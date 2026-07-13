@@ -732,39 +732,39 @@
 	}
 
 	.paper-id {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 		font-size: 0.75rem;
 		letter-spacing: 0.1em;
 	}
 
 	.paper-title {
-		font-size: var(--text-h1);
-		font-weight: var(--font-bold);
+		font-size: var(--text-performance-h1);
+		font-weight: var(--font-performance-bold);
 	}
 
 	.paper-subtitle {
-		font-size: var(--text-body-lg);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-lg);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.paper-meta {
-		color: var(--color-fg-muted);
-		font-size: var(--text-body-sm);
+		color: var(--color-performance-fg-muted);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.section-heading {
-		font-size: var(--text-h3);
-		font-weight: var(--font-semibold);
+		font-size: var(--text-performance-h3);
+		font-weight: var(--font-performance-semibold);
 		margin-bottom: 1rem;
 	}
 
 	.body-text {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 		line-height: 1.7;
 	}
 
 	.text-muted {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	/* ===========================================
@@ -777,31 +777,31 @@
 	}
 
 	.modality-number {
-		font-family: var(--font-mono);
+		font-family: var(--font-performance-mono);
 		font-size: 2rem;
-		font-weight: var(--font-bold);
-		color: var(--color-fg-muted);
+		font-weight: var(--font-performance-bold);
+		color: var(--color-performance-fg-muted);
 		opacity: 0.5;
 		line-height: 1;
 	}
 
 	.modality-title-lg {
-		font-size: var(--text-h3);
-		font-weight: var(--font-semibold);
+		font-size: var(--text-performance-h3);
+		font-weight: var(--font-performance-semibold);
 		margin-bottom: 0.25rem;
 	}
 
 	.modality-stage {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-muted);
 	}
 
 	/* ===========================================
 	   DEMO CONTAINERS
 	   =========================================== */
 	.demo-container {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
 		padding: 1.5rem;
 	}
 
@@ -809,9 +809,9 @@
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-		font-family: var(--font-mono);
+		font-family: var(--font-performance-mono);
 		font-size: 0.7rem;
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 		margin-bottom: 1rem;
@@ -826,7 +826,7 @@
 
 	:global(.spritz-embed) {
 		--spritz-bg: var(--color-bg-base);
-		--spritz-fg: var(--color-fg-primary);
+		--spritz-fg: var(--color-performance-fg-primary);
 		min-height: 200px;
 	}
 
@@ -839,7 +839,7 @@
 
 	.motion-canvas {
 		background: #000;
-		border-radius: var(--radius-md);
+		border-radius: var(--radius-performance-scale-md);
 		padding: 3rem 2rem;
 		min-height: 200px;
 		display: flex;
@@ -851,7 +851,7 @@
 	}
 
 	.reveal-label {
-		font-family: var(--font-mono);
+		font-family: var(--font-performance-mono);
 		font-size: 0.7rem;
 		color: #737373;
 		letter-spacing: 0.15em;
@@ -869,7 +869,7 @@
 	}
 
 	.reveal-philosophy {
-		font-family: var(--font-mono);
+		font-family: var(--font-performance-mono);
 		font-size: 0.7rem;
 		color: #525252;
 		text-align: center;
@@ -887,16 +887,16 @@
 		align-items: center;
 		gap: 0.5rem;
 		padding: 0.5rem 1rem;
-		border-radius: var(--radius-md);
-		color: var(--color-fg-secondary);
-		font-size: var(--text-body-sm);
+		border-radius: var(--radius-performance-scale-md);
+		color: var(--color-performance-fg-secondary);
+		font-size: var(--text-performance-body-sm);
 		cursor: pointer;
 		transition: all 0.15s;
 	}
 
 	.motion-btn:hover {
-		background: var(--color-bg-surface);
-		color: var(--color-fg-primary);
+		background: var(--color-performance-bg-surface);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.motion-btn.play {
@@ -927,7 +927,7 @@
 	}
 
 	.style-dot:hover {
-		background: var(--color-fg-muted);
+		background: var(--color-performance-fg-muted);
 	}
 
 	.style-dot.active {
@@ -952,13 +952,13 @@
 		display: block;
 		padding: 1.25rem;
 		background: var(--color-bg-base);
-		border-radius: var(--radius-md);
+		border-radius: var(--radius-performance-scale-md);
 		text-decoration: none;
 		transition: all 0.2s;
 	}
 
 	.learn-path-card:hover {
-		border-color: var(--color-border-emphasis);
+		border-color: var(--color-performance-border-emphasis);
 		transform: translateY(-2px);
 	}
 
@@ -986,25 +986,25 @@
 
 	.path-lessons {
 		font-size: 0.75rem;
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.path-title-text {
-		font-size: var(--text-body);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
+		font-size: var(--text-performance-body);
+		font-weight: var(--font-performance-semibold);
+		color: var(--color-performance-fg-primary);
 		margin-bottom: 0.25rem;
 	}
 
 	.path-subtitle-text {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-muted);
 		margin-bottom: 0.5rem;
 	}
 
 	.path-description-text {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
 		margin-bottom: 1rem;
 		line-height: 1.5;
 	}
@@ -1013,12 +1013,12 @@
 		display: flex;
 		align-items: center;
 		gap: 0.25rem;
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.learn-path-card:hover .path-cta {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	/* ===========================================
@@ -1032,31 +1032,31 @@
 
 	.detail-card {
 		padding: 1rem;
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-md);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-md);
 	}
 
 	.detail-title {
-		font-size: var(--text-body-sm);
-		font-weight: var(--font-semibold);
+		font-size: var(--text-performance-body-sm);
+		font-weight: var(--font-performance-semibold);
 		margin-bottom: 0.5rem;
 	}
 
 	.detail-text {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
 		line-height: 1.6;
 	}
 
 	.detail-list {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
 		list-style: disc;
 		list-style-position: inside;
 	}
 
 	.detail-list.mono {
-		font-family: var(--font-mono);
+		font-family: var(--font-performance-mono);
 		font-size: 0.8rem;
 	}
 
@@ -1075,8 +1075,8 @@
 
 	.engagement-card {
 		padding: 1.25rem;
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.engagement-card.spritz-accent { border-top: 3px solid #22c55e; }
@@ -1084,12 +1084,12 @@
 	.engagement-card.learn-accent { border-top: 3px solid #3b82f6; }
 
 	.engagement-icon {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 		margin-bottom: 0.5rem;
 	}
 
 	.engagement-modality {
-		font-weight: var(--font-semibold);
+		font-weight: var(--font-performance-semibold);
 		margin-bottom: 1rem;
 	}
 
@@ -1106,13 +1106,13 @@
 
 	.stat-value {
 		font-size: 1.25rem;
-		font-weight: var(--font-bold);
-		font-family: var(--font-mono);
+		font-weight: var(--font-performance-bold);
+		font-family: var(--font-performance-mono);
 	}
 
 	.stat-label {
 		font-size: 0.7rem;
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 	}
@@ -1122,7 +1122,7 @@
 	   =========================================== */
 	.hypothesis-table {
 		width: 100%;
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.hypothesis-table th,
@@ -1137,25 +1137,25 @@
 	}
 
 	.hypothesis-table tbody {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	/* ===========================================
 	   TRIAD CARDS
 	   =========================================== */
 	.triad-card {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.triad-title {
-		font-weight: var(--font-semibold);
+		font-weight: var(--font-performance-semibold);
 		margin-bottom: 0.5rem;
 	}
 
 	.triad-text {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-muted);
 	}
 
 	/* ===========================================
@@ -1172,19 +1172,19 @@
 		align-items: center;
 		gap: 0.75rem;
 		padding: 1rem;
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-md);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-md);
 		text-decoration: none;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		transition: all 0.15s;
 	}
 
 	.link-card:hover:not(.muted) {
-		border-color: var(--color-border-emphasis);
+		border-color: var(--color-performance-border-emphasis);
 	}
 
 	.link-card.muted {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 		cursor: default;
 	}
 
@@ -1200,7 +1200,7 @@
 		bottom: 0;
 		left: 0;
 		right: 0;
-		background: var(--color-bg-surface);
+		background: var(--color-performance-bg-surface);
 		padding: 1.5rem;
 		z-index: 1000;
 		box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
@@ -1216,18 +1216,18 @@
 		align-items: center;
 		gap: 0.5rem;
 		margin-bottom: 0.75rem;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.consent-title {
-		font-size: var(--text-body);
-		font-weight: var(--font-semibold);
+		font-size: var(--text-performance-body);
+		font-weight: var(--font-performance-semibold);
 		margin: 0;
 	}
 
 	.consent-text {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
 		margin-bottom: 1rem;
 		line-height: 1.5;
 	}
@@ -1240,20 +1240,20 @@
 
 	.consent-btn {
 		padding: 0.5rem 1rem;
-		border-radius: var(--radius-md);
-		font-size: var(--text-body-sm);
-		font-weight: var(--font-medium);
+		border-radius: var(--radius-performance-scale-md);
+		font-size: var(--text-performance-body-sm);
+		font-weight: var(--font-performance-medium);
 		cursor: pointer;
 		transition: all 0.15s;
 	}
 
 	.consent-btn.decline {
 		background: transparent;
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.consent-btn.decline:hover {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.consent-btn.accept {
@@ -1272,8 +1272,8 @@
 	   =========================================== */
 	.privacy-status {
 		padding: 1rem;
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-md);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-md);
 	}
 
 	.privacy-indicator {
@@ -1281,12 +1281,12 @@
 		align-items: center;
 		gap: 0.5rem;
 		flex-wrap: wrap;
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.privacy-text {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.privacy-toggle {
@@ -1295,8 +1295,8 @@
 		gap: 0.25rem;
 		margin-left: auto;
 		padding: 0.25rem 0.5rem;
-		border-radius: var(--radius-sm);
-		color: var(--color-fg-muted);
+		border-radius: var(--radius-performance-scale-sm);
+		color: var(--color-performance-fg-muted);
 		font-size: 0.75rem;
 		cursor: pointer;
 		transition: all 0.15s;
@@ -1304,13 +1304,13 @@
 
 	.privacy-toggle:hover {
 		background: var(--color-bg-base);
-		color: var(--color-fg-primary);
-		border-color: var(--color-border-emphasis);
+		color: var(--color-performance-fg-primary);
+		border-color: var(--color-performance-border-emphasis);
 	}
 
 	.privacy-note {
 		font-size: 0.75rem;
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 		margin-top: 0.5rem;
 		line-height: 1.4;
 	}
@@ -1320,8 +1320,8 @@
 		align-items: center;
 		gap: 0.25rem;
 		padding: 0.125rem 0.5rem;
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-full);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-full);
 		font-size: 0.7rem;
 	}
 </style>

@@ -114,18 +114,18 @@
 	.select {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-xs);
+		gap: var(--space-performance-xs);
 	}
 
 	/* Label */
 	.select-label {
-		font-size: var(--text-body-sm);
-		font-weight: var(--font-medium);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-sm);
+		font-weight: var(--font-performance-medium);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.required-indicator {
-		color: var(--color-error);
+		color: var(--color-performance-error);
 		margin-left: 2px;
 	}
 
@@ -138,42 +138,42 @@
 	.select-input {
 		box-sizing: border-box;
 		width: 100%;
-		padding: var(--space-sm) var(--space-xl) var(--space-sm) var(--space-md);
-		border-radius: var(--radius-md);
-		color: var(--color-fg-primary);
-		font-size: var(--text-body);
+		padding: var(--space-performance-sm) var(--space-performance-xl) var(--space-performance-sm) var(--space-performance-md);
+		border-radius: var(--radius-performance-scale-md);
+		color: var(--color-performance-fg-primary);
+		font-size: var(--text-performance-body);
 		font-family: inherit;
 		appearance: none;
 		cursor: pointer;
-		transition: border-color var(--duration-micro) var(--ease-standard),
-			box-shadow var(--duration-micro) var(--ease-standard);
+		transition: border-color var(--duration-performance-micro) var(--ease-performance-standard),
+			box-shadow var(--duration-performance-micro) var(--ease-performance-standard);
 		min-height: 44px; /* WCAG touch target */
 	}
 
 	.select-input:hover:not(:disabled) {
-		border-color: var(--color-border-emphasis);
+		border-color: var(--color-performance-border-emphasis);
 	}
 
 	.select-input:focus {
 		outline: none;
-		border-color: var(--color-border-emphasis);
-		box-shadow: 0 0 0 3px var(--color-focus);
+		border-color: var(--color-performance-border-emphasis);
+		box-shadow: 0 0 0 3px var(--color-performance-focus);
 	}
 
 	.select-input:disabled {
 		opacity: 0.5;
 		cursor: not-allowed;
-		background: var(--color-bg-subtle);
+		background: var(--color-performance-bg-subtle);
 	}
 
 	/* Custom arrow */
 	.select-arrow {
 		position: absolute;
-		right: var(--space-sm);
+		right: var(--space-performance-sm);
 		top: 50%;
 		transform: translateY(-50%);
 		pointer-events: none;
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.select-arrow svg {
@@ -183,22 +183,22 @@
 
 	/* Error state */
 	.has-error .select-input {
-		border-color: var(--color-error);
+		border-color: var(--color-performance-error);
 	}
 
 	.has-error .select-input:focus {
-		box-shadow: 0 0 0 3px var(--color-error-muted);
+		box-shadow: 0 0 0 3px var(--color-performance-error-muted);
 	}
 
 	/* Size variants */
 	.select-sm .select-input {
-		padding: var(--space-xs) var(--space-lg) var(--space-xs) var(--space-sm);
-		font-size: var(--text-body-sm);
+		padding: var(--space-performance-xs) var(--space-performance-lg) var(--space-performance-xs) var(--space-performance-sm);
+		font-size: var(--text-performance-body-sm);
 		min-height: 36px;
 	}
 
 	.select-sm .select-label {
-		font-size: var(--text-caption);
+		font-size: var(--text-performance-caption);
 	}
 
 	.select-sm .select-arrow svg {
@@ -207,13 +207,13 @@
 	}
 
 	.select-lg .select-input {
-		padding: var(--space-md) var(--space-2xl) var(--space-md) var(--space-lg);
-		font-size: var(--text-body-lg);
+		padding: var(--space-performance-md) var(--space-performance-2xl) var(--space-performance-md) var(--space-performance-lg);
+		font-size: var(--text-performance-body-lg);
 		min-height: 52px;
 	}
 
 	.select-lg .select-label {
-		font-size: var(--text-body);
+		font-size: var(--text-performance-body);
 	}
 
 	.select-lg .select-arrow svg {
@@ -223,15 +223,15 @@
 
 	/* Description */
 	.select-description {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 		margin: 0;
 	}
 
 	/* Error message */
 	.select-error {
-		font-size: var(--text-caption);
-		color: var(--color-error);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-error);
 		margin: 0;
 	}
 </style>

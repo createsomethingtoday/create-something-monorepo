@@ -66,7 +66,7 @@
 		font-size: 0.72rem;
 		letter-spacing: 0.14em;
 		text-transform: uppercase;
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.title-row {
@@ -85,7 +85,7 @@
 
 	.lede,
 	.identity-meta {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.lede {

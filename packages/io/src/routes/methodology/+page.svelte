@@ -613,116 +613,116 @@
 
   /* Hero Section */
   .hero-lead {
-    font-size: var(--text-body-lg);
-    color: var(--color-fg-secondary);
-    line-height: var(--leading-relaxed);
+    font-size: var(--text-performance-body-lg);
+    color: var(--color-performance-fg-secondary);
+    line-height: var(--leading-performance-relaxed);
   }
 
   .hero-subtext {
-    font-size: var(--text-body);
-    color: var(--color-fg-tertiary);
-    line-height: var(--leading-relaxed);
+    font-size: var(--text-performance-body);
+    color: var(--color-performance-fg-tertiary);
+    line-height: var(--leading-performance-relaxed);
   }
 
   /* Section Headers - h2 uses base styles from Canon */
   :global(.section-subtitle) {
-    font-size: var(--text-body-lg);
-    color: var(--color-fg-secondary);
+    font-size: var(--text-performance-body-lg);
+    color: var(--color-performance-fg-secondary);
   }
 
   /* Cards */
   .card {
-    background: var(--color-bg-surface);
-    border-radius: var(--radius-lg);
+    background: var(--color-performance-bg-surface);
+    border-radius: var(--radius-performance-scale-lg);
   }
 
   .card-step {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-muted);
+    font-size: var(--text-performance-body-sm);
+    color: var(--color-performance-fg-muted);
   }
 
   :global(.card-title) {
-    font-size: var(--text-body-lg);
-    font-weight: var(--font-semibold);
-    color: var(--color-fg-primary);
+    font-size: var(--text-performance-body-lg);
+    font-weight: var(--font-performance-semibold);
+    color: var(--color-performance-fg-primary);
   }
 
   .card-description {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-tertiary);
+    font-size: var(--text-performance-body-sm);
+    color: var(--color-performance-fg-tertiary);
   }
 
   /* Icons */
   .icon {
-    color: var(--color-fg-secondary);
+    color: var(--color-performance-fg-secondary);
   }
 
   .arrow {
-    color: var(--color-fg-subtle);
+    color: var(--color-performance-fg-subtle);
   }
 
   /* Typography Variants */
   .emphasis-text {
-    font-size: var(--text-body-lg);
-    color: var(--color-fg-secondary);
-    font-weight: var(--font-medium);
+    font-size: var(--text-performance-body-lg);
+    color: var(--color-performance-fg-secondary);
+    font-weight: var(--font-performance-medium);
   }
 
   .metric-label {
-    font-size: var(--text-body-lg);
-    font-weight: var(--font-semibold);
-    color: var(--color-fg-primary);
+    font-size: var(--text-performance-body-lg);
+    font-weight: var(--font-performance-semibold);
+    color: var(--color-performance-fg-primary);
   }
 
   :global(.metric-description) {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-tertiary);
+    font-size: var(--text-performance-body-sm);
+    color: var(--color-performance-fg-tertiary);
   }
 
   .metric-example {
-    font-size: var(--text-caption);
-    color: var(--color-fg-muted);
-    background: var(--color-hover);
+    font-size: var(--text-performance-caption);
+    color: var(--color-performance-fg-muted);
+    background: var(--color-performance-hover);
     padding: 0.25rem 0.5rem;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-performance-scale-sm);
   }
 
   /* Quote Box */
   .quote-box {
-    background: var(--color-hover);
-    border: 1px solid var(--color-border-emphasis);
-    border-radius: var(--radius-lg);
+    background: var(--color-performance-hover);
+    border: 1px solid var(--color-performance-border-emphasis);
+    border-radius: var(--radius-performance-scale-lg);
   }
 
   .quote-text {
-    color: var(--color-fg-secondary);
+    color: var(--color-performance-fg-secondary);
     font-style: italic;
   }
 
   .quote-author {
-    color: var(--color-fg-muted);
-    font-size: var(--text-body-sm);
+    color: var(--color-performance-fg-muted);
+    font-size: var(--text-performance-body-sm);
   }
 
   /* Principles */
   .principle-title {
-    font-size: var(--text-body);
-    font-weight: var(--font-semibold);
-    color: var(--color-fg-primary);
+    font-size: var(--text-performance-body);
+    font-weight: var(--font-performance-semibold);
+    color: var(--color-performance-fg-primary);
   }
 
   .principle-description {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-tertiary);
+    font-size: var(--text-performance-body-sm);
+    color: var(--color-performance-fg-tertiary);
   }
 
   :global(.principle-application) {
-    font-size: var(--text-caption);
-    color: var(--color-fg-muted);
+    font-size: var(--text-performance-caption);
+    color: var(--color-performance-fg-muted);
   }
 
   :global(.principle-label) {
-    color: var(--color-fg-tertiary);
+    color: var(--color-performance-fg-tertiary);
   }
 
   /* Borders */
@@ -730,43 +730,43 @@
 
   /* Lists */
   .checklist-icon {
-    color: var(--color-fg-muted);
+    color: var(--color-performance-fg-muted);
   }
 
   .list-text {
-    color: var(--color-fg-tertiary);
+    color: var(--color-performance-fg-tertiary);
   }
 
   /* Buttons */
   .cta-button {
-    background: var(--color-hover);
-    color: var(--color-fg-primary);
-    border: 1px solid var(--color-border-emphasis);
-    font-weight: var(--font-semibold);
-    border-radius: var(--radius-full);
-    transition: all var(--duration-standard) var(--ease-standard);
+    background: var(--color-performance-hover);
+    color: var(--color-performance-fg-primary);
+    border: 1px solid var(--color-performance-border-emphasis);
+    font-weight: var(--font-performance-semibold);
+    border-radius: var(--radius-performance-scale-full);
+    transition: all var(--duration-performance-standard) var(--ease-performance-standard);
   }
 
   .cta-button:hover {
-    background: var(--color-active);
-    border-color: var(--color-border-strong);
+    background: var(--color-performance-active);
+    border-color: var(--color-performance-border-strong);
   }
 
   .cta-button-primary {
-    background: var(--color-fg-primary);
-    color: var(--color-bg-pure);
-    font-weight: var(--font-semibold);
-    border-radius: var(--radius-full);
-    transition: all var(--duration-standard) var(--ease-standard);
+    background: var(--color-performance-fg-primary);
+    color: var(--color-performance-bg-pure);
+    font-weight: var(--font-performance-semibold);
+    border-radius: var(--radius-performance-scale-full);
+    transition: all var(--duration-performance-standard) var(--ease-performance-standard);
   }
 
   .cta-button-primary:hover {
-    background: var(--color-fg-secondary);
+    background: var(--color-performance-fg-secondary);
   }
 
   /* Links */
   .link-text {
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
   }
 
   .link-text:hover {
@@ -775,143 +775,143 @@
 
   /* Tags & Badges */
   .tag {
-    font-size: var(--text-caption);
-    background: var(--color-hover);
-    color: var(--color-fg-tertiary);
-    border-radius: var(--radius-sm);
+    font-size: var(--text-performance-caption);
+    background: var(--color-performance-hover);
+    color: var(--color-performance-fg-tertiary);
+    border-radius: var(--radius-performance-scale-sm);
   }
 
   .badge {
-    font-size: var(--text-caption);
-    background: var(--color-hover);
-    color: var(--color-fg-tertiary);
-    border-radius: var(--radius-full);
+    font-size: var(--text-performance-caption);
+    background: var(--color-performance-hover);
+    color: var(--color-performance-fg-tertiary);
+    border-radius: var(--radius-performance-scale-full);
   }
 
   /* Mode Cards */
   :global(.mode-title) {
-    font-size: var(--text-body-lg);
-    font-weight: var(--font-semibold);
-    color: var(--color-fg-primary);
+    font-size: var(--text-performance-body-lg);
+    font-weight: var(--font-performance-semibold);
+    color: var(--color-performance-fg-primary);
   }
 
   .mode-description {
-    color: var(--color-fg-secondary);
+    color: var(--color-performance-fg-secondary);
   }
 
   .mode-label {
-    color: var(--color-fg-muted);
+    color: var(--color-performance-fg-muted);
   }
 
   .mode-value {
-    color: var(--color-fg-tertiary);
+    color: var(--color-performance-fg-tertiary);
   }
 
   /* Stats */
   .stat-value {
-    font-size: var(--text-h2);
-    font-weight: var(--font-bold);
-    color: var(--color-fg-primary);
+    font-size: var(--text-performance-h2);
+    font-weight: var(--font-performance-bold);
+    color: var(--color-performance-fg-primary);
   }
 
   .stat-label {
-    font-size: var(--text-caption);
-    color: var(--color-fg-muted);
+    font-size: var(--text-performance-caption);
+    color: var(--color-performance-fg-muted);
   }
 
   .stat-card {
-    background: var(--color-hover);
-    border-radius: var(--radius-sm);
+    background: var(--color-performance-hover);
+    border-radius: var(--radius-performance-scale-sm);
   }
 
   /* Info */
   :global(.info-label) {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-tertiary);
+    font-size: var(--text-performance-body-sm);
+    color: var(--color-performance-fg-tertiary);
   }
 
   :global(.info-value) {
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
   }
 
   /* Steps */
   .step-number {
-    font-weight: var(--font-bold);
-    color: var(--color-fg-subtle);
+    font-weight: var(--font-performance-bold);
+    color: var(--color-performance-fg-subtle);
   }
 
   :global(.step-title) {
-    font-size: var(--text-body);
-    font-weight: var(--font-semibold);
-    color: var(--color-fg-primary);
+    font-size: var(--text-performance-body);
+    font-weight: var(--font-performance-semibold);
+    color: var(--color-performance-fg-primary);
   }
 
   :global(.step-description) {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-tertiary);
+    font-size: var(--text-performance-body-sm);
+    color: var(--color-performance-fg-tertiary);
   }
 
   /* Authors */
   .author-name {
-    font-size: var(--text-body-lg);
-    font-weight: var(--font-semibold);
-    color: var(--color-fg-primary);
+    font-size: var(--text-performance-body-lg);
+    font-weight: var(--font-performance-semibold);
+    color: var(--color-performance-fg-primary);
   }
 
   .author-title {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-muted);
+    font-size: var(--text-performance-body-sm);
+    color: var(--color-performance-fg-muted);
   }
 
   /* Work Titles */
   .work-title {
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
   }
 
   :global(.work-description) {
-    color: var(--color-fg-secondary);
+    color: var(--color-performance-fg-secondary);
   }
 
   .principle-item {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-tertiary);
+    font-size: var(--text-performance-body-sm);
+    color: var(--color-performance-fg-tertiary);
   }
 
   /* Footer Links */
   .footer-link {
-    color: var(--color-fg-secondary);
-    transition: color var(--duration-standard) var(--ease-standard);
+    color: var(--color-performance-fg-secondary);
+    transition: color var(--duration-performance-standard) var(--ease-performance-standard);
   }
 
   .footer-link:hover {
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
   }
 
   :global(.footer-text) {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-tertiary);
+    font-size: var(--text-performance-body-sm);
+    color: var(--color-performance-fg-tertiary);
   }
 
   .footer-links {
-    font-size: var(--text-body-sm);
+    font-size: var(--text-performance-body-sm);
   }
 
   /* Canon Intro */
   .canon-intro {
-    font-size: var(--text-body);
-    color: var(--color-fg-secondary);
+    font-size: var(--text-performance-body);
+    color: var(--color-performance-fg-secondary);
   }
 
   :global(.canon-note) {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-secondary);
+    font-size: var(--text-performance-body-sm);
+    color: var(--color-performance-fg-secondary);
   }
 
   /* Animations - Canon duration */
   .animate-reveal {
     opacity: 0;
     transform: translateY(20px);
-    animation: reveal var(--duration-complex) var(--ease-standard) forwards;
+    animation: reveal var(--duration-performance-complex) var(--ease-performance-standard) forwards;
     animation-delay: calc(var(--delay, 0) * 100ms);
   }
 

@@ -84,17 +84,17 @@
 <style>
 	.sticky-cta {
 		position: fixed;
-		bottom: var(--space-lg, 2.618rem);
-		right: var(--space-lg, 2.618rem);
+		bottom: var(--space-performance-lg, 2.618rem);
+		right: var(--space-performance-lg, 2.618rem);
 		z-index: 50;
-		animation: slideUp var(--duration-micro, 200ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)) forwards;
+		animation: slideUp var(--duration-performance-micro, 200ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1)) forwards;
 	}
 
 	@media (max-width: 768px) {
 		.sticky-cta {
-			bottom: var(--space-md, 1.618rem);
-			right: var(--space-md, 1.618rem);
-			left: var(--space-md, 1.618rem);
+			bottom: var(--space-performance-md, 1.618rem);
+			right: var(--space-performance-md, 1.618rem);
+			left: var(--space-performance-md, 1.618rem);
 		}
 
 		.sticky-cta-button {
@@ -106,23 +106,23 @@
 	.sticky-cta-button {
 		display: inline-flex;
 		align-items: center;
-		gap: var(--space-xs, 0.5rem);
-		background: var(--color-fg-primary, #fff);
-		color: var(--color-bg-pure, #000);
-		padding: var(--space-sm, 1rem) var(--space-lg, 2.618rem);
-		border-radius: var(--radius-full, 9999px);
+		gap: var(--space-performance-xs, 0.5rem);
+		background: var(--color-performance-fg-primary, #fff);
+		color: var(--color-performance-bg-pure, #000);
+		padding: var(--space-performance-sm, 1rem) var(--space-performance-lg, 2.618rem);
+		border-radius: var(--radius-performance-scale-full, 9999px);
 		font-weight: 600;
-		font-size: var(--text-body-sm, 0.875rem);
+		font-size: var(--text-performance-body-sm, 0.875rem);
 		text-decoration: none;
-		box-shadow: var(--shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.1));
+		box-shadow: var(--shadow-performance-scale-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.1));
 		transition:
-			transform var(--duration-micro, 200ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
-			box-shadow var(--duration-micro, 200ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+			transform var(--duration-performance-micro, 200ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1)),
+			box-shadow var(--duration-performance-micro, 200ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1));
 	}
 
 	.sticky-cta-button:hover {
 		transform: translateY(-2px);
-		box-shadow: var(--shadow-xl, 0 20px 25px -5px rgba(0, 0, 0, 0.1));
+		box-shadow: var(--shadow-performance-scale-xl, 0 20px 25px -5px rgba(0, 0, 0, 0.1));
 	}
 
 	.sticky-cta-button:active {
@@ -130,7 +130,7 @@
 	}
 
 	.sticky-cta-arrow {
-		transition: transform var(--duration-micro, 200ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+		transition: transform var(--duration-performance-micro, 200ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1));
 	}
 
 	.sticky-cta-button:hover .sticky-cta-arrow {
@@ -140,7 +140,7 @@
 	/* Late journey state - more prominent */
 	.late .sticky-cta-button {
 		box-shadow:
-			var(--shadow-xl, 0 20px 25px -5px rgba(0, 0, 0, 0.1)),
+			var(--shadow-performance-scale-xl, 0 20px 25px -5px rgba(0, 0, 0, 0.1)),
 			0 0 20px rgba(255, 255, 255, 0.1);
 	}
 

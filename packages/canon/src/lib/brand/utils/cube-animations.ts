@@ -305,7 +305,7 @@ ${cubePulseKeyframes('cube-pulse')}
 .cube-reveal .face-top,
 .cube-reveal .face-left,
 .cube-reveal .face-right {
-	animation: cube-face-reveal var(--duration-complex, 500ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)) forwards;
+	animation: cube-face-reveal var(--duration-performance-complex, 500ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1)) forwards;
 }
 
 .cube-reveal .face-top { animation-delay: 0ms; }
@@ -313,21 +313,21 @@ ${cubePulseKeyframes('cube-pulse')}
 .cube-reveal .face-right { animation-delay: 200ms; }
 
 .cube-assemble .face-top {
-	animation: cube-assemble-top var(--duration-complex, 500ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)) forwards;
+	animation: cube-assemble-top var(--duration-performance-complex, 500ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1)) forwards;
 }
 
 .cube-assemble .face-left {
-	animation: cube-assemble-left var(--duration-complex, 500ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)) forwards;
+	animation: cube-assemble-left var(--duration-performance-complex, 500ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1)) forwards;
 	animation-delay: 150ms;
 }
 
 .cube-assemble .face-right {
-	animation: cube-assemble-right var(--duration-complex, 500ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)) forwards;
+	animation: cube-assemble-right var(--duration-performance-complex, 500ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1)) forwards;
 	animation-delay: 300ms;
 }
 
 .cube-pulse {
-	animation: cube-pulse var(--duration-complex, 500ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)) infinite alternate;
+	animation: cube-pulse var(--duration-performance-complex, 500ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1)) infinite alternate;
 }
 
 /* Reduced Motion */

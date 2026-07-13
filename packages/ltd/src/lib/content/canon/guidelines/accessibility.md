@@ -14,11 +14,11 @@ All text in the Canon system meets WCAG AA contrast requirements. The minimum ra
 
 | Text Type | Ratio | Token |
 |-----------|-------|-------|
-| Primary Text | 21:1 | `--color-fg-primary` |
-| Secondary Text | 13.7:1 | `--color-fg-secondary` |
-| Muted Text | 4.56:1 | `--color-fg-muted` |
+| Primary Text | 21:1 | `--color-performance-fg-primary` |
+| Secondary Text | 13.7:1 | `--color-performance-fg-secondary` |
+| Muted Text | 4.56:1 | `--color-performance-fg-muted` |
 
-**Note:** `--color-fg-subtle` (0.2 opacity) does not meet AA contrast and should only be used for decorative elements, never for informational content.
+**Note:** `--color-performance-fg-subtle` (0.2 opacity) does not meet AA contrast and should only be used for decorative elements, never for informational content.
 
 ### Clear Proof and Status Surfaces
 
@@ -39,14 +39,14 @@ All interactive elements must have visible focus indicators. Canon uses a consis
 ```css
 /* Standard focus pattern */
 .interactive:focus-visible {
-  outline: 2px solid var(--color-focus);
+  outline: 2px solid var(--color-performance-focus);
   outline-offset: 2px;
 }
 
 /* High contrast mode enhancement */
 @media (prefers-contrast: more) {
   .interactive:focus-visible {
-    outline: 3px solid var(--color-focus);
+    outline: 3px solid var(--color-performance-focus);
     outline-offset: 3px;
   }
 }
@@ -128,9 +128,9 @@ Canon supports `prefers-contrast: more` with enhanced visibility tokens.
 
 | Token | Standard | High Contrast |
 |-------|----------|---------------|
-| `--color-fg-muted` | 0.46 opacity | 0.75 opacity |
-| `--color-border-default` | 0.1 opacity | 0.3 opacity |
-| `--color-focus` | 0.5 opacity | 0.9 opacity |
+| `--color-performance-fg-muted` | 0.46 opacity | 0.75 opacity |
+| `--color-performance-border-default` | 0.1 opacity | 0.3 opacity |
+| `--color-performance-focus` | 0.5 opacity | 0.9 opacity |
 
 ## Checklist
 

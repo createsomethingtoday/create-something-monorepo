@@ -59,7 +59,7 @@
 
 <style>
 	.section-header {
-		margin-bottom: var(--space-xl);
+		margin-bottom: var(--space-performance-xl);
 	}
 
 	/* Alignment */
@@ -78,28 +78,28 @@
 	/* Eyebrow */
 	.section-header__eyebrow {
 		display: block;
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 		font-weight: 600;
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 		text-transform: uppercase;
 		letter-spacing: 0.1em;
-		margin-bottom: var(--space-sm);
+		margin-bottom: var(--space-performance-sm);
 	}
 
 	/* Title */
 	.section-header__title {
-		font-size: var(--text-h2);
+		font-size: var(--text-performance-h2);
 		font-weight: 600;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		margin: 0;
 		line-height: 1.2;
 	}
 
 	/* Subtitle */
 	.section-header__subtitle {
-		font-size: var(--text-body-lg);
-		color: var(--color-fg-secondary);
-		margin: var(--space-sm) 0 0;
+		font-size: var(--text-performance-body-lg);
+		color: var(--color-performance-fg-secondary);
+		margin: var(--space-performance-sm) 0 0;
 		line-height: 1.6;
 	}
 

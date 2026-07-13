@@ -109,9 +109,9 @@
     border-radius: var(--radius-performance-sm, 4px);
     background: var(--color-performance-panel, #ffffff);
     color: var(--color-performance-muted, #5e6268);
-    font-family: var(--font-mono);
+    font-family: var(--font-performance-mono);
     font-size: 0.76rem;
-    font-weight: var(--font-semibold);
+    font-weight: var(--font-performance-semibold);
     letter-spacing: 0;
     line-height: 1.15;
     text-transform: uppercase;
@@ -122,7 +122,7 @@
     max-width: 12ch;
     color: var(--color-performance-ink, #090909);
     font-size: clamp(3.2rem, 8vw, 5.45rem);
-    font-weight: var(--font-medium);
+    font-weight: var(--font-performance-medium);
     line-height: 0.98;
     letter-spacing: 0;
     text-wrap: balance;
@@ -153,13 +153,13 @@
     border: 1px solid var(--color-performance-line, #d7d7d2);
     border-radius: var(--radius-performance-sm, 4px);
     font-size: 1rem;
-    font-weight: var(--font-semibold);
+    font-weight: var(--font-performance-semibold);
     line-height: 1.1;
     text-decoration: none;
     transition:
-      background var(--duration-micro) var(--ease-standard),
-      border-color var(--duration-micro) var(--ease-standard),
-      color var(--duration-micro) var(--ease-standard);
+      background var(--duration-performance-micro) var(--ease-performance-standard),
+      border-color var(--duration-performance-micro) var(--ease-performance-standard),
+      color var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   .clear-error-page__button--primary {
@@ -201,9 +201,9 @@
 
   .clear-error-page__panel span {
     color: var(--color-performance-muted, #5e6268);
-    font-family: var(--font-mono);
+    font-family: var(--font-performance-mono);
     font-size: 0.76rem;
-    font-weight: var(--font-medium);
+    font-weight: var(--font-performance-medium);
     letter-spacing: 0;
     text-transform: uppercase;
   }
@@ -211,7 +211,7 @@
   .clear-error-page__panel strong {
     color: var(--color-performance-ink, #090909);
     font-size: clamp(4rem, 11vw, 7.5rem);
-    font-weight: var(--font-medium);
+    font-weight: var(--font-performance-medium);
     line-height: 0.9;
   }
 

@@ -279,18 +279,18 @@
 	}
 
 	.building-outline {
-		fill: var(--color-bg-elevated);
-		stroke: var(--color-fg-subtle);
+		fill: var(--color-performance-bg-elevated);
+		stroke: var(--color-performance-fg-subtle);
 		stroke-width: 0.5;
 	}
 
 	/* Zone labels */
 	.zone-label {
-		font-family: var(--font-sans, system-ui, sans-serif);
+		font-family: var(--font-performance-sans, system-ui, sans-serif);
 		font-size: 6px;
 		text-anchor: middle;
 		dominant-baseline: middle;
-		letter-spacing: var(--tracking-wider, 0.05em);
+		letter-spacing: var(--tracking-performance-wider, 0.05em);
 		text-transform: uppercase;
 	}
 
@@ -321,10 +321,10 @@
 
 	/* Equipment labels */
 	.equipment-label {
-		font-family: var(--font-sans, system-ui, sans-serif);
+		font-family: var(--font-performance-sans, system-ui, sans-serif);
 		font-size: 5px;
 		text-anchor: middle;
-		letter-spacing: var(--tracking-normal, 0.02em);
+		letter-spacing: var(--tracking-performance-normal, 0.02em);
 	}
 
 	.equipment-label.hvac {
@@ -341,7 +341,7 @@
 
 	/* General labels */
 	.label {
-		font-family: var(--font-sans, system-ui, sans-serif);
+		font-family: var(--font-performance-sans, system-ui, sans-serif);
 		font-size: 7px;
 		fill: var(--arch-label-primary);
 		text-anchor: middle;
@@ -355,16 +355,16 @@
 
 	/* Legend */
 	.legend-title {
-		font-family: var(--font-sans, system-ui, sans-serif);
+		font-family: var(--font-performance-sans, system-ui, sans-serif);
 		font-size: 6px;
 		fill: var(--arch-label-secondary);
-		letter-spacing: var(--tracking-widest, 0.1em);
+		letter-spacing: var(--tracking-performance-widest, 0.1em);
 	}
 
 	.legend-item {
-		font-family: var(--font-sans, system-ui, sans-serif);
+		font-family: var(--font-performance-sans, system-ui, sans-serif);
 		font-size: 5px;
-		letter-spacing: var(--tracking-wider, 0.05em);
+		letter-spacing: var(--tracking-performance-wider, 0.05em);
 	}
 
 	.legend-item.hvac {
@@ -384,15 +384,15 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		margin-top: var(--space-md, 1.5rem);
-		padding-top: var(--space-sm, 1rem);
-		border-top: 1px solid var(--color-hover);
-		font-family: var(--font-sans, system-ui, sans-serif);
+		margin-top: var(--space-performance-md, 1.5rem);
+		padding-top: var(--space-performance-sm, 1rem);
+		border-top: 1px solid var(--color-performance-hover);
+		font-family: var(--font-performance-sans, system-ui, sans-serif);
 	}
 
 	.caption {
-		font-size: var(--text-body-sm, 11px);
-		color: var(--color-fg-muted);
-		letter-spacing: var(--tracking-normal, 0.02em);
+		font-size: var(--text-performance-body-sm, 11px);
+		color: var(--color-performance-fg-muted);
+		letter-spacing: var(--tracking-performance-normal, 0.02em);
 	}
 </style>

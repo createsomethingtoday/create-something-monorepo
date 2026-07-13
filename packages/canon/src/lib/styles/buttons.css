@@ -29,20 +29,20 @@
   justify-content: center;
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
-  background-color: var(--color-fg-primary);
-  color: var(--color-bg-pure);
-  font-weight: var(--font-semibold);
+  background-color: var(--color-performance-fg-primary);
+  color: var(--color-performance-bg-pure);
+  font-weight: var(--font-performance-semibold);
   border-radius: 10px;
   transition:
-    background-color var(--duration-standard) var(--ease-standard),
-    transform var(--duration-standard) var(--ease-standard),
-    box-shadow var(--duration-standard) var(--ease-standard);
+    background-color var(--duration-performance-standard) var(--ease-performance-standard),
+    transform var(--duration-performance-standard) var(--ease-performance-standard),
+    box-shadow var(--duration-performance-standard) var(--ease-performance-standard);
   text-decoration: none;
   white-space: nowrap;
 }
 
 .button-primary:hover {
-  background-color: var(--color-fg-secondary);
+  background-color: var(--color-performance-fg-secondary);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);
 }
@@ -65,11 +65,11 @@
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
   background-color: transparent;
-  border: 1px solid var(--color-border-emphasis);
-  color: var(--color-fg-primary);
-  font-weight: var(--font-semibold);
+  border: 1px solid var(--color-performance-border-emphasis);
+  color: var(--color-performance-fg-primary);
+  font-weight: var(--font-performance-semibold);
   border-radius: 10px;
-  transition: all var(--duration-standard) var(--ease-standard);
+  transition: all var(--duration-performance-standard) var(--ease-performance-standard);
   text-decoration: none;
   white-space: nowrap;
   overflow: hidden;
@@ -81,18 +81,18 @@
   position: absolute;
   inset: 0;
   z-index: -1;
-  background-color: var(--glass-bg-light);
+  background-color: var(--glass-performance-bg-light);
   backdrop-filter: blur(16px) saturate(120%);
   border-radius: inherit;
   pointer-events: none;
 }
 
 .button-secondary:hover {
-  border-color: var(--color-border-strong);
+  border-color: var(--color-performance-border-strong);
 }
 
 .button-secondary:hover::before {
-  background-color: var(--glass-bg-medium);
+  background-color: var(--glass-performance-bg-medium);
 }
 
 /* ==========================================================================

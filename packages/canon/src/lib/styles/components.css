@@ -20,24 +20,24 @@
      Usage: <h1 class="page-title">, <p class="page-subtitle">
      ========================================================================== */
   .page-title {
-    font-size: var(--text-display);
-    font-weight: var(--font-light);
-    margin: 0 0 var(--space-sm) 0;
-    color: var(--color-fg-primary);
+    font-size: var(--text-performance-display);
+    font-weight: var(--font-performance-light);
+    margin: 0 0 var(--space-performance-sm) 0;
+    color: var(--color-performance-fg-primary);
   }
 
   .page-subtitle {
-    font-size: var(--text-body-lg);
-    color: var(--color-fg-secondary);
+    font-size: var(--text-performance-body-lg);
+    color: var(--color-performance-fg-secondary);
     max-width: 48rem;
     margin: 0;
-    line-height: var(--leading-relaxed);
+    line-height: var(--leading-performance-relaxed);
   }
 
   .page-description {
-    font-size: var(--text-body-lg);
-    color: var(--color-fg-tertiary);
-    line-height: var(--leading-relaxed);
+    font-size: var(--text-performance-body-lg);
+    color: var(--color-performance-fg-tertiary);
+    line-height: var(--leading-performance-relaxed);
     margin: 0;
   }
 
@@ -45,13 +45,13 @@
      Section Title
      ========================================================================== */
   .section-title {
-    font-size: var(--text-h2);
-    margin-bottom: var(--space-lg);
+    font-size: var(--text-performance-h2);
+    margin-bottom: var(--space-performance-lg);
   }
 
   .section-title.center {
     text-align: center;
-    margin-bottom: var(--space-md);
+    margin-bottom: var(--space-performance-md);
   }
 
   /* ==========================================================================
@@ -60,26 +60,26 @@
      ========================================================================== */
   .card {
     display: block;
-    padding: var(--space-md);
-    background: var(--color-bg-elevated);
-    border: 1px solid var(--color-border-default);
-    border-radius: var(--radius-lg);
-    transition: border-color var(--duration-micro) var(--ease-standard);
+    padding: var(--space-performance-md);
+    background: var(--color-performance-bg-elevated);
+    border: 1px solid var(--color-performance-border-default);
+    border-radius: var(--radius-performance-scale-lg);
+    transition: border-color var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   .card:hover {
-    border-color: var(--color-border-emphasis);
+    border-color: var(--color-performance-border-emphasis);
   }
 
   .card-xl {
-    padding: var(--space-lg);
-    border-radius: var(--radius-xl);
+    padding: var(--space-performance-lg);
+    border-radius: var(--radius-performance-scale-xl);
   }
 
   /* Glass emphasis - subtle depth for key surfaces */
   .glass-emphasis {
-    border-color: var(--glass-border-medium);
-    box-shadow: var(--glass-shadow-sm);
+    border-color: var(--glass-performance-border-medium);
+    box-shadow: var(--glass-performance-shadow-sm);
   }
 
   /* ==========================================================================
@@ -89,46 +89,46 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: var(--space-xs);
-    padding: var(--space-sm) var(--space-md);
-    border-radius: var(--radius-md);
-    font-size: var(--text-body);
+    gap: var(--space-performance-xs);
+    padding: var(--space-performance-sm) var(--space-performance-md);
+    border-radius: var(--radius-performance-scale-md);
+    font-size: var(--text-performance-body);
     cursor: pointer;
-    transition: all var(--duration-micro) var(--ease-standard);
+    transition: all var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   .btn-primary {
-    background: var(--color-fg-primary);
-    color: var(--color-bg-pure);
+    background: var(--color-performance-fg-primary);
+    color: var(--color-performance-bg-pure);
     border: none;
-    font-weight: var(--font-medium);
+    font-weight: var(--font-performance-medium);
   }
 
   .btn-primary:hover {
-    background: var(--color-fg-secondary);
+    background: var(--color-performance-fg-secondary);
   }
 
   .btn-secondary {
     background: transparent;
-    color: var(--color-fg-secondary);
-    border: 1px solid var(--color-border-emphasis);
+    color: var(--color-performance-fg-secondary);
+    border: 1px solid var(--color-performance-border-emphasis);
   }
 
   .btn-secondary:hover {
-    border-color: var(--color-border-strong);
-    color: var(--color-fg-primary);
+    border-color: var(--color-performance-border-strong);
+    color: var(--color-performance-fg-primary);
   }
 
   .btn-ghost {
     background: transparent;
-    color: var(--color-fg-secondary);
-    border: 1px solid var(--color-border-default);
+    color: var(--color-performance-fg-secondary);
+    border: 1px solid var(--color-performance-border-default);
   }
 
   .btn-ghost:hover {
-    background: var(--color-hover);
-    border-color: var(--color-border-emphasis);
-    color: var(--color-fg-primary);
+    background: var(--color-performance-hover);
+    border-color: var(--color-performance-border-emphasis);
+    color: var(--color-performance-fg-primary);
   }
 
   /* ==========================================================================
@@ -138,7 +138,7 @@
      This variant adds accent styling
      ========================================================================== */
   .eyebrow-accent {
-    font-size: var(--text-caption);
+    font-size: var(--text-performance-caption);
     text-transform: uppercase;
     letter-spacing: 0.05em;
     font-weight: 600;
@@ -149,29 +149,29 @@
      Small inline label
      ========================================================================== */
   .badge {
-    font-size: var(--text-caption);
+    font-size: var(--text-performance-caption);
     padding: 0.25rem 0.5rem;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-performance-scale-sm);
   }
 
   .badge-info {
-    color: var(--color-info);
-    background: var(--color-info-muted);
+    color: var(--color-performance-info);
+    background: var(--color-performance-info-muted);
   }
 
   .badge-success {
-    color: var(--color-success);
-    background: var(--color-success-muted);
+    color: var(--color-performance-success);
+    background: var(--color-performance-success-muted);
   }
 
   .badge-warning {
-    color: var(--color-warning);
-    background: var(--color-warning-muted);
+    color: var(--color-performance-warning);
+    background: var(--color-performance-warning-muted);
   }
 
   .badge-error {
-    color: var(--color-error);
-    background: var(--color-error-muted);
+    color: var(--color-performance-error);
+    background: var(--color-performance-error-muted);
   }
 
   /* ==========================================================================
@@ -180,13 +180,13 @@
   .list-vertical {
     display: flex;
     flex-direction: column;
-    gap: var(--space-md);
+    gap: var(--space-performance-md);
   }
 
   .list-vertical-sm {
     display: flex;
     flex-direction: column;
-    gap: var(--space-sm);
+    gap: var(--space-performance-sm);
   }
 
   /* ==========================================================================
@@ -194,8 +194,8 @@
      ========================================================================== */
   .progress-track {
     height: 4px;
-    background: var(--color-bg-surface);
-    border-radius: var(--radius-full);
+    background: var(--color-performance-bg-surface);
+    border-radius: var(--radius-performance-scale-full);
     overflow: hidden;
   }
 
@@ -205,9 +205,9 @@
 
   .progress-fill {
     height: 100%;
-    background: var(--color-fg-primary);
-    border-radius: var(--radius-full);
-    transition: width var(--duration-complex) var(--ease-standard);
+    background: var(--color-performance-fg-primary);
+    border-radius: var(--radius-performance-scale-full);
+    transition: width var(--duration-performance-complex) var(--ease-performance-standard);
   }
 
   /* ==========================================================================
@@ -217,14 +217,14 @@
   .number-circle {
     width: 2.5rem;
     height: 2.5rem;
-    border-radius: var(--radius-full);
-    background: var(--color-bg-surface);
+    border-radius: var(--radius-performance-scale-full);
+    background: var(--color-performance-bg-surface);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-muted);
-    font-weight: var(--font-medium);
+    font-size: var(--text-performance-body-sm);
+    color: var(--color-performance-fg-muted);
+    font-weight: var(--font-performance-medium);
   }
 
   /* ==========================================================================
@@ -249,27 +249,27 @@
 
   .container {
     width: 100%;
-    max-width: var(--container-xl);
+    max-width: var(--container-performance-xl);
     margin-left: auto;
     margin-right: auto;
-    padding-left: var(--space-md);
-    padding-right: var(--space-md);
+    padding-left: var(--space-performance-md);
+    padding-right: var(--space-performance-md);
   }
 
   .container-sm {
-    max-width: var(--container-sm);
+    max-width: var(--container-performance-sm);
   }
 
   .container-md {
-    max-width: var(--container-md);
+    max-width: var(--container-performance-md);
   }
 
   .container-lg {
-    max-width: var(--container-lg);
+    max-width: var(--container-performance-lg);
   }
 
   .container-prose {
-    max-width: var(--container-prose);
+    max-width: var(--container-performance-prose);
   }
 
   /* ==========================================================================
@@ -280,69 +280,69 @@
 
   /* Base hover transition - apply to any interactive element */
   .hover-transition {
-    transition: all var(--duration-micro) var(--ease-standard);
+    transition: all var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   /* Border emphasis on hover - subtle but noticeable */
   .hover-border {
-    transition: border-color var(--duration-micro) var(--ease-standard);
+    transition: border-color var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   .hover-border:hover {
-    border-color: var(--color-border-emphasis);
+    border-color: var(--color-performance-border-emphasis);
   }
 
   /* Strong border on hover - more prominent feedback */
   .hover-border-strong {
-    transition: border-color var(--duration-micro) var(--ease-standard);
+    transition: border-color var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   .hover-border-strong:hover {
-    border-color: var(--color-border-strong);
+    border-color: var(--color-performance-border-strong);
   }
 
   /* Background overlay on hover - for cards and panels */
   .hover-bg {
-    transition: background-color var(--duration-micro) var(--ease-standard);
+    transition: background-color var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   .hover-bg:hover {
-    background-color: var(--color-hover);
+    background-color: var(--color-performance-hover);
   }
 
   /* Active state background - for pressed/active states */
   .hover-bg-active:active {
-    background-color: var(--color-active);
+    background-color: var(--color-performance-active);
   }
 
   /* Text opacity hover - muted to full */
   .hover-text {
-    color: var(--color-fg-muted);
-    transition: color var(--duration-micro) var(--ease-standard);
+    color: var(--color-performance-fg-muted);
+    transition: color var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   .hover-text:hover {
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
   }
 
   /* Secondary text hover - secondary to primary */
   .hover-text-secondary {
-    color: var(--color-fg-secondary);
-    transition: color var(--duration-micro) var(--ease-standard);
+    color: var(--color-performance-fg-secondary);
+    transition: color var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   .hover-text-secondary:hover {
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
   }
 
   /* Combined hover pattern - border + background */
   .hover-interactive {
-    transition: all var(--duration-micro) var(--ease-standard);
+    transition: all var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   .hover-interactive:hover {
-    border-color: var(--color-border-emphasis);
-    background-color: var(--color-hover);
+    border-color: var(--color-performance-border-emphasis);
+    background-color: var(--color-performance-hover);
   }
 
   /* ==========================================================================
@@ -352,79 +352,79 @@
 
   /* Base elevation transition */
   .elevation-transition {
-    transition: box-shadow var(--duration-standard) var(--ease-standard),
-                transform var(--duration-standard) var(--ease-standard);
+    transition: box-shadow var(--duration-performance-standard) var(--ease-performance-standard),
+                transform var(--duration-performance-standard) var(--ease-performance-standard);
   }
 
   /* Subtle lift - minimal movement, ideal for cards */
   .elevation-lift-sm {
-    transition: box-shadow var(--duration-standard) var(--ease-standard),
-                transform var(--duration-standard) var(--ease-standard);
+    transition: box-shadow var(--duration-performance-standard) var(--ease-performance-standard),
+                transform var(--duration-performance-standard) var(--ease-performance-standard);
   }
 
   .elevation-lift-sm:hover {
     transform: translateY(-4px);
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-performance-scale-lg);
   }
 
   /* Standard lift - noticeable movement, ideal for feature cards */
   .elevation-lift {
-    transition: box-shadow var(--duration-standard) var(--ease-standard),
-                transform var(--duration-standard) var(--ease-standard);
+    transition: box-shadow var(--duration-performance-standard) var(--ease-performance-standard),
+                transform var(--duration-performance-standard) var(--ease-performance-standard);
   }
 
   .elevation-lift:hover {
     transform: translateY(-8px);
-    box-shadow: var(--shadow-xl);
+    box-shadow: var(--shadow-performance-scale-xl);
   }
 
   /* Large lift - dramatic movement, ideal for hero cards */
   .elevation-lift-lg {
-    transition: box-shadow var(--duration-standard) var(--ease-standard),
-                transform var(--duration-standard) var(--ease-standard);
+    transition: box-shadow var(--duration-performance-standard) var(--ease-performance-standard),
+                transform var(--duration-performance-standard) var(--ease-performance-standard);
   }
 
   .elevation-lift-lg:hover {
     transform: translateY(-12px);
-    box-shadow: var(--shadow-2xl);
+    box-shadow: var(--shadow-performance-scale-2xl);
   }
 
   /* Glow elevation - adds soft glow instead of shadow */
   .elevation-glow {
-    transition: box-shadow var(--duration-standard) var(--ease-standard);
+    transition: box-shadow var(--duration-performance-standard) var(--ease-performance-standard);
   }
 
   .elevation-glow:hover {
-    box-shadow: var(--shadow-glow-md);
+    box-shadow: var(--shadow-performance-scale-glow-md);
   }
 
   /* Strong glow - more prominent glow effect */
   .elevation-glow-lg {
-    transition: box-shadow var(--duration-standard) var(--ease-standard);
+    transition: box-shadow var(--duration-performance-standard) var(--ease-performance-standard);
   }
 
   .elevation-glow-lg:hover {
-    box-shadow: var(--shadow-glow-lg);
+    box-shadow: var(--shadow-performance-scale-glow-lg);
   }
 
   /* Shadow only - no transform, just shadow change */
   .elevation-shadow {
-    transition: box-shadow var(--duration-standard) var(--ease-standard);
+    transition: box-shadow var(--duration-performance-standard) var(--ease-performance-standard);
   }
 
   .elevation-shadow:hover {
-    box-shadow: var(--shadow-xl);
+    box-shadow: var(--shadow-performance-scale-xl);
   }
 
   /* Combined: lift + border + background */
   .elevation-card {
-    transition: all var(--duration-standard) var(--ease-standard);
+    transition: all var(--duration-performance-standard) var(--ease-performance-standard);
   }
 
   .elevation-card:hover {
     transform: translateY(-4px);
-    box-shadow: var(--shadow-lg);
-    border-color: var(--color-border-emphasis);
+    box-shadow: var(--shadow-performance-scale-lg);
+    border-color: var(--color-performance-border-emphasis);
   }
 
   /* ==========================================================================
@@ -444,39 +444,39 @@
 
   /* Individual card styling */
   .responsive-table-card {
-    padding: var(--space-md);
-    background: var(--color-bg-elevated);
-    border: 1px solid var(--color-border-default);
-    border-radius: var(--radius-md);
+    padding: var(--space-performance-md);
+    background: var(--color-performance-bg-elevated);
+    border: 1px solid var(--color-performance-border-default);
+    border-radius: var(--radius-performance-scale-md);
   }
 
   .responsive-table-card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: var(--space-sm);
-    padding-bottom: var(--space-sm);
-    border-bottom: 1px solid var(--color-border-default);
+    margin-bottom: var(--space-performance-sm);
+    padding-bottom: var(--space-performance-sm);
+    border-bottom: 1px solid var(--color-performance-border-default);
   }
 
   .responsive-table-card-title {
     font-weight: 600;
-    color: var(--color-fg-primary);
-    font-size: var(--text-body);
+    color: var(--color-performance-fg-primary);
+    font-size: var(--text-performance-body);
   }
 
   .responsive-table-card-badge {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-muted);
+    font-size: var(--text-performance-body-sm);
+    color: var(--color-performance-fg-muted);
     padding: 2px 8px;
-    background: var(--color-bg-subtle);
-    border-radius: var(--radius-sm);
+    background: var(--color-performance-bg-subtle);
+    border-radius: var(--radius-performance-scale-sm);
   }
 
   .responsive-table-card-body {
     display: flex;
     flex-direction: column;
-    gap: var(--space-xs);
+    gap: var(--space-performance-xs);
   }
 
   .responsive-table-card-row {
@@ -486,13 +486,13 @@
   }
 
   .responsive-table-card-label {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-muted);
+    font-size: var(--text-performance-body-sm);
+    color: var(--color-performance-fg-muted);
   }
 
   .responsive-table-card-value {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-secondary);
+    font-size: var(--text-performance-body-sm);
+    color: var(--color-performance-fg-secondary);
   }
 
   /* Table styling */
@@ -504,19 +504,19 @@
 
   .responsive-table th,
   .responsive-table td {
-    padding: var(--space-sm) var(--space-md);
-    border-bottom: 1px solid var(--color-border-default);
+    padding: var(--space-performance-sm) var(--space-performance-md);
+    border-bottom: 1px solid var(--color-performance-border-default);
   }
 
   .responsive-table th {
-    font-size: var(--text-body-sm);
+    font-size: var(--text-performance-body-sm);
     font-weight: 600;
-    color: var(--color-fg-tertiary);
+    color: var(--color-performance-fg-tertiary);
   }
 
   .responsive-table td {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-secondary);
+    font-size: var(--text-performance-body-sm);
+    color: var(--color-performance-fg-secondary);
   }
 
   .responsive-table tbody tr:last-child td {
@@ -531,24 +531,24 @@
 
   /* Horizontal slide - subtle rightward movement */
   .elevation-slide {
-    transition: transform var(--duration-micro) var(--ease-standard),
-                border-color var(--duration-micro) var(--ease-standard);
+    transition: transform var(--duration-performance-micro) var(--ease-performance-standard),
+                border-color var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   .elevation-slide:hover {
     transform: translateX(4px);
-    border-color: var(--color-border-emphasis);
+    border-color: var(--color-performance-border-emphasis);
   }
 
   /* Scale up - subtle grow effect */
   .elevation-scale {
-    transition: transform var(--duration-standard) var(--ease-standard),
-                box-shadow var(--duration-standard) var(--ease-standard);
+    transition: transform var(--duration-performance-standard) var(--ease-performance-standard),
+                box-shadow var(--duration-performance-standard) var(--ease-performance-standard);
   }
 
   .elevation-scale:hover {
     transform: scale(1.02);
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-performance-scale-lg);
   }
 
   /* ==========================================================================
@@ -558,42 +558,42 @@
 
   /* Interactive card - combines elevation + border + background */
   .interactive-card {
-    background: var(--color-bg-elevated);
-    border: 1px solid var(--color-border-default);
-    border-radius: var(--radius-lg);
-    transition: all var(--duration-standard) var(--ease-standard);
+    background: var(--color-performance-bg-elevated);
+    border: 1px solid var(--color-performance-border-default);
+    border-radius: var(--radius-performance-scale-lg);
+    transition: all var(--duration-performance-standard) var(--ease-performance-standard);
   }
 
   .interactive-card:hover {
-    border-color: var(--color-border-emphasis);
-    background: var(--color-bg-surface);
+    border-color: var(--color-performance-border-emphasis);
+    background: var(--color-performance-bg-surface);
     transform: translateY(-4px);
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-performance-scale-lg);
   }
 
   /* Interactive list item - horizontal slide with border */
   .interactive-list-item {
-    border: 1px solid var(--color-border-default);
-    transition: all var(--duration-micro) var(--ease-standard);
+    border: 1px solid var(--color-performance-border-default);
+    transition: all var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   .interactive-list-item:hover {
-    border-color: var(--color-border-emphasis);
+    border-color: var(--color-performance-border-emphasis);
     transform: translateX(4px);
-    background: var(--color-hover);
+    background: var(--color-performance-hover);
   }
 
   /* Interactive link block - background highlight */
   .interactive-link {
-    transition: all var(--duration-micro) var(--ease-standard);
+    transition: all var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   .interactive-link:hover {
-    background: var(--color-hover);
+    background: var(--color-performance-hover);
   }
 
   .interactive-link:active {
-    background: var(--color-active);
+    background: var(--color-performance-active);
   }
 
   /* ==========================================================================
@@ -604,109 +604,109 @@
 
   /* Form Elements */
   .select-field {
-    background: var(--color-bg-surface);
-    border: 1px solid var(--color-border-default);
-    border-radius: var(--radius-lg);
-    color: var(--color-fg-primary);
-    font-size: var(--text-body-sm);
-    transition: border-color var(--duration-micro) var(--ease-standard);
+    background: var(--color-performance-bg-surface);
+    border: 1px solid var(--color-performance-border-default);
+    border-radius: var(--radius-performance-scale-lg);
+    color: var(--color-performance-fg-primary);
+    font-size: var(--text-performance-body-sm);
+    transition: border-color var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   .select-field:focus {
     outline: none;
-    border-color: var(--color-border-emphasis);
+    border-color: var(--color-performance-border-emphasis);
   }
 
   /* Loading State */
   .loading-text {
-    color: var(--color-fg-tertiary);
+    color: var(--color-performance-fg-tertiary);
   }
 
   /* Table Card - container for HighDensityTable */
   .table-card {
-    background: var(--color-bg-surface);
-    border: 1px solid var(--color-border-default);
-    border-radius: var(--radius-lg);
+    background: var(--color-performance-bg-surface);
+    border: 1px solid var(--color-performance-border-default);
+    border-radius: var(--radius-performance-scale-lg);
     overflow: auto; /* Allow horizontal scroll when content overflows */
     min-width: 0; /* Allow flex child to shrink */
   }
 
   .table-title {
-    font-size: var(--text-body-sm);
+    font-size: var(--text-performance-body-sm);
     font-weight: 600;
-    color: var(--color-fg-tertiary);
+    color: var(--color-performance-fg-tertiary);
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
 
   /* Chart Card - container for Sparkline/DailyGrid */
   .chart-card {
-    background: var(--color-bg-surface);
-    border: 1px solid var(--color-border-default);
-    border-radius: var(--radius-lg);
+    background: var(--color-performance-bg-surface);
+    border: 1px solid var(--color-performance-border-default);
+    border-radius: var(--radius-performance-scale-lg);
   }
 
   .chart-title {
-    font-size: var(--text-h3);
+    font-size: var(--text-performance-h3);
     font-weight: 600;
   }
 
   .chart-subtitle {
-    font-size: var(--text-caption);
-    color: var(--color-fg-muted);
+    font-size: var(--text-performance-caption);
+    color: var(--color-performance-fg-muted);
   }
 
   .chart-value {
-    font-size: var(--text-h2);
+    font-size: var(--text-performance-h2);
     font-weight: 700;
   }
 
   .chart-label {
-    font-size: var(--text-caption);
-    color: var(--color-fg-muted);
+    font-size: var(--text-performance-caption);
+    color: var(--color-performance-fg-muted);
   }
 
   /* Empty State */
   .empty-state {
-    color: var(--color-fg-muted);
-    font-size: var(--text-body-sm);
+    color: var(--color-performance-fg-muted);
+    font-size: var(--text-performance-body-sm);
   }
 
   /* Section Header (with border) */
   .section-header {
-    border-top: 1px solid var(--color-border-default);
-    padding-top: var(--space-md);
+    border-top: 1px solid var(--color-performance-border-default);
+    padding-top: var(--space-performance-md);
   }
 
   .section-subtitle {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-tertiary);
-    margin-top: var(--space-xs);
+    font-size: var(--text-performance-body-sm);
+    color: var(--color-performance-fg-tertiary);
+    margin-top: var(--space-performance-xs);
   }
 
   /* Info Footer */
   .info-footer {
-    border-top: 1px solid var(--color-border-default);
+    border-top: 1px solid var(--color-performance-border-default);
   }
 
   .footer-text {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-muted);
+    font-size: var(--text-performance-body-sm);
+    color: var(--color-performance-fg-muted);
   }
 
   .footer-note {
-    font-size: var(--text-caption);
-    color: var(--color-fg-subtle);
+    font-size: var(--text-performance-caption);
+    color: var(--color-performance-fg-subtle);
   }
 
   .footer-link {
     color: inherit;
     text-decoration: none;
-    transition: color var(--duration-micro) var(--ease-standard);
+    transition: color var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   .footer-link:hover {
-    color: var(--color-fg-secondary);
+    color: var(--color-performance-fg-secondary);
     text-decoration: none;
   }
 
@@ -718,20 +718,20 @@
     display: inline-flex;
     align-items: center;
     gap: 0.45rem;
-    font-family: var(--font-mono);
+    font-family: var(--font-performance-mono);
     font-size: 0.74rem;
     line-height: 1;
     letter-spacing: 0.16em;
     text-transform: uppercase;
-    color: var(--color-fg-muted);
+    color: var(--color-performance-fg-muted);
   }
 
   .product-kicker::before {
     content: '';
     width: 0.5rem;
     height: 0.5rem;
-    border-radius: var(--radius-full);
-    background: var(--color-brand-primary);
+    border-radius: var(--radius-performance-scale-full);
+    background: var(--color-performance-brand-primary);
     box-shadow: 0 0 18px rgba(49, 92, 255, 0.5);
     flex: 0 0 auto;
   }
@@ -739,13 +739,13 @@
   .product-surface {
     position: relative;
     overflow: hidden;
-    border: 1px solid var(--color-shell-border-default);
-    border-radius: var(--radius-2xl);
+    border: 1px solid var(--color-performance-shell-border-default);
+    border-radius: var(--radius-performance-scale-2xl);
     background:
       radial-gradient(circle at top left, rgba(49, 92, 255, 0.12), transparent 34%),
       linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015)),
-      color-mix(in srgb, var(--color-shell-surface-secondary) 92%, transparent);
-    box-shadow: var(--color-shell-shadow);
+      color-mix(in srgb, var(--color-performance-shell-surface-secondary) 92%, transparent);
+    box-shadow: var(--color-performance-shell-shadow);
   }
 
   .product-surface::after {
@@ -762,11 +762,11 @@
     background:
       radial-gradient(circle at top left, rgba(49, 92, 255, 0.08), transparent 30%),
       linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01)),
-      color-mix(in srgb, var(--color-shell-surface) 88%, transparent);
+      color-mix(in srgb, var(--color-performance-shell-surface) 88%, transparent);
   }
 
   .product-surface--accent {
-    border-color: var(--color-brand-primary-border);
+    border-color: var(--color-performance-brand-primary-border);
     box-shadow:
       0 18px 42px rgba(0, 0, 0, 0.42),
       0 0 0 1px rgba(49, 92, 255, 0.12),
@@ -785,11 +785,11 @@
     justify-content: center;
     min-height: 2rem;
     padding: 0.42rem 0.72rem;
-    border-radius: var(--radius-full);
-    border: 1px solid var(--color-shell-border-default);
+    border-radius: var(--radius-performance-scale-full);
+    border: 1px solid var(--color-performance-shell-border-default);
     background: rgba(255, 255, 255, 0.03);
-    color: var(--color-fg-secondary);
-    font-family: var(--font-mono);
+    color: var(--color-performance-fg-secondary);
+    font-family: var(--font-performance-mono);
     font-size: 0.76rem;
     letter-spacing: 0.03em;
   }
@@ -805,7 +805,7 @@
   .product-list li {
     position: relative;
     padding-left: 1rem;
-    color: var(--color-fg-secondary);
+    color: var(--color-performance-fg-secondary);
     line-height: 1.6;
   }
 
@@ -816,19 +816,19 @@
     top: 0.72em;
     width: 0.38rem;
     height: 0.38rem;
-    border-radius: var(--radius-full);
-    background: var(--color-brand-secondary);
+    border-radius: var(--radius-performance-scale-full);
+    background: var(--color-performance-brand-secondary);
   }
 
   .terminal-surface {
     position: relative;
     overflow: hidden;
-    border: 1px solid var(--color-shell-border-default);
-    border-radius: calc(var(--radius-2xl) + 4px);
+    border: 1px solid var(--color-performance-shell-border-default);
+    border-radius: calc(var(--radius-performance-scale-2xl) + 4px);
     background:
       radial-gradient(circle at top left, rgba(49, 92, 255, 0.16), transparent 30%),
       linear-gradient(180deg, rgba(17, 17, 19, 0.98), rgba(7, 7, 9, 0.98));
-    box-shadow: var(--color-shell-shadow-strong);
+    box-shadow: var(--color-performance-shell-shadow-strong);
   }
 
   .terminal-surface__bar {
@@ -837,13 +837,13 @@
     justify-content: space-between;
     gap: 0.75rem;
     padding: 0.85rem 1rem;
-    border-bottom: 1px solid var(--color-shell-border-subtle);
+    border-bottom: 1px solid var(--color-performance-shell-border-subtle);
     background: rgba(255, 255, 255, 0.02);
   }
 
   .terminal-surface__title {
-    color: var(--color-fg-muted);
-    font-family: var(--font-mono);
+    color: var(--color-performance-fg-muted);
+    font-family: var(--font-performance-mono);
     font-size: 0.74rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -858,7 +858,7 @@
   .terminal-surface__dots span {
     width: 0.62rem;
     height: 0.62rem;
-    border-radius: var(--radius-full);
+    border-radius: var(--radius-performance-scale-full);
     background: rgba(255, 255, 255, 0.16);
   }
 
@@ -895,7 +895,7 @@
     --performance-motion-color: var(--performance-system-ink);
     background: var(--performance-system-paper);
     color: var(--performance-system-ink);
-    font-family: var(--font-sans);
+    font-family: var(--font-performance-sans);
     letter-spacing: 0;
     text-rendering: geometricPrecision;
   }
@@ -1436,11 +1436,11 @@
     outline: 2px solid transparent;
     outline-offset: 2px;
     transition:
-      outline-color var(--duration-micro) var(--ease-standard),
-      border-color var(--duration-micro) var(--ease-standard),
-      background-color var(--duration-micro) var(--ease-standard),
-      box-shadow var(--duration-micro) var(--ease-standard),
-      color var(--duration-micro) var(--ease-standard);
+      outline-color var(--duration-performance-micro) var(--ease-performance-standard),
+      border-color var(--duration-performance-micro) var(--ease-performance-standard),
+      background-color var(--duration-performance-micro) var(--ease-performance-standard),
+      box-shadow var(--duration-performance-micro) var(--ease-performance-standard),
+      color var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   .performance-system-shell [data-motion-target][data-motion-active='true'] {
@@ -4748,7 +4748,7 @@
 .responsive-table-cards {
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
+  gap: var(--space-performance-sm);
 }
 
 /* Table wrapper - hidden on mobile, visible on desktop */

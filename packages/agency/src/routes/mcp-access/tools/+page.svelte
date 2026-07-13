@@ -491,7 +491,7 @@
 		font-size: 0.82rem;
 		letter-spacing: 0.08em;
 		text-transform: uppercase;
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.search-form {
@@ -510,13 +510,13 @@
 		border: 1px solid rgba(255, 255, 255, 0.1);
 		border-radius: 0.65rem;
 		padding: 0.72rem 0.9rem;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	button {
 		border: 1px solid rgba(255, 255, 255, 0.12);
 		background: rgba(255, 255, 255, 0.04);
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		border-radius: 0.65rem;
 		padding: 0.72rem 0.95rem;
 		cursor: pointer;
@@ -541,7 +541,7 @@
 		gap: 0.65rem;
 		border: 1px solid rgba(255, 255, 255, 0.1);
 		background: rgba(255, 255, 255, 0.02);
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		text-decoration: none;
 		border-radius: 999px;
 		padding: 0.45rem 0.8rem;
@@ -571,7 +571,7 @@
 	.empty-note,
 	.tool-cell span,
 	.warning-block p {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 		font-size: 0.9rem;
 		line-height: 1.55;
 	}
@@ -586,7 +586,7 @@
 
 	.toolkit-meta {
 		font-family: ui-monospace, monospace;
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.warning-block {
@@ -622,7 +622,7 @@
 		font-size: 0.78rem;
 		letter-spacing: 0.08em;
 		text-transform: uppercase;
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.tool-cell {
@@ -660,7 +660,7 @@
 
 	.summary-card span,
 	.selected-toolkit-card span {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 		font-size: 0.88rem;
 	}
 

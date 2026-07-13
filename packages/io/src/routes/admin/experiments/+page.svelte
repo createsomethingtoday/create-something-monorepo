@@ -287,23 +287,23 @@
 <style>
 	/* Typography */
 	.page-title {
-		font-size: var(--text-h1);
+		font-size: var(--text-performance-h1);
 		font-weight: 700;
-		margin-bottom: var(--space-sm);
-		color: var(--color-fg-primary);
+		margin-bottom: var(--space-performance-sm);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.page-subtitle {
-		color: var(--color-fg-tertiary);
-		font-size: var(--text-body);
+		color: var(--color-performance-fg-tertiary);
+		font-size: var(--text-performance-body);
 	}
 
 	/* Buttons */
 	.btn {
-		padding: var(--space-sm) var(--space-md);
-		border-radius: var(--radius-lg);
+		padding: var(--space-performance-sm) var(--space-performance-md);
+		border-radius: var(--radius-performance-scale-lg);
 		font-weight: 600;
-		transition: all var(--duration-standard) var(--ease-standard);
+		transition: all var(--duration-performance-standard) var(--ease-performance-standard);
 		border: none;
 		cursor: pointer;
 		text-decoration: none;
@@ -316,73 +316,73 @@
 	}
 
 	.btn--primary {
-		background: var(--color-fg-primary);
-		color: var(--color-bg-pure);
+		background: var(--color-performance-fg-primary);
+		color: var(--color-performance-bg-pure);
 	}
 
 	.btn--primary:hover:not(:disabled) {
-		background: var(--color-fg-secondary);
+		background: var(--color-performance-fg-secondary);
 	}
 
 	.btn--secondary {
-		background: var(--color-bg-surface);
-		color: var(--color-fg-primary);
+		background: var(--color-performance-bg-surface);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.btn--secondary:hover:not(:disabled) {
-		background: var(--color-hover);
+		background: var(--color-performance-hover);
 	}
 
 	/* Form Inputs */
 	.search-input {
 		flex: 1;
-		padding: var(--space-sm) var(--space-md);
-		border-radius: var(--radius-lg);
-		color: var(--color-fg-primary);
-		font-size: var(--text-body);
+		padding: var(--space-performance-sm) var(--space-performance-md);
+		border-radius: var(--radius-performance-scale-lg);
+		color: var(--color-performance-fg-primary);
+		font-size: var(--text-performance-body);
 	}
 
 	.search-input::placeholder {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.search-input:focus {
 		outline: none;
-		border-color: var(--color-border-emphasis);
+		border-color: var(--color-performance-border-emphasis);
 	}
 
 	.category-select {
-		padding: var(--space-sm) var(--space-md);
-		border-radius: var(--radius-lg);
-		color: var(--color-fg-primary);
-		font-size: var(--text-body);
+		padding: var(--space-performance-sm) var(--space-performance-md);
+		border-radius: var(--radius-performance-scale-lg);
+		color: var(--color-performance-fg-primary);
+		font-size: var(--text-performance-body);
 		cursor: pointer;
 	}
 
 	.category-select:focus {
 		outline: none;
-		border-color: var(--color-border-emphasis);
+		border-color: var(--color-performance-border-emphasis);
 	}
 
 	/* Skeleton Loading */
 	.skeleton-card {
-		padding: var(--space-lg);
-		border-radius: var(--radius-lg);
+		padding: var(--space-performance-lg);
+		border-radius: var(--radius-performance-scale-lg);
 		animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 	}
 
 	.skeleton-title {
 		height: 1.5rem;
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-sm);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-sm);
 		width: 33.333333%;
-		margin-bottom: var(--space-sm);
+		margin-bottom: var(--space-performance-sm);
 	}
 
 	.skeleton-text {
 		height: 1rem;
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-sm);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-sm);
 		width: 66.666667%;
 	}
 
@@ -394,103 +394,103 @@
 	/* Empty State */
 	.empty-state {
 		text-align: center;
-		padding: var(--space-2xl);
-		color: var(--color-fg-tertiary);
+		padding: var(--space-performance-2xl);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.error-state {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-xs);
-		color: var(--color-error);
+		gap: var(--space-performance-xs);
+		color: var(--color-performance-error);
 	}
 
 	/* Experiment Cards */
 	.experiment-card {
-		padding: var(--space-lg);
-		border-radius: var(--radius-lg);
-		transition: border-color var(--duration-standard) var(--ease-standard);
+		padding: var(--space-performance-lg);
+		border-radius: var(--radius-performance-scale-lg);
+		transition: border-color var(--duration-performance-standard) var(--ease-performance-standard);
 	}
 
 	.experiment-card:hover {
-		border-color: var(--color-border-emphasis);
+		border-color: var(--color-performance-border-emphasis);
 	}
 
 	.experiment-title {
-		font-size: var(--text-h3);
+		font-size: var(--text-performance-h3);
 		font-weight: 600;
-		margin-bottom: var(--space-sm);
-		color: var(--color-fg-primary);
+		margin-bottom: var(--space-performance-sm);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.experiment-description {
-		color: var(--color-fg-tertiary);
-		font-size: var(--text-body-sm);
+		color: var(--color-performance-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	/* Badges */
 	.badge {
-		padding: var(--space-xs) var(--space-sm);
-		border-radius: var(--radius-sm);
-		font-size: var(--text-caption);
+		padding: var(--space-performance-xs) var(--space-performance-sm);
+		border-radius: var(--radius-performance-scale-sm);
+		font-size: var(--text-performance-caption);
 	}
 
 	.badge--featured {
-		background: var(--color-bg-surface);
-		color: var(--color-fg-secondary);
+		background: var(--color-performance-bg-surface);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.badge--category {
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	/* Action Buttons */
 	.action-btn {
-		padding: var(--space-xs) var(--space-sm);
-		background: var(--color-bg-surface);
+		padding: var(--space-performance-xs) var(--space-performance-sm);
+		background: var(--color-performance-bg-surface);
 		border: none;
-		border-radius: var(--radius-md);
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-primary);
-		transition: all var(--duration-standard) var(--ease-standard);
+		border-radius: var(--radius-performance-scale-md);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-primary);
+		transition: all var(--duration-performance-standard) var(--ease-performance-standard);
 		cursor: pointer;
 		text-decoration: none;
 		display: inline-block;
 	}
 
 	.action-btn:hover {
-		background: var(--color-hover);
+		background: var(--color-performance-hover);
 	}
 
 	.action-btn--danger {
-		background: var(--color-error-muted);
-		color: var(--color-error);
+		background: var(--color-performance-error-muted);
+		color: var(--color-performance-error);
 	}
 
 	.action-btn--danger:hover {
-		background: var(--color-error-border);
+		background: var(--color-performance-error-border);
 	}
 
 	/* Experiment Metadata */
 	.experiment-link {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
 		text-decoration: none;
-		transition: color var(--duration-standard) var(--ease-standard);
+		transition: color var(--duration-performance-standard) var(--ease-performance-standard);
 	}
 
 	.experiment-link:hover {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.experiment-meta {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-muted);
 	}
 
 	/* Stats Section */
 	.stats-section {
-		padding-top: var(--space-lg);
+		padding-top: var(--space-performance-lg);
 	}
 
 	.stat-item {
@@ -498,14 +498,14 @@
 	}
 
 	.stat-value {
-		font-size: var(--text-h1);
+		font-size: var(--text-performance-h1);
 		font-weight: 700;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.stat-label {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
-		margin-top: var(--space-xs);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-tertiary);
+		margin-top: var(--space-performance-xs);
 	}
 </style>

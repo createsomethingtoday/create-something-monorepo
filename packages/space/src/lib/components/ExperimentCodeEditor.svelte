@@ -250,14 +250,14 @@
 
   .lesson-title p {
     margin: 0;
-    color: var(--color-fg-tertiary);
+    color: var(--color-performance-fg-tertiary);
     line-height: 1.5;
     font-size: 0.875rem;
   }
 
   .lesson-count {
     font-size: 0.75rem;
-    color: var(--color-fg-muted);
+    color: var(--color-performance-fg-muted);
     font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
     white-space: nowrap;
   }
@@ -275,7 +275,7 @@
     display: flex;
     flex-direction: column;
     border-radius: 8px;
-    background: var(--color-overlay);
+    background: var(--color-performance-overlay);
     overflow: hidden;
   }
 
@@ -305,7 +305,7 @@
     display: flex;
     gap: 0.5rem;
     padding: 0.75rem;
-    background: var(--color-overlay);
+    background: var(--color-performance-overlay);
     flex-wrap: wrap;
     align-items: center;
   }
@@ -323,7 +323,7 @@
   }
 
   .run-btn:hover:not(:disabled) {
-    background: var(--color-fg-secondary);
+    background: var(--color-performance-fg-secondary);
     transform: scale(1.02);
   }
 
@@ -335,9 +335,9 @@
   .hint-btn,
   .solution-btn {
     padding: 0.5rem 0.875rem;
-    background: var(--color-hover);
+    background: var(--color-performance-hover);
     color: white;
-    border: 1px solid var(--color-border-emphasis);
+    border: 1px solid var(--color-performance-border-emphasis);
     border-radius: 6px;
     font-size: 0.75rem;
     cursor: pointer;
@@ -346,8 +346,8 @@
 
   .hint-btn:hover,
   .solution-btn:hover {
-    background: var(--color-active);
-    border-color: var(--color-border-strong);
+    background: var(--color-performance-active);
+    border-color: var(--color-performance-border-strong);
   }
 
   .nav-buttons {
@@ -358,9 +358,9 @@
 
   .nav-buttons button {
     padding: 0.5rem 0.875rem;
-    background: var(--color-hover);
+    background: var(--color-performance-hover);
     color: white;
-    border: 1px solid var(--color-border-emphasis);
+    border: 1px solid var(--color-performance-border-emphasis);
     border-radius: 6px;
     font-size: 0.75rem;
     cursor: pointer;
@@ -368,8 +368,8 @@
   }
 
   .nav-buttons button:hover:not(:disabled) {
-    background: var(--color-active);
-    border-color: var(--color-border-strong);
+    background: var(--color-performance-active);
+    border-color: var(--color-performance-border-strong);
   }
 
   .nav-buttons button:disabled {
@@ -386,8 +386,8 @@
 
   .hint-box {
     padding: 1rem;
-    background: var(--color-warning-muted);
-    border: 1px solid var(--color-warning-border);
+    background: var(--color-performance-warning-muted);
+    border: 1px solid var(--color-performance-warning-border);
     border-radius: 6px;
   }
 
@@ -395,7 +395,7 @@
     margin: 0 0 0.5rem 0;
     font-size: 0.75rem;
     font-weight: 600;
-    color: var(--color-warning);
+    color: var(--color-performance-warning);
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
@@ -406,7 +406,7 @@
   }
 
   .hint-box li {
-    color: var(--color-fg-secondary);
+    color: var(--color-performance-fg-secondary);
     font-size: 0.875rem;
     line-height: 1.6;
   }
@@ -414,7 +414,7 @@
   .output-section,
   .kv-section {
     padding: 1rem;
-    background: var(--color-overlay);
+    background: var(--color-performance-overlay);
     border-radius: 6px;
   }
 
@@ -432,7 +432,7 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: var(--color-fg-muted);
+    color: var(--color-performance-fg-muted);
   }
 
   .execution-info {
@@ -444,13 +444,13 @@
 
   .exec-time {
     font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
-    color: var(--color-fg-tertiary);
+    color: var(--color-performance-fg-tertiary);
     font-weight: 500;
   }
 
   .improvement {
     font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
-    color: var(--color-success);
+    color: var(--color-performance-success);
     font-weight: 600;
   }
 
@@ -461,7 +461,7 @@
     font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
     font-size: 0.875rem;
     line-height: 1.6;
-    background: var(--color-overlay);
+    background: var(--color-performance-overlay);
     border-radius: 4px;
     overflow-x: auto;
     white-space: pre-wrap;
@@ -471,7 +471,7 @@
 
   .output-placeholder,
   .kv-placeholder {
-    color: var(--color-fg-muted);
+    color: var(--color-performance-fg-muted);
     font-style: italic;
   }
 
@@ -486,7 +486,7 @@
     display: flex;
     gap: 0.75rem;
     padding: 0.75rem;
-    background: var(--color-overlay);
+    background: var(--color-performance-overlay);
     border-radius: 4px;
     font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
     font-size: 0.875rem;
@@ -494,7 +494,7 @@
 
   .kv-key {
     font-weight: 600;
-    color: var(--color-fg-tertiary);
+    color: var(--color-performance-fg-tertiary);
   }
 
   .kv-value {

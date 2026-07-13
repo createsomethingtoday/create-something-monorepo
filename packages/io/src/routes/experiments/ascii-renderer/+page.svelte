@@ -653,27 +653,27 @@
 	.experiment-page {
 		max-width: 1000px;
 		margin: 0 auto;
-		padding: var(--space-xl);
+		padding: var(--space-performance-xl);
 	}
 
 	.page-header {
-		margin-bottom: var(--space-2xl);
+		margin-bottom: var(--space-performance-2xl);
 	}
 
 	h1 {
-		font-size: var(--text-display-sm);
+		font-size: var(--text-performance-display-sm);
 		font-weight: 700;
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-sm);
+		color: var(--color-performance-fg-primary);
+		margin-bottom: var(--space-performance-sm);
 	}
 
 	.subtitle {
-		font-size: var(--text-body-lg);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-lg);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.subtitle a {
-		color: var(--color-focus);
+		color: var(--color-performance-focus);
 		text-decoration: none;
 	}
 
@@ -684,23 +684,23 @@
 	h2 {
 		font-size: var(--text-heading-sm);
 		font-weight: 600;
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-sm);
-		margin-top: var(--space-lg);
+		color: var(--color-performance-fg-primary);
+		margin-bottom: var(--space-performance-sm);
+		margin-top: var(--space-performance-lg);
 	}
 
 	.demo-section {
-		margin-bottom: var(--space-xl);
+		margin-bottom: var(--space-performance-xl);
 	}
 
 	.demo-container {
-		background: var(--color-bg-pure);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-bg-pure);
+		border-radius: var(--radius-performance-scale-lg);
 		overflow: hidden;
 	}
 
 	.ascii-output {
-		padding: var(--space-md);
+		padding: var(--space-performance-md);
 		overflow: auto;
 		max-height: 600px;
 	}
@@ -709,7 +709,7 @@
 		font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
 		font-size: 10px;
 		line-height: 1.0;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		margin: 0;
 		white-space: pre;
 	}
@@ -720,18 +720,18 @@
 
 	.stats {
 		display: flex;
-		gap: var(--space-md);
-		padding: var(--space-sm) var(--space-md);
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
-		background: var(--color-bg-surface);
+		gap: var(--space-performance-md);
+		padding: var(--space-performance-sm) var(--space-performance-md);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
+		background: var(--color-performance-bg-surface);
 	}
 
 	.controls-section {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
-		padding: var(--space-lg);
-		margin-bottom: var(--space-xl);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
+		padding: var(--space-performance-lg);
+		margin-bottom: var(--space-performance-xl);
 	}
 
 	.controls-section h2:first-child {
@@ -741,29 +741,29 @@
 	.scene-buttons {
 		display: flex;
 		flex-wrap: wrap;
-		gap: var(--space-sm);
+		gap: var(--space-performance-sm);
 	}
 
 	.scene-buttons button,
 	.upload-button {
-		padding: var(--space-sm) var(--space-md);
-		background: var(--color-bg-pure);
-		border-radius: var(--radius-sm);
-		color: var(--color-fg-secondary);
+		padding: var(--space-performance-sm) var(--space-performance-md);
+		background: var(--color-performance-bg-pure);
+		border-radius: var(--radius-performance-scale-sm);
+		color: var(--color-performance-fg-secondary);
 		cursor: pointer;
-		transition: all var(--duration-micro) var(--ease-standard);
-		font-size: var(--text-body-sm);
+		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.scene-buttons button:hover,
 	.upload-button:hover {
-		background: var(--color-hover);
-		color: var(--color-fg-primary);
+		background: var(--color-performance-hover);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.scene-buttons button.active {
-		background: var(--color-focus);
-		border-color: var(--color-focus);
+		background: var(--color-performance-focus);
+		border-color: var(--color-performance-focus);
 		color: white;
 	}
 
@@ -776,33 +776,33 @@
 	}
 
 	.animation-control {
-		margin-top: var(--space-sm);
+		margin-top: var(--space-performance-sm);
 	}
 
 	.animation-control button {
-		padding: var(--space-xs) var(--space-sm);
-		background: var(--color-bg-pure);
-		border-radius: var(--radius-sm);
-		color: var(--color-fg-secondary);
+		padding: var(--space-performance-xs) var(--space-performance-sm);
+		background: var(--color-performance-bg-pure);
+		border-radius: var(--radius-performance-scale-sm);
+		color: var(--color-performance-fg-secondary);
 		cursor: pointer;
-		font-size: var(--text-caption);
+		font-size: var(--text-performance-caption);
 	}
 
 	.slider-group {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-sm);
+		gap: var(--space-performance-sm);
 	}
 
 	.slider-group label {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-xs);
+		gap: var(--space-performance-xs);
 	}
 
 	.slider-group label span {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.slider-group input[type='range'] {
@@ -811,31 +811,31 @@
 	}
 
 	.technique-section {
-		padding-top: var(--space-xl);
+		padding-top: var(--space-performance-xl);
 	}
 
 	.technique-grid {
 		display: grid;
 		grid-template-columns: repeat(2, 1fr);
-		gap: var(--space-md);
+		gap: var(--space-performance-md);
 	}
 
 	.technique-card {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-md);
-		padding: var(--space-md);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-md);
+		padding: var(--space-performance-md);
 	}
 
 	.technique-card h3 {
-		font-size: var(--text-body-md);
+		font-size: var(--text-performance-body-md);
 		font-weight: 600;
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-xs);
+		color: var(--color-performance-fg-primary);
+		margin-bottom: var(--space-performance-xs);
 	}
 
 	.technique-card p {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
 		margin: 0;
 		line-height: 1.5;
 	}

@@ -134,7 +134,7 @@
 		border-top: 0;
 		background: var(--color-performance-panel, #ffffff);
 		color: var(--color-performance-muted, #5e6268);
-		font-family: var(--font-performance-mono, var(--font-mono));
+		font-family: var(--font-performance-mono, var(--font-performance-mono));
 		font-size: 0.78rem;
 	}
 

@@ -341,9 +341,9 @@
 
   .operator-outcome span {
     color: var(--color-performance-muted, #5e6268);
-    font-family: var(--font-mono);
+    font-family: var(--font-performance-mono);
     font-size: 0.72rem;
-    font-weight: var(--font-semibold);
+    font-weight: var(--font-performance-semibold);
     text-transform: uppercase;
   }
 
@@ -355,7 +355,7 @@
   .operator-outcome h3 {
     max-width: 22ch;
     font-size: clamp(1.45rem, 2.5vw, 2.15rem);
-    font-weight: var(--font-medium);
+    font-weight: var(--font-performance-medium);
     line-height: 1.05;
   }
 
@@ -422,9 +422,9 @@
   .service-flow-artifact__copy span,
   .service-flow-artifact__copy small {
     color: var(--color-performance-muted, #5e6268);
-    font-family: var(--font-mono);
+    font-family: var(--font-performance-mono);
     font-size: 0.72rem;
-    font-weight: var(--font-semibold);
+    font-weight: var(--font-performance-semibold);
     line-height: 1.32;
     letter-spacing: 0;
     text-transform: uppercase;
@@ -434,7 +434,7 @@
     margin: 0;
     color: var(--color-performance-ink, #090909);
     font-size: 1.12rem;
-    font-weight: var(--font-medium);
+    font-weight: var(--font-performance-medium);
     line-height: 1.18;
   }
 

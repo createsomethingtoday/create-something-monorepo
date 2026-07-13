@@ -96,50 +96,50 @@
 
 <style>
 	.interactive-experiment-cta {
-		background: var(--color-bg-pure);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-bg-pure);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.cta-title {
-		color: var(--color-fg-secondary);
-		font-size: var(--text-body-sm);
+		color: var(--color-performance-fg-secondary);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.cta-subtitle {
-		color: var(--color-fg-tertiary);
-		font-size: var(--text-caption);
+		color: var(--color-performance-fg-tertiary);
+		font-size: var(--text-performance-caption);
 	}
 
 	.reset-btn {
-		color: var(--color-fg-tertiary);
-		border-radius: var(--radius-sm);
-		transition: all var(--duration-standard) var(--ease-standard);
+		color: var(--color-performance-fg-tertiary);
+		border-radius: var(--radius-performance-scale-sm);
+		transition: all var(--duration-performance-standard) var(--ease-performance-standard);
 	}
 
 	.reset-btn:hover {
-		color: var(--color-fg-primary);
-		background: var(--color-active);
+		color: var(--color-performance-fg-primary);
+		background: var(--color-performance-active);
 	}
 
 	.launch-btn {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 		font-weight: 600;
-		border-radius: var(--radius-sm);
-		transition: all var(--duration-standard) var(--ease-standard);
+		border-radius: var(--radius-performance-scale-sm);
+		transition: all var(--duration-performance-standard) var(--ease-performance-standard);
 	}
 
 	.launch-btn.default {
-		background: var(--color-fg-primary);
-		color: var(--color-bg-pure);
+		background: var(--color-performance-fg-primary);
+		color: var(--color-performance-bg-pure);
 	}
 
 	.launch-btn.default:hover {
-		background: var(--color-fg-secondary);
+		background: var(--color-performance-fg-secondary);
 	}
 
 	.launch-btn.completed {
-		background: var(--color-success);
-		color: var(--color-bg-pure);
+		background: var(--color-performance-success);
+		color: var(--color-performance-bg-pure);
 	}
 
 	.launch-btn.completed:hover {

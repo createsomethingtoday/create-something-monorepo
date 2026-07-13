@@ -60,21 +60,21 @@
 
 	.section__container {
 		margin: 0 auto;
-		padding-left: var(--space-md);
-		padding-right: var(--space-md);
+		padding-left: var(--space-performance-md);
+		padding-right: var(--space-performance-md);
 	}
 
 	/* Padding sizes - practical values for page layout
-	   Note: Avoids --space-2xl (110px) and --space-3xl (177px) which are 
+	   Note: Avoids --space-performance-2xl (110px) and --space-performance-3xl (177px) which are
 	   impractical for section padding. See CLAUDE.md "Spacing Guidance". */
 	.section--sm {
-		padding-top: var(--space-lg);  /* ~42px */
-		padding-bottom: var(--space-lg);
+		padding-top: var(--space-performance-lg);  /* ~42px */
+		padding-bottom: var(--space-performance-lg);
 	}
 
 	.section--md {
-		padding-top: var(--space-xl);  /* ~68px */
-		padding-bottom: var(--space-xl);
+		padding-top: var(--space-performance-xl);  /* ~68px */
+		padding-bottom: var(--space-performance-xl);
 	}
 
 	.section--lg {
@@ -89,15 +89,15 @@
 
 	/* Background variants */
 	.section--default {
-		background: var(--color-bg-pure);
+		background: var(--color-performance-bg-pure);
 	}
 
 	.section--subtle {
-		background: var(--color-bg-subtle);
+		background: var(--color-performance-bg-subtle);
 	}
 
 	.section--pure {
-		background: var(--color-bg-pure);
+		background: var(--color-performance-bg-pure);
 	}
 
 	/* Content widths */

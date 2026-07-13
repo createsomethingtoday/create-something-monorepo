@@ -11,8 +11,8 @@
   --green: #1e3c2c;
   --blue: #0048ff;
   --red: #c41e3a;
-  --font-interface: Arial, "Helvetica Neue", Helvetica, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-topology-label: ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  --font-performance-interface: Arial, "Helvetica Neue", Helvetica, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-performance-topology-label: ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   --database-panel-height: min(38vh, 360px);
   --shadow-soft: 0 10px 26px rgba(10, 14, 25, 0.06);
   --shadow-panel: 0 24px 70px rgba(10, 14, 25, 0.1);
@@ -34,7 +34,7 @@ body {
   overflow: hidden;
   background: var(--bg);
   color: var(--text);
-  font-family: var(--font-interface);
+  font-family: var(--font-performance-interface);
   font-size: 16px;
   line-height: 1.18;
 }
@@ -1159,7 +1159,7 @@ input::placeholder {
   background: #101521;
   color: #f4f4ef;
   padding: 0.78rem;
-  font-family: var(--font-topology-label);
+  font-family: var(--font-performance-topology-label);
   font-size: 0.76rem;
   line-height: 1.45;
   white-space: pre-wrap;
@@ -1403,7 +1403,7 @@ input::placeholder {
   background: rgba(255, 255, 255, 0.82);
   box-shadow: 0 4px 16px rgba(10, 14, 25, 0.04);
   color: rgba(10, 14, 25, 0.7);
-  font-family: var(--font-topology-label);
+  font-family: var(--font-performance-topology-label);
   font-size: 0.56rem;
   font-weight: 700;
   line-height: 1.1;

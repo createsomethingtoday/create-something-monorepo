@@ -46,12 +46,12 @@
 
 <style>
     .next-card {
-        background: linear-gradient(to bottom right, var(--color-border-default), var(--color-hover));
-        border-radius: var(--radius-xl);
+        background: linear-gradient(to bottom right, var(--color-performance-border-default), var(--color-performance-hover));
+        border-radius: var(--radius-performance-scale-xl);
     }
 
     .bg-glow {
-        background: var(--color-data-3-muted);
+        background: var(--color-performance-data-3-muted);
         filter: blur(48px);
         opacity: 0;
         transition: opacity 500ms;
@@ -62,41 +62,41 @@
     }
 
     .horizon-badge {
-        border-radius: var(--radius-full);
-        background: var(--color-hover);
-        font-size: var(--text-caption);
+        border-radius: var(--radius-performance-scale-full);
+        background: var(--color-performance-hover);
+        font-size: var(--text-performance-caption);
         font-weight: 500;
-        color: var(--color-fg-secondary);
+        color: var(--color-performance-fg-secondary);
     }
 
     .next-heading {
         font-size: clamp(1.25rem, 3vw, 1.5rem);
         font-weight: bold;
-        color: var(--color-fg-primary);
+        color: var(--color-performance-fg-primary);
     }
 
     .next-description {
-        color: var(--color-fg-tertiary);
+        color: var(--color-performance-fg-tertiary);
     }
 
     .next-title-highlight {
-        color: var(--color-fg-primary);
+        color: var(--color-performance-fg-primary);
         font-weight: 500;
     }
 
     .next-button {
-        background: var(--color-fg-primary);
-        color: var(--color-bg-pure);
+        background: var(--color-performance-fg-primary);
+        color: var(--color-performance-bg-pure);
         font-weight: bold;
-        border-radius: var(--radius-full);
-        transition: all var(--duration-standard);
-        box-shadow: var(--shadow-lg);
+        border-radius: var(--radius-performance-scale-full);
+        transition: all var(--duration-performance-standard);
+        box-shadow: var(--shadow-performance-scale-lg);
     }
 
     .next-button:hover {
-        background: var(--color-fg-secondary);
-        transform: scale(var(--scale-small));
-        box-shadow: var(--shadow-2xl);
+        background: var(--color-performance-fg-secondary);
+        transform: scale(var(--scale-performance-small));
+        box-shadow: var(--shadow-performance-scale-2xl);
     }
 
     .animate-reveal {

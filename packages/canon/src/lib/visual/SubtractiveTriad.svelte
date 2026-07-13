@@ -292,78 +292,78 @@
 
 	/* Noise particles */
 	.noise-particle {
-		fill: var(--color-fg-muted, rgba(255, 255, 255, 0.4));
+		fill: var(--color-performance-fg-muted, rgba(255, 255, 255, 0.4));
 		opacity: 0.4;
 	}
 
 	/* Pillar faces */
 	.face {
-		stroke: var(--color-fg-muted, rgba(255, 255, 255, 0.4));
+		stroke: var(--color-performance-fg-muted, rgba(255, 255, 255, 0.4));
 		stroke-width: 1;
 		vector-effect: non-scaling-stroke;
 		opacity: 0;
 	}
 
 	.face-top {
-		fill: var(--color-fg-subtle, rgba(255, 255, 255, 0.15));
+		fill: var(--color-performance-fg-subtle, rgba(255, 255, 255, 0.15));
 	}
 
 	.face-left {
-		fill: var(--color-bg-subtle, rgba(255, 255, 255, 0.08));
+		fill: var(--color-performance-bg-subtle, rgba(255, 255, 255, 0.08));
 	}
 
 	.face-right {
-		fill: var(--color-bg-elevated, rgba(255, 255, 255, 0.03));
+		fill: var(--color-performance-bg-elevated, rgba(255, 255, 255, 0.03));
 	}
 
 	/* Labels */
 	.pillar-label {
-		font-family: var(--font-mono, monospace);
+		font-family: var(--font-performance-mono, monospace);
 		font-size: 11px;
 		font-weight: 600;
-		fill: var(--color-fg-primary, white);
+		fill: var(--color-performance-fg-primary, white);
 		opacity: 0;
 	}
 
 	.pillar-sublabel {
-		font-family: var(--font-sans, system-ui);
+		font-family: var(--font-performance-sans, system-ui);
 		font-size: 8px;
-		fill: var(--color-fg-muted, rgba(255, 255, 255, 0.4));
+		fill: var(--color-performance-fg-muted, rgba(255, 255, 255, 0.4));
 		opacity: 0;
 	}
 
 	.pillar-action {
-		font-family: var(--font-sans, system-ui);
+		font-family: var(--font-performance-sans, system-ui);
 		font-size: 9px;
 		font-weight: 500;
-		fill: var(--color-fg-secondary, rgba(255, 255, 255, 0.8));
+		fill: var(--color-performance-fg-secondary, rgba(255, 255, 255, 0.8));
 		opacity: 0;
 	}
 
 	/* Questions */
 	.question {
-		font-family: var(--font-sans, system-ui);
+		font-family: var(--font-performance-sans, system-ui);
 		font-size: 7px;
 		font-style: italic;
-		fill: var(--color-fg-tertiary, rgba(255, 255, 255, 0.6));
+		fill: var(--color-performance-fg-tertiary, rgba(255, 255, 255, 0.6));
 		opacity: 0;
 	}
 
 	/* Meta-principle */
 	.meta-principle {
-		font-family: var(--font-sans, system-ui);
+		font-family: var(--font-performance-sans, system-ui);
 		font-size: 10px;
 		font-style: italic;
-		fill: var(--color-fg-muted, rgba(255, 255, 255, 0.4));
+		fill: var(--color-performance-fg-muted, rgba(255, 255, 255, 0.4));
 		opacity: 0;
 	}
 
 	/* Hover states */
 	.pillar:hover .face {
-		stroke: var(--color-fg-secondary, rgba(255, 255, 255, 0.6));
+		stroke: var(--color-performance-fg-secondary, rgba(255, 255, 255, 0.6));
 	}
 
 	.pillar:hover .face-top {
-		fill: var(--color-fg-muted, rgba(255, 255, 255, 0.25));
+		fill: var(--color-performance-fg-muted, rgba(255, 255, 255, 0.25));
 	}
 </style>

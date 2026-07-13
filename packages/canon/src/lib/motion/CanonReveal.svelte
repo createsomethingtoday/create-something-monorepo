@@ -177,7 +177,7 @@
 	.canon-reveal {
 		position: relative;
 		display: inline-block;
-		font-family: var(--font-sans, system-ui, sans-serif);
+		font-family: var(--font-performance-sans, system-ui, sans-serif);
 	}
 
 	.reveal-text {
@@ -188,7 +188,7 @@
 	.reveal-text.mono,
 	.canon-reveal.typewriter .reveal-text,
 	.canon-reveal.decode .reveal-text {
-		font-family: var(--font-mono, 'JetBrains Mono', monospace);
+		font-family: var(--font-performance-mono, 'JetBrains Mono', monospace);
 		letter-spacing: 0.05em;
 	}
 
@@ -201,7 +201,7 @@
 		position: absolute;
 		top: 0;
 		left: 0;
-		color: var(--color-fg-muted, #737373);
+		color: var(--color-performance-fg-muted, #737373);
 		filter: blur(1px);
 		user-select: none;
 		pointer-events: none;
@@ -210,7 +210,7 @@
 	/* Typewriter */
 	.cursor {
 		opacity: 0;
-		color: var(--color-fg-muted, #737373);
+		color: var(--color-performance-fg-muted, #737373);
 		transition: opacity 0.05s;
 	}
 

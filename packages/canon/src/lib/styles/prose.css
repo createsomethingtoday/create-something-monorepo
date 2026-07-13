@@ -9,64 +9,64 @@
  */
 
 .prose {
-  color: var(--color-fg-primary);
+  color: var(--color-performance-fg-primary);
   line-height: 1.7;
 }
 
 .prose h2 {
-  font-size: var(--text-h2);
+  font-size: var(--text-performance-h2);
   font-weight: 700;
-  margin: var(--space-xl) 0 var(--space-md);
-  color: var(--color-fg-primary);
+  margin: var(--space-performance-xl) 0 var(--space-performance-md);
+  color: var(--color-performance-fg-primary);
 }
 
 .prose h3 {
-  font-size: var(--text-h3);
+  font-size: var(--text-performance-h3);
   font-weight: 600;
-  margin: var(--space-lg) 0 var(--space-sm);
-  color: var(--color-fg-secondary);
+  margin: var(--space-performance-lg) 0 var(--space-performance-sm);
+  color: var(--color-performance-fg-secondary);
 }
 
 .prose h4 {
-  font-size: var(--text-h4);
+  font-size: var(--text-performance-h4);
   font-weight: 600;
-  margin: var(--space-md) 0 var(--space-sm);
-  color: var(--color-fg-secondary);
+  margin: var(--space-performance-md) 0 var(--space-performance-sm);
+  color: var(--color-performance-fg-secondary);
 }
 
 .prose p {
-  margin: var(--space-md) 0;
-  font-size: var(--text-body);
-  color: var(--color-fg-secondary);
+  margin: var(--space-performance-md) 0;
+  font-size: var(--text-performance-body);
+  color: var(--color-performance-fg-secondary);
   line-height: 1.8;
 }
 
 .prose ul,
 .prose ol {
-  margin: var(--space-md) 0;
-  padding-left: var(--space-lg);
+  margin: var(--space-performance-md) 0;
+  padding-left: var(--space-performance-lg);
 }
 
 .prose li {
-  margin: var(--space-xs) 0;
-  color: var(--color-fg-secondary);
+  margin: var(--space-performance-xs) 0;
+  color: var(--color-performance-fg-secondary);
 }
 
 .prose a {
-  color: var(--color-fg-primary);
+  color: var(--color-performance-fg-primary);
   text-decoration: underline;
-  text-decoration-color: var(--color-border-emphasis);
+  text-decoration-color: var(--color-performance-border-emphasis);
   text-underline-offset: 0.2em;
-  transition: text-decoration-color var(--duration-micro) var(--ease-standard);
+  transition: text-decoration-color var(--duration-performance-micro) var(--ease-performance-standard);
 }
 
 .prose a:hover {
-  text-decoration-color: var(--color-fg-primary);
+  text-decoration-color: var(--color-performance-fg-primary);
 }
 
 .prose strong {
   font-weight: 600;
-  color: var(--color-fg-primary);
+  color: var(--color-performance-fg-primary);
 }
 
 .prose em {
@@ -74,28 +74,28 @@
 }
 
 .prose blockquote {
-  border-left: 2px solid var(--color-border-emphasis);
-  padding-left: var(--space-md);
-  margin: var(--space-lg) 0;
+  border-left: 2px solid var(--color-performance-border-emphasis);
+  padding-left: var(--space-performance-md);
+  margin: var(--space-performance-lg) 0;
   font-style: italic;
-  color: var(--color-fg-tertiary);
+  color: var(--color-performance-fg-tertiary);
 }
 
 .prose code {
-  background: var(--color-bg-subtle);
+  background: var(--color-performance-bg-subtle);
   padding: 0.125rem 0.375rem;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-performance-scale-sm);
   font-size: 0.9em;
-  font-family: var(--font-mono);
-  color: var(--color-fg-primary);
+  font-family: var(--font-performance-mono);
+  color: var(--color-performance-fg-primary);
 }
 
 .prose pre {
-  background: var(--color-bg-subtle);
-  padding: var(--space-md);
-  border-radius: var(--radius-md);
+  background: var(--color-performance-bg-subtle);
+  padding: var(--space-performance-md);
+  border-radius: var(--radius-performance-scale-md);
   overflow-x: auto;
-  margin: var(--space-lg) 0;
+  margin: var(--space-performance-lg) 0;
 }
 
 .prose pre code {
@@ -106,45 +106,45 @@
 .prose table {
   width: 100%;
   border-collapse: collapse;
-  margin: var(--space-lg) 0;
-  border: 1px solid var(--color-border-default);
+  margin: var(--space-performance-lg) 0;
+  border: 1px solid var(--color-performance-border-default);
 }
 
 .prose th {
-  background: var(--color-bg-subtle);
-  padding: var(--space-sm);
+  background: var(--color-performance-bg-subtle);
+  padding: var(--space-performance-sm);
   text-align: left;
   font-weight: 600;
-  border-bottom: 1px solid var(--color-border-emphasis);
-  color: var(--color-fg-primary);
+  border-bottom: 1px solid var(--color-performance-border-emphasis);
+  color: var(--color-performance-fg-primary);
 }
 
 .prose td {
-  padding: var(--space-sm);
-  border-bottom: 1px solid var(--color-border-default);
-  color: var(--color-fg-secondary);
+  padding: var(--space-performance-sm);
+  border-bottom: 1px solid var(--color-performance-border-default);
+  color: var(--color-performance-fg-secondary);
 }
 
 .prose hr {
   border: none;
-  border-top: 1px solid var(--color-border-default);
-  margin: var(--space-xl) 0;
+  border-top: 1px solid var(--color-performance-border-default);
+  margin: var(--space-performance-xl) 0;
 }
 
 .prose img {
   max-width: 100%;
   height: auto;
-  border-radius: var(--radius-md);
-  margin: var(--space-lg) 0;
+  border-radius: var(--radius-performance-scale-md);
+  margin: var(--space-performance-lg) 0;
 }
 
 .prose figure {
-  margin: var(--space-lg) 0;
+  margin: var(--space-performance-lg) 0;
 }
 
 .prose figcaption {
-  font-size: var(--text-body-sm);
-  color: var(--color-fg-muted);
-  margin-top: var(--space-sm);
+  font-size: var(--text-performance-body-sm);
+  color: var(--color-performance-fg-muted);
+  margin-top: var(--space-performance-sm);
   text-align: center;
 }

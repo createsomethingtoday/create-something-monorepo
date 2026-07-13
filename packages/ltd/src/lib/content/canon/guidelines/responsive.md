@@ -15,20 +15,20 @@ Start with mobile styles, add complexity for larger screens.
 ```css
 /* Base: Mobile */
 .card {
-  padding: var(--space-md);
+  padding: var(--space-performance-md);
 }
 
 /* Enhancement: Tablet+ */
 @media (min-width: 768px) {
   .card {
-    padding: var(--space-lg);
+    padding: var(--space-performance-lg);
   }
 }
 
 /* Enhancement: Desktop+ */
 @media (min-width: 1024px) {
   .card {
-    padding: var(--space-xl);
+    padding: var(--space-performance-xl);
   }
 }
 ```
@@ -79,9 +79,9 @@ Scale spacing proportionally:
 
 | Context | Mobile | Tablet | Desktop |
 |---------|--------|--------|---------|
-| Section padding | `--space-lg` | `--space-xl` | `--space-2xl` |
-| Card padding | `--space-md` | `--space-lg` | `--space-lg` |
-| Stack gap | `--space-sm` | `--space-md` | `--space-md` |
+| Section padding | `--space-performance-lg` | `--space-performance-xl` | `--space-performance-2xl` |
+| Card padding | `--space-performance-md` | `--space-performance-lg` | `--space-performance-lg` |
+| Stack gap | `--space-performance-sm` | `--space-performance-md` | `--space-performance-md` |
 
 ## Layout Patterns
 
@@ -90,7 +90,7 @@ Scale spacing proportionally:
 ```css
 .features {
   display: grid;
-  gap: var(--space-lg);
+  gap: var(--space-performance-lg);
   grid-template-columns: 1fr;
 }
 
@@ -139,7 +139,7 @@ Minimum touch target size: 44×44px
 .button {
   min-height: 44px;
   min-width: 44px;
-  padding: var(--space-sm) var(--space-md);
+  padding: var(--space-performance-sm) var(--space-performance-md);
 }
 ```
 

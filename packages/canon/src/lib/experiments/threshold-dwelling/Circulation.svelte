@@ -36,7 +36,7 @@
 
 	// Zone colors (muted for background context)
 	const zoneColors: Record<string, string> = {
-		outer: 'var(--color-bg-pure)',
+		outer: 'var(--color-performance-bg-pure)',
 		service: 'rgba(255, 255, 255, 0.03)',
 		public: 'rgba(255, 255, 255, 0.05)',
 		private: 'rgba(255, 255, 255, 0.08)',
@@ -53,9 +53,9 @@
 
 	// Path mode styling
 	const pathColors: Record<CirculationMode, string> = {
-		primary: 'var(--color-fg-secondary)',
-		secondary: 'var(--color-fg-muted)',
-		service: 'var(--color-fg-subtle)'
+		primary: 'var(--color-performance-fg-secondary)',
+		secondary: 'var(--color-performance-fg-muted)',
+		service: 'var(--color-performance-fg-subtle)'
 	};
 
 	// Generate SVG path from points
@@ -89,7 +89,7 @@
 				refY="3.5"
 				orient="auto"
 			>
-				<polygon points="0 0, 10 3.5, 0 7" fill="var(--color-fg-muted)" />
+				<polygon points="0 0, 10 3.5, 0 7" fill="var(--color-performance-fg-muted)" />
 			</marker>
 
 			<!-- Threshold glow -->
@@ -232,8 +232,8 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: var(--space-sm);
-		font-family: var(--font-sans, system-ui, sans-serif);
+		gap: var(--space-performance-sm);
+		font-family: var(--font-performance-sans, system-ui, sans-serif);
 	}
 
 	.circulation {
@@ -244,12 +244,12 @@
 
 	/* Zone backgrounds */
 	.zone-bg {
-		transition: opacity var(--duration-micro) var(--ease-standard);
+		transition: opacity var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	/* Zone transitions */
 	.zone-transition {
-		fill: var(--color-border-emphasis);
+		fill: var(--color-performance-border-emphasis);
 		opacity: 0.5;
 	}
 
@@ -279,7 +279,7 @@
 	/* Threshold moments */
 	.threshold-moment {
 		cursor: pointer;
-		transition: transform var(--duration-micro) var(--ease-standard);
+		transition: transform var(--duration-performance-micro) var(--ease-performance-standard);
 		outline: none;
 	}
 
@@ -300,7 +300,7 @@
 		fill: none;
 		stroke-width: 2;
 		opacity: 0.6;
-		transition: opacity var(--duration-micro) var(--ease-standard);
+		transition: opacity var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.threshold-moment.active .threshold-ring {
@@ -317,12 +317,12 @@
 
 	.threshold-label {
 		font-size: 9px;
-		fill: var(--color-fg-muted);
+		fill: var(--color-performance-fg-muted);
 		text-anchor: middle;
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 		opacity: 0;
-		transition: opacity var(--duration-micro) var(--ease-standard);
+		transition: opacity var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.threshold-moment.active .threshold-label {
@@ -332,21 +332,21 @@
 	/* Labels */
 	.label {
 		font-size: 10px;
-		fill: var(--color-fg-tertiary);
+		fill: var(--color-performance-fg-tertiary);
 		text-anchor: middle;
 		dominant-baseline: middle;
 	}
 
 	.label.small {
 		font-size: 8px;
-		fill: var(--color-fg-muted);
+		fill: var(--color-performance-fg-muted);
 	}
 
 	/* Title */
 	.title {
 		font-size: 11px;
 		font-weight: 500;
-		fill: var(--color-fg-secondary);
+		fill: var(--color-performance-fg-secondary);
 		text-transform: uppercase;
 		letter-spacing: 0.1em;
 	}
@@ -354,7 +354,7 @@
 	/* Legend */
 	.legend {
 		display: flex;
-		gap: var(--space-md);
+		gap: var(--space-performance-md);
 		flex-wrap: wrap;
 		justify-content: center;
 	}
@@ -370,8 +370,8 @@
 	}
 
 	.legend-label {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 		text-transform: capitalize;
 	}
 
@@ -379,22 +379,22 @@
 	.threshold-description {
 		max-width: 300px;
 		text-align: center;
-		padding: var(--space-xs) var(--space-sm);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-sm);
+		padding: var(--space-performance-xs) var(--space-performance-sm);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-sm);
 	}
 
 	.threshold-description p {
 		margin: 0;
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-tertiary);
 		font-style: italic;
 	}
 
 	/* Caption */
 	.caption {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 		text-align: center;
 		margin: 0;
 	}

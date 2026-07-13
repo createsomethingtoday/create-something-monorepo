@@ -13,7 +13,7 @@
 .performance-shell {
   background: var(--color-performance-paper);
   color: var(--color-performance-ink);
-  font-family: var(--font-performance-display, var(--font-sans));
+  font-family: var(--font-performance-display, var(--font-performance-sans));
   letter-spacing: 0;
 }
 
@@ -25,7 +25,7 @@
 .performance-eyebrow {
   margin: 0;
   color: var(--color-performance-pressure);
-  font-family: var(--font-performance-mono, var(--font-mono));
+  font-family: var(--font-performance-mono, var(--font-performance-mono));
   font-size: 0.76rem;
   font-weight: 800;
   letter-spacing: 0;
@@ -131,7 +131,7 @@
   border-radius: var(--radius-performance-sm);
   background: var(--color-performance-panel);
   color: var(--color-performance-ink);
-  font-family: var(--font-mono);
+  font-family: var(--font-performance-mono);
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0;
@@ -140,19 +140,19 @@
 }
 
 .property-performance {
-  --font-sans: var(--font-performance-display);
-  --font-display: var(--font-performance-display);
-  --font-heading: var(--font-performance-display);
-  --font-interface: var(--font-performance-display);
-  --font-prose: var(--font-performance-display);
-  --font-mono: var(--font-performance-mono);
-  --font-record: var(--font-performance-mono);
-  --font-topology-label: var(--font-performance-mono);
-  --font-code: var(--font-performance-mono);
+  --font-performance-sans: var(--font-performance-display);
+  --font-performance-display: var(--font-performance-display);
+  --font-performance-heading: var(--font-performance-display);
+  --font-performance-interface: var(--font-performance-display);
+  --font-performance-prose: var(--font-performance-display);
+  --font-performance-mono: var(--font-performance-mono);
+  --font-performance-record: var(--font-performance-mono);
+  --font-performance-topology-label: var(--font-performance-mono);
+  --font-performance-code: var(--font-performance-mono);
   --property-performance-panel-shadow: var(--shadow-performance-panel);
   background: var(--color-performance-paper);
   color: var(--color-performance-ink);
-  font-family: var(--font-performance-display, var(--font-sans));
+  font-family: var(--font-performance-display, var(--font-performance-sans));
 }
 
 .property-performance:is(.layout-root, .layout, .min-h-screen) {

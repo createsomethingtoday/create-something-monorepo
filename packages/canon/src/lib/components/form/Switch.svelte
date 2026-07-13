@@ -115,7 +115,7 @@
 	.switch {
 		display: flex;
 		align-items: flex-start;
-		gap: var(--space-sm);
+		gap: var(--space-performance-sm);
 	}
 
 	.switch-label-left {
@@ -128,27 +128,27 @@
 		position: relative;
 		width: 44px;
 		height: 24px;
-		background: var(--color-bg-subtle);
-		border: 2px solid var(--color-border-default);
-		border-radius: var(--radius-full);
+		background: var(--color-performance-bg-subtle);
+		border: 2px solid var(--color-performance-border-default);
+		border-radius: var(--radius-performance-scale-full);
 		cursor: pointer;
 		flex-shrink: 0;
-		transition: all var(--duration-micro) var(--ease-standard);
+		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 		padding: 0;
 	}
 
 	.switch-track:hover:not(:disabled) {
-		border-color: var(--color-border-emphasis);
+		border-color: var(--color-performance-border-emphasis);
 	}
 
 	.switch-track:focus-visible {
-		outline: 2px solid var(--color-focus);
+		outline: 2px solid var(--color-performance-focus);
 		outline-offset: 2px;
 	}
 
 	.switch-track.checked {
-		background: var(--color-fg-primary);
-		border-color: var(--color-fg-primary);
+		background: var(--color-performance-fg-primary);
+		border-color: var(--color-performance-fg-primary);
 	}
 
 	.switch-track:disabled {
@@ -163,14 +163,14 @@
 		left: 2px;
 		width: 16px;
 		height: 16px;
-		background: var(--color-fg-muted);
-		border-radius: var(--radius-full);
-		transition: all var(--duration-micro) var(--ease-standard);
+		background: var(--color-performance-fg-muted);
+		border-radius: var(--radius-performance-scale-full);
+		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.switch-track.checked .switch-thumb {
 		left: calc(100% - 18px);
-		background: var(--color-bg-pure);
+		background: var(--color-performance-bg-pure);
 	}
 
 	/* Content area */
@@ -183,8 +183,8 @@
 
 	/* Label */
 	.switch-label {
-		font-size: var(--text-body);
-		color: var(--color-fg-primary);
+		font-size: var(--text-performance-body);
+		color: var(--color-performance-fg-primary);
 		cursor: pointer;
 		user-select: none;
 	}
@@ -197,8 +197,8 @@
 
 	/* Description */
 	.switch-description {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 		margin: 0;
 	}
 
@@ -218,7 +218,7 @@
 	}
 
 	.switch-sm .switch-label {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.switch-lg .switch-track {
@@ -236,6 +236,6 @@
 	}
 
 	.switch-lg .switch-label {
-		font-size: var(--text-body-lg);
+		font-size: var(--text-performance-body-lg);
 	}
 </style>

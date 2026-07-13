@@ -261,37 +261,37 @@ Outcomes and learnings..."
 <style>
 	/* Typography */
 	.page-title {
-		font-size: var(--text-h1);
+		font-size: var(--text-performance-h1);
 		font-weight: 700;
-		margin-bottom: var(--space-sm);
-		color: var(--color-fg-primary);
+		margin-bottom: var(--space-performance-sm);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.page-subtitle {
-		color: var(--color-fg-tertiary);
-		font-size: var(--text-body);
+		color: var(--color-performance-fg-tertiary);
+		font-size: var(--text-performance-body);
 	}
 
 	/* Links */
 	.back-link {
-		padding: var(--space-sm) var(--space-md);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
-		color: var(--color-fg-primary);
+		padding: var(--space-performance-sm) var(--space-performance-md);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
+		color: var(--color-performance-fg-primary);
 		text-decoration: none;
-		transition: all var(--duration-standard) var(--ease-standard);
+		transition: all var(--duration-performance-standard) var(--ease-performance-standard);
 	}
 
 	.back-link:hover {
-		background: var(--color-hover);
+		background: var(--color-performance-hover);
 	}
 
 	/* Buttons */
 	.btn {
-		padding: var(--space-sm) var(--space-lg);
-		border-radius: var(--radius-lg);
+		padding: var(--space-performance-sm) var(--space-performance-lg);
+		border-radius: var(--radius-performance-scale-lg);
 		font-weight: 600;
-		transition: all var(--duration-standard) var(--ease-standard);
+		transition: all var(--duration-performance-standard) var(--ease-performance-standard);
 		border: none;
 		cursor: pointer;
 		text-decoration: none;
@@ -305,103 +305,103 @@ Outcomes and learnings..."
 	}
 
 	.btn--primary {
-		background: var(--color-fg-primary);
-		color: var(--color-bg-pure);
+		background: var(--color-performance-fg-primary);
+		color: var(--color-performance-bg-pure);
 	}
 
 	.btn--primary:hover:not(:disabled) {
-		background: var(--color-fg-secondary);
+		background: var(--color-performance-fg-secondary);
 	}
 
 	.btn--secondary {
-		background: var(--color-bg-surface);
-		color: var(--color-fg-primary);
+		background: var(--color-performance-bg-surface);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.btn--secondary:hover:not(:disabled) {
-		background: var(--color-hover);
+		background: var(--color-performance-hover);
 	}
 
 	/* Error Alert */
 	.error-alert {
-		padding: var(--space-md);
-		background: var(--color-error-muted);
-		border: 1px solid var(--color-error-border);
-		border-radius: var(--radius-lg);
-		color: var(--color-error);
+		padding: var(--space-performance-md);
+		background: var(--color-performance-error-muted);
+		border: 1px solid var(--color-performance-error-border);
+		border-radius: var(--radius-performance-scale-lg);
+		color: var(--color-performance-error);
 	}
 
 	/* Form Elements */
 	.form-label {
 		display: block;
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 		font-weight: 500;
-		margin-bottom: var(--space-sm);
-		color: var(--color-fg-primary);
+		margin-bottom: var(--space-performance-sm);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.form-input,
 	.form-textarea,
 	.form-select {
 		width: 100%;
-		padding: var(--space-sm) var(--space-md);
-		border-radius: var(--radius-lg);
-		color: var(--color-fg-primary);
-		font-size: var(--text-body);
+		padding: var(--space-performance-sm) var(--space-performance-md);
+		border-radius: var(--radius-performance-scale-lg);
+		color: var(--color-performance-fg-primary);
+		font-size: var(--text-performance-body);
 	}
 
 	.form-input::placeholder,
 	.form-textarea::placeholder {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.form-input:focus,
 	.form-textarea:focus,
 	.form-select:focus {
 		outline: none;
-		border-color: var(--color-border-emphasis);
+		border-color: var(--color-performance-border-emphasis);
 	}
 
 	.form-textarea--mono {
 		font-family: ui-monospace, monospace;
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.form-help {
-		margin-top: var(--space-xs);
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		margin-top: var(--space-performance-xs);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 	}
 
 	/* Tag Buttons */
 	.tag-btn {
-		padding: 0.375rem var(--space-sm);
-		border-radius: var(--radius-lg);
-		font-size: var(--text-body-sm);
-		transition: all var(--duration-standard) var(--ease-standard);
-		background: var(--color-bg-surface);
-		color: var(--color-fg-primary);
+		padding: 0.375rem var(--space-performance-sm);
+		border-radius: var(--radius-performance-scale-lg);
+		font-size: var(--text-performance-body-sm);
+		transition: all var(--duration-performance-standard) var(--ease-performance-standard);
+		background: var(--color-performance-bg-surface);
+		color: var(--color-performance-fg-primary);
 		border: none;
 		cursor: pointer;
 	}
 
 	.tag-btn:hover {
-		background: var(--color-hover);
+		background: var(--color-performance-hover);
 	}
 
 	.tag-btn--active {
-		background: var(--color-fg-primary);
-		color: var(--color-bg-pure);
+		background: var(--color-performance-fg-primary);
+		color: var(--color-performance-bg-pure);
 	}
 
 	/* Checkbox */
 	.checkbox-label {
 		display: flex;
 		align-items: center;
-		gap: var(--space-sm);
+		gap: var(--space-performance-sm);
 		cursor: pointer;
-		color: var(--color-fg-primary);
-		font-size: var(--text-body-sm);
+		color: var(--color-performance-fg-primary);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.checkbox-input {

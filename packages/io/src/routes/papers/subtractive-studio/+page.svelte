@@ -606,7 +606,7 @@ export function \${name}() {
 The golden ratio (1.618) produces naturally harmonious proportions that work
 across scales without manual tuning.
 
-**How to Apply**: Use tokens: \`--space-xs\`, \`--space-sm\`, \`--space-md\`, etc.
+**How to Apply**: Use tokens: \`--space-performance-xs\`, \`--space-performance-sm\`, \`--space-performance-md\`, etc.
 Never hardcode pixel values for spacing.`}</pre>
 				</div>
 
@@ -735,116 +735,116 @@ Never hardcode pixel values for spacing.`}</pre>
 
 	/* Container */
 	.paper-container {
-		background: var(--color-bg-pure);
-		color: var(--color-fg-primary);
+		background: var(--color-performance-bg-pure);
+		color: var(--color-performance-fg-primary);
 	}
 
 	/* Header */
 
 	.paper-id {
-		color: var(--color-fg-muted);
-		font-size: var(--text-body-sm);
+		color: var(--color-performance-fg-muted);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.paper-title {
-		font-size: var(--text-h1);
+		font-size: var(--text-performance-h1);
 	}
 
 	.paper-subtitle {
-		color: var(--color-fg-secondary);
-		font-size: var(--text-body-lg);
+		color: var(--color-performance-fg-secondary);
+		font-size: var(--text-performance-body-lg);
 	}
 
 	.paper-meta {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	/* Abstract */
 	.abstract-section {
-		border-left: 4px solid var(--color-border-emphasis);
+		border-left: 4px solid var(--color-performance-border-emphasis);
 	}
 
 	/* Typography */
 	.section-heading {
-		font-size: var(--text-h2);
+		font-size: var(--text-performance-h2);
 	}
 
 	.subsection-heading {
-		font-size: var(--text-h3);
-		color: var(--color-fg-primary);
+		font-size: var(--text-performance-h3);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.body-text {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	/* Quote Box */
 	.quote-box {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.quote-text {
-		color: var(--color-fg-secondary);
-		font-size: var(--text-body-lg);
+		color: var(--color-performance-fg-secondary);
+		font-size: var(--text-performance-body-lg);
 	}
 
 	.quote-attribution {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-muted);
 	}
 
 	/* Blockquote */
 	.blockquote {
-		border-left: 4px solid var(--color-border-emphasis);
-		color: var(--color-fg-tertiary);
+		border-left: 4px solid var(--color-performance-border-emphasis);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	/* Code Blocks */
 	.code-block {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
-		font-size: var(--text-body-sm);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
+		font-size: var(--text-performance-body-sm);
 		overflow-x: auto;
 	}
 
 	.code-primary {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.code-secondary {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	/* Comparison Cards */
 	.comparison-success {
-		background: var(--color-success-muted);
-		border: 1px solid var(--color-success-border);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-success-muted);
+		border: 1px solid var(--color-performance-success-border);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.comparison-warning {
-		background: var(--color-warning-muted);
-		border: 1px solid var(--color-warning-border);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-warning-muted);
+		border: 1px solid var(--color-performance-warning-border);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.comparison-heading {
-		font-size: var(--text-body-lg);
+		font-size: var(--text-performance-body-lg);
 	}
 
 	.comparison-success-heading {
-		color: var(--color-success);
+		color: var(--color-performance-success);
 	}
 
 	.comparison-warning-heading {
-		color: var(--color-warning);
+		color: var(--color-performance-warning);
 	}
 
 	.comparison-list {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	/* Data Table */
@@ -853,84 +853,84 @@ Never hardcode pixel values for spacing.`}</pre>
 	}
 
 	.data-table {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.data-table thead tr {
-		border-bottom: 1px solid var(--color-border-emphasis);
+		border-bottom: 1px solid var(--color-performance-border-emphasis);
 	}
 
 	.data-table th {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 
 	.data-table td {
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.result-positive {
-		color: var(--color-success);
+		color: var(--color-performance-success);
 	}
 
 	/* Highlight Box */
 	.highlight-box {
-		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-emphasis);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-bg-subtle);
+		border: 1px solid var(--color-performance-border-emphasis);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.highlight-text {
-		font-size: var(--text-body-lg);
+		font-size: var(--text-performance-body-lg);
 		text-align: center;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	/* Principle Box */
 	.principle-box {
-		background: var(--color-bg-subtle);
-		border: 2px solid var(--color-border-strong);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-bg-subtle);
+		border: 2px solid var(--color-performance-border-strong);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.principle-text {
-		font-size: var(--text-h3);
+		font-size: var(--text-performance-h3);
 		font-weight: 600;
 		text-align: center;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 	.footer-text {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.footer-link {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
-		transition: color var(--duration-micro) var(--ease-standard);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-tertiary);
+		transition: color var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.footer-link:hover {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.code-block-success {
-		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-success, var(--color-border-default));
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-bg-subtle);
+		border: 1px solid var(--color-border-success, var(--color-performance-border-default));
+		border-radius: var(--radius-performance-scale-lg);
 		overflow-x: auto;
 	}
 
 	.code-secondary {
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.emphasis-text {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.subsection-heading {
-		font-size: var(--text-h3);
-		color: var(--color-fg-primary);
+		font-size: var(--text-performance-h3);
+		color: var(--color-performance-fg-primary);
 	}
 </style>

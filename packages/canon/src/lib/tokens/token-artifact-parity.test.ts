@@ -34,13 +34,31 @@ function readRootToken(name: string): string {
 }
 
 describe('Canon token artifact parity', () => {
+	it('keeps the complete Performance contract aligned across generated artifacts', () => {
+		const performanceTokens = Object.fromEntries(
+			[...rootBlock.matchAll(/^\s*(--[A-Za-z0-9_-]*-performance(?:-[A-Za-z0-9_-]+)*):\s*([^;]+);/gm)].map(
+				(match) => [match[1], match[2].trim()]
+			)
+		);
+		const compatibilityAliases = Object.fromEntries(
+			[...rootBlock.matchAll(/^\s*(--[A-Za-z0-9_-]+):\s*var\((--[^)]*performance[^)]*)\);/gm)]
+				.filter((match) => !match[1].includes('-performance'))
+				.map((match) => [match[1], match[2]])
+		);
+
+		for (const artifact of [dtcgTokens, figmaTokens, canonJson, canonTokensJson]) {
+			expect(artifact.performanceContract.tokens).toEqual(performanceTokens);
+			expect(artifact.performanceContract.compatibilityAliases).toEqual(compatibilityAliases);
+		}
+	});
+
   it('keeps foreground TS exports aligned with tokens.css', () => {
     const foregroundTokens = [
-      '--color-fg-primary',
-      '--color-fg-secondary',
-      '--color-fg-tertiary',
-      '--color-fg-muted',
-      '--color-fg-subtle'
+      '--color-performance-fg-primary',
+      '--color-performance-fg-secondary',
+      '--color-performance-fg-tertiary',
+      '--color-performance-fg-muted',
+      '--color-performance-fg-subtle'
     ] as const;
 
     for (const token of foregroundTokens) {
@@ -50,28 +68,28 @@ describe('Canon token artifact parity', () => {
 
   it('keeps core typography TS exports aligned with tokens.css', () => {
     const typographyTokens = [
-      '--text-display-xl',
-      '--text-display',
-      '--text-h1',
-      '--text-h2',
-      '--text-h3',
-      '--text-h4',
-      '--text-h5',
-      '--text-h6',
-      '--text-body-lg',
-      '--text-body',
-      '--text-body-sm',
-      '--text-caption',
-      '--text-overline',
-      '--text-record',
-      '--text-record-meta',
-      '--text-operator-label',
-      '--text-topology-label',
-      '--font-interface',
-      '--font-record',
-      '--font-topology-label',
-      '--tracking-topology-label',
-      '--leading-topology-label'
+      '--text-performance-display-xl',
+      '--text-performance-display',
+      '--text-performance-h1',
+      '--text-performance-h2',
+      '--text-performance-h3',
+      '--text-performance-h4',
+      '--text-performance-h5',
+      '--text-performance-h6',
+      '--text-performance-body-lg',
+      '--text-performance-body',
+      '--text-performance-body-sm',
+      '--text-performance-caption',
+      '--text-performance-overline',
+      '--text-performance-record',
+      '--text-performance-record-meta',
+      '--text-performance-operator-label',
+      '--text-performance-topology-label',
+      '--font-performance-interface',
+      '--font-performance-record',
+      '--font-performance-topology-label',
+      '--tracking-performance-topology-label',
+      '--leading-performance-topology-label'
     ] as const;
 
     for (const token of typographyTokens) {
@@ -81,9 +99,9 @@ describe('Canon token artifact parity', () => {
 
   it('keeps exported typography font artifacts aligned with tokens.css', () => {
     const fontTokens = [
-      ['--font-sans', 'sans'],
-      ['--font-mono', 'mono'],
-      ['--font-serif', 'serif']
+      ['--font-performance-sans', 'sans'],
+      ['--font-performance-mono', 'mono'],
+      ['--font-performance-serif', 'serif']
     ] as const;
 
     for (const [cssToken, artifactToken] of fontTokens) {

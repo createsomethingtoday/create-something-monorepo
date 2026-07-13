@@ -108,50 +108,50 @@ function handleKeydown(event: KeyboardEvent) {
 	.garbage-time-indicator {
 		display: inline-flex;
 		align-items: center;
-		gap: var(--space-xs);
-		padding: var(--space-xs) var(--space-sm);
-		border-radius: var(--radius-md);
+		gap: var(--space-performance-xs);
+		padding: var(--space-performance-xs) var(--space-performance-sm);
+		border-radius: var(--radius-performance-scale-md);
 		cursor: help;
 		position: relative;
-		transition: all var(--duration-micro) var(--ease-standard);
+		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.garbage-time-indicator:hover,
 	.garbage-time-indicator:focus {
-		border-color: var(--color-warning);
+		border-color: var(--color-performance-warning);
 		outline: none;
 	}
 
 	.garbage-time-indicator:focus-visible {
-		outline: 2px solid var(--color-focus);
+		outline: 2px solid var(--color-performance-focus);
 		outline-offset: 2px;
 	}
 
 	.garbage-time-indicator.compact {
-		padding: var(--space-xs);
-		border-radius: var(--radius-full);
+		padding: var(--space-performance-xs);
+		border-radius: var(--radius-performance-scale-full);
 	}
 
 	/* Severity colors */
 	.garbage-time-indicator.high {
-		color: var(--color-error);
-		border-color: var(--color-error);
-		background: var(--color-error-muted);
+		color: var(--color-performance-error);
+		border-color: var(--color-performance-error);
+		background: var(--color-performance-error-muted);
 	}
 
 	.garbage-time-indicator.medium {
-		color: var(--color-warning);
-		border-color: var(--color-warning);
-		background: var(--color-warning-muted);
+		color: var(--color-performance-warning);
+		border-color: var(--color-performance-warning);
+		background: var(--color-performance-warning-muted);
 	}
 
 	.garbage-time-indicator.low {
-		color: var(--color-fg-secondary);
-		border-color: var(--color-border-default);
+		color: var(--color-performance-fg-secondary);
+		border-color: var(--color-performance-border-default);
 	}
 
 	.label {
-		font-size: var(--text-caption);
+		font-size: var(--text-performance-caption);
 		font-weight: 500;
 		white-space: nowrap;
 	}
@@ -159,16 +159,16 @@ function handleKeydown(event: KeyboardEvent) {
 	/* Tooltip */
 	.tooltip {
 		position: absolute;
-		top: calc(100% + var(--space-sm));
+		top: calc(100% + var(--space-performance-sm));
 		left: 50%;
 		transform: translateX(-50%);
 		width: 280px;
-		padding: var(--space-md);
-		border-radius: var(--radius-lg);
-		box-shadow: var(--shadow-lg);
-		z-index: var(--z-modal);
+		padding: var(--space-performance-md);
+		border-radius: var(--radius-performance-scale-lg);
+		box-shadow: var(--shadow-performance-scale-lg);
+		z-index: var(--z-performance-modal);
 		pointer-events: none;
-		animation: fadeIn var(--duration-micro) var(--ease-standard);
+		animation: fadeIn var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	@keyframes fadeIn {
@@ -193,7 +193,7 @@ function handleKeydown(event: KeyboardEvent) {
 		height: 0;
 		border-left: 6px solid transparent;
 		border-right: 6px solid transparent;
-		border-bottom: 6px solid var(--color-border-default);
+		border-bottom: 6px solid var(--color-performance-border-default);
 	}
 
 	.tooltip::after {
@@ -206,39 +206,39 @@ function handleKeydown(event: KeyboardEvent) {
 		height: 0;
 		border-left: 6px solid transparent;
 		border-right: 6px solid transparent;
-		border-bottom: 6px solid var(--color-bg-elevated);
+		border-bottom: 6px solid var(--color-performance-bg-elevated);
 	}
 
 	.tooltip-header {
 		display: flex;
 		align-items: center;
-		gap: var(--space-sm);
-		margin-bottom: var(--space-sm);
-		color: var(--color-warning);
+		gap: var(--space-performance-sm);
+		margin-bottom: var(--space-performance-sm);
+		color: var(--color-performance-warning);
 	}
 
 	.tooltip-title {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 		font-weight: 600;
 	}
 
 	.tooltip-content {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-sm);
+		gap: var(--space-performance-sm);
 	}
 
 	.tooltip-text {
 		margin: 0;
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
 		line-height: 1.5;
 	}
 
 	.tooltip-note {
 		margin: 0;
-		font-size: var(--text-caption);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-tertiary);
 		font-style: italic;
 		line-height: 1.4;
 	}
@@ -246,37 +246,37 @@ function handleKeydown(event: KeyboardEvent) {
 	.reliability-meter {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-xs);
-		padding: var(--space-sm);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-md);
+		gap: var(--space-performance-xs);
+		padding: var(--space-performance-sm);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-md);
 	}
 
 	.reliability-label {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		font-size: var(--text-caption);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.reliability-score {
 		font-weight: 700;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		font-variant-numeric: tabular-nums;
 	}
 
 	.reliability-bar {
 		height: 4px;
-		border-radius: var(--radius-full);
+		border-radius: var(--radius-performance-scale-full);
 		overflow: hidden;
 	}
 
 	.reliability-fill {
 		height: 100%;
-		background: linear-gradient(90deg, var(--color-error) 0%, var(--color-warning) 50%, var(--color-success) 100%);
-		border-radius: var(--radius-full);
-		transition: width var(--duration-standard) var(--ease-standard);
+		background: linear-gradient(90deg, var(--color-performance-error) 0%, var(--color-performance-warning) 50%, var(--color-performance-success) 100%);
+		border-radius: var(--radius-performance-scale-full);
+		transition: width var(--duration-performance-standard) var(--ease-performance-standard);
 	}
 
 	/* Mobile responsive */
@@ -291,7 +291,7 @@ function handleKeydown(event: KeyboardEvent) {
 		.tooltip::before,
 		.tooltip::after {
 			left: auto;
-			right: var(--space-md);
+			right: var(--space-performance-md);
 			transform: none;
 		}
 	}

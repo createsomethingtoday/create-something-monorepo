@@ -164,35 +164,35 @@
   }
 
   .back-link {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-muted);
+    font-size: var(--text-performance-body-sm);
+    color: var(--color-performance-fg-muted);
     display: inline-block;
     margin-bottom: 2rem;
-    transition: color var(--duration-micro) var(--ease-standard);
+    transition: color var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   .back-link:hover {
-    color: var(--color-fg-secondary);
+    color: var(--color-performance-fg-secondary);
   }
 
   .meta {
-    font-size: var(--text-body-sm);
-    letter-spacing: var(--tracking-widest);
+    font-size: var(--text-performance-body-sm);
+    letter-spacing: var(--tracking-performance-widest);
     text-transform: uppercase;
-    color: var(--color-fg-tertiary);
+    color: var(--color-performance-fg-tertiary);
     margin-bottom: 1rem;
   }
 
   .title {
-    font-size: var(--text-h1);
-    font-weight: var(--font-semibold);
+    font-size: var(--text-performance-h1);
+    font-weight: var(--font-performance-semibold);
     margin-bottom: 1.5rem;
   }
 
   .description {
-    font-size: var(--text-body-lg);
-    color: var(--color-fg-secondary);
-    line-height: var(--leading-relaxed);
+    font-size: var(--text-performance-body-lg);
+    color: var(--color-performance-fg-secondary);
+    line-height: var(--leading-performance-relaxed);
   }
 
   /* Presentations List */
@@ -206,13 +206,13 @@
   .presentation-card {
     display: block;
     padding: 1.5rem;
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-performance-scale-md);
     text-decoration: none;
-    transition: all var(--duration-micro) var(--ease-standard);
+    transition: all var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   .presentation-card:hover {
-    border-color: var(--color-border-emphasis);
+    border-color: var(--color-performance-border-emphasis);
     transform: translateX(2px);
   }
 
@@ -224,27 +224,27 @@
 
   .card-slides,
   .card-duration {
-    font-family: var(--font-mono);
-    font-size: var(--text-caption);
-    color: var(--color-fg-muted);
+    font-family: var(--font-performance-mono);
+    font-size: var(--text-performance-caption);
+    color: var(--color-performance-fg-muted);
   }
 
   .card-title {
-    font-size: var(--text-h3);
-    font-weight: var(--font-semibold);
+    font-size: var(--text-performance-h3);
+    font-weight: var(--font-performance-semibold);
     margin-bottom: 0.5rem;
   }
 
   .card-subtitle {
-    font-size: var(--text-body);
-    color: var(--color-fg-secondary);
+    font-size: var(--text-performance-body);
+    color: var(--color-performance-fg-secondary);
     margin-bottom: 0.75rem;
   }
 
   .card-description {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-tertiary);
-    line-height: var(--leading-relaxed);
+    font-size: var(--text-performance-body-sm);
+    color: var(--color-performance-fg-tertiary);
+    line-height: var(--leading-performance-relaxed);
     margin-bottom: 1rem;
   }
 
@@ -256,36 +256,36 @@
   }
 
   .tag {
-    font-size: var(--text-caption);
-    color: var(--color-fg-muted);
+    font-size: var(--text-performance-caption);
+    color: var(--color-performance-fg-muted);
     padding: 0.25rem 0.5rem;
-    background: var(--color-bg-surface);
-    border-radius: var(--radius-sm);
+    background: var(--color-performance-bg-surface);
+    border-radius: var(--radius-performance-scale-sm);
   }
 
   .card-cta {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-secondary);
+    font-size: var(--text-performance-body-sm);
+    color: var(--color-performance-fg-secondary);
   }
 
   /* Footer */
   .footer {
     padding-top: 2rem;
-    /* border-top: 1px solid var(--color-border-default); */
+    /* border-top: 1px solid var(--color-performance-border-default); */
     text-align: center;
   }
 
   .footer-text {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-muted);
+    font-size: var(--text-performance-body-sm);
+    color: var(--color-performance-fg-muted);
   }
 
   .footer-text a {
-    color: var(--color-fg-secondary);
+    color: var(--color-performance-fg-secondary);
     text-decoration: underline;
   }
 
   .footer-text a:hover {
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
   }
 </style>

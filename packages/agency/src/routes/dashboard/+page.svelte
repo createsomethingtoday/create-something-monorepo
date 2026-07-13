@@ -323,7 +323,7 @@
 	.empty-copy,
 	.inline-callout p,
 	.annotation-column p {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.eligibility-grid {
@@ -383,7 +383,7 @@
 	}
 
 	a {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		text-decoration: underline;
 		text-underline-offset: 0.18em;
 		font-size: 0.8rem;

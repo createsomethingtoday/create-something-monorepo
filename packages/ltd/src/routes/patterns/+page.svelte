@@ -277,7 +277,7 @@
 						</div>
 						<div class="flex justify-between">
 							<span>padding</span>
-							<span>26px ← golden ratio (--space-md)</span>
+							<span>26px ← golden ratio (--space-performance-md)</span>
 						</div>
 						<div class="flex justify-between">
 							<span>colors</span>
@@ -512,67 +512,67 @@
 <style>
 	/* Typography */
 	.text-xs-canon {
-		font-size: var(--text-caption);
+		font-size: var(--text-performance-caption);
 	}
 
 	.text-sm-canon {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.text-base-canon {
-		font-size: var(--text-body);
+		font-size: var(--text-performance-body);
 	}
 
 	.text-lg-canon {
-		font-size: var(--text-body-lg);
+		font-size: var(--text-performance-body-lg);
 	}
 
 	.text-xl-canon {
-		font-size: var(--text-h3);
+		font-size: var(--text-performance-h3);
 	}
 
 	.text-2xl-canon {
-		font-size: var(--text-h2);
+		font-size: var(--text-performance-h2);
 	}
 
 	/* Opacity as color tokens */
 	.opacity-40-canon {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.opacity-50-canon {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.opacity-60-canon {
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.opacity-70-canon {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	/* Borders */
 	.border-canon {
-		border-color: var(--color-border-default);
+		border-color: var(--color-performance-border-default);
 	}
 
 	.border-emphasis {
-		border-color: var(--color-border-emphasis);
+		border-color: var(--color-performance-border-emphasis);
 	}
 
 
 	/* Semantic colors */
 	.bg-error-subtle {
-		background: var(--color-error-muted);
+		background: var(--color-performance-error-muted);
 	}
 
 	.border-error {
-		border-color: var(--color-error-border);
+		border-color: var(--color-performance-error-border);
 	}
 
 	/* Universal element styles */
 	section {
-		border-color: var(--color-border-default);
+		border-color: var(--color-performance-border-default);
 	}
 </style>

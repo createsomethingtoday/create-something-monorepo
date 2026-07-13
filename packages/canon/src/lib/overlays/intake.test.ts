@@ -709,8 +709,8 @@ function readyManifest(id: string, name: string, sourcePackage: string): {
 		targetModalities: ['web', 'chat'],
 		tags: ['canon', 'overlay'],
 		artifacts: [
-			{ kind: 'theme', path: 'theme.css', registryItemIds: ['token.canon-core'] },
-			{ kind: 'tokens', path: 'tokens.json', registryItemIds: ['token.canon-core'] },
+			{ kind: 'theme', path: 'theme.css', registryItemIds: ['token.performance-core'] },
+			{ kind: 'tokens', path: 'tokens.json', registryItemIds: ['token.performance-core'] },
 			{ kind: 'templates', path: 'templates', registryItemIds: ['template.canon-extension-intake'] },
 			{ kind: 'copy-rules', path: 'copy-rules.md', registryItemIds: ['policy.signal-decision-proof'] },
 			{

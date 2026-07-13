@@ -83,9 +83,9 @@
 		border-radius: var(--radius-performance-sm, 4px);
 		background: var(--color-performance-paper, #f3f3f0);
 		color: var(--color-performance-muted, #5e6268);
-		font-family: var(--font-mono);
+		font-family: var(--font-performance-mono);
 		font-size: 0.76rem;
-		font-weight: var(--font-semibold);
+		font-weight: var(--font-performance-semibold);
 		letter-spacing: 0;
 		line-height: 1.15;
 		text-transform: uppercase;
@@ -96,7 +96,7 @@
 		max-width: 15ch;
 		color: var(--color-performance-ink, #090909);
 		font-size: 3.05rem;
-		font-weight: var(--font-medium);
+		font-weight: var(--font-performance-medium);
 		letter-spacing: 0;
 		line-height: 1.03;
 		text-wrap: balance;
@@ -135,7 +135,7 @@
 	.clear-quote-metric-panel__metrics strong {
 		color: var(--color-performance-ink, #090909);
 		font-size: clamp(2.6rem, 6vw, 5rem);
-		font-weight: var(--font-medium);
+		font-weight: var(--font-performance-medium);
 		letter-spacing: 0;
 		line-height: 0.92;
 	}
@@ -143,7 +143,7 @@
 	.clear-quote-metric-panel__metrics span {
 		color: var(--color-performance-ink, #090909);
 		font-size: 1.02rem;
-		font-weight: var(--font-medium);
+		font-weight: var(--font-performance-medium);
 		line-height: 1.18;
 	}
 

@@ -8,10 +8,10 @@
  * Tufte constrains the application. Maximum data-ink ratio at every viewport.
  *
  * The 4-Value Constraint (following WORKWAY):
- *   --space-sm: 1rem      (16px) - tight relationships
- *   --space-md: 1.618rem  (26px) - default breathing room
- *   --space-lg: 2.618rem  (42px) - between related sections
- *   --space-xl: 4.236rem  (68px) - major landmarks, heroes
+ *   --space-performance-sm: 1rem      (16px) - tight relationships
+ *   --space-performance-md: 1.618rem  (26px) - default breathing room
+ *   --space-performance-lg: 2.618rem  (42px) - between related sections
+ *   --space-performance-xl: 4.236rem  (68px) - major landmarks, heroes
  *
  * Why 4 values? Fewer options = faster decisions = consistent application.
  * Every pixel of padding steals space from content. Be deliberate.
@@ -55,17 +55,17 @@ export const inkPadding = {
 	// Container padding (page/section level)
 	// Desktop: md (not lg) - tighter than traditional, more like WORKWAY
 	container: {
-		compact: 'var(--space-sm)', // 16px mobile
-		standard: 'var(--space-md)', // 26px tablet
-		expanded: 'var(--space-md)' // 26px desktop (Tufte: same as tablet)
+		compact: 'var(--space-performance-sm)', // 16px mobile
+		standard: 'var(--space-performance-md)', // 26px tablet
+		expanded: 'var(--space-performance-md)' // 26px desktop (Tufte: same as tablet)
 	},
 
 	// Component padding (cards, metrics)
 	// Desktop: sm (not md) - maximize data visibility at all sizes
 	component: {
 		compact: '0.75rem', // 12px mobile - balanced touch/density
-		standard: 'var(--space-sm)', // 16px tablet
-		expanded: 'var(--space-sm)' // 16px desktop (Tufte: tight)
+		standard: 'var(--space-performance-sm)', // 16px tablet
+		expanded: 'var(--space-performance-sm)' // 16px desktop (Tufte: tight)
 	},
 
 	// Cell padding (table cells, grid items)

@@ -207,28 +207,28 @@
 <style>
 	.animation-renderer {
 		max-width: 900px;
-		margin: var(--space-2xl, 3rem) auto;
-		padding: 0 var(--space-lg, 1.5rem);
+		margin: var(--space-performance-2xl, 3rem) auto;
+		padding: 0 var(--space-performance-lg, 1.5rem);
 	}
 
 	.animation-label {
 		display: flex;
 		align-items: center;
-		gap: var(--space-sm, 0.5rem);
-		font-family: var(--font-mono, monospace);
-		font-size: var(--text-caption, 0.75rem);
-		color: var(--color-fg-muted, #666);
+		gap: var(--space-performance-sm, 0.5rem);
+		font-family: var(--font-performance-mono, monospace);
+		font-size: var(--text-performance-caption, 0.75rem);
+		color: var(--color-performance-fg-muted, #666);
 		text-transform: uppercase;
 		letter-spacing: 0.1em;
-		margin-bottom: var(--space-md, 1rem);
+		margin-bottom: var(--space-performance-md, 1rem);
 	}
 
 	.label-icon {
-		color: var(--color-success, #22c55e);
+		color: var(--color-performance-success, #22c55e);
 	}
 
 	.animation-container {
-		border-radius: var(--radius-lg, 0.75rem);
+		border-radius: var(--radius-performance-scale-lg, 0.75rem);
 		overflow: hidden;
 		position: relative;
 	}
@@ -239,7 +239,7 @@
 		left: 0;
 		right: 0;
 		text-align: center;
-		font-family: var(--font-mono, monospace);
+		font-family: var(--font-performance-mono, monospace);
 		font-size: 11px;
 		color: #666;
 		letter-spacing: 0.15em;
@@ -277,8 +277,8 @@
 	.controls {
 		display: flex;
 		align-items: center;
-		gap: var(--space-sm, 0.5rem);
-		margin-top: var(--space-md, 1rem);
+		gap: var(--space-performance-sm, 0.5rem);
+		margin-top: var(--space-performance-md, 1rem);
 	}
 
 	.control-btn {
@@ -287,17 +287,17 @@
 		justify-content: center;
 		width: 40px;
 		height: 40px;
-		background: var(--color-bg-surface, #1a1a1a);
+		background: var(--color-performance-bg-surface, #1a1a1a);
 		border: 1px solid var(--color-border-subtle, #333);
-		border-radius: var(--radius-md, 0.5rem);
-		color: var(--color-fg-secondary, #999);
+		border-radius: var(--radius-performance-scale-md, 0.5rem);
+		color: var(--color-performance-fg-secondary, #999);
 		cursor: pointer;
 		transition: all 0.15s ease;
 	}
 
 	.control-btn:hover {
-		background: var(--color-bg-elevated, #222);
-		color: var(--color-fg-primary, #fff);
+		background: var(--color-performance-bg-elevated, #222);
+		color: var(--color-performance-fg-primary, #fff);
 	}
 
 	.icon-play, .icon-pause, .icon-reset {
@@ -306,17 +306,17 @@
 	}
 
 	.progress-label {
-		font-family: var(--font-mono, monospace);
-		font-size: var(--text-caption, 0.75rem);
-		color: var(--color-fg-muted, #666);
-		margin-left: var(--space-sm, 0.5rem);
+		font-family: var(--font-performance-mono, monospace);
+		font-size: var(--text-performance-caption, 0.75rem);
+		color: var(--color-performance-fg-muted, #666);
+		margin-left: var(--space-performance-sm, 0.5rem);
 	}
 
 	.caption {
-		font-size: var(--text-body-sm, 0.875rem);
-		color: var(--color-fg-muted, #666);
+		font-size: var(--text-performance-body-sm, 0.875rem);
+		color: var(--color-performance-fg-muted, #666);
 		text-align: center;
-		margin-top: var(--space-md, 1rem);
+		margin-top: var(--space-performance-md, 1rem);
 		margin-bottom: 0;
 	}
 </style>

@@ -118,82 +118,82 @@
 
 <style>
   .badge-compact {
-    background: var(--color-hover);
-    border: 1px solid var(--color-border-emphasis);
-    border-radius: var(--radius-full);
-    font-size: var(--text-caption);
-    color: var(--color-fg-muted);
+    background: var(--color-performance-hover);
+    border: 1px solid var(--color-performance-border-emphasis);
+    border-radius: var(--radius-performance-scale-full);
+    font-size: var(--text-performance-caption);
+    color: var(--color-performance-fg-muted);
   }
 
   .badge-icon {
-    color: var(--color-fg-muted);
+    color: var(--color-performance-fg-muted);
   }
 
   .badge-label {
-    color: var(--color-fg-secondary);
+    color: var(--color-performance-fg-secondary);
   }
 
   .badge-separator {
-    color: var(--color-fg-muted);
+    color: var(--color-performance-fg-muted);
   }
 
   .badge-text {
-    color: var(--color-fg-tertiary);
+    color: var(--color-performance-fg-tertiary);
   }
 
   .badge-full {
-    background: var(--color-bg-subtle);
-    border-radius: var(--radius-lg);
+    background: var(--color-performance-bg-subtle);
+    border-radius: var(--radius-performance-scale-lg);
   }
 
   .stats-icon {
-    color: var(--color-fg-muted);
+    color: var(--color-performance-fg-muted);
   }
 
   .stats-title {
-    font-size: var(--text-body-lg);
+    font-size: var(--text-performance-body-lg);
     font-weight: 600;
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
   }
 
   .stats-subtitle {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-tertiary);
+    font-size: var(--text-performance-body-sm);
+    color: var(--color-performance-fg-tertiary);
   }
 
   .metric-card {
-    background: var(--color-hover);
-    border-radius: var(--radius-sm);
+    background: var(--color-performance-hover);
+    border-radius: var(--radius-performance-scale-sm);
   }
 
   .metric-value {
-    font-size: var(--text-h3);
+    font-size: var(--text-performance-h3);
     font-weight: 700;
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
   }
 
   .metric-label {
-    font-size: var(--text-caption);
-    color: var(--color-fg-muted);
+    font-size: var(--text-performance-caption);
+    color: var(--color-performance-fg-muted);
   }
 
   .footer-text {
-    font-size: var(--text-caption);
-    color: var(--color-fg-tertiary);
+    font-size: var(--text-performance-caption);
+    color: var(--color-performance-fg-tertiary);
   }
 
   .footer-strong {
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
   }
 
   .methodology-link {
-    font-size: var(--text-caption);
-    color: var(--color-fg-muted);
-    transition: color var(--duration-standard) var(--ease-standard);
+    font-size: var(--text-performance-caption);
+    color: var(--color-performance-fg-muted);
+    transition: color var(--duration-performance-standard) var(--ease-performance-standard);
   }
 
   .methodology-link:hover {
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
     text-decoration: underline;
   }
 

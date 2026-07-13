@@ -33,10 +33,10 @@
 
 	// Get bar color based on performance vs league average
 	function getBarColor(ppp: number): string {
-		if (ppp >= leagueAvgPPP + 0.2) return 'var(--color-success)';
-		if (ppp >= leagueAvgPPP) return 'var(--color-data-1)';
-		if (ppp >= leagueAvgPPP - 0.1) return 'var(--color-warning)';
-		return 'var(--color-error)';
+		if (ppp >= leagueAvgPPP + 0.2) return 'var(--color-performance-success)';
+		if (ppp >= leagueAvgPPP) return 'var(--color-performance-data-1)';
+		if (ppp >= leagueAvgPPP - 0.1) return 'var(--color-performance-warning)';
+		return 'var(--color-performance-error)';
 	}
 
 	// Get duo display name
@@ -65,7 +65,7 @@
 				y1="20"
 				x2={labelWidth + scalePPP(leagueAvgPPP)}
 				y2={chartHeight - 10}
-				stroke="var(--color-fg-muted)"
+				stroke="var(--color-performance-fg-muted)"
 				stroke-width="1"
 				stroke-dasharray="4,4"
 			/>
@@ -102,7 +102,7 @@
 					y={y}
 					width={chartWidth - labelWidth - rightMargin}
 					height={barHeight}
-					fill="var(--color-bg-surface)"
+					fill="var(--color-performance-bg-surface)"
 					rx="4"
 				/>
 
@@ -143,19 +143,19 @@
 		<!-- Legend -->
 		<div class="chart-legend">
 			<span class="legend-item">
-				<span class="legend-dot" style="background: var(--color-success)"></span>
+				<span class="legend-dot" style="background: var(--color-performance-success)"></span>
 				Elite (+0.2)
 			</span>
 			<span class="legend-item">
-				<span class="legend-dot" style="background: var(--color-data-1)"></span>
+				<span class="legend-dot" style="background: var(--color-performance-data-1)"></span>
 				Above Avg
 			</span>
 			<span class="legend-item">
-				<span class="legend-dot" style="background: var(--color-warning)"></span>
+				<span class="legend-dot" style="background: var(--color-performance-warning)"></span>
 				Near Avg
 			</span>
 			<span class="legend-item">
-				<span class="legend-dot" style="background: var(--color-error)"></span>
+				<span class="legend-dot" style="background: var(--color-performance-error)"></span>
 				Below Avg
 			</span>
 		</div>
@@ -164,23 +164,23 @@
 
 <style>
 	.duo-chart {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
-		padding: var(--space-md);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
+		padding: var(--space-performance-md);
 	}
 
 	.chart-title {
-		font-size: var(--text-body-lg);
+		font-size: var(--text-performance-body-lg);
 		font-weight: 600;
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-md);
+		color: var(--color-performance-fg-primary);
+		margin-bottom: var(--space-performance-md);
 	}
 
 	.empty-message {
-		color: var(--color-fg-muted);
-		font-size: var(--text-body-sm);
+		color: var(--color-performance-fg-muted);
+		font-size: var(--text-performance-body-sm);
 		text-align: center;
-		padding: var(--space-lg);
+		padding: var(--space-performance-lg);
 	}
 
 	.chart-svg {
@@ -191,19 +191,19 @@
 
 	.chart-label {
 		font-size: 12px;
-		fill: var(--color-fg-secondary);
+		fill: var(--color-performance-fg-secondary);
 		font-family: inherit;
 	}
 
 	.chart-label-small {
 		font-size: 10px;
-		fill: var(--color-fg-muted);
+		fill: var(--color-performance-fg-muted);
 		font-family: inherit;
 	}
 
 	.chart-value {
 		font-size: 12px;
-		fill: var(--color-fg-primary);
+		fill: var(--color-performance-fg-primary);
 		font-weight: 600;
 		font-family: inherit;
 	}
@@ -214,32 +214,32 @@
 	}
 
 	.chart-delta.positive {
-		fill: var(--color-success);
+		fill: var(--color-performance-success);
 	}
 
 	.chart-delta.negative {
-		fill: var(--color-error);
+		fill: var(--color-performance-error);
 	}
 
 	.chart-legend {
 		display: flex;
 		flex-wrap: wrap;
-		gap: var(--space-md);
-		margin-top: var(--space-md);
-		padding-top: var(--space-sm);
+		gap: var(--space-performance-md);
+		margin-top: var(--space-performance-md);
+		padding-top: var(--space-performance-sm);
 	}
 
 	.legend-item {
 		display: flex;
 		align-items: center;
-		gap: var(--space-xs);
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		gap: var(--space-performance-xs);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.legend-dot {
 		width: 8px;
 		height: 8px;
-		border-radius: var(--radius-full);
+		border-radius: var(--radius-performance-scale-full);
 	}
 </style>

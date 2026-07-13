@@ -138,7 +138,7 @@
 
   .hero {
     position: relative;
-    padding: var(--space-xl) var(--space-md);
+    padding: var(--space-performance-xl) var(--space-performance-md);
     overflow: hidden;
   }
 
@@ -150,48 +150,48 @@
 
   /* Masthead */
   .masthead {
-    margin-bottom: var(--space-md);
+    margin-bottom: var(--space-performance-md);
   }
 
   .masthead-text {
-    font-size: var(--text-body);
-    font-weight: var(--font-medium);
-    letter-spacing: var(--tracking-widest);
-    color: var(--color-fg-secondary);
+    font-size: var(--text-performance-body);
+    font-weight: var(--font-performance-medium);
+    letter-spacing: var(--tracking-performance-widest);
+    color: var(--color-performance-fg-secondary);
   }
 
   /* Headline */
   .headline {
-    font-size: var(--text-display);
-    font-weight: var(--font-bold);
-    color: var(--color-fg-primary);
-    line-height: var(--leading-tight);
-    margin: 0 0 var(--space-sm) 0;
+    font-size: var(--text-performance-display);
+    font-weight: var(--font-performance-bold);
+    color: var(--color-performance-fg-primary);
+    line-height: var(--leading-performance-tight);
+    margin: 0 0 var(--space-performance-sm) 0;
     text-align: center;
   }
 
   /* Subheadline */
   .subheadline {
-    font-size: var(--text-body-lg);
-    color: var(--color-fg-muted);
+    font-size: var(--text-performance-body-lg);
+    color: var(--color-performance-fg-muted);
     max-width: 700px;
-    margin: 0 auto var(--space-lg);
-    line-height: var(--leading-relaxed);
+    margin: 0 auto var(--space-performance-lg);
+    line-height: var(--leading-performance-relaxed);
   }
 
   /* Paths Container */
   .paths-container {
     display: grid;
     grid-template-columns: 1fr auto 1fr;
-    gap: var(--space-md);
+    gap: var(--space-performance-md);
     align-items: stretch;
-    margin-bottom: var(--space-lg);
+    margin-bottom: var(--space-performance-lg);
   }
 
   @media (max-width: 768px) {
     .paths-container {
       grid-template-columns: 1fr;
-      gap: var(--space-sm);
+      gap: var(--space-performance-sm);
     }
   }
 
@@ -204,36 +204,36 @@
   .path-card {
     display: flex;
     flex-direction: column;
-    padding: var(--space-md);
+    padding: var(--space-performance-md);
     /* Glass Design System - "The Automation Layer" */
-    background-color: var(--glass-bg-light);
-    backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
-    border: 1px solid var(--glass-border-light);
-    border-radius: var(--radius-lg);
+    background-color: var(--glass-performance-bg-light);
+    backdrop-filter: blur(var(--glass-performance-blur-md)) var(--glass-performance-saturate-md);
+    border: 1px solid var(--glass-performance-border-light);
+    border-radius: var(--radius-performance-scale-lg);
     text-decoration: none;
-    transition: all var(--duration-standard) var(--ease-standard);
+    transition: all var(--duration-performance-standard) var(--ease-performance-standard);
   }
 
   /* Experiments: Zuhandenheit — Engaged practice, participatory lift */
   .path-card.experiments {
-    border-color: var(--glass-border-light);
+    border-color: var(--glass-performance-border-light);
   }
 
   .path-card.experiments:hover {
-    border-color: var(--glass-border-medium);
-    background-color: var(--glass-bg-medium);
+    border-color: var(--glass-performance-border-medium);
+    background-color: var(--glass-performance-bg-medium);
     transform: translateY(-4px); /* Prominent lift — participatory */
-    box-shadow: var(--glass-shadow-md);
+    box-shadow: var(--glass-performance-shadow-md);
   }
 
   /* Papers: Vorhandenheit — Detached analysis, contemplative stillness */
   .path-card.papers {
-    border-color: var(--glass-border-light);
+    border-color: var(--glass-performance-border-light);
   }
 
   .path-card.papers:hover {
-    border-color: var(--glass-border-light); /* Minimal change */
-    background-color: var(--glass-bg-subtle);
+    border-color: var(--glass-performance-border-light); /* Minimal change */
+    background-color: var(--glass-performance-bg-subtle);
     transform: translateY(-1px); /* Subtle — observational */
     box-shadow: none;
   }
@@ -241,34 +241,34 @@
   .path-icon {
     width: 48px;
     height: 48px;
-    margin: 0 auto var(--space-sm);
-    color: var(--color-fg-muted);
-    transition: color var(--duration-micro) var(--ease-standard);
+    margin: 0 auto var(--space-performance-sm);
+    color: var(--color-performance-fg-muted);
+    transition: color var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   .path-card:hover .path-icon {
-    color: var(--color-fg-secondary);
+    color: var(--color-performance-fg-secondary);
   }
 
   .path-title {
-    font-size: var(--text-h3);
-    font-weight: var(--font-semibold);
-    color: var(--color-fg-primary);
-    margin: 0 0 var(--space-xs) 0;
+    font-size: var(--text-performance-h3);
+    font-weight: var(--font-performance-semibold);
+    color: var(--color-performance-fg-primary);
+    margin: 0 0 var(--space-performance-xs) 0;
   }
 
   .path-mode {
-    font-size: var(--text-caption);
+    font-size: var(--text-performance-caption);
     font-style: italic;
-    color: var(--color-fg-muted);
-    margin: 0 0 var(--space-sm) 0;
-    letter-spacing: var(--tracking-wide);
+    color: var(--color-performance-fg-muted);
+    margin: 0 0 var(--space-performance-sm) 0;
+    letter-spacing: var(--tracking-performance-wide);
   }
 
   .path-description {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-secondary);
-    line-height: var(--leading-relaxed);
+    font-size: var(--text-performance-body-sm);
+    color: var(--color-performance-fg-secondary);
+    line-height: var(--leading-performance-relaxed);
     margin: 0;
     flex-grow: 1;
   }
@@ -276,22 +276,22 @@
   .path-cta {
     display: inline-flex;
     align-items: center;
-    gap: var(--space-xs);
-    margin-top: var(--space-md);
-    font-size: var(--text-body-sm);
-    font-weight: var(--font-medium);
-    color: var(--color-fg-tertiary);
-    transition: color var(--duration-micro) var(--ease-standard);
+    gap: var(--space-performance-xs);
+    margin-top: var(--space-performance-md);
+    font-size: var(--text-performance-body-sm);
+    font-weight: var(--font-performance-medium);
+    color: var(--color-performance-fg-tertiary);
+    transition: color var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   .path-card:hover .path-cta {
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
   }
 
   .cta-arrow {
     width: 16px;
     height: 16px;
-    transition: transform var(--duration-micro) var(--ease-standard);
+    transition: transform var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   /* Experiments arrow: continuous motion suggestion */
@@ -312,32 +312,32 @@
   }
 
   .divider-text {
-    font-size: var(--text-caption);
-    color: var(--color-fg-muted);
+    font-size: var(--text-performance-caption);
+    color: var(--color-performance-fg-muted);
     font-style: italic;
   }
 
   @media (max-width: 768px) {
     .path-divider {
-      padding: var(--space-xs) 0;
+      padding: var(--space-performance-xs) 0;
     }
 
     .divider-text::before,
     .divider-text::after {
       content: '—';
-      margin: 0 var(--space-sm);
-      color: var(--color-border-default);
+      margin: 0 var(--space-performance-sm);
+      color: var(--color-performance-border-default);
     }
   }
 
   /* Hermeneutic Note */
   .hermeneutic-note {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-muted);
+    font-size: var(--text-performance-body-sm);
+    color: var(--color-performance-fg-muted);
     font-style: italic;
     max-width: 600px;
     margin: 0 auto;
-    line-height: var(--leading-relaxed);
+    line-height: var(--leading-performance-relaxed);
   }
 
   /* ==========================================================================

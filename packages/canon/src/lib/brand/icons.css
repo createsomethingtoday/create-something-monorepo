@@ -10,7 +10,7 @@
 
   Usage:
     <span class="icon-cube icon-md"></span>
-    <span class="icon-cube icon-lg" style="color: var(--color-fg-secondary);"></span>
+    <span class="icon-cube icon-lg" style="color: var(--color-performance-fg-secondary);"></span>
 
   The icon uses currentColor, so it inherits from the parent's color property.
 */
@@ -111,7 +111,7 @@
 
 /* Pulse animation - subtle breathing effect */
 .icon-pulse {
-  animation: icon-pulse var(--duration-complex, 500ms) var(--ease-standard, ease) infinite alternate;
+  animation: icon-pulse var(--duration-performance-complex, 500ms) var(--ease-performance-standard, ease) infinite alternate;
 }
 
 @keyframes icon-pulse {
@@ -125,7 +125,7 @@
 
 /* Spin animation - loading state */
 .icon-spin {
-  animation: icon-spin calc(var(--duration-complex, 500ms) * 2) linear infinite;
+  animation: icon-spin calc(var(--duration-performance-complex, 500ms) * 2) linear infinite;
 }
 
 @keyframes icon-spin {

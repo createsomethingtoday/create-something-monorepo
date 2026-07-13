@@ -83,69 +83,69 @@
   </section>
 
 <style>
-  /* Page title - uses --text-h1 for internal pages */
+  /* Page title - uses --text-performance-h1 for internal pages */
   .page-title {
-    font-size: var(--text-h1);
-    font-weight: var(--font-bold);
-    color: var(--color-fg-primary);
+    font-size: var(--text-performance-h1);
+    font-weight: var(--font-performance-bold);
+    color: var(--color-performance-fg-primary);
   }
 
   .text-tertiary {
-    color: var(--color-fg-tertiary);
+    color: var(--color-performance-fg-tertiary);
   }
 
   .text-body-lg {
-    font-size: var(--text-body-lg);
+    font-size: var(--text-performance-body-lg);
   }
 
   .category-card {
-    background: var(--color-bg-surface);
-    border-radius: var(--radius-lg);
-    transition: border-color var(--duration-micro) var(--ease-standard);
+    background: var(--color-performance-bg-surface);
+    border-radius: var(--radius-performance-scale-lg);
+    transition: border-color var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   .category-card:hover {
-    border-color: var(--color-border-strong);
+    border-color: var(--color-performance-border-strong);
   }
 
   .category-title {
-    font-size: var(--text-h2);
+    font-size: var(--text-performance-h2);
     font-weight: 600;
-    color: var(--color-fg-primary);
-    transition: color var(--duration-micro) var(--ease-standard);
+    color: var(--color-performance-fg-primary);
+    transition: color var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   .group:hover .category-title {
-    color: var(--color-fg-secondary);
+    color: var(--color-performance-fg-secondary);
   }
 
   .category-count {
-    font-size: var(--text-body);
+    font-size: var(--text-performance-body);
     font-weight: 500;
-    color: var(--color-fg-tertiary);
-    transition: color var(--duration-micro) var(--ease-standard);
+    color: var(--color-performance-fg-tertiary);
+    transition: color var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   .group:hover .category-count {
-    color: var(--color-fg-secondary);
+    color: var(--color-performance-fg-secondary);
   }
 
   .category-arrow {
-    color: var(--color-fg-tertiary);
-    transition: all var(--duration-micro) var(--ease-standard);
+    color: var(--color-performance-fg-tertiary);
+    transition: all var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   .group:hover .category-arrow {
-    color: var(--color-fg-secondary);
+    color: var(--color-performance-fg-secondary);
     transform: translateX(4px);
   }
 
   .category-overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(to bottom right, var(--color-hover), transparent);
+    background: linear-gradient(to bottom right, var(--color-performance-hover), transparent);
     opacity: 0;
-    transition: opacity var(--duration-micro) var(--ease-standard);
+    transition: opacity var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   .group:hover .category-overlay {
@@ -155,8 +155,8 @@
   .animate-reveal {
     opacity: 0;
     transform: translateY(20px);
-    animation: reveal var(--duration-complex) var(--ease-standard) forwards;
-    animation-delay: calc(var(--delay, 0) * var(--cascade-group));
+    animation: reveal var(--duration-performance-complex) var(--ease-performance-standard) forwards;
+    animation-delay: calc(var(--delay, 0) * var(--cascade-performance-group));
   }
 
   @keyframes reveal {

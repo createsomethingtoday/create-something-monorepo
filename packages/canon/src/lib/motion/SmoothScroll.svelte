@@ -350,7 +350,7 @@
 	}
 
 	.smooth-scroll-wrapper:focus-visible {
-		outline: 2px solid var(--color-focus, rgba(255, 255, 255, 0.5));
+		outline: 2px solid var(--color-performance-focus, rgba(255, 255, 255, 0.5));
 		outline-offset: -2px;
 	}
 
@@ -425,17 +425,17 @@
 
 	.smooth-scroll-wrapper.native::-webkit-scrollbar-track,
 	.smooth-scroll-wrapper.reduced-motion::-webkit-scrollbar-track {
-		background: var(--color-bg-subtle, #1a1a1a);
+		background: var(--color-performance-bg-subtle, #1a1a1a);
 	}
 
 	.smooth-scroll-wrapper.native::-webkit-scrollbar-thumb,
 	.smooth-scroll-wrapper.reduced-motion::-webkit-scrollbar-thumb {
-		background: var(--color-border-emphasis, rgba(255, 255, 255, 0.2));
-		border-radius: var(--radius-full, 9999px);
+		background: var(--color-performance-border-emphasis, rgba(255, 255, 255, 0.2));
+		border-radius: var(--radius-performance-scale-full, 9999px);
 	}
 
 	.smooth-scroll-wrapper.native::-webkit-scrollbar-thumb:hover,
 	.smooth-scroll-wrapper.reduced-motion::-webkit-scrollbar-thumb:hover {
-		background: var(--color-border-strong, rgba(255, 255, 255, 0.3));
+		background: var(--color-performance-border-strong, rgba(255, 255, 255, 0.3));
 	}
 </style>

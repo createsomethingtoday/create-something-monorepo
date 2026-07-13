@@ -83,7 +83,7 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: var(--space-xs);
+		gap: var(--space-performance-xs);
 	}
 
 	.cube-icon {
@@ -93,24 +93,24 @@
 
 	/* Face colors following Canon opacities */
 	.face-top {
-		fill: var(--color-fg-primary);
+		fill: var(--color-performance-fg-primary);
 		opacity: 1;
 	}
 
 	.face-left {
-		fill: var(--color-fg-primary);
+		fill: var(--color-performance-fg-primary);
 		opacity: 0.6;
 	}
 
 	.face-right {
-		fill: var(--color-fg-primary);
+		fill: var(--color-performance-fg-primary);
 		opacity: 0.3;
 	}
 
 	/* Loading message */
 	.loader-message {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	/* ==========================================================================
@@ -119,7 +119,7 @@
 	   ========================================================================== */
 
 	.loader-spin .cube-icon {
-		animation: loader-spin calc(var(--duration-complex, 500ms) * 2) linear infinite;
+		animation: loader-spin calc(var(--duration-performance-complex, 500ms) * 2) linear infinite;
 	}
 
 	@keyframes loader-spin {
@@ -137,7 +137,7 @@
 	   ========================================================================== */
 
 	.loader-pulse .cube-icon {
-		animation: loader-pulse var(--duration-complex, 500ms) var(--ease-standard) infinite alternate;
+		animation: loader-pulse var(--duration-performance-complex, 500ms) var(--ease-performance-standard) infinite alternate;
 	}
 
 	@keyframes loader-pulse {
@@ -157,17 +157,17 @@
 	   ========================================================================== */
 
 	.loader-assemble .face-top {
-		animation: face-assemble var(--duration-complex, 500ms) var(--ease-standard) infinite;
+		animation: face-assemble var(--duration-performance-complex, 500ms) var(--ease-performance-standard) infinite;
 		animation-delay: 0ms;
 	}
 
 	.loader-assemble .face-left {
-		animation: face-assemble var(--duration-complex, 500ms) var(--ease-standard) infinite;
+		animation: face-assemble var(--duration-performance-complex, 500ms) var(--ease-performance-standard) infinite;
 		animation-delay: 150ms;
 	}
 
 	.loader-assemble .face-right {
-		animation: face-assemble var(--duration-complex, 500ms) var(--ease-standard) infinite;
+		animation: face-assemble var(--duration-performance-complex, 500ms) var(--ease-performance-standard) infinite;
 		animation-delay: 300ms;
 	}
 

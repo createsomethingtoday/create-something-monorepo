@@ -29,7 +29,7 @@
   max-width: 13ch;
   color: var(--color-performance-ink, #090909);
   font-size: clamp(4rem, 7vw, 5.45rem);
-  font-weight: var(--font-medium);
+  font-weight: var(--font-performance-medium);
   line-height: 0.98;
   letter-spacing: 0;
   text-wrap: balance;
@@ -123,7 +123,7 @@
   color: var(--color-performance-muted, #5e6268);
   padding: 0.36rem 0.62rem;
   font-size: 0.76rem;
-  font-weight: var(--font-semibold);
+  font-weight: var(--font-performance-semibold);
   line-height: 1.15;
 }
 
@@ -203,16 +203,16 @@
   color: var(--color-performance-muted, #5e6268);
   min-height: 1.9rem;
   padding: 0.36rem 0.62rem;
-  font-family: var(--font-mono);
+  font-family: var(--font-performance-mono);
   font-size: 0.72rem;
-  font-weight: var(--font-medium);
+  font-weight: var(--font-performance-medium);
   line-height: 1.15;
 }
 
 .intake-path strong {
   color: var(--color-performance-ink, #090909);
   font-size: 1.12rem;
-  font-weight: var(--font-medium);
+  font-weight: var(--font-performance-medium);
   line-height: 1.15;
 }
 
@@ -242,7 +242,7 @@
   max-width: 720px;
   color: var(--color-performance-ink, #090909);
   font-size: 3.1rem;
-  font-weight: var(--font-medium);
+  font-weight: var(--font-performance-medium);
   line-height: 1.02;
   letter-spacing: 0;
   text-wrap: balance;
@@ -308,9 +308,9 @@
 .runbook-card > span,
 .access-table article > span {
   color: var(--color-performance-muted, #5e6268);
-  font-family: var(--font-mono);
+  font-family: var(--font-performance-mono);
   font-size: 0.72rem;
-  font-weight: var(--font-medium);
+  font-weight: var(--font-performance-medium);
   text-transform: uppercase;
   letter-spacing: 0;
   line-height: 1.12;
@@ -319,7 +319,7 @@
 .artifact-link strong {
   color: var(--color-performance-ink, #090909);
   font-size: 1.18rem;
-  font-weight: var(--font-medium);
+  font-weight: var(--font-performance-medium);
   line-height: 1.18;
   text-wrap: balance;
 }
@@ -344,7 +344,7 @@
   margin: 0;
   color: var(--color-performance-ink, #090909);
   font-size: 3.1rem;
-  font-weight: var(--font-medium);
+  font-weight: var(--font-performance-medium);
   line-height: 1.02;
   letter-spacing: 0;
   text-wrap: balance;
@@ -440,7 +440,7 @@
 .follow-up-list strong,
 .delivery-agent__form label {
   color: var(--color-performance-muted, #5e6268);
-  font-family: var(--font-mono);
+  font-family: var(--font-performance-mono);
   font-size: 0.74rem;
   text-transform: uppercase;
   letter-spacing: 0;
@@ -553,7 +553,7 @@
   margin: 0;
   color: var(--color-performance-ink, #090909);
   font-size: 1.18rem;
-  font-weight: var(--font-medium);
+  font-weight: var(--font-performance-medium);
   line-height: 1.18;
   letter-spacing: 0;
   text-wrap: balance;
@@ -598,7 +598,7 @@
 
 .runbook-card code {
   color: var(--color-performance-ink, #090909);
-  font-family: var(--font-mono);
+  font-family: var(--font-performance-mono);
   font-size: 0.9rem;
   line-height: 1.65;
   white-space: pre;

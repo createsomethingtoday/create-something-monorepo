@@ -125,34 +125,34 @@
 	.inline-error {
 		display: flex;
 		align-items: flex-start;
-		gap: var(--space-sm);
-		padding: var(--space-sm);
-		border-radius: var(--radius-md);
+		gap: var(--space-performance-sm);
+		padding: var(--space-performance-sm);
+		border-radius: var(--radius-performance-scale-md);
 		border: 1px solid;
 	}
 
 	.inline-error--sm {
-		padding: var(--space-xs);
-		gap: var(--space-xs);
+		padding: var(--space-performance-xs);
+		gap: var(--space-performance-xs);
 	}
 
 	/* Type variants */
 	.inline-error--error {
-		background: var(--color-error-muted);
-		border-color: var(--color-error-border);
-		color: var(--color-error);
+		background: var(--color-performance-error-muted);
+		border-color: var(--color-performance-error-border);
+		color: var(--color-performance-error);
 	}
 
 	.inline-error--warning {
-		background: var(--color-warning-muted);
-		border-color: var(--color-warning-border);
-		color: var(--color-warning);
+		background: var(--color-performance-warning-muted);
+		border-color: var(--color-performance-warning-border);
+		color: var(--color-performance-warning);
 	}
 
 	.inline-error--info {
-		background: var(--color-info-muted);
-		border-color: var(--color-info-border);
-		color: var(--color-info);
+		background: var(--color-performance-info-muted);
+		border-color: var(--color-performance-info-border);
+		color: var(--color-performance-info);
 	}
 
 	.error-icon svg {
@@ -172,30 +172,30 @@
 	}
 
 	.error-message {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 		margin: 0;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.inline-error--sm .error-message {
-		font-size: var(--text-caption);
+		font-size: var(--text-performance-caption);
 	}
 
 	.error-code {
 		font-family: monospace;
 		font-size: 0.85em;
-		background: var(--color-bg-subtle);
+		background: var(--color-performance-bg-subtle);
 		padding: 0.1em 0.4em;
-		border-radius: var(--radius-sm);
-		margin-left: var(--space-xs);
+		border-radius: var(--radius-performance-scale-sm);
+		margin-left: var(--space-performance-xs);
 	}
 
 	.error-action {
-		margin-top: var(--space-xs);
+		margin-top: var(--space-performance-xs);
 	}
 
 	.error-action :global(button) {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 		text-decoration: underline;
 		background: none;
 		border: none;
@@ -218,19 +218,19 @@
 		padding: 0;
 		background: transparent;
 		border: none;
-		border-radius: var(--radius-sm);
+		border-radius: var(--radius-performance-scale-sm);
 		cursor: pointer;
-		color: var(--color-fg-secondary);
-		transition: all var(--duration-micro) var(--ease-standard);
+		color: var(--color-performance-fg-secondary);
+		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.error-dismiss:hover {
-		background: var(--color-hover);
-		color: var(--color-fg-primary);
+		background: var(--color-performance-hover);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.error-dismiss:focus-visible {
-		outline: 2px solid var(--color-focus);
+		outline: 2px solid var(--color-performance-focus);
 		outline-offset: 2px;
 	}
 

@@ -257,9 +257,9 @@
   .failed-boundary small,
   .measurement-plan span,
   .runtime-evidence span {
-    font-family: var(--font-mono);
+    font-family: var(--font-performance-mono);
     font-size: 0.72rem;
-    font-weight: var(--font-semibold, 600);
+    font-weight: var(--font-performance-semibold, 600);
     text-transform: uppercase;
   }
 
@@ -289,7 +289,7 @@
   .failed-boundary h2 {
     max-width: 14ch;
     margin: 0;
-    font-family: var(--font-performance-display, var(--font-sans));
+    font-family: var(--font-performance-display, var(--font-performance-sans));
     font-size: clamp(2.6rem, 5vw, 5.2rem);
     font-weight: var(--font-performance-display-weight, 500);
     letter-spacing: var(--tracking-performance-display, -0.03em);
@@ -319,7 +319,7 @@
   }
   .field-result__metrics dd {
     margin: auto 0 0;
-    font-family: var(--font-mono);
+    font-family: var(--font-performance-mono);
     font-size: clamp(2rem, 4vw, 3.5rem);
     font-variant-numeric: tabular-nums;
   }
@@ -345,7 +345,7 @@
     color: #fff;
   }
   .failed-boundary__status strong {
-    font-family: var(--font-mono);
+    font-family: var(--font-performance-mono);
     font-size: clamp(3rem, 6vw, 6rem);
     font-variant-numeric: tabular-nums;
   }
@@ -397,7 +397,7 @@
     color: #fff;
   }
   .measurement-plan__formula strong {
-    font-family: var(--font-mono);
+    font-family: var(--font-performance-mono);
     font-size: clamp(1.15rem, 2.4vw, 2rem);
     line-height: 1.35;
   }

@@ -370,7 +370,7 @@
 					</div>
 					<div class="responsive-table-card-row">
 						<span class="responsive-table-card-label">Canon</span>
-						<span class="responsive-table-card-value text-success">var(--radius-*)</span>
+						<span class="responsive-table-card-value text-success">var(--radius-performance-scale-*)</span>
 					</div>
 				</div>
 			</div>
@@ -385,7 +385,7 @@
 					</div>
 					<div class="responsive-table-card-row">
 						<span class="responsive-table-card-label">Canon</span>
-						<span class="responsive-table-card-value text-success">var(--color-*)</span>
+						<span class="responsive-table-card-value text-success">var(--color-performance-*)</span>
 					</div>
 				</div>
 			</div>
@@ -400,7 +400,7 @@
 					</div>
 					<div class="responsive-table-card-row">
 						<span class="responsive-table-card-label">Canon</span>
-						<span class="responsive-table-card-value text-success">var(--space-*)</span>
+						<span class="responsive-table-card-value text-success">var(--space-performance-*)</span>
 					</div>
 				</div>
 			</div>
@@ -415,7 +415,7 @@
 					</div>
 					<div class="responsive-table-card-row">
 						<span class="responsive-table-card-label">Canon</span>
-						<span class="responsive-table-card-value text-success">var(--text-*)</span>
+						<span class="responsive-table-card-value text-success">var(--text-performance-*)</span>
 					</div>
 				</div>
 			</div>
@@ -430,7 +430,7 @@
 					</div>
 					<div class="responsive-table-card-row">
 						<span class="responsive-table-card-label">Canon</span>
-						<span class="responsive-table-card-value text-success">var(--shadow-*)</span>
+						<span class="responsive-table-card-value text-success">var(--shadow-performance-*)</span>
 					</div>
 				</div>
 			</div>
@@ -455,27 +455,27 @@
 					<tr>
 						<td class="font-medium">Border Radius</td>
 						<td class="text-error">✗ Avoid</td>
-						<td class="text-success">var(--radius-*)</td>
+						<td class="text-success">var(--radius-performance-scale-*)</td>
 					</tr>
 					<tr>
 						<td class="font-medium">Colors</td>
 						<td class="text-error">✗ Avoid</td>
-						<td class="text-success">var(--color-*)</td>
+						<td class="text-success">var(--color-performance-*)</td>
 					</tr>
 					<tr>
 						<td class="font-medium">Spacing</td>
 						<td class="text-warning">~ Acceptable</td>
-						<td class="text-success">var(--space-*)</td>
+						<td class="text-success">var(--space-performance-*)</td>
 					</tr>
 					<tr>
 						<td class="font-medium">Typography</td>
 						<td class="text-error">✗ Avoid</td>
-						<td class="text-success">var(--text-*)</td>
+						<td class="text-success">var(--text-performance-*)</td>
 					</tr>
 					<tr>
 						<td class="font-medium">Shadows</td>
 						<td class="text-error">✗ Avoid</td>
-						<td class="text-success">var(--shadow-*)</td>
+						<td class="text-success">var(--shadow-performance-*)</td>
 					</tr>
 				</tbody>
 			</table>
@@ -553,75 +553,75 @@
 <style>
 	/* Typography */
 	.text-xs-canon {
-		font-size: var(--text-caption);
+		font-size: var(--text-performance-caption);
 	}
 
 	.text-sm-canon {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.text-base-canon {
-		font-size: var(--text-body);
+		font-size: var(--text-performance-body);
 	}
 
 	.text-lg-canon {
-		font-size: var(--text-body-lg);
+		font-size: var(--text-performance-body-lg);
 	}
 
 	.text-xl-canon {
-		font-size: var(--text-h3);
+		font-size: var(--text-performance-h3);
 	}
 
 	.text-2xl-canon {
-		font-size: var(--text-h2);
+		font-size: var(--text-performance-h2);
 	}
 
 	/* Opacity as color tokens */
 	.opacity-40-canon {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.opacity-50-canon {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.opacity-60-canon {
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.opacity-70-canon {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.opacity-80-canon {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	/* Borders */
 	.border-canon {
-		border-color: var(--color-border-default);
+		border-color: var(--color-performance-border-default);
 	}
 
 	/* Backgrounds */
 	.bg-surface-subtle {
-		background: var(--color-bg-subtle);
+		background: var(--color-performance-bg-subtle);
 	}
 
 	/* Semantic colors - using Canon tokens */
 	.text-success {
-		color: var(--color-success);
+		color: var(--color-performance-success);
 	}
 
 	.text-error {
-		color: var(--color-error);
+		color: var(--color-performance-error);
 	}
 
 	.text-warning {
-		color: var(--color-warning);
+		color: var(--color-performance-warning);
 	}
 
 	/* Universal element styles */
 	section {
-		border-color: var(--color-border-default);
+		border-color: var(--color-performance-border-default);
 	}
 </style>

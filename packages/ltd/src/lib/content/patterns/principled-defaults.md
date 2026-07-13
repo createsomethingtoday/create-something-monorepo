@@ -91,11 +91,11 @@ Document the principle behind each value. If a value can't be traced,
 
 | Token | Value | Derivation |
 |---|---|---|
-| --space-xs | 10px | 16 × 0.618 ≈ 10 |
-| --space-sm | 16px | Base unit (1rem) |
-| --space-md | 26px | 16 × 1.618 ≈ 26 |
-| --space-lg | 42px | 16 × 2.618 ≈ 42 |
-| --space-xl | 68px | 16 × 4.236 ≈ 68 |
+| --space-performance-xs | 10px | 16 × 0.618 ≈ 10 |
+| --space-performance-sm | 16px | Base unit (1rem) |
+| --space-performance-md | 26px | 16 × 1.618 ≈ 26 |
+| --space-performance-lg | 42px | 16 × 2.618 ≈ 42 |
+| --space-performance-xl | 68px | 16 × 4.236 ≈ 68 |
 
 
 

@@ -93,15 +93,15 @@
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		padding: var(--space-2xl);
-		gap: var(--space-md);
+		padding: var(--space-performance-2xl);
+		gap: var(--space-performance-md);
 	}
 
 	.spinner {
 		width: 32px;
 		height: 32px;
-		border: 3px solid var(--color-border-default);
-		border-top-color: var(--color-fg-primary);
+		border: 3px solid var(--color-performance-border-default);
+		border-top-color: var(--color-performance-fg-primary);
 		border-radius: 50%;
 		animation: spin 0.8s linear infinite;
 	}
@@ -114,8 +114,8 @@
 
 	.loading-text,
 	.redirect-text {
-		font-size: var(--text-body);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body);
+		color: var(--color-performance-fg-tertiary);
 		margin: 0;
 	}
 </style>

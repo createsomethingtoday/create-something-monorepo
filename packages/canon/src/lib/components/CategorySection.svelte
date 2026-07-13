@@ -92,17 +92,17 @@
 <style>
   /* Section */
   .category-section {
-    background: var(--color-bg-pure);
+    background: var(--color-performance-bg-pure);
   }
 
   .section-title {
-    font-size: var(--text-body-lg);
-    color: var(--color-fg-secondary);
+    font-size: var(--text-performance-body-lg);
+    color: var(--color-performance-fg-secondary);
   }
 
   @media (min-width: 768px) {
     .section-title {
-      font-size: var(--text-h3);
+      font-size: var(--text-performance-h3);
     }
   }
 
@@ -112,8 +112,8 @@
     border: 1px solid var(--color-performance-line, #d7d7d2);
     border-radius: var(--radius-performance-sm, 4px);
     transition:
-      background var(--duration-standard) var(--ease-standard),
-      border-color var(--duration-standard) var(--ease-standard);
+      background var(--duration-performance-standard) var(--ease-performance-standard),
+      border-color var(--duration-performance-standard) var(--ease-performance-standard);
   }
 
   .category-card:hover {
@@ -123,29 +123,29 @@
 
   /* Category Name */
   .category-name {
-    font-size: var(--text-h3);
-    color: var(--color-fg-primary);
-    transition: color var(--duration-micro) var(--ease-standard);
+    font-size: var(--text-performance-h3);
+    color: var(--color-performance-fg-primary);
+    transition: color var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   .group:hover .category-name {
-    color: var(--color-fg-secondary);
+    color: var(--color-performance-fg-secondary);
   }
 
   /* Count */
   .category-count {
-    font-size: var(--text-body);
-    color: var(--color-fg-tertiary);
+    font-size: var(--text-performance-body);
+    color: var(--color-performance-fg-tertiary);
   }
 
   .category-count-hover {
-    font-size: var(--text-body);
-    color: var(--color-fg-secondary);
+    font-size: var(--text-performance-body);
+    color: var(--color-performance-fg-secondary);
   }
 
   /* Arrow */
   .arrow-icon {
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
   }
 
   /* Hover Overlay */
@@ -155,7 +155,7 @@
 
   /* Empty State */
   .empty-text {
-    color: var(--color-fg-tertiary);
+    color: var(--color-performance-fg-tertiary);
   }
 
   /* Staggered reveal animation - CSS only */

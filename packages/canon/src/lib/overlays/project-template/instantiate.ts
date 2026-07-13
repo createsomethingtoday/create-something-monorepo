@@ -617,7 +617,7 @@ function renderRegistryJson(manifest: CanonProjectOverlayManifest) {
 		sourcePackage: manifest.sourcePackage,
 		targetModalities: manifest.targetModalities,
 		registryItemIds: [
-			'token.canon-core',
+			'token.performance-core',
 			'component.clear-decision-panel',
 			'component.clear-proof-strip',
 			'template.canon-project-overlay-manifest',

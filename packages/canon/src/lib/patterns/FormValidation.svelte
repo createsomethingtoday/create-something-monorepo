@@ -108,23 +108,23 @@
 	.form-validation {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-md);
+		gap: var(--space-performance-md);
 	}
 
 	.validation-summary {
 		display: flex;
-		gap: var(--space-sm);
-		padding: var(--space-sm);
-		background: var(--color-error-muted);
-		border: 1px solid var(--color-error-border);
-		border-radius: var(--radius-md);
+		gap: var(--space-performance-sm);
+		padding: var(--space-performance-sm);
+		background: var(--color-performance-error-muted);
+		border: 1px solid var(--color-performance-error-border);
+		border-radius: var(--radius-performance-scale-md);
 	}
 
 	.summary-icon {
 		flex-shrink: 0;
 		width: 20px;
 		height: 20px;
-		color: var(--color-error);
+		color: var(--color-performance-error);
 	}
 
 	.summary-icon svg {
@@ -137,17 +137,17 @@
 	}
 
 	.summary-title {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 		font-weight: 500;
-		color: var(--color-error);
-		margin: 0 0 var(--space-xs) 0;
+		color: var(--color-performance-error);
+		margin: 0 0 var(--space-performance-xs) 0;
 	}
 
 	.summary-list {
 		margin: 0;
-		padding-left: var(--space-md);
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		padding-left: var(--space-performance-md);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.summary-list li {
@@ -155,17 +155,17 @@
 	}
 
 	.summary-link {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 		text-decoration: underline;
 		text-underline-offset: 2px;
 	}
 
 	.summary-link:hover {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.summary-link:focus-visible {
-		outline: 2px solid var(--color-focus);
+		outline: 2px solid var(--color-performance-focus);
 		outline-offset: 2px;
 		border-radius: 2px;
 	}
@@ -173,6 +173,6 @@
 	.validation-content {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-md);
+		gap: var(--space-performance-md);
 	}
 </style>

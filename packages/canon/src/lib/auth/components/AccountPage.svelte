@@ -131,7 +131,7 @@
 		display: flex;
 		align-items: flex-start;
 		justify-content: center;
-		padding: var(--space-xl) var(--space-lg);
+		padding: var(--space-performance-xl) var(--space-performance-lg);
 	}
 
 	.account-card {
@@ -142,67 +142,67 @@
 	.account-header {
 		display: flex;
 		align-items: center;
-		gap: var(--space-lg);
-		margin-bottom: var(--space-xl);
-		padding-bottom: var(--space-lg);
+		gap: var(--space-performance-lg);
+		margin-bottom: var(--space-performance-xl);
+		padding-bottom: var(--space-performance-lg);
 	}
 
 	.avatar {
 		width: 72px;
 		height: 72px;
-		border-radius: var(--radius-full);
-		background: var(--color-bg-surface);
+		border-radius: var(--radius-performance-scale-full);
+		background: var(--color-performance-bg-surface);
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		font-size: var(--text-h2);
+		font-size: var(--text-performance-h2);
 		font-weight: 600;
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.account-info h1 {
-		font-size: var(--text-h2);
+		font-size: var(--text-performance-h2);
 		font-weight: 700;
-		color: var(--color-fg-primary);
-		margin: 0 0 var(--space-xs) 0;
+		color: var(--color-performance-fg-primary);
+		margin: 0 0 var(--space-performance-xs) 0;
 	}
 
 	.email {
-		font-size: var(--text-body);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body);
+		color: var(--color-performance-fg-tertiary);
 		margin: 0;
 	}
 
 	.account-sections {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-xl);
+		gap: var(--space-performance-xl);
 	}
 
 	.account-section {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
-		padding: var(--space-lg);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
+		padding: var(--space-performance-lg);
 	}
 
 	.account-section h2 {
-		font-size: var(--text-body-lg);
+		font-size: var(--text-performance-body-lg);
 		font-weight: 600;
-		color: var(--color-fg-primary);
-		margin: 0 0 var(--space-md) 0;
+		color: var(--color-performance-fg-primary);
+		margin: 0 0 var(--space-performance-md) 0;
 	}
 
 	.section-description {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
-		margin: 0 0 var(--space-md) 0;
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-tertiary);
+		margin: 0 0 var(--space-performance-md) 0;
 	}
 
 	.detail-row {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		padding: var(--space-sm) 0;
+		padding: var(--space-performance-sm) 0;
 	}
 
 	.detail-row:last-child {
@@ -210,71 +210,71 @@
 	}
 
 	.detail-label {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.detail-value {
-		font-size: var(--text-body);
-		color: var(--color-fg-primary);
+		font-size: var(--text-performance-body);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.detail-value.tier {
 		text-transform: capitalize;
-		padding: var(--space-xs) var(--space-sm);
-		border-radius: var(--radius-sm);
-		font-size: var(--text-body-sm);
+		padding: var(--space-performance-xs) var(--space-performance-sm);
+		border-radius: var(--radius-performance-scale-sm);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.properties-grid {
 		display: grid;
 		grid-template-columns: repeat(2, 1fr);
-		gap: var(--space-sm);
+		gap: var(--space-performance-sm);
 	}
 
 	.property-link {
 		display: flex;
 		flex-direction: column;
-		padding: var(--space-md);
-		border-radius: var(--radius-md);
+		padding: var(--space-performance-md);
+		border-radius: var(--radius-performance-scale-md);
 		text-decoration: none;
-		transition: all var(--duration-micro) var(--ease-standard);
+		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.property-link:hover {
-		border-color: var(--color-border-emphasis);
-		background: var(--color-hover);
+		border-color: var(--color-performance-border-emphasis);
+		background: var(--color-performance-hover);
 	}
 
 	.property-link.current {
-		border-color: var(--color-fg-muted);
+		border-color: var(--color-performance-fg-muted);
 	}
 
 	.property-name {
-		font-size: var(--text-body);
+		font-size: var(--text-performance-body);
 		font-weight: 600;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.property-label {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.logout-button {
 		width: 100%;
-		padding: var(--space-sm) var(--space-md);
+		padding: var(--space-performance-sm) var(--space-performance-md);
 		background: transparent;
-		color: var(--color-fg-secondary);
-		border-radius: var(--radius-md);
-		font-size: var(--text-body);
+		color: var(--color-performance-fg-secondary);
+		border-radius: var(--radius-performance-scale-md);
+		font-size: var(--text-performance-body);
 		cursor: pointer;
-		transition: all var(--duration-micro) var(--ease-standard);
+		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.logout-button:hover:not(:disabled) {
-		background: var(--color-hover);
-		border-color: var(--color-border-emphasis);
+		background: var(--color-performance-hover);
+		border-color: var(--color-performance-border-emphasis);
 	}
 
 	.logout-button:disabled {

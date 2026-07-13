@@ -57,15 +57,15 @@
 
 	.access-card p {
 		margin: 0;
-		color: var(--color-fg-tertiary, rgba(255, 255, 255, 0.72));
+		color: var(--color-performance-fg-tertiary, rgba(255, 255, 255, 0.72));
 		line-height: 1.7;
 	}
 
 	.access-link {
 		border-radius: 999px;
 		padding: 0.85rem 1.25rem;
-		background: var(--color-fg-primary, #fff);
-		color: var(--color-bg-pure, #000);
+		background: var(--color-performance-fg-primary, #fff);
+		color: var(--color-performance-bg-pure, #000);
 		text-decoration: none;
 		font-weight: 600;
 		white-space: nowrap;

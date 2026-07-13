@@ -83,7 +83,7 @@
 			y: 150,
 			width: 120,
 			height: 80,
-			fill: 'var(--color-data-1)',
+			fill: 'var(--color-performance-data-1)',
 			cornerRadius: 8,
 			draggable: true
 		},
@@ -93,7 +93,7 @@
 			x: 350,
 			y: 150,
 			radius: 50,
-			fill: 'var(--color-data-2)',
+			fill: 'var(--color-performance-data-2)',
 			draggable: true
 		},
 		{
@@ -103,7 +103,7 @@
 			y: 150,
 			x2: 300,
 			y2: 150,
-			stroke: 'var(--color-fg-muted)',
+			stroke: 'var(--color-performance-fg-muted)',
 			strokeWidth: 2,
 			headSize: 12
 		},
@@ -113,7 +113,7 @@
 			x: 150,
 			y: 250,
 			text: 'Input',
-			fill: 'var(--color-fg-primary)',
+			fill: 'var(--color-performance-fg-primary)',
 			fontSize: 14
 		},
 		{
@@ -122,7 +122,7 @@
 			x: 350,
 			y: 250,
 			text: 'Output',
-			fill: 'var(--color-fg-primary)',
+			fill: 'var(--color-performance-fg-primary)',
 			fontSize: 14
 		},
 		{
@@ -132,7 +132,7 @@
 			y: 150,
 			width: 100,
 			height: 100,
-			fill: 'var(--color-data-3)',
+			fill: 'var(--color-performance-data-3)',
 			rotation: 45,
 			draggable: true
 		},
@@ -143,7 +143,7 @@
 			y: 150,
 			x2: 490,
 			y2: 150,
-			stroke: 'var(--color-fg-muted)',
+			stroke: 'var(--color-performance-fg-muted)',
 			strokeWidth: 2,
 			headSize: 12
 		}
@@ -369,127 +369,127 @@
 	.experiment-page {
 		max-width: 900px;
 		margin: 0 auto;
-		padding: var(--space-xl);
+		padding: var(--space-performance-xl);
 	}
 
 	.page-header {
-		margin-bottom: var(--space-2xl);
+		margin-bottom: var(--space-performance-2xl);
 	}
 
 	h1 {
-		font-size: var(--text-display-sm);
+		font-size: var(--text-performance-display-sm);
 		font-weight: 700;
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-sm);
+		color: var(--color-performance-fg-primary);
+		margin-bottom: var(--space-performance-sm);
 	}
 
 	.subtitle {
-		font-size: var(--text-body-lg);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-lg);
+		color: var(--color-performance-fg-secondary);
 		max-width: 600px;
 	}
 
 	.demo-section {
-		margin-bottom: var(--space-3xl);
+		margin-bottom: var(--space-performance-3xl);
 	}
 
 	h2 {
 		font-size: var(--text-heading-md);
 		font-weight: 600;
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-sm);
+		color: var(--color-performance-fg-primary);
+		margin-bottom: var(--space-performance-sm);
 	}
 
 	.description {
-		font-size: var(--text-body-md);
-		color: var(--color-fg-secondary);
-		margin-bottom: var(--space-md);
+		font-size: var(--text-performance-body-md);
+		color: var(--color-performance-fg-secondary);
+		margin-bottom: var(--space-performance-md);
 	}
 
 	.demo-container {
-		margin-bottom: var(--space-md);
+		margin-bottom: var(--space-performance-md);
 	}
 
 	.selection-info {
-		padding: var(--space-sm) var(--space-md);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-md);
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
-		margin-bottom: var(--space-md);
+		padding: var(--space-performance-sm) var(--space-performance-md);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-md);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
+		margin-bottom: var(--space-performance-md);
 	}
 
 	.code-example {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-md);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-md);
 		overflow: hidden;
 	}
 
 	.code-example pre {
 		margin: 0;
-		padding: var(--space-md);
+		padding: var(--space-performance-md);
 		overflow-x: auto;
 	}
 
 	.code-example code {
 		font-family: 'SF Mono', 'Menlo', monospace;
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.timeline-preview {
 		display: flex;
 		align-items: center;
-		gap: var(--space-md);
-		padding: var(--space-md);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-md);
-		margin-bottom: var(--space-md);
+		gap: var(--space-performance-md);
+		padding: var(--space-performance-md);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-md);
+		margin-bottom: var(--space-performance-md);
 		min-height: 80px;
 	}
 
 	.preview-label {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-muted);
 		min-width: 120px;
 	}
 
 	.preview-box {
 		width: 40px;
 		height: 40px;
-		background: var(--color-data-1);
-		border-radius: var(--radius-sm);
+		background: var(--color-performance-data-1);
+		border-radius: var(--radius-performance-scale-sm);
 		transition: none;
 	}
 
 	.benefits-section {
-		margin-top: var(--space-xl);
-		padding-top: var(--space-xl);
+		margin-top: var(--space-performance-xl);
+		padding-top: var(--space-performance-xl);
 	}
 
 	.benefits-grid {
 		display: grid;
 		grid-template-columns: repeat(2, 1fr);
-		gap: var(--space-md);
-		margin-top: var(--space-lg);
+		gap: var(--space-performance-md);
+		margin-top: var(--space-performance-lg);
 	}
 
 	.benefit-card {
-		padding: var(--space-md);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-md);
+		padding: var(--space-performance-md);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-md);
 	}
 
 	.benefit-card h3 {
-		font-size: var(--text-body-md);
+		font-size: var(--text-performance-body-md);
 		font-weight: 600;
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-xs);
+		color: var(--color-performance-fg-primary);
+		margin-bottom: var(--space-performance-xs);
 	}
 
 	.benefit-card p {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
 		margin: 0;
 	}
 

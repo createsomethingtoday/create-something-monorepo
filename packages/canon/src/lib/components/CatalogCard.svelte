@@ -81,26 +81,26 @@
     display: flex;
     flex-direction: column;
     height: 100%;
-    padding: var(--space-md);
-    border-radius: var(--radius-lg);
+    padding: var(--space-performance-md);
+    border-radius: var(--radius-performance-scale-lg);
     background: transparent;
-    border: 1px solid var(--color-border-default);
+    border: 1px solid var(--color-performance-border-default);
     text-decoration: none;
     color: inherit;
-    transition: all var(--duration-micro) var(--ease-standard);
+    transition: all var(--duration-performance-micro) var(--ease-performance-standard);
     position: relative;
   }
 
   .catalog-card:hover {
-    border-color: var(--color-border-emphasis);
-    background: var(--color-bg-elevated);
-    transform: scale(var(--scale-micro));
+    border-color: var(--color-performance-border-emphasis);
+    background: var(--color-performance-bg-elevated);
+    transform: scale(var(--scale-performance-micro));
   }
 
   .card-header {
     display: flex;
-    gap: var(--space-xs);
-    margin-bottom: var(--space-sm);
+    gap: var(--space-performance-xs);
+    margin-bottom: var(--space-performance-sm);
     flex-wrap: wrap;
     align-items: center;
   }
@@ -108,10 +108,10 @@
   .category-badge {
     display: inline-block;
     padding: 0.25rem 0.75rem;
-    background: var(--color-bg-subtle);
-    border-radius: var(--radius-md);
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-secondary);
+    background: var(--color-performance-bg-subtle);
+    border-radius: var(--radius-performance-scale-md);
+    font-size: var(--text-performance-body-sm);
+    color: var(--color-performance-fg-secondary);
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -119,47 +119,47 @@
   }
 
   .difficulty-badge {
-    font-size: var(--text-body-sm);
+    font-size: var(--text-performance-body-sm);
     padding: 0.25rem 0.75rem;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-performance-scale-sm);
     font-weight: 500;
     text-transform: capitalize;
   }
 
   .difficulty-beginner {
-    background: var(--color-success-muted);
-    color: var(--color-success);
+    background: var(--color-performance-success-muted);
+    color: var(--color-performance-success);
   }
 
   .difficulty-intermediate {
-    background: var(--color-info-muted);
-    color: var(--color-info);
+    background: var(--color-performance-info-muted);
+    color: var(--color-performance-info);
   }
 
   .difficulty-advanced {
-    background: var(--color-error-muted);
-    color: var(--color-error);
+    background: var(--color-performance-error-muted);
+    color: var(--color-performance-error);
   }
 
   .card-content {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: var(--space-sm);
-    margin-bottom: var(--space-md);
+    gap: var(--space-performance-sm);
+    margin-bottom: var(--space-performance-md);
   }
 
   .item-title {
-    font-size: var(--text-body-lg);
+    font-size: var(--text-performance-body-lg);
     font-weight: 700;
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
     margin: 0;
     line-height: 1.3;
   }
 
   .item-description {
-    font-size: var(--text-body);
-    color: var(--color-fg-secondary);
+    font-size: var(--text-performance-body);
+    color: var(--color-performance-fg-secondary);
     margin: 0;
     line-height: 1.5;
   }
@@ -167,51 +167,51 @@
   .tags {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-xs);
-    margin-top: var(--space-xs);
+    gap: var(--space-performance-xs);
+    margin-top: var(--space-performance-xs);
   }
 
   .tag {
     display: inline-block;
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-muted);
-    background: var(--color-bg-subtle);
+    font-size: var(--text-performance-body-sm);
+    color: var(--color-performance-fg-muted);
+    background: var(--color-performance-bg-subtle);
     padding: 0.25rem 0.5rem;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-performance-scale-sm);
     text-transform: lowercase;
   }
 
   .item-metadata {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-muted);
+    font-size: var(--text-performance-body-sm);
+    color: var(--color-performance-fg-muted);
     margin: 0;
-    margin-top: var(--space-xs);
+    margin-top: var(--space-performance-xs);
   }
 
   .card-footer {
     display: flex;
     align-items: center;
-    gap: var(--space-xs);
-    padding-top: var(--space-sm);
+    gap: var(--space-performance-xs);
+    padding-top: var(--space-performance-sm);
   }
 
   .explore-link {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-tertiary);
+    font-size: var(--text-performance-body-sm);
+    color: var(--color-performance-fg-tertiary);
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;
     font-weight: 500;
-    transition: color var(--duration-micro) var(--ease-standard);
+    transition: color var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   .catalog-card:hover .explore-link {
-    color: var(--color-fg-secondary);
+    color: var(--color-performance-fg-secondary);
   }
 
   .arrow {
     display: inline-block;
-    transition: transform var(--duration-micro) var(--ease-standard);
+    transition: transform var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   .catalog-card:hover .arrow {

@@ -232,7 +232,7 @@ describe('Performance composition typography', () => {
 		expect(source).toContain('api.fontshare.com/v2/css');
 		expect(source).toContain('@ibm/plex-mono/css/ibm-plex-mono-all.css');
 		expect(source).toContain('font-family: var(--font-performance-display');
-		expect(source).toContain('--font-mono: var(--font-performance-mono)');
+		expect(source).toContain('--font-performance-mono: var(--font-performance-mono)');
 	});
 
 	it('keeps the shared PerformancePageSection foundation on the same display contract', () => {

@@ -31,47 +31,47 @@
    ========================================================================== */
 
 :root {
-  --view-transition-duration: 300ms;
+  --duration-performance-view-transition: 300ms;
 
   /* Shared clear-shell typography */
-  --font-heading: var(--font-sans);
-  --font-display: var(--font-sans);
-  --font-serif: Georgia, "Times New Roman", serif;
-  --color-focus: rgba(167, 184, 255, 0.72);
+  --font-performance-heading: var(--font-performance-sans);
+  --font-performance-display: var(--font-performance-sans);
+  --font-performance-serif: Georgia, "Times New Roman", serif;
+  --color-performance-focus: rgba(167, 184, 255, 0.72);
 
   /* Performance Lab readability surface mapping for existing property routes */
-  --color-bg-pure: var(--color-performance-panel, #ffffff);
-  --color-bg-elevated: var(--color-performance-paper, #f3f3f0);
-  --color-bg-surface: var(--color-performance-court, #e6e6e0);
-  --color-bg-subtle: #eeeeee;
-  --color-fg-primary: var(--color-performance-ink, #090909);
-  --color-fg-secondary: rgba(10, 14, 25, 0.8);
-  --color-fg-tertiary: rgba(10, 14, 25, 0.62);
-  --color-fg-muted: var(--color-performance-muted, #5e6268);
-  --color-fg-subtle: rgba(10, 14, 25, 0.22);
-  --color-border-default: var(--color-performance-line, #d7d7d2);
-  --color-border-emphasis: var(--color-performance-line-strong, #9c9c96);
-  --color-border-strong: rgba(10, 14, 25, 0.24);
-  --color-shell-surface: var(--color-performance-panel, #ffffff);
-  --color-shell-surface-secondary: var(--color-performance-paper, #f3f3f0);
-  --color-shell-surface-tertiary: var(--color-performance-court, #e6e6e0);
-  --color-shell-surface-elevated: #eeeeee;
-  --color-shell-surface-hover: var(--color-performance-court, #e6e6e0);
-  --color-shell-border-subtle: rgba(10, 14, 25, 0.06);
-  --color-shell-border-default: var(--color-performance-line, #d7d7d2);
-  --color-shell-border-strong: var(--color-performance-line-strong, #9c9c96);
-  --color-shell-shadow: var(--shadow-performance-panel, none);
-  --color-shell-shadow-strong: 0 16px 44px rgba(0, 0, 0, 0.12);
-  --color-hover: rgba(10, 14, 25, 0.04);
-  --color-active: rgba(10, 14, 25, 0.08);
-  --glass-bg-subtle: rgba(255, 255, 255, 0.65);
-  --glass-bg-light: rgba(255, 255, 255, 0.72);
-  --glass-bg-medium: rgba(255, 255, 255, 0.82);
-  --glass-bg-strong: rgba(255, 255, 255, 0.92);
-  --glass-border-subtle: rgba(10, 14, 25, 0.06);
-  --glass-border-light: rgba(10, 14, 25, 0.1);
-  --glass-border-medium: rgba(10, 14, 25, 0.15);
-  --glass-border-strong: rgba(10, 14, 25, 0.22);
+  --color-performance-bg-pure: var(--color-performance-panel, #ffffff);
+  --color-performance-bg-elevated: var(--color-performance-paper, #f3f3f0);
+  --color-performance-bg-surface: var(--color-performance-court, #e6e6e0);
+  --color-performance-bg-subtle: #eeeeee;
+  --color-performance-fg-primary: var(--color-performance-ink, #090909);
+  --color-performance-fg-secondary: rgba(10, 14, 25, 0.8);
+  --color-performance-fg-tertiary: rgba(10, 14, 25, 0.62);
+  --color-performance-fg-muted: var(--color-performance-muted, #5e6268);
+  --color-performance-fg-subtle: rgba(10, 14, 25, 0.22);
+  --color-performance-border-default: var(--color-performance-line, #d7d7d2);
+  --color-performance-border-emphasis: var(--color-performance-line-strong, #9c9c96);
+  --color-performance-border-strong: rgba(10, 14, 25, 0.24);
+  --color-performance-shell-surface: var(--color-performance-panel, #ffffff);
+  --color-performance-shell-surface-secondary: var(--color-performance-paper, #f3f3f0);
+  --color-performance-shell-surface-tertiary: var(--color-performance-court, #e6e6e0);
+  --color-performance-shell-surface-elevated: #eeeeee;
+  --color-performance-shell-surface-hover: var(--color-performance-court, #e6e6e0);
+  --color-performance-shell-border-subtle: rgba(10, 14, 25, 0.06);
+  --color-performance-shell-border-default: var(--color-performance-line, #d7d7d2);
+  --color-performance-shell-border-strong: var(--color-performance-line-strong, #9c9c96);
+  --color-performance-shell-shadow: var(--shadow-performance-panel, none);
+  --color-performance-shell-shadow-strong: 0 16px 44px rgba(0, 0, 0, 0.12);
+  --color-performance-hover: rgba(10, 14, 25, 0.04);
+  --color-performance-active: rgba(10, 14, 25, 0.08);
+  --glass-performance-bg-subtle: rgba(255, 255, 255, 0.65);
+  --glass-performance-bg-light: rgba(255, 255, 255, 0.72);
+  --glass-performance-bg-medium: rgba(255, 255, 255, 0.82);
+  --glass-performance-bg-strong: rgba(255, 255, 255, 0.92);
+  --glass-performance-border-subtle: rgba(10, 14, 25, 0.06);
+  --glass-performance-border-light: rgba(10, 14, 25, 0.1);
+  --glass-performance-border-medium: rgba(10, 14, 25, 0.15);
+  --glass-performance-border-strong: rgba(10, 14, 25, 0.22);
 
   /* ==========================================================================
      Architectural Visualization Tokens
@@ -80,79 +80,79 @@
      ========================================================================== */
 
   /* Threshold Zone Colors - derived from background scale, barely perceptible */
-  --arch-zone-outer: var(--color-bg-pure);
+  --arch-zone-outer: var(--color-performance-bg-pure);
   --arch-zone-service: rgba(255, 255, 255, 0.02);
   --arch-zone-public: rgba(255, 255, 255, 0.03);
   --arch-zone-private: rgba(255, 255, 255, 0.05);
   --arch-zone-open: rgba(255, 255, 255, 0.04);
 
   /* Structural Elements - derived from foreground scale */
-  --arch-wall-exterior: var(--color-fg-primary);
-  --arch-wall-interior: var(--color-fg-secondary);
+  --arch-wall-exterior: var(--color-performance-fg-primary);
+  --arch-wall-interior: var(--color-performance-fg-secondary);
   --arch-wall-weight-exterior: 1.5;
   --arch-wall-weight-interior: 0.5;
 
   /* Labels & Annotations - derived from foreground scale */
-  --arch-label-primary: var(--color-fg-tertiary);
-  --arch-label-secondary: var(--color-fg-muted);
-  --arch-label-subtle: var(--color-fg-subtle);
+  --arch-label-primary: var(--color-performance-fg-tertiary);
+  --arch-label-secondary: var(--color-performance-fg-muted);
+  --arch-label-subtle: var(--color-performance-fg-subtle);
 
   /* Interactive Elements - derived from foreground scale */
-  --arch-door-tick: var(--color-fg-muted);
-  --arch-window: var(--color-fg-tertiary);
-  --arch-column: var(--color-fg-secondary);
-  --arch-overhang: var(--color-fg-subtle);
-  --arch-entry-arrow: var(--color-fg-muted);
+  --arch-door-tick: var(--color-performance-fg-muted);
+  --arch-window: var(--color-performance-fg-tertiary);
+  --arch-column: var(--color-performance-fg-secondary);
+  --arch-overhang: var(--color-performance-fg-subtle);
+  --arch-entry-arrow: var(--color-performance-fg-muted);
 
   /* MEP Systems - derived from Canon data visualization palette */
   /* HVAC: Blue (data-1) */
-  --arch-hvac-supply: color-mix(in srgb, var(--color-data-1) 50%, transparent);
-  --arch-hvac-return: color-mix(in srgb, var(--color-data-1) 30%, transparent);
-  --arch-hvac-equipment: color-mix(in srgb, var(--color-data-1) 60%, transparent);
+  --arch-hvac-supply: color-mix(in srgb, var(--color-performance-data-1) 50%, transparent);
+  --arch-hvac-return: color-mix(in srgb, var(--color-performance-data-1) 30%, transparent);
+  --arch-hvac-equipment: color-mix(in srgb, var(--color-performance-data-1) 60%, transparent);
   --arch-hvac-zone: transparent;
-  --arch-hvac-label: color-mix(in srgb, var(--color-data-1) 40%, transparent);
+  --arch-hvac-label: color-mix(in srgb, var(--color-performance-data-1) 40%, transparent);
 
   /* Plumbing: Purple (data-3) */
-  --arch-plumbing-supply: color-mix(in srgb, var(--color-data-3) 50%, transparent);
-  --arch-plumbing-drain: color-mix(in srgb, var(--color-data-3) 40%, transparent);
-  --arch-plumbing-vent: color-mix(in srgb, var(--color-data-3) 30%, transparent);
-  --arch-plumbing-fixture: color-mix(in srgb, var(--color-data-3) 60%, transparent);
-  --arch-plumbing-label: color-mix(in srgb, var(--color-data-3) 40%, transparent);
+  --arch-plumbing-supply: color-mix(in srgb, var(--color-performance-data-3) 50%, transparent);
+  --arch-plumbing-drain: color-mix(in srgb, var(--color-performance-data-3) 40%, transparent);
+  --arch-plumbing-vent: color-mix(in srgb, var(--color-performance-data-3) 30%, transparent);
+  --arch-plumbing-fixture: color-mix(in srgb, var(--color-performance-data-3) 60%, transparent);
+  --arch-plumbing-label: color-mix(in srgb, var(--color-performance-data-3) 40%, transparent);
 
   /* Electrical: Amber (data-4) */
   --arch-electrical-circuit: transparent;
-  --arch-electrical-equipment: color-mix(in srgb, var(--color-data-4) 60%, transparent);
-  --arch-electrical-wire: color-mix(in srgb, var(--color-data-4) 35%, transparent);
-  --arch-electrical-label: color-mix(in srgb, var(--color-data-4) 40%, transparent);
+  --arch-electrical-equipment: color-mix(in srgb, var(--color-performance-data-4) 60%, transparent);
+  --arch-electrical-wire: color-mix(in srgb, var(--color-performance-data-4) 35%, transparent);
+  --arch-electrical-label: color-mix(in srgb, var(--color-performance-data-4) 40%, transparent);
 
   /* Site Plan - derived from Canon background/foreground */
-  --arch-site-building: var(--color-bg-surface);
-  --arch-site-driveway: var(--color-bg-elevated);
-  --arch-site-landscape: color-mix(in srgb, var(--color-data-2) 15%, transparent);
-  --arch-site-water: color-mix(in srgb, var(--color-data-1) 20%, transparent);
-  --arch-site-setback: var(--color-fg-subtle);
+  --arch-site-building: var(--color-performance-bg-surface);
+  --arch-site-driveway: var(--color-performance-bg-elevated);
+  --arch-site-landscape: color-mix(in srgb, var(--color-performance-data-2) 15%, transparent);
+  --arch-site-water: color-mix(in srgb, var(--color-performance-data-1) 20%, transparent);
+  --arch-site-setback: var(--color-performance-fg-subtle);
 
   /* Circulation/Threshold - derived from Canon data palette */
-  --arch-threshold-entry: var(--color-data-2);      /* Green - arrival */
-  --arch-threshold-transition: var(--color-data-1); /* Blue - zone change */
-  --arch-threshold-passage: var(--color-data-4);    /* Amber - movement */
-  --arch-threshold-arrival: var(--color-data-3);    /* Purple - destination */
+  --arch-threshold-entry: var(--color-performance-data-2);      /* Green - arrival */
+  --arch-threshold-transition: var(--color-performance-data-1); /* Blue - zone change */
+  --arch-threshold-passage: var(--color-performance-data-4);    /* Amber - movement */
+  --arch-threshold-arrival: var(--color-performance-data-3);    /* Purple - destination */
 
   /* Light Study - derived from Canon data palette */
-  --arch-sun-summer: var(--color-data-4);   /* Amber */
-  --arch-sun-equinox: var(--color-data-1);  /* Blue */
-  --arch-sun-winter: var(--color-data-3);   /* Purple */
-  --arch-light-direct: var(--color-data-4);
-  --arch-light-diffuse: var(--color-data-1);
-  --arch-light-shade: var(--color-bg-subtle);
+  --arch-sun-summer: var(--color-performance-data-4);   /* Amber */
+  --arch-sun-equinox: var(--color-performance-data-1);  /* Blue */
+  --arch-sun-winter: var(--color-performance-data-3);   /* Purple */
+  --arch-light-direct: var(--color-performance-data-4);
+  --arch-light-diffuse: var(--color-performance-data-1);
+  --arch-light-shade: var(--color-performance-bg-subtle);
 
   /* Daily Rhythm - derived from Canon data palette */
-  --arch-rhythm-family: var(--color-data-1);   /* Blue */
-  --arch-rhythm-parents: var(--color-data-3);  /* Purple */
-  --arch-rhythm-daughter: var(--color-data-5); /* Pink */
-  --arch-rhythm-inlaw: var(--color-data-4);    /* Amber */
-  --arch-rhythm-guests: var(--color-data-2);   /* Green */
-  --arch-rhythm-service: var(--color-fg-muted);
+  --arch-rhythm-family: var(--color-performance-data-1);   /* Blue */
+  --arch-rhythm-parents: var(--color-performance-data-3);  /* Purple */
+  --arch-rhythm-daughter: var(--color-performance-data-5); /* Pink */
+  --arch-rhythm-inlaw: var(--color-performance-data-4);    /* Amber */
+  --arch-rhythm-guests: var(--color-performance-data-2);   /* Green */
+  --arch-rhythm-service: var(--color-performance-fg-muted);
 
   /* ==========================================================================
      Construction Document Tokens
@@ -167,26 +167,26 @@
   --arch-stroke-hairline: 0.15;  /* Hidden lines, hatching patterns */
 
   /* Dimension System */
-  --arch-dimension-color: var(--color-fg-subtle);
-  --arch-dimension-text: var(--color-fg-muted);
+  --arch-dimension-color: var(--color-performance-fg-subtle);
+  --arch-dimension-text: var(--color-performance-fg-muted);
   --arch-dimension-tick: 4;      /* Tick mark length in px */
 
   /* Scale Bar */
-  --arch-scale-color: var(--color-fg-muted);
-  --arch-scale-text: var(--color-fg-subtle);
+  --arch-scale-color: var(--color-performance-fg-muted);
+  --arch-scale-text: var(--color-performance-fg-subtle);
 
   /* Hatching Patterns (for expanded/fullscreen view) */
-  --arch-hatch-color: var(--color-fg-subtle);
+  --arch-hatch-color: var(--color-performance-fg-subtle);
   --arch-hatch-opacity: 0.3;
   --arch-hatch-spacing: 3;       /* px between hatch lines */
 
   /* Title Block */
-  --arch-title-primary: var(--color-fg-secondary);
-  --arch-title-secondary: var(--color-fg-muted);
+  --arch-title-primary: var(--color-performance-fg-secondary);
+  --arch-title-secondary: var(--color-performance-fg-muted);
 }
 
 .nav-logo {
-  font-family: var(--font-display);
+  font-family: var(--font-performance-display);
 }
 
 /* ==========================================================================
@@ -221,7 +221,7 @@
 }
 
 a:not([class*="button"]):not(.btn) {
-  transition: opacity var(--duration-micro) var(--ease-standard);
+  transition: opacity var(--duration-performance-micro) var(--ease-performance-standard);
 }
 
 a:not([class*="button"]):not(.btn):hover {
@@ -229,7 +229,7 @@ a:not([class*="button"]):not(.btn):hover {
 }
 
 *:focus-visible {
-  outline: 2px solid var(--color-focus);
+  outline: 2px solid var(--color-performance-focus);
   outline-offset: 2px;
   border-radius: 0px;
 }

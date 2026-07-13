@@ -95,11 +95,11 @@
 	.skeleton-container {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-sm);
+		gap: var(--space-performance-sm);
 	}
 
 	.skeleton {
-		background: var(--color-bg-subtle);
+		background: var(--color-performance-bg-subtle);
 		position: relative;
 		overflow: hidden;
 	}
@@ -109,20 +109,20 @@
 		border-radius: 0;
 	}
 
-	.skeleton--radius-sm {
-		border-radius: var(--radius-sm);
+	.skeleton--radius-performance-scale-sm {
+		border-radius: var(--radius-performance-scale-sm);
 	}
 
-	.skeleton--radius-md {
-		border-radius: var(--radius-md);
+	.skeleton--radius-performance-scale-md {
+		border-radius: var(--radius-performance-scale-md);
 	}
 
-	.skeleton--radius-lg {
-		border-radius: var(--radius-lg);
+	.skeleton--radius-performance-scale-lg {
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
-	.skeleton--radius-full {
-		border-radius: var(--radius-full);
+	.skeleton--radius-performance-scale-full {
+		border-radius: var(--radius-performance-scale-full);
 	}
 
 	/* Shimmer animation */
@@ -136,7 +136,7 @@
 		background: linear-gradient(
 			90deg,
 			transparent,
-			var(--color-hover),
+			var(--color-performance-hover),
 			transparent
 		);
 		animation: shimmer 1.5s infinite;
@@ -153,7 +153,7 @@
 	@media (prefers-reduced-motion: reduce) {
 		.skeleton--animated::after {
 			animation: none;
-			background: var(--color-hover);
+			background: var(--color-performance-hover);
 			transform: none;
 		}
 	}
@@ -162,9 +162,9 @@
 	.skeleton--row {
 		display: flex;
 		align-items: center;
-		gap: var(--space-md);
-		padding: var(--space-sm);
-		background: var(--color-bg-surface);
+		gap: var(--space-performance-md);
+		padding: var(--space-performance-sm);
+		background: var(--color-performance-bg-surface);
 	}
 
 	/* Screen reader only */

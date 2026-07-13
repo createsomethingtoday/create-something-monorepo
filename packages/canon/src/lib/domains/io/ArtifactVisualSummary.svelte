@@ -53,9 +53,9 @@
 	.artifact-visual-summary {
 		margin-top: 2rem;
 		padding: 1.25rem;
-		background: var(--color-bg-pure);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-bg-pure);
+		border: 1px solid var(--color-performance-border-default);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.visual-copy {
@@ -65,7 +65,7 @@
 
 	.visual-kicker {
 		margin: 0 0 0.45rem;
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 		font-size: 0.72rem;
 		font-weight: 600;
 		letter-spacing: 0.12em;
@@ -74,7 +74,7 @@
 
 	h2 {
 		margin: 0;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		font-size: clamp(1.2rem, 2vw, 1.55rem);
 		line-height: 1.2;
 	}
@@ -82,8 +82,8 @@
 	.visual-caption {
 		margin: 0.65rem 0 0;
 		max-width: 40rem;
-		color: var(--color-fg-secondary);
-		font-size: var(--text-body-sm);
+		color: var(--color-performance-fg-secondary);
+		font-size: var(--text-performance-body-sm);
 		line-height: 1.65;
 	}
 
@@ -112,9 +112,9 @@
 		gap: 0.8rem;
 		min-width: 0;
 		padding: 0.85rem;
-		background: var(--color-bg-subtle);
+		background: var(--color-performance-bg-subtle);
 		border: 1px solid var(--color-border-subtle);
-		border-radius: var(--radius-md);
+		border-radius: var(--radius-performance-scale-md);
 	}
 
 	.visual-state-strip .visual-node:not(:last-child)::after,
@@ -125,7 +125,7 @@
 		right: -0.75rem;
 		width: 0.75rem;
 		height: 1px;
-		background: var(--color-border-emphasis);
+		background: var(--color-performance-border-emphasis);
 		transform: translateY(-50%);
 	}
 
@@ -136,10 +136,10 @@
 		flex: 0 0 auto;
 		width: 2rem;
 		height: 2rem;
-		color: var(--color-fg-secondary);
-		background: var(--color-bg-pure);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-sm);
+		color: var(--color-performance-fg-secondary);
+		background: var(--color-performance-bg-pure);
+		border: 1px solid var(--color-performance-border-default);
+		border-radius: var(--radius-performance-scale-sm);
 		font-family: monospace;
 		font-size: 0.78rem;
 	}
@@ -150,32 +150,32 @@
 
 	.node-label {
 		margin: 0;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		font-weight: 650;
 		line-height: 1.3;
 	}
 
 	.node-detail {
 		margin: 0.35rem 0 0;
-		color: var(--color-fg-tertiary);
-		font-size: var(--text-body-sm);
+		color: var(--color-performance-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
 		line-height: 1.5;
 	}
 
 	.tone-run .node-mark {
-		color: var(--color-success);
+		color: var(--color-performance-success);
 	}
 
 	.tone-wait .node-mark {
-		color: var(--color-warning);
+		color: var(--color-performance-warning);
 	}
 
 	.tone-stop .node-mark {
-		color: var(--color-error);
+		color: var(--color-performance-error);
 	}
 
 	.tone-receipt .node-mark {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	@media (max-width: 768px) {

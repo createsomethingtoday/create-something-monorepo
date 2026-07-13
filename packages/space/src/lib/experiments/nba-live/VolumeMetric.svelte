@@ -56,31 +56,31 @@
 	.volume-metric {
 		display: flex;
 		flex-direction: column;
-		gap: calc(var(--space-xs) * 0.5);
-		font-size: var(--text-caption);
-		padding-top: var(--space-xs);
-		margin-top: var(--space-xs);
+		gap: calc(var(--space-performance-xs) * 0.5);
+		font-size: var(--text-performance-caption);
+		padding-top: var(--space-performance-xs);
+		margin-top: var(--space-performance-xs);
 	}
 
 	.volume-metric.significant {
-		border-top-color: var(--color-warning);
+		border-top-color: var(--color-performance-warning);
 	}
 
 	/* Label */
 	.metric-label {
 		display: flex;
 		align-items: center;
-		gap: calc(var(--space-xs) * 0.5);
-		color: var(--color-fg-muted);
+		gap: calc(var(--space-performance-xs) * 0.5);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.volume-metric :global(.metric-icon) {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.volume-metric :global(.metric-icon--home),
 	.volume-metric :global(.metric-icon--away) {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.label-text {
@@ -92,29 +92,29 @@
 	.metric-values {
 		display: flex;
 		align-items: center;
-		gap: var(--space-xs);
+		gap: var(--space-performance-xs);
 		font-variant-numeric: tabular-nums;
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.team-value {
-		color: var(--color-fg-tertiary);
-		transition: color var(--duration-micro) var(--ease-standard);
+		color: var(--color-performance-fg-tertiary);
+		transition: color var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.team-value.advantage {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		font-weight: 600;
 	}
 
 	.separator {
-		color: var(--color-border-emphasis);
+		color: var(--color-performance-border-emphasis);
 	}
 
 	/* Significance badge */
 	.significance-badge {
-		font-size: var(--text-caption);
-		color: var(--color-warning);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-warning);
 		font-weight: 500;
 		text-transform: uppercase;
 		letter-spacing: 0.05em;

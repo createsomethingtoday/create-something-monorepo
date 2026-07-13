@@ -106,9 +106,9 @@
 		display: block;
 		margin-bottom: 0.35rem;
 		color: var(--color-performance-muted, #5e6268);
-		font-family: var(--font-mono);
+		font-family: var(--font-performance-mono);
 		font-size: 0.72rem;
-		font-weight: var(--font-semibold);
+		font-weight: var(--font-performance-semibold);
 		letter-spacing: 0;
 		text-transform: uppercase;
 	}
@@ -117,7 +117,7 @@
 		display: block;
 		color: var(--color-performance-ink, #090909);
 		font-size: 1.75rem;
-		font-weight: var(--font-medium);
+		font-weight: var(--font-performance-medium);
 		line-height: 1.08;
 	}
 
@@ -179,9 +179,9 @@
 		border-radius: var(--radius-performance-sm, 4px);
 		background: var(--color-performance-muted, #5e6268);
 		color: #ffffff;
-		font-family: var(--font-mono);
+		font-family: var(--font-performance-mono);
 		font-size: 0.72rem;
-		font-weight: var(--font-bold);
+		font-weight: var(--font-performance-bold);
 		letter-spacing: 0;
 		text-transform: uppercase;
 		box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
@@ -242,7 +242,7 @@
 		border-radius: var(--radius-performance-sm, 4px);
 		background: var(--color-performance-panel, #ffffff);
 		color: var(--color-performance-ink, #090909);
-		font-family: var(--font-mono);
+		font-family: var(--font-performance-mono);
 		font-size: 0.78rem;
 		line-height: 1.25;
 		overflow-wrap: anywhere;

@@ -34,28 +34,28 @@
 <style>
 	.progress-threshold {
 		display: flex;
-		gap: var(--space-sm);
+		gap: var(--space-performance-sm);
 	}
 
 	.threshold-marker {
 		width: 8px;
 		height: 8px;
-		border-radius: var(--radius-full);
+		border-radius: var(--radius-performance-scale-full);
 		background: transparent;
-		border: 1px solid var(--color-fg-subtle);
-		transition: all var(--duration-standard) var(--ease-standard);
+		border: 1px solid var(--color-performance-fg-subtle);
+		transition: all var(--duration-performance-standard) var(--ease-performance-standard);
 		padding: 0;
 		cursor: default;
 	}
 
 	.threshold-marker.current {
-		border-color: var(--color-fg-tertiary);
-		box-shadow: 0 0 0 2px var(--color-bg-elevated), 0 0 0 4px var(--color-fg-subtle);
+		border-color: var(--color-performance-fg-tertiary);
+		box-shadow: 0 0 0 2px var(--color-performance-bg-elevated), 0 0 0 4px var(--color-performance-fg-subtle);
 	}
 
 	.threshold-marker.past {
-		background: var(--color-fg-muted);
-		border-color: var(--color-fg-muted);
+		background: var(--color-performance-fg-muted);
+		border-color: var(--color-performance-fg-muted);
 	}
 
 	.threshold-marker.clickable {
@@ -63,7 +63,7 @@
 	}
 
 	.threshold-marker.clickable:hover {
-		background: var(--color-fg-tertiary);
-		border-color: var(--color-fg-tertiary);
+		background: var(--color-performance-fg-tertiary);
+		border-color: var(--color-performance-fg-tertiary);
 	}
 </style>

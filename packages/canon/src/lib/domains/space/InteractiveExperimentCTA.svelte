@@ -98,49 +98,49 @@
 
 <style>
 	.cta-container {
-		background: var(--color-bg-pure);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-bg-pure);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.cta-heading {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.cta-subheading {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.reset-btn {
-		color: var(--color-fg-muted);
-		border-radius: var(--radius-sm);
-		transition: all var(--duration-micro) var(--ease-standard);
+		color: var(--color-performance-fg-muted);
+		border-radius: var(--radius-performance-scale-sm);
+		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.reset-btn:hover {
-		color: var(--color-fg-primary);
-		background: var(--color-hover);
+		color: var(--color-performance-fg-primary);
+		background: var(--color-performance-hover);
 	}
 
 	.launch-btn {
-		font-size: var(--text-body-sm);
-		border-radius: var(--radius-sm);
-		transition: all var(--duration-micro) var(--ease-standard);
+		font-size: var(--text-performance-body-sm);
+		border-radius: var(--radius-performance-scale-sm);
+		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.launch-btn.default {
-		background: var(--color-fg-primary);
-		color: var(--color-bg-pure);
+		background: var(--color-performance-fg-primary);
+		color: var(--color-performance-bg-pure);
 	}
 
 	.launch-btn.default:hover {
-		background: var(--color-fg-secondary);
+		background: var(--color-performance-fg-secondary);
 	}
 
 	.launch-btn.completed {
-		background: var(--color-success);
-		color: var(--color-bg-pure);
+		background: var(--color-performance-success);
+		color: var(--color-performance-bg-pure);
 	}
 
 	.launch-btn.completed:hover {

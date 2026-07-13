@@ -30,6 +30,8 @@
 		"library:health": "tsx scripts/check-canon-library-health.ts",
 		"stable-component:depth": "tsx scripts/check-stable-component-depth.ts",
 		"stable-component:depth:gate": "tsx scripts/check-stable-component-depth.ts --fail-on-gaps",
+		"tokens:performance:check": "tsx scripts/migrate-performance-token-contract.ts",
+		"tokens:performance:write": "tsx scripts/migrate-performance-token-contract.ts --write",
 		"visual:screenshot:check": "tsx scripts/check-canon-visual-screenshots.ts",
 		"overlay:check": "tsx scripts/check-overlay-quality-gate.ts",
 		"overlay:consumer-check": "tsx scripts/check-overlay-consumer-compatibility.ts",

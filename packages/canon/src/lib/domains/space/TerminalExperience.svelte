@@ -766,20 +766,20 @@
 
 <style>
 	.custom-cursor .cursor-outer {
-		background: var(--color-fg-primary);
-		border-radius: var(--radius-full);
+		background: var(--color-performance-fg-primary);
+		border-radius: var(--radius-performance-scale-full);
 		opacity: 0.5;
 	}
 
 	.custom-cursor .cursor-inner {
-		background: var(--color-fg-primary);
-		border-radius: var(--radius-full);
+		background: var(--color-performance-fg-primary);
+		border-radius: var(--radius-performance-scale-full);
 	}
 
 	.terminal-header-gradient {
 		background: linear-gradient(to right, rgba(0, 0, 0, 0.8), rgba(88, 28, 135, 0.2), rgba(0, 0, 0, 0.8));
 		background-size: 200% 100%;
-		border-bottom: 1px solid var(--color-border-emphasis);
+		border-bottom: 1px solid var(--color-performance-border-emphasis);
 		animation: header-gradient 20s linear infinite;
 	}
 
@@ -789,116 +789,116 @@
 	}
 
 	.header-dot {
-		background: var(--color-bg-subtle);
-		border-radius: var(--radius-full);
+		background: var(--color-performance-bg-subtle);
+		border-radius: var(--radius-performance-scale-full);
 	}
 
 	.header-title {
-		color: var(--color-fg-primary);
-		font-size: var(--text-body-sm);
+		color: var(--color-performance-fg-primary);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.header-stats {
-		color: var(--color-fg-muted);
-		font-size: var(--text-caption);
+		color: var(--color-performance-fg-muted);
+		font-size: var(--text-performance-caption);
 	}
 
 	.terminal-content {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	@media (min-width: 1024px) {
 		.terminal-content {
-			font-size: var(--text-body);
+			font-size: var(--text-performance-body);
 		}
 	}
 
 	.terminal-line {
-		border-radius: var(--radius-sm);
+		border-radius: var(--radius-performance-scale-sm);
 	}
 
 	.terminal-line:hover {
-		background: var(--color-hover);
+		background: var(--color-performance-hover);
 	}
 
 	.line-input,
 	.line-output,
 	.line-info,
 	.line-default {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.line-error {
-		color: var(--color-error);
+		color: var(--color-performance-error);
 	}
 
 	.line-system {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.line-success {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		opacity: 0.9;
 	}
 
 	.line-ascii {
-		color: var(--color-fg-primary);
-		font-size: var(--text-caption);
+		color: var(--color-performance-fg-primary);
+		font-size: var(--text-performance-caption);
 	}
 
 	.spinner-container .spinner-icon {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		font-size: 1.5rem;
 	}
 
 	.spinner-container .spinner-text {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.paper-card {
-		font-size: var(--text-caption);
+		font-size: var(--text-performance-caption);
 	}
 
 	.card-selected-indicator {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.demo-indicator .demo-title {
-		color: var(--color-fg-primary);
-		font-size: var(--text-body-lg);
+		color: var(--color-performance-fg-primary);
+		font-size: var(--text-performance-body-lg);
 	}
 
 	.demo-indicator .demo-subtitle {
-		color: var(--color-fg-primary);
-		font-size: var(--text-body-sm);
+		color: var(--color-performance-fg-primary);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.terminal-prompt {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.terminal-input {
 		background: transparent;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.terminal-input::placeholder {
-		color: var(--color-fg-subtle);
+		color: var(--color-performance-fg-subtle);
 	}
 
 	.terminal-cursor {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.terminal-footer {
 		background: rgba(0, 0, 0, 0.8);
-		border-top: 1px solid var(--color-border-emphasis);
+		border-top: 1px solid var(--color-performance-border-emphasis);
 	}
 
 	.footer-status,
 	.footer-credits {
-		color: var(--color-fg-muted);
-		font-size: var(--text-caption);
+		color: var(--color-performance-fg-muted);
+		font-size: var(--text-performance-caption);
 	}
 
 	/* Animation classes */

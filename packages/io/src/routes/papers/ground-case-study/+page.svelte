@@ -225,7 +225,7 @@
 		</p>
 		<ul>
 			<li>Hardcoded <code>rgba(255,255,255,0.x)</code> instead of <code>--color-fg-*</code></li>
-			<li>Hardcoded <code>8px</code> instead of <code>--radius-md</code></li>
+			<li>Hardcoded <code>8px</code> instead of <code>--radius-performance-scale-md</code></li>
 			<li>Inline colors in older components</li>
 		</ul>
 		<p>Action: Created migration tickets for affected components.</p>
@@ -260,138 +260,138 @@
 	.paper {
 		max-width: 800px;
 		margin: 0 auto;
-		padding: var(--space-lg);
+		padding: var(--space-performance-lg);
 	}
 
 	.paper-header {
-		margin-bottom: var(--space-xl);
+		margin-bottom: var(--space-performance-xl);
 	}
 
 	.category {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 		text-transform: uppercase;
-		letter-spacing: var(--tracking-wider);
+		letter-spacing: var(--tracking-performance-wider);
 	}
 
 	.paper-header h1 {
-		font-size: var(--text-display);
-		color: var(--color-fg-primary);
-		margin: var(--space-sm) 0;
+		font-size: var(--text-performance-display);
+		color: var(--color-performance-fg-primary);
+		margin: var(--space-performance-sm) 0;
 	}
 
 	.subtitle {
-		font-size: var(--text-h3);
-		color: var(--color-fg-secondary);
-		margin-bottom: var(--space-sm);
+		font-size: var(--text-performance-h3);
+		color: var(--color-performance-fg-secondary);
+		margin-bottom: var(--space-performance-sm);
 	}
 
 	time {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.abstract {
-		padding: var(--space-lg);
-		border-radius: var(--radius-lg);
-		margin-bottom: var(--space-xl);
+		padding: var(--space-performance-lg);
+		border-radius: var(--radius-performance-scale-lg);
+		margin-bottom: var(--space-performance-xl);
 	}
 
 	.abstract h2 {
-		font-size: var(--text-h3);
-		color: var(--color-fg-secondary);
-		margin-bottom: var(--space-sm);
+		font-size: var(--text-performance-h3);
+		color: var(--color-performance-fg-secondary);
+		margin-bottom: var(--space-performance-sm);
 	}
 
 	.abstract p {
-		font-size: var(--text-body-lg);
-		color: var(--color-fg-tertiary);
-		line-height: var(--leading-relaxed);
+		font-size: var(--text-performance-body-lg);
+		color: var(--color-performance-fg-tertiary);
+		line-height: var(--leading-performance-relaxed);
 	}
 
 	.metrics-grid {
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-		gap: var(--space-md);
-		margin-bottom: var(--space-xl);
+		gap: var(--space-performance-md);
+		margin-bottom: var(--space-performance-xl);
 	}
 
 	.metric-card {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
-		padding: var(--space-md);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
+		padding: var(--space-performance-md);
 		text-align: center;
 	}
 
 	.metric-value {
 		display: block;
-		font-size: var(--text-h1);
-		font-weight: var(--font-bold);
-		color: var(--color-fg-primary);
+		font-size: var(--text-performance-h1);
+		font-weight: var(--font-performance-bold);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.metric-label {
 		display: block;
-		font-size: var(--text-body);
-		color: var(--color-fg-secondary);
-		margin-top: var(--space-xs);
+		font-size: var(--text-performance-body);
+		color: var(--color-performance-fg-secondary);
+		margin-top: var(--space-performance-xs);
 	}
 
 	.metric-context {
 		display: block;
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
-		margin-top: var(--space-xs);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
+		margin-top: var(--space-performance-xs);
 	}
 
 	.section {
-		margin-bottom: var(--space-xl);
+		margin-bottom: var(--space-performance-xl);
 	}
 
 	.section h2 {
-		font-size: var(--text-h2);
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-md);
-		padding-bottom: var(--space-sm);
+		font-size: var(--text-performance-h2);
+		color: var(--color-performance-fg-primary);
+		margin-bottom: var(--space-performance-md);
+		padding-bottom: var(--space-performance-sm);
 	}
 
 	.section h3 {
-		font-size: var(--text-h3);
-		color: var(--color-fg-secondary);
-		margin-top: var(--space-lg);
-		margin-bottom: var(--space-sm);
+		font-size: var(--text-performance-h3);
+		color: var(--color-performance-fg-secondary);
+		margin-top: var(--space-performance-lg);
+		margin-bottom: var(--space-performance-sm);
 	}
 
 	.section p {
-		font-size: var(--text-body);
-		color: var(--color-fg-tertiary);
-		margin-bottom: var(--space-sm);
-		line-height: var(--leading-relaxed);
+		font-size: var(--text-performance-body);
+		color: var(--color-performance-fg-tertiary);
+		margin-bottom: var(--space-performance-sm);
+		line-height: var(--leading-performance-relaxed);
 	}
 
 	.section ul {
-		padding-left: var(--space-lg);
-		margin-bottom: var(--space-md);
+		padding-left: var(--space-performance-lg);
+		margin-bottom: var(--space-performance-md);
 	}
 
 	.section li {
-		font-size: var(--text-body);
-		color: var(--color-fg-tertiary);
-		margin-bottom: var(--space-xs);
-		line-height: var(--leading-normal);
+		font-size: var(--text-performance-body);
+		color: var(--color-performance-fg-tertiary);
+		margin-bottom: var(--space-performance-xs);
+		line-height: var(--leading-performance-normal);
 	}
 
 	code {
-		background: var(--color-bg-subtle);
+		background: var(--color-performance-bg-subtle);
 		padding: 2px 6px;
-		border-radius: var(--radius-sm);
-		font-size: var(--text-body-sm);
-		font-family: var(--font-mono);
+		border-radius: var(--radius-performance-scale-sm);
+		font-size: var(--text-performance-body-sm);
+		font-family: var(--font-performance-mono);
 	}
 
 	pre {
-		padding: var(--space-md);
-		border-radius: var(--radius-md);
+		padding: var(--space-performance-md);
+		border-radius: var(--radius-performance-scale-md);
 		overflow-x: auto;
 	}
 
@@ -403,41 +403,41 @@
 	table {
 		width: 100%;
 		border-collapse: collapse;
-		margin-bottom: var(--space-md);
+		margin-bottom: var(--space-performance-md);
 	}
 
 	th, td {
-		padding: var(--space-sm);
+		padding: var(--space-performance-sm);
 		text-align: left;
 	}
 
 	th {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
-		font-weight: var(--font-semibold);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
+		font-weight: var(--font-performance-semibold);
 	}
 
 	td {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.note {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 		font-style: italic;
 	}
 
 	.comparison-table {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-md);
+		gap: var(--space-performance-md);
 	}
 
 	.comparison-row {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
-		padding: var(--space-md);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
+		padding: var(--space-performance-md);
 	}
 
 	.comparison-row h3 {
@@ -447,40 +447,40 @@
 	.comparison-cols {
 		display: grid;
 		grid-template-columns: 1fr 1fr;
-		gap: var(--space-md);
+		gap: var(--space-performance-md);
 	}
 
 	.before, .after {
-		padding: var(--space-sm);
-		border-radius: var(--radius-md);
+		padding: var(--space-performance-sm);
+		border-radius: var(--radius-performance-scale-md);
 	}
 
 	.before {
-		background: var(--color-error-muted);
+		background: var(--color-performance-error-muted);
 	}
 
 	.after {
-		background: var(--color-success-muted);
+		background: var(--color-performance-success-muted);
 	}
 
 	.label {
 		display: block;
-		font-size: var(--text-caption);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-secondary);
-		margin-bottom: var(--space-xs);
+		font-size: var(--text-performance-caption);
+		font-weight: var(--font-performance-semibold);
+		color: var(--color-performance-fg-secondary);
+		margin-bottom: var(--space-performance-xs);
 	}
 
 	.improvement {
-		font-size: var(--text-body-sm);
-		color: var(--color-success);
-		font-weight: var(--font-medium);
-		margin-top: var(--space-sm);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-success);
+		font-weight: var(--font-performance-medium);
+		margin-top: var(--space-performance-sm);
 	}
 
 	.cta {
-		padding: var(--space-lg);
-		border-radius: var(--radius-lg);
+		padding: var(--space-performance-lg);
+		border-radius: var(--radius-performance-scale-lg);
 		text-align: center;
 	}
 
@@ -490,12 +490,12 @@
 	}
 
 	.cta a {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 		text-decoration: none;
 	}
 
 	.cta a:hover {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		text-decoration: underline;
 	}
 

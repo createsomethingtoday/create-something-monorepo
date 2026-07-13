@@ -14,25 +14,25 @@ Built on the golden ratio (φ = 1.618). Each step is derived from φⁿ where ba
 
 | Token | Value | Derivation | Recommended Use |
 |-------|-------|------------|-----------------|
-| `--space-xs` | 0.618rem (~10px) | φ⁻¹ | Tight gaps, inline elements |
-| `--space-sm` | 1rem (16px) | φ⁰ (base) | Form element gaps, small padding |
-| `--space-md` | 1.618rem (~26px) | φ¹ | Default component spacing |
-| `--space-lg` | 2.618rem (~42px) | φ² | Card padding, section gaps |
-| `--space-xl` | 4.236rem (~68px) | φ³ | Large component gaps |
-| `--space-2xl` | 6.854rem (~110px) | φ⁴ | *See guidance below* |
-| `--space-3xl` | 11.09rem (~177px) | φ⁵ | *See guidance below* |
+| `--space-performance-xs` | 0.618rem (~10px) | φ⁻¹ | Tight gaps, inline elements |
+| `--space-performance-sm` | 1rem (16px) | φ⁰ (base) | Form element gaps, small padding |
+| `--space-performance-md` | 1.618rem (~26px) | φ¹ | Default component spacing |
+| `--space-performance-lg` | 2.618rem (~42px) | φ² | Card padding, section gaps |
+| `--space-performance-xl` | 4.236rem (~68px) | φ³ | Large component gaps |
+| `--space-performance-2xl` | 6.854rem (~110px) | φ⁴ | *See guidance below* |
+| `--space-performance-3xl` | 11.09rem (~177px) | φ⁵ | *See guidance below* |
 
 ## Tailwind for Structure, Canon for Aesthetics
 
-**Important**: The golden ratio produces mathematically elegant values, but `--space-2xl` (110px) and `--space-3xl` (177px) are impractical for most page-level padding.
+**Important**: The golden ratio produces mathematically elegant values, but `--space-performance-2xl` (110px) and `--space-performance-3xl` (177px) are impractical for most page-level padding.
 
 **Use Tailwind utilities for layout spacing:**
 - Page padding: `py-16`, `py-24`, `px-6`
 - Section gaps: `gap-8`, `space-y-12`
-- Nav offset: `calc(var(--header-height) + var(--space-md))`
+- Nav offset: `calc(var(--height-performance-header) + var(--space-performance-md))`
 
 **Use Canon tokens for component internals:**
-- `--space-xs` through `--space-xl` work well for component padding, gaps, and margins
+- `--space-performance-xs` through `--space-performance-xl` work well for component padding, gaps, and margins
 
 ## Usage Patterns
 
@@ -40,15 +40,15 @@ Built on the golden ratio (φ = 1.618). Each step is derived from φⁿ where ba
 
 ```css
 .button {
-  padding: var(--space-xs) var(--space-sm);
+  padding: var(--space-performance-xs) var(--space-performance-sm);
 }
 
 .card {
-  padding: var(--space-lg);
+  padding: var(--space-performance-lg);
 }
 
 .modal {
-  padding: var(--space-xl);
+  padding: var(--space-performance-xl);
 }
 ```
 
@@ -56,11 +56,11 @@ Built on the golden ratio (φ = 1.618). Each step is derived from φⁿ where ba
 
 ```css
 .stack > * + * {
-  margin-top: var(--space-md);
+  margin-top: var(--space-performance-md);
 }
 
 .stack-lg > * + * {
-  margin-top: var(--space-lg);
+  margin-top: var(--space-performance-lg);
 }
 ```
 
@@ -68,11 +68,11 @@ Built on the golden ratio (φ = 1.618). Each step is derived from φⁿ where ba
 
 ```css
 .grid {
-  gap: var(--space-lg);
+  gap: var(--space-performance-lg);
 }
 
 .grid-tight {
-  gap: var(--space-sm);
+  gap: var(--space-performance-sm);
 }
 ```
 
@@ -80,10 +80,10 @@ Built on the golden ratio (φ = 1.618). Each step is derived from φⁿ where ba
 
 When spacing follows φ, adjacent elements feel balanced:
 
-- `--space-xs` × φ = `--space-sm`
-- `--space-sm` × φ = `--space-md`
-- `--space-md` × φ = `--space-lg`
-- `--space-lg` × φ = `--space-xl`
+- `--space-performance-xs` × φ = `--space-performance-sm`
+- `--space-performance-sm` × φ = `--space-performance-md`
+- `--space-performance-md` × φ = `--space-performance-lg`
+- `--space-performance-lg` × φ = `--space-performance-xl`
 
 This creates rhythm without manual calculation.
 
@@ -105,7 +105,7 @@ For page-level spacing, use Tailwind utilities which provide more practical valu
 </section>
 
 <!-- Fixed nav offset -->
-<main class="pt-[calc(var(--header-height)+1.618rem)]">
+<main class="pt-[calc(var(--height-performance-header)+1.618rem)]">
   <!-- content -->
 </main>
 ```

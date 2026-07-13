@@ -227,20 +227,20 @@
     font-size: 0.72rem;
     letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: var(--color-fg-muted, rgba(255, 255, 255, 0.6));
+    color: var(--color-performance-fg-muted, rgba(255, 255, 255, 0.6));
   }
 
   .flow-copy h3 {
     font-size: clamp(1.6rem, 2.2vw, 2.35rem);
-    color: var(--color-fg-primary, #fff);
+    color: var(--color-performance-fg-primary, #fff);
     line-height: 1.05;
-    letter-spacing: var(--tracking-tight, -0.02em);
+    letter-spacing: var(--tracking-performance-tight, -0.02em);
     margin: 0;
   }
 
   .flow-copy p,
   .flow-caption {
-    color: var(--color-fg-secondary, rgba(255, 255, 255, 0.76));
+    color: var(--color-performance-fg-secondary, rgba(255, 255, 255, 0.76));
     line-height: 1.7;
     margin: 0;
   }
@@ -285,7 +285,7 @@
     border-radius: 14px;
     border: 1px solid rgba(255, 255, 255, 0.12);
     background: rgba(8, 12, 19, 0.9);
-    color: var(--color-fg-secondary, rgba(255, 255, 255, 0.84));
+    color: var(--color-performance-fg-secondary, rgba(255, 255, 255, 0.84));
     font-size: 0.84rem;
     line-height: 1.3;
     box-shadow:
@@ -339,9 +339,9 @@
 
   .node-title {
     font-size: 1.45rem;
-    color: var(--color-fg-primary, #fff);
-    font-weight: var(--font-semibold, 600);
-    letter-spacing: var(--tracking-tight, -0.015em);
+    color: var(--color-performance-fg-primary, #fff);
+    font-weight: var(--font-performance-semibold, 600);
+    letter-spacing: var(--tracking-performance-tight, -0.015em);
   }
 
   .control-title {
@@ -354,7 +354,7 @@
     font-size: 0.72rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--color-fg-muted, rgba(255, 255, 255, 0.5));
+    color: var(--color-performance-fg-muted, rgba(255, 255, 255, 0.5));
   }
 
   .pill-row {

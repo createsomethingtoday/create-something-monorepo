@@ -414,64 +414,64 @@ Outcomes While You Sleep
 
 <style>
 	.header-section {
-		padding-top: var(--space-xl);
-		padding-bottom: var(--space-xl);
+		padding-top: var(--space-performance-xl);
+		padding-bottom: var(--space-performance-xl);
 	}
 
 	.eyebrow {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 		letter-spacing: 0.1em;
 		text-transform: uppercase;
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.intro-text {
-		font-size: var(--text-body-lg);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-lg);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.text-sm-canon {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.text-lg-canon {
-		font-size: var(--text-body-lg);
+		font-size: var(--text-performance-body-lg);
 	}
 
 	.text-xs-canon {
-		font-size: var(--text-caption);
+		font-size: var(--text-performance-caption);
 	}
 
 	.text-base-canon {
-		font-size: var(--text-body);
+		font-size: var(--text-performance-body);
 	}
 
 	.text-2xl-canon {
-		font-size: var(--text-h2);
+		font-size: var(--text-performance-h2);
 	}
 
 	.opacity-40-canon {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.opacity-60-canon {
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.opacity-70-canon {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.opacity-80-canon {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.border-canon {
-		border-color: var(--color-border-default);
+		border-color: var(--color-performance-border-default);
 	}
 
 	section {
-		border-color: var(--color-border-default);
+		border-color: var(--color-performance-border-default);
 	}
 
 	/* Custom styling for triad question (italic) */
@@ -480,7 +480,7 @@ Outcomes While You Sleep
 	}
 
 	.triad-intro {
-		font-size: var(--text-body-lg);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-lg);
+		color: var(--color-performance-fg-secondary);
 	}
 </style>

@@ -128,31 +128,31 @@
 <style>
 	.section-title {
 		font-size: 1.875rem;
-		font-weight: var(--font-bold);
-		color: var(--color-fg-primary);
+		font-weight: var(--font-performance-bold);
+		color: var(--color-performance-fg-primary);
 	}
 
 	/* Card */
 	.related-card {
-		border-radius: var(--radius-lg);
-		transition: all var(--duration-standard) var(--ease-standard);
+		border-radius: var(--radius-performance-scale-lg);
+		transition: all var(--duration-performance-standard) var(--ease-performance-standard);
 	}
 
 	.related-card:hover {
-		border-color: var(--color-border-strong);
-		box-shadow: var(--shadow-lg), 0 0 20px var(--color-hover);
+		border-color: var(--color-performance-border-strong);
+		box-shadow: var(--shadow-performance-scale-lg), 0 0 20px var(--color-performance-hover);
 	}
 
 	/* Thumbnail */
 	.thumbnail-container {
-		background: var(--color-bg-pure);
+		background: var(--color-performance-bg-pure);
 	}
 
 	.ascii-art {
 		font-size: 0.35rem;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		opacity: 0.8;
-		transition: opacity var(--duration-micro) var(--ease-standard);
+		transition: opacity var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	@media (min-width: 640px) {
@@ -167,45 +167,45 @@
 
 	.ascii-placeholder {
 		font-size: 0.4rem;
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	/* Metadata */
 	.meta-row {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.meta-separator {
-		color: var(--color-fg-subtle);
+		color: var(--color-performance-fg-subtle);
 	}
 
 	/* Title */
 	.related-title {
-		font-size: var(--text-body-lg);
-		color: var(--color-fg-primary);
-		transition: color var(--duration-micro) var(--ease-standard);
+		font-size: var(--text-performance-body-lg);
+		color: var(--color-performance-fg-primary);
+		transition: color var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.group:hover .related-title {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	/* Excerpt */
 	.related-excerpt {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	/* Read More */
 	.read-more {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	/* Hover Overlay */
 	.hover-overlay {
-		background: linear-gradient(to top, var(--color-hover), transparent);
+		background: linear-gradient(to top, var(--color-performance-hover), transparent);
 	}
 
 	/* Staggered reveal animation - CSS only */
@@ -213,7 +213,7 @@
 		opacity: 0;
 		transform: translateY(20px);
 		animation: reveal 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-		animation-delay: calc(var(--index, 0) * var(--cascade-group));
+		animation-delay: calc(var(--index, 0) * var(--cascade-performance-group));
 	}
 
 	@keyframes reveal {

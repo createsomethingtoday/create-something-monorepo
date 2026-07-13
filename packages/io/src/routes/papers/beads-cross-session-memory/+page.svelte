@@ -340,71 +340,71 @@ bd sync
 
 <style>
 	.paper-container {
-		background: var(--color-bg-pure);
-		color: var(--color-fg-primary);
+		background: var(--color-performance-bg-pure);
+		color: var(--color-performance-fg-primary);
 	}
 
 
 	.paper-id {
-		color: var(--color-fg-muted);
-		font-size: var(--text-body-sm);
+		color: var(--color-performance-fg-muted);
+		font-size: var(--text-performance-body-sm);
 		text-transform: uppercase;
 		letter-spacing: 0.1em;
 	}
 
 	.paper-title {
-		font-size: var(--text-h1);
+		font-size: var(--text-performance-h1);
 		font-weight: 700;
 		line-height: 1.2;
 	}
 
 	.paper-subtitle {
-		font-size: var(--text-body-lg);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-lg);
+		color: var(--color-performance-fg-secondary);
 		line-height: 1.6;
 	}
 
 	.paper-meta {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.abstract-section {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
-		padding: var(--space-lg);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
+		padding: var(--space-performance-lg);
 	}
 
 	.section-heading {
-		font-size: var(--text-h2);
+		font-size: var(--text-performance-h2);
 		font-weight: 700;
-		margin-bottom: var(--space-md);
+		margin-bottom: var(--space-performance-md);
 	}
 
 	.subsection-heading {
-		font-size: var(--text-h3);
+		font-size: var(--text-performance-h3);
 		font-weight: 600;
-		margin: var(--space-lg) 0 var(--space-md) 0;
-		color: var(--color-fg-secondary);
+		margin: var(--space-performance-lg) 0 var(--space-performance-md) 0;
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.body-text {
-		font-size: var(--text-body);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body);
+		color: var(--color-performance-fg-tertiary);
 		line-height: 1.7;
 	}
 
 	.body-text code {
 		font-family: 'Stack Sans', monospace;
-		background: var(--color-bg-subtle);
+		background: var(--color-performance-bg-subtle);
 		padding: 0.125rem 0.375rem;
-		border-radius: var(--radius-sm);
+		border-radius: var(--radius-performance-scale-sm);
 		font-size: 0.9em;
 	}
 
 	.comparison-card {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.comparison-card .subsection-heading {
@@ -412,11 +412,11 @@ bd sync
 	}
 
 	.code-block {
-		background: var(--color-bg-subtle);
-		border-radius: var(--radius-lg);
-		padding: var(--space-md);
+		background: var(--color-performance-bg-subtle);
+		border-radius: var(--radius-performance-scale-lg);
+		padding: var(--space-performance-md);
 		overflow-x: auto;
-		margin: var(--space-md) 0;
+		margin: var(--space-performance-md) 0;
 	}
 
 	.code-block pre {
@@ -425,32 +425,32 @@ bd sync
 
 	.code-block code {
 		font-family: 'Stack Sans', monospace;
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.metric-table {
 		border-collapse: collapse;
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
 		overflow: hidden;
 	}
 
 	.metric-table th {
-		background: var(--color-bg-subtle);
-		padding: var(--space-md);
+		background: var(--color-performance-bg-subtle);
+		padding: var(--space-performance-md);
 		text-align: left;
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 		font-weight: 600;
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
-		border-bottom: 1px solid var(--color-border-emphasis);
+		border-bottom: 1px solid var(--color-performance-border-emphasis);
 	}
 
 	.metric-table td {
-		padding: var(--space-md);
-		color: var(--color-fg-tertiary);
+		padding: var(--space-performance-md);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.metric-table tr:last-child td {
@@ -459,13 +459,13 @@ bd sync
 
 	.metric-table code {
 		font-family: 'Stack Sans', monospace;
-		background: var(--color-bg-subtle);
+		background: var(--color-performance-bg-subtle);
 		padding: 0.125rem 0.375rem;
-		border-radius: var(--radius-sm);
+		border-radius: var(--radius-performance-scale-sm);
 		font-size: 0.9em;
 	}
 
 	.border-default {
-		border-color: var(--color-border-default);
+		border-color: var(--color-performance-border-default);
 	}
 </style>

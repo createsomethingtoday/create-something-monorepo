@@ -17,199 +17,199 @@ export interface CanonLintMapping {
 export const CANON_TAILWIND_DESIGN_MAPPINGS: CanonLintMapping[] = [
   {
     tailwind: 'rounded-sm',
-    canon: 'var(--radius-sm)',
+    canon: 'var(--radius-performance-scale-sm)',
     category: 'radius',
     description: radius.sm
   },
   {
     tailwind: 'rounded-md',
-    canon: 'var(--radius-md)',
+    canon: 'var(--radius-performance-scale-md)',
     category: 'radius',
     description: radius.md
   },
   {
     tailwind: 'rounded-lg',
-    canon: 'var(--radius-lg)',
+    canon: 'var(--radius-performance-scale-lg)',
     category: 'radius',
     description: radius.lg
   },
   {
     tailwind: 'rounded-xl',
-    canon: 'var(--radius-xl)',
+    canon: 'var(--radius-performance-scale-xl)',
     category: 'radius',
     description: radius.xl
   },
   {
     tailwind: 'rounded-full',
-    canon: 'var(--radius-full)',
+    canon: 'var(--radius-performance-scale-full)',
     category: 'radius',
     description: radius.full
   },
-  { tailwind: /^rounded-\w+$/, canon: 'var(--radius-*)', category: 'radius' },
+  { tailwind: /^rounded-\w+$/, canon: 'var(--radius-performance-scale-*)', category: 'radius' },
 
   {
     tailwind: 'bg-black',
-    canon: 'var(--color-bg-pure)',
+    canon: 'var(--color-performance-bg-pure)',
     category: 'color',
     description: colors.background.pure
   },
   {
     tailwind: 'bg-white',
-    canon: 'var(--color-fg-primary)',
+    canon: 'var(--color-performance-fg-primary)',
     category: 'color',
     description: colors.foreground.primary
   },
   {
     tailwind: /^bg-white\/5$/,
-    canon: 'var(--color-bg-subtle)',
+    canon: 'var(--color-performance-bg-subtle)',
     category: 'color',
     description: colors.background.subtle
   },
   {
     tailwind: /^bg-white\/10$/,
-    canon: 'var(--color-bg-surface)',
+    canon: 'var(--color-performance-bg-surface)',
     category: 'color',
     description: colors.background.surface
   },
-  { tailwind: /^bg-gray-/, canon: 'var(--color-bg-*)', category: 'color' },
-  { tailwind: /^bg-slate-/, canon: 'var(--color-bg-*)', category: 'color' },
+  { tailwind: /^bg-gray-/, canon: 'var(--color-performance-bg-*)', category: 'color' },
+  { tailwind: /^bg-slate-/, canon: 'var(--color-performance-bg-*)', category: 'color' },
 
   {
     tailwind: 'text-white',
-    canon: 'var(--color-fg-primary)',
+    canon: 'var(--color-performance-fg-primary)',
     category: 'color',
     description: colors.foreground.primary
   },
   {
     tailwind: 'text-black',
-    canon: 'var(--color-fg-primary)',
+    canon: 'var(--color-performance-fg-primary)',
     category: 'color',
     description: '#000000 (inverted theme)'
   },
   {
     tailwind: /^text-white\/80$/,
-    canon: 'var(--color-fg-secondary)',
+    canon: 'var(--color-performance-fg-secondary)',
     category: 'color',
     description: colors.foreground.secondary
   },
   {
     tailwind: /^text-white\/60$/,
-    canon: 'var(--color-fg-tertiary)',
+    canon: 'var(--color-performance-fg-tertiary)',
     category: 'color',
     description: colors.foreground.tertiary
   },
   {
     tailwind: /^text-white\/46$/,
-    canon: 'var(--color-fg-muted)',
+    canon: 'var(--color-performance-fg-muted)',
     category: 'color',
     description: `${colors.foreground.muted} - WCAG AA compliant`
   },
   {
     tailwind: /^text-white\/20$/,
-    canon: 'var(--color-fg-subtle)',
+    canon: 'var(--color-performance-fg-subtle)',
     category: 'color',
     description: colors.foreground.subtle
   },
-  { tailwind: /^text-gray-/, canon: 'var(--color-fg-*)', category: 'color' },
-  { tailwind: /^text-slate-/, canon: 'var(--color-fg-*)', category: 'color' },
+  { tailwind: /^text-gray-/, canon: 'var(--color-performance-fg-*)', category: 'color' },
+  { tailwind: /^text-slate-/, canon: 'var(--color-performance-fg-*)', category: 'color' },
 
   {
     tailwind: /^border-white\/10$/,
-    canon: 'var(--color-border-default)',
+    canon: 'var(--color-performance-border-default)',
     category: 'color',
     description: colors.border.default
   },
   {
     tailwind: /^border-white\/20$/,
-    canon: 'var(--color-border-emphasis)',
+    canon: 'var(--color-performance-border-emphasis)',
     category: 'color',
     description: colors.border.emphasis
   },
   {
     tailwind: /^border-white\/30$/,
-    canon: 'var(--color-border-strong)',
+    canon: 'var(--color-performance-border-strong)',
     category: 'color',
     description: colors.border.strong
   },
-  { tailwind: /^border-gray-/, canon: 'var(--color-border-*)', category: 'color' },
-  { tailwind: /^border-white$/, canon: 'var(--color-border-*)', category: 'color' },
-  { tailwind: /^border-black$/, canon: 'var(--color-border-*)', category: 'color' },
+  { tailwind: /^border-gray-/, canon: 'var(--color-performance-border-*)', category: 'color' },
+  { tailwind: /^border-white$/, canon: 'var(--color-performance-border-*)', category: 'color' },
+  { tailwind: /^border-black$/, canon: 'var(--color-performance-border-*)', category: 'color' },
 
   {
     tailwind: 'shadow-sm',
-    canon: 'var(--shadow-sm)',
+    canon: 'var(--shadow-performance-scale-sm)',
     category: 'shadow',
     description: shadows.sm
   },
   {
     tailwind: 'shadow-md',
-    canon: 'var(--shadow-md)',
+    canon: 'var(--shadow-performance-scale-md)',
     category: 'shadow',
     description: shadows.md
   },
   {
     tailwind: 'shadow-lg',
-    canon: 'var(--shadow-lg)',
+    canon: 'var(--shadow-performance-scale-lg)',
     category: 'shadow',
     description: shadows.lg
   },
   {
     tailwind: 'shadow-xl',
-    canon: 'var(--shadow-xl)',
+    canon: 'var(--shadow-performance-scale-xl)',
     category: 'shadow',
     description: shadows.xl
   },
   {
     tailwind: 'shadow-2xl',
-    canon: 'var(--shadow-2xl)',
+    canon: 'var(--shadow-performance-scale-2xl)',
     category: 'shadow',
     description: shadows['2xl']
   },
-  { tailwind: /^shadow-\w+$/, canon: 'var(--shadow-*)', category: 'shadow' },
+  { tailwind: /^shadow-\w+$/, canon: 'var(--shadow-performance-scale-*)', category: 'shadow' },
 
   {
     tailwind: 'text-xs',
-    canon: 'var(--text-caption)',
+    canon: 'var(--text-performance-caption)',
     category: 'typography',
     description: typography.scale.caption
   },
   {
     tailwind: 'text-sm',
-    canon: 'var(--text-body-sm)',
+    canon: 'var(--text-performance-body-sm)',
     category: 'typography',
     description: typography.scale['body-sm']
   },
   {
     tailwind: 'text-base',
-    canon: 'var(--text-body)',
+    canon: 'var(--text-performance-body)',
     category: 'typography',
     description: typography.scale.body
   },
   {
     tailwind: 'text-lg',
-    canon: 'var(--text-body-lg)',
+    canon: 'var(--text-performance-body-lg)',
     category: 'typography',
     description: typography.scale['body-lg']
   },
   {
     tailwind: 'text-xl',
-    canon: 'var(--text-h3)',
+    canon: 'var(--text-performance-h3)',
     category: 'typography',
     description: typography.scale.h3
   },
   {
     tailwind: 'text-2xl',
-    canon: 'var(--text-h2)',
+    canon: 'var(--text-performance-h2)',
     category: 'typography',
     description: typography.scale.h2
   },
   {
     tailwind: 'text-3xl',
-    canon: 'var(--text-h1)',
+    canon: 'var(--text-performance-h1)',
     category: 'typography',
     description: typography.scale.h1
   },
-  { tailwind: /^text-\d+xl$/, canon: 'var(--text-*)', category: 'typography' },
+  { tailwind: /^text-\d+xl$/, canon: 'var(--text-performance-*)', category: 'typography' },
 
   {
     tailwind: /^opacity-\d+$/,
@@ -274,42 +274,42 @@ export const CANON_ALLOWED_TAILWIND_UTILS: CanonTailwindUtilityPattern[] = [
 ];
 
 export const CANON_CSS_VALUE_MAPPINGS: Record<string, string> = {
-  '#000000': 'var(--color-bg-pure)',
-  '#000': 'var(--color-bg-pure)',
-  black: 'var(--color-bg-pure)',
-  '#0a0a0a': 'var(--color-bg-elevated)',
-  '#111111': 'var(--color-bg-surface)',
-  '#111': 'var(--color-bg-surface)',
-  '#1a1a1a': 'var(--color-bg-subtle)',
-  '#ffffff': 'var(--color-fg-primary)',
-  '#fff': 'var(--color-fg-primary)',
-  white: 'var(--color-fg-primary)',
-  'rgba(255, 255, 255, 0.8)': 'var(--color-fg-secondary)',
-  'rgba(255,255,255,0.8)': 'var(--color-fg-secondary)',
-  'rgba(255, 255, 255, 0.6)': 'var(--color-fg-tertiary)',
-  'rgba(255,255,255,0.6)': 'var(--color-fg-tertiary)',
-  'rgba(255, 255, 255, 0.46)': 'var(--color-fg-muted)',
-  'rgba(255,255,255,0.46)': 'var(--color-fg-muted)',
-  'rgba(255, 255, 255, 0.2)': 'var(--color-fg-subtle)',
-  'rgba(255,255,255,0.2)': 'var(--color-fg-subtle)',
-  'rgba(255, 255, 255, 0.1)': 'var(--color-border-default)',
-  'rgba(255,255,255,0.1)': 'var(--color-border-default)',
-  'rgba(255, 255, 255, 0.3)': 'var(--color-border-strong)',
-  'rgba(255,255,255,0.3)': 'var(--color-border-strong)',
-  '6px': 'var(--radius-sm)',
-  '8px': 'var(--radius-md)',
-  '12px': 'var(--radius-lg)',
-  '16px': 'var(--radius-xl)',
-  '9999px': 'var(--radius-full)',
-  '0.75rem': 'var(--text-caption)',
-  '0.875rem': 'var(--text-body-sm)',
-  '1rem': 'var(--text-body)',
-  '1.125rem': 'var(--text-body-lg)',
-  '0.5rem': 'var(--space-xs)',
-  '1.618rem': 'var(--space-md)',
-  '2.618rem': 'var(--space-lg)',
-  '4.236rem': 'var(--space-xl)',
-  '6.854rem': 'var(--space-2xl)'
+  '#000000': 'var(--color-performance-bg-pure)',
+  '#000': 'var(--color-performance-bg-pure)',
+  black: 'var(--color-performance-bg-pure)',
+  '#0a0a0a': 'var(--color-performance-bg-elevated)',
+  '#111111': 'var(--color-performance-bg-surface)',
+  '#111': 'var(--color-performance-bg-surface)',
+  '#1a1a1a': 'var(--color-performance-bg-subtle)',
+  '#ffffff': 'var(--color-performance-fg-primary)',
+  '#fff': 'var(--color-performance-fg-primary)',
+  white: 'var(--color-performance-fg-primary)',
+  'rgba(255, 255, 255, 0.8)': 'var(--color-performance-fg-secondary)',
+  'rgba(255,255,255,0.8)': 'var(--color-performance-fg-secondary)',
+  'rgba(255, 255, 255, 0.6)': 'var(--color-performance-fg-tertiary)',
+  'rgba(255,255,255,0.6)': 'var(--color-performance-fg-tertiary)',
+  'rgba(255, 255, 255, 0.46)': 'var(--color-performance-fg-muted)',
+  'rgba(255,255,255,0.46)': 'var(--color-performance-fg-muted)',
+  'rgba(255, 255, 255, 0.2)': 'var(--color-performance-fg-subtle)',
+  'rgba(255,255,255,0.2)': 'var(--color-performance-fg-subtle)',
+  'rgba(255, 255, 255, 0.1)': 'var(--color-performance-border-default)',
+  'rgba(255,255,255,0.1)': 'var(--color-performance-border-default)',
+  'rgba(255, 255, 255, 0.3)': 'var(--color-performance-border-strong)',
+  'rgba(255,255,255,0.3)': 'var(--color-performance-border-strong)',
+  '6px': 'var(--radius-performance-scale-sm)',
+  '8px': 'var(--radius-performance-scale-md)',
+  '12px': 'var(--radius-performance-scale-lg)',
+  '16px': 'var(--radius-performance-scale-xl)',
+  '9999px': 'var(--radius-performance-scale-full)',
+  '0.75rem': 'var(--text-performance-caption)',
+  '0.875rem': 'var(--text-performance-body-sm)',
+  '1rem': 'var(--text-performance-body)',
+  '1.125rem': 'var(--text-performance-body-lg)',
+  '0.5rem': 'var(--space-performance-xs)',
+  '1.618rem': 'var(--space-performance-md)',
+  '2.618rem': 'var(--space-performance-lg)',
+  '4.236rem': 'var(--space-performance-xl)',
+  '6.854rem': 'var(--space-performance-2xl)'
 };
 
 export const CANON_CSS_TOKEN_PROPERTIES = [

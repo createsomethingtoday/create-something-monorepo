@@ -74,7 +74,7 @@
 		<path
 			bind:this={pathElement}
 			d={pathD}
-			stroke="var(--color-fg-subtle)"
+			stroke="var(--color-performance-fg-subtle)"
 			stroke-width="0.5"
 			fill="none"
 			stroke-linecap="round"
@@ -155,7 +155,7 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		padding: var(--space-2xl);
+		padding: var(--space-performance-2xl);
 	}
 
 	.act-content {
@@ -163,21 +163,21 @@
 		flex-direction: column;
 		align-items: center;
 		text-align: center;
-		gap: var(--space-md);
+		gap: var(--space-performance-md);
 		max-width: 800px;
 	}
 
 	/* Typography */
 	.act-text {
-		font-size: var(--text-display-xl);
-		font-weight: var(--font-bold);
-		color: var(--color-fg-primary);
-		line-height: var(--leading-tight);
-		letter-spacing: var(--tracking-tight);
+		font-size: var(--text-performance-display-xl);
+		font-weight: var(--font-performance-bold);
+		color: var(--color-performance-fg-primary);
+		line-height: var(--leading-performance-tight);
+		letter-spacing: var(--tracking-performance-tight);
 		max-width: 14ch;
 		opacity: 0;
 		transform: translateY(20px);
-		transition: opacity var(--duration-complex) var(--ease-standard), transform var(--duration-complex) var(--ease-standard);
+		transition: opacity var(--duration-performance-complex) var(--ease-performance-standard), transform var(--duration-performance-complex) var(--ease-performance-standard);
 	}
 
 	.act-text.visible {
@@ -186,19 +186,19 @@
 	}
 
 	.act-text.delayed {
-		transition-delay: var(--duration-micro);
+		transition-delay: var(--duration-performance-micro);
 	}
 
 	.act-subtext {
-		font-size: var(--text-h2);
-		font-weight: var(--font-medium);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-h2);
+		font-weight: var(--font-performance-medium);
+		color: var(--color-performance-fg-tertiary);
 		font-style: italic;
 		max-width: 24ch;
 		opacity: 0;
 		transform: translateY(20px);
-		transition: opacity var(--duration-complex) var(--ease-standard), transform var(--duration-complex) var(--ease-standard);
-		transition-delay: var(--duration-micro);
+		transition: opacity var(--duration-performance-complex) var(--ease-performance-standard), transform var(--duration-performance-complex) var(--ease-performance-standard);
+		transition-delay: var(--duration-performance-micro);
 	}
 
 	.act-subtext.visible {
@@ -210,21 +210,21 @@
 	.act-cta {
 		display: inline-flex;
 		align-items: center;
-		gap: var(--space-sm);
-		margin-top: var(--space-lg);
-		padding: var(--space-md) var(--space-xl);
-		font-size: var(--text-h3);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
+		gap: var(--space-performance-sm);
+		margin-top: var(--space-performance-lg);
+		padding: var(--space-performance-md) var(--space-performance-xl);
+		font-size: var(--text-performance-h3);
+		font-weight: var(--font-performance-semibold);
+		color: var(--color-performance-fg-primary);
 		background: transparent;
-		border: 1px solid var(--color-border-emphasis);
-		border-radius: var(--radius-full);
+		border: 1px solid var(--color-performance-border-emphasis);
+		border-radius: var(--radius-performance-scale-full);
 		opacity: 0;
 		transform: translateY(20px);
-		transition: opacity var(--duration-complex) var(--ease-standard),
-					transform var(--duration-complex) var(--ease-standard),
-					border-color var(--duration-micro) var(--ease-standard),
-					background var(--duration-micro) var(--ease-standard);
+		transition: opacity var(--duration-performance-complex) var(--ease-performance-standard),
+					transform var(--duration-performance-complex) var(--ease-performance-standard),
+					border-color var(--duration-performance-micro) var(--ease-performance-standard),
+					background var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.act-cta.visible {
@@ -233,12 +233,12 @@
 	}
 
 	.act-cta:hover {
-		border-color: var(--color-fg-tertiary);
-		background: var(--color-hover);
+		border-color: var(--color-performance-fg-tertiary);
+		background: var(--color-performance-hover);
 	}
 
 	.act-cta .arrow {
-		transition: transform var(--duration-micro) var(--ease-standard);
+		transition: transform var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.act-cta:hover .arrow {
@@ -248,11 +248,11 @@
 	/* Responsive */
 	@media (max-width: 768px) {
 		.act-text {
-			font-size: var(--text-display);
+			font-size: var(--text-performance-display);
 		}
 
 		.act-subtext {
-			font-size: var(--text-h3);
+			font-size: var(--text-performance-h3);
 		}
 
 		.revelation-line {
@@ -261,7 +261,7 @@
 		}
 
 		.act {
-			padding: var(--space-xl);
+			padding: var(--space-performance-xl);
 		}
 	}
 </style>

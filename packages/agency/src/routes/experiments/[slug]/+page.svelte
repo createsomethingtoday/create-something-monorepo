@@ -65,15 +65,15 @@
 
 <style>
 	.page-wrapper {
-		background: var(--color-bg-pure);
+		background: var(--color-performance-bg-pure);
 	}
 
 	.back-link {
-		color: var(--color-success);
-		transition: color var(--duration-micro) var(--ease-standard);
+		color: var(--color-performance-success);
+		transition: color var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.back-link:hover {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 </style>

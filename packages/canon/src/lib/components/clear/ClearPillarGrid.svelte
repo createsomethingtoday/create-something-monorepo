@@ -93,8 +93,8 @@
 
 	a.clear-pillar {
 		transition:
-			border-color var(--duration-micro) var(--ease-standard),
-			background var(--duration-micro) var(--ease-standard);
+			border-color var(--duration-performance-micro) var(--ease-performance-standard),
+			background var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	a.clear-pillar:hover {
@@ -113,9 +113,9 @@
 		border-radius: var(--radius-performance-sm, 4px);
 		background: var(--color-performance-paper, #f3f3f0);
 		color: var(--color-performance-muted, #5e6268);
-		font-family: var(--font-mono);
+		font-family: var(--font-performance-mono);
 		font-size: 0.72rem;
-		font-weight: var(--font-semibold);
+		font-weight: var(--font-performance-semibold);
 		letter-spacing: 0;
 		line-height: 1.12;
 		text-transform: uppercase;
@@ -126,7 +126,7 @@
 		display: block;
 		color: var(--color-performance-ink, #090909);
 		font-size: 1.18rem;
-		font-weight: var(--font-medium);
+		font-weight: var(--font-performance-medium);
 		line-height: 1.16;
 		text-decoration: none;
 		text-wrap: balance;
@@ -150,9 +150,9 @@
 		padding-top: 0.72rem;
 		border-top: 1px solid var(--color-performance-line, #d7d7d2);
 		color: var(--color-performance-ink, #090909);
-		font-family: var(--font-mono);
+		font-family: var(--font-performance-mono);
 		font-size: 0.76rem;
-		font-weight: var(--font-medium);
+		font-weight: var(--font-performance-medium);
 		line-height: 1.35;
 	}
 
@@ -173,7 +173,7 @@
 		background: var(--color-performance-panel, #ffffff);
 		color: var(--color-performance-ink, #090909);
 		font-size: 0.8rem;
-		font-weight: var(--font-medium);
+		font-weight: var(--font-performance-medium);
 		line-height: 1.2;
 		text-decoration: none;
 	}

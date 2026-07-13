@@ -132,8 +132,8 @@
 
 <style>
 	.code-block {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
 		overflow: hidden;
 	}
 
@@ -141,19 +141,19 @@
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		padding: var(--space-xs) var(--space-sm);
-		background: var(--color-bg-subtle);
+		padding: var(--space-performance-xs) var(--space-performance-sm);
+		background: var(--color-performance-bg-subtle);
 	}
 
 	.code-title {
-		font-size: var(--text-caption);
-		font-family: var(--font-mono);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		font-family: var(--font-performance-mono);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.code-actions {
 		display: flex;
-		gap: var(--space-xs);
+		gap: var(--space-performance-xs);
 	}
 
 	.code-content {
@@ -164,72 +164,72 @@
 	.line-numbers {
 		display: flex;
 		flex-direction: column;
-		padding: var(--space-sm);
+		padding: var(--space-performance-sm);
 		padding-right: 0;
-		background: var(--color-bg-subtle);
-		border-right: 1px solid var(--color-border-default);
+		background: var(--color-performance-bg-subtle);
+		border-right: 1px solid var(--color-performance-border-default);
 		user-select: none;
 	}
 
 	.line-number {
-		font-family: var(--font-mono);
-		font-size: var(--text-body-sm);
+		font-family: var(--font-performance-mono);
+		font-size: var(--text-performance-body-sm);
 		line-height: 1.6;
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 		text-align: right;
 		min-width: 2ch;
 	}
 
 	.code-pre {
 		margin: 0;
-		padding: var(--space-sm);
+		padding: var(--space-performance-sm);
 		overflow-x: auto;
 		flex: 1;
 	}
 
 	.code {
-		font-family: var(--font-mono);
-		font-size: var(--text-body-sm);
+		font-family: var(--font-performance-mono);
+		font-size: var(--text-performance-body-sm);
 		line-height: 1.6;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		white-space: pre;
 	}
 
 	/* Syntax highlighting tokens - using Canon data colors */
 	:global(.code-block .token.property) {
-		color: var(--color-data-1);
+		color: var(--color-performance-data-1);
 	}
 
 	:global(.code-block .token.value) {
-		color: var(--color-data-3);
+		color: var(--color-performance-data-3);
 	}
 
 	:global(.code-block .token.comment) {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 		font-style: italic;
 	}
 
 	:global(.code-block .token.keyword) {
-		color: var(--color-data-3);
+		color: var(--color-performance-data-3);
 	}
 
 	:global(.code-block .token.string) {
-		color: var(--color-data-2);
+		color: var(--color-performance-data-2);
 	}
 
 	:global(.code-block .token.tag) {
-		color: var(--color-data-5);
+		color: var(--color-performance-data-5);
 	}
 
 	:global(.code-block .token.attr-name) {
-		color: var(--color-data-1);
+		color: var(--color-performance-data-1);
 	}
 
 	:global(.code-block .token.command) {
-		color: var(--color-data-2);
+		color: var(--color-performance-data-2);
 	}
 
 	:global(.code-block .token.flag) {
-		color: var(--color-data-4);
+		color: var(--color-performance-data-4);
 	}
 </style>

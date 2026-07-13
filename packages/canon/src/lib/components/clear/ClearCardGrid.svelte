@@ -125,8 +125,8 @@
 
 	a.clear-card-grid__card {
 		transition:
-			border-color var(--duration-micro) var(--ease-standard),
-			background var(--duration-micro) var(--ease-standard);
+			border-color var(--duration-performance-micro) var(--ease-performance-standard),
+			background var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	a.clear-card-grid__card:hover {
@@ -156,9 +156,9 @@
 
 	.clear-card-grid__eyebrow {
 		color: var(--color-performance-muted, #5e6268);
-		font-family: var(--font-mono);
+		font-family: var(--font-performance-mono);
 		font-size: 0.72rem;
-		font-weight: var(--font-medium);
+		font-weight: var(--font-performance-medium);
 		letter-spacing: 0;
 		line-height: 1.12;
 		text-transform: uppercase;
@@ -167,7 +167,7 @@
 	.clear-card-grid__card strong {
 		color: var(--color-performance-ink, #090909);
 		font-size: 1.18rem;
-		font-weight: var(--font-medium);
+		font-weight: var(--font-performance-medium);
 		line-height: 1.18;
 		text-wrap: balance;
 	}

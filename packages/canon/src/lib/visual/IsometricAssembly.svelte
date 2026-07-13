@@ -297,46 +297,46 @@
 
 	/* Box faces */
 	.face {
-		stroke: var(--color-fg-muted, rgba(255, 255, 255, 0.4));
+		stroke: var(--color-performance-fg-muted, rgba(255, 255, 255, 0.4));
 		stroke-width: 1;
 		vector-effect: non-scaling-stroke;
 	}
 
 	.face-top {
-		fill: var(--color-fg-subtle, rgba(255, 255, 255, 0.15));
+		fill: var(--color-performance-fg-subtle, rgba(255, 255, 255, 0.15));
 	}
 
 	.face-left {
-		fill: var(--color-bg-subtle, rgba(255, 255, 255, 0.08));
+		fill: var(--color-performance-bg-subtle, rgba(255, 255, 255, 0.08));
 	}
 
 	.face-right {
-		fill: var(--color-bg-elevated, rgba(255, 255, 255, 0.03));
+		fill: var(--color-performance-bg-elevated, rgba(255, 255, 255, 0.03));
 	}
 
 	/* Labels */
 	.part-label {
-		font-family: var(--font-mono, monospace);
+		font-family: var(--font-performance-mono, monospace);
 		font-size: 10px;
-		fill: var(--color-fg-secondary, rgba(255, 255, 255, 0.8));
+		fill: var(--color-performance-fg-secondary, rgba(255, 255, 255, 0.8));
 		opacity: 0;
 	}
 
 	/* Title */
 	.assembly-title {
-		font-family: var(--font-sans, system-ui);
+		font-family: var(--font-performance-sans, system-ui);
 		font-size: 12px;
-		fill: var(--color-fg-muted, rgba(255, 255, 255, 0.4));
+		fill: var(--color-performance-fg-muted, rgba(255, 255, 255, 0.4));
 		font-style: italic;
 		opacity: 0;
 	}
 
 	/* Hover interactions */
 	.part:hover .face {
-		stroke: var(--color-fg-secondary, rgba(255, 255, 255, 0.6));
+		stroke: var(--color-performance-fg-secondary, rgba(255, 255, 255, 0.6));
 	}
 
 	.part:hover .face-top {
-		fill: var(--color-fg-muted, rgba(255, 255, 255, 0.25));
+		fill: var(--color-performance-fg-muted, rgba(255, 255, 255, 0.25));
 	}
 </style>

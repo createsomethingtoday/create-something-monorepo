@@ -14,17 +14,17 @@ Three levels of elevation for clear visual hierarchy.
 
 | Token | Use |
 |-------|-----|
-| `--shadow-sm` | Buttons, inputs, subtle lift |
-| `--shadow-md` | Cards, dropdowns |
-| `--shadow-lg` | Modals, popovers |
+| `--shadow-performance-scale-sm` | Buttons, inputs, subtle lift |
+| `--shadow-performance-scale-md` | Cards, dropdowns |
+| `--shadow-performance-scale-lg` | Modals, popovers |
 
 ## Shadow Values
 
 ```css
---shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
---shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 
+--shadow-performance-scale-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+--shadow-performance-scale-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
              0 2px 4px -1px rgba(0, 0, 0, 0.06);
---shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 
+--shadow-performance-scale-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
              0 4px 6px -2px rgba(0, 0, 0, 0.05);
 ```
 
@@ -34,11 +34,11 @@ Three levels of elevation for clear visual hierarchy.
 
 ```css
 .card {
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-performance-scale-md);
 }
 
 .card:hover {
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-performance-scale-lg);
   transform: translateY(-2px);
 }
 ```
@@ -47,7 +47,7 @@ Three levels of elevation for clear visual hierarchy.
 
 ```css
 .modal {
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-performance-scale-lg);
 }
 ```
 
@@ -55,7 +55,7 @@ Three levels of elevation for clear visual hierarchy.
 
 ```css
 .button {
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-performance-scale-sm);
 }
 
 .button:active {
@@ -69,10 +69,10 @@ Consistent stacking order for overlapping elements.
 
 | Token | Value | Use |
 |-------|-------|-----|
-| `--z-dropdown` | 100 | Dropdowns, tooltips |
-| `--z-modal` | 200 | Modal dialogs |
+| `--z-performance-dropdown` | 100 | Dropdowns, tooltips |
+| `--z-performance-modal` | 200 | Modal dialogs |
 | `--z-toast` | 300 | Toast notifications |
-| `--z-tooltip` | 400 | Tooltips on top |
+| `--z-performance-tooltip` | 400 | Tooltips on top |
 
 ## Best Practices
 
@@ -84,7 +84,7 @@ Consistent stacking order for overlapping elements.
 ```css
 /* Elevation transition */
 .card {
-  transition: box-shadow var(--duration-fast) var(--ease-standard),
-              transform var(--duration-fast) var(--ease-standard);
+  transition: box-shadow var(--duration-performance-fast) var(--ease-performance-standard),
+              transform var(--duration-performance-fast) var(--ease-performance-standard);
 }
 ```

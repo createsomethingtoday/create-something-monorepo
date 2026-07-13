@@ -65,7 +65,7 @@
 			width={svgWidth}
 			height={svgHeight - ty(elevation.groundLevel)}
 			class="ground-fill"
-			fill={expanded ? 'url(#earth-hatch)' : 'var(--color-bg-pure)'}
+			fill={expanded ? 'url(#earth-hatch)' : 'var(--color-performance-bg-pure)'}
 		/>
 
 		<!-- Elements -->
@@ -195,7 +195,7 @@
 	}
 
 	.elevation-label {
-		font-family: var(--font-sans, system-ui, sans-serif);
+		font-family: var(--font-performance-sans, system-ui, sans-serif);
 		font-size: 7px;
 		fill: var(--arch-label-primary);
 		text-anchor: middle;
@@ -208,7 +208,7 @@
 	}
 
 	.dimension-label {
-		font-family: var(--font-sans, system-ui, sans-serif);
+		font-family: var(--font-performance-sans, system-ui, sans-serif);
 		font-size: 6px;
 		fill: var(--arch-label-subtle);
 		dominant-baseline: middle;
@@ -218,21 +218,21 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		margin-top: var(--space-md, 1.5rem);
-		padding-top: var(--space-sm, 1rem);
-		font-family: var(--font-sans, system-ui, sans-serif);
+		margin-top: var(--space-performance-md, 1.5rem);
+		padding-top: var(--space-performance-sm, 1rem);
+		font-family: var(--font-performance-sans, system-ui, sans-serif);
 	}
 
 	.caption {
-		font-size: var(--text-body-sm, 11px);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-body-sm, 11px);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.direction-hint {
-		font-size: var(--text-caption, 10px);
-		color: var(--color-fg-subtle);
+		font-size: var(--text-performance-caption, 10px);
+		color: var(--color-performance-fg-subtle);
 		text-transform: uppercase;
-		letter-spacing: var(--tracking-widest, 0.1em);
+		letter-spacing: var(--tracking-performance-widest, 0.1em);
 	}
 
 	@media (max-width: 768px) {

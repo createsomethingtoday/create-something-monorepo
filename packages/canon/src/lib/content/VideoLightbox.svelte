@@ -172,29 +172,29 @@
 	.thumbnail {
 		position: relative;
 		width: 100%;
-		background: var(--color-bg-surface, #111);
-		border: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
-		border-radius: var(--radius-lg, 12px);
+		background: var(--color-performance-bg-surface, #111);
+		border: 1px solid var(--color-performance-border-default, rgba(255, 255, 255, 0.1));
+		border-radius: var(--radius-performance-scale-lg, 12px);
 		overflow: hidden;
 		cursor: pointer;
-		transition: all var(--duration-micro, 200ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+		transition: all var(--duration-performance-micro, 200ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1));
 	}
 
 	.thumbnail:hover {
-		border-color: var(--color-border-emphasis, rgba(255, 255, 255, 0.2));
+		border-color: var(--color-performance-border-emphasis, rgba(255, 255, 255, 0.2));
 	}
 
 	.thumbnail:hover .play-button {
 		transform: translate(-50%, -50%) scale(1.1);
-		background: var(--color-fg-primary, #fff);
+		background: var(--color-performance-fg-primary, #fff);
 	}
 
 	.thumbnail:hover .play-button svg {
-		color: var(--color-bg-pure, #000);
+		color: var(--color-performance-bg-pure, #000);
 	}
 
 	.thumbnail:focus-visible {
-		outline: 2px solid var(--color-focus, rgba(255, 255, 255, 0.5));
+		outline: 2px solid var(--color-performance-focus, rgba(255, 255, 255, 0.5));
 		outline-offset: 2px;
 	}
 
@@ -209,8 +209,8 @@
 		height: 100%;
 		background: linear-gradient(
 			135deg,
-			var(--color-bg-surface, #111) 0%,
-			var(--color-bg-subtle, #1a1a1a) 100%
+			var(--color-performance-bg-surface, #111) 0%,
+			var(--color-performance-bg-subtle, #1a1a1a) 100%
 		);
 	}
 
@@ -222,20 +222,20 @@
 		width: var(--size);
 		height: var(--size);
 		background: rgba(0, 0, 0, 0.7);
-		border: 2px solid var(--color-fg-primary, #fff);
+		border: 2px solid var(--color-performance-fg-primary, #fff);
 		border-radius: 50%;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		transition: all var(--duration-micro, 200ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+		transition: all var(--duration-performance-micro, 200ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1));
 	}
 
 	.play-button svg {
 		width: 40%;
 		height: 40%;
-		color: var(--color-fg-primary, #fff);
+		color: var(--color-performance-fg-primary, #fff);
 		margin-left: 4px; /* Visual centering for play icon */
-		transition: color var(--duration-micro, 200ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+		transition: color var(--duration-performance-micro, 200ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1));
 	}
 
 	/* Lightbox */
@@ -243,12 +243,12 @@
 		position: fixed;
 		inset: 0;
 		z-index: 100;
-		background: var(--color-overlay-heavy, rgba(0, 0, 0, 0.9));
+		background: var(--color-performance-overlay-heavy, rgba(0, 0, 0, 0.9));
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		padding: var(--space-md, 1.618rem);
-		animation: fadeIn var(--duration-micro, 200ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+		padding: var(--space-performance-md, 1.618rem);
+		animation: fadeIn var(--duration-performance-micro, 200ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1));
 	}
 
 	.lightbox-content {
@@ -256,10 +256,10 @@
 		width: 100%;
 		max-width: 1200px;
 		aspect-ratio: 16/9;
-		background: var(--color-bg-pure, #000);
-		border-radius: var(--radius-lg, 12px);
+		background: var(--color-performance-bg-pure, #000);
+		border-radius: var(--radius-performance-scale-lg, 12px);
 		overflow: hidden;
-		animation: scaleIn var(--duration-micro, 200ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+		animation: scaleIn var(--duration-performance-micro, 200ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1));
 	}
 
 	.lightbox-content iframe,
@@ -276,21 +276,21 @@
 		height: 40px;
 		background: transparent;
 		border: none;
-		color: var(--color-fg-primary, #fff);
+		color: var(--color-performance-fg-primary, #fff);
 		cursor: pointer;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		border-radius: var(--radius-sm, 6px);
-		transition: background var(--duration-micro, 200ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+		border-radius: var(--radius-performance-scale-sm, 6px);
+		transition: background var(--duration-performance-micro, 200ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1));
 	}
 
 	.close-button:hover {
-		background: var(--color-hover, rgba(255, 255, 255, 0.05));
+		background: var(--color-performance-hover, rgba(255, 255, 255, 0.05));
 	}
 
 	.close-button:focus-visible {
-		outline: 2px solid var(--color-focus, rgba(255, 255, 255, 0.5));
+		outline: 2px solid var(--color-performance-focus, rgba(255, 255, 255, 0.5));
 		outline-offset: 2px;
 	}
 

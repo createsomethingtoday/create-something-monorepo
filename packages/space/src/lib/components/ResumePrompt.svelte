@@ -69,82 +69,82 @@
 
 <style>
 	.modal-overlay {
-		background: var(--color-overlay-heavy);
+		background: var(--color-performance-overlay-heavy);
 		backdrop-filter: blur(4px);
 	}
 
 	.modal {
-		background: var(--color-bg-pure);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-bg-pure);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.modal-title {
-		font-size: var(--text-h3);
+		font-size: var(--text-performance-h3);
 		font-weight: bold;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.modal-subtitle {
-		color: var(--color-fg-tertiary);
-		font-size: var(--text-body-sm);
+		color: var(--color-performance-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.progress-label {
-		color: var(--color-fg-secondary);
-		font-size: var(--text-body-sm);
+		color: var(--color-performance-fg-secondary);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.progress-value {
-		color: var(--color-fg-tertiary);
-		font-size: var(--text-body-sm);
+		color: var(--color-performance-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.progress-track {
 		width: 100%;
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-full);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-full);
 		height: 0.5rem;
 	}
 
 	.progress-fill {
-		background: var(--color-fg-secondary);
+		background: var(--color-performance-fg-secondary);
 		height: 0.5rem;
-		border-radius: var(--radius-full);
-		transition: width 500ms var(--ease-standard);
+		border-radius: var(--radius-performance-scale-full);
+		transition: width 500ms var(--ease-performance-standard);
 	}
 
 	.progress-details {
-		color: var(--color-fg-tertiary);
-		font-size: var(--text-caption);
+		color: var(--color-performance-fg-tertiary);
+		font-size: var(--text-performance-caption);
 	}
 
 	.btn-primary {
-		background: var(--color-fg-primary);
-		color: var(--color-bg-pure);
+		background: var(--color-performance-fg-primary);
+		color: var(--color-performance-bg-pure);
 		font-weight: 600;
-		border-radius: var(--radius-lg);
-		transition: background var(--duration-standard) var(--ease-standard);
+		border-radius: var(--radius-performance-scale-lg);
+		transition: background var(--duration-performance-standard) var(--ease-performance-standard);
 	}
 
 	.btn-primary:hover {
-		background: var(--color-fg-secondary);
+		background: var(--color-performance-fg-secondary);
 	}
 
 	.btn-secondary {
-		background: var(--color-hover);
-		color: var(--color-fg-secondary);
+		background: var(--color-performance-hover);
+		color: var(--color-performance-fg-secondary);
 		font-weight: 600;
-		border-radius: var(--radius-lg);
-		transition: background var(--duration-standard) var(--ease-standard);
+		border-radius: var(--radius-performance-scale-lg);
+		transition: background var(--duration-performance-standard) var(--ease-performance-standard);
 	}
 
 	.btn-secondary:hover {
-		background: var(--color-hover);
+		background: var(--color-performance-hover);
 	}
 
 	.note {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.animate-fade-in {

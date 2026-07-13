@@ -24,62 +24,62 @@ export const propertyAccents: Record<Property, string> = {
 export const theme = {
   colors: {
     // Backgrounds
-    bgPure: 'var(--color-bg-pure, #000000)',
-    bgElevated: 'var(--color-bg-elevated, #0a0a0a)',
-    bgSurface: 'var(--color-bg-surface, #111111)',
-    bgSubtle: 'var(--color-bg-subtle, #1a1a1a)',
+    bgPure: 'var(--color-performance-bg-pure, #000000)',
+    bgElevated: 'var(--color-performance-bg-elevated, #0a0a0a)',
+    bgSurface: 'var(--color-performance-bg-surface, #111111)',
+    bgSubtle: 'var(--color-performance-bg-subtle, #1a1a1a)',
 
     // Foregrounds
-    fgPrimary: 'var(--color-fg-primary, #ffffff)',
-    fgSecondary: 'var(--color-fg-secondary, rgba(255, 255, 255, 0.8))',
-    fgTertiary: 'var(--color-fg-tertiary, rgba(255, 255, 255, 0.6))',
-    fgMuted: 'var(--color-fg-muted, rgba(255, 255, 255, 0.46))',
+    fgPrimary: 'var(--color-performance-fg-primary, #ffffff)',
+    fgSecondary: 'var(--color-performance-fg-secondary, rgba(255, 255, 255, 0.8))',
+    fgTertiary: 'var(--color-performance-fg-tertiary, rgba(255, 255, 255, 0.6))',
+    fgMuted: 'var(--color-performance-fg-muted, rgba(255, 255, 255, 0.46))',
 
     // Borders
-    borderDefault: 'var(--color-border-default, rgba(255, 255, 255, 0.1))',
-    borderEmphasis: 'var(--color-border-emphasis, rgba(255, 255, 255, 0.2))',
+    borderDefault: 'var(--color-performance-border-default, rgba(255, 255, 255, 0.1))',
+    borderEmphasis: 'var(--color-performance-border-emphasis, rgba(255, 255, 255, 0.2))',
 
     // Data visualization
     data: [
-      'var(--color-data-1, #60a5fa)',
-      'var(--color-data-2, #22c55e)',
-      'var(--color-data-3, #c084fc)',
-      'var(--color-data-4, #fbbf24)',
-      'var(--color-data-5, #f472b6)',
-      'var(--color-data-6, #facc15)',
+      'var(--color-performance-data-1, #60a5fa)',
+      'var(--color-performance-data-2, #22c55e)',
+      'var(--color-performance-data-3, #c084fc)',
+      'var(--color-performance-data-4, #fbbf24)',
+      'var(--color-performance-data-5, #f472b6)',
+      'var(--color-performance-data-6, #facc15)',
     ],
 
     // Semantic
-    success: 'var(--color-success, #44aa44)',
-    error: 'var(--color-error, #d44d4d)',
+    success: 'var(--color-performance-success, #44aa44)',
+    error: 'var(--color-performance-error, #d44d4d)',
   },
 
   typography: {
-    fontFamily: "var(--font-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif)",
-    h1: 'var(--text-h1, clamp(2rem, 3vw + 1rem, 3.5rem))',
-    h2: 'var(--text-h2, clamp(1.5rem, 2vw + 0.75rem, 2.25rem))',
-    h3: 'var(--text-h3, clamp(1.25rem, 1.5vw + 0.5rem, 1.75rem))',
-    body: 'var(--text-body, 1rem)',
-    bodySm: 'var(--text-body-sm, 0.875rem)',
-    caption: 'var(--text-caption, 0.75rem)',
+    fontFamily: "var(--font-performance-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif)",
+    h1: 'var(--text-performance-h1, clamp(2rem, 3vw + 1rem, 3.5rem))',
+    h2: 'var(--text-performance-h2, clamp(1.5rem, 2vw + 0.75rem, 2.25rem))',
+    h3: 'var(--text-performance-h3, clamp(1.25rem, 1.5vw + 0.5rem, 1.75rem))',
+    body: 'var(--text-performance-body, 1rem)',
+    bodySm: 'var(--text-performance-body-sm, 0.875rem)',
+    caption: 'var(--text-performance-caption, 0.75rem)',
   },
 
   spacing: {
-    xs: 'var(--space-xs, 0.5rem)',
-    sm: 'var(--space-sm, 1rem)',
-    md: 'var(--space-md, 1.618rem)',
-    lg: 'var(--space-lg, 2.618rem)',
+    xs: 'var(--space-performance-xs, 0.5rem)',
+    sm: 'var(--space-performance-sm, 1rem)',
+    md: 'var(--space-performance-md, 1.618rem)',
+    lg: 'var(--space-performance-lg, 2.618rem)',
   },
 
   radius: {
-    sm: 'var(--radius-sm, 6px)',
-    md: 'var(--radius-md, 8px)',
-    lg: 'var(--radius-lg, 12px)',
+    sm: 'var(--radius-performance-scale-sm, 6px)',
+    md: 'var(--radius-performance-scale-md, 8px)',
+    lg: 'var(--radius-performance-scale-lg, 12px)',
   },
 
   animation: {
-    duration: 'var(--duration-standard, 300ms)',
-    easing: 'var(--ease-standard, cubic-bezier(0.4, 0.0, 0.2, 1))',
+    duration: 'var(--duration-performance-standard, 300ms)',
+    easing: 'var(--ease-performance-standard, cubic-bezier(0.4, 0.0, 0.2, 1))',
   },
 } as const;
 

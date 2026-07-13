@@ -95,13 +95,13 @@
 	.backdrop {
 		position: fixed;
 		inset: 0;
-		z-index: var(--z-modal, 50);
+		z-index: var(--z-performance-modal, 50);
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		padding: var(--space-md);
-		background: var(--color-overlay);
-		animation: backdropIn var(--duration-standard) var(--ease-standard);
+		padding: var(--space-performance-md);
+		background: var(--color-performance-overlay);
+		animation: backdropIn var(--duration-performance-standard) var(--ease-performance-standard);
 	}
 
 	@keyframes backdropIn {
@@ -119,14 +119,14 @@
 		flex-direction: column;
 		width: 100%;
 		max-width: 800px;
-		max-height: calc(100vh - var(--space-lg) * 2);
+		max-height: calc(100vh - var(--space-performance-lg) * 2);
 		/* Glass Design System - "The Automation Layer" */
-		background-color: var(--glass-bg-medium);
-		backdrop-filter: blur(var(--glass-blur-xl)) var(--glass-saturate-xl);
-		border: 1px solid var(--glass-border-medium);
-		border-radius: var(--radius-lg);
-		box-shadow: var(--glass-shadow-lg);
-		animation: modalIn var(--duration-standard) var(--ease-standard);
+		background-color: var(--glass-performance-bg-medium);
+		backdrop-filter: blur(var(--glass-performance-blur-xl)) var(--glass-performance-saturate-xl);
+		border: 1px solid var(--glass-performance-border-medium);
+		border-radius: var(--radius-performance-scale-lg);
+		box-shadow: var(--glass-performance-shadow-lg);
+		animation: modalIn var(--duration-performance-standard) var(--ease-performance-standard);
 	}
 
 	@keyframes modalIn {
@@ -144,44 +144,44 @@
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		gap: var(--space-sm);
-		padding: var(--space-md) var(--space-lg);
+		gap: var(--space-performance-sm);
+		padding: var(--space-performance-md) var(--space-performance-lg);
 	}
 
 	.title {
-		font-size: var(--text-h3);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
+		font-size: var(--text-performance-h3);
+		font-weight: var(--font-performance-semibold);
+		color: var(--color-performance-fg-primary);
 		margin: 0;
 	}
 
 	.header-actions {
 		display: flex;
 		align-items: center;
-		gap: var(--space-sm);
+		gap: var(--space-performance-sm);
 	}
 
 	.copy-button {
 		display: inline-flex;
 		align-items: center;
-		gap: var(--space-xs);
-		padding: var(--space-xs) var(--space-sm);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-md);
-		color: var(--color-fg-secondary);
-		font-size: var(--text-body-sm);
+		gap: var(--space-performance-xs);
+		padding: var(--space-performance-xs) var(--space-performance-sm);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-md);
+		color: var(--color-performance-fg-secondary);
+		font-size: var(--text-performance-body-sm);
 		cursor: pointer;
-		transition: all var(--duration-micro) var(--ease-standard);
+		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.copy-button:hover {
-		background: var(--color-hover);
-		color: var(--color-fg-primary);
-		border-color: var(--color-border-emphasis);
+		background: var(--color-performance-hover);
+		color: var(--color-performance-fg-primary);
+		border-color: var(--color-performance-border-emphasis);
 	}
 
 	.copy-button:focus-visible {
-		outline: 2px solid var(--color-focus);
+		outline: 2px solid var(--color-performance-focus);
 		outline-offset: 2px;
 	}
 
@@ -192,19 +192,19 @@
 		padding: 6px;
 		background: none;
 		border: none;
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 		cursor: pointer;
-		border-radius: var(--radius-md);
-		transition: all var(--duration-micro) var(--ease-standard);
+		border-radius: var(--radius-performance-scale-md);
+		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.close-button:hover {
-		color: var(--color-fg-primary);
-		background: var(--color-hover);
+		color: var(--color-performance-fg-primary);
+		background: var(--color-performance-hover);
 	}
 
 	.close-button:focus-visible {
-		outline: 2px solid var(--color-focus);
+		outline: 2px solid var(--color-performance-focus);
 		outline-offset: 2px;
 	}
 
@@ -221,18 +221,18 @@
 	.body {
 		flex: 1;
 		overflow-y: auto;
-		padding: var(--space-lg);
+		padding: var(--space-performance-lg);
 	}
 
 	.markdown-content {
 		margin: 0;
-		padding: var(--space-md);
-		background: var(--color-bg-pure);
-		border-radius: var(--radius-md);
-		color: var(--color-fg-primary);
+		padding: var(--space-performance-md);
+		background: var(--color-performance-bg-pure);
+		border-radius: var(--radius-performance-scale-md);
+		color: var(--color-performance-fg-primary);
 		font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New',
 			monospace;
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 		line-height: 1.6;
 		white-space: pre-wrap;
 		word-break: break-word;

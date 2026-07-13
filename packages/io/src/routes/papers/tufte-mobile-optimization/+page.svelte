@@ -484,7 +484,7 @@ interface DashboardCardProps &#123;
 	/* Paper container */
 	.paper-container {
 		background: var(--color-bg-base, #000);
-		color: var(--color-fg-primary, #fff);
+		color: var(--color-performance-fg-primary, #fff);
 	}
 
 	/* Header styles */
@@ -673,29 +673,29 @@ interface DashboardCardProps &#123;
 
 	/* Wireframe blocks */
 	.wireframe-block {
-		background: var(--color-bg-surface, rgba(255, 255, 255, 0.1));
-		border-radius: var(--radius-sm, 4px);
+		background: var(--color-performance-bg-surface, rgba(255, 255, 255, 0.1));
+		border-radius: var(--radius-performance-scale-sm, 4px);
 	}
 
 	/* Comparison caption */
 	.comparison-caption {
-		font-size: var(--text-body-sm, 0.913rem);
+		font-size: var(--text-performance-body-sm, 0.913rem);
 		color: rgba(255, 255, 255, 0.5);
 	}
 
 	/* Styled card elements */
 	.styled-value {
-		font-size: var(--text-h2, clamp(1.2rem, 2vw + 0.5rem, 1.618rem));
+		font-size: var(--text-performance-h2, clamp(1.2rem, 2vw + 0.5rem, 1.618rem));
 		font-weight: 600;
 	}
 
 	.styled-value-mobile {
-		font-size: var(--text-h3, clamp(1.02rem, 1vw + 0.5rem, 1.2rem));
+		font-size: var(--text-performance-h3, clamp(1.02rem, 1vw + 0.5rem, 1.2rem));
 		font-weight: 600;
 	}
 
 	.styled-label {
-		font-size: var(--text-body-sm, 0.913rem);
+		font-size: var(--text-performance-body-sm, 0.913rem);
 		color: rgba(255, 255, 255, 0.5);
 	}
 
@@ -703,8 +703,8 @@ interface DashboardCardProps &#123;
 	.sparkline-container {
 		height: 2rem;
 		width: 100%;
-		background: var(--color-bg-subtle, rgba(255, 255, 255, 0.05));
-		border-radius: var(--radius-sm, 4px);
+		background: var(--color-performance-bg-subtle, rgba(255, 255, 255, 0.05));
+		border-radius: var(--radius-performance-scale-sm, 4px);
 		display: flex;
 		align-items: center;
 		padding: 0 0.5rem;
@@ -712,8 +712,8 @@ interface DashboardCardProps &#123;
 
 	.sparkline-container-lg {
 		height: 2.5rem;
-		background: var(--color-bg-subtle, rgba(255, 255, 255, 0.05));
-		border-radius: var(--radius-sm, 4px);
+		background: var(--color-performance-bg-subtle, rgba(255, 255, 255, 0.05));
+		border-radius: var(--radius-performance-scale-sm, 4px);
 		display: flex;
 		align-items: center;
 		padding: 0 0.5rem;
@@ -721,70 +721,70 @@ interface DashboardCardProps &#123;
 
 	/* Demo cards */
 	.demo-card-desktop {
-		border: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
-		border-radius: var(--radius-xl, 16px);
+		border: 1px solid var(--color-performance-border-default, rgba(255, 255, 255, 0.1));
+		border-radius: var(--radius-performance-scale-xl, 16px);
 	}
 
 	.demo-card-mobile {
 		border: 1px solid rgba(255, 255, 255, 0.05);
-		border-radius: var(--radius-lg, 12px);
+		border-radius: var(--radius-performance-scale-lg, 12px);
 	}
 
 	.demo-label-upper {
-		font-size: var(--text-caption, 0.833rem);
+		font-size: var(--text-performance-caption, 0.833rem);
 		color: rgba(255, 255, 255, 0.5);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 	}
 
 	.demo-label {
-		font-size: var(--text-caption, 0.833rem);
+		font-size: var(--text-performance-caption, 0.833rem);
 		color: rgba(255, 255, 255, 0.5);
 	}
 
 	.demo-dimensions {
-		font-size: var(--text-caption, 0.833rem);
+		font-size: var(--text-performance-caption, 0.833rem);
 		color: rgba(255, 255, 255, 0.4);
 	}
 
 	/* Change badges and text */
 	.change-badge-positive {
 		padding: 0.25rem 0.5rem;
-		border-radius: var(--radius-full, 9999px);
+		border-radius: var(--radius-performance-scale-full, 9999px);
 		background: rgba(34, 197, 94, 0.2);
 		color: rgb(74, 222, 128);
-		font-size: var(--text-caption, 0.833rem);
+		font-size: var(--text-performance-caption, 0.833rem);
 	}
 
 	.change-text-positive {
-		font-size: var(--text-caption, 0.833rem);
+		font-size: var(--text-performance-caption, 0.833rem);
 		color: rgb(74, 222, 128);
 	}
 
 	/* Blockquote */
 	.blockquote {
-		border-left: 2px solid var(--color-border-emphasis, rgba(255, 255, 255, 0.2));
+		border-left: 2px solid var(--color-performance-border-emphasis, rgba(255, 255, 255, 0.2));
 		font-style: italic;
 		color: rgba(255, 255, 255, 0.7);
 	}
 
 	.blockquote-footer {
-		font-size: var(--text-body-sm, 0.913rem);
+		font-size: var(--text-performance-body-sm, 0.913rem);
 		color: rgba(255, 255, 255, 0.4);
 		font-style: normal;
 	}
 
 	/* Section borders */
 	.section-border-top {
-		border-top: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
+		border-top: 1px solid var(--color-performance-border-default, rgba(255, 255, 255, 0.1));
 	}
 
 	/* References */
 	.references-text {
-		font-size: var(--text-body-sm, 0.913rem);
+		font-size: var(--text-performance-body-sm, 0.913rem);
 	}
 	.footer-text {
-		font-size: var(--text-body-sm, 0.913rem);
+		font-size: var(--text-performance-body-sm, 0.913rem);
 		color: rgba(255, 255, 255, 0.4);
 	}
 </style>

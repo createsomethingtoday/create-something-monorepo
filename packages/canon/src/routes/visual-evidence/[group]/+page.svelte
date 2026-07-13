@@ -390,8 +390,8 @@
 	.visual-page {
 		min-height: 100vh;
 		padding: 2rem;
-		background: var(--color-bg-pure);
-		color: var(--color-fg-primary);
+		background: var(--color-performance-bg-pure);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.visual-header {
@@ -401,8 +401,8 @@
 
 	.visual-header p {
 		margin: 0 0 0.25rem;
-		color: var(--color-fg-muted);
-		font-family: var(--font-mono);
+		color: var(--color-performance-fg-muted);
+		font-family: var(--font-performance-mono);
 		font-size: 0.78rem;
 		text-transform: uppercase;
 	}
@@ -468,8 +468,8 @@
 		display: grid;
 		gap: 0.65rem;
 		padding: 1rem;
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-md);
+		border: 1px solid var(--color-performance-border-default);
+		border-radius: var(--radius-performance-scale-md);
 	}
 
 	.data-stack {
@@ -482,20 +482,20 @@
 	.data-panel {
 		min-width: 0;
 		padding: 1rem;
-		background: var(--color-shell-surface, var(--color-bg-surface));
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-md);
+		background: var(--color-performance-shell-surface, var(--color-performance-bg-surface));
+		border: 1px solid var(--color-performance-border-default);
+		border-radius: var(--radius-performance-scale-md);
 	}
 
 	.data-panel-title {
 		margin: 0 0 0.75rem;
-		font-size: var(--text-h3);
-		font-weight: var(--font-medium);
+		font-size: var(--text-performance-h3);
+		font-weight: var(--font-performance-medium);
 	}
 
 	.data-count {
-		font-family: var(--font-mono);
-		color: var(--color-fg-muted);
+		font-family: var(--font-performance-mono);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.badge-row {

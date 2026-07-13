@@ -53,8 +53,8 @@
 
 	a.clear-artifact-card {
 		transition:
-			border-color var(--duration-micro) var(--ease-standard),
-			transform var(--duration-micro) var(--ease-standard);
+			border-color var(--duration-performance-micro) var(--ease-performance-standard),
+			transform var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	a.clear-artifact-card:hover {
@@ -66,9 +66,9 @@
 
 	.clear-artifact-card span {
 		color: var(--color-performance-muted, #5e6268);
-		font-family: var(--font-mono);
+		font-family: var(--font-performance-mono);
 		font-size: 0.72rem;
-		font-weight: var(--font-medium);
+		font-weight: var(--font-performance-medium);
 		letter-spacing: 0;
 		text-transform: uppercase;
 	}
@@ -76,7 +76,7 @@
 	.clear-artifact-card strong {
 		color: var(--color-performance-ink, #090909);
 		font-size: 1.12rem;
-		font-weight: var(--font-medium);
+		font-weight: var(--font-performance-medium);
 		line-height: 1.2;
 	}
 

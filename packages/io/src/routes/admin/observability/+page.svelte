@@ -141,19 +141,19 @@
 		switch (status.toLowerCase()) {
 			case 'ready':
 			case 'pending':
-				return 'var(--color-fg-tertiary)';
+				return 'var(--color-performance-fg-tertiary)';
 			case 'claimed':
 			case 'running':
 				return 'var(--color-accent)';
 			case 'done':
 			case 'complete':
-				return 'var(--color-success)';
+				return 'var(--color-performance-success)';
 			case 'blocked':
 			case 'error':
 			case 'budget_exhausted':
-				return 'var(--color-error)';
+				return 'var(--color-performance-error)';
 			default:
-				return 'var(--color-fg-muted)';
+				return 'var(--color-performance-fg-muted)';
 		}
 	}
 
@@ -238,7 +238,7 @@
 				</div>
 				<div class="metric-breakdown">
 					<div class="breakdown-item">
-						<span class="breakdown-dot" style="background: var(--color-fg-tertiary)"></span>
+						<span class="breakdown-dot" style="background: var(--color-performance-fg-tertiary)"></span>
 						<span class="breakdown-label">Pending</span>
 						<span class="breakdown-value">{data.tasks.ready}</span>
 					</div>
@@ -248,17 +248,17 @@
 						<span class="breakdown-value">{data.tasks.claimed}</span>
 					</div>
 					<div class="breakdown-item">
-						<span class="breakdown-dot" style="background: var(--color-warning)"></span>
+						<span class="breakdown-dot" style="background: var(--color-performance-warning)"></span>
 						<span class="breakdown-label">Blocked</span>
 						<span class="breakdown-value">{data.tasks.blocked}</span>
 					</div>
 					<div class="breakdown-item">
-						<span class="breakdown-dot" style="background: var(--color-success)"></span>
+						<span class="breakdown-dot" style="background: var(--color-performance-success)"></span>
 						<span class="breakdown-label">Complete</span>
 						<span class="breakdown-value">{data.tasks.done}</span>
 					</div>
 					<div class="breakdown-item">
-						<span class="breakdown-dot" style="background: var(--color-error)"></span>
+						<span class="breakdown-dot" style="background: var(--color-performance-error)"></span>
 						<span class="breakdown-label">Errors</span>
 						<span class="breakdown-value">{data.tasks.cancelled}</span>
 					</div>
@@ -273,7 +273,7 @@
 				</div>
 				<div class="metric-breakdown">
 					<div class="breakdown-item">
-						<span class="breakdown-dot" style="background: var(--color-error)"></span>
+						<span class="breakdown-dot" style="background: var(--color-performance-error)"></span>
 						<span class="breakdown-label">Events (errors)</span>
 						<span class="breakdown-value">{data.traces.errors}</span>
 					</div>
@@ -432,38 +432,38 @@
 
 <style>
 	.page-title {
-		font-size: var(--text-h1);
+		font-size: var(--text-performance-h1);
 		font-weight: 700;
 	}
 
 	.page-description {
-		color: var(--color-fg-tertiary);
-		font-size: var(--text-body-sm);
+		color: var(--color-performance-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.select-field {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
-		color: var(--color-fg-primary);
-		font-size: var(--text-body-sm);
-		transition: border-color var(--duration-micro) var(--ease-standard);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
+		color: var(--color-performance-fg-primary);
+		font-size: var(--text-performance-body-sm);
+		transition: border-color var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.select-field:focus {
 		outline: none;
-		border-color: var(--color-border-emphasis);
+		border-color: var(--color-performance-border-emphasis);
 	}
 
 	.btn-secondary {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
-		color: var(--color-fg-tertiary);
-		font-size: var(--text-body-sm);
-		transition: all var(--duration-micro) var(--ease-standard);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
+		color: var(--color-performance-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
+		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.btn-secondary:hover:not(:disabled) {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.btn-secondary:disabled {
@@ -473,38 +473,38 @@
 	/* Loading & Error & Empty States */
 	.loading-state,
 	.error-state {
-		padding: var(--space-xl);
+		padding: var(--space-performance-xl);
 		text-align: center;
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.error-message {
-		color: var(--color-error);
+		color: var(--color-performance-error);
 	}
 
 	.empty-state {
-		padding: 48px var(--space-xl);
+		padding: 48px var(--space-performance-xl);
 		text-align: center;
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.empty-icon {
 		font-size: 48px;
-		color: var(--color-fg-muted);
-		margin-bottom: var(--space-md);
+		color: var(--color-performance-fg-muted);
+		margin-bottom: var(--space-performance-md);
 		opacity: 0.4;
 	}
 
 	.empty-title {
-		font-size: var(--text-h3);
+		font-size: var(--text-performance-h3);
 		font-weight: 600;
-		margin-bottom: var(--space-sm);
+		margin-bottom: var(--space-performance-sm);
 	}
 
 	.empty-description {
-		color: var(--color-fg-tertiary);
-		font-size: var(--text-body-sm);
+		color: var(--color-performance-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
 		max-width: 480px;
 		margin: 0 auto;
 		line-height: 1.6;
@@ -514,31 +514,31 @@
 	.metrics-grid {
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-		gap: var(--space-md);
+		gap: var(--space-performance-md);
 	}
 
 	.metric-card {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
-		padding: var(--space-md);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
+		padding: var(--space-performance-md);
 	}
 
 	.metric-header {
 		display: flex;
 		justify-content: space-between;
 		align-items: baseline;
-		margin-bottom: var(--space-sm);
+		margin-bottom: var(--space-performance-sm);
 	}
 
 	.metric-label {
-		color: var(--color-fg-muted);
-		font-size: var(--text-caption);
+		color: var(--color-performance-fg-muted);
+		font-size: var(--text-performance-caption);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 	}
 
 	.metric-value {
-		font-size: var(--text-h2);
+		font-size: var(--text-performance-h2);
 		font-weight: 600;
 		font-variant-numeric: tabular-nums;
 	}
@@ -550,14 +550,14 @@
 	.metric-breakdown {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-xs);
+		gap: var(--space-performance-xs);
 	}
 
 	.breakdown-item {
 		display: flex;
 		align-items: center;
-		gap: var(--space-xs);
-		font-size: var(--text-caption);
+		gap: var(--space-performance-xs);
+		font-size: var(--text-performance-caption);
 	}
 
 	.breakdown-dot {
@@ -567,42 +567,42 @@
 	}
 
 	.breakdown-label {
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 		flex: 1;
 	}
 
 	.breakdown-value {
 		font-variant-numeric: tabular-nums;
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	/* Sections */
 	.section {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
-		padding: var(--space-md);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
+		padding: var(--space-performance-md);
 	}
 
 	.section-title {
-		color: var(--color-fg-muted);
-		font-size: var(--text-caption);
+		color: var(--color-performance-fg-muted);
+		font-size: var(--text-performance-caption);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
-		margin-bottom: var(--space-md);
+		margin-bottom: var(--space-performance-md);
 	}
 
 	/* Agents Table */
 	.agents-table {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.table-header {
 		display: grid;
 		grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
-		gap: var(--space-sm);
-		padding: var(--space-xs) 0;
-		color: var(--color-fg-muted);
-		font-size: var(--text-caption);
+		gap: var(--space-performance-sm);
+		padding: var(--space-performance-xs) 0;
+		color: var(--color-performance-fg-muted);
+		font-size: var(--text-performance-caption);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 	}
@@ -610,8 +610,8 @@
 	.table-row {
 		display: grid;
 		grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
-		gap: var(--space-sm);
-		padding: var(--space-sm) 0;
+		gap: var(--space-performance-sm);
+		padding: var(--space-performance-sm) 0;
 		align-items: center;
 	}
 
@@ -622,8 +622,8 @@
 	.success-badge {
 		display: inline-block;
 		padding: 2px 8px;
-		border-radius: var(--radius-sm);
-		font-size: var(--text-caption);
+		border-radius: var(--radius-performance-scale-sm);
+		font-size: var(--text-performance-caption);
 		background: linear-gradient(
 			90deg,
 			rgba(16, 185, 129, 0.2) var(--progress, 0%),
@@ -635,19 +635,19 @@
 	.atlas-breakdown {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-sm);
+		gap: var(--space-performance-sm);
 	}
 
 	.atlas-item {
 		display: grid;
 		grid-template-columns: 120px 1fr 60px;
-		gap: var(--space-sm);
+		gap: var(--space-performance-sm);
 		align-items: center;
 	}
 
 	.atlas-label {
-		font-size: var(--text-caption);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-tertiary);
 		font-family: monospace;
 		overflow: hidden;
 		text-overflow: ellipsis;
@@ -655,7 +655,7 @@
 
 	.atlas-bar {
 		height: 8px;
-		border-radius: var(--radius-sm);
+		border-radius: var(--radius-performance-scale-sm);
 		overflow: hidden;
 	}
 
@@ -663,13 +663,13 @@
 		display: block;
 		height: 100%;
 		background: var(--color-accent);
-		border-radius: var(--radius-sm);
-		transition: width var(--duration-standard) var(--ease-standard);
+		border-radius: var(--radius-performance-scale-sm);
+		transition: width var(--duration-performance-standard) var(--ease-performance-standard);
 	}
 
 	.atlas-value {
-		font-size: var(--text-caption);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-secondary);
 		text-align: right;
 		font-variant-numeric: tabular-nums;
 	}
@@ -678,14 +678,14 @@
 	.activity-list {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-xs);
+		gap: var(--space-performance-xs);
 	}
 
 	.activity-item {
 		display: flex;
 		align-items: center;
-		gap: var(--space-sm);
-		padding: var(--space-xs) 0;
+		gap: var(--space-performance-sm);
+		padding: var(--space-performance-xs) 0;
 	}
 
 	.activity-item:last-child {
@@ -700,7 +700,7 @@
 		align-items: center;
 		justify-content: center;
 		color: white;
-		font-size: var(--text-caption);
+		font-size: var(--text-performance-caption);
 		font-weight: 600;
 		flex-shrink: 0;
 	}
@@ -712,14 +712,14 @@
 
 	.activity-name {
 		display: block;
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-primary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.activity-meta {
 		display: flex;
-		gap: var(--space-sm);
-		font-size: var(--text-caption);
+		gap: var(--space-performance-sm);
+		font-size: var(--text-performance-caption);
 	}
 
 	.activity-status {
@@ -727,43 +727,43 @@
 	}
 
 	.activity-cost {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.activity-time {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 		white-space: nowrap;
 	}
 
 	.activity-empty {
-		padding: var(--space-md);
+		padding: var(--space-performance-md);
 		text-align: center;
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	/* Config Links */
 	.config-links {
 		display: flex;
-		gap: var(--space-md);
+		gap: var(--space-performance-md);
 	}
 
 	.config-link {
 		display: flex;
 		align-items: center;
-		gap: var(--space-xs);
-		padding: var(--space-sm) var(--space-md);
-		border-radius: var(--radius-md);
-		color: var(--color-fg-secondary);
-		font-size: var(--text-body-sm);
-		transition: all var(--duration-micro) var(--ease-standard);
+		gap: var(--space-performance-xs);
+		padding: var(--space-performance-sm) var(--space-performance-md);
+		border-radius: var(--radius-performance-scale-md);
+		color: var(--color-performance-fg-secondary);
+		font-size: var(--text-performance-body-sm);
+		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 		text-decoration: none;
 	}
 
 	.config-link:hover {
-		background: var(--color-bg-surface);
-		border-color: var(--color-border-emphasis);
-		color: var(--color-fg-primary);
+		background: var(--color-performance-bg-surface);
+		border-color: var(--color-performance-border-emphasis);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.config-link-arrow {
@@ -774,12 +774,12 @@
 	}
 
 	.footer-text {
-		color: var(--color-fg-subtle);
-		font-size: var(--text-caption);
+		color: var(--color-performance-fg-subtle);
+		font-size: var(--text-performance-caption);
 	}
 
 	.footer-highlight {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	/* Responsive */

@@ -77,8 +77,8 @@
     left: 0;
     right: 0;
     z-index: 9999;
-    padding: var(--space-sm) var(--space-md);
-    background: var(--color-bg-surface);
+    padding: var(--space-performance-sm) var(--space-performance-md);
+    background: var(--color-performance-bg-surface);
   }
 
   .consent-content {
@@ -87,45 +87,45 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: var(--space-md);
+    gap: var(--space-performance-md);
   }
 
   .consent-text {
-    color: var(--color-fg-secondary);
-    font-size: var(--text-body-sm);
+    color: var(--color-performance-fg-secondary);
+    font-size: var(--text-performance-body-sm);
     margin: 0;
   }
 
   .privacy-link {
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
     text-decoration: underline;
     margin-left: 0.25em;
   }
 
   .privacy-link:hover {
-    color: var(--color-fg-secondary);
+    color: var(--color-performance-fg-secondary);
   }
 
   .accept-btn {
     flex-shrink: 0;
-    padding: var(--space-xs) var(--space-md);
-    background: var(--color-fg-primary);
-    color: var(--color-bg-pure);
+    padding: var(--space-performance-xs) var(--space-performance-md);
+    background: var(--color-performance-fg-primary);
+    color: var(--color-performance-bg-pure);
     border: none;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-performance-scale-sm);
     font-family: inherit;
-    font-size: var(--text-body-sm);
+    font-size: var(--text-performance-body-sm);
     font-weight: 500;
     cursor: pointer;
-    transition: background var(--duration-micro) var(--ease-standard);
+    transition: background var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   .accept-btn:hover {
-    background: var(--color-fg-secondary);
+    background: var(--color-performance-fg-secondary);
   }
 
   .accept-btn:focus-visible {
-    outline: 2px solid var(--color-focus);
+    outline: 2px solid var(--color-performance-focus);
     outline-offset: 2px;
   }
 
@@ -133,7 +133,7 @@
     .consent-content {
       flex-direction: column;
       text-align: center;
-      gap: var(--space-sm);
+      gap: var(--space-performance-sm);
     }
 
     .accept-btn {

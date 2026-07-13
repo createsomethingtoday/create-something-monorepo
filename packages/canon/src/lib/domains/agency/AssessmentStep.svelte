@@ -152,7 +152,7 @@
 										cy="12"
 										r="10"
 										fill="none"
-										stroke="var(--color-fg-subtle)"
+										stroke="var(--color-performance-fg-subtle)"
 										stroke-width="2"
 									/>
 									<circle
@@ -160,7 +160,7 @@
 										cy="12"
 										r="10"
 										fill="none"
-										stroke="var(--color-fg-tertiary)"
+										stroke="var(--color-performance-fg-tertiary)"
 										stroke-width="2"
 										stroke-dasharray={2 * Math.PI * 10}
 										stroke-dashoffset={2 * Math.PI * 10 * (1 - timerProgress / 100)}
@@ -200,7 +200,7 @@
 	.step-container {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-lg);
+		gap: var(--space-performance-lg);
 		width: 100%;
 		max-width: 100%;
 	}
@@ -210,17 +210,17 @@
 	}
 
 	.step-question {
-		font-size: var(--text-display);
-		font-weight: var(--font-bold);
-		color: var(--color-fg-primary);
-		letter-spacing: var(--tracking-tight);
-		line-height: var(--leading-tight);
-		margin-bottom: var(--space-sm);
+		font-size: var(--text-performance-display);
+		font-weight: var(--font-performance-bold);
+		color: var(--color-performance-fg-primary);
+		letter-spacing: var(--tracking-performance-tight);
+		line-height: var(--leading-performance-tight);
+		margin-bottom: var(--space-performance-sm);
 	}
 
 	.step-subtext {
-		font-size: var(--text-body);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-body);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.step-input {
@@ -231,7 +231,7 @@
 	.selection-list {
 		display: grid;
 		grid-template-columns: repeat(3, 1fr);
-		gap: var(--space-md);
+		gap: var(--space-performance-md);
 	}
 
 	@media (max-width: 768px) {
@@ -245,25 +245,25 @@
 		flex-direction: column;
 		align-items: center;
 		text-align: center;
-		gap: var(--space-sm);
-		padding: var(--space-lg);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
+		gap: var(--space-performance-sm);
+		padding: var(--space-performance-lg);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
 		cursor: pointer;
-		transition: all var(--duration-standard) var(--ease-standard);
+		transition: all var(--duration-performance-standard) var(--ease-performance-standard);
 		position: relative;
 		min-height: 140px;
 		justify-content: center;
 	}
 
 	.selection-option:hover {
-		border-color: var(--color-border-emphasis);
-		background: var(--color-hover);
+		border-color: var(--color-performance-border-emphasis);
+		background: var(--color-performance-hover);
 	}
 
 	.selection-option.selected {
-		border-color: var(--color-fg-tertiary);
-		background: var(--color-active);
+		border-color: var(--color-performance-fg-tertiary);
+		background: var(--color-performance-active);
 	}
 
 	.selection-option input {
@@ -276,26 +276,26 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: var(--space-xs);
+		gap: var(--space-performance-xs);
 	}
 
 	.selection-label {
-		font-size: var(--text-body-lg);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
+		font-size: var(--text-performance-body-lg);
+		font-weight: var(--font-performance-semibold);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.selection-description {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
-		line-height: var(--leading-relaxed);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-tertiary);
+		line-height: var(--leading-performance-relaxed);
 	}
 
 	/* Progress Ring for Auto-advance */
 	.progress-ring {
 		position: absolute;
-		top: var(--space-sm);
-		right: var(--space-sm);
+		top: var(--space-performance-sm);
+		right: var(--space-performance-sm);
 		width: 20px;
 		height: 20px;
 	}
@@ -316,57 +316,57 @@
 
 	.text-input {
 		width: 100%;
-		padding: var(--space-md);
+		padding: var(--space-performance-md);
 		background: transparent;
-		border-radius: var(--radius-md);
-		color: var(--color-fg-primary);
-		font-size: var(--text-body);
+		border-radius: var(--radius-performance-scale-md);
+		color: var(--color-performance-fg-primary);
+		font-size: var(--text-performance-body);
 		font-family: inherit;
 		line-height: 1.6;
 		resize: none;
-		transition: border-color var(--duration-standard) var(--ease-standard);
+		transition: border-color var(--duration-performance-standard) var(--ease-performance-standard);
 	}
 
 	.text-input::placeholder {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.text-input:focus {
 		outline: none;
-		border-color: var(--color-fg-tertiary);
+		border-color: var(--color-performance-fg-tertiary);
 	}
 
 	.char-count {
 		position: absolute;
-		bottom: var(--space-sm);
-		right: var(--space-sm);
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		bottom: var(--space-performance-sm);
+		right: var(--space-performance-sm);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 		font-variant-numeric: tabular-nums;
 	}
 
 	.char-count.near-limit {
-		color: var(--color-warning);
+		color: var(--color-performance-warning);
 	}
 
 	/* Actions */
 	.step-actions {
 		display: flex;
 		justify-content: center;
-		margin-top: var(--space-sm);
+		margin-top: var(--space-performance-sm);
 	}
 
 	.continue-button {
-		padding: var(--space-sm) var(--space-lg);
-		background: var(--color-fg-primary);
-		color: var(--color-bg-pure);
-		font-size: var(--text-body);
-		font-weight: var(--font-medium);
+		padding: var(--space-performance-sm) var(--space-performance-lg);
+		background: var(--color-performance-fg-primary);
+		color: var(--color-performance-bg-pure);
+		font-size: var(--text-performance-body);
+		font-weight: var(--font-performance-medium);
 		border: none;
-		border-radius: var(--radius-full);
+		border-radius: var(--radius-performance-scale-full);
 		cursor: pointer;
 		opacity: 0.4;
-		transition: opacity var(--duration-standard) var(--ease-standard);
+		transition: opacity var(--duration-performance-standard) var(--ease-performance-standard);
 	}
 
 	.continue-button.has-selection {

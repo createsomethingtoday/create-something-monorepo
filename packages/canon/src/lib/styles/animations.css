@@ -10,14 +10,14 @@
  * | Vehicle Part    | Canon Motion              | Principle                    |
  * |-----------------|---------------------------|------------------------------|
  * | Engine          | requestAnimationFrame     | Where execution happens      |
- * | Transmission    | --ease-standard           | Smooth power transfer        |
+ * | Transmission    | --ease-performance-standard           | Smooth power transfer        |
  * | Suspension      | will-change, translate3d  | Absorbs jank, smooth ride    |
  * | German Eng.     | Ive motion principles     | Precision mechanism feel     |
  *
  * IVE MOTION PRINCIPLES:
  * 1. Purposeful - Animation communicates state, not decoration
- * 2. Physics-based - Lerp-like deceleration via --ease-standard
- * 3. Restraint - Max --duration-complex (500ms), prefer --duration-micro (200ms)
+ * 2. Physics-based - Lerp-like deceleration via --ease-performance-standard
+ * 3. Restraint - Max --duration-performance-complex (500ms), prefer --duration-performance-micro (200ms)
  * 4. Depth through translucency - Glass system for layered UI
  * 5. Inevitable - Motion explains "why", not "look at me"
  *
@@ -78,17 +78,17 @@
 
 /* Reveal animation class */
 .animate-reveal {
-	animation: reveal var(--duration-standard) var(--ease-standard) forwards;
+	animation: reveal var(--duration-performance-standard) var(--ease-performance-standard) forwards;
 }
 
 /* Spin animation class */
 .animate-spin {
-	animation: spin var(--duration-slow) linear infinite;
+	animation: spin var(--duration-performance-slow) linear infinite;
 }
 
 /* Spinner utility (common pattern) */
 .spinner {
-	animation: spin var(--duration-slow) linear infinite;
+	animation: spin var(--duration-performance-slow) linear infinite;
 	will-change: transform;
 }
 
@@ -162,27 +162,27 @@
 
 /* Entrance Animation Classes */
 .animate-fade-in {
-	animation: fadeIn var(--duration-complex) var(--ease-standard) forwards;
+	animation: fadeIn var(--duration-performance-complex) var(--ease-performance-standard) forwards;
 }
 
 .animate-slide-up {
-	animation: slideUp var(--duration-complex) var(--ease-standard) forwards;
+	animation: slideUp var(--duration-performance-complex) var(--ease-performance-standard) forwards;
 }
 
 .animate-slide-down {
-	animation: slideDown var(--duration-complex) var(--ease-standard) forwards;
+	animation: slideDown var(--duration-performance-complex) var(--ease-performance-standard) forwards;
 }
 
 .animate-slide-left {
-	animation: slideLeft var(--duration-complex) var(--ease-standard) forwards;
+	animation: slideLeft var(--duration-performance-complex) var(--ease-performance-standard) forwards;
 }
 
 .animate-slide-right {
-	animation: slideRight var(--duration-complex) var(--ease-standard) forwards;
+	animation: slideRight var(--duration-performance-complex) var(--ease-performance-standard) forwards;
 }
 
 .animate-scale-in {
-	animation: scaleIn var(--duration-complex) var(--ease-standard) forwards;
+	animation: scaleIn var(--duration-performance-complex) var(--ease-performance-standard) forwards;
 }
 
 /* Initial hidden state for entrance animations */
@@ -191,7 +191,7 @@
 }
 
 .animate-on-scroll.visible {
-	animation: slideUp var(--duration-complex) var(--ease-standard) forwards;
+	animation: slideUp var(--duration-performance-complex) var(--ease-performance-standard) forwards;
 }
 
 /* ==========================================================================
@@ -200,22 +200,22 @@
 
 /* Cascade delay for sibling elements */
 .stagger-children > * {
-	animation-delay: calc(var(--cascade-step, 50ms) * var(--index, 0));
+	animation-delay: calc(var(--cascade-performance-step, 50ms) * var(--index, 0));
 }
 
 /* Quick cascade (50ms steps) */
 .stagger-quick > * {
-	--cascade-step: 50ms;
+	--cascade-performance-step: 50ms;
 }
 
 /* Standard cascade (100ms steps) */
 .stagger-standard > * {
-	--cascade-step: 100ms;
+	--cascade-performance-step: 100ms;
 }
 
 /* Slow cascade (150ms steps) */
 .stagger-slow > * {
-	--cascade-step: 150ms;
+	--cascade-performance-step: 150ms;
 }
 
 /* Auto-index for up to 12 children */
@@ -238,7 +238,7 @@
 
 /* Lift effect (subtle elevation) */
 .hover-lift {
-	transition: transform var(--duration-standard) var(--ease-standard);
+	transition: transform var(--duration-performance-standard) var(--ease-performance-standard);
 }
 
 .hover-lift:hover {
@@ -247,18 +247,18 @@
 
 /* Border glow effect */
 .hover-glow {
-	transition: border-color var(--duration-micro) var(--ease-standard),
-		box-shadow var(--duration-micro) var(--ease-standard);
+	transition: border-color var(--duration-performance-micro) var(--ease-performance-standard),
+		box-shadow var(--duration-performance-micro) var(--ease-performance-standard);
 }
 
 .hover-glow:hover {
-	border-color: var(--color-border-emphasis);
-	box-shadow: 0 0 0 1px var(--color-border-emphasis);
+	border-color: var(--color-performance-border-emphasis);
+	box-shadow: 0 0 0 1px var(--color-performance-border-emphasis);
 }
 
 /* Opacity fade */
 .hover-fade {
-	transition: opacity var(--duration-micro) var(--ease-standard);
+	transition: opacity var(--duration-performance-micro) var(--ease-performance-standard);
 }
 
 .hover-fade:hover {
@@ -267,12 +267,12 @@
 
 /* Scale + Shadow (card lift) */
 .hover-card {
-	transition: all var(--duration-standard) var(--ease-standard);
+	transition: all var(--duration-performance-standard) var(--ease-performance-standard);
 }
 
 .hover-card:hover {
 	transform: translateY(-4px) scale(1.02);
-	box-shadow: var(--shadow-lg);
+	box-shadow: var(--shadow-performance-scale-lg);
 }
 
 /* ==========================================================================
@@ -294,12 +294,12 @@
 
 /* Scroll fade (header transparency) */
 .scroll-fade {
-	transition: background var(--duration-standard) var(--ease-standard);
+	transition: background var(--duration-performance-standard) var(--ease-performance-standard);
 }
 
 .scroll-fade.scrolled {
-	background: var(--color-bg-pure);
-	box-shadow: var(--shadow-sm);
+	background: var(--color-performance-bg-pure);
+	box-shadow: var(--shadow-performance-scale-sm);
 }
 
 /* ==========================================================================
@@ -325,23 +325,23 @@
 }
 
 .loading-pulse {
-	animation: pulse var(--duration-loading) var(--ease-standard) infinite;
+	animation: pulse var(--duration-performance-loading) var(--ease-performance-standard) infinite;
 }
 
 .loading-shimmer {
 	background: linear-gradient(
 		90deg,
-		var(--color-bg-subtle) 0%,
-		var(--color-bg-surface) 50%,
-		var(--color-bg-subtle) 100%
+		var(--color-performance-bg-subtle) 0%,
+		var(--color-performance-bg-surface) 50%,
+		var(--color-performance-bg-subtle) 100%
 	);
 	background-size: 1000px 100%;
-	animation: shimmer var(--duration-loading) linear infinite;
+	animation: shimmer var(--duration-performance-loading) linear infinite;
 }
 
 /* Skeleton loading state */
 .skeleton {
-	background: var(--color-bg-subtle);
+	background: var(--color-performance-bg-subtle);
 	position: relative;
 	overflow: hidden;
 }
@@ -359,7 +359,7 @@
 		rgba(255, 255, 255, 0.05),
 		transparent
 	);
-	animation: shimmer var(--duration-loading) linear infinite;
+	animation: shimmer var(--duration-performance-loading) linear infinite;
 }
 
 /* ==========================================================================
@@ -389,11 +389,11 @@
 }
 
 .page-enter {
-	animation: pageEnter var(--duration-complex) var(--ease-standard);
+	animation: pageEnter var(--duration-performance-complex) var(--ease-performance-standard);
 }
 
 .page-exit {
-	animation: pageExit var(--duration-standard) var(--ease-standard);
+	animation: pageExit var(--duration-performance-standard) var(--ease-performance-standard);
 }
 
 /* ==========================================================================
@@ -402,7 +402,7 @@
 
 /* Button press effect */
 .press-effect {
-	transition: transform var(--duration-micro) var(--ease-standard);
+	transition: transform var(--duration-performance-micro) var(--ease-performance-standard);
 }
 
 .press-effect:active {
@@ -422,7 +422,7 @@
 	width: 0;
 	height: 1px;
 	background: currentColor;
-	transition: width var(--duration-standard) var(--ease-standard);
+	transition: width var(--duration-performance-standard) var(--ease-performance-standard);
 }
 
 .underline-reveal:hover::after {
@@ -431,7 +431,7 @@
 
 /* Icon rotate on hover */
 .rotate-on-hover {
-	transition: transform var(--duration-standard) var(--ease-standard);
+	transition: transform var(--duration-performance-standard) var(--ease-performance-standard);
 }
 
 .rotate-on-hover:hover {
@@ -467,7 +467,7 @@
 @supports (view-transition-name: none) {
 	::view-transition-old(root),
 	::view-transition-new(root) {
-		animation-duration: var(--duration-standard);
+		animation-duration: var(--duration-performance-standard);
 	}
 
 	::view-transition-old(root) {
@@ -485,25 +485,25 @@
 
 /* Fade in + Slide up (most common entrance) */
 .entrance-default {
-	animation: slideUp var(--duration-complex) var(--ease-standard) forwards;
+	animation: slideUp var(--duration-performance-complex) var(--ease-performance-standard) forwards;
 }
 
 /* Hero entrance (scale + fade) */
 .entrance-hero {
-	animation: scaleIn calc(var(--duration-complex) * 1.5) var(--ease-standard) forwards;
+	animation: scaleIn calc(var(--duration-performance-complex) * 1.5) var(--ease-performance-standard) forwards;
 }
 
 /* Quick micro-feedback */
 .feedback-quick {
-	transition: all var(--duration-micro) var(--ease-standard);
+	transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 }
 
 /* Standard interactive feedback */
 .feedback-standard {
-	transition: all var(--duration-standard) var(--ease-standard);
+	transition: all var(--duration-performance-standard) var(--ease-performance-standard);
 }
 
 /* Complex state changes */
 .feedback-complex {
-	transition: all var(--duration-complex) var(--ease-standard);
+	transition: all var(--duration-performance-complex) var(--ease-performance-standard);
 }

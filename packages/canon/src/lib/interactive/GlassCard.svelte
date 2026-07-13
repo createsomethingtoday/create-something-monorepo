@@ -66,43 +66,43 @@
 		position: relative;
 		overflow: hidden;
 		/* Glass Design System - "The Automation Layer" */
-		background-color: var(--glass-bg-light);
-		border: 1px solid var(--glass-border-light);
-		backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
+		background-color: var(--glass-performance-bg-light);
+		border: 1px solid var(--glass-performance-border-light);
+		backdrop-filter: blur(var(--glass-performance-blur-md)) var(--glass-performance-saturate-md);
 		transition:
-			background var(--duration-micro, 200ms) var(--ease-standard),
-			border-color var(--duration-micro, 200ms) var(--ease-standard),
-			box-shadow var(--duration-micro, 200ms) var(--ease-standard),
-			transform var(--duration-micro, 200ms) var(--ease-standard);
+			background var(--duration-performance-micro, 200ms) var(--ease-performance-standard),
+			border-color var(--duration-performance-micro, 200ms) var(--ease-performance-standard),
+			box-shadow var(--duration-performance-micro, 200ms) var(--ease-performance-standard),
+			transform var(--duration-performance-micro, 200ms) var(--ease-performance-standard);
 	}
 
 	/* Variants */
 	.glass-card.default {
-		background-color: var(--glass-bg-light);
+		background-color: var(--glass-performance-bg-light);
 	}
 
 	.glass-card.subtle {
-		background-color: var(--glass-bg-subtle);
-		border-color: var(--glass-border-subtle);
-		backdrop-filter: blur(var(--glass-blur-sm)) var(--glass-saturate-sm);
+		background-color: var(--glass-performance-bg-subtle);
+		border-color: var(--glass-performance-border-subtle);
+		backdrop-filter: blur(var(--glass-performance-blur-sm)) var(--glass-performance-saturate-sm);
 	}
 
 	.glass-card.elevated {
-		background-color: var(--glass-bg-medium);
-		box-shadow: var(--glass-shadow-md);
-		backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
+		background-color: var(--glass-performance-bg-medium);
+		box-shadow: var(--glass-performance-shadow-md);
+		backdrop-filter: blur(var(--glass-performance-blur-lg)) var(--glass-performance-saturate-lg);
 	}
 
 	/* Hover states */
 	.glass-card:hover {
-		background-color: var(--glass-bg-medium);
-		border-color: var(--glass-border-medium);
-		box-shadow: var(--glass-shadow-sm);
+		background-color: var(--glass-performance-bg-medium);
+		border-color: var(--glass-performance-border-medium);
+		box-shadow: var(--glass-performance-shadow-sm);
 	}
 
 	.glass-card.elevated:hover {
 		transform: translateY(-4px);
-		box-shadow: var(--glass-shadow-lg);
+		box-shadow: var(--glass-performance-shadow-lg);
 	}
 
 	/* Padding */
@@ -110,27 +110,27 @@
 		padding: 0;
 	}
 	.glass-card.padding-sm {
-		padding: var(--space-sm, 1rem);
+		padding: var(--space-performance-sm, 1rem);
 	}
 	.glass-card.padding-md {
-		padding: var(--space-md, 1.618rem);
+		padding: var(--space-performance-md, 1.618rem);
 	}
 	.glass-card.padding-lg {
-		padding: var(--space-lg, 2.618rem);
+		padding: var(--space-performance-lg, 2.618rem);
 	}
 
 	/* Border radius */
 	.glass-card.radius-sm {
-		border-radius: var(--radius-sm, 6px);
+		border-radius: var(--radius-performance-scale-sm, 6px);
 	}
 	.glass-card.radius-md {
-		border-radius: var(--radius-md, 8px);
+		border-radius: var(--radius-performance-scale-md, 8px);
 	}
 	.glass-card.radius-lg {
-		border-radius: var(--radius-lg, 12px);
+		border-radius: var(--radius-performance-scale-lg, 12px);
 	}
 	.glass-card.radius-xl {
-		border-radius: var(--radius-xl, 16px);
+		border-radius: var(--radius-performance-scale-xl, 16px);
 	}
 
 	/* Edge glow - subtle gradient at top */
@@ -158,7 +158,7 @@
 			transparent 100%
 		);
 		opacity: 0;
-		transition: opacity var(--duration-standard, 300ms) var(--ease-standard);
+		transition: opacity var(--duration-performance-standard, 300ms) var(--ease-performance-standard);
 		pointer-events: none;
 	}
 

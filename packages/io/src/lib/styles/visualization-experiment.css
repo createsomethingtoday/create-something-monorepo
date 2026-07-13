@@ -8,135 +8,135 @@
 
 /* Layout */
 :global(.page-container) {
-	background: var(--color-bg-pure);
-	color: var(--color-fg-primary);
+	background: var(--color-performance-bg-pure);
+	color: var(--color-performance-fg-primary);
 	/* Note: Page-level padding handled by Tailwind classes on elements.
 	   This container provides background/color only. */
 }
 
 /* Typography */
 :global(.page-title) {
-	font-size: var(--text-h1);
+	font-size: var(--text-performance-h1);
 	font-weight: 700;
 }
 
 :global(.section-title) {
-	font-size: var(--text-h2);
+	font-size: var(--text-performance-h2);
 	font-weight: 700;
 }
 
 :global(.subsection-title) {
-	font-size: var(--text-h3);
+	font-size: var(--text-performance-h3);
 	font-weight: 600;
-	color: var(--color-fg-secondary);
+	color: var(--color-performance-fg-secondary);
 }
 
 :global(.results-title) {
-	font-size: var(--text-h1);
+	font-size: var(--text-performance-h1);
 	font-weight: 700;
 }
 
 /* Text Colors */
 :global(.text-secondary) {
-	color: var(--color-fg-secondary);
-	font-size: var(--text-body-lg);
+	color: var(--color-performance-fg-secondary);
+	font-size: var(--text-performance-body-lg);
 }
 
 :global(.text-tertiary) {
-	color: var(--color-fg-tertiary);
+	color: var(--color-performance-fg-tertiary);
 }
 
 :global(.text-muted) {
-	color: var(--color-fg-muted);
+	color: var(--color-performance-fg-muted);
 }
 
 :global(.text-body-sm) {
-	font-size: var(--text-body-sm);
+	font-size: var(--text-performance-body-sm);
 }
 
 :global(.text-caption) {
-	font-size: var(--text-caption);
+	font-size: var(--text-performance-caption);
 }
 
 /* Section Dividers */
 :global(.header-section) {
-	border-bottom: 1px solid var(--color-border-default);
+	border-bottom: 1px solid var(--color-performance-border-default);
 }
 
 :global(.section-divider) {
-	border-top: 1px solid var(--color-border-default);
+	border-top: 1px solid var(--color-performance-border-default);
 }
 
 :global(.abstract-section) {
-	border-left: 4px solid var(--color-border-emphasis);
+	border-left: 4px solid var(--color-performance-border-emphasis);
 }
 
 /* Cards */
 :global(.card) {
-	background: var(--color-bg-subtle);
-	border: 1px solid var(--color-border-default);
-	border-radius: var(--radius-lg);
+	background: var(--color-performance-bg-subtle);
+	border: 1px solid var(--color-performance-border-default);
+	border-radius: var(--radius-performance-scale-lg);
 }
 
 :global(.card-subtle) {
-	background: var(--color-bg-subtle);
-	border: 1px solid var(--color-border-default);
-	border-radius: var(--radius-lg);
+	background: var(--color-performance-bg-subtle);
+	border: 1px solid var(--color-performance-border-default);
+	border-radius: var(--radius-performance-scale-lg);
 }
 
 :global(.card-title) {
-	font-size: var(--text-body-lg);
+	font-size: var(--text-performance-body-lg);
 	font-weight: 600;
-	color: var(--color-fg-secondary);
+	color: var(--color-performance-fg-secondary);
 }
 
 /* Code */
 :global(.code-block) {
-	background: var(--color-bg-subtle);
-	border: 1px solid var(--color-border-default);
-	border-radius: var(--radius-lg);
+	background: var(--color-performance-bg-subtle);
+	border: 1px solid var(--color-performance-border-default);
+	border-radius: var(--radius-performance-scale-lg);
 	font-family: monospace;
-	font-size: var(--text-body-sm);
+	font-size: var(--text-performance-body-sm);
 }
 
 :global(.code-inline) {
-	color: var(--color-fg-secondary);
-	background: var(--color-bg-subtle);
+	color: var(--color-performance-fg-secondary);
+	background: var(--color-performance-bg-subtle);
 	padding: 0.125rem 0.5rem;
-	border-radius: var(--radius-sm);
+	border-radius: var(--radius-performance-scale-sm);
 }
 
 /* Metrics */
 :global(.metric-value) {
-	font-size: var(--text-h1);
+	font-size: var(--text-performance-h1);
 	font-weight: 700;
 }
 
 /* Links */
 :global(.link) {
-	color: var(--color-fg-secondary);
+	color: var(--color-performance-fg-secondary);
 	text-decoration: underline;
 	overflow-wrap: anywhere;
-	transition: color var(--duration-micro) var(--ease-standard);
+	transition: color var(--duration-performance-micro) var(--ease-performance-standard);
 }
 
 :global(.link:hover) {
-	color: var(--color-fg-primary);
+	color: var(--color-performance-fg-primary);
 }
 
 /* Data Visualization Semantic Colors */
 :global(.data-success) {
-	color: var(--color-data-2);
+	color: var(--color-performance-data-2);
 }
 
 :global(.data-error) {
-	color: var(--color-error);
+	color: var(--color-performance-error);
 }
 
 :global(.data-info) {
-	color: var(--color-data-1);
+	color: var(--color-performance-data-1);
 }
 
 :global(.data-warning) {
-	color: var(--color-data-4);
+	color: var(--color-performance-data-4);
 }

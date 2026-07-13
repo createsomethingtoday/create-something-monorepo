@@ -101,8 +101,8 @@
 		opacity: 0;
 		transform: translateY(20px);
 		transition:
-			opacity var(--duration-standard, 300ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
-			transform var(--duration-standard, 300ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+			opacity var(--duration-performance-standard, 300ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1)),
+			transform var(--duration-performance-standard, 300ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1));
 	}
 
 	.stagger-container.visible :global(.stagger-item) {

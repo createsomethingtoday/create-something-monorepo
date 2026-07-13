@@ -565,12 +565,12 @@
 
 	/* Additional styles for this experiment */
 	.architecture-diagram {
-		background: var(--color-bg-subtle);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-bg-subtle);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.metric-highlight {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		font-weight: 600;
 	}
 
@@ -579,24 +579,24 @@
 	}
 
 	.comparison-table thead {
-		background: var(--color-bg-subtle);
+		background: var(--color-performance-bg-subtle);
 	}
 
 	.comparison-table th {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 		font-weight: 600;
 	}
 
 
 	.comparison-table tbody tr:last-child {
-		background: var(--color-bg-subtle);
+		background: var(--color-performance-bg-subtle);
 	}
 
 	.text-error {
-		color: var(--color-error);
+		color: var(--color-performance-error);
 	}
 
 	.text-success {
-		color: var(--color-success);
+		color: var(--color-performance-success);
 	}
 </style>

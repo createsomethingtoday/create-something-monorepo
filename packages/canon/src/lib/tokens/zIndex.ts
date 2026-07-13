@@ -30,13 +30,13 @@ export function getZIndex(key: ZIndexKey): number {
  * CSS custom property names for z-index
  */
 export const zIndexVars = {
-	base: '--z-base',
-	dropdown: '--z-dropdown',
-	sticky: '--z-sticky',
-	fixed: '--z-fixed',
-	modal: '--z-modal',
-	popover: '--z-popover',
-	tooltip: '--z-tooltip'
+	base: '--z-performance-base',
+	dropdown: '--z-performance-dropdown',
+	sticky: '--z-performance-sticky',
+	fixed: '--z-performance-fixed',
+	modal: '--z-performance-modal',
+	popover: '--z-performance-popover',
+	tooltip: '--z-performance-tooltip'
 } as const;
 
 /**

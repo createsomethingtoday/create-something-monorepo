@@ -65,9 +65,9 @@
 	.detail-panel {
 		display: flex;
 		flex-direction: column;
-		padding: var(--space-md);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-md);
+		padding: var(--space-performance-md);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-md);
 		overflow-y: auto;
 	}
 
@@ -78,57 +78,57 @@
 	}
 
 	.empty-message {
-		color: var(--color-fg-muted);
-		font-size: var(--text-body-sm);
+		color: var(--color-performance-fg-muted);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.detail-header {
-		padding-bottom: var(--space-md);
+		padding-bottom: var(--space-performance-md);
 	}
 
 	.detail-title {
-		font-size: var(--text-h3);
-		color: var(--color-fg-primary);
-		margin: 0 0 var(--space-xs) 0;
+		font-size: var(--text-performance-h3);
+		color: var(--color-performance-fg-primary);
+		margin: 0 0 var(--space-performance-xs) 0;
 	}
 
 	.detail-meta {
 		display: flex;
-		gap: var(--space-xs);
+		gap: var(--space-performance-xs);
 		flex-wrap: wrap;
 	}
 
 	.meta-item {
-		padding: 2px var(--space-xs);
-		font-size: var(--text-caption);
-		color: var(--color-fg-secondary);
-		background: var(--color-bg-subtle);
-		border-radius: var(--radius-sm);
+		padding: 2px var(--space-performance-xs);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-secondary);
+		background: var(--color-performance-bg-subtle);
+		border-radius: var(--radius-performance-scale-sm);
 	}
 
 	.meta-item.package {
-		color: var(--color-data-1);
-		border-color: var(--color-data-1);
-		background: var(--color-data-1-muted);
+		color: var(--color-performance-data-1);
+		border-color: var(--color-performance-data-1);
+		background: var(--color-performance-data-1-muted);
 	}
 
 	.detail-body {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-md);
-		padding-top: var(--space-md);
+		gap: var(--space-performance-md);
+		padding-top: var(--space-performance-md);
 	}
 
 	.detail-section {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-xs);
+		gap: var(--space-performance-xs);
 	}
 
 	.section-title {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 		font-weight: 600;
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 		margin: 0;
@@ -136,48 +136,48 @@
 
 	.path {
 		font-family: 'Geist Mono', 'SF Mono', Monaco, monospace;
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
-		background: var(--color-bg-subtle);
-		padding: var(--space-xs);
-		border-radius: var(--radius-sm);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-tertiary);
+		background: var(--color-performance-bg-subtle);
+		padding: var(--space-performance-xs);
+		border-radius: var(--radius-performance-scale-sm);
 		word-break: break-all;
 	}
 
 	.concept-list {
 		display: flex;
-		gap: var(--space-xs);
+		gap: var(--space-performance-xs);
 		flex-wrap: wrap;
 	}
 
 	.concept-tag {
-		padding: 2px var(--space-xs);
-		font-size: var(--text-caption);
-		color: var(--color-data-3);
-		background: var(--color-data-3-muted);
-		border: 1px solid var(--color-data-3-border);
-		border-radius: var(--radius-sm);
+		padding: 2px var(--space-performance-xs);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-data-3);
+		background: var(--color-performance-data-3-muted);
+		border: 1px solid var(--color-performance-data-3-border);
+		border-radius: var(--radius-performance-scale-sm);
 	}
 
 	.metadata-list {
 		display: grid;
 		grid-template-columns: auto 1fr;
-		gap: var(--space-xs) var(--space-sm);
-		font-size: var(--text-body-sm);
+		gap: var(--space-performance-xs) var(--space-performance-sm);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.metadata-list dt {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.metadata-list dd {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 		margin: 0;
 	}
 
 	.metadata-list code {
 		font-family: 'Geist Mono', 'SF Mono', Monaco, monospace;
-		font-size: var(--text-caption);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-tertiary);
 	}
 </style>

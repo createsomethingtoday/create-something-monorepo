@@ -34,17 +34,17 @@ export type ShadowKey = keyof typeof shadows;
  * CSS custom property names for shadows
  */
 export const shadowVars = {
-	'--shadow-none': shadows.none,
-	'--shadow-sm': shadows.sm,
-	'--shadow-md': shadows.md,
-	'--shadow-lg': shadows.lg,
-	'--shadow-xl': shadows.xl,
-	'--shadow-2xl': shadows['2xl'],
-	'--shadow-glow-sm': shadows['glow-sm'],
-	'--shadow-glow-md': shadows['glow-md'],
-	'--shadow-glow-lg': shadows['glow-lg'],
-	'--shadow-inner': shadows.inner,
-	'--shadow-inner-lg': shadows['inner-lg']
+	'--shadow-performance-scale-none': shadows.none,
+	'--shadow-performance-scale-sm': shadows.sm,
+	'--shadow-performance-scale-md': shadows.md,
+	'--shadow-performance-scale-lg': shadows.lg,
+	'--shadow-performance-scale-xl': shadows.xl,
+	'--shadow-performance-scale-2xl': shadows['2xl'],
+	'--shadow-performance-scale-glow-sm': shadows['glow-sm'],
+	'--shadow-performance-scale-glow-md': shadows['glow-md'],
+	'--shadow-performance-scale-glow-lg': shadows['glow-lg'],
+	'--shadow-performance-scale-inner': shadows.inner,
+	'--shadow-performance-scale-inner-lg': shadows['inner-lg']
 } as const;
 
 /**

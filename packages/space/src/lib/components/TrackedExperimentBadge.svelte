@@ -119,81 +119,81 @@
 <style>
   .badge-compact {
     padding: 0.5rem 1rem;
-    background: var(--color-hover);
-    border: 1px solid var(--color-border-emphasis);
-    border-radius: var(--radius-full);
-    font-size: var(--text-caption);
-    color: var(--color-fg-tertiary);
+    background: var(--color-performance-hover);
+    border: 1px solid var(--color-performance-border-emphasis);
+    border-radius: var(--radius-performance-scale-full);
+    font-size: var(--text-performance-caption);
+    color: var(--color-performance-fg-tertiary);
   }
 
   .badge-icon {
-    color: var(--color-fg-muted);
+    color: var(--color-performance-fg-muted);
   }
 
   .badge-label {
     font-weight: 500;
-    color: var(--color-fg-secondary);
+    color: var(--color-performance-fg-secondary);
   }
 
   .badge-dot {
-    color: var(--color-fg-muted);
+    color: var(--color-performance-fg-muted);
   }
 
   .stats-card {
     padding: 1.5rem;
-    background: var(--color-bg-surface);
-    border-radius: var(--radius-lg);
+    background: var(--color-performance-bg-surface);
+    border-radius: var(--radius-performance-scale-lg);
   }
 
   .stats-icon {
-    color: var(--color-fg-tertiary);
+    color: var(--color-performance-fg-tertiary);
   }
 
   .stats-title {
-    font-size: var(--text-body-lg);
+    font-size: var(--text-performance-body-lg);
     font-weight: 600;
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
   }
 
   .stats-subtitle {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-tertiary);
+    font-size: var(--text-performance-body-sm);
+    color: var(--color-performance-fg-tertiary);
   }
 
   .metric-card {
     padding: 0.75rem;
-    background: var(--color-hover);
-    border-radius: var(--radius-sm);
+    background: var(--color-performance-hover);
+    border-radius: var(--radius-performance-scale-sm);
   }
 
   .metric-value {
     font-size: 1.25rem;
     font-weight: 700;
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
   }
 
   .metric-label {
-    font-size: var(--text-caption);
-    color: var(--color-fg-muted);
+    font-size: var(--text-performance-caption);
+    color: var(--color-performance-fg-muted);
   }
 
   .metadata-text {
-    font-size: var(--text-caption);
-    color: var(--color-fg-tertiary);
+    font-size: var(--text-performance-caption);
+    color: var(--color-performance-fg-tertiary);
   }
 
   .metadata-strong {
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
   }
 
   .methodology-link {
-    font-size: var(--text-caption);
-    color: var(--color-fg-tertiary);
-    transition: color var(--duration-standard) var(--ease-standard);
+    font-size: var(--text-performance-caption);
+    color: var(--color-performance-fg-tertiary);
+    transition: color var(--duration-performance-standard) var(--ease-performance-standard);
   }
 
   .methodology-link:hover {
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
     text-decoration: underline;
   }
 

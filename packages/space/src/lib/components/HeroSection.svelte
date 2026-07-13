@@ -87,29 +87,29 @@
 <style>
 
 	.eyebrow {
-		font-size: var(--text-body);
+		font-size: var(--text-performance-body);
 		font-weight: 500;
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 		text-align: center;
 	}
 
 	@media (min-width: 768px) {
 		.eyebrow {
-			font-size: var(--text-body-lg);
+			font-size: var(--text-performance-body-lg);
 		}
 	}
 
 	.headline {
-		font-size: var(--text-display);
-		font-weight: var(--font-bold);
-		color: var(--color-fg-primary);
-		line-height: var(--leading-tight);
+		font-size: var(--text-performance-display);
+		font-weight: var(--font-performance-bold);
+		color: var(--color-performance-fg-primary);
+		line-height: var(--leading-performance-tight);
 		text-align: center;
 	}
 
 	.description {
-		font-size: var(--text-body-lg);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body-lg);
+		color: var(--color-performance-fg-tertiary);
 		text-align: center;
 	}
 
@@ -120,37 +120,37 @@
 	}
 
 	.link {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 		text-decoration: underline;
-		transition: color var(--duration-standard) var(--ease-standard);
+		transition: color var(--duration-performance-standard) var(--ease-performance-standard);
 	}
 
 	.link:hover {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.cta-link {
-		color: var(--color-fg-tertiary);
-		transition: color var(--duration-standard) var(--ease-standard);
+		color: var(--color-performance-fg-tertiary);
+		transition: color var(--duration-performance-standard) var(--ease-performance-standard);
 	}
 
 	.cta-link:hover {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.cta-text {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	@media (min-width: 768px) {
 		.cta-text {
-			font-size: var(--text-body);
+			font-size: var(--text-performance-body);
 		}
 	}
 
 	/* CTA Arrow: Explicit Canon motion token (not Tailwind default) */
 	.cta-arrow {
-		transition: transform var(--duration-micro) var(--ease-standard);
+		transition: transform var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.cta-link:hover .cta-arrow {
@@ -158,19 +158,19 @@
 	}
 
 	.section-title {
-		font-size: var(--text-h2);
+		font-size: var(--text-performance-h2);
 		font-weight: 700;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		text-align: center;
 	}
 
 	.section-description {
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 		text-align: center;
 	}
 
 	.hero-background {
-		background: linear-gradient(to bottom, var(--color-bg-pure), var(--color-bg-pure), var(--color-bg-elevated));
+		background: linear-gradient(to bottom, var(--color-performance-bg-pure), var(--color-performance-bg-pure), var(--color-performance-bg-elevated));
 	}
 
 	/* ==========================================================================
@@ -182,7 +182,7 @@
 	.animate-reveal {
 		opacity: 0;
 		transform: translateY(16px);
-		animation: reveal var(--duration-complex) var(--ease-standard) forwards;
+		animation: reveal var(--duration-performance-complex) var(--ease-performance-standard) forwards;
 		animation-delay: calc(var(--delay, 0) * 100ms);
 	}
 

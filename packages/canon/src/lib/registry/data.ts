@@ -40,7 +40,7 @@ function createFoundationControlItem(definition: FoundationControlDefinition): C
 		docsPath: `/canon/components/${definition.group}`,
 		tags: [definition.group, ...definition.tags],
 		modalities: definition.modalities,
-		dependencies: definition.dependencies ?? ['token.canon-core'],
+		dependencies: definition.dependencies ?? ['token.performance-core'],
 		contract: definition.contract
 	};
 }
@@ -60,7 +60,7 @@ function createRootComponentStableItem(
 		docsPath: '/canon/components',
 		tags: ['components', ...definition.tags],
 		modalities: definition.modalities,
-		dependencies: definition.dependencies ?? ['token.canon-core'],
+		dependencies: definition.dependencies ?? ['token.performance-core'],
 		contract: definition.contract
 	};
 }
@@ -79,7 +79,7 @@ const CLEAR_PRIMITIVE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/clear',
 		tags: ['clear', 'layout', 'section', 'surface'],
 		modalities: ['web', 'app'],
-		dependencies: ['token.canon-core'],
+		dependencies: ['token.performance-core'],
 		contract: {
 			accessibility: 'Sections must preserve heading order, landmarks, and readable spacing.',
 			extension: 'Use page sections for full-width layout bands instead of nested card shells.'
@@ -98,7 +98,7 @@ const CLEAR_PRIMITIVE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/clear',
 		tags: ['clear', 'error', 'recovery', 'state'],
 		modalities: ['web', 'app', 'chat'],
-		dependencies: ['token.canon-core', 'policy.signal-decision-proof'],
+		dependencies: ['token.performance-core', 'policy.signal-decision-proof'],
 		contract: {
 			accessibility: 'Error surfaces must state the problem and recovery path in text.',
 			evidence: 'When possible, include receipt, owner, or support route for the failure.',
@@ -118,7 +118,7 @@ const CLEAR_PRIMITIVE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/clear',
 		tags: ['clear', 'hero', 'claim', 'proof'],
 		modalities: ['web', 'app', 'chat'],
-		dependencies: ['token.canon-core', 'component.clear-proof-strip'],
+		dependencies: ['token.performance-core', 'component.clear-proof-strip'],
 		contract: {
 			accessibility: 'Hero claims must remain readable as text and not depend on decorative media.',
 			evidence: 'Claims need adjacent proof metadata or a route to receipts.',
@@ -137,7 +137,7 @@ const CLEAR_PRIMITIVE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/clear',
 		tags: ['clear', 'proof', 'logos', 'trust'],
 		modalities: ['web', 'app'],
-		dependencies: ['token.canon-core'],
+		dependencies: ['token.performance-core'],
 		contract: {
 			accessibility: 'Logo rows need text alternatives and must not be the only proof claim.',
 			evidence: 'Use only when the relationship or receipt behind the mark is true.',
@@ -156,7 +156,7 @@ const CLEAR_PRIMITIVE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/clear',
 		tags: ['clear', 'proof', 'evidence', 'receipt'],
 		modalities: ['web', 'app', 'chat'],
-		dependencies: ['token.canon-core', 'policy.signal-decision-proof'],
+		dependencies: ['token.performance-core', 'policy.signal-decision-proof'],
 		contract: {
 			evidence: 'Proof items must connect claims to concrete artifacts, checks, or receipts.',
 			extension: 'Prefer this when multiple proof objects need to be scanned together.'
@@ -175,7 +175,7 @@ const CLEAR_PRIMITIVE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/clear',
 		tags: ['clear', 'workflow', 'artifact', 'receipt'],
 		modalities: ['web', 'app', 'chat', 'glasses'],
-		dependencies: ['token.canon-core', 'policy.signal-decision-proof'],
+		dependencies: ['token.performance-core', 'policy.signal-decision-proof'],
 		contract: {
 			accessibility: 'Mini artifacts must keep object, state, and owner readable without hover.',
 			evidence: 'Receipt or source metadata should sit near the workflow state.',
@@ -194,7 +194,7 @@ const CLEAR_PRIMITIVE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/clear',
 		tags: ['clear', 'state', 'workflow', 'owner'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'policy.signal-decision-proof'],
+		dependencies: ['token.performance-core', 'policy.signal-decision-proof'],
 		contract: {
 			accessibility: 'State must be encoded in text and structure, not color alone.',
 			evidence: 'Rows should name owner, evidence, receipt, or next action.',
@@ -213,7 +213,7 @@ const CLEAR_PRIMITIVE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/clear',
 		tags: ['clear', 'artifact', 'proof', 'card'],
 		modalities: ['web', 'app', 'chat'],
-		dependencies: ['token.canon-core'],
+		dependencies: ['token.performance-core'],
 		contract: {
 			accessibility: 'Artifact cards need explicit titles and link/action labels.',
 			evidence: 'Artifact metadata should identify what is proved and where the source lives.',
@@ -232,7 +232,7 @@ const CLEAR_PRIMITIVE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/clear',
 		tags: ['clear', 'grid', 'cards', 'comparison'],
 		modalities: ['web', 'app'],
-		dependencies: ['token.canon-core'],
+		dependencies: ['token.performance-core'],
 		contract: {
 			accessibility: 'Card grids must preserve readable headings and stable focus order.',
 			extension: 'Use for repeated items; avoid nested card-in-card page composition.'
@@ -250,7 +250,7 @@ const CLEAR_PRIMITIVE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/clear',
 		tags: ['clear', 'use-case', 'outcome', 'workflow'],
 		modalities: ['web', 'app', 'chat'],
-		dependencies: ['token.canon-core', 'policy.signal-decision-proof'],
+		dependencies: ['token.performance-core', 'policy.signal-decision-proof'],
 		contract: {
 			accessibility: 'Use cases must be stated as workflow needs and outcomes.',
 			evidence: 'Each use case should connect to proof, receipt, or a next action.',
@@ -269,7 +269,7 @@ const CLEAR_PRIMITIVE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/clear',
 		tags: ['clear', 'quote', 'metric', 'proof'],
 		modalities: ['web', 'app'],
-		dependencies: ['token.canon-core'],
+		dependencies: ['token.performance-core'],
 		contract: {
 			accessibility: 'Quotes and metrics must remain readable as text.',
 			evidence: 'Metrics need labels and should not imply precision without source proof.',
@@ -288,7 +288,7 @@ const CLEAR_PRIMITIVE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/clear',
 		tags: ['clear', 'pillars', 'principles', 'structure'],
 		modalities: ['web', 'app', 'chat'],
-		dependencies: ['token.canon-core'],
+		dependencies: ['token.performance-core'],
 		contract: {
 			accessibility: 'Pillars need descriptive headings and optional links with clear labels.',
 			extension: 'Use for structured explanation before creating local principle grids.'
@@ -306,7 +306,7 @@ const CLEAR_PRIMITIVE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/clear',
 		tags: ['clear', 'metadata', 'owner', 'receipt'],
 		modalities: ['web', 'app', 'chat', 'voice'],
-		dependencies: ['token.canon-core', 'policy.signal-decision-proof'],
+		dependencies: ['token.performance-core', 'policy.signal-decision-proof'],
 		contract: {
 			accessibility: 'Metadata labels and values must remain paired in text.',
 			evidence: 'Rails should expose owner, source, receipt, or status metadata near decisions.',
@@ -325,7 +325,7 @@ const CLEAR_PRIMITIVE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/clear',
 		tags: ['clear', 'security', 'governance', 'controls'],
 		modalities: ['web', 'app', 'chat'],
-		dependencies: ['token.canon-core', 'policy.signal-decision-proof'],
+		dependencies: ['token.performance-core', 'policy.signal-decision-proof'],
 		contract: {
 			accessibility: 'Security state must be visible in text and grouped by control or log.',
 			evidence: 'Controls and logs should identify owner, state, and proof.',
@@ -344,7 +344,7 @@ const CLEAR_PRIMITIVE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/clear',
 		tags: ['clear', 'content', 'highlights', 'claims'],
 		modalities: ['web', 'app', 'chat'],
-		dependencies: ['token.canon-core'],
+		dependencies: ['token.performance-core'],
 		contract: {
 			accessibility: 'Highlights must use readable text labels and not only visual emphasis.',
 			extension: 'Use for compact content summaries before creating local feature lists.'
@@ -362,7 +362,7 @@ const CLEAR_PRIMITIVE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/clear',
 		tags: ['clear', 'receipt', 'proof', 'validation'],
 		modalities: ['web', 'app', 'chat'],
-		dependencies: ['token.canon-core', 'policy.signal-decision-proof'],
+		dependencies: ['token.performance-core', 'policy.signal-decision-proof'],
 		contract: {
 			accessibility: 'Receipts need labels, status text, and navigable links when interactive.',
 			evidence: 'Every receipt should identify what was validated and where proof lives.',
@@ -381,7 +381,7 @@ const CLEAR_PRIMITIVE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/clear',
 		tags: ['clear', 'cta', 'action', 'handoff'],
 		modalities: ['web', 'app'],
-		dependencies: ['token.canon-core'],
+		dependencies: ['token.performance-core'],
 		contract: {
 			accessibility: 'Action labels must describe the outcome and remain keyboard reachable.',
 			evidence: 'When trust matters, pair the action with a proof or receipt cue.',
@@ -400,7 +400,7 @@ const CLEAR_PRIMITIVE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/clear',
 		tags: ['clear', 'action', 'footer', 'handoff'],
 		modalities: ['web', 'app', 'chat'],
-		dependencies: ['token.canon-core'],
+		dependencies: ['token.performance-core'],
 		contract: {
 			accessibility: 'Footer actions must be clearly labeled and ordered by expected workflow.',
 			extension: 'Use for terminal action groups before creating local footer button clusters.'
@@ -419,7 +419,7 @@ const CLEAR_PRIMITIVE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/clear',
 		tags: ['clear', 'decision', 'run-wait-stop', 'evidence', 'receipt'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'policy.signal-decision-proof'],
+		dependencies: ['token.performance-core', 'policy.signal-decision-proof'],
 		contract: {
 			accessibility:
 				'Decision state must be present in text and structure, not only color or animation.',
@@ -477,7 +477,7 @@ const FOUNDATION_CONTROL_ITEMS: CanonRegistryManifest['items'] = [
 		description: 'Grouped checkbox options with shared label, description, and error treatment.',
 		tags: ['input', 'selection', 'group'],
 		modalities: ['web', 'app'],
-		dependencies: ['token.canon-core', 'component.form-checkbox'],
+		dependencies: ['token.performance-core', 'component.form-checkbox'],
 		contract: {
 			accessibility:
 				'Grouped checkboxes need a group label and clear relationship between options and errors.',
@@ -503,7 +503,7 @@ const FOUNDATION_CONTROL_ITEMS: CanonRegistryManifest['items'] = [
 		description: 'Grouped mutually exclusive options with shared label and validation treatment.',
 		tags: ['input', 'selection', 'group'],
 		modalities: ['web', 'app'],
-		dependencies: ['token.canon-core', 'component.form-radio'],
+		dependencies: ['token.performance-core', 'component.form-radio'],
 		contract: {
 			accessibility:
 				'Radio groups need one selected value, keyboard navigation, and a visible group label.',
@@ -541,7 +541,7 @@ const FOUNDATION_CONTROL_ITEMS: CanonRegistryManifest['items'] = [
 		description: 'Inline status message for success, warning, error, and informational states.',
 		tags: ['status', 'message', 'notice'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'policy.signal-decision-proof'],
+		dependencies: ['token.performance-core', 'policy.signal-decision-proof'],
 		contract: {
 			accessibility: 'Alert severity and message must be available in text, not only color.',
 			evidence: 'Operational alerts should name the affected object, owner, or recovery route.',
@@ -568,7 +568,7 @@ const FOUNDATION_CONTROL_ITEMS: CanonRegistryManifest['items'] = [
 		description: 'Focused modal surface for confirmation, interruption, and bounded decisions.',
 		tags: ['modal', 'decision', 'focus'],
 		modalities: ['web', 'app'],
-		dependencies: ['token.canon-core', 'policy.signal-decision-proof'],
+		dependencies: ['token.performance-core', 'policy.signal-decision-proof'],
 		contract: {
 			accessibility: 'Dialogs must trap focus, expose a title, and provide keyboard dismissal rules.',
 			evidence: 'Decision dialogs should name consequence, owner, or rollback path when relevant.',
@@ -713,7 +713,7 @@ const FOUNDATION_PRIMITIVE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/heading',
 		tags: ['typography', 'heading', 'semantic', 'foundation'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core'],
+		dependencies: ['token.performance-core'],
 		contract: {
 			accessibility:
 				'Consumers must choose the heading level for document structure, not visual size alone.',
@@ -733,7 +733,7 @@ const FOUNDATION_PRIMITIVE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/skip-to-content',
 		tags: ['accessibility', 'keyboard', 'navigation', 'foundation'],
 		modalities: ['web', 'app'],
-		dependencies: ['token.canon-core'],
+		dependencies: ['token.performance-core'],
 		contract: {
 			accessibility:
 				'Place before navigation and ensure the configured target id exists on the main content.',
@@ -754,7 +754,7 @@ const FOUNDATION_PRIMITIVE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/layout',
 		tags: ['layout', 'section', 'spacing', 'foundation'],
 		modalities: ['web', 'app'],
-		dependencies: ['token.canon-core'],
+		dependencies: ['token.performance-core'],
 		contract: {
 			accessibility: 'Sections must preserve semantic section structure and readable spacing.',
 			extension:
@@ -774,7 +774,7 @@ const FOUNDATION_PRIMITIVE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/layout',
 		tags: ['layout', 'heading', 'section-header', 'foundation'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.layout-section', 'component.heading'],
+		dependencies: ['token.performance-core', 'component.layout-section', 'component.heading'],
 		contract: {
 			accessibility:
 				'Choose the heading level for document structure and keep title/subtitle readable as text.',
@@ -795,7 +795,7 @@ const FOUNDATION_PRIMITIVE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/layout',
 		tags: ['layout', 'grid', 'bento', 'foundation'],
 		modalities: ['web', 'app'],
-		dependencies: ['token.canon-core', 'component.layout-bento-item'],
+		dependencies: ['token.performance-core', 'component.layout-bento-item'],
 		contract: {
 			accessibility:
 				'Grid order must remain logical when the responsive layout stacks or spans change.',
@@ -816,7 +816,7 @@ const FOUNDATION_PRIMITIVE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/layout',
 		tags: ['layout', 'grid-item', 'bento', 'foundation'],
 		modalities: ['web', 'app'],
-		dependencies: ['token.canon-core'],
+		dependencies: ['token.performance-core'],
 		contract: {
 			accessibility:
 				'Spans and variants must not replace semantic headings, labels, or reading order.',
@@ -837,7 +837,7 @@ const FOUNDATION_PRIMITIVE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/layout',
 		tags: ['layout', 'split', 'responsive', 'foundation'],
 		modalities: ['web', 'app'],
-		dependencies: ['token.canon-core', 'component.layout-section'],
+		dependencies: ['token.performance-core', 'component.layout-section'],
 		contract: {
 			accessibility:
 				'Column order must stay understandable when reversed or stacked at responsive breakpoints.',
@@ -858,7 +858,7 @@ const FOUNDATION_PRIMITIVE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/icons',
 		tags: ['icon', 'visual-language', 'accessibility', 'foundation'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core'],
+		dependencies: ['token.performance-core'],
 		contract: {
 			accessibility:
 				'Provide a label for standalone meaningful icons and omit it only for decorative icons.',
@@ -876,7 +876,7 @@ const ROOT_COMPONENT_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 			'Shared site footer primitive for property navigation, legal routes, contact links, and cross-property identity.',
 		tags: ['footer', 'navigation', 'site-chrome'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.navigation'],
+		dependencies: ['token.performance-core', 'component.navigation'],
 		contract: {
 			accessibility:
 				'Footer content must preserve landmark semantics, link labels, property identity, and legal route names.',
@@ -893,7 +893,7 @@ const ROOT_COMPONENT_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 			'Catalog listing card primitive for reusable offers, templates, papers, packages, or property entries.',
 		tags: ['catalog', 'card', 'listing'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.card', 'component.clear-artifact-card'],
+		dependencies: ['token.performance-core', 'component.card', 'component.clear-artifact-card'],
 		contract: {
 			accessibility:
 				'Catalog cards must expose title, description, category, link/action label, and any status text without relying on hover.',
@@ -910,7 +910,7 @@ const ROOT_COMPONENT_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 			'Research paper card primitive for title, summary, category, publication metadata, and reading route.',
 		tags: ['paper', 'research', 'card'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.card', 'component.content-testimonial-carousel'],
+		dependencies: ['token.performance-core', 'component.card', 'component.content-testimonial-carousel'],
 		contract: {
 			accessibility:
 				'Paper cards must expose title, summary, category, date or status, and read action as text.',
@@ -927,7 +927,7 @@ const ROOT_COMPONENT_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 			'Research paper collection grid primitive for filtered or grouped paper lists with empty and loading states.',
 		tags: ['papers', 'grid', 'collection'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.paper-card', 'component.clear-card-grid'],
+		dependencies: ['token.performance-core', 'component.paper-card', 'component.clear-card-grid'],
 		contract: {
 			accessibility:
 				'Paper grids must preserve collection heading, item count, filter context, empty state, and card order.',
@@ -944,7 +944,7 @@ const ROOT_COMPONENT_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 			'Content taxonomy section primitive for grouping entries under a category heading with summary and calls to action.',
 		tags: ['category', 'taxonomy', 'section'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.layout-section', 'component.heading'],
+		dependencies: ['token.performance-core', 'component.layout-section', 'component.heading'],
 		contract: {
 			accessibility:
 				'Category sections must expose category name, summary, item list, and route labels in a logical heading hierarchy.',
@@ -961,7 +961,7 @@ const ROOT_COMPONENT_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 			'Share control primitive for platform-specific sharing routes with explicit channel policy and copy fallback.',
 		tags: ['share', 'platform', 'actions'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.button'],
+		dependencies: ['token.performance-core', 'component.button'],
 		contract: {
 			accessibility:
 				'Share controls must expose destination platform, target URL, copy action, success or failure state, and focusable labels.',
@@ -978,7 +978,7 @@ const ROOT_COMPONENT_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 			'Editorial quote block primitive for quoted text, attribution, source context, and optional proof relationship.',
 		tags: ['quote', 'editorial', 'proof'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.clear-quote-metric-panel'],
+		dependencies: ['token.performance-core', 'component.clear-quote-metric-panel'],
 		contract: {
 			accessibility:
 				'Quotes must expose quote text, attribution, source label, and context without decorative punctuation as the only cue.',
@@ -995,7 +995,7 @@ const ROOT_COMPONENT_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 			'Related content section primitive for recommendation lists tied to taxonomy, topic, or authored relationship.',
 		tags: ['related-content', 'recommendation', 'section'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.navigation-related-content', 'component.card'],
+		dependencies: ['token.performance-core', 'component.navigation-related-content', 'component.card'],
 		contract: {
 			accessibility:
 				'Related content must expose section heading, article titles, relationship reason when available, and route labels.',
@@ -1012,7 +1012,7 @@ const ROOT_COMPONENT_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 			'Three-Tier Framework health display primitive for Database, Automation, and Judgment readiness.',
 		tags: ['three-tier', 'health', 'governance'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'policy.signal-decision-proof', 'component.clear-state-rows'],
+		dependencies: ['token.performance-core', 'policy.signal-decision-proof', 'component.clear-state-rows'],
 		contract: {
 			accessibility:
 				'Triad health must expose each tier label, state, blocker, evidence, owner, and next action in text.',
@@ -1029,7 +1029,7 @@ const ROOT_COMPONENT_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 			'Conceptual framework display primitive for showing iterative interpretation loops and their current state.',
 		tags: ['framework', 'loop', 'governance'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.clear-state-rows'],
+		dependencies: ['token.performance-core', 'component.clear-state-rows'],
 		contract: {
 			accessibility:
 				'Loop displays must expose cycle labels, current phase, interpretation state, and route to detail without relying on circular layout.',
@@ -1046,7 +1046,7 @@ const ROOT_COMPONENT_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 			'Mode and state indicator primitive for showing current operating mode, environment, or workflow posture.',
 		tags: ['mode', 'status', 'indicator'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.clear-state-rows'],
+		dependencies: ['token.performance-core', 'component.clear-state-rows'],
 		contract: {
 			accessibility:
 				'Mode indicators must expose label, current mode, state meaning, and change context without color-only encoding.',
@@ -1063,7 +1063,7 @@ const ROOT_COMPONENT_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 			'Cross-property routing primitive for linking between CREATE SOMETHING properties with clear destination context.',
 		tags: ['property', 'routing', 'link'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.button', 'component.navigation'],
+		dependencies: ['token.performance-core', 'component.button', 'component.navigation'],
 		contract: {
 			accessibility:
 				'Cross-property links must name the destination property, action, external context, and current-route relationship.',
@@ -1080,7 +1080,7 @@ const ROOT_COMPONENT_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 			'Property conversion funnel primitive for routing visitors from property context to the next owned action.',
 		tags: ['property', 'funnel', 'conversion'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.clear-cta-band', 'component.conversion-sticky-cta'],
+		dependencies: ['token.performance-core', 'component.clear-cta-band', 'component.conversion-sticky-cta'],
 		contract: {
 			accessibility:
 				'Funnels must expose current property, offer, qualifying context, primary action, secondary action, and dismissal state.',
@@ -1097,7 +1097,7 @@ const ROOT_COMPONENT_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 			'Consent surface primitive for privacy notice, preference state, regional behavior, and analytics gating.',
 		tags: ['consent', 'privacy', 'policy'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'policy.signal-decision-proof', 'component.button'],
+		dependencies: ['token.performance-core', 'policy.signal-decision-proof', 'component.button'],
 		contract: {
 			accessibility:
 				'Consent prompts must expose notice text, accept action, reject or manage action, preference state, and policy link.',
@@ -1114,7 +1114,7 @@ const ROOT_COMPONENT_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 			'Page-level action group primitive for edit, preview, share, copy, publish, or workflow commands.',
 		tags: ['page-actions', 'commands', 'authoring'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.button', 'component.clear-action-footer'],
+		dependencies: ['token.performance-core', 'component.button', 'component.clear-action-footer'],
 		contract: {
 			accessibility:
 				'Page actions must expose command labels, disabled state, destructive state, shortcut or status text, and result feedback.',
@@ -1131,7 +1131,7 @@ const ROOT_COMPONENT_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 			'Markdown preview modal primitive for authoring workflows that need rendered preview, source context, and close controls.',
 		tags: ['markdown', 'preview', 'authoring', 'modal'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.feedback-dialog', 'component.page-actions'],
+		dependencies: ['token.performance-core', 'component.feedback-dialog', 'component.page-actions'],
 		contract: {
 			accessibility:
 				'Preview modals must expose title, close action, rendered heading structure, source state, and focus management.',
@@ -1157,7 +1157,7 @@ const INTERACTIVE_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/interactive',
 		tags: ['interactive', 'hover-card', 'disclosure'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.card', 'component.navigation-tooltip'],
+		dependencies: ['token.performance-core', 'component.card', 'component.navigation-tooltip'],
 		contract: {
 			accessibility:
 				'Hover disclosures must expose trigger label, preview content, focus behavior, Escape close, and non-hover fallback.',
@@ -1183,7 +1183,7 @@ const INTERACTIVE_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		tags: ['interactive', 'integration-flow', 'workflow'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
 		dependencies: [
-			'token.canon-core',
+			'token.performance-core',
 			'adapter.atlas-graph-artifact',
 			'component.clear-workflow-mini-artifact'
 		],
@@ -1211,7 +1211,7 @@ const INTERACTIVE_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/interactive',
 		tags: ['interactive', 'timeline', 'editor'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.page-actions', 'component.diagrams-timeline'],
+		dependencies: ['token.performance-core', 'component.page-actions', 'component.diagrams-timeline'],
 		contract: {
 			accessibility:
 				'Timeline editors must expose current frame, total frames, track names, selected keyframe, keyboard navigation, and canvas fallback state.',
@@ -1239,7 +1239,7 @@ const BRAND_3D_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/brand',
 		tags: ['brand', '3d', 'cube-mark'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.icon'],
+		dependencies: ['token.performance-core', 'component.icon'],
 		contract: {
 			accessibility:
 				'3D brand marks must expose a text label, stable dimensions, reduced-motion rotation behavior, and a non-canvas fallback path.',
@@ -1264,7 +1264,7 @@ const BRAND_3D_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/brand',
 		tags: ['brand', '3d', 'glass-scene'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.brand-cube-mark3-d'],
+		dependencies: ['token.performance-core', 'component.brand-cube-mark3-d'],
 		contract: {
 			accessibility:
 				'Scene consumers must provide the accessible brand label and nonvisual description outside the canvas wrapper.',
@@ -1293,7 +1293,7 @@ const LAYOUT_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		tags: ['layout', 'project-grid', 'interactive'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
 		dependencies: [
-			'token.canon-core',
+			'token.performance-core',
 			'component.layout-section',
 			'component.layout-bento-grid',
 			'component.layout-bento-item'
@@ -1325,7 +1325,7 @@ const DIAGRAM_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/diagrams',
 		tags: ['diagrams', 'flow', 'graph'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core'],
+		dependencies: ['token.performance-core'],
 		contract: {
 			accessibility:
 				'Every node and edge must be recoverable as ordered text for screen readers and nonvisual modalities.',
@@ -1347,7 +1347,7 @@ const DIAGRAM_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/diagrams',
 		tags: ['diagrams', 'chart', 'bar'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core'],
+		dependencies: ['token.performance-core'],
 		contract: {
 			accessibility:
 				'Bars must have text labels and values that do not depend on color or visual height alone.',
@@ -1369,7 +1369,7 @@ const DIAGRAM_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/diagrams',
 		tags: ['diagrams', 'chart', 'line'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core'],
+		dependencies: ['token.performance-core'],
 		contract: {
 			accessibility:
 				'Series names, axis labels, and point values must be available as structured text.',
@@ -1391,7 +1391,7 @@ const DIAGRAM_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/diagrams',
 		tags: ['diagrams', 'chart', 'pie'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core'],
+		dependencies: ['token.performance-core'],
 		contract: {
 			accessibility:
 				'Slices must expose labels, values, and percentages in text; color must not be the only differentiator.',
@@ -1413,7 +1413,7 @@ const DIAGRAM_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/diagrams',
 		tags: ['diagrams', 'timeline', 'events'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core'],
+		dependencies: ['token.performance-core'],
 		contract: {
 			accessibility:
 				'Events must retain readable date, label, description, and highlight state in source order.',
@@ -1435,7 +1435,7 @@ const DIAGRAM_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/diagrams',
 		tags: ['diagrams', 'matrix', 'comparison'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core'],
+		dependencies: ['token.performance-core'],
 		contract: {
 			accessibility:
 				'Cells must preserve row and column headers so values remain understandable outside the visual table.',
@@ -1457,7 +1457,7 @@ const DIAGRAM_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/diagrams',
 		tags: ['diagrams', 'knowledge-graph', 'canvas'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core'],
+		dependencies: ['token.performance-core'],
 		contract: {
 			accessibility:
 				'Canvas graph nodes and edges must have an equivalent textual graph summary and keyboard-safe inspection route.',
@@ -1479,7 +1479,7 @@ const DIAGRAM_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/diagrams',
 		tags: ['diagrams', 'canvas', 'export'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core'],
+		dependencies: ['token.performance-core'],
 		contract: {
 			accessibility:
 				'Canvas shapes must have a durable text alternative or serialized shape list for nonvisual modalities.',
@@ -1505,7 +1505,7 @@ const TYPOGRAPHY_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/typography',
 		tags: ['typography', 'hero', 'weight-contrast'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.heading'],
+		dependencies: ['token.performance-core', 'component.heading'],
 		contract: {
 			accessibility:
 				'Hero hierarchy must preserve semantic heading structure and readable copy in every modality.',
@@ -1532,7 +1532,7 @@ const ATLAS_RENDERER_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/atlas',
 		tags: ['atlas', 'renderer', 'workflow-map'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['adapter.atlas-graph-artifact', 'token.canon-core'],
+		dependencies: ['adapter.atlas-graph-artifact', 'token.performance-core'],
 		contract: {
 			accessibility:
 				'Rendered nodes and edges must retain aria labels plus a text summary path for chat, voice, and glasses surfaces.',
@@ -1585,7 +1585,7 @@ const FORM_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/forms',
 		tags: ['forms', 'field', 'validation'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.form-text-field'],
+		dependencies: ['token.performance-core', 'component.form-text-field'],
 		contract: {
 			accessibility:
 				'Labels, descriptions, errors, and required state must stay programmatically tied to the composed control.',
@@ -1610,7 +1610,7 @@ const FORM_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/forms',
 		tags: ['forms', 'combobox', 'selection'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.form-text-field', 'component.form-select'],
+		dependencies: ['token.performance-core', 'component.form-text-field', 'component.form-select'],
 		contract: {
 			accessibility:
 				'Input, popup, active option, selected value, and empty state must be exposed for keyboard and screen-reader users.',
@@ -1635,7 +1635,7 @@ const FORM_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/forms',
 		tags: ['forms', 'date-picker', 'calendar'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.form-text-field'],
+		dependencies: ['token.performance-core', 'component.form-text-field'],
 		contract: {
 			accessibility:
 				'Dates must be reachable through typed input, keyboard calendar navigation, and readable selected-state text.',
@@ -1660,7 +1660,7 @@ const FORM_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/forms',
 		tags: ['forms', 'file-upload', 'attachment'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.form-text-field'],
+		dependencies: ['token.performance-core', 'component.form-text-field'],
 		contract: {
 			accessibility:
 				'Upload control, accepted types, selected files, progress, and errors must be available as text and status.',
@@ -1685,7 +1685,7 @@ const FORM_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/forms',
 		tags: ['forms', 'otp', 'verification'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.form-text-field'],
+		dependencies: ['token.performance-core', 'component.form-text-field'],
 		contract: {
 			accessibility:
 				'Segmented inputs must expose one clear verification-code field purpose, order, errors, and completion state.',
@@ -1713,7 +1713,7 @@ const PATTERN_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/patterns',
 		tags: ['patterns', 'form', 'layout'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.form-text-field', 'component.clear-action-footer'],
+		dependencies: ['token.performance-core', 'component.form-text-field', 'component.clear-action-footer'],
 		contract: {
 			accessibility:
 				'Form sections must preserve heading order, labels, descriptions, and final action order across modalities.',
@@ -1737,7 +1737,7 @@ const PATTERN_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/patterns',
 		tags: ['patterns', 'form', 'validation'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.form-text-field', 'component.feedback-alert'],
+		dependencies: ['token.performance-core', 'component.form-text-field', 'component.feedback-alert'],
 		contract: {
 			accessibility:
 				'Validation summaries and field messages must be announced, linked to fields, and readable without color.',
@@ -1761,7 +1761,7 @@ const PATTERN_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/patterns',
 		tags: ['patterns', 'form', 'multi-step'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.form-text-field', 'component.clear-action-footer'],
+		dependencies: ['token.performance-core', 'component.form-text-field', 'component.clear-action-footer'],
 		contract: {
 			accessibility:
 				'Step order, current step, completed steps, and progress must be available as structured text.',
@@ -1786,7 +1786,7 @@ const PATTERN_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/patterns',
 		tags: ['patterns', 'empty-state', 'recovery'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.button'],
+		dependencies: ['token.performance-core', 'component.button'],
 		contract: {
 			accessibility:
 				'Empty states must expose the title, explanation, and available next action as text.',
@@ -1810,7 +1810,7 @@ const PATTERN_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/patterns',
 		tags: ['patterns', 'onboarding', 'progress'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.button', 'component.feedback-alert'],
+		dependencies: ['token.performance-core', 'component.button', 'component.feedback-alert'],
 		contract: {
 			accessibility:
 				'Onboarding progress, step titles, descriptions, action labels, and dismiss controls must be readable and keyboard reachable.',
@@ -1834,7 +1834,7 @@ const PATTERN_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/patterns',
 		tags: ['patterns', 'loading', 'skeleton'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core'],
+		dependencies: ['token.performance-core'],
 		contract: {
 			accessibility:
 				'Loading placeholders must expose busy state and a readable loading label without pretending content exists.',
@@ -1858,7 +1858,7 @@ const PATTERN_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/patterns',
 		tags: ['patterns', 'loading', 'overlay'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.feedback-alert'],
+		dependencies: ['token.performance-core', 'component.feedback-alert'],
 		contract: {
 			accessibility:
 				'Blocking loading state must expose scope, message, and busy state without trapping users unexpectedly.',
@@ -1882,7 +1882,7 @@ const PATTERN_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/patterns',
 		tags: ['patterns', 'error', 'inline'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.feedback-alert', 'component.form-text-field'],
+		dependencies: ['token.performance-core', 'component.feedback-alert', 'component.form-text-field'],
 		contract: {
 			accessibility:
 				'Inline messages must expose severity, message, related field or object, and dismiss action when present.',
@@ -1906,7 +1906,7 @@ const PATTERN_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/patterns',
 		tags: ['patterns', 'error', 'boundary'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.clear-error-page', 'component.button'],
+		dependencies: ['token.performance-core', 'component.clear-error-page', 'component.button'],
 		contract: {
 			accessibility:
 				'Boundary fallback must announce failure, preserve the reset route, and keep diagnostic details optional.',
@@ -1933,7 +1933,7 @@ const NAVIGATION_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/navigation',
 		tags: ['navigation', 'header', 'sticky'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.navigation'],
+		dependencies: ['token.performance-core', 'component.navigation'],
 		contract: {
 			accessibility:
 				'Persistent headers must expose primary wayfinding, current context, and skip/focus behavior without relying on scroll position.',
@@ -1958,7 +1958,7 @@ const NAVIGATION_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/navigation',
 		tags: ['navigation', 'drawer', 'mobile'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.navigation', 'component.navigation-drawer'],
+		dependencies: ['token.performance-core', 'component.navigation', 'component.navigation-drawer'],
 		contract: {
 			accessibility:
 				'Drawers must preserve close controls, modal context, focus management, and menu labels for nonvisual paths.',
@@ -1984,7 +1984,7 @@ const NAVIGATION_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		tags: ['navigation', 'command-palette', 'keyboard'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
 		dependencies: [
-			'token.canon-core',
+			'token.performance-core',
 			'component.navigation-dropdown-menu',
 			'component.form-text-field',
 			'component.button'
@@ -2014,7 +2014,7 @@ const NAVIGATION_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		tags: ['navigation', 'search', 'cross-property'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
 		dependencies: [
-			'token.canon-core',
+			'token.performance-core',
 			'component.navigation-dropdown-menu',
 			'component.form-text-field',
 			'component.feedback-alert'
@@ -2043,7 +2043,7 @@ const NAVIGATION_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/navigation',
 		tags: ['navigation', 'related-content', 'recommendation'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.navigation', 'component.card', 'component.feedback-alert'],
+		dependencies: ['token.performance-core', 'component.navigation', 'component.card', 'component.feedback-alert'],
 		contract: {
 			accessibility:
 				'Related content must expose section title, grouped links, relationship labels, and loading/error states as text.',
@@ -2068,7 +2068,7 @@ const NAVIGATION_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/navigation',
 		tags: ['navigation', 'journey', 'cross-property'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.navigation', 'component.card', 'component.feedback-alert'],
+		dependencies: ['token.performance-core', 'component.navigation', 'component.card', 'component.feedback-alert'],
 		contract: {
 			accessibility:
 				'Journey stages must expose concept, stage order, item links, empty stages, loading, and error states structurally.',
@@ -2093,7 +2093,7 @@ const NAVIGATION_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/navigation',
 		tags: ['navigation', 'menu-button', 'toggle'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.button', 'component.navigation'],
+		dependencies: ['token.performance-core', 'component.button', 'component.navigation'],
 		contract: {
 			accessibility:
 				'Menu toggles must expose open/closed state, target label, focus treatment, and an equivalent text command.',
@@ -2119,7 +2119,7 @@ const NAVIGATION_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		tags: ['navigation', 'mega-menu', 'menu'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
 		dependencies: [
-			'token.canon-core',
+			'token.performance-core',
 			'component.navigation',
 			'component.navigation-dropdown-menu',
 			'component.navigation-drawer'
@@ -2151,7 +2151,7 @@ const FILTERING_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/filtering',
 		tags: ['filtering', 'facets', 'toggle-panel'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.form-checkbox', 'component.form-switch'],
+		dependencies: ['token.performance-core', 'component.form-checkbox', 'component.form-switch'],
 		contract: {
 			accessibility:
 				'Facet groups must expose labels, selected state, range values, clear action, and expanded state without visual-only toggles.',
@@ -2176,7 +2176,7 @@ const FILTERING_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/filtering',
 		tags: ['filtering', 'product-grid', 'catalog'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.card', 'component.patterns-empty-state'],
+		dependencies: ['token.performance-core', 'component.card', 'component.patterns-empty-state'],
 		contract: {
 			accessibility:
 				'Product cards must preserve product name, image alt text, status, material, dimensions, price, and empty state text.',
@@ -2202,7 +2202,7 @@ const FILTERING_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		tags: ['filtering', 'agent-panel', 'reasoning'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
 		dependencies: [
-			'token.canon-core',
+			'token.performance-core',
 			'component.form-text-field',
 			'component.button',
 			'component.filtering-filter-toggle-panel'
@@ -2235,7 +2235,7 @@ const INSIGHT_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		tags: ['insights', 'proof', 'shareable'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
 		dependencies: [
-			'token.canon-core',
+			'token.performance-core',
 			'component.insights-statement-text',
 			'component.clear-proof-strip'
 		],
@@ -2263,7 +2263,7 @@ const INSIGHT_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/insights',
 		tags: ['insights', 'card', 'comparison'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.card', 'component.insights-key-insight'],
+		dependencies: ['token.performance-core', 'component.card', 'component.insights-key-insight'],
 		contract: {
 			accessibility:
 				'Insight cards must keep the key insight label, category, principle, comparison rows, link target, and source readable.',
@@ -2288,7 +2288,7 @@ const INSIGHT_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/insights',
 		tags: ['insights', 'statement', 'typography'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.heading', 'component.typography-typography-hero'],
+		dependencies: ['token.performance-core', 'component.heading', 'component.typography-typography-hero'],
 		contract: {
 			accessibility:
 				'Statement text must preserve full words, kept words, emphasis, phase, direction, and readable essence without animation.',
@@ -2316,7 +2316,7 @@ const CONTENT_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/content',
 		tags: ['content', 'video', 'lightbox'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.button'],
+		dependencies: ['token.performance-core', 'component.button'],
 		contract: {
 			accessibility:
 				'Video triggers must expose title, play action, close action, modal state, captions path, and provider fallback.',
@@ -2341,7 +2341,7 @@ const CONTENT_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/content',
 		tags: ['content', 'carousel', 'slides'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.button'],
+		dependencies: ['token.performance-core', 'component.button'],
 		contract: {
 			accessibility:
 				'Carousel slides must expose region label, current index, slide count, previous/next actions, dot labels, and hidden state.',
@@ -2367,7 +2367,7 @@ const CONTENT_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		tags: ['content', 'testimonial', 'social-proof'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
 		dependencies: [
-			'token.canon-core',
+			'token.performance-core',
 			'component.content-carousel',
 			'component.clear-proof-strip'
 		],
@@ -2398,7 +2398,7 @@ const CONVERSION_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/conversion',
 		tags: ['conversion', 'trust', 'proof'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.clear-proof-strip'],
+		dependencies: ['token.performance-core', 'component.clear-proof-strip'],
 		contract: {
 			accessibility:
 				'Trust marks must expose headline, item names, logo alt text, fallback logo text, variant, and compact state.',
@@ -2423,7 +2423,7 @@ const CONVERSION_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/conversion',
 		tags: ['conversion', 'cta', 'journey-depth'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.button', 'component.clear-cta-band'],
+		dependencies: ['token.performance-core', 'component.button', 'component.clear-cta-band'],
 		contract: {
 			accessibility:
 				'Sticky actions must expose href, current message, journey depth, visible state, and text alternative to the arrow.',
@@ -2449,7 +2449,7 @@ const CONVERSION_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		tags: ['conversion', 'process', 'steps'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
 		dependencies: [
-			'token.canon-core',
+			'token.performance-core',
 			'component.patterns-multi-step-form',
 			'component.clear-state-rows'
 		],
@@ -2477,7 +2477,7 @@ const CONVERSION_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/conversion',
 		tags: ['conversion', 'metrics', 'proof'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.clear-proof-strip'],
+		dependencies: ['token.performance-core', 'component.clear-proof-strip'],
 		contract: {
 			accessibility:
 				'Metric counters must expose final numeric value, prefix, suffix, label, and source context without relying on count-up animation.',
@@ -2502,7 +2502,7 @@ const CONVERSION_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/conversion',
 		tags: ['conversion', 'modal', 'retention'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core', 'component.feedback-dialog', 'component.button'],
+		dependencies: ['token.performance-core', 'component.feedback-dialog', 'component.button'],
 		contract: {
 			accessibility:
 				'Exit intent prompts must expose dialog title, description, close action, CTA, dismissal, storage policy, and Escape behavior.',
@@ -2535,7 +2535,7 @@ const DATA_LAYER_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/data',
 		tags: ['data', 'table', 'database-layer', 'records'],
 		modalities: ['web', 'app'],
-		dependencies: ['token.canon-core'],
+		dependencies: ['token.performance-core'],
 		contract: {
 			accessibility:
 				'Tables must keep real table semantics (thead, th scope, optional sr-only caption), expose aria-sort on the active column, and make clickable rows keyboard-activatable via Enter and Space so screen readers and keyboard users get the grid for free.',
@@ -2560,7 +2560,7 @@ const DATA_LAYER_ITEMS: CanonRegistryManifest['items'] = [
 		docsPath: '/canon/components/data',
 		tags: ['data', 'status', 'badge', 'database-layer', 'state'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
-		dependencies: ['token.canon-core'],
+		dependencies: ['token.performance-core'],
 		contract: {
 			accessibility:
 				'State must never be color-only: the visible label carries the state text, the dot variant marks its dot aria-hidden, and emphasis is expressed through weight and border rather than hue alone.',
@@ -2621,8 +2621,8 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
 	},
 	items: [
 		{
-			id: 'token.canon-core',
-			name: 'Canon Core Tokens',
+			id: 'token.performance-core',
+			name: 'Performance Core Tokens',
 			kind: 'token',
 			maturity: 'stable',
 			description:
@@ -2639,6 +2639,25 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
 			}
 		},
 		{
+			id: 'token.canon-core',
+			name: 'Legacy Canon Core Token Alias',
+			kind: 'token',
+			maturity: 'stable',
+			description:
+				'Compatibility registry entry for consumers migrating to the Performance Core Token contract.',
+			ownerPackage: '@create-something/canon',
+			sourcePath: 'packages/canon/src/lib/styles/tokens.css',
+			importPath: '@create-something/canon/styles/tokens.css',
+			docsPath: '/canon/resources/tokens',
+			tags: ['tokens', 'compatibility', 'deprecated'],
+			modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
+			dependencies: ['token.performance-core'],
+			contract: {
+				accessibility: 'Compatibility aliases resolve to the same accessible Performance values.',
+				extension: 'Do not add new consumers; migrate registry dependencies to token.performance-core.'
+			}
+		},
+		{
 			id: 'component.button',
 			name: 'Button',
 			kind: 'component',
@@ -2650,7 +2669,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
 			docsPath: '/canon/components/button',
 			tags: ['action', 'control', 'web'],
 			modalities: ['web', 'app'],
-			dependencies: ['token.canon-core'],
+			dependencies: ['token.performance-core'],
 			contract: {
 				accessibility: 'Actions need explicit labels, disabled state, and visible focus treatment.',
 				extension: 'Use variants before adding local button styles.'
@@ -2668,7 +2687,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
 			docsPath: '/canon/components/card',
 			tags: ['container', 'surface', 'web'],
 			modalities: ['web', 'app'],
-			dependencies: ['token.canon-core'],
+			dependencies: ['token.performance-core'],
 			contract: {
 				accessibility: 'Cards must not hide structure from headings, landmarks, or link text.',
 				extension: 'Use cards for bounded repeated items, not nested page-section decoration.'
@@ -2686,7 +2705,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
 			docsPath: '/canon/components/navigation',
 			tags: ['navigation', 'wayfinding', 'property'],
 			modalities: ['web', 'app'],
-			dependencies: ['token.canon-core'],
+			dependencies: ['token.performance-core'],
 			contract: {
 				accessibility: 'Navigation must expose clear labels, current state, and mobile-safe targets.',
 				extension: 'Property packages configure links and policy; Canon owns the primitive.'
@@ -2842,7 +2861,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
 			dependencies: [
 				'template.canon-project-overlay-manifest',
 				'template.canon-extension-intake',
-				'token.canon-core',
+				'token.performance-core',
 				'policy.signal-decision-proof'
 			],
 			contract: {

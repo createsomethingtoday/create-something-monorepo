@@ -19,7 +19,7 @@
 		}
 
 		// Set mode-specific duration (300ms for .io - analytical)
-		document.documentElement.style.setProperty('--view-transition-duration', '300ms');
+		document.documentElement.style.setProperty('--duration-performance-view-transition', '300ms');
 
 		return new Promise((resolve) => {
 			document.startViewTransition(async () => {
@@ -181,6 +181,6 @@
 
 	.main-content {
 		/* Navigation bar height offset: header (72px) + breathing room */
-		padding-top: calc(var(--header-height) + var(--space-md));
+		padding-top: calc(var(--height-performance-header) + var(--space-performance-md));
 	}
 </style>

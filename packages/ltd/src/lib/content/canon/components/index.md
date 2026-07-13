@@ -121,26 +121,26 @@ published: true
 <div class="token-grid">
 <div class="token-category">
 <h3>Colors</h3>
-<code>--color-bg-surface</code>
-<code>--color-fg-primary</code>
-<code>--color-border-default</code>
+<code>--color-performance-bg-surface</code>
+<code>--color-performance-fg-primary</code>
+<code>--color-performance-border-default</code>
 </div>
 <div class="token-category">
 <h3>Motion</h3>
-<code>--duration-micro</code>
-<code>--ease-standard</code>
+<code>--duration-performance-micro</code>
+<code>--ease-performance-standard</code>
 </div>
 <div class="token-category">
 <h3>Spacing</h3>
-<code>--space-xs</code>
-<code>--space-sm</code>
-<code>--space-md</code>
+<code>--space-performance-xs</code>
+<code>--space-performance-sm</code>
+<code>--space-performance-md</code>
 </div>
 <div class="token-category">
 <h3>Borders</h3>
-<code>--radius-sm</code>
-<code>--radius-md</code>
-<code>--radius-lg</code>
+<code>--radius-performance-scale-sm</code>
+<code>--radius-performance-scale-md</code>
+<code>--radius-performance-scale-lg</code>
 </div>
 </div>
 </section>

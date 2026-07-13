@@ -628,211 +628,211 @@ for identity verification, but it remains independent of business logic.
 <style>
 	/* Paper Container */
 	.paper-container {
-		background-color: var(--color-bg-pure);
+		background-color: var(--color-performance-bg-pure);
 	}
 
 	/* Header Styles */
 
 	.paper-id {
-		color: var(--color-fg-muted);
-		font-size: var(--text-body-sm);
+		color: var(--color-performance-fg-muted);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.paper-title {
-		font-size: var(--text-h1);
+		font-size: var(--text-performance-h1);
 		font-weight: 700;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.paper-subtitle {
-		color: var(--color-fg-tertiary);
-		font-size: var(--text-body-lg);
+		color: var(--color-performance-fg-tertiary);
+		font-size: var(--text-performance-body-lg);
 	}
 
 	.paper-meta {
-		color: var(--color-fg-subtle);
-		font-size: var(--text-body-sm);
+		color: var(--color-performance-fg-subtle);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	/* Section Styles */
 	.section-heading {
-		font-size: var(--text-h2);
+		font-size: var(--text-performance-h2);
 		font-weight: 700;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.subsection-heading {
-		font-size: var(--text-h3);
+		font-size: var(--text-performance-h3);
 		font-weight: 600;
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.body-text {
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.emphasis-text {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	/* Abstract Section */
 	.abstract-section {
-		border-left: 4px solid var(--color-border-emphasis);
-		padding-left: var(--space-md);
+		border-left: 4px solid var(--color-performance-border-emphasis);
+		padding-left: var(--space-performance-md);
 	}
 
 	/* Metric Cards */
 	.metric-card {
-		background-color: var(--color-bg-subtle);
-		border-radius: var(--radius-lg);
+		background-color: var(--color-performance-bg-subtle);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.metric-value {
-		font-size: var(--text-h2);
+		font-size: var(--text-performance-h2);
 		font-weight: 700;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.metric-label {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-muted);
 	}
 
 	/* Code Blocks */
 	.code-block {
-		background-color: var(--color-bg-subtle);
-		border-radius: var(--radius-lg);
+		background-color: var(--color-performance-bg-subtle);
+		border-radius: var(--radius-performance-scale-lg);
 		overflow-x: auto;
 	}
 
 	.code-block-success {
-		background-color: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-success, var(--color-border-default));
-		border-radius: var(--radius-lg);
+		background-color: var(--color-performance-bg-subtle);
+		border: 1px solid var(--color-border-success, var(--color-performance-border-default));
+		border-radius: var(--radius-performance-scale-lg);
 		overflow-x: auto;
 	}
 
 	.code-comment {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.code-primary {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.code-secondary {
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.inline-code {
-		background-color: var(--color-bg-subtle);
+		background-color: var(--color-performance-bg-subtle);
 		padding: 0.125rem 0.375rem;
-		border-radius: var(--radius-sm);
-		font-family: var(--font-mono, ui-monospace, monospace);
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		border-radius: var(--radius-performance-scale-sm);
+		font-family: var(--font-performance-mono, ui-monospace, monospace);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	/* Info Cards */
 	.info-card {
-		background-color: var(--color-bg-subtle);
-		border-radius: var(--radius-lg);
+		background-color: var(--color-performance-bg-subtle);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.card-heading {
-		font-size: var(--text-h3);
+		font-size: var(--text-performance-h3);
 		font-weight: 600;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.card-list {
-		color: var(--color-fg-tertiary);
-		font-size: var(--text-body-sm);
+		color: var(--color-performance-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	/* Callout Box */
 	.callout-box {
-		background-color: var(--color-bg-subtle);
-		border-radius: var(--radius-lg);
+		background-color: var(--color-performance-bg-subtle);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.callout-text {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	/* Table Styles */
 	.comparison-table {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.comparison-table th {
-		color: var(--color-fg-secondary);
-		border-bottom: 1px solid var(--color-border-emphasis);
+		color: var(--color-performance-fg-secondary);
+		border-bottom: 1px solid var(--color-performance-border-emphasis);
 		padding: 0.5rem 0;
 		text-align: left;
 	}
 
 
 	.comparison-table td {
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 		padding: 0.5rem 0;
 	}
 
 	/* Validation Box */
 	.validation-box {
-		background-color: var(--color-bg-subtle);
-		border-radius: var(--radius-lg);
+		background-color: var(--color-performance-bg-subtle);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.validation-list {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.validation-label {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	/* Conclusion */
 	.conclusion-insight {
-		color: var(--color-fg-secondary);
-		font-size: var(--text-body-lg);
+		color: var(--color-performance-fg-secondary);
+		font-size: var(--text-performance-body-lg);
 	}
 
 	/* References */
 	.references-section {
-		padding-top: var(--space-lg);
+		padding-top: var(--space-performance-lg);
 	}
 
 	.references-list {
-		color: var(--color-fg-tertiary);
-		font-size: var(--text-body-sm);
+		color: var(--color-performance-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.reference-link {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 		text-decoration: underline;
-		transition: color var(--duration-micro) var(--ease-standard);
+		transition: color var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.reference-link:hover {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 	.paper-footer {
-		padding-top: var(--space-md);
+		padding-top: var(--space-performance-md);
 	}
 
 	.footer-text {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.footer-link {
 		text-decoration: underline;
-		transition: color var(--duration-micro) var(--ease-standard);
+		transition: color var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.footer-link:hover {
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 	}
 </style>

@@ -78,8 +78,8 @@
 <style>
 	.cube-skeleton {
 		display: flex;
-		gap: var(--space-sm);
-		padding: var(--space-sm);
+		gap: var(--space-performance-sm);
+		padding: var(--space-performance-sm);
 	}
 
 	/* Cube motif */
@@ -95,17 +95,17 @@
 	}
 
 	.face-top {
-		fill: var(--color-fg-subtle);
+		fill: var(--color-performance-fg-subtle);
 		opacity: 1;
 	}
 
 	.face-left {
-		fill: var(--color-fg-subtle);
+		fill: var(--color-performance-fg-subtle);
 		opacity: 0.6;
 	}
 
 	.face-right {
-		fill: var(--color-fg-subtle);
+		fill: var(--color-performance-fg-subtle);
 		opacity: 0.3;
 	}
 
@@ -114,23 +114,23 @@
 		flex: 1;
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-xs);
+		gap: var(--space-performance-xs);
 	}
 
 	/* Image skeleton */
 	.skeleton-image {
 		width: 100%;
 		height: 120px;
-		border-radius: var(--radius-md);
-		background: var(--color-bg-subtle);
+		border-radius: var(--radius-performance-scale-md);
+		background: var(--color-performance-bg-subtle);
 	}
 
 	/* Header skeleton */
 	.skeleton-header {
 		height: 24px;
 		width: 60%;
-		border-radius: var(--radius-sm);
-		background: var(--color-bg-subtle);
+		border-radius: var(--radius-performance-scale-sm);
+		background: var(--color-performance-bg-subtle);
 	}
 
 	/* Lines skeleton */
@@ -143,8 +143,8 @@
 	.skeleton-line {
 		height: 14px;
 		width: var(--line-width, 100%);
-		border-radius: var(--radius-sm);
-		background: var(--color-bg-subtle);
+		border-radius: var(--radius-performance-scale-sm);
+		background: var(--color-performance-bg-subtle);
 	}
 
 	/* Shimmer animation */
@@ -160,11 +160,11 @@
 		background: linear-gradient(
 			90deg,
 			transparent 0%,
-			var(--color-hover) 50%,
+			var(--color-performance-hover) 50%,
 			transparent 100%
 		);
 		transform: translateX(-100%);
-		animation: shimmer var(--duration-slow) var(--ease-standard) infinite;
+		animation: shimmer var(--duration-performance-slow) var(--ease-performance-standard) infinite;
 	}
 
 	@keyframes shimmer {

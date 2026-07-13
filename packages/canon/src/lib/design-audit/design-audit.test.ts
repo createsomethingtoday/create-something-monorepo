@@ -32,11 +32,11 @@ describe('Canon design audit contract', () => {
     const colors = buildCanonDesignAuditChecks('colors')[0]!;
     const spacing = buildCanonDesignAuditChecks('spacing')[0]!;
 
-    expect(colors.items.join(' ')).toContain('--color-bg-surface');
-    expect(colors.items.join(' ')).toContain('--color-fg-primary');
+    expect(colors.items.join(' ')).toContain('--color-performance-bg-surface');
+    expect(colors.items.join(' ')).toContain('--color-performance-fg-primary');
     expect(colors.items.join(' ')).not.toContain('--bg-primary');
     expect(colors.items.join(' ')).not.toContain('--fg-primary');
-    expect(spacing.items.join(' ')).toContain('--space-xs');
+    expect(spacing.items.join(' ')).toContain('--space-performance-xs');
   });
 
   it('creates and renders the Markdown audit report consumed by MCP', () => {

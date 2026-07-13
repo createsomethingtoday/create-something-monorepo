@@ -118,75 +118,75 @@
 
 <style>
   .hint-card {
-    border: 1px solid var(--color-border-emphasis);
-    border-radius: var(--radius-lg);
-    background: var(--color-hover);
+    border: 1px solid var(--color-performance-border-emphasis);
+    border-radius: var(--radius-performance-scale-lg);
+    background: var(--color-performance-hover);
     backdrop-filter: blur(4px);
   }
 
   .hint-icon {
-    color: var(--color-fg-secondary);
+    color: var(--color-performance-fg-secondary);
   }
 
   .hint-title {
-    color: var(--color-fg-secondary);
-    font-size: var(--text-body-sm);
+    color: var(--color-performance-fg-secondary);
+    font-size: var(--text-performance-body-sm);
     font-weight: 500;
   }
 
   .dismiss-button {
-    color: var(--color-fg-muted);
-    transition: color var(--duration-standard) var(--ease-standard);
+    color: var(--color-performance-fg-muted);
+    transition: color var(--duration-performance-standard) var(--ease-performance-standard);
   }
 
   .dismiss-button:hover {
-    color: var(--color-fg-secondary);
+    color: var(--color-performance-fg-secondary);
   }
 
   .hint-content {
-    color: var(--color-fg-tertiary);
-    font-size: var(--text-body-sm);
+    color: var(--color-performance-fg-tertiary);
+    font-size: var(--text-performance-body-sm);
     line-height: 1.6;
   }
 
   .alternative-card {
-    background: var(--color-hover);
-    border-radius: var(--radius-sm);
+    background: var(--color-performance-hover);
+    border-radius: var(--radius-performance-scale-sm);
   }
 
   .alternative-label {
-    color: var(--color-fg-tertiary);
-    font-size: var(--text-caption);
+    color: var(--color-performance-fg-tertiary);
+    font-size: var(--text-performance-caption);
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
 
   .alternative-text {
-    color: var(--color-fg-tertiary);
-    font-size: var(--text-body-sm);
+    color: var(--color-performance-fg-tertiary);
+    font-size: var(--text-performance-body-sm);
   }
 
   .feedback-label {
-    color: var(--color-fg-muted);
-    font-size: var(--text-caption);
+    color: var(--color-performance-fg-muted);
+    font-size: var(--text-performance-caption);
   }
 
   .feedback-button {
     padding: 0.25rem 0.75rem;
-    background: var(--color-active);
-    color: var(--color-fg-secondary);
-    border-radius: var(--radius-sm);
-    font-size: var(--text-caption);
-    transition: background var(--duration-standard) var(--ease-standard);
+    background: var(--color-performance-active);
+    color: var(--color-performance-fg-secondary);
+    border-radius: var(--radius-performance-scale-sm);
+    font-size: var(--text-performance-caption);
+    transition: background var(--duration-performance-standard) var(--ease-performance-standard);
   }
 
   .feedback-button:hover {
-    background: var(--color-border-emphasis);
+    background: var(--color-performance-border-emphasis);
   }
 
   .thanks-message {
-    color: var(--color-fg-tertiary);
-    font-size: var(--text-caption);
+    color: var(--color-performance-fg-tertiary);
+    font-size: var(--text-performance-caption);
   }
 
   .animate-slide-down {

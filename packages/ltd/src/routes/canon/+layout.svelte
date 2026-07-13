@@ -53,7 +53,7 @@
 <style>
 	.doc-layout {
 		min-height: 100vh;
-		background: var(--color-bg-pure);
+		background: var(--color-performance-bg-pure);
 	}
 
 	/* Mobile header */
@@ -65,9 +65,9 @@
 		height: 56px;
 		display: flex;
 		align-items: center;
-		gap: var(--space-sm);
-		padding: 0 var(--space-md);
-		z-index: calc(var(--z-fixed) - 2);
+		gap: var(--space-performance-sm);
+		padding: 0 var(--space-performance-md);
+		z-index: calc(var(--z-performance-fixed) - 2);
 	}
 
 	@media (min-width: 1024px) {
@@ -84,22 +84,22 @@
 		height: 40px;
 		background: transparent;
 		border: none;
-		border-radius: var(--radius-md);
-		color: var(--color-fg-primary);
+		border-radius: var(--radius-performance-scale-md);
+		color: var(--color-performance-fg-primary);
 		cursor: pointer;
-		transition: background var(--duration-micro) var(--ease-standard);
+		transition: background var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.menu-toggle:hover {
-		background: var(--color-hover);
+		background: var(--color-performance-hover);
 	}
 
 	.mobile-logo {
-		font-size: var(--text-h3);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
+		font-size: var(--text-performance-h3);
+		font-weight: var(--font-performance-semibold);
+		color: var(--color-performance-fg-primary);
 		text-decoration: none;
-		letter-spacing: var(--tracking-tight);
+		letter-spacing: var(--tracking-performance-tight);
 	}
 
 	/* Main content area */
@@ -118,12 +118,12 @@
 	.doc-content {
 		max-width: 900px;
 		margin: 0 auto;
-		padding: var(--space-xl) var(--space-md);
+		padding: var(--space-performance-xl) var(--space-performance-md);
 	}
 
 	@media (min-width: 768px) {
 		.doc-content {
-			padding: var(--space-xl) var(--space-xl);
+			padding: var(--space-performance-xl) var(--space-performance-xl);
 		}
 	}
 </style>

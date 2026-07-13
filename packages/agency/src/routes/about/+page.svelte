@@ -307,7 +307,7 @@
 
   .circle-list li strong {
     color: var(--color-performance-ink, #090909);
-    font-weight: var(--font-medium);
+    font-weight: var(--font-performance-medium);
   }
 
   .muted {
@@ -317,7 +317,7 @@
 
   .about-prose a {
     color: var(--color-performance-ink, #090909);
-    font-weight: var(--font-medium);
+    font-weight: var(--font-performance-medium);
   }
 
   .signal-rail,
@@ -338,9 +338,9 @@
   .signal-card span,
   .contract-card span {
     color: var(--color-performance-muted, #5e6268);
-    font-family: var(--font-mono);
+    font-family: var(--font-performance-mono);
     font-size: 0.72rem;
-    font-weight: var(--font-semibold);
+    font-weight: var(--font-performance-semibold);
     letter-spacing: 0;
     line-height: 1.2;
     text-transform: uppercase;
@@ -358,7 +358,7 @@
   .signal-card strong,
   .contract-card strong {
     font-size: 1rem;
-    font-weight: var(--font-medium);
+    font-weight: var(--font-performance-medium);
     line-height: 1.25;
   }
 

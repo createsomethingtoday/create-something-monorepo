@@ -66,7 +66,7 @@
 	.article-content :global(h1) {
 		font-size: 2.25rem;
 		font-weight: 700;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		margin-bottom: 1.5rem;
 		margin-top: 3rem;
 	}
@@ -74,7 +74,7 @@
 	.article-content :global(h2) {
 		font-size: 1.875rem;
 		font-weight: 700;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		margin-bottom: 1.25rem;
 		margin-top: 2.5rem;
 	}
@@ -82,7 +82,7 @@
 	.article-content :global(h3) {
 		font-size: 1.5rem;
 		font-weight: 600;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		margin-bottom: 1rem;
 		margin-top: 2rem;
 	}
@@ -90,32 +90,32 @@
 	.article-content :global(h4) {
 		font-size: 1.25rem;
 		font-weight: 600;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		margin-bottom: 0.75rem;
 		margin-top: 1.5rem;
 	}
 
 	.article-content :global(p) {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 		line-height: 1.6;
 		margin-bottom: 1.5rem;
 	}
 
 	.article-content :global(a) {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 		text-decoration: underline;
 		text-underline-offset: 4px;
-		transition: color var(--duration-standard) var(--ease-standard);
+		transition: color var(--duration-performance-standard) var(--ease-performance-standard);
 	}
 
 	.article-content :global(a:hover) {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.article-content :global(ul),
 	.article-content :global(ol) {
 		list-style-position: outside;
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 		margin-bottom: 1.5rem;
 		margin-left: 0;
 		padding-left: 1.5rem;
@@ -149,8 +149,8 @@
 	}
 
 	.article-content :global(pre) {
-		background: var(--color-bg-subtle);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-bg-subtle);
+		border-radius: var(--radius-performance-scale-lg);
 		padding: 1.5rem;
 		margin-bottom: 1.5rem;
 		overflow-x: auto;
@@ -158,69 +158,69 @@
 
 	.article-content :global(code) {
 		font-family: monospace;
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.article-content :global(:not(pre) > code) {
-		background: var(--color-active);
+		background: var(--color-performance-active);
 		padding: 0.125rem 0.5rem;
-		border-radius: var(--radius-sm);
-		color: var(--color-fg-secondary);
+		border-radius: var(--radius-performance-scale-sm);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.article-content :global(blockquote) {
-		border-left: 4px solid var(--color-border-emphasis);
+		border-left: 4px solid var(--color-performance-border-emphasis);
 		padding-left: 1.5rem;
 		padding-top: 0.5rem;
 		padding-bottom: 0.5rem;
 		margin: 1.5rem 0;
 		font-style: italic;
-		color: var(--color-fg-tertiary);
-		background: var(--color-hover);
-		border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+		color: var(--color-performance-fg-tertiary);
+		background: var(--color-performance-hover);
+		border-radius: 0 var(--radius-performance-scale-sm) var(--radius-performance-scale-sm) 0;
 	}
 
 	.article-content :global(img) {
-		border-radius: var(--radius-lg);
+		border-radius: var(--radius-performance-scale-lg);
 		width: 100%;
 		margin: 2rem 0;
 	}
 
 	.article-content :global(table) {
 		min-width: 100%;
-		border-radius: var(--radius-lg);
+		border-radius: var(--radius-performance-scale-lg);
 		margin: 1.5rem 0;
 	}
 
 	.article-content :global(thead) {
-		background: var(--color-hover);
+		background: var(--color-performance-hover);
 	}
 
 	.article-content :global(th) {
 		padding: 0.75rem 1rem;
 		text-align: left;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		font-weight: 600;
 	}
 
 	.article-content :global(td) {
 		padding: 0.75rem 1rem;
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.article-content :global(hr) {
-		border-color: var(--color-border-default);
+		border-color: var(--color-performance-border-default);
 		margin: 2rem 0;
 	}
 
 	.article-content :global(strong) {
 		font-weight: 700;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.article-content :global(em) {
 		font-style: italic;
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.animate-reveal {

@@ -201,7 +201,7 @@
   }
 
   .runtime-workbench :global(.terminal-surface__title) {
-    color: var(--color-fg-muted);
+    color: var(--color-performance-fg-muted);
   }
 
   .runtime-workbench__body {
@@ -226,12 +226,12 @@
     margin: 0;
     font-size: clamp(1.4rem, 1.6vw, 1.85rem);
     line-height: 1.08;
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
   }
 
   .runtime-workbench__intro p {
     margin: 0;
-    color: var(--color-fg-secondary);
+    color: var(--color-performance-fg-secondary);
     font-size: 0.95rem;
     line-height: 1.65;
   }
@@ -250,9 +250,9 @@
     background: var(--color-performance-panel, #ffffff);
     text-align: left;
     transition:
-      border-color var(--duration-micro) var(--ease-standard),
-      background var(--duration-micro) var(--ease-standard),
-      transform var(--duration-micro) var(--ease-standard);
+      border-color var(--duration-performance-micro) var(--ease-performance-standard),
+      background var(--duration-performance-micro) var(--ease-performance-standard),
+      transform var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   .preview-tab:hover {
@@ -268,20 +268,20 @@
   }
 
   .preview-tab__label {
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
     font-size: 0.9rem;
-    font-weight: var(--font-semibold);
+    font-weight: var(--font-performance-semibold);
     line-height: 1.2;
   }
 
   .preview-tab__route,
   .panel-label {
-    font-family: var(--font-mono);
+    font-family: var(--font-performance-mono);
     font-size: 0.72rem;
     font-weight: 500;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: var(--color-fg-muted);
+    color: var(--color-performance-fg-muted);
   }
 
   .runtime-workbench__panel {
@@ -307,8 +307,8 @@
     border-radius: var(--radius-performance-md, 4px);
     border: 1px solid rgba(10, 14, 25, 0.08);
     background: var(--color-performance-paper, #f3f3f0);
-    color: var(--color-fg-primary);
-    font-family: var(--font-mono);
+    color: var(--color-performance-fg-primary);
+    font-family: var(--font-performance-mono);
     font-size: 0.9rem;
     line-height: 1.7;
   }
@@ -327,7 +327,7 @@
     display: flex;
     gap: 0.7rem;
     align-items: flex-start;
-    color: var(--color-fg-secondary);
+    color: var(--color-performance-fg-secondary);
     font-size: 0.95rem;
     line-height: 1.55;
   }
@@ -368,12 +368,12 @@
   .runtime-decision h4 {
     margin: 0;
     font-size: 1.15rem;
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
   }
 
   .runtime-decision p {
     margin: 0;
-    color: var(--color-fg-secondary);
+    color: var(--color-performance-fg-secondary);
     font-size: 0.95rem;
     line-height: 1.65;
   }
@@ -387,7 +387,7 @@
     padding: 0 0.85rem;
     border-radius: 999px;
     border: 1px solid rgba(10, 14, 25, 0.12);
-    font-family: var(--font-mono);
+    font-family: var(--font-performance-mono);
     font-size: 0.72rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;

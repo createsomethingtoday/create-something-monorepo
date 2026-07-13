@@ -102,9 +102,9 @@
 		border-radius: var(--radius-performance-sm, 4px);
 		background: rgba(255, 255, 255, 0.08);
 		color: rgba(255, 255, 255, 0.72);
-		font-family: var(--font-mono);
+		font-family: var(--font-performance-mono);
 		font-size: 0.76rem;
-		font-weight: var(--font-semibold);
+		font-weight: var(--font-performance-semibold);
 		letter-spacing: 0;
 		line-height: 1.15;
 		text-transform: uppercase;
@@ -115,7 +115,7 @@
 		max-width: 14ch;
 		color: #ffffff;
 		font-size: 3.25rem;
-		font-weight: var(--font-medium);
+		font-weight: var(--font-performance-medium);
 		letter-spacing: 0;
 		line-height: 1.02;
 		text-wrap: balance;
@@ -161,9 +161,9 @@
 	.clear-security-panel__items article span,
 	.clear-security-panel__logs span {
 		color: rgba(255, 255, 255, 0.62);
-		font-family: var(--font-mono);
+		font-family: var(--font-performance-mono);
 		font-size: 0.72rem;
-		font-weight: var(--font-medium);
+		font-weight: var(--font-performance-medium);
 		letter-spacing: 0;
 		line-height: 1.12;
 		text-transform: uppercase;
@@ -172,7 +172,7 @@
 	.clear-security-panel__items article strong {
 		color: #ffffff;
 		font-size: 1.18rem;
-		font-weight: var(--font-medium);
+		font-weight: var(--font-performance-medium);
 		line-height: 1.16;
 		text-wrap: balance;
 	}
@@ -229,9 +229,9 @@
 
 	.clear-security-panel__logs strong {
 		color: #ffffff;
-		font-family: var(--font-mono);
+		font-family: var(--font-performance-mono);
 		font-size: 0.86rem;
-		font-weight: var(--font-medium);
+		font-weight: var(--font-performance-medium);
 		line-height: 1.35;
 		overflow-wrap: anywhere;
 	}

@@ -87,58 +87,58 @@
 	}
 
 	.article-prose :global(h1) {
-		font-size: var(--text-display);
+		font-size: var(--text-performance-display);
 		font-weight: bold;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		margin-bottom: 1.5rem;
 		margin-top: 3rem;
 	}
 
 	.article-prose :global(h2) {
-		font-size: var(--text-h1);
+		font-size: var(--text-performance-h1);
 		font-weight: bold;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		margin-bottom: 1.25rem;
 		margin-top: 2.5rem;
 	}
 
 	.article-prose :global(h3) {
-		font-size: var(--text-h2);
+		font-size: var(--text-performance-h2);
 		font-weight: 600;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		margin-bottom: 1rem;
 		margin-top: 2rem;
 	}
 
 	.article-prose :global(h4) {
-		font-size: var(--text-h3);
+		font-size: var(--text-performance-h3);
 		font-weight: 600;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		margin-bottom: 0.75rem;
 		margin-top: 1.5rem;
 	}
 
 	.article-prose :global(p) {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 		line-height: 1.75;
 		margin-bottom: 1.5rem;
 	}
 
 	.article-prose :global(a) {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 		text-decoration: underline;
 		text-underline-offset: 0.25rem;
-		transition: color var(--duration-micro) var(--ease-standard);
+		transition: color var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.article-prose :global(a:hover) {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.article-prose :global(ul),
 	.article-prose :global(ol) {
 		list-style-position: outside;
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 		margin-bottom: 1.5rem;
 		margin-left: 0;
 		padding-left: 1.5rem;
@@ -166,7 +166,7 @@
 	}
 
 	.article-prose :global(pre) {
-		border-radius: var(--radius-lg);
+		border-radius: var(--radius-performance-scale-lg);
 		padding: 1.5rem;
 		margin-bottom: 1.5rem;
 		overflow-x: auto;
@@ -174,32 +174,32 @@
 
 	.article-prose :global(code) {
 		font-family: monospace;
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.article-prose :global(:not(pre) > code) {
-		background: var(--color-bg-surface);
+		background: var(--color-performance-bg-surface);
 		padding: 0.125rem 0.5rem;
-		border-radius: var(--radius-sm);
-		color: var(--color-fg-secondary);
+		border-radius: var(--radius-performance-scale-sm);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.article-prose :global(blockquote) {
-		border-left: 4px solid var(--color-border-emphasis);
+		border-left: 4px solid var(--color-performance-border-emphasis);
 		padding-left: 1.5rem;
 		padding-top: 0.5rem;
 		padding-bottom: 0.5rem;
 		margin-top: 1.5rem;
 		margin-bottom: 1.5rem;
 		font-style: italic;
-		color: var(--color-fg-tertiary);
-		background: var(--color-bg-surface);
-		border-top-right-radius: var(--radius-sm);
-		border-bottom-right-radius: var(--radius-sm);
+		color: var(--color-performance-fg-tertiary);
+		background: var(--color-performance-bg-surface);
+		border-top-right-radius: var(--radius-performance-scale-sm);
+		border-bottom-right-radius: var(--radius-performance-scale-sm);
 	}
 
 	.article-prose :global(img) {
-		border-radius: var(--radius-lg);
+		border-radius: var(--radius-performance-scale-lg);
 		max-width: 100%;
 		width: 100%;
 		margin-top: 2rem;
@@ -218,42 +218,42 @@
 	.article-prose :global(table) {
 		width: 100%;
 		min-width: 100%;
-		border-radius: var(--radius-lg);
+		border-radius: var(--radius-performance-scale-lg);
 		border-collapse: collapse;
 	}
 
 	.article-prose :global(thead) {
-		background: var(--color-bg-surface);
+		background: var(--color-performance-bg-surface);
 	}
 
 	.article-prose :global(th) {
 		padding: 0.75rem 1rem;
 		text-align: left;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		font-weight: 600;
 		vertical-align: top;
 	}
 
 	.article-prose :global(td) {
 		padding: 0.75rem 1rem;
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 		vertical-align: top;
 	}
 
 	.article-prose :global(hr) {
-		border-color: var(--color-border-default);
+		border-color: var(--color-performance-border-default);
 		margin-top: 2rem;
 		margin-bottom: 2rem;
 	}
 
 	.article-prose :global(strong) {
 		font-weight: bold;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.article-prose :global(em) {
 		font-style: italic;
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.animate-reveal {
@@ -287,17 +287,17 @@
 		}
 
 		.article-prose :global(h1) {
-			font-size: var(--text-h1);
+			font-size: var(--text-performance-h1);
 			margin-top: 2rem;
 		}
 
 		.article-prose :global(h2) {
-			font-size: var(--text-h2);
+			font-size: var(--text-performance-h2);
 			margin-top: 2rem;
 		}
 
 		.article-prose :global(h3) {
-			font-size: var(--text-h3);
+			font-size: var(--text-performance-h3);
 		}
 
 		.article-prose :global(p),
@@ -312,14 +312,14 @@
 
 		.article-prose :global(pre) {
 			padding: 1rem;
-			border-radius: var(--radius-md);
+			border-radius: var(--radius-performance-scale-md);
 		}
 
 		.article-prose :global(table) {
 			display: block;
 			min-width: 0;
-			border-radius: var(--radius-md);
-			font-size: var(--text-body-sm);
+			border-radius: var(--radius-performance-scale-md);
+			font-size: var(--text-performance-body-sm);
 		}
 
 		.article-prose :global(thead) {
@@ -343,9 +343,9 @@
 
 		.article-prose :global(tr) {
 			margin-bottom: 0.875rem;
-			border: 1px solid var(--color-border-default);
-			border-radius: var(--radius-md);
-			background: var(--color-bg-pure);
+			border: 1px solid var(--color-performance-border-default);
+			border-radius: var(--radius-performance-scale-md);
+			background: var(--color-performance-bg-pure);
 			overflow: hidden;
 		}
 
@@ -367,7 +367,7 @@
 		.article-prose :global(td::before) {
 			content: attr(data-label);
 			font-weight: 600;
-			color: var(--color-fg-primary);
+			color: var(--color-performance-fg-primary);
 			overflow-wrap: normal;
 		}
 	}

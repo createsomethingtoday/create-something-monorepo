@@ -1063,81 +1063,81 @@
 
 <style>
   .eyebrow {
-    font-size: var(--text-body-sm);
+    font-size: var(--text-performance-body-sm);
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    color: var(--color-fg-tertiary);
+    color: var(--color-performance-fg-tertiary);
   }
 
   .header-description {
-    font-size: var(--text-body-lg);
-    color: var(--color-fg-secondary);
+    font-size: var(--text-performance-body-lg);
+    color: var(--color-performance-fg-secondary);
   }
 
   .principle-description {
-    color: var(--color-fg-secondary);
+    color: var(--color-performance-fg-secondary);
   }
 
   .example-block {
-    border-left: 2px solid var(--color-border-emphasis);
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-tertiary);
+    border-left: 2px solid var(--color-performance-border-emphasis);
+    font-size: var(--text-performance-body-sm);
+    color: var(--color-performance-fg-tertiary);
   }
 
   .pattern-title {
-    font-size: var(--text-body-lg);
+    font-size: var(--text-performance-body-lg);
     font-family: monospace;
   }
 
   .pattern-examples {
-    font-size: var(--text-body);
-    color: var(--color-fg-secondary);
+    font-size: var(--text-performance-body);
+    color: var(--color-performance-fg-secondary);
   }
 
   .checklist-items {
-    font-size: var(--text-body);
-    color: var(--color-fg-secondary);
+    font-size: var(--text-performance-body);
+    color: var(--color-performance-fg-secondary);
   }
 
   .checkmark {
-    color: var(--color-fg-muted);
+    color: var(--color-performance-fg-muted);
   }
 
   .forbidden-grid {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-muted);
+    font-size: var(--text-performance-body-sm);
+    color: var(--color-performance-fg-muted);
   }
 
   .decoration-rules {
-    font-size: var(--text-body);
-    color: var(--color-fg-secondary);
+    font-size: var(--text-performance-body);
+    color: var(--color-performance-fg-secondary);
   }
 
   .checklist-intro {
-    color: var(--color-fg-secondary);
+    color: var(--color-performance-fg-secondary);
   }
 
   .checklist-box {
     font-family: monospace;
-    font-size: var(--text-body-sm);
+    font-size: var(--text-performance-body-sm);
   }
 
   .checkbox {
-    color: var(--color-fg-muted);
+    color: var(--color-performance-fg-muted);
   }
 
   .terminology-title {
-    font-size: var(--text-body-lg);
+    font-size: var(--text-performance-body-lg);
   }
 
   .terminology-list {
-    font-size: var(--text-body);
-    color: var(--color-fg-secondary);
+    font-size: var(--text-performance-body);
+    color: var(--color-performance-fg-secondary);
   }
 
   .test-description {
-    font-size: var(--text-body);
-    color: var(--color-fg-secondary);
+    font-size: var(--text-performance-body);
+    color: var(--color-performance-fg-secondary);
   }
 
   .test-question {
@@ -1145,37 +1145,37 @@
   }
 
   .test-answer {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-tertiary);
+    font-size: var(--text-performance-body-sm);
+    color: var(--color-performance-fg-tertiary);
   }
 
   .masters-description {
-    font-size: var(--text-body);
-    color: var(--color-fg-secondary);
+    font-size: var(--text-performance-body);
+    color: var(--color-performance-fg-secondary);
   }
 
   .master-quote {
-    border-left: 2px solid var(--color-border-emphasis);
+    border-left: 2px solid var(--color-performance-border-emphasis);
   }
 
   .lineage-table {
-    font-size: var(--text-body-sm);
+    font-size: var(--text-performance-body-sm);
     border-collapse: collapse;
   }
 
   .lineage-table th {
-    color: var(--color-fg-tertiary);
+    color: var(--color-performance-fg-tertiary);
   }
 
   .lineage-table td {
-    color: var(--color-fg-secondary);
+    color: var(--color-performance-fg-secondary);
   }
 
   .master-layer {
-    font-size: var(--text-caption);
+    font-size: var(--text-performance-caption);
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    color: var(--color-fg-muted);
+    color: var(--color-performance-fg-muted);
   }
 
   .master-name {
@@ -1183,118 +1183,118 @@
   }
 
   .master-approach {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-tertiary);
+    font-size: var(--text-performance-body-sm);
+    color: var(--color-performance-fg-tertiary);
   }
 
   .quote-text {
-    font-size: var(--text-body-sm);
+    font-size: var(--text-performance-body-sm);
     font-style: italic;
   }
 
   .note-title {
-    font-size: var(--text-body-lg);
-    color: var(--color-fg-secondary);
+    font-size: var(--text-performance-body-lg);
+    color: var(--color-performance-fg-secondary);
   }
 
   .note-description {
-    color: var(--color-fg-secondary);
+    color: var(--color-performance-fg-secondary);
   }
 
   /* When Specificity Is Constrained */
   .constrained-description {
-    font-size: var(--text-body);
-    color: var(--color-fg-secondary);
+    font-size: var(--text-performance-body);
+    color: var(--color-performance-fg-secondary);
   }
 
   .terminology-box {
-    background: var(--color-bg-surface);
-    border-radius: var(--radius-lg);
+    background: var(--color-performance-bg-surface);
+    border-radius: var(--radius-performance-scale-lg);
   }
 
   .box-title {
     font-weight: 600;
-    color: var(--color-fg-secondary);
+    color: var(--color-performance-fg-secondary);
   }
 
   .input-metrics {
-    color: var(--color-fg-tertiary);
+    color: var(--color-performance-fg-tertiary);
   }
 
   .warning-text {
-    color: var(--color-fg-secondary);
+    color: var(--color-performance-fg-secondary);
   }
 
   /* Educational Voice */
   .educational-description {
-    font-size: var(--text-body);
-    color: var(--color-fg-secondary);
+    font-size: var(--text-performance-body);
+    color: var(--color-performance-fg-secondary);
   }
 
   .pattern-name {
     font-weight: 600;
     font-family: monospace;
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
   }
 
   .pattern-example {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-tertiary);
+    font-size: var(--text-performance-body-sm);
+    color: var(--color-performance-fg-tertiary);
     font-style: italic;
   }
 
   .scaffolding-list {
-    color: var(--color-fg-secondary);
+    color: var(--color-performance-fg-secondary);
   }
 
   .avoid-list {
-    font-size: var(--text-body);
-    color: var(--color-fg-secondary);
+    font-size: var(--text-performance-body);
+    color: var(--color-performance-fg-secondary);
   }
 
   /* Recognition Section Styles */
   .recognition-description {
-    color: var(--color-fg-secondary);
+    color: var(--color-performance-fg-secondary);
   }
 
   .recognition-intro {
-    font-size: var(--text-body-lg);
+    font-size: var(--text-performance-body-lg);
     font-style: italic;
-    color: var(--color-fg-secondary);
+    color: var(--color-performance-fg-secondary);
   }
 
   .recognition-box {
-    background: var(--color-bg-surface);
-    border-radius: var(--radius-lg);
+    background: var(--color-performance-bg-surface);
+    border-radius: var(--radius-performance-scale-lg);
   }
 
   .box-description {
-    font-size: var(--text-body);
-    color: var(--color-fg-secondary);
+    font-size: var(--text-performance-body);
+    color: var(--color-performance-fg-secondary);
   }
 
   .principle-lead {
-    font-size: var(--text-body-lg);
+    font-size: var(--text-performance-body-lg);
     font-weight: 600;
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
   }
 
   .section-intro {
-    font-size: var(--text-body-lg);
-    color: var(--color-fg-secondary);
+    font-size: var(--text-performance-body-lg);
+    color: var(--color-performance-fg-secondary);
   }
 
   .pattern-section-title {
-    font-size: var(--text-body-lg);
+    font-size: var(--text-performance-body-lg);
   }
 
   .pattern-description {
-    color: var(--color-fg-secondary);
+    color: var(--color-performance-fg-secondary);
   }
 
   .principle-test {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-tertiary);
+    font-size: var(--text-performance-body-sm);
+    color: var(--color-performance-fg-tertiary);
     font-style: italic;
   }
 
@@ -1306,23 +1306,23 @@
   .transformation-table table {
     width: 100%;
     border-collapse: collapse;
-    font-size: var(--text-body-sm);
+    font-size: var(--text-performance-body-sm);
   }
 
   .transformation-table th {
     text-align: left;
-    padding: var(--space-sm);
-    color: var(--color-fg-tertiary);
+    padding: var(--space-performance-sm);
+    color: var(--color-performance-fg-tertiary);
     font-weight: 600;
   }
 
   .transformation-table td {
-    padding: var(--space-sm);
-    color: var(--color-fg-secondary);
+    padding: var(--space-performance-sm);
+    color: var(--color-performance-fg-secondary);
   }
 
   .transformation-table td.line-through {
-    color: var(--color-fg-muted);
+    color: var(--color-performance-fg-muted);
     text-decoration: line-through;
   }
 </style>

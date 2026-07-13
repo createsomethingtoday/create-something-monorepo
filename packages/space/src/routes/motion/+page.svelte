@@ -498,73 +498,73 @@
 
 <style>
   .ascii-container {
-    background: var(--color-bg-pure);
-    border-radius: var(--radius-lg);
+    background: var(--color-performance-bg-pure);
+    border-radius: var(--radius-performance-scale-lg);
   }
 
   .ascii-art {
-    color: var(--color-fg-secondary);
+    color: var(--color-performance-fg-secondary);
     font-size: clamp(0.6rem, 1.5vw, 0.9rem);
   }
 
   .hero-title {
-    font-size: var(--text-h1);
+    font-size: var(--text-performance-h1);
     font-weight: 700;
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
   }
 
   .hero-subtitle {
-    font-size: var(--text-body-lg);
-    color: var(--color-fg-secondary);
+    font-size: var(--text-performance-body-lg);
+    color: var(--color-performance-fg-secondary);
   }
 
   .hero-description {
-    color: var(--color-fg-muted);
+    color: var(--color-performance-fg-muted);
   }
 
   .highlight-text {
-    color: var(--color-fg-secondary);
+    color: var(--color-performance-fg-secondary);
   }
 
   .form-card {
-    background: var(--color-hover);
-    border-radius: var(--radius-xl);
+    background: var(--color-performance-hover);
+    border-radius: var(--radius-performance-scale-xl);
   }
 
   .form-label {
-    font-size: var(--text-body-sm);
+    font-size: var(--text-performance-body-sm);
     font-weight: 500;
-    color: var(--color-fg-tertiary);
+    color: var(--color-performance-fg-tertiary);
   }
 
   .form-input,
   .form-select {
-    background: var(--color-overlay);
-    border-radius: var(--radius-md);
-    color: var(--color-fg-primary);
+    background: var(--color-performance-overlay);
+    border-radius: var(--radius-performance-scale-md);
+    color: var(--color-performance-fg-primary);
   }
 
   .form-input::placeholder {
-    color: var(--color-fg-subtle);
+    color: var(--color-performance-fg-subtle);
   }
 
   .form-input:focus {
     outline: none;
-    border-color: var(--color-border-emphasis);
+    border-color: var(--color-performance-border-emphasis);
   }
 
   .error-text {
-    color: var(--color-error);
-    font-size: var(--text-body-sm);
+    color: var(--color-performance-error);
+    font-size: var(--text-performance-body-sm);
   }
 
   .submit-button {
-    background: var(--color-fg-primary);
-    color: var(--color-bg-pure);
-    border-radius: var(--radius-md);
+    background: var(--color-performance-fg-primary);
+    color: var(--color-performance-bg-pure);
+    border-radius: var(--radius-performance-scale-md);
     border: none;
     cursor: pointer;
-    transition: opacity var(--duration-micro) var(--ease-standard);
+    transition: opacity var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
   .submit-button:hover:not(:disabled) {
@@ -577,252 +577,252 @@
   }
 
   .result-card {
-    background: var(--color-hover);
-    border-radius: var(--radius-xl);
+    background: var(--color-performance-hover);
+    border-radius: var(--radius-performance-scale-xl);
   }
 
   .card-title {
-    font-size: var(--text-h3);
+    font-size: var(--text-performance-h3);
     font-weight: 700;
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
   }
 
   .label-text {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-muted);
+    font-size: var(--text-performance-body-sm);
+    color: var(--color-performance-fg-muted);
   }
 
   .section-label {
-    font-size: var(--text-body-sm);
+    font-size: var(--text-performance-body-sm);
     font-weight: 500;
-    color: var(--color-fg-muted);
+    color: var(--color-performance-fg-muted);
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
 
   .emphasis-text {
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
   }
 
   .body-text {
-    color: var(--color-fg-secondary);
+    color: var(--color-performance-fg-secondary);
   }
 
   .body-text-light {
-    color: var(--color-fg-secondary);
+    color: var(--color-performance-fg-secondary);
   }
 
   .judgment-badge {
     padding: 0.5rem 1rem;
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-performance-scale-md);
     border: 1px solid;
-    font-size: var(--text-body-sm);
+    font-size: var(--text-performance-body-sm);
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
 
   .judgment-functional {
-    color: var(--color-success);
-    background: var(--color-success-muted);
-    border-color: var(--color-success-border);
+    color: var(--color-performance-success);
+    background: var(--color-performance-success-muted);
+    border-color: var(--color-performance-success-border);
   }
 
   .judgment-decorative {
-    color: var(--color-error);
-    background: var(--color-error-muted);
-    border-color: var(--color-error-border);
+    color: var(--color-performance-error);
+    background: var(--color-performance-error-muted);
+    border-color: var(--color-performance-error-border);
   }
 
   .judgment-ambiguous {
-    color: var(--color-warning);
-    background: var(--color-warning-muted);
-    border-color: var(--color-warning-border);
+    color: var(--color-performance-warning);
+    background: var(--color-performance-warning-muted);
+    border-color: var(--color-performance-warning-border);
   }
 
   .mode-label {
-    font-size: var(--text-body-sm);
+    font-size: var(--text-performance-body-sm);
   }
 
   .mode-zuhandenheit {
-    color: var(--color-success);
+    color: var(--color-performance-success);
   }
 
   .mode-vorhandenheit {
-    color: var(--color-warning);
+    color: var(--color-performance-warning);
   }
 
   .puppeteer-badge {
-    font-size: var(--text-caption);
+    font-size: var(--text-performance-caption);
     padding: 0.25rem 0.5rem;
-    background: var(--color-success-muted);
-    color: var(--color-success);
-    border-radius: var(--radius-sm);
+    background: var(--color-performance-success-muted);
+    color: var(--color-performance-success);
+    border-radius: var(--radius-performance-scale-sm);
   }
 
   .metric-card {
-    background: var(--color-bg-surface);
-    border-radius: var(--radius-md);
-    font-size: var(--text-body-sm);
+    background: var(--color-performance-bg-surface);
+    border-radius: var(--radius-performance-scale-md);
+    font-size: var(--text-performance-body-sm);
   }
 
   .metric-label {
-    color: var(--color-fg-muted);
-    font-size: var(--text-caption);
+    color: var(--color-performance-fg-muted);
+    font-size: var(--text-performance-caption);
   }
 
   .metric-value-lg {
-    font-size: var(--text-body-lg);
+    font-size: var(--text-performance-body-lg);
     font-weight: 500;
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
   }
 
   .metric-value-xl {
-    font-size: var(--text-h2);
+    font-size: var(--text-performance-h2);
     font-weight: 700;
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
   }
 
   .code-block {
-    background: var(--color-bg-surface);
-    border-radius: var(--radius-md);
-    font-size: var(--text-body-sm);
+    background: var(--color-performance-bg-surface);
+    border-radius: var(--radius-performance-scale-md);
+    font-size: var(--text-performance-body-sm);
   }
 
   .code-primary {
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
   }
 
   .code-secondary {
-    color: var(--color-fg-muted);
+    color: var(--color-performance-fg-muted);
   }
 
   .code-keyword {
-    color: var(--color-data-3);
+    color: var(--color-performance-data-3);
   }
 
   .code-selector {
-    color: var(--color-info);
+    color: var(--color-performance-info);
   }
 
   .caption-text {
-    color: var(--color-fg-muted);
-    font-size: var(--text-body-sm);
+    color: var(--color-performance-fg-muted);
+    font-size: var(--text-performance-body-sm);
   }
 
   .subsection-title {
-    color: var(--color-fg-tertiary);
+    color: var(--color-performance-fg-tertiary);
     font-weight: 500;
   }
 
   .reference-text {
-    color: var(--color-fg-muted);
+    color: var(--color-performance-fg-muted);
   }
 
   .term-zuhandenheit {
-    color: var(--color-success);
+    color: var(--color-performance-success);
   }
 
   .term-vorhandenheit {
-    color: var(--color-warning);
+    color: var(--color-performance-warning);
   }
 
   .term-label {
-    color: var(--color-fg-tertiary);
+    color: var(--color-performance-fg-tertiary);
   }
 
   /* Missing class definitions - migrated to Canon */
   .recommendation-box {
-    background: var(--color-bg-surface);
-    border-radius: var(--radius-md);
+    background: var(--color-performance-bg-surface);
+    border-radius: var(--radius-performance-scale-md);
   }
 
   .debug-box {
-    background: var(--color-bg-surface);
-    border-radius: var(--radius-md);
+    background: var(--color-performance-bg-surface);
+    border-radius: var(--radius-performance-scale-md);
   }
 
   .metric-box {
-    background: var(--color-bg-surface);
-    border-radius: var(--radius-md);
+    background: var(--color-performance-bg-surface);
+    border-radius: var(--radius-performance-scale-md);
   }
 
   .framework-card {
-    background: var(--color-hover);
-    border-radius: var(--radius-xl);
+    background: var(--color-performance-hover);
+    border-radius: var(--radius-performance-scale-xl);
   }
 
   .framework-text {
-    color: var(--color-fg-secondary);
-    font-size: var(--text-body-sm);
+    color: var(--color-performance-fg-secondary);
+    font-size: var(--text-performance-body-sm);
   }
 
   .list-heading {
-    font-size: var(--text-body-sm);
+    font-size: var(--text-performance-body-sm);
     font-weight: 500;
-    color: var(--color-fg-tertiary);
+    color: var(--color-performance-fg-tertiary);
   }
 
   .property-tag {
-    background: var(--color-bg-surface);
-    border-radius: var(--radius-sm);
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-secondary);
+    background: var(--color-performance-bg-surface);
+    border-radius: var(--radius-performance-scale-sm);
+    font-size: var(--text-performance-body-sm);
+    color: var(--color-performance-fg-secondary);
   }
 
   .metadata-text {
-    color: var(--color-fg-muted);
-    font-size: var(--text-body-sm);
+    color: var(--color-performance-fg-muted);
+    font-size: var(--text-performance-body-sm);
   }
 
   .capture-time {
-    color: var(--color-fg-muted);
-    font-size: var(--text-caption);
+    color: var(--color-performance-fg-muted);
+    font-size: var(--text-performance-caption);
   }
 
   .confidence-row {
-    color: var(--color-fg-muted);
-    font-size: var(--text-body-sm);
+    color: var(--color-performance-fg-muted);
+    font-size: var(--text-performance-body-sm);
   }
 
   .confidence-track {
-    background: var(--color-bg-surface);
-    border-radius: var(--radius-full);
+    background: var(--color-performance-bg-surface);
+    border-radius: var(--radius-performance-scale-full);
   }
 
   .confidence-fill {
-    background: var(--color-success);
-    border-radius: var(--radius-full);
-    transition: width var(--duration-standard) var(--ease-standard);
+    background: var(--color-performance-success);
+    border-radius: var(--radius-performance-scale-full);
+    transition: width var(--duration-performance-standard) var(--ease-performance-standard);
   }
 
   .action-keep {
-    color: var(--color-success);
+    color: var(--color-performance-success);
   }
 
   .action-remove {
-    color: var(--color-error);
+    color: var(--color-performance-error);
   }
 
   .action-modify {
-    color: var(--color-warning);
+    color: var(--color-performance-warning);
   }
 
   .modification-text {
-    color: var(--color-fg-muted);
-    font-size: var(--text-body-sm);
+    color: var(--color-performance-fg-muted);
+    font-size: var(--text-performance-body-sm);
     font-style: italic;
   }
 
   .status-success {
-    color: var(--color-success);
+    color: var(--color-performance-success);
   }
 
   .status-error {
-    color: var(--color-error);
+    color: var(--color-performance-error);
   }
 
   .status-warning {
-    color: var(--color-warning);
+    color: var(--color-performance-warning);
   }
 </style>

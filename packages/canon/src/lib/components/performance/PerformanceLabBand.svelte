@@ -95,9 +95,9 @@
   .performance-lab-band__identity small,
   .performance-lab-band__label,
   .performance-lab-band__index {
-    font-family: var(--font-mono);
+    font-family: var(--font-performance-mono);
     font-size: 0.72rem;
-    font-weight: var(--font-semibold, 600);
+    font-weight: var(--font-performance-semibold, 600);
     letter-spacing: 0;
     line-height: 1.25;
     text-transform: uppercase;
@@ -121,9 +121,9 @@
   .performance-lab-band__statement h2 {
     max-width: 18ch;
     margin: 0;
-    font-family: var(--font-display, var(--font-sans));
+    font-family: var(--font-performance-display, var(--font-performance-sans));
     font-size: clamp(1.9rem, 4vw, 3.5rem);
-    font-weight: var(--font-bold, 700);
+    font-weight: var(--font-performance-bold, 700);
     letter-spacing: 0;
     line-height: 0.96;
     text-wrap: balance;
@@ -198,7 +198,7 @@
     display: block;
     color: var(--color-performance-ink, #090909);
     font-size: clamp(1.25rem, 2vw, 1.75rem);
-    font-weight: var(--font-bold, 700);
+    font-weight: var(--font-performance-bold, 700);
     line-height: 1;
   }
 

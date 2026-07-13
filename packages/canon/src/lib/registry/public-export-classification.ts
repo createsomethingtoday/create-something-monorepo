@@ -232,8 +232,8 @@ const PACKAGE_EXPORT_PATH_POLICIES: CanonPublicExportClassificationRule[] = [
     exportPath: './styles/tokens.css',
     classification: 'token-artifact',
     registryPolicy: 'registry-covered',
-    registryItemIds: ['token.canon-core'],
-    rationale: 'Canonical CSS token source is covered by token.canon-core.'
+    registryItemIds: ['token.performance-core'],
+    rationale: 'Canonical CSS token source is covered by token.performance-core.'
   },
   {
     exportPath: './styles/canon.css',
@@ -337,30 +337,30 @@ const PACKAGE_EXPORT_PATH_POLICIES: CanonPublicExportClassificationRule[] = [
     exportPath: './styles/tokens.scss',
     classification: 'token-artifact',
     registryPolicy: 'registry-covered',
-    registryItemIds: ['token.canon-core'],
-    rationale: 'SCSS token export is an alternate consumer format for token.canon-core.'
+    registryItemIds: ['token.performance-core'],
+    rationale: 'SCSS token export is an alternate consumer format for token.performance-core.'
   },
   {
     exportPath: './styles/tokens.dtcg.json',
     classification: 'token-artifact',
     registryPolicy: 'registry-covered',
-    registryItemIds: ['token.canon-core'],
-    rationale: 'DTCG token export is an alternate machine-readable format for token.canon-core.'
+    registryItemIds: ['token.performance-core'],
+    rationale: 'DTCG token export is an alternate machine-readable format for token.performance-core.'
   },
   {
     exportPath: './styles/tokens.figma.json',
     classification: 'token-artifact',
     registryPolicy: 'registry-covered',
-    registryItemIds: ['token.canon-core'],
-    rationale: 'Figma token export is an alternate design-tool format for token.canon-core.'
+    registryItemIds: ['token.performance-core'],
+    rationale: 'Figma token export is an alternate design-tool format for token.performance-core.'
   },
   {
     exportPath: './styles/canon.json',
     classification: 'token-artifact',
     registryPolicy: 'registry-covered',
-    registryItemIds: ['token.canon-core'],
+    registryItemIds: ['token.performance-core'],
     rationale:
-      'Canon JSON export is a machine-readable token artifact governed by token.canon-core.'
+      'Canon JSON export is a machine-readable token artifact governed by token.performance-core.'
   },
   {
     exportPath: './components',
@@ -496,15 +496,15 @@ const PACKAGE_EXPORT_PATH_POLICIES: CanonPublicExportClassificationRule[] = [
     exportPath: './tokens',
     classification: 'token-artifact',
     registryPolicy: 'registry-covered',
-    registryItemIds: ['token.canon-core'],
-    rationale: 'Typed token API is governed by token.canon-core.'
+    registryItemIds: ['token.performance-core'],
+    rationale: 'Typed token API is governed by token.performance-core.'
   },
   {
     exportPath: './tokens/*',
     classification: 'token-artifact',
     registryPolicy: 'registry-covered',
-    registryItemIds: ['token.canon-core'],
-    rationale: 'Wildcard token module exports are governed by token.canon-core.'
+    registryItemIds: ['token.performance-core'],
+    rationale: 'Wildcard token module exports are governed by token.performance-core.'
   },
   {
     exportPath: './actions',
@@ -661,7 +661,7 @@ const PACKAGE_EXPORT_PATH_POLICIES: CanonPublicExportClassificationRule[] = [
     exportPath: './lint-contract',
     classification: 'registry-artifact',
     registryPolicy: 'registry-covered',
-    registryItemIds: ['token.canon-core'],
+    registryItemIds: ['token.performance-core'],
     rationale:
       'Lint contract maps consumer utility usage back to Canon token artifacts without duplicating design-system policy.'
   },

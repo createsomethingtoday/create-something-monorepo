@@ -29,13 +29,13 @@ export function getSpacing(key: SpacingKey): string {
  * CSS custom property names for spacing
  */
 export const spacingVars = {
-	xs: '--space-xs',
-	sm: '--space-sm',
-	md: '--space-md',
-	lg: '--space-lg',
-	xl: '--space-xl',
-	'2xl': '--space-2xl',
-	'3xl': '--space-3xl'
+	xs: '--space-performance-xs',
+	sm: '--space-performance-sm',
+	md: '--space-performance-md',
+	lg: '--space-performance-lg',
+	xl: '--space-performance-xl',
+	'2xl': '--space-performance-2xl',
+	'3xl': '--space-performance-3xl'
 } as const;
 
 /**

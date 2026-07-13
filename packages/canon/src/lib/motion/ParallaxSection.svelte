@@ -228,7 +228,7 @@
 		height: 100%;
 		display: flex;
 		flex-direction: column;
-		padding: var(--space-xl, 4.236rem) var(--space-lg, 2.618rem);
+		padding: var(--space-performance-xl, 4.236rem) var(--space-performance-lg, 2.618rem);
 	}
 
 	/* Alignment variants */
@@ -262,7 +262,7 @@
 	/* Mobile optimization - can disable parallax for performance */
 	@media (max-width: 768px) {
 		.parallax-content {
-			padding: var(--space-lg, 2.618rem) var(--space-md, 1.618rem);
+			padding: var(--space-performance-lg, 2.618rem) var(--space-performance-md, 1.618rem);
 		}
 	}
 </style>

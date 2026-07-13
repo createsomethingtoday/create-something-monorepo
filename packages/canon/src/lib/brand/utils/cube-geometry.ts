@@ -200,7 +200,7 @@ export function generateLayoutCube(options: {
 		precision: 2
 	});
 
-	const fillColor = useCssVars ? 'var(--color-fg-primary, #ffffff)' : '#ffffff';
+	const fillColor = useCssVars ? 'var(--color-performance-fg-primary, #ffffff)' : '#ffffff';
 	const ariaAttrs = accessible ? 'aria-label="CREATE SOMETHING" role="img"' : 'aria-hidden="true"';
 	const classAttr = className ? `class="${className}"` : '';
 

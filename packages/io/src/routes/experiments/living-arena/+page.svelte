@@ -233,8 +233,8 @@
 			<span class="experiment-label">Experiment</span>
 			<h1 class="experiment-title">Living Arena</h1>
 			<p class="experiment-description">
-				What if your building could help people without them having to ask? 
-				The lights guide you to your seat. The air feels right before you notice. 
+				What if your building could help people without them having to ask?
+				The lights guide you to your seat. The air feels right before you notice.
 				And through it all, <strong>safety comes first</strong>—always.
 			</p>
 		</div>
@@ -265,19 +265,19 @@
 				</radialGradient>
 
 				<radialGradient id="hvac-zone" cx="50%" cy="50%" r="50%">
-					<stop offset="0%" stop-color="var(--color-data-2)" stop-opacity="0.15" />
-					<stop offset="100%" stop-color="var(--color-data-2)" stop-opacity="0" />
+					<stop offset="0%" stop-color="var(--color-performance-data-2)" stop-opacity="0.15" />
+					<stop offset="100%" stop-color="var(--color-performance-data-2)" stop-opacity="0" />
 				</radialGradient>
 
 				<linearGradient id="security-beam" x1="0%" y1="0%" x2="100%" y2="0%">
-					<stop offset="0%" stop-color="var(--color-data-1)" stop-opacity="0" />
-					<stop offset="50%" stop-color="var(--color-data-1)" stop-opacity="0.6" />
-					<stop offset="100%" stop-color="var(--color-data-1)" stop-opacity="0" />
+					<stop offset="0%" stop-color="var(--color-performance-data-1)" stop-opacity="0" />
+					<stop offset="50%" stop-color="var(--color-performance-data-1)" stop-opacity="0.6" />
+					<stop offset="100%" stop-color="var(--color-performance-data-1)" stop-opacity="0" />
 				</linearGradient>
 
 				<linearGradient id="road-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-					<stop offset="0%" stop-color="var(--color-fg-tertiary)" stop-opacity="0.3" />
-					<stop offset="100%" stop-color="var(--color-fg-tertiary)" stop-opacity="0.15" />
+					<stop offset="0%" stop-color="var(--color-performance-fg-tertiary)" stop-opacity="0.3" />
+					<stop offset="100%" stop-color="var(--color-performance-fg-tertiary)" stop-opacity="0.15" />
 				</linearGradient>
 
 				<!-- Filters -->
@@ -291,60 +291,60 @@
 
 				<!-- Patterns -->
 				<pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
-					<path d="M 20 0 L 0 0 0 20" fill="none" stroke="var(--color-border-default)" stroke-width="0.5" opacity="0.3" />
+					<path d="M 20 0 L 0 0 0 20" fill="none" stroke="var(--color-performance-border-default)" stroke-width="0.5" opacity="0.3" />
 				</pattern>
 
 				<pattern id="parking-lines" width="24" height="40" patternUnits="userSpaceOnUse">
-					<path d="M 0 0 L 0 40 M 24 0 L 24 40" fill="none" stroke="var(--color-fg-tertiary)" stroke-width="1" opacity="0.3" />
+					<path d="M 0 0 L 0 40 M 24 0 L 24 40" fill="none" stroke="var(--color-performance-fg-tertiary)" stroke-width="1" opacity="0.3" />
 				</pattern>
 			</defs>
 
 			<!-- Background (expanded) -->
-			<rect x="-200" y="-150" width="1200" height="900" fill="var(--color-bg-pure)" />
+			<rect x="-200" y="-150" width="1200" height="900" fill="var(--color-performance-bg-pure)" />
 			<rect x="-200" y="-150" width="1200" height="900" fill="url(#grid)" />
 
 			<!-- === SURROUNDING SPACE === -->
-			
+
 			<!-- Access Roads -->
 			<g class="access-roads">
 				<!-- Main entrance road (north) -->
 				<rect x="350" y="-150" width="100" height="150" fill="url(#road-gradient)" />
-				<line x1="370" y1="-150" x2="370" y2="0" stroke="var(--color-data-4)" stroke-width="2" stroke-dasharray="10 15" opacity="0.5" class="road-marking" />
-				<line x1="430" y1="-150" x2="430" y2="0" stroke="var(--color-data-4)" stroke-width="2" stroke-dasharray="10 15" opacity="0.5" class="road-marking" />
-				
+				<line x1="370" y1="-150" x2="370" y2="0" stroke="var(--color-performance-data-4)" stroke-width="2" stroke-dasharray="10 15" opacity="0.5" class="road-marking" />
+				<line x1="430" y1="-150" x2="430" y2="0" stroke="var(--color-performance-data-4)" stroke-width="2" stroke-dasharray="10 15" opacity="0.5" class="road-marking" />
+
 				<!-- South exit road -->
 				<rect x="350" y="600" width="100" height="150" fill="url(#road-gradient)" />
-				<line x1="400" y1="600" x2="400" y2="750" stroke="var(--color-fg-tertiary)" stroke-width="2" stroke-dasharray="10 15" opacity="0.4" />
-				
+				<line x1="400" y1="600" x2="400" y2="750" stroke="var(--color-performance-fg-tertiary)" stroke-width="2" stroke-dasharray="10 15" opacity="0.4" />
+
 				<!-- Perimeter road (ring around arena) -->
-				<ellipse cx="400" cy="300" rx="440" ry="330" fill="none" stroke="var(--color-fg-tertiary)" stroke-width="25" opacity="0.15" />
+				<ellipse cx="400" cy="300" rx="440" ry="330" fill="none" stroke="var(--color-performance-fg-tertiary)" stroke-width="25" opacity="0.15" />
 			</g>
 
 			<!-- Parking Lots -->
 			<g class="parking-lots">
 				<!-- North parking lot -->
-				<rect x="-150" y="-120" width="220" height="150" rx="8" fill="var(--color-bg-surface)" stroke="var(--color-border-default)" stroke-width="1" opacity="0.8" />
+				<rect x="-150" y="-120" width="220" height="150" rx="8" fill="var(--color-performance-bg-surface)" stroke="var(--color-performance-border-default)" stroke-width="1" opacity="0.8" />
 				<rect x="-140" y="-110" width="200" height="130" fill="url(#parking-lines)" opacity="0.5" />
-				<text x="-50" y="-50" text-anchor="middle" font-size="10" fill="var(--color-fg-tertiary)">LOT A</text>
-				
+				<text x="-50" y="-50" text-anchor="middle" font-size="10" fill="var(--color-performance-fg-tertiary)">LOT A</text>
+
 				<!-- Northeast parking lot -->
-				<rect x="730" y="-120" width="220" height="150" rx="8" fill="var(--color-bg-surface)" stroke="var(--color-border-default)" stroke-width="1" opacity="0.8" />
+				<rect x="730" y="-120" width="220" height="150" rx="8" fill="var(--color-performance-bg-surface)" stroke="var(--color-performance-border-default)" stroke-width="1" opacity="0.8" />
 				<rect x="740" y="-110" width="200" height="130" fill="url(#parking-lines)" opacity="0.5" />
-				<text x="840" y="-50" text-anchor="middle" font-size="10" fill="var(--color-fg-tertiary)">LOT B</text>
-				
+				<text x="840" y="-50" text-anchor="middle" font-size="10" fill="var(--color-performance-fg-tertiary)">LOT B</text>
+
 				<!-- South parking lot -->
-				<rect x="290" y="680" width="220" height="140" rx="8" fill="var(--color-bg-surface)" stroke="var(--color-border-default)" stroke-width="1" opacity="0.8" />
+				<rect x="290" y="680" width="220" height="140" rx="8" fill="var(--color-performance-bg-surface)" stroke="var(--color-performance-border-default)" stroke-width="1" opacity="0.8" />
 				<rect x="300" y="690" width="200" height="120" fill="url(#parking-lines)" opacity="0.5" />
-				<text x="400" y="730" text-anchor="middle" font-size="10" fill="var(--color-fg-tertiary)">LOT C - VIP</text>
+				<text x="400" y="730" text-anchor="middle" font-size="10" fill="var(--color-performance-fg-tertiary)">LOT C - VIP</text>
 			</g>
 
 			<!-- Vehicles in parking lots (animated based on event phase) -->
 			<g class="parked-vehicles">
 				{#each Array(8) as _, i}
-					<rect x={-130 + (i % 4) * 50} y={-100 + Math.floor(i / 4) * 50} width="18" height="8" rx="2" fill="var(--color-fg-muted)" opacity={0.4 + (tick % 60) * 0.01 * ((i % 3) + 1) * 0.1} />
+					<rect x={-130 + (i % 4) * 50} y={-100 + Math.floor(i / 4) * 50} width="18" height="8" rx="2" fill="var(--color-performance-fg-muted)" opacity={0.4 + (tick % 60) * 0.01 * ((i % 3) + 1) * 0.1} />
 				{/each}
 				{#each Array(8) as _, i}
-					<rect x={750 + (i % 4) * 50} y={-100 + Math.floor(i / 4) * 50} width="18" height="8" rx="2" fill="var(--color-fg-muted)" opacity={0.4 + (tick % 60) * 0.01 * ((i % 3) + 1) * 0.1} />
+					<rect x={750 + (i % 4) * 50} y={-100 + Math.floor(i / 4) * 50} width="18" height="8" rx="2" fill="var(--color-performance-fg-muted)" opacity={0.4 + (tick % 60) * 0.01 * ((i % 3) + 1) * 0.1} />
 				{/each}
 			</g>
 
@@ -352,9 +352,9 @@
 			<g class="perimeter-security">
 				{#each [[-100, 100], [900, 100], [-100, 500], [900, 500], [400, -100], [400, 700]] as [x, y], i}
 					<g transform="translate({x}, {y})">
-						<circle r="12" fill="var(--color-bg-elevated)" stroke="var(--color-data-1)" stroke-width="2" />
-						<circle r="8" fill="var(--color-data-1)" opacity="0.3" class="security-pulse" style:animation-delay="{i * 0.3}s" />
-						<circle r="3" fill="var(--color-data-1)" />
+						<circle r="12" fill="var(--color-performance-bg-elevated)" stroke="var(--color-performance-data-1)" stroke-width="2" />
+						<circle r="8" fill="var(--color-performance-data-1)" opacity="0.3" class="security-pulse" style:animation-delay="{i * 0.3}s" />
+						<circle r="3" fill="var(--color-performance-data-1)" />
 					</g>
 				{/each}
 			</g>
@@ -364,63 +364,63 @@
 				{#if activeScenario === 0}
 					<!-- Pre-game: vehicles arriving from north -->
 					{#each Array(4) as _, i}
-						<rect 
-							x={360 + (i % 2) * 40} 
-							y={-80 + ((tick * 2 + i * 50) % 150)} 
-							width="14" 
-							height="8" 
-							rx="2" 
-							fill="var(--color-data-4)" 
+						<rect
+							x={360 + (i % 2) * 40}
+							y={-80 + ((tick * 2 + i * 50) % 150)}
+							width="14"
+							height="8"
+							rx="2"
+							fill="var(--color-performance-data-4)"
 							opacity="0.6"
 						/>
 					{/each}
 				{:else if activeScenario === 1}
 					<!-- VIP: luxury vehicles arriving at south -->
 					{#each Array(2) as _, i}
-						<rect 
-							x={385 + i * 30} 
-							y={720 - ((tick * 1.5 + i * 40) % 80)} 
-							width="20" 
-							height="10" 
-							rx="3" 
-							fill="var(--color-accent)" 
+						<rect
+							x={385 + i * 30}
+							y={720 - ((tick * 1.5 + i * 40) % 80)}
+							width="20"
+							height="10"
+							rx="3"
+							fill="var(--color-accent)"
 							opacity="0.7"
 						/>
 					{/each}
 				{:else if activeScenario === 4}
 					<!-- Emergency: vehicles leaving rapidly to south -->
 					{#each Array(6) as _, i}
-						<rect 
-							x={370 + (i % 3) * 20} 
-							y={620 + ((tick * 3 + i * 25) % 130)} 
-							width="14" 
-							height="8" 
-							rx="2" 
-							fill="var(--color-error)" 
+						<rect
+							x={370 + (i % 3) * 20}
+							y={620 + ((tick * 3 + i * 25) % 130)}
+							width="14"
+							height="8"
+							rx="2"
+							fill="var(--color-performance-error)"
 							opacity="0.5"
 						/>
 					{/each}
 				{:else if activeScenario === 5}
 					<!-- Game end: vehicles leaving from all lots -->
 					{#each Array(4) as _, i}
-						<rect 
-							x={360 + (i % 2) * 40} 
-							y={-80 - ((tick * 1.5 + i * 50) % 100)} 
-							width="14" 
-							height="8" 
-							rx="2" 
-							fill="var(--color-data-1)" 
+						<rect
+							x={360 + (i % 2) * 40}
+							y={-80 - ((tick * 1.5 + i * 50) % 100)}
+							width="14"
+							height="8"
+							rx="2"
+							fill="var(--color-performance-data-1)"
 							opacity="0.5"
 						/>
 					{/each}
 					{#each Array(4) as _, i}
-						<rect 
-							x={370 + (i % 2) * 40} 
-							y={620 + ((tick * 1.5 + i * 40) % 130)} 
-							width="14" 
-							height="8" 
-							rx="2" 
-							fill="var(--color-data-1)" 
+						<rect
+							x={370 + (i % 2) * 40}
+							y={620 + ((tick * 1.5 + i * 40) % 130)}
+							width="14"
+							height="8"
+							rx="2"
+							fill="var(--color-performance-data-1)"
 							opacity="0.5"
 						/>
 					{/each}
@@ -430,18 +430,18 @@
 			<!-- Pedestrian Crossings -->
 			<g class="crossings">
 				<g transform="translate(400, -50)">
-					<rect x="-30" y="-10" width="60" height="20" rx="2" fill="var(--color-fg-tertiary)" opacity="0.1" />
+					<rect x="-30" y="-10" width="60" height="20" rx="2" fill="var(--color-performance-fg-tertiary)" opacity="0.1" />
 					{#each Array(6) as _, i}
-						<rect x={-25 + i * 10} y="-5" width="4" height="10" fill="var(--color-fg-tertiary)" opacity="0.4" />
+						<rect x={-25 + i * 10} y="-5" width="4" height="10" fill="var(--color-performance-fg-tertiary)" opacity="0.4" />
 					{/each}
 				</g>
 			</g>
 
 			<!-- Shuttle/Bus Lanes -->
 			<g class="transit-lanes">
-				<rect x="-180" y="200" width="60" height="200" rx="4" fill="var(--color-bg-surface)" stroke="var(--color-border-default)" opacity="0.7" />
-				<text x="-150" y="295" text-anchor="middle" font-size="8" fill="var(--color-fg-tertiary)" transform="rotate(-90, -150, 295)">SHUTTLE</text>
-				
+				<rect x="-180" y="200" width="60" height="200" rx="4" fill="var(--color-performance-bg-surface)" stroke="var(--color-performance-border-default)" opacity="0.7" />
+				<text x="-150" y="295" text-anchor="middle" font-size="8" fill="var(--color-performance-fg-tertiary)" transform="rotate(-90, -150, 295)">SHUTTLE</text>
+
 				<!-- Shuttle bus icon -->
 				<rect x="-165" y={250 + Math.sin(tick * 0.05) * 30} width="30" height="15" rx="3" fill="var(--color-accent)" opacity="0.6" />
 			</g>
@@ -455,7 +455,7 @@
 				rx="380"
 				ry="280"
 				fill="none"
-				stroke="var(--color-border-emphasis)"
+				stroke="var(--color-performance-border-emphasis)"
 				stroke-width="2"
 				class="arena-outer"
 			/>
@@ -476,7 +476,7 @@
 				<path
 					d="M 400 300 m -300 0 a 300 220 0 0 1 600 0"
 					fill="none"
-					stroke="var(--color-data-2)"
+					stroke="var(--color-performance-data-2)"
 					stroke-width="40"
 					stroke-opacity="0.1"
 					class="hvac-zone zone-2"
@@ -488,7 +488,7 @@
 					rx="350"
 					ry="260"
 					fill="none"
-					stroke="var(--color-data-2)"
+					stroke="var(--color-performance-data-2)"
 					stroke-width="30"
 					stroke-opacity="0.08"
 					class="hvac-zone zone-3"
@@ -501,7 +501,7 @@
 					<path
 						d="M {400 + Math.cos((i * 30 * Math.PI) / 180) * 180} {300 + Math.sin((i * 30 * Math.PI) / 180) * 130}
 						   L {400 + Math.cos((i * 30 * Math.PI) / 180) * 320} {300 + Math.sin((i * 30 * Math.PI) / 180) * 240}"
-						stroke="var(--color-border-default)"
+						stroke="var(--color-performance-border-default)"
 						stroke-width="1"
 						opacity="0.5"
 					/>
@@ -515,8 +515,8 @@
 				width="200"
 				height="160"
 				rx="4"
-				fill="var(--color-bg-subtle)"
-				stroke="var(--color-border-emphasis)"
+				fill="var(--color-performance-bg-subtle)"
+				stroke="var(--color-performance-border-emphasis)"
 				stroke-width="2"
 			/>
 
@@ -532,7 +532,7 @@
 			/>
 
 			<!-- Court Markings -->
-			<g class="court-markings" stroke="var(--color-fg-muted)" stroke-width="1" fill="none" opacity="0.6">
+			<g class="court-markings" stroke="var(--color-performance-fg-muted)" stroke-width="1" fill="none" opacity="0.6">
 				<rect x="310" y="230" width="180" height="140" rx="2" />
 				<circle cx="400" cy="300" r="20" />
 				<line x1="400" y1="230" x2="400" y2="370" />
@@ -549,7 +549,7 @@
 						cx={x}
 						cy={y}
 						r="6"
-						fill="var(--color-data-1)"
+						fill="var(--color-performance-data-1)"
 						class="security-sensor"
 						style:animation-delay="{i * 0.1}s"
 						style:animation-duration={securityPulseSpeed}
@@ -560,7 +560,7 @@
 						cy={y}
 						r="25"
 						fill="none"
-						stroke="var(--color-data-1)"
+						stroke="var(--color-performance-data-1)"
 						stroke-width="1"
 						opacity="0.2"
 						class="sensor-range"
@@ -577,15 +577,15 @@
 			<g class="cameras">
 				{#each [[150, 120], [650, 120], [150, 480], [650, 480]] as [cx, cy], i}
 					<g transform="translate({cx}, {cy})">
-						<rect x="-8" y="-5" width="16" height="10" rx="2" fill="var(--color-fg-muted)" />
-						<circle cx="0" cy="0" r="4" fill="var(--color-data-1)" class="camera-indicator" style:animation-delay="{i * 0.5}s" />
+						<rect x="-8" y="-5" width="16" height="10" rx="2" fill="var(--color-performance-fg-muted)" />
+						<circle cx="0" cy="0" r="4" fill="var(--color-performance-data-1)" class="camera-indicator" style:animation-delay="{i * 0.5}s" />
 					</g>
 				{/each}
 			</g>
 
 			<!-- AI Orchestration Hub (Center) -->
 			<g class="ai-hub" transform="translate(400, 300)">
-				<circle r="30" fill="var(--color-bg-surface)" stroke="var(--color-accent)" stroke-width="2" class="hub-core" />
+				<circle r="30" fill="var(--color-performance-bg-surface)" stroke="var(--color-accent)" stroke-width="2" class="hub-core" />
 				<circle r="40" fill="none" stroke="var(--color-accent)" stroke-width="1" opacity="0.5" class="hub-ring ring-1" />
 				<circle r="50" fill="none" stroke="var(--color-accent)" stroke-width="1" opacity="0.3" class="hub-ring ring-2" />
 				<circle r="60" fill="none" stroke="var(--color-accent)" stroke-width="1" opacity="0.15" class="hub-ring ring-3" />
@@ -618,20 +618,20 @@
 
 			<!-- Entry/Exit Points -->
 			<g class="entry-points">
-				<rect x="395" y="15" width="10" height="20" rx="2" class="entry north" class:highlighted={highlightedEntry === 'north'} fill={highlightedEntry === 'north' ? 'var(--color-data-4)' : 'var(--color-fg-muted)'} />
-				<rect x="395" y="565" width="10" height="20" rx="2" class="entry south" class:highlighted={highlightedEntry === 'south'} fill={highlightedEntry === 'south' ? 'var(--color-error)' : 'var(--color-fg-muted)'} />
-				<rect x="15" y="295" width="20" height="10" rx="2" class="entry west" class:highlighted={highlightedEntry === 'west'} fill={highlightedEntry === 'west' ? 'var(--color-data-4)' : 'var(--color-fg-muted)'} />
-				<rect x="765" y="295" width="20" height="10" rx="2" class="entry east" class:highlighted={highlightedEntry === 'east'} fill={highlightedEntry === 'east' ? 'var(--color-data-4)' : 'var(--color-fg-muted)'} />
+				<rect x="395" y="15" width="10" height="20" rx="2" class="entry north" class:highlighted={highlightedEntry === 'north'} fill={highlightedEntry === 'north' ? 'var(--color-performance-data-4)' : 'var(--color-performance-fg-muted)'} />
+				<rect x="395" y="565" width="10" height="20" rx="2" class="entry south" class:highlighted={highlightedEntry === 'south'} fill={highlightedEntry === 'south' ? 'var(--color-performance-error)' : 'var(--color-performance-fg-muted)'} />
+				<rect x="15" y="295" width="20" height="10" rx="2" class="entry west" class:highlighted={highlightedEntry === 'west'} fill={highlightedEntry === 'west' ? 'var(--color-performance-data-4)' : 'var(--color-performance-fg-muted)'} />
+				<rect x="765" y="295" width="20" height="10" rx="2" class="entry east" class:highlighted={highlightedEntry === 'east'} fill={highlightedEntry === 'east' ? 'var(--color-performance-data-4)' : 'var(--color-performance-fg-muted)'} />
 			</g>
 
 			<!-- Active Scenario Indicator -->
 			{#if activeScenario === 0}
 				<!-- Gate crowding - highlight north area -->
-				<ellipse cx="400" cy="80" rx="120" ry="60" fill="var(--color-data-4)" opacity="0.15" class="scenario-zone pulse" />
-				<text x="400" y="85" text-anchor="middle" font-size="11" fill="var(--color-data-4)" font-weight="600">CROWD BUILDING</text>
+				<ellipse cx="400" cy="80" rx="120" ry="60" fill="var(--color-performance-data-4)" opacity="0.15" class="scenario-zone pulse" />
+				<text x="400" y="85" text-anchor="middle" font-size="11" fill="var(--color-performance-data-4)" font-weight="600">CROWD BUILDING</text>
 				<!-- Flow arrows from parking to entrance -->
-				<path d="M -50 -30 Q 150 30 380 40" fill="none" stroke="var(--color-data-4)" stroke-width="2" opacity="0.4" stroke-dasharray="8 4" class="flow-arrow" />
-				<path d="M 850 -30 Q 650 30 420 40" fill="none" stroke="var(--color-data-4)" stroke-width="2" opacity="0.4" stroke-dasharray="8 4" class="flow-arrow" />
+				<path d="M -50 -30 Q 150 30 380 40" fill="none" stroke="var(--color-performance-data-4)" stroke-width="2" opacity="0.4" stroke-dasharray="8 4" class="flow-arrow" />
+				<path d="M 850 -30 Q 650 30 420 40" fill="none" stroke="var(--color-performance-data-4)" stroke-width="2" opacity="0.4" stroke-dasharray="8 4" class="flow-arrow" />
 			{:else if activeScenario === 1}
 				<!-- VIP arrival - highlight south entrance and Lot C -->
 				<ellipse cx="400" cy="680" rx="100" ry="40" fill="var(--color-accent)" opacity="0.2" class="scenario-zone pulse" />
@@ -639,56 +639,56 @@
 				<text x="400" y="640" text-anchor="middle" font-size="11" fill="var(--color-accent)" font-weight="600">VIP ARRIVAL</text>
 			{:else if activeScenario === 2}
 				<!-- Halftime - highlight concourse -->
-				<ellipse cx="400" cy="300" rx="340" ry="250" fill="none" stroke="var(--color-data-2)" stroke-width="30" opacity="0.1" class="scenario-zone pulse" />
-				<text x="400" y="180" text-anchor="middle" font-size="11" fill="var(--color-data-2)" font-weight="600">HALFTIME RUSH</text>
+				<ellipse cx="400" cy="300" rx="340" ry="250" fill="none" stroke="var(--color-performance-data-2)" stroke-width="30" opacity="0.1" class="scenario-zone pulse" />
+				<text x="400" y="180" text-anchor="middle" font-size="11" fill="var(--color-performance-data-2)" font-weight="600">HALFTIME RUSH</text>
 				<!-- Concession hotspots -->
-				<circle cx="200" cy="180" r="25" fill="var(--color-data-2)" opacity="0.2" class="hotspot pulse" />
-				<circle cx="600" cy="180" r="25" fill="var(--color-data-2)" opacity="0.2" class="hotspot pulse" />
-				<circle cx="200" cy="420" r="25" fill="var(--color-data-2)" opacity="0.2" class="hotspot pulse" />
-				<circle cx="600" cy="420" r="25" fill="var(--color-data-2)" opacity="0.2" class="hotspot pulse" />
+				<circle cx="200" cy="180" r="25" fill="var(--color-performance-data-2)" opacity="0.2" class="hotspot pulse" />
+				<circle cx="600" cy="180" r="25" fill="var(--color-performance-data-2)" opacity="0.2" class="hotspot pulse" />
+				<circle cx="200" cy="420" r="25" fill="var(--color-performance-data-2)" opacity="0.2" class="hotspot pulse" />
+				<circle cx="600" cy="420" r="25" fill="var(--color-performance-data-2)" opacity="0.2" class="hotspot pulse" />
 			{:else if activeScenario === 3}
 				<!-- Weather incoming - highlight covered areas -->
-				<rect x="-150" y="-120" width="220" height="150" rx="8" fill="var(--color-data-3)" opacity="0.15" class="scenario-zone pulse" />
-				<rect x="730" y="-120" width="220" height="150" rx="8" fill="var(--color-data-3)" opacity="0.15" class="scenario-zone pulse" />
-				<text x="400" y="-80" text-anchor="middle" font-size="11" fill="var(--color-data-3)" font-weight="600">STORM APPROACHING</text>
+				<rect x="-150" y="-120" width="220" height="150" rx="8" fill="var(--color-performance-data-3)" opacity="0.15" class="scenario-zone pulse" />
+				<rect x="730" y="-120" width="220" height="150" rx="8" fill="var(--color-performance-data-3)" opacity="0.15" class="scenario-zone pulse" />
+				<text x="400" y="-80" text-anchor="middle" font-size="11" fill="var(--color-performance-data-3)" font-weight="600">STORM APPROACHING</text>
 				<!-- Rain effect -->
 				{#each Array(20) as _, i}
-					<line 
-						x1={-100 + i * 55} y1={-140 + (tick * 2 + i * 10) % 80} 
-						x2={-95 + i * 55} y2={-130 + (tick * 2 + i * 10) % 80} 
-						stroke="var(--color-data-3)" stroke-width="1" opacity="0.3" 
+					<line
+						x1={-100 + i * 55} y1={-140 + (tick * 2 + i * 10) % 80}
+						x2={-95 + i * 55} y2={-130 + (tick * 2 + i * 10) % 80}
+						stroke="var(--color-performance-data-3)" stroke-width="1" opacity="0.3"
 					/>
 				{/each}
 			{:else if activeScenario === 4}
 				<!-- Emergency - highlight section 112 area -->
-				<ellipse cx="550" cy="400" rx="80" ry="60" fill="var(--color-error)" opacity="0.2" class="scenario-zone alert-pulse" />
-				<text x="550" y="405" text-anchor="middle" font-size="11" fill="var(--color-error)" font-weight="600">SECTION 112</text>
+				<ellipse cx="550" cy="400" rx="80" ry="60" fill="var(--color-performance-error)" opacity="0.2" class="scenario-zone alert-pulse" />
+				<text x="550" y="405" text-anchor="middle" font-size="11" fill="var(--color-performance-error)" font-weight="600">SECTION 112</text>
 				<!-- Exit path indicators -->
-				<line x1="550" y1="400" x2="400" y2="560" stroke="var(--color-error)" stroke-width="3" stroke-dasharray="10 5" opacity="0.6" class="exit-path" />
-				<line x1="400" y1="560" x2="400" y2="700" stroke="var(--color-error)" stroke-width="3" stroke-dasharray="10 5" opacity="0.6" class="exit-path" />
+				<line x1="550" y1="400" x2="400" y2="560" stroke="var(--color-performance-error)" stroke-width="3" stroke-dasharray="10 5" opacity="0.6" class="exit-path" />
+				<line x1="400" y1="560" x2="400" y2="700" stroke="var(--color-performance-error)" stroke-width="3" stroke-dasharray="10 5" opacity="0.6" class="exit-path" />
 			{:else if activeScenario === 5}
 				<!-- Game end - all exits active -->
-				<text x="400" y="180" text-anchor="middle" font-size="12" fill="var(--color-data-1)" font-weight="600">FINAL BUZZER</text>
+				<text x="400" y="180" text-anchor="middle" font-size="12" fill="var(--color-performance-data-1)" font-weight="600">FINAL BUZZER</text>
 				<!-- Exit flow arrows -->
-				<line x1="400" y1="250" x2="400" y2="40" stroke="var(--color-data-1)" stroke-width="2" opacity="0.4" stroke-dasharray="6 4" class="flow-arrow" />
-				<line x1="400" y1="350" x2="400" y2="580" stroke="var(--color-data-1)" stroke-width="2" opacity="0.4" stroke-dasharray="6 4" class="flow-arrow" />
-				<line x1="300" y1="300" x2="50" y2="300" stroke="var(--color-data-1)" stroke-width="2" opacity="0.4" stroke-dasharray="6 4" class="flow-arrow" />
-				<line x1="500" y1="300" x2="750" y2="300" stroke="var(--color-data-1)" stroke-width="2" opacity="0.4" stroke-dasharray="6 4" class="flow-arrow" />
+				<line x1="400" y1="250" x2="400" y2="40" stroke="var(--color-performance-data-1)" stroke-width="2" opacity="0.4" stroke-dasharray="6 4" class="flow-arrow" />
+				<line x1="400" y1="350" x2="400" y2="580" stroke="var(--color-performance-data-1)" stroke-width="2" opacity="0.4" stroke-dasharray="6 4" class="flow-arrow" />
+				<line x1="300" y1="300" x2="50" y2="300" stroke="var(--color-performance-data-1)" stroke-width="2" opacity="0.4" stroke-dasharray="6 4" class="flow-arrow" />
+				<line x1="500" y1="300" x2="750" y2="300" stroke="var(--color-performance-data-1)" stroke-width="2" opacity="0.4" stroke-dasharray="6 4" class="flow-arrow" />
 				<!-- Parking lot activity -->
-				<rect x="-150" y="-120" width="220" height="150" rx="8" fill="var(--color-data-1)" opacity="0.1" class="scenario-zone pulse" />
-				<rect x="730" y="-120" width="220" height="150" rx="8" fill="var(--color-data-1)" opacity="0.1" class="scenario-zone pulse" />
-				<rect x="290" y="680" width="220" height="140" rx="8" fill="var(--color-data-1)" opacity="0.1" class="scenario-zone pulse" />
+				<rect x="-150" y="-120" width="220" height="150" rx="8" fill="var(--color-performance-data-1)" opacity="0.1" class="scenario-zone pulse" />
+				<rect x="730" y="-120" width="220" height="150" rx="8" fill="var(--color-performance-data-1)" opacity="0.1" class="scenario-zone pulse" />
+				<rect x="290" y="680" width="220" height="140" rx="8" fill="var(--color-performance-data-1)" opacity="0.1" class="scenario-zone pulse" />
 			{:else if activeScenario === 6}
 				<!-- Overnight - minimal activity, perimeter security -->
-				<text x="400" y="180" text-anchor="middle" font-size="11" fill="var(--color-fg-tertiary)" font-weight="600">OVERNIGHT MODE</text>
+				<text x="400" y="180" text-anchor="middle" font-size="11" fill="var(--color-performance-fg-tertiary)" font-weight="600">OVERNIGHT MODE</text>
 				<!-- Dimmed arena -->
-				<ellipse cx="400" cy="300" rx="380" ry="280" fill="var(--color-bg-pure)" opacity="0.6" />
+				<ellipse cx="400" cy="300" rx="380" ry="280" fill="var(--color-performance-bg-pure)" opacity="0.6" />
 				<!-- Security patrol path -->
-				<ellipse cx="400" cy="300" rx="440" ry="330" fill="none" stroke="var(--color-data-1)" stroke-width="2" stroke-dasharray="20 10" opacity="0.3" class="patrol-path" />
+				<ellipse cx="400" cy="300" rx="440" ry="330" fill="none" stroke="var(--color-performance-data-1)" stroke-width="2" stroke-dasharray="20 10" opacity="0.3" class="patrol-path" />
 			{/if}
 
 			<!-- Labels -->
-			<g class="labels" font-size="10" fill="var(--color-fg-tertiary)">
+			<g class="labels" font-size="10" fill="var(--color-performance-fg-tertiary)">
 				<text x="400" y="50" text-anchor="middle">NORTH ENTRANCE</text>
 				<text x="400" y="570" text-anchor="middle">SOUTH ENTRANCE</text>
 				<text x="60" y="305" text-anchor="middle">WEST</text>
@@ -707,7 +707,7 @@
 						class="crowd-person"
 					/>
 				{/each}
-				
+
 				<!-- Movement trail for emergency evacuation -->
 				{#if activeScenario === 4}
 					{#each crowdParticles.slice(0, 8) as particle (particle.id)}
@@ -715,7 +715,7 @@
 							cx={particle.x - 8}
 							cy={particle.y - 8}
 							r={particle.size * 0.5}
-							fill="var(--color-error)"
+							fill="var(--color-performance-error)"
 							opacity="0.2"
 						/>
 					{/each}
@@ -725,33 +725,33 @@
 			<!-- Crowd density heat zones -->
 			{#if activeScenario === 0}
 				<!-- Entering: density at north gate -->
-				<ellipse cx="400" cy="60" rx="80" ry="30" fill="var(--color-data-4)" opacity="0.3" class="density-high" />
+				<ellipse cx="400" cy="60" rx="80" ry="30" fill="var(--color-performance-data-4)" opacity="0.3" class="density-high" />
 			{:else if activeScenario === 1}
 				<!-- VIP: density at south entrance -->
 				<ellipse cx="400" cy="620" rx="60" ry="25" fill="var(--color-accent)" opacity="0.3" class="density-high" />
 			{:else if activeScenario === 2}
 				<!-- Halftime: concession crowds -->
 				<g class="concession-crowds">
-					<ellipse cx="200" cy="180" rx="40" ry="25" fill="var(--color-data-2)" opacity="0.25" class="density-high" />
-					<ellipse cx="600" cy="180" rx="40" ry="25" fill="var(--color-data-2)" opacity="0.25" class="density-high" />
-					<ellipse cx="200" cy="420" rx="40" ry="25" fill="var(--color-data-2)" opacity="0.25" class="density-high" />
-					<ellipse cx="600" cy="420" rx="40" ry="25" fill="var(--color-data-2)" opacity="0.25" class="density-high" />
+					<ellipse cx="200" cy="180" rx="40" ry="25" fill="var(--color-performance-data-2)" opacity="0.25" class="density-high" />
+					<ellipse cx="600" cy="180" rx="40" ry="25" fill="var(--color-performance-data-2)" opacity="0.25" class="density-high" />
+					<ellipse cx="200" cy="420" rx="40" ry="25" fill="var(--color-performance-data-2)" opacity="0.25" class="density-high" />
+					<ellipse cx="600" cy="420" rx="40" ry="25" fill="var(--color-performance-data-2)" opacity="0.25" class="density-high" />
 				</g>
 			{:else if activeScenario === 4}
 				<!-- Emergency: density near exit -->
-				<ellipse cx="400" cy="540" rx="100" ry="40" fill="var(--color-error)" opacity="0.2" class="density-high" />
+				<ellipse cx="400" cy="540" rx="100" ry="40" fill="var(--color-performance-error)" opacity="0.2" class="density-high" />
 			{:else if activeScenario === 5}
 				<!-- Game end: density at all exits -->
-				<ellipse cx="400" cy="60" rx="60" ry="25" fill="var(--color-data-1)" opacity="0.2" class="density-high" />
-				<ellipse cx="400" cy="540" rx="60" ry="25" fill="var(--color-data-1)" opacity="0.2" class="density-high" />
-				<ellipse cx="60" cy="300" rx="25" ry="40" fill="var(--color-data-1)" opacity="0.2" class="density-high" />
-				<ellipse cx="740" cy="300" rx="25" ry="40" fill="var(--color-data-1)" opacity="0.2" class="density-high" />
+				<ellipse cx="400" cy="60" rx="60" ry="25" fill="var(--color-performance-data-1)" opacity="0.2" class="density-high" />
+				<ellipse cx="400" cy="540" rx="60" ry="25" fill="var(--color-performance-data-1)" opacity="0.2" class="density-high" />
+				<ellipse cx="60" cy="300" rx="25" ry="40" fill="var(--color-performance-data-1)" opacity="0.2" class="density-high" />
+				<ellipse cx="740" cy="300" rx="25" ry="40" fill="var(--color-performance-data-1)" opacity="0.2" class="density-high" />
 			{/if}
 
 			<!-- Live Mode Indicator -->
 			{#if liveMode}
 				<g class="live-badge">
-					<rect x="-180" y="-130" width="60" height="24" rx="4" fill="var(--color-error)" opacity="0.9" />
+					<rect x="-180" y="-130" width="60" height="24" rx="4" fill="var(--color-performance-error)" opacity="0.9" />
 					<circle cx="-165" cy="-118" r="4" fill="white" class="live-dot" />
 					<text x="-145" y="-113" font-size="11" fill="white" font-weight="600">LIVE</text>
 				</g>
@@ -759,27 +759,27 @@
 
 			<!-- Scenario Info Panel (bottom right) -->
 			<g class="scenario-info" transform="translate(700, 620)" class:transitioning={scenarioTransitioning}>
-				<rect x="0" y="0" width="280" height="120" rx="8" fill="var(--color-bg-elevated)" opacity="0.95" stroke="var(--color-border-emphasis)" stroke-width="1" />
-				
+				<rect x="0" y="0" width="280" height="120" rx="8" fill="var(--color-performance-bg-elevated)" opacity="0.95" stroke="var(--color-performance-border-emphasis)" stroke-width="1" />
+
 				<!-- Scenario title -->
-				<text x="15" y="25" font-size="10" fill="var(--color-fg-tertiary)" font-weight="500">SCENARIO {activeScenario + 1} OF {intelligenceScenarios.length}</text>
+				<text x="15" y="25" font-size="10" fill="var(--color-performance-fg-tertiary)" font-weight="500">SCENARIO {activeScenario + 1} OF {intelligenceScenarios.length}</text>
 				<text x="15" y="48" font-size="14" fill="var(--color-fg-default)" font-weight="600">{currentScenario.trigger}</text>
-				
+
 				<!-- Phase indicator -->
 				<rect x="15" y="60" width="auto" height="18" rx="3" fill="var(--color-accent)" opacity="0.2" />
 				<text x="22" y="73" font-size="10" fill="var(--color-accent)" font-weight="500">{currentScenario.phase}</text>
-				
+
 				<!-- Visual cue -->
-				<text x="15" y="100" font-size="9" fill="var(--color-fg-muted)" font-style="italic">{currentScenario.visualCue}</text>
-				
+				<text x="15" y="100" font-size="9" fill="var(--color-performance-fg-muted)" font-style="italic">{currentScenario.visualCue}</text>
+
 				<!-- Progress dots -->
 				<g transform="translate(200, 18)">
 					{#each intelligenceScenarios as _, i}
-						<circle 
-							cx={i * 10} 
-							cy="0" 
-							r="3" 
-							fill={i === activeScenario ? 'var(--color-accent)' : 'var(--color-fg-tertiary)'} 
+						<circle
+							cx={i * 10}
+							cy="0"
+							r="3"
+							fill={i === activeScenario ? 'var(--color-accent)' : 'var(--color-performance-fg-tertiary)'}
 							opacity={i === activeScenario ? 1 : 0.3}
 						/>
 					{/each}
@@ -788,8 +788,8 @@
 
 			<!-- Attendance counter -->
 			<g class="attendance-counter" transform="translate(-180, 700)">
-				<rect x="0" y="0" width="140" height="40" rx="6" fill="var(--color-bg-surface)" opacity="0.9" stroke="var(--color-border-default)" />
-				<text x="15" y="18" font-size="9" fill="var(--color-fg-tertiary)">CURRENT ATTENDANCE</text>
+				<rect x="0" y="0" width="140" height="40" rx="6" fill="var(--color-performance-bg-surface)" opacity="0.9" stroke="var(--color-performance-border-default)" />
+				<text x="15" y="18" font-size="9" fill="var(--color-performance-fg-tertiary)">CURRENT ATTENDANCE</text>
 				<text x="15" y="33" font-size="14" fill="var(--color-fg-default)" font-weight="600">{currentEvent.attendance.toLocaleString()}</text>
 			</g>
 		</svg>
@@ -937,8 +937,8 @@
 			<div class="emphasis-content">
 				<h3>Safety First. Everything Else Second.</h3>
 				<p>
-					The building can make your experience better—but not if it means making you less safe. 
-					Every suggestion the system makes gets checked against one question: does this keep people secure? 
+					The building can make your experience better—but not if it means making you less safe.
+					Every suggestion the system makes gets checked against one question: does this keep people secure?
 					If there's ever a conflict, safety wins. No exceptions.
 				</p>
 			</div>
@@ -1003,7 +1003,7 @@
 
 		<div class="reasoning-benefit">
 			<p>
-				<strong>Why this matters:</strong> You can question it. You can override it. You can understand 
+				<strong>Why this matters:</strong> You can question it. You can override it. You can understand
 				why it did what it did. That's the difference between automation you trust and automation you tolerate.
 			</p>
 		</div>
@@ -1065,11 +1065,11 @@
 
 		<div class="holistic-benefit">
 			<p>
-				<strong>The old way:</strong> Six different people get six different alerts. They each make changes. 
+				<strong>The old way:</strong> Six different people get six different alerts. They each make changes.
 				Things get missed. Things conflict. It takes an hour of coordination.
 			</p>
 			<p>
-				<strong>AI-native:</strong> One coherent plan, generated in seconds, reviewed by one person, 
+				<strong>AI-native:</strong> One coherent plan, generated in seconds, reviewed by one person,
 				executed across everything. The systems already know how to work together.
 			</p>
 		</div>
@@ -1134,8 +1134,8 @@
 			<div class="loop-content">
 				<h3>Human in the Loop — Always</h3>
 				<p>
-					The AI proposes. Humans dispose. Every critical decision requires human confirmation. 
-					Every failure is logged. Every override teaches the system. Every escalation is an 
+					The AI proposes. Humans dispose. Every critical decision requires human confirmation.
+					Every failure is logged. Every override teaches the system. Every escalation is an
 					admission: "I don't know enough—help me."
 				</p>
 				<div class="loop-principles">
@@ -1164,9 +1164,9 @@
 			<div class="note-content">
 				<h4>This System Is Not Perfect</h4>
 				<p>
-					Sensors fail. Predictions are wrong. Edge cases exist. The value of AI-native automation 
-					isn't perfection—it's <strong>speed of detection</strong>, <strong>transparency of failure</strong>, 
-					<strong>rapid human escalation</strong>, and <strong>continuous learning</strong>. 
+					Sensors fail. Predictions are wrong. Edge cases exist. The value of AI-native automation
+					isn't perfection—it's <strong>speed of detection</strong>, <strong>transparency of failure</strong>,
+					<strong>rapid human escalation</strong>, and <strong>continuous learning</strong>.
 					The building gets smarter every day, but humans remain in control.
 				</p>
 			</div>
@@ -1178,9 +1178,9 @@
 		<div class="hypothesis">
 			<h3>What We're Trying to Show</h3>
 			<p>
-				Buildings can be helpful without being creepy. They can learn without pretending to be smarter than they are. 
-				They can make things easier while keeping people safe—and keeping people in charge. 
-				When something goes wrong, you'll know. When the system isn't sure, it asks. When you override it, it listens. 
+				Buildings can be helpful without being creepy. They can learn without pretending to be smarter than they are.
+				They can make things easier while keeping people safe—and keeping people in charge.
+				When something goes wrong, you'll know. When the system isn't sure, it asks. When you override it, it listens.
 				That's the kind of automation we believe in: <strong>honest</strong>, <strong>humble</strong>, and <strong>always getting better</strong>.
 			</p>
 		</div>
@@ -1203,45 +1203,45 @@
 <style>
 	.arena-experiment {
 		min-height: 100vh;
-		background: var(--color-bg-pure);
-		color: var(--color-fg-primary);
+		background: var(--color-performance-bg-pure);
+		color: var(--color-performance-fg-primary);
 	}
 
 	/* Header */
 	.experiment-header {
-		padding: var(--space-xl) var(--space-lg);
+		padding: var(--space-performance-xl) var(--space-performance-lg);
 		display: flex;
 		justify-content: space-between;
 		align-items: flex-start;
 		flex-wrap: wrap;
-		gap: var(--space-md);
+		gap: var(--space-performance-md);
 	}
 
 	.experiment-label {
 		display: inline-block;
-		padding: var(--space-xs) var(--space-sm);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-sm);
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		padding: var(--space-performance-xs) var(--space-performance-sm);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-sm);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 		text-transform: uppercase;
 		letter-spacing: 0.1em;
-		margin-bottom: var(--space-sm);
+		margin-bottom: var(--space-performance-sm);
 	}
 
 	.experiment-title {
-		font-size: var(--text-h1);
+		font-size: var(--text-performance-h1);
 		font-weight: 700;
-		margin-bottom: var(--space-sm);
-		background: linear-gradient(135deg, var(--color-fg-primary), var(--color-accent));
+		margin-bottom: var(--space-performance-sm);
+		background: linear-gradient(135deg, var(--color-performance-fg-primary), var(--color-accent));
 		-webkit-background-clip: text;
 		-webkit-text-fill-color: transparent;
 		background-clip: text;
 	}
 
 	.experiment-description {
-		font-size: var(--text-body);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body);
+		color: var(--color-performance-fg-tertiary);
 		max-width: 600px;
 		line-height: 1.6;
 	}
@@ -1250,28 +1250,28 @@
 		display: flex;
 		flex-direction: column;
 		align-items: flex-end;
-		gap: var(--space-xs);
-		padding: var(--space-md);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
+		gap: var(--space-performance-xs);
+		padding: var(--space-performance-md);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.event-phase {
-		font-size: var(--text-caption);
+		font-size: var(--text-performance-caption);
 		color: var(--color-accent);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 	}
 
 	.event-name {
-		font-size: var(--text-body);
-		color: var(--color-fg-primary);
+		font-size: var(--text-performance-body);
+		color: var(--color-performance-fg-primary);
 		font-weight: 600;
 	}
 
 	.attendance {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 		font-variant-numeric: tabular-nums;
 	}
 
@@ -1280,39 +1280,39 @@
 		display: flex;
 		flex-direction: column;
 		align-items: flex-end;
-		gap: var(--space-sm);
+		gap: var(--space-performance-sm);
 	}
 
 	/* Live Toggle */
 	.live-toggle {
 		display: flex;
 		align-items: center;
-		gap: var(--space-xs);
-		padding: var(--space-xs) var(--space-sm);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-md);
-		font-size: var(--text-caption);
+		gap: var(--space-performance-xs);
+		padding: var(--space-performance-xs) var(--space-performance-sm);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-md);
+		font-size: var(--text-performance-caption);
 		font-weight: 600;
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 		cursor: pointer;
-		transition: all var(--duration-standard) var(--ease-standard);
+		transition: all var(--duration-performance-standard) var(--ease-performance-standard);
 	}
 
 	.live-toggle:hover {
-		border-color: var(--color-border-emphasis);
+		border-color: var(--color-performance-border-emphasis);
 	}
 
 	.live-toggle.active {
-		background: var(--color-error);
-		border-color: var(--color-error);
+		background: var(--color-performance-error);
+		border-color: var(--color-performance-error);
 		color: white;
 	}
 
 	.live-indicator {
 		width: 8px;
 		height: 8px;
-		border-radius: var(--radius-full);
-		background: var(--color-fg-muted);
+		border-radius: var(--radius-performance-scale-full);
+		background: var(--color-performance-fg-muted);
 	}
 
 	.live-toggle.active .live-indicator {
@@ -1332,8 +1332,8 @@
 	.visualization-container {
 		display: grid;
 		grid-template-columns: 1fr 320px;
-		gap: var(--space-lg);
-		padding: var(--space-lg);
+		gap: var(--space-performance-lg);
+		padding: var(--space-performance-lg);
 	}
 
 	@media (max-width: 1024px) {
@@ -1346,8 +1346,8 @@
 		width: 100%;
 		height: auto;
 		max-height: 70vh;
-		border-radius: var(--radius-lg);
-		background: var(--color-bg-subtle);
+		border-radius: var(--radius-performance-scale-lg);
+		background: var(--color-performance-bg-subtle);
 	}
 
 	/* SVG Animations */
@@ -1472,11 +1472,11 @@
 	}
 
 	@keyframes securityPulse {
-		0% { 
+		0% {
 			r: 8;
 			opacity: 0.5;
 		}
-		100% { 
+		100% {
 			r: 25;
 			opacity: 0;
 		}
@@ -1602,21 +1602,21 @@
 	.status-panels {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-md);
+		gap: var(--space-performance-md);
 	}
 
 	.status-panel {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
-		padding: var(--space-md);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
+		padding: var(--space-performance-md);
 	}
 
 	.panel-header {
 		display: flex;
 		align-items: center;
-		gap: var(--space-sm);
-		margin-bottom: var(--space-sm);
-		padding-bottom: var(--space-sm);
+		gap: var(--space-performance-sm);
+		margin-bottom: var(--space-performance-sm);
+		padding-bottom: var(--space-performance-sm);
 	}
 
 	.panel-icon {
@@ -1625,119 +1625,119 @@
 
 	.panel-title {
 		font-weight: 600;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		flex: 1;
 	}
 
 	.status-indicator {
-		font-size: var(--text-caption);
+		font-size: var(--text-performance-caption);
 		padding: 2px 8px;
-		border-radius: var(--radius-full);
+		border-radius: var(--radius-performance-scale-full);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 	}
 
 	.status-indicator.monitoring {
-		background: var(--color-data-1);
-		color: var(--color-bg-pure);
+		background: var(--color-performance-data-1);
+		color: var(--color-performance-bg-pure);
 	}
 
 	.status-indicator.armed {
-		background: var(--color-data-2);
-		color: var(--color-bg-pure);
+		background: var(--color-performance-data-2);
+		color: var(--color-performance-bg-pure);
 	}
 
 	.status-indicator.alert {
-		background: var(--color-error);
+		background: var(--color-performance-error);
 		color: white;
 	}
 
 	.status-indicator.active {
-		background: var(--color-data-2);
-		color: var(--color-bg-pure);
+		background: var(--color-performance-data-2);
+		color: var(--color-performance-bg-pure);
 	}
 
 	.panel-metrics {
 		display: grid;
 		grid-template-columns: 1fr 1fr;
-		gap: var(--space-sm);
-		margin-bottom: var(--space-sm);
+		gap: var(--space-performance-sm);
+		margin-bottom: var(--space-performance-sm);
 	}
 
 	.metric {
 		text-align: center;
-		padding: var(--space-sm);
-		background: var(--color-bg-subtle);
-		border-radius: var(--radius-md);
+		padding: var(--space-performance-sm);
+		background: var(--color-performance-bg-subtle);
+		border-radius: var(--radius-performance-scale-md);
 	}
 
 	.metric-value {
 		display: block;
-		font-size: var(--text-h3);
+		font-size: var(--text-performance-h3);
 		font-weight: 700;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		font-variant-numeric: tabular-nums;
 	}
 
 	.metric-label {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.panel-action button {
 		width: 100%;
-		padding: var(--space-sm);
-		background: var(--color-bg-subtle);
-		border-radius: var(--radius-md);
-		color: var(--color-fg-secondary);
-		font-size: var(--text-body-sm);
+		padding: var(--space-performance-sm);
+		background: var(--color-performance-bg-subtle);
+		border-radius: var(--radius-performance-scale-md);
+		color: var(--color-performance-fg-secondary);
+		font-size: var(--text-performance-body-sm);
 		cursor: pointer;
-		transition: all var(--duration-standard) var(--ease-standard);
+		transition: all var(--duration-performance-standard) var(--ease-performance-standard);
 	}
 
 	.panel-action button:hover {
-		background: var(--color-hover);
-		border-color: var(--color-border-emphasis);
-		color: var(--color-fg-primary);
+		background: var(--color-performance-hover);
+		border-color: var(--color-performance-border-emphasis);
+		color: var(--color-performance-fg-primary);
 	}
 
 	/* HVAC Panel */
 	.hvac-zones-list {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-xs);
+		gap: var(--space-performance-xs);
 	}
 
 	.hvac-zone-item {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		padding: var(--space-xs) var(--space-sm);
-		background: var(--color-bg-subtle);
-		border-radius: var(--radius-sm);
+		padding: var(--space-performance-xs) var(--space-performance-sm);
+		background: var(--color-performance-bg-subtle);
+		border-radius: var(--radius-performance-scale-sm);
 	}
 
 	.zone-name {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.zone-temp {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 		font-weight: 600;
-		color: var(--color-data-2);
+		color: var(--color-performance-data-2);
 		font-variant-numeric: tabular-nums;
 	}
 
 	.zone-temp.warning {
-		color: var(--color-data-4);
+		color: var(--color-performance-data-4);
 	}
 
 	/* Notifications Panel */
 	.notifications-list {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-xs);
+		gap: var(--space-performance-xs);
 		max-height: 200px;
 		overflow-y: auto;
 	}
@@ -1745,11 +1745,11 @@
 	.notification-item {
 		display: grid;
 		grid-template-columns: auto 1fr auto;
-		gap: var(--space-sm);
-		padding: var(--space-xs) var(--space-sm);
-		background: var(--color-bg-subtle);
-		border-radius: var(--radius-sm);
-		font-size: var(--text-caption);
+		gap: var(--space-performance-sm);
+		padding: var(--space-performance-xs) var(--space-performance-sm);
+		background: var(--color-performance-bg-subtle);
+		border-radius: var(--radius-performance-scale-sm);
+		font-size: var(--text-performance-caption);
 		align-items: center;
 	}
 
@@ -1759,17 +1759,17 @@
 	}
 
 	.notif-message {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.notif-time {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 	.experiment-footer {
-		padding: var(--space-xl) var(--space-lg);
+		padding: var(--space-performance-xl) var(--space-performance-lg);
 		display: grid;
 		grid-template-columns: 2fr 1fr;
-		gap: var(--space-xl);
+		gap: var(--space-performance-xl);
 	}
 
 	@media (max-width: 768px) {
@@ -1779,76 +1779,76 @@
 	}
 
 	.hypothesis h3 {
-		font-size: var(--text-h3);
+		font-size: var(--text-performance-h3);
 		font-weight: 600;
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-sm);
+		color: var(--color-performance-fg-primary);
+		margin-bottom: var(--space-performance-sm);
 	}
 
 	.hypothesis p {
-		font-size: var(--text-body);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body);
+		color: var(--color-performance-fg-tertiary);
 		line-height: 1.7;
 	}
 
 	.patterns-note .label {
 		display: block;
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 		text-transform: uppercase;
 		letter-spacing: 0.1em;
-		margin-bottom: var(--space-sm);
+		margin-bottom: var(--space-performance-sm);
 	}
 
 	.pattern-tags {
 		display: flex;
 		flex-wrap: wrap;
-		gap: var(--space-xs);
+		gap: var(--space-performance-xs);
 	}
 
 	.tag {
-		padding: var(--space-xs) var(--space-sm);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-sm);
-		font-size: var(--text-caption);
-		color: var(--color-fg-secondary);
+		padding: var(--space-performance-xs) var(--space-performance-sm);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-sm);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-secondary);
 		font-family: monospace;
 	}
 
 	/* Cross-System Intelligence Section */
 	.intelligence-section {
-		padding: var(--space-xl) var(--space-lg);
-		background: var(--color-bg-subtle);
+		padding: var(--space-performance-xl) var(--space-performance-lg);
+		background: var(--color-performance-bg-subtle);
 	}
 
 	.section-header {
 		text-align: center;
-		margin-bottom: var(--space-xl);
+		margin-bottom: var(--space-performance-xl);
 	}
 
 	.section-header h2 {
-		font-size: var(--text-h2);
+		font-size: var(--text-performance-h2);
 		font-weight: 700;
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-sm);
+		color: var(--color-performance-fg-primary);
+		margin-bottom: var(--space-performance-sm);
 	}
 
 	.section-header p {
-		font-size: var(--text-body);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body);
+		color: var(--color-performance-fg-tertiary);
 		max-width: 600px;
 		margin: 0 auto;
 	}
 
 	.scenarios-container {
 		max-width: 900px;
-		margin: 0 auto var(--space-xl);
+		margin: 0 auto var(--space-performance-xl);
 	}
 
 	.scenario-tabs {
 		display: flex;
-		gap: var(--space-sm);
-		margin-bottom: var(--space-lg);
+		gap: var(--space-performance-sm);
+		margin-bottom: var(--space-performance-lg);
 		flex-wrap: wrap;
 	}
 
@@ -1857,21 +1857,21 @@
 		min-width: 200px;
 		display: flex;
 		align-items: center;
-		gap: var(--space-sm);
-		padding: var(--space-md);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
+		gap: var(--space-performance-sm);
+		padding: var(--space-performance-md);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
 		cursor: pointer;
-		transition: all var(--duration-standard) var(--ease-standard);
+		transition: all var(--duration-performance-standard) var(--ease-performance-standard);
 		text-align: left;
 	}
 
 	.scenario-tab:hover {
-		border-color: var(--color-border-emphasis);
+		border-color: var(--color-performance-border-emphasis);
 	}
 
 	.scenario-tab.active {
-		background: var(--color-bg-pure);
+		background: var(--color-performance-bg-pure);
 		border-color: var(--color-accent);
 		box-shadow: 0 0 0 1px var(--color-accent);
 	}
@@ -1882,65 +1882,65 @@
 		justify-content: center;
 		width: 28px;
 		height: 28px;
-		background: var(--color-bg-subtle);
-		border-radius: var(--radius-full);
-		font-size: var(--text-body-sm);
+		background: var(--color-performance-bg-subtle);
+		border-radius: var(--radius-performance-scale-full);
+		font-size: var(--text-performance-body-sm);
 		font-weight: 600;
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.scenario-tab.active .tab-number {
 		background: var(--color-accent);
-		color: var(--color-bg-pure);
+		color: var(--color-performance-bg-pure);
 	}
 
 	.tab-trigger {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
 		line-height: 1.4;
 	}
 
 	.scenario-detail {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
-		padding: var(--space-lg);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
+		padding: var(--space-performance-lg);
 	}
 
 	.scenario-trigger {
 		display: flex;
 		align-items: center;
-		gap: var(--space-md);
-		padding-bottom: var(--space-md);
-		margin-bottom: var(--space-lg);
+		gap: var(--space-performance-md);
+		padding-bottom: var(--space-performance-md);
+		margin-bottom: var(--space-performance-lg);
 	}
 
 	.trigger-label {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 		text-transform: uppercase;
 		letter-spacing: 0.1em;
 	}
 
 	.trigger-text {
-		font-size: var(--text-body-lg);
+		font-size: var(--text-performance-body-lg);
 		font-weight: 600;
-		color: var(--color-data-4);
+		color: var(--color-performance-data-4);
 	}
 
 	.responses-flow {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-sm);
-		margin-bottom: var(--space-lg);
+		gap: var(--space-performance-sm);
+		margin-bottom: var(--space-performance-lg);
 	}
 
 	.response-card {
 		display: flex;
 		align-items: center;
-		gap: var(--space-sm);
-		padding: var(--space-sm) var(--space-md);
-		background: var(--color-bg-subtle);
-		border-radius: var(--radius-md);
+		gap: var(--space-performance-sm);
+		padding: var(--space-performance-sm) var(--space-performance-md);
+		background: var(--color-performance-bg-subtle);
+		border-radius: var(--radius-performance-scale-md);
 		animation: slideIn 0.3s ease-out forwards;
 		opacity: 0;
 		transform: translateX(-10px);
@@ -1954,29 +1954,29 @@
 	}
 
 	.response-system {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 		font-weight: 600;
 		color: var(--color-accent);
 		min-width: 80px;
 	}
 
 	.response-arrow {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.response-action {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.scenario-insight {
 		display: flex;
 		align-items: flex-start;
-		gap: var(--space-sm);
-		padding: var(--space-md);
-		background: linear-gradient(135deg, var(--color-bg-subtle), transparent);
-		border-left: 3px solid var(--color-data-2);
-		border-radius: 0 var(--radius-md) var(--radius-md) 0;
+		gap: var(--space-performance-sm);
+		padding: var(--space-performance-md);
+		background: linear-gradient(135deg, var(--color-performance-bg-subtle), transparent);
+		border-left: 3px solid var(--color-performance-data-2);
+		border-radius: 0 var(--radius-performance-scale-md) var(--radius-performance-scale-md) 0;
 	}
 
 	.insight-icon {
@@ -1984,8 +1984,8 @@
 	}
 
 	.insight-text {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
 		font-style: italic;
 	}
 
@@ -1993,17 +1993,17 @@
 	.human-loop-callout {
 		display: flex;
 		align-items: center;
-		gap: var(--space-sm);
-		padding: var(--space-sm) var(--space-md);
-		background: var(--color-bg-subtle);
-		border: 1px dashed var(--color-border-emphasis);
-		border-radius: var(--radius-md);
-		margin-bottom: var(--space-md);
+		gap: var(--space-performance-sm);
+		padding: var(--space-performance-sm) var(--space-performance-md);
+		background: var(--color-performance-bg-subtle);
+		border: 1px dashed var(--color-performance-border-emphasis);
+		border-radius: var(--radius-performance-scale-md);
+		margin-bottom: var(--space-performance-md);
 	}
 
 	.human-loop-callout.critical {
 		background: rgba(255, 200, 50, 0.1);
-		border-color: var(--color-data-4);
+		border-color: var(--color-performance-data-4);
 		border-style: solid;
 		border-width: 2px;
 	}
@@ -2013,26 +2013,26 @@
 	}
 
 	.human-text {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.human-loop-callout.critical .human-text {
-		color: var(--color-data-4);
+		color: var(--color-performance-data-4);
 		font-weight: 600;
 	}
 
 	/* Security Emphasis */
 	.security-emphasis {
 		display: flex;
-		gap: var(--space-lg);
+		gap: var(--space-performance-lg);
 		align-items: flex-start;
 		max-width: 700px;
 		margin: 0 auto;
-		padding: var(--space-lg);
-		background: var(--color-bg-surface);
-		border: 2px solid var(--color-data-1);
-		border-radius: var(--radius-lg);
+		padding: var(--space-performance-lg);
+		background: var(--color-performance-bg-surface);
+		border: 2px solid var(--color-performance-data-1);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.emphasis-icon {
@@ -2041,29 +2041,29 @@
 	}
 
 	.emphasis-content h3 {
-		font-size: var(--text-h3);
+		font-size: var(--text-performance-h3);
 		font-weight: 600;
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-xs);
+		color: var(--color-performance-fg-primary);
+		margin-bottom: var(--space-performance-xs);
 	}
 
 	.emphasis-content p {
-		font-size: var(--text-body);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body);
+		color: var(--color-performance-fg-tertiary);
 		line-height: 1.6;
 	}
 
 	/* Incident Log Section */
 	.incident-section {
-		padding: var(--space-xl) var(--space-lg);
-		background: var(--color-bg-pure);
+		padding: var(--space-performance-xl) var(--space-performance-lg);
+		background: var(--color-performance-bg-pure);
 	}
 
 	.incident-log {
 		max-width: 900px;
-		margin: 0 auto var(--space-xl);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
+		margin: 0 auto var(--space-performance-xl);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
 		overflow: hidden;
 	}
 
@@ -2071,47 +2071,47 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		padding: var(--space-md) var(--space-lg);
-		background: var(--color-bg-subtle);
+		padding: var(--space-performance-md) var(--space-performance-lg);
+		background: var(--color-performance-bg-subtle);
 		flex-wrap: wrap;
-		gap: var(--space-sm);
+		gap: var(--space-performance-sm);
 	}
 
 	.log-title {
 		font-weight: 600;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.log-legend {
 		display: flex;
 		flex-wrap: wrap;
-		gap: var(--space-md);
-		font-size: var(--text-caption);
+		gap: var(--space-performance-md);
+		font-size: var(--text-performance-caption);
 		max-width: 100%;
 	}
 
 	.legend-item {
 		display: flex;
 		align-items: center;
-		gap: var(--space-xs);
-		color: var(--color-fg-muted);
+		gap: var(--space-performance-xs);
+		color: var(--color-performance-fg-muted);
 		min-width: 0;
 	}
 
 	.legend-item.success {
-		color: var(--color-data-2);
+		color: var(--color-performance-data-2);
 	}
 
 	.legend-item.failure {
-		color: var(--color-error);
+		color: var(--color-performance-error);
 	}
 
 	.legend-item.override {
-		color: var(--color-data-4);
+		color: var(--color-performance-data-4);
 	}
 
 	.legend-item.escalation {
-		color: var(--color-data-1);
+		color: var(--color-performance-data-1);
 	}
 
 	.incidents-list {
@@ -2120,8 +2120,8 @@
 	}
 
 	.incident-item {
-		padding: var(--space-md) var(--space-lg);
-		transition: background var(--duration-micro) var(--ease-standard);
+		padding: var(--space-performance-md) var(--space-performance-lg);
+		transition: background var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.incident-item:last-child {
@@ -2129,37 +2129,37 @@
 	}
 
 	.incident-item:hover {
-		background: var(--color-bg-subtle);
+		background: var(--color-performance-bg-subtle);
 	}
 
 	.incident-item.failure {
-		border-left: 3px solid var(--color-error);
+		border-left: 3px solid var(--color-performance-error);
 	}
 
 	.incident-item.success {
-		border-left: 3px solid var(--color-data-2);
+		border-left: 3px solid var(--color-performance-data-2);
 	}
 
 	.incident-item.override {
-		border-left: 3px solid var(--color-data-4);
+		border-left: 3px solid var(--color-performance-data-4);
 	}
 
 	.incident-item.escalation {
-		border-left: 3px solid var(--color-data-1);
+		border-left: 3px solid var(--color-performance-data-1);
 	}
 
 	.incident-header {
 		display: flex;
 		align-items: center;
-		gap: var(--space-sm);
-		margin-bottom: var(--space-xs);
+		gap: var(--space-performance-sm);
+		margin-bottom: var(--space-performance-xs);
 		flex-wrap: wrap;
 	}
 
 	.incident-time {
 		font-family: monospace;
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.incident-type-badge {
@@ -2168,116 +2168,116 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		border-radius: var(--radius-full);
+		border-radius: var(--radius-performance-scale-full);
 		font-size: 10px;
 		font-weight: bold;
 	}
 
 	.incident-type-badge.success {
-		background: var(--color-data-2);
-		color: var(--color-bg-pure);
+		background: var(--color-performance-data-2);
+		color: var(--color-performance-bg-pure);
 	}
 
 	.incident-type-badge.failure {
-		background: var(--color-error);
+		background: var(--color-performance-error);
 		color: white;
 	}
 
 	.incident-type-badge.override {
-		background: var(--color-data-4);
-		color: var(--color-bg-pure);
+		background: var(--color-performance-data-4);
+		color: var(--color-performance-bg-pure);
 	}
 
 	.incident-type-badge.escalation {
-		background: var(--color-data-1);
-		color: var(--color-bg-pure);
+		background: var(--color-performance-data-1);
+		color: var(--color-performance-bg-pure);
 	}
 
 	.incident-system {
 		font-weight: 600;
-		color: var(--color-fg-secondary);
-		font-size: var(--text-body-sm);
+		color: var(--color-performance-fg-secondary);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.human-badge {
-		font-size: var(--text-caption);
+		font-size: var(--text-performance-caption);
 		padding: 2px 6px;
-		background: var(--color-bg-subtle);
-		border-radius: var(--radius-sm);
-		color: var(--color-fg-muted);
+		background: var(--color-performance-bg-subtle);
+		border-radius: var(--radius-performance-scale-sm);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.incident-event {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-xs);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-primary);
+		margin-bottom: var(--space-performance-xs);
 	}
 
 	.incident-resolution,
 	.incident-learned {
-		font-size: var(--text-caption);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-tertiary);
 		line-height: 1.5;
 	}
 
 	.resolution-label,
 	.learned-label {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 		font-weight: 500;
 	}
 
 	.incident-learned {
-		color: var(--color-data-2);
+		color: var(--color-performance-data-2);
 		font-style: italic;
 	}
 
 	/* Human in the Loop Emphasis */
 	.human-loop-emphasis {
 		max-width: 900px;
-		margin: 0 auto var(--space-xl);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
-		padding: var(--space-lg);
+		margin: 0 auto var(--space-performance-xl);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
+		padding: var(--space-performance-lg);
 	}
 
 	.loop-visual {
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		gap: var(--space-sm);
-		margin-bottom: var(--space-lg);
+		gap: var(--space-performance-sm);
+		margin-bottom: var(--space-performance-lg);
 		flex-wrap: wrap;
 	}
 
 	.loop-node {
-		padding: var(--space-sm) var(--space-md);
-		border-radius: var(--radius-md);
-		font-size: var(--text-body-sm);
+		padding: var(--space-performance-sm) var(--space-performance-md);
+		border-radius: var(--radius-performance-scale-md);
+		font-size: var(--text-performance-body-sm);
 		font-weight: 600;
 	}
 
 	.loop-node.ai {
 		background: var(--color-accent);
-		color: var(--color-bg-pure);
+		color: var(--color-performance-bg-pure);
 	}
 
 	.loop-node.action {
-		background: var(--color-bg-subtle);
-		color: var(--color-fg-secondary);
+		background: var(--color-performance-bg-subtle);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.loop-node.human {
-		background: var(--color-data-2);
-		color: var(--color-bg-pure);
+		background: var(--color-performance-data-2);
+		color: var(--color-performance-bg-pure);
 	}
 
 	.loop-node.feedback {
-		background: var(--color-data-4);
-		color: var(--color-bg-pure);
+		background: var(--color-performance-data-4);
+		color: var(--color-performance-bg-pure);
 	}
 
 	.loop-arrow {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 		font-size: 1.2em;
 	}
 
@@ -2286,35 +2286,35 @@
 	}
 
 	.loop-content h3 {
-		font-size: var(--text-h3);
+		font-size: var(--text-performance-h3);
 		font-weight: 600;
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-sm);
+		color: var(--color-performance-fg-primary);
+		margin-bottom: var(--space-performance-sm);
 		text-align: center;
 	}
 
 	.loop-content > p {
-		font-size: var(--text-body);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body);
+		color: var(--color-performance-fg-tertiary);
 		line-height: 1.6;
 		text-align: center;
 		max-width: 700px;
-		margin: 0 auto var(--space-lg);
+		margin: 0 auto var(--space-performance-lg);
 	}
 
 	.loop-principles {
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr));
-		gap: var(--space-md);
+		gap: var(--space-performance-md);
 	}
 
 	.principle {
 		display: flex;
 		align-items: flex-start;
-		gap: var(--space-sm);
-		padding: var(--space-sm);
-		background: var(--color-bg-subtle);
-		border-radius: var(--radius-md);
+		gap: var(--space-performance-sm);
+		padding: var(--space-performance-sm);
+		background: var(--color-performance-bg-subtle);
+		border-radius: var(--radius-performance-scale-md);
 		min-width: 0;
 	}
 
@@ -2324,8 +2324,8 @@
 	}
 
 	.principle-text {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
 		line-height: 1.4;
 		min-width: 0;
 		overflow-wrap: anywhere;
@@ -2334,14 +2334,14 @@
 	/* Not Perfect Note */
 	.not-perfect-note {
 		display: flex;
-		gap: var(--space-md);
+		gap: var(--space-performance-md);
 		align-items: flex-start;
 		max-width: 700px;
 		margin: 0 auto;
-		padding: var(--space-lg);
+		padding: var(--space-performance-lg);
 		background: linear-gradient(135deg, rgba(255, 200, 50, 0.1), transparent);
-		border: 1px solid var(--color-data-4);
-		border-radius: var(--radius-lg);
+		border: 1px solid var(--color-performance-data-4);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.note-icon {
@@ -2350,96 +2350,96 @@
 	}
 
 	.note-content h4 {
-		font-size: var(--text-body-lg);
+		font-size: var(--text-performance-body-lg);
 		font-weight: 600;
-		color: var(--color-data-4);
-		margin-bottom: var(--space-xs);
+		color: var(--color-performance-data-4);
+		margin-bottom: var(--space-performance-xs);
 	}
 
 	.note-content p {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-tertiary);
 		line-height: 1.6;
 	}
 
 	.note-content strong {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	/* AI Reasoning Section */
 	.reasoning-section {
-		padding: var(--space-xl) var(--space-lg);
-		background: var(--color-bg-subtle);
+		padding: var(--space-performance-xl) var(--space-performance-lg);
+		background: var(--color-performance-bg-subtle);
 	}
 
 	.reasoning-container {
 		max-width: 800px;
-		margin: 0 auto var(--space-lg);
+		margin: 0 auto var(--space-performance-lg);
 	}
 
 	.reasoning-tabs {
 		display: flex;
-		gap: var(--space-sm);
-		margin-bottom: var(--space-lg);
+		gap: var(--space-performance-sm);
+		margin-bottom: var(--space-performance-lg);
 		flex-wrap: wrap;
 	}
 
 	.reasoning-tab {
-		padding: var(--space-sm) var(--space-md);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-md);
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		padding: var(--space-performance-sm) var(--space-performance-md);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-md);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
 		cursor: pointer;
-		transition: all var(--duration-standard) var(--ease-standard);
+		transition: all var(--duration-performance-standard) var(--ease-performance-standard);
 	}
 
 	.reasoning-tab:hover {
-		border-color: var(--color-border-emphasis);
+		border-color: var(--color-performance-border-emphasis);
 	}
 
 	.reasoning-tab.active {
 		background: var(--color-accent);
 		border-color: var(--color-accent);
-		color: var(--color-bg-pure);
+		color: var(--color-performance-bg-pure);
 	}
 
 	.reasoning-detail {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
-		padding: var(--space-lg);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
+		padding: var(--space-performance-lg);
 	}
 
 	.reasoning-header {
 		display: flex;
 		align-items: center;
-		gap: var(--space-md);
-		margin-bottom: var(--space-lg);
-		padding-bottom: var(--space-md);
+		gap: var(--space-performance-md);
+		margin-bottom: var(--space-performance-lg);
+		padding-bottom: var(--space-performance-md);
 	}
 
 	.situation-label {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 		text-transform: uppercase;
 		letter-spacing: 0.1em;
 	}
 
 	.situation-text {
-		font-size: var(--text-body-lg);
+		font-size: var(--text-performance-body-lg);
 		font-weight: 600;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.thinking-process {
-		margin-bottom: var(--space-lg);
+		margin-bottom: var(--space-performance-lg);
 	}
 
 	.thinking-label {
 		display: block;
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
-		margin-bottom: var(--space-sm);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-muted);
+		margin-bottom: var(--space-performance-sm);
 	}
 
 	.thinking-list {
@@ -2448,16 +2448,16 @@
 		margin: 0;
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-xs);
+		gap: var(--space-performance-xs);
 	}
 
 	.thinking-list li {
-		padding: var(--space-xs) var(--space-sm);
-		background: var(--color-bg-subtle);
-		border-radius: var(--radius-sm);
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
-		border-left: 2px solid var(--color-border-emphasis);
+		padding: var(--space-performance-xs) var(--space-performance-sm);
+		background: var(--color-performance-bg-subtle);
+		border-radius: var(--radius-performance-scale-sm);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
+		border-left: 2px solid var(--color-performance-border-emphasis);
 		animation: fadeSlideIn 0.3s ease-out forwards;
 		opacity: 0;
 	}
@@ -2474,63 +2474,63 @@
 	}
 
 	.decision-box {
-		background: var(--color-bg-subtle);
-		border: 2px solid var(--color-data-2);
-		border-radius: var(--radius-lg);
-		padding: var(--space-md);
-		margin-bottom: var(--space-md);
+		background: var(--color-performance-bg-subtle);
+		border: 2px solid var(--color-performance-data-2);
+		border-radius: var(--radius-performance-scale-lg);
+		padding: var(--space-performance-md);
+		margin-bottom: var(--space-performance-md);
 	}
 
 	.decision-main {
-		margin-bottom: var(--space-sm);
+		margin-bottom: var(--space-performance-sm);
 	}
 
 	.decision-label {
 		display: block;
-		font-size: var(--text-caption);
-		color: var(--color-data-2);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-data-2);
 		text-transform: uppercase;
 		letter-spacing: 0.1em;
-		margin-bottom: var(--space-xs);
+		margin-bottom: var(--space-performance-xs);
 	}
 
 	.decision-text {
-		font-size: var(--text-body);
-		color: var(--color-fg-primary);
+		font-size: var(--text-performance-body);
+		color: var(--color-performance-fg-primary);
 		font-weight: 500;
 	}
 
 	.confidence-meter {
 		display: flex;
 		align-items: center;
-		gap: var(--space-sm);
+		gap: var(--space-performance-sm);
 	}
 
 	.confidence-label {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 		min-width: 70px;
 	}
 
 	.confidence-bar {
 		flex: 1;
 		height: 8px;
-		background: var(--color-bg-pure);
-		border-radius: var(--radius-full);
+		background: var(--color-performance-bg-pure);
+		border-radius: var(--radius-performance-scale-full);
 		overflow: hidden;
 	}
 
 	.confidence-fill {
 		height: 100%;
-		background: var(--color-data-2);
-		border-radius: var(--radius-full);
+		background: var(--color-performance-data-2);
+		border-radius: var(--radius-performance-scale-full);
 		transition: width 0.5s ease-out;
 	}
 
 	.confidence-value {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 		font-weight: 600;
-		color: var(--color-data-2);
+		color: var(--color-performance-data-2);
 		min-width: 40px;
 		text-align: right;
 	}
@@ -2538,10 +2538,10 @@
 	.alternative-note {
 		display: flex;
 		align-items: flex-start;
-		gap: var(--space-sm);
-		padding: var(--space-sm);
-		background: var(--color-bg-subtle);
-		border-radius: var(--radius-md);
+		gap: var(--space-performance-sm);
+		padding: var(--space-performance-sm);
+		background: var(--color-performance-bg-subtle);
+		border-radius: var(--radius-performance-scale-md);
 		font-style: italic;
 	}
 
@@ -2550,8 +2550,8 @@
 	}
 
 	.alt-text {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.reasoning-benefit {
@@ -2561,35 +2561,35 @@
 	}
 
 	.reasoning-benefit p {
-		font-size: var(--text-body);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body);
+		color: var(--color-performance-fg-tertiary);
 		line-height: 1.6;
 	}
 
 	.reasoning-benefit strong {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	/* Holistic Update Section */
 	.holistic-section {
-		padding: var(--space-xl) var(--space-lg);
-		background: var(--color-bg-pure);
+		padding: var(--space-performance-xl) var(--space-performance-lg);
+		background: var(--color-performance-bg-pure);
 	}
 
 	.holistic-container {
 		max-width: 900px;
-		margin: 0 auto var(--space-lg);
+		margin: 0 auto var(--space-performance-lg);
 	}
 
 	.holistic-trigger {
 		display: flex;
 		align-items: center;
-		gap: var(--space-md);
-		padding: var(--space-lg);
+		gap: var(--space-performance-md);
+		padding: var(--space-performance-lg);
 		background: linear-gradient(135deg, rgba(100, 150, 255, 0.1), transparent);
-		border: 2px solid var(--color-data-1);
-		border-radius: var(--radius-lg);
-		margin-bottom: var(--space-md);
+		border: 2px solid var(--color-performance-data-1);
+		border-radius: var(--radius-performance-scale-lg);
+		margin-bottom: var(--space-performance-md);
 	}
 
 	.trigger-icon {
@@ -2599,38 +2599,38 @@
 	.trigger-content {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-xs);
+		gap: var(--space-performance-xs);
 	}
 
 	.trigger-time {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 		font-family: monospace;
 	}
 
 	.trigger-event {
-		font-size: var(--text-body-lg);
+		font-size: var(--text-performance-body-lg);
 		font-weight: 600;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.holistic-arrow {
 		text-align: center;
-		padding: var(--space-md);
-		color: var(--color-fg-muted);
-		font-size: var(--text-body-sm);
+		padding: var(--space-performance-md);
+		color: var(--color-performance-fg-muted);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.systems-cascade {
 		display: grid;
-		gap: var(--space-sm);
-		margin-bottom: var(--space-lg);
+		gap: var(--space-performance-sm);
+		margin-bottom: var(--space-performance-lg);
 	}
 
 	.cascade-item {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-md);
-		padding: var(--space-md);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-md);
+		padding: var(--space-performance-md);
 		animation: cascadeIn 0.4s ease-out forwards;
 		opacity: 0;
 	}
@@ -2647,20 +2647,20 @@
 	}
 
 	.cascade-header {
-		margin-bottom: var(--space-sm);
+		margin-bottom: var(--space-performance-sm);
 	}
 
 	.cascade-system {
 		font-weight: 600;
 		color: var(--color-accent);
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.cascade-change {
 		display: flex;
 		align-items: center;
-		gap: var(--space-sm);
-		margin-bottom: var(--space-sm);
+		gap: var(--space-performance-sm);
+		margin-bottom: var(--space-performance-sm);
 		flex-wrap: wrap;
 	}
 
@@ -2668,20 +2668,20 @@
 	.change-after {
 		flex: 1;
 		min-width: 200px;
-		padding: var(--space-xs) var(--space-sm);
-		background: var(--color-bg-subtle);
-		border-radius: var(--radius-sm);
+		padding: var(--space-performance-xs) var(--space-performance-sm);
+		background: var(--color-performance-bg-subtle);
+		border-radius: var(--radius-performance-scale-sm);
 	}
 
 	.change-label {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
-		margin-right: var(--space-xs);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
+		margin-right: var(--space-performance-xs);
 	}
 
 	.change-value {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.change-before {
@@ -2690,32 +2690,32 @@
 	}
 
 	.change-after {
-		border-left: 2px solid var(--color-data-2);
+		border-left: 2px solid var(--color-performance-data-2);
 	}
 
 	.change-arrow {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 		font-weight: bold;
 	}
 
 	.cascade-reason {
-		font-size: var(--text-caption);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-tertiary);
 		font-style: italic;
 	}
 
 	.reason-label {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.holistic-approval {
 		display: flex;
 		align-items: flex-start;
-		gap: var(--space-md);
-		padding: var(--space-lg);
-		background: var(--color-bg-surface);
-		border: 2px solid var(--color-data-2);
-		border-radius: var(--radius-lg);
+		gap: var(--space-performance-md);
+		padding: var(--space-performance-lg);
+		background: var(--color-performance-bg-surface);
+		border: 2px solid var(--color-performance-data-2);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.approval-icon {
@@ -2724,9 +2724,9 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		background: var(--color-data-2);
-		color: var(--color-bg-pure);
-		border-radius: var(--radius-full);
+		background: var(--color-performance-data-2);
+		color: var(--color-performance-bg-pure);
+		border-radius: var(--radius-performance-scale-full);
 		font-weight: bold;
 	}
 
@@ -2735,14 +2735,14 @@
 	}
 
 	.approval-text {
-		font-size: var(--text-body);
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-xs);
+		font-size: var(--text-performance-body);
+		color: var(--color-performance-fg-primary);
+		margin-bottom: var(--space-performance-xs);
 	}
 
 	.approval-time {
-		font-size: var(--text-caption);
-		color: var(--color-data-2);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-data-2);
 		font-weight: 500;
 	}
 
@@ -2751,24 +2751,24 @@
 		margin: 0 auto;
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-md);
+		gap: var(--space-performance-md);
 	}
 
 	.holistic-benefit p {
-		font-size: var(--text-body);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body);
+		color: var(--color-performance-fg-tertiary);
 		line-height: 1.6;
-		padding: var(--space-md);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-md);
+		padding: var(--space-performance-md);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-md);
 	}
 
 	.holistic-benefit p:last-child {
 		background: linear-gradient(135deg, rgba(100, 200, 100, 0.1), transparent);
-		border-left: 3px solid var(--color-data-2);
+		border-left: 3px solid var(--color-performance-data-2);
 	}
 
 	.holistic-benefit strong {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 </style>

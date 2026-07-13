@@ -146,9 +146,9 @@
 		width: 100%;
 		max-width: 42rem;
 		margin-inline: auto;
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
-		padding: var(--space-md);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
+		padding: var(--space-performance-md);
 	}
 
 	.date-picker.loading {
@@ -160,7 +160,7 @@
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		margin-bottom: var(--space-md);
+		margin-bottom: var(--space-performance-md);
 	}
 
 	.nav-button {
@@ -170,16 +170,16 @@
 		width: 2.5rem;
 		height: 2.5rem;
 		background: transparent;
-		border-radius: var(--radius-md);
-		color: var(--color-fg-secondary);
+		border-radius: var(--radius-performance-scale-md);
+		color: var(--color-performance-fg-secondary);
 		cursor: pointer;
-		transition: all var(--duration-micro) var(--ease-standard);
+		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.nav-button:hover:not(:disabled) {
-		background: var(--color-hover);
-		border-color: var(--color-border-emphasis);
-		color: var(--color-fg-primary);
+		background: var(--color-performance-hover);
+		border-color: var(--color-performance-border-emphasis);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.nav-button:disabled {
@@ -188,32 +188,32 @@
 	}
 
 	.nav-button:focus-visible {
-		outline: 2px solid var(--color-focus);
+		outline: 2px solid var(--color-performance-focus);
 		outline-offset: 2px;
 	}
 
 	.arrow {
-		font-size: var(--text-body-lg);
+		font-size: var(--text-performance-body-lg);
 	}
 
 	.month-label {
-		font-size: var(--text-body-lg);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
+		font-size: var(--text-performance-body-lg);
+		font-weight: var(--font-performance-semibold);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.weekdays {
 		display: grid;
 		grid-template-columns: repeat(7, 1fr);
 		gap: 2px;
-		margin-bottom: var(--space-xs);
+		margin-bottom: var(--space-performance-xs);
 	}
 
 	.weekday {
 		text-align: center;
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
-		padding: var(--space-xs) 0;
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
+		padding: var(--space-performance-xs) 0;
 	}
 
 	.days-grid {
@@ -227,21 +227,21 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-primary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-primary);
 		background: transparent;
 		border: 1px solid transparent;
-		border-radius: var(--radius-md);
+		border-radius: var(--radius-performance-scale-md);
 		cursor: pointer;
-		transition: all var(--duration-micro) var(--ease-standard);
+		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.day:not(:disabled):hover {
-		background: var(--color-hover);
+		background: var(--color-performance-hover);
 	}
 
 	.day:focus-visible {
-		outline: 2px solid var(--color-focus);
+		outline: 2px solid var(--color-performance-focus);
 		outline-offset: 2px;
 	}
 
@@ -250,18 +250,18 @@
 	}
 
 	.day.today {
-		border-color: var(--color-fg-primary);
+		border-color: var(--color-performance-fg-primary);
 	}
 
 	.day.selected {
-		border-color: var(--color-border-emphasis);
-		color: var(--color-fg-primary);
-		font-weight: var(--font-semibold);
+		border-color: var(--color-performance-border-emphasis);
+		color: var(--color-performance-fg-primary);
+		font-weight: var(--font-performance-semibold);
 	}
 
 	.day.past,
 	.day.unavailable {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 		cursor: not-allowed;
 	}
 
@@ -279,12 +279,12 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		background: var(--color-overlay);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-overlay);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.loading-text {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
 	}
 </style>

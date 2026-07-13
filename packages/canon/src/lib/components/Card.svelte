@@ -73,8 +73,8 @@
     border: 1px solid var(--color-performance-line, #d7d7d2);
     color: var(--color-performance-ink, #090909);
     transition:
-      border-color var(--duration-standard) var(--ease-standard),
-      background var(--duration-standard) var(--ease-standard);
+      border-color var(--duration-performance-standard) var(--ease-performance-standard),
+      background var(--duration-performance-standard) var(--ease-performance-standard);
   }
 
   /* Variants */
@@ -100,19 +100,19 @@
 
   /* Radius variants */
   .card-radius-sm {
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-performance-scale-sm);
   }
 
   .card-radius-md {
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-performance-scale-md);
   }
 
   .card-radius-lg {
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-performance-scale-lg);
   }
 
   .card-radius-xl {
-    border-radius: var(--radius-xl);
+    border-radius: var(--radius-performance-scale-xl);
   }
 
   /* Hover effect - Scale + Border Progression (Pattern 1) */
@@ -133,7 +133,7 @@
   a.card:focus-visible,
   button.card:focus-visible,
   div.card:focus-visible {
-    outline: 2px solid var(--color-focus);
+    outline: 2px solid var(--color-performance-focus);
     outline-offset: 2px;
   }
 

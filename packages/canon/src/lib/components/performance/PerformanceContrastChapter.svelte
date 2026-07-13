@@ -106,18 +106,18 @@
 	}
 
 	.performance-contrast-chapter span {
-		font-family: var(--font-mono);
+		font-family: var(--font-performance-mono);
 		font-size: 0.72rem;
-		font-weight: var(--font-semibold, 600);
+		font-weight: var(--font-performance-semibold, 600);
 		text-transform: uppercase;
 	}
 
 	.performance-contrast-chapter h2 {
 		max-width: 11ch;
 		margin: 0;
-		font-family: var(--font-performance-display, var(--font-display, var(--font-sans)));
+		font-family: var(--font-performance-display, var(--font-performance-display, var(--font-performance-sans)));
 		font-size: clamp(3rem, 6vw, 6rem);
-		font-weight: var(--font-performance-display-weight, var(--font-medium, 500));
+		font-weight: var(--font-performance-display-weight, var(--font-performance-medium, 500));
 		font-kerning: normal;
 		font-feature-settings: "kern" 1, "liga" 1;
 		letter-spacing: var(--tracking-performance-display, -0.03em);
@@ -125,7 +125,7 @@
 		text-wrap: balance;
 	}
 
-	.performance-contrast-chapter h3 { max-width: 15ch; margin: 0; font-family: var(--font-performance-display, var(--font-display, var(--font-sans))); font-size: clamp(2rem, 4vw, 4rem); font-weight: var(--font-performance-display-weight, var(--font-medium, 500)); font-kerning: normal; font-feature-settings: "kern" 1, "liga" 1; letter-spacing: var(--tracking-performance-display, -0.03em); line-height: var(--leading-performance-display, 0.94); text-wrap: balance; }
+	.performance-contrast-chapter h3 { max-width: 15ch; margin: 0; font-family: var(--font-performance-display, var(--font-performance-display, var(--font-performance-sans))); font-size: clamp(2rem, 4vw, 4rem); font-weight: var(--font-performance-display-weight, var(--font-performance-medium, 500)); font-kerning: normal; font-feature-settings: "kern" 1, "liga" 1; letter-spacing: var(--tracking-performance-display, -0.03em); line-height: var(--leading-performance-display, 0.94); text-wrap: balance; }
 	.performance-contrast-chapter p { max-width: 38rem; margin: 0.85rem 0 0; color: currentColor; opacity: 0.68; line-height: 1.5; }
 	.performance-contrast-chapter__copy { display: grid; align-content: start; gap: 0.5rem; }
 	.performance-contrast-chapter__artifact { align-self: end; min-width: 0; border-top: 1px solid currentColor; padding-top: 1.25rem; }

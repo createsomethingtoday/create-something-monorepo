@@ -486,7 +486,7 @@
 
 	.eyebrow {
 		margin: 0 0 0.4rem;
-		color: var(--color-fg-muted, #9ca3af);
+		color: var(--color-performance-fg-muted, #9ca3af);
 		font-size: 0.78rem;
 		text-transform: uppercase;
 		letter-spacing: 0.08em;
@@ -505,7 +505,7 @@
 	.hero p:last-child,
 	.panel-header p,
 	.muted {
-		color: var(--color-fg-muted, #9ca3af);
+		color: var(--color-performance-fg-muted, #9ca3af);
 	}
 
 	.actions {
@@ -584,7 +584,7 @@
 	}
 
 	.metric-label {
-		color: var(--color-fg-muted, #9ca3af);
+		color: var(--color-performance-fg-muted, #9ca3af);
 		font-size: 0.82rem;
 		text-transform: capitalize;
 	}
@@ -617,7 +617,7 @@
 	}
 
 	.filters label span {
-		color: var(--color-fg-muted, #9ca3af);
+		color: var(--color-performance-fg-muted, #9ca3af);
 		font-size: 0.72rem;
 		font-weight: 600;
 		text-transform: uppercase;
@@ -648,7 +648,7 @@
 	}
 
 	.filter-actions a {
-		color: var(--color-fg-muted, #9ca3af);
+		color: var(--color-performance-fg-muted, #9ca3af);
 		font-size: 0.88rem;
 		text-decoration: none;
 		white-space: nowrap;
@@ -691,7 +691,7 @@
 
 	.empty {
 		padding: 2rem;
-		color: var(--color-fg-muted, #9ca3af);
+		color: var(--color-performance-fg-muted, #9ca3af);
 	}
 
 	.table-wrap {
@@ -713,7 +713,7 @@
 	}
 
 	th {
-		color: var(--color-fg-muted, #9ca3af);
+		color: var(--color-performance-fg-muted, #9ca3af);
 		font-size: 0.76rem;
 		font-weight: 600;
 		text-transform: uppercase;
@@ -746,7 +746,7 @@
 	ul {
 		margin: 0.45rem 0 0;
 		padding-left: 1rem;
-		color: var(--color-fg-muted, #9ca3af);
+		color: var(--color-performance-fg-muted, #9ca3af);
 	}
 
 	.atlas-handoff {
@@ -814,7 +814,7 @@
 
 	.decision-grid .clear-button {
 		grid-column: 1 / -1;
-		color: var(--color-fg-muted, #9ca3af);
+		color: var(--color-performance-fg-muted, #9ca3af);
 	}
 
 	@media (max-width: 820px) {

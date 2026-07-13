@@ -155,8 +155,8 @@
 
 <style>
 	.ascii-hero {
-		background: var(--color-bg-pure);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-bg-pure);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.ascii-art {
@@ -167,14 +167,14 @@
 	}
 
 	.ascii-art-real {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 		font-size: clamp(0.7rem, 1.5vw, 0.9rem);
 		line-height: 1.2;
 		opacity: 0.9;
 	}
 
 	.ascii-art-placeholder {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 		font-size: 0.8rem;
 		line-height: 1.4;
 	}
@@ -182,11 +182,11 @@
 	.category-tag {
 		display: inline-block;
 		padding: 0.5rem 1rem;
-		background: var(--color-bg-subtle);
-		border-radius: var(--radius-sm);
-		font-size: var(--text-body-sm);
+		background: var(--color-performance-bg-subtle);
+		border-radius: var(--radius-performance-scale-sm);
+		font-size: var(--text-performance-body-sm);
 		font-weight: 500;
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 	}
@@ -194,70 +194,70 @@
 	.article-title {
 		font-size: clamp(2rem, 5vw, 3.75rem);
 		font-weight: bold;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		line-height: 1.2;
 	}
 
 	.article-excerpt {
 		font-size: clamp(1.125rem, 2vw, 1.25rem);
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 		line-height: 1.6;
 	}
 
 	.metadata-row {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.difficulty-indicator {
 		width: 0.5rem;
 		height: 0.5rem;
-		border-radius: var(--radius-full);
+		border-radius: var(--radius-performance-scale-full);
 	}
 
 	/* Difficulty level colors - using Canon semantic tokens */
 	.difficulty-beginner .difficulty-indicator {
-		background-color: var(--color-success);
+		background-color: var(--color-performance-success);
 	}
 
 	.difficulty-beginner .difficulty-text {
-		color: var(--color-success);
+		color: var(--color-performance-success);
 	}
 
 	.difficulty-intermediate .difficulty-indicator {
-		background-color: var(--color-warning);
+		background-color: var(--color-performance-warning);
 	}
 
 	.difficulty-intermediate .difficulty-text {
-		color: var(--color-warning);
+		color: var(--color-performance-warning);
 	}
 
 	.difficulty-advanced .difficulty-indicator {
-		background-color: var(--color-error);
+		background-color: var(--color-performance-error);
 	}
 
 	.difficulty-advanced .difficulty-text {
-		color: var(--color-error);
+		color: var(--color-performance-error);
 	}
 
 	.difficulty-default .difficulty-indicator {
-		background-color: var(--color-fg-primary);
+		background-color: var(--color-performance-fg-primary);
 	}
 
 	.difficulty-default .difficulty-text {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.tag-label {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.tech-tag {
 		padding: 0.25rem 0.5rem;
-		font-size: var(--text-caption);
-		background: var(--color-bg-subtle);
-		border-radius: var(--radius-sm);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-caption);
+		background: var(--color-performance-bg-subtle);
+		border-radius: var(--radius-performance-scale-sm);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.animate-reveal {
@@ -305,7 +305,7 @@
 		.ascii-hero {
 			margin-bottom: 1.5rem;
 			overflow-x: auto;
-			border-radius: var(--radius-md);
+			border-radius: var(--radius-performance-scale-md);
 			-webkit-overflow-scrolling: touch;
 		}
 
@@ -327,7 +327,7 @@
 
 		.category-tag {
 			padding: 0.375rem 0.625rem;
-			font-size: var(--text-caption);
+			font-size: var(--text-performance-caption);
 		}
 
 		.article-title {
@@ -336,7 +336,7 @@
 		}
 
 		.article-excerpt {
-			font-size: var(--text-body);
+			font-size: var(--text-performance-body);
 			line-height: 1.55;
 		}
 

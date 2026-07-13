@@ -29,8 +29,8 @@
 
 .interactive {
   transition:
-    opacity var(--duration-micro) var(--ease-standard),
-    transform var(--duration-micro) var(--ease-standard);
+    opacity var(--duration-performance-micro) var(--ease-performance-standard),
+    transform var(--duration-performance-micro) var(--ease-performance-standard);
   will-change: opacity, transform;
 }
 
@@ -45,8 +45,8 @@
 /* Pressable button - tactile feedback */
 .pressable {
   transition:
-    transform var(--duration-micro) var(--ease-standard),
-    box-shadow var(--duration-micro) var(--ease-standard);
+    transform var(--duration-performance-micro) var(--ease-performance-standard),
+    box-shadow var(--duration-performance-micro) var(--ease-performance-standard);
 }
 
 .pressable:active {
@@ -55,7 +55,7 @@
 
 /* Hover lift - subtle elevation change */
 .hover-lift-sm {
-  transition: transform var(--duration-micro) var(--ease-standard);
+  transition: transform var(--duration-performance-micro) var(--ease-performance-standard);
 }
 
 .hover-lift-sm:hover {
@@ -94,8 +94,8 @@
    ========================================================================== */
 
 .dim-siblings-on-hover > * {
-  transition: opacity var(--duration-standard) var(--ease-standard),
-              transform var(--duration-standard) var(--ease-standard);
+  transition: opacity var(--duration-performance-standard) var(--ease-performance-standard),
+              transform var(--duration-performance-standard) var(--ease-performance-standard);
 }
 
 .dim-siblings-on-hover:hover > * {
@@ -123,7 +123,7 @@
 }
 
 .animate-fade-in-up {
-  animation: fadeInUp var(--duration-standard) var(--ease-standard) forwards;
+  animation: fadeInUp var(--duration-performance-standard) var(--ease-performance-standard) forwards;
 }
 
 .animate-delay-100 { animation-delay: 0.1s; opacity: 0; }
@@ -142,9 +142,9 @@
 .skeleton {
   background: linear-gradient(
     90deg,
-    var(--color-bg-subtle) 0%,
-    var(--color-bg-surface) 50%,
-    var(--color-bg-subtle) 100%
+    var(--color-performance-bg-subtle) 0%,
+    var(--color-performance-bg-surface) 50%,
+    var(--color-performance-bg-subtle) 100%
   );
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.5s ease-in-out infinite;

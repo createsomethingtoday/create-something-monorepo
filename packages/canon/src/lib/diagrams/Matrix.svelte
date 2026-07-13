@@ -155,77 +155,77 @@
 
 <style>
   .diagram {
-    font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+    font-family: var(--font-performance-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
   }
 
   .bg {
-    fill: var(--color-bg-pure, #000000);
+    fill: var(--color-performance-bg-pure, #000000);
   }
 
   .title {
-    fill: var(--color-fg-primary, #ffffff);
-    font-size: var(--text-h2, 1.5rem);
+    fill: var(--color-performance-fg-primary, #ffffff);
+    font-size: var(--text-performance-h2, 1.5rem);
     font-weight: 600;
   }
 
   .subtitle {
-    fill: var(--color-fg-muted, rgba(255, 255, 255, 0.46));
-    font-size: var(--text-body-sm, 0.875rem);
+    fill: var(--color-performance-fg-muted, rgba(255, 255, 255, 0.46));
+    font-size: var(--text-performance-body-sm, 0.875rem);
   }
 
   .header-label {
-    fill: var(--color-fg-secondary, rgba(255, 255, 255, 0.8));
-    font-size: var(--text-body-sm, 0.875rem);
+    fill: var(--color-performance-fg-secondary, rgba(255, 255, 255, 0.8));
+    font-size: var(--text-performance-body-sm, 0.875rem);
     font-weight: 600;
   }
 
   .row-label {
-    fill: var(--color-fg-secondary, rgba(255, 255, 255, 0.8));
-    font-size: var(--text-body-sm, 0.875rem);
+    fill: var(--color-performance-fg-secondary, rgba(255, 255, 255, 0.8));
+    font-size: var(--text-performance-body-sm, 0.875rem);
   }
 
   .separator {
-    stroke: var(--color-border-emphasis, rgba(255, 255, 255, 0.2));
+    stroke: var(--color-performance-border-emphasis, rgba(255, 255, 255, 0.2));
     stroke-width: 1;
   }
 
   .row-separator {
-    stroke: var(--color-border-default, rgba(255, 255, 255, 0.1));
+    stroke: var(--color-performance-border-default, rgba(255, 255, 255, 0.1));
     stroke-width: 1;
   }
 
   .cell {
     fill: transparent;
-    stroke: var(--color-border-default, rgba(255, 255, 255, 0.1));
+    stroke: var(--color-performance-border-default, rgba(255, 255, 255, 0.1));
     stroke-width: 1;
     transition: fill 0.2s ease;
   }
 
   .cell.highlight {
-    fill: var(--color-bg-subtle, #1a1a1a);
+    fill: var(--color-performance-bg-subtle, #1a1a1a);
   }
 
   .cell:hover {
-    fill: var(--color-bg-subtle, #1a1a1a);
+    fill: var(--color-performance-bg-subtle, #1a1a1a);
   }
 
   .cell-value {
-    fill: var(--color-fg-tertiary, rgba(255, 255, 255, 0.6));
-    font-size: var(--text-caption, 0.75rem);
+    fill: var(--color-performance-fg-tertiary, rgba(255, 255, 255, 0.6));
+    font-size: var(--text-performance-caption, 0.75rem);
   }
 
   .cell-value.highlight {
-    fill: var(--color-fg-primary, #ffffff);
+    fill: var(--color-performance-fg-primary, #ffffff);
     font-weight: 500;
   }
 
   .branding {
-    fill: var(--color-fg-subtle, rgba(255, 255, 255, 0.2));
-    font-size: var(--text-caption, 0.75rem);
+    fill: var(--color-performance-fg-subtle, rgba(255, 255, 255, 0.2));
+    font-size: var(--text-performance-caption, 0.75rem);
   }
 
   .caption {
-    fill: var(--color-fg-muted, rgba(255, 255, 255, 0.46));
-    font-size: var(--text-caption, 0.75rem);
+    fill: var(--color-performance-fg-muted, rgba(255, 255, 255, 0.46));
+    font-size: var(--text-performance-caption, 0.75rem);
   }
 </style>

@@ -104,38 +104,38 @@
 	.form-layout {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-lg);
+		gap: var(--space-performance-lg);
 	}
 
 	.form-header {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-xs);
+		gap: var(--space-performance-xs);
 	}
 
 	.form-title {
-		font-size: var(--text-h3);
+		font-size: var(--text-performance-h3);
 		font-weight: 600;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		margin: 0;
 	}
 
 	.form-description {
-		font-size: var(--text-body);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body);
+		color: var(--color-performance-fg-secondary);
 		margin: 0;
 	}
 
 	.form-content {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-md);
+		gap: var(--space-performance-md);
 	}
 
 	.form-layout--two-column .form-content {
 		display: grid;
 		grid-template-columns: repeat(2, 1fr);
-		gap: var(--space-md);
+		gap: var(--space-performance-md);
 	}
 
 	@media (max-width: 640px) {
@@ -151,13 +151,13 @@
 	}
 
 	.form-layout--dividers .form-content > :global(*:not(:last-child)) {
-		padding-bottom: var(--space-md);
+		padding-bottom: var(--space-performance-md);
 	}
 
 	.form-actions {
 		display: flex;
-		gap: var(--space-sm);
+		gap: var(--space-performance-sm);
 		justify-content: flex-end;
-		padding-top: var(--space-md);
+		padding-top: var(--space-performance-md);
 	}
 </style>

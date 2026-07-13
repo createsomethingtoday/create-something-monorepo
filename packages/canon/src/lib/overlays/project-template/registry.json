@@ -5,7 +5,7 @@
   "sourcePackage": "@create-something/example-project",
   "targetModalities": ["web", "chat", "app", "voice", "glasses"],
   "registryItemIds": [
-    "token.canon-core",
+    "token.performance-core",
     "component.clear-decision-panel",
     "component.clear-proof-strip",
     "template.canon-project-overlay-manifest",

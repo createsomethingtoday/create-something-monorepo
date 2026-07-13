@@ -39,26 +39,26 @@
 	 * Map sizes to Canon typography tokens
 	 */
 	const SIZE_TO_TOKEN: Record<WordmarkSize, string> = {
-		xs: 'var(--text-body-sm)',
-		sm: 'var(--text-body)',
-		md: 'var(--text-h3)',
-		lg: 'var(--text-h2)',
-		xl: 'var(--text-h1)',
-		display: 'var(--text-display)',
-		'display-xl': 'var(--text-display-xl)'
+		xs: 'var(--text-performance-body-sm)',
+		sm: 'var(--text-performance-body)',
+		md: 'var(--text-performance-h3)',
+		lg: 'var(--text-performance-h2)',
+		xl: 'var(--text-performance-h1)',
+		display: 'var(--text-performance-display)',
+		'display-xl': 'var(--text-performance-display-xl)'
 	};
 
 	/**
 	 * Tagline size relative to wordmark size
 	 */
 	const TAGLINE_SIZE: Record<WordmarkSize, string> = {
-		xs: 'var(--text-caption)',
-		sm: 'var(--text-caption)',
-		md: 'var(--text-body-sm)',
-		lg: 'var(--text-body-sm)',
-		xl: 'var(--text-body)',
-		display: 'var(--text-body-lg)',
-		'display-xl': 'var(--text-h3)'
+		xs: 'var(--text-performance-caption)',
+		sm: 'var(--text-performance-caption)',
+		md: 'var(--text-performance-body-sm)',
+		lg: 'var(--text-performance-body-sm)',
+		xl: 'var(--text-performance-body)',
+		display: 'var(--text-performance-body-lg)',
+		'display-xl': 'var(--text-performance-h3)'
 	};
 
 	const fontSize = $derived(SIZE_TO_TOKEN[size]);
@@ -97,16 +97,16 @@
 	.wordmark {
 		display: inline-flex;
 		flex-direction: column;
-		gap: var(--space-xs);
-		font-family: var(--font-sans);
+		gap: var(--space-performance-xs);
+		font-family: var(--font-performance-sans);
 	}
 
 	.wordmark-text {
-		font-size: var(--wordmark-size, var(--text-h3));
-		font-weight: var(--font-bold);
-		letter-spacing: var(--tracking-tight);
-		line-height: var(--leading-tight);
-		color: var(--color-fg-primary);
+		font-size: var(--wordmark-size, var(--text-performance-h3));
+		font-weight: var(--font-performance-bold);
+		letter-spacing: var(--tracking-performance-tight);
+		line-height: var(--leading-performance-tight);
+		color: var(--color-performance-fg-primary);
 	}
 
 	/* Word styling */
@@ -115,11 +115,11 @@
 	}
 
 	.word-create {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.word-something {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	/* Layout variants */
@@ -138,10 +138,10 @@
 
 	/* Tagline */
 	.tagline {
-		font-size: var(--tagline-size, var(--text-body-sm));
-		font-weight: var(--font-regular);
-		color: var(--color-fg-secondary);
-		letter-spacing: var(--tracking-wide);
+		font-size: var(--tagline-size, var(--text-performance-body-sm));
+		font-weight: var(--font-performance-regular);
+		color: var(--color-performance-fg-secondary);
+		letter-spacing: var(--tracking-performance-wide);
 		text-transform: uppercase;
 	}
 
@@ -159,7 +159,7 @@
 	.wordmark-reveal .tagline {
 		opacity: 0;
 		transform: translateY(0.5em);
-		animation: word-reveal var(--duration-complex) var(--ease-standard) forwards;
+		animation: word-reveal var(--duration-performance-complex) var(--ease-performance-standard) forwards;
 		animation-delay: calc(var(--word-index, 0) * var(--stagger-delay, 100ms));
 	}
 
@@ -180,7 +180,7 @@
 	   ========================================================================== */
 
 	.wordmark-pulse .wordmark-text {
-		animation: wordmark-pulse var(--duration-complex) var(--ease-standard) infinite alternate;
+		animation: wordmark-pulse var(--duration-performance-complex) var(--ease-performance-standard) infinite alternate;
 	}
 
 	@keyframes wordmark-pulse {
@@ -199,7 +199,7 @@
 
 	.wordmark-assemble .word {
 		opacity: 0;
-		animation: word-assemble var(--duration-complex) var(--ease-standard) forwards;
+		animation: word-assemble var(--duration-performance-complex) var(--ease-performance-standard) forwards;
 	}
 
 	.wordmark-assemble .word-create {
@@ -215,7 +215,7 @@
 	.wordmark-assemble .tagline {
 		opacity: 0;
 		transform: translateY(0.5em);
-		animation: word-reveal var(--duration-complex) var(--ease-standard) forwards;
+		animation: word-reveal var(--duration-performance-complex) var(--ease-performance-standard) forwards;
 		animation-delay: 300ms;
 	}
 

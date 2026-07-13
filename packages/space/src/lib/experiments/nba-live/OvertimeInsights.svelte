@@ -31,9 +31,9 @@
 	});
 	
 	const fatigueColor = $derived(() => {
-		if (fatigueLevel() === 'severe') return 'var(--color-error)';
-		if (fatigueLevel() === 'moderate') return 'var(--color-warning)';
-		return 'var(--color-success)';
+		if (fatigueLevel() === 'severe') return 'var(--color-performance-error)';
+		if (fatigueLevel() === 'moderate') return 'var(--color-performance-warning)';
+		return 'var(--color-performance-success)';
 	});
 	
 	// Format stat changes
@@ -106,51 +106,51 @@
 	.overtime-insights {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-md);
-		padding: var(--space-xl);
-		border-radius: var(--radius-lg);
+		gap: var(--space-performance-md);
+		padding: var(--space-performance-xl);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.overtime-insights.compact {
-		padding: var(--space-md);
-		gap: var(--space-sm);
+		padding: var(--space-performance-md);
+		gap: var(--space-performance-sm);
 	}
 
 	.header {
 		display: flex;
 		align-items: center;
-		gap: var(--space-sm);
-		color: var(--color-fg-primary);
+		gap: var(--space-performance-sm);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.title {
-		font-size: var(--text-body);
+		font-size: var(--text-performance-body);
 		font-weight: 600;
 		margin: 0;
 	}
 
 	.badge {
 		margin-left: auto;
-		padding: var(--space-xs) var(--space-sm);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-full);
-		font-size: var(--text-caption);
+		padding: var(--space-performance-xs) var(--space-performance-sm);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-full);
+		font-size: var(--text-performance-caption);
 		font-weight: 500;
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.fatigue-meter {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-sm);
+		gap: var(--space-performance-sm);
 	}
 
 	.meter-label {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.meter-value {
@@ -160,77 +160,77 @@
 
 	.meter-bar {
 		height: 8px;
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-full);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-full);
 		overflow: hidden;
 	}
 
 	.meter-fill {
 		height: 100%;
-		background: var(--color-success);
-		border-radius: var(--radius-full);
-		transition: width var(--duration-standard) var(--ease-standard), background var(--duration-standard) var(--ease-standard);
+		background: var(--color-performance-success);
+		border-radius: var(--radius-performance-scale-full);
+		transition: width var(--duration-performance-standard) var(--ease-performance-standard), background var(--duration-performance-standard) var(--ease-performance-standard);
 	}
 
 	.meter-fill.moderate {
-		background: var(--color-warning);
+		background: var(--color-performance-warning);
 	}
 
 	.meter-fill.severe {
-		background: var(--color-error);
+		background: var(--color-performance-error);
 	}
 
 	.fatigue-description {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
-		margin-top: var(--space-xs);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
+		margin-top: var(--space-performance-xs);
 	}
 
 	.game-score {
 		display: flex;
 		align-items: center;
-		gap: var(--space-sm);
-		padding: var(--space-sm);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-md);
+		gap: var(--space-performance-sm);
+		padding: var(--space-performance-sm);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-md);
 	}
 
 	.final-label {
-		font-size: var(--text-caption);
+		font-size: var(--text-performance-caption);
 		font-weight: 500;
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 		text-transform: uppercase;
 	}
 
 	.score {
-		font-size: var(--text-body-lg);
+		font-size: var(--text-performance-body-lg);
 		font-weight: 700;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		font-variant-numeric: tabular-nums;
 	}
 
 	.note {
-		padding: var(--space-sm);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-md);
+		padding: var(--space-performance-sm);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-md);
 	}
 
 	.note p {
 		margin: 0;
-		font-size: var(--text-caption);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-tertiary);
 		font-style: italic;
 	}
 
 	.warning {
 		display: flex;
 		align-items: center;
-		gap: var(--space-sm);
-		padding: var(--space-sm) var(--space-md);
-		background: var(--color-error-muted);
-		border: 1px solid var(--color-error-border);
-		border-radius: var(--radius-md);
-		font-size: var(--text-body-sm);
-		color: var(--color-error);
+		gap: var(--space-performance-sm);
+		padding: var(--space-performance-sm) var(--space-performance-md);
+		background: var(--color-performance-error-muted);
+		border: 1px solid var(--color-performance-error-border);
+		border-radius: var(--radius-performance-scale-md);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-error);
 	}
 </style>

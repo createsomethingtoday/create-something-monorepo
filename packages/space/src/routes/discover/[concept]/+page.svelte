@@ -61,20 +61,20 @@
   .discover-nav {
     max-width: 800px;
     margin: 0 auto;
-    padding: var(--space-lg, 2.618rem) var(--space-md, 1.618rem);
+    padding: var(--space-performance-lg, 2.618rem) var(--space-performance-md, 1.618rem);
   }
 
   .nav-link {
     display: inline-flex;
     align-items: center;
-    gap: var(--space-xs, 0.5rem);
-    color: var(--color-fg-muted, rgba(255, 255, 255, 0.46));
+    gap: var(--space-performance-xs, 0.5rem);
+    color: var(--color-performance-fg-muted, rgba(255, 255, 255, 0.46));
     text-decoration: none;
-    font-size: var(--text-body-sm, 0.875rem);
-    transition: color var(--duration-micro, 200ms) var(--ease-standard);
+    font-size: var(--text-performance-body-sm, 0.875rem);
+    transition: color var(--duration-performance-micro, 200ms) var(--ease-performance-standard);
   }
 
   .nav-link:hover {
-    color: var(--color-fg-primary, #fff);
+    color: var(--color-performance-fg-primary, #fff);
   }
 </style>

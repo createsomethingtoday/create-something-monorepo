@@ -135,30 +135,30 @@
 <style>
 	/* Title */
 	.share-title {
-		font-size: var(--text-body-lg);
-		color: var(--color-fg-primary);
+		font-size: var(--text-performance-body-lg);
+		color: var(--color-performance-fg-primary);
 	}
 
 	/* Share Button */
 	.share-button {
-		background: var(--color-hover);
-		border-radius: var(--radius-lg);
-		transition: all var(--duration-micro) var(--ease-standard);
+		background: var(--color-performance-hover);
+		border-radius: var(--radius-performance-scale-lg);
+		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.share-button:hover {
-		background: var(--color-active);
-		border-color: var(--color-border-emphasis);
+		background: var(--color-performance-active);
+		border-color: var(--color-performance-border-emphasis);
 	}
 
 	/* Icon */
 	.share-icon {
-		color: var(--color-fg-tertiary);
-		transition: color var(--duration-micro) var(--ease-standard);
+		color: var(--color-performance-fg-tertiary);
+		transition: color var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.group:hover .share-icon {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	/* Slide in animation - CSS only */

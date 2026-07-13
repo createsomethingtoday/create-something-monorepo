@@ -110,8 +110,8 @@ pnpm install`}</code></pre>
 <style>
   .component {
     /* Use Canon tokens */
-    padding: var(--space-sm);
-    color: var(--color-fg-primary);
+    padding: var(--space-performance-sm);
+    color: var(--color-performance-fg-primary);
   }
 </style>`}</code></pre>
 </div>

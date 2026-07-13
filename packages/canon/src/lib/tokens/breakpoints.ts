@@ -63,18 +63,18 @@ export const media = {
  * CSS custom property names for breakpoints
  */
 export const breakpointVars = {
-	'--breakpoint-sm': breakpoints.sm,
-	'--breakpoint-md': breakpoints.md,
-	'--breakpoint-lg': breakpoints.lg,
-	'--breakpoint-xl': breakpoints.xl,
-	'--breakpoint-2xl': breakpoints['2xl'],
+	'--breakpoint-performance-sm': breakpoints.sm,
+	'--breakpoint-performance-md': breakpoints.md,
+	'--breakpoint-performance-lg': breakpoints.lg,
+	'--breakpoint-performance-xl': breakpoints.xl,
+	'--breakpoint-performance-2xl': breakpoints['2xl'],
 
-	'--container-sm': containers.sm,
-	'--container-md': containers.md,
-	'--container-lg': containers.lg,
-	'--container-xl': containers.xl,
-	'--container-2xl': containers['2xl'],
-	'--container-prose': containers.prose
+	'--container-performance-sm': containers.sm,
+	'--container-performance-md': containers.md,
+	'--container-performance-lg': containers.lg,
+	'--container-performance-xl': containers.xl,
+	'--container-performance-2xl': containers['2xl'],
+	'--container-performance-prose': containers.prose
 } as const;
 
 /**

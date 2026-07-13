@@ -105,7 +105,7 @@
 		font-size: 0.72rem;
 		letter-spacing: 0.14em;
 		text-transform: uppercase;
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	h1 {
@@ -117,7 +117,7 @@
 
 	.lede,
 	.footnote {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 		line-height: 1.72;
 	}
 
@@ -153,7 +153,7 @@
 
 	.secondary-action {
 		border: 1px solid rgba(255, 255, 255, 0.18);
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.footnote {

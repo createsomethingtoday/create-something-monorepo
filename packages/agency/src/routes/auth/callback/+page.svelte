@@ -20,6 +20,6 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 </style>

@@ -982,7 +982,7 @@
     border-radius: 999px;
     background: rgba(5, 7, 12, 0.58);
     color: rgba(197, 233, 255, 0.66);
-    font-family: var(--font-mono, 'IBM Plex Mono', monospace);
+    font-family: var(--font-performance-mono, 'IBM Plex Mono', monospace);
     font-size: 0.62rem;
     letter-spacing: 0.12em;
     text-transform: uppercase;

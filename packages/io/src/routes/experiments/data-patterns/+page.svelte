@@ -84,10 +84,10 @@
 
 	// Comparative trends - using Canon data visualization colors
 	const performanceTrends = [
-		{ label: 'Auth', data: apiMetrics.auth.dailyAverages, color: 'var(--color-data-2)', opacity: 0.9 },
-		{ label: 'Database', data: apiMetrics.database.dailyAverages, color: 'var(--color-error)', opacity: 0.9 },
-		{ label: 'Cache', data: apiMetrics.cache.dailyAverages, color: 'var(--color-data-1)', opacity: 0.9 },
-		{ label: 'Storage', data: apiMetrics.storage.dailyAverages, color: 'var(--color-data-4)', opacity: 0.9 }
+		{ label: 'Auth', data: apiMetrics.auth.dailyAverages, color: 'var(--color-performance-data-2)', opacity: 0.9 },
+		{ label: 'Database', data: apiMetrics.database.dailyAverages, color: 'var(--color-performance-error)', opacity: 0.9 },
+		{ label: 'Cache', data: apiMetrics.cache.dailyAverages, color: 'var(--color-performance-data-1)', opacity: 0.9 },
+		{ label: 'Storage', data: apiMetrics.storage.dailyAverages, color: 'var(--color-performance-data-4)', opacity: 0.9 }
 	];
 </script>
 

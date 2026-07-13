@@ -164,7 +164,7 @@ bd update cs-123 --status in-progress`
 		</section>
 
 		<!-- Related Papers -->
-		<section class="space-y-4 pt-8 border-t border-[var(--color-border-default)]">
+		<section class="space-y-4 pt-8 border-t border-[var(--color-performance-border-default)]">
 			<h2 class="section-heading">Related Papers</h2>
 			<ul class="space-y-2 pl-6">
 				<li><a href="/papers/beads-cross-session-memory" class="text-link">Beads Cross-Session Memory</a></li>
@@ -176,86 +176,86 @@ bd update cs-123 --status in-progress`
 
 <style>
 	.paper-container {
-		background: var(--color-bg-pure);
-		color: var(--color-fg-primary);
+		background: var(--color-performance-bg-pure);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.paper-id {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-muted);
 		letter-spacing: 0.1em;
 	}
 
 	.paper-title {
-		font-size: var(--text-h1);
+		font-size: var(--text-performance-h1);
 		font-weight: 700;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		line-height: 1.1;
 	}
 
 	.paper-subtitle {
-		font-size: var(--text-body-lg);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-lg);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.paper-meta {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.section-heading {
-		font-size: var(--text-h2);
+		font-size: var(--text-performance-h2);
 		font-weight: 600;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.subsection-heading {
-		font-size: var(--text-h3);
+		font-size: var(--text-performance-h3);
 		font-weight: 600;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.body-text {
-		font-size: var(--text-body);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body);
+		color: var(--color-performance-fg-secondary);
 		line-height: 1.7;
 	}
 
 	.comparison-card {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.code-block {
-		background: var(--color-bg-subtle);
-		border-radius: var(--radius-md);
-		padding: var(--space-sm);
+		background: var(--color-performance-bg-subtle);
+		border-radius: var(--radius-performance-scale-md);
+		padding: var(--space-performance-sm);
 		overflow-x: auto;
 	}
 
 	.code-block code {
 		font-family: monospace;
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
 		white-space: pre-wrap;
 	}
 
 	.code-inline {
 		font-family: monospace;
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
-		background: var(--color-bg-subtle);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-muted);
+		background: var(--color-performance-bg-subtle);
 		padding: 0.1em 0.3em;
-		border-radius: var(--radius-sm);
+		border-radius: var(--radius-performance-scale-sm);
 	}
 
 	.text-link {
-		color: var(--color-info);
+		color: var(--color-performance-info);
 		text-decoration: none;
-		transition: color var(--duration-micro) var(--ease-standard);
+		transition: color var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.text-link:hover {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 </style>

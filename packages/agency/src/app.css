@@ -37,13 +37,13 @@
    ========================================================================== */
 
 :root {
-  --view-transition-duration: 200ms;
+  --duration-performance-view-transition: 200ms;
   
   /* Canon owns the local/system display, body, and operational mono stacks. */
-  --font-heading: var(--font-sans);
-  --font-display: var(--font-sans);
-  --font-serif: Georgia, "Times New Roman", serif;
-  --color-focus: rgba(167, 184, 255, 0.72);
+  --font-performance-heading: var(--font-performance-sans);
+  --font-performance-display: var(--font-performance-sans);
+  --font-performance-serif: Georgia, "Times New Roman", serif;
+  --color-performance-focus: rgba(167, 184, 255, 0.72);
 }
 
 /* ==========================================================================
@@ -51,7 +51,7 @@
    ========================================================================== */
 
 .nav-logo {
-  font-family: var(--font-display);
+  font-family: var(--font-performance-display);
 }
 
 /* ==========================================================================
@@ -60,7 +60,7 @@
 
 /* Links - Canonical CREATE SOMETHING micro-interactions */
 a:not([class*="button"]):not(.btn) {
-  transition: opacity var(--duration-micro) var(--ease-standard);
+  transition: opacity var(--duration-performance-micro) var(--ease-performance-standard);
 }
 
 a:not([class*="button"]):not(.btn):hover {
@@ -69,7 +69,7 @@ a:not([class*="button"]):not(.btn):hover {
 
 /* Custom focus styles for accessibility */
 *:focus-visible {
-  outline: 2px solid var(--color-focus);
+  outline: 2px solid var(--color-performance-focus);
   outline-offset: 2px;
   border-radius: var(--radius-performance-sm, 4px);
 }

@@ -211,75 +211,75 @@
 	.page {
 		max-width: var(--content-width-xl);
 		margin: 0 auto;
-		padding: var(--space-lg);
+		padding: var(--space-performance-lg);
 	}
 
 	.header {
-		margin-bottom: var(--space-xl);
+		margin-bottom: var(--space-performance-xl);
 	}
 
 	.back-link {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-muted);
 		text-decoration: none;
 		display: inline-block;
-		margin-bottom: var(--space-sm);
+		margin-bottom: var(--space-performance-sm);
 	}
 
 	.back-link:hover {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.header h1 {
-		font-size: var(--text-h1);
-		margin: 0 0 var(--space-xs) 0;
+		font-size: var(--text-performance-h1);
+		margin: 0 0 var(--space-performance-xs) 0;
 	}
 
 	.subtitle {
-		color: var(--color-fg-muted);
-		font-size: var(--text-body-sm);
+		color: var(--color-performance-fg-muted);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.message {
-		padding: var(--space-sm) var(--space-md);
-		border-radius: var(--radius-md);
-		margin-bottom: var(--space-lg);
-		font-size: var(--text-body-sm);
+		padding: var(--space-performance-sm) var(--space-performance-md);
+		border-radius: var(--radius-performance-scale-md);
+		margin-bottom: var(--space-performance-lg);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.message.success {
-		background: var(--color-success-muted);
-		border: 1px solid var(--color-success-border);
-		color: var(--color-success);
+		background: var(--color-performance-success-muted);
+		border: 1px solid var(--color-performance-success-border);
+		color: var(--color-performance-success);
 	}
 
 	.message.error {
-		background: var(--color-error-muted);
-		border: 1px solid var(--color-error-border);
-		color: var(--color-error);
+		background: var(--color-performance-error-muted);
+		border: 1px solid var(--color-performance-error-border);
+		color: var(--color-performance-error);
 	}
 
 	.section {
-		margin-bottom: var(--space-xl);
+		margin-bottom: var(--space-performance-xl);
 	}
 
 	.section-title {
-		font-size: var(--text-h3);
-		color: var(--color-fg-secondary);
-		margin: 0 0 var(--space-md) 0;
-		padding-bottom: var(--space-xs);
+		font-size: var(--text-performance-h3);
+		color: var(--color-performance-fg-secondary);
+		margin: 0 0 var(--space-performance-md) 0;
+		padding-bottom: var(--space-performance-xs);
 	}
 
 	.fields-grid {
 		display: grid;
 		grid-template-columns: repeat(2, 1fr);
-		gap: var(--space-md);
+		gap: var(--space-performance-md);
 	}
 
 	.field {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-xs);
+		gap: var(--space-performance-xs);
 	}
 
 	.field.full-width {
@@ -287,24 +287,24 @@
 	}
 
 	.field label {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 	}
 
 	.required {
-		color: var(--color-error);
+		color: var(--color-performance-error);
 	}
 
 	.field input,
 	.field select,
 	.field textarea {
-		padding: var(--space-sm);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-md);
-		color: var(--color-fg-primary);
-		font-size: var(--text-body);
+		padding: var(--space-performance-sm);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-md);
+		color: var(--color-performance-fg-primary);
+		font-size: var(--text-performance-body);
 		font-family: inherit;
 	}
 
@@ -316,12 +316,12 @@
 	.field select:focus,
 	.field textarea:focus {
 		outline: none;
-		border-color: var(--color-border-emphasis);
+		border-color: var(--color-performance-border-emphasis);
 	}
 
 	.field input::placeholder,
 	.field textarea::placeholder {
-		color: var(--color-fg-subtle);
+		color: var(--color-performance-fg-subtle);
 	}
 
 	.field textarea {
@@ -332,35 +332,35 @@
 	.actions {
 		display: flex;
 		justify-content: flex-end;
-		gap: var(--space-md);
-		padding-top: var(--space-lg);
+		gap: var(--space-performance-md);
+		padding-top: var(--space-performance-lg);
 	}
 
 	.cancel-btn {
-		padding: var(--space-sm) var(--space-lg);
+		padding: var(--space-performance-sm) var(--space-performance-lg);
 		background: transparent;
-		color: var(--color-fg-secondary);
-		border-radius: var(--radius-md);
-		font-size: var(--text-body);
+		color: var(--color-performance-fg-secondary);
+		border-radius: var(--radius-performance-scale-md);
+		font-size: var(--text-performance-body);
 		text-decoration: none;
-		transition: all var(--duration-micro) var(--ease-standard);
+		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.cancel-btn:hover {
-		border-color: var(--color-border-emphasis);
-		color: var(--color-fg-primary);
+		border-color: var(--color-performance-border-emphasis);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.submit-btn {
-		padding: var(--space-sm) var(--space-lg);
-		background: var(--color-fg-primary);
-		color: var(--color-bg-pure);
+		padding: var(--space-performance-sm) var(--space-performance-lg);
+		background: var(--color-performance-fg-primary);
+		color: var(--color-performance-bg-pure);
 		border: none;
-		border-radius: var(--radius-md);
-		font-size: var(--text-body);
+		border-radius: var(--radius-performance-scale-md);
+		font-size: var(--text-performance-body);
 		font-weight: 500;
 		cursor: pointer;
-		transition: opacity var(--duration-micro) var(--ease-standard);
+		transition: opacity var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.submit-btn:hover:not(:disabled) {

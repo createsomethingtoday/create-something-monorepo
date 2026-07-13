@@ -75,7 +75,7 @@
 
   .mapping-brief__copy h3 {
     margin: 0;
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
     font-size: clamp(1.8rem, 3vw, 3rem);
     line-height: 1.02;
     letter-spacing: -0.04em;
@@ -85,7 +85,7 @@
   .mapping-brief__copy p,
   .mapping-brief__step p {
     margin: 0;
-    color: var(--color-fg-secondary);
+    color: var(--color-performance-fg-secondary);
     line-height: 1.68;
     text-wrap: pretty;
   }
@@ -109,15 +109,15 @@
   }
 
   .mapping-brief__step span {
-    color: var(--color-fg-muted);
-    font-family: var(--font-mono);
+    color: var(--color-performance-fg-muted);
+    font-family: var(--font-performance-mono);
     font-size: 0.7rem;
     letter-spacing: 0.1em;
     text-transform: uppercase;
   }
 
   .mapping-brief__step strong {
-    color: var(--color-fg-primary);
+    color: var(--color-performance-fg-primary);
     font-size: 1.04rem;
     line-height: 1.2;
   }

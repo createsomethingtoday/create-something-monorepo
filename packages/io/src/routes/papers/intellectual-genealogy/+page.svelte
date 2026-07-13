@@ -808,170 +808,170 @@ const principles = [
 
 <style>
 	.paper-container {
-		background: var(--color-bg-pure);
-		color: var(--color-fg-primary);
+		background: var(--color-performance-bg-pure);
+		color: var(--color-performance-fg-primary);
 	}
 
 
 	.paper-id {
-		color: var(--color-fg-muted);
-		font-size: var(--text-body-sm);
+		color: var(--color-performance-fg-muted);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.paper-title {
-		font-size: var(--text-h1);
+		font-size: var(--text-performance-h1);
 		font-weight: bold;
 	}
 
 	.paper-subtitle {
-		color: var(--color-fg-secondary);
-		font-size: var(--text-body-lg);
+		color: var(--color-performance-fg-secondary);
+		font-size: var(--text-performance-body-lg);
 	}
 
 	.paper-meta {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.abstract-section {
-		border-left: 4px solid var(--color-border-emphasis);
+		border-left: 4px solid var(--color-performance-border-emphasis);
 	}
 
 	.section-heading {
-		font-size: var(--text-h2);
+		font-size: var(--text-performance-h2);
 		font-weight: bold;
 	}
 
 	.body-text {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.data-table {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.data-table thead tr {
-		border-bottom: 1px solid var(--color-border-emphasis);
+		border-bottom: 1px solid var(--color-performance-border-emphasis);
 	}
 
 	.data-table th {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 		font-weight: 600;
 	}
 
 
 	.data-table td {
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.lineage-table {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.lineage-table thead tr {
-		border-bottom: 1px solid var(--color-border-emphasis);
+		border-bottom: 1px solid var(--color-performance-border-emphasis);
 	}
 
 	.lineage-table th {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 		font-weight: 600;
 	}
 
 
 	.lineage-table td {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 		vertical-align: top;
 	}
 
 	.layer-label {
 		font-weight: 600;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.work-title {
 		font-style: italic;
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.master-card {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
-		padding: var(--space-md);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
+		padding: var(--space-performance-md);
 	}
 
 	.master-header {
-		margin-bottom: var(--space-sm);
+		margin-bottom: var(--space-performance-sm);
 	}
 
 	.master-layer-tag {
-		font-size: var(--text-caption);
+		font-size: var(--text-performance-caption);
 		text-transform: uppercase;
 		letter-spacing: 0.1em;
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.master-name {
-		font-size: var(--text-h3);
+		font-size: var(--text-performance-h3);
 		font-weight: 600;
-		margin-top: var(--space-xs);
+		margin-top: var(--space-performance-xs);
 	}
 
 	.master-work {
 		font-style: italic;
-		color: var(--color-fg-tertiary);
-		font-size: var(--text-body-sm);
+		color: var(--color-performance-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.master-contribution {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 		line-height: 1.7;
 	}
 
 	.purpose-card {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
-		padding: var(--space-md);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
+		padding: var(--space-performance-md);
 	}
 
 	.purpose-title {
 		font-weight: 600;
-		margin-bottom: var(--space-xs);
+		margin-bottom: var(--space-performance-xs);
 	}
 
 	.purpose-text {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.principle-box {
-		background: var(--color-bg-subtle);
-		border: 2px solid var(--color-border-strong);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-bg-subtle);
+		border: 2px solid var(--color-performance-border-strong);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.principle-text {
-		font-size: var(--text-body-lg);
+		font-size: var(--text-performance-body-lg);
 		font-weight: 600;
 		text-align: center;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.reading-path {
 		display: grid;
-		gap: var(--space-md);
+		gap: var(--space-performance-md);
 	}
 
 	.reading-stage {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
-		padding: var(--space-md);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
+		padding: var(--space-performance-md);
 	}
 
 	.stage-title {
 		font-weight: 600;
-		margin-bottom: var(--space-sm);
-		color: var(--color-fg-primary);
+		margin-bottom: var(--space-performance-sm);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.stage-list {
@@ -981,9 +981,9 @@ const principles = [
 	}
 
 	.stage-list li {
-		color: var(--color-fg-tertiary);
-		font-size: var(--text-body-sm);
-		padding: var(--space-xs) 0;
+		color: var(--color-performance-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
+		padding: var(--space-performance-xs) 0;
 	}
 
 	.stage-list li:last-child {
@@ -991,20 +991,20 @@ const principles = [
 	}
 
 	.conclusion-box {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	.conclusion-quote {
 		text-align: center;
 		font-style: italic;
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 		line-height: 1.8;
 	}
 
 	.footer-text {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.responsive-table-scroll {
@@ -1012,24 +1012,24 @@ const principles = [
 	}
 
 	.code-block-success {
-		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-success, var(--color-border-default));
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-bg-subtle);
+		border: 1px solid var(--color-border-success, var(--color-performance-border-default));
+		border-radius: var(--radius-performance-scale-lg);
 		overflow-x: auto;
 	}
 
 	.code-secondary {
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.emphasis-text {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.subsection-heading {
-		font-size: var(--text-h3);
+		font-size: var(--text-performance-h3);
 		font-weight: 600;
-		color: var(--color-fg-primary);
-		margin-top: var(--space-md);
+		color: var(--color-performance-fg-primary);
+		margin-top: var(--space-performance-md);
 	}
 </style>

@@ -59,8 +59,8 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
   },
   "items": [
     {
-      "id": "token.canon-core",
-      "name": "Canon Core Tokens",
+      "id": "token.performance-core",
+      "name": "Performance Core Tokens",
       "kind": "token",
       "maturity": "stable",
       "description": "Shared color, typography, spacing, radius, motion, surface, and proof-state values used by Canon consumers.",
@@ -87,6 +87,36 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       }
     },
     {
+      "id": "token.canon-core",
+      "name": "Legacy Canon Core Token Alias",
+      "kind": "token",
+      "maturity": "stable",
+      "description": "Compatibility registry entry for consumers migrating to the Performance Core Token contract.",
+      "ownerPackage": "@create-something/canon",
+      "sourcePath": "packages/canon/src/lib/styles/tokens.css",
+      "importPath": "@create-something/canon/styles/tokens.css",
+      "docsPath": "/canon/resources/tokens",
+      "tags": [
+        "tokens",
+        "compatibility",
+        "deprecated"
+      ],
+      "modalities": [
+        "web",
+        "app",
+        "chat",
+        "voice",
+        "glasses"
+      ],
+      "dependencies": [
+        "token.performance-core"
+      ],
+      "contract": {
+        "accessibility": "Compatibility aliases resolve to the same accessible Performance values.",
+        "extension": "Do not add new consumers; migrate registry dependencies to token.performance-core."
+      }
+    },
+    {
       "id": "component.button",
       "name": "Button",
       "kind": "component",
@@ -106,7 +136,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "app"
       ],
       "dependencies": [
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "Actions need explicit labels, disabled state, and visible focus treatment.",
@@ -133,7 +163,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "app"
       ],
       "dependencies": [
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "Cards must not hide structure from headings, landmarks, or link text.",
@@ -160,7 +190,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "app"
       ],
       "dependencies": [
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "Navigation must expose clear labels, current state, and mobile-safe targets.",
@@ -191,7 +221,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "Consumers must choose the heading level for document structure, not visual size alone.",
@@ -219,7 +249,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "app"
       ],
       "dependencies": [
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "Place before navigation and ensure the configured target id exists on the main content.",
@@ -247,7 +277,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "app"
       ],
       "dependencies": [
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "Sections must preserve semantic section structure and readable spacing.",
@@ -278,7 +308,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.layout-section",
         "component.heading"
       ],
@@ -308,7 +338,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "app"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.layout-bento-item"
       ],
       "contract": {
@@ -337,7 +367,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "app"
       ],
       "dependencies": [
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "Spans and variants must not replace semantic headings, labels, or reading order.",
@@ -365,7 +395,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "app"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.layout-section"
       ],
       "contract": {
@@ -397,7 +427,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "Provide a label for standalone meaningful icons and omit it only for decorative icons.",
@@ -428,7 +458,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.navigation"
       ],
       "contract": {
@@ -461,7 +491,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.card",
         "component.clear-artifact-card"
       ],
@@ -495,7 +525,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.card",
         "component.content-testimonial-carousel"
       ],
@@ -529,7 +559,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.paper-card",
         "component.clear-card-grid"
       ],
@@ -563,7 +593,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.layout-section",
         "component.heading"
       ],
@@ -597,7 +627,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.button"
       ],
       "contract": {
@@ -630,7 +660,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.clear-quote-metric-panel"
       ],
       "contract": {
@@ -663,7 +693,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.navigation-related-content",
         "component.card"
       ],
@@ -697,7 +727,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "policy.signal-decision-proof",
         "component.clear-state-rows"
       ],
@@ -731,7 +761,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.clear-state-rows"
       ],
       "contract": {
@@ -764,7 +794,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.clear-state-rows"
       ],
       "contract": {
@@ -797,7 +827,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.button",
         "component.navigation"
       ],
@@ -831,7 +861,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.clear-cta-band",
         "component.conversion-sticky-cta"
       ],
@@ -865,7 +895,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "policy.signal-decision-proof",
         "component.button"
       ],
@@ -899,7 +929,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.button",
         "component.clear-action-footer"
       ],
@@ -934,7 +964,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.feedback-dialog",
         "component.page-actions"
       ],
@@ -967,7 +997,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.card",
         "component.navigation-tooltip"
       ],
@@ -1001,7 +1031,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "adapter.atlas-graph-artifact",
         "component.clear-workflow-mini-artifact"
       ],
@@ -1035,7 +1065,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.page-actions",
         "component.diagrams-timeline"
       ],
@@ -1069,7 +1099,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.icon"
       ],
       "contract": {
@@ -1102,7 +1132,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.brand-cube-mark3-d"
       ],
       "contract": {
@@ -1135,7 +1165,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.layout-section",
         "component.layout-bento-grid",
         "component.layout-bento-item"
@@ -1170,7 +1200,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "Every node and edge must be recoverable as ordered text for screen readers and nonvisual modalities.",
@@ -1202,7 +1232,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "Bars must have text labels and values that do not depend on color or visual height alone.",
@@ -1234,7 +1264,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "Series names, axis labels, and point values must be available as structured text.",
@@ -1266,7 +1296,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "Slices must expose labels, values, and percentages in text; color must not be the only differentiator.",
@@ -1298,7 +1328,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "Events must retain readable date, label, description, and highlight state in source order.",
@@ -1330,7 +1360,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "Cells must preserve row and column headers so values remain understandable outside the visual table.",
@@ -1362,7 +1392,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "Canvas graph nodes and edges must have an equivalent textual graph summary and keyboard-safe inspection route.",
@@ -1394,7 +1424,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "Canvas shapes must have a durable text alternative or serialized shape list for nonvisual modalities.",
@@ -1426,7 +1456,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.heading"
       ],
       "contract": {
@@ -1460,7 +1490,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       ],
       "dependencies": [
         "adapter.atlas-graph-artifact",
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "Rendered nodes and edges must retain aria labels plus a text summary path for chat, voice, and glasses surfaces.",
@@ -1525,7 +1555,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.form-text-field"
       ],
       "contract": {
@@ -1558,7 +1588,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.form-text-field",
         "component.form-select"
       ],
@@ -1592,7 +1622,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.form-text-field"
       ],
       "contract": {
@@ -1625,7 +1655,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.form-text-field"
       ],
       "contract": {
@@ -1658,7 +1688,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.form-text-field"
       ],
       "contract": {
@@ -1691,7 +1721,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.form-text-field",
         "component.clear-action-footer"
       ],
@@ -1725,7 +1755,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.form-text-field",
         "component.feedback-alert"
       ],
@@ -1759,7 +1789,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.form-text-field",
         "component.clear-action-footer"
       ],
@@ -1793,7 +1823,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.button"
       ],
       "contract": {
@@ -1826,7 +1856,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.button",
         "component.feedback-alert"
       ],
@@ -1860,7 +1890,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "Loading placeholders must expose busy state and a readable loading label without pretending content exists.",
@@ -1892,7 +1922,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.feedback-alert"
       ],
       "contract": {
@@ -1925,7 +1955,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.feedback-alert",
         "component.form-text-field"
       ],
@@ -1959,7 +1989,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.clear-error-page",
         "component.button"
       ],
@@ -1993,7 +2023,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.navigation"
       ],
       "contract": {
@@ -2026,7 +2056,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.navigation",
         "component.navigation-drawer"
       ],
@@ -2060,7 +2090,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.navigation-dropdown-menu",
         "component.form-text-field",
         "component.button"
@@ -2095,7 +2125,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.navigation-dropdown-menu",
         "component.form-text-field",
         "component.feedback-alert"
@@ -2130,7 +2160,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.navigation",
         "component.card",
         "component.feedback-alert"
@@ -2165,7 +2195,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.navigation",
         "component.card",
         "component.feedback-alert"
@@ -2200,7 +2230,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.button",
         "component.navigation"
       ],
@@ -2234,7 +2264,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.navigation",
         "component.navigation-dropdown-menu",
         "component.navigation-drawer"
@@ -2269,7 +2299,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.form-checkbox",
         "component.form-switch"
       ],
@@ -2303,7 +2333,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.card",
         "component.patterns-empty-state"
       ],
@@ -2337,7 +2367,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.form-text-field",
         "component.button",
         "component.filtering-filter-toggle-panel"
@@ -2372,7 +2402,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.insights-statement-text",
         "component.clear-proof-strip"
       ],
@@ -2406,7 +2436,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.card",
         "component.insights-key-insight"
       ],
@@ -2440,7 +2470,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.heading",
         "component.typography-typography-hero"
       ],
@@ -2474,7 +2504,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.button"
       ],
       "contract": {
@@ -2507,7 +2537,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.button"
       ],
       "contract": {
@@ -2540,7 +2570,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.content-carousel",
         "component.clear-proof-strip"
       ],
@@ -2574,7 +2604,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.clear-proof-strip"
       ],
       "contract": {
@@ -2607,7 +2637,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.button",
         "component.clear-cta-band"
       ],
@@ -2641,7 +2671,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.patterns-multi-step-form",
         "component.clear-state-rows"
       ],
@@ -2675,7 +2705,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.clear-proof-strip"
       ],
       "contract": {
@@ -2708,7 +2738,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.feedback-dialog",
         "component.button"
       ],
@@ -2740,7 +2770,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "app"
       ],
       "dependencies": [
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "Tables must keep real table semantics (thead, th scope, optional sr-only caption), expose aria-sort on the active column, and make clickable rows keyboard-activatable via Enter and Space so screen readers and keyboard users get the grid for free.",
@@ -2774,7 +2804,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "State must never be color-only: the visible label carries the state text, the dot variant marks its dot aria-hidden, and emphasis is expressed through weight and border rather than hue alone.",
@@ -2804,7 +2834,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "app"
       ],
       "dependencies": [
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "Sections must preserve heading order, landmarks, and readable spacing.",
@@ -2833,7 +2863,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "chat"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "policy.signal-decision-proof"
       ],
       "contract": {
@@ -2864,7 +2894,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "chat"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.clear-proof-strip"
       ],
       "contract": {
@@ -2894,7 +2924,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "app"
       ],
       "dependencies": [
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "Logo rows need text alternatives and must not be the only proof claim.",
@@ -2924,7 +2954,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "chat"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "policy.signal-decision-proof"
       ],
       "contract": {
@@ -2955,7 +2985,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "policy.signal-decision-proof"
       ],
       "contract": {
@@ -2988,7 +3018,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "policy.signal-decision-proof"
       ],
       "contract": {
@@ -3019,7 +3049,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "chat"
       ],
       "dependencies": [
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "Artifact cards need explicit titles and link/action labels.",
@@ -3048,7 +3078,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "app"
       ],
       "dependencies": [
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "Card grids must preserve readable headings and stable focus order.",
@@ -3077,7 +3107,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "chat"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "policy.signal-decision-proof"
       ],
       "contract": {
@@ -3107,7 +3137,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "app"
       ],
       "dependencies": [
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "Quotes and metrics must remain readable as text.",
@@ -3137,7 +3167,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "chat"
       ],
       "dependencies": [
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "Pillars need descriptive headings and optional links with clear labels.",
@@ -3167,7 +3197,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "voice"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "policy.signal-decision-proof"
       ],
       "contract": {
@@ -3198,7 +3228,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "chat"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "policy.signal-decision-proof"
       ],
       "contract": {
@@ -3229,7 +3259,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "chat"
       ],
       "dependencies": [
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "Highlights must use readable text labels and not only visual emphasis.",
@@ -3258,7 +3288,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "chat"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "policy.signal-decision-proof"
       ],
       "contract": {
@@ -3288,7 +3318,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "app"
       ],
       "dependencies": [
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "Action labels must describe the outcome and remain keyboard reachable.",
@@ -3318,7 +3348,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "chat"
       ],
       "dependencies": [
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "Footer actions must be clearly labeled and ordered by expected workflow.",
@@ -3350,7 +3380,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "policy.signal-decision-proof"
       ],
       "contract": {
@@ -3381,7 +3411,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "app"
       ],
       "dependencies": [
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "Text inputs need visible labels, described-by help or error text, and keyboard focus.",
@@ -3409,7 +3439,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "app"
       ],
       "dependencies": [
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "Text areas need visible labels, described-by help or error text, and keyboard focus.",
@@ -3437,7 +3467,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "app"
       ],
       "dependencies": [
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "Checkbox state must be programmatically exposed and not depend on color alone.",
@@ -3465,7 +3495,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "app"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.form-checkbox"
       ],
       "contract": {
@@ -3494,7 +3524,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "app"
       ],
       "dependencies": [
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "Radio state and label must be programmatically exposed for keyboard users.",
@@ -3522,7 +3552,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "app"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "component.form-radio"
       ],
       "contract": {
@@ -3551,7 +3581,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "app"
       ],
       "dependencies": [
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "Select controls need a visible label, valid option text, and error messaging.",
@@ -3579,7 +3609,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "app"
       ],
       "dependencies": [
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "Switches need readable labels and state exposed as checked or unchecked.",
@@ -3610,7 +3640,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "policy.signal-decision-proof"
       ],
       "contract": {
@@ -3640,7 +3670,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "app"
       ],
       "dependencies": [
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "Toast content must not be the only place critical information or recovery actions appear.",
@@ -3668,7 +3698,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "app"
       ],
       "dependencies": [
-        "token.canon-core",
+        "token.performance-core",
         "policy.signal-decision-proof"
       ],
       "contract": {
@@ -3701,7 +3731,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "glasses"
       ],
       "dependencies": [
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "Progress state needs text or semantic value when the operation is meaningful.",
@@ -3730,7 +3760,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "app"
       ],
       "dependencies": [
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "Spinners need an accessible label when they communicate active work.",
@@ -3758,7 +3788,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "app"
       ],
       "dependencies": [
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "Skeletons must not be announced as real content.",
@@ -3787,7 +3817,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "chat"
       ],
       "dependencies": [
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "Breadcrumbs need ordered links with a clear current location.",
@@ -3815,7 +3845,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "app"
       ],
       "dependencies": [
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "Tabs need keyboard navigation, selected state, and associated panels.",
@@ -3843,7 +3873,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "app"
       ],
       "dependencies": [
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "Pagination needs descriptive labels and current page state.",
@@ -3871,7 +3901,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "app"
       ],
       "dependencies": [
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "Tooltips must not contain critical information unavailable through visible text or labels.",
@@ -3899,7 +3929,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "app"
       ],
       "dependencies": [
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "Popovers need focus management and clear trigger relationships.",
@@ -3927,7 +3957,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "app"
       ],
       "dependencies": [
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "Menus need keyboard navigation, roles, and explicit item labels.",
@@ -3955,7 +3985,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "app"
       ],
       "dependencies": [
-        "token.canon-core"
+        "token.performance-core"
       ],
       "contract": {
         "accessibility": "Drawers need focus management, close controls, and clear title context.",
@@ -4155,7 +4185,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "dependencies": [
         "template.canon-project-overlay-manifest",
         "template.canon-extension-intake",
-        "token.canon-core",
+        "token.performance-core",
         "policy.signal-decision-proof"
       ],
       "contract": {

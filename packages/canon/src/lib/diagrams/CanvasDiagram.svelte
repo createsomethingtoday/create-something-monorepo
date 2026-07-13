@@ -96,7 +96,7 @@
 		shapes,
 		width = 800,
 		height = 600,
-		background = 'var(--color-bg-pure, #0a0a0a)',
+		background = 'var(--color-performance-bg-pure, #0a0a0a)',
 		gridSize = 20,
 		showGrid = false,
 		snapToGrid = false,
@@ -146,9 +146,9 @@
 		const get = (prop: string, fallback: string) =>
 			computedStyles?.getPropertyValue(prop).trim() || fallback;
 		
-		resolvedBg = get('--color-bg-pure', '#0a0a0a');
-		resolvedBorder = get('--color-border-default', '#333333');
-		resolvedFocus = get('--color-focus', '#6366f1');
+		resolvedBg = get('--color-performance-bg-pure', '#0a0a0a');
+		resolvedBorder = get('--color-performance-border-default', '#333333');
+		resolvedFocus = get('--color-performance-focus', '#6366f1');
 	});
 
 	// Load images
@@ -561,14 +561,14 @@
 <style>
 	.canvas-diagram {
 		position: relative;
-		background: var(--color-bg-pure);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-bg-pure);
+		border-radius: var(--radius-performance-scale-lg);
 		overflow: hidden;
 		outline: none;
 	}
 
 	.canvas-diagram:focus {
-		border-color: var(--color-focus);
+		border-color: var(--color-performance-focus);
 	}
 
 	canvas {
@@ -586,27 +586,27 @@
 
 	.toolbar {
 		position: absolute;
-		bottom: var(--space-sm);
-		right: var(--space-sm);
+		bottom: var(--space-performance-sm);
+		right: var(--space-performance-sm);
 		display: flex;
-		gap: var(--space-xs);
+		gap: var(--space-performance-xs);
 	}
 
 	.toolbar button {
 		display: flex;
 		align-items: center;
-		gap: var(--space-xs);
-		padding: var(--space-xs) var(--space-sm);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-sm);
-		color: var(--color-fg-secondary);
-		font-size: var(--text-caption);
+		gap: var(--space-performance-xs);
+		padding: var(--space-performance-xs) var(--space-performance-sm);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-sm);
+		color: var(--color-performance-fg-secondary);
+		font-size: var(--text-performance-caption);
 		cursor: pointer;
-		transition: all var(--duration-micro) var(--ease-standard);
+		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.toolbar button:hover {
-		background: var(--color-hover);
-		color: var(--color-fg-primary);
+		background: var(--color-performance-hover);
+		color: var(--color-performance-fg-primary);
 	}
 </style>

@@ -82,20 +82,20 @@
     font-size: 0.72rem;
     letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: var(--color-fg-muted, rgba(255, 255, 255, 0.6));
+    color: var(--color-performance-fg-muted, rgba(255, 255, 255, 0.6));
   }
 
   .stack-copy h2 {
     margin: 0;
-    color: var(--color-fg-primary, #fff);
+    color: var(--color-performance-fg-primary, #fff);
     font-size: clamp(1.7rem, 2.8vw, 2.6rem);
     line-height: 1.05;
-    letter-spacing: var(--tracking-tight, -0.02em);
+    letter-spacing: var(--tracking-performance-tight, -0.02em);
   }
 
   .stack-copy p {
     margin: 0;
-    color: var(--color-fg-secondary, rgba(255, 255, 255, 0.76));
+    color: var(--color-performance-fg-secondary, rgba(255, 255, 255, 0.76));
     line-height: 1.7;
   }
 
@@ -132,13 +132,13 @@
 
   .stack-card h3 {
     margin: 0.5rem 0 0.65rem;
-    color: var(--color-fg-primary, #fff);
+    color: var(--color-performance-fg-primary, #fff);
     font-size: 1.05rem;
   }
 
   .stack-card p {
     margin: 0;
-    color: var(--color-fg-secondary, rgba(255, 255, 255, 0.74));
+    color: var(--color-performance-fg-secondary, rgba(255, 255, 255, 0.74));
     line-height: 1.6;
     font-size: 0.94rem;
   }

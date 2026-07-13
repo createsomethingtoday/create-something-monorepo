@@ -103,70 +103,70 @@
 
 <style>
 	.learning-section {
-		background: var(--color-bg-pure);
+		background: var(--color-performance-bg-pure);
 	}
 
 	.eyebrow {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 		font-weight: 500;
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 		letter-spacing: 0.05em;
 	}
 
 	.section-title {
-		font-size: var(--text-h2);
+		font-size: var(--text-performance-h2);
 		font-weight: 700;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.section-description {
-		font-size: var(--text-body);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.path-card {
 		display: flex;
 		flex-direction: column;
-		padding: var(--space-lg);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
+		padding: var(--space-performance-lg);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
 		text-decoration: none;
 		transition:
-			border-color var(--duration-standard) var(--ease-standard),
-			transform var(--duration-standard) var(--ease-standard);
+			border-color var(--duration-performance-standard) var(--ease-performance-standard),
+			transform var(--duration-performance-standard) var(--ease-performance-standard);
 	}
 
 	.path-card:hover {
-		border-color: var(--color-border-emphasis);
+		border-color: var(--color-performance-border-emphasis);
 		transform: translateY(-2px);
 	}
 
 	.category {
-		font-size: var(--text-caption);
+		font-size: var(--text-performance-caption);
 		font-weight: 500;
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
-		margin-bottom: var(--space-sm);
+		margin-bottom: var(--space-performance-sm);
 	}
 
 	.path-title {
-		font-size: var(--text-h3);
+		font-size: var(--text-performance-h3);
 		font-weight: 600;
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-xs);
+		color: var(--color-performance-fg-primary);
+		margin-bottom: var(--space-performance-xs);
 		line-height: 1.3;
 	}
 
 	.path-subtitle {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
-		margin-bottom: var(--space-sm);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-muted);
+		margin-bottom: var(--space-performance-sm);
 	}
 
 	.path-description {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-tertiary);
 		line-height: 1.6;
 		flex-grow: 1;
 	}
@@ -175,14 +175,14 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		margin-top: var(--space-md);
-		padding-top: var(--space-sm);
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		margin-top: var(--space-performance-md);
+		padding-top: var(--space-performance-sm);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.arrow {
-		transition: transform var(--duration-micro) var(--ease-standard);
+		transition: transform var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.path-card:hover .arrow {
@@ -192,13 +192,13 @@
 	.view-all-link {
 		display: inline-flex;
 		align-items: center;
-		font-size: var(--text-body);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body);
+		color: var(--color-performance-fg-secondary);
 		text-decoration: none;
-		transition: color var(--duration-standard) var(--ease-standard);
+		transition: color var(--duration-performance-standard) var(--ease-performance-standard);
 	}
 
 	.view-all-link:hover {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 </style>

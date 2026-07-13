@@ -47,7 +47,7 @@
 
 <style>
 	.typography-hero {
-		padding: var(--space-2xl) var(--space-lg);
+		padding: var(--space-performance-2xl) var(--space-performance-lg);
 		max-width: 900px;
 	}
 
@@ -58,47 +58,47 @@
 
 	/* Eyebrow: light weight, tracked */
 	.eyebrow {
-		font-size: var(--text-caption);
-		font-weight: var(--font-light, 300);
-		color: var(--color-fg-tertiary);
-		letter-spacing: var(--tracking-wide);
+		font-size: var(--text-performance-caption);
+		font-weight: var(--font-performance-light, 300);
+		color: var(--color-performance-fg-tertiary);
+		letter-spacing: var(--tracking-performance-wide);
 		text-transform: uppercase;
-		margin-bottom: var(--space-sm);
+		margin-bottom: var(--space-performance-sm);
 		opacity: 0;
-		animation: fade-up 0.8s var(--ease-standard) 0.2s forwards;
+		animation: fade-up 0.8s var(--ease-performance-standard) 0.2s forwards;
 	}
 
 	/* Headline: dramatic weight contrast */
 	.headline {
-		font-size: var(--text-display);
+		font-size: var(--text-performance-display);
 		line-height: 1.1;
 		margin: 0;
 		opacity: 0;
-		animation: fade-up 0.8s var(--ease-standard) 0.4s forwards;
+		animation: fade-up 0.8s var(--ease-performance-standard) 0.4s forwards;
 	}
 
 	/* Minimal variant: medium weight */
 	[data-variant='minimal'] .headline {
-		font-weight: var(--font-medium, 500);
-		color: var(--color-fg-primary);
+		font-weight: var(--font-performance-medium, 500);
+		color: var(--color-performance-fg-primary);
 	}
 
 	/* Dramatic variant: bold with secondary color mix */
 	[data-variant='dramatic'] .headline {
-		font-weight: var(--font-bold, 700);
-		color: var(--color-fg-primary);
+		font-weight: var(--font-performance-bold, 700);
+		color: var(--color-performance-fg-primary);
 	}
 
 	/* Subhead: light weight, secondary color */
 	.subhead {
-		font-size: var(--text-body-lg);
-		font-weight: var(--font-light, 300);
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body-lg);
+		font-weight: var(--font-performance-light, 300);
+		color: var(--color-performance-fg-secondary);
 		line-height: 1.6;
-		margin-top: var(--space-md);
+		margin-top: var(--space-performance-md);
 		max-width: 60ch;
 		opacity: 0;
-		animation: fade-up 0.8s var(--ease-standard) 0.6s forwards;
+		animation: fade-up 0.8s var(--ease-performance-standard) 0.6s forwards;
 	}
 
 	.center .subhead {
@@ -108,27 +108,27 @@
 
 	/* CTA: minimal styling, focus on typography */
 	.cta-wrapper {
-		margin-top: var(--space-lg);
+		margin-top: var(--space-performance-lg);
 		opacity: 0;
-		animation: fade-up 0.8s var(--ease-standard) 0.8s forwards;
+		animation: fade-up 0.8s var(--ease-performance-standard) 0.8s forwards;
 	}
 
 	.cta-link {
 		display: inline-flex;
 		align-items: center;
-		gap: var(--space-sm);
-		font-size: var(--text-body);
-		font-weight: var(--font-medium, 500);
-		color: var(--color-fg-primary);
+		gap: var(--space-performance-sm);
+		font-size: var(--text-performance-body);
+		font-weight: var(--font-performance-medium, 500);
+		color: var(--color-performance-fg-primary);
 		text-decoration: none;
-		padding-bottom: var(--space-xs);
+		padding-bottom: var(--space-performance-xs);
 		transition:
-			border-color var(--duration-micro) var(--ease-standard),
-			transform var(--duration-micro) var(--ease-standard);
+			border-color var(--duration-performance-micro) var(--ease-performance-standard),
+			transform var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.cta-link:hover {
-		border-color: var(--color-border-emphasis);
+		border-color: var(--color-performance-border-emphasis);
 	}
 
 	.cta-link:hover .cta-arrow {
@@ -136,7 +136,7 @@
 	}
 
 	.cta-arrow {
-		transition: transform var(--duration-micro) var(--ease-standard);
+		transition: transform var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	@keyframes fade-up {
@@ -153,15 +153,15 @@
 	/* Responsive: scale down on mobile */
 	@media (max-width: 768px) {
 		.typography-hero {
-			padding: var(--space-xl) var(--space-md);
+			padding: var(--space-performance-xl) var(--space-performance-md);
 		}
 
 		.headline {
-			font-size: var(--text-h1);
+			font-size: var(--text-performance-h1);
 		}
 
 		.subhead {
-			font-size: var(--text-body);
+			font-size: var(--text-performance-body);
 		}
 	}
 

@@ -171,32 +171,32 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		padding: var(--space-lg);
+		padding: var(--space-performance-lg);
 	}
 
 	.auth-card {
 		width: 100%;
 		max-width: 480px;
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
-		padding: var(--space-xl);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
+		padding: var(--space-performance-xl);
 	}
 
 	.auth-header {
 		text-align: center;
-		margin-bottom: var(--space-lg);
+		margin-bottom: var(--space-performance-lg);
 	}
 
 	.auth-header h1 {
-		font-size: var(--text-h2);
-		font-weight: var(--font-bold);
-		color: var(--color-fg-primary);
-		margin: 0 0 var(--space-xs) 0;
+		font-size: var(--text-performance-h2);
+		font-weight: var(--font-performance-bold);
+		color: var(--color-performance-fg-primary);
+		margin: 0 0 var(--space-performance-xs) 0;
 	}
 
 	.auth-subtitle {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-tertiary);
 		margin: 0;
 	}
 </style>

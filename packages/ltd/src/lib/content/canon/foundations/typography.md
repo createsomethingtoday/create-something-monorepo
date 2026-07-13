@@ -23,43 +23,43 @@ Built on the golden ratio (φ = 1.618). Each step multiplies by φ for natural v
 | `--text-3xl` | 1.875rem | H3 headings |
 | `--text-4xl` | 2.25rem | H2 headings |
 | `--text-5xl` | 3rem | H1 headings |
-| `--text-display` | 4rem | Hero text |
+| `--text-performance-display` | 4rem | Hero text |
 
 ## Font Weights
 
 | Token | Weight | Use |
 |-------|--------|-----|
-| `--font-light` | 300 | Display text |
+| `--font-performance-light` | 300 | Display text |
 | `--font-normal` | 400 | Body text |
-| `--font-medium` | 500 | Emphasis |
-| `--font-semibold` | 600 | Subheadings |
-| `--font-bold` | 700 | Headings |
+| `--font-performance-medium` | 500 | Emphasis |
+| `--font-performance-semibold` | 600 | Subheadings |
+| `--font-performance-bold` | 700 | Headings |
 
 ## Line Height
 
 | Token | Value | Use |
 |-------|-------|-----|
 | `--leading-none` | 1 | Single-line text |
-| `--leading-tight` | 1.25 | Headings |
-| `--leading-normal` | 1.5 | Body text |
-| `--leading-relaxed` | 1.75 | Long-form reading |
+| `--leading-performance-tight` | 1.25 | Headings |
+| `--leading-performance-normal` | 1.5 | Body text |
+| `--leading-performance-relaxed` | 1.75 | Long-form reading |
 
 ## Letter Spacing
 
 | Token | Value | Use |
 |-------|-------|-----|
-| `--tracking-tight` | -0.025em | Large headings |
-| `--tracking-normal` | 0 | Body text |
-| `--tracking-wide` | 0.025em | Buttons |
-| `--tracking-widest` | 0.1em | Labels, caps |
+| `--tracking-performance-tight` | -0.025em | Large headings |
+| `--tracking-performance-normal` | 0 | Body text |
+| `--tracking-performance-wide` | 0.025em | Buttons |
+| `--tracking-performance-widest` | 0.1em | Labels, caps |
 
 ## Font Stack
 
 ```css
---font-sans: Arial, 'Helvetica Neue', Helvetica, system-ui, sans-serif;
---font-display: var(--font-sans);
---font-mono: ui-monospace, 'SFMono-Regular', 'SF Mono', Menlo, Consolas, monospace;
---font-serif: Georgia, 'Times New Roman', serif;
+--font-performance-sans: Arial, 'Helvetica Neue', Helvetica, system-ui, sans-serif;
+--font-performance-display: var(--font-performance-sans);
+--font-performance-mono: ui-monospace, 'SFMono-Regular', 'SF Mono', Menlo, Consolas, monospace;
+--font-performance-serif: Georgia, 'Times New Roman', serif;
 ```
 
 The Performance Lab layer uses the local/system sans stack for interface and body text, the platform
@@ -76,7 +76,7 @@ short state labels and identifiers, not long explanatory paragraphs.
 Display text scales with viewport:
 
 ```css
---text-display: clamp(2.5rem, 4vw + 1.5rem, 4.5rem);
+--text-performance-display: clamp(2.5rem, 4vw + 1.5rem, 4.5rem);
 ```
 
 ## Usage Example
@@ -84,20 +84,20 @@ Display text scales with viewport:
 ```css
 .article-title {
   font-size: var(--text-4xl);
-  font-weight: var(--font-bold);
-  line-height: var(--leading-tight);
-  letter-spacing: var(--tracking-tight);
+  font-weight: var(--font-performance-bold);
+  line-height: var(--leading-performance-tight);
+  letter-spacing: var(--tracking-performance-tight);
 }
 
 .article-body {
   font-size: var(--text-base);
   font-weight: var(--font-normal);
-  line-height: var(--leading-relaxed);
+  line-height: var(--leading-performance-relaxed);
 }
 
 .article-meta {
   font-size: var(--text-sm);
-  color: var(--color-fg-muted);
-  letter-spacing: var(--tracking-wide);
+  color: var(--color-performance-fg-muted);
+  letter-spacing: var(--tracking-performance-wide);
 }
 ```

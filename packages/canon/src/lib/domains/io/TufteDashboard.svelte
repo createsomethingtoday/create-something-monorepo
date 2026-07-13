@@ -127,9 +127,9 @@
 	// Get funnel bar color based on index
 	function getFunnelColor(index: number): string {
 		const colors = [
-			'var(--color-data-1)',
-			'var(--color-data-2)',
-			'var(--color-data-4)'
+			'var(--color-performance-data-1)',
+			'var(--color-performance-data-2)',
+			'var(--color-performance-data-4)'
 		];
 		return colors[index] || colors[2];
 	}
@@ -511,76 +511,76 @@
 <style>
 	/* Base Dashboard Styles */
 	.tufte-dashboard {
-		font-family: var(--font-mono, ui-monospace, monospace);
+		font-family: var(--font-performance-mono, ui-monospace, monospace);
 	}
 
 	/* Loading & Error States */
 	.loading-text {
-		color: var(--color-fg-muted);
-		font-size: var(--text-body-sm);
+		color: var(--color-performance-fg-muted);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.error-banner {
-		background-color: var(--color-error-muted);
-		border: 1px solid var(--color-error-border);
-		border-radius: var(--radius-lg);
+		background-color: var(--color-performance-error-muted);
+		border: 1px solid var(--color-performance-error-border);
+		border-radius: var(--radius-performance-scale-lg);
 		padding: 1rem;
 	}
 
 	.error-text {
-		color: var(--color-error);
-		font-size: var(--text-body-sm);
+		color: var(--color-performance-error);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	/* Section Headings */
 	.section-heading {
-		color: var(--color-fg-muted);
-		font-size: var(--text-caption);
+		color: var(--color-performance-fg-muted);
+		font-size: var(--text-performance-caption);
 		text-transform: uppercase;
-		letter-spacing: var(--tracking-wider);
+		letter-spacing: var(--tracking-performance-wider);
 		margin-bottom: 1rem;
 	}
 
 	.subsection-label {
-		color: var(--color-fg-muted);
-		font-size: var(--text-caption);
+		color: var(--color-performance-fg-muted);
+		font-size: var(--text-performance-caption);
 		margin-bottom: 0.5rem;
 	}
 
 	/* Panel - Shared card styling */
 	.panel {
-		background-color: var(--color-hover);
-		border-radius: var(--radius-lg);
+		background-color: var(--color-performance-hover);
+		border-radius: var(--radius-performance-scale-lg);
 		padding: 1rem;
 	}
 
 	.panel-heading {
-		color: var(--color-fg-tertiary);
-		font-size: var(--text-caption);
+		color: var(--color-performance-fg-tertiary);
+		font-size: var(--text-performance-caption);
 		margin-bottom: 0.75rem;
 	}
 
 	/* AI Insights Banner */
 	.ai-insights-banner {
-		background: linear-gradient(to right, var(--color-data-3-muted), var(--color-data-1-muted));
-		border: 1px solid var(--color-border-emphasis);
-		border-radius: var(--radius-lg);
+		background: linear-gradient(to right, var(--color-performance-data-3-muted), var(--color-performance-data-1-muted));
+		border: 1px solid var(--color-performance-border-emphasis);
+		border-radius: var(--radius-performance-scale-lg);
 		padding: 1rem;
 	}
 
 	.ai-badge {
-		color: var(--color-data-3);
-		font-size: var(--text-body-lg);
+		color: var(--color-performance-data-3);
+		font-size: var(--text-performance-body-lg);
 	}
 
 	.ai-summary {
-		color: var(--color-fg-secondary);
-		font-size: var(--text-body-sm);
+		color: var(--color-performance-fg-secondary);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.ai-timestamp {
-		color: var(--color-fg-subtle);
-		font-size: var(--text-caption);
+		color: var(--color-performance-fg-subtle);
+		font-size: var(--text-performance-caption);
 		margin-top: 0.25rem;
 	}
 
@@ -590,72 +590,72 @@
 		align-items: center;
 		gap: 0.5rem;
 		padding: 0.5rem 0.75rem;
-		border-radius: var(--radius-md);
+		border-radius: var(--radius-performance-scale-md);
 		border: 1px solid;
-		font-size: var(--text-caption);
+		font-size: var(--text-performance-caption);
 	}
 
 	.anomaly-date {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.anomalies-more {
-		color: var(--color-fg-muted);
-		font-size: var(--text-caption);
+		color: var(--color-performance-fg-muted);
+		font-size: var(--text-performance-caption);
 	}
 
 	/* Severity States */
 	.severity-critical {
-		background-color: var(--color-error-muted);
-		border-color: var(--color-error-border);
-		color: var(--color-error);
+		background-color: var(--color-performance-error-muted);
+		border-color: var(--color-performance-error-border);
+		color: var(--color-performance-error);
 	}
 
 	.severity-warning {
-		background-color: var(--color-warning-muted);
-		border-color: var(--color-warning-border);
-		color: var(--color-warning);
+		background-color: var(--color-performance-warning-muted);
+		border-color: var(--color-performance-warning-border);
+		color: var(--color-performance-warning);
 	}
 
 	.severity-info {
-		background-color: var(--color-info-muted);
-		border-color: var(--color-info-border);
-		color: var(--color-info);
+		background-color: var(--color-performance-info-muted);
+		border-color: var(--color-performance-info-border);
+		color: var(--color-performance-info);
 	}
 
 	/* Trend Labels */
 	.trend-label {
-		color: var(--color-fg-tertiary);
-		font-size: var(--text-body-sm);
+		color: var(--color-performance-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	/* Funnel Visualization */
 	.funnel-bar {
 		width: 100%;
-		border-radius: var(--radius-sm) var(--radius-sm) 0 0;
-		transition: all var(--duration-standard) var(--ease-standard);
+		border-radius: var(--radius-performance-scale-sm) var(--radius-performance-scale-sm) 0 0;
+		transition: all var(--duration-performance-standard) var(--ease-performance-standard);
 	}
 
 	.funnel-count {
-		color: var(--color-fg-secondary);
-		font-size: var(--text-body-sm);
-		font-family: var(--font-mono);
+		color: var(--color-performance-fg-secondary);
+		font-size: var(--text-performance-body-sm);
+		font-family: var(--font-performance-mono);
 	}
 
 	.funnel-label {
-		color: var(--color-fg-muted);
-		font-size: var(--text-caption);
+		color: var(--color-performance-fg-muted);
+		font-size: var(--text-performance-caption);
 	}
 
 	.funnel-dropoff {
-		color: var(--color-error);
+		color: var(--color-performance-error);
 		opacity: 0.6;
-		font-size: var(--text-caption);
+		font-size: var(--text-performance-caption);
 	}
 
 	/* Churn Rate */
 	.churn-rate {
-		color: var(--color-fg-subtle);
+		color: var(--color-performance-fg-subtle);
 		margin-left: 0.5rem;
 	}
 </style>

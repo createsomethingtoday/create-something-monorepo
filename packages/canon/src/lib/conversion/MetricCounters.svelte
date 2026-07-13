@@ -142,8 +142,8 @@
 
 <style>
 	.metrics-section {
-		padding: var(--space-2xl, 6.854rem) var(--space-lg, 2.618rem);
-		background: var(--color-bg-elevated, #0a0a0a);
+		padding: var(--space-performance-2xl, 6.854rem) var(--space-performance-lg, 2.618rem);
+		background: var(--color-performance-bg-elevated, #0a0a0a);
 		position: relative;
 		overflow: hidden;
 	}
@@ -168,12 +168,12 @@
 	.metrics-grid {
 		display: grid;
 		grid-template-columns: repeat(4, 1fr);
-		gap: var(--space-lg, 2.618rem);
+		gap: var(--space-performance-lg, 2.618rem);
 	}
 
 	.metric-item {
 		text-align: center;
-		padding: var(--space-lg, 2.618rem);
+		padding: var(--space-performance-lg, 2.618rem);
 		position: relative;
 	}
 
@@ -186,15 +186,15 @@
 		transform: translateY(-50%);
 		height: 60%;
 		width: 1px;
-		background: var(--color-border-default, rgba(255, 255, 255, 0.1));
+		background: var(--color-performance-border-default, rgba(255, 255, 255, 0.1));
 	}
 
 	.metric-value {
-		font-size: var(--text-display, clamp(2.5rem, 4vw + 1.5rem, 5rem));
+		font-size: var(--text-performance-display, clamp(2.5rem, 4vw + 1.5rem, 5rem));
 		font-weight: 700;
-		color: var(--color-fg-primary, #fff);
+		color: var(--color-performance-fg-primary, #fff);
 		line-height: 1;
-		margin-bottom: var(--space-sm, 1rem);
+		margin-bottom: var(--space-performance-sm, 1rem);
 		font-variant-numeric: tabular-nums;
 		white-space: nowrap;
 		display: flex;
@@ -215,8 +215,8 @@
 	}
 
 	.metric-label {
-		font-size: var(--text-body, 1rem);
-		color: var(--color-fg-secondary, rgba(255, 255, 255, 0.8));
+		font-size: var(--text-performance-body, 1rem);
+		color: var(--color-performance-fg-secondary, rgba(255, 255, 255, 0.8));
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 		font-weight: 500;
@@ -227,8 +227,8 @@
 		opacity: 0;
 		transform: translateY(20px);
 		transition:
-			opacity var(--duration-complex, 500ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
-			transform var(--duration-complex, 500ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+			opacity var(--duration-performance-complex, 500ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1)),
+			transform var(--duration-performance-complex, 500ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1));
 	}
 
 	.metric-item.animated {
@@ -259,12 +259,12 @@
 
 	@media (max-width: 640px) {
 		.metrics-section {
-			padding: var(--space-xl, 4.236rem) var(--space-md, 1.618rem);
+			padding: var(--space-performance-xl, 4.236rem) var(--space-performance-md, 1.618rem);
 		}
 
 		.metrics-grid {
 			grid-template-columns: 1fr;
-			gap: var(--space-md, 1.618rem);
+			gap: var(--space-performance-md, 1.618rem);
 		}
 
 		.metric-item::after {
@@ -272,8 +272,8 @@
 		}
 
 		.metric-item {
-			border-bottom: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
-			padding-bottom: var(--space-md, 1.618rem);
+			border-bottom: 1px solid var(--color-performance-border-default, rgba(255, 255, 255, 0.1));
+			padding-bottom: var(--space-performance-md, 1.618rem);
 		}
 
 		.metric-item:last-child {
@@ -282,7 +282,7 @@
 		}
 
 		.metric-value {
-			font-size: var(--text-h1, clamp(2rem, 3vw + 1rem, 3.5rem));
+			font-size: var(--text-performance-h1, clamp(2rem, 3vw + 1rem, 3.5rem));
 		}
 	}
 

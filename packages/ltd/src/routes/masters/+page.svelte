@@ -49,51 +49,51 @@
 </section>
 
 <style>
-	/* Page Title - Uses --text-h1 for page titles
-	 * Pattern: Hero headlines use --text-display, page titles use --text-h1
+	/* Page Title - Uses --text-performance-h1 for page titles
+	 * Pattern: Hero headlines use --text-performance-display, page titles use --text-performance-h1
 	 * This ensures consistency across all properties
 	 */
 	.page-title {
-		font-size: var(--text-h1);
-		font-weight: var(--font-bold);
-		line-height: var(--leading-tight);
-		letter-spacing: var(--tracking-tight);
-		color: var(--color-fg-primary);
+		font-size: var(--text-performance-h1);
+		font-weight: var(--font-performance-bold);
+		line-height: var(--leading-performance-tight);
+		letter-spacing: var(--tracking-performance-tight);
+		color: var(--color-performance-fg-primary);
 	}
 
 	/* Typography */
 	.text-sm-canon {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.text-lg-canon {
-		font-size: var(--text-body-lg);
+		font-size: var(--text-performance-body-lg);
 	}
 
 	.text-xl-canon {
-		font-size: var(--text-h3);
+		font-size: var(--text-performance-h3);
 	}
 
 	/* Opacity as color tokens */
 	.opacity-40-canon {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.opacity-60-canon {
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.opacity-70-canon {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	/* Borders */
 	.border-canon {
-		border-color: var(--color-border-default);
+		border-color: var(--color-performance-border-default);
 	}
 
 	/* Universal element styles */
 	section {
-		border-color: var(--color-border-default);
+		border-color: var(--color-performance-border-default);
 	}
 </style>

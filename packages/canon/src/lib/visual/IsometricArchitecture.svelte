@@ -295,70 +295,70 @@
 	/* Connections */
 	.connection {
 		fill: none;
-		stroke: var(--color-fg-muted, rgba(255, 255, 255, 0.4));
+		stroke: var(--color-performance-fg-muted, rgba(255, 255, 255, 0.4));
 		stroke-width: 1.5;
 		stroke-dasharray: 100;
 		stroke-dashoffset: 100;
 	}
 
 	.connection-label {
-		font-family: var(--font-mono, monospace);
+		font-family: var(--font-performance-mono, monospace);
 		font-size: 7px;
-		fill: var(--color-fg-muted, rgba(255, 255, 255, 0.4));
+		fill: var(--color-performance-fg-muted, rgba(255, 255, 255, 0.4));
 		opacity: 0;
 	}
 
 	/* Node faces */
 	.face {
-		stroke: var(--color-fg-muted, rgba(255, 255, 255, 0.4));
+		stroke: var(--color-performance-fg-muted, rgba(255, 255, 255, 0.4));
 		stroke-width: 1;
 		vector-effect: non-scaling-stroke;
 		opacity: 0;
 	}
 
 	.face-top {
-		fill: var(--color-fg-subtle, rgba(255, 255, 255, 0.15));
+		fill: var(--color-performance-fg-subtle, rgba(255, 255, 255, 0.15));
 	}
 
 	.face-left {
-		fill: var(--color-bg-subtle, rgba(255, 255, 255, 0.08));
+		fill: var(--color-performance-bg-subtle, rgba(255, 255, 255, 0.08));
 	}
 
 	.face-right {
-		fill: var(--color-bg-elevated, rgba(255, 255, 255, 0.03));
+		fill: var(--color-performance-bg-elevated, rgba(255, 255, 255, 0.03));
 	}
 
 	/* Labels */
 	.node-label {
-		font-family: var(--font-mono, monospace);
+		font-family: var(--font-performance-mono, monospace);
 		font-size: 9px;
 		font-weight: 600;
-		fill: var(--color-fg-primary, white);
+		fill: var(--color-performance-fg-primary, white);
 		opacity: 0;
 	}
 
 	.node-sublabel {
-		font-family: var(--font-sans, system-ui);
+		font-family: var(--font-performance-sans, system-ui);
 		font-size: 7px;
-		fill: var(--color-fg-muted, rgba(255, 255, 255, 0.4));
+		fill: var(--color-performance-fg-muted, rgba(255, 255, 255, 0.4));
 		opacity: 0;
 	}
 
 	/* Title */
 	.arch-title {
-		font-family: var(--font-sans, system-ui);
+		font-family: var(--font-performance-sans, system-ui);
 		font-size: 10px;
 		font-style: italic;
-		fill: var(--color-fg-muted, rgba(255, 255, 255, 0.4));
+		fill: var(--color-performance-fg-muted, rgba(255, 255, 255, 0.4));
 		opacity: 0;
 	}
 
 	/* Hover states */
 	.node:hover .face {
-		stroke: var(--color-fg-secondary, rgba(255, 255, 255, 0.6));
+		stroke: var(--color-performance-fg-secondary, rgba(255, 255, 255, 0.6));
 	}
 
 	.node:hover .face-top {
-		fill: var(--color-fg-muted, rgba(255, 255, 255, 0.25));
+		fill: var(--color-performance-fg-muted, rgba(255, 255, 255, 0.25));
 	}
 </style>

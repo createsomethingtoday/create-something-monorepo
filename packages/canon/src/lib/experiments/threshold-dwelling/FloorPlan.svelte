@@ -382,7 +382,7 @@
 
 	/* Zones - barely perceptible, Tufte-style */
 	.zone {
-		transition: opacity var(--duration-standard, 0.3s) var(--ease-standard, ease);
+		transition: opacity var(--duration-performance-standard, 0.3s) var(--ease-performance-standard, ease);
 	}
 
 	.interactive .zone:hover {
@@ -444,12 +444,12 @@
 
 	/* Room labels - Rams: unobtrusive */
 	.room-label {
-		font-family: var(--font-sans, system-ui, sans-serif);
+		font-family: var(--font-performance-sans, system-ui, sans-serif);
 		font-size: 7px;
 		fill: var(--arch-label-primary);
 		text-anchor: middle;
 		dominant-baseline: middle;
-		letter-spacing: var(--tracking-normal, 0.02em);
+		letter-spacing: var(--tracking-performance-normal, 0.02em);
 	}
 
 	.room-label.small {
@@ -459,21 +459,21 @@
 
 	/* North label - minimal */
 	.north-label {
-		font-family: var(--font-sans, system-ui, sans-serif);
+		font-family: var(--font-performance-sans, system-ui, sans-serif);
 		font-size: 6px;
 		fill: var(--arch-label-subtle);
 		text-anchor: middle;
-		letter-spacing: var(--tracking-wider, 0.05em);
+		letter-spacing: var(--tracking-performance-wider, 0.05em);
 	}
 
 	/* Overhang label - subtle */
 	.overhang-label {
-		font-family: var(--font-sans, system-ui, sans-serif);
+		font-family: var(--font-performance-sans, system-ui, sans-serif);
 		font-size: 5px;
 		fill: var(--arch-label-subtle);
 		text-anchor: middle;
 		dominant-baseline: middle;
-		letter-spacing: var(--tracking-wider, 0.05em);
+		letter-spacing: var(--tracking-performance-wider, 0.05em);
 		text-transform: uppercase;
 	}
 
@@ -482,95 +482,95 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		margin-top: var(--space-md, 1.5rem);
-		padding-top: var(--space-sm, 1rem);
-		border-top: 1px solid var(--color-hover, rgba(255, 255, 255, 0.05));
-		font-family: var(--font-sans, system-ui, sans-serif);
+		margin-top: var(--space-performance-md, 1.5rem);
+		padding-top: var(--space-performance-sm, 1rem);
+		border-top: 1px solid var(--color-performance-hover, rgba(255, 255, 255, 0.05));
+		font-family: var(--font-performance-sans, system-ui, sans-serif);
 	}
 
 	.caption {
-		font-size: var(--text-body-sm, 11px);
-		color: var(--color-fg-muted);
-		letter-spacing: var(--tracking-normal, 0.02em);
+		font-size: var(--text-performance-body-sm, 11px);
+		color: var(--color-performance-fg-muted);
+		letter-spacing: var(--tracking-performance-normal, 0.02em);
 	}
 
 	.zone-hint {
-		font-size: var(--text-caption, 10px);
-		color: var(--color-fg-subtle);
+		font-size: var(--text-performance-caption, 10px);
+		color: var(--color-performance-fg-subtle);
 		text-transform: uppercase;
-		letter-spacing: var(--tracking-widest, 0.1em);
+		letter-spacing: var(--tracking-performance-widest, 0.1em);
 	}
 
 	.caption-right {
 		display: flex;
 		align-items: center;
-		gap: var(--space-sm, 1rem);
+		gap: var(--space-performance-sm, 1rem);
 	}
 
 	/* Cost toggle button - subdued */
 	.cost-toggle {
-		font-family: var(--font-sans, system-ui, sans-serif);
-		font-size: var(--text-caption, 10px);
-		color: var(--color-fg-subtle);
+		font-family: var(--font-performance-sans, system-ui, sans-serif);
+		font-size: var(--text-performance-caption, 10px);
+		color: var(--color-performance-fg-subtle);
 		background: none;
 		padding: 0.25rem 0.5rem;
 		cursor: pointer;
-		letter-spacing: var(--tracking-wider, 0.05em);
+		letter-spacing: var(--tracking-performance-wider, 0.05em);
 		text-transform: uppercase;
-		transition: all var(--duration-micro, 0.2s) var(--ease-standard, ease);
+		transition: all var(--duration-performance-micro, 0.2s) var(--ease-performance-standard, ease);
 	}
 
 	.cost-toggle:hover {
-		color: var(--color-fg-tertiary);
-		border-color: var(--color-border-emphasis);
+		color: var(--color-performance-fg-tertiary);
+		border-color: var(--color-performance-border-emphasis);
 	}
 
 	/* Cost summary panel - Rams: unobtrusive financial clarity */
 	.cost-summary {
-		margin-top: var(--space-md, 1.5rem);
-		padding: var(--space-md, 1.5rem);
-		background: var(--color-hover, rgba(255, 255, 255, 0.02));
-		border: 1px solid var(--color-hover, rgba(255, 255, 255, 0.05));
-		font-family: var(--font-sans, system-ui, sans-serif);
+		margin-top: var(--space-performance-md, 1.5rem);
+		padding: var(--space-performance-md, 1.5rem);
+		background: var(--color-performance-hover, rgba(255, 255, 255, 0.02));
+		border: 1px solid var(--color-performance-hover, rgba(255, 255, 255, 0.05));
+		font-family: var(--font-performance-sans, system-ui, sans-serif);
 	}
 
 	.cost-header {
 		display: flex;
 		justify-content: space-between;
 		align-items: baseline;
-		padding-bottom: var(--space-sm, 1rem);
-		border-bottom: 1px solid var(--color-hover, rgba(255, 255, 255, 0.05));
-		margin-bottom: var(--space-sm, 1rem);
+		padding-bottom: var(--space-performance-sm, 1rem);
+		border-bottom: 1px solid var(--color-performance-hover, rgba(255, 255, 255, 0.05));
+		margin-bottom: var(--space-performance-sm, 1rem);
 	}
 
 	.cost-total {
 		font-size: 1.5rem;
 		font-weight: 200;
-		color: var(--color-fg-tertiary);
-		letter-spacing: var(--tracking-tight, -0.02em);
+		color: var(--color-performance-fg-tertiary);
+		letter-spacing: var(--tracking-performance-tight, -0.02em);
 	}
 
 	.cost-per-sf {
-		font-size: var(--text-body-sm, 11px);
-		color: var(--color-fg-subtle);
+		font-size: var(--text-performance-body-sm, 11px);
+		color: var(--color-performance-fg-subtle);
 	}
 
 	.cost-categories {
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-		gap: var(--space-md, 1.5rem);
+		gap: var(--space-performance-md, 1.5rem);
 	}
 
 	.cost-category {
-		padding: var(--space-sm, 1rem) 0;
+		padding: var(--space-performance-sm, 1rem) 0;
 	}
 
 	.category-name {
-		font-size: var(--text-overline, 9px);
-		font-weight: var(--font-medium, 500);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-overline, 9px);
+		font-weight: var(--font-performance-medium, 500);
+		color: var(--color-performance-fg-muted);
 		text-transform: uppercase;
-		letter-spacing: var(--tracking-widest, 0.1em);
+		letter-spacing: var(--tracking-performance-widest, 0.1em);
 		margin: 0 0 0.75rem 0;
 	}
 
@@ -582,35 +582,35 @@
 	}
 
 	.item-desc {
-		font-size: var(--text-body-sm, 11px);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body-sm, 11px);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.item-amount {
-		font-size: var(--text-body-sm, 11px);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-body-sm, 11px);
+		color: var(--color-performance-fg-muted);
 		font-variant-numeric: tabular-nums;
 	}
 
 	.item-notes {
-		font-size: var(--text-overline, 9px);
-		color: var(--color-fg-subtle);
+		font-size: var(--text-performance-overline, 9px);
+		color: var(--color-performance-fg-subtle);
 		margin: 0.25rem 0 0.5rem 0;
 		font-style: italic;
 	}
 
 	.cost-assumptions {
-		margin-top: var(--space-md, 1.5rem);
-		padding-top: var(--space-sm, 1rem);
-		border-top: 1px solid var(--color-hover);
+		margin-top: var(--space-performance-md, 1.5rem);
+		padding-top: var(--space-performance-sm, 1rem);
+		border-top: 1px solid var(--color-performance-hover);
 	}
 
 	.cost-assumptions h4 {
-		font-size: var(--text-overline, 9px);
-		font-weight: var(--font-medium, 500);
-		color: var(--color-fg-subtle);
+		font-size: var(--text-performance-overline, 9px);
+		font-weight: var(--font-performance-medium, 500);
+		color: var(--color-performance-fg-subtle);
 		text-transform: uppercase;
-		letter-spacing: var(--tracking-widest, 0.1em);
+		letter-spacing: var(--tracking-performance-widest, 0.1em);
 		margin: 0 0 0.5rem 0;
 	}
 
@@ -620,15 +620,15 @@
 	}
 
 	.cost-assumptions li {
-		font-size: var(--text-caption, 10px);
-		color: var(--color-fg-subtle);
+		font-size: var(--text-performance-caption, 10px);
+		color: var(--color-performance-fg-subtle);
 		margin: 0.25rem 0;
 	}
 
 	.cost-updated {
-		font-size: var(--text-overline, 9px);
-		color: var(--color-fg-subtle);
-		margin: var(--space-md, 1.5rem) 0 0 0;
+		font-size: var(--text-performance-overline, 9px);
+		color: var(--color-performance-fg-subtle);
+		margin: var(--space-performance-md, 1.5rem) 0 0 0;
 		text-align: right;
 	}
 
@@ -645,28 +645,28 @@
 	}
 
 	.scale-bar-label {
-		font-family: var(--font-sans, system-ui, sans-serif);
+		font-family: var(--font-performance-sans, system-ui, sans-serif);
 		font-size: 6px;
 		fill: var(--arch-scale-text);
 		text-anchor: middle;
-		letter-spacing: var(--tracking-normal, 0.02em);
+		letter-spacing: var(--tracking-performance-normal, 0.02em);
 	}
 
 	/* Title block - minimal project info */
 	.title-block-name {
-		font-family: var(--font-sans, system-ui, sans-serif);
+		font-family: var(--font-performance-sans, system-ui, sans-serif);
 		font-size: 8px;
 		fill: var(--arch-title-primary);
 		font-weight: 500;
-		letter-spacing: var(--tracking-wide, 0.04em);
+		letter-spacing: var(--tracking-performance-wide, 0.04em);
 		text-anchor: start;
 	}
 
 	.title-block-scale {
-		font-family: var(--font-sans, system-ui, sans-serif);
+		font-family: var(--font-performance-sans, system-ui, sans-serif);
 		font-size: 6px;
 		fill: var(--arch-title-secondary);
-		letter-spacing: var(--tracking-wider, 0.05em);
+		letter-spacing: var(--tracking-performance-wider, 0.05em);
 		text-anchor: start;
 		text-transform: uppercase;
 	}

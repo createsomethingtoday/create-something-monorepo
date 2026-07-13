@@ -53,7 +53,7 @@
 
 	.matrix-header {
 		padding: 0.45rem 0 0.55rem;
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 		font-size: 0.7rem;
 		letter-spacing: 0.12em;
 		text-transform: uppercase;
@@ -67,17 +67,17 @@
 
 	.credential,
 	.status {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.usage {
 		display: grid;
 		gap: 0.2rem;
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.usage small {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 		font-size: 0.75rem;
 		line-height: 1.45;
 	}
@@ -100,7 +100,7 @@
 			font-size: 0.66rem;
 			letter-spacing: 0.1em;
 			text-transform: uppercase;
-			color: var(--color-fg-muted);
+			color: var(--color-performance-fg-muted);
 		}
 
 		.matrix-row > .usage::before {

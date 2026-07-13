@@ -189,64 +189,64 @@
 
 <style>
 	/* Page Title - Entity names need smaller sizing than hero headlines
-	 * Uses --text-h1 (22-28px mobile) to prevent overflow on long names
+	 * Uses --text-performance-h1 (22-28px mobile) to prevent overflow on long names
 	 * like "Ludwig Mies van der Rohe"
 	 *
-	 * Pattern: Hero headlines use --text-display, entity titles use --text-h1
+	 * Pattern: Hero headlines use --text-performance-display, entity titles use --text-performance-h1
 	 */
 	.page-title {
-		font-size: var(--text-h1);
-		font-weight: var(--font-bold);
-		line-height: var(--leading-tight);
-		letter-spacing: var(--tracking-tight);
-		color: var(--color-fg-primary);
+		font-size: var(--text-performance-h1);
+		font-weight: var(--font-performance-bold);
+		line-height: var(--leading-performance-tight);
+		letter-spacing: var(--tracking-performance-tight);
+		color: var(--color-performance-fg-primary);
 	}
 
 	/* Typography */
 	.text-xs-canon {
-		font-size: var(--text-caption);
+		font-size: var(--text-performance-caption);
 	}
 
 	.text-sm-canon {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	.text-lg-canon {
-		font-size: var(--text-body-lg);
+		font-size: var(--text-performance-body-lg);
 	}
 
 	.text-xl-canon {
-		font-size: var(--text-h3);
+		font-size: var(--text-performance-h3);
 	}
 
 	.text-2xl-canon {
-		font-size: var(--text-h2);
+		font-size: var(--text-performance-h2);
 	}
 
 	.text-3xl-canon {
-		font-size: var(--text-h1);
+		font-size: var(--text-performance-h1);
 	}
 
 	/* Opacity as color tokens */
 	.opacity-40-canon {
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 
 	.opacity-60-canon {
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.opacity-70-canon {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.opacity-80-canon {
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	/* Borders */
 	.border-canon {
-		border-color: var(--color-border-default);
+		border-color: var(--color-performance-border-default);
 	}
 
 	/* Masonry grid using CSS columns */
@@ -269,25 +269,25 @@
 
 	/* Section headings for examples */
 	.section-heading {
-		font-size: var(--text-h1);
+		font-size: var(--text-performance-h1);
 		font-weight: 700;
 		margin-bottom: 2rem;
 	}
 
 	.section-subheading {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-tertiary);
 		margin-bottom: 3rem;
 	}
 
 	/* Example gallery */
 	.example-card {
-		background: var(--color-bg-surface);
+		background: var(--color-performance-bg-surface);
 		break-inside: avoid;
 	}
 
 	.example-img {
-		transition: transform var(--duration-standard) var(--ease-standard);
+		transition: transform var(--duration-performance-standard) var(--ease-performance-standard);
 	}
 
 	.example-card:hover .example-img {
@@ -295,9 +295,9 @@
 	}
 
 	.example-overlay {
-		background: linear-gradient(to top, var(--color-overlay-heavy), transparent, transparent);
+		background: linear-gradient(to top, var(--color-performance-overlay-heavy), transparent, transparent);
 		opacity: 0;
-		transition: opacity var(--duration-standard) var(--ease-standard);
+		transition: opacity var(--duration-performance-standard) var(--ease-performance-standard);
 	}
 
 	.example-card:hover .example-overlay {
@@ -305,9 +305,9 @@
 	}
 
 	.example-title {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 		font-weight: 500;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 		display: -webkit-box;
 		line-clamp: 2;
 		-webkit-line-clamp: 2;
@@ -316,13 +316,13 @@
 	}
 
 	.example-year {
-		font-size: var(--text-caption);
-		color: var(--color-fg-tertiary);
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-tertiary);
 		margin-top: 0.25rem;
 	}
 
 	/* Universal element styles */
 	section {
-		border-color: var(--color-border-default);
+		border-color: var(--color-performance-border-default);
 	}
 </style>

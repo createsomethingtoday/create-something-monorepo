@@ -115,67 +115,67 @@ ${metrics && metrics.length ? `### Key Metrics\n${metrics.map(m => `- ${m}`).joi
 <style>
 	/* Agency typography and spacing */
 	:global(.prose-agency h2) {
-		margin-top: var(--space-xl);
-		margin-bottom: var(--space-md);
-		font-size: var(--text-h2);
+		margin-top: var(--space-performance-xl);
+		margin-bottom: var(--space-performance-md);
+		font-size: var(--text-performance-h2);
 		font-weight: 600;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	:global(.prose-agency h3) {
-		margin-top: var(--space-lg);
-		margin-bottom: var(--space-sm);
-		font-size: var(--text-h3);
+		margin-top: var(--space-performance-lg);
+		margin-bottom: var(--space-performance-sm);
+		font-size: var(--text-performance-h3);
 		font-weight: 600;
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	:global(.prose-agency p) {
-		margin-bottom: var(--space-md);
-		font-size: var(--text-body);
-		color: var(--color-fg-secondary);
+		margin-bottom: var(--space-performance-md);
+		font-size: var(--text-performance-body);
+		color: var(--color-performance-fg-secondary);
 		line-height: 1.8;
 	}
 
 	:global(.prose-agency ul),
 	:global(.prose-agency ol) {
-		margin-bottom: var(--space-md);
-		padding-left: var(--space-lg);
+		margin-bottom: var(--space-performance-md);
+		padding-left: var(--space-performance-lg);
 	}
 
 	:global(.prose-agency li) {
-		margin-bottom: var(--space-sm);
-		color: var(--color-fg-secondary);
+		margin-bottom: var(--space-performance-sm);
+		color: var(--color-performance-fg-secondary);
 	}
 
 	:global(.prose-agency blockquote) {
-		border-left: 2px solid var(--color-border-emphasis);
-		padding-left: var(--space-md);
-		margin: var(--space-lg) 0;
+		border-left: 2px solid var(--color-performance-border-emphasis);
+		padding-left: var(--space-performance-md);
+		margin: var(--space-performance-lg) 0;
 		font-style: italic;
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	:global(.prose-agency strong) {
 		font-weight: 600;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	:global(.prose-agency code) {
-		background: var(--color-bg-subtle);
+		background: var(--color-performance-bg-subtle);
 		padding: 0.2em 0.4em;
-		border-radius: var(--radius-sm);
-		font-family: var(--font-mono);
+		border-radius: var(--radius-performance-scale-sm);
+		font-family: var(--font-performance-mono);
 		font-size: 0.9em;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	:global(.prose-agency pre) {
-		background: var(--color-bg-subtle);
-		padding: var(--space-md);
-		border-radius: var(--radius-md);
+		background: var(--color-performance-bg-subtle);
+		padding: var(--space-performance-md);
+		border-radius: var(--radius-performance-scale-md);
 		overflow-x: auto;
-		margin: var(--space-lg) 0;
+		margin: var(--space-performance-lg) 0;
 	}
 
 	:global(.prose-agency pre code) {
@@ -185,11 +185,11 @@ ${metrics && metrics.length ? `### Key Metrics\n${metrics.map(m => `- ${m}`).joi
 
 	/* Preserve agency-specific card styles */
 	:global(.prose-agency .card-surface) {
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
+		background: var(--color-performance-bg-surface);
+		border-radius: var(--radius-performance-scale-lg);
 	}
 
 	:global(.prose-agency .section-border) {
-		padding-top: var(--space-xl);
+		padding-top: var(--space-performance-xl);
 	}
 </style>

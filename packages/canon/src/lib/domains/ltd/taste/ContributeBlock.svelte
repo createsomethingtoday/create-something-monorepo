@@ -239,30 +239,30 @@
 <style>
 	/* Trigger Button */
 	.contribute-btn {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 		font-weight: 500;
-		color: var(--color-fg-primary);
-		background: var(--color-bg-surface);
-		padding: var(--space-xs) var(--space-sm);
+		color: var(--color-performance-fg-primary);
+		background: var(--color-performance-bg-surface);
+		padding: var(--space-performance-xs) var(--space-performance-sm);
 		cursor: pointer;
-		transition: all var(--duration-micro) var(--ease-standard);
+		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.contribute-btn:hover {
-		background: var(--color-hover);
-		border-color: var(--color-border-emphasis);
+		background: var(--color-performance-hover);
+		border-color: var(--color-performance-border-emphasis);
 	}
 
 	/* Modal Overlay */
 	.modal-overlay {
 		position: fixed;
 		inset: 0;
-		background: var(--color-overlay);
+		background: var(--color-performance-overlay);
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		z-index: 1000;
-		padding: var(--space-md);
+		padding: var(--space-performance-md);
 	}
 
 	.modal-content {
@@ -277,19 +277,19 @@
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		padding: var(--space-md);
+		padding: var(--space-performance-md);
 	}
 
 	.modal-title {
-		font-size: var(--text-h3);
+		font-size: var(--text-performance-h3);
 		font-weight: 700;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.close-btn {
 		font-size: 2rem;
 		line-height: 1;
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 		background: none;
 		border: none;
 		cursor: pointer;
@@ -299,48 +299,48 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		transition: color var(--duration-micro) var(--ease-standard);
+		transition: color var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.close-btn:hover {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	/* Form */
 	.contribute-form {
-		padding: var(--space-md);
+		padding: var(--space-performance-md);
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-md);
+		gap: var(--space-performance-md);
 	}
 
 	.form-group {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-xs);
+		gap: var(--space-performance-xs);
 	}
 
 	.form-label {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 		font-weight: 500;
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	.form-input,
 	.form-select,
 	.form-textarea {
-		font-size: var(--text-body);
-		color: var(--color-fg-primary);
-		background: var(--color-bg-surface);
-		padding: var(--space-xs) var(--space-sm);
-		transition: border-color var(--duration-micro) var(--ease-standard);
+		font-size: var(--text-performance-body);
+		color: var(--color-performance-fg-primary);
+		background: var(--color-performance-bg-surface);
+		padding: var(--space-performance-xs) var(--space-performance-sm);
+		transition: border-color var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.form-input:focus,
 	.form-select:focus,
 	.form-textarea:focus {
 		outline: none;
-		border-color: var(--color-border-emphasis);
+		border-color: var(--color-performance-border-emphasis);
 	}
 
 	.form-textarea {
@@ -349,79 +349,79 @@
 	}
 
 	.form-hint {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-muted);
 	}
 
 	/* Radio Group */
 	.radio-group {
 		display: flex;
-		gap: var(--space-md);
+		gap: var(--space-performance-md);
 	}
 
 	.radio-label {
 		display: flex;
 		align-items: center;
-		gap: var(--space-xs);
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		gap: var(--space-performance-xs);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-fg-secondary);
 		cursor: pointer;
 	}
 
 	.radio-label input[type='radio'] {
-		accent-color: var(--color-fg-primary);
+		accent-color: var(--color-performance-fg-primary);
 	}
 
 	/* Messages */
 	.error-message {
-		font-size: var(--text-body-sm);
-		color: var(--color-error);
-		background: var(--color-error-muted);
-		border: 1px solid var(--color-error-border);
-		padding: var(--space-sm);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-error);
+		background: var(--color-performance-error-muted);
+		border: 1px solid var(--color-performance-error-border);
+		padding: var(--space-performance-sm);
 	}
 
 	.success-message {
-		font-size: var(--text-body-sm);
-		color: var(--color-success);
-		background: var(--color-success-muted);
-		border: 1px solid var(--color-success-border);
-		padding: var(--space-sm);
+		font-size: var(--text-performance-body-sm);
+		color: var(--color-performance-success);
+		background: var(--color-performance-success-muted);
+		border: 1px solid var(--color-performance-success-border);
+		padding: var(--space-performance-sm);
 	}
 
 	/* Action Buttons */
 	.form-actions {
 		display: flex;
-		gap: var(--space-sm);
+		gap: var(--space-performance-sm);
 		justify-content: flex-end;
 	}
 
 	.btn-secondary,
 	.btn-primary {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 		font-weight: 500;
-		padding: var(--space-xs) var(--space-md);
+		padding: var(--space-performance-xs) var(--space-performance-md);
 		cursor: pointer;
-		transition: all var(--duration-micro) var(--ease-standard);
+		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
 	.btn-secondary {
-		color: var(--color-fg-secondary);
-		background: var(--color-bg-surface);
+		color: var(--color-performance-fg-secondary);
+		background: var(--color-performance-bg-surface);
 	}
 
 	.btn-secondary:hover:not(:disabled) {
-		background: var(--color-hover);
+		background: var(--color-performance-hover);
 	}
 
 	.btn-primary {
-		color: var(--color-fg-primary);
-		background: var(--color-bg-surface);
-		border-color: var(--color-border-emphasis);
+		color: var(--color-performance-fg-primary);
+		background: var(--color-performance-bg-surface);
+		border-color: var(--color-performance-border-emphasis);
 	}
 
 	.btn-primary:hover:not(:disabled) {
-		background: var(--color-hover);
+		background: var(--color-performance-hover);
 	}
 
 	.btn-secondary:disabled,

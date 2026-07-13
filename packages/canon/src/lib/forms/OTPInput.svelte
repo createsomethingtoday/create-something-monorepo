@@ -238,7 +238,7 @@
 <style>
 	.otp-input {
 		display: flex;
-		gap: var(--space-xs, 0.5rem);
+		gap: var(--space-performance-xs, 0.5rem);
 		justify-content: center;
 	}
 
@@ -250,44 +250,44 @@
 	.otp-digit {
 		width: 48px;
 		height: 56px;
-		background: var(--color-bg-surface, #111);
-		border: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
-		border-radius: var(--radius-md, 8px);
-		font-size: var(--text-h3, clamp(1.25rem, 1.5vw + 0.5rem, 1.75rem));
+		background: var(--color-performance-bg-surface, #111);
+		border: 1px solid var(--color-performance-border-default, rgba(255, 255, 255, 0.1));
+		border-radius: var(--radius-performance-scale-md, 8px);
+		font-size: var(--text-performance-h3, clamp(1.25rem, 1.5vw + 0.5rem, 1.75rem));
 		font-weight: 600;
-		color: var(--color-fg-primary, #fff);
+		color: var(--color-performance-fg-primary, #fff);
 		text-align: center;
-		caret-color: var(--color-fg-primary, #fff);
-		transition: all var(--duration-micro, 200ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+		caret-color: var(--color-performance-fg-primary, #fff);
+		transition: all var(--duration-performance-micro, 200ms) var(--ease-performance-standard, cubic-bezier(0.4, 0, 0.2, 1));
 	}
 
 	.otp-digit::placeholder {
-		color: var(--color-fg-subtle, rgba(255, 255, 255, 0.2));
+		color: var(--color-performance-fg-subtle, rgba(255, 255, 255, 0.2));
 		font-weight: 400;
 	}
 
 	.otp-digit:hover:not(:disabled) {
-		border-color: var(--color-border-emphasis, rgba(255, 255, 255, 0.2));
+		border-color: var(--color-performance-border-emphasis, rgba(255, 255, 255, 0.2));
 	}
 
 	.otp-digit:focus {
 		outline: none;
-		border-color: var(--color-border-strong, rgba(255, 255, 255, 0.3));
-		box-shadow: 0 0 0 3px var(--color-focus, rgba(255, 255, 255, 0.5));
+		border-color: var(--color-performance-border-strong, rgba(255, 255, 255, 0.3));
+		box-shadow: 0 0 0 3px var(--color-performance-focus, rgba(255, 255, 255, 0.5));
 	}
 
 	.otp-digit.filled {
-		border-color: var(--color-border-emphasis, rgba(255, 255, 255, 0.2));
-		background: var(--color-bg-subtle, #1a1a1a);
+		border-color: var(--color-performance-border-emphasis, rgba(255, 255, 255, 0.2));
+		background: var(--color-performance-bg-subtle, #1a1a1a);
 	}
 
 	/* Error state */
 	.otp-input.error .otp-digit {
-		border-color: var(--color-error, #d44d4d);
+		border-color: var(--color-performance-error, #d44d4d);
 	}
 
 	.otp-input.error .otp-digit:focus {
-		box-shadow: 0 0 0 3px var(--color-error-muted, rgba(212, 77, 77, 0.2));
+		box-shadow: 0 0 0 3px var(--color-performance-error-muted, rgba(212, 77, 77, 0.2));
 	}
 
 	/* Responsive */
@@ -295,7 +295,7 @@
 		.otp-digit {
 			width: 40px;
 			height: 48px;
-			font-size: var(--text-body-lg, 1.125rem);
+			font-size: var(--text-performance-body-lg, 1.125rem);
 		}
 
 		.otp-input {

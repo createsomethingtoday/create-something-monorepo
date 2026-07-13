@@ -683,7 +683,7 @@
 	.summary-panel summary span,
 	.starter-grid button > span {
 		color: var(--color-performance-muted, #5e6268);
-		font-family: var(--font-mono);
+		font-family: var(--font-performance-mono);
 		font-size: 0.72rem;
 		font-weight: 700;
 		letter-spacing: 0.08em;

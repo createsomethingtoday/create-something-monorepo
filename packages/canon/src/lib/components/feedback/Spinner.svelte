@@ -40,14 +40,14 @@
 	.spinner-container.centered {
 		display: flex;
 		width: 100%;
-		padding: var(--space-lg);
+		padding: var(--space-performance-lg);
 	}
 
 	.spinner {
-		border-radius: var(--radius-full);
+		border-radius: var(--radius-performance-scale-full);
 		border-style: solid;
-		border-color: var(--color-border-default);
-		border-top-color: var(--color-fg-primary);
+		border-color: var(--color-performance-border-default);
+		border-top-color: var(--color-performance-fg-primary);
 		animation: spin 0.8s linear infinite;
 	}
 
@@ -99,8 +99,8 @@
 	@media (prefers-reduced-motion: reduce) {
 		.spinner {
 			animation: none;
-			border-color: var(--color-fg-muted);
-			border-top-color: var(--color-fg-primary);
+			border-color: var(--color-performance-fg-muted);
+			border-top-color: var(--color-performance-fg-primary);
 		}
 	}
 </style>

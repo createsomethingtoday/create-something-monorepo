@@ -144,25 +144,25 @@
 	.interactions-panel {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-lg);
+		gap: var(--space-performance-lg);
 	}
 
 	.metrics-grid {
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-		gap: var(--space-md);
+		gap: var(--space-performance-md);
 	}
 
 	.section {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-sm);
+		gap: var(--space-performance-sm);
 	}
 
 	.section-title {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 		font-weight: 500;
-		color: var(--color-fg-secondary);
+		color: var(--color-performance-fg-secondary);
 		margin: 0;
 	}
 
@@ -175,20 +175,20 @@
 	.opted-out,
 	.loading,
 	.no-data {
-		padding: var(--space-lg);
+		padding: var(--space-performance-lg);
 		text-align: center;
-		color: var(--color-fg-tertiary);
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.message {
-		font-size: var(--text-body);
-		margin: 0 0 var(--space-xs) 0;
-		color: var(--color-fg-secondary);
+		font-size: var(--text-performance-body);
+		margin: 0 0 var(--space-performance-xs) 0;
+		color: var(--color-performance-fg-secondary);
 	}
 
 	.hint {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-performance-body-sm);
 		margin: 0;
-		color: var(--color-fg-muted);
+		color: var(--color-performance-fg-muted);
 	}
 </style>

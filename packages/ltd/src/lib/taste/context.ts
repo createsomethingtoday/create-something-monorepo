@@ -161,8 +161,8 @@ export const CHANNELS_WITH_CONTEXT: ChannelContext[] = [
 		intents: ['motion'],
 		principles: [
 			'Animation reveals state changes',
-			'200ms for micro-interactions (--duration-micro)',
-			'Single easing curve for consistency (--ease-standard)',
+			'200ms for micro-interactions (--duration-performance-micro)',
+			'Single easing curve for consistency (--ease-performance-standard)',
 			'Respect prefers-reduced-motion'
 		]
 	},
@@ -252,8 +252,8 @@ export const DESIGN_PRINCIPLES: DesignPrinciples = {
 	],
 	motion: [
 		'Purposeful: Animation reveals state, guides attention',
-		'Subtle: --duration-micro (200ms) for most interactions',
-		'Consistent: One easing curve (--ease-standard)',
+		'Subtle: --duration-performance-micro (200ms) for most interactions',
+		'Consistent: One easing curve (--ease-performance-standard)',
 		'Reducible: Respect prefers-reduced-motion'
 	],
 	typography: [
@@ -291,95 +291,95 @@ export const DESIGN_PRINCIPLES: DesignPrinciples = {
 export const CORE_TOKEN_MAPPINGS: TokenMapping[] = [
 	// Colors
 	{
-		token: '--color-bg-pure',
+		token: '--color-performance-bg-pure',
 		value: '#000000',
 		category: 'color',
 		derivedFrom: 'Rams black backgrounds, brutalist web'
 	},
 	{
-		token: '--color-fg-primary',
+		token: '--color-performance-fg-primary',
 		value: '#ffffff',
 		category: 'color',
 		derivedFrom: 'High contrast accessibility'
 	},
 	{
-		token: '--color-fg-secondary',
+		token: '--color-performance-fg-secondary',
 		value: 'rgba(255, 255, 255, 0.8)',
 		category: 'color',
 		derivedFrom: 'Swiss design hierarchy'
 	},
 	{
-		token: '--color-fg-muted',
+		token: '--color-performance-fg-muted',
 		value: 'rgba(255, 255, 255, 0.46)',
 		category: 'color',
 		derivedFrom: "Rams' muted grays, WCAG AA minimum"
 	},
 	// Spacing
 	{
-		token: '--space-sm',
+		token: '--space-performance-sm',
 		value: '1rem',
 		category: 'spacing',
 		derivedFrom: 'Swiss grid proportions'
 	},
 	{
-		token: '--space-md',
+		token: '--space-performance-md',
 		value: '1.618rem',
 		category: 'spacing',
 		derivedFrom: 'Golden ratio (phi = 1.618)'
 	},
 	{
-		token: '--space-lg',
+		token: '--space-performance-lg',
 		value: '2.618rem',
 		category: 'spacing',
 		derivedFrom: 'Golden ratio progression'
 	},
 	// Radius
 	{
-		token: '--radius-sm',
+		token: '--radius-performance-scale-sm',
 		value: '6px',
 		category: 'radius',
 		derivedFrom: 'Braun product corners'
 	},
 	{
-		token: '--radius-md',
+		token: '--radius-performance-scale-md',
 		value: '8px',
 		category: 'radius',
 		derivedFrom: 'Braun product corners'
 	},
 	{
-		token: '--radius-lg',
+		token: '--radius-performance-scale-lg',
 		value: '12px',
 		category: 'radius',
 		derivedFrom: 'Braun product corners'
 	},
 	// Motion
 	{
-		token: '--duration-micro',
+		token: '--duration-performance-micro',
 		value: '200ms',
 		category: 'motion',
 		derivedFrom: 'Minimal motion references'
 	},
 	{
-		token: '--duration-standard',
+		token: '--duration-performance-standard',
 		value: '300ms',
 		category: 'motion',
 		derivedFrom: 'Interface motion patterns'
 	},
 	{
-		token: '--ease-standard',
+		token: '--ease-performance-standard',
 		value: 'cubic-bezier(0.4, 0.0, 0.2, 1)',
 		category: 'motion',
 		derivedFrom: 'Material Design easing'
 	},
 	// Typography
 	{
-		token: '--text-body',
+		token: '--text-performance-body',
 		value: '1rem',
 		category: 'typography',
 		derivedFrom: 'Swiss typography standards'
 	},
 	{
-		token: '--text-body-sm',
+		token: '--text-performance-body-sm',
 		value: '0.875rem',
 		category: 'typography',
 		derivedFrom: 'Swiss typography standards'

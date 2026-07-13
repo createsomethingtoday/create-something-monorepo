@@ -76,11 +76,11 @@
 	 * Each property has a unique color identity
 	 */
 	const PROPERTY_COLORS = {
-		io: 'var(--color-data-1)', // Blue - Research/Tools
-		ltd: 'var(--color-fg-primary)', // White - Philosophy/Canon (pure, authoritative)
-		space: 'var(--color-data-3)', // Purple - Practice/Experiments
-		agency: 'var(--color-data-4)', // Amber - Services/Client work
-		lms: 'var(--color-data-2)' // Green - Learning
+		io: 'var(--color-performance-data-1)', // Blue - Research/Tools
+		ltd: 'var(--color-performance-fg-primary)', // White - Philosophy/Canon (pure, authoritative)
+		space: 'var(--color-performance-data-3)', // Purple - Practice/Experiments
+		agency: 'var(--color-performance-data-4)', // Amber - Services/Client work
+		lms: 'var(--color-performance-data-2)' // Green - Learning
 	} as const;
 
 	// Derived values
@@ -125,8 +125,8 @@
 		display: inline-flex;
 		align-items: center;
 		gap: calc(var(--mark-size, 32px) * 0.25);
-		font-family: var(--font-sans);
-		font-weight: var(--font-medium);
+		font-family: var(--font-performance-sans);
+		font-weight: var(--font-performance-medium);
 		line-height: 1;
 	}
 
@@ -156,19 +156,19 @@
 	/* Text sizing based on mark size */
 	.property-text {
 		font-size: calc(var(--mark-size, 32px) * 0.5);
-		color: var(--color-fg-primary);
-		letter-spacing: var(--tracking-tight);
+		color: var(--color-performance-fg-primary);
+		letter-spacing: var(--tracking-performance-tight);
 	}
 
 	/* Abbreviated variant gets property color accent */
 	.variant-abbreviated .property-text {
 		color: var(--property-color);
-		font-weight: var(--font-semibold);
+		font-weight: var(--font-performance-semibold);
 	}
 
 	/* Full variant: base text white, extension in property color */
 	.variant-full .property-text {
-		color: var(--color-fg-primary);
+		color: var(--color-performance-fg-primary);
 	}
 
 	/* Icon variant */
@@ -179,10 +179,10 @@
 		width: var(--mark-size, 32px);
 		height: var(--mark-size, 32px);
 		font-size: calc(var(--mark-size, 32px) * 0.5);
-		font-weight: var(--font-bold);
-		color: var(--color-bg-pure);
+		font-weight: var(--font-performance-bold);
+		color: var(--color-performance-bg-pure);
 		background: var(--property-color);
-		border-radius: var(--radius-sm);
+		border-radius: var(--radius-performance-scale-sm);
 	}
 
 	/* ==========================================================================
@@ -191,11 +191,11 @@
 
 	.mark-reveal .property-text,
 	.mark-reveal .property-icon {
-		animation: mark-reveal var(--duration-complex) var(--ease-standard);
+		animation: mark-reveal var(--duration-performance-complex) var(--ease-performance-standard);
 	}
 
 	.mark-reveal .cube-icon {
-		animation: cube-reveal var(--duration-complex) var(--ease-standard);
+		animation: cube-reveal var(--duration-performance-complex) var(--ease-performance-standard);
 	}
 
 	@keyframes mark-reveal {
@@ -221,7 +221,7 @@
 	}
 
 	.mark-pulse .cube-icon {
-		animation: mark-pulse var(--duration-complex) var(--ease-standard) infinite alternate;
+		animation: mark-pulse var(--duration-performance-complex) var(--ease-performance-standard) infinite alternate;
 	}
 
 	@keyframes mark-pulse {
