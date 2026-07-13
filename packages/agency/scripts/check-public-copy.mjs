@@ -330,6 +330,10 @@ export function discoverPublicCopyFiles() {
     /\.(ts|svelte|json)$/.test(file)
   );
   const canonicalSeo = path.join(monorepoRoot, 'packages/canon/src/lib/components/SEO.svelte');
+  const schedulerEmail = path.join(
+    monorepoRoot,
+    'apps/create-something-scheduler/src/notifications/booking-email.ts'
+  );
   const canonicalAtlasFiles = walk(path.join(monorepoRoot, 'packages/canon/src/lib/atlas')).filter(
     (file) => /\.(ts|svelte|json)$/.test(file)
   );
@@ -339,6 +343,7 @@ export function discoverPublicCopyFiles() {
   const extraFiles = existsSync(canonicalSeo)
     ? [canonicalSeo, ...canonicalAtlasFiles, ...canonicalAtlasDistFiles]
     : [...canonicalAtlasFiles, ...canonicalAtlasDistFiles];
+  if (existsSync(schedulerEmail)) extraFiles.push(schedulerEmail);
 
   return uniqueSorted([...routeFiles, ...componentFiles, ...dataFiles, ...atlasFiles, ...extraFiles]);
 }

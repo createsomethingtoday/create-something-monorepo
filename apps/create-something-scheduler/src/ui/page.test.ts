@@ -56,6 +56,9 @@ describe('scheduler public page', () => {
     expect(html).toContain('id="status-state"');
     expect(html).toContain('event.source !== parent');
     expect(html).toContain("event.origin !== 'https://createsomething.agency'");
+    expect(html).toContain("event.data?.type === 'create-something:scheduler-access'");
+    expect(html).toContain('sessionStorage.setItem(tokenKey(access.bookingId),access.actionToken)');
+    expect(html).toContain('state.actionToken=result.actionToken');
     expect(html).toContain('context:state.context');
     expect(html).toContain('--color-performance-signal:#0057b8');
     expect(html).toContain('--color-performance-growth:#007a4d');

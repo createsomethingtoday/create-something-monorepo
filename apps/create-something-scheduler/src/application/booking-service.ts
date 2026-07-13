@@ -169,7 +169,7 @@ type ResultMetadata = {
 };
 
 export type LifecycleReceipt = ResultMetadata & {
-  status: 'proposed' | 'committed' | 'rescheduled' | 'cancelled' | 'rejected' | 'retryable' | 'operator_required' | 'reminder_sent' | 'reminder_retryable' | 'reminder_failed' | 'override_applied' | 'override_deleted';
+  status: 'proposed' | 'committed' | 'rescheduled' | 'cancelled' | 'rejected' | 'retryable' | 'operator_required' | 'reminder_sent' | 'reminder_retryable' | 'reminder_failed' | 'notification_sent' | 'notification_retryable' | 'notification_failed' | 'override_applied' | 'override_deleted';
   bookingId?: string;
   reason?: string;
   context?: BookingContext;
@@ -185,6 +185,20 @@ export type ReminderJob = {
   scheduler: SchedulerIdentity;
   slot: AvailableSlot;
   meetUrl: string;
+};
+
+export type BookingNotificationKind = 'confirmation' | 'reminder' | 'rescheduled';
+
+/** Durable delivery intent. Booking PII and action credentials stay out of the queue. */
+export type BookingNotificationJob = {
+  notificationId: string;
+  receiptId: string;
+  bookingId: string;
+  slotStart: string;
+  kind: BookingNotificationKind;
+  policyVersion: string;
+  runAt: string;
+  status: 'pending' | 'retryable' | 'sent' | 'failed' | 'cancelled';
 };
 
 export type CommittedReceipt = LifecycleReceipt & {
@@ -245,12 +259,12 @@ export type Booking = {
 };
 
 export type CommitActionResult =
-  | { status: 'committed'; booking: Booking; reminder?: ReminderJob }
+  | { status: 'committed'; booking: Booking; reminder?: ReminderJob; notifications?: BookingNotificationJob[] }
   | { status: 'rejected' | 'retryable'; reason: string };
 
 export type TransitionActionResult =
-  | { status: 'rescheduled'; booking: Booking; reminder?: ReminderJob }
-  | { status: 'cancelled'; booking: Booking; reminder?: ReminderJob }
+  | { status: 'rescheduled'; booking: Booking; reminder?: ReminderJob; notifications?: BookingNotificationJob[] }
+  | { status: 'cancelled'; booking: Booking; reminder?: ReminderJob; notifications?: BookingNotificationJob[] }
   | { status: 'rejected' | 'retryable'; reason: string };
 
 export type BookingStore = {
@@ -335,6 +349,7 @@ export class InMemoryBookingStore implements BookingStore {
   private readonly bookings = new Map<string, Booking>();
   private readonly receipts = new Map<string, LifecycleReceipt>();
   private readonly reminders = new Map<string, ReminderJob>();
+  private readonly notifications = new Map<string, BookingNotificationJob>();
   private readonly claimedSlots = new Set<string>();
   private readonly transitionsByIdempotency = new Map<
     string,
@@ -386,6 +401,9 @@ export class InMemoryBookingStore implements BookingStore {
         this.bookings.set(result.booking.bookingId, result.booking);
         this.receipts.set(input.receipt.receiptId, input.receipt);
         if (result.reminder) this.reminders.set(result.reminder.reminderId, result.reminder);
+        for (const notification of result.notifications ?? []) {
+          this.notifications.set(notification.notificationId, notification);
+        }
       }
       return result;
     } finally {
@@ -442,6 +460,9 @@ export class InMemoryBookingStore implements BookingStore {
         this.bookings.set(result.booking.bookingId, result.booking);
         this.receipts.set(input.receipt.receiptId, input.receipt);
         if (result.reminder) this.reminders.set(result.reminder.reminderId, result.reminder);
+        for (const notification of result.notifications ?? []) {
+          this.notifications.set(notification.notificationId, notification);
+        }
         this.transitionsByIdempotency.set(input.idempotencyKey, {
           fingerprint,
           status: result.status,
@@ -877,7 +898,7 @@ export class BookingService {
         return {
           status: 'committed',
           booking,
-          reminder: reminderForBooking(booking)
+          notifications: notificationJobsForBooking(booking, 'confirmation', occurredAt)
         };
       }
     );
@@ -984,7 +1005,10 @@ export class BookingService {
           return {
             status: 'rescheduled',
             booking: updatedBooking,
-            reminder: reminderForBooking(updatedBooking)
+            notifications: [
+              cancelledReminderForBooking(booking),
+              ...notificationJobsForBooking(updatedBooking, 'rescheduled', occurredAt)
+            ]
           };
         } catch (error) {
           return { status: 'retryable', reason: providerFailureReason(error) };
@@ -1063,7 +1087,7 @@ export class BookingService {
           return {
             status: 'cancelled',
             booking: { ...booking, status: 'cancelled' },
-            reminder: { ...reminderForBooking(booking), status: 'cancelled' }
+            notifications: [cancelledReminderForBooking(booking)]
           };
         } catch (error) {
           return { status: 'retryable', reason: providerFailureReason(error) };
@@ -1166,6 +1190,50 @@ function reminderForBooking(booking: Booking): ReminderJob {
     scheduler: booking.scheduler,
     slot: booking.slot,
     meetUrl: booking.provider.meetUrl
+  };
+}
+
+export function notificationJobsForBooking(
+  booking: Booking,
+  immediateKind: 'confirmation' | 'rescheduled',
+  occurredAt: string
+): BookingNotificationJob[] {
+  const slotIdentity = `${booking.bookingId}:${booking.slot.start}`;
+  return [
+    {
+      notificationId: receiptId(`notification_${immediateKind}`, slotIdentity),
+      receiptId: receiptId(`notification_${immediateKind}_receipt`, slotIdentity),
+      bookingId: booking.bookingId,
+      slotStart: booking.slot.start,
+      kind: immediateKind,
+      policyVersion: LINK_POLICY.version,
+      runAt: Temporal.Instant.from(occurredAt).toString(),
+      status: 'pending'
+    },
+    {
+      notificationId: receiptId('notification_reminder', slotIdentity),
+      receiptId: receiptId('notification_reminder_receipt', slotIdentity),
+      bookingId: booking.bookingId,
+      slotStart: booking.slot.start,
+      kind: 'reminder',
+      policyVersion: LINK_POLICY.version,
+      runAt: Temporal.Instant.from(booking.slot.start).subtract({ hours: 1 }).toString(),
+      status: 'pending'
+    }
+  ];
+}
+
+function cancelledReminderForBooking(booking: Booking): BookingNotificationJob {
+  const slotIdentity = `${booking.bookingId}:${booking.slot.start}`;
+  return {
+    notificationId: receiptId('notification_reminder', slotIdentity),
+    receiptId: receiptId('notification_reminder_receipt', slotIdentity),
+    bookingId: booking.bookingId,
+    slotStart: booking.slot.start,
+    kind: 'reminder',
+    policyVersion: LINK_POLICY.version,
+    runAt: Temporal.Instant.from(booking.slot.start).subtract({ hours: 1 }).toString(),
+    status: 'cancelled'
   };
 }
 

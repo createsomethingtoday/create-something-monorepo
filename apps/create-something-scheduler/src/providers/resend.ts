@@ -1,4 +1,8 @@
-import type { ReminderJob } from '../application/booking-service.js';
+import type {
+  Booking,
+  BookingNotificationJob
+} from '../application/booking-service.js';
+import { renderBookingEmail } from '../notifications/booking-email.js';
 
 type ResendOptions = {
   apiKey: string;
@@ -15,26 +19,31 @@ export class ResendNotificationPort {
     this.from = options.from ?? 'CREATE SOMETHING <noreply@createsomething.io>';
   }
 
-  async sendReminder(job: ReminderJob): Promise<{ messageId: string }> {
+  async sendNotification(
+    job: BookingNotificationJob,
+    input: { booking: Booking; manageUrl: string }
+  ): Promise<{ messageId: string }> {
+    const rendered = renderBookingEmail({
+      kind: job.kind,
+      recipientName: input.booking.scheduler.name,
+      slot: input.booking.slot,
+      meetUrl: input.booking.provider.meetUrl,
+      manageUrl: input.manageUrl,
+      timezone: 'America/Chicago'
+    });
     const response = await this.fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         authorization: `Bearer ${this.options.apiKey}`,
         'content-type': 'application/json',
-        'idempotency-key': job.reminderId
+        'idempotency-key': job.notificationId
       },
       body: JSON.stringify({
         from: this.from,
-        to: [job.scheduler.email],
-        subject: 'Your CREATE SOMETHING meeting starts in one hour',
-        text: [
-          `Hi ${job.scheduler.name},`,
-          '',
-          `Your meeting with Micah starts at ${job.slot.start} and ends at ${job.slot.end}.`,
-          `Join with Google Meet: ${job.meetUrl}`,
-          '',
-          'CREATE SOMETHING'
-        ].join('\n')
+        to: [input.booking.scheduler.email],
+        subject: rendered.subject,
+        text: rendered.text,
+        html: rendered.html
       })
     });
 

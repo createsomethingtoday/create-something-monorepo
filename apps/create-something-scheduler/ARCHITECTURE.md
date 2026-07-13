@@ -1,12 +1,12 @@
 # CREATE SOMETHING Scheduler Architecture
 
-Linear: [CRE-1213](https://linear.app/createsomething/issue/CRE-1213/replace-createsomethingtogether-savvycal-link-with-first-party)
+Linear: [CRE-1213](https://linear.app/createsomething/issue/CRE-1213/replace-createsomethingtogether-savvycal-link-with-first-party), [CRE-1239](https://linear.app/createsomething/issue/CRE-1239/add-secure-emailed-booking-management-links)
 
 ## Deep-module proposal
 
 Concept: A provider-backed appointment booking link for one CREATE SOMETHING host.
 
-Current interface: SavvyCal owns the complete workflow externally. The repo's `schedule-mcp` owns internal D1 calendars, events, members, backfill, forecast, and conflict analysis. CLEARWAY owns facility/court reservations. Neither exposes a secure Google-backed public booking lifecycle that a Browser, JSON API, and MCP client can share.
+Current interface: The first-party scheduler owns the complete workflow. The repo's `schedule-mcp` owns internal D1 calendars, events, members, backfill, forecast, and conflict analysis. CLEARWAY owns facility/court reservations. Those systems remain separate from this secure Google-backed public booking lifecycle shared by Browser, JSON API, and MCP clients.
 
 Problem: Adding public appointment booking directly to `schedule-mcp` would make callers understand its unrelated member/unit/template model and would mix its authoritative internal calendar CRUD with Google Calendar's external authority. Reusing CLEARWAY would leak facility, court, payment, and reservation concepts. A separate UI plus separate MCP server would duplicate lifecycle behavior and deploy state.
 
@@ -20,7 +20,7 @@ Locality: Calendar/provider changes remain behind `CalendarPort`; email behind `
 
 Test surface: service tests through the public `BookingService`; adapter contract/parity tests through direct API calls, an in-memory MCP client, and the Browser; provider tests through fakes and the approved real Google Calendar verifier; Durable Object alarm tests through `cloudflare:test`.
 
-Migration: Build and verify independently while SavvyCal remains the rollback route. Promote the first-party URL only after the full verifier passes. Revoke SavvyCal credentials and cancel the subscription only after explicit approval. Rollback restores the existing SavvyCal destination while preserving first-party receipts for diagnosis.
+Migration: The owned `/book` route and first-party Worker are the production authority. Rollback uses the prior first-party deployment while preserving Durable Object records and receipts for diagnosis.
 
 ## Runtime shape
 
@@ -32,7 +32,9 @@ MCP client ──────┘                          │                   
                                            └─> NotificationPort -> confirmation/reminder email
 ```
 
-The Cloudflare Worker serves static browser assets, `/api/v1/*`, `/mcp`, OAuth callbacks, and operator receipt endpoints. A stateless Streamable HTTP MCP handler is sufficient because application state belongs to the host Durable Object, not the MCP session. The Durable Object serializes booking/reschedule/cancel operations and uses its single alarm as an ordered reminder queue with idempotent delivery.
+The Cloudflare Worker serves static browser assets, `/api/v1/*`, `/mcp`, OAuth callbacks, and operator receipt endpoints. A stateless Streamable HTTP MCP handler is sufficient because application state belongs to the host Durable Object, not the MCP session. The Durable Object serializes booking/reschedule/cancel operations and uses its single alarm as an ordered notification queue with idempotent confirmation, reminder, and reschedule delivery. Queue payloads contain only booking identity, notification kind, policy, schedule, and status; recipient data and lifecycle-bound action credentials are resolved at send time.
+
+Booking-management email links use `https://createsomething.agency/book?booking=<id>#access=<token>`. The fragment is removed by the owned parent page before any network navigation and is handed only to the exact scheduler iframe origin through `postMessage`. Action credentials expire one day after the current meeting ends; a successful reschedule returns and emails a fresh credential for the moved slot.
 
 ## Application contracts
 

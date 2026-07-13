@@ -241,8 +241,19 @@ describe('scheduler Worker transport', () => {
       });
     });
     let freeBusyCalls = 0;
-    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+    const providerRequests: Array<{ url: string; method: string }> = [];
+    const resendDeliveries: Array<{ idempotencyKey: string; body: Record<string, unknown> }> = [];
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
       const url = String(input);
+      providerRequests.push({ url, method: init?.method ?? 'GET' });
+      if (url === 'https://api.resend.com/emails') {
+        const headers = new Headers(init?.headers);
+        resendDeliveries.push({
+          idempotencyKey: headers.get('idempotency-key') ?? '',
+          body: JSON.parse(String(init?.body)) as Record<string, unknown>
+        });
+        return Response.json({ id: `resend-controlled-${resendDeliveries.length}` });
+      }
       if (url === 'https://challenges.cloudflare.com/turnstile/v0/siteverify') {
         return Response.json({ success: true, hostname: 'scheduler.local' });
       }
@@ -260,6 +271,19 @@ describe('scheduler Worker transport', () => {
           hangoutLink: 'https://meet.google.com/worker-test'
         });
       }
+      if (
+        url.includes('/events/google-event-worker?conferenceDataVersion=1&sendUpdates=all') &&
+        init?.method === 'PATCH'
+      ) {
+        return Response.json({
+          id: 'google-event-worker',
+          hangoutLink: 'https://meet.google.com/worker-test'
+        });
+      }
+      if (
+        url.includes('/events/google-event-worker?sendUpdates=all') &&
+        init?.method === 'DELETE'
+      ) return new Response(null, { status: 204 });
       throw new Error(`Unexpected provider request: ${url}`);
     });
 
@@ -315,6 +339,26 @@ describe('scheduler Worker transport', () => {
     expect(committed).toMatchObject({
       booking: { provider: { meetUrl: 'https://meet.google.com/worker-test' } }
     });
+    const queuedNotifications = await runInDurableObject(stub, async (_instance, state) =>
+      state.storage.sql.exec<{ payload_json: string }>(
+        'SELECT payload_json FROM reminders ORDER BY run_at, reminder_id'
+      ).toArray().map((row) => JSON.parse(row.payload_json) as Record<string, unknown>)
+    );
+    expect(queuedNotifications).toEqual([
+      expect.objectContaining({
+        bookingId: committed.booking.bookingId,
+        kind: 'confirmation',
+        status: 'pending'
+      }),
+      expect.objectContaining({
+        bookingId: committed.booking.bookingId,
+        kind: 'reminder',
+        status: 'pending'
+      })
+    ]);
+    expect(JSON.stringify(queuedNotifications)).not.toMatch(
+      /controlled@example\.com|worker-test|actionToken|access=/i
+    );
 
     const read = await SELF.fetch(
       `https://scheduler.local/api/v1/bookings/${committed.booking.bookingId}`,
@@ -325,7 +369,86 @@ describe('scheduler Worker transport', () => {
       status: 'committed',
       booking: { bookingId: committed.booking.bookingId }
     });
-    expect(freeBusyCalls).toBe(2);
+    const reschedule = await SELF.fetch(
+      `https://scheduler.local/api/v1/bookings/${committed.booking.bookingId}/reschedule`,
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-booking-action-token': committed.actionToken
+        },
+        body: JSON.stringify({
+          newSlot: { start: '2026-07-16T18:00:00Z', end: '2026-07-16T18:30:00Z' },
+          idempotencyKey: 'worker-controlled-reschedule',
+          explicitIntent: true
+        })
+      }
+    );
+    const rescheduleBody = await reschedule.json();
+    expect(
+      reschedule.status,
+      JSON.stringify({ rescheduleBody, providerRequests })
+    ).toBe(200);
+    const rescheduled = rescheduleBody as {
+      actionToken: string;
+      booking: { bookingId: string; slot: { start: string } };
+    };
+    expect(rescheduled).toMatchObject({
+      booking: { slot: { start: '2026-07-16T18:00:00Z' } }
+    });
+    expect(rescheduled.actionToken).not.toBe(committed.actionToken);
+
+    const cancel = await SELF.fetch(
+      `https://scheduler.local/api/v1/bookings/${committed.booking.bookingId}/cancel`,
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-booking-action-token': rescheduled.actionToken
+        },
+        body: JSON.stringify({
+          idempotencyKey: 'worker-controlled-cancel',
+          explicitIntent: true
+        })
+      }
+    );
+    expect(cancel.status).toBe(200);
+    expect(await cancel.json()).toMatchObject({ status: 'cancelled' });
+
+    const lifecycleNotifications = await runInDurableObject(stub, async (_instance, state) =>
+      state.storage.sql.exec<{ status: string; payload_json: string }>(
+        'SELECT status, payload_json FROM reminders ORDER BY run_at, reminder_id'
+      ).toArray().map((row) => ({
+        status: row.status,
+        kind: (JSON.parse(row.payload_json) as { kind: string }).kind
+      }))
+    );
+    expect(lifecycleNotifications).toEqual(expect.arrayContaining([
+      { kind: 'confirmation', status: 'sent' },
+      { kind: 'rescheduled', status: 'sent' },
+      { kind: 'reminder', status: 'cancelled' },
+      { kind: 'reminder', status: 'cancelled' }
+    ]));
+    expect(resendDeliveries).toHaveLength(2);
+    expect(resendDeliveries.map((delivery) => delivery.idempotencyKey)).toEqual([
+      expect.stringMatching(/^notification_confirmation_/),
+      expect.stringMatching(/^notification_rescheduled_/)
+    ]);
+    expect(resendDeliveries.map((delivery) => delivery.body)).toEqual([
+      expect.objectContaining({
+        to: ['controlled@example.com'],
+        subject: 'Your CREATE SOMETHING meeting is booked',
+        html: expect.stringContaining('background-color:#f3f3f0'),
+        text: expect.stringContaining('Manage this meeting:')
+      }),
+      expect.objectContaining({
+        to: ['controlled@example.com'],
+        subject: 'Your CREATE SOMETHING meeting has moved',
+        html: expect.stringContaining('#access='),
+        text: expect.stringContaining('Thursday, July 16, 2026')
+      })
+    ]);
+    expect(freeBusyCalls).toBe(3);
   });
 
   it('enforces a durable fixed-window rate limit without storing the raw subject', async () => {

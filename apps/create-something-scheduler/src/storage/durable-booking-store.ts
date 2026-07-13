@@ -1,5 +1,6 @@
 import type {
   Booking,
+  BookingNotificationJob,
   BookingStore,
   CommitActionResult,
   CommittedReceipt,
@@ -152,6 +153,9 @@ export class DurableObjectBookingStore implements BookingStore {
           JSON.stringify(input.receipt)
         );
         if (result.reminder) this.upsertReminder(result.reminder);
+        for (const notification of result.notifications ?? []) {
+          this.upsertNotification(notification);
+        }
       });
       await this.scheduleNextAlarm();
       return { ...result, replayed: false };
@@ -244,6 +248,9 @@ export class DurableObjectBookingStore implements BookingStore {
           JSON.stringify(input.receipt)
         );
         if (result.reminder) this.upsertReminder(result.reminder);
+        for (const notification of result.notifications ?? []) {
+          this.upsertNotification(notification);
+        }
       });
       await this.scheduleNextAlarm();
       return { ...result, replayed: false };
@@ -378,6 +385,100 @@ export class DurableObjectBookingStore implements BookingStore {
     });
   }
 
+  async processDueNotifications(
+    now: string,
+    send: (job: BookingNotificationJob) => Promise<{ messageId: string }>
+  ): Promise<{ sent: number; retryable: number; failed: number }> {
+    return this.state.blockConcurrencyWhile(async () => {
+      const nowMilliseconds = Date.parse(now);
+      const due = this.state.storage.sql.exec<ReminderRow>(
+        `SELECT reminder_id, attempts, payload_json
+           FROM reminders
+          WHERE status IN ('pending', 'retryable') AND run_at <= ?
+          ORDER BY run_at, reminder_id`,
+        nowMilliseconds
+      ).toArray();
+      const result = { sent: 0, retryable: 0, failed: 0 };
+
+      for (const row of due) {
+        let parsed: Record<string, unknown> | undefined;
+        try {
+          parsed = JSON.parse(row.payload_json) as Record<string, unknown>;
+        } catch {
+          // A malformed durable row cannot be retried into validity. Quarantine it so
+          // it does not keep the Durable Object alarm pinned in a hot loop.
+        }
+        const job = parsed ? normalizeNotificationJob(parsed) : null;
+        if (!job) {
+          this.state.storage.sql.exec(
+            `UPDATE reminders SET status = 'failed', attempts = 3 WHERE reminder_id = ?`,
+            row.reminder_id
+          );
+          result.failed += 1;
+          continue;
+        }
+        try {
+          const delivery = await send(job);
+          const deliveredJob: BookingNotificationJob = { ...job, status: 'sent' };
+          this.state.storage.transactionSync(() => {
+            this.state.storage.sql.exec(
+              `UPDATE reminders SET status = 'sent', payload_json = ? WHERE reminder_id = ?`,
+              JSON.stringify(deliveredJob),
+              row.reminder_id
+            );
+            this.insertReminderReceipt({
+              receiptId: job.receiptId,
+              status: 'notification_sent',
+              policyVersion: job.policyVersion,
+              occurredAt: now,
+              bookingId: job.bookingId,
+              reason: `message_id:${delivery.messageId}`,
+              nextActions: ['get_booking']
+            });
+          });
+          result.sent += 1;
+        } catch (error) {
+          const attempts = row.attempts + 1;
+          const permanent = error instanceof Error && error.message.startsWith('resend_failed:');
+          const exhausted = permanent || attempts >= 3;
+          const status = exhausted ? 'failed' : 'retryable';
+          const nextRunAt = nowMilliseconds + 60_000;
+          const updatedJob: BookingNotificationJob = {
+            ...job,
+            status,
+            runAt: exhausted ? job.runAt : new Date(nextRunAt).toISOString()
+          };
+          this.state.storage.transactionSync(() => {
+            this.state.storage.sql.exec(
+              `UPDATE reminders
+                  SET status = ?, attempts = ?, run_at = ?, payload_json = ?
+                WHERE reminder_id = ?`,
+              status,
+              attempts,
+              exhausted ? Date.parse(job.runAt) : nextRunAt,
+              JSON.stringify(updatedJob),
+              row.reminder_id
+            );
+            this.insertReminderReceipt({
+              receiptId: job.receiptId,
+              status: exhausted ? 'notification_failed' : 'notification_retryable',
+              policyVersion: job.policyVersion,
+              occurredAt: now,
+              bookingId: job.bookingId,
+              reason: error instanceof Error ? error.message : 'notification_delivery_failed',
+              nextActions: exhausted ? ['contact_operator'] : ['retry_notification']
+            });
+          });
+          if (exhausted) result.failed += 1;
+          else result.retryable += 1;
+        }
+      }
+
+      await this.scheduleNextAlarm();
+      return result;
+    });
+  }
+
   private insertReminderReceipt(receipt: LifecycleReceipt): void {
     this.state.storage.sql.exec(
       `INSERT INTO receipts(receipt_id, status, occurred_at, receipt_json)
@@ -411,6 +512,24 @@ export class DurableObjectBookingStore implements BookingStore {
     );
   }
 
+  private upsertNotification(job: BookingNotificationJob): void {
+    this.state.storage.sql.exec(
+      `INSERT INTO reminders(reminder_id, booking_id, run_at, status, attempts, payload_json)
+       VALUES (?, ?, ?, ?, 0, ?)
+       ON CONFLICT(reminder_id) DO UPDATE SET
+         booking_id = excluded.booking_id,
+         run_at = excluded.run_at,
+         status = CASE WHEN reminders.status = 'sent' THEN reminders.status ELSE excluded.status END,
+         attempts = CASE WHEN excluded.status = 'pending' THEN 0 ELSE reminders.attempts END,
+         payload_json = CASE WHEN reminders.status = 'sent' THEN reminders.payload_json ELSE excluded.payload_json END`,
+      job.notificationId,
+      job.bookingId,
+      Date.parse(job.runAt),
+      job.status,
+      JSON.stringify(job)
+    );
+  }
+
   private async scheduleNextAlarm(): Promise<void> {
     const next = this.state.storage.sql.exec<{ run_at: number }>(
       `SELECT run_at FROM reminders
@@ -420,6 +539,36 @@ export class DurableObjectBookingStore implements BookingStore {
     if (next) await this.state.storage.setAlarm(next.run_at);
     else await this.state.storage.deleteAlarm();
   }
+}
+
+function normalizeNotificationJob(value: Record<string, unknown>): BookingNotificationJob | null {
+  if (
+    typeof value.receiptId !== 'string' ||
+    typeof value.bookingId !== 'string' ||
+    typeof value.policyVersion !== 'string' ||
+    typeof value.runAt !== 'string' ||
+    !['pending', 'retryable', 'sent', 'failed', 'cancelled'].includes(String(value.status))
+  ) return null;
+  if (
+    typeof value.notificationId === 'string' &&
+    typeof value.slotStart === 'string' &&
+    ['confirmation', 'reminder', 'rescheduled'].includes(String(value.kind))
+  ) return value as BookingNotificationJob;
+  if (typeof value.reminderId === 'string') {
+    const legacySlot = value.slot as { start?: unknown } | undefined;
+    if (typeof legacySlot?.start !== 'string') return null;
+    return {
+      notificationId: value.reminderId,
+      receiptId: value.receiptId,
+      bookingId: value.bookingId,
+      slotStart: legacySlot.start,
+      kind: 'reminder',
+      policyVersion: value.policyVersion,
+      runAt: value.runAt,
+      status: value.status as BookingNotificationJob['status']
+    };
+  }
+  return null;
 }
 
 function transitionFingerprint(input: {

@@ -1,4 +1,8 @@
-import { normalizeBookingContext, type BookingService } from '../application/booking-service.js';
+import {
+  normalizeBookingContext,
+  type Booking,
+  type BookingService
+} from '../application/booking-service.js';
 import type { RoomService } from '../application/room-service.js';
 import { z } from 'zod';
 
@@ -24,7 +28,7 @@ export type ApiScope =
   | { role: 'booking'; bookingId: string };
 
 export type ApiOptions = {
-  issueActionToken?: (bookingId: string) => Promise<string>;
+  issueActionToken?: (booking: Booking) => Promise<string>;
 };
 
 const prepareSchema = z.object({
@@ -176,7 +180,7 @@ export async function handleApiRequest(
     if (result.status === 'committed' && options.issueActionToken) {
       return json({
         ...result,
-        actionToken: await options.issueActionToken(result.booking.bookingId)
+        actionToken: await options.issueActionToken(result.booking)
       }, status);
     }
     return json(result, status);
@@ -250,6 +254,12 @@ export async function handleApiRequest(
     const parsed = rescheduleSchema.safeParse(await readJson(request));
     if (!parsed.success) return invalidRequest(parsed.error.issues);
     const result = await service.rescheduleBooking({ bookingId, ...parsed.data });
+    if (result.status === 'rescheduled' && options.issueActionToken) {
+      return json({
+        ...result,
+        actionToken: await options.issueActionToken(result.booking)
+      }, transitionStatus(result.status));
+    }
     return json(result, transitionStatus(result.status));
   }
 

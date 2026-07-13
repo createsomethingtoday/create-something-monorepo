@@ -178,9 +178,29 @@ export function schedulerPage(input: { nonce: string; turnstileSiteKey?: string 
   const query=new URLSearchParams(location.search);
   state.context=schedulerContext({source:query.get('source'),intent:query.get('intent'),lane:query.get('lane'),warmup:query.get('warmup'),readiness:query.get('readiness'),trafficClass:query.get('traffic_class'),score:query.get('score'),atlasSessionId:query.get('atlas_session_id'),agentMessages:query.get('agent_messages')});
   addEventListener('message',event=>{
-    if (event.source !== parent || event.origin !== 'https://createsomething.agency' || event.data?.type !== 'create-something:scheduler-context') return;
-    state.context=schedulerContext(event.data.context);
+    if (event.source !== parent || event.origin !== 'https://createsomething.agency') return;
+    if (event.data?.type === 'create-something:scheduler-context') {
+      state.context=schedulerContext(event.data.context);
+      return;
+    }
+    if (event.data?.type === 'create-something:scheduler-access') {
+      const access=schedulerAccess(event.data);
+      if (!access) return;
+      sessionStorage.setItem(tokenKey(access.bookingId),access.actionToken);
+      restoreBooking(access.bookingId,access.actionToken);
+    }
   });
+
+  function schedulerAccess(input) {
+    if (!input || typeof input !== 'object') return null;
+    const bookingId=String(input.bookingId || '');
+    const actionToken=String(input.actionToken || '');
+    const expectedBookingId=query.get('booking');
+    if (!expectedBookingId || bookingId !== expectedBookingId) return null;
+    if (!/^[A-Za-z0-9_-]{1,200}$/.test(bookingId)) return null;
+    if (!/^[A-Za-z0-9._~-]{16,4096}$/.test(actionToken)) return null;
+    return {bookingId,actionToken};
+  }
 
   function notifyParent(action, details={}) {
     if (parent === window || !['booking_form_started','booking_initiated','booking_completed'].includes(action)) return;
@@ -311,7 +331,9 @@ export function schedulerPage(input: { nonce: string; turnstileSiteKey?: string 
     if (!state.booking || !state.selected) return;
     try {
       const result=await api('/api/v1/bookings/'+encodeURIComponent(state.booking.bookingId)+'/reschedule',{method:'POST',headers:{'x-booking-action-token':state.actionToken},body:JSON.stringify({newSlot:state.selected,idempotencyKey:idempotency('browser-reschedule'),explicitIntent:true})});
-      state.booking=result.booking; document.querySelector('#move-meeting')?.remove(); showBooking(result);
+      state.booking=result.booking; state.actionToken=result.actionToken;
+      sessionStorage.setItem(tokenKey(state.booking.bookingId),state.actionToken);
+      document.querySelector('#move-meeting')?.remove(); showBooking(result);
     } catch(error) { setStatus(error.message,'stop'); }
   }
 
@@ -322,8 +344,8 @@ export function schedulerPage(input: { nonce: string; turnstileSiteKey?: string 
     } catch(error) { confirmation.querySelector('#confirm-action').textContent=error.message; }
   }
 
-  async function restoreBooking(bookingId) {
-    const token=sessionStorage.getItem(tokenKey(bookingId)); if (!token) { loadAvailability(); return; }
+  async function restoreBooking(bookingId, suppliedToken) {
+    const token=suppliedToken || sessionStorage.getItem(tokenKey(bookingId)); if (!token) { loadAvailability(); return; }
     try { const result=await api('/api/v1/bookings/'+encodeURIComponent(bookingId),{headers:{'x-booking-action-token':token}}); state.booking=result.booking; state.actionToken=token; showBooking(result); }
     catch { sessionStorage.removeItem(tokenKey(bookingId)); loadAvailability(); }
   }

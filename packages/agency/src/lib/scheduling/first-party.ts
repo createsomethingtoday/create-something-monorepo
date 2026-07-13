@@ -18,6 +18,12 @@ export type SchedulerHandoffContext = {
 
 export type SchedulerDeclaredTrafficClass = 'internal' | 'test';
 
+export type SchedulerAccess = {
+	bookingId: string;
+	actionToken: string;
+	cleanPath: string;
+};
+
 export type SchedulerLifecycleAction =
 	| 'booking_form_started'
 	| 'booking_initiated'
@@ -41,6 +47,8 @@ const SCHEDULER_LIFECYCLE_ACTIONS = new Set<SchedulerLifecycleAction>([
 	'booking_initiated',
 	'booking_completed'
 ]);
+const BOOKING_ID = /^[A-Za-z0-9_-]{1,200}$/;
+const ACTION_TOKEN = /^[A-Za-z0-9._~-]{16,4096}$/;
 
 function token(value: unknown, max: number): string {
 	return String(value ?? '')
@@ -71,7 +79,35 @@ export function buildFirstPartySchedulerUrl(search = ''): string {
 	append('score', context.score);
 	append('atlas_session_id', context.atlasSessionId);
 	append('agent_messages', context.agentMessages);
+	const bookingId = new URLSearchParams(search).get('booking');
+	if (bookingId && BOOKING_ID.test(bookingId)) target.searchParams.set('booking', bookingId);
 	return target.toString();
+}
+
+export function normalizeSchedulerAccessUrl(value: string | URL): SchedulerAccess | null {
+	let url: URL;
+	try {
+		url = value instanceof URL ? new URL(value.toString()) : new URL(value);
+	} catch {
+		return null;
+	}
+	if (url.origin !== 'https://createsomething.agency' || url.pathname !== '/book') return null;
+	if (url.searchParams.has('access')) return null;
+	const bookingId = url.searchParams.get('booking');
+	const fragment = new URLSearchParams(url.hash.slice(1));
+	const actionToken = fragment.get('access');
+	if (
+		!bookingId ||
+		!BOOKING_ID.test(bookingId) ||
+		!actionToken ||
+		!ACTION_TOKEN.test(actionToken) ||
+		Array.from(fragment.keys()).some((key) => key !== 'access')
+	) return null;
+	return {
+		bookingId,
+		actionToken,
+		cleanPath: `${url.pathname}${url.search}`
+	};
 }
 
 export function schedulerHandoffContext(search = '', warmupNotes?: string): SchedulerHandoffContext {
