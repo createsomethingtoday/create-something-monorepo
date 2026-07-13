@@ -375,8 +375,9 @@ Implementation surface:
 - `@create-something/canon/atlas/headless` owns the reusable Atlas node, edge,
   canvas, readiness, graph-artifact, and story-artifact contract.
 - `@create-something/canon/atlas` owns the Svelte `AtlasStoryCanvas` and
-  `AtlasFlow` renderers that adapt the headless contract into read-only story
-  and editable map surfaces.
+  `AtlasFlow` adapters that mount the shared `@create-something/canvas-kernel`
+  renderer over the headless contract for read-only story and editable map
+  surfaces.
 - `createPublicAtlasGraphArtifact(...)` and
   `createPublicAtlasStoryArtifact(...)` are imported from Canon when `.agency`
   needs renderer-independent graph or story output.
@@ -410,10 +411,10 @@ Implementation surface:
   the chosen map into booking context; it is the `.agency` intake surface.
 - `test/public-atlas-starter-maps.test.ts` verifies coverage and policy-boundary
   shape.
-- `test/public-atlas-route.test.ts` verifies that `/`, `/atlas`, and
-  `/services` present the story canvas before the editable public canvas where
-  applicable, and that `/methodology`, `/stack`, and `/products` can use the
-  same story surface without mounting the editable canvas.
+- `test/public-atlas-route.test.ts` verifies that `/atlas` puts the editable
+  canvas before the long story, `/services` keeps one editable map, and
+  `/methodology`, `/stack`, and `/products` can use the same story surface
+  without mounting the editable canvas.
 
 Story-canvas usage contract:
 
@@ -421,17 +422,18 @@ Story-canvas usage contract:
   references remain stable if multiple story canvases appear on the same page.
 - Pass an explicit `flowId` on route-level editable-canvas uses if more than one
   editable Atlas flow can mount on a page.
-- Keep the story canvas before the editable canvas when both are present. The
-  story teaches the workflow language; the editable canvas collects booking
-  context.
+- Put the editable canvas before the long story on intent-heavy routes such as
+  `/atlas`; visitors should be able to act on the primary CTA before reading
+  the deeper explanation. The story can follow as supporting evidence.
 - Keep motion semantics in markup, not visible copy. Chapter motion cues belong
   in `data-motion-cue` attributes so animations can target them without exposing
   implementation labels to readers.
 
 Renderer rule:
 
-- The interactive Svelte Atlas flow is the primary renderer for workflow
-  education, intake, editing, accessibility, and agent-operable maps.
+- The interactive Svelte Atlas adapter mounts the shared
+  `@create-something/canvas-kernel` renderer for workflow education, intake,
+  editing, accessibility, and agent-operable maps.
 - The homepage proof object is the transparent operating canvas:
   `PublicSubstrateCanvas.svelte` mounts the shared `@create-something/canvas-kernel`
   renderer and shows a public projection of the real Substrate/Atlas/receipt
@@ -452,8 +454,9 @@ Renderer rule:
 - Story canvases should animate only chapter focus, handoff traces, stop
   boundaries, and proof reveals. The `accessibilitySummary` must remain complete
   when motion is disabled.
-- `/atlas` presents the read-only story canvas before the editable public Atlas
-  canvas so visitors can understand the workflow language before using the agent.
+- `/atlas` presents the editable public Atlas canvas before the read-only story
+  so visitors can act on the primary mapping intent before reading the deeper
+  workflow explanation.
 - `/methodology` uses a read-only story canvas to explain the method without
   collecting booking context.
 - `/stack` uses a read-only story canvas to explain the ownership and vendor

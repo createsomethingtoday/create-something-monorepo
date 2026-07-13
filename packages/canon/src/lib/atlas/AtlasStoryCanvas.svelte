@@ -8,7 +8,7 @@
 		type PublicAtlasGraphArtifact,
 		type PublicAtlasStoryArtifact
 	} from './headless.js';
-	import type { Viewport } from '@xyflow/svelte';
+	import type { CanvasKernelViewport as Viewport } from '@create-something/canvas-kernel';
 
 	type LedgerCopy = {
 		label: string;

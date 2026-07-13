@@ -360,6 +360,34 @@
 		}
 	}
 
+	@media (min-width: 48rem) and (max-height: 50rem) {
+		.performance-campaign-opening {
+			min-height: calc(100svh - 4rem);
+		}
+
+		.performance-campaign-opening__content {
+			gap: 1.5rem;
+			padding-block: 4.75rem 0.75rem;
+		}
+
+		.performance-campaign-opening__content header {
+			gap: 0.75rem;
+		}
+
+		.performance-campaign-opening h1 {
+			font-size: clamp(3rem, 6.5vw, 5.5rem);
+		}
+
+		.performance-campaign-opening__lede {
+			font-size: 1rem;
+			line-height: 1.35;
+		}
+
+		.performance-campaign-opening__proof li {
+			padding: 0.75rem 1rem;
+		}
+	}
+
 	@media (prefers-reduced-motion: reduce) {
 		.performance-campaign-opening *,
 		.performance-campaign-opening *::before,

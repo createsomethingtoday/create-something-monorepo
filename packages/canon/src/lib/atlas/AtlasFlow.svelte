@@ -1,71 +1,62 @@
 <script lang="ts">
-	import '@xyflow/svelte/dist/style.css';
-	import './AtlasFlow.css';
+	import { onMount } from 'svelte';
+	import type {
+		CanvasKernelEmphasis,
+		CanvasKernelFocusRequest,
+		CanvasKernelPalette,
+		CanvasKernelProjection,
+		CanvasKernelViewport
+	} from '@create-something/canvas-kernel';
 	import {
-		Background,
-		Controls,
-		MarkerType,
-		SvelteFlow,
-		type Edge,
-		type Node,
-		type OnSelectionChange,
-		type ProOptions,
-		type Viewport
-	} from '@xyflow/svelte';
-	import AtlasFlowNode from './AtlasFlowNode.svelte';
-	import {
-		PUBLIC_ATLAS_FLOW_SIZE,
 		layoutPublicAtlasNodes,
 		publicAtlasNodeWidth,
 		type PublicAtlasCanvas,
 		type PublicAtlasNodeKind,
 		type PublicAtlasNodeStatus
 	} from './headless.js';
+	import './AtlasFlow.css';
 
-	type AtlasFlowNodeData = {
-		kind: PublicAtlasNodeKind;
-		kindLabel: string;
-		label: string;
-		owner: string;
-		notes: string;
-		status: PublicAtlasNodeStatus;
-		statusLabel: string;
-		focusState: 'focused' | 'dimmed' | 'neutral';
-	};
+	type ReactCreateElement = typeof import('react').createElement;
+	type ReactRoot = import('react-dom/client').Root;
+	type CanvasKernelComponent = typeof import('@create-something/canvas-kernel').CanvasKernel;
 
-	const KIND_LABELS: Record<PublicAtlasNodeKind, string> = {
-		actor: 'Actor',
-		ai: 'AI task',
-		constraint: 'Constraint',
-		data: 'Data',
-		human: 'Human',
-		system: 'System',
-		touchpoint: 'Touchpoint'
-	};
-
-	const STATUS_LABELS: Record<PublicAtlasNodeStatus, string> = {
-		run: 'Run',
-		stop: 'Stop',
-		unknown: 'Unknown',
-		wait: 'Wait'
-	};
-
-	const nodeTypes = {
-		atlas: AtlasFlowNode
-	};
-
-	const proOptions: ProOptions = {
-		hideAttribution: true
-	};
-
-	const controlsFitViewOptions = {
-		padding: 0.12,
-		minZoom: 0.7,
-		maxZoom: 1
+	type Viewport = {
+		x: number;
+		y: number;
+		zoom: number;
 	};
 
 	const noopMoveNode = () => {};
 	const noopSelectNode = () => {};
+	const NODE_HEIGHT = 118;
+
+	const KIND_STRIPE: Record<PublicAtlasNodeKind, [number, number, number, number]> = {
+		actor: [0.07, 0.08, 0.11, 0.5],
+		ai: [0.18, 0.28, 0.22, 0.42],
+		constraint: [0.77, 0.12, 0.23, 0.46],
+		data: [0.49, 0.49, 0.46, 0.42],
+		human: [0.0, 0.28, 1, 0.34],
+		system: [0.18, 0.19, 0.2, 0.42],
+		touchpoint: [0.36, 0.29, 0.42, 0.36]
+	};
+
+	const STATUS_RING: Record<PublicAtlasNodeStatus, [number, number, number, number]> = {
+		run: [0.12, 0.24, 0.18, 0.3],
+		stop: [0.77, 0.12, 0.23, 0.38],
+		unknown: [0.07, 0.08, 0.11, 0.24],
+		wait: [0.0, 0.28, 1, 0.26]
+	};
+
+	const PALETTE: CanvasKernelPalette = {
+		activeRing: [0.0, 0.28, 1, 0.32],
+		edge: [0.12, 0.13, 0.15, 0.15],
+		kindStripe: KIND_STRIPE,
+		nodeBorder: [0.07, 0.08, 0.11, 0.24],
+		nodeFace: [0.992, 0.992, 0.972, 0.96],
+		nodeFaceSelected: [1, 1, 0.992, 0.99],
+		selectedRing: [0.0, 0.28, 1, 0.72],
+		statusRing: STATUS_RING
+	};
 
 	export let canvas: PublicAtlasCanvas;
 	export let selectedNodeId: string;
@@ -77,89 +68,122 @@
 	export let focusedNodeIds: string[] = [];
 	export let focusedEdgeIds: string[] = [];
 	export let dimUnfocused = false;
-	export let initialViewport: Viewport = {
-		x: 0,
-		y: 0,
-		zoom: 1
-	};
+	export let initialViewport: Viewport = { x: 0, y: 0, zoom: 1 };
 	export let minZoom = 0.7;
 	export let maxZoom = 1.45;
 
+	let viewportElement: HTMLDivElement;
+	let root: ReactRoot | null = null;
+	let createElement: ReactCreateElement | null = null;
+	let CanvasKernel: CanvasKernelComponent | null = null;
+	let fitRequest = 0;
+	let viewport: CanvasKernelViewport = initialViewport;
+	let renderBackend = 'unavailable';
+
 	$: counts = `${canvas.nodes.length} nodes / ${canvas.edges.length} edges`;
-	$: focusedNodeSet = new Set(focusedNodeIds);
-	$: focusedEdgeSet = new Set(focusedEdgeIds);
-	$: hasFocus = dimUnfocused && (focusedNodeSet.size > 0 || focusedEdgeSet.size > 0);
-	$: flowNodes = layoutPublicAtlasNodes(canvas.nodes).map((node) => {
-		const width = publicAtlasNodeWidth(node);
-		const isFocused = focusedNodeSet.has(node.id);
-		return {
-			id: node.id,
-			type: 'atlas',
-			position: { x: node.x ?? 0, y: node.y ?? 0 },
-			width,
-			selected: node.id === selectedNodeId,
-			focusable: true,
-			ariaRole: 'button',
-			ariaLabel: `${node.label}. ${KIND_LABELS[node.kind]}. ${STATUS_LABELS[node.status]}. ${
-				node.notes || 'Describe the boundary, handoff, evidence, or next decision.'
-			}`,
-			data: {
-				kind: node.kind,
-				kindLabel: KIND_LABELS[node.kind],
-				label: node.label,
-				owner: node.owner || node.createdBy,
-				notes: node.notes || 'Describe the boundary, handoff, evidence, or next decision.',
-				status: node.status,
-				statusLabel: STATUS_LABELS[node.status],
-				focusState: !hasFocus ? 'neutral' : isFocused ? 'focused' : 'dimmed'
+	$: projection = toProjection(canvas);
+	$: activeNodeIds = new Set(
+		canvas.nodes
+			.filter((node) => node.status === 'run' || node.kind === 'touchpoint' || node.id === selectedNodeId)
+			.map((node) => node.id)
+	);
+	$: emphasis = (dimUnfocused
+		? {
+				dimUnfocused: true,
+				edgeIds: new Set(focusedEdgeIds),
+				nodeIds: new Set(focusedNodeIds)
 			}
-		} satisfies Node<AtlasFlowNodeData, 'atlas'>;
-	});
-	$: flowEdges = canvas.edges.map((edge) => {
-		const nodeFocused = focusedNodeSet.has(edge.source) || focusedNodeSet.has(edge.target);
-		const edgeFocused = focusedEdgeSet.has(edge.id) || nodeFocused;
-		const opacity = hasFocus && !edgeFocused ? 0.18 : 1;
-		const color = hasFocus && edgeFocused ? '#0a0e19' : '#9f9b90';
-		return {
-			id: edge.id,
-			source: edge.source,
-			target: edge.target,
-			label: edge.label,
-			type: 'smoothstep',
-			focusable: true,
-			ariaRole: 'group',
-			markerEnd: {
-				type: MarkerType.ArrowClosed,
-				width: 16,
-				height: 16,
-				color
-			},
-			style: `stroke: ${color}; stroke-width: ${edgeFocused ? 1.8 : 1.35}; opacity: ${opacity};`,
-			labelStyle: `fill: #6f6f67; font-family: var(--font-topology-label, var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace)); font-size: var(--text-topology-label, 0.72rem); font-variant-numeric: tabular-nums; font-weight: 600; letter-spacing: var(--tracking-topology-label, 0); line-height: var(--leading-topology-label, 1.2); paint-order: stroke; stroke: #fbfbf8; stroke-width: 7px; opacity: ${opacity};`
+		: undefined) satisfies CanvasKernelEmphasis | undefined;
+	$: focusRequest = null satisfies CanvasKernelFocusRequest;
+	$: renderKey = `${flowId}:${canvas.id}:${canvas.updatedAt}:${selectedNodeId}:${fitRequest}:${focusedNodeIds.join(',')}:${focusedEdgeIds.join(',')}:${dimUnfocused}`;
+	$: if (root && createElement && CanvasKernel && renderKey) renderKernel();
+
+	function toProjection(source: PublicAtlasCanvas): CanvasKernelProjection {
+		const nodes = layoutPublicAtlasNodes(source.nodes).map((node) => ({
+			height: NODE_HEIGHT,
+			id: node.id,
+			kind: node.kind,
+			label: node.label,
+			status: node.status,
+			width: node.width ?? publicAtlasNodeWidth(node),
+			x: node.x ?? 0,
+			y: node.y ?? 0
+		}));
+		const nodeIds = new Set(nodes.map((node) => node.id));
+		const edges = source.edges
+			.filter((edge) => nodeIds.has(edge.source) && nodeIds.has(edge.target))
+			.map((edge) => ({ id: edge.id, source: edge.source, target: edge.target }));
+		return { edges, nodes };
+	}
+
+	function readRenderBackend(): string {
+		return viewportElement
+			?.querySelector('[data-render-backend]')
+			?.getAttribute('data-render-backend') ?? 'unavailable';
+	}
+
+	function handleViewportChange(next: CanvasKernelViewport): void {
+		viewport = next;
+		queueMicrotask(() => (renderBackend = readRenderBackend()));
+	}
+
+	function renderKernel(): void {
+		if (!root || !createElement || !CanvasKernel) return;
+		root.render(
+			createElement(CanvasKernel, {
+				activeNodeIds,
+				ariaLabel: 'Atlas workflow map',
+				emphasis,
+				fitRequest,
+				focusRequest,
+				onNodeSelect: readOnly ? noopSelectNode : (nodeId: string) => onSelectNode(nodeId),
+				onPaneClick: () => undefined,
+				onViewportChange: handleViewportChange,
+				palette: PALETTE,
+				projection,
+				selectedNodeId
+			})
+		);
+	}
+
+	function fitMap(): void {
+		fitRequest += 1;
+	}
+
+	onMount(() => {
+		let disposed = false;
+		const observer = new MutationObserver(() => (renderBackend = readRenderBackend()));
+		observer.observe(viewportElement, { attributes: true, subtree: true });
+		void Promise.all([
+			import('react'),
+			import('react-dom/client'),
+			import('@create-something/canvas-kernel')
+		]).then(([react, reactDom, canvasKernel]) => {
+			if (disposed) return;
+			createElement = react.createElement;
+			CanvasKernel = canvasKernel.CanvasKernel;
+			root = reactDom.createRoot(viewportElement);
+			renderKernel();
+		});
+
+		return () => {
+			disposed = true;
+			observer.disconnect();
+			root?.unmount();
+			root = null;
 		};
-	}) satisfies Edge[];
-
-	function handleNodeClick({ node }: { node: Node<AtlasFlowNodeData, 'atlas'> }) {
-		onSelectNode(node.id);
-	}
-
-	function handleNodeDragStop({ nodes }: { nodes: Array<Node<AtlasFlowNodeData, 'atlas'>> }) {
-		for (const node of nodes) {
-			onMoveNode(node.id, {
-				x: Math.max(0, Math.round(node.position.x)),
-				y: Math.max(0, Math.round(node.position.y))
-			});
-		}
-	}
-
-	const handleSelectionChange: OnSelectionChange<Node<AtlasFlowNodeData, 'atlas'>, Edge> = ({
-		nodes
-	}) => {
-		if (nodes[0]) onSelectNode(nodes[0].id);
-	};
+	});
 </script>
 
-<div class="public-atlas-flow" aria-label="Atlas workflow map">
+<div
+	class="public-atlas-flow"
+	data-flow-id={flowId}
+	data-read-only={readOnly}
+	data-min-zoom={minZoom}
+	data-max-zoom={maxZoom}
+	data-move-handler={onMoveNode ? 'provided' : 'none'}
+	aria-label="Atlas workflow map"
+>
 	<div class="public-atlas-kicker">
 		<strong>Workflow map</strong>
 		<small>{counts}</small>
@@ -169,39 +193,11 @@
 		<span class="wait">Wait</span>
 		<span class="stop">Stop</span>
 	</div>
-
-	<SvelteFlow
-		id={flowId}
-		bind:nodes={flowNodes}
-		bind:edges={flowEdges}
-		{nodeTypes}
-		{initialViewport}
-		{minZoom}
-		{maxZoom}
-		snapGrid={[8, 8]}
-		nodesConnectable={false}
-		nodesDraggable={!readOnly}
-		panOnDrag
-		elementsSelectable={!readOnly}
-		nodesFocusable
-		edgesFocusable
-		nodeExtent={[
-			[0, 0],
-			[PUBLIC_ATLAS_FLOW_SIZE.width, PUBLIC_ATLAS_FLOW_SIZE.height]
-		]}
-		translateExtent={[
-			[-120, -120],
-			[PUBLIC_ATLAS_FLOW_SIZE.width + 120, PUBLIC_ATLAS_FLOW_SIZE.height + 120]
-		]}
-		{proOptions}
-		aria-label="Atlas workflow map"
-		onnodeclick={handleNodeClick}
-		onnodedragstop={handleNodeDragStop}
-		onselectionchange={handleSelectionChange}
-	>
-		{#if showControls}
-			<Controls showLock={false} fitViewOptions={controlsFitViewOptions} />
-		{/if}
-		<Background gap={32} patternColor="#eeeee8" />
-	</SvelteFlow>
+	{#if showControls}
+		<button type="button" class="public-atlas-fit" onclick={fitMap}>Fit</button>
+	{/if}
+	<div class="public-atlas-kernel" bind:this={viewportElement}></div>
+	<span class="sr-only">
+		Renderer {renderBackend}. Viewport {Math.round(viewport.x)}, {Math.round(viewport.y)}, {viewport.zoom.toFixed(2)}.
+	</span>
 </div>
