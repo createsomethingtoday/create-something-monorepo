@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:operating-slice-readiness:internal",
-  "generatedAt": "2026-07-12T22:50:07.137Z",
+  "generatedAt": "2026-07-13T01:55:01.230Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceReviewId": "substrate:create-something:operating-slice-review:internal",
@@ -150,20 +150,20 @@
       "tier": "Mixed",
       "surface": "guide",
       "owner": "CREATE SOMETHING",
-      "recordCount": 56,
-      "mappedRecordCount": 56,
+      "recordCount": 55,
+      "mappedRecordCount": 55,
       "missingRecordIds": [],
       "gates": [
         {
           "id": "topology_records_exist",
           "status": "pass",
-          "summary": "56/56 slice records exist in the internal topology.",
+          "summary": "55/55 slice records exist in the internal topology.",
           "evidence": "packages/database-layer/data/create-something-internal-topology.json"
         },
         {
           "id": "topology_records_mapped",
           "status": "pass",
-          "summary": "56/56 slice records are mapped.",
+          "summary": "55/55 slice records are mapped.",
           "evidence": "packages/database-layer/data/create-something-internal-topology.json"
         },
         {
@@ -404,20 +404,20 @@
       "tier": "Automation",
       "surface": "package",
       "owner": "CREATE SOMETHING",
-      "recordCount": 14,
-      "mappedRecordCount": 14,
+      "recordCount": 15,
+      "mappedRecordCount": 15,
       "missingRecordIds": [],
       "gates": [
         {
           "id": "topology_records_exist",
           "status": "pass",
-          "summary": "14/14 slice records exist in the internal topology.",
+          "summary": "15/15 slice records exist in the internal topology.",
           "evidence": "packages/database-layer/data/create-something-internal-topology.json"
         },
         {
           "id": "topology_records_mapped",
           "status": "pass",
-          "summary": "14/14 slice records are mapped.",
+          "summary": "15/15 slice records are mapped.",
           "evidence": "packages/database-layer/data/create-something-internal-topology.json"
         },
         {

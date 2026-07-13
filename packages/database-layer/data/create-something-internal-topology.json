@@ -4,14 +4,14 @@
   "atlasCanvasId": "create-something-internal-operating-topology",
   "rootNodeId": "substrate:create-something:root",
   "coverage": {
-    "generatedAt": "2026-07-12T22:50:06.919Z",
+    "generatedAt": "2026-07-13T01:55:01.026Z",
     "rootPath": ".",
-    "packageCount": 193,
+    "packageCount": 194,
     "appCount": 8,
     "workerCount": 101,
     "clientOverlayCount": 6,
     "policyCount": 56,
-    "guideCount": 56,
+    "guideCount": 55,
     "configCount": 40
   },
   "nodes": [
@@ -3790,6 +3790,24 @@
       "runtime": "node"
     },
     {
+      "id": "substrate:create-something:package:create-something-workflow-shadow-pilot-packages-workflow-shadow-pilot",
+      "atlasNodeId": "atlas_create-something_package_create-something-workflow-shadow-pilot-packages-workflow-shadow-pilot",
+      "title": "@create-something/workflow-shadow-pilot",
+      "path": "packages/workflow-shadow-pilot",
+      "tier": "Automation",
+      "surface": "package",
+      "owner": "CREATE SOMETHING <hello@createsomething.agency>",
+      "status": "mapped",
+      "summary": "Compose workflow discovery, compilation, reconciliation, privacy proof, measurement, and operator evidence in read-only shadow mode.",
+      "tags": [
+        "package",
+        "package",
+        "automation"
+      ],
+      "packageName": "@create-something/workflow-shadow-pilot",
+      "runtime": "node"
+    },
+    {
       "id": "substrate:create-something:package:create-something-zendesk-mcp-packages-zendesk-mcp",
       "atlasNodeId": "atlas_create-something_package_create-something-zendesk-mcp-packages-zendesk-mcp",
       "title": "@create-something/zendesk-mcp",
@@ -6835,21 +6853,6 @@
       ]
     },
     {
-      "id": "substrate:create-something:guide:docs-guides-hermes-agent-loop-evaluation-md",
-      "atlasNodeId": "atlas_create-something_guide_docs-guides-hermes-agent-loop-evaluation-md",
-      "title": "HERMES_AGENT_LOOP_EVALUATION.md",
-      "path": "docs/guides/HERMES_AGENT_LOOP_EVALUATION.md",
-      "tier": "Mixed",
-      "surface": "guide",
-      "owner": "CREATE SOMETHING",
-      "status": "mapped",
-      "summary": "guide artifact in the CREATE SOMETHING operating topology.",
-      "tags": [
-        "guide",
-        "documentation"
-      ]
-    },
-    {
       "id": "substrate:create-something:guide:docs-guides-hydra-db-governed-recall-md",
       "atlasNodeId": "atlas_create-something_guide_docs-guides-hydra-db-governed-recall-md",
       "title": "HYDRA_DB_GOVERNED_RECALL.md",
@@ -9294,6 +9297,13 @@
       "evidence": "packages/workflow-receipt-reconciler is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-workflow-shadow-pilot-packages-workflow-shadow-pilot",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-workflow-shadow-pilot-packages-workflow-shadow-pilot",
+      "relation": "contains",
+      "evidence": "packages/workflow-shadow-pilot is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-zendesk-mcp-packages-zendesk-mcp",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:package:create-something-zendesk-mcp-packages-zendesk-mcp",
@@ -10615,13 +10625,6 @@
       "target": "substrate:create-something:guide:docs-guides-git-light-agent-delivery-workflow-md",
       "relation": "contains",
       "evidence": "docs/guides/GIT_LIGHT_AGENT_DELIVERY_WORKFLOW.md is present in the repo scan."
-    },
-    {
-      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-hermes-agent-loop-evaluation-md",
-      "source": "substrate:create-something:root",
-      "target": "substrate:create-something:guide:docs-guides-hermes-agent-loop-evaluation-md",
-      "relation": "contains",
-      "evidence": "docs/guides/HERMES_AGENT_LOOP_EVALUATION.md is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-hydra-db-governed-recall-md",
@@ -12801,6 +12804,27 @@
       "evidence": "@create-something/workflow-receipt-reconciler declares @create-something/workflow-evidence-extractor."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-workflow-shadow-pilot-packages-workflow-shadow-pilot-depends-on-substrate-create-something-package-create-something-workflow-compiler-packages-workflow-compiler",
+      "source": "substrate:create-something:package:create-something-workflow-shadow-pilot-packages-workflow-shadow-pilot",
+      "target": "substrate:create-something:package:create-something-workflow-compiler-packages-workflow-compiler",
+      "relation": "depends_on",
+      "evidence": "@create-something/workflow-shadow-pilot declares @create-something/workflow-compiler."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-workflow-shadow-pilot-packages-workflow-shadow-pilot-depends-on-substrate-create-something-package-create-something-workflow-historical-context-reconciler-packages-workflow-historical-context-reconciler",
+      "source": "substrate:create-something:package:create-something-workflow-shadow-pilot-packages-workflow-shadow-pilot",
+      "target": "substrate:create-something:package:create-something-workflow-historical-context-reconciler-packages-workflow-historical-context-reconciler",
+      "relation": "depends_on",
+      "evidence": "@create-something/workflow-shadow-pilot declares @create-something/workflow-historical-context-reconciler."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-workflow-shadow-pilot-packages-workflow-shadow-pilot-depends-on-substrate-create-something-package-create-something-workflow-receipt-reconciler-packages-workflow-receipt-reconciler",
+      "source": "substrate:create-something:package:create-something-workflow-shadow-pilot-packages-workflow-shadow-pilot",
+      "target": "substrate:create-something:package:create-something-workflow-receipt-reconciler-packages-workflow-receipt-reconciler",
+      "relation": "depends_on",
+      "evidence": "@create-something/workflow-shadow-pilot declares @create-something/workflow-receipt-reconciler."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-zendesk-mcp-packages-zendesk-mcp-depends-on-substrate-create-something-package-create-something-mcp-core-packages-mcp-core",
       "source": "substrate:create-something:package:create-something-zendesk-mcp-packages-zendesk-mcp",
       "target": "substrate:create-something:package:create-something-mcp-core-packages-mcp-core",
@@ -13387,13 +13411,6 @@
       "target": "substrate:create-something:root",
       "relation": "documents",
       "evidence": "docs/guides/GIT_LIGHT_AGENT_DELIVERY_WORKFLOW.md is an operating guide."
-    },
-    {
-      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-hermes-agent-loop-evaluation-md-documents-substrate-create-something-root",
-      "source": "substrate:create-something:guide:docs-guides-hermes-agent-loop-evaluation-md",
-      "target": "substrate:create-something:root",
-      "relation": "documents",
-      "evidence": "docs/guides/HERMES_AGENT_LOOP_EVALUATION.md is an operating guide."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-hydra-db-governed-recall-md-documents-substrate-create-something-root",
@@ -14213,13 +14230,6 @@
       "target": "substrate:create-something:agent-config:config-dify-agents-aaron-hub-json",
       "relation": "documents",
       "evidence": "docs/guides/GIT_LIGHT_AGENT_DELIVERY_WORKFLOW.md documents config/dify-agents/aaron-hub.json through matching topology terms."
-    },
-    {
-      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-hermes-agent-loop-evaluation-md-documents-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
-      "source": "substrate:create-something:guide:docs-guides-hermes-agent-loop-evaluation-md",
-      "target": "substrate:create-something:agent-config:config-dify-agents-aaron-hub-json",
-      "relation": "documents",
-      "evidence": "docs/guides/HERMES_AGENT_LOOP_EVALUATION.md documents config/dify-agents/aaron-hub.json through matching topology terms."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-hydra-db-governed-recall-md-documents-substrate-create-something-package-create-something-hydra-db-recall-mcp-packages-hydra-db-recall-mcp",

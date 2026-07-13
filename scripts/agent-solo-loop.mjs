@@ -11,13 +11,10 @@ const DEFAULT_REQUIRED_FILES = [
   'package.json'
 ];
 
-const VALID_PROVIDERS = new Set(['codex', 'hermes']);
-
 export function parseArgs(argv) {
   const options = {
     check: false,
     json: false,
-    provider: 'codex',
     strict: false,
     starter: false
   };
@@ -29,10 +26,6 @@ export function parseArgs(argv) {
     else if (arg === '--json') options.json = true;
     else if (arg === '--strict') options.strict = true;
     else if (arg === '--starter' || arg === '--prompt') options.starter = true;
-    else if (arg === '--provider') {
-      index += 1;
-      options.provider = readOptionValue(arg, argv[index]);
-    } else if (arg.startsWith('--provider=')) options.provider = arg.slice('--provider='.length);
     else if (arg === '--task') {
       index += 1;
       options.task = readOptionValue(arg, argv[index]);
@@ -42,12 +35,6 @@ export function parseArgs(argv) {
       options.starter = true;
     } else if (arg === '--help' || arg === '-h') options.help = true;
     else throw new Error(`Unknown argument: ${arg}`);
-  }
-
-  if (!VALID_PROVIDERS.has(options.provider)) {
-    throw new Error(
-      `Unknown provider: ${options.provider}. Expected one of: ${[...VALID_PROVIDERS].join(', ')}`
-    );
   }
 
   return options;
@@ -150,14 +137,9 @@ export function decideSoloPosture({ status, divergence, strict }) {
 
 export function buildStarterPrompt({
   task,
-  provider = 'codex',
   branch = 'unknown',
   warnings = []
 }) {
-  const providerLine =
-    provider === 'hermes'
-      ? 'Use Hermes as the implementation worker. Normal repo-local tests do not require E2B unless the task is untrusted, destructive, resource-heavy, or needs disposable parallel environments.'
-      : 'Use Codex as the implementation worker from this checkout.';
   const taskText =
     task?.trim() ||
     '[Replace this with one compact task, including the nearest file, command, error, or smoke target.]';
@@ -172,7 +154,7 @@ Task:
 ${taskText}
 
 Worker:
-${providerLine}
+Use Codex as the implementation worker from this checkout.
 
 Current branch:
 ${branch || 'unknown'}${warningText}
@@ -186,13 +168,7 @@ Operating constraints:
 - Before finishing, report files changed, commands run, validation result, remaining risks, and the recommended next loop.`;
 }
 
-export function buildLaunchCommand({
-  provider = 'codex',
-  hermesCommand = process.env.HERMES_COMMAND || 'hermes'
-}) {
-  if (provider === 'hermes') {
-    return `${hermesCommand} --cli -z '<paste the starter prompt here>'`;
-  }
+export function buildLaunchCommand() {
   return 'codex # paste the starter prompt into the session';
 }
 
@@ -224,7 +200,7 @@ function shellQuote(value) {
 function usage() {
   console.log(`Usage:
   node scripts/agent-solo-loop.mjs [--json] [--check] [--strict]
-  node scripts/agent-solo-loop.mjs --starter [--provider codex|hermes] [--task "..."]
+  node scripts/agent-solo-loop.mjs --starter [--task "..."]
 
 Peter Steinberger-inspired solo-operator loop readiness for this repo.
 
@@ -235,7 +211,6 @@ Options:
   --strict             Fail when checkout is dirty or behind upstream.
   --json               Print machine-readable output.
   --starter, --prompt  Include an inspectable starter prompt and launch command.
-  --provider <name>    Prompt for codex or hermes. Default: codex.
   --task <text>        Task text to embed in the starter prompt.
 `);
 }
@@ -264,18 +239,6 @@ function main() {
       fileProbe(DEFAULT_REQUIRED_FILES)
     )
   ];
-
-  const hermesProbe = run(
-    'bash',
-    ['-lc', `command -v ${shellQuote(process.env.HERMES_COMMAND || 'hermes')}`],
-    {
-      summarize: (stdout, _stderr, ok) =>
-        ok
-          ? `Hermes command resolved: ${stdout.trim()}`
-          : 'Hermes command not found. Use Codex for the solo loop or set HERMES_COMMAND.'
-    }
-  );
-  steps.push(step('hermes-command', 'Check optional Hermes CLI availability', hermesProbe, true));
 
   const codexProbe = run('bash', ['-lc', 'command -v codex'], {
     summarize: (stdout, _stderr, ok) =>
@@ -321,11 +284,10 @@ function main() {
   const starter =
     options.starter || options.task
       ? {
-          provider: options.provider,
-          launch_command: buildLaunchCommand({ provider: options.provider }),
+          provider: 'codex',
+          launch_command: buildLaunchCommand(),
           prompt: buildStarterPrompt({
             task: options.task,
-            provider: options.provider,
             branch: branchLine.replace(/^##\s*/, ''),
             warnings: posture.warnings
           })
