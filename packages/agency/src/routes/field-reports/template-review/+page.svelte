@@ -182,6 +182,35 @@
     {/snippet}
   </PerformancePageSection>
 
+  <PerformancePageSection
+    eyebrow="Modeled capacity / Supplied baseline"
+    title="One observed packet models to about 36 an hour."
+    description="Against the user-provided human baseline of two to four templates per hour, the measured 99.5-second agent packet models to about 36 packets per hour in serial. This is a capacity scenario—not proof of equivalent review quality or realized savings."
+  >
+    {#snippet after()}
+      <div class="runtime-evidence" aria-label="Template Review modeled capacity scenario">
+        <article>
+          <span>Human scenario input</span>
+          <strong>2–4 / hour</strong>
+          <p>This rate was supplied for the scenario; it was not timed in the one-case pilot.</p>
+        </article>
+        <article>
+          <span>Measured agent basis</span>
+          <strong>99.5 seconds</strong>
+          <p>One end-to-end packet models to about 36 packets per hour in serial.</p>
+        </article>
+        <article>
+          <span>Modeled capacity range</span>
+          <strong>9–18×</strong>
+          <p>
+            The range compares throughput only. Equivalent quality, human verification time, and
+            cash savings remain unmeasured.
+          </p>
+        </article>
+      </div>
+    {/snippet}
+  </PerformancePageSection>
+
   <section class="failed-boundary" aria-labelledby="failed-boundary-title">
     <div class="failed-boundary__status">
       <span>Promotion blocked</span>

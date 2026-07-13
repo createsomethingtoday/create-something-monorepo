@@ -49,6 +49,23 @@ Measured packet provider cost = 0.001208457 + 0.110515
 
 Reasoning tokens are included within output tokens and are not priced twice.
 
+## Modeled capacity scenario
+
+The user supplied a human review baseline of 2-4 templates per hour. Using the measured 99.537-second end-to-end packet as the agent denominator:
+
+```text
+Modeled agent packets per hour = 3,600 / 99.537
+                               = 36.1674553181
+
+Low capacity multiple  = 36.1674553181 / 4
+                       = 9.0418638295
+
+High capacity multiple = 36.1674553181 / 2
+                       = 18.0837276591
+```
+
+Public copy rounds this to about 36 packets per hour and about 9-18 times the supplied human baseline. This is a modeled serial-throughput comparison. The 2-4 templates/hour input was not independently timed in this pilot, and the calculation is not evidence of equivalent review quality, autonomous approval capacity, human verification time saved, or realized cash savings.
+
 Sources:
 
 - [E2B pricing](https://e2b.dev/pricing)

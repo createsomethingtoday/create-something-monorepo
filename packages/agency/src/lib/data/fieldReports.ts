@@ -1,5 +1,10 @@
 export type EvidenceStatus = 'measured' | 'derived' | 'unmeasured';
 
+const TEMPLATE_REVIEW_AGENT_ELAPSED_MS = 99_537;
+const TEMPLATE_REVIEW_HUMAN_TEMPLATES_PER_HOUR = { low: 2, high: 4 } as const;
+const TEMPLATE_REVIEW_MODELED_AGENT_TEMPLATES_PER_HOUR =
+  3_600_000 / TEMPLATE_REVIEW_AGENT_ELAPSED_MS;
+
 export type TemplateReviewFieldReport = {
   slug: 'template-review';
   title: string;
@@ -50,6 +55,25 @@ export type TemplateReviewFieldReport = {
     totalMeasuredProviderCostUsd: number;
     storageAndToolCost: 'unmeasured';
     annualSavings: 'unmeasured';
+    status: EvidenceStatus;
+  };
+  capacityScenario: {
+    checkedAt: string;
+    classification: 'modeled_capacity';
+    humanBaselineSource: 'user_provided';
+    humanTemplatesPerHour: {
+      low: number;
+      high: number;
+    };
+    agentBasis: 'single_case_end_to_end';
+    agentEndToEndElapsedMs: number;
+    modeledAgentTemplatesPerHour: number;
+    modeledCapacityMultiple: {
+      low: number;
+      high: number;
+    };
+    qualityEquivalence: 'unmeasured';
+    cashSavings: 'unmeasured';
     status: EvidenceStatus;
   };
   savings: {
@@ -114,13 +138,33 @@ export const templateReviewFieldReport: TemplateReviewFieldReport = {
     collectorDurationMs: 32_661,
     reviewerDurationMs: 44_956,
     sequentialActiveRuntimeMs: 77_617,
-    endToEndElapsedMs: 99_537,
+    endToEndElapsedMs: TEMPLATE_REVIEW_AGENT_ELAPSED_MS,
     collectorProviderCostUsd: 0.001208457,
     reviewerProviderCostUsd: 0.110515,
     totalMeasuredProviderCostUsd: 0.111723457,
     storageAndToolCost: 'unmeasured',
     annualSavings: 'unmeasured',
     status: 'measured'
+  },
+  capacityScenario: {
+    checkedAt: '2026-07-13',
+    classification: 'modeled_capacity',
+    humanBaselineSource: 'user_provided',
+    humanTemplatesPerHour: TEMPLATE_REVIEW_HUMAN_TEMPLATES_PER_HOUR,
+    agentBasis: 'single_case_end_to_end',
+    agentEndToEndElapsedMs: TEMPLATE_REVIEW_AGENT_ELAPSED_MS,
+    modeledAgentTemplatesPerHour: TEMPLATE_REVIEW_MODELED_AGENT_TEMPLATES_PER_HOUR,
+    modeledCapacityMultiple: {
+      low:
+        TEMPLATE_REVIEW_MODELED_AGENT_TEMPLATES_PER_HOUR /
+        TEMPLATE_REVIEW_HUMAN_TEMPLATES_PER_HOUR.high,
+      high:
+        TEMPLATE_REVIEW_MODELED_AGENT_TEMPLATES_PER_HOUR /
+        TEMPLATE_REVIEW_HUMAN_TEMPLATES_PER_HOUR.low
+    },
+    qualityEquivalence: 'unmeasured',
+    cashSavings: 'unmeasured',
+    status: 'derived'
   },
   savings: {
     status: 'unmeasured',

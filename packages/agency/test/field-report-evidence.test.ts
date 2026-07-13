@@ -89,6 +89,41 @@ test('public evidence records are inspectable and include the sanitized runtime 
   assert.match(sources[4].artifact, /template-review-unit-economics-pilot/i);
 });
 
+test('modeled capacity separates the supplied human baseline from measured agent runtime and savings', () => {
+  assert.equal(templateReviewFieldReport.capacityScenario.classification, 'modeled_capacity');
+  assert.equal(templateReviewFieldReport.capacityScenario.humanBaselineSource, 'user_provided');
+  assert.deepEqual(templateReviewFieldReport.capacityScenario.humanTemplatesPerHour, {
+    low: 2,
+    high: 4
+  });
+  assert.equal(templateReviewFieldReport.capacityScenario.agentBasis, 'single_case_end_to_end');
+  assert.equal(templateReviewFieldReport.capacityScenario.agentEndToEndElapsedMs, 99_537);
+  assert.equal(
+    Math.round(templateReviewFieldReport.capacityScenario.modeledAgentTemplatesPerHour),
+    36
+  );
+  assert.deepEqual(
+    {
+      low: Math.round(templateReviewFieldReport.capacityScenario.modeledCapacityMultiple.low),
+      high: Math.round(templateReviewFieldReport.capacityScenario.modeledCapacityMultiple.high)
+    },
+    { low: 9, high: 18 }
+  );
+  assert.equal(templateReviewFieldReport.capacityScenario.qualityEquivalence, 'unmeasured');
+  assert.equal(templateReviewFieldReport.capacityScenario.cashSavings, 'unmeasured');
+
+  const route = readFileSync(
+    new URL('../src/routes/field-reports/template-review/+page.svelte', import.meta.url),
+    'utf8'
+  );
+  assert.match(route, /2–4 \/ hour/i);
+  assert.match(route, /about 36 packets per hour/i);
+  assert.match(route, /9–18×/i);
+  assert.match(route, /user-provided human baseline/i);
+  assert.match(route, /not proof of equivalent review quality/i);
+  assert.match(route, /cash savings remain unmeasured/i);
+});
+
 test('Field Reports are a browsable proof chapter in the agency journey', () => {
   const indexUrl = new URL('../src/routes/field-reports/+page.svelte', import.meta.url);
   const layout = readFileSync(new URL('../src/routes/+layout.svelte', import.meta.url), 'utf8');
