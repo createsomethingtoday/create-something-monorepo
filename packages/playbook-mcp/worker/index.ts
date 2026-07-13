@@ -30,6 +30,8 @@ import {
   runHalfDozenInboxTriage
 } from './halfdozenFleetWatchdog.js';
 import type { HalfDozenScenarioRunResult } from './halfdozenFleetWatchdog.js';
+import { runDeterministicFleetWatchdog } from './deterministicFleetWatchdog.js';
+import { runScheduledDeterministicFleetWatchdog } from './scheduledFleetWatchdog.js';
 import { inferredProxyToolCount, liveHubTotalServerCount } from './registrySweepTelemetry.js';
 
 // =============================================================================
@@ -1818,66 +1820,20 @@ async function runScheduledFleetWatchdog(
   const scenario: ScenarioKey = 'fleet-watchdog';
   const route = HALFDOZEN_FLEET_WATCHDOG_CRON_ROUTE;
   const runId = crypto.randomUUID();
-  const startedAt = Date.now();
-
-  if (!env.OPENAI_API_KEY) {
-    const message = 'OPENAI_API_KEY is not set.';
-    const durationMs = Date.now() - startedAt;
-    await recordFleetWatchdogRunEvidence(env, {
-      runId,
-      route,
-      cron: new Date(scheduledTimeMs).toISOString(),
-      success: false,
-      durationMs,
-      errorMessage: message
-    });
-    queueErrorNotification(ctx, env, scenario, route, runId, message, durationMs);
-    return;
-  }
-
-  const runInput = buildHalfDozenRunInput(env, {
-    query:
-      'Scheduled fleet watchdog review. Use the standard 24-hour fleet watchdog contract and escalate degraded services or required-tool coverage failures.'
+  await runScheduledDeterministicFleetWatchdog({
+    runId,
+    route,
+    scheduledTimeMs,
+    run: () =>
+      runDeterministicFleetWatchdog({
+        telemetryMcpUrl: env.HALFDOZEN_TELEMETRY_MCP_URL
+      }),
+    record: (evidence) => recordFleetWatchdogRunEvidence(env, evidence),
+    notifySuccess: (result, completedRunId, durationMs) =>
+      queueSuccessNotifications(ctx, env, result, route, completedRunId, durationMs),
+    notifyError: (message, failedRunId, durationMs) =>
+      queueErrorNotification(ctx, env, scenario, route, failedRunId, message, durationMs)
   });
-  const langfuseTracingEnabled = isLangfuseRouteTracingEnabled(env);
-
-  try {
-    const result = await runHalfDozenFleetWatchdog({
-      ...runInput,
-      tracingDisabled: !langfuseTracingEnabled
-    });
-    const durationMs = Date.now() - startedAt;
-    await recordFleetWatchdogRunEvidence(env, {
-      runId,
-      route,
-      cron: new Date(scheduledTimeMs).toISOString(),
-      success: !shouldEscalate(result),
-      durationMs,
-      result,
-      errorMessage: shouldEscalate(result)
-        ? (result.degraded_reason ?? 'Fleet watchdog degraded.')
-        : undefined
-    });
-    queueSuccessNotifications(ctx, env, result, route, runId, durationMs);
-    if (langfuseTracingEnabled) {
-      ctx.waitUntil(safeFlushLangfuse('scheduled fleet watchdog success'));
-    }
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    const durationMs = Date.now() - startedAt;
-    await recordFleetWatchdogRunEvidence(env, {
-      runId,
-      route,
-      cron: new Date(scheduledTimeMs).toISOString(),
-      success: false,
-      durationMs,
-      errorMessage: message
-    });
-    queueErrorNotification(ctx, env, scenario, route, runId, message, durationMs);
-    if (langfuseTracingEnabled) {
-      ctx.waitUntil(safeFlushLangfuse('scheduled fleet watchdog error'));
-    }
-  }
 }
 
 async function runScheduledMcpRegistrySweep(
