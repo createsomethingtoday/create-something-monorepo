@@ -21,6 +21,8 @@ Template-reviewer migration to Claude Cowork is a separate operator-owned lane a
 - Judgment: each repo-owned agent definition is a policy artifact with an explicit access class and per-server tool allowlist.
 - Rollback: no Dify app, key, or route is removed during shadow validation.
 
+The shadow Worker currently receives its OpenAI credential from Infisical `prod:/:WEBFLOW_OPENAI_API_KEY`. This restored live parity after the dedicated pilot key returned `insufficient_quota`; migrate to a funded runtime-specific project key before expanding beyond the Guide Agent.
+
 The OpenAI Agents SDK requires tool names to be unique across all MCP servers attached to one agent. The Guide Agent therefore keeps `three-tier-framework.classify_component` and omits the duplicate `create-something.classify_component`; all other read-only Guide tools remain available.
 
 ## Inventory disposition
