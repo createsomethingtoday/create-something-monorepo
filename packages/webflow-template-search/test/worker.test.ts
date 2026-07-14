@@ -125,6 +125,7 @@ const PUBLISHED_ASSETS = [
       '🔗Listing URL': 'https://webflow.com/templates/html/agentflow-website-template',
       '🔗Preview Site URL': 'https://agentflow.example.com',
       '🔗Website URL': 'https://webflow.com/templates/html/agentflow-website-template',
+      'ℹ️MRP ID': ['mrp-agentflow'],
       '📅LMT': '2026-03-16T05:13:07.000Z',
     },
   },
@@ -2087,12 +2088,15 @@ describe('webflow-template-search worker', () => {
         'public, max-age=300, stale-while-revalidate=86400',
       );
       const categoryPayload = (await categorySearch.json()) as {
-        items: Array<{ name: string }>;
+        items: Array<{ name: string; purchase_url: string | null }>;
         available_facets: { styles: Array<{ slug: string }>; types: Array<{ value: string }> };
         subcategory_pills: Array<{ slug: string; active: boolean }>;
       };
 
       expect(categoryPayload.items.map((item) => item.name)).toEqual(['Setrex', 'Agentflow']);
+      expect(categoryPayload.items.find((item) => item.name === 'Agentflow')?.purchase_url).toBe(
+        'https://webflow.com/dashboard/marketplace-checkout/redirect?rtype=Template&rid=mrp-agentflow&unauthSignup=true',
+      );
       expect(categoryPayload.available_facets.styles.map((item) => item.slug)).toEqual(['dark-websites', 'modern']);
       expect(categoryPayload.available_facets.types.map((item) => item.value)).toEqual(['Multi Layout', 'Multi Page']);
       expect(categoryPayload.subcategory_pills.map((pill) => pill.slug)).toEqual(['ai-websites', 'software-and-saas-websites']);
@@ -3455,6 +3459,7 @@ describe('webflow-template-search worker', () => {
             'sync-record-id': 'recAgentflow',
             name: 'Agentflow',
             slug: 'agentflow-website-template',
+            'reviewer-pick-reason-featured-templates': 'Strong interaction polish and clear buyer-fit execution.',
             'main-thumbnail': { url: 'https://cdn.prod.website-files.com/site/agentflow-updated.webp' },
           },
         },
@@ -3473,9 +3478,14 @@ describe('webflow-template-search worker', () => {
       });
 
       const afterRefresh = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
-      const afterPayload = (await afterRefresh.json()) as { items: Array<{ thumbnail_image_url: string | null }> };
+      const afterPayload = (await afterRefresh.json()) as {
+        items: Array<{ thumbnail_image_url: string | null; reviewer_pick_reason: string | null }>;
+      };
       expect(afterPayload.items[0]?.thumbnail_image_url).toBe(
         'https://cdn.prod.website-files.com/site/agentflow-updated.webp',
+      );
+      expect(afterPayload.items[0]?.reviewer_pick_reason).toBe(
+        'Strong interaction polish and clear buyer-fit execution.',
       );
     } finally {
       fetchMock.mockRestore();

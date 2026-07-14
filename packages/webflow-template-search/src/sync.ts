@@ -628,6 +628,12 @@ function normalizeTemplateRecord(
     listingUrl: webflowIdentity?.listingUrl ?? (typeof record.fields['🔗Listing URL'] === 'string' ? record.fields['🔗Listing URL'] : null),
     previewUrl: typeof record.fields['🔗Preview Site URL'] === 'string' ? record.fields['🔗Preview Site URL'] : null,
     websiteUrl: typeof record.fields['🔗Website URL'] === 'string' ? record.fields['🔗Website URL'] : null,
+    mrpId: (() => {
+      const raw = record.fields['ℹ️MRP ID'];
+      if (typeof raw === 'string') return raw.trim() || null;
+      if (Array.isArray(raw) && typeof raw[0] === 'string') return raw[0].trim() || null;
+      return null;
+    })(),
     creatorName: typeof record.fields['🎨Creator Name'] === 'string' ? record.fields['🎨Creator Name'] : null,
     creatorRecordId: creator.creatorRecordId,
     creatorSlug: creator.creatorSlug,

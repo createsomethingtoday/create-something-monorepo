@@ -108,6 +108,7 @@ export interface WebflowTemplateImageRecord {
   thumbnailImageUrl: string | null;
   thumbnailImageSecondaryUrl: string | null;
   carouselImageUrls: string[];
+  reviewerPickReason: string | null;
   price: number | null;
   isFree: boolean | null;
 }
@@ -434,6 +435,7 @@ function mapTemplateFieldData(fieldData: Record<string, unknown>): WebflowTempla
     thumbnailImageUrl: imageUrl(fieldData, ['main-thumbnail', 'main-thumbnail-image', 'thumbnail', 'thumbnail-image']),
     thumbnailImageSecondaryUrl: imageUrl(fieldData, ['thumbnail-secondary', 'thumbnail-image-secondary']),
     carouselImageUrls: imageUrls(fieldData, ['slider-images', 'carousel-images']),
+    reviewerPickReason: trimString(fieldData['reviewer-pick-reason-featured-templates']),
     price: offer?.price ?? null,
     isFree: offer?.isFree ?? null,
   };
