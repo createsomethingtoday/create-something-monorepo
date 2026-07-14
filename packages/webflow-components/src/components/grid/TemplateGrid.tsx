@@ -9,6 +9,7 @@ import React, {
 } from 'react';
 import { TemplateCard, TEMPLATE_CARD_STYLES, type TemplateCardBadge, type TemplateCardLink } from '../cards/TemplateCard';
 import { trackMarketplaceEvent } from '../marketplace/analytics';
+import { FeaturedTemplatePreview } from '../marketplace/FeaturedTemplatePreview';
 import {
   MarketplaceComponentErrorBoundary,
   useMarketplaceComponentErrorTracking,
@@ -35,6 +36,7 @@ interface ApiItem {
   url: string | null;
   preview_url: string | null;
   website_url: string | null;
+  purchase_url: string | null;
   creator_name: string | null;
   creator_slug: string | null;
   creator_profile_url: string | null;
@@ -45,6 +47,7 @@ interface ApiItem {
   price: number | null;
   is_free: boolean;
   is_featured: boolean;
+  reviewer_pick_reason: string | null;
   template_type: string | null;
   popularity_score: number | null;
   unique_viewers: number | null;
@@ -90,6 +93,47 @@ interface FilterState {
   types: string[];
   freeOnly: boolean;
   sort: TemplateSort;
+}
+
+interface FeaturedPreviewSession {
+  items: ApiItem[];
+  index: number;
+  page: number;
+  hasNextPage: boolean;
+  total: number;
+  filters: FilterState;
+  loadingNext: boolean;
+}
+
+export function appendUniqueFeaturedPreviewItems<T extends { id: string; template_slug: string }>(
+  current: readonly T[],
+  nextPage: readonly T[],
+): T[] {
+  const seen = new Set(current.map((item) => item.id || item.template_slug));
+  const appended = nextPage.filter((item) => {
+    const key = item.id || item.template_slug;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  return [...current, ...appended];
+}
+
+export type FeaturedPreviewNavigationIntent =
+  | { kind: 'move'; index: number }
+  | { kind: 'load-next' }
+  | { kind: 'none' };
+
+export function resolveFeaturedPreviewNavigation(
+  index: number,
+  itemCount: number,
+  hasNextPage: boolean,
+  direction: -1 | 1,
+): FeaturedPreviewNavigationIntent {
+  const nextIndex = index + direction;
+  if (nextIndex >= 0 && nextIndex < itemCount) return { kind: 'move', index: nextIndex };
+  if (direction === 1 && hasNextPage) return { kind: 'load-next' };
+  return { kind: 'none' };
 }
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -732,6 +776,21 @@ function normalizeTemplateHref(href: string | null | undefined): string | null {
   }
 }
 
+export function shouldOpenFeaturedTemplatePreview(options: {
+  scope: TemplateScope;
+  anchorHref: string | null;
+  itemUrl: string | null;
+  button: number;
+  modified: boolean;
+}): boolean {
+  return (
+    options.scope === 'featured' &&
+    options.button === 0 &&
+    !options.modified &&
+    normalizeTemplateHref(options.anchorHref) === normalizeTemplateHref(options.itemUrl)
+  );
+}
+
 function isTemplateDetailAnchorClick(event: React.MouseEvent<HTMLDivElement>, itemUrl: string | null): boolean {
   const target = event.target;
   if (!(target instanceof Element)) return false;
@@ -1162,12 +1221,16 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
   const [emptyRecommendations, setEmptyRecommendations] = useState<ApiItem[]>([]);
   const [emptyRecommendationsTitleState, setEmptyRecommendationsTitleState] = useState(emptyRecommendationsTitle);
   const [emptyRecommendationsLoading, setEmptyRecommendationsLoading] = useState(false);
+  const [featuredPreview, setFeaturedPreview] = useState<FeaturedPreviewSession | null>(null);
 
   // Stale-fetch guard: every new filter/sort change increments this
   const fetchEpochRef = useRef(0);
   const activeFetchAbortRef = useRef<AbortController | null>(null);
   const emptyRecommendationsAbortRef = useRef<AbortController | null>(null);
+  const featuredPreviewFetchAbortRef = useRef<AbortController | null>(null);
+  const featuredPreviewRef = useRef<FeaturedPreviewSession | null>(null);
   const lastHrefRef = useRef(typeof window === 'undefined' ? '' : window.location.href);
+  featuredPreviewRef.current = featuredPreview;
 
   // Keep Designer prop edits and production URL changes aligned after mount.
   useEffect(() => {
@@ -1316,6 +1379,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
     return () => {
       activeFetchAbortRef.current?.abort();
       emptyRecommendationsAbortRef.current?.abort();
+      featuredPreviewFetchAbortRef.current?.abort();
     };
   }, []);
 
@@ -1673,6 +1737,136 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
     setFilters(next);
   }, [filters, initialSort]);
 
+  const closeFeaturedPreview = useCallback(() => {
+    featuredPreviewFetchAbortRef.current?.abort();
+    featuredPreviewFetchAbortRef.current = null;
+    featuredPreviewRef.current = null;
+    setFeaturedPreview((current) => {
+      if (current) {
+        const item = current.items[current.index];
+        trackMarketplaceEvent(
+          'Code Component Event',
+          {
+            ...getSafeAnalyticsOverrides(),
+            component: 'TemplateGrid',
+            scope: 'featured_preview_closed',
+            template_slug: item?.template_slug ?? null,
+            source_position: current.index + 1,
+          },
+          enableAnalytics,
+        );
+      }
+      return null;
+    });
+  }, [enableAnalytics]);
+
+  const fetchFeaturedPreviewPage = useCallback(
+    async (targetPage: number, currentFilters: FilterState): Promise<ApiResponse | null> => {
+      featuredPreviewFetchAbortRef.current?.abort();
+      const controller = new AbortController();
+      featuredPreviewFetchAbortRef.current = controller;
+      const url = buildApiUrl(apiBase, currentFilters, targetPage, resolvedPageSize);
+      const cached = getCachedGridResponse(url);
+      if (cached) {
+        if (featuredPreviewFetchAbortRef.current === controller) featuredPreviewFetchAbortRef.current = null;
+        return cached;
+      }
+
+      try {
+        const response = await fetch(url, { signal: controller.signal });
+        if (!response.ok) throw new Error(`API ${response.status}`);
+        const data = (await response.json()) as ApiResponse;
+        setCachedGridResponse(url, data);
+        return controller.signal.aborted ? null : data;
+      } catch {
+        return null;
+      } finally {
+        if (featuredPreviewFetchAbortRef.current === controller) featuredPreviewFetchAbortRef.current = null;
+      }
+    },
+    [apiBase, resolvedPageSize],
+  );
+
+  const navigateFeaturedPreview = useCallback(
+    async (direction: -1 | 1) => {
+      const current = featuredPreviewRef.current;
+      if (!current || current.loadingNext) return;
+
+      const intent = resolveFeaturedPreviewNavigation(
+        current.index,
+        current.items.length,
+        current.hasNextPage,
+        direction,
+      );
+      if (intent.kind === 'move') {
+        const nextIndex = intent.index;
+        const next = { ...current, index: nextIndex };
+        featuredPreviewRef.current = next;
+        setFeaturedPreview(next);
+        const item = next.items[nextIndex];
+        trackMarketplaceEvent(
+          'Code Component Event',
+          {
+            ...getSafeAnalyticsOverrides(),
+            component: 'TemplateGrid',
+            scope: 'featured_preview_navigated',
+            navigation_direction: direction === 1 ? 'next' : 'previous',
+            template_slug: item.template_slug,
+            source_position: nextIndex + 1,
+          },
+          enableAnalytics,
+        );
+        return;
+      }
+
+      if (intent.kind !== 'load-next') return;
+
+      const loadingSession = { ...current, loadingNext: true };
+      featuredPreviewRef.current = loadingSession;
+      setFeaturedPreview(loadingSession);
+      const data = await fetchFeaturedPreviewPage(current.page + 1, current.filters);
+      if (featuredPreviewRef.current !== loadingSession) return;
+      if (!data) {
+        const failedSession = { ...loadingSession, loadingNext: false };
+        featuredPreviewRef.current = failedSession;
+        setFeaturedPreview(failedSession);
+        return;
+      }
+
+      const appendedItems = appendUniqueFeaturedPreviewItems(current.items, data.items);
+      const appendedIndex = current.index + 1;
+      const nextSession: FeaturedPreviewSession = {
+        ...current,
+        items: appendedItems,
+        index: Math.min(appendedIndex, appendedItems.length - 1),
+        page: data.pagination.page,
+        hasNextPage: data.pagination.has_next_page,
+        total: data.pagination.total_items,
+        loadingNext: false,
+      };
+      featuredPreviewRef.current = nextSession;
+      setFeaturedPreview(nextSession);
+
+      const item = nextSession.items[nextSession.index];
+      if (item && nextSession.index > current.index) {
+        trackMarketplaceEvent(
+          'Code Component Event',
+          {
+            ...getSafeAnalyticsOverrides(),
+            component: 'TemplateGrid',
+            scope: 'featured_preview_navigated',
+            navigation_direction: 'next',
+            template_slug: item.template_slug,
+            source_position: nextSession.index + 1,
+            loaded_page_boundary: true,
+          },
+          enableAnalytics,
+        );
+      }
+    },
+    [enableAnalytics, fetchFeaturedPreviewPage],
+  );
+
   const handleTemplateCardClick = useCallback(
     (event: React.MouseEvent<HTMLDivElement>, item: ApiItem, index: number, signals: string[]) => {
       if (!isTemplateDetailAnchorClick(event, item.url)) return;
@@ -1709,8 +1903,50 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
         },
         enableAnalytics,
       );
+
+      const target = event.target instanceof Element ? event.target : null;
+      const anchor = target?.closest<HTMLAnchorElement>('a[href]');
+      const shouldOpenPreview = shouldOpenFeaturedTemplatePreview({
+        scope: filters.scope,
+        anchorHref: anchor?.getAttribute('href') ?? null,
+        itemUrl: item.url,
+        button: event.button,
+        modified: event.metaKey || event.ctrlKey || event.shiftKey || event.altKey,
+      });
+      if (!shouldOpenPreview) return;
+
+      event.preventDefault();
+      const nextPreviewSession: FeaturedPreviewSession = {
+        items: [...items],
+        index,
+        page,
+        hasNextPage,
+        total: totalItems ?? items.length,
+        filters: {
+          ...filters,
+          styles: [...filters.styles],
+          tags: [...filters.tags],
+          types: [...filters.types],
+        },
+        loadingNext: false,
+      };
+      featuredPreviewRef.current = nextPreviewSession;
+      setFeaturedPreview(nextPreviewSession);
+      trackMarketplaceEvent(
+        'Code Component Event',
+        {
+          ...getSafeAnalyticsOverrides(),
+          component: 'TemplateGrid',
+          scope: 'featured_preview_opened',
+          template_slug: item.template_slug,
+          source_position: sourcePosition,
+          reviewer_pick_reason_present: Boolean(item.reviewer_pick_reason?.trim()),
+          direct_purchase_present: Boolean(item.purchase_url),
+        },
+        enableAnalytics,
+      );
     },
-    [enableAnalytics, filters, resolvedPageSize],
+    [enableAnalytics, filters, hasNextPage, items, page, resolvedPageSize, totalItems],
   );
 
   const renderTemplateGridItem = (item: ApiItem, i: number, keyPrefix = 'result') => (
@@ -1729,10 +1965,56 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
     />
   );
 
+  const activeFeaturedPreviewItem = featuredPreview?.items[featuredPreview.index] ?? null;
+  const featuredPreviewOverlay = featuredPreview && activeFeaturedPreviewItem ? (
+    <FeaturedTemplatePreview
+      item={activeFeaturedPreviewItem}
+      index={featuredPreview.index}
+      total={featuredPreview.total}
+      hasPrevious={featuredPreview.index > 0}
+      hasNext={featuredPreview.index < featuredPreview.items.length - 1 || featuredPreview.hasNextPage}
+      loadingNext={featuredPreview.loadingNext}
+      onClose={closeFeaturedPreview}
+      onNavigate={navigateFeaturedPreview}
+      onPrimaryAction={() => {
+        trackMarketplaceEvent(
+          'Code Component Event',
+          {
+            ...getSafeAnalyticsOverrides(),
+            component: 'TemplateGrid',
+            scope: 'featured_preview_primary_action_clicked',
+            template_slug: activeFeaturedPreviewItem.template_slug,
+            direct_purchase: Boolean(activeFeaturedPreviewItem.purchase_url),
+          },
+          enableAnalytics,
+        );
+      }}
+      onOpenSite={() => {
+        trackMarketplaceEvent(
+          'Code Component Event',
+          {
+            ...getSafeAnalyticsOverrides(),
+            component: 'TemplateGrid',
+            scope: 'featured_preview_site_opened',
+            template_slug: activeFeaturedPreviewItem.template_slug,
+          },
+          enableAnalytics,
+        );
+      }}
+    />
+  ) : null;
+
+  const withFeaturedPreview = (content: React.ReactNode) => (
+    <>
+      {content}
+      {featuredPreviewOverlay}
+    </>
+  );
+
   // ── Render ─────────────────────────────────────────────────────────────────
 
   if (loading && items.length === 0) {
-    return (
+    return withFeaturedPreview(
       <div style={S.root}>
         <style dangerouslySetInnerHTML={{ __html: GRID_STYLES }} />
         <div className="tmgrid-grid">
@@ -1740,12 +2022,12 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
             <SkeletonCard key={i} index={i} />
           ))}
         </div>
-      </div>
+      </div>,
     );
   }
 
   if (error && items.length === 0) {
-    return (
+    return withFeaturedPreview(
       <div style={S.root}>
         <div style={S.errorBox}>
           <p>Unable to load templates. Please try refreshing the page.</p>
@@ -1764,21 +2046,21 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
             Retry
           </button>
         </div>
-      </div>
+      </div>,
     );
   }
 
   // When no component empty state is enabled, let the native
   // [fs-cmsfilter-element="empty"] element handle zero-result rendering.
   if (items.length === 0) {
-    if (!rendersComponentEmptyState) return null;
+    if (!rendersComponentEmptyState) return withFeaturedPreview(null);
     const query = filters.q.trim();
     const resolvedEmptyTitle = query ? `No templates found for "${query}"` : emptyTitle;
     const resolvedEmptyDescription = query
       ? 'Try a shorter search term, remove filters, or start from these recent templates.'
       : emptyDescription;
 
-    return (
+    return withFeaturedPreview(
       <div style={S.root}>
         <style dangerouslySetInnerHTML={{ __html: GRID_STYLES }} />
         <div style={S.emptyRecovery} role="status">
@@ -1807,13 +2089,13 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
             </div>
           </div>
         )}
-      </div>
+      </div>,
     );
   }
 
   const isRefreshing = loading && items.length > 0;
 
-  return (
+  return withFeaturedPreview(
     <div style={S.root} aria-busy={isRefreshing ? true : undefined}>
       <style dangerouslySetInnerHTML={{ __html: GRID_STYLES }} />
       {totalItems !== null && (
@@ -1853,7 +2135,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
           All {totalItems?.toLocaleString()} templates loaded
         </div>
       )}
-    </div>
+    </div>,
   );
 };
 
