@@ -24,6 +24,7 @@ import {
 import { getCachedPublishedValidation } from '../../../../lib/server/published-validation-cache';
 import { runValidatorAppSubmissionPreflight } from '../../../../lib/intake/validator-app';
 import { validateTemplateNameSyntax } from '../../../../lib/intake/template-name';
+import { waitForTemplateSubmissionReceipt } from '../../../../lib/intake/submission-receipt';
 import {
   checkTemplateNameAvailability,
   getTemplateNameAvailabilityFailureMessage
@@ -458,6 +459,7 @@ export async function POST(request: Request) {
       { submissionId }
     );
 
+    const submittedAfter = new Date().toISOString();
     const webhookResponse = await postMarketplaceWebhook(envelope);
     if (!webhookResponse.ok) {
       return jsonNoStore(
@@ -466,12 +468,56 @@ export async function POST(request: Request) {
       );
     }
 
+    const handoff = await waitForTemplateSubmissionReceipt(
+      (request) => airtable.findTemplateSubmissionReceipt(request),
+      {
+        creatorEmail,
+        templateName,
+        submittedAfter
+      }
+    );
+
+    if (handoff.state === 'processing') {
+      return jsonNoStore(
+        {
+          asset: {
+            id: submissionId,
+            name: templateName
+          },
+          submissionId,
+          handoffState: 'processing',
+          receipt: {
+            submissionId,
+            state: handoff.state,
+            reason: handoff.reason
+          },
+          warning:
+            'Your submission was received and its Asset record is still processing. Do not resubmit; support can trace it with this receipt.',
+          publishedValidation: {
+            normalizedUrl: publishedUrlResult.normalizedUrl,
+            gsapDetected: publishedUrlResult.gsapDetected,
+            siteResults: publishedUrlResult.siteResults
+          }
+        },
+        { status: 202 }
+      );
+    }
+
     return jsonNoStore({
       asset: {
-        id: submissionId,
+        id: handoff.receipt.assetId,
         name: templateName
       },
       submissionId,
+      versionId: handoff.receipt.versionId,
+      handoffState: 'confirmed',
+      receipt: {
+        submissionId,
+        state: handoff.state,
+        assetId: handoff.receipt.assetId,
+        versionId: handoff.receipt.versionId,
+        reviewStatus: handoff.receipt.reviewStatus
+      },
       publishedValidation: {
         normalizedUrl: publishedUrlResult.normalizedUrl,
         gsapDetected: publishedUrlResult.gsapDetected,

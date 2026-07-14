@@ -451,6 +451,8 @@ type TemplateFormState = {
 
 type SubmittedTemplateState = {
   name: string;
+  handoffState: 'confirmed' | 'processing';
+  submissionId?: string;
   warning?: string;
 };
 
@@ -1420,18 +1422,30 @@ function TemplateSubmissionSuccessPanel({
     <div className="submission-form submission-success-panel" aria-live="polite">
       <div>
         <div className="submission-success-kicker">Submission received</div>
-        <h3 className="submission-success-title">Template submitted for review</h3>
+        <h3 className="submission-success-title">
+          {submission.handoffState === 'confirmed'
+            ? 'Template submitted for review'
+            : 'Template submission is processing'}
+        </h3>
         <p className="submission-success-copy">
-          Reviewers will process this submission next. The Asset Dashboard gives creators a place to
-          review assets, track review activity, run validation checks, and see Marketplace Insights
-          when available.
+          {submission.handoffState === 'confirmed'
+            ? 'Reviewers will process this submission next. The Asset Dashboard gives creators a place to review assets, track review activity, run validation checks, and see Marketplace Insights when available.'
+            : 'We received your submission, but the Asset and review-version handoff is still processing. Do not submit it again; keep the receipt below if support needs to trace it.'}
         </p>
       </div>
 
-      <div className="submission-status submission-status-success">
-        {submission.name
-          ? `${submission.name} is now in the review queue.`
-          : 'Your template is now in the review queue.'}
+      <div
+        className={`submission-status ${
+          submission.handoffState === 'confirmed'
+            ? 'submission-status-success'
+            : 'submission-status-warning'
+        }`}
+      >
+        {submission.handoffState === 'confirmed'
+          ? submission.name
+            ? `${submission.name} is now in the review queue.`
+            : 'Your template is now in the review queue.'
+          : `Processing receipt: ${submission.submissionId || 'available from support'}`}
       </div>
 
       {submission.warning ? (
@@ -1495,11 +1509,13 @@ function TemplateSubmissionSuccessPanel({
         </div>
       </div>
 
-      <div className="submission-actions">
-        <button className="button-sp cc-white" type="button" onClick={onSubmitAnother}>
-          Submit another template
-        </button>
-      </div>
+      {submission.handoffState === 'confirmed' ? (
+        <div className="submission-actions">
+          <button className="button-sp cc-white" type="button" onClick={onSubmitAnother}>
+            Submit another template
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -2759,6 +2775,8 @@ export function TemplateIntake() {
           id?: string;
           name?: string;
         };
+        submissionId?: string;
+        handoffState?: 'confirmed' | 'processing';
         error?: string;
         validationIssues?: string[];
         validatorPreflight?: ValidatorAppPreflightPayload;
@@ -2785,14 +2803,20 @@ export function TemplateIntake() {
         return;
       }
 
+      const handoffState = data.handoffState || 'confirmed';
       setTemplateStatus({
-        tone: 'success',
-        message: data.warning
-          ? `Template submitted. ${data.warning}`
-          : 'Template submitted for review.'
+        tone: handoffState === 'confirmed' ? 'success' : 'info',
+        message:
+          handoffState === 'confirmed'
+            ? data.warning
+              ? `Template submitted. ${data.warning}`
+              : 'Template submitted for review.'
+            : 'Submission received and processing. Do not resubmit; keep the receipt shown below.'
       });
       setSubmittedTemplate({
         name: data.asset.name || template.templateName,
+        handoffState,
+        submissionId: data.submissionId,
         warning: data.warning
       });
       setAutofillManaged({});
