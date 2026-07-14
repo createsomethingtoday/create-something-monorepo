@@ -1,0 +1,12 @@
+{
+  "name": "CREATE SOMETHING Canon Components",
+  "components": "./src/components/@(marketplace|sections|cards|chat|forms|navigation|layout|form|typography|surfaces|search|grid|filter|feedback|data|core)/**/*.webflow.@(js|jsx|mjs|ts|tsx)",
+  "library": {
+    "components": [
+      "src/components/@(marketplace|sections|cards|chat|forms|navigation|layout|form|typography|surfaces|search|grid|filter|feedback|data|core)/**/*.webflow.@(js|jsx|mjs|ts|tsx)"
+    ],
+    "name": "CREATE SOMETHING Canon Components",
+    "description": "Canon-first Webflow component library for CREATE SOMETHING — marketplace-scoped build. Includes foundational UI, layout, section, and Template Marketplace components. Excludes client-specific (Cato) and internal operator control-plane/business components.",
+    "id": "create-something-canon-components"
+  }
+}

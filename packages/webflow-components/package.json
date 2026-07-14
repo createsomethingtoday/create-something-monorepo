@@ -8,11 +8,13 @@
   "scripts": {
     "bundle": "npx webflow library bundle --public-path / --no-input",
     "bundle:cato": "npx webflow library bundle --manifest webflow.cato.json --public-path / --no-input",
-    "share": "npx webflow library share",
-    "share:cato": "WEBFLOW_WORKSPACE_API_TOKEN= WEBFLOW_SKIP_UPDATE_CHECKS=true npx webflow library share --manifest webflow.cato.json",
+    "share:preflight": "node scripts/share-preflight.mjs",
+    "share": "pnpm run share:preflight -- --manifest webflow.json && npx webflow library share",
+    "share:cato": "pnpm run share:preflight -- --manifest webflow.cato.json && WEBFLOW_WORKSPACE_API_TOKEN= WEBFLOW_SKIP_UPDATE_CHECKS=true npx webflow library share --manifest webflow.cato.json",
+    "share:marketplace": "test -n \"$WEBFLOW_WORKSPACE_KEY\" || { echo 'ERROR: WEBFLOW_WORKSPACE_KEY not set. Run under: infisical run --path=/webflow/template-marketplace --env=prod -- ...'; exit 1; }; pnpm run share:preflight -- --manifest webflow.marketplace.json --forbid cato,control,business && WEBFLOW_WORKSPACE_API_TOKEN=\"$WEBFLOW_WORKSPACE_KEY\" WEBFLOW_SKIP_UPDATE_CHECKS=true npx webflow library share --no-input --manifest webflow.marketplace.json",
     "check": "pnpm run typecheck && pnpm run test",
     "lint": "pnpm run typecheck",
-    "test": "node --import tsx --test test/*.test.tsx",
+    "test": "pnpm exec tsx --test test/*.test.tsx test/*.test.mjs",
     "typecheck": "tsc --noEmit",
     "verify": "pnpm run check && pnpm run bundle"
   },
@@ -27,6 +29,7 @@
     "@types/react-dom": "^18.2.0",
     "@webflow/webflow-cli": "^1.0.0",
     "@webflow/data-types": "^1.0.0",
+    "fast-glob": "^3.3.3",
     "typescript": "^5.3.0"
   },
   "peerDependencies": {
