@@ -89,6 +89,7 @@ const GRID_ITEM_SELECT_COLUMNS = [
   'd.listing_url',
   'd.preview_url',
   'd.website_url',
+  'd.mrp_id',
   'd.creator_name',
   'd.creator_slug',
   'd.creator_profile_url',
@@ -103,6 +104,7 @@ const GRID_ITEM_SELECT_COLUMNS = [
   'd.template_type',
   'd.is_free',
   'd.is_featured',
+  'd.reviewer_pick_reason',
   'd.popularity_score',
   'd.unique_viewers',
   'd.cumulative_purchases',
@@ -634,6 +636,9 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
       url: toTemplateUrl(row),
       preview_url: row.preview_url,
       website_url: row.website_url,
+      purchase_url: row.mrp_id
+        ? `https://webflow.com/dashboard/marketplace-checkout/redirect?rtype=Template&rid=${row.mrp_id}&unauthSignup=true`
+        : null,
       creator_name: row.creator_name,
       creator_slug: publicCreatorSlug(row.creator_slug),
       creator_profile_url: publicCreatorProfileUrl(row.creator_profile_url, row.creator_slug),
@@ -644,6 +649,7 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
       price: row.price,
       is_free: typeof row.price === 'number' ? row.price === 0 : row.is_free === 1,
       is_featured: row.is_featured === 1,
+      reviewer_pick_reason: row.reviewer_pick_reason,
       template_type: row.template_type,
       popularity_score: row.popularity_score,
       unique_viewers: row.unique_viewers,

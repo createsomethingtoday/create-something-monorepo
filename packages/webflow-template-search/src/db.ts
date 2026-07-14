@@ -103,6 +103,7 @@ const UPSERT_TEMPLATE_SQL = `
     listing_url,
     preview_url,
     website_url,
+    mrp_id,
     creator_name,
     creator_record_id,
     creator_slug,
@@ -127,6 +128,7 @@ const UPSERT_TEMPLATE_SQL = `
     is_free,
     is_featured,
     is_landing_page,
+    reviewer_pick_reason,
     popularity_score,
     unique_viewers,
     cumulative_purchases,
@@ -140,7 +142,7 @@ const UPSERT_TEMPLATE_SQL = `
     styles_text,
     tags_text
   ) VALUES (
-    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
   )
   ON CONFLICT(id) DO UPDATE SET
     template_slug = excluded.template_slug,
@@ -148,6 +150,7 @@ const UPSERT_TEMPLATE_SQL = `
     listing_url = excluded.listing_url,
     preview_url = excluded.preview_url,
     website_url = excluded.website_url,
+    mrp_id = excluded.mrp_id,
     creator_name = excluded.creator_name,
     creator_record_id = excluded.creator_record_id,
     creator_slug = excluded.creator_slug,
@@ -214,6 +217,7 @@ const UPSERT_TEMPLATE_SQL = `
     is_free = excluded.is_free,
     is_featured = excluded.is_featured,
     is_landing_page = excluded.is_landing_page,
+    reviewer_pick_reason = template_documents.reviewer_pick_reason,
     popularity_score = excluded.popularity_score,
     unique_viewers = excluded.unique_viewers,
     cumulative_purchases = excluded.cumulative_purchases,
@@ -515,6 +519,7 @@ export async function upsertTemplateDocuments(db: D1Database, documents: Templat
         document.listingUrl,
         document.previewUrl,
         document.websiteUrl,
+        document.mrpId,
         document.creatorName,
         document.creatorRecordId,
         document.creatorSlug,
@@ -539,6 +544,7 @@ export async function upsertTemplateDocuments(db: D1Database, documents: Templat
         document.isFree ? 1 : 0,
         document.isFeatured ? 1 : 0,
         document.isLandingPage ? 1 : 0,
+        null,
         document.popularityScore,
         document.uniqueViewers,
         document.cumulativePurchases,
@@ -725,6 +731,7 @@ export async function updateTemplateImagesFromWebflow(
             `UPDATE template_documents
              SET template_slug = COALESCE(?, template_slug),
                  listing_url = COALESCE(?, listing_url),
+                 reviewer_pick_reason = ?,
                  thumbnail_image_url = ?,
                  thumbnail_image_secondary_url = ?,
                  carousel_image_urls_json = ?,
@@ -733,6 +740,7 @@ export async function updateTemplateImagesFromWebflow(
                AND (
                  (? IS NOT NULL AND NOT (template_slug IS ?))
                  OR (? IS NOT NULL AND NOT (listing_url IS ?))
+                 OR NOT (reviewer_pick_reason IS ?)
                  OR NOT (thumbnail_image_url IS ?)
                  OR NOT (thumbnail_image_secondary_url IS ?)
                  OR NOT (carousel_image_urls_json IS ?)
@@ -741,6 +749,7 @@ export async function updateTemplateImagesFromWebflow(
           .bind(
             record.templateSlug,
             record.listingUrl,
+            record.reviewerPickReason,
             record.thumbnailImageUrl,
             record.thumbnailImageSecondaryUrl,
             carouselImageUrlsJson,
@@ -750,6 +759,7 @@ export async function updateTemplateImagesFromWebflow(
             record.templateSlug,
             record.listingUrl,
             record.listingUrl,
+            record.reviewerPickReason,
             record.thumbnailImageUrl,
             record.thumbnailImageSecondaryUrl,
             carouselImageUrlsJson,
@@ -766,6 +776,7 @@ export async function updateTemplateImagesFromWebflow(
             `UPDATE template_documents
              SET template_slug = COALESCE(?, template_slug),
                  listing_url = COALESCE(?, listing_url),
+                 reviewer_pick_reason = ?,
                  thumbnail_image_url = ?,
                  thumbnail_image_secondary_url = ?,
                  carousel_image_urls_json = ?,
@@ -784,6 +795,7 @@ export async function updateTemplateImagesFromWebflow(
                AND (
                  (? IS NOT NULL AND NOT (template_slug IS ?))
                  OR (? IS NOT NULL AND NOT (listing_url IS ?))
+                 OR NOT (reviewer_pick_reason IS ?)
                  OR NOT (thumbnail_image_url IS ?)
                  OR NOT (thumbnail_image_secondary_url IS ?)
                  OR NOT (carousel_image_urls_json IS ?)
@@ -792,6 +804,7 @@ export async function updateTemplateImagesFromWebflow(
           .bind(
             record.templateSlug,
             record.listingUrl,
+            record.reviewerPickReason,
             record.thumbnailImageUrl,
             record.thumbnailImageSecondaryUrl,
             carouselImageUrlsJson,
@@ -805,6 +818,7 @@ export async function updateTemplateImagesFromWebflow(
             record.templateSlug,
             record.listingUrl,
             record.listingUrl,
+            record.reviewerPickReason,
             record.thumbnailImageUrl,
             record.thumbnailImageSecondaryUrl,
             carouselImageUrlsJson,

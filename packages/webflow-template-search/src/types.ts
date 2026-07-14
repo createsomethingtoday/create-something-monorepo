@@ -131,6 +131,7 @@ export interface TemplateDocumentInput {
   listingUrl: string | null;
   previewUrl: string | null;
   websiteUrl: string | null;
+  mrpId: string | null;
   creatorName: string | null;
   creatorRecordId: string | null;
   creatorSlug: string | null;
@@ -197,6 +198,7 @@ export interface SearchItem {
   url: string | null;
   preview_url: string | null;
   website_url: string | null;
+  purchase_url: string | null;
   creator_name: string | null;
   creator_slug: string | null;
   creator_profile_url: string | null;
@@ -207,6 +209,7 @@ export interface SearchItem {
   price: number | null;
   is_free: boolean;
   is_featured: boolean;
+  reviewer_pick_reason: string | null;
   template_type: string | null;
   popularity_score: number | null;
   unique_viewers: number | null;
@@ -324,6 +327,7 @@ export interface DocumentRow {
   listing_url: string | null;
   preview_url: string | null;
   website_url: string | null;
+  mrp_id: string | null;
   creator_name: string | null;
   creator_slug: string | null;
   creator_profile_url: string | null;
@@ -347,6 +351,7 @@ export interface DocumentRow {
   is_free: number;
   is_featured: number;
   is_landing_page: number;
+  reviewer_pick_reason: string | null;
   popularity_score: number | null;
   unique_viewers: number | null;
   cumulative_purchases: number | null;
