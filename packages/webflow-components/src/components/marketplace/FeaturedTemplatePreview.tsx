@@ -29,6 +29,10 @@ export interface FeaturedTemplatePreviewProps {
   onOpenSite?: () => void;
 }
 
+export function shouldResetFeaturedPreviewLoad(previousItemId: string, nextItemId: string): boolean {
+  return previousItemId !== nextItemId;
+}
+
 const FEATURED_TEMPLATE_PREVIEW_STYLES = `
 .tmfeatured-preview,
 .tmfeatured-preview * { box-sizing: border-box; }
@@ -155,6 +159,7 @@ export const FeaturedTemplatePreview: React.FC<FeaturedTemplatePreviewProps> = (
   const dialogRef = useRef<HTMLElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
+  const loadedItemIdRef = useRef(item.id);
   const interactionRef = useRef({ hasPrevious, hasNext, onClose, onNavigate });
   interactionRef.current = { hasPrevious, hasNext, onClose, onNavigate };
   const actionUrl = item.purchase_url || item.url;
@@ -166,8 +171,12 @@ export const FeaturedTemplatePreview: React.FC<FeaturedTemplatePreviewProps> = (
   const reviewerFeedback = item.reviewer_pick_reason?.trim();
 
   useEffect(() => {
-    setLoaded(false);
-  }, [device, item.id]);
+    const previousItemId = loadedItemIdRef.current;
+    loadedItemIdRef.current = item.id;
+    if (shouldResetFeaturedPreviewLoad(previousItemId, item.id)) setLoaded(false);
+  }, [item.id]);
+
+  const previewLoaded = loaded && loadedItemIdRef.current === item.id;
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
@@ -284,7 +293,7 @@ export const FeaturedTemplatePreview: React.FC<FeaturedTemplatePreviewProps> = (
             <div className="tmfeatured-frame-wrap">
               {item.website_url ? (
                 <>
-                  <div className="tmfeatured-loading" aria-live="polite" style={{ opacity: loaded ? 0 : 1 }}>
+                  <div className="tmfeatured-loading" aria-live="polite" style={{ opacity: previewLoaded ? 0 : 1 }}>
                     Loading live preview
                   </div>
                   <iframe
@@ -294,7 +303,7 @@ export const FeaturedTemplatePreview: React.FC<FeaturedTemplatePreviewProps> = (
                     title={`${item.name} live template preview`}
                     loading="eager"
                     onLoad={() => setLoaded(true)}
-                    style={{ opacity: loaded ? 1 : 0 }}
+                    style={{ opacity: previewLoaded ? 1 : 0 }}
                   />
                 </>
               ) : (

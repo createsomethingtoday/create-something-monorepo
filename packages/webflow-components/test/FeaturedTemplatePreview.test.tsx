@@ -4,6 +4,7 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
   FeaturedTemplatePreview,
+  shouldResetFeaturedPreviewLoad,
   type FeaturedTemplatePreviewItem,
 } from '../src/components/marketplace/FeaturedTemplatePreview';
 
@@ -58,6 +59,11 @@ test('offers device modes and the direct marketplace action', () => {
   assert.match(html, />Mobile</);
   assert.match(html, />Buy — \$79</);
   assert.match(html, /marketplace-checkout\/redirect/);
+});
+
+test('keeps the loaded iframe visible while resizing the same template across devices', () => {
+  assert.equal(shouldResetFeaturedPreviewLoad('template-1', 'template-1'), false);
+  assert.equal(shouldResetFeaturedPreviewLoad('template-1', 'template-2'), true);
 });
 
 test('uses the detail fallback and free action label when direct checkout is unavailable', () => {
