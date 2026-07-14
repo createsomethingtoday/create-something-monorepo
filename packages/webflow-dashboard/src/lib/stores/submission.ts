@@ -79,6 +79,8 @@ export interface SubmissionState {
 interface ExternalApiResponse {
 	assetsSubmitted30: number;
 	hasError: boolean;
+	useLocalCalculation?: boolean;
+	fallbackReason?: string;
 	message?: string;
 	publishedTemplates?: number;
 	submittedTemplates?: number;
@@ -241,6 +243,8 @@ interface FetchResult {
 	submittedTemplates: number;
 	isWhitelisted: boolean;
 	assetsSubmitted30: number;
+	useLocalCalculation?: boolean;
+	fallbackReason?: string;
 	errorMessage?: string;
 }
 
@@ -282,7 +286,9 @@ async function fetchExternalStatus(
 			publishedTemplates: data.publishedTemplates || 0,
 			submittedTemplates: data.submittedTemplates || 0,
 			isWhitelisted: data.isWhitelisted || false,
-			assetsSubmitted30: data.assetsSubmitted30 || 0
+			assetsSubmitted30: data.assetsSubmitted30 || 0,
+			useLocalCalculation: data.useLocalCalculation === true,
+			fallbackReason: data.fallbackReason
 		};
 	} catch (error) {
 		const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -335,6 +341,34 @@ async function refreshSubmissionStatus(userEmail?: string): Promise<void> {
 	// If we have a user email, try external API
 	if (userEmail && !isDevMode) {
 		const externalData = await fetchExternalStatus(userEmail);
+
+		if (externalData?.useLocalCalculation) {
+			submissionState.set({
+				remainingSubmissions: localData.remainingSubmissions,
+				hasError: false,
+				errorMessage: '',
+				message:
+					externalData.message ||
+					'Submission availability is calculated from your dashboard assets.',
+				canSubmitNow: !localData.isAtLimit,
+				isAtLimit: localData.isAtLimit,
+				publishedTemplates: localData.publishedCount,
+				submittedTemplates: localData.totalSubmitted,
+				isWhitelisted: false,
+				assetsSubmitted30: localData.submissions.length,
+				isLoading: false,
+				submissions: localData.submissions,
+				nextExpiryDate: localData.nextExpiryDate,
+				timeUntilNextSlot: localData.timeUntilNextSlot,
+				isDevMode: false,
+				retryCount: 0,
+				showWarning: localData.showWarning,
+				warningLevel: localData.warningLevel,
+				lastRefresh: new Date(),
+				dataSource: 'local'
+			});
+			return;
+		}
 
 		if (externalData && !externalData.errorMessage) {
 			// Calculate warning level based on external data

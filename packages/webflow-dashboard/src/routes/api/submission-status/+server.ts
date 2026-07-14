@@ -23,8 +23,9 @@ import { json, type RequestHandler } from '@sveltejs/kit';
  */
 
 interface ExternalApiResponse {
-	assetsSubmitted30: number;
+	assetsSubmitted30?: number;
 	hasError: boolean;
+	userExists?: boolean;
 	message?: string;
 	publishedTemplates?: number;
 	submittedTemplates?: number;
@@ -99,6 +100,19 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 
 			// Parse and return response
 			const data: ExternalApiResponse = await response.json();
+
+			// The legacy service returns a successful HTTP response without a count
+			// when a creator has no row in that service. This is an expected miss,
+			// not a dashboard outage; the client can calculate from its Airtable assets.
+			if (data.userExists === false && data.hasError && typeof data.assetsSubmitted30 !== 'number') {
+				return json({
+					assetsSubmitted30: 0,
+					hasError: false,
+					message: 'Submission availability is calculated from your dashboard assets.',
+					useLocalCalculation: true,
+					fallbackReason: 'legacy_user_not_found'
+				});
+			}
 
 			// Validate response structure
 			if (typeof data.assetsSubmitted30 !== 'number') {

@@ -20,22 +20,41 @@ export interface CreatorEligibilityResult {
   remainingSubmissions?: number;
 }
 
-function isActiveReviewAsset(asset: Asset): boolean {
-  const status = (asset.status || '').toLowerCase();
-  if (!status) return false;
+function normalizeStatus(value: unknown): string {
+  if (Array.isArray(value)) {
+    return value.map(normalizeStatus).filter(Boolean).join(' ');
+  }
 
-  if (status.includes('published') || status.includes('rejected') || status.includes('delisted')) {
+  return typeof value === 'string' ? value.trim().toLowerCase() : '';
+}
+
+export function isActiveReviewAsset(asset: Asset): boolean {
+  const marketplaceStatus = normalizeStatus(asset.status);
+
+  if (
+    marketplaceStatus.includes('published') ||
+    marketplaceStatus.includes('rejected') ||
+    marketplaceStatus.includes('delisted')
+  ) {
     return false;
   }
 
-  return /ready|review|submitted|changes requested|response/i.test(status);
+  const reviewStatus = normalizeStatus(asset.latestReviewStatus);
+  return /ready|review|submitted|changes requested|response/i.test(
+    `${marketplaceStatus} ${reviewStatus}`
+  );
 }
 
-function localEligibilityMessage(remainingSubmissions: number, activeReviewCount: number, publishedCount: number) {
+function localEligibilityMessage(
+  remainingSubmissions: number,
+  activeReviewCount: number,
+  publishedCount: number
+) {
   if (publishedCount < 5 && activeReviewCount > 0) {
     return {
       allowed: false,
-      message: 'Creators with fewer than 5 published templates can only have 1 active review at a time.'
+      message:
+        'Creators with fewer than 5 published templates can only have 1 active review at a time.'
     };
   }
 
@@ -146,7 +165,11 @@ export async function evaluateCreatorEligibility(email: string): Promise<Creator
       };
     }
 
-    const fallback = localEligibilityMessage(remainingSubmissions, activeReviewCount, publishedCount);
+    const fallback = localEligibilityMessage(
+      remainingSubmissions,
+      activeReviewCount,
+      publishedCount
+    );
     const nextWindowMessage =
       !fallback.allowed && localSubmission.timeUntilNextSlot
         ? ` Next slot opens ${formatTimeUntil(localSubmission.timeUntilNextSlot)}.`
@@ -180,7 +203,11 @@ export async function evaluateCreatorEligibility(email: string): Promise<Creator
       };
     }
 
-    const fallback = localEligibilityMessage(remainingSubmissions, activeReviewCount, publishedCount);
+    const fallback = localEligibilityMessage(
+      remainingSubmissions,
+      activeReviewCount,
+      publishedCount
+    );
     const nextWindowMessage =
       !fallback.allowed && localSubmission.timeUntilNextSlot
         ? ` Next slot opens ${formatTimeUntil(localSubmission.timeUntilNextSlot)}.`

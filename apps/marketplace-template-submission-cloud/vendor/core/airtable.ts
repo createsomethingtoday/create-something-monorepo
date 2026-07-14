@@ -55,6 +55,15 @@ const CREATOR_EMAIL_FIELDS_PRIORITY = [
   'CREATOR_EMAIL'
 ] as const;
 
+// Airtable rejects the entire formula when it references a field that is not
+// present in the current base. Keep legacy aliases available for JS-side record
+// parsing, but only use confirmed fields in server-side formulas.
+const CREATOR_EMAIL_FORMULA_FIELDS = [
+  '🎨📧 Creator Email',
+  '🎨📧 Creator WF Account Email',
+  '📧Emails (from 🎨Creator)'
+] as const;
+
 const CATEGORY_FIELDS_PRIORITY = [
   '🏷️Category',
   '🏷️Categories',
@@ -170,6 +179,20 @@ export interface TemplateSubmissionRecord {
   warning?: string;
 }
 
+export interface TemplateSubmissionReceiptLookupInput {
+  creatorEmail: string;
+  templateName: string;
+  submittedAfter: string;
+}
+
+export interface TemplateSubmissionReceiptCandidate {
+  assetId?: string;
+  versionId?: string;
+  assetType?: string;
+  creatorMatched: boolean;
+  reviewStatus?: string;
+}
+
 export interface ApiKey {
   id: string;
   name: string;
@@ -196,8 +219,7 @@ function parseTimestampCandidate(value: unknown): Date | null {
   }
 
   if (typeof value === 'number' && Number.isFinite(value)) {
-    const ms =
-      value > 1_000_000_000_000 ? value : value > 1_000_000_000 ? value * 1000 : null;
+    const ms = value > 1_000_000_000_000 ? value : value > 1_000_000_000 ? value * 1000 : null;
     if (!ms) return null;
 
     const parsed = new Date(ms);
@@ -205,6 +227,16 @@ function parseTimestampCandidate(value: unknown): Date | null {
   }
 
   return null;
+}
+
+function firstString(value: unknown): string | undefined {
+  if (Array.isArray(value)) {
+    return value.map(firstString).find((item): item is string => Boolean(item));
+  }
+
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  return trimmed || undefined;
 }
 
 function isLikelyMarketplaceTimestampField(fieldName: string): boolean {
@@ -251,8 +283,8 @@ function extractMarketplaceFreshness(
     }
 
     const createdAt = parseTimestampCandidate(
-      (record as Airtable.Record<Airtable.FieldSet> & { _rawJson?: { createdTime?: string } })._rawJson
-        ?.createdTime
+      (record as Airtable.Record<Airtable.FieldSet> & { _rawJson?: { createdTime?: string } })
+        ._rawJson?.createdTime
     );
 
     if (createdAt && isReasonableRecentTimestamp(createdAt, 21)) {
@@ -294,16 +326,15 @@ export function escapeAirtableString(input: string): string {
 export function buildCreatorEmailMatchFormula(email: string): string {
   const normalizedEmail = email.trim().toLowerCase();
   const escapedEmail = escapeAirtableString(normalizedEmail);
-  const clauses = CREATOR_EMAIL_FIELDS_PRIORITY.map(
-    (field) =>
-      `FIND('${escapedEmail}', IFERROR(LOWER(ARRAYJOIN({${field}}, ",")), IFERROR(LOWER({${field}}), ""))) > 0`
+  const clauses = CREATOR_EMAIL_FORMULA_FIELDS.map(
+    (field) => `FIND('${escapedEmail}', LOWER(ARRAYJOIN({${field}}, ","))) > 0`
   );
 
   return `OR(${clauses.join(', ')})`;
 }
 
 export function buildAssetListFormula(email: string): string {
-  return `AND(${buildCreatorEmailMatchFormula(email)}, {🆎Type} = 'Template🏗️')`;
+  return buildCreatorEmailMatchFormula(email);
 }
 
 export function validateEmail(email: string): string {
@@ -418,7 +449,10 @@ function getCandidateFieldNames(
       continue;
     }
 
-    if (normalized.includes('categoryperformance') || normalized.includes('templatesinsubcategory')) {
+    if (
+      normalized.includes('categoryperformance') ||
+      normalized.includes('templatesinsubcategory')
+    ) {
       continue;
     }
 
@@ -507,9 +541,7 @@ function buildSubmissionSummary(metadata: Record<string, unknown> | undefined): 
       if (value === undefined || value === null) return null;
 
       if (Array.isArray(value)) {
-        const cleaned = value
-          .map((item) => String(item).trim())
-          .filter(Boolean);
+        const cleaned = value.map((item) => String(item).trim()).filter(Boolean);
         if (cleaned.length === 0) return null;
         return `${key}: ${cleaned.join(', ')}`;
       }
@@ -529,8 +561,9 @@ function buildSubmissionSummary(metadata: Record<string, unknown> | undefined): 
 
 function mapAssetRecord(record: Airtable.Record<Airtable.FieldSet>): Asset {
   const carouselImages =
-    (record.fields['🖼️Carousel Images'] as { url: string }[] | undefined)?.map((image) => image.url) ||
-    [];
+    (record.fields['🖼️Carousel Images'] as { url: string }[] | undefined)?.map(
+      (image) => image.url
+    ) || [];
   const rawStatus = (record.fields['🚀Marketplace Status'] as string) || 'Draft';
   const cleanedStatus = cleanMarketplaceStatus(rawStatus) as Asset['status'];
   const category = extractPrimaryCategory(record.fields);
@@ -546,7 +579,7 @@ function mapAssetRecord(record: Airtable.Record<Airtable.FieldSet>): Asset {
     description: (record.fields['📝Description'] as string) || '',
     descriptionShort: (record.fields['ℹ️Description (Short)'] as string) || '',
     descriptionLongHtml: (record.fields['ℹ️Description (Long).html'] as string) || '',
-    type: ((record.fields['🆎Type'] as Asset['type']) || 'Template'),
+    type: (record.fields['🆎Type'] as Asset['type']) || 'Template',
     category,
     subcategory,
     status: cleanedStatus || 'Draft',
@@ -565,9 +598,11 @@ function mapAssetRecord(record: Airtable.Record<Airtable.FieldSet>): Asset {
     uniqueViewers: record.fields['📋 Unique Viewers'] as number,
     cumulativePurchases: record.fields['📋 Cumulative Purchases'] as number,
     cumulativeRevenue: record.fields['📋 Cumulative Revenue'] as number,
-    latestReviewStatus: record.fields['📝Latest Review Status'] as string,
+    latestReviewStatus: firstString(record.fields['📝Latest Review Status']),
     latestReviewDate: record.fields['📝Latest Review Date'] as string,
-    latestReviewFeedback: (record.fields['🖌️📝Latest Review Feedback'] as string[] | undefined)?.[0],
+    latestReviewFeedback: (
+      record.fields['🖌️📝Latest Review Feedback'] as string[] | undefined
+    )?.[0],
     rejectionFeedback:
       (record.fields['🚩Rejection Feedback'] as string) ||
       (record.fields['🖌Rejection Feedback'] as string),
@@ -587,7 +622,10 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
   const base = new Airtable({ apiKey: env.AIRTABLE_API_KEY }).base(env.AIRTABLE_BASE_ID);
   type MutationFields = Record<string, unknown>;
 
-  async function updateRecords(tableId: string, records: Array<{ id: string; fields: MutationFields }>) {
+  async function updateRecords(
+    tableId: string,
+    records: Array<{ id: string; fields: MutationFields }>
+  ) {
     return (await (base(tableId) as any).update(records)) as Airtable.Record<Airtable.FieldSet>[];
   }
 
@@ -704,6 +742,59 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
       return records.map(mapAssetRecord);
     },
 
+    async findTemplateSubmissionReceipt(
+      input: TemplateSubmissionReceiptLookupInput
+    ): Promise<TemplateSubmissionReceiptCandidate | null> {
+      const escapedName = escapeAirtableString(input.templateName.trim());
+      const formula = `AND(${buildCreatorEmailMatchFormula(input.creatorEmail)}, LOWER({Name}) = LOWER('${escapedName}'))`;
+      const assetRecords = await base(TABLES.ASSETS)
+        .select({ filterByFormula: formula, maxRecords: 10 })
+        .firstPage();
+      const submittedAfterMs = Date.parse(input.submittedAfter);
+      const thresholdMs = Number.isFinite(submittedAfterMs) ? submittedAfterMs - 60_000 : 0;
+      const assetRecord = assetRecords
+        .filter((record) => {
+          const createdAt = parseTimestampCandidate(
+            (record as Airtable.Record<Airtable.FieldSet> & { _rawJson?: { createdTime?: string } })
+              ._rawJson?.createdTime
+          );
+          return !createdAt || createdAt.getTime() >= thresholdMs;
+        })
+        .sort((a, b) => {
+          const createdAtA = parseTimestampCandidate(
+            (a as Airtable.Record<Airtable.FieldSet> & { _rawJson?: { createdTime?: string } })
+              ._rawJson?.createdTime
+          );
+          const createdAtB = parseTimestampCandidate(
+            (b as Airtable.Record<Airtable.FieldSet> & { _rawJson?: { createdTime?: string } })
+              ._rawJson?.createdTime
+          );
+          return (createdAtB?.getTime() ?? 0) - (createdAtA?.getTime() ?? 0);
+        })[0];
+
+      if (!assetRecord) return null;
+
+      const escapedAssetId = escapeAirtableString(assetRecord.id);
+      const versionRecords = await base(TABLES.ASSET_VERSIONS)
+        .select({
+          filterByFormula: `{⚙️👛Asset Record ID} = '${escapedAssetId}'`,
+          maxRecords: 10,
+          sort: [{ field: '📅Submission Datetime', direction: 'desc' }]
+        })
+        .firstPage();
+      const versionRecord = versionRecords[0];
+
+      return {
+        assetId: assetRecord.id,
+        versionId: versionRecord?.id,
+        assetType:
+          firstString(assetRecord.fields['⚙️🆎Type (Text)']) ||
+          firstString(versionRecord?.fields['⚙️🆎Asset Type Record ID']),
+        creatorMatched: true,
+        reviewStatus: firstString(versionRecord?.fields['📝Review Status'])
+      };
+    },
+
     async getAsset(id: string): Promise<Asset | null> {
       try {
         const record = await base(TABLES.ASSETS).find(id);
@@ -718,7 +809,12 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
       data: Partial<
         Pick<
           Asset,
-          'name' | 'description' | 'descriptionShort' | 'descriptionLongHtml' | 'websiteUrl' | 'previewUrl'
+          | 'name'
+          | 'description'
+          | 'descriptionShort'
+          | 'descriptionLongHtml'
+          | 'websiteUrl'
+          | 'previewUrl'
         >
       >
     ): Promise<Asset | null> {
@@ -726,7 +822,8 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
 
       if (data.name !== undefined) fields['Name'] = data.name;
       if (data.description !== undefined) fields['📝Description'] = data.description;
-      if (data.descriptionShort !== undefined) fields['ℹ️Description (Short)'] = data.descriptionShort;
+      if (data.descriptionShort !== undefined)
+        fields['ℹ️Description (Short)'] = data.descriptionShort;
       if (data.descriptionLongHtml !== undefined) {
         fields['ℹ️Description (Long).html'] = data.descriptionLongHtml;
       }
@@ -766,7 +863,8 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
 
       if (data.name !== undefined) fields['Name'] = data.name;
       if (data.description !== undefined) fields['📝Description'] = data.description;
-      if (data.descriptionShort !== undefined) fields['ℹ️Description (Short)'] = data.descriptionShort;
+      if (data.descriptionShort !== undefined)
+        fields['ℹ️Description (Short)'] = data.descriptionShort;
       if (data.descriptionLongHtml !== undefined) {
         fields['ℹ️Description (Long).html'] = data.descriptionLongHtml;
       }
@@ -871,7 +969,12 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
         userEmailHash: string;
         emailFields: Record<
           string,
-          { present: boolean; type: 'array' | 'string' | 'other'; matched: boolean; length?: number }
+          {
+            present: boolean;
+            type: 'array' | 'string' | 'other';
+            matched: boolean;
+            length?: number;
+          }
         >;
         formulaMatched: boolean;
         dashboardLikeFormulaMatched: boolean;
@@ -907,12 +1010,19 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
         }
 
         if (Array.isArray(value)) {
-          const matched = value.some((item) => String(item).toLowerCase().includes(normalizedEmail));
+          const matched = value.some((item) =>
+            String(item).toLowerCase().includes(normalizedEmail)
+          );
           fieldDiagnostics[field] = { present: true, type: 'array', matched, length: value.length };
           if (matched) anyFieldMatched = true;
         } else if (typeof value === 'string') {
           const matched = value.toLowerCase().includes(normalizedEmail);
-          fieldDiagnostics[field] = { present: true, type: 'string', matched, length: value.length };
+          fieldDiagnostics[field] = {
+            present: true,
+            type: 'string',
+            matched,
+            length: value.length
+          };
           if (matched) anyFieldMatched = true;
         } else {
           fieldDiagnostics[field] = { present: true, type: 'other', matched: false };
@@ -1034,7 +1144,8 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
             ?.split(',')
             .map((value) => value.trim())
             .filter(Boolean),
-          avatarUrl: (record.fields['🖼️Avatar (Primary)'] as { url: string }[] | undefined)?.[0]?.url,
+          avatarUrl: (record.fields['🖼️Avatar (Primary)'] as { url: string }[] | undefined)?.[0]
+            ?.url,
           biography: record.fields['ℹ️Biography'] as string,
           legalName: record.fields['ℹ️Legal Name'] as string
         };
@@ -1066,12 +1177,14 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
         return {
           id: record.id,
           name: (record.fields['Name'] as string) || '',
-          email: ((record.fields['📧Emails'] as string | undefined) || '').split(',')[0]?.trim() || '',
+          email:
+            ((record.fields['📧Emails'] as string | undefined) || '').split(',')[0]?.trim() || '',
           emails: (record.fields['📧Emails'] as string | undefined)
             ?.split(',')
             .map((value) => value.trim())
             .filter(Boolean),
-          avatarUrl: (record.fields['🖼️Avatar (Primary)'] as { url: string }[] | undefined)?.[0]?.url,
+          avatarUrl: (record.fields['🖼️Avatar (Primary)'] as { url: string }[] | undefined)?.[0]
+            ?.url,
           biography: record.fields['ℹ️Biography'] as string,
           legalName: record.fields['ℹ️Legal Name'] as string
         };
@@ -1087,7 +1200,7 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
         '📧Email': data.email.trim().toLowerCase(),
         '📧WF Account Email': data.webflowEmail.trim().toLowerCase(),
         '📧Emails': emails.join(', '),
-        'ℹ️Biography': data.biography.trim(),
+        ℹ️Biography: data.biography.trim(),
         'ℹ️Legal Name': data.legalName.trim()
       };
 
@@ -1428,7 +1541,11 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
 
         creatorsSeen.add(creatorEmail);
 
-        const categories = extractCategoryValues(record.fields, CATEGORY_FIELDS_PRIORITY, 'category');
+        const categories = extractCategoryValues(
+          record.fields,
+          CATEGORY_FIELDS_PRIORITY,
+          'category'
+        );
         if (categories.length === 0) {
           assetsWithoutCategory += 1;
           continue;
