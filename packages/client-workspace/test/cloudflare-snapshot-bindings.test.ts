@@ -66,26 +66,39 @@ test('D1 snapshot ledger reads and upserts one sanitized pointer per sandbox', a
 
 test('R2 snapshot objects keep archive streams private behind the binding', async () => {
   const calls: unknown[] = [];
-  const source = new ReadableStream<Uint8Array>();
+  const source = new ReadableStream<Uint8Array>({
+    start(controller) {
+      controller.enqueue(new Uint8Array([1, 2, 3]));
+      controller.close();
+    }
+  });
   const bucket = {
     async get(key: string) {
       calls.push(['get', key]);
       return { body: source };
     },
     async put(key: string, value: ReadableStream<Uint8Array>, options: unknown) {
-      calls.push(['put', key, value === source, options]);
+      const bytes = new Uint8Array(await new Response(value).arrayBuffer());
+      calls.push(['put', key, value === source, [...bytes], options]);
     }
   };
-  const objects = new R2WorkspaceSnapshotObjects(bucket);
+  const objects = new R2WorkspaceSnapshotObjects(bucket, {
+    createFixedLengthStream(size) {
+      calls.push(['fixed', size]);
+      return new TransformStream<Uint8Array, Uint8Array>();
+    }
+  });
 
   assert.equal(await objects.get('snapshots/private.tgz'), source);
-  await objects.put('snapshots/private.tgz', source);
+  await objects.put('snapshots/private.tgz', source, 3);
   assert.deepEqual(calls, [
     ['get', 'snapshots/private.tgz'],
+    ['fixed', 3],
     [
       'put',
       'snapshots/private.tgz',
-      true,
+      false,
+      [1, 2, 3],
       {
         httpMetadata: { contentType: 'application/gzip' },
         customMetadata: { classification: 'private-client-workspace-snapshot' }

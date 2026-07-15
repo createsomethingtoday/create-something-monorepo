@@ -9,6 +9,8 @@ import {
 } from '../src/lib/server/preview/preview-session.js';
 import { WorkspaceRegistry } from '../src/lib/server/workspaces/registry.js';
 
+const demoRoot = fileURLToPath(new URL('../clients/demo-frontend', import.meta.url));
+
 async function availablePort(): Promise<number> {
   return await new Promise((resolve, reject) => {
     const server = net.createServer();
@@ -24,18 +26,17 @@ async function availablePort(): Promise<number> {
 async function previewFor(mode: 'ready' | 'crash' | 'hang', readinessTimeoutMs = 1_000) {
   const port = await availablePort();
   const fixture = fileURLToPath(new URL('./fixtures/fake-preview-server.mjs', import.meta.url));
-  const root = fileURLToPath(new URL('../clients/demo-frontend', import.meta.url));
   const registry = new WorkspaceRegistry({
     managedRoot: fileURLToPath(new URL('../clients', import.meta.url)),
     definitions: [
       {
         id: 'demo',
         label: 'Demo',
-        sourceRoot: root,
+        sourceRoot: demoRoot,
         editableRoots: ['src'],
         preview: {
           command: process.execPath,
-          args: [fixture, String(port), mode],
+          args: [fixture, String(port), mode, demoRoot],
           port,
           healthPath: '/api/workspaces/demo/preview'
         }
@@ -59,6 +60,38 @@ test('preview starts one declared process, becomes ready, proxies only its owned
       new Request('http://workspace.test/api/workspaces/demo/preview?screen=desktop')
     );
     assert.equal(await response.text(), 'preview:/api/workspaces/demo/preview?screen=desktop');
+
+    const privateModuleResponse = await preview.proxy(
+      new Request('http://workspace.test/api/workspaces/demo/preview/leak.js')
+    );
+    const privateModule = await privateModuleResponse.text();
+    assert.equal(privateModule.includes(demoRoot), false);
+    assert.equal(privateModule.includes('/@fs/'), false);
+    const privateModulePath = privateModule.match(
+      /\/api\/workspaces\/demo\/preview\/__preview_module__\/[a-f0-9-]+/
+    )?.[0];
+    assert.ok(privateModulePath);
+    const resolvedModuleResponse = await preview.proxy(
+      new Request(`http://workspace.test${privateModulePath}`)
+    );
+    assert.equal(await resolvedModuleResponse.text(), 'export const previewModule = true;');
+
+    const viteClientResponse = await preview.proxy(
+      new Request('http://workspace.test/api/workspaces/demo/preview/@vite/client')
+    );
+    const viteClient = await viteClientResponse.text();
+    assert.equal(viteClient.includes('transport.connect(createHMRHandler(handleMessage))'), false);
+    assert.equal(viteClient.includes('export { createHotContext }'), true);
+
+    await assert.rejects(
+      preview.proxy(
+        new Request(
+          'http://workspace.test/api/workspaces/demo/preview/__preview_module__/unknown'
+        )
+      ),
+      (error: unknown) =>
+        error instanceof PreviewSessionError && error.code === 'preview_path_escape'
+    );
 
     await assert.rejects(
       preview.proxy(new Request('http://workspace.test/api/workspaces/other/preview/')),

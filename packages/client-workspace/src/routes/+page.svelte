@@ -37,6 +37,7 @@
   let userMessages = $state<Array<{ text: string; imageName?: string }>>([]);
   let opening = $state(false);
   let resetting = $state(false);
+  let closing = $state(false);
   let sending = $state(false);
   let notice = $state('Choose an allowlisted workspace to begin.');
   let errorMessage = $state('');
@@ -137,7 +138,9 @@
         receipt = {
           ...receipt,
           status:
-            event.type === 'turn.completed'
+            event.type === 'session.closed'
+              ? 'closed'
+              : event.type === 'turn.completed'
               ? 'completed'
               : event.type === 'turn.failed' || event.type === 'runtime.error'
                 ? 'failed'
@@ -157,7 +160,13 @@
         void refreshArtifacts();
       }
       notice = event.message;
-      if (event.type === 'turn.completed' || event.type === 'turn.failed') sending = false;
+      if (
+        event.type === 'session.closed' ||
+        event.type === 'turn.completed' ||
+        event.type === 'turn.failed'
+      ) {
+        sending = false;
+      }
     };
     eventSource.onerror = () => {
       notice = 'Live activity paused. The saved receipt remains available.';
@@ -255,6 +264,30 @@
     }
   }
 
+  async function closeWorkspace() {
+    if (!receipt || closing) return;
+    const closingSessionId = receipt.sessionId;
+    closing = true;
+    errorMessage = '';
+    notice = 'Saving the workspace receipt and releasing its sandbox…';
+    eventSource?.close();
+    eventSource = null;
+    try {
+      await readJson<{ ok: boolean }>(
+        await fetch(`/api/sessions/${encodeURIComponent(closingSessionId)}/close`, {
+          method: 'POST'
+        })
+      );
+      clearSession();
+      notice = 'Workspace closed and sandbox released.';
+    } catch (error) {
+      connectEvents(closingSessionId);
+      showError(error);
+    } finally {
+      closing = false;
+    }
+  }
+
   function clearSession() {
     eventSource?.close();
     eventSource = null;
@@ -300,7 +333,9 @@
       <button class="quiet-button" type="button" disabled={resetting} onclick={resetWorkspace}>
         {resetting ? 'Resetting…' : 'Reset demo'}
       </button>
-      <button class="quiet-button" type="button" onclick={clearSession}>Close</button>
+      <button class="quiet-button" type="button" disabled={closing} onclick={closeWorkspace}>
+        {closing ? 'Closing…' : 'Close'}
+      </button>
     {/if}
   </div>
 </header>

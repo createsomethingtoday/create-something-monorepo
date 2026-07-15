@@ -19,7 +19,7 @@
 - `WorkspaceRegistry.resolve/resolveEditablePath` is server-only authority.
 - `WorkspaceSession.open/startTurn/respondToApproval/events/receipt/close`
   composes Codex, receipts, and policy without exposing their protocols.
-- `ClientWorkspaceService.createSession/sessionState/storeAttachment/workspaceDiff/resetWorkspace`
+- `ClientWorkspaceService.createSession/sessionState/storeAttachment/workspaceDiff/closeSession/resetWorkspace`
   composes the registry, private uploads, restart-safe public receipts, a
   session-start baseline, and immutable-seed reset behind ID-only browser routes.
 - `PreviewSession.start/status/url/close` owns the declared preview lifecycle.
@@ -28,12 +28,17 @@
   instance, strips browser authority, and delegates only to
   `ClientWorkspaceSandboxGateway.fetch`.
 - `CloudflareSandboxGateway.fetch` hides RPC SDK, container process, lifecycle,
-  port, path, environment, and retry details from the edge caller.
+  port, path, environment, retry, checkpoint, and destroy details from the edge
+  caller.
 - `D1WorkspaceActivityLedger.recordResponse` persists only normalized public
   receipts and route-derived action metadata; it never reads prompt bodies or
   stores Codex thread/turn identifiers.
 - `WorkspaceSnapshotStore.capture/restoreLatest` owns private R2 archive and D1
-  pointer durability for `/workspace/projects` and `/workspace/state`.
+  pointer durability for `/workspace/projects` and `/workspace/state`, including
+  isolated concurrent archives and rejection of empty snapshots.
+- `PreviewSession.proxy` replaces private filesystem module paths with opaque
+  per-session tokens and removes the Vite HMR transport at the authenticated
+  preview boundary without changing application module exports.
 
 ## Critical Dependencies
 

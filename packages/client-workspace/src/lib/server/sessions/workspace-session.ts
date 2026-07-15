@@ -44,6 +44,7 @@ export interface CodexConnection {
 
 export type WorkspaceActivityEventType =
   | 'session.ready'
+  | 'session.closed'
   | 'turn.started'
   | 'agent.message'
   | 'command.started'
@@ -234,11 +235,20 @@ function classifyRuntimeError(value: unknown): string {
   } catch {
     return 'agent_execution_failed';
   }
+  if (
+    /insufficient[_ -]?quota|quota[_ -]?exhausted|exceeded (?:your )?current quota|billing (?:details|quota)|run out of credits/.test(
+      diagnostic
+    )
+  ) {
+    return 'quota_exhausted';
+  }
   if (/local.?image|input.?image|image (?:input|load|decode)|\bimage\b/.test(diagnostic)) {
     return 'image_input_failed';
   }
-  if (/auth|credential|api.?key|\b401\b/.test(diagnostic)) return 'authentication_failed';
-  if (/rate.?limit|quota|\b429\b/.test(diagnostic)) return 'rate_limited';
+  if (/auth|credential|invalid.?api.?key|\b401\b/.test(diagnostic)) {
+    return 'authentication_failed';
+  }
+  if (/rate.?limit|too many requests|\b429\b/.test(diagnostic)) return 'rate_limited';
   if (/model|\b404\b/.test(diagnostic)) return 'model_unavailable';
   if (/sandbox|permission denied|operation not permitted/.test(diagnostic)) return 'sandbox_failed';
   return 'agent_execution_failed';
@@ -382,8 +392,8 @@ export class WorkspaceSession {
     this.#closed = true;
     this.#activeTurn = false;
     this.#receipt.status = 'closed';
-    this.#receipt.updatedAt = this.#now().toISOString();
-    await this.#receiptStore.put(this.receipt());
+    this.#emit({ type: 'session.closed', message: 'Workspace session closed.', status: 'completed' });
+    await this.#persist();
     this.#codex.close();
     this.#subscribers.clear();
     this.#pendingApprovals.clear();

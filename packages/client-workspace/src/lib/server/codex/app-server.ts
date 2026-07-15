@@ -1,4 +1,6 @@
 import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
+import { rm } from 'node:fs/promises';
+import { join, resolve } from 'node:path';
 import readline from 'node:readline';
 
 import type {
@@ -24,6 +26,8 @@ export type ConnectCodexAppServerOptions = {
   command?: string;
   args?: string[];
   requestTimeoutMs?: number;
+  environment?: NodeJS.ProcessEnv;
+  ephemeralAuthFile?: string;
 };
 
 export class CodexAppServerError extends Error {
@@ -201,15 +205,64 @@ export async function connectCodexAppServer(
 ): Promise<CodexConnection> {
   const command = options.command ?? 'codex';
   const args = options.args ?? ['app-server', '--stdio'];
-  const process = spawn(command, args, {
+  const sourceEnvironment = options.environment ?? process.env;
+  const ephemeralAuthFile =
+    options.ephemeralAuthFile ?? ephemeralAuthFileFromEnvironment(sourceEnvironment);
+  const childProcess = spawn(command, args, {
     stdio: ['pipe', 'pipe', 'pipe'],
-    env: processEnvWithoutBrowserLeak()
+    env: processEnvWithoutBrowserLeak(sourceEnvironment, Boolean(ephemeralAuthFile))
   });
-  const connection = new CodexAppServerConnection(process, options.requestTimeoutMs ?? 30_000);
-  await connection.initialize();
-  return connection;
+  const connection = new CodexAppServerConnection(
+    childProcess,
+    options.requestTimeoutMs ?? 30_000
+  );
+  try {
+    await connection.initialize();
+    await removeEphemeralAuthFile(ephemeralAuthFile);
+    return connection;
+  } catch (error) {
+    connection.close();
+    await removeEphemeralAuthFile(ephemeralAuthFile);
+    throw error;
+  }
 }
 
-function processEnvWithoutBrowserLeak(): NodeJS.ProcessEnv {
-  return { ...process.env };
+function ephemeralAuthFileFromEnvironment(environment: NodeJS.ProcessEnv): string | undefined {
+  if (environment.CLIENT_WORKSPACE_EPHEMERAL_CODEX_AUTH !== '1') return undefined;
+  const codexHome = environment.CODEX_HOME;
+  if (!codexHome) {
+    throw new CodexAppServerError(
+      'request_failed',
+      'Codex ephemeral authentication is misconfigured.'
+    );
+  }
+  const resolvedHome = resolve(codexHome);
+  if (resolvedHome === '/dev/shm' || !resolvedHome.startsWith('/dev/shm/')) {
+    throw new CodexAppServerError(
+      'request_failed',
+      'Codex ephemeral authentication must use memory-backed storage.'
+    );
+  }
+  return join(resolvedHome, 'auth.json');
+}
+
+async function removeEphemeralAuthFile(authFile: string | undefined): Promise<void> {
+  if (!authFile) return;
+  try {
+    await rm(authFile, { force: true });
+  } catch {
+    throw new CodexAppServerError(
+      'request_failed',
+      'Codex ephemeral authentication cleanup failed.'
+    );
+  }
+}
+
+function processEnvWithoutBrowserLeak(
+  sourceEnvironment: NodeJS.ProcessEnv,
+  removeProviderKey: boolean
+): NodeJS.ProcessEnv {
+  const environment = { ...sourceEnvironment };
+  if (removeProviderKey) delete environment.OPENAI_API_KEY;
+  return environment;
 }

@@ -1,5 +1,6 @@
 export type BrowserWorkspaceEventType =
   | 'session.ready'
+  | 'session.closed'
   | 'turn.started'
   | 'agent.message'
   | 'command.started'

@@ -13,7 +13,7 @@ type SandboxOptions = {
 };
 
 type SandboxProcess = {
-  status: string;
+  status: 'starting' | 'running' | 'completed' | 'failed' | 'killed' | 'error';
   waitForPort?(port: number, options: { path: string; status: number; timeout: number }): Promise<void>;
 };
 
@@ -32,6 +32,7 @@ type SandboxLike = {
     }
   ): Promise<StartedSandboxProcess>;
   containerFetch(request: Request, port: number): Promise<Response>;
+  destroy(): Promise<void>;
 } & Partial<SnapshotSandbox>;
 
 export interface CloudflareSandboxGatewayOptions {
@@ -78,7 +79,10 @@ export class CloudflareSandboxGateway implements ClientWorkspaceSandboxGateway {
       keepAlive: false
     });
     await this.#ensureApp(sandboxId, sandbox);
-    const response = await sandbox.containerFetch(request, APP_PORT);
+    let response = await sandbox.containerFetch(request, APP_PORT);
+    if (this.#shouldDestroy(request, response)) {
+      response = await this.#checkpointAndDestroy(sandboxId, sandbox, response);
+    }
     if (this.#activity) {
       this.#waitUntil(
         this.#activity.recordResponse(sandboxId, request, response).catch((error) => {
@@ -113,9 +117,19 @@ export class CloudflareSandboxGateway implements ClientWorkspaceSandboxGateway {
     }
     if (existing?.status === 'running') return;
 
-    if (existing?.waitForPort) {
-      await existing.waitForPort(APP_PORT, { path: '/', status: 200, timeout: 120_000 });
-      return;
+    if (existing?.status === 'starting' && existing.waitForPort) {
+      try {
+        await existing.waitForPort(APP_PORT, {
+          path: '/',
+          status: 200,
+          timeout: 120_000
+        });
+        return;
+      } catch (error) {
+        if (!(error instanceof Error) || error.name !== 'ProcessExitedBeforeReadyError') {
+          throw error;
+        }
+      }
     }
 
     if (this.#snapshots) {
@@ -129,6 +143,7 @@ export class CloudflareSandboxGateway implements ClientWorkspaceSandboxGateway {
         HOST: '0.0.0.0',
         PORT: String(APP_PORT),
         NODE_ENV: 'production',
+        BODY_SIZE_LIMIT: '6M',
         OPENAI_API_KEY: this.#openaiApiKey,
         CLIENT_WORKSPACE_STATE_ROOT: '/workspace/state',
         CLIENT_WORKSPACE_MANAGED_ROOT: '/workspace/projects',
@@ -141,9 +156,39 @@ export class CloudflareSandboxGateway implements ClientWorkspaceSandboxGateway {
   #shouldCapture(request: Request, response: Response): boolean {
     if (!response.ok) return false;
     const pathname = new URL(request.url).pathname;
+    return request.method === 'GET' && /^\/api\/sessions\/[^/]+\/diff$/.test(pathname);
+  }
+
+  #shouldDestroy(request: Request, response: Response): boolean {
+    if (!response.ok || request.method !== 'POST') return false;
+    const pathname = new URL(request.url).pathname;
     return (
-      (request.method === 'GET' && /^\/api\/sessions\/[^/]+\/diff$/.test(pathname)) ||
-      (request.method === 'POST' && /^\/api\/workspaces\/[^/]+\/reset$/.test(pathname))
+      /^\/api\/sessions\/[^/]+\/close$/.test(pathname) ||
+      /^\/api\/workspaces\/[^/]+\/reset$/.test(pathname)
     );
+  }
+
+  async #checkpointAndDestroy(
+    sandboxId: string,
+    sandbox: SandboxLike,
+    response: Response
+  ): Promise<Response> {
+    const body = await response.arrayBuffer();
+    if (!this.#snapshots) throw new Error('sandbox_close_snapshot_unavailable');
+    try {
+      await this.#snapshots.capture(sandboxId, sandbox as SnapshotSandbox);
+    } catch (error) {
+      this.#onSnapshotError({
+        sandboxId,
+        kind: error instanceof Error ? error.name : 'unknown'
+      });
+      throw new Error('sandbox_close_checkpoint_failed');
+    }
+    await sandbox.destroy();
+    return new Response(body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: response.headers
+    });
   }
 }

@@ -71,6 +71,39 @@ test('edge worker routes an allowed request through one opaque RPC sandbox and s
   assert.match(response.headers.get('set-cookie') ?? '', /^cs_workspace_instance=/);
 });
 
+test('edge worker preserves a bounded multipart turn while stripping browser authority', async () => {
+  const worker = createClientWorkspaceWorker({
+    cookieSecret: 'test-secret-with-32-bytes-minimum',
+    resolveAccess: async () => allowedAccess,
+    sandbox: {
+      async fetch(_sandboxId, request) {
+        assert.equal(request.headers.get('cookie'), null);
+        const form = await request.formData();
+        const image = form.get('image');
+        assert.equal(form.get('text'), 'Use the attached reference.');
+        assert.ok(image instanceof File);
+        assert.equal(image.type, 'image/png');
+        assert.equal(image.size, 8);
+        return Response.json({ turnId: 'turn-demo' }, { status: 202 });
+      }
+    }
+  });
+  const form = new FormData();
+  form.set('text', 'Use the attached reference.');
+  form.set('image', new File([Buffer.from('tiny-png')], 'reference.png', { type: 'image/png' }));
+
+  const response = await worker.fetch(
+    new Request('https://workspace.createsomething.space/api/sessions/session-demo/turns', {
+      method: 'POST',
+      headers: { cookie: 'cs_access_token=secret-access; cs_refresh_token=secret-refresh' },
+      body: form
+    })
+  );
+
+  assert.equal(response.status, 202);
+  assert.deepEqual(await response.json(), { turnId: 'turn-demo' });
+});
+
 test('edge worker redirects blocked document requests to sign-in without leaking workspace data', async () => {
   const worker = createClientWorkspaceWorker({
     cookieSecret: 'test-secret-with-32-bytes-minimum',

@@ -19,6 +19,7 @@ import { WorkspaceRegistry } from '../src/lib/server/workspaces/registry.js';
 class FakeConnection implements CodexConnection {
   turnOptions: StartTurnOptions | undefined;
   responses: unknown[] = [];
+  closed = false;
   #listener: ((message: CodexServerMessage) => void) | undefined;
 
   onMessage(listener: (message: CodexServerMessage) => void): void {
@@ -38,7 +39,9 @@ class FakeConnection implements CodexConnection {
     this.responses.push({ id, result });
   }
 
-  close(): void {}
+  close(): void {
+    this.closed = true;
+  }
 
   emit(message: CodexServerMessage): void {
     this.#listener?.(message);
@@ -127,6 +130,26 @@ test('service forwards normalized events and opaque approvals to subscribers', a
     await service.respondToApproval(created.receipt.sessionId, approval.approvalId, 'accept');
     assert.deepEqual(connection.responses, [{ id: 88, result: { decision: 'accept' } }]);
     unsubscribe();
+  });
+});
+
+test('service closes active session authority while preserving its terminal receipt', async () => {
+  await withService(async ({ service, connection }) => {
+    const created = await service.createSession('demo');
+    const events: Array<{ type?: string }> = [];
+    service.subscribe(created.receipt.sessionId, (event) => events.push(event));
+
+    await service.closeSession(created.receipt.sessionId);
+
+    assert.equal(connection.closed, true);
+    assert.equal(events.at(-1)?.type, 'session.closed');
+    assert.throws(
+      () => service.receipt(created.receipt.sessionId),
+      (error: unknown) =>
+        error instanceof ClientWorkspaceServiceError && error.code === 'session_not_found'
+    );
+    const persisted = await service.sessionState(created.receipt.sessionId);
+    assert.equal(persisted.receipt.status, 'closed');
   });
 });
 

@@ -23,6 +23,7 @@ export const GET: RequestHandler = ({ request, params }) => {
         };
         unsubscribe = clientWorkspaceRuntime.service.subscribe(params.sessionId, (event) => {
           controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
+          if (event.type === 'session.closed') close();
         });
         keepAlive = setInterval(() => controller.enqueue(encoder.encode(': keep-alive\n\n')), 15_000);
         request.signal.addEventListener('abort', close, { once: true });

@@ -159,6 +159,12 @@ export class ClientWorkspaceService {
     await this.#get(sessionId).session.respondToApproval(approvalId, decision);
   }
 
+  async closeSession(sessionId: string): Promise<void> {
+    const active = this.#get(sessionId);
+    await active.session.close();
+    this.#sessions.delete(sessionId);
+  }
+
   async storeAttachment(sessionId: string, file: File): Promise<WorkspaceAttachment> {
     const active = this.#get(sessionId);
     const extension = UPLOAD_EXTENSIONS.get(file.type);
