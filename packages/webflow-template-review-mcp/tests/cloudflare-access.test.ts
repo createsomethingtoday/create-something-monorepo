@@ -119,6 +119,47 @@ test('resolveCloudflareAccessRequest maps a signed Access assertion onto the can
   });
 });
 
+test('resolveCloudflareAccessRequest accepts a separately configured Webflow Access application', async () => {
+  const webflowTeamDomain = 'https://webflow.cloudflareaccess.com';
+  const webflowAudience = 'template-review-webflow-access-audience';
+  const { privateKey, publicKey } = await generateKeyPair('RS256');
+  const publicJwk = await exportJWK(publicKey);
+  publicJwk.kid = KEY_ID;
+  publicJwk.alg = 'RS256';
+
+  const assertion = await new SignJWT({ email: 'micah@webflow.com', type: 'app' })
+    .setProtectedHeader({ alg: 'RS256', kid: KEY_ID })
+    .setIssuer(webflowTeamDomain)
+    .setAudience(webflowAudience)
+    .setSubject('webflow-access-user-micah')
+    .setIssuedAt()
+    .setNotBefore(Math.floor(Date.now() / 1000) - 1)
+    .setExpirationTime('5m')
+    .sign(privateKey);
+
+  const result = await resolveCloudflareAccessRequest({
+    request: new Request('https://template-review.example.test/access/mcp', {
+      headers: { 'Cf-Access-Jwt-Assertion': assertion },
+    }),
+    teamDomain: TEAM_DOMAIN,
+    audience: POLICY_AUD,
+    trustedApplications: [{ teamDomain: webflowTeamDomain, audience: webflowAudience }],
+    allowedDomain: 'webflow.com',
+    allowedEmails: parseAllowedEmails('micah@webflow.com'),
+    directory,
+    jwks: createLocalJWKSet({ keys: [publicJwk] }),
+  });
+
+  assert.deepEqual(result, {
+    ok: true,
+    subject: 'webflow-access-user-micah',
+    accountId: 'acct_wf_micah',
+    email: 'micah@webflow.com',
+    name: null,
+    scopes: [SCOPE_READ, SCOPE_WRITE],
+  });
+});
+
 test('resolveCloudflareAccessRequest rejects assertions outside the exact Access application boundary', async () => {
   const trusted = await generateKeyPair('RS256');
   const attacker = await generateKeyPair('RS256');

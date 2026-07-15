@@ -1,5 +1,6 @@
 import {
   createRemoteJWKSet,
+  decodeJwt,
   jwtVerify,
   type JWTVerifyGetKey,
 } from 'jose';
@@ -28,6 +29,11 @@ export type CloudflareAccessRequestResult =
     };
 
 const remoteJwksByTeamDomain = new Map<string, JWTVerifyGetKey>();
+
+export type CloudflareAccessApplication = {
+  teamDomain: string;
+  audience: string;
+};
 
 export function isCloudflareAccessMcpPath(pathname: string): boolean {
   return (
@@ -72,6 +78,32 @@ function remoteJwks(teamDomain: string): JWTVerifyGetKey {
   return jwks;
 }
 
+function normalizeTrustedApplications(input: {
+  teamDomain: string;
+  audience: string;
+  trustedApplications?: CloudflareAccessApplication[];
+}): CloudflareAccessApplication[] {
+  return [
+    { teamDomain: input.teamDomain, audience: input.audience },
+    ...(input.trustedApplications ?? []),
+  ].flatMap((candidate) => {
+    const teamDomain = normalizeTeamDomain(candidate.teamDomain);
+    const audience = candidate.audience.trim();
+    return teamDomain && audience ? [{ teamDomain, audience }] : [];
+  });
+}
+
+function resolveTrustedApplication(assertion: string, configured: CloudflareAccessApplication[]): CloudflareAccessApplication | null {
+  let issuer: string;
+  try {
+    const decoded = decodeJwt(assertion);
+    issuer = typeof decoded.iss === 'string' ? decoded.iss : '';
+  } catch {
+    return null;
+  }
+  return configured.find((candidate) => candidate.teamDomain === issuer) ?? null;
+}
+
 function deniedAccessResult(
   access: Exclude<OAuthAccessResult, { allowed: true }>,
   allowedDomain: string,
@@ -92,14 +124,18 @@ export async function resolveCloudflareAccessRequest(input: {
   request: Request;
   teamDomain: string;
   audience: string;
+  trustedApplications?: CloudflareAccessApplication[];
   allowedDomain: string;
   allowedEmails: Set<string>;
   directory: ReviewerDirectory;
   jwks?: JWTVerifyGetKey;
 }): Promise<CloudflareAccessRequestResult> {
-  const teamDomain = normalizeTeamDomain(input.teamDomain);
-  const audience = input.audience.trim();
-  if (!teamDomain || !audience) {
+  const configuredApplications = normalizeTrustedApplications({
+    teamDomain: input.teamDomain,
+    audience: input.audience,
+    trustedApplications: input.trustedApplications,
+  });
+  if (!configuredApplications.length) {
     return {
       ok: false,
       status: 500,
@@ -118,12 +154,22 @@ export async function resolveCloudflareAccessRequest(input: {
     };
   }
 
+  const application = resolveTrustedApplication(assertion, configuredApplications);
+  if (!application) {
+    return {
+      ok: false,
+      status: 401,
+      code: 'unauthorized',
+      message: 'Invalid Cloudflare Access application assertion.',
+    };
+  }
+
   let payload: Awaited<ReturnType<typeof jwtVerify>>['payload'];
   try {
-    ({ payload } = await jwtVerify(assertion, input.jwks ?? remoteJwks(teamDomain), {
+    ({ payload } = await jwtVerify(assertion, input.jwks ?? remoteJwks(application.teamDomain), {
       algorithms: ['RS256'],
-      issuer: teamDomain,
-      audience,
+      issuer: application.teamDomain,
+      audience: application.audience,
     }));
   } catch {
     return {

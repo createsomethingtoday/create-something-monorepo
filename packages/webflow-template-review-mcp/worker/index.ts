@@ -8,6 +8,7 @@ import {
   cloudflareAccessServePath,
   isCloudflareAccessMcpPath,
   resolveCloudflareAccessRequest,
+  type CloudflareAccessApplication,
 } from '../src/cloudflare-access.js';
 import { DEFAULT_AIRTABLE_BASE_ID, TABLE_IDS } from '../src/schema.js';
 import {
@@ -40,6 +41,7 @@ interface Env {
   CS_IDENTITY_ISSUER?: string;
   CF_ACCESS_TEAM_DOMAIN?: string;
   CF_ACCESS_AUD?: string;
+  CF_ACCESS_TRUSTED_APPLICATIONS_JSON?: string;
   OAUTH_ALLOWED_EMAIL_DOMAIN?: string;
   OAUTH_ALLOWED_EMAILS?: string;
   WEBFLOW_TEMPLATE_VALIDATION_WORKER_URL?: string;
@@ -221,10 +223,15 @@ async function authenticateWithCloudflareAccess(
   env: Env,
   origin: string,
 ): Promise<{ props: RequestProps } | Response> {
+  const trustedApplications = parseTrustedAccessApplications(env.CF_ACCESS_TRUSTED_APPLICATIONS_JSON);
+  if (trustedApplications === null) {
+    return misconfiguredResponse('Cloudflare Access trusted applications are not configured correctly.');
+  }
   const result = await resolveCloudflareAccessRequest({
     request,
     teamDomain: env.CF_ACCESS_TEAM_DOMAIN ?? '',
     audience: env.CF_ACCESS_AUD ?? '',
+    trustedApplications,
     allowedDomain: allowedDomain(env),
     allowedEmails: parseAllowedEmails(env.OAUTH_ALLOWED_EMAILS),
     directory: resolveReviewerDirectory(env),
@@ -244,6 +251,26 @@ async function authenticateWithCloudflareAccess(
       scopes: result.scopes,
     },
   };
+}
+
+function parseTrustedAccessApplications(raw: string | undefined): CloudflareAccessApplication[] | null {
+  if (!raw?.trim()) return [];
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return null;
+    const applications = parsed.map((value): CloudflareAccessApplication | null => {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+      const candidate = value as Record<string, unknown>;
+      return typeof candidate.teamDomain === 'string' && typeof candidate.audience === 'string'
+        ? { teamDomain: candidate.teamDomain, audience: candidate.audience }
+        : null;
+    });
+    return applications.every((application): application is CloudflareAccessApplication => application !== null)
+      ? applications
+      : null;
+  } catch {
+    return null;
+  }
 }
 
 function protectedResourceResponse(env: Env, origin: string, resourcePath: string): Response {
