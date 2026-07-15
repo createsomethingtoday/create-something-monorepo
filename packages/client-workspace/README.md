@@ -41,6 +41,10 @@ Not included: arbitrary Git URLs, greenfield sandboxes, direct Webflow Designer
 mutation, terminal emulation, client invitation, allowlist expansion, merge, or
 credential-management authority.
 
+The workspace shell imports Canon's Performance token contract. The isolated
+editable demo uses the same Performance token names with canonical fallbacks, so
+visual edits stay portable without giving the seed a private monorepo dependency.
+
 ## Production Boundary
 
 `workspace.createsomething.space` is an authenticated Cloudflare Worker in front
