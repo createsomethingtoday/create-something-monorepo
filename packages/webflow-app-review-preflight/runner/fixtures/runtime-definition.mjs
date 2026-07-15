@@ -5,15 +5,6 @@ export const runtimeSource = `(() => {
   ready.dataset.runtimeReady = 'true';
   ready.textContent = 'Consent runtime active';
   document.body.appendChild(ready);
-  const uninstall = document.createElement('button');
-  uninstall.dataset.runtimeUninstall = 'true';
-  uninstall.textContent = 'Uninstall runtime';
-  uninstall.addEventListener('click', () => {
-    ready.remove();
-    uninstall.remove();
-    // Intentional defect: script and localStorage remain after cleanup.
-  });
-  document.body.appendChild(uninstall);
   fetch('/allowed-data?session=private-value').catch(() => {});
   fetch('https://blocked.invalid/should-not-run?authorization=Bearer%20fixture-secret').catch(() => {});
 })();

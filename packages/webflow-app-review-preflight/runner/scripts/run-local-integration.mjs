@@ -1,11 +1,13 @@
 import { createHash } from 'node:crypto';
-import { readFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { runRuntimeObservation } from '../dist/index.js';
 import { runtimeSource } from '../fixtures/runtime-definition.mjs';
 
 const apiBaseUrl = process.env.PREFLIGHT_API_BASE ?? 'http://127.0.0.1:8787';
 const bundlePath = process.env.PREFLIGHT_BUNDLE_PATH;
 const outputDir = process.env.RUNTIME_EVIDENCE_OUTPUT;
+const expectedSecurityStatus = process.env.RUNTIME_EXPECT_SECURITY_STATUS ?? 'passed';
 if (!bundlePath || !outputDir) {
   throw new Error('PREFLIGHT_BUNDLE_PATH and RUNTIME_EVIDENCE_OUTPUT are required.');
 }
@@ -50,11 +52,7 @@ const packageResponse = await fetch(
         urlTemplate: 'http://127.0.0.1:4173/proxy?url={canaryUrl}'
       },
       lifecycle: {
-        readySelector: '[data-runtime-ready]',
-        cleanupTrigger: {
-          type: 'click',
-          selector: '[data-runtime-uninstall]'
-        }
+        readySelector: '[data-runtime-ready]'
       }
     })
   }
@@ -90,14 +88,24 @@ const listResponse = await fetch(
 if (!listResponse.ok) throw new Error(`Evidence readback failed: ${await listResponse.text()}`);
 const { testPackages } = await listResponse.json();
 const canaryState = await fetch('http://127.0.0.1:4174/state').then((response) => response.json());
+const securityStatus = testPackages[0]?.observation?.evidence?.securityStatus;
+if (securityStatus !== expectedSecurityStatus) {
+  throw new Error(
+    `Expected runtime security ${expectedSecurityStatus}, received ${securityStatus ?? 'no result'}.`
+  );
+}
 
-console.log(JSON.stringify({
+const receipt = {
   reviewId: review.id,
   reviewVersionId: review.latestVersion.id,
   bundleSha256: review.latestVersion.result.artifact.sha256,
   testPackageId: testPackage.id,
   observationJobId: observationJob.id,
   result,
+  expectedSecurityStatus,
   readback: testPackages[0],
   canaryState
-}, null, 2));
+};
+await mkdir(outputDir, { recursive: true });
+await writeFile(join(outputDir, 'receipt.json'), `${JSON.stringify(receipt, null, 2)}\n`);
+console.log(JSON.stringify(receipt, null, 2));

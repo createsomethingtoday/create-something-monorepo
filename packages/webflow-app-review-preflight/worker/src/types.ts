@@ -25,6 +25,7 @@ export interface AuthenticatedUser {
   companionSession?: {
     reviewId: string;
     reviewVersionId: string;
+    runtimeTestPackageId: string;
     actorRole: 'developer' | 'reviewer';
   };
 }

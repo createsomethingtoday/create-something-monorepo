@@ -18,7 +18,7 @@ export interface RuntimeRunnerResult {
   observationJobId: string;
   status: 'complete';
   trust: 'webflow_observed';
-  cleanupStatus: 'clean' | 'residue_detected';
+  cleanupStatus: 'clean' | 'residue_detected' | 'not_tested';
   negativeProxyOutcome: 'blocked' | 'exposed' | 'error';
   artifactCount: number;
 }
@@ -37,12 +37,19 @@ interface RuntimeArtifactObservation {
   expectedSha256: string;
   observedSha256: string;
   integrity: string;
+  domIntegrity: string | null;
+  domCrossOrigin: string | null;
   loadedByPage: boolean;
   sourceMap: { available: boolean; url?: string };
 }
 
 interface BrowserState {
-  scripts: Array<{ src: string; integrity: string | null; crossOrigin: string | null }>;
+  scripts: Array<{
+    src: string;
+    integrity: string | null;
+    crossOrigin: string | null;
+    runtimeCreated: boolean;
+  }>;
   storage: {
     local: Array<{ key: string; bytes: number }>;
     session: Array<{ key: string; bytes: number }>;
@@ -171,7 +178,10 @@ async function captureState(page: Page): Promise<BrowserState> {
       scripts: [...document.scripts].map((script) => ({
         src: script.src,
         integrity: script.getAttribute('integrity'),
-        crossOrigin: script.getAttribute('crossorigin')
+        crossOrigin: script.getAttribute('crossorigin'),
+        runtimeCreated: Boolean(
+          Reflect.get(script, Symbol.for('webflow.runtime-created-script'))
+        )
       })),
       storage: {
         local: storage(localStorage),
@@ -214,7 +224,8 @@ async function screenshot(page: Page): Promise<Uint8Array> {
 async function observeRuntimeArtifact(
   pin: RuntimeObservationJobContract['runtimeArtifacts'][number],
   response: PlaywrightResponse | null,
-  allowedHosts: Set<string>
+  allowedHosts: Set<string>,
+  scripts: BrowserState['scripts']
 ): Promise<RuntimeArtifactObservation> {
   const bytes = response
     ? new Uint8Array(await response.body())
@@ -245,6 +256,8 @@ async function observeRuntimeArtifact(
     expectedSha256: pin.sha256,
     observedSha256: sha256(bytes),
     integrity: pin.integrity,
+    domIntegrity: scripts.find((script) => script.src === sanitizeUrl(pin.url))?.integrity ?? null,
+    domCrossOrigin: scripts.find((script) => script.src === sanitizeUrl(pin.url))?.crossOrigin ?? null,
     loadedByPage: response !== null,
     sourceMap
   };
@@ -256,7 +269,7 @@ async function capture(
 ): Promise<{
   manifest: Record<string, unknown>;
   artifacts: EvidenceArtifact[];
-  cleanupStatus: 'clean' | 'residue_detected';
+  cleanupStatus: 'clean' | 'residue_detected' | 'not_tested';
   negativeProxyOutcome: 'blocked' | 'exposed' | 'error';
 }> {
   const startedAt = new Date();
@@ -269,6 +282,21 @@ async function capture(
     viewport: { width: 1280, height: 720 },
     serviceWorkers: 'block',
     acceptDownloads: false
+  });
+  await context.addInitScript(() => {
+    const marker = Symbol.for('webflow.runtime-created-script');
+    const originalCreateElement = Document.prototype.createElement;
+    Document.prototype.createElement = function (
+      this: Document,
+      localName: string,
+      options?: ElementCreationOptions
+    ): HTMLElement {
+      const element = Reflect.apply(originalCreateElement, this, [localName, options]) as HTMLElement;
+      if (localName.toLowerCase() === 'script') {
+        Object.defineProperty(element, marker, { value: true });
+      }
+      return element;
+    } as typeof Document.prototype.createElement;
   });
   let requestCount = 0;
   await context.route('**/*', async (route) => {
@@ -333,10 +361,16 @@ async function capture(
       timeout: contract.controls.requestTimeoutMs
     });
     const before = await screenshot(page);
-    await page.waitForSelector(contract.lifecycle.readySelector, {
-      state: 'attached',
-      timeout: contract.controls.requestTimeoutMs
-    });
+    let runtimeReadyObserved = false;
+    try {
+      await page.waitForSelector(contract.lifecycle.readySelector, {
+        state: 'attached',
+        timeout: contract.controls.requestTimeoutMs
+      });
+      runtimeReadyObserved = true;
+    } catch {
+      pageErrors.push('Runtime-ready selector was not observed.');
+    }
     const installedState = await captureState(page);
     const afterInstall = await screenshot(page);
 
@@ -362,43 +396,76 @@ async function capture(
       negativeProxyOutcome = 'error';
     }
 
-    await page.locator(contract.lifecycle.cleanupTrigger.selector).click({
-      timeout: contract.controls.requestTimeoutMs
-    });
-    await page.waitForTimeout(250);
-    const cleanedState = await captureState(page);
-    const afterCleanup = await screenshot(page);
+    if (contract.lifecycle.cleanupTrigger) {
+      await page.locator(contract.lifecycle.cleanupTrigger.selector).click({
+        timeout: contract.controls.requestTimeoutMs
+      });
+      await page.waitForTimeout(250);
+    }
+    const observedState = await captureState(page);
+    const afterObservation = await screenshot(page);
 
     const pinnedUrls = new Set(contract.runtimeArtifacts.map((artifact) => sanitizeUrl(artifact.url)));
-    const residue = [
-      ...cleanedState.scripts
+    const observedResidue = [
+      ...observedState.scripts
         .filter((script) => pinnedUrls.has(script.src))
         .map((script) => `script:${script.src}`),
-      ...cleanedState.storage.local.map((item) => `localStorage:${item.key}`),
-      ...cleanedState.storage.session.map((item) => `sessionStorage:${item.key}`)
+      ...observedState.storage.local.map((item) => `localStorage:${item.key}`),
+      ...observedState.storage.session.map((item) => `sessionStorage:${item.key}`)
     ].slice(0, 100);
-    const cleanupStatus = residue.length === 0 ? 'clean' : 'residue_detected';
+    const residue = contract.lifecycle.cleanupTrigger ? observedResidue : [];
+    const cleanupStatus = contract.lifecycle.cleanupTrigger
+      ? residue.length === 0 ? 'clean' : 'residue_detected'
+      : 'not_tested';
     const runtimeArtifacts = await Promise.all(
       contract.runtimeArtifacts.map((pin) =>
-        observeRuntimeArtifact(pin, artifactResponses.get(pin.url) ?? null, allowedHosts)
+        observeRuntimeArtifact(
+          pin,
+          artifactResponses.get(pin.url) ?? null,
+          allowedHosts,
+          installedState.scripts
+        )
       )
     );
+    const runtimeHosts = new Set(
+      contract.runtimeArtifacts.map((artifact) => new URL(artifact.url).hostname.toLowerCase())
+    );
+    const unreviewedRuntimeScripts = installedState.scripts
+      .filter((script) => {
+        if (!script.src || script.src === '[invalid-url]' || pinnedUrls.has(script.src)) return false;
+        try {
+          return runtimeHosts.has(new URL(script.src).hostname.toLowerCase());
+        } catch {
+          return false;
+        }
+      })
+      .map((script) => script.src)
+      .slice(0, 100);
+    const runtimeCreatedScripts = installedState.scripts
+      .filter(
+        (script) =>
+          script.runtimeCreated &&
+          script.src &&
+          script.src !== '[invalid-url]'
+      )
+      .map((script) => script.src)
+      .slice(0, 100);
 
     const artifacts = [
       pngArtifact('screenshot_before', before),
       pngArtifact('screenshot_after_install', afterInstall),
-      pngArtifact('screenshot_after_cleanup', afterCleanup),
+      pngArtifact('screenshot_after_observation', afterObservation),
       jsonArtifact('network_log', network),
       jsonArtifact('console_log', { messages: consoleMessages, pageErrors }),
       jsonArtifact('dom_snapshot', {
         installed: installedState.dom,
-        afterCleanup: cleanedState.dom,
-        scriptsAfterCleanup: cleanedState.scripts
+        afterObservation: observedState.dom,
+        scriptsAfterObservation: observedState.scripts
       }),
       jsonArtifact('storage_snapshot', {
         beforeNavigation: { local: [], session: [] },
         installed: installedState.storage,
-        afterCleanup: cleanedState.storage
+        afterObservation: observedState.storage
       }),
       jsonArtifact('script_inventory', runtimeArtifacts)
     ];
@@ -420,7 +487,10 @@ async function capture(
         cookiesRemoved: true,
         formValuesMasked: true
       },
+      runtimeReadyObserved,
       runtimeArtifacts,
+      runtimeCreatedScripts,
+      unreviewedRuntimeScripts,
       cleanup: { status: cleanupStatus, residue },
       negativeProxyCanary: {
         url: contract.controls.negativeProxyCanaryUrl,

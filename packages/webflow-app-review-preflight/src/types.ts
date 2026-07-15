@@ -86,7 +86,7 @@ export interface RuntimeArtifactPin {
 
 export interface RuntimeLifecycleContract {
   readySelector: string;
-  cleanupTrigger: {
+  cleanupTrigger?: {
     type: 'click';
     selector: string;
   };
@@ -174,7 +174,19 @@ export interface RuntimeObservationSummary {
   expiresAt: string;
   completedAt: string | null;
   evidence: {
-    cleanupStatus: 'clean' | 'residue_detected';
+    securityStatus: 'passed' | 'blocked';
+    securityPredicates: {
+      publishedTarget: boolean;
+      runtimeReadyObserved: boolean;
+      runtimeLoadedByPage: boolean;
+      runtimeHashMatched: boolean;
+      runtimeIntegrityMatched: boolean;
+      noRuntimeCreatedScripts: boolean;
+      noUnreviewedRuntimeScripts: boolean;
+      negativeProxyBlocked: boolean;
+    };
+    blockers: string[];
+    cleanupStatus: 'clean' | 'residue_detected' | 'not_tested';
     cleanupResidue: string[];
     negativeProxyOutcome: 'blocked' | 'exposed' | 'error';
     artifactCount: number;
@@ -237,6 +249,7 @@ export interface CompanionRun {
   reviewId: string;
   reviewVersionId: string;
   bundleSha256: string;
+  runtimeTestPackageId: string;
   actorRole: CompanionActorRole;
   evidenceTrust: RuntimeEvidenceTrust;
   policyVersion: string;

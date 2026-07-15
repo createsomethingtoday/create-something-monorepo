@@ -1,20 +1,15 @@
 # Webflow App Review Companion
 
-The App Review Companion is one Manifest V3 browser extension used by Marketplace developers and Webflow reviewers. For the Consent Pro pilot, it guides four scored runtime lifecycle missions in the real Designer and published-site browser surfaces:
+The App Review Companion is one Manifest V3 browser extension used by Marketplace developers and Webflow reviewers. For the Consent Pro pilot, it captures one partner-supplied production-runtime observation bound to an exact Runtime Test Package. It does not score configuration, publication, authorization, or uninstall cleanup.
 
-1. Configure the externally authorized app for the reviewed runtime
-2. Publish the designated test site
-3. Exercise the production runtime
-4. Uninstall and verify cleanup
+External authorization is a setup prerequisite. Configuration proves only that the version-bound test contract is complete, and publication proves only that the automated runner reached a public Webflow origin instead of Designer. The service derives those facts automatically; they are not companion missions or code-security verdicts.
 
-External authorization is a setup prerequisite, not a scored Designer mission. The companion does not capture credentials or claim that authorization was validated.
-
-The browser is a collector, not the authority. The App Review Preflight Worker binds every run to an exact review version and bundle SHA-256, owns the mission policy and final state, validates evidence digests and screenshot artifacts, and assigns evidence trust from authenticated server identity.
+The companion is a collector, not the authority. The App Review Preflight Worker binds every run to an exact review version, bundle SHA-256, and Runtime Test Package. Partner evidence always remains blocked. Only the Webflow-controlled E2B browser can execute the pinned runtime and return the server-derived security predicates.
 
 ## Evidence trust
 
 - `Partner supplied`: a developer completed the mission with the companion. It is useful preparation evidence, but cannot become Webflow-observed evidence through a client field.
-- `Webflow observed`: an authenticated reviewer replayed the run from the Webflow-controlled role boundary.
+- `Webflow observed`: the Webflow-controlled E2B runner executed the exact Runtime Test Package and uploaded capability-bound evidence.
 - `Human verified`: a separate human confirmation. It does not rewrite captured facts.
 
 Reviewer replay creates a new linked run. It never mutates the developer's receipts.
@@ -39,7 +34,7 @@ Local development retains a guarded start form for the integration harness. Prod
 
 ## Real Chrome verifier
 
-The integration harness creates a fresh local D1/R2 state, starts the real Worker, builds an owned Designer/published-site fixture, loads the actual extension service worker into a clean Chromium profile, completes every mission, verifies `Validated`, creates an incomplete run and verifies `Blocked`, and writes a receipt plus UI screenshot.
+The integration harness creates fresh local D1/R2 state, starts the real Worker, builds an owned published-site fixture, loads the actual extension service worker into a clean Chromium profile, captures the single partner-evidence mission, proves the run remains `Blocked`, creates an incomplete run that also remains `Blocked`, and writes a receipt plus UI screenshot. The separate runtime-runner integration is the only path that may earn a passing security result.
 
 ```bash
 COMPANION_WORKER_PORT=8794 \

@@ -25,7 +25,7 @@ if (!apiBaseUrl || !observationJobId || !capability) {
       outputDir
     });
     console.log(
-      `Webflow observation complete: ${result.artifactCount} artifacts; cleanup ${result.cleanupStatus}; proxy canary ${result.negativeProxyOutcome}.`
+      `Webflow runtime observation complete: ${result.artifactCount} artifacts; proxy canary ${result.negativeProxyOutcome}. The Worker derives the security result.`
     );
   } catch (error) {
     console.error(error instanceof Error ? error.message : 'Runtime observation failed.');

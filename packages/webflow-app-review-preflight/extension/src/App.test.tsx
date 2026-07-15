@@ -329,11 +329,7 @@ describe('App Review Preflight extension', () => {
         urlTemplate: 'https://api.consentpro.com/v2/proxy?url={canaryUrl}'
       },
       lifecycle: {
-        readySelector: '[data-runtime-ready]',
-        cleanupTrigger: {
-          type: 'click' as const,
-          selector: '[data-runtime-uninstall]'
-        }
+        readySelector: '[data-runtime-ready]'
       },
       evidence: null,
       createdAt,
@@ -349,13 +345,25 @@ describe('App Review Preflight extension', () => {
         expiresAt: '2026-07-14T23:15:00.000Z',
         completedAt: '2026-07-14T23:01:00.000Z',
         evidence: {
-          cleanupStatus: 'residue_detected' as const,
-          cleanupResidue: ['script:runtime-v1.js'],
+          securityStatus: 'blocked' as const,
+          securityPredicates: {
+            publishedTarget: true,
+            runtimeReadyObserved: false,
+            runtimeLoadedByPage: true,
+            runtimeHashMatched: true,
+            runtimeIntegrityMatched: true,
+            noRuntimeCreatedScripts: true,
+            noUnreviewedRuntimeScripts: true,
+            negativeProxyBlocked: true
+          },
+          blockers: ['The runtime-ready signal was not observed on the published page.'],
+          cleanupStatus: 'not_tested' as const,
+          cleanupResidue: [],
           negativeProxyOutcome: 'blocked' as const,
           artifactCount: 8,
           artifacts: [
             {
-              kind: 'screenshot_after_cleanup',
+              kind: 'screenshot_after_observation',
               contentType: 'image/png',
               bytes: 12000,
               sha256: 'c'.repeat(64)
@@ -405,7 +413,7 @@ describe('App Review Preflight extension', () => {
     fireEvent.change(screen.getByLabelText('Script integrity (SRI)'), {
       target: { value: 'sha256-runtime-v1' }
     });
-    fireEvent.click(screen.getByText('Lifecycle selectors and proxy check'));
+    fireEvent.click(screen.getByText('Runtime-ready selector and proxy check'));
     fireEvent.change(screen.getByLabelText('Proxy probe URL template'), {
       target: { value: 'https://api.consentpro.com/v2/proxy?url={canaryUrl}' }
     });
@@ -422,7 +430,7 @@ describe('App Review Preflight extension', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Check run status' }));
     expect(await screen.findByLabelText('Current evidence: Webflow observed')).toBeVisible();
-    expect(screen.getByText('Cleanup residue found')).toBeVisible();
+    expect(screen.getByText('Runtime security blocked')).toBeVisible();
     expect(screen.getByText('Proxy canary blocked')).toBeVisible();
     expect(screen.getByText('What the evidence labels mean')).toBeVisible();
     expect(screen.getByRole('button', { name: 'Prepare another test package' })).toBeVisible();
@@ -477,6 +485,24 @@ describe('App Review Preflight extension', () => {
         }
       ],
       getReview: async () => review,
+      listRuntimeTestPackages: async () => [{
+        schemaVersion: 'runtime_test_package.v1' as const,
+        id: 'runtime-package-consent-pro',
+        reviewId: review.id,
+        reviewVersionId: review.latestVersion.id,
+        bundleSha256: review.latestVersion.result.artifact.sha256,
+        status: 'ready' as const,
+        trust: 'partner_supplied' as const,
+        target: { url: 'https://consent-pro-test.webflow.io/', host: 'consent-pro-test.webflow.io' },
+        sandboxInstallationId: 'consent-pro-test-site',
+        license: { mode: 'installation_allowlist' as const, expiresAt: new Date(Date.now() + 3_600_000).toISOString() },
+        runtimeArtifacts: [{ url: 'https://api.consentpro.com/v2/cdn/runtime.js', sha256: 'a'.repeat(64), integrity: 'sha256-runtime' }],
+        negativeProxyProbe: { method: 'GET' as const, urlTemplate: 'https://api.consentpro.com/v2/proxy?url={canaryUrl}' },
+        lifecycle: { readySelector: '[data-runtime-ready]' },
+        evidence: null,
+        createdAt: new Date().toISOString(),
+        observation: null
+      }],
       createCompanionPairing
     } as PreflightApi;
 
@@ -487,7 +513,8 @@ describe('App Review Preflight extension', () => {
     await waitFor(() => {
       expect(createCompanionPairing).toHaveBeenCalledWith(
         review.id,
-        review.latestVersion.id
+        review.latestVersion.id,
+        'runtime-package-consent-pro'
       );
       expect(pairCompanion).toHaveBeenCalledWith({
         code: 'pairing-code-from-webflow-identity',

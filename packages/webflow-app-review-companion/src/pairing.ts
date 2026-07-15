@@ -3,6 +3,7 @@ export interface CompanionSettings {
   token: string;
   reviewId: string;
   reviewVersionId: string;
+  runtimeTestPackageId: string;
   expiresAt: string;
 }
 
@@ -17,6 +18,7 @@ interface PairingSessionResponse {
     expiresAt: string;
     reviewId: string;
     reviewVersionId: string;
+    runtimeTestPackageId: string;
     actorRole: 'developer' | 'reviewer';
     evidenceTrust: 'partner_supplied' | 'webflow_observed';
   };
@@ -52,6 +54,7 @@ export async function redeemAndBeginCompanion({
     token: redeemed.session.token,
     reviewId: redeemed.session.reviewId,
     reviewVersionId: redeemed.session.reviewVersionId,
+    runtimeTestPackageId: redeemed.session.runtimeTestPackageId,
     expiresAt: redeemed.session.expiresAt
   };
   const started = await responseBody<{ run: unknown }>(
@@ -63,7 +66,10 @@ export async function redeemAndBeginCompanion({
           authorization: `Bearer ${settings.token}`,
           'content-type': 'application/json'
         },
-        body: JSON.stringify({ reviewVersionId: settings.reviewVersionId })
+        body: JSON.stringify({
+          reviewVersionId: settings.reviewVersionId,
+          runtimeTestPackageId: settings.runtimeTestPackageId
+        })
       }
     )
   );

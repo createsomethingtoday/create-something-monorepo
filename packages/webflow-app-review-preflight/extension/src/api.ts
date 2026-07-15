@@ -107,14 +107,15 @@ export function createPreflightApi(): PreflightApi {
     },
     async createCompanionPairing(
       reviewId: string,
-      reviewVersionId: string
+      reviewVersionId: string,
+      runtimeTestPackageId: string
     ): Promise<CompanionPairing> {
       const body = await request<{ pairing: CompanionPairing }>(
         `/v1/reviews/${reviewId}/companion-pairings`,
         {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ reviewVersionId })
+          body: JSON.stringify({ reviewVersionId, runtimeTestPackageId })
         }
       );
       return body.pairing;

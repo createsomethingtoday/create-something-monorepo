@@ -1,6 +1,9 @@
 import { env, exports } from 'cloudflare:workers';
 import JSZip from 'jszip';
 import { describe, expect, test } from 'vitest';
+import { evaluateRuntimeSecurity } from '../src/runtime-observations';
+
+const TEST_RUNTIME_INTEGRITY = 'sha256-qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqo=';
 
 async function createBundle(options: { injectScript?: boolean } = {}): Promise<Uint8Array> {
   const zip = new JSZip();
@@ -34,7 +37,78 @@ async function sha256Hex(value: ArrayBuffer | Uint8Array | string): Promise<stri
     .join('');
 }
 
+async function createReadyRuntimePackage(reviewId: string): Promise<string> {
+  const response = await exports.default.fetch(
+    new Request(`https://preflight.test/v1/reviews/${reviewId}/runtime-test-packages`, {
+      method: 'POST',
+      headers: {
+        authorization: 'Bearer test-token',
+        origin: 'http://localhost:1337',
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        targetUrl: 'http://127.0.0.1:4173/runtime-fixture',
+        sandboxInstallationId: 'webflow-sandbox-site-123',
+        sandboxOwnershipConfirmed: true,
+        license: {
+          mode: 'installation_allowlist',
+          expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString()
+        },
+        runtimeArtifacts: [{
+          url: 'http://127.0.0.1:4173/runtime-v1.js',
+          sha256: 'a'.repeat(64),
+          integrity: TEST_RUNTIME_INTEGRITY
+        }],
+        negativeProxyProbe: {
+          method: 'GET',
+          urlTemplate: 'http://127.0.0.1:4173/proxy?url={canaryUrl}'
+        },
+        lifecycle: { readySelector: '[data-runtime-ready]' }
+      })
+    })
+  );
+  expect(response.status).toBe(201);
+  const body = await response.json<{ testPackage: { id: string } }>();
+  return body.testPackage.id;
+}
+
 describe('review API', () => {
+  test('derives a blocked security verdict from click-only or substituted runtime evidence', () => {
+    const contract = {
+      target: { url: 'https://consent-pro-test.webflow.io/', host: 'consent-pro-test.webflow.io' },
+      runtimeArtifacts: [{
+        url: 'https://api.consentpro.com/v2/cdn/runtime.js',
+        sha256: 'a'.repeat(64),
+        integrity: 'sha256-reviewed-runtime'
+      }]
+    } as any;
+    const result = evaluateRuntimeSecurity({
+      runtimeReadyObserved: false,
+      runtimeArtifacts: [{
+        url: contract.runtimeArtifacts[0].url,
+        observedSha256: 'b'.repeat(64),
+        loadedByPage: false,
+        domIntegrity: null
+      }],
+      runtimeCreatedScripts: ['https://api.consentpro.com/v2/cdn/debugger.js'],
+      unreviewedRuntimeScripts: ['https://api.consentpro.com/v2/cdn/debugger.js'],
+      negativeProxyCanary: { outcome: 'exposed' }
+    }, contract);
+
+    expect(result.status).toBe('blocked');
+    expect(result.predicates).toEqual({
+      publishedTarget: true,
+      runtimeReadyObserved: false,
+      runtimeLoadedByPage: false,
+      runtimeHashMatched: false,
+      runtimeIntegrityMatched: false,
+      noRuntimeCreatedScripts: false,
+      noUnreviewedRuntimeScripts: false,
+      negativeProxyBlocked: false
+    });
+    expect(result.blockers).toHaveLength(7);
+  });
+
   test('returns the resolved Webflow identity and server-owned companion role', async () => {
     const developer = await exports.default.fetch(
       new Request('https://preflight.test/v1/me', {
@@ -91,6 +165,27 @@ describe('review API', () => {
       review: { id: string; latestVersion: { id: string } };
     }>();
 
+    const missingPackageResponse = await exports.default.fetch(
+      new Request(
+        `https://preflight.test/v1/reviews/${created.review.id}/companion-pairings`,
+        {
+          method: 'POST',
+          headers: {
+            authorization: 'Bearer test-token',
+            origin: 'http://localhost:1337',
+            'content-type': 'application/json'
+          },
+          body: JSON.stringify({ reviewVersionId: created.review.latestVersion.id })
+        }
+      )
+    );
+    expect(missingPackageResponse.status).toBe(400);
+    expect(await missingPackageResponse.json()).toMatchObject({
+      error: 'invalid_companion_pairing',
+      message: expect.stringMatching(/runtime test package/i)
+    });
+    const runtimeTestPackageId = await createReadyRuntimePackage(created.review.id);
+
     const pairingResponse = await exports.default.fetch(
       new Request(
         `https://preflight.test/v1/reviews/${created.review.id}/companion-pairings`,
@@ -102,7 +197,8 @@ describe('review API', () => {
             'content-type': 'application/json'
           },
           body: JSON.stringify({
-            reviewVersionId: created.review.latestVersion.id
+            reviewVersionId: created.review.latestVersion.id,
+            runtimeTestPackageId
           })
         }
       )
@@ -135,13 +231,15 @@ describe('review API', () => {
         reviewVersionId: string;
         actorRole: string;
         evidenceTrust: string;
+        runtimeTestPackageId: string;
       };
     }>();
     expect(session.session).toMatchObject({
       reviewId: created.review.id,
       reviewVersionId: created.review.latestVersion.id,
       actorRole: 'developer',
-      evidenceTrust: 'partner_supplied'
+      evidenceTrust: 'partner_supplied',
+      runtimeTestPackageId
     });
 
     const genericApiAttempt = await exports.default.fetch(
@@ -164,7 +262,7 @@ describe('review API', () => {
             origin: 'http://localhost:1337',
             'content-type': 'application/json'
           },
-          body: JSON.stringify({ reviewVersionId: 'another-version' })
+          body: JSON.stringify({ reviewVersionId: 'another-version', runtimeTestPackageId })
         }
       )
     );
@@ -181,7 +279,8 @@ describe('review API', () => {
             'content-type': 'application/json'
           },
           body: JSON.stringify({
-            reviewVersionId: created.review.latestVersion.id
+            reviewVersionId: created.review.latestVersion.id,
+            runtimeTestPackageId
           })
         }
       )
@@ -214,6 +313,7 @@ describe('review API', () => {
     const created = await createdResponse.json<{
       review: { id: string; latestVersion: { id: string } };
     }>();
+    const runtimeTestPackageId = await createReadyRuntimePackage(created.review.id);
     const pairingResponse = await exports.default.fetch(
       new Request(
         `https://preflight.test/v1/reviews/${created.review.id}/companion-pairings`,
@@ -224,7 +324,10 @@ describe('review API', () => {
             origin: 'http://localhost:1337',
             'content-type': 'application/json'
           },
-          body: JSON.stringify({ reviewVersionId: created.review.latestVersion.id })
+          body: JSON.stringify({
+            reviewVersionId: created.review.latestVersion.id,
+            runtimeTestPackageId
+          })
         }
       )
     );
@@ -274,6 +377,7 @@ describe('review API', () => {
     const created = await createdResponse.json<{
       review: { id: string; latestVersion: { id: string } };
     }>();
+    const runtimeTestPackageId = await createReadyRuntimePackage(created.review.id);
     const pairingResponse = await exports.default.fetch(
       new Request(
         `https://preflight.test/v1/reviews/${created.review.id}/companion-pairings`,
@@ -284,7 +388,10 @@ describe('review API', () => {
             origin: 'http://localhost:1337',
             'content-type': 'application/json'
           },
-          body: JSON.stringify({ reviewVersionId: created.review.latestVersion.id })
+          body: JSON.stringify({
+            reviewVersionId: created.review.latestVersion.id,
+            runtimeTestPackageId
+          })
         }
       )
     );
@@ -332,6 +439,7 @@ describe('review API', () => {
         latestVersion: { id: string; result: { artifact: { sha256: string } } };
       };
     }>();
+    const runtimeTestPackageId = await createReadyRuntimePackage(created.review.id);
 
     const createRunResponse = await exports.default.fetch(
       new Request(
@@ -345,6 +453,7 @@ describe('review API', () => {
           },
           body: JSON.stringify({
             reviewVersionId: created.review.latestVersion.id,
+            runtimeTestPackageId,
             actorRole: 'reviewer',
             evidenceTrust: 'webflow_observed',
             status: 'validated'
@@ -371,14 +480,12 @@ describe('review API', () => {
       bundleSha256: created.review.latestVersion.result.artifact.sha256,
       actorRole: 'developer',
       evidenceTrust: 'partner_supplied',
-      policyVersion: 'companion-policy.v2',
+      runtimeTestPackageId,
+      policyVersion: 'companion-policy.v3',
       status: 'ready'
     });
     expect(createdRun.run.missions.map((mission) => mission.id)).toEqual([
-      'configure',
-      'publish',
-      'production_runtime',
-      'uninstall_cleanup'
+      'production_runtime'
     ]);
 
     const elevatedMission = await exports.default.fetch(
@@ -715,6 +822,114 @@ describe('review API', () => {
     );
   });
 
+  test('rejects Designer Extension URLs as production-runtime targets', async () => {
+    const form = new FormData();
+    form.set(
+      'bundle',
+      new File([await createBundle()], 'consent-pro.zip', { type: 'application/zip' })
+    );
+    const createdResponse = await exports.default.fetch(
+      new Request('https://preflight.test/v1/reviews', {
+        method: 'POST',
+        headers: { authorization: 'Bearer test-token', origin: 'http://localhost:1337' },
+        body: form
+      })
+    );
+    const created = await createdResponse.json<{ review: { id: string } }>();
+    const response = await exports.default.fetch(
+      new Request(
+        `https://preflight.test/v1/reviews/${created.review.id}/runtime-test-packages`,
+        {
+          method: 'POST',
+          headers: {
+            authorization: 'Bearer test-token',
+            origin: 'http://localhost:1337',
+            'content-type': 'application/json'
+          },
+          body: JSON.stringify({
+            targetUrl: 'https://68821e9ad5797a48cfc68499.webflow-ext.com/6a552d5baa59e9a3a1ebba5d/',
+            sandboxInstallationId: 'webflow-sandbox-site-123',
+            sandboxOwnershipConfirmed: true,
+            license: {
+              mode: 'installation_allowlist',
+              expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString()
+            },
+            runtimeArtifacts: [{
+              url: 'https://api.consentpro.com/v2/cdn/runtime.js',
+              sha256: 'a'.repeat(64),
+              integrity: TEST_RUNTIME_INTEGRITY
+            }],
+            negativeProxyProbe: {
+              method: 'GET',
+              urlTemplate: 'https://api.consentpro.com/v2/proxy?url={canaryUrl}'
+            },
+            lifecycle: { readySelector: '[data-runtime-ready]' }
+          })
+        }
+      )
+    );
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({
+      error: 'invalid_runtime_test_package',
+      message: expect.stringMatching(/published-site origin/i)
+    });
+  });
+
+  test('rejects a runtime package whose SRI does not describe the pinned SHA-256 bytes', async () => {
+    const form = new FormData();
+    form.set(
+      'bundle',
+      new File([await createBundle()], 'consent-pro.zip', { type: 'application/zip' })
+    );
+    const createdResponse = await exports.default.fetch(
+      new Request('https://preflight.test/v1/reviews', {
+        method: 'POST',
+        headers: { authorization: 'Bearer test-token', origin: 'http://localhost:1337' },
+        body: form
+      })
+    );
+    const created = await createdResponse.json<{ review: { id: string } }>();
+
+    const response = await exports.default.fetch(
+      new Request(
+        `https://preflight.test/v1/reviews/${created.review.id}/runtime-test-packages`,
+        {
+          method: 'POST',
+          headers: {
+            authorization: 'Bearer test-token',
+            origin: 'http://localhost:1337',
+            'content-type': 'application/json'
+          },
+          body: JSON.stringify({
+            targetUrl: 'http://127.0.0.1:4173/runtime-fixture',
+            sandboxInstallationId: 'webflow-sandbox-site-123',
+            sandboxOwnershipConfirmed: true,
+            license: {
+              mode: 'installation_allowlist',
+              expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString()
+            },
+            runtimeArtifacts: [{
+              url: 'http://127.0.0.1:4173/runtime-v1.js',
+              sha256: 'a'.repeat(64),
+              integrity: 'sha256-mismatched-runtime-bytes'
+            }],
+            negativeProxyProbe: {
+              method: 'GET',
+              urlTemplate: 'http://127.0.0.1:4173/proxy?url={canaryUrl}'
+            },
+            lifecycle: { readySelector: '[data-runtime-ready]' }
+          })
+        }
+      )
+    );
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({
+      error: 'invalid_runtime_test_package',
+      message: expect.stringMatching(/same SHA-256 bytes/i)
+    });
+  });
+
   test('accepts partner test input but only lets the Webflow coordinator issue an observation job', async () => {
     const form = new FormData();
     form.set(
@@ -764,7 +979,7 @@ describe('review API', () => {
               {
                 url: 'http://127.0.0.1:4173/runtime-v1.js',
                 sha256: 'a'.repeat(64),
-                integrity: 'sha256-test-fixture-digest'
+                integrity: TEST_RUNTIME_INTEGRITY
               }
             ],
             negativeProxyProbe: {
@@ -773,11 +988,7 @@ describe('review API', () => {
                 'http://127.0.0.1:4173/proxy?url={canaryUrl}'
             },
             lifecycle: {
-              readySelector: '[data-runtime-ready]',
-              cleanupTrigger: {
-                type: 'click',
-                selector: '[data-runtime-uninstall]'
-              }
+              readySelector: '[data-runtime-ready]'
             }
           })
         }
@@ -980,18 +1191,24 @@ describe('review API', () => {
         cookiesRemoved: true,
         formValuesMasked: true
       },
+      runtimeReadyObserved: true,
       runtimeArtifacts: [
         {
           url: 'http://127.0.0.1:4173/runtime-v1.js',
           expectedSha256: 'a'.repeat(64),
           observedSha256: 'a'.repeat(64),
-          integrity: 'sha256-test-fixture-digest',
+          integrity: TEST_RUNTIME_INTEGRITY,
+          domIntegrity: TEST_RUNTIME_INTEGRITY,
+          domCrossOrigin: 'anonymous',
+          loadedByPage: true,
           sourceMap: { available: false }
         }
       ],
+      runtimeCreatedScripts: [],
+      unreviewedRuntimeScripts: [],
       cleanup: {
-        status: 'residue_detected',
-        residue: ['script:http://127.0.0.1:4173/runtime-v1.js']
+        status: 'not_tested',
+        residue: []
       },
       negativeProxyCanary: {
         url: 'http://127.0.0.1:4174/webflow-runtime-canary',
@@ -1222,12 +1439,14 @@ describe('review API', () => {
       observationJobId: string;
       status: string;
       trust: string;
+      security: { status: string; blockers: string[] };
       artifacts: Array<{ kind: string; sha256: string; objectKey: string }>;
     }>();
     expect(acceptedBody).toMatchObject({
       observationJobId: approvedBody.observationJob.id,
       status: 'complete',
       trust: 'webflow_observed',
+      security: { status: 'passed', blockers: [] },
       artifacts: [
         {
           kind: 'screenshot_after_cleanup',
@@ -1270,7 +1489,23 @@ describe('review API', () => {
       consumed_at: expect.any(String),
       evidence_trust: 'webflow_observed'
     });
-    expect(JSON.parse(completed!.evidence_manifest_json)).toEqual(baseManifest);
+    expect(JSON.parse(completed!.evidence_manifest_json)).toEqual({
+      ...baseManifest,
+      securityEvaluation: {
+        status: 'passed',
+        predicates: {
+          publishedTarget: true,
+          runtimeReadyObserved: true,
+          runtimeLoadedByPage: true,
+          runtimeHashMatched: true,
+          runtimeIntegrityMatched: true,
+          noRuntimeCreatedScripts: true,
+          noUnreviewedRuntimeScripts: true,
+          negativeProxyBlocked: true
+        },
+        blockers: []
+      }
+    });
     const storedArtifact = await env.ARTIFACTS.get(
       acceptedBody.artifacts[0]!.objectKey
     );

@@ -7,10 +7,7 @@ import type {
 } from './types';
 
 export const COMPANION_MISSIONS = [
-  'configure',
-  'publish',
-  'production_runtime',
-  'uninstall_cleanup'
+  'production_runtime'
 ] as const satisfies readonly CompanionMissionId[];
 
 const SHA256 = /^[a-f0-9]{64}$/;
@@ -19,6 +16,7 @@ interface ReviewVersionBinding {
   reviewId: string;
   reviewVersionId: string;
   bundleSha256: string;
+  runtimeTestPackageId: string;
 }
 
 interface CompanionRunAuthority {
@@ -69,6 +67,7 @@ export function createCompanionRun(
     !binding.reviewId ||
     !binding.reviewVersionId ||
     !SHA256.test(binding.bundleSha256) ||
+    !binding.runtimeTestPackageId ||
     !authority.runId ||
     !authority.policyVersion ||
     !validDate(authority.now)
@@ -144,22 +143,17 @@ export function recordCompanionMission(
         }
       : candidate
   );
-  const requiredComplete = missions.every(
-    (candidate) => candidate.status === 'passed' || candidate.status === 'not_applicable'
-  );
   const hasFailed = missions.some((candidate) => candidate.status === 'failed');
   const hasBlocked = missions.some((candidate) => candidate.status === 'blocked');
 
   return {
     ...run,
     missions,
-    status: requiredComplete
-      ? 'validated'
-      : hasFailed
+    status: hasFailed
         ? 'failed'
         : hasBlocked
           ? 'blocked'
-          : 'running',
+          : 'blocked',
     updatedAt: input.observedAt
   };
 }
@@ -178,10 +172,5 @@ export function finalizeCompanionRun(
   ) {
     throw new Error('Companion run authority does not match the server session.');
   }
-  const complete = run.missions.every(
-    (mission) =>
-      (mission.status === 'passed' && mission.receipt?.evidenceTrust === expectedTrust) ||
-      (mission.status === 'not_applicable' && Boolean(mission.approvedNotApplicableReason))
-  );
-  return { ...run, status: complete ? 'validated' : 'blocked', updatedAt: now };
+  return { ...run, status: 'blocked', updatedAt: now };
 }

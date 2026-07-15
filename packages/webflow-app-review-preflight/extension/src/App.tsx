@@ -234,7 +234,6 @@ function RuntimeObservationCard({
   const [artifactSha256, setArtifactSha256] = useState('');
   const [integrity, setIntegrity] = useState('');
   const [readySelector, setReadySelector] = useState('[data-runtime-ready]');
-  const [cleanupSelector, setCleanupSelector] = useState('[data-runtime-uninstall]');
   const [proxyTemplate, setProxyTemplate] = useState('');
   const [showNewPackage, setShowNewPackage] = useState(false);
   const trustLabel = latest?.observation?.trust === 'webflow_observed'
@@ -264,8 +263,7 @@ function RuntimeObservationCard({
         urlTemplate: proxyTemplate
       },
       lifecycle: {
-        readySelector,
-        cleanupTrigger: { type: 'click', selector: cleanupSelector }
+        readySelector
       }
     });
   };
@@ -310,16 +308,16 @@ function RuntimeObservationCard({
                 </div>
               </div>
               <div className="observation-results">
-                <div className={latest.observation.evidence.cleanupStatus === 'clean' ? 'pass' : 'fail'}>
+                <div className={latest.observation.evidence.securityStatus === 'passed' ? 'pass' : 'fail'}>
                   <strong>
-                    {latest.observation.evidence.cleanupStatus === 'clean'
-                      ? 'Cleanup passed'
-                      : 'Cleanup residue found'}
+                    {latest.observation.evidence.securityStatus === 'passed'
+                      ? 'Runtime security passed'
+                      : 'Runtime security blocked'}
                   </strong>
                   <span>
-                    {latest.observation.evidence.cleanupStatus === 'clean'
-                      ? 'No tracked runtime state remained.'
-                      : `${latest.observation.evidence.cleanupResidue.length} tracked item${latest.observation.evidence.cleanupResidue.length === 1 ? '' : 's'} remained.`}
+                    {latest.observation.evidence.securityStatus === 'passed'
+                      ? 'Published code matched its reviewed hash and SRI requirements.'
+                      : latest.observation.evidence.blockers.join(' ')}
                   </span>
                 </div>
                 <div className={latest.observation.evidence.negativeProxyOutcome === 'blocked' ? 'pass' : 'fail'}>
@@ -409,14 +407,10 @@ function RuntimeObservationCard({
             </label>
           </fieldset>
           <details className="advanced-settings">
-            <summary>Lifecycle selectors and proxy check</summary>
+            <summary>Runtime-ready selector and proxy check</summary>
             <label>
               Ready selector
               <input required value={readySelector} onChange={(event) => setReadySelector(event.target.value)} />
-            </label>
-            <label>
-              Uninstall selector
-              <input required value={cleanupSelector} onChange={(event) => setCleanupSelector(event.target.value)} />
             </label>
             <label>
               Proxy probe URL template
@@ -505,6 +499,9 @@ function ReviewDetail({
     'idle' | 'connecting' | 'connected' | 'error'
   >('idle');
   const blockerText = result.summary.securityBlockers === 1 ? 'blocker' : 'blockers';
+  const readyRuntimePackage = runtimeTestPackages.find(
+    (candidate) => candidate.status === 'ready' && Date.parse(candidate.license.expiresAt) > Date.now()
+  ) ?? null;
 
   return (
     <main className="review-view">
@@ -540,12 +537,12 @@ function ReviewDetail({
           </span>
         </div>
         <p>
-          Connect this exact revision, then complete four runtime-focused missions in Designer
-          and on the published site. External authorization is a setup prerequisite, not a scored check.
+          Connect this exact revision only after the runtime package is ready. The companion can
+          capture partner evidence, but only the Webflow-controlled browser can verify code security.
         </p>
         <button
           className="button button-primary"
-          disabled={busy || companionStatus === 'connecting' || companionStatus === 'connected'}
+          disabled={busy || !readyRuntimePackage || companionStatus === 'connecting' || companionStatus === 'connected'}
           onClick={async () => {
             setCompanionStatus('connecting');
             try {
@@ -565,7 +562,11 @@ function ReviewDetail({
         {companionStatus === 'error' ? (
           <small role="alert">Install or reopen the browser companion, then try again.</small>
         ) : (
-          <small>The one-time connection expires in five minutes and cannot be reused.</small>
+          <small>
+            {readyRuntimePackage
+              ? 'The one-time connection expires in five minutes and cannot be reused.'
+              : 'Prepare a valid runtime test package before connecting.'}
+          </small>
         )}
       </section>
 
@@ -832,9 +833,16 @@ export function App({
             await refreshRuntimePackages(review.id);
           })}
           onPairCompanion={async () => {
+            const runtimeTestPackage = runtimeTestPackages.find(
+              (candidate) => candidate.status === 'ready' && Date.parse(candidate.license.expiresAt) > Date.now()
+            );
+            if (!runtimeTestPackage) {
+              throw new Error('Prepare a valid runtime test package before connecting.');
+            }
             const pairing = await api.createCompanionPairing(
               review.id,
-              review.latestVersion.id
+              review.latestVersion.id,
+              runtimeTestPackage.id
             );
             await pairCompanion(pairing);
           }}

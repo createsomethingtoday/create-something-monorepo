@@ -29,8 +29,7 @@ function contract(): RuntimeObservationJobContract {
       url: 'http://127.0.0.1:4173/proxy?url=http%3A%2F%2F127.0.0.1%3A4174%2Fcanary'
     },
     lifecycle: {
-      readySelector: '[data-runtime-ready]',
-      cleanupTrigger: { type: 'click', selector: '[data-runtime-uninstall]' }
+      readySelector: '[data-runtime-ready]'
     },
     controls: {
       allowedHosts: ['127.0.0.1'],

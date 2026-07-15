@@ -9,7 +9,8 @@ import {
 const VERSION = {
   reviewId: 'review-consent-pro',
   reviewVersionId: 'version-2',
-  bundleSha256: 'a'.repeat(64)
+  bundleSha256: 'a'.repeat(64),
+  runtimeTestPackageId: 'runtime-package-consent-pro-v2'
 };
 
 describe('App Review Companion runs', () => {
@@ -30,10 +31,7 @@ describe('App Review Companion runs', () => {
       officialDecision: null
     });
     expect(run.missions.map((mission) => mission.id)).toEqual([
-      'configure',
-      'publish',
-      'production_runtime',
-      'uninstall_cleanup'
+      'production_runtime'
     ]);
     expect(COMPANION_MISSIONS).not.toContain('install_authorize');
     expect(run.missions.every((mission) => mission.required && mission.status === 'pending')).toBe(
@@ -69,7 +67,7 @@ describe('App Review Companion runs', () => {
       policyVersion: 'companion-policy.v1',
       now: '2026-07-14T20:00:00.000Z'
     });
-    for (const [index, mission] of COMPANION_MISSIONS.slice(0, -1).entries()) {
+    for (const [index, mission] of COMPANION_MISSIONS.entries()) {
       run = recordCompanionMission(
         run,
         mission,
@@ -89,5 +87,6 @@ describe('App Review Companion runs', () => {
     expect(finalizeCompanionRun(run, authority, '2026-07-14T20:10:00.000Z').status).toBe(
       'blocked'
     );
+    expect(run.status).toBe('blocked');
   });
 });

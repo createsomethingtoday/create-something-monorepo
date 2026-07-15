@@ -22,17 +22,12 @@ describe('App Review Companion capture policy', () => {
   });
 
   test('never treats incomplete mission coverage as validated', () => {
-    expect(MISSIONS).toEqual([
-      'configure',
-      'publish',
-      'production_runtime',
-      'uninstall_cleanup'
-    ]);
+    expect(MISSIONS).toEqual(['production_runtime']);
     expect(
       coverageStatus(MISSIONS.slice(0, -1).map((id) => ({ id, status: 'passed' })))
     ).toBe('blocked');
     expect(coverageStatus(MISSIONS.map((id) => ({ id, status: 'passed' })))).toBe(
-      'validated'
+      'blocked'
     );
   });
 });

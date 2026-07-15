@@ -1,8 +1,5 @@
 export const MISSIONS = [
-  'configure',
-  'publish',
-  'production_runtime',
-  'uninstall_cleanup'
+  'production_runtime'
 ] as const;
 
 export type MissionId = (typeof MISSIONS)[number];
@@ -61,17 +58,9 @@ export function normalizeEvent(event: CapturedEvent): CapturedEvent {
 }
 
 export function coverageStatus(
-  missions: Array<{ id: MissionId; status: string }>
+  _missions: Array<{ id: MissionId; status: string }>
 ): 'validated' | 'blocked' {
-  return MISSIONS.every((id) =>
-    missions.some(
-      (mission) =>
-        mission.id === id &&
-        (mission.status === 'passed' || mission.status === 'not_applicable')
-    )
-  )
-    ? 'validated'
-    : 'blocked';
+  return 'blocked';
 }
 
 export async function sha256(value: unknown): Promise<string> {

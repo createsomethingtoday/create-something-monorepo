@@ -3,10 +3,7 @@ import { COMPANION_API_BASE } from './config';
 import { requestMissionTarget } from './permissions';
 
 const LABELS: Record<MissionId, { title: string; detail: string }> = {
-  configure: { title: 'Configure', detail: 'Confirm the externally authorized app is configured to produce the reviewed runtime.' },
-  publish: { title: 'Publish', detail: 'Publish the test site and capture the transition.' },
-  production_runtime: { title: 'Production runtime', detail: 'Exercise the published behavior and capture the scripts, requests, and resulting state.' },
-  uninstall_cleanup: { title: 'Uninstall & cleanup', detail: 'Remove the app and verify the published runtime leaves no residue.' }
+  production_runtime: { title: 'Capture runtime evidence', detail: 'Exercise the published behavior and capture partner-supplied scripts, requests, and resulting state. Webflow-controlled automation issues the security result.' }
 };
 
 const root = document.querySelector<HTMLElement>('#app')!;
@@ -35,6 +32,7 @@ async function render(): Promise<void> {
         <label>Session token<input name="token" type="password" value="test-token" autocomplete="off" required></label>
         <label>Review ID<input name="reviewId" required></label>
         <label>Version ID<input name="reviewVersionId" required></label>
+        <label>Runtime package ID<input name="runtimeTestPackageId" required></label>
         <button type="submit">Begin validation</button>
       </form><aside class="privacy"><strong>Privacy boundary</strong><p>No headers, cookies, bodies, form values, or storage values are captured.</p></aside></main>` : `
       <header><div class="mark">W</div><div><h1>App Review Companion</h1><p>One mission set. Evidence everyone can trust.</p></div></header>
@@ -58,7 +56,7 @@ async function render(): Promise<void> {
   const completed = state.run.missions.filter((mission: any) => mission.status === 'passed').length;
   root.innerHTML = `
     <header><div class="mark">W</div><div><h1>App Review Companion</h1><p>${escape(state.run.actorRole === 'reviewer' ? 'Reviewer replay' : 'Developer validation')}</p></div></header>
-    <main><section class="status card"><div><span class="eyebrow">${escape(state.run.evidenceTrust.replace('_', ' '))}</span><h2>${escape(state.run.status === 'validated' ? 'Validation complete' : 'Complete runtime validation')}</h2></div><strong>${completed}/${state.run.missions.length}</strong></section>
+    <main><section class="status card"><div><span class="eyebrow">${escape(state.run.evidenceTrust.replace('_', ' '))}</span><h2>Capture production-runtime evidence</h2></div><strong>${completed}/${state.run.missions.length}</strong></section>
     <div class="version">Version <code>${escape(state.run.reviewVersionId)}</code><br>Bundle <code>${escape(state.run.bundleSha256.slice(0, 12))}…</code></div>
     <section class="card"><strong>Authorization is already complete</strong><p>External app authorization is a setup prerequisite and is not scored or recorded by this validation.</p></section>
     <section class="missions">${state.run.missions.map((mission: any, index: number) => {
@@ -66,7 +64,7 @@ async function render(): Promise<void> {
       const done = mission.status === 'passed';
       return `<article class="mission ${done ? 'done' : ''} ${active ? 'active' : ''}"><div class="step">${done ? '✓' : index + 1}</div><div class="mission-copy"><h3>${escape(LABELS[mission.id as MissionId].title)}</h3><p>${escape(LABELS[mission.id as MissionId].detail)}</p><span>${escape(active ? `${state.events.length} observations captured` : mission.status)}</span></div><button data-mission="${mission.id}" data-action="${active ? 'complete' : 'start'}" ${done || (state.activeMission && !active) ? 'disabled' : ''}>${active ? 'Complete' : done ? 'Saved' : 'Start'}</button></article>`;
     }).join('')}</section>
-    ${state.run.status === 'validated' ? '<section class="success"><strong>Checkpoint earned</strong><p>All required missions have version-bound evidence. This is not an official Marketplace decision.</p></section>' : '<aside class="privacy"><strong>Closed-world validation</strong><p>Missing evidence remains Blocked. Individual checks never produce a partial approval.</p></aside>'}
+    ${completed === state.run.missions.length ? '<section class="success"><strong>Partner evidence saved</strong><p>This does not verify code security. The Webflow-controlled runtime job must independently load and hash the published code.</p></section>' : '<aside class="privacy"><strong>Evidence only</strong><p>Browser buttons cannot produce a security pass. Missing Webflow-observed evidence remains Blocked.</p></aside>'}
     </main>`;
   document.querySelectorAll<HTMLButtonElement>('[data-mission]').forEach((button) => {
     button.addEventListener('click', async () => {

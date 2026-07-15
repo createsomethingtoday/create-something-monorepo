@@ -8,6 +8,10 @@ let canaryHits = 0;
 
 const runtimeSha256 = createHash('sha256').update(runtimeSource).digest('hex');
 const integrity = `sha256-${createHash('sha256').update(runtimeSource).digest('base64')}`;
+const servedRuntimeSource = process.env.RUNTIME_FIXTURE_TAMPERED === '1'
+  ? `${runtimeSource}\n/* tampered after review */`
+  : runtimeSource;
+const dynamicLoader = process.env.RUNTIME_FIXTURE_DYNAMIC === '1';
 
 const fixture = createServer((request, response) => {
   const url = new URL(request.url ?? '/', `http://127.0.0.1:${fixturePort}`);
@@ -16,18 +20,21 @@ const fixture = createServer((request, response) => {
       'content-type': 'text/html; charset=utf-8',
       'cache-control': 'no-store'
     });
+    const runtimeMarkup = dynamicLoader
+      ? `<script>
+          const script = document.createElement('script');
+          script.src = '/runtime-v1.js';
+          script.integrity = '${integrity}';
+          script.crossOrigin = 'anonymous';
+          document.head.appendChild(script);
+        </script>`
+      : `<script src="/runtime-v1.js" integrity="${integrity}" crossorigin="anonymous"></script>`;
     response.end(`<!doctype html>
 <html><head><meta charset="utf-8"><title>Runtime fixture</title></head>
 <body>
   <h1>Webflow-owned runtime fixture</h1>
   <input value="customer@example.com" aria-label="Sensitive fixture field">
-  <script>
-    const script = document.createElement('script');
-    script.src = '/runtime-v1.js';
-    script.integrity = '${integrity}';
-    script.crossOrigin = 'anonymous';
-    document.head.appendChild(script);
-  </script>
+  ${runtimeMarkup}
 </body></html>`);
     return;
   }
@@ -37,7 +44,7 @@ const fixture = createServer((request, response) => {
       'access-control-allow-origin': '*',
       'cache-control': 'public, max-age=31536000, immutable'
     });
-    response.end(runtimeSource);
+    response.end(servedRuntimeSource);
     return;
   }
   if (url.pathname === '/runtime-v1.js.map') {
@@ -87,6 +94,8 @@ console.log(JSON.stringify({
   runtimeUrl: `http://127.0.0.1:${fixturePort}/runtime-v1.js`,
   runtimeSha256,
   integrity,
+  tampered: servedRuntimeSource !== runtimeSource,
+  dynamicLoader,
   canaryUrl: `http://127.0.0.1:${canaryPort}/webflow-runtime-canary`
 }));
 

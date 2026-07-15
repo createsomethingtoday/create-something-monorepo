@@ -6,7 +6,7 @@ It is a preflight and evidence system. It does not approve or reject an app.
 
 The shared browser lifecycle surface lives in `packages/webflow-app-review-companion`. The native Designer Extension remains the bundle-feedback and version-history surface; the companion observes Designer and published-site browser behavior for the same exact review version. Neither surface may promote partner evidence to `Webflow observed` or make an official decision.
 
-For the Consent Pro pilot, authorization happens outside the Designer Extension. It is an unscored setup prerequisite: the scored browser lifecycle is configure, publish, production runtime, and uninstall cleanup. No surface captures credentials or claims that external authorization was validated.
+For the Consent Pro pilot, authorization happens outside the Designer Extension. Authorization, configuration, and publication are unscored prerequisites. Uninstall cleanup is also unscored while the Custom Code API cannot reliably complete that lifecycle. The only security result comes from Webflow-controlled execution of the pinned production runtime; no companion button can issue it.
 
 ## Package boundaries
 
@@ -30,10 +30,10 @@ Raw partner bundles remain in private, owner-scoped R2 keys. They do not enter A
 
 Licensed and account-gated behavior uses a different trust model from the public runtime fetch:
 
-1. The partner prepares a Runtime Test Package tied to the current review version and bundle SHA. It names a dedicated Webflow sandbox installation, a one-hour installation allowlist, immutable runtime URLs plus SHA-256/SRI, lifecycle selectors, and one bounded proxy-canary template.
+1. The partner prepares a Runtime Test Package tied to the current review version and bundle SHA. It names a dedicated published Webflow test site, a one-hour installation allowlist, immutable runtime URLs whose SHA-256 and SRI resolve to the same bytes, one runtime-ready selector, and one bounded proxy-canary template.
 2. The package is labeled `Partner supplied`. It is test input, not evidence. The partner cannot create an executable observation job, read its capability, upload review evidence, or change review state.
 3. After explicit human approval and sandbox-ownership verification, the Webflow coordinator creates a 15-minute observation job. The one-time capability is returned to the coordinator once and stored only as a SHA-256 hash.
-4. E2B opens a fresh Chromium context, enforces the exact host and request budgets, masks form controls, captures scripts/hashes/SRI/source maps, sanitized network and console metadata, structural DOM/storage state, cleanup residue, screenshots, and the Webflow-owned negative proxy canary.
+4. E2B opens a fresh Chromium context, proves it reached the published origin, instruments runtime-created script elements before page code executes, enforces the exact host and request budgets, masks form controls, and captures scripts, executed hashes, DOM SRI, source maps, sanitized network and console metadata, structural DOM/storage state, screenshots, and the Webflow-owned negative proxy canary.
 5. The runner uploads a strict multipart manifest and artifact set. The Worker revalidates every binding, redaction receipt, type, size, and digest before writing immutable R2 objects and D1 metadata. A successful upload consumes the capability; replay fails closed.
 6. The extension displays the earned `Webflow observed` result. It remains evidence only and cannot approve, reject, close a deterministic finding, or write to governance.
 
@@ -82,6 +82,8 @@ RUNTIME_EVIDENCE_OUTPUT=.codex/partner-runtime-evidence/evidence/browser \
 node packages/webflow-app-review-preflight/runner/scripts/run-local-integration.mjs
 ```
 
+The integration fixture supports explicit negative receipts. Start its server with `RUNTIME_FIXTURE_DYNAMIC=1` to prove runtime-created loaders are blocked, or `RUNTIME_FIXTURE_TAMPERED=1` to prove changed bytes and a missing ready signal are blocked; set `RUNTIME_EXPECT_SECURITY_STATUS=blocked` on the integration command. Every run writes `receipt.json` beside its immutable artifacts.
+
 The integration script uses fixed local development identities only. Production uses separately managed Webflow identity, coordinator authorization, and per-job capabilities; do not reuse local tokens.
 
 ## Security boundaries
@@ -94,12 +96,12 @@ The integration script uses fixed local development identities only. Production 
 - Runtime jobs accept only public HTTPS targets, reject templates and private/local hosts, and allow at most eight targets, twenty requests, ten seconds per request, and sixty seconds total.
 - Runtime evidence contains response metadata and object keys only—no response bodies, credentials, cookies, tokens, official decisions, or governance writes.
 - E2B, Webflow app, pattern coordinator, and governance approver credentials are separate server-side boundaries.
-- Runtime Test Packages accept only a named Webflow sandbox, a short installation allowlist, pinned artifacts, bounded lifecycle selectors, and one proxy template whose host is already in the job allowlist.
+- Runtime Test Packages accept only a named Webflow sandbox, a short installation allowlist, pinned artifacts with matching SHA-256/SRI bytes, one bounded runtime-ready selector, and one proxy template whose host is already in the job allowlist.
 - Observation jobs use hashed, expiring, one-time capabilities. Partner identity cannot issue or fetch a job or submit evidence.
 - Evidence intake is limited to 128 KB of manifest data, 10 MB total artifacts, a fixed file/type allowlist, per-file limits, strict SHA-256 validation, and secret-shaped metadata rejection before R2 writes.
 - The runner records no headers, cookies, response/request bodies, form values, or storage values. Query values and console personal/secret-shaped text are redacted, and form controls are masked in screenshots.
 - Production sandbox and canary URLs must be HTTPS and on Webflow-controlled origins. Development HTTP/private targets are accepted only when the Worker itself runs outside production.
-- Mutable runtime delivery, hash mismatch, source-map gaps, proxy exposure, and incomplete uninstall remain evidence-backed blockers or manual-review inputs. Observation does not downgrade them.
+- Mutable runtime delivery, hash/SRI mismatch, runtime-created script elements, unreviewed child scripts, source-map gaps, and proxy exposure remain evidence-backed blockers or manual-review inputs. Cleanup is recorded only for legacy compatibility and is not scored. Observation does not downgrade security findings.
 
 ## Verification
 

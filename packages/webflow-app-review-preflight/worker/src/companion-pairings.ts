@@ -55,16 +55,30 @@ export async function createCompanionPairing(
   if (typeof input.reviewVersionId !== 'string' || !input.reviewVersionId) {
     throw new CompanionPairingInputError('An exact reviewVersionId is required.');
   }
+  if (typeof input.runtimeTestPackageId !== 'string' || !input.runtimeTestPackageId) {
+    throw new CompanionPairingInputError(
+      'Prepare a ready runtime test package before connecting the browser companion.'
+    );
+  }
   const actorRole = reviewerIds(env).has(user.id) ? 'reviewer' : 'developer';
   const version = await env.DB.prepare(
-    `SELECT r.owner_user_id
+    `SELECT r.owner_user_id, p.id AS runtime_test_package_id
        FROM review_versions rv
        JOIN reviews r ON r.id = rv.review_id
+       JOIN runtime_test_packages p ON p.review_version_id = rv.id
       WHERE rv.review_id = ? AND rv.id = ?
+        AND p.id = ? AND p.status = 'ready' AND p.license_expires_at > ?
         AND (? = 'reviewer' OR r.owner_user_id = ?)`
   )
-    .bind(reviewId, input.reviewVersionId, actorRole, user.id)
-    .first<{ owner_user_id: string }>();
+    .bind(
+      reviewId,
+      input.reviewVersionId,
+      input.runtimeTestPackageId,
+      new Date().toISOString(),
+      actorRole,
+      user.id
+    )
+    .first<{ owner_user_id: string; runtime_test_package_id: string }>();
   if (!version) return null;
 
   const now = new Date();
@@ -72,15 +86,17 @@ export async function createCompanionPairing(
   const code = randomToken();
   await env.DB.prepare(
     `INSERT INTO companion_pairings
-      (id, code_sha256, review_id, review_version_id, owner_user_id, actor_user_id,
+      (id, code_sha256, review_id, review_version_id, runtime_test_package_id,
+       owner_user_id, actor_user_id,
        actor_site_id, actor_role, created_at, expires_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   )
     .bind(
       crypto.randomUUID(),
       await sha256(code),
       reviewId,
       input.reviewVersionId,
+      version.runtime_test_package_id,
       version.owner_user_id,
       user.id,
       user.siteId,
@@ -101,6 +117,7 @@ export async function redeemCompanionPairing(
       expiresAt: string;
       reviewId: string;
       reviewVersionId: string;
+      runtimeTestPackageId: string;
       actorRole: 'developer' | 'reviewer';
       evidenceTrust: 'partner_supplied' | 'webflow_observed';
     }
@@ -115,13 +132,16 @@ export async function redeemCompanionPairing(
     `UPDATE companion_pairings
         SET redeemed_at = ?
       WHERE code_sha256 = ? AND redeemed_at IS NULL AND expires_at > ?
-      RETURNING id, review_id, review_version_id, actor_user_id, actor_site_id, actor_role`
+        AND runtime_test_package_id IS NOT NULL
+      RETURNING id, review_id, review_version_id, runtime_test_package_id,
+                actor_user_id, actor_site_id, actor_role`
   )
     .bind(now.toISOString(), await sha256(input.code), now.toISOString())
     .first<{
       id: string;
       review_id: string;
       review_version_id: string;
+      runtime_test_package_id: string;
       actor_user_id: string;
       actor_site_id: string | null;
       actor_role: 'developer' | 'reviewer';
@@ -132,9 +152,10 @@ export async function redeemCompanionPairing(
   const expiresAt = new Date(now.getTime() + SESSION_TTL_MS).toISOString();
   await env.DB.prepare(
     `INSERT INTO companion_sessions
-      (id, token_sha256, pairing_id, review_id, review_version_id, actor_user_id,
+      (id, token_sha256, pairing_id, review_id, review_version_id,
+       runtime_test_package_id, actor_user_id,
        actor_site_id, actor_role, created_at, expires_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   )
     .bind(
       crypto.randomUUID(),
@@ -142,6 +163,7 @@ export async function redeemCompanionPairing(
       pairing.id,
       pairing.review_id,
       pairing.review_version_id,
+      pairing.runtime_test_package_id,
       pairing.actor_user_id,
       pairing.actor_site_id,
       pairing.actor_role,
@@ -155,6 +177,7 @@ export async function redeemCompanionPairing(
     expiresAt,
     reviewId: pairing.review_id,
     reviewVersionId: pairing.review_version_id,
+    runtimeTestPackageId: pairing.runtime_test_package_id,
     actorRole: pairing.actor_role,
     evidenceTrust:
       pairing.actor_role === 'reviewer' ? 'webflow_observed' : 'partner_supplied'

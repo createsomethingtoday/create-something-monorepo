@@ -96,6 +96,7 @@ export interface PreflightApi {
   ): Promise<RuntimeTestPackageView>;
   createCompanionPairing(
     reviewId: string,
-    reviewVersionId: string
+    reviewVersionId: string,
+    runtimeTestPackageId: string
   ): Promise<CompanionPairing>;
 }

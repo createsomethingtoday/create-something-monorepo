@@ -20,6 +20,9 @@ const outputDir = resolve(process.env.COMPANION_EVIDENCE_OUTPUT ?? resolve(repo,
 const persistDir = await mkdtemp(join(tmpdir(), 'companion-d1-'));
 const profileDir = await mkdtemp(join(tmpdir(), 'companion-chrome-'));
 const pnpmCli = resolve(dirname(process.execPath), '../lib/node_modules/corepack/dist/pnpm.js');
+const runtimeSource = 'const n=document.createElement("div");n.id="consent-runtime";n.textContent="Runtime active";document.body.append(n);';
+const runtimeSha256 = createHash('sha256').update(runtimeSource).digest('hex');
+const runtimeIntegrity = `sha256-${createHash('sha256').update(runtimeSource).digest('base64')}`;
 await mkdir(outputDir, { recursive: true });
 
 const build = spawnSync(
@@ -47,12 +50,17 @@ const fixture = createServer((request, response) => {
   }
   if (request.url === '/runtime.js') {
     response.setHeader('content-type', 'text/javascript');
-    response.end('const n=document.createElement("div");n.id="consent-runtime";n.textContent="Runtime active";document.body.append(n);');
+    response.end(runtimeSource);
+    return;
+  }
+  if (request.url?.startsWith('/proxy?')) {
+    response.statusCode = 403;
+    response.end('blocked');
     return;
   }
   response.setHeader('content-type', 'text/html; charset=utf-8');
   if (request.url === '/published') {
-    response.end('<!doctype html><title>Published test site</title><main><h1>Published site</h1><button id="cleanup">Remove runtime</button></main><script src="/runtime.js"></script><script>cleanup.onclick=()=>document.querySelector("#consent-runtime")?.remove()</script>');
+    response.end(`<!doctype html><title>Published test site</title><main><h1>Published site</h1></main><script src="/runtime.js" integrity="${runtimeIntegrity}" crossorigin="anonymous"></script>`);
     return;
   }
   response.end('<!doctype html><title>Designer fixture</title><main><h1>Webflow Designer test site</h1><div id="app-panel">App ready</div><button id="publish">Publish</button></main><script src="/designer-app.js"></script>');
@@ -135,6 +143,29 @@ try {
   form.set('bundle', new File([bundle], 'companion-fixture.zip', { type: 'application/zip' }));
   const created = await api('/v1/reviews', { method: 'POST', body: form });
   const review = created.review;
+  const runtimePackage = await api(`/v1/reviews/${review.id}/runtime-test-packages`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      targetUrl: `http://localhost:${fixturePort}/published`,
+      sandboxInstallationId: 'webflow-owned-companion-fixture',
+      sandboxOwnershipConfirmed: true,
+      license: {
+        mode: 'installation_allowlist',
+        expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString()
+      },
+      runtimeArtifacts: [{
+        url: `http://localhost:${fixturePort}/runtime.js`,
+        sha256: runtimeSha256,
+        integrity: runtimeIntegrity
+      }],
+      negativeProxyProbe: {
+        method: 'GET',
+        urlTemplate: `http://localhost:${fixturePort}/proxy?url={canaryUrl}`
+      },
+      lifecycle: { readySelector: '#consent-runtime' }
+    })
+  });
 
   context = await chromium.launchPersistentContext(profileDir, {
     headless: true,
@@ -152,7 +183,10 @@ try {
   const pairing = await api(`/v1/reviews/${review.id}/companion-pairings`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ reviewVersionId: review.latestVersion.id })
+    body: JSON.stringify({
+      reviewVersionId: review.latestVersion.id,
+      runtimeTestPackageId: runtimePackage.testPackage.id
+    })
   });
   const pairingResult = await fixturePage.evaluate(
     ({ targetExtensionId, code }) => new Promise((resolvePairing, rejectPairing) => {
@@ -175,13 +209,12 @@ try {
     { targetExtensionId: extensionId, code: pairing.pairing.code }
   );
   if (!pairingResult?.ok) throw new Error(pairingResult?.error ?? 'External pairing failed.');
-  await panel.getByText('Complete runtime validation').waitFor();
+  await panel.getByText('Capture production-runtime evidence').waitFor();
 
-  const missions = ['configure', 'publish', 'production_runtime', 'uninstall_cleanup'];
+  const missions = ['production_runtime'];
   for (const mission of missions) {
-    const targetUrl = mission === 'production_runtime' || mission === 'uninstall_cleanup' ? publishedUrl : designerUrl;
+    const targetUrl = publishedUrl;
     await fixturePage.goto(targetUrl);
-    if (mission === 'uninstall_cleanup') await fixturePage.locator('#cleanup').click();
     const tabs = await panel.evaluate(() => chrome.tabs.query({}));
     const target = tabs.find((tab) => tab.url === targetUrl);
     if (!target?.id) throw new Error(`Fixture tab unavailable for ${mission}.`);
@@ -201,18 +234,21 @@ try {
     await panel.reload();
   }
 
-  await panel.getByText('Validation complete').waitFor();
-  await panel.screenshot({ path: join(outputDir, 'validated.png'), fullPage: true });
+  await panel.getByText('Partner evidence saved').waitFor();
+  await panel.screenshot({ path: join(outputDir, 'partner-evidence.png'), fullPage: true });
   const state = await panel.evaluate(() => chrome.runtime.sendMessage({ type: 'COMPANION_GET_STATE' }));
-  if (state.state.run.status !== 'validated') throw new Error('Complete mission set did not validate.');
+  if (state.state.run.status !== 'blocked') throw new Error('Partner evidence incorrectly produced a security pass.');
   if (JSON.stringify(state.state.run.missions.map((mission) => mission.id)) !== JSON.stringify(missions)) {
-    throw new Error('Runtime-first policy did not expose the exact four scored missions.');
+    throw new Error('Runtime-first policy did not expose the single partner-evidence mission.');
   }
 
   const blocked = await api(`/v1/reviews/${review.id}/companion-runs`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ reviewVersionId: review.latestVersion.id })
+    body: JSON.stringify({
+      reviewVersionId: review.latestVersion.id,
+      runtimeTestPackageId: runtimePackage.testPackage.id
+    })
   });
   const finalized = await api(`/v1/companion-runs/${blocked.run.id}/complete`, { method: 'POST' });
   if (finalized.run.status !== 'blocked') throw new Error('Incomplete run did not fail closed.');
@@ -221,6 +257,7 @@ try {
     reviewId: review.id,
     reviewVersionId: review.latestVersion.id,
     bundleSha256: review.latestVersion.result.artifact.sha256,
+    runtimeTestPackageId: runtimePackage.testPackage.id,
     run: state.state.run,
     blockedRun: finalized.run,
     extensionId,

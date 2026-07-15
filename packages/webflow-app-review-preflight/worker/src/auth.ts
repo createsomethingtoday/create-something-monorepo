@@ -77,9 +77,11 @@ export async function authenticateCompanion(
   if (!token) return null;
   const now = new Date().toISOString();
   const session = await env.DB.prepare(
-    `SELECT actor_user_id, actor_site_id, actor_role, review_id, review_version_id
+    `SELECT actor_user_id, actor_site_id, actor_role, review_id, review_version_id,
+            runtime_test_package_id
        FROM companion_sessions
-      WHERE token_sha256 = ? AND revoked_at IS NULL AND expires_at > ?`
+      WHERE token_sha256 = ? AND revoked_at IS NULL AND expires_at > ?
+        AND runtime_test_package_id IS NOT NULL`
   )
     .bind(await sha256(token), now)
     .first<{
@@ -88,6 +90,7 @@ export async function authenticateCompanion(
       actor_role: 'developer' | 'reviewer';
       review_id: string;
       review_version_id: string;
+      runtime_test_package_id: string;
     }>();
   if (!session) return null;
   return {
@@ -96,6 +99,7 @@ export async function authenticateCompanion(
     companionSession: {
       reviewId: session.review_id,
       reviewVersionId: session.review_version_id,
+      runtimeTestPackageId: session.runtime_test_package_id,
       actorRole: session.actor_role
     }
   };

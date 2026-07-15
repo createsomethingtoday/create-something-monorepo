@@ -24686,7 +24686,6 @@
     const [artifactSha256, setArtifactSha256] = (0, import_react.useState)("");
     const [integrity, setIntegrity] = (0, import_react.useState)("");
     const [readySelector, setReadySelector] = (0, import_react.useState)("[data-runtime-ready]");
-    const [cleanupSelector, setCleanupSelector] = (0, import_react.useState)("[data-runtime-uninstall]");
     const [proxyTemplate, setProxyTemplate] = (0, import_react.useState)("");
     const [showNewPackage, setShowNewPackage] = (0, import_react.useState)(false);
     const trustLabel = latest?.observation?.trust === "webflow_observed" ? "Webflow observed" : latest ? "Partner supplied" : "Not prepared";
@@ -24710,8 +24709,7 @@
           urlTemplate: proxyTemplate
         },
         lifecycle: {
-          readySelector,
-          cleanupTrigger: { type: "click", selector: cleanupSelector }
+          readySelector
         }
       });
     };
@@ -24756,9 +24754,9 @@
             ] })
           ] }),
           /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "observation-results", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: latest.observation.evidence.cleanupStatus === "clean" ? "pass" : "fail", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: latest.observation.evidence.cleanupStatus === "clean" ? "Cleanup passed" : "Cleanup residue found" }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: latest.observation.evidence.cleanupStatus === "clean" ? "No tracked runtime state remained." : `${latest.observation.evidence.cleanupResidue.length} tracked item${latest.observation.evidence.cleanupResidue.length === 1 ? "" : "s"} remained.` })
+            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: latest.observation.evidence.securityStatus === "passed" ? "pass" : "fail", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: latest.observation.evidence.securityStatus === "passed" ? "Runtime security passed" : "Runtime security blocked" }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: latest.observation.evidence.securityStatus === "passed" ? "Published code matched its reviewed hash and SRI requirements." : latest.observation.evidence.blockers.join(" ") })
             ] }),
             /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: latest.observation.evidence.negativeProxyOutcome === "blocked" ? "pass" : "fail", children: [
               /* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: latest.observation.evidence.negativeProxyOutcome === "blocked" ? "Proxy canary blocked" : latest.observation.evidence.negativeProxyOutcome === "exposed" ? "Proxy canary exposed" : "Proxy canary inconclusive" }),
@@ -24846,14 +24844,10 @@
               ] })
             ] }),
             /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("details", { className: "advanced-settings", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("summary", { children: "Lifecycle selectors and proxy check" }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("summary", { children: "Runtime-ready selector and proxy check" }),
               /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", { children: [
                 "Ready selector",
                 /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", { required: true, value: readySelector, onChange: (event) => setReadySelector(event.target.value) })
-              ] }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", { children: [
-                "Uninstall selector",
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", { required: true, value: cleanupSelector, onChange: (event) => setCleanupSelector(event.target.value) })
               ] }),
               /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", { children: [
                 "Proxy probe URL template",
@@ -24927,6 +24921,9 @@
     const [confirmRuntime, setConfirmRuntime] = (0, import_react.useState)(false);
     const [companionStatus, setCompanionStatus] = (0, import_react.useState)("idle");
     const blockerText = result.summary.securityBlockers === 1 ? "blocker" : "blockers";
+    const readyRuntimePackage = runtimeTestPackages.find(
+      (candidate) => candidate.status === "ready" && Date.parse(candidate.license.expiresAt) > Date.now()
+    ) ?? null;
     return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("main", { className: "review-view", children: [
       /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { className: "back-button", onClick: onBack, children: "\u2190 All runs" }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", { className: "review-header", children: [
@@ -24965,12 +24962,12 @@
           ] }),
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: `manual-pill ${companionStatus === "connected" ? "approved" : ""}`, children: companionStatus === "connected" ? "Connected" : "Not connected" })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: "Connect this exact revision, then complete four runtime-focused missions in Designer and on the published site. External authorization is a setup prerequisite, not a scored check." }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: "Connect this exact revision only after the runtime package is ready. The companion can capture partner evidence, but only the Webflow-controlled browser can verify code security." }),
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
           "button",
           {
             className: "button button-primary",
-            disabled: busy || companionStatus === "connecting" || companionStatus === "connected",
+            disabled: busy || !readyRuntimePackage || companionStatus === "connecting" || companionStatus === "connected",
             onClick: async () => {
               setCompanionStatus("connecting");
               try {
@@ -24983,7 +24980,7 @@
             children: companionStatus === "connecting" ? "Connecting\u2026" : companionStatus === "connected" ? "Browser companion connected" : "Connect browser companion"
           }
         ),
-        companionStatus === "error" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("small", { role: "alert", children: "Install or reopen the browser companion, then try again." }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("small", { children: "The one-time connection expires in five minutes and cannot be reused." })
+        companionStatus === "error" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("small", { role: "alert", children: "Install or reopen the browser companion, then try again." }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("small", { children: readyRuntimePackage ? "The one-time connection expires in five minutes and cannot be reused." : "Prepare a valid runtime test package before connecting." })
       ] }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", { className: "findings", "aria-labelledby": "findings-title", children: [
         /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "section-heading", children: [
@@ -25212,9 +25209,16 @@
             await refreshRuntimePackages(review.id);
           }),
           onPairCompanion: async () => {
+            const runtimeTestPackage = runtimeTestPackages.find(
+              (candidate) => candidate.status === "ready" && Date.parse(candidate.license.expiresAt) > Date.now()
+            );
+            if (!runtimeTestPackage) {
+              throw new Error("Prepare a valid runtime test package before connecting.");
+            }
             const pairing = await api.createCompanionPairing(
               review.id,
-              review.latestVersion.id
+              review.latestVersion.id,
+              runtimeTestPackage.id
             );
             await pairCompanion(pairing);
           }
@@ -25351,13 +25355,13 @@
         });
         return { ...body.testPackage, observation: null };
       },
-      async createCompanionPairing(reviewId, reviewVersionId) {
+      async createCompanionPairing(reviewId, reviewVersionId, runtimeTestPackageId) {
         const body = await request(
           `/v1/reviews/${reviewId}/companion-pairings`,
           {
             method: "POST",
             headers: { "content-type": "application/json" },
-            body: JSON.stringify({ reviewVersionId })
+            body: JSON.stringify({ reviewVersionId, runtimeTestPackageId })
           }
         );
         return body.pairing;

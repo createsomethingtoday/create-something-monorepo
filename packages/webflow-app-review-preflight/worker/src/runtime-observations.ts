@@ -27,6 +27,8 @@ const ARTIFACT_POLICY: Record<
 > = {
   screenshot_before: { contentType: 'image/png', maxBytes: 2 * 1024 * 1024, extension: 'png' },
   screenshot_after_install: { contentType: 'image/png', maxBytes: 2 * 1024 * 1024, extension: 'png' },
+  screenshot_after_observation: { contentType: 'image/png', maxBytes: 2 * 1024 * 1024, extension: 'png' },
+  // Legacy artifact kind retained so previously captured evidence remains readable.
   screenshot_after_cleanup: { contentType: 'image/png', maxBytes: 2 * 1024 * 1024, extension: 'png' },
   network_log: { contentType: 'application/json', maxBytes: 1024 * 1024, extension: 'json' },
   console_log: { contentType: 'application/json', maxBytes: 512 * 1024, extension: 'json' },
@@ -78,6 +80,10 @@ interface ValidatedEvidenceArtifact extends EvidenceArtifactDeclaration {
   objectKey: string;
 }
 
+type RuntimeSecurityPredicates = NonNullable<
+  RuntimeObservationSummary['evidence']
+>['securityPredicates'];
+
 function isPrivateIpv4(hostname: string): boolean {
   const parts = hostname.split('.').map(Number);
   if (
@@ -116,6 +122,18 @@ function normalizeUrl(
   const host = url.hostname.toLowerCase();
   if (url.username || url.password || !host || !['http:', 'https:'].includes(url.protocol)) {
     throw new RuntimeTestPackageError(`${kind} URL must not contain credentials.`);
+  }
+
+  if (
+    kind === 'sandbox' &&
+    (host === 'webflow-ext.com' ||
+      host.endsWith('.webflow-ext.com') ||
+      host === 'design.webflow.com' ||
+      host.endsWith('.design.webflow.com'))
+  ) {
+    throw new RuntimeTestPackageError(
+      'Published runtime evidence requires a Webflow published-site origin, not Designer or a Designer Extension URL.'
+    );
   }
 
   if (env.ENVIRONMENT === 'production') {
@@ -173,20 +191,8 @@ function parseLifecycle(value: unknown): RuntimeLifecycleContract {
     throw new RuntimeTestPackageError('Lifecycle instructions are required.');
   }
   const lifecycle = value as Record<string, unknown>;
-  const cleanup = lifecycle.cleanupTrigger;
-  if (!cleanup || typeof cleanup !== 'object' || Array.isArray(cleanup)) {
-    throw new RuntimeTestPackageError('A cleanup trigger is required.');
-  }
-  const cleanupRecord = cleanup as Record<string, unknown>;
-  if (cleanupRecord.type !== 'click') {
-    throw new RuntimeTestPackageError('The cleanup trigger must be a click action.');
-  }
   return {
-    readySelector: boundedSelector(lifecycle.readySelector, 'Ready selector'),
-    cleanupTrigger: {
-      type: 'click',
-      selector: boundedSelector(cleanupRecord.selector, 'Cleanup selector')
-    }
+    readySelector: boundedSelector(lifecycle.readySelector, 'Ready selector')
   };
 }
 
@@ -215,6 +221,14 @@ function parseArtifacts(value: unknown, env: Env): RuntimeArtifactPin[] {
       artifact.integrity.length > 160
     ) {
       throw new RuntimeTestPackageError('Every runtime artifact requires a SHA-256 SRI value.');
+    }
+    const digestBytes = artifact.sha256.match(/.{2}/g)!.map((pair) =>
+      String.fromCharCode(Number.parseInt(pair, 16))
+    ).join('');
+    if (artifact.integrity !== `sha256-${btoa(digestBytes)}`) {
+      throw new RuntimeTestPackageError(
+        'The runtime SHA-256 and SRI must describe the same SHA-256 bytes.'
+      );
     }
     return {
       url: url.toString(),
@@ -489,13 +503,21 @@ export async function listRuntimeTestPackages(
     if (row.job_id && row.job_status && row.approved_at && row.expires_at) {
       const manifest = row.evidence_manifest_json
         ? (JSON.parse(row.evidence_manifest_json) as {
-            cleanup?: { status?: unknown; residue?: unknown };
-            negativeProxyCanary?: { outcome?: unknown };
+          cleanup?: { status?: unknown; residue?: unknown };
+          negativeProxyCanary?: { outcome?: unknown };
+          securityEvaluation?: {
+            status?: unknown;
+            predicates?: unknown;
+            blockers?: unknown;
+          };
           })
         : null;
       const cleanupStatus = manifest?.cleanup?.status;
       const cleanupResidue = manifest?.cleanup?.residue;
       const proxyOutcome = manifest?.negativeProxyCanary?.outcome;
+      const securityStatus = manifest?.securityEvaluation?.status;
+      const securityPredicates = manifest?.securityEvaluation?.predicates;
+      const securityBlockers = manifest?.securityEvaluation?.blockers;
       const artifactRows = row.evidence_trust === 'webflow_observed'
         ? await env.DB.prepare(
             `SELECT kind, content_type, bytes, sha256
@@ -520,10 +542,18 @@ export async function listRuntimeTestPackages(
         completedAt: row.consumed_at,
         evidence:
           row.evidence_trust === 'webflow_observed' &&
-          (cleanupStatus === 'clean' || cleanupStatus === 'residue_detected') &&
+          (cleanupStatus === 'clean' || cleanupStatus === 'residue_detected' || cleanupStatus === 'not_tested') &&
           Array.isArray(cleanupResidue) &&
+          (securityStatus === 'passed' || securityStatus === 'blocked') &&
+          securityPredicates !== null && typeof securityPredicates === 'object' &&
+          Array.isArray(securityBlockers) &&
           (proxyOutcome === 'blocked' || proxyOutcome === 'exposed' || proxyOutcome === 'error')
             ? {
+                securityStatus,
+                securityPredicates: securityPredicates as RuntimeSecurityPredicates,
+                blockers: securityBlockers.filter(
+                  (item): item is string => typeof item === 'string'
+                ),
                 cleanupStatus,
                 cleanupResidue: cleanupResidue.filter(
                   (item): item is string => typeof item === 'string'
@@ -721,6 +751,9 @@ function validateManifest(
     if (
       record.expectedSha256 !== pin.sha256 ||
       record.integrity !== pin.integrity ||
+      typeof record.loadedByPage !== 'boolean' ||
+      (record.domIntegrity !== null && typeof record.domIntegrity !== 'string') ||
+      (record.domCrossOrigin !== null && typeof record.domCrossOrigin !== 'string') ||
       typeof record.observedSha256 !== 'string' ||
       !HEX_SHA256.test(record.observedSha256)
     ) {
@@ -745,8 +778,38 @@ function validateManifest(
     }
   }
 
+  if (typeof manifest.runtimeReadyObserved !== 'boolean') {
+    throw new RuntimeObservationEvidenceError(
+      'Runtime-ready observation is missing.'
+    );
+  }
+
+  if (
+    !Array.isArray(manifest.runtimeCreatedScripts) ||
+    manifest.runtimeCreatedScripts.length > 100 ||
+    manifest.runtimeCreatedScripts.some(
+      (item) => typeof item !== 'string' || item.length > 2048
+    )
+  ) {
+    throw new RuntimeObservationEvidenceError(
+      'Runtime-created script observations are missing or too large.'
+    );
+  }
+
+  if (
+    !Array.isArray(manifest.unreviewedRuntimeScripts) ||
+    manifest.unreviewedRuntimeScripts.length > 100 ||
+    manifest.unreviewedRuntimeScripts.some(
+      (item) => typeof item !== 'string' || item.length > 2048
+    )
+  ) {
+    throw new RuntimeObservationEvidenceError(
+      'Unreviewed runtime script observations are missing or too large.'
+    );
+  }
+
   const cleanup = requireRecord(manifest.cleanup, 'Cleanup observation');
-  if (!['clean', 'residue_detected'].includes(String(cleanup.status))) {
+  if (!['clean', 'residue_detected', 'not_tested'].includes(String(cleanup.status))) {
     throw new RuntimeObservationEvidenceError('Cleanup status is invalid.');
   }
   if (
@@ -807,6 +870,62 @@ function validateManifest(
   });
 
   return Object.assign(manifest, { artifacts });
+}
+
+export function evaluateRuntimeSecurity(
+  manifest: Record<string, unknown>,
+  contract: RuntimeObservationJobContract
+): {
+  status: 'passed' | 'blocked';
+  predicates: RuntimeSecurityPredicates;
+  blockers: string[];
+} {
+  const observations = manifest.runtimeArtifacts as Array<Record<string, unknown>>;
+  const canary = manifest.negativeProxyCanary as Record<string, unknown>;
+  const targetHost = new URL(contract.target.url).hostname.toLowerCase();
+  const predicates: RuntimeSecurityPredicates = {
+    publishedTarget:
+      targetHost !== 'design.webflow.com' &&
+      !targetHost.endsWith('.design.webflow.com') &&
+      targetHost !== 'webflow-ext.com' &&
+      !targetHost.endsWith('.webflow-ext.com'),
+    runtimeReadyObserved: manifest.runtimeReadyObserved === true,
+    runtimeLoadedByPage: contract.runtimeArtifacts.every((pin) =>
+      observations.some((item) => item.url === pin.url && item.loadedByPage === true)
+    ),
+    runtimeHashMatched: contract.runtimeArtifacts.every((pin) =>
+      observations.some(
+        (item) => item.url === pin.url && item.observedSha256 === pin.sha256
+      )
+    ),
+    runtimeIntegrityMatched: contract.runtimeArtifacts.every((pin) =>
+      observations.some(
+        (item) => item.url === pin.url && item.domIntegrity === pin.integrity
+      )
+    ),
+    noRuntimeCreatedScripts:
+      Array.isArray(manifest.runtimeCreatedScripts) &&
+      manifest.runtimeCreatedScripts.length === 0,
+    noUnreviewedRuntimeScripts:
+      Array.isArray(manifest.unreviewedRuntimeScripts) &&
+      manifest.unreviewedRuntimeScripts.length === 0,
+    negativeProxyBlocked: canary.outcome === 'blocked'
+  };
+  const blockers = [
+    !predicates.publishedTarget ? 'Use a real published Webflow test-site URL.' : null,
+    !predicates.runtimeReadyObserved ? 'The runtime-ready signal was not observed on the published page.' : null,
+    !predicates.runtimeLoadedByPage ? 'The pinned runtime was not loaded by the published page.' : null,
+    !predicates.runtimeHashMatched ? 'The executed runtime bytes did not match the pinned SHA-256.' : null,
+    !predicates.runtimeIntegrityMatched ? 'The runtime script did not carry the pinned SRI value.' : null,
+    !predicates.noRuntimeCreatedScripts ? 'The runtime created additional script elements at execution time.' : null,
+    !predicates.noUnreviewedRuntimeScripts ? 'The runtime loaded additional unreviewed scripts.' : null,
+    !predicates.negativeProxyBlocked ? 'The negative proxy canary was not blocked.' : null
+  ].filter((item): item is string => item !== null);
+  return {
+    status: blockers.length === 0 ? 'passed' : 'blocked',
+    predicates,
+    blockers
+  };
 }
 
 async function validateEvidenceArtifacts(
@@ -902,6 +1021,11 @@ export async function recordRuntimeObservationEvidence(
       observationJobId: string;
       status: 'complete';
       trust: 'webflow_observed';
+      security: {
+        status: 'passed' | 'blocked';
+        predicates: RuntimeSecurityPredicates;
+        blockers: string[];
+      };
       artifacts: Array<{ kind: string; sha256: string; objectKey: string }>;
     }
   | { unauthorized: true }
@@ -945,7 +1069,10 @@ export async function recordRuntimeObservationEvidence(
     throw new RuntimeObservationEvidenceError('Evidence manifest must be valid JSON.');
   }
   const contract = JSON.parse(row.contract_json) as RuntimeObservationJobContract;
-  const manifest = validateManifest(parsedManifest, observationJobId, contract);
+  const validatedManifest = validateManifest(parsedManifest, observationJobId, contract);
+  const manifest = Object.assign(validatedManifest, {
+    securityEvaluation: evaluateRuntimeSecurity(validatedManifest, contract)
+  });
   const artifacts = await validateEvidenceArtifacts(
     form,
     manifest.artifacts,
@@ -1018,7 +1145,9 @@ export async function recordRuntimeObservationEvidence(
           observationJobId,
           testPackageId: contract.testPackageId,
           trust: 'webflow_observed',
-          artifactCount: artifacts.length
+          artifactCount: artifacts.length,
+          securityStatus: manifest.securityEvaluation.status,
+          securityBlockers: manifest.securityEvaluation.blockers
         }),
         completedAt
       )
@@ -1039,6 +1168,7 @@ export async function recordRuntimeObservationEvidence(
     observationJobId,
     status: 'complete',
     trust: 'webflow_observed',
+    security: manifest.securityEvaluation,
     artifacts: artifacts.map((artifact) => ({
       kind: artifact.kind,
       sha256: artifact.sha256,

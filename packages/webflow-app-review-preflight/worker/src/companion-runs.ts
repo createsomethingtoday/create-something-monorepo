@@ -10,7 +10,7 @@ import {
 import type { AuthenticatedUser, Env } from './types';
 
 const MAX_INPUT_BYTES = 128 * 1024;
-const POLICY_VERSION = 'companion-policy.v2';
+const POLICY_VERSION = 'companion-policy.v3';
 const FORBIDDEN_CAPTURE_KEY = /^(?:authorization|cookie|set-cookie|headers?|requestBody|responseBody|formValues?|storageValue|password|secret|credentials?|token)$/i;
 const SECRET_CAPTURE_VALUE = /(?:Bearer\s+[A-Za-z0-9._~+/=-]{8,}|-----BEGIN [^-]*PRIVATE KEY-----|\bsk-[A-Za-z0-9_-]{12,})/i;
 const MAX_SCREENSHOT_BYTES = 2 * 1024 * 1024;
@@ -23,6 +23,7 @@ interface VersionRow {
   version_id: string;
   artifact_sha256: string;
   owner_user_id: string;
+  runtime_test_package_id: string;
 }
 
 interface StoredRunRow {
@@ -39,15 +40,17 @@ async function insertRun(
 ): Promise<void> {
   await env.DB.prepare(
     `INSERT INTO companion_runs
-      (id, review_id, review_version_id, owner_user_id, actor_user_id, actor_role,
+      (id, review_id, review_version_id, runtime_test_package_id,
+       owner_user_id, actor_user_id, actor_role,
        evidence_trust, policy_version, status, replay_of_run_id, run_json,
        created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   )
     .bind(
       run.id,
       run.reviewId,
       run.reviewVersionId,
+      run.runtimeTestPackageId,
       ownerUserId,
       actorUserId,
       run.actorRole,
@@ -178,6 +181,7 @@ async function validateCapturedEvidence(
 async function findVersion(
   reviewId: string,
   reviewVersionId: string,
+  runtimeTestPackageId: string,
   env: Env,
   user: AuthenticatedUser
 ): Promise<VersionRow | null> {
@@ -188,15 +192,31 @@ async function findVersion(
   ) {
     return null;
   }
+  if (
+    user.companionSession &&
+    user.companionSession.runtimeTestPackageId !== runtimeTestPackageId
+  ) {
+    return null;
+  }
   const authority = authorityForUser(user, env);
   return env.DB.prepare(
-    `SELECT rv.review_id, rv.id AS version_id, rv.artifact_sha256, r.owner_user_id
+    `SELECT rv.review_id, rv.id AS version_id, rv.artifact_sha256, r.owner_user_id,
+            p.id AS runtime_test_package_id
        FROM review_versions rv
        JOIN reviews r ON r.id = rv.review_id
+       JOIN runtime_test_packages p ON p.review_version_id = rv.id
       WHERE rv.review_id = ? AND rv.id = ?
+        AND p.id = ? AND p.status = 'ready' AND p.license_expires_at > ?
         AND (? = 'reviewer' OR r.owner_user_id = ?)`
   )
-    .bind(reviewId, reviewVersionId, authority.actorRole, user.id)
+    .bind(
+      reviewId,
+      reviewVersionId,
+      runtimeTestPackageId,
+      new Date().toISOString(),
+      authority.actorRole,
+      user.id
+    )
     .first<VersionRow>();
 }
 
@@ -210,7 +230,16 @@ export async function createCompanionRunForReview(
   if (typeof input.reviewVersionId !== 'string' || !input.reviewVersionId) {
     throw new CompanionRunInputError('An exact reviewVersionId is required.');
   }
-  const version = await findVersion(reviewId, input.reviewVersionId, env, user);
+  if (typeof input.runtimeTestPackageId !== 'string' || !input.runtimeTestPackageId) {
+    throw new CompanionRunInputError('A ready runtimeTestPackageId is required.');
+  }
+  const version = await findVersion(
+    reviewId,
+    input.reviewVersionId,
+    input.runtimeTestPackageId,
+    env,
+    user
+  );
   if (!version) return null;
 
   const now = new Date().toISOString();
@@ -219,7 +248,8 @@ export async function createCompanionRunForReview(
     {
       reviewId: version.review_id,
       reviewVersionId: version.version_id,
-      bundleSha256: version.artifact_sha256
+      bundleSha256: version.artifact_sha256,
+      runtimeTestPackageId: version.runtime_test_package_id
     },
     {
       runId: crypto.randomUUID(),
@@ -286,7 +316,8 @@ export async function replayCompanionRun(
     {
       reviewId: source.reviewId,
       reviewVersionId: source.reviewVersionId,
-      bundleSha256: source.bundleSha256
+      bundleSha256: source.bundleSha256,
+      runtimeTestPackageId: source.runtimeTestPackageId
     },
     {
       runId: crypto.randomUUID(),
