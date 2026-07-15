@@ -1,6 +1,7 @@
 import { MISSIONS, normalizeEvent, sanitizeDetail, sanitizeUrl, sha256, sha256Bytes, type CapturedEvent, type MissionId } from './core';
 import { COMPANION_API_BASE } from './config';
 import { captureMaskedVisibleTab } from './capture';
+import { configureToolbarAction } from './action';
 import {
   isAllowedPairingSender,
   redeemAndBeginCompanion,
@@ -56,8 +57,10 @@ async function appendEvent(event: CapturedEvent, tabId?: number): Promise<void> 
   await saveState(state);
 }
 
-chrome.runtime.onInstalled.addListener(() => {
-  void chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+configureToolbarAction({
+  setPanelBehavior: (options) => chrome.sidePanel.setPanelBehavior(options),
+  addOnClicked: (listener) => chrome.action.onClicked.addListener(listener),
+  openPanel: (options) => chrome.sidePanel.open(options)
 });
 
 chrome.webNavigation.onCommitted.addListener((details) => {
