@@ -43,6 +43,11 @@ import {
   createCompanionPairing,
   redeemCompanionPairing
 } from './companion-pairings';
+import {
+  completeWebflowOAuth,
+  startWebflowOAuth,
+  webflowOAuthCompletePage
+} from './webflow-oauth';
 
 async function handle(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
@@ -59,6 +64,15 @@ async function handle(request: Request, env: Env): Promise<Response> {
   }
   if (url.pathname === '/health' && request.method === 'GET') {
     return json({ ok: true, service: 'webflow-app-review-preflight' }, 200, origin);
+  }
+  if (url.pathname === '/v1/oauth/webflow/start' && request.method === 'GET') {
+    return startWebflowOAuth(env);
+  }
+  if (url.pathname === '/v1/oauth/webflow/callback' && request.method === 'GET') {
+    return completeWebflowOAuth(request, env);
+  }
+  if (url.pathname === '/v1/oauth/webflow/complete' && request.method === 'GET') {
+    return webflowOAuthCompletePage();
   }
 
   if (url.pathname === '/v1/companion-pairings/redeem' && request.method === 'POST') {

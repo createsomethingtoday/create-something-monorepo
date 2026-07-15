@@ -67,7 +67,9 @@ pnpm build
 python3 -m http.server 1337 --directory public
 ```
 
-For the real Designer surface, use `pnpm serve` and add the displayed development extension through Webflow Designer. Production promotion must set `globalThis.PREFLIGHT_API_BASE` to the approved Worker origin in the extension shell; the bundle fails closed when that value is absent outside localhost. Production authentication additionally requires the server-only `WEBFLOW_APP_ACCESS_TOKEN` so the Worker can resolve `webflow.getIdToken()` through Webflow's token-resolution endpoint.
+For the real Designer surface, use `pnpm serve` and add the displayed development extension through Webflow Designer. Production promotion must set `globalThis.PREFLIGHT_API_BASE` to the approved Worker origin in the extension shell; the bundle fails closed when that value is absent outside localhost.
+
+Production authentication uses the registered Hybrid App's OAuth installation. Configure `WEBFLOW_CLIENT_ID`, `WEBFLOW_CLIENT_SECRET`, `WEBFLOW_OAUTH_REDIRECT_URI`, and a base64-encoded 32-byte `WEBFLOW_TOKEN_ENCRYPTION_KEY` as server-only Worker configuration. Open `/v1/oauth/webflow/start` to begin the state-bound installation flow. The callback exchanges the single-use code, encrypts the resulting app token before D1 storage, and never sends that token to the browser. The Worker then uses the token to resolve short-lived values from `webflow.getIdToken()`. `WEBFLOW_APP_ACCESS_TOKEN` remains an optional managed-secret fallback for controlled rotation and rollback.
 
 Run the owned-fixture lifecycle after building the runner and starting the local Worker:
 
@@ -88,6 +90,7 @@ The integration script uses fixed local development identities only. Production 
 - Evidence snippets are bounded; full immutable bytes stay in R2.
 - CORS uses an explicit origin allowlist.
 - Production users are owner-scoped through resolved Webflow identity.
+- OAuth callbacks require a matching secure, HttpOnly browser state cookie and a one-time server-side state record. App tokens are AES-GCM encrypted before D1 storage and never returned in browser responses or logs.
 - Runtime jobs accept only public HTTPS targets, reject templates and private/local hosts, and allow at most eight targets, twenty requests, ten seconds per request, and sixty seconds total.
 - Runtime evidence contains response metadata and object keys only—no response bodies, credentials, cookies, tokens, official decisions, or governance writes.
 - E2B, Webflow app, pattern coordinator, and governance approver credentials are separate server-side boundaries.
