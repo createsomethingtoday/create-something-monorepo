@@ -90,6 +90,49 @@ test('identity routes preserve login failure status and clear sessions on logout
   assert.match(cookies, /Max-Age=0/);
 });
 
+test('identity routes invoke fetch with the Workers global receiver', async () => {
+  const receiverSensitiveFetch = async function (this: unknown) {
+    assert.equal(this, globalThis);
+    return Response.json({ error: 'invalid_credentials' }, { status: 401 });
+  } as typeof globalThis.fetch;
+  const routes = createIdentityRoutes({
+    identityApiUrl: 'https://id.createsomething.space',
+    fetch: receiverSensitiveFetch
+  });
+
+  const response = await routes.fetch(
+    new Request('https://workspace.createsomething.io/api/auth/login', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: 'nobody@example.com', password: 'incorrect' })
+    })
+  );
+
+  assert.equal(response!.status, 401);
+  assert.deepEqual(await response!.json(), { error: 'invalid_credentials' });
+});
+
+test('identity routes contain upstream login transport failures', async () => {
+  const routes = createIdentityRoutes({
+    identityApiUrl: 'https://id.createsomething.space',
+    fetch: async () => {
+      throw new Error('identity transport unavailable');
+    }
+  });
+
+  const response = await routes.fetch(
+    new Request('https://workspace.createsomething.io/api/auth/login', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: 'nobody@example.com', password: 'incorrect' })
+    })
+  );
+
+  assert.equal(response!.status, 503);
+  assert.deepEqual(await response!.json(), { error: 'identity_unavailable' });
+  assert.equal(response!.headers.has('set-cookie'), false);
+});
+
 test('identity routes return null for non-auth paths', async () => {
   const routes = createIdentityRoutes({
     identityApiUrl: 'https://id.createsomething.space',
