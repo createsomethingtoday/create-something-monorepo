@@ -41,7 +41,7 @@ deployment:
 | Field | Required value |
 | --- | --- |
 | Account | `Create Something` (`9645bd52e640b8a4f40a3a55ff1dd75a`) |
-| Access team domain | Exact `https://<team>.cloudflareaccess.com` value |
+| Access team domain | `https://createsomething.cloudflareaccess.com` (live `/cdn-cgi/access/certs` returns 200) |
 | Application domain/path | Exact Worker hostname plus `/access/mcp` |
 | Application Audience tag | Exact stable AUD from the created application |
 | Identity provider | Explicit approved provider; verify sign-in returns reviewer email |
@@ -49,8 +49,10 @@ deployment:
 | Managed OAuth settings | Read back application type, redirect policy, token lifetime, and grant/session lifetime |
 
 The current Wrangler login can deploy Workers but cannot read Access
-applications or organizations. Use an authenticated Zero Trust dashboard
-session or a narrowly scoped Access read/write API token; never print the token.
+applications or organizations. The public JWKS endpoint established the team
+domain, but the remaining application values still require an authenticated
+Zero Trust dashboard session or a narrowly scoped Access read/write API token;
+never print the token.
 
 ## Origin verification contract
 

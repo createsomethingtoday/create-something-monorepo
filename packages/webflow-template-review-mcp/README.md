@@ -81,10 +81,11 @@ does not intercept the existing Identity connector or trusted hub bridge.
 - The Worker never treats the opaque `Authorization` bearer or an unsigned
   forwarded email header as reviewer identity.
 
-Required production configuration is intentionally absent until the Access
-application exists and its values have been read back:
+The team issuer has been read back through its live JWKS endpoint. The
+application-specific audience remains intentionally absent until the Access
+application exists and its value has been read back:
 
-- `CF_ACCESS_TEAM_DOMAIN` — exact `https://<team>.cloudflareaccess.com` issuer.
+- `CF_ACCESS_TEAM_DOMAIN` — `https://createsomething.cloudflareaccess.com`.
 - `CF_ACCESS_AUD` — stable Application Audience tag for the path-scoped app.
 
 Promotion order: create/read back the path-scoped Access application and AUD,

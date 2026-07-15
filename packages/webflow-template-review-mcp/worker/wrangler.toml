@@ -20,9 +20,10 @@ CS_IDENTITY_ISSUER = "https://id.createsomething.space"
 OAUTH_ALLOWED_EMAIL_DOMAIN = "webflow.com"
 OAUTH_ALLOWED_EMAILS = "natalia.ledford@webflow.com,eric.unger@webflow.com,vicki.chen@webflow.com,mariana.segura@webflow.com,micah@webflow.com,micah@createsomething.io"
 REVIEWER_AUTH_EMAIL_ALIASES_JSON = '{"acct_wf_micah":["micah@createsomething.io"]}'
-# CF_ACCESS_TEAM_DOMAIN and CF_ACCESS_AUD are intentionally unset until the
-# path-scoped /access/mcp application is created and its issuer/AUD are read
-# back. Never guess or commit placeholder production values.
+CF_ACCESS_TEAM_DOMAIN = "https://createsomething.cloudflareaccess.com"
+# CF_ACCESS_AUD is intentionally unset until the path-scoped /access/mcp
+# application is created and its stable Application Audience tag is read back.
+# Never guess or commit a placeholder production value.
 WEBFLOW_TEMPLATE_VALIDATION_WORKER_URL = "https://validation-worker.createsomething.workers.dev/validate"
 GSAP_VALIDATION_WORKER_URL = "https://gsap-validation-worker.createsomething.workers.dev/validateGsap"
 
