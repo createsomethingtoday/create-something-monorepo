@@ -47,7 +47,7 @@ visual edits stay portable without giving the seed a private monorepo dependency
 
 ## Production Boundary
 
-`workspace.createsomething.space` is an authenticated Cloudflare Worker in front
+`workspace.createsomething.io` is an authenticated Cloudflare Worker in front
 of one RPC-only `standard-1` Sandbox container. Canon verifies the dedicated
 `client-workspace` Identity audience and the Worker applies the exact
 `micah@createsomething.io` allow rule before deriving an opaque signed Sandbox
@@ -112,7 +112,7 @@ the owned preview/session processes, restores `/app/seed/demo-frontend`, removes
 prior session authority, and checkpoints the clean state. It cannot select a
 root, seed, command, storage key, or Sandbox ID.
 
-The production target is `https://workspace.createsomething.space`; its durable
+The production target is `https://workspace.createsomething.io`; its durable
 finish line and live browser verifier are in
 `../../.codex/internal-client-workspace-promotion/goal.md`. Real client
 invitations, allowlist expansion, merge, and credential removal remain separately

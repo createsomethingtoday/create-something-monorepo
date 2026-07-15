@@ -7,7 +7,7 @@
   "compatibility_flags": ["nodejs_compat"],
   "routes": [
     {
-      "pattern": "workspace.createsomething.space",
+      "pattern": "workspace.createsomething.io",
       "custom_domain": true
     }
   ],
