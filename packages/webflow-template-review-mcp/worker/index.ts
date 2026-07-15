@@ -16,6 +16,7 @@ import {
 import { registerPrompts, SERVER_INSTRUCTIONS } from '../src/prompts.js';
 import { registerResources } from '../src/resources.js';
 import {
+  applyReviewerAuthEmailAliases,
   parseReviewerDirectory,
   getReviewerProfileForAccount,
   getReviewerProfileForEmail,
@@ -30,6 +31,7 @@ interface Env {
   AIRTABLE_API_KEY?: string;
   AIRTABLE_BASE_ID?: string;
   REVIEWER_DIRECTORY_JSON?: string;
+  REVIEWER_AUTH_EMAIL_ALIASES_JSON?: string;
   CS_IDENTITY_ISSUER?: string;
   OAUTH_ALLOWED_EMAIL_DOMAIN?: string;
   OAUTH_ALLOWED_EMAILS?: string;
@@ -75,7 +77,7 @@ export class WebflowTemplateReviewMCP extends McpAgent<Env, unknown, RequestProp
       });
     };
 
-    const reviewerDirectory = parseReviewerDirectory(this.env.REVIEWER_DIRECTORY_JSON);
+    const reviewerDirectory = resolveReviewerDirectory(this.env);
     const getReviewer = () => {
       if (this.props?.authMode === 'oauth') {
         return getReviewerProfileForEmail(reviewerDirectory, this.props?.email ?? null);
@@ -140,6 +142,13 @@ function allowedDomain(env: Env): string {
   return (env.OAUTH_ALLOWED_EMAIL_DOMAIN ?? 'webflow.com').trim().toLowerCase();
 }
 
+function resolveReviewerDirectory(env: Pick<Env, 'REVIEWER_DIRECTORY_JSON' | 'REVIEWER_AUTH_EMAIL_ALIASES_JSON'>) {
+  return applyReviewerAuthEmailAliases(
+    parseReviewerDirectory(env.REVIEWER_DIRECTORY_JSON),
+    env.REVIEWER_AUTH_EMAIL_ALIASES_JSON,
+  );
+}
+
 function unauthorized(origin: string, message: string): Response {
   return new Response(JSON.stringify({ ok: false, error: { code: 'UNAUTHORIZED', message } }), {
     status: 401,
@@ -177,7 +186,7 @@ async function authenticateWithIdentity(
     expectedResource: `${origin}/mcp`,
     allowedDomain: allowedDomain(env),
     allowedEmails: parseAllowedEmails(env.OAUTH_ALLOWED_EMAILS),
-    directory: parseReviewerDirectory(env.REVIEWER_DIRECTORY_JSON),
+    directory: resolveReviewerDirectory(env),
     fetch,
   });
   if (result.ok === false) {

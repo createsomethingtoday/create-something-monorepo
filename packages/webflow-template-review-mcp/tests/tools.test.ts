@@ -5,7 +5,12 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 import type { AirtableClient } from '../src/airtable.js';
 import { RUBRIC_DIMENSIONS } from '../src/comprehensive-review-contract.js';
-import type { ReviewerProfile } from '../src/reviewer-directory.js';
+import { resolveOAuthAccess, SCOPE_WRITE } from '../src/oauth-access.js';
+import {
+  applyReviewerAuthEmailAliases,
+  parseReviewerDirectory,
+  type ReviewerProfile,
+} from '../src/reviewer-directory.js';
 import { METRICS_ASSET_FIELD_IDS, TABLE_IDS } from '../src/schema.js';
 import { registerTools, WRITE_TOOL_NAMES } from '../src/tools.js';
 
@@ -539,6 +544,53 @@ test('my_queue defaults to compact active assigned work', async () => {
   assert.equal(items[0]?.latestReviewFeedback, undefined);
 });
 
+test('OAuth auth alias drives my_queue with the canonical Airtable collaborator', async () => {
+  const directory = applyReviewerAuthEmailAliases(
+    parseReviewerDirectory(JSON.stringify({
+      acct_wf_micah: {
+        airtableCollaboratorId: 'usr_micah',
+        email: 'micah@webflow.com',
+        name: 'Micah Johnson',
+      },
+    })),
+    JSON.stringify({ acct_wf_micah: ['micah@createsomething.io'] }),
+  );
+  const access = resolveOAuthAccess({
+    email: 'micah@createsomething.io',
+    allowedDomain: 'webflow.com',
+    allowedEmails: new Set(['micah@createsomething.io']),
+    directory,
+  });
+  assert.equal(access.allowed, true);
+  if (!access.allowed) return;
+
+  const { server, handlers } = createServerHarness();
+  const calls: Array<Record<string, unknown>> = [];
+  const client = {
+    listMyQueueDetailed: async (query: Record<string, unknown>) => {
+      calls.push(query);
+      return { sortApplied: query.sort, items: [] };
+    },
+  } as unknown as AirtableClient;
+
+  registerTools(
+    server,
+    () => client,
+    () => access.reviewerProfile,
+    {},
+    { allowWrites: access.scopes.includes(SCOPE_WRITE) },
+  );
+  const result = await handlers.get('template_review_my_queue')?.({});
+
+  assert.ok(result);
+  assert.equal(parsePayload(result).ok, true);
+  assert.deepEqual(calls[0]?.currentReviewer, {
+    id: 'usr_micah',
+    email: 'micah@webflow.com',
+    name: 'Micah Johnson',
+  });
+});
+
 test('request_changes requires reviewer ownership before mutation', async () => {
   const { server, handlers } = createServerHarness();
   const calls: Array<{ method: string; args: unknown[] }> = [];
@@ -1035,6 +1087,30 @@ test('read-only access registers no write tools', () => {
   assert.notEqual(names.indexOf('template_review_get_review_context'), -1);
   assert.notEqual(names.indexOf('template_review_run_published_site_validation'), -1);
   assert.notEqual(names.indexOf('template_review_format_agent_review_feedback'), -1);
+});
+
+test('unmapped allowlisted OAuth identity receives no reviewer write tools', () => {
+  const access = resolveOAuthAccess({
+    email: 'mariana.segura@webflow.com',
+    allowedDomain: 'webflow.com',
+    allowedEmails: new Set(['mariana.segura@webflow.com']),
+    directory: new Map(),
+  });
+  assert.equal(access.allowed, true);
+  if (!access.allowed) return;
+
+  const { server, names } = createServerHarness();
+  registerTools(
+    server,
+    () => ({} as AirtableClient),
+    () => access.reviewerProfile,
+    {},
+    { allowWrites: access.scopes.includes(SCOPE_WRITE) },
+  );
+
+  for (const writeTool of WRITE_TOOL_NAMES) {
+    assert.equal(names.includes(writeTool), false, `expected ${writeTool} to be hidden for unmapped OAuth identity`);
+  }
 });
 
 test('workflow shadow pilot access registers exactly the queue read tool', () => {

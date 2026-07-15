@@ -61,14 +61,15 @@ Optional environment:
 
 Required reviewer mapping input for `webflow-template-review-mcp`:
 
-- merge Micah into the deployed worker's `REVIEWER_DIRECTORY_JSON`
+- keep the deployed worker's complete `REVIEWER_DIRECTORY_JSON` unchanged
 - use the live Airtable reviewer identity confirmed on `2026-03-17`:
   - account id: `acct_wf_micah`
   - collaborator id: `usr1b45eivydAeayI`
-  - email: `micah@webflow.com`
+  - canonical reviewer email: `micah@webflow.com`
+  - approved authentication alias: `micah@createsomething.io`
   - lane: `wf-template-review-micah`
 
-Reviewer-directory entry to merge into the existing payload:
+Canonical reviewer-directory entry already present in the secret:
 
 ```json
 {
@@ -81,12 +82,15 @@ Reviewer-directory entry to merge into the existing payload:
 }
 ```
 
-Suggested command after merging that entry into the full reviewer-directory payload:
+Configure the approved login alias through the non-secret Worker variable:
 
-```bash
-cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/webflow-template-review-mcp/worker"
-pnpm exec wrangler secret put REVIEWER_DIRECTORY_JSON
+```toml
+REVIEWER_AUTH_EMAIL_ALIASES_JSON = '{"acct_wf_micah":["micah@createsomething.io"]}'
 ```
+
+The Worker merges this overlay only when `acct_wf_micah` already exists in the
+canonical directory. Unknown accounts are ignored and ambiguous aliases fail
+closed, so the alias cannot manufacture or replace a reviewer profile.
 
 ## 5. Deploy all active reviewer Hubs
 
