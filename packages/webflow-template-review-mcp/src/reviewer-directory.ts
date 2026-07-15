@@ -2,6 +2,7 @@ export interface ReviewerProfile {
   accountId: string;
   airtableCollaboratorId: string;
   email?: string;
+  authEmailAliases?: string[];
   name?: string;
   lane?: string;
 }
@@ -12,14 +13,29 @@ function isObject(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
 
+function normalizeEmail(value: string): string {
+  return value.trim().toLowerCase();
+}
+
 function parseReviewerProfile(accountId: string, value: unknown): ReviewerProfile | null {
   if (!isObject(value)) return null;
   const airtableCollaboratorId = typeof value.airtableCollaboratorId === 'string' ? value.airtableCollaboratorId.trim() : '';
   if (!airtableCollaboratorId) return null;
+  const email = typeof value.email === 'string' && value.email.trim() ? value.email.trim() : null;
+  const canonicalEmail = email ? normalizeEmail(email) : null;
+  const authEmailAliases = Array.isArray(value.authEmailAliases)
+    ? [...new Set(
+        value.authEmailAliases
+          .filter((entry): entry is string => typeof entry === 'string')
+          .map(normalizeEmail)
+          .filter((entry) => entry && entry !== canonicalEmail),
+      )]
+    : [];
   return {
     accountId,
     airtableCollaboratorId,
-    ...(typeof value.email === 'string' && value.email.trim() ? { email: value.email.trim() } : {}),
+    ...(email ? { email } : {}),
+    ...(authEmailAliases.length > 0 ? { authEmailAliases } : {}),
     ...(typeof value.name === 'string' && value.name.trim() ? { name: value.name.trim() } : {}),
     ...(typeof value.lane === 'string' && value.lane.trim() ? { lane: value.lane.trim() } : {}),
   };
@@ -47,16 +63,46 @@ export function parseReviewerDirectory(raw?: string | null): ReviewerDirectory {
   return directory;
 }
 
+export function applyReviewerAuthEmailAliases(directory: ReviewerDirectory, raw?: string | null): ReviewerDirectory {
+  if (!raw?.trim()) return directory;
+  const parsed = JSON.parse(raw) as unknown;
+  if (!isObject(parsed)) return directory;
+
+  const withAliases = new Map(directory);
+  for (const [accountId, value] of Object.entries(parsed)) {
+    const profile = directory.get(accountId);
+    if (!profile || !Array.isArray(value)) continue;
+    const canonicalEmail = profile.email ? normalizeEmail(profile.email) : null;
+    const aliases = [...new Set(
+      value
+        .filter((entry): entry is string => typeof entry === 'string')
+        .map(normalizeEmail)
+        .filter((entry) => entry && entry !== canonicalEmail),
+    )];
+    if (aliases.length === 0) continue;
+    withAliases.set(accountId, {
+      ...profile,
+      authEmailAliases: [...new Set([...(profile.authEmailAliases ?? []), ...aliases])],
+    });
+  }
+  return withAliases;
+}
+
 export function getReviewerProfileForAccount(directory: ReviewerDirectory, accountId?: string | null): ReviewerProfile | null {
   if (!accountId) return null;
   return directory.get(accountId) ?? null;
 }
 
 export function getReviewerProfileForEmail(directory: ReviewerDirectory, email?: string | null): ReviewerProfile | null {
-  const normalized = email?.trim().toLowerCase();
+  const normalized = email ? normalizeEmail(email) : '';
   if (!normalized) return null;
+  let matchedProfile: ReviewerProfile | null = null;
   for (const profile of directory.values()) {
-    if (profile.email?.toLowerCase() === normalized) return profile;
+    const canonicalEmail = profile.email ? normalizeEmail(profile.email) : null;
+    const matches = canonicalEmail === normalized || profile.authEmailAliases?.includes(normalized);
+    if (!matches) continue;
+    if (matchedProfile && matchedProfile.accountId !== profile.accountId) return null;
+    matchedProfile = profile;
   }
-  return null;
+  return matchedProfile;
 }

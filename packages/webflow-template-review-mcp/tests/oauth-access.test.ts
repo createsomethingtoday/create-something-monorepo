@@ -11,19 +11,29 @@ import {
   resolveIdentityOAuthRequest,
   resolveOAuthAccess,
 } from '../src/oauth-access.js';
-import { parseReviewerDirectory } from '../src/reviewer-directory.js';
+import {
+  applyReviewerAuthEmailAliases,
+  getReviewerProfileForEmail,
+  parseReviewerDirectory,
+} from '../src/reviewer-directory.js';
 
-const directory = parseReviewerDirectory(
-  JSON.stringify({
-    acct_wf_eric: {
-      airtableCollaboratorId: 'usrEric',
-      email: 'eric.unger@webflow.com',
-      name: 'Eric Unger',
-    },
-  }),
+const directory = applyReviewerAuthEmailAliases(
+  parseReviewerDirectory(JSON.stringify({
+      acct_wf_eric: {
+        airtableCollaboratorId: 'usrEric',
+        email: 'eric.unger@webflow.com',
+        name: 'Eric Unger',
+      },
+      acct_wf_micah: {
+        airtableCollaboratorId: 'usrMicah',
+        email: 'micah@webflow.com',
+        name: 'Micah Johnson',
+      },
+    })),
+  JSON.stringify({ acct_wf_micah: ['micah@createsomething.io'] }),
 );
 
-const allowlist = parseAllowedEmails('micah@webflow.com, eric.unger@webflow.com,mariana.segura@webflow.com');
+const allowlist = parseAllowedEmails('micah@webflow.com,micah@createsomething.io,eric.unger@webflow.com,mariana.segura@webflow.com');
 
 test('fetchIdentityUserInfo resolves a verified reviewer from the owned Identity endpoint', async () => {
   const requests: Request[] = [];
@@ -82,6 +92,35 @@ test('resolveIdentityOAuthRequest maps an Identity bearer onto reviewer-scoped M
     subject: 'user_eric',
     accountId: 'acct_wf_eric',
     email: 'eric.unger@webflow.com',
+    name: null,
+    scopes: [SCOPE_READ, SCOPE_WRITE],
+  });
+});
+
+test('resolveIdentityOAuthRequest maps an approved auth alias onto the canonical reviewer account', async () => {
+  const result = await resolveIdentityOAuthRequest({
+    request: new Request('https://template-review.example.test/mcp', {
+      headers: { Authorization: 'Bearer identity-token' },
+    }),
+    issuer: 'https://id.example.test',
+    expectedResource: 'https://template-review.example.test/mcp',
+    allowedDomain: 'webflow.com',
+    allowedEmails: allowlist,
+    directory,
+    fetch: async () => Response.json({
+      sub: 'user_micah',
+      email: 'micah@createsomething.io',
+      email_verified: true,
+      resource: 'https://template-review.example.test/mcp',
+      scope: 'template-review:read template-review:write',
+    }),
+  });
+
+  assert.deepEqual(result, {
+    ok: true,
+    subject: 'user_micah',
+    accountId: 'acct_wf_micah',
+    email: 'micah@createsomething.io',
     name: null,
     scopes: [SCOPE_READ, SCOPE_WRITE],
   });
@@ -259,7 +298,7 @@ test('resolveIdentityOAuthRequest preserves the exact workflow shadow pilot queu
   if (result.ok) assert.deepEqual(result.scopes, [SCOPE_QUEUE_READ]);
 });
 
-test('resolveOAuthAccess grants write scope to allowlisted reviewers', () => {
+test('resolveOAuthAccess does not grant reviewer write scope without a resolved reviewer profile', () => {
   const result = resolveOAuthAccess({
     email: 'Mariana.Segura@webflow.com',
     allowedDomain: 'webflow.com',
@@ -268,7 +307,7 @@ test('resolveOAuthAccess grants write scope to allowlisted reviewers', () => {
   });
   assert.equal(result.allowed, true);
   if (result.allowed) {
-    assert.deepEqual(result.scopes, [SCOPE_READ, SCOPE_WRITE]);
+    assert.deepEqual(result.scopes, [SCOPE_READ]);
     assert.equal(result.email, 'mariana.segura@webflow.com');
     assert.equal(result.reviewerProfile, null);
   }
@@ -286,6 +325,36 @@ test('resolveOAuthAccess resolves directory profiles by email', () => {
     assert.equal(result.reviewerProfile?.airtableCollaboratorId, 'usrEric');
     assert.deepEqual(result.scopes, [SCOPE_READ, SCOPE_WRITE]);
   }
+});
+
+test('reviewer directory normalizes and deduplicates auth aliases', () => {
+  const reviewer = getReviewerProfileForEmail(directory, ' MICAH@CREATESOMETHING.IO ');
+
+  assert.equal(reviewer?.accountId, 'acct_wf_micah');
+  assert.deepEqual(reviewer?.authEmailAliases, ['micah@createsomething.io']);
+});
+
+test('reviewer alias overlay preserves every canonical directory entry', () => {
+  assert.equal(directory.size, 2);
+  assert.equal(directory.get('acct_wf_eric')?.email, 'eric.unger@webflow.com');
+  assert.equal(directory.get('acct_wf_micah')?.email, 'micah@webflow.com');
+});
+
+test('reviewer directory fails closed when an auth email is ambiguous', () => {
+  const ambiguousDirectory = parseReviewerDirectory(JSON.stringify({
+    acct_one: {
+      airtableCollaboratorId: 'usrOne',
+      email: 'one@webflow.com',
+      authEmailAliases: ['shared@createsomething.io'],
+    },
+    acct_two: {
+      airtableCollaboratorId: 'usrTwo',
+      email: 'two@webflow.com',
+      authEmailAliases: ['SHARED@createsomething.io'],
+    },
+  }));
+
+  assert.equal(getReviewerProfileForEmail(ambiguousDirectory, 'shared@createsomething.io'), null);
 });
 
 test('resolveOAuthAccess rejects non-allowlisted domain users when an allowlist is set', () => {
@@ -324,6 +393,7 @@ test('resolveOAuthAccess can authorize one exact external alias without opening 
   });
 
   assert.equal(result.allowed, true);
+  if (result.allowed) assert.deepEqual(result.scopes, [SCOPE_READ]);
   assert.deepEqual(denied, { allowed: false, reason: 'email_not_allowlisted' });
 });
 

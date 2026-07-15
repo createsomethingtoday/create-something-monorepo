@@ -219,8 +219,8 @@ export async function resolveIdentityOAuthRequest(input: {
  * Central access policy for OAuth-authenticated sessions:
  * - an explicit email allowlist is authoritative when configured
  * - otherwise email must belong to the allowed domain
- * - allowlisted users and directory-listed reviewers get write scope;
- *   everyone else is read-only
+ * - the reviewer directory is authoritative for reviewer/write scope;
+ *   admitted identities without a reviewer mapping remain read-only
  */
 export function resolveOAuthAccess(input: OAuthAccessInput): OAuthAccessResult {
   const email = input.email?.trim().toLowerCase();
@@ -232,11 +232,10 @@ export function resolveOAuthAccess(input: OAuthAccessInput): OAuthAccessResult {
   }
 
   const reviewerProfile = getReviewerProfileForEmail(input.directory, email);
-  const isReviewer = Boolean(reviewerProfile) || input.allowedEmails.has(email);
   return {
     allowed: true,
     email,
-    scopes: isReviewer ? [SCOPE_READ, SCOPE_WRITE] : [SCOPE_READ],
+    scopes: reviewerProfile ? [SCOPE_READ, SCOPE_WRITE] : [SCOPE_READ],
     reviewerProfile,
   };
 }

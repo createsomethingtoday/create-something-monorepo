@@ -51,8 +51,9 @@ is the authorization server; this worker remains a pure OAuth resource server:
 - Access policy:
   - email must be a `@webflow.com` account (`OAUTH_ALLOWED_EMAIL_DOMAIN`)
   - when `OAUTH_ALLOWED_EMAILS` is set, only those emails may connect at all
-  - allowlisted users and `REVIEWER_DIRECTORY_JSON` email matches get
-    `template-review:write`; everyone else gets `template-review:read`
+  - only identities that resolve through a canonical `REVIEWER_DIRECTORY_JSON`
+    email or `authEmailAliases` entry get `template-review:write`; admitted but
+    unmapped identities remain `template-review:read`
 - Write tools are **not registered** on read-only sessions, so non-reviewers
   never see them.
 
@@ -91,8 +92,13 @@ Optional:
 
 - `AIRTABLE_BASE_ID` (defaults to `appMoIgXMTTTNIc3p`)
 - `REVIEWER_DIRECTORY_JSON` (JSON map from hub `account_id` to reviewer identity;
-  entries need `email` set for OAuth write-scope matching, and are used by
-  `template_review_assign_self` and reviewer resources)
+  entries need a canonical `email` for OAuth write-scope matching and may carry
+  normalized `authEmailAliases` that resolve alternate login emails to the same
+  account and Airtable collaborator; used by `template_review_assign_self` and
+  reviewer resources)
+- `REVIEWER_AUTH_EMAIL_ALIASES_JSON` (non-secret JSON map from canonical reviewer
+  `account_id` to approved login-email aliases; merged over the directory without
+  replacing or duplicating canonical reviewer profiles)
 - `WEBFLOW_TEMPLATE_VALIDATION_WORKER_URL` (defaults to `https://validation-worker.createsomething.workers.dev/validate`)
 - `GSAP_VALIDATION_WORKER_URL` (defaults to `https://gsap-validation-worker.createsomething.workers.dev/validateGsap`)
 - `TEMPLATE_REVIEW_VALIDATION_TIMEOUT_MS` (defaults to `45000`)
