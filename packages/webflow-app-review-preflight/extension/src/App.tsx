@@ -1,52 +1,14 @@
 import { useEffect, useId, useState } from 'react';
 import type { ReviewGuidance } from '@create-something/webflow-app-review-preflight';
 import type {
-  CompanionPairing,
   PreflightIdentity,
   PreflightApi,
   ReviewComparison,
   ReviewSummary,
-  RuntimeJob,
   RuntimeTestPackageInput,
   RuntimeTestPackageView,
   StoredReview
 } from './types';
-import { PREFLIGHT_COMPANION_EXTENSION_ID } from './config';
-
-interface ExternalChromeRuntime {
-  lastError?: { message?: string };
-  sendMessage(
-    extensionId: string,
-    message: unknown,
-    callback: (response: { ok?: boolean; error?: string } | undefined) => void
-  ): void;
-}
-
-export async function deliverCompanionPairing(pairing: CompanionPairing): Promise<void> {
-  const runtime = (globalThis as typeof globalThis & {
-    chrome?: { runtime?: ExternalChromeRuntime };
-  }).chrome?.runtime;
-  if (!runtime?.sendMessage) {
-    throw new Error('Install the App Review Companion browser extension, then try again.');
-  }
-  await new Promise<void>((resolve, reject) => {
-    runtime.sendMessage(
-      PREFLIGHT_COMPANION_EXTENSION_ID,
-      { type: 'COMPANION_PAIR', code: pairing.code },
-      (response) => {
-        if (runtime.lastError) {
-          reject(new Error(runtime.lastError.message ?? 'The browser companion is unavailable.'));
-          return;
-        }
-        if (!response?.ok) {
-          reject(new Error(response?.error ?? 'The browser companion could not connect.'));
-          return;
-        }
-        resolve();
-      }
-    );
-  });
-}
 
 const SELECTED_REVIEW_KEY = 'app-review-preflight.selected-review';
 
@@ -154,10 +116,31 @@ function History({
   );
 }
 
-function Coverage({ review }: { review: StoredReview }) {
+function Coverage({
+  review,
+  testPackages
+}: {
+  review: StoredReview;
+  testPackages: RuntimeTestPackageView[];
+}) {
+  const observed = testPackages.find(
+    (testPackage) => testPackage.observation?.trust === 'webflow_observed'
+  )?.observation?.evidence;
+  const coverage = review.latestVersion.result.coverage.map((item) => {
+    if (item.surface !== 'production_runtime' || !observed) return item;
+    return {
+      ...item,
+      status: 'reviewed' as const,
+      label: 'Production runtime observed',
+      detail: observed.securityStatus === 'passed'
+        ? 'Webflow captured the published runtime and its pinned security checks passed.'
+        : 'Webflow captured the published runtime. Security blockers remain in the result below.'
+    };
+  });
+
   return (
     <section className="coverage-grid" aria-label="Review coverage">
-      {review.latestVersion.result.coverage.map((item) => (
+      {coverage.map((item) => (
         <article className={`coverage-card ${item.status}`} key={item.surface}>
           <div className="coverage-mark" aria-hidden="true">
             {item.status === 'reviewed' ? '✓' : '!'}
@@ -469,39 +452,25 @@ function RuntimeObservationCard({
 function ReviewDetail({
   review,
   comparison,
-  runtimeJob,
   runtimeTestPackages,
   busy,
   onRevision,
-  onApproveRuntime,
   onPrepareRuntimePackage,
   onRefreshRuntimePackages,
-  onPairCompanion,
   onBack
 }: {
   review: StoredReview;
   comparison: ReviewComparison | null;
-  runtimeJob: RuntimeJob | null;
   runtimeTestPackages: RuntimeTestPackageView[];
   busy: boolean;
   onRevision: (file: File) => void;
-  onApproveRuntime: () => void;
   onPrepareRuntimePackage: (input: RuntimeTestPackageInput) => void;
   onRefreshRuntimePackages: () => void;
-  onPairCompanion: () => Promise<void>;
   onBack: () => void;
 }) {
   const result = review.latestVersion.result;
   const revisionId = useId();
-  const runtimeDialogTitle = useId();
-  const [confirmRuntime, setConfirmRuntime] = useState(false);
-  const [companionStatus, setCompanionStatus] = useState<
-    'idle' | 'connecting' | 'connected' | 'error'
-  >('idle');
   const blockerText = result.summary.securityBlockers === 1 ? 'blocker' : 'blockers';
-  const readyRuntimePackage = runtimeTestPackages.find(
-    (candidate) => candidate.status === 'ready' && Date.parse(candidate.license.expiresAt) > Date.now()
-  ) ?? null;
 
   return (
     <main className="review-view">
@@ -518,56 +487,12 @@ function ReviewDetail({
       </header>
 
       {comparison ? <Comparison comparison={comparison} /> : null}
-      <Coverage review={review} />
+      <Coverage review={review} testPackages={runtimeTestPackages} />
 
       <section className="summary-grid" aria-label="Finding summary">
         <div><strong>{result.summary.securityBlockers}</strong><span>Security blockers</span></div>
         <div><strong>{result.summary.requiredUpdates}</strong><span>Required updates</span></div>
         <div><strong>{result.summary.suggestedUpdates}</strong><span>Suggested updates</span></div>
-      </section>
-
-      <section className="runtime-card companion-card" aria-labelledby="companion-title">
-        <div className="runtime-heading">
-          <div>
-            <span className="eyebrow">Guided validation</span>
-            <h2 id="companion-title">Browser companion</h2>
-          </div>
-          <span className={`manual-pill ${companionStatus === 'connected' ? 'approved' : ''}`}>
-            {companionStatus === 'connected' ? 'Connected' : 'Not connected'}
-          </span>
-        </div>
-        <p>
-          Connect this exact revision only after the runtime package is ready. The companion can
-          capture partner evidence, but only the Webflow-controlled browser can verify code security.
-        </p>
-        <button
-          className="button button-primary"
-          disabled={busy || !readyRuntimePackage || companionStatus === 'connecting' || companionStatus === 'connected'}
-          onClick={async () => {
-            setCompanionStatus('connecting');
-            try {
-              await onPairCompanion();
-              setCompanionStatus('connected');
-            } catch {
-              setCompanionStatus('error');
-            }
-          }}
-        >
-          {companionStatus === 'connecting'
-            ? 'Connecting…'
-            : companionStatus === 'connected'
-              ? 'Browser companion connected'
-              : 'Connect browser companion'}
-        </button>
-        {companionStatus === 'error' ? (
-          <small role="alert">Install or reopen the browser companion, then try again.</small>
-        ) : (
-          <small>
-            {readyRuntimePackage
-              ? 'The one-time connection expires in five minutes and cannot be reused.'
-              : 'Prepare a valid runtime test package before connecting.'}
-          </small>
-        )}
       </section>
 
       <section className="findings" aria-labelledby="findings-title">
@@ -583,114 +508,6 @@ function ReviewDetail({
             <p>The bundle scan has no remaining deterministic findings.</p>
           </div>
         )}
-      </section>
-
-      <section className="runtime-card" aria-labelledby="runtime-title">
-        <div className="runtime-heading">
-          <div>
-            <span className="eyebrow">Production runtime</span>
-            <h2 id="runtime-title">Sandbox verification</h2>
-          </div>
-          <span className={`manual-pill ${runtimeJob ? 'approved' : ''}`}>
-            {runtimeJob
-              ? 'Job approved'
-              : result.runtime.references.length > 0
-                ? 'Approval required'
-                : 'Manual check'}
-          </span>
-        </div>
-        {result.runtime.references.length > 0 ? (
-          <p>
-            We found {result.runtime.references.length} runtime reference{result.runtime.references.length === 1 ? '' : 's'}.
-            Code will not run until you approve the bounded test.
-          </p>
-        ) : (
-          <p>
-            No public runtime target was discovered in this revision. Production behavior still needs a human check.
-          </p>
-        )}
-        {result.runtime.references.length > 0 ? (
-          <ul className="runtime-list">
-            {result.runtime.references.map((reference) => (
-              <li key={reference}>
-                <span>{reference}</span>
-                <em>{reference.includes('{') ? 'Test ID needed' : 'Public target'}</em>
-              </li>
-            ))}
-          </ul>
-        ) : null}
-        {runtimeJob ? (
-          <div className="runtime-approved" role="status">
-            <strong>Sandbox job approved</strong>
-            <p>
-              Allowed host{runtimeJob.contract.controls.allowedHosts.length === 1 ? '' : 's'}:{' '}
-              {runtimeJob.contract.controls.allowedHosts.join(', ') || 'none'}
-            </p>
-            <small>This evidence helps a reviewer. It does not approve or reject your app.</small>
-            {runtimeJob.contract.manualVerification.length > 0 ? (
-              <div className="manual-gaps">
-                <span>Still needs a human</span>
-                <ul>
-                  {runtimeJob.contract.manualVerification.map((gap) => <li key={gap}>{gap}</li>)}
-                </ul>
-              </div>
-            ) : null}
-          </div>
-        ) : (
-          <>
-            <button
-              className="button button-secondary"
-              disabled={busy || result.runtime.references.length === 0}
-              onClick={() => setConfirmRuntime(true)}
-            >
-              Approve sandbox test
-            </button>
-            <small>
-              {result.runtime.references.length > 0
-                ? 'Nothing runs until you review and approve the bounded job.'
-                : 'Provide a concrete public runtime URL or a disposable test installation to automate this step.'}
-            </small>
-          </>
-        )}
-        {confirmRuntime ? (
-          <div
-            className="dialog-backdrop"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={runtimeDialogTitle}
-          >
-            <div className="dialog-card">
-              <span className="eyebrow">One approval</span>
-              <h2 id={runtimeDialogTitle}>Confirm sandbox evidence test</h2>
-              <p>
-                The sandbox may request only the discovered public runtime hosts. No credentials are sent,
-                and the job cannot write to App Governance or make a review decision.
-              </p>
-              <ul>
-                <li>At most 20 requests</li>
-                <li>60-second total timeout</li>
-                <li>Desktop and mobile evidence</li>
-              </ul>
-              <div className="dialog-actions">
-                <button
-                  className="button button-secondary"
-                  onClick={() => setConfirmRuntime(false)}
-                >
-                  Cancel
-                </button>
-                <button
-                  className="button button-primary"
-                  onClick={() => {
-                    setConfirmRuntime(false);
-                    onApproveRuntime();
-                  }}
-                >
-                  Approve bounded test
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : null}
       </section>
 
       <RuntimeObservationCard
@@ -727,17 +544,10 @@ function ReviewDetail({
   );
 }
 
-export function App({
-  api,
-  pairCompanion = deliverCompanionPairing
-}: {
-  api: PreflightApi;
-  pairCompanion?: (pairing: CompanionPairing) => Promise<void>;
-}) {
+export function App({ api }: { api: PreflightApi }) {
   const [history, setHistory] = useState<ReviewSummary[]>([]);
   const [review, setReview] = useState<StoredReview | null>(null);
   const [comparison, setComparison] = useState<ReviewComparison | null>(null);
-  const [runtimeJob, setRuntimeJob] = useState<RuntimeJob | null>(null);
   const [runtimeTestPackages, setRuntimeTestPackages] = useState<RuntimeTestPackageView[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -804,13 +614,11 @@ export function App({
         <ReviewDetail
           review={review}
           comparison={comparison}
-          runtimeJob={runtimeJob}
           runtimeTestPackages={runtimeTestPackages}
           busy={busy}
           onBack={() => {
             setReview(null);
             setComparison(null);
-            setRuntimeJob(null);
             setRuntimeTestPackages([]);
             rememberReview(null);
           }}
@@ -818,12 +626,8 @@ export function App({
             const revised = await api.addRevision(review.id, file);
             setReview(revised.review);
             setComparison(revised.comparison);
-            setRuntimeJob(null);
             setRuntimeTestPackages([]);
             await refreshHistory();
-          })}
-          onApproveRuntime={() => run(async () => {
-            setRuntimeJob(await api.approveRuntimeJob(review.id));
           })}
           onPrepareRuntimePackage={(input) => run(async () => {
             const prepared = await api.createRuntimeTestPackage(review.id, input);
@@ -832,20 +636,6 @@ export function App({
           onRefreshRuntimePackages={() => run(async () => {
             await refreshRuntimePackages(review.id);
           })}
-          onPairCompanion={async () => {
-            const runtimeTestPackage = runtimeTestPackages.find(
-              (candidate) => candidate.status === 'ready' && Date.parse(candidate.license.expiresAt) > Date.now()
-            );
-            if (!runtimeTestPackage) {
-              throw new Error('Prepare a valid runtime test package before connecting.');
-            }
-            const pairing = await api.createCompanionPairing(
-              review.id,
-              review.latestVersion.id,
-              runtimeTestPackage.id
-            );
-            await pairCompanion(pairing);
-          }}
         />
       ) : (
         <main className="start-view">
@@ -868,7 +658,6 @@ export function App({
               const created = await api.createReview(file);
               setReview(created);
               setComparison(null);
-              setRuntimeJob(null);
               setRuntimeTestPackages([]);
               rememberReview(created.id);
               await refreshHistory();
@@ -884,7 +673,6 @@ export function App({
               ]);
               setReview(selectedReview);
               setComparison(null);
-              setRuntimeJob(null);
               rememberReview(id);
             })}
           />

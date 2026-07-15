@@ -1,12 +1,10 @@
 import type {
   PreflightApi,
   RevisionResult,
-  RuntimeJob,
   RuntimeTestPackageInput,
   RuntimeTestPackageView,
   ReviewSummary,
   StoredReview,
-  CompanionPairing,
   PreflightIdentity
 } from './types';
 import { PREFLIGHT_API_BASE } from './config';
@@ -75,17 +73,6 @@ export function createPreflightApi(): PreflightApi {
         body: form
       });
     },
-    async approveRuntimeJob(reviewId: string): Promise<RuntimeJob> {
-      const body = await request<{ runtimeJob: RuntimeJob }>(
-        `/v1/reviews/${reviewId}/runtime-jobs`,
-        {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ approved: true })
-        }
-      );
-      return body.runtimeJob;
-    },
     async listRuntimeTestPackages(reviewId: string): Promise<RuntimeTestPackageView[]> {
       const body = await request<{ testPackages: RuntimeTestPackageView[] }>(
         `/v1/reviews/${reviewId}/runtime-test-packages`
@@ -104,21 +91,6 @@ export function createPreflightApi(): PreflightApi {
         body: JSON.stringify(input)
       });
       return { ...body.testPackage, observation: null };
-    },
-    async createCompanionPairing(
-      reviewId: string,
-      reviewVersionId: string,
-      runtimeTestPackageId: string
-    ): Promise<CompanionPairing> {
-      const body = await request<{ pairing: CompanionPairing }>(
-        `/v1/reviews/${reviewId}/companion-pairings`,
-        {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ reviewVersionId, runtimeTestPackageId })
-        }
-      );
-      return body.pairing;
     }
   };
 }

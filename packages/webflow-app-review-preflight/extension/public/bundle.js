@@ -24492,36 +24492,7 @@
 
   // src/App.tsx
   var import_react = __toESM(require_react(), 1);
-
-  // src/config.ts
-  var PREFLIGHT_API_BASE = true ? "https://webflow-app-review-preflight.createsomething.workers.dev" : "";
-  var PREFLIGHT_COMPANION_EXTENSION_ID = true ? "eiogakldgljpbbmplgckjkoglfgabblm" : "eiogakldgljpbbmplgckjkoglfgabblm";
-
-  // src/App.tsx
   var import_jsx_runtime = __toESM(require_jsx_runtime(), 1);
-  async function deliverCompanionPairing(pairing) {
-    const runtime = globalThis.chrome?.runtime;
-    if (!runtime?.sendMessage) {
-      throw new Error("Install the App Review Companion browser extension, then try again.");
-    }
-    await new Promise((resolve, reject) => {
-      runtime.sendMessage(
-        PREFLIGHT_COMPANION_EXTENSION_ID,
-        { type: "COMPANION_PAIR", code: pairing.code },
-        (response) => {
-          if (runtime.lastError) {
-            reject(new Error(runtime.lastError.message ?? "The browser companion is unavailable."));
-            return;
-          }
-          if (!response?.ok) {
-            reject(new Error(response?.error ?? "The browser companion could not connect."));
-            return;
-          }
-          resolve();
-        }
-      );
-    });
-  }
   var SELECTED_REVIEW_KEY = "app-review-preflight.selected-review";
   function rememberedReviewId() {
     try {
@@ -24612,8 +24583,23 @@
       )) })
     ] });
   }
-  function Coverage({ review }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("section", { className: "coverage-grid", "aria-label": "Review coverage", children: review.latestVersion.result.coverage.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("article", { className: `coverage-card ${item.status}`, children: [
+  function Coverage({
+    review,
+    testPackages
+  }) {
+    const observed = testPackages.find(
+      (testPackage) => testPackage.observation?.trust === "webflow_observed"
+    )?.observation?.evidence;
+    const coverage = review.latestVersion.result.coverage.map((item) => {
+      if (item.surface !== "production_runtime" || !observed) return item;
+      return {
+        ...item,
+        status: "reviewed",
+        label: "Production runtime observed",
+        detail: observed.securityStatus === "passed" ? "Webflow captured the published runtime and its pinned security checks passed." : "Webflow captured the published runtime. Security blockers remain in the result below."
+      };
+    });
+    return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("section", { className: "coverage-grid", "aria-label": "Review coverage", children: coverage.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("article", { className: `coverage-card ${item.status}`, children: [
       /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "coverage-mark", "aria-hidden": "true", children: item.status === "reviewed" ? "\u2713" : "!" }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", { children: item.label }),
@@ -24905,25 +24891,16 @@
   function ReviewDetail({
     review,
     comparison,
-    runtimeJob,
     runtimeTestPackages,
     busy,
     onRevision,
-    onApproveRuntime,
     onPrepareRuntimePackage,
     onRefreshRuntimePackages,
-    onPairCompanion,
     onBack
   }) {
     const result = review.latestVersion.result;
     const revisionId = (0, import_react.useId)();
-    const runtimeDialogTitle = (0, import_react.useId)();
-    const [confirmRuntime, setConfirmRuntime] = (0, import_react.useState)(false);
-    const [companionStatus, setCompanionStatus] = (0, import_react.useState)("idle");
     const blockerText = result.summary.securityBlockers === 1 ? "blocker" : "blockers";
-    const readyRuntimePackage = runtimeTestPackages.find(
-      (candidate) => candidate.status === "ready" && Date.parse(candidate.license.expiresAt) > Date.now()
-    ) ?? null;
     return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("main", { className: "review-view", children: [
       /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { className: "back-button", onClick: onBack, children: "\u2190 All runs" }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", { className: "review-header", children: [
@@ -24939,7 +24916,7 @@
         ] })
       ] }),
       comparison ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Comparison, { comparison }) : null,
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Coverage, { review }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Coverage, { review, testPackages: runtimeTestPackages }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", { className: "summary-grid", "aria-label": "Finding summary", children: [
         /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: result.summary.securityBlockers }),
@@ -24954,34 +24931,6 @@
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Suggested updates" })
         ] })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", { className: "runtime-card companion-card", "aria-labelledby": "companion-title", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "runtime-heading", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "eyebrow", children: "Guided validation" }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", { id: "companion-title", children: "Browser companion" })
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: `manual-pill ${companionStatus === "connected" ? "approved" : ""}`, children: companionStatus === "connected" ? "Connected" : "Not connected" })
-        ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: "Connect this exact revision only after the runtime package is ready. The companion can capture partner evidence, but only the Webflow-controlled browser can verify code security." }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-          "button",
-          {
-            className: "button button-primary",
-            disabled: busy || !readyRuntimePackage || companionStatus === "connecting" || companionStatus === "connected",
-            onClick: async () => {
-              setCompanionStatus("connecting");
-              try {
-                await onPairCompanion();
-                setCompanionStatus("connected");
-              } catch {
-                setCompanionStatus("error");
-              }
-            },
-            children: companionStatus === "connecting" ? "Connecting\u2026" : companionStatus === "connected" ? "Browser companion connected" : "Connect browser companion"
-          }
-        ),
-        companionStatus === "error" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("small", { role: "alert", children: "Install or reopen the browser companion, then try again." }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("small", { children: readyRuntimePackage ? "The one-time connection expires in five minutes and cannot be reused." : "Prepare a valid runtime test package before connecting." })
-      ] }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", { className: "findings", "aria-labelledby": "findings-title", children: [
         /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "section-heading", children: [
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", { id: "findings-title", children: "Review feedback" }),
@@ -24991,92 +24940,6 @@
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Ready for teammate review" }),
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: "The bundle scan has no remaining deterministic findings." })
         ] })
-      ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", { className: "runtime-card", "aria-labelledby": "runtime-title", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "runtime-heading", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "eyebrow", children: "Production runtime" }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", { id: "runtime-title", children: "Sandbox verification" })
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: `manual-pill ${runtimeJob ? "approved" : ""}`, children: runtimeJob ? "Job approved" : result.runtime.references.length > 0 ? "Approval required" : "Manual check" })
-        ] }),
-        result.runtime.references.length > 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", { children: [
-          "We found ",
-          result.runtime.references.length,
-          " runtime reference",
-          result.runtime.references.length === 1 ? "" : "s",
-          ". Code will not run until you approve the bounded test."
-        ] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: "No public runtime target was discovered in this revision. Production behavior still needs a human check." }),
-        result.runtime.references.length > 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", { className: "runtime-list", children: result.runtime.references.map((reference) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: reference }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("em", { children: reference.includes("{") ? "Test ID needed" : "Public target" })
-        ] }, reference)) }) : null,
-        runtimeJob ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "runtime-approved", role: "status", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Sandbox job approved" }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", { children: [
-            "Allowed host",
-            runtimeJob.contract.controls.allowedHosts.length === 1 ? "" : "s",
-            ":",
-            " ",
-            runtimeJob.contract.controls.allowedHosts.join(", ") || "none"
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("small", { children: "This evidence helps a reviewer. It does not approve or reject your app." }),
-          runtimeJob.contract.manualVerification.length > 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "manual-gaps", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Still needs a human" }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", { children: runtimeJob.contract.manualVerification.map((gap) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: gap }, gap)) })
-          ] }) : null
-        ] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-            "button",
-            {
-              className: "button button-secondary",
-              disabled: busy || result.runtime.references.length === 0,
-              onClick: () => setConfirmRuntime(true),
-              children: "Approve sandbox test"
-            }
-          ),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("small", { children: result.runtime.references.length > 0 ? "Nothing runs until you review and approve the bounded job." : "Provide a concrete public runtime URL or a disposable test installation to automate this step." })
-        ] }),
-        confirmRuntime ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-          "div",
-          {
-            className: "dialog-backdrop",
-            role: "dialog",
-            "aria-modal": "true",
-            "aria-labelledby": runtimeDialogTitle,
-            children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "dialog-card", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "eyebrow", children: "One approval" }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", { id: runtimeDialogTitle, children: "Confirm sandbox evidence test" }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: "The sandbox may request only the discovered public runtime hosts. No credentials are sent, and the job cannot write to App Governance or make a review decision." }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("ul", { children: [
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: "At most 20 requests" }),
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: "60-second total timeout" }),
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: "Desktop and mobile evidence" })
-              ] }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "dialog-actions", children: [
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-                  "button",
-                  {
-                    className: "button button-secondary",
-                    onClick: () => setConfirmRuntime(false),
-                    children: "Cancel"
-                  }
-                ),
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-                  "button",
-                  {
-                    className: "button button-primary",
-                    onClick: () => {
-                      setConfirmRuntime(false);
-                      onApproveRuntime();
-                    },
-                    children: "Approve bounded test"
-                  }
-                )
-              ] })
-            ] })
-          }
-        ) : null
       ] }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
         RuntimeObservationCard,
@@ -25113,14 +24976,10 @@
       ] })
     ] });
   }
-  function App({
-    api,
-    pairCompanion = deliverCompanionPairing
-  }) {
+  function App({ api }) {
     const [history, setHistory] = (0, import_react.useState)([]);
     const [review, setReview] = (0, import_react.useState)(null);
     const [comparison, setComparison] = (0, import_react.useState)(null);
-    const [runtimeJob, setRuntimeJob] = (0, import_react.useState)(null);
     const [runtimeTestPackages, setRuntimeTestPackages] = (0, import_react.useState)([]);
     const [busy, setBusy] = (0, import_react.useState)(false);
     const [error, setError] = (0, import_react.useState)(null);
@@ -25180,13 +25039,11 @@
         {
           review,
           comparison,
-          runtimeJob,
           runtimeTestPackages,
           busy,
           onBack: () => {
             setReview(null);
             setComparison(null);
-            setRuntimeJob(null);
             setRuntimeTestPackages([]);
             rememberReview(null);
           },
@@ -25194,12 +25051,8 @@
             const revised = await api.addRevision(review.id, file);
             setReview(revised.review);
             setComparison(revised.comparison);
-            setRuntimeJob(null);
             setRuntimeTestPackages([]);
             await refreshHistory();
-          }),
-          onApproveRuntime: () => run(async () => {
-            setRuntimeJob(await api.approveRuntimeJob(review.id));
           }),
           onPrepareRuntimePackage: (input) => run(async () => {
             const prepared = await api.createRuntimeTestPackage(review.id, input);
@@ -25207,21 +25060,7 @@
           }),
           onRefreshRuntimePackages: () => run(async () => {
             await refreshRuntimePackages(review.id);
-          }),
-          onPairCompanion: async () => {
-            const runtimeTestPackage = runtimeTestPackages.find(
-              (candidate) => candidate.status === "ready" && Date.parse(candidate.license.expiresAt) > Date.now()
-            );
-            if (!runtimeTestPackage) {
-              throw new Error("Prepare a valid runtime test package before connecting.");
-            }
-            const pairing = await api.createCompanionPairing(
-              review.id,
-              review.latestVersion.id,
-              runtimeTestPackage.id
-            );
-            await pairCompanion(pairing);
-          }
+          })
         }
       ) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("main", { className: "start-view", children: [
         /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "intro", children: [
@@ -25243,7 +25082,6 @@
               const created = await api.createReview(file);
               setReview(created);
               setComparison(null);
-              setRuntimeJob(null);
               setRuntimeTestPackages([]);
               rememberReview(created.id);
               await refreshHistory();
@@ -25262,7 +25100,6 @@
               ]);
               setReview(selectedReview);
               setComparison(null);
-              setRuntimeJob(null);
               rememberReview(id);
             })
           }
@@ -25271,6 +25108,9 @@
       ] })
     ] });
   }
+
+  // src/config.ts
+  var PREFLIGHT_API_BASE = true ? "https://webflow-app-review-preflight.createsomething.workers.dev" : "";
 
   // src/api.ts
   function apiBase() {
@@ -25330,17 +25170,6 @@
           body: form
         });
       },
-      async approveRuntimeJob(reviewId) {
-        const body = await request(
-          `/v1/reviews/${reviewId}/runtime-jobs`,
-          {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({ approved: true })
-          }
-        );
-        return body.runtimeJob;
-      },
       async listRuntimeTestPackages(reviewId) {
         const body = await request(
           `/v1/reviews/${reviewId}/runtime-test-packages`
@@ -25354,17 +25183,6 @@
           body: JSON.stringify(input)
         });
         return { ...body.testPackage, observation: null };
-      },
-      async createCompanionPairing(reviewId, reviewVersionId, runtimeTestPackageId) {
-        const body = await request(
-          `/v1/reviews/${reviewId}/companion-pairings`,
-          {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({ reviewVersionId, runtimeTestPackageId })
-          }
-        );
-        return body.pairing;
       }
     };
   }

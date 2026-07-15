@@ -18,10 +18,8 @@ const api: PreflightApi = {
   getReview: async () => Promise.reject(new Error('not used')),
   createReview: async () => Promise.reject(new Error('not used')),
   addRevision: async () => Promise.reject(new Error('not used')),
-  approveRuntimeJob: async () => Promise.reject(new Error('not used')),
   listRuntimeTestPackages: async () => [],
-  createRuntimeTestPackage: async () => Promise.reject(new Error('not used')),
-  createCompanionPairing: async () => Promise.reject(new Error('not used'))
+  createRuntimeTestPackage: async () => Promise.reject(new Error('not used'))
 };
 
 function consentProReview(sequence = 1): StoredReview {
@@ -228,75 +226,6 @@ describe('App Review Preflight extension', () => {
     expect(screen.getByText('Revision 2')).toBeVisible();
   });
 
-  test('requires a clear confirmation before preparing the evidence-only sandbox job', async () => {
-    const review = consentProReview();
-    const approveRuntimeJob = vi.fn(async () => ({
-      id: 'runtime-job-1',
-      status: 'approved' as const,
-      approvedAt: '2026-07-14T22:10:00.000Z',
-      contract: {
-        schemaVersion: 'app_runtime_evidence_job.v1' as const,
-        purpose: 'evidence_only' as const,
-        reviewVersionId: review.latestVersion.id,
-        targets: [
-          {
-            url: 'https://api.consentpro.com/v2/cdn/runtime.js',
-            host: 'api.consentpro.com'
-          }
-        ],
-        manualVerification: ['Licensed behavior still requires a human check.'],
-        controls: {
-          allowedHosts: ['api.consentpro.com'],
-          maxRequests: 20,
-          requestTimeoutMs: 10_000,
-          totalTimeoutMs: 60_000,
-          networkMode: 'exact_host_allowlist' as const,
-          credentials: 'none' as const,
-          viewports: [{ width: 1280, height: 720 }]
-        },
-        evidenceOutputs: ['request_log'],
-        boundaries: {
-          officialDecision: null,
-          canWriteGovernance: false as const,
-          acceptsSecrets: false as const
-        }
-      }
-    }));
-    const runtimeApi: PreflightApi = {
-      ...api,
-      listReviews: async () => [
-        {
-          id: review.id,
-          name: review.name,
-          updatedAt: review.updatedAt,
-          latestSequence: 1,
-          readiness: 'changes_required',
-          appName: 'Consent Pro by Finsweet',
-          coverage: review.latestVersion.result.coverage
-        }
-      ],
-      getReview: async () => review,
-      approveRuntimeJob
-    };
-    render(<App api={runtimeApi} />);
-
-    fireEvent.click(await screen.findByRole('button', { name: /Consent Pro preflight/i }));
-    fireEvent.click(await screen.findByRole('button', { name: 'Approve sandbox test' }));
-
-    expect(screen.getByRole('heading', { name: 'Confirm sandbox evidence test' })).toBeVisible();
-    expect(screen.getByText(/No credentials are sent/i)).toBeVisible();
-    expect(approveRuntimeJob).not.toHaveBeenCalled();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Approve bounded test' }));
-
-    expect(await screen.findByText('Sandbox job approved')).toBeVisible();
-    expect(screen.getByText(/Allowed host: api\.consentpro\.com/)).toBeVisible();
-    expect(screen.getByText(/does not approve or reject your app/i)).toBeVisible();
-    expect(screen.getByText('Still needs a human')).toBeVisible();
-    expect(screen.getByText('Licensed behavior still requires a human check.')).toBeVisible();
-    expect(approveRuntimeJob).toHaveBeenCalledWith(review.id);
-  });
-
   test('prepares partner test input but shows evidence only after a Webflow run', async () => {
     const review = consentProReview();
     const createdAt = '2026-07-14T23:00:00.000Z';
@@ -430,6 +359,9 @@ describe('App Review Preflight extension', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Check run status' }));
     expect(await screen.findByLabelText('Current evidence: Webflow observed')).toBeVisible();
+    expect(screen.getByText('Production runtime observed')).toBeVisible();
+    expect(screen.queryByText('Production runtime not yet verified')).not.toBeInTheDocument();
+    expect(screen.getByText(/Security blockers remain in the result below/i)).toBeVisible();
     expect(screen.getByText('Runtime security blocked')).toBeVisible();
     expect(screen.getByText('Proxy canary blocked')).toBeVisible();
     expect(screen.getByText('What the evidence labels mean')).toBeVisible();
@@ -464,14 +396,9 @@ describe('App Review Preflight extension', () => {
     expect(getReview).toHaveBeenCalledWith(review.id);
   });
 
-  test('pairs the browser companion to the selected version with one action', async () => {
+  test('keeps production validation inside the Designer app without a browser companion', async () => {
     const review = consentProReview();
-    const createCompanionPairing = vi.fn(async () => ({
-      code: 'pairing-code-from-webflow-identity',
-      expiresAt: '2026-07-15T14:05:00.000Z'
-    }));
-    const pairCompanion = vi.fn(async () => undefined);
-    const pairingApi = {
+    const runtimeApi = {
       ...api,
       listReviews: async () => [
         {
@@ -502,26 +429,17 @@ describe('App Review Preflight extension', () => {
         evidence: null,
         createdAt: new Date().toISOString(),
         observation: null
-      }],
-      createCompanionPairing
+      }]
     } as PreflightApi;
 
-    render(<App api={pairingApi} pairCompanion={pairCompanion} />);
+    render(<App api={runtimeApi} />);
     fireEvent.click(await screen.findByRole('button', { name: /Consent Pro preflight/i }));
-    fireEvent.click(await screen.findByRole('button', { name: 'Connect browser companion' }));
 
-    await waitFor(() => {
-      expect(createCompanionPairing).toHaveBeenCalledWith(
-        review.id,
-        review.latestVersion.id,
-        'runtime-package-consent-pro'
-      );
-      expect(pairCompanion).toHaveBeenCalledWith({
-        code: 'pairing-code-from-webflow-identity',
-        expiresAt: '2026-07-15T14:05:00.000Z'
-      });
-    });
-    expect(screen.getByText('Browser companion connected')).toBeVisible();
-    expect(screen.queryByText(/Session token/i)).not.toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Consent Pro by Finsweet' })).toBeVisible();
+    expect(screen.queryByText('Browser companion')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Connect browser companion' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Approve sandbox test' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Check run status' })).toBeVisible();
+    expect(screen.getByText('Ready for Webflow run')).toBeVisible();
   });
 });

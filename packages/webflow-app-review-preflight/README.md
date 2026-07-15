@@ -4,9 +4,21 @@ App Review Preflight is a native Webflow Designer Extension for Marketplace deve
 
 It is a preflight and evidence system. It does not approve or reject an app.
 
-The shared browser lifecycle surface lives in `packages/webflow-app-review-companion`. The native Designer Extension remains the bundle-feedback and version-history surface; the companion observes Designer and published-site browser behavior for the same exact review version. Neither surface may promote partner evidence to `Webflow observed` or make an official decision.
+The native Designer Extension is the developer surface for bundle feedback, immutable version history, Runtime Test Package preparation, and trusted-result readback. Reviewers use the web app to inspect submissions across developers and request independent replays. The actual production-runtime browser remains Webflow-controlled in E2B; neither interface can upload observed evidence, promote partner input to `Webflow observed`, or make an official decision.
 
-For the Consent Pro pilot, authorization happens outside the Designer Extension. Authorization, configuration, and publication are unscored prerequisites. Uninstall cleanup is also unscored while the Custom Code API cannot reliably complete that lifecycle. The only security result comes from Webflow-controlled execution of the pinned production runtime; no companion button can issue it.
+For the Consent Pro pilot, authorization happens outside the Designer Extension. Authorization, configuration, and publication are unscored prerequisites. Uninstall cleanup is also unscored while the Custom Code API cannot reliably complete that lifecycle. The only security result comes from Webflow-controlled execution of the pinned production runtime; no user-controlled browser can issue or manufacture it.
+
+## Hybrid App boundary
+
+The Hybrid App has two intentional user surfaces over one evidence system:
+
+- **Designer Extension — developer surface.** A developer uploads the exact submission bundle, prepares a dedicated site-bound Runtime Test Package, requests validation, and reads the resulting blockers. Developer access remains owner-scoped.
+- **Reviewer web app — internal review surface.** An authenticated reviewer searches submissions across owners, opens any immutable revision, compares prior observations, and requests an independent replay of the exact package. Reviewer access is cross-owner, audited, and unavailable to developer identities.
+- **Worker, D1, R2, and E2B — authority surface.** The Worker owns immutable bindings and audit events; R2 stores private artifacts; D1 stores versions and predicates; a server-side coordinator issues one-time E2B jobs. Neither user interface receives the coordinator token or uploads `Webflow observed` evidence.
+
+The reviewer web app is the reason this is a Hybrid App. A separate browser extension is not part of the required architecture. Historical companion records and endpoints may remain readable during migration, but they do not appear in the active validation flow or contribute to the security result.
+
+Reviewer reruns must preserve the original review-version ID, bundle SHA-256, published target, installation ID, pinned runtime SHA-256/SRI, ready selector, and negative proxy probe. A replay creates a new immutable observation linked to that package; it never overwrites an earlier result. If any required binding is stale or missing, the rerun stays blocked until a new package is prepared.
 
 ## Package boundaries
 
@@ -18,13 +30,22 @@ For the Consent Pro pilot, authorization happens outside the Designer Extension.
 
 Raw partner bundles remain in private, owner-scoped R2 keys. They do not enter App Governance. Cross-app pattern candidates contain rule IDs, counts, dates, and generic guidance only; producing a governance handoff requires a separate authorized human approval and still performs no external write.
 
+## Governance precision requirements
+
+The governance backlog defines runtime integrity as the P0 rule: code that executes on a customer site must be reviewed, registered, and integrity-pinned regardless of whether it arrived through an App bundle, the Custom Code API, or a pasted loader. Preflight therefore keeps the executed-byte hash, DOM SRI, child-script inventory, source-map availability, and negative proxy result visible as separate predicates rather than collapsing them into one generic pass.
+
+Findings must also preserve provenance. Each evidence location should identify developer-owned code or a declared third-party dependency when that can be proven. The default remains "if it is in your bundle, you own it"; a dependency finding may be reclassified only by a versioned, reviewer-owned library policy with the matching package/version and supporting evidence. A heuristic match or developer declaration alone cannot allowlist or close a blocker. This distinction improves routing and feedback without lowering the review bar.
+
+The reviewer surface must keep bundle/source visibility, source-map gaps, iframe-only blind spots, DOM access to credential fields, and uninstall responsibility explicit. For the Consent Pro pilot, the unresolved Custom Code API uninstall limitation remains documented but unscored; it does not weaken the runtime-integrity predicates.
+
 ## Review flow
 
 1. The extension gets a short-lived Webflow ID token and uploads the zip to the Worker.
 2. The Worker hashes and stores the original bytes, runs deterministic rules, persists the policy snapshot, and returns Designer Extension and production-runtime coverage separately.
 3. Revisions create immutable versions and return resolved, remaining, and new rule IDs.
-4. A developer may approve a bounded runtime job. Approval prepares an exact-host allowlisted, credential-free evidence contract; it does not execute code or make a review decision.
-5. An E2B coordinator may return normalized response metadata through its own server-side token. That token is never placed in the sandbox.
+4. A developer prepares a version-bound Runtime Test Package in the Designer Extension. A reviewer may inspect or replay the same package from the reviewer web app. The package records the dedicated published target, installation allowlist, pinned runtime bytes, SRI, ready selector, and negative proxy probe as test input—not evidence.
+5. After the owning Webflow approval boundary issues the job, the E2B coordinator runs the exact package and returns normalized evidence through its own server-side token. That token is never placed in the Designer Extension or sandbox.
+6. Developers read the result in the Designer Extension; reviewers read the same immutable predicates, blockers, and artifact receipts in the web app. Their role changes access and authorization, not the security result.
 
 ## Complete runtime observation
 
