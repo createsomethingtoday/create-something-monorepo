@@ -6,8 +6,10 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
+    "build:production": "COMPANION_BUILD_MODE=production node scripts/build.mjs",
     "check": "tsc --noEmit",
     "lint": "pnpm run check",
+    "prepare:production": "pnpm build:production && node scripts/verify-production-build.mjs",
     "test": "vitest run"
   },
   "devDependencies": {

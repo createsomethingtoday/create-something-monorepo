@@ -2,11 +2,18 @@ import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { build } from 'esbuild';
+import { productionApiBase } from './production-config.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const dist = resolve(root, 'dist');
-const apiBaseUrl = (process.env.COMPANION_API_BASE ?? 'http://127.0.0.1:8789').replace(/\/$/, '');
 const production = process.env.COMPANION_BUILD_MODE === 'production';
+const apiBaseUrl = (
+  process.env.COMPANION_API_BASE ??
+  (production ? productionApiBase : 'http://127.0.0.1:8789')
+).replace(/\/$/, '');
+if (production && !apiBaseUrl.startsWith('https://')) {
+  throw new Error('Production browser companion builds require an HTTPS API base.');
+}
 await rm(dist, { recursive: true, force: true });
 await mkdir(dist, { recursive: true });
 await build({
