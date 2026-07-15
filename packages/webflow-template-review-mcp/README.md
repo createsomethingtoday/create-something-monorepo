@@ -28,7 +28,7 @@ Phase 1 is intentionally conservative:
 
 ## Auth
 
-The worker supports two parallel auth modes:
+The worker supports two production auth modes plus the legacy hub bridge:
 
 ### OAuth 2.1 + DCR via CREATE SOMETHING Identity (Claude Enterprise connector)
 
@@ -62,6 +62,43 @@ Claude Enterprise rollout: an org Owner adds a custom connector pointing at
 CREATE SOMETHING Identity via protected-resource metadata, registers via DCR,
 and each reviewer signs in once through the owned Identity flow.
 
+### Cloudflare Access Managed OAuth (direct Review teammate connector)
+
+The dedicated connector surface is
+`https://webflow-template-review-mcp-access.createsomething.workers.dev/mcp`.
+Cloudflare Managed OAuth cannot protect a domain containing a path, so a
+fail-closed proxy Worker owns that entire hostname and forwards only `/mcp` to
+this Worker's internal `/access/mcp` surface. The existing Worker hostname and
+its Identity connector or trusted hub bridge remain untouched.
+
+- Cloudflare Access owns OAuth discovery, dynamic client registration, SSO,
+  opaque client tokens, and refresh for the dedicated proxy hostname.
+- The proxy requires the Access assertion, forwards only MCP transport headers
+  plus that assertion, strips the opaque bearer and unsigned forwarded email,
+  and exposes no origin route other than `/mcp`.
+- After Access admits the request, the Worker validates the signed
+  `Cf-Access-Jwt-Assertion` with the account's rotating JWKS, exact team-domain
+  issuer, exact application audience, RS256, expiry, application-token type,
+  subject, and identity-provider-verified email.
+- The verified email then crosses the same `OAUTH_ALLOWED_EMAILS` and reviewer
+  directory policy as Identity OAuth. A mapped reviewer receives read/write
+  scope; an explicitly admitted but unmapped identity remains read-only.
+- The Worker never treats the opaque `Authorization` bearer or an unsigned
+  forwarded email header as reviewer identity.
+
+The team issuer has been read back through its live JWKS endpoint. The
+application-specific audience remains intentionally absent until the Access
+application exists and its value has been read back:
+
+- `CF_ACCESS_TEAM_DOMAIN` — `https://createsomething.cloudflareaccess.com`.
+- `CF_ACCESS_AUD` — stable Application Audience tag for the dedicated-hostname app.
+
+Promotion order: create/read back the dedicated-hostname Access application and
+AUD, deploy the tested Template Review Worker plus its fail-closed proxy, then
+verify native Claude Cowork plus canonical D1 attribution. Rollback disables
+the Access application and proxy while continuing to use the unchanged
+existing `/mcp` Identity connector or recorded prior Worker version.
+
 ### Legacy shared bearer (hub bridges)
 
 - Header: `Authorization: Bearer <MCP_API_KEY>`
@@ -81,8 +118,14 @@ OAuth mode:
 - `CS_IDENTITY_ISSUER` (owned authorization-server origin; production uses
   `https://id.createsomething.space`)
 - `OAUTH_ALLOWED_EMAIL_DOMAIN` (defaults to `webflow.com`)
-- `OAUTH_ALLOWED_EMAILS` (comma-separated sign-in allowlist; allowlisted
-  users receive write scope)
+- `OAUTH_ALLOWED_EMAILS` (comma-separated sign-in allowlist; allowlisted users
+  may connect, while only identities resolved through the reviewer directory
+  receive write scope)
+
+Cloudflare Access Managed OAuth mode:
+
+- `CF_ACCESS_TEAM_DOMAIN` (exact Access team-domain issuer; no default)
+- `CF_ACCESS_AUD` (exact dedicated-hostname Access application audience; no default)
 
 Legacy mode:
 
