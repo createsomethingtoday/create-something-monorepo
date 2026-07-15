@@ -1,0 +1,12 @@
+name = "webflow-template-review-mcp-access"
+main = "access-proxy.ts"
+compatibility_date = "2025-01-01"
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+workers_dev = true
+preview_urls = false
+
+[observability]
+enabled = true
+
+[vars]
+TEMPLATE_REVIEW_UPSTREAM_ORIGIN = "https://webflow-template-review-mcp.createsomething.workers.dev"

@@ -1,6 +1,6 @@
 # Template Review Cloudflare Access Managed OAuth Runbook
 
-**Status:** Deployment-ready candidate; not deployed
+**Status:** Corrected deployment candidate; not deployed
 
 **Date:** 2026-07-15
 
@@ -10,13 +10,21 @@
 
 ## Boundary
 
-Protect only this dedicated resource:
+Protect only this dedicated connector hostname:
 
-`https://webflow-template-review-mcp.createsomething.workers.dev/access/mcp`
+`https://webflow-template-review-mcp-access.createsomething.workers.dev/mcp`
 
-Do not place Cloudflare Access in front of the existing `/mcp` path. That path
-continues to serve the CREATE SOMETHING Identity connector and trusted hub
-bridge.
+The hostname belongs to a fail-closed proxy Worker that forwards only `/mcp`
+to the existing Worker's `/access/mcp` signed-assertion route. Do not place
+Cloudflare Access or a custom domain on the existing Worker. Its
+`webflow-template-review-mcp.createsomething.workers.dev/mcp` path continues to
+serve the CREATE SOMETHING Identity connector and trusted hub bridge.
+
+The first approved API create attempt targeted the existing hostname plus
+`/access/mcp`. Cloudflare rejected it before creating an application with code
+`12130`: Managed OAuth applications cannot have a path in `domain`. The
+dedicated hostname is the fail-closed correction; no production object was
+created by the rejected attempt.
 
 ## Observed compatibility evidence
 
@@ -52,15 +60,17 @@ Access token for readback and the approved mutation. Never print it.
 
 ## Approved candidate configuration
 
-Create one self-hosted Access application. This protects the exact direct
-resource without introducing an MCP portal or touching the existing `/mcp`
-connector:
+Create one self-hosted Access application for the dedicated proxy Worker. This
+protects the whole connector hostname without introducing an MCP portal or
+touching the existing Worker hostname:
 
 | Field | Candidate value |
 | --- | --- |
 | Name | `Webflow Template Review MCP` |
 | Type | `self_hosted` |
-| Domain and public destination | `webflow-template-review-mcp.createsomething.workers.dev/access/mcp` |
+| Domain | `webflow-template-review-mcp-access.createsomething.workers.dev` |
+| Public connector URL | `https://webflow-template-review-mcp-access.createsomething.workers.dev/mcp` |
+| Protected Worker | `webflow-template-review-mcp-access` (`workers.dev`; preview URLs disabled) |
 | Access application session | `12h` |
 | IdP | One-time PIN only |
 | Policy | Allow the six reviewer sign-in emails listed below; no broad domain rule |
@@ -81,9 +91,16 @@ to avoid daily reviewer sign-in.
 
 Creating the application generates its immutable application ID and Audience
 tag. Read both back immediately, set the exact Audience as `CF_ACCESS_AUD`, and
-rerun the Worker dry run before deployment. If the Access edge does not emit
-working OAuth discovery for `/access/mcp` while leaving `/mcp` unchanged,
-delete the new application and stop before Worker deployment.
+rerun both Worker dry runs before deployment. If the Access edge does not emit
+working OAuth discovery for the dedicated hostname while the existing
+Worker's `/mcp` discovery remains unchanged, delete the new application and
+stop before either Worker deployment.
+
+The proxy accepts only `/mcp`, requires `Cf-Access-Jwt-Assertion`, forwards
+only MCP transport headers plus that assertion, strips the opaque OAuth bearer
+and unsigned forwarded-email header, and targets the existing Worker's
+`/access/mcp`. The existing Worker remains the sole JWT verifier and reviewer
+identity authority.
 
 ## Origin verification contract
 
@@ -120,18 +137,20 @@ canonical account. Do not expose its secret value in logs.
    current Worker version, deploy command, post-deploy checks, and rollback.
 3. Require the operator to type the literal word `deploy` before either Access
    or Worker production mutation.
-4. Create and read back the path-scoped Access application and policy.
-5. Verify Access discovery on `/access/mcp` and unchanged Identity discovery on
-   `/mcp`; stop and delete the application if path isolation fails.
-6. Set the generated `CF_ACCESS_AUD`, rerun the dry run, and deploy the reviewed
-   SHA.
-7. Add the organization connector using the dedicated `/access/mcp` URL.
+4. Create and read back the dedicated-hostname Access application and policy.
+5. Verify Access discovery on the dedicated hostname and unchanged Identity
+   discovery on the existing Worker; stop and delete the application if
+   hostname isolation fails.
+6. Set the generated `CF_ACCESS_AUD`, rerun both dry runs, and deploy the
+   reviewed SHA to the existing Worker and dedicated proxy Worker.
+7. Add the organization connector using the dedicated proxy `/mcp` URL.
 8. Sign in through native Claude Cowork, call `template_review_my_queue`, and
    query D1 to prove the same canonical reviewer account was attributed.
 
 ## Rollback
 
-Disable or remove the path-scoped Access application, remove the organization
-connector, and restore the recorded prior Worker version if origin code must be
-rolled back. The existing `/mcp` Identity connector remains the immediate
-service fallback throughout.
+Disable or remove the dedicated-hostname Access application, remove the
+organization connector, delete or roll back the proxy Worker, and restore the
+recorded prior Template Review Worker version if origin code must be rolled
+back. The existing Worker hostname and `/mcp` Identity connector remain the
+immediate service fallback throughout.
