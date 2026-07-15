@@ -56,11 +56,14 @@ the preview remains behind the same authenticated Worker path.
 
 The container runs the adapter-node app, pinned Codex CLI, and an immutable demo
 seed. It sleeps after ten minutes and never keeps provider credentials in an
-image, file, receipt, or browser response. Access tokens rotate server-side from
-the host-only refresh cookie. D1 contains only sanitized receipts, bounded action
+image, durable file, receipt, app-server environment, or browser response. Codex
+authentication is bootstrapped through a memory-backed home, then its cached auth
+file is deleted after initialization. Access tokens rotate server-side from the
+host-only refresh cookie. D1 contains only sanitized receipts, bounded action
 metadata, and opaque snapshot pointers; private R2 archives the governed project
-and receipt roots with a seven-day lifecycle rule. A successful diff read or
-operator reset checkpoints state for wake/restart recovery.
+and receipt roots with a seven-day lifecycle rule. Successful diff reads and
+explicit close/reset actions checkpoint state for recovery; close/reset also
+destroy the running Sandbox.
 
 ## Local Development
 
@@ -72,11 +75,15 @@ pnpm --filter @create-something/client-workspace dev
 The checked-in demo project is
 `packages/client-workspace/clients/demo-frontend`. It is allowlisted by server
 configuration; browser requests cannot replace its path or preview command.
-`demo:reset` recognizes only the declared acceptance edit (headline and accent),
-restores those two literals, and refuses to overwrite any unexpected change.
+`demo:reset` restores the checked-in immutable seed through the declared demo
+boundary; browser input cannot select another root, seed, command, storage key,
+or Sandbox ID.
 
-Open the printed local URL, choose **Demo frontend**, attach `gemini_share.png`,
-and submit the acceptance prompt from the durable goal. Approvals are deliberately
+Open the printed local URL, choose **Demo frontend**, attach the declared PNG,
+and submit the Performance acceptance prompt from the durable goal: change only
+the hero eyebrow to `Governed product delivery`, the headline to `Move from intent
+to proof.`, and add a 4px orange top rule while preserving the navigation, CTA,
+and three proof cards. Approvals are deliberately
 opaque in the browser; approve or decline only the bounded command/file card that
 the activity rail presents. Reloading the same browser restores the sanitized
 receipt, terminal state, baseline diff, and owned preview while the local server
@@ -107,10 +114,11 @@ fully rolls back this MVP because it changes no production route, identity polic
 credential, invitation, or third-party system.
 
 The operator approved the separately tracked production promotion in CRE-1266.
-The in-product **Reset demo** action is the only production reset route: it stops
-the owned preview/session processes, restores `/app/seed/demo-frontend`, removes
-prior session authority, and checkpoints the clean state. It cannot select a
-root, seed, command, storage key, or Sandbox ID.
+The in-product **Close** action checkpoints state and releases the Sandbox; **Reset
+demo** stops the owned preview/session processes, restores
+`/app/seed/demo-frontend`, removes prior session authority, checkpoints the clean
+state, and releases the Sandbox. Neither can select a root, seed, command, storage
+key, or Sandbox ID.
 
 The production target is `https://workspace.createsomething.io`; its durable
 finish line and live browser verifier are in

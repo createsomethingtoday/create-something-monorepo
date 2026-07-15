@@ -55,6 +55,7 @@ test('sandbox gateway pins RPC, bounded lifecycle, one app process, and authenti
           HOST: '0.0.0.0',
           PORT: '4173',
           NODE_ENV: 'production',
+          BODY_SIZE_LIMIT: '6M',
           OPENAI_API_KEY: 'server-secret',
           CLIENT_WORKSPACE_STATE_ROOT: '/workspace/state',
           CLIENT_WORKSPACE_MANAGED_ROOT: '/workspace/projects',
@@ -94,6 +95,46 @@ test('sandbox gateway reuses a running app process without reinjecting secrets',
   );
   assert.equal(await response.text(), 'reused');
   assert.equal(starts, 0);
+});
+
+test('sandbox gateway replaces a stale starting app process after the SDK reports it exited', async () => {
+  let starts = 0;
+  let waitsOnExited = 0;
+  const gateway = new CloudflareSandboxGateway({
+    binding: {} as never,
+    openaiApiKey: 'server-secret',
+    getSandbox() {
+      return {
+        async getProcess() {
+          return {
+            status: 'starting',
+            async waitForPort() {
+              waitsOnExited += 1;
+              const error = new Error('exited before ready');
+              error.name = 'ProcessExitedBeforeReadyError';
+              throw error;
+            }
+          };
+        },
+        async startProcess() {
+          starts += 1;
+          return { async waitForPort() {} };
+        },
+        async containerFetch() {
+          return new Response('restarted');
+        }
+      };
+    }
+  });
+
+  const response = await gateway.fetch(
+    'client-workspace-0123456789abcdef0123456789abcdef',
+    new Request('https://workspace.createsomething.space/')
+  );
+
+  assert.equal(await response.text(), 'restarted');
+  assert.equal(starts, 1);
+  assert.equal(waitsOnExited, 1);
 });
 
 test('sandbox gateway rejects non-router sandbox ids', async () => {
@@ -227,6 +268,7 @@ test('sandbox gateway reports a sanitized checkpoint failure without failing the
 test('sandbox gateway checkpoints the operator reset response', async () => {
   const tasks: Promise<unknown>[] = [];
   let captures = 0;
+  let destroys = 0;
   const gateway = new CloudflareSandboxGateway({
     binding: {} as never,
     openaiApiKey: 'server-secret',
@@ -239,6 +281,9 @@ test('sandbox gateway checkpoints the operator reset response', async () => {
       },
       async containerFetch() {
         return Response.json({ ok: true });
+      },
+      async destroy() {
+        destroys += 1;
       }
     }),
     snapshots: {
@@ -265,6 +310,52 @@ test('sandbox gateway checkpoints the operator reset response', async () => {
 
   assert.equal(response.status, 200);
   assert.equal(captures, 1);
+  assert.equal(destroys, 1);
+});
+
+test('sandbox gateway checkpoints and destroys after an explicit successful close', async () => {
+  const calls: string[] = [];
+  const sandbox = {
+    async getProcess() {
+      return { status: 'running' };
+    },
+    async startProcess() {
+      throw new Error('should not start');
+    },
+    async containerFetch() {
+      calls.push('containerFetch');
+      return Response.json({ ok: true });
+    },
+    async destroy() {
+      calls.push('destroy');
+    }
+  };
+  const gateway = new CloudflareSandboxGateway({
+    binding: {} as never,
+    openaiApiKey: 'server-secret',
+    getSandbox: () => sandbox,
+    snapshots: {
+      async restoreLatest() {
+        return false;
+      },
+      async capture() {
+        calls.push('capture');
+        return { key: 'private', size: 1, capturedAt: 'now' };
+      }
+    }
+  });
+
+  const response = await gateway.fetch(
+    'client-workspace-0123456789abcdef0123456789abcdef',
+    new Request(
+      'https://workspace.createsomething.space/api/sessions/session-1/close',
+      { method: 'POST' }
+    )
+  );
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { ok: true });
+  assert.deepEqual(calls, ['containerFetch', 'capture', 'destroy']);
 });
 
 test('sandbox gateway schedules sanitized D1 activity capture for an app response', async () => {

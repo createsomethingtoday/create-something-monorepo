@@ -52,6 +52,18 @@ const SAFE_PROXY_REQUEST_HEADERS = [
   'range'
 ] as const;
 
+const PRIVATE_MODULE_PREFIX = '/__preview_module__/';
+
+function isTextResponse(contentType: string | null): boolean {
+  if (!contentType) return false;
+  return (
+    contentType.startsWith('text/') ||
+    contentType.includes('javascript') ||
+    contentType.includes('json') ||
+    contentType.includes('xml')
+  );
+}
+
 function delay(milliseconds: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
@@ -78,6 +90,8 @@ export class PreviewSession {
   #startedAt: string | undefined;
   #child: ChildProcess | undefined;
   #exited = false;
+  readonly #privateModuleTokens = new Map<string, string>();
+  readonly #privateModulePaths = new Map<string, string>();
 
   constructor(options: PreviewSessionOptions) {
     this.#workspace = options.workspace;
@@ -162,8 +176,9 @@ export class PreviewSession {
       throw new PreviewSessionError('preview_path_escape', 'Preview path is outside this workspace.');
     }
 
+    const targetPath = this.#resolveProxyPath(incoming.pathname);
     const target = new URL(
-      `${incoming.pathname}${incoming.search}`,
+      `${targetPath}${incoming.search}`,
       `http://127.0.0.1:${this.#workspace.preview.port}`
     );
     const headers = new Headers();
@@ -177,11 +192,64 @@ export class PreviewSession {
       const value = upstream.headers.get(name);
       if (value) responseHeaders.set(name, value);
     }
-    return new Response(request.method === 'HEAD' ? null : upstream.body, {
+    let body: BodyInit | null = request.method === 'HEAD' ? null : upstream.body;
+    if (request.method === 'GET' && isTextResponse(upstream.headers.get('content-type'))) {
+      body = this.#sanitizePreviewBody(await upstream.text(), targetPath);
+      responseHeaders.delete('content-length');
+      responseHeaders.delete('content-encoding');
+    }
+    return new Response(body, {
       status: upstream.status,
       statusText: upstream.statusText,
       headers: responseHeaders
     });
+  }
+
+  #resolveProxyPath(pathname: string): string {
+    const tokenPrefix = `${this.#previewPath}${PRIVATE_MODULE_PREFIX}`;
+    if (pathname.startsWith(tokenPrefix)) {
+      const token = pathname.slice(tokenPrefix.length);
+      if (!/^[a-f0-9-]{36}$/.test(token)) {
+        throw new PreviewSessionError('preview_path_escape', 'Preview module token is invalid.');
+      }
+      const privatePath = this.#privateModulePaths.get(token);
+      if (!privatePath) {
+        throw new PreviewSessionError('preview_path_escape', 'Preview module token is unknown.');
+      }
+      return `${this.#previewPath}${privatePath}`;
+    }
+    if (pathname.startsWith(`${this.#previewPath}/@fs/`)) {
+      throw new PreviewSessionError('preview_path_escape', 'Direct preview module paths are unavailable.');
+    }
+    return pathname;
+  }
+
+  #sanitizePreviewBody(rawBody: string, targetPath: string): string {
+    let tokenized = rawBody.replace(/\/@fs\/[^"'`\s<>()\\]+/g, (rawPath) => {
+      const suffixIndex = rawPath.search(/[?#]/);
+      const privatePath = suffixIndex === -1 ? rawPath : rawPath.slice(0, suffixIndex);
+      const suffix = suffixIndex === -1 ? '' : rawPath.slice(suffixIndex);
+      let token = this.#privateModuleTokens.get(privatePath);
+      if (!token) {
+        token = crypto.randomUUID();
+        this.#privateModuleTokens.set(privatePath, token);
+        this.#privateModulePaths.set(token, privatePath);
+      }
+      return `${PRIVATE_MODULE_PREFIX}${token}${suffix}`;
+    });
+    if (targetPath.endsWith('/@vite/client')) {
+      tokenized = tokenized
+        .replaceAll('console.debug("[vite] connecting...");', '')
+        .replaceAll(
+          'transport.connect(createHMRHandler(handleMessage));',
+          '/* Live HMR is disabled at the authenticated preview boundary. */'
+        );
+    }
+    return tokenized
+      .replaceAll(this.#workspace.sourceRoot, '[workspace]')
+      .replaceAll(`/app/seed/${this.#workspace.id}`, '[workspace-dependency]')
+      .replaceAll(`127.0.0.1:${this.#workspace.preview.port}`, 'preview.internal')
+      .replaceAll(`localhost:${this.#workspace.preview.port}`, 'preview.internal');
   }
 
   close(): void {
@@ -189,5 +257,7 @@ export class PreviewSession {
     this.#state = 'stopped';
     this.#child?.kill('SIGTERM');
     this.#child = undefined;
+    this.#privateModuleTokens.clear();
+    this.#privateModulePaths.clear();
   }
 }

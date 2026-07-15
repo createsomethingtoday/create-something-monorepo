@@ -220,6 +220,28 @@ test('session normalizes activity and persists a sanitized terminal receipt', as
   });
 });
 
+test('session distinguishes exhausted provider quota from authentication and rate limits', async () => {
+  await withSession(async ({ session, codex }) => {
+    const messages: string[] = [];
+    session.subscribe((event) => messages.push(event.message));
+    await session.open();
+    await session.startTurn({ text: 'Update the page.' });
+
+    codex.emit({
+      method: 'error',
+      params: {
+        error: {
+          code: 'insufficient_quota',
+          message: 'You exceeded your current quota. Check your plan and billing details.',
+          status: 429
+        }
+      }
+    });
+
+    assert.equal(messages.at(-1), 'quota_exhausted');
+  });
+});
+
 test('session exposes opaque approval ids and returns only allowed decisions', async () => {
   await withSession(async ({ session, codex }) => {
     const events: Array<{ type?: string; approvalId?: string }> = [];

@@ -78,17 +78,18 @@ export default {
         preview: { enabled: false, environment: 'production' }
       });
     let refreshedCookies: string[] = [];
+    const resolveAccess = async (protectedRequest: Request) => {
+      const initial = await applicationAccess(protectedRequest);
+      if (initial.status !== 'anonymous' && initial.status !== 'invalid') return initial;
+      const refreshed = await identityRoutes.refreshAccess(protectedRequest);
+      if (!refreshed) return initial;
+      refreshedCookies = refreshed.setCookies;
+      return await applicationAccess(refreshed.request);
+    };
 
     const worker = createClientWorkspaceWorker({
       cookieSecret: env.WORKSPACE_COOKIE_SECRET,
-      resolveAccess: async (protectedRequest) => {
-        const initial = await applicationAccess(protectedRequest);
-        if (initial.status !== 'anonymous' && initial.status !== 'invalid') return initial;
-        const refreshed = await identityRoutes.refreshAccess(protectedRequest);
-        if (!refreshed) return initial;
-        refreshedCookies = refreshed.setCookies;
-        return await applicationAccess(refreshed.request);
-      },
+      resolveAccess,
       sandbox: new CloudflareSandboxGateway({
         binding: env.Sandbox,
         openaiApiKey: env.OPENAI_API_KEY,

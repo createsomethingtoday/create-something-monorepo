@@ -33,6 +33,25 @@ interface SnapshotRow {
   captured_at: string;
 }
 
+interface FixedLengthStreamPair {
+  readable: ReadableStream<Uint8Array>;
+  writable: WritableStream<Uint8Array>;
+}
+
+interface R2WorkspaceSnapshotObjectsOptions {
+  createFixedLengthStream?: (size: number) => FixedLengthStreamPair;
+}
+
+function createRuntimeFixedLengthStream(size: number): FixedLengthStreamPair {
+  const RuntimeFixedLengthStream = (
+    globalThis as typeof globalThis & {
+      FixedLengthStream?: new (expectedLength: number) => FixedLengthStreamPair;
+    }
+  ).FixedLengthStream;
+  if (!RuntimeFixedLengthStream) throw new Error('fixed_length_stream_unavailable');
+  return new RuntimeFixedLengthStream(size);
+}
+
 export class D1WorkspaceSnapshotLedger implements WorkspaceSnapshotLedger {
   constructor(private readonly database: D1DatabaseLike) {}
 
@@ -73,16 +92,29 @@ export class D1WorkspaceSnapshotLedger implements WorkspaceSnapshotLedger {
 }
 
 export class R2WorkspaceSnapshotObjects implements WorkspaceSnapshotObjects {
-  constructor(private readonly bucket: R2BucketLike) {}
+  readonly #createFixedLengthStream: (size: number) => FixedLengthStreamPair;
+
+  constructor(
+    private readonly bucket: R2BucketLike,
+    options: R2WorkspaceSnapshotObjectsOptions = {}
+  ) {
+    this.#createFixedLengthStream =
+      options.createFixedLengthStream ?? createRuntimeFixedLengthStream;
+  }
 
   async get(key: string): Promise<ReadableStream<Uint8Array> | null> {
     return (await this.bucket.get(key))?.body ?? null;
   }
 
-  async put(key: string, body: ReadableStream<Uint8Array>): Promise<void> {
-    await this.bucket.put(key, body, {
-      httpMetadata: { contentType: 'application/gzip' },
-      customMetadata: { classification: 'private-client-workspace-snapshot' }
-    });
+  async put(key: string, body: ReadableStream<Uint8Array>, size: number): Promise<void> {
+    const fixed = this.#createFixedLengthStream(size);
+    const piping = body.pipeTo(fixed.writable);
+    await Promise.all([
+      this.bucket.put(key, fixed.readable, {
+        httpMetadata: { contentType: 'application/gzip' },
+        customMetadata: { classification: 'private-client-workspace-snapshot' }
+      }),
+      piping
+    ]);
   }
 }

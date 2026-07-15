@@ -1,4 +1,7 @@
 import assert from 'node:assert/strict';
+import { access, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 
@@ -41,4 +44,49 @@ test('Codex process adapter initializes, starts a thread and turn, and forwards 
   } finally {
     connection.close();
   }
+});
+
+test('Codex process adapter removes ephemeral auth after the child caches it', async () => {
+  const fakeServer = fileURLToPath(new URL('./fixtures/fake-codex-app-server.mjs', import.meta.url));
+  const codexHome = await mkdtemp(join(tmpdir(), 'client-workspace-codex-auth-'));
+  const authFile = join(codexHome, 'auth.json');
+  await writeFile(authFile, '{"OPENAI_API_KEY":"test-only"}', { mode: 0o600 });
+
+  const connection = await connectCodexAppServer({
+    command: process.execPath,
+    args: [fakeServer],
+    environment: {
+      ...process.env,
+      CODEX_HOME: codexHome,
+      OPENAI_API_KEY: 'must-not-reach-child',
+      EXPECT_EPHEMERAL_CODEX_AUTH: '1'
+    },
+    ephemeralAuthFile: authFile
+  });
+
+  try {
+    await assert.rejects(access(authFile), { code: 'ENOENT' });
+    const thread = await connection.startThread({
+      cwd: process.cwd(),
+      model: 'gpt-5.5',
+      approvalPolicy: 'untrusted',
+      developerInstructions: 'Stay inside the workspace.'
+    });
+    assert.equal(thread.threadId, 'thread-from-process');
+  } finally {
+    connection.close();
+    await rm(codexHome, { recursive: true, force: true });
+  }
+});
+
+test('Sandbox entrypoint authenticates Codex in memory and clears the inherited provider key', async () => {
+  const entrypoint = await readFile(
+    fileURLToPath(new URL('../cloudflare/start-client-workspace.sh', import.meta.url)),
+    'utf8'
+  );
+
+  assert.match(entrypoint, /CODEX_HOME=.*\/dev\/shm/);
+  assert.match(entrypoint, /codex login --with-api-key/);
+  assert.match(entrypoint, /unset OPENAI_API_KEY/);
+  assert.match(entrypoint, /CLIENT_WORKSPACE_EPHEMERAL_CODEX_AUTH/);
 });
