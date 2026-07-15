@@ -146,6 +146,9 @@ try {
   const designerUrl = `http://localhost:${fixturePort}/designer`;
   const publishedUrl = `http://localhost:${fixturePort}/published`;
   await fixturePage.goto(designerUrl);
+  const panel = await context.newPage();
+  await panel.goto(`${extensionOrigin}/sidepanel.html`);
+  await panel.getByText('Choose the exact submission').waitFor();
   const pairing = await api(`/v1/reviews/${review.id}/companion-pairings`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -172,8 +175,6 @@ try {
     { targetExtensionId: extensionId, code: pairing.pairing.code }
   );
   if (!pairingResult?.ok) throw new Error(pairingResult?.error ?? 'External pairing failed.');
-  const panel = await context.newPage();
-  await panel.goto(`${extensionOrigin}/sidepanel.html`);
   await panel.getByText('Complete runtime validation').waitFor();
 
   const missions = ['configure', 'publish', 'production_runtime', 'uninstall_cleanup'];

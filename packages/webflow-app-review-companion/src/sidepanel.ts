@@ -111,3 +111,6 @@ chrome.tabs.onActivated.addListener(() => void render());
 chrome.tabs.onUpdated.addListener((_tabId, change, tab) => {
   if (tab.active && change.url) void render();
 });
+chrome.storage.onChanged.addListener((changes, areaName) => {
+  if (areaName === 'session' && changes.companionState) void render();
+});
