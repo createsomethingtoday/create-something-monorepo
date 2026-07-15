@@ -138,17 +138,23 @@ function authError(status = 400, code = 'invalid_credentials'): Response {
 
 export function createIdentityRoutes(options: IdentityRoutesOptions): IdentityRoutes {
   const identityApiUrl = options.identityApiUrl.replace(/\/+$/, '');
+  const fetchIdentity = options.fetch.bind(globalThis);
 
   return {
     async refreshAccess(request) {
       const cookies = requestCookies(request);
       const refreshToken = cookies.get('cs_refresh_token');
       if (!refreshToken) return null;
-      const response = await options.fetch(`${identityApiUrl}/v1/auth/refresh`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ refresh_token: refreshToken })
-      });
+      let response: Response;
+      try {
+        response = await fetchIdentity(`${identityApiUrl}/v1/auth/refresh`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ refresh_token: refreshToken })
+        });
+      } catch {
+        return null;
+      }
       if (!response.ok) return null;
       const data = (await response.json().catch(() => ({}))) as Record<string, unknown>;
       if (
@@ -198,11 +204,16 @@ export function createIdentityRoutes(options: IdentityRoutesOptions): IdentityRo
           return authError(400, 'invalid_request');
         }
 
-        const response = await options.fetch(`${identityApiUrl}/v1/auth/login`, {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ email: body.email, password: body.password })
-        });
+        let response: Response;
+        try {
+          response = await fetchIdentity(`${identityApiUrl}/v1/auth/login`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ email: body.email, password: body.password })
+          });
+        } catch {
+          return authError(503, 'identity_unavailable');
+        }
         const data = (await response.json().catch(() => ({}))) as Record<string, unknown>;
         if (!response.ok) {
           const error = typeof data.error === 'string' ? data.error : 'invalid_credentials';
