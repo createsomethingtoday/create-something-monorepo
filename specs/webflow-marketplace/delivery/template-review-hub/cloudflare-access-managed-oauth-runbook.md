@@ -1,6 +1,6 @@
 # Template Review Cloudflare Access Managed OAuth Runbook
 
-**Status:** Access application created; Worker deployment pending
+**Status:** Production deployed; Webflow Claude organization submission and native Cowork verification pending
 
 **Date:** 2026-07-15
 
@@ -46,14 +46,14 @@ Template Review production values from those unknowns.
 The Create Something Cloudflare account was read through the scoped Access API
 without printing the token:
 
-| Field | Readback |
-| --- | --- |
-| Account | `Create Something` (`9645bd52e640b8a4f40a3a55ff1dd75a`) |
-| Access team domain | `https://createsomething.cloudflareaccess.com` (live `/cdn-cgi/access/certs` returns 200) |
-| Existing applications | 2 self-hosted apps; neither targets Template Review or MCP |
-| Existing MCP servers | 0 AI Controls MCP server records |
-| Identity provider | Cloudflare One-time PIN only (`6e4c08b5-43be-46a7-88d8-1daa80863b60`) |
-| Organization | `createsomething.cloudflareaccess.com`; configuration is writable |
+| Field                 | Readback                                                                                  |
+| --------------------- | ----------------------------------------------------------------------------------------- |
+| Account               | `Create Something` (`9645bd52e640b8a4f40a3a55ff1dd75a`)                                   |
+| Access team domain    | `https://createsomething.cloudflareaccess.com` (live `/cdn-cgi/access/certs` returns 200) |
+| Existing applications | 2 self-hosted apps; neither targets Template Review or MCP                                |
+| Existing MCP servers  | 0 AI Controls MCP server records                                                          |
+| Identity provider     | Cloudflare One-time PIN only (`6e4c08b5-43be-46a7-88d8-1daa80863b60`)                     |
+| Organization          | `createsomething.cloudflareaccess.com`; configuration is writable                         |
 
 The Wrangler OAuth grant cannot read Access, but Infisical provides a scoped
 Access token for readback and the approved mutation. Never print it.
@@ -63,20 +63,60 @@ Access token for readback and the approved mutation. Never print it.
 The corrected application was created after the fresh literal `deploy`
 approval and read back through the scoped API:
 
-| Field | Production readback |
-| --- | --- |
-| Application ID | `f18711d2-5673-4aa9-b04c-7227301e1064` |
-| Audience | `9e652f0b7b017646202668709415884dfb620217d3ded9a71585ce9d8d740a5d` |
-| Policy ID | `ea41ab8a-9e29-43c9-9bd4-c0b1527809f2` |
-| Domain | `webflow-template-review-mcp-access.createsomething.workers.dev` |
-| Session / grant / token | `12h` / `336h` / `15m` |
-| Identity provider | One-time PIN (`6e4c08b5-43be-46a7-88d8-1daa80863b60`) |
+| Field                   | Production readback                                                |
+| ----------------------- | ------------------------------------------------------------------ |
+| Application ID          | `f18711d2-5673-4aa9-b04c-7227301e1064`                             |
+| Audience                | `9e652f0b7b017646202668709415884dfb620217d3ded9a71585ce9d8d740a5d` |
+| Policy ID               | `ea41ab8a-9e29-43c9-9bd4-c0b1527809f2`                             |
+| Domain                  | `webflow-template-review-mcp-access.createsomething.workers.dev`   |
+| Session / grant / token | `12h` / `336h` / `15m`                                             |
+| Identity provider       | One-time PIN (`6e4c08b5-43be-46a7-88d8-1daa80863b60`)              |
 
 The six-email policy, DCR callbacks, localhost/loopback denials, and Managed
-OAuth settings match the candidate table below. Before the proxy Worker exists,
-the dedicated hostname returns Cloudflare `1042`; the existing Worker's `/mcp`
-protected-resource metadata remains unchanged and still names CREATE SOMETHING
-Identity. Recheck OAuth discovery immediately after proxy deployment.
+OAuth settings match the candidate table below. The application has both the
+public hostname destination and the Worker-native destination for script tag
+`91ef3be1605c407993e70482a1f5894e`. Cloudflare requires the public domain to
+remain in the destination set, while the Worker destination makes the
+Worker-native protected-resource metadata route available. The existing
+Worker's `/mcp` protected-resource metadata remains unchanged and still names
+CREATE SOMETHING Identity.
+
+## Production deployment receipts
+
+PR `#966` merged candidate `76a3ad98edca09db83a22d8d1b35ef9f089d0462`
+to `main` as merge commit `c9be922936c6b12d5792a7f873e4e99272e680d0`
+after all nine applicable checks passed (two non-applicable jobs skipped).
+
+| Surface                                | Production receipt                                                                                | Rollback receipt                                                                                  |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Existing Template Review origin Worker | deployment `44a9a06a-93f1-4649-9220-a67f1eff8765`; version `21b6f34f-3770-4c97-abaf-5b14df6252ca` | deployment `bf50cba8-5b7f-4850-ab87-65eb48a2b620`; version `52a7d389-6942-45bb-9b08-275cf491ddaf` |
+| Dedicated Access proxy Worker          | deployment `18f67781-d909-4ed6-980c-e38bbfed06c0`; version `507587c0-8ded-4b54-b5bb-f0cccd71d35d` | delete or roll back the dedicated proxy without changing the origin `/mcp` connector              |
+
+Production readback proves:
+
+1. `GET /mcp` on the dedicated connector returns Cloudflare's Managed OAuth
+   `401` challenge with the exact protected-resource metadata URL.
+2. The advertised protected-resource metadata returns `200`, names the exact
+   `/mcp` resource, reports `protected: true`, and names
+   `https://createsomething.cloudflareaccess.com` as the authorization server.
+3. Authorization-server metadata returns `200` with dynamic client
+   registration, authorization-code plus refresh-token grants, and S256 PKCE.
+4. Direct origin `GET /access/mcp` without a signed Access assertion fails
+   closed with `401`.
+5. The existing origin `/mcp` still returns its unchanged CREATE SOMETHING
+   Identity challenge and metadata.
+
+The final native Cowork verifier is blocked on Webflow's Claude organization
+catalog rather than Worker health. The signed-in Webflow Claude member receives
+`You don't have access to organization settings`, and the connector does not
+yet appear under Customize -> Connectors. Internal precedent routes the catalog
+request through `#help-ai` to Enterprise AI Operations, with Reed Shackelford
+as the operator who added WROP
+([receipt](https://webflow.enterprise.slack.com/archives/C08KYC4GC4R/p1784143616627369?thread_ts=1784141942.008439&cid=C08KYC4GC4R)),
+plus a parallel `#triage-security` workflow for the externally hosted remote
+MCP. The submission must describe the deployed auth accurately as Cloudflare
+Access Managed OAuth with Cloudflare One-time PIN; this Create Something Access
+application does not use Webflow Okta.
 
 ## Approved candidate configuration
 
@@ -84,23 +124,23 @@ Create one self-hosted Access application for the dedicated proxy Worker. This
 protects the whole connector hostname without introducing an MCP portal or
 touching the existing Worker hostname:
 
-| Field | Candidate value |
-| --- | --- |
-| Name | `Webflow Template Review MCP` |
-| Type | `self_hosted` |
-| Domain | `webflow-template-review-mcp-access.createsomething.workers.dev` |
-| Public connector URL | `https://webflow-template-review-mcp-access.createsomething.workers.dev/mcp` |
-| Protected Worker | `webflow-template-review-mcp-access` (`workers.dev`; preview URLs disabled) |
-| Access application session | `12h` |
-| IdP | One-time PIN only |
-| Policy | Allow the six reviewer sign-in emails listed below; no broad domain rule |
-| Managed OAuth | enabled |
-| Dynamic client registration | enabled |
-| Allow localhost clients | false |
-| Allow loopback clients | false |
-| Allowed redirect URIs | `https://claude.ai/api/mcp/auth_callback`, `https://claude.com/api/mcp/auth_callback` |
-| Access token lifetime | `15m` |
-| Grant session duration | `336h` (14 days) |
+| Field                       | Candidate value                                                                       |
+| --------------------------- | ------------------------------------------------------------------------------------- |
+| Name                        | `Webflow Template Review MCP`                                                         |
+| Type                        | `self_hosted`                                                                         |
+| Domain                      | `webflow-template-review-mcp-access.createsomething.workers.dev`                      |
+| Public connector URL        | `https://webflow-template-review-mcp-access.createsomething.workers.dev/mcp`          |
+| Protected Worker            | `webflow-template-review-mcp-access` (`workers.dev`; preview URLs disabled)           |
+| Access application session  | `12h`                                                                                 |
+| IdP                         | One-time PIN only                                                                     |
+| Policy                      | Allow the six reviewer sign-in emails listed below; no broad domain rule              |
+| Managed OAuth               | enabled                                                                               |
+| Dynamic client registration | enabled                                                                               |
+| Allow localhost clients     | false                                                                                 |
+| Allow loopback clients      | false                                                                                 |
+| Allowed redirect URIs       | `https://claude.ai/api/mcp/auth_callback`, `https://claude.com/api/mcp/auth_callback` |
+| Access token lifetime       | `15m`                                                                                 |
+| Grant session duration      | `336h` (14 days)                                                                      |
 
 Claude's published connector contract says remote Cowork/Desktop traffic is
 brokered from Anthropic's cloud and documents those two HTTPS callback URLs.
