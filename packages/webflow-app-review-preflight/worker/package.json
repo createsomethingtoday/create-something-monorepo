@@ -1,0 +1,27 @@
+{
+  "name": "@create-something/webflow-app-review-preflight-worker",
+  "version": "0.1.0",
+  "description": "Cloudflare D1 and R2 API for Webflow App Review Preflight",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node ../../../scripts/run-wrangler.mjs deploy --dry-run --outdir dist --config wrangler.jsonc",
+    "check": "tsc --noEmit",
+    "dev": "node ../../../scripts/run-wrangler.mjs dev --config wrangler.jsonc",
+    "lint": "pnpm run check",
+    "pretest": "pnpm --filter @create-something/webflow-app-review-preflight build",
+    "test": "vitest run",
+    "types": "node ../../../scripts/run-wrangler.mjs types --config wrangler.jsonc"
+  },
+  "dependencies": {
+    "@create-something/webflow-app-review-preflight": "workspace:*"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.18.4",
+    "@cloudflare/workers-types": "^5.20260711.1",
+    "jszip": "^3.10.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.8",
+    "wrangler": "^4.110.0"
+  }
+}
