@@ -238,7 +238,155 @@ export async function completeWebflowOAuth(
 
 export function webflowOAuthCompletePage(): Response {
   return new Response(
-    '<!doctype html><meta charset="utf-8"><title>Webflow connected</title><main><h1>Connection complete</h1><p>Return to the Webflow Designer to continue validation.</p></main>',
+    `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark">
+    <title>Connection complete · App Review Preflight</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --background-1: #1e1e1e;
+        --background-2: #2e2e2e;
+        --background-3: #444;
+        --text-1: #f5f5f5;
+        --text-2: #bdbdbd;
+        --text-3: #898989;
+        --border-1: #3d3d3d;
+        --action: #146ef5;
+        --action-hover: #2f80ff;
+        --success: #5bd69b;
+        --success-background: #183428;
+        --font: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      * { box-sizing: border-box; }
+      body {
+        min-width: 320px;
+        min-height: 100vh;
+        margin: 0;
+        background:
+          radial-gradient(circle at 50% 15%, rgba(20, 110, 245, .15), transparent 34rem),
+          var(--background-1);
+        color: var(--text-1);
+        font-family: var(--font);
+        -webkit-font-smoothing: antialiased;
+      }
+      .shell {
+        display: grid;
+        min-height: 100vh;
+        grid-template-rows: auto 1fr auto;
+      }
+      header, footer {
+        display: flex;
+        align-items: center;
+        min-height: 64px;
+        padding: 0 clamp(20px, 4vw, 48px);
+      }
+      header { border-bottom: 1px solid var(--border-1); }
+      .brand { display: flex; align-items: center; gap: 12px; font-size: 13px; font-weight: 600; }
+      .brand-mark {
+        display: grid;
+        width: 32px;
+        height: 32px;
+        place-items: center;
+        border-radius: 6px;
+        background: var(--action);
+        color: white;
+        font-size: 14px;
+        font-weight: 800;
+        letter-spacing: -1px;
+      }
+      main { display: grid; place-items: center; padding: 48px 20px; }
+      .card {
+        width: min(100%, 480px);
+        padding: clamp(28px, 5vw, 40px);
+        border: 1px solid var(--border-1);
+        border-radius: 10px;
+        background: var(--background-2);
+        box-shadow: 0 24px 70px rgba(0, 0, 0, .28);
+      }
+      .status {
+        display: grid;
+        width: 48px;
+        height: 48px;
+        place-items: center;
+        border: 1px solid #28543f;
+        border-radius: 50%;
+        background: var(--success-background);
+        color: var(--success);
+      }
+      .status svg { width: 22px; height: 22px; }
+      .eyebrow {
+        margin: 24px 0 8px;
+        color: var(--success);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+      }
+      h1 { margin: 0; font-size: clamp(28px, 7vw, 38px); line-height: 1.08; letter-spacing: -.03em; }
+      .lede { margin: 16px 0 0; color: var(--text-2); font-size: 14px; line-height: 1.55; }
+      .privacy {
+        display: flex;
+        gap: 10px;
+        margin: 24px 0 0;
+        padding: 12px;
+        border: 1px solid var(--border-1);
+        border-radius: 6px;
+        background: var(--background-1);
+        color: var(--text-3);
+        font-size: 11px;
+        line-height: 1.45;
+      }
+      .privacy strong { color: var(--text-2); }
+      .dot { flex: 0 0 8px; height: 8px; margin-top: 4px; border-radius: 50%; background: var(--success); }
+      .button {
+        display: inline-flex;
+        min-height: 40px;
+        align-items: center;
+        justify-content: center;
+        margin-top: 24px;
+        padding: 0 18px;
+        border-radius: 4px;
+        background: var(--action);
+        color: white;
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: background 120ms ease;
+      }
+      .button:hover { background: var(--action-hover); }
+      .button:focus-visible { outline: 2px solid #70a7ff; outline-offset: 3px; }
+      footer { justify-content: center; color: var(--text-3); font-size: 11px; text-align: center; }
+      @media (max-width: 520px) {
+        header { min-height: 56px; }
+        main { align-items: start; padding-top: 32px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <header>
+        <div class="brand"><span class="brand-mark" aria-hidden="true">W</span>App Review Preflight</div>
+      </header>
+      <main>
+        <section class="card" aria-labelledby="completion-title">
+          <div class="status" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4L19 6"/></svg>
+          </div>
+          <p class="eyebrow">Setup checkpoint complete</p>
+          <h1 id="completion-title">Connection complete</h1>
+          <p class="lede">The secure connection is ready. Return to Webflow and open the approved test site in Designer to begin runtime validation.</p>
+          <div class="privacy"><span class="dot" aria-hidden="true"></span><span><strong>Credentials stayed private.</strong> The app token was encrypted server-side and was not shown in this browser.</span></div>
+          <a class="button" href="https://webflow.com/dashboard">Return to Webflow</a>
+        </section>
+      </main>
+      <footer>App Review Preflight · Evidence supports review; it does not make the decision.</footer>
+    </div>
+  </body>
+</html>`,
     {
       status: 200,
       headers: {

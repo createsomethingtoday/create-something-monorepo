@@ -90,4 +90,24 @@ describe('Webflow OAuth installation', () => {
       reason: 'state_mismatch'
     });
   });
+
+  test('renders a self-contained Webflow-style completion page', async () => {
+    const response = await fetchWorker(
+      new Request('https://preflight.test/v1/oauth/webflow/complete')
+    );
+    const html = await response.text();
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-security-policy')).toContain(
+      "default-src 'none'"
+    );
+    expect(response.headers.get('content-security-policy')).toContain(
+      "style-src 'unsafe-inline'"
+    );
+    expect(html).toContain('App Review Preflight');
+    expect(html).toContain('Connection complete');
+    expect(html).toContain('#146ef5');
+    expect(html).toContain('https://webflow.com/dashboard');
+    expect(html).not.toContain('<script');
+  });
 });
