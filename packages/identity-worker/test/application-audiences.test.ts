@@ -9,3 +9,7 @@ test('identity tokens address the first-party ona-agents application', () => {
 test('identity tokens address the Guard Performance Lab application', () => {
 	assert.ok(IDENTITY_TOKEN_AUDIENCES.includes('guard-performance-lab'));
 });
+
+test('identity tokens address the governed client workspace application', () => {
+	assert.ok(IDENTITY_TOKEN_AUDIENCES.includes('client-workspace'));
+});
