@@ -24494,7 +24494,7 @@
   var import_react = __toESM(require_react(), 1);
 
   // src/config.ts
-  var PREFLIGHT_API_BASE = true ? "https://webflow-app-review-preflight.createsomething.workers.dev" : "";
+  var PREFLIGHT_API_BASE = true ? "" : "";
   var PREFLIGHT_COMPANION_EXTENSION_ID = true ? "eiogakldgljpbbmplgckjkoglfgabblm" : "eiogakldgljpbbmplgckjkoglfgabblm";
 
   // src/App.tsx
@@ -25177,17 +25177,6 @@
       }
     };
     return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "app-shell", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", { className: "app-header", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "brand-mark", "aria-hidden": "true", children: "W" }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", { children: "App Review Preflight" }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: "Clear fixes before Marketplace review" })
-        ] }),
-        identity ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "identity-state", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: identity.companionRole === "reviewer" ? "Reviewer identity" : "Developer identity" }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("code", { children: identity.id })
-        ] }) : null
-      ] }),
       error ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "error-banner", role: "alert", children: error }) : null,
       review ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
         ReviewDetail,
@@ -25232,7 +25221,13 @@
         }
       ) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("main", { className: "start-view", children: [
         /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "intro", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "eyebrow", children: "Review run" }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "intro-meta", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "eyebrow", children: "Review run" }),
+            identity ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "identity-state", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: identity.companionRole === "reviewer" ? "Reviewer identity" : "Developer identity" }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("code", { children: identity.id })
+            ] }) : null
+          ] }),
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", { children: "Make the next review easier." }),
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: "See what is blocking, what is recommended, and which parts still need a human check." })
         ] }),

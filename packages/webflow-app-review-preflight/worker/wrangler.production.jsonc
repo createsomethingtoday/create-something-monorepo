@@ -8,7 +8,7 @@
   "observability": { "enabled": true },
   "vars": {
     "ENVIRONMENT": "production",
-    "ALLOWED_ORIGINS": "chrome-extension://eiogakldgljpbbmplgckjkoglfgabblm",
+    "ALLOWED_ORIGINS": "chrome-extension://eiogakldgljpbbmplgckjkoglfgabblm,https://6a57b0fa70db1b7a0cd666ac.webflow-ext.com",
     "WEBFLOW_OAUTH_REDIRECT_URI": "https://webflow-app-review-preflight.createsomething.workers.dev/v1/oauth/webflow/callback"
   },
   "d1_databases": [

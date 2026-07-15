@@ -132,11 +132,16 @@ describe('App Review Preflight extension', () => {
     expect(screen.queryByText('Reviewer identity')).not.toBeInTheDocument();
   });
 
-  test('starts with one clear upload action and no sharing action', async () => {
+  test('uses the Designer wrapper title and starts with one clear upload action', async () => {
     render(<App api={api} />);
 
-    expect(await screen.findByRole('heading', { name: 'App Review Preflight' })).toBeVisible();
-    expect(screen.getByText('Upload your app bundle')).toBeVisible();
+    expect(await screen.findByText('Upload your app bundle')).toBeVisible();
+    expect(
+      screen.queryByRole('heading', { name: 'App Review Preflight' })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('Clear fixes before Marketplace review')
+    ).not.toBeInTheDocument();
     expect(screen.getByText('Choose bundle')).toBeVisible();
     expect(screen.queryByText('Share')).not.toBeInTheDocument();
   });

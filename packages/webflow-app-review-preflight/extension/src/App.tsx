@@ -797,20 +797,6 @@ export function App({
 
   return (
     <div className="app-shell">
-      <header className="app-header">
-        <div className="brand-mark" aria-hidden="true">W</div>
-        <div>
-          <h1>App Review Preflight</h1>
-          <p>Clear fixes before Marketplace review</p>
-        </div>
-        {identity ? (
-          <div className="identity-state">
-            <strong>{identity.companionRole === 'reviewer' ? 'Reviewer identity' : 'Developer identity'}</strong>
-            <code>{identity.id}</code>
-          </div>
-        ) : null}
-      </header>
-
       {error ? <div className="error-banner" role="alert">{error}</div> : null}
 
       {review ? (
@@ -856,7 +842,15 @@ export function App({
       ) : (
         <main className="start-view">
           <div className="intro">
-            <span className="eyebrow">Review run</span>
+            <div className="intro-meta">
+              <span className="eyebrow">Review run</span>
+              {identity ? (
+                <div className="identity-state">
+                  <strong>{identity.companionRole === 'reviewer' ? 'Reviewer identity' : 'Developer identity'}</strong>
+                  <code>{identity.id}</code>
+                </div>
+              ) : null}
+            </div>
             <h2>Make the next review easier.</h2>
             <p>See what is blocking, what is recommended, and which parts still need a human check.</p>
           </div>
