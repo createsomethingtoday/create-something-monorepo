@@ -1,6 +1,6 @@
 import { env, exports } from 'cloudflare:workers';
 import JSZip from 'jszip';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 import { evaluateRuntimeSecurity } from '../src/runtime-observations';
 
 const TEST_RUNTIME_INTEGRITY = 'sha256-qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqo=';
@@ -1524,6 +1524,74 @@ describe('review API', () => {
       review: { latestVersion: { result: { officialDecision: null } } };
     }>();
     expect(reviewAfterBody.review.latestVersion.result.officialDecision).toBeNull();
+  });
+
+  test('lets the package owner request a server-dispatched runtime run without exposing its capability', async () => {
+    const reviewForm = new FormData();
+    reviewForm.set(
+      'bundle',
+      new File([await createBundle()], 'consent-pro.zip', { type: 'application/zip' })
+    );
+    const reviewResponse = await exports.default.fetch(
+      new Request('https://preflight.test/v1/reviews', {
+        method: 'POST',
+        headers: { authorization: 'Bearer test-token', origin: 'http://localhost:1337' },
+        body: reviewForm
+      })
+    );
+    const review = await reviewResponse.json<{ review: { id: string } }>();
+    const testPackageId = await createReadyRuntimePackage(review.review.id);
+    const nonOwnerResponse = await exports.default.fetch(
+      new Request(
+        `https://preflight.test/v1/runtime-test-packages/${testPackageId}/observation-runs`,
+        {
+          method: 'POST',
+          headers: {
+            authorization: 'Bearer reviewer-test-token',
+            origin: 'http://localhost:1337'
+          }
+        }
+      )
+    );
+    expect(nonOwnerResponse.status).toBe(404);
+    let dispatched: { authorization: string | null; body: unknown } | null = null;
+    const dispatch = vi.fn(async (request: Request) => {
+      dispatched = {
+        authorization: request.headers.get('authorization'),
+        body: await request.json()
+      };
+      return new Response(null, { status: 202 });
+    });
+    vi.stubGlobal('fetch', dispatch);
+
+    try {
+      const response = await exports.default.fetch(
+        new Request(
+          `https://preflight.test/v1/runtime-test-packages/${testPackageId}/observation-runs`,
+          {
+            method: 'POST',
+            headers: { authorization: 'Bearer test-token', origin: 'http://localhost:1337' }
+          }
+        )
+      );
+      expect(response.status).toBe(201);
+      const body = await response.json<{
+        observationJob: { id: string; status: string; capability?: string };
+      }>();
+      expect(body.observationJob).toMatchObject({ status: 'approved' });
+      expect(body.observationJob.capability).toBeUndefined();
+      expect(dispatch).toHaveBeenCalledOnce();
+      expect(dispatched).toEqual({
+        authorization: 'Bearer runtime-dispatcher-test-token',
+        body: {
+        observationJobId: body.observationJob.id,
+        apiBaseUrl: 'https://preflight.test',
+        capability: expect.any(String)
+        }
+      });
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   test('fails closed until a developer explicitly approves a bounded runtime job', async () => {

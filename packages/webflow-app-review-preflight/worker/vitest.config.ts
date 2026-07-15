@@ -25,6 +25,8 @@ export default defineConfig({
             'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
           E2B_COORDINATOR_TOKEN: 'coordinator-test-token',
           RUNTIME_CANARY_URL: 'http://127.0.0.1:4174/webflow-runtime-canary',
+          RUNTIME_OBSERVATION_DISPATCH_URL: 'https://runtime-dispatcher.test/run',
+          RUNTIME_OBSERVATION_DISPATCH_TOKEN: 'runtime-dispatcher-test-token',
           PATTERN_COORDINATOR_TOKEN: 'pattern-coordinator-test-token',
           GOVERNANCE_APPROVER_TOKEN: 'governance-approver-test-token',
           TEST_MIGRATIONS: await readD1Migrations(path.join(directory, '../migrations'))

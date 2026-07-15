@@ -200,12 +200,14 @@ function RuntimeObservationCard({
   testPackages,
   busy,
   onPrepare,
+  onRun,
   onRefresh
 }: {
   review: StoredReview;
   testPackages: RuntimeTestPackageView[];
   busy: boolean;
   onPrepare: (input: RuntimeTestPackageInput) => void;
+  onRun: (testPackageId: string) => void;
   onRefresh: () => void;
 }) {
   const latest = testPackages.find(
@@ -231,6 +233,11 @@ function RuntimeObservationCard({
     : latest
       ? 'Partner supplied'
       : 'Not prepared';
+  const canRequestRun =
+    !latest?.observation ||
+    latest.observation.status === 'failed' ||
+    latest.observation.status === 'expired' ||
+    latest.observation.status === 'revoked';
 
   useEffect(() => {
     setShowNewPackage(false);
@@ -359,13 +366,25 @@ function RuntimeObservationCard({
             </div>
           ) : (
             <div className="checkpoint-row pending">
-              <span className="checkpoint-number">2</span>
               <div>
-                <strong>Ready for Webflow run</strong>
-                <p>Keep the named installation allowlisted while the review team runs it.</p>
+                <strong>Ready to run</strong>
+                <p>Start a fresh Webflow-controlled browser test when this installation is ready.</p>
               </div>
             </div>
           )}
+          {canRequestRun ? (
+            <button
+              className="button button-primary"
+              disabled={busy}
+              onClick={() => onRun(latest.id)}
+            >
+              {busy
+                ? 'Starting Webflow run…'
+                : latest.observation
+                  ? 'Run test again'
+                  : 'Run test now'}
+            </button>
+          ) : null}
           <button className="button button-secondary" disabled={busy} onClick={onRefresh}>
             Check run status
           </button>
@@ -492,6 +511,7 @@ function ReviewDetail({
   busy,
   onRevision,
   onPrepareRuntimePackage,
+  onRunRuntimeObservation,
   onRefreshRuntimePackages,
   onBack
 }: {
@@ -501,6 +521,7 @@ function ReviewDetail({
   busy: boolean;
   onRevision: (file: File) => void;
   onPrepareRuntimePackage: (input: RuntimeTestPackageInput) => void;
+  onRunRuntimeObservation: (testPackageId: string) => void;
   onRefreshRuntimePackages: () => void;
   onBack: () => void;
 }) {
@@ -551,6 +572,7 @@ function ReviewDetail({
         testPackages={runtimeTestPackages}
         busy={busy}
         onPrepare={onPrepareRuntimePackage}
+        onRun={onRunRuntimeObservation}
         onRefresh={onRefreshRuntimePackages}
       />
 
@@ -668,6 +690,10 @@ export function App({ api }: { api: PreflightApi }) {
           onPrepareRuntimePackage={(input) => run(async () => {
             const prepared = await api.createRuntimeTestPackage(review.id, input);
             setRuntimeTestPackages([prepared]);
+          })}
+          onRunRuntimeObservation={(testPackageId) => run(async () => {
+            await api.requestRuntimeObservationRun(testPackageId);
+            await refreshRuntimePackages(review.id);
           })}
           onRefreshRuntimePackages={() => run(async () => {
             await refreshRuntimePackages(review.id);

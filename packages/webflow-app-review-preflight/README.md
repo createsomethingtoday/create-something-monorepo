@@ -46,7 +46,7 @@ The reviewer surface must keep bundle/source visibility, source-map gaps, iframe
 2. The Worker hashes and stores the original bytes, runs deterministic rules, persists the policy snapshot, and returns Designer Extension and production-runtime coverage separately.
 3. Revisions create immutable versions and return resolved, remaining, and new rule IDs.
 4. A developer prepares a version-bound Runtime Test Package in the Designer Extension. A reviewer may inspect or replay the same package from the reviewer web app. The package records the dedicated published target, installation allowlist, pinned runtime bytes, SRI, ready selector, and negative proxy probe as test input—not evidence.
-5. After the owning Webflow approval boundary issues the job, the E2B coordinator runs the exact package and returns normalized evidence through its own server-side token. That token is never placed in the Designer Extension or sandbox.
+5. The developer can request a fresh run for their own ready package from the Designer Extension. The Worker verifies ownership and package validity, then sends a one-time runner capability only to the configured server-side dispatcher. The dispatcher starts the E2B runner for the exact package. Neither the Designer Extension nor the developer browser receives that capability.
 6. Developers read the result in the Designer Extension; reviewers read the same immutable predicates, blockers, and artifact receipts in the web app. Their role changes access and authorization, not the security result.
 
 ## Complete runtime observation
@@ -54,8 +54,8 @@ The reviewer surface must keep bundle/source visibility, source-map gaps, iframe
 Licensed and account-gated behavior uses a different trust model from the public runtime fetch:
 
 1. The partner prepares a Runtime Test Package tied to the current review version and bundle SHA. It names a dedicated published Webflow test site, a one-hour installation allowlist, immutable runtime URLs whose SHA-256 and SRI resolve to the same bytes, one runtime-ready selector, and one bounded proxy-canary template.
-2. The package is labeled `Partner supplied`. It is test input, not evidence. The partner cannot create an executable observation job, read its capability, upload review evidence, or change review state.
-3. After explicit human approval and sandbox-ownership verification, the Webflow coordinator creates a 15-minute observation job. The one-time capability is returned to the coordinator once and stored only as a SHA-256 hash.
+2. The package is labeled `Partner supplied`. It is test input, not evidence. The partner may request one fresh run for their own ready package, but cannot read its capability, upload review evidence, or change review state.
+3. The Worker creates a 15-minute observation job and sends its one-time capability only over an authenticated server-to-server call to the Webflow-owned dispatcher. The dispatcher starts E2B and places that capability in the runner process only; the Worker stores only its SHA-256 hash and the Designer Extension receives a safe status summary.
 4. E2B opens a fresh Chromium context, proves it reached the published origin, instruments runtime-created script elements before page code executes, enforces the exact host and request budgets, masks form controls, and captures scripts, executed hashes, DOM SRI, source maps, sanitized network and console metadata, structural DOM/storage state, screenshots, and the Webflow-owned negative proxy canary.
 5. The runner uploads a strict multipart manifest and artifact set. The Worker revalidates every binding, redaction receipt, type, size, and digest before writing immutable R2 objects and D1 metadata. A successful upload consumes the capability; replay fails closed.
 6. The extension displays the earned `Webflow observed` result. It remains evidence only and cannot approve, reject, close a deterministic finding, or write to governance.
@@ -79,6 +79,8 @@ pnpm exec wrangler d1 migrations apply webflow-app-review-preflight --local --co
 pnpm exec wrangler dev --config wrangler.jsonc --port 8787 \
   --var PREFLIGHT_DEV_TOKEN:test-token \
   --var E2B_COORDINATOR_TOKEN=coordinator-test-token \
+  --var RUNTIME_OBSERVATION_DISPATCH_URL=http://127.0.0.1:8790/run \
+  --var RUNTIME_OBSERVATION_DISPATCH_TOKEN=local-dispatch-token \
   --var RUNTIME_CANARY_URL=http://127.0.0.1:4174/webflow-runtime-canary
 ```
 
@@ -109,6 +111,27 @@ The integration fixture supports explicit negative receipts. Start its server wi
 
 The integration script uses fixed local development identities only. Production uses separately managed Webflow identity, coordinator authorization, and per-job capabilities; do not reuse local tokens.
 
+### Developer-requested runner dispatch
+
+The **Run test now** button never starts a browser from the developer's computer. It asks the Worker to create a fresh job for the signed-in developer's own ready package. The Worker calls the configured `RUNTIME_OBSERVATION_DISPATCH_URL` with an authenticated JSON request:
+
+```json
+{
+  "observationJobId": "job-id",
+  "apiBaseUrl": "https://preflight.example.workers.dev",
+  "capability": "one-time-secret"
+}
+```
+
+The request uses `Authorization: Bearer $RUNTIME_OBSERVATION_DISPATCH_TOKEN`. The dispatcher is a Webflow-owned service: it must not log or persist the capability, must start an E2B sandbox with `RUNTIME_OBSERVATION_CAPABILITY` set only in the runner process, and must invoke the runner with `--api-base` and `--job`. For example, its process boundary runs:
+
+```bash
+RUNTIME_OBSERVATION_CAPABILITY="$capability" \
+webflow-app-review-runtime --api-base "$apiBaseUrl" --job "$observationJobId"
+```
+
+Both dispatcher values are production secrets. If either is absent, unreachable, or rejects the job, the Worker marks that job failed and returns a fail-closed error; it never presents a result as Webflow-observed evidence. The developer may correct the setup and request another fresh run. A result remains evidence only and cannot approve, reject, or update governance policy.
+
 ## Security boundaries
 
 - Zip uploads are limited to 10 MB, 50 MB uncompressed, and 2,000 files, and must pass deterministic archive processing before D1 writes.
@@ -120,7 +143,7 @@ The integration script uses fixed local development identities only. Production 
 - Runtime evidence contains response metadata and object keys only—no response bodies, credentials, cookies, tokens, official decisions, or governance writes.
 - E2B, Webflow app, pattern coordinator, and governance approver credentials are separate server-side boundaries.
 - Runtime Test Packages accept only a named Webflow sandbox, a short installation allowlist, pinned artifacts with matching SHA-256/SRI bytes, one bounded runtime-ready selector, and one proxy template whose host is already in the job allowlist.
-- Observation jobs use hashed, expiring, one-time capabilities. Partner identity cannot issue or fetch a job or submit evidence.
+- Observation jobs use hashed, expiring, one-time capabilities. A package owner can request a fresh job for their own ready package, but cannot fetch its capability, contract, or evidence-upload route; partner identity cannot submit evidence.
 - Evidence intake is limited to 128 KB of manifest data, 10 MB total artifacts, a fixed file/type allowlist, per-file limits, strict SHA-256 validation, and secret-shaped metadata rejection before R2 writes.
 - The runner records no headers, cookies, response/request bodies, form values, or storage values. Query values and console personal/secret-shaped text are redacted, and form controls are masked in screenshots.
 - Production sandbox and canary URLs must be HTTPS and on Webflow-controlled origins. Development HTTP/private targets are accepted only when the Worker itself runs outside production.

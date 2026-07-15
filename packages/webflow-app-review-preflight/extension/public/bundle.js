@@ -24659,6 +24659,7 @@
     testPackages,
     busy,
     onPrepare,
+    onRun,
     onRefresh
   }) {
     const latest = testPackages.find(
@@ -24679,6 +24680,7 @@
     const [proxyTemplate, setProxyTemplate] = (0, import_react.useState)("");
     const [showNewPackage, setShowNewPackage] = (0, import_react.useState)(false);
     const trustLabel = latest?.observation?.trust === "webflow_observed" ? "Webflow observed" : latest ? "Partner supplied" : "Not prepared";
+    const canRequestRun = !latest?.observation || latest.observation.status === "failed" || latest.observation.status === "expired" || latest.observation.status === "revoked";
     (0, import_react.useEffect)(() => {
       setShowNewPackage(false);
     }, [latest?.id]);
@@ -24788,13 +24790,19 @@
             ] }),
             /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: "E2B owns the browser and will return sanitized evidence." })
           ] })
-        ] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "checkpoint-row pending", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "checkpoint-number", children: "2" }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Ready for Webflow run" }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: "Keep the named installation allowlisted while the review team runs it." })
-          ] })
-        ] }),
+        ] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "checkpoint-row pending", children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Ready to run" }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: "Start a fresh Webflow-controlled browser test when this installation is ready." })
+        ] }) }),
+        canRequestRun ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+          "button",
+          {
+            className: "button button-primary",
+            disabled: busy,
+            onClick: () => onRun(latest.id),
+            children: busy ? "Starting Webflow run\u2026" : latest.observation ? "Run test again" : "Run test now"
+          }
+        ) : null,
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { className: "button button-secondary", disabled: busy, onClick: onRefresh, children: "Check run status" }),
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
           "button",
@@ -24920,6 +24928,7 @@
     busy,
     onRevision,
     onPrepareRuntimePackage,
+    onRunRuntimeObservation,
     onRefreshRuntimePackages,
     onBack
   }) {
@@ -24973,6 +24982,7 @@
           testPackages: runtimeTestPackages,
           busy,
           onPrepare: onPrepareRuntimePackage,
+          onRun: onRunRuntimeObservation,
           onRefresh: onRefreshRuntimePackages
         }
       ),
@@ -25082,6 +25092,10 @@
           onPrepareRuntimePackage: (input) => run(async () => {
             const prepared = await api.createRuntimeTestPackage(review.id, input);
             setRuntimeTestPackages([prepared]);
+          }),
+          onRunRuntimeObservation: (testPackageId) => run(async () => {
+            await api.requestRuntimeObservationRun(testPackageId);
+            await refreshRuntimePackages(review.id);
           }),
           onRefreshRuntimePackages: () => run(async () => {
             await refreshRuntimePackages(review.id);
@@ -25208,6 +25222,12 @@
           body: JSON.stringify(input)
         });
         return { ...body.testPackage, observation: null };
+      },
+      async requestRuntimeObservationRun(testPackageId) {
+        const body = await request(`/v1/runtime-test-packages/${testPackageId}/observation-runs`, {
+          method: "POST"
+        });
+        return body.observationJob;
       }
     };
   }

@@ -23,7 +23,9 @@ import {
   createRuntimeTestPackage,
   getRuntimeObservationJob,
   listRuntimeTestPackages,
+  requestRuntimeObservationRun,
   RuntimeObservationApprovalError,
+  RuntimeObservationDispatchError,
   RuntimeObservationEvidenceError,
   recordRuntimeObservationEvidence,
   RuntimeTestPackageError
@@ -278,6 +280,21 @@ async function handle(request: Request, env: Env): Promise<Response> {
   }
 
   try {
+    const observationRunMatch = url.pathname.match(
+      /^\/v1\/runtime-test-packages\/([^/]+)\/observation-runs$/
+    );
+    if (observationRunMatch && request.method === 'POST') {
+      const observationJob = await requestRuntimeObservationRun(
+        decodeURIComponent(observationRunMatch[1]!),
+        request,
+        env,
+        user
+      );
+      return 'notFound' in observationJob
+        ? json({ error: 'runtime_test_package_not_found' }, 404, origin)
+        : json({ observationJob }, 201, origin);
+    }
+
     const companionCompleteMatch = url.pathname.match(
       /^\/v1\/companion-runs\/([^/]+)\/complete$/
     );
@@ -440,6 +457,13 @@ async function handle(request: Request, env: Env): Promise<Response> {
       return json(
         { error: 'runtime_approval_required', message: error.message },
         403,
+        origin
+      );
+    }
+    if (error instanceof RuntimeObservationDispatchError) {
+      return json(
+        { error: 'runtime_observation_dispatch_unavailable', message: error.message },
+        503,
         origin
       );
     }

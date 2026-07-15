@@ -60,4 +60,5 @@ export interface PreflightApi {
     reviewId: string,
     input: RuntimeTestPackageInput
   ): Promise<RuntimeTestPackageView>;
+  requestRuntimeObservationRun(testPackageId: string): Promise<RuntimeTestPackageView['observation']>;
 }

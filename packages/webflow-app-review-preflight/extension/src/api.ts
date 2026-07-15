@@ -91,6 +91,14 @@ export function createPreflightApi(): PreflightApi {
         body: JSON.stringify(input)
       });
       return { ...body.testPackage, observation: null };
+    },
+    async requestRuntimeObservationRun(testPackageId: string) {
+      const body = await request<{
+        observationJob: RuntimeTestPackageView['observation'];
+      }>(`/v1/runtime-test-packages/${testPackageId}/observation-runs`, {
+        method: 'POST'
+      });
+      return body.observationJob;
     }
   };
 }

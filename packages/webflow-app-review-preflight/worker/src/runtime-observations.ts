@@ -41,6 +41,7 @@ const ARTIFACT_POLICY: Record<
 export class RuntimeTestPackageError extends Error {}
 export class RuntimeObservationApprovalError extends Error {}
 export class RuntimeObservationEvidenceError extends Error {}
+export class RuntimeObservationDispatchError extends Error {}
 
 interface ReviewVersionRow {
   review_id: string;
@@ -1177,32 +1178,10 @@ export async function recordRuntimeObservationEvidence(
   };
 }
 
-export async function approveRuntimeObservationJob(
+async function issueRuntimeObservationJob(
   testPackageId: string,
-  request: Request,
   env: Env
-): Promise<StoredRuntimeObservationJob | { unauthorized: true } | null> {
-  if (!(await serviceTokenAuthorized(request, env.E2B_COORDINATOR_TOKEN))) {
-    return { unauthorized: true };
-  }
-
-  let body: Record<string, unknown>;
-  try {
-    body = await readJson(request);
-  } catch (error) {
-    if (error instanceof RuntimeTestPackageError) {
-      throw new RuntimeObservationApprovalError(
-        'Explicit Webflow approval and sandbox ownership verification are required.'
-      );
-    }
-    throw error;
-  }
-  if (body.approved !== true || body.sandboxOwnershipVerified !== true) {
-    throw new RuntimeObservationApprovalError(
-      'Explicit Webflow approval and sandbox ownership verification are required.'
-    );
-  }
-
+): Promise<StoredRuntimeObservationJob | null> {
   const row = await env.DB.prepare(
     `SELECT id, review_version_id, owner_user_id, status,
             license_expires_at, package_json
@@ -1321,4 +1300,142 @@ export async function approveRuntimeObservationJob(
   ]);
 
   return { id, status: 'approved', approvedAt, capability, contract };
+}
+
+export async function approveRuntimeObservationJob(
+  testPackageId: string,
+  request: Request,
+  env: Env
+): Promise<StoredRuntimeObservationJob | { unauthorized: true } | null> {
+  if (!(await serviceTokenAuthorized(request, env.E2B_COORDINATOR_TOKEN))) {
+    return { unauthorized: true };
+  }
+
+  let body: Record<string, unknown>;
+  try {
+    body = await readJson(request);
+  } catch (error) {
+    if (error instanceof RuntimeTestPackageError) {
+      throw new RuntimeObservationApprovalError(
+        'Explicit Webflow approval and sandbox ownership verification are required.'
+      );
+    }
+    throw error;
+  }
+  if (body.approved !== true || body.sandboxOwnershipVerified !== true) {
+    throw new RuntimeObservationApprovalError(
+      'Explicit Webflow approval and sandbox ownership verification are required.'
+    );
+  }
+
+  return issueRuntimeObservationJob(testPackageId, env);
+}
+
+async function dispatchRuntimeObservationJob(
+  request: Request,
+  job: StoredRuntimeObservationJob,
+  env: Env
+): Promise<void> {
+  if (!env.RUNTIME_OBSERVATION_DISPATCH_URL || !env.RUNTIME_OBSERVATION_DISPATCH_TOKEN) {
+    throw new RuntimeObservationDispatchError(
+      'The runtime runner is not configured. Your test package remains ready; ask a reviewer to configure the server-owned runner.'
+    );
+  }
+
+  let dispatchUrl: URL;
+  try {
+    dispatchUrl = new URL(env.RUNTIME_OBSERVATION_DISPATCH_URL);
+  } catch {
+    throw new RuntimeObservationDispatchError('The runtime runner endpoint is invalid.');
+  }
+  if (env.ENVIRONMENT === 'production' && dispatchUrl.protocol !== 'https:') {
+    throw new RuntimeObservationDispatchError('The runtime runner endpoint must use HTTPS.');
+  }
+
+  let response: Response;
+  try {
+    response = await fetch(new Request(dispatchUrl.toString(), {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${env.RUNTIME_OBSERVATION_DISPATCH_TOKEN}`,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        observationJobId: job.id,
+        apiBaseUrl: new URL(request.url).origin,
+        capability: job.capability
+      })
+    }));
+  } catch {
+    throw new RuntimeObservationDispatchError('The runtime runner could not be reached.');
+  }
+  if (!response.ok) {
+    throw new RuntimeObservationDispatchError('The runtime runner rejected this test request.');
+  }
+}
+
+export async function requestRuntimeObservationRun(
+  testPackageId: string,
+  request: Request,
+  env: Env,
+  user: AuthenticatedUser
+): Promise<
+  | Omit<StoredRuntimeObservationJob, 'capability' | 'contract'>
+  | { notFound: true }
+> {
+  const owned = await env.DB.prepare(
+    'SELECT id FROM runtime_test_packages WHERE id = ? AND owner_user_id = ?'
+  )
+    .bind(testPackageId, user.id)
+    .first<{ id: string }>();
+  if (!owned) return { notFound: true };
+
+  const job = await issueRuntimeObservationJob(testPackageId, env);
+  if (!job) return { notFound: true };
+
+  try {
+    await dispatchRuntimeObservationJob(request, job, env);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'The runtime runner could not be started.';
+    const now = new Date().toISOString();
+    await env.DB.batch([
+      env.DB.prepare(
+        `UPDATE runtime_observation_jobs
+            SET status = 'failed', updated_at = ?
+          WHERE id = ? AND status = 'approved'`
+      ).bind(now, job.id),
+      env.DB.prepare(
+        `INSERT INTO review_events
+          (id, review_id, review_version_id, actor_user_id, event_type,
+           payload_json, created_at)
+         VALUES (?, ?, ?, ?, 'runtime_observation_dispatch_failed', ?, ?)`
+      ).bind(
+        crypto.randomUUID(),
+        job.contract.reviewId,
+        job.contract.reviewVersionId,
+        user.id,
+        JSON.stringify({ observationJobId: job.id, testPackageId, message }),
+        now
+      )
+    ]);
+    throw error;
+  }
+
+  await env.DB.prepare(
+    `INSERT INTO review_events
+      (id, review_id, review_version_id, actor_user_id, event_type,
+       payload_json, created_at)
+     VALUES (?, ?, ?, ?, 'runtime_observation_run_requested', ?, ?)`
+  )
+    .bind(
+      crypto.randomUUID(),
+      job.contract.reviewId,
+      job.contract.reviewVersionId,
+      user.id,
+      JSON.stringify({ observationJobId: job.id, testPackageId }),
+      new Date().toISOString()
+    )
+    .run();
+
+  return { id: job.id, status: job.status, approvedAt: job.approvedAt };
 }

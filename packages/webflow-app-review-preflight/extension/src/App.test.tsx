@@ -19,7 +19,8 @@ const api: PreflightApi = {
   createReview: async () => Promise.reject(new Error('not used')),
   addRevision: async () => Promise.reject(new Error('not used')),
   listRuntimeTestPackages: async () => [],
-  createRuntimeTestPackage: async () => Promise.reject(new Error('not used'))
+  createRuntimeTestPackage: async () => Promise.reject(new Error('not used')),
+  requestRuntimeObservationRun: async () => Promise.reject(new Error('not used'))
 };
 
 function consentProReview(sequence = 1): StoredReview {
@@ -306,6 +307,7 @@ describe('App Review Preflight extension', () => {
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([completed]);
     const createRuntimeTestPackage = vi.fn(async () => prepared);
+    const requestRuntimeObservationRun = vi.fn(async () => prepared.observation);
     const runtimeApi: PreflightApi = {
       ...api,
       listReviews: async () => [
@@ -321,7 +323,8 @@ describe('App Review Preflight extension', () => {
       ],
       getReview: async () => review,
       listRuntimeTestPackages,
-      createRuntimeTestPackage
+      createRuntimeTestPackage,
+      requestRuntimeObservationRun
     };
     render(<App api={runtimeApi} />);
 
@@ -353,11 +356,12 @@ describe('App Review Preflight extension', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Confirm test package' }));
 
     expect(await screen.findByLabelText('Current evidence: Partner supplied')).toBeVisible();
-    expect(screen.getByText('Ready for Webflow run')).toBeVisible();
+    expect(screen.getByText('Ready to run')).toBeVisible();
     expect(screen.getByText(/cannot become Webflow-observed evidence/i)).toBeVisible();
     expect(createRuntimeTestPackage).toHaveBeenCalledTimes(1);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Check run status' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Run test now' }));
+    await waitFor(() => expect(requestRuntimeObservationRun).toHaveBeenCalledWith(prepared.id));
     expect(await screen.findByLabelText('Current evidence: Webflow observed')).toBeVisible();
     expect(screen.getByText('Production runtime observed')).toBeVisible();
     expect(screen.queryByText('Production runtime not yet verified')).not.toBeInTheDocument();
@@ -537,7 +541,7 @@ describe('App Review Preflight extension', () => {
     expect(screen.queryByText('Browser companion')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Connect browser companion' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Approve sandbox test' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Check run status' })).toBeVisible();
-    expect(screen.getByText('Ready for Webflow run')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Run test now' })).toBeVisible();
+    expect(screen.getByText('Ready to run')).toBeVisible();
   });
 });
