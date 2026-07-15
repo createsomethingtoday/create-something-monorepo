@@ -1,5 +1,6 @@
 import { MISSIONS, normalizeEvent, sanitizeDetail, sanitizeUrl, sha256, sha256Bytes, type CapturedEvent, type MissionId } from './core';
 import { COMPANION_API_BASE } from './config';
+import { captureMaskedVisibleTab } from './capture';
 import {
   isAllowedPairingSender,
   redeemAndBeginCompanion,
@@ -151,7 +152,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             session: (snapshot.storage?.session ?? []).slice(0, 100).map((item: any) => ({ key: String(item.key).slice(0, 120), bytes: Number(item.bytes) || 0 }))
           }
         };
-        await chrome.tabs.sendMessage(state.activeTabId, { type: 'COMPANION_CAPTURE_MASK', enabled: true });
         const targetTab = await chrome.tabs.get(state.activeTabId);
         const localHarnessScreenshot =
           __COMPANION_LOCAL_PAIRING__ &&
@@ -161,9 +161,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             ? message.localHarnessScreenshot
             : null;
         await chrome.tabs.update(state.activeTabId, { active: true });
-        const screenshotUrl = localHarnessScreenshot ??
-          await chrome.tabs.captureVisibleTab(targetTab.windowId, { format: 'png' });
-        await chrome.tabs.sendMessage(state.activeTabId, { type: 'COMPANION_CAPTURE_MASK', enabled: false });
+        const screenshotUrl = await captureMaskedVisibleTab({
+          setMask: (enabled) => chrome.tabs.sendMessage(
+            state.activeTabId!,
+            { type: 'COMPANION_CAPTURE_MASK', enabled }
+          ),
+          capture: () => localHarnessScreenshot
+            ? Promise.resolve(localHarnessScreenshot)
+            : chrome.tabs.captureVisibleTab(targetTab.windowId, { format: 'png' })
+        });
         const screenshot = await (await fetch(screenshotUrl)).blob();
         const screenshotSha256 = await sha256Bytes(await screenshot.arrayBuffer());
         const evidence = {
