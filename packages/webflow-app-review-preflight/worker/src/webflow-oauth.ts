@@ -112,6 +112,32 @@ function invalidCallback(reason: string): Response {
   );
 }
 
+function redirectTo(request: Request, path: string): Response {
+  return new Response(null, {
+    status: 303,
+    headers: {
+      location: new URL(path, request.url).toString(),
+      'cache-control': 'no-store'
+    }
+  });
+}
+
+async function recoverInvalidBrowserCallback(
+  request: Request,
+  env: Env,
+  reason: string
+): Promise<Response> {
+  if (!(request.headers.get('accept') ?? '').includes('text/html')) {
+    return invalidCallback(reason);
+  }
+
+  if (await storedWebflowAccessToken(env)) {
+    return redirectTo(request, '/v1/oauth/webflow/complete');
+  }
+
+  return redirectTo(request, '/v1/oauth/webflow/start');
+}
+
 function configuredForStart(env: Env): boolean {
   return Boolean(env.WEBFLOW_CLIENT_ID && env.WEBFLOW_OAUTH_REDIRECT_URI);
 }
@@ -173,7 +199,7 @@ export async function completeWebflowOAuth(
   const cookieState = cookieValue(request, STATE_COOKIE);
   if (!code) return invalidCallback('missing_code');
   if (!state || !cookieState || state !== cookieState) {
-    return invalidCallback('state_mismatch');
+    return recoverInvalidBrowserCallback(request, env, 'state_mismatch');
   }
 
   const consumed = await env.DB.prepare(
@@ -183,7 +209,9 @@ export async function completeWebflowOAuth(
   )
     .bind(await sha256(state), new Date().toISOString())
     .first<{ state_sha256: string }>();
-  if (!consumed) return invalidCallback('state_unavailable');
+  if (!consumed) {
+    return recoverInvalidBrowserCallback(request, env, 'state_unavailable');
+  }
 
   const exchange = await fetch('https://api.webflow.com/oauth/access_token', {
     method: 'POST',

@@ -68,6 +68,18 @@ describe('Webflow OAuth installation', () => {
       user: { id: 'webflow-user-id', siteId: 'webflow-site-id' }
     });
     expect(outboundFetch).toHaveBeenCalledTimes(2);
+
+    const directInstallCallback = await fetchWorker(
+      new Request(
+        'https://preflight.test/v1/oauth/webflow/callback?code=unused-direct-install-code',
+        { headers: { accept: 'text/html' } }
+      )
+    );
+    expect(directInstallCallback.status).toBe(303);
+    expect(directInstallCallback.headers.get('location')).toBe(
+      'https://preflight.test/v1/oauth/webflow/complete'
+    );
+    expect(outboundFetch).toHaveBeenCalledTimes(2);
   });
 
   test('rejects a callback whose browser state does not match', async () => {
@@ -89,6 +101,25 @@ describe('Webflow OAuth installation', () => {
       error: 'invalid_webflow_oauth_callback',
       reason: 'state_mismatch'
     });
+  });
+
+  test('restarts the secure flow for a browser callback without reusable state', async () => {
+    await env.DB.prepare(
+      "DELETE FROM webflow_oauth_installations WHERE id = 'active'"
+    ).run();
+
+    const callback = await fetchWorker(
+      new Request(
+        'https://preflight.test/v1/oauth/webflow/callback?code=unused-direct-install-code',
+        { headers: { accept: 'text/html' } }
+      )
+    );
+
+    expect(callback.status).toBe(303);
+    expect(callback.headers.get('location')).toBe(
+      'https://preflight.test/v1/oauth/webflow/start'
+    );
+    expect(await callback.text()).not.toContain('unused-direct-install-code');
   });
 
   test('renders a self-contained Webflow-style completion page', async () => {
