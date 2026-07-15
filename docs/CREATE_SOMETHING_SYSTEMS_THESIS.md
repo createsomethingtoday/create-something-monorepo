@@ -257,6 +257,7 @@ The thesis becomes real only through artifacts. Each artifact has a job.
 | Artifact | Source of truth | Job |
 | --- | --- | --- |
 | Thesis | this document plus `MCP_FIRST_THESIS.md` | State the argument. |
+| Experience contract | `THE_DELEGATION_PRACTICE_EXPERIENCE.md` | Define The Delegation Practice journey, vocabulary, ownership, earned-authority mechanism, and cross-property handoffs. |
 | Framework | `THREE_TIER_FRAMEWORK.md` | Explain the system ontology. |
 | Product definition | `POLICY_OS_PRODUCT_DEFINITION.md` | Define the commercial governed package. |
 | Contract bundle | `templates/` | Define what the workflow may access, do, prove, and recover from. |
@@ -486,9 +487,20 @@ Need:
 - A public or internal page that walks through the thesis, method, cases,
   artifacts, critique, and next work.
 
+Decided experience:
+
+- **The Delegation Practice** is the named experience for accountable operators
+  and practitioners.
+- The recommended canonical route is `packages/agency/src/routes/practice`,
+  expressed publicly as `createsomething.agency/practice` only after a separate
+  promotion decision.
+- `docs/THE_DELEGATION_PRACTICE_EXPERIENCE.md` owns the experience contract.
+
 Likely owner:
 
-- Public: `packages/agency` or `packages/io`
+- Public operator entry: `packages/agency`
+- Research and examination: `packages/io`
+- Practice tools and curriculum: `packages/space` and `packages/lms`
 - Internal source: this document
 
 ### 2. A flagship defense walkthrough
@@ -628,7 +640,7 @@ The thesis would be weakened if:
 
 These are not rhetorical risks. They are useful tests for future work.
 
-## Defense Experience
+## The Delegation Practice Defense
 
 The comprehensive experience should feel like a defense of the thesis.
 
@@ -683,9 +695,11 @@ Recommended sequence:
 
 ### Phase 3: Public defense surface
 
-- Build a public `.agency` or `.io` route that uses the Atlas story-canvas
-  pattern to walk the thesis.
+- Build the local `.agency/practice` route using the Atlas story-canvas pattern
+  and The Delegation Practice experience contract.
 - Include links to the relevant papers, templates, and proof records.
+- Hold public publication for a separate promotion decision after browser,
+  evidence, and client-safety review.
 
 ### Phase 4: Curriculum path
 

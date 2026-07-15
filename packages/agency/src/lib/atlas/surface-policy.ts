@@ -7,6 +7,7 @@ export const AGENCY_DIFY_ARTICLE_PATHS = [
 export const AGENCY_ATLAS_PROOF_PATHS = [
   '/services',
   '/atlas',
+  '/practice',
   '/methodology',
   '/stack',
   '/products',
