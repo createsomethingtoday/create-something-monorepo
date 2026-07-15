@@ -87,6 +87,14 @@ apps/webflow-marketplace-category-cloud/node_modules*/
 apps/webflow-marketplace-category-cloud/.next/
 apps/webflow-marketplace-category-cloud/.open-next/
 apps/webflow-marketplace-category-cloud/tsconfig.tsbuildinfo
+!apps/webflow-template-review-cloud/
+!apps/webflow-template-review-cloud/**
+apps/webflow-template-review-cloud/node_modules/
+apps/webflow-template-review-cloud/node_modules*/
+apps/webflow-template-review-cloud/.next/
+apps/webflow-template-review-cloud/.open-next/
+apps/webflow-template-review-cloud/.wrangler/
+apps/webflow-template-review-cloud/tsconfig.tsbuildinfo
 !apps/bettermode-marketplace-creator-agent/
 !apps/bettermode-marketplace-creator-agent/**
 apps/bettermode-marketplace-creator-agent/node_modules/
