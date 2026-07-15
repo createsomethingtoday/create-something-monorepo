@@ -396,6 +396,104 @@ describe('App Review Preflight extension', () => {
     expect(getReview).toHaveBeenCalledWith(review.id);
   });
 
+  test('prefills a new revision from the previous package without inheriting its evidence', async () => {
+    const review = consentProReview(2);
+    const previousPackage = {
+      schemaVersion: 'runtime_test_package.v1' as const,
+      id: 'runtime-package-version-1',
+      reviewId: review.id,
+      reviewVersionId: 'version-1',
+      bundleSha256: 'previous-bundle-sha',
+      status: 'expired' as const,
+      trust: 'partner_supplied' as const,
+      target: {
+        url: 'https://consent-pro-test.webflow.io/',
+        host: 'consent-pro-test.webflow.io'
+      },
+      sandboxInstallationId: 'consent-pro-test-site',
+      license: {
+        mode: 'installation_allowlist' as const,
+        expiresAt: '2026-07-15T18:00:00.000Z'
+      },
+      runtimeArtifacts: [{
+        url: 'https://api.consentpro.com/v2/cdn/runtime/immutable.js',
+        sha256: 'd'.repeat(64),
+        integrity: 'sha256-3d3d3d3d'
+      }],
+      negativeProxyProbe: {
+        method: 'GET' as const,
+        urlTemplate: 'https://api.consentpro.com/v2/proxy?url={canaryUrl}'
+      },
+      lifecycle: { readySelector: '[data-consent-pro-ready]' },
+      evidence: null,
+      createdAt: '2026-07-15T17:00:00.000Z',
+      observation: {
+        id: 'observation-version-1',
+        status: 'complete' as const,
+        trust: 'webflow_observed' as const,
+        approvedAt: '2026-07-15T17:05:00.000Z',
+        expiresAt: '2026-07-15T17:20:00.000Z',
+        completedAt: '2026-07-15T17:10:00.000Z',
+        evidence: {
+          securityStatus: 'passed' as const,
+          securityPredicates: {
+            publishedTarget: true,
+            runtimeReadyObserved: true,
+            runtimeLoadedByPage: true,
+            runtimeHashMatched: true,
+            runtimeIntegrityMatched: true,
+            noRuntimeCreatedScripts: true,
+            noUnreviewedRuntimeScripts: true,
+            negativeProxyBlocked: true
+          },
+          blockers: [],
+          cleanupStatus: 'not_tested' as const,
+          cleanupResidue: [],
+          negativeProxyOutcome: 'blocked' as const,
+          artifactCount: 8,
+          artifacts: []
+        }
+      }
+    };
+    const runtimeApi: PreflightApi = {
+      ...api,
+      listReviews: async () => [{
+        id: review.id,
+        name: review.name,
+        updatedAt: review.updatedAt,
+        latestSequence: 2,
+        readiness: 'changes_required',
+        appName: 'Consent Pro by Finsweet',
+        coverage: review.latestVersion.result.coverage
+      }],
+      getReview: async () => review,
+      listRuntimeTestPackages: async () => [previousPackage]
+    };
+
+    render(<App api={runtimeApi} />);
+    fireEvent.click(await screen.findByRole('button', { name: /Consent Pro preflight/i }));
+
+    expect(await screen.findByText('Previous setup loaded')).toBeVisible();
+    expect(screen.getByLabelText('Published Webflow test URL')).toHaveValue(
+      'https://consent-pro-test.webflow.io/'
+    );
+    expect(screen.getByLabelText('Webflow installation or site ID')).toHaveValue(
+      'consent-pro-test-site'
+    );
+    expect(screen.getByLabelText('Immutable runtime URL')).toHaveValue(
+      'https://api.consentpro.com/v2/cdn/runtime/immutable.js'
+    );
+    expect(screen.getByLabelText('SHA-256')).toHaveValue('d'.repeat(64));
+    expect(screen.getByLabelText('Script integrity (SRI)')).toHaveValue('sha256-3d3d3d3d');
+    expect(screen.getByLabelText('Ready selector')).toHaveValue('[data-consent-pro-ready]');
+    expect(screen.getByLabelText('Proxy probe URL template')).toHaveValue(
+      'https://api.consentpro.com/v2/proxy?url={canaryUrl}'
+    );
+    expect(screen.getByLabelText('Current evidence: Not prepared')).toBeVisible();
+    expect(screen.getByText('Production runtime not yet verified')).toBeVisible();
+    expect(screen.queryByText('Production runtime observed')).not.toBeInTheDocument();
+  });
+
   test('keeps production validation inside the Designer app without a browser companion', async () => {
     const review = consentProReview();
     const runtimeApi = {

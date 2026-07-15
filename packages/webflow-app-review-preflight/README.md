@@ -20,6 +20,8 @@ The reviewer web app is the reason this is a Hybrid App. A separate browser exte
 
 Reviewer reruns must preserve the original review-version ID, bundle SHA-256, published target, installation ID, pinned runtime SHA-256/SRI, ready selector, and negative proxy probe. A replay creates a new immutable observation linked to that package; it never overwrites an earlier result. If any required binding is stale or missing, the rerun stays blocked until a new package is prepared.
 
+When a developer uploads a revision, the Designer Extension pre-fills the new Runtime Test Package from the most recent package for that review: the dedicated test site, installation ID, runtime pin, selector, and proxy probe. The form marks those values as prior test input and asks the developer to review them. A prior package or Webflow observation never transfers to the new bundle; the new version starts unprepared and receives its own immutable evidence only after another Webflow-controlled run.
+
 ## Package boundaries
 
 - `src/`: deterministic bundle review contract, artifact-scope detection, runtime-reference discovery, and plain-language guidance.

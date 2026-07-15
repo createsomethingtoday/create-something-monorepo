@@ -124,7 +124,9 @@ function Coverage({
   testPackages: RuntimeTestPackageView[];
 }) {
   const observed = testPackages.find(
-    (testPackage) => testPackage.observation?.trust === 'webflow_observed'
+    (testPackage) =>
+      testPackage.reviewVersionId === review.latestVersion.id &&
+      testPackage.observation?.trust === 'webflow_observed'
   )?.observation?.evidence;
   const coverage = review.latestVersion.result.coverage.map((item) => {
     if (item.surface !== 'production_runtime' || !observed) return item;
@@ -206,14 +208,19 @@ function RuntimeObservationCard({
   onPrepare: (input: RuntimeTestPackageInput) => void;
   onRefresh: () => void;
 }) {
-  const latest = testPackages[0] ?? null;
+  const latest = testPackages.find(
+    (testPackage) => testPackage.reviewVersionId === review.latestVersion.id
+  ) ?? null;
+  const previous = testPackages.find(
+    (testPackage) => testPackage.reviewVersionId !== review.latestVersion.id
+  ) ?? null;
+  const discoveredArtifactUrl =
+    review.latestVersion.result.runtime.references.find((value) => !value.includes('{')) ?? '';
   const dialogTitle = useId();
   const [confirm, setConfirm] = useState(false);
   const [targetUrl, setTargetUrl] = useState('');
   const [sandboxInstallationId, setSandboxInstallationId] = useState('');
-  const [artifactUrl, setArtifactUrl] = useState(
-    review.latestVersion.result.runtime.references.find((value) => !value.includes('{')) ?? ''
-  );
+  const [artifactUrl, setArtifactUrl] = useState(discoveredArtifactUrl);
   const [artifactSha256, setArtifactSha256] = useState('');
   const [integrity, setIntegrity] = useState('');
   const [readySelector, setReadySelector] = useState('[data-runtime-ready]');
@@ -228,6 +235,22 @@ function RuntimeObservationCard({
   useEffect(() => {
     setShowNewPackage(false);
   }, [latest?.id]);
+
+  const fillFromPackage = (source: RuntimeTestPackageView | null) => {
+    const artifact = source?.runtimeArtifacts[0];
+    setTargetUrl(source?.target.url ?? '');
+    setSandboxInstallationId(source?.sandboxInstallationId ?? '');
+    setArtifactUrl(artifact?.url ?? discoveredArtifactUrl);
+    setArtifactSha256(artifact?.sha256 ?? '');
+    setIntegrity(artifact?.integrity ?? '');
+    setReadySelector(source?.lifecycle.readySelector ?? '[data-runtime-ready]');
+    setProxyTemplate(source?.negativeProxyProbe.urlTemplate ?? '');
+  };
+
+  useEffect(() => {
+    if (latest) return;
+    fillFromPackage(previous);
+  }, [review.latestVersion.id, previous?.id]);
 
   const submit = () => {
     onPrepare({
@@ -349,7 +372,10 @@ function RuntimeObservationCard({
           <button
             className="button button-tertiary"
             disabled={busy}
-            onClick={() => setShowNewPackage(true)}
+            onClick={() => {
+              fillFromPackage(latest);
+              setShowNewPackage(true);
+            }}
           >
             Prepare another test package
           </button>
@@ -363,6 +389,16 @@ function RuntimeObservationCard({
             setConfirm(true);
           }}
         >
+          {previous ? (
+            <div className="prefill-note" role="status">
+              <strong>Previous setup loaded</strong>
+              <p>
+                We reused the last test site, runtime pin, selector, and proxy check. Review the
+                values before continuing; Webflow will verify the runtime bytes and SRI again for
+                this bundle.
+              </p>
+            </div>
+          ) : null}
           <fieldset>
             <legend><span>1</span> Dedicated test installation</legend>
             <label>
@@ -626,7 +662,7 @@ export function App({ api }: { api: PreflightApi }) {
             const revised = await api.addRevision(review.id, file);
             setReview(revised.review);
             setComparison(revised.comparison);
-            setRuntimeTestPackages([]);
+            await refreshRuntimePackages(review.id);
             await refreshHistory();
           })}
           onPrepareRuntimePackage={(input) => run(async () => {

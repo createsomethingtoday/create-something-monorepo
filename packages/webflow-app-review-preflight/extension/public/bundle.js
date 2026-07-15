@@ -24588,7 +24588,7 @@
     testPackages
   }) {
     const observed = testPackages.find(
-      (testPackage) => testPackage.observation?.trust === "webflow_observed"
+      (testPackage) => testPackage.reviewVersionId === review.latestVersion.id && testPackage.observation?.trust === "webflow_observed"
     )?.observation?.evidence;
     const coverage = review.latestVersion.result.coverage.map((item) => {
       if (item.surface !== "production_runtime" || !observed) return item;
@@ -24661,14 +24661,18 @@
     onPrepare,
     onRefresh
   }) {
-    const latest = testPackages[0] ?? null;
+    const latest = testPackages.find(
+      (testPackage) => testPackage.reviewVersionId === review.latestVersion.id
+    ) ?? null;
+    const previous = testPackages.find(
+      (testPackage) => testPackage.reviewVersionId !== review.latestVersion.id
+    ) ?? null;
+    const discoveredArtifactUrl = review.latestVersion.result.runtime.references.find((value) => !value.includes("{")) ?? "";
     const dialogTitle = (0, import_react.useId)();
     const [confirm, setConfirm] = (0, import_react.useState)(false);
     const [targetUrl, setTargetUrl] = (0, import_react.useState)("");
     const [sandboxInstallationId, setSandboxInstallationId] = (0, import_react.useState)("");
-    const [artifactUrl, setArtifactUrl] = (0, import_react.useState)(
-      review.latestVersion.result.runtime.references.find((value) => !value.includes("{")) ?? ""
-    );
+    const [artifactUrl, setArtifactUrl] = (0, import_react.useState)(discoveredArtifactUrl);
     const [artifactSha256, setArtifactSha256] = (0, import_react.useState)("");
     const [integrity, setIntegrity] = (0, import_react.useState)("");
     const [readySelector, setReadySelector] = (0, import_react.useState)("[data-runtime-ready]");
@@ -24678,6 +24682,20 @@
     (0, import_react.useEffect)(() => {
       setShowNewPackage(false);
     }, [latest?.id]);
+    const fillFromPackage = (source) => {
+      const artifact = source?.runtimeArtifacts[0];
+      setTargetUrl(source?.target.url ?? "");
+      setSandboxInstallationId(source?.sandboxInstallationId ?? "");
+      setArtifactUrl(artifact?.url ?? discoveredArtifactUrl);
+      setArtifactSha256(artifact?.sha256 ?? "");
+      setIntegrity(artifact?.integrity ?? "");
+      setReadySelector(source?.lifecycle.readySelector ?? "[data-runtime-ready]");
+      setProxyTemplate(source?.negativeProxyProbe.urlTemplate ?? "");
+    };
+    (0, import_react.useEffect)(() => {
+      if (latest) return;
+      fillFromPackage(previous);
+    }, [review.latestVersion.id, previous?.id]);
     const submit = () => {
       onPrepare({
         targetUrl,
@@ -24783,7 +24801,10 @@
           {
             className: "button button-tertiary",
             disabled: busy,
-            onClick: () => setShowNewPackage(true),
+            onClick: () => {
+              fillFromPackage(latest);
+              setShowNewPackage(true);
+            },
             children: "Prepare another test package"
           }
         ),
@@ -24797,6 +24818,10 @@
             setConfirm(true);
           },
           children: [
+            previous ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "prefill-note", role: "status", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Previous setup loaded" }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: "We reused the last test site, runtime pin, selector, and proxy check. Review the values before continuing; Webflow will verify the runtime bytes and SRI again for this bundle." })
+            ] }) : null,
             /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("fieldset", { children: [
               /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("legend", { children: [
                 /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "1" }),
@@ -25051,7 +25076,7 @@
             const revised = await api.addRevision(review.id, file);
             setReview(revised.review);
             setComparison(revised.comparison);
-            setRuntimeTestPackages([]);
+            await refreshRuntimePackages(review.id);
             await refreshHistory();
           }),
           onPrepareRuntimePackage: (input) => run(async () => {
