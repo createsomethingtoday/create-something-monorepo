@@ -24494,7 +24494,7 @@
   var import_react = __toESM(require_react(), 1);
 
   // src/config.ts
-  var PREFLIGHT_API_BASE = true ? "" : "";
+  var PREFLIGHT_API_BASE = true ? "https://webflow-app-review-preflight.createsomething.workers.dev" : "";
   var PREFLIGHT_COMPANION_EXTENSION_ID = true ? "eiogakldgljpbbmplgckjkoglfgabblm" : "eiogakldgljpbbmplgckjkoglfgabblm";
 
   // src/App.tsx

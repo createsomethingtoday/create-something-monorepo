@@ -1,10 +1,13 @@
 import { build } from 'esbuild';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { productionApiBase } from './production-config.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const production = process.env.PREFLIGHT_BUILD_MODE === 'production';
-const apiBase = (process.env.PREFLIGHT_API_BASE ?? '').replace(/\/$/, '');
+const apiBase = (
+  process.env.PREFLIGHT_API_BASE ?? (production ? productionApiBase : '')
+).replace(/\/$/, '');
 const companionExtensionId =
   process.env.PREFLIGHT_COMPANION_EXTENSION_ID ??
   'eiogakldgljpbbmplgckjkoglfgabblm';
