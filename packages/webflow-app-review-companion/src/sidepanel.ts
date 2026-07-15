@@ -1,5 +1,6 @@
 import { MISSIONS, type MissionId } from './core';
 import { COMPANION_API_BASE } from './config';
+import { requestMissionTarget } from './permissions';
 
 const LABELS: Record<MissionId, { title: string; detail: string }> = {
   configure: { title: 'Configure', detail: 'Confirm the externally authorized app is configured to produce the reviewed runtime.' },
@@ -19,7 +20,11 @@ function escape(value: unknown): string {
 }
 
 async function render(): Promise<void> {
-  const response = await send({ type: 'COMPANION_GET_STATE' });
+  const [response, tabs] = await Promise.all([
+    send({ type: 'COMPANION_GET_STATE' }),
+    chrome.tabs.query({ active: true, currentWindow: true })
+  ]);
+  const activeTab = tabs[0];
   const state = response.state;
   if (!state.run) {
     root.innerHTML = __COMPANION_LOCAL_PAIRING__ ? `
@@ -66,7 +71,24 @@ async function render(): Promise<void> {
   document.querySelectorAll<HTMLButtonElement>('[data-mission]').forEach((button) => {
     button.addEventListener('click', async () => {
       const type = button.dataset.action === 'complete' ? 'COMPANION_COMPLETE_MISSION' : 'COMPANION_START_MISSION';
-      const result = await send({ type, mission: button.dataset.mission });
+      let targetTabId: number | undefined;
+      if (type === 'COMPANION_START_MISSION') {
+        try {
+          const target = await requestMissionTarget(
+            activeTab,
+            (permissions) => chrome.permissions.request(permissions)
+          );
+          targetTabId = target.targetTabId;
+        } catch (error) {
+          showError(error instanceof Error ? error.message : 'Current-site access was not granted.');
+          return;
+        }
+      }
+      const result = await send({
+        type,
+        mission: button.dataset.mission,
+        targetTabId
+      });
       if (!result.ok) return showError(result.error);
       await render();
     });
@@ -85,3 +107,7 @@ function showError(message: string): void {
 }
 
 void render();
+chrome.tabs.onActivated.addListener(() => void render());
+chrome.tabs.onUpdated.addListener((_tabId, change, tab) => {
+  if (tab.active && change.url) void render();
+});

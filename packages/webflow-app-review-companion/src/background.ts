@@ -123,8 +123,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (!tab?.id || !tab.url) throw new Error('Open the Designer or published site tab first.');
         const origin = `${new URL(tab.url).origin}/*`;
         const alreadyGranted = await chrome.permissions.contains({ origins: [origin] });
-        const granted = alreadyGranted || await chrome.permissions.request({ origins: [origin] });
-        if (!granted) throw new Error('This mission needs access to the current site only.');
+        if (!alreadyGranted) {
+          throw new Error(
+            'Use Start in the companion side panel to grant access to the current site.'
+          );
+        }
         await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['content.js'] });
         state.activeMission = mission;
         state.activeTabId = tab.id;
