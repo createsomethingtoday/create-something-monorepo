@@ -1,7 +1,3 @@
-<script lang="ts">
-  const accent = '#2f6f68';
-</script>
-
 <svelte:head>
   <title>Northstar — Demo frontend</title>
   <meta
@@ -10,7 +6,7 @@
   />
 </svelte:head>
 
-<main style={`--accent: ${accent}`}>
+<main>
   <nav aria-label="Primary">
     <a class="brand" href="/">Northstar</a>
     <a href="#contact">Start a project</a>
@@ -52,9 +48,9 @@
 
   :global(body) {
     margin: 0;
-    color: #1f211f;
-    background: #f2efe8;
-    font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+    color: var(--color-performance-ink, #090909);
+    background: var(--color-performance-paper, #f3f3f0);
+    font-family: var(--font-performance-interface, Arial, 'Helvetica Neue', Helvetica, system-ui, sans-serif);
   }
 
   main {
@@ -69,7 +65,7 @@
     max-width: 1180px;
     margin: 0 auto;
     padding-bottom: 1.25rem;
-    border-bottom: 1px solid rgb(31 33 31 / 18%);
+    border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
   }
 
   nav a {
@@ -80,7 +76,7 @@
   }
 
   .brand {
-    letter-spacing: -0.035em;
+    letter-spacing: var(--tracking-performance-display, -0.03em);
     font-size: 1.2rem;
   }
 
@@ -92,39 +88,43 @@
 
   .eyebrow,
   article span {
-    color: var(--accent);
+    color: var(--color-performance-pressure, #e54800);
+    font-family: var(--font-performance-mono, 'IBM Plex Mono', ui-monospace, monospace);
     font-size: 0.72rem;
     font-weight: 750;
-    letter-spacing: 0.12em;
+    letter-spacing: var(--tracking-performance-wider, 0.05em);
     text-transform: uppercase;
   }
 
   h1 {
     max-width: 900px;
     margin: 0.45rem 0 1.5rem;
-    font-family: Georgia, 'Times New Roman', serif;
-    font-size: clamp(4rem, 11vw, 9.5rem);
-    font-weight: 400;
-    letter-spacing: -0.07em;
-    line-height: 0.83;
+    font-family: var(--font-performance-display, Arial, 'Helvetica Neue', Helvetica, system-ui, sans-serif);
+    font-size: var(--text-performance-display-xl, clamp(4.236rem, 6vw + 2rem, 6.854rem));
+    font-weight: var(--font-performance-display-weight, 500);
+    letter-spacing: var(--tracking-performance-display, -0.03em);
+    line-height: var(--leading-performance-display, 0.94);
   }
 
   .summary {
     max-width: 610px;
     margin: 0 0 2rem;
-    color: #50534e;
-    font-size: clamp(1rem, 2vw, 1.3rem);
-    line-height: 1.55;
+    color: var(--color-performance-muted, #5e6268);
+    font-size: var(--text-performance-body-lg, 1.095rem);
+    line-height: var(--leading-performance-relaxed, 1.618);
   }
 
   .button {
     display: inline-flex;
     padding: 0.85rem 1.1rem;
-    color: white;
-    background: var(--accent);
-    border-radius: 999px;
+    color: var(--color-performance-panel, #ffffff);
+    background: var(--color-performance-ink, #090909);
+    border: 1px solid var(--color-performance-ink, #090909);
+    border-radius: var(--radius-performance-sm, 0);
+    font-family: var(--font-performance-mono, 'IBM Plex Mono', ui-monospace, monospace);
     font-size: 0.86rem;
     font-weight: 700;
+    text-transform: uppercase;
     text-decoration: none;
   }
 
@@ -133,17 +133,26 @@
     grid-template-columns: repeat(3, 1fr);
     max-width: 1180px;
     margin: 0 auto;
-    border-top: 1px solid rgb(31 33 31 / 18%);
+    border-top: 1px solid var(--color-performance-line, #d7d7d2);
   }
 
   article {
     min-height: 190px;
     padding: 1.5rem 1.5rem 1.5rem 0;
+    border-top: 4px solid var(--color-performance-signal, #0057b8);
+  }
+
+  article:nth-child(2) {
+    border-top-color: var(--color-performance-growth, #007a4d);
+  }
+
+  article:nth-child(3) {
+    border-top-color: var(--color-performance-pressure, #e54800);
   }
 
   article + article {
     padding-left: 1.5rem;
-    border-left: 1px solid rgb(31 33 31 / 18%);
+    border-left: 1px solid var(--color-performance-line, #d7d7d2);
   }
 
   h2 {
@@ -154,7 +163,7 @@
   article p {
     max-width: 28ch;
     margin: 0;
-    color: #656861;
+    color: var(--color-performance-muted, #5e6268);
     font-size: 0.88rem;
     line-height: 1.5;
   }
@@ -172,7 +181,7 @@
     article + article {
       padding: 1.25rem 0;
       border-left: 0;
-      border-top: 1px solid rgb(31 33 31 / 18%);
+      border-top: 1px solid var(--color-performance-line, #d7d7d2);
     }
 
     article:first-child {

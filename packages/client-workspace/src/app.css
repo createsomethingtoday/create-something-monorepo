@@ -1,0 +1,31 @@
+@import '@create-something/canon/styles/tokens.css';
+
+:root {
+  font-family: var(--font-performance-interface);
+  color: var(--color-performance-ink);
+  background: var(--color-performance-paper);
+  font-synthesis: none;
+}
+
+html,
+body {
+  min-width: 320px;
+  margin: 0;
+  background: var(--color-performance-paper);
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

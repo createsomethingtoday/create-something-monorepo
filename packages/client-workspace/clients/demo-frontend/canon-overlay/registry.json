@@ -1,0 +1,22 @@
+{
+  "id": "overlay.client-workspace-demo",
+  "name": "Client Workspace Demo Overlay",
+  "owner": "client-workspace-operator",
+  "sourcePackage": "@create-something/client-workspace-demo",
+  "targetModalities": [
+    "web",
+    "chat",
+    "app",
+    "voice",
+    "glasses"
+  ],
+  "registryItemIds": [
+    "token.performance-core",
+    "component.clear-decision-panel",
+    "component.clear-proof-strip",
+    "template.canon-project-overlay-manifest",
+    "template.canon-extension-intake",
+    "policy.signal-decision-proof"
+  ],
+  "overlayRule": "Use project-local artifacts for theme, tokens, templates, copy, surface policy, and registry metadata. Route primitive changes through Canon extension intake instead of forking Canon."
+}
