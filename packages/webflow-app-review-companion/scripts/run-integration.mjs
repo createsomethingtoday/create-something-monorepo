@@ -173,9 +173,9 @@ try {
   if (!pairingResult?.ok) throw new Error(pairingResult?.error ?? 'External pairing failed.');
   const panel = await context.newPage();
   await panel.goto(`${extensionOrigin}/sidepanel.html`);
-  await panel.getByText('Complete every mission').waitFor();
+  await panel.getByText('Complete runtime validation').waitFor();
 
-  const missions = ['install_authorize', 'configure', 'publish', 'production_runtime', 'uninstall_cleanup'];
+  const missions = ['configure', 'publish', 'production_runtime', 'uninstall_cleanup'];
   for (const mission of missions) {
     const targetUrl = mission === 'production_runtime' || mission === 'uninstall_cleanup' ? publishedUrl : designerUrl;
     await fixturePage.goto(targetUrl);
@@ -203,6 +203,9 @@ try {
   await panel.screenshot({ path: join(outputDir, 'validated.png'), fullPage: true });
   const state = await panel.evaluate(() => chrome.runtime.sendMessage({ type: 'COMPANION_GET_STATE' }));
   if (state.state.run.status !== 'validated') throw new Error('Complete mission set did not validate.');
+  if (JSON.stringify(state.state.run.missions.map((mission) => mission.id)) !== JSON.stringify(missions)) {
+    throw new Error('Runtime-first policy did not expose the exact four scored missions.');
+  }
 
   const blocked = await api(`/v1/reviews/${review.id}/companion-runs`, {
     method: 'POST',

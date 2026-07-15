@@ -10,7 +10,7 @@ import {
 import type { AuthenticatedUser, Env } from './types';
 
 const MAX_INPUT_BYTES = 128 * 1024;
-const POLICY_VERSION = 'companion-policy.v1';
+const POLICY_VERSION = 'companion-policy.v2';
 const FORBIDDEN_CAPTURE_KEY = /^(?:authorization|cookie|set-cookie|headers?|requestBody|responseBody|formValues?|storageValue|password|secret|credentials?|token)$/i;
 const SECRET_CAPTURE_VALUE = /(?:Bearer\s+[A-Za-z0-9._~+/=-]{8,}|-----BEGIN [^-]*PRIVATE KEY-----|\bsk-[A-Za-z0-9_-]{12,})/i;
 const MAX_SCREENSHOT_BYTES = 2 * 1024 * 1024;

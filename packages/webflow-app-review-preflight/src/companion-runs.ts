@@ -7,7 +7,6 @@ import type {
 } from './types';
 
 export const COMPANION_MISSIONS = [
-  'install_authorize',
   'configure',
   'publish',
   'production_runtime',

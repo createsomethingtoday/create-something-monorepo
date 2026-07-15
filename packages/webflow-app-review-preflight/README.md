@@ -6,6 +6,8 @@ It is a preflight and evidence system. It does not approve or reject an app.
 
 The shared browser lifecycle surface lives in `packages/webflow-app-review-companion`. The native Designer Extension remains the bundle-feedback and version-history surface; the companion observes Designer and published-site browser behavior for the same exact review version. Neither surface may promote partner evidence to `Webflow observed` or make an official decision.
 
+For the Consent Pro pilot, authorization happens outside the Designer Extension. It is an unscored setup prerequisite: the scored browser lifecycle is configure, publish, production runtime, and uninstall cleanup. No surface captures credentials or claims that external authorization was validated.
+
 ## Package boundaries
 
 - `src/`: deterministic bundle review contract, artifact-scope detection, runtime-reference discovery, and plain-language guidance.

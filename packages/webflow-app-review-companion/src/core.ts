@@ -1,5 +1,4 @@
 export const MISSIONS = [
-  'install_authorize',
   'configure',
   'publish',
   'production_runtime',

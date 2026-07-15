@@ -361,6 +361,7 @@ describe('review API', () => {
         bundleSha256: string;
         actorRole: string;
         evidenceTrust: string;
+        policyVersion: string;
         status: string;
         missions: Array<{ id: string; status: string }>;
       };
@@ -370,13 +371,19 @@ describe('review API', () => {
       bundleSha256: created.review.latestVersion.result.artifact.sha256,
       actorRole: 'developer',
       evidenceTrust: 'partner_supplied',
+      policyVersion: 'companion-policy.v2',
       status: 'ready'
     });
-    expect(createdRun.run.missions).toHaveLength(5);
+    expect(createdRun.run.missions.map((mission) => mission.id)).toEqual([
+      'configure',
+      'publish',
+      'production_runtime',
+      'uninstall_cleanup'
+    ]);
 
     const elevatedMission = await exports.default.fetch(
       new Request(
-        `https://preflight.test/v1/companion-runs/${createdRun.run.id}/missions/install_authorize`,
+        `https://preflight.test/v1/companion-runs/${createdRun.run.id}/missions/configure`,
         {
           method: 'POST',
           headers: {

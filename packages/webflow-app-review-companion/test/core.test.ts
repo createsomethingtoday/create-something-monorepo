@@ -22,8 +22,14 @@ describe('App Review Companion capture policy', () => {
   });
 
   test('never treats incomplete mission coverage as validated', () => {
+    expect(MISSIONS).toEqual([
+      'configure',
+      'publish',
+      'production_runtime',
+      'uninstall_cleanup'
+    ]);
     expect(
-      coverageStatus(MISSIONS.slice(0, 4).map((id) => ({ id, status: 'passed' })))
+      coverageStatus(MISSIONS.slice(0, -1).map((id) => ({ id, status: 'passed' })))
     ).toBe('blocked');
     expect(coverageStatus(MISSIONS.map((id) => ({ id, status: 'passed' })))).toBe(
       'validated'

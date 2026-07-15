@@ -29,7 +29,13 @@ describe('App Review Companion runs', () => {
       evidenceTrust: 'partner_supplied',
       officialDecision: null
     });
-    expect(run.missions.map((mission) => mission.id)).toEqual(COMPANION_MISSIONS);
+    expect(run.missions.map((mission) => mission.id)).toEqual([
+      'configure',
+      'publish',
+      'production_runtime',
+      'uninstall_cleanup'
+    ]);
+    expect(COMPANION_MISSIONS).not.toContain('install_authorize');
     expect(run.missions.every((mission) => mission.required && mission.status === 'pending')).toBe(
       true
     );
@@ -63,7 +69,7 @@ describe('App Review Companion runs', () => {
       policyVersion: 'companion-policy.v1',
       now: '2026-07-14T20:00:00.000Z'
     });
-    for (const [index, mission] of COMPANION_MISSIONS.slice(0, 4).entries()) {
+    for (const [index, mission] of COMPANION_MISSIONS.slice(0, -1).entries()) {
       run = recordCompanionMission(
         run,
         mission,

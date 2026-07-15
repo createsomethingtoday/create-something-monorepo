@@ -2,11 +2,10 @@ import { MISSIONS, type MissionId } from './core';
 import { COMPANION_API_BASE } from './config';
 
 const LABELS: Record<MissionId, { title: string; detail: string }> = {
-  install_authorize: { title: 'Install & authorize', detail: 'Confirm OAuth, redirects, and the app opening in Designer.' },
-  configure: { title: 'Configure', detail: 'Exercise the real configuration and premium path.' },
+  configure: { title: 'Configure', detail: 'Confirm the externally authorized app is configured to produce the reviewed runtime.' },
   publish: { title: 'Publish', detail: 'Publish the test site and capture the transition.' },
-  production_runtime: { title: 'Production runtime', detail: 'Open the published site and exercise the installed behavior.' },
-  uninstall_cleanup: { title: 'Uninstall & cleanup', detail: 'Remove the app and verify runtime residue is gone.' }
+  production_runtime: { title: 'Production runtime', detail: 'Exercise the published behavior and capture the scripts, requests, and resulting state.' },
+  uninstall_cleanup: { title: 'Uninstall & cleanup', detail: 'Remove the app and verify the published runtime leaves no residue.' }
 };
 
 const root = document.querySelector<HTMLElement>('#app')!;
@@ -54,8 +53,9 @@ async function render(): Promise<void> {
   const completed = state.run.missions.filter((mission: any) => mission.status === 'passed').length;
   root.innerHTML = `
     <header><div class="mark">W</div><div><h1>App Review Companion</h1><p>${escape(state.run.actorRole === 'reviewer' ? 'Reviewer replay' : 'Developer validation')}</p></div></header>
-    <main><section class="status card"><div><span class="eyebrow">${escape(state.run.evidenceTrust.replace('_', ' '))}</span><h2>${escape(state.run.status === 'validated' ? 'Validation complete' : 'Complete every mission')}</h2></div><strong>${completed}/5</strong></section>
+    <main><section class="status card"><div><span class="eyebrow">${escape(state.run.evidenceTrust.replace('_', ' '))}</span><h2>${escape(state.run.status === 'validated' ? 'Validation complete' : 'Complete runtime validation')}</h2></div><strong>${completed}/${state.run.missions.length}</strong></section>
     <div class="version">Version <code>${escape(state.run.reviewVersionId)}</code><br>Bundle <code>${escape(state.run.bundleSha256.slice(0, 12))}…</code></div>
+    <section class="card"><strong>Authorization is already complete</strong><p>External app authorization is a setup prerequisite and is not scored or recorded by this validation.</p></section>
     <section class="missions">${state.run.missions.map((mission: any, index: number) => {
       const active = state.activeMission === mission.id;
       const done = mission.status === 'passed';

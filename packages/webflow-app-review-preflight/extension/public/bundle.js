@@ -24965,7 +24965,7 @@
           ] }),
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: `manual-pill ${companionStatus === "connected" ? "approved" : ""}`, children: companionStatus === "connected" ? "Connected" : "Not connected" })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: "Connect this exact revision, then follow five short missions in Designer and on the published site. No service URL, token, or version ID to copy." }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: "Connect this exact revision, then complete four runtime-focused missions in Designer and on the published site. External authorization is a setup prerequisite, not a scored check." }),
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
           "button",
           {

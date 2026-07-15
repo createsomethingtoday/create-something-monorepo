@@ -540,8 +540,8 @@ function ReviewDetail({
           </span>
         </div>
         <p>
-          Connect this exact revision, then follow five short missions in Designer and
-          on the published site. No service URL, token, or version ID to copy.
+          Connect this exact revision, then complete four runtime-focused missions in Designer
+          and on the published site. External authorization is a setup prerequisite, not a scored check.
         </p>
         <button
           className="button button-primary"

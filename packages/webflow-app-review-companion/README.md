@@ -1,12 +1,13 @@
 # Webflow App Review Companion
 
-The App Review Companion is one Manifest V3 browser extension used by Marketplace developers and Webflow reviewers. It guides the same five lifecycle missions in the real Designer and published-site browser surfaces:
+The App Review Companion is one Manifest V3 browser extension used by Marketplace developers and Webflow reviewers. For the Consent Pro pilot, it guides four scored runtime lifecycle missions in the real Designer and published-site browser surfaces:
 
-1. Install and authorize
-2. Configure
-3. Publish
-4. Exercise the production runtime
-5. Uninstall and verify cleanup
+1. Configure the externally authorized app for the reviewed runtime
+2. Publish the designated test site
+3. Exercise the production runtime
+4. Uninstall and verify cleanup
+
+External authorization is a setup prerequisite, not a scored Designer mission. The companion does not capture credentials or claim that authorization was validated.
 
 The browser is a collector, not the authority. The App Review Preflight Worker binds every run to an exact review version and bundle SHA-256, owns the mission policy and final state, validates evidence digests and screenshot artifacts, and assigns evidence trust from authenticated server identity.
 
