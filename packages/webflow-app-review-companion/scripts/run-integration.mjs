@@ -11,7 +11,7 @@ import { chromium } from 'playwright';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const repo = resolve(root, '../..');
 const workerDir = resolve(repo, 'packages/webflow-app-review-preflight/worker');
-const dist = resolve(root, 'dist');
+const dist = await mkdtemp(join(tmpdir(), 'companion-extension-'));
 const extensionId = 'eiogakldgljpbbmplgckjkoglfgabblm';
 const extensionOrigin = `chrome-extension://${extensionId}`;
 const workerPort = Number(process.env.COMPANION_WORKER_PORT ?? 8789);
@@ -31,7 +31,8 @@ const build = spawnSync(
     env: {
       ...process.env,
       COMPANION_API_BASE: `http://127.0.0.1:${workerPort}`,
-      COMPANION_BUILD_MODE: 'development'
+      COMPANION_BUILD_MODE: 'development',
+      COMPANION_OUTDIR: dist
     }
   }
 );

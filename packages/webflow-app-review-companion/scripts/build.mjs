@@ -5,7 +5,9 @@ import { build } from 'esbuild';
 import { productionApiBase } from './production-config.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const dist = resolve(root, 'dist');
+const dist = process.env.COMPANION_OUTDIR
+  ? resolve(process.env.COMPANION_OUTDIR)
+  : resolve(root, 'dist');
 const production = process.env.COMPANION_BUILD_MODE === 'production';
 const apiBaseUrl = (
   process.env.COMPANION_API_BASE ??
