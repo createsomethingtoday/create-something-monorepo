@@ -1,6 +1,6 @@
 # Template Review Cloudflare Access Managed OAuth Runbook
 
-**Status:** Production candidate; not deployed
+**Status:** Deployment-ready candidate; not deployed
 
 **Date:** 2026-07-15
 
@@ -35,24 +35,55 @@ Template Review production values from those unknowns.
 
 ## Required pre-deploy readback
 
-Record these exact values from the Create Something Cloudflare account before
-deployment:
+The Create Something Cloudflare account was read through the scoped Access API
+without printing the token:
 
-| Field | Required value |
+| Field | Readback |
 | --- | --- |
 | Account | `Create Something` (`9645bd52e640b8a4f40a3a55ff1dd75a`) |
 | Access team domain | `https://createsomething.cloudflareaccess.com` (live `/cdn-cgi/access/certs` returns 200) |
-| Application domain/path | Exact Worker hostname plus `/access/mcp` |
-| Application Audience tag | Exact stable AUD from the created application |
-| Identity provider | Explicit approved provider; verify sign-in returns reviewer email |
-| Access policy | Include only the approved Template Review teammate cohort |
-| Managed OAuth settings | Read back application type, redirect policy, token lifetime, and grant/session lifetime |
+| Existing applications | 2 self-hosted apps; neither targets Template Review or MCP |
+| Existing MCP servers | 0 AI Controls MCP server records |
+| Identity provider | Cloudflare One-time PIN only (`6e4c08b5-43be-46a7-88d8-1daa80863b60`) |
+| Organization | `createsomething.cloudflareaccess.com`; configuration is writable |
 
-The current Wrangler login can deploy Workers but cannot read Access
-applications or organizations. The public JWKS endpoint established the team
-domain, but the remaining application values still require an authenticated
-Zero Trust dashboard session or a narrowly scoped Access read/write API token;
-never print the token.
+The Wrangler OAuth grant cannot read Access, but Infisical provides a scoped
+Access token for readback and the approved mutation. Never print it.
+
+## Approved candidate configuration
+
+Create one self-hosted Access application. This protects the exact direct
+resource without introducing an MCP portal or touching the existing `/mcp`
+connector:
+
+| Field | Candidate value |
+| --- | --- |
+| Name | `Webflow Template Review MCP` |
+| Type | `self_hosted` |
+| Domain and public destination | `webflow-template-review-mcp.createsomething.workers.dev/access/mcp` |
+| Access application session | `12h` |
+| IdP | One-time PIN only |
+| Policy | Allow the six reviewer sign-in emails listed below; no broad domain rule |
+| Managed OAuth | enabled |
+| Dynamic client registration | enabled |
+| Allow localhost clients | false |
+| Allow loopback clients | false |
+| Allowed redirect URIs | `https://claude.ai/api/mcp/auth_callback`, `https://claude.com/api/mcp/auth_callback` |
+| Access token lifetime | `15m` |
+| Grant session duration | `336h` (14 days) |
+
+Claude's published connector contract says remote Cowork/Desktop traffic is
+brokered from Anthropic's cloud and documents those two HTTPS callback URLs.
+Localhost and loopback grants are therefore unnecessary. Cloudflare recommends
+a 5–15 minute access token and a 1–2 week grant for agents; the candidate uses
+the least-permissive end of the token range and the longest recommended grant
+to avoid daily reviewer sign-in.
+
+Creating the application generates its immutable application ID and Audience
+tag. Read both back immediately, set the exact Audience as `CF_ACCESS_AUD`, and
+rerun the Worker dry run before deployment. If the Access edge does not emit
+working OAuth discovery for `/access/mcp` while leaving `/mcp` unchanged,
+delete the new application and stop before Worker deployment.
 
 ## Origin verification contract
 
@@ -84,15 +115,18 @@ canonical account. Do not expose its secret value in logs.
 
 ## Promotion gate
 
-1. Merge the reviewed implementation and retain its commit SHA.
-2. Create and read back the path-scoped Access application and policy.
-3. Present the exact application settings, Worker variables, source SHA,
+1. Retain the reviewed implementation commit SHA and green CI receipt.
+2. Present the exact application settings, Worker variables, source SHA,
    current Worker version, deploy command, post-deploy checks, and rollback.
-4. Require the operator to type the literal word `deploy` before either Access
+3. Require the operator to type the literal word `deploy` before either Access
    or Worker production mutation.
-5. Set `CF_ACCESS_TEAM_DOMAIN` and `CF_ACCESS_AUD`, then deploy the reviewed SHA.
-6. Add the organization connector using the dedicated `/access/mcp` URL.
-7. Sign in through native Claude Cowork, call `template_review_my_queue`, and
+4. Create and read back the path-scoped Access application and policy.
+5. Verify Access discovery on `/access/mcp` and unchanged Identity discovery on
+   `/mcp`; stop and delete the application if path isolation fails.
+6. Set the generated `CF_ACCESS_AUD`, rerun the dry run, and deploy the reviewed
+   SHA.
+7. Add the organization connector using the dedicated `/access/mcp` URL.
+8. Sign in through native Claude Cowork, call `template_review_my_queue`, and
    query D1 to prove the same canonical reviewer account was attributed.
 
 ## Rollback
