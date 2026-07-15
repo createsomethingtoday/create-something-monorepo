@@ -1,5 +1,5 @@
 version: 1
-updated: 2026-06-25
+updated: 2026-07-14
 title: CREATE SOMETHING Living Systems Thesis Claims
 source_thesis: docs/CREATE_SOMETHING_SYSTEMS_THESIS.md
 generated_report: docs/CREATE_SOMETHING_SYSTEMS_THESIS_EVIDENCE.generated.md
@@ -65,7 +65,7 @@ claims:
       - Generic agent setup produces equally reliable governed outcomes without explicit state, policy, ownership, and proof artifacts.
       - Repo artifacts cannot be used to debug, hand off, or improve real workflows.
     open_questions:
-      - Which flagship case should become the first fully evidenced public defense?
+      - What evidence threshold must Governed Agent Delivery pass before it becomes the first public defense?
 
   - id: thesis.mcp-creation-is-the-moat
     title: MCP creation is the durable capability boundary.
@@ -277,3 +277,90 @@ claims:
       - Operators do not use Atlas maps to understand, review, or improve workflows.
     open_questions:
       - What is the minimum evidence binding required before an Atlas map counts as proof?
+
+  - id: thesis.delegation-practice-experience
+    title: The systems thesis should be operable as The Delegation Practice.
+    status: partial
+    tier:
+      - database
+      - automation
+      - judgment
+    claim: >
+      Accountable operators should be able to understand, apply, examine, and
+      improve the CREATE SOMETHING systems thesis through one artifact-producing
+      experience rather than reconstructing the method from disconnected docs,
+      products, cases, and courses.
+    burden_of_proof:
+      - A canonical experience contract defines the audience, journey, ownership, and completion state.
+      - A local operator route implements the complete journey using existing Atlas and Canon contracts.
+      - Each stage produces or inspects a real map, policy, test, receipt, authority decision, or critique.
+      - A clean-load desktop and mobile browser workflow can exercise the experience end to end.
+    evidence:
+      - id: delegation-practice-contract
+        type: file
+        relation: supports
+        path: docs/THE_DELEGATION_PRACTICE_EXPERIENCE.md
+        anchors:
+          - The Delegation Practice
+          - Earned Authority
+          - Experience architecture
+        note: Canonical contract for the named systems thesis experience.
+      - id: delegation-practice-thesis-source
+        type: file
+        relation: supports
+        path: docs/CREATE_SOMETHING_SYSTEMS_THESIS.md
+        anchors:
+          - The Delegation Practice Defense
+          - createsomething.agency/practice
+        note: Canonical thesis records the decided experience and route ownership.
+      - id: delegation-practice-atlas-component
+        type: file
+        relation: illustrates
+        path: packages/agency/src/lib/components/PublicAtlasStoryCanvas.svelte
+        note: Existing story-canvas adapter selected for the local prototype.
+      - id: delegation-practice-route
+        type: file
+        relation: implements
+        path: packages/agency/src/routes/practice/+page.svelte
+        anchors:
+          - Make delegated work trustworthy.
+          - PublicAtlasStoryCanvas
+          - Governed Agent Delivery
+        note: Local operator route joining the thesis, map, workbench, proof, defense, and practice handoff.
+      - id: delegation-practice-workbench
+        type: file
+        relation: implements
+        path: packages/agency/src/lib/components/DelegationPracticeWorkbench.svelte
+        anchors:
+          - Authority Envelope
+          - Owner approves expansion
+          - Missing required artifacts
+          - Not certification
+        note: Artifact-producing ten-stage workbench with fail-closed receipt, affected-party recourse, browser-local recovery, and contextual Earned Authority decisions.
+      - id: delegation-practice-internal-preview-protocol
+        type: file
+        relation: tests
+        path: docs/internal/DELEGATION_PRACTICE_INTERNAL_PREVIEW.md
+        anchors:
+          - Safety boundary
+          - Unassisted run
+          - Skeptical review questions
+          - Readiness record
+        note: Bounded runbook for the first human preview; explicitly separates implementation readiness from practitioner evidence.
+      - id: delegation-practice-route-test
+        type: command
+        relation: tests
+        command: cd packages/agency && node --import tsx --test test/delegation-practice.test.ts
+        note: Verifies route composition, progression, failure states, and the proof versus approval boundary.
+      - id: delegation-practice-evidence-check
+        type: command
+        relation: tests
+        command: pnpm thesis:evidence:check
+        note: Verifies the experience claim remains bound to repo-owned sources.
+    falsification:
+      - Operators still need repository authors to explain how the experience stages fit together.
+      - The route rewards content consumption or activity instead of inspectable artifacts and authority decisions.
+      - Maps, policies, cases, and proof become decorative excerpts disconnected from current source evidence.
+      - The browser journey cannot expose a useful failure, stop, critique, or rollback path.
+    open_questions:
+      - What independent practitioner and defense evidence is sufficient to advance this claim beyond partial?

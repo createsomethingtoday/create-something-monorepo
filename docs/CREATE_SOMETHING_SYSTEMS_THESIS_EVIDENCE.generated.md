@@ -6,10 +6,10 @@
 ## Summary
 
 - Source thesis: `docs/CREATE_SOMETHING_SYSTEMS_THESIS.md`
-- Claim set updated: 2026-06-25
-- Total claims: 6
+- Claim set updated: 2026-07-14
+- Total claims: 7
 - supported: 4
-- partial: 2
+- partial: 3
 
 ## How To Read This
 
@@ -62,7 +62,7 @@ Falsification tests:
 
 Open questions:
 
-- Which flagship case should become the first fully evidenced public defense?
+- What evidence threshold must Governed Agent Delivery pass before it becomes the first public defense?
 
 ### MCP creation is the durable capability boundary.
 
@@ -212,3 +212,40 @@ Falsification tests:
 Open questions:
 
 - What is the minimum evidence binding required before an Atlas map counts as proof?
+
+### The systems thesis should be operable as The Delegation Practice.
+
+- id: `thesis.delegation-practice-experience`
+- status: `partial`
+- tier: `database`, `automation`, `judgment`
+
+Accountable operators should be able to understand, apply, examine, and improve the CREATE SOMETHING systems thesis through one artifact-producing experience rather than reconstructing the method from disconnected docs, products, cases, and courses.
+
+Burden of proof:
+
+- A canonical experience contract defines the audience, journey, ownership, and completion state.
+- A local operator route implements the complete journey using existing Atlas and Canon contracts.
+- Each stage produces or inspects a real map, policy, test, receipt, authority decision, or critique.
+- A clean-load desktop and mobile browser workflow can exercise the experience end to end.
+
+Evidence:
+
+- `supports` `file` `docs/THE_DELEGATION_PRACTICE_EXPERIENCE.md` - Canonical contract for the named systems thesis experience. Anchors: `The Delegation Practice`; `Earned Authority`; `Experience architecture`
+- `supports` `file` `docs/CREATE_SOMETHING_SYSTEMS_THESIS.md` - Canonical thesis records the decided experience and route ownership. Anchors: `The Delegation Practice Defense`; `createsomething.agency/practice`
+- `illustrates` `file` `packages/agency/src/lib/components/PublicAtlasStoryCanvas.svelte` - Existing story-canvas adapter selected for the local prototype.
+- `implements` `file` `packages/agency/src/routes/practice/+page.svelte` - Local operator route joining the thesis, map, workbench, proof, defense, and practice handoff. Anchors: `Make delegated work trustworthy.`; `PublicAtlasStoryCanvas`; `Governed Agent Delivery`
+- `implements` `file` `packages/agency/src/lib/components/DelegationPracticeWorkbench.svelte` - Artifact-producing ten-stage workbench with fail-closed receipt, affected-party recourse, browser-local recovery, and contextual Earned Authority decisions. Anchors: `Authority Envelope`; `Owner approves expansion`; `Missing required artifacts`; `Not certification`
+- `tests` `file` `docs/internal/DELEGATION_PRACTICE_INTERNAL_PREVIEW.md` - Bounded runbook for the first human preview; explicitly separates implementation readiness from practitioner evidence. Anchors: `Safety boundary`; `Unassisted run`; `Skeptical review questions`; `Readiness record`
+- `tests` `command` `cd packages/agency && node --import tsx --test test/delegation-practice.test.ts` - Verifies route composition, progression, failure states, and the proof versus approval boundary.
+- `tests` `command` `pnpm thesis:evidence:check` - Verifies the experience claim remains bound to repo-owned sources.
+
+Falsification tests:
+
+- Operators still need repository authors to explain how the experience stages fit together.
+- The route rewards content consumption or activity instead of inspectable artifacts and authority decisions.
+- Maps, policies, cases, and proof become decorative excerpts disconnected from current source evidence.
+- The browser journey cannot expose a useful failure, stop, critique, or rollback path.
+
+Open questions:
+
+- What independent practitioner and defense evidence is sufficient to advance this claim beyond partial?

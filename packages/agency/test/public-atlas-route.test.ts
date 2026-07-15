@@ -11,6 +11,10 @@ import {
 } from '../src/lib/atlas/surface-policy.ts';
 
 const atlasRoute = readFileSync(new URL('../src/routes/atlas/+page.svelte', import.meta.url), 'utf8');
+const practiceRoute = readFileSync(
+	new URL('../src/routes/practice/+page.svelte', import.meta.url),
+	'utf8'
+);
 const homeRoute = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
 const servicesRoute = readFileSync(
 	new URL('../src/routes/services/+page.svelte', import.meta.url),
@@ -92,6 +96,7 @@ test('agency surface policy names Atlas proof and compact privacy paths', () => 
 	assert.deepEqual(AGENCY_ATLAS_PROOF_PATHS, [
 		'/services',
 		'/atlas',
+		'/practice',
 		'/methodology',
 		'/stack',
 		'/products',
@@ -103,6 +108,7 @@ test('agency surface policy names Atlas proof and compact privacy paths', () => 
 	assert.ok(AGENCY_COMPACT_PRIVACY_PATHS.includes('/'));
 	assert.equal(AGENCY_DIFY_ARTICLE_PATHS.length, 3);
 	assert.equal(isAgencyAtlasProofPath('/atlas/'), true);
+	assert.equal(isAgencyAtlasProofPath('/practice/'), true);
 	assert.equal(isAgencyAtlasProofPath('/book'), false);
 	assert.equal(isAgencyDifyArticlePath('/dify/content-engine'), false);
 	assert.equal(usesCompactAgencyPrivacyPrompt('/'), true);
@@ -113,6 +119,12 @@ test('agency surface policy names Atlas proof and compact privacy paths', () => 
 	assert.equal(usesCompactAgencyPrivacyPrompt('/field-reports'), true);
 	assert.equal(usesCompactAgencyPrivacyPrompt('/field-reports/template-review/'), true);
 	assert.equal(usesCompactAgencyPrivacyPrompt('/contact'), false);
+});
+
+test('Delegation Practice is a bounded Atlas proof surface, not an editable production canvas', () => {
+	assert.ok(practiceRoute.includes('<PublicAtlasStoryCanvas'));
+	assert.ok(practiceRoute.includes('starterId="marketplace-review-queue"'));
+	assert.equal(practiceRoute.includes('<PublicAtlasCanvas'), false);
 });
 
 test('atlas route presents the story canvas before the editable canvas', () => {
