@@ -6,7 +6,8 @@
       "tier": "database",
       "relativePath": "packages/database-layer/data/create-something-internal-operating-topology.atlas-session.json",
       "owner": "Atlas Studio",
-      "expectedSha256": "sha256:9c0ceca1ec7494d46910c78b01f1206dd86dc0662f63238b3551df4941ac71fc",
+      "expectedSha256": "sha256:e01c97a3b71b9a023b2a8a282371e20f08927ffa7bddb25936e9b4a7cf5bb8f7",
+      "hashMode": "atlas_semantic_v1",
       "evidence": "atlas_session_export_hash",
       "receipt": "atlas_readback_receipt",
       "escalation": "operator_topology_review"
@@ -46,7 +47,7 @@
       "tier": "database",
       "relativePath": "packages/database-layer/data/create-something-business-operating-recommendations.json",
       "owner": "Substrate",
-      "expectedSha256": "sha256:bd2598c4e754ab79fd5a4b0ab99ec59c07d43e0197c7147dc53b12bc7f9470c9",
+      "expectedSha256": "sha256:4c05243d1368333d171c1383a4d700bad8a727522eef239e3289b5946246e8d1",
       "evidence": "topology_resource_hash",
       "receipt": "substrate_readback_receipt",
       "escalation": "substrate_operator"

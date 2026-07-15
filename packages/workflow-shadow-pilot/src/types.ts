@@ -14,6 +14,7 @@ export interface WorkflowPilotSource {
   id: string;
   tier: 'database' | 'automation' | 'judgment';
   relativePath: string;
+  hashMode: 'raw_sha256' | 'atlas_semantic_v1';
   sha256: string;
 }
 

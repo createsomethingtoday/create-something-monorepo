@@ -76,3 +76,50 @@ test('replays representative history through compiled transitions and fails clos
   assert.equal(unknown.owner, 'marketplace-review-lead');
   assert.match(unknown.recovery.path, /workflow definition/i);
 });
+
+test('replays a reused action through the transition entered from the current state', async () => {
+  const definition = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  definition.transitions.push({
+    id: 'approved-to-published-through-validation',
+    from: 'approved',
+    to: 'published',
+    actionId: 'validate_submission',
+  });
+  const validation = definition.actions.find((action) => action.id === 'validate_submission');
+  const evidence = Object.fromEntries(
+    validation.requiredEvidence.map((field) => [field, 'present']),
+  );
+
+  const { report } = replayWorkflow(compileWorkflowDefinition(definition), {
+    schemaVersion: 'workflow_replay_manifest.v0.1',
+    workflowId: definition.workflowId,
+    cases: [
+      {
+        caseId: 'reused-validation-from-submitted',
+        title: 'Validation continues the submitted workflow',
+        initialState: 'submitted',
+        actionId: 'validate_submission',
+        actorId: 'workflow-runtime',
+        evidence,
+        approvals: [],
+        expectedOutcome: 'pass',
+        expectedState: 'ready_for_review',
+      },
+    ],
+  });
+
+  assert.deepEqual(
+    report.cases.map((entry) => ({
+      stateAfter: entry.stateAfter,
+      observedOutcome: entry.observedOutcome,
+      expectationMatched: entry.expectationMatched,
+    })),
+    [
+      {
+        stateAfter: 'ready_for_review',
+        observedOutcome: 'pass',
+        expectationMatched: true,
+      },
+    ],
+  );
+});
