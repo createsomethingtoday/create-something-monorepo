@@ -4,6 +4,11 @@ import { enableTelemetry } from '@create-something/mcp-core';
 
 import { misconfiguredResponse } from '../src/auth.js';
 import { AirtableClient } from '../src/airtable.js';
+import {
+  cloudflareAccessServePath,
+  isCloudflareAccessMcpPath,
+  resolveCloudflareAccessRequest,
+} from '../src/cloudflare-access.js';
 import { DEFAULT_AIRTABLE_BASE_ID, TABLE_IDS } from '../src/schema.js';
 import {
   SCOPE_READ,
@@ -33,6 +38,8 @@ interface Env {
   REVIEWER_DIRECTORY_JSON?: string;
   REVIEWER_AUTH_EMAIL_ALIASES_JSON?: string;
   CS_IDENTITY_ISSUER?: string;
+  CF_ACCESS_TEAM_DOMAIN?: string;
+  CF_ACCESS_AUD?: string;
   OAUTH_ALLOWED_EMAIL_DOMAIN?: string;
   OAUTH_ALLOWED_EMAILS?: string;
   WEBFLOW_TEMPLATE_VALIDATION_WORKER_URL?: string;
@@ -149,12 +156,15 @@ function resolveReviewerDirectory(env: Pick<Env, 'REVIEWER_DIRECTORY_JSON' | 'RE
   );
 }
 
-function unauthorized(origin: string, message: string): Response {
+function unauthorized(origin: string, message: string, resourcePath = '/mcp'): Response {
+  const resourceMetadata = resourcePath === '/mcp'
+    ? `${origin}/.well-known/oauth-protected-resource`
+    : `${origin}/.well-known/oauth-protected-resource${resourcePath}`;
   return new Response(JSON.stringify({ ok: false, error: { code: 'UNAUTHORIZED', message } }), {
     status: 401,
     headers: {
       ...JSON_HEADERS,
-      'WWW-Authenticate': `Bearer resource_metadata="${origin}/.well-known/oauth-protected-resource"`,
+      'WWW-Authenticate': `Bearer resource_metadata="${resourceMetadata}"`,
     },
   });
 }
@@ -206,6 +216,36 @@ async function authenticateWithIdentity(
   };
 }
 
+async function authenticateWithCloudflareAccess(
+  request: Request,
+  env: Env,
+  origin: string,
+): Promise<{ props: RequestProps } | Response> {
+  const result = await resolveCloudflareAccessRequest({
+    request,
+    teamDomain: env.CF_ACCESS_TEAM_DOMAIN ?? '',
+    audience: env.CF_ACCESS_AUD ?? '',
+    allowedDomain: allowedDomain(env),
+    allowedEmails: parseAllowedEmails(env.OAUTH_ALLOWED_EMAILS),
+    directory: resolveReviewerDirectory(env),
+  });
+  if (result.ok === false) {
+    if (result.status === 401) return unauthorized(origin, result.message, '/access/mcp');
+    if (result.status === 403) return forbidden(result.message);
+    return misconfiguredResponse(result.message);
+  }
+
+  return {
+    props: {
+      authMode: 'oauth',
+      accountId: result.accountId,
+      email: result.email,
+      name: result.name,
+      scopes: result.scopes,
+    },
+  };
+}
+
 function protectedResourceResponse(env: Env, origin: string, resourcePath: string): Response {
   const authorizationServer = identityIssuer(env);
   if (!authorizationServer) {
@@ -231,7 +271,23 @@ export default {
     }
     if (url.pathname.startsWith('/.well-known/oauth-protected-resource/')) {
       const resourcePath = url.pathname.slice('/.well-known/oauth-protected-resource'.length);
+      // Cloudflare Access owns discovery for the dedicated Managed OAuth
+      // resource. Reaching this origin branch means the edge application is
+      // absent or mis-scoped; never advertise the Identity server for it.
+      if (isCloudflareAccessMcpPath(resourcePath)) {
+        return new Response('Not found', { status: 404, headers: CORS_HEADERS });
+      }
       return protectedResourceResponse(env, url.origin, resourcePath);
+    }
+
+    if (isCloudflareAccessMcpPath(url.pathname)) {
+      const basePath = cloudflareAccessServePath(url.pathname);
+      const serve = basePath === '/access/sse'
+        ? WebflowTemplateReviewMCP.serveSSE('/access/sse')
+        : WebflowTemplateReviewMCP.serve('/access/mcp');
+      const result = await authenticateWithCloudflareAccess(request, env, url.origin);
+      if (result instanceof Response) return result;
+      return serve.fetch(request, env, { ...ctx, props: result.props });
     }
 
     if (isMcpPath(url.pathname)) {
@@ -276,6 +332,14 @@ export default {
                   discovery: '/.well-known/oauth-protected-resource',
                   scopes: [SCOPE_READ, SCOPE_WRITE],
                 },
+                cloudflareAccess: {
+                  flow: 'Cloudflare Access Managed OAuth with a signed application assertion',
+                  endpoint: '/access/mcp',
+                  teamDomain: env.CF_ACCESS_TEAM_DOMAIN?.trim().replace(/\/+$/, '') || null,
+                  audienceConfigured: Boolean(env.CF_ACCESS_AUD?.trim()),
+                  configured: Boolean(env.CF_ACCESS_TEAM_DOMAIN?.trim() && env.CF_ACCESS_AUD?.trim()),
+                  scopes: [SCOPE_READ, SCOPE_WRITE],
+                },
                 legacy: {
                   flow: 'Shared bearer token (hub bridges only)',
                   header: 'Authorization: Bearer <MCP_API_KEY>',
@@ -283,7 +347,7 @@ export default {
                 },
               },
             },
-            endpoints: { mcp: '/mcp', sse: '/sse' },
+            endpoints: { mcp: '/mcp', sse: '/sse', managedOAuthMcp: '/access/mcp' },
             scope: 'templates-only',
             tables: TABLE_IDS,
           },
