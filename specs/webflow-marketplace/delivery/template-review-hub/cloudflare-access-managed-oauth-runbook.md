@@ -1,6 +1,6 @@
 # Template Review Cloudflare Access Managed OAuth Runbook
 
-**Status:** Corrected deployment candidate; not deployed
+**Status:** Access application created; Worker deployment pending
 
 **Date:** 2026-07-15
 
@@ -58,6 +58,26 @@ without printing the token:
 The Wrangler OAuth grant cannot read Access, but Infisical provides a scoped
 Access token for readback and the approved mutation. Never print it.
 
+## Created application readback
+
+The corrected application was created after the fresh literal `deploy`
+approval and read back through the scoped API:
+
+| Field | Production readback |
+| --- | --- |
+| Application ID | `f18711d2-5673-4aa9-b04c-7227301e1064` |
+| Audience | `9e652f0b7b017646202668709415884dfb620217d3ded9a71585ce9d8d740a5d` |
+| Policy ID | `ea41ab8a-9e29-43c9-9bd4-c0b1527809f2` |
+| Domain | `webflow-template-review-mcp-access.createsomething.workers.dev` |
+| Session / grant / token | `12h` / `336h` / `15m` |
+| Identity provider | One-time PIN (`6e4c08b5-43be-46a7-88d8-1daa80863b60`) |
+
+The six-email policy, DCR callbacks, localhost/loopback denials, and Managed
+OAuth settings match the candidate table below. Before the proxy Worker exists,
+the dedicated hostname returns Cloudflare `1042`; the existing Worker's `/mcp`
+protected-resource metadata remains unchanged and still names CREATE SOMETHING
+Identity. Recheck OAuth discovery immediately after proxy deployment.
+
 ## Approved candidate configuration
 
 Create one self-hosted Access application for the dedicated proxy Worker. This
@@ -89,9 +109,9 @@ a 5–15 minute access token and a 1–2 week grant for agents; the candidate us
 the least-permissive end of the token range and the longest recommended grant
 to avoid daily reviewer sign-in.
 
-Creating the application generates its immutable application ID and Audience
-tag. Read both back immediately, set the exact Audience as `CF_ACCESS_AUD`, and
-rerun both Worker dry runs before deployment. If the Access edge does not emit
+The application generated its immutable application ID and Audience tag shown
+above. The exact Audience is committed as `CF_ACCESS_AUD`; rerun both Worker
+dry runs before deployment. If the Access edge does not emit
 working OAuth discovery for the dedicated hostname while the existing
 Worker's `/mcp` discovery remains unchanged, delete the new application and
 stop before either Worker deployment.
