@@ -18,6 +18,9 @@ test('identity routes serve a credential form without protected workspace data',
   assert.equal(response!.status, 200);
   assert.match(body, /Sign in to Client Workspace/);
   assert.match(body, /name="email"/);
+  assert.match(body, /--color-performance-paper/);
+  assert.match(body, /var\(--font-performance-interface\)/);
+  assert.match(body, /var\(--color-performance-signal\)/);
   assert.equal(body.includes('Demo frontend'), false);
 });
 

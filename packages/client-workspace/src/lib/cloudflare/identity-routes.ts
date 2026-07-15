@@ -20,14 +20,81 @@ const signInHtml = `<!doctype html>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Sign in — Client Workspace</title>
     <style>
-      :root { color-scheme: light; font: 16px/1.45 system-ui, sans-serif; background: #f5f2ec; color: #17201f; }
-      body { min-height: 100vh; margin: 0; display: grid; place-items: center; padding: 1.5rem; }
-      main { width: min(100%, 25rem); background: white; border: 1px solid #d9d4ca; padding: 2rem; box-shadow: 0 1rem 3rem #17201f12; }
-      h1 { font: 500 1.6rem/1.15 Georgia, serif; margin: 0 0 .5rem; }
-      p { color: #53605e; margin: 0 0 1.5rem; }
-      label { display: grid; gap: .4rem; margin-top: 1rem; font-size: .85rem; }
-      input { font: inherit; padding: .75rem; border: 1px solid #b9b4aa; border-radius: .25rem; }
-      button { width: 100%; margin-top: 1.25rem; padding: .8rem; border: 0; border-radius: .25rem; background: #2f6f68; color: white; font: inherit; }
+      :root {
+        color-scheme: light;
+        --color-performance-paper: #f3f3f0;
+        --color-performance-panel: #ffffff;
+        --color-performance-ink: #090909;
+        --color-performance-muted: #5e6268;
+        --color-performance-line: #d7d7d2;
+        --color-performance-line-strong: #9c9c96;
+        --color-performance-signal: #0057b8;
+        --font-performance-display: "Satoshi", "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
+        --font-performance-interface: var(--font-performance-display);
+        --font-performance-mono: "IBM Plex Mono", "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
+        --space-performance-xs: 0.618rem;
+        --space-performance-sm: 1rem;
+        --space-performance-md: 1.618rem;
+        --space-performance-lg: 2.618rem;
+        --radius-performance-sm: 0;
+        --radius-performance-md: 4px;
+        --shadow-performance-panel: none;
+        font-family: var(--font-performance-interface);
+        background: var(--color-performance-paper);
+        color: var(--color-performance-ink);
+      }
+      * { box-sizing: border-box; }
+      body {
+        min-height: 100vh;
+        margin: 0;
+        display: grid;
+        place-items: center;
+        padding: var(--space-performance-md);
+        background: var(--color-performance-paper);
+      }
+      main {
+        width: min(100%, 26.18rem);
+        padding: var(--space-performance-lg);
+        background: var(--color-performance-panel);
+        border: 1px solid var(--color-performance-line);
+        border-top: 4px solid var(--color-performance-signal);
+        border-radius: var(--radius-performance-md);
+        box-shadow: var(--shadow-performance-panel);
+      }
+      h1 {
+        margin: 0 0 var(--space-performance-xs);
+        font-family: var(--font-performance-display);
+        font-size: 1.618rem;
+        font-weight: 500;
+        line-height: 1.15;
+      }
+      p { margin: 0 0 var(--space-performance-md); color: var(--color-performance-muted); }
+      label {
+        display: grid;
+        gap: var(--space-performance-xs);
+        margin-top: var(--space-performance-sm);
+        font-family: var(--font-performance-mono);
+        font-size: 0.85rem;
+      }
+      input {
+        padding: var(--space-performance-xs);
+        border: 1px solid var(--color-performance-line-strong);
+        border-radius: var(--radius-performance-sm);
+        background: var(--color-performance-panel);
+        color: var(--color-performance-ink);
+        font: inherit;
+      }
+      input:focus-visible, button:focus-visible { outline: 2px solid var(--color-performance-signal); outline-offset: 2px; }
+      button {
+        width: 100%;
+        margin-top: var(--space-performance-md);
+        padding: var(--space-performance-xs) var(--space-performance-sm);
+        border: 1px solid var(--color-performance-ink);
+        border-radius: var(--radius-performance-sm);
+        background: var(--color-performance-ink);
+        color: var(--color-performance-panel);
+        font: inherit;
+      }
     </style>
   </head>
   <body>
