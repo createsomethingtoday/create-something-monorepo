@@ -9,7 +9,7 @@ try {
     new Request(`http://workspace.test${status.previewPath}`, { method: 'GET' })
   );
   const html = await response.text();
-  if (!response.ok || !html.includes('Shape the next release.')) {
+  if (!response.ok || !html.includes('Build what clients can see.')) {
     throw new Error('preview_smoke_failed');
   }
   console.log(

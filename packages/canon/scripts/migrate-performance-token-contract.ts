@@ -28,6 +28,8 @@ const documentationPaths = [
 	.filter((path) => statSync(path).isFile());
 
 const originalTokensCss = readFileSync(tokensCssPath, 'utf8');
+const compatibilityAliasComment =
+	'  /* Legacy compatibility aliases. First-party consumers use Performance tokens. */';
 const rootBlock = originalTokensCss.match(/:root\s*{([\s\S]*?)\n}/)?.[1];
 if (!rootBlock) throw new Error('Could not find the canonical :root token block');
 
@@ -48,7 +50,13 @@ if (write) {
 	writeFileSync(tokensCssPath, migrateCanonicalCss(originalTokensCss));
 	for (const root of sourceRoots) {
 		for (const path of walk(root)) {
-			if (path === tokensCssPath || path.includes('performance-contract.')) continue;
+			if (
+				path === tokensCssPath ||
+				path.includes('performance-contract.') ||
+				path.endsWith('/performance/scheduler-document.ts')
+			) {
+				continue;
+			}
 			const source = readFileSync(path, 'utf8');
 			const migrated = replaceTokenNames(source);
 			if (migrated !== source) writeFileSync(path, migrated);
@@ -73,7 +81,7 @@ if (violations.length > 0) {
 }
 
 function migrateCanonicalCss(source: string): string {
-	let primarySource = source;
+	let primarySource = source.replaceAll(`\n${compatibilityAliasComment}`, '');
 	const declaredSet = new Set(declaredNames);
 	for (const [legacy, performance] of orderedMapping) {
 		if (!declaredSet.has(performance)) continue;
@@ -92,7 +100,7 @@ function migrateCanonicalCss(source: string): string {
 	const firstRootEnd = migrated.indexOf('\n}', migrated.indexOf(':root'));
 	if (firstRootEnd === -1) throw new Error('Could not close canonical :root token block');
 
-	return `${migrated.slice(0, firstRootEnd)}\n\n  /* Legacy compatibility aliases. First-party consumers use Performance tokens. */\n${aliases}${migrated.slice(firstRootEnd)}`;
+	return `${migrated.slice(0, firstRootEnd)}\n\n${compatibilityAliasComment}\n${aliases}${migrated.slice(firstRootEnd)}`;
 }
 
 function replaceTokenNames(source: string): string {

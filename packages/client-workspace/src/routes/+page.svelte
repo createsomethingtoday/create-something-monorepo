@@ -1,8 +1,11 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import {
+    eventWorkState,
     mergeWorkspaceEvents,
     pendingWorkspaceApprovals,
+    previewWorkState,
+    sessionWorkState,
     type BrowserWorkspaceEvent
   } from '$lib/client/workspace-view.js';
   import type { PageData } from './$types';
@@ -35,6 +38,7 @@
   let promptText = $state('');
   let attachment = $state<File | null>(null);
   let userMessages = $state<Array<{ text: string; imageName?: string }>>([]);
+  let restoring = $state(true);
   let opening = $state(false);
   let resetting = $state(false);
   let closing = $state(false);
@@ -62,7 +66,13 @@
 
   onMount(() => {
     const storedSession = localStorage.getItem(sessionStorageKey);
-    if (storedSession) void restoreSession(storedSession);
+    if (storedSession) {
+      void restoreSession(storedSession).finally(() => {
+        restoring = false;
+      });
+    } else {
+      restoring = false;
+    }
     return () => eventSource?.close();
   });
 
@@ -326,8 +336,14 @@
     <strong>{workspace?.label ?? 'No workspace open'}</strong>
   </div>
   <div class="top-actions">
-    <span class:active={receipt?.status === 'running'} class="session-state">
-      {receipt?.status ?? 'local MVP'}
+    <span
+      class="session-state"
+      data-work-state={sessionWorkState(
+        restoring || opening ? 'opening' : (receipt?.status ?? null),
+        pendingWorkspaceApprovals(events).length > 0
+      )}
+    >
+      {restoring ? 'restoring' : (receipt?.status ?? 'local MVP')}
     </span>
     {#if workspace}
       <button class="quiet-button" type="button" disabled={resetting} onclick={resetWorkspace}>
@@ -340,7 +356,14 @@
   </div>
 </header>
 
-{#if !workspace}
+{#if restoring}
+  <main class="workspace-restoring" data-work-state="planning" aria-live="polite" aria-busy="true">
+    <span class="restoring-mark" aria-hidden="true"></span>
+    <p class="eyebrow">Receipt readback</p>
+    <h1>Restoring your workspace.</h1>
+    <p>The saved activity, focused diff, and owned preview are being reconnected.</p>
+  </main>
+{:else if !workspace}
   <main class="workspace-picker">
     <div class="intro">
       <p class="eyebrow">Governed frontend editing</p>
@@ -412,7 +435,7 @@
           </div>
         {/each}
         {#if sending}
-          <div class="thinking" aria-label="Agent is working"><i></i><i></i><i></i></div>
+          <div class="thinking" data-work-state="running" aria-label="Agent is working"><i></i><i></i><i></i></div>
         {/if}
       </div>
 
@@ -466,13 +489,20 @@
         <span class="rail-number">02</span>
       </div>
 
-      <div class="activity-status" aria-live="polite">
-        <span class:running={receipt?.status === 'running'} class="status-dot"></span>
+      <div
+        class="activity-status"
+        data-work-state={sessionWorkState(
+          restoring || opening ? 'opening' : (receipt?.status ?? null),
+          pendingWorkspaceApprovals(events).length > 0
+        )}
+        aria-live="polite"
+      >
+        <span class="status-dot"></span>
         <p>{notice}</p>
       </div>
 
       {#each pendingWorkspaceApprovals(events) as approval (approval.sequence)}
-        <article class="approval-card">
+        <article class="approval-card" data-work-state="approval">
           <p class="eyebrow">Approval required</p>
           <h3>{approval.approvalKind === 'command' ? 'Run bounded command?' : 'Apply bounded file change?'}</h3>
           <p>{approval.message}</p>
@@ -489,7 +519,7 @@
         {/if}
         {#each [...events].reverse() as event (event.sequence)}
           <article class="activity-item">
-            <span class:event-failed={event.status === 'failed'} class:event-pending={event.status === 'pending'} class="event-marker"></span>
+            <span class="event-marker" data-work-state={eventWorkState(event)}></span>
             <div>
               <div class="event-meta">
                 <span>{eventLabel(event.type)}</span>
@@ -517,7 +547,7 @@
           <h2 id="preview-heading">Live preview</h2>
         </div>
         <div class="preview-actions">
-          <span class:ready={preview?.state === 'ready'} class="preview-state">{preview?.state ?? 'idle'}</span>
+          <span class="preview-state" data-work-state={previewWorkState(preview?.state ?? null)}>{preview?.state ?? 'idle'}</span>
           <button class="icon-button" type="button" onclick={refreshArtifacts} aria-label="Refresh preview">↻</button>
           <span class="rail-number">03</span>
         </div>
@@ -533,7 +563,7 @@
             src={`${preview.previewPath}?revision=${previewRevision}`}
           ></iframe>
         {:else}
-          <div class="preview-placeholder" role="status">
+          <div class="preview-placeholder" data-work-state={previewWorkState(preview?.state ?? null)} role="status">
             <span class="preview-glyph">◫</span>
             <h3>{preview?.state === 'blocked' || preview?.state === 'crashed' ? 'Preview unavailable' : 'Starting preview'}</h3>
             <p>{preview?.state === 'blocked' || preview?.state === 'crashed' ? 'Review the activity rail for the safe failure state.' : 'The allowlisted project is booting in its isolated process.'}</p>
@@ -552,8 +582,15 @@
   :global(*) { box-sizing: border-box; }
   :global(button), :global(label) { -webkit-tap-highlight-color: transparent; }
   :global(button:focus-visible), :global(textarea:focus-visible), :global(input:focus-visible), :global(summary:focus-visible), :global(a:focus-visible) { outline: 3px solid var(--color-performance-signal); outline-offset: 3px; }
+  [data-work-state] { --workspace-state-text: var(--color-performance-work-idle-text); --workspace-state-background: var(--color-performance-work-idle-background); --workspace-state-border: var(--color-performance-work-idle-border); }
+  [data-work-state='planning'] { --workspace-state-text: var(--color-performance-work-planning-text); --workspace-state-background: var(--color-performance-work-planning-background); --workspace-state-border: var(--color-performance-work-planning-border); }
+  [data-work-state='running'] { --workspace-state-text: var(--color-performance-work-running-text); --workspace-state-background: var(--color-performance-work-running-background); --workspace-state-border: var(--color-performance-work-running-border); }
+  [data-work-state='approval'] { --workspace-state-text: var(--color-performance-work-approval-text); --workspace-state-background: var(--color-performance-work-approval-background); --workspace-state-border: var(--color-performance-work-approval-border); }
+  [data-work-state='success'] { --workspace-state-text: var(--color-performance-work-success-text); --workspace-state-background: var(--color-performance-work-success-background); --workspace-state-border: var(--color-performance-work-success-border); }
+  [data-work-state='warning'] { --workspace-state-text: var(--color-performance-work-warning-text); --workspace-state-background: var(--color-performance-work-warning-background); --workspace-state-border: var(--color-performance-work-warning-border); }
+  [data-work-state='failure'] { --workspace-state-text: var(--color-performance-work-failure-text); --workspace-state-background: var(--color-performance-work-failure-background); --workspace-state-border: var(--color-performance-work-failure-border); }
   .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
-  .topbar { height: 64px; display: grid; grid-template-columns: minmax(220px, 1fr) auto minmax(220px, 1fr); align-items: center; gap: 1rem; padding: 0 1.25rem; color: var(--color-performance-fg-primary); background: var(--color-performance-bg-elevated); border-bottom: 1px solid var(--color-performance-border-emphasis); }
+  .topbar { min-width: 0; height: 64px; display: grid; grid-template-columns: minmax(220px, 1fr) auto minmax(220px, 1fr); align-items: center; gap: 1rem; padding: 0 1.25rem; color: var(--color-performance-fg-primary); background: var(--color-performance-bg-elevated); border-bottom: 1px solid var(--color-performance-border-emphasis); }
   .brand { display: inline-flex; align-items: center; gap: .7rem; color: inherit; text-decoration: none; font-size: .72rem; font-weight: 750; letter-spacing: .12em; }
   .mark { width: 11px; height: 11px; display: block; background: var(--color-performance-pressure); transform: rotate(45deg); }
   .workspace-context { text-align: center; line-height: 1.15; }
@@ -561,9 +598,13 @@
   .eyebrow { margin: 0; color: var(--color-performance-pressure); font-family: var(--font-performance-mono); font-size: .63rem; font-weight: var(--font-performance-bold); letter-spacing: var(--tracking-performance-wider); line-height: 1.2; text-transform: uppercase; }
   .workspace-context .eyebrow { color: var(--color-performance-fg-tertiary); font-size: .56rem; }
   .top-actions { justify-self: end; display: flex; align-items: center; gap: .6rem; }
-  .session-state, .preview-state { padding: .3rem .55rem; color: var(--color-performance-fg-secondary); background: var(--color-performance-bg-subtle); border: 1px solid var(--color-performance-border-default); border-radius: var(--radius-performance-sm); font-family: var(--font-performance-mono); font-size: .62rem; font-weight: var(--font-performance-bold); letter-spacing: var(--tracking-performance-wide); text-transform: uppercase; }
-  .session-state.active { color: var(--color-performance-review); background: var(--color-performance-review-soft); border-color: var(--color-performance-review); }
+  .session-state, .preview-state { padding: .3rem .55rem; color: var(--workspace-state-text); background: var(--workspace-state-background); border: 1px solid var(--workspace-state-border); border-radius: var(--radius-performance-sm); font-family: var(--font-performance-mono); font-size: .62rem; font-weight: var(--font-performance-bold); letter-spacing: var(--tracking-performance-wide); text-transform: uppercase; }
   .quiet-button { padding: .35rem .55rem; color: var(--color-performance-fg-secondary); background: transparent; border: 1px solid var(--color-performance-border-emphasis); border-radius: var(--radius-performance-sm); cursor: pointer; font-size: .7rem; }
+  .workspace-restoring { min-height: calc(100vh - 64px); display: grid; place-items: center; align-content: center; gap: .7rem; padding: 2rem; color: var(--workspace-state-text); background: var(--workspace-state-background); text-align: center; }
+  .workspace-restoring h1 { max-width: 780px; margin: 0; color: var(--color-performance-ink); font-family: var(--font-performance-display); font-size: var(--text-performance-display); font-weight: var(--font-performance-medium); letter-spacing: var(--tracking-performance-display); line-height: var(--leading-performance-display); }
+  .workspace-restoring > p:last-child { max-width: 540px; margin: 0; color: var(--color-performance-muted); line-height: var(--leading-performance-relaxed); }
+  .restoring-mark { width: 14px; height: 14px; margin-bottom: .5rem; background: var(--workspace-state-text); box-shadow: 0 0 0 8px var(--workspace-state-background); transform: rotate(45deg); animation: restore-pulse 1.2s ease-in-out infinite; }
+  @keyframes restore-pulse { 0%, 100% { opacity: .55; transform: rotate(45deg) scale(.88); } 50% { opacity: 1; transform: rotate(45deg) scale(1); } }
   .workspace-picker { width: min(1180px, calc(100% - 2rem)); min-height: calc(100vh - 64px); display: grid; grid-template-columns: 1.25fr .75fr; align-items: center; gap: clamp(3rem, 7vw, 8rem); margin: 0 auto; padding: 4rem 0 7rem; }
   .intro h1 { max-width: 800px; margin: 1rem 0 1.5rem; font-family: var(--font-performance-display); font-size: var(--text-performance-display-xl); font-weight: var(--font-performance-medium); letter-spacing: var(--tracking-performance-display); line-height: var(--leading-performance-display); }
   .lede { max-width: 590px; margin: 0; color: var(--color-performance-muted); font-size: var(--text-performance-body-lg); line-height: var(--leading-performance-relaxed); }
@@ -579,22 +620,22 @@
   .primary-button { padding: .65rem .75rem; border-radius: var(--radius-performance-sm); font-size: .69rem; font-weight: var(--font-performance-bold); }
   button:disabled { cursor: not-allowed; opacity: .48; }
   .trust-note { margin: 1rem .4rem .2rem; color: var(--color-performance-muted); font-size: .62rem; }
-  .workspace-shell { height: calc(100vh - 64px); display: grid; grid-template-columns: minmax(310px, .82fr) minmax(290px, .72fr) minmax(480px, 1.46fr); overflow: hidden; }
-  .rail { min-width: 0; display: flex; flex-direction: column; border-right: 1px solid var(--color-performance-line); background: var(--color-performance-paper); }
+  .workspace-shell { width: 100%; min-width: 0; height: calc(100vh - 64px); display: grid; grid-template-columns: minmax(310px, .82fr) minmax(290px, .72fr) minmax(480px, 1.46fr); overflow: hidden; }
+  .rail { width: 100%; min-width: 0; max-width: 100%; display: flex; flex-direction: column; border-right: 1px solid var(--color-performance-line); background: var(--color-performance-paper); }
   .rail:last-child { border-right: 0; }
   .rail-heading { min-height: 83px; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 1.1rem; border-bottom: 1px solid var(--color-performance-line); }
   .rail-heading h1, .rail-heading h2 { margin: .35rem 0 0; font-size: var(--text-performance-h3); font-weight: var(--font-performance-medium); }
   .rail-number { color: var(--color-performance-muted); font-family: var(--font-performance-mono); font-size: .75rem; }
-  .conversation { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 1rem; overflow-y: auto; padding: 1.2rem 1.1rem; }
-  .message { max-width: 92%; padding: .85rem .9rem; border: 1px solid var(--color-performance-line); }
-  .message p { margin: 0; font-size: .78rem; line-height: 1.55; white-space: pre-wrap; }
+  .conversation { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 1rem; overflow-y: auto; padding: 1.2rem 1.1rem; }
+  .message { min-width: 0; max-width: 92%; padding: .85rem .9rem; border: 1px solid var(--color-performance-line); }
+  .message p { margin: 0; overflow-wrap: anywhere; font-size: .78rem; line-height: 1.55; white-space: pre-wrap; }
   .message .message-author { margin-bottom: .45rem; color: var(--color-performance-muted); font-family: var(--font-performance-mono); font-size: .57rem; font-weight: var(--font-performance-bold); letter-spacing: var(--tracking-performance-wider); text-transform: uppercase; }
   .agent-message { align-self: flex-start; background: var(--color-performance-panel); border-radius: var(--radius-performance-md); }
   .user-message { align-self: flex-end; color: var(--color-performance-fg-primary); background: var(--color-performance-bg-elevated); border-color: var(--color-performance-bg-elevated); border-radius: var(--radius-performance-md); }
   .user-message .message-author { color: var(--color-performance-fg-tertiary); }
   .attachment-chip { display: inline-block; max-width: 100%; margin-top: .6rem; padding: .3rem .45rem; overflow: hidden; color: var(--color-performance-fg-secondary); background: var(--color-performance-bg-subtle); border-radius: var(--radius-performance-sm); font-size: .6rem; text-overflow: ellipsis; white-space: nowrap; }
   .thinking { display: flex; gap: .25rem; padding: .35rem 0; }
-  .thinking i { width: 5px; height: 5px; background: var(--color-performance-signal); border-radius: 50%; animation: pulse 1.2s infinite ease-in-out; }
+  .thinking i { width: 5px; height: 5px; background: var(--workspace-state-text); border-radius: 50%; animation: pulse 1.2s infinite ease-in-out; }
   .thinking i:nth-child(2) { animation-delay: .15s; } .thinking i:nth-child(3) { animation-delay: .3s; }
   @keyframes pulse { 0%, 70%, 100% { opacity: .3; transform: translateY(0); } 35% { opacity: 1; transform: translateY(-3px); } }
   .composer { margin: .8rem; background: var(--color-performance-panel); border: 1px solid var(--color-performance-line); box-shadow: var(--shadow-performance-panel); }
@@ -613,9 +654,8 @@
   .activity-rail { background: var(--color-performance-court); }
   .activity-status { display: flex; align-items: flex-start; gap: .55rem; padding: .75rem 1rem; border-bottom: 1px solid var(--color-performance-line); }
   .activity-status p { margin: 0; color: var(--color-performance-muted); font-size: .67rem; line-height: 1.4; }
-  .status-dot { width: 7px; height: 7px; flex: 0 0 auto; margin-top: .14rem; background: var(--color-performance-ready); border-radius: 50%; }
-  .status-dot.running { background: var(--color-performance-review); box-shadow: 0 0 0 4px var(--color-performance-review-soft); }
-  .approval-card { margin: .8rem .8rem 0; padding: .85rem; background: var(--color-performance-review-soft); border: 1px solid var(--color-performance-review); border-left-width: 4px; }
+  .status-dot { width: 7px; height: 7px; flex: 0 0 auto; margin-top: .14rem; background: var(--workspace-state-text); border-radius: 50%; box-shadow: 0 0 0 4px var(--workspace-state-background); }
+  .approval-card { margin: .8rem .8rem 0; padding: .85rem; color: var(--workspace-state-text); background: var(--workspace-state-background); border: 1px solid var(--workspace-state-border); border-left-width: 4px; }
   .approval-card h3 { margin: .45rem 0; font-size: .78rem; }
   .approval-card > p:not(.eyebrow) { margin: 0 0 .75rem; color: var(--color-performance-ink-soft); font-size: .66rem; line-height: 1.4; }
   .approval-card div { display: flex; gap: .4rem; }
@@ -623,12 +663,11 @@
   .decline-button { color: var(--color-performance-risk); background: transparent; border: 1px solid var(--color-performance-risk); cursor: pointer; }
   .activity-list { flex: 1; min-height: 0; overflow-y: auto; padding: .25rem .8rem .8rem; }
   .empty-copy { margin: 1rem .2rem; color: var(--color-performance-muted); font-size: .7rem; line-height: 1.5; }
-  .activity-item { display: grid; grid-template-columns: auto 1fr; gap: .6rem; padding: .75rem .25rem; border-bottom: 1px solid var(--color-performance-line); }
-  .event-marker { width: 7px; height: 7px; margin-top: .25rem; background: var(--color-performance-ready); border-radius: 50%; }
-  .event-marker.event-failed { background: var(--color-performance-stop); } .event-marker.event-pending { background: var(--color-performance-review); }
+  .activity-item { min-width: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .6rem; padding: .75rem .25rem; border-bottom: 1px solid var(--color-performance-line); }
+  .event-marker { width: 7px; height: 7px; margin-top: .25rem; background: var(--workspace-state-text); border-radius: 50%; box-shadow: 0 0 0 3px var(--workspace-state-background); }
   .event-meta { display: flex; justify-content: space-between; gap: .5rem; color: var(--color-performance-muted); font-family: var(--font-performance-mono); font-size: .55rem; font-weight: var(--font-performance-bold); letter-spacing: var(--tracking-performance-wide); text-transform: uppercase; }
   .event-meta time { font-weight: 500; letter-spacing: 0; }
-  .activity-item p { margin: .3rem 0 0; color: var(--color-performance-ink-soft); font-size: .66rem; line-height: 1.45; white-space: pre-wrap; }
+  .activity-item p { margin: .3rem 0 0; overflow-wrap: anywhere; color: var(--color-performance-ink-soft); font-size: .66rem; line-height: 1.45; white-space: pre-wrap; }
   .diff-panel { max-height: 34%; overflow: auto; color: var(--color-performance-fg-secondary); background: var(--color-performance-bg-elevated); border-top: 1px solid var(--color-performance-border-emphasis); }
   .diff-panel summary { display: flex; justify-content: space-between; padding: .7rem .8rem; cursor: pointer; font-size: .62rem; font-weight: 730; list-style: none; }
   .diff-panel summary span:last-child { color: var(--color-performance-fg-tertiary); font-weight: 520; }
@@ -637,8 +676,7 @@
   .preview-rail { padding: 0; background: var(--color-performance-court); }
   .preview-heading-row { background: var(--color-performance-paper); }
   .preview-actions { display: flex; align-items: center; gap: .55rem; }
-  .preview-state { color: var(--color-performance-muted); background: var(--color-performance-paper); border-color: var(--color-performance-line); }
-  .preview-state.ready { color: var(--color-performance-ready); background: var(--color-performance-ready-soft); border-color: var(--color-performance-ready); }
+  .preview-state { color: var(--workspace-state-text); background: var(--workspace-state-background); border-color: var(--workspace-state-border); }
   .icon-button { width: 28px; height: 28px; display: grid; place-items: center; color: var(--color-performance-ink); background: var(--color-performance-panel); border: 1px solid var(--color-performance-line-strong); border-radius: var(--radius-performance-sm); cursor: pointer; }
   .browser-frame { flex: 1; min-height: 0; margin: 1rem 1rem .65rem; overflow: hidden; background: var(--color-performance-panel); border: 1px solid var(--color-performance-line-strong); box-shadow: var(--shadow-performance-panel); }
   .browser-chrome { height: 36px; display: flex; align-items: center; gap: .3rem; padding: 0 .7rem; background: var(--color-performance-paper); border-bottom: 1px solid var(--color-performance-line); }
@@ -646,8 +684,8 @@
   .browser-chrome > span:first-child { background: var(--color-performance-pressure); }
   .browser-chrome p { flex: 1; margin: 0 3.4rem 0 1rem; padding: .25rem .6rem; color: var(--color-performance-muted); background: var(--color-performance-panel); border: 1px solid var(--color-performance-line); border-radius: var(--radius-performance-sm); font-family: var(--font-performance-mono); font-size: .55rem; text-align: center; }
   iframe { width: 100%; height: calc(100% - 36px); display: block; background: var(--color-performance-panel); border: 0; }
-  .preview-placeholder { height: calc(100% - 36px); display: grid; place-items: center; align-content: center; padding: 2rem; color: var(--color-performance-muted); text-align: center; }
-  .preview-glyph { color: var(--color-performance-signal); font-size: 2rem; }
+  .preview-placeholder { height: calc(100% - 36px); display: grid; place-items: center; align-content: center; padding: 2rem; color: var(--workspace-state-text); background: var(--workspace-state-background); text-align: center; }
+  .preview-glyph { color: var(--workspace-state-text); font-size: 2rem; }
   .preview-placeholder h3 { margin: .8rem 0 .3rem; font-weight: var(--font-performance-medium); }
   .preview-placeholder p { max-width: 320px; margin: 0; font-size: .7rem; line-height: 1.5; }
   .preview-footer { display: flex; justify-content: space-between; padding: 0 1rem .8rem; color: var(--color-performance-muted); font-family: var(--font-performance-mono); font-size: .57rem; }
@@ -658,11 +696,15 @@
     .chat-rail, .activity-rail { min-height: calc(100vh - 64px); }
   }
   @media (max-width: 720px) {
-    .topbar { grid-template-columns: 1fr auto; padding: 0 .8rem; }
+    .topbar { min-width: 0; grid-template-columns: minmax(0, 1fr) auto; gap: .45rem; padding: 0 .8rem; }
+    .brand { min-width: 0; gap: .5rem; font-size: .62rem; letter-spacing: .08em; }
+    .top-actions { min-width: 0; gap: .3rem; }
+    .session-state { padding: .25rem .35rem; font-size: .52rem; }
+    .quiet-button { padding: .3rem .4rem; font-size: .62rem; }
     .workspace-context { display: none; }
     .workspace-picker { grid-template-columns: 1fr; align-content: center; gap: 3rem; padding: 3rem 0 5rem; }
     .intro h1 { font-size: clamp(3.1rem, 15vw, 5.2rem); }
-    .workspace-shell { height: auto; display: block; overflow: visible; }
+    .workspace-shell { width: 100%; min-width: 0; max-width: 100%; height: auto; display: block; overflow: hidden; }
     .rail { min-height: auto; border-right: 0; border-bottom: 1px solid var(--color-performance-line); }
     .chat-rail { height: calc(100vh - 64px); }
     .activity-rail { min-height: 78vh; height: 88vh; }
@@ -670,5 +712,7 @@
     .workspace-card { grid-template-columns: auto 1fr; }
     .workspace-card .primary-button { grid-column: 1 / -1; }
     .policy-copy { display: none; }
+    .browser-chrome p { min-width: 0; margin-right: 1rem; }
+    .preview-footer { flex-wrap: wrap; gap: .35rem 1rem; }
   }
 </style>

@@ -82,8 +82,9 @@ or Sandbox ID.
 Open the printed local URL, choose **Demo frontend**, attach the declared PNG,
 and submit the Performance acceptance prompt from the durable goal: change only
 the hero eyebrow to `Governed product delivery`, the headline to `Move from intent
-to proof.`, and add a 4px orange top rule while preserving the navigation, CTA,
-and three proof cards. Approvals are deliberately
+to proof.`, and add
+`border-top: 4px solid var(--color-performance-pressure, #e54800);` to `.hero`
+while preserving the navigation, CTA, and three proof cards. Approvals are deliberately
 opaque in the browser; approve or decline only the bounded command/file card that
 the activity rail presents. Reloading the same browser restores the sanitized
 receipt, terminal state, baseline diff, and owned preview while the local server

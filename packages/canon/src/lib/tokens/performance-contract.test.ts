@@ -48,6 +48,38 @@ describe('Performance token contract', () => {
 		expect(invalid).toEqual([]);
 	});
 
+	it('exposes complete semantic state roles for live agent work', () => {
+		const tokensCssPath = fileURLToPath(new URL('../styles/tokens.css', import.meta.url));
+		const rootBlock = readFileSync(tokensCssPath, 'utf8').match(/:root\s*{([\s\S]*?)\n}/)?.[1] ?? '';
+		const declarations = Object.fromEntries(
+			[...rootBlock.matchAll(/^\s*(--[A-Za-z0-9_-]+):\s*([^;]+);/gm)].map((match) => [
+				match[1],
+				match[2].trim()
+			])
+		);
+		const expectedRoles = {
+			idle: ['muted', 'paper', 'line'],
+			planning: ['signal', 'signal-soft', 'signal'],
+			running: ['pressure', 'pressure-soft', 'pressure'],
+			approval: ['review', 'review-soft', 'review'],
+			success: ['ready', 'ready-soft', 'ready'],
+			warning: ['gold', 'gold-soft', 'gold'],
+			failure: ['stop', 'stop-soft', 'stop']
+		} as const;
+
+		for (const [state, [text, background, border]] of Object.entries(expectedRoles)) {
+			expect(declarations[`--color-performance-work-${state}-text`]).toBe(
+				`var(--color-performance-${text})`
+			);
+			expect(declarations[`--color-performance-work-${state}-background`]).toBe(
+				`var(--color-performance-${background})`
+			);
+			expect(declarations[`--color-performance-work-${state}-border`]).toBe(
+				`var(--color-performance-${border})`
+			);
+		}
+	});
+
 	it('prevents first-party Canon and property source from consuming legacy design tokens', () => {
 		const canonRoot = fileURLToPath(new URL('../..', import.meta.url));
 		const repoRoot = fileURLToPath(new URL('../../../../..', import.meta.url));

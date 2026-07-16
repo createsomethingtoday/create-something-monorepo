@@ -2,8 +2,11 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  eventWorkState,
   mergeWorkspaceEvents,
   pendingWorkspaceApprovals,
+  previewWorkState,
+  sessionWorkState,
   type BrowserWorkspaceEvent
 } from '../src/lib/client/workspace-view.js';
 
@@ -42,4 +45,22 @@ test('browser event model exposes only unresolved approvals', () => {
     pendingWorkspaceApprovals(events).map((item) => item.approvalId),
     ['approval-b']
   );
+});
+
+test('browser view maps agent, tool, approval, preview, and outcome states to Canon roles', () => {
+  assert.equal(sessionWorkState('opening', false), 'planning');
+  assert.equal(sessionWorkState('running', false), 'running');
+  assert.equal(sessionWorkState('running', true), 'approval');
+  assert.equal(sessionWorkState('completed', false), 'success');
+  assert.equal(sessionWorkState('failed', false), 'failure');
+
+  assert.equal(previewWorkState('starting'), 'planning');
+  assert.equal(previewWorkState('ready'), 'success');
+  assert.equal(previewWorkState('blocked'), 'warning');
+  assert.equal(previewWorkState('crashed'), 'failure');
+
+  assert.equal(eventWorkState({ ...event(4, 'command.started'), status: 'running' }), 'running');
+  assert.equal(eventWorkState(event(5, 'approval.requested', 'approval-c')), 'approval');
+  assert.equal(eventWorkState({ ...event(6, 'turn.completed'), status: 'completed' }), 'success');
+  assert.equal(eventWorkState({ ...event(7, 'runtime.error'), status: 'failed' }), 'failure');
 });
