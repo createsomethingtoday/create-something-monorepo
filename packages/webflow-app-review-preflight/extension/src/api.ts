@@ -36,6 +36,11 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const response = await fetch(`${apiBase()}${path}`, { ...init, headers });
   const body = (await response.json()) as T & { message?: string; error?: string };
   if (!response.ok) {
+    if (path.includes('/observation-runs') && response.status === 404 && body.error === 'not_found') {
+      throw new Error(
+        'The live preflight service is out of date. Ask a reviewer to deploy the runtime-run update, then try again.'
+      );
+    }
     throw new Error(body.message ?? 'The preflight service could not complete that step.');
   }
   return body;
