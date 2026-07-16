@@ -24682,7 +24682,7 @@
     const [showNewPackage, setShowNewPackage] = (0, import_react.useState)(false);
     const cardRef = (0, import_react.useRef)(null);
     const trustLabel = latest?.observation?.trust === "webflow_observed" ? "Webflow observed" : latest ? "Partner supplied" : "Not prepared";
-    const canRequestRun = !latest?.observation || latest.observation.status === "failed" || latest.observation.status === "expired" || latest.observation.status === "revoked";
+    const canRequestRun = !latest?.observation || latest.observation.status === "complete" || latest.observation.status === "failed" || latest.observation.status === "expired" || latest.observation.status === "revoked";
     (0, import_react.useEffect)(() => {
       setShowNewPackage(false);
     }, [latest?.id]);

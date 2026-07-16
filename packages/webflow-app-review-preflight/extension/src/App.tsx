@@ -239,6 +239,7 @@ function RuntimeObservationCard({
       : 'Not prepared';
   const canRequestRun =
     !latest?.observation ||
+    latest.observation.status === 'complete' ||
     latest.observation.status === 'failed' ||
     latest.observation.status === 'expired' ||
     latest.observation.status === 'revoked';

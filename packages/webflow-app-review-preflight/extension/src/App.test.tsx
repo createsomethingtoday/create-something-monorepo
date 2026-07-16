@@ -378,7 +378,7 @@ describe('App Review Preflight extension', () => {
     const listRuntimeTestPackages = vi
       .fn<PreflightApi['listRuntimeTestPackages']>()
       .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([completed]);
+      .mockResolvedValue([completed]);
     const createRuntimeTestPackage = vi.fn(async () => prepared);
     const requestRuntimeObservationRun = vi
       .fn<PreflightApi['requestRuntimeObservationRun']>()
@@ -465,6 +465,11 @@ describe('App Review Preflight extension', () => {
     expect(screen.getByText('Runtime security blocked')).toBeVisible();
     expect(screen.getByText('Proxy canary blocked')).toBeVisible();
     expect(screen.getByText('What the evidence labels mean')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Run test again' }));
+    await waitFor(() => {
+      expect(requestRuntimeObservationRun).toHaveBeenCalledTimes(3);
+      expect(requestRuntimeObservationRun).toHaveBeenLastCalledWith(prepared.id);
+    });
     expect(screen.getByRole('button', { name: 'Prepare another test package' })).toBeVisible();
     expect(screen.queryByText('Share')).not.toBeInTheDocument();
   });
