@@ -33,6 +33,9 @@ test('identity worker serves oauth authorization server metadata', async () => {
 		'canva-client:read',
 		'canva-client:write',
 		'canva-client:admin',
+		'notion-client:read',
+		'notion-client:write',
+		'notion-client:admin',
   ]);
 });
 
@@ -91,6 +94,24 @@ test('Canva Client Operator authorize page describes the resource-bound applicat
   assert.match(text, /Application MCP Access/);
   assert.match(text, new RegExp(`Resource: ${resource.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`));
   assert.match(text, /Scopes: openid profile email mcp canva-client:read canva-client:write canva-client:admin/);
+  assert.doesNotMatch(text, /managed MCP bearer token/);
+  assert.doesNotMatch(text, /Hub:/);
+});
+
+test('Notion Client Operator authorize page describes the resource-bound application grant', async () => {
+  const resource = 'https://notion-client-operator-mcp.createsomething.workers.dev/mcp';
+  const response = await identityWorker.fetch(
+    new Request(
+      `https://id.createsomething.space/oauth/authorize?response_type=code&client_id=claude-code&redirect_uri=${encodeURIComponent('http://127.0.0.1:65221/callback')}&scope=${encodeURIComponent('openid profile email mcp notion-client:read notion-client:write notion-client:admin')}&resource=${encodeURIComponent(resource)}`,
+    ),
+    makeEnv(),
+  );
+
+  assert.equal(response.status, 200);
+  const text = await response.text();
+  assert.match(text, /Application MCP Access/);
+  assert.match(text, new RegExp(`Resource: ${resource.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`));
+  assert.match(text, /Scopes: openid profile email mcp notion-client:read notion-client:write notion-client:admin/);
   assert.doesNotMatch(text, /managed MCP bearer token/);
   assert.doesNotMatch(text, /Hub:/);
 });

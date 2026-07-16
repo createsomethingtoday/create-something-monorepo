@@ -1,0 +1,30 @@
+{
+  "name": "@create-something/notion-client-operator-mcp",
+  "version": "0.1.0",
+  "description": "Claude-authenticated MCP for operator-managed, client-authorized Notion access through Composio.",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test test/*.test.ts",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "dry-run": "wrangler deploy --dry-run"
+  },
+  "dependencies": {
+    "@create-something/composio-bridge": "workspace:*",
+    "@create-something/mcp-core": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.25.3",
+    "zod": "^3.25.34"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250730.0",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.7.0",
+    "wrangler": "^4.24.3"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}

@@ -839,6 +839,9 @@ const OAUTH_SUPPORTED_SCOPES = [
 	'canva-client:read',
 	'canva-client:write',
 	'canva-client:admin',
+	'notion-client:read',
+	'notion-client:write',
+	'notion-client:admin',
 ];
 const MIN_MCP_LEGACY_KEY_TTL_SECONDS = 3600;
 const DEFAULT_MCP_LEGACY_KEY_TTL_SECONDS = 7 * 24 * 60 * 60;
@@ -863,6 +866,14 @@ const OAUTH_APPLICATION_ACCESS_POLICIES = new Map<string, {
 		{
 			applicationId: 'canva-client-operator-mcp',
 			resource: 'https://canva-client-operator-mcp.createsomething.workers.dev/mcp',
+			expiresIn: OAUTH_APPLICATION_ACCESS_TOKEN_EXPIRES_IN,
+		},
+	],
+	[
+		'https://notion-client-operator-mcp.createsomething.workers.dev/mcp',
+		{
+			applicationId: 'notion-client-operator-mcp',
+			resource: 'https://notion-client-operator-mcp.createsomething.workers.dev/mcp',
 			expiresIn: OAUTH_APPLICATION_ACCESS_TOKEN_EXPIRES_IN,
 		},
 	],
