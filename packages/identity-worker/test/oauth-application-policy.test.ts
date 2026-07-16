@@ -31,6 +31,18 @@ test('Canva Client Operator OAuth uses an explicit resource-bound application po
 	});
 });
 
+test('Notion Client Operator OAuth uses an explicit resource-bound application policy', () => {
+	const policy = resolveOAuthApplicationAccessPolicy(
+		'https://notion-client-operator-mcp.createsomething.workers.dev/mcp'
+	);
+
+	assert.deepEqual(policy, {
+		applicationId: 'notion-client-operator-mcp',
+		resource: 'https://notion-client-operator-mcp.createsomething.workers.dev/mcp',
+		expiresIn: 3600,
+	});
+});
+
 test('unknown OAuth resources do not bypass managed bearer governance', () => {
 	assert.equal(resolveOAuthApplicationAccessPolicy('https://unknown.example/mcp'), null);
 });

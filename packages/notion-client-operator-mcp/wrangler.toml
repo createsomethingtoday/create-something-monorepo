@@ -1,0 +1,23 @@
+name = "notion-client-operator-mcp"
+main = "worker/index.ts"
+compatibility_date = "2026-07-16"
+compatibility_flags = ["nodejs_compat"]
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+
+[observability]
+enabled = true
+
+[vars]
+CS_IDENTITY_ISSUER = "https://id.createsomething.space"
+OAUTH_ALLOWED_EMAIL_DOMAIN = "createsomething.io"
+OAUTH_ALLOWED_EMAILS = "micah@createsomething.io,dm@halfdozen.co,fillip@halfdozen.co"
+COMPOSIO_NOTION_AUTH_CONFIG_ID = "ac_qQS-vg3uf2xi"
+COMPOSIO_CLIENT_USER_ID = "client:75824b0f-02d0-40b8-8e22-a1fb89ec6690:notion"
+
+[[durable_objects.bindings]]
+name = "NOTION_BINDING"
+class_name = "NotionClientBindingObject"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["NotionClientBindingObject"]
