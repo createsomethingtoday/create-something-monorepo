@@ -72,6 +72,20 @@ Use proposal-handoff to export a Codex-ready markdown packet from the reviewed
 proposal. The handoff separates approved implementation candidates from pending
 and rejected actions and repeats the production safety boundary.
 
+For a client-facing projection of an existing mapping session, use the read-only
+Map-to-Build handoff:
+
+```bash
+pnpm atlas:desktop:studio client-handoff --session <session-id>
+```
+
+The browser portal exposes the same artifact at
+`/api/sessions/<session-id>/client-handoff.md`. It projects the internal Atlas
+session into public `Map -> Build -> Control` language, separates mapped facts,
+Build candidates, Control boundaries, proof, and open questions, and never
+approves or applies production changes. The existing `export` command remains
+the internal Atlas operator export.
+
 Both MCP tools and CLI commands use the same app-data store:
 
 ```text

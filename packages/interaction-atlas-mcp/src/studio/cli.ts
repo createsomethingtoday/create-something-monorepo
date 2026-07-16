@@ -7,6 +7,7 @@ import {
   addObservation,
   attachGovernanceRecord,
   createSession,
+  exportClientHandoffMarkdown,
   exportSessionMarkdown,
   getSessionPath,
   listSessions,
@@ -79,6 +80,7 @@ Usage:
   pnpm atlas:studio propose --session SESSION_ID [--profile template-system]
   pnpm atlas:studio proposal-action --session SESSION_ID --proposal PROPOSAL_ID --action ACTION_ID --status approved|rejected|proposed [--note "..."]
   pnpm atlas:studio proposal-handoff --session SESSION_ID [--proposal PROPOSAL_ID]
+  pnpm atlas:studio client-handoff --session SESSION_ID
   pnpm atlas:studio export --session SESSION_ID
   pnpm atlas:studio list
 `);
@@ -295,6 +297,12 @@ async function main(): Promise<void> {
     case 'export': {
       const session = await readSession(required(parsed.flags, 'session'));
       process.stdout.write(exportSessionMarkdown(session));
+      return;
+    }
+
+    case 'client-handoff': {
+      const session = await readSession(required(parsed.flags, 'session'));
+      process.stdout.write(exportClientHandoffMarkdown(session));
       return;
     }
 
