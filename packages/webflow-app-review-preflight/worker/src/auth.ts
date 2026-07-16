@@ -13,6 +13,19 @@ function bearerToken(request: Request): string | null {
   return token || null;
 }
 
+function cookieToken(request: Request, name: string): string | null {
+  const cookie = request.headers.get('cookie');
+  if (!cookie) return null;
+  for (const item of cookie.split(';')) {
+    const [key, ...parts] = item.trim().split('=');
+    if (key === name) {
+      const value = parts.join('=').trim();
+      return value || null;
+    }
+  }
+  return null;
+}
+
 export async function authenticate(
   request: Request,
   env: Env
@@ -73,7 +86,7 @@ export async function authenticateCompanion(
   const webflowUser = await authenticate(request, env);
   if (webflowUser) return webflowUser;
 
-  const token = bearerToken(request);
+  const token = bearerToken(request) ?? cookieToken(request, 'app_review_reviewer_session');
   if (!token) return null;
   const now = new Date().toISOString();
   const session = await env.DB.prepare(

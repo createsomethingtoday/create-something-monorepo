@@ -7,6 +7,7 @@ import type {
   ReviewSummary,
   RuntimeTestPackageInput,
   RuntimeTestPackageView,
+  ReviewerHandoff,
   StoredReview
 } from './types';
 
@@ -266,7 +267,7 @@ function RuntimeObservationCard({
       sandboxOwnershipConfirmed: true,
       license: {
         mode: 'installation_allowlist',
-        expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString()
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
       },
       runtimeArtifacts: [
         { url: artifactUrl, sha256: artifactSha256, integrity }
@@ -478,7 +479,7 @@ function RuntimeObservationCard({
             <h2 id={dialogTitle}>Confirm dedicated test access</h2>
             <p>
               Confirm this is a Webflow-controlled test installation with no customer data,
-              and that its license is allowlisted for the next hour. Webflow—not this browser—will run the test.
+              and that its license is allowlisted for the next 24 hours. Webflow—not this browser—will run the test.
             </p>
             <ul>
               <li>Runtime bytes are pinned to this bundle version</li>
@@ -513,6 +514,9 @@ function ReviewDetail({
   onPrepareRuntimePackage,
   onRunRuntimeObservation,
   onRefreshRuntimePackages,
+  reviewerHandoff,
+  reviewerMode,
+  onCreateReviewerHandoff,
   onBack
 }: {
   review: StoredReview;
@@ -523,6 +527,9 @@ function ReviewDetail({
   onPrepareRuntimePackage: (input: RuntimeTestPackageInput) => void;
   onRunRuntimeObservation: (testPackageId: string) => void;
   onRefreshRuntimePackages: () => void;
+  reviewerHandoff: ReviewerHandoff | null;
+  reviewerMode: boolean;
+  onCreateReviewerHandoff: (testPackageId: string) => void;
   onBack: () => void;
 }) {
   const result = review.latestVersion.result;
@@ -576,6 +583,34 @@ function ReviewDetail({
         onRefresh={onRefreshRuntimePackages}
       />
 
+      {reviewerMode && runtimeTestPackages[0]?.status === 'ready' ? (
+        <section className="revision-card">
+          <div>
+            <span className="eyebrow">Reviewer workspace</span>
+            <h2>Inspect and replay this exact package</h2>
+            <p>Open the server-owned review surface to compare prior observations and request an independent runtime replay.</p>
+          </div>
+          {reviewerHandoff ? (
+            <a
+              className="button button-primary"
+              href={reviewerHandoff.url}
+              target="_blank"
+              rel="noreferrer noopener"
+            >
+              Open reviewer workspace
+            </a>
+          ) : (
+            <button
+              className="button button-primary"
+              disabled={busy}
+              onClick={() => onCreateReviewerHandoff(runtimeTestPackages[0]!.id)}
+            >
+              {busy ? 'Preparing…' : 'Create reviewer workspace'}
+            </button>
+          )}
+        </section>
+      ) : null}
+
       <section className="revision-card">
         <div>
           <span className="eyebrow">Next move</span>
@@ -610,6 +645,7 @@ export function App({ api }: { api: PreflightApi }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [identity, setIdentity] = useState<PreflightIdentity | null>(null);
+  const [reviewerHandoff, setReviewerHandoff] = useState<ReviewerHandoff | null>(null);
 
   const refreshHistory = async () => {
     const items = await api.listReviews();
@@ -674,16 +710,20 @@ export function App({ api }: { api: PreflightApi }) {
           comparison={comparison}
           runtimeTestPackages={runtimeTestPackages}
           busy={busy}
+          reviewerMode={identity?.companionRole === 'reviewer'}
+          reviewerHandoff={reviewerHandoff}
           onBack={() => {
             setReview(null);
             setComparison(null);
             setRuntimeTestPackages([]);
+            setReviewerHandoff(null);
             rememberReview(null);
           }}
           onRevision={(file) => run(async () => {
             const revised = await api.addRevision(review.id, file);
             setReview(revised.review);
             setComparison(revised.comparison);
+            setReviewerHandoff(null);
             await refreshRuntimePackages(review.id);
             await refreshHistory();
           })}
@@ -697,6 +737,14 @@ export function App({ api }: { api: PreflightApi }) {
           })}
           onRefreshRuntimePackages={() => run(async () => {
             await refreshRuntimePackages(review.id);
+          })}
+          onCreateReviewerHandoff={(testPackageId) => run(async () => {
+            const handoff = await api.createReviewerHandoff(
+              review.id,
+              review.latestVersion.id,
+              testPackageId
+            );
+            setReviewerHandoff(handoff);
           })}
         />
       ) : (
@@ -721,6 +769,7 @@ export function App({ api }: { api: PreflightApi }) {
               setReview(created);
               setComparison(null);
               setRuntimeTestPackages([]);
+              setReviewerHandoff(null);
               rememberReview(created.id);
               await refreshHistory();
             })}
@@ -735,6 +784,7 @@ export function App({ api }: { api: PreflightApi }) {
               ]);
               setReview(selectedReview);
               setComparison(null);
+              setReviewerHandoff(null);
               rememberReview(id);
             })}
           />

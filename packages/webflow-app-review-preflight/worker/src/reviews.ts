@@ -371,17 +371,18 @@ export interface ReviewSummary {
 
 export async function listReviews(
   env: Env,
-  user: AuthenticatedUser
+  user: AuthenticatedUser,
+  options: { includeAll?: boolean } = {}
 ): Promise<ReviewSummary[]> {
   const rows = await env.DB.prepare(
     `SELECT r.id, r.name, r.updated_at, v.sequence, v.review_json
        FROM reviews r
        JOIN review_versions v ON v.id = r.latest_version_id
-      WHERE r.owner_user_id = ?
+      WHERE (? = 1 OR r.owner_user_id = ?)
       ORDER BY r.updated_at DESC
       LIMIT 50`
   )
-    .bind(user.id)
+    .bind(options.includeAll ? 1 : 0, user.id)
     .all<{
       id: string;
       name: string;
@@ -407,7 +408,8 @@ export async function listReviews(
 export async function getReview(
   reviewId: string,
   env: Env,
-  user: AuthenticatedUser
+  user: AuthenticatedUser,
+  options: { includeAll?: boolean } = {}
 ): Promise<StoredReview | null> {
   const row = await env.DB.prepare(
     `SELECT r.id, r.name, r.created_at, r.updated_at,
@@ -415,9 +417,9 @@ export async function getReview(
             v.review_json
        FROM reviews r
        JOIN review_versions v ON v.id = r.latest_version_id
-      WHERE r.id = ? AND r.owner_user_id = ?`
+      WHERE r.id = ? AND (? = 1 OR r.owner_user_id = ?)`
   )
-    .bind(reviewId, user.id)
+    .bind(reviewId, options.includeAll ? 1 : 0, user.id)
     .first<StoredReviewRow>();
 
   if (!row) return null;

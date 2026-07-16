@@ -49,6 +49,11 @@ export interface PreflightIdentity {
   companionRole: 'developer' | 'reviewer';
 }
 
+export interface ReviewerHandoff {
+  url: string;
+  expiresAt: string;
+}
+
 export interface PreflightApi {
   getIdentity(): Promise<PreflightIdentity>;
   listReviews(): Promise<ReviewSummary[]>;
@@ -61,4 +66,9 @@ export interface PreflightApi {
     input: RuntimeTestPackageInput
   ): Promise<RuntimeTestPackageView>;
   requestRuntimeObservationRun(testPackageId: string): Promise<RuntimeTestPackageView['observation']>;
+  createReviewerHandoff(
+    reviewId: string,
+    reviewVersionId: string,
+    runtimeTestPackageId: string
+  ): Promise<ReviewerHandoff>;
 }

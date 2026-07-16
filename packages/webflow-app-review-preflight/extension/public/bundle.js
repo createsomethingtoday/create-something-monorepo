@@ -24705,7 +24705,7 @@
         sandboxOwnershipConfirmed: true,
         license: {
           mode: "installation_allowlist",
-          expiresAt: new Date(Date.now() + 60 * 60 * 1e3).toISOString()
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1e3).toISOString()
         },
         runtimeArtifacts: [
           { url: artifactUrl, sha256: artifactSha256, integrity }
@@ -24898,7 +24898,7 @@
       confirm ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "dialog-backdrop", role: "dialog", "aria-modal": "true", "aria-labelledby": dialogTitle, children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "dialog-card", children: [
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "eyebrow", children: "Partner checkpoint" }),
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", { id: dialogTitle, children: "Confirm dedicated test access" }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: "Confirm this is a Webflow-controlled test installation with no customer data, and that its license is allowlisted for the next hour. Webflow\u2014not this browser\u2014will run the test." }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: "Confirm this is a Webflow-controlled test installation with no customer data, and that its license is allowlisted for the next 24 hours. Webflow\u2014not this browser\u2014will run the test." }),
         /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("ul", { children: [
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: "Runtime bytes are pinned to this bundle version" }),
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: "Evidence is captured in a fresh Webflow browser" }),
@@ -24930,6 +24930,9 @@
     onPrepareRuntimePackage,
     onRunRuntimeObservation,
     onRefreshRuntimePackages,
+    reviewerHandoff,
+    reviewerMode,
+    onCreateReviewerHandoff,
     onBack
   }) {
     const result = review.latestVersion.result;
@@ -24986,6 +24989,31 @@
           onRefresh: onRefreshRuntimePackages
         }
       ),
+      reviewerMode && runtimeTestPackages[0]?.status === "ready" ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", { className: "revision-card", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "eyebrow", children: "Reviewer workspace" }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", { children: "Inspect and replay this exact package" }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: "Open the server-owned review surface to compare prior observations and request an independent runtime replay." })
+        ] }),
+        reviewerHandoff ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+          "a",
+          {
+            className: "button button-primary",
+            href: reviewerHandoff.url,
+            target: "_blank",
+            rel: "noreferrer noopener",
+            children: "Open reviewer workspace"
+          }
+        ) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+          "button",
+          {
+            className: "button button-primary",
+            disabled: busy,
+            onClick: () => onCreateReviewerHandoff(runtimeTestPackages[0].id),
+            children: busy ? "Preparing\u2026" : "Create reviewer workspace"
+          }
+        )
+      ] }) : null,
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", { className: "revision-card", children: [
         /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "eyebrow", children: "Next move" }),
@@ -25019,6 +25047,7 @@
     const [busy, setBusy] = (0, import_react.useState)(false);
     const [error, setError] = (0, import_react.useState)(null);
     const [identity, setIdentity] = (0, import_react.useState)(null);
+    const [reviewerHandoff, setReviewerHandoff] = (0, import_react.useState)(null);
     const refreshHistory = async () => {
       const items = await api.listReviews();
       setHistory(items);
@@ -25076,16 +25105,20 @@
           comparison,
           runtimeTestPackages,
           busy,
+          reviewerMode: identity?.companionRole === "reviewer",
+          reviewerHandoff,
           onBack: () => {
             setReview(null);
             setComparison(null);
             setRuntimeTestPackages([]);
+            setReviewerHandoff(null);
             rememberReview(null);
           },
           onRevision: (file) => run(async () => {
             const revised = await api.addRevision(review.id, file);
             setReview(revised.review);
             setComparison(revised.comparison);
+            setReviewerHandoff(null);
             await refreshRuntimePackages(review.id);
             await refreshHistory();
           }),
@@ -25099,6 +25132,14 @@
           }),
           onRefreshRuntimePackages: () => run(async () => {
             await refreshRuntimePackages(review.id);
+          }),
+          onCreateReviewerHandoff: (testPackageId) => run(async () => {
+            const handoff = await api.createReviewerHandoff(
+              review.id,
+              review.latestVersion.id,
+              testPackageId
+            );
+            setReviewerHandoff(handoff);
           })
         }
       ) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("main", { className: "start-view", children: [
@@ -25122,6 +25163,7 @@
               setReview(created);
               setComparison(null);
               setRuntimeTestPackages([]);
+              setReviewerHandoff(null);
               rememberReview(created.id);
               await refreshHistory();
             })
@@ -25139,6 +25181,7 @@
               ]);
               setReview(selectedReview);
               setComparison(null);
+              setReviewerHandoff(null);
               rememberReview(id);
             })
           }
@@ -25173,6 +25216,16 @@
     const response = await fetch(`${apiBase()}${path}`, { ...init, headers });
     const body = await response.json();
     if (!response.ok) {
+      if (path.includes("/observation-runs") && response.status === 404 && body.error === "not_found") {
+        throw new Error(
+          "The live preflight service is out of date. Ask a reviewer to deploy the runtime-run update, then try again."
+        );
+      }
+      if (path.includes("/observation-runs") && body.error === "runtime_observation_approval_required") {
+        throw new Error(
+          body.message ?? "This test package has expired. Prepare a fresh package, then run the test again."
+        );
+      }
       throw new Error(body.message ?? "The preflight service could not complete that step.");
     }
     return body;
@@ -25228,6 +25281,17 @@
           method: "POST"
         });
         return body.observationJob;
+      },
+      async createReviewerHandoff(reviewId, reviewVersionId, runtimeTestPackageId) {
+        const body = await request(
+          `/v1/reviews/${reviewId}/reviewer-handoffs`,
+          {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ reviewVersionId, runtimeTestPackageId })
+          }
+        );
+        return body.handoff;
       }
     };
   }

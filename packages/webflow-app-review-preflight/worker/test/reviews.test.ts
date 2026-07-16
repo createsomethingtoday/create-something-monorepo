@@ -1594,6 +1594,135 @@ describe('review API', () => {
     }
   });
 
+  test('reports an expired test package as an actionable precondition failure', async () => {
+    const reviewForm = new FormData();
+    reviewForm.set(
+      'bundle',
+      new File([await createBundle()], 'expired-runtime.zip', { type: 'application/zip' })
+    );
+    const reviewResponse = await exports.default.fetch(
+      new Request('https://preflight.test/v1/reviews', {
+        method: 'POST',
+        headers: { authorization: 'Bearer test-token', origin: 'http://localhost:1337' },
+        body: reviewForm
+      })
+    );
+    const review = await reviewResponse.json<{ review: { id: string } }>();
+    const testPackageId = await createReadyRuntimePackage(review.review.id);
+    await env.DB.prepare(
+      "UPDATE runtime_test_packages SET license_expires_at = '2000-01-01T00:00:00.000Z' WHERE id = ?"
+    )
+      .bind(testPackageId)
+      .run();
+
+    const response = await exports.default.fetch(
+      new Request(
+        `https://preflight.test/v1/runtime-test-packages/${testPackageId}/observation-runs`,
+        {
+          method: 'POST',
+          headers: { authorization: 'Bearer test-token', origin: 'http://localhost:1337' }
+        }
+      )
+    );
+
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toMatchObject({
+      error: 'runtime_observation_approval_required',
+      message: 'The runtime test package is expired or no longer available.'
+    });
+  });
+
+  test('lets an authenticated reviewer open the web workspace and request an independent replay', async () => {
+    const reviewForm = new FormData();
+    reviewForm.set(
+      'bundle',
+      new File([await createBundle()], 'reviewer-runtime.zip', { type: 'application/zip' })
+    );
+    const reviewResponse = await exports.default.fetch(
+      new Request('https://preflight.test/v1/reviews', {
+        method: 'POST',
+        headers: { authorization: 'Bearer test-token', origin: 'http://localhost:1337' },
+        body: reviewForm
+      })
+    );
+    const review = await reviewResponse.json<{
+      review: { id: string; latestVersion: { id: string } };
+    }>();
+    const testPackageId = await createReadyRuntimePackage(review.review.id);
+
+    const handoffResponse = await exports.default.fetch(
+      new Request(
+        `https://preflight.test/v1/reviews/${review.review.id}/reviewer-handoffs`,
+        {
+          method: 'POST',
+          headers: {
+            authorization: 'Bearer reviewer-test-token',
+            origin: 'http://localhost:1337',
+            'content-type': 'application/json'
+          },
+          body: JSON.stringify({
+            reviewVersionId: review.review.latestVersion.id,
+            runtimeTestPackageId: testPackageId
+          })
+        }
+      )
+    );
+    expect(handoffResponse.status).toBe(201);
+    const handoff = await handoffResponse.json<{ handoff: { url: string } }>();
+    expect(handoff.handoff.url).toMatch(/^https:\/\/preflight\.test\/reviewer\/connect\?code=/);
+
+    const connectResponse = await exports.default.fetch(
+      new Request(handoff.handoff.url, { redirect: 'manual' })
+    );
+    expect(connectResponse.status).toBe(303);
+    expect(connectResponse.headers.get('location')).toBe('/reviewer');
+    const sessionCookie = connectResponse.headers.get('set-cookie');
+    expect(sessionCookie).toContain('app_review_reviewer_session=');
+    expect(sessionCookie).toContain('HttpOnly');
+    expect(sessionCookie).toContain('SameSite=Strict');
+
+    const workspaceResponse = await exports.default.fetch(
+      new Request('https://preflight.test/reviewer', {
+        headers: { cookie: sessionCookie!.split(';')[0]! }
+      })
+    );
+    expect(workspaceResponse.status).toBe(200);
+    expect(workspaceResponse.headers.get('content-type')).toContain('text/html');
+    const workspaceHtml = await workspaceResponse.text();
+    expect(workspaceHtml).toContain('Reviewer workspace');
+    expect(workspaceHtml).toContain('Run independent replay');
+    expect(workspaceHtml).toContain(testPackageId);
+
+    let dispatched: { body: unknown } | null = null;
+    vi.stubGlobal('fetch', vi.fn(async (request: Request) => {
+      dispatched = { body: await request.json() };
+      return new Response(null, { status: 202 });
+    }));
+    try {
+      const replayResponse = await exports.default.fetch(
+        new Request(
+          `https://preflight.test/reviewer/runtime-test-packages/${testPackageId}/replay`,
+          {
+            method: 'POST',
+            redirect: 'manual',
+            headers: { cookie: sessionCookie!.split(';')[0]! }
+          }
+        )
+      );
+      expect(replayResponse.status).toBe(303);
+      expect(replayResponse.headers.get('location')).toMatch(/^\/reviewer\?started=/);
+      expect(dispatched).toEqual({
+        body: {
+          observationJobId: expect.any(String),
+          apiBaseUrl: 'https://preflight.test',
+          capability: expect.any(String)
+        }
+      });
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   test('fails closed until a developer explicitly approves a bounded runtime job', async () => {
     const form = new FormData();
     form.set(

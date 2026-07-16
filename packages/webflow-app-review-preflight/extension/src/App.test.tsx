@@ -20,7 +20,8 @@ const api: PreflightApi = {
   addRevision: async () => Promise.reject(new Error('not used')),
   listRuntimeTestPackages: async () => [],
   createRuntimeTestPackage: async () => Promise.reject(new Error('not used')),
-  requestRuntimeObservationRun: async () => Promise.reject(new Error('not used'))
+  requestRuntimeObservationRun: async () => Promise.reject(new Error('not used')),
+  createReviewerHandoff: async () => Promise.reject(new Error('not used'))
 };
 
 function consentProReview(sequence = 1): StoredReview {
@@ -168,6 +169,78 @@ describe('App Review Preflight extension', () => {
     expect(screen.getByText('Upload revision')).toBeVisible();
     expect(screen.queryByText('Share')).not.toBeInTheDocument();
     expect(uploadApi.createReview).toHaveBeenCalledWith(file);
+  });
+
+  test('gives reviewers a one-time handoff into the server-owned workspace', async () => {
+    const review = consentProReview();
+    const testPackage = {
+      schemaVersion: 'runtime_test_package.v1' as const,
+      id: 'reviewer-package-1',
+      reviewId: review.id,
+      reviewVersionId: review.latestVersion.id,
+      bundleSha256: review.latestVersion.result.artifact.sha256,
+      status: 'ready' as const,
+      trust: 'partner_supplied' as const,
+      target: {
+        url: 'https://app-review-sandbox.webflow.io/',
+        host: 'app-review-sandbox.webflow.io'
+      },
+      sandboxInstallationId: 'webflow-sandbox-site-123',
+      license: {
+        mode: 'installation_allowlist' as const,
+        expiresAt: '2026-07-16T00:00:00.000Z'
+      },
+      runtimeArtifacts: [{
+        url: 'https://api.consentpro.com/v2/cdn/runtime-v1.js',
+        sha256: 'a'.repeat(64),
+        integrity: 'sha256-runtime-v1'
+      }],
+      negativeProxyProbe: {
+        method: 'GET' as const,
+        urlTemplate: 'https://api.consentpro.com/v2/proxy?url={canaryUrl}'
+      },
+      lifecycle: { readySelector: '[data-runtime-ready]' },
+      evidence: null,
+      createdAt: '2026-07-15T23:00:00.000Z',
+      observation: null
+    };
+    const createReviewerHandoff = vi.fn(async () => ({
+      url: 'https://preflight.test/reviewer/connect?code=one-time-code',
+      expiresAt: '2026-07-15T23:05:00.000Z'
+    }));
+    const reviewerApi: PreflightApi = {
+      ...api,
+      getIdentity: async () => ({
+        id: 'local-webflow-reviewer',
+        siteId: 'local-review-site',
+        companionRole: 'reviewer'
+      }),
+      listReviews: async () => [{
+        id: review.id,
+        name: review.name,
+        updatedAt: review.updatedAt,
+        latestSequence: 1,
+        readiness: 'changes_required',
+        appName: 'Consent Pro by Finsweet',
+        coverage: review.latestVersion.result.coverage
+      }],
+      getReview: async () => review,
+      listRuntimeTestPackages: async () => [testPackage],
+      createReviewerHandoff
+    };
+
+    render(<App api={reviewerApi} />);
+    fireEvent.click(await screen.findByRole('button', { name: /Consent Pro preflight/i }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Create reviewer workspace' }));
+
+    expect(createReviewerHandoff).toHaveBeenCalledWith(
+      review.id,
+      review.latestVersion.id,
+      testPackage.id
+    );
+    const link = await screen.findByRole('link', { name: 'Open reviewer workspace' });
+    expect(link).toHaveAttribute('href', 'https://preflight.test/reviewer/connect?code=one-time-code');
+    expect(link).toHaveAttribute('target', '_blank');
   });
 
   test('shows revision progress and keeps the review usable after an upload error', async () => {

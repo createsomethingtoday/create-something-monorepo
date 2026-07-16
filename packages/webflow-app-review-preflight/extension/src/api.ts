@@ -5,7 +5,8 @@ import type {
   RuntimeTestPackageView,
   ReviewSummary,
   StoredReview,
-  PreflightIdentity
+  PreflightIdentity,
+  ReviewerHandoff
 } from './types';
 import { PREFLIGHT_API_BASE } from './config';
 
@@ -39,6 +40,11 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     if (path.includes('/observation-runs') && response.status === 404 && body.error === 'not_found') {
       throw new Error(
         'The live preflight service is out of date. Ask a reviewer to deploy the runtime-run update, then try again.'
+      );
+    }
+    if (path.includes('/observation-runs') && body.error === 'runtime_observation_approval_required') {
+      throw new Error(
+        body.message ?? 'This test package has expired. Prepare a fresh package, then run the test again.'
       );
     }
     throw new Error(body.message ?? 'The preflight service could not complete that step.');
@@ -104,6 +110,21 @@ export function createPreflightApi(): PreflightApi {
         method: 'POST'
       });
       return body.observationJob;
+    },
+    async createReviewerHandoff(
+      reviewId: string,
+      reviewVersionId: string,
+      runtimeTestPackageId: string
+    ): Promise<ReviewerHandoff> {
+      const body = await request<{ handoff: ReviewerHandoff }>(
+        `/v1/reviews/${reviewId}/reviewer-handoffs`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ reviewVersionId, runtimeTestPackageId })
+        }
+      );
+      return body.handoff;
     }
   };
 }

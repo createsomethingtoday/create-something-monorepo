@@ -452,12 +452,13 @@ export async function createRuntimeTestPackage(
 export async function listRuntimeTestPackages(
   reviewId: string,
   env: Env,
-  user: AuthenticatedUser
+  user: AuthenticatedUser,
+  options: { includeAll?: boolean } = {}
 ): Promise<RuntimeTestPackageView[] | null> {
   const owned = await env.DB.prepare(
-    'SELECT id FROM reviews WHERE id = ? AND owner_user_id = ?'
+    'SELECT id FROM reviews WHERE id = ? AND (? = 1 OR owner_user_id = ?)'
   )
-    .bind(reviewId, user.id)
+    .bind(reviewId, options.includeAll ? 1 : 0, user.id)
     .first<{ id: string }>();
   if (!owned) return null;
 
@@ -479,10 +480,10 @@ export async function listRuntimeTestPackages(
             ORDER BY nested.created_at DESC
             LIMIT 1
          )
-      WHERE v.review_id = ? AND p.owner_user_id = ?
+      WHERE v.review_id = ? AND (? = 1 OR p.owner_user_id = ?)
       ORDER BY p.created_at DESC`
   )
-    .bind(reviewId, user.id)
+    .bind(reviewId, options.includeAll ? 1 : 0, user.id)
     .all<{
       package_json: string;
       package_status: string;
@@ -1378,15 +1379,19 @@ export async function requestRuntimeObservationRun(
   testPackageId: string,
   request: Request,
   env: Env,
-  user: AuthenticatedUser
+  user: AuthenticatedUser,
+  options: {
+    includeAll?: boolean;
+    eventType?: 'runtime_observation_run_requested' | 'runtime_observation_replay_requested';
+  } = {}
 ): Promise<
   | Omit<StoredRuntimeObservationJob, 'capability' | 'contract'>
   | { notFound: true }
 > {
   const owned = await env.DB.prepare(
-    'SELECT id FROM runtime_test_packages WHERE id = ? AND owner_user_id = ?'
+    'SELECT id FROM runtime_test_packages WHERE id = ? AND (? = 1 OR owner_user_id = ?)'
   )
-    .bind(testPackageId, user.id)
+    .bind(testPackageId, options.includeAll ? 1 : 0, user.id)
     .first<{ id: string }>();
   if (!owned) return { notFound: true };
 
@@ -1425,17 +1430,38 @@ export async function requestRuntimeObservationRun(
     `INSERT INTO review_events
       (id, review_id, review_version_id, actor_user_id, event_type,
        payload_json, created_at)
-     VALUES (?, ?, ?, ?, 'runtime_observation_run_requested', ?, ?)`
+     VALUES (?, ?, ?, ?, ?, ?, ?)`
   )
     .bind(
       crypto.randomUUID(),
       job.contract.reviewId,
       job.contract.reviewVersionId,
       user.id,
+      options.eventType ?? 'runtime_observation_run_requested',
       JSON.stringify({ observationJobId: job.id, testPackageId }),
       new Date().toISOString()
     )
     .run();
 
   return { id: job.id, status: job.status, approvedAt: job.approvedAt };
+}
+
+export async function requestReviewerRuntimeObservationReplay(
+  testPackageId: string,
+  request: Request,
+  env: Env,
+  user: AuthenticatedUser
+): ReturnType<typeof requestRuntimeObservationRun> {
+  if (
+    user.companionSession?.actorRole !== 'reviewer' ||
+    user.companionSession.runtimeTestPackageId !== testPackageId
+  ) {
+    throw new RuntimeObservationApprovalError(
+      'Only an authenticated reviewer may replay this exact runtime test package.'
+    );
+  }
+  return requestRuntimeObservationRun(testPackageId, request, env, user, {
+    includeAll: true,
+    eventType: 'runtime_observation_replay_requested'
+  });
 }

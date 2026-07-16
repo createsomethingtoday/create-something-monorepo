@@ -50,13 +50,19 @@ import {
   startWebflowOAuth,
   webflowOAuthCompletePage
 } from './webflow-oauth';
+import {
+  connectReviewerWorkspace,
+  replayReviewerRuntimePackage,
+  reviewerWorkspace
+} from './reviewer-web';
 
 async function handle(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const requestOrigin = request.headers.get('origin');
   const origin = allowedOrigin(request, env);
+  const sameOriginRequest = requestOrigin === url.origin;
 
-  if (requestOrigin && !origin) {
+  if (requestOrigin && !origin && !sameOriginRequest) {
     return json({ error: 'origin_not_allowed' }, 403);
   }
   if (request.method === 'OPTIONS') {
@@ -75,6 +81,53 @@ async function handle(request: Request, env: Env): Promise<Response> {
   }
   if (url.pathname === '/v1/oauth/webflow/complete' && request.method === 'GET') {
     return webflowOAuthCompletePage();
+  }
+
+  if (url.pathname === '/reviewer/connect' && request.method === 'GET') {
+    try {
+      return await connectReviewerWorkspace(request, env);
+    } catch (error) {
+      if (error instanceof CompanionPairingInputError) {
+        return json(
+          { error: 'invalid_reviewer_handoff', message: error.message },
+          400,
+          origin
+        );
+      }
+      throw error;
+    }
+  }
+
+  if (url.pathname === '/reviewer' && request.method === 'GET') {
+    const reviewer = await authenticateCompanion(request, env);
+    return reviewer
+      ? reviewerWorkspace(request, env, reviewer)
+      : json({ error: 'unauthorized' }, 401, origin);
+  }
+
+  const reviewerReplayMatch = url.pathname.match(
+    /^\/reviewer\/runtime-test-packages\/([^/]+)\/replay$/
+  );
+  if (reviewerReplayMatch && request.method === 'POST') {
+    const reviewer = await authenticateCompanion(request, env);
+    if (!reviewer) return json({ error: 'unauthorized' }, 401, origin);
+    try {
+      return await replayReviewerRuntimePackage(
+        decodeURIComponent(reviewerReplayMatch[1]!),
+        request,
+        env,
+        reviewer
+      );
+    } catch (error) {
+      if (error instanceof RuntimeObservationDispatchError) {
+        return json(
+          { error: 'runtime_observation_dispatch_unavailable', message: error.message },
+          503,
+          origin
+        );
+      }
+      throw error;
+    }
   }
 
   if (url.pathname === '/v1/companion-pairings/redeem' && request.method === 'POST') {
@@ -115,6 +168,49 @@ async function handle(request: Request, env: Env): Promise<Response> {
       if (error instanceof CompanionPairingInputError) {
         return json(
           { error: 'invalid_companion_pairing', message: error.message },
+          400,
+          origin
+        );
+      }
+      throw error;
+    }
+  }
+
+  const reviewerHandoffMatch = url.pathname.match(
+    /^\/v1\/reviews\/([^/]+)\/reviewer-handoffs$/
+  );
+  if (reviewerHandoffMatch && request.method === 'POST') {
+    const reviewer = await authenticate(request, env);
+    if (!reviewer) return json({ error: 'unauthorized' }, 401, origin);
+    if (companionRoleForUser(reviewer, env) !== 'reviewer') {
+      return json({ error: 'reviewer_required' }, 403, origin);
+    }
+    try {
+      const pairing = await createCompanionPairing(
+        decodeURIComponent(reviewerHandoffMatch[1]!),
+        request,
+        env,
+        reviewer
+      );
+      if (!pairing) {
+        return json({ error: 'review_version_not_found' }, 404, origin);
+      }
+      const handoffUrl = new URL('/reviewer/connect', url.origin);
+      handoffUrl.searchParams.set('code', pairing.code);
+      return json(
+        {
+          handoff: {
+            url: handoffUrl.toString(),
+            expiresAt: pairing.expiresAt
+          }
+        },
+        201,
+        origin
+      );
+    } catch (error) {
+      if (error instanceof CompanionPairingInputError) {
+        return json(
+          { error: 'invalid_reviewer_handoff', message: error.message },
           400,
           origin
         );
@@ -370,12 +466,22 @@ async function handle(request: Request, env: Env): Promise<Response> {
       return json({ review: await createReview(request, env, user) }, 201, origin);
     }
     if (url.pathname === '/v1/reviews' && request.method === 'GET') {
-      return json({ reviews: await listReviews(env, user) }, 200, origin);
+      return json(
+        {
+          reviews: await listReviews(env, user, {
+            includeAll: companionRoleForUser(user, env) === 'reviewer'
+          })
+        },
+        200,
+        origin
+      );
     }
 
     const reviewMatch = url.pathname.match(/^\/v1\/reviews\/([^/]+)$/);
     if (reviewMatch && request.method === 'GET') {
-      const review = await getReview(decodeURIComponent(reviewMatch[1]!), env, user);
+      const review = await getReview(decodeURIComponent(reviewMatch[1]!), env, user, {
+        includeAll: companionRoleForUser(user, env) === 'reviewer'
+      });
       return review
         ? json({ review }, 200, origin)
         : json({ error: 'review_not_found' }, 404, origin);
@@ -416,7 +522,8 @@ async function handle(request: Request, env: Env): Promise<Response> {
       const testPackages = await listRuntimeTestPackages(
         decodeURIComponent(runtimeTestPackageMatch[1]!),
         env,
-        user
+        user,
+        { includeAll: companionRoleForUser(user, env) === 'reviewer' }
       );
       return testPackages
         ? json({ testPackages }, 200, origin)
@@ -464,6 +571,13 @@ async function handle(request: Request, env: Env): Promise<Response> {
       return json(
         { error: 'runtime_observation_dispatch_unavailable', message: error.message },
         503,
+        origin
+      );
+    }
+    if (error instanceof RuntimeObservationApprovalError) {
+      return json(
+        { error: 'runtime_observation_approval_required', message: error.message },
+        403,
         origin
       );
     }
