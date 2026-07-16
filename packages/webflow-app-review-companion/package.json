@@ -1,0 +1,23 @@
+{
+  "name": "@create-something/webflow-app-review-companion",
+  "version": "0.1.0",
+  "description": "Shared developer and reviewer browser companion for Webflow App Review",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "build:production": "COMPANION_BUILD_MODE=production node scripts/build.mjs",
+    "check": "tsc --noEmit",
+    "lint": "pnpm run check",
+    "prepare:production": "pnpm build:production && node scripts/verify-production-build.mjs",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.268",
+    "esbuild": "^0.25.12",
+    "jszip": "^3.10.1",
+    "playwright": "^1.61.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.8"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "Webflow App Review Companion",
+  "version": "0.1.0",
+  "key": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDfduxh3U7rUdWlTWQmr5ZE53t2y6GbE6EsN+uNWkKrCqYZGm1Cv9HPytmo+a5rd7IVvORVQ47g6f9pkZj4O8bzOdumeyg194NrVTRpYCKG/qVeF9S3g+MNSO9jZTiFLyU+4JDJuXSUMechRGUM4I683WdsqjuMamUcQjuvAdhxXQIDAQAB",
+  "description": "Guided, evidence-backed validation for Webflow Marketplace apps.",
+  "action": { "default_title": "Open App Review Companion" },
+  "background": { "service_worker": "background.js", "type": "module" },
+  "side_panel": { "default_path": "sidepanel.html" },
+  "permissions": [
+    "activeTab",
+    "sidePanel",
+    "storage",
+    "scripting",
+    "tabs",
+    "webNavigation",
+    "webRequest"
+  ],
+  "host_permissions": ["http://localhost/*"],
+  "optional_host_permissions": [
+    "https://*.webflow.com/*",
+    "https://*.webflow.io/*",
+    "https://*.webflow-ext.com/*",
+    "https://*/*"
+  ],
+  "externally_connectable": {
+    "matches": [
+      "https://*.webflow-ext.com/*",
+      "http://localhost/*"
+    ]
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'none'; base-uri 'none'"
+  }
+}

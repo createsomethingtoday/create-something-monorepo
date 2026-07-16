@@ -1,0 +1,1 @@
+export const COMPANION_API_BASE = __COMPANION_API_BASE__;

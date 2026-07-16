@@ -1,0 +1,19 @@
+{
+  "name": "App Review Preflight",
+  "apiVersion": "2",
+  "slug": "app-review-preflight",
+  "version": "0.1.0",
+  "manifestVersion": 1,
+  "size": "large",
+  "publicDir": "public",
+  "designer": {
+    "publicDir": "public",
+    "panels": [
+      {
+        "name": "Preflight",
+        "location": "right",
+        "entry": "index.html"
+      }
+    ]
+  }
+}

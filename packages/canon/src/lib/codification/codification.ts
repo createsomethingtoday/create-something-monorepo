@@ -115,6 +115,12 @@ export const CANON_CODIFICATION_EXEMPTIONS: CanonCodificationExemption[] = [
 			'Webflow review UI is tooling for review workflows and browser extension surfaces, not a Canon-consuming property shell.'
 	},
 	{
+		path: 'packages/webflow-app-review-preflight/extension',
+		reason: 'webflow-review-tooling',
+		justification:
+			'App Review Preflight is a Webflow Designer review tool with Webflow-native UI constraints, not a rendered Canon-consuming property shell.'
+	},
+	{
 		path: 'packages/webflow-apps-admin',
 		reason: 'admin-shell-tooling',
 		justification:
