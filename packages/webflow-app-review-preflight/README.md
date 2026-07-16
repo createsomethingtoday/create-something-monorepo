@@ -2,6 +2,8 @@
 
 App Review Preflight is a native Webflow Designer Extension for Marketplace developers. It turns an uploaded app bundle into deterministic, scope-aware feedback, keeps immutable revisions, and supports separately approved production-runtime evidence.
 
+Operators should use the [App Review Preflight Operator Runbook](./OPERATOR_RUNBOOK.md) for the three-run validation loop, state decisions, failure routing, and evidence receipts.
+
 It is a preflight and evidence system. It does not approve or reject an app.
 
 The native Designer Extension is the developer surface for bundle feedback, immutable version history, Runtime Test Package preparation, and trusted-result readback. Reviewers use the web app to inspect submissions across developers and request independent replays. The actual production-runtime browser remains Webflow-controlled in E2B; neither interface can upload observed evidence, promote partner input to `Webflow observed`, or make an official decision.

@@ -122,6 +122,7 @@ Read in this order when you need broad repo context:
 
 ### Runbooks and operational procedures
 
+- [App Review Preflight Operator Runbook](../packages/webflow-app-review-preflight/OPERATOR_RUNBOOK.md)
 - [AUTH0_SUBJECT_REBIND_RUNBOOK.md](./AUTH0_SUBJECT_REBIND_RUNBOOK.md)
 - [CS_HUB_VAULT_ROTATION_WORKFLOW.md](./CS_HUB_VAULT_ROTATION_WORKFLOW.md)
 - [DM_HUB_CLIENT_ONBOARDING.md](./DM_HUB_CLIENT_ONBOARDING.md)
