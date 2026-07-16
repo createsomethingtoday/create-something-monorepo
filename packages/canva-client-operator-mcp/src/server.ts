@@ -117,7 +117,7 @@ function managementTools(composioUserId: string, allowAdmin: boolean): Tool[] {
     {
       name: 'canva_connection_status',
       description:
-        'Check whether the client Canva authorization is unbound, awaiting completion, or locked.',
+        'Check whether the client Canva authorization is unbound, awaiting completion, or locked. Pending status includes the existing shareable Connect URL so operators can recover it without creating a duplicate request.',
       inputSchema: { type: 'object', properties: {}, additionalProperties: false },
       annotations: {
         readOnlyHint: true,

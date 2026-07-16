@@ -34,6 +34,7 @@ class MemoryBindingStore implements CanvaBindingStore {
       operatorSubject: input.operatorSubject,
       createdAt: input.now,
       connectionRequestId: null,
+      redirectUrl: null,
     };
     return this.record;
   }
@@ -41,10 +42,15 @@ class MemoryBindingStore implements CanvaBindingStore {
   async attachConnectionRequest(input: {
     reservationId: string;
     connectionRequestId: string;
+    redirectUrl: string;
   }): Promise<CanvaBindingRecord> {
     assert.equal(this.record?.status, 'pending');
     assert.equal(this.record.reservationId, input.reservationId);
-    this.record = { ...this.record, connectionRequestId: input.connectionRequestId };
+    this.record = {
+      ...this.record,
+      connectionRequestId: input.connectionRequestId,
+      redirectUrl: input.redirectUrl,
+    };
     return this.record;
   }
 
@@ -365,6 +371,14 @@ test('MCP admin reset clears a stale pending request through the Claude-facing t
 
   try {
     await client.callTool({ name: 'canva_create_connect_link', arguments: {} });
+    const pendingStatus = await client.callTool({
+      name: 'canva_connection_status',
+      arguments: {},
+    });
+    assert.equal(
+      (pendingStatus.structuredContent as { redirectUrl?: string } | undefined)?.redirectUrl,
+      'https://connect.composio.dev/link/ln_client_canva',
+    );
     const reset = await client.callTool({
       name: 'canva_reset_connection',
       arguments: { confirmation: 'RESET client:acme:canva' },

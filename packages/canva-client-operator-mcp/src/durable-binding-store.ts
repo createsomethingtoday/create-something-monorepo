@@ -27,6 +27,7 @@ export class DurableCanvaBindingStore implements CanvaBindingStore {
   attachConnectionRequest(input: {
     reservationId: string;
     connectionRequestId: string;
+    redirectUrl: string;
   }): Promise<CanvaBindingRecord> {
     return this.post<CanvaBindingRecord>('/attach', input);
   }
@@ -96,6 +97,7 @@ export class CanvaClientBindingObject {
           operatorSubject: requiredString(body, 'operatorSubject'),
           createdAt: requiredString(body, 'now'),
           connectionRequestId: null,
+          redirectUrl: null,
         };
         await this.state.storage.put('binding', record);
         return Response.json(record);
@@ -112,6 +114,7 @@ export class CanvaClientBindingObject {
         const record: CanvaBindingRecord = {
           ...existing,
           connectionRequestId: requiredString(body, 'connectionRequestId'),
+          redirectUrl: requiredString(body, 'redirectUrl'),
         };
         await this.state.storage.put('binding', record);
         return Response.json(record);

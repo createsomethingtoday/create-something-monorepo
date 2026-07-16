@@ -4,6 +4,7 @@ export type PendingCanvaBinding = {
   operatorSubject: string;
   createdAt: string;
   connectionRequestId: string | null;
+  redirectUrl: string | null;
 };
 
 export type LockedCanvaBinding = Omit<PendingCanvaBinding, 'status'> & {
@@ -24,6 +25,7 @@ export interface CanvaBindingStore {
   attachConnectionRequest(input: {
     reservationId: string;
     connectionRequestId: string;
+    redirectUrl: string;
   }): Promise<CanvaBindingRecord>;
   lock(input: {
     reservationId: string;
@@ -67,6 +69,7 @@ export type CanvaConnectionStatus =
       status: 'pending';
       connectedAccountId: null;
       connectionRequestId: string | null;
+      redirectUrl: string | null;
       createdAt: string;
     }
   | {
@@ -134,6 +137,7 @@ export class CanvaClientBindingService {
       await this.store.attachConnectionRequest({
         reservationId,
         connectionRequestId: request.connectionRequestId,
+        redirectUrl: request.redirectUrl,
       });
       return {
         status: 'pending',
@@ -160,6 +164,7 @@ export class CanvaClientBindingService {
       status: 'pending',
       connectedAccountId: null,
       connectionRequestId: binding.connectionRequestId,
+      redirectUrl: binding.redirectUrl ?? null,
       createdAt: binding.createdAt,
     };
   }

@@ -32,7 +32,7 @@ These are independent authentication layers. Clearing Claude's MCP login does no
 5. The next status or Canva-tool call observes the active Composio connection and atomically locks its `connectedAccountId`.
 6. Every `client_canva_*` call supplies that exact account ID to Composio. No ambient/default account selection is allowed.
 
-While a link is pending, another link cannot be created until the client completes it or an operator resets it. While an account is locked, another link cannot be created until an operator resets it.
+While a link is pending, another link cannot be created until the client completes it or an operator resets it. `canva_connection_status` returns the existing pending `redirectUrl`, allowing any authenticated operator to recover and share that link from a new Claude session. While an account is locked, another link cannot be created until an operator resets it.
 
 ## Reset and client account change
 

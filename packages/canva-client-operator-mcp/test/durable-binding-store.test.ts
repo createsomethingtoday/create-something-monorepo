@@ -28,6 +28,7 @@ test('Durable Object atomically audits and clears a pending reset', async () => 
   assert.equal((await post('/attach', {
     reservationId: 'reservation_1',
     connectionRequestId: 'ca_stale_pending',
+    redirectUrl: 'https://connect.composio.dev/link/ln_stale_pending',
   })).status, 200);
   assert.equal((await post('/reset-pending', {
     expectedReservationId: 'reservation_1',
