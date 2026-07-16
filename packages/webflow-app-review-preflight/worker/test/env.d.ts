@@ -6,8 +6,8 @@ declare module 'cloudflare:workers' {
     ALLOWED_ORIGINS: string;
     PREFLIGHT_DEV_TOKEN: string;
     E2B_COORDINATOR_TOKEN: string;
-    RUNTIME_OBSERVATION_DISPATCH_URL: string;
-    RUNTIME_OBSERVATION_DISPATCH_TOKEN: string;
+    E2B_API_KEY: string;
+    E2B_RUNTIME_TEMPLATE_ID: string;
     PATTERN_COORDINATOR_TOKEN: string;
     GOVERNANCE_APPROVER_TOKEN: string;
     TEST_MIGRATIONS: D1Migration[];

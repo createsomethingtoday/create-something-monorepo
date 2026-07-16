@@ -9,6 +9,11 @@ import type {
 } from '@create-something/webflow-app-review-preflight';
 import { serviceTokenAuthorized } from './service-auth';
 import type { AuthenticatedUser, Env } from './types';
+import {
+  E2BRuntimeLaunchError,
+  launchRuntimeObservationInE2B,
+  type E2BRuntimeLaunchStage
+} from './e2b-runtime-launcher';
 
 const MAX_INPUT_BYTES = 32 * 1024;
 const MAX_RUNTIME_ARTIFACTS = 8;
@@ -41,7 +46,11 @@ const ARTIFACT_POLICY: Record<
 export class RuntimeTestPackageError extends Error {}
 export class RuntimeObservationApprovalError extends Error {}
 export class RuntimeObservationEvidenceError extends Error {}
-export class RuntimeObservationDispatchError extends Error {}
+export class RuntimeObservationDispatchError extends Error {
+  constructor(message: string, readonly stage: E2BRuntimeLaunchStage) {
+    super(message);
+  }
+}
 
 interface ReviewVersionRow {
   review_id: string;
@@ -1332,46 +1341,33 @@ export async function approveRuntimeObservationJob(
   return issueRuntimeObservationJob(testPackageId, env);
 }
 
-async function dispatchRuntimeObservationJob(
+function safeLaunchMessage(stage: E2BRuntimeLaunchStage): string {
+  switch (stage) {
+    case 'configuration':
+      return 'The runtime runner is not configured. Your test package remains ready; ask a reviewer to configure the server-owned runner.';
+    case 'sandbox_create':
+      return 'The runtime runner could not create a secure sandbox.';
+    case 'runner_start':
+      return 'The runtime runner could not start inside the secure sandbox.';
+  }
+}
+
+async function launchRuntimeObservationJob(
   request: Request,
   job: StoredRuntimeObservationJob,
   env: Env
 ): Promise<void> {
-  if (!env.RUNTIME_OBSERVATION_DISPATCH_URL || !env.RUNTIME_OBSERVATION_DISPATCH_TOKEN) {
-    throw new RuntimeObservationDispatchError(
-      'The runtime runner is not configured. Your test package remains ready; ask a reviewer to configure the server-owned runner.'
-    );
-  }
-
-  let dispatchUrl: URL;
   try {
-    dispatchUrl = new URL(env.RUNTIME_OBSERVATION_DISPATCH_URL);
-  } catch {
-    throw new RuntimeObservationDispatchError('The runtime runner endpoint is invalid.');
-  }
-  if (env.ENVIRONMENT === 'production' && dispatchUrl.protocol !== 'https:') {
-    throw new RuntimeObservationDispatchError('The runtime runner endpoint must use HTTPS.');
-  }
-
-  let response: Response;
-  try {
-    response = await fetch(new Request(dispatchUrl.toString(), {
-      method: 'POST',
-      headers: {
-        authorization: `Bearer ${env.RUNTIME_OBSERVATION_DISPATCH_TOKEN}`,
-        'content-type': 'application/json'
-      },
-      body: JSON.stringify({
-        observationJobId: job.id,
-        apiBaseUrl: new URL(request.url).origin,
-        capability: job.capability
-      })
-    }));
-  } catch {
-    throw new RuntimeObservationDispatchError('The runtime runner could not be reached.');
-  }
-  if (!response.ok) {
-    throw new RuntimeObservationDispatchError('The runtime runner rejected this test request.');
+    await launchRuntimeObservationInE2B({
+      observationJobId: job.id,
+      apiBaseUrl: new URL(request.url).origin,
+      capability: job.capability
+    }, env);
+  } catch (error) {
+    const stage = error instanceof E2BRuntimeLaunchError
+      ? error.stage
+      : 'runner_start';
+    throw new RuntimeObservationDispatchError(safeLaunchMessage(stage), stage);
   }
 }
 
@@ -1399,7 +1395,7 @@ export async function requestRuntimeObservationRun(
   if (!job) return { notFound: true };
 
   try {
-    await dispatchRuntimeObservationJob(request, job, env);
+    await launchRuntimeObservationJob(request, job, env);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'The runtime runner could not be started.';
     const now = new Date().toISOString();
@@ -1419,7 +1415,14 @@ export async function requestRuntimeObservationRun(
         job.contract.reviewId,
         job.contract.reviewVersionId,
         user.id,
-        JSON.stringify({ observationJobId: job.id, testPackageId, message }),
+        JSON.stringify({
+          observationJobId: job.id,
+          testPackageId,
+          stage: error instanceof RuntimeObservationDispatchError
+            ? error.stage
+            : 'runner_start',
+          message
+        }),
         now
       )
     ]);

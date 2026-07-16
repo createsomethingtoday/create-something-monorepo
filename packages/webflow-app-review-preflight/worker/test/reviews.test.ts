@@ -1526,7 +1526,7 @@ describe('review API', () => {
     expect(reviewAfterBody.review.latestVersion.result.officialDecision).toBeNull();
   });
 
-  test('lets the package owner request a server-dispatched runtime run without exposing its capability', async () => {
+  test('lets the package owner launch the pinned E2B runtime without exposing its capability', async () => {
     const reviewForm = new FormData();
     reviewForm.set(
       'bundle',
@@ -1554,15 +1554,33 @@ describe('review API', () => {
       )
     );
     expect(nonOwnerResponse.status).toBe(404);
-    let dispatched: { authorization: string | null; body: unknown } | null = null;
-    const dispatch = vi.fn(async (request: Request) => {
-      dispatched = {
-        authorization: request.headers.get('authorization'),
-        body: await request.json()
-      };
-      return new Response(null, { status: 202 });
+    const launched: Array<{ url: string; headers: Headers; body: unknown }> = [];
+    const e2b = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const request = input instanceof Request ? input : new Request(input, init);
+      launched.push({
+        url: request.url,
+        headers: new Headers(request.headers),
+        body: request.body ? await request.clone().json() : null
+      });
+      if (request.url === 'https://api.e2b.app/sandboxes') {
+        return new Response(JSON.stringify({
+          templateID: 'template-runtime-test',
+          sandboxID: 'sandbox-test-123',
+          clientID: 'client-test',
+          envdVersion: '0.5.7',
+          envdAccessToken: 'envd-access-token',
+          trafficAccessToken: 'traffic-access-token'
+        }), {
+          status: 201,
+          headers: { 'content-type': 'application/json' }
+        });
+      }
+      return new Response(JSON.stringify({ accepted: true }), {
+        status: 202,
+        headers: { 'content-type': 'application/json' }
+      });
     });
-    vi.stubGlobal('fetch', dispatch);
+    vi.stubGlobal('fetch', e2b);
 
     try {
       const response = await exports.default.fetch(
@@ -1580,15 +1598,34 @@ describe('review API', () => {
       }>();
       expect(body.observationJob).toMatchObject({ status: 'approved' });
       expect(body.observationJob.capability).toBeUndefined();
-      expect(dispatch).toHaveBeenCalledOnce();
-      expect(dispatched).toEqual({
-        authorization: 'Bearer runtime-dispatcher-test-token',
+      expect(e2b).toHaveBeenCalledTimes(2);
+      expect(launched[0]).toMatchObject({
+        url: 'https://api.e2b.app/sandboxes',
         body: {
-        observationJobId: body.observationJob.id,
-        apiBaseUrl: 'https://preflight.test',
-        capability: expect.any(String)
+          templateID:
+            'app-review-companion-runtime:f47ac10b-58cc-4372-a567-0e02b2c3d479',
+          timeout: 900,
+          secure: true,
+          allow_internet_access: true,
+          network: { allowPublicTraffic: false },
+          metadata: {
+            lane: 'app_review_runtime_observation',
+            observation_job_id: body.observationJob.id,
+            coordinator: 'webflow-app-review-preflight'
+          }
         }
       });
+      expect(launched[0]!.headers.get('x-api-key')).toBe('e2b-test-key');
+      expect(launched[1]).toMatchObject({
+        url: 'https://3000-sandbox-test-123.e2b.app/run',
+        body: {
+          observationJobId: body.observationJob.id,
+          apiBaseUrl: 'https://preflight.test',
+          capability: expect.any(String)
+        }
+      });
+      expect(launched[1]!.headers.get('e2b-traffic-access-token'))
+        .toBe('traffic-access-token');
     } finally {
       vi.unstubAllGlobals();
     }
@@ -1630,6 +1667,66 @@ describe('review API', () => {
       error: 'runtime_observation_approval_required',
       message: 'The runtime test package is expired or no longer available.'
     });
+  });
+
+  test('maps E2B create failures to a safe in-card launch stage without provider detail', async () => {
+    const reviewForm = new FormData();
+    reviewForm.set(
+      'bundle',
+      new File([await createBundle()], 'safe-launch-error.zip', { type: 'application/zip' })
+    );
+    const reviewResponse = await exports.default.fetch(
+      new Request('https://preflight.test/v1/reviews', {
+        method: 'POST',
+        headers: { authorization: 'Bearer test-token', origin: 'http://localhost:1337' },
+        body: reviewForm
+      })
+    );
+    const review = await reviewResponse.json<{ review: { id: string } }>();
+    const testPackageId = await createReadyRuntimePackage(review.review.id);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        new Response('provider-internal-detail e2b-test-key', { status: 500 })
+      )
+    );
+
+    try {
+      const response = await exports.default.fetch(
+        new Request(
+          `https://preflight.test/v1/runtime-test-packages/${testPackageId}/observation-runs`,
+          {
+            method: 'POST',
+            headers: { authorization: 'Bearer test-token', origin: 'http://localhost:1337' }
+          }
+        )
+      );
+      const text = await response.text();
+      expect(response.status).toBe(503);
+      expect(JSON.parse(text)).toEqual({
+        error: 'runtime_observation_dispatch_unavailable',
+        message: 'The runtime runner could not create a secure sandbox.'
+      });
+      expect(text).not.toContain('provider-internal-detail');
+      expect(text).not.toContain('e2b-test-key');
+
+      const event = await env.DB.prepare(
+        `SELECT payload_json FROM review_events
+          WHERE review_id = ? AND event_type = 'runtime_observation_dispatch_failed'
+          ORDER BY created_at DESC LIMIT 1`
+      )
+        .bind(review.review.id)
+        .first<{ payload_json: string }>();
+      expect(JSON.parse(event!.payload_json)).toMatchObject({
+        testPackageId,
+        stage: 'sandbox_create',
+        message: 'The runtime runner could not create a secure sandbox.'
+      });
+      expect(event!.payload_json).not.toContain('provider-internal-detail');
+      expect(event!.payload_json).not.toContain('e2b-test-key');
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   test('lets an authenticated reviewer open the web workspace and request an independent replay', async () => {
@@ -1693,10 +1790,31 @@ describe('review API', () => {
     expect(workspaceHtml).toContain('Run independent replay');
     expect(workspaceHtml).toContain(testPackageId);
 
-    let dispatched: { body: unknown } | null = null;
-    vi.stubGlobal('fetch', vi.fn(async (request: Request) => {
-      dispatched = { body: await request.json() };
-      return new Response(null, { status: 202 });
+    const replayLaunches: Array<{ url: string; body: unknown }> = [];
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const request = input instanceof Request ? input : new Request(input, init);
+      replayLaunches.push({
+        url: request.url,
+        body: request.body ? await request.clone().json() : null
+      });
+      if (request.url === 'https://api.e2b.app/sandboxes') {
+        const createBody = replayLaunches[0]!.body as {
+          templateID: string;
+          metadata: { observation_job_id: string };
+        };
+        return new Response(JSON.stringify({
+          templateID: createBody.templateID,
+          sandboxID: 'reviewer-sandbox-test',
+          clientID: 'reviewer-client-test',
+          envdVersion: '0.5.7',
+          envdAccessToken: 'reviewer-envd-token',
+          trafficAccessToken: 'reviewer-traffic-token'
+        }), {
+          status: 201,
+          headers: { 'content-type': 'application/json' }
+        });
+      }
+      return new Response(JSON.stringify({ accepted: true }), { status: 202 });
     }));
     try {
       const replayResponse = await exports.default.fetch(
@@ -1711,7 +1829,17 @@ describe('review API', () => {
       );
       expect(replayResponse.status).toBe(303);
       expect(replayResponse.headers.get('location')).toMatch(/^\/reviewer\?started=/);
-      expect(dispatched).toEqual({
+      expect(replayLaunches).toHaveLength(2);
+      expect(replayLaunches[0]).toMatchObject({
+        url: 'https://api.e2b.app/sandboxes',
+        body: {
+          templateID:
+            'app-review-companion-runtime:f47ac10b-58cc-4372-a567-0e02b2c3d479',
+          metadata: { observation_job_id: expect.any(String) }
+        }
+      });
+      expect(replayLaunches[1]).toEqual({
+        url: 'https://3000-reviewer-sandbox-test.e2b.app/run',
         body: {
           observationJobId: expect.any(String),
           apiBaseUrl: 'https://preflight.test',

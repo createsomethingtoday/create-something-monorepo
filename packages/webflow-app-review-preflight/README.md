@@ -28,6 +28,7 @@ When a developer uploads a revision, the Designer Extension pre-fills the new Ru
 - `worker/`: Cloudflare Worker API with dedicated D1 metadata and private R2 bundle storage.
 - `extension/`: native large right-panel Webflow Designer Extension.
 - `runner/`: Webflow-controlled Playwright/E2B runtime observation runner.
+- `../webflow-app-review-runtime-template/`: immutable E2B template with the runner, pinned Playwright, Chromium, and OS dependencies baked at build time.
 - `migrations/`: dedicated Preflight D1 schema.
 
 Raw partner bundles remain in private, owner-scoped R2 keys. They do not enter App Governance. Cross-app pattern candidates contain rule IDs, counts, dates, and generic guidance only; producing a governance handoff requires a separate authorized human approval and still performs no external write.
@@ -46,7 +47,7 @@ The reviewer surface must keep bundle/source visibility, source-map gaps, iframe
 2. The Worker hashes and stores the original bytes, runs deterministic rules, persists the policy snapshot, and returns Designer Extension and production-runtime coverage separately.
 3. Revisions create immutable versions and return resolved, remaining, and new rule IDs.
 4. A developer prepares a version-bound Runtime Test Package in the Designer Extension. A reviewer may inspect or replay the same package from the reviewer web app. The package records the dedicated published target, installation allowlist, pinned runtime bytes, SRI, ready selector, and negative proxy probe as test input—not evidence.
-5. The developer can request a fresh run for their own ready package from the Designer Extension. The Worker verifies ownership and package validity, then sends a one-time runner capability only to the configured server-side dispatcher. The dispatcher starts the E2B runner for the exact package. Neither the Designer Extension nor the developer browser receives that capability.
+5. The developer can request a fresh run for their own ready package from the Designer Extension. The Worker verifies ownership and package validity, creates the exact immutable E2B template build through E2B's control plane, and sends the one-time runner capability only to that sandbox's restricted `/run` route. Neither the Designer Extension nor the developer browser receives the capability or E2B credential.
 6. Developers read the result in the Designer Extension; reviewers read the same immutable predicates, blockers, and artifact receipts in the web app. Their role changes access and authorization, not the security result.
 
 ## Complete runtime observation
@@ -55,7 +56,7 @@ Licensed and account-gated behavior uses a different trust model from the public
 
 1. The partner prepares a Runtime Test Package tied to the current review version and bundle SHA. It names a dedicated published Webflow test site, a one-hour installation allowlist, immutable runtime URLs whose SHA-256 and SRI resolve to the same bytes, one runtime-ready selector, and one bounded proxy-canary template.
 2. The package is labeled `Partner supplied`. It is test input, not evidence. The partner may request one fresh run for their own ready package, but cannot read its capability, upload review evidence, or change review state.
-3. The Worker creates a 15-minute observation job and sends its one-time capability only over an authenticated server-to-server call to the Webflow-owned dispatcher. The dispatcher starts E2B and places that capability in the runner process only; the Worker stores only its SHA-256 hash and the Designer Extension receives a safe status summary.
+3. The Worker creates a 15-minute observation job and an E2B sandbox from the configured immutable `<template-name>:<build-id>` reference. Public sandbox traffic is disabled. The Worker uses E2B's per-sandbox traffic token to call the template's one-shot `/run` route, which places the capability in the baked runner process only; the Worker stores only its SHA-256 hash and the Designer Extension receives a safe status summary.
 4. E2B opens a fresh Chromium context, proves it reached the published origin, instruments runtime-created script elements before page code executes, enforces the exact host and request budgets, masks form controls, and captures scripts, executed hashes, DOM SRI, source maps, sanitized network and console metadata, structural DOM/storage state, screenshots, and the Webflow-owned negative proxy canary.
 5. The runner uploads a strict multipart manifest and artifact set. The Worker revalidates every binding, redaction receipt, type, size, and digest before writing immutable R2 objects and D1 metadata. A successful upload consumes the capability; replay fails closed.
 6. The extension displays the earned `Webflow observed` result. It remains evidence only and cannot approve, reject, close a deterministic finding, or write to governance.
@@ -79,8 +80,6 @@ pnpm exec wrangler d1 migrations apply webflow-app-review-preflight --local --co
 pnpm exec wrangler dev --config wrangler.jsonc --port 8787 \
   --var PREFLIGHT_DEV_TOKEN:test-token \
   --var E2B_COORDINATOR_TOKEN=coordinator-test-token \
-  --var RUNTIME_OBSERVATION_DISPATCH_URL=http://127.0.0.1:8790/run \
-  --var RUNTIME_OBSERVATION_DISPATCH_TOKEN=local-dispatch-token \
   --var RUNTIME_CANARY_URL=http://127.0.0.1:4174/webflow-runtime-canary
 ```
 
@@ -111,9 +110,11 @@ The integration fixture supports explicit negative receipts. Start its server wi
 
 The integration script uses fixed local development identities only. Production uses separately managed Webflow identity, coordinator authorization, and per-job capabilities; do not reuse local tokens.
 
-### Developer-requested runner dispatch
+### Developer-requested E2B launch
 
-The **Run test now** button never starts a browser from the developer's computer. It asks the Worker to create a fresh job for the signed-in developer's own ready package. The Worker calls the configured `RUNTIME_OBSERVATION_DISPATCH_URL` with an authenticated JSON request:
+The **Run test now** button never starts a browser from the developer's computer. It asks the Worker to create a fresh job for the signed-in developer's own ready package. The Worker calls E2B's documented sandbox-create API using server-only `E2B_API_KEY` and the immutable reference in `E2B_RUNTIME_TEMPLATE_ID`. Mutable names and tags fail before network access.
+
+E2B returns a per-sandbox restricted-traffic token. The Worker uses it once to send this body to the baked `/run` service:
 
 ```json
 {
@@ -123,14 +124,14 @@ The **Run test now** button never starts a browser from the developer's computer
 }
 ```
 
-The request uses `Authorization: Bearer $RUNTIME_OBSERVATION_DISPATCH_TOKEN`. The dispatcher is a Webflow-owned service: it must not log or persist the capability, must start an E2B sandbox with `RUNTIME_OBSERVATION_CAPABILITY` set only in the runner process, and must invoke the runner with `--api-base` and `--job`. For example, its process boundary runs:
+The template service accepts the exact production Preflight origin, validates a bounded UUID/capability body, rejects replays, never logs or returns the capability, and starts the already-baked runner without a shell. Its process boundary is equivalent to:
 
 ```bash
 RUNTIME_OBSERVATION_CAPABILITY="$capability" \
 webflow-app-review-runtime --api-base "$apiBaseUrl" --job "$observationJobId"
 ```
 
-Both dispatcher values are production secrets. If either is absent, unreachable, or rejects the job, the Worker marks that job failed and returns a fail-closed error; it never presents a result as Webflow-observed evidence. The developer may correct the setup and request another fresh run. A result remains evidence only and cannot approve, reject, or update governance policy.
+`E2B_API_KEY` is a production secret; the immutable build reference is reviewed configuration. If either is absent, mutable, unreachable, or the template rejects the job, the Worker marks that job failed and returns only a safe launch-stage error. A partially created sandbox is deleted immediately, with its 15-minute TTL as the final cleanup boundary. The service never presents a failed launch as Webflow-observed evidence. A result remains evidence only and cannot approve, reject, or update governance policy.
 
 ## Security boundaries
 

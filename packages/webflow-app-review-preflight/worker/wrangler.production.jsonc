@@ -9,6 +9,7 @@
   "vars": {
     "ENVIRONMENT": "production",
     "ALLOWED_ORIGINS": "chrome-extension://eiogakldgljpbbmplgckjkoglfgabblm,https://6a57b0fa70db1b7a0cd666ac.webflow-ext.com",
+    "E2B_RUNTIME_TEMPLATE_ID": "app-review-companion-runtime:a96a06d0-74cc-4f48-b1aa-9189777303ab",
     "WEBFLOW_OAUTH_REDIRECT_URI": "https://webflow-app-review-preflight.createsomething.workers.dev/v1/oauth/webflow/callback"
   },
   "d1_databases": [

@@ -184,7 +184,7 @@ export async function reviewerWorkspace(
           <button type="submit">Run independent replay</button>
           <a class="button" href="/reviewer">Refresh status</a>
         </form>
-        <div class="notice">The dispatcher runs in a fresh E2B browser. Runtime bytes, SRI, created scripts, network behavior, and the proxy canary are derived by the Worker.</div>
+        <div class="notice">A pinned E2B template runs a fresh browser. Runtime bytes, SRI, created scripts, network behavior, and the proxy canary are derived by the Worker.</div>
       </section>
       <aside class="card"><h2>Submission queue</h2><ul class="queue">${queueHtml}</ul></aside>
       <section class="card" style="grid-column:1/-1"><h2>Previous observations</h2>${historyHtml}</section>

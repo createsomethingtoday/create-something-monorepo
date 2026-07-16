@@ -3946,9 +3946,15 @@ importers:
       '@cloudflare/workers-types':
         specifier: ^5.20260711.1
         version: 5.20260712.1
+      esbuild:
+        specifier: ^0.24.2
+        version: 0.24.2
       jszip:
         specifier: ^3.10.1
         version: 3.10.1
+      miniflare:
+        specifier: 4.20260708.1
+        version: 4.20260708.1(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -3959,24 +3965,24 @@ importers:
         specifier: ^4.110.0
         version: 4.110.0(@cloudflare/workers-types@5.20260712.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
-  packages/webflow-app-review-runtime-dispatcher:
+  packages/webflow-app-review-runtime-template:
     dependencies:
-      '@e2b/code-interpreter':
-        specifier: ^2.5.0
-        version: 2.5.0
+      e2b:
+        specifier: 2.24.0
+        version: 2.24.0
     devDependencies:
-      '@cloudflare/workers-types':
-        specifier: ^5.20260711.1
-        version: 5.20260712.1
+      '@types/node':
+        specifier: 24.10.9
+        version: 24.10.9
+      tsup:
+        specifier: ^8.0.0
+        version: 8.5.1(@swc/core@1.15.11(@swc/helpers@0.5.18))(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
       vitest:
         specifier: ^4.1.8
         version: 4.1.8(@opentelemetry/api@1.9.0)(@types/node@24.10.9)(jsdom@27.4.0(@noble/hashes@1.8.0)(bufferutil@4.1.0)(utf-8-validate@6.0.6))(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))
-      wrangler:
-        specifier: ^4.110.0
-        version: 4.110.0(@cloudflare/workers-types@5.20260712.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/webflow-apps-admin:
     devDependencies:

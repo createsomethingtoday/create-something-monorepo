@@ -1093,7 +1093,7 @@
             var dispatcher = resolveDispatcher();
             return dispatcher.useReducer(reducer, initialArg, init);
           }
-          function useRef(initialValue) {
+          function useRef2(initialValue) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useRef(initialValue);
           }
@@ -1887,7 +1887,7 @@
           exports.useLayoutEffect = useLayoutEffect;
           exports.useMemo = useMemo;
           exports.useReducer = useReducer;
-          exports.useRef = useRef;
+          exports.useRef = useRef2;
           exports.useState = useState2;
           exports.useSyncExternalStore = useSyncExternalStore;
           exports.useTransition = useTransition;
@@ -24658,6 +24658,7 @@
     review,
     testPackages,
     busy,
+    runtimeError,
     onPrepare,
     onRun,
     onRefresh
@@ -24679,6 +24680,7 @@
     const [readySelector, setReadySelector] = (0, import_react.useState)("[data-runtime-ready]");
     const [proxyTemplate, setProxyTemplate] = (0, import_react.useState)("");
     const [showNewPackage, setShowNewPackage] = (0, import_react.useState)(false);
+    const cardRef = (0, import_react.useRef)(null);
     const trustLabel = latest?.observation?.trust === "webflow_observed" ? "Webflow observed" : latest ? "Partner supplied" : "Not prepared";
     const canRequestRun = !latest?.observation || latest.observation.status === "failed" || latest.observation.status === "expired" || latest.observation.status === "revoked";
     (0, import_react.useEffect)(() => {
@@ -24698,6 +24700,11 @@
       if (latest) return;
       fillFromPackage(previous);
     }, [review.latestVersion.id, previous?.id]);
+    (0, import_react.useEffect)(() => {
+      if (!runtimeError || !cardRef.current) return;
+      cardRef.current.focus();
+      cardRef.current.scrollIntoView?.({ behavior: "smooth", block: "center" });
+    }, [runtimeError]);
     const submit = () => {
       onPrepare({
         targetUrl,
@@ -24719,213 +24726,224 @@
         }
       });
     };
-    return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", { className: "runtime-card observation-card", "aria-labelledby": "observation-title", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "runtime-heading", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "eyebrow", children: "Complete behavior test" }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", { id: "observation-title", children: "Webflow runtime observation" })
-        ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-          "span",
-          {
-            className: `manual-pill ${latest?.observation?.trust ? "approved" : ""}`,
-            "aria-label": `Current evidence: ${trustLabel}`,
-            children: trustLabel
-          }
-        )
-      ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: "Make a dedicated Webflow test installation available. Webflow runs the browser in E2B and captures the evidence automatically; output from your computer is not used as review evidence." }),
-      latest && !showNewPackage ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "observation-status", role: "status", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "checkpoint-row", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "checkpoint-number", children: "1" }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Test package ready" }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: latest.target.url }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("small", { children: [
-              "Bound to bundle ",
-              latest.bundleSha256.slice(0, 12),
-              "\u2026"
-            ] })
-          ] })
-        ] }),
-        latest.observation?.trust === "webflow_observed" && latest.observation.evidence ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "checkpoint-row complete", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "checkpoint-number", children: "2" }),
+    return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
+      "section",
+      {
+        ref: cardRef,
+        className: "runtime-card observation-card",
+        "aria-labelledby": "observation-title",
+        tabIndex: -1,
+        children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "runtime-heading", children: [
             /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Evidence captured by Webflow" }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", { children: [
-                latest.observation.evidence.artifactCount,
-                " immutable artifacts"
-              ] })
-            ] })
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "eyebrow", children: "Complete behavior test" }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", { id: "observation-title", children: "Webflow runtime observation" })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+              "span",
+              {
+                className: `manual-pill ${latest?.observation?.trust ? "approved" : ""}`,
+                "aria-label": `Current evidence: ${trustLabel}`,
+                children: trustLabel
+              }
+            )
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "observation-results", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: latest.observation.evidence.securityStatus === "passed" ? "pass" : "fail", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: latest.observation.evidence.securityStatus === "passed" ? "Runtime security passed" : "Runtime security blocked" }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: latest.observation.evidence.securityStatus === "passed" ? "Published code matched its reviewed hash and SRI requirements." : latest.observation.evidence.blockers.join(" ") })
-            ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: latest.observation.evidence.negativeProxyOutcome === "blocked" ? "pass" : "fail", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: latest.observation.evidence.negativeProxyOutcome === "blocked" ? "Proxy canary blocked" : latest.observation.evidence.negativeProxyOutcome === "exposed" ? "Proxy canary exposed" : "Proxy canary inconclusive" }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "This is observed evidence, not an approval decision." })
-            ] })
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("details", { className: "artifact-details", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("summary", { children: "Evidence artifact details" }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", { children: latest.observation.evidence.artifacts.map((artifact) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", { children: [
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: artifact.kind.replaceAll("_", " ") }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("code", { children: [
-                artifact.sha256.slice(0, 12),
-                "\u2026 \xB7 ",
-                artifact.bytes,
-                " bytes"
-              ] })
-            ] }, `${artifact.kind}:${artifact.sha256}`)) })
-          ] })
-        ] }) : latest.observation ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "checkpoint-row active", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "checkpoint-number", children: "2" }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
-            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("strong", { children: [
-              "Webflow test ",
-              latest.observation.status
-            ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: "E2B owns the browser and will return sanitized evidence." })
-          ] })
-        ] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "checkpoint-row pending", children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Ready to run" }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: "Start a fresh Webflow-controlled browser test when this installation is ready." })
-        ] }) }),
-        canRequestRun ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-          "button",
-          {
-            className: "button button-primary",
-            disabled: busy,
-            onClick: () => onRun(latest.id),
-            children: busy ? "Starting Webflow run\u2026" : latest.observation ? "Run test again" : "Run test now"
-          }
-        ) : null,
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { className: "button button-secondary", disabled: busy, onClick: onRefresh, children: "Check run status" }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-          "button",
-          {
-            className: "button button-tertiary",
-            disabled: busy,
-            onClick: () => {
-              fillFromPackage(latest);
-              setShowNewPackage(true);
-            },
-            children: "Prepare another test package"
-          }
-        ),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("small", { children: "Partner-supplied settings cannot become Webflow-observed evidence by themselves." })
-      ] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
-        "form",
-        {
-          className: "observation-form",
-          onSubmit: (event) => {
-            event.preventDefault();
-            setConfirm(true);
-          },
-          children: [
-            previous ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "prefill-note", role: "status", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Previous setup loaded" }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: "We reused the last test site, runtime pin, selector, and proxy check. Review the values before continuing; Webflow will verify the runtime bytes and SRI again for this bundle." })
-            ] }) : null,
-            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("fieldset", { children: [
-              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("legend", { children: [
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "1" }),
-                " Dedicated test installation"
-              ] }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", { children: [
-                "Published Webflow test URL",
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", { required: true, type: "url", value: targetUrl, onChange: (event) => setTargetUrl(event.target.value), placeholder: "https://app-review-sandbox.webflow.io" })
-              ] }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", { children: [
-                "Webflow installation or site ID",
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", { required: true, value: sandboxInstallationId, onChange: (event) => setSandboxInstallationId(event.target.value), placeholder: "webflow-sandbox-site-123" })
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: "Make a dedicated Webflow test installation available. Webflow runs the browser in E2B and captures the evidence automatically; output from your computer is not used as review evidence." }),
+          runtimeError ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "error-banner", role: "alert", children: runtimeError }) : null,
+          latest && !showNewPackage ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "observation-status", role: "status", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "checkpoint-row", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "checkpoint-number", children: "1" }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Test package ready" }),
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: latest.target.url }),
+                /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("small", { children: [
+                  "Bound to bundle ",
+                  latest.bundleSha256.slice(0, 12),
+                  "\u2026"
+                ] })
               ] })
             ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("fieldset", { children: [
-              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("legend", { children: [
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "2" }),
-                " Pin the reviewed runtime"
+            latest.observation?.trust === "webflow_observed" && latest.observation.evidence ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "checkpoint-row complete", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "checkpoint-number", children: "2" }),
+                /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Evidence captured by Webflow" }),
+                  /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", { children: [
+                    latest.observation.evidence.artifactCount,
+                    " immutable artifacts"
+                  ] })
+                ] })
               ] }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", { children: [
-                "Immutable runtime URL",
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", { required: true, type: "url", value: artifactUrl, onChange: (event) => setArtifactUrl(event.target.value) })
+              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "observation-results", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: latest.observation.evidence.securityStatus === "passed" ? "pass" : "fail", children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: latest.observation.evidence.securityStatus === "passed" ? "Runtime security passed" : "Runtime security blocked" }),
+                  /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: latest.observation.evidence.securityStatus === "passed" ? "Published code matched its reviewed hash and SRI requirements." : latest.observation.evidence.blockers.join(" ") })
+                ] }),
+                /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: latest.observation.evidence.negativeProxyOutcome === "blocked" ? "pass" : "fail", children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: latest.observation.evidence.negativeProxyOutcome === "blocked" ? "Proxy canary blocked" : latest.observation.evidence.negativeProxyOutcome === "exposed" ? "Proxy canary exposed" : "Proxy canary inconclusive" }),
+                  /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "This is observed evidence, not an approval decision." })
+                ] })
               ] }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", { children: [
-                "SHA-256",
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", { required: true, pattern: "[a-f0-9]{64}", value: artifactSha256, onChange: (event) => setArtifactSha256(event.target.value), placeholder: "64 lowercase hex characters" })
-              ] }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", { children: [
-                "Script integrity (SRI)",
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", { required: true, value: integrity, onChange: (event) => setIntegrity(event.target.value), placeholder: "sha256-\u2026" })
+              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("details", { className: "artifact-details", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("summary", { children: "Evidence artifact details" }),
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", { children: latest.observation.evidence.artifacts.map((artifact) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", { children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: artifact.kind.replaceAll("_", " ") }),
+                  /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("code", { children: [
+                    artifact.sha256.slice(0, 12),
+                    "\u2026 \xB7 ",
+                    artifact.bytes,
+                    " bytes"
+                  ] })
+                ] }, `${artifact.kind}:${artifact.sha256}`)) })
               ] })
-            ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("details", { className: "advanced-settings", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("summary", { children: "Runtime-ready selector and proxy check" }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", { children: [
-                "Ready selector",
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", { required: true, value: readySelector, onChange: (event) => setReadySelector(event.target.value) })
-              ] }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", { children: [
-                "Proxy probe URL template",
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", { required: true, value: proxyTemplate, onChange: (event) => setProxyTemplate(event.target.value), placeholder: "https://api.example.com/proxy?url={canaryUrl}" })
+            ] }) : latest.observation ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "checkpoint-row active", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "checkpoint-number", children: "2" }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
+                /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("strong", { children: [
+                  "Webflow test ",
+                  latest.observation.status
+                ] }),
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: "E2B owns the browser and will return sanitized evidence." })
               ] })
-            ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { className: "button button-primary", disabled: busy, type: "submit", children: "Prepare Webflow run" }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("small", { children: "No customer sites, account passwords, session exports, or license secrets." })
-          ]
-        }
-      ),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("details", { className: "trust-details", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("summary", { children: "What the evidence labels mean" }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("dl", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Partner supplied" }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", { children: "Test settings only. Not review evidence." })
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Webflow observed" }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", { children: "Captured automatically in a Webflow-controlled browser." })
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Human verified" }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", { children: "A reviewer separately confirmed the evidence and conclusion." })
-          ] })
-        ] })
-      ] }),
-      confirm ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "dialog-backdrop", role: "dialog", "aria-modal": "true", "aria-labelledby": dialogTitle, children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "dialog-card", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "eyebrow", children: "Partner checkpoint" }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", { id: dialogTitle, children: "Confirm dedicated test access" }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: "Confirm this is a Webflow-controlled test installation with no customer data, and that its license is allowlisted for the next 24 hours. Webflow\u2014not this browser\u2014will run the test." }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("ul", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: "Runtime bytes are pinned to this bundle version" }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: "Evidence is captured in a fresh Webflow browser" }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: "The result cannot approve or reject the app" })
-        ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "dialog-actions", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { className: "button button-secondary", onClick: () => setConfirm(false), children: "Cancel" }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-            "button",
+            ] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "checkpoint-row pending", children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Ready to run" }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: "Start a fresh Webflow-controlled browser test when this installation is ready." })
+            ] }) }),
+            canRequestRun ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+              "button",
+              {
+                className: "button button-primary",
+                disabled: busy,
+                onClick: () => onRun(latest.id),
+                children: busy ? "Starting Webflow run\u2026" : latest.observation ? "Run test again" : "Run test now"
+              }
+            ) : null,
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { className: "button button-secondary", disabled: busy, onClick: onRefresh, children: "Check run status" }),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+              "button",
+              {
+                className: "button button-tertiary",
+                disabled: busy,
+                onClick: () => {
+                  fillFromPackage(latest);
+                  setShowNewPackage(true);
+                },
+                children: "Prepare another test package"
+              }
+            ),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("small", { children: "Partner-supplied settings cannot become Webflow-observed evidence by themselves." })
+          ] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
+            "form",
             {
-              className: "button button-primary",
-              onClick: () => {
-                setConfirm(false);
-                submit();
+              className: "observation-form",
+              onSubmit: (event) => {
+                event.preventDefault();
+                setConfirm(true);
               },
-              children: "Confirm test package"
+              children: [
+                previous ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "prefill-note", role: "status", children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Previous setup loaded" }),
+                  /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: "We reused the last test site, runtime pin, selector, and proxy check. Review the values before continuing; Webflow will verify the runtime bytes and SRI again for this bundle." })
+                ] }) : null,
+                /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("fieldset", { children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("legend", { children: [
+                    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "1" }),
+                    " Dedicated test installation"
+                  ] }),
+                  /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", { children: [
+                    "Published Webflow test URL",
+                    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", { required: true, type: "url", value: targetUrl, onChange: (event) => setTargetUrl(event.target.value), placeholder: "https://app-review-sandbox.webflow.io" })
+                  ] }),
+                  /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", { children: [
+                    "Webflow installation or site ID",
+                    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", { required: true, value: sandboxInstallationId, onChange: (event) => setSandboxInstallationId(event.target.value), placeholder: "webflow-sandbox-site-123" })
+                  ] })
+                ] }),
+                /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("fieldset", { children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("legend", { children: [
+                    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "2" }),
+                    " Pin the reviewed runtime"
+                  ] }),
+                  /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", { children: [
+                    "Immutable runtime URL",
+                    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", { required: true, type: "url", value: artifactUrl, onChange: (event) => setArtifactUrl(event.target.value) })
+                  ] }),
+                  /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", { children: [
+                    "SHA-256",
+                    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", { required: true, pattern: "[a-f0-9]{64}", value: artifactSha256, onChange: (event) => setArtifactSha256(event.target.value), placeholder: "64 lowercase hex characters" })
+                  ] }),
+                  /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", { children: [
+                    "Script integrity (SRI)",
+                    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", { required: true, value: integrity, onChange: (event) => setIntegrity(event.target.value), placeholder: "sha256-\u2026" })
+                  ] })
+                ] }),
+                /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("details", { className: "advanced-settings", children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime.jsx)("summary", { children: "Runtime-ready selector and proxy check" }),
+                  /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", { children: [
+                    "Ready selector",
+                    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", { required: true, value: readySelector, onChange: (event) => setReadySelector(event.target.value) })
+                  ] }),
+                  /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", { children: [
+                    "Proxy probe URL template",
+                    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", { required: true, value: proxyTemplate, onChange: (event) => setProxyTemplate(event.target.value), placeholder: "https://api.example.com/proxy?url={canaryUrl}" })
+                  ] })
+                ] }),
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { className: "button button-primary", disabled: busy, type: "submit", children: "Prepare Webflow run" }),
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("small", { children: "No customer sites, account passwords, session exports, or license secrets." })
+              ]
             }
-          )
-        ] })
-      ] }) }) : null
-    ] });
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("details", { className: "trust-details", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("summary", { children: "What the evidence labels mean" }),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("dl", { children: [
+              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Partner supplied" }),
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", { children: "Test settings only. Not review evidence." })
+              ] }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Webflow observed" }),
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", { children: "Captured automatically in a Webflow-controlled browser." })
+              ] }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", { children: "Human verified" }),
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", { children: "A reviewer separately confirmed the evidence and conclusion." })
+              ] })
+            ] })
+          ] }),
+          confirm ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "dialog-backdrop", role: "dialog", "aria-modal": "true", "aria-labelledby": dialogTitle, children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "dialog-card", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "eyebrow", children: "Partner checkpoint" }),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", { id: dialogTitle, children: "Confirm dedicated test access" }),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: "Confirm this is a Webflow-controlled test installation with no customer data, and that its license is allowlisted for the next 24 hours. Webflow\u2014not this browser\u2014will run the test." }),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("ul", { children: [
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: "Runtime bytes are pinned to this bundle version" }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: "Evidence is captured in a fresh Webflow browser" }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: "The result cannot approve or reject the app" })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "dialog-actions", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { className: "button button-secondary", onClick: () => setConfirm(false), children: "Cancel" }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+                "button",
+                {
+                  className: "button button-primary",
+                  onClick: () => {
+                    setConfirm(false);
+                    submit();
+                  },
+                  children: "Confirm test package"
+                }
+              )
+            ] })
+          ] }) }) : null
+        ]
+      }
+    );
   }
   function ReviewDetail({
     review,
     comparison,
     runtimeTestPackages,
     busy,
+    runtimeError,
     onRevision,
     onPrepareRuntimePackage,
     onRunRuntimeObservation,
@@ -24984,6 +25002,7 @@
           review,
           testPackages: runtimeTestPackages,
           busy,
+          runtimeError,
           onPrepare: onPrepareRuntimePackage,
           onRun: onRunRuntimeObservation,
           onRefresh: onRefreshRuntimePackages
@@ -25046,6 +25065,7 @@
     const [runtimeTestPackages, setRuntimeTestPackages] = (0, import_react.useState)([]);
     const [busy, setBusy] = (0, import_react.useState)(false);
     const [error, setError] = (0, import_react.useState)(null);
+    const [runtimeError, setRuntimeError] = (0, import_react.useState)(null);
     const [identity, setIdentity] = (0, import_react.useState)(null);
     const [reviewerHandoff, setReviewerHandoff] = (0, import_react.useState)(null);
     const refreshHistory = async () => {
@@ -25085,13 +25105,13 @@
         setError(cause instanceof Error ? cause.message : "Webflow identity is unavailable.");
       });
     }, []);
-    const run = async (action) => {
+    const run = async (action, onError = setError) => {
       setBusy(true);
       setError(null);
       try {
         await action();
       } catch (cause) {
-        setError(cause instanceof Error ? cause.message : "That step could not be completed.");
+        onError(cause instanceof Error ? cause.message : "That step could not be completed.");
       } finally {
         setBusy(false);
       }
@@ -25105,6 +25125,7 @@
           comparison,
           runtimeTestPackages,
           busy,
+          runtimeError,
           reviewerMode: identity?.companionRole === "reviewer",
           reviewerHandoff,
           onBack: () => {
@@ -25126,10 +25147,13 @@
             const prepared = await api.createRuntimeTestPackage(review.id, input);
             setRuntimeTestPackages([prepared]);
           }),
-          onRunRuntimeObservation: (testPackageId) => run(async () => {
-            await api.requestRuntimeObservationRun(testPackageId);
-            await refreshRuntimePackages(review.id);
-          }),
+          onRunRuntimeObservation: (testPackageId) => {
+            setRuntimeError(null);
+            void run(async () => {
+              await api.requestRuntimeObservationRun(testPackageId);
+              await refreshRuntimePackages(review.id);
+            }, setRuntimeError);
+          },
           onRefreshRuntimePackages: () => run(async () => {
             await refreshRuntimePackages(review.id);
           }),

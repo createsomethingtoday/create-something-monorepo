@@ -380,7 +380,12 @@ describe('App Review Preflight extension', () => {
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([completed]);
     const createRuntimeTestPackage = vi.fn(async () => prepared);
-    const requestRuntimeObservationRun = vi.fn(async () => prepared.observation);
+    const requestRuntimeObservationRun = vi
+      .fn<PreflightApi['requestRuntimeObservationRun']>()
+      .mockRejectedValueOnce(
+        new Error('The runtime runner could not start inside the secure sandbox.')
+      )
+      .mockResolvedValue(prepared.observation);
     const runtimeApi: PreflightApi = {
       ...api,
       listReviews: async () => [
@@ -402,7 +407,12 @@ describe('App Review Preflight extension', () => {
     render(<App api={runtimeApi} />);
 
     fireEvent.click(await screen.findByRole('button', { name: /Consent Pro preflight/i }));
-    expect(await screen.findByRole('heading', { name: 'Webflow runtime observation' })).toBeVisible();
+    const runtimeHeading = await screen.findByRole('heading', {
+      name: 'Webflow runtime observation'
+    });
+    expect(runtimeHeading).toBeVisible();
+    const runtimeCard = runtimeHeading.closest('section')!;
+    runtimeCard.scrollIntoView = vi.fn();
     fireEvent.change(screen.getByLabelText('Published Webflow test URL'), {
       target: { value: 'https://app-review-sandbox.webflow.io' }
     });
@@ -435,6 +445,19 @@ describe('App Review Preflight extension', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Run test now' }));
     await waitFor(() => expect(requestRuntimeObservationRun).toHaveBeenCalledWith(prepared.id));
+    const runtimeError = await screen.findByRole('alert');
+    expect(runtimeCard).toContainElement(runtimeError);
+    expect(runtimeError).toHaveTextContent(
+      'The runtime runner could not start inside the secure sandbox.'
+    );
+    expect(runtimeCard).toHaveFocus();
+    expect(runtimeCard.scrollIntoView).toHaveBeenCalledWith({
+      behavior: 'smooth',
+      block: 'center'
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Run test now' }));
+    await waitFor(() => expect(requestRuntimeObservationRun).toHaveBeenCalledTimes(2));
     expect(await screen.findByLabelText('Current evidence: Webflow observed')).toBeVisible();
     expect(screen.getByText('Production runtime observed')).toBeVisible();
     expect(screen.queryByText('Production runtime not yet verified')).not.toBeInTheDocument();

@@ -10,6 +10,7 @@
     "dev": "node ../../../scripts/run-wrangler.mjs dev --config wrangler.jsonc",
     "lint": "pnpm run check",
     "pretest": "pnpm --filter @create-something/webflow-app-review-preflight build",
+    "probe:e2b": "node scripts/probe-e2b-runtime.mjs",
     "test": "vitest run",
     "types": "node ../../../scripts/run-wrangler.mjs types --config wrangler.jsonc"
   },
@@ -19,7 +20,9 @@
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.18.4",
     "@cloudflare/workers-types": "^5.20260711.1",
+    "esbuild": "^0.24.2",
     "jszip": "^3.10.1",
+    "miniflare": "4.20260708.1",
     "typescript": "^5.9.3",
     "vitest": "^4.1.8",
     "wrangler": "^4.110.0"

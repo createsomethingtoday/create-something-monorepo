@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import type { ReviewGuidance } from '@create-something/webflow-app-review-preflight';
 import type {
   PreflightIdentity,
@@ -200,6 +200,7 @@ function RuntimeObservationCard({
   review,
   testPackages,
   busy,
+  runtimeError,
   onPrepare,
   onRun,
   onRefresh
@@ -207,6 +208,7 @@ function RuntimeObservationCard({
   review: StoredReview;
   testPackages: RuntimeTestPackageView[];
   busy: boolean;
+  runtimeError: string | null;
   onPrepare: (input: RuntimeTestPackageInput) => void;
   onRun: (testPackageId: string) => void;
   onRefresh: () => void;
@@ -229,6 +231,7 @@ function RuntimeObservationCard({
   const [readySelector, setReadySelector] = useState('[data-runtime-ready]');
   const [proxyTemplate, setProxyTemplate] = useState('');
   const [showNewPackage, setShowNewPackage] = useState(false);
+  const cardRef = useRef<HTMLElement>(null);
   const trustLabel = latest?.observation?.trust === 'webflow_observed'
     ? 'Webflow observed'
     : latest
@@ -260,6 +263,12 @@ function RuntimeObservationCard({
     fillFromPackage(previous);
   }, [review.latestVersion.id, previous?.id]);
 
+  useEffect(() => {
+    if (!runtimeError || !cardRef.current) return;
+    cardRef.current.focus();
+    cardRef.current.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+  }, [runtimeError]);
+
   const submit = () => {
     onPrepare({
       targetUrl,
@@ -283,7 +292,12 @@ function RuntimeObservationCard({
   };
 
   return (
-    <section className="runtime-card observation-card" aria-labelledby="observation-title">
+    <section
+      ref={cardRef}
+      className="runtime-card observation-card"
+      aria-labelledby="observation-title"
+      tabIndex={-1}
+    >
       <div className="runtime-heading">
         <div>
           <span className="eyebrow">Complete behavior test</span>
@@ -301,6 +315,7 @@ function RuntimeObservationCard({
         in E2B and captures the evidence automatically; output from your computer is not
         used as review evidence.
       </p>
+      {runtimeError ? <div className="error-banner" role="alert">{runtimeError}</div> : null}
 
       {latest && !showNewPackage ? (
         <div className="observation-status" role="status">
@@ -510,6 +525,7 @@ function ReviewDetail({
   comparison,
   runtimeTestPackages,
   busy,
+  runtimeError,
   onRevision,
   onPrepareRuntimePackage,
   onRunRuntimeObservation,
@@ -523,6 +539,7 @@ function ReviewDetail({
   comparison: ReviewComparison | null;
   runtimeTestPackages: RuntimeTestPackageView[];
   busy: boolean;
+  runtimeError: string | null;
   onRevision: (file: File) => void;
   onPrepareRuntimePackage: (input: RuntimeTestPackageInput) => void;
   onRunRuntimeObservation: (testPackageId: string) => void;
@@ -578,6 +595,7 @@ function ReviewDetail({
         review={review}
         testPackages={runtimeTestPackages}
         busy={busy}
+        runtimeError={runtimeError}
         onPrepare={onPrepareRuntimePackage}
         onRun={onRunRuntimeObservation}
         onRefresh={onRefreshRuntimePackages}
@@ -644,6 +662,7 @@ export function App({ api }: { api: PreflightApi }) {
   const [runtimeTestPackages, setRuntimeTestPackages] = useState<RuntimeTestPackageView[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [runtimeError, setRuntimeError] = useState<string | null>(null);
   const [identity, setIdentity] = useState<PreflightIdentity | null>(null);
   const [reviewerHandoff, setReviewerHandoff] = useState<ReviewerHandoff | null>(null);
 
@@ -688,13 +707,16 @@ export function App({ api }: { api: PreflightApi }) {
     });
   }, []);
 
-  const run = async (action: () => Promise<void>) => {
+  const run = async (
+    action: () => Promise<void>,
+    onError: (message: string) => void = setError
+  ) => {
     setBusy(true);
     setError(null);
     try {
       await action();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'That step could not be completed.');
+      onError(cause instanceof Error ? cause.message : 'That step could not be completed.');
     } finally {
       setBusy(false);
     }
@@ -710,6 +732,7 @@ export function App({ api }: { api: PreflightApi }) {
           comparison={comparison}
           runtimeTestPackages={runtimeTestPackages}
           busy={busy}
+          runtimeError={runtimeError}
           reviewerMode={identity?.companionRole === 'reviewer'}
           reviewerHandoff={reviewerHandoff}
           onBack={() => {
@@ -731,10 +754,13 @@ export function App({ api }: { api: PreflightApi }) {
             const prepared = await api.createRuntimeTestPackage(review.id, input);
             setRuntimeTestPackages([prepared]);
           })}
-          onRunRuntimeObservation={(testPackageId) => run(async () => {
-            await api.requestRuntimeObservationRun(testPackageId);
-            await refreshRuntimePackages(review.id);
-          })}
+          onRunRuntimeObservation={(testPackageId) => {
+            setRuntimeError(null);
+            void run(async () => {
+              await api.requestRuntimeObservationRun(testPackageId);
+              await refreshRuntimePackages(review.id);
+            }, setRuntimeError);
+          }}
           onRefreshRuntimePackages={() => run(async () => {
             await refreshRuntimePackages(review.id);
           })}
