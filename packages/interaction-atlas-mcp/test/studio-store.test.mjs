@@ -21,6 +21,7 @@ import {
   advanceStoryStep,
   clearStoryFocus,
   createSession,
+  exportClientHandoffMarkdown,
   exportSessionMarkdown,
   readSession,
   readSessionDatabaseHealth,
@@ -125,6 +126,96 @@ test('local Atlas Studio sessions can be mutated by agent commands', async () =>
   assert.match(markdown, /Products: Atlas -> Signal -> Decision -> Proof/);
   assert.match(markdown, /Linear issue/);
   assert.match(markdown, /proof: Docs PR merged \(gov_proof_123\) - passed/);
+});
+
+test('client handoff projects internal Atlas truth into Map, Build, and Control without mutation', async () => {
+  const cwd = await mkdtemp(path.join(tmpdir(), 'atlas-studio-client-handoff-test-'));
+  const session = await createSession(
+    { client: 'Acme', workflow: 'Support recovery', owner: 'Ops' },
+    cwd
+  );
+
+  const withSystem = await addNode(
+    session.id,
+    {
+      kind: 'system',
+      label: 'Ticketing integration',
+      owner: 'Acme',
+      status: 'run',
+      notes: 'Connect the approved support source after account-owner authorization.',
+      createdBy: 'agent'
+    },
+    cwd
+  );
+  const withProof = await attachGovernanceRecord(
+    session.id,
+    'data_workflow',
+    {
+      id: 'proof_support_contract',
+      productId: 'proof',
+      title: 'Support workflow contract',
+      summary: 'The approved workflow definition is source controlled.',
+      status: 'verified',
+      attachedBy: 'agent'
+    },
+    cwd
+  );
+  await attachGovernanceRecord(
+    session.id,
+    'human_approval',
+    {
+      id: 'control_account_owner_required',
+      productId: 'decision',
+      title: 'Account-owner authorization is still required',
+      summary: 'This is a control boundary, not verified implementation evidence.',
+      status: 'required',
+      attachedBy: 'agent'
+    },
+    cwd
+  );
+  const mapped = await setStoryFocus(
+    session.id,
+    {
+      questions: [
+        {
+          id: 'question_account_owner',
+          nodeId: withSystem.canvas.nodes.at(-1)?.id,
+          owner: 'Acme',
+          question: 'Who can authorize the production ticketing connection?',
+          status: 'open'
+        }
+      ],
+      title: 'Support recovery walkthrough',
+      updatedBy: 'agent'
+    },
+    cwd
+  );
+  const before = structuredClone(mapped);
+
+  const markdown = exportClientHandoffMarkdown(mapped);
+
+  assert.match(markdown, /# Acme - CREATE SOMETHING Map-to-Build Handoff/);
+  assert.match(markdown, /Public sequence: Map -> Build -> Control/);
+  assert.match(markdown, /## Map: Shared Workflow Definition/);
+  assert.match(markdown, /## Build: Scoped Candidates/);
+  assert.match(markdown, /Ticketing integration \[candidate\]/);
+  assert.doesNotMatch(markdown, /Acme \[candidate\]/);
+  assert.doesNotMatch(markdown, /Support recovery \[candidate\]/);
+  assert.match(markdown, /## Control: Approval and Operating Boundaries/);
+  assert.match(markdown, /Approval boundary \[wait\]/);
+  assert.match(markdown, /## Verified Proof/);
+  assert.match(markdown, /Support workflow contract \(proof_support_contract\) - verified/);
+  assert.doesNotMatch(markdown, /Account-owner authorization is still required/);
+  assert.match(markdown, /## Open Questions/);
+  assert.match(markdown, /Who can authorize the production ticketing connection\?/);
+  assert.match(markdown, /No production or client-system change is authorized by this handoff\./);
+  assert.doesNotMatch(markdown, /Atlas Workflow Map/);
+  assert.doesNotMatch(markdown, /Products: Atlas -> Signal -> Decision -> Proof/);
+  assert.deepEqual(mapped, before);
+
+  const internal = exportSessionMarkdown(withProof);
+  assert.match(internal, /Acme - Atlas Workflow Map/);
+  assert.match(internal, /Products: Atlas -> Signal -> Decision -> Proof/);
 });
 
 test('removing an Atlas Studio node also removes connected edges', async () => {

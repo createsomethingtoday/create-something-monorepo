@@ -90,5 +90,11 @@ export declare function clearStoryFocus(sessionId: string, input?: {
 }, cwd?: string): Promise<AtlasSession>;
 export declare function acceptSuggestion(sessionId: string, suggestionId: string, cwd?: string): Promise<AtlasSession>;
 export declare function exportSessionMarkdown(session: AtlasSession): string;
+/**
+ * Projects an internal Atlas session into a client-facing Map -> Build -> Control
+ * handoff. This function is deliberately pure: callers can use it from CLI and
+ * GET-only HTTP surfaces without updating the source session.
+ */
+export declare function exportClientHandoffMarkdown(session: AtlasSession): string;
 export {};
 //# sourceMappingURL=store.d.ts.map

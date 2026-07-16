@@ -9,7 +9,7 @@ import { getAtlasStudioPalette } from './atlas.js';
 import { renderStudioHtml } from './html.js';
 import { healSessionProductionBindings } from './production-bindings.js';
 import { createWritebackProposal, exportWritebackProposalHandoffForSession, reviewWritebackProposalAction } from './writeback-proposals.js';
-import { acceptSuggestion, addEdge, addNode, addObservation, createSession, exportSessionMarkdown, getSessionPath, listSessions, readSession, removeNode, updateNode, updateEdge, updateNodes } from './store.js';
+import { acceptSuggestion, addEdge, addNode, addObservation, createSession, exportClientHandoffMarkdown, exportSessionMarkdown, getSessionPath, listSessions, readSession, removeNode, updateNode, updateEdge, updateNodes } from './store.js';
 import { activateStoryApiStep, addStoryApiQuestion, advanceStoryApiStep, clearStory, focusStory, getStory, storySessionPayload } from './story-api.js';
 import { tidyNodeUpdates } from './client/layout.js';
 import { readSharedCanvasState, updateSharedCanvasState } from './canvas-state.js';
@@ -179,6 +179,11 @@ export async function startStudioServer(options) {
         try {
             const url = new URL(request.url ?? '/', `http://${request.headers.host ?? `${options.host}:${options.port}`}`);
             const method = request.method ?? 'GET';
+            if (method === 'GET' && url.pathname === '/favicon.ico') {
+                response.writeHead(204, { 'cache-control': 'public, max-age=86400' });
+                response.end();
+                return;
+            }
             if (method === 'GET' && (url.pathname === '/' || url.pathname === '/sessions')) {
                 response.writeHead(302, { location: `/sessions/${defaultSessionId}` });
                 response.end();
@@ -219,6 +224,12 @@ export async function startStudioServer(options) {
                     workflow: body.workflow?.trim() || 'Workflow mapping',
                     owner: body.owner
                 }, cwd));
+                return;
+            }
+            const clientHandoffMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)\/client-handoff\.md$/);
+            if (method === 'GET' && clientHandoffMatch) {
+                const session = await readSession(decodeURIComponent(clientHandoffMatch[1] ?? ''), cwd);
+                sendText(response, 200, exportClientHandoffMarkdown(session), 'text/markdown');
                 return;
             }
             const exportMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)\/export\.md$/);

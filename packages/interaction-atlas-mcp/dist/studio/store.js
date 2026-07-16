@@ -683,4 +683,93 @@ export function exportSessionMarkdown(session) {
     ].filter((line) => line !== null);
     return `${lines.join('\n')}\n`;
 }
+function clientHandoffBuildReason(node) {
+    if (node.status === 'unknown')
+        return undefined;
+    if (node.sync && node.sync.status !== 'synced') {
+        return `Production binding state is ${node.sync.status}; ${node.sync.summary}`;
+    }
+    if (['ai', 'data', 'system', 'touchpoint'].includes(node.kind) &&
+        !(node.governanceRecords?.length)) {
+        return 'Mapped capability has no attached verification record yet.';
+    }
+    return undefined;
+}
+function clientHandoffNodeLine(node) {
+    const owner = node.owner ? ` - owner: ${node.owner}` : '';
+    const notes = node.notes ? ` - ${node.notes}` : '';
+    return `- ${node.label} [${node.kind}, ${node.status}]${owner}${notes}`;
+}
+function clientHandoffRecordIsVerified(record) {
+    return record.status === 'verified' || record.status === 'repo_verified';
+}
+/**
+ * Projects an internal Atlas session into a client-facing Map -> Build -> Control
+ * handoff. This function is deliberately pure: callers can use it from CLI and
+ * GET-only HTTP surfaces without updating the source session.
+ */
+export function exportClientHandoffMarkdown(session) {
+    const buildCandidates = session.canvas.nodes.flatMap((node) => {
+        const reason = clientHandoffBuildReason(node);
+        if (!reason)
+            return [];
+        const approval = node.status === 'wait' || node.status === 'stop' ? ' Approval required.' : '';
+        return [
+            `- ${node.label} [candidate]${node.owner ? ` - owner: ${node.owner}` : ''} - ${reason}${approval}`
+        ];
+    });
+    const controlBoundaries = session.canvas.nodes.filter((node) => node.status === 'wait' || node.status === 'stop' || node.kind === 'human' || node.kind === 'constraint');
+    const proofRecords = session.canvas.nodes.flatMap((node) => (node.governanceRecords ?? [])
+        .filter(clientHandoffRecordIsVerified)
+        .map((record) => ({ node, record })));
+    const openQuestions = (session.story?.questions ?? []).filter((question) => question.status === 'open');
+    const unresolvedNodes = session.canvas.nodes.filter((node) => node.status === 'unknown');
+    const lines = [
+        `# ${session.client} - CREATE SOMETHING Map-to-Build Handoff`,
+        '',
+        `Workflow: ${session.workflow}`,
+        session.owner ? `Owner: ${session.owner}` : null,
+        `Updated: ${session.updatedAt}`,
+        'Public sequence: Map -> Build -> Control',
+        '',
+        '## Map: Shared Workflow Definition',
+        `- Coverage: ${session.canvas.nodes.length} mapped nodes and ${session.canvas.edges.length} relationships.`,
+        ...session.canvas.nodes.map(clientHandoffNodeLine),
+        '',
+        '## Build: Scoped Candidates',
+        ...(buildCandidates.length
+            ? buildCandidates
+            : ['- No implementation candidate is asserted from the current map.']),
+        '',
+        'Build candidates are review items, not approved work or completed implementation.',
+        '',
+        '## Control: Approval and Operating Boundaries',
+        ...(controlBoundaries.length
+            ? controlBoundaries.map((node) => `- ${node.label} [${node.status}]${node.owner ? ` - owner: ${node.owner}` : ''}${node.notes ? ` - ${node.notes}` : ''}`)
+            : ['- No explicit wait, stop, human-judgment, or constraint boundary is recorded.']),
+        '',
+        '## Verified Proof',
+        ...(proofRecords.length
+            ? proofRecords.map(({ node, record }) => `- ${record.title} (${record.id})${record.status ? ` - ${record.status}` : ''} - mapped to ${node.label}${record.href ? ` - ${record.href}` : ''}`)
+            : ['- No explicitly verified governance proof is attached to the current map.']),
+        '',
+        '## Open Questions',
+        ...openQuestions.map((question) => `- ${question.question}${question.owner ? ` - owner: ${question.owner}` : ''}`),
+        ...unresolvedNodes.map((node) => `- Confirm the scope, owner, and operating state for ${node.label}.`),
+        ...(openQuestions.length || unresolvedNodes.length
+            ? []
+            : ['- No open question or unknown-state node is recorded.']),
+        '',
+        '## Approval Required',
+        '- Review the Build candidates, owners, access boundaries, and proof requirements before implementation.',
+        '- No production or client-system change is authorized by this handoff.',
+        '- Paid activity, outreach, account authorization, private-data disclosure, and external writes require the owning approval workflow.',
+        '',
+        '## Recommended Next Step',
+        '- Confirm the mapped workflow and open questions with the named owners.',
+        '- Scope only the approved Build candidates, then bring the implemented workflow into Control for bounded operation and proof.',
+        ''
+    ].filter((line) => line !== null);
+    return `${lines.join('\n')}\n`;
+}
 //# sourceMappingURL=store.js.map
