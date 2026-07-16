@@ -70,6 +70,7 @@
 	export let canvas: PublicAtlasCanvas;
 	export let selectedNodeId: string;
 	export let flowId = 'public-atlas-flow';
+	export let ariaLabel = 'Atlas workflow map';
 	export let onMoveNode: (nodeId: string, position: { x: number; y: number }) => void = noopMoveNode;
 	export let onSelectNode: (nodeId: string) => void = noopSelectNode;
 	export let readOnly = false;
@@ -159,7 +160,7 @@
 	};
 </script>
 
-<div class="public-atlas-flow" aria-label="Atlas workflow map">
+<div class="public-atlas-flow" aria-label={ariaLabel}>
 	<div class="public-atlas-kicker">
 		<strong>Workflow map</strong>
 		<small>{counts}</small>
@@ -194,7 +195,7 @@
 			[PUBLIC_ATLAS_FLOW_SIZE.width + 120, PUBLIC_ATLAS_FLOW_SIZE.height + 120]
 		]}
 		{proOptions}
-		aria-label="Atlas workflow map"
+		aria-label={ariaLabel}
 		onnodeclick={handleNodeClick}
 		onnodedragstop={handleNodeDragStop}
 		onselectionchange={handleSelectionChange}

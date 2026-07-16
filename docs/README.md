@@ -11,13 +11,14 @@ Read in this order when you need broad repo context:
 1. [CREATE_SOMETHING_SYSTEMS_THESIS.md](./CREATE_SOMETHING_SYSTEMS_THESIS.md) — synthesis spine for the practice-led systems thesis
 2. [THE_DELEGATION_PRACTICE_EXPERIENCE.md](./THE_DELEGATION_PRACTICE_EXPERIENCE.md) — canonical experience contract for the thesis, lab, field practice, defense, and school
 3. [CREATE_SOMETHING_SYSTEMS_THESIS_EVIDENCE.generated.md](./CREATE_SOMETHING_SYSTEMS_THESIS_EVIDENCE.generated.md) — living claim and citation report generated from `docs/thesis/claims.yaml`
-4. [MCP_FIRST_THESIS.md](./MCP_FIRST_THESIS.md) — strategic thesis, packaging, and market framing
-5. [THREE_TIER_FRAMEWORK.md](./THREE_TIER_FRAMEWORK.md) — Database / Automation / Judgment model
-6. [AGENT_RUN_RECEIPT_CHARTER.md](./AGENT_RUN_RECEIPT_CHARTER.md) — agent-run-with-receipts operating charter
-7. [CREATE_SOMETHING_DATABASE_LAYER.md](./CREATE_SOMETHING_DATABASE_LAYER.md) — reusable database-layer product direction
-8. [packages/database-layer/docs/agent-wiki/business-recommendations.md](../packages/database-layer/docs/agent-wiki/business-recommendations.md) — generated operating lanes for CREATE SOMETHING business recommendations
-9. [POLICY_OS_PRODUCT_DEFINITION.md](./POLICY_OS_PRODUCT_DEFINITION.md) — canonical paid package definition
-10. [policies/README.md](./policies/README.md) — versioned policy artifacts
+4. [CREATE_SOMETHING_PRODUCT_FAMILY.md](./CREATE_SOMETHING_PRODUCT_FAMILY.md) — public Map -> Build -> Control packaging and internal compatibility boundary
+5. [MCP_FIRST_THESIS.md](./MCP_FIRST_THESIS.md) — strategic thesis, packaging, and market framing
+6. [THREE_TIER_FRAMEWORK.md](./THREE_TIER_FRAMEWORK.md) — Database / Automation / Judgment model
+7. [AGENT_RUN_RECEIPT_CHARTER.md](./AGENT_RUN_RECEIPT_CHARTER.md) — agent-run-with-receipts operating charter
+8. [CREATE_SOMETHING_DATABASE_LAYER.md](./CREATE_SOMETHING_DATABASE_LAYER.md) — reusable database-layer product direction
+9. [packages/database-layer/docs/agent-wiki/business-recommendations.md](../packages/database-layer/docs/agent-wiki/business-recommendations.md) — generated operating lanes for CREATE SOMETHING business recommendations
+10. [POLICY_OS_PRODUCT_DEFINITION.md](./POLICY_OS_PRODUCT_DEFINITION.md) — Control product definition and Policy OS compatibility contract
+11. [policies/README.md](./policies/README.md) — versioned policy artifacts
 
 ## Navigation by task
 
@@ -25,6 +26,7 @@ Read in this order when you need broad repo context:
 
 - [CREATE_SOMETHING_SYSTEMS_THESIS.md](./CREATE_SOMETHING_SYSTEMS_THESIS.md)
 - [THE_DELEGATION_PRACTICE_EXPERIENCE.md](./THE_DELEGATION_PRACTICE_EXPERIENCE.md)
+- [CREATE_SOMETHING_PRODUCT_FAMILY.md](./CREATE_SOMETHING_PRODUCT_FAMILY.md)
 - [CREATE_SOMETHING_SYSTEMS_THESIS_EVIDENCE.generated.md](./CREATE_SOMETHING_SYSTEMS_THESIS_EVIDENCE.generated.md)
 - [thesis/README.md](./thesis/README.md)
 - [MCP_FIRST_THESIS.md](./MCP_FIRST_THESIS.md)

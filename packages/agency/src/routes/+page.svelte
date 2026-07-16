@@ -227,8 +227,8 @@
   <PerformanceContrastChapter
     eyebrow="Workflow plan"
     title="Map the work before AI runs it."
-    description="Atlas turns the current process into a clear map: which signals matter, where work moves, what AI can handle, where people approve, and what proof records the outcome."
-    intervention={{ label: 'Intervention 01', title: 'Atlas workflow map', detail: 'A shared canvas makes systems, authority, risk, and proof inspectable before implementation.' }}
+    description="CREATE SOMETHING Map turns the current process into a clear workflow definition: which signals matter, where work moves, what AI can handle, where people approve, and what proof records the outcome."
+    intervention={{ label: 'Intervention 01', title: 'Map workflow definition', detail: 'A shared canvas makes systems, authority, risk, and proof inspectable before implementation.' }}
 	artifactPlacement="full-width"
   >
     {#snippet artifact()}

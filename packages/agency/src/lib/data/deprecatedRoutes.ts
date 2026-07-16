@@ -3,6 +3,7 @@ export const deprecatedRedirects: Readonly<Record<string, string>> = {
 	'/category': '/services',
 	'/work': '/',
 	'/discover': '/',
+	'/atlas': '/map',
 	'/dify': '/stack',
 	'/notion': '/stack'
 };

@@ -184,8 +184,10 @@ test('commercial decision routes lead with plain meaning before owned terminolog
   assert.match(services, /See the workflow before deciding to build/);
   assert.doesNotMatch(services, /PerformanceFieldSequence|PerformanceThesisConditions/);
 
-  assert.match(productsPage, /title="One workflow map\. Three places to operate\."/);
-  assert.match(productsPage, /Atlas maps the workflow\. Signal watches changes\. Decision routes judgment\. Proof keeps the record\./);
+  assert.match(productsPage, /title="Map the system\. Control the work\."/);
+  assert.match(productsPage, /CREATE SOMETHING Map stands alone/);
+  assert.match(productsPage, /CREATE SOMETHING Control stands alone/);
+  assert.match(productsPage, /Control includes Map/);
   assert.doesNotMatch(productsPage, /Product hierarchy|Product protocol|Operating sequence/);
 
   assert.match(stack, /You keep the accounts, data, approval rights, and operating history/);

@@ -375,7 +375,7 @@
 
 </script>
 
-<section class="public-atlas" class:compact={compact} aria-label="Public Atlas workflow canvas">
+<section class="public-atlas" class:compact={compact} aria-label="Public Map workflow canvas">
 	<div class="atlas-copy">
 		<span>Mapping warmup</span>
 		<h3>Turn one workflow into a map before booking.</h3>
@@ -394,10 +394,10 @@
 							<span>Map readiness</span>
 							<strong>{readiness.level}</strong>
 						</div>
-						<div class="progress-meter" aria-label={`${mappedPercent}% of Atlas dimensions mapped`}>
+						<div class="progress-meter" aria-label={`${mappedPercent}% of Map dimensions mapped`}>
 							<span style={`width: ${mappedPercent}%`}></span>
 						</div>
-						<div class="dimension-strip" aria-label="Atlas dimension coverage">
+						<div class="dimension-strip" aria-label="Map dimension coverage">
 							{#each dimensionCoverage as lane}
 								<span class:mapped={lane.mapped} title={lane.description}>
 									{lane.label}
@@ -435,7 +435,7 @@
 					</div>
 				</div>
 
-				<div class="focus-strip" aria-label="Atlas focus mode">
+				<div class="focus-strip" aria-label="Map focus mode">
 					{#each focusGroups as group}
 						<button
 							type="button"
@@ -451,7 +451,7 @@
 					{/each}
 				</div>
 
-				<div class="atlas-flow-viewport" aria-label="Atlas flow canvas">
+				<div class="atlas-flow-viewport" aria-label="Map flow canvas">
 					<PublicAtlasFlow
 						{canvas}
 						{flowId}

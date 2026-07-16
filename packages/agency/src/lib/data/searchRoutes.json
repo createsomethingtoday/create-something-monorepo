@@ -24,10 +24,16 @@
 		"lastmod": "2026-06-28"
 	},
 	{
-		"path": "/atlas",
+		"path": "/map",
 		"changefreq": "weekly",
 		"priority": "0.85",
 		"lastmod": "2026-06-19"
+	},
+	{
+		"path": "/control",
+		"changefreq": "monthly",
+		"priority": "0.85",
+		"lastmod": "2026-07-16"
 	},
 	{
 		"path": "/basketball-systems-lab",

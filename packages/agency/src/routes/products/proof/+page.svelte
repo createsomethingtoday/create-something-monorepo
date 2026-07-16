@@ -22,9 +22,9 @@
         'Proof is the product surface for the ledger idea. It records what happened and why without exposing private logs, credentials, or sensitive client data.'
     },
     {
-      question: 'How does Proof connect back to Atlas?',
+      question: 'How does Proof connect back to Map?',
       answer:
-        'Proof records back onto Atlas so operators can see which workflow node produced the outcome and what evidence supports it.'
+        'Proof records back onto Map so operators can see which workflow node produced the outcome and what evidence supports it.'
     }
   ];
 
@@ -38,12 +38,12 @@
       points: ['Evidence', 'Outcome', 'Receipt', 'Rollback note']
     },
     {
-      eyebrow: 'Atlas connection',
+      eyebrow: 'Map connection',
       icon: 'folder',
       title: 'Every receipt points back to the map',
       detail:
-        'Atlas shows where the Proof came from, which Signal and Decision produced it, and what owner should inspect it next.',
-      points: [`Composition: ${composition.id}`, 'Hub: Atlas']
+        'Map shows where the Proof came from, which Signal and Decision produced it, and what owner should inspect it next.',
+      points: [`Composition: ${composition.id}`, 'Hub: Map']
     }
   ];
 
@@ -65,7 +65,7 @@
     },
     {
       icon: 'objects' as const,
-      value: 'Atlas',
+      value: 'Map',
       label: 'The map shows where the Proof belongs and what system relationship it affects.'
     }
   ];
@@ -112,9 +112,9 @@
     {
       eyebrow: 'Map',
       icon: 'folder',
-      title: 'Atlas',
+      title: 'Map',
       detail: 'Attach each proof record to the workflow map.',
-      href: '/atlas'
+      href: '/map'
     }
   ];
 
@@ -132,7 +132,7 @@
       detail: 'Show the audit trail without exposing credentials, raw logs, or sensitive client data.'
     },
     {
-      label: 'Atlas',
+      label: 'Map',
       icon: 'folder',
       title: 'Attach the receipt to the map',
       detail: 'Make the proof record visible in the workflow where the decision happened.'
@@ -142,15 +142,15 @@
   const relatedLinks = [
     { label: 'Signal inbox', href: '/products/signal' },
     { label: 'Decision queue', href: '/products/decision' },
-    { label: 'Atlas map', href: '/atlas' },
+    { label: 'Map', href: '/map' },
     { label: 'Product overview', href: '/products' }
   ];
 </script>
 
 <SEO
   title="Proof Graph for App Governance | CREATE SOMETHING .agency"
-  description="Proof is the ledger surface for app governance: evidence, decisions, outcomes, receipts, rollback notes, and audit trails attached to Atlas."
-  keywords="app governance proof graph, workflow ledger, decision receipts, audit trail, Atlas governance proof"
+  description="Proof is the ledger surface inside Control: evidence, decisions, outcomes, receipts, rollback notes, and audit trails attached to Map."
+  keywords="app governance proof graph, workflow ledger, decision receipts, audit trail, workflow control proof"
   ogImage="/og-image.png"
   propertyName="agency"
   {faqItems}

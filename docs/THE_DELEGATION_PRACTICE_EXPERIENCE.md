@@ -36,18 +36,21 @@ Every term has one job.
 | Design language | **Performance Lab** | Makes the system feel trained, tested, governed, and proven under pressure. |
 | Operating method | **Signal -> Decision -> Proof** | Provides the recurring workflow and page rhythm. |
 | Game-theoretic mechanism | **Earned Authority** | Uses verified proof to preserve, widen, narrow, or revoke a contextual authority envelope. |
-| Service language | **Workflow Trust Layer** | Names the current `.agency` implementation service for one workflow. |
-| Product package | **Policy OS** | Ships the governed contracts, skills, MCP boundaries, golden tasks, runbook, and tuning loop. |
-| Map interface | **Atlas** | Makes actors, systems, artifacts, constraints, actions, and ownership legible. |
+| Public mapping product | **CREATE SOMETHING Map** | Sells a living workflow definition as a standalone subscription. |
+| Implementation service | **CREATE SOMETHING Build** | Turns an approved Map into an owned system and handoff. |
+| Governed product | **CREATE SOMETHING Control** | Ships governed execution as a standalone subscription and includes Map. |
+| Internal mapping implementation | **Atlas** | Powers actors, systems, artifacts, constraints, actions, and ownership without becoming the public product name. |
+| Internal policy package | **Policy OS** | Retains governed contracts, skills, MCP boundaries, entitlements, golden tasks, and runbook compatibility inside Control. |
 | Operator surfaces | **Inbox / Map / Proof** | Routes decisions, provides context, and records outcomes. |
 | Practice surfaces | **Workbench / Learn / Pi** | Supports exercises, curriculum, and installable practice primitives. |
 
 ### Vocabulary rule
 
-`Delegated Work Control` must remain the category, not a route name. `Policy OS`
-must remain the paid package, not the thesis. `Atlas` must remain the mapping
-and context surface, not the entire method. `Performance Lab` must remain the
-design language, not a second experience competing with The Delegation Practice.
+`Delegated Work Control` must remain the category, not a route name. Public
+commercial language follows `Map -> Build -> Control`; Control includes Map.
+`Policy OS` and `Atlas` remain internal or compatibility contracts rather than
+public package names. `Performance Lab` remains the design language, not a
+second experience competing with The Delegation Practice.
 
 ## Name comparison
 
@@ -232,14 +235,14 @@ createsomething.agency/practice
 ```
 
 `.agency` owns the route because the primary audience is accountable operators
-and the package already owns the public Atlas story, Delegation Card, workflow
+and the package already owns the public Map story, Delegation Card, workflow
 mapping, service handoff, and client-safe proof patterns.
 
 The route hands off by function:
 
 ```text
 /practice
-  -> /atlas                                 map one workflow
+  -> /map                                   map one workflow
   -> createsomething.io/papers/...          inspect research and critique
   -> createsomething.space/praxis/...       run a practice exercise
   -> learn.createsomething.space/paths/...  follow the guided practicum
@@ -606,7 +609,7 @@ examination.
 | Experience need | Destination | Receipt returned to the experience |
 | --- | --- | --- |
 | Read the full argument | `docs/CREATE_SOMETHING_SYSTEMS_THESIS.md` and `.io` papers | Claim and evidence status. |
-| Inspect or edit the workflow map | Atlas / `.agency/atlas` | Map ID, readiness, owner, and unresolved nodes. |
+| Inspect or edit the workflow map | CREATE SOMETHING Map / `.agency/map` | Map ID, readiness, owner, and unresolved nodes. |
 | Run a rehearsal | `.space` Workbench or package-local harness | Golden-task result and recovery evidence. |
 | Follow guided practice | `packages/lms` | Practice Receipt, not production entitlement. |
 | Install practice primitives | Pi packages | Package version and local check result. |

@@ -2,36 +2,40 @@
   import {
     Button,
     PerformanceCampaignOpening,
+    PerformanceCardGrid,
     PerformanceContrastChapter,
+    PerformancePageSection,
     SEO
   } from '@create-something/canon';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
+  import { getPublicProduct } from '$lib/data/productFamily';
   import PublicAtlasCanvas from '$lib/components/PublicAtlasCanvas.svelte';
+
+  const mapProduct = getPublicProduct('map');
+  const buildProduct = getPublicProduct('build');
+  const controlProduct = getPublicProduct('control');
 
   const services = [
     {
-      name: 'Workflow Map',
-      description:
-        'A fixed first map of the workflow, systems, AI tasks, approval path, and first controlled pilot.',
-      type: 'First workflow map',
-      price: 'Fixed scope',
-      priceDescription: 'Map before any build decision'
+      name: mapProduct.name,
+      description: mapProduct.customerJob,
+      type: 'Standalone product',
+      price: 'Monthly / yearly',
+      priceDescription: 'Pricing configured at launch'
     },
     {
-      name: 'Workflow Pilot',
-      description:
-        'A single workflow rebuilt with clear rules, clean handoffs, and production-safe behavior.',
-      type: 'Implementation Sprint',
+      name: buildProduct.name,
+      description: buildProduct.customerJob,
+      type: 'Implementation service',
       price: 'Custom',
       priceDescription: 'Scoped build'
     },
     {
-      name: 'Ongoing Workflow Control',
-      description:
-        'Ongoing care for live AI-assisted work: approvals, release checks, blocked states, recovery notes, and review rhythm.',
-      type: 'Operating Plan',
-      price: 'Custom',
-      priceDescription: 'Monthly'
+      name: controlProduct.name,
+      description: controlProduct.customerJob,
+      type: 'Standalone product',
+      price: 'Monthly / yearly',
+      priceDescription: 'Control includes Map; pricing configured at launch'
     },
     {
       name: 'Enterprise Extension',
@@ -43,11 +47,35 @@
     }
   ];
 
+  const familyCards = [
+    {
+      eyebrow: 'Standalone subscription',
+      title: mapProduct.name,
+      detail: mapProduct.outcome,
+      href: mapProduct.route,
+      points: ['Living workflow definition', 'Monthly or yearly', 'Useful without Build or Control']
+    },
+    {
+      eyebrow: 'Implementation service',
+      title: buildProduct.name,
+      detail: buildProduct.outcome,
+      href: agencyCoreMessaging.workflowMappingSessionHref,
+      points: ['Scoped implementation', 'Owned system and handoff', 'Quoted separately from software']
+    },
+    {
+      eyebrow: 'Standalone subscription',
+      title: controlProduct.name,
+      detail: controlProduct.outcome,
+      href: controlProduct.route,
+      points: ['Control includes Map', 'Monthly or yearly', 'Inbox / Map / Proof']
+    }
+  ];
+
   const faqItems = [
     {
       question: 'What is your primary service?',
       answer:
-        'The first offer is a fixed-scope Workflow Map. Workflow Pilot follows only when the first controlled path is clear enough to build.'
+        'Start with CREATE SOMETHING Map when the workflow still needs definition. Use CREATE SOMETHING Build for implementation, then CREATE SOMETHING Control when the workflow needs governed operation. Control includes Map.'
     },
     {
       question: 'Are agents part of the workforce?',
@@ -87,7 +115,7 @@
     proof={[{ label: 'Boundary', value: 'Named' }, { label: 'Pressure', value: 'Held' }, { label: 'Evidence', value: 'Attached' }]}
   >
     {#snippet actions()}
-      <Button href="#atlas-warmup">
+      <Button href="#map-warmup">
         {agencyCoreMessaging.selfMapLabel}
       </Button>
       <Button href={agencyCoreMessaging.servicesMappingSessionHref} variant="secondary">
@@ -96,12 +124,23 @@
     {/snippet}
   </PerformanceCampaignOpening>
 
-  <div id="atlas-warmup">
+  <PerformancePageSection
+    variant="white"
+    eyebrow="Product and service path"
+    title="Map -> Build -> Control"
+    description="Map and Control are standalone subscriptions. Build is the implementation service between them when a team wants CREATE SOMETHING to turn the approved definition into an owned system. Control includes Map."
+  >
+    {#snippet after()}
+      <PerformanceCardGrid items={familyCards} columns={3} ariaLabel="CREATE SOMETHING product and service family" />
+    {/snippet}
+  </PerformancePageSection>
+
+  <div id="map-warmup">
   <PerformanceContrastChapter
     eyebrow="Map before booking"
     title="See the workflow before deciding to build."
-    description="The public Atlas map turns one workflow into a first plan: the systems involved, which signals matter, what AI can handle, where people approve, and what proof records the outcome. It does not touch production systems."
-    intervention={{ label: 'Read-only warmup', title: 'Public Atlas canvas', detail: 'Explore the operating path without touching production systems.' }}
+    description="CREATE SOMETHING Map turns one workflow into a first plan: the systems involved, which signals matter, what AI can handle, where people approve, and what proof records the outcome. It does not touch production systems."
+    intervention={{ label: 'Read-only warmup', title: 'Public Map canvas', detail: 'Explore the operating path without touching production systems.' }}
     artifactPlacement="full-width"
   >
     {#snippet artifact()}

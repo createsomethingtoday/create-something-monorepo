@@ -13,11 +13,27 @@
   import { listGovernanceProducts, type GovernanceProduct } from '@create-something/canon/governance';
   import { products, type Product } from '$lib/data/services';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
+  import { PUBLIC_PRODUCT_SEQUENCE, getPublicProduct } from '$lib/data/productFamily';
 
   type ProductSurfaceKind = 'signal' | 'decision' | 'proof';
 
   const featured = products.filter((product) => product.category === 'featured');
   const governanceProducts = listGovernanceProducts();
+  const familyItems: PerformanceCardItem[] = PUBLIC_PRODUCT_SEQUENCE.map((productId) => {
+    const product = getPublicProduct(productId);
+    return {
+      eyebrow: product.kind === 'subscription' ? 'Standalone subscription' : 'Implementation service',
+      title: product.name,
+      detail: product.outcome,
+      href: product.route,
+      points:
+        product.id === 'control'
+          ? ['Control includes Map', 'Monthly or yearly', 'Inbox / Map / Proof']
+          : product.id === 'map'
+            ? ['Living workflow definition', 'Monthly or yearly', 'Useful on its own']
+            : ['Scoped implementation', 'Owned system and handoff', 'Quoted separately']
+    };
+  });
 
   const faqItems = [
     {
@@ -43,12 +59,12 @@
     title: string;
     detail: string;
     href: string;
-  }> = governanceProducts.map((product) => ({
+  }> = governanceProducts.filter((product) => product.id !== 'atlas').map((product) => ({
     kind: miniArtifactKind(product),
     label: product.name,
     title: surfaceTitle(product),
     detail: product.description,
-    href: product.id === 'atlas' ? '/atlas' : `/products/${product.id}`
+    href: `/products/${product.id}`
   }));
 
   function productCard(product: Product): PerformanceCardItem {
@@ -83,7 +99,6 @@
   }
 
   function surfaceTitle(product: GovernanceProduct): string {
-    if (product.id === 'atlas') return 'Map the workflow';
     if (product.id === 'signal') return 'Watch the source';
     if (product.id === 'decision') return 'Route the judgment';
     return 'Preserve the record';
@@ -91,9 +106,9 @@
 </script>
 
 <SEO
-  title="AI Workflow Product System | CREATE SOMETHING .agency"
-  description="The CREATE SOMETHING product system for controlled AI workflows: Atlas maps the work, Signal watches changes, Decision routes judgment, and Proof preserves the record."
-  keywords="AI workflow product system, workflow control layer, Signal Decision Proof, Atlas workflow map, operator surfaces, workflow audit trail"
+  title="Map and Control | CREATE SOMETHING .agency"
+  description="CREATE SOMETHING Map defines the workflow. CREATE SOMETHING Control governs operation and includes Map. CREATE SOMETHING Build connects the approved system."
+  keywords="workflow mapping subscription, AI workflow control, governed execution, workflow implementation service, operator surfaces"
   ogImage="/og-image.png"
   propertyName="agency"
   {faqItems}
@@ -101,10 +116,10 @@
 
 <PerformanceCampaignOpening
   eyebrow="Product system"
-  title="One workflow map. Three places to operate."
-  lede="Atlas maps the workflow. Signal watches changes. Decision routes judgment. Proof keeps the record. The map defines the boundary; the three operating surfaces keep responsibility visible."
+  title="Map the system. Control the work."
+  lede="CREATE SOMETHING Map stands alone as a living workflow definition. CREATE SOMETHING Control stands alone as the governed operating product and includes Map. CREATE SOMETHING Build is the implementation service when you want us to connect the approved system."
   media={{ src: '/images/performance-lab/product-system-natural.webp', mobileSrc: '/images/performance-lab/product-system-natural-mobile.webp', alt: 'Aerial black-and-white view of one water-control structure dividing flow across three channels' }}
-  proof={[{ label: 'Atlas', value: 'Map' }, { label: 'Signal', value: 'Watch' }, { label: 'Decision', value: 'Route' }, { label: 'Proof', value: 'Record' }]}
+  proof={[{ label: 'Map', value: 'Define' }, { label: 'Build', value: 'Connect' }, { label: 'Control', value: 'Operate' }]}
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.selfMapHref}>
@@ -117,21 +132,21 @@
 </PerformanceCampaignOpening>
 
 <PerformanceContrastChapter
-  eyebrow="System anatomy"
-  title="One map coordinates three operating surfaces."
-  description="Atlas holds the map. Signal watches, Decision routes, and Proof records. Substrate is the Foundation underneath; Map / Pilot / Operate is the delivery method."
-  intervention={{ label: 'Product system', title: 'Atlas → Signal / Decision / Proof', detail: 'Map the work once, then watch the change, route the judgment, and preserve the record.' }}
+  eyebrow="Product anatomy"
+  title="Map -> Build -> Control"
+  description="Map defines the system. Build connects it when implementation is needed. Control operates it through Signal, Decision, and Proof. Control includes Map, so governed workflows never lose their legible definition."
+  intervention={{ label: 'One shared system', title: 'Define -> Connect -> Operate', detail: 'Two standalone products and one implementation service reuse the same workflow, canvas, policy, and receipt contracts.' }}
 >
   {#snippet artifact()}
     <aside class="product-system-artifact" aria-label="CREATE SOMETHING product system">
       <div class="product-system-artifact__header">
         <span>AI workflow system</span>
-        <strong>Atlas / Signal / Decision / Proof</strong>
+        <strong>Map / Build / Control</strong>
       </div>
       <div class="product-system-artifact__atlas">
-        <span>Atlas</span>
-        <strong>Workflow map</strong>
-        <p>Systems, owners, approvals, stops, and proof requirements.</p>
+        <span>Map</span>
+        <strong>Living workflow definition</strong>
+        <p>Systems, owners, approvals, stops, proof requirements, versions, and handoff.</p>
       </div>
       <div class="product-system-artifact__surfaces">
         <div>
@@ -154,8 +169,23 @@
 <PerformancePageSection
   variant="white"
   eyebrow="Product overview"
-  title="The product line follows the workflow."
-  description="This page is the index: each product surface has one job, a clear owner, and a visible relationship to the others."
+  title="Two products and one implementation service."
+  description="Subscribe to Map by itself, use Build when you want CREATE SOMETHING to implement the approved definition, or subscribe to Control for governed operation with Map included."
+>
+  {#snippet after()}
+    <PerformanceCardGrid
+      items={familyItems}
+      columns={3}
+      ariaLabel="CREATE SOMETHING Map Build and Control family"
+    />
+  {/snippet}
+</PerformancePageSection>
+
+<PerformancePageSection
+  variant="white"
+  eyebrow="Inside Control"
+  title="Signal, Decision, and Proof are operator surfaces."
+  description="They are not additive licenses. Together they let Control watch a change, route the judgment, and preserve the result against the workflow Map."
 >
   {#snippet after()}
     <div class="product-surface-list" aria-label="CREATE SOMETHING product surfaces">
@@ -198,8 +228,8 @@
 
 <PerformanceConversionHandoff
   eyebrow="Apply the proof"
-  title="Apply the proof to the workflow your team still protects by hand."
-  description="I’ll map the first workflow, identify the safest signal source, define who decides, and name what proof the control layer should leave behind."
+  title="Start with the workflow your team still protects by hand."
+  description="Use Map to define it, Build to connect it, or Control to operate it with approvals and proof. Control includes Map."
   handoff={{ owner: 'Workflow owner', authority: 'Human approval', proof: 'Map + state + receipt', state: 'ready' }}
 >
   {#snippet actions()}
@@ -321,7 +351,7 @@
 
   .product-surface-list {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     border: 1px solid var(--color-performance-line, #d7d7d2);
     border-radius: var(--radius-performance-sm, 4px);
     background: var(--color-performance-panel, #ffffff);
