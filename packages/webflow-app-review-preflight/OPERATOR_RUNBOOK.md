@@ -1,193 +1,283 @@
-# App Review Preflight Operator Runbook
+# Validate a Production Runtime with App Review Preflight
 
-Use this runbook to operate the production-runtime evidence loop for a Webflow App review. The loop succeeds when independent actors can replay the same immutable test package and receive server-owned evidence. It does **not** approve or reject an app.
+This guide shows you how to use App Review Preflight to test the production runtime for a Webflow App.
 
-## The 60-second rule
+It is written for a junior Webflow app developer or reviewer. You should know how to publish a Webflow test site and open the Designer Extension. You do not need to know the internal Worker, database, or E2B code.
 
-Before taking an action, identify four values:
+Preflight gives you evidence. It does not approve or reject an app.
 
-1. **Package:** the Runtime Test Package ID and bundle SHA-256.
-2. **Actor:** developer, reviewer, or Webflow runtime coordinator.
-3. **State:** package state, observation state, and sandbox termination state.
-4. **Next move:** the one action allowed by the decision table below.
+## What you will do
 
-If any value is unknown, stop and inspect. Do not create another package or run to make an unclear state disappear.
+You will:
 
-## The game being played
+1. Upload the exact app bundle you plan to submit.
+2. Connect that bundle to a dedicated published Webflow test site.
+3. Pin the production runtime by URL, SHA-256, and SRI.
+4. Ask Webflow's server to run the site in a fresh browser.
+5. Repeat the developer test on the same package.
+6. Ask a reviewer to replay that exact package.
 
-The developer knows what the app is intended to do. Webflow controls the observation environment. The reviewer decides how the evidence affects review outside this system. These roles stay separate because the actor who benefits from a pass must not control the evidence that earns it.
+At the end, you will know whether the published site ran the reviewed runtime and blocked the proxy canary.
 
-| Actor               | Goal                                                           | Allowed move                                                                | Cannot do                                                                           |
-| ------------------- | -------------------------------------------------------------- | --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| Developer           | Prove the submitted bundle behaves as declared                 | Upload a bundle, prepare a package, request a run, read evidence            | Upload observed evidence, see the runner capability, inspect another owner's review |
-| Reviewer            | Test whether the same evidence can be reproduced independently | Inspect history and replay the exact package                                | Change package bindings, turn evidence into an approval, submit runner evidence     |
-| Runtime coordinator | Preserve bindings and start one isolated run                   | Issue a one-time job, create E2B, accept validated artifacts, terminate E2B | Relax a predicate, accept developer evidence, make a review decision                |
-| Operator            | Keep the evidence loop safe and legible                        | Inspect state, follow the decision table, record receipts, escalate         | Edit evidence, bypass identity, retry across an unresolved sandbox                  |
+## Before you start
 
-### Loss ordering
+Have these items ready:
 
-The system intentionally prefers a visible block to a false pass.
+- the exact zip bundle you plan to submit
+- a dedicated Webflow test site with the app installed
+- the published `webflow.io` URL for that site
+- the Webflow site or installation ID
+- the exact production runtime URL
+- the SHA-256 for the runtime file
+- the matching SRI value for the same file
+- a CSS selector that appears only when the runtime is ready
+- the approved proxy-check URL template
 
-| Outcome                                               | Operational value | Response                                                                      |
-| ----------------------------------------------------- | ----------------: | ----------------------------------------------------------------------------- |
-| Honest pass reproduced by developer and reviewer runs |           Highest | Preserve the receipts and hand evidence to review                             |
-| Honest block with an exact predicate                  |            Useful | Fix the app or package input, then prepare a new package when bindings change |
-| Infrastructure failure                                |        Incomplete | Repair the execution path; do not interpret it as app evidence                |
-| False pass or partner-manufactured evidence           |      Unacceptable | Fail closed and escalate                                                      |
+Do not use a customer site. Do not use a runtime URL that can change while the review is running.
 
-This loss ordering is the core game-theory rule. A developer gains nothing by manipulating local output because local output cannot become `webflow_observed`. A reviewer gains confidence by replaying the unchanged package. The stable strategy for every actor is therefore to preserve the package and improve the quality of observation.
+## Terms you need
 
-## What counts as a win
+| Term                 | Plain meaning                                                                        |
+| -------------------- | ------------------------------------------------------------------------------------ |
+| Bundle               | The zip file you plan to submit for review                                           |
+| Bundle SHA-256       | A fingerprint for the zip; different files have a different fingerprint              |
+| Runtime              | The JavaScript file that the published site loads and runs                           |
+| Runtime SHA-256      | A fingerprint for the runtime file that actually ran                                 |
+| SRI                  | The integrity value the browser uses to check a script before it runs                |
+| Runtime Test Package | The saved bundle, site, runtime, and test settings for one review attempt            |
+| Observation job      | One server-requested browser run against one test package                            |
+| E2B sandbox          | The short-lived remote computer that runs the browser                                |
+| `webflow_observed`   | Evidence produced by Webflow's server-owned browser, not your computer               |
+| Proxy canary         | A harmless request used to prove that the app proxy does not expose an arbitrary URL |
 
-For the production pilot, collect all of the following:
+## Step 1: Upload the bundle
 
-- two completed developer-requested jobs for the same Runtime Test Package ID
-- one completed reviewer replay for that exact package
-- the same review-version ID and bundle SHA-256 across all three jobs
-- `webflow_observed` trust on each completed observation
-- immutable artifact count and SHA-256 receipts for each job
-- a recorded security result of `passed` or `blocked`
-- a recorded negative proxy outcome
-- `verified` sandbox termination for every sandbox that started
+1. Open **App Review Preflight** in Webflow Designer.
+2. Select the exact zip bundle you plan to submit.
+3. Wait for the bundle review to finish.
+4. Read every deterministic finding.
 
-A security result of `blocked` can still complete the operational loop. It is valid evidence that the app did not satisfy a runtime predicate. Only the external review process can decide what that evidence means for the app.
+If the bundle review reports a problem, fix the bundle and upload a revision. Do not move to runtime testing until you understand the remaining findings.
 
-## State machine
+When the bundle is ready, record:
 
-```mermaid
-stateDiagram-v2
-    [*] --> PackageReady: package bindings accepted
-    PackageReady --> ActiveRun: developer requests run
-    ActiveRun --> Complete: evidence validated and stored
-    ActiveRun --> Failed: launch or execution fails
-    ActiveRun --> Expired: 15-minute job budget ends
-    Complete --> PackageReady: request another run on same package
-    Failed --> PackageReady: failure reconciled
-    Expired --> PackageReady: sandbox termination verified
-    PackageReady --> ReviewerReplay: reviewer opens exact-package handoff
-    ReviewerReplay --> Complete: replay evidence stored
-    Complete --> ReviewHandoff: receipts complete
-    ReviewHandoff --> [*]
+- review ID
+- review-version ID
+- bundle SHA-256
+
+These values identify the exact code under test.
+
+## Step 2: Prepare the Runtime Test Package
+
+Find the **Webflow runtime observation** card. Select **Prepare another test package** if an older package is already shown.
+
+Enter each field carefully:
+
+| Field                           | What to enter                                              | What it proves                                           |
+| ------------------------------- | ---------------------------------------------------------- | -------------------------------------------------------- |
+| Published Webflow test URL      | The dedicated site's published `https://...webflow.io` URL | The browser tested a real published Webflow site         |
+| Webflow installation or site ID | The ID for that dedicated test site                        | The runtime license belongs to the named installation    |
+| Immutable runtime URL           | The exact production JavaScript URL                        | The review points to one runtime file                    |
+| SHA-256                         | The lowercase SHA-256 for the runtime bytes                | The executed file matches the reviewed file              |
+| Script integrity (SRI)          | The `sha256-...` integrity value for those same bytes      | The page pins the script in the browser                  |
+| Ready selector                  | A CSS selector added when the runtime is ready             | The runtime finished loading and reached its ready state |
+| Proxy probe URL template        | The approved proxy template with the canary placeholder    | The proxy refuses an arbitrary destination               |
+
+Review the values before you continue. A previous setup may be loaded for convenience, but the loaded values are still test input. They are not evidence.
+
+1. Select **Prepare Webflow run**.
+2. Read the **Confirm dedicated test access** dialog.
+3. Select **Confirm test package**.
+
+The card should show **Test package ready** and a shortened bundle SHA.
+
+### Get SHA-256 and SRI from the same runtime file
+
+If the runtime URL is public, download it once and calculate both values from that file:
+
+```bash
+export RUNTIME_URL="https://cdn.example.com/runtime/version/runtime.js"
+curl -fsSL "$RUNTIME_URL" -o /tmp/app-review-runtime.js
+shasum -a 256 /tmp/app-review-runtime.js
+openssl dgst -sha256 -binary /tmp/app-review-runtime.js | openssl base64 -A
 ```
 
-There is no transition from this state machine to official approval. That boundary is deliberate.
+Use the 64-character value from `shasum` as **SHA-256**. Add `sha256-` before the Base64 value from `openssl` and use the result as **Script integrity (SRI)**.
 
-## Decision table
+Both values must describe the exact bytes served by the runtime URL. If a later download produces different values, the URL is not immutable enough for this package.
 
-Read the three state columns together. The most restrictive state controls the next move.
+For a ready selector, prefer one clear marker such as `[data-runtime-ready]`. The runtime must add that marker only after it is ready for review.
 
-| Package state          | Latest observation                    | Sandbox termination       | Meaning                                                                | Operator move                                                           |
-| ---------------------- | ------------------------------------- | ------------------------- | ---------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| `ready`                | none                                  | not started               | Inputs are bound; no browser has run                                   | Start the first developer run                                           |
-| `ready`                | `approved`, `running`, or `uploading` | `pending`                 | One active job owns the package                                        | Wait, then select **Check run status**                                  |
-| `ready`                | `complete` + `webflow_observed`       | `verified`                | Evidence is immutable and the sandbox is gone                          | Record the receipt; rerun the same package or begin reviewer replay     |
-| `ready`                | `complete` + `webflow_observed`       | `failed` or `pending`     | Evidence exists, but cleanup is unresolved                             | Stop; reconcile termination before another run                          |
-| `ready`                | `failed`                              | not started               | Configuration or sandbox creation failed before a sandbox was retained | Repair infrastructure; retry the same package                           |
-| `ready`                | `failed`                              | `verified`                | A sandbox started, failed, and was removed                             | Record the failure stage; retry the same package after repair           |
-| `ready`                | `failed`                              | `failed` or `pending`     | A failed job may still own a sandbox                                   | Stop; reconcile termination before retrying                             |
-| `ready`                | `expired` or `revoked`                | `verified` or not started | The job is terminal and no sandbox remains                             | Request a fresh run if the package license is still valid               |
-| `expired` or `revoked` | any                                   | any                       | The package cannot authorize another job                               | Prepare a new package after all prior sandboxes are verified terminated |
+The proxy template must contain `{canaryUrl}` where the test URL belongs. Do not replace the placeholder yourself.
 
-Two rapid requests for the same package are deduplicated to the one active job. Never treat a deduplicated response as a second run.
+### When to create a new package
 
-## Normal operating sequence
+Create a new package when any of these values changes:
 
-### 1. Establish the immutable checkpoint
+- bundle SHA-256
+- review-version ID
+- published test site
+- site or installation ID
+- runtime URL
+- runtime SHA-256 or SRI
+- ready selector
+- proxy-check URL
 
-In the Designer Extension:
+Do not create a new package merely because you want to run the same test again.
 
-1. Confirm the uploaded zip is the exact submission bundle.
-2. Record the review-version ID and bundle SHA-256.
-3. Confirm the deterministic bundle review has no unexplained result.
-4. Prepare one Runtime Test Package with the dedicated published test site.
-5. Record the Runtime Test Package ID.
+## Step 3: Run the developer test twice
 
-The package must bind:
+### First run
 
-- published Webflow test URL and host
-- Webflow installation or site ID
-- current review-version ID and bundle SHA-256
-- immutable runtime URL
-- runtime SHA-256 and matching SRI
-- runtime-ready selector
-- bounded negative proxy probe
-- installation allowlist expiring within 24 hours
+1. Confirm the dedicated test site is published and available.
+2. Select **Run test now**.
+3. Wait while the card shows `approved`, `running`, or `uploading`.
+4. Select **Check run status** until the run finishes.
+5. Record the observation job ID and result.
 
-If any binding changes, prepare a new package. Do not compare a new package as if it were another run of the old one.
+The server creates a fresh E2B sandbox and opens the published site. Your local browser does not create the review evidence.
 
-### 2. Run the developer check twice
+### Second run
 
-1. Select **Run test now**.
-2. Wait for a terminal observation state.
-3. Select **Check run status** until the state is terminal.
-4. Record the first job receipt.
-5. Confirm sandbox termination is `verified`.
-6. Select **Run test again** without preparing another package.
-7. Record the second job receipt.
-8. Confirm sandbox termination is `verified`.
+1. Confirm the first run is finished.
+2. Keep the same Runtime Test Package.
+3. Select **Run test again**.
+4. Select **Check run status** until the second run finishes.
+5. Record the second observation job ID and result.
 
-The two job IDs must differ. The Runtime Test Package ID, review-version ID, and bundle SHA-256 must match.
+The two job IDs must be different. The package ID, review-version ID, and bundle SHA-256 must remain the same.
 
-### 3. Run the independent reviewer replay
+Two quick clicks do not create two runs. The server returns the one active job until that job is finished.
+
+## Step 4: Ask a reviewer to replay the package
+
+A reviewer uses a separate identity and a server-owned workspace.
 
 1. Sign in with a configured reviewer identity.
-2. Select **Create reviewer workspace**.
-3. Open the one-time handoff.
-4. Compare the package bindings and previous observation history.
-5. Request the replay from the reviewer workspace.
-6. Refresh until the new job is terminal.
-7. Record the reviewer job receipt.
-8. Confirm sandbox termination is `verified`.
+2. Open the same review and Runtime Test Package.
+3. Select **Create reviewer workspace**.
+4. Select **Open reviewer workspace**.
+5. Compare the package details with the two developer runs.
+6. Select **Run independent replay**.
+7. Select **Refresh status** until the replay finishes.
+8. Record the reviewer observation job ID and result.
 
-The reviewer replay must create a new job. It must not overwrite either developer observation.
+The reviewer replay must use the same package ID, review-version ID, and bundle SHA-256. It creates a third job and does not replace either developer run.
 
-### 4. Hand evidence to review
+## Step 5: Read the result
 
-Attach the three receipts and state one conclusion:
+### Runtime security
 
-- **reproduced pass:** all three observations passed the runtime predicates
-- **reproduced block:** all three observations reported the same blocker
-- **mixed evidence:** observations disagree; manual investigation is required
-- **infrastructure incomplete:** one or more runs did not produce trusted evidence
+| Result                       | Meaning                                                 | Your next move                                     |
+| ---------------------------- | ------------------------------------------------------- | -------------------------------------------------- |
+| **Runtime security passed**  | Every required runtime check passed in this browser run | Record the result and continue the three-run loop  |
+| **Runtime security blocked** | One or more runtime checks failed                       | Open the blocker details and fix the named problem |
 
-Never write “approved by Preflight.” Preflight produces evidence only.
+The app checks each fact separately:
 
-## Read the result correctly
+- the browser reached the published site
+- the ready selector appeared
+- the page loaded the pinned runtime
+- the executed runtime matched the SHA-256
+- the script tag matched the SRI
+- the runtime did not create new script elements
+- no unreviewed child script appeared
+- the proxy canary was blocked
 
-### Security result
+A blocked result is useful evidence. It means the browser ran, but the app did not meet one or more runtime rules.
 
-`passed` means all required runtime predicates passed in that observation. `blocked` means at least one predicate did not.
+### Proxy canary
 
-Inspect these predicates separately:
+| Result                        | Meaning                                                                 |
+| ----------------------------- | ----------------------------------------------------------------------- |
+| **Proxy canary blocked**      | Expected result; the proxy refused the canary destination               |
+| **Proxy canary exposed**      | Security blocker; the proxy allowed the canary destination              |
+| **Proxy canary inconclusive** | The check failed to reach a clear result; investigate before continuing |
 
-- published target reached
-- runtime-ready selector observed
-- runtime loaded by the page
-- executed runtime SHA-256 matched the pin
-- DOM integrity matched the SRI pin
-- no runtime-created script elements appeared
-- no unreviewed runtime scripts appeared
-- negative proxy canary was blocked
+### Evidence artifacts
 
-Do not collapse a failed predicate into “the sandbox failed.” Predicate failures are app evidence; launch, upload, and termination failures are infrastructure evidence.
+Open **Evidence artifact details** to see the saved artifact types, sizes, and SHA-256 values. These values let a reviewer confirm that the evidence was stored without trusting a screenshot or developer report.
 
-### Negative proxy result
+Do not read **Evidence captured by Webflow** as an approval. It only tells you who controlled the browser and evidence path.
 
-- `blocked`: the expected safe result
-- `exposed`: a security blocker
-- `error`: inconclusive; investigate before interpreting the run
+## Step 6: Decide whether the validation is complete
 
-### Cleanup result
+The production-runtime validation is complete when you have:
 
-Cleanup is recorded for context but is not scored for the current Consent Pro pilot. `residue_detected` still belongs in the receipt so a reviewer can judge it separately.
+- two completed developer jobs for one Runtime Test Package
+- one completed reviewer replay for that same package
+- three different observation job IDs
+- the same review-version ID and bundle SHA-256 on all three jobs
+- `webflow_observed` evidence on all three jobs
+- a security result and proxy result for all three jobs
+- verified E2B sandbox termination for every sandbox that started
 
-## Failure routing
+Choose one summary:
 
-Debug in Database, Automation, Judgment order.
+| Summary                     | Use it when                                      |
+| --------------------------- | ------------------------------------------------ |
+| `reproduced_pass`           | All three runs passed the same runtime checks    |
+| `reproduced_block`          | All three runs reported the same blocker         |
+| `mixed_evidence`            | The runs disagree and need manual investigation  |
+| `infrastructure_incomplete` | One or more runs did not return trusted evidence |
 
-### Database: are the bindings and states true?
+Only the external review process can approve or reject the app.
 
-Confirm the review version, package, latest job, actor, expiry, and sandbox lifecycle in D1. Use the production deployment's D1 binding; never copy credentials into the runbook or receipt.
+## If the app does not move forward
+
+Use the state shown in the app:
+
+| State          | What it means                                  | What to do                                                        |
+| -------------- | ---------------------------------------------- | ----------------------------------------------------------------- |
+| No observation | The package is ready but no browser has run    | Select **Run test now**                                           |
+| `approved`     | The server created a job                       | Wait, then check status                                           |
+| `running`      | The remote browser is testing the site         | Wait, then check status                                           |
+| `uploading`    | The server is checking and saving the evidence | Wait; do not start another run                                    |
+| `complete`     | Trusted evidence was saved                     | Read the result and record the receipt                            |
+| `failed`       | The sandbox or runner did not finish           | Read the safe error, then ask an operator to check the service    |
+| `expired`      | The package or 15-minute job window ended      | Refresh; prepare a new package only if the package itself expired |
+| `revoked`      | The package or job is no longer allowed        | Ask a reviewer why it was revoked before continuing               |
+
+### App problem or service problem?
+
+- A named runtime predicate is an **app result**. Fix the bundle, runtime, site, or package input.
+- A sandbox launch, runner start, upload, or termination error is a **service problem**. Keep the package and ask an operator to inspect the service.
+
+Do not change the app merely to make a service error disappear.
+
+## Stop and ask for help when
+
+- you cannot prove which bundle or runtime is under test
+- the review-version ID or bundle SHA changes between runs
+- another job remains `approved`, `running`, or `uploading`
+- a prior E2B sandbox is not verified as terminated
+- the reviewer workspace opens a different package
+- the developer and reviewer runs disagree
+- the proxy canary is exposed or inconclusive
+- anyone asks you to upload, edit, or relabel observed evidence
+- anyone describes a Preflight result as an official decision
+
+Record the IDs you can see before asking for help. Do not create more packages or jobs to hide an unclear state.
+
+## Why the app keeps each role separate
+
+The developer benefits from a pass, so the developer cannot control the browser that earns trusted evidence. Webflow's server runs the browser. The reviewer then repeats the test without changing the package.
+
+| Actor                   | What they control                                   | What they cannot control                     |
+| ----------------------- | --------------------------------------------------- | -------------------------------------------- |
+| Developer               | Bundle, test site, package input, run request       | Runner key, evidence upload, reviewer replay |
+| Reviewer                | Package inspection and replay request               | Package bindings or evidence upload          |
+| Webflow runtime service | Job, E2B browser, evidence checks, artifact storage | Official review decision                     |
+
+This makes preserving the package the best move for everyone. A developer gains nothing by changing local output because local output cannot earn `webflow_observed` status. A reviewer gains confidence by replaying the same package.
+
+The system prefers a clear block to a false pass. A block can be fixed. False evidence can mislead a review.
+
+## Operator-only service check
+
+You do not need this section to use the app. Use it only if you manage the Preflight Worker and a run is stuck or reports a service problem.
+
+Check the package's jobs in D1:
 
 ```sql
 SELECT
@@ -195,7 +285,6 @@ SELECT
   j.test_package_id,
   j.status,
   j.evidence_trust,
-  j.approved_by_actor,
   j.approved_at,
   j.consumed_at,
   j.expires_at,
@@ -208,125 +297,93 @@ WHERE j.test_package_id = '<runtime-test-package-id>'
 ORDER BY j.created_at ASC;
 ```
 
-Stop if an active job exists in `approved`, `running`, or `uploading`. Only one active job is allowed per package.
+Do not start another run while a job is `approved`, `running`, or `uploading`. If a sandbox started, its termination status must be `verified` before the next run.
 
-### Automation: did the execution path finish?
+The scheduled Worker task expires stale jobs and retries sandbox termination. Never construct or upload evidence by hand.
 
-Classify the failure before retrying:
+## Validation receipt
 
-| Failure class                    | Evidence                                                   | Safe response                                                                 |
-| -------------------------------- | ---------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| `configuration`                  | Runner not configured                                      | Restore reviewed server configuration; keep the package                       |
-| `sandbox_create`                 | E2B could not create or validate a sandbox                 | Check E2B service, template reference, and launch response; keep the package  |
-| `runner_start`                   | Sandbox exists but the baked runner did not accept the job | Check immutable template health and restricted traffic; verify termination    |
-| execution or evidence validation | Job started but no trusted result completed                | Inspect sanitized Worker/E2B logs and contract validation; verify termination |
-| artifact upload                  | Job reached `uploading` but storage did not complete       | Check R2 and manifest validation; do not construct evidence manually          |
-| termination                      | Sandbox termination is not `verified`                      | Stop new runs and reconcile the sandbox                                       |
-
-The scheduled Worker handler expires stale active jobs and retries unresolved sandbox termination. A manual retry is safe only after the lifecycle row proves that no prior sandbox remains.
-
-### Judgment: what does the evidence mean?
-
-Apply the review policy only after Database and Automation are coherent. A runtime block is not an infrastructure failure, and a successful infrastructure run is not an app approval.
-
-Escalate when:
-
-- developer runs disagree on the same immutable package
-- the reviewer replay differs from both developer runs
-- executed bytes match SHA-256 but DOM SRI does not match
-- a runtime-created or unreviewed child script appears
-- the proxy canary is exposed or inconclusive
-- sandbox termination remains unresolved
-- identity or ownership does not match the package
-
-## Anti-cheating invariants
-
-These invariants make honest participation the rational strategy:
-
-- Partner-supplied settings remain `partner_supplied`; they cannot become evidence by themselves.
-- Only the server creates the one-time runner capability, and only the named E2B sandbox receives it.
-- The developer and reviewer interfaces cannot upload `webflow_observed` evidence.
-- The Worker validates contract bindings, artifact types, byte limits, and SHA-256 before persistence.
-- A completed evidence upload consumes the capability; replaying it fails closed.
-- One active observation job is allowed per package.
-- Reviewer access is role-specific, one-time, package-bound, and cross-owner only by explicit authorization.
-- Every started sandbox must reach `verified` termination before another safe run.
-- Legacy runtime mutation endpoints return `410` and cannot re-enter the evidence path.
-- The job contract sets `officialDecision` to `null` and forbids governance writes.
-
-If an operational shortcut weakens one of these invariants, do not take it.
-
-## Operator receipt
-
-Copy this block for each run:
+Copy this block after the three-run loop:
 
 ```text
 review_id:
 review_version_id:
 bundle_sha256:
 runtime_test_package_id:
-actor_role: developer | reviewer
-observation_job_id:
-observation_status:
-evidence_trust:
-security_status:
+developer_job_ids:
+reviewer_replay_job_id:
+security_results:
 security_blockers:
-negative_proxy_outcome:
-artifact_count:
+proxy_results:
+artifact_counts:
 artifact_sha256s:
-sandbox_id:
-sandbox_termination_status:
-approved_at:
-completed_at:
+all_sandboxes_terminated: true | false
+result: reproduced_pass | reproduced_block | mixed_evidence | infrastructure_incomplete
+official_decision: null
 operator:
 notes:
 ```
 
-For the three-run pilot receipt, add:
-
-```text
-same_package_across_runs: true | false
-developer_job_ids:
-reviewer_replay_job_id:
-all_sandboxes_terminated: true | false
-result: reproduced_pass | reproduced_block | mixed_evidence | infrastructure_incomplete
-official_decision: null
-```
-
-## Stop conditions
-
-Stop the loop immediately when:
-
-- the package, review version, or bundle SHA cannot be proven
-- the actor role is wrong or ambiguous
-- another active job exists
-- a prior sandbox is not verified terminated
-- a package or job is expired and the UI has not refreshed
-- a reviewer handoff opens a different package
-- anyone asks to upload, edit, or relabel observed evidence
-- anyone describes the Preflight result as an official decision
-
-Preserve the current state, record the IDs, and escalate. Do not generate new state to hide the old state.
-
 ## Performance content lint
 
-Future edits to this runbook pass only when a cold reader can answer each question without reading source code:
+### Reader outcome
 
-- What is the operational objective?
-- Which actor am I?
-- Which identifiers must remain unchanged?
-- What state is the package, job, and sandbox in?
-- What is the one safe next move?
-- What evidence must I record?
-- When must I stop?
-- Which results are app evidence, infrastructure evidence, or external judgment?
+Write for a junior practitioner who is learning how to validate a production runtime with this app. They know basic Webflow and browser ideas. They should not need prior knowledge of E2B, D1, R2, the evidence model, or this project's history.
 
-Apply these editorial rules:
+The reader should be able to:
 
-- Put the outcome before background.
-- Use the exact UI labels and stored status values.
-- Give each numbered step one action.
-- Pair every failure with a safe response.
-- Keep secrets out; name environment variables or bindings instead.
+1. prepare the correct inputs
+2. complete the developer and reviewer paths
+3. explain what each result means
+4. tell an app problem from a service problem
+5. know when to stop and ask for help
+
+A readability formula may flag a sudden jump in density. It does not define the reader or prove that the guide is clear or enjoyable.
+
+Ask a new junior practitioner to rate each statement from 1 to 5:
+
+1. I know what this app helps me prove.
+2. I know what to enter and where to enter it.
+3. I can picture what happens after I select **Run test now**.
+4. I know what to do when a result is blocked or failed.
+5. I could explain the validation process to another junior teammate.
+
+The target is an average of at least 4 out of 5, with no statement below 3.
+
+### Policy packs
+
+Apply three packs in order. A later pack adds context; it does not weaken an earlier one.
+
+#### 1. Core clarity and readability
+
+- Put the learner's action before system background.
+- Prefer a concrete verb over an abstract label.
+- Explain what a system does before naming it.
+- Split sentences above 25 words unless the longer form is easier to follow.
+- Review blocks that are much denser than the prose around them.
+- Do not use a fixed school-grade score as the acceptance target.
+- Explain owned terms before placing several of them in one sentence.
+- Break dense noun stacks into actions such as “List,” “Check,” or “Show.”
+- Flag jargon, vague claims, and unsupported claims even when a formula passes.
+
+#### 2. Performance meaning
+
+- Keep `ready`, `running`, `blocked`, `complete`, and `failed` meanings stable.
+- Name the pressure: time, identity, package drift, evidence quality, or sandbox cleanup.
+- Put the boundary beside the action it limits.
+- Put proof beside the claim it supports.
+- Lead with the learner's consequence before the mechanism.
+
+#### 3. App-guide overlay
+
+- Use the exact labels the learner sees in the app.
+- Give each numbered step one visible action.
+- Tell the learner what a successful step looks like.
+- Pair every failure with a safe next move.
+- Define internal terms at first use.
+- Keep secrets out of examples.
 - Use “evidence,” never “approval,” for Preflight output.
-- Remove any sentence that does not change an operator decision.
+
+### Rollout rule
+
+Enforce these checks on changed prose first. Report older failures as a backlog until they are edited. This keeps new writing from adding debt without forcing unrelated rewrites into one change.
