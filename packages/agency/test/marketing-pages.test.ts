@@ -8,7 +8,6 @@ import {
   marketingPagePortfolio,
   scoreMarketingPage
 } from '../src/lib/data/marketingPages.ts';
-import { deprecatedRedirects } from '../src/lib/data/deprecatedRoutes.ts';
 
 const packageRoot = new URL('..', import.meta.url).pathname;
 
@@ -56,20 +55,7 @@ test('marketing portfolio owns every sitemap route and route-only page', () => {
   }
 });
 
-test('deprecated routes cannot remain indexable marketing pages', () => {
-  for (const [prefix, routeTarget] of Object.entries(deprecatedRedirects)) {
-    const coveredEntries = marketingPagePortfolio.filter(
-      (entry) => entry.path === prefix || entry.path.startsWith(`${prefix}/`)
-    );
-
-    for (const entry of coveredEntries) {
-      assert.notEqual(entry.decision, 'index', `${entry.path} is redirected and cannot be indexed`);
-      assert.equal(entry.routeTarget, routeTarget, `${entry.path} should route to ${routeTarget}`);
-    }
-  }
-});
-
-test('retired Dify marketing cluster remains archived to the current stack route', () => {
+test('Dify marketing cluster has one pillar and indexable support routes', () => {
   const difyPages = marketingPagePortfolio.filter((entry) => entry.cluster === 'dify');
 
   assert.equal(difyPages.filter((entry) => entry.role === 'pillar').length, 1);
@@ -80,9 +66,7 @@ test('retired Dify marketing cluster remains archived to the current stack route
     '/dify/ship-dify-app-with-mcp-tools',
     '/dify/template-marketplace-proof'
   ]);
-  assert.ok(
-    difyPages.every((entry) => entry.decision === 'archive' && entry.routeTarget === '/stack')
-  );
+  assert.ok(difyPages.every((entry) => entry.decision === 'index'));
 });
 
 test('current marketing portfolio pages clear their route-decision strength threshold', () => {

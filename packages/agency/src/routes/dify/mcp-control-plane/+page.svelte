@@ -171,7 +171,6 @@
   articleSection="Dify Implementation"
   articleTags={['Dify', 'MCP', 'Policy OS', 'agent workflows']}
   propertyName="agency"
-  noindex={true}
 />
 
 <PerformanceCampaignOpening

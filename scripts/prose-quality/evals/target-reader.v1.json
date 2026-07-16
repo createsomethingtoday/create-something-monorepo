@@ -19,6 +19,19 @@
       "reason": "Names one concrete operating problem, explains run, wait, stop, and proof in plain language, then offers a specific next action."
     },
     {
+      "id": "agency-operator-before-after",
+      "property": "agency",
+      "expected": "pass",
+      "reviewScope": "rendered-component",
+      "context": "Read both rendered operator outcome cards as one before-and-after unit.",
+      "source": {
+        "file": "packages/agency/src/routes/+page.svelte",
+        "line": 149,
+        "anchor": "The operator returns when judgment matters."
+      },
+      "reason": "Uses a before and after contrast to show the operational change without requiring framework vocabulary."
+    },
+    {
       "id": "agency-evidence-with-limits",
       "property": "agency",
       "expected": "pass",
@@ -45,6 +58,19 @@
       "reason": "Explains the worked example, its local evidence, and the exact production actions it cannot take."
     },
     {
+      "id": "agency-acceptance-receipt",
+      "property": "agency",
+      "expected": "pass",
+      "reviewScope": "rendered-component",
+      "context": "Read the complete acceptance-receipt section, proof strip, receipt text, and limitation note.",
+      "source": {
+        "file": "packages/agency/src/routes/proof/marketplace-workflow/+page.svelte",
+        "line": 193,
+        "anchor": "compares every generated file byte for byte"
+      },
+      "reason": "Makes the verification method inspectable and keeps production and client-outcome claims out of scope."
+    },
+    {
       "id": "ltd-owned-term-translation",
       "property": "ltd",
       "expected": "pass",
@@ -58,17 +84,17 @@
       "reason": "Shows the unclear technical label beside a concrete run, wait, or stop translation a practitioner can act on."
     },
     {
-      "id": "agency-concrete-authority-and-stop-conditions",
+      "id": "agency-dense-decision-inventory",
       "property": "agency",
-      "expected": "pass",
+      "expected": "revise",
       "reviewScope": "rendered-component",
-      "context": "Read the complete Database, Automation, and Judgment card grid as one compiled-package explanation.",
+      "context": "Read the complete Judgment artifact card within the three-card compiled-package grid.",
       "source": {
         "file": "packages/agency/src/routes/proof/marketplace-workflow/+page.svelte",
         "line": 102,
-        "anchor": "Shows who may act, when approval is required"
+        "anchor": "Decision inventory, autonomy classes, approval surfaces"
       },
-      "reason": "Each card now explains the records, allowed tool actions, operator view, approval points, and stop behavior before relying on framework labels."
+      "reason": "Stacks several abstract control terms before showing one representative decision and its consequence."
     },
     {
       "id": "agency-undefined-three-tier-terms",
@@ -84,43 +110,17 @@
       "reason": "The heading introduces the diagnostic order, and the adjacent rendered condition cards define each category in practical terms."
     },
     {
-      "id": "agency-linear-to-production-defense",
+      "id": "agency-recursive-flagship-stack",
       "property": "agency",
-      "expected": "pass",
+      "expected": "revise",
       "reviewScope": "rendered-component",
       "context": "Read the complete flagship-defense chapter, including its intervention label, unresolved boundary, and test detail.",
       "source": {
         "file": "packages/agency/src/routes/practice/+page.svelte",
         "line": 145,
-        "anchor": "This case follows work from a Linear issue to production"
+        "anchor": "The first defense is recursive"
       },
-      "reason": "Starts with a recognizable delivery path, names the controls that must remain visible, and keeps the unresolved review boundary explicit."
-    },
-    {
-      "id": "agency-product-proof-owned-terms",
-      "property": "agency",
-      "expected": "revise",
-      "reviewScope": "rendered-component",
-      "context": "Read the Supporting proof section with the adjacent Ground and Loom MCP cards.",
-      "source": {
-        "file": "packages/agency/src/routes/products/+page.svelte",
-        "line": 188,
-        "anchor": "Ground and Loom MCP are evidence of the same operating rule"
-      },
-      "reason": "Introduces two owned product names and an operating rule before showing one concrete result a new practitioner can recognize."
-    },
-    {
-      "id": "agency-enterprise-runtime-jargon",
-      "property": "agency",
-      "expected": "revise",
-      "reviewScope": "rendered-component",
-      "context": "Read the complete enterprise-use-case hero with its actions and opening proof.",
-      "source": {
-        "file": "packages/agency/src/routes/use-cases/enterprise/+page.svelte",
-        "line": 213,
-        "anchor": "For teams already running MCP-backed or cross-system workflows"
-      },
-      "reason": "Stacks MCP, Policy OS, controlled execution, prompt optimization, approval logic, and monitoring before giving the junior practitioner a representative workflow consequence."
+      "reason": "Requires the reader to unpack recursive defense, delegated delivery, ownership, policy, validation, approval, and rollback at once."
     },
     {
       "id": "ltd-owned-boundary-inventory",

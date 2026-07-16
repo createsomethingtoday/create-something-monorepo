@@ -276,7 +276,6 @@
   articleSection="Dify Implementation"
   articleTags={['Dify', 'MCP', 'Policy OS', 'agent governance', 'workflow implementation']}
   propertyName="agency"
-  noindex={true}
 />
 
 <PerformancePageSection

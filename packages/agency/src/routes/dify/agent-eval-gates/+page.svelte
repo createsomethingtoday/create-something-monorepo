@@ -239,7 +239,6 @@
   articleSection="Dify Implementation"
   articleTags={['Dify', 'eval gates', 'MCP', 'Policy OS', 'agent governance']}
   propertyName="agency"
-  noindex={true}
 />
 
 <PerformancePageSection
