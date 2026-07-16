@@ -86,6 +86,7 @@ Read in this order when you need broad repo context:
 - [MCP_CATALOG_EXPOSURE_POLICY.md](./MCP_CATALOG_EXPOSURE_POLICY.md)
 - [AGENCY_USER_PROVISIONING_POLICY.md](./AGENCY_USER_PROVISIONING_POLICY.md)
 - [policies/v1/policy.git-light-agent-delivery.v1.md](./policies/v1/policy.git-light-agent-delivery.v1.md)
+- [policies/v1/policy.prose-quality.v1.md](./policies/v1/policy.prose-quality.v1.md)
 - [policies/v1/policy.operator-agent-production-lab.v1.md](./policies/v1/policy.operator-agent-production-lab.v1.md)
 
 ### Agent execution, observability, and UI legibility

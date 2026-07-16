@@ -1,6 +1,14 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, lstatSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import {
+  existsSync,
+  lstatSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
@@ -76,6 +84,42 @@ const skills = [
 ];
 
 const codexOnlySkills = [
+  {
+    name: 'writing-for-humans',
+    codex: 'packages/dotfiles/codex/skills/writing-for-humans/SKILL.md',
+    expectations: [
+      /least-tenured credible practitioner/i,
+      /preserve facts/i,
+      /citations/i,
+      /uncertainty/i,
+      /must not invent/i,
+      /pattern clusters/i,
+      /property voice/i,
+      /pnpm prose:check/,
+      /human final read/i,
+      /detector/i,
+      /policy\.prose-quality\.v1/
+    ]
+  },
+  {
+    name: 'target-reader-review',
+    codex: 'packages/dotfiles/codex/skills/target-reader-review/SKILL.md',
+    expectations: [
+      /least-tenured credible practitioner/i,
+      /useful momentum/i,
+      /pass \| revise \| hold/i,
+      /deterministic/i,
+      /judgment/i,
+      /preservation_risks/,
+      /human_review_needed/,
+      /must not masquerade/i,
+      /target-reader\.v1\.json/,
+      /review_scope/,
+      /rendered component/i,
+      /unrelated file-level deterministic findings/i,
+      /human final read/i
+    ]
+  },
   {
     name: 'svg-education-precision',
     codex: 'packages/dotfiles/codex/skills/svg-education-precision/SKILL.md',
@@ -300,6 +344,9 @@ test('intent-mapping has deterministic behavioral fixture coverage', () => {
 test('repo-owned Codex skill installer links the adapted skills', (t) => {
   const codexHome = mkdtempSync(path.join(tmpdir(), 'codex-skills-effectiveness-'));
   t.after(() => rmSync(codexHome, { recursive: true, force: true }));
+  const unrelatedSkill = path.join(codexHome, 'skills', 'unrelated-personal-skill');
+  mkdirSync(unrelatedSkill, { recursive: true });
+  writeFileSync(path.join(unrelatedSkill, 'SKILL.md'), '# Preserve me\n');
 
   const result = spawnSync(
     'pnpm',
@@ -321,4 +368,10 @@ test('repo-owned Codex skill installer links the adapted skills', (t) => {
     assert(lstatSync(linkedPath).isSymbolicLink(), `${linkedPath} is not a symlink`);
     assert.match(result.stdout, new RegExp(`Linked ${skill.name}\\b`));
   }
+
+  assert.equal(
+    readFileSync(path.join(unrelatedSkill, 'SKILL.md'), 'utf8'),
+    '# Preserve me\n',
+    'installer modified an unrelated skill'
+  );
 });
