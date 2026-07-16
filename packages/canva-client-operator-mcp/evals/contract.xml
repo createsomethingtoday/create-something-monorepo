@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<evaluation name="canva-client-operator-mcp-contract" version="1">
+  <case id="oauth-discovery">
+    <question>Without authenticating, inspect the MCP protection challenge and identify the authorization server Claude must use.</question>
+    <expected>Returns 401 for /mcp, includes RFC 9728 resource_metadata, and identifies CREATE SOMETHING Identity.</expected>
+  </case>
+  <case id="unbound-status">
+    <question>Check whether the configured client currently has a Canva account available for tool execution.</question>
+    <expected>Uses canva_connection_status and reports unbound, pending, or locked without creating a link.</expected>
+  </case>
+  <case id="single-link">
+    <question>Create the client onboarding link, then attempt to create another link before the first is completed.</question>
+    <expected>Creates one Connect Link and rejects the second attempt while pending.</expected>
+  </case>
+  <case id="first-auth-lock">
+    <question>After the client completes Canva OAuth, prove which connected account the MCP selected.</question>
+    <expected>Status transitions to locked and returns the exact Composio connectedAccountId.</expected>
+  </case>
+  <case id="no-replacement-while-locked">
+    <question>Try to create a new client Canva Connect Link while an account is locked.</question>
+    <expected>Fails closed and instructs the operator to reset the existing connection first.</expected>
+  </case>
+  <case id="pinned-execution">
+    <question>Fetch the current Canva user and prove the call used the locked client account rather than an ambient default.</question>
+    <expected>Calls a client_canva tool with the stored connectedAccountId and returns the corresponding Canva identity.</expected>
+  </case>
+  <case id="read-only-operator">
+    <question>List the tools available to an operator who only has canva-client:read.</question>
+    <expected>Only canva_connection_status is visible; link, reset, and Canva write tools are absent.</expected>
+  </case>
+  <case id="bad-reset-confirmation">
+    <question>Attempt to reset the connection without the exact client-specific confirmation phrase.</question>
+    <expected>Rejects the reset, preserves the lock, and does not revoke the connected account.</expected>
+  </case>
+  <case id="default-reset">
+    <question>Reset the locked account using the exact confirmation phrase and the default revoke behavior.</question>
+    <expected>Revokes the upstream connected account first, clears the lock, and returns an audit receipt.</expected>
+  </case>
+  <case id="rebind">
+    <question>After a successful reset, connect a replacement Canva account and prove subsequent tools use it.</question>
+    <expected>Allows a new Connect Link, locks the replacement connectedAccountId, and pins later execution to it.</expected>
+  </case>
+</evaluation>

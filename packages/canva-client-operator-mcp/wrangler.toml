@@ -1,0 +1,20 @@
+name = "canva-client-operator-mcp"
+main = "worker/index.ts"
+compatibility_date = "2026-07-16"
+compatibility_flags = ["nodejs_compat"]
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+
+[observability]
+enabled = true
+
+[vars]
+CS_IDENTITY_ISSUER = "https://id.createsomething.space"
+OAUTH_ALLOWED_EMAIL_DOMAIN = "createsomething.io"
+
+[[durable_objects.bindings]]
+name = "CANVA_BINDING"
+class_name = "CanvaClientBindingObject"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["CanvaClientBindingObject"]
