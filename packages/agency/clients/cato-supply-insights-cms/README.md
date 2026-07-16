@@ -7,9 +7,12 @@ Public, read-only adapter between the Cato Supply Webflow CMS and the Cato code-
 `GET /api/cato/insights` returns one payload with:
 
 - `categories`: published `Insight Categories` records normalized for global navigation labels, link summaries, and archive routes.
+- `subscription`: the first published `Subscription CTA` record normalized as global heading, supporting copy, and button text.
 - `items`: published Insight articles normalized for mega-menu features, hubs, archives, and detail pages.
 
 The Cato Navigation and Cato Insights Mega Menu components use this endpoint by default. CMS category values take precedence over component-instance fallback copy, so a published category edit is global across instances.
+
+The Cato Insights archive components use the singleton `subscription` object before their local fallback copy. Edit the `Global Subscription CTA` item in Webflow CMS to update every subscription panel.
 
 Supported category fields include the standard Webflow `name` and `slug` fields plus optional `mega-menu-label`, `mega-menu-summary`, and `sort-order` fields. `card-summary`, `short-summary`, or `summary` can supply the menu description when `mega-menu-summary` is absent.
 

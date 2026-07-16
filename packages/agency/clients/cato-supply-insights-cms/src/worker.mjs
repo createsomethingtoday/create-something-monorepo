@@ -11,6 +11,7 @@ const JSON_HEADERS = {
 };
 
 const DEFAULT_INSIGHTS_COLLECTION_ID = '69fd0ee732ea65ee49381665';
+const DEFAULT_SUBSCRIPTION_CTA_COLLECTION_ID = '6a59336ab0af00f0e2e38078';
 const DEFAULT_TEAM_COLLECTION_ID = '69255f78c214e919f388455c';
 
 const INSIGHT_CATEGORY_IDS = {
@@ -146,18 +147,22 @@ function isPublished(item) {
   return !item.isArchived && Boolean(item.lastPublished);
 }
 
-async function fetchWebflowItems(env, collectionId) {
+async function fetchWebflowItems(env, collectionId, { live = false } = {}) {
   const token = env.WEBFLOW_AGENT_ACCESS || env.WEBFLOW_API_TOKEN;
   if (!token) {
     throw new Error('Missing WEBFLOW_AGENT_ACCESS or WEBFLOW_API_TOKEN');
   }
 
-  const response = await fetch(`https://api.webflow.com/v2/collections/${collectionId}/items?limit=100`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'accept-version': '2.0.0'
+  const endpoint = live ? 'items/live' : 'items';
+  const response = await fetch(
+    `https://api.webflow.com/v2/collections/${collectionId}/${endpoint}?limit=100`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'accept-version': '2.0.0'
+      }
     }
-  });
+  );
 
   if (!response.ok) {
     const body = await response.text();
@@ -190,7 +195,8 @@ function normalizeInsight(item) {
     'insight-category',
     'resource-category'
   ]);
-  const categorySlug = INSIGHT_CATEGORY_SLUGS[categoryId] || field(record, ['categorySlug', 'category-slug']);
+  const categorySlug =
+    INSIGHT_CATEGORY_SLUGS[categoryId] || field(record, ['categorySlug', 'category-slug']);
   const title = field(record, ['name', 'title']);
   const slug = field(record, ['slug']);
   const externalUrl = field(record, ['external-url', 'externalUrl', 'url', 'link']);
@@ -205,7 +211,10 @@ function normalizeInsight(item) {
     date: dateValue(record),
     category: categorySlug,
     resourceType,
-    pill: field(record, ['content-label', 'contentLabel']) || INSIGHT_CATEGORY_LABELS[categorySlug] || resourceType,
+    pill:
+      field(record, ['content-label', 'contentLabel']) ||
+      INSIGHT_CATEGORY_LABELS[categorySlug] ||
+      resourceType,
     href,
     ctaLabel: field(record, ['cta-label', 'ctaLabel']) || 'Read report',
     featured: Boolean(record.featured || record['featured-now']),
@@ -255,7 +264,8 @@ function normalizeInsightCategory(item) {
       'summary'
     ]),
     cardCta: field(record, ['card-cta', 'cardCta']),
-    order: Number.isFinite(sortOrder) && sortOrder > 0 ? sortOrder : INSIGHT_CATEGORY_ORDER[id] || 999
+    order:
+      Number.isFinite(sortOrder) && sortOrder > 0 ? sortOrder : INSIGHT_CATEGORY_ORDER[id] || 999
   };
 }
 
@@ -266,6 +276,35 @@ export function normalizeInsightCategories(items) {
     .filter((category) => Boolean(category))
     .sort((a, b) => a.order - b.order)
     .map(({ order: _order, ...category }) => category);
+}
+
+export function normalizeSubscriptionCta(items) {
+  const item = items.find(
+    (candidate) =>
+      !candidate.isArchived && (Boolean(candidate.lastPublished) || candidate.isDraft === false)
+  );
+  if (!item) return null;
+
+  const record = item.fieldData || {};
+  const heading = field(record, ['heading', 'title']);
+  const supportingCopy = field(record, [
+    'supporting-copy',
+    'supportingCopy',
+    'sub-content',
+    'subContent',
+    'summary'
+  ]);
+  const buttonText = field(record, [
+    'button-text',
+    'buttonText',
+    'button-label',
+    'buttonLabel',
+    'cta-label',
+    'ctaLabel'
+  ]);
+  if (!heading && !supportingCopy && !buttonText) return null;
+
+  return { heading, supportingCopy, buttonText };
 }
 
 function normalizeTeamGroups(record) {
@@ -355,19 +394,23 @@ export function normalizeTeam(items, { group } = {}) {
 async function handleInsights(url, env) {
   const collectionId = env.WEBFLOW_INSIGHTS_COLLECTION_ID || DEFAULT_INSIGHTS_COLLECTION_ID;
   const categoriesCollectionId = env.WEBFLOW_INSIGHT_CATEGORIES_COLLECTION_ID;
-  const [items, categoryItems] = await Promise.all([
+  const subscriptionCollectionId =
+    env.WEBFLOW_SUBSCRIPTION_CTA_COLLECTION_ID || DEFAULT_SUBSCRIPTION_CTA_COLLECTION_ID;
+  const [items, categoryItems, subscriptionItems] = await Promise.all([
     fetchWebflowItems(env, collectionId),
     categoriesCollectionId
       ? fetchWebflowItems(env, categoriesCollectionId).catch(() => [])
-      : Promise.resolve([])
+      : Promise.resolve([]),
+    fetchWebflowItems(env, subscriptionCollectionId, { live: true }).catch(() => [])
   ]);
   const normalized = normalizeInsights(items, {
     category: url.searchParams.get('category') || url.searchParams.get('archive')
   });
   const categories = normalizeInsightCategories(categoryItems);
+  const subscription = normalizeSubscriptionCta(subscriptionItems);
   const limit = Number(url.searchParams.get('limit'));
   const limited = Number.isFinite(limit) && limit > 0 ? normalized.slice(0, limit) : normalized;
-  return json({ categories, items: limited });
+  return json({ categories, subscription, items: limited });
 }
 
 async function handleTeam(url, env) {
@@ -401,7 +444,10 @@ export default {
       }
       return json({ error: 'Not found' }, { status: 404 });
     } catch (error) {
-      return json({ error: error instanceof Error ? error.message : 'Unexpected error' }, { status: 500 });
+      return json(
+        { error: error instanceof Error ? error.message : 'Unexpected error' },
+        { status: 500 }
+      );
     }
   }
 };
