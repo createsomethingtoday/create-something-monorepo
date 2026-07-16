@@ -12,7 +12,7 @@
 	import PublicAtlasStoryCanvas from '$lib/components/PublicAtlasStoryCanvas.svelte';
 	import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
-	const atlasProtocol: PerformanceCondition[] = [
+	const mapProtocol: PerformanceCondition[] = [
 		{
 			label: 'Input',
 			title: 'Prospect map only',
@@ -35,19 +35,19 @@
 </script>
 
 <SEO
-	title="Public Atlas Canvas | CREATE SOMETHING"
-	description="Use the public Atlas canvas to map one workflow, understand the operating boundary, and carry the summary into a CREATE SOMETHING mapping session."
-	keywords="Atlas canvas, workflow mapping, AI agent workflow, public workflow map"
+	title="CREATE SOMETHING Map | Workflow Mapping"
+	description="Use CREATE SOMETHING Map to define one human-agent workflow, make its operating boundary legible, and carry an approved definition into Build or Control."
+	keywords="workflow mapping product, human agent workflow, workflow definition, AI workflow map"
 	propertyName="agency"
 />
 
-<main class="atlas-page">
+<main class="map-page">
 	<PerformanceCampaignOpening
-		eyebrow="Atlas canvas"
+		eyebrow="CREATE SOMETHING Map"
 		title="Map the workflow before the call."
-		lede="Use the constrained public canvas to name the owner, data, approvals, systems, risks, and inspection points. The agent can only edit this prospect map; production tools and private systems stay outside the public surface."
+		lede="Use the constrained public canvas to name the owner, data, approvals, systems, risks, and inspection points. Map can stand alone as the living workflow definition, or carry approved context into Build and Control."
 		media={{ src: '/images/performance-lab/trace-wake-natural.webp', mobileSrc: '/images/performance-lab/trace-wake-natural-mobile.webp', alt: 'Aerial black-and-white view of a survey craft leaving a directional wake' }}
-		proof={[{ label: 'Input', value: 'Prospect map' }, { label: 'Boundary', value: 'No production tools' }, { label: 'Handoff', value: 'Summary + context' }]}
+		proof={[{ label: 'Input', value: 'Prospect map' }, { label: 'Boundary', value: 'No production tools' }, { label: 'Handoff', value: 'Build or Control' }]}
 	>
 		{#snippet actions()}
 			<Button href="#canvas">Open canvas</Button>
@@ -58,23 +58,23 @@
 	</PerformanceCampaignOpening>
 
 	<PerformanceThesisConditions
-		eyebrow="Atlas protocol"
+		eyebrow="Mapping protocol"
 		title="Map the channel before work enters it."
-		description="Atlas makes the boundary, ownership, stops, and proof requirements visible without touching production systems."
-		conditions={atlasProtocol}
-		ariaLabel="Atlas public mapping protocol"
+		description="Map makes the boundary, ownership, stops, and proof requirements visible without touching production systems."
+		conditions={mapProtocol}
+		ariaLabel="Public workflow mapping protocol"
 	/>
 
 	<PerformanceContrastChapter
-		eyebrow="Atlas story"
+		eyebrow="Workflow story"
 		title="See the workflow as a story before editing the map."
-		description="The static Atlas story uses the same graph contract as the interactive canvas. It explains what can run, what waits for judgment, where execution must stop, and where proof lands."
+		description="The static story uses the same graph contract as the interactive canvas. It explains what can run, what waits for judgment, where execution must stop, and where proof lands."
 		intervention={{ label: 'Shared graph contract', title: 'Story before mutation', detail: 'The explanatory view and interactive canvas render the same operating model.' }}
 	>
 		{#snippet artifact()}
 			<PublicAtlasStoryCanvas
 				starterId="marketplace-review-queue"
-				storyId="atlas-page-marketplace-review-story"
+				storyId="map-page-marketplace-review-story"
 			/>
 		{/snippet}
 	</PerformanceContrastChapter>
@@ -83,11 +83,12 @@
 		id="canvas"
 		variant="white"
 		eyebrow="Public mapping surface"
-		title="The canvas turns curiosity into booking context."
-		description="Cold readers can test the method without exposing credentials. Warm teams leave with a summary, readiness signal, and booking metadata that make the first session sharper."
+		title="The canvas turns curiosity into operating context."
+		description="Cold readers can test the method without exposing credentials. Warm teams leave with a summary, readiness signal, and workflow definition that can stand alone or move into Build and Control."
 	>
 		{#snippet after()}
 			<PublicAtlasCanvas bookingHref="/book" />
 		{/snippet}
 	</PerformancePageSection>
 </main>
+

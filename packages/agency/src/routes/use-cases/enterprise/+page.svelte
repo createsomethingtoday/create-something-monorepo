@@ -14,7 +14,7 @@
     {
       eyebrow: 'Layer',
       icon: 'settings',
-      title: 'Policy OS',
+      title: 'CREATE SOMETHING Control',
       detail:
         'A controlled execution layer for teams already running MCP servers, agents, or cross-system workflows.'
     },
@@ -157,9 +157,9 @@
 
   const faqItems = [
     {
-      question: 'When does an enterprise need Policy OS?',
+      question: 'When does an enterprise need CREATE SOMETHING Control?',
       answer:
-        'Policy OS fits teams already running automation that now need controlled execution states, approval rules, monitoring, and operating receipts.'
+        'CREATE SOMETHING Control fits teams already running automation that now need controlled execution states, approval rules, monitoring, and operating receipts.'
     },
     {
       question: 'What should be added after the first workflow pilot?',
@@ -196,8 +196,8 @@
 </script>
 
 <SEO
-  title="Policy OS for Enterprise Workflow Reliability | CREATE SOMETHING .agency"
-  description="Policy OS for teams already running automation. Add controlled execution states, approval rules, monitoring, and operating receipts once the first workflow pilot is live."
+  title="CREATE SOMETHING Control for Enterprise Workflow Reliability"
+  description="CREATE SOMETHING Control helps teams add controlled execution states, approval rules, monitoring, and operating receipts once the first workflow is live."
   keywords="enterprise automation reliability, workflow controls, policy operations, ai control layer, workflow reliability"
   ogImage="/og/policy-os.png"
   propertyName="agency"
@@ -210,7 +210,7 @@
   titleLevel="h1"
   eyebrow="The Judgment Layer"
   title="Reliability is what turns automation into operations."
-  description="For teams already running MCP-backed or cross-system workflows, Policy OS adds the controlled execution layer: prompt optimization, approval logic, blocked states, monitoring, and receipts after launch."
+  description="For teams already running MCP-backed or cross-system workflows, CREATE SOMETHING Control adds the governed execution layer: prompt optimization, approval logic, blocked states, monitoring, and receipts after launch."
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.selfMapHref}>
@@ -226,7 +226,7 @@
       items={reliabilitySummary}
       columns={1}
       density="compact"
-      ariaLabel="Policy OS reliability summary"
+      ariaLabel="CREATE SOMETHING Control reliability summary"
     />
   {/snippet}
 </PerformancePageSection>
@@ -245,11 +245,11 @@
 <PerformancePageSection
   variant="soft"
   eyebrow="Control layer"
-  title="Policy OS keeps the workflow explainable after launch."
+  title="CREATE SOMETHING Control keeps the workflow explainable after launch."
   description="The work is not another trigger. It is the operating layer that keeps agent capacity aligned with ownership, approval, recovery, and evidence."
 >
   {#snippet after()}
-    <PerformanceCardGrid items={controlLayer} columns={4} ariaLabel="Policy OS control layer" />
+    <PerformanceCardGrid items={controlLayer} columns={4} ariaLabel="CREATE SOMETHING Control layer" />
   {/snippet}
 </PerformancePageSection>
 
@@ -282,7 +282,7 @@
   description="The work fits when a workflow is already valuable enough that drift, unclear approvals, or invisible failures would create real operational cost."
 >
   {#snippet after()}
-    <PerformanceCardGrid items={audienceCards} columns={3} ariaLabel="Policy OS fit" />
+    <PerformanceCardGrid items={audienceCards} columns={3} ariaLabel="CREATE SOMETHING Control fit" />
   {/snippet}
 </PerformancePageSection>
 

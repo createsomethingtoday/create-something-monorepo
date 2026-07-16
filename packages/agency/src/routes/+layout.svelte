@@ -185,10 +185,10 @@
     {
       id: 'nav-products',
       label: 'Products',
-      description: 'Atlas, Signal, Decision, and Proof surfaces for controlled AI workflows',
+      description: 'Map and Control products for defining and operating delegated workflows',
       href: '/products',
       icon: '📦',
-      keywords: ['portfolio', 'tools', 'integrations', 'product surfaces', 'proof surfaces']
+      keywords: ['portfolio', 'map', 'control', 'workflow products', 'proof surfaces']
     },
     {
       id: 'nav-field-reports',

@@ -15,7 +15,10 @@ We make one business workflow safe to delegate.
 | **AI workflow systems** | Public category: business workflows with connected tools, scoped AI tasks, approvals, stop conditions, and audit trails. |
 | **Delegated Work Control** | Internal thesis layer: what can run, what waits, what stops, who owns the decision, and what evidence proves the work. |
 | **Workflow Trust Layer** | Internal service-language layer for governed execution around a workflow. |
-| **Policy OS** | Canonical paid package for governed execution, approval rules, runbooks, golden tasks, and recurring tuning. |
+| **CREATE SOMETHING Map** | Standalone subscription for a living workflow definition. |
+| **CREATE SOMETHING Build** | Implementation service that turns an approved Map into an owned system. |
+| **CREATE SOMETHING Control** | Standalone governed-execution subscription; Control includes Map. |
+| **Policy OS / Atlas** | Internal and compatibility names retained for package, entitlement, schema, and implementation contracts. |
 | **MCP-only** | Constrained discovery or compliance entry path, not the default paid offer. |
 
 The clearest public operating loop is:
@@ -55,7 +58,7 @@ Use this order:
 2. Name the business situation: one messy handoff, repeated workflow, or live
    operating risk.
 3. State the operating loop: Signals, Decisions, and Proof.
-4. Show the proof object: an Atlas map, decision inbox, delivery record, or
+4. Show the proof object: a CREATE SOMETHING Map, decision inbox, delivery record, or
    audit trail.
 5. Explain the stack only after the workflow boundary is visible.
 
@@ -179,7 +182,7 @@ The managed portfolio covers the high-intent public funnel:
 | Stack boundary | `/stack` | - |
 | Workflow tool stack | `/partners` | `/cloudflare` |
 | Archived Dify education | `/dify` → `/stack` | Nested Dify routes also redirect to `/stack` and remain source-only rollback history. |
-| Delegation Practice | `/practice` | Interactive field school linked to `/methodology`, `/atlas`, and `/proof/marketplace-workflow`. |
+| Delegation Practice | `/practice` | Interactive field school linked to `/methodology`, `/map`, and `/proof/marketplace-workflow`. |
 | Products | `/products` | - |
 | Field Reports | `/field-reports` | `/field-reports/template-review` |
 | Business use case | `/use-cases/business` | - |
@@ -237,7 +240,7 @@ Use the hybrid boundary:
 - Homepage, services, editorial, case-study, and social surfaces may use
   original human motion, material studies, technical annotation, and temporal
   composition.
-- Products, Atlas, proof, booking, and operator surfaces keep workflow evidence
+- Products, Map, proof, booking, and operator surfaces keep workflow evidence
   primary and use the same energy through hierarchy, state, measurement, and
   semantic motion.
 
@@ -256,7 +259,7 @@ Those six patterns are implemented by Canon as `PerformanceCampaignOpening`,
 `PerformanceThesisConditions`, `PerformanceFieldSequence`,
 `PerformanceContrastChapter`, `PerformanceEvidenceIndex`, and
 `PerformanceConversionHandoff`. The homepage, services, Dify control-plane,
-products, Atlas, and booking routes are the `.agency` reference set. Their
+products, Map, and booking routes are the `.agency` reference set. Their
 copy, media, canvases, and forms stay local; shared composition and responsive
 behavior do not.
 
@@ -288,7 +291,7 @@ Default public-page hierarchy:
 
 1. Name the category: `AI workflow systems`.
 2. State the outcome: turn one messy business handoff into a reliable AI-assisted workflow.
-3. Show the Delegation Card or Atlas map before explaining the stack.
+3. Show the Delegation Card or Map before explaining the stack.
 4. Name what can run, what waits, what stops, who owns the decision, and what
    receipt proves the work.
 5. Use one direct action: map one workflow.
@@ -344,16 +347,17 @@ evidence.
 
 | Offer | Description | Typical Output |
 |-------|-------------|----------------|
-| **Workflow Map / Pilot** | Map one business handoff, then build the first controlled AI-assisted path when the boundary is clear. | Workflow map, pilot implementation, runbook |
-| **Policy OS** | Add policy controls, release gates, approval rules, incident loops, and recurring governed-execution operations. | Governed runtime behavior + release evidence |
+| **CREATE SOMETHING Map** | Keep one living workflow definition with owners, systems, approvals, stops, and proof requirements. | Standalone monthly or yearly subscription |
+| **CREATE SOMETHING Build** | Turn an approved Map into an owned AI-assisted workflow when implementation is required. | Scoped implementation, runbook, and handoff |
+| **CREATE SOMETHING Control** | Add policy controls, approval rules, incident loops, and recurring governed execution. Includes Map. | Standalone monthly or yearly subscription + governed runtime evidence |
 | **Enterprise Extension** | Extend for high-stakes, cross-system, and compliance-heavy workflows. | Custom governance boundaries + enterprise orchestration |
 | **Workflow Mapping Session** | Paid pre-implementation mapping to scope the workflow and operating boundary. | Pilot scope, operating boundary, and 30-day plan |
 
 ---
 
-## Public Atlas Starter Maps
+## Public Map Starter Maps
 
-The public Atlas canvas is the give-first surface for prospects. It lets a visitor
+The public Map canvas is the give-first surface for prospects. It lets a visitor
 start from a concrete industry workflow, edit the owner/systems/approval boundary,
 and carry the summary into booking without exposing production systems.
 
@@ -372,7 +376,7 @@ Current starter maps:
 | Marketplace review queue | Marketplace operations | Stop before ungrounded approval, rejection, or security claims |
 | Insurance claims intake | Insurance operations | Stop before payout, denial, fraud escalation, or sensitive decisioning |
 
-Each starter map must include all public Atlas dimensions: `Actor`, `Human task`,
+Each starter map must include all public Map dimensions: `Actor`, `Human task`,
 `AI task`, `System operation`, `Data artifact`, `Constraint`, and `Touchpoint`.
 Each map must also expose at least one `run`, one `wait`, and one `stop` node so
 the prospect sees the action boundary before the sales conversation.
@@ -417,7 +421,7 @@ Implementation surface:
   the chosen map into booking context; it is the `.agency` intake surface.
 - `test/public-atlas-starter-maps.test.ts` verifies coverage and policy-boundary
   shape.
-- `test/public-atlas-route.test.ts` verifies that `/`, `/atlas`, and
+- `test/public-atlas-route.test.ts` verifies that `/`, `/map`, and
   `/services` present the story canvas before the editable public canvas where
   applicable, and that `/methodology`, `/stack`, and `/products` can use the
   same story surface without mounting the editable canvas.
@@ -459,7 +463,7 @@ Renderer rule:
 - Story canvases should animate only chapter focus, handoff traces, stop
   boundaries, and proof reveals. The `accessibilitySummary` must remain complete
   when motion is disabled.
-- `/atlas` presents the read-only story canvas before the editable public Atlas
+- `/map` presents the read-only story canvas before the editable public Map
   canvas so visitors can understand the workflow language before using the agent.
 - `/methodology` uses a read-only story canvas to explain the method without
   collecting booking context.
@@ -484,9 +488,9 @@ Renderer rule:
 └─────────────────────────────────────────────────────────────┘
 ```
 
-**Entry point**: Workflow Map, a scoped diagnostic for one workflow, its owners, and its first controlled point
-**Default build**: Workflow Pilot, one workflow rebuilt with clear rules, handoffs, runbooks, and release evidence
-**Expansion**: Ongoing Workflow Control for governed execution, then Enterprise Extension based on risk and workflow complexity
+**Standalone definition**: CREATE SOMETHING Map, a living workflow model with owners, systems, approvals, stops, and proof requirements
+**Implementation bridge**: CREATE SOMETHING Build, a scoped service that connects the approved Map and hands back an owned system
+**Governed operation**: CREATE SOMETHING Control, a standalone subscription for live Signal, Decision, and Proof; Control includes Map
 
 ---
 

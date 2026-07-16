@@ -10,7 +10,7 @@ import {
 	usesCompactAgencyPrivacyPrompt
 } from '../src/lib/atlas/surface-policy.ts';
 
-const atlasRoute = readFileSync(new URL('../src/routes/atlas/+page.svelte', import.meta.url), 'utf8');
+const mapRoute = readFileSync(new URL('../src/routes/map/+page.svelte', import.meta.url), 'utf8');
 const practiceRoute = readFileSync(
 	new URL('../src/routes/practice/+page.svelte', import.meta.url),
 	'utf8'
@@ -95,7 +95,7 @@ const agencyReadme = readFileSync(new URL('../README.md', import.meta.url), 'utf
 test('agency surface policy names Atlas proof and compact privacy paths', () => {
 	assert.deepEqual(AGENCY_ATLAS_PROOF_PATHS, [
 		'/services',
-		'/atlas',
+		'/map',
 		'/practice',
 		'/methodology',
 		'/stack',
@@ -107,7 +107,8 @@ test('agency surface policy names Atlas proof and compact privacy paths', () => 
 	]);
 	assert.ok(AGENCY_COMPACT_PRIVACY_PATHS.includes('/'));
 	assert.equal(AGENCY_DIFY_ARTICLE_PATHS.length, 3);
-	assert.equal(isAgencyAtlasProofPath('/atlas/'), true);
+	assert.equal(isAgencyAtlasProofPath('/map/'), true);
+	assert.equal(isAgencyAtlasProofPath('/atlas/'), false);
 	assert.equal(isAgencyAtlasProofPath('/practice/'), true);
 	assert.equal(isAgencyAtlasProofPath('/book'), false);
 	assert.equal(isAgencyDifyArticlePath('/dify/content-engine'), false);
@@ -127,26 +128,26 @@ test('Delegation Practice is a bounded Atlas proof surface, not an editable prod
 	assert.equal(practiceRoute.includes('<PublicAtlasCanvas'), false);
 });
 
-test('atlas route presents the story canvas before the editable canvas', () => {
-	const storyCanvasIndex = atlasRoute.indexOf('<PublicAtlasStoryCanvas');
-	const editableCanvasIndex = atlasRoute.indexOf('<PublicAtlasCanvas');
+test('Map route presents the story canvas before the editable canvas', () => {
+	const storyCanvasIndex = mapRoute.indexOf('<PublicAtlasStoryCanvas');
+	const editableCanvasIndex = mapRoute.indexOf('<PublicAtlasCanvas');
 
 	assert.notEqual(storyCanvasIndex, -1);
 	assert.notEqual(editableCanvasIndex, -1);
 	assert.ok(storyCanvasIndex < editableCanvasIndex);
-	assert.ok(atlasRoute.includes('starterId="marketplace-review-queue"'));
-	assert.ok(atlasRoute.includes('storyId="atlas-page-marketplace-review-story"'));
-	assert.ok(atlasRoute.includes('bookingHref="/book"'));
+	assert.ok(mapRoute.includes('starterId="marketplace-review-queue"'));
+	assert.ok(mapRoute.includes('storyId="map-page-marketplace-review-story"'));
+	assert.ok(mapRoute.includes('bookingHref="/book"'));
 });
 
-test('atlas route labels the story and mapping surfaces distinctly', () => {
-	assert.ok(atlasRoute.includes('eyebrow="Atlas story"'));
-	assert.ok(atlasRoute.includes('same graph contract'));
-	assert.ok(atlasRoute.includes('eyebrow="Public mapping surface"'));
-	assert.ok(atlasRoute.includes('The canvas turns curiosity into booking context.'));
+test('Map route labels the story and mapping surfaces distinctly', () => {
+	assert.ok(mapRoute.includes('eyebrow="Workflow story"'));
+	assert.ok(mapRoute.includes('same graph contract'));
+	assert.ok(mapRoute.includes('eyebrow="Public mapping surface"'));
+	assert.ok(mapRoute.includes('The canvas turns curiosity into operating context.'));
 });
 
-test('services route keeps one public Atlas map and removes the example canvas', () => {
+test('services route keeps one public Map canvas and one product-family grid', () => {
 	assert.ok(servicesRoute.includes('<PublicAtlasCanvas'));
 	assert.match(
 		servicesRoute,
@@ -156,18 +157,18 @@ test('services route keeps one public Atlas map and removes the example canvas',
 	assert.equal(servicesRoute.includes('storyId="services-marketplace-review-story"'), false);
 	assert.equal(servicesRoute.includes('<PerformanceDecisionPanel'), false);
 	assert.equal(servicesRoute.includes('<PerformanceCtaBand'), false);
-	assert.equal(servicesRoute.includes('<PerformanceCardGrid'), false);
+	assert.ok(servicesRoute.includes('<PerformanceCardGrid'));
 });
 
-test('public Atlas gives the booking warmup a distinct label and deliberate copy rhythm', () => {
+test('public Map keeps the existing booking warmup rhythm', () => {
 	assert.ok(agencyEditableCanvas.includes('<span>Mapping warmup</span>'));
 	assert.ok(agencyEditableCanvas.includes('gap: clamp(1.5rem, 3vw, 2.5rem)'));
 	assert.ok(agencyEditableCanvas.includes('max-width: 46rem'));
-	assert.ok(agencyEditableCanvas.includes('font-family: var(--font-mono)'));
+	assert.ok(agencyEditableCanvas.includes('font-family: var(--font-performance-mono)'));
 });
 
 test('public Performance routes use the natural water image series', () => {
-	for (const route of [homeRoute, servicesRoute, productsRoute, bookRoute, atlasRoute, difyControlPlaneRoute]) {
+	for (const route of [homeRoute, servicesRoute, productsRoute, bookRoute, mapRoute, difyControlPlaneRoute]) {
 		assert.equal(route.includes('/images/performance-lab/controlled-flow.webp'), false);
 		assert.equal(route.includes('/images/performance-lab/pressure-boundary.webp'), false);
 		assert.equal(route.includes('/images/performance-lab/trace-control-plane.webp'), false);
@@ -231,17 +232,17 @@ test('stack route uses a read-only story canvas to explain the boundary', () => 
 test('products route exposes the governance product contract surfaces', () => {
 	assert.ok(productsRoute.includes("from '@create-something/canon/governance'"));
 	assert.ok(productsRoute.includes('listGovernanceProducts'));
-	assert.ok(productsRoute.includes('Atlas maps the workflow.'));
-	assert.ok(productsRoute.includes("href: product.id === 'atlas' ? '/atlas' : `/products/${product.id}`"));
+	assert.ok(productsRoute.includes("filter((product) => product.id !== 'atlas')"));
+	assert.ok(productsRoute.includes('Signal, Decision, and Proof are operator surfaces.'));
+	assert.ok(productsRoute.includes('Control includes Map'));
 	assert.equal(productsRoute.includes('<PublicAtlasCanvas'), false);
 });
 
 test('public proof path distinguishes the workflow compiler prototype from live operation', () => {
 	assert.ok(homeRoute.includes('href="/proof/marketplace-workflow"'));
 	assert.ok(homeRoute.includes('Stop watching the workflow. Keep the judgment.'));
-	assert.ok(productsRoute.includes('Foundation'));
-	assert.ok(productsRoute.includes('Substrate'));
-	assert.ok(productsRoute.includes('Map / Pilot / Operate'));
+	assert.ok(productsRoute.includes('Map / Build / Control'));
+	assert.ok(productsRoute.includes('Two products and one implementation service.'));
 	assert.ok(marketplaceWorkflowRoute.includes('Active development'));
 	assert.ok(marketplaceWorkflowRoute.includes('representative local fixtures'));
 	assert.ok(marketplaceWorkflowRoute.includes('no production writes'));
@@ -250,11 +251,11 @@ test('public proof path distinguishes the workflow compiler prototype from live 
 	assert.ok(marketplaceWorkflowRoute.includes("{ value: '5'"));
 });
 
-test('Signal Decision and Proof product pages attach back to Atlas and each other', () => {
+test('Signal Decision and Proof product pages attach back to Map and each other', () => {
 	for (const route of [signalProductRoute, decisionProductRoute, proofProductRoute]) {
 		assert.ok(route.includes("from '@create-something/canon/governance'"));
 		assert.ok(route.includes('<GovernanceProductPage'));
-		assert.ok(route.includes("href: '/atlas'"));
+		assert.ok(route.includes("href: '/map'"));
 		assert.ok(route.includes("href: '/products'"));
 	}
 
@@ -311,7 +312,8 @@ test('editable Atlas flow uses stable overridable ids instead of fixed DOM ids',
 	assert.ok(canonFlowComponent.includes('{initialViewport}'));
 	assert.ok(canonFlowComponent.includes('proOptions'));
 	assert.ok(canonFlowComponent.includes('hideAttribution: true'));
-	assert.ok(canonFlowComponent.includes('aria-label="Atlas workflow map"'));
+	assert.ok(canonFlowComponent.includes("export let ariaLabel = 'Atlas workflow map'"));
+	assert.ok(canonFlowComponent.includes('aria-label={ariaLabel}'));
 	assert.equal(canonFlowComponent.includes('public-atlas-flow__surface'), false);
 	assert.equal(canonFlowComponent.includes('<svg'), false);
 	assert.equal(canonFlowComponent.includes('\n\t\t\tfitView\n'), false);
@@ -334,13 +336,26 @@ test('agency story canvas is a Canon wrapper over local starter maps', () => {
 	assert.ok(canonPackage.includes('"./atlas/headless"'));
 });
 
+test('public Map projects internal Atlas renderers through public labels', () => {
+	assert.ok(agencyStoryCanvasWrapper.includes("export let surfaceLabel = 'Map'"));
+	assert.ok(agencyStoryCanvasWrapper.includes("export let eyebrow = 'Map story canvas'"));
+	assert.ok(agencyStoryCanvasWrapper.includes('The same Map graph can teach the workflow'));
+	assert.ok(agencyStoryCanvasWrapper.includes('{surfaceLabel}'));
+	assert.ok(canonStoryCanvasComponent.includes("export let surfaceLabel = 'Atlas'"));
+	assert.ok(canonStoryCanvasComponent.includes('projectSurfaceLabel'));
+	assert.ok(canonFlowComponent.includes("export let ariaLabel = 'Atlas workflow map'"));
+	assert.ok(agencyFlowComponent.includes('ariaLabel="Workflow map"'));
+	assert.equal(agencyEditableCanvas.includes('aria-label="Public Atlas workflow canvas"'), false);
+	assert.equal(agencyEditableCanvas.includes('Atlas dimension coverage'), false);
+});
+
 test('agency public Substrate canvas mounts the shared canvas kernel', () => {
 	assert.ok(agencySubstrateCanvasWrapper.includes("import('@create-something/canvas-kernel')"));
 	assert.ok(agencySubstrateCanvasWrapper.includes('kernel.CanvasKernel'));
 	assert.ok(agencySubstrateCanvasWrapper.includes('data-public-substrate-canvas'));
-	assert.ok(agencySubstrateCanvasWrapper.includes('The canvas is the proof object.'));
-	assert.ok(agencySubstrateCanvasWrapper.includes('Signal / Decision / Proof'));
-	assert.ok(agencySubstrateCanvasWrapper.includes('shared kernel'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('Follow the workflow from request to receipt.'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('where a person must approve'));
+	assert.ok(agencySubstrateCanvasWrapper.includes('data-render-backend'));
 	assert.ok(agencySubstrateCanvasWrapper.includes('Trace proof'));
 	assert.ok(agencySubstrateCanvasModule.includes("from '@create-something/canvas-kernel'"));
 	assert.ok(agencySubstrateCanvasModule.includes('PUBLIC_SUBSTRATE_CANVAS_PROJECTION'));
@@ -399,7 +414,7 @@ test('agency README documents story canvas route usage contract', () => {
 	assert.ok(agencyReadme.includes('`@create-something/canon/atlas/headless` owns'));
 	assert.ok(agencyReadme.includes('`@create-something/canon/atlas` owns the Svelte'));
 	assert.ok(agencyReadme.includes('`AtlasFlow`'));
-	assert.ok(agencyReadme.includes('`/`, `/atlas`, and'));
+	assert.ok(agencyReadme.includes('`/`, `/map`, and'));
 	assert.ok(agencyReadme.includes('`/methodology`, `/stack`, and `/products` can use the'));
 	assert.ok(agencyReadme.includes('`data-motion-cue` attributes'));
 });
@@ -441,6 +456,6 @@ test('compact mobile privacy prompt stays below navigation and away from campaig
 test('short desktop campaigns keep the property switcher away from primary actions', () => {
 	assert.ok(layoutRoute.includes('@media (max-height: 47.5rem) and (min-width: 48rem)'));
 	assert.ok(layoutRoute.includes(':global(.layout-root .mode-indicator)'));
-	assert.ok(layoutRoute.includes('top: calc(72px + var(--space-md, 1rem))'));
+	assert.ok(layoutRoute.includes('top: calc(72px + var(--space-performance-md, 1rem))'));
 	assert.ok(layoutRoute.includes('bottom: auto'));
 });

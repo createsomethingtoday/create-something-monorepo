@@ -1,10 +1,10 @@
 export const agencyCoreMessaging = {
   categoryLabel: 'AI workflow systems',
   startWithWorkflowLabel: 'Map one workflow',
-  startWithWorkflowHref: '/services#atlas-warmup',
+  startWithWorkflowHref: '/map',
   tryMapLabel: 'Map one workflow',
   selfMapLabel: 'Map one workflow',
-  selfMapHref: '/services#atlas-warmup',
+  selfMapHref: '/map',
   governanceChecklistLabel: 'Get Workflow Checklist',
   governanceChecklistHref: '/contact?source=resource&intent=governance-checklist&lane=not_sure',
   workflowTeardownLabel: 'Request Workflow Map',

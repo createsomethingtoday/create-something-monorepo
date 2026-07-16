@@ -9,7 +9,7 @@ import {
 } from '../src/lib/scheduling/first-party.ts';
 
 const bookRoute = readFileSync(new URL('../src/routes/book/+page.svelte', import.meta.url), 'utf8');
-const atlasRoute = readFileSync(new URL('../src/routes/atlas/+page.svelte', import.meta.url), 'utf8');
+const mapRoute = readFileSync(new URL('../src/routes/map/+page.svelte', import.meta.url), 'utf8');
 const contactRoute = readFileSync(new URL('../src/routes/contact/+page.svelte', import.meta.url), 'utf8');
 const textRevelation = readFileSync(
 	new URL('../../canon/src/lib/domains/agency/TextRevelation.svelte', import.meta.url),
@@ -24,8 +24,8 @@ const schedulerPage = readFileSync(
 	'utf8'
 );
 
-test('owned /book route embeds the first-party scheduler and remains the Atlas destination', () => {
-	assert.ok(atlasRoute.includes('bookingHref="/book"'));
+test('owned /book route embeds the first-party scheduler and remains the Map destination', () => {
+	assert.ok(mapRoute.includes('bookingHref="/book"'));
 	assert.ok(bookRoute.includes('buildFirstPartySchedulerUrl'));
 	assert.ok(bookRoute.includes('<iframe'));
 	assert.ok(bookRoute.includes('title="Schedule a CREATE SOMETHING mapping session"'));

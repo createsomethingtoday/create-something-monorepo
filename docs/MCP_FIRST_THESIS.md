@@ -1,7 +1,7 @@
 # The MCP-First Thesis
 
 > Research conducted: February 4, 2026
-> Updated: June 26, 2026 (Delegated Work Control hierarchy)
+> Updated: July 16, 2026 (Map -> Build -> Control public packaging)
 > Context: Strategic pivot for WORKWAY and CREATE SOMETHING
 
 ## Executive Summary
@@ -72,7 +72,7 @@ NEW: MCP Servers → Connectivity → Intelligence Layer (creation as entry poin
 The longer-lived claim is broader than MCP:
 
 ```
-Delegated Work Control → Workflow Trust Layer → Policy OS → MCP/Skills/runtime artifacts
+Delegated Work Control → Map / Build / Control → Policy OS and Atlas contracts → MCP/Skills/runtime artifacts
 ```
 
 The simplest operating language for that hierarchy is:
@@ -89,17 +89,19 @@ Signal → Decision → Proof
   outcome, and rollback or follow-up path.
 
 This language is the visitor-facing and operator-facing explanation. The
-technical architecture still uses Delegated Work Control, Workflow Trust Layer,
-Policy OS, MCP, Skills, and runtime artifacts underneath.
+technical architecture still uses Delegated Work Control, Policy OS, Atlas,
+MCP, Skills, and runtime artifacts underneath.
 
 ### Packaging Rule (Codex Vector)
 
 The go-to-market sequence is explicit:
 
-1. **Entry wedge**: `MCP-only` for discovery and compliance-constrained cases.
-2. **Default paid offer**: `Policy OS` (custom MCP + agent layer + policy operations).
-3. **Vector**: Codex-first setup and demos, with MCP/policy artifacts portable to Claude and Cursor.
-4. **Category**: Delegated Work Control, with Workflow Trust Layer as current public service language.
+1. **Standalone definition**: `CREATE SOMETHING Map` on a monthly or yearly cadence.
+2. **Implementation bridge**: `CREATE SOMETHING Build` for an approved Map.
+3. **Standalone operation**: `CREATE SOMETHING Control`, including Map, with Policy OS as the internal governed contract.
+4. **Technical wedge**: `MCP-only` for discovery and compliance-constrained cases.
+5. **Vector**: Codex-first setup and demos, with MCP/policy artifacts portable to Claude and Cursor.
+6. **Category**: Delegated Work Control.
 
 ---
 
@@ -301,15 +303,16 @@ inside it.
 | **.ltd** | Philosophy of creation | Philosophy of controlled delegation and automation infrastructure |
 | **.io** | Research, tools, docs | MCP, SDK, policy, and proof patterns for builders |
 | **.space** | Practice via experiments | **The Workbench** for maps, checks, code execution, and proof tools |
-| **.agency** | Client services | Workflow Trust Layer implementation for delegated work |
+| **.agency** | Client services | Map, Build, and Control for delegated work |
 
 ### .agency Service Offerings
 
 | Service | Description | Value |
 |---------|-------------|-------|
-| **Trust Map** | Which workflow can be safely delegated first? | Workflow, owner, action, stop, and receipt clarity |
+| **CREATE SOMETHING Map** | Standalone living workflow definition | Workflow, owner, action, stop, and receipt clarity |
+| **CREATE SOMETHING Build** | Implementation of an approved Map | Connected owned system, tests, runbook, and handoff |
+| **CREATE SOMETHING Control** | Standalone governed execution; includes Map | Managed Signal, Decision, Proof, approvals, and recovery |
 | **MCP-only (Discovery/Compliance)** | Limited-scope or read-only connectivity for teams operating agents internally | Fast trust setup with lower autonomy risk |
-| **Policy OS (Default)** | Custom MCP server(s) + Codex setup + policy + runbook + managed judgment loop | Differentiated outcomes + premium margin |
 | **Ongoing Support** | Auth updates, policy tuning, golden-task regressions, new capabilities | Recurring relationship |
 
 **Positioning shift**: From "We build websites/apps with modern stacks" to "We
@@ -421,7 +424,7 @@ Client Request → CREATE SOMETHING MCP Server (mcp-core)
 - Client never knows the supplier exists
 - mcp-core is always the server framework
 - Intelligence Layer is always custom
-- Policy OS is the default commercial package
+- Control is the public governed product; Policy OS remains its internal package contract
 - Supplier is swappable (MIT-licensed SDK, wrapper pattern = contained blast radius)
 
 ### Supplier Comparison
@@ -480,7 +483,7 @@ The `@create-something/composio-bridge` package provides the wrap pattern adapte
 ### CREATE SOMETHING (Horizontal - Creation Moat)
 1. [ ] Update .io content: focus on MCP *creation* patterns, not consumption
 2. [x] Redefine .space as The Workbench — live tools, not articles
-3. [ ] Define .agency service packages: MCP Audit, MCP-only wedge, Policy OS (default)
+3. [x] Define .agency product family: Map, Build, and Control; retain MCP-only and Policy OS as technical contracts
 4. [ ] Publish client contract templates: `mcp_contract.yaml`, `agent_contract.yaml`, `outcome_contract.md`
 5. [ ] Build reference MCPs for common integration patterns (CRM, project management, etc.)
 6. [ ] Document the creation moat thesis on .ltd

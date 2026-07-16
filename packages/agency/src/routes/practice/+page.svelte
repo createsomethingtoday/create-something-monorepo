@@ -54,10 +54,10 @@
 			id: 'MAP-01',
 			kind: 'Workflow model',
 			title: 'Marketplace review queue',
-			detail: 'A read-only Atlas story shows the signal, automated preparation, human review, stop condition, and proof landing zone.',
+			detail: 'A read-only Map story shows the signal, automated preparation, human review, stop condition, and proof landing zone.',
 			state: 'verified',
 			date: 'Representative local map',
-			href: '/atlas'
+			href: '/map'
 		},
 		{
 			id: 'CASE-01',
@@ -113,7 +113,7 @@
 		title="See where work may run, wait, or stop."
 		description="This representative Marketplace review queue is a read-only teaching surface. It exposes a real operating shape without claiming production access or client proof."
 		intervention={{
-			label: 'Atlas / shared graph contract',
+			label: 'Map / shared graph contract',
 			title: 'The map is the first policy artifact.',
 			detail: 'Each node names an owner and each edge exposes the handoff that must be governed, tested, and proved.'
 		}}

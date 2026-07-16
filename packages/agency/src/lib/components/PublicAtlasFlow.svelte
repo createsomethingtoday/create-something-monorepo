@@ -16,6 +16,7 @@
 	{canvas}
 	{selectedNodeId}
 	{flowId}
+	ariaLabel="Workflow map"
 	{onMoveNode}
 	{onSelectNode}
 	{focusedNodeIds}

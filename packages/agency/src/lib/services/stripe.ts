@@ -33,6 +33,29 @@ export interface StripePriceConfig {
  * 4. Add to this configuration
  */
 export const STRIPE_PRICES: Record<string, StripePriceConfig> = {
+	// CREATE SOMETHING Map and Control subscription cadences.
+	// Placeholder fallbacks keep checkout fail-closed until approved Stripe prices are configured.
+	'map-monthly': {
+		priceId: process.env.STRIPE_PRICE_MAP_MONTHLY || 'price_placeholder_map_monthly',
+		mode: 'subscription',
+		name: 'CREATE SOMETHING Map (Monthly)'
+	},
+	'map-yearly': {
+		priceId: process.env.STRIPE_PRICE_MAP_YEARLY || 'price_placeholder_map_yearly',
+		mode: 'subscription',
+		name: 'CREATE SOMETHING Map (Yearly)'
+	},
+	'control-monthly': {
+		priceId: process.env.STRIPE_PRICE_CONTROL_MONTHLY || 'price_placeholder_control_monthly',
+		mode: 'subscription',
+		name: 'CREATE SOMETHING Control (Monthly)'
+	},
+	'control-yearly': {
+		priceId: process.env.STRIPE_PRICE_CONTROL_YEARLY || 'price_placeholder_control_yearly',
+		mode: 'subscription',
+		name: 'CREATE SOMETHING Control (Yearly)'
+	},
+
 	// Vertical Templates - Subscription tiers ($29/mo Solo, $79/mo Team)
 	// Set STRIPE_PRICE_VERTICAL_SOLO and STRIPE_PRICE_VERTICAL_TEAM in Cloudflare secrets
 	'vertical-templates-solo': {

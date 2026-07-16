@@ -165,16 +165,16 @@ test('Field Reports are a browsable proof chapter in the agency journey', () => 
   assert.match(footer, /href="\/field-reports">Field Reports/);
 });
 
-test('Products explains one map and three operating surfaces without a four-surface ambiguity', () => {
+test('Products explains the product family and keeps operating surfaces inside Control', () => {
   const products = readFileSync(
     new URL('../src/routes/products/+page.svelte', import.meta.url),
     'utf8'
   );
 
-  assert.match(products, /One map coordinates three operating surfaces\./);
-  assert.match(products, /Atlas holds the map\./);
-  assert.match(products, /Signal watches, Decision routes, and Proof records\./);
-  assert.match(products, /One workflow map\. Three places to operate\./);
+  assert.match(products, /Map -> Build -> Control/);
+  assert.match(products, /Two products and one implementation service\./);
+  assert.match(products, /Signal, Decision, and Proof are operator surfaces\./);
+  assert.match(products, /Control includes Map/);
   assert.doesNotMatch(products, /Four inspectable surfaces/);
   assert.doesNotMatch(products, /Four visible jobs/);
 });

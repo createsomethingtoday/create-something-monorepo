@@ -3,7 +3,8 @@ export type MarketingPageCluster =
   | 'home'
   | 'core-services'
   | 'conversion'
-  | 'atlas'
+  | 'map'
+  | 'control'
   | 'stack-boundary'
   | 'workflow-tool-stack'
   | 'dify'
@@ -100,8 +101,8 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     funnelStage: 'book',
     intent: 'Explain the core service path: map one workflow before build work starts.',
     primaryAction: 'Map the workflow',
-    requiredTerms: ['workflow', 'handoff', 'Signal', 'Decision', 'Proof'],
-    requiredLinks: ['#atlas-warmup'],
+    requiredTerms: ['workflow', 'Map', 'Build', 'Control', 'Proof'],
+    requiredLinks: ['#map-warmup'],
     schema: 'faq',
     search: {
       changefreq: 'weekly',
@@ -149,8 +150,8 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     selfHealing: ['copy:heal', 'search-route:sync']
   },
   {
-    path: '/atlas',
-    cluster: 'atlas',
+    path: '/map',
+    cluster: 'map',
     role: 'pillar',
     decision: 'index',
     audience: 'Visitors who want to map one workflow before a call.',
@@ -164,6 +165,25 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
       changefreq: 'weekly',
       priority: '0.85',
       lastmod: '2026-06-19'
+    },
+    selfHealing: ['copy:heal', 'search-route:sync']
+  },
+  {
+    path: '/control',
+    cluster: 'control',
+    role: 'pillar',
+    decision: 'index',
+    audience: 'Teams that need approvals, evidence, and recovery around a live human-agent workflow.',
+    funnelStage: 'evaluate',
+    intent: 'Explain Control as a standalone governed-execution subscription that includes Map.',
+    primaryAction: 'Talk through one workflow',
+    requiredTerms: ['Control', 'Map', 'Signal', 'Decision', 'Proof'],
+    requiredLinks: ['/map', '/products/signal', '/products/decision', '/products/proof'],
+    schema: 'page',
+    search: {
+      changefreq: 'monthly',
+      priority: '0.85',
+      lastmod: '2026-07-16'
     },
     selfHealing: ['copy:heal', 'search-route:sync']
   },
@@ -197,7 +217,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     intent:
       'Show one complete Marketplace workflow from versioned map through compiled contracts, representative replay, and deterministic proof.',
     primaryAction: 'Map your workflow',
-    requiredTerms: ['workflow', 'Atlas', 'Marketplace', 'approval', 'proof'],
+    requiredTerms: ['workflow', 'Map', 'Marketplace', 'approval', 'proof'],
     requiredLinks: ['/products'],
     schema: 'article',
     search: {
@@ -275,7 +295,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     intent: 'Let practitioners map, bound, test, and review delegated work against visible evidence.',
     primaryAction: 'Map one workflow',
     requiredTerms: ['workflow', 'authority', 'operator', 'evidence', 'proof'],
-    requiredLinks: ['/methodology', '/atlas', '/proof/marketplace-workflow'],
+    requiredLinks: ['/methodology', '/map', '/proof/marketplace-workflow'],
     schema: 'page',
     search: {
       changefreq: 'weekly',
@@ -455,9 +475,9 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     audience: 'Teams evaluating the product surfaces behind controlled AI workflow work.',
     funnelStage: 'evaluate',
     intent:
-      'Explain Atlas, Signal, Decision, and Proof as one product system for inspectable workflows.',
+      'Explain Map and Control as standalone products, Build as the implementation service, and Signal, Decision, and Proof as Control surfaces.',
     primaryAction: 'Map one workflow',
-    requiredTerms: ['workflow', 'Atlas', 'Signal', 'Decision', 'Proof'],
+    requiredTerms: ['workflow', 'Map', 'Build', 'Control', 'Proof'],
     requiredLinks: [],
     schema: 'faq',
     search: {
@@ -493,10 +513,10 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     decision: 'index',
     audience: 'Teams that need proactive notification when product, API, or process updates affect reviewers.',
     funnelStage: 'evaluate',
-    intent: 'Explain Signal as the app governance inbox that routes updates into Atlas, Decision, and Proof.',
+    intent: 'Explain Signal as the Control inbox that routes updates into Map, Decision, and Proof.',
     primaryAction: 'Map one workflow',
-    requiredTerms: ['Signal', 'inbox', 'API updates', 'Atlas', 'Proof'],
-    requiredLinks: ['/atlas', '/products/decision', '/products/proof', '/products'],
+    requiredTerms: ['Signal', 'inbox', 'API updates', 'Map', 'Proof'],
+    requiredLinks: ['/map', '/products/decision', '/products/proof', '/products'],
     schema: 'faq',
     search: {
       changefreq: 'monthly',
@@ -515,7 +535,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     intent: 'Explain Decision as the queue that turns Signals into approval, policy action, stop states, and Proof.',
     primaryAction: 'Map one workflow',
     requiredTerms: ['Decision', 'queue', 'human-in-the-loop', 'Signal', 'Proof'],
-    requiredLinks: ['/products/signal', '/atlas', '/products/proof', '/products'],
+    requiredLinks: ['/products/signal', '/map', '/products/proof', '/products'],
     schema: 'faq',
     search: {
       changefreq: 'monthly',
@@ -533,8 +553,8 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     funnelStage: 'evaluate',
     intent: 'Explain Proof as the ledger surface that records evidence, outcomes, receipts, and rollback notes.',
     primaryAction: 'Map one workflow',
-    requiredTerms: ['Proof', 'ledger', 'audit trail', 'Atlas', 'Decision'],
-    requiredLinks: ['/products/signal', '/products/decision', '/atlas', '/products'],
+    requiredTerms: ['Proof', 'ledger', 'audit trail', 'Map', 'Decision'],
+    requiredLinks: ['/products/signal', '/products/decision', '/map', '/products'],
     schema: 'faq',
     search: {
       changefreq: 'monthly',
@@ -627,9 +647,9 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     decision: 'index',
     audience: 'Teams whose AI-assisted workflows already affect operations or risk.',
     funnelStage: 'book',
-    intent: 'Explain the enterprise Policy OS path after the first workflow is live.',
+    intent: 'Explain the enterprise Control path after the first workflow is live.',
     primaryAction: 'Bring the workflow',
-    requiredTerms: ['Policy OS', 'workflow', 'approval', 'evidence', 'reliability'],
+    requiredTerms: ['Control', 'workflow', 'approval', 'evidence', 'reliability'],
     requiredLinks: [],
     schema: 'faq',
     search: {
