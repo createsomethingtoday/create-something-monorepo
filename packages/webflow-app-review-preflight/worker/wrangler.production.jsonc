@@ -6,10 +6,11 @@
   "compatibility_date": "2026-07-14",
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
+  "triggers": { "crons": ["*/5 * * * *"] },
   "vars": {
     "ENVIRONMENT": "production",
     "ALLOWED_ORIGINS": "chrome-extension://eiogakldgljpbbmplgckjkoglfgabblm,https://6a57b0fa70db1b7a0cd666ac.webflow-ext.com",
-    "E2B_RUNTIME_TEMPLATE_ID": "app-review-companion-runtime:a96a06d0-74cc-4f48-b1aa-9189777303ab",
+    "E2B_RUNTIME_TEMPLATE_ID": "app-review-companion-runtime:b6da7894-38b3-46e6-a3bc-e9cf47404023",
     "WEBFLOW_OAUTH_REDIRECT_URI": "https://webflow-app-review-preflight.createsomething.workers.dev/v1/oauth/webflow/callback"
   },
   "d1_databases": [

@@ -24,6 +24,7 @@ import {
   getRuntimeObservationJob,
   listRuntimeTestPackages,
   requestRuntimeObservationRun,
+  reconcileRuntimeObservationJobs,
   RuntimeObservationApprovalError,
   RuntimeObservationDispatchError,
   RuntimeObservationEvidenceError,
@@ -56,6 +57,18 @@ import {
   reviewerWorkspace
 } from './reviewer-web';
 
+function isRetiredLegacyMutation(pathname: string, method: string): boolean {
+  if (method !== 'POST') return false;
+  return [
+    /^\/v1\/runtime-jobs\/[^/]+\/evidence$/,
+    /^\/v1\/runtime-test-packages\/[^/]+\/observation-jobs$/,
+    /^\/v1\/reviews\/[^/]+\/runtime-jobs$/,
+    /^\/v1\/reviews\/[^/]+\/companion-runs$/,
+    /^\/v1\/companion-runs\/[^/]+\/(?:complete|replay)$/,
+    /^\/v1\/companion-runs\/[^/]+\/missions\/[^/]+$/
+  ].some((pattern) => pattern.test(pathname));
+}
+
 async function handle(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const requestOrigin = request.headers.get('origin');
@@ -69,6 +82,19 @@ async function handle(request: Request, env: Env): Promise<Response> {
     return origin
       ? options(origin)
       : json({ error: 'origin_required' }, 403);
+  }
+  if (
+    env.ENVIRONMENT === 'production' &&
+    isRetiredLegacyMutation(url.pathname, request.method)
+  ) {
+    return json(
+      {
+        error: 'legacy_runtime_mutation_retired',
+        message: 'Use the package-bound runtime observation and reviewer replay workflow.'
+      },
+      410,
+      origin
+    );
   }
   if (url.pathname === '/health' && request.method === 'GET') {
     return json({ ok: true, service: 'webflow-app-review-preflight' }, 200, origin);
@@ -388,7 +414,7 @@ async function handle(request: Request, env: Env): Promise<Response> {
       );
       return 'notFound' in observationJob
         ? json({ error: 'runtime_test_package_not_found' }, 404, origin)
-        : json({ observationJob }, 201, origin);
+        : json({ observationJob }, observationJob.deduplicated ? 200 : 201, origin);
     }
 
     const companionCompleteMatch = url.pathname.match(
@@ -596,5 +622,12 @@ async function handle(request: Request, env: Env): Promise<Response> {
 export default {
   fetch(request: Request, env: Env): Promise<Response> {
     return handle(request, env);
+  },
+  scheduled(
+    _controller: ScheduledController,
+    env: Env,
+    ctx: ExecutionContext
+  ): void {
+    ctx.waitUntil(reconcileRuntimeObservationJobs(env));
   }
 };

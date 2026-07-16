@@ -12,6 +12,7 @@ import type { AuthenticatedUser, Env } from './types';
 import {
   E2BRuntimeLaunchError,
   launchRuntimeObservationInE2B,
+  terminateRuntimeObservationInE2B,
   type E2BRuntimeLaunchStage
 } from './e2b-runtime-launcher';
 
@@ -23,18 +24,32 @@ const HEX_SHA256 = /^[a-f0-9]{64}$/;
 const INSTALLATION_ID = /^[a-zA-Z0-9:_-]{3,128}$/;
 const MAX_EVIDENCE_BYTES = 10 * 1024 * 1024;
 const MAX_EVIDENCE_ARTIFACTS = 12;
-const FORBIDDEN_EVIDENCE_KEY = /^(?:authorization|cookie|set-cookie|password|secret|token|credentials?|requestHeaders|responseHeaders|requestBody|responseBody|formValues?)$/i;
-const FORBIDDEN_EVIDENCE_VALUE = /(?:Bearer\s+[A-Za-z0-9._~+/=-]{8,}|-----BEGIN [^-]*PRIVATE KEY-----|\bsk-[A-Za-z0-9_-]{12,})/i;
+const FORBIDDEN_EVIDENCE_KEY =
+  /^(?:authorization|cookie|set-cookie|password|secret|token|credentials?|requestHeaders|responseHeaders|requestBody|responseBody|formValues?)$/i;
+const FORBIDDEN_EVIDENCE_VALUE =
+  /(?:Bearer\s+[A-Za-z0-9._~+/=-]{8,}|-----BEGIN [^-]*PRIVATE KEY-----|\bsk-[A-Za-z0-9_-]{12,})/i;
 
 const ARTIFACT_POLICY: Record<
   string,
   { contentType: string; maxBytes: number; extension: string }
 > = {
   screenshot_before: { contentType: 'image/png', maxBytes: 2 * 1024 * 1024, extension: 'png' },
-  screenshot_after_install: { contentType: 'image/png', maxBytes: 2 * 1024 * 1024, extension: 'png' },
-  screenshot_after_observation: { contentType: 'image/png', maxBytes: 2 * 1024 * 1024, extension: 'png' },
+  screenshot_after_install: {
+    contentType: 'image/png',
+    maxBytes: 2 * 1024 * 1024,
+    extension: 'png'
+  },
+  screenshot_after_observation: {
+    contentType: 'image/png',
+    maxBytes: 2 * 1024 * 1024,
+    extension: 'png'
+  },
   // Legacy artifact kind retained so previously captured evidence remains readable.
-  screenshot_after_cleanup: { contentType: 'image/png', maxBytes: 2 * 1024 * 1024, extension: 'png' },
+  screenshot_after_cleanup: {
+    contentType: 'image/png',
+    maxBytes: 2 * 1024 * 1024,
+    extension: 'png'
+  },
   network_log: { contentType: 'application/json', maxBytes: 1024 * 1024, extension: 'json' },
   console_log: { contentType: 'application/json', maxBytes: 512 * 1024, extension: 'json' },
   dom_snapshot: { contentType: 'application/json', maxBytes: 1024 * 1024, extension: 'json' },
@@ -47,7 +62,10 @@ export class RuntimeTestPackageError extends Error {}
 export class RuntimeObservationApprovalError extends Error {}
 export class RuntimeObservationEvidenceError extends Error {}
 export class RuntimeObservationDispatchError extends Error {
-  constructor(message: string, readonly stage: E2BRuntimeLaunchStage) {
+  constructor(
+    message: string,
+    readonly stage: E2BRuntimeLaunchStage
+  ) {
     super(message);
   }
 }
@@ -113,11 +131,7 @@ function isPrivateIpv4(hostname: string): boolean {
   );
 }
 
-function normalizeUrl(
-  value: unknown,
-  env: Env,
-  kind: 'sandbox' | 'runtime' | 'canary'
-): URL {
+function normalizeUrl(value: unknown, env: Env, kind: 'sandbox' | 'runtime' | 'canary'): URL {
   if (typeof value !== 'string' || value.length === 0 || value.length > 2048) {
     throw new RuntimeTestPackageError(`${kind} URL is missing or too long.`);
   }
@@ -189,6 +203,66 @@ async function readJson(request: Request): Promise<Record<string, unknown>> {
   }
 }
 
+async function readBoundedText(response: Response, maxBytes: number): Promise<string> {
+  if (!response.body) return '';
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let bytes = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      bytes += value.byteLength;
+      if (bytes > maxBytes) {
+        throw new RuntimeTestPackageError(
+          'The published Webflow site HTML is too large to verify safely.'
+        );
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  const combined = new Uint8Array(bytes);
+  let offset = 0;
+  for (const chunk of chunks) {
+    combined.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return new TextDecoder().decode(combined);
+}
+
+async function verifyPublishedWebflowSiteOwnership(
+  targetUrl: string,
+  siteId: string,
+  env: Env
+): Promise<void> {
+  if (env.ENVIRONMENT !== 'production') return;
+  let response: Response;
+  try {
+    response = await fetch(targetUrl, {
+      method: 'GET',
+      redirect: 'manual',
+      signal: AbortSignal.timeout(10_000)
+    });
+  } catch {
+    throw new RuntimeTestPackageError('The published Webflow site could not be verified.');
+  }
+  if (
+    response.status !== 200 ||
+    !(response.headers.get('content-type') ?? '').toLowerCase().includes('text/html')
+  ) {
+    throw new RuntimeTestPackageError('The published Webflow site could not be verified.');
+  }
+  const html = await readBoundedText(response, 256 * 1024);
+  const escapedSiteId = siteId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  if (!new RegExp(`data-wf-site\\s*=\\s*["']${escapedSiteId}["']`, 'i').test(html)) {
+    throw new RuntimeTestPackageError(
+      'The published Webflow site does not belong to the authenticated Webflow site.'
+    );
+  }
+}
+
 function boundedSelector(value: unknown, label: string): string {
   if (typeof value !== 'string' || value.trim().length === 0 || value.length > 256) {
     throw new RuntimeTestPackageError(`${label} must be a selector under 257 characters.`);
@@ -232,9 +306,10 @@ function parseArtifacts(value: unknown, env: Env): RuntimeArtifactPin[] {
     ) {
       throw new RuntimeTestPackageError('Every runtime artifact requires a SHA-256 SRI value.');
     }
-    const digestBytes = artifact.sha256.match(/.{2}/g)!.map((pair) =>
-      String.fromCharCode(Number.parseInt(pair, 16))
-    ).join('');
+    const digestBytes = artifact.sha256
+      .match(/.{2}/g)!
+      .map((pair) => String.fromCharCode(Number.parseInt(pair, 16)))
+      .join('');
     if (artifact.integrity !== `sha256-${btoa(digestBytes)}`) {
       throw new RuntimeTestPackageError(
         'The runtime SHA-256 and SRI must describe the same SHA-256 bytes.'
@@ -253,7 +328,8 @@ function parseNegativeProxyProbe(
   env: Env,
   allowedHosts: Set<string>
 ): RuntimeTestPackageInput['negativeProxyProbe'] {
-  const probe = value && typeof value === 'object' && !Array.isArray(value)
+  const probe =
+    value && typeof value === 'object' && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : null;
   if (
@@ -307,9 +383,7 @@ function parsePackageInput(
   }
   const licenseRecord = license as Record<string, unknown>;
   const expiresAtMs =
-    typeof licenseRecord.expiresAt === 'string'
-      ? Date.parse(licenseRecord.expiresAt)
-      : Number.NaN;
+    typeof licenseRecord.expiresAt === 'string' ? Date.parse(licenseRecord.expiresAt) : Number.NaN;
   if (
     licenseRecord.mode !== 'installation_allowlist' ||
     !Number.isFinite(expiresAtMs) ||
@@ -337,11 +411,7 @@ function parsePackageInput(
       expiresAt: new Date(expiresAtMs).toISOString()
     },
     runtimeArtifacts,
-    negativeProxyProbe: parseNegativeProxyProbe(
-      body.negativeProxyProbe,
-      env,
-      allowedHosts
-    ),
+    negativeProxyProbe: parseNegativeProxyProbe(body.negativeProxyProbe, env, allowedHosts),
     lifecycle: parseLifecycle(body.lifecycle)
   };
 }
@@ -396,7 +466,13 @@ export async function createRuntimeTestPackage(
 
   const now = new Date();
   const input = parsePackageInput(await readJson(request), env, now.getTime());
+  if (!user.siteId || input.sandboxInstallationId !== user.siteId) {
+    throw new RuntimeTestPackageError(
+      'The sandbox installation must match the authenticated Webflow site.'
+    );
+  }
   const target = new URL(input.targetUrl);
+  await verifyPublishedWebflowSiteOwnership(target.toString(), user.siteId, env);
   const id = crypto.randomUUID();
   const testPackage: RuntimeTestPackage = {
     schemaVersion: 'runtime_test_package.v1',
@@ -512,6 +588,11 @@ export async function listRuntimeTestPackages(
     const expired = Date.parse(testPackage.license.expiresAt) <= Date.now();
     let observation: RuntimeObservationSummary | null = null;
     if (row.job_id && row.job_status && row.approved_at && row.expires_at) {
+      const effectiveJobStatus =
+        ['approved', 'running', 'uploading'].includes(row.job_status) &&
+        Date.parse(row.expires_at) <= Date.now()
+          ? 'expired'
+          : row.job_status;
       const manifest = row.evidence_manifest_json
         ? (JSON.parse(row.evidence_manifest_json) as {
           cleanup?: { status?: unknown; residue?: unknown };
@@ -529,7 +610,8 @@ export async function listRuntimeTestPackages(
       const securityStatus = manifest?.securityEvaluation?.status;
       const securityPredicates = manifest?.securityEvaluation?.predicates;
       const securityBlockers = manifest?.securityEvaluation?.blockers;
-      const artifactRows = row.evidence_trust === 'webflow_observed'
+      const artifactRows =
+        row.evidence_trust === 'webflow_observed'
         ? await env.DB.prepare(
             `SELECT kind, content_type, bytes, sha256
                FROM runtime_observation_artifacts
@@ -546,17 +628,20 @@ export async function listRuntimeTestPackages(
         : { results: [] };
       observation = {
         id: row.job_id,
-        status: row.job_status,
+        status: effectiveJobStatus,
         trust: row.evidence_trust,
         approvedAt: row.approved_at,
         expiresAt: row.expires_at,
         completedAt: row.consumed_at,
         evidence:
           row.evidence_trust === 'webflow_observed' &&
-          (cleanupStatus === 'clean' || cleanupStatus === 'residue_detected' || cleanupStatus === 'not_tested') &&
+          (cleanupStatus === 'clean' ||
+            cleanupStatus === 'residue_detected' ||
+            cleanupStatus === 'not_tested') &&
           Array.isArray(cleanupResidue) &&
           (securityStatus === 'passed' || securityStatus === 'blocked') &&
-          securityPredicates !== null && typeof securityPredicates === 'object' &&
+          securityPredicates !== null &&
+          typeof securityPredicates === 'object' &&
           Array.isArray(securityBlockers) &&
           (proxyOutcome === 'blocked' || proxyOutcome === 'exposed' || proxyOutcome === 'error')
             ? {
@@ -583,7 +668,8 @@ export async function listRuntimeTestPackages(
     }
     views.push({
       ...testPackage,
-      status: expired && row.package_status === 'ready'
+      status:
+        expired && row.package_status === 'ready'
         ? 'expired'
         : (row.package_status as RuntimeTestPackageView['status']),
       observation
@@ -598,6 +684,13 @@ export interface StoredRuntimeObservationJob {
   approvedAt: string;
   capability: string;
   contract: RuntimeObservationJobContract;
+}
+
+interface RequestedRuntimeObservationJob {
+  id: string;
+  status: 'approved' | 'running' | 'uploading';
+  approvedAt: string;
+  deduplicated: boolean;
 }
 
 export async function getRuntimeObservationJob(
@@ -630,10 +723,7 @@ export async function getRuntimeObservationJob(
   if (!constantTimeEqual(suppliedHash, row.capability_sha256)) {
     return { unauthorized: true };
   }
-  if (
-    !['approved', 'running'].includes(row.status) ||
-    Date.parse(row.expires_at) <= Date.now()
-  ) {
+  if (!['approved', 'running'].includes(row.status) || Date.parse(row.expires_at) <= Date.now()) {
     return { unavailable: true };
   }
 
@@ -718,7 +808,9 @@ function validateManifest(
     manifest.bundleSha256 !== contract.bundleSha256 ||
     manifest.nonce !== contract.nonce ||
     manifest.targetUrl !== contract.target.url ||
-    manifest.trust !== 'webflow_observed'
+    manifest.trust !== 'webflow_observed' ||
+    manifest.executionEvidence !== contract.controls.executionEvidence ||
+    contract.controls.executionEvidence !== 'chromium_cdp_v1'
   ) {
     throw new RuntimeObservationEvidenceError(
       'Evidence does not match the server-issued observation contract.'
@@ -790,17 +882,13 @@ function validateManifest(
   }
 
   if (typeof manifest.runtimeReadyObserved !== 'boolean') {
-    throw new RuntimeObservationEvidenceError(
-      'Runtime-ready observation is missing.'
-    );
+    throw new RuntimeObservationEvidenceError('Runtime-ready observation is missing.');
   }
 
   if (
     !Array.isArray(manifest.runtimeCreatedScripts) ||
     manifest.runtimeCreatedScripts.length > 100 ||
-    manifest.runtimeCreatedScripts.some(
-      (item) => typeof item !== 'string' || item.length > 2048
-    )
+    manifest.runtimeCreatedScripts.some((item) => typeof item !== 'string' || item.length > 2048)
   ) {
     throw new RuntimeObservationEvidenceError(
       'Runtime-created script observations are missing or too large.'
@@ -810,9 +898,7 @@ function validateManifest(
   if (
     !Array.isArray(manifest.unreviewedRuntimeScripts) ||
     manifest.unreviewedRuntimeScripts.length > 100 ||
-    manifest.unreviewedRuntimeScripts.some(
-      (item) => typeof item !== 'string' || item.length > 2048
-    )
+    manifest.unreviewedRuntimeScripts.some((item) => typeof item !== 'string' || item.length > 2048)
   ) {
     throw new RuntimeObservationEvidenceError(
       'Unreviewed runtime script observations are missing or too large.'
@@ -836,7 +922,9 @@ function validateManifest(
     canary.url !== contract.controls.negativeProxyCanaryUrl ||
     !['blocked', 'exposed', 'error'].includes(String(canary.outcome)) ||
     (canary.statusCode !== null &&
-      (!Number.isInteger(canary.statusCode) || Number(canary.statusCode) < 0 || Number(canary.statusCode) > 599))
+      (!Number.isInteger(canary.statusCode) ||
+        Number(canary.statusCode) < 0 ||
+        Number(canary.statusCode) > 599))
   ) {
     throw new RuntimeObservationEvidenceError('Negative proxy canary evidence is invalid.');
   }
@@ -905,18 +993,13 @@ export function evaluateRuntimeSecurity(
       observations.some((item) => item.url === pin.url && item.loadedByPage === true)
     ),
     runtimeHashMatched: contract.runtimeArtifacts.every((pin) =>
-      observations.some(
-        (item) => item.url === pin.url && item.observedSha256 === pin.sha256
-      )
+      observations.some((item) => item.url === pin.url && item.observedSha256 === pin.sha256)
     ),
     runtimeIntegrityMatched: contract.runtimeArtifacts.every((pin) =>
-      observations.some(
-        (item) => item.url === pin.url && item.domIntegrity === pin.integrity
-      )
+      observations.some((item) => item.url === pin.url && item.domIntegrity === pin.integrity)
     ),
     noRuntimeCreatedScripts:
-      Array.isArray(manifest.runtimeCreatedScripts) &&
-      manifest.runtimeCreatedScripts.length === 0,
+      Array.isArray(manifest.runtimeCreatedScripts) && manifest.runtimeCreatedScripts.length === 0,
     noUnreviewedRuntimeScripts:
       Array.isArray(manifest.unreviewedRuntimeScripts) &&
       manifest.unreviewedRuntimeScripts.length === 0,
@@ -924,12 +1007,24 @@ export function evaluateRuntimeSecurity(
   };
   const blockers = [
     !predicates.publishedTarget ? 'Use a real published Webflow test-site URL.' : null,
-    !predicates.runtimeReadyObserved ? 'The runtime-ready signal was not observed on the published page.' : null,
-    !predicates.runtimeLoadedByPage ? 'The pinned runtime was not loaded by the published page.' : null,
-    !predicates.runtimeHashMatched ? 'The executed runtime bytes did not match the pinned SHA-256.' : null,
-    !predicates.runtimeIntegrityMatched ? 'The runtime script did not carry the pinned SRI value.' : null,
-    !predicates.noRuntimeCreatedScripts ? 'The runtime created additional script elements at execution time.' : null,
-    !predicates.noUnreviewedRuntimeScripts ? 'The runtime loaded additional unreviewed scripts.' : null,
+    !predicates.runtimeReadyObserved
+      ? 'The runtime-ready signal was not observed on the published page.'
+      : null,
+    !predicates.runtimeLoadedByPage
+      ? 'The pinned runtime was not loaded by the published page.'
+      : null,
+    !predicates.runtimeHashMatched
+      ? 'The executed runtime bytes did not match the pinned SHA-256.'
+      : null,
+    !predicates.runtimeIntegrityMatched
+      ? 'The runtime script did not carry the pinned SRI value.'
+      : null,
+    !predicates.noRuntimeCreatedScripts
+      ? 'The runtime created additional script elements at execution time.'
+      : null,
+    !predicates.noUnreviewedRuntimeScripts
+      ? 'The runtime loaded additional unreviewed scripts.'
+      : null,
     !predicates.negativeProxyBlocked ? 'The negative proxy canary was not blocked.' : null
   ].filter((item): item is string => item !== null);
   return {
@@ -1175,6 +1270,8 @@ export async function recordRuntimeObservationEvidence(
     throw error;
   }
 
+  await terminateRuntimeObservationSandbox(observationJobId, env);
+
   return {
     observationJobId,
     status: 'complete',
@@ -1186,6 +1283,145 @@ export async function recordRuntimeObservationEvidence(
       objectKey: artifact.objectKey
     }))
   };
+}
+
+export async function terminateRuntimeObservationSandbox(
+  observationJobId: string,
+  env: Env
+): Promise<'verified' | 'failed' | 'not_started'> {
+  const row = await env.DB.prepare(
+    `SELECT sandbox_id, sandbox_termination_status, contract_json
+       FROM runtime_observation_jobs
+      WHERE id = ?`
+  )
+    .bind(observationJobId)
+    .first<{
+      sandbox_id: string | null;
+      sandbox_termination_status: 'pending' | 'verified' | 'failed' | null;
+      contract_json: string;
+    }>();
+  if (!row?.sandbox_id) return 'not_started';
+  if (row.sandbox_termination_status === 'verified') return 'verified';
+
+  const result = await terminateRuntimeObservationInE2B(row.sandbox_id, env);
+  const now = new Date().toISOString();
+  const contract = JSON.parse(row.contract_json) as RuntimeObservationJobContract;
+  const statements = [
+    env.DB.prepare(
+      `UPDATE runtime_observation_jobs
+          SET sandbox_termination_status = ?, sandbox_terminated_at = ?, updated_at = ?
+        WHERE id = ? AND sandbox_id = ?`
+    ).bind(result, result === 'verified' ? now : null, now, observationJobId, row.sandbox_id)
+  ];
+  if (row.sandbox_termination_status !== result) {
+    statements.push(
+      env.DB.prepare(
+        `INSERT INTO review_events
+        (id, review_id, review_version_id, actor_user_id, event_type,
+         payload_json, created_at)
+       VALUES (?, ?, ?, 'webflow-runtime-coordinator',
+               'runtime_observation_sandbox_terminated', ?, ?)`
+      ).bind(
+        crypto.randomUUID(),
+        contract.reviewId,
+        contract.reviewVersionId,
+        JSON.stringify({
+          observationJobId,
+          testPackageId: contract.testPackageId,
+          termination: result
+        }),
+        now
+      )
+    );
+  }
+  await env.DB.batch(statements);
+  return result;
+}
+
+export async function reconcileRuntimeObservationJobs(env: Env): Promise<{
+  reconciled: number;
+  failed: number;
+}> {
+  const now = new Date().toISOString();
+  await env.DB.prepare(
+    `UPDATE runtime_observation_jobs
+        SET status = 'expired', updated_at = ?
+      WHERE status IN ('approved', 'running', 'uploading')
+        AND expires_at <= ?`
+  )
+    .bind(now, now)
+    .run();
+  const rows = await env.DB.prepare(
+    `SELECT id
+       FROM runtime_observation_jobs
+      WHERE sandbox_id IS NOT NULL
+        AND COALESCE(sandbox_termination_status, 'pending') <> 'verified'
+        AND (status IN ('complete', 'failed', 'expired', 'revoked') OR expires_at <= ?)
+      ORDER BY updated_at ASC
+      LIMIT 50`
+  )
+    .bind(now)
+    .all<{ id: string }>();
+  let reconciled = 0;
+  let failed = 0;
+  for (const row of rows.results) {
+    const result = await terminateRuntimeObservationSandbox(row.id, env);
+    if (result === 'verified' || result === 'not_started') reconciled += 1;
+    else failed += 1;
+  }
+  return { reconciled, failed };
+}
+
+async function activeRuntimeObservationJob(
+  testPackageId: string,
+  env: Env
+): Promise<RequestedRuntimeObservationJob | null> {
+  const row = await env.DB.prepare(
+    `SELECT id, status, approved_at
+       FROM runtime_observation_jobs
+      WHERE test_package_id = ?
+        AND status IN ('approved', 'running', 'uploading')
+        AND expires_at > ?
+      ORDER BY created_at DESC
+      LIMIT 1`
+  )
+    .bind(testPackageId, new Date().toISOString())
+    .first<{ id: string; status: 'approved' | 'running' | 'uploading'; approved_at: string }>();
+  return row
+    ? { id: row.id, status: row.status, approvedAt: row.approved_at, deduplicated: true }
+    : null;
+}
+
+async function expireActiveRuntimeObservationJobs(testPackageId: string, env: Env): Promise<void> {
+  const now = new Date().toISOString();
+  await env.DB.prepare(
+    `UPDATE runtime_observation_jobs
+        SET status = 'expired', updated_at = ?
+      WHERE test_package_id = ?
+        AND status IN ('approved', 'running', 'uploading')
+        AND expires_at <= ?`
+  )
+    .bind(now, testPackageId, now)
+    .run();
+  const unresolved = await env.DB.prepare(
+    `SELECT id
+       FROM runtime_observation_jobs
+      WHERE test_package_id = ?
+        AND sandbox_id IS NOT NULL
+        AND COALESCE(sandbox_termination_status, 'pending') <> 'verified'
+        AND (status IN ('complete', 'failed', 'expired', 'revoked') OR expires_at <= ?)
+      ORDER BY updated_at ASC`
+  )
+    .bind(testPackageId, now)
+    .all<{ id: string }>();
+  for (const job of unresolved.results) {
+    const termination = await terminateRuntimeObservationSandbox(job.id, env);
+    if (termination === 'failed') {
+      throw new RuntimeObservationApprovalError(
+        'The previous runtime sandbox could not be terminated safely.'
+      );
+    }
+  }
 }
 
 async function issueRuntimeObservationJob(
@@ -1204,7 +1440,11 @@ async function issueRuntimeObservationJob(
 
   const now = new Date();
   const licenseExpiresAt = Date.parse(row.license_expires_at);
-  if (row.status !== 'ready' || !Number.isFinite(licenseExpiresAt) || licenseExpiresAt <= now.getTime()) {
+  if (
+    row.status !== 'ready' ||
+    !Number.isFinite(licenseExpiresAt) ||
+    licenseExpiresAt <= now.getTime()
+  ) {
     throw new RuntimeObservationApprovalError(
       'The runtime test package is expired or no longer available.'
     );
@@ -1256,6 +1496,7 @@ async function issueRuntimeObservationJob(
       totalTimeoutMs: 90_000,
       networkMode: 'exact_host_allowlist',
       evidenceTrust: 'webflow_observed',
+      executionEvidence: 'chromium_cdp_v1',
       negativeProxyCanaryUrl: canaryUrl.toString()
     },
     boundaries: {
@@ -1357,16 +1598,83 @@ async function launchRuntimeObservationJob(
   job: StoredRuntimeObservationJob,
   env: Env
 ): Promise<void> {
+  let launchedSandboxId: string | null = null;
   try {
-    await launchRuntimeObservationInE2B({
+    const launched = await launchRuntimeObservationInE2B(
+      {
       observationJobId: job.id,
       apiBaseUrl: new URL(request.url).origin,
       capability: job.capability
-    }, env);
+      },
+      env
+    );
+    launchedSandboxId = launched.sandboxId;
+    const startedAt = new Date().toISOString();
+    await env.DB.batch([
+      env.DB.prepare(
+        `UPDATE runtime_observation_jobs
+            SET sandbox_id = ?, sandbox_started_at = ?,
+                sandbox_termination_status = 'pending', updated_at = ?
+          WHERE id = ? AND sandbox_id IS NULL`
+      ).bind(launched.sandboxId, startedAt, startedAt, job.id),
+      env.DB.prepare(
+        `INSERT INTO review_events
+          (id, review_id, review_version_id, actor_user_id, event_type,
+           payload_json, created_at)
+         VALUES (?, ?, ?, 'webflow-runtime-coordinator',
+                 'runtime_observation_sandbox_started', ?, ?)`
+      ).bind(
+        crypto.randomUUID(),
+        job.contract.reviewId,
+        job.contract.reviewVersionId,
+        JSON.stringify({
+          observationJobId: job.id,
+          testPackageId: job.contract.testPackageId
+        }),
+        startedAt
+      )
+    ]);
   } catch (error) {
-    const stage = error instanceof E2BRuntimeLaunchError
-      ? error.stage
-      : 'runner_start';
+    if (launchedSandboxId) {
+      await terminateRuntimeObservationInE2B(launchedSandboxId, env);
+    }
+    if (error instanceof E2BRuntimeLaunchError && error.sandboxId) {
+      const recordedAt = new Date().toISOString();
+      await env.DB.batch([
+        env.DB.prepare(
+          `UPDATE runtime_observation_jobs
+              SET sandbox_id = ?, sandbox_started_at = ?,
+                  sandbox_termination_status = ?, sandbox_terminated_at = ?,
+                  updated_at = ?
+            WHERE id = ? AND sandbox_id IS NULL`
+        ).bind(
+          error.sandboxId,
+          recordedAt,
+          error.terminationStatus ?? 'failed',
+          error.terminationStatus === 'verified' ? recordedAt : null,
+          recordedAt,
+          job.id
+        ),
+        env.DB.prepare(
+          `INSERT INTO review_events
+            (id, review_id, review_version_id, actor_user_id, event_type,
+             payload_json, created_at)
+           VALUES (?, ?, ?, 'webflow-runtime-coordinator',
+                   'runtime_observation_sandbox_launch_failed', ?, ?)`
+        ).bind(
+          crypto.randomUUID(),
+          job.contract.reviewId,
+          job.contract.reviewVersionId,
+          JSON.stringify({
+            observationJobId: job.id,
+            testPackageId: job.contract.testPackageId,
+            termination: error.terminationStatus ?? 'failed'
+          }),
+          recordedAt
+        )
+      ]);
+    }
+    const stage = error instanceof E2BRuntimeLaunchError ? error.stage : 'runner_start';
     throw new RuntimeObservationDispatchError(safeLaunchMessage(stage), stage);
   }
 }
@@ -1380,10 +1688,7 @@ export async function requestRuntimeObservationRun(
     includeAll?: boolean;
     eventType?: 'runtime_observation_run_requested' | 'runtime_observation_replay_requested';
   } = {}
-): Promise<
-  | Omit<StoredRuntimeObservationJob, 'capability' | 'contract'>
-  | { notFound: true }
-> {
+): Promise<RequestedRuntimeObservationJob | { notFound: true }> {
   const owned = await env.DB.prepare(
     'SELECT id FROM runtime_test_packages WHERE id = ? AND (? = 1 OR owner_user_id = ?)'
   )
@@ -1391,13 +1696,25 @@ export async function requestRuntimeObservationRun(
     .first<{ id: string }>();
   if (!owned) return { notFound: true };
 
-  const job = await issueRuntimeObservationJob(testPackageId, env);
+  await expireActiveRuntimeObservationJobs(testPackageId, env);
+  const active = await activeRuntimeObservationJob(testPackageId, env);
+  if (active) return active;
+
+  let job: StoredRuntimeObservationJob | null;
+  try {
+    job = await issueRuntimeObservationJob(testPackageId, env);
+  } catch (error) {
+    const raced = await activeRuntimeObservationJob(testPackageId, env);
+    if (raced) return raced;
+    throw error;
+  }
   if (!job) return { notFound: true };
 
   try {
     await launchRuntimeObservationJob(request, job, env);
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'The runtime runner could not be started.';
+    const message =
+      error instanceof Error ? error.message : 'The runtime runner could not be started.';
     const now = new Date().toISOString();
     await env.DB.batch([
       env.DB.prepare(
@@ -1418,9 +1735,7 @@ export async function requestRuntimeObservationRun(
         JSON.stringify({
           observationJobId: job.id,
           testPackageId,
-          stage: error instanceof RuntimeObservationDispatchError
-            ? error.stage
-            : 'runner_start',
+          stage: error instanceof RuntimeObservationDispatchError ? error.stage : 'runner_start',
           message
         }),
         now
@@ -1446,7 +1761,12 @@ export async function requestRuntimeObservationRun(
     )
     .run();
 
-  return { id: job.id, status: job.status, approvedAt: job.approvedAt };
+  return {
+    id: job.id,
+    status: job.status,
+    approvedAt: job.approvedAt,
+    deduplicated: false
+  };
 }
 
 export async function requestReviewerRuntimeObservationReplay(

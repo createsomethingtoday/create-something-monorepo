@@ -34,7 +34,7 @@ const packageResponse = await fetch(
     headers: { ...ownerHeaders, 'content-type': 'application/json' },
     body: JSON.stringify({
       targetUrl: 'http://127.0.0.1:4173/runtime-fixture',
-      sandboxInstallationId: 'webflow-owned-local-fixture',
+      sandboxInstallationId: 'local-webflow-site',
       sandboxOwnershipConfirmed: true,
       license: {
         mode: 'installation_allowlist',
@@ -71,7 +71,8 @@ const approvalResponse = await fetch(
     body: JSON.stringify({ approved: true, sandboxOwnershipVerified: true })
   }
 );
-if (!approvalResponse.ok) throw new Error(`Observation approval failed: ${await approvalResponse.text()}`);
+if (!approvalResponse.ok)
+  throw new Error(`Observation approval failed: ${await approvalResponse.text()}`);
 const { observationJob } = await approvalResponse.json();
 
 const result = await runRuntimeObservation({

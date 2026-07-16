@@ -155,6 +155,7 @@ export interface RuntimeObservationJobContract {
     totalTimeoutMs: 90_000;
     networkMode: 'exact_host_allowlist';
     evidenceTrust: 'webflow_observed';
+    executionEvidence: 'chromium_cdp_v1';
     negativeProxyCanaryUrl: string;
   };
   boundaries: {

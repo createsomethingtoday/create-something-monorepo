@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   E2BRuntimeLaunchError,
-  launchRuntimeObservationInE2B
+  launchRuntimeObservationInE2B,
+  terminateRuntimeObservationInE2B
 } from '../src/e2b-runtime-launcher';
 import type { Env } from '../src/types';
 
@@ -44,25 +45,54 @@ describe('E2B runtime launcher', () => {
         )
       )
       .mockResolvedValueOnce(new Response(`provider rejected ${input.capability}`, { status: 500 }))
-      .mockResolvedValueOnce(new Response(null, { status: 204 }));
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(Response.json({ error: 'not_found' }, { status: 404 }));
     vi.stubGlobal('fetch', request);
     const env = {
       E2B_API_KEY: 'e2b-test-key',
-      E2B_RUNTIME_TEMPLATE_ID:
-        'app-review-companion-runtime:f47ac10b-58cc-4372-a567-0e02b2c3d479'
+      E2B_RUNTIME_TEMPLATE_ID: 'app-review-companion-runtime:f47ac10b-58cc-4372-a567-0e02b2c3d479'
     } as Env;
 
     try {
       const failure = await launchRuntimeObservationInE2B(input, env).catch(
         (error: unknown) => error
       );
-      expect(failure).toEqual(new E2BRuntimeLaunchError('runner_start'));
+      expect(failure).toBeInstanceOf(E2BRuntimeLaunchError);
+      expect(failure).toMatchObject({
+        stage: 'runner_start',
+        sandboxId: 'sandbox-partial-123',
+        terminationStatus: 'verified'
+      });
       expect(String(failure)).not.toContain(input.capability);
-      expect(request).toHaveBeenCalledTimes(3);
-      expect(request.mock.calls[2]?.[0]).toBe(
-        'https://api.e2b.app/sandboxes/sandbox-partial-123'
-      );
+      expect(request).toHaveBeenCalledTimes(4);
+      expect(request.mock.calls[2]?.[0]).toBe('https://api.e2b.app/sandboxes/sandbox-partial-123');
       expect(request.mock.calls[2]?.[1]).toMatchObject({ method: 'DELETE' });
+      expect(request.mock.calls[3]?.[0]).toBe('https://api.e2b.app/sandboxes/sandbox-partial-123');
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('verifies sandbox termination through an E2B 404 read-back', async () => {
+    const request = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(Response.json({ error: 'not_found' }, { status: 404 }));
+    vi.stubGlobal('fetch', request);
+    const env = { E2B_API_KEY: 'e2b-test-key' } as Env;
+
+    try {
+      await expect(terminateRuntimeObservationInE2B('sandbox-complete-123', env)).resolves.toBe(
+        'verified'
+      );
+      expect(request).toHaveBeenCalledTimes(2);
+      expect(request.mock.calls[0]?.[1]).toMatchObject({
+        method: 'DELETE',
+        signal: expect.any(AbortSignal)
+      });
+      expect(request.mock.calls[1]?.[1]).toMatchObject({
+        signal: expect.any(AbortSignal)
+      });
     } finally {
       vi.unstubAllGlobals();
     }

@@ -81,7 +81,8 @@ export async function connectReviewerWorkspace(request: Request, env: Env): Prom
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ code })
     }),
-    env
+    env,
+    'reviewer'
   );
   if (!redemption || redemption.actorRole !== 'reviewer') {
     return html(shell('<main><div class="card"><h1>Reviewer link unavailable</h1><p>This one-time link is invalid, expired, or already used.</p></div></main>'), 403);

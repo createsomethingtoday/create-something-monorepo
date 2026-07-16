@@ -110,7 +110,8 @@ export async function createCompanionPairing(
 
 export async function redeemCompanionPairing(
   request: Request,
-  env: Env
+  env: Env,
+  expectedActorRole?: 'developer' | 'reviewer'
 ): Promise<
   | {
       token: string;
@@ -133,10 +134,17 @@ export async function redeemCompanionPairing(
         SET redeemed_at = ?
       WHERE code_sha256 = ? AND redeemed_at IS NULL AND expires_at > ?
         AND runtime_test_package_id IS NOT NULL
+        AND (? IS NULL OR actor_role = ?)
       RETURNING id, review_id, review_version_id, runtime_test_package_id,
                 actor_user_id, actor_site_id, actor_role`
   )
-    .bind(now.toISOString(), await sha256(input.code), now.toISOString())
+    .bind(
+      now.toISOString(),
+      await sha256(input.code),
+      now.toISOString(),
+      expectedActorRole ?? null,
+      expectedActorRole ?? null
+    )
     .first<{
       id: string;
       review_id: string;

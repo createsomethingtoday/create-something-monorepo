@@ -1,9 +1,15 @@
 import { env, exports } from 'cloudflare:workers';
 import JSZip from 'jszip';
-import { describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vitest';
 import { evaluateRuntimeSecurity } from '../src/runtime-observations';
+import worker from '../src/index';
+import type { Env } from '../src/types';
 
 const TEST_RUNTIME_INTEGRITY = 'sha256-qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqo=';
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 async function createBundle(options: { injectScript?: boolean } = {}): Promise<Uint8Array> {
   const zip = new JSZip();
@@ -16,10 +22,7 @@ async function createBundle(options: { injectScript?: boolean } = {}): Promise<U
     'const runtime = "/v2/cdn/runtime.js";'
   ];
   if (options.injectScript !== false) {
-    source.push(
-      'const script = document.createElement("script");',
-      'script.src = runtime;'
-    );
+    source.push('const script = document.createElement("script");', 'script.src = runtime;');
   }
   zip.file('assets/index.js', source.join('\n'));
   return zip.generateAsync({ type: 'uint8array' });
@@ -48,17 +51,19 @@ async function createReadyRuntimePackage(reviewId: string): Promise<string> {
       },
       body: JSON.stringify({
         targetUrl: 'http://127.0.0.1:4173/runtime-fixture',
-        sandboxInstallationId: 'webflow-sandbox-site-123',
+        sandboxInstallationId: 'local-webflow-site',
         sandboxOwnershipConfirmed: true,
         license: {
           mode: 'installation_allowlist',
           expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString()
         },
-        runtimeArtifacts: [{
+        runtimeArtifacts: [
+          {
           url: 'http://127.0.0.1:4173/runtime-v1.js',
           sha256: 'a'.repeat(64),
           integrity: TEST_RUNTIME_INTEGRITY
-        }],
+          }
+        ],
         negativeProxyProbe: {
           method: 'GET',
           urlTemplate: 'http://127.0.0.1:4173/proxy?url={canaryUrl}'
@@ -76,24 +81,31 @@ describe('review API', () => {
   test('derives a blocked security verdict from click-only or substituted runtime evidence', () => {
     const contract = {
       target: { url: 'https://consent-pro-test.webflow.io/', host: 'consent-pro-test.webflow.io' },
-      runtimeArtifacts: [{
+      runtimeArtifacts: [
+        {
         url: 'https://api.consentpro.com/v2/cdn/runtime.js',
         sha256: 'a'.repeat(64),
         integrity: 'sha256-reviewed-runtime'
-      }]
+        }
+      ]
     } as any;
-    const result = evaluateRuntimeSecurity({
+    const result = evaluateRuntimeSecurity(
+      {
       runtimeReadyObserved: false,
-      runtimeArtifacts: [{
+        runtimeArtifacts: [
+          {
         url: contract.runtimeArtifacts[0].url,
         observedSha256: 'b'.repeat(64),
         loadedByPage: false,
         domIntegrity: null
-      }],
+          }
+        ],
       runtimeCreatedScripts: ['https://api.consentpro.com/v2/cdn/debugger.js'],
       unreviewedRuntimeScripts: ['https://api.consentpro.com/v2/cdn/debugger.js'],
       negativeProxyCanary: { outcome: 'exposed' }
-    }, contract);
+      },
+      contract
+    );
 
     expect(result.status).toBe('blocked');
     expect(result.predicates).toEqual({
@@ -145,6 +157,42 @@ describe('review API', () => {
     });
   });
 
+  test('retires legacy runtime and companion mutations in production', async () => {
+    const productionEnv = {
+      DB: env.DB,
+      ARTIFACTS: env.ARTIFACTS,
+      ENVIRONMENT: 'production',
+      ALLOWED_ORIGINS: '',
+      E2B_COORDINATOR_TOKEN: 'coordinator-test-token'
+    } as Env;
+    const routes = [
+      '/v1/runtime-jobs/legacy-job/evidence',
+      '/v1/runtime-test-packages/legacy-package/observation-jobs',
+      '/v1/reviews/legacy-review/runtime-jobs',
+      '/v1/reviews/legacy-review/companion-runs',
+      '/v1/companion-runs/legacy-run/complete',
+      '/v1/companion-runs/legacy-run/replay',
+      '/v1/companion-runs/legacy-run/missions/production_runtime'
+    ];
+    for (const path of routes) {
+      const response = await worker.fetch(
+        new Request(`https://preflight.test${path}`, {
+          method: 'POST',
+          headers: {
+            authorization: 'Bearer coordinator-test-token',
+            'content-type': 'application/json'
+          },
+          body: '{}'
+        }),
+        productionEnv
+      );
+      expect(response.status, path).toBe(410);
+      await expect(response.json()).resolves.toMatchObject({
+        error: 'legacy_runtime_mutation_retired'
+      });
+    }
+  });
+
   test('pairs the browser companion once and scopes its short-lived session to the exact review version', async () => {
     const form = new FormData();
     form.set(
@@ -166,9 +214,7 @@ describe('review API', () => {
     }>();
 
     const missingPackageResponse = await exports.default.fetch(
-      new Request(
-        `https://preflight.test/v1/reviews/${created.review.id}/companion-pairings`,
-        {
+      new Request(`https://preflight.test/v1/reviews/${created.review.id}/companion-pairings`, {
           method: 'POST',
           headers: {
             authorization: 'Bearer test-token',
@@ -176,8 +222,7 @@ describe('review API', () => {
             'content-type': 'application/json'
           },
           body: JSON.stringify({ reviewVersionId: created.review.latestVersion.id })
-        }
-      )
+      })
     );
     expect(missingPackageResponse.status).toBe(400);
     expect(await missingPackageResponse.json()).toMatchObject({
@@ -187,9 +232,7 @@ describe('review API', () => {
     const runtimeTestPackageId = await createReadyRuntimePackage(created.review.id);
 
     const pairingResponse = await exports.default.fetch(
-      new Request(
-        `https://preflight.test/v1/reviews/${created.review.id}/companion-pairings`,
-        {
+      new Request(`https://preflight.test/v1/reviews/${created.review.id}/companion-pairings`, {
           method: 'POST',
           headers: {
             authorization: 'Bearer test-token',
@@ -200,8 +243,7 @@ describe('review API', () => {
             reviewVersionId: created.review.latestVersion.id,
             runtimeTestPackageId
           })
-        }
-      )
+      })
     );
     expect(pairingResponse.status).toBe(201);
     const paired = await pairingResponse.json<{
@@ -209,6 +251,21 @@ describe('review API', () => {
     }>();
     expect(paired.pairing.code.length).toBeGreaterThanOrEqual(32);
     expect(Date.parse(paired.pairing.expiresAt)).toBeGreaterThan(Date.now());
+
+    const wrongSurface = await exports.default.fetch(
+      new Request(
+        `https://preflight.test/reviewer/connect?code=${encodeURIComponent(paired.pairing.code)}`,
+        { redirect: 'manual' }
+      )
+    );
+    expect(wrongSurface.status).toBe(403);
+    const unconsumed = await env.DB.prepare(
+      `SELECT redeemed_at
+         FROM companion_pairings
+        ORDER BY created_at DESC
+        LIMIT 1`
+    ).first<{ redeemed_at: string | null }>();
+    expect(unconsumed?.redeemed_at).toBeNull();
 
     const redeem = () =>
       exports.default.fetch(
@@ -253,9 +310,7 @@ describe('review API', () => {
     expect(genericApiAttempt.status).toBe(401);
 
     const versionEscapeAttempt = await exports.default.fetch(
-      new Request(
-        `https://preflight.test/v1/reviews/${created.review.id}/companion-runs`,
-        {
+      new Request(`https://preflight.test/v1/reviews/${created.review.id}/companion-runs`, {
           method: 'POST',
           headers: {
             authorization: `Bearer ${session.session.token}`,
@@ -263,15 +318,12 @@ describe('review API', () => {
             'content-type': 'application/json'
           },
           body: JSON.stringify({ reviewVersionId: 'another-version', runtimeTestPackageId })
-        }
-      )
+      })
     );
     expect(versionEscapeAttempt.status).toBe(404);
 
     const runResponse = await exports.default.fetch(
-      new Request(
-        `https://preflight.test/v1/reviews/${created.review.id}/companion-runs`,
-        {
+      new Request(`https://preflight.test/v1/reviews/${created.review.id}/companion-runs`, {
           method: 'POST',
           headers: {
             authorization: `Bearer ${session.session.token}`,
@@ -282,8 +334,7 @@ describe('review API', () => {
             reviewVersionId: created.review.latestVersion.id,
             runtimeTestPackageId
           })
-        }
-      )
+      })
     );
     expect(runResponse.status).toBe(201);
 
@@ -315,9 +366,7 @@ describe('review API', () => {
     }>();
     const runtimeTestPackageId = await createReadyRuntimePackage(created.review.id);
     const pairingResponse = await exports.default.fetch(
-      new Request(
-        `https://preflight.test/v1/reviews/${created.review.id}/companion-pairings`,
-        {
+      new Request(`https://preflight.test/v1/reviews/${created.review.id}/companion-pairings`, {
           method: 'POST',
           headers: {
             authorization: 'Bearer test-token',
@@ -328,8 +377,7 @@ describe('review API', () => {
             reviewVersionId: created.review.latestVersion.id,
             runtimeTestPackageId
           })
-        }
-      )
+      })
     );
     const pairing = await pairingResponse.json<{ pairing: { code: string } }>();
     await env.DB.prepare(
@@ -379,9 +427,7 @@ describe('review API', () => {
     }>();
     const runtimeTestPackageId = await createReadyRuntimePackage(created.review.id);
     const pairingResponse = await exports.default.fetch(
-      new Request(
-        `https://preflight.test/v1/reviews/${created.review.id}/companion-pairings`,
-        {
+      new Request(`https://preflight.test/v1/reviews/${created.review.id}/companion-pairings`, {
           method: 'POST',
           headers: {
             authorization: 'Bearer reviewer-test-token',
@@ -392,8 +438,7 @@ describe('review API', () => {
             reviewVersionId: created.review.latestVersion.id,
             runtimeTestPackageId
           })
-        }
-      )
+      })
     );
     const pairing = await pairingResponse.json<{ pairing: { code: string } }>();
     const redeemed = await exports.default.fetch(
@@ -442,9 +487,7 @@ describe('review API', () => {
     const runtimeTestPackageId = await createReadyRuntimePackage(created.review.id);
 
     const createRunResponse = await exports.default.fetch(
-      new Request(
-        `https://preflight.test/v1/reviews/${created.review.id}/companion-runs`,
-        {
+      new Request(`https://preflight.test/v1/reviews/${created.review.id}/companion-runs`, {
           method: 'POST',
           headers: {
             authorization: 'Bearer test-token',
@@ -458,8 +501,7 @@ describe('review API', () => {
             evidenceTrust: 'webflow_observed',
             status: 'validated'
           })
-        }
-      )
+      })
     );
 
     expect(createRunResponse.status).toBe(201);
@@ -484,9 +526,7 @@ describe('review API', () => {
       policyVersion: 'companion-policy.v3',
       status: 'ready'
     });
-    expect(createdRun.run.missions.map((mission) => mission.id)).toEqual([
-      'production_runtime'
-    ]);
+    expect(createdRun.run.missions.map((mission) => mission.id)).toEqual(['production_runtime']);
 
     const elevatedMission = await exports.default.fetch(
       new Request(
@@ -529,16 +569,13 @@ describe('review API', () => {
     });
 
     const replayResponse = await exports.default.fetch(
-      new Request(
-        `https://preflight.test/v1/companion-runs/${createdRun.run.id}/replay`,
-        {
+      new Request(`https://preflight.test/v1/companion-runs/${createdRun.run.id}/replay`, {
           method: 'POST',
           headers: {
             authorization: 'Bearer reviewer-test-token',
             origin: 'http://localhost:1337'
           }
-        }
-      )
+      })
     );
     expect(replayResponse.status).toBe(201);
     const replay = await replayResponse.json<{ run: any }>();
@@ -688,10 +725,7 @@ describe('review API', () => {
   test('treats a repeated artifact as an idempotent checkpoint', async () => {
     const bundle = await createBundle();
     const initialForm = new FormData();
-    initialForm.set(
-      'bundle',
-      new File([bundle], 'consent-pro.zip', { type: 'application/zip' })
-    );
+    initialForm.set('bundle', new File([bundle], 'consent-pro.zip', { type: 'application/zip' }));
     const initialResponse = await exports.default.fetch(
       new Request('https://preflight.test/v1/reviews', {
         method: 'POST',
@@ -837,9 +871,7 @@ describe('review API', () => {
     );
     const created = await createdResponse.json<{ review: { id: string } }>();
     const response = await exports.default.fetch(
-      new Request(
-        `https://preflight.test/v1/reviews/${created.review.id}/runtime-test-packages`,
-        {
+      new Request(`https://preflight.test/v1/reviews/${created.review.id}/runtime-test-packages`, {
           method: 'POST',
           headers: {
             authorization: 'Bearer test-token',
@@ -848,30 +880,159 @@ describe('review API', () => {
           },
           body: JSON.stringify({
             targetUrl: 'https://68821e9ad5797a48cfc68499.webflow-ext.com/6a552d5baa59e9a3a1ebba5d/',
-            sandboxInstallationId: 'webflow-sandbox-site-123',
+          sandboxInstallationId: 'local-webflow-site',
             sandboxOwnershipConfirmed: true,
             license: {
               mode: 'installation_allowlist',
               expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString()
             },
-            runtimeArtifacts: [{
+          runtimeArtifacts: [
+            {
               url: 'https://api.consentpro.com/v2/cdn/runtime.js',
               sha256: 'a'.repeat(64),
               integrity: TEST_RUNTIME_INTEGRITY
-            }],
+            }
+          ],
             negativeProxyProbe: {
               method: 'GET',
               urlTemplate: 'https://api.consentpro.com/v2/proxy?url={canaryUrl}'
             },
             lifecycle: { readySelector: '[data-runtime-ready]' }
           })
-        }
-      )
+      })
     );
     expect(response.status).toBe(400);
     expect(await response.json()).toMatchObject({
       error: 'invalid_runtime_test_package',
       message: expect.stringMatching(/published-site origin/i)
+    });
+  });
+
+  test('rejects a runtime package for a site other than the authenticated Webflow site', async () => {
+    const form = new FormData();
+    form.set(
+      'bundle',
+      new File([await createBundle()], 'consent-pro.zip', { type: 'application/zip' })
+    );
+    const createdResponse = await exports.default.fetch(
+      new Request('https://preflight.test/v1/reviews', {
+        method: 'POST',
+        headers: { authorization: 'Bearer test-token', origin: 'http://localhost:1337' },
+        body: form
+      })
+    );
+    const created = await createdResponse.json<{ review: { id: string } }>();
+    const response = await exports.default.fetch(
+      new Request(`https://preflight.test/v1/reviews/${created.review.id}/runtime-test-packages`, {
+        method: 'POST',
+        headers: {
+          authorization: 'Bearer test-token',
+          origin: 'http://localhost:1337',
+          'content-type': 'application/json'
+        },
+        body: JSON.stringify({
+          targetUrl: 'http://127.0.0.1:4173/runtime-fixture',
+          sandboxInstallationId: 'another-webflow-site',
+          sandboxOwnershipConfirmed: true,
+          license: {
+            mode: 'installation_allowlist',
+            expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString()
+          },
+          runtimeArtifacts: [
+            {
+              url: 'http://127.0.0.1:4173/runtime-v1.js',
+              sha256: 'a'.repeat(64),
+              integrity: TEST_RUNTIME_INTEGRITY
+            }
+          ],
+          negativeProxyProbe: {
+            method: 'GET',
+            urlTemplate: 'http://127.0.0.1:4173/proxy?url={canaryUrl}'
+          },
+          lifecycle: { readySelector: '[data-runtime-ready]' }
+        })
+      })
+    );
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({
+      error: 'invalid_runtime_test_package',
+      message: expect.stringMatching(/authenticated Webflow site/i)
+    });
+  });
+
+  test('verifies the published Webflow page belongs to the authenticated site', async () => {
+    const form = new FormData();
+    form.set(
+      'bundle',
+      new File([await createBundle()], 'consent-pro.zip', { type: 'application/zip' })
+    );
+    const createdResponse = await exports.default.fetch(
+      new Request('https://preflight.test/v1/reviews', {
+        method: 'POST',
+        headers: { authorization: 'Bearer test-token', origin: 'http://localhost:1337' },
+        body: form
+      })
+    );
+    const created = await createdResponse.json<{ review: { id: string } }>();
+    const productionEnv = {
+      DB: env.DB,
+      ARTIFACTS: env.ARTIFACTS,
+      ENVIRONMENT: 'production',
+      ALLOWED_ORIGINS: '',
+      WEBFLOW_APP_ACCESS_TOKEN: 'app-token'
+    } as Env;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const request = input instanceof Request ? input : new Request(input);
+        if (request.url === 'https://api.webflow.com/beta/token/resolve') {
+          return Response.json({ id: 'local-webflow-user', siteId: 'local-webflow-site' });
+        }
+        if (request.url === 'https://foreign-site.webflow.io/') {
+          return new Response(
+            '<!doctype html><html data-wf-site="another-webflow-site"><body></body></html>',
+            { status: 200, headers: { 'content-type': 'text/html; charset=utf-8' } }
+          );
+        }
+        return Response.json({ error: 'unexpected_request' }, { status: 500 });
+      })
+    );
+
+    const response = await worker.fetch(
+      new Request(`https://preflight.test/v1/reviews/${created.review.id}/runtime-test-packages`, {
+        method: 'POST',
+        headers: {
+          authorization: 'Bearer designer-id-token',
+          'content-type': 'application/json'
+        },
+        body: JSON.stringify({
+          targetUrl: 'https://foreign-site.webflow.io/',
+          sandboxInstallationId: 'local-webflow-site',
+          sandboxOwnershipConfirmed: true,
+          license: {
+            mode: 'installation_allowlist',
+            expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString()
+          },
+          runtimeArtifacts: [
+            {
+              url: 'https://api.consentpro.com/v2/cdn/runtime.js',
+              sha256: 'a'.repeat(64),
+              integrity: TEST_RUNTIME_INTEGRITY
+            }
+          ],
+          negativeProxyProbe: {
+            method: 'GET',
+            urlTemplate: 'https://api.consentpro.com/v2/proxy?url={canaryUrl}'
+          },
+          lifecycle: { readySelector: '[data-runtime-ready]' }
+        })
+      }),
+      productionEnv
+    );
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({
+      error: 'invalid_runtime_test_package',
+      message: expect.stringMatching(/published Webflow site/i)
     });
   });
 
@@ -891,9 +1052,7 @@ describe('review API', () => {
     const created = await createdResponse.json<{ review: { id: string } }>();
 
     const response = await exports.default.fetch(
-      new Request(
-        `https://preflight.test/v1/reviews/${created.review.id}/runtime-test-packages`,
-        {
+      new Request(`https://preflight.test/v1/reviews/${created.review.id}/runtime-test-packages`, {
           method: 'POST',
           headers: {
             authorization: 'Bearer test-token',
@@ -902,25 +1061,26 @@ describe('review API', () => {
           },
           body: JSON.stringify({
             targetUrl: 'http://127.0.0.1:4173/runtime-fixture',
-            sandboxInstallationId: 'webflow-sandbox-site-123',
+          sandboxInstallationId: 'local-webflow-site',
             sandboxOwnershipConfirmed: true,
             license: {
               mode: 'installation_allowlist',
               expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString()
             },
-            runtimeArtifacts: [{
+          runtimeArtifacts: [
+            {
               url: 'http://127.0.0.1:4173/runtime-v1.js',
               sha256: 'a'.repeat(64),
               integrity: 'sha256-mismatched-runtime-bytes'
-            }],
+            }
+          ],
             negativeProxyProbe: {
               method: 'GET',
               urlTemplate: 'http://127.0.0.1:4173/proxy?url={canaryUrl}'
             },
             lifecycle: { readySelector: '[data-runtime-ready]' }
           })
-        }
-      )
+      })
     );
 
     expect(response.status).toBe(400);
@@ -958,9 +1118,7 @@ describe('review API', () => {
 
     const licenseExpiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
     const packageResponse = await exports.default.fetch(
-      new Request(
-        `https://preflight.test/v1/reviews/${created.review.id}/runtime-test-packages`,
-        {
+      new Request(`https://preflight.test/v1/reviews/${created.review.id}/runtime-test-packages`, {
           method: 'POST',
           headers: {
             authorization: 'Bearer test-token',
@@ -969,7 +1127,7 @@ describe('review API', () => {
           },
           body: JSON.stringify({
             targetUrl: 'http://127.0.0.1:4173/runtime-fixture',
-            sandboxInstallationId: 'webflow-sandbox-site-123',
+          sandboxInstallationId: 'local-webflow-site',
             sandboxOwnershipConfirmed: true,
             license: {
               mode: 'installation_allowlist',
@@ -984,15 +1142,13 @@ describe('review API', () => {
             ],
             negativeProxyProbe: {
               method: 'GET',
-              urlTemplate:
-                'http://127.0.0.1:4173/proxy?url={canaryUrl}'
+            urlTemplate: 'http://127.0.0.1:4173/proxy?url={canaryUrl}'
             },
             lifecycle: {
               readySelector: '[data-runtime-ready]'
             }
           })
-        }
-      )
+      })
     );
 
     expect(packageResponse.status).toBe(201);
@@ -1017,7 +1173,7 @@ describe('review API', () => {
         url: 'http://127.0.0.1:4173/runtime-fixture',
         host: '127.0.0.1'
       },
-      sandboxInstallationId: 'webflow-sandbox-site-123',
+      sandboxInstallationId: 'local-webflow-site',
       evidence: null
     });
     expect(created.review.latestVersion.result.officialDecision).toBeNull();
@@ -1170,8 +1326,7 @@ describe('review API', () => {
     expect(fetched.observationJob.capability).toBeUndefined();
 
     const screenshot = new Uint8Array([
-      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
-      0x00, 0x00, 0x00, 0x00
+      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x00
     ]);
     const screenshotSha256 = await sha256Hex(screenshot);
     const baseManifest = {
@@ -1183,6 +1338,7 @@ describe('review API', () => {
       nonce: approvedBody.observationJob.contract.nonce,
       targetUrl: approvedBody.observationJob.contract.target.url,
       trust: 'webflow_observed',
+      executionEvidence: 'chromium_cdp_v1',
       startedAt: new Date().toISOString(),
       finishedAt: new Date().toISOString(),
       redaction: {
@@ -1349,8 +1505,11 @@ describe('review API', () => {
       id: string;
       capability: string;
     }> {
+      const extraPackageId = await createReadyRuntimePackage(created.review.id);
       const response = await exports.default.fetch(
-        new Request(jobEndpoint, {
+        new Request(
+          `https://preflight.test/v1/runtime-test-packages/${extraPackageId}/observation-jobs`,
+          {
           method: 'POST',
           headers: {
             authorization: 'Bearer coordinator-test-token',
@@ -1360,7 +1519,8 @@ describe('review API', () => {
             approved: true,
             sandboxOwnershipVerified: true
           })
-        })
+          }
+        )
       );
       expect(response.status).toBe(201);
       const body = await response.json<{
@@ -1370,9 +1530,7 @@ describe('review API', () => {
     }
 
     const expiredJob = await createExtraObservationJob();
-    await env.DB.prepare(
-      `UPDATE runtime_observation_jobs SET expires_at = ? WHERE id = ?`
-    )
+    await env.DB.prepare(`UPDATE runtime_observation_jobs SET expires_at = ? WHERE id = ?`)
       .bind('2000-01-01T00:00:00.000Z', expiredJob.id)
       .run();
     const expiredResponse = await exports.default.fetch(
@@ -1383,9 +1541,7 @@ describe('review API', () => {
     expect(expiredResponse.status).toBe(410);
 
     const revokedJob = await createExtraObservationJob();
-    await env.DB.prepare(
-      `UPDATE runtime_observation_jobs SET status = 'revoked' WHERE id = ?`
-    )
+    await env.DB.prepare(`UPDATE runtime_observation_jobs SET status = 'revoked' WHERE id = ?`)
       .bind(revokedJob.id)
       .run();
     const revokedResponse = await exports.default.fetch(
@@ -1418,6 +1574,28 @@ describe('review API', () => {
       prefix: 'runtime-observations/'
     });
     expect(artifactsBeforeAcceptance.objects).toHaveLength(0);
+    await env.DB.prepare(
+      `UPDATE runtime_observation_jobs
+          SET sandbox_id = 'sandbox-evidence-123',
+              sandbox_started_at = ?, sandbox_termination_status = 'pending'
+        WHERE id = ?`
+    )
+      .bind(new Date().toISOString(), approvedBody.observationJob.id)
+      .run();
+    const terminateSandbox = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const request = input instanceof Request ? input : new Request(input, init);
+      if (
+        request.url === 'https://api.e2b.app/sandboxes/sandbox-evidence-123' &&
+        request.method === 'DELETE'
+      ) {
+        return new Response(null, { status: 204 });
+      }
+      if (request.url === 'https://api.e2b.app/sandboxes/sandbox-evidence-123') {
+        return Response.json({ error: 'not_found' }, { status: 404 });
+      }
+      return Response.json({ error: 'unexpected_request' }, { status: 500 });
+    });
+    vi.stubGlobal('fetch', terminateSandbox);
 
     const evidence = new FormData();
     evidence.set('manifest', JSON.stringify(baseManifest));
@@ -1473,7 +1651,8 @@ describe('review API', () => {
     expect(replayResponse.status).toBe(410);
 
     const completed = await env.DB.prepare(
-      `SELECT status, consumed_at, evidence_trust, evidence_manifest_json
+      `SELECT status, consumed_at, evidence_trust, evidence_manifest_json,
+              sandbox_terminated_at, sandbox_termination_status
          FROM runtime_observation_jobs
         WHERE id = ?`
     )
@@ -1483,12 +1662,17 @@ describe('review API', () => {
         consumed_at: string;
         evidence_trust: string;
         evidence_manifest_json: string;
+        sandbox_terminated_at: string;
+        sandbox_termination_status: string;
       }>();
     expect(completed).toMatchObject({
       status: 'complete',
       consumed_at: expect.any(String),
-      evidence_trust: 'webflow_observed'
+      evidence_trust: 'webflow_observed',
+      sandbox_terminated_at: expect.any(String),
+      sandbox_termination_status: 'verified'
     });
+    expect(terminateSandbox).toHaveBeenCalledTimes(2);
     expect(JSON.parse(completed!.evidence_manifest_json)).toEqual({
       ...baseManifest,
       securityEvaluation: {
@@ -1506,9 +1690,7 @@ describe('review API', () => {
         blockers: []
       }
     });
-    const storedArtifact = await env.ARTIFACTS.get(
-      acceptedBody.artifacts[0]!.objectKey
-    );
+    const storedArtifact = await env.ARTIFACTS.get(acceptedBody.artifacts[0]!.objectKey);
     expect(storedArtifact).not.toBeNull();
     expect(new Uint8Array(await storedArtifact!.arrayBuffer())).toEqual(screenshot);
 
@@ -1555,6 +1737,7 @@ describe('review API', () => {
     );
     expect(nonOwnerResponse.status).toBe(404);
     const launched: Array<{ url: string; headers: Headers; body: unknown }> = [];
+    let terminationShouldFail = false;
     const e2b = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const request = input instanceof Request ? input : new Request(input, init);
       launched.push({
@@ -1563,17 +1746,32 @@ describe('review API', () => {
         body: request.body ? await request.clone().json() : null
       });
       if (request.url === 'https://api.e2b.app/sandboxes') {
-        return new Response(JSON.stringify({
+        return new Response(
+          JSON.stringify({
           templateID: 'template-runtime-test',
           sandboxID: 'sandbox-test-123',
           clientID: 'client-test',
           envdVersion: '0.5.7',
           envdAccessToken: 'envd-access-token',
           trafficAccessToken: 'traffic-access-token'
-        }), {
+          }),
+          {
           status: 201,
           headers: { 'content-type': 'application/json' }
-        });
+          }
+        );
+      }
+      if (
+        request.url === 'https://api.e2b.app/sandboxes/sandbox-test-123' &&
+        request.method === 'DELETE'
+      ) {
+        if (terminationShouldFail) {
+          return Response.json({ error: 'provider_unavailable' }, { status: 503 });
+        }
+        return new Response(null, { status: 204 });
+      }
+      if (request.url === 'https://api.e2b.app/sandboxes/sandbox-test-123') {
+        return Response.json({ error: 'not_found' }, { status: 404 });
       }
       return new Response(JSON.stringify({ accepted: true }), {
         status: 202,
@@ -1602,8 +1800,7 @@ describe('review API', () => {
       expect(launched[0]).toMatchObject({
         url: 'https://api.e2b.app/sandboxes',
         body: {
-          templateID:
-            'app-review-companion-runtime:f47ac10b-58cc-4372-a567-0e02b2c3d479',
+          templateID: 'app-review-companion-runtime:f47ac10b-58cc-4372-a567-0e02b2c3d479',
           timeout: 900,
           secure: true,
           allow_internet_access: true,
@@ -1624,8 +1821,123 @@ describe('review API', () => {
           capability: expect.any(String)
         }
       });
-      expect(launched[1]!.headers.get('e2b-traffic-access-token'))
-        .toBe('traffic-access-token');
+      expect(launched[1]!.headers.get('e2b-traffic-access-token')).toBe('traffic-access-token');
+      const launchedLifecycle = await env.DB.prepare(
+        `SELECT sandbox_id, sandbox_started_at, sandbox_termination_status
+           FROM runtime_observation_jobs
+          WHERE id = ?`
+      )
+        .bind(body.observationJob.id)
+        .first<{
+          sandbox_id: string;
+          sandbox_started_at: string;
+          sandbox_termination_status: string;
+        }>();
+      expect(launchedLifecycle).toMatchObject({
+        sandbox_id: 'sandbox-test-123',
+        sandbox_started_at: expect.any(String),
+        sandbox_termination_status: 'pending'
+      });
+
+      const duplicateResponse = await exports.default.fetch(
+        new Request(
+          `https://preflight.test/v1/runtime-test-packages/${testPackageId}/observation-runs`,
+          {
+            method: 'POST',
+            headers: { authorization: 'Bearer test-token', origin: 'http://localhost:1337' }
+          }
+        )
+      );
+      expect(duplicateResponse.status).toBe(200);
+      const duplicateBody = await duplicateResponse.json<{
+        observationJob: { id: string; status: string; deduplicated: boolean };
+      }>();
+      expect(duplicateBody.observationJob).toMatchObject({
+        id: body.observationJob.id,
+        status: 'approved',
+        deduplicated: true
+      });
+      expect(e2b).toHaveBeenCalledTimes(2);
+
+      await env.DB.prepare(
+        `UPDATE runtime_observation_jobs
+            SET expires_at = '2000-01-01T00:00:00.000Z'
+          WHERE id = ?`
+      )
+        .bind(body.observationJob.id)
+        .run();
+      const expiredReadback = await exports.default.fetch(
+        new Request(`https://preflight.test/v1/reviews/${review.review.id}/runtime-test-packages`, {
+          headers: { authorization: 'Bearer test-token', origin: 'http://localhost:1337' }
+        })
+      );
+      const expiredBody = await expiredReadback.json<{
+        testPackages: Array<{ observation: { status: string } | null }>;
+      }>();
+      expect(expiredBody.testPackages[0]?.observation?.status).toBe('expired');
+
+      terminationShouldFail = true;
+      const blockedRelaunch = await exports.default.fetch(
+        new Request(
+          `https://preflight.test/v1/runtime-test-packages/${testPackageId}/observation-runs`,
+          {
+            method: 'POST',
+            headers: { authorization: 'Bearer test-token', origin: 'http://localhost:1337' }
+          }
+        )
+      );
+      expect(blockedRelaunch.status).toBe(403);
+      expect(await blockedRelaunch.json()).toMatchObject({
+        error: 'runtime_observation_approval_required',
+        message: 'The previous runtime sandbox could not be terminated safely.'
+      });
+      expect(e2b).toHaveBeenCalledTimes(3);
+
+      const stillBlockedRelaunch = await exports.default.fetch(
+        new Request(
+          `https://preflight.test/v1/runtime-test-packages/${testPackageId}/observation-runs`,
+          {
+            method: 'POST',
+            headers: { authorization: 'Bearer test-token', origin: 'http://localhost:1337' }
+          }
+        )
+      );
+      expect(stillBlockedRelaunch.status).toBe(403);
+      expect(e2b).toHaveBeenCalledTimes(4);
+
+      terminationShouldFail = false;
+      const relaunchedResponse = await exports.default.fetch(
+        new Request(
+          `https://preflight.test/v1/runtime-test-packages/${testPackageId}/observation-runs`,
+          {
+            method: 'POST',
+            headers: { authorization: 'Bearer test-token', origin: 'http://localhost:1337' }
+          }
+        )
+      );
+      expect(relaunchedResponse.status).toBe(201);
+      const relaunchedBody = await relaunchedResponse.json<{
+        observationJob: { id: string; deduplicated: boolean };
+      }>();
+      expect(relaunchedBody.observationJob).toMatchObject({ deduplicated: false });
+      expect(relaunchedBody.observationJob.id).not.toBe(body.observationJob.id);
+      expect(e2b).toHaveBeenCalledTimes(8);
+      const expiredLifecycle = await env.DB.prepare(
+        `SELECT status, sandbox_terminated_at, sandbox_termination_status
+           FROM runtime_observation_jobs
+          WHERE id = ?`
+      )
+        .bind(body.observationJob.id)
+        .first<{
+          status: string;
+          sandbox_terminated_at: string;
+          sandbox_termination_status: string;
+        }>();
+      expect(expiredLifecycle).toMatchObject({
+        status: 'expired',
+        sandbox_terminated_at: expect.any(String),
+        sandbox_termination_status: 'verified'
+      });
     } finally {
       vi.unstubAllGlobals();
     }
@@ -1686,9 +1998,7 @@ describe('review API', () => {
     const testPackageId = await createReadyRuntimePackage(review.review.id);
     vi.stubGlobal(
       'fetch',
-      vi.fn(async () =>
-        new Response('provider-internal-detail e2b-test-key', { status: 500 })
-      )
+      vi.fn(async () => new Response('provider-internal-detail e2b-test-key', { status: 500 }))
     );
 
     try {
@@ -1729,6 +2039,93 @@ describe('review API', () => {
     }
   });
 
+  test('persists and verifies cleanup when a created E2B sandbox cannot start its runner', async () => {
+    const reviewForm = new FormData();
+    reviewForm.set(
+      'bundle',
+      new File([await createBundle()], 'partial-launch.zip', { type: 'application/zip' })
+    );
+    const reviewResponse = await exports.default.fetch(
+      new Request('https://preflight.test/v1/reviews', {
+        method: 'POST',
+        headers: { authorization: 'Bearer test-token', origin: 'http://localhost:1337' },
+        body: reviewForm
+      })
+    );
+    const review = await reviewResponse.json<{ review: { id: string } }>();
+    const testPackageId = await createReadyRuntimePackage(review.review.id);
+    let e2bCall = 0;
+    const e2b = vi.fn<typeof fetch>(async () => {
+      e2bCall += 1;
+      if (e2bCall === 1) {
+        return Response.json(
+          {
+            templateID: 'template-runtime-test',
+            sandboxID: 'sandbox-partial-123',
+            trafficAccessToken: 'traffic-access-token'
+          },
+          { status: 201 }
+        );
+      }
+      if (e2bCall === 2) {
+        return Response.json({ error: 'runner_unavailable' }, { status: 500 });
+      }
+      if (e2bCall === 3) return new Response(null, { status: 204 });
+      return Response.json({ error: 'not_found' }, { status: 404 });
+    });
+    vi.stubGlobal('fetch', e2b);
+
+    try {
+      const response = await exports.default.fetch(
+        new Request(
+          `https://preflight.test/v1/runtime-test-packages/${testPackageId}/observation-runs`,
+          {
+            method: 'POST',
+            headers: { authorization: 'Bearer test-token', origin: 'http://localhost:1337' }
+          }
+        )
+      );
+      expect(response.status).toBe(503);
+      expect(
+        e2b.mock.calls.map(([input]) => (input instanceof Request ? input.url : String(input)))
+      ).toEqual([
+        'https://api.e2b.app/sandboxes',
+        'https://3000-sandbox-partial-123.e2b.app/run',
+        'https://api.e2b.app/sandboxes/sandbox-partial-123',
+        'https://api.e2b.app/sandboxes/sandbox-partial-123'
+      ]);
+      expect(e2b).toHaveBeenCalledTimes(4);
+      await expect(response.json()).resolves.toEqual({
+        error: 'runtime_observation_dispatch_unavailable',
+        message: 'The runtime runner could not start inside the secure sandbox.'
+      });
+      const lifecycle = await env.DB.prepare(
+        `SELECT status, sandbox_id, sandbox_started_at,
+                sandbox_terminated_at, sandbox_termination_status
+           FROM runtime_observation_jobs
+          WHERE test_package_id = ?
+          ORDER BY created_at DESC LIMIT 1`
+      )
+        .bind(testPackageId)
+        .first<{
+          status: string;
+          sandbox_id: string;
+          sandbox_started_at: string;
+          sandbox_terminated_at: string;
+          sandbox_termination_status: string;
+        }>();
+      expect(lifecycle).toMatchObject({
+        status: 'failed',
+        sandbox_id: 'sandbox-partial-123',
+        sandbox_started_at: expect.any(String),
+        sandbox_terminated_at: expect.any(String),
+        sandbox_termination_status: 'verified'
+      });
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   test('lets an authenticated reviewer open the web workspace and request an independent replay', async () => {
     const reviewForm = new FormData();
     reviewForm.set(
@@ -1748,9 +2145,7 @@ describe('review API', () => {
     const testPackageId = await createReadyRuntimePackage(review.review.id);
 
     const handoffResponse = await exports.default.fetch(
-      new Request(
-        `https://preflight.test/v1/reviews/${review.review.id}/reviewer-handoffs`,
-        {
+      new Request(`https://preflight.test/v1/reviews/${review.review.id}/reviewer-handoffs`, {
           method: 'POST',
           headers: {
             authorization: 'Bearer reviewer-test-token',
@@ -1761,8 +2156,7 @@ describe('review API', () => {
             reviewVersionId: review.review.latestVersion.id,
             runtimeTestPackageId: testPackageId
           })
-        }
-      )
+      })
     );
     expect(handoffResponse.status).toBe(201);
     const handoff = await handoffResponse.json<{ handoff: { url: string } }>();
@@ -1791,7 +2185,9 @@ describe('review API', () => {
     expect(workspaceHtml).toContain(testPackageId);
 
     const replayLaunches: Array<{ url: string; body: unknown }> = [];
-    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const request = input instanceof Request ? input : new Request(input, init);
       replayLaunches.push({
         url: request.url,
@@ -1802,20 +2198,24 @@ describe('review API', () => {
           templateID: string;
           metadata: { observation_job_id: string };
         };
-        return new Response(JSON.stringify({
+          return new Response(
+            JSON.stringify({
           templateID: createBody.templateID,
           sandboxID: 'reviewer-sandbox-test',
           clientID: 'reviewer-client-test',
           envdVersion: '0.5.7',
           envdAccessToken: 'reviewer-envd-token',
           trafficAccessToken: 'reviewer-traffic-token'
-        }), {
+            }),
+            {
           status: 201,
           headers: { 'content-type': 'application/json' }
-        });
+            }
+          );
       }
       return new Response(JSON.stringify({ accepted: true }), { status: 202 });
-    }));
+      })
+    );
     try {
       const replayResponse = await exports.default.fetch(
         new Request(
@@ -1833,8 +2233,7 @@ describe('review API', () => {
       expect(replayLaunches[0]).toMatchObject({
         url: 'https://api.e2b.app/sandboxes',
         body: {
-          templateID:
-            'app-review-companion-runtime:f47ac10b-58cc-4372-a567-0e02b2c3d479',
+          templateID: 'app-review-companion-runtime:f47ac10b-58cc-4372-a567-0e02b2c3d479',
           metadata: { observation_job_id: expect.any(String) }
         }
       });
@@ -1999,9 +2398,7 @@ describe('review API', () => {
     );
     const created = await createResponse.json<{ review: { id: string } }>();
     const approveResponse = await exports.default.fetch(
-      new Request(
-        `https://preflight.test/v1/reviews/${created.review.id}/runtime-jobs`,
-        {
+      new Request(`https://preflight.test/v1/reviews/${created.review.id}/runtime-jobs`, {
           method: 'POST',
           headers: {
             authorization: 'Bearer test-token',
@@ -2009,8 +2406,7 @@ describe('review API', () => {
             origin: 'http://localhost:1337'
           },
           body: JSON.stringify({ approved: true })
-        }
-      )
+      })
     );
     const approved = await approveResponse.json<{ runtimeJob: { id: string } }>();
     const endpoint = `https://preflight.test/v1/runtime-jobs/${approved.runtimeJob.id}/evidence`;
@@ -2165,9 +2561,7 @@ describe('review API', () => {
       })
     );
     expect(unapproved.status).toBe(403);
-    const stillDraft = await env.DB.prepare(
-      'SELECT status FROM pattern_candidates WHERE id = ?'
-    )
+    const stillDraft = await env.DB.prepare('SELECT status FROM pattern_candidates WHERE id = ?')
       .bind(candidate!.id)
       .first<{ status: string }>();
     expect(stillDraft?.status).toBe('draft');
