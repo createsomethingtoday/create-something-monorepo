@@ -1,6 +1,6 @@
 {
   "id": "overlay.agency-atlas-public",
-  "name": "Agency Atlas Public Overlay",
+  "name": "Agency Map Public Overlay",
   "owner": "agency-team",
   "sourcePackage": "@create-something/agency",
   "targetModalities": [
@@ -23,5 +23,5 @@
     "template.canon-extension-intake",
     "policy.signal-decision-proof"
   ],
-  "overlayRule": "Agency Atlas public surfaces consume Canon Clear and Atlas primitives through local route, canvas, agent, and booking handoff policy. Promote only repeated workflow-proof patterns through Canon extension intake; keep project copy, route lists, limits, and booking metadata local."
+  "overlayRule": "Agency Map public surfaces consume Canon Clear and internal Atlas primitives through local route, canvas, agent, and booking handoff policy. Promote only repeated workflow-proof patterns through Canon extension intake; keep project copy, route lists, limits, and booking metadata local."
 }

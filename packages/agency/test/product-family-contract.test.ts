@@ -78,6 +78,26 @@ test('canonical product documentation preserves the public and internal naming b
   assert.match(controlDoc, /policy_os_core/);
 });
 
+test('Canon overlay projects Map publicly while keeping stable Atlas contracts', () => {
+  const manifest = readFileSync(
+    new URL('../canon-overlay/manifest.ts', import.meta.url),
+    'utf8'
+  );
+  const surfacePolicy = readFileSync(
+    new URL('../canon-overlay/surface-policy.md', import.meta.url),
+    'utf8'
+  );
+
+  assert.match(manifest, /"id": "overlay\.agency-atlas-public"/);
+  assert.match(manifest, /"name": "Agency Map Public Overlay"/);
+  assert.match(manifest, /"sourcePath": "src\/routes\/map\/\+page\.svelte"/);
+  assert.match(manifest, /"name": "Public Map route"/);
+  assert.doesNotMatch(manifest, /src\/routes\/atlas\/\+page\.svelte/);
+
+  assert.match(surfacePolicy, /`\/map`/);
+  assert.doesNotMatch(surfacePolicy, /`\/atlas`/);
+});
+
 test('Map is the canonical public canvas route and Atlas redirects for compatibility', async () => {
   const mapRoute = readFileSync(
     new URL('../src/routes/map/+page.svelte', import.meta.url),
