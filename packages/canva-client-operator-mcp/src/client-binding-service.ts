@@ -38,6 +38,14 @@ export interface CanvaBindingStore {
     receiptId: string;
     revoked: boolean;
   }): Promise<void>;
+  resetPending(input: {
+    expectedReservationId: string;
+    previousConnectionRequestId: string | null;
+    operatorSubject: string;
+    resetAt: string;
+    receiptId: string;
+    revoked: boolean;
+  }): Promise<void>;
 }
 
 export interface CanvaConnectionGateway {
@@ -171,13 +179,23 @@ export class CanvaClientBindingService {
     operatorSubject: string;
     confirmation: string;
     revoke?: boolean;
-  }): Promise<{
-    receiptId: string;
-    previousConnectedAccountId: string;
-    revoked: boolean;
-    resetAt: string;
-    operatorSubject: string;
-  }> {
+  }): Promise<
+    | {
+        receiptId: string;
+        previousConnectedAccountId: string;
+        revoked: boolean;
+        resetAt: string;
+        operatorSubject: string;
+      }
+    | {
+        receiptId: string;
+        previousStatus: 'pending';
+        previousConnectionRequestId: string | null;
+        revoked: boolean;
+        resetAt: string;
+        operatorSubject: string;
+      }
+  > {
     const requiredConfirmation = `RESET ${this.composioUserId}`;
     if (input.confirmation !== requiredConfirmation) {
       throw new CanvaBindingError(
@@ -186,22 +204,45 @@ export class CanvaClientBindingService {
       );
     }
 
-    const status = await this.getStatus();
-    if (status.status !== 'locked') {
+    const binding = await this.store.read();
+    if (!binding) {
       throw new CanvaBindingError(
-        'CANVA_CONNECTION_NOT_LOCKED',
-        'There is no locked Canva account to reset.',
+        'CANVA_CONNECTION_NOT_BOUND',
+        'There is no pending or locked Canva connection to reset.',
       );
     }
 
     const revoked = input.revoke ?? true;
+    if (binding.status === 'pending') {
+      if (revoked && binding.connectionRequestId) {
+        await this.gateway.revoke(binding.connectionRequestId);
+      }
+      const receipt = {
+        receiptId: this.randomId(),
+        previousStatus: 'pending' as const,
+        previousConnectionRequestId: binding.connectionRequestId,
+        revoked,
+        resetAt: this.now(),
+        operatorSubject: input.operatorSubject,
+      };
+      await this.store.resetPending({
+        expectedReservationId: binding.reservationId,
+        previousConnectionRequestId: receipt.previousConnectionRequestId,
+        operatorSubject: receipt.operatorSubject,
+        resetAt: receipt.resetAt,
+        receiptId: receipt.receiptId,
+        revoked: receipt.revoked,
+      });
+      return receipt;
+    }
+
     if (revoked) {
-      await this.gateway.revoke(status.connectedAccountId);
+      await this.gateway.revoke(binding.connectedAccountId);
     }
 
     const receipt = {
       receiptId: this.randomId(),
-      previousConnectedAccountId: status.connectedAccountId,
+      previousConnectedAccountId: binding.connectedAccountId,
       revoked,
       resetAt: this.now(),
       operatorSubject: input.operatorSubject,

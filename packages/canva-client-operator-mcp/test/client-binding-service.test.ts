@@ -82,6 +82,20 @@ class MemoryBindingStore implements CanvaBindingStore {
     this.audit.push(input);
     this.record = null;
   }
+
+  async resetPending(input: {
+    expectedReservationId: string;
+    previousConnectionRequestId: string | null;
+    operatorSubject: string;
+    resetAt: string;
+    receiptId: string;
+    revoked: boolean;
+  }): Promise<void> {
+    assert.equal(this.record?.status, 'pending');
+    assert.equal(this.record.reservationId, input.expectedReservationId);
+    this.audit.push(input);
+    this.record = null;
+  }
 }
 
 class FakeConnectionGateway implements CanvaConnectionGateway, CanvaToolGateway {
@@ -220,6 +234,43 @@ test('operator reset requires client-specific confirmation, revokes the old acco
   assert.equal(gateway.authorizeCalls, 2);
 });
 
+test('operator reset cancels a pending request and immediately permits a fresh link', async () => {
+  const store = new MemoryBindingStore();
+  const gateway = new FakeConnectionGateway();
+  const service = new CanvaClientBindingService({
+    store,
+    gateway,
+    composioUserId: 'client:acme:canva',
+    now: () => '2026-07-16T21:00:00.000Z',
+    randomId: (() => {
+      const ids = ['reservation_1', 'reset_receipt_1', 'reservation_2'];
+      return () => ids.shift() ?? 'fallback_id';
+    })(),
+  });
+
+  await service.createConnectLink({ operatorSubject: 'operator_123' });
+  const receipt = await service.resetConnection({
+    operatorSubject: 'operator_456',
+    confirmation: 'RESET client:acme:canva',
+  });
+
+  assert.deepEqual(receipt, {
+    receiptId: 'reset_receipt_1',
+    previousStatus: 'pending',
+    previousConnectionRequestId: 'ca_client_canva',
+    revoked: true,
+    resetAt: '2026-07-16T21:00:00.000Z',
+    operatorSubject: 'operator_456',
+  });
+  assert.deepEqual(gateway.revoked, ['ca_client_canva']);
+  assert.equal((await service.getStatus()).status, 'unbound');
+  assert.equal(store.audit.length, 1);
+
+  const nextLink = await service.createConnectLink({ operatorSubject: 'operator_456' });
+  assert.equal(nextLink.status, 'pending');
+  assert.equal(gateway.authorizeCalls, 2);
+});
+
 test('MCP Canva tools execute only through the locked client account', async () => {
   const store = new MemoryBindingStore();
   const gateway = new FakeConnectionGateway();
@@ -277,6 +328,59 @@ test('MCP Canva tools execute only through the locked client account', async () 
         connectedAccountId: 'ca_client_canva',
       },
     ]);
+  } finally {
+    await client.close();
+    await server.close();
+  }
+});
+
+test('MCP admin reset clears a stale pending request through the Claude-facing tool', async () => {
+  const store = new MemoryBindingStore();
+  const gateway = new FakeConnectionGateway();
+  const service = new CanvaClientBindingService({
+    store,
+    gateway,
+    composioUserId: 'client:acme:canva',
+    randomId: (() => {
+      const ids = ['reservation_1', 'reset_receipt_1', 'reservation_2'];
+      return () => ids.shift() ?? 'fallback_id';
+    })(),
+  });
+  const server = await createCanvaOperatorMcpServer({
+    service,
+    gateway,
+    composioUserId: 'client:acme:canva',
+    operator: {
+      subject: 'operator_admin',
+      email: 'operator@createsomething.io',
+      scopes: ['canva-client:read', 'canva-client:admin'],
+    },
+  });
+  const client = new Client(
+    { name: 'canva-client-pending-reset-test', version: '1.0.0' },
+    { capabilities: {} },
+  );
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+  await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
+
+  try {
+    await client.callTool({ name: 'canva_create_connect_link', arguments: {} });
+    const reset = await client.callTool({
+      name: 'canva_reset_connection',
+      arguments: { confirmation: 'RESET client:acme:canva' },
+    });
+    assert.notEqual(reset.isError, true);
+    assert.equal(
+      (reset.structuredContent as { previousStatus?: string } | undefined)?.previousStatus,
+      'pending',
+    );
+
+    const replacement = await client.callTool({
+      name: 'canva_create_connect_link',
+      arguments: {},
+    });
+    assert.notEqual(replacement.isError, true);
+    assert.equal(gateway.authorizeCalls, 2);
   } finally {
     await client.close();
     await server.close();

@@ -143,7 +143,7 @@ function managementTools(composioUserId: string, allowAdmin: boolean): Tool[] {
     tools.push({
       name: 'canva_reset_connection',
       description:
-        `Operator-only destructive reset. By default revokes the locked Composio account before removing the binding. Requires exact confirmation "RESET ${composioUserId}".`,
+        `Operator-only destructive reset for either a pending request or locked account. By default revokes/deletes the Composio connection before removing the binding. Requires exact confirmation "RESET ${composioUserId}".`,
       inputSchema: {
         type: 'object',
         properties: {

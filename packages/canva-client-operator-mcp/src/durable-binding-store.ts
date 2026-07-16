@@ -53,6 +53,17 @@ export class DurableCanvaBindingStore implements CanvaBindingStore {
     await this.post('/reset', input);
   }
 
+  async resetPending(input: {
+    expectedReservationId: string;
+    previousConnectionRequestId: string | null;
+    operatorSubject: string;
+    resetAt: string;
+    receiptId: string;
+    revoked: boolean;
+  }): Promise<void> {
+    await this.post('/reset-pending', input);
+  }
+
   private async post<T = Record<string, unknown>>(path: string, body: unknown): Promise<T> {
     const response = await this.stub.fetch(`https://binding.internal${path}`, {
       method: 'POST',
@@ -149,6 +160,31 @@ export class CanvaClientBindingObject {
         const receipt = {
           receiptId,
           previousConnectedAccountId: expectedConnectedAccountId,
+          operatorSubject: requiredString(body, 'operatorSubject'),
+          resetAt: requiredString(body, 'resetAt'),
+          revoked: body.revoked === true,
+        };
+        await this.state.storage.put(`audit:${receiptId}`, receipt);
+        await this.state.storage.delete('binding');
+        return Response.json({ ok: true, receipt });
+      }
+
+      if (url.pathname === '/reset-pending') {
+        const expectedReservationId = requiredString(body, 'expectedReservationId');
+        if (
+          existing.status !== 'pending' ||
+          existing.reservationId !== expectedReservationId
+        ) {
+          return conflict('CANVA_RESERVATION_MISMATCH');
+        }
+        const receiptId = requiredString(body, 'receiptId');
+        const receipt = {
+          receiptId,
+          previousStatus: 'pending',
+          previousConnectionRequestId:
+            typeof body.previousConnectionRequestId === 'string'
+              ? body.previousConnectionRequestId
+              : null,
           operatorSubject: requiredString(body, 'operatorSubject'),
           resetAt: requiredString(body, 'resetAt'),
           revoked: body.revoked === true,

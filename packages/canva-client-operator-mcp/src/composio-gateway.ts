@@ -60,7 +60,12 @@ export class ComposioCanvaGateway implements CanvaConnectionGateway, CanvaToolGa
   }
 
   async revoke(connectedAccountId: string): Promise<void> {
-    await this.client.getSDK().connectedAccounts.delete(connectedAccountId);
+    try {
+      await this.client.getSDK().connectedAccounts.delete(connectedAccountId);
+    } catch (error) {
+      if (isNotFoundError(error)) return;
+      throw error;
+    }
   }
 
   async listTools(): Promise<CanvaToolDefinition[]> {
@@ -110,4 +115,16 @@ function requiredString(value: Record<string, unknown>, key: string): string {
     throw new Error(`COMPOSIO_INVALID_RESPONSE: ${key} is missing.`);
   }
   return result;
+}
+
+function isNotFoundError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const record = error as Record<string, unknown>;
+  const response = record.response && typeof record.response === 'object'
+    ? record.response as Record<string, unknown>
+    : null;
+  const statuses = [record.status, record.statusCode, record.code, response?.status];
+  if (statuses.some((status) => status === 404 || status === '404')) return true;
+  const message = error instanceof Error ? error.message : String(record.message ?? '');
+  return /\b404\b.*(?:not found|resource)/i.test(message);
 }

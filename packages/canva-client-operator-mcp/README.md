@@ -32,20 +32,20 @@ These are independent authentication layers. Clearing Claude's MCP login does no
 5. The next status or Canva-tool call observes the active Composio connection and atomically locks its `connectedAccountId`.
 6. Every `client_canva_*` call supplies that exact account ID to Composio. No ambient/default account selection is allowed.
 
-While a link is pending, another link cannot be created. While an account is locked, another link cannot be created.
+While a link is pending, another link cannot be created until the client completes it or an operator resets it. While an account is locked, another link cannot be created until an operator resets it.
 
 ## Reset and client account change
 
 Reset is an operator-admin action, not a client link action.
 
-1. Check `canva_connection_status` and record the current connection.
+1. Check `canva_connection_status` and record the current pending request or locked connection.
 2. Call `canva_reset_connection` with the exact phrase shown in the tool schema:
 
    ```text
    RESET <COMPOSIO_CLIENT_USER_ID>
    ```
 
-3. Omit `revoke`, or pass `true`, to revoke/delete the old Composio connected account before detaching it. This is the safe default.
+3. Omit `revoke`, or pass `true`, to revoke/delete the pending request or locked Composio connected account before detaching it. A Composio `404` is treated as already removed; other upstream failures keep the local binding in place. This is the safe default.
 4. Preserve the returned reset receipt.
 5. Create a new Connect Link and have the client authorize the replacement account.
 
