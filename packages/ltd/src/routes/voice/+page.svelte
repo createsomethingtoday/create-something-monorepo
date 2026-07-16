@@ -208,8 +208,7 @@
         lab provides an instrument; the surrounding system carries the durable claim.
       </p>
       <p>
-        Use <a href="/canon/concepts/conviction-without-dependence"
-          >Conviction Without Dependence</a
+        Use <a href="/canon/concepts/conviction-without-dependence">Conviction Without Dependence</a
         > for the full language hierarchy, ownership boundary, and anti-patterns.
       </p>
     </div>
@@ -249,6 +248,7 @@
           Steven Pressfield named the internal force that fights against clear expression. Here's
           how it shows up in writing:
         </p>
+        <!-- prose-ignore-start: intentional examples of unclear language -->
         <div class="transformation-table my-4">
           <table>
             <thead>
@@ -281,6 +281,7 @@
             </tbody>
           </table>
         </div>
+        <!-- prose-ignore-end -->
         <p class="box-description mt-4">
           When you catch yourself reaching for jargon, pause. That's your signal. Ask what you
           actually mean.
@@ -299,14 +300,17 @@
       <div>
         <h3 class="mb-3">1. Clarity Over Cleverness</h3>
         <p class="principle-lead mb-4">Write for your reader, not yourself.</p>
+        <!-- prose-ignore-start: intentional explanation of a discouraged term -->
         <p class="principle-description leading-relaxed mb-3">
           You might reach for "leverage" because it sounds professional. You might add a clever
           metaphor hoping readers will be impressed.
         </p>
+        <!-- prose-ignore-end -->
         <p class="principle-description leading-relaxed mb-3">
           Here's what works better: Code is read 10x more than written. Writing is read 100x more.
           Serve the reader.
         </p>
+        <!-- prose-ignore-start: intentional negative examples -->
         <div class="transformation-table my-6">
           <table>
             <thead>
@@ -327,6 +331,7 @@
             </tbody>
           </table>
         </div>
+        <!-- prose-ignore-end -->
         <p class="principle-test">
           <strong>The test:</strong> Would your grandmother understand this sentence? If not, rewrite.
         </p>
@@ -541,6 +546,7 @@
           These words feel professional but communicate little. When you notice yourself reaching
           for them, ask: what do I actually mean?
         </p>
+        <!-- prose-ignore-start: prohibited terms shown for instruction -->
         <div class="grid grid-cols-2 gap-3 forbidden-grid">
           <div class="line-through">Cutting-edge</div>
           <div class="line-through">Revolutionary</div>
@@ -551,6 +557,7 @@
           <div class="line-through">Solutions</div>
           <div class="line-through">Best-in-class</div>
         </div>
+        <!-- prose-ignore-end -->
       </div>
 
       <div>
@@ -674,6 +681,7 @@
     <h2 class="mb-8">Preferred Terminology</h2>
 
     <div class="space-y-8">
+      <!-- prose-ignore-start: exact preferred and discouraged terminology -->
       <div>
         <h3 class="terminology-title mb-3">AI Development</h3>
         <div class="space-y-2 terminology-list">
@@ -685,6 +693,7 @@
           </p>
         </div>
       </div>
+      <!-- prose-ignore-end -->
 
       <div>
         <h3 class="terminology-title mb-3">Research</h3>

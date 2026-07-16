@@ -102,6 +102,9 @@ Validation:
   approved plain-language replacements, then reruns the audit.
 - Add a rule to `scripts/check-public-copy.mjs` when a phrase becomes a private
   planning term instead of public language.
+- The root `pnpm prose:check` command imports this package's `PUBLIC_COPY_RULES`
+  as its `.agency` overlay. Keep `pnpm copy:check` as the package authority; do
+  not duplicate or weaken its rule list in the root adapter.
 
 ### Platform Conviction Contract
 

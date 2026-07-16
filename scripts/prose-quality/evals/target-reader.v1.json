@@ -1,0 +1,165 @@
+{
+  "version": 1,
+  "reader": "junior-practitioner",
+  "readerContract": "The least-tenured credible practitioner in the document's actual field. They know basic field concepts but do not know CREATE SOMETHING vocabulary.",
+  "enjoymentContract": "Useful momentum: concrete stakes, visible progress or discovery, varied rhythm, and respect for the reader. Do not force jokes, slang, or anecdotes.",
+  "evaluationBoundary": "These cases test judgment in rendered-component context. A revise verdict requests human review and is never a deterministic CI failure by itself. Unrelated file-level deterministic findings do not change the excerpt verdict.",
+  "cases": [
+    {
+      "id": "agency-offer-next-action",
+      "property": "agency",
+      "expected": "pass",
+      "reviewScope": "rendered-component",
+      "context": "Read the complete PerformanceCampaignOpening and its visible actions and proof.",
+      "source": {
+        "file": "packages/agency/src/routes/+page.svelte",
+        "line": 180,
+        "anchor": "Make one workflow safe to delegate."
+      },
+      "reason": "Names one concrete operating problem, explains run, wait, stop, and proof in plain language, then offers a specific next action."
+    },
+    {
+      "id": "agency-operator-before-after",
+      "property": "agency",
+      "expected": "pass",
+      "reviewScope": "rendered-component",
+      "context": "Read both rendered operator outcome cards as one before-and-after unit.",
+      "source": {
+        "file": "packages/agency/src/routes/+page.svelte",
+        "line": 149,
+        "anchor": "The operator returns when judgment matters."
+      },
+      "reason": "Uses a before and after contrast to show the operational change without requiring framework vocabulary."
+    },
+    {
+      "id": "agency-evidence-with-limits",
+      "property": "agency",
+      "expected": "pass",
+      "reviewScope": "rendered-component",
+      "context": "Read the full Field Report evidence item, including its state, date, and stated limits.",
+      "source": {
+        "file": "packages/agency/src/routes/+page.svelte",
+        "line": 159,
+        "anchor": "Evidence collection completed for 49 of 50 selected cases."
+      },
+      "reason": "Pairs a concrete result with explicit limits on automated judgment and unmeasured time savings."
+    },
+    {
+      "id": "agency-shadow-mode-boundary",
+      "property": "agency",
+      "expected": "pass",
+      "reviewScope": "rendered-component",
+      "context": "Read the complete PerformanceCampaignOpening with its status, mode, cases, and writes proof.",
+      "source": {
+        "file": "packages/agency/src/routes/proof/marketplace-workflow/+page.svelte",
+        "line": 125,
+        "anchor": "It runs in shadow mode only"
+      },
+      "reason": "Explains the worked example, its local evidence, and the exact production actions it cannot take."
+    },
+    {
+      "id": "agency-acceptance-receipt",
+      "property": "agency",
+      "expected": "pass",
+      "reviewScope": "rendered-component",
+      "context": "Read the complete acceptance-receipt section, proof strip, receipt text, and limitation note.",
+      "source": {
+        "file": "packages/agency/src/routes/proof/marketplace-workflow/+page.svelte",
+        "line": 193,
+        "anchor": "compares every generated file byte for byte"
+      },
+      "reason": "Makes the verification method inspectable and keeps production and client-outcome claims out of scope."
+    },
+    {
+      "id": "ltd-owned-term-translation",
+      "property": "ltd",
+      "expected": "pass",
+      "reviewScope": "rendered-component",
+      "context": "Read the entire transformation-table row containing the discouraged phrase and its replacement.",
+      "source": {
+        "file": "packages/ltd/src/routes/voice/+page.svelte",
+        "line": 149,
+        "anchor": "MCP-enabled trust layer for enterprise automation"
+      },
+      "reason": "Shows the unclear technical label beside a concrete run, wait, or stop translation a practitioner can act on."
+    },
+    {
+      "id": "agency-dense-decision-inventory",
+      "property": "agency",
+      "expected": "revise",
+      "reviewScope": "rendered-component",
+      "context": "Read the complete Judgment artifact card within the three-card compiled-package grid.",
+      "source": {
+        "file": "packages/agency/src/routes/proof/marketplace-workflow/+page.svelte",
+        "line": 102,
+        "anchor": "Decision inventory, autonomy classes, approval surfaces"
+      },
+      "reason": "Stacks several abstract control terms before showing one representative decision and its consequence."
+    },
+    {
+      "id": "agency-undefined-three-tier-terms",
+      "property": "agency",
+      "expected": "pass",
+      "reviewScope": "rendered-component",
+      "context": "Read the full PerformanceThesisConditions component and the adjacent Database, Automation, and Judgment condition cards it renders.",
+      "source": {
+        "file": "packages/agency/src/routes/practice/+page.svelte",
+        "line": 106,
+        "anchor": "verify the Database, then the Automation, then the Judgment"
+      },
+      "reason": "The heading introduces the diagnostic order, and the adjacent rendered condition cards define each category in practical terms."
+    },
+    {
+      "id": "agency-recursive-flagship-stack",
+      "property": "agency",
+      "expected": "revise",
+      "reviewScope": "rendered-component",
+      "context": "Read the complete flagship-defense chapter, including its intervention label, unresolved boundary, and test detail.",
+      "source": {
+        "file": "packages/agency/src/routes/practice/+page.svelte",
+        "line": 145,
+        "anchor": "The first defense is recursive"
+      },
+      "reason": "Requires the reader to unpack recursive defense, delegated delivery, ownership, policy, validation, approval, and rollback at once."
+    },
+    {
+      "id": "ltd-owned-boundary-inventory",
+      "property": "ltd",
+      "expected": "pass",
+      "reviewScope": "rendered-component",
+      "context": "Read the complete Platform Conviction Standard sequence from Current Default through Tested Exit.",
+      "source": {
+        "file": "packages/ltd/src/routes/standards/+page.svelte",
+        "line": 125,
+        "anchor": "Show which data, MCP contracts, harness behavior"
+      },
+      "reason": "The surrounding standards sequence defines the current default, names owned assets, and explains the tested-exit consequence."
+    },
+    {
+      "id": "io-research-transfer-abstraction",
+      "property": "io",
+      "expected": "pass",
+      "reviewScope": "rendered-component",
+      "context": "Read the research-readiness condition cards and the adjacent Read, Validate, and Scope decision panel.",
+      "source": {
+        "file": "packages/io/src/routes/+page.svelte",
+        "line": 270,
+        "anchor": "Research is ready to transfer when its claim is traced"
+      },
+      "reason": "The adjacent cards and decision panel turn traced claims, runtime tests, and receiving layers into a concrete transfer path."
+    },
+    {
+      "id": "space-real-execution-surfaces",
+      "property": "space",
+      "expected": "pass",
+      "reviewScope": "rendered-component",
+      "context": "Read the complete campaign opening with hero proof, calls to action, and the nearby named workbench tools.",
+      "source": {
+        "file": "packages/space/src/routes/+page.svelte",
+        "line": 246,
+        "anchor": "tested against real execution surfaces"
+      },
+      "reason": "The hero proof, calls to action, and nearby named tools ground what real execution surfaces mean on this page."
+    }
+  ]
+}
