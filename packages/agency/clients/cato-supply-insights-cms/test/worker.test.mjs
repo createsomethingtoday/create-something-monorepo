@@ -4,8 +4,40 @@ import worker, {
   htmlToPlainText,
   normalizeInsightCategories,
   normalizeInsights,
+  normalizeSubscriptionCta,
   normalizeTeam
 } from '../src/worker.mjs';
+
+test('normalizes the single published Subscription CTA record for the global component contract', () => {
+  const subscription = normalizeSubscriptionCta([
+    {
+      id: 'draft-subscription',
+      lastPublished: null,
+      fieldData: {
+        heading: 'Draft heading',
+        'supporting-copy': 'Draft supporting copy',
+        'button-text': 'Draft button'
+      }
+    },
+    {
+      id: 'global-subscription',
+      isDraft: false,
+      lastPublished: null,
+      fieldData: {
+        heading: 'Receive new Cato insights.',
+        'supporting-copy':
+          'Get Cato reports, research, resources, and company updates as they publish.',
+        'button-text': 'Subscribe to alerts'
+      }
+    }
+  ]);
+
+  assert.deepEqual(subscription, {
+    heading: 'Receive new Cato insights.',
+    supportingCopy: 'Get Cato reports, research, resources, and company updates as they publish.',
+    buttonText: 'Subscribe to alerts'
+  });
+});
 
 test('normalizes published Insight Categories for the global mega-menu contract', () => {
   const categories = normalizeInsightCategories([
@@ -80,6 +112,24 @@ test('serves global categories and article items from the public Insights endpoi
       );
     }
 
+    if (url.includes('/collections/subscription/items')) {
+      return new Response(
+        JSON.stringify({
+          items: [
+            {
+              id: 'global-subscription',
+              lastPublished: '2026-07-16T19:40:00.000Z',
+              fieldData: {
+                heading: 'Receive new Cato insights.',
+                'supporting-copy': 'One CMS edit updates every subscription CTA.',
+                'button-text': 'Join alerts'
+              }
+            }
+          ]
+        })
+      );
+    }
+
     return new Response(
       JSON.stringify({
         items: [
@@ -99,20 +149,23 @@ test('serves global categories and article items from the public Insights endpoi
   };
 
   try {
-    const response = await worker.fetch(
-      new Request('https://example.com/api/cato/insights'),
-      {
-        WEBFLOW_AGENT_ACCESS: 'test-token',
-        WEBFLOW_INSIGHTS_COLLECTION_ID: 'insights',
-        WEBFLOW_INSIGHT_CATEGORIES_COLLECTION_ID: 'categories'
-      }
-    );
+    const response = await worker.fetch(new Request('https://example.com/api/cato/insights'), {
+      WEBFLOW_AGENT_ACCESS: 'test-token',
+      WEBFLOW_INSIGHTS_COLLECTION_ID: 'insights',
+      WEBFLOW_INSIGHT_CATEGORIES_COLLECTION_ID: 'categories',
+      WEBFLOW_SUBSCRIPTION_CTA_COLLECTION_ID: 'subscription'
+    });
     const payload = await response.json();
 
     assert.equal(response.status, 200);
     assert.equal(payload.categories[0].title, 'Global Risk Briefs');
     assert.equal(payload.categories[0].cardSummary, 'One CMS edit updates every menu.');
     assert.equal(payload.items[0].title, 'Supply update');
+    assert.deepEqual(payload.subscription, {
+      heading: 'Receive new Cato insights.',
+      supportingCopy: 'One CMS edit updates every subscription CTA.',
+      buttonText: 'Join alerts'
+    });
   } finally {
     globalThis.fetch = originalFetch;
   }
