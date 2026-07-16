@@ -2,6 +2,7 @@ import { redirect, type Handle } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { createAuthHooks } from '@create-something/canon/auth';
 import { abundanceApiAuthHandle } from './lib/server/abundance-api-auth';
+import { deprecatedRedirects } from './lib/data/deprecatedRoutes';
 import { AGENCY_PROTECTED_PATHS } from './lib/server/protected-routes';
 import {
 	createPublicHtmlCacheKey,
@@ -9,18 +10,6 @@ import {
 	shouldAttemptPublicHtmlCache,
 	withPublicHtmlCacheHeaders
 } from './lib/server/public-html-cache';
-
-/**
- * Redirects for deprecated routes (post-MCP pivot)
- */
-const deprecatedRedirects: Record<string, string> = {
-	'/categories': '/services',
-	'/category': '/services',
-	'/work': '/',
-	'/discover': '/',
-	'/dify': '/stack',
-	'/notion': '/stack'
-};
 
 const redirectHandle: Handle = async ({ event, resolve }) => {
 	const path = event.url.pathname;

@@ -142,11 +142,11 @@
 	<PerformanceContrastChapter
 		eyebrow="Flagship defense"
 		title="Governed Agent Delivery: from Linear signal to production proof."
-		description="The first defense is recursive: CREATE SOMETHING must show that its own delegated delivery system can preserve ownership, policy, validation, approval, and rollback evidence."
+		description="This case follows work from a Linear issue to production. At every step, it must keep the owner, allowed actions, required checks, approval points, and rollback evidence visible."
 		intervention={{
 			label: 'Unresolved boundary',
 			title: 'A proposed case is not a passed defense.',
-			detail: 'The case must still survive artifact inspection, counterexample review, rollback examination, and a consequential skeptical verdict.'
+			detail: 'Passing still requires artifact inspection, counterexample review, a rollback check, and an independent verdict with real consequences.'
 		}}
 		mode="paper-to-ink"
 	/>
