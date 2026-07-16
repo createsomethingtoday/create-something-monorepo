@@ -16,6 +16,16 @@ The target reader is the least-tenured credible practitioner in the document's a
 - **Automation:** the root `prose:*` commands, changed-file selection, stable findings, and text or JSON reports.
 - **Judgment:** the Voice Canon, property voice, target-reader review, claim preservation, and the final human read.
 
+## Policy Statements
+
+1. Agent-authored prose MUST be evaluated for a defined target reader and preserve the source's facts, citations, uncertainty, scope limits, technical labels, and approved property voice.
+2. Writers, reviewers, and automated rewrites MUST NOT invent metrics, examples, experiences, opinions, citations, confidence, customer details, or outcomes.
+3. Deterministic checks MUST enforce only reliable policy or configuration claims; contextual readability signals MUST remain warnings or human judgment.
+4. Changed-file enforcement MUST block only findings introduced within the selected scope. A full audit MUST expose existing backlog without turning that backlog into a promotion failure.
+5. Consequential publication MUST receive a final human read for factual integrity, reader momentum, property voice, and proof sufficiency.
+6. Target-reader verdicts MUST use rendered-component context. Unrelated file-level deterministic findings MUST NOT change an excerpt's scoped reader verdict.
+7. Intentional teaching examples MAY be excluded only with balanced, reason-bearing prose-ignore markers. The exclusion MUST NOT conceal published claims.
+
 ## Enforcement Boundary
 
 1. `prose:check` MUST fail only for deterministic findings in the selected changed files or explicit files.
@@ -61,6 +71,15 @@ Changed-file checks compare the current finding multiset with the selected Git b
 The target-reader corpus contains six pass and six revise examples across `.agency`, `.ltd`, `.io`, and `.space`. Corpus verdicts calibrate judgment; they are not token bans and do not authorize automatic rewrites.
 
 Every consequential publication still requires a human final read for factual integrity, reader momentum, property voice, and whether the evidence supports the claim.
+
+## Evidence
+
+- The machine-readable contract is `docs/policies/v1/policy.prose-quality.v1.json`.
+- Deterministic behavior and changed-file semantics are covered by `scripts/test/prose-quality.test.mjs` and run with `pnpm prose:test`.
+- Target-reader calibration is recorded in `scripts/prose-quality/evals/target-reader.v1.json` with source anchors, rendered-component context, `review_scope`, expected verdicts, and preservation requirements.
+- Writer and independent-reader workflows are installed from `packages/dotfiles/codex/skills/writing-for-humans/SKILL.md` and `packages/dotfiles/codex/skills/target-reader-review/SKILL.md`.
+- Property ownership remains executable through `packages/agency/scripts/check-public-copy.mjs` and its package-local tests.
+- Repository policy shape is validated with `pnpm policy:artifacts:check`; prose enforcement is validated with `pnpm prose:check -- --changed-from origin/main --format json`.
 
 ## Rollback
 
