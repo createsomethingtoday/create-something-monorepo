@@ -30,6 +30,9 @@ test('identity worker serves oauth authorization server metadata', async () => {
     'template-review:read',
     'template-review:write',
     'template-review:queue-read',
+		'canva-client:read',
+		'canva-client:write',
+		'canva-client:admin',
   ]);
 });
 
@@ -70,6 +73,24 @@ test('Template Review authorize page describes the resource-bound application gr
   assert.match(text, /short-lived access token bound to this resource and the requested scopes/);
   assert.match(text, new RegExp(`Resource: ${resource.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`));
   assert.match(text, /Scopes: openid profile email mcp template-review:queue-read/);
+  assert.doesNotMatch(text, /managed MCP bearer token/);
+  assert.doesNotMatch(text, /Hub:/);
+});
+
+test('Canva Client Operator authorize page describes the resource-bound application grant', async () => {
+  const resource = 'https://canva-client-operator-mcp.createsomething.workers.dev/mcp';
+  const response = await identityWorker.fetch(
+    new Request(
+      `https://id.createsomething.space/oauth/authorize?response_type=code&client_id=claude-code&redirect_uri=${encodeURIComponent('http://127.0.0.1:65221/callback')}&scope=${encodeURIComponent('openid profile email mcp canva-client:read canva-client:write canva-client:admin')}&resource=${encodeURIComponent(resource)}`,
+    ),
+    makeEnv(),
+  );
+
+  assert.equal(response.status, 200);
+  const text = await response.text();
+  assert.match(text, /Application MCP Access/);
+  assert.match(text, new RegExp(`Resource: ${resource.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`));
+  assert.match(text, /Scopes: openid profile email mcp canva-client:read canva-client:write canva-client:admin/);
   assert.doesNotMatch(text, /managed MCP bearer token/);
   assert.doesNotMatch(text, /Hub:/);
 });

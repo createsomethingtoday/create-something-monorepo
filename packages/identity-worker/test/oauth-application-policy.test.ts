@@ -19,6 +19,18 @@ test('Template Review OAuth uses an explicit resource-bound application policy',
 	});
 });
 
+test('Canva Client Operator OAuth uses an explicit resource-bound application policy', () => {
+	const policy = resolveOAuthApplicationAccessPolicy(
+		'https://canva-client-operator-mcp.createsomething.workers.dev/mcp'
+	);
+
+	assert.deepEqual(policy, {
+		applicationId: 'canva-client-operator-mcp',
+		resource: 'https://canva-client-operator-mcp.createsomething.workers.dev/mcp',
+		expiresIn: 3600,
+	});
+});
+
 test('unknown OAuth resources do not bypass managed bearer governance', () => {
 	assert.equal(resolveOAuthApplicationAccessPolicy('https://unknown.example/mcp'), null);
 });
