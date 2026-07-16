@@ -19,8 +19,8 @@ export const PUBLIC_SUBSTRATE_CANVAS_DETAILS: PublicSubstrateCanvasNodeDetail[] 
 		label: '.agency public canvas',
 		kicker: 'Public proof surface',
 		status: 'run',
-		body: 'The public site renders the same canvas kernel used by Atlas, Substrate, and Topology so the visitor sees the operating surface, not a detached diagram.',
-		proof: 'shared renderer · public projection · no private client records'
+		body: 'This public view shows where a request starts, what an agent may do, where approval is required, and which receipt records the result.',
+		proof: 'public workflow view · no private client records'
 	},
 	{
 		id: 'signal_queue',

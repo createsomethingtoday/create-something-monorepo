@@ -8,6 +8,7 @@ export type MarketingPageCluster =
   | 'workflow-tool-stack'
   | 'dify'
   | 'methodology'
+  | 'delegation-practice'
   | 'products'
   | 'field-reports'
   | 'proof-lab'
@@ -265,6 +266,25 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
   },
   {
+    path: '/practice',
+    cluster: 'delegation-practice',
+    role: 'pillar',
+    decision: 'index',
+    audience: 'Accountable operators learning to transfer authority over one workflow.',
+    funnelStage: 'evaluate',
+    intent: 'Let practitioners map, bound, test, and review delegated work against visible evidence.',
+    primaryAction: 'Map one workflow',
+    requiredTerms: ['workflow', 'authority', 'operator', 'evidence', 'proof'],
+    requiredLinks: ['/methodology', '/atlas', '/proof/marketplace-workflow'],
+    schema: 'page',
+    search: {
+      changefreq: 'weekly',
+      priority: '0.82',
+      lastmod: '2026-07-15'
+    },
+    selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
+  },
+  {
     path: '/security',
     cluster: 'trust',
     role: 'pillar',
@@ -325,7 +345,8 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     path: '/dify',
     cluster: 'dify',
     role: 'pillar',
-    decision: 'index',
+    decision: 'archive',
+    routeTarget: '/stack',
     audience: 'Teams evaluating Dify for controlled AI workflow systems.',
     funnelStage: 'understand',
     intent: 'Explain the Dify workflow path and route readers into the cluster.',
@@ -349,7 +370,8 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     path: '/dify/mcp-control-plane',
     cluster: 'dify',
     role: 'support',
-    decision: 'index',
+    decision: 'archive',
+    routeTarget: '/stack',
     audience: 'Builders and operators who need Dify connected to governed tools.',
     funnelStage: 'understand',
     intent: 'Teach the operating model: Dify surface, MCP boundary, Policy OS rule.',
@@ -368,7 +390,8 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     path: '/dify/agent-eval-gates',
     cluster: 'dify',
     role: 'operations',
-    decision: 'index',
+    decision: 'archive',
+    routeTarget: '/stack',
     audience: 'Operators deciding whether a Dify workflow is ready to run.',
     funnelStage: 'evaluate',
     intent: 'Show the gates that prove a Dify workflow can operate safely.',
@@ -387,7 +410,8 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     path: '/dify/ship-dify-app-with-mcp-tools',
     cluster: 'dify',
     role: 'implementation',
-    decision: 'index',
+    decision: 'archive',
+    routeTarget: '/stack',
     audience: 'Teams ready to package one Dify workflow with scoped tools.',
     funnelStage: 'implement',
     intent: 'Give a practical shipping checklist for Dify plus MCP systems.',
@@ -406,7 +430,8 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     path: '/dify/template-marketplace-proof',
     cluster: 'dify',
     role: 'implementation',
-    decision: 'index',
+    decision: 'archive',
+    routeTarget: '/stack',
     audience: 'Teams turning a governed Dify workflow into a reusable template.',
     funnelStage: 'implement',
     intent:

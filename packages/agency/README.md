@@ -178,21 +178,22 @@ The managed portfolio covers the high-intent public funnel:
 | Core services | `/services` | - |
 | Stack boundary | `/stack` | - |
 | Workflow tool stack | `/partners` | `/cloudflare` |
-| Dify | `/dify` | `/dify/mcp-control-plane`, `/dify/agent-eval-gates`, `/dify/ship-dify-app-with-mcp-tools`, `/dify/template-marketplace-proof` |
+| Archived Dify education | `/dify` → `/stack` | Nested Dify routes also redirect to `/stack` and remain source-only rollback history. |
+| Delegation Practice | `/practice` | Interactive field school linked to `/methodology`, `/atlas`, and `/proof/marketplace-workflow`. |
 | Products | `/products` | - |
 | Field Reports | `/field-reports` | `/field-reports/template-review` |
 | Business use case | `/use-cases/business` | - |
 | Enterprise use case | `/use-cases/enterprise` | - |
 
-The Dify cluster is the first multi-page content system:
+The former Dify cluster is archived after the owned-runtime graduation. Its source remains useful historical education and rollback evidence, but every route redirects to `/stack`, is excluded from search, and is not a current delivery lane:
 
 | Page | Role | Funnel job |
 |------|------|------------|
-| `/dify` | Pillar | Explain the Dify workflow path and route readers into the cluster. |
-| `/dify/mcp-control-plane` | Support | Teach the operating model: Dify surface, MCP boundary, Policy OS rule. |
-| `/dify/agent-eval-gates` | Operations | Show the gates that prove a Dify workflow can operate safely. |
-| `/dify/ship-dify-app-with-mcp-tools` | Implementation | Give a practical shipping checklist for Dify plus MCP systems. |
-| `/dify/template-marketplace-proof` | Implementation | Package the first Dify marketplace template as public proof without leaking private delivery evidence. |
+| `/dify` | Archived pillar | Redirect to the current owned stack boundary. |
+| `/dify/mcp-control-plane` | Archived support | Preserve historical control-plane education without presenting Dify as current runtime. |
+| `/dify/agent-eval-gates` | Archived operations | Preserve historical eval guidance as rollback evidence. |
+| `/dify/ship-dify-app-with-mcp-tools` | Archived implementation | Preserve the former shipping checklist outside the public index. |
+| `/dify/template-marketplace-proof` | Archived implementation | Preserve the former marketplace packaging evidence outside the public index. |
 
 The durable SEO/AEO strategy is:
 

@@ -85,21 +85,21 @@
       icon: 'folder',
       title: 'State and evidence contracts',
       detail:
-        'Compiled workflow, object and event schemas, workflow map, evidence ledger, and content-hashed manifest.'
+        'Shows the records the workflow reads, the states it can enter, and the evidence saved after each change.'
     },
     {
       eyebrow: 'Automation',
       icon: 'settings',
       title: 'Runtime and replay contracts',
       detail:
-        'Runtime inventory, tool and agent contracts, transition replay, evaluation manifest, and operator console.'
+        'Shows which tools the agent may call, how a case is replayed, and what the operator sees while work runs.'
     },
     {
       eyebrow: 'Judgment',
       icon: 'user',
       title: 'Authority and stop conditions',
       detail:
-        'Decision inventory, autonomy classes, approval surfaces, insufficient-evidence handling, and unknown-action refusal.'
+        'Shows who may act, when approval is required, what happens when evidence is missing, and which unknown actions must stop.'
     }
   ];
 </script>
