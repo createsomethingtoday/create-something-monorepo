@@ -76,3 +76,31 @@ test('operator authentication rejects missing, unverified, and non-allowlisted i
   assert.equal(denied.ok, false);
   if (!denied.ok) assert.equal(denied.status, 403);
 });
+
+test('the pilot allowlist admits the named CREATE SOMETHING and Half Dozen operators', async () => {
+  const allowedEmails = parseAllowedEmails(
+    'micah@createsomething.io,dm@halfdozen.co,fillip@halfdozen.co',
+  );
+
+  for (const email of allowedEmails) {
+    const result = await authenticateOperatorRequest({
+      request: new Request('https://canva-client-mcp.example.com/mcp', {
+        headers: { Authorization: 'Bearer operator-token' },
+      }),
+      issuer: 'https://id.createsomething.space',
+      expectedResource: 'https://canva-client-mcp.example.com/mcp',
+      allowedDomain: 'createsomething.io',
+      allowedEmails,
+      fetch: async () =>
+        Response.json({
+          sub: `operator:${email}`,
+          email,
+          email_verified: true,
+          resource: 'https://canva-client-mcp.example.com/mcp',
+          scope: 'canva-client:read',
+        }),
+    });
+
+    assert.equal(result.ok, true, `${email} should be admitted by the explicit allowlist`);
+  }
+});

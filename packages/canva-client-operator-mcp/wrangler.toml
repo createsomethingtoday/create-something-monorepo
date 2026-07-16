@@ -10,7 +10,7 @@ enabled = true
 [vars]
 CS_IDENTITY_ISSUER = "https://id.createsomething.space"
 OAUTH_ALLOWED_EMAIL_DOMAIN = "createsomething.io"
-OAUTH_ALLOWED_EMAILS = "micah@createsomething.io"
+OAUTH_ALLOWED_EMAILS = "micah@createsomething.io,dm@halfdozen.co,fillip@halfdozen.co"
 COMPOSIO_CANVA_AUTH_CONFIG_ID = "ac_ZWqR5VXUevvF"
 COMPOSIO_CLIENT_USER_ID = "client:7784bdaf-e984-4602-a8b7-bd69f89fb2fd:canva"
 
