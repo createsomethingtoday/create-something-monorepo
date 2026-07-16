@@ -193,6 +193,7 @@
   articleSection="Dify Implementation"
   articleTags={['Dify', 'Template Marketplace', 'Creator Center', 'Policy OS', 'MCP']}
   propertyName="agency"
+  noindex={true}
 />
 
 <PerformancePageSection

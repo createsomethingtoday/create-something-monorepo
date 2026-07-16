@@ -159,6 +159,7 @@
   keywords="Dify workflow systems, Dify MCP, Policy OS, Dify eval gates, AI workflow evidence"
   ogImage="/og/dify-lane.png"
   propertyName="agency"
+  noindex={true}
   {faqItems}
 />
 
