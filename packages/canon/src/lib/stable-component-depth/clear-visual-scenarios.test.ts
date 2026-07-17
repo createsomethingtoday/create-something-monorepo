@@ -42,7 +42,7 @@ const PERFORMANCE_VISUAL_SCENARIOS = [
 	{
 		component: 'PerformanceCampaignOpening',
 		sourcePath: 'packages/canon/src/lib/components/performance/PerformanceCampaignOpening.svelte',
-		states: ['ink', 'paper', 'mobile-media', 'with-proof']
+		states: ['ink', 'paper', 'compact', 'mobile-media', 'with-proof']
 	},
 	{
 		component: 'PerformanceThesisConditions',

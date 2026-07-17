@@ -10,6 +10,7 @@
     type PerformanceCondition
   } from '$canon/components/performance';
   import { traceControlPlaneMedia } from '$canon/components/performance/media/trace-control-plane';
+  import PropertyFunnel from '$canon/components/PropertyFunnel.svelte';
 
   const featuredCourse = PATHS[0] ?? null;
   const featuredLessons = featuredCourse?.lessons ?? [];
@@ -157,6 +158,12 @@
       ariaLabel="Course proof artifacts"
     />
   </section>
+
+  <PropertyFunnel
+    current="lms"
+    heading="Turn guided learning into the next operating move."
+    description="Build an artifact here, use .space to test it, return to .ltd for the governing principle, or carry a named workflow into .agency practice."
+  />
 
   <PerformanceConversionHandoff
     eyebrow="Learning handoff"

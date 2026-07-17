@@ -1,20 +1,12 @@
 <script lang="ts">
-  type FunnelProperty = 'ltd' | 'io' | 'space' | 'agency';
-
-  type FunnelStep = {
-    id: FunnelProperty;
-    label: string;
-    role: string;
-    href: string;
-    summary: string;
-  };
-
-  type FunnelAction = {
-    label: string;
-    href: string;
-    cta: string;
-    type: 'cta' | 'nav' | 'action';
-  };
+  import { getAnalytics } from '../analytics/index.js';
+  import {
+    PROPERTY_FUNNEL_STEPS,
+    getPropertyFunnelActions,
+    withJourneyContext,
+    type FunnelProperty,
+    type PropertyFunnelAction
+  } from '../funnel/property-intent.js';
 
   interface Props {
     current: FunnelProperty;
@@ -27,97 +19,25 @@
     current,
     eyebrow = 'Property progression',
     heading = 'Follow the work from principle to delivery.',
-    description = 'Each CREATE SOMETHING property has one job in the path: clarify the judgment, publish the evidence, validate the runtime, then scope the workflow.'
+    description = 'Each CREATE SOMETHING property has one job in the path: clarify the judgment, publish the evidence, teach the practice, validate the runtime, then map the workflow.'
   }: Props = $props();
 
-  const steps: FunnelStep[] = [
-    {
-      id: 'ltd',
-      label: '.ltd',
-      role: 'Canon',
-      href: 'https://createsomething.ltd',
-      summary: 'Clarify the principles, standards, and judgment that should guide the work.'
-    },
-    {
-      id: 'io',
-      label: '.io',
-      role: 'Research',
-      href: 'https://createsomething.io',
-      summary: 'Read the evidence, patterns, and operating notes that make the claim defensible.'
-    },
-    {
-      id: 'space',
-      label: '.space',
-      role: 'Workbench',
-      href: 'https://createsomething.space',
-      summary: 'Try the routes, tools, and runtime behavior before the pattern becomes delivery.'
-    },
-    {
-      id: 'agency',
-      label: '.agency',
-      role: 'Build',
-      href: 'https://createsomething.agency',
-      summary: 'Turn the fit into a scoped workflow with controls, owners, and handoff notes.'
-    }
-  ];
+  const currentStep = $derived(PROPERTY_FUNNEL_STEPS.find((step) => step.id === current) ?? PROPERTY_FUNNEL_STEPS[0]);
+  const actions = $derived(getPropertyFunnelActions(current));
 
-  const primaryActions: Record<FunnelProperty, FunnelAction> = {
-    ltd: {
-      label: 'Map a policy-backed workflow',
-      href: 'https://createsomething.agency/book?source=ltd&intent=policy-to-workflow&lane=policy_os',
-      cta: 'property-funnel-book-ltd',
-      type: 'cta'
-    },
-    io: {
-      label: 'Turn research into a build',
-      href: 'https://createsomething.agency/book?source=io&intent=research-to-implementation&lane=workflow_infrastructure',
-      cta: 'property-funnel-book-io',
-      type: 'cta'
-    },
-    space: {
-      label: 'Bring a validated workflow',
-      href: 'https://createsomething.agency/book?source=space&intent=runtime-validation&lane=workflow_infrastructure',
-      cta: 'property-funnel-book-space',
-      type: 'cta'
-    },
-    agency: {
-      label: 'Book a mapping session',
-      href: '/book?source=agency&intent=workflow-mapping&lane=workflow_infrastructure',
-      cta: 'property-funnel-book-agency',
-      type: 'cta'
-    }
-  };
+  function carryJourney(event: MouseEvent, action: PropertyFunnelAction) {
+    const analytics = getAnalytics();
+    if (!analytics || analytics.isTrackingDisabled()) return;
 
-  const secondaryActions: Record<FunnelProperty, FunnelAction> = {
-    ltd: {
-      label: 'Read the research',
-      href: 'https://createsomething.io',
-      cta: 'property-funnel-next-io',
-      type: 'nav'
-    },
-    io: {
-      label: 'Try the workbench',
-      href: 'https://createsomething.space',
-      cta: 'property-funnel-next-space',
-      type: 'nav'
-    },
-    space: {
-      label: 'Read the pattern',
-      href: 'https://createsomething.io',
-      cta: 'property-funnel-next-io',
-      type: 'nav'
-    },
-    agency: {
-      label: 'Review the operating model',
-      href: '/services',
-      cta: 'property-funnel-services-agency',
-      type: 'action'
-    }
-  };
-
-  const currentStep = $derived(steps.find((step) => step.id === current) ?? steps[0]);
-  const primaryAction = $derived(primaryActions[current]);
-  const secondaryAction = $derived(secondaryActions[current]);
+    const anchor = event.currentTarget as HTMLAnchorElement;
+    anchor.href = withJourneyContext(anchor.href, {
+      journeyId: analytics.getSessionId(),
+      source: current,
+      intent: action.intent,
+      stage: action.stage,
+      lane: action.lane
+    });
+  }
 </script>
 
 <section class="property-funnel" aria-labelledby="property-funnel-heading">
@@ -134,7 +54,7 @@
     </div>
 
     <ol class="property-funnel__steps">
-      {#each steps as step, index}
+      {#each PROPERTY_FUNNEL_STEPS as step, index}
         <li class:property-funnel__step--active={step.id === current}>
           <a
             href={step.href}
@@ -153,22 +73,23 @@
     </ol>
 
     <div class="property-funnel__actions" aria-label="Recommended next actions">
-      <a
-        href={primaryAction.href}
-        class="property-funnel__button property-funnel__button--primary"
-        data-cta={primaryAction.cta}
-        data-cta-type={primaryAction.type}
-      >
-        {primaryAction.label}
-      </a>
-      <a
-        href={secondaryAction.href}
-        class="property-funnel__button property-funnel__button--secondary"
-        data-cta={secondaryAction.cta}
-        data-cta-type={secondaryAction.type}
-      >
-        {secondaryAction.label}
-      </a>
+      {#each actions as action, index}
+        <a
+          href={action.href}
+          class:property-funnel__button--primary={index === 0}
+          class:property-funnel__button--secondary={index !== 0}
+          class="property-funnel__button"
+          data-cta={action.cta}
+          data-cta-type={action.type}
+          data-funnel-source={current}
+          data-funnel-intent={action.intent}
+          data-funnel-stage={action.stage}
+          data-funnel-lane={action.lane}
+          onclick={(event) => carryJourney(event, action)}
+        >
+          {action.label}
+        </a>
+      {/each}
     </div>
   </div>
 </section>
@@ -247,7 +168,7 @@
   .property-funnel__steps {
     grid-column: 1 / -1;
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 0.85rem;
     margin: 0;
     padding: 0;

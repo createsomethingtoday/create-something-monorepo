@@ -218,7 +218,7 @@
       receipts: ['proof record', 'handoff note', 'recovery path'],
       actions: [
         { label: 'Read Canon', href: '/canon' },
-        { label: 'Map Workflow', href: 'https://createsomething.agency/book?source=ltd&intent=policy-to-workflow&lane=policy_os' }
+        { label: 'Open Practice', href: 'https://createsomething.agency/practice?source=ltd&intent=policy-to-workflow&stage=qualify&lane=policy_os' }
       ]
     }
   ];
@@ -238,10 +238,11 @@
   lede="CREATE SOMETHING .ltd explains the creation moat: consuming AI tools is easy; building governed connectivity, policy, trust boundaries, and proof is the work."
   media={pressureBoundaryMedia}
   proof={heroProofItems}
+  density="compact"
 >
   {#snippet actions()}
-    <Button href="/canon">Read The Canon</Button>
-    <Button href="/standards" variant="secondary">Open Standards</Button>
+    <Button href="https://createsomething.agency/practice?source=ltd&intent=canon-to-practice&stage=qualify&lane=policy_os">See The Practice</Button>
+    <Button href="/canon" variant="secondary">Read The Canon</Button>
   {/snippet}
 
 </PerformanceCampaignOpening>
@@ -318,7 +319,7 @@
 <PropertyFunnel
   current="ltd"
   heading="Turn the canon into the next operating decision."
-  description="Start with the philosophy, read the research when the claim needs evidence, use the workbench when it needs runtime proof, and book a mapping session when it belongs in the business."
+  description="Start with the philosophy, read the research when the claim needs evidence, use the workbench when it needs runtime proof, and enter the practice when a named workflow needs controls and an owner."
 />
 
 <!-- Newsletter CTA -->

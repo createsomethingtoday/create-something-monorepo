@@ -240,6 +240,11 @@ mapping, service handoff, and client-safe proof patterns.
 
 The route hands off by function:
 
+The cross-property entry, action-temperature, and privacy contract is owned by
+[`PROPERTY_INTENT_FUNNEL.md`](./PROPERTY_INTENT_FUNNEL.md). `/practice` is the
+warm qualification surface in that contract; `/book` remains the qualified
+conversion route.
+
 ```text
 /practice
   -> /map                                   map one workflow

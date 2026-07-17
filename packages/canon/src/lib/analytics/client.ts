@@ -19,6 +19,7 @@ import {
 	type EventBatch,
 } from './types.js';
 import { shouldTrackAnalytics, initializeConsent, getConsentState } from '../gdpr/consent.js';
+import { getJourneyIdFromUrl, type FunnelProperty } from '../funnel/property-intent.js';
 
 // =============================================================================
 // SESSION MANAGEMENT
@@ -85,6 +86,37 @@ function getSourcePropertyFromReferrer(currentProperty: Property): Property | nu
 	return null;
 }
 
+function getSourcePropertyFromQuery(currentProperty: Property): Property | null {
+	if (typeof window === 'undefined') return null;
+
+	try {
+		const source = new URL(window.location.href).searchParams.get('source') as FunnelProperty | null;
+		if (source && ['space', 'io', 'agency', 'ltd', 'lms'].includes(source) && source !== currentProperty) {
+			return source;
+		}
+	} catch {
+		// Ignore malformed location state.
+	}
+
+	return null;
+}
+
+function getJourneyMetadata(): Record<string, string> | undefined {
+	if (typeof window === 'undefined') return undefined;
+
+	try {
+		const params = new URL(window.location.href).searchParams;
+		const metadata: Record<string, string> = {};
+		for (const key of ['intent', 'stage', 'lane'] as const) {
+			const value = params.get(key);
+			if (value && /^[a-z0-9][a-z0-9_-]{0,63}$/i.test(value)) metadata[key] = value;
+		}
+		return Object.keys(metadata).length > 0 ? metadata : undefined;
+	} catch {
+		return undefined;
+	}
+}
+
 /**
  * Generate a collision-resistant session ID
  */
@@ -103,9 +135,24 @@ function getSessionId(): string {
 	}
 
 	try {
+		const resumedJourneyId = getJourneyIdFromUrl(window.location.href);
 		const stored = sessionStorage.getItem(SESSION_KEY);
+		const storedSession: SessionData | null = stored ? JSON.parse(stored) : null;
+
+		if (resumedJourneyId) {
+			const now = Date.now();
+			const resumedSession: SessionData = {
+				id: resumedJourneyId,
+				startedAt: storedSession?.id === resumedJourneyId ? storedSession.startedAt : now,
+				lastActivityAt: now,
+				sourceProperty: storedSession?.sourceProperty
+			};
+			sessionStorage.setItem(SESSION_KEY, JSON.stringify(resumedSession));
+			return resumedJourneyId;
+		}
+
 		if (stored) {
-			const session: SessionData = JSON.parse(stored);
+			const session: SessionData = storedSession!;
 			const now = Date.now();
 
 			// Check if session is still valid
@@ -204,6 +251,7 @@ export class AnalyticsClient {
 	private userId: string | null = null;
 
 	constructor(config: AnalyticsConfig) {
+		const journeyMetadata = getJourneyMetadata();
 		this.config = {
 			property: config.property,
 			endpoint: config.endpoint ?? '/api/analytics/events',
@@ -213,7 +261,10 @@ export class AnalyticsClient {
 			debug: config.debug ?? false,
 			userOptedOut: config.userOptedOut ?? false,
 			userId: config.userId,
-			globalMetadata: config.globalMetadata,
+			globalMetadata:
+				config.globalMetadata || journeyMetadata
+					? { ...(journeyMetadata ?? {}), ...(config.globalMetadata ?? {}) }
+					: undefined,
 		};
 		this.userOptedOut = config.userOptedOut ?? false;
 		this.userId = config.userId ?? null;
@@ -222,7 +273,8 @@ export class AnalyticsClient {
 		this.sessionStartedAt = getSessionStartedAt();
 
 		// Detect cross-property navigation
-		const referrerSourceProperty = getSourcePropertyFromReferrer(config.property);
+		const referrerSourceProperty =
+			getSourcePropertyFromReferrer(config.property) ?? getSourcePropertyFromQuery(config.property);
 		this.sourceProperty =
 			referrerSourceProperty ?? getStoredSessionSourceProperty(config.property);
 

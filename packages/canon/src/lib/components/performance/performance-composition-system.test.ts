@@ -38,6 +38,7 @@ describe('PerformanceCampaignOpening', () => {
 				title: 'Train the system before it runs.',
 				lede: 'Map signals. Route decisions. Define actions. Leave proof.',
 				mode: 'ink',
+				density: 'compact',
 				media: {
 					src: '/images/pressure-wide.webp',
 					mobileSrc: '/images/pressure-tall.webp',
@@ -56,6 +57,7 @@ describe('PerformanceCampaignOpening', () => {
 
 		const opening = target.querySelector('section.performance-campaign-opening');
 		expect(opening?.getAttribute('data-mode')).toBe('ink');
+		expect(opening?.getAttribute('data-density')).toBe('compact');
 		expect(opening?.getAttribute('aria-label')).toBe('AI Performance Lab');
 		expect(opening?.querySelector('h1')?.textContent).toBe('Train the system before it runs.');
 		expect(opening?.querySelector('.performance-campaign-opening__lede')?.textContent).toContain(
