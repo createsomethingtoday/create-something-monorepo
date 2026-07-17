@@ -12,60 +12,51 @@
 	import { SEO } from '@create-something/canon';
 	import { onMount } from 'svelte';
 	import { MetricCard, HighDensityTable, Sparkline, DailyGrid, FlowGrid } from '@create-something/tufte';
+	import { fetchAdminJson, type AdminRequestError } from '$lib/admin/client';
+	import {
+		createEmptyAnalyticsDashboard,
+		getAnalyticsPropertyStats,
+		normalizeAnalyticsDays,
+		settleAnalyticsRequest,
+		type AnalyticsDashboardData,
+		type AnalyticsDays
+	} from '$lib/admin/analytics-dashboard';
 
 	let loading = true;
-	let days = 30;
-	let analytics: any = {
-		total_views: 0,
-		views_by_property: [],
-		top_pages: [],
-		top_experiments: [],
-		top_countries: [],
-		daily_views: [],
-		top_referrers: [],
-		unified: {
-			categoryBreakdown: [],
-			topActions: [],
-			sessionStats: { total: 0, avgPageViews: 0, avgDuration: 0 },
-			dailyAggregates: [],
-			propertyTransitions: [],
-		},
-	};
+	let days: AnalyticsDays = 30;
+	let analytics: AnalyticsDashboardData = createEmptyAnalyticsDashboard();
+	let requestError: AdminRequestError | null = null;
+	let requestSequence = 0;
 
 	async function loadAnalytics() {
+		const sequence = ++requestSequence;
 		loading = true;
-		try {
-			const response = await fetch(`/api/admin/analytics?days=${days}`);
-			if (response.ok) {
-				analytics = await response.json();
-			}
-		} catch (error) {
-			console.error('Failed to load analytics:', error);
-		} finally {
-			loading = false;
+		requestError = null;
+
+		const state = settleAnalyticsRequest(
+			await fetchAdminJson<AnalyticsDashboardData>(`/api/admin/analytics?days=${days}`)
+		);
+
+		if (sequence !== requestSequence) return;
+
+		if (state.status === 'ready') {
+			analytics = state.analytics;
+		} else {
+			requestError = state.error;
 		}
+
+		loading = false;
+	}
+
+	function changeAnalyticsRange(event: Event) {
+		days = normalizeAnalyticsDays((event.currentTarget as HTMLSelectElement).value);
+		void loadAnalytics();
 	}
 
 	onMount(() => {
 		loadAnalytics();
 	});
 
-	// Reload analytics when days changes
-	$: if (days) {
-		loadAnalytics();
-	}
-
-	// Get property stats with defaults for all properties
-	function getPropertyStats() {
-		const properties = ['agency', 'io', 'space', 'ltd'];
-		return properties.map((prop) => {
-			const found = analytics.views_by_property.find((p: any) => p.property === prop);
-			return {
-				property: prop,
-				count: found?.count || 0
-			};
-		});
-	}
 </script>
 
 <SEO
@@ -79,11 +70,12 @@
 	<div class="flex items-center justify-between">
 		<div>
 			<h2 class="page-title mb-2">Analytics</h2>
-			<p class="page-description">Privacy-first analytics across CREATE SOMETHING properties</p>
+			<p class="page-description">First-party analytics across CREATE SOMETHING properties</p>
 		</div>
 
 		<select
-			bind:value={days}
+			value={days}
+			onchange={changeAnalyticsRange}
 			class="select-field px-4 py-2"
 		>
 			<option value={7}>Last 7 days</option>
@@ -94,9 +86,23 @@
 
 	{#if loading}
 		<div class="text-center py-12 loading-text">Loading analytics...</div>
+	{:else if requestError}
+		<div class="table-card p-6" role="alert">
+			<h3 class="table-title mb-2">Analytics unavailable</h3>
+			<p class="footer-text">
+				{requestError.kind === 'unauthorized'
+					? 'Your admin session has expired. Sign in again, then reload this page.'
+					: requestError.kind === 'forbidden'
+						? 'Your account does not have permission to view analytics.'
+						: 'The analytics service could not be reached. Existing data has not been replaced with zeros.'}
+			</p>
+			{#if requestError.kind !== 'forbidden'}
+				<button class="select-field mt-4 px-4 py-2" type="button" onclick={loadAnalytics}>Retry</button>
+			{/if}
+		</div>
 	{:else}
 		<!-- Overview Stats - Using Agentic MetricCard Components -->
-		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
 			<MetricCard
 				label="Total Views"
 				value={analytics.total_views}
@@ -104,12 +110,12 @@
 				context="{days} days"
 			/>
 
-			{#each getPropertyStats() as prop}
+			{#each getAnalyticsPropertyStats(analytics) as prop}
 				<MetricCard
 					label=".{prop.property}"
 					value={prop.count}
-					context={prop.count > 0 ? `${Math.round((prop.count / analytics.total_views) * 100)}% of total` : 'no data'}
-					percentage={Math.round((prop.count / analytics.total_views) * 100)}
+					context={prop.count > 0 ? `${prop.percentage}% of total` : 'no data'}
+					percentage={prop.percentage}
 				/>
 			{/each}
 		</div>
@@ -135,7 +141,7 @@
 			<div class="table-card p-4">
 				<h3 class="table-title mb-3">Top Experiments</h3>
 				<HighDensityTable
-					items={analytics.top_experiments.map((exp: any) => ({
+					items={analytics.top_experiments.map((exp) => ({
 						label: exp.title || exp.experiment_id,
 						count: exp.count
 					}))}
@@ -150,7 +156,7 @@
 			<div class="table-card p-4">
 				<h3 class="table-title mb-3">Top Countries</h3>
 				<HighDensityTable
-					items={analytics.top_countries.map((c: any) => ({
+					items={analytics.top_countries.map((c) => ({
 						label: c.country,
 						count: c.count
 					}))}
@@ -165,7 +171,7 @@
 			<div class="table-card p-4">
 				<h3 class="table-title mb-3">Top Referrers</h3>
 				<HighDensityTable
-					items={analytics.top_referrers.map((ref: any) => ({
+					items={analytics.top_referrers.map((ref) => ({
 						label: ref.referrer,
 						count: ref.count
 					}))}
@@ -193,7 +199,7 @@
 				/>
 				<MetricCard
 					label="Avg Page Views"
-					value={analytics.unified.sessionStats.avgPageViews?.toFixed(1) || '0'}
+					value={Math.round((analytics.unified.sessionStats.avgPageViews ?? 0) * 10) / 10}
 					context="per session"
 				/>
 				<MetricCard
@@ -208,7 +214,7 @@
 				<div class="table-card p-4">
 					<h3 class="table-title mb-3">By Category</h3>
 					<HighDensityTable
-						items={analytics.unified.categoryBreakdown.map((c: any) => ({
+						items={analytics.unified.categoryBreakdown.map((c) => ({
 							label: c.category.charAt(0).toUpperCase() + c.category.slice(1),
 							count: c.count
 						}))}
@@ -222,7 +228,7 @@
 				<div class="table-card p-4">
 					<h3 class="table-title mb-3">Top Actions</h3>
 					<HighDensityTable
-						items={analytics.unified.topActions.map((a: any) => ({
+						items={analytics.unified.topActions.map((a) => ({
 							label: a.action,
 							count: a.count
 						}))}
@@ -296,8 +302,9 @@
 		<!-- Info Footer -->
 		<div class="info-footer pt-6">
 			<p class="footer-text">
-				Privacy-first analytics powered by D1. No cookies, no tracking scripts, no personal data
-				collected. All data stored in your own database.
+				First-party analytics powered by D1. No third-party analytics cookies or advertising pixels.
+				We record session activity, page URLs, referrers, country-level location, and authenticated
+				user IDs when available. See the <a href="/privacy" class="footer-link">privacy policy</a>.
 			</p>
 			<p class="footer-note mt-2">
 				Visualizations powered by <a href="https://createsomething.ltd/masters/edward-tufte" class="footer-link">@create-something/tufte</a>
