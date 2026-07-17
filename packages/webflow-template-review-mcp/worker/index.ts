@@ -45,6 +45,8 @@ interface Env {
   WEBFLOW_TEMPLATE_VALIDATION_WORKER_URL?: string;
   GSAP_VALIDATION_WORKER_URL?: string;
   TEMPLATE_REVIEW_VALIDATION_TIMEOUT_MS?: string;
+  E2B_API_KEY?: string;
+  E2B_BROWSER_TEMPLATE?: string;
 }
 
 type RequestProps = {
@@ -114,6 +116,10 @@ export class WebflowTemplateReviewMCP extends McpAgent<Env, unknown, RequestProp
         timeoutMs: this.env.TEMPLATE_REVIEW_VALIDATION_TIMEOUT_MS
           ? Number(this.env.TEMPLATE_REVIEW_VALIDATION_TIMEOUT_MS)
           : undefined,
+        sandboxExecution: {
+          apiKey: this.env.E2B_API_KEY,
+          template: this.env.E2B_BROWSER_TEMPLATE,
+        },
       },
       {
         allowWrites,

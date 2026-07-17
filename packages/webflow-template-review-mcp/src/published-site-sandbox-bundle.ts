@@ -109,14 +109,35 @@ function normalizeViewport(viewport: PublishedSiteSandboxViewport, index: number
 }
 
 function isPrivateHostname(hostname: string): boolean {
+  const normalized = hostname.trim().toLowerCase().replace(/^\[|\]$/g, '').replace(/\.$/, '');
+  if (
+    normalized === 'localhost'
+    || normalized.endsWith('.localhost')
+    || normalized.endsWith('.local')
+    || normalized.endsWith('.internal')
+    || normalized.endsWith('.home.arpa')
+    || normalized === 'metadata.google.internal'
+    || normalized === '::'
+    || normalized === '::1'
+    || /^(?:fc|fd)/.test(normalized)
+    || /^fe[89ab]/.test(normalized)
+    || /^ff/.test(normalized)
+  ) return true;
+
+  const octets = normalized.split('.').map((part) => Number(part));
+  if (octets.length !== 4 || octets.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) return false;
+  const [first, second] = octets;
   return (
-    hostname === 'localhost' ||
-    hostname === '::1' ||
-    hostname.endsWith('.local') ||
-    /^127\./.test(hostname) ||
-    /^10\./.test(hostname) ||
-    /^192\.168\./.test(hostname) ||
-    /^172\.(1[6-9]|2\d|3[0-1])\./.test(hostname)
+    first === 0
+    || first === 10
+    || first === 127
+    || (first === 100 && second >= 64 && second <= 127)
+    || (first === 169 && second === 254)
+    || (first === 172 && second >= 16 && second <= 31)
+    || (first === 192 && second === 0)
+    || (first === 192 && second === 168)
+    || (first === 198 && (second === 18 || second === 19))
+    || first >= 224
   );
 }
 
@@ -128,6 +149,7 @@ function normalizePublicHttpsUrl(value: string): URL {
     throw new Error('published_url must be a valid public https URL.');
   }
   if (parsed.protocol !== 'https:') throw new Error('published_url must use https.');
+  if (parsed.username || parsed.password) throw new Error('published_url must not contain credentials.');
   const hostname = parsed.hostname.toLowerCase();
   if (isPrivateHostname(hostname)) throw new Error('published_url must not use private, local, or loopback hosts.');
   parsed.hash = '';
@@ -212,6 +234,7 @@ function buildPythonRunner(job: PublishedSiteSandboxJob): string {
   return `#!/usr/bin/env python3
 import asyncio
 import html.parser
+import ipaddress
 import json
 import os
 import re
@@ -224,7 +247,10 @@ import urllib.request
 
 JOB = json.loads(r'''${jobJson}''')
 WORK_DIR = '/tmp/webflow-template-review-sandbox'
-os.environ.setdefault('PLAYWRIGHT_BROWSERS_PATH', '/tmp/ms-playwright')
+if os.path.isdir('/opt/ms-playwright'):
+    os.environ['PLAYWRIGHT_BROWSERS_PATH'] = '/opt/ms-playwright'
+else:
+    os.environ.setdefault('PLAYWRIGHT_BROWSERS_PATH', '/tmp/ms-playwright')
 
 
 class EvidenceParser(html.parser.HTMLParser):
@@ -272,27 +298,30 @@ class EvidenceParser(html.parser.HTMLParser):
 def is_private_hostname(hostname):
     if not hostname:
         return True
-    hostname = hostname.lower()
-    if hostname in {'localhost', '::1'} or hostname.endswith('.local'):
+    hostname = hostname.lower().strip('[]').rstrip('.')
+    if hostname in {'localhost', '::', '::1', 'metadata.google.internal'} or hostname.endswith(('.localhost', '.local', '.internal', '.home.arpa')):
         return True
     try:
         addresses = {item[4][0] for item in socket.getaddrinfo(hostname, None)}
     except Exception:
         addresses = set()
     candidates = addresses or {hostname}
-    return any(
-        candidate.startswith('127.') or
-        candidate.startswith('10.') or
-        candidate.startswith('192.168.') or
-        re.match(r'^172\\.(1[6-9]|2\\d|3[0-1])\\.', candidate)
-        for candidate in candidates
-    )
+    for candidate in candidates:
+        try:
+            address = ipaddress.ip_address(candidate.split('%', 1)[0])
+            if not address.is_global:
+                return True
+        except ValueError:
+            continue
+    return False
 
 
 def assert_allowed_url(url):
     parsed = urllib.parse.urlparse(url)
     if parsed.scheme != 'https':
         raise ValueError('Only https URLs are allowed.')
+    if parsed.username or parsed.password:
+        raise ValueError('Credential-bearing URLs are blocked.')
     if is_private_hostname(parsed.hostname):
         raise ValueError('Private, local, or loopback hosts are blocked.')
     if parsed.hostname.lower() not in set(JOB['controls']['allowed_hosts']):
@@ -316,8 +345,14 @@ def absolute_url(href, base_url):
 
 def fetch_html(url):
     assert_allowed_url(url)
+    class SafeRedirectHandler(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, request, fp, code, message, headers, new_url):
+            assert_allowed_url(new_url)
+            return super().redirect_request(request, fp, code, message, headers, new_url)
     request = urllib.request.Request(url, headers={'User-Agent': JOB['controls']['user_agent']})
-    with urllib.request.urlopen(request, timeout=JOB['controls']['timeout_ms'] / 1000) as response:
+    opener = urllib.request.build_opener(SafeRedirectHandler())
+    with opener.open(request, timeout=JOB['controls']['timeout_ms'] / 1000) as response:
+        assert_allowed_url(response.geturl())
         content_type = response.headers.get('content-type', '')
         status = response.status
         body = response.read(2_000_000)

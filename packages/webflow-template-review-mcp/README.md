@@ -145,8 +145,25 @@ Optional:
 - `WEBFLOW_TEMPLATE_VALIDATION_WORKER_URL` (defaults to `https://validation-worker.createsomething.workers.dev/validate`)
 - `GSAP_VALIDATION_WORKER_URL` (defaults to `https://gsap-validation-worker.createsomething.workers.dev/validateGsap`)
 - `TEMPLATE_REVIEW_VALIDATION_TIMEOUT_MS` (defaults to `45000`)
+- `E2B_API_KEY` (coordinator-only Worker secret that enables bounded published-site evidence execution; never sent into the sandbox)
+- `E2B_BROWSER_TEMPLATE` (defaults to `webflow-template-review-browser-v1`)
 
 ## Published Site Sandbox Bundle
+
+Claude Chat and Cowork can call `template_review_run_published_site_sandbox`
+directly. The MCP Worker creates a short-lived E2B sandbox, runs only the
+repo-owned published-site collector, returns bounded evidence and screenshots,
+and kills the sandbox. Callers cannot provide code, shell commands, packages,
+secrets, or output destinations. The tool blocks credential-bearing and
+private-network targets, performs no Airtable writes, and never chooses a review
+decision.
+
+Build the pinned browser-ready E2B template with an Infisical-backed API key:
+
+```bash
+infisical run --env=prod --path=/ --include-imports=true -- \
+  pnpm --filter @create-something/webflow-template-review-mcp e2b:template:build
+```
 
 Generate a Dify/E2B-ready evidence runner for published-site rendering checks:
 
@@ -581,6 +598,7 @@ creator-facing feedback.
 - `template_review_get_comprehensive_review_contract` (read-only comprehensive evidence contract for Auto/Partial/Manual coverage, rubric dimensions, manual checks, and Agent Review Feedback format)
 - `template_review_format_agent_review_feedback` (read-only comprehensive evidence validator/formatter for Agent Review Feedback drafts; does not write Airtable)
 - `template_review_prepare_published_site_sandbox` (read-only E2B sandbox job/runner bundle for first-class published-site evidence; does not execute E2B or write Airtable)
+- `template_review_run_published_site_sandbox` (read-only bounded E2B execution for rendered-page evidence and screenshots; fixed collector only, no caller-provided code or Airtable writes)
 - `template_review_run_published_site_validation` (read-only published-site validation; no Designer/Preview data or Airtable writes)
 - `template_review_list_releases`
 - `template_review_complete_publishing`

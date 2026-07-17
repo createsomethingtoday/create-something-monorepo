@@ -40,6 +40,10 @@ async function main() {
       webflowValidationWorkerUrl: process.env.WEBFLOW_TEMPLATE_VALIDATION_WORKER_URL,
       gsapValidationWorkerUrl: process.env.GSAP_VALIDATION_WORKER_URL,
       timeoutMs: process.env.TEMPLATE_REVIEW_VALIDATION_TIMEOUT_MS ? Number(process.env.TEMPLATE_REVIEW_VALIDATION_TIMEOUT_MS) : undefined,
+      sandboxExecution: {
+        apiKey: process.env.E2B_API_KEY ?? process.env.DIFY_E2B_API_KEY,
+        template: process.env.E2B_BROWSER_TEMPLATE,
+      },
     },
   );
   registerPrompts(server);

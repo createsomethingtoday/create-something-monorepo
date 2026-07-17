@@ -312,7 +312,10 @@ import urllib.request
 
 JOB = json.loads(r'''${jobJson}''')
 WORK_DIR = '/tmp/webflow-template-review-sandbox'
-os.environ.setdefault('PLAYWRIGHT_BROWSERS_PATH', '/tmp/ms-playwright')
+if os.path.isdir('/opt/ms-playwright'):
+    os.environ['PLAYWRIGHT_BROWSERS_PATH'] = '/opt/ms-playwright'
+else:
+    os.environ.setdefault('PLAYWRIGHT_BROWSERS_PATH', '/tmp/ms-playwright')
 
 
 class LinkParser(html.parser.HTMLParser):
