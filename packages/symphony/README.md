@@ -19,7 +19,7 @@ pnpm symphony:policy
 5. Start an agent worker and stream status events.
 6. Preserve completed worker evidence and the workspace for an independent completion decision.
 
-Generic workflows default to `completion.mode: evidence_only`. A successful worker comments a structured handoff, leaves Linear non-terminal, and preserves the workspace. The temporary `worker_exit_legacy` mode retains the old auto-completion behavior only as an explicit migration escape hatch and emits a gate-bypass warning.
+Generic workflows default to `completion.mode: evidence_only`. A successful worker comments a structured handoff, leaves Linear non-terminal, preserves the workspace, and enters an observable `awaiting_completion` state that suppresses redispatch. Transient comment failures receive three bounded attempts; an exhausted handoff remains non-terminal, suppressed, and visible with its last error. The temporary `worker_exit_legacy` mode retains the old auto-completion behavior only as an explicit migration escape hatch and emits a gate-bypass warning.
 
 ## Agent Legibility Contract
 

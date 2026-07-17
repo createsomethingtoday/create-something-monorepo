@@ -40,6 +40,7 @@ function retry_delay_ms(config, attempt, continuation) {
         return 1000;
     return Math.min(10_000 * 2 ** Math.max(0, attempt - 1), config.agent.max_retry_backoff_ms);
 }
+const MAX_EVIDENCE_HANDOFF_ATTEMPTS = 3;
 function evidence_only_handoff(issue, state, result) {
     return {
         schema_version: 'symphony-evidence-handoff.v1',
@@ -89,6 +90,7 @@ export class SymphonyService {
     workspace_manager;
     running = new Map();
     claimed = new Set();
+    awaiting_completion = new Map();
     retry_attempts = new Map();
     completed = new Set();
     pending_exits = new Set();
@@ -171,6 +173,7 @@ export class SymphonyService {
         }
         this.running.clear();
         this.claimed.clear();
+        this.awaiting_completion.clear();
         this.workflow_manager.stop_watching();
         if (this.http_server) {
             await new Promise((resolve, reject) => {
@@ -221,14 +224,17 @@ export class SymphonyService {
             due_at: new Date(entry.due_at_ms).toISOString(),
             error: entry.error,
         }));
+        const awaiting_completion = [...this.awaiting_completion.values()];
         return {
             generated_at,
             counts: {
                 running: running.length,
                 retrying: retrying.length,
+                awaiting_completion: awaiting_completion.length,
             },
             running,
             retrying,
+            awaiting_completion,
             codex_totals: {
                 input_tokens: this.codex_totals.input_tokens,
                 output_tokens: this.codex_totals.output_tokens,
@@ -241,7 +247,8 @@ export class SymphonyService {
     get_issue_snapshot(issue_identifier) {
         const running = [...this.running.values()].find((state) => state.entry.issue.identifier === issue_identifier);
         const retry = [...this.retry_attempts.values()].find((state) => state.entry.identifier === issue_identifier);
-        if (!running && !retry)
+        const awaiting_completion = [...this.awaiting_completion.values()].find((state) => state.issue_identifier === issue_identifier);
+        if (!running && !retry && !awaiting_completion)
             return null;
         const running_view = running
             ? this.get_snapshot().running.find((entry) => entry.issue_identifier === issue_identifier) ?? null
@@ -251,11 +258,11 @@ export class SymphonyService {
             : null;
         return {
             issue_identifier,
-            issue_id: running?.entry.issue.id ?? retry?.entry.issue_id ?? '',
-            status: running ? 'running' : retry ? 'retrying' : 'released',
+            issue_id: running?.entry.issue.id ?? retry?.entry.issue_id ?? awaiting_completion?.issue_id ?? '',
+            status: running ? 'running' : retry ? 'retrying' : awaiting_completion ? 'awaiting_completion' : 'released',
             workspace: {
-                path: running?.workspace_path ?? this.workspace_manager.get_workspace_paths(issue_identifier).workspace_path,
-                metadata_path: running?.workspace_metadata_path ?? this.workspace_manager.get_workspace_paths(issue_identifier).metadata_path,
+                path: running?.workspace_path ?? awaiting_completion?.workspace_path ?? this.workspace_manager.get_workspace_paths(issue_identifier).workspace_path,
+                metadata_path: running?.workspace_metadata_path ?? awaiting_completion?.workspace_metadata_path ?? this.workspace_manager.get_workspace_paths(issue_identifier).metadata_path,
             },
             attempts: {
                 restart_count: running?.entry.restart_count ?? retry?.entry.attempt ?? 0,
@@ -263,8 +270,9 @@ export class SymphonyService {
             },
             running: running_view,
             retry: retry_view,
+            completion_handoff: awaiting_completion ?? null,
             recent_events: running?.entry.recent_events ?? [],
-            last_error: running?.entry.last_error ?? retry?.entry.error ?? null,
+            last_error: running?.entry.last_error ?? retry?.entry.error ?? awaiting_completion?.last_error ?? null,
             tracked: {},
         };
     }
@@ -299,7 +307,7 @@ export class SymphonyService {
                 response.end(`
           <html><body>
             <h1>Symphony</h1>
-            <p>running=${snapshot.counts.running} retrying=${snapshot.counts.retrying}</p>
+            <p>running=${snapshot.counts.running} retrying=${snapshot.counts.retrying} awaiting_completion=${snapshot.counts.awaiting_completion}</p>
             <pre>${JSON.stringify(snapshot, null, 2)}</pre>
           </body></html>
         `);
@@ -420,6 +428,9 @@ export class SymphonyService {
             return false;
         }
         if (this.running.has(issue.id)) {
+            return false;
+        }
+        if (this.awaiting_completion.has(issue.id)) {
             return false;
         }
         if (!ignore_claimed && this.claimed.has(issue.id)) {
@@ -567,18 +578,43 @@ export class SymphonyService {
             this.completed.add(issue_id);
             if (this.current_config.completion.mode === 'evidence_only') {
                 const handoff = evidence_only_handoff(state.entry.issue, state, result);
-                if (typeof this.tracker.comment_issue === 'function') {
-                    await this.tracker.comment_issue(
-                        state.entry.issue.id,
-                        `Symphony evidence-only handoff:\n\n\`\`\`json\n${JSON.stringify(handoff, null, 2)}\n\`\`\``,
-                    );
-                }
-                this.logger.info('worker completed with evidence-only handoff', {
+                this.awaiting_completion.set(issue_id, {
                     issue_id,
                     issue_identifier: state.entry.issue.identifier,
                     workspace_path: state.workspace_path,
+                    workspace_metadata_path: state.workspace_metadata_path,
+                    evidence_recorded: false,
+                    comment_attempts: 0,
+                    last_error: null,
                 });
                 this.claimed.delete(issue_id);
+                const evidence_result = await this.record_evidence_handoff(state.entry.issue, handoff);
+                this.awaiting_completion.set(issue_id, {
+                    issue_id,
+                    issue_identifier: state.entry.issue.identifier,
+                    workspace_path: state.workspace_path,
+                    workspace_metadata_path: state.workspace_metadata_path,
+                    evidence_recorded: evidence_result.recorded,
+                    comment_attempts: evidence_result.attempts,
+                    last_error: evidence_result.error,
+                });
+                if (evidence_result.recorded) {
+                    this.logger.info('worker completed with evidence-only handoff', {
+                        issue_id,
+                        issue_identifier: state.entry.issue.identifier,
+                        workspace_path: state.workspace_path,
+                        comment_attempts: evidence_result.attempts,
+                    });
+                }
+                else {
+                    this.logger.error('evidence-only handoff could not be recorded after retries', {
+                        issue_id,
+                        issue_identifier: state.entry.issue.identifier,
+                        workspace_path: state.workspace_path,
+                        comment_attempts: evidence_result.attempts,
+                        error: evidence_result.error,
+                    });
+                }
                 return;
             }
             if (typeof this.tracker.comment_issue === 'function') {
@@ -620,6 +656,40 @@ export class SymphonyService {
             identifier: state.entry.issue.identifier,
             error: result.error ?? 'worker exited unexpectedly',
         });
+    }
+    evidence_handoff_retry_delay_ms(attempt) {
+        return 1000 * 2 ** Math.max(0, attempt - 1);
+    }
+    async record_evidence_handoff(issue, handoff) {
+        if (typeof this.tracker.comment_issue !== 'function') {
+            return { recorded: true, attempts: 0, error: null };
+        }
+        const body = `Symphony evidence-only handoff:\n\n\`\`\`json\n${JSON.stringify(handoff, null, 2)}\n\`\`\``;
+        let last_error = null;
+        for (let attempt = 1; attempt <= MAX_EVIDENCE_HANDOFF_ATTEMPTS; attempt += 1) {
+            try {
+                await this.tracker.comment_issue(issue.id, body);
+                return { recorded: true, attempts: attempt, error: null };
+            }
+            catch (error) {
+                last_error = error instanceof Error ? error.message : String(error);
+                this.logger.warn('evidence-only handoff comment failed', {
+                    issue_id: issue.id,
+                    issue_identifier: issue.identifier,
+                    attempt,
+                    max_attempts: MAX_EVIDENCE_HANDOFF_ATTEMPTS,
+                    error: last_error,
+                });
+                if (attempt < MAX_EVIDENCE_HANDOFF_ATTEMPTS) {
+                    await new Promise((resolve) => setTimeout(resolve, this.evidence_handoff_retry_delay_ms(attempt)));
+                }
+            }
+        }
+        return {
+            recorded: false,
+            attempts: MAX_EVIDENCE_HANDOFF_ATTEMPTS,
+            error: last_error,
+        };
     }
     next_attempt(current) {
         return current === null ? 1 : current + 1;

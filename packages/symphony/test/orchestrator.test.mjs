@@ -105,7 +105,114 @@ test('completed workers hand off evidence without completing Linear or removing 
   assert.match(calls.comments[0], /\/tmp\/symphony\/CRE-1300/);
   assert.match(calls.comments[0], /Targeted tests passed; ready for independent review\./);
   assert.equal(service.claimed.has(issue.id), false);
+  assert.equal(service.awaiting_completion.has(issue.id), true);
+  assert.equal(service.should_dispatch(issue, false), false);
   assert.equal(service.retry_attempts.has(issue.id), false);
+  assert.deepEqual(service.get_issue_snapshot(issue.identifier).completion_handoff, {
+    issue_id: issue.id,
+    issue_identifier: issue.identifier,
+    workspace_path: '/tmp/symphony/CRE-1300',
+    workspace_metadata_path: '/tmp/symphony/CRE-1300/.symphony-workspace.json',
+    evidence_recorded: true,
+    comment_attempts: 1,
+    last_error: null,
+  });
+});
+
+test('evidence-only handoff retries a transient comment failure without rerunning the worker', async () => {
+  const service = createService();
+  const issue = createIssue({ id: 'issue-transient', identifier: 'CRE-TRANSIENT', state: 'claimed' });
+  const calls = { comments: 0 };
+  service.started = true;
+  service.evidence_handoff_retry_delay_ms = () => 0;
+  service.tracker = {
+    async comment_issue() {
+      calls.comments += 1;
+      if (calls.comments === 1) {
+        throw new Error('temporary Linear outage');
+      }
+    },
+  };
+  service.workspace_manager = {
+    async remove_workspace() {
+      assert.fail('evidence-only handoff must preserve the workspace');
+    },
+  };
+  service.claimed.add(issue.id);
+  service.running.set(issue.id, {
+    entry: {
+      issue,
+      started_at: new Date().toISOString(),
+      retry_attempt: null,
+      turn_count: 1,
+      last_codex_message: 'Worker completed before Linear recovered.',
+    },
+    run: {},
+    workspace_path: '/tmp/symphony/CRE-TRANSIENT',
+    workspace_metadata_path: '/tmp/symphony/CRE-TRANSIENT/.symphony-workspace.json',
+    stop_behavior: { mode: 'default' },
+  });
+
+  await service.on_worker_exit(issue.id, {
+    status: 'completed',
+    turn_count: 1,
+    final_message: 'Ready for evidence handoff.',
+  });
+
+  assert.equal(calls.comments, 2);
+  assert.equal(service.awaiting_completion.has(issue.id), true);
+  assert.equal(service.claimed.has(issue.id), false);
+  assert.equal(service.retry_attempts.has(issue.id), false);
+  assert.equal(service.should_dispatch(issue, false), false);
+  assert.equal(service.get_issue_snapshot(issue.identifier).completion_handoff.evidence_recorded, true);
+  assert.equal(service.get_issue_snapshot(issue.identifier).last_error, null);
+});
+
+test('evidence-only handoff keeps dispatch suppressed when comment retries are exhausted', async () => {
+  const service = createService();
+  const issue = createIssue({ id: 'issue-outage', identifier: 'CRE-OUTAGE', state: 'claimed' });
+  const calls = { comments: 0 };
+  service.started = true;
+  service.evidence_handoff_retry_delay_ms = () => 0;
+  service.tracker = {
+    async comment_issue() {
+      calls.comments += 1;
+      throw new Error('Linear remains unavailable');
+    },
+  };
+  service.workspace_manager = {
+    async remove_workspace() {
+      assert.fail('evidence-only handoff must preserve the workspace');
+    },
+  };
+  service.claimed.add(issue.id);
+  service.running.set(issue.id, {
+    entry: {
+      issue,
+      started_at: new Date().toISOString(),
+      retry_attempt: null,
+      turn_count: 1,
+      last_codex_message: 'Worker completed while Linear was unavailable.',
+    },
+    run: {},
+    workspace_path: '/tmp/symphony/CRE-OUTAGE',
+    workspace_metadata_path: '/tmp/symphony/CRE-OUTAGE/.symphony-workspace.json',
+    stop_behavior: { mode: 'default' },
+  });
+
+  await service.on_worker_exit(issue.id, {
+    status: 'completed',
+    turn_count: 1,
+    final_message: 'Ready for evidence handoff.',
+  });
+
+  assert.equal(calls.comments, 3);
+  assert.equal(service.awaiting_completion.has(issue.id), true);
+  assert.equal(service.claimed.has(issue.id), false);
+  assert.equal(service.retry_attempts.has(issue.id), false);
+  assert.equal(service.should_dispatch(issue, false), false);
+  assert.equal(service.get_issue_snapshot(issue.identifier).completion_handoff.evidence_recorded, false);
+  assert.equal(service.get_issue_snapshot(issue.identifier).last_error, 'Linear remains unavailable');
 });
 
 test('legacy worker-exit completion is explicit and comments the gate bypass', async () => {
