@@ -199,7 +199,7 @@ export class SymphonyService {
     }
     get_snapshot() {
         const generated_at = now_iso();
-        const running = [...this.running.values()].map(({ entry, workspace_path, workspace_metadata_path }) => ({
+        const running = [...this.running.values()].map(({ entry, workspace_path, workspace_metadata_path, completion_mode }) => ({
             issue_id: entry.issue.id,
             issue_identifier: entry.issue.identifier,
             state: entry.issue.state,
@@ -211,6 +211,7 @@ export class SymphonyService {
             turn_count: entry.turn_count,
             last_event: entry.last_codex_event,
             last_message: entry.last_codex_message,
+            completion_mode,
             started_at: entry.started_at,
             last_event_at: entry.last_codex_timestamp,
             tokens: {
@@ -570,6 +571,7 @@ export class SymphonyService {
             run,
             workspace_path: workspace.path,
             workspace_metadata_path: workspace.metadata_path,
+            completion_mode: this.current_config.completion.mode,
             stop_behavior: { mode: 'default' },
         });
         this.claimed.add(claimed_issue.id);
@@ -678,7 +680,8 @@ export class SymphonyService {
         }
         if (result.status === 'completed') {
             this.completed.add(issue_id);
-            if (this.current_config.completion.mode === 'evidence_only') {
+            const completion_mode = state.completion_mode ?? this.current_config.completion.mode;
+            if (completion_mode === 'evidence_only') {
                 const handoff = evidence_only_handoff(state.entry.issue, state, result);
                 let completion_state = {
                     issue_id,
@@ -748,7 +751,7 @@ export class SymphonyService {
             this.logger.warn('legacy worker-exit completion bypassed canonical evidence gate', {
                 issue_id,
                 issue_identifier: state.entry.issue.identifier,
-                completion_mode: this.current_config.completion.mode,
+                completion_mode,
             });
             if (typeof this.tracker.complete_issue === 'function') {
                 try {

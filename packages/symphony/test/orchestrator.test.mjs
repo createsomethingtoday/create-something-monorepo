@@ -132,6 +132,53 @@ test('completed workers hand off evidence without completing Linear or removing 
   });
 });
 
+test('worker exit uses the completion mode captured before a workflow reload', async () => {
+  const service = createService();
+  const issue = createIssue({ id: 'issue-reload', identifier: 'CRE-RELOAD', state: 'claimed' });
+  const calls = { complete: 0, comments: 0, remove: 0 };
+  service.current_config.completion.mode = 'worker_exit_legacy';
+  service.started = true;
+  service.tracker = {
+    async complete_issue() {
+      calls.complete += 1;
+    },
+    async comment_issue() {
+      calls.comments += 1;
+    },
+  };
+  service.workspace_manager = {
+    async remove_workspace() {
+      calls.remove += 1;
+    },
+  };
+  service.claimed.add(issue.id);
+  service.running.set(issue.id, {
+    entry: {
+      issue,
+      started_at: new Date().toISOString(),
+      retry_attempt: null,
+      turn_count: 1,
+      last_codex_message: 'Worker started under evidence-only policy.',
+    },
+    run: {},
+    workspace_path: '/tmp/symphony/CRE-RELOAD',
+    workspace_metadata_path: '/tmp/symphony/.metadata/CRE-RELOAD.json',
+    completion_mode: 'evidence_only',
+    stop_behavior: { mode: 'default' },
+  });
+
+  await service.on_worker_exit(issue.id, {
+    status: 'completed',
+    turn_count: 1,
+    final_message: 'Ready for independent review.',
+  });
+
+  assert.equal(calls.complete, 0);
+  assert.equal(calls.remove, 0);
+  assert.equal(calls.comments, 1);
+  assert.equal(service.awaiting_completion.has(issue.id), true);
+});
+
 test('evidence-only handoff retries a transient comment failure without rerunning the worker', async () => {
   const service = createService();
   const issue = createIssue({ id: 'issue-transient', identifier: 'CRE-TRANSIENT', state: 'claimed' });
