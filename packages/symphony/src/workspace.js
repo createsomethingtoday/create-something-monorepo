@@ -1,4 +1,5 @@
-import { mkdir, lstat, readFile, rm, rmdir, writeFile } from 'node:fs/promises';
+import { randomUUID } from 'node:crypto';
+import { mkdir, lstat, readFile, rename, rm, rmdir, writeFile } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
 import { join } from 'node:path';
 import { SymphonyError } from './errors.js';
@@ -154,9 +155,11 @@ async function remove_linked_git_worktree(path, logger) {
 export class WorkspaceManager {
     config;
     logger;
-    constructor(config, logger) {
+    file_operations;
+    constructor(config, logger, file_operations = { writeFile, rename, rm }) {
         this.config = config;
         this.logger = logger;
+        this.file_operations = file_operations;
     }
     get_workspace_paths(issue_identifier) {
         const workspace_key = sanitize_workspace_key(issue_identifier);
@@ -209,7 +212,22 @@ export class WorkspaceManager {
             workspace_metadata_path: paths.metadata_path,
             updated_at: now_iso(),
         };
-        await writeFile(paths.completion_path, `${JSON.stringify(record, null, 2)}\n`, 'utf8');
+        const temporary_path = `${paths.completion_path}.${process.pid}.${randomUUID()}.tmp`;
+        try {
+            await this.file_operations.writeFile(temporary_path, `${JSON.stringify(record, null, 2)}\n`, 'utf8');
+            await this.file_operations.rename(temporary_path, paths.completion_path);
+        }
+        finally {
+            try {
+                await this.file_operations.rm(temporary_path, { force: true });
+            }
+            catch (error) {
+                this.logger.warn('completion handoff temporary-file cleanup failed', {
+                    temporary_path,
+                    error: error instanceof Error ? error.message : String(error),
+                });
+            }
+        }
         return record;
     }
     async read_workspace_metadata(metadata_path, workspace_key, workspace_path) {

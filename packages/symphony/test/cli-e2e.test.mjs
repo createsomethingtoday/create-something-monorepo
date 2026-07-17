@@ -249,5 +249,5 @@ Issue: {{ issue.identifier }} :: {{ issue.title }}
   assert.doesNotMatch(hookLog, /removed/);
 
   const workspaceEntries = await readdir(workspacesRoot);
-  assert.deepEqual(workspaceEntries, ['.metadata', 'CRE-999']);
+  assert.deepEqual(workspaceEntries.sort(), ['.metadata', 'CRE-999']);
 });
