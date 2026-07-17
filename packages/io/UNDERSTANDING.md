@@ -127,7 +127,7 @@ src/routes/api/plugins/+server.ts
 **For Paper System**:
 1. **`src/routes/experiments/[slug]/+page.svelte`** — How papers are rendered
 2. **`src/routes/methodology/+page.svelte`** — Research methodology
-3. **`src/routes/admin/experiments/+page.svelte`** — How papers are managed
+3. **`src/routes/admin/experiments/+page.svelte`** — Read-only operator view of the repository catalog
 
 ## Key Concepts
 
@@ -155,7 +155,7 @@ src/routes/api/plugins/+server.ts
 | Task | Start Here |
 |------|------------|
 | Read a paper | `/experiments/[slug]` |
-| Create a new paper | `/admin/experiments/new` |
+| Create a new experiment | Add a reviewed file-backed artifact through `src/lib/config/fileBasedExperiments.ts` |
 | View analytics | `/admin/analytics` |
 | Review AI drafts | `/admin/agent-drafts` |
 | Add a new plugin | Modify `src/lib/config/plugins.ts` |

@@ -28,6 +28,7 @@
 		"check:papers": "node scripts/check-paper-catalog.mjs",
 		"check:experiments": "node scripts/check-experiment-catalog.mjs",
 		"test:analytics": "node --import tsx --test test/admin-analytics.test.ts",
+		"test:admin-experiments": "node --import tsx --test test/admin-experiments.test.ts",
 		"check": "pnpm --filter @create-something/spritz package && pnpm check:content && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings --watch",
 		"prelint": "pnpm --filter @create-something/eslint-plugin-canon build",
