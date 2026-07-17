@@ -22,6 +22,7 @@ OAUTH_ALLOWED_EMAILS = "natalia.ledford@webflow.com,eric.unger@webflow.com,vicki
 REVIEWER_AUTH_EMAIL_ALIASES_JSON = '{"acct_wf_micah":["micah@createsomething.io"]}'
 CF_ACCESS_TEAM_DOMAIN = "https://createsomething.cloudflareaccess.com"
 CF_ACCESS_AUD = "9e652f0b7b017646202668709415884dfb620217d3ded9a71585ce9d8d740a5d"
+CF_ACCESS_TRUSTED_APPLICATIONS_JSON = '[{"teamDomain":"https://webflow.cloudflareaccess.com","audience":"3b4a38c7c99ec7127bcbb99d9c8aae7b0011a51370bff31b7085385e1a2807ba"}]'
 WEBFLOW_TEMPLATE_VALIDATION_WORKER_URL = "https://validation-worker.createsomething.workers.dev/validate"
 GSAP_VALIDATION_WORKER_URL = "https://gsap-validation-worker.createsomething.workers.dev/validateGsap"
 

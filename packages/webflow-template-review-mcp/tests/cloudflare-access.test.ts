@@ -11,6 +11,7 @@ import {
 import {
   cloudflareAccessServePath,
   isCloudflareAccessMcpPath,
+  readCloudflareAccessAssertionMetadata,
   resolveCloudflareAccessRequest,
 } from '../src/cloudflare-access.js';
 import { SCOPE_READ, SCOPE_WRITE, parseAllowedEmails } from '../src/oauth-access.js';
@@ -43,6 +44,24 @@ test('Cloudflare Access uses a dedicated MCP surface without intercepting the ex
   assert.equal(isCloudflareAccessMcpPath('/sse'), false);
   assert.equal(cloudflareAccessServePath('/access/mcp/messages'), '/access/mcp');
   assert.equal(cloudflareAccessServePath('/access/sse/messages'), '/access/sse');
+});
+
+test('readCloudflareAccessAssertionMetadata extracts only issuer and audience configuration', async () => {
+  const { privateKey } = await generateKeyPair('RS256');
+  const assertion = await new SignJWT({ email: 'micah@webflow.com', type: 'app' })
+    .setProtectedHeader({ alg: 'RS256', kid: KEY_ID })
+    .setIssuer('https://webflow.cloudflareaccess.com')
+    .setAudience(['template-review-webflow-access-audience', 'another-audience'])
+    .setSubject('not-returned')
+    .setIssuedAt()
+    .setExpirationTime('5m')
+    .sign(privateKey);
+
+  assert.deepEqual(readCloudflareAccessAssertionMetadata(assertion), {
+    issuer: 'https://webflow.cloudflareaccess.com',
+    audiences: ['template-review-webflow-access-audience', 'another-audience'],
+  });
+  assert.equal(readCloudflareAccessAssertionMetadata('not-a-jwt'), null);
 });
 
 test('resolveCloudflareAccessRequest fails closed when Access configuration or assertion is missing', async () => {
@@ -114,6 +133,47 @@ test('resolveCloudflareAccessRequest maps a signed Access assertion onto the can
     subject: 'access-user-micah',
     accountId: 'acct_wf_micah',
     email: 'micah@createsomething.io',
+    name: null,
+    scopes: [SCOPE_READ, SCOPE_WRITE],
+  });
+});
+
+test('resolveCloudflareAccessRequest accepts a separately configured Webflow Access application', async () => {
+  const webflowTeamDomain = 'https://webflow.cloudflareaccess.com';
+  const webflowAudience = 'template-review-webflow-access-audience';
+  const { privateKey, publicKey } = await generateKeyPair('RS256');
+  const publicJwk = await exportJWK(publicKey);
+  publicJwk.kid = KEY_ID;
+  publicJwk.alg = 'RS256';
+
+  const assertion = await new SignJWT({ email: 'micah@webflow.com', type: 'app' })
+    .setProtectedHeader({ alg: 'RS256', kid: KEY_ID })
+    .setIssuer(webflowTeamDomain)
+    .setAudience(webflowAudience)
+    .setSubject('webflow-access-user-micah')
+    .setIssuedAt()
+    .setNotBefore(Math.floor(Date.now() / 1000) - 1)
+    .setExpirationTime('5m')
+    .sign(privateKey);
+
+  const result = await resolveCloudflareAccessRequest({
+    request: new Request('https://template-review.example.test/access/mcp', {
+      headers: { 'Cf-Access-Jwt-Assertion': assertion },
+    }),
+    teamDomain: TEAM_DOMAIN,
+    audience: POLICY_AUD,
+    trustedApplications: [{ teamDomain: webflowTeamDomain, audience: webflowAudience }],
+    allowedDomain: 'webflow.com',
+    allowedEmails: parseAllowedEmails('micah@webflow.com'),
+    directory,
+    jwks: createLocalJWKSet({ keys: [publicJwk] }),
+  });
+
+  assert.deepEqual(result, {
+    ok: true,
+    subject: 'webflow-access-user-micah',
+    accountId: 'acct_wf_micah',
+    email: 'micah@webflow.com',
     name: null,
     scopes: [SCOPE_READ, SCOPE_WRITE],
   });

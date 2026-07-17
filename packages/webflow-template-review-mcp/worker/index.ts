@@ -7,7 +7,9 @@ import { AirtableClient } from '../src/airtable.js';
 import {
   cloudflareAccessServePath,
   isCloudflareAccessMcpPath,
+  readCloudflareAccessAssertionMetadata,
   resolveCloudflareAccessRequest,
+  type CloudflareAccessApplication,
 } from '../src/cloudflare-access.js';
 import { DEFAULT_AIRTABLE_BASE_ID, TABLE_IDS } from '../src/schema.js';
 import {
@@ -40,6 +42,7 @@ interface Env {
   CS_IDENTITY_ISSUER?: string;
   CF_ACCESS_TEAM_DOMAIN?: string;
   CF_ACCESS_AUD?: string;
+  CF_ACCESS_TRUSTED_APPLICATIONS_JSON?: string;
   OAUTH_ALLOWED_EMAIL_DOMAIN?: string;
   OAUTH_ALLOWED_EMAILS?: string;
   WEBFLOW_TEMPLATE_VALIDATION_WORKER_URL?: string;
@@ -221,15 +224,37 @@ async function authenticateWithCloudflareAccess(
   env: Env,
   origin: string,
 ): Promise<{ props: RequestProps } | Response> {
+  const trustedApplications = parseTrustedAccessApplications(env.CF_ACCESS_TRUSTED_APPLICATIONS_JSON);
+  if (trustedApplications === null) {
+    return misconfiguredResponse('Cloudflare Access trusted applications are not configured correctly.');
+  }
   const result = await resolveCloudflareAccessRequest({
     request,
     teamDomain: env.CF_ACCESS_TEAM_DOMAIN ?? '',
     audience: env.CF_ACCESS_AUD ?? '',
+    trustedApplications,
     allowedDomain: allowedDomain(env),
     allowedEmails: parseAllowedEmails(env.OAUTH_ALLOWED_EMAILS),
     directory: resolveReviewerDirectory(env),
   });
   if (result.ok === false) {
+    // The Webflow-hosted proxy can only forward a signed edge assertion. If
+    // its Access application has been created with a new audience, capture
+    // that non-secret configuration value in Worker logs so the upstream can
+    // be updated without logging a token or identity claim. The MCP response
+    // stays intentionally generic and the assertion is still rejected.
+    if (result.status === 401) {
+      const metadata = readCloudflareAccessAssertionMetadata(
+        request.headers.get('Cf-Access-Jwt-Assertion')?.trim() ?? '',
+      );
+      if (metadata?.issuer === 'https://webflow.cloudflareaccess.com' && metadata.audiences.length) {
+        console.warn(JSON.stringify({
+          event: 'template_review_webflow_access_audience_observed',
+          issuer: metadata.issuer,
+          audiences: metadata.audiences,
+        }));
+      }
+    }
     if (result.status === 401) return unauthorized(origin, result.message, '/access/mcp');
     if (result.status === 403) return forbidden(result.message);
     return misconfiguredResponse(result.message);
@@ -244,6 +269,26 @@ async function authenticateWithCloudflareAccess(
       scopes: result.scopes,
     },
   };
+}
+
+function parseTrustedAccessApplications(raw: string | undefined): CloudflareAccessApplication[] | null {
+  if (!raw?.trim()) return [];
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return null;
+    const applications = parsed.map((value): CloudflareAccessApplication | null => {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+      const candidate = value as Record<string, unknown>;
+      return typeof candidate.teamDomain === 'string' && typeof candidate.audience === 'string'
+        ? { teamDomain: candidate.teamDomain, audience: candidate.audience }
+        : null;
+    });
+    return applications.every((application): application is CloudflareAccessApplication => application !== null)
+      ? applications
+      : null;
+  } catch {
+    return null;
+  }
 }
 
 function protectedResourceResponse(env: Env, origin: string, resourcePath: string): Response {
@@ -338,6 +383,9 @@ export default {
                   teamDomain: env.CF_ACCESS_TEAM_DOMAIN?.trim().replace(/\/+$/, '') || null,
                   audienceConfigured: Boolean(env.CF_ACCESS_AUD?.trim()),
                   configured: Boolean(env.CF_ACCESS_TEAM_DOMAIN?.trim() && env.CF_ACCESS_AUD?.trim()),
+                  trustedTeamDomains: parseTrustedAccessApplications(
+                    env.CF_ACCESS_TRUSTED_APPLICATIONS_JSON,
+                  )?.map((application) => application.teamDomain) ?? [],
                   scopes: [SCOPE_READ, SCOPE_WRITE],
                 },
                 legacy: {
