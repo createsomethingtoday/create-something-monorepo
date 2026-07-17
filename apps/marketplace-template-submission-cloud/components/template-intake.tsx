@@ -3542,35 +3542,45 @@ export function TemplateIntake() {
                       ) : null}
                     </div>
 
-                    <div
-                      className={fieldClassName(hasAutofilledPriceModel, 'submission-select-field')}
-                    >
-                      <label
+                    <div className={fieldClassName(hasAutofilledPriceModel)}>
+                      <span
                         className="field-label template-application-form_field-label cc-with-desc"
-                        htmlFor="priceModel"
+                        id="price-model-label"
                       >
                         Free or paid
+                        <span className="submission-required"> *</span>
                         {hasAutofilledPriceModel ? <AiUpdatedBadge /> : null}
-                      </label>
+                      </span>
                       <p className="field-help cc-library-application-form_field-desc">
                         Choose whether the template will be published as a free listing or a paid
                         marketplace template.
                       </p>
-                      <select
-                        className="field-select input w-select"
-                        id="priceModel"
-                        value={template.priceModel}
-                        onChange={(event) =>
-                          updateTemplate(
-                            'priceModel',
-                            event.target.value as TemplateFormState['priceModel']
-                          )
-                        }
+                      <div
+                        className="submission-choice-grid submission-choice-grid-template-type"
+                        role="radiogroup"
+                        aria-labelledby="price-model-label"
+                        aria-required="true"
                       >
-                        <option value="">Select pricing</option>
-                        <option value="Free">Free</option>
-                        <option value="Paid">Paid</option>
-                      </select>
+                        {(['Free', 'Paid'] as const).map((option) => (
+                          <label
+                            className={choiceClassName(
+                              template.priceModel === option,
+                              'input-block cc-check cc-template-application-form-choice'
+                            )}
+                            key={option}
+                          >
+                            <input
+                              type="radio"
+                              name="priceModel"
+                              value={option}
+                              checked={template.priceModel === option}
+                              onChange={() => updateTemplate('priceModel', option)}
+                              required
+                            />
+                            <span className="submission-choice-copy">{option}</span>
+                          </label>
+                        ))}
+                      </div>
                     </div>
 
                     <div className={fieldClassName(hasAutofilledCategories)}>
