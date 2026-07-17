@@ -963,6 +963,7 @@ export class SymphonyService {
         }
     }
     async reconcile_awaiting_completion() {
+        await this.restore_linear_fallback_handoffs();
         const issue_ids = [...this.awaiting_completion.keys()];
         if (issue_ids.length === 0) {
             return;
@@ -1006,6 +1007,57 @@ export class SymphonyService {
                     error: message,
                 });
             }
+        }
+    }
+    async restore_linear_fallback_handoffs() {
+        if (this.current_config.completion.mode !== 'evidence_only' ||
+            typeof this.tracker.fetch_handoff_issues !== 'function') {
+            return;
+        }
+        let issues;
+        try {
+            issues = await this.tracker.fetch_handoff_issues();
+        }
+        catch (error) {
+            this.logger.warn('Linear fallback handoff restoration failed', {
+                error: error instanceof Error ? error.message : String(error),
+            });
+            return;
+        }
+        for (const issue of issues) {
+            if (this.awaiting_completion.has(issue.id)) {
+                continue;
+            }
+            try {
+                if (typeof this.workspace_manager.workspace_exists === 'function' &&
+                    !(await this.workspace_manager.workspace_exists(issue.identifier))) {
+                    continue;
+                }
+            }
+            catch (error) {
+                this.logger.warn('Linear fallback handoff workspace check failed', {
+                    issue_id: issue.id,
+                    issue_identifier: issue.identifier,
+                    error: error instanceof Error ? error.message : String(error),
+                });
+                continue;
+            }
+            const paths = this.workspace_manager.get_workspace_paths?.(issue.identifier);
+            this.awaiting_completion.set(issue.id, {
+                issue_id: issue.id,
+                issue_identifier: issue.identifier,
+                workspace_path: paths?.workspace_path ?? null,
+                workspace_metadata_path: paths?.metadata_path ?? null,
+                evidence_recorded: false,
+                comment_attempts: 0,
+                fail_closed_state: issue.state,
+                last_error: 'Restored from the Linear fallback handoff state; the durable marker was unavailable.',
+            });
+            this.logger.info('restored Linear fallback completion handoff', {
+                issue_id: issue.id,
+                issue_identifier: issue.identifier,
+                state: issue.state,
+            });
         }
     }
     async reconcile_stalled_runs() {

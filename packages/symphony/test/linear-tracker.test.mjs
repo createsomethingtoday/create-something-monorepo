@@ -101,6 +101,27 @@ test('fetch_candidate_issues requires all configured tracker labels', async () =
   );
 });
 
+test('fetch_handoff_issues scopes the Linear fallback ledger by required labels', async () => {
+  const client = new LinearTrackerClient(
+    {
+      ...createConfig({ label: 'code-quality' }),
+      completion: { handoff_state: 'In Review' },
+    },
+    logger,
+    createFetch([
+      createIssue('CRE-1300', ['code-quality']),
+      createIssue('CRE-OTHER', ['another-workflow']),
+    ]),
+  );
+
+  const handoffs = await client.fetch_handoff_issues();
+
+  assert.deepEqual(
+    handoffs.map((issue) => issue.identifier),
+    ['CRE-1300'],
+  );
+});
+
 test('fetch_issue_by_identifier selects an active labeled issue without project membership', async () => {
   const node = createIssue('CRE-1154', ['code-quality']);
   const client = new LinearTrackerClient(

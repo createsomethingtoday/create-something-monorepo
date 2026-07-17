@@ -16,6 +16,7 @@ function createService() {
     },
     completion: {
       mode: 'evidence_only',
+      handoff_state: 'In Review',
     },
     codex: {
       stall_timeout_ms: 0,
@@ -503,6 +504,59 @@ test('terminal awaiting-completion issues are reconciled without a service resta
       calls.remove += 1;
     },
   };
+
+  await service.reconcile_running_issues();
+
+  assert.equal(calls.remove, 1);
+  assert.equal(service.awaiting_completion.has(issue.id), false);
+});
+
+test('a restarted service restores Linear-only handoffs for terminal reconciliation', async () => {
+  const service = createService();
+  const issue = createIssue({
+    id: 'issue-linear-fallback',
+    identifier: 'CRE-LINEAR-FALLBACK',
+    state: 'In Review',
+  });
+  const unrelated = createIssue({
+    id: 'issue-unrelated-review',
+    identifier: 'CRE-UNRELATED-REVIEW',
+    state: 'In Review',
+  });
+  const calls = { handoffFetches: 0, stateFetches: 0, remove: 0 };
+  service.tracker = {
+    async fetch_handoff_issues() {
+      calls.handoffFetches += 1;
+      return calls.handoffFetches === 1 ? [issue, unrelated] : [];
+    },
+    async fetch_issue_states_by_ids(ids) {
+      assert.deepEqual(ids, [issue.id]);
+      calls.stateFetches += 1;
+      return [{ ...issue, state: calls.stateFetches === 1 ? 'In Review' : 'done' }];
+    },
+  };
+  service.workspace_manager = {
+    async workspace_exists(identifier) {
+      return identifier === issue.identifier;
+    },
+    get_workspace_paths(identifier) {
+      assert.equal(identifier, issue.identifier);
+      return {
+        workspace_path: '/tmp/symphony/CRE-LINEAR-FALLBACK',
+        metadata_path: '/tmp/symphony/.metadata/CRE-LINEAR-FALLBACK.json',
+      };
+    },
+    async remove_workspace(identifier) {
+      assert.equal(identifier, issue.identifier);
+      calls.remove += 1;
+    },
+  };
+
+  await service.reconcile_running_issues();
+
+  assert.equal(service.awaiting_completion.get(issue.id).fail_closed_state, 'In Review');
+  assert.equal(service.awaiting_completion.has(unrelated.id), false);
+  assert.equal(calls.remove, 0);
 
   await service.reconcile_running_issues();
 

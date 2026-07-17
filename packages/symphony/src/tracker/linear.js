@@ -110,6 +110,14 @@ export class LinearTrackerClient {
         const issues = await this.fetch_issues_by_states(this.config.tracker.active_states);
         return issues.filter((issue) => has_required_labels(issue, this.config));
     }
+    async fetch_handoff_issues() {
+        const handoff_state = this.config.completion?.handoff_state;
+        if (!handoff_state) {
+            return [];
+        }
+        const issues = await this.fetch_issues_by_states([handoff_state]);
+        return issues.filter((issue) => has_required_labels(issue, this.config));
+    }
     async fetch_issue_by_identifier(identifier) {
         const payload = await this.graphql(`
         query SymphonyIssueByIdentifier($id: String!) {

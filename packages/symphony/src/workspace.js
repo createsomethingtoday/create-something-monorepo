@@ -174,6 +174,9 @@ export class WorkspaceManager {
             completion_path,
         };
     }
+    async workspace_exists(issue_identifier) {
+        return path_exists(this.get_workspace_paths(issue_identifier).workspace_path);
+    }
     async read_completion_handoff(issue_identifier) {
         const paths = this.get_workspace_paths(issue_identifier);
         try {
