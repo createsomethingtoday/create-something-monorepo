@@ -10,6 +10,12 @@ import type { RequestHandler } from './$types';
 import { json, error } from '@sveltejs/kit';
 import { createStripeClient, getStripePrice, hasStripePricing } from '$lib/services/stripe';
 import { getOfferingBySlug } from '$lib/data/services';
+import { resolveCustomerMapScope } from '$lib/server/customer-map-context';
+import {
+	buildMapCheckoutMetadata,
+	isMapPlanId,
+	resolveMapPlan
+} from '$lib/server/map-commercial';
 
 interface CheckoutRequest {
 	productId: string;
@@ -18,7 +24,7 @@ interface CheckoutRequest {
 	customerEmail?: string;
 }
 
-export const POST: RequestHandler = async ({ request, platform, url }) => {
+export const POST: RequestHandler = async ({ request, platform, url, locals }) => {
 	// Get Stripe secret key from environment
 	const stripeSecretKey = platform?.env?.STRIPE_SECRET_KEY;
 	if (!stripeSecretKey) {
@@ -37,7 +43,26 @@ export const POST: RequestHandler = async ({ request, platform, url }) => {
 
 	// Validate product exists
 	const product = getOfferingBySlug(productId);
-	const priceConfig = getStripePrice(productId);
+	let priceConfig = getStripePrice(productId);
+	let mapMetadata: Record<string, string> | null = null;
+	if (isMapPlanId(productId)) {
+		const plan = resolveMapPlan(productId, platform?.env);
+		if (!plan.checkoutEnabled || !plan.priceId) {
+			throw error(503, 'Map checkout is not commercially approved and configured.');
+		}
+		if (!locals.user?.id || !locals.user.email) throw error(401, 'Sign in before starting Map checkout.');
+		const scope = await resolveCustomerMapScope({
+			platform,
+			user: locals.user,
+			requireCommercialEntitlement: false
+		});
+		mapMetadata = buildMapCheckoutMetadata({ scope, email: locals.user.email, planId: productId });
+		priceConfig = {
+			priceId: plan.priceId,
+			mode: 'subscription',
+			name: productId === 'map-monthly' ? 'CREATE SOMETHING Map (Monthly)' : 'CREATE SOMETHING Map (Yearly)'
+		};
+	}
 	if (!product && !priceConfig) {
 		throw error(404, 'Product not found');
 	}
@@ -53,7 +78,7 @@ export const POST: RequestHandler = async ({ request, platform, url }) => {
 	}
 
 	// Check if real Stripe prices are configured
-	if (!hasStripePricing(productId)) {
+	if (!isMapPlanId(productId) && !hasStripePricing(productId)) {
 		throw error(503, 'Payment system is being configured. Please contact us directly.');
 	}
 
@@ -62,7 +87,9 @@ export const POST: RequestHandler = async ({ request, platform, url }) => {
 
 	// Build checkout session
 	const baseUrl = url.origin;
-	const defaultProductUrl = product?.href?.startsWith('/') ? product.href : '/products';
+	const defaultProductUrl = isMapPlanId(productId)
+		? '/map/workspace'
+		: product?.href?.startsWith('/') ? product.href : '/products';
 	const defaultSuccessUrl = `${baseUrl}${defaultProductUrl}?success=true&session_id={CHECKOUT_SESSION_ID}`;
 	const defaultCancelUrl = `${baseUrl}${defaultProductUrl}?canceled=true`;
 
@@ -75,18 +102,20 @@ export const POST: RequestHandler = async ({ request, platform, url }) => {
 					quantity: 1
 				}
 			],
-			success_url: successUrl || defaultSuccessUrl,
-			cancel_url: cancelUrl || defaultCancelUrl,
-			customer_email: customerEmail,
+			success_url: isMapPlanId(productId) ? defaultSuccessUrl : successUrl || defaultSuccessUrl,
+			cancel_url: isMapPlanId(productId) ? defaultCancelUrl : cancelUrl || defaultCancelUrl,
+			customer_email: mapMetadata?.customer_email ?? customerEmail,
 			metadata: {
 				product_id: productId,
+				...(mapMetadata ?? {}),
 				...(productId.startsWith('agent-in-a-box-') && {
 					tier: productId.replace('agent-in-a-box-', '')
 				})
 			},
 			// For subscriptions, allow promotion codes
 			...(priceConfig.mode === 'subscription' && {
-				allow_promotion_codes: true
+				allow_promotion_codes: true,
+				...(mapMetadata ? { subscription_data: { metadata: mapMetadata } } : {})
 			}),
 			// Collect billing address for tax purposes
 			billing_address_collection: 'required'

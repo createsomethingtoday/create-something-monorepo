@@ -83,7 +83,7 @@ export interface TeamStats {
 }
 
 export type GameStatus = 'scheduled' | 'live' | 'halftime' | 'final';
-export type NBADataProvider = 'nba' | 'espn';
+export type NBADataProvider = 'nba' | 'espn' | 'archive';
 
 export interface NBADataMetadata {
 	source: NBADataProvider;
@@ -366,6 +366,32 @@ export interface NBAGameSummary {
 	awayTeam: NBATeamScore;
 	gameTimeUTC: string;
 	arenaName?: string;
+}
+
+export interface NBARecentHistoryResponse {
+	source: 'archive' | 'espn';
+	degraded: boolean;
+	stale: boolean;
+	fetchedAt: string;
+	slates: Array<{
+		date: string;
+		games: Array<
+			NBAGameSummary & {
+				capabilities: NBADataMetadata['capabilities'];
+			}
+		>;
+	}>;
+}
+
+export interface RecentHistory {
+	source: 'archive' | 'espn';
+	degraded: boolean;
+	stale: boolean;
+	fetchedAt: string;
+	slates: Array<{
+		date: string;
+		games: Game[];
+	}>;
 }
 
 export interface NBATeamScore {

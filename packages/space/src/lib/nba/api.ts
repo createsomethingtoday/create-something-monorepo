@@ -21,6 +21,9 @@ import type {
 	Shot,
 	ShotZone,
 	NBADataMetadata,
+	NBAGameSummary,
+	NBARecentHistoryResponse,
+	RecentHistory,
 } from './types';
 
 // Configuration
@@ -147,6 +150,39 @@ function parseGameStatus(status: number): GameStatus {
 	}
 }
 
+function mapGameSummary(
+	game: NBAGameSummary,
+	provider: Game['dataProvider'],
+	analyticsAvailable: boolean
+): Game {
+	return {
+		id: game.gameId,
+		homeTeam: {
+			id: game.homeTeam.teamId.toString(),
+			name: game.homeTeam.teamName,
+			abbreviation: game.homeTeam.teamTricode,
+			city: game.homeTeam.teamCity,
+			conference: 'East',
+		},
+		awayTeam: {
+			id: game.awayTeam.teamId.toString(),
+			name: game.awayTeam.teamName,
+			abbreviation: game.awayTeam.teamTricode,
+			city: game.awayTeam.teamCity,
+			conference: 'East',
+		},
+		homeScore: game.homeTeam.score,
+		awayScore: game.awayTeam.score,
+		status: parseGameStatus(game.gameStatus),
+		quarter: game.period,
+		gameClock: game.gameClock || '',
+		startTime: game.gameTimeUTC,
+		arena: game.arenaName,
+		dataProvider: provider,
+		analyticsAvailable,
+	};
+}
+
 /**
  * Convert NBA API action type to our ActionType
  */
@@ -232,32 +268,13 @@ export async function fetchLiveGames(
 	}
 
 	try {
-		const games: Game[] = result.data.scoreboard.games.map((g) => ({
-			id: g.gameId,
-			homeTeam: {
-				id: g.homeTeam.teamId.toString(),
-				name: g.homeTeam.teamName,
-				abbreviation: g.homeTeam.teamTricode,
-				city: g.homeTeam.teamCity,
-				conference: 'East', // Would need additional API call for this
-			},
-			awayTeam: {
-				id: g.awayTeam.teamId.toString(),
-				name: g.awayTeam.teamName,
-				abbreviation: g.awayTeam.teamTricode,
-				city: g.awayTeam.teamCity,
-				conference: 'East',
-			},
-			homeScore: g.homeTeam.score,
-			awayScore: g.awayTeam.score,
-			status: parseGameStatus(g.gameStatus),
-			quarter: g.period,
-			gameClock: g.gameClock || '',
-			startTime: g.gameTimeUTC,
-			arena: g.arenaName,
-			dataProvider: result.metadata?.source ?? 'nba',
-			analyticsAvailable: result.metadata?.capabilities.advancedAnalytics ?? true,
-		}));
+		const games: Game[] = result.data.scoreboard.games.map((game) =>
+			mapGameSummary(
+				game,
+				result.metadata?.source ?? 'nba',
+				result.metadata?.capabilities.advancedAnalytics ?? true
+			)
+		);
 
 		console.log('[fetchLiveGames] Successfully fetched games', {
 			correlationId,
@@ -286,6 +303,49 @@ export async function fetchLiveGames(
 			error: createError(
 				error instanceof Error ? error.message : 'Failed to parse games',
 				correlationId
+			),
+		};
+	}
+}
+
+export async function fetchRecentHistory(
+	before: string,
+	limit: number = 5,
+	proxyUrl: string = NBA_PROXY_URL
+): Promise<NBAApiResult<RecentHistory>> {
+	const result = await fetchWithTimeout<NBARecentHistoryResponse>(
+		`${proxyUrl}/games/recent?before=${encodeURIComponent(before)}&limit=${limit}`
+	);
+	if (!result.success) return result;
+
+	try {
+		return {
+			success: true,
+			data: {
+				source: result.data.source,
+				degraded: result.data.degraded,
+				stale: result.data.stale,
+				fetchedAt: result.data.fetchedAt,
+				slates: result.data.slates.map((slate) => ({
+					date: slate.date,
+					games: slate.games.map((game) =>
+						mapGameSummary(
+							game,
+							result.data.source,
+							game.capabilities.advancedAnalytics
+						)
+					),
+				})),
+			},
+			cached: result.cached,
+			timestamp: result.timestamp,
+		};
+	} catch (error) {
+		return {
+			success: false,
+			error: createError(
+				error instanceof Error ? error.message : 'Failed to parse recent NBA history',
+				generateCorrelationId()
 			),
 		};
 	}
@@ -379,11 +439,12 @@ export async function fetchGamePBP(
  * - Logs correlation IDs for debugging data quality issues
  */
 export async function fetchGameBoxScore(
-	gameId: string
+	gameId: string,
+	proxyUrl: string = NBA_PROXY_URL
 ): Promise<NBAApiResult<{ home: Player[]; away: Player[] }>> {
 	const correlationId = generateCorrelationId();
 	const result = await fetchWithTimeout<NBABoxScoreResponse>(
-		`${NBA_PROXY_URL}/game/${gameId}/boxscore`
+		`${proxyUrl}/game/${gameId}/boxscore`
 	);
 
 	if (!result.success) {
@@ -492,11 +553,12 @@ export async function fetchGameBoxScore(
  * Fetch player baselines from D1 (via proxy)
  */
 export async function fetchPlayerBaselines(
-	playerId?: string
+	playerId?: string,
+	proxyUrl: string = NBA_PROXY_URL
 ): Promise<NBAApiResult<PlayerBaseline[]>> {
 	const url = playerId
-		? `${NBA_PROXY_URL}/baselines/${playerId}`
-		: `${NBA_PROXY_URL}/baselines`;
+		? `${proxyUrl}/baselines/${playerId}`
+		: `${proxyUrl}/baselines`;
 
 	const result = await fetchWithTimeout<PlayerBaseline | { results: PlayerBaseline[] }>(url);
 
@@ -523,9 +585,12 @@ export async function fetchPlayerBaselines(
  * Fetch games with detailed team statistics for insights
  * @param date - YYYY-MM-DD format (defaults to today)
  */
-export async function fetchGamesWithStats(date?: string): Promise<NBAApiResult<Game[]>> {
+export async function fetchGamesWithStats(
+	date?: string,
+	proxyUrl: string = NBA_PROXY_URL
+): Promise<NBAApiResult<Game[]>> {
 	// First fetch basic games
-	const gamesResult = await fetchLiveGames(date);
+	const gamesResult = await fetchLiveGames(date, proxyUrl);
 
 	if (!gamesResult.success) {
 		return gamesResult;
@@ -540,7 +605,7 @@ export async function fetchGamesWithStats(date?: string): Promise<NBAApiResult<G
 			}
 
 			try {
-				const boxScoreResult = await fetchGameBoxScore(game.id);
+				const boxScoreResult = await fetchGameBoxScore(game.id, proxyUrl);
 
 				if (!boxScoreResult.success) {
 					console.warn(`[fetchGamesWithStats] Failed to fetch boxscore for ${game.id}`, {

@@ -1,4 +1,5 @@
 import { fetchGamesWithStats } from '$lib/nba/api';
+import { env } from '$env/dynamic/private';
 import type { PageServerLoad } from './$types';
 import type { TeamStats } from '$lib/nba/types';
 
@@ -32,9 +33,10 @@ export const load: PageServerLoad = async ({ url, depends }) => {
 	depends('pace:data');
 
 	const date = url.searchParams.get('date') || new Date().toISOString().split('T')[0];
+	const proxyUrl = env.NBA_PROXY_URL;
 
 	// Fetch games with box score stats
-	const result = await fetchGamesWithStats(date);
+	const result = await fetchGamesWithStats(date, proxyUrl);
 
 	// Check if any games are live
 	const hasLiveGames = result.success

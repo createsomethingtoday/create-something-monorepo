@@ -3,7 +3,9 @@ export const AGENCY_PROTECTED_PATHS = [
 	'/dashboard',
 	'/admin',
 	'/api/community',
-	'/mcp-access'
+	'/mcp-access',
+	'/map/workspace',
+	'/map/subscribe'
 ] as const;
 
 export function isAgencyProtectedPath(pathname: string): boolean {

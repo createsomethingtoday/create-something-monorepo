@@ -11,6 +11,7 @@
 export { default as AnalyticsNav } from './AnalyticsNav.svelte';
 export { default as CorrelationChart } from './CorrelationChart.svelte';
 export { default as DateNavigation } from './DateNavigation.svelte';
+export { default as RecentHistory } from './RecentHistory.svelte';
 export { default as DatePicker } from './DatePicker.svelte';
 export { default as DefensiveHeatmap } from './DefensiveHeatmap.svelte';
 export { default as DuoChart } from './DuoChart.svelte';

@@ -22,6 +22,7 @@
 		createPublicAtlasCanvasFromStarter,
 		PUBLIC_ATLAS_INDUSTRY_STARTERS
 	} from '$lib/atlas/public';
+	import { buildPublicAtlasBookingUrl } from '$lib/atlas/public-booking';
 	import { PUBLIC_ATLAS_LIMITS, PUBLIC_ATLAS_STORAGE_KEYS } from '$lib/atlas/intake-policy';
 
 	type AgentMessage = {
@@ -125,24 +126,9 @@
 	$: activeFocusGroup = focusGroups.find((group) => group.id === activeFocusId) ?? focusGroups[0];
 	$: activeFocusNodeIds = activeFocusGroup?.nodeIds ?? [];
 	$: activeFocusEdgeIds = activeFocusGroup?.edgeIds ?? [];
-	$: bookingUrl = buildBookingUrl();
+	$: bookingUrl = buildPublicAtlasBookingUrl({ bookingHref, canvas, readiness });
 	$: mappedPercent = Math.round((selectedDimensionCount / PUBLIC_ATLAS_LANES.length) * 100);
 	$: leadTierLabel = usage.tier === 'warmLead' ? 'Warm lead' : 'Anonymous map';
-
-	function buildBookingUrl() {
-		const base = bookingHref.split('?')[0] || '/book';
-		const params = new URLSearchParams({
-			source: 'atlas-canvas',
-			intent: readiness.intent,
-			lane: readiness.lane,
-			warmup: 'atlas_canvas',
-			readiness: readiness.slug,
-			score: String(readiness.score),
-			atlas_session_id: canvas.id,
-			agent_messages: String(canvas.agentMessages)
-		});
-		return `${base}?${params.toString()}`;
-	}
 
 	function persistCanvas() {
 		if (!browser) return;

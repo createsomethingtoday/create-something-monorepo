@@ -6,6 +6,7 @@
  */
 
 import type { PageServerLoad } from './$types';
+import { env } from '$env/dynamic/private';
 import { fetchGamePBP, fetchGameBoxScore, fetchLiveGames } from '$lib/nba/api';
 import type { Player, Game } from '$lib/nba/types';
 
@@ -36,6 +37,7 @@ export interface TeamNetwork {
 export const load: PageServerLoad = async ({ url }) => {
 	const gameId = url.searchParams.get('gameId');
 	const date = url.searchParams.get('date') || new Date().toISOString().split('T')[0];
+	const proxyUrl = env.NBA_PROXY_URL;
 
 	if (!gameId) {
 		return {
@@ -57,7 +59,7 @@ export const load: PageServerLoad = async ({ url }) => {
 	}
 
 	// Fetch game info to check status
-	const gamesResult = await fetchLiveGames(date);
+	const gamesResult = await fetchLiveGames(date, proxyUrl);
 	const game = gamesResult.success
 		? gamesResult.data.find((g) => g.id === gameId)
 		: null;
@@ -79,8 +81,8 @@ export const load: PageServerLoad = async ({ url }) => {
 
 	// Fetch play-by-play and boxscore in parallel
 	const [pbpResult, boxscoreResult] = await Promise.all([
-		fetchGamePBP(gameId),
-		fetchGameBoxScore(gameId),
+		fetchGamePBP(gameId, proxyUrl),
+		fetchGameBoxScore(gameId, proxyUrl),
 	]);
 
 	if (!pbpResult.success) {
