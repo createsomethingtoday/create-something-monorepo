@@ -4,6 +4,7 @@ import { EventSourceType, OsEventTypeList } from '@evenrealities/even_hub_sdk';
 import type { PresenceCard } from '@create-something/codex-presence';
 
 import { inputSource, resolveInteraction } from '../src/interaction';
+import { resolveSelection } from '../src/selection';
 import { actionsScreen, confirmScreen, overviewScreen, voiceScreen } from '../src/screens';
 
 describe('Even G2 Codex Presence behavior', () => {
@@ -24,7 +25,44 @@ describe('Even G2 Codex Presence behavior', () => {
     assert.deepEqual(resolveInteraction({ eventType: OsEventTypeList.DOUBLE_CLICK_EVENT, source: 'ring', view: 'detail' }), { kind: 'back' });
     assert.deepEqual(resolveInteraction({ eventType: OsEventTypeList.DOUBLE_CLICK_EVENT, source: 'glasses', view: 'overview' }), { kind: 'exit' });
   });
+
+  it('drives overview, detail, voice review, and retry through the runtime reducer', () => {
+    assert.deepEqual(selection('overview'), { kind: 'view', view: 'detail' });
+    assert.deepEqual(selection('detail'), { kind: 'view', view: 'actions' });
+    assert.deepEqual(selection('actions'), { kind: 'begin_voice', action: card.actions[1] });
+    assert.deepEqual(selection('voice_review', { voiceText: 'Continue with the recommended.' }), {
+      kind: 'send', action: card.actions[1], confirmed: false, text: 'Continue with the recommended.'
+    });
+    assert.deepEqual(selection('error'), { kind: 'view', view: 'overview' });
+    assert.deepEqual(selection('receipt'), { kind: 'view', view: 'overview' });
+  });
+
+  it('fails closed for risky confirmation and disconnected or stale decisions', () => {
+    assert.deepEqual(selection('actions', { actionIndex: 1 }), {
+      kind: 'view', view: 'confirm', pendingAction: card.actions[2]
+    });
+    assert.deepEqual(selection('confirm', { pendingAction: card.actions[2] }), {
+      kind: 'send', action: card.actions[2], confirmed: true
+    });
+    assert.equal(selection('confirm').kind, 'error');
+    assert.deepEqual(selection('overview', { card: undefined }), { kind: 'noop' });
+    assert.match(overviewScreen([], 0), /No visible tasks/);
+  });
 });
+
+function selection(
+  view: Parameters<typeof resolveSelection>[0]['view'],
+  overrides: Partial<Parameters<typeof resolveSelection>[0]> = {}
+) {
+  return resolveSelection({
+    view,
+    card,
+    actionIndex: 0,
+    pendingAction: null,
+    voiceText: '',
+    ...overrides
+  });
+}
 
 const card: PresenceCard = {
   taskId: 'thread-live', task: 'Build Codex Presence', state: 'working', attention: 'quiet', operatorRequired: false,

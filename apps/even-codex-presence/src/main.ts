@@ -7,6 +7,7 @@ import {
 import type { ActionReceipt, PresenceAction, PresenceCard } from '@create-something/codex-presence';
 
 import { inputSource, resolveInteraction, type PresenceInteraction } from './interaction';
+import { resolveSelection } from './selection';
 import {
   actionable,
   actionsScreen,
@@ -105,33 +106,22 @@ async function applyInteraction(interaction: PresenceInteraction): Promise<void>
 
 async function selectCurrent(): Promise<void> {
   const card = currentCard();
-  if (view === 'recording') {
-    await finishVoice();
-    return;
+  const decision = resolveSelection({ view, card, actionIndex, pendingAction, voiceText });
+  if (decision.kind === 'finish_voice') return finishVoice();
+  if (decision.kind === 'begin_voice') {
+    pendingAction = decision.action;
+    return beginVoice();
   }
-  if (view === 'overview' && card) view = 'detail';
-  else if (view === 'detail' && card) {
-    view = 'actions';
-    actionIndex = 0;
-  } else if (view === 'actions' && card) {
-    pendingAction = actionable(card.actions)[actionIndex] ?? null;
-    if (!pendingAction) return;
-    if (pendingAction.type === 'follow_up' || pendingAction.type === 'answer') {
-      await beginVoice();
-      return;
-    }
-    if (pendingAction.requiresConfirmation) view = 'confirm';
-    else await sendAction(pendingAction);
-  } else if (view === 'confirm' && pendingAction) await sendAction(pendingAction, true);
-  else if (view === 'voice_review' && card && voiceText) {
-    const target = card.actions.find((action) => action.type === (card.state === 'needs_input' ? 'answer' : 'follow_up'));
-    if (!target) {
-      view = 'error';
-      await render(messageScreen('Unavailable', 'This task cannot accept voice input in its current state.'));
-      return;
-    }
-    await sendAction(target, false, voiceText);
-  } else if (view === 'receipt' || view === 'error') view = 'overview';
+  if (decision.kind === 'send') return sendAction(decision.action, decision.confirmed, decision.text);
+  if (decision.kind === 'error') {
+    view = 'error';
+    voiceText = decision.message;
+  }
+  if (decision.kind === 'view') {
+    view = decision.view;
+    pendingAction = decision.pendingAction ?? null;
+    if (view === 'actions') actionIndex = 0;
+  }
   await renderCurrent();
 }
 
