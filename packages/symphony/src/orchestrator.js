@@ -91,6 +91,7 @@ export class SymphonyService {
     running = new Map();
     claimed = new Set();
     awaiting_completion = new Map();
+    completion_workspace_managers = new Map();
     retry_attempts = new Map();
     completed = new Set();
     pending_exits = new Set();
@@ -176,6 +177,7 @@ export class SymphonyService {
         this.running.clear();
         this.claimed.clear();
         this.awaiting_completion.clear();
+        this.completion_workspace_managers.clear();
         this.workflow_manager.stop_watching();
         if (this.http_server) {
             await new Promise((resolve, reject) => {
@@ -478,6 +480,7 @@ export class SymphonyService {
                     evidence_recorded: false,
                     last_error: `Completion handoff issue id ${handoff.issue_id ?? 'missing'} does not match ${issue.id}.`,
                 });
+                this.completion_workspace_managers.set(issue.id, this.workspace_manager);
                 this.logger.error('completion handoff identity mismatch; dispatch suppressed', {
                     issue_id: issue.id,
                     issue_identifier: issue.identifier,
@@ -486,6 +489,7 @@ export class SymphonyService {
                 return true;
             }
             this.awaiting_completion.set(issue.id, handoff);
+            this.completion_workspace_managers.set(issue.id, this.workspace_manager);
             if (!handoff.evidence_recorded &&
                 (handoff.comment_attempts ?? 0) < MAX_EVIDENCE_HANDOFF_ATTEMPTS &&
                 handoff.handoff) {
@@ -529,6 +533,7 @@ export class SymphonyService {
                 comment_attempts: 0,
                 last_error: message,
             });
+            this.completion_workspace_managers.set(issue.id, this.workspace_manager);
             this.logger.error('completion handoff could not be restored; dispatch suppressed', {
                 issue_id: issue.id,
                 issue_identifier: issue.identifier,
@@ -551,26 +556,30 @@ export class SymphonyService {
         return this.current_config.tracker.terminal_states.some((entry) => normalize_state(entry) === normalized);
     }
     async dispatch_issue(issue, attempt) {
+        const workspace_manager = this.workspace_manager;
+        const tracker = this.tracker;
         let claimed_issue = issue;
-        if (typeof this.tracker.claim_issue === 'function') {
-            claimed_issue = await this.tracker.claim_issue(issue);
+        if (typeof tracker.claim_issue === 'function') {
+            claimed_issue = await tracker.claim_issue(issue);
         }
         let workspace;
         try {
-            workspace = await this.workspace_manager.ensure_workspace(claimed_issue.identifier);
+            workspace = await workspace_manager.ensure_workspace(claimed_issue.identifier);
         }
         catch (error) {
-            if (typeof this.tracker.release_issue === 'function') {
-                await this.tracker.release_issue(claimed_issue, 'workspace setup failed');
+            if (typeof tracker.release_issue === 'function') {
+                await tracker.release_issue(claimed_issue, 'workspace setup failed');
             }
             throw error;
         }
-        const run = this.worker_factory(claimed_issue, attempt, this.current_definition.prompt_template, this.current_config, this.tracker, this.workspace_manager, this.logger, (event) => this.handle_codex_event(claimed_issue.id, event));
+        const run = this.worker_factory(claimed_issue, attempt, this.current_definition.prompt_template, this.current_config, tracker, workspace_manager, this.logger, (event) => this.handle_codex_event(claimed_issue.id, event));
         this.running.set(claimed_issue.id, {
             entry: to_running_entry(claimed_issue, attempt),
             run,
             workspace_path: workspace.path,
             workspace_metadata_path: workspace.metadata_path,
+            workspace_manager,
+            tracker,
             completion_mode: this.current_config.completion.mode,
             stop_behavior: { mode: 'default' },
         });
@@ -658,11 +667,13 @@ export class SymphonyService {
         const state = this.running.get(issue_id);
         if (!state)
             return;
+        const workspace_manager = state.workspace_manager ?? this.workspace_manager;
+        const tracker = state.tracker ?? this.tracker;
         this.running.delete(issue_id);
         this.codex_totals.seconds_running_ended += Math.max(0, (now_ms() - Date.parse(state.entry.started_at)) / 1000);
         if (state.stop_behavior.mode === 'release') {
             if (state.stop_behavior.cleanup_workspace) {
-                await this.workspace_manager.remove_workspace(state.entry.issue.identifier);
+                await workspace_manager.remove_workspace(state.entry.issue.identifier);
             }
             this.claimed.delete(issue_id);
             return;
@@ -682,6 +693,7 @@ export class SymphonyService {
             this.completed.add(issue_id);
             const completion_mode = state.completion_mode ?? this.current_config.completion.mode;
             if (completion_mode === 'evidence_only') {
+                this.completion_workspace_managers.set(issue_id, workspace_manager);
                 const handoff = evidence_only_handoff(state.entry.issue, state, result);
                 let completion_state = {
                     issue_id,
@@ -693,7 +705,7 @@ export class SymphonyService {
                     last_error: null,
                     handoff,
                 };
-                completion_state = await this.persist_completion_handoff(state.entry.issue, completion_state);
+                completion_state = await this.persist_completion_handoff(state.entry.issue, completion_state, workspace_manager, tracker);
                 this.awaiting_completion.set(issue_id, completion_state);
                 this.claimed.delete(issue_id);
                 const evidence_result = await this.record_evidence_handoff(state.entry.issue, handoff, 0, async (attempt, error) => {
@@ -703,16 +715,16 @@ export class SymphonyService {
                         comment_attempts: attempt,
                         last_error: error,
                     };
-                    completion_state = await this.persist_completion_handoff(state.entry.issue, completion_state);
+                    completion_state = await this.persist_completion_handoff(state.entry.issue, completion_state, workspace_manager, tracker);
                     this.awaiting_completion.set(issue_id, completion_state);
-                });
+                }, tracker);
                 completion_state = {
                     ...completion_state,
                     evidence_recorded: evidence_result.recorded,
                     comment_attempts: evidence_result.attempts,
                     last_error: evidence_result.error,
                 };
-                completion_state = await this.persist_completion_handoff(state.entry.issue, completion_state);
+                completion_state = await this.persist_completion_handoff(state.entry.issue, completion_state, workspace_manager, tracker);
                 this.awaiting_completion.set(issue_id, completion_state);
                 if (evidence_result.recorded) {
                     this.logger.info('worker completed with evidence-only handoff', {
@@ -733,9 +745,9 @@ export class SymphonyService {
                 }
                 return;
             }
-            if (typeof this.tracker.comment_issue === 'function') {
+            if (typeof tracker.comment_issue === 'function') {
                 try {
-                    await this.tracker.comment_issue(
+                    await tracker.comment_issue(
                         state.entry.issue.id,
                         'Warning: legacy worker-exit completion bypassed the canonical evidence gate. Migrate this workflow to evidence_only.',
                     );
@@ -753,13 +765,13 @@ export class SymphonyService {
                 issue_identifier: state.entry.issue.identifier,
                 completion_mode,
             });
-            if (typeof this.tracker.complete_issue === 'function') {
+            if (typeof tracker.complete_issue === 'function') {
                 try {
-                    await this.tracker.complete_issue(state.entry.issue, {
+                    await tracker.complete_issue(state.entry.issue, {
                         turn_count: result.turn_count,
                         message: result.final_message ?? state.entry.last_codex_message ?? null,
                     });
-                    await this.workspace_manager.remove_workspace(state.entry.issue.identifier);
+                    await workspace_manager.remove_workspace(state.entry.issue.identifier);
                     this.claimed.delete(issue_id);
                     return;
                 }
@@ -785,12 +797,12 @@ export class SymphonyService {
     evidence_handoff_retry_delay_ms(attempt) {
         return 1000 * 2 ** Math.max(0, attempt - 1);
     }
-    async persist_completion_handoff(issue, completion_state) {
-        if (typeof this.workspace_manager.write_completion_handoff !== 'function') {
+    async persist_completion_handoff(issue, completion_state, workspace_manager = this.workspace_manager, tracker = this.tracker) {
+        if (typeof workspace_manager.write_completion_handoff !== 'function') {
             return completion_state;
         }
         try {
-            return await this.workspace_manager.write_completion_handoff(issue.identifier, completion_state);
+            return await workspace_manager.write_completion_handoff(issue.identifier, completion_state);
         }
         catch (error) {
             const message = error instanceof Error ? error.message : String(error);
@@ -805,9 +817,9 @@ export class SymphonyService {
                     persistence_error: message,
                 };
             }
-            if (typeof this.tracker.handoff_issue === 'function') {
+            if (typeof tracker.handoff_issue === 'function') {
                 try {
-                    const handed_off = await this.tracker.handoff_issue(issue);
+                    const handed_off = await tracker.handoff_issue(issue);
                     this.logger.warn('completion handoff failed closed through Linear state', {
                         issue_id: issue.id,
                         issue_identifier: issue.identifier,
@@ -829,15 +841,15 @@ export class SymphonyService {
             throw new Error(`Completion handoff persistence failed without a durable Linear fallback: ${message}`);
         }
     }
-    async record_evidence_handoff(issue, handoff, completed_attempts = 0, on_failed_attempt = null) {
-        if (typeof this.tracker.comment_issue !== 'function') {
+    async record_evidence_handoff(issue, handoff, completed_attempts = 0, on_failed_attempt = null, tracker = this.tracker) {
+        if (typeof tracker.comment_issue !== 'function') {
             return { recorded: true, attempts: completed_attempts, error: null };
         }
         const body = `Symphony evidence-only handoff:\n\n\`\`\`json\n${JSON.stringify(handoff, null, 2)}\n\`\`\``;
         let last_error = null;
         for (let attempt = completed_attempts + 1; attempt <= MAX_EVIDENCE_HANDOFF_ATTEMPTS; attempt += 1) {
             try {
-                await this.tracker.comment_issue(issue.id, body);
+                await tracker.comment_issue(issue.id, body);
                 return { recorded: true, attempts: attempt, error: null };
             }
             catch (error) {
@@ -987,8 +999,10 @@ export class SymphonyService {
                 continue;
             }
             try {
-                await this.workspace_manager.remove_workspace(handoff.issue_identifier ?? issue.identifier);
+                const workspace_manager = this.completion_workspace_managers.get(issue.id) ?? this.workspace_manager;
+                await workspace_manager.remove_workspace(handoff.issue_identifier ?? issue.identifier);
                 this.awaiting_completion.delete(issue.id);
+                this.completion_workspace_managers.delete(issue.id);
                 this.completed.delete(issue.id);
                 this.logger.info('terminal completion handoff reconciled', {
                     issue_id: issue.id,
@@ -1053,6 +1067,7 @@ export class SymphonyService {
                 fail_closed_state: issue.state,
                 last_error: 'Restored from the Linear fallback handoff state; the durable marker was unavailable.',
             });
+            this.completion_workspace_managers.set(issue.id, this.workspace_manager);
             this.logger.info('restored Linear fallback completion handoff', {
                 issue_id: issue.id,
                 issue_identifier: issue.identifier,

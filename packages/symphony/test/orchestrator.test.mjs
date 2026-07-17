@@ -180,6 +180,98 @@ test('worker exit uses the completion mode captured before a workflow reload', a
   assert.equal(service.awaiting_completion.has(issue.id), true);
 });
 
+test('completion handoff keeps dispatch dependencies captured before a workflow reload', async () => {
+  const service = createService();
+  const issue = createIssue({ id: 'issue-workspace-reload', identifier: 'CRE-WORKSPACE-RELOAD', state: 'claimed' });
+  const calls = {
+    dispatchWrites: 0,
+    dispatchRemoves: 0,
+    dispatchComments: 0,
+    reloadWrites: 0,
+    reloadRemoves: 0,
+    reloadComments: 0,
+  };
+  const dispatchTracker = {
+    async comment_issue() {
+      calls.dispatchComments += 1;
+    },
+  };
+  const dispatchWorkspaceManager = {
+    async write_completion_handoff(_identifier, state) {
+      calls.dispatchWrites += 1;
+      return {
+        ...state,
+        workspace_path: '/tmp/symphony-old/CRE-WORKSPACE-RELOAD',
+        workspace_metadata_path: '/tmp/symphony-old/.metadata/CRE-WORKSPACE-RELOAD.json',
+      };
+    },
+    async remove_workspace(identifier) {
+      assert.equal(identifier, issue.identifier);
+      calls.dispatchRemoves += 1;
+    },
+  };
+  service.workspace_manager = {
+    async write_completion_handoff(_identifier, state) {
+      calls.reloadWrites += 1;
+      return {
+        ...state,
+        workspace_path: '/tmp/symphony-new/CRE-WORKSPACE-RELOAD',
+        workspace_metadata_path: '/tmp/symphony-new/.metadata/CRE-WORKSPACE-RELOAD.json',
+      };
+    },
+    async remove_workspace() {
+      calls.reloadRemoves += 1;
+    },
+  };
+  service.started = true;
+  service.tracker = {
+    async comment_issue() {
+      calls.reloadComments += 1;
+    },
+    async fetch_issue_states_by_ids(ids) {
+      assert.deepEqual(ids, [issue.id]);
+      return [{ ...issue, state: 'done' }];
+    },
+  };
+  service.claimed.add(issue.id);
+  service.running.set(issue.id, {
+    entry: {
+      issue,
+      started_at: new Date().toISOString(),
+      retry_attempt: null,
+      turn_count: 1,
+      last_codex_message: 'Worker started in the old workspace root.',
+    },
+    run: {},
+    workspace_path: '/tmp/symphony-old/CRE-WORKSPACE-RELOAD',
+    workspace_metadata_path: '/tmp/symphony-old/.metadata/CRE-WORKSPACE-RELOAD.json',
+    workspace_manager: dispatchWorkspaceManager,
+    tracker: dispatchTracker,
+    completion_mode: 'evidence_only',
+    stop_behavior: { mode: 'default' },
+  });
+
+  await service.on_worker_exit(issue.id, {
+    status: 'completed',
+    turn_count: 1,
+    final_message: 'Ready for review in the old workspace root.',
+  });
+
+  assert.equal(calls.dispatchWrites, 2);
+  assert.equal(calls.dispatchComments, 1);
+  assert.equal(calls.reloadWrites, 0);
+  assert.equal(calls.reloadComments, 0);
+  assert.equal(
+    service.awaiting_completion.get(issue.id).workspace_path,
+    '/tmp/symphony-old/CRE-WORKSPACE-RELOAD',
+  );
+
+  await service.reconcile_running_issues();
+
+  assert.equal(calls.dispatchRemoves, 1);
+  assert.equal(calls.reloadRemoves, 0);
+});
+
 test('evidence-only handoff retries a transient comment failure without rerunning the worker', async () => {
   const service = createService();
   const issue = createIssue({ id: 'issue-transient', identifier: 'CRE-TRANSIENT', state: 'claimed' });
