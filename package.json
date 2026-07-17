@@ -309,8 +309,6 @@
     "deploy:phase-3-notion-mcp": "node scripts/run-wrangler.mjs --cwd packages/halfdozen-notion-mcp/worker deploy --config wrangler.phase-3.toml",
     "deploy:system-studio-notion-mcp": "node scripts/run-wrangler.mjs --cwd packages/halfdozen-notion-mcp/worker deploy --config wrangler.system-studio.toml",
     "deploy:three-six-zero-notion-mcp": "node scripts/run-wrangler.mjs --cwd packages/halfdozen-notion-mcp/worker deploy --config wrangler.three-six-zero.toml",
-    "agency:auth0:seed": "bash scripts/agency-auth0-seed-infisical.sh",
-    "agency:auth0:sync": "bash scripts/agency-pages-sync-auth0-from-infisical.sh",
     "auth0:export": "bash scripts/auth0-export.sh",
     "delivery:project": "node scripts/delivery-update.mjs",
     "delivery:abundance": "node scripts/delivery-update.mjs --project abundance",

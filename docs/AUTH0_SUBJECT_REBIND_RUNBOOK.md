@@ -1,5 +1,9 @@
 # Auth0 Subject Rebind Runbook
 
+> Retired historical migration artifact. Use
+> [`IDENTITY_SUBJECT_REBIND_RUNBOOK`](./IDENTITY_SUBJECT_REBIND_RUNBOOK.md) for
+> current CREATE SOMETHING Identity incidents.
+
 Use this runbook when an Auth0 user is deleted or recreated and later returns with the same email but a different Auth0 `sub`.
 
 This runbook implements [policy.auth0-subject-rebind-governance.v1](./policies/v1/policy.auth0-subject-rebind-governance.v1.md).

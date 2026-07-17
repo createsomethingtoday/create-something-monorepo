@@ -156,8 +156,8 @@
 						</select>
 					</label>
 					<label>
-						<span>Auth Subject</span>
-						<input bind:value={form.auth_subject} placeholder="auth0|..." />
+						<span>Identity Subject</span>
+						<input bind:value={form.auth_subject} placeholder="identity-user-id" />
 					</label>
 					<label>
 						<span>Email</span>

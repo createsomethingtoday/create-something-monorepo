@@ -63,9 +63,9 @@ The Hub remains the MCP resource server at `/mcp`.
 
 ## Identity Rules
 
-1. The `.agency` portal login continues to be Auth0.
-2. The interactive password entered on the OAuth authorize page is an `identity-worker` credential, not an Auth0 password.
-3. That OAuth login password is separate from the managed bearer token and separate from the Auth0 session.
+1. The `.agency` portal login uses CREATE SOMETHING Identity.
+2. The interactive password entered on the OAuth authorize page is a distinct `identity-worker` host credential, not the portal password.
+3. That OAuth login password is separate from the managed bearer token and separate from the Identity portal session.
 4. `.agency` should show the linked MCP email and account or tenant context for the OAuth login credential.
 5. `.agency` should allow the entitled user to set or rotate that password without revealing any previously stored plaintext password.
 6. If the system generates a temporary password, it may be revealed only once at issuance or reset time.

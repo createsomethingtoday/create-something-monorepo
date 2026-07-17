@@ -1,8 +1,11 @@
 # policy.auth0-subject-rebind-governance.v1
 
-- Status: `draft`
+- Status: `deprecated`
 - Owner: `CREATE SOMETHING identity + support + partner operations`
 - Effective date: `TBD`
+
+> Historical migration artifact only. Current incidents are governed by
+> [`policy.identity-subject-rebind-governance.v1`](./policy.identity-subject-rebind-governance.v1.md).
 
 ## Purpose
 
