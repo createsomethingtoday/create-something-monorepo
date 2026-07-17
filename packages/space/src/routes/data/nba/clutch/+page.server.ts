@@ -1,5 +1,6 @@
 import type { ClutchStats } from '$lib/nba/clutch-calculator';
 import { fetchGamesWithStats } from '$lib/nba/api';
+import { env } from '$env/dynamic/private';
 import type { PageServerLoad } from './$types';
 import type { Game } from '$lib/nba/types';
 
@@ -77,9 +78,10 @@ export const load: PageServerLoad = async ({ url, depends }) => {
 	depends('clutch:data');
 
 	const date = url.searchParams.get('date') || new Date().toISOString().split('T')[0];
+	const proxyUrl = env.NBA_PROXY_URL;
 
 	// Fetch games with box score stats
-	const result = await fetchGamesWithStats(date);
+	const result = await fetchGamesWithStats(date, proxyUrl);
 
 	// Check if any games are live
 	const hasLiveGames = result.success
@@ -100,7 +102,7 @@ export const load: PageServerLoad = async ({ url, depends }) => {
 		for (const game of clutchGames) {
 			// Get box scores if available
 			const boxScoreResult = await import('$lib/nba/api').then(m =>
-				m.fetchGameBoxScore(game.id)
+				m.fetchGameBoxScore(game.id, proxyUrl)
 			);
 
 			if (!boxScoreResult.success) continue;
