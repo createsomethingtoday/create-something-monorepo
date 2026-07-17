@@ -86,12 +86,11 @@ its Identity connector or trusted hub bridge remain untouched.
 - The Worker never treats the opaque `Authorization` bearer or an unsigned
   forwarded email header as reviewer identity.
 
-The team issuer has been read back through its live JWKS endpoint. The
-application-specific audience remains intentionally absent until the Access
-application exists and its value has been read back:
+The Webflow-owned app assertion has been read back from the authenticated
+`wf.app` connector and is pinned to its exact issuer and audience:
 
-- `CF_ACCESS_TEAM_DOMAIN` — `https://createsomething.cloudflareaccess.com`.
-- `CF_ACCESS_AUD` — stable Application Audience tag for the dedicated-hostname app.
+- `CF_ACCESS_TEAM_DOMAIN` — `https://webflow.cloudflareaccess.com`.
+- `CF_ACCESS_AUD` — `3b4a38c7c99ec7127bcbb99d9c8aae7b0011a51370bff31b7085385e1a2807ba`.
 
 Promotion order: create/read back the dedicated-hostname Access application and
 AUD, deploy the tested Template Review Worker plus its fail-closed proxy, then

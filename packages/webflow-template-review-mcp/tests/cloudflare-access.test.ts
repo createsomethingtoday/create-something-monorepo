@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 import {
@@ -18,6 +19,12 @@ import {
   applyReviewerAuthEmailAliases,
   parseReviewerDirectory,
 } from '../src/reviewer-directory.js';
+
+test('production config trusts the signed Webflow-owned wf.app Access boundary', () => {
+  const wranglerConfig = readFileSync(new URL('../worker/wrangler.toml', import.meta.url), 'utf8');
+  assert.match(wranglerConfig, /CF_ACCESS_TEAM_DOMAIN = "https:\/\/webflow\.cloudflareaccess\.com"/);
+  assert.match(wranglerConfig, /CF_ACCESS_AUD = "3b4a38c7c99ec7127bcbb99d9c8aae7b0011a51370bff31b7085385e1a2807ba"/);
+});
 
 const TEAM_DOMAIN = 'https://create-something.cloudflareaccess.com';
 const POLICY_AUD = 'template-review-access-audience';
