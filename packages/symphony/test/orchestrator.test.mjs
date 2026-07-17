@@ -267,6 +267,48 @@ test('dispatch halts when both marker persistence and Linear handoff fail', asyn
   assert.equal(service.should_dispatch(issue, false), false);
 });
 
+test('dispatch settlement surfaces fatal completion-handoff failures to once mode', async () => {
+  const service = createService();
+  const issue = createIssue({ id: 'issue-fatal-exit', identifier: 'CRE-FATAL-EXIT', state: 'claimed' });
+  service.started = true;
+  service.current_definition = { prompt_template: 'test prompt' };
+  service.tracker = {
+    async claim_issue(received) {
+      return received;
+    },
+    async handoff_issue() {
+      throw new Error('Linear state update failed');
+    },
+  };
+  service.workspace_manager = {
+    async ensure_workspace() {
+      return {
+        path: '/tmp/symphony/CRE-FATAL-EXIT',
+        metadata_path: '/tmp/symphony/.metadata/CRE-FATAL-EXIT.json',
+      };
+    },
+    async write_completion_handoff() {
+      throw new Error('metadata directory is read-only');
+    },
+  };
+  service.worker_factory = () => ({
+    promise: Promise.resolve({
+      status: 'completed',
+      turn_count: 1,
+      final_message: 'Worker completed.',
+    }),
+  });
+
+  await service.dispatch_issue(issue, null);
+
+  await assert.rejects(
+    () => service.drain_until_idle(),
+    /persistence and Linear fallback both failed/,
+  );
+  assert.equal(service.dispatch_halted, true);
+  assert.match(service.fatal_error.message, /persistence and Linear fallback both failed/);
+});
+
 test('evidence-only handoff keeps dispatch suppressed when comment retries are exhausted', async () => {
   const service = createService();
   const issue = createIssue({ id: 'issue-outage', identifier: 'CRE-OUTAGE', state: 'claimed' });

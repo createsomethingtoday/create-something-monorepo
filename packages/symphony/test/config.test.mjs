@@ -47,6 +47,28 @@ test('validate_dispatch_config rejects active completion handoff states', () => 
   );
 });
 
+test('validate_dispatch_config ignores the unused handoff state in legacy mode', () => {
+  const config = resolve_service_config({
+    path: '/tmp/workflow.md',
+    config: {
+      tracker: {
+        kind: 'linear',
+        endpoint: 'https://api.linear.app/graphql',
+        api_key: 'test-token',
+        project_slug: 'test-project',
+        active_states: ['In Review'],
+      },
+      completion: {
+        mode: 'worker_exit_legacy',
+        handoff_state: 'In Review',
+      },
+    },
+    prompt_template: 'test prompt',
+  });
+
+  assert.doesNotThrow(() => validate_dispatch_config(config));
+});
+
 test('validate_dispatch_config rejects unknown completion modes', () => {
   const config = resolve_service_config({
     path: '/tmp/workflow.md',

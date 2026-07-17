@@ -105,6 +105,7 @@ export class SymphonyService {
     tick_running = false;
     pending_refresh = false;
     dispatch_halted = false;
+    fatal_error = null;
     started = false;
     http_server = null;
     requested_port;
@@ -237,6 +238,7 @@ export class SymphonyService {
             retrying,
             awaiting_completion,
             dispatch_halted: this.dispatch_halted,
+            fatal_error: this.fatal_error?.message ?? null,
             codex_totals: {
                 input_tokens: this.codex_totals.input_tokens,
                 output_tokens: this.codex_totals.output_tokens,
@@ -578,14 +580,14 @@ export class SymphonyService {
         }
         let exit_settlement;
         exit_settlement = run.promise
-            .then((result) => this.on_worker_exit(claimed_issue.id, result))
-            .catch((error) => this.on_worker_exit(claimed_issue.id, {
+            .then((result) => this.on_worker_exit(claimed_issue.id, result), (error) => this.on_worker_exit(claimed_issue.id, {
             status: 'failed',
-            error: error.message,
+            error: error instanceof Error ? error.message : String(error),
             turn_count: this.running.get(claimed_issue.id)?.entry.turn_count ?? 0,
             issue: claimed_issue,
             final_message: null,
         }))
+            .catch((error) => this.handle_worker_exit_failure(claimed_issue, error))
             .finally(() => {
             this.pending_exits.delete(exit_settlement);
         });
@@ -639,6 +641,16 @@ export class SymphonyService {
         if (state.entry.recent_events.length > 25) {
             state.entry.recent_events.shift();
         }
+    }
+    handle_worker_exit_failure(issue, error) {
+        const fatal_error = error instanceof Error ? error : new Error(String(error));
+        this.dispatch_halted = true;
+        this.fatal_error = fatal_error;
+        this.logger.error('worker completion handling failed; dispatch halted', {
+            issue_id: issue.id,
+            issue_identifier: issue.identifier,
+            error: fatal_error.message,
+        });
     }
     async on_worker_exit(issue_id, result) {
         const state = this.running.get(issue_id);
@@ -1013,6 +1025,9 @@ export class SymphonyService {
     async drain_until_idle() {
         while (this.running.size > 0 || this.retry_attempts.size > 0 || this.pending_exits.size > 0 || this.tick_running) {
             await new Promise((resolve) => setTimeout(resolve, 25));
+        }
+        if (this.fatal_error) {
+            throw this.fatal_error;
         }
     }
     compute_seconds_running() {
