@@ -20,6 +20,11 @@ import {
 	type ScoreboardMetadata,
 	type ScoreboardReadiness,
 } from './scoreboard';
+import {
+	fetchRecentHistory,
+	readArchivedGamePayload,
+	type RecentHistoryResult,
+} from './archive';
 
 export interface Env {
 	CACHE: KVNamespace;
@@ -220,6 +225,73 @@ async function handleGamesToday(env: Env, correlationId: string): Promise<Respon
 	}
 }
 
+function isValidIsoDate(value: string): boolean {
+	if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+	const parsed = new Date(`${value}T12:00:00Z`);
+	return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+}
+
+async function handleRecentHistory(
+	url: URL,
+	env: Env,
+	correlationId: string
+): Promise<Response> {
+	const before = url.searchParams.get('before') ?? formatPacificDate(new Date());
+	if (!isValidIsoDate(before)) {
+		return errorResponse('before must be a valid YYYY-MM-DD date', correlationId, 400);
+	}
+
+	const limitValue = url.searchParams.get('limit') ?? '5';
+	const limit = Number(limitValue);
+	if (!Number.isInteger(limit) || limit < 1 || limit > 12) {
+		return errorResponse('limit must be an integer between 1 and 12', correlationId, 400);
+	}
+	const cacheKey = `nba:history:v1:${before}:${limit}`;
+	const lastGoodKey = `nba:history:v1:last-good:${before}:${limit}`;
+	try {
+		const cached = await env.CACHE.get<RecentHistoryResult>(cacheKey, 'json');
+		if (cached) return successResponse(cached, correlationId, true);
+	} catch {
+		// Cache is an optimization; continue to archive/provider retrieval.
+	}
+
+	try {
+		const history = await fetchRecentHistory(env.DB, {
+			before,
+			limit,
+			fetchImpl: fetch,
+			espnApiBaseUrl:
+				env.ESPN_API_BASE_URL ||
+				'https://site.api.espn.com/apis/site/v2/sports/basketball/nba',
+		});
+		try {
+			await Promise.all([
+				env.CACHE.put(cacheKey, JSON.stringify(history), { expirationTtl: 3600 }),
+				env.CACHE.put(lastGoodKey, JSON.stringify(history), { expirationTtl: 604800 }),
+			]);
+		} catch {
+			// A successful archive read remains usable even if cache writes fail.
+		}
+		return successResponse(history, correlationId, false);
+	} catch (error) {
+		const message = error instanceof Error ? error.message : 'Unknown history error';
+		try {
+			const lastGood = await env.CACHE.get<RecentHistoryResult>(lastGoodKey, 'json');
+			if (lastGood) {
+				return successResponse(
+					{ ...lastGood, degraded: true, stale: true },
+					correlationId,
+					true
+				);
+			}
+		} catch {
+			// Fall through to the truthful unavailable response.
+		}
+		console.error(`[${correlationId}] Recent history error:`, message);
+		return errorResponse(`Recent history unavailable: ${message}`, correlationId, 503);
+	}
+}
+
 async function handleGamesByDate(
 	date: string,
 	env: Env,
@@ -283,6 +355,19 @@ async function handleGamePBP(
 	correlationId: string
 ): Promise<Response> {
 	try {
+		try {
+			const archived = await readArchivedGamePayload(env.DB, gameId, 'play-by-play');
+			if (archived) {
+				console.log(`[${correlationId}] Archived play-by-play hit: ${gameId}`);
+				return successResponse(archived.data, correlationId, true);
+			}
+		} catch (error) {
+			console.warn(
+				`[${correlationId}] Archived play-by-play lookup unavailable for ${gameId}; using live source`,
+				error instanceof Error ? error.message : error
+			);
+		}
+
 		// NBA.com play-by-play endpoint
 		const url = `${env.NBA_API_BASE_URL}/liveData/playbyplay/playbyplay_${gameId}.json`;
 		const cacheKey = `nba:pbp:${gameId}`;
@@ -302,6 +387,19 @@ async function handleGameBoxScore(
 	correlationId: string
 ): Promise<Response> {
 	try {
+		try {
+			const archived = await readArchivedGamePayload(env.DB, gameId, 'box-score');
+			if (archived) {
+				console.log(`[${correlationId}] Archived box score hit: ${gameId}`);
+				return successResponse(archived.data, correlationId, true);
+			}
+		} catch (error) {
+			console.warn(
+				`[${correlationId}] Archived box score lookup unavailable for ${gameId}; using live source`,
+				error instanceof Error ? error.message : error
+			);
+		}
+
 		// NBA.com boxscore endpoint
 		const url = `${env.NBA_API_BASE_URL}/liveData/boxscore/boxscore_${gameId}.json`;
 		const cacheKey = `nba:boxscore:${gameId}`;
@@ -665,6 +763,10 @@ export default {
 
 		if (path === '/games/today') {
 			return handleGamesToday(env, correlationId);
+		}
+
+		if (path === '/games/recent') {
+			return handleRecentHistory(url, env, correlationId);
 		}
 
 		// /games/:date (YYYY-MM-DD format)

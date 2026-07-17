@@ -6,7 +6,7 @@
  */
 
 import type { PageServerLoad } from './$types';
-import { fetchLiveGames, fetchGamePBP } from '$lib/nba/api';
+import { fetchLiveGames, fetchGamePBP, fetchRecentHistory } from '$lib/nba/api';
 import { calculateFGDifferential } from '$lib/nba/calculations';
 import type { Game } from '$lib/nba/types';
 import { deriveScoreboardView, formatNbaDate } from '$lib/nba/scoreboard-state';
@@ -74,7 +74,11 @@ export const load: PageServerLoad = async ({ url }) => {
 	const nbaToday = formatNbaDate(new Date());
 	const currentDate = url.searchParams.get('date') || nbaToday;
 	const proxyUrl = env.NBA_PROXY_URL;
-	const result = await fetchLiveGames(currentDate, proxyUrl);
+	const [result, recentHistoryResult] = await Promise.all([
+		fetchLiveGames(currentDate, proxyUrl),
+		fetchRecentHistory(nbaToday, 3, proxyUrl),
+	]);
+	const recentHistory = recentHistoryResult.success ? recentHistoryResult.data : null;
 
 	if (!result.success) {
 		const view = deriveScoreboardView({
@@ -97,6 +101,7 @@ export const load: PageServerLoad = async ({ url }) => {
 			nbaToday,
 			scoreboardState: view.state,
 			dateRelation: view.dateRelation,
+			recentHistory,
 		};
 	}
 
@@ -121,6 +126,7 @@ export const load: PageServerLoad = async ({ url }) => {
 			nbaToday,
 			scoreboardState: view.state,
 			dateRelation: view.dateRelation,
+			recentHistory,
 		};
 	}
 
@@ -141,5 +147,6 @@ export const load: PageServerLoad = async ({ url }) => {
 		nbaToday,
 		scoreboardState: view.state,
 		dateRelation: view.dateRelation,
+		recentHistory,
 	};
 };

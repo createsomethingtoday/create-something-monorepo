@@ -12,6 +12,7 @@
   import { GameSelector } from '$lib/experiments/nba-live';
   import { GameHighlightCard } from '$lib/experiments/nba-live';
   import { DateNavigation } from '$lib/experiments/nba-live';
+  import { RecentHistory } from '$lib/experiments/nba-live';
   import { selectGameOfTheNight } from '$lib/nba/calculations';
   import {
     Zap,
@@ -291,6 +292,10 @@
   </div>
 </section>
 
+{#if data.games.length === 0 && data.recentHistory?.slates.length}
+  <RecentHistory history={data.recentHistory} />
+{/if}
+
 <!-- Game of the Night -->
 {#if gameOfTheNight}
   <section class="highlight-section">
@@ -326,7 +331,10 @@
       <h3 class="section-label">Choose an analysis</h3>
       <div class="analysis-grid">
         {#each analysisOptions as option}
-          <a href="/data/nba/{option.slug}?gameId={selectedGame.id}" class="analysis-card">
+          <a
+            href="/data/nba/{option.slug}?gameId={selectedGame.id}&date={data.currentDate}"
+            class="analysis-card"
+          >
             <div class="card-header">
               <option.icon size={20} class="card-icon" />
               <h4 class="card-title">{option.title}</h4>

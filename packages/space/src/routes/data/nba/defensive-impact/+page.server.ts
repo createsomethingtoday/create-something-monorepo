@@ -7,6 +7,7 @@
  */
 
 import type { PageServerLoad } from './$types';
+import { env } from '$env/dynamic/private';
 import { fetchGamePBP, fetchGameBoxScore, fetchPlayerBaselines, fetchLiveGames, extractShots } from '$lib/nba/api';
 import { calculateTeamExpectedPoints } from '$lib/nba/calculations';
 import type { Player, Shot, PlayerBaseline, Game } from '$lib/nba/types';
@@ -22,6 +23,7 @@ interface TeamDefensiveStats {
 export const load: PageServerLoad = async ({ url }) => {
 	const gameId = url.searchParams.get('gameId');
 	const date = url.searchParams.get('date') || new Date().toISOString().split('T')[0];
+	const proxyUrl = env.NBA_PROXY_URL;
 
 	if (!gameId) {
 		return {
@@ -44,7 +46,7 @@ export const load: PageServerLoad = async ({ url }) => {
 	}
 
 	// Fetch game info to check status
-	const gamesResult = await fetchLiveGames(date);
+	const gamesResult = await fetchLiveGames(date, proxyUrl);
 	const game = gamesResult.success
 		? gamesResult.data.find((g) => g.id === gameId)
 		: null;
@@ -67,9 +69,9 @@ export const load: PageServerLoad = async ({ url }) => {
 
 	// Fetch all data in parallel
 	const [pbpResult, boxscoreResult, baselinesResult] = await Promise.all([
-		fetchGamePBP(gameId),
-		fetchGameBoxScore(gameId),
-		fetchPlayerBaselines(),
+		fetchGamePBP(gameId, proxyUrl),
+		fetchGameBoxScore(gameId, proxyUrl),
+		fetchPlayerBaselines(undefined, proxyUrl),
 	]);
 
 	if (!pbpResult.success) {

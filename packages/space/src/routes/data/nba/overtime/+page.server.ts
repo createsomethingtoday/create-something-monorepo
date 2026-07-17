@@ -1,4 +1,5 @@
 import { fetchGamesWithStats } from '$lib/nba/api';
+import { env } from '$env/dynamic/private';
 import type { OvertimeDifferential } from '$lib/nba/overtime-analyzer';
 import type { PageServerLoad } from './$types';
 import type { Game } from '$lib/nba/types';
@@ -91,9 +92,10 @@ export const load: PageServerLoad = async ({ url, depends }) => {
 	depends('overtime:data');
 
 	const date = url.searchParams.get('date') || new Date().toISOString().split('T')[0];
+	const proxyUrl = env.NBA_PROXY_URL;
 
 	// Fetch games with stats
-	const result = await fetchGamesWithStats(date);
+	const result = await fetchGamesWithStats(date, proxyUrl);
 
 	// Check if any games are live
 	const hasLiveGames = result.success
