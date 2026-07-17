@@ -20,6 +20,7 @@ import type {
 	PlayerBaseline,
 	Shot,
 	ShotZone,
+	NBADataMetadata,
 } from './types';
 
 // Configuration
@@ -66,26 +67,33 @@ async function fetchWithTimeout<T>(
 
 		clearTimeout(timeoutId);
 
-		if (!response.ok) {
-			const isRetryable = response.status >= 500 || response.status === 429;
-			return {
-				success: false,
-				error: createError(
-					`HTTP ${response.status}: ${response.statusText}`,
-					correlationId,
-					isRetryable
-				),
-			};
-		}
-
-		const json = (await response.json()) as {
-			success: boolean;
+		const responseText = await response.text();
+		let json: {
+			success?: boolean;
 			data?: T;
 			error?: string;
 			correlationId?: string;
 			cached?: boolean;
 			timestamp?: string;
-		};
+			metadata?: NBADataMetadata;
+		} = {};
+		try {
+			json = JSON.parse(responseText) as typeof json;
+		} catch {
+			// Preserve the HTTP status below when an upstream returns non-JSON.
+		}
+
+		if (!response.ok) {
+			const isRetryable = response.status >= 500 || response.status === 429;
+			return {
+				success: false,
+				error: createError(
+					json.error || `HTTP ${response.status}: ${response.statusText}`,
+					json.correlationId || response.headers.get('X-Correlation-ID') || correlationId,
+					isRetryable
+				),
+			};
+		}
 
 		// Proxy returns { success, data, cached, timestamp }
 		if (json.success === false) {
@@ -100,6 +108,7 @@ async function fetchWithTimeout<T>(
 			data: json.data as T,
 			cached: json.cached || false,
 			timestamp: json.timestamp || new Date().toISOString(),
+			metadata: json.metadata,
 		};
 	} catch (error) {
 		clearTimeout(timeoutId);
@@ -205,10 +214,13 @@ function determineShotZone(x: number, y: number, distance: number): ShotZone {
  * Fetch games for a specific date
  * @param date - YYYY-MM-DD format (defaults to today)
  */
-export async function fetchLiveGames(date?: string): Promise<NBAApiResult<Game[]>> {
+export async function fetchLiveGames(
+	date?: string,
+	proxyUrl: string = NBA_PROXY_URL
+): Promise<NBAApiResult<Game[]>> {
 	const correlationId = generateCorrelationId();
 	const endpoint = date ? `/games/${date}` : '/games/today';
-	const result = await fetchWithTimeout<NBAScoreboardResponse>(`${NBA_PROXY_URL}${endpoint}`);
+	const result = await fetchWithTimeout<NBAScoreboardResponse>(`${proxyUrl}${endpoint}`);
 
 	if (!result.success) {
 		console.error('[fetchLiveGames] Failed to fetch games', {
@@ -243,6 +255,8 @@ export async function fetchLiveGames(date?: string): Promise<NBAApiResult<Game[]
 			gameClock: g.gameClock || '',
 			startTime: g.gameTimeUTC,
 			arena: g.arenaName,
+			dataProvider: result.metadata?.source ?? 'nba',
+			analyticsAvailable: result.metadata?.capabilities.advancedAnalytics ?? true,
 		}));
 
 		console.log('[fetchLiveGames] Successfully fetched games', {
@@ -260,6 +274,7 @@ export async function fetchLiveGames(date?: string): Promise<NBAApiResult<Game[]
 			cached: result.cached,
 			timestamp: result.timestamp,
 			gameDate: result.data.scoreboard.gameDate, // Include NBA's game date (Pacific Time)
+			metadata: result.metadata,
 		};
 	} catch (error) {
 		console.error('[fetchLiveGames] Failed to parse games', {
@@ -280,11 +295,12 @@ export async function fetchLiveGames(date?: string): Promise<NBAApiResult<Game[]
  * Fetch play-by-play for a game
  */
 export async function fetchGamePBP(
-	gameId: string
+	gameId: string,
+	proxyUrl: string = NBA_PROXY_URL
 ): Promise<NBAApiResult<PlayByPlayAction[]>> {
 	const correlationId = generateCorrelationId();
 	const result = await fetchWithTimeout<NBAPlayByPlayResponse>(
-		`${NBA_PROXY_URL}/game/${gameId}/pbp`
+		`${proxyUrl}/game/${gameId}/pbp`
 	);
 
 	if (!result.success) {
