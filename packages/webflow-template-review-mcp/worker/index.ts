@@ -383,6 +383,9 @@ export default {
                   teamDomain: env.CF_ACCESS_TEAM_DOMAIN?.trim().replace(/\/+$/, '') || null,
                   audienceConfigured: Boolean(env.CF_ACCESS_AUD?.trim()),
                   configured: Boolean(env.CF_ACCESS_TEAM_DOMAIN?.trim() && env.CF_ACCESS_AUD?.trim()),
+                  trustedTeamDomains: parseTrustedAccessApplications(
+                    env.CF_ACCESS_TRUSTED_APPLICATIONS_JSON,
+                  )?.map((application) => application.teamDomain) ?? [],
                   scopes: [SCOPE_READ, SCOPE_WRITE],
                 },
                 legacy: {
