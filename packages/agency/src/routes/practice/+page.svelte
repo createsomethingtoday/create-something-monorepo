@@ -154,7 +154,7 @@
 	<PerformanceConversionHandoff
 		eyebrow="School + skeptical review"
 		title="Finish with a Practice Receipt, not a certificate."
-		description="Practice produces an inspectable workflow map, authority envelope, test plan, proof bundle, and review verdict. Skeptical review may support, revise, hold, or falsify the thesis; completion never grants portable authority."
+		description="Practice produces an inspectable workflow map, authority envelope, test plan, proof bundle, and review verdict. Skeptical review may support, revise, hold, or falsify the thesis. When you can name the workflow and accountable owner, the mapping-session path is ready."
 		handoff={{
 			owner: 'Accountable practitioner',
 			authority: 'One named workflow only',
@@ -165,6 +165,7 @@
 		{#snippet actions()}
 			<Button href="#practice-workbench">Rehearse the operator journey</Button>
 			<Button href="/proof/marketplace-workflow" variant="secondary">Inspect a bounded proof route</Button>
+			<Button href="/book?source=practice&intent=named-workflow&stage=convert&lane=not_sure" variant="secondary">Request a mapping session</Button>
 		{/snippet}
 	</PerformanceConversionHandoff>
 </main>
