@@ -17,6 +17,9 @@ function createService() {
     completion: {
       mode: 'evidence_only',
     },
+    codex: {
+      stall_timeout_ms: 0,
+    },
   };
   return service;
 }
@@ -116,6 +119,16 @@ test('completed workers hand off evidence without completing Linear or removing 
     evidence_recorded: true,
     comment_attempts: 1,
     last_error: null,
+    handoff: {
+      schema_version: 'symphony-evidence-handoff.v1',
+      issue: issue.identifier,
+      status: 'worker_completed_evidence_only',
+      eligible_for_done: false,
+      workspace_path: '/tmp/symphony/CRE-1300',
+      turn_count: 2,
+      worker_message: 'Targeted tests passed; ready for independent review.',
+      next_decision: 'Inspect the preserved workspace and attach independently verified completion evidence before moving Linear to a terminal state.',
+    },
   });
 });
 
@@ -240,6 +253,86 @@ test('a restarted service restores a durable evidence handoff before dispatch', 
   assert.equal(service.awaiting_completion.has(issue.id), true);
   assert.equal(service.should_dispatch(issue, false), false);
   assert.equal(service.get_issue_snapshot(issue.identifier).status, 'awaiting_completion');
+});
+
+test('a restarted service delivers a crash-only handoff marker to Linear', async () => {
+  const service = createService();
+  const issue = createIssue({ id: 'issue-crash', identifier: 'CRE-CRASH', state: 'claimed' });
+  const calls = { comments: 0, persisted: [] };
+  const marker = {
+    schema_version: 'symphony-evidence-handoff-marker.v1',
+    issue_id: issue.id,
+    issue_identifier: issue.identifier,
+    workspace_path: '/tmp/symphony/CRE-CRASH',
+    workspace_metadata_path: '/tmp/symphony/.metadata/CRE-CRASH.json',
+    evidence_recorded: false,
+    comment_attempts: 0,
+    last_error: null,
+    handoff: {
+      schema_version: 'symphony-evidence-handoff.v1',
+      issue: issue.identifier,
+      status: 'worker_completed_evidence_only',
+      eligible_for_done: false,
+      workspace_path: '/tmp/symphony/CRE-CRASH',
+      turn_count: 1,
+      worker_message: 'Worker completed before Symphony crashed.',
+      next_decision: 'Review the preserved workspace.',
+    },
+  };
+  service.tracker = {
+    async comment_issue() {
+      calls.comments += 1;
+    },
+  };
+  service.workspace_manager = {
+    async read_completion_handoff() {
+      return marker;
+    },
+    async write_completion_handoff(_identifier, state) {
+      calls.persisted.push(state);
+      return state;
+    },
+  };
+
+  const restored = await service.restore_completion_handoff(issue);
+
+  assert.equal(restored, true);
+  assert.equal(calls.comments, 1);
+  assert.equal(calls.persisted.at(-1).evidence_recorded, true);
+  assert.equal(service.awaiting_completion.get(issue.id).evidence_recorded, true);
+  assert.equal(service.should_dispatch(issue, false), false);
+});
+
+test('terminal awaiting-completion issues are reconciled without a service restart', async () => {
+  const service = createService();
+  const issue = createIssue({ id: 'issue-terminal', identifier: 'CRE-TERMINAL', state: 'claimed' });
+  const calls = { remove: 0 };
+  service.awaiting_completion.set(issue.id, {
+    issue_id: issue.id,
+    issue_identifier: issue.identifier,
+    workspace_path: '/tmp/symphony/CRE-TERMINAL',
+    workspace_metadata_path: '/tmp/symphony/.metadata/CRE-TERMINAL.json',
+    evidence_recorded: true,
+    comment_attempts: 1,
+    last_error: null,
+  });
+  service.tracker = {
+    async fetch_issue_states_by_ids(ids) {
+      assert.deepEqual(ids, [issue.id]);
+      return [{ ...issue, state: 'done' }];
+    },
+  };
+  service.workspace_manager = {
+    async remove_workspace(identifier) {
+      assert.equal(identifier, issue.identifier);
+      calls.remove += 1;
+    },
+  };
+
+  await service.reconcile_running_issues();
+
+  assert.equal(calls.remove, 1);
+  assert.equal(service.awaiting_completion.has(issue.id), false);
 });
 
 test('a corrupt durable handoff fails closed after restart', async () => {
