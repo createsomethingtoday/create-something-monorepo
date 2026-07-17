@@ -1,7 +1,7 @@
 {
   "package_id": "agency.createsomething.codexrelay",
   "name": "Codex Relay",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "edition": "202601",
   "min_app_version": "2.0.0",
   "min_sdk_version": "0.0.10",
@@ -11,10 +11,6 @@
       "name": "network",
       "desc": "Connect to the operator-paired Codex Relay service.",
       "whitelist": ["https://codex-g2.createsomething.agency"]
-    },
-    {
-      "name": "g2-microphone",
-      "desc": "Capture speech for operator-reviewed Codex input."
     }
   ],
   "supported_languages": ["en"]
