@@ -63,6 +63,54 @@ test('SymphonyService does not dispatch blocked in-progress issues', () => {
   assert.equal(should_dispatch, false);
 });
 
+test('dispatch snapshots policy and prompt before asynchronous claim work', async () => {
+  const service = createService();
+  const issue = createIssue({ id: 'issue-dispatch-snapshot', identifier: 'CRE-DISPATCH-SNAPSHOT', state: 'ready' });
+  let releaseClaim;
+  let markClaimStarted;
+  const claimGate = new Promise((resolve) => {
+    releaseClaim = resolve;
+  });
+  const claimStarted = new Promise((resolve) => {
+    markClaimStarted = resolve;
+  });
+  let captured = null;
+  service.current_definition = { prompt_template: 'evidence-only prompt' };
+  service.tracker = {
+    async claim_issue(received) {
+      markClaimStarted();
+      await claimGate;
+      return { ...received, state: 'claimed' };
+    },
+  };
+  service.workspace_manager = {
+    async ensure_workspace() {
+      return {
+        path: '/tmp/symphony/CRE-DISPATCH-SNAPSHOT',
+        metadata_path: '/tmp/symphony/.metadata/CRE-DISPATCH-SNAPSHOT.json',
+      };
+    },
+  };
+  service.worker_factory = (_issue, _attempt, prompt, config) => {
+    captured = { prompt, config };
+    return { promise: new Promise(() => {}) };
+  };
+
+  const dispatch = service.dispatch_issue(issue, null);
+  await claimStarted;
+  service.current_definition = { prompt_template: 'legacy prompt' };
+  service.current_config = {
+    ...service.current_config,
+    completion: { ...service.current_config.completion, mode: 'worker_exit_legacy' },
+  };
+  releaseClaim();
+  await dispatch;
+
+  assert.equal(captured.prompt, 'evidence-only prompt');
+  assert.equal(captured.config.completion.mode, 'evidence_only');
+  assert.equal(service.running.get(issue.id).completion_mode, 'evidence_only');
+});
+
 test('completed workers hand off evidence without completing Linear or removing the workspace', async () => {
   const service = createService();
   const issue = createIssue({ id: 'issue-1', identifier: 'CRE-1300', state: 'claimed' });

@@ -556,6 +556,8 @@ export class SymphonyService {
         return this.current_config.tracker.terminal_states.some((entry) => normalize_state(entry) === normalized);
     }
     async dispatch_issue(issue, attempt) {
+        const definition = this.current_definition;
+        const config = this.current_config;
         const workspace_manager = this.workspace_manager;
         const tracker = this.tracker;
         let claimed_issue = issue;
@@ -572,7 +574,7 @@ export class SymphonyService {
             }
             throw error;
         }
-        const run = this.worker_factory(claimed_issue, attempt, this.current_definition.prompt_template, this.current_config, tracker, workspace_manager, this.logger, (event) => this.handle_codex_event(claimed_issue.id, event));
+        const run = this.worker_factory(claimed_issue, attempt, definition.prompt_template, config, tracker, workspace_manager, this.logger, (event) => this.handle_codex_event(claimed_issue.id, event));
         this.running.set(claimed_issue.id, {
             entry: to_running_entry(claimed_issue, attempt),
             run,
@@ -580,7 +582,7 @@ export class SymphonyService {
             workspace_metadata_path: workspace.metadata_path,
             workspace_manager,
             tracker,
-            completion_mode: this.current_config.completion.mode,
+            completion_mode: config.completion.mode,
             stop_behavior: { mode: 'default' },
         });
         this.claimed.add(claimed_issue.id);
