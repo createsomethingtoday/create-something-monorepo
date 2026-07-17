@@ -110,6 +110,40 @@ test('WorkspaceManager removes workspace metadata with the workspace', async (t)
   await assert.rejects(() => readFile(workspace.metadata_path, 'utf8'), /ENOENT/);
 });
 
+test('WorkspaceManager persists completion handoffs outside the worker git diff', async (t) => {
+  const tempRoot = await mkdtemp(join(tmpdir(), 'symphony-workspace-'));
+  t.after(async () => {
+    await rm(tempRoot, { recursive: true, force: true });
+  });
+
+  const root = join(tempRoot, 'workspaces');
+  const logger = createLogger();
+  const manager = new WorkspaceManager(createConfig(root, join(tempRoot, 'hook.log')), logger);
+  const workspace = await manager.ensure_workspace('CRE-RESTART');
+  const completionPath = manager.get_workspace_paths('CRE-RESTART').completion_path;
+  await writeFile(completionPath, '{"schema_version":"wrong"}\n', 'utf8');
+  await assert.rejects(() => manager.read_completion_handoff('CRE-RESTART'), /invalid_completion_handoff|does not match/);
+  const handoff = await manager.write_completion_handoff('CRE-RESTART', {
+    issue_id: 'issue-restart',
+    issue_identifier: 'CRE-RESTART',
+    workspace_path: workspace.path,
+    workspace_metadata_path: workspace.metadata_path,
+    evidence_recorded: true,
+    comment_attempts: 1,
+    last_error: null,
+  });
+
+  assert.equal(handoff.schema_version, 'symphony-evidence-handoff-marker.v1');
+  assert.equal(handoff.issue_id, 'issue-restart');
+  assert.equal(await manager.read_completion_handoff('CRE-RESTART').then((entry) => entry.issue_id), 'issue-restart');
+  assert.equal(workspace.path.startsWith(join(root, '.metadata')), false);
+  assert.equal(completionPath.startsWith(join(root, '.metadata')), true);
+
+  await manager.remove_workspace('CRE-RESTART');
+
+  assert.equal(await manager.read_completion_handoff('CRE-RESTART'), null);
+});
+
 test('WorkspaceManager unregisters clean linked git worktrees before removing them', async (t) => {
   const tempRoot = await mkdtemp(join(tmpdir(), 'symphony-workspace-'));
   t.after(async () => {

@@ -215,6 +215,55 @@ test('evidence-only handoff keeps dispatch suppressed when comment retries are e
   assert.equal(service.get_issue_snapshot(issue.identifier).last_error, 'Linear remains unavailable');
 });
 
+test('a restarted service restores a durable evidence handoff before dispatch', async () => {
+  const service = createService();
+  const issue = createIssue({ id: 'issue-restart', identifier: 'CRE-RESTART', state: 'claimed' });
+  service.workspace_manager = {
+    async read_completion_handoff(identifier) {
+      assert.equal(identifier, issue.identifier);
+      return {
+        schema_version: 'symphony-evidence-handoff-marker.v1',
+        issue_id: issue.id,
+        issue_identifier: issue.identifier,
+        workspace_path: '/tmp/symphony/CRE-RESTART',
+        workspace_metadata_path: '/tmp/symphony/.metadata/CRE-RESTART.json',
+        evidence_recorded: true,
+        comment_attempts: 1,
+        last_error: null,
+      };
+    },
+  };
+
+  const restored = await service.restore_completion_handoff(issue);
+
+  assert.equal(restored, true);
+  assert.equal(service.awaiting_completion.has(issue.id), true);
+  assert.equal(service.should_dispatch(issue, false), false);
+  assert.equal(service.get_issue_snapshot(issue.identifier).status, 'awaiting_completion');
+});
+
+test('a corrupt durable handoff fails closed after restart', async () => {
+  const service = createService();
+  const issue = createIssue({ id: 'issue-corrupt', identifier: 'CRE-CORRUPT', state: 'claimed' });
+  service.workspace_manager = {
+    async read_completion_handoff() {
+      throw new Error('completion marker is corrupt');
+    },
+    get_workspace_paths() {
+      return {
+        workspace_path: '/tmp/symphony/CRE-CORRUPT',
+        metadata_path: '/tmp/symphony/.metadata/CRE-CORRUPT.json',
+      };
+    },
+  };
+
+  const restored = await service.restore_completion_handoff(issue);
+
+  assert.equal(restored, true);
+  assert.equal(service.should_dispatch(issue, false), false);
+  assert.equal(service.get_issue_snapshot(issue.identifier).last_error, 'completion marker is corrupt');
+});
+
 test('legacy worker-exit completion is explicit and comments the gate bypass', async () => {
   const service = createService();
   const issue = createIssue({ id: 'issue-legacy', identifier: 'CRE-LEGACY', state: 'claimed' });

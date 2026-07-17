@@ -5,6 +5,7 @@ import { SymphonyError } from './errors.js';
 import { ensure_path_within_root, sanitize_workspace_key } from './config.js';
 const WORKSPACE_METADATA_DIR = '.metadata';
 const WORKSPACE_METADATA_VERSION = 1;
+const COMPLETION_HANDOFF_VERSION = 'symphony-evidence-handoff-marker.v1';
 function truncate(text) {
     return text.length > 2000 ? `${text.slice(0, 2000)}…` : text;
 }
@@ -163,13 +164,50 @@ export class WorkspaceManager {
         const workspace_path = ensure_path_within_root(root, join(root, workspace_key));
         const metadata_root = ensure_path_within_root(root, join(root, WORKSPACE_METADATA_DIR));
         const metadata_path = ensure_path_within_root(metadata_root, join(metadata_root, `${workspace_key}.json`));
+        const completion_path = ensure_path_within_root(metadata_root, join(metadata_root, `${workspace_key}.completion.json`));
         return {
             root,
             workspace_path,
             workspace_key,
             metadata_root,
             metadata_path,
+            completion_path,
         };
+    }
+    async read_completion_handoff(issue_identifier) {
+        const paths = this.get_workspace_paths(issue_identifier);
+        try {
+            const parsed = JSON.parse(await readFile(paths.completion_path, 'utf8'));
+            if (parsed?.schema_version !== COMPLETION_HANDOFF_VERSION ||
+                parsed.issue_identifier !== issue_identifier ||
+                parsed.workspace_path !== paths.workspace_path) {
+                throw new SymphonyError('invalid_completion_handoff', `Completion handoff does not match ${issue_identifier}: ${paths.completion_path}`);
+            }
+            return parsed;
+        }
+        catch (error) {
+            if (error.code === 'ENOENT') {
+                return null;
+            }
+            if (error instanceof SymphonyError) {
+                throw error;
+            }
+            throw new SymphonyError('invalid_completion_handoff', `Completion handoff is unreadable for ${issue_identifier}: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    }
+    async write_completion_handoff(issue_identifier, handoff) {
+        const paths = this.get_workspace_paths(issue_identifier);
+        await mkdir(paths.metadata_root, { recursive: true });
+        const record = {
+            ...handoff,
+            schema_version: COMPLETION_HANDOFF_VERSION,
+            issue_identifier,
+            workspace_path: paths.workspace_path,
+            workspace_metadata_path: paths.metadata_path,
+            updated_at: now_iso(),
+        };
+        await writeFile(paths.completion_path, `${JSON.stringify(record, null, 2)}\n`, 'utf8');
+        return record;
     }
     async read_workspace_metadata(metadata_path, workspace_key, workspace_path) {
         try {
@@ -287,6 +325,7 @@ export class WorkspaceManager {
         catch (error) {
             if (error.code === 'ENOENT') {
                 await rm(paths.metadata_path, { force: true });
+                await rm(paths.completion_path, { force: true });
                 await remove_empty_directory(paths.metadata_root);
                 return;
             }
@@ -315,6 +354,7 @@ export class WorkspaceManager {
             await rm(paths.workspace_path, { recursive: true, force: true });
         }
         await rm(paths.metadata_path, { force: true });
+        await rm(paths.completion_path, { force: true });
         await remove_empty_directory(paths.metadata_root);
         this.logger.info('workspace removed completed', {
             issue_identifier,

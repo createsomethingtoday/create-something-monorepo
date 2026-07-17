@@ -406,6 +406,9 @@ export class SymphonyService {
             })) {
                 if (this.available_slots() <= 0)
                     break;
+                if (await this.restore_completion_handoff(issue)) {
+                    continue;
+                }
                 if (this.should_dispatch(issue, false)) {
                     await this.dispatch_issue(issue, null);
                 }
@@ -443,6 +446,61 @@ export class SymphonyService {
             return false;
         }
         return this.has_state_slot(issue.state);
+    }
+    async restore_completion_handoff(issue) {
+        if (this.awaiting_completion.has(issue.id)) {
+            return true;
+        }
+        if (typeof this.workspace_manager.read_completion_handoff !== 'function') {
+            return false;
+        }
+        try {
+            const handoff = await this.workspace_manager.read_completion_handoff(issue.identifier);
+            if (!handoff) {
+                return false;
+            }
+            if (handoff.issue_id !== issue.id) {
+                this.awaiting_completion.set(issue.id, {
+                    ...handoff,
+                    issue_id: issue.id,
+                    evidence_recorded: false,
+                    last_error: `Completion handoff issue id ${handoff.issue_id ?? 'missing'} does not match ${issue.id}.`,
+                });
+                this.logger.error('completion handoff identity mismatch; dispatch suppressed', {
+                    issue_id: issue.id,
+                    issue_identifier: issue.identifier,
+                    handoff_issue_id: handoff.issue_id ?? null,
+                });
+                return true;
+            }
+            this.awaiting_completion.set(issue.id, handoff);
+            this.logger.info('restored evidence-only completion handoff; dispatch suppressed', {
+                issue_id: issue.id,
+                issue_identifier: issue.identifier,
+                workspace_path: handoff.workspace_path,
+                evidence_recorded: handoff.evidence_recorded,
+            });
+            return true;
+        }
+        catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            const paths = this.workspace_manager.get_workspace_paths?.(issue.identifier);
+            this.awaiting_completion.set(issue.id, {
+                issue_id: issue.id,
+                issue_identifier: issue.identifier,
+                workspace_path: paths?.workspace_path ?? null,
+                workspace_metadata_path: paths?.metadata_path ?? null,
+                evidence_recorded: false,
+                comment_attempts: 0,
+                last_error: message,
+            });
+            this.logger.error('completion handoff could not be restored; dispatch suppressed', {
+                issue_id: issue.id,
+                issue_identifier: issue.identifier,
+                error: message,
+            });
+            return true;
+        }
     }
     has_state_slot(state) {
         const normalized = normalize_state(state);
@@ -578,7 +636,7 @@ export class SymphonyService {
             this.completed.add(issue_id);
             if (this.current_config.completion.mode === 'evidence_only') {
                 const handoff = evidence_only_handoff(state.entry.issue, state, result);
-                this.awaiting_completion.set(issue_id, {
+                let completion_state = {
                     issue_id,
                     issue_identifier: state.entry.issue.identifier,
                     workspace_path: state.workspace_path,
@@ -586,18 +644,19 @@ export class SymphonyService {
                     evidence_recorded: false,
                     comment_attempts: 0,
                     last_error: null,
-                });
+                };
+                completion_state = await this.persist_completion_handoff(state.entry.issue, completion_state);
+                this.awaiting_completion.set(issue_id, completion_state);
                 this.claimed.delete(issue_id);
                 const evidence_result = await this.record_evidence_handoff(state.entry.issue, handoff);
-                this.awaiting_completion.set(issue_id, {
-                    issue_id,
-                    issue_identifier: state.entry.issue.identifier,
-                    workspace_path: state.workspace_path,
-                    workspace_metadata_path: state.workspace_metadata_path,
+                completion_state = {
+                    ...completion_state,
                     evidence_recorded: evidence_result.recorded,
                     comment_attempts: evidence_result.attempts,
                     last_error: evidence_result.error,
-                });
+                };
+                completion_state = await this.persist_completion_handoff(state.entry.issue, completion_state);
+                this.awaiting_completion.set(issue_id, completion_state);
                 if (evidence_result.recorded) {
                     this.logger.info('worker completed with evidence-only handoff', {
                         issue_id,
@@ -659,6 +718,26 @@ export class SymphonyService {
     }
     evidence_handoff_retry_delay_ms(attempt) {
         return 1000 * 2 ** Math.max(0, attempt - 1);
+    }
+    async persist_completion_handoff(issue, completion_state) {
+        if (typeof this.workspace_manager.write_completion_handoff !== 'function') {
+            return completion_state;
+        }
+        try {
+            return await this.workspace_manager.write_completion_handoff(issue.identifier, completion_state);
+        }
+        catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            this.logger.error('completion handoff persistence failed', {
+                issue_id: issue.id,
+                issue_identifier: issue.identifier,
+                error: message,
+            });
+            return {
+                ...completion_state,
+                persistence_error: message,
+            };
+        }
     }
     async record_evidence_handoff(issue, handoff) {
         if (typeof this.tracker.comment_issue !== 'function') {
