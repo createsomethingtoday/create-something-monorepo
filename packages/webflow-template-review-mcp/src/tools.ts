@@ -7,6 +7,11 @@ import { COMPREHENSIVE_REVIEW_LANE_IDS, EVIDENCE_LABELS, formatComprehensiveAgen
 import { COMPREHENSIVE_REVIEW_CONTRACT } from './comprehensive-review-contract.js';
 import { RUBRIC_DIMENSIONS } from './comprehensive-review-contract.js';
 import { buildPublishedSiteSandboxBundle } from './published-site-sandbox-bundle.js';
+import {
+  PublishedSiteSandboxExecutionError,
+  runPublishedSiteSandbox,
+  type PublishedSiteSandboxExecutionConfig,
+} from './published-site-sandbox-execution.js';
 import { TEMPLATE_REVIEW_FIELD_MAP } from './schema.js';
 import { REVIEW_WORKFLOW } from './prompts.js';
 import type { ReviewerProfile } from './reviewer-directory.js';
@@ -149,6 +154,10 @@ export interface ToolAccess {
   allowedToolNames?: ReadonlySet<string>;
 }
 
+export interface ToolRuntimeConfig extends ValidationToolConfig {
+  sandboxExecution?: PublishedSiteSandboxExecutionConfig;
+}
+
 /**
  * Tools that mutate Airtable review state. Sessions without the
  * template-review:write scope never see these registered.
@@ -173,7 +182,7 @@ export function registerTools(
   mcpServer: McpServer,
   getClient: ClientFactory,
   getReviewer: ReviewerFactory = () => null,
-  validationConfig: ValidationToolConfig = {},
+  runtimeConfig: ToolRuntimeConfig = {},
   access: ToolAccess = { allowWrites: true },
 ): void {
   const registerOnServer = mcpServer.tool.bind(mcpServer) as (...args: unknown[]) => unknown;
@@ -203,6 +212,65 @@ export function registerTools(
     'Read-only: return the comprehensive template-review evidence contract, including coverage matrix, rubric dimensions, manual checks, and Agent Review Feedback format.',
     {},
     async () => asSuccess(COMPREHENSIVE_REVIEW_CONTRACT),
+  );
+
+  server.tool(
+    'template_review_run_published_site_sandbox',
+    'Read-only: execute the fixed, bounded E2B published-site evidence runner. Accepts no caller code or credentials, blocks private networks, always attempts sandbox cleanup, performs no Airtable write, and makes no review decision.',
+    {
+      published_url: z.string().url(),
+      run_id: z.string().min(1).optional(),
+      policy_snapshot_id: z.string().min(1).optional(),
+      max_pages: z.number().int().min(1).max(25).optional(),
+      max_network_requests: z.number().int().min(25).max(1000).optional(),
+      timeout_ms: z.number().int().min(5_000).max(120_000).optional(),
+      viewports: z.array(sandboxViewportSchema).min(1).max(6).optional(),
+      allowed_hosts: z.array(z.string().min(1)).max(10).optional(),
+      include_screenshots: z.boolean().optional(),
+    },
+    {
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: false,
+      openWorldHint: true,
+    },
+    async (input) => {
+      try {
+        const executor = runtimeConfig.sandboxExecution?.executor ?? runPublishedSiteSandbox;
+        const result = await executor(input, runtimeConfig.sandboxExecution ?? {});
+        const screenshots = result.screenshots.map(({ data: _data, ...screenshot }) => screenshot);
+        const data = { ...result, screenshots };
+        return {
+          structuredContent: { ok: true, data },
+          content: [
+            { type: 'text' as const, text: JSON.stringify({ ok: true, data }, null, 2) },
+            ...result.screenshots
+              .filter((screenshot) => screenshot.included && screenshot.data)
+              .map((screenshot) => ({
+                type: 'image' as const,
+                data: screenshot.data as string,
+                mimeType: screenshot.mime_type,
+              })),
+          ],
+        };
+      } catch (error) {
+        if (error instanceof PublishedSiteSandboxExecutionError) {
+          return jsonContent(
+            {
+              ok: false,
+              error: {
+                code: error.code,
+                message: error.message,
+                status: error.status,
+                details: error.details,
+              },
+            },
+            true,
+          );
+        }
+        return asError(error);
+      }
+    },
   );
 
   server.tool(
@@ -417,7 +485,7 @@ export function registerTools(
               max_pages,
               include_raw,
             },
-            validationConfig,
+            runtimeConfig,
           ),
         });
       } catch (error) {

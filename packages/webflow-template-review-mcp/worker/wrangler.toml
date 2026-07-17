@@ -24,6 +24,7 @@ CF_ACCESS_TEAM_DOMAIN = "https://createsomething.cloudflareaccess.com"
 CF_ACCESS_AUD = "9e652f0b7b017646202668709415884dfb620217d3ded9a71585ce9d8d740a5d"
 WEBFLOW_TEMPLATE_VALIDATION_WORKER_URL = "https://validation-worker.createsomething.workers.dev/validate"
 GSAP_VALIDATION_WORKER_URL = "https://gsap-validation-worker.createsomething.workers.dev/validateGsap"
+E2B_BROWSER_TEMPLATE = "webflow-template-review-browser-v1"
 
 [[d1_databases]]
 binding = "TELEMETRY_DB"
