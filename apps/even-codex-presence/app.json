@@ -10,7 +10,11 @@
     {
       "name": "network",
       "desc": "Connect to the operator-paired Codex Presence service.",
-      "whitelist": ["http://127.0.0.1:4782", "http://localhost:4782"]
+      "whitelist": [
+        "http://127.0.0.1:4782",
+        "http://localhost:4782",
+        "https://codex-g2.createsomething.agency"
+      ]
     },
     {
       "name": "g2-microphone",

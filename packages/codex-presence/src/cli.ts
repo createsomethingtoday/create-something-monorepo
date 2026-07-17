@@ -12,8 +12,10 @@ const service = await startPresenceServer({
   codexHome: process.env.CODEX_HOME?.trim() || join(homedir(), '.codex'),
   port: Number(process.env.CODEX_PRESENCE_PORT || 4782),
   allowedOrigin: process.env.CODEX_PRESENCE_ORIGIN?.trim() || 'http://127.0.0.1:5173',
+  staticDir: process.env.CODEX_PRESENCE_STATIC_DIR?.trim() || undefined,
   actionExecutor: createEvenTerminalExecutor({
-    instancesDir: process.env.EVEN_TERMINAL_INSTANCES?.trim() || join(homedir(), '.even-terminal', 'instances')
+    instancesDir:
+      process.env.EVEN_TERMINAL_INSTANCES?.trim() || join(homedir(), '.even-terminal', 'instances')
   })
 });
 

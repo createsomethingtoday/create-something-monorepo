@@ -1,21 +1,17 @@
 import { redirect } from '@sveltejs/kit';
-import { createSessionManager, getAuth0Config, PROPERTY_DOMAINS } from '@create-something/canon/auth';
 import type { PageServerLoad } from './$types';
 
 const DEFAULT_REDIRECT = '/dashboard';
 
-export const load: PageServerLoad = async ({ url, cookies, platform }) => {
-	const authProvider = getAuth0Config(platform?.env);
-	const session = createSessionManager(cookies, {
-		isProduction: platform?.env?.ENVIRONMENT === 'production',
-		domain: PROPERTY_DOMAINS.agency,
-		authProvider: authProvider ?? undefined,
-	});
+function safeRedirect(value: string | null): string {
+	if (!value || !value.startsWith('/') || value.startsWith('//')) return DEFAULT_REDIRECT;
+	return value;
+}
 
-	const user = await session.getUser();
-	const redirectTo = url.searchParams.get('redirect') || DEFAULT_REDIRECT;
+export const load: PageServerLoad = async ({ url, locals }) => {
+	const redirectTo = safeRedirect(url.searchParams.get('redirect'));
 
-	if (user) {
+	if (locals.user) {
 		throw redirect(302, redirectTo);
 	}
 
