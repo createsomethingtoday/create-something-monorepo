@@ -6,10 +6,10 @@
 	let {
 		prospects = [],
 		title = 'Prospect Workspaces',
-		description = 'Preprovisioned partner workspaces this Auth0 account can view or bind before commercial graduation. Claiming binds identity; it does not issue customer credentials.',
+		description = 'Preprovisioned partner workspaces this CREATE SOMETHING Identity account can view or bind before commercial graduation. Claiming binds identity; it does not issue customer credentials.',
 		href = null,
 		actionLabel = null,
-		emptyMessage = 'No prospect workspaces are currently authorized for this Auth0 account.',
+		emptyMessage = 'No prospect workspaces are currently authorized for this CREATE SOMETHING Identity account.',
 	}: {
 		prospects?: ProspectWorkspaceCandidate[];
 		title?: string;
@@ -206,7 +206,7 @@
 			if (!response.ok) {
 				throw new Error(payload.message ?? 'Failed to claim prospect workspace');
 			}
-			claimMessage = `${prospect.client.display_name ?? prospect.client.slug} is now bound to this Auth0 account.`;
+			claimMessage = `${prospect.client.display_name ?? prospect.client.slug} is now bound to this CREATE SOMETHING Identity account.`;
 			await invalidateAll();
 		} catch (error) {
 			claimError = error instanceof Error ? error.message : 'Failed to claim prospect workspace';
@@ -338,7 +338,7 @@
 							</button>
 						</div>
 					{:else if prospect.prospect_claim.state === 'claimed_by_you' && prospect.prospect_claim.can_claim_now}
-						<p class="feedback success">This workspace is already bound to this Auth0 account.</p>
+						<p class="feedback success">This workspace is already bound to this CREATE SOMETHING Identity account.</p>
 						{#if prospectEnabledToolkits(prospect).length > 0}
 							<div class="prospect-toolkit-list">
 								{#each prospectEnabledToolkits(prospect) as toolkit}

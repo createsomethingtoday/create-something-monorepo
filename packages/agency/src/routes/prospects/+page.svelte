@@ -69,7 +69,7 @@
 	>
 		<svelte:fragment slot="summary">
 			<SummaryItem label="Claimable" value={String(claimableCount)} note="Ready to bind now" />
-			<SummaryItem label="Claimed" value={String(claimedCount)} note="Already bound to this Auth0 account" />
+			<SummaryItem label="Claimed" value={String(claimedCount)} note="Already bound to this CREATE SOMETHING Identity account" />
 			<SummaryItem label="Review" value={String(reviewCount)} note="Blocked or unavailable workspaces" />
 			<SummaryItem label="Grad Ready" value={String(graduationReadyCount)} note="Ready for operator promotion" />
 			<SummaryItem label="Connected Toolkits" value={String(connectedToolkitCount)} note="Active provider connections" />
@@ -79,7 +79,7 @@
 			<p class="feedback error">{data.error}</p>
 		{/if}
 
-		<ProspectWorkspaceSection prospects={prospects} emptyMessage="No prospect workspaces are currently assigned to this Auth0 account." />
+		<ProspectWorkspaceSection prospects={prospects} emptyMessage="No prospect workspaces are currently assigned to this CREATE SOMETHING Identity account." />
 	</ReportShell>
 {/if}
 

@@ -10,4 +10,4 @@
 
 - Boot: `pnpm dev`
 - Smoke: `pnpm check`
-- Escalate if Auth0, D1, or client-delivery data is needed and not available through local fixtures or Infisical-backed environment.
+- Escalate if CREATE SOMETHING Identity, D1, or client-delivery data is needed and not available through local fixtures or Infisical-backed environment.

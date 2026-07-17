@@ -1,10 +1,9 @@
 {
-  "policy_id": "policy.auth0-subject-rebind-governance.v1",
+  "policy_id": "policy.identity-subject-rebind-governance.v1",
   "version": 1,
-  "status": "deprecated",
-  "superseded_by": "policy.identity-subject-rebind-governance.v1",
-  "identity_provider": "auth0",
-  "incident_type": "subject_rebind_after_delete_or_recreate",
+  "status": "draft",
+  "identity_provider": "create_something_identity",
+  "incident_type": "subject_rebind_after_account_change",
   "rebind_requirements": {
     "normalized_email_match_required": true,
     "unambiguous_account_mapping_required": true,
@@ -26,15 +25,9 @@
     "disable_stale_legacy_alias_resolution"
   ],
   "credential_separation": {
-    "auth0_session_separate_from_managed_bearer": true,
-    "auth0_session_separate_from_identity_worker_oauth_password": true,
-    "oauth_password_must_not_reuse_auth0_secret": true
-  },
-  "implementation_boundaries": {
-    "new_public_endpoints": false,
-    "schema_migrations": false,
-    "automatic_auth0_webhook_reconciliation": false,
-    "new_ui": false
+    "identity_session_separate_from_managed_bearer": true,
+    "identity_session_separate_from_identity_worker_oauth_password": true,
+    "oauth_password_must_not_reuse_identity_secret": true
   },
   "required_evidence": [
     "old_subject",

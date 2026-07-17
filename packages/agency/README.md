@@ -579,7 +579,7 @@ packages/agency/
 | Smoke command | `pnpm check` |
 | Validation surfaces | Svelte check output, Cloudflare Pages build output, route preview, sales content review |
 | UI validation path | `/`, `/services` |
-| Escalation rule | stop if Auth0, D1, or client-delivery data is required and cannot be reproduced from local fixtures or Infisical-backed environment |
+| Escalation rule | stop if CREATE SOMETHING Identity, D1, or client-delivery data is required and cannot be reproduced from local fixtures or Infisical-backed environment |
 
 ## Sales Assets
 
@@ -647,90 +647,30 @@ pnpm --filter @create-something/agency research:clarity-capture
 The capture hashes visible copy, fails closed when a route is unavailable, and
 is useful for before/after review. It is not evidence of human comprehension.
 
-## Auth0 And Infisical
+## CREATE SOMETHING Identity
 
-`.agency` now treats Auth0 as the identity source of truth. Browser login flows redirect through Auth0 Universal Login, the Auth0 callback is handled at `/auth/callback`, and server-side session validation accepts Auth0-issued tokens through the shared Canon auth layer.
+`.agency` uses CREATE SOMETHING Identity as its only browser identity provider. The
+Performance-styled login form submits credentials directly to the first-party
+Identity Worker, and the application verifies ES256 session tokens against the
+published JWKS for the `client-workspace` audience.
 
-Tenant export uses `a0deploy`, not `auth0`. The repo-level export wrapper is:
-
-```bash
-cp auth0/config.example.json auth0/config.json
-pnpm auth0:export
-```
-
-The export wrapper expects `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`, and `AUTH0_CLIENT_SECRET` in your environment, then runs:
+The public verification contract is checked into `wrangler.jsonc`:
 
 ```bash
-a0deploy export -c auth0/config.json -f yaml -o auth0/export
+IDENTITY_API_URL=https://id.createsomething.space
+CS_IDENTITY_ISSUER=https://id.createsomething.space
+CS_IDENTITY_JWKS_URL=https://id.createsomething.space/.well-known/jwks.json
+CS_IDENTITY_AUDIENCE=client-workspace
 ```
 
-Required Pages secrets:
+Provisioning and Stripe webhook flows also use the private
+`IDENTITY_WORKER_ADMIN_API_KEY` and `IDENTITY_WORKER_SECRET` bindings. Keep secret
+values in the owning deployment secret store; never add them to the repository or
+duplicate them as browser-visible variables. See
+[`FIRST_PARTY_AUTH_PLATFORM.md`](../../docs/guides/FIRST_PARTY_AUTH_PLATFORM.md)
+for the shared verification and application-access policy contract.
 
-```bash
-AUTH0_DOMAIN
-AUTH0_CLIENT_ID
-AUTH0_CLIENT_SECRET
-AUTH0_ISSUER_BASE_URL
-AUTH0_JWKS_URL
-```
-
-Optional Pages secrets:
-
-```bash
-AUTH0_AUDIENCE
-AUTH0_SCOPE
-AUTH0_CLAIMS_NAMESPACE
-AUTH0_REDIRECT_URI
-```
-
-Do not point `AUTH0_AUDIENCE` at the Auth0 Management API (`https://<tenant>/api/v2/`) for browser sign-in. `.agency` only needs the ID token for the property session; the Management API audience is a machine-to-machine setting and can break Universal Login flows.
-
-If Auth0 login is fronted by a custom domain, preview hostname, or proxy that differs from the incoming Worker request host, set:
-
-```bash
-AUTH0_REDIRECT_URI=https://createsomething.agency/auth/callback
-```
-
-and add that exact URL to the Auth0 application's Allowed Callback URLs.
-
-Recommended Infisical path:
-
-```bash
-/agency/auth
-```
-
-Auth0 secrets must live only under `/agency/auth`. Do not store duplicate `AUTH0_*` keys at the Infisical root path `/`; the seed/sync scripts now fail closed when root-path drift is present.
-
-Seed Auth0 tenant values into Infisical:
-
-```bash
-AUTH0_DOMAIN=...
-AUTH0_CLIENT_ID=...
-AUTH0_CLIENT_SECRET=...
-AUTH0_ISSUER_BASE_URL=...
-AUTH0_JWKS_URL=...
-AUTH0_REDIRECT_URI=https://createsomething.agency/auth/callback
-pnpm agency:auth0:seed
-```
-
-Sync Auth0 secrets from Infisical into the Cloudflare Pages project:
-
-```bash
-pnpm agency:auth0:sync
-```
-
-Useful overrides:
-
-```bash
-PROJECT_NAME=create-something-agency
-INFISICAL_ENV=prod
-INFISICAL_PATH=/agency/auth
-INFISICAL_PROJECT_ID=<optional>
-DRY_RUN=true
-CLOUDFLARE_ACCOUNT_ID=<required when Wrangler has multiple accounts>
-```
-
-After syncing secrets, deploy normally:
+Deploy normally after the package gates pass:
 
 ```bash
 pnpm --filter @create-something/canon package

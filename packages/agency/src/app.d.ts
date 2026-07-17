@@ -10,7 +10,7 @@ declare global {
 				id: string;
 				email: string;
 				tier: 'free' | 'pro' | 'agency';
-				source: 'workway' | 'templates' | 'io' | 'space' | 'lms' | 'auth0';
+				source: 'workway' | 'templates' | 'io' | 'space' | 'lms';
 				analytics_opt_out?: boolean;
 			};
 		}
@@ -76,16 +76,6 @@ declare global {
 				// Optional: Override API URL (defaults to workway-api-gateway.half-dozen.workers.dev)
 				// Set to api.workway.co once DNS route is configured
 				WORKWAY_API_URL?: string;
-				// Auth0 identity
-				AUTH0_DOMAIN?: string;
-				AUTH0_CLIENT_ID?: string;
-				AUTH0_CLIENT_SECRET?: string;
-				AUTH0_AUDIENCE?: string;
-				AUTH0_SCOPE?: string;
-				AUTH0_ISSUER_BASE_URL?: string;
-				AUTH0_JWKS_URL?: string;
-				AUTH0_CLAIMS_NAMESPACE?: string;
-				AUTH0_REDIRECT_URI?: string;
 				AGENCY_INTERNAL_API_KEY?: string;
 				AGENCY_OPERATOR_EMAILS?: string;
 				CANON_OPERATOR_ORIGINS?: string;

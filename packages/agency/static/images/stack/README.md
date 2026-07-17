@@ -14,4 +14,3 @@ Sources used:
 - `linear.svg`: `https://linear.app/static/favicon.svg`
 - `trmnl.png`: `https://trmnl.com/images/favicons/apple-touch-icon-180x180.png`
 - `infisical.png`: generated from `https://infisical.com/infisical.ico`
-- `auth0.svg`: `https://cdn.auth0.com/website/website/favicons/auth0-favicon.svg`
