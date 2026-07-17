@@ -42,6 +42,7 @@ new_sqlite_classes = ["WebflowTemplateReviewMCP"]
 [env.dev]
 name = "webflow-template-review-mcp-dev"
 workers_dev = true
+preview_urls = false
 
 [env.dev.vars]
 TEMPLATE_REVIEW_ENVIRONMENT = "development"

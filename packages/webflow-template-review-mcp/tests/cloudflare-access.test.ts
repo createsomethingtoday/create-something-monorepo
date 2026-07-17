@@ -32,6 +32,7 @@ test('dev config is a separate Micah-only read-only Worker without Webflow Acces
 
   assert.ok(devConfig, 'expected a named Wrangler dev environment');
   assert.match(devConfig, /name = "webflow-template-review-mcp-dev"/);
+  assert.match(devConfig, /preview_urls = false/);
   assert.match(devConfig, /TEMPLATE_REVIEW_ENVIRONMENT = "development"/);
   assert.match(devConfig, /TEMPLATE_REVIEW_FORCE_READ_ONLY = "true"/);
   assert.match(devConfig, /OAUTH_ALLOWED_EMAILS = "micah@webflow\.com,micah@createsomething\.io"/);

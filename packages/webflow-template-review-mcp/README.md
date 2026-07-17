@@ -644,6 +644,20 @@ pnpm deploy:dev:dry-run
 pnpm deploy:dev
 ```
 
+After deployment, run the reusable protocol verifier with the dev MCP bearer
+and E2B coordinator key present in the process environment:
+
+```bash
+cd packages/webflow-template-review-mcp
+pnpm worker:dev:verify
+```
+
+The verifier checks health and discovery, performs a real MCP initialize and
+tool listing, reads one queue item, proves a known write tool is unavailable,
+runs the bounded E2B collector against `example.com`, and confirms its sandbox
+is absent from the active inventory after cleanup. It prints only a compact
+receipt, not queue contents or secrets.
+
 The dev Worker is intentionally different from production:
 
 - only `micah@webflow.com` and `micah@createsomething.io` are admitted through
@@ -652,6 +666,7 @@ The dev Worker is intentionally different from production:
   both OAuth and the dev operator bearer
 - protected-resource discovery advertises only `template-review:read`
 - telemetry and Durable Object state use dev-only namespaces
+- only the stable dev hostname is enabled; per-version preview URLs are disabled
 - Webflow Cloudflare Access issuer and audience are explicitly empty
 - the fixed, bounded E2B evidence tool remains available; its coordinator key
   stays in the Worker and is never sent to the sandbox
