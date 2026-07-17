@@ -7,7 +7,7 @@ import { inputSource, resolveInteraction } from '../src/interaction';
 import { resolveSelection } from '../src/selection';
 import { actionsScreen, confirmScreen, overviewScreen, voiceScreen } from '../src/screens';
 
-describe('Even G2 Codex Presence behavior', () => {
+describe('Even G2 Codex Relay behavior', () => {
   it('renders a quiet, bounded overview and decision-first action list', () => {
     const output = overviewScreen([card], 0);
     assert.equal(output.split('\n').length <= 9, true);

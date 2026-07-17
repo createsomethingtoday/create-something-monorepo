@@ -1,7 +1,7 @@
 {
-  "package_id": "agency.createsomething.codexpresence",
-  "name": "Codex Presence",
-  "version": "0.1.1",
+  "package_id": "agency.createsomething.codexrelay",
+  "name": "Codex Relay",
+  "version": "0.1.2",
   "edition": "202601",
   "min_app_version": "2.0.0",
   "min_sdk_version": "0.0.10",
@@ -9,7 +9,7 @@
   "permissions": [
     {
       "name": "network",
-      "desc": "Connect to the operator-paired Codex Presence service.",
+      "desc": "Connect to the operator-paired Codex Relay service.",
       "whitelist": ["https://codex-g2.createsomething.agency"]
     },
     {
