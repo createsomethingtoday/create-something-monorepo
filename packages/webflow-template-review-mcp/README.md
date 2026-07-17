@@ -632,6 +632,72 @@ pnpm dev
 pnpm deploy
 ```
 
+### Isolated development Worker
+
+The stable development Worker is `webflow-template-review-mcp-dev`. It is a
+Wrangler named environment, not a long-lived Git branch. Check out the feature
+branch to test, run the dry run, then explicitly deploy that checkout:
+
+```bash
+cd packages/webflow-template-review-mcp/worker
+pnpm deploy:dev:dry-run
+pnpm deploy:dev
+```
+
+After deployment, run the reusable protocol verifier with the dev MCP bearer
+and E2B coordinator key present in the process environment:
+
+```bash
+cd packages/webflow-template-review-mcp
+pnpm worker:dev:verify
+```
+
+The verifier checks health and discovery, performs a real MCP initialize and
+tool listing, reads one queue item, proves a known write tool is unavailable,
+runs the bounded E2B collector against `example.com`, and confirms its sandbox
+is absent from the active inventory after cleanup. It prints only a compact
+receipt, not queue contents or secrets.
+
+The dev Worker is intentionally different from production:
+
+- only `micah@webflow.com` and `micah@createsomething.io` are admitted through
+  CREATE SOMETHING Identity
+- `TEMPLATE_REVIEW_FORCE_READ_ONLY=true` hides every Airtable write tool for
+  both OAuth and the dev operator bearer
+- protected-resource discovery advertises only `template-review:read`
+- telemetry and Durable Object state use dev-only namespaces
+- only the stable dev hostname is enabled; per-version preview URLs are disabled
+- Webflow Cloudflare Access issuer and audience are explicitly empty
+- the fixed, bounded E2B evidence tool remains available; its coordinator key
+  stays in the Worker and is never sent to the sandbox
+
+Dev secrets are separate Cloudflare bindings. Source them from Infisical
+without placing values in shell history or repo files:
+
+```bash
+infisical secrets get AIRTABLE_API_KEY --env=dev --path=/ --plain --silent \
+  | pnpm exec wrangler secret put AIRTABLE_API_KEY --env dev
+infisical secrets get MCP_API_KEY --env=dev --path=/ --plain --silent \
+  | pnpm exec wrangler secret put MCP_API_KEY --env dev
+infisical secrets get E2B_API_KEY --env=prod --path=/ --plain --silent \
+  | pnpm exec wrangler secret put E2B_API_KEY --env dev
+```
+
+The Airtable PAT reads the explicitly configured existing template-review base;
+the server-enforced policy prevents every MCP write route. Use the dev operator bearer only for protocol
+smoke tests and include `x-mcp-account-id: acct_wf_micah` for reviewer-scoped
+reads.
+
+Rollback affects only dev:
+
+```bash
+pnpm exec wrangler rollback <prior-dev-version-id> --env dev
+```
+
+If the first dev deployment must be removed entirely, delete only
+`webflow-template-review-mcp-dev`. Never run the production deploy command as a
+dev rollback.
+
 ## Token Rotation
 
 Rotate shared bearer token:
