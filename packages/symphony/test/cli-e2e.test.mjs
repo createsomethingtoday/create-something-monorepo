@@ -101,7 +101,7 @@ async function startFakeLinearServer(issue, operations) {
   return { server, endpoint };
 }
 
-test('CLI once mode completes a Linear-backed issue end-to-end', async (t) => {
+test('CLI once mode preserves a Linear-backed issue and workspace for evidence review', async (t) => {
   await mkdir(TEST_TMP_ROOT, { recursive: true });
   const tempRoot = await mkdtemp(join(TEST_TMP_ROOT, 'symphony-e2e-'));
   t.after(async () => {
@@ -237,16 +237,17 @@ Issue: {{ issue.identifier }} :: {{ issue.title }}
   });
 
   assert.equal(exitCode, 0, `stdout:\n${stdout}\n\nstderr:\n${stderr}`);
-  assert.equal(issue.state.name, 'Done');
-  assert.match(issue.evidence, /Evidence:/);
+  assert.equal(issue.state.name, 'In Progress');
+  assert.match(issue.evidence, /Symphony evidence-only handoff/);
+  assert.match(issue.evidence, /"eligible_for_done": false/);
   assert.match(issue.evidence, new RegExp(completionMessage));
   assert.ok(operations.some((entry) => entry.operation === 'SymphonyUpdateIssue'));
   assert.ok(operations.some((entry) => entry.operation === 'SymphonyComment'));
 
   const hookLog = await readFile(hookLogPath, 'utf8');
   assert.match(hookLog, /created/);
-  assert.match(hookLog, /removed/);
+  assert.doesNotMatch(hookLog, /removed/);
 
   const workspaceEntries = await readdir(workspacesRoot);
-  assert.deepEqual(workspaceEntries, []);
+  assert.deepEqual(workspaceEntries, ['.metadata', 'CRE-999']);
 });

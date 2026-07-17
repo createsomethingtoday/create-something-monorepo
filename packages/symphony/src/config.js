@@ -82,6 +82,7 @@ export function resolve_service_config(workflow, cwd = process.cwd(), env = proc
     const hooks = asObject(workflow.config.hooks);
     const agent = asObject(workflow.config.agent);
     const codex = asObject(workflow.config.codex);
+    const completion = asObject(workflow.config.completion);
     const server = asObject(workflow.config.server);
     const turn_sandbox_policy = asMaybeObject(codex.turn_sandbox_policy);
     const tracker_api_key = asString(tracker.api_key);
@@ -138,12 +139,18 @@ export function resolve_service_config(workflow, cwd = process.cwd(), env = proc
             read_timeout_ms: asInteger(codex.read_timeout_ms) ?? 5_000,
             stall_timeout_ms: asInteger(codex.stall_timeout_ms) ?? 300_000,
         },
+        completion: {
+            mode: asString(completion.mode) ?? 'evidence_only',
+        },
         server: {
             port: normalizeServerPort(server.port),
         },
     };
 }
 export function validate_dispatch_config(config) {
+    if (!['evidence_only', 'worker_exit_legacy'].includes(config.completion.mode)) {
+        throw new SymphonyError('unsupported_completion_mode', `Unsupported completion mode: ${config.completion.mode}`);
+    }
     if (config.tracker.kind !== 'linear') {
         throw new SymphonyError('unsupported_tracker_kind', `Unsupported tracker kind: ${config.tracker.kind}`);
     }

@@ -40,6 +40,18 @@ function retry_delay_ms(config, attempt, continuation) {
         return 1000;
     return Math.min(10_000 * 2 ** Math.max(0, attempt - 1), config.agent.max_retry_backoff_ms);
 }
+function evidence_only_handoff(issue, state, result) {
+    return {
+        schema_version: 'symphony-evidence-handoff.v1',
+        issue: issue.identifier,
+        status: 'worker_completed_evidence_only',
+        eligible_for_done: false,
+        workspace_path: state.workspace_path,
+        turn_count: result.turn_count,
+        worker_message: result.final_message ?? state.entry.last_codex_message ?? null,
+        next_decision: 'Inspect the preserved workspace and attach independently verified completion evidence before moving Linear to a terminal state.',
+    };
+}
 function default_tracker_factory(config, logger) {
     return new LinearTrackerClient(config, logger);
 }
@@ -553,6 +565,33 @@ export class SymphonyService {
         }
         if (result.status === 'completed') {
             this.completed.add(issue_id);
+            if (this.current_config.completion.mode === 'evidence_only') {
+                const handoff = evidence_only_handoff(state.entry.issue, state, result);
+                if (typeof this.tracker.comment_issue === 'function') {
+                    await this.tracker.comment_issue(
+                        state.entry.issue.id,
+                        `Symphony evidence-only handoff:\n\n\`\`\`json\n${JSON.stringify(handoff, null, 2)}\n\`\`\``,
+                    );
+                }
+                this.logger.info('worker completed with evidence-only handoff', {
+                    issue_id,
+                    issue_identifier: state.entry.issue.identifier,
+                    workspace_path: state.workspace_path,
+                });
+                this.claimed.delete(issue_id);
+                return;
+            }
+            if (typeof this.tracker.comment_issue === 'function') {
+                await this.tracker.comment_issue(
+                    state.entry.issue.id,
+                    'Warning: legacy worker-exit completion bypassed the canonical evidence gate. Migrate this workflow to evidence_only.',
+                );
+            }
+            this.logger.warn('legacy worker-exit completion bypassed canonical evidence gate', {
+                issue_id,
+                issue_identifier: state.entry.issue.identifier,
+                completion_mode: this.current_config.completion.mode,
+            });
             if (typeof this.tracker.complete_issue === 'function') {
                 try {
                     await this.tracker.complete_issue(state.entry.issue, {
