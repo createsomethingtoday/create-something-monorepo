@@ -7,7 +7,10 @@
     "build:deps": "pnpm --filter @create-something/mcp-core build",
     "dev": "pnpm run build:deps && node ../../../scripts/run-wrangler.mjs dev",
     "deploy": "pnpm run build:deps && node ../../../scripts/run-wrangler.mjs deploy",
-    "tail": "node ../../../scripts/run-wrangler.mjs tail"
+    "deploy:dev:dry-run": "pnpm run build:deps && node ../../../scripts/run-wrangler.mjs deploy --env dev --dry-run",
+    "deploy:dev": "pnpm run build:deps && node ../../../scripts/run-wrangler.mjs deploy --env dev",
+    "tail": "node ../../../scripts/run-wrangler.mjs tail",
+    "tail:dev": "node ../../../scripts/run-wrangler.mjs tail --env dev"
   },
   "dependencies": {
     "@create-something/mcp-core": "workspace:*",

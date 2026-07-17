@@ -421,3 +421,14 @@ test('buildProtectedResourceMetadata points at CREATE SOMETHING Identity', () =>
   assert.deepEqual(metadata.scopes_supported, [SCOPE_QUEUE_READ, SCOPE_READ, SCOPE_WRITE]);
   assert.deepEqual(metadata.bearer_methods_supported, ['header']);
 });
+
+test('buildProtectedResourceMetadata can advertise a read-only resource', () => {
+  const metadata = buildProtectedResourceMetadata({
+    resourceOrigin: 'https://webflow-template-review-mcp-dev.createsomething.workers.dev',
+    resourcePath: '/mcp',
+    authorizationServer: 'https://id.createsomething.space',
+    scopesSupported: [SCOPE_READ],
+  });
+
+  assert.deepEqual(metadata.scopes_supported, [SCOPE_READ]);
+});

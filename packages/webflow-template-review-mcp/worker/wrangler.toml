@@ -38,3 +38,30 @@ class_name = "WebflowTemplateReviewMCP"
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["WebflowTemplateReviewMCP"]
+
+[env.dev]
+name = "webflow-template-review-mcp-dev"
+workers_dev = true
+
+[env.dev.vars]
+TEMPLATE_REVIEW_ENVIRONMENT = "development"
+TEMPLATE_REVIEW_FORCE_READ_ONLY = "true"
+AIRTABLE_BASE_ID = "appMoIgXMTTTNIc3p"
+CS_IDENTITY_ISSUER = "https://id.createsomething.space"
+OAUTH_ALLOWED_EMAIL_DOMAIN = "webflow.com"
+OAUTH_ALLOWED_EMAILS = "micah@webflow.com,micah@createsomething.io"
+REVIEWER_AUTH_EMAIL_ALIASES_JSON = '{"acct_wf_micah":["micah@createsomething.io"]}'
+CF_ACCESS_TEAM_DOMAIN = ""
+CF_ACCESS_AUD = ""
+WEBFLOW_TEMPLATE_VALIDATION_WORKER_URL = "https://validation-worker.createsomething.workers.dev/validate"
+GSAP_VALIDATION_WORKER_URL = "https://gsap-validation-worker.createsomething.workers.dev/validateGsap"
+E2B_BROWSER_TEMPLATE = "webflow-template-review-browser-v1"
+
+[[env.dev.d1_databases]]
+binding = "TELEMETRY_DB"
+database_name = "cs-telemetry-template-review-dev"
+database_id = "61e14213-5893-4966-bab5-904f7a8be407"
+
+[[env.dev.durable_objects.bindings]]
+name = "MCP_OBJECT"
+class_name = "WebflowTemplateReviewMCP"
