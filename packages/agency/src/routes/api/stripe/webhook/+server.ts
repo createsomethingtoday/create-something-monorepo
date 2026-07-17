@@ -11,6 +11,11 @@ import { createStripeClient, getProductIdByStripePriceId } from '$lib/services/s
 import { createPersistentLogger, createLogger, type Logger } from '@create-something/canon/utils';
 import type Stripe from 'stripe';
 import { normalizeAgencyServiceTier } from '$lib/server/mcp-entitlements';
+import {
+	buildMapEntitlementFromMetadata,
+	updateMapEntitlementBillingBySubscription,
+	upsertMapEntitlement
+} from '$lib/server/map-commercial';
 
 export const POST: RequestHandler = async ({ request, platform }) => {
 	const waitUntil = platform?.context?.waitUntil?.bind(platform.context);
@@ -791,6 +796,14 @@ async function upsertCommercialStateFromCheckout(
 		},
 	});
 
+	const mapEntitlement = buildMapEntitlementFromMetadata({
+		metadata: session.metadata,
+		subscriptionStatus: 'checkout_completed',
+		stripeCustomerId,
+		stripeSubscriptionId: normalizeIdentifier(session.subscription)
+	});
+	if (mapEntitlement) await upsertMapEntitlement(db, mapEntitlement);
+
 	logger.info('Commercial state updated from checkout', {
 		customerEmail,
 		stripeCustomerId,
@@ -812,7 +825,7 @@ async function upsertCommercialStateFromSubscription(
 	const stripeCustomerId = normalizeIdentifier(subscription.customer);
 	const customerEmail = await resolveStripeCustomerEmail(subscription.customer, stripe);
 	const priceId = subscription.items?.data?.[0]?.price?.id ?? null;
-	const productId = priceId ? getProductIdByStripePriceId(priceId) : null;
+	const productId = normalizeProductId(subscription.metadata?.product_id) ?? (priceId ? getProductIdByStripePriceId(priceId) : null);
 	const active =
 		!options.forceCanceled &&
 		['trialing', 'active'].includes(subscription.status);
@@ -836,6 +849,15 @@ async function upsertCommercialStateFromSubscription(
 			cancel_at_period_end: subscription.cancel_at_period_end,
 		},
 	});
+
+	const mapEntitlement = buildMapEntitlementFromMetadata({
+		metadata: subscription.metadata,
+		subscriptionStatus: options.forceCanceled ? 'canceled' : subscription.status,
+		stripeCustomerId,
+		stripeSubscriptionId: subscription.id,
+		currentPeriodEnd
+	});
+	if (mapEntitlement) await upsertMapEntitlement(db, mapEntitlement);
 
 	logger.info('Commercial state updated from subscription', {
 		stripeCustomerId,
@@ -876,6 +898,14 @@ async function upsertCommercialStateFromInvoice(
 			hosted_invoice_url: invoice.hosted_invoice_url ?? null,
 		},
 	});
+
+	if (stripeSubscriptionId) {
+		await updateMapEntitlementBillingBySubscription(db, stripeSubscriptionId, {
+			billingActive: input.billingActive,
+			subscriptionStatus: input.lastInvoiceStatus,
+			entitlementStatus: input.billingActive ? 'active' : 'payment_failed'
+		});
+	}
 
 	logger.info('Commercial state updated from invoice', {
 		customerEmail,

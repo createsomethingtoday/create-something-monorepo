@@ -1,0 +1,73 @@
+name: Agency Map Production Monitor
+
+on:
+  schedule:
+    - cron: '7,22,37,52 * * * *'
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: 'Deployed .agency URL to verify.'
+        required: false
+        default: 'https://createsomething.agency'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: agency-map-production-monitor
+  cancel-in-progress: false
+
+jobs:
+  map-synthetic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      MAP_SYNTHETIC_BASE_URL: ${{ github.event_name == 'workflow_dispatch' && inputs.base_url || 'https://createsomething.agency' }}
+      MAP_SYNTHETIC_ALERT_OWNER: 'Micah Johnson'
+      MAP_SYNTHETIC_LINEAR_ISSUE: 'CRE-1289'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Chromium
+        run: pnpm --filter @create-something/agency exec playwright install --with-deps chromium
+
+      - name: Run credential-free production synthetic
+        id: synthetic
+        continue-on-error: true
+        run: pnpm --filter @create-something/agency map:synthetic
+
+      - name: Evaluate SLO receipt
+        id: evaluate
+        if: always()
+        continue-on-error: true
+        run: pnpm --filter @create-something/agency map:synthetic:evaluate
+
+      - name: Upload synthetic receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: map-production-synthetic-${{ github.run_id }}
+          path: packages/agency/artifacts/map-synthetic
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Route failure to named owner
+        if: steps.synthetic.outcome != 'success' || steps.evaluate.outcome != 'success'
+        run: |
+          echo "Map production synthetic failed. Owner: $MAP_SYNTHETIC_ALERT_OWNER. Linear: $MAP_SYNTHETIC_LINEAR_ISSUE."
+          exit 1
