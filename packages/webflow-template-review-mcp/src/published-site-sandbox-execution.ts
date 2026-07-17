@@ -9,19 +9,6 @@ import {
 } from './published-site-sandbox-bundle.js';
 import { createCollectorReceipt } from './unit-economics.js';
 
-const PRIVATE_NETWORK_DENY_CIDRS = [
-  '10.0.0.0/8',
-  '100.64.0.0/10',
-  '127.0.0.0/8',
-  '169.254.0.0/16',
-  '172.16.0.0/12',
-  '192.0.0.0/24',
-  '192.168.0.0/16',
-  '198.18.0.0/15',
-  '224.0.0.0/4',
-  '240.0.0.0/4',
-] as const;
-
 const DEFAULT_SANDBOX_TIMEOUT_MS = 180_000;
 const DEFAULT_REQUEST_TIMEOUT_MS = 120_000;
 const DEFAULT_MAX_SCREENSHOT_BYTES = 750_000;
@@ -44,10 +31,7 @@ export type PublishedSiteSandboxRuntimeOptions = {
   allowInternetAccess: true;
   envs: Record<string, never>;
   metadata: Record<string, string>;
-  network: {
-    allowPublicTraffic: false;
-    denyOut: string[];
-  };
+  network?: never;
   lifecycle: {
     onTimeout: 'kill';
   };
@@ -339,10 +323,11 @@ function buildRuntimeOptions(
       source_host: new URL(bundle.job.source_url).hostname.slice(0, 128),
       coordinator: 'webflow-template-review-mcp',
     },
-    network: {
-      allowPublicTraffic: false,
-      denyOut: [...PRIVATE_NETWORK_DENY_CIDRS],
-    },
+    // Do not request E2B's provider-level network policy here. At current E2B
+    // capacity that option can make otherwise healthy sandboxes unplaceable.
+    // The fixed runner performs its own hostname and resolved-IP checks before
+    // every static, redirect, and browser request, and callers cannot supply
+    // code or credentials.
     lifecycle: { onTimeout: 'kill' },
   };
 }

@@ -64,6 +64,7 @@ class FakeSandbox implements PublishedSiteSandboxRuntime {
   killed = false;
   killError: Error | undefined;
   runError: Error | undefined;
+  runCodeInput = '';
   output = outputFixture();
   outputExists = true;
   screenshot = new Uint8Array([137, 80, 78, 71, 1, 2, 3]);
@@ -76,7 +77,8 @@ class FakeSandbox implements PublishedSiteSandboxRuntime {
     };
   }
 
-  async runCode(_code: string) {
+  async runCode(code: string) {
+    this.runCodeInput = code;
     if (this.runError) throw this.runError;
     return { error: undefined };
   }
@@ -152,12 +154,10 @@ test('runs the fixed evidence runner, returns compact evidence, and always kills
   assert.equal(runtimeOptions?.template, 'template-review-browser');
   assert.deepEqual(runtimeOptions?.envs, {});
   assert.equal(runtimeOptions?.lifecycle.onTimeout, 'kill');
-  assert.ok(runtimeOptions?.network.denyOut.includes('169.254.0.0/16'));
-  assert.ok(runtimeOptions?.network.denyOut.includes('10.0.0.0/8'));
-  assert.ok(runtimeOptions?.network.denyOut.includes('127.0.0.0/8'));
-  assert.ok(runtimeOptions?.network.denyOut.includes('192.168.0.0/16'));
-  assert.ok(runtimeOptions?.network.denyOut.includes('100.64.0.0/10'));
-  assert.ok(runtimeOptions?.network.denyOut.includes('240.0.0.0/4'));
+  assert.equal(runtimeOptions?.network, undefined);
+  assert.match(sandbox.runCodeInput, /if not address\.is_global:/);
+  assert.match(sandbox.runCodeInput, /assert_allowed_url\(new_url\)/);
+  assert.match(sandbox.runCodeInput, /await page\.route\('\*\*\/\*', route_handler\)/);
   assert.doesNotMatch(JSON.stringify(result), /test-only-e2b-key/);
 });
 
