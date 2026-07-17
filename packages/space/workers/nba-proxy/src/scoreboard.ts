@@ -313,13 +313,15 @@ export async function fetchScoreboardForDate(
 		};
 		await storeResult(dependencies.cache, cacheKey, result, date === dependencies.today ? 300 : 3600);
 		await storeResult(dependencies.cache, lastGoodCacheKey(date), result, 604800);
-		await storeReadiness(dependencies.cache, {
-			status: 'degraded',
-			checkedAt,
-			primary: primaryError ? 'unavailable' : 'not_checked',
-			servingSource: 'espn',
-			error: primaryError,
-		});
+		if (date === dependencies.today) {
+			await storeReadiness(dependencies.cache, {
+				status: 'degraded',
+				checkedAt,
+				primary: primaryError ? 'unavailable' : 'not_checked',
+				servingSource: 'espn',
+				error: primaryError,
+			});
+		}
 		return result;
 	} catch (fallbackError) {
 		const fallbackMessage = errorMessage(fallbackError);
@@ -335,23 +337,27 @@ export async function fetchScoreboardForDate(
 					primaryError: [primaryError, fallbackMessage].filter(Boolean).join('; '),
 				},
 			};
-			await storeReadiness(dependencies.cache, {
-				status: 'degraded',
-				checkedAt,
-				primary: primaryError ? 'unavailable' : 'not_checked',
-				servingSource: result.metadata.source,
-				error: result.metadata.primaryError,
-			});
+			if (date === dependencies.today) {
+				await storeReadiness(dependencies.cache, {
+					status: 'degraded',
+					checkedAt,
+					primary: primaryError ? 'unavailable' : 'not_checked',
+					servingSource: result.metadata.source,
+					error: result.metadata.primaryError,
+				});
+			}
 			return result;
 		}
 
 		const message = [primaryError, fallbackMessage].filter(Boolean).join('; ');
-		await storeReadiness(dependencies.cache, {
-			status: 'unavailable',
-			checkedAt,
-			primary: primaryError ? 'unavailable' : 'not_checked',
-			error: message,
-		});
+		if (date === dependencies.today) {
+			await storeReadiness(dependencies.cache, {
+				status: 'unavailable',
+				checkedAt,
+				primary: primaryError ? 'unavailable' : 'not_checked',
+				error: message,
+			});
+		}
 		throw new Error(`Scoreboard unavailable: ${message}`);
 	}
 }
