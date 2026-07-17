@@ -1,27 +1,32 @@
 <script lang="ts">
 	import { SEO } from '@create-something/canon';
 	import { onMount } from 'svelte';
+	import { fetchAdminJson, type AdminRequestError } from '$lib/admin/client';
 
-	let stats = {
-		experiments: 0,
-		submissions: 0,
-		subscribers: 0,
-		executions: 0
-	};
+	interface AdminStats {
+		experiments: number;
+		submissions: number | null;
+		subscribers: number | null;
+		executions: number | null;
+	}
+
+	let stats: AdminStats | null = null;
+	let loadError: AdminRequestError | null = null;
 	let loading = true;
 
 	onMount(async () => {
-		try {
-			const response = await fetch('/api/admin/stats');
-			if (response.ok) {
-				stats = await response.json();
-			}
-		} catch (error) {
-			console.error('Failed to load stats:', error);
-		} finally {
-			loading = false;
+		const result = await fetchAdminJson<AdminStats>('/api/admin/stats');
+		if (result.ok) {
+			stats = result.data;
+		} else {
+			loadError = result.error;
 		}
+		loading = false;
 	});
+
+	function displayStat(value: number | null | undefined) {
+		return value === null || value === undefined ? '—' : value.toLocaleString();
+	}
 </script>
 
 <SEO
@@ -37,6 +42,13 @@
 		<p class="page-description">Overview of CREATE SOMETHING systems</p>
 	</div>
 
+	{#if loadError}
+		<div class="stats-error" role="alert">
+			<strong>Some dashboard metrics are unavailable.</strong>
+			<span>{loadError.message}</span>
+		</div>
+	{/if}
+
 	<!-- Stats Grid -->
 	<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 		<div class="stat-card p-6">
@@ -45,11 +57,11 @@
 				{#if loading}
 					<div class="skeleton h-10 w-20"></div>
 				{:else}
-					{stats.experiments}
+					{displayStat(stats?.experiments)}
 				{/if}
 			</div>
 			<a href="/admin/experiments" class="stat-link mt-2 inline-block"
-				>Manage →</a
+				>Review →</a
 			>
 		</div>
 
@@ -59,7 +71,7 @@
 				{#if loading}
 					<div class="skeleton h-10 w-20"></div>
 				{:else}
-					{stats.submissions}
+					{displayStat(stats?.submissions)}
 				{/if}
 			</div>
 			<a href="/admin/submissions" class="stat-link mt-2 inline-block"
@@ -73,7 +85,7 @@
 				{#if loading}
 					<div class="skeleton h-10 w-20"></div>
 				{:else}
-					{stats.subscribers}
+					{displayStat(stats?.subscribers)}
 				{/if}
 			</div>
 			<a href="/admin/subscribers" class="stat-link mt-2 inline-block"
@@ -87,7 +99,7 @@
 				{#if loading}
 					<div class="skeleton h-10 w-20"></div>
 				{:else}
-					{stats.executions}
+					{displayStat(stats?.executions)}
 				{/if}
 			</div>
 			<div class="stat-label mt-2">Last 30 days</div>
@@ -98,9 +110,9 @@
 	<div class="section-divider pt-8">
 		<h3 class="section-title mb-4">Quick Actions</h3>
 		<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-			<a href="/admin/experiments?action=feature" class="action-card p-4 group">
-				<div class="action-title">Feature an Experiment</div>
-				<div class="action-description">Promote experiment to homepage</div>
+			<a href="/admin/experiments" class="action-card p-4 group">
+				<div class="action-title">Review Experiment Catalog</div>
+				<div class="action-description">Inspect the repository-owned published catalog</div>
 			</a>
 
 			<a href="/admin/submissions?filter=unread" class="action-card p-4 group">
@@ -138,6 +150,15 @@
 
 	.page-description {
 		color: var(--color-performance-fg-tertiary);
+	}
+
+	.stats-error {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-performance-xs);
+		padding: var(--space-performance-md);
+		border-radius: var(--radius-performance-scale-lg);
+		color: var(--color-performance-error);
 	}
 
 	.stat-card {
