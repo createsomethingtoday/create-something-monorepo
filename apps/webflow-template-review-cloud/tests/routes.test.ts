@@ -12,17 +12,23 @@ describe('public MCP route', () => {
   afterEach(() => vi.unstubAllGlobals());
 
   it('exposes every Streamable HTTP method through the Cloud adapter', async () => {
-    const fetchUpstream = vi.fn(async (request: Request) => new Response(request.method, {
-      status: request.method === 'POST' ? 202 : 200,
-    }));
+    const fetchUpstream = vi.fn(
+      async (request: Request) =>
+        new Response(request.method, {
+          status: request.method === 'POST' ? 202 : 200
+        })
+    );
     vi.stubGlobal('fetch', fetchUpstream);
 
     const handlers = { GET, POST, DELETE, OPTIONS };
     for (const [method, handler] of Object.entries(handlers)) {
-      const response = await handler(new Request('https://template-review.webflow.io/mcp', {
-        method,
-        ...(method === 'POST' ? { body: '{}' } : {}),
-      }));
+      const response = await handler(
+        new Request('https://template-review-mcp-access.wf.app/mcp', {
+          method,
+          headers: { 'Cf-Access-Jwt-Assertion': 'signed-access-assertion' },
+          ...(method === 'POST' ? { body: '{}' } : {})
+        })
+      );
       expect(await response.text()).toBe(method);
     }
 
@@ -31,67 +37,92 @@ describe('public MCP route', () => {
 
   it('exposes MCP subpaths, SSE, and OAuth discovery at the public origin', async () => {
     const seenUrls: string[] = [];
-    vi.stubGlobal('fetch', vi.fn(async (request: Request) => {
-      seenUrls.push(request.url);
-      if (request.url.includes('oauth-protected-resource')) {
-        return Response.json({
-          resource: 'https://webflow-template-review-mcp.createsomething.workers.dev/mcp',
-        });
-      }
-      return new Response('ok');
-    }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (request: Request) => {
+        seenUrls.push(request.url);
+        if (request.url.includes('oauth-protected-resource')) {
+          return Response.json({
+            resource: 'https://webflow-template-review-mcp.createsomething.workers.dev/mcp'
+          });
+        }
+        return new Response('ok');
+      })
+    );
 
-    await POST_MCP_SUBPATH(new Request('https://template-review.webflow.io/mcp/messages?session=1', {
-      method: 'POST',
-      body: '{}',
-    }));
-    await GET_SSE(new Request('https://template-review.webflow.io/sse'));
-    await GET_SSE_SUBPATH(new Request('https://template-review.webflow.io/sse/messages'));
+    await POST_MCP_SUBPATH(
+      new Request('https://template-review-mcp-access.wf.app/mcp/messages?session=1', {
+        method: 'POST',
+        headers: { 'Cf-Access-Jwt-Assertion': 'signed-access-assertion' },
+        body: '{}'
+      })
+    );
+    await GET_SSE(
+      new Request('https://template-review-mcp-access.wf.app/sse', {
+        headers: { 'Cf-Access-Jwt-Assertion': 'signed-access-assertion' }
+      })
+    );
+    await GET_SSE_SUBPATH(
+      new Request('https://template-review-mcp-access.wf.app/sse/messages', {
+        headers: { 'Cf-Access-Jwt-Assertion': 'signed-access-assertion' }
+      })
+    );
     const discovery = await GET_DISCOVERY(
-      new Request('https://template-review.webflow.io/.well-known/oauth-protected-resource'),
+      new Request('https://template-review-mcp-access.wf.app/.well-known/oauth-protected-resource')
     );
     const pathDiscovery = await GET_DISCOVERY_SUBPATH(
-      new Request('https://template-review.webflow.io/.well-known/oauth-protected-resource/sse'),
+      new Request(
+        'https://template-review-mcp-access.wf.app/.well-known/oauth-protected-resource/sse'
+      )
     );
 
     expect(seenUrls).toEqual([
-      'https://webflow-template-review-mcp.createsomething.workers.dev/mcp/messages?session=1',
-      'https://webflow-template-review-mcp.createsomething.workers.dev/sse',
-      'https://webflow-template-review-mcp.createsomething.workers.dev/sse/messages',
+      'https://webflow-template-review-mcp.createsomething.workers.dev/access/mcp/messages?session=1',
+      'https://webflow-template-review-mcp.createsomething.workers.dev/access/sse',
+      'https://webflow-template-review-mcp.createsomething.workers.dev/access/sse/messages',
       'https://webflow-template-review-mcp.createsomething.workers.dev/.well-known/oauth-protected-resource',
-      'https://webflow-template-review-mcp.createsomething.workers.dev/.well-known/oauth-protected-resource/sse',
+      'https://webflow-template-review-mcp.createsomething.workers.dev/.well-known/oauth-protected-resource/sse'
     ]);
-    expect((await discovery.json()).resource).toBe('https://template-review.webflow.io/mcp');
-    expect((await pathDiscovery.json()).resource).toBe('https://template-review.webflow.io/mcp');
+    expect((await discovery.json()).resource).toBe('https://template-review-mcp-access.wf.app/mcp');
+    expect((await pathDiscovery.json()).resource).toBe(
+      'https://template-review-mcp-access.wf.app/mcp'
+    );
   });
 
   it('discloses the upstream dependency and reports its live health', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => Response.json({
-      name: 'webflow-template-review-mcp',
-      version: '1.0.0',
-    })));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        Response.json({
+          name: 'webflow-template-review-mcp',
+          version: '1.0.0'
+        })
+      )
+    );
 
-    const response = await GET_HEALTH(new Request('https://template-review.webflow.io/health'));
+    const response = await GET_HEALTH(
+      new Request('https://template-review-mcp-access.wf.app/health')
+    );
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
       name: 'webflow-template-review-cloud',
       status: 'ok',
       adapter: 'transparent-proxy',
-      publicOrigin: 'https://template-review.webflow.io',
+      publicOrigin: 'https://template-review-mcp-access.wf.app',
       upstream: {
         origin: 'https://webflow-template-review-mcp.createsomething.workers.dev',
         status: 200,
         health: {
           name: 'webflow-template-review-mcp',
-          version: '1.0.0',
-        },
+          version: '1.0.0'
+        }
       },
       endpoints: {
         mcp: '/mcp',
         sse: '/sse',
-        discovery: '/.well-known/oauth-protected-resource',
-      },
+        discovery: '/.well-known/oauth-protected-resource'
+      }
     });
   });
 });

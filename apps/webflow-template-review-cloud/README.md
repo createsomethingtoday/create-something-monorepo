@@ -2,18 +2,18 @@
 
 Standalone Webflow Cloud origin for the CREATE SOMETHING Template Review MCP.
 
-This package is intentionally a transparent adapter. It keeps the current Worker as the owning runtime and rollback path while exposing the same authenticated MCP transport through the Webflow-assigned domain.
+This package is the Webflow-owned Cloudflare Access adapter. It keeps the current Worker as the owning runtime and rollback path while exposing its signed-assertion MCP transport through the Webflow-assigned domain.
 
 ## Runtime contract
 
-- Public MCP: `/mcp` and `/mcp/*`
-- Legacy SSE: `/sse` and `/sse/*`
+- Public MCP: `/mcp` and `/mcp/*`, routed to the Worker's `/access/mcp` surface
+- Legacy SSE: `/sse` and `/sse/*`, routed to the Worker's `/access/sse` surface
 - OAuth protected-resource discovery: `/.well-known/oauth-protected-resource` and path variants
 - Health: `/health`
 - Upstream: `https://webflow-template-review-mcp.createsomething.workers.dev`
 - Workspace: `Create Something` (`63221596dcbcf2eaadee2798`)
 
-The adapter forwards the caller's OAuth bearer and MCP session headers. It never stores or relays the Worker's legacy shared bearer. The Worker must explicitly allowlist the assigned Cloud `/mcp` resource before authenticated Cloud-origin calls can pass its audience check.
+Cloudflare Access resolves its opaque Managed OAuth bearer before the adapter runs and injects a signed `Cf-Access-Jwt-Assertion`. The adapter requires that assertion, strips the opaque bearer and unsigned identity headers, and forwards only the assertion plus MCP transport headers. The Worker verifies the Webflow Access issuer, application audience, signature, identity claims, and reviewer allowlist on `/access/mcp`.
 
 ## Commands
 
