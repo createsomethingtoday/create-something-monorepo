@@ -95,7 +95,7 @@
 				{error}
 				showMagicLinkOption={false}
 				showLoginLink={true}
-				source="agency"
+				source="space"
 			/>
 		{/if}
 	</section>

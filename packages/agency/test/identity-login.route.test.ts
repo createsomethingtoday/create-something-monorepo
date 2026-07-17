@@ -2,13 +2,14 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
-import { POST } from '../src/routes/api/auth/login/+server.ts';
+import { POST as login } from '../src/routes/api/auth/login/+server.ts';
+import { POST as signup } from '../src/routes/api/auth/signup/+server.ts';
 
 test('agency signs customers in through CREATE SOMETHING Identity', async () => {
 	const cookieWrites: Array<{ name: string; value: string }> = [];
 	let identityRequest: Request | null = null;
 
-	const response = await POST({
+	const response = await login({
 		request: new Request('https://createsomething.agency/api/auth/login', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
@@ -63,6 +64,48 @@ test('agency signs customers in through CREATE SOMETHING Identity', async () => 
 			tier: 'agency',
 			source: 'space',
 		},
+	});
+});
+
+test('agency signs customers up through an Identity-supported source', async () => {
+	let identityRequest: Request | null = null;
+
+	const response = await signup({
+		request: new Request('https://createsomething.agency/api/auth/signup', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				email: 'new-owner@example.com',
+				password: 'correct horse battery staple',
+				name: 'New Owner',
+				source: 'agency',
+			}),
+		}),
+		cookies: { set() {} },
+		fetch: async (request: RequestInfo | URL, init?: RequestInit) => {
+			identityRequest = new Request(request, init);
+			return Response.json({
+				access_token: 'identity-access-token',
+				refresh_token: 'identity-refresh-token',
+				expires_in: 900,
+				user: { id: 'usr_new', email: 'new-owner@example.com' },
+			});
+		},
+		platform: {
+			env: {
+				ENVIRONMENT: 'production',
+				IDENTITY_API_URL: 'https://id.createsomething.space',
+			},
+		},
+	} as never);
+
+	assert.equal(response.status, 200);
+	assert.ok(identityRequest);
+	assert.deepEqual(await identityRequest.json(), {
+		email: 'new-owner@example.com',
+		password: 'correct horse battery staple',
+		name: 'New Owner',
+		source: 'space',
 	});
 });
 
