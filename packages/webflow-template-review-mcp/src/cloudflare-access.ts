@@ -35,6 +35,11 @@ export type CloudflareAccessApplication = {
   audience: string;
 };
 
+export type CloudflareAccessAssertionMetadata = {
+  issuer: string | null;
+  audiences: string[];
+};
+
 export function isCloudflareAccessMcpPath(pathname: string): boolean {
   return (
     pathname === '/access/mcp'
@@ -93,15 +98,28 @@ function normalizeTrustedApplications(input: {
   });
 }
 
-function resolveTrustedApplication(assertion: string, configured: CloudflareAccessApplication[]): CloudflareAccessApplication | null {
-  let issuer: string;
+export function readCloudflareAccessAssertionMetadata(
+  assertion: string,
+): CloudflareAccessAssertionMetadata | null {
   try {
     const decoded = decodeJwt(assertion);
-    issuer = typeof decoded.iss === 'string' ? decoded.iss : '';
+    return {
+      issuer: typeof decoded.iss === 'string' ? decoded.iss : null,
+      audiences: typeof decoded.aud === 'string'
+        ? [decoded.aud]
+        : Array.isArray(decoded.aud)
+          ? decoded.aud.filter((value): value is string => typeof value === 'string')
+          : [],
+    };
   } catch {
     return null;
   }
-  return configured.find((candidate) => candidate.teamDomain === issuer) ?? null;
+}
+
+function resolveTrustedApplication(assertion: string, configured: CloudflareAccessApplication[]): CloudflareAccessApplication | null {
+  const metadata = readCloudflareAccessAssertionMetadata(assertion);
+  if (!metadata?.issuer) return null;
+  return configured.find((candidate) => candidate.teamDomain === metadata.issuer) ?? null;
 }
 
 function deniedAccessResult(

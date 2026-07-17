@@ -7,6 +7,7 @@ import { AirtableClient } from '../src/airtable.js';
 import {
   cloudflareAccessServePath,
   isCloudflareAccessMcpPath,
+  readCloudflareAccessAssertionMetadata,
   resolveCloudflareAccessRequest,
   type CloudflareAccessApplication,
 } from '../src/cloudflare-access.js';
@@ -237,6 +238,23 @@ async function authenticateWithCloudflareAccess(
     directory: resolveReviewerDirectory(env),
   });
   if (result.ok === false) {
+    // The Webflow-hosted proxy can only forward a signed edge assertion. If
+    // its Access application has been created with a new audience, capture
+    // that non-secret configuration value in Worker logs so the upstream can
+    // be updated without logging a token or identity claim. The MCP response
+    // stays intentionally generic and the assertion is still rejected.
+    if (result.status === 401) {
+      const metadata = readCloudflareAccessAssertionMetadata(
+        request.headers.get('Cf-Access-Jwt-Assertion')?.trim() ?? '',
+      );
+      if (metadata?.issuer === 'https://webflow.cloudflareaccess.com' && metadata.audiences.length) {
+        console.warn(JSON.stringify({
+          event: 'template_review_webflow_access_audience_observed',
+          issuer: metadata.issuer,
+          audiences: metadata.audiences,
+        }));
+      }
+    }
     if (result.status === 401) return unauthorized(origin, result.message, '/access/mcp');
     if (result.status === 403) return forbidden(result.message);
     return misconfiguredResponse(result.message);

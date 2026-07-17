@@ -11,6 +11,7 @@ import {
 import {
   cloudflareAccessServePath,
   isCloudflareAccessMcpPath,
+  readCloudflareAccessAssertionMetadata,
   resolveCloudflareAccessRequest,
 } from '../src/cloudflare-access.js';
 import { SCOPE_READ, SCOPE_WRITE, parseAllowedEmails } from '../src/oauth-access.js';
@@ -43,6 +44,24 @@ test('Cloudflare Access uses a dedicated MCP surface without intercepting the ex
   assert.equal(isCloudflareAccessMcpPath('/sse'), false);
   assert.equal(cloudflareAccessServePath('/access/mcp/messages'), '/access/mcp');
   assert.equal(cloudflareAccessServePath('/access/sse/messages'), '/access/sse');
+});
+
+test('readCloudflareAccessAssertionMetadata extracts only issuer and audience configuration', async () => {
+  const { privateKey } = await generateKeyPair('RS256');
+  const assertion = await new SignJWT({ email: 'micah@webflow.com', type: 'app' })
+    .setProtectedHeader({ alg: 'RS256', kid: KEY_ID })
+    .setIssuer('https://webflow.cloudflareaccess.com')
+    .setAudience(['template-review-webflow-access-audience', 'another-audience'])
+    .setSubject('not-returned')
+    .setIssuedAt()
+    .setExpirationTime('5m')
+    .sign(privateKey);
+
+  assert.deepEqual(readCloudflareAccessAssertionMetadata(assertion), {
+    issuer: 'https://webflow.cloudflareaccess.com',
+    audiences: ['template-review-webflow-access-audience', 'another-audience'],
+  });
+  assert.equal(readCloudflareAccessAssertionMetadata('not-a-jwt'), null);
 });
 
 test('resolveCloudflareAccessRequest fails closed when Access configuration or assertion is missing', async () => {
