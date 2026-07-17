@@ -577,16 +577,16 @@ export function createAuthHooks(config: AuthHooksConfig = {}): Handle {
 		isProduction = true,
 		domain,
 		onAnalyticsEvent,
+		authProvider: configuredAuthProvider,
 	} = config;
 
 	return async ({ event, resolve }) => {
 		const { cookies, url, locals } = event;
-		const platformEnv = (
-			event as { platform?: { env?: Record<string, string | undefined> } }
-		).platform?.env;
+		const platformEnv = (event as { platform?: { env?: Record<string, string | undefined> } })
+			.platform?.env;
 
 		// Get session and attempt to get user (with auto-refresh)
-		const authProvider = getAuth0Config(platformEnv);
+		const authProvider = configuredAuthProvider ?? getAuth0Config(platformEnv);
 		const sessionManager = createSessionManager(cookies, {
 			isProduction,
 			domain,
@@ -664,13 +664,17 @@ function getDomainFromHostname(hostname: string, isProduction: boolean): string 
 export async function handleLogout(
 	request: Request,
 	cookies: CookiesAPI,
-	platform?: { env?: Record<string, unknown> & { ENVIRONMENT?: string } }
+	platform?: { env?: Record<string, unknown> & { ENVIRONMENT?: string } },
+	options?: Pick<SessionManagerOptions, 'authProvider'>
 ): Promise<Response> {
 	try {
 		const isProduction = platform?.env?.ENVIRONMENT === 'production';
 		const url = new URL(request.url);
 		const domain = getDomainFromHostname(url.hostname, isProduction);
-			const authProvider = getAuth0Config(platform?.env as Record<string, string | undefined> | undefined) ?? undefined;
+		const authProvider =
+			options?.authProvider ??
+			getAuth0Config(platform?.env as Record<string, string | undefined> | undefined) ??
+			undefined;
 
 		// Get refresh token to revoke at Identity Worker
 		const refreshToken = getRefreshTokenFromRequest(request);
@@ -681,12 +685,13 @@ export async function handleLogout(
 		// Clear JWT cookies
 		clearSessionCookies(cookies, isProduction ?? true, domain);
 
-		const logoutUrl = authProvider
-			? buildAuth0LogoutUrl({
-					config: authProvider,
-					returnTo: `${url.origin}/login`,
-				})
-			: `${url.origin}/login`;
+		const logoutUrl =
+			authProvider?.type === 'auth0'
+				? buildAuth0LogoutUrl({
+						config: authProvider as Auth0ProviderConfig,
+						returnTo: `${url.origin}/login`,
+					})
+				: `${url.origin}/login`;
 
 		return new Response(JSON.stringify({ success: true, logoutUrl }), {
 			status: 200,

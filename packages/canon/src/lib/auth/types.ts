@@ -135,6 +135,8 @@ export interface AuthHooksConfig {
 	domain?: string;
 	/** Analytics event emitter */
 	onAnalyticsEvent?: (event: SessionAnalyticsEvent) => void;
+	/** Explicit session provider. Set Identity to prevent retired provider env from taking precedence. */
+	authProvider?: AuthProviderConfig | Auth0ProviderConfig;
 }
 
 export interface SessionManagerOptions {

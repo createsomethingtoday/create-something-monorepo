@@ -3,7 +3,8 @@ import { sequence } from '@sveltejs/kit/hooks';
 import { createAuthHooks } from '@create-something/canon/auth';
 import { abundanceApiAuthHandle } from './lib/server/abundance-api-auth';
 import { deprecatedRedirects } from './lib/data/deprecatedRoutes';
-import { AGENCY_PROTECTED_PATHS } from './lib/server/protected-routes';
+import { verifyAgencyIdentitySession } from './lib/server/agency-identity-session';
+import { AGENCY_PROTECTED_PATHS, isAgencyProtectedPath } from './lib/server/protected-routes';
 import {
 	createPublicHtmlCacheKey,
 	isCacheablePublicHtmlResponse,
@@ -33,7 +34,27 @@ const authHandle = createAuthHooks({
 	protectedPaths: [...AGENCY_PROTECTED_PATHS],
 	loginPath: '/login',
 	includeRedirect: true,
+	authProvider: { type: 'identity-worker' },
 }) as Handle;
+
+const identityVerificationHandle: Handle = async ({ event, resolve }) => {
+	const user = await verifyAgencyIdentitySession({
+		cookies: event.cookies,
+		platform: event.platform,
+		fetch: event.fetch,
+	});
+	event.locals.user = user ?? undefined;
+
+	if (isAgencyProtectedPath(event.url.pathname) && !user) {
+		const destination = `${event.url.pathname}${event.url.search}`;
+		return new Response(null, {
+			status: 302,
+			headers: { Location: `/login?redirect=${encodeURIComponent(destination)}` },
+		});
+	}
+
+	return resolve(event);
+};
 
 const publicHtmlCacheHandle: Handle = async ({ event, resolve }) => {
 	const shouldAttemptCache = shouldAttemptPublicHtmlCache({
@@ -69,4 +90,10 @@ const publicHtmlCacheHandle: Handle = async ({ event, resolve }) => {
 	return cacheableResponse;
 };
 
-export const handle = sequence(redirectHandle, authHandle, abundanceApiAuthHandle, publicHtmlCacheHandle);
+export const handle = sequence(
+	redirectHandle,
+	authHandle,
+	identityVerificationHandle,
+	abundanceApiAuthHandle,
+	publicHtmlCacheHandle,
+);
