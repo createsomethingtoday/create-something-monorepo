@@ -105,10 +105,14 @@ async function main() {
 
     let writeDenied = false;
     try {
-      await client.callTool({
+      const writeResult = await client.callTool({
         name: 'template_review_assign_self',
         arguments: { version_id: 'must-not-run' },
       });
+      const writeResultText = JSON.stringify(writeResult);
+      writeDenied =
+        (writeResult as { isError?: unknown }).isError === true ||
+        /not found|unknown tool/i.test(writeResultText);
     } catch (error) {
       writeDenied = /not found|unknown tool/i.test(error instanceof Error ? error.message : String(error));
     }
