@@ -2,42 +2,40 @@
 
 import { randomBytes } from 'node:crypto';
 import { spawn, spawnSync } from 'node:child_process';
-import {
-  chmodSync,
-  closeSync,
-  existsSync,
-  mkdirSync,
-  openSync,
-  readFileSync,
-  rmSync,
-  writeFileSync
-} from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const root = process.cwd();
+const scriptPath = fileURLToPath(import.meta.url);
+const root = resolve(dirname(scriptPath), '..');
 const runtimeDir = resolve(root, '.tmp/codex-presence-production');
 const runtimePath = resolve(runtimeDir, 'runtime.json');
 const logPath = resolve(runtimeDir, 'presence.log');
+const launchLabel = 'agency.createsomething.codex-presence';
 const publicOrigin = 'https://codex-g2.createsomething.agency';
 const localOrigin = 'http://127.0.0.1:19931';
 const staticDir = resolve(root, 'apps/even-codex-presence/dist');
 const packagePath = resolve(root, 'apps/even-codex-presence/even-codex-presence.ehpk');
+const infisicalBinary = existsSync('/opt/homebrew/bin/infisical')
+  ? '/opt/homebrew/bin/infisical'
+  : 'infisical';
 const command = process.argv[2] || 'status';
 
-if (!new Set(['start', 'status', 'stop', 'qr']).has(command)) {
+if (!new Set(['start', 'status', 'stop', 'qr', 'daemon']).has(command)) {
   throw new Error('Usage: codex-presence-production.mjs <start|status|stop|qr>');
 }
 
 if (command === 'start') await start();
 if (command === 'status') await status();
-if (command === 'stop') stop();
-if (command === 'qr') qr();
+if (command === 'stop') await stop();
+if (command === 'qr') await qr();
+if (command === 'daemon') await daemon();
 
 async function start() {
-  const current = readRuntime();
-  if (current && processAlive(current.pid)) {
+  if (await health()) {
     throw new Error(`Codex Presence is already running on ${localOrigin}.`);
   }
+  if (jobLoaded()) removeJob();
   if (!existsSync(resolve(staticDir, 'index.html'))) {
     throw new Error(
       'Build the Even client before starting production (`pnpm --filter @create-something/even-codex-presence build`).'
@@ -47,33 +45,11 @@ async function start() {
   mkdirSync(runtimeDir, { recursive: true, mode: 0o700 });
   const secretName =
     process.env.CODEX_PRESENCE_OPENAI_SECRET_NAME?.trim() || 'WEBFLOW_OPENAI_API_KEY';
-  const apiKey = loadInfisicalSecret(secretName);
   const pairingToken = randomBytes(32).toString('base64url');
   const installUrl = `${publicOrigin}/?service=${encodeURIComponent(publicOrigin)}&token=${encodeURIComponent(pairingToken)}`;
-  const log = openSync(logPath, 'a', 0o600);
-  const child = spawn(
-    resolve(root, 'node_modules/.bin/tsx'),
-    [resolve(root, 'packages/codex-presence/src/cli.ts')],
-    {
-      cwd: root,
-      detached: true,
-      env: {
-        ...process.env,
-        OPENAI_API_KEY: apiKey,
-        CODEX_PRESENCE_TOKEN: pairingToken,
-        CODEX_PRESENCE_PORT: '19931',
-        CODEX_PRESENCE_ORIGIN: publicOrigin,
-        CODEX_PRESENCE_STATIC_DIR: staticDir
-      },
-      stdio: ['ignore', log, log]
-    }
-  );
-  child.unref();
-  closeSync(log);
 
   const runtime = {
-    version: 1,
-    pid: child.pid,
+    version: 2,
     startedAt: new Date().toISOString(),
     localOrigin,
     publicOrigin,
@@ -84,9 +60,33 @@ async function start() {
     installUrl
   };
   writePrivateJson(runtimePath, runtime);
+  writeFileSync(logPath, '', { flag: 'a', mode: 0o600 });
+  chmodSync(logPath, 0o600);
+
+  const submitted = spawnSync(
+    'launchctl',
+    [
+      'submit',
+      '-l',
+      launchLabel,
+      '-o',
+      logPath,
+      '-e',
+      logPath,
+      '--',
+      process.execPath,
+      scriptPath,
+      'daemon'
+    ],
+    { cwd: root, stdio: ['ignore', 'pipe', 'pipe'], encoding: 'utf8' }
+  );
+  if (submitted.status !== 0) {
+    rmSync(runtimePath, { force: true });
+    throw new Error('Could not register Codex Presence with the macOS user launch service.');
+  }
 
   if (!(await waitForHealth())) {
-    terminate(child.pid);
+    removeJob();
     rmSync(runtimePath, { force: true });
     throw new Error(`Codex Presence did not become healthy. Inspect ${logPath}.`);
   }
@@ -95,10 +95,9 @@ async function start() {
 }
 
 async function status() {
-  const runtime = readRuntime();
-  const running = Boolean(runtime && processAlive(runtime.pid));
-  const healthy = running && (await health());
-  console.log(`Process: ${running ? 'running' : 'stopped'}`);
+  const registered = jobLoaded();
+  const healthy = registered && (await health());
+  console.log(`Launch service: ${registered ? 'registered' : 'stopped'}`);
   console.log(`Health: ${healthy ? 'healthy' : 'unavailable'}`);
   console.log(`Local origin: ${localOrigin}`);
   console.log(`Public origin: ${publicOrigin}`);
@@ -106,21 +105,23 @@ async function status() {
   process.exitCode = healthy ? 0 : 1;
 }
 
-function stop() {
-  const runtime = readRuntime();
-  if (!runtime || !processAlive(runtime.pid)) {
+async function stop() {
+  if (!jobLoaded() && !(await health())) {
     rmSync(runtimePath, { force: true });
     console.log('Codex Presence is already stopped.');
     return;
   }
-  terminate(runtime.pid);
+  removeJob();
+  for (let attempt = 0; attempt < 20 && (await health()); attempt += 1) {
+    await new Promise((resolveWait) => setTimeout(resolveWait, 100));
+  }
   rmSync(runtimePath, { force: true });
   console.log('Codex Presence production process stopped and its pairing receipt was removed.');
 }
 
-function qr() {
+async function qr() {
   const runtime = readRuntime();
-  if (!runtime || !processAlive(runtime.pid))
+  if (!runtime || !(await health()))
     throw new Error('Start Codex Presence before opening its install QR.');
   const result = spawnSync(
     'pnpm',
@@ -139,11 +140,42 @@ function qr() {
   if (result.status !== 0) throw new Error('Even Hub could not open the install QR.');
 }
 
+async function daemon() {
+  const runtime = readRuntime();
+  if (!runtime?.pairingToken || !runtime?.secretName) {
+    throw new Error('The private Codex Presence runtime receipt is missing or invalid.');
+  }
+  const apiKey = loadInfisicalSecret(runtime.secretName);
+  const child = spawn(
+    resolve(root, 'node_modules/.bin/tsx'),
+    [resolve(root, 'packages/codex-presence/src/cli.ts')],
+    {
+      cwd: root,
+      env: {
+        ...process.env,
+        PATH: `${dirname(process.execPath)}:/opt/homebrew/bin:/usr/bin:/bin`,
+        OPENAI_API_KEY: apiKey,
+        CODEX_PRESENCE_TOKEN: runtime.pairingToken,
+        CODEX_PRESENCE_PORT: '19931',
+        CODEX_PRESENCE_ORIGIN: publicOrigin,
+        CODEX_PRESENCE_STATIC_DIR: staticDir
+      },
+      stdio: 'inherit'
+    }
+  );
+  for (const signal of ['SIGINT', 'SIGTERM']) {
+    process.once(signal, () => child.kill(signal));
+  }
+  process.exitCode = await new Promise((resolveExit) => {
+    child.once('exit', (code) => resolveExit(code ?? 1));
+  });
+}
+
 function loadInfisicalSecret(secretName) {
   const environment = process.env.CODEX_PRESENCE_INFISICAL_ENV?.trim() || 'prod';
   const secretPath = process.env.CODEX_PRESENCE_INFISICAL_PATH?.trim() || '/';
   const result = spawnSync(
-    'infisical',
+    infisicalBinary,
     [
       'secrets',
       'get',
@@ -177,26 +209,15 @@ function writePrivateJson(path, value) {
   chmodSync(path, 0o600);
 }
 
-function processAlive(pid) {
-  if (!Number.isInteger(pid) || pid <= 0) return false;
-  try {
-    process.kill(pid, 0);
-    return true;
-  } catch {
-    return false;
-  }
+function jobLoaded() {
+  return (
+    spawnSync('launchctl', ['print', `gui/${process.getuid()}/${launchLabel}`], { stdio: 'ignore' })
+      .status === 0
+  );
 }
 
-function terminate(pid) {
-  try {
-    process.kill(-pid, 'SIGTERM');
-  } catch {
-    try {
-      process.kill(pid, 'SIGTERM');
-    } catch {
-      /* already stopped */
-    }
-  }
+function removeJob() {
+  spawnSync('launchctl', ['remove', launchLabel], { stdio: 'ignore' });
 }
 
 async function health() {
