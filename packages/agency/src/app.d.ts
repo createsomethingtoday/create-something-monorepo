@@ -36,6 +36,9 @@ declare global {
 				STRIPE_SECRET_KEY: string;
 				STRIPE_WEBHOOK_SECRET: string;
 				STRIPE_PUBLISHABLE_KEY?: string;
+				STRIPE_PRICE_MAP_MONTHLY?: string;
+				STRIPE_PRICE_MAP_YEARLY?: string;
+				MAP_COMMERCIAL_LAUNCH_APPROVED?: string;
 				// Templates Platform
 				TEMPLATES_PLATFORM_API_URL?: string;
 				TEMPLATES_PLATFORM_API_SECRET?: string;

@@ -35,6 +35,8 @@
 		"governance:slack-monitor": "node ./scripts/run-governance-slack-monitor.mjs",
 		"governance:readiness": "node ./scripts/check-governance-production-readiness.mjs",
 		"governance:sync-monitor-config": "node ./scripts/sync-governance-monitor-config.mjs",
+		"map:synthetic": "playwright test --config playwright.map-synthetic.config.ts",
+		"map:synthetic:evaluate": "node ./scripts/evaluate-map-synthetic-receipts.mjs",
 		"check:watch": "pnpm prepare:build-dir && pnpm prepare:local-deps && node ./scripts/run-pinned-bin.mjs @sveltejs/kit svelte-kit sync && node ./scripts/run-pinned-bin.mjs svelte-check svelte-check --tsconfig ./tsconfig.json --fail-on-warnings --watch",
 		"test:abundance": "node --import tsx --test test/abundance-*.test.ts",
 		"smoke:mobile": "pnpm --filter @create-something/canon package && pnpm --filter @create-something/tufte package && pnpm build && playwright test --config playwright.mobile-smoke.config.ts",
