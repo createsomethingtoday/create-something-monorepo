@@ -83,16 +83,27 @@ Then start the client and simulator using the runtime pairing URL described in
 pnpm codex:presence:verify
 ```
 
+To load one existing key from Infisical without writing it to disk or injecting
+the rest of the vault into verifier children:
+
+```bash
+CODEX_PRESENCE_OPENAI_SECRET_NAME=WEBFLOW_OPENAI_API_KEY \
+  pnpm codex:presence:verify:infisical
+```
+
 The verifier starts clean local service, client, simulator, and disposable
 Codex processes; captures 576x288 screenshots and console output; drives two
 simulator inputs; sends a typed follow-up through Even Terminal; generates a
 speech fixture; and writes JSON evidence to `.tmp/codex-presence/<timestamp>`.
+It discovers a supported CoreAudio loopback, binds the official simulator to
+that input with `--aid`, and plays the spoken fixture to the matching output so
+the G2 PCM path is deterministic without changing system-default audio devices.
 
-Completion requires two consecutive passes. As of 2026-07-17, the approved
-existing OpenAI key authenticates but its API project returns HTTP 429
-`insufficient_quota`. Add API credits or raise the project/organization spend
-limit, then rerun the verifier twice. A mocked transcript is intentionally not
-accepted as completion proof.
+Completion requires two consecutive passes. On 2026-07-17, Infisical production
+`OPENAI_API_KEY` returned HTTP 429 `insufficient_quota`, while the distinct
+existing `WEBFLOW_OPENAI_API_KEY` returned a real transcript. The Infisical
+launcher above produced two consecutive full passes. A mocked transcript is
+intentionally not accepted as completion proof.
 
 ## Physical-device promotion
 

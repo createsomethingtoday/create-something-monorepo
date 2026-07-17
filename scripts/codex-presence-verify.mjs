@@ -28,7 +28,8 @@ let disposableHome;
 mkdirSync(evidenceDirectory, { recursive: true });
 
 try {
-  stage('preflight', runChecks());
+  const audioLoopback = findAudioLoopback();
+  stage('preflight', { ...runChecks(), audioLoopback });
 
   let service = start('pnpm', ['--filter', '@create-something/codex-presence', 'start'], {
     CODEX_PRESENCE_TOKEN: token,
@@ -144,7 +145,8 @@ try {
   voiceTarget.searchParams.set('task', first.sessionId);
   simulator = start('pnpm', [
     '--filter', '@create-something/even-codex-presence', 'exec', 'evenhub-simulator',
-    voiceTarget.toString(), '--automation-port', String(ports.simulator), '--no-glow'
+    voiceTarget.toString(), '--automation-port', String(ports.simulator), '--no-glow',
+    '--aid', audioLoopback.inputId
   ]);
   await waitFor(`http://127.0.0.1:${ports.simulator}/api/ping`, 30_000, false);
   await delay(2_000);
@@ -154,7 +156,7 @@ try {
   await simulatorInput('click');
   await delay(500);
   const recordingPath = await screenshot('voice-recording');
-  command('say', ['Continue with the recommended.']);
+  command('say', ['-a', audioLoopback.outputDevice, 'Continue with the recommended.']);
   await delay(300);
   await simulatorInput('click');
   await delay(5_000);
@@ -193,6 +195,21 @@ function runChecks() {
   command('pnpm', ['--filter', '@create-something/even-codex-presence', 'build']);
   command('pnpm', ['--filter', '@create-something/even-codex-presence', 'pack:even']);
   return { ok: true };
+}
+
+function findAudioLoopback() {
+  const result = spawnSync('pnpm', [
+    '--filter', '@create-something/even-codex-presence', 'exec',
+    'evenhub-simulator', '--list-audio-input-devices'
+  ], { cwd: root, encoding: 'utf8', env: process.env });
+  if (result.status !== 0) throw new Error('Could not list EvenHub simulator audio input devices.');
+  const candidates = ['Descript Loopback Recorder', 'Microsoft Teams Audio', 'ZoomAudioDevice'];
+  for (const outputDevice of candidates) {
+    const line = result.stdout.split('\n').find((value) => value.includes(outputDevice));
+    const inputId = line?.trim().split(/\s+/)[0];
+    if (inputId?.startsWith('coreaudio:')) return { inputId, outputDevice };
+  }
+  throw new Error('No supported CoreAudio loopback device is available for deterministic G2 voice verification.');
 }
 
 function command(executable, args) {
