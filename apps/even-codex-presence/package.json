@@ -1,0 +1,27 @@
+{
+  "name": "@create-something/even-codex-presence",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "tsc --noEmit && vite build",
+    "check": "tsc --noEmit",
+    "preview": "vite preview --host 0.0.0.0",
+    "simulator": "evenhub-simulator http://127.0.0.1:5173",
+    "test": "tsx --test test/*.test.ts",
+    "pack:even": "vite build && evenhub pack app.json dist -o even-codex-presence.ehpk"
+  },
+  "dependencies": {
+    "@evenrealities/even_hub_sdk": "^0.0.10"
+  },
+  "devDependencies": {
+    "@create-something/codex-presence": "workspace:*",
+    "@evenrealities/evenhub-cli": "^0.1.13",
+    "@evenrealities/evenhub-simulator": "^0.7.3",
+    "@types/node": "^24.10.9",
+    "tsx": "^4.21.0",
+    "typescript": "^5.7.2",
+    "vite": "7.1.10"
+  }
+}

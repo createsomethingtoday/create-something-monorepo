@@ -90,6 +90,7 @@
     "codex:g2:access:config": "node scripts/codex-g2-cloudflare-access.mjs config",
     "codex:g2:access:start": "node scripts/codex-g2-cloudflare-access.mjs start",
     "codex:g2:access:status": "node scripts/codex-g2-cloudflare-access.mjs status",
+    "codex:presence:verify": "node scripts/codex-presence-verify.mjs",
     "graph:build": "tsx scripts/build-knowledge-graph/index.ts",
     "graph:build:incremental": "tsx scripts/build-knowledge-graph/index.ts --incremental",
     "graph:build:dry-run": "tsx scripts/build-knowledge-graph/index.ts --dry-run",
