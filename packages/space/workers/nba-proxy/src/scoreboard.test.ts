@@ -112,6 +112,35 @@ describe('scoreboard provider fallback', () => {
 		assert.equal(result.data.scoreboard.games[0]?.awayTeam.teamTricode, 'NYK');
 	});
 
+	it('keeps readiness scoped to the current slate when historical dates are requested', async () => {
+		const cache = new MemoryCache();
+		let now = new Date('2026-07-17T03:30:00Z');
+		const dependencies = {
+			today: '2026-07-16',
+			cache,
+			fetchImpl: async (input: RequestInfo | URL) =>
+				input.toString().includes('cdn.nba.com')
+					? new Response('forbidden', { status: 403 })
+					: Response.json({ events: [] }),
+			nbaApiBaseUrl: 'https://cdn.nba.com/static/json',
+			espnApiBaseUrl: 'https://site.api.espn.com/apis/site/v2/sports/basketball/nba',
+			now: () => now,
+		};
+
+		await fetchScoreboardForDate('2026-07-16', dependencies);
+		now = new Date('2026-07-17T04:00:00Z');
+		await fetchScoreboardForDate('2026-01-05', dependencies);
+
+		const readiness = JSON.parse((await cache.get(READINESS_CACHE_KEY)) ?? '{}') as {
+			checkedAt?: string;
+			primary?: string;
+			servingSource?: string;
+		};
+		assert.equal(readiness.checkedAt, '2026-07-17T03:30:00.000Z');
+		assert.equal(readiness.primary, 'unavailable');
+		assert.equal(readiness.servingSource, 'espn');
+	});
+
 	it('serves last-known-good data as stale when both providers fail', async () => {
 		const cache = new MemoryCache();
 		const dependencies = {
