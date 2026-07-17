@@ -571,6 +571,62 @@ test('a restarted service delivers a crash-only handoff marker to Linear', async
   assert.equal(service.should_dispatch(issue, false), false);
 });
 
+test('restart restoration surfaces dual handoff durability failures to once mode', async () => {
+  const service = createService();
+  const issue = createIssue({ id: 'issue-restore-fatal', identifier: 'CRE-RESTORE-FATAL', state: 'claimed' });
+  service.evidence_handoff_retry_delay_ms = () => 0;
+  service.tracker = {
+    async comment_issue() {
+      throw new Error('Linear comment unavailable');
+    },
+    async handoff_issue() {
+      throw new Error('Linear state update unavailable');
+    },
+  };
+  service.workspace_manager = {
+    async read_completion_handoff() {
+      return {
+        schema_version: 'symphony-evidence-handoff-marker.v1',
+        issue_id: issue.id,
+        issue_identifier: issue.identifier,
+        workspace_path: '/tmp/symphony/CRE-RESTORE-FATAL',
+        workspace_metadata_path: '/tmp/symphony/.metadata/CRE-RESTORE-FATAL.json',
+        evidence_recorded: false,
+        comment_attempts: 0,
+        last_error: null,
+        handoff: {
+          schema_version: 'symphony-evidence-handoff.v1',
+          issue: issue.identifier,
+          status: 'worker_completed_evidence_only',
+          eligible_for_done: false,
+          workspace_path: '/tmp/symphony/CRE-RESTORE-FATAL',
+          turn_count: 1,
+          worker_message: 'Worker completed before the service restarted.',
+          next_decision: 'Review the preserved workspace.',
+        },
+      };
+    },
+    async write_completion_handoff() {
+      throw new Error('completion marker storage unavailable');
+    },
+    get_workspace_paths() {
+      return {
+        workspace_path: '/tmp/symphony/CRE-RESTORE-FATAL',
+        metadata_path: '/tmp/symphony/.metadata/CRE-RESTORE-FATAL.json',
+      };
+    },
+  };
+
+  const restored = await service.restore_completion_handoff(issue);
+
+  assert.equal(restored, true);
+  assert.equal(service.dispatch_halted, true);
+  await assert.rejects(
+    () => service.drain_until_idle(),
+    /persistence and Linear fallback both failed/,
+  );
+});
+
 test('terminal awaiting-completion issues are reconciled without a service restart', async () => {
   const service = createService();
   const issue = createIssue({ id: 'issue-terminal', identifier: 'CRE-TERMINAL', state: 'claimed' });

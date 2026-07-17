@@ -833,12 +833,16 @@ export class SymphonyService {
                 }
                 catch (handoff_error) {
                     const handoff_message = handoff_error instanceof Error ? handoff_error.message : String(handoff_error);
+                    const fatal_error = new Error(`Completion handoff persistence and Linear fallback both failed: ${message}; ${handoff_message}`);
                     this.dispatch_halted = true;
-                    throw new Error(`Completion handoff persistence and Linear fallback both failed: ${message}; ${handoff_message}`);
+                    this.fatal_error = fatal_error;
+                    throw fatal_error;
                 }
             }
+            const fatal_error = new Error(`Completion handoff persistence failed without a durable Linear fallback: ${message}`);
             this.dispatch_halted = true;
-            throw new Error(`Completion handoff persistence failed without a durable Linear fallback: ${message}`);
+            this.fatal_error = fatal_error;
+            throw fatal_error;
         }
     }
     async record_evidence_handoff(issue, handoff, completed_attempts = 0, on_failed_attempt = null, tracker = this.tracker) {
