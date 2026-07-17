@@ -8,34 +8,27 @@
 
 	import { ChevronLeft, ChevronRight, Calendar } from 'lucide-svelte';
 	import { goto } from '$app/navigation';
+	import { formatNbaDate, shiftNbaDate } from '$lib/nba/scoreboard-state';
 
 	interface Props {
 		currentDate: string; // YYYY-MM-DD
 		baseUrl?: string;
+		todayDate?: string;
 	}
 
-	let { currentDate, baseUrl = '/data/nba' }: Props = $props();
+	let { currentDate, baseUrl = '/data/nba', todayDate = formatNbaDate(new Date()) }: Props = $props();
 
 	function formatDate(dateStr: string): string {
-		const date = new Date(dateStr + 'T00:00:00');
-		const today = new Date();
-		today.setHours(0, 0, 0, 0);
-		const dateObj = new Date(date);
-		dateObj.setHours(0, 0, 0, 0);
+		if (dateStr === todayDate) return 'Today';
+		if (dateStr === shiftNbaDate(todayDate, -1)) return 'Yesterday';
+		if (dateStr === shiftNbaDate(todayDate, 1)) return 'Tomorrow';
 
-		const diffDays = Math.floor((dateObj.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-
-		if (diffDays === 0) return 'Today';
-		if (diffDays === -1) return 'Yesterday';
-		if (diffDays === 1) return 'Tomorrow';
-
+		const date = new Date(dateStr + 'T12:00:00Z');
 		return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 	}
 
 	function changeDate(offset: number) {
-		const date = new Date(currentDate + 'T00:00:00');
-		date.setDate(date.getDate() + offset);
-		const newDate = date.toISOString().split('T')[0];
+		const newDate = shiftNbaDate(currentDate, offset);
 		goto(`${baseUrl}?date=${newDate}`);
 	}
 </script>

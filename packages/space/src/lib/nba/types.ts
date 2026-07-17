@@ -61,6 +61,8 @@ export interface Game {
 	gameClock: string;
 	startTime: string;
 	arena?: string;
+	dataProvider?: NBADataProvider;
+	analyticsAvailable?: boolean;
 	// Team statistics (when available from box score)
 	homeStats?: TeamStats;
 	awayStats?: TeamStats;
@@ -81,6 +83,20 @@ export interface TeamStats {
 }
 
 export type GameStatus = 'scheduled' | 'live' | 'halftime' | 'final';
+export type NBADataProvider = 'nba' | 'espn';
+
+export interface NBADataMetadata {
+	source: NBADataProvider;
+	degraded: boolean;
+	stale: boolean;
+	fetchedAt: string;
+	primaryError?: string;
+	capabilities: {
+		playByPlay: boolean;
+		boxScore: boolean;
+		advancedAnalytics: boolean;
+	};
+}
 
 // ============================================
 // Play-by-Play & Possession Tracking
@@ -500,7 +516,14 @@ export interface NBAApiError {
 }
 
 export type NBAApiResult<T> =
-	| { success: true; data: T; cached: boolean; timestamp: string; gameDate?: string }
+	| {
+			success: true;
+			data: T;
+			cached: boolean;
+			timestamp: string;
+			gameDate?: string;
+			metadata?: NBADataMetadata;
+	  }
 	| { success: false; error: NBAApiError };
 
 // ============================================

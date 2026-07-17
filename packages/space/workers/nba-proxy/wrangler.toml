@@ -19,15 +19,16 @@ binding = "DB"
 database_name = "create-something-db"
 database_id = "a74e70ae-6a94-43da-905e-b90719c8dfd2"
 
-# Cron trigger for daily snapshot capture
-# Runs at 2am ET (7am UTC during EST, 6am UTC during EDT)
+# Cron trigger for daily snapshot capture.
+# 10:00 UTC is 2am PST / 3am PDT, after the late slate normally completes.
 [triggers]
-crons = ["0 7 * * *"]
+crons = ["0 10 * * *"]
 
 # Environment variables
 [vars]
 ENVIRONMENT = "production"
 NBA_API_BASE_URL = "https://cdn.nba.com/static/json"
+ESPN_API_BASE_URL = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba"
 RATE_LIMIT_REQUESTS = "10"
 RATE_LIMIT_WINDOW_MS = "60000"
 CACHE_TTL_SECONDS = "60"

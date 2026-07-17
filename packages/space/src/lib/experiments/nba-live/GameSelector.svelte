@@ -51,6 +51,8 @@
 				class="game-card"
 				class:selected={selectedGameId === game.id}
 				class:live={game.status === 'live'}
+				class:scoreboard-only={game.analyticsAvailable === false}
+				disabled={game.analyticsAvailable === false}
 				onclick={() => onselect?.(game)}
 			>
 				<div class="game-header">
@@ -64,6 +66,9 @@
 						{:else}
 							<Clock size={14} class="status-icon" />
 							<span class="status-label">{formatGameClock(game)}</span>
+						{/if}
+						{#if game.analyticsAvailable === false}
+							<span class="provider-label">Scoreboard only</span>
 						{/if}
 					</span>
 				</div>
@@ -145,6 +150,15 @@
 		border-left: 3px solid var(--color-performance-success);
 	}
 
+	.game-card.scoreboard-only {
+		cursor: default;
+		opacity: 0.88;
+	}
+
+	.game-card.scoreboard-only:hover {
+		border-color: var(--color-performance-border-default);
+	}
+
 	/* Header */
 	.game-header {
 		margin-bottom: var(--space-performance-xs);
@@ -172,6 +186,12 @@
 	.status-label--live {
 		color: var(--color-performance-success);
 		font-weight: 500;
+	}
+
+	.provider-label {
+		margin-left: auto;
+		font-size: var(--text-performance-caption);
+		color: var(--color-performance-fg-muted);
 	}
 
 	/* Matchup (Tufte: data-ink ratio) */
