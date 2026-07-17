@@ -135,7 +135,7 @@ test('completed workers hand off evidence without completing Linear or removing 
 test('evidence-only handoff retries a transient comment failure without rerunning the worker', async () => {
   const service = createService();
   const issue = createIssue({ id: 'issue-transient', identifier: 'CRE-TRANSIENT', state: 'claimed' });
-  const calls = { comments: 0 };
+  const calls = { comments: 0, persisted_attempts: [] };
   service.started = true;
   service.evidence_handoff_retry_delay_ms = () => 0;
   service.tracker = {
@@ -147,6 +147,10 @@ test('evidence-only handoff retries a transient comment failure without rerunnin
     },
   };
   service.workspace_manager = {
+    async write_completion_handoff(_identifier, state) {
+      calls.persisted_attempts.push(state.comment_attempts);
+      return state;
+    },
     async remove_workspace() {
       assert.fail('evidence-only handoff must preserve the workspace');
     },
@@ -173,12 +177,94 @@ test('evidence-only handoff retries a transient comment failure without rerunnin
   });
 
   assert.equal(calls.comments, 2);
+  assert.deepEqual(calls.persisted_attempts, [0, 1, 2]);
   assert.equal(service.awaiting_completion.has(issue.id), true);
   assert.equal(service.claimed.has(issue.id), false);
   assert.equal(service.retry_attempts.has(issue.id), false);
   assert.equal(service.should_dispatch(issue, false), false);
   assert.equal(service.get_issue_snapshot(issue.identifier).completion_handoff.evidence_recorded, true);
   assert.equal(service.get_issue_snapshot(issue.identifier).last_error, null);
+});
+
+test('marker persistence failure falls back to a non-active Linear handoff state', async () => {
+  const service = createService();
+  const issue = createIssue({ id: 'issue-persistence', identifier: 'CRE-PERSISTENCE', state: 'claimed' });
+  const calls = { comments: 0, handoffs: 0 };
+  service.started = true;
+  service.tracker = {
+    async handoff_issue(received) {
+      assert.equal(received.id, issue.id);
+      calls.handoffs += 1;
+      return { ...received, state: 'In Review' };
+    },
+    async comment_issue() {
+      calls.comments += 1;
+    },
+  };
+  service.workspace_manager = {
+    async write_completion_handoff() {
+      throw new Error('metadata directory is read-only');
+    },
+    async remove_workspace() {
+      assert.fail('evidence-only handoff must preserve the workspace');
+    },
+  };
+  service.claimed.add(issue.id);
+  service.running.set(issue.id, {
+    entry: {
+      issue,
+      started_at: new Date().toISOString(),
+      retry_attempt: null,
+      turn_count: 1,
+      last_codex_message: 'Worker completed before marker persistence failed.',
+    },
+    run: {},
+    workspace_path: '/tmp/symphony/CRE-PERSISTENCE',
+    workspace_metadata_path: '/tmp/symphony/.metadata/CRE-PERSISTENCE.json',
+    stop_behavior: { mode: 'default' },
+  });
+
+  await service.on_worker_exit(issue.id, {
+    status: 'completed',
+    turn_count: 1,
+    final_message: 'Ready for independent review.',
+  });
+
+  assert.equal(calls.handoffs, 1);
+  assert.equal(calls.comments, 1);
+  assert.equal(service.awaiting_completion.get(issue.id).fail_closed_state, 'In Review');
+  assert.equal(service.claimed.has(issue.id), false);
+  assert.equal(service.should_dispatch(issue, false), false);
+});
+
+test('dispatch halts when both marker persistence and Linear handoff fail', async () => {
+  const service = createService();
+  const issue = createIssue({ id: 'issue-dual-failure', identifier: 'CRE-DUAL-FAILURE', state: 'claimed' });
+  service.tracker = {
+    async handoff_issue() {
+      throw new Error('Linear state update failed');
+    },
+  };
+  service.workspace_manager = {
+    async write_completion_handoff() {
+      throw new Error('metadata directory is read-only');
+    },
+  };
+
+  await assert.rejects(
+    () => service.persist_completion_handoff(issue, {
+      issue_id: issue.id,
+      issue_identifier: issue.identifier,
+      evidence_recorded: false,
+      comment_attempts: 0,
+      last_error: null,
+    }),
+    /persistence and Linear fallback both failed/,
+  );
+
+  assert.equal(service.dispatch_halted, true);
+  assert.equal(service.get_snapshot().dispatch_halted, true);
+  assert.equal(service.should_dispatch(issue, false), false);
 });
 
 test('evidence-only handoff keeps dispatch suppressed when comment retries are exhausted', async () => {

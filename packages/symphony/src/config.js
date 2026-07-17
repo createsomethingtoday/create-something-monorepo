@@ -141,6 +141,7 @@ export function resolve_service_config(workflow, cwd = process.cwd(), env = proc
         },
         completion: {
             mode: asString(completion.mode) ?? 'evidence_only',
+            handoff_state: asString(completion.handoff_state) ?? 'In Review',
         },
         server: {
             port: normalizeServerPort(server.port),
@@ -150,6 +151,12 @@ export function resolve_service_config(workflow, cwd = process.cwd(), env = proc
 export function validate_dispatch_config(config) {
     if (!['evidence_only', 'worker_exit_legacy'].includes(config.completion.mode)) {
         throw new SymphonyError('unsupported_completion_mode', `Unsupported completion mode: ${config.completion.mode}`);
+    }
+    const handoff_state = config.completion.handoff_state.trim().toLowerCase();
+    const reserved_states = [...config.tracker.active_states, ...config.tracker.terminal_states]
+        .map((state) => state.trim().toLowerCase());
+    if (!handoff_state || reserved_states.includes(handoff_state)) {
+        throw new SymphonyError('unsafe_completion_handoff_state', `Completion handoff state must be non-active and non-terminal: ${config.completion.handoff_state}`);
     }
     if (config.tracker.kind !== 'linear') {
         throw new SymphonyError('unsupported_tracker_kind', `Unsupported tracker kind: ${config.tracker.kind}`);

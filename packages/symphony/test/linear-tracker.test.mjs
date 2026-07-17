@@ -123,3 +123,52 @@ test('fetch_issue_by_identifier selects an active labeled issue without project 
   assert.equal(issue.state, 'Todo');
   assert.deepEqual(issue.labels, ['code-quality']);
 });
+
+test('handoff_issue moves evidence-only work to the exact non-active handoff state', async () => {
+  const issueNode = createIssue('CRE-1300', ['code-quality']);
+  const client = new LinearTrackerClient(
+    {
+      ...createConfig(),
+      completion: { handoff_state: 'In Review' },
+    },
+    logger,
+    async (_url, init) => {
+      const payload = JSON.parse(init.body);
+      if (payload.query.includes('query SymphonyBootstrap')) {
+        return new Response(JSON.stringify({
+          data: {
+            viewer: { id: 'viewer-1' },
+            workflowStates: {
+              nodes: [
+                { id: 'state-progress', name: 'In Progress', type: 'started' },
+                { id: 'state-review', name: 'In Review', type: 'started' },
+                { id: 'state-done', name: 'Done', type: 'completed' },
+              ],
+            },
+          },
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+      assert.match(payload.query, /mutation SymphonyUpdateIssue/);
+      assert.deepEqual(payload.variables.input, { stateId: 'state-review' });
+      return new Response(JSON.stringify({
+        data: {
+          issueUpdate: {
+            success: true,
+            issue: {
+              ...issueNode,
+              state: { id: 'state-review', name: 'In Review', type: 'started' },
+            },
+          },
+        },
+      }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    },
+  );
+
+  const handedOff = await client.handoff_issue({
+    id: issueNode.id,
+    identifier: issueNode.identifier,
+    state: 'In Progress',
+  });
+
+  assert.equal(handedOff.state, 'In Review');
+});

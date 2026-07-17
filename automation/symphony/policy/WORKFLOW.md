@@ -41,6 +41,7 @@ codex:
   stall_timeout_ms: 300000
 completion:
   mode: evidence_only
+  handoff_state: In Review
 server:
   port: 4781
 ---

@@ -104,6 +104,7 @@ export class SymphonyService {
     tick_timer = null;
     tick_running = false;
     pending_refresh = false;
+    dispatch_halted = false;
     started = false;
     http_server = null;
     requested_port;
@@ -235,6 +236,7 @@ export class SymphonyService {
             running,
             retrying,
             awaiting_completion,
+            dispatch_halted: this.dispatch_halted,
             codex_totals: {
                 input_tokens: this.codex_totals.input_tokens,
                 output_tokens: this.codex_totals.output_tokens,
@@ -380,6 +382,10 @@ export class SymphonyService {
                 this.logger.error('workflow reload failed', { error: error.message });
             }
             await this.reconcile_running_issues();
+            if (this.dispatch_halted) {
+                this.logger.error('dispatch halted after completion handoff durability failure');
+                return;
+            }
             try {
                 validate_dispatch_config(this.current_config);
             }
@@ -424,6 +430,9 @@ export class SymphonyService {
         }
     }
     should_dispatch(issue, ignore_claimed) {
+        if (this.dispatch_halted) {
+            return false;
+        }
         if (!issue.id || !issue.identifier || !issue.title || !issue.state) {
             return false;
         }
@@ -477,9 +486,19 @@ export class SymphonyService {
             if (!handoff.evidence_recorded &&
                 (handoff.comment_attempts ?? 0) < MAX_EVIDENCE_HANDOFF_ATTEMPTS &&
                 handoff.handoff) {
-                const evidence_result = await this.record_evidence_handoff(issue, handoff.handoff, handoff.comment_attempts ?? 0);
-                let updated_handoff = {
-                    ...handoff,
+                let updated_handoff = handoff;
+                const evidence_result = await this.record_evidence_handoff(issue, handoff.handoff, handoff.comment_attempts ?? 0, async (attempt, error) => {
+                    updated_handoff = {
+                        ...updated_handoff,
+                        evidence_recorded: false,
+                        comment_attempts: attempt,
+                        last_error: error,
+                    };
+                    updated_handoff = await this.persist_completion_handoff(issue, updated_handoff);
+                    this.awaiting_completion.set(issue.id, updated_handoff);
+                });
+                updated_handoff = {
+                    ...updated_handoff,
                     evidence_recorded: evidence_result.recorded,
                     comment_attempts: evidence_result.attempts,
                     last_error: evidence_result.error,
@@ -662,7 +681,16 @@ export class SymphonyService {
                 completion_state = await this.persist_completion_handoff(state.entry.issue, completion_state);
                 this.awaiting_completion.set(issue_id, completion_state);
                 this.claimed.delete(issue_id);
-                const evidence_result = await this.record_evidence_handoff(state.entry.issue, handoff);
+                const evidence_result = await this.record_evidence_handoff(state.entry.issue, handoff, 0, async (attempt, error) => {
+                    completion_state = {
+                        ...completion_state,
+                        evidence_recorded: false,
+                        comment_attempts: attempt,
+                        last_error: error,
+                    };
+                    completion_state = await this.persist_completion_handoff(state.entry.issue, completion_state);
+                    this.awaiting_completion.set(issue_id, completion_state);
+                });
                 completion_state = {
                     ...completion_state,
                     evidence_recorded: evidence_result.recorded,
@@ -756,13 +784,37 @@ export class SymphonyService {
                 issue_identifier: issue.identifier,
                 error: message,
             });
-            return {
-                ...completion_state,
-                persistence_error: message,
-            };
+            if (completion_state.fail_closed_state) {
+                return {
+                    ...completion_state,
+                    persistence_error: message,
+                };
+            }
+            if (typeof this.tracker.handoff_issue === 'function') {
+                try {
+                    const handed_off = await this.tracker.handoff_issue(issue);
+                    this.logger.warn('completion handoff failed closed through Linear state', {
+                        issue_id: issue.id,
+                        issue_identifier: issue.identifier,
+                        state: handed_off.state,
+                    });
+                    return {
+                        ...completion_state,
+                        persistence_error: message,
+                        fail_closed_state: handed_off.state,
+                    };
+                }
+                catch (handoff_error) {
+                    const handoff_message = handoff_error instanceof Error ? handoff_error.message : String(handoff_error);
+                    this.dispatch_halted = true;
+                    throw new Error(`Completion handoff persistence and Linear fallback both failed: ${message}; ${handoff_message}`);
+                }
+            }
+            this.dispatch_halted = true;
+            throw new Error(`Completion handoff persistence failed without a durable Linear fallback: ${message}`);
         }
     }
-    async record_evidence_handoff(issue, handoff, completed_attempts = 0) {
+    async record_evidence_handoff(issue, handoff, completed_attempts = 0, on_failed_attempt = null) {
         if (typeof this.tracker.comment_issue !== 'function') {
             return { recorded: true, attempts: completed_attempts, error: null };
         }
@@ -782,6 +834,9 @@ export class SymphonyService {
                     max_attempts: MAX_EVIDENCE_HANDOFF_ATTEMPTS,
                     error: last_error,
                 });
+                if (on_failed_attempt) {
+                    await on_failed_attempt(attempt, last_error);
+                }
                 if (attempt < MAX_EVIDENCE_HANDOFF_ATTEMPTS) {
                     await new Promise((resolve) => setTimeout(resolve, this.evidence_handoff_retry_delay_ms(attempt)));
                 }
