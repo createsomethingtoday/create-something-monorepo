@@ -12,6 +12,7 @@ test('defaults encode the approved G2 Cloudflare Access posture', () => {
   assert.equal(DEFAULTS.hostname, 'codex-g2.createsomething.agency');
   assert.equal(DEFAULTS.tunnelName, 'create-something-codex-g2');
   assert.equal(DEFAULTS.origin, 'http://127.0.0.1:19931');
+  assert.equal(DEFAULTS.protocol, 'http2');
   assert.equal(DEFAULTS.sessionDuration, '12h');
   assert.deepEqual(validateConfig(DEFAULTS), []);
 });
@@ -37,6 +38,7 @@ test('parses command options and renders Cloudflare tunnel ingress config', () =
   assert.equal(options.origin, 'http://localhost:3000');
   assert.equal(options.configPath, '.tmp/custom.yml');
   assert.match(buildTunnelConfig(options), /hostname: codex-g2\.createsomething\.agency/);
+  assert.match(buildTunnelConfig(options), /protocol: http2/);
   assert.match(buildTunnelConfig(options), /service: http:\/\/localhost:3000/);
   assert.match(buildTunnelConfig(options), /http_status:404/);
 });
