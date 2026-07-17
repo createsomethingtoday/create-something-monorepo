@@ -1,7 +1,13 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
+import { readFile, stat } from 'node:fs/promises';
+import { extname, resolve, sep } from 'node:path';
 
 import { listPresenceCards, type PresenceActionType } from './presence';
-import { OpenAITranscriptionError, transcribeAudio, type TranscriptionResult } from './transcription';
+import {
+  OpenAITranscriptionError,
+  transcribeAudio,
+  type TranscriptionResult
+} from './transcription';
 
 export type ActionRequest = {
   requestId: string;
@@ -36,6 +42,7 @@ export type PresenceServerOptions = {
   port?: number;
   host?: string;
   allowedOrigin?: string;
+  staticDir?: string;
   actionExecutor?: ActionExecutor;
   transcriber?: (input: { bytes: Uint8Array; mimeType: string }) => Promise<TranscriptionResult>;
 };
@@ -45,7 +52,9 @@ export type PresenceServerHandle = {
   close: () => Promise<void>;
 };
 
-export async function startPresenceServer(options: PresenceServerOptions): Promise<PresenceServerHandle> {
+export async function startPresenceServer(
+  options: PresenceServerOptions
+): Promise<PresenceServerHandle> {
   if (!options.token.trim()) throw new Error('Presence service token is required.');
   const receipts = new Map<string, ActionReceipt>();
   const server = createServer(async (request, response) => {
@@ -56,6 +65,13 @@ export async function startPresenceServer(options: PresenceServerOptions): Promi
     }
 
     const url = new URL(request.url ?? '/', 'http://127.0.0.1');
+    if (options.staticDir && !url.pathname.startsWith('/v1/')) {
+      if (request.method === 'GET' || request.method === 'HEAD') {
+        if (await serveStatic(response, request.method, url.pathname, options.staticDir)) return;
+      }
+      sendJson(response, 404, { error: 'Not found' });
+      return;
+    }
     if (url.pathname === '/v1/health') {
       sendJson(response, 200, { ok: true, service: 'codex-presence' });
       return;
@@ -67,13 +83,16 @@ export async function startPresenceServer(options: PresenceServerOptions): Promi
 
     try {
       if (request.method === 'GET' && url.pathname === '/v1/cards') {
-        sendJson(response, 200, { cards: await listPresenceCards({ codexHome: options.codexHome }) });
+        sendJson(response, 200, {
+          cards: await listPresenceCards({ codexHome: options.codexHome })
+        });
         return;
       }
       if (request.method === 'GET' && url.pathname.startsWith('/v1/cards/')) {
         const id = decodeURIComponent(url.pathname.slice('/v1/cards/'.length));
-        const card = (await listPresenceCards({ codexHome: options.codexHome, limit: 100 }))
-          .find((candidate) => candidate.taskId === id);
+        const card = (await listPresenceCards({ codexHome: options.codexHome, limit: 100 })).find(
+          (candidate) => candidate.taskId === id
+        );
         sendJson(response, card ? 200 : 404, card ?? { error: 'Task not found' });
         return;
       }
@@ -89,9 +108,12 @@ export async function startPresenceServer(options: PresenceServerOptions): Promi
           sendJson(response, replay.status === 'accepted' ? 202 : 409, replay);
           return;
         }
-        const card = (await listPresenceCards({ codexHome: options.codexHome, limit: 100 }))
-          .find((candidate) => candidate.taskId === action.taskId);
-        const offered = card?.actions.find((candidate) => candidate.type === action.type && candidate.id === action.actionId);
+        const card = (await listPresenceCards({ codexHome: options.codexHome, limit: 100 })).find(
+          (candidate) => candidate.taskId === action.taskId
+        );
+        const offered = card?.actions.find(
+          (candidate) => candidate.type === action.type && candidate.id === action.actionId
+        );
         if (!card || !offered) {
           const receipt = rejected(action, 'Action is not valid for the current task state.');
           receipts.set(action.requestId, receipt);
@@ -110,7 +132,10 @@ export async function startPresenceServer(options: PresenceServerOptions): Promi
           sendJson(response, 409, receipt);
           return;
         }
-        if (!options.actionExecutor && !['inspect', 'dismiss', 'open_detail'].includes(action.type)) {
+        if (
+          !options.actionExecutor &&
+          !['inspect', 'dismiss', 'open_detail'].includes(action.type)
+        ) {
           const receipt = rejected(action, 'No action executor is configured.');
           receipts.set(action.requestId, receipt);
           sendJson(response, 503, receipt);
@@ -168,11 +193,71 @@ export async function startPresenceServer(options: PresenceServerOptions): Promi
     server.listen(options.port ?? 0, options.host ?? '127.0.0.1', () => resolve());
   });
   const address = server.address();
-  if (!address || typeof address === 'string') throw new Error('Presence service did not bind a TCP port.');
+  if (!address || typeof address === 'string')
+    throw new Error('Presence service did not bind a TCP port.');
   return {
     origin: `http://${options.host ?? '127.0.0.1'}:${address.port}`,
-    close: () => new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()))
+    close: () =>
+      new Promise<void>((resolve, reject) =>
+        server.close((error) => (error ? reject(error) : resolve()))
+      )
   };
+}
+
+async function serveStatic(
+  response: ServerResponse,
+  method: 'GET' | 'HEAD',
+  pathname: string,
+  staticDir: string
+): Promise<boolean> {
+  const root = resolve(staticDir);
+  let relative: string;
+  try {
+    relative = decodeURIComponent(pathname === '/' ? 'index.html' : pathname.replace(/^\/+/, ''));
+  } catch {
+    return false;
+  }
+  const target = resolve(root, relative);
+  if (target !== root && !target.startsWith(`${root}${sep}`)) return false;
+
+  let file;
+  try {
+    if (!(await stat(target)).isFile()) return false;
+    file = await readFile(target);
+  } catch {
+    return false;
+  }
+
+  response.writeHead(200, {
+    'content-type': contentType(target),
+    'content-length': file.byteLength,
+    'cache-control': target.endsWith(`${sep}index.html`)
+      ? 'no-store'
+      : 'public, max-age=31536000, immutable',
+    'content-security-policy':
+      "default-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'",
+    'referrer-policy': 'no-referrer',
+    'x-content-type-options': 'nosniff',
+    'x-frame-options': 'DENY'
+  });
+  response.end(method === 'HEAD' ? undefined : file);
+  return true;
+}
+
+function contentType(pathname: string): string {
+  return (
+    (
+      {
+        '.css': 'text/css; charset=utf-8',
+        '.html': 'text/html; charset=utf-8',
+        '.js': 'text/javascript; charset=utf-8',
+        '.json': 'application/json; charset=utf-8',
+        '.png': 'image/png',
+        '.svg': 'image/svg+xml',
+        '.wasm': 'application/wasm'
+      } as Record<string, string>
+    )[extname(pathname)] ?? 'application/octet-stream'
+  );
 }
 
 function authenticated(request: IncomingMessage, url: URL, token: string): boolean {
@@ -188,9 +273,17 @@ function parseActionRequest(value: unknown): ActionRequest {
   const taskId = text(body.taskId);
   const type = text(body.type) as PresenceActionType;
   const allowed: PresenceActionType[] = [
-    'inspect', 'follow_up', 'answer', 'approve', 'deny', 'interrupt', 'dismiss', 'open_detail'
+    'inspect',
+    'follow_up',
+    'answer',
+    'approve',
+    'deny',
+    'interrupt',
+    'dismiss',
+    'open_detail'
   ];
-  if (!requestId || !actionId || !taskId || !allowed.includes(type)) throw new Error('Invalid action request.');
+  if (!requestId || !actionId || !taskId || !allowed.includes(type))
+    throw new Error('Invalid action request.');
   return {
     requestId,
     actionId,
@@ -220,7 +313,9 @@ async function streamCards(response: ServerResponse, codexHome: string): Promise
     connection: 'keep-alive'
   });
   let active = true;
-  response.on('close', () => { active = false; });
+  response.on('close', () => {
+    active = false;
+  });
   while (active) {
     const cards = await listPresenceCards({ codexHome });
     response.write(`event: cards\ndata: ${JSON.stringify({ cards })}\n\n`);
@@ -258,7 +353,7 @@ function applyCors(response: ServerResponse, allowedOrigin?: string): void {
 
 function object(value: unknown): Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
-    ? value as Record<string, unknown>
+    ? (value as Record<string, unknown>)
     : {};
 }
 

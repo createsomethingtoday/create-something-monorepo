@@ -14,7 +14,7 @@ Even G2 / Even app
   -> https://codex-g2.createsomething.agency
   -> Cloudflare Access
   -> Cloudflare Tunnel replica on the Mac
-  -> http://127.0.0.1:19931
+  -> http://127.0.0.1:19931 (compiled Even client + Presence API)
 ```
 
 Tier mapping:
@@ -35,6 +35,7 @@ Tier mapping:
 - Access session duration: `12h`
 - Allowed identity: `micah@createsomething.io`
 - Local origin default: `http://127.0.0.1:19931`
+- Tunnel transport: `http2` (works when outbound QUIC/UDP 7844 is blocked)
 
 The local origin may use a different port for a specific Codex or Even Terminal
 session, but it must remain bound to `127.0.0.1`, `localhost`, or `::1`.
@@ -82,6 +83,21 @@ Start the all-day tunnel replica:
 ```bash
 pnpm codex:g2:access:start
 ```
+
+For Codex Presence, build the client and start its loopback-only production
+process before starting the tunnel:
+
+```bash
+pnpm --filter @create-something/even-codex-presence build
+pnpm --filter @create-something/even-codex-presence pack:even
+pnpm codex:presence:production:start
+pnpm codex:presence:production:status
+```
+
+The launcher retrieves the approved transcription key from Infisical without
+printing or persisting it. Its short-lived pairing token exists only in the
+mode-`0600` runtime receipt under the ignored `.tmp/` directory and the Even
+Hub install QR. Do not copy the token into shell history or Linear evidence.
 
 Use a non-default local port when Codex or Even Terminal is listening elsewhere:
 
