@@ -677,10 +677,19 @@ export class SymphonyService {
                 return;
             }
             if (typeof this.tracker.comment_issue === 'function') {
-                await this.tracker.comment_issue(
-                    state.entry.issue.id,
-                    'Warning: legacy worker-exit completion bypassed the canonical evidence gate. Migrate this workflow to evidence_only.',
-                );
+                try {
+                    await this.tracker.comment_issue(
+                        state.entry.issue.id,
+                        'Warning: legacy worker-exit completion bypassed the canonical evidence gate. Migrate this workflow to evidence_only.',
+                    );
+                }
+                catch (error) {
+                    this.logger.warn('legacy completion gate-bypass warning could not be recorded', {
+                        issue_id,
+                        issue_identifier: state.entry.issue.identifier,
+                        error: error instanceof Error ? error.message : String(error),
+                    });
+                }
             }
             this.logger.warn('legacy worker-exit completion bypassed canonical evidence gate', {
                 issue_id,

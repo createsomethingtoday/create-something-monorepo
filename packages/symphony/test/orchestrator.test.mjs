@@ -310,3 +310,50 @@ test('legacy worker-exit completion is explicit and comments the gate bypass', a
   assert.match(calls.comments[0], /legacy worker-exit completion bypassed the canonical evidence gate/i);
   assert.equal(service.claimed.has(issue.id), false);
 });
+
+test('legacy completion continues when its gate-bypass warning comment fails', async () => {
+  const service = createService();
+  const issue = createIssue({ id: 'issue-legacy-warning', identifier: 'CRE-LEGACY-WARNING', state: 'claimed' });
+  const calls = { complete: 0, comments: 0, remove: 0 };
+  service.current_config.completion.mode = 'worker_exit_legacy';
+  service.started = true;
+  service.tracker = {
+    async complete_issue() {
+      calls.complete += 1;
+    },
+    async comment_issue() {
+      calls.comments += 1;
+      throw new Error('temporary warning comment failure');
+    },
+  };
+  service.workspace_manager = {
+    async remove_workspace() {
+      calls.remove += 1;
+    },
+  };
+  service.claimed.add(issue.id);
+  service.running.set(issue.id, {
+    entry: {
+      issue,
+      started_at: new Date().toISOString(),
+      retry_attempt: null,
+      turn_count: 1,
+      last_codex_message: 'Legacy worker finished.',
+    },
+    run: {},
+    workspace_path: '/tmp/symphony/CRE-LEGACY-WARNING',
+    workspace_metadata_path: '/tmp/symphony/CRE-LEGACY-WARNING/.symphony-workspace.json',
+    stop_behavior: { mode: 'default' },
+  });
+
+  await service.on_worker_exit(issue.id, {
+    status: 'completed',
+    turn_count: 1,
+    final_message: 'Legacy worker finished.',
+  });
+
+  assert.equal(calls.comments, 1);
+  assert.equal(calls.complete, 1);
+  assert.equal(calls.remove, 1);
+  assert.equal(service.claimed.has(issue.id), false);
+});

@@ -336,6 +336,7 @@ export class WorkspaceManager {
         }
         if (!(await path_exists(paths.workspace_path))) {
             await rm(paths.metadata_path, { force: true });
+            await rm(paths.completion_path, { force: true });
             await remove_empty_directory(paths.metadata_root);
             this.logger.info('workspace removed completed', {
                 issue_identifier,
