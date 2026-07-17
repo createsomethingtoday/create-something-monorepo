@@ -50,6 +50,10 @@ declare global {
 				ABUNDANCE_STAFF_ONBOARDING_TOKEN?: string;
 				// Identity Worker (LMS provisioning)
 				IDENTITY_WORKER_URL?: string;
+				IDENTITY_API_URL?: string;
+				CS_IDENTITY_ISSUER?: string;
+				CS_IDENTITY_JWKS_URL?: string;
+				CS_IDENTITY_AUDIENCE?: string;
 				IDENTITY_WORKER_SECRET?: string;
 				IDENTITY_WORKER_ADMIN_API_KEY?: string;
 				ANALYTICS_SERVICE_TOKEN?: string;
