@@ -156,10 +156,10 @@
     {
       eyebrow: '.agency',
       icon: 'arrow-right',
-      title: 'Operationalize the pattern',
+      title: 'Map the pattern',
       detail:
-        'Move from research into governed workflow delivery when the operating path becomes commercially or reputationally important.',
-      href: 'https://createsomething.agency/book?source=io&intent=research-to-implementation&lane=workflow_infrastructure'
+        'Carry the evidence into practice when the operating path becomes commercially, operationally, or reputationally important.',
+      href: 'https://createsomething.agency/practice?source=io&intent=research-to-practice&stage=qualify&lane=workflow_infrastructure'
     },
     {
       eyebrow: '.ltd',
@@ -220,8 +220,8 @@
       receipts: ['handoff note', 'policy cue', 'mapping session'],
       actions: [
         {
-          label: 'Map The Workflow',
-          href: 'https://createsomething.agency/book?source=io&intent=research-to-implementation&lane=workflow_infrastructure'
+          label: 'Open The Practice',
+          href: 'https://createsomething.agency/practice?source=io&intent=research-to-practice&stage=qualify&lane=workflow_infrastructure'
         }
       ]
     }
@@ -314,7 +314,7 @@
 <PropertyFunnel
   current="io"
   heading="Let the research tell the visitor where to go next."
-  description="Use .io to understand the evidence, move to .space when the pattern needs runtime validation, and move to .agency when the workflow is ready to be scoped."
+  description="Use .io to understand the evidence, move to .space when the pattern needs runtime validation, use .learn for guided practice, and enter .agency practice when a named workflow is ready to map."
 />
 
 <PerformanceConversionHandoff

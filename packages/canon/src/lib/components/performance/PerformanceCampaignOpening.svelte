@@ -3,6 +3,7 @@
 	import type { PerformanceMediaVideo } from './media/types';
 
 	export type PerformanceCampaignOpeningMode = 'ink' | 'paper';
+	export type PerformanceCampaignOpeningDensity = 'standard' | 'compact';
 
 	export type PerformanceCampaignVideo = PerformanceMediaVideo;
 
@@ -28,6 +29,7 @@
 		media: PerformanceCampaignMedia;
 		proof?: PerformanceCampaignProof[];
 		mode?: PerformanceCampaignOpeningMode;
+		density?: PerformanceCampaignOpeningDensity;
 		priority?: boolean;
 		actions?: Snippet;
 	}
@@ -39,6 +41,7 @@
 		media,
 		proof = [],
 		mode = 'ink',
+		density = 'standard',
 		priority = true,
 		actions
 	}: Props = $props();
@@ -63,7 +66,7 @@
 	});
 </script>
 
-<section class="performance-campaign-opening" data-mode={mode} aria-label={eyebrow}>
+<section class="performance-campaign-opening" data-mode={mode} data-density={density} aria-label={eyebrow}>
 	<figure class="performance-campaign-opening__media">
 		<picture>
 			{#if media.mobileSrc}
@@ -147,6 +150,10 @@
 		color: var(--color-performance-ink, #090909);
 	}
 
+	.performance-campaign-opening[data-density='compact'] {
+		min-height: clamp(34rem, 72svh, 48rem);
+	}
+
 	.performance-campaign-opening__media,
 	.performance-campaign-opening__media picture,
 	.performance-campaign-opening__media img,
@@ -209,6 +216,16 @@
 		width: min(var(--content-width-performance, 85rem), calc(100% - 2.5rem));
 		margin-inline: auto;
 		padding-block: clamp(8rem, 17vh, 12rem) 1.25rem;
+	}
+
+	.performance-campaign-opening[data-density='compact'] .performance-campaign-opening__content {
+		gap: clamp(2rem, 5vw, 4rem);
+		padding-block: clamp(2.5rem, 6vh, 4rem) 1rem;
+	}
+
+	.performance-campaign-opening[data-density='compact'] h1 {
+		max-width: 15ch;
+		font-size: clamp(3rem, 5.4vw, 5.5rem);
 	}
 
 	.performance-campaign-opening__content header {
@@ -353,6 +370,14 @@
 		.performance-campaign-opening__content {
 			width: min(100% - 1.5rem, var(--content-width-performance, 85rem));
 			padding-block: 7rem 0.75rem;
+		}
+
+		.performance-campaign-opening[data-density='compact'] {
+			min-height: 42rem;
+		}
+
+		.performance-campaign-opening[data-density='compact'] .performance-campaign-opening__content {
+			padding-block: 5.5rem 0.75rem;
 		}
 
 		.performance-campaign-opening__proof {
