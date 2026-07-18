@@ -125,7 +125,8 @@ function reviewed_evidence_ok(value) {
     && value.before.length > 0
     && value.before === value?.after
     && value?.unchanged === true
-    && !value?.findings?.some((finding) => finding?.status === 'actionable');
+    && Array.isArray(value?.findings)
+    && !value.findings.some((finding) => finding?.status === 'actionable');
 }
 
 function lane_blockers(candidate) {

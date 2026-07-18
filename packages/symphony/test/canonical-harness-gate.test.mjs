@@ -151,6 +151,34 @@ test('canonical gate rejects unknown receipt fields', () => {
   assert.equal(decision.schema_validation.ok, false);
 });
 
+test('canonical gate persists malformed review findings as an ineligible receipt', async (t) => {
+  const root = await mkdtemp(join(tmpdir(), 'canonical-gate-malformed-review-'));
+  t.after(async () => rm(root, { recursive: true, force: true }));
+  let completion_calls = 0;
+  const gate = new CanonicalHarnessGate({
+    tracker: {
+      async complete_issue() {
+        completion_calls += 1;
+      },
+    },
+    output_root: join(root, 'runs'),
+  });
+  const candidate = valid_reviewed_candidate();
+  candidate.review.findings = 'not-an-array';
+
+  const result = await gate.complete(
+    { id: 'linear-id', identifier: 'CRE-1304' },
+    candidate,
+  );
+
+  assert.equal(result.completed, false);
+  assert.equal(result.receipt.eligible_for_done, false);
+  assert.equal(result.receipt.schema_validation.ok, false);
+  assert.ok(result.receipt.blockers.includes('schema /review/findings must be array'));
+  assert.equal(completion_calls, 0);
+  assert.deepEqual(JSON.parse(await readFile(result.receipt_path, 'utf8')), result.receipt);
+});
+
 test('canonical gate requires every declared acceptance criterion to pass', () => {
   const candidate = valid_a1_candidate();
   candidate.acceptance.results[0].status = 'failed';
