@@ -11,9 +11,14 @@ The Performance design system is one Canon-owned namespace for presenting and op
 | Sequential field tests | `PerformanceFieldSequence`     | Ordered studies, figure numbering, alternating media, optional sticky progression, and reduced-motion fallback                                  |
 | Contrast chapter       | `PerformanceContrastChapter`   | The black/white principle-to-intervention break and an inline or full-width slot for a real route-owned artifact                                |
 | Evidence index         | `PerformanceEvidenceIndex`     | Inspectable public evidence rows, receipt state, links, and an explicit empty state                                                             |
+| Indexed narrative      | `PerformanceNarrativeStage`    | A persistent scene index, one focused property-owned artifact, URL state, pointer/touch/keyboard controls, and complete SSR/no-JavaScript order |
 | Conversion handoff     | `PerformanceConversionHandoff` | Owner, authority, proof, state, optional staged steps, actions, and compact or full-width artifact placement at the next boundary               |
 
-These six patterns are a grammar, not six required page sections. Every Performance surface must compose from this system before inventing another route-level shell, but adjacent ideas should share one chapter when they support the same decision. The narrative protocol remains claim, conditions, tests, intervention, evidence, handoff; a homepage should normally land that protocol in three to five top-level sections.
+These seven patterns are a grammar, not seven required page sections. Every Performance surface must compose from this system before inventing another route-level shell, but adjacent ideas should share one chapter when they support the same decision. The narrative protocol remains claim, conditions, tests, intervention, evidence, handoff; a homepage should normally land that protocol in three to five top-level sections.
+
+Use `PerformanceNarrativeStage` when two or more adjacent chapters are parts of one operating decision and each has a meaningful property-owned artifact. The ordered index keeps every scene label, summary, state, and primary destination visible; the active panel concentrates the complete detail, evidence, receipts, and artifact. Selection is always explicit—never autoplayed—and supports pointer, touch, roving arrow/Home/End keys, previous/next controls, and stable URL fragments. Canon renders every panel in document order during SSR, then hides inactive panels only after hydration. This is progressive disclosure, not content removal.
+
+Judge the stage in the complete page. The opening must create the question, the stage must resolve it with proof, and the final handoff must be the earned next action. Do not use the stage to combine unrelated ideas, preserve duplicated introductions, or add motion that competes with the page argument. Property artifacts stay behind the scene-aware `artifact` snippet; Canon owns only selection, responsive composition, focus, state, and fallback behavior.
 
 Use `density="compact"` on `PerformanceCampaignOpening`, `PerformancePageSection`, `PerformanceDecisionPanel`, `PerformanceConversionHandoff`, and `PropertyFunnel` when the full content contract can remain visible with a shorter vertical commitment. Compact density changes spacing and responsive composition only. It must not hide summaries, remove evidence, or turn multiple unchanged chapters into one wrapper. `PropertyFunnel` may also carry a compact `handoff` ledger when progression and the final authority boundary belong to the same decision.
 
@@ -63,6 +68,10 @@ Satoshi is loaded from Fontshare's official hosted service under the ITF Free Fo
 </PerformanceContrastChapter>
 
 <PerformanceEvidenceIndex title="Evidence index" items={evidence} />
+
+<PerformanceNarrativeStage id="operating-story" title="Map. Decide. Prove." {scenes}>
+  {#snippet artifact(scene)}<!-- route-owned artifact for this scene -->{/snippet}
+</PerformanceNarrativeStage>
 
 <PerformanceConversionHandoff
   {handoff}

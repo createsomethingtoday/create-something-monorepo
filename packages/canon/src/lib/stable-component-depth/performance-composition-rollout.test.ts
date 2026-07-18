@@ -16,6 +16,7 @@ const HOMEPAGE_SECTION_COMPONENTS = [
 	'PerformanceContrastChapter',
 	'PerformanceEvidenceIndex',
 	'PerformanceConversionHandoff',
+	'PerformanceNarrativeStage',
 	'PerformancePageSection',
 	'PerformanceDecisionPanel',
 	'PropertyFunnel',
@@ -29,11 +30,16 @@ function routeMarkup(source: string): string {
 
 function homepageSectionCount(source: string): number {
 	const markup = routeMarkup(source);
-	const componentSections = HOMEPAGE_SECTION_COMPONENTS.reduce(
-		(count, component) => count + (markup.match(new RegExp(`<${component}\\b`, 'g'))?.length ?? 0),
-		0
+	const openingPattern = new RegExp(
+		`^(\\s*)<(?:${HOMEPAGE_SECTION_COMPONENTS.join('|')}|section)\\b`,
+		'gm'
 	);
-	return componentSections + (markup.match(/<section\b/g)?.length ?? 0);
+	const openings = [...markup.matchAll(openingPattern)].map((match) => ({
+		indent: match[1].length,
+		markup: match[0]
+	}));
+	const topLevelIndent = Math.min(...openings.map((opening) => opening.indent));
+	return openings.filter((opening) => opening.indent === topLevelIndent).length;
 }
 
 function svelteSources(relativeDirectory: string): Array<{ path: string; source: string }> {
@@ -56,9 +62,7 @@ function svelteSources(relativeDirectory: string): Array<{ path: string; source:
 
 describe('Performance composition cross-property rollout', () => {
 	it('keeps compact decision consoles full-width below the desktop split', () => {
-		const source = routeSource(
-			'packages/canon/src/lib/components/clear/ClearDecisionPanel.svelte'
-		);
+		const source = routeSource('packages/canon/src/lib/components/clear/ClearDecisionPanel.svelte');
 		const responsiveRules = source.slice(source.indexOf('@media (max-width: 1180px)'));
 
 		expect(responsiveRules).toContain(
@@ -67,13 +71,15 @@ describe('Performance composition cross-property rollout', () => {
 		expect(responsiveRules).toContain('grid-template-columns: 1fr;');
 	});
 
-	it('lands the .agency story in five chapters without dropping the boundary or proof', () => {
+	it('lands the .agency story in three chapters without dropping the boundary or proof', () => {
 		const source = routeSource('packages/agency/src/routes/+page.svelte');
 
-		expect(homepageSectionCount(source)).toBeLessThanOrEqual(5);
+		expect(homepageSectionCount(source)).toBeLessThanOrEqual(3);
 		expect(source).toContain('PerformanceCampaignOpening');
-		expect(source).toContain('PerformanceContrastChapter');
+		expect(source).toContain('PerformanceNarrativeStage');
 		expect(source).toContain('PerformanceConversionHandoff');
+		expect(source).not.toContain('PerformanceContrastChapter');
+		expect(source).not.toContain('PerformancePageSection');
 		expect(source).not.toContain('PerformanceFieldSequence');
 		expect(source).not.toContain('PerformanceEvidenceIndex');
 		expect(source).toContain('Stop watching the workflow. Keep the judgment.');
@@ -84,13 +90,14 @@ describe('Performance composition cross-property rollout', () => {
 		expect(source).toContain('Built with OpenAI Codex. Designed to remain yours.');
 	});
 
-	it('lands the .ltd canon in five chapters instead of using the grammar as a template', () => {
+	it('lands the .ltd canon in three chapters instead of using the grammar as a template', () => {
 		const source = routeSource('packages/ltd/src/routes/+page.svelte');
 
-		expect(homepageSectionCount(source)).toBeLessThanOrEqual(5);
+		expect(homepageSectionCount(source)).toBeLessThanOrEqual(3);
 		expect(source).toContain('PerformanceCampaignOpening');
-		expect(source).toContain('PerformanceDecisionPanel');
-		expect(source).toContain('PerformancePageSection');
+		expect(source).toContain('PerformanceNarrativeStage');
+		expect(source).not.toContain('PerformanceDecisionPanel');
+		expect(source).not.toContain('PerformancePageSection');
 		expect(source).toContain('PropertyFunnel');
 		expect(source).toContain('NewsletterSignup');
 		expect(source).not.toContain('PerformanceThesisConditions');
@@ -103,12 +110,13 @@ describe('Performance composition cross-property rollout', () => {
 		expect(source).not.toContain('PerformanceLabBand');
 	});
 
-	it('lands the .io research decision in no more than five chapters', () => {
+	it('lands the .io research decision in no more than three chapters', () => {
 		const source = routeSource('packages/io/src/routes/+page.svelte');
 
-		expect(homepageSectionCount(source)).toBeLessThanOrEqual(5);
+		expect(homepageSectionCount(source)).toBeLessThanOrEqual(3);
 		expect(source).toContain('PerformanceCampaignOpening');
-		expect(source).toContain('PerformanceDecisionPanel');
+		expect(source).toContain('PerformanceNarrativeStage');
+		expect(source).not.toContain('PerformanceDecisionPanel');
 		expect(source).toContain('PapersGrid');
 		expect(source).toContain('PropertyFunnel');
 		expect(source).not.toContain('PerformanceThesisConditions');
@@ -138,8 +146,9 @@ describe('Performance composition cross-property rollout', () => {
 	it('lands the .learn path in three chapters with proof and handoff intact', () => {
 		const source = routeSource('packages/lms/src/routes/+page.svelte');
 
-		expect(homepageSectionCount(source)).toBeLessThanOrEqual(4);
+		expect(homepageSectionCount(source)).toBeLessThanOrEqual(3);
 		expect(source).toContain('PerformanceCampaignOpening');
+		expect(source).toContain('PerformanceNarrativeStage');
 		expect(source).toContain('PropertyFunnel');
 		expect(source).not.toContain('PerformanceThesisConditions');
 		expect(source).not.toContain('PerformanceConversionHandoff');
@@ -149,6 +158,45 @@ describe('Performance composition cross-property rollout', () => {
 		expect(source).toContain('Working MCP + workflow image');
 		expect(source).not.toContain('PerformancePlatformHero');
 		expect(source).not.toContain('PerformanceCtaBand');
+	});
+
+	it('preserves every primary homepage destination inside the sharper compositions', () => {
+		const destinationsByRoute = {
+			'packages/agency/src/routes/+page.svelte': [
+				'agencyCoreMessaging.selfMapHref',
+				'/proof/marketplace-workflow',
+				'/services',
+				'/partners',
+				'/products',
+				'/field-reports/template-review',
+				'/stack',
+				'createsomething.ltd/canon/concepts/conviction-without-dependence'
+			],
+			'packages/ltd/src/routes/+page.svelte': [
+				'/canon',
+				'/masters',
+				'/patterns/crystallization',
+				'/standards',
+				'/patterns',
+				'createsomething.io',
+				'createsomething.space',
+				'createsomething.agency/practice'
+			],
+			'packages/io/src/routes/+page.svelte': [
+				'/papers',
+				'/experiments',
+				'/methodology',
+				'/graph',
+				'createsomething.space',
+				'createsomething.agency/practice'
+			],
+			'packages/lms/src/routes/+page.svelte': ['/paths', 'firstLessonHref']
+		};
+
+		for (const [route, destinations] of Object.entries(destinationsByRoute)) {
+			const source = routeSource(route);
+			for (const destination of destinations) expect(source).toContain(destination);
+		}
 	});
 
 	it('uses shared product compositions on the staff agent roster', () => {

@@ -3,11 +3,12 @@
   import {
     Button,
     PerformanceCampaignOpening,
-    PerformanceDecisionPanel,
+    PerformanceNarrativeStage,
     PapersGrid,
     PropertyFunnel,
     SEO,
-    type PerformanceDecisionItem
+    type PerformanceDecisionItem,
+    type PerformanceNarrativeScene
   } from '@create-something/canon';
   import { traceControlPlaneMedia } from '@create-something/canon/components/performance/media/trace-control-plane';
   import type { Paper } from '@create-something/canon/types';
@@ -100,6 +101,11 @@
       ]
     }
   ];
+
+  const ioScenes: PerformanceNarrativeScene[] = decisionStates.map((item, index) => ({
+    id: ['read', 'validate', 'scope'][index],
+    ...item
+  }));
 </script>
 
 <SEO
@@ -124,23 +130,24 @@
   {/snippet}
 </PerformanceCampaignOpening>
 
-<PerformanceDecisionPanel
-  id="research-decision"
+<PerformanceNarrativeStage
+  id="research-operating-story"
   eyebrow="Research decision path"
   title="Start from evidence. Decide whether to read, test, or scope."
-  description="The research layer makes the next operating decision easier: trace the claim, test runtime-dependent behavior, and name the receiving surface before the handoff."
-  items={decisionStates}
+  description="The research decision and its artifacts now share one surface: trace the claim, inspect the relevant work, and name the receiving lane before handoff."
+  scenes={ioScenes}
   ariaLabel="Research decision path"
-  density="compact"
-/>
-
-{#if featuredExperiments.length > 0}
-  <PapersGrid
-    papers={featuredExperiments}
-    title="Featured Work"
-    subtitle="Experiments, field notes, and patterns worth inspecting first."
-  />
-{/if}
+>
+  {#snippet artifact(scene: PerformanceNarrativeScene, index: number)}
+    {#if featuredExperiments.slice(index * 2, index * 2 + 2).length > 0}
+      <PapersGrid
+        papers={featuredExperiments.slice(index * 2, index * 2 + 2)}
+        title={`${scene.label}: Featured Work`}
+        subtitle="Experiments, field notes, and patterns that support this decision."
+      />
+    {/if}
+  {/snippet}
+</PerformanceNarrativeStage>
 
 <PropertyFunnel
   current="io"
