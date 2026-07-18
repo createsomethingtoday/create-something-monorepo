@@ -489,6 +489,17 @@ test('D1 repository binds every placeholder and keeps resource queries tenant-sc
 	await repository.findMap(accountA, map.id);
 	await repository.listVersions(accountA, map.id);
 	await repository.appendVersion(accountA, { ...map, currentVersion: 2 }, { ...version, id: 'version_2', version: 2 }, 1);
+	await repository.createShare(accountA, {
+		id: 'share_1',
+		mapId: map.id,
+		accountId: map.accountId,
+		mapVersion: 1,
+		tokenDigest: 'digest_1',
+		createdBy: map.createdBy,
+		expiresAt: null,
+		revokedAt: null,
+		createdAt: map.createdAt
+	});
 	const handoff: CustomerMapHandoffRecord = {
 		id: 'handoff_1', mapId: map.id, accountId: map.accountId, mapVersion: 1, status: 'prepared',
 		payload: {
@@ -527,6 +538,10 @@ test('D1 repository binds every placeholder and keeps resource queries tenant-sc
 	const resolutionSql = sql.find((statement) => /UPDATE customer_map_handoffs/.test(statement));
 	assert.match(resolutionSql ?? '', /m\.tenant_id/);
 	assert.match(resolutionSql ?? '', /m\.workspace_account_id/);
+	const createHandoffSql = sql.find((statement) => /INSERT INTO customer_map_handoffs/.test(statement));
+	assert.match(createHandoffSql ?? '', /m\.deleted_at IS NULL/);
+	const createShareSql = sql.find((statement) => /INSERT INTO customer_map_shares/.test(statement));
+	assert.match(createShareSql ?? '', /m\.deleted_at IS NULL/);
 	const handoffReceiptSql = sql.filter((statement) => /SELECT h\.\*/.test(statement));
 	assert.equal(handoffReceiptSql.length, 2);
 	assert.ok(handoffReceiptSql.some((statement) => !/m\.deleted_at IS NULL/.test(statement)));

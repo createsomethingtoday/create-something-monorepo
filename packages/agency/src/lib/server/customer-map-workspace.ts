@@ -968,7 +968,7 @@ export function createD1CustomerMapRepository(db: D1Database): CustomerMapReposi
 					 SELECT ?, m.id, m.account_id, m.current_version, ?, ?, ?, NULL, ?
 					 FROM customer_maps m
 					 WHERE m.id = ? AND m.account_id = ? AND m.tenant_id = ? AND m.workspace_account_id = ?
-					   AND m.review_state = 'approved' AND m.current_version = ?`
+					   AND m.review_state = 'approved' AND m.current_version = ? AND m.deleted_at IS NULL`
 				)
 				.bind(
 					share.id,
@@ -1051,7 +1051,7 @@ export function createD1CustomerMapRepository(db: D1Database): CustomerMapReposi
 					 SELECT ?, m.id, m.account_id, m.current_version, ?, ?, ?, ?, NULL
 					 FROM customer_maps m
 					 WHERE m.id = ? AND m.account_id = ? AND m.tenant_id = ? AND m.workspace_account_id = ?
-					   AND m.review_state = 'approved' AND m.current_version = ?`
+					   AND m.review_state = 'approved' AND m.current_version = ? AND m.deleted_at IS NULL`
 				)
 				.bind(
 					handoff.id,
