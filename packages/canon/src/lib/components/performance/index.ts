@@ -47,6 +47,12 @@ export type {
   PerformanceHandoffStep,
   PerformanceHandoffState
 } from './PerformanceConversionHandoff.svelte';
+export { default as PerformanceNarrativeStage } from './PerformanceNarrativeStage.svelte';
+export type {
+  PerformanceNarrativeAction,
+  PerformanceNarrativeScene,
+  PerformanceNarrativeTone
+} from './PerformanceNarrativeStage.svelte';
 
 // Preferred public names. The implementation paths and legacy Clear exports
 // remain stable for downstream compatibility.
