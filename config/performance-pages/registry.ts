@@ -22,22 +22,17 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     'agency',
     [
       'about',
-      'basketball-systems-lab',
-      'book',
       'cloudflare',
       'contact',
       'control',
-      'dify',
-      'methodology',
       'partners',
-      'practice',
       'security',
       'services',
       'stack',
       'use-cases/business',
       'use-cases/enterprise'
     ],
-    'pending',
+    'migrated',
     contract(
       'commercial',
       'Decide whether the operating boundary and engagement fit.',
@@ -57,6 +52,8 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
       'dify/ship-dify-app-with-mcp-tools',
       'dify/template-marketplace-proof',
       'field-reports/template-review',
+      'methodology',
+      'practice',
       'proof/marketplace-workflow'
     ],
     'pending',
@@ -102,6 +99,8 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     'agency-public-tools',
     'agency',
     [
+      'basketball-systems-lab',
+      'book',
       'dashboard',
       'map',
       'map/share/[token]',
@@ -186,6 +185,13 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     ['notion'],
     'redirect',
     'Retains a compatibility route that redirects retired Notion positioning to the owned stack page.'
+  ),
+  exclusion(
+    'agency-dify-redirect',
+    'agency',
+    ['dify'],
+    'redirect',
+    'Preserves an edge compatibility route that redirects retired Dify positioning to the owned stack page.'
   ),
 
   group(

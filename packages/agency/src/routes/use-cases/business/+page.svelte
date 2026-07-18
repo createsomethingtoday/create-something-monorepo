@@ -3,10 +3,12 @@
     Button,
     PerformanceCardGrid,
     PerformanceConversionHandoff,
+    PerformanceNarrativeStage,
     PerformancePageSection,
     SEO,
     type PerformanceCardItem,
-    type PerformanceCtaItem
+    type PerformanceCtaItem,
+    type PerformanceNarrativeScene
   } from '@create-something/canon';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
@@ -27,7 +29,8 @@
       eyebrow: 'Keep',
       icon: 'document',
       title: 'Code, policy, and runbook',
-      detail: 'The operator keeps the map, the control boundary, and the evidence needed to trust it.'
+      detail:
+        'The operator keeps the map, the control boundary, and the evidence needed to trust it.'
     }
   ];
 
@@ -43,8 +46,7 @@
       eyebrow: '02',
       icon: 'plus',
       title: 'Connect only the first handoff',
-      detail:
-        'Use the smallest useful connection point instead of rebuilding every system at once.'
+      detail: 'Use the smallest useful connection point instead of rebuilding every system at once.'
     },
     {
       eyebrow: '03',
@@ -67,8 +69,7 @@
       eyebrow: 'Workflow Pilot',
       icon: 'settings',
       title: '2-4 week implementation',
-      detail:
-        'A scoped first build for one high-value workflow. Typical range: $2,000-$5,000.',
+      detail: 'A scoped first build for one high-value workflow. Typical range: $2,000-$5,000.',
       points: ['Connectivity', 'Setup', 'Policy', 'Runbook']
     },
     {
@@ -133,7 +134,49 @@
       eyebrow: 'Scale gap',
       icon: 'warning',
       title: 'Zapier-style glue hit the wall',
-      detail: 'The workflow now needs ownership, approval rules, and recovery paths, not another trigger.'
+      detail:
+        'The workflow now needs ownership, approval rules, and recovery paths, not another trigger.'
+    }
+  ];
+
+  const businessScenes: PerformanceNarrativeScene[] = [
+    {
+      id: 'path',
+      label: 'Path',
+      summary: 'Remove one manual bridge',
+      title: 'Do not re-platform. Control the first handoff.',
+      detail:
+        'Map the manual bridge, connect only the smallest useful point, classify decision states, and leave the operator with receipts.',
+      tone: 'allow',
+      receipts: ['workflow map', 'first connection', 'decision states', 'runbook']
+    },
+    {
+      id: 'offer',
+      label: 'Offer',
+      summary: 'Expand after proof',
+      title: 'The engagement grows only when the first pilot earns it.',
+      detail:
+        'A controlled workflow pilot creates the evidence for a broader system map or ongoing reliability work instead of promising to automate everything at once.',
+      tone: 'review'
+    },
+    {
+      id: 'example',
+      label: 'Example',
+      summary: 'Feel the difference early',
+      title: 'One pipeline handoff can prove value without changing every tool.',
+      detail:
+        'A professional-services team can begin with HubSpot, use measured time savings to map the wider system, then add the next connection under the same control layer.',
+      tone: 'allow',
+      evidence: ['5 hours per week', 'three disconnected systems', '15 hours per week automated']
+    },
+    {
+      id: 'fit',
+      label: 'Fit',
+      summary: 'People carry the workflow',
+      title: 'This is for teams rebuilding context by hand.',
+      detail:
+        'The right starting team can name the repeated handoff, the person carrying it, and the business consequence when it breaks.',
+      tone: 'neutral'
     }
   ];
 
@@ -213,56 +256,50 @@
   {/snippet}
 </PerformancePageSection>
 
-<PerformancePageSection
-  variant="white"
-  eyebrow="Operating path"
-  title="Do not re-platform. Remove one manual bridge."
-  description="Your team does not need a full-stack rebuild on the first call. You need to see which handoff can be mapped, delegated, stopped, and proven."
+<PerformanceNarrativeStage
+  id="business-pilot-story"
+  eyebrow="One pilot story"
+  title="Path. Offer. Example. Fit."
+  description="A small team needs one legible decision: which manual bridge deserves the first controlled pilot, what that pilot costs, what useful proof looks like, and whether the operating conditions fit."
+  scenes={businessScenes}
+  ariaLabel="Small-team workflow pilot story"
 >
-  {#snippet after()}
-    <PerformanceCardGrid items={journey} columns={4} ariaLabel="Small-team workflow pilot journey" />
+  {#snippet artifact(scene: PerformanceNarrativeScene)}
+    {#if scene.id === 'path'}
+      <PerformanceCardGrid
+        items={journey}
+        columns={4}
+        ariaLabel="Small-team workflow pilot journey"
+      />
+    {:else if scene.id === 'offer'}
+      <PerformanceCardGrid
+        items={packageCards}
+        columns={3}
+        ariaLabel="Workflow pilot service packages"
+      />
+    {:else if scene.id === 'example'}
+      <PerformanceCardGrid
+        items={exampleMetrics}
+        columns={3}
+        ariaLabel="Small business workflow example metrics"
+      />
+    {:else}
+      <PerformanceCardGrid items={audienceCards} columns={3} ariaLabel="Small-team workflow fit" />
+    {/if}
   {/snippet}
-</PerformancePageSection>
-
-<PerformancePageSection
-  variant="soft"
-  eyebrow="Service shape"
-  title="The offer expands only after the first pilot proves useful."
-  description="One controlled workflow becomes the evidence for the next map, not a promise to automate everything at once."
->
-  {#snippet after()}
-    <PerformanceCardGrid items={packageCards} columns={3} ariaLabel="Workflow pilot service packages" />
-  {/snippet}
-</PerformancePageSection>
-
-<PerformancePageSection
-  variant="white"
-  eyebrow="Example"
-  title="A small team can feel the difference without changing every tool."
-  description="A professional-services team can start with one pipeline handoff, then use the evidence to decide what deserves the next connection."
->
-  {#snippet after()}
-    <PerformanceCardGrid items={exampleMetrics} columns={3} ariaLabel="Small business workflow example metrics" />
-  {/snippet}
-</PerformancePageSection>
-
-<PerformancePageSection
-  variant="soft"
-  eyebrow="Fit"
-  title="This is for teams carrying too much workflow in people."
-  description="The right starting team can name the repeated handoff, the person currently rebuilding context, and the business consequence when that handoff breaks."
->
-  {#snippet after()}
-    <PerformanceCardGrid items={audienceCards} columns={3} ariaLabel="Small-team workflow fit" />
-  {/snippet}
-</PerformancePageSection>
+</PerformanceNarrativeStage>
 
 <PerformanceConversionHandoff
   eyebrow="Start with one workflow"
   title="Bring the workflow that wastes the most time."
   description="I will help map the first controlled pilot before expanding authority, scope, or spend."
   steps={ctaItems}
-  handoff={{ owner: 'Business operator', authority: 'First controlled pilot', proof: 'Runbook + control states', state: 'review' }}
+  handoff={{
+    owner: 'Business operator',
+    authority: 'First controlled pilot',
+    proof: 'Runbook + control states',
+    state: 'review'
+  }}
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.selfMapHref}>
