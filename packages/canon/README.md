@@ -212,12 +212,13 @@ the product sending the message.
 Readable Control is the proof/readability substrate inside both modes. It is not
 a separate public identity.
 
-Performance design and composition is now a single six-pattern namespace rather than a set
+Performance design and composition is one seven-pattern grammar rather than a set
 of route-local campaign, editorial, product, learning, and operator shells. Use the campaign opening, thesis/conditions,
-field sequence, contrast chapter, evidence index, and conversion handoff as the
-complete narrative vocabulary. The source-adjacent
+field sequence, contrast chapter, evidence index, indexed narrative, and conversion handoff as the
+shared narrative vocabulary. The patterns are not seven required sections: the whole-page sharpness contract limits each page to one decision, one spine, bounded chapter roles, primary proof, and an earned handoff. The source-adjacent
 [`components/performance/README.md`](src/lib/components/performance/README.md)
-defines their contracts, property seams, composition recipe, and rollout gate.
+defines the component contracts and property seams; [`docs/PERFORMANCE_PAGE_SHARPNESS.md`](../../docs/PERFORMANCE_PAGE_SHARPNESS.md)
+defines the archetypes, budgets, interaction selection, registry, and rollout gate.
 
 For readiness summaries that repeat across properties, use `PerformanceLabBand`
 instead of defining a route-local row of metric cards. It renders one continuous,
