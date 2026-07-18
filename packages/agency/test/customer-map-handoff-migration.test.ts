@@ -73,3 +73,10 @@ test('handoff resolution migration makes terminal decisions audited and immutabl
 		rmSync(directory, { recursive: true, force: true });
 	}
 });
+
+test('pending ShivWorks offboarding stays non-destructive until its owning approval', () => {
+	const migration = readFileSync(new URL('0027_remove_shivworks_delivery_context.sql', migrationRoot), 'utf8');
+	assert.doesNotMatch(migration, /\bDELETE\b/i);
+	assert.match(migration, /preserv/i);
+	assert.match(migration, /approval/i);
+});
