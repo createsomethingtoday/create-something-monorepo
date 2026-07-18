@@ -96,6 +96,10 @@ export interface BuildAcceptanceReceipt {
 	handoffId: string;
 	accountId: string;
 	workspaceAccountId: string;
+	environment: 'staging' | 'production';
+	target: string;
+	sourceSha: string;
+	deployId: string;
 	status: BuildReleaseAcceptanceStatus;
 	decidedAt: string;
 	decidedBy: string;
@@ -109,6 +113,10 @@ export interface BuildVerificationReceipt {
 	handoffId: string;
 	accountId: string;
 	workspaceAccountId: string;
+	environment: 'staging' | 'production';
+	target: string;
+	sourceSha: string;
+	deployId: string;
 	kind: 'staging' | 'uat';
 	status: BuildReleaseVerifierStatus;
 	command: string;
@@ -274,13 +282,9 @@ function isoTimestampAt(
 	issues: BuildReleaseValidationIssue[],
 ): string {
 	const timestamp = stringAt(value, path, issues);
-	const matchesUtcShape = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/.test(
-		timestamp,
-	);
+	const matchesUtcShape = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/.test(timestamp);
 	const parsedTimestamp = Date.parse(timestamp);
-	const normalizedInput = timestamp.includes('.')
-		? timestamp
-		: timestamp.replace(/Z$/, '.000Z');
+	const normalizedInput = timestamp.includes('.') ? timestamp : timestamp.replace(/Z$/, '.000Z');
 	if (
 		timestamp &&
 		(!matchesUtcShape ||
@@ -581,6 +585,10 @@ export function parseBuildAcceptanceReceipt(input: unknown): BuildAcceptanceRece
 			'handoffId',
 			'accountId',
 			'workspaceAccountId',
+			'environment',
+			'target',
+			'sourceSha',
+			'deployId',
 			'status',
 			'decidedAt',
 			'decidedBy',
@@ -596,6 +604,10 @@ export function parseBuildAcceptanceReceipt(input: unknown): BuildAcceptanceRece
 		handoffId: stringAt(root.handoffId, '$.handoffId', issues),
 		accountId: stringAt(root.accountId, '$.accountId', issues),
 		workspaceAccountId: stringAt(root.workspaceAccountId, '$.workspaceAccountId', issues),
+		environment: literalAt(root.environment, '$.environment', ['staging', 'production'], issues),
+		target: stringAt(root.target, '$.target', issues),
+		sourceSha: stringAt(root.sourceSha, '$.sourceSha', issues, /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/),
+		deployId: stringAt(root.deployId, '$.deployId', issues),
 		status: literalAt(root.status, '$.status', ['accepted', 'rejected'], issues),
 		decidedAt: isoTimestampAt(root.decidedAt, '$.decidedAt', issues),
 		decidedBy: stringAt(root.decidedBy, '$.decidedBy', issues),
@@ -621,6 +633,10 @@ export function parseBuildVerificationReceipt(input: unknown): BuildVerification
 			'handoffId',
 			'accountId',
 			'workspaceAccountId',
+			'environment',
+			'target',
+			'sourceSha',
+			'deployId',
 			'kind',
 			'status',
 			'command',
@@ -637,6 +653,10 @@ export function parseBuildVerificationReceipt(input: unknown): BuildVerification
 		handoffId: stringAt(root.handoffId, '$.handoffId', issues),
 		accountId: stringAt(root.accountId, '$.accountId', issues),
 		workspaceAccountId: stringAt(root.workspaceAccountId, '$.workspaceAccountId', issues),
+		environment: literalAt(root.environment, '$.environment', ['staging', 'production'], issues),
+		target: stringAt(root.target, '$.target', issues),
+		sourceSha: stringAt(root.sourceSha, '$.sourceSha', issues, /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/),
+		deployId: stringAt(root.deployId, '$.deployId', issues),
 		kind: literalAt(root.kind, '$.kind', ['staging', 'uat'], issues),
 		status: literalAt(root.status, '$.status', ['passed', 'failed'], issues),
 		command: stringAt(root.command, '$.command', issues),
@@ -831,6 +851,10 @@ export function inspectBuildReleasePackage(manifestPath: string): BuildReleaseIn
 				manifest.handoff.workspaceAccountId,
 				acceptanceReceipt.workspaceAccountId,
 			],
+			['environment', manifest.release.environment, acceptanceReceipt.environment],
+			['target', manifest.release.target, acceptanceReceipt.target],
+			['sourceSha', manifest.release.sourceSha, acceptanceReceipt.sourceSha],
+			['deployId', manifest.release.deployId, acceptanceReceipt.deployId],
 			['status', manifest.acceptance.status, acceptanceReceipt.status],
 		] as const;
 		for (const [field, manifestValue, receiptValue] of acceptanceIdentity) {
@@ -897,6 +921,10 @@ export function inspectBuildReleasePackage(manifestPath: string): BuildReleaseIn
 			['handoffId', manifest.handoff.handoffId, receipt.handoffId],
 			['accountId', manifest.handoff.accountId, receipt.accountId],
 			['workspaceAccountId', manifest.handoff.workspaceAccountId, receipt.workspaceAccountId],
+			['environment', manifest.release.environment, receipt.environment],
+			['target', manifest.release.target, receipt.target],
+			['sourceSha', manifest.release.sourceSha, receipt.sourceSha],
+			['deployId', manifest.release.deployId, receipt.deployId],
 			['kind', kind, receipt.kind],
 			['status', reference.status, receipt.status],
 		] as const;

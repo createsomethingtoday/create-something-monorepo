@@ -17,6 +17,7 @@ import {
 - `inspectBuildReleasePackage` verifies the exact Map handoff, staging, UAT, and Build acceptance receipts plus five canonical artifact hashes, identity/account binding, rollback data, and owners.
 - Staging and UAT readiness comes from separately referenced SHA-256-bound verifier receipts; arbitrary inline evidence cannot assert a passing result.
 - The manifest may summarize the acceptance decision, but readiness comes from the referenced SHA-256-bound receipt. Editing the manifest decision alone fails closed.
+- Every staging, UAT, and acceptance receipt binds the exact release environment, target, source SHA, and deploy ID; changing the deployed revision after verification fails closed.
 
 `evidenceValid` means identities, schema, paths, and hashes are coherent. `releaseReady` additionally requires an accepted Map handoff, passed staging and UAT results, and an accepted terminal Build decision. Neither value performs a deployment or grants production approval.
 

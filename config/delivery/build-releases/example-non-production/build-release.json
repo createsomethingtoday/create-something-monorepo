@@ -36,13 +36,13 @@
   "verification": {
     "staging": {
       "receiptPath": "receipts/staging-verification.json",
-      "receiptSha256": "618bb240461f4cdaa8988bbb05a7c633bacde18c694d0e76c2fdfb896c44ce3a",
+      "receiptSha256": "f2e6c68a236db5ebbc8b5aa740eb422611e94610d70d5819bd5cbe7667f637a1",
       "receiptId": "fixture-verification-staging-001",
       "status": "passed"
     },
     "uat": {
       "receiptPath": "receipts/uat-verification.json",
-      "receiptSha256": "426134a3b454aa5b21fe154cdedf0deaefdc202e8dcde0a01b4534a764a9d0c5",
+      "receiptSha256": "aa490450b958ab294eb66c9240c4b85c9c1fc97fd0886d46cb4dae180d272eac",
       "receiptId": "fixture-verification-uat-001",
       "status": "passed"
     }
@@ -63,7 +63,7 @@
   },
   "acceptance": {
     "receiptPath": "receipts/build-acceptance.json",
-    "receiptSha256": "4745b0dbf75972ddd5138e8f0b634041bce22de1246738b73c731b953447d3e7",
+    "receiptSha256": "16d96707923ff5d3bc3b7e05002678fd1f18f903ac53ec345a09f174846c03b0",
     "receiptId": "fixture-acceptance-example-001",
     "status": "accepted"
   }

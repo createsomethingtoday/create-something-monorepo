@@ -153,6 +153,10 @@ function validVerificationReceipt(kind: 'staging' | 'uat'): unknown {
 		handoffId: 'handoff_example_001',
 		accountId: 'account_example',
 		workspaceAccountId: 'workspace_example',
+		environment: 'staging',
+		target: 'example-build-staging',
+		sourceSha: '1'.repeat(40),
+		deployId: 'deploy_example_001',
 		kind,
 		status: 'passed',
 		command: `pnpm test:${kind}`,
@@ -169,6 +173,10 @@ function validAcceptanceReceipt(): unknown {
 		handoffId: 'handoff_example_001',
 		accountId: 'account_example',
 		workspaceAccountId: 'workspace_example',
+		environment: 'staging',
+		target: 'example-build-staging',
+		sourceSha: '1'.repeat(40),
+		deployId: 'deploy_example_001',
 		status: 'accepted',
 		decidedAt: '2026-07-18T12:30:00.000Z',
 		decidedBy: 'acceptor@example.test',
@@ -284,9 +292,7 @@ test('parseBuildReleaseManifest rejects unknown and missing fields', () => {
 		() => parseBuildReleaseManifest(normalizedImpossibleDate),
 		(error: unknown) =>
 			error instanceof BuildReleaseValidationError &&
-			error.issues.some(
-				(issue) => issue.path === '$.createdAt' && issue.code === 'invalid_value',
-			),
+			error.issues.some((issue) => issue.path === '$.createdAt' && issue.code === 'invalid_value'),
 	);
 });
 
@@ -352,6 +358,20 @@ test('inspectBuildReleasePackage fails closed on handoff and decision boundaries
 	const invalidVerifierHash = inspectBuildReleasePackage(changedVerifier.manifestPath);
 	assert.equal(invalidVerifierHash.releaseReady, false);
 	assert.ok(invalidVerifierHash.issues.some((issue) => issue.code === 'verifier_hash_mismatch'));
+
+	const changedRevision = writeRepresentativePackage();
+	const revisionManifest = JSON.parse(readFileSync(changedRevision.manifestPath, 'utf8')) as Record<
+		string,
+		any
+	>;
+	revisionManifest.release.sourceSha = '9'.repeat(40);
+	writeFileSync(changedRevision.manifestPath, `${JSON.stringify(revisionManifest, null, 2)}\n`);
+	const unverifiedRevision = inspectBuildReleasePackage(changedRevision.manifestPath);
+	assert.equal(unverifiedRevision.releaseReady, false);
+	assert.ok(unverifiedRevision.issues.some((issue) => issue.code === 'verifier_identity_mismatch'));
+	assert.ok(
+		unverifiedRevision.issues.some((issue) => issue.code === 'acceptance_identity_mismatch'),
+	);
 
 	const rejected = inspectBuildReleasePackage(
 		writeRepresentativePackage({ acceptanceStatus: 'rejected' }).manifestPath,
