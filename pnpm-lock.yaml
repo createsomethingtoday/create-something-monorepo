@@ -3698,6 +3698,9 @@ importers:
 
   packages/symphony:
     dependencies:
+      ajv:
+        specifier: ^8.17.1
+        version: 8.17.1
       liquidjs:
         specifier: ^10.25.0
         version: 10.25.0

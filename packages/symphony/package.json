@@ -10,7 +10,8 @@
     "entrypoints": [
       "src/cli.js",
       "src/orchestrator.js",
-      "src/tracker/linear.js"
+      "src/tracker/linear.js",
+      "src/canonical-harness-gate.js"
     ],
     "boot": "node src/cli.js ../../automation/symphony/code-quality/WORKFLOW.md --once",
     "smoke": "pnpm check && pnpm test"
@@ -20,6 +21,8 @@
     ".": "./src/index.js",
     "./cli": "./src/cli.js",
     "./config": "./src/config.js",
+    "./canonical-harness-gate": "./src/canonical-harness-gate.js",
+    "./canonical-harness-receipt-schema": "./schemas/canonical-harness-receipt.v1.schema.json",
     "./orchestrator": "./src/orchestrator.js",
     "./tracker/linear": "./src/tracker/linear.js",
     "./work-unit-contract": "./src/work-unit-contract.js"
@@ -28,7 +31,8 @@
     "symphony": "./src/cli.js"
   },
   "files": [
-    "src"
+    "src",
+    "schemas"
   ],
   "scripts": {
     "check": "for f in src/*.js src/tracker/*.js test/*.mjs; do node --check \"$f\"; done",
@@ -36,6 +40,7 @@
     "work-unit:verify": "node ../../scripts/agent-work-unit-verify.mjs"
   },
   "dependencies": {
+    "ajv": "^8.17.1",
     "liquidjs": "^10.25.0",
     "yaml": "^2.8.2"
   },
