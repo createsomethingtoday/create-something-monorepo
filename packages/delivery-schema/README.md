@@ -14,7 +14,8 @@ import {
 
 - `parseBuildReleaseManifest` strictly validates the versioned manifest and rejects unknown or missing fields.
 - `parseMapBuildHandoffReceipt` preserves prepared, accepted, and cancelled Map evidence without treating nonterminal evidence as approval.
-- `inspectBuildReleasePackage` verifies the exact Map handoff receipt, separate Build acceptance receipt, and five canonical artifact hashes, plus identity/account binding, verifier decisions, rollback data, and owners.
+- `inspectBuildReleasePackage` verifies the exact Map handoff, staging, UAT, and Build acceptance receipts plus five canonical artifact hashes, identity/account binding, rollback data, and owners.
+- Staging and UAT readiness comes from separately referenced SHA-256-bound verifier receipts; arbitrary inline evidence cannot assert a passing result.
 - The manifest may summarize the acceptance decision, but readiness comes from the referenced SHA-256-bound receipt. Editing the manifest decision alone fails closed.
 
 `evidenceValid` means identities, schema, paths, and hashes are coherent. `releaseReady` additionally requires an accepted Map handoff, passed staging and UAT results, and an accepted terminal Build decision. Neither value performs a deployment or grants production approval.

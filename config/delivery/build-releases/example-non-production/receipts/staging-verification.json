@@ -1,0 +1,13 @@
+{
+  "schema": "create-something/build-verification-receipt@1",
+  "receiptId": "fixture-verification-staging-001",
+  "releaseId": "release_example_nonprod_001",
+  "handoffId": "handoff_example_nonprod_001",
+  "accountId": "account_example_nonprod",
+  "workspaceAccountId": "workspace_example_nonprod",
+  "kind": "staging",
+  "status": "passed",
+  "command": "fixture verify --environment staging",
+  "completedAt": "2026-07-18T12:10:00.000Z",
+  "evidence": ["fixture://build-release/example-non-production/staging"]
+}

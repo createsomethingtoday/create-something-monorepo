@@ -11,6 +11,7 @@ import {
 	BuildReleaseValidationError,
 	inspectBuildReleasePackage,
 	parseBuildAcceptanceReceipt,
+	parseBuildVerificationReceipt,
 	parseMapBuildHandoffReceipt,
 	parseBuildReleaseManifest,
 } from '../src/build-release.js';
@@ -40,16 +41,16 @@ function validManifest(): unknown {
 		},
 		verification: {
 			staging: {
+				receiptPath: 'receipts/staging-verification.json',
+				receiptSha256: '2'.repeat(64),
+				receiptId: 'verification_staging_example_001',
 				status: 'passed',
-				command: 'pnpm test:staging',
-				completedAt: '2026-07-18T12:10:00.000Z',
-				evidence: ['receipt://staging/example-001'],
 			},
 			uat: {
+				receiptPath: 'receipts/uat-verification.json',
+				receiptSha256: '3'.repeat(64),
+				receiptId: 'verification_uat_example_001',
 				status: 'passed',
-				command: 'pnpm test:uat',
-				completedAt: '2026-07-18T12:20:00.000Z',
-				evidence: ['receipt://uat/example-001'],
 			},
 		},
 		release: {
@@ -120,11 +121,19 @@ function writeRepresentativePackage(overrides?: {
 	acceptanceReceipt.status = overrides?.acceptanceStatus ?? 'accepted';
 	const acceptanceJson = `${JSON.stringify(acceptanceReceipt, null, 2)}\n`;
 	writeFileSync(join(root, 'receipts', 'build-acceptance.json'), acceptanceJson);
+	const stagingReceipt = validVerificationReceipt('staging') as Record<string, unknown>;
+	stagingReceipt.status = overrides?.stagingStatus ?? 'passed';
+	const stagingJson = `${JSON.stringify(stagingReceipt, null, 2)}\n`;
+	writeFileSync(join(root, 'receipts', 'staging-verification.json'), stagingJson);
+	const uatJson = `${JSON.stringify(validVerificationReceipt('uat'), null, 2)}\n`;
+	writeFileSync(join(root, 'receipts', 'uat-verification.json'), uatJson);
 
 	const manifest = validManifest() as Record<string, any>;
 	manifest.handoff.receiptSha256 = sha256(receiptJson);
 	manifest.handoff.accountId = overrides?.accountId ?? 'account_example';
 	manifest.verification.staging.status = overrides?.stagingStatus ?? 'passed';
+	manifest.verification.staging.receiptSha256 = sha256(stagingJson);
+	manifest.verification.uat.receiptSha256 = sha256(uatJson);
 	manifest.acceptance.status = overrides?.acceptanceStatus ?? 'accepted';
 	manifest.acceptance.receiptSha256 = sha256(acceptanceJson);
 	for (const name of Object.keys(artifactContent) as Array<keyof typeof artifactContent>) {
@@ -134,6 +143,22 @@ function writeRepresentativePackage(overrides?: {
 	writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
 
 	return { root, manifestPath };
+}
+
+function validVerificationReceipt(kind: 'staging' | 'uat'): unknown {
+	return {
+		schema: 'create-something/build-verification-receipt@1',
+		receiptId: `verification_${kind}_example_001`,
+		releaseId: 'release_example_001',
+		handoffId: 'handoff_example_001',
+		accountId: 'account_example',
+		workspaceAccountId: 'workspace_example',
+		kind,
+		status: 'passed',
+		command: `pnpm test:${kind}`,
+		completedAt: kind === 'staging' ? '2026-07-18T12:10:00.000Z' : '2026-07-18T12:20:00.000Z',
+		evidence: [`receipt://${kind}/example-001`],
+	};
 }
 
 function validAcceptanceReceipt(): unknown {
@@ -198,6 +223,14 @@ test('parseBuildAcceptanceReceipt requires a strict terminal receipt', () => {
 	const pending = validAcceptanceReceipt() as Record<string, unknown>;
 	pending.status = 'pending';
 	assert.throws(() => parseBuildAcceptanceReceipt(pending), BuildReleaseValidationError);
+});
+
+test('parseBuildVerificationReceipt requires a strict staging or UAT receipt', () => {
+	assert.equal(parseBuildVerificationReceipt(validVerificationReceipt('staging')).kind, 'staging');
+
+	const unknown = validVerificationReceipt('uat') as Record<string, unknown>;
+	unknown.kind = 'production';
+	assert.throws(() => parseBuildVerificationReceipt(unknown), BuildReleaseValidationError);
 });
 
 test('parseBuildReleaseManifest rejects unknown and missing fields', () => {
@@ -279,6 +312,35 @@ test('inspectBuildReleasePackage fails closed on handoff and decision boundaries
 	assert.equal(failedVerifier.evidenceValid, true);
 	assert.equal(failedVerifier.releaseReady, false);
 	assert.ok(failedVerifier.issues.some((issue) => issue.code === 'verifier_failed'));
+
+	const selfAssertedVerifier = writeRepresentativePackage({ stagingStatus: 'failed' });
+	const verifierManifest = JSON.parse(
+		readFileSync(selfAssertedVerifier.manifestPath, 'utf8'),
+	) as Record<string, any>;
+	verifierManifest.verification.staging.status = 'passed';
+	writeFileSync(
+		selfAssertedVerifier.manifestPath,
+		`${JSON.stringify(verifierManifest, null, 2)}\n`,
+	);
+	const unverifiedPass = inspectBuildReleasePackage(selfAssertedVerifier.manifestPath);
+	assert.equal(unverifiedPass.releaseReady, false);
+	assert.ok(unverifiedPass.issues.some((issue) => issue.code === 'verifier_identity_mismatch'));
+
+	const changedVerifier = writeRepresentativePackage();
+	writeFileSync(
+		join(changedVerifier.root, 'receipts', 'staging-verification.json'),
+		`${JSON.stringify(
+			{
+				...(validVerificationReceipt('staging') as Record<string, unknown>),
+				evidence: ['self-asserted-after-verification'],
+			},
+			null,
+			2,
+		)}\n`,
+	);
+	const invalidVerifierHash = inspectBuildReleasePackage(changedVerifier.manifestPath);
+	assert.equal(invalidVerifierHash.releaseReady, false);
+	assert.ok(invalidVerifierHash.issues.some((issue) => issue.code === 'verifier_hash_mismatch'));
 
 	const rejected = inspectBuildReleasePackage(
 		writeRepresentativePackage({ acceptanceStatus: 'rejected' }).manifestPath,

@@ -35,16 +35,16 @@
   },
   "verification": {
     "staging": {
-      "status": "passed",
-      "command": "fixture verify --environment staging",
-      "completedAt": "2026-07-18T12:10:00.000Z",
-      "evidence": ["fixture://build-release/example-non-production/staging"]
+      "receiptPath": "receipts/staging-verification.json",
+      "receiptSha256": "618bb240461f4cdaa8988bbb05a7c633bacde18c694d0e76c2fdfb896c44ce3a",
+      "receiptId": "fixture-verification-staging-001",
+      "status": "passed"
     },
     "uat": {
-      "status": "passed",
-      "command": "fixture verify --environment uat",
-      "completedAt": "2026-07-18T12:20:00.000Z",
-      "evidence": ["fixture://build-release/example-non-production/uat"]
+      "receiptPath": "receipts/uat-verification.json",
+      "receiptSha256": "426134a3b454aa5b21fe154cdedf0deaefdc202e8dcde0a01b4534a764a9d0c5",
+      "receiptId": "fixture-verification-uat-001",
+      "status": "passed"
     }
   },
   "release": {

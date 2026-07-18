@@ -7,6 +7,8 @@ export const MAP_BUILD_HANDOFF_RECEIPT_SCHEMA =
 	'create-something/map-to-build-handoff-receipt@1' as const;
 export const BUILD_ACCEPTANCE_RECEIPT_SCHEMA =
 	'create-something/build-acceptance-receipt@1' as const;
+export const BUILD_VERIFICATION_RECEIPT_SCHEMA =
+	'create-something/build-verification-receipt@1' as const;
 
 export const BUILD_RELEASE_ARTIFACTS = [
 	'mcp_contract',
@@ -25,11 +27,11 @@ export interface BuildReleaseArtifactReference {
 	sha256: string;
 }
 
-export interface BuildReleaseVerifierResult {
+export interface BuildReleaseVerifierReference {
+	receiptPath: string;
+	receiptSha256: string;
+	receiptId: string;
 	status: BuildReleaseVerifierStatus;
-	command: string;
-	completedAt: string;
-	evidence: string[];
 }
 
 export interface BuildReleaseManifest {
@@ -47,8 +49,8 @@ export interface BuildReleaseManifest {
 	};
 	artifacts: Record<BuildReleaseArtifactName, BuildReleaseArtifactReference>;
 	verification: {
-		staging: BuildReleaseVerifierResult;
-		uat: BuildReleaseVerifierResult;
+		staging: BuildReleaseVerifierReference;
+		uat: BuildReleaseVerifierReference;
 	};
 	release: {
 		environment: 'staging' | 'production';
@@ -100,6 +102,20 @@ export interface BuildAcceptanceReceipt {
 	note: string;
 }
 
+export interface BuildVerificationReceipt {
+	schema: typeof BUILD_VERIFICATION_RECEIPT_SCHEMA;
+	receiptId: string;
+	releaseId: string;
+	handoffId: string;
+	accountId: string;
+	workspaceAccountId: string;
+	kind: 'staging' | 'uat';
+	status: BuildReleaseVerifierStatus;
+	command: string;
+	completedAt: string;
+	evidence: string[];
+}
+
 export type BuildReleaseInspectionIssueCode =
 	| 'manifest_invalid'
 	| 'receipt_missing'
@@ -115,6 +131,10 @@ export type BuildReleaseInspectionIssueCode =
 	| 'acceptance_hash_mismatch'
 	| 'acceptance_invalid'
 	| 'acceptance_identity_mismatch'
+	| 'verifier_missing'
+	| 'verifier_hash_mismatch'
+	| 'verifier_invalid'
+	| 'verifier_identity_mismatch'
 	| 'verifier_failed'
 	| 'release_rejected';
 
@@ -129,6 +149,7 @@ export interface BuildReleaseInspection {
 	manifest: BuildReleaseManifest | null;
 	handoffReceipt: MapBuildHandoffReceipt | null;
 	acceptanceReceipt: BuildAcceptanceReceipt | null;
+	verificationReceipts: Record<'staging' | 'uat', BuildVerificationReceipt | null>;
 	evidenceValid: boolean;
 	releaseReady: boolean;
 	issues: BuildReleaseInspectionIssue[];
@@ -321,17 +342,27 @@ function parseArtifact(
 	};
 }
 
-function parseVerifier(
+function parseVerifierReference(
 	value: unknown,
 	path: string,
 	issues: BuildReleaseValidationIssue[],
-): BuildReleaseVerifierResult {
-	const verifier = objectAt(value, path, ['status', 'command', 'completedAt', 'evidence'], issues);
+): BuildReleaseVerifierReference {
+	const verifier = objectAt(
+		value,
+		path,
+		['receiptPath', 'receiptSha256', 'receiptId', 'status'],
+		issues,
+	);
 	return {
+		receiptPath: relativePathAt(verifier.receiptPath, `${path}.receiptPath`, issues),
+		receiptSha256: stringAt(
+			verifier.receiptSha256,
+			`${path}.receiptSha256`,
+			issues,
+			/^[a-f0-9]{64}$/,
+		),
+		receiptId: stringAt(verifier.receiptId, `${path}.receiptId`, issues),
 		status: literalAt(verifier.status, `${path}.status`, ['passed', 'failed'], issues),
-		command: stringAt(verifier.command, `${path}.command`, issues),
-		completedAt: isoTimestampAt(verifier.completedAt, `${path}.completedAt`, issues),
-		evidence: evidenceAt(verifier.evidence, `${path}.evidence`, issues),
 	};
 }
 
@@ -418,8 +449,8 @@ export function parseBuildReleaseManifest(input: unknown): BuildReleaseManifest 
 			]),
 		) as Record<BuildReleaseArtifactName, BuildReleaseArtifactReference>,
 		verification: {
-			staging: parseVerifier(verification.staging, '$.verification.staging', issues),
-			uat: parseVerifier(verification.uat, '$.verification.uat', issues),
+			staging: parseVerifierReference(verification.staging, '$.verification.staging', issues),
+			uat: parseVerifierReference(verification.uat, '$.verification.uat', issues),
 		},
 		release: {
 			environment: literalAt(
@@ -570,6 +601,48 @@ export function parseBuildAcceptanceReceipt(input: unknown): BuildAcceptanceRece
 	return receipt;
 }
 
+export function parseBuildVerificationReceipt(input: unknown): BuildVerificationReceipt {
+	const issues: BuildReleaseValidationIssue[] = [];
+	const root = objectAt(
+		input,
+		'$',
+		[
+			'schema',
+			'receiptId',
+			'releaseId',
+			'handoffId',
+			'accountId',
+			'workspaceAccountId',
+			'kind',
+			'status',
+			'command',
+			'completedAt',
+			'evidence',
+		],
+		issues,
+	);
+
+	const receipt: BuildVerificationReceipt = {
+		schema: literalAt(root.schema, '$.schema', [BUILD_VERIFICATION_RECEIPT_SCHEMA], issues),
+		receiptId: stringAt(root.receiptId, '$.receiptId', issues),
+		releaseId: stringAt(root.releaseId, '$.releaseId', issues),
+		handoffId: stringAt(root.handoffId, '$.handoffId', issues),
+		accountId: stringAt(root.accountId, '$.accountId', issues),
+		workspaceAccountId: stringAt(root.workspaceAccountId, '$.workspaceAccountId', issues),
+		kind: literalAt(root.kind, '$.kind', ['staging', 'uat'], issues),
+		status: literalAt(root.status, '$.status', ['passed', 'failed'], issues),
+		command: stringAt(root.command, '$.command', issues),
+		completedAt: isoTimestampAt(root.completedAt, '$.completedAt', issues),
+		evidence: evidenceAt(root.evidence, '$.evidence', issues),
+	};
+
+	if (issues.length > 0) {
+		throw new BuildReleaseValidationError(issues);
+	}
+
+	return receipt;
+}
+
 const CANONICAL_ARTIFACT_FILENAMES: Record<BuildReleaseArtifactName, string> = {
 	mcp_contract: 'mcp_contract.yaml',
 	agent_contract: 'agent_contract.yaml',
@@ -627,6 +700,7 @@ export function inspectBuildReleasePackage(manifestPath: string): BuildReleaseIn
 			manifest: null,
 			handoffReceipt: null,
 			acceptanceReceipt: null,
+			verificationReceipts: { staging: null, uat: null },
 			evidenceValid: false,
 			releaseReady: false,
 			issues,
@@ -763,6 +837,73 @@ export function inspectBuildReleasePackage(manifestPath: string): BuildReleaseIn
 		}
 	}
 
+	const verificationReceipts: Record<'staging' | 'uat', BuildVerificationReceipt | null> = {
+		staging: null,
+		uat: null,
+	};
+	for (const kind of ['staging', 'uat'] as const) {
+		const reference = manifest.verification[kind];
+		const verifierPath = resolvedPackagePath(
+			packageRoot,
+			reference.receiptPath,
+			`$.verification.${kind}.receiptPath`,
+			issues,
+		);
+		if (verifierPath !== null && (!existsSync(verifierPath) || !statSync(verifierPath).isFile())) {
+			issues.push({
+				code: 'verifier_missing',
+				category: 'integrity',
+				path: `$.verification.${kind}.receiptPath`,
+				message: `${kind} verification receipt is missing: ${reference.receiptPath}.`,
+			});
+			continue;
+		}
+		if (verifierPath === null) continue;
+		if (fileSha256(verifierPath) !== reference.receiptSha256) {
+			issues.push({
+				code: 'verifier_hash_mismatch',
+				category: 'integrity',
+				path: `$.verification.${kind}.receiptSha256`,
+				message: `${kind} verification receipt SHA-256 does not match the manifest.`,
+			});
+		}
+		try {
+			verificationReceipts[kind] = parseBuildVerificationReceipt(
+				JSON.parse(readFileSync(verifierPath, 'utf8')) as unknown,
+			);
+		} catch (error) {
+			issues.push({
+				code: 'verifier_invalid',
+				category: 'integrity',
+				path: `$.verification.${kind}.receiptPath`,
+				message: error instanceof Error ? error.message : String(error),
+			});
+			continue;
+		}
+
+		const receipt = verificationReceipts[kind];
+		if (receipt === null) continue;
+		const verifierIdentity = [
+			['receiptId', reference.receiptId, receipt.receiptId],
+			['releaseId', manifest.releaseId, receipt.releaseId],
+			['handoffId', manifest.handoff.handoffId, receipt.handoffId],
+			['accountId', manifest.handoff.accountId, receipt.accountId],
+			['workspaceAccountId', manifest.handoff.workspaceAccountId, receipt.workspaceAccountId],
+			['kind', kind, receipt.kind],
+			['status', reference.status, receipt.status],
+		] as const;
+		for (const [field, manifestValue, receiptValue] of verifierIdentity) {
+			if (manifestValue !== receiptValue) {
+				issues.push({
+					code: 'verifier_identity_mismatch',
+					category: 'integrity',
+					path: `$.verification.${kind}.${field}`,
+					message: `Manifest ${field} does not match the ${kind} verification receipt.`,
+				});
+			}
+		}
+	}
+
 	const seenArtifactPaths = new Set<string>();
 	for (const name of BUILD_RELEASE_ARTIFACTS) {
 		const reference = manifest.artifacts[name];
@@ -811,7 +952,7 @@ export function inspectBuildReleasePackage(manifestPath: string): BuildReleaseIn
 	}
 
 	for (const verifier of ['staging', 'uat'] as const) {
-		if (manifest.verification[verifier].status === 'failed') {
+		if (verificationReceipts[verifier]?.status === 'failed') {
 			issues.push({
 				code: 'verifier_failed',
 				category: 'readiness',
@@ -834,6 +975,7 @@ export function inspectBuildReleasePackage(manifestPath: string): BuildReleaseIn
 		manifest,
 		handoffReceipt,
 		acceptanceReceipt,
+		verificationReceipts,
 		evidenceValid,
 		releaseReady: evidenceValid && !issues.some((issue) => issue.category === 'readiness'),
 		issues,

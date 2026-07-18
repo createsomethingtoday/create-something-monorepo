@@ -40,6 +40,10 @@ function main(argv: string[]): number {
     console.log(
       `Map handoff: ${result.manifest.handoff.handoffId} (${result.handoffReceipt?.status ?? 'unverified'})`
     );
+    console.log(
+      `Staging verification: ${result.verificationReceipts.staging?.status ?? 'unverified'}`
+    );
+    console.log(`UAT verification: ${result.verificationReceipts.uat?.status ?? 'unverified'}`);
     console.log(`Terminal decision: ${result.acceptanceReceipt?.status ?? 'unverified'}`);
   }
   if (result.issues.length > 0) {
