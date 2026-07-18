@@ -147,10 +147,13 @@ test('public agency surfaces state the OpenAI conviction and owned-system bounda
     'utf8'
   );
 
-  assert.match(home, /eyebrow="How we build"/);
+  assert.match(home, /<span>How we build<\/span>/);
   assert.match(home, /Built with OpenAI Codex\. Designed to remain yours\./);
   assert.match(home, /We use Codex to map, build, and maintain the workflow\./);
-  assert.match(home, /If the model or agent environment changes, the system does not have to start over\./);
+  assert.match(
+    home,
+    /If the model\s+or agent environment changes, the system does not have to start over\./
+  );
   assert.match(home, />Why we build this way</);
   assert.doesNotMatch(home, /Current agent environment|Designed to outlast any model|MCP contracts, harnesses/);
   assert.match(home, /https:\/\/createsomething\.ltd\/canon\/concepts\/conviction-without-dependence/);
