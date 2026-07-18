@@ -95,7 +95,26 @@ function same_paths(left, right) {
 }
 
 function passed_stage(value) {
-  return value?.status === 'passed';
+  return value?.status === 'passed'
+    && Array.isArray(value?.commands)
+    && value.commands.length > 0
+    && value.commands.every((command) => command?.exit_code === 0);
+}
+
+function stage_identity_blockers(candidate, stage_name) {
+  const stage = candidate.stages?.[stage_name];
+  if (!stage) return [];
+  const blockers = [];
+  if (stage.role !== stage_name) {
+    blockers.push(`${stage_name} receipt must declare role ${stage_name}`);
+  }
+  if (stage.run_id !== candidate.run_id) {
+    blockers.push(`${stage_name} receipt must target canonical run ${candidate.run_id ?? '<missing>'}`);
+  }
+  if (stage.linear?.issue !== candidate.linear?.issue) {
+    blockers.push(`${stage_name} receipt must target Linear issue ${candidate.linear?.issue ?? '<missing>'}`);
+  }
+  return blockers;
 }
 
 function reviewed_evidence_ok(value) {
@@ -122,6 +141,9 @@ function lane_blockers(candidate) {
   }[level];
   if (expected_lane && lane !== expected_lane) {
     blockers.push(`${level} requires lane ${expected_lane}`);
+  }
+  for (const stage_name of ['worker', 'reviewer', 'integrator']) {
+    blockers.push(...stage_identity_blockers(candidate, stage_name));
   }
   if (['A0', 'A1', 'A2', 'A3'].includes(level) && !passed_stage(candidate.stages?.worker)) {
     blockers.push(`${level} requires a passed worker receipt`);

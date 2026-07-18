@@ -177,12 +177,65 @@
     "stage": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["receipt_schema", "status", "evidence", "changed_paths"],
+      "required": [
+        "schema_version",
+        "run_id",
+        "role",
+        "work_unit_id",
+        "linear",
+        "status",
+        "commands",
+        "changed_paths",
+        "evidence",
+        "next_decision",
+        "metrics"
+      ],
       "properties": {
-        "receipt_schema": { "const": "multi-agent-evidence-receipt.v1" },
+        "schema_version": { "const": "multi-agent-evidence-receipt.v1" },
+        "run_id": { "$ref": "#/$defs/nonEmptyString" },
+        "role": { "enum": ["scout", "worker", "reviewer", "integrator", "operator"] },
+        "work_unit_id": { "$ref": "#/$defs/nonEmptyString" },
+        "linear": { "$ref": "#/$defs/stageLinear" },
         "status": { "enum": ["passed", "failed", "blocked"] },
+        "commands": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/commandResult" }
+        },
         "evidence": { "$ref": "#/$defs/nonEmptyString" },
-        "changed_paths": { "$ref": "#/$defs/stringArray" }
+        "changed_paths": { "$ref": "#/$defs/stringArray" },
+        "next_decision": { "$ref": "#/$defs/nonEmptyString" },
+        "metrics": { "$ref": "#/$defs/stageMetrics" }
+      }
+    },
+    "stageLinear": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["issue"],
+      "properties": {
+        "issue": { "$ref": "#/$defs/issueIdentifier" },
+        "map_issue": { "$ref": "#/$defs/issueIdentifier" }
+      }
+    },
+    "commandResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["command", "exit_code", "summary"],
+      "properties": {
+        "command": { "$ref": "#/$defs/nonEmptyString" },
+        "exit_code": { "type": "integer", "minimum": 0 },
+        "summary": { "$ref": "#/$defs/nonEmptyString" }
+      }
+    },
+    "stageMetrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["duration_ms", "retry_count", "human_intervention_count", "tokens"],
+      "properties": {
+        "duration_ms": { "type": "number", "minimum": 0 },
+        "retry_count": { "type": "number", "minimum": 0 },
+        "human_intervention_count": { "type": "number", "minimum": 0 },
+        "tokens": { "$ref": "#/$defs/tokens" }
       }
     },
     "nullableStage": {

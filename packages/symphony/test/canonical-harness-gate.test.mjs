@@ -34,12 +34,11 @@ function valid_a1_candidate(overrides = {}) {
       results: [{ criterion_id: 'gate', kind: 'command', status: 'passed', evidence: 'node --test passed' }],
     },
     stages: {
-      worker: {
-        receipt_schema: 'multi-agent-evidence-receipt.v1',
-        status: 'passed',
-        evidence: 'Worker produced the bounded source change.',
-        changed_paths: ['packages/symphony/src/canonical-harness-gate.js'],
-      },
+      worker: existing_stage_receipt(
+        'worker',
+        ['packages/symphony/src/canonical-harness-gate.js'],
+        'Worker produced the bounded source change.',
+      ),
       reviewer: null,
       integrator: null,
     },
@@ -66,14 +65,29 @@ function valid_a1_candidate(overrides = {}) {
   };
 }
 
+function existing_stage_receipt(role, changed_paths = [], evidence = `${role} completed.`) {
+  return {
+    schema_version: 'multi-agent-evidence-receipt.v1',
+    run_id: 'CRE-1304-run-1',
+    role,
+    work_unit_id: `CRE-1304-${role}`,
+    linear: { issue: 'CRE-1304' },
+    status: 'passed',
+    commands: [{ command: 'node --test', exit_code: 0, summary: `${role} tests passed.` }],
+    changed_paths,
+    evidence,
+    next_decision: `${role} may hand off to the next decision.`,
+    metrics: {
+      duration_ms: 10,
+      retry_count: 0,
+      human_intervention_count: 0,
+      tokens: { input: 1, output: 1, total: 2 },
+    },
+  };
+}
+
 function valid_reviewed_candidate(level = 'A2', overrides = {}) {
   const candidate = valid_a1_candidate();
-  const stage = (evidence) => ({
-    receipt_schema: 'multi-agent-evidence-receipt.v1',
-    status: 'passed',
-    evidence,
-    changed_paths: [],
-  });
   return {
     ...candidate,
     routing: {
@@ -84,8 +98,8 @@ function valid_reviewed_candidate(level = 'A2', overrides = {}) {
     },
     stages: {
       ...candidate.stages,
-      reviewer: stage('Independent reviewer found no actionable issues.'),
-      integrator: stage('Integrator verified the reviewed outcome.'),
+      reviewer: existing_stage_receipt('reviewer', [], 'Independent reviewer found no actionable issues.'),
+      integrator: existing_stage_receipt('integrator', [], 'Integrator verified the reviewed outcome.'),
     },
     review: {
       required: true,
@@ -174,6 +188,31 @@ test('canonical gate requires execution changed paths to match source diff evide
 
   assert.equal(decision.eligible_for_done, false);
   assert.ok(decision.blockers.includes('execution changed paths must match source changed paths'));
+});
+
+test('canonical gate accepts Symphony existing evidence receipt stage shape directly', () => {
+  const candidate = valid_a1_candidate();
+  candidate.stages.worker = existing_stage_receipt('worker', candidate.source.changed_paths);
+
+  const decision = evaluate_canonical_harness_receipt(candidate);
+
+  assert.equal(decision.eligible_for_done, true, JSON.stringify(decision.blockers));
+});
+
+test('canonical gate binds existing stage receipts to run, role, issue, and passing commands', () => {
+  const candidate = valid_a1_candidate();
+  candidate.stages.worker.role = 'reviewer';
+  candidate.stages.worker.run_id = 'another-run';
+  candidate.stages.worker.linear.issue = 'CRE-OTHER';
+  candidate.stages.worker.commands[0].exit_code = 1;
+
+  const decision = evaluate_canonical_harness_receipt(candidate);
+
+  assert.equal(decision.eligible_for_done, false);
+  assert.ok(decision.blockers.includes('worker receipt must declare role worker'));
+  assert.ok(decision.blockers.includes('worker receipt must target canonical run CRE-1304-run-1'));
+  assert.ok(decision.blockers.includes('worker receipt must target Linear issue CRE-1304'));
+  assert.ok(decision.blockers.includes('A1 requires a passed worker receipt'));
 });
 
 test('canonical gate admits reviewed integrator changes but never reviewer writes', () => {
@@ -283,7 +322,7 @@ test('canonical gate keeps A0 read-only and rejects unsupported stage receipts',
     },
   });
   const unsupported = valid_a1_candidate();
-  unsupported.stages.worker.receipt_schema = 'unsupported-receipt.v0';
+  unsupported.stages.worker.schema_version = 'unsupported-receipt.v0';
 
   const a0 = evaluate_canonical_harness_receipt(changed_a0);
   const stage = evaluate_canonical_harness_receipt(unsupported);

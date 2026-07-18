@@ -38,6 +38,11 @@ A4 is never eligible for autonomous completion. Unknown fields, caller-supplied
 eligibility, issue-identity mismatches, corrupt receipts, and tampered computed
 fields all fail closed without a tracker mutation.
 
+Stage evidence uses Symphony's existing `multi-agent-evidence-receipt.v1`
+contract directly. The gate binds each receipt to the canonical run, Linear
+issue, and expected role, and treats a nonzero verification command as a failed
+stage even if its reported status says `passed`.
+
 The gate and schema are exported as `@create-something/symphony/canonical-harness-gate`
 and `@create-something/symphony/canonical-harness-receipt-schema`. Existing
 workflow routing remains evidence-only until the canonical router adopts this
