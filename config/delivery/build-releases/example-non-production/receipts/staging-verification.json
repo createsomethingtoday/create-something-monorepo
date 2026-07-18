@@ -9,6 +9,8 @@
   "target": "example-non-production-fixture",
   "sourceSha": "1111111111111111111111111111111111111111",
   "deployId": "fixture-deploy-example-001",
+  "handoffReceiptSha256": "83d429c4e37ec2617204632234c5cfff544ad078bdfa150f1dc82cc4b159fd06",
+  "artifactSetSha256": "1465fce95a9920db5f146a6a144967b0d893c5d9c0b0ce36fa9777dbd7e2586c",
   "kind": "staging",
   "status": "passed",
   "command": "fixture verify --environment staging",

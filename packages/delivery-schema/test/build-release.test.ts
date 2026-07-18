@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 
 import {
 	BuildReleaseValidationError,
+	buildReleaseArtifactSetSha256,
 	inspectBuildReleasePackage,
 	parseBuildAcceptanceReceipt,
 	parseBuildVerificationReceipt,
@@ -80,6 +81,13 @@ function sha256(content: string): string {
 	return createHash('sha256').update(content).digest('hex');
 }
 
+function validArtifactSetSha256(): string {
+	return buildReleaseArtifactSetSha256(
+		(validManifest() as { artifacts: Parameters<typeof buildReleaseArtifactSetSha256>[0] })
+			.artifacts,
+	);
+}
+
 function writeRepresentativePackage(overrides?: {
 	handoffStatus?: 'prepared' | 'accepted' | 'cancelled';
 	accountId?: string;
@@ -117,28 +125,40 @@ function writeRepresentativePackage(overrides?: {
 	}
 	const receiptJson = `${JSON.stringify(receipt, null, 2)}\n`;
 	writeFileSync(join(root, 'receipts', 'map-handoff.json'), receiptJson);
-	const acceptanceReceipt = validAcceptanceReceipt() as Record<string, unknown>;
-	acceptanceReceipt.status = overrides?.acceptanceStatus ?? 'accepted';
-	const acceptanceJson = `${JSON.stringify(acceptanceReceipt, null, 2)}\n`;
-	writeFileSync(join(root, 'receipts', 'build-acceptance.json'), acceptanceJson);
-	const stagingReceipt = validVerificationReceipt('staging') as Record<string, unknown>;
-	stagingReceipt.status = overrides?.stagingStatus ?? 'passed';
-	const stagingJson = `${JSON.stringify(stagingReceipt, null, 2)}\n`;
-	writeFileSync(join(root, 'receipts', 'staging-verification.json'), stagingJson);
-	const uatJson = `${JSON.stringify(validVerificationReceipt('uat'), null, 2)}\n`;
-	writeFileSync(join(root, 'receipts', 'uat-verification.json'), uatJson);
 
 	const manifest = validManifest() as Record<string, any>;
 	manifest.handoff.receiptSha256 = sha256(receiptJson);
 	manifest.handoff.accountId = overrides?.accountId ?? 'account_example';
 	manifest.verification.staging.status = overrides?.stagingStatus ?? 'passed';
-	manifest.verification.staging.receiptSha256 = sha256(stagingJson);
-	manifest.verification.uat.receiptSha256 = sha256(uatJson);
 	manifest.acceptance.status = overrides?.acceptanceStatus ?? 'accepted';
-	manifest.acceptance.receiptSha256 = sha256(acceptanceJson);
 	for (const name of Object.keys(artifactContent) as Array<keyof typeof artifactContent>) {
 		manifest.artifacts[name].sha256 = sha256(artifactContent[name]);
 	}
+	const artifactSetSha256 = buildReleaseArtifactSetSha256(manifest.artifacts);
+
+	const stagingReceipt = validVerificationReceipt('staging') as Record<string, unknown>;
+	stagingReceipt.status = overrides?.stagingStatus ?? 'passed';
+	stagingReceipt.handoffReceiptSha256 = manifest.handoff.receiptSha256;
+	stagingReceipt.artifactSetSha256 = artifactSetSha256;
+	const stagingJson = `${JSON.stringify(stagingReceipt, null, 2)}\n`;
+	writeFileSync(join(root, 'receipts', 'staging-verification.json'), stagingJson);
+	const uatReceipt = validVerificationReceipt('uat') as Record<string, unknown>;
+	uatReceipt.handoffReceiptSha256 = manifest.handoff.receiptSha256;
+	uatReceipt.artifactSetSha256 = artifactSetSha256;
+	const uatJson = `${JSON.stringify(uatReceipt, null, 2)}\n`;
+	writeFileSync(join(root, 'receipts', 'uat-verification.json'), uatJson);
+
+	manifest.verification.staging.receiptSha256 = sha256(stagingJson);
+	manifest.verification.uat.receiptSha256 = sha256(uatJson);
+	const acceptanceReceipt = validAcceptanceReceipt() as Record<string, unknown>;
+	acceptanceReceipt.status = overrides?.acceptanceStatus ?? 'accepted';
+	acceptanceReceipt.handoffReceiptSha256 = manifest.handoff.receiptSha256;
+	acceptanceReceipt.artifactSetSha256 = artifactSetSha256;
+	acceptanceReceipt.stagingReceiptSha256 = manifest.verification.staging.receiptSha256;
+	acceptanceReceipt.uatReceiptSha256 = manifest.verification.uat.receiptSha256;
+	const acceptanceJson = `${JSON.stringify(acceptanceReceipt, null, 2)}\n`;
+	writeFileSync(join(root, 'receipts', 'build-acceptance.json'), acceptanceJson);
+	manifest.acceptance.receiptSha256 = sha256(acceptanceJson);
 	const manifestPath = join(root, 'build-release.json');
 	writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
 
@@ -157,6 +177,8 @@ function validVerificationReceipt(kind: 'staging' | 'uat'): unknown {
 		target: 'example-build-staging',
 		sourceSha: '1'.repeat(40),
 		deployId: 'deploy_example_001',
+		handoffReceiptSha256: 'f'.repeat(64),
+		artifactSetSha256: validArtifactSetSha256(),
 		kind,
 		status: 'passed',
 		command: `pnpm test:${kind}`,
@@ -177,6 +199,10 @@ function validAcceptanceReceipt(): unknown {
 		target: 'example-build-staging',
 		sourceSha: '1'.repeat(40),
 		deployId: 'deploy_example_001',
+		handoffReceiptSha256: 'f'.repeat(64),
+		artifactSetSha256: validArtifactSetSha256(),
+		stagingReceiptSha256: '2'.repeat(64),
+		uatReceiptSha256: '3'.repeat(64),
 		status: 'accepted',
 		decidedAt: '2026-07-18T12:30:00.000Z',
 		decidedBy: 'acceptor@example.test',
@@ -315,6 +341,53 @@ test('inspectBuildReleasePackage verifies the exact accepted handoff and artifac
 	assert.equal(changed.evidenceValid, false);
 	assert.equal(changed.releaseReady, false);
 	assert.ok(changed.issues.some((issue) => issue.code === 'artifact_hash_mismatch'));
+});
+
+test('inspectBuildReleasePackage rejects evidence replaced after verification or acceptance', () => {
+	const replacedArtifact = writeRepresentativePackage();
+	const replacementRunbook = '# Replaced after verification\n';
+	writeFileSync(join(replacedArtifact.root, 'artifacts', 'runbook.md'), replacementRunbook);
+	const artifactManifest = JSON.parse(
+		readFileSync(replacedArtifact.manifestPath, 'utf8'),
+	) as Record<string, any>;
+	artifactManifest.artifacts.runbook.sha256 = sha256(replacementRunbook);
+	writeFileSync(
+		replacedArtifact.manifestPath,
+		`${JSON.stringify(artifactManifest, null, 2)}\n`,
+	);
+	const replacedArtifactResult = inspectBuildReleasePackage(replacedArtifact.manifestPath);
+	assert.equal(replacedArtifactResult.evidenceValid, false);
+	assert.equal(replacedArtifactResult.releaseReady, false);
+	assert.ok(
+		replacedArtifactResult.issues.some((issue) => issue.code === 'verifier_identity_mismatch'),
+	);
+	assert.ok(
+		replacedArtifactResult.issues.some((issue) => issue.code === 'acceptance_identity_mismatch'),
+	);
+
+	const replacedVerifier = writeRepresentativePackage();
+	const uatReceiptPath = join(replacedVerifier.root, 'receipts', 'uat-verification.json');
+	const replacementUat = JSON.parse(readFileSync(uatReceiptPath, 'utf8')) as Record<
+		string,
+		unknown
+	>;
+	replacementUat.evidence = ['replacement evidence after acceptance'];
+	const replacementUatJson = `${JSON.stringify(replacementUat, null, 2)}\n`;
+	writeFileSync(uatReceiptPath, replacementUatJson);
+	const verifierManifest = JSON.parse(
+		readFileSync(replacedVerifier.manifestPath, 'utf8'),
+	) as Record<string, any>;
+	verifierManifest.verification.uat.receiptSha256 = sha256(replacementUatJson);
+	writeFileSync(
+		replacedVerifier.manifestPath,
+		`${JSON.stringify(verifierManifest, null, 2)}\n`,
+	);
+	const replacedVerifierResult = inspectBuildReleasePackage(replacedVerifier.manifestPath);
+	assert.equal(replacedVerifierResult.evidenceValid, false);
+	assert.equal(replacedVerifierResult.releaseReady, false);
+	assert.ok(
+		replacedVerifierResult.issues.some((issue) => issue.code === 'acceptance_identity_mismatch'),
+	);
 });
 
 test('inspectBuildReleasePackage fails closed on handoff and decision boundaries', () => {

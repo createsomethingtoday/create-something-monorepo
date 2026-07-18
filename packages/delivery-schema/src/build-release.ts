@@ -100,6 +100,10 @@ export interface BuildAcceptanceReceipt {
 	target: string;
 	sourceSha: string;
 	deployId: string;
+	handoffReceiptSha256: string;
+	artifactSetSha256: string;
+	stagingReceiptSha256: string;
+	uatReceiptSha256: string;
 	status: BuildReleaseAcceptanceStatus;
 	decidedAt: string;
 	decidedBy: string;
@@ -117,6 +121,8 @@ export interface BuildVerificationReceipt {
 	target: string;
 	sourceSha: string;
 	deployId: string;
+	handoffReceiptSha256: string;
+	artifactSetSha256: string;
 	kind: 'staging' | 'uat';
 	status: BuildReleaseVerifierStatus;
 	command: string;
@@ -601,6 +607,10 @@ export function parseBuildAcceptanceReceipt(input: unknown): BuildAcceptanceRece
 			'target',
 			'sourceSha',
 			'deployId',
+			'handoffReceiptSha256',
+			'artifactSetSha256',
+			'stagingReceiptSha256',
+			'uatReceiptSha256',
 			'status',
 			'decidedAt',
 			'decidedBy',
@@ -620,6 +630,30 @@ export function parseBuildAcceptanceReceipt(input: unknown): BuildAcceptanceRece
 		target: stringAt(root.target, '$.target', issues),
 		sourceSha: stringAt(root.sourceSha, '$.sourceSha', issues, /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/),
 		deployId: stringAt(root.deployId, '$.deployId', issues),
+		handoffReceiptSha256: stringAt(
+			root.handoffReceiptSha256,
+			'$.handoffReceiptSha256',
+			issues,
+			/^[a-f0-9]{64}$/,
+		),
+		artifactSetSha256: stringAt(
+			root.artifactSetSha256,
+			'$.artifactSetSha256',
+			issues,
+			/^[a-f0-9]{64}$/,
+		),
+		stagingReceiptSha256: stringAt(
+			root.stagingReceiptSha256,
+			'$.stagingReceiptSha256',
+			issues,
+			/^[a-f0-9]{64}$/,
+		),
+		uatReceiptSha256: stringAt(
+			root.uatReceiptSha256,
+			'$.uatReceiptSha256',
+			issues,
+			/^[a-f0-9]{64}$/,
+		),
 		status: literalAt(root.status, '$.status', ['accepted', 'rejected'], issues),
 		decidedAt: isoTimestampAt(root.decidedAt, '$.decidedAt', issues),
 		decidedBy: stringAt(root.decidedBy, '$.decidedBy', issues),
@@ -649,6 +683,8 @@ export function parseBuildVerificationReceipt(input: unknown): BuildVerification
 			'target',
 			'sourceSha',
 			'deployId',
+			'handoffReceiptSha256',
+			'artifactSetSha256',
 			'kind',
 			'status',
 			'command',
@@ -669,6 +705,18 @@ export function parseBuildVerificationReceipt(input: unknown): BuildVerification
 		target: stringAt(root.target, '$.target', issues),
 		sourceSha: stringAt(root.sourceSha, '$.sourceSha', issues, /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/),
 		deployId: stringAt(root.deployId, '$.deployId', issues),
+		handoffReceiptSha256: stringAt(
+			root.handoffReceiptSha256,
+			'$.handoffReceiptSha256',
+			issues,
+			/^[a-f0-9]{64}$/,
+		),
+		artifactSetSha256: stringAt(
+			root.artifactSetSha256,
+			'$.artifactSetSha256',
+			issues,
+			/^[a-f0-9]{64}$/,
+		),
 		kind: literalAt(root.kind, '$.kind', ['staging', 'uat'], issues),
 		status: literalAt(root.status, '$.status', ['passed', 'failed'], issues),
 		command: stringAt(root.command, '$.command', issues),
@@ -693,6 +741,16 @@ const CANONICAL_ARTIFACT_FILENAMES: Record<BuildReleaseArtifactName, string> = {
 
 function fileSha256(path: string): string {
 	return createHash('sha256').update(readFileSync(path)).digest('hex');
+}
+
+export function buildReleaseArtifactSetSha256(
+	artifacts: Record<BuildReleaseArtifactName, BuildReleaseArtifactReference>,
+): string {
+	const canonicalArtifactSet = BUILD_RELEASE_ARTIFACTS.map((name) => [
+		name,
+		artifacts[name].sha256,
+	]);
+	return createHash('sha256').update(JSON.stringify(canonicalArtifactSet)).digest('hex');
 }
 
 function resolvedPackagePath(
@@ -852,6 +910,7 @@ export function inspectBuildReleasePackage(manifestPath: string): BuildReleaseIn
 		}
 	}
 
+	const artifactSetSha256 = buildReleaseArtifactSetSha256(manifest.artifacts);
 	if (acceptanceReceipt !== null) {
 		const acceptanceIdentity = [
 			['receiptId', manifest.acceptance.receiptId, acceptanceReceipt.receiptId],
@@ -867,6 +926,22 @@ export function inspectBuildReleasePackage(manifestPath: string): BuildReleaseIn
 			['target', manifest.release.target, acceptanceReceipt.target],
 			['sourceSha', manifest.release.sourceSha, acceptanceReceipt.sourceSha],
 			['deployId', manifest.release.deployId, acceptanceReceipt.deployId],
+			[
+				'handoffReceiptSha256',
+				manifest.handoff.receiptSha256,
+				acceptanceReceipt.handoffReceiptSha256,
+			],
+			['artifactSetSha256', artifactSetSha256, acceptanceReceipt.artifactSetSha256],
+			[
+				'stagingReceiptSha256',
+				manifest.verification.staging.receiptSha256,
+				acceptanceReceipt.stagingReceiptSha256,
+			],
+			[
+				'uatReceiptSha256',
+				manifest.verification.uat.receiptSha256,
+				acceptanceReceipt.uatReceiptSha256,
+			],
 			['status', manifest.acceptance.status, acceptanceReceipt.status],
 		] as const;
 		for (const [field, manifestValue, receiptValue] of acceptanceIdentity) {
@@ -937,6 +1012,8 @@ export function inspectBuildReleasePackage(manifestPath: string): BuildReleaseIn
 			['target', manifest.release.target, receipt.target],
 			['sourceSha', manifest.release.sourceSha, receipt.sourceSha],
 			['deployId', manifest.release.deployId, receipt.deployId],
+			['handoffReceiptSha256', manifest.handoff.receiptSha256, receipt.handoffReceiptSha256],
+			['artifactSetSha256', artifactSetSha256, receipt.artifactSetSha256],
 			['kind', kind, receipt.kind],
 			['status', reference.status, receipt.status],
 		] as const;

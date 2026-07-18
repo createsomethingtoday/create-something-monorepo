@@ -18,6 +18,7 @@ import {
 - Staging and UAT readiness comes from separately referenced SHA-256-bound verifier receipts; arbitrary inline evidence cannot assert a passing result.
 - The manifest may summarize the acceptance decision, but readiness comes from the referenced SHA-256-bound receipt. Editing the manifest decision alone fails closed.
 - Every staging, UAT, and acceptance receipt binds the exact release environment, target, source SHA, and deploy ID; changing the deployed revision after verification fails closed.
+- Verifier receipts also bind the accepted Map handoff hash and canonical five-artifact hash set. Terminal acceptance additionally binds both verifier receipt hashes, so replacing handoff, artifacts, or gate evidence requires a new acceptance decision.
 
 `evidenceValid` means identities, schema, paths, and hashes are coherent. `releaseReady` additionally requires an accepted Map handoff, passed staging and UAT results, and an accepted terminal Build decision. Neither value performs a deployment or grants production approval.
 
