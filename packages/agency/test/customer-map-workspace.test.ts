@@ -171,9 +171,21 @@ function createMemoryRepository(): CustomerMapRepository {
 					}
 				: null;
 		},
-		async archiveMap(scope, mapId, deletedAt, retentionExpiresAt) {
+		async archiveMap(scope, mapId, deletedAt, retentionExpiresAt, preparedHandoffResolution) {
 			const map = maps.get(mapId);
 			if (!map || !belongsTo(scope, map)) return false;
+			for (let index = 0; index < handoffs.length; index += 1) {
+				const handoff = handoffs[index];
+				if (handoff.mapId !== mapId || handoff.accountId !== scope.accountId || handoff.status !== 'prepared') continue;
+				handoffs[index] = {
+					...handoff,
+					status: 'cancelled',
+					acceptedAt: null,
+					resolvedAt: preparedHandoffResolution.resolvedAt,
+					resolvedBy: preparedHandoffResolution.resolvedBy,
+					resolutionNote: preparedHandoffResolution.resolutionNote
+				};
+			}
 			maps.set(mapId, { ...map, deletedAt, retentionExpiresAt });
 			return true;
 		},
@@ -431,6 +443,15 @@ test('an Agency operator accepts a prepared handoff and the customer reads back 
 		() => operator.acceptBuildHandoff('identity|operator', payload.handoffId, { note: 'Scope intake verified' }),
 		CustomerMapAccessError
 	);
+	await workspace.archive(accountA, second.map.id);
+	assert.equal(await operator.countPrepared(), 0);
+	await workspace.recover(accountA, second.map.id);
+	const archivedReceipt = await workspace.getBuildHandoff(accountA, second.map.id, secondPayload.handoffId);
+	assert.equal(archivedReceipt.status, 'cancelled');
+	assert.equal(archivedReceipt.acceptedAt, null);
+	assert.equal(archivedReceipt.resolvedAt, '2026-07-17T00:00:00.000Z');
+	assert.equal(archivedReceipt.resolvedBy, accountA.authSubject);
+	assert.equal(archivedReceipt.resolutionNote, 'Cancelled automatically when the owning Map was archived');
 });
 
 test('D1 repository binds every placeholder and keeps resource queries tenant-scoped', async () => {
@@ -486,7 +507,12 @@ test('D1 repository binds every placeholder and keeps resource queries tenant-sc
 	await repository.listPreparedHandoffsForOperator({ limit: 20, offset: 0 });
 	await repository.countPreparedHandoffsForOperator();
 	await repository.findHandoffScopeForOperator(handoff.id);
-	await repository.archiveMap(accountA, map.id, map.createdAt, '2026-08-16T00:00:00.000Z');
+	await repository.archiveMap(accountA, map.id, map.createdAt, '2026-08-16T00:00:00.000Z', {
+		status: 'cancelled',
+		resolvedAt: map.createdAt,
+		resolvedBy: accountA.authSubject,
+		resolutionNote: 'Cancelled automatically when the owning Map was archived'
+	});
 	await repository.recoverMap(accountA, map.id, '2026-07-18T00:00:00.000Z');
 
 	for (const statement of sql.filter(
@@ -501,6 +527,13 @@ test('D1 repository binds every placeholder and keeps resource queries tenant-sc
 	const resolutionSql = sql.find((statement) => /UPDATE customer_map_handoffs/.test(statement));
 	assert.match(resolutionSql ?? '', /m\.tenant_id/);
 	assert.match(resolutionSql ?? '', /m\.workspace_account_id/);
+	const archiveResolutionSql = sql.find(
+		(statement) => /UPDATE customer_map_handoffs/.test(statement) && /accepted_at = NULL/.test(statement)
+	);
+	assert.match(archiveResolutionSql ?? '', /status = 'prepared'/);
+	assert.match(archiveResolutionSql ?? '', /m\.deleted_at IS NULL/);
+	assert.match(archiveResolutionSql ?? '', /m\.tenant_id/);
+	assert.match(archiveResolutionSql ?? '', /m\.workspace_account_id/);
 	const operatorCountSql = sql.find((statement) => /SELECT COUNT\(\*\) AS count/.test(statement));
 	assert.match(operatorCountSql ?? '', /INNER JOIN customer_maps/);
 	assert.match(operatorCountSql ?? '', /m\.deleted_at IS NULL/);

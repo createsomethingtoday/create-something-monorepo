@@ -176,7 +176,13 @@ export interface CustomerMapRepository {
 	listPreparedHandoffsForOperator(options: CustomerMapHandoffListOptions): Promise<CustomerMapHandoffOperatorSummary[]>;
 	countPreparedHandoffsForOperator(): Promise<number>;
 	findHandoffScopeForOperator(handoffId: string): Promise<CustomerMapHandoffOperatorContext | null>;
-	archiveMap(scope: CustomerMapScope, mapId: string, deletedAt: string, retentionExpiresAt: string): Promise<boolean>;
+	archiveMap(
+		scope: CustomerMapScope,
+		mapId: string,
+		deletedAt: string,
+		retentionExpiresAt: string,
+		preparedHandoffResolution: CustomerMapHandoffResolution
+	): Promise<boolean>;
 	recoverMap(scope: CustomerMapScope, mapId: string, at: string): Promise<boolean>;
 }
 
@@ -560,7 +566,12 @@ export function createCustomerMapWorkspace(options: CustomerMapWorkspaceOptions)
 			const retentionExpiresAt = new Date(
 				Date.parse(deletedAt) + CUSTOMER_MAP_POLICY.archiveRecoveryDays * 24 * 60 * 60 * 1000
 			).toISOString();
-			if (!(await options.repository.archiveMap(scope, mapId, deletedAt, retentionExpiresAt))) {
+			if (!(await options.repository.archiveMap(scope, mapId, deletedAt, retentionExpiresAt, {
+				status: 'cancelled',
+				resolvedAt: deletedAt,
+				resolvedBy: scope.authSubject,
+				resolutionNote: 'Cancelled automatically when the owning Map was archived'
+			}))) {
 				throw new CustomerMapConflictError();
 			}
 			return { mapId, deletedAt, retentionExpiresAt };
@@ -1176,8 +1187,29 @@ export function createD1CustomerMapRepository(db: D1Database): CustomerMapReposi
 				: null;
 		},
 
-		async archiveMap(scope, mapId, deletedAt, retentionExpiresAt) {
+		async archiveMap(scope, mapId, deletedAt, retentionExpiresAt, preparedHandoffResolution) {
 			const result = await db.batch([
+				db
+					.prepare(
+						`UPDATE customer_map_handoffs
+						 SET status = ?, resolved_at = ?, resolved_by = ?, resolution_note = ?, accepted_at = NULL
+						 WHERE map_id = ? AND account_id = ? AND status = 'prepared'
+						   AND EXISTS (
+						     SELECT 1 FROM customer_maps m
+						     WHERE m.id = customer_map_handoffs.map_id
+						       AND m.account_id = ? AND m.tenant_id = ? AND m.workspace_account_id = ?
+						       AND m.deleted_at IS NULL
+						   )`
+					)
+					.bind(
+						preparedHandoffResolution.status,
+						preparedHandoffResolution.resolvedAt,
+						preparedHandoffResolution.resolvedBy,
+						preparedHandoffResolution.resolutionNote,
+						mapId,
+						scope.accountId,
+						...scopeBindings(scope)
+					),
 				db
 					.prepare(
 						`UPDATE customer_maps SET deleted_at = ?, retention_expires_at = ?, updated_at = ?
@@ -1191,7 +1223,7 @@ export function createD1CustomerMapRepository(db: D1Database): CustomerMapReposi
 					)
 					.bind(deletedAt, mapId, scope.accountId)
 			]);
-			return Number(result[0]?.meta?.changes ?? 0) === 1;
+			return Number(result[1]?.meta?.changes ?? 0) === 1;
 		},
 
 		async recoverMap(scope, mapId, at) {
