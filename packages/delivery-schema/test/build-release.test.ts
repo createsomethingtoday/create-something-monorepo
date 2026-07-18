@@ -373,6 +373,32 @@ test('inspectBuildReleasePackage fails closed on handoff and decision boundaries
 		unverifiedRevision.issues.some((issue) => issue.code === 'acceptance_identity_mismatch'),
 	);
 
+	const prematureAcceptance = writeRepresentativePackage();
+	const prematureReceiptPath = join(
+		prematureAcceptance.root,
+		'receipts',
+		'build-acceptance.json',
+	);
+	const prematureReceipt = JSON.parse(readFileSync(prematureReceiptPath, 'utf8')) as Record<
+		string,
+		unknown
+	>;
+	prematureReceipt.decidedAt = '2026-07-18T12:15:00.000Z';
+	const prematureReceiptJson = `${JSON.stringify(prematureReceipt, null, 2)}\n`;
+	writeFileSync(prematureReceiptPath, prematureReceiptJson);
+	const prematureManifest = JSON.parse(
+		readFileSync(prematureAcceptance.manifestPath, 'utf8'),
+	) as Record<string, any>;
+	prematureManifest.acceptance.receiptSha256 = sha256(prematureReceiptJson);
+	writeFileSync(
+		prematureAcceptance.manifestPath,
+		`${JSON.stringify(prematureManifest, null, 2)}\n`,
+	);
+	const premature = inspectBuildReleasePackage(prematureAcceptance.manifestPath);
+	assert.equal(premature.evidenceValid, false);
+	assert.equal(premature.releaseReady, false);
+	assert.ok(premature.issues.some((issue) => issue.code === 'acceptance_sequence_invalid'));
+
 	const rejected = inspectBuildReleasePackage(
 		writeRepresentativePackage({ acceptanceStatus: 'rejected' }).manifestPath,
 	);

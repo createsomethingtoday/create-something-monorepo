@@ -139,6 +139,7 @@ export type BuildReleaseInspectionIssueCode =
 	| 'acceptance_hash_mismatch'
 	| 'acceptance_invalid'
 	| 'acceptance_identity_mismatch'
+	| 'acceptance_sequence_invalid'
 	| 'verifier_missing'
 	| 'verifier_hash_mismatch'
 	| 'verifier_invalid'
@@ -935,6 +936,23 @@ export function inspectBuildReleasePackage(manifestPath: string): BuildReleaseIn
 					category: 'integrity',
 					path: `$.verification.${kind}.${field}`,
 					message: `Manifest ${field} does not match the ${kind} verification receipt.`,
+				});
+			}
+		}
+	}
+
+	if (acceptanceReceipt !== null) {
+		for (const kind of ['staging', 'uat'] as const) {
+			const verifierReceipt = verificationReceipts[kind];
+			if (
+				verifierReceipt !== null &&
+				Date.parse(acceptanceReceipt.decidedAt) < Date.parse(verifierReceipt.completedAt)
+			) {
+				issues.push({
+					code: 'acceptance_sequence_invalid',
+					category: 'integrity',
+					path: '$.acceptance.receiptPath',
+					message: `Build acceptance predates the completed ${kind} verification receipt.`,
 				});
 			}
 		}
