@@ -125,8 +125,7 @@ function reviewed_evidence_ok(value) {
     && value.before.length > 0
     && value.before === value?.after
     && value?.unchanged === true
-    && Array.isArray(value?.findings)
-    && !value.findings.some((finding) => finding?.status === 'actionable');
+    && Array.isArray(value?.findings);
 }
 
 function lane_blockers(candidate) {
@@ -150,13 +149,25 @@ function lane_blockers(candidate) {
     blockers.push(`${level} requires a passed worker receipt`);
   }
   if (['A0', 'A1', 'A2', 'A3'].includes(level) && passed_stage(candidate.stages?.worker)) {
+    const worker_paths = Array.isArray(candidate.stages.worker.changed_paths)
+      ? candidate.stages.worker.changed_paths
+      : [];
+    const integrator_paths = Array.isArray(candidate.stages?.integrator?.changed_paths)
+      ? candidate.stages.integrator.changed_paths
+      : [];
     const execution_paths = [
-      ...(candidate.stages.worker.changed_paths ?? []),
-      ...(['A2', 'A3'].includes(level) ? (candidate.stages?.integrator?.changed_paths ?? []) : []),
+      ...worker_paths,
+      ...(['A2', 'A3'].includes(level) ? integrator_paths : []),
     ];
     if (!same_paths(execution_paths, candidate.source?.changed_paths)) {
       blockers.push('execution changed paths must match source changed paths');
     }
+  }
+  if (
+    Array.isArray(candidate.review?.findings)
+    && candidate.review.findings.some((finding) => finding?.status === 'actionable')
+  ) {
+    blockers.push('actionable review findings must be resolved before done');
   }
   if (['A2', 'A3'].includes(level)) {
     if (!passed_stage(candidate.stages?.reviewer) || !passed_stage(candidate.stages?.integrator)) {

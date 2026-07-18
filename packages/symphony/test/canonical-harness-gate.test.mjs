@@ -151,8 +151,8 @@ test('canonical gate rejects unknown receipt fields', () => {
   assert.equal(decision.schema_validation.ok, false);
 });
 
-test('canonical gate persists malformed review findings as an ineligible receipt', async (t) => {
-  const root = await mkdtemp(join(tmpdir(), 'canonical-gate-malformed-review-'));
+test('canonical gate persists malformed nested collections as ineligible receipts', async (t) => {
+  const root = await mkdtemp(join(tmpdir(), 'canonical-gate-malformed-collections-'));
   t.after(async () => rm(root, { recursive: true, force: true }));
   let completion_calls = 0;
   const gate = new CanonicalHarnessGate({
@@ -163,20 +163,44 @@ test('canonical gate persists malformed review findings as an ineligible receipt
     },
     output_root: join(root, 'runs'),
   });
-  const candidate = valid_reviewed_candidate();
-  candidate.review.findings = 'not-an-array';
+  const malformed_findings = valid_reviewed_candidate();
+  malformed_findings.run_id = 'CRE-1304-malformed-findings';
+  malformed_findings.review.findings = 'not-an-array';
+  const malformed_paths = valid_a1_candidate();
+  malformed_paths.run_id = 'CRE-1304-malformed-paths';
+  malformed_paths.stages.worker.changed_paths = 42;
 
-  const result = await gate.complete(
-    { id: 'linear-id', identifier: 'CRE-1304' },
-    candidate,
-  );
+  for (const [candidate, expected_blocker] of [
+    [malformed_findings, 'schema /review/findings must be array'],
+    [malformed_paths, 'schema /stages/worker/changed_paths must be array'],
+  ]) {
+    const result = await gate.complete(
+      { id: 'linear-id', identifier: 'CRE-1304' },
+      candidate,
+    );
 
-  assert.equal(result.completed, false);
-  assert.equal(result.receipt.eligible_for_done, false);
-  assert.equal(result.receipt.schema_validation.ok, false);
-  assert.ok(result.receipt.blockers.includes('schema /review/findings must be array'));
+    assert.equal(result.completed, false);
+    assert.equal(result.receipt.eligible_for_done, false);
+    assert.equal(result.receipt.schema_validation.ok, false);
+    assert.ok(result.receipt.blockers.includes(expected_blocker));
+    assert.deepEqual(JSON.parse(await readFile(result.receipt_path, 'utf8')), result.receipt);
+  }
   assert.equal(completion_calls, 0);
-  assert.deepEqual(JSON.parse(await readFile(result.receipt_path, 'utf8')), result.receipt);
+});
+
+test('canonical gate blocks actionable findings in every autonomy lane', () => {
+  const candidate = valid_a1_candidate();
+  candidate.review.findings.push({
+    id: 'finding-a1',
+    status: 'actionable',
+    disposition: 'The unresolved defect must block done.',
+  });
+
+  const decision = evaluate_canonical_harness_receipt(candidate);
+
+  assert.equal(decision.schema_validation.ok, true, JSON.stringify(decision.blockers));
+  assert.equal(decision.eligible_for_done, false);
+  assert.ok(decision.blockers.includes('actionable review findings must be resolved before done'));
 });
 
 test('canonical gate requires every declared acceptance criterion to pass', () => {
@@ -532,6 +556,12 @@ test('canonical gate never mutates Linear for validation failures', async (t) =>
     },
   });
   const missing_a3 = valid_reviewed_candidate('A3');
+  const actionable_a1 = valid_a1_candidate();
+  actionable_a1.review.findings.push({
+    id: 'finding-a1',
+    status: 'actionable',
+    disposition: 'The unresolved defect must block done.',
+  });
   const a4 = valid_a1_candidate({
     routing: {
       autonomy_level: 'A4',
@@ -549,6 +579,7 @@ test('canonical gate never mutates Linear for validation failures', async (t) =>
     no_op_without_verifier,
     missing_review,
     missing_a3,
+    actionable_a1,
     a4,
   ].entries()) {
     candidate.run_id = `CRE-1304-invalid-${index}`;
