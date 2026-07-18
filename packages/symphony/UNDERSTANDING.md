@@ -24,7 +24,7 @@ Symphony turns Linear issues and workflow definitions into running Codex worker 
 |----------|----------------------------|
 | Code-quality lanes | How ready Linear issues become Codex worker sessions |
 | Policy lanes | How workflow definitions constrain automation |
-| Operators | Which workers are running, retrying, or cleaned up |
+| Operators | Which workers are running, retrying, awaiting independent completion, or cleaned up |
 | Agent infrastructure | How orchestration differs from a single local Codex turn |
 
 ## Internal Structure

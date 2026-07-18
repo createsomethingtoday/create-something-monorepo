@@ -110,6 +110,121 @@ test('WorkspaceManager removes workspace metadata with the workspace', async (t)
   await assert.rejects(() => readFile(workspace.metadata_path, 'utf8'), /ENOENT/);
 });
 
+test('WorkspaceManager persists completion handoffs outside the worker git diff', async (t) => {
+  const tempRoot = await mkdtemp(join(tmpdir(), 'symphony-workspace-'));
+  t.after(async () => {
+    await rm(tempRoot, { recursive: true, force: true });
+  });
+
+  const root = join(tempRoot, 'workspaces');
+  const logger = createLogger();
+  const manager = new WorkspaceManager(createConfig(root, join(tempRoot, 'hook.log')), logger);
+  const workspace = await manager.ensure_workspace('CRE-RESTART');
+  const completionPath = manager.get_workspace_paths('CRE-RESTART').completion_path;
+  await writeFile(completionPath, '{"schema_version":"wrong"}\n', 'utf8');
+  await assert.rejects(() => manager.read_completion_handoff('CRE-RESTART'), /invalid_completion_handoff|does not match/);
+  const handoff = await manager.write_completion_handoff('CRE-RESTART', {
+    issue_id: 'issue-restart',
+    issue_identifier: 'CRE-RESTART',
+    workspace_path: workspace.path,
+    workspace_metadata_path: workspace.metadata_path,
+    evidence_recorded: true,
+    comment_attempts: 1,
+    last_error: null,
+  });
+
+  assert.equal(handoff.schema_version, 'symphony-evidence-handoff-marker.v1');
+  assert.equal(handoff.issue_id, 'issue-restart');
+  assert.equal(await manager.read_completion_handoff('CRE-RESTART').then((entry) => entry.issue_id), 'issue-restart');
+  assert.equal(workspace.path.startsWith(join(root, '.metadata')), false);
+  assert.equal(completionPath.startsWith(join(root, '.metadata')), true);
+
+  await manager.remove_workspace('CRE-RESTART');
+
+  assert.equal(await manager.read_completion_handoff('CRE-RESTART'), null);
+});
+
+test('WorkspaceManager publishes completion handoffs through an atomic rename', async (t) => {
+  const tempRoot = await mkdtemp(join(tmpdir(), 'symphony-workspace-'));
+  t.after(async () => {
+    await rm(tempRoot, { recursive: true, force: true });
+  });
+
+  const root = join(tempRoot, 'workspaces');
+  const calls = [];
+  const fileOperations = {
+    async writeFile(path, contents, encoding) {
+      calls.push({ operation: 'write', path, contents, encoding });
+    },
+    async rename(from, to) {
+      calls.push({ operation: 'rename', from, to });
+    },
+    async rm(path, options) {
+      calls.push({ operation: 'cleanup', path, options });
+    },
+  };
+  const manager = new WorkspaceManager(
+    createConfig(root, join(tempRoot, 'hook.log')),
+    createLogger(),
+    fileOperations,
+  );
+  const completionPath = manager.get_workspace_paths('CRE-ATOMIC').completion_path;
+
+  await manager.write_completion_handoff('CRE-ATOMIC', {
+    issue_id: 'issue-atomic',
+    evidence_recorded: false,
+    comment_attempts: 0,
+    last_error: null,
+  });
+
+  assert.equal(calls[0].operation, 'write');
+  assert.notEqual(calls[0].path, completionPath);
+  assert.match(calls[0].path, /\.completion\.json\..+\.tmp$/);
+  assert.deepEqual(calls[1], {
+    operation: 'rename',
+    from: calls[0].path,
+    to: completionPath,
+  });
+  assert.deepEqual(calls[2], {
+    operation: 'cleanup',
+    path: calls[0].path,
+    options: { force: true },
+  });
+});
+
+test('WorkspaceManager removes completion handoffs when before_remove deletes the workspace', async (t) => {
+  const tempRoot = await mkdtemp(join(tmpdir(), 'symphony-workspace-'));
+  t.after(async () => {
+    await rm(tempRoot, { recursive: true, force: true });
+  });
+
+  const root = join(tempRoot, 'workspaces');
+  const logger = createLogger();
+  const baseConfig = createConfig(root, join(tempRoot, 'hook.log'));
+  const manager = new WorkspaceManager(
+    {
+      ...baseConfig,
+      hooks: {
+        ...baseConfig.hooks,
+        before_remove: 'rm -rf "$PWD"',
+      },
+    },
+    logger,
+  );
+  const workspace = await manager.ensure_workspace('CRE-HOOK-REMOVE');
+  await manager.write_completion_handoff('CRE-HOOK-REMOVE', {
+    issue_id: 'issue-hook-remove',
+    evidence_recorded: true,
+    comment_attempts: 1,
+    last_error: null,
+  });
+
+  await manager.remove_workspace('CRE-HOOK-REMOVE');
+
+  await assert.rejects(() => readFile(workspace.path, 'utf8'), /ENOENT/);
+  assert.equal(await manager.read_completion_handoff('CRE-HOOK-REMOVE'), null);
+});
+
 test('WorkspaceManager unregisters clean linked git worktrees before removing them', async (t) => {
   const tempRoot = await mkdtemp(join(tmpdir(), 'symphony-workspace-'));
   t.after(async () => {

@@ -66,6 +66,8 @@ function select_state_id(states, preferred_names, fallback_type) {
         if (matched?.id)
             return matched.id;
     }
+    if (!fallback_type)
+        return null;
     const fallback = states.find((state) => state.type === fallback_type);
     return fallback?.id ?? null;
 }
@@ -106,6 +108,14 @@ export class LinearTrackerClient {
     }
     async fetch_candidate_issues() {
         const issues = await this.fetch_issues_by_states(this.config.tracker.active_states);
+        return issues.filter((issue) => has_required_labels(issue, this.config));
+    }
+    async fetch_handoff_issues() {
+        const handoff_state = this.config.completion?.handoff_state;
+        if (!handoff_state) {
+            return [];
+        }
+        const issues = await this.fetch_issues_by_states([handoff_state]);
         return issues.filter((issue) => has_required_labels(issue, this.config));
     }
     async fetch_issue_by_identifier(identifier) {
@@ -223,6 +233,15 @@ export class LinearTrackerClient {
             await this.comment_issue(issue.id, `Evidence:\n\n${message}`);
         }
         return completed;
+    }
+    async handoff_issue(issue) {
+        const bootstrap = await this.bootstrap();
+        const handoff_state = this.config.completion?.handoff_state ?? 'In Review';
+        const state_id = select_state_id(bootstrap.workflow_states, [handoff_state], null);
+        if (!state_id) {
+            throw new SymphonyError('linear_missing_handoff_state', `No Linear workflow state matched completion.handoff_state: ${handoff_state}`);
+        }
+        return this.update_issue(issue.id, { stateId: state_id });
     }
     async release_issue(issue, reason) {
         const bootstrap = await this.bootstrap();
