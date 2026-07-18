@@ -941,7 +941,7 @@ export function inspectBuildReleasePackage(manifestPath: string): BuildReleaseIn
 		}
 	}
 
-	if (acceptanceReceipt !== null) {
+	if (acceptanceReceipt?.status === 'accepted') {
 		for (const kind of ['staging', 'uat'] as const) {
 			const verifierReceipt = verificationReceipts[kind];
 			if (

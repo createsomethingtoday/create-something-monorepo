@@ -406,6 +406,34 @@ test('inspectBuildReleasePackage fails closed on handoff and decision boundaries
 	assert.equal(rejected.releaseReady, false);
 	assert.ok(rejected.issues.some((issue) => issue.code === 'release_rejected'));
 
+	const earlyRejected = writeRepresentativePackage({ acceptanceStatus: 'rejected' });
+	const earlyRejectedReceiptPath = join(
+		earlyRejected.root,
+		'receipts',
+		'build-acceptance.json',
+	);
+	const earlyRejectedReceipt = JSON.parse(
+		readFileSync(earlyRejectedReceiptPath, 'utf8'),
+	) as Record<string, unknown>;
+	earlyRejectedReceipt.decidedAt = '2026-07-18T12:00:00.000Z';
+	const earlyRejectedJson = `${JSON.stringify(earlyRejectedReceipt, null, 2)}\n`;
+	writeFileSync(earlyRejectedReceiptPath, earlyRejectedJson);
+	const earlyRejectedManifest = JSON.parse(
+		readFileSync(earlyRejected.manifestPath, 'utf8'),
+	) as Record<string, any>;
+	earlyRejectedManifest.acceptance.receiptSha256 = sha256(earlyRejectedJson);
+	writeFileSync(
+		earlyRejected.manifestPath,
+		`${JSON.stringify(earlyRejectedManifest, null, 2)}\n`,
+	);
+	const validEarlyRejection = inspectBuildReleasePackage(earlyRejected.manifestPath);
+	assert.equal(validEarlyRejection.evidenceValid, true);
+	assert.equal(validEarlyRejection.releaseReady, false);
+	assert.ok(validEarlyRejection.issues.some((issue) => issue.code === 'release_rejected'));
+	assert.ok(
+		!validEarlyRejection.issues.some((issue) => issue.code === 'acceptance_sequence_invalid'),
+	);
+
 	const selfAsserted = writeRepresentativePackage({ acceptanceStatus: 'rejected' });
 	const manifest = JSON.parse(readFileSync(selfAsserted.manifestPath, 'utf8')) as Record<
 		string,
