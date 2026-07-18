@@ -223,6 +223,13 @@ test('parseMapBuildHandoffReceipt preserves terminal and nonterminal source stat
 	const unknown = validHandoffReceipt() as Record<string, unknown>;
 	unknown.tenantAlias = 'wrong-account-shortcut';
 	assert.throws(() => parseMapBuildHandoffReceipt(unknown), BuildReleaseValidationError);
+
+	const resolvedBeforeCreation = validHandoffReceipt() as Record<string, unknown>;
+	resolvedBeforeCreation.resolvedAt = '2026-07-18T10:59:59.000Z';
+	assert.throws(
+		() => parseMapBuildHandoffReceipt(resolvedBeforeCreation),
+		BuildReleaseValidationError,
+	);
 });
 
 test('parseBuildAcceptanceReceipt requires a strict terminal receipt', () => {
@@ -398,6 +405,50 @@ test('inspectBuildReleasePackage fails closed on handoff and decision boundaries
 	assert.equal(premature.evidenceValid, false);
 	assert.equal(premature.releaseReady, false);
 	assert.ok(premature.issues.some((issue) => issue.code === 'acceptance_sequence_invalid'));
+
+	const retroactiveHandoff = writeRepresentativePackage();
+	const retroactiveHandoffPath = join(
+		retroactiveHandoff.root,
+		'receipts',
+		'map-handoff.json',
+	);
+	const retroactiveReceipt = JSON.parse(
+		readFileSync(retroactiveHandoffPath, 'utf8'),
+	) as Record<string, unknown>;
+	retroactiveReceipt.resolvedAt = '2026-07-18T12:25:00.000Z';
+	const retroactiveReceiptJson = `${JSON.stringify(retroactiveReceipt, null, 2)}\n`;
+	writeFileSync(retroactiveHandoffPath, retroactiveReceiptJson);
+	const retroactiveManifest = JSON.parse(
+		readFileSync(retroactiveHandoff.manifestPath, 'utf8'),
+	) as Record<string, any>;
+	retroactiveManifest.handoff.receiptSha256 = sha256(retroactiveReceiptJson);
+	writeFileSync(
+		retroactiveHandoff.manifestPath,
+		`${JSON.stringify(retroactiveManifest, null, 2)}\n`,
+	);
+	const retroactive = inspectBuildReleasePackage(retroactiveHandoff.manifestPath);
+	assert.equal(retroactive.evidenceValid, false);
+	assert.equal(retroactive.releaseReady, false);
+	assert.ok(retroactive.issues.some((issue) => issue.code === 'verifier_sequence_invalid'));
+
+	const reversedGates = writeRepresentativePackage();
+	const reversedUatPath = join(reversedGates.root, 'receipts', 'uat-verification.json');
+	const reversedUat = JSON.parse(readFileSync(reversedUatPath, 'utf8')) as Record<
+		string,
+		unknown
+	>;
+	reversedUat.completedAt = '2026-07-18T12:05:00.000Z';
+	const reversedUatJson = `${JSON.stringify(reversedUat, null, 2)}\n`;
+	writeFileSync(reversedUatPath, reversedUatJson);
+	const reversedManifest = JSON.parse(
+		readFileSync(reversedGates.manifestPath, 'utf8'),
+	) as Record<string, any>;
+	reversedManifest.verification.uat.receiptSha256 = sha256(reversedUatJson);
+	writeFileSync(reversedGates.manifestPath, `${JSON.stringify(reversedManifest, null, 2)}\n`);
+	const reversed = inspectBuildReleasePackage(reversedGates.manifestPath);
+	assert.equal(reversed.evidenceValid, false);
+	assert.equal(reversed.releaseReady, false);
+	assert.ok(reversed.issues.some((issue) => issue.code === 'verifier_sequence_invalid'));
 
 	const rejected = inspectBuildReleasePackage(
 		writeRepresentativePackage({ acceptanceStatus: 'rejected' }).manifestPath,

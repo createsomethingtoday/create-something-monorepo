@@ -144,6 +144,7 @@ export type BuildReleaseInspectionIssueCode =
 	| 'verifier_hash_mismatch'
 	| 'verifier_invalid'
 	| 'verifier_identity_mismatch'
+	| 'verifier_sequence_invalid'
 	| 'verifier_failed'
 	| 'release_rejected';
 
@@ -566,6 +567,16 @@ export function parseMapBuildHandoffReceipt(input: unknown): MapBuildHandoffRece
 			message: 'A terminal handoff requires resolvedAt and resolvedBy.',
 		});
 	}
+	if (
+		receipt.resolvedAt !== null &&
+		Date.parse(receipt.resolvedAt) < Date.parse(receipt.createdAt)
+	) {
+		issues.push({
+			code: 'invalid_value',
+			path: '$.resolvedAt',
+			message: 'Handoff resolution cannot predate handoff creation.',
+		});
+	}
 
 	if (issues.length > 0) {
 		throw new BuildReleaseValidationError(issues);
@@ -939,6 +950,37 @@ export function inspectBuildReleasePackage(manifestPath: string): BuildReleaseIn
 				});
 			}
 		}
+	}
+
+	if (handoffReceipt?.status === 'accepted' && handoffReceipt.resolvedAt !== null) {
+		for (const kind of ['staging', 'uat'] as const) {
+			const verifierReceipt = verificationReceipts[kind];
+			if (
+				verifierReceipt !== null &&
+				Date.parse(verifierReceipt.completedAt) < Date.parse(handoffReceipt.resolvedAt)
+			) {
+				issues.push({
+					code: 'verifier_sequence_invalid',
+					category: 'integrity',
+					path: `$.verification.${kind}.receiptPath`,
+					message: `${kind} verification predates the accepted Map handoff.`,
+				});
+			}
+		}
+	}
+	const stagingReceipt = verificationReceipts.staging;
+	const uatReceipt = verificationReceipts.uat;
+	if (
+		stagingReceipt !== null &&
+		uatReceipt !== null &&
+		Date.parse(uatReceipt.completedAt) < Date.parse(stagingReceipt.completedAt)
+	) {
+		issues.push({
+			code: 'verifier_sequence_invalid',
+			category: 'integrity',
+			path: '$.verification.uat.receiptPath',
+			message: 'UAT verification cannot predate staging verification.',
+		});
 	}
 
 	if (acceptanceReceipt?.status === 'accepted') {
