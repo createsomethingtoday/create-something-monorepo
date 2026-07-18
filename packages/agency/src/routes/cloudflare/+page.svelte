@@ -3,10 +3,12 @@
     Button,
     PerformanceCardGrid,
     PerformanceConversionHandoff,
+    PerformanceNarrativeStage,
     PerformancePageSection,
     SEO,
     type PerformanceCardItem,
-    type PerformanceCtaItem
+    type PerformanceCtaItem,
+    type PerformanceNarrativeScene
   } from '@create-something/canon';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
@@ -129,7 +131,8 @@
       eyebrow: 'Owned operating layer',
       icon: 'document',
       title: 'Substrate',
-      detail: 'Source records, operator review, decisions, and receipts remain in the owned system.',
+      detail:
+        'Source records, operator review, decisions, and receipts remain in the owned system.',
       href: '/products'
     },
     {
@@ -139,6 +142,43 @@
       detail:
         'Ownership boundaries across Substrate, OpenAI, Cloudflare, client tools, account data, billing, tokens, and public proof.',
       href: '/stack'
+    }
+  ];
+
+  const cloudflareScenes: PerformanceNarrativeScene[] = [
+    {
+      id: 'proof',
+      label: 'Proof',
+      summary: 'Routes, tools, evidence',
+      title: 'The runtime earns its place through an owned delivery path.',
+      detail:
+        'Cloudflare carries deployable workflow infrastructure while account boundaries, control checks, durable state, and client-safe evidence remain explicit.',
+      tone: 'allow',
+      receipts: ['Workers + Pages', 'scoped MCP tools', 'control routes', 'review surfaces']
+    },
+    {
+      id: 'flow',
+      label: 'Flow',
+      summary: 'Route → gate → prove',
+      title: 'The runtime should be explainable before it becomes infrastructure.',
+      detail:
+        'Every path names where work enters, how risk is classified, where state persists, what may act, and which receipt returns.',
+      tone: 'review',
+      evidence: ['Route', 'Control gate', 'Durable state', 'Scoped action', 'Handoff evidence']
+    },
+    {
+      id: 'ecosystem',
+      label: 'Boundary',
+      summary: 'One runtime role',
+      title: 'Cloudflare is the runtime, not the whole operating model.',
+      detail:
+        'Intelligence, owned operating state, and vendor infrastructure stay separate so the workflow can be inspected, transferred, and recovered.',
+      tone: 'neutral',
+      actions: [
+        { label: 'See what you keep', href: '/stack' },
+        { label: 'Inspect the products', href: '/products' },
+        { label: 'See the tool stack', href: '/partners' }
+      ]
     }
   ];
 
@@ -198,45 +238,44 @@
   {/snippet}
 </PerformancePageSection>
 
-<PerformancePageSection
-  variant="white"
-  eyebrow="Runtime proof"
-  title="The runtime carries routes, tools, and evidence."
-  description="Cloudflare is strongest when workflow infrastructure needs ownership, durability, a reviewable delivery path, and clear account boundaries before anything runs."
+<PerformanceNarrativeStage
+  id="cloudflare-runtime-story"
+  eyebrow="One runtime story"
+  title="Proof. Flow. Boundary."
+  description="Cloudflare becomes legible as one controlled path: show what the runtime already carries, trace how work moves through it, and keep the surrounding ownership boundary explicit."
+  scenes={cloudflareScenes}
+  ariaLabel="Cloudflare runtime story"
 >
-  {#snippet after()}
-    <PerformanceCardGrid items={proofCards} columns={4} ariaLabel="Cloudflare runtime proof" />
+  {#snippet artifact(scene: PerformanceNarrativeScene)}
+    {#if scene.id === 'proof'}
+      <PerformanceCardGrid items={proofCards} columns={4} ariaLabel="Cloudflare runtime proof" />
+    {:else if scene.id === 'flow'}
+      <PerformanceCardGrid items={runtimeFlow} columns={4} ariaLabel="Cloudflare runtime flow" />
+    {:else}
+      <PerformanceCardGrid
+        items={ecosystemCards}
+        columns={3}
+        ariaLabel="Cloudflare ecosystem roles"
+      />
+      <p class="boundary-note">
+        Public claims stay conservative: show readiness, proof, and client-safe evidence without
+        implying official authorization before acceptance.
+      </p>
+    {/if}
   {/snippet}
-</PerformancePageSection>
-
-<PerformancePageSection
-  variant="soft"
-  eyebrow="Runtime flow"
-  title="Route. Gate. State. Act. Prove."
-  description="The operating model makes the Cloudflare layer easy to explain before it becomes a hidden infrastructure decision."
->
-  {#snippet after()}
-    <PerformanceCardGrid items={runtimeFlow} columns={4} ariaLabel="Cloudflare runtime flow" />
-  {/snippet}
-</PerformancePageSection>
-
-<PerformancePageSection
-  variant="soft"
-  eyebrow="Ecosystem"
-  title="Cloudflare is the runtime, not the whole operating model."
-  description="The workflow tool stack works because each adjacent surface keeps a distinct role. Public claims stay conservative: show readiness, proof, and client-safe evidence without implying official authorization before acceptance."
->
-  {#snippet after()}
-    <PerformanceCardGrid items={ecosystemCards} columns={3} ariaLabel="Cloudflare ecosystem roles" />
-  {/snippet}
-</PerformancePageSection>
+</PerformanceNarrativeStage>
 
 <PerformanceConversionHandoff
   eyebrow="Map the runtime"
   title="Bring the workflow that needs a controlled route."
   description="I’ll map the route, state, permissions, tool boundary, and evidence your team needs before a Cloudflare build becomes production work."
   steps={ctaItems}
-  handoff={{ owner: 'Runtime owner', authority: 'Controlled Cloudflare route', proof: 'Deploy note + rollback path', state: 'review' }}
+  handoff={{
+    owner: 'Runtime owner',
+    authority: 'Controlled Cloudflare route',
+    proof: 'Deploy note + rollback path',
+    state: 'review'
+  }}
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
@@ -245,3 +284,12 @@
     <Button href="/stack" variant="secondary">See what you keep</Button>
   {/snippet}
 </PerformanceConversionHandoff>
+
+<style>
+  .boundary-note {
+    max-width: 52rem;
+    margin: 1rem 0 0;
+    color: var(--color-performance-muted, #5e6268);
+    line-height: 1.55;
+  }
+</style>
