@@ -5,14 +5,12 @@
     PerformanceCardGrid,
     PerformanceDecisionPanel,
     PerformancePageSection,
-    PerformanceThesisConditions,
     SEO,
     NewsletterSignup,
     PropertyFunnel,
     type PerformanceCardItem,
     type PerformanceCampaignProof,
-    type PerformanceCondition,
-    type PerformanceDecisionItem,
+    type PerformanceDecisionItem
   } from '@create-something/canon';
   import { pressureBoundaryMedia } from '@create-something/canon/components/performance/media/pressure-boundary';
 
@@ -32,27 +30,6 @@
     {
       label: 'Proof',
       value: 'Inspectable receipt'
-    }
-  ];
-
-  const creationStates: PerformanceCondition[] = [
-    {
-      tone: 'signal',
-      label: 'Build',
-      title: 'Create the connection',
-      detail: 'Name the tool boundary, system owner, data shape, and action that should exist.'
-    },
-    {
-      tone: 'pressure',
-      label: 'Govern',
-      title: 'Encode the judgment',
-      detail: 'Turn taste, risk, and approval rules into policy artifacts an agent can follow.'
-    },
-    {
-      tone: 'growth',
-      label: 'Prove',
-      title: 'Leave the receipt',
-      detail: 'Keep the evidence, owner, outcome, and recovery path visible after the work runs.'
     }
   ];
 
@@ -139,31 +116,10 @@
     }
   ];
 
-  const ecosystemCards: PerformanceCardItem[] = [
-    {
-      eyebrow: '.io',
-      icon: 'document',
-      title: 'Research with receipts',
-      detail:
-        'Reference implementations and operating notes that make a claim defensible before it becomes delivery.',
-      href: 'https://createsomething.io'
-    },
-    {
-      eyebrow: '.space',
-      icon: 'settings',
-      title: 'Runtime practice',
-      detail:
-        'Integration experiments and pattern validation before the idea becomes a documented operating rule.',
-      href: 'https://createsomething.space'
-    },
-    {
-      eyebrow: '.agency',
-      icon: 'arrow-right',
-      title: 'Governed workflow delivery',
-      detail:
-        'Custom MCP and automation work shaped by policy, controls, owners, and handoff evidence.',
-      href: 'https://createsomething.agency'
-    }
+  const canonEvidenceCards: PerformanceCardItem[] = [
+    ...canonCards,
+    ...patternCards,
+    ...masterCards
   ];
 
   const decisionStates: PerformanceDecisionItem[] = [
@@ -218,7 +174,10 @@
       receipts: ['proof record', 'handoff note', 'recovery path'],
       actions: [
         { label: 'Read Canon', href: '/canon' },
-        { label: 'Open Practice', href: 'https://createsomething.agency/practice?source=ltd&intent=policy-to-workflow&stage=qualify&lane=policy_os' }
+        {
+          label: 'Open Practice',
+          href: 'https://createsomething.agency/practice?source=ltd&intent=policy-to-workflow&stage=qualify&lane=policy_os'
+        }
       ]
     }
   ];
@@ -241,77 +200,41 @@
   density="compact"
 >
   {#snippet actions()}
-    <Button href="https://createsomething.agency/practice?source=ltd&intent=canon-to-practice&stage=qualify&lane=policy_os">See The Practice</Button>
+    <Button
+      href="https://createsomething.agency/practice?source=ltd&intent=canon-to-practice&stage=qualify&lane=policy_os"
+      >See The Practice</Button
+    >
     <Button href="/canon" variant="secondary">Read The Canon</Button>
   {/snippet}
-
 </PerformanceCampaignOpening>
-
-<PerformanceThesisConditions
-  eyebrow="Creation loop"
-  title="Build, govern, prove."
-  description="The philosophy becomes useful when it names the connection, encodes the judgment, and leaves proof another operator can inspect."
-  conditions={creationStates}
-  ariaLabel="Automation infrastructure creation loop"
-/>
 
 <PerformanceDecisionPanel
   id="canon-decision"
   eyebrow="Delegation canon"
-  title="Creation starts where consumption stops."
-  description="The canon helps decide whether the next useful move is a connection, a policy, or proof that the delegated work stayed inside its lane."
+  title="Build, govern, prove."
+  description="Creation starts where consumption stops. Name the connection, encode the judgment, and leave proof another operator can inspect."
   items={decisionStates}
   ariaLabel="Delegated work control decision path"
+  density="compact"
 />
 
 <PerformancePageSection
   variant="white"
-  eyebrow="Operating thesis"
-  title="MCP consumption is commoditized. MCP creation is not."
-  description="The entry point to automation is connectivity, not intelligence. The canon names the discipline required to build that connectivity without losing control."
->
-  {#snippet after()}
-    <PerformanceCardGrid items={canonCards} columns={3} ariaLabel="Automation infrastructure principles" />
-  {/snippet}
-</PerformancePageSection>
-
-<PerformancePageSection
-  variant="soft"
-  eyebrow="Featured pattern"
+  eyebrow="Canon and evidence"
   title="Crystallization turns judgment into an operating artifact."
-  description="The strongest ideas in the canon are not decorative. They become constraints, quality gates, routing decisions, and review paths."
->
-  {#snippet after()}
-    <PerformanceCardGrid items={patternCards} columns={2} ariaLabel="Crystallization pattern details" />
-  {/snippet}
-</PerformancePageSection>
-
-<PerformancePageSection
-  variant="white"
-  eyebrow="Featured masters"
-  title="Reference points for restraint."
-  description="Rams, Mies, and the canon matter because governed automation needs fewer vague affordances and more decisions that earn their place."
+  description="MCP consumption is commoditized. MCP creation is not. The entry point is governed connectivity: a disciplined connection, reusable policy, visible proof, and the restraint to keep only what earns its place."
+  density="compact"
 >
   {#snippet actions()}
+    <Button href="/canon" variant="secondary">Read The Canon</Button>
     <Button href="/masters" variant="secondary">View All Masters</Button>
   {/snippet}
 
   {#snippet after()}
-    <PerformanceCardGrid items={masterCards} columns={2} ariaLabel="Featured masters" />
-  {/snippet}
-</PerformancePageSection>
-
-<PerformancePageSection
-  variant="soft"
-  eyebrow="Property loop"
-  title="The philosophy has to return to the work."
-  description=".ltd names the standard, .io documents the evidence, .space tests the runtime, and .agency turns the fit into governed workflow delivery."
->
-  {#snippet after()}
     <PerformanceCardGrid
-      items={ecosystemCards}
+      items={canonEvidenceCards}
       columns={3}
-      ariaLabel="CREATE SOMETHING property system"
+      ariaLabel="Canon principles, patterns, and masters"
     />
   {/snippet}
 </PerformancePageSection>
@@ -319,7 +242,8 @@
 <PropertyFunnel
   current="ltd"
   heading="Turn the canon into the next operating decision."
-  description="Start with the philosophy, read the research when the claim needs evidence, use the workbench when it needs runtime proof, and enter the practice when a named workflow needs controls and an owner."
+  description="The philosophy has to return to the work: .ltd names the standard, .io publishes research with receipts, .space tests runtime practice, and .agency turns a named workflow into governed delivery."
+  density="compact"
 />
 
 <!-- Newsletter CTA -->

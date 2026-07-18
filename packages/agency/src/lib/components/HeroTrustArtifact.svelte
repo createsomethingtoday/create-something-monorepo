@@ -429,27 +429,34 @@
     }
 
     .hero-trust-artifact__path {
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 0.54rem;
       padding: 0.6rem;
     }
 
     .hero-trust-artifact__signal {
+      grid-template-columns: 1fr;
       min-height: auto;
       padding: 0.72rem;
     }
 
+    .hero-trust-artifact__icon {
+      width: 1.9rem;
+      height: 1.9rem;
+    }
+
     .hero-trust-artifact__footer strong {
       min-width: 0;
-      flex-basis: 100%;
+      flex-basis: calc(50% - 0.21rem);
     }
 
     .hero-trust-artifact__states {
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
     .hero-trust-artifact__state {
       min-height: auto;
+      padding: 0.58rem;
     }
   }
 </style>

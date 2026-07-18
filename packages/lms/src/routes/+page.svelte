@@ -3,9 +3,7 @@
   import { PATHS } from '$content/paths';
   import {
     PerformanceCampaignOpening,
-    PerformanceConversionHandoff,
     PerformanceProofStrip,
-    PerformanceThesisConditions,
     type PerformanceCampaignProof,
     type PerformanceCondition
   } from '$canon/components/performance';
@@ -69,6 +67,7 @@
     lede="Practical paths for business owners becoming operators. Start in the OpenAI ecosystem with the Codex app, create a RapidAPI-backed MCP, then use Canon image rules to make boundaries, policy, proof, and handoff visible."
     media={traceControlPlaneMedia}
     proof={proofItems}
+    density="compact"
   >
     {#snippet actions()}
       <a class="btn btn-primary" href={firstLessonHref}>
@@ -79,21 +78,25 @@
     {/snippet}
   </PerformanceCampaignOpening>
 
-  <PerformanceThesisConditions
-    eyebrow="Learning loop"
-    title="Prompt. Create. Prove."
-    description="Performance learning is complete when the operator can run the workflow, inspect its boundary, and explain the evidence it leaves behind."
-    conditions={workflowConditions}
-    ariaLabel="Course workflow conditions"
-  />
-
   <section class="learn-section" aria-labelledby="course-outline-title">
     <div class="learn-section__header">
       <span>Course outline</span>
-      <h2 id="course-outline-title">
-        Two operator paths: create the workflow, then make it visible.
-      </h2>
+      <h2 id="course-outline-title">Prompt. Create. Prove.</h2>
+      <p>
+        Two operator paths create the workflow, make it visible, and finish only when the operator
+        can run it, inspect its boundary, and explain the evidence it leaves behind.
+      </p>
     </div>
+
+    <ol class="learning-loop" aria-label="Course workflow conditions">
+      {#each workflowConditions as condition, index}
+        <li data-tone={condition.tone}>
+          <span>{String(index + 1).padStart(2, '0')} · {condition.label}</span>
+          <strong>{condition.title}</strong>
+          <p>{condition.detail}</p>
+        </li>
+      {/each}
+    </ol>
 
     {#if PATHS.length}
       <div class="course-grid">
@@ -129,10 +132,7 @@
         </div>
       </div>
     {/if}
-  </section>
-
-  <section class="learn-section learn-section--proof" aria-labelledby="proof-title">
-    <div class="learn-section__header">
+    <div class="learn-section__header learn-section__header--proof">
       <span>How it lands</span>
       <h2 id="proof-title">The course is judged by artifacts, not vibes.</h2>
     </div>
@@ -161,26 +161,17 @@
 
   <PropertyFunnel
     current="lms"
-    heading="Turn guided learning into the next operating move."
-    description="Build an artifact here, use .space to test it, return to .ltd for the governing principle, or carry a named workflow into .agency practice."
-  />
-
-  <PerformanceConversionHandoff
     eyebrow="Learning handoff"
-    title="Build the smallest useful workflow first."
-    description="Start with one Codex prompt, one endpoint, one schema, and one MCP call. Then use Canon to make the operating boundary visible enough to govern."
+    heading="Build the smallest useful workflow first."
+    description="Start with one Codex prompt, one endpoint, one schema, and one MCP call. Make the boundary visible with Canon, use .space to test it, return to .ltd for the governing principle, or carry the named workflow into .agency practice."
+    density="compact"
     handoff={{
       owner: 'Learner / operator',
       authority: 'Artifact review',
       proof: 'Working MCP + workflow image',
       state: 'ready'
     }}
-  >
-    {#snippet actions()}
-      <a class="btn btn-primary" href={firstLessonHref}>Start lesson 1</a>
-      <a class="btn btn-secondary" href="/paths">View paths</a>
-    {/snippet}
-  </PerformanceConversionHandoff>
+  />
 </div>
 
 <style>
@@ -194,10 +185,6 @@
     width: min(var(--content-width-performance, 85rem), calc(100% - 2.5rem));
     margin-inline: auto;
     padding-block: 3.5rem;
-  }
-
-  .learn-section--proof {
-    padding-top: 1rem;
   }
 
   .learn-section__header {
@@ -225,6 +212,58 @@
     letter-spacing: 0;
     line-height: 1.04;
     text-wrap: balance;
+  }
+
+  .learn-section__header p {
+    margin: 0;
+    color: var(--color-performance-muted, #5e6268);
+    font-size: 1rem;
+    line-height: 1.52;
+  }
+
+  .learn-section__header--proof {
+    margin-top: 1.5rem;
+  }
+
+  .learning-loop {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+    list-style: none;
+  }
+
+  .learning-loop li {
+    display: grid;
+    align-content: start;
+    gap: 0.55rem;
+    padding: 1rem;
+    background: var(--color-performance-panel, #ffffff);
+  }
+
+  .learning-loop li + li {
+    border-left: 1px solid var(--color-performance-line, #d7d7d2);
+  }
+
+  .learning-loop span {
+    color: var(--color-performance-muted, #5e6268);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+  }
+
+  .learning-loop strong {
+    font-size: 1.12rem;
+    font-weight: var(--font-medium);
+  }
+
+  .learning-loop p {
+    margin: 0;
+    color: var(--color-performance-muted, #5e6268);
+    font-size: 0.92rem;
+    line-height: 1.45;
   }
 
   .course-grid {
@@ -347,6 +386,15 @@
 
     .course-panel {
       padding: 0.75rem;
+    }
+
+    .learning-loop {
+      grid-template-columns: 1fr;
+    }
+
+    .learning-loop li + li {
+      border-top: 1px solid var(--color-performance-line, #d7d7d2);
+      border-left: 0;
     }
 
     .lesson-list li {

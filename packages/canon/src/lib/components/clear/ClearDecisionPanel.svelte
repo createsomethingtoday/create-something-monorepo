@@ -28,6 +28,7 @@
 		ariaLabel?: string;
 		autoRotate?: boolean;
 		rotateMs?: number;
+		density?: 'standard' | 'compact';
 	}
 
 	let {
@@ -38,7 +39,8 @@
 		items,
 		ariaLabel = 'Decision states',
 		autoRotate = true,
-		rotateMs = 5200
+		rotateMs = 5200,
+		density = 'standard'
 	}: Props = $props();
 
 	let activeIndex = $state(0);
@@ -72,7 +74,7 @@
 	});
 </script>
 
-<section {id} class="clear-decision-panel" aria-label={ariaLabel}>
+<section {id} class="clear-decision-panel" data-density={density} aria-label={ariaLabel}>
 	<div class="clear-decision-panel__inner">
 		<header class="clear-decision-panel__header">
 			{#if eyebrow}
@@ -91,7 +93,10 @@
 					<strong>{activeItem?.label}</strong>
 				</div>
 				{#if activeItem}
-					<span class={`clear-decision-panel__status clear-decision-panel__status--${activeItem.tone ?? 'neutral'}`} aria-live="polite">
+					<span
+						class={`clear-decision-panel__status clear-decision-panel__status--${activeItem.tone ?? 'neutral'}`}
+						aria-live="polite"
+					>
 						{activeItem.summary}
 					</span>
 				{/if}
@@ -117,7 +122,11 @@
 				</div>
 
 				{#if activeItem}
-					<div id={panelId} class={`clear-decision-panel__active clear-decision-panel__active--${activeItem.tone ?? 'neutral'}`} role="tabpanel">
+					<div
+						id={panelId}
+						class={`clear-decision-panel__active clear-decision-panel__active--${activeItem.tone ?? 'neutral'}`}
+						role="tabpanel"
+					>
 						<div class="clear-decision-panel__active-copy">
 							<span>Decision object</span>
 							<h3>{activeItem.title}</h3>
@@ -170,6 +179,23 @@
 			linear-gradient(90deg, rgba(10, 14, 25, 0.035) 1px, transparent 1px) 0 0 / 3.75rem 3.75rem,
 			var(--color-performance-paper, #f3f3f0);
 		color: var(--color-performance-ink, #090909);
+	}
+
+	.clear-decision-panel[data-density='compact'] {
+		padding-block: 3rem;
+	}
+
+	.clear-decision-panel[data-density='compact'] .clear-decision-panel__inner {
+		grid-template-columns: minmax(20rem, 0.42fr) minmax(0, 1fr);
+		gap: clamp(2rem, 4vw, 3.5rem);
+	}
+
+	.clear-decision-panel[data-density='compact'] h2 {
+		font-size: 2.45rem;
+	}
+
+	.clear-decision-panel[data-density='compact'] .clear-decision-panel__active {
+		min-height: 20rem;
 	}
 
 	.clear-decision-panel__inner {
@@ -395,7 +421,8 @@
 		min-width: 0;
 		min-height: 24rem;
 		padding: 1rem;
-		border: 1px solid color-mix(in srgb, var(--decision-accent) 70%, var(--color-performance-line, #d7d7d2));
+		border: 1px solid
+			color-mix(in srgb, var(--decision-accent) 70%, var(--color-performance-line, #d7d7d2));
 		border-radius: var(--radius-performance-md, 4px);
 		background:
 			linear-gradient(90deg, rgba(10, 14, 25, 0.04) 1px, transparent 1px) 0 0 / 2.75rem 2.75rem,
@@ -555,6 +582,10 @@
 	@media (max-width: 640px) {
 		.clear-decision-panel {
 			padding-block: 2.75rem;
+		}
+
+		.clear-decision-panel[data-density='compact'] {
+			padding-block: 2.25rem;
 		}
 
 		.clear-decision-panel__inner {

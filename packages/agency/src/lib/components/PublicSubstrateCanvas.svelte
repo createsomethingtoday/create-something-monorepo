@@ -511,8 +511,8 @@
 		}
 
 		.public-substrate-canvas__chrome {
-			gap: 1rem;
-			padding: 1rem;
+			gap: 0.75rem;
+			padding: 0.8rem;
 		}
 
 		.public-substrate-canvas h3 {
@@ -541,16 +541,21 @@
 		}
 
 		.public-substrate-canvas__viewport {
-			min-height: clamp(21rem, 54vh, 28rem);
+			min-height: clamp(18rem, 44vh, 22rem);
 		}
 
 		.public-substrate-canvas__inspector {
-			gap: 0.75rem;
-			padding: 1rem;
+			gap: 0.6rem;
+			padding: 0.85rem;
 		}
 
 		.public-substrate-canvas__inspector dl {
-			gap: 0.55rem;
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+			gap: 0.5rem;
+		}
+
+		.public-substrate-canvas__inspector dl div {
+			padding-top: 0.45rem;
 		}
 
 		.public-substrate-canvas__actions {

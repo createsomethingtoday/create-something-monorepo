@@ -189,10 +189,12 @@ test('booking carries the Field Report handoff into the owned mapping scheduler'
   assert.match(book, /schedulerHandoffContext/);
 });
 
-test('the homepage hands the operating thesis into measured Field Report proof', () => {
+test('the homepage keeps measured Field Report proof inside the consolidated service chapter', () => {
   const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
 
-  assert.match(home, /PerformanceEvidenceIndex/);
+  assert.doesNotMatch(home, /PerformanceEvidenceIndex/);
+  assert.match(home, /class="service-proof-row"/);
+  assert.match(home, /See what passed—and what did not/);
   assert.match(home, /href: '\/field-reports\/template-review'/);
   assert.match(home, /49 of 50 selected cases/);
   assert.match(home, /automated judgment remains blocked/i);

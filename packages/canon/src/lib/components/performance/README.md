@@ -2,18 +2,20 @@
 
 The Performance design system is one Canon-owned namespace for presenting and operating an AI workflow system from claim through handoff. It applies to campaign, editorial, research, learning, product, evidence, and operator surfaces. It owns shared typography, spacing, contrast, responsive behavior, state, proof, motion, and composition so properties do not reconstruct those decisions route by route.
 
-## The six-pattern sequence
+## The composition grammar
 
-| Pattern | Component | Owns |
-|---|---|---|
-| Campaign opening | `PerformanceCampaignOpening` | Static-first first viewport, optional progressive video enhancement, responsive image source, claim hierarchy, actions, and campaign proof rail |
-| Thesis + conditions | `PerformanceThesisConditions` | One governing proposition paired with explicit signal, pressure, growth, risk, or neutral conditions |
-| Sequential field tests | `PerformanceFieldSequence` | Ordered studies, figure numbering, alternating media, optional sticky progression, and reduced-motion fallback |
-| Contrast chapter | `PerformanceContrastChapter` | The black/white principle-to-intervention break and an inline or full-width slot for a real route-owned artifact |
-| Evidence index | `PerformanceEvidenceIndex` | Inspectable public evidence rows, receipt state, links, and an explicit empty state |
-| Conversion handoff | `PerformanceConversionHandoff` | Owner, authority, proof, state, optional staged steps, actions, and compact or full-width artifact placement at the next boundary |
+| Pattern                | Component                      | Owns                                                                                                                                            |
+| ---------------------- | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Campaign opening       | `PerformanceCampaignOpening`   | Static-first first viewport, optional progressive video enhancement, responsive image source, claim hierarchy, actions, and campaign proof rail |
+| Thesis + conditions    | `PerformanceThesisConditions`  | One governing proposition paired with explicit signal, pressure, growth, risk, or neutral conditions                                            |
+| Sequential field tests | `PerformanceFieldSequence`     | Ordered studies, figure numbering, alternating media, optional sticky progression, and reduced-motion fallback                                  |
+| Contrast chapter       | `PerformanceContrastChapter`   | The black/white principle-to-intervention break and an inline or full-width slot for a real route-owned artifact                                |
+| Evidence index         | `PerformanceEvidenceIndex`     | Inspectable public evidence rows, receipt state, links, and an explicit empty state                                                             |
+| Conversion handoff     | `PerformanceConversionHandoff` | Owner, authority, proof, state, optional staged steps, actions, and compact or full-width artifact placement at the next boundary               |
 
-Not every page needs all six patterns, but every Performance surface must compose from this system before inventing another route-level shell. The order is a narrative protocol, not a mandatory template: claim, conditions, tests, intervention, evidence, handoff. Product and operator surfaces normally emphasize conditions, evidence, and handoff; campaign and editorial surfaces may use the full sequence.
+These six patterns are a grammar, not six required page sections. Every Performance surface must compose from this system before inventing another route-level shell, but adjacent ideas should share one chapter when they support the same decision. The narrative protocol remains claim, conditions, tests, intervention, evidence, handoff; a homepage should normally land that protocol in three to five top-level sections.
+
+Use `density="compact"` on `PerformanceCampaignOpening`, `PerformancePageSection`, `PerformanceDecisionPanel`, `PerformanceConversionHandoff`, and `PropertyFunnel` when the full content contract can remain visible with a shorter vertical commitment. Compact density changes spacing and responsive composition only. It must not hide summaries, remove evidence, or turn multiple unchanged chapters into one wrapper. `PropertyFunnel` may also carry a compact `handoff` ledger when progression and the final authority boundary belong to the same decision.
 
 ## Ownership boundary
 
