@@ -3,14 +3,14 @@
     Button,
     PerformanceCampaignOpening,
     PerformanceCardGrid,
-    PerformanceDecisionPanel,
-    PerformancePageSection,
+    PerformanceNarrativeStage,
     SEO,
     NewsletterSignup,
     PropertyFunnel,
     type PerformanceCardItem,
     type PerformanceCampaignProof,
-    type PerformanceDecisionItem
+    type PerformanceDecisionItem,
+    type PerformanceNarrativeScene
   } from '@create-something/canon';
   import { pressureBoundaryMedia } from '@create-something/canon/components/performance/media/pressure-boundary';
 
@@ -174,6 +174,7 @@
       receipts: ['proof record', 'handoff note', 'recovery path'],
       actions: [
         { label: 'Read Canon', href: '/canon' },
+        { label: 'View All Masters', href: '/masters' },
         {
           label: 'Open Practice',
           href: 'https://createsomething.agency/practice?source=ltd&intent=policy-to-workflow&stage=qualify&lane=policy_os'
@@ -181,6 +182,17 @@
       ]
     }
   ];
+
+  const evidenceByScene: Record<string, PerformanceCardItem[]> = {
+    connect: canonCards.slice(0, 2),
+    govern: patternCards,
+    prove: [canonCards[2], ...masterCards]
+  };
+
+  const ltdScenes: PerformanceNarrativeScene[] = decisionStates.map((item, index) => ({
+    id: ['connect', 'govern', 'prove'][index],
+    ...item
+  }));
 </script>
 
 <SEO
@@ -208,51 +220,48 @@
   {/snippet}
 </PerformanceCampaignOpening>
 
-<PerformanceDecisionPanel
-  id="canon-decision"
+<PerformanceNarrativeStage
+  id="canon-operating-story"
   eyebrow="Delegation canon"
   title="Build, govern, prove."
-  description="Creation starts where consumption stops. Name the connection, encode the judgment, and leave proof another operator can inspect."
-  items={decisionStates}
+  description="MCP consumption is commoditized. MCP creation is not. Each operating decision now carries its governing canon and evidence in the same focused surface."
+  scenes={ltdScenes}
   ariaLabel="Delegated work control decision path"
-  density="compact"
-/>
-
-<PerformancePageSection
-  variant="white"
-  eyebrow="Canon and evidence"
-  title="Crystallization turns judgment into an operating artifact."
-  description="MCP consumption is commoditized. MCP creation is not. The entry point is governed connectivity: a disciplined connection, reusable policy, visible proof, and the restraint to keep only what earns its place."
-  density="compact"
 >
-  {#snippet actions()}
-    <Button href="/canon" variant="secondary">Read The Canon</Button>
-    <Button href="/masters" variant="secondary">View All Masters</Button>
-  {/snippet}
-
-  {#snippet after()}
+  {#snippet artifact(scene: PerformanceNarrativeScene)}
     <PerformanceCardGrid
-      items={canonEvidenceCards}
-      columns={3}
-      ariaLabel="Canon principles, patterns, and masters"
+      items={evidenceByScene[scene.id] ?? canonEvidenceCards}
+      columns={scene.id === 'prove' ? 3 : 2}
+      ariaLabel={`${scene.label} canon and evidence`}
     />
   {/snippet}
-</PerformancePageSection>
+</PerformanceNarrativeStage>
 
-<PropertyFunnel
-  current="ltd"
-  heading="Turn the canon into the next operating decision."
-  description="The philosophy has to return to the work: .ltd names the standard, .io publishes research with receipts, .space tests runtime practice, and .agency turns a named workflow into governed delivery."
-  density="compact"
-/>
+<section class="ltd-continuation" aria-label="Canon continuation">
+  <PropertyFunnel
+    current="ltd"
+    heading="Turn the canon into the next operating decision."
+    description="The philosophy has to return to the work: .ltd names the standard, .io publishes research with receipts, .space tests runtime practice, and .agency turns a named workflow into governed delivery."
+    density="compact"
+  />
 
-<!-- Newsletter CTA -->
-<NewsletterSignup
-  eyebrow="Canon letter"
-  headline="Keep the canon close to the work."
-  description="A quiet note when a new master, standard, or operating pattern is worth carrying into the next decision."
-  actionLabel="Get the next canon note."
-  submitLabel="Get the note"
-  note="No noise. Just the principles, language, and artifacts that make the work easier to defend."
-  source="ltd-homepage"
-/>
+  <NewsletterSignup
+    eyebrow="Canon letter"
+    headline="Keep the canon close to the work."
+    description="A quiet note when a new master, standard, or operating pattern is worth carrying into the next decision."
+    actionLabel="Get the next canon note."
+    submitLabel="Get the note"
+    note="No noise. Just the principles, language, and artifacts that make the work easier to defend."
+    source="ltd-homepage"
+  />
+</section>
+
+<style>
+  .ltd-continuation {
+    background: var(--color-performance-panel, #ffffff);
+  }
+
+  .ltd-continuation :global(.newsletter-section) {
+    padding-block: clamp(2.75rem, 5vw, 4rem);
+  }
+</style>

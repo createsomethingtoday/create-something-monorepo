@@ -10,6 +10,7 @@ import PerformanceFieldSequence from './PerformanceFieldSequence.svelte';
 import PerformanceContrastChapter from './PerformanceContrastChapter.svelte';
 import PerformanceEvidenceIndex from './PerformanceEvidenceIndex.svelte';
 import PerformanceConversionHandoff from './PerformanceConversionHandoff.svelte';
+import PerformanceNarrativeStage from './PerformanceNarrativeStage.svelte';
 import PerformancePageSection from '../clear/ClearPageSection.svelte';
 import PerformanceDecisionPanel from '../clear/ClearDecisionPanel.svelte';
 import PropertyFunnel from '../PropertyFunnel.svelte';
@@ -23,6 +24,7 @@ afterEach(() => {
 		instance = undefined;
 	}
 	document.body.innerHTML = '';
+	window.history.replaceState(null, '', '/');
 	vi.unstubAllGlobals();
 });
 
@@ -214,7 +216,8 @@ describe('Performance composition typography', () => {
 			'PerformanceFieldSequence.svelte',
 			'PerformanceContrastChapter.svelte',
 			'PerformanceEvidenceIndex.svelte',
-			'PerformanceConversionHandoff.svelte'
+			'PerformanceConversionHandoff.svelte',
+			'PerformanceNarrativeStage.svelte'
 		];
 
 		const tokens = readFileSync(join(process.cwd(), 'src/lib/styles/tokens.css'), 'utf8');
@@ -652,5 +655,101 @@ describe('Performance compact density', () => {
 		expect(funnel?.querySelector('.property-funnel__handoff')?.textContent).toContain(
 			'Working workflow'
 		);
+	});
+});
+
+describe('PerformanceNarrativeStage', () => {
+	const scenes = [
+		{
+			id: 'map',
+			label: 'Map',
+			summary: 'Boundary visible',
+			title: 'See the whole workflow.',
+			detail: 'Name the systems, owner, risk, and proof before implementation.',
+			evidence: ['Systems are named'],
+			receipts: ['workflow map']
+		},
+		{
+			id: 'decide',
+			label: 'Decide',
+			summary: 'Authority routed',
+			title: 'Keep consequential judgment.',
+			detail: 'Safe work runs and exceptions reach a named operator.',
+			evidence: ['Run, wait, and stop are explicit'],
+			receipts: ['decision policy']
+		},
+		{
+			id: 'prove',
+			label: 'Prove',
+			summary: 'Receipt attached',
+			title: 'Leave an inspectable wake.',
+			detail: 'Source evidence, policy, action, and recovery remain connected.',
+			evidence: ['Outcome maps back to policy'],
+			receipts: ['proof record'],
+			actions: [{ label: 'Inspect proof', href: '/proof' }]
+		}
+	];
+
+	it('keeps every scene summary visible while one complete proof scene holds focus', () => {
+		target = document.createElement('div');
+		document.body.appendChild(target);
+		instance = mount(PerformanceNarrativeStage, {
+			target,
+			props: {
+				id: 'workflow-story',
+				eyebrow: 'Operating sequence',
+				title: 'Map. Decide. Prove.',
+				description: 'One argument, held in one stage.',
+				scenes
+			}
+		}) as Record<string, unknown>;
+		flushSync();
+
+		const stage = target.querySelector('section.performance-narrative-stage');
+		const tabs = [...(stage?.querySelectorAll('[role="tab"]') ?? [])];
+		expect(tabs.map((tab) => tab.textContent)).toEqual([
+			expect.stringContaining('Boundary visible'),
+			expect.stringContaining('Authority routed'),
+			expect.stringContaining('Receipt attached')
+		]);
+		expect(stage?.querySelector('[role="tab"][aria-selected="true"]')?.textContent).toContain(
+			'Map'
+		);
+		expect(stage?.querySelector('[role="tabpanel"]:not([hidden])')?.textContent).toContain(
+			'See the whole workflow.'
+		);
+
+		(tabs[2] as HTMLButtonElement).click();
+		flushSync();
+
+		expect(stage?.querySelector('[role="tab"][aria-selected="true"]')?.textContent).toContain(
+			'Prove'
+		);
+		const activePanel = stage?.querySelector('[role="tabpanel"]:not([hidden])');
+		expect(activePanel?.textContent).toContain('Leave an inspectable wake.');
+		expect(activePanel?.textContent).toContain('Outcome maps back to policy');
+		expect(activePanel?.textContent).toContain('proof record');
+		expect(activePanel?.querySelector('a')?.getAttribute('href')).toBe('/proof');
+	});
+
+	it('supports roving keyboard selection and fragment-addressable scenes', () => {
+		window.history.replaceState(null, '', '#workflow-story-decide');
+		target = document.createElement('div');
+		document.body.appendChild(target);
+		instance = mount(PerformanceNarrativeStage, {
+			target,
+			props: { id: 'workflow-story', title: 'Map. Decide. Prove.', scenes }
+		}) as Record<string, unknown>;
+		flushSync();
+
+		let selected = target.querySelector<HTMLButtonElement>('[role="tab"][aria-selected="true"]');
+		expect(selected?.textContent).toContain('Decide');
+		selected?.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }));
+		flushSync();
+
+		selected = target.querySelector<HTMLButtonElement>('[role="tab"][aria-selected="true"]');
+		expect(selected?.textContent).toContain('Prove');
+		expect(document.activeElement).toBe(selected);
+		expect(window.location.hash).toBe('#workflow-story-prove');
 	});
 });

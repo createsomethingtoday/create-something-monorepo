@@ -2,14 +2,14 @@
   import {
     Button,
     PerformanceCampaignOpening,
-    PerformanceContrastChapter,
     PerformanceConversionHandoff,
-    PerformancePageSection,
+    PerformanceNarrativeStage,
     PerformanceWorkflowMiniArtifact,
     SEO,
     type PerformanceCampaignProof,
     type PerformanceFieldStudyMetric,
-    type PerformanceFieldStudyProof
+    type PerformanceFieldStudyProof,
+    type PerformanceNarrativeScene
   } from '@create-something/canon';
   import { controlledFlowMedia } from '@create-something/canon/components/performance/media/controlled-flow';
   import HeroTrustArtifact from '$lib/components/HeroTrustArtifact.svelte';
@@ -173,6 +173,61 @@
       href: '/field-reports/template-review'
     }
   ];
+
+  const agencyScenes: PerformanceNarrativeScene[] = [
+    {
+      id: 'boundary',
+      label: 'Boundary',
+      summary: 'Authority scoped',
+      title: 'Stop watching the workflow. Keep the judgment.',
+      detail:
+        'The goal is less manual monitoring without giving away consequential authority. Decide what can move, what must wait, and what must stop before the first lane runs.',
+      tone: 'review',
+      evidence: [
+        'Safe work moves without an operator watching every handoff',
+        'Exceptions return to a named owner with enough context',
+        'Every action leaves an inspectable recovery path'
+      ],
+      receipts: [flowStudyProof.id, flowStudyProof.state],
+      actions: [{ label: agencyCoreMessaging.selfMapLabel, href: agencyCoreMessaging.selfMapHref }]
+    },
+    {
+      id: 'map',
+      label: 'Map',
+      summary: 'Workflow visible',
+      title: 'Map the work before AI runs it.',
+      detail:
+        'CREATE SOMETHING Map turns the current process into a shared workflow definition: signals, systems, authority, risk, approval, and proof become inspectable before implementation.',
+      tone: 'allow',
+      evidence: [
+        'Systems and handoffs share one operating view',
+        'AI tasks and human approvals have explicit boundaries',
+        'The first controlled pilot is visible before a build decision'
+      ],
+      receipts: ['workflow definition', 'owner map', 'proof plan'],
+      actions: [{ label: 'Map one workflow', href: agencyCoreMessaging.selfMapHref }]
+    },
+    {
+      id: 'operate',
+      label: 'Operate',
+      summary: 'Signal → proof',
+      title: 'Map signals. Route decisions. Leave proof.',
+      detail:
+        'The work stays narrow: understand the handoff, build one controlled pilot, and add operating rules only when live work needs them.',
+      tone: 'neutral',
+      evidence: [
+        'Signal, Decision, and Proof remain one connected service path',
+        'The field report names what passed and what remains blocked',
+        'The client keeps data, rules, tests, history, and recovery'
+      ],
+      receipts: ['workflow map', fieldReportProof[0].id, 'recovery path'],
+      actions: [
+        { label: 'See the service path', href: '/services' },
+        { label: 'Inspect the field report', href: fieldReportProof[0].href },
+        { label: 'See what you keep', href: '/stack' }
+      ]
+    }
+  ];
 </script>
 
 <SEO
@@ -200,151 +255,128 @@
     {/snippet}
   </PerformanceCampaignOpening>
 
-  <PerformancePageSection
-    variant="white"
-    eyebrow="Business outcome"
-    title="Stop watching the workflow. Keep the judgment."
-    description="The goal is not more autonomous activity. It is less manual monitoring without giving away consequential authority."
-    density="compact"
+  <PerformanceNarrativeStage
+    id="agency-operating-story"
+    eyebrow="One controlled operating story"
+    title="Boundary. Map. Operate."
+    description="The page now holds one argument: keep consequential judgment, make the workflow visible, then operate the first lane with proof attached."
+    scenes={agencyScenes}
+    ariaLabel="Agency operating story"
   >
-    {#snippet after()}
-      <div class="operator-outcomes" aria-label="Workflow before and after controlled delegation">
-        {#each operatorOutcomes as outcome}
-          <article class="operator-outcome operator-outcome--{outcome.state.toLowerCase()}">
-            <span>{outcome.state}</span>
-            <h3>{outcome.title}</h3>
-            <p>{outcome.detail}</p>
-          </article>
-        {/each}
-      </div>
-      <article class="boundary-study" aria-labelledby="boundary-study-title">
-        <picture class="boundary-study__media">
-          <source
-            media="(max-width: 47.99rem)"
-            srcset="/images/performance-lab/pressure-boundary-natural-mobile.webp"
-          />
-          <img
-            src="/images/performance-lab/pressure-boundary-natural.webp"
-            alt="Black-and-white field study of water meeting a designed boundary."
-            loading="lazy"
-          />
-        </picture>
-        <div class="boundary-study__copy">
-          <span>Performance principle</span>
-          <h3 id="boundary-study-title">Test the boundary before work moves.</h3>
-          <p>
-            <strong>Decide what can move before it runs.</strong> Map the change, route the decision,
-            define the stop, and preserve the record before authority expands.
-          </p>
-          <p class="boundary-study__principle">Governance directs flow.</p>
-        </div>
-        <dl class="boundary-study__metrics">
-          {#each flowStudyMetrics as metric}
-            <div>
-              <dt>{metric.label}</dt>
-              <dd><strong>{metric.value}</strong><span>{metric.detail}</span></dd>
-            </div>
+    {#snippet artifact(scene: PerformanceNarrativeScene)}
+      {#if scene.id === 'boundary'}
+        <div class="operator-outcomes" aria-label="Workflow before and after controlled delegation">
+          {#each operatorOutcomes as outcome}
+            <article class="operator-outcome operator-outcome--{outcome.state.toLowerCase()}">
+              <span>{outcome.state}</span>
+              <h3>{outcome.title}</h3>
+              <p>{outcome.detail}</p>
+            </article>
           {/each}
-        </dl>
-        <dl class="boundary-study__receipt" aria-label="Boundary study receipt">
-          <div>
-            <dt>Receipt</dt>
-            <dd>{flowStudyProof.id}</dd>
+        </div>
+        <article class="boundary-study" aria-labelledby="boundary-study-title">
+          <picture class="boundary-study__media">
+            <source
+              media="(max-width: 47.99rem)"
+              srcset="/images/performance-lab/pressure-boundary-natural-mobile.webp"
+            />
+            <img
+              src="/images/performance-lab/pressure-boundary-natural.webp"
+              alt="Black-and-white field study of water meeting a designed boundary."
+              loading="lazy"
+            />
+          </picture>
+          <div class="boundary-study__copy">
+            <span>Performance principle</span>
+            <h3 id="boundary-study-title">Test the boundary before work moves.</h3>
+            <p>
+              <strong>Decide what can move before it runs.</strong> Map the change, route the decision,
+              define the stop, and preserve the record before authority expands.
+            </p>
+            <p class="boundary-study__principle">Governance directs flow.</p>
           </div>
-          <div>
-            <dt>Owner</dt>
-            <dd>{flowStudyProof.owner}</dd>
-          </div>
-          <div>
-            <dt>State</dt>
-            <dd>{flowStudyProof.state}</dd>
-          </div>
-          <div>
-            <dt>Verified</dt>
-            <dd>{flowStudyProof.verified}</dd>
-          </div>
-        </dl>
-      </article>
-    {/snippet}
-  </PerformancePageSection>
-
-  <PerformanceContrastChapter
-    eyebrow="Workflow plan"
-    title="Map the work before AI runs it."
-    description="CREATE SOMETHING Map turns the current process into a clear workflow definition: which signals matter, where work moves, what AI can handle, where people approve, and what proof records the outcome."
-    intervention={{
-      label: 'Intervention 01',
-      title: 'Map workflow definition',
-      detail:
-        'A shared canvas makes systems, authority, risk, and proof inspectable before implementation.'
-    }}
-    artifactPlacement="full-width"
-    density="compact"
-  >
-    {#snippet artifact()}
-      <PublicSubstrateCanvas />
-    {/snippet}
-  </PerformanceContrastChapter>
-
-  <PerformancePageSection
-    id="service-flow"
-    variant="white"
-    class="home-process-section"
-    eyebrow="Service path"
-    title="Map signals. Route decisions. Leave proof."
-    description="The work stays narrow: first understand the handoff, then build one controlled pilot, then add operating rules only when live work needs them."
-    density="compact"
-  >
-    {#snippet after()}
-      <div class="service-flow-artifacts" aria-label="CREATE SOMETHING service flow">
-        {#each serviceFlowSteps as step}
-          <article class="service-flow-artifact service-flow-artifact--{step.id}">
-            <div class="service-flow-artifact__visual">
-              <PerformanceWorkflowMiniArtifact kind={step.id} />
+          <dl class="boundary-study__metrics">
+            {#each flowStudyMetrics as metric}
+              <div>
+                <dt>{metric.label}</dt>
+                <dd><strong>{metric.value}</strong><span>{metric.detail}</span></dd>
+              </div>
+            {/each}
+          </dl>
+          <dl class="boundary-study__receipt" aria-label="Boundary study receipt">
+            <div>
+              <dt>Receipt</dt>
+              <dd>{flowStudyProof.id}</dd>
             </div>
-            <div class="service-flow-artifact__copy">
-              <span>{step.eyebrow}</span>
-              <h3>{step.title}</h3>
-              <p>{step.detail}</p>
-              <small>{step.proof}</small>
+            <div>
+              <dt>Owner</dt>
+              <dd>{flowStudyProof.owner}</dd>
             </div>
-          </article>
-        {/each}
-      </div>
-      <div class="service-flow-action">
-        <Button href={agencyCoreMessaging.selfMapHref}>{agencyCoreMessaging.selfMapLabel}</Button>
-        <p>
-          See the <a href="/services">service path</a>, the <a href="/partners">tool stack</a>, or
-          the <a href="/products">proof surfaces</a>.
-        </p>
-      </div>
-      <div class="service-proof-row">
-        {#each fieldReportProof as report}
-          <a class="field-report" href={report.href}>
-            <span>Field result · See what passed—and what did not.</span>
-            <h3>{report.title}</h3>
-            <p>{report.detail}</p>
-            <small>{report.kind} · {report.state} · {report.id} · {report.date}</small>
-          </a>
-        {/each}
-        <aside class="ownership-callout">
-          <span>How we build</span>
-          <h3>Built with OpenAI Codex. Designed to remain yours.</h3>
+            <div>
+              <dt>State</dt>
+              <dd>{flowStudyProof.state}</dd>
+            </div>
+            <div>
+              <dt>Verified</dt>
+              <dd>{flowStudyProof.verified}</dd>
+            </div>
+          </dl>
+        </article>
+      {:else if scene.id === 'map'}
+        <div class="agency-stage-map" aria-label="Map workflow definition">
+          <PublicSubstrateCanvas />
+        </div>
+      {:else}
+        <div class="service-flow-artifacts" aria-label="CREATE SOMETHING service flow">
+          {#each serviceFlowSteps as step}
+            <article class="service-flow-artifact service-flow-artifact--{step.id}">
+              <div class="service-flow-artifact__visual">
+                <PerformanceWorkflowMiniArtifact kind={step.id} />
+              </div>
+              <div class="service-flow-artifact__copy">
+                <span>{step.eyebrow}</span>
+                <h3>{step.title}</h3>
+                <p>{step.detail}</p>
+                <small>{step.proof}</small>
+              </div>
+            </article>
+          {/each}
+        </div>
+        <div class="service-flow-action">
+          <Button href={agencyCoreMessaging.selfMapHref}>{agencyCoreMessaging.selfMapLabel}</Button>
           <p>
-            We use Codex to map, build, and maintain the workflow. Your team keeps the data,
-            connections, approval rules, tests, operating history, and recovery path. If the model
-            or agent environment changes, the system does not have to start over.
+            See the <a href="/services">service path</a>, the <a href="/partners">tool stack</a>, or
+            the <a href="/products">proof surfaces</a>.
           </p>
-          <div>
-            <a href="/stack">See what you keep</a>
-            <a href="https://createsomething.ltd/canon/concepts/conviction-without-dependence"
-              >Why we build this way</a
-            >
-          </div>
-        </aside>
-      </div>
+        </div>
+        <div class="service-proof-row">
+          {#each fieldReportProof as report}
+            <a class="field-report" href={report.href}>
+              <span>Field result · See what passed—and what did not.</span>
+              <h3>{report.title}</h3>
+              <p>{report.detail}</p>
+              <small>{report.kind} · {report.state} · {report.id} · {report.date}</small>
+            </a>
+          {/each}
+          <aside class="ownership-callout">
+            <span>How we build</span>
+            <h3>Built with OpenAI Codex. Designed to remain yours.</h3>
+            <p>
+              We use Codex to map, build, and maintain the workflow. Your team keeps the data,
+              connections, approval rules, tests, operating history, and recovery path. If the model
+              or agent environment changes, the system does not have to start over.
+            </p>
+            <div>
+              <a href="/stack">See what you keep</a>
+              <a href="https://createsomething.ltd/canon/concepts/conviction-without-dependence"
+                >Why we build this way</a
+              >
+            </div>
+          </aside>
+        </div>
+      {/if}
     {/snippet}
-  </PerformancePageSection>
+  </PerformanceNarrativeStage>
 
   <PerformanceConversionHandoff
     eyebrow="Fixed-scope first step"
@@ -375,10 +407,6 @@
   .home-pilot {
     background: var(--color-performance-panel, #ffffff);
     color: var(--color-performance-ink, #090909);
-  }
-
-  .home-pilot :global(.home-process-section) {
-    padding-block: 3.35rem;
   }
 
   .operator-outcomes {
@@ -526,25 +554,6 @@
     max-width: 34rem;
     color: var(--color-performance-muted, #5e6268);
     line-height: 1.55;
-  }
-
-  .home-pilot :global(.home-process-section .clear-page-section__copy) {
-    max-width: 42rem;
-    gap: 0.78rem;
-  }
-
-  .home-pilot :global(.home-process-section .clear-page-section__title) {
-    max-width: 14ch;
-    font-size: clamp(2.25rem, 4.5vw, 3.15rem);
-    line-height: 1.02;
-  }
-
-  .home-pilot :global(.home-process-section .clear-page-section__description) {
-    max-width: 38rem;
-  }
-
-  .home-pilot :global(.home-process-section .clear-page-section__after) {
-    margin-top: 2.4rem;
   }
 
   .service-flow-artifacts {
