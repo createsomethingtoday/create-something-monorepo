@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import test from 'node:test';
@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 import {
 	BuildReleaseValidationError,
 	inspectBuildReleasePackage,
+	parseBuildAcceptanceReceipt,
 	parseMapBuildHandoffReceipt,
 	parseBuildReleaseManifest,
 } from '../src/build-release.js';
@@ -66,11 +67,10 @@ function validManifest(): unknown {
 			support: 'support@example.test',
 		},
 		acceptance: {
+			receiptPath: 'receipts/build-acceptance.json',
+			receiptSha256: '0'.repeat(64),
 			receiptId: 'acceptance_example_001',
 			status: 'accepted',
-			decidedAt: '2026-07-18T12:30:00.000Z',
-			decidedBy: 'acceptor@example.test',
-			note: 'Representative non-production acceptance.',
 		},
 	};
 }
@@ -116,12 +116,17 @@ function writeRepresentativePackage(overrides?: {
 	}
 	const receiptJson = `${JSON.stringify(receipt, null, 2)}\n`;
 	writeFileSync(join(root, 'receipts', 'map-handoff.json'), receiptJson);
+	const acceptanceReceipt = validAcceptanceReceipt() as Record<string, unknown>;
+	acceptanceReceipt.status = overrides?.acceptanceStatus ?? 'accepted';
+	const acceptanceJson = `${JSON.stringify(acceptanceReceipt, null, 2)}\n`;
+	writeFileSync(join(root, 'receipts', 'build-acceptance.json'), acceptanceJson);
 
 	const manifest = validManifest() as Record<string, any>;
 	manifest.handoff.receiptSha256 = sha256(receiptJson);
 	manifest.handoff.accountId = overrides?.accountId ?? 'account_example';
 	manifest.verification.staging.status = overrides?.stagingStatus ?? 'passed';
 	manifest.acceptance.status = overrides?.acceptanceStatus ?? 'accepted';
+	manifest.acceptance.receiptSha256 = sha256(acceptanceJson);
 	for (const name of Object.keys(artifactContent) as Array<keyof typeof artifactContent>) {
 		manifest.artifacts[name].sha256 = sha256(artifactContent[name]);
 	}
@@ -129,6 +134,21 @@ function writeRepresentativePackage(overrides?: {
 	writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
 
 	return { root, manifestPath };
+}
+
+function validAcceptanceReceipt(): unknown {
+	return {
+		schema: 'create-something/build-acceptance-receipt@1',
+		receiptId: 'acceptance_example_001',
+		releaseId: 'release_example_001',
+		handoffId: 'handoff_example_001',
+		accountId: 'account_example',
+		workspaceAccountId: 'workspace_example',
+		status: 'accepted',
+		decidedAt: '2026-07-18T12:30:00.000Z',
+		decidedBy: 'acceptor@example.test',
+		note: 'Representative non-production acceptance.',
+	};
 }
 
 function validHandoffReceipt(): unknown {
@@ -170,6 +190,14 @@ test('parseMapBuildHandoffReceipt preserves terminal and nonterminal source stat
 	const unknown = validHandoffReceipt() as Record<string, unknown>;
 	unknown.tenantAlias = 'wrong-account-shortcut';
 	assert.throws(() => parseMapBuildHandoffReceipt(unknown), BuildReleaseValidationError);
+});
+
+test('parseBuildAcceptanceReceipt requires a strict terminal receipt', () => {
+	assert.equal(parseBuildAcceptanceReceipt(validAcceptanceReceipt()).status, 'accepted');
+
+	const pending = validAcceptanceReceipt() as Record<string, unknown>;
+	pending.status = 'pending';
+	assert.throws(() => parseBuildAcceptanceReceipt(pending), BuildReleaseValidationError);
 });
 
 test('parseBuildReleaseManifest rejects unknown and missing fields', () => {
@@ -258,6 +286,33 @@ test('inspectBuildReleasePackage fails closed on handoff and decision boundaries
 	assert.equal(rejected.evidenceValid, true);
 	assert.equal(rejected.releaseReady, false);
 	assert.ok(rejected.issues.some((issue) => issue.code === 'release_rejected'));
+
+	const selfAsserted = writeRepresentativePackage({ acceptanceStatus: 'rejected' });
+	const manifest = JSON.parse(readFileSync(selfAsserted.manifestPath, 'utf8')) as Record<
+		string,
+		any
+	>;
+	manifest.acceptance.status = 'accepted';
+	writeFileSync(selfAsserted.manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+	const tampered = inspectBuildReleasePackage(selfAsserted.manifestPath);
+	assert.equal(tampered.releaseReady, false);
+	assert.ok(tampered.issues.some((issue) => issue.code === 'acceptance_identity_mismatch'));
+
+	const changedReceipt = writeRepresentativePackage();
+	writeFileSync(
+		join(changedReceipt.root, 'receipts', 'build-acceptance.json'),
+		`${JSON.stringify(
+			{
+				...(validAcceptanceReceipt() as Record<string, unknown>),
+				note: 'Changed after acceptance.',
+			},
+			null,
+			2,
+		)}\n`,
+	);
+	const invalidReceiptHash = inspectBuildReleasePackage(changedReceipt.manifestPath);
+	assert.equal(invalidReceiptHash.releaseReady, false);
+	assert.ok(invalidReceiptHash.issues.some((issue) => issue.code === 'acceptance_hash_mismatch'));
 });
 
 test('a second operator can run the repository CLI from a clean package path', () => {
@@ -281,5 +336,5 @@ test('the repository representative package remains internally coherent', () => 
 	assert.equal(result.evidenceValid, true);
 	assert.equal(result.releaseReady, true);
 	assert.equal(result.manifest?.release.environment, 'staging');
-	assert.match(result.manifest?.acceptance.note ?? '', /not a customer decision/);
+	assert.match(result.acceptanceReceipt?.note ?? '', /not a customer decision/);
 });

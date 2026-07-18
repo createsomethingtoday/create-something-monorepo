@@ -62,10 +62,9 @@
     "support": "fixture-support@example.test"
   },
   "acceptance": {
+    "receiptPath": "receipts/build-acceptance.json",
+    "receiptSha256": "4745b0dbf75972ddd5138e8f0b634041bce22de1246738b73c731b953447d3e7",
     "receiptId": "fixture-acceptance-example-001",
-    "status": "accepted",
-    "decidedAt": "2026-07-18T12:30:00.000Z",
-    "decidedBy": "fixture-acceptor@example.test",
-    "note": "Synthetic non-production acceptance for verifier coverage; not a customer decision."
+    "status": "accepted"
   }
 }

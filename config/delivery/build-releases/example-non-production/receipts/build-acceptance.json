@@ -1,0 +1,12 @@
+{
+  "schema": "create-something/build-acceptance-receipt@1",
+  "receiptId": "fixture-acceptance-example-001",
+  "releaseId": "release_example_nonprod_001",
+  "handoffId": "handoff_example_nonprod_001",
+  "accountId": "account_example_nonprod",
+  "workspaceAccountId": "workspace_example_nonprod",
+  "status": "accepted",
+  "decidedAt": "2026-07-18T12:30:00.000Z",
+  "decidedBy": "fixture-acceptor@example.test",
+  "note": "Synthetic non-production acceptance for verifier coverage; not a customer decision."
+}

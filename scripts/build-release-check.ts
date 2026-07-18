@@ -40,7 +40,7 @@ function main(argv: string[]): number {
     console.log(
       `Map handoff: ${result.manifest.handoff.handoffId} (${result.handoffReceipt?.status ?? 'unverified'})`
     );
-    console.log(`Terminal decision: ${result.manifest.acceptance.status}`);
+    console.log(`Terminal decision: ${result.acceptanceReceipt?.status ?? 'unverified'}`);
   }
   if (result.issues.length > 0) {
     console.log('Issues:');

@@ -5,6 +5,8 @@ import { basename, dirname, resolve, sep } from 'node:path';
 export const BUILD_RELEASE_SCHEMA = 'create-something/build-release-manifest@1' as const;
 export const MAP_BUILD_HANDOFF_RECEIPT_SCHEMA =
 	'create-something/map-to-build-handoff-receipt@1' as const;
+export const BUILD_ACCEPTANCE_RECEIPT_SCHEMA =
+	'create-something/build-acceptance-receipt@1' as const;
 
 export const BUILD_RELEASE_ARTIFACTS = [
 	'mcp_contract',
@@ -63,11 +65,10 @@ export interface BuildReleaseManifest {
 		support: string;
 	};
 	acceptance: {
+		receiptPath: string;
+		receiptSha256: string;
 		receiptId: string;
 		status: BuildReleaseAcceptanceStatus;
-		decidedAt: string;
-		decidedBy: string;
-		note: string;
 	};
 }
 
@@ -86,6 +87,19 @@ export interface MapBuildHandoffReceipt {
 	resolutionNote: string | null;
 }
 
+export interface BuildAcceptanceReceipt {
+	schema: typeof BUILD_ACCEPTANCE_RECEIPT_SCHEMA;
+	receiptId: string;
+	releaseId: string;
+	handoffId: string;
+	accountId: string;
+	workspaceAccountId: string;
+	status: BuildReleaseAcceptanceStatus;
+	decidedAt: string;
+	decidedBy: string;
+	note: string;
+}
+
 export type BuildReleaseInspectionIssueCode =
 	| 'manifest_invalid'
 	| 'receipt_missing'
@@ -97,6 +111,10 @@ export type BuildReleaseInspectionIssueCode =
 	| 'artifact_path_mismatch'
 	| 'artifact_hash_mismatch'
 	| 'package_path_escape'
+	| 'acceptance_missing'
+	| 'acceptance_hash_mismatch'
+	| 'acceptance_invalid'
+	| 'acceptance_identity_mismatch'
 	| 'verifier_failed'
 	| 'release_rejected';
 
@@ -110,6 +128,7 @@ export interface BuildReleaseInspectionIssue {
 export interface BuildReleaseInspection {
 	manifest: BuildReleaseManifest | null;
 	handoffReceipt: MapBuildHandoffReceipt | null;
+	acceptanceReceipt: BuildAcceptanceReceipt | null;
 	evidenceValid: boolean;
 	releaseReady: boolean;
 	issues: BuildReleaseInspectionIssue[];
@@ -366,7 +385,7 @@ export function parseBuildReleaseManifest(input: unknown): BuildReleaseManifest 
 	const acceptance = objectAt(
 		root.acceptance,
 		'$.acceptance',
-		['receiptId', 'status', 'decidedAt', 'decidedBy', 'note'],
+		['receiptPath', 'receiptSha256', 'receiptId', 'status'],
 		issues,
 	);
 
@@ -427,11 +446,15 @@ export function parseBuildReleaseManifest(input: unknown): BuildReleaseManifest 
 			support: stringAt(owners.support, '$.owners.support', issues),
 		},
 		acceptance: {
+			receiptPath: relativePathAt(acceptance.receiptPath, '$.acceptance.receiptPath', issues),
+			receiptSha256: stringAt(
+				acceptance.receiptSha256,
+				'$.acceptance.receiptSha256',
+				issues,
+				/^[a-f0-9]{64}$/,
+			),
 			receiptId: stringAt(acceptance.receiptId, '$.acceptance.receiptId', issues),
 			status: literalAt(acceptance.status, '$.acceptance.status', ['accepted', 'rejected'], issues),
-			decidedAt: isoTimestampAt(acceptance.decidedAt, '$.acceptance.decidedAt', issues),
-			decidedBy: stringAt(acceptance.decidedBy, '$.acceptance.decidedBy', issues),
-			note: stringAt(acceptance.note, '$.acceptance.note', issues),
 		},
 	};
 
@@ -507,6 +530,46 @@ export function parseMapBuildHandoffReceipt(input: unknown): MapBuildHandoffRece
 	return receipt;
 }
 
+export function parseBuildAcceptanceReceipt(input: unknown): BuildAcceptanceReceipt {
+	const issues: BuildReleaseValidationIssue[] = [];
+	const root = objectAt(
+		input,
+		'$',
+		[
+			'schema',
+			'receiptId',
+			'releaseId',
+			'handoffId',
+			'accountId',
+			'workspaceAccountId',
+			'status',
+			'decidedAt',
+			'decidedBy',
+			'note',
+		],
+		issues,
+	);
+
+	const receipt: BuildAcceptanceReceipt = {
+		schema: literalAt(root.schema, '$.schema', [BUILD_ACCEPTANCE_RECEIPT_SCHEMA], issues),
+		receiptId: stringAt(root.receiptId, '$.receiptId', issues),
+		releaseId: stringAt(root.releaseId, '$.releaseId', issues),
+		handoffId: stringAt(root.handoffId, '$.handoffId', issues),
+		accountId: stringAt(root.accountId, '$.accountId', issues),
+		workspaceAccountId: stringAt(root.workspaceAccountId, '$.workspaceAccountId', issues),
+		status: literalAt(root.status, '$.status', ['accepted', 'rejected'], issues),
+		decidedAt: isoTimestampAt(root.decidedAt, '$.decidedAt', issues),
+		decidedBy: stringAt(root.decidedBy, '$.decidedBy', issues),
+		note: stringAt(root.note, '$.note', issues),
+	};
+
+	if (issues.length > 0) {
+		throw new BuildReleaseValidationError(issues);
+	}
+
+	return receipt;
+}
+
 const CANONICAL_ARTIFACT_FILENAMES: Record<BuildReleaseArtifactName, string> = {
 	mcp_contract: 'mcp_contract.yaml',
 	agent_contract: 'agent_contract.yaml',
@@ -563,6 +626,7 @@ export function inspectBuildReleasePackage(manifestPath: string): BuildReleaseIn
 		return {
 			manifest: null,
 			handoffReceipt: null,
+			acceptanceReceipt: null,
 			evidenceValid: false,
 			releaseReady: false,
 			issues,
@@ -634,6 +698,71 @@ export function inspectBuildReleasePackage(manifestPath: string): BuildReleaseIn
 		}
 	}
 
+	let acceptanceReceipt: BuildAcceptanceReceipt | null = null;
+	const acceptancePath = resolvedPackagePath(
+		packageRoot,
+		manifest.acceptance.receiptPath,
+		'$.acceptance.receiptPath',
+		issues,
+	);
+	if (
+		acceptancePath !== null &&
+		(!existsSync(acceptancePath) || !statSync(acceptancePath).isFile())
+	) {
+		issues.push({
+			code: 'acceptance_missing',
+			category: 'integrity',
+			path: '$.acceptance.receiptPath',
+			message: `Build acceptance receipt is missing: ${manifest.acceptance.receiptPath}.`,
+		});
+	} else if (acceptancePath !== null) {
+		if (fileSha256(acceptancePath) !== manifest.acceptance.receiptSha256) {
+			issues.push({
+				code: 'acceptance_hash_mismatch',
+				category: 'integrity',
+				path: '$.acceptance.receiptSha256',
+				message: 'Build acceptance receipt SHA-256 does not match the manifest.',
+			});
+		}
+		try {
+			acceptanceReceipt = parseBuildAcceptanceReceipt(
+				JSON.parse(readFileSync(acceptancePath, 'utf8')) as unknown,
+			);
+		} catch (error) {
+			issues.push({
+				code: 'acceptance_invalid',
+				category: 'integrity',
+				path: '$.acceptance.receiptPath',
+				message: error instanceof Error ? error.message : String(error),
+			});
+		}
+	}
+
+	if (acceptanceReceipt !== null) {
+		const acceptanceIdentity = [
+			['receiptId', manifest.acceptance.receiptId, acceptanceReceipt.receiptId],
+			['releaseId', manifest.releaseId, acceptanceReceipt.releaseId],
+			['handoffId', manifest.handoff.handoffId, acceptanceReceipt.handoffId],
+			['accountId', manifest.handoff.accountId, acceptanceReceipt.accountId],
+			[
+				'workspaceAccountId',
+				manifest.handoff.workspaceAccountId,
+				acceptanceReceipt.workspaceAccountId,
+			],
+			['status', manifest.acceptance.status, acceptanceReceipt.status],
+		] as const;
+		for (const [field, manifestValue, receiptValue] of acceptanceIdentity) {
+			if (manifestValue !== receiptValue) {
+				issues.push({
+					code: 'acceptance_identity_mismatch',
+					category: 'integrity',
+					path: `$.acceptance.${field}`,
+					message: `Manifest ${field} does not match the Build acceptance receipt.`,
+				});
+			}
+		}
+	}
+
 	const seenArtifactPaths = new Set<string>();
 	for (const name of BUILD_RELEASE_ARTIFACTS) {
 		const reference = manifest.artifacts[name];
@@ -691,7 +820,7 @@ export function inspectBuildReleasePackage(manifestPath: string): BuildReleaseIn
 			});
 		}
 	}
-	if (manifest.acceptance.status === 'rejected') {
+	if (acceptanceReceipt?.status === 'rejected') {
 		issues.push({
 			code: 'release_rejected',
 			category: 'readiness',
@@ -704,6 +833,7 @@ export function inspectBuildReleasePackage(manifestPath: string): BuildReleaseIn
 	return {
 		manifest,
 		handoffReceipt,
+		acceptanceReceipt,
 		evidenceValid,
 		releaseReady: evidenceValid && !issues.some((issue) => issue.category === 'readiness'),
 		issues,
