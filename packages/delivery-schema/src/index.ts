@@ -11,7 +11,9 @@
  * Optionality follows the server's invariants (the API constructs complete
  * objects; renderers may still apply display fallbacks). Types only — no
  * runtime code, so `import type` consumers (including the Webflow CLI bundle)
- * carry zero weight from this package.
+ * carry zero weight from this package. Executable Build release validation is
+ * isolated behind the `@create-something/delivery-schema/build-release`
+ * subpath so this browser-facing root remains types-only.
  *
  * Context assembly (`CanonWorkflowContext`) currently lives in the agency
  * package; it migrates here in step 3 of docs/DELIVERY_SURFACE_SPEC.md.

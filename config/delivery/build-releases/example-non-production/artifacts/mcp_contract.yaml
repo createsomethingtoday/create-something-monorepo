@@ -1,0 +1,28 @@
+version: "1.0"
+contract_type: "mcp_contract"
+metadata:
+  client_name: "Example Non-Production"
+  engagement_id: "example-build-001"
+  package_name: "policy-os"
+  status: "draft"
+  approved_workflows:
+    - "read example tickets"
+  approval_mode: "human-in-the-loop"
+  escalation_policy: "runbook.md#escalation"
+  review_cadence: "before every fixture run"
+  billing_and_entitlement_assumptions:
+    service_tier: "fixture_only"
+    service_entitled: false
+    policy_accepted: false
+    contract_active: false
+    billing_active: false
+mcp_server:
+  name: "example-ticket-reader"
+  transport: "stdio"
+resources:
+  - id: "example-tickets"
+    uri: "fixture://tickets"
+tools:
+  - name: "list_example_tickets"
+    side_effect_level: "read"
+    approval_required: "always"

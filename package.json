@@ -326,6 +326,7 @@
     "delivery:site": "node scripts/delivery-page.mjs",
     "delivery:site:check": "node scripts/delivery-page.mjs --check",
     "delivery:site:deploy": "pnpm delivery:site && CLOUDFLARE_ACCOUNT_ID=9645bd52e640b8a4f40a3a55ff1dd75a pnpm dlx wrangler@4.103.0 pages deploy .cloudflare/delivery-site --project-name=create-something-deliveries --commit-dirty=true",
+    "build:release:check": "tsx scripts/build-release-check.ts",
     "webflow:components:verify": "pnpm --filter @create-something/webflow-components verify",
     "webflow:governance:generate": "node scripts/webflow-governance-control-plane.mjs generate",
     "webflow:governance:check": "node scripts/webflow-governance-control-plane.mjs check",

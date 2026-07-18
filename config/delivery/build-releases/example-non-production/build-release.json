@@ -1,0 +1,70 @@
+{
+  "schema": "create-something/build-release-manifest@1",
+  "releaseId": "release_example_nonprod_001",
+  "createdAt": "2026-07-18T12:00:00.000Z",
+  "handoff": {
+    "receiptPath": "receipts/map-handoff.json",
+    "receiptSha256": "83d429c4e37ec2617204632234c5cfff544ad078bdfa150f1dc82cc4b159fd06",
+    "handoffId": "handoff_example_nonprod_001",
+    "mapId": "map_example_nonprod_001",
+    "mapVersion": 1,
+    "accountId": "account_example_nonprod",
+    "workspaceAccountId": "workspace_example_nonprod"
+  },
+  "artifacts": {
+    "mcp_contract": {
+      "path": "artifacts/mcp_contract.yaml",
+      "sha256": "383ce5e72faf3b05f95fac3edab77897531fa50868243771e058ca86d65ead7a"
+    },
+    "agent_contract": {
+      "path": "artifacts/agent_contract.yaml",
+      "sha256": "9cdf155bd9fbd0762fde96fe6bbfe8e7da07a93f3f28452cc07b79b0e5dae1c6"
+    },
+    "outcome_contract": {
+      "path": "artifacts/outcome_contract.md",
+      "sha256": "2a5dc2bcf0823cf4d9dcb875f2be5a221cf1a2036e7f57fbbd65d37a6d53cb3f"
+    },
+    "golden_tasks": {
+      "path": "artifacts/golden_tasks.yaml",
+      "sha256": "15f250322eab19f01c320e31610b5703617d57f1f9dbc6a1fca0d6ee68260e6c"
+    },
+    "runbook": {
+      "path": "artifacts/runbook.md",
+      "sha256": "f305c42ee14a6a40a1ca48f244e42ed8069100faace993b8fb879b97a14238a3"
+    }
+  },
+  "verification": {
+    "staging": {
+      "receiptPath": "receipts/staging-verification.json",
+      "receiptSha256": "450b380e9e63a297e29bb4a6a4b6c0742219eb947aa7b69467ddbd39833ce144",
+      "receiptId": "fixture-verification-staging-001",
+      "status": "passed"
+    },
+    "uat": {
+      "receiptPath": "receipts/uat-verification.json",
+      "receiptSha256": "9304063343b0afbcd22668d0ae5cc2303e722d77d5a105cc017eab436f0b2a04",
+      "receiptId": "fixture-verification-uat-001",
+      "status": "passed"
+    }
+  },
+  "release": {
+    "environment": "staging",
+    "target": "example-non-production-fixture",
+    "sourceSha": "1111111111111111111111111111111111111111",
+    "deployId": "fixture-deploy-example-001",
+    "rollback": {
+      "command": "fixture rollback fixture-deploy-example-001",
+      "artifact": "fixture://build-release/example-non-production/previous"
+    }
+  },
+  "owners": {
+    "operator": "fixture-operator@example.test",
+    "support": "fixture-support@example.test"
+  },
+  "acceptance": {
+    "receiptPath": "receipts/build-acceptance.json",
+    "receiptSha256": "e1e5220fecc110b1c376cfd554aae1854b1be691849dadcc449797d2d3040b26",
+    "receiptId": "fixture-acceptance-example-001",
+    "status": "accepted"
+  }
+}
