@@ -1,0 +1,14 @@
+{
+  "schema": "create-something/map-to-build-handoff-receipt@1",
+  "handoffId": "handoff_example_nonprod_001",
+  "mapId": "map_example_nonprod_001",
+  "mapVersion": 1,
+  "accountId": "account_example_nonprod",
+  "workspaceAccountId": "workspace_example_nonprod",
+  "status": "accepted",
+  "createdAt": "2026-07-18T11:00:00.000Z",
+  "createdBy": "fixture-mapper@example.test",
+  "resolvedAt": "2026-07-18T11:30:00.000Z",
+  "resolvedBy": "fixture-builder@example.test",
+  "resolutionNote": "Synthetic Build intake accepted for verifier coverage only."
+}

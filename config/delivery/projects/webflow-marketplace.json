@@ -6,6 +6,11 @@
   "clientShortName": "Webflow",
   "audience": "business_review",
   "targetKind": "report_collection",
+  "buildReleasePackage": {
+    "status": "not_configured",
+    "manifestPath": null,
+    "note": "This bespoke delivery predates the versioned Build release package. Preserve its existing evidence, but do not infer accepted handoff, artifact hashes, UAT, rollback, or terminal acceptance."
+  },
   "deliveryDate": "2026-06-05",
   "headline": "A PM-ready report packet now connects Marketplace Code Components, richer search, Validator app enforcement, Asset Dashboard routing, and agent-review guardrails to the current business trajectory.",
   "recentChangePaths": [
