@@ -159,6 +159,9 @@ function lane_blockers(candidate) {
       blockers.push('A3 requires matching passed promotion packet, live proof, and rollback proof');
     }
   }
+  if (level === 'A2' && candidate.promotion?.rollback?.status !== 'passed') {
+    blockers.push('A2 requires passed rollback proof');
+  }
   if (level === 'A0' && candidate.source?.no_op?.verified !== true) {
     blockers.push('A0 is read-only and requires verified no-op source evidence');
   }
@@ -322,7 +325,14 @@ export class CanonicalHarnessGate {
   }
 
   async complete(issue, candidate) {
-    const recorded = await this.record(candidate, { issue_identifier: issue?.identifier });
+    const issue_identifier = issue?.identifier;
+    if (typeof issue_identifier !== 'string' || issue_identifier.length === 0) {
+      throw new SymphonyError(
+        'canonical_issue_identifier_required',
+        'Canonical completion requires a non-empty Linear issue identifier.',
+      );
+    }
+    const recorded = await this.record(candidate, { issue_identifier });
     if (!recorded.receipt.eligible_for_done) {
       return { ...recorded, completed: false, completed_issue: null };
     }
@@ -330,7 +340,7 @@ export class CanonicalHarnessGate {
       throw new SymphonyError('canonical_tracker_unavailable', 'Canonical completion requires a tracker completion seam.');
     }
     const persisted_receipt = await this.read(recorded.receipt_path, {
-      issue_identifier: issue?.identifier,
+      issue_identifier,
       expected_receipt: recorded.receipt,
     });
     if (!persisted_receipt.eligible_for_done) {

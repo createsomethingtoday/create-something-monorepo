@@ -96,6 +96,17 @@ function valid_reviewed_candidate(level = 'A2', overrides = {}) {
       unchanged: true,
       findings: [],
     },
+    promotion: level === 'A2'
+      ? {
+          packet: null,
+          live: null,
+          rollback: {
+            target: 'bounded-self-heal',
+            status: 'passed',
+            evidence: 'Rollback note identifies how to reverse the deterministic repair.',
+          },
+        }
+      : null,
     ...overrides,
   };
 }
@@ -194,6 +205,13 @@ test('canonical gate requires independent reviewed evidence for A2 work', () => 
   assert.equal(decision.eligible_for_done, false);
   assert.ok(decision.blockers.includes('A2 requires passed reviewer and integrator receipts'));
   assert.ok(decision.blockers.includes('A2 requires independent read-only review with an unchanged fingerprint'));
+});
+
+test('canonical gate requires rollback proof for A2 self-heal work', () => {
+  const decision = evaluate_canonical_harness_receipt(valid_reviewed_candidate('A2', { promotion: null }));
+
+  assert.equal(decision.eligible_for_done, false);
+  assert.ok(decision.blockers.includes('A2 requires passed rollback proof'));
 });
 
 test('canonical gate requires promotion, live, and rollback proof for A3 work', () => {
@@ -392,6 +410,26 @@ test('canonical gate preserves Linear when receipt identity does not match the c
   assert.ok(result.receipt.blockers.includes('receipt issue CRE-1304 does not match completion issue CRE-OTHER'));
   const persisted = JSON.parse(await readFile(result.receipt_path, 'utf8'));
   assert.equal(persisted.eligible_for_done, false);
+});
+
+test('canonical gate refuses completion when the Linear issue identifier is unavailable', async (t) => {
+  const root = await mkdtemp(join(tmpdir(), 'canonical-gate-missing-identity-'));
+  t.after(async () => rm(root, { recursive: true, force: true }));
+  let completion_calls = 0;
+  const gate = new CanonicalHarnessGate({
+    tracker: {
+      async complete_issue() {
+        completion_calls += 1;
+      },
+    },
+    output_root: join(root, 'runs'),
+  });
+
+  await assert.rejects(
+    gate.complete({ id: 'linear-id' }, valid_a1_candidate()),
+    (error) => error?.code === 'canonical_issue_identifier_required',
+  );
+  assert.equal(completion_calls, 0);
 });
 
 test('canonical gate never mutates Linear for validation failures', async (t) => {

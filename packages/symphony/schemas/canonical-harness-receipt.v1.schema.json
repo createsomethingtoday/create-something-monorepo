@@ -243,10 +243,16 @@
       "additionalProperties": false,
       "required": ["packet", "live", "rollback"],
       "properties": {
-        "packet": { "$ref": "#/$defs/proof" },
-        "live": { "$ref": "#/$defs/proof" },
+        "packet": { "$ref": "#/$defs/nullableProof" },
+        "live": { "$ref": "#/$defs/nullableProof" },
         "rollback": { "$ref": "#/$defs/proof" }
       }
+    },
+    "nullableProof": {
+      "anyOf": [
+        { "$ref": "#/$defs/proof" },
+        { "type": "null" }
+      ]
     },
     "tokens": {
       "type": "object",

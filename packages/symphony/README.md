@@ -32,7 +32,8 @@ tracker's terminal completion seam.
 
 The gate requires source diff or verified no-op evidence, direct results for
 every acceptance criterion, lane-appropriate stage receipts, independent
-read-only review for A2/A3, and promotion, live, and rollback proof for A3.
+read-only review plus rollback proof for A2/A3, and matching promotion and live
+proof for A3.
 A4 is never eligible for autonomous completion. Unknown fields, caller-supplied
 eligibility, issue-identity mismatches, corrupt receipts, and tampered computed
 fields all fail closed without a tracker mutation.
