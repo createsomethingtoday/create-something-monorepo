@@ -20,6 +20,14 @@ Use `PerformanceNarrativeStage` when two or more adjacent chapters are parts of 
 
 Judge the stage in the complete page. The opening must create the question, the stage must resolve it with proof, and the final handoff must be the earned next action. Do not use the stage to combine unrelated ideas, preserve duplicated introductions, or add motion that competes with the page argument. Property artifacts stay behind the scene-aware `artifact` snippet; Canon owns only selection, responsive composition, focus, state, and fallback behavior.
 
+## Whole-page sharpness contract
+
+The composition grammar sits inside a stricter whole-page contract. Every CREATE SOMETHING page declares one decision, one narrative or task spine, bounded chapter roles, one primary proof location, and one earned handoff. The stable archetypes are `landing`, `commercial`, `editorial`, `index`, `learning`, and `tool`; each has a different chapter budget and canonical spine. A long article body, collection, learning sequence, or live workspace remains one top-level chapter even when its internal structure is rich.
+
+Use `validatePerformancePageContract` and the exported `PerformancePage*` types to validate the contract through Canon's public interface. The cross-property registry and fail-closed commands are documented in [`docs/PERFORMANCE_PAGE_SHARPNESS.md`](../../../../../../docs/PERFORMANCE_PAGE_SHARPNESS.md). A new route must be registered explicitly; authenticated and operator pages use the `tool` contract rather than escaping the system.
+
+The universal sequence is not permission to make properties or page types look alike. Canon owns the vocabulary, budgets, responsive behavior, and validation. Properties keep their words, media, evidence, data, and domain action. Choose a static chapter, index, field sequence, narrative stage, editorial body, or work surface according to the communication problem.
+
 Use `density="compact"` on `PerformanceCampaignOpening`, `PerformancePageSection`, `PerformanceDecisionPanel`, `PerformanceConversionHandoff`, and `PropertyFunnel` when the full content contract can remain visible with a shorter vertical commitment. Compact density changes spacing and responsive composition only. It must not hide summaries, remove evidence, or turn multiple unchanged chapters into one wrapper. `PropertyFunnel` may also carry a compact `handoff` ledger when progression and the final authority boundary belong to the same decision.
 
 ## Ownership boundary

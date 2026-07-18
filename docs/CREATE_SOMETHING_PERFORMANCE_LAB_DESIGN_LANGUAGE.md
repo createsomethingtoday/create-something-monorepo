@@ -225,3 +225,9 @@ band, and representative property rollout. The active hybrid rollout adds:
 
 The detailed visual rubric and asset provenance contract live in
 `docs/PERFORMANCE_LAB_VISUAL_GRAMMAR.md`.
+
+Whole-page communication follows the separate, executable
+[`Performance Page Sharpness`](./PERFORMANCE_PAGE_SHARPNESS.md) contract. The visual
+grammar determines how Performance Lab feels; the sharpness contract determines
+what each page must communicate, how many top-level roles it may carry, where
+proof belongs, and what counts as a complete handoff.
