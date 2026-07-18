@@ -108,3 +108,26 @@ test('pending ShivWorks offboarding stays non-destructive until its owning appro
 	assert.match(migration, /preserv/i);
 	assert.match(migration, /approval/i);
 });
+
+test('forward recovery restores a missing ShivWorks context without overwriting an existing row', () => {
+	const directory = mkdtempSync(join(tmpdir(), 'shivworks-context-recovery-'));
+	const database = join(directory, 'test.sqlite');
+	try {
+		const schema = readFileSync(new URL('0021_canon_workflow_contexts.sql', migrationRoot), 'utf8');
+		const recovery = readFileSync(new URL('0038_restore_shivworks_delivery_context.sql', migrationRoot), 'utf8');
+		sqlite(database, schema);
+		sqlite(database, recovery);
+		assert.equal(
+			sqlite(database, "SELECT COUNT(*) FROM canon_workflow_contexts WHERE context_id = 'shivworks-network-handoff';"),
+			'1'
+		);
+		sqlite(database, "UPDATE canon_workflow_contexts SET title = 'Environment-owned title' WHERE context_id = 'shivworks-network-handoff';");
+		sqlite(database, recovery);
+		assert.equal(
+			sqlite(database, "SELECT title FROM canon_workflow_contexts WHERE context_id = 'shivworks-network-handoff';"),
+			'Environment-owned title'
+		);
+	} finally {
+		rmSync(directory, { recursive: true, force: true });
+	}
+});
