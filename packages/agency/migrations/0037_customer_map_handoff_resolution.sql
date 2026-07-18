@@ -8,6 +8,12 @@ ALTER TABLE customer_map_handoffs ADD COLUMN resolved_by TEXT;
 ALTER TABLE customer_map_handoffs ADD COLUMN resolution_note TEXT
   CHECK (resolution_note IS NULL OR length(resolution_note) <= 240);
 
+-- Prepared rows are not accepted. Remove timestamps the legacy schema allowed
+-- so a future terminal decision can satisfy the new state invariant.
+UPDATE customer_map_handoffs
+SET accepted_at = NULL
+WHERE status = 'prepared' AND accepted_at IS NOT NULL;
+
 -- Preserve legacy accepted rows without inventing an operator identity.
 UPDATE customer_map_handoffs
 SET accepted_at = COALESCE(accepted_at, created_at),
