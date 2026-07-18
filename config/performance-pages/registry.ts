@@ -45,23 +45,41 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     'agency',
     [
       'bearer-token-policy',
-      'delivery',
-      'delivery/abundance',
-      'dify/agent-eval-gates',
-      'dify/mcp-control-plane',
-      'dify/ship-dify-app-with-mcp-tools',
-      'dify/template-marketplace-proof',
       'field-reports/template-review',
       'methodology',
       'practice',
       'proof/marketplace-workflow'
     ],
-    'pending',
+    'migrated',
     contract(
       'editorial',
       'Assess the operating argument and decide whether to apply its boundary.',
       'The field report, implementation artifact, or policy evidence supports the argument.',
       'Apply the proven boundary to one workflow'
+    )
+  ),
+  group(
+    'agency-delivery-index',
+    'agency',
+    ['delivery'],
+    'pending',
+    contract(
+      'index',
+      'Choose the delivery record that needs review.',
+      'The collection exposes client-safe state, outcome, and a direct review destination.',
+      'Open one delivery record'
+    )
+  ),
+  group(
+    'agency-delivery-tool',
+    'agency',
+    ['delivery/abundance'],
+    'pending',
+    contract(
+      'tool',
+      'Review the delivery state and resolve the next client-safe question.',
+      'The delivery surface separates public artifacts, private evidence, agent guidance, and owner decisions.',
+      'Ask, inspect, or hand off the next governed decision'
     )
   ),
   group(
@@ -192,6 +210,18 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     ['dify'],
     'redirect',
     'Preserves an edge compatibility route that redirects retired Dify positioning to the owned stack page.'
+  ),
+  exclusion(
+    'agency-dify-archive-redirects',
+    'agency',
+    [
+      'dify/agent-eval-gates',
+      'dify/mcp-control-plane',
+      'dify/ship-dify-app-with-mcp-tools',
+      'dify/template-marketplace-proof'
+    ],
+    'redirect',
+    'Retains checked-in historical implementation context behind live compatibility routes that redirect the retired Dify cluster to the owned stack page.'
   ),
 
   group(

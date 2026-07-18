@@ -84,22 +84,28 @@ test('public Field Report leads with the decision and keeps eval scope explicit'
   assert.doesNotMatch(route, /layoff|head[ -]?count|replace(?:d|ment)? people/i);
 });
 
-test('public Field Report places the failed judgment before one combined economics section', () => {
+test('public Field Report orders the evidence argument before one combined economics scene', () => {
   const route = readFileSync(
     new URL('../src/routes/field-reports/template-review/+page.svelte', import.meta.url),
     'utf8'
   );
-  const syntheticRuntime = route.indexOf('Current runtime check / Synthetic');
-  const failedJudgment = route.indexOf('Automated judgment was not ready.');
-  const combinedEconomics = route.indexOf(
-    'One measured packet sets the cost. The supplied baseline models the capacity.'
-  );
-  const evidenceBasis = route.indexOf('Evidence basis');
+  const resultScene = route.indexOf("id: 'result'");
+  const boundaryScene = route.indexOf("id: 'boundary'");
+  const economicsScene = route.indexOf("id: 'economics'");
+  const evidenceScene = route.indexOf("id: 'evidence'");
 
-  assert.ok(syntheticRuntime >= 0, 'synthetic runtime section is present');
-  assert.ok(failedJudgment > syntheticRuntime, 'failed judgment follows the synthetic runtime');
-  assert.ok(combinedEconomics > failedJudgment, 'economics follows the failed judgment');
-  assert.ok(evidenceBasis > combinedEconomics, 'evidence index follows the combined economics');
+  assert.match(route, /PerformanceNarrativeStage/);
+  assert.match(route, /Current runtime check \/ Synthetic/);
+  assert.ok(resultScene >= 0, 'result scene is present');
+  assert.ok(boundaryScene > resultScene, 'failed judgment follows the result scene');
+  assert.ok(economicsScene > boundaryScene, 'economics follows the failed judgment');
+  assert.ok(evidenceScene > economicsScene, 'evidence follows the combined economics');
+  assert.equal(
+    route.match(/One measured packet sets the cost\. The supplied baseline models the capacity\./g)
+      ?.length,
+    1,
+    'economics stays one combined scene'
+  );
   assert.doesNotMatch(route, /One live packet cost about eleven cents\./i);
   assert.doesNotMatch(route, /One observed packet models to about 36 an hour\./i);
 });

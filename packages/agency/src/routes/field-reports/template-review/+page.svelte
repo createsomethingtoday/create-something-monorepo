@@ -4,11 +4,12 @@
     PerformanceCampaignOpening,
     PerformanceConversionHandoff,
     PerformanceEvidenceIndex,
-    PerformancePageSection,
+    PerformanceNarrativeStage,
     PerformanceThesisConditions,
     SEO,
     type PerformanceCondition,
-    type PerformanceEvidenceItem
+    type PerformanceEvidenceItem,
+    type PerformanceNarrativeScene
   } from '@create-something/canon';
   import {
     getTemplateReviewPacketCompletion,
@@ -53,6 +54,61 @@
       href: source.href
     })
   );
+
+  const fieldReportScenes: PerformanceNarrativeScene[] = [
+    {
+      id: 'result',
+      label: 'Result',
+      summary: '49 / 50 packets',
+      title: 'The collector worked. The quality judge stayed blocked.',
+      detail:
+        'Evidence collection completed for 49 of 50 selected cases in a balanced shadow sample. That measures packet completion—not decision accuracy, reviewer capacity, or business impact.',
+      tone: 'review',
+      evidence: [
+        '49 / 50 packet completion',
+        'Current runtime check / Synthetic',
+        'human decision retained'
+      ]
+    },
+    {
+      id: 'boundary',
+      label: 'Boundary',
+      summary: 'Promotion remains blocked',
+      title: 'Automated judgment was not ready.',
+      detail:
+        'The initial broad reviewer missed both historical exceptional examples. The best later specialist still missed one of two, so evidence preparation may continue while official judgment stays human.',
+      tone: 'block',
+      receipts: [
+        'best current run: 1 / 2 missed',
+        'promotion: blocked',
+        'decision owner: human reviewer'
+      ]
+    },
+    {
+      id: 'economics',
+      label: 'Economics',
+      summary: 'Measured cost, modeled capacity',
+      title: 'One measured packet sets the cost. The supplied baseline models the capacity.',
+      detail:
+        'On July 13, one blind private case measured 99.5 seconds elapsed and USD 0.1117 in provider cost. Against the user-provided human baseline of two to four templates per hour, that pace models to about 36 packets per hour and 9–18× throughput. This remains a one-case cost observation and capacity scenario—not proof of equivalent review quality, reviewer verification time, or cash savings.',
+      tone: 'neutral',
+      evidence: [
+        '99.5 seconds',
+        'USD 0.1117',
+        '2–4 / hour supplied baseline',
+        '~36 / hour modeled capacity'
+      ]
+    },
+    {
+      id: 'evidence',
+      label: 'Evidence',
+      summary: 'Claims stay dated and bounded',
+      title: 'The claims stay attached to dated records.',
+      detail:
+        'Reviewer time savings are not measured. The source records and measurement plan keep packet completion, judgment quality, capacity scenarios, and remaining unknowns separate.',
+      tone: 'allow'
+    }
+  ];
 </script>
 
 <SEO
@@ -84,157 +140,153 @@
     {/snippet}
   </PerformanceCampaignOpening>
 
-  <section id="result" class="field-result" aria-labelledby="field-result-title">
-    <header>
-      <span>Decision summary</span>
-      <div>
-        <h2 id="field-result-title">The collector worked. The quality judge stayed blocked.</h2>
-        <p>
-          Evidence collection completed for 49 of 50 selected cases in a deliberately balanced
-          shadow sample. That result measures packet completion—not decision accuracy, reviewer
-          capacity, or business impact.
-        </p>
-      </div>
-    </header>
-    <dl class="field-result__metrics">
-      <div>
-        <dt>Packet completion</dt>
-        <dd>49 / 50</dd>
-        <small>{packetCompletion}% of selected cases</small>
-      </div>
-      <div>
-        <dt>Judgment promotion</dt>
-        <dd>Blocked</dd>
-        <small>1 of 2 exceptional examples missed</small>
-      </div>
-      <div>
-        <dt>Reviewer time saved</dt>
-        <dd>Unmeasured</dd>
-        <small>Requires a matched pilot</small>
-      </div>
-    </dl>
-  </section>
-
-  <PerformanceThesisConditions
-    eyebrow="What the evidence says"
-    title="Collection worked. Judgment did not earn promotion."
-    description={templateReviewFieldReport.hypothesis}
-    conditions={resultConditions}
-    ariaLabel="Template review measured results and limits"
-  />
-
-  <PerformancePageSection
-    variant="soft"
-    eyebrow="Current runtime check / Synthetic"
-    title="Five Dify agents held the boundary in controlled tests."
-    description="On July 12, the central Template Review Hub and four reviewer-specific agents passed their current contract and safety suites. These were synthetic sessions, not production usage or evidence of review quality."
+  <PerformanceNarrativeStage
+    id="result"
+    eyebrow="One evidence argument"
+    title="Result. Boundary. Economics. Evidence."
+    description="The report keeps four different questions separate: did collection work, did judgment earn promotion, what did one packet cost, and which claims remain measured or unresolved."
+    scenes={fieldReportScenes}
+    ariaLabel="Template review Field Report argument"
   >
-    {#snippet after()}
-      <div class="runtime-evidence" aria-label="Template Review Dify synthetic eval results">
-        <article>
-          <span>Central agent</span>
-          <strong>7 / 7 live checks</strong>
-          <p>Tool routing, schema discovery, policy, narrow writes, and secret refusal passed.</p>
-        </article>
-        <article>
-          <span>Four reviewer agents</span>
-          <strong>32 live boundary scenarios</strong>
-          <p>All passed without forbidden writes; median response time was about 10 seconds.</p>
-        </article>
-        <article>
-          <span>Evidence limit</span>
-          <strong>Not production usage</strong>
+    {#snippet artifact(scene: PerformanceNarrativeScene)}
+      {#if scene.id === 'result'}
+        <section class="field-result" aria-labelledby="field-result-title">
+          <header>
+            <span>Decision summary</span>
+            <div>
+              <h2 id="field-result-title">Collection worked. Judgment did not earn promotion.</h2>
+              <p>{templateReviewFieldReport.hypothesis}</p>
+            </div>
+          </header>
+          <dl class="field-result__metrics">
+            <div>
+              <dt>Packet completion</dt>
+              <dd>49 / 50</dd>
+              <small>{packetCompletion}% of selected cases</small>
+            </div>
+            <div>
+              <dt>Judgment promotion</dt>
+              <dd>Blocked</dd>
+              <small>1 of 2 exceptional examples missed</small>
+            </div>
+            <div>
+              <dt>Reviewer time saved</dt>
+              <dd>Unmeasured</dd>
+              <small>Requires a matched pilot</small>
+            </div>
+          </dl>
+        </section>
+        <PerformanceThesisConditions
+          eyebrow="What the evidence says"
+          title="Measured result and limits"
+          description="Packet completion, objective findings, and the official decision remain different claims."
+          conditions={resultConditions}
+          ariaLabel="Template review measured results and limits"
+        />
+        <section class="stage-evidence-block" aria-labelledby="synthetic-check-title">
+          <h4 id="synthetic-check-title">
+            Five Dify agents held the boundary in controlled tests.
+          </h4>
           <p>
-            Langfuse readback was not available in this environment, so current ingestion and
-            organic session volume remain unverified.
+            On July 12, the central Template Review Hub and four reviewer-specific agents passed
+            their current contract and safety suites. These were synthetic sessions, not production
+            usage or evidence of review quality.
           </p>
-        </article>
-      </div>
-    {/snippet}
-  </PerformancePageSection>
-
-  <section class="failed-boundary" aria-labelledby="failed-boundary-title">
-    <div class="failed-boundary__status">
-      <span>Promotion blocked</span>
-      <strong>1 / 2 missed</strong>
-      <small>Best current specialist run</small>
-    </div>
-    <div>
-      <span>Failed boundary / Judgment</span>
-      <h2 id="failed-boundary-title">Automated judgment was not ready.</h2>
-      <p>
-        The initial broad reviewer missed both historical exceptional examples. A later specialist
-        improved that result, but the best current run still missed one of two historical
-        exceptional examples. Promotion remains blocked. The evidence collector can stay useful
-        without turning its findings into an official review decision.
-      </p>
-    </div>
-  </section>
-
-  <PerformancePageSection
-    eyebrow="Economics + capacity / One measured case"
-    title="One measured packet sets the cost. The supplied baseline models the capacity."
-    description="On July 13, one blind private case measured 99.5 seconds elapsed and USD 0.1117 in provider cost. Against the user-provided human baseline of two to four templates per hour, that pace models to about 36 packets per hour and 9–18× throughput. This remains a one-case cost observation and capacity scenario—not proof of equivalent review quality, reviewer verification time, or cash savings."
-  >
-    {#snippet after()}
-      <div class="runtime-evidence" aria-label="Template Review measured cost and modeled capacity">
-        <article>
-          <span>Measured packet</span>
-          <strong>99.5 sec · USD 0.1117</strong>
-          <p>
-            One blind private case. Active stages totaled 77.6 seconds: E2B took 32.7 seconds and
-            measured USD 0.00121; GPT-5.5 took 45.0 seconds and measured USD 0.11052.
-          </p>
-        </article>
-        <article>
-          <span>Supplied human baseline</span>
-          <strong>2–4 / hour</strong>
-          <p>This scenario input was user-provided; it was not timed in the one-case pilot.</p>
-        </article>
-        <article>
-          <span>Modeled capacity</span>
-          <strong>~36 / hour · 9–18×</strong>
-          <p>
-            Throughput only. Equivalent quality, human verification time, reviewer time saved, and
-            cash savings remain unmeasured.
-          </p>
-        </article>
-      </div>
-    {/snippet}
-  </PerformancePageSection>
-
-  <PerformanceEvidenceIndex
-    eyebrow="Evidence basis"
-    title="The claims stay attached to dated records."
-    description="Open the dated source records for the selected sample, packet result, failed judgment gate, synthetic runtime checks, and unresolved business measurement."
-    items={evidenceItems}
-    ariaLabel="Template review Field Report evidence records"
-  />
-
-  <PerformancePageSection
-    variant="soft"
-    eyebrow="What remains unproven"
-    title="Reviewer time savings are not measured."
-    description={templateReviewFieldReport.savings.statement}
-  >
-    {#snippet after()}
-      <div class="measurement-plan">
-        <div class="measurement-plan__formula">
-          <span>Capacity calculation</span>
-          <strong>{templateReviewFieldReport.savings.formula}</strong>
-          <p>Report the sample size, submission mix, and quality measures beside any result.</p>
+          <div class="runtime-evidence" aria-label="Template Review Dify synthetic eval results">
+            <article>
+              <span>Central agent</span><strong>7 / 7 live checks</strong>
+              <p>
+                Tool routing, schema discovery, policy, narrow writes, and secret refusal passed.
+              </p>
+            </article>
+            <article>
+              <span>Four reviewer agents</span><strong>32 live boundary scenarios</strong>
+              <p>All passed without forbidden writes; median response time was about 10 seconds.</p>
+            </article>
+            <article>
+              <span>Evidence limit</span><strong>Not production usage</strong>
+              <p>
+                Langfuse readback was not available in this environment, so current ingestion and
+                organic session volume remain unverified.
+              </p>
+            </article>
+          </div>
+        </section>
+      {:else if scene.id === 'boundary'}
+        <section class="failed-boundary" aria-labelledby="failed-boundary-title">
+          <div class="failed-boundary__status">
+            <span>Promotion blocked</span><strong>1 / 2 missed</strong><small
+              >Best current specialist run</small
+            >
+          </div>
+          <div>
+            <span>Failed boundary / Judgment</span>
+            <h2 id="failed-boundary-title">Automated judgment was not ready.</h2>
+            <p>
+              The initial broad reviewer missed both historical exceptional examples. A later
+              specialist improved that result, but the best current run still missed one of two
+              historical exceptional examples. Promotion remains blocked. The evidence collector can
+              stay useful without turning its findings into an official review decision.
+            </p>
+          </div>
+        </section>
+      {:else if scene.id === 'economics'}
+        <div
+          class="runtime-evidence"
+          aria-label="Template Review measured cost and modeled capacity"
+        >
+          <article>
+            <span>Measured packet</span><strong>99.5 sec · USD 0.1117</strong>
+            <p>
+              One blind private case. Active stages totaled 77.6 seconds: E2B took 32.7 seconds and
+              measured USD 0.00121; GPT-5.5 took 45.0 seconds and measured USD 0.11052.
+            </p>
+          </article>
+          <article>
+            <span>Supplied human baseline</span><strong>2–4 / hour</strong>
+            <p>This scenario input was user-provided; it was not timed in the one-case pilot.</p>
+          </article>
+          <article>
+            <span>Modeled capacity</span><strong>~36 / hour · 9–18×</strong>
+            <p>
+              Throughput only. Equivalent quality, human verification time, reviewer time saved, and
+              cash savings remain unmeasured.
+            </p>
+          </article>
         </div>
-        <ol>
-          {#each templateReviewFieldReport.savings.instrumentation as item, index}
-            <li>
-              <span>{String(index + 1).padStart(2, '0')}</span>
-              <p>{item}</p>
-            </li>
-          {/each}
-        </ol>
-      </div>
+      {:else}
+        <div class="field-evidence-stack">
+          <PerformanceEvidenceIndex
+            eyebrow="Evidence basis"
+            title="Open the dated source records."
+            description="The selected sample, packet result, failed judgment gate, synthetic runtime checks, and unresolved business measurement remain inspectable."
+            items={evidenceItems}
+            ariaLabel="Template review Field Report evidence records"
+          />
+          <section class="stage-evidence-block" aria-labelledby="measurement-plan-title">
+            <h4 id="measurement-plan-title">Reviewer time savings are not measured.</h4>
+            <p>{templateReviewFieldReport.savings.statement}</p>
+            <div class="measurement-plan">
+              <div class="measurement-plan__formula">
+                <span>Capacity calculation</span><strong
+                  >{templateReviewFieldReport.savings.formula}</strong
+                >
+                <p>
+                  Report the sample size, submission mix, and quality measures beside any result.
+                </p>
+              </div>
+              <ol>
+                {#each templateReviewFieldReport.savings.instrumentation as item, index}<li>
+                    <span>{String(index + 1).padStart(2, '0')}</span>
+                    <p>{item}</p>
+                  </li>{/each}
+              </ol>
+            </div>
+          </section>
+        </div>
+      {/if}
     {/snippet}
-  </PerformancePageSection>
+  </PerformanceNarrativeStage>
 
   <PerformanceConversionHandoff
     eyebrow="Business implication"
@@ -282,6 +334,38 @@
     color: var(--color-performance-ink, #090909);
   }
 
+  .field-evidence-stack,
+  .stage-evidence-block {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .field-evidence-stack {
+    gap: clamp(1.25rem, 3vw, 2.5rem);
+  }
+
+  .stage-evidence-block {
+    padding: clamp(1rem, 2.5vw, 2rem);
+    border: 1px solid var(--color-performance-line-strong, #9c9c96);
+  }
+
+  .stage-evidence-block h4,
+  .stage-evidence-block > p {
+    margin: 0;
+  }
+
+  .stage-evidence-block h4 {
+    max-width: 30ch;
+    font-size: clamp(1.35rem, 3vw, 2.4rem);
+    line-height: 1.08;
+  }
+
+  .stage-evidence-block > p {
+    max-width: 52rem;
+    color: var(--color-performance-muted, #5e6268);
+    line-height: 1.55;
+  }
+
   .field-result > header > span,
   .field-result__metrics dt,
   .field-result__metrics small,
@@ -297,7 +381,7 @@
 
   .field-result {
     width: min(var(--content-width-performance, 85rem), calc(100% - 2.5rem));
-    margin: clamp(3rem, 7vw, 7rem) auto;
+    margin: 0 auto 1.5rem;
     border: 1px solid var(--color-performance-ink, #090909);
   }
 

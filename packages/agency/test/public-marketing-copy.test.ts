@@ -196,7 +196,7 @@ test('commercial decision routes lead with plain meaning before owned terminolog
   assert.match(stack, /You keep the accounts, data, approval rights, and operating history/);
   assert.match(stack, /title="What You Keep \| CREATE SOMETHING \.agency"/);
   assert.match(proof, /title="Turn a watched review queue into a testable workflow\."/);
-  assert.match(proof, /title="Spend less time rebuilding context\."/);
+  assert.match(proof, /title(?:=|:)\s*["']Spend less time rebuilding context\.["']/);
   assert.match(proof, /prototype measurements, not customer ROI claims/);
 });
 
