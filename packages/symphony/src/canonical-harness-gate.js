@@ -142,21 +142,23 @@ function lane_blockers(candidate) {
   if (expected_lane && lane !== expected_lane) {
     blockers.push(`${level} requires lane ${expected_lane}`);
   }
-  for (const stage_name of ['worker', 'reviewer', 'integrator']) {
+  for (const stage_name of ['scout', 'worker', 'reviewer', 'integrator']) {
     blockers.push(...stage_identity_blockers(candidate, stage_name));
   }
-  if (['A0', 'A1', 'A2', 'A3'].includes(level) && !passed_stage(candidate.stages?.worker)) {
-    blockers.push(`${level} requires a passed worker receipt`);
+  const execution_stage_name = level === 'A0' ? 'scout' : 'worker';
+  const execution_stage = candidate.stages?.[execution_stage_name];
+  if (['A0', 'A1', 'A2', 'A3'].includes(level) && !passed_stage(execution_stage)) {
+    blockers.push(`${level} requires a passed ${execution_stage_name} receipt`);
   }
-  if (['A0', 'A1', 'A2', 'A3'].includes(level) && passed_stage(candidate.stages?.worker)) {
-    const worker_paths = Array.isArray(candidate.stages.worker.changed_paths)
-      ? candidate.stages.worker.changed_paths
+  if (['A0', 'A1', 'A2', 'A3'].includes(level) && passed_stage(execution_stage)) {
+    const execution_stage_paths = Array.isArray(execution_stage.changed_paths)
+      ? execution_stage.changed_paths
       : [];
     const integrator_paths = Array.isArray(candidate.stages?.integrator?.changed_paths)
       ? candidate.stages.integrator.changed_paths
       : [];
     const execution_paths = [
-      ...worker_paths,
+      ...execution_stage_paths,
       ...(['A2', 'A3'].includes(level) ? integrator_paths : []),
     ];
     if (!same_paths(execution_paths, candidate.source?.changed_paths)) {

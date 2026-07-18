@@ -247,8 +247,9 @@
     "stages": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["worker", "reviewer", "integrator"],
+      "required": ["scout", "worker", "reviewer", "integrator"],
       "properties": {
+        "scout": { "$ref": "#/$defs/nullableStage" },
         "worker": { "$ref": "#/$defs/nullableStage" },
         "reviewer": { "$ref": "#/$defs/nullableStage" },
         "integrator": { "$ref": "#/$defs/nullableStage" }

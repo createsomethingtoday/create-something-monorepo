@@ -34,6 +34,7 @@ function valid_a1_candidate(overrides = {}) {
       results: [{ criterion_id: 'gate', kind: 'command', status: 'passed', evidence: 'node --test passed' }],
     },
     stages: {
+      scout: null,
       worker: existing_stage_receipt(
         'worker',
         ['packages/symphony/src/canonical-harness-gate.js'],
@@ -61,6 +62,37 @@ function valid_a1_candidate(overrides = {}) {
     },
     outcome: { delivered: true, summary: 'Canonical gate behavior verified.' },
     status: 'passed',
+    ...overrides,
+  };
+}
+
+function valid_a0_candidate(overrides = {}) {
+  const candidate = valid_a1_candidate();
+  return {
+    ...candidate,
+    routing: {
+      autonomy_level: 'A0',
+      lane: 'scout',
+      policy_artifacts: [{ id: 'policy.operator-agent-production-lab.v1', version: '1' }],
+      reasons: ['Read-only scout work.'],
+    },
+    source: {
+      ...candidate.source,
+      before_fingerprint: 'unchanged-a0',
+      after_fingerprint: 'unchanged-a0',
+      changed_paths: [],
+      no_op: {
+        verified: true,
+        verifier: 'git diff --quiet',
+        evidence: 'Read-only scout produced no source changes.',
+      },
+    },
+    stages: {
+      scout: existing_stage_receipt('scout', [], 'Scout verified the repository without writes.'),
+      worker: null,
+      reviewer: null,
+      integrator: null,
+    },
     ...overrides,
   };
 }
@@ -365,14 +397,12 @@ test('canonical gate rejects changed work without a real diff and no-op work wit
 });
 
 test('canonical gate keeps A0 read-only and rejects unsupported stage receipts', () => {
-  const changed_a0 = valid_a1_candidate({
-    routing: {
-      autonomy_level: 'A0',
-      lane: 'scout',
-      policy_artifacts: [{ id: 'policy.operator-agent-production-lab.v1', version: '1' }],
-      reasons: ['Read-only scout work.'],
-    },
-  });
+  const changed_a0 = valid_a0_candidate();
+  changed_a0.source.before_fingerprint = 'before-a0-write';
+  changed_a0.source.after_fingerprint = 'after-a0-write';
+  changed_a0.source.changed_paths = ['packages/symphony/src/canonical-harness-gate.js'];
+  changed_a0.source.no_op = null;
+  changed_a0.stages.scout.changed_paths = ['packages/symphony/src/canonical-harness-gate.js'];
   const unsupported = valid_a1_candidate();
   unsupported.stages.worker.schema_version = 'unsupported-receipt.v0';
 
@@ -386,23 +416,7 @@ test('canonical gate keeps A0 read-only and rejects unsupported stage receipts',
 });
 
 test('canonical gate admits complete A0 through A3 evidence', () => {
-  const a0 = valid_a1_candidate({
-    routing: {
-      autonomy_level: 'A0',
-      lane: 'scout',
-      policy_artifacts: [{ id: 'policy.operator-agent-production-lab.v1', version: '1' }],
-      reasons: ['Read-only scout work.'],
-    },
-  });
-  a0.source.before_fingerprint = 'unchanged-a0';
-  a0.source.after_fingerprint = 'unchanged-a0';
-  a0.source.changed_paths = [];
-  a0.source.no_op = {
-    verified: true,
-    verifier: 'git diff --quiet',
-    evidence: 'Read-only scout produced no source changes.',
-  };
-  a0.stages.worker.changed_paths = [];
+  const a0 = valid_a0_candidate();
 
   const a1 = valid_a1_candidate();
   const a2 = valid_reviewed_candidate('A2');
