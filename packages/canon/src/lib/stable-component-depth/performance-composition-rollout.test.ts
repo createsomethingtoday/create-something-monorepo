@@ -55,6 +55,18 @@ function svelteSources(relativeDirectory: string): Array<{ path: string; source:
 }
 
 describe('Performance composition cross-property rollout', () => {
+	it('keeps compact decision consoles full-width below the desktop split', () => {
+		const source = routeSource(
+			'packages/canon/src/lib/components/clear/ClearDecisionPanel.svelte'
+		);
+		const responsiveRules = source.slice(source.indexOf('@media (max-width: 1180px)'));
+
+		expect(responsiveRules).toContain(
+			".clear-decision-panel[data-density='compact'] .clear-decision-panel__inner,"
+		);
+		expect(responsiveRules).toContain('grid-template-columns: 1fr;');
+	});
+
 	it('lands the .agency story in five chapters without dropping the boundary or proof', () => {
 		const source = routeSource('packages/agency/src/routes/+page.svelte');
 

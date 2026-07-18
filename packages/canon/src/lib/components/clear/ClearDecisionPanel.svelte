@@ -574,6 +574,7 @@
 
 	@media (max-width: 1180px) {
 		.clear-decision-panel__inner,
+		.clear-decision-panel[data-density='compact'] .clear-decision-panel__inner,
 		.clear-decision-panel__body {
 			grid-template-columns: 1fr;
 		}
