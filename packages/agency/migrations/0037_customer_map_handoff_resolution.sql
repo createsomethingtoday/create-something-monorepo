@@ -16,6 +16,15 @@ SET accepted_at = COALESCE(accepted_at, created_at),
     resolution_note = 'Migrated legacy accepted handoff; original resolver unavailable.'
 WHERE status = 'accepted' AND resolved_at IS NULL;
 
+-- Normalize legacy cancellations before terminal resolution becomes immutable.
+-- Older schemas permitted cancelled rows to retain an accepted_at value.
+UPDATE customer_map_handoffs
+SET accepted_at = NULL,
+    resolved_at = created_at,
+    resolved_by = 'legacy:unknown',
+    resolution_note = 'Migrated legacy cancelled handoff; original resolver unavailable.'
+WHERE status = 'cancelled' AND resolved_at IS NULL;
+
 CREATE TRIGGER customer_map_handoff_insert_requires_consistent_state
 BEFORE INSERT ON customer_map_handoffs
 WHEN (
