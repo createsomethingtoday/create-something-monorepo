@@ -523,6 +523,41 @@ test('canonical gate refuses completion when the Linear issue identifier is unav
   assert.equal(completion_calls, 0);
 });
 
+test('canonical gate re-resolves issue identity immediately before Linear completion', async (t) => {
+  const root = await mkdtemp(join(tmpdir(), 'canonical-gate-authoritative-identity-'));
+  t.after(async () => rm(root, { recursive: true, force: true }));
+  const fetched = [];
+  let completion_calls = 0;
+  const gate = new CanonicalHarnessGate({
+    tracker: {
+      async fetch_issue_by_identifier(identifier) {
+        fetched.push(identifier);
+        return { id: 'different-linear-id', identifier };
+      },
+      async complete_issue() {
+        completion_calls += 1;
+      },
+    },
+    output_root: join(root, 'runs'),
+  });
+
+  await assert.rejects(
+    gate.complete(
+      { id: 'linear-id', identifier: 'CRE-1304' },
+      valid_a1_candidate(),
+    ),
+    (error) => error?.code === 'canonical_issue_identity_mismatch',
+  );
+
+  assert.deepEqual(fetched, ['CRE-1304']);
+  assert.equal(completion_calls, 0);
+  const persisted = JSON.parse(await readFile(
+    join(root, 'runs', 'CRE-1304-run-1', 'receipt.v1.json'),
+    'utf8',
+  ));
+  assert.equal(persisted.eligible_for_done, true);
+});
+
 test('canonical gate never mutates Linear for validation failures', async (t) => {
   const root = await mkdtemp(join(tmpdir(), 'canonical-gate-failures-'));
   t.after(async () => rm(root, { recursive: true, force: true }));
@@ -660,6 +695,9 @@ test('canonical gate revalidates the persisted receipt immediately before comple
   const completed = [];
   const gate = new CanonicalHarnessGate({
     tracker: {
+      async fetch_issue_by_identifier(identifier) {
+        return { id: 'linear-id', identifier, state: 'In Progress' };
+      },
       async complete_issue(issue, result) {
         completed.push({ issue, result });
         return { ...issue, state: 'Done' };

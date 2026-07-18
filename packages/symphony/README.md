@@ -28,15 +28,18 @@ runs. It computes eligibility from a strict v1 receipt, writes the result
 atomically to
 `output/canonical-agent-harness/runs/<run_id>/receipt.v1.json`, then reads and
 revalidates that exact persisted receipt immediately before calling the
-tracker's terminal completion seam.
+tracker's terminal completion seam. It also re-resolves the receipt's Linear
+identifier through the tracker and requires the authoritative issue ID to match
+the completion request before that mutation.
 
 The gate requires source diff or verified no-op evidence, direct results for
 every acceptance criterion, lane-appropriate stage receipts, independent
 read-only review plus rollback proof for A2/A3, and matching promotion and live
 proof for A3.
 A4 is never eligible for autonomous completion. Unknown fields, caller-supplied
-eligibility, issue-identity mismatches, corrupt receipts, and tampered computed
-fields all fail closed without a tracker mutation.
+eligibility, unresolved actionable findings in any lane, issue-identity
+mismatches, corrupt receipts, and tampered computed fields all fail closed
+without a tracker mutation.
 
 Stage evidence uses Symphony's existing `multi-agent-evidence-receipt.v1`
 contract directly. The gate binds each receipt to the canonical run, Linear

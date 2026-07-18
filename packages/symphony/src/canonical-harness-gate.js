@@ -380,7 +380,31 @@ export class CanonicalHarnessGate {
     if (!persisted_receipt.eligible_for_done) {
       return { ...recorded, receipt: persisted_receipt, completed: false, completed_issue: null };
     }
-    const completed_issue = await this.tracker.complete_issue(issue, {
+    if (typeof this.tracker?.fetch_issue_by_identifier !== 'function') {
+      throw new SymphonyError(
+        'canonical_tracker_identity_unavailable',
+        'Canonical completion requires an authoritative tracker identity readback seam.',
+      );
+    }
+    const authoritative_issue = await this.tracker.fetch_issue_by_identifier(issue_identifier);
+    if (
+      !authoritative_issue
+      || authoritative_issue.identifier !== issue_identifier
+      || authoritative_issue.id !== issue?.id
+    ) {
+      throw new SymphonyError(
+        'canonical_issue_identity_mismatch',
+        `Canonical completion issue identity changed before Linear mutation: ${issue_identifier}`,
+        {
+          details: {
+            requested_id: issue?.id ?? null,
+            authoritative_id: authoritative_issue?.id ?? null,
+            authoritative_identifier: authoritative_issue?.identifier ?? null,
+          },
+        },
+      );
+    }
+    const completed_issue = await this.tracker.complete_issue(authoritative_issue, {
       message: `Canonical harness receipt: ${recorded.receipt_path}\n\n${JSON.stringify(persisted_receipt, null, 2)}`,
     });
     return { ...recorded, receipt: persisted_receipt, completed: true, completed_issue };
