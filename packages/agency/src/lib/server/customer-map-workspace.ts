@@ -174,6 +174,7 @@ export interface CustomerMapRepository {
 		resolution: CustomerMapHandoffResolution
 	): Promise<CustomerMapHandoffRecord | null>;
 	listPreparedHandoffsForOperator(options: CustomerMapHandoffListOptions): Promise<CustomerMapHandoffOperatorSummary[]>;
+	countPreparedHandoffsForOperator(): Promise<number>;
 	findHandoffScopeForOperator(handoffId: string): Promise<CustomerMapHandoffOperatorContext | null>;
 	archiveMap(scope: CustomerMapScope, mapId: string, deletedAt: string, retentionExpiresAt: string): Promise<boolean>;
 	recoverMap(scope: CustomerMapScope, mapId: string, at: string): Promise<boolean>;
@@ -591,6 +592,10 @@ export function createCustomerMapHandoffOperator(options: {
 				throw new CustomerMapValidationError('Prepared handoff offset must be a non-negative integer');
 			}
 			return options.repository.listPreparedHandoffsForOperator({ limit, offset });
+		},
+
+		async countPrepared(): Promise<number> {
+			return options.repository.countPreparedHandoffsForOperator();
 		},
 
 		async acceptBuildHandoff(
@@ -1131,6 +1136,18 @@ export function createD1CustomerMapRepository(db: D1Database): CustomerMapReposi
 				createdBy: row.created_by,
 				createdAt: row.created_at
 			}));
+		},
+
+		async countPreparedHandoffsForOperator() {
+			const row = await db
+				.prepare(
+					`SELECT COUNT(*) AS count
+					 FROM customer_map_handoffs h
+					 INNER JOIN customer_maps m ON m.id = h.map_id AND m.account_id = h.account_id
+					 WHERE h.status = 'prepared' AND m.deleted_at IS NULL`
+				)
+				.first<{ count: number }>();
+			return Number(row?.count ?? 0);
 		},
 
 		async findHandoffScopeForOperator(handoffId) {

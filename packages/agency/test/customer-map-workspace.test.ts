@@ -153,6 +153,12 @@ function createMemoryRepository(): CustomerMapRepository {
 				}];
 			}).slice(options.offset, options.offset + options.limit);
 		},
+		async countPreparedHandoffsForOperator() {
+			return handoffs.filter((handoff) => {
+				const map = maps.get(handoff.mapId);
+				return Boolean(map && !map.deletedAt && handoff.status === 'prepared');
+			}).length;
+		},
 		async findHandoffScopeForOperator(handoffId) {
 			const handoff = handoffs.find((candidate) => candidate.id === handoffId);
 			const map = handoff ? maps.get(handoff.mapId) : null;
@@ -385,6 +391,7 @@ test('an Agency operator accepts a prepared handoff and the customer reads back 
 	assert.deepEqual(prepared.payload, payload);
 	const [nextPrepared] = await operator.listPrepared({ limit: 1, offset: 1 });
 	assert.deepEqual(nextPrepared.payload, secondPayload);
+	assert.equal(await operator.countPrepared(), 2);
 	const accepted = await operator.acceptBuildHandoff('identity|operator', payload.handoffId, {
 		note: 'Scope intake verified'
 	});
@@ -395,6 +402,7 @@ test('an Agency operator accepts a prepared handoff and the customer reads back 
 	assert.equal(accepted.resolutionNote, 'Scope intake verified');
 	assert.deepEqual(accepted.payload, payload);
 	assert.equal((await operator.listPrepared()).length, 1);
+	assert.equal(await operator.countPrepared(), 1);
 	assert.deepEqual(
 		await workspace.getBuildHandoff(accountA, created.map.id, payload.handoffId),
 		accepted
@@ -418,6 +426,7 @@ test('an Agency operator accepts a prepared handoff and the customer reads back 
 		payload
 	);
 	await workspace.archive(accountA, created.map.id);
+	assert.equal(await operator.countPrepared(), 1);
 	await assert.rejects(
 		() => operator.acceptBuildHandoff('identity|operator', payload.handoffId, { note: 'Scope intake verified' }),
 		CustomerMapAccessError
@@ -475,15 +484,24 @@ test('D1 repository binds every placeholder and keeps resource queries tenant-sc
 		status: 'cancelled', resolvedAt: map.createdAt, resolvedBy: accountA.authSubject, resolutionNote: null
 	});
 	await repository.listPreparedHandoffsForOperator({ limit: 20, offset: 0 });
+	await repository.countPreparedHandoffsForOperator();
 	await repository.findHandoffScopeForOperator(handoff.id);
 	await repository.archiveMap(accountA, map.id, map.createdAt, '2026-08-16T00:00:00.000Z');
 	await repository.recoverMap(accountA, map.id, '2026-07-18T00:00:00.000Z');
 
-	for (const statement of sql.filter((candidate) => /customer_maps/.test(candidate) && /(SELECT|UPDATE)/.test(candidate))) {
+	for (const statement of sql.filter(
+		(candidate) =>
+			/customer_maps/.test(candidate) &&
+			/(SELECT|UPDATE)/.test(candidate) &&
+			!/(FROM|JOIN) customer_map_handoffs h/.test(candidate)
+	)) {
 		assert.match(statement, /account_id/);
 		assert.match(statement, /workspace_account_id/);
 	}
 	const resolutionSql = sql.find((statement) => /UPDATE customer_map_handoffs/.test(statement));
 	assert.match(resolutionSql ?? '', /m\.tenant_id/);
 	assert.match(resolutionSql ?? '', /m\.workspace_account_id/);
+	const operatorCountSql = sql.find((statement) => /SELECT COUNT\(\*\) AS count/.test(statement));
+	assert.match(operatorCountSql ?? '', /INNER JOIN customer_maps/);
+	assert.match(operatorCountSql ?? '', /m\.deleted_at IS NULL/);
 });

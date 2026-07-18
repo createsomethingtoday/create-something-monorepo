@@ -16,7 +16,6 @@ interface MapOperatorSummary {
 	workspace_count: number;
 	version_count: number;
 	active_shares: number;
-	prepared_handoffs: number;
 }
 
 interface EntitlementCount { entitlement_status: string; count: number }
@@ -30,15 +29,14 @@ export const load: PageServerLoad = async ({ cookies, platform, url }) => {
 	const requestedPage = Number(url.searchParams.get('handoff_page') ?? '1');
 	const handoffPage = Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
 	const handoffOperator = createCustomerMapHandoffOperator({ repository: createD1CustomerMapRepository(db) });
-	const [summary, entitlementResult, preparedHandoffs] = await Promise.all([
+	const [summary, entitlementResult, preparedHandoffs, preparedHandoffCount] = await Promise.all([
 		db.prepare(
 			`SELECT
 			   COUNT(CASE WHEN deleted_at IS NULL THEN 1 END) AS active_maps,
 			   COUNT(CASE WHEN deleted_at IS NOT NULL THEN 1 END) AS archived_maps,
 			   COUNT(DISTINCT account_id || ':' || workspace_account_id) AS workspace_count,
 			   (SELECT COUNT(*) FROM customer_map_versions) AS version_count,
-			   (SELECT COUNT(*) FROM customer_map_shares WHERE revoked_at IS NULL AND (expires_at IS NULL OR expires_at > datetime('now'))) AS active_shares,
-			   (SELECT COUNT(*) FROM customer_map_handoffs WHERE status = 'prepared') AS prepared_handoffs
+			   (SELECT COUNT(*) FROM customer_map_shares WHERE revoked_at IS NULL AND (expires_at IS NULL OR expires_at > datetime('now'))) AS active_shares
 			 FROM customer_maps`
 		).first<MapOperatorSummary>(),
 		db.prepare(
@@ -48,22 +46,26 @@ export const load: PageServerLoad = async ({ cookies, platform, url }) => {
 		handoffOperator.listPrepared({
 			limit: HANDOFF_PAGE_SIZE,
 			offset: (handoffPage - 1) * HANDOFF_PAGE_SIZE
-		})
+		}),
+		handoffOperator.countPrepared()
 	]);
 	const commercial = resolveMapCommercialConfig(platform?.env);
 	return {
 		operatorEmail: operator.email,
-		summary: summary ?? {
-			active_maps: 0, archived_maps: 0, workspace_count: 0, version_count: 0, active_shares: 0, prepared_handoffs: 0
+		summary: {
+			...(summary ?? {
+				active_maps: 0, archived_maps: 0, workspace_count: 0, version_count: 0, active_shares: 0
+			}),
+			prepared_handoffs: preparedHandoffCount
 		},
 		entitlements: entitlementResult.results,
 		preparedHandoffs,
 		handoffPagination: {
 			page: handoffPage,
 			pageSize: HANDOFF_PAGE_SIZE,
-			total: Number(summary?.prepared_handoffs ?? 0),
+			total: preparedHandoffCount,
 			hasPrevious: handoffPage > 1,
-			hasNext: handoffPage * HANDOFF_PAGE_SIZE < Number(summary?.prepared_handoffs ?? 0)
+			hasNext: handoffPage * HANDOFF_PAGE_SIZE < preparedHandoffCount
 		},
 		commercial: {
 			checkoutEnabled: commercial.checkoutEnabled,
