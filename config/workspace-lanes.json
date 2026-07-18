@@ -26,6 +26,7 @@
       "packages/canon",
       "packages/canon-tokens",
       "packages/concierge-chat",
+      "packages/delivery-schema",
       "packages/io",
       "packages/learn",
       "packages/lms",
