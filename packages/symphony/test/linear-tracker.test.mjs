@@ -145,6 +145,33 @@ test('fetch_issue_by_identifier selects an active labeled issue without project 
   assert.deepEqual(issue.labels, ['code-quality']);
 });
 
+test('fetch_issue_identity_by_identifier reads a handoff issue without dispatch filtering', async () => {
+  const client = new LinearTrackerClient(
+    createConfig(),
+    logger,
+    async (_url, init) => {
+      const payload = JSON.parse(init.body);
+      assert.match(payload.query, /query SymphonyIssueIdentity/);
+      assert.equal(payload.variables.id, 'CRE-1304');
+      return new Response(JSON.stringify({
+        data: {
+          issue: {
+            id: 'id-CRE-1304',
+            identifier: 'CRE-1304',
+          },
+        },
+      }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    },
+  );
+
+  const identity = await client.fetch_issue_identity_by_identifier('CRE-1304');
+
+  assert.deepEqual(identity, { id: 'id-CRE-1304', identifier: 'CRE-1304' });
+});
+
 test('handoff_issue moves evidence-only work to the exact non-active handoff state', async () => {
   const issueNode = createIssue('CRE-1300', ['code-quality']);
   const client = new LinearTrackerClient(

@@ -382,13 +382,13 @@ export class CanonicalHarnessGate {
     if (!persisted_receipt.eligible_for_done) {
       return { ...recorded, receipt: persisted_receipt, completed: false, completed_issue: null };
     }
-    if (typeof this.tracker?.fetch_issue_by_identifier !== 'function') {
+    if (typeof this.tracker?.fetch_issue_identity_by_identifier !== 'function') {
       throw new SymphonyError(
         'canonical_tracker_identity_unavailable',
         'Canonical completion requires an authoritative tracker identity readback seam.',
       );
     }
-    const authoritative_issue = await this.tracker.fetch_issue_by_identifier(issue_identifier);
+    const authoritative_issue = await this.tracker.fetch_issue_identity_by_identifier(issue_identifier);
     if (
       !authoritative_issue
       || authoritative_issue.identifier !== issue_identifier

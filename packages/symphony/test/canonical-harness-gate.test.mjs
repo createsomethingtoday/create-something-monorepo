@@ -544,7 +544,7 @@ test('canonical gate re-resolves issue identity immediately before Linear comple
   let completion_calls = 0;
   const gate = new CanonicalHarnessGate({
     tracker: {
-      async fetch_issue_by_identifier(identifier) {
+      async fetch_issue_identity_by_identifier(identifier) {
         fetched.push(identifier);
         return { id: 'different-linear-id', identifier };
       },
@@ -709,7 +709,7 @@ test('canonical gate revalidates the persisted receipt immediately before comple
   const completed = [];
   const gate = new CanonicalHarnessGate({
     tracker: {
-      async fetch_issue_by_identifier(identifier) {
+      async fetch_issue_identity_by_identifier(identifier) {
         return { id: 'linear-id', identifier, state: 'In Progress' };
       },
       async complete_issue(issue, result) {
