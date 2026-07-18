@@ -1108,7 +1108,20 @@ export function createD1CustomerMapRepository(db: D1Database): CustomerMapReposi
 					...scopeBindings(scope)
 				)
 				.run();
-			const handoff = await this.findHandoff(scope, mapId, handoffId);
+			// A concurrent archive can commit after the terminal update but before
+			// this read. Keep the receipt scoped, but do not require the Map to
+			// remain active after the decision has already persisted.
+			const row = await db
+				.prepare(
+					`SELECT h.* FROM customer_map_handoffs h
+					 INNER JOIN customer_maps m ON m.id = h.map_id AND m.account_id = h.account_id
+					 WHERE h.id = ? AND h.map_id = ?
+					   AND m.account_id = ? AND m.tenant_id = ? AND m.workspace_account_id = ?
+					 LIMIT 1`
+				)
+				.bind(handoffId, mapId, ...scopeBindings(scope))
+				.first<CustomerMapHandoffRow>();
+			const handoff = row ? fromHandoffRow(row) : null;
 			if (!handoff) return null;
 			if (Number(result.meta.changes ?? 0) === 1) return handoff;
 			if (

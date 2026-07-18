@@ -527,6 +527,9 @@ test('D1 repository binds every placeholder and keeps resource queries tenant-sc
 	const resolutionSql = sql.find((statement) => /UPDATE customer_map_handoffs/.test(statement));
 	assert.match(resolutionSql ?? '', /m\.tenant_id/);
 	assert.match(resolutionSql ?? '', /m\.workspace_account_id/);
+	const handoffReceiptSql = sql.filter((statement) => /SELECT h\.\*/.test(statement));
+	assert.equal(handoffReceiptSql.length, 2);
+	assert.ok(handoffReceiptSql.some((statement) => !/m\.deleted_at IS NULL/.test(statement)));
 	const archiveResolutionSql = sql.find(
 		(statement) => /UPDATE customer_map_handoffs/.test(statement) && /accepted_at = NULL/.test(statement)
 	);
