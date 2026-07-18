@@ -10,7 +10,8 @@ ALTER TABLE customer_map_handoffs ADD COLUMN resolution_note TEXT
 
 -- Preserve legacy accepted rows without inventing an operator identity.
 UPDATE customer_map_handoffs
-SET resolved_at = COALESCE(accepted_at, created_at),
+SET accepted_at = COALESCE(accepted_at, created_at),
+    resolved_at = COALESCE(accepted_at, created_at),
     resolved_by = 'legacy:unknown',
     resolution_note = 'Migrated legacy accepted handoff; original resolver unavailable.'
 WHERE status = 'accepted' AND resolved_at IS NULL;

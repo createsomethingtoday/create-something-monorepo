@@ -17,11 +17,25 @@ test('handoff resolution migration makes terminal decisions audited and immutabl
 	try {
 		const base = readFileSync(new URL('0035_customer_map_workspaces.sql', migrationRoot), 'utf8');
 		const resolution = readFileSync(new URL('0037_customer_map_handoff_resolution.sql', migrationRoot), 'utf8');
-		sqlite(database, `${base}\n${resolution}`);
+		sqlite(database, base);
+		sqlite(
+			database,
+			`INSERT INTO customer_maps
+			 (id, title, account_id, tenant_id, workspace_account_id, created_by, current_version, review_state, created_at, updated_at)
+			 VALUES ('legacy_map', 'Legacy accepted map', 'acct_legacy', 'tenant_legacy', 'workspace_legacy', 'identity|legacy', 1, 'approved', '2026-07-16T00:00:00.000Z', '2026-07-16T00:00:00.000Z');
+			 INSERT INTO customer_map_handoffs
+			 (id, map_id, account_id, map_version, status, payload_json, created_by, created_at, accepted_at)
+			 VALUES ('legacy_handoff', 'legacy_map', 'acct_legacy', 1, 'accepted', '{}', 'identity|legacy', '2026-07-16T00:00:00.000Z', NULL);`
+		);
+		sqlite(database, resolution);
 		const columns = sqlite(database, "SELECT name FROM pragma_table_info('customer_map_handoffs') ORDER BY cid;");
 		assert.match(columns, /resolved_at/);
 		assert.match(columns, /resolved_by/);
 		assert.match(columns, /resolution_note/);
+		assert.equal(
+			sqlite(database, "SELECT accepted_at = resolved_at AND accepted_at IS NOT NULL FROM customer_map_handoffs WHERE id = 'legacy_handoff';"),
+			'1'
+		);
 
 		sqlite(
 			database,
