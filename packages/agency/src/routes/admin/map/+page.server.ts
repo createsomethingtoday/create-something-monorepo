@@ -21,10 +21,14 @@ interface MapOperatorSummary {
 
 interface EntitlementCount { entitlement_status: string; count: number }
 
-export const load: PageServerLoad = async ({ cookies, platform }) => {
+const HANDOFF_PAGE_SIZE = 20;
+
+export const load: PageServerLoad = async ({ cookies, platform, url }) => {
 	const operator = await requireAgencyOperator({ cookies, platform });
 	const db = platform?.env?.DB;
 	if (!db) throw error(503, 'Map operator database is unavailable');
+	const requestedPage = Number(url.searchParams.get('handoff_page') ?? '1');
+	const handoffPage = Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
 	const handoffOperator = createCustomerMapHandoffOperator({ repository: createD1CustomerMapRepository(db) });
 	const [summary, entitlementResult, preparedHandoffs] = await Promise.all([
 		db.prepare(
@@ -41,7 +45,10 @@ export const load: PageServerLoad = async ({ cookies, platform }) => {
 			`SELECT entitlement_status, COUNT(*) AS count
 			 FROM agency_map_entitlements GROUP BY entitlement_status ORDER BY entitlement_status`
 		).all<EntitlementCount>(),
-		handoffOperator.listPrepared()
+		handoffOperator.listPrepared({
+			limit: HANDOFF_PAGE_SIZE,
+			offset: (handoffPage - 1) * HANDOFF_PAGE_SIZE
+		})
 	]);
 	const commercial = resolveMapCommercialConfig(platform?.env);
 	return {
@@ -51,6 +58,13 @@ export const load: PageServerLoad = async ({ cookies, platform }) => {
 		},
 		entitlements: entitlementResult.results,
 		preparedHandoffs,
+		handoffPagination: {
+			page: handoffPage,
+			pageSize: HANDOFF_PAGE_SIZE,
+			total: Number(summary?.prepared_handoffs ?? 0),
+			hasPrevious: handoffPage > 1,
+			hasNext: handoffPage * HANDOFF_PAGE_SIZE < Number(summary?.prepared_handoffs ?? 0)
+		},
 		commercial: {
 			checkoutEnabled: commercial.checkoutEnabled,
 			approvalRecorded: commercial.approved,

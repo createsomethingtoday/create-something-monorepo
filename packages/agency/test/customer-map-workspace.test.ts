@@ -135,7 +135,7 @@ function createMemoryRepository(): CustomerMapRepository {
 			handoffs[index] = structuredClone(resolved);
 			return resolved;
 		},
-		async listPreparedHandoffsForOperator() {
+		async listPreparedHandoffsForOperator(options) {
 			return handoffs.flatMap((handoff) => {
 				const map = maps.get(handoff.mapId);
 				if (!map || map.deletedAt || handoff.status !== 'prepared') return [];
@@ -151,7 +151,7 @@ function createMemoryRepository(): CustomerMapRepository {
 					createdBy: handoff.createdBy,
 					createdAt: handoff.createdAt
 				}];
-			});
+			}).slice(options.offset, options.offset + options.limit);
 		},
 		async findHandoffScopeForOperator(handoffId) {
 			const handoff = handoffs.find((candidate) => candidate.id === handoffId);
@@ -373,9 +373,18 @@ test('an Agency operator accepts a prepared handoff and the customer reads back 
 	await workspace.review(accountA, created.map.id, { to: 'in_review' });
 	await workspace.review(accountA, created.map.id, { to: 'approved' });
 	const payload = await workspace.prepareBuildHandoff(accountA, created.map.id);
+	const second = await workspace.create(accountA, {
+		title: 'Second operator acceptance map',
+		canvas: createPublicAtlasCanvas()
+	});
+	await workspace.review(accountA, second.map.id, { to: 'in_review' });
+	await workspace.review(accountA, second.map.id, { to: 'approved' });
+	const secondPayload = await workspace.prepareBuildHandoff(accountA, second.map.id);
 
-	const [prepared] = await operator.listPrepared();
+	const [prepared] = await operator.listPrepared({ limit: 1, offset: 0 });
 	assert.deepEqual(prepared.payload, payload);
+	const [nextPrepared] = await operator.listPrepared({ limit: 1, offset: 1 });
+	assert.deepEqual(nextPrepared.payload, secondPayload);
 	const accepted = await operator.acceptBuildHandoff('identity|operator', payload.handoffId, {
 		note: 'Scope intake verified'
 	});
@@ -385,7 +394,7 @@ test('an Agency operator accepts a prepared handoff and the customer reads back 
 	assert.equal(accepted.resolvedBy, 'identity|operator');
 	assert.equal(accepted.resolutionNote, 'Scope intake verified');
 	assert.deepEqual(accepted.payload, payload);
-	assert.equal((await operator.listPrepared()).length, 0);
+	assert.equal((await operator.listPrepared()).length, 1);
 	assert.deepEqual(
 		await workspace.getBuildHandoff(accountA, created.map.id, payload.handoffId),
 		accepted
@@ -465,7 +474,7 @@ test('D1 repository binds every placeholder and keeps resource queries tenant-sc
 	await repository.resolveHandoff(accountA, map.id, handoff.id, {
 		status: 'cancelled', resolvedAt: map.createdAt, resolvedBy: accountA.authSubject, resolutionNote: null
 	});
-	await repository.listPreparedHandoffsForOperator();
+	await repository.listPreparedHandoffsForOperator({ limit: 20, offset: 0 });
 	await repository.findHandoffScopeForOperator(handoff.id);
 	await repository.archiveMap(accountA, map.id, map.createdAt, '2026-08-16T00:00:00.000Z');
 	await repository.recoverMap(accountA, map.id, '2026-07-18T00:00:00.000Z');

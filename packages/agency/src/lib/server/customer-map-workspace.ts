@@ -137,6 +137,11 @@ export interface CustomerMapHandoffOperatorContext {
 	workspaceAccountId: string;
 }
 
+export interface CustomerMapHandoffListOptions {
+	limit: number;
+	offset: number;
+}
+
 export interface CustomerMapRepository {
 	createMap(map: CustomerMapRecord, version: CustomerMapVersion): Promise<void>;
 	listMaps(scope: CustomerMapScope): Promise<CustomerMapRecord[]>;
@@ -168,7 +173,7 @@ export interface CustomerMapRepository {
 		handoffId: string,
 		resolution: CustomerMapHandoffResolution
 	): Promise<CustomerMapHandoffRecord | null>;
-	listPreparedHandoffsForOperator(): Promise<CustomerMapHandoffOperatorSummary[]>;
+	listPreparedHandoffsForOperator(options: CustomerMapHandoffListOptions): Promise<CustomerMapHandoffOperatorSummary[]>;
 	findHandoffScopeForOperator(handoffId: string): Promise<CustomerMapHandoffOperatorContext | null>;
 	archiveMap(scope: CustomerMapScope, mapId: string, deletedAt: string, retentionExpiresAt: string): Promise<boolean>;
 	recoverMap(scope: CustomerMapScope, mapId: string, at: string): Promise<boolean>;
@@ -574,8 +579,18 @@ export function createCustomerMapHandoffOperator(options: {
 }) {
 	const now = options.clock ?? (() => new Date().toISOString());
 	return {
-		async listPrepared(): Promise<CustomerMapHandoffOperatorSummary[]> {
-			return options.repository.listPreparedHandoffsForOperator();
+		async listPrepared(
+			input: Partial<CustomerMapHandoffListOptions> = {}
+		): Promise<CustomerMapHandoffOperatorSummary[]> {
+			const limit = input.limit ?? 20;
+			const offset = input.offset ?? 0;
+			if (!Number.isInteger(limit) || limit < 1 || limit > 100) {
+				throw new CustomerMapValidationError('Prepared handoff page size must be between 1 and 100');
+			}
+			if (!Number.isInteger(offset) || offset < 0) {
+				throw new CustomerMapValidationError('Prepared handoff offset must be a non-negative integer');
+			}
+			return options.repository.listPreparedHandoffsForOperator({ limit, offset });
 		},
 
 		async acceptBuildHandoff(
@@ -1090,7 +1105,7 @@ export function createD1CustomerMapRepository(db: D1Database): CustomerMapReposi
 			throw new CustomerMapConflictError('This Build handoff already has a different terminal decision');
 		},
 
-		async listPreparedHandoffsForOperator() {
+		async listPreparedHandoffsForOperator(options) {
 			const result = await db
 				.prepare(
 					`SELECT h.id, h.map_id, m.title AS map_title, h.account_id,
@@ -1100,8 +1115,9 @@ export function createD1CustomerMapRepository(db: D1Database): CustomerMapReposi
 					 INNER JOIN customer_maps m ON m.id = h.map_id AND m.account_id = h.account_id
 					 WHERE h.status = 'prepared' AND m.deleted_at IS NULL
 					 ORDER BY h.created_at ASC, h.id ASC
-					 LIMIT 100`
+					 LIMIT ? OFFSET ?`
 				)
+				.bind(options.limit, options.offset)
 				.all<CustomerMapHandoffOperatorRow>();
 			return result.results.map((row) => ({
 				id: row.id,
