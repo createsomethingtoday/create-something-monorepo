@@ -5,6 +5,7 @@ import { createPublicAtlasCanvas, createPublicAtlasNode } from '../src/lib/atlas
 import {
 	CustomerMapAccessError,
 	CustomerMapConflictError,
+	createCustomerMapHandoffOperator,
 	createCustomerMapWorkspace,
 	createD1CustomerMapRepository,
 	type CustomerMapRecord,
@@ -106,6 +107,63 @@ function createMemoryRepository(): CustomerMapRepository {
 			if (!map || !belongsTo(scope, map)) return null;
 			const handoff = handoffs.find((candidate) => candidate.id === handoffId && candidate.mapId === mapId);
 			return handoff ? structuredClone(handoff) : null;
+		},
+		async resolveHandoff(scope, mapId, handoffId, resolution) {
+			const map = maps.get(mapId);
+			if (!map || !belongsTo(scope, map) || map.deletedAt) return null;
+			const index = handoffs.findIndex((candidate) => candidate.id === handoffId && candidate.mapId === mapId);
+			if (index < 0) return null;
+			const handoff = handoffs[index];
+			if (handoff.status !== 'prepared') {
+				if (
+					handoff.status === resolution.status &&
+					handoff.resolvedBy === resolution.resolvedBy &&
+					handoff.resolutionNote === resolution.resolutionNote
+				) {
+					return structuredClone(handoff);
+				}
+				throw new CustomerMapConflictError('This Build handoff already has a different terminal decision');
+			}
+			const resolved = {
+				...handoff,
+				status: resolution.status,
+				acceptedAt: resolution.status === 'accepted' ? resolution.resolvedAt : null,
+				resolvedAt: resolution.resolvedAt,
+				resolvedBy: resolution.resolvedBy,
+				resolutionNote: resolution.resolutionNote
+			};
+			handoffs[index] = structuredClone(resolved);
+			return resolved;
+		},
+		async listPreparedHandoffsForOperator() {
+			return handoffs.flatMap((handoff) => {
+				const map = maps.get(handoff.mapId);
+				if (!map || map.deletedAt || handoff.status !== 'prepared') return [];
+				return [{
+					id: handoff.id,
+					mapId: handoff.mapId,
+					mapTitle: map.title,
+					accountId: map.accountId,
+					tenantId: map.tenantId,
+					workspaceAccountId: map.workspaceAccountId,
+					mapVersion: handoff.mapVersion,
+					payload: structuredClone(handoff.payload),
+					createdBy: handoff.createdBy,
+					createdAt: handoff.createdAt
+				}];
+			});
+		},
+		async findHandoffScopeForOperator(handoffId) {
+			const handoff = handoffs.find((candidate) => candidate.id === handoffId);
+			const map = handoff ? maps.get(handoff.mapId) : null;
+			return map && !map.deletedAt
+				? {
+						mapId: map.id,
+						accountId: map.accountId,
+						tenantId: map.tenantId,
+						workspaceAccountId: map.workspaceAccountId
+					}
+				: null;
 		},
 		async archiveMap(scope, mapId, deletedAt, retentionExpiresAt) {
 			const map = maps.get(mapId);
@@ -224,6 +282,7 @@ test('review, share, export, and Build handoff stay pinned to an approved immuta
 	const created = await workspace.create(accountA, { title: 'Approved handoff map', canvas });
 
 	await assert.rejects(() => workspace.share(accountA, created.map.id), /must be approved/i);
+	await assert.rejects(() => workspace.prepareBuildHandoff(accountA, created.map.id), /must be approved/i);
 	await workspace.review(accountA, created.map.id, { to: 'in_review', note: 'Ready for owner review' });
 	const approved = await workspace.review(accountA, created.map.id, { to: 'approved', note: 'Approved for Build' });
 	assert.equal(approved.map.reviewState, 'approved');
@@ -248,6 +307,110 @@ test('review, share, export, and Build handoff stay pinned to an approved immuta
 	assert.deepEqual((await workspace.getBuildHandoff(accountA, created.map.id, handoff.handoffId)).payload, handoff);
 	await assert.rejects(
 		() => workspace.getBuildHandoff(accountB, created.map.id, handoff.handoffId),
+		CustomerMapAccessError
+	);
+});
+
+test('the owning customer can cancel a prepared Build handoff exactly once without changing its payload', async () => {
+	const repository = createMemoryRepository();
+	const workspace = createCustomerMapWorkspace({
+		repository,
+		clock: () => '2026-07-17T00:00:00.000Z',
+		id: (() => {
+			let id = 0;
+			return () => `id_${++id}`;
+		})()
+	});
+	const created = await workspace.create(accountA, {
+		title: 'Cancellable handoff map',
+		canvas: createPublicAtlasCanvas()
+	});
+	await workspace.review(accountA, created.map.id, { to: 'in_review' });
+	await workspace.review(accountA, created.map.id, { to: 'approved' });
+	const payload = await workspace.prepareBuildHandoff(accountA, created.map.id);
+
+	const cancelled = await workspace.cancelBuildHandoff(accountA, created.map.id, payload.handoffId, {
+		note: 'Build timing changed'
+	});
+	assert.equal(cancelled.status, 'cancelled');
+	assert.equal(cancelled.resolvedAt, '2026-07-17T00:00:00.000Z');
+	assert.equal(cancelled.resolvedBy, accountA.authSubject);
+	assert.equal(cancelled.resolutionNote, 'Build timing changed');
+	assert.deepEqual(cancelled.payload, payload);
+
+	const repeated = await workspace.cancelBuildHandoff(accountA, created.map.id, payload.handoffId, {
+		note: 'Build timing changed'
+	});
+	assert.deepEqual(repeated, cancelled);
+	await assert.rejects(
+		() => workspace.cancelBuildHandoff(accountA, created.map.id, payload.handoffId, { note: 'Different reason' }),
+		CustomerMapConflictError
+	);
+	await assert.rejects(
+		() => workspace.cancelBuildHandoff(accountB, created.map.id, payload.handoffId),
+		CustomerMapAccessError
+	);
+});
+
+test('an Agency operator accepts a prepared handoff and the customer reads back the same terminal receipt', async () => {
+	const repository = createMemoryRepository();
+	const workspace = createCustomerMapWorkspace({
+		repository,
+		clock: () => '2026-07-17T00:00:00.000Z',
+		id: (() => {
+			let id = 0;
+			return () => `id_${++id}`;
+		})()
+	});
+	const operator = createCustomerMapHandoffOperator({
+		repository,
+		clock: () => '2026-07-18T00:00:00.000Z'
+	});
+	const created = await workspace.create(accountA, {
+		title: 'Operator acceptance map',
+		canvas: createPublicAtlasCanvas()
+	});
+	await workspace.review(accountA, created.map.id, { to: 'in_review' });
+	await workspace.review(accountA, created.map.id, { to: 'approved' });
+	const payload = await workspace.prepareBuildHandoff(accountA, created.map.id);
+
+	const [prepared] = await operator.listPrepared();
+	assert.deepEqual(prepared.payload, payload);
+	const accepted = await operator.acceptBuildHandoff('identity|operator', payload.handoffId, {
+		note: 'Scope intake verified'
+	});
+	assert.equal(accepted.status, 'accepted');
+	assert.equal(accepted.acceptedAt, '2026-07-18T00:00:00.000Z');
+	assert.equal(accepted.resolvedAt, accepted.acceptedAt);
+	assert.equal(accepted.resolvedBy, 'identity|operator');
+	assert.equal(accepted.resolutionNote, 'Scope intake verified');
+	assert.deepEqual(accepted.payload, payload);
+	assert.equal((await operator.listPrepared()).length, 0);
+	assert.deepEqual(
+		await workspace.getBuildHandoff(accountA, created.map.id, payload.handoffId),
+		accepted
+	);
+	assert.deepEqual(
+		await operator.acceptBuildHandoff('identity|operator', payload.handoffId, {
+			note: 'Scope intake verified'
+		}),
+		accepted
+	);
+	await assert.rejects(
+		() => workspace.cancelBuildHandoff(accountA, created.map.id, payload.handoffId),
+		CustomerMapConflictError
+	);
+	await workspace.save(accountA, created.map.id, {
+		canvas: { ...created.version.canvas, title: 'Revised after accepted handoff' },
+		expectedVersion: 1
+	});
+	assert.deepEqual(
+		(await workspace.getBuildHandoff(accountA, created.map.id, payload.handoffId)).payload,
+		payload
+	);
+	await workspace.archive(accountA, created.map.id);
+	await assert.rejects(
+		() => operator.acceptBuildHandoff('identity|operator', payload.handoffId, { note: 'Scope intake verified' }),
 		CustomerMapAccessError
 	);
 });
@@ -287,6 +450,23 @@ test('D1 repository binds every placeholder and keeps resource queries tenant-sc
 	await repository.findMap(accountA, map.id);
 	await repository.listVersions(accountA, map.id);
 	await repository.appendVersion(accountA, { ...map, currentVersion: 2 }, { ...version, id: 'version_2', version: 2 }, 1);
+	const handoff: CustomerMapHandoffRecord = {
+		id: 'handoff_1', mapId: map.id, accountId: map.accountId, mapVersion: 1, status: 'prepared',
+		payload: {
+			schema: 'create-something/map-to-build-handoff@1', handoffId: 'handoff_1', preparedAt: map.createdAt,
+			mapId: map.id, mapTitle: map.title, mapVersion: 1, reviewState: 'approved', accountId: map.accountId,
+			workspaceAccountId: map.workspaceAccountId, canvas: version.canvas
+		},
+		createdBy: map.createdBy, createdAt: map.createdAt, acceptedAt: null, resolvedAt: null, resolvedBy: null,
+		resolutionNote: null
+	};
+	await repository.createHandoff(accountA, handoff);
+	await repository.findHandoff(accountA, map.id, handoff.id);
+	await repository.resolveHandoff(accountA, map.id, handoff.id, {
+		status: 'cancelled', resolvedAt: map.createdAt, resolvedBy: accountA.authSubject, resolutionNote: null
+	});
+	await repository.listPreparedHandoffsForOperator();
+	await repository.findHandoffScopeForOperator(handoff.id);
 	await repository.archiveMap(accountA, map.id, map.createdAt, '2026-08-16T00:00:00.000Z');
 	await repository.recoverMap(accountA, map.id, '2026-07-18T00:00:00.000Z');
 
@@ -294,4 +474,7 @@ test('D1 repository binds every placeholder and keeps resource queries tenant-sc
 		assert.match(statement, /account_id/);
 		assert.match(statement, /workspace_account_id/);
 	}
+	const resolutionSql = sql.find((statement) => /UPDATE customer_map_handoffs/.test(statement));
+	assert.match(resolutionSql ?? '', /m\.tenant_id/);
+	assert.match(resolutionSql ?? '', /m\.workspace_account_id/);
 });

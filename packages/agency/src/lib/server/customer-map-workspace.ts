@@ -105,6 +105,36 @@ export interface CustomerMapHandoffRecord {
 	createdBy: string;
 	createdAt: string;
 	acceptedAt: string | null;
+	resolvedAt: string | null;
+	resolvedBy: string | null;
+	resolutionNote: string | null;
+}
+
+export interface CustomerMapHandoffResolution {
+	status: 'accepted' | 'cancelled';
+	resolvedAt: string;
+	resolvedBy: string;
+	resolutionNote: string | null;
+}
+
+export interface CustomerMapHandoffOperatorSummary {
+	id: string;
+	mapId: string;
+	mapTitle: string;
+	accountId: string;
+	tenantId: string;
+	workspaceAccountId: string;
+	mapVersion: number;
+	payload: CustomerMapBuildHandoff;
+	createdBy: string;
+	createdAt: string;
+}
+
+export interface CustomerMapHandoffOperatorContext {
+	mapId: string;
+	accountId: string;
+	tenantId: string;
+	workspaceAccountId: string;
 }
 
 export interface CustomerMapRepository {
@@ -132,6 +162,14 @@ export interface CustomerMapRepository {
 	): Promise<{ map: CustomerMapRecord; version: CustomerMapVersion; share: CustomerMapShareRecord } | null>;
 	createHandoff(scope: CustomerMapScope, handoff: CustomerMapHandoffRecord): Promise<void>;
 	findHandoff(scope: CustomerMapScope, mapId: string, handoffId: string): Promise<CustomerMapHandoffRecord | null>;
+	resolveHandoff(
+		scope: CustomerMapScope,
+		mapId: string,
+		handoffId: string,
+		resolution: CustomerMapHandoffResolution
+	): Promise<CustomerMapHandoffRecord | null>;
+	listPreparedHandoffsForOperator(): Promise<CustomerMapHandoffOperatorSummary[]>;
+	findHandoffScopeForOperator(handoffId: string): Promise<CustomerMapHandoffOperatorContext | null>;
 	archiveMap(scope: CustomerMapScope, mapId: string, deletedAt: string, retentionExpiresAt: string): Promise<boolean>;
 	recoverMap(scope: CustomerMapScope, mapId: string, at: string): Promise<boolean>;
 }
@@ -181,8 +219,8 @@ export class CustomerMapAccessError extends Error {
 export class CustomerMapConflictError extends Error {
 	readonly code = 'customer_map_version_conflict';
 
-	constructor() {
-		super('This map changed after the requested version was loaded');
+	constructor(message = 'This map changed after the requested version was loaded') {
+		super(message);
 		this.name = 'CustomerMapConflictError';
 	}
 }
@@ -474,7 +512,10 @@ export function createCustomerMapWorkspace(options: CustomerMapWorkspaceOptions)
 				payload,
 				createdBy: scope.authSubject,
 				createdAt: timestamp,
-				acceptedAt: null
+				acceptedAt: null,
+				resolvedAt: null,
+				resolvedBy: null,
+				resolutionNote: null
 			});
 			return payload;
 		},
@@ -486,6 +527,23 @@ export function createCustomerMapWorkspace(options: CustomerMapWorkspaceOptions)
 		): Promise<CustomerMapHandoffRecord> {
 			await requireMap(scope, mapId);
 			const handoff = await options.repository.findHandoff(scope, mapId, handoffId);
+			if (!handoff) throw new CustomerMapAccessError();
+			return handoff;
+		},
+
+		async cancelBuildHandoff(
+			scope: CustomerMapScope,
+			mapId: string,
+			handoffId: string,
+			input: { note?: string | null } = {}
+		): Promise<CustomerMapHandoffRecord> {
+			await requireMap(scope, mapId);
+			const handoff = await options.repository.resolveHandoff(scope, mapId, handoffId, {
+				status: 'cancelled',
+				resolvedAt: now(),
+				resolvedBy: scope.authSubject,
+				resolutionNote: normalizeMessage(input.note)
+			});
 			if (!handoff) throw new CustomerMapAccessError();
 			return handoff;
 		},
@@ -506,6 +564,47 @@ export function createCustomerMapWorkspace(options: CustomerMapWorkspaceOptions)
 			requireScope(scope);
 			if (!(await options.repository.recoverMap(scope, mapId, now()))) throw new CustomerMapAccessError();
 			return this.get(scope, mapId);
+		}
+	};
+}
+
+export function createCustomerMapHandoffOperator(options: {
+	repository: CustomerMapRepository;
+	clock?: () => string;
+}) {
+	const now = options.clock ?? (() => new Date().toISOString());
+	return {
+		async listPrepared(): Promise<CustomerMapHandoffOperatorSummary[]> {
+			return options.repository.listPreparedHandoffsForOperator();
+		},
+
+		async acceptBuildHandoff(
+			operatorSubject: string,
+			handoffId: string,
+			input: { note?: string | null } = {}
+		): Promise<CustomerMapHandoffRecord> {
+			const resolvedBy = operatorSubject.trim();
+			if (!resolvedBy) throw new CustomerMapValidationError('Operator subject is required');
+			const context = await options.repository.findHandoffScopeForOperator(handoffId);
+			if (!context) throw new CustomerMapAccessError();
+			const handoff = await options.repository.resolveHandoff(
+				{
+					authSubject: resolvedBy,
+					accountId: context.accountId,
+					tenantId: context.tenantId,
+					workspaceAccountId: context.workspaceAccountId
+				},
+				context.mapId,
+				handoffId,
+				{
+					status: 'accepted',
+					resolvedAt: now(),
+					resolvedBy,
+					resolutionNote: normalizeMessage(input.note)
+				}
+			);
+			if (!handoff) throw new CustomerMapAccessError();
+			return handoff;
 		}
 	};
 }
@@ -574,6 +673,39 @@ interface CustomerMapHandoffRow {
 	created_by: string;
 	created_at: string;
 	accepted_at: string | null;
+	resolved_at: string | null;
+	resolved_by: string | null;
+	resolution_note: string | null;
+}
+
+interface CustomerMapHandoffOperatorRow {
+	id: string;
+	map_id: string;
+	map_title: string;
+	account_id: string;
+	tenant_id: string;
+	workspace_account_id: string;
+	map_version: number;
+	payload_json: string;
+	created_by: string;
+	created_at: string;
+}
+
+function fromHandoffRow(row: CustomerMapHandoffRow): CustomerMapHandoffRecord {
+	return {
+		id: row.id,
+		mapId: row.map_id,
+		accountId: row.account_id,
+		mapVersion: row.map_version,
+		status: row.status,
+		payload: JSON.parse(row.payload_json) as CustomerMapBuildHandoff,
+		createdBy: row.created_by,
+		createdAt: row.created_at,
+		acceptedAt: row.accepted_at,
+		resolvedAt: row.resolved_at,
+		resolvedBy: row.resolved_by,
+		resolutionNote: row.resolution_note
+	};
 }
 
 function fromMapRow(row: CustomerMapRow): CustomerMapRecord {
@@ -915,18 +1047,100 @@ export function createD1CustomerMapRepository(db: D1Database): CustomerMapReposi
 				)
 				.bind(handoffId, mapId, ...scopeBindings(scope))
 				.first<CustomerMapHandoffRow>();
-			if (!row) return null;
-			return {
+			return row ? fromHandoffRow(row) : null;
+		},
+
+		async resolveHandoff(scope, mapId, handoffId, resolution) {
+			const result = await db
+				.prepare(
+					`UPDATE customer_map_handoffs
+					 SET status = ?, resolved_at = ?, resolved_by = ?, resolution_note = ?,
+					     accepted_at = CASE WHEN ? = 'accepted' THEN ? ELSE accepted_at END
+					 WHERE id = ? AND map_id = ? AND account_id = ? AND status = 'prepared'
+					   AND EXISTS (
+					     SELECT 1 FROM customer_maps m
+					     WHERE m.id = customer_map_handoffs.map_id
+					       AND m.account_id = ? AND m.tenant_id = ? AND m.workspace_account_id = ?
+					       AND m.deleted_at IS NULL
+					   )`
+				)
+				.bind(
+					resolution.status,
+					resolution.resolvedAt,
+					resolution.resolvedBy,
+					resolution.resolutionNote,
+					resolution.status,
+					resolution.resolvedAt,
+					handoffId,
+					mapId,
+					scope.accountId,
+					...scopeBindings(scope)
+				)
+				.run();
+			const handoff = await this.findHandoff(scope, mapId, handoffId);
+			if (!handoff) return null;
+			if (Number(result.meta.changes ?? 0) === 1) return handoff;
+			if (
+				handoff.status === resolution.status &&
+				handoff.resolvedBy === resolution.resolvedBy &&
+				handoff.resolutionNote === resolution.resolutionNote
+			) {
+				return handoff;
+			}
+			throw new CustomerMapConflictError('This Build handoff already has a different terminal decision');
+		},
+
+		async listPreparedHandoffsForOperator() {
+			const result = await db
+				.prepare(
+					`SELECT h.id, h.map_id, m.title AS map_title, h.account_id,
+					        m.tenant_id, m.workspace_account_id, h.map_version, h.payload_json,
+					        h.created_by, h.created_at
+					 FROM customer_map_handoffs h
+					 INNER JOIN customer_maps m ON m.id = h.map_id AND m.account_id = h.account_id
+					 WHERE h.status = 'prepared' AND m.deleted_at IS NULL
+					 ORDER BY h.created_at ASC, h.id ASC
+					 LIMIT 100`
+				)
+				.all<CustomerMapHandoffOperatorRow>();
+			return result.results.map((row) => ({
 				id: row.id,
 				mapId: row.map_id,
+				mapTitle: row.map_title,
 				accountId: row.account_id,
+				tenantId: row.tenant_id,
+				workspaceAccountId: row.workspace_account_id,
 				mapVersion: row.map_version,
-				status: row.status,
 				payload: JSON.parse(row.payload_json) as CustomerMapBuildHandoff,
 				createdBy: row.created_by,
-				createdAt: row.created_at,
-				acceptedAt: row.accepted_at
-			};
+				createdAt: row.created_at
+			}));
+		},
+
+		async findHandoffScopeForOperator(handoffId) {
+			const row = await db
+				.prepare(
+					`SELECT h.map_id, h.account_id, m.tenant_id, m.workspace_account_id
+					 FROM customer_map_handoffs h
+					 INNER JOIN customer_maps m ON m.id = h.map_id AND m.account_id = h.account_id
+					 WHERE h.id = ? AND m.deleted_at IS NULL
+					 LIMIT 1`
+				)
+				.bind(handoffId)
+				.first<{
+					map_id: string;
+					account_id: string;
+					tenant_id: string;
+					workspace_account_id: string;
+				}>();
+			return row
+				? {
+						mapId: row.map_id,
+						accountId: row.account_id,
+						tenantId: row.tenant_id,
+						workspaceAccountId: row.workspace_account_id
+					}
+				: null;
 		},
 
 		async archiveMap(scope, mapId, deletedAt, retentionExpiresAt) {
