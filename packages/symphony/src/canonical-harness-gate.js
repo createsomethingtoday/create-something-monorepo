@@ -142,8 +142,22 @@ function lane_blockers(candidate) {
   if (expected_lane && lane !== expected_lane) {
     blockers.push(`${level} requires lane ${expected_lane}`);
   }
+  const permitted_stages = {
+    A0: ['scout'],
+    A1: ['worker'],
+    A2: ['worker', 'reviewer', 'integrator'],
+    A3: ['worker', 'reviewer', 'integrator'],
+    A4: [],
+  }[level];
   for (const stage_name of ['scout', 'worker', 'reviewer', 'integrator']) {
     blockers.push(...stage_identity_blockers(candidate, stage_name));
+    if (
+      Array.isArray(permitted_stages)
+      && candidate.stages?.[stage_name] != null
+      && !permitted_stages.includes(stage_name)
+    ) {
+      blockers.push(`${level} does not permit a ${stage_name} receipt`);
+    }
   }
   const execution_stage_name = level === 'A0' ? 'scout' : 'worker';
   const execution_stage = candidate.stages?.[execution_stage_name];

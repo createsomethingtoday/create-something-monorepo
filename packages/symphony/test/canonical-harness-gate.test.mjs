@@ -415,6 +415,45 @@ test('canonical gate keeps A0 read-only and rejects unsupported stage receipts',
   assert.ok(stage.blockers.some((blocker) => blocker.includes('must be equal to constant')));
 });
 
+test('canonical gate rejects every stage receipt that is not permitted by the routed lane', () => {
+  const cases = [
+    { candidate: valid_a0_candidate(), stage: 'worker' },
+    { candidate: valid_a0_candidate(), stage: 'reviewer' },
+    { candidate: valid_a0_candidate(), stage: 'integrator' },
+    { candidate: valid_a1_candidate(), stage: 'scout' },
+    { candidate: valid_a1_candidate(), stage: 'reviewer' },
+    { candidate: valid_a1_candidate(), stage: 'integrator' },
+    { candidate: valid_reviewed_candidate('A2'), stage: 'scout' },
+    { candidate: valid_reviewed_candidate('A3'), stage: 'scout' },
+    {
+      candidate: valid_a1_candidate({
+        routing: {
+          autonomy_level: 'A4',
+          lane: 'escalation',
+          policy_artifacts: [{ id: 'policy.operator-agent-production-lab.v1', version: '1' }],
+          reasons: ['Protected work requires an operator decision.'],
+        },
+      }),
+      stage: 'worker',
+    },
+  ];
+
+  for (const { candidate, stage } of cases) {
+    candidate.stages[stage] = existing_stage_receipt(
+      stage,
+      ['packages/symphony/src/unexpected-stage-write.js'],
+      `${stage} unexpectedly wrote outside its routed lane.`,
+    );
+    const decision = evaluate_canonical_harness_receipt(candidate);
+
+    assert.equal(decision.eligible_for_done, false);
+    assert.ok(
+      decision.blockers.includes(`${candidate.routing.autonomy_level} does not permit a ${stage} receipt`),
+      JSON.stringify(decision.blockers),
+    );
+  }
+});
+
 test('canonical gate admits complete A0 through A3 evidence', () => {
   const a0 = valid_a0_candidate();
 

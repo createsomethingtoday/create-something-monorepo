@@ -245,12 +245,11 @@ export class LinearTrackerClient {
         if (!state_id) {
             throw new SymphonyError('linear_missing_completed_state', 'No Linear completed workflow state matched terminal_states.');
         }
-        const completed = await this.update_issue(issue.id, { stateId: state_id });
         const message = result?.message ? String(result.message).trim() : '';
         if (message) {
             await this.comment_issue(issue.id, `Evidence:\n\n${message}`);
         }
-        return completed;
+        return this.update_issue(issue.id, { stateId: state_id });
     }
     async handoff_issue(issue) {
         const bootstrap = await this.bootstrap();
