@@ -277,6 +277,17 @@ test('parseBuildReleaseManifest rejects unknown and missing fields', () => {
 				(issue) => issue.path === '$.verification.uat.status' && issue.code === 'invalid_value',
 			),
 	);
+
+	const normalizedImpossibleDate = validManifest() as Record<string, any>;
+	normalizedImpossibleDate.createdAt = '2026-02-31T12:00:00.000Z';
+	assert.throws(
+		() => parseBuildReleaseManifest(normalizedImpossibleDate),
+		(error: unknown) =>
+			error instanceof BuildReleaseValidationError &&
+			error.issues.some(
+				(issue) => issue.path === '$.createdAt' && issue.code === 'invalid_value',
+			),
+	);
 });
 
 test('inspectBuildReleasePackage verifies the exact accepted handoff and artifact set', () => {

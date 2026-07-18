@@ -274,10 +274,18 @@ function isoTimestampAt(
 	issues: BuildReleaseValidationIssue[],
 ): string {
 	const timestamp = stringAt(value, path, issues);
+	const matchesUtcShape = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/.test(
+		timestamp,
+	);
+	const parsedTimestamp = Date.parse(timestamp);
+	const normalizedInput = timestamp.includes('.')
+		? timestamp
+		: timestamp.replace(/Z$/, '.000Z');
 	if (
 		timestamp &&
-		(!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/.test(timestamp) ||
-			Number.isNaN(Date.parse(timestamp)))
+		(!matchesUtcShape ||
+			Number.isNaN(parsedTimestamp) ||
+			new Date(parsedTimestamp).toISOString() !== normalizedInput)
 	) {
 		issues.push({ code: 'invalid_value', path, message: 'Expected an ISO 8601 UTC timestamp.' });
 	}
