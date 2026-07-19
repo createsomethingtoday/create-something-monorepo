@@ -648,7 +648,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     'space-home',
     'space',
     ['/'],
-    'pending',
+    'migrated',
     contract(
       'landing',
       'Choose which material, data, or motion experiment to inspect.',

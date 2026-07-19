@@ -1,8 +1,14 @@
 // @vitest-environment node
+import { readFileSync } from 'node:fs';
 import { render } from 'svelte/server';
 import { describe, expect, it } from 'vitest';
 
 import PerformanceNarrativeStage from './PerformanceNarrativeStage.svelte';
+
+const componentSource = readFileSync(
+  new URL('./PerformanceNarrativeStage.svelte', import.meta.url),
+  'utf8'
+);
 
 describe('PerformanceNarrativeStage SSR', () => {
   it('renders every complete scene in document order before JavaScript enhances it', () => {
@@ -43,6 +49,12 @@ describe('PerformanceNarrativeStage SSR', () => {
     );
     expect(body.indexOf('Keep consequential judgment.')).toBeLessThan(
       body.indexOf('Leave an inspectable wake.')
+    );
+  });
+
+  it('lets every unenhanced panel contribute to document height', () => {
+    expect(componentSource).toMatch(
+      /data-enhanced='false'[\s\S]*?performance-narrative-stage__panel[\s\S]*?min-height:\s*0/
     );
   });
 });
