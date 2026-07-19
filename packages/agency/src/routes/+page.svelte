@@ -96,52 +96,52 @@
   const serviceFlowSteps = [
     {
       id: 'signal',
-      eyebrow: '01 Signal',
-      title: 'Watch the signals',
+      eyebrow: '01 Notice',
+      title: 'Spot the change',
       detail:
-        'Pick the support, revenue, production, API, or credential-touching changes the team still has to notice by hand.',
-      proof: 'signal sources · workflow map · owner · systems · risk'
+        'Choose the support, revenue, production, API, or access changes your team still has to notice by hand.',
+      proof: 'source · workflow · owner · system · risk'
     },
     {
       id: 'decision',
-      eyebrow: '02 Decision',
-      title: 'Route the decision',
+      eyebrow: '02 Decide',
+      title: 'Send it to the right owner',
       detail:
-        'Turn that map into an operator inbox with scoped actions, approval pauses, blocked states, and clear owners.',
-      proof: 'decision queue · working path · runbook · release evidence'
+        'Give the owner the context, allowed actions, approval options, and stop reason in one place.',
+      proof: 'decision queue · allowed actions · runbook · release record'
     },
     {
       id: 'proof',
-      eyebrow: '03 Proof',
-      title: 'Leave proof behind',
+      eyebrow: '03 Record',
+      title: 'Keep the result',
       detail:
-        'Record source evidence, policy, decision, downstream action, receipt, and recovery path when the lane goes live.',
-      proof: 'Proof Graph · receipt trail · recovery path'
+        'Record what started the work, which rule applied, who decided, what happened next, and how to recover.',
+      proof: 'source · rule · decision · result · recovery'
     }
   ] as const;
 
   const flowStudyMetrics: PerformanceFieldStudyMetric[] = [
     {
-      label: 'Flow boundary',
-      value: '1 controlled path',
-      detail: 'Scope the first lane before adding authority.'
+      label: 'Starting scope',
+      value: '1 workflow',
+      detail: 'Start with one workflow before allowing more actions.'
     },
     {
-      label: 'Decision gates',
+      label: 'Decision points',
       value: 'Run / Wait / Stop',
       detail: 'Every branch names who decides.'
     },
     {
-      label: 'Proof condition',
+      label: 'Required record',
       value: 'Receipt required',
-      detail: 'Every action leaves an inspectable wake.'
+      detail: 'Every action leaves a record your team can review.'
     }
   ];
 
   const flowStudyProof: PerformanceFieldStudyProof = {
     id: 'PL-METHOD-20260710',
     owner: 'CREATE SOMETHING',
-    state: 'PROVENANCE ATTACHED',
+    state: 'RECORD ATTACHED',
     verified: '2026-07-10',
     version: 'v1',
     classification: 'Public method'
@@ -155,7 +155,7 @@
     },
     {
       state: 'After',
-      title: 'The operator returns when judgment matters.',
+      title: 'The operator returns when a decision matters.',
       detail:
         'Safe work moves, exceptions reach a named owner, and unsafe actions stop with a reason.'
     }
@@ -165,9 +165,9 @@
     {
       id: '#FR-2026-01',
       kind: 'Review operations',
-      title: 'Automation prepared the evidence. Human judgment still decided.',
+      title: 'Automation gathered the evidence. A person made the final decision.',
       detail:
-        'Evidence collection completed for 49 of 50 selected cases. Automated judgment remains blocked, and reviewer time savings are not yet measured.',
+        'Evidence collection finished for 49 of 50 selected cases. The system cannot make the final decision, and reviewer time savings have not been measured.',
       state: 'verified',
       date: 'May–June 2026',
       href: '/field-reports/template-review'
@@ -178,15 +178,15 @@
     {
       id: 'boundary',
       label: 'Boundary',
-      summary: 'Authority scoped',
-      title: 'Stop watching the workflow. Keep the judgment.',
+      summary: 'Limits set',
+      title: 'Stop watching every handoff. Step in when a decision matters.',
       detail:
-        'The goal is less manual monitoring without giving away consequential authority. Decide what can move, what must wait, and what must stop before the first lane runs.',
+        'Your team decides what can run, what needs approval, and what must stop before the workflow starts.',
       tone: 'review',
       evidence: [
         'Safe work moves without an operator watching every handoff',
-        'Exceptions return to a named owner with enough context',
-        'Every action leaves an inspectable recovery path'
+        'Exceptions reach a named owner with enough context',
+        'Every action leaves a record and recovery path'
       ],
       receipts: [flowStudyProof.id, flowStudyProof.state],
       actions: [{ label: agencyCoreMessaging.selfMapLabel, href: agencyCoreMessaging.selfMapHref }]
@@ -194,31 +194,31 @@
     {
       id: 'map',
       label: 'Map',
-      summary: 'Workflow visible',
-      title: 'Map the work before AI runs it.',
+      summary: 'Workflow mapped',
+      title: 'Map the handoff before AI runs it.',
       detail:
-        'CREATE SOMETHING Map turns the current process into a shared workflow definition: signals, systems, authority, risk, approval, and proof become inspectable before implementation.',
+        'CREATE SOMETHING Map shows where work starts, what the agent may do, and where a person must approve. It also shows when the workflow stops and what record proves the result.',
       tone: 'allow',
       evidence: [
-        'Systems and handoffs share one operating view',
-        'AI tasks and human approvals have explicit boundaries',
-        'The first controlled pilot is visible before a build decision'
+        'One view shows systems, owners, and handoffs',
+        'Agent actions and human approvals have clear limits',
+        'Your team can inspect the first test before deciding to build'
       ],
-      receipts: ['workflow definition', 'owner map', 'proof plan'],
+      receipts: ['workflow map', 'owner list', 'record plan'],
       actions: [{ label: 'Map one workflow', href: agencyCoreMessaging.selfMapHref }]
     },
     {
       id: 'operate',
       label: 'Operate',
-      summary: 'Signal → proof',
-      title: 'Map signals. Route decisions. Leave proof.',
+      summary: 'Run → record',
+      title: 'Notice the change. Route the decision. Record the result.',
       detail:
-        'The work stays narrow: understand the handoff, build one controlled pilot, and add operating rules only when live work needs them.',
+        'Start with one workflow. Add rules only when real work shows where they are needed.',
       tone: 'neutral',
       evidence: [
-        'Signal, Decision, and Proof remain one connected service path',
+        'Each request stays connected to its decision and record',
         'The field report names what passed and what remains blocked',
-        'The client keeps data, rules, tests, history, and recovery'
+        'Your team keeps the data, rules, tests, history, and recovery path'
       ],
       receipts: ['workflow map', fieldReportProof[0].id, 'recovery path'],
       actions: [
@@ -257,9 +257,9 @@
 
   <PerformanceNarrativeStage
     id="agency-operating-story"
-    eyebrow="One controlled operating story"
+    eyebrow="One workflow, step by step"
     title="Boundary. Map. Operate."
-    description="Keep consequential judgment with the operator. Make the workflow visible, then run the first lane with proof attached."
+    description="Your team sets the limits before work moves. We map the handoff, test one workflow, and keep a record of every run."
     scenes={agencyScenes}
     ariaLabel="Agency operating story"
   >
@@ -290,10 +290,10 @@
             <span>Performance principle</span>
             <h3 id="boundary-study-title">Test the boundary before work moves.</h3>
             <p>
-              <strong>Decide what can move before it runs.</strong> Map the change, route the decision,
-              define the stop, and preserve the record before authority expands.
+              <strong>Decide what can run before it starts.</strong> Map the handoff, name who approves
+              it, define when it stops, and keep a record before the workflow can do more.
             </p>
-            <p class="boundary-study__principle">Governance directs flow.</p>
+            <p class="boundary-study__principle">The rules decide what runs, waits, or stops.</p>
           </div>
           <dl class="boundary-study__metrics">
             {#each flowStudyMetrics as metric}
@@ -345,8 +345,8 @@
         <div class="service-flow-action">
           <Button href={agencyCoreMessaging.selfMapHref}>{agencyCoreMessaging.selfMapLabel}</Button>
           <p>
-            See the <a href="/services">service path</a>, the <a href="/partners">tool stack</a>, or
-            the <a href="/products">proof surfaces</a>.
+            See the <a href="/services">service path</a>, the <a href="/partners">tools we use</a>, or
+            the <a href="/products">evidence</a>.
           </p>
         </div>
         <div class="service-proof-row">
@@ -774,17 +774,15 @@
     }
 
     .service-flow-artifact {
-      grid-template-columns: 5.5rem minmax(0, 1fr);
+      grid-template-columns: 1fr;
       grid-template-rows: none;
-      gap: 0.85rem;
+      gap: 0;
       min-height: 0;
       padding: 1rem 0;
     }
 
     .service-flow-artifact__visual {
-      min-height: 7rem;
-      border-right: 1px solid var(--color-performance-line, #d7d7d2);
-      border-bottom: 0;
+      display: none;
     }
 
     .service-flow-artifact + .service-flow-artifact {

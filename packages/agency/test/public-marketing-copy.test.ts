@@ -200,13 +200,41 @@ test('commercial decision routes lead with plain meaning before owned terminolog
   assert.match(proof, /prototype measurements, not customer ROI claims/);
 });
 
-test('the homepage operating story speaks to the reader instead of describing the page', () => {
+test('the homepage operating story preserves the boundary in reader-facing language', () => {
+  const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
+  const description = home.match(
+    /id="agency-operating-story"[\s\S]*?description="([^"]+)"/
+  )?.[1];
+
+  assert(description, 'Agency operating-story description is missing');
+  assert.doesNotMatch(description, /\b(?:the page|this page|this section|holds one argument)\b/i);
+  assert.doesNotMatch(description, /\b(?:consequential judgment|first lane|proof attached)\b/i);
+  assert.match(description, /\b(?:team|operator|you)\b/i, 'decision owner is not visible');
+  assert.match(description, /\b(?:limit|decide|approval|stop)\w*\b/i, 'authority boundary is missing');
+  assert.match(description, /\b(?:map|handoff|workflow|test|run)\w*\b/i, 'bounded workflow is missing');
+  assert.match(description, /\b(?:record|receipt|proof|evidence)\w*\b/i, 'inspectable proof is missing');
+});
+
+test('the complete operating story translates its method into people, actions, and records', () => {
+  const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
+  const story = home.slice(home.indexOf('const serviceFlowSteps'), home.indexOf('</script>'));
+
+  assert.doesNotMatch(
+    story,
+    /Authority scoped|Signal → proof|consequential authority|first lane|inspectable wake|Governance directs flow|Proof Graph/i
+  );
+  assert.match(story, /team decides what can run, what needs approval, and what must stop/i);
+  assert.match(story, /where work starts[^.]*what the agent may do[^.]*where a person must approve/i);
+  assert.match(story, /every action leaves a record your team can review/i);
+  assert.match(story, /system cannot make the final decision/i);
+});
+
+test('the mobile operating story removes decorative mini artifacts from the reading path', () => {
   const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
 
-  assert.doesNotMatch(home, /The page now holds one argument/i);
   assert.match(
     home,
-    /Keep consequential judgment with the operator\. Make the workflow visible, then run the first lane with proof attached\./
+    /@media \(max-width: 640px\)[\s\S]*?\.service-flow-artifact__visual\s*\{\s*display:\s*none;/
   );
 });
 

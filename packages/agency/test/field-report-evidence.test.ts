@@ -203,6 +203,7 @@ test('the homepage keeps measured Field Report proof inside the consolidated ser
   assert.match(home, /See what passed—and what did not/);
   assert.match(home, /href: '\/field-reports\/template-review'/);
   assert.match(home, /49 of 50 selected cases/);
-  assert.match(home, /automated judgment remains blocked/i);
+  assert.match(home, /(?:system|automation)[^.]*(?:cannot|blocked)[^.]*(?:decision|judgment)/i);
+  assert.match(home, /reviewer time savings[^.]*(?:not|never)[^.]*(?:measured|verified)/i);
   assert.doesNotMatch(home, /<PerformanceCampaignOpening[\s\S]*?>\s*>\s*\{#snippet actions\(\)\}/);
 });
