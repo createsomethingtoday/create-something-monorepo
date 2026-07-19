@@ -1,0 +1,32 @@
+{
+  "method": "Decode each final H.264 stream to raw frames with FFmpeg framemd5 and compare every adjacent frame hash.",
+  "expectedFrames": 480,
+  "blender": {
+    "video": "../exports/signal-decision-proof--v10--fluid-physical--20s--16x9--v20260719.mp4",
+    "decodedFrames": 480,
+    "adjacentDuplicateFrames": 0,
+    "approachRangeFrames48To144": {
+      "decodedFrames": 97,
+      "adjacentDuplicateFrames": 0
+    },
+    "postGateRangeFrames252To360": {
+      "decodedFrames": 109,
+      "adjacentDuplicateFrames": 0
+    },
+    "valid": true
+  },
+  "sora": {
+    "video": "../exports/signal-decision-proof--v10--sora-five-shot--20s--16x9--v20260719.mp4",
+    "decodedFrames": 480,
+    "adjacentDuplicateFrames": 0,
+    "approachRangeFrames48To144": {
+      "decodedFrames": 97,
+      "adjacentDuplicateFrames": 0
+    },
+    "postGateRangeFrames252To360": {
+      "decodedFrames": 109,
+      "adjacentDuplicateFrames": 0
+    },
+    "valid": true
+  }
+}

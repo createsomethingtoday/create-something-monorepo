@@ -1,0 +1,21 @@
+{
+  "sora": {
+    "repository": "../exports/signal-decision-proof--v10--sora-five-shot--20s--16x9--v20260719.mp4",
+    "download": "/Users/micahjohnson/Downloads/create-something--signal-decision-proof--20s--sora-production.mp4",
+    "sha256": "dd02a5474f1fefa237f62652198cfb98c0ca5a2dbc91c22d5a951aa47cecbd57",
+    "hashesMatch": true
+  },
+  "blender": {
+    "repository": "../exports/signal-decision-proof--v10--fluid-physical--20s--16x9--v20260719.mp4",
+    "download": "/Users/micahjohnson/Downloads/create-something--signal-decision-proof--20s--blender-continuity.mp4",
+    "sha256": "78e58d9f3db391a27bb7f5ce624819adf1bbb54d5ee277851c67f66d5c97f0d2",
+    "hashesMatch": true
+  },
+  "captions": {
+    "repository": "../source/captions--en--v10--v20260719.vtt",
+    "download": "/Users/micahjohnson/Downloads/create-something--signal-decision-proof--20s--en.vtt",
+    "sha256": "894e5e74345fc60fabb171b5cb894d491c7a2162912748af1109c7308e386bf5",
+    "hashesMatch": true
+  },
+  "valid": true
+}

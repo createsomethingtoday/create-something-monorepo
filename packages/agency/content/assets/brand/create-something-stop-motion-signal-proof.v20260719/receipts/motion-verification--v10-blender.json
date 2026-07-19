@@ -1,0 +1,13 @@
+{
+  "sceneId": "create-something.signal-decision-proof.v10",
+  "videoPath": "packages/agency/content/assets/brand/create-something-stop-motion-signal-proof.v20260719/exports/signal-decision-proof--v10--fluid-physical--20s--16x9--v20260719.mp4",
+  "valid": true,
+  "checks": {
+    "duration": true,
+    "dimensions": true,
+    "frameRate": true,
+    "frameCount": true,
+    "audio": true,
+    "noSubtitleStream": true
+  }
+}

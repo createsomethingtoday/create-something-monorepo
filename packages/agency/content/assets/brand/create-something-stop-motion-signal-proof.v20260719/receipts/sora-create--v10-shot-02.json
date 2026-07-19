@@ -1,0 +1,36 @@
+{
+  "create": {
+    "completed_at": null,
+    "created_at": 1784500910,
+    "edited_from_video_id": null,
+    "error": null,
+    "expires_at": null,
+    "extended_from_video_id": null,
+    "id": "video_6a5d52ae60a8819184cda288fda96e9e078729198b9267c8",
+    "model": "sora-2-pro",
+    "object": "video",
+    "progress": 0,
+    "prompt": "Use case: CREATE SOMETHING 16:9 editorial marketing film, final production shot 2 of 5.\n\nPrimary request: Preserve the supplied shot's exact photoreal practical-installation world, connected tunnel, gate, and cobalt work packet. Create one controlled four-second spatial approach shot; do not introduce another angle or cut.\n\nScene/background: The same single unbroken clear-acrylic tunnel and ribbed conveyor from the reference. One machined-black decision gate spans the center of this same route; the proof bay is visibly connected beyond it. Near-black studio floor, hard raking light, accurate acrylic refraction, brushed metal, contact shadows, restrained reflections.\n\nSubject: The same one substantial cobalt-blue anodized-metal cuboid, heavy and softly beveled, traveling only left to right.\n\nAction: The moving conveyor carries the packet steadily from the left toward the closed decision gate. The packet decelerates naturally and stops with a clear physical gap immediately before the gate by 3.2 seconds, then remains completely still for the final 0.8 seconds. The gate stays closed and motionless throughout. No receipt appears.\n\nCamera: One low three-quarter 50mm spatial-context view. A restrained slow dolly follows rightward while keeping the connected inlet, gate, packet, and beginning of the proof bay legible. Deep enough focus for the route. No cut, zoom, rack focus, or angle change.\n\nLighting/mood: rigorous high-end practical product photography; hard directional key, cool edge light, deep blacks, physically accurate contact and acrylic shadows.\n\nColor palette: near-black, optic white, clear acrylic, brushed steel, one cobalt-blue accent.\n\nStyle/format: photoreal full-frame commercial cinematography, natural motion blur, restrained fine film grain, smooth 24+ fps motion, continuous left-to-right screen direction.\n\nAudio: quiet conveyor motor decelerating to silence and low laboratory room tone; no dialogue and no music.\n\nConstraints: one connected tunnel, one moving conveyor, one packet, one closed gate, one continuous shot. Packet never reverses, rotates, deforms, disappears, duplicates, or crosses the gate. No captions, subtitles, titles, legible text, logos, interfaces, people, hands, watermarks, or glowing graphics.\n\nAvoid: CGI appearance; miniature toy styling; stop-motion cadence; disconnected tunnel; gap or bridge; plastic material; flicker; jitter; focus pulsing; teleportation; extra mechanisms.",
+    "remixed_from_video_id": null,
+    "seconds": "4",
+    "size": "1280x720",
+    "status": "queued"
+  },
+  "final": {
+    "completed_at": 1784501053,
+    "created_at": 1784500910,
+    "edited_from_video_id": null,
+    "error": null,
+    "expires_at": 1784673853,
+    "extended_from_video_id": null,
+    "id": "video_6a5d52ae60a8819184cda288fda96e9e078729198b9267c8",
+    "model": "sora-2-pro",
+    "object": "video",
+    "progress": 100,
+    "prompt": "Use case: CREATE SOMETHING 16:9 editorial marketing film, final production shot 2 of 5.\n\nPrimary request: Preserve the supplied shot's exact photoreal practical-installation world, connected tunnel, gate, and cobalt work packet. Create one controlled four-second spatial approach shot; do not introduce another angle or cut.\n\nScene/background: The same single unbroken clear-acrylic tunnel and ribbed conveyor from the reference. One machined-black decision gate spans the center of this same route; the proof bay is visibly connected beyond it. Near-black studio floor, hard raking light, accurate acrylic refraction, brushed metal, contact shadows, restrained reflections.\n\nSubject: The same one substantial cobalt-blue anodized-metal cuboid, heavy and softly beveled, traveling only left to right.\n\nAction: The moving conveyor carries the packet steadily from the left toward the closed decision gate. The packet decelerates naturally and stops with a clear physical gap immediately before the gate by 3.2 seconds, then remains completely still for the final 0.8 seconds. The gate stays closed and motionless throughout. No receipt appears.\n\nCamera: One low three-quarter 50mm spatial-context view. A restrained slow dolly follows rightward while keeping the connected inlet, gate, packet, and beginning of the proof bay legible. Deep enough focus for the route. No cut, zoom, rack focus, or angle change.\n\nLighting/mood: rigorous high-end practical product photography; hard directional key, cool edge light, deep blacks, physically accurate contact and acrylic shadows.\n\nColor palette: near-black, optic white, clear acrylic, brushed steel, one cobalt-blue accent.\n\nStyle/format: photoreal full-frame commercial cinematography, natural motion blur, restrained fine film grain, smooth 24+ fps motion, continuous left-to-right screen direction.\n\nAudio: quiet conveyor motor decelerating to silence and low laboratory room tone; no dialogue and no music.\n\nConstraints: one connected tunnel, one moving conveyor, one packet, one closed gate, one continuous shot. Packet never reverses, rotates, deforms, disappears, duplicates, or crosses the gate. No captions, subtitles, titles, legible text, logos, interfaces, people, hands, watermarks, or glowing graphics.\n\nAvoid: CGI appearance; miniature toy styling; stop-motion cadence; disconnected tunnel; gap or bridge; plastic material; flicker; jitter; focus pulsing; teleportation; extra mechanisms.",
+    "remixed_from_video_id": null,
+    "seconds": "4",
+    "size": "1280x720",
+    "status": "completed"
+  }
+}

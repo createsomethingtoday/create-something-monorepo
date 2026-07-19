@@ -1,0 +1,17 @@
+{
+  "completed_at": null,
+  "created_at": 1784501331,
+  "edited_from_video_id": null,
+  "error": null,
+  "expires_at": null,
+  "extended_from_video_id": null,
+  "id": "video_6a5d5453b0fc8191beb81f5ccee286ff0f43ee70711c7331",
+  "model": "sora-2-pro",
+  "object": "video",
+  "progress": 0,
+  "prompt": "Primary request: Keep this exact shot, framing, duration, camera, cobalt packet, connected acrylic tunnel, lighting, materials, grain, and audio character. Change only the gate-clearing action.\n\nGate correction: Begin with every vertical steel blocking slat down exactly as in the source. Keep the cobalt packet completely motionless. The gate performs three small inspection ticks, then every blocking slat retracts vertically upward and fully disappears into the top beam. By 3.2 seconds the rectangular passage from conveyor surface to top beam is completely empty and wide enough for the cobalt packet; no slat, bar, tooth, cable, or obstruction remains anywhere below the top beam. Hold that visibly empty opening and stationary packet through the end.\n\nInvariants: same one packet; same side and distance from gate; same fixed camera; same connected tunnel; same screen direction; same photographic materials and lighting; no receipt; no packet movement; no cut or new angle.\n\nAvoid: partially open gate; dangling slats; bars remaining in the passage; side-opening door; packet movement; new mechanism; camera change; flicker; text; logo; people.",
+  "remixed_from_video_id": "video_6a5d536268ac8193ab5dc2a28e25a87e0d813271c639a8ab",
+  "seconds": "4",
+  "size": "1280x720",
+  "status": "queued"
+}

@@ -1,0 +1,158 @@
+{
+  "$schema": "https://createsomething.agency/schemas/motion-scene.v1.json",
+  "id": "create-something.signal-decision-proof.v10",
+  "purpose": "Render one fluid physical Signal to Decision to Action to Proof journey from a single Blender scene.",
+  "format": {
+    "width": 1280,
+    "height": 720,
+    "aspectRatio": "16:9",
+    "deliveryDurationSeconds": 20,
+    "authoredFps": 24,
+    "deliveryFps": 24,
+    "burnedInCaptions": false
+  },
+  "elements": [
+    {
+      "id": "continuous-tunnel",
+      "asset": "performance-lab.continuous-acrylic-tunnel.v10",
+      "role": "environment",
+      "editable": true
+    },
+    {
+      "id": "signal",
+      "asset": "performance-lab.signal.cobalt-anodized-cube.v10",
+      "role": "input",
+      "editable": true
+    },
+    {
+      "id": "decision-gate",
+      "asset": "performance-lab.decision-gate.telescoping-onyx.v10",
+      "role": "judgment",
+      "editable": true
+    },
+    {
+      "id": "proof-receipt",
+      "asset": "performance-lab.proof-receipt.porcelain.v10",
+      "role": "evidence",
+      "editable": true
+    },
+    {
+      "id": "camera",
+      "asset": "performance-lab.camera.four-shot-film-progression.v10",
+      "role": "viewpoint",
+      "editable": true
+    }
+  ],
+  "beats": [
+    {
+      "id": "establish",
+      "startSeconds": 0,
+      "endSeconds": 2,
+      "focus": ["continuous-tunnel", "signal", "decision-gate"],
+      "renderCell": "fluid-physical-master"
+    },
+    {
+      "id": "signal",
+      "startSeconds": 2,
+      "endSeconds": 6,
+      "focus": ["signal", "camera"],
+      "dependsOn": ["establish"],
+      "renderCell": "fluid-physical-master"
+    },
+    {
+      "id": "decision",
+      "startSeconds": 6,
+      "endSeconds": 10.5,
+      "focus": ["signal", "decision-gate", "camera"],
+      "dependsOn": ["signal"],
+      "renderCell": "fluid-physical-master"
+    },
+    {
+      "id": "action",
+      "startSeconds": 10.5,
+      "endSeconds": 15,
+      "focus": ["signal", "decision-gate", "camera"],
+      "dependsOn": ["decision"],
+      "renderCell": "fluid-physical-master"
+    },
+    {
+      "id": "proof",
+      "startSeconds": 15,
+      "endSeconds": 18,
+      "focus": ["signal", "proof-receipt", "camera"],
+      "dependsOn": ["action"],
+      "renderCell": "fluid-physical-master"
+    },
+    {
+      "id": "terminal-hold",
+      "startSeconds": 18,
+      "endSeconds": 20,
+      "focus": ["signal", "decision-gate", "proof-receipt"],
+      "dependsOn": ["proof"],
+      "renderCell": "fluid-physical-master"
+    }
+  ],
+  "renderCells": [
+    {
+      "id": "fluid-physical-master",
+      "startSeconds": 0,
+      "endSeconds": 20,
+      "source": "../exports/signal-decision-proof--v10--fluid-physical--20s--16x9--v20260719.mp4",
+      "generation": "cached"
+    }
+  ],
+  "producer": {
+    "engine": "Blender 5.2 Eevee",
+    "scene": "fluid-signal-scene--v10.blend",
+    "source": "packages/motion-studio/scripts/render-fluid-signal-scene.py",
+    "verifier": "packages/motion-studio/scripts/verify-fluid-signal-scene.py",
+    "composition": "single physical scene; no plate or moving-element composite"
+  },
+  "camera": {
+    "reference": "Sony FE 100mm f/2.8 Macro GM OSS-inspired packet and proof imagery with wider contextual lenses where causality requires it",
+    "shots": [
+      {"frames": [1, 120], "lensMillimeters": 100, "purpose": "ground-level packet macro and visible belt travel"},
+      {"frames": [121, 252], "lensMillimeters": 50, "purpose": "spatial context and decision system"},
+      {"frames": [253, 360], "lensMillimeters": 85, "purpose": "gate passage and action"},
+      {"frames": [361, 480], "lensMillimeters": 100, "purpose": "proof rise, monumental hero, and terminal hold"}
+    ],
+    "cuts": 3,
+    "terminalHoldSeconds": 2
+  },
+  "finish": {
+    "grain": "restrained temporally varying optical film grain applied during deterministic FFmpeg encoding",
+    "conveyor": "visible belt travel synchronized with packet motion and held still during the terminal tableau"
+  },
+  "audio": {
+    "narration": "First, a signal. Then, a decision. Only then, action—and proof.",
+    "music": "none"
+  },
+  "policy": {
+    "draft": {
+      "model": "sora-2",
+      "maximumAttemptsPerCell": 0,
+      "maximumSceneSpendUsd": 0
+    },
+    "final": {
+      "model": "sora-2-pro",
+      "rerenderInvalidatedCellsOnly": true,
+      "requiresApprovalAboveUsd": 0,
+      "maximumSceneSpendUsd": 0
+    }
+  },
+  "invariants": [
+    "one physical Blender scene",
+    "four motivated camera shots rendered from the same physical scene",
+    "one continuous acrylic tunnel",
+    "one cobalt signal cube with nondecreasing x-position",
+    "gate clears before signal passage",
+    "proof receipt stays hidden until after passage",
+    "smooth 24 fps physical motion",
+    "100mm macro scale with wider spatial and action lenses as needed",
+    "visible conveyor travel synchronized with the work packet",
+    "restrained temporal film grain",
+    "terminal camera, belt, and proof state hold for two seconds",
+    "no photographic plate or moving-element composite",
+    "no burned-in captions, legible text, logos, watermarks, or people"
+  ]
+}

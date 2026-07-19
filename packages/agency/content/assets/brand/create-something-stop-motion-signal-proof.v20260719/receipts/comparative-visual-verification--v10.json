@@ -1,0 +1,42 @@
+{
+  "method": "Inspect dense half-second contact sheets, full-size checkpoints at 2, 6, 10, 14, 18, and 19.9 seconds, and full-size frames on both sides of each Sora cut. Every image was decoded from the final encoded MP4.",
+  "blender": {
+    "video": "../exports/signal-decision-proof--v10--fluid-physical--20s--16x9--v20260719.mp4",
+    "contactSheet": "final-contact-sheet--500ms--v10-blender.jpg",
+    "checks": {
+      "singlePhysicalScene": true,
+      "connectedTunnel": true,
+      "singlePacketIdentity": true,
+      "leftToRightMotion": true,
+      "gateClearBeforePassage": true,
+      "proofAfterPassage": true,
+      "twoSecondTerminalHold": true,
+      "noBurnedTextOrCaptions": true,
+      "photographicMaterialQuality": false
+    },
+    "verdict": "Deterministic continuity master and reusable previs. It proves topology and causal order, but its Eevee materials visibly read as CG and are below the production image-quality bar."
+  },
+  "sora": {
+    "video": "../exports/signal-decision-proof--v10--sora-five-shot--20s--16x9--v20260719.mp4",
+    "contactSheet": "final-contact-sheet--500ms--v10-sora.jpg",
+    "cutContactSheet": "final-cut-contact-sheet--v10-sora.jpg",
+    "checks": {
+      "photographicMaterialQuality": true,
+      "connectedTunnelArtDirection": true,
+      "singlePacketIdentityBeforeAndAfterDecision": true,
+      "leftToRightScreenDirection": true,
+      "gateDecisionBeforePostGatePacket": true,
+      "proofAfterPassage": true,
+      "terminalHold": true,
+      "noBurnedTextOrCaptions": true,
+      "deterministicCrossShotTopologyProof": false
+    },
+    "verdict": "Production master. The five-camera editorial cut is visually cohesive and materially stronger. The tight gate insert avoids packet deformation; the intact packet beyond the gate completes causality through film grammar. Independent Sora cells cannot provide Blender-level topology proof, so the Blender master remains the authoritative continuity reference."
+  },
+  "recommendation": {
+    "productionMaster": "sora",
+    "continuityAndPrevisMaster": "blender",
+    "reason": "Sora wins the audience-facing quality comparison; Blender wins deterministic repeatability and exact element control. Keeping both is the maintainable hybrid production system."
+  },
+  "valid": true
+}

@@ -1,0 +1,27 @@
+Use case: CREATE SOMETHING 16:9 editorial marketing film, final production photography.
+
+Primary request: Recreate the Blender-directed Signal to Decision to Action sequence as a genuinely photoreal cinematic product film. Preserve the supplied reference's single connected tunnel topology, but make the physical materials, scale, motion, optics, and lighting indistinguishable from a photographed practical kinetic installation rather than CGI or stop motion.
+
+Scene/background: One long unbroken conveyor passes through one continuous clear-acrylic tunnel on a near-black studio floor. The tunnel has two uninterrupted sidewalls, one machined-black decision gate at center, and one proof bay on the right. There are no separate trays, gaps, bridges, boxes, basins, or disconnected tunnel sections. Hard raking studio light reveals real acrylic edge refraction, tiny controlled surface imperfections, brushed metal, contact shadows, and restrained reflections against a deep black background.
+
+Subject: One substantial cobalt-blue anodized-metal cuboid is the packet of work. It is heavy, solid, softly beveled, materially consistent, and always the same object. It must feel large through ground-level macro scale, not like a toy. One ribbed industrial conveyor belt visibly moves beneath it from left to right.
+
+Action: The conveyor and the same cobalt packet move only left to right. The packet approaches the closed center gate, stops completely, and remains still while the gate performs three restrained mechanical inspection ticks. The gate then retracts fully before the packet resumes. The same packet passes cleanly through the opening and becomes fully visible in the right proof bay. End with the packet stopped in the proof bay and the connected route still readable; do not issue the receipt yet.
+
+Camera and timing:
+- 0.0-2.5s: begin from the supplied connected-tunnel establishing composition, 50mm low three-quarter view, subtle steady dolly; the whole route is readable and the belt begins moving.
+- 2.5-5.5s: motivated cut to a ground-level Sony FE 100mm f/2.8 Macro GM OSS-inspired lateral close-up; the heavy cobalt packet fills the frame while ribbed belt travel is unmistakable.
+- 5.5-9.0s: motivated cut to a 50mm low spatial-context view; packet stops at the closed gate, three mechanical inspection ticks occur, then the gate retracts completely.
+- 9.0-12.0s: motivated cut to an 85mm side-tracking action view; the same packet crosses the open gate left to right and stops fully visible in the proof bay. Hold the final state steady for the last half second.
+
+Lighting/mood: rigorous, calm, high-end practical product photography; hard directional key, cool controlled edge light, deep blacks, physically accurate contact and acrylic shadows.
+
+Color palette: near-black, optic white, clear acrylic, brushed steel, one cobalt-blue accent.
+
+Style/format: photoreal full-frame commercial cinematography, natural motion blur, shallow depth of field only in macro shots, restrained fine film grain, continuous screen direction, clean motivated cuts.
+
+Audio: quiet conveyor motor, three dry inspection ticks, one gate-release click, low laboratory room tone; no dialogue and no music.
+
+Constraints: one connected tunnel, one moving conveyor, one cobalt packet, one gate, one proof bay. Gate opens before passage. Packet never reverses, resets, teleports, disappears, duplicates, morphs, or changes material. No receipt in this first sequence. No captions, subtitles, titles, legible writing, logos, interfaces, people, hands, watermarks, or glowing science-fiction graphics.
+
+Avoid: low-quality CGI; miniature toy styling; stop-motion cadence; plastic-looking acrylic; rubbery deformation; disconnected geometry; camera jitter; flicker; focus pulsing; jumpy object motion; continuity errors; decorative extra mechanisms.

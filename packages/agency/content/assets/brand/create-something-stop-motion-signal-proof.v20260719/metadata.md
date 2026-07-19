@@ -206,6 +206,74 @@ local and zero-generation-cost.
 V8 verdict: recreated internal pilot master. Publication remains a separate
 approval boundary.
 
+## Revision v10: deterministic previs plus five-shot Sora production
+
+V10 removes the rejected stop-motion/photoreal composite. It preserves one
+art-direction and causal contract, then produces two exact 20-second masters:
+a fully controllable Blender scene for topology, timing, and future punchlists,
+and five independently addressable Sora camera cells for the audience-facing
+production cut.
+
+| Field | Blender continuity master | Sora production master |
+| --- | --- | --- |
+| Final export | `exports/signal-decision-proof--v10--fluid-physical--20s--16x9--v20260719.mp4` | `exports/signal-decision-proof--v10--sora-five-shot--20s--16x9--v20260719.mp4` |
+| Scene contract | `source/scene.v10.json` | `source/scene.sora.v10.json` |
+| Rebuild path | `packages/motion-studio/scripts/render-fluid-signal-scene.py` | `packages/motion-studio/scripts/assemble-sora-signal-proof.py` |
+| Camera language | 100mm macro, 50mm context, 85mm action, 100mm proof | five four-second single-camera cells with hard cuts at 4, 8, 12, and 16 seconds |
+| Continuity | One physical Blender scene; deterministic packet, belt, gate, proof, light, and camera state | Editorial continuity across independently generated cells; tight gate insert followed by the intact post-gate packet |
+| New AI video cost | $0 | $10.80 |
+| Final export SHA-256 | `78e58d9f3db391a27bb7f5ce624819adf1bbb54d5ee277851c67f66d5c97f0d2` | `dd02a5474f1fefa237f62652198cfb98c0ca5a2dbc91c22d5a951aa47cecbd57` |
+
+The Sora spend consists of one 12-second Pro style scout at $3.60 plus six
+four-second Pro jobs at $1.20 each: five planned cells and one approved gate
+remix. The dedicated action-passage cell flattened the packet into a slab and
+was rejected; the clean post-gate passage already present in the style scout is
+used instead. The first gate cell also failed full clearance and is retained
+only as failure evidence. Exact provider job IDs, accepted sources, rejected
+sources, prompts, edit decisions, and per-job costs live in
+`source/scene.sora.v10.json`. Credentials were injected from Infisical
+`prod:/` using `WEBFLOW_OPENAI_API_KEY`; no key value was stored.
+
+### V10 programmatic receipts
+
+- `receipts/fluid-scene-verification--v10.json` proves Blender's 480-frame
+  monotonic packet path, four lens bindings, gate-before-passage order, moving
+  belt, proof timing, camera continuity, and terminal hold.
+- `receipts/sora-render-plan--v10.json` maps each story beat to an independently
+  replaceable cached shot cell.
+- `receipts/sora-assembly-verification--v10.json` records the five exact inputs,
+  hard-cut boundaries, narration, and fail-closed media verdict.
+- `receipts/motion-verification--v10-blender.json` and
+  `receipts/motion-verification--v10-sora.json` pass duration, dimensions,
+  frame rate, frame count, audio, and no-subtitle checks.
+- `receipts/cadence-verification--v10.json` finds zero duplicate adjacent decoded
+  frames in both 480-frame masters, including both packet-motion ranges.
+- `receipts/audio-transcription--v10.json` independently transcribes both masters
+  as "First, a signal. Then, a decision. Only then, action and proof."
+- `receipts/comparative-visual-verification--v10.json` records the decoded-media
+  comparison and the explicit renderer tradeoff.
+- Dense contact sheets, full-size checkpoints, and Sora cut-boundary frames are
+  stored under `receipts/` and were inspected from the final encodes.
+
+### V10 review
+
+- [x] Both deliveries are exactly 20 seconds, 1280x720, 480 frames at 24 fps.
+- [x] Both contain H.264 video, AAC narration, and no subtitle stream.
+- [x] Both use smooth delivery-frame motion rather than two-frame stop-motion holds.
+- [x] Both preserve signal, decision, action, proof, and a terminal hold.
+- [x] The Blender candidate proves one connected tunnel and exact causal state.
+- [x] The Sora candidate preserves a cohesive photographic set, one cobalt packet
+  identity, left-to-right screen direction, and motivated editorial cuts.
+- [x] No captions, text, logos, interfaces, people, or music are burned in.
+- [x] The external WebVTT remains available for player-rendered captions.
+
+V10 verdict: use the Sora five-shot edit as the production master because its
+materials, optics, and sense of scale are markedly stronger. Retain Blender as
+the repeatable source of scene truth, punchlists, lens direction, timing, and
+continuity verification. The gate insert is an editorial proof of decision,
+not Blender-level cross-shot topology proof; that limitation is explicit rather
+than hidden.
+
 ## Boundary
 
 This artifact is an internal prototype. Generation and local review do not authorize publication, posting, deployment, or broader product development.

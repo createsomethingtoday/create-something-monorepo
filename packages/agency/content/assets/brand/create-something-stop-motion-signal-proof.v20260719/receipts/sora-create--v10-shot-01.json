@@ -1,0 +1,36 @@
+{
+  "create": {
+    "completed_at": null,
+    "created_at": 1784500727,
+    "edited_from_video_id": null,
+    "error": null,
+    "expires_at": null,
+    "extended_from_video_id": null,
+    "id": "video_6a5d51f7e96c8191a85c41571ed99f870e881fac0e3e037a",
+    "model": "sora-2-pro",
+    "object": "video",
+    "progress": 0,
+    "prompt": "Use case: CREATE SOMETHING 16:9 editorial marketing film, final production shot 1 of 5.\n\nPrimary request: Preserve the supplied shot's exact photoreal practical-installation world and cobalt work packet. Create one controlled four-second macro shot; do not introduce another angle or cut.\n\nScene/background: The same single unbroken clear-acrylic tunnel and ribbed industrial conveyor from the reference, on a near-black studio floor under hard raking light. Real acrylic edge refraction, brushed metal, contact shadows, restrained reflections, deep black background.\n\nSubject: The one substantial cobalt-blue anodized-metal cuboid from the reference, heavy and softly beveled. It is a large packet of work, not a toy.\n\nAction: Over four seconds the conveyor ribs travel smoothly left to right and carry the same packet steadily rightward by roughly one packet width. The packet never rotates, deforms, lifts, slips, reverses, or changes identity. Nothing else moves.\n\nCamera: One ground-level Sony FE 100mm f/2.8 Macro GM OSS-inspired lateral close-up. Very slow parallel slider move matching the packet, shallow but stable depth of field, packet remains crisply focused and visually large. No cut, zoom, rack focus, or angle change.\n\nLighting/mood: rigorous high-end practical product photography; hard directional key, cool edge light, deep blacks, accurate floor contact.\n\nColor palette: near-black, optic white, clear acrylic, brushed steel, one cobalt-blue accent.\n\nStyle/format: photoreal full-frame commercial cinematography, natural motion blur, restrained fine film grain, smooth 24+ fps motion.\n\nAudio: quiet conveyor motor and low laboratory room tone; no dialogue and no music.\n\nConstraints: one tunnel, one conveyor, one packet, one continuous shot. No gate action or receipt in this shot. No captions, subtitles, titles, legible text, logos, interfaces, people, hands, watermarks, or glowing graphics.\n\nAvoid: CGI appearance; miniature toy styling; stop-motion cadence; plastic material; rubbery edges; flicker; jitter; focus pulsing; duplicated packet; disconnected geometry; decorative mechanisms.",
+    "remixed_from_video_id": null,
+    "seconds": "4",
+    "size": "1280x720",
+    "status": "queued"
+  },
+  "final": {
+    "completed_at": 1784500873,
+    "created_at": 1784500727,
+    "edited_from_video_id": null,
+    "error": null,
+    "expires_at": 1784673673,
+    "extended_from_video_id": null,
+    "id": "video_6a5d51f7e96c8191a85c41571ed99f870e881fac0e3e037a",
+    "model": "sora-2-pro",
+    "object": "video",
+    "progress": 100,
+    "prompt": "Use case: CREATE SOMETHING 16:9 editorial marketing film, final production shot 1 of 5.\n\nPrimary request: Preserve the supplied shot's exact photoreal practical-installation world and cobalt work packet. Create one controlled four-second macro shot; do not introduce another angle or cut.\n\nScene/background: The same single unbroken clear-acrylic tunnel and ribbed industrial conveyor from the reference, on a near-black studio floor under hard raking light. Real acrylic edge refraction, brushed metal, contact shadows, restrained reflections, deep black background.\n\nSubject: The one substantial cobalt-blue anodized-metal cuboid from the reference, heavy and softly beveled. It is a large packet of work, not a toy.\n\nAction: Over four seconds the conveyor ribs travel smoothly left to right and carry the same packet steadily rightward by roughly one packet width. The packet never rotates, deforms, lifts, slips, reverses, or changes identity. Nothing else moves.\n\nCamera: One ground-level Sony FE 100mm f/2.8 Macro GM OSS-inspired lateral close-up. Very slow parallel slider move matching the packet, shallow but stable depth of field, packet remains crisply focused and visually large. No cut, zoom, rack focus, or angle change.\n\nLighting/mood: rigorous high-end practical product photography; hard directional key, cool edge light, deep blacks, accurate floor contact.\n\nColor palette: near-black, optic white, clear acrylic, brushed steel, one cobalt-blue accent.\n\nStyle/format: photoreal full-frame commercial cinematography, natural motion blur, restrained fine film grain, smooth 24+ fps motion.\n\nAudio: quiet conveyor motor and low laboratory room tone; no dialogue and no music.\n\nConstraints: one tunnel, one conveyor, one packet, one continuous shot. No gate action or receipt in this shot. No captions, subtitles, titles, legible text, logos, interfaces, people, hands, watermarks, or glowing graphics.\n\nAvoid: CGI appearance; miniature toy styling; stop-motion cadence; plastic material; rubbery edges; flicker; jitter; focus pulsing; duplicated packet; disconnected geometry; decorative mechanisms.",
+    "remixed_from_video_id": null,
+    "seconds": "4",
+    "size": "1280x720",
+    "status": "completed"
+  }
+}

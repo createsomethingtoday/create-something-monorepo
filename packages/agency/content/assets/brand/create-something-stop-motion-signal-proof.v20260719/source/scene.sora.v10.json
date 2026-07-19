@@ -1,0 +1,227 @@
+{
+  "$schema": "https://createsomething.agency/schemas/motion-scene.v1.json",
+  "id": "create-something.signal-decision-proof.sora.v10",
+  "purpose": "Assemble five independently addressable Sora camera cells into a photographic Signal to Decision to Action to Proof master.",
+  "format": {
+    "width": 1280,
+    "height": 720,
+    "aspectRatio": "16:9",
+    "deliveryDurationSeconds": 20,
+    "authoredFps": 24,
+    "deliveryFps": 24,
+    "burnedInCaptions": false
+  },
+  "elements": [
+    {
+      "id": "continuous-tunnel",
+      "asset": "performance-lab.continuous-acrylic-tunnel.v10",
+      "role": "environment",
+      "editable": true
+    },
+    {
+      "id": "signal",
+      "asset": "performance-lab.signal.cobalt-cuboid.v10",
+      "role": "input",
+      "editable": true
+    },
+    {
+      "id": "decision-gate",
+      "asset": "performance-lab.decision-gate.onyx.v10",
+      "role": "judgment",
+      "editable": true
+    },
+    {
+      "id": "proof-receipt",
+      "asset": "performance-lab.proof-receipt.porcelain.v10",
+      "role": "evidence",
+      "editable": true
+    },
+    {
+      "id": "camera",
+      "asset": "performance-lab.camera.five-shot-editorial-progression.v10",
+      "role": "viewpoint",
+      "editable": true
+    }
+  ],
+  "beats": [
+    {
+      "id": "signal",
+      "startSeconds": 0,
+      "endSeconds": 4,
+      "focus": ["signal", "continuous-tunnel", "camera"],
+      "renderCell": "macro-signal",
+      "direction": "Ground-level 100mm-style macro; the packet feels materially large."
+    },
+    {
+      "id": "approach",
+      "startSeconds": 4,
+      "endSeconds": 8,
+      "focus": ["signal", "continuous-tunnel", "decision-gate", "camera"],
+      "dependsOn": ["signal"],
+      "renderCell": "spatial-approach",
+      "direction": "Wider connected-tunnel context; the packet advances left to right and stops before the closed gate."
+    },
+    {
+      "id": "decision",
+      "startSeconds": 8,
+      "endSeconds": 12,
+      "focus": ["decision-gate", "camera"],
+      "dependsOn": ["approach"],
+      "renderCell": "gate-insert",
+      "direction": "Tight mechanical insert isolates gate actuation without asking a generated packet to deform through it."
+    },
+    {
+      "id": "action",
+      "startSeconds": 12,
+      "endSeconds": 16,
+      "focus": ["signal", "continuous-tunnel", "decision-gate", "camera"],
+      "dependsOn": ["decision"],
+      "renderCell": "action-passage",
+      "direction": "The intact cobalt packet is shown beyond the gate, preserving left-to-right screen direction."
+    },
+    {
+      "id": "proof",
+      "startSeconds": 16,
+      "endSeconds": 20,
+      "focus": ["signal", "proof-receipt", "continuous-tunnel", "camera"],
+      "dependsOn": ["action"],
+      "renderCell": "proof-hero",
+      "direction": "A porcelain proof object rises beside the intact packet and holds through the terminal frame."
+    }
+  ],
+  "renderCells": [
+    {
+      "id": "macro-signal",
+      "startSeconds": 0,
+      "endSeconds": 4,
+      "source": "../exports/signal-decision-proof--v10--sora-shot-01-macro-signal--4s--16x9--v20260719.mp4",
+      "generation": "cached"
+    },
+    {
+      "id": "spatial-approach",
+      "startSeconds": 4,
+      "endSeconds": 8,
+      "source": "../exports/signal-decision-proof--v10--sora-shot-02-spatial-approach--4s--16x9--v20260719.mp4",
+      "generation": "cached"
+    },
+    {
+      "id": "gate-insert",
+      "startSeconds": 8,
+      "endSeconds": 12,
+      "source": "../exports/signal-decision-proof--v10--sora-shot-03-gate-insert--4s--16x9--v20260719.mp4",
+      "generation": "cached"
+    },
+    {
+      "id": "action-passage",
+      "startSeconds": 12,
+      "endSeconds": 16,
+      "source": "../exports/signal-decision-proof--v10--sora-shot-04-action-passage-from-scout--4s--16x9--v20260719.mp4",
+      "generation": "cached"
+    },
+    {
+      "id": "proof-hero",
+      "startSeconds": 16,
+      "endSeconds": 20,
+      "source": "../exports/signal-decision-proof--v10--sora-shot-05-proof-hero--4s--16x9--v20260719.mp4",
+      "generation": "cached"
+    }
+  ],
+  "edit": {
+    "cellOrder": [
+      "macro-signal",
+      "spatial-approach",
+      "gate-insert",
+      "action-passage",
+      "proof-hero"
+    ],
+    "transition": "hard-cut",
+    "cutPointsSeconds": [4, 8, 12, 16],
+    "assembler": "packages/motion-studio/scripts/assemble-sora-signal-proof.py",
+    "output": "../exports/signal-decision-proof--v10--sora-five-shot--20s--16x9--v20260719.mp4"
+  },
+  "provider": {
+    "model": "sora-2-pro",
+    "totalSpendUsd": 10.8,
+    "jobs": [
+      {
+        "role": "style-scout",
+        "id": "video_6a5d4f9920b08191b9df33226498a1ed0337b97dde226a99",
+        "durationSeconds": 12,
+        "costUsd": 3.6,
+        "acceptedUse": "style reference and action-passage source"
+      },
+      {
+        "role": "macro-signal",
+        "id": "video_6a5d51f7e96c8191a85c41571ed99f870e881fac0e3e037a",
+        "durationSeconds": 4,
+        "costUsd": 1.2,
+        "acceptedUse": "shot 1"
+      },
+      {
+        "role": "spatial-approach",
+        "id": "video_6a5d52ae60a8819184cda288fda96e9e078729198b9267c8",
+        "durationSeconds": 4,
+        "costUsd": 1.2,
+        "acceptedUse": "shot 2"
+      },
+      {
+        "role": "gate-decision",
+        "id": "video_6a5d536268ac8193ab5dc2a28e25a87e0d813271c639a8ab",
+        "durationSeconds": 4,
+        "costUsd": 1.2,
+        "acceptedUse": "rejected because the aperture did not fully clear"
+      },
+      {
+        "role": "gate-decision-remix",
+        "id": "video_6a5d5453b0fc8191beb81f5ccee286ff0f43ee70711c7331",
+        "durationSeconds": 4,
+        "costUsd": 1.2,
+        "acceptedUse": "tight gate-only insert"
+      },
+      {
+        "role": "action-passage",
+        "id": "video_6a5d553099fc8191a4cdf2079925ad8206c09fce782b731d",
+        "durationSeconds": 4,
+        "costUsd": 1.2,
+        "acceptedUse": "rejected because the packet flattened into a slab"
+      },
+      {
+        "role": "proof-hero",
+        "id": "video_6a5d562f55508190b24b00bcec10753f0662339deee8bac3",
+        "durationSeconds": 4,
+        "costUsd": 1.2,
+        "acceptedUse": "shot 5"
+      }
+    ]
+  },
+  "audio": {
+    "narration": "First, a signal. Then, a decision. Only then, action and proof.",
+    "music": "none",
+    "captions": "external WebVTT only"
+  },
+  "policy": {
+    "draft": {
+      "model": "sora-2",
+      "maximumAttemptsPerCell": 0,
+      "maximumSceneSpendUsd": 0
+    },
+    "final": {
+      "model": "sora-2-pro",
+      "rerenderInvalidatedCellsOnly": true,
+      "requiresApprovalAboveUsd": 0,
+      "maximumSceneSpendUsd": 10.8
+    }
+  },
+  "invariants": [
+    "five independently addressable camera cells",
+    "one primary action per cell",
+    "left-to-right screen direction",
+    "one cobalt packet identity before and after the decision insert",
+    "connected acrylic-tunnel art direction",
+    "gate decision precedes visible passage",
+    "proof object appears only after passage",
+    "hard cuts at exact four-second boundaries",
+    "no burned-in captions, legible text, logos, watermarks, or people"
+  ],
+  "knownLimitation": "Sora does not provide Blender-level topology proof across independently generated shots; the tight gate insert and intact post-gate packet make causality legible through editorial continuity."
+}

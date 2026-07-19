@@ -1,0 +1,23 @@
+Use case: CREATE SOMETHING 16:9 editorial marketing film, final production shot 4 of 5.
+
+Primary request: Preserve the supplied shot's exact photoreal practical-installation world, open gate, connected tunnel, and cobalt work packet. Create one controlled four-second passage shot; do not introduce another angle or cut.
+
+Scene/background: The same unbroken clear-acrylic tunnel continues physically through the fully open machined-black gate into the right proof bay. The same ribbed conveyor is continuous beneath it. Near-black studio floor, hard raking light, realistic acrylic refraction, brushed metal, contact shadows, restrained reflections.
+
+Subject: The same one cobalt-blue anodized-metal work packet, already beginning to emerge from behind the open gate, heavy and softly beveled.
+
+Action: The gate remains fully open and motionless. The conveyor carries the same packet smoothly left to right from partial gate occlusion until it is completely visible and centered in the connected proof bay. The packet decelerates naturally and stops by 3.4 seconds; hold the arrived state for 0.6 seconds. No receipt appears.
+
+Camera: One low 85mm side-tracking action view matching the reference's gate-side perspective. A restrained smooth lateral move follows the packet rightward while preserving left-to-right screen direction. Stable focus on the packet, natural motion blur. No cut, zoom, rack focus, or angle change.
+
+Lighting/mood: rigorous high-end practical product photography; hard directional key, cool edge light, deep blacks, accurate floor contact and acrylic shadows.
+
+Color palette: near-black, optic white, clear acrylic, brushed steel, one cobalt-blue accent.
+
+Style/format: photoreal full-frame commercial cinematography, restrained fine film grain, smooth 24+ fps motion.
+
+Audio: quiet conveyor motor, restrained passage sound, low laboratory room tone; no dialogue and no music.
+
+Constraints: one connected tunnel, one open gate, one conveyor, one packet, one continuous shot. Packet never reverses, rotates, lifts, deforms, disappears, duplicates, or transforms. No receipt yet. No captions, subtitles, titles, legible text, logos, interfaces, people, hands, watermarks, or glowing graphics.
+
+Avoid: CGI appearance; miniature toy styling; stop-motion cadence; disconnected proof bay; gap or bridge; closing gate; packet teleportation; flicker; jitter; focus pulsing; extra mechanisms.

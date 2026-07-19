@@ -1,0 +1,36 @@
+{
+  "create": {
+    "completed_at": null,
+    "created_at": 1784501090,
+    "edited_from_video_id": null,
+    "error": null,
+    "expires_at": null,
+    "extended_from_video_id": null,
+    "id": "video_6a5d536268ac8193ab5dc2a28e25a87e0d813271c639a8ab",
+    "model": "sora-2-pro",
+    "object": "video",
+    "progress": 0,
+    "prompt": "Use case: CREATE SOMETHING 16:9 editorial marketing film, final production shot 3 of 5.\n\nPrimary request: Preserve the supplied shot's exact photoreal practical-installation world, connected tunnel, cobalt packet, and decision gate. Create one controlled four-second decision shot; do not introduce another angle or cut.\n\nScene/background: The same single unbroken clear-acrylic tunnel and conveyor, with one machined-black gate spanning the route. Near-black studio floor, hard raking light, realistic acrylic edges, brushed steel, contact shadows, restrained reflections.\n\nSubject: The same one cobalt-blue anodized-metal work packet is stopped on the left side of the closed gate with a visible safety gap. It remains completely still for the entire shot.\n\nAction: Only the gate moves. Over the first 2.2 seconds it performs exactly three small, discrete mechanical inspection ticks while remaining closed. At 2.2 seconds the gate's vertical steel slats retract upward smoothly and completely into the top beam. By 3.4 seconds the route is fully clear; hold the open gate and stationary packet for the final 0.6 seconds. The conveyor is still. No receipt appears.\n\nCamera: One low 85mm decision-detail view across the gate, similar compression and framing to the reference. Locked tripod with only imperceptible controlled breathing. Deep enough focus to keep packet, slats, and clear route readable. No cut, zoom, rack focus, or angle change.\n\nLighting/mood: rigorous high-end practical product photography; hard directional key, cool edge light, deep blacks, accurate metal and acrylic response.\n\nColor palette: near-black, optic white, clear acrylic, brushed steel, one cobalt-blue accent.\n\nStyle/format: photoreal full-frame commercial cinematography, restrained fine film grain, smooth mechanical motion.\n\nAudio: exactly three dry inspection ticks, one clean gate-release click, low laboratory room tone; no dialogue and no music.\n\nConstraints: one connected tunnel, one stationary packet, one gate, one continuous shot. Gate opens before any packet passage. No packet motion, duplicate, morph, disappearance, or reset. No captions, subtitles, titles, legible text, logos, interfaces, people, hands, watermarks, or glowing graphics.\n\nAvoid: CGI appearance; miniature toy styling; stop-motion cadence; disconnected geometry; side-opening gate; swinging door; packet movement; flicker; jitter; extra mechanisms.",
+    "remixed_from_video_id": null,
+    "seconds": "4",
+    "size": "1280x720",
+    "status": "queued"
+  },
+  "final": {
+    "completed_at": 1784501242,
+    "created_at": 1784501090,
+    "edited_from_video_id": null,
+    "error": null,
+    "expires_at": 1784674042,
+    "extended_from_video_id": null,
+    "id": "video_6a5d536268ac8193ab5dc2a28e25a87e0d813271c639a8ab",
+    "model": "sora-2-pro",
+    "object": "video",
+    "progress": 100,
+    "prompt": "Use case: CREATE SOMETHING 16:9 editorial marketing film, final production shot 3 of 5.\n\nPrimary request: Preserve the supplied shot's exact photoreal practical-installation world, connected tunnel, cobalt packet, and decision gate. Create one controlled four-second decision shot; do not introduce another angle or cut.\n\nScene/background: The same single unbroken clear-acrylic tunnel and conveyor, with one machined-black gate spanning the route. Near-black studio floor, hard raking light, realistic acrylic edges, brushed steel, contact shadows, restrained reflections.\n\nSubject: The same one cobalt-blue anodized-metal work packet is stopped on the left side of the closed gate with a visible safety gap. It remains completely still for the entire shot.\n\nAction: Only the gate moves. Over the first 2.2 seconds it performs exactly three small, discrete mechanical inspection ticks while remaining closed. At 2.2 seconds the gate's vertical steel slats retract upward smoothly and completely into the top beam. By 3.4 seconds the route is fully clear; hold the open gate and stationary packet for the final 0.6 seconds. The conveyor is still. No receipt appears.\n\nCamera: One low 85mm decision-detail view across the gate, similar compression and framing to the reference. Locked tripod with only imperceptible controlled breathing. Deep enough focus to keep packet, slats, and clear route readable. No cut, zoom, rack focus, or angle change.\n\nLighting/mood: rigorous high-end practical product photography; hard directional key, cool edge light, deep blacks, accurate metal and acrylic response.\n\nColor palette: near-black, optic white, clear acrylic, brushed steel, one cobalt-blue accent.\n\nStyle/format: photoreal full-frame commercial cinematography, restrained fine film grain, smooth mechanical motion.\n\nAudio: exactly three dry inspection ticks, one clean gate-release click, low laboratory room tone; no dialogue and no music.\n\nConstraints: one connected tunnel, one stationary packet, one gate, one continuous shot. Gate opens before any packet passage. No packet motion, duplicate, morph, disappearance, or reset. No captions, subtitles, titles, legible text, logos, interfaces, people, hands, watermarks, or glowing graphics.\n\nAvoid: CGI appearance; miniature toy styling; stop-motion cadence; disconnected geometry; side-opening gate; swinging door; packet movement; flicker; jitter; extra mechanisms.",
+    "remixed_from_video_id": null,
+    "seconds": "4",
+    "size": "1280x720",
+    "status": "completed"
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "sceneId": "create-something.signal-decision-proof.sora.v10",
+  "durationSeconds": 20,
+  "format": {
+    "width": 1280,
+    "height": 720,
+    "aspectRatio": "16:9",
+    "deliveryDurationSeconds": 20,
+    "authoredFps": 24,
+    "deliveryFps": 24,
+    "burnedInCaptions": false
+  },
+  "cells": [
+    {
+      "id": "macro-signal",
+      "startSeconds": 0,
+      "endSeconds": 4,
+      "source": "../exports/signal-decision-proof--v10--sora-shot-01-macro-signal--4s--16x9--v20260719.mp4",
+      "generation": "cached",
+      "beatIds": [
+        "signal"
+      ]
+    },
+    {
+      "id": "spatial-approach",
+      "startSeconds": 4,
+      "endSeconds": 8,
+      "source": "../exports/signal-decision-proof--v10--sora-shot-02-spatial-approach--4s--16x9--v20260719.mp4",
+      "generation": "cached",
+      "beatIds": [
+        "approach"
+      ]
+    },
+    {
+      "id": "gate-insert",
+      "startSeconds": 8,
+      "endSeconds": 12,
+      "source": "../exports/signal-decision-proof--v10--sora-shot-03-gate-insert--4s--16x9--v20260719.mp4",
+      "generation": "cached",
+      "beatIds": [
+        "decision"
+      ]
+    },
+    {
+      "id": "action-passage",
+      "startSeconds": 12,
+      "endSeconds": 16,
+      "source": "../exports/signal-decision-proof--v10--sora-shot-04-action-passage-from-scout--4s--16x9--v20260719.mp4",
+      "generation": "cached",
+      "beatIds": [
+        "action"
+      ]
+    },
+    {
+      "id": "proof-hero",
+      "startSeconds": 16,
+      "endSeconds": 20,
+      "source": "../exports/signal-decision-proof--v10--sora-shot-05-proof-hero--4s--16x9--v20260719.mp4",
+      "generation": "cached",
+      "beatIds": [
+        "proof"
+      ]
+    }
+  ],
+  "quality": "draft",
+  "pendingCellIds": [],
+  "estimatedSpendUsd": 0,
+  "maximumSpendUsd": 0,
+  "withinBudget": true,
+  "requiresApproval": false
+}

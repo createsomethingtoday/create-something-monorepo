@@ -1,0 +1,48 @@
+{
+  "scene": "/private/tmp/cre-1333-recreate/packages/agency/content/assets/brand/create-something-stop-motion-signal-proof.v20260719/source/fluid-signal-scene--v10.blend",
+  "valid": true,
+  "checks": {
+    "duration": true,
+    "dimensions": true,
+    "fourMotivatedShots": true,
+    "cubeMonotonic": true,
+    "gateClearBeforePassage": true,
+    "receiptHiddenBeforeProof": true,
+    "cameraContinuousWithinShots": true,
+    "beltMovesWithPacket": true,
+    "beltStopsForTerminalHold": true,
+    "terminalHold": true
+  },
+  "firstPassageFrame": 284,
+  "shotMarkers": [
+    [
+      1,
+      "Shot 1 - 100mm ground macro packet",
+      100
+    ],
+    [
+      121,
+      "Shot 2 - 50mm spatial decision context",
+      50
+    ],
+    [
+      253,
+      "Shot 3 - 85mm gate action",
+      85
+    ],
+    [
+      361,
+      "Shot 4 - 100mm monumental proof hero",
+      100
+    ]
+  ],
+  "beltPositions": {
+    "48": 0.0,
+    "144": -4.46999979019165,
+    "252": -4.46999979019165,
+    "360": -9.0,
+    "432": -9.0,
+    "480": -9.0
+  },
+  "maximumInShotCameraStep": 0.03561668521233228
+}

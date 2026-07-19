@@ -1,0 +1,16 @@
+{
+  "model": "gpt-4o-mini-transcribe",
+  "credential": "Infisical prod:/ WEBFLOW_OPENAI_API_KEY injected as OPENAI_API_KEY; value not stored",
+  "expected": "First, a signal. Then, a decision. Only then, action and proof.",
+  "blender": {
+    "video": "../exports/signal-decision-proof--v10--fluid-physical--20s--16x9--v20260719.mp4",
+    "transcript": "First, a signal. Then, a decision. Only then, action and proof.",
+    "matches": true
+  },
+  "sora": {
+    "video": "../exports/signal-decision-proof--v10--sora-five-shot--20s--16x9--v20260719.mp4",
+    "transcript": "First, a signal. Then, a decision. Only then, action and proof.",
+    "matches": true
+  },
+  "valid": true
+}

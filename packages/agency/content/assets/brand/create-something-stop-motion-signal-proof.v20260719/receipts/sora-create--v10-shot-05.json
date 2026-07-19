@@ -1,0 +1,36 @@
+{
+  "create": {
+    "completed_at": null,
+    "created_at": 1784501808,
+    "edited_from_video_id": null,
+    "error": null,
+    "expires_at": null,
+    "extended_from_video_id": null,
+    "id": "video_6a5d562f55508190b24b00bcec10753f0662339deee8bac3",
+    "model": "sora-2-pro",
+    "object": "video",
+    "progress": 0,
+    "prompt": "Use case: CREATE SOMETHING 16:9 editorial marketing film, final production shot 5 of 5.\n\nPrimary request: Preserve the supplied shot's exact photoreal practical-installation world, connected proof bay, and arrived cobalt work packet. Create one controlled four-second proof-resolution hero shot; do not introduce another angle or cut.\n\nScene/background: The same right end of the unbroken clear-acrylic tunnel and ribbed conveyor in the proof bay. A low clear fixture beside the packet contains one hidden optic-white porcelain receipt. Near-black studio floor, hard raking light, realistic acrylic edge refraction, contact shadows, restrained reflections.\n\nSubject: The same cobalt-blue anodized-metal packet is already stopped in the proof bay and remains motionless. One thick optic-white porcelain proof receipt has softly beveled edges and one small recessed cobalt square mark with no writing.\n\nAction: The conveyor and packet remain completely still. During the first 1.8 seconds the single porcelain receipt rises vertically and mechanically from the clear fixture, settles, and locks. It never appears before rising and never duplicates. Hold the completed packet-and-proof tableau absolutely still for the final 2.2 seconds.\n\nCamera: One ground-level Sony FE 100mm f/2.8 Macro GM OSS-inspired proof hero. Very slow restrained dolly-in during the receipt rise, then camera becomes completely still for the terminal hold. Shallow stable depth of field keeps packet and receipt legible. No cut, zoom jump, rack focus, or angle change.\n\nLighting/mood: rigorous high-end practical product photography; hard directional key, cool edge light, deep blacks, porcelain highlight control, accurate floor contact.\n\nColor palette: near-black, optic white, clear acrylic, brushed steel, one cobalt-blue accent.\n\nStyle/format: photoreal full-frame commercial cinematography, restrained fine film grain, smooth mechanical motion, monumental proof scale.\n\nAudio: one tactile receipt lift, one restrained lock click, low laboratory room tone; no dialogue and no music.\n\nConstraints: one connected proof bay, one stationary packet, one receipt, one continuous shot. No legible writing. Receipt does not morph from the packet. No captions, subtitles, titles, logos, interfaces, people, hands, watermarks, or glowing graphics.\n\nAvoid: CGI appearance; miniature toy styling; stop-motion cadence; paper flutter; receipt deformation; duplicate proof; disconnected tray; flicker; jitter; focus pulsing; extra mechanisms.",
+    "remixed_from_video_id": null,
+    "seconds": "4",
+    "size": "1280x720",
+    "status": "queued"
+  },
+  "final": {
+    "completed_at": 1784501963,
+    "created_at": 1784501808,
+    "edited_from_video_id": null,
+    "error": null,
+    "expires_at": 1784674763,
+    "extended_from_video_id": null,
+    "id": "video_6a5d562f55508190b24b00bcec10753f0662339deee8bac3",
+    "model": "sora-2-pro",
+    "object": "video",
+    "progress": 100,
+    "prompt": "Use case: CREATE SOMETHING 16:9 editorial marketing film, final production shot 5 of 5.\n\nPrimary request: Preserve the supplied shot's exact photoreal practical-installation world, connected proof bay, and arrived cobalt work packet. Create one controlled four-second proof-resolution hero shot; do not introduce another angle or cut.\n\nScene/background: The same right end of the unbroken clear-acrylic tunnel and ribbed conveyor in the proof bay. A low clear fixture beside the packet contains one hidden optic-white porcelain receipt. Near-black studio floor, hard raking light, realistic acrylic edge refraction, contact shadows, restrained reflections.\n\nSubject: The same cobalt-blue anodized-metal packet is already stopped in the proof bay and remains motionless. One thick optic-white porcelain proof receipt has softly beveled edges and one small recessed cobalt square mark with no writing.\n\nAction: The conveyor and packet remain completely still. During the first 1.8 seconds the single porcelain receipt rises vertically and mechanically from the clear fixture, settles, and locks. It never appears before rising and never duplicates. Hold the completed packet-and-proof tableau absolutely still for the final 2.2 seconds.\n\nCamera: One ground-level Sony FE 100mm f/2.8 Macro GM OSS-inspired proof hero. Very slow restrained dolly-in during the receipt rise, then camera becomes completely still for the terminal hold. Shallow stable depth of field keeps packet and receipt legible. No cut, zoom jump, rack focus, or angle change.\n\nLighting/mood: rigorous high-end practical product photography; hard directional key, cool edge light, deep blacks, porcelain highlight control, accurate floor contact.\n\nColor palette: near-black, optic white, clear acrylic, brushed steel, one cobalt-blue accent.\n\nStyle/format: photoreal full-frame commercial cinematography, restrained fine film grain, smooth mechanical motion, monumental proof scale.\n\nAudio: one tactile receipt lift, one restrained lock click, low laboratory room tone; no dialogue and no music.\n\nConstraints: one connected proof bay, one stationary packet, one receipt, one continuous shot. No legible writing. Receipt does not morph from the packet. No captions, subtitles, titles, logos, interfaces, people, hands, watermarks, or glowing graphics.\n\nAvoid: CGI appearance; miniature toy styling; stop-motion cadence; paper flutter; receipt deformation; duplicate proof; disconnected tray; flicker; jitter; focus pulsing; extra mechanisms.",
+    "remixed_from_video_id": null,
+    "seconds": "4",
+    "size": "1280x720",
+    "status": "completed"
+  }
+}

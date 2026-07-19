@@ -1,0 +1,61 @@
+{
+  "output": "/private/tmp/cre-1333-recreate/packages/agency/content/assets/brand/create-something-stop-motion-signal-proof.v20260719/exports/signal-decision-proof--v10--sora-five-shot--20s--16x9--v20260719.mp4",
+  "inputs": [
+    "/private/tmp/cre-1333-recreate/packages/agency/content/assets/brand/create-something-stop-motion-signal-proof.v20260719/exports/signal-decision-proof--v10--sora-shot-01-macro-signal--4s--16x9--v20260719.mp4",
+    "/private/tmp/cre-1333-recreate/packages/agency/content/assets/brand/create-something-stop-motion-signal-proof.v20260719/exports/signal-decision-proof--v10--sora-shot-02-spatial-approach--4s--16x9--v20260719.mp4",
+    "/private/tmp/cre-1333-recreate/packages/agency/content/assets/brand/create-something-stop-motion-signal-proof.v20260719/exports/signal-decision-proof--v10--sora-shot-03-gate-insert--4s--16x9--v20260719.mp4",
+    "/private/tmp/cre-1333-recreate/packages/agency/content/assets/brand/create-something-stop-motion-signal-proof.v20260719/exports/signal-decision-proof--v10--sora-shot-04-action-passage-from-scout--4s--16x9--v20260719.mp4",
+    "/private/tmp/cre-1333-recreate/packages/agency/content/assets/brand/create-something-stop-motion-signal-proof.v20260719/exports/signal-decision-proof--v10--sora-shot-05-proof-hero--4s--16x9--v20260719.mp4"
+  ],
+  "narration": "/private/tmp/cre-1333-recreate/packages/motion-studio/public/signal-decision-proof/narration.m4a",
+  "edit": {
+    "shotDurationsSeconds": [
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "cutPointsSeconds": [
+      4,
+      8,
+      12,
+      16
+    ],
+    "transition": "hard-cut"
+  },
+  "valid": true,
+  "checks": {
+    "duration": true,
+    "dimensions": true,
+    "frameRate": true,
+    "frameCount": true,
+    "h264": true,
+    "aac": true,
+    "noSubtitleStream": true
+  },
+  "probe": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "codec_name": "h264",
+        "codec_type": "video",
+        "width": 1280,
+        "height": 720,
+        "r_frame_rate": "24/1",
+        "nb_frames": "480"
+      },
+      {
+        "codec_name": "aac",
+        "codec_type": "audio",
+        "sample_rate": "48000",
+        "r_frame_rate": "0/0",
+        "nb_frames": "935"
+      }
+    ],
+    "format": {
+      "duration": "20.000000"
+    }
+  }
+}
