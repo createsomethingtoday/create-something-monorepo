@@ -182,7 +182,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     'agency-legal',
     'agency',
     ['privacy', 'terms'],
-    'pending',
+    'migrated',
     contract(
       'editorial',
       'Understand the governing policy before using the service.',
