@@ -1,328 +1,401 @@
 <script lang="ts">
-	import { PrincipleCard } from '$lib/components';
-	import { QuoteBlock, SEO } from '@create-something/canon';
-	import type { PageData } from './$types';
+  import { PrincipleCard } from '$lib/components';
+  import {
+    PerformanceActionFooter,
+    PerformanceNarrativeStage,
+    QuoteBlock,
+    SEO,
+    type PerformanceNarrativeScene
+  } from '@create-something/canon';
+  import type { PageData } from './$types';
 
-	let { data }: { data: PageData } = $props();
+  let { data }: { data: PageData } = $props();
+
+  let masterScenes = $derived<PerformanceNarrativeScene[]>([
+    {
+      id: 'context',
+      label: 'Context',
+      summary: 'Life + legacy',
+      title: 'Understand the source before borrowing the principle.',
+      detail:
+        'Biography and legacy establish the conditions that shaped the work and the part CREATE SOMETHING carries forward.',
+      tone: 'neutral'
+    },
+    {
+      id: 'principles',
+      label: 'Principles',
+      summary: `${data.principles.length} operating rules`,
+      title: 'Translate the philosophy into decisions.',
+      detail:
+        'Each principle names a judgment that can be applied to an interface, system, or delivery decision.',
+      tone: 'allow',
+      receipts: [`${data.principles.length} principles`]
+    },
+    {
+      id: 'evidence',
+      label: 'Evidence',
+      summary: 'Words + artifacts',
+      title: 'Inspect what supports the interpretation.',
+      detail:
+        'Quotes, visual references, and source links keep the profile inspectable instead of asking the reader to accept a summary.',
+      tone: 'review',
+      receipts: [
+        `${data.quotes.length} quotes`,
+        `${data.examples.length} visual references`,
+        `${data.resources.length} resources`
+      ]
+    }
+  ]);
 </script>
 
 <SEO
-	title={data.master ? data.master.name : 'Master Not Found'}
-	description={data.master?.tagline || (data.master ? `Learn about ${data.master.name} and their principles.` : 'Master not found in the canon.')}
-	propertyName="ltd"
-	breadcrumbs={[
-		{ name: 'Home', url: 'https://createsomething.ltd' },
-		{ name: 'Masters', url: 'https://createsomething.ltd/masters' },
-		{
-			name: data.master?.name || 'Not Found',
-			url: data.master
-				? `https://createsomething.ltd/masters/${data.master.slug}`
-				: 'https://createsomething.ltd/masters'
-		}
-	]}
+  title={data.master ? data.master.name : 'Master Not Found'}
+  description={data.master?.tagline ||
+    (data.master
+      ? `Learn about ${data.master.name} and their principles.`
+      : 'Master not found in the canon.')}
+  propertyName="ltd"
+  breadcrumbs={[
+    { name: 'Home', url: 'https://createsomething.ltd' },
+    { name: 'Masters', url: 'https://createsomething.ltd/masters' },
+    {
+      name: data.master?.name || 'Not Found',
+      url: data.master
+        ? `https://createsomething.ltd/masters/${data.master.slug}`
+        : 'https://createsomething.ltd/masters'
+    }
+  ]}
 />
 
 {#if data.master}
+  <section class="master-opening" aria-label={`${data.master.name} profile opening`}>
+    <div>
+      <a href="/masters" class="back-link">← All Masters</a>
+      {#if data.master.discipline}
+        <p class="eyebrow">{data.master.discipline}</p>
+      {/if}
+      <h1>{data.master.name}</h1>
+      {#if data.master.birth_year}
+        <p class="years">
+          {data.master.birth_year}{#if data.master.death_year}
+            — {data.master.death_year}{:else}
+            — Present{/if}
+        </p>
+      {/if}
+      {#if data.master.tagline}
+        <p class="tagline">{data.master.tagline}</p>
+      {/if}
+      <p class="opening-direction">
+        Start with context, translate the principles, then inspect the evidence behind the profile.
+      </p>
+    </div>
+  </section>
 
-	<!-- Master Header -->
-	<section class="pt-24 pb-16 px-6 border-b border-canon">
-		<div class="max-w-4xl mx-auto">
-			{#if data.master.discipline}
-				<p class="text-sm-canon tracking-widest uppercase opacity-60-canon mb-4">{data.master.discipline}</p>
-			{/if}
+  <PerformanceNarrativeStage
+    id="master-profile"
+    eyebrow="Source profile"
+    title="Context. Principles. Evidence."
+    description="One indexed profile replaces a stack of disconnected chapters while keeping every source in its original role."
+    scenes={masterScenes}
+    ariaLabel={`${data.master.name} source profile`}
+  >
+    {#snippet artifact(scene: PerformanceNarrativeScene)}
+      <div class="master-scene-artifact">
+        {#if scene.id === 'context'}
+          <div class="context-grid">
+            <div>
+              <span class="artifact-label">Biography</span>
+              {#if data.master?.biography}
+                <div class="profile-prose">{@html data.master.biography ?? ''}</div>
+              {:else}
+                <p class="empty-copy">Biography has not been added yet.</p>
+              {/if}
+            </div>
+            <div>
+              <span class="artifact-label">Legacy</span>
+              {#if data.master?.legacy}
+                <div class="profile-prose">{@html data.master.legacy ?? ''}</div>
+              {:else}
+                <p class="empty-copy">Legacy notes have not been added yet.</p>
+              {/if}
+            </div>
+          </div>
+        {:else if scene.id === 'principles'}
+          {#if data.principles.length > 0}
+            <div class="principle-grid">
+              {#each data.principles as principle}
+                <PrincipleCard {principle} />
+              {/each}
+            </div>
+          {:else}
+            <p class="empty-copy">No principles are attached to this source yet.</p>
+          {/if}
+        {:else}
+          <div class="evidence-stack">
+            {#if data.quotes.length > 0}
+              <div>
+                <span class="artifact-label">Notable quotes</span>
+                <div class="quote-grid">
+                  {#each data.quotes as quote}
+                    <QuoteBlock {quote} />
+                  {/each}
+                </div>
+              </div>
+            {/if}
 
-			<h1 class="page-title mb-4">{data.master.name}</h1>
+            {#if data.examples.length > 0}
+              <div>
+                <span class="artifact-label">Visual references</span>
+                <div class="example-grid">
+                  {#each data.examples as example}
+                    <figure>
+                      {#if example.image_url}
+                        <img
+                          src={example.image_url}
+                          alt={example.title || 'Visual reference'}
+                          loading="lazy"
+                        />
+                      {/if}
+                      {#if example.title || example.year}
+                        <figcaption>
+                          {example.title || 'Untitled reference'}{#if example.year}
+                            · {example.year}{/if}
+                        </figcaption>
+                      {/if}
+                    </figure>
+                  {/each}
+                </div>
+              </div>
+            {/if}
 
-			{#if data.master.birth_year}
-				<p class="text-lg-canon opacity-40-canon mb-6">
-					{data.master.birth_year}{#if data.master.death_year} — {data.master.death_year}{:else} — Present{/if}
-				</p>
-			{/if}
+            {#if data.resources.length > 0}
+              <div>
+                <span class="artifact-label">Resources</span>
+                <div class="resource-grid">
+                  {#each data.resources as resource}
+                    <article>
+                      {#if resource.type}<span>{resource.type}</span>{/if}
+                      <h4>{resource.title}</h4>
+                      {#if resource.description}<p>{resource.description}</p>{/if}
+                      {#if resource.url}
+                        <a href={resource.url} target="_blank" rel="noopener">View source →</a>
+                      {/if}
+                    </article>
+                  {/each}
+                </div>
+              </div>
+            {/if}
 
-			{#if data.master.tagline}
-				<p class="text-2xl-canon opacity-70-canon leading-relaxed">{data.master.tagline}</p>
-			{/if}
-		</div>
-	</section>
+            {#if data.quotes.length === 0 && data.examples.length === 0 && data.resources.length === 0}
+              <p class="empty-copy">No supporting artifacts are attached to this source yet.</p>
+            {/if}
+          </div>
+        {/if}
+      </div>
+    {/snippet}
+  </PerformanceNarrativeStage>
 
-	<!-- Biography -->
-	{#if data.master.biography}
-		<section class="py-16 px-6">
-			<div class="max-w-3xl mx-auto">
-				<h2 class="text-3xl-canon font-bold mb-8">Biography</h2>
-				<div class="prose prose-lg max-w-none opacity-80-canon leading-relaxed">
-					{@html data.master.biography}
-				</div>
-			</div>
-		</section>
-	{/if}
-
-	<!-- Principles -->
-	{#if data.principles && data.principles.length > 0}
-		<section class="py-16 px-6 border-t border-canon">
-			<div class="max-w-5xl mx-auto">
-				<h2 class="text-3xl-canon font-bold mb-12">
-					{data.principles.length === 10 ? 'The 10 Principles' : 'Principles'}
-				</h2>
-
-				<div class="space-y-6">
-					{#each data.principles as principle}
-						<PrincipleCard {principle} />
-					{/each}
-				</div>
-			</div>
-		</section>
-	{/if}
-
-	<!-- Quotes -->
-	{#if data.quotes && data.quotes.length > 0}
-		<section class="py-16 px-6 border-t border-canon">
-			<div class="max-w-3xl mx-auto">
-				<h2 class="text-3xl-canon font-bold mb-12">Notable Quotes</h2>
-
-				<div class="space-y-8">
-					{#each data.quotes as quote}
-						<QuoteBlock {quote} />
-					{/each}
-				</div>
-			</div>
-		</section>
-	{/if}
-
-	<!-- Visual Examples -->
-	{#if data.examples && data.examples.length > 0}
-		<section class="py-16 px-6 border-t border-canon">
-			<div class="max-w-6xl mx-auto">
-				<h2 class="section-heading">Visual References</h2>
-				<p class="section-subheading">
-					{data.examples.length} curated examples from Are.na
-				</p>
-
-				<div class="masonry-grid">
-					{#each data.examples as example}
-						<div class="example-card group relative overflow-hidden border border-canon mb-4">
-							{#if example.image_url}
-								<img
-									src={example.image_url}
-									alt={example.title || 'Visual reference'}
-									class="example-img w-full h-auto"
-									loading="lazy"
-								/>
-							{/if}
-							<div class="example-overlay absolute inset-0">
-								<div class="absolute bottom-0 left-0 right-0 p-4">
-									{#if example.title}
-										<p class="example-title">{example.title}</p>
-									{/if}
-									{#if example.year}
-										<p class="example-year">{example.year}</p>
-									{/if}
-								</div>
-							</div>
-						</div>
-					{/each}
-				</div>
-			</div>
-		</section>
-	{/if}
-
-	<!-- Legacy -->
-	{#if data.master.legacy}
-		<section class="py-16 px-6 border-t border-canon">
-			<div class="max-w-3xl mx-auto">
-				<h2 class="text-3xl-canon font-bold mb-8">Legacy</h2>
-				<div class="prose prose-lg max-w-none opacity-80-canon leading-relaxed">
-					{@html data.master.legacy}
-				</div>
-			</div>
-		</section>
-	{/if}
-
-	<!-- Resources -->
-	{#if data.resources && data.resources.length > 0}
-		<section class="py-16 px-6 border-t border-canon">
-			<div class="max-w-3xl mx-auto">
-				<h2 class="text-3xl-canon font-bold mb-8">Resources</h2>
-
-				<div class="space-y-4">
-					{#each data.resources as resource}
-						<div class="border border-canon p-6">
-							<div class="flex items-start justify-between gap-4">
-								<div class="flex-1">
-									{#if resource.type}
-										<span class="text-xs-canon uppercase tracking-widest opacity-40-canon mb-2 block"
-											>{resource.type}</span
-										>
-									{/if}
-									<h4 class="text-lg-canon font-semibold mb-2">{resource.title}</h4>
-									{#if resource.description}
-										<p class="text-sm-canon opacity-60-canon">{resource.description}</p>
-									{/if}
-								</div>
-								{#if resource.url}
-									<a
-										href={resource.url}
-										target="_blank"
-										rel="noopener"
-										class="text-sm-canon font-medium hover:opacity-70-canon whitespace-nowrap"
-									>
-										View →
-									</a>
-								{/if}
-							</div>
-						</div>
-					{/each}
-				</div>
-			</div>
-		</section>
-	{/if}
+  <PerformanceActionFooter
+    eyebrow="Continue the canon"
+    title="Carry the source into the work."
+    description="Compare the principle across masters, or return to the source collection before choosing what should govern the next decision."
+    items={[
+      { label: 'Current source', value: data.master.name },
+      { label: 'Operating rules', value: `${data.principles.length} principles` }
+    ]}
+  >
+    {#snippet actions()}
+      <a class="btn btn-primary" href="/principles">Compare principles</a>
+      <a class="btn btn-secondary" href="/masters">Choose another master</a>
+    {/snippet}
+  </PerformanceActionFooter>
 {:else}
-	<!-- Not Found -->
-	<section class="py-24 px-6">
-		<div class="max-w-4xl mx-auto text-center">
-			<h1 class="mb-6">Master Not Found</h1>
-			<p class="text-xl-canon opacity-60-canon mb-8">This master hasn't been added to the canon yet.</p>
-			<a href="/masters" class="text-sm-canon font-medium hover:opacity-70-canon"> ← Back to Masters </a>
-		</div>
-	</section>
+  <section class="not-found">
+    <div>
+      <h1>Master Not Found</h1>
+      <p>This master hasn't been added to the canon yet.</p>
+      <a href="/masters">← Back to Masters</a>
+    </div>
+  </section>
 {/if}
 
 <style>
-	/* Page Title - Entity names need smaller sizing than hero headlines
-	 * Uses --text-performance-h1 (22-28px mobile) to prevent overflow on long names
-	 * like "Ludwig Mies van der Rohe"
-	 *
-	 * Pattern: Hero headlines use --text-performance-display, entity titles use --text-performance-h1
-	 */
-	.page-title {
-		font-size: var(--text-performance-h1);
-		font-weight: var(--font-performance-bold);
-		line-height: var(--leading-performance-tight);
-		letter-spacing: var(--tracking-performance-tight);
-		color: var(--color-performance-fg-primary);
-	}
+  .master-opening,
+  .not-found {
+    padding: 6rem 1.5rem 4rem;
+    border-bottom: 1px solid var(--color-performance-border-default);
+  }
 
-	/* Typography */
-	.text-xs-canon {
-		font-size: var(--text-performance-caption);
-	}
+  .master-opening > div,
+  .not-found > div {
+    width: min(100%, 56rem);
+    margin-inline: auto;
+  }
 
-	.text-sm-canon {
-		font-size: var(--text-performance-body-sm);
-	}
+  .back-link {
+    display: inline-block;
+    margin-bottom: 2rem;
+    color: var(--color-performance-fg-muted);
+    font-size: var(--text-performance-body-sm);
+    text-decoration: none;
+  }
 
-	.text-lg-canon {
-		font-size: var(--text-performance-body-lg);
-	}
+  .eyebrow,
+  .artifact-label,
+  .resource-grid span {
+    color: var(--color-performance-fg-muted);
+    font-family: var(--font-performance-mono);
+    font-size: var(--text-performance-caption);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
 
-	.text-xl-canon {
-		font-size: var(--text-performance-h3);
-	}
+  .master-opening h1,
+  .not-found h1 {
+    margin: 0.7rem 0;
+    font-size: var(--text-performance-h1);
+    font-weight: var(--font-performance-bold);
+    line-height: var(--leading-performance-tight);
+    letter-spacing: var(--tracking-performance-tight);
+  }
 
-	.text-2xl-canon {
-		font-size: var(--text-performance-h2);
-	}
+  .years {
+    color: var(--color-performance-fg-muted);
+    font-size: var(--text-performance-body-sm);
+  }
 
-	.text-3xl-canon {
-		font-size: var(--text-performance-h1);
-	}
+  .tagline {
+    max-width: 30ch;
+    margin-top: 1.25rem;
+    color: var(--color-performance-fg-secondary);
+    font-size: var(--text-performance-h2);
+    line-height: 1.25;
+  }
 
-	/* Opacity as color tokens */
-	.opacity-40-canon {
-		color: var(--color-performance-fg-muted);
-	}
+  .opening-direction {
+    max-width: 42rem;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--color-performance-border-default);
+    color: var(--color-performance-fg-tertiary);
+    font-size: var(--text-performance-body);
+    line-height: 1.65;
+  }
 
-	.opacity-60-canon {
-		color: var(--color-performance-fg-tertiary);
-	}
+  .master-scene-artifact,
+  .evidence-stack {
+    display: grid;
+    gap: 2rem;
+    min-width: 0;
+  }
 
-	.opacity-70-canon {
-		color: var(--color-performance-fg-secondary);
-	}
+  .context-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1px;
+    background: var(--color-performance-line, #d7d7d2);
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+  }
 
-	.opacity-80-canon {
-		color: var(--color-performance-fg-secondary);
-	}
+  .context-grid > div {
+    display: grid;
+    align-content: start;
+    gap: 1rem;
+    padding: clamp(1.25rem, 3vw, 2rem);
+    background: var(--color-performance-panel, #ffffff);
+  }
 
-	/* Borders */
-	.border-canon {
-		border-color: var(--color-performance-border-default);
-	}
+  .profile-prose,
+  .empty-copy {
+    color: var(--color-performance-fg-secondary);
+    line-height: 1.72;
+  }
 
-	/* Masonry grid using CSS columns */
-	.masonry-grid {
-		column-count: 2;
-		column-gap: 1rem;
-	}
+  .principle-grid,
+  .quote-grid,
+  .resource-grid,
+  .example-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.8rem;
+  }
 
-	@media (min-width: 768px) {
-		.masonry-grid {
-			column-count: 3;
-		}
-	}
+  .principle-grid :global(.card) {
+    padding: 1.2rem;
+    background: var(--color-performance-panel, #ffffff);
+  }
 
-	@media (min-width: 1024px) {
-		.masonry-grid {
-			column-count: 4;
-		}
-	}
+  .quote-grid :global(.quote-block) {
+    margin: 0;
+    padding: 1rem;
+    background: var(--color-performance-panel, #ffffff);
+  }
 
-	/* Section headings for examples */
-	.section-heading {
-		font-size: var(--text-performance-h1);
-		font-weight: 700;
-		margin-bottom: 2rem;
-	}
+  .example-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 
-	.section-subheading {
-		font-size: var(--text-performance-body-sm);
-		color: var(--color-performance-fg-tertiary);
-		margin-bottom: 3rem;
-	}
+  .example-grid figure {
+    margin: 0;
+    background: var(--color-performance-panel, #ffffff);
+  }
 
-	/* Example gallery */
-	.example-card {
-		background: var(--color-performance-bg-surface);
-		break-inside: avoid;
-	}
+  .example-grid img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
 
-	.example-img {
-		transition: transform var(--duration-performance-standard) var(--ease-performance-standard);
-	}
+  .example-grid figcaption {
+    padding: 0.75rem;
+    color: var(--color-performance-fg-tertiary);
+    font-size: var(--text-performance-body-sm);
+  }
 
-	.example-card:hover .example-img {
-		transform: scale(1.05);
-	}
+  .resource-grid article {
+    display: grid;
+    gap: 0.6rem;
+    padding: 1.1rem;
+    background: var(--color-performance-panel, #ffffff);
+  }
 
-	.example-overlay {
-		background: linear-gradient(to top, var(--color-performance-overlay-heavy), transparent, transparent);
-		opacity: 0;
-		transition: opacity var(--duration-performance-standard) var(--ease-performance-standard);
-	}
+  .resource-grid h4,
+  .resource-grid p {
+    margin: 0;
+  }
 
-	.example-card:hover .example-overlay {
-		opacity: 1;
-	}
+  .resource-grid p {
+    color: var(--color-performance-fg-tertiary);
+  }
 
-	.example-title {
-		font-size: var(--text-performance-body-sm);
-		font-weight: 500;
-		color: var(--color-performance-fg-primary);
-		display: -webkit-box;
-		line-clamp: 2;
-		-webkit-line-clamp: 2;
-		-webkit-box-orient: vertical;
-		overflow: hidden;
-	}
+  .resource-grid a {
+    color: var(--color-performance-fg-primary);
+    font-size: var(--text-performance-body-sm);
+    font-weight: 600;
+  }
 
-	.example-year {
-		font-size: var(--text-performance-caption);
-		color: var(--color-performance-fg-tertiary);
-		margin-top: 0.25rem;
-	}
+  .not-found {
+    min-height: 60vh;
+    text-align: center;
+  }
 
-	/* Universal element styles */
-	section {
-		border-color: var(--color-performance-border-default);
-	}
+  .not-found p {
+    margin: 1rem 0 2rem;
+    color: var(--color-performance-fg-tertiary);
+  }
+
+  @media (max-width: 720px) {
+    .master-opening,
+    .not-found {
+      padding: 4.5rem 1rem 2.75rem;
+    }
+
+    .context-grid,
+    .principle-grid,
+    .quote-grid,
+    .resource-grid,
+    .example-grid {
+      grid-template-columns: 1fr;
+    }
+  }
 </style>

@@ -276,7 +276,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     'ltd-canon-details',
     'ltd',
     ['canon/[...path]', 'masters/[slug]', 'patterns/[slug]'],
-    'pending',
+    'migrated',
     contract(
       'editorial',
       'Interpret one canon source and decide how to use it.',
