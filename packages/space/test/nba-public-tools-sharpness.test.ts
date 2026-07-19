@@ -112,6 +112,7 @@ test('states the date-wide questions without overstating the available evidence'
 test('makes the league sample date-aware and appropriately cautious', () => {
   assert.match(league, /<h1 class="title">What did this slate reveal\?<\/h1>/);
   assert.match(league, /const dateLabel =/);
+  assert.match(league, /timeZone: 'UTC'/);
   assert.match(league, /completed\s+games on \{dateLabel\}/);
   assert.match(league, /Try again/);
   assert.match(league, /Choose another date/);

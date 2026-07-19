@@ -37,7 +37,8 @@
     new Date(`${data.date}T12:00:00Z`).toLocaleDateString('en-US', {
       weekday: 'long',
       month: 'long',
-      day: 'numeric'
+      day: 'numeric',
+      timeZone: 'UTC'
     })
   );
 </script>
