@@ -1,5 +1,7 @@
-export const STORAGE_KEY = 'guard-performance-lab:v4';
-export const STATE_VERSION = 4;
+import type { CapturedFilmAnalysis, FilmCorrection } from './film.js';
+
+export const STORAGE_KEY = 'guard-performance-lab:v5';
+export const STATE_VERSION = 5;
 
 export type EvidenceSignal = 'scan' | 'angle' | 'security' | 'finish' | 'explain';
 export type EvidenceValue = 'emerging' | 'usable' | 'repeatable';
@@ -52,14 +54,22 @@ export type Receipt = {
   evidence: Record<EvidenceSignal, EvidenceValue>;
   createdAt: string;
 };
+export type FilmAnalysisRecord = CapturedFilmAnalysis & {
+  id: string;
+  playerId: string;
+  title: string;
+  createdAt: string;
+  corrections: FilmCorrection[];
+};
 export type LabState = {
-  version: 4;
+  version: 5;
   revision: number;
   selectedPlayerId: string;
   players: Player[];
   receipts: Receipt[];
   artifacts: EvidenceArtifact[];
   engagements: EngagementEvent[];
+  filmAnalyses: FilmAnalysisRecord[];
 };
 
 const evidence = (): Receipt['evidence'] => ({
@@ -104,7 +114,8 @@ export function createInitialState(now = new Date().toISOString()): LabState {
     players: [{ id: 'developing-guard', name: 'Developing Guard', profile: emptyPlayerProfile(), createdAt: now }],
     receipts: [],
     artifacts: [],
-    engagements: []
+    engagements: [],
+    filmAnalyses: []
   };
 }
 
@@ -112,10 +123,10 @@ export function parseState(raw: string | null): LabState {
   if (!raw) return createInitialState();
   try {
     const value = JSON.parse(raw) as Partial<LabState>;
-    if (![2, 3, STATE_VERSION].includes(value.version as number) || !Array.isArray(value.players) || value.players.length === 0 || value.players.some((player) => !player || typeof player.id !== 'string' || typeof player.name !== 'string')) return createInitialState();
+    if (![2, 3, 4, STATE_VERSION].includes(value.version as number) || !Array.isArray(value.players) || value.players.length === 0 || value.players.some((player) => !player || typeof player.id !== 'string' || typeof player.name !== 'string')) return createInitialState();
     const selected = value.players.some((p) => p.id === value.selectedPlayerId) ? value.selectedPlayerId! : value.players[0]!.id;
     const players = value.players.map((player) => ({ ...player, profile: normalizePlayerProfile(player.profile) }));
-    return { version: STATE_VERSION, revision: typeof value.revision === 'number' ? value.revision : 0, selectedPlayerId: selected, players, receipts: Array.isArray(value.receipts) ? value.receipts : [], artifacts: Array.isArray(value.artifacts) ? value.artifacts : [], engagements: Array.isArray(value.engagements) ? value.engagements : [] };
+    return { version: STATE_VERSION, revision: typeof value.revision === 'number' ? value.revision : 0, selectedPlayerId: selected, players, receipts: Array.isArray(value.receipts) ? value.receipts : [], artifacts: Array.isArray(value.artifacts) ? value.artifacts : [], engagements: Array.isArray(value.engagements) ? value.engagements : [], filmAnalyses: Array.isArray(value.filmAnalyses) ? value.filmAnalyses : [] };
   } catch {
     return createInitialState();
   }
@@ -125,7 +136,7 @@ export function parseAuthoritativeState(raw: string): LabState {
   let value: Record<string, unknown>;
   try { value = JSON.parse(raw) as Record<string, unknown>; }
   catch { throw new Error('The authoritative workspace contains invalid JSON. Restore or reset it explicitly.'); }
-  if (![2, 3, STATE_VERSION].includes(value.version as number) || !Array.isArray(value.players) || value.players.length === 0 || !Array.isArray(value.receipts) || !Array.isArray(value.artifacts)) throw new Error('The authoritative workspace has an invalid schema. Restore or reset it explicitly.');
+  if (![2, 3, 4, STATE_VERSION].includes(value.version as number) || !Array.isArray(value.players) || value.players.length === 0 || !Array.isArray(value.receipts) || !Array.isArray(value.artifacts)) throw new Error('The authoritative workspace has an invalid schema. Restore or reset it explicitly.');
   if (typeof value.selectedPlayerId !== 'string' || !value.players.some((player) => typeof player === 'object' && player !== null && (player as { id?: unknown }).id === value.selectedPlayerId)) throw new Error('The authoritative workspace has an invalid selected player. Restore or reset it explicitly.');
   return parseState(raw);
 }

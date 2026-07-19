@@ -1,0 +1,362 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.12"
+# dependencies = [
+#   "numpy==2.4.3",
+#   "onnxruntime==1.24.4",
+#   "opencv-python-headless==4.13.0.92",
+#   "scipy==1.17.1",
+# ]
+# ///
+"""Create one private, derived basketball traffic revision from a linked video.
+
+The source is decoded sequentially and is never copied to the output. Person
+detection uses an operator-supplied YOLOX ONNX file; YOLOX is Apache-2.0 and the
+model path/hash are recorded in the receipt. The decoder below implements the
+public YOLOX ONNX output contract rather than importing the training project.
+
+Court coordinates are explicitly marked `estimated`: longitudinal position is
+stabilized against camera pan using background optical flow, while court width
+uses a perspective approximation. Corrections and calibrated projections are a
+separate, non-inference layer in the Lab.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import math
+import sys
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from pathlib import Path
+
+import cv2
+import numpy as np
+import onnxruntime as ort
+from scipy.optimize import linear_sum_assignment
+
+
+PROFILE = "guard-player-trace-v1"
+COURT_LENGTH = 94.0
+COURT_WIDTH = 50.0
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--source", required=True)
+    parser.add_argument("--source-sha256", required=True)
+    parser.add_argument("--model", required=True)
+    parser.add_argument("--output", required=True)
+    parser.add_argument("--sample-fps", type=float, default=2.0)
+    parser.add_argument("--target-seed", action="append", default=[], help="timeMs:x:y at the detected player's feet")
+    parser.add_argument("--analyzed-at")
+    parser.add_argument("--start-ms", type=int, default=0, help=argparse.SUPPRESS)
+    parser.add_argument("--end-ms", type=int, help=argparse.SUPPRESS)
+    return parser.parse_args()
+
+
+def sha256(path: str):
+    digest = hashlib.sha256()
+    with open(path, "rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def preprocess(image: np.ndarray, size: int = 640):
+    ratio = min(size / image.shape[0], size / image.shape[1])
+    resized = cv2.resize(image, (int(image.shape[1] * ratio), int(image.shape[0] * ratio)))
+    padded = np.full((size, size, 3), 114, dtype=np.uint8)
+    padded[: resized.shape[0], : resized.shape[1]] = resized
+    return np.ascontiguousarray(padded.transpose(2, 0, 1), dtype=np.float32), ratio
+
+
+def decode(output: np.ndarray, size: int = 640):
+    grids, strides = [], []
+    for stride in (8, 16, 32):
+        height = width = size // stride
+        y, x = np.meshgrid(np.arange(height), np.arange(width), indexing="ij")
+        grids.append(np.stack((x, y), 2).reshape(1, -1, 2))
+        strides.append(np.full((1, height * width, 1), stride))
+    grid, stride = np.concatenate(grids, axis=1), np.concatenate(strides, axis=1)
+    output[..., :2] = (output[..., :2] + grid) * stride
+    output[..., 2:4] = np.exp(output[..., 2:4]) * stride
+    return output
+
+
+def nms(boxes: np.ndarray, scores: np.ndarray, threshold: float = 0.45):
+    if not len(boxes):
+        return []
+    x1, y1, x2, y2 = boxes.T
+    areas, order, keep = (x2 - x1 + 1) * (y2 - y1 + 1), scores.argsort()[::-1], []
+    while order.size:
+        index = order[0]
+        keep.append(int(index))
+        xx1, yy1 = np.maximum(x1[index], x1[order[1:]]), np.maximum(y1[index], y1[order[1:]])
+        xx2, yy2 = np.minimum(x2[index], x2[order[1:]]), np.minimum(y2[index], y2[order[1:]])
+        intersection = np.maximum(0, xx2 - xx1 + 1) * np.maximum(0, yy2 - yy1 + 1)
+        overlap = intersection / (areas[index] + areas[order[1:]] - intersection)
+        order = order[np.where(overlap <= threshold)[0] + 1]
+    return keep
+
+
+class PersonDetector:
+    def __init__(self, model_path: str):
+        self.session = ort.InferenceSession(model_path, providers=["CPUExecutionProvider"])
+        self.input_name = self.session.get_inputs()[0].name
+
+    def detect(self, image: np.ndarray):
+        tensor, ratio = preprocess(image)
+        prediction = decode(self.session.run(None, {self.input_name: tensor[None]})[0])[0]
+        centers, scores = prediction[:, :4], prediction[:, 4] * prediction[:, 5]
+        mask = scores >= 0.15
+        centers, scores = centers[mask], scores[mask]
+        boxes = np.empty_like(centers)
+        boxes[:, 0], boxes[:, 1] = centers[:, 0] - centers[:, 2] / 2, centers[:, 1] - centers[:, 3] / 2
+        boxes[:, 2], boxes[:, 3] = centers[:, 0] + centers[:, 2] / 2, centers[:, 1] + centers[:, 3] / 2
+        boxes /= ratio
+        return [(boxes[index], float(scores[index])) for index in nms(boxes, scores)]
+
+
+def appearance(image: np.ndarray, box: np.ndarray):
+    height, width = image.shape[:2]
+    x1, y1, x2, y2 = [int(value) for value in box]
+    x1, y1, x2, y2 = max(0, x1), max(0, y1), min(width, x2), min(height, y2)
+    crop = image[y1 : max(y1 + 1, int(y1 + (y2 - y1) * 0.72)), x1:x2]
+    if not crop.size:
+        return np.zeros(128, dtype=np.float32), 0.0
+    hsv = cv2.cvtColor(crop, cv2.COLOR_BGR2HSV)
+    hist = cv2.calcHist([hsv], [0, 1], None, [16, 8], [0, 180, 0, 256]).flatten()
+    hist /= max(float(np.linalg.norm(hist)), 1e-8)
+    white = float(np.mean((hsv[:, :, 1] < 90) & (hsv[:, :, 2] > 135)))
+    return hist.astype(np.float32), white
+
+
+def camera_shift(previous: np.ndarray | None, current: np.ndarray):
+    small = cv2.resize(cv2.cvtColor(current, cv2.COLOR_BGR2GRAY), (480, 270))
+    if previous is None:
+        return small, 0.0, 0.0
+    mask = np.zeros_like(previous)
+    mask[: int(mask.shape[0] * 0.62)] = 255
+    points = cv2.goodFeaturesToTrack(previous, 350, 0.01, 8, mask=mask)
+    if points is None or len(points) < 20:
+        return small, 0.0, 0.0
+    moved, status, _ = cv2.calcOpticalFlowPyrLK(previous, small, points, None, winSize=(31, 31), maxLevel=4)
+    if moved is None:
+        return small, 0.0, 0.0
+    delta = (moved - points)[status.flatten() == 1].reshape(-1, 2)
+    if len(delta) < 15:
+        return small, 0.0, 0.0
+    median = np.median(delta, axis=0)
+    residual = np.linalg.norm(delta - median, axis=1)
+    inliers = residual < 4
+    confidence = float(np.mean(inliers))
+    if confidence < 0.35:
+        return small, 0.0, confidence
+    return small, float(median[0] * (current.shape[1] / 480)), confidence
+
+
+@dataclass
+class Detection:
+    box: np.ndarray
+    score: float
+    foot_x: float
+    foot_y: float
+    pano_x: float
+    depth: float
+    hist: np.ndarray
+    white: float
+    track_id: str = ""
+
+
+@dataclass
+class Track:
+    track_id: str
+    pano_x: float
+    depth: float
+    hist: np.ndarray
+    last_ms: int
+
+
+def similarity(a: np.ndarray, b: np.ndarray):
+    return float(np.dot(a, b))
+
+
+def assign_tracks(detections: list[Detection], tracks: dict[str, Track], time_ms: int, next_id: int):
+    active = [track for track in tracks.values() if time_ms - track.last_ms <= 1500]
+    if active and detections:
+        costs = np.zeros((len(active), len(detections)), dtype=np.float32)
+        for row, track in enumerate(active):
+            for column, detection in enumerate(detections):
+                motion = math.hypot((track.pano_x - detection.pano_x) / 180, (track.depth - detection.depth) / 0.22)
+                costs[row, column] = motion + (1 - similarity(track.hist, detection.hist)) * 1.4
+        rows, columns = linear_sum_assignment(costs)
+        for row, column in zip(rows, columns):
+            if costs[row, column] <= 2.8:
+                detection = detections[column]
+                detection.track_id = active[row].track_id
+    for detection in detections:
+        if not detection.track_id:
+            detection.track_id = f"p-{next_id:04d}"
+            next_id += 1
+        prior = tracks.get(detection.track_id)
+        blend = detection.hist if prior is None else prior.hist * 0.65 + detection.hist * 0.35
+        blend /= max(float(np.linalg.norm(blend)), 1e-8)
+        tracks[detection.track_id] = Track(detection.track_id, detection.pano_x, detection.depth, blend, time_ms)
+    return next_id
+
+
+def relation_zone(x: float, y: float):
+    side = "left" if x < COURT_LENGTH / 2 else "right"
+    band = "near" if y < COURT_WIDTH / 3 else "far" if y > COURT_WIDTH * 2 / 3 else "middle"
+    return f"{side}-{band}"
+
+
+def main():
+    args = parse_args()
+    source_path, model_path = Path(args.source), Path(args.model)
+    if not source_path.is_file() or not model_path.is_file():
+        raise SystemExit("The linked source and operator-supplied model must both exist.")
+    if len(args.source_sha256) != 64:
+        raise SystemExit("--source-sha256 must be the previously verified 64-character receipt hash.")
+    seeds = []
+    for value in args.target_seed:
+        time_ms, x, y = value.split(":")
+        seeds.append((int(time_ms), float(x), float(y)))
+
+    capture = cv2.VideoCapture(str(source_path))
+    fps = float(capture.get(cv2.CAP_PROP_FPS))
+    width, height = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH)), int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    frame_count = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
+    duration_ms = round(frame_count / fps * 1000)
+    interval = max(1, round(fps / args.sample_fps))
+    detector = PersonDetector(str(model_path))
+    tracks: dict[str, Track] = {}
+    target_track_ids: set[str] = set()
+    target_reference: np.ndarray | None = None
+    next_id, index, sampled = 1, -1, 0
+    previous_gray, cumulative_shift = None, 0.0
+    provisional = []
+    all_pano = []
+
+    while True:
+        ok, image = capture.read()
+        if not ok:
+            break
+        index += 1
+        time_ms = round(index / fps * 1000)
+        if time_ms < args.start_ms or index % interval:
+            continue
+        if args.end_ms is not None and time_ms > args.end_ms:
+            break
+        previous_gray, shift, pan_confidence = camera_shift(previous_gray, image)
+        cumulative_shift += shift
+        detections = []
+        for box, score in detector.detect(image):
+            box_height, box_width = box[3] - box[1], box[2] - box[0]
+            foot_x, foot_y = float((box[0] + box[2]) / 2), float(box[3])
+            if box_height < height * 0.065 or box_width / max(box_height, 1) > 0.9 or foot_y < height * 0.47 or foot_y > height * 0.97:
+                continue
+            hist, white = appearance(image, box)
+            depth = min(1.0, max(0.0, (foot_y / height - 0.44) / 0.46))
+            detection = Detection(box, score, foot_x, foot_y, foot_x - cumulative_shift, depth, hist, white)
+            detections.append(detection)
+            all_pano.append(detection.pano_x)
+        next_id = assign_tracks(detections, tracks, time_ms, next_id)
+
+        for seed_ms, seed_x, seed_y in seeds:
+            if abs(seed_ms - time_ms) <= 250 and detections:
+                seeded = min(detections, key=lambda detection: math.hypot(detection.foot_x - seed_x, detection.foot_y - seed_y))
+                if math.hypot(seeded.foot_x - seed_x, seeded.foot_y - seed_y) <= 180:
+                    target_track_ids.add(seeded.track_id)
+                    target_reference = seeded.hist if target_reference is None else (target_reference + seeded.hist) / 2
+                    target_reference /= max(float(np.linalg.norm(target_reference)), 1e-8)
+
+        target = next((detection for detection in detections if detection.track_id in target_track_ids), None)
+        if target is None and target_reference is not None:
+            candidates = [(similarity(target_reference, detection.hist) + detection.white * 0.3, detection) for detection in detections if detection.white >= 0.13]
+            candidates.sort(key=lambda item: item[0], reverse=True)
+            if candidates and candidates[0][0] >= 0.86 and (len(candidates) == 1 or candidates[0][0] - candidates[1][0] >= 0.05):
+                target = candidates[0][1]
+                target_track_ids.add(target.track_id)
+
+        provisional.append({
+            "timeMs": time_ms,
+            "targetStatus": "resolved" if target else ("unresolved" if any(detection.white >= 0.13 for detection in detections) else "out-of-frame"),
+            "targetTrackId": target.track_id if target else None,
+            "pan": {"offsetPixels": round(cumulative_shift, 3), "confidence": round(pan_confidence, 4)},
+            "detections": detections,
+        })
+        sampled += 1
+        if sampled % 100 == 0:
+            print(f"analyzed {time_ms / 1000:.1f}s / {duration_ms / 1000:.1f}s ({sampled} samples)", file=sys.stderr, flush=True)
+    capture.release()
+
+    if not all_pano:
+        raise SystemExit("No on-court person detections were captured.")
+    low, high = np.percentile(np.array(all_pano), [1, 99])
+    span = max(float(high - low), 1.0)
+    frames = []
+    for frame in provisional:
+        players = []
+        for detection in frame.pop("detections"):
+            court_x = min(COURT_LENGTH, max(0.0, (detection.pano_x - low) / span * COURT_LENGTH))
+            court_y = min(COURT_WIDTH, max(0.0, detection.depth * COURT_WIDTH))
+            is_target = detection.track_id == frame["targetTrackId"]
+            team = "target" if is_target else "teammate" if detection.white >= 0.13 else "opponent"
+            players.append({
+                "trackId": "13" if is_target else detection.track_id,
+                "team": team,
+                "court": [round(court_x, 3), round(court_y, 3)],
+                "image": [round(detection.foot_x / width, 5), round(detection.foot_y / height, 5)],
+                "confidence": round(detection.score * max(frame["pan"]["confidence"], 0.35), 4),
+                "provenance": "model",
+                "projection": "estimated",
+                "zone": relation_zone(court_x, court_y),
+            })
+        frame.pop("targetTrackId")
+        frames.append({**frame, "players": players})
+
+    output = {
+        "version": 1,
+        "source": {
+            "sha256": args.source_sha256,
+            "durationMs": duration_ms,
+            "width": width,
+            "height": height,
+            "fps": fps,
+            "byteSize": source_path.stat().st_size,
+            "linkedPath": str(source_path),
+        },
+        "profile": PROFILE,
+        "analysis": {
+            "revision": 1,
+            "executionCount": 1,
+            "analyzedAt": args.analyzed_at or datetime.now(timezone.utc).isoformat(),
+            "detector": {"name": "YOLOX-s ONNX", "sha256": sha256(str(model_path)), "license": "Apache-2.0"},
+            "sampleFps": args.sample_fps,
+            "projection": "pan-stabilized-estimate",
+        },
+        "coverage": {
+            "frameCount": len(frames),
+            "firstTimeMs": frames[0]["timeMs"],
+            "lastTimeMs": frames[-1]["timeMs"],
+            "resolvedTargetFrames": sum(frame["targetStatus"] == "resolved" for frame in frames),
+            "unresolvedTargetFrames": sum(frame["targetStatus"] == "unresolved" for frame in frames),
+            "outOfFrameTargetFrames": sum(frame["targetStatus"] == "out-of-frame" for frame in frames),
+        },
+        "frames": frames,
+        "corrections": [],
+    }
+    destination = Path(args.output)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    temporary = destination.with_suffix(destination.suffix + ".tmp")
+    temporary.write_text(json.dumps(output, separators=(",", ":")))
+    temporary.replace(destination)
+    print(json.dumps({"ok": True, "output": str(destination), "coverage": output["coverage"], "analysis": output["analysis"]}, indent=2))
+
+
+if __name__ == "__main__":
+    main()

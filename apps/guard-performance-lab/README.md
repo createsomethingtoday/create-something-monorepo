@@ -1,16 +1,18 @@
 # Guard Performance Lab
 
-A standalone, private-first coaching system for developing guards. Version 0.4 adds player-owned structured profiles to the first-party identity, exact operator/player authorization, remote MCP verification, and durable production storage workflow.
+A standalone, private-first coaching system for developing guards. Version 0.5 adds an immutable film-trace workflow: a supplied game is analyzed once, the derived player traffic is stored privately, and the operator can scrub, correct, reload, and export the captured revision without rerunning inference.
 
 ## Privacy model
 
-- Player profiles, receipts, evidence, and engagement state use a versioned app-owned local datastore at `.data/workspace.json` relative to the app process working directory (gitignored). Set `GUARD_LAB_DATA_PATH` to use an explicit private path.
+- Player profiles, receipts, evidence, engagement state, derived film coordinates, and correction provenance use a versioned app-owned local datastore at `.data/workspace.json` relative to the app process working directory (gitignored). Set `GUARD_LAB_DATA_PATH` to use an explicit private path.
 - Production uses the private `GUARD_LAB_DB` Cloudflare D1 binding. The runtime fails closed when `ENVIRONMENT=production` and that durable binding is absent; the JSON file store remains development-only.
+- D1 stores immutable film frames in ordered chunks so large captured traces do not exceed SQLite row-value limits. Corrections remain a small append-only overlay and do not rewrite or increment the analysis revision.
 - Every mutation goes through one typed command service. An atomic cross-process lock prevents browser and Codex writes from overwriting one another; the visible workspace revision increments after each accepted command.
 - Protected workspace data is never restored from browser storage; the server-scoped response is authoritative for every identity.
 - The app has no analytics or domain-external data writes. Network access is limited to first-party identity verification/login and operator-requested source links.
 - The starter profile is generic and contains no child-identifying information.
 - Resetting local data restores the generic profile and removes saved receipts, evidence, and engagement events.
+- Source-video bytes and detector weights are never written to the application datastore or committed. Only hashes, model provenance, derived coordinates, unresolved intervals, and correction receipts persist.
 
 This is a development aid, not medical guidance, a talent ranking, or a recruiting projection.
 
@@ -31,6 +33,32 @@ pnpm --filter @create-something/guard-performance-lab preview
 
 The production preview runs at `http://127.0.0.1:4173` and is the owning surface for the Playwright workflow recorded in `.codex/guard-performance-lab-app/goal.md`.
 
+## One-run film trace
+
+The analyzer requires an operator-supplied source video and YOLOX ONNX model. Both remain outside version control. It decodes the complete source sequentially, captures one immutable analysis revision, and records unresolved target intervals rather than inventing positions. The fixed three-clip benchmark must pass before import; the report separates the raw model baseline from the correction-aware result.
+
+```bash
+pnpm --filter @create-something/guard-performance-lab film:analyze -- \
+  --source /private/path/game.mp4 \
+  --source-sha256 <verified-source-sha256> \
+  --model /private/path/yolox_s.onnx \
+  --target-seed <timeMs:footX:footY> \
+  --output /private/path/full-analysis-r1.json
+
+pnpm --filter @create-something/guard-performance-lab film:verify -- \
+  --analysis /private/path/full-analysis-r1.json \
+  --benchmark fixtures/film/player-13-golden.json \
+  --report /private/path/benchmark-report.json \
+  --corrections /private/path/benchmark-corrections.json \
+  --svg /private/path/benchmark-evidence.svg
+
+pnpm --filter @create-something/guard-performance-lab film:import:http -- \
+  --analysis /private/path/full-analysis-r1.json \
+  --corrections /private/path/benchmark-corrections.json
+```
+
+`Film trace` then replays the captured top-down traffic. The slider works in both directions, #13 carries an adjustable wake that breaks across unresolved gaps, and JSON/SVG exports are derived from the persisted revision. Operator corrections require direct-evidence text and append provenance; player-scoped identities cannot attach or correct analyses and can read only their assigned player.
+
 ## AI-native contract
 
 One typed guidance engine owns program stage, requested coach context, safety state, evidence separation, and the next interaction. It is used by:
@@ -39,7 +67,7 @@ One typed guidance engine owns program stage, requested coach context, safety st
 - `POST /api/guide`;
 - the local stdio MCP server.
 
-Browser mutations use `POST /api/workspace/command` with typed actions for selecting or creating a player, updating one player-owned profile, saving a receipt, registering evidence, or recording engagement. Whole-workspace `PUT` replacement is intentionally unsupported.
+Browser mutations use `POST /api/workspace/command` with typed actions for selecting or creating a player, updating one player-owned profile, saving a receipt, registering evidence, recording engagement, attaching one completed film revision, or appending a correction. Whole-workspace `PUT` replacement is intentionally unsupported.
 
 The coach supplies short observations only when requested. The agent/program owns the sequence and receipt cues.
 

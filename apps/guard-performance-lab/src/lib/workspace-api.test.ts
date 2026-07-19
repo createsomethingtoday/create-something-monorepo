@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { workspaceCommandResponse } from './workspace-api.js';
 import { LabService } from './server/lab-service.js';
 import { JsonFileLabStore } from './server/store.js';
+import { captureFilmAnalysis } from './film.js';
 
 let dir = '';
 afterEach(async () => { if (dir) await rm(dir, { recursive: true, force: true }); });
@@ -114,5 +115,36 @@ describe('workspace command HTTP contract', () => {
     );
     expect(otherResponse.status).toBe(403);
     expect((await service.getPlayerWorkspace(otherPlayerId)).workspace.players[0]?.profile.preferredName).toBe('');
+  });
+
+  it('lets only an operator attach a captured one-run analysis revision', async () => {
+    dir = await mkdtemp(join(tmpdir(), 'guard-api-film-'));
+    const service = new LabService(new JsonFileLabStore(join(dir, 'workspace.json')));
+    const playerId = (await service.getWorkspace()).workspace.selectedPlayerId;
+    const analysis = captureFilmAnalysis({
+      source: { sha256: 'b'.repeat(64), durationMs: 1000, width: 1920, height: 1080, fps: 30, byteSize: 1000, linkedPath: '/private/game.mp4' },
+      frames: [{ timeMs: 0, players: [] }]
+    });
+    const command = { action: 'attach-film-analysis', playerId, title: 'Game / #13', analysis };
+    const denied = await workspaceCommandResponse(new Request('http://local/api/workspace/command', { method: 'POST', body: JSON.stringify(command) }), service, { role: 'player', playerId });
+    expect(denied.status).toBe(403);
+    expect((await service.getWorkspace()).workspace.filmAnalyses).toHaveLength(0);
+
+    const allowed = await workspaceCommandResponse(new Request('http://local/api/workspace/command', { method: 'POST', body: JSON.stringify(command) }), service, { role: 'operator' });
+    expect(allowed.status).toBe(200);
+    const attached = await allowed.json();
+    expect(attached.workspace.filmAnalyses).toMatchObject([{ playerId, title: 'Game / #13', analysis: { executionCount: 1 } }]);
+
+    const deniedCorrection = await workspaceCommandResponse(new Request('http://local/api/workspace/command', {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'correct-film-analysis',
+        playerId,
+        analysisId: attached.workspace.filmAnalyses[0].id,
+        correction: { timeMs: 0, court: null, targetStatus: 'unresolved', reason: 'Player attempted to alter captured evidence.' }
+      })
+    }), service, { role: 'player', playerId });
+    expect(deniedCorrection.status).toBe(403);
+    expect((await service.getWorkspace()).workspace.filmAnalyses[0]?.corrections).toHaveLength(0);
   });
 });

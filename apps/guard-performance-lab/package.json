@@ -1,6 +1,6 @@
 {
   "name": "@create-something/guard-performance-lab",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
   "type": "module",
   "createSomething": {
@@ -26,6 +26,10 @@
     "mcp:smoke": "tsx src/mcp/smoke.ts",
     "mcp:parity": "tsx src/mcp/parity.ts",
     "auth:browser-fixture": "node scripts/browser-auth-fixture.mjs",
+    "film:analyze": "uv run --script scripts/analyze-film.py",
+    "film:verify": "tsx scripts/verify-film.ts",
+    "film:import": "tsx scripts/import-film.ts",
+    "film:import:http": "tsx scripts/import-film-http.ts",
     "d1:migrate:local": "node ../../scripts/run-wrangler.mjs d1 migrations apply guard-performance-lab --local",
     "d1:migrate:remote": "node ../../scripts/run-wrangler.mjs d1 migrations apply guard-performance-lab --remote",
     "deploy": "pnpm build && node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=guard-performance-lab --branch=main"

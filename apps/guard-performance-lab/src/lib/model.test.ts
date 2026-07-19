@@ -4,7 +4,7 @@ import { createInitialState, createPlayer, emptyReceipt, parseState, receiptsFor
 describe('guard performance local model', () => {
   it('recovers from missing and corrupt storage', () => {
     expect(parseState(null).players[0]?.name).toBe('Developing Guard');
-    expect(parseState('{broken').version).toBe(4);
+    expect(parseState('{broken').version).toBe(5);
   });
 
   it('upgrades an existing v3 player without inventing profile data', () => {
@@ -18,7 +18,7 @@ describe('guard performance local model', () => {
       engagements: []
     }));
 
-    expect(state.version).toBe(4);
+    expect(state.version).toBe(5);
     expect(state.revision).toBe(7);
     expect(state.players[0]?.profile).toMatchObject({ age: null, gender: null, primaryPosition: null, preferredName: '' });
   });
