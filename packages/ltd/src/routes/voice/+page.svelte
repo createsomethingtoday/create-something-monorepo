@@ -1,5 +1,57 @@
 <script lang="ts">
-  import { SEO } from '@create-something/canon';
+  import {
+    PerformanceNarrativeStage,
+    SEO,
+    type PerformanceNarrativeScene
+  } from '@create-something/canon';
+
+  const voiceScenes: PerformanceNarrativeScene[] = [
+    {
+      id: 'act',
+      label: 'Act',
+      summary: 'Plain claim first',
+      title: 'Write for the next decision.',
+      detail: 'Start with language a reader can understand, verify, and act on before introducing framework or platform terminology.',
+      tone: 'allow',
+      evidence: ['Cut the excess', 'Name the workflow', 'Make proof visible']
+    },
+    {
+      id: 'principles',
+      label: 'Principles',
+      summary: 'Recognize good writing',
+      title: 'Make clarity a repeatable discipline.',
+      detail: 'The recognition loop and five principles turn subjective editing into a standard another writer can apply.',
+      tone: 'review',
+      evidence: ['Clarity', 'Specificity', 'Honesty', 'Usefulness', 'Grounding']
+    },
+    {
+      id: 'patterns',
+      label: 'Patterns',
+      summary: 'Write + transform',
+      title: 'Use structures that reveal the work.',
+      detail: 'Sentence forms, experiment requirements, transformations, and the checklist make the standard usable in production copy.',
+      tone: 'neutral',
+      receipts: ['Sentence patterns', 'Experiment contract', 'Voice checklist']
+    },
+    {
+      id: 'vocabulary',
+      label: 'Vocabulary',
+      summary: 'Preferred + constrained',
+      title: 'Choose precise words without overstating.',
+      detail: 'Preferred terminology and constrained-specificity rules keep claims useful when confidentiality or authority limits detail.',
+      tone: 'neutral',
+      receipts: ['Preferred terms', 'Safe specificity', 'Authority boundary']
+    },
+    {
+      id: 'teaching',
+      label: 'Teaching',
+      summary: 'Scaffold + lineage',
+      title: 'Teach the reader how the standard was formed.',
+      detail: 'Educational voice, the hermeneutic test, and the writing lineage reconnect today’s practice to the masters without imitating their style.',
+      tone: 'neutral',
+      receipts: ['Progressive disclosure', 'Hermeneutic test', 'Master lineage']
+    }
+  ];
 </script>
 
 <SEO
@@ -24,6 +76,17 @@
   </div>
 </section>
 
+<PerformanceNarrativeStage
+  id="voice-operating-story"
+  eyebrow="Writing standards"
+  title="Say it. Prove it. Teach it."
+  description="Seventeen chapters now resolve through five indexed writing decisions, preserving the complete standard without asking every topic to compete at once."
+  scenes={voiceScenes}
+  ariaLabel="CREATE SOMETHING voice standards"
+>
+  {#snippet artifact(scene: PerformanceNarrativeScene)}
+    <div class="voice-scene-artifact">
+      {#if scene.id === 'act'}
 <!-- What to Do This Week -->
 <section class="py-16 px-6">
   <div class="max-w-3xl mx-auto">
@@ -214,6 +277,8 @@
     </div>
   </div>
 </section>
+
+      {:else if scene.id === 'principles'}
 
 <!-- Recognition -->
 <section class="py-16 px-6 section-divider">
@@ -426,6 +491,8 @@
     </div>
   </div>
 </section>
+
+      {:else if scene.id === 'patterns'}
 
 <!-- Sentence Patterns -->
 <section class="section-divider py-16 px-6">
@@ -675,6 +742,8 @@
   </div>
 </section>
 
+      {:else if scene.id === 'vocabulary'}
+
 <!-- Terminology -->
 <section class="section-divider py-16 px-6">
   <div class="max-w-3xl mx-auto">
@@ -784,6 +853,8 @@
     </div>
   </div>
 </section>
+
+      {:else}
 
 <!-- Educational Voice -->
 <section class="section-divider py-16 px-6">
@@ -1070,7 +1141,17 @@
   </div>
 </section>
 
+      {/if}
+    </div>
+  {/snippet}
+</PerformanceNarrativeStage>
+
 <style>
+  .voice-scene-artifact {
+    min-width: 0;
+    overflow: hidden;
+  }
+
   .eyebrow {
     font-size: var(--text-performance-body-sm);
     text-transform: uppercase;

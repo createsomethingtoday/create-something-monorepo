@@ -240,16 +240,13 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     'ltd-editorial',
     'ltd',
     [
-      'brand',
       'ethos',
       'experiments/the-circle-closes',
-      'principles',
       'standards',
       'taste',
-      'taste/insights',
       'voice'
     ],
-    'pending',
+    'migrated',
     contract(
       'editorial',
       'Understand the governing principle and decide how it changes the work.',
@@ -260,13 +257,25 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
   group(
     'ltd-canon-indexes',
     'ltd',
-    ['canon', 'masters', 'patterns', 'presentations'],
+    ['canon', 'masters', 'patterns', 'presentations', 'principles'],
     'pending',
     contract(
       'index',
       'Choose the canon, master, pattern, or presentation most relevant to the current decision.',
       'The collection exposes provenance, status, and a direct destination.',
       'Open one source in context'
+    )
+  ),
+  group(
+    'ltd-public-tools',
+    'ltd',
+    ['brand', 'taste/insights'],
+    'pending',
+    contract(
+      'tool',
+      'Inspect the current brand or taste system state and decide what to use next.',
+      'The asset library or analytics surface exposes source material, state, and direct actions.',
+      'Use the relevant asset, source, or recovery path'
     )
   ),
   group(
