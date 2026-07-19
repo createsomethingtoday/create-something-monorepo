@@ -37,6 +37,8 @@ import numpy as np
 import onnxruntime as ort
 from scipy.optimize import linear_sum_assignment
 
+from team_classifier import TEAM_SCORE_THRESHOLD, classify_team, stabilize_team_roles
+
 
 PROFILE = "guard-player-trace-v1"
 COURT_LENGTH = 94.0
@@ -168,6 +170,10 @@ class Detection:
     depth: float
     hist: np.ndarray
     white: float
+    raw_role: str
+    role: str
+    team_score: float
+    classification: dict
     track_id: str = ""
 
 
@@ -177,6 +183,8 @@ class Track:
     pano_x: float
     depth: float
     hist: np.ndarray
+    team_score: float
+    role: str
     last_ms: int
 
 
@@ -204,7 +212,18 @@ def assign_tracks(detections: list[Detection], tracks: dict[str, Track], time_ms
         prior = tracks.get(detection.track_id)
         blend = detection.hist if prior is None else prior.hist * 0.65 + detection.hist * 0.35
         blend /= max(float(np.linalg.norm(blend)), 1e-8)
-        tracks[detection.track_id] = Track(detection.track_id, detection.pano_x, detection.depth, blend, time_ms)
+        if detection.raw_role == "ignore":
+            detection.role = "ignore"
+            blended_team_score = prior.team_score if prior is not None else detection.team_score
+        else:
+            blended_team_score = detection.team_score if prior is None or prior.role == "ignore" else prior.team_score * 0.72 + detection.team_score * 0.28
+            if prior is not None and prior.role == "teammate":
+                detection.role = "teammate" if blended_team_score >= 0.26 else "opponent"
+            elif prior is not None and prior.role == "opponent":
+                detection.role = "opponent" if blended_team_score <= 0.36 else "teammate"
+            else:
+                detection.role = "teammate" if blended_team_score >= TEAM_SCORE_THRESHOLD else "opponent"
+        tracks[detection.track_id] = Track(detection.track_id, detection.pano_x, detection.depth, blend, blended_team_score, detection.role, time_ms)
     return next_id
 
 
@@ -260,11 +279,12 @@ def main():
             if box_height < height * 0.065 or box_width / max(box_height, 1) > 0.9 or foot_y < height * 0.47 or foot_y > height * 0.97:
                 continue
             hist, white = appearance(image, box)
+            classification = classify_team(image, box)
             depth = min(1.0, max(0.0, (foot_y / height - 0.44) / 0.46))
-            detection = Detection(box, score, foot_x, foot_y, foot_x - cumulative_shift, depth, hist, white)
+            detection = Detection(box, score, foot_x, foot_y, foot_x - cumulative_shift, depth, hist, white, classification.role, classification.role, classification.evidence.team_score, classification.audit_dict())
             detections.append(detection)
-            all_pano.append(detection.pano_x)
         next_id = assign_tracks(detections, tracks, time_ms, next_id)
+        all_pano.extend(detection.pano_x for detection in detections if detection.role != "ignore")
 
         for seed_ms, seed_x, seed_y in seeds:
             if abs(seed_ms - time_ms) <= 250 and detections:
@@ -276,7 +296,7 @@ def main():
 
         target = next((detection for detection in detections if detection.track_id in target_track_ids), None)
         if target is None and target_reference is not None:
-            candidates = [(similarity(target_reference, detection.hist) + detection.white * 0.3, detection) for detection in detections if detection.white >= 0.13]
+            candidates = [(similarity(target_reference, detection.hist) + detection.white * 0.3, detection) for detection in detections if detection.role == "teammate"]
             candidates.sort(key=lambda item: item[0], reverse=True)
             if candidates and candidates[0][0] >= 0.86 and (len(candidates) == 1 or candidates[0][0] - candidates[1][0] >= 0.05):
                 target = candidates[0][1]
@@ -284,7 +304,7 @@ def main():
 
         provisional.append({
             "timeMs": time_ms,
-            "targetStatus": "resolved" if target else ("unresolved" if any(detection.white >= 0.13 for detection in detections) else "out-of-frame"),
+            "targetStatus": "resolved" if target else ("unresolved" if any(detection.role == "teammate" for detection in detections) else "out-of-frame"),
             "targetTrackId": target.track_id if target else None,
             "pan": {"offsetPixels": round(cumulative_shift, 3), "confidence": round(pan_confidence, 4)},
             "detections": detections,
@@ -301,11 +321,27 @@ def main():
     frames = []
     for frame in provisional:
         players = []
-        for detection in frame.pop("detections"):
+        ignored = []
+        detections = frame.pop("detections")
+        active_detections = [detection for detection in detections if detection.role != "ignore"]
+        active_detections.sort(key=lambda detection: (detection.track_id == frame["targetTrackId"], detection.score * detection.classification["confidence"]), reverse=True)
+        retained_ids = {id(detection) for detection in active_detections[:10]}
+        for detection in detections:
+            if detection.role == "ignore" or id(detection) not in retained_ids:
+                ignored.append({
+                    "trackId": detection.track_id,
+                    "role": "ignore",
+                    "image": [round(detection.foot_x / width, 5), round(detection.foot_y / height, 5)],
+                    "confidence": round(detection.score * detection.classification["confidence"], 4),
+                    "courtMembership": detection.classification["courtMembership"],
+                    "reason": detection.classification["reason"] if detection.role == "ignore" else "active-court-cap",
+                    "classification": detection.classification,
+                })
+                continue
             court_x = min(COURT_LENGTH, max(0.0, (detection.pano_x - low) / span * COURT_LENGTH))
             court_y = min(COURT_WIDTH, max(0.0, detection.depth * COURT_WIDTH))
             is_target = detection.track_id == frame["targetTrackId"]
-            team = "target" if is_target else "teammate" if detection.white >= 0.13 else "opponent"
+            team = "target" if is_target else detection.role
             players.append({
                 "trackId": "13" if is_target else detection.track_id,
                 "team": team,
@@ -315,10 +351,13 @@ def main():
                 "provenance": "model",
                 "projection": "estimated",
                 "zone": relation_zone(court_x, court_y),
+                "courtMembership": "foreground-court",
+                "classification": {**detection.classification, "trackRole": detection.role},
             })
         frame.pop("targetTrackId")
-        frames.append({**frame, "players": players})
+        frames.append({**frame, "players": players, "ignored": ignored})
 
+    frames = stabilize_team_roles(frames)
     output = {
         "version": 1,
         "source": {
@@ -332,12 +371,19 @@ def main():
         },
         "profile": PROFILE,
         "analysis": {
-            "revision": 1,
+            "revision": 2,
             "executionCount": 1,
             "analyzedAt": args.analyzed_at or datetime.now(timezone.utc).isoformat(),
             "detector": {"name": "YOLOX-s ONNX", "sha256": sha256(str(model_path)), "license": "Apache-2.0"},
             "sampleFps": args.sample_fps,
             "projection": "pan-stabilized-estimate",
+            "classification": {
+                "name": "foreground-court-central-torso-v2",
+                "courtMembership": "half-court-perspective-calibration",
+                "teamRule": "white-jersey-teammate-versus-other-opponent",
+                "trackAggregation": "ema-with-hysteresis-plus-full-track-confidence-vote",
+                "maxActivePlayers": 10,
+            },
         },
         "coverage": {
             "frameCount": len(frames),

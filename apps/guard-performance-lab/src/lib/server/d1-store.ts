@@ -23,7 +23,7 @@ type StoredFilm = Omit<FilmAnalysisRecord, 'frames'> & {
   frameStorage: { kind: 'd1-chunks'; chunkCount: number; frameCount: number };
 };
 
-export function prepareD1Workspace(state: LabState, framesPerChunk = 100): { workspace: LabState; chunks: FilmChunk[] } {
+export function prepareD1Workspace(state: LabState, framesPerChunk = 40): { workspace: LabState; chunks: FilmChunk[] } {
   const chunks: FilmChunk[] = [];
   const filmAnalyses = state.filmAnalyses.map((analysis) => {
     for (let index = 0; index < analysis.frames.length; index += framesPerChunk) {

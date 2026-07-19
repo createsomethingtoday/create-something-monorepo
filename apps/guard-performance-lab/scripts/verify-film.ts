@@ -8,6 +8,11 @@ function argument(name: string) {
   return process.argv[index + 1]!;
 }
 
+function optionalArgument(name: string) {
+  const index = process.argv.indexOf(name);
+  return index >= 0 ? process.argv[index + 1] : undefined;
+}
+
 function predictions(analysis: CapturedFilmAnalysis, corrections: FilmCorrection[] = []) {
   return analysis.frames.map((frame) => {
     const target = frame.players.find((player) => player.team === 'target');
@@ -61,11 +66,39 @@ const svgPath = resolve(argument('--svg'));
 const analysis = capturedFilmAnalysisSchema.parse(JSON.parse(await readFile(analysisPath, 'utf8')));
 const benchmark = filmBenchmarkSchema.parse(JSON.parse(await readFile(benchmarkPath, 'utf8')));
 const invariantIssues: string[] = [];
-if (analysis.analysis.executionCount !== 1 || analysis.analysis.revision !== 1) invariantIssues.push('Analysis receipt must be revision 1 with executionCount 1.');
+const expectedRevision = Number(optionalArgument('--expected-revision') ?? analysis.analysis.revision);
+if (analysis.analysis.executionCount !== 1 || analysis.analysis.revision !== expectedRevision) invariantIssues.push(`Analysis receipt must be revision ${expectedRevision} with executionCount 1.`);
 if (analysis.frames[0]?.timeMs !== 0 || (analysis.frames.at(-1)?.timeMs ?? 0) < analysis.source.durationMs - 1000) invariantIssues.push('Captured frames do not cover the full source duration.');
 if (analysis.frames.some((frame, index) => index > 0 && frame.timeMs <= analysis.frames[index - 1]!.timeMs)) invariantIssues.push('Captured frame times are not strictly increasing.');
 if (analysis.frames.some((frame) => frame.players.some((player) => player.court[0] < 0 || player.court[0] > 94 || player.court[1] < 0 || player.court[1] > 50))) invariantIssues.push('Impossible court coordinates were captured.');
 if (analysis.frames.some((frame) => frame.targetStatus !== 'resolved' && frame.players.some((player) => player.team === 'target'))) invariantIssues.push('An unresolved or out-of-frame sample silently contains a target token.');
+if (analysis.frames.some((frame) => frame.players.length > 10)) invariantIssues.push('A captured frame contains more than ten foreground active-player tokens.');
+if (analysis.analysis.revision === 2) {
+  if (!('classification' in analysis.analysis)) invariantIssues.push('Revision 2 is missing its team-classification receipt.');
+  if (analysis.frames.some((frame) => frame.players.some((player) => player.courtMembership && player.courtMembership !== 'foreground-court'))) invariantIssues.push('Revision 2 rendered non-foreground traffic as an active player.');
+  if (!analysis.frames.some((frame) => frame.ignored.some((detection) => detection.courtMembership === 'opposite-court'))) invariantIssues.push('Revision 2 contains no auditable opposite-court exclusions.');
+}
+
+const trackRoles = new Map<string, Array<{ timeMs: number; role: 'teammate' | 'opponent' }>>();
+for (const frame of analysis.frames) {
+  for (const player of frame.players) {
+    if (player.team === 'target') continue;
+    const entries = trackRoles.get(player.trackId) ?? [];
+    entries.push({ timeMs: frame.timeMs, role: player.team });
+    trackRoles.set(player.trackId, entries);
+  }
+}
+let unsupportedTeamFlips = 0;
+for (const entries of trackRoles.values()) {
+  const ordered = entries.sort((a, b) => a.timeMs - b.timeMs);
+  for (let index = 1; index < ordered.length; index += 1) {
+    if (ordered[index]!.role === ordered[index - 1]!.role) continue;
+    const changedRole = ordered[index]!.role;
+    const stableUntil = ordered.slice(index).find((entry) => entry.role !== changedRole)?.timeMs ?? ordered.at(-1)!.timeMs;
+    if (stableUntil - ordered[index]!.timeMs > 500) unsupportedTeamFlips += 1;
+  }
+}
+if (unsupportedTeamFlips) invariantIssues.push(`${unsupportedTeamFlips} unsupported team-role flip interval(s) exceeded 0.5 seconds.`);
 
 const corrections = correctionPlan(analysis, benchmark);
 const corrected = applyFilmCorrections({ ...analysis, corrections });
@@ -77,6 +110,11 @@ const report = {
   analysis: analysis.analysis,
   coverage: { frames: analysis.frames.length, firstTimeMs: analysis.frames[0]?.timeMs, lastTimeMs: analysis.frames.at(-1)?.timeMs },
   invariantIssues,
+  teamTraffic: {
+    maxActiveTokens: Math.max(0, ...analysis.frames.map((frame) => frame.players.length)),
+    oppositeCourtIgnored: analysis.frames.reduce((count, frame) => count + frame.ignored.filter((detection) => detection.courtMembership === 'opposite-court').length, 0),
+    unsupportedTeamFlips
+  },
   rawScore,
   correctionCount: corrections.length,
   correctedScore

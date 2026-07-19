@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 export const FILM_BENCHMARK_PROFILE = 'guard-player-trace-v1';
+export const FILM_TEAM_BENCHMARK_PROFILE = 'guard-player-team-benchmark-v2';
 
 const pointSchema = z.tuple([z.number(), z.number()]);
 const targetSchema = z.object({
@@ -122,6 +123,121 @@ export function scoreFilmBenchmark(benchmarkInput: unknown, predictionInput: unk
   return { ok: issues.length === 0, issues, visibleAccuracy, medianCourtErrorFeet, p95CourtErrorFeet, zoneAccuracy, statusAccuracy, silentIdentitySwitches };
 }
 
+const teamRoleSchema = z.enum(['teammate', 'opponent', 'ignore']);
+const courtMembershipSchema = z.enum(['foreground-court', 'opposite-court']);
+const cropBoundsSchema = z.tuple([z.number().int().nonnegative(), z.number().int().nonnegative(), z.number().int().positive(), z.number().int().positive()]);
+const teamAnnotationSchema = z.object({
+  id: z.string().min(1),
+  clipId: z.enum(['clear-half-court', 'transition-wide', 'pan-occlusion']),
+  timeMs: z.number().int().nonnegative(),
+  box: cropBoundsSchema,
+  expectedRole: teamRoleSchema,
+  courtMembership: courtMembershipSchema,
+  ignoreReason: z.enum(['opposite-court', 'official', 'sideline-or-non-player-traffic']).nullable(),
+  provenance: z.object({
+    method: z.literal('manual-review'),
+    detectorConfidence: z.number().min(0).max(1),
+    cropBounds: cropBoundsSchema,
+    legacyWholeBoxWhiteRatio: z.number().min(0).max(1),
+    reviewCorrection: z.object({
+      priorRole: teamRoleSchema,
+      correctedRole: teamRoleSchema,
+      reason: z.string().min(1)
+    }).optional()
+  })
+});
+
+export const filmTeamBenchmarkSchema = z.object({
+  version: z.literal(1),
+  profile: z.literal(FILM_TEAM_BENCHMARK_PROFILE),
+  sourceSha256: z.string().regex(/^[a-f0-9]{64}$/),
+  reviewRule: z.string().min(1),
+  annotations: z.array(teamAnnotationSchema)
+});
+
+export function validateFilmTeamBenchmark(input: unknown) {
+  const parsed = filmTeamBenchmarkSchema.safeParse(input);
+  if (!parsed.success) return { ok: false as const, issues: parsed.error.issues.map((issue) => issue.message), sampleCount: 0 };
+  const issues: string[] = [];
+  const annotations = parsed.data.annotations;
+  const countRole = (role: z.infer<typeof teamRoleSchema>) => annotations.filter((sample) => sample.expectedRole === role).length;
+  const ids = new Set<string>();
+  for (const annotation of annotations) {
+    if (ids.has(annotation.id)) issues.push(`Duplicate team benchmark id: ${annotation.id}.`);
+    ids.add(annotation.id);
+    if (annotation.box.some((value, index) => value !== annotation.provenance.cropBounds[index])) issues.push(`${annotation.id} crop provenance does not match its reviewed bounds.`);
+    if (annotation.provenance.reviewCorrection && annotation.provenance.reviewCorrection.correctedRole !== annotation.expectedRole) issues.push(`${annotation.id} review correction does not match the final expected role.`);
+    if (annotation.courtMembership === 'opposite-court' && (annotation.expectedRole !== 'ignore' || annotation.ignoreReason !== 'opposite-court')) issues.push(`${annotation.id} opposite-court traffic must be labeled ignore with opposite-court provenance.`);
+    if (annotation.expectedRole !== 'ignore' && annotation.ignoreReason !== null) issues.push(`${annotation.id} active player traffic cannot carry an ignore reason.`);
+  }
+  if (annotations.length < 60) issues.push('The team benchmark requires at least 60 real-source crops.');
+  for (const clipId of ['clear-half-court', 'transition-wide', 'pan-occlusion'] as const) {
+    if (!annotations.some((sample) => sample.clipId === clipId)) issues.push(`Missing required team benchmark clip: ${clipId}.`);
+  }
+  if (countRole('teammate') < 20) issues.push('The team benchmark requires at least 20 teammate crops.');
+  if (countRole('opponent') < 20) issues.push('The team benchmark requires at least 20 opponent crops.');
+  if (countRole('ignore') < 10) issues.push('The team benchmark requires at least 10 ignore crops.');
+  if (annotations.filter((sample) => sample.courtMembership === 'opposite-court').length < 2) issues.push('The team benchmark requires explicit opposite-court negatives.');
+  const regression = annotations.filter((sample) => sample.timeMs === 1698000);
+  if (regression.filter((sample) => sample.expectedRole === 'teammate').length < 4 || regression.filter((sample) => sample.expectedRole === 'opponent').length < 4) issues.push('The 28:18 regression frame requires at least four teammate and four opponent crops.');
+  return { ok: issues.length === 0, issues, sampleCount: annotations.length };
+}
+
+const teamPredictionSchema = z.object({
+  id: z.string().min(1),
+  predictedRole: teamRoleSchema,
+  courtMembership: courtMembershipSchema,
+  confidence: z.number().min(0).max(1),
+  trackId: z.string().min(1).optional(),
+  corrected: z.literal(false).optional()
+});
+
+export type FilmTeamPrediction = z.infer<typeof teamPredictionSchema>;
+
+export function scoreFilmTeamBenchmark(benchmarkInput: unknown, predictionInput: unknown) {
+  const benchmarkValidation = validateFilmTeamBenchmark(benchmarkInput);
+  const parsedPredictions = z.array(teamPredictionSchema).safeParse(predictionInput);
+  const issues = [...benchmarkValidation.issues];
+  const empty = { ok: false as const, issues, teammateRecall: 0, opponentRecall: 0, ignoreRecall: 0, balancedAccuracy: 0, oppositeCourtRecall: 0, regressionCorrect: 0, confusionMatrix: { teammate: { teammate: 0, opponent: 0, ignore: 0 }, opponent: { teammate: 0, opponent: 0, ignore: 0 }, ignore: { teammate: 0, opponent: 0, ignore: 0 } } };
+  if (!parsedPredictions.success) return { ...empty, issues: [...issues, ...parsedPredictions.error.issues.map((issue) => issue.message)] };
+  const benchmark = filmTeamBenchmarkSchema.safeParse(benchmarkInput);
+  if (!benchmark.success) return empty;
+  const predictions = new Map(parsedPredictions.data.map((prediction) => [prediction.id, prediction]));
+  const matrix = {
+    teammate: { teammate: 0, opponent: 0, ignore: 0 },
+    opponent: { teammate: 0, opponent: 0, ignore: 0 },
+    ignore: { teammate: 0, opponent: 0, ignore: 0 }
+  };
+  for (const annotation of benchmark.data.annotations) {
+    const prediction = predictions.get(annotation.id);
+    if (!prediction) { issues.push(`Missing team prediction: ${annotation.id}.`); continue; }
+    matrix[annotation.expectedRole][prediction.predictedRole] += 1;
+  }
+  const recall = (role: z.infer<typeof teamRoleSchema>) => {
+    const row = matrix[role];
+    const total = row.teammate + row.opponent + row.ignore;
+    return total ? row[role] / total : 0;
+  };
+  const teammateRecall = recall('teammate');
+  const opponentRecall = recall('opponent');
+  const ignoreRecall = recall('ignore');
+  const balancedAccuracy = (teammateRecall + opponentRecall + ignoreRecall) / 3;
+  const opposite = benchmark.data.annotations.filter((sample) => sample.courtMembership === 'opposite-court');
+  const oppositeCourtRecall = opposite.length ? opposite.filter((sample) => {
+    const prediction = predictions.get(sample.id);
+    return prediction?.predictedRole === 'ignore' && prediction.courtMembership === 'opposite-court';
+  }).length / opposite.length : 0;
+  const regression = benchmark.data.annotations.filter((sample) => sample.timeMs === 1698000 && (sample.expectedRole === 'teammate' || sample.expectedRole === 'opponent'));
+  const regressionCorrect = regression.length ? regression.filter((sample) => predictions.get(sample.id)?.predictedRole === sample.expectedRole).length / regression.length : 0;
+  if (teammateRecall < 0.95) issues.push(`Teammate recall ${Math.round(teammateRecall * 1000) / 10}% is below 95%.`);
+  if (opponentRecall < 0.95) issues.push(`Opponent recall ${Math.round(opponentRecall * 1000) / 10}% is below 95%.`);
+  if (ignoreRecall < 0.9) issues.push(`Ignore recall ${Math.round(ignoreRecall * 1000) / 10}% is below 90%.`);
+  if (balancedAccuracy < 0.95) issues.push(`Team balanced accuracy ${Math.round(balancedAccuracy * 1000) / 10}% is below 95%.`);
+  if (oppositeCourtRecall < 1) issues.push(`Opposite-court rejection ${Math.round(oppositeCourtRecall * 1000) / 10}% must be 100%.`);
+  if (regressionCorrect < 1) issues.push(`The 28:18 team regression is ${Math.round(regressionCorrect * 1000) / 10}% and must be 100%.`);
+  return { ok: issues.length === 0, issues, teammateRecall, opponentRecall, ignoreRecall, balancedAccuracy, oppositeCourtRecall, regressionCorrect, confusionMatrix: matrix };
+}
+
 const capturedPlayerSchema = z.object({
   trackId: z.string().min(1),
   team: z.enum(['target', 'teammate', 'opponent']),
@@ -131,20 +247,32 @@ const capturedPlayerSchema = z.object({
   correctionId: z.string().optional(),
   image: pointSchema.optional(),
   projection: z.enum(['estimated', 'calibrated']).optional(),
-  zone: z.string().optional()
+  zone: z.string().optional(),
+  courtMembership: z.literal('foreground-court').optional(),
+  classification: z.record(z.unknown()).optional()
+}).passthrough();
+const ignoredDetectionSchema = z.object({
+  trackId: z.string().min(1),
+  role: z.literal('ignore'),
+  image: pointSchema,
+  confidence: z.number().min(0).max(1),
+  courtMembership: z.enum(['foreground-court', 'opposite-court']),
+  reason: z.string().min(1),
+  classification: z.record(z.unknown())
 }).passthrough();
 const capturedFrameSchema = z.object({
   timeMs: z.number().int().nonnegative(),
   targetStatus: z.enum(['resolved', 'unresolved', 'out-of-frame']).default('resolved'),
   players: z.array(capturedPlayerSchema),
-  pan: z.object({ offsetPixels: z.number(), confidence: z.number().min(0).max(1) }).optional()
+  pan: z.object({ offsetPixels: z.number(), confidence: z.number().min(0).max(1) }).optional(),
+  ignored: z.array(ignoredDetectionSchema).default([])
 }).passthrough();
 
 export const capturedFilmAnalysisSchema = z.object({
   version: z.literal(1),
   source: filmSourceSchema,
   profile: z.literal(FILM_BENCHMARK_PROFILE),
-  analysis: z.object({ revision: z.literal(1), executionCount: z.literal(1), analyzedAt: z.string().min(1) }).passthrough(),
+  analysis: z.object({ revision: z.union([z.literal(1), z.literal(2)]), executionCount: z.literal(1), analyzedAt: z.string().min(1) }).passthrough(),
   frames: z.array(capturedFrameSchema)
 }).passthrough();
 

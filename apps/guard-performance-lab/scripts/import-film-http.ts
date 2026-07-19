@@ -9,18 +9,35 @@ function argument(name: string, fallback?: string) {
   return value;
 }
 
+function optionalArgument(name: string) {
+  const index = process.argv.indexOf(name);
+  return index >= 0 ? process.argv[index + 1] : undefined;
+}
+
 const analysis = capturedFilmAnalysisSchema.parse(JSON.parse(await readFile(resolve(argument('--analysis')), 'utf8')));
 const corrections = filmCorrectionSchema.array().parse(JSON.parse(await readFile(resolve(argument('--corrections')), 'utf8')));
 const url = new URL('/api/workspace/command', argument('--url', 'http://127.0.0.1:4173'));
 const playerId = argument('--player', 'developing-guard');
+const tokenUrl = optionalArgument('--token-url');
+let authorization: string | undefined;
+if (tokenUrl) {
+  const response = await fetch(tokenUrl);
+  const result = await response.json() as { access_token?: string; error?: string };
+  if (!response.ok || !result.access_token) throw new Error(`${response.status}: ${result.error ?? 'Access-token fixture failed.'}`);
+  authorization = `Bearer ${result.access_token}`;
+}
 async function command(body: unknown) {
-  const response = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
-  const result = await response.json() as { ok?: boolean; error?: string; workspace?: { filmAnalyses?: Array<{ id: string; source: { sha256: string }; corrections: unknown[] }> } };
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', ...(authorization ? { authorization } : {}) },
+    body: JSON.stringify(body),
+  });
+  const result = await response.json() as { ok?: boolean; error?: string; workspace?: { filmAnalyses?: Array<{ id: string; source: { sha256: string }; analysis: { revision: number }; corrections: unknown[] }> } };
   if (!response.ok || !result.ok) throw new Error(`${response.status}: ${result.error ?? 'HTTP import failed.'}`);
   return result;
 }
 let workspace = await command({ action: 'attach-film-analysis', playerId, title: argument('--title', 'Burton Angels Summer League / player #13'), analysis });
-const record = workspace.workspace?.filmAnalyses?.find((item) => item.source.sha256 === analysis.source.sha256);
+const record = workspace.workspace?.filmAnalyses?.find((item) => item.source.sha256 === analysis.source.sha256 && item.analysis.revision === analysis.analysis.revision);
 if (!record) throw new Error('Attached film analysis was not returned by the scoped workspace.');
 for (const correction of corrections) {
   workspace = await command({ action: 'correct-film-analysis', playerId, analysisId: record.id, correction });

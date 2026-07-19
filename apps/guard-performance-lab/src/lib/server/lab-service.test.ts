@@ -59,7 +59,13 @@ describe('Guard Lab command service', () => {
 
     await service.attachFilmAnalysis(playerId, 'Burton Angels / #13', analysis);
     await expect(service.attachFilmAnalysis(playerId, 'Duplicate', analysis)).rejects.toThrow(/already captured/i);
-    expect((await service.getPlayerWorkspace(playerId)).workspace.filmAnalyses).toMatchObject([{ playerId, title: 'Burton Angels / #13', analysis: { executionCount: 1 } }]);
+    const revision2 = { ...analysis, analysis: { ...analysis.analysis, revision: 2 as const } };
+    await service.attachFilmAnalysis(playerId, 'Burton Angels / #13 / team-aware', revision2);
+    const revisions = (await service.getPlayerWorkspace(playerId)).workspace.filmAnalyses;
+    expect(revisions).toMatchObject([
+      { playerId, title: 'Burton Angels / #13', analysis: { revision: 1, executionCount: 1 } },
+      { playerId, title: 'Burton Angels / #13 / team-aware', analysis: { revision: 2, executionCount: 1 } }
+    ]);
     expect((await service.getPlayerWorkspace(otherPlayerId)).workspace.filmAnalyses).toHaveLength(0);
   });
 

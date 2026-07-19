@@ -22,7 +22,7 @@ if (!workspace.players.some((player) => player.id === playerId)) throw new Error
 let record = workspace.filmAnalyses.find((item) => item.playerId === playerId && item.source.sha256 === analysis.source.sha256 && item.analysis.revision === analysis.analysis.revision);
 if (!record) {
   const attached = await service.attachFilmAnalysis(playerId, title, analysis);
-  record = attached.workspace.filmAnalyses.find((item) => item.playerId === playerId && item.source.sha256 === analysis.source.sha256)!;
+  record = attached.workspace.filmAnalyses.find((item) => item.playerId === playerId && item.source.sha256 === analysis.source.sha256 && item.analysis.revision === analysis.analysis.revision)!;
 }
 for (const correction of corrections) {
   const current = (await service.getPlayerWorkspace(playerId)).workspace.filmAnalyses.find((item) => item.id === record.id)!;

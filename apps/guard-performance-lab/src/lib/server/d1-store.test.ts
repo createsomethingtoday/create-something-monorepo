@@ -13,8 +13,8 @@ describe('D1 film frame storage', () => {
     const prepared = prepareD1Workspace({ ...createInitialState(), filmAnalyses: [record] });
 
     expect(prepared.workspace.filmAnalyses[0]?.frames).toEqual([]);
-    expect(prepared.chunks).toHaveLength(3);
-    expect(prepared.chunks.map((chunk) => JSON.parse(chunk.framesJson).length)).toEqual([100, 100, 50]);
+    expect(prepared.chunks).toHaveLength(7);
+    expect(prepared.chunks.map((chunk) => JSON.parse(chunk.framesJson).length)).toEqual([40, 40, 40, 40, 40, 40, 10]);
     expect(Math.max(...prepared.chunks.map((chunk) => Buffer.byteLength(chunk.framesJson)))).toBeLessThan(500_000);
   });
 });

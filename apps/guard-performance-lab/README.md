@@ -35,25 +35,39 @@ The production preview runs at `http://127.0.0.1:4173` and is the owning surface
 
 ## One-run film trace
 
-The analyzer requires an operator-supplied source video and YOLOX ONNX model. Both remain outside version control. It decodes the complete source sequentially, captures one immutable analysis revision, and records unresolved target intervals rather than inventing positions. The fixed three-clip benchmark must pass before import; the report separates the raw model baseline from the correction-aware result.
+The analyzer requires an operator-supplied source video and YOLOX ONNX model. Both remain outside version control. It decodes the complete source sequentially, captures one immutable analysis revision, and records unresolved target intervals rather than inventing positions. Revision 2 first rejects detections outside the foreground court closest to the camera, then classifies central-torso evidence using this game's white-jersey teammate / other-colored opponent rule. Opposite-court, official, and sideline detections stay in the audit receipt but never render as traffic. A deterministic full-track vote stabilizes team roles without another inference execution.
+
+Run the locked real-source team benchmark before the one authorized full revision. Its predictions must contain no correction overlays. Revision 1 remains auditable; the app selects the highest compatible revision for replay.
 
 ```bash
-pnpm --filter @create-something/guard-performance-lab film:analyze -- \
+pnpm --filter @create-something/guard-performance-lab film:classify:team \
+  --source /private/path/game.mp4 \
+  --source-sha256 <verified-source-sha256> \
+  --fixture fixtures/film/player-team-benchmark.json \
+  --output /private/path/team-predictions.json
+
+pnpm --filter @create-something/guard-performance-lab film:verify:team \
+  fixtures/film/player-team-benchmark.json \
+  /private/path/team-predictions.json \
+  /private/path/team-report.json
+
+pnpm --filter @create-something/guard-performance-lab film:analyze \
   --source /private/path/game.mp4 \
   --source-sha256 <verified-source-sha256> \
   --model /private/path/yolox_s.onnx \
   --target-seed <timeMs:footX:footY> \
-  --output /private/path/full-analysis-r1.json
+  --output /private/path/full-analysis-r2.json
 
-pnpm --filter @create-something/guard-performance-lab film:verify -- \
-  --analysis /private/path/full-analysis-r1.json \
+pnpm --filter @create-something/guard-performance-lab film:verify \
+  --analysis /private/path/full-analysis-r2.json \
   --benchmark fixtures/film/player-13-golden.json \
   --report /private/path/benchmark-report.json \
   --corrections /private/path/benchmark-corrections.json \
-  --svg /private/path/benchmark-evidence.svg
+  --svg /private/path/benchmark-evidence.svg \
+  --expected-revision 2
 
-pnpm --filter @create-something/guard-performance-lab film:import:http -- \
-  --analysis /private/path/full-analysis-r1.json \
+pnpm --filter @create-something/guard-performance-lab film:import:http \
+  --analysis /private/path/full-analysis-r2.json \
   --corrections /private/path/benchmark-corrections.json
 ```
 

@@ -88,7 +88,7 @@
   let receipts = $derived(receiptsForSelected(labState));
   let artifacts = $derived(artifactsForSelected(labState));
   let engagements = $derived(engagementsForSelected(labState));
-  let activeFilm = $derived(labState.filmAnalyses.find((analysis) => analysis.playerId === labState.selectedPlayerId));
+  let activeFilm = $derived(labState.filmAnalyses.filter((analysis) => analysis.playerId === labState.selectedPlayerId).toSorted((a, b) => b.analysis.revision - a.analysis.revision)[0]);
   let correctedFilm = $derived(activeFilm ? applyFilmCorrections(activeFilm) : null);
   let filmTraffic = $derived(correctedFilm ? resolveFilmTrafficAt(correctedFilm, filmTimeMs, filmWakeMs) : null);
   let filteredTerms = $derived(glossary.filter(([term, meaning, phase]) => {
@@ -344,9 +344,9 @@
           <aside class="film-legend">
             <p class="eyebrow">Traffic key</p>
             <div><i class="traffic-dot target"></i><span>Player #13 + wake</span></div>
-            <div><i class="traffic-dot teammate"></i><span>Captured teammate</span></div>
-            <div><i class="traffic-dot opponent"></i><span>Captured opponent</span></div>
-            <p>Unresolved intervals break the orange wake. Faded tokens have lower detector or projection confidence.</p>
+            <div><i class="traffic-dot teammate"></i><span>Foreground-court teammate</span></div>
+            <div><i class="traffic-dot opponent"></i><span>Foreground-court opponent</span></div>
+            <p>Opposite-court, official, and sideline detections remain in the audit receipt but never render as traffic. Unresolved intervals break the orange wake.</p>
             <dl><dt>Source</dt><dd>{activeFilm.source.sha256.slice(0, 12)}…</dd><dt>Frames</dt><dd>{activeFilm.frames.length}</dd><dt>Corrections</dt><dd>{activeFilm.corrections.length}</dd></dl>
           </aside>
         </div>
