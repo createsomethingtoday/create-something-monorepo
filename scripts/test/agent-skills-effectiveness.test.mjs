@@ -95,6 +95,12 @@ const codexOnlySkills = [
       /must not invent/i,
       /pattern clusters/i,
       /property voice/i,
+      /smallest useful framework stack/i,
+      /reader and outcome/i,
+      /operator-instructions\.md/,
+      /reports-and-arguments\.md/,
+      /sentence-clarity\.md/,
+      /writing-tasks\.v1\.json/,
       /pnpm prose:check/,
       /human final read/i,
       /detector/i,
@@ -116,6 +122,13 @@ const codexOnlySkills = [
       /target-reader\.v1\.json/,
       /review_scope/,
       /rendered component/i,
+      /artifact_type/,
+      /can_orient/,
+      /can_find_default/,
+      /can_start/,
+      /can_complete/,
+      /can_recover/,
+      /can_verify/,
       /unrelated file-level deterministic findings/i,
       /human final read/i
     ]
@@ -338,6 +351,54 @@ test('intent-mapping has deterministic behavioral fixture coverage', () => {
         );
       }
     }
+  }
+});
+
+test('writing skills route realistic artifacts through bounded framework stacks', () => {
+  const corpus = JSON.parse(read('scripts/prose-quality/evals/writing-tasks.v1.json'));
+  const writer = read('packages/dotfiles/codex/skills/writing-for-humans/SKILL.md');
+  const reviewer = read('packages/dotfiles/codex/skills/target-reader-review/SKILL.md');
+  const referenceRoot = 'packages/dotfiles/codex/skills/writing-for-humans/references';
+
+  assert.equal(corpus.version, 1);
+  assert.equal(corpus.reader, 'junior-practitioner');
+  assert.equal(corpus.cases.length, 6);
+  assert.deepEqual(corpus.cases.map((entry) => entry.artifactType).sort(), [
+    'argument',
+    'case-study',
+    'operator-instructions',
+    'report',
+    'teaching',
+    'technical-explanation'
+  ]);
+
+  for (const entry of corpus.cases) {
+    assert.match(entry.prompt, /\S/);
+    assert.match(entry.sourceExcerpt, /\S/);
+    assert(entry.expectedSequence.length >= 3, `${entry.id} needs an observable sequence`);
+    assert(
+      entry.preservationRequirements.length > 0,
+      `${entry.id} needs preservation requirements`
+    );
+    assert.match(writer, new RegExp(entry.artifactType.replaceAll('-', '[ -]'), 'i'));
+
+    const referencePath = `${referenceRoot}/${entry.reference}`;
+    assert(existsSync(path.join(REPO_ROOT, referencePath)), `${referencePath} missing`);
+    const reference = read(referencePath);
+    for (const signal of entry.requiredSignals) {
+      assert.match(reference, new RegExp(signal, 'i'), `${entry.id} missing ${signal}`);
+    }
+  }
+
+  for (const field of [
+    'can_orient',
+    'can_find_default',
+    'can_start',
+    'can_complete',
+    'can_recover',
+    'can_verify'
+  ]) {
+    assert.match(reviewer, new RegExp(field));
   }
 });
 
