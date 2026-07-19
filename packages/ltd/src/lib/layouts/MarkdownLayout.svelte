@@ -221,6 +221,7 @@ ${section ? `**Section**: ${section}\n` : ''}
     font-family: 'Stack Sans Mono', monospace;
     font-size: 0.9em;
     color: var(--color-performance-fg-primary);
+    overflow-wrap: anywhere;
   }
 
   :global(.prose-ltd pre) {
@@ -234,6 +235,7 @@ ${section ? `**Section**: ${section}\n` : ''}
   :global(.prose-ltd pre code) {
     background: none;
     padding: 0;
+    overflow-wrap: normal;
   }
 
   .reading-handoff {
