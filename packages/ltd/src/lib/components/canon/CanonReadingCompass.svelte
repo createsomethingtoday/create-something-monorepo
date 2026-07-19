@@ -34,6 +34,18 @@
     scrollToChapter(id);
   }
 
+  function syncFromLocation() {
+    const fragment = window.location.hash.slice(1);
+    const nextId = chapters.some((chapter) => chapter.id === fragment)
+      ? fragment
+      : (chapters[0]?.id ?? '');
+    if (!nextId) return;
+
+    selectionLockedUntil = performance.now() + 700;
+    activeId = nextId;
+    centerActive(nextId);
+  }
+
   onMount(() => {
     const headings = Array.from(
       document.querySelectorAll<HTMLElement>('article[data-canon-reading] h2')
@@ -48,30 +60,36 @@
     });
 
     const fragment = window.location.hash.slice(1);
-    activeId = chapters.some((chapter) => chapter.id === fragment)
-      ? fragment
-      : (chapters[0]?.id ?? '');
+    syncFromLocation();
 
     if (fragment && activeId === fragment) {
-      selectionLockedUntil = performance.now() + 700;
       scrollToChapter(fragment);
     }
 
-    if (!('IntersectionObserver' in window)) return;
+    window.addEventListener('popstate', syncFromLocation);
+    window.addEventListener('hashchange', syncFromLocation);
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (performance.now() < selectionLockedUntil) return;
-        const visible = entries.find((entry) => entry.isIntersecting);
-        if (!(visible?.target instanceof HTMLElement) || visible.target.id === activeId) return;
-        activeId = visible.target.id;
-        centerActive(activeId);
-      },
-      { rootMargin: '-18% 0px -68% 0px' }
-    );
+    const observer =
+      'IntersectionObserver' in window
+        ? new IntersectionObserver(
+            (entries) => {
+              if (performance.now() < selectionLockedUntil) return;
+              const visible = entries.find((entry) => entry.isIntersecting);
+              if (!(visible?.target instanceof HTMLElement) || visible.target.id === activeId)
+                return;
+              activeId = visible.target.id;
+              centerActive(activeId);
+            },
+            { rootMargin: '-18% 0px -68% 0px' }
+          )
+        : null;
 
-    headings.forEach((heading) => observer.observe(heading));
-    return () => observer.disconnect();
+    headings.forEach((heading) => observer?.observe(heading));
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener('popstate', syncFromLocation);
+      window.removeEventListener('hashchange', syncFromLocation);
+    };
   });
 </script>
 

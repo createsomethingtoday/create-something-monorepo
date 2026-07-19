@@ -32,6 +32,8 @@ test('keeps markdown entries direct while adding one contained reading compass',
   assert.match(compass, /overflow-x:\s*auto/);
   assert.match(compass, /scrollTo\(\{ left, behavior: 'auto' \}\)/);
   assert.match(compass, /scrollIntoView\(\{ behavior: 'instant' as ScrollBehavior \}\)/);
+  assert.match(compass, /addEventListener\('popstate', syncFromLocation\)/);
+  assert.match(compass, /addEventListener\('hashchange', syncFromLocation\)/);
   assert.match(layout, /\.prose-ltd code[\s\S]+overflow-wrap:\s*anywhere/);
 });
 
