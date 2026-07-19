@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { FILM_BENCHMARK_PROFILE, captureFilmAnalysis, capturedFilmAnalysisSchema, filmFrameAt, resolveFilmTrafficAt, scoreFilmBenchmark, scoreFilmTeamBenchmark, validateFilmBenchmark, validateFilmTeamBenchmark } from './film.js';
+import { FILM_BENCHMARK_PROFILE, FILM_IDENTITY_BENCHMARK_PROFILE, captureFilmAnalysis, capturedFilmAnalysisSchema, deriveFilmIdentityCandidate, finalizeFilmIdentityRevision, filmFrameAt, resolveFilmTrafficAt, scoreFilmBenchmark, scoreFilmIdentityBenchmark, scoreFilmTeamBenchmark, validateFilmBenchmark, validateFilmIdentityBenchmark, validateFilmTeamBenchmark, verifyFilmIdentityCandidate } from './film.js';
 
 const source = { sha256: 'a'.repeat(64), durationMs: 5000, width: 1920, height: 1080, fps: 30, byteSize: 1000, linkedPath: '/private/source.mp4' };
 const annotations = (startMs: number) => Array.from({ length: 20 }, (_, index) => ({ timeMs: startMs + index * 1000, target: { status: 'visible' as const, court: [index, 10] as [number, number], zone: 'frontcourt', trackId: '13', provenance: 'manual' as const } }));
@@ -59,6 +59,42 @@ describe('film benchmark contract', () => {
     expect(resolveFilmTrafficAt(captured, 3500, 5000)).toEqual(forward);
     expect(backward.players.find((player) => player.team === 'target')?.court).toEqual([11, 20]);
     expect(captured.analysis.executionCount).toBe(1);
+  });
+
+  it('stops #13 traffic while substituted out and resumes the wake only after verified re-entry', () => {
+    const revision3 = capturedFilmAnalysisSchema.parse({
+      version: 1,
+      source,
+      profile: FILM_BENCHMARK_PROFILE,
+      analysis: {
+        revision: 3,
+        executionCount: 1,
+        analyzedAt: '2026-07-19T20:00:00.000Z',
+        derivedFromRevision: 2,
+        personDetectionExecuted: false,
+        identityExecutionCount: 1,
+        identityPolicy: 'direct-number-or-bounded-continuity-fail-closed-v1',
+        identityVerification: {
+          benchmarkProfile: FILM_IDENTITY_BENCHMARK_PROFILE,
+          candidateFingerprint: 'fnv1a32-test',
+          positiveRecall: 1,
+          hardNegativePrecision: 1,
+          substitutionAccuracy: 1,
+          correctionOverlayCount: 0
+        }
+      },
+      frames: [
+        { timeMs: 0, players: [{ trackId: 'p-13-a', team: 'target', court: [10, 20], confidence: 1 }] },
+        { timeMs: 1000, players: [{ trackId: 'p-13-a', team: 'target', court: [12, 20], confidence: 1 }] },
+        { timeMs: 2000, targetStatus: 'inactive', players: [] },
+        { timeMs: 3000, players: [{ trackId: 'p-13-b', team: 'target', court: [16, 20], confidence: 1 }] },
+        { timeMs: 4000, players: [{ trackId: 'p-13-b', team: 'target', court: [18, 20], confidence: 1 }] }
+      ]
+    });
+
+    expect(revision3.analysis).toMatchObject({ revision: 3, derivedFromRevision: 2, personDetectionExecuted: false, identityExecutionCount: 1 });
+    expect(revision3.frames[2]?.targetStatus).toBe('inactive');
+    expect(resolveFilmTrafficAt(revision3, 4000, 5000).targetWake.map((segment) => segment.map((sample) => sample.timeMs))).toEqual([[0, 1000], [3000, 4000]]);
   });
 
   it('enforces fixed identity, court-error, zone, and correction-provenance gates', () => {
@@ -120,5 +156,184 @@ describe('foreground-court team benchmark contract', () => {
     expect(scoreFilmTeamBenchmark(fixture, predictions.slice(1)).issues.join(' ')).toContain('Missing team prediction');
     const relabeled = predictions.map((prediction: { id: string; predictedRole: string }) => prediction.id === '1698000-0' ? { ...prediction, predictedRole: 'teammate' } : prediction);
     expect(scoreFilmTeamBenchmark(fixture, relabeled).issues.join(' ')).toContain('28:18');
+  });
+});
+
+describe('real-source #13 identity benchmark contract', () => {
+  const realFixture = JSON.parse(readFileSync(new URL('../../fixtures/film/player-13-identity-benchmark.json', import.meta.url), 'utf8'));
+  const positive = Array.from({ length: 30 }, (_, index) => ({
+    id: `positive-${index}`,
+    segmentId: `on-court-${Math.floor(index / 10) + 1}`,
+    timeMs: 100_000 + index * 100,
+    associationTimeMs: 100_000 + index * 100,
+    trackId: `p-${index}`,
+    cropBounds: [100, 200, 200, 400],
+    courtMembership: 'foreground-court',
+    expectedIdentity: '13',
+    visibleNumber: '13',
+    participation: 'active',
+    negativeClass: null,
+    provenance: { method: 'direct-number-review', reviewer: 'codex', cropBounds: [100, 200, 200, 400], sourceFrame: `positive-${index}.jpg` }
+  }));
+  const negativeClasses = ['5', '11', '15', 'unreadable', 'substitution', 'tracker-handoff'] as const;
+  const negative = Array.from({ length: 30 }, (_, index) => ({
+    id: `negative-${index}`,
+    segmentId: `negative-${negativeClasses[index % negativeClasses.length]}`,
+    timeMs: 200_000 + index * 100,
+    associationTimeMs: 200_000 + index * 100,
+    trackId: `n-${index}`,
+    cropBounds: [300, 200, 400, 400],
+    courtMembership: 'foreground-court',
+    expectedIdentity: negativeClasses[index % negativeClasses.length] === 'substitution' ? '13' : negativeClasses[index % negativeClasses.length] === 'unreadable' ? 'unreadable' : 'not-13',
+    visibleNumber: negativeClasses[index % negativeClasses.length] === 'substitution' ? '13' : negativeClasses[index % negativeClasses.length] === 'tracker-handoff' ? 'unreadable' : negativeClasses[index % negativeClasses.length],
+    participation: negativeClasses[index % negativeClasses.length] === 'substitution' ? 'inactive' : 'active',
+    negativeClass: negativeClasses[index % negativeClasses.length],
+    provenance: { method: 'direct-number-review', reviewer: 'codex', cropBounds: [300, 200, 400, 400], sourceFrame: `negative-${index}.jpg` }
+  }));
+  const identityBenchmark = {
+    version: 1,
+    profile: FILM_IDENTITY_BENCHMARK_PROFILE,
+    sourceSha256: 'a'.repeat(64),
+    derivedFromRevision: 2,
+    personDetectionExecuted: false,
+    annotations: [...positive, ...negative]
+  };
+
+  it('accepts the locked real-source fixture without person detection or correction overlays', () => {
+    expect(validateFilmIdentityBenchmark(realFixture)).toMatchObject({ ok: true, positiveCount: 33, negativeCount: 31, positiveSegmentCount: 4 });
+    expect(realFixture).toMatchObject({ sourceSha256: '94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0', derivedFromRevision: 2, personDetectionExecuted: false });
+  });
+
+  it('requires 30 readable #13 crops across three active segments plus every hard-negative class', () => {
+    expect(validateFilmIdentityBenchmark(identityBenchmark)).toMatchObject({ ok: true, positiveCount: 30, negativeCount: 30, positiveSegmentCount: 3 });
+    expect(validateFilmIdentityBenchmark({ ...identityBenchmark, annotations: identityBenchmark.annotations.filter((sample) => sample.segmentId !== 'on-court-3') }).issues.join(' ')).toContain('three on-court segments');
+    expect(validateFilmIdentityBenchmark({ ...identityBenchmark, annotations: identityBenchmark.annotations.filter((sample) => sample.negativeClass !== 'tracker-handoff') }).issues.join(' ')).toContain('tracker-handoff');
+  });
+
+  it('rejects the old target path and passes only evidence-backed #13 plus inactive substitution states', () => {
+    const oldTargetPath = identityBenchmark.annotations.map((sample) => ({ id: sample.id, predictedIdentity: '13', targetStatus: 'resolved', evidence: 'none', corrected: false }));
+    const failed = scoreFilmIdentityBenchmark(identityBenchmark, oldTargetPath);
+    expect(failed.ok).toBe(false);
+    expect(failed.hardNegativePrecision).toBe(0);
+    expect(failed.issues.join(' ')).toContain('hard-negative precision');
+    expect(failed.issues.join(' ')).toContain('substitution');
+
+    const evidenceBacked = identityBenchmark.annotations.map((sample) => ({
+      id: sample.id,
+      predictedIdentity: sample.expectedIdentity === '13' ? '13' : sample.expectedIdentity === 'not-13' ? 'not-13' : 'unresolved',
+      targetStatus: sample.participation === 'inactive' ? 'inactive' : sample.expectedIdentity === '13' ? 'resolved' : 'unresolved',
+      evidence: sample.expectedIdentity === '13' ? 'direct-number' : 'none',
+      corrected: false
+    }));
+    expect(scoreFilmIdentityBenchmark(identityBenchmark, evidenceBacked)).toMatchObject({ ok: true, positiveRecall: 1, hardNegativePrecision: 1, substitutionAccuracy: 1 });
+  });
+});
+
+describe('identity-only candidate derivation', () => {
+  it('relabels only an explicitly evidenced revision-2 teammate and fails closed everywhere else', () => {
+    const revision2 = capturedFilmAnalysisSchema.parse({
+      version: 1,
+      source,
+      profile: FILM_BENCHMARK_PROFILE,
+      analysis: { revision: 2, executionCount: 1, analyzedAt: '2026-07-19T19:00:00.000Z' },
+      frames: [
+        { timeMs: 0, players: [{ trackId: 'old-wrong', team: 'target', court: [40, 20], confidence: 0.7 }, { trackId: 'p-13', team: 'teammate', court: [10, 20], confidence: 0.9 }] },
+        { timeMs: 1000, players: [{ trackId: 'p-5', team: 'teammate', court: [20, 20], confidence: 0.9 }] },
+        { timeMs: 2000, players: [{ trackId: 'p-13-next', team: 'teammate', court: [30, 20], confidence: 0.9 }] }
+      ]
+    });
+    const candidate = deriveFilmIdentityCandidate(revision2, [
+      { timeMs: 0, trackId: 'p-13', targetStatus: 'resolved', evidence: { method: 'direct-number', anchorId: 'positive-0' } },
+      { timeMs: 2000, targetStatus: 'inactive', evidence: { method: 'substitution', anchorId: 'substitution-0' } }
+    ]);
+
+    expect(candidate).toMatchObject({ derivedFromRevision: 2, personDetectionExecuted: false });
+    expect(candidate).not.toHaveProperty('analysis.revision');
+    expect(candidate.frames[0]?.players.find((player) => player.team === 'target')).toMatchObject({ trackId: 'p-13', court: [10, 20] });
+    expect(candidate.frames[0]?.players.find((player) => player.trackId === 'old-wrong')?.team).toBe('teammate');
+    expect(candidate.frames[1]).toMatchObject({ targetStatus: 'unresolved' });
+    expect(candidate.frames[1]?.players.some((player) => player.team === 'target')).toBe(false);
+    expect(candidate.frames[2]).toMatchObject({ targetStatus: 'inactive' });
+    expect(candidate.frames[2]?.players.some((player) => player.team === 'target')).toBe(false);
+  });
+
+  it('verifies preserved revision-2 traffic before finalizing exactly one identity-only revision 3 receipt', () => {
+    const revision2 = capturedFilmAnalysisSchema.parse({
+      version: 1,
+      source,
+      profile: FILM_BENCHMARK_PROFILE,
+      analysis: { revision: 2, executionCount: 1, analyzedAt: '2026-07-19T19:00:00.000Z', classification: { executionCount: 1 } },
+      frames: [
+        { timeMs: 0, players: [{ trackId: 'wrong-old-target', team: 'target', court: [40, 20], confidence: 0.7 }, { trackId: 'p-13', team: 'teammate', court: [10, 20], confidence: 0.9 }] },
+        { timeMs: 1000, players: [{ trackId: 'p-5', team: 'teammate', court: [20, 20], confidence: 0.9 }] },
+        { timeMs: 2000, players: [{ trackId: 'p-13-next', team: 'teammate', court: [30, 20], confidence: 0.9 }] }
+      ]
+    });
+    const candidate = deriveFilmIdentityCandidate(revision2, [
+      { timeMs: 0, trackId: 'p-13', targetStatus: 'resolved', evidence: { method: 'direct-number', anchorId: 'positive-0' } },
+      { timeMs: 2000, targetStatus: 'inactive', evidence: { method: 'substitution', anchorId: 'substitution-0' } }
+    ]);
+    const fixture = {
+      version: 1,
+      profile: FILM_IDENTITY_BENCHMARK_PROFILE,
+      sourceSha256: source.sha256,
+      derivedFromRevision: 2,
+      personDetectionExecuted: false,
+      annotations: [
+        ...Array.from({ length: 30 }, (_, index) => ({
+          id: `positive-${index}`,
+          segmentId: `segment-${Math.floor(index / 10)}`,
+          timeMs: index,
+          associationTimeMs: 0,
+          trackId: 'p-13',
+          cropBounds: [1, 1, 2, 2],
+          courtMembership: 'foreground-court',
+          expectedIdentity: '13',
+          visibleNumber: '13',
+          participation: 'active',
+          negativeClass: null,
+          provenance: { method: 'direct-number-review', reviewer: 'codex', cropBounds: [1, 1, 2, 2], sourceFrame: `positive-${index}.jpg` }
+        })),
+        ...(['5', '11', '15', 'unreadable', 'tracker-handoff'] as const).flatMap((negativeClass, classIndex) => Array.from({ length: 5 }, (_, index) => ({
+          id: `${negativeClass}-${index}`,
+          segmentId: `negative-${negativeClass}`,
+          timeMs: 100 + classIndex * 10 + index,
+          associationTimeMs: 1000,
+          trackId: 'p-5',
+          cropBounds: [1, 1, 2, 2],
+          courtMembership: 'foreground-court',
+          expectedIdentity: negativeClass === 'unreadable' ? 'unreadable' : 'not-13',
+          visibleNumber: negativeClass === 'tracker-handoff' ? 'unreadable' : negativeClass,
+          participation: 'active',
+          negativeClass,
+          provenance: { method: 'direct-number-review', reviewer: 'codex', cropBounds: [1, 1, 2, 2], sourceFrame: `${negativeClass}-${index}.jpg` }
+        }))),
+        ...Array.from({ length: 5 }, (_, index) => ({
+          id: `substitution-${index}`,
+          segmentId: 'substitution',
+          timeMs: 200 + index,
+          associationTimeMs: 2000,
+          trackId: 'p-13-next',
+          cropBounds: [1, 1, 2, 2],
+          courtMembership: 'foreground-court',
+          expectedIdentity: '13',
+          visibleNumber: '13',
+          participation: 'inactive',
+          negativeClass: 'substitution',
+          provenance: { method: 'direct-number-review', reviewer: 'codex', cropBounds: [1, 1, 2, 2], sourceFrame: `substitution-${index}.jpg` }
+        }))
+      ]
+    };
+
+    const receipt = verifyFilmIdentityCandidate(revision2, candidate, fixture);
+    expect(receipt).toMatchObject({ ok: true, invariantIssues: [], positiveRecall: 1, hardNegativePrecision: 1, substitutionAccuracy: 1, correctionOverlayCount: 0 });
+    const revision3 = finalizeFilmIdentityRevision(revision2, candidate, receipt, '2026-07-19T20:00:00.000Z');
+    expect(revision3.analysis).toMatchObject({ revision: 3, executionCount: 1, derivedFromRevision: 2, personDetectionExecuted: false, identityExecutionCount: 1 });
+    expect(revision3.frames).toEqual(candidate.frames);
+
+    const changedCourt = structuredClone(candidate);
+    changedCourt.frames[0].players[0].court[0] += 1;
+    expect(verifyFilmIdentityCandidate(revision2, changedCourt, fixture).invariantIssues.join(' ')).toContain('court coordinates');
+    expect(() => finalizeFilmIdentityRevision(revision2, changedCourt, verifyFilmIdentityCandidate(revision2, changedCourt, fixture), '2026-07-19T20:00:00.000Z')).toThrow(/passing identity verification receipt/i);
   });
 });

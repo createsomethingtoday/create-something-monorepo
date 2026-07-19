@@ -15,7 +15,7 @@
 
 <svg id="film-traffic-court" class="traffic-court" viewBox="0 0 940 500" role="img" aria-labelledby="traffic-title traffic-desc" xmlns="http://www.w3.org/2000/svg">
   <title id="traffic-title">Player traffic at {Math.round(traffic.timeMs / 100) / 10} seconds</title>
-  <desc id="traffic-desc">A top-down basketball court with {traffic.players.length} foreground-court players: {teammateCount} teammates, {opponentCount} opponents, target count {targetCount}. Opposite-court, official, and sideline detections are excluded. Number 13 is highlighted with a wake that breaks across unresolved intervals.</desc>
+  <desc id="traffic-desc">A top-down basketball court with {traffic.players.length} foreground-court players: {teammateCount} teammates, {opponentCount} opponents, target count {targetCount}. Opposite-court, official, and sideline detections are excluded. Number 13 is highlighted with a wake that breaks across unresolved or inactive intervals.</desc>
   <rect width="940" height="500" fill="#f8f7f1" />
   <g class="court-lines" fill="none" stroke="#171717">
     <rect x="2" y="2" width="936" height="496" stroke-width="4" />

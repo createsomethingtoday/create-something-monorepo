@@ -39,7 +39,7 @@ const filmCorrectionDraftSchema = z.object({
   timeMs: z.number().int().nonnegative(),
   trackId: z.string().min(1).optional(),
   court: z.tuple([z.number().min(0).max(94), z.number().min(0).max(50)]).nullable(),
-  targetStatus: z.enum(['resolved', 'unresolved', 'out-of-frame']).optional(),
+  targetStatus: z.enum(['resolved', 'unresolved', 'out-of-frame', 'inactive']).optional(),
   reason: z.string().trim().min(1).max(800)
 });
 

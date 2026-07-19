@@ -79,7 +79,7 @@
   let filmWakeMs = $state(5000);
   let correctionX = $state(47);
   let correctionY = $state(25);
-  let correctionStatus = $state<'resolved' | 'unresolved' | 'out-of-frame'>('resolved');
+  let correctionStatus = $state<'resolved' | 'unresolved' | 'out-of-frame' | 'inactive'>('resolved');
   let correctionReason = $state('');
   let correctionSaved = $state(false);
   let operator = $derived(data.guardAccess.scope?.role === 'operator');
@@ -335,6 +335,7 @@
         <section class="film-status" aria-label="Captured film status">
           <div><span class="mono">Analysis</span><strong>{activeFilm.analysis.executionCount}x / captured</strong></div>
           <div><span class="mono">Revision</span><strong>{activeFilm.analysis.revision}</strong></div>
+          <div><span class="mono">Identity</span><strong>{activeFilm.analysis.identityExecutionCount ? `${activeFilm.analysis.identityExecutionCount}x / r${activeFilm.analysis.derivedFromRevision}` : 'legacy'}</strong></div>
           <div><span class="mono">Time</span><strong>{formatFilmTime(filmTraffic.timeMs)}</strong></div>
           <div><span class="mono">Traffic</span><strong>{filmTraffic.players.length} tokens</strong></div>
           <div><span class="mono">Target</span><strong>{activeFilm.frames.findLast((frame) => frame.timeMs <= filmTimeMs)?.targetStatus ?? 'out-of-frame'}</strong></div>
@@ -346,7 +347,8 @@
             <div><i class="traffic-dot target"></i><span>Player #13 + wake</span></div>
             <div><i class="traffic-dot teammate"></i><span>Foreground-court teammate</span></div>
             <div><i class="traffic-dot opponent"></i><span>Foreground-court opponent</span></div>
-            <p>Opposite-court, official, and sideline detections remain in the audit receipt but never render as traffic. Unresolved intervals break the orange wake.</p>
+            <p>Opposite-court, official, and sideline detections remain in the audit receipt but never render as traffic. Unresolved intervals and verified inactive substitutions break the orange wake.</p>
+            {#if activeFilm.analysis.identityVerification}<p class="mono">ID PROOF / {Math.round(activeFilm.analysis.identityVerification.positiveRecall * 100)}% #13 / {Math.round(activeFilm.analysis.identityVerification.hardNegativePrecision * 100)}% NEG / NO DETECTOR RERUN</p>{/if}
             <dl><dt>Source</dt><dd>{activeFilm.source.sha256.slice(0, 12)}…</dd><dt>Frames</dt><dd>{activeFilm.frames.length}</dd><dt>Corrections</dt><dd>{activeFilm.corrections.length}</dd></dl>
           </aside>
         </div>
@@ -360,7 +362,7 @@
           <section class="film-correction">
             <div><p class="eyebrow">Correction overlay</p><h3>Correct evidence, never rerun the film.</h3><p>The raw revision stays captured. This append-only note changes the rendered sample and records why.</p></div>
             <div class="film-correction-form">
-              <label class="field"><span>Status</span><select class="input" bind:value={correctionStatus}><option value="resolved">Resolved</option><option value="unresolved">Unresolved</option><option value="out-of-frame">Out of frame</option></select></label>
+              <label class="field"><span>Status</span><select class="input" bind:value={correctionStatus}><option value="resolved">Resolved</option><option value="unresolved">Unresolved</option><option value="out-of-frame">Out of frame</option><option value="inactive">Inactive / substituted</option></select></label>
               <label class="field"><span>Court X / feet</span><input class="input" type="number" min="0" max="94" step="0.5" bind:value={correctionX} disabled={correctionStatus !== 'resolved'} /></label>
               <label class="field"><span>Court Y / feet</span><input class="input" type="number" min="0" max="50" step="0.5" bind:value={correctionY} disabled={correctionStatus !== 'resolved'} /></label>
               <label class="field full"><span>Direct evidence</span><input class="input" bind:value={correctionReason} placeholder="Example: both feet verified against the near lane mark" /></label>

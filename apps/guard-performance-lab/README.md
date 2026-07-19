@@ -1,6 +1,6 @@
 # Guard Performance Lab
 
-A standalone, private-first coaching system for developing guards. Version 0.5 adds an immutable film-trace workflow: a supplied game is analyzed once, the derived player traffic is stored privately, and the operator can scrub, correct, reload, and export the captured revision without rerunning inference.
+A standalone, private-first coaching system for developing guards. Version 0.5 adds an immutable film-trace workflow: a supplied game is analyzed once, the derived player traffic is stored privately, and the operator can scrub, correct, reload, and export the captured revision without rerunning inference. Identity-only revision 3 preserves the revision-2 player field and associates #13 from direct jersey evidence plus bounded continuity; verified substitutions are stored as `inactive`, while ambiguous spans fail closed as `unresolved`.
 
 ## Privacy model
 
@@ -71,7 +71,29 @@ pnpm --filter @create-something/guard-performance-lab film:import:http \
   --corrections /private/path/benchmark-corrections.json
 ```
 
-`Film trace` then replays the captured top-down traffic. The slider works in both directions, #13 carries an adjustable wake that breaks across unresolved gaps, and JSON/SVG exports are derived from the persisted revision. Operator corrections require direct-evidence text and append provenance; player-scoped identities cannot attach or correct analyses and can read only their assigned player.
+Repairing identity does not rerun person detection or team classification. The locked #13 fixture contains readable positives across four live-play segments plus #5, #11, #15, unreadable, tracker-handoff, and substitution negatives. Create a candidate, verify it, and only then finalize the one identity receipt:
+
+```bash
+pnpm --filter @create-something/guard-performance-lab film:derive:identity -- \
+  --revision2 /private/path/full-analysis-r2.json \
+  --assignments fixtures/film/player-13-identity-assignments.json \
+  --output /private/path/full-analysis-r3-candidate.json
+
+pnpm --filter @create-something/guard-performance-lab film:verify:identity -- \
+  --analysis /private/path/full-analysis-r2.json \
+  --candidate /private/path/full-analysis-r3-candidate.json \
+  --fixture fixtures/film/player-13-identity-benchmark.json \
+  --report /private/path/identity-verifier-r3-candidate.json
+
+pnpm --filter @create-something/guard-performance-lab film:finalize:identity -- \
+  --revision2 /private/path/full-analysis-r2.json \
+  --candidate /private/path/full-analysis-r3-candidate.json \
+  --receipt /private/path/identity-verifier-r3-candidate.json \
+  --output /private/path/full-analysis-r3.json \
+  --analyzed-at <fixed-receipt-time>
+```
+
+`Film trace` then replays the captured top-down traffic. The slider works in both directions, #13 carries an adjustable wake that breaks across unresolved gaps and inactive substitutions, and JSON/SVG exports are derived from the persisted revision. Operator corrections require direct-evidence text and append provenance; player-scoped identities cannot attach or correct analyses and can read only their assigned player.
 
 ## AI-native contract
 

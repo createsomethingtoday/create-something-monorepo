@@ -23,9 +23,15 @@ type StoredFilm = Omit<FilmAnalysisRecord, 'frames'> & {
   frameStorage: { kind: 'd1-chunks'; chunkCount: number; frameCount: number };
 };
 
-export function prepareD1Workspace(state: LabState, framesPerChunk = 40): { workspace: LabState; chunks: FilmChunk[] } {
+export function prepareD1Workspace(state: LabState, framesPerChunk = 40, preserveStorageForIds?: ReadonlySet<string>): { workspace: LabState; chunks: FilmChunk[] } {
   const chunks: FilmChunk[] = [];
+  const preservedIds = preserveStorageForIds ?? new Set(state.filmAnalyses.flatMap((analysis) =>
+    (analysis as FilmAnalysisRecord & { frameStorage?: StoredFilm['frameStorage'] }).frameStorage?.kind === 'd1-chunks' ? [analysis.id] : []));
   const filmAnalyses = state.filmAnalyses.map((analysis) => {
+    const existingStorage = (analysis as FilmAnalysisRecord & { frameStorage?: StoredFilm['frameStorage'] }).frameStorage;
+    if (preservedIds.has(analysis.id) && existingStorage?.kind === 'd1-chunks') {
+      return { ...analysis, frames: [], frameStorage: existingStorage } satisfies StoredFilm;
+    }
     for (let index = 0; index < analysis.frames.length; index += framesPerChunk) {
       chunks.push({ analysisId: analysis.id, chunkIndex: Math.floor(index / framesPerChunk), framesJson: JSON.stringify(analysis.frames.slice(index, index + framesPerChunk)) });
     }
@@ -57,7 +63,7 @@ export class D1LabStore implements LabStore {
 
   private async writeNewFilmChunks(current: LabState, next: LabState) {
     const existingIds = new Set(current.filmAnalyses.map((analysis) => analysis.id));
-    const prepared = prepareD1Workspace({ ...next, filmAnalyses: next.filmAnalyses.filter((analysis) => !existingIds.has(analysis.id)) });
+    const prepared = prepareD1Workspace({ ...next, filmAnalyses: next.filmAnalyses.filter((analysis) => !existingIds.has(analysis.id)) }, 40, new Set());
     for (const chunk of prepared.chunks) {
       await this.db.prepare('INSERT INTO guard_film_chunks (analysis_id, chunk_index, frames_json) VALUES (?, ?, ?) ON CONFLICT(analysis_id, chunk_index) DO UPDATE SET frames_json = excluded.frames_json')
         .bind(chunk.analysisId, chunk.chunkIndex, chunk.framesJson).run();
@@ -85,7 +91,8 @@ export class D1LabStore implements LabStore {
         revision: current.revision + 1
       }));
       await this.writeNewFilmChunks(current, next);
-      const encoded = JSON.stringify(prepareD1Workspace(next).workspace);
+      const existingIds = new Set(current.filmAnalyses.map((analysis) => analysis.id));
+      const encoded = JSON.stringify(prepareD1Workspace(next, 40, existingIds).workspace);
       const result = row
         ? await this.db.prepare('UPDATE guard_workspace SET revision = ?, data = ?, updated_at = CURRENT_TIMESTAMP WHERE id = 1 AND revision = ?')
           .bind(next.revision, encoded, row.revision).run()

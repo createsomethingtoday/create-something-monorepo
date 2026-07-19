@@ -71,12 +71,16 @@ if (analysis.analysis.executionCount !== 1 || analysis.analysis.revision !== exp
 if (analysis.frames[0]?.timeMs !== 0 || (analysis.frames.at(-1)?.timeMs ?? 0) < analysis.source.durationMs - 1000) invariantIssues.push('Captured frames do not cover the full source duration.');
 if (analysis.frames.some((frame, index) => index > 0 && frame.timeMs <= analysis.frames[index - 1]!.timeMs)) invariantIssues.push('Captured frame times are not strictly increasing.');
 if (analysis.frames.some((frame) => frame.players.some((player) => player.court[0] < 0 || player.court[0] > 94 || player.court[1] < 0 || player.court[1] > 50))) invariantIssues.push('Impossible court coordinates were captured.');
-if (analysis.frames.some((frame) => frame.targetStatus !== 'resolved' && frame.players.some((player) => player.team === 'target'))) invariantIssues.push('An unresolved or out-of-frame sample silently contains a target token.');
+if (analysis.frames.some((frame) => frame.targetStatus !== 'resolved' && frame.players.some((player) => player.team === 'target'))) invariantIssues.push('A non-resolved sample silently contains a target token.');
 if (analysis.frames.some((frame) => frame.players.length > 10)) invariantIssues.push('A captured frame contains more than ten foreground active-player tokens.');
-if (analysis.analysis.revision === 2) {
-  if (!('classification' in analysis.analysis)) invariantIssues.push('Revision 2 is missing its team-classification receipt.');
-  if (analysis.frames.some((frame) => frame.players.some((player) => player.courtMembership && player.courtMembership !== 'foreground-court'))) invariantIssues.push('Revision 2 rendered non-foreground traffic as an active player.');
-  if (!analysis.frames.some((frame) => frame.ignored.some((detection) => detection.courtMembership === 'opposite-court'))) invariantIssues.push('Revision 2 contains no auditable opposite-court exclusions.');
+if (analysis.analysis.revision >= 2) {
+  if (!('classification' in analysis.analysis)) invariantIssues.push(`Revision ${analysis.analysis.revision} is missing its team-classification receipt.`);
+  if (analysis.frames.some((frame) => frame.players.some((player) => player.courtMembership && player.courtMembership !== 'foreground-court'))) invariantIssues.push(`Revision ${analysis.analysis.revision} rendered non-foreground traffic as an active player.`);
+  if (!analysis.frames.some((frame) => frame.ignored.some((detection) => detection.courtMembership === 'opposite-court'))) invariantIssues.push(`Revision ${analysis.analysis.revision} contains no auditable opposite-court exclusions.`);
+}
+if (analysis.analysis.revision === 3) {
+  if (analysis.analysis.derivedFromRevision !== 2 || analysis.analysis.personDetectionExecuted !== false || analysis.analysis.identityExecutionCount !== 1 || !analysis.analysis.identityVerification) invariantIssues.push('Revision 3 is missing its identity-only derivation and locked-verifier receipt.');
+  if (!analysis.frames.some((frame) => frame.targetStatus === 'inactive')) invariantIssues.push('Revision 3 contains no verified inactive substitution interval.');
 }
 
 const trackRoles = new Map<string, Array<{ timeMs: number; role: 'teammate' | 'opponent' }>>();
