@@ -208,7 +208,11 @@ export function completeCodexCommand(
 ): CodexCommand {
   const runnerId = identifier(runnerIdInput, 'runner_id');
   if (runnerId !== command.runner_id || runnerId !== command.claimed_by) {
-    throw new CodexCommandError('wrong_runner', 403, 'Only the claiming runner may write a receipt.');
+    throw new CodexCommandError(
+      'wrong_runner',
+      403,
+      'Only the claiming runner may write a receipt.'
+    );
   }
   if (command.status !== 'claimed') {
     throw new CodexCommandError('terminal_command', 409, 'The command is not awaiting a receipt.');
@@ -218,7 +222,11 @@ export function completeCodexCommand(
     input.task_id !== command.task_id ||
     input.action_id !== command.action_id
   ) {
-    throw new CodexCommandError('receipt_mismatch', 409, 'Receipt identifiers do not match the claim.');
+    throw new CodexCommandError(
+      'receipt_mismatch',
+      409,
+      'Receipt identifiers do not match the claim.'
+    );
   }
   if (input.status !== 'accepted' && input.status !== 'rejected') {
     throw new CodexCommandError('invalid_receipt', 400, 'Receipt status is invalid.');
@@ -266,14 +274,29 @@ export function toDeviceCodexView(
 } {
   const usableSnapshot = snapshot && snapshot.expires_at > now ? snapshot : null;
   const currentCommand = command ? expireCodexCommand(command, now) : null;
+  const commandMatchesSnapshot = Boolean(
+    currentCommand &&
+    usableSnapshot &&
+    currentCommand.task_id === usableSnapshot.task_id &&
+    currentCommand.action_id === usableSnapshot.action_id
+  );
+  const activeCommand =
+    currentCommand &&
+    (currentCommand.status === 'queued' ||
+      currentCommand.status === 'claimed' ||
+      !usableSnapshot ||
+      commandMatchesSnapshot)
+      ? currentCommand
+      : null;
   return {
     ok: true,
-    status: currentCommand?.status ?? (usableSnapshot ? 'ready' : 'offline'),
+    status: activeCommand?.status ?? (usableSnapshot ? 'ready' : 'offline'),
     task_id: usableSnapshot?.task_id ?? currentCommand?.task_id ?? '',
     task: usableSnapshot?.task ?? '',
     action_id: usableSnapshot?.action_id ?? currentCommand?.action_id ?? '',
     request_id: currentCommand?.request_id ?? null,
-    expires_at: currentCommand?.expires_at ?? usableSnapshot?.expires_at ?? null,
+    expires_at:
+      activeCommand?.expires_at ?? usableSnapshot?.expires_at ?? currentCommand?.expires_at ?? null,
     receipt: currentCommand?.receipt ?? null
   };
 }
@@ -286,7 +309,12 @@ function record(value: unknown): Record<string, unknown> {
 }
 
 function text(value: unknown): string {
-  return typeof value === 'string' ? value.replace(/[\r\n\t]+/g, ' ').replace(/\s+/g, ' ').trim() : '';
+  return typeof value === 'string'
+    ? value
+        .replace(/[\r\n\t]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+    : '';
 }
 
 function boundedText(value: unknown, field: string, maximum: number): string {

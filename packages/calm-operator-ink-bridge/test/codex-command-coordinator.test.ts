@@ -63,8 +63,46 @@ describe('Codex command coordinator', () => {
       detail: 'Follow-up accepted.'
     });
     assert.equal(accepted.status, 'accepted');
-    assert.equal((await coordinator.deviceCommand(first.request_id, 'core-ink')).status, 'accepted');
+    assert.equal(
+      (await coordinator.deviceCommand(first.request_id, 'core-ink')).status,
+      'accepted'
+    );
     assert.equal((await coordinator.deviceView('core-ink')).receipt?.status, 'accepted');
+  });
+
+  it('returns to ready when Presence advances beyond the accepted action', async () => {
+    const coordinator = new CodexCommandCoordinator(new MemoryCodexCommandStorage(), {
+      now: () => NOW,
+      requestId: () => 'request-1'
+    });
+    await coordinator.publishSnapshot(snapshot());
+    const command = await coordinator.createCommand({
+      device_id: 'core-ink',
+      device_nonce: 'boot-7:press-1',
+      task_id: 'disposable-task-1',
+      action_id: 'disposable-task-1:follow_up:complete:1',
+      confirmed: true
+    });
+    await coordinator.claimCommand(command.request_id, 'runner-macbook');
+    await coordinator.completeCommand(command.request_id, 'runner-macbook', {
+      request_id: command.request_id,
+      task_id: command.task_id,
+      action_id: command.action_id,
+      status: 'accepted'
+    });
+
+    await coordinator.publishSnapshot({
+      ...snapshot(),
+      action_id: 'disposable-task-1:follow_up:complete:2',
+      observed_at: new Date(NOW + 1_000).toISOString(),
+      version: 'complete:2'
+    });
+
+    const view = await coordinator.deviceView('core-ink');
+    assert.equal(view.status, 'ready');
+    assert.equal(view.action_id, 'disposable-task-1:follow_up:complete:2');
+    assert.equal(view.request_id, 'request-1');
+    assert.equal(view.receipt?.status, 'accepted');
   });
 
   it('keeps other devices and runners outside the command boundary', async () => {
