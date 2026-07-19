@@ -110,6 +110,16 @@ test('preserves editorial destinations and complete proof inventory', () => {
   }
 });
 
+test('contains the no-JavaScript methodology map without hiding its fallback panel', () => {
+  const methodology = readRoute('methodology');
+
+  assert.match(methodology, /class="methodology-artifact methodology-map-artifact"/);
+  assert.match(
+    methodology,
+    /\.methodology-map-artifact\s*\{[^}]*min-width:\s*0;[^}]*overflow:\s*hidden;/s
+  );
+});
+
 function sourceForRoute(route: string) {
   return `packages/agency/src/routes/${route}/+page.svelte`;
 }
