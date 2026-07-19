@@ -33,6 +33,16 @@ test('identity worker serves oauth authorization server metadata', async () => {
   ]);
 });
 
+test('identity worker uses an explicit issuer for preview metadata', async () => {
+  const response = await identityWorker.fetch(
+    new Request('https://identity-worker-preview.example/.well-known/oauth-authorization-server'),
+    { ...makeEnv(), OAUTH_ISSUER: 'https://identity-preview.example/' },
+  );
+  const body = await response.json() as Record<string, unknown>;
+  assert.equal(body.issuer, 'https://identity-preview.example');
+  assert.equal(body.jwks_uri, 'https://identity-preview.example/.well-known/jwks.json');
+});
+
 test('identity worker renders oauth authorize page', async () => {
   const response = await identityWorker.fetch(
     new Request(

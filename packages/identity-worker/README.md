@@ -28,6 +28,7 @@ Single identity across all properties: .space, .io, .agency, .ltd, and .learn.
 | GET | `/.well-known/jwks.json` | Public keys |
 | POST | `/v1/mcp/sessions` | Create MCP session token + policy claims |
 | POST | `/v1/mcp/sessions/admin-mint` | Admin mint MCP session for mapped account (API key + policy gated) |
+| POST | `/v1/control/scheduler-tokens/admin-issue` | Issue a short-lived Control scheduler JWT after exact frozen-activation scope readback (API key permission gated) |
 | POST | `/v1/mcp/sessions/resolve` | Resolve MCP session token (hub-only) |
 | POST | `/v1/mcp/long-lived-tokens/admin-issue` | Issue or regenerate a managed bearer token (API key + policy gated) |
 | POST | `/v1/mcp/long-lived-tokens/admin-get` | Inspect managed bearer token metadata by auth subject (API key gated) |
@@ -48,6 +49,18 @@ Single identity across all properties: .space, .io, .agency, .ltd, and .learn.
 ```bash
 pnpm --filter=identity-worker dev
 ```
+
+Control preview/local pairs must set one explicit `OAUTH_ISSUER`, list the
+paired runtime MCP audience in `CONTROL_RUNTIME_RESOURCES`, and configure that
+runtime with the same issuer plus this Identity instance's JWKS URL. Production
+pins these values only in the production deploy command; shared Wrangler
+defaults intentionally do not impersonate the production issuer or audience.
+Do not reuse a production audience for a preview runtime.
+Control credential roles are new execution authority. Existing entitlement
+rows are not converted to readers implicitly; an owning approval workflow must
+provision `account_owner` or `account_reader` explicitly before customer OAuth
+can mint a Control token. The initial fail-closed deployment provisions no such
+customer role or access grant.
 
 ## Deployment
 

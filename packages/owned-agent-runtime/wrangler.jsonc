@@ -11,6 +11,12 @@
       "database_name": "create-something-agent-runtime",
       "database_id": "1ea45279-a1d4-4c5d-93b1-b72c2f5bdd3e",
       "migrations_dir": "migrations"
+    },
+    {
+      // Agency D1 owns customer_control_activations via migration 0039.
+      "binding": "CONTROL_DB",
+      "database_name": "create-something-db",
+      "database_id": "a74e70ae-6a94-43da-905e-b90719c8dfd2"
     }
   ],
   "ratelimits": [
@@ -23,6 +29,16 @@
       "name": "PUBLIC_AGENT_BUDGET_RATE_LIMITER",
       "namespace_id": "123302",
       "simple": { "limit": 120, "period": 60 }
+    },
+    {
+      "name": "CONTROL_TENANT_RATE_LIMITER",
+      "namespace_id": "123303",
+      "simple": { "limit": 30, "period": 60 }
+    },
+    {
+      "name": "CONTROL_BUDGET_RATE_LIMITER",
+      "namespace_id": "123304",
+      "simple": { "limit": 10, "period": 60 }
     }
   ],
   "services": [

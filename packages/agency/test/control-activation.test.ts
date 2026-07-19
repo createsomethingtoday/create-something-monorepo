@@ -18,8 +18,12 @@ import {
   type ControlProjectionEvent
 } from '../src/lib/server/control-activation.ts';
 import { controlActivationHttpErrorStatus } from '../src/lib/server/control-activation-http.ts';
-import { deriveControlActivationRole } from '../src/lib/server/control-activation-role.ts';
+import {
+  deriveControlActivationRole,
+  deriveControlCredentialRole
+} from '../src/lib/server/control-activation-role.ts';
 import type { CustomerMapScope } from '../src/lib/server/customer-map-workspace.ts';
+import { findControlSchedulerActivationScope } from '../src/lib/server/control-scheduler-scope.ts';
 
 const scopeA: CustomerMapScope = {
   authSubject: 'identity|operator',
@@ -246,11 +250,83 @@ test('Control transport derives roles from first-party state and maps client err
     'account_reader'
   );
   assert.equal(
+    deriveControlCredentialRole({
+      email: 'legacy@example.com',
+      metadataJson: '{}'
+    }),
+    null
+  );
+  assert.equal(
+    deriveControlCredentialRole({
+      email: 'owner@example.com',
+      metadataJson: '{"control_role":"account_owner"}'
+    }),
+    'account_owner'
+  );
+  assert.equal(
+    deriveControlCredentialRole({
+      email: 'current-operator@example.com',
+      metadataJson: '{}',
+      operatorEmails: 'current-operator@example.com'
+    }),
+    'agency_operator'
+  );
+  assert.equal(
     controlActivationHttpErrorStatus(new ControlActivationValidationError('bad request')),
     400
   );
   assert.equal(controlActivationHttpErrorStatus(new ControlActivationAccessError()), 404);
   assert.equal(controlActivationHttpErrorStatus(new Error('unexpected')), null);
+});
+
+test('legacy entitlements do not silently gain new Control credential authority', () => {
+  assert.equal(
+    deriveControlActivationRole({ email: 'legacy@example.com', metadataJson: '{}' }),
+    'account_reader'
+  );
+  assert.equal(
+    deriveControlCredentialRole({ email: 'legacy@example.com', metadataJson: '{}' }),
+    null
+  );
+});
+
+test('scheduler authority requires the run frozen activation in its exact scope', async () => {
+  const requested = ['activation-a', 'account-a', 'tenant-a', 'workspace-a'];
+  const db = {
+    prepare(sql: string) {
+      assert.match(sql, /WHERE id = \?/);
+      assert.doesNotMatch(sql, /status = 'active'/);
+      return {
+        bind(...values: string[]) {
+          assert.deepEqual(values, requested);
+          return { async first() { return { id: 'activation-a' }; } };
+        }
+      };
+    }
+  } as unknown as D1Database;
+  assert.deepEqual(
+    await findControlSchedulerActivationScope(db, {
+      activationId: requested[0],
+      accountId: requested[1],
+      tenantId: requested[2],
+      workspaceAccountId: requested[3]
+    }),
+    { allowed: true, activation_id: 'activation-a' }
+  );
+  const empty = {
+    prepare() {
+      return { bind() { return { async first() { return null; } }; } };
+    }
+  } as unknown as D1Database;
+  assert.deepEqual(
+    await findControlSchedulerActivationScope(empty, {
+      activationId: requested[0],
+      accountId: requested[1],
+      tenantId: requested[2],
+      workspaceAccountId: requested[3]
+    }),
+    { allowed: false, reason: 'control_activation_scope_required' }
+  );
 });
 
 test('Control source is derived and registered only from a strict ready Build inspection', async () => {
