@@ -1,19 +1,19 @@
 ---
 name: target-reader-review
-description: Review prose as its least-tenured credible practitioner, separating deterministic policy findings from editorial judgment and returning pass, revise, or hold with preservation risks.
+description: Review nonfiction as its least-tenured credible practitioner and return pass, revise, or hold without replacing factual or policy authority. Use after drafting public copy, operator instructions, runbooks, onboarding, documentation, reports, arguments, or technical explanations when reader comprehension, actionability, recovery, or verification matters.
 ---
 
 # Target Reader Review
 
-Use this skill after a draft exists and the question is whether the intended human can understand it, trust it, and want the next sentence. This is a judgment review, not an AI detector, grammar score, buyer simulation, or brand-cheerleading pass.
+Review the artifact as the least-tenured credible practitioner in its field unless the source names another reader. Assume basic field knowledge but no CREATE SOMETHING vocabulary.
 
-The default reader is the least-tenured credible practitioner in the document's actual field. They know basic field concepts but do not know CREATE SOMETHING vocabulary. Use a named target reader when the source provides one.
-
-Useful momentum means concrete stakes, visible progress or discovery, varied rhythm, and respect for the reader. It does not require jokes, slang, fake anecdotes, or forced informality.
+Judge whether the reader can use the prose, not whether it resembles a preferred style. Useful momentum comes from concrete stakes, visible progress or discovery, coherent information flow, and respect for the reader. Do not reward jokes, slang, fake anecdotes, or forced informality.
 
 ## Inputs
 
-Gather the draft, its purpose, intended reader, source facts, required citations, uncertainty, scope limits, property voice, technical labels, intended next action, and `review_scope`. Default `review_scope` to the rendered component, not an isolated sentence. Include referenced cards, proof, calls to action, definitions, and nearby content that the reader actually sees. If missing context could change factual meaning, return `hold` and request the owning evidence.
+Gather the draft, `artifact_type`, purpose, intended reader, source facts, citations, uncertainty, scope limits, property voice, exact labels, intended next action, and `review_scope`.
+
+Review what the reader actually receives. Use a rendered component for public pages and the complete relevant document section for documentation. Include adjacent definitions, proof, calls to action, prerequisites, warnings, expected results, recovery guidance, and completion evidence.
 
 For repo work, read:
 
@@ -21,25 +21,29 @@ For repo work, read:
 - `scripts/prose-quality/evals/target-reader.v1.json`
 - the applicable property voice or public-copy policy
 
+Return `hold` when missing source, approval, or factual context could change the meaning.
+
 ## Review Loop
 
-1. Read once for meaning. State what the prose asks the reader to understand, decide, or do.
-2. Read the complete rendered component again for useful momentum. Mark the first place where the reader loses the actor, action, stakes, evidence, or reason to continue.
-3. Check whether owned terms are defined locally or grounded by a concrete example.
-4. Check whether claims remain attached to proof, uncertainty, and scope limits.
-5. Check paragraph jobs, sentence rhythm, repeated conclusions, and transitions in context.
-6. Separate deterministic tool findings from judgment. Run `pnpm prose:check -- <file> --format json` when a repository file is available. Unrelated file-level deterministic findings do not change the verdict for the excerpt or rendered component under review; report them separately.
-7. Suggest the smallest edit that restores meaning or momentum without changing the claim.
+1. State what the prose helps the reader understand, decide, believe, or do.
+2. State the answer or recommended path the reader is likely to take away. Mark a buried or ambiguous answer.
+3. Trace the information structure. Check that each section supports the point above it and each paragraph has one recognizable job.
+4. Mark the first place the reader loses the actor, action, context, important new information, stakes, evidence, or reason to continue.
+5. Check whether owned terms are defined locally or grounded by a concrete example.
+6. Check whether claims remain attached to proof, uncertainty, and scope limits.
+7. For operator content, simulate the path: orient, find the default, start, complete, recover, and verify. Mark the first missing link and the most likely incorrect action.
+8. Run `pnpm prose:check -- <file> --format json` when a repository file is available. Report unrelated file-level deterministic findings separately from the scoped judgment verdict.
+9. Suggest the smallest structural or sentence-level edit that restores meaning or use without changing the claim.
 
-Do not infer a rewrite from a score. Do not invent evidence or human texture. Do not silently replace exact labels, citations, approved claims, or controlled property vocabulary.
+Do not infer a rewrite from a score. Do not invent evidence or human texture. Do not silently replace exact labels, citations, approved claims, controlled vocabulary, or safety language.
 
 ## Verdicts
 
-- `pass`: the target reader can follow the meaning and the prose earns its next sentence; minor optional polish may remain.
-- `revise`: a localized editorial change would materially improve meaning, trust, or momentum without needing new evidence.
-- `hold`: factual, source, approval, or reader context is missing; a human or owning system must resolve it before rewriting.
+- `pass`: the target reader can follow and use the prose for its stated purpose; minor optional polish may remain.
+- `revise`: a bounded structural or sentence-level edit would materially improve orientation, meaning, trust, actionability, recovery, or verification without requiring new evidence.
+- `hold`: source facts, reader context, approval, or policy authority are missing and must be resolved before rewriting.
 
-A `hold` is judgment escalation. It must not masquerade as a deterministic CI failure.
+An operator artifact with a required `no` in its usable path cannot pass. A `hold` is judgment escalation and must not masquerade as a deterministic CI failure.
 
 ## Output
 
@@ -48,9 +52,19 @@ Return this compact YAML-shaped packet:
 ```yaml
 verdict: pass | revise | hold
 reader: <target reader used>
-review_scope: <rendered component, page section, or other explicit boundary>
-purpose: <what the prose helps them understand, decide, or do>
-first_friction: <location and concise reason, or none>
+artifact_type: <operator-instructions | report | argument | technical-explanation | public-copy | other>
+review_scope: <rendered component, document section, or other explicit boundary>
+purpose: <what the prose helps the reader understand, decide, believe, or do>
+answer_or_default: <the answer or recommended path the reader receives>
+first_friction: <location and reader effect, or none>
+operator_path:
+  can_orient: yes | no | not-applicable
+  can_find_default: yes | no | not-applicable
+  can_start: yes | no | not-applicable
+  can_complete: yes | no | not-applicable
+  can_recover: yes | no | not-applicable
+  can_verify: yes | no | not-applicable
+likely_wrong_action: <bounded risk, or none>
 strengths:
   - <specific strength>
 frictions:
@@ -58,10 +72,10 @@ frictions:
     reason: <reader effect>
     smallest_edit: <bounded change; never fabricated content>
 preservation_risks:
-  - <fact, citation, uncertainty, label, or voice at risk>
+  - <fact, citation, uncertainty, exact label, safety boundary, or voice at risk>
 deterministic_findings:
   - <tool rule and location, or none>
 human_review_needed: <yes or no, with reason>
 ```
 
-The reviewer may quote only the minimum text needed to locate a friction. Finish consequential publication with a human final read even when the verdict is `pass`.
+Quote only enough text to locate a friction. Finish consequential publication with a human final read even when the verdict is `pass`.

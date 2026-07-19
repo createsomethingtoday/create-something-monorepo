@@ -1,59 +1,86 @@
 ---
 name: writing-for-humans
-description: Draft or edit agent-assisted prose for a real human reader while preserving facts, citations, uncertainty, technical meaning, and CREATE SOMETHING property voice.
+description: Draft or edit clear nonfiction for real human readers while preserving facts, citations, uncertainty, technical meaning, and CREATE SOMETHING property voice. Use for operator instructions, runbooks, onboarding, documentation, reports, proposals, arguments, technical explanations, case studies, teaching, public copy, and messages.
 ---
 
 # Writing for Humans
 
-Use this skill for prose a person must understand, trust, or act on: public copy, documentation, reports, briefs, explanations, proposals, and messages. Do not use it to optimize for an AI detector or to disguise authorship.
+Write for the least-tenured credible practitioner in the artifact's actual field unless the source names another reader. Assume they know basic field concepts but do not know CREATE SOMETHING vocabulary.
 
-The default reader is the least-tenured credible practitioner in the document's actual field. They know basic field concepts but do not know CREATE SOMETHING vocabulary. If the artifact names another reader, use that reader instead.
+Optimize for use, not a detector score. Light writing has low cognitive load: the reader can find the point, the recommended path, and the next action without decoding the organization.
 
 ## Preservation Contract
 
-Before editing, identify and preserve facts, citations, quoted language, uncertainty, scope limits, approved claims, technical labels, and required terminology.
+Identify and preserve facts, citations, quotations, uncertainty, scope limits, approved claims, exact labels, required terms, and technical safety boundaries before editing.
 
-You must not invent metrics, customers, examples, anecdotes, experiences, opinions, quotations, sources, or confidence. Do not add fake human texture. If a useful detail is missing, mark the gap or ask for evidence.
+You must not invent metrics, customers, examples, anecdotes, experiences, opinions, sources, outcomes, or confidence. Mark a missing fact or request evidence instead of adding plausible detail.
 
-Keep property voice intact. Plain language can explain an owned term without erasing it. Exact UI labels, code, legal language, and quoted text may stay technical when accuracy depends on them.
+Keep property voice intact. Explain owned terms in plain language where the reader first needs them. Keep code, legal language, exact UI labels, and technical terms when accuracy depends on them.
 
-## Draft and Edit Loop
+## Core Workflow
 
-1. Name the reader, the decision or action the prose supports, and the evidence available.
-2. Lead with the concrete change, stake, question, or next move.
-3. Move from known language to new language. Define an owned term where the reader first needs it.
-4. Prefer concrete nouns and active verbs. Name the actor, action, artifact, boundary, or observed result.
-5. Give each paragraph one job. Vary sentence length when the thought changes; do not manufacture rhythm mechanically.
-6. Keep claims beside proof and limitations. Preserve uncertainty instead of upgrading it into confidence.
-7. Remove repetition that does not change meaning or move the reader forward.
-8. Read the result once for meaning and once for useful momentum.
+1. Name the reader and outcome: after reading, what should they understand, decide, believe, or do?
+2. Write the answer in one plain sentence. For actionable prose, state the recommended path.
+3. Build the smallest useful framework stack for the artifact job. Do not apply every framework.
+4. Group two to four supporting ideas beneath the answer. Put evidence, examples, limits, and qualifications under the idea they support.
+5. Give each paragraph one job. Connect the paragraph's claim, evidence or example, meaning, and next point.
+6. Repair difficult sentences: make the main character the subject, express the main action as a verb, begin with familiar context, and place important new information near the end.
+7. Remove throat-clearing, repeated conclusions, inflated phrasing, hidden verbs, and unnecessary choices.
+8. Read once for factual integrity, once for reader use, and once aloud for voice and rhythm.
+
+## Framework Router
+
+Select only the row that matches the artifact's main job. Read its reference before drafting or making a structural edit.
+
+| Artifact job                                           | Required stack                                                          | Reference                                                       |
+| ------------------------------------------------------ | ----------------------------------------------------------------------- | --------------------------------------------------------------- |
+| Operator instructions, runbook, onboarding, navigation | Plain language, answer-first structure, sentence clarity, revision      | [operator-instructions.md](references/operator-instructions.md) |
+| Report or proposal                                     | Answer-first structure, grouped supports, sentence clarity, revision    | [reports-and-arguments.md](references/reports-and-arguments.md) |
+| Argument or research article                           | Existing conversation, response, reasons, counterargument, significance | [reports-and-arguments.md](references/reports-and-arguments.md) |
+| Technical explanation                                  | Topic flow, visible actors and actions, familiar-to-new information     | [sentence-clarity.md](references/sentence-clarity.md)           |
+| Case study or presentation                             | Answer-first structure; add And-But-Therefore when movement helps       | [reports-and-arguments.md](references/reports-and-arguments.md) |
+| Teaching or memorable public prose                     | Core workflow; add a memorability check only after clarity and evidence | [reports-and-arguments.md](references/reports-and-arguments.md) |
+
+Use [examples.md](references/examples.md) when the draft is still abstract or the correct transformation is unclear. Calibrate artifact routing against `scripts/prose-quality/evals/writing-tasks.v1.json` for repo work.
+
+## Lightness Contract
+
+- Present one recommended path before alternatives.
+- Introduce the concrete task before architecture or rationale unless safety requires the reverse.
+- Introduce one new concept at a time and ground it where it first appears.
+- Give each step one action and place its expected result beside it.
+- Put prerequisites before commands, recovery beside likely failures, and completion proof at the end.
+- Use headings that answer reader questions rather than naming internal categories.
+- Keep tables and checklists only when they make comparison or execution easier for the human reader.
+- Move optional history, theory, edge cases, and machine-oriented structure after the usable path.
 
 ## Review Pattern Clusters
 
-Treat these as contextual pattern clusters, not forbidden tokens:
+Treat these as contextual review prompts, not forbidden tokens:
 
-- stacked abstractions before a concrete example
+- a conclusion buried beneath discovery history
+- stacked abstractions before a concrete actor, action, example, or consequence
+- several choices before a recommended default
+- commands without prerequisites, expected results, recovery, or completion proof
 - repeated restatement of the same conclusion
-- canned openings, summaries, or transitions that could fit any document
-- excessive symmetry, slogan-like triplets, or identical paragraph rhythm
+- canned openings or transitions that could fit any document
 - unexplained owned terms or acronyms
-- confident claims detached from evidence or scope limits
-- inflated adjectives where a mechanism or result belongs
+- claims detached from evidence, uncertainty, or scope limits
 
-One instance is not proof of poor prose or AI authorship. Keep a phrase when it is accurate, natural in context, and serves the reader.
+One instance is not proof of poor prose or AI authorship. Keep a pattern when it is accurate, natural in context, and useful to the reader.
 
 ## Repository Verification
 
-For repository prose, read `docs/policies/v1/policy.prose-quality.v1.md`, then run the narrow public check:
+Read `docs/policies/v1/policy.prose-quality.v1.md`, then run the narrow check:
 
 ```bash
 pnpm prose:check -- path/to/file.md --format json
 ```
 
-Fix deterministic findings. Treat warnings as review prompts, not automatic rewrite instructions. For a broader judgment pass, invoke `$target-reader-review` and calibrate against `scripts/prose-quality/evals/target-reader.v1.json`.
+Fix deterministic findings. Treat warnings as review prompts, not rewrite commands. Invoke `$target-reader-review` for independent judgment in the complete rendered component or document section.
 
-Finish with a human final read for factual integrity, reader momentum, and property voice. A green linter is necessary evidence only where policy says so; it is never proof that the prose is good.
+Finish consequential publication with a human final read. A green linter proves only the declared deterministic contract; it never proves that the prose is good.
 
 ## Attribution
 
-The positive clear-writing loop adapts principles from `softaworks/agent-toolkit`'s `writing-clearly-and-concisely` skill (MIT). This repo keeps its own preservation, property-voice, enforcement, and review boundaries instead of vendoring the upstream reference prompt.
+The workflow combines plain-language usability with answer-first organization, visible characters and actions, reader-expectation information flow, and subtractive revision. It draws on Barbara Minto, Joseph Williams, George Gopen and Judith Swan, William Zinsser, Gerald Graff and Cathy Birkenstein, Randy Olson, and Chip and Dan Heath. It also adapts clear-writing principles from `softaworks/agent-toolkit`'s MIT-licensed `writing-clearly-and-concisely` skill without vendoring its prompt.

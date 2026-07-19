@@ -21,8 +21,8 @@ This symlinks repo-owned skills into `~/.codex/skills` without deleting unrelate
 - `intent-mapping` - decision, scope, validation, and handoff capture before ambiguous or long-running work
 - `svg-education-precision` - exact educational SVGs from structured specs with overflow, text-fit, collision, and browser-render gates
 - `tdd-vertical-slice` - test-first behavior slices through public interfaces
-- `target-reader-review` - review prose as the least-tenured credible practitioner without turning judgment into CI
-- `writing-for-humans` - draft and edit agent-assisted prose for clarity, momentum, factual preservation, and property voice
+- `target-reader-review` - review whether the least-tenured credible practitioner can understand, act, recover, and verify without turning judgment into CI
+- `writing-for-humans` - route clear nonfiction through the smallest useful structure, sentence, revision, and operator-usability stack
 - `webflow-template-review-reviewer`
 - `webflow-template-review-analysis-calibration`
 - `webflow-template-review-write-guardrails`
@@ -42,8 +42,8 @@ Use $deep-module-design before refactoring this workflow interface.
 Use $intent-mapping before turning this ambiguous request into implementation work.
 Use $svg-education-precision for an exact workflow, policy, comparison, system, or evidence diagram.
 Use $tdd-vertical-slice to add this behavior through a public interface test.
-Use $target-reader-review to judge whether this prose earns a practitioner's next sentence.
-Use $writing-for-humans to draft or edit this prose without inventing human texture.
+Use $target-reader-review to judge whether a junior practitioner can understand and use this prose.
+Use $writing-for-humans to draft or edit this prose with the smallest framework stack that fits its job.
 ```
 
 ## Testing
