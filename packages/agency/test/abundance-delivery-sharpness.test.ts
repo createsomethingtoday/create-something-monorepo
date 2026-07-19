@@ -45,7 +45,9 @@ test('keeps evidence and ownership visible while shortening prompt labels', () =
     '{item.source}',
     '{suggestion.label}',
     'askDeliveryAgent(suggestion.prompt)',
-    'deliveryQuestion = message;'
+    'deliveryQuestion = message;',
+    'const previousMessages = deliveryMessages;',
+    'deliveryMessages = previousMessages;'
   ]) {
     assert.ok(routeSource.includes(requiredSource), `route lost ${requiredSource}`);
   }

@@ -70,8 +70,9 @@
     }
 
     deliveryAgentError = '';
-    const history = deliveryMessages.slice(-8).map(({ role, body }) => ({ role, body }));
-    deliveryMessages = [...deliveryMessages, { role: 'client', body: message }];
+    const previousMessages = deliveryMessages;
+    const history = previousMessages.slice(-8).map(({ role, body }) => ({ role, body }));
+    deliveryMessages = [...previousMessages, { role: 'client', body: message }];
     deliveryQuestion = '';
     isAskingDeliveryAgent = true;
 
@@ -100,6 +101,7 @@
         }
       ];
     } catch (error) {
+      deliveryMessages = previousMessages;
       deliveryQuestion = message;
       deliveryAgentError =
         error instanceof Error
