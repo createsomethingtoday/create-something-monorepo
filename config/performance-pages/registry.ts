@@ -239,13 +239,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
   group(
     'ltd-editorial',
     'ltd',
-    [
-      'ethos',
-      'experiments/the-circle-closes',
-      'standards',
-      'taste',
-      'voice'
-    ],
+    ['ethos', 'experiments/the-circle-closes', 'standards', 'taste', 'voice'],
     'migrated',
     contract(
       'editorial',
@@ -375,7 +369,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     'io-catalogs',
     'io',
     ['agents', 'categories', 'experiments', 'mcp', 'papers', 'plugins'],
-    'pending',
+    'migrated',
     contract(
       'index',
       'Choose the most relevant research artifact, agent, experiment, or plugin.',
