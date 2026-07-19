@@ -1,0 +1,140 @@
+{
+  "$schema": "https://createsomething.agency/schemas/stop-motion-scene.v1.json",
+  "id": "create-something.signal-decision-proof.v2",
+  "remixes": "create-something.signal-decision-proof.v1",
+  "purpose": "Make Signal -> Decision -> Action -> Proof read as one causal journey rather than four adjacent symbols.",
+  "format": {
+    "width": 1280,
+    "height": 720,
+    "aspectRatio": "16:9",
+    "masterDurationSeconds": 12,
+    "deliveryDurationSeconds": 10,
+    "authoredFps": 12,
+    "deliveryFps": 24,
+    "burnedInCaptions": false
+  },
+  "sceneWhole": {
+    "composition": "One continuous left-to-right transparent channel with three physically connected stations visible in the opening tableau.",
+    "stations": [
+      {
+        "order": 1,
+        "id": "signal-inlet",
+        "role": "introduce one cobalt delegated-work signal"
+      },
+      {
+        "order": 2,
+        "id": "decision-gate",
+        "role": "stop, inspect, and visibly release that same signal"
+      },
+      {
+        "order": 3,
+        "id": "proof-bay",
+        "role": "receive that same signal and mechanically issue its receipt"
+      }
+    ],
+    "direction": "left-to-right only",
+    "causalRule": "Only one meaningful event moves at a time; no downstream event begins before its upstream cause completes."
+  },
+  "elements": [
+    {
+      "id": "signal",
+      "appearance": "one small matte cobalt isometric object",
+      "behavior": "travels through every station and never duplicates, transforms, or remains behind"
+    },
+    {
+      "id": "decision-gate",
+      "appearance": "one precisely machined near-black mechanical gate with a thin stop-red inspection indicator",
+      "behavior": "blocks the signal, performs exactly three inspection ticks, then opens once"
+    },
+    {
+      "id": "wake",
+      "appearance": "one restrained optic-white stepped water trace",
+      "behavior": "appears only behind the released signal and physically connects its approved passage"
+    },
+    {
+      "id": "proof-receipt",
+      "appearance": "one small optic-white physical card with a matching embossed cube mark and no legible text",
+      "behavior": "remains hidden until the signal enters the proof bay, then ejects mechanically"
+    }
+  ],
+  "timing": [
+    {
+      "startSeconds": 0,
+      "endSeconds": 1.25,
+      "beat": "establish",
+      "direction": "Hold a wider low three-quarter view showing all three connected stations. Nothing moves."
+    },
+    {
+      "startSeconds": 1.25,
+      "endSeconds": 3.25,
+      "beat": "signal",
+      "direction": "The cobalt signal visibly traverses the inlet and reaches the closed decision gate. Every other element remains still."
+    },
+    {
+      "startSeconds": 3.25,
+      "endSeconds": 5.75,
+      "beat": "decision",
+      "direction": "The signal stops completely. The gate performs exactly three mechanical inspection ticks, then opens. Nothing downstream moves."
+    },
+    {
+      "startSeconds": 5.75,
+      "endSeconds": 8.5,
+      "beat": "action",
+      "direction": "The same cobalt signal crosses the opened gate and travels to the proof bay. One stepped white wake follows directly behind it."
+    },
+    {
+      "startSeconds": 8.5,
+      "endSeconds": 10,
+      "beat": "proof",
+      "direction": "The signal enters the final bay and mechanically triggers the proof receipt. Focus transfers from the signal to the matching receipt."
+    },
+    {
+      "startSeconds": 10,
+      "endSeconds": 12,
+      "beat": "terminal-hold",
+      "direction": "Hold the completed composition absolutely still for deterministic trimming."
+    }
+  ],
+  "camera": {
+    "shotCount": 1,
+    "cuts": 0,
+    "lensEquivalentMm": 35,
+    "opening": "wider low three-quarter tableau showing inlet, gate, and proof bay together for 1.25 seconds",
+    "movement": "after the establishing hold, one slow left-to-right lateral track follows the signal without losing the next station",
+    "ending": "one restrained rack focus from the arrived signal to the mechanically issued receipt",
+    "avoid": [
+      "tight crop before the system is established",
+      "camera movement unrelated to the signal",
+      "cuts",
+      "angle changes",
+      "zoom jumps",
+      "handheld motion"
+    ]
+  },
+  "audio": {
+    "narration": "First, a signal. Then, a decision. Only then, action—and proof.",
+    "delivery": "calm, precise, confident editorial narrator",
+    "synchronization": [
+      "First, a signal. accompanies the cobalt object's inlet traversal.",
+      "Then, a decision. accompanies the three gate inspection ticks.",
+      "Only then, action—and proof. begins as the gate opens and ends as the receipt ejects."
+    ],
+    "effects": [
+      "three dry mechanical inspection ticks",
+      "one gate-release click",
+      "one restrained stepped-water trace",
+      "one tactile receipt-ejection click"
+    ],
+    "music": "none"
+  },
+  "invariants": [
+    "same miniature Performance laboratory set",
+    "same clear acrylic material language",
+    "same near-black surface and hard raking light",
+    "same onyx, porcelain, quiet grey, and cobalt palette",
+    "same tactile 12 fps replacement-animation stop-motion technique",
+    "same 16:9 1280x720 format",
+    "same single continuous shot",
+    "no burned-in captions or legible text"
+  ]
+}

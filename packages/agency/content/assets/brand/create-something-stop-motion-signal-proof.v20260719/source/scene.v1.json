@@ -1,0 +1,173 @@
+{
+  "$schema": "https://createsomething.agency/schemas/stop-motion-scene.v1.json",
+  "id": "create-something.signal-decision-proof.v1",
+  "purpose": "Explain that governed AI work moves from signal through a policy decision to durable proof.",
+  "format": {
+    "width": 1280,
+    "height": 720,
+    "aspectRatio": "16:9",
+    "durationSeconds": 10,
+    "authoredFps": 12,
+    "deliveryFps": 24,
+    "audio": true,
+    "burnedInCaptions": false
+  },
+  "who": [
+    {
+      "id": "signal",
+      "role": "incoming delegated-work signal",
+      "appearance": "small cobalt geometric object, tactile matte material"
+    },
+    {
+      "id": "policy-gate",
+      "role": "visible decision boundary",
+      "appearance": "precisely machined near-black mechanical gate"
+    },
+    {
+      "id": "proof-receipt",
+      "role": "durable evidence of the approved action",
+      "appearance": "small optic-white physical card with embossed non-legible marks"
+    }
+  ],
+  "what": {
+    "action": "The signal enters a clear channel, pauses while the gate evaluates it, crosses the opened boundary, leaves a visible wake, and causes a proof receipt to click into place.",
+    "claim": "AI work shouldn't just run. It should leave proof."
+  },
+  "where": {
+    "environment": "miniature controlled-water laboratory",
+    "set": "three clear acrylic channels on a near-black technical surface",
+    "materials": [
+      "clear acrylic",
+      "controlled water",
+      "matte technical paper",
+      "machined metal",
+      "optic-white card"
+    ],
+    "palette": {
+      "onyx": "#0a0e19",
+      "porcelain": "#f9f9f9",
+      "ocean": "#0048ff",
+      "quietGrey": "#636363"
+    }
+  },
+  "when": {
+    "lighting": "timeless controlled laboratory, hard raking key light, crisp reflections, deep black background",
+    "beats": [
+      {
+        "startSeconds": 0,
+        "endSeconds": 2,
+        "label": "signal",
+        "action": "The cobalt signal enters the first clear channel in deliberate stop-motion steps."
+      },
+      {
+        "startSeconds": 2,
+        "endSeconds": 6,
+        "label": "decision",
+        "action": "The signal pauses at the policy gate; the mechanism inspects, clicks, and opens."
+      },
+      {
+        "startSeconds": 6,
+        "endSeconds": 9,
+        "label": "proof",
+        "action": "The signal crosses the boundary and leaves one clean physical wake in the downstream channel."
+      },
+      {
+        "startSeconds": 9,
+        "endSeconds": 10,
+        "label": "receipt",
+        "action": "An optic-white proof card clicks into its final slot; focus transfers to it."
+      }
+    ]
+  },
+  "camera": {
+    "shotCount": 1,
+    "cuts": 0,
+    "lensEquivalentMm": 35,
+    "view": "low three-quarter macro view",
+    "path": "single slow left-to-right lateral track following the signal",
+    "pushIn": "subtle continuous push-in from 2 to 9 seconds",
+    "focus": "track the signal through 9 seconds, then rack focus to the proof receipt",
+    "constraints": [
+      "no handheld motion",
+      "no angle changes",
+      "no zoom jumps",
+      "no cuts"
+    ]
+  },
+  "motion": {
+    "technique": "tactile miniature stop motion",
+    "cadence": "12 unique poses per second, each held for two frames in the 24 fps delivery",
+    "water": "stepped replacement-animation shapes rather than smooth fluid simulation",
+    "avoid": [
+      "smooth real-time motion",
+      "flicker",
+      "boiling textures",
+      "morphing geometry",
+      "object drift"
+    ]
+  },
+  "audio": {
+    "voiceover": {
+      "line": "AI work shouldn't just run. It should leave proof.",
+      "delivery": "calm, precise, confident editorial narrator",
+      "timing": "begin after the signal enters and finish before the receipt clicks"
+    },
+    "effects": [
+      "quiet miniature mechanism ticks",
+      "subtle water movement",
+      "one clean gate click",
+      "one tactile receipt click"
+    ],
+    "music": "none"
+  },
+  "renderPlan": {
+    "camera": [
+      { "frame": 0, "centerX": 0.47, "centerY": 0.52, "zoom": 1.0 },
+      { "frame": 24, "centerX": 0.48, "centerY": 0.52, "zoom": 1.015 },
+      { "frame": 72, "centerX": 0.51, "centerY": 0.51, "zoom": 1.055 },
+      { "frame": 108, "centerX": 0.54, "centerY": 0.5, "zoom": 1.08 },
+      { "frame": 119, "centerX": 0.54, "centerY": 0.5, "zoom": 1.08 }
+    ],
+    "signal": [
+      { "frame": 0, "x": 118, "y": 430, "scale": 0.82 },
+      { "frame": 23, "x": 510, "y": 420, "scale": 1.0 },
+      { "frame": 24, "x": 520, "y": 418, "scale": 1.0 },
+      { "frame": 67, "x": 532, "y": 416, "scale": 1.0 },
+      { "frame": 68, "x": 548, "y": 416, "scale": 1.0 },
+      { "frame": 107, "x": 990, "y": 410, "scale": 0.92 },
+      { "frame": 119, "x": 1032, "y": 406, "scale": 0.88 }
+    ],
+    "gate": {
+      "x": 625,
+      "y": 372,
+      "width": 18,
+      "height": 132,
+      "openStartFrame": 56,
+      "openEndFrame": 68,
+      "liftPixels": 92
+    },
+    "wake": {
+      "startFrame": 72,
+      "startX": 654,
+      "startY": 422
+    },
+    "receipt": {
+      "x": 1034,
+      "y": 342,
+      "width": 118,
+      "height": 76,
+      "appearStartFrame": 108,
+      "settledFrame": 116
+    },
+    "narration": {
+      "voice": "Samantha",
+      "rate": 176,
+      "delayMilliseconds": 1000
+    }
+  },
+  "reference": {
+    "source": "../../agency-performance-lab-hybrid.v20260710/exports/performance-lab-trace-control-plane--v20260710.png",
+    "role": "approved material and composition reference",
+    "derivedInput": "reference--1280x720--v20260719.png"
+  }
+}

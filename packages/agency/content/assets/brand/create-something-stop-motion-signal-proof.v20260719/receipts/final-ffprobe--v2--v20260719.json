@@ -1,0 +1,28 @@
+{
+  "streams": [
+    {
+      "index": 0,
+      "codec_name": "h264",
+      "codec_type": "video",
+      "width": 1280,
+      "height": 720,
+      "r_frame_rate": "24/1",
+      "avg_frame_rate": "24/1",
+      "nb_frames": "240"
+    },
+    {
+      "index": 1,
+      "codec_name": "aac",
+      "codec_type": "audio",
+      "sample_rate": "96000",
+      "channels": 2,
+      "nb_frames": "939"
+    }
+  ],
+  "format": {
+    "duration": "10.000000",
+    "size": "1962719",
+    "bit_rate": "1570175"
+  },
+  "sha256": "d8cec89416f050d4aecd3e21e366bac22618cceca1698b70ecceba173f069d1e"
+}

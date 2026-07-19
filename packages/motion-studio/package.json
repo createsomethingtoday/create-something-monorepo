@@ -3,11 +3,27 @@
   "version": "0.1.0",
   "description": "Vox-style motion graphics generation using Canon components and Remotion",
   "type": "module",
+  "createSomething": {
+    "agentLegibilityContract": true,
+    "tier": "automation",
+    "surface": "library",
+    "entrypoints": [
+      "src/index.ts",
+      "src/scene/index.ts",
+      "src/scene/cli.ts"
+    ],
+    "boot": "pnpm build:scene",
+    "smoke": "pnpm check:scene && pnpm test:scene"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "bin": {
+    "motion-scene": "dist/scene/cli.js"
+  },
   "scripts": {
     "dev": "remotion studio",
     "build": "tsc && remotion bundle",
+    "build:scene": "tsc -p tsconfig.scene.json",
     "render": "remotion render",
     "render:still": "remotion still",
     "preview": "remotion preview",
@@ -15,6 +31,8 @@
     "validate": "pnpm run typecheck && pnpm run validate:motion-studio",
     "validate:motion-studio": "npx tsx scripts/validate-motion-studio.ts",
     "typecheck": "tsc --noEmit",
+    "check:scene": "tsc -p tsconfig.scene.json --noEmit",
+    "test:scene": "pnpm build:scene && node --test test/*.test.mjs",
     "generate-voiceover": "npx ts-node scripts/generate-voiceover.ts",
     "generate-sounds": "npx tsx scripts/generate-sounds.ts"
   },
@@ -30,6 +48,7 @@
     "zod": "3.22.3"
   },
   "devDependencies": {
+    "@types/node": "^22.0.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "typescript": "^5.3.0"
@@ -53,6 +72,10 @@
     "./styles": {
       "types": "./dist/styles/index.d.ts",
       "import": "./dist/styles/index.js"
+    },
+    "./scene": {
+      "types": "./dist/scene/index.d.ts",
+      "import": "./dist/scene/index.js"
     }
   },
   "files": [

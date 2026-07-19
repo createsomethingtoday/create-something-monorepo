@@ -1,0 +1,155 @@
+{
+  "$schema": "https://createsomething.agency/schemas/motion-scene.v1.json",
+  "id": "create-something.signal-decision-proof.v3",
+  "extends": "create-something.signal-decision-proof.v2",
+  "purpose": "Complete the proof event without compressing or cutting its resolution.",
+  "format": {
+    "width": 1280,
+    "height": 720,
+    "aspectRatio": "16:9",
+    "deliveryDurationSeconds": 18,
+    "authoredFps": 12,
+    "deliveryFps": 24,
+    "burnedInCaptions": false
+  },
+  "elements": [
+    {
+      "id": "signal",
+      "asset": "performance-lab.signal.cobalt-cube.v1",
+      "role": "input",
+      "editable": true
+    },
+    {
+      "id": "decision-gate",
+      "asset": "performance-lab.decision-gate.onyx.v1",
+      "role": "judgment",
+      "editable": true
+    },
+    {
+      "id": "proof-receipt",
+      "asset": "performance-lab.proof-receipt.porcelain.v1",
+      "role": "evidence",
+      "editable": true
+    },
+    {
+      "id": "proof-display",
+      "asset": "performance-lab.proof-display.acrylic.v1",
+      "role": "terminal-state",
+      "editable": true
+    }
+  ],
+  "beats": [
+    {
+      "id": "signal",
+      "startSeconds": 0,
+      "endSeconds": 3.25,
+      "focus": ["signal"],
+      "renderCell": "existing-v2"
+    },
+    {
+      "id": "decision",
+      "startSeconds": 3.25,
+      "endSeconds": 5.75,
+      "focus": ["signal", "decision-gate"],
+      "dependsOn": ["signal"],
+      "renderCell": "existing-v2"
+    },
+    {
+      "id": "action",
+      "startSeconds": 5.75,
+      "endSeconds": 8.5,
+      "focus": ["signal", "decision-gate"],
+      "dependsOn": ["decision"],
+      "renderCell": "existing-v2"
+    },
+    {
+      "id": "proof",
+      "startSeconds": 8.5,
+      "endSeconds": 10,
+      "focus": ["signal", "proof-receipt"],
+      "dependsOn": ["action"],
+      "renderCell": "existing-v2"
+    },
+    {
+      "id": "proof-resolution",
+      "startSeconds": 10,
+      "endSeconds": 16,
+      "focus": ["proof-receipt", "proof-display"],
+      "dependsOn": ["proof"],
+      "renderCell": "proof-resolution-v1",
+      "direction": "The receipt finishes rising, locks into the clear proof display, and catches one restrained cobalt verification glint. Nothing upstream replays."
+    },
+    {
+      "id": "terminal-hold",
+      "startSeconds": 16,
+      "endSeconds": 18,
+      "focus": ["signal", "decision-gate", "proof-receipt"],
+      "dependsOn": ["proof-resolution"],
+      "renderCell": "proof-resolution-v1",
+      "direction": "Ease to a wider completed-system tableau, then hold absolutely still."
+    }
+  ],
+  "renderCells": [
+    {
+      "id": "existing-v2",
+      "startSeconds": 0,
+      "endSeconds": 10,
+      "source": "../exports/signal-decision-proof--remix-v2--10s--16x9--v20260719.mp4",
+      "generation": "cached"
+    },
+    {
+      "id": "proof-resolution-v1",
+      "startSeconds": 10,
+      "endSeconds": 18,
+      "source": "../exports/signal-decision-proof--proof-resolution--8s--16x9--v20260719.mp4",
+      "generation": "sora",
+      "inputReference": "reference--proof-start--1280x720--v20260719.png",
+      "durationSeconds": 8,
+      "draftModel": "sora-2",
+      "finalModel": "sora-2-pro"
+    }
+  ],
+  "audio": {
+    "narration": "First, a signal. Then, a decision. Only then, action—and proof.",
+    "continuationNarration": "none",
+    "continuationEffects": [
+      "one tactile receipt-lock click",
+      "one restrained verification tone",
+      "quiet laboratory room tone"
+    ],
+    "music": "none"
+  },
+  "assembly": {
+    "cellOrder": ["existing-v2", "proof-resolution-v1"],
+    "transition": {
+      "kind": "stop-motion-crossfade",
+      "durationSeconds": 0.3,
+      "offsetSeconds": 9.7
+    },
+    "terminalFramePaddingSeconds": 0.12,
+    "output": "../exports/signal-decision-proof--v3--18s--16x9--v20260719.mp4"
+  },
+  "policy": {
+    "draft": {
+      "model": "sora-2",
+      "maximumAttemptsPerCell": 2,
+      "maximumSceneSpendUsd": 1.6
+    },
+    "final": {
+      "model": "sora-2-pro",
+      "rerenderInvalidatedCellsOnly": true,
+      "requiresApprovalAboveUsd": 1.2,
+      "maximumSceneSpendUsd": 3.6
+    }
+  },
+  "invariants": [
+    "same miniature Performance laboratory set",
+    "same connected left-to-right acrylic channel",
+    "same onyx, porcelain, quiet grey, and cobalt palette",
+    "same hard raking light and near-black background",
+    "same tactile 12 fps replacement-animation stop-motion technique",
+    "no cuts inside either render cell",
+    "no burned-in captions, legible text, logos, watermarks, or people",
+    "the proof receipt remains visible through the terminal hold"
+  ]
+}

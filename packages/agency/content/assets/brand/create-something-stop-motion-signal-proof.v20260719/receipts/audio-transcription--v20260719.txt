@@ -1,0 +1,6 @@
+Verification model: whisper-1
+Input: final 10-second MP4 audio stream extracted to a temporary MP3
+Transcript: AI work shouldn't just run, it should leave proof.
+Verified segment: 00:00:00.000 --> 00:00:07.000
+Approved line: AI work shouldn't just run. It should leave proof.
+Verdict: pass; wording matches and punctuation is normalized by transcription.

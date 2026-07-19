@@ -1,0 +1,11 @@
+{
+  "sceneId": "create-something.signal-decision-proof.v3",
+  "outputPath": "/private/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/cre-1333-agent-worktree/packages/agency/content/assets/brand/create-something-stop-motion-signal-proof.v20260719/exports/signal-decision-proof--v3--18s--16x9--v20260719.mp4",
+  "inputPaths": [
+    "/private/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/cre-1333-agent-worktree/packages/agency/content/assets/brand/create-something-stop-motion-signal-proof.v20260719/exports/signal-decision-proof--remix-v2--10s--16x9--v20260719.mp4",
+    "/private/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/cre-1333-agent-worktree/packages/agency/content/assets/brand/create-something-stop-motion-signal-proof.v20260719/exports/signal-decision-proof--proof-resolution--8s--16x9--v20260719.mp4"
+  ],
+  "durationSeconds": 18,
+  "authoredFps": 12,
+  "deliveryFps": 24
+}

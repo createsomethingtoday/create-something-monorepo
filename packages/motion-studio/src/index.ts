@@ -49,3 +49,21 @@ export type {
 
 // Remotion Root export
 export { RemotionRoot } from './Root';
+
+// AI-native scene compilation, selective invalidation, and cost planning
+export {
+  buildAssemblyCommand,
+  compileScene,
+  planEdit,
+  planRender,
+  priceSoraCell,
+  verifyVideoProbe,
+} from './scene';
+export type {
+  CostedRenderPlan,
+  EditPlan,
+  EditRequest,
+  MotionScene,
+  RenderPlan,
+  RenderQuality,
+} from './scene';

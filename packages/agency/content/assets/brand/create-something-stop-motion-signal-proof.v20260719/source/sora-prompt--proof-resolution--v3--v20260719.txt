@@ -1,0 +1,13 @@
+Use case: CREATE SOMETHING 16:9 marketing pilot continuation
+Primary request: Continue directly from the supplied reference as the exact opening composition and complete the proof event that has just begun.
+Scene/background: The same miniature Performance laboratory, one clear acrylic left-to-right channel on a near-black surface under hard raking studio light.
+Subject: The same optic-white physical proof receipt already emerging at the far-right proof bay, the same cobalt signal, and the same onyx decision gate.
+Action: The proof receipt finishes its existing upward mechanical travel, locks once into a thin clear acrylic display, and catches one restrained cobalt verification glint. Nothing upstream replays or moves again. The camera then eases wider to show the completed connected channel and holds absolutely still.
+Camera: Begin with the exact framing of the reference image. One very slow restrained ease-back after the receipt locks; no cut, no angle change, no zoom jump.
+Lighting/mood: Hard precise raking light, deep onyx negative space, calm confident laboratory inspection.
+Color palette: onyx, porcelain white, quiet grey, clear acrylic, one cobalt accent.
+Style/format: tactile miniature replacement-animation stop motion, exactly 12 visible poses per second, premium editorial explainer restraint, 16:9.
+Timing/beats: 0-2 seconds receipt finishes rising; 2-4 seconds receipt locks into the clear display with one dry click; 4-6 seconds one cobalt verification glint travels across its embossed cube mark; 6-8 seconds ease wider and hold the completed system.
+Audio: no narration, no dialogue, no music; one dry receipt-lock click, one quiet restrained verification tone, otherwise subtle laboratory room tone.
+Constraints: Preserve the exact materials, set, object scale, light direction, channel geometry, receipt identity, and left-to-right causal state from the reference. Keep the receipt fully visible at the end.
+Avoid: new objects, duplicate receipts, duplicate cobalt signals, replayed gate motion, flowing water, legible text, symbols other than the existing abstract cube mark, logos, captions, watermarks, people, hands, cuts, camera shake, flicker, liquid deformation, or a premature ending.

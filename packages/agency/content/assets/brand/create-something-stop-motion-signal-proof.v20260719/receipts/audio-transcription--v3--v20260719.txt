@@ -1,0 +1,4 @@
+Model: gpt-4o-mini-transcribe
+Source: exports/signal-decision-proof--v3--18s--16x9--v20260719.mp4
+
+First, a signal. Then, a decision. Only then, action and proof.

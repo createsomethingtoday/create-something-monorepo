@@ -1,0 +1,10 @@
+Attempted: 2026-07-19
+Model: sora-2-pro
+Size: 1280x720
+Seconds: 12
+Input reference: source/reference--1280x720--v20260719.png
+Result for shell and Infisical `OPENAI_API_KEY`: No video job created.
+Error type: billing_limit_user_error
+Error code: billing_hard_limit_reached
+Error message: Billing hard limit has been reached.
+Resolution: Infisical `prod:/` secret `WEBFLOW_OPENAI_API_KEY` was injected as `OPENAI_API_KEY` inside the child process. It successfully created Sora job `video_6a5cde81e1708193bfd0f419e5bb751a03dff68369cf80c9`. No secret value was logged or written to disk.

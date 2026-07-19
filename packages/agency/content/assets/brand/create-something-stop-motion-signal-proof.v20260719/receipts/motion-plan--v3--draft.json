@@ -1,0 +1,51 @@
+{
+  "sceneId": "create-something.signal-decision-proof.v3",
+  "durationSeconds": 18,
+  "format": {
+    "width": 1280,
+    "height": 720,
+    "aspectRatio": "16:9",
+    "deliveryDurationSeconds": 18,
+    "authoredFps": 12,
+    "deliveryFps": 24,
+    "burnedInCaptions": false
+  },
+  "cells": [
+    {
+      "id": "existing-v2",
+      "startSeconds": 0,
+      "endSeconds": 10,
+      "source": "../exports/signal-decision-proof--remix-v2--10s--16x9--v20260719.mp4",
+      "generation": "cached",
+      "beatIds": [
+        "signal",
+        "decision",
+        "action",
+        "proof"
+      ]
+    },
+    {
+      "id": "proof-resolution-v1",
+      "startSeconds": 10,
+      "endSeconds": 18,
+      "source": "../exports/signal-decision-proof--proof-resolution--8s--16x9--v20260719.mp4",
+      "generation": "sora",
+      "inputReference": "reference--proof-start--1280x720--v20260719.png",
+      "durationSeconds": 8,
+      "draftModel": "sora-2",
+      "finalModel": "sora-2-pro",
+      "beatIds": [
+        "proof-resolution",
+        "terminal-hold"
+      ]
+    }
+  ],
+  "quality": "draft",
+  "pendingCellIds": [
+    "proof-resolution-v1"
+  ],
+  "estimatedSpendUsd": 0.8,
+  "maximumSpendUsd": 1.6,
+  "withinBudget": true,
+  "requiresApproval": false
+}

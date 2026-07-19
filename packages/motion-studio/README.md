@@ -13,6 +13,61 @@ Built on:
 - **Remotion** - Programmatic video rendering in React
 - **Vox Style** - Clean, data-driven visual storytelling
 
+## AI-native scene compiler
+
+Motion Studio also compiles short, addressable AI-native scenes. The scene file
+is the source of truth for elements, beats, render cells, dependencies, and cost
+policy; provider prompts and final video files are derived artifacts.
+
+```bash
+# Compile the scene and show the maximum draft spend before generation.
+pnpm motion:plan -- \
+  --scene packages/agency/content/assets/brand/example/source/scene.json \
+  --quality draft
+
+# Identify the cells affected by a beat edit and price only those cells.
+pnpm motion:edit -- \
+  --scene packages/agency/content/assets/brand/example/source/scene.json \
+  --beat proof-resolution \
+  --quality draft
+
+# Assemble cached and regenerated cells through the scene's transition policy.
+pnpm motion:assemble -- --scene path/to/scene.json --receipt path/to/assembly.json
+
+# Fail closed when duration, dimensions, frame rate, frame count, audio, or
+# subtitle-stream policy does not match the scene.
+pnpm motion:verify -- \
+  --scene path/to/scene.json \
+  --video path/to/final.mp4 \
+  --receipt path/to/verification.json
+```
+
+Import the public interface from the focused subpath:
+
+```ts
+import {
+  compileScene,
+  planEdit,
+  planRender,
+} from '@create-something/motion-studio/scene';
+```
+
+The current pilot contract is intentionally narrow: 1280x720, 16:9, 15–20
+seconds, 12 authored poses per second delivered at 24 fps, and player-rendered
+captions only. Cached cells cost nothing to reuse. Sora cells are estimated at
+their configured duration and model before a render is authorized.
+
+## Agent Legibility Contract
+
+| Field | Value |
+| --- | --- |
+| Entry point | `src/index.ts`, `src/Root.tsx`, `src/scene/index.ts`, `src/scene/cli.ts` |
+| Boot command | `pnpm build:scene` |
+| Smoke command | `pnpm check:scene && pnpm test:scene` |
+| Validation surfaces | Scene compiler tests, render/edit cost receipts, assembly receipt, ffprobe media receipt, contact sheets, and transcription evidence |
+| UI validation path | Open the final 16:9 MP4 and inspect the whole-scene and seam contact sheets; use Remotion Studio for deterministic composition changes |
+| Escalation rule | Stop before publication, secret mutation, an over-budget render, or an edit that cannot preserve stable element and beat identity |
+
 ## Installation
 
 ```bash

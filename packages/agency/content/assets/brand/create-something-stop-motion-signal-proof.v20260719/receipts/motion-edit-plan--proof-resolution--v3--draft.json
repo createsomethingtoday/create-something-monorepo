@@ -1,0 +1,15 @@
+{
+  "sceneId": "create-something.signal-decision-proof.v3",
+  "targetBeatId": "proof-resolution",
+  "quality": "draft",
+  "invalidatedBeatIds": [
+    "proof-resolution",
+    "terminal-hold"
+  ],
+  "invalidatedCellIds": [
+    "proof-resolution-v1"
+  ],
+  "estimatedSpendUsd": 0.8,
+  "maximumSpendUsd": 1.6,
+  "withinBudget": true
+}

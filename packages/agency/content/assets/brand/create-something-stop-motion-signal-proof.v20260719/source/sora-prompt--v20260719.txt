@@ -1,0 +1,30 @@
+Use case: internal CREATE SOMETHING 16:9 marketing pilot, editorial explainer.
+
+Primary request: Create one uninterrupted tactile miniature stop-motion shot that explains Signal -> Decision -> Proof. Preserve the approved reference image's near-black laboratory surface, three clear acrylic channels, mechanical gate, hard raking light, and physically believable material detail. A small cobalt geometric signal object is the only strong color accent.
+
+Scene/background: A miniature controlled-water laboratory with three clear acrylic channels on a near-black technical surface, deep black background, crisp reflections, subtle non-legible measurement marks, no people.
+
+Subject: One small matte cobalt signal object, one precisely machined near-black policy gate, controlled water made from stepped replacement-animation shapes, and one small optic-white physical proof card with embossed but non-legible marks.
+
+Action: 0-2 seconds, the cobalt signal enters the first channel in deliberate stop-motion steps. 2-6 seconds, it pauses at the mechanical policy gate; the gate visibly inspects, clicks, and opens. 6-9 seconds, the signal crosses the boundary and leaves one clean stepped wake in the downstream channel. 9-10 seconds, the optic-white proof card clicks into a final physical slot. 10-12 seconds, hold the completed composition completely still for safe deterministic trimming.
+
+Camera: One continuous low three-quarter macro tracking shot, 35mm-equivalent lens. A slow left-to-right lateral move follows the signal. Add one subtle continuous push-in from 2-9 seconds. Focus follows the signal until 9 seconds, then racks once to the proof receipt. No cuts, no handheld motion, no angle changes, no zoom jumps.
+
+Lighting/mood: Hard controlled raking key light, crisp acrylic reflections, deep blacks, optic-white highlights, rigorous advanced design laboratory, calm and precise rather than futuristic.
+
+Color palette: onyx #0a0e19, porcelain #f9f9f9, quiet grey #636363, one cobalt #0048ff signal accent only.
+
+Style/format: True tactile tabletop replacement-animation stop motion, 12 authored poses per second, visible two-frame holds, slight handcrafted material variation, editorial explanatory clarity, physically photographed miniature set. The story logic may use Vox-like explainer pacing, but all visible identity must remain original CREATE SOMETHING Performance material language.
+
+Timing/beats: Signal 0-2s; decision 2-6s; proof 6-9s; receipt 9-10s; terminal still hold 10-12s.
+
+Audio: Clean close-miked editorial voiceover, quiet miniature mechanism ticks, subtle water movement, one gate click, one tactile receipt click, no music.
+
+Dialogue:
+<dialogue>
+- Narrator: "AI work shouldn't just run. It should leave proof."
+</dialogue>
+
+Constraints: Suitable for all audiences. One shot only. No captions, no subtitles, no title card, no legible words, no logo, no interface, no real people. Keep the three channels, signal object, gate, wake, and proof card physically consistent throughout. The entire narrative must finish by 10 seconds, followed by an unmoving two-second hold.
+
+Avoid: copyrighted visual identity; copied Vox colors or graphics; generated typography; text artifacts; smooth real-time motion; fluid CGI; decorative science fiction; blue gradients; glowing UI; extra objects; cuts; flicker; jitter; boiling textures; morphing geometry; object drift; water catastrophe; ocean imagery; dam imagery; logos; watermarks.

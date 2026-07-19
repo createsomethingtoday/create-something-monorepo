@@ -1,0 +1,8 @@
+Verification model: whisper-1
+Input: remix v2 final 10-second MP4 audio stream extracted to a temporary MP3
+Verified segments:
+- 00:00:00.000 --> 00:00:02.000: First, a signal.
+- 00:00:02.000 --> 00:00:04.000: Then, a decision.
+- 00:00:04.000 --> 00:00:09.000: Only then, action and proof.
+Approved line: First, a signal. Then, a decision. Only then, action—and proof.
+Verdict: pass; wording matches and punctuation is normalized by transcription.
