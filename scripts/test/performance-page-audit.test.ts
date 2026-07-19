@@ -122,9 +122,9 @@ test('fails closed on missing, overlapping, and invalid registrations', () => {
       status: 'pending',
       contract: invalidContract
     },
-		{
-			id: 'agency-overlap',
-			property: 'io',
+    {
+      id: 'agency-overlap',
+      property: 'io',
       sources: ['packages/agency/src/routes/+page.svelte'],
       status: 'pending',
       contract: invalidContract
@@ -151,16 +151,16 @@ test('fails closed on missing, overlapping, and invalid registrations', () => {
       'packages/agency/src/routes/+page.svelte is registered by multiple groups: agency-invalid, agency-overlap.'
     )
   );
-	assert.ok(
-		result.errors.includes(
-			'agency-invalid-exclusion requires a specific technical exclusion reason.'
-		)
-	);
-	assert.ok(
-		result.errors.includes(
-			'agency-overlap assigns packages/agency/src/routes/+page.svelte to property io.'
-		)
-	);
+  assert.ok(
+    result.errors.includes(
+      'agency-invalid-exclusion requires a specific technical exclusion reason.'
+    )
+  );
+  assert.ok(
+    result.errors.includes(
+      'agency-overlap assigns packages/agency/src/routes/+page.svelte to property io.'
+    )
+  );
   assert.ok(result.errors.some((error) => error.includes('has 2 introduction chapters')));
   assert.ok(
     result.errors.some((error) => error.includes('primary proof references unknown chapter'))
@@ -174,9 +174,9 @@ test('covers every current CREATE SOMETHING page implementation and emits bounde
   assert.deepEqual(result.totals, {
     discovered: 229,
     registered: 229,
-    migrated: 36,
-    pending: 181,
-    excluded: 12
+    migrated: 39,
+    pending: 176,
+    excluded: 14
   });
   assert.deepEqual(
     Object.fromEntries(

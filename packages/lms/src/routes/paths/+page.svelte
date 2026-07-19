@@ -11,36 +11,42 @@
 </svelte:head>
 
 <div class="paths-shell">
-  <header class="paths-hero">
-    <p class="paths-kicker">Operator learning</p>
-    <h1 class="page-title">Operator Workflow Paths</h1>
-    <p class="page-subtitle">
-      Use the Codex app to create your first MCP-backed workflow, then use Canon to make the
-      workflow visible through maps, boundaries, gates, receipts, and handoff artifacts.
-    </p>
-  </header>
+  <section class="paths-opening" aria-labelledby="paths-title">
+    <header class="paths-hero">
+      <p class="paths-kicker">Operator learning</p>
+      <h1 id="paths-title" class="page-title">Operator Workflow Paths</h1>
+      <p class="page-subtitle">
+        Use the Codex app to create your first MCP-backed workflow, then use Canon to make the
+        workflow visible through maps, boundaries, gates, receipts, and handoff artifacts.
+      </p>
+    </header>
+  </section>
 
-  <div class="paths-list">
-    {#each PATHS as path}
-      <a href="/paths/{path.id}" class="path-row {path.color}">
-        <div class="path-header">
-          <div class="path-dot"></div>
-          <h2 class="path-title">{path.title}</h2>
-          <span class="path-subtitle">{path.subtitle}</span>
-        </div>
+  <section class="paths-collection" aria-label="Available learning paths">
+    <div class="paths-list">
+      {#each PATHS as path}
+        <a href="/paths/{path.id}" class="path-row {path.color}">
+          <div class="path-header">
+            <div class="path-dot"></div>
+            <h2 class="path-title">{path.title}</h2>
+            <span class="path-subtitle">{path.subtitle}</span>
+          </div>
 
-        <p class="path-description">{path.description}</p>
+          <p class="path-description">{path.description}</p>
 
-        <div class="path-meta">
-          <span>{path.lessons.length} lessons</span>
-          <span
-            >{path.id === 'codex-mcp' ? 'Codex MCP-building skill' : 'Canon learning images'}</span
-          >
-          <span>Practical operator workflow</span>
-        </div>
-      </a>
-    {/each}
-  </div>
+          <div class="path-meta">
+            <span>{path.lessons.length} lessons</span>
+            <span
+              >{path.id === 'codex-mcp'
+                ? 'Codex MCP-building skill'
+                : 'Canon learning images'}</span
+            >
+            <span>Practical operator workflow</span>
+          </div>
+        </a>
+      {/each}
+    </div>
+  </section>
 </div>
 
 <style>
@@ -49,6 +55,11 @@
     margin-inline: auto;
     padding: clamp(3rem, 8vw, 5rem) 0;
     color: var(--color-performance-ink, #090909);
+  }
+
+  .paths-opening,
+  .paths-collection {
+    padding: 0;
   }
 
   .paths-hero {

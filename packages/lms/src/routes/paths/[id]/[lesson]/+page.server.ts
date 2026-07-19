@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { getPath, getLesson } from '$lib/content/paths';
-import { loadLesson, extractFrontmatter } from '$lib/content/lessons';
+import { loadLesson, extractFrontmatter, stripDuplicateLessonHeading } from '$lib/content/lessons';
 import { marked } from 'marked';
 
 // Configure marked for clean output
@@ -30,7 +30,7 @@ export const load: PageServerLoad = async ({ params }) => {
   try {
     const markdown = await loadLesson(params.id, params.lesson);
     const parsed = extractFrontmatter(markdown);
-    content = await marked.parse(parsed.content);
+    content = stripDuplicateLessonHeading(await marked.parse(parsed.content), lesson.title);
   } catch (err) {
     console.error(`Failed to load lesson content: ${params.id}/${params.lesson}`, err);
   }

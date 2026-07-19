@@ -239,13 +239,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
   group(
     'ltd-editorial',
     'ltd',
-    [
-      'ethos',
-      'experiments/the-circle-closes',
-      'standards',
-      'taste',
-      'voice'
-    ],
+    ['ethos', 'experiments/the-circle-closes', 'standards', 'taste', 'voice'],
     'migrated',
     contract(
       'editorial',
@@ -587,7 +581,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     'learn-path-index',
     'lms',
     ['paths'],
-    'pending',
+    'migrated',
     contract(
       'index',
       "Choose the path that matches the learner's current capability.",
@@ -598,14 +592,21 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
   group(
     'learn-paths',
     'lms',
-    ['paths/[id]', 'paths/[id]/[lesson]', 'seeing', 'seeing/[lesson]'],
-    'pending',
+    ['paths/[id]', 'paths/[id]/[lesson]'],
+    'migrated',
     contract(
       'learning',
       'Complete the current learning objective and decide what to practice next.',
       'The lesson sequence, exercise, and completion state demonstrate progress.',
       'Continue to the next lesson or practice'
     )
+  ),
+  exclusion(
+    'learn-legacy-redirects',
+    'lms',
+    ['seeing', 'seeing/[lesson]'],
+    'redirect',
+    'Permanent compatibility routes preserve legacy lesson URLs and issue HTTP 308 redirects to the current Codex MCP path.'
   ),
   group(
     'learn-progress',

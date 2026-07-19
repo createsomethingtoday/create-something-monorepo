@@ -17,6 +17,7 @@
   // Track time spent on this lesson
   let startTime = $state(0);
   let isCompleting = $state(false);
+  let completionError = $state('');
 
   // Get progress for this lesson - needs to be derived to react to lesson changes
   let lessonProgress = $derived(getLessonProgress(path.id, lesson.id));
@@ -26,10 +27,15 @@
     // Reset state for new lesson
     startTime = Date.now();
     isCompleting = false;
+    completionError = '';
+
+    // Public lessons remain readable without calling authenticated progress APIs.
+    if (!data.user) return;
 
     // Mark lesson as started
-    progress.startLesson(path.id, lesson.id).catch((err) => {
-      console.error('Failed to track lesson start:', err);
+    progress.startLesson(path.id, lesson.id).catch(() => {
+      completionError =
+        'Progress could not be saved. The lesson remains available; try again when the connection recovers.';
     });
 
     // Fetch full progress
@@ -40,6 +46,7 @@
     if (isCompleting) return;
 
     isCompleting = true;
+    completionError = '';
     const timeSpent = Math.floor((Date.now() - startTime) / 1000);
 
     try {
@@ -58,6 +65,8 @@
       }
     } catch (err) {
       console.error('Failed to complete lesson:', err);
+      completionError =
+        'Progress could not be saved. The lesson remains available; try again or continue without saving.';
       isCompleting = false;
     }
   }
@@ -68,32 +77,31 @@
 </svelte:head>
 
 <div class="lesson-shell">
-  <!-- Breadcrumb -->
-  <div class="breadcrumb">
-    <a href="/paths" class="breadcrumb-link">Paths</a>
-    <span class="breadcrumb-separator">/</span>
-    <a href="/paths/{path.id}" class="breadcrumb-link">{path.title}</a>
-    <span class="breadcrumb-separator">/</span>
-    <span class="breadcrumb-current">{lesson.title}</span>
-  </div>
-
-  <!-- Progress Bar -->
-  <div class="progress-container">
-    <div class="progress-bar" style="width: {(lessonNumber / totalLessons) * 100}%"></div>
-  </div>
-
-  <!-- Lesson Header -->
-  <div class="mb-12">
-    <div class="flex items-center gap-3 mb-4">
-      <div class="path-dot {path.color}"></div>
-      <span class="lesson-meta">Lesson {lessonNumber} of {totalLessons}</span>
-      <span class="lesson-meta">•</span>
-      <span class="lesson-meta">{lesson.duration}</span>
+  <section class="lesson-opening" aria-labelledby="lesson-title">
+    <div class="breadcrumb">
+      <a href="/paths" class="breadcrumb-link">Paths</a>
+      <span class="breadcrumb-separator">/</span>
+      <a href="/paths/{path.id}" class="breadcrumb-link">{path.title}</a>
+      <span class="breadcrumb-separator">/</span>
+      <span class="breadcrumb-current">{lesson.title}</span>
     </div>
 
-    <h1 class="lesson-title">{lesson.title}</h1>
-    <p class="lesson-description">{lesson.description}</p>
-  </div>
+    <div class="progress-container" aria-label={`Lesson ${lessonNumber} of ${totalLessons}`}>
+      <div class="progress-bar" style="width: {(lessonNumber / totalLessons) * 100}%"></div>
+    </div>
+
+    <header>
+      <div class="flex items-center gap-3 mb-4">
+        <div class="path-dot {path.color}"></div>
+        <span class="lesson-meta">Lesson {lessonNumber} of {totalLessons}</span>
+        <span class="lesson-meta">•</span>
+        <span class="lesson-meta">{lesson.duration}</span>
+      </div>
+
+      <h1 id="lesson-title" class="lesson-title">{lesson.title}</h1>
+      <p class="lesson-description">{lesson.description}</p>
+    </header>
+  </section>
 
   <!-- Lesson Content -->
   <article class="lesson-content">
@@ -115,58 +123,73 @@
     {/if}
   </article>
 
-  <!-- Navigation Footer -->
-  <div class="lesson-nav">
-    <!-- Previous Lesson -->
-    {#if previousLesson}
-      <a href="/paths/{path.id}/{previousLesson.id}" class="nav-button prev">
-        <div class="nav-arrow"><ChevronLeft size={24} /></div>
-        <div class="flex-1">
-          <div class="nav-label">Previous</div>
-          <div class="nav-title">{previousLesson.title}</div>
-        </div>
-      </a>
-    {:else}
-      <div aria-hidden="true"></div>
-    {/if}
+  <section class="lesson-handoff" aria-labelledby="lesson-handoff-title">
+    <header class="handoff-heading">
+      <span>Next step</span>
+      <h2 id="lesson-handoff-title">
+        {nextLesson ? 'Continue to the next objective.' : 'Close the path with a receipt.'}
+      </h2>
+    </header>
 
-    <!-- Back to Path -->
-    <a href="/paths/{path.id}" class="nav-button center">
-      <div class="nav-label">All Lessons</div>
-    </a>
-
-    <!-- Next Lesson -->
-    {#if nextLesson}
-      <a href="/paths/{path.id}/{nextLesson.id}" class="nav-button next">
-        <div class="flex-1 text-right">
-          <div class="nav-label">Next</div>
-          <div class="nav-title">{nextLesson.title}</div>
-        </div>
-        <div class="nav-arrow"><ChevronRight size={24} /></div>
-      </a>
-    {:else}
-      <div aria-hidden="true"></div>
-    {/if}
-  </div>
-
-  <!-- Completion Action -->
-  <div class="completion-section">
-    {#if $lessonProgress?.status === 'completed'}
-      <div class="completed-indicator">
-        <CheckCircle size={20} />
-        <span>Lesson Completed</span>
+    {#if completionError}
+      <div class="completion-error" role="alert">
+        <p>{completionError}</p>
+        {#if data.user}
+          <button type="button" onclick={handleCompleteLesson}>Try saving again</button>
+        {/if}
       </div>
-      {#if nextLesson}
-        <a href="/paths/{path.id}/{nextLesson.id}" class="btn-primary"> Continue to Next Lesson </a>
-      {:else}
-        <a href="/paths/{path.id}" class="btn-secondary"> View Path Overview </a>
-      {/if}
-    {:else}
-      <button class="btn-primary" onclick={handleCompleteLesson} disabled={isCompleting}>
-        {isCompleting ? 'Completing...' : nextLesson ? 'Complete & Continue' : 'Complete Lesson'}
-      </button>
     {/if}
-  </div>
+
+    <div class="handoff-primary">
+      {#if data.user}
+        {#if $lessonProgress?.status === 'completed'}
+          <div class="completed-indicator">
+            <CheckCircle size={20} />
+            <span>Lesson completed</span>
+          </div>
+          {#if nextLesson}
+            <a href="/paths/{path.id}/{nextLesson.id}" class="btn-primary">
+              Continue to next lesson <ChevronRight size={18} />
+            </a>
+          {:else}
+            <a href="/paths/{path.id}" class="btn-primary">View path overview</a>
+          {/if}
+        {:else}
+          <button class="btn-primary" onclick={handleCompleteLesson} disabled={isCompleting}>
+            {isCompleting
+              ? 'Completing...'
+              : nextLesson
+                ? 'Complete & Continue'
+                : 'Complete Lesson'}
+          </button>
+        {/if}
+      {:else}
+        {#if nextLesson}
+          <a href="/paths/{path.id}/{nextLesson.id}" class="btn-primary">
+            Continue to next lesson <ChevronRight size={18} />
+          </a>
+        {:else}
+          <a href="/paths/{path.id}" class="btn-primary">View path overview</a>
+        {/if}
+        <a
+          href={`/login?redirect=${encodeURIComponent(`/paths/${path.id}/${lesson.id}`)}`}
+          class="btn-secondary">Sign in to save progress</a
+        >
+      {/if}
+    </div>
+
+    <nav class="handoff-secondary" aria-label="Lesson navigation">
+      {#if previousLesson}
+        <a href="/paths/{path.id}/{previousLesson.id}" class="nav-button">
+          <ChevronLeft size={18} />
+          <span><small>Previous lesson</small>{previousLesson.title}</span>
+        </a>
+      {/if}
+      <a href="/paths/{path.id}" class="nav-button">
+        <span><small>Path index</small>All lessons</span>
+      </a>
+    </nav>
+  </section>
 </div>
 
 <style>
@@ -385,6 +408,7 @@
     background: var(--color-performance-court, #e6e6e0);
     border-radius: var(--radius-performance-sm, 4px);
     color: var(--color-performance-ink, #090909);
+    overflow-wrap: anywhere;
   }
 
   .prose :global(pre) {
@@ -399,12 +423,14 @@
     padding: 0;
     background: none;
     color: #ffffff;
+    overflow-wrap: normal;
   }
 
   .prose :global(table) {
     width: 100%;
     margin: var(--space-md) 0;
     border-collapse: collapse;
+    table-layout: fixed;
     background: var(--color-performance-panel, #ffffff);
   }
 
@@ -413,6 +439,7 @@
     padding: var(--space-sm);
     border: 1px solid var(--color-performance-line, #d7d7d2);
     text-align: left;
+    overflow-wrap: anywhere;
   }
 
   .prose :global(th) {
@@ -437,20 +464,89 @@
     color: var(--color-performance-ink, #090909);
   }
 
-  .lesson-nav {
+  .lesson-opening {
     display: grid;
-    grid-template-columns: 1fr auto 1fr;
     gap: var(--space-md);
     margin-bottom: var(--space-xl);
-    padding-top: var(--space-xl);
+    padding: 0;
+  }
+
+  .lesson-opening header {
+    display: grid;
+    gap: var(--space-sm);
+  }
+
+  .lesson-handoff {
+    display: grid;
+    gap: var(--space-lg);
+    margin-top: var(--space-xl);
+    padding: clamp(1.25rem, 4vw, 2rem);
     border-top: 1px solid var(--color-performance-line, #d7d7d2);
+    background: var(--color-performance-panel, #ffffff);
+  }
+
+  .handoff-heading {
+    display: grid;
+    gap: 0.55rem;
+  }
+
+  .handoff-heading > span {
+    color: var(--color-performance-muted, #5e6268);
+    font-family: var(--font-mono);
+    font-size: var(--text-caption);
+    font-weight: var(--font-semibold);
+    text-transform: uppercase;
+  }
+
+  .handoff-heading h2 {
+    max-width: 24ch;
+    margin: 0;
+    color: var(--color-performance-ink, #090909);
+    font-size: var(--text-h2);
+    font-weight: var(--font-medium);
+    line-height: var(--leading-tight);
+  }
+
+  .handoff-primary,
+  .handoff-secondary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    align-items: center;
+  }
+
+  .handoff-secondary {
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--color-performance-line, #d7d7d2);
+  }
+
+  .completion-error {
+    display: flex;
+    gap: var(--space-sm);
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-sm);
+    border: 1px solid var(--color-performance-line-strong, #9c9c96);
+    color: var(--color-performance-ink, #090909);
+  }
+
+  .completion-error p {
+    margin: 0;
+    color: var(--color-performance-muted, #5e6268);
+  }
+
+  .completion-error button {
+    flex: 0 0 auto;
+    font-weight: var(--font-semibold);
+    text-decoration: underline;
   }
 
   .nav-button {
     display: flex;
     align-items: center;
     gap: var(--space-sm);
-    padding: var(--space-md);
+    min-width: min(100%, 14rem);
+    padding: var(--space-sm);
     border-radius: var(--radius-performance-md, 4px);
     border: 1px solid var(--color-performance-line, #d7d7d2);
     background: var(--color-performance-panel, #ffffff);
@@ -464,36 +560,25 @@
     background: var(--color-performance-court, #e6e6e0);
   }
 
-  .nav-button.center {
-    justify-content: center;
-  }
-
-  .nav-arrow {
-    display: flex;
-    align-items: center;
-    color: var(--color-performance-muted, #5e6268);
-  }
-
-  .nav-label {
-    font-size: var(--text-caption);
-    color: var(--color-performance-muted, #5e6268);
-    text-transform: uppercase;
-    letter-spacing: 0;
-    margin-bottom: 0.25rem;
-  }
-
-  .nav-title {
-    font-size: var(--text-body-sm);
+  .nav-button span {
+    display: grid;
+    gap: 0.2rem;
     color: var(--color-performance-ink, #090909);
+    font-size: var(--text-body-sm);
   }
 
-  .completion-section {
-    display: flex;
-    justify-content: center;
-    padding: var(--space-lg) 0;
+  .nav-button small {
+    color: var(--color-performance-muted, #5e6268);
+    font-family: var(--font-mono);
+    font-size: var(--text-caption);
+    text-transform: uppercase;
   }
 
   .btn-primary {
+    display: inline-flex;
+    gap: var(--space-xs);
+    align-items: center;
+    justify-content: center;
     padding: var(--space-md) var(--space-lg);
     border-radius: var(--radius-performance-sm, 4px);
     border: 1px solid var(--color-performance-ink, #090909);
@@ -517,6 +602,9 @@
   }
 
   .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     padding: var(--space-md) var(--space-lg);
     border-radius: var(--radius-performance-sm, 4px);
     background: var(--color-performance-panel, #ffffff);
@@ -527,7 +615,6 @@
     transition:
       background var(--duration-micro) var(--ease-standard),
       border-color var(--duration-micro) var(--ease-standard);
-    margin-left: var(--space-md);
   }
 
   .btn-secondary:hover {
@@ -544,7 +631,18 @@
     margin-bottom: var(--space-md);
   }
 
-  .text-right {
-    text-align: right;
+  @media (max-width: 640px) {
+    .handoff-primary,
+    .handoff-secondary,
+    .completion-error {
+      align-items: stretch;
+      flex-direction: column;
+    }
+
+    .btn-primary,
+    .btn-secondary,
+    .nav-button {
+      width: 100%;
+    }
   }
 </style>
