@@ -521,7 +521,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     'io-account',
     'io',
     ['account', 'login'],
-    'pending',
+    'migrated',
     contract(
       'tool',
       'Complete the identity or account task and return to research work.',
