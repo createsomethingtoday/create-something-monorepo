@@ -7,6 +7,7 @@ const discoverSource = readFileSync(
 	new URL('../src/routes/discover/+page.svelte', import.meta.url),
 	'utf8'
 );
+const layoutSource = readFileSync(new URL('../src/routes/+layout.svelte', import.meta.url), 'utf8');
 const registrySource = readFileSync(
 	new URL('../../../config/performance-pages/registry.ts', import.meta.url),
 	'utf8'
@@ -20,6 +21,13 @@ test('each Space index has one orientation and one complete collection', () => {
 	for (const source of [dataSource, discoverSource]) {
 		assert.deepEqual(chapters(source), ['orientation', 'collection']);
 		assert.match(source, /aria-labelledby="[^"]+-collection-title"/);
+	}
+});
+
+test('route fragments do not nest another main landmark inside the shared layout', () => {
+	assert.match(layoutSource, /<main id="main-content"/);
+	for (const source of [dataSource, discoverSource]) {
+		assert.doesNotMatch(source, /<\/?main(?:\s|>)/);
 	}
 });
 

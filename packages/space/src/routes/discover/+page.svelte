@@ -48,7 +48,7 @@
 	]}
 />
 
-<main class="index-page">
+<div class="index-page">
 	<section data-page-chapter="orientation" class="index-opening">
 		<div class="container opening-inner">
 			<p class="eyebrow">Concept map · six starting points</p>
@@ -82,7 +82,7 @@
 			</div>
 		</div>
 	</section>
-</main>
+</div>
 
 <style>
 	.index-page,

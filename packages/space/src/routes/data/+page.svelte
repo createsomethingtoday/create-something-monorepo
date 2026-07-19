@@ -33,7 +33,7 @@
   ]}
 />
 
-<main class="index-page">
+<div class="index-page">
   <section data-page-chapter="orientation" class="index-opening">
     <div class="container opening-inner">
       <p class="eyebrow">Data Studio · live and saved evidence</p>
@@ -59,7 +59,7 @@
       <PerformanceCardGrid items={datasets} columns={1} ariaLabel="Available live data surfaces" />
     </div>
   </section>
-</main>
+</div>
 
 <style>
   .index-page,
