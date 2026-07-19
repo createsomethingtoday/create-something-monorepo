@@ -1,8 +1,9 @@
-export type AuthRole = 'device' | 'source';
+export type AuthRole = 'device' | 'source' | 'runner';
 
 export interface AuthEnv {
   INK_BRIDGE_TOKEN?: string;
   INK_DEVICE_TOKEN?: string;
+  INK_RUNNER_TOKEN?: string;
   INK_SOURCE_TOKEN?: string;
 }
 
@@ -40,10 +41,14 @@ async function tokenMatches(input: string, expected: string): Promise<boolean> {
 function roleTokens(env: AuthEnv, role: AuthRole): string[] {
   const bridgeToken = env.INK_BRIDGE_TOKEN?.trim();
   const deviceToken = env.INK_DEVICE_TOKEN?.trim();
+  const runnerToken = env.INK_RUNNER_TOKEN?.trim();
   const sourceToken = env.INK_SOURCE_TOKEN?.trim();
 
-  const candidates =
-    role === 'device' ? [deviceToken, bridgeToken] : [sourceToken, bridgeToken];
+  const candidates = role === 'device'
+    ? [deviceToken, bridgeToken]
+    : role === 'source'
+      ? [sourceToken, bridgeToken]
+      : [runnerToken];
 
   return candidates.filter((value): value is string => Boolean(value));
 }

@@ -45,3 +45,17 @@ test('bridge token remains compatibility token for device and source roles', asy
   assert.equal(await isAuthorized(requestWithToken('bridge-token'), env, 'device'), true);
   assert.equal(await isAuthorized(requestWithToken('bridge-token'), env, 'source'), true);
 });
+
+test('runner auth accepts only the dedicated runner token', async () => {
+  const env = {
+    INK_RUNNER_TOKEN: 'runner-token',
+    INK_DEVICE_TOKEN: 'device-token',
+    INK_SOURCE_TOKEN: 'source-token',
+    INK_BRIDGE_TOKEN: 'bridge-token'
+  };
+
+  assert.equal(await isAuthorized(requestWithToken('runner-token'), env, 'runner'), true);
+  assert.equal(await isAuthorized(requestWithToken('device-token'), env, 'runner'), false);
+  assert.equal(await isAuthorized(requestWithToken('source-token'), env, 'runner'), false);
+  assert.equal(await isAuthorized(requestWithToken('bridge-token'), env, 'runner'), false);
+});

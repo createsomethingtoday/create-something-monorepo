@@ -1,0 +1,30 @@
+{
+  "name": "@create-something/calm-operator-codex-runner",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "check": "tsc --noEmit",
+    "once": "tsx src/cli.ts once",
+    "start": "tsx src/cli.ts start",
+    "status": "tsx src/cli.ts status",
+    "stop": "tsx src/cli.ts stop",
+    "service:start": "tsx scripts/service.ts start",
+    "service:status": "tsx scripts/service.ts status",
+    "service:stop": "tsx scripts/service.ts stop",
+    "test": "tsx --test test/*.test.ts",
+    "verify:live": "tsx scripts/verify-live.ts",
+    "verify:physical": "tsx scripts/verify-physical.ts"
+  },
+  "dependencies": {
+    "@create-something/codex-presence": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.9",
+    "tsx": "^4.21.0",
+    "typescript": "^5.7.2"
+  }
+}
