@@ -9,6 +9,7 @@ import {
   readRuntimeEnv,
   readRuntimeList
 } from '../runtime';
+import { safeAgentReturnPath } from './return-path';
 
 export interface IdentityAccessContext {
   fetch?: typeof globalThis.fetch;
@@ -35,7 +36,11 @@ function buildSignInUrl(context: IdentityAccessContext): string {
   const rawUrl = readRuntimeEnv(context.platform, 'CS_AUTH_SIGN_IN_URL')?.trim() || '/sign-in';
   try {
     const target = new URL(rawUrl, context.url.origin);
-    target.searchParams.set('redirect', `${context.url.pathname}${context.url.search}`);
+    const returnPath =
+      context.url.pathname === '/sign-in'
+        ? safeAgentReturnPath(context.url.searchParams.get('redirect'))
+        : safeAgentReturnPath(`${context.url.pathname}${context.url.search}`);
+    target.searchParams.set('redirect', returnPath);
     return target.pathname.startsWith('/') && target.origin === context.url.origin
       ? `${target.pathname}${target.search}`
       : target.toString();
