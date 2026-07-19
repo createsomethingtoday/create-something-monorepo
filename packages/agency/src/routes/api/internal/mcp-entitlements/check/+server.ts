@@ -7,9 +7,11 @@ import {
 	findAgencyMcpEntitlementByAuthSubject,
 	reconcileAgencyMcpEntitlement,
 } from '$lib/server/mcp-entitlements';
+import { deriveControlCredentialRole } from '$lib/server/control-activation-role';
 
 interface EntitlementCheckBody {
 	auth_subject?: string;
+	auth_email?: string;
 	account_id?: string;
 	tenant_id?: string;
 }
@@ -42,6 +44,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 	const row =
 		(await reconcileAgencyMcpEntitlement(env.DB, {
 			authSubject,
+			authEmail: body?.auth_email?.trim() || null,
 			accountId: body?.account_id?.trim() || null,
 			tenantId: body?.tenant_id?.trim() || null,
 		})) ?? (await findAgencyMcpEntitlementByAuthSubject(env.DB, authSubject));
@@ -50,9 +53,21 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		tenantId: body?.tenant_id?.trim() || null,
 	});
 	const snapshot = buildAgencyEntitlementSnapshot(row, decision);
+	// Identity authenticates the subject before calling this API. Use its current
+	// email for the operator allowlist rather than a potentially stale projection.
+	const currentIdentityEmail = body?.auth_email?.trim() || row?.auth_email || '';
+	const controlRole = row
+		? deriveControlCredentialRole({
+			email: currentIdentityEmail,
+			metadataJson: row.metadata_json,
+			operatorEmails: env.AGENCY_OPERATOR_EMAILS,
+		})
+		: null;
 
 	return json({
 		...decision,
+		workspace_account_id: row?.workspace_account_id ?? null,
+		control_role: controlRole,
 		service_tier: snapshot.service_tier,
 		entitlement_snapshot: snapshot,
 	});

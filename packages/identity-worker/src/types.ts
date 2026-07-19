@@ -20,6 +20,8 @@ export interface Env {
 	MCP_POLICY_FALLBACK_ENABLED?: string;
 	AGENCY_INTERNAL_API_URL?: string;
 	AGENCY_INTERNAL_API_KEY?: string;
+	OAUTH_ISSUER?: string;
+	CONTROL_RUNTIME_RESOURCES?: string;
 }
 
 // Database models
