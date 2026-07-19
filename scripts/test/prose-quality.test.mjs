@@ -285,8 +285,26 @@ test('target-reader corpus keeps pass and revise coverage anchored to current so
   for (const entry of corpus.cases) {
     if (entry.source) {
       const sourcePath = path.join(repoRoot, entry.source.file);
-      assert(existsSync(sourcePath), `${entry.id} source file is missing`);
-      const sourceLines = readFileSync(sourcePath, 'utf8').split(/\r?\n/);
+      let sourceText;
+
+      if (entry.source.revision) {
+        const historical = spawnSync(
+          'git',
+          ['show', `${entry.source.revision}:${entry.source.file}`],
+          { cwd: repoRoot, encoding: 'utf8' }
+        );
+        assert.equal(
+          historical.status,
+          0,
+          `${entry.id} historical source is unavailable: ${historical.stderr || historical.stdout}`
+        );
+        sourceText = historical.stdout;
+      } else {
+        assert(existsSync(sourcePath), `${entry.id} source file is missing`);
+        sourceText = readFileSync(sourcePath, 'utf8');
+      }
+
+      const sourceLines = sourceText.split(/\r?\n/);
       const nearbySource = sourceLines
         .slice(Math.max(0, entry.source.line - 3), entry.source.line + 3)
         .join(' ')

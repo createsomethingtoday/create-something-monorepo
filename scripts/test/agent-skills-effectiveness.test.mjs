@@ -438,7 +438,11 @@ test('writing skills reject local-clarity false positives', () => {
     agencyPair.map((entry) => entry.expected).sort(),
     ['pass', 'revise']
   );
-  assert(agencyPair.every((entry) => entry.fixture?.excerpt));
+  const agencyNegative = agencyPair.find((entry) => entry.expected === 'revise');
+  const agencyPositive = agencyPair.find((entry) => entry.expected === 'pass');
+  assert.match(agencyNegative?.source?.revision ?? '', /^[0-9a-f]{40}$/);
+  assert.match(agencyNegative?.source?.anchor ?? '', /The page now holds one argument/);
+  assert.match(agencyPositive?.fixture?.excerpt ?? '', /Your team sets the limits/);
 });
 
 test('repo-owned Codex skill installer links the adapted skills', (t) => {
