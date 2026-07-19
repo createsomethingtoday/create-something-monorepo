@@ -18,7 +18,7 @@
       summary: 'Life + legacy',
       title: 'Understand the source before borrowing the principle.',
       detail:
-        'Biography and legacy establish the conditions that shaped the work and the part CREATE SOMETHING carries forward.',
+        'See the life and conditions behind the work—and what CREATE SOMETHING carries forward.',
       tone: 'neutral'
     },
     {
@@ -26,8 +26,7 @@
       label: 'Principles',
       summary: `${data.principles.length} operating rules`,
       title: 'Translate the philosophy into decisions.',
-      detail:
-        'Each principle names a judgment that can be applied to an interface, system, or delivery decision.',
+      detail: 'Use each principle to guide an interface, system, or delivery decision.',
       tone: 'allow',
       receipts: [`${data.principles.length} principles`]
     },
@@ -36,8 +35,7 @@
       label: 'Evidence',
       summary: 'Words + artifacts',
       title: 'Inspect what supports the interpretation.',
-      detail:
-        'Quotes, visual references, and source links keep the profile inspectable instead of asking the reader to accept a summary.',
+      detail: 'Check the quotes, visual references, and source links behind the interpretation.',
       tone: 'review',
       receipts: [
         `${data.quotes.length} quotes`,
@@ -86,7 +84,7 @@
         <p class="tagline">{data.master.tagline}</p>
       {/if}
       <p class="opening-direction">
-        Start with context, translate the principles, then inspect the evidence behind the profile.
+        Read the context first. Then apply the principles and check the evidence.
       </p>
     </div>
   </section>
@@ -95,7 +93,7 @@
     id="master-profile"
     eyebrow="Source profile"
     title="Context. Principles. Evidence."
-    description="One indexed profile replaces a stack of disconnected chapters while keeping every source in its original role."
+    description="See what shaped the work, what it teaches, and which sources support the interpretation."
     scenes={masterScenes}
     ariaLabel={`${data.master.name} source profile`}
   >
@@ -198,7 +196,7 @@
   <PerformanceActionFooter
     eyebrow="Continue the canon"
     title="Carry the source into the work."
-    description="Compare the principle across masters, or return to the source collection before choosing what should govern the next decision."
+    description="Compare these principles with another master, or return to the collection before choosing what guides your next decision."
     items={[
       { label: 'Current source', value: data.master.name },
       { label: 'Operating rules', value: `${data.principles.length} principles` }

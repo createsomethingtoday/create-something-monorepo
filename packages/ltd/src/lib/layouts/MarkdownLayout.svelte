@@ -129,7 +129,7 @@ ${section ? `**Section**: ${section}\n` : ''}
     {@render children?.()}
 
     <footer class="reading-handoff">
-      <span>Continue through the source family</span>
+      <span>Keep exploring</span>
       <a href={category === 'Pattern' ? '/patterns' : '/canon'}>
         All {category === 'Pattern' ? 'Patterns' : 'Canon'} →
       </a>
