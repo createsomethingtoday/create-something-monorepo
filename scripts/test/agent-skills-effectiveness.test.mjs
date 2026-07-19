@@ -440,7 +440,15 @@ test('writing skills reject local-clarity false positives', () => {
   );
   const agencyNegative = agencyPair.find((entry) => entry.expected === 'revise');
   const agencyPositive = agencyPair.find((entry) => entry.expected === 'pass');
-  assert.match(agencyNegative?.source?.revision ?? '', /^[0-9a-f]{40}$/);
+  assert.match(
+    agencyNegative?.source?.file ?? '',
+    /^scripts\/prose-quality\/evals\/fixtures\//
+  );
+  assert.match(agencyNegative?.source?.provenance?.revision ?? '', /^[0-9a-f]{40}$/);
+  assert.equal(
+    agencyNegative?.source?.provenance?.file,
+    'packages/agency/src/routes/+page.svelte'
+  );
   assert.match(agencyNegative?.source?.anchor ?? '', /The page now holds one argument/);
   assert.match(agencyPositive?.fixture?.excerpt ?? '', /Your team sets the limits/);
 });

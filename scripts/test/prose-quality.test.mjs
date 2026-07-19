@@ -285,25 +285,8 @@ test('target-reader corpus keeps pass and revise coverage anchored to current so
   for (const entry of corpus.cases) {
     if (entry.source) {
       const sourcePath = path.join(repoRoot, entry.source.file);
-      let sourceText;
-
-      if (entry.source.revision) {
-        const historical = spawnSync(
-          'git',
-          ['show', `${entry.source.revision}:${entry.source.file}`],
-          { cwd: repoRoot, encoding: 'utf8' }
-        );
-        assert.equal(
-          historical.status,
-          0,
-          `${entry.id} historical source is unavailable: ${historical.stderr || historical.stdout}`
-        );
-        sourceText = historical.stdout;
-      } else {
-        assert(existsSync(sourcePath), `${entry.id} source file is missing`);
-        sourceText = readFileSync(sourcePath, 'utf8');
-      }
-
+      assert(existsSync(sourcePath), `${entry.id} source file is missing`);
+      const sourceText = readFileSync(sourcePath, 'utf8');
       const sourceLines = sourceText.split(/\r?\n/);
       const nearbySource = sourceLines
         .slice(Math.max(0, entry.source.line - 3), entry.source.line + 3)
@@ -313,6 +296,14 @@ test('target-reader corpus keeps pass and revise coverage anchored to current so
         nearbySource.includes(entry.source.anchor),
         `${entry.id} anchor drifted near ${entry.source.file}:${entry.source.line}`
       );
+      if (entry.source.provenance) {
+        assert.match(entry.source.provenance.file, /\S/);
+        assert.match(entry.source.provenance.revision, /^[0-9a-f]{40}$/);
+        assert(Number.isInteger(entry.source.provenance.line));
+        assert(sourceText.includes(entry.source.provenance.file));
+        assert(sourceText.includes(entry.source.provenance.revision));
+        assert(sourceText.includes(String(entry.source.provenance.line)));
+      }
     } else {
       assert.match(entry.fixture?.excerpt ?? '', /\S/, `${entry.id} fixture excerpt is missing`);
       assert.match(

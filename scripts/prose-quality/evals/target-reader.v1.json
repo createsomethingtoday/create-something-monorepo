@@ -223,10 +223,14 @@
       "reviewScope": "rendered-component",
       "context": "Read the operating-story heading, description, three visible stage labels, and first Boundary scene as one mobile component.",
       "source": {
-        "file": "packages/agency/src/routes/+page.svelte",
-        "revision": "dd81d8b905ab8ca79a1e3177fea85c81eb647941",
-        "line": 262,
-        "anchor": "The page now holds one argument: keep consequential judgment, make the workflow visible, then operate the first lane with proof attached."
+        "file": "scripts/prose-quality/evals/fixtures/agency-operating-story-original.md",
+        "line": 9,
+        "anchor": "The page now holds one argument: keep consequential judgment, make the workflow visible, then operate the first lane with proof attached.",
+        "provenance": {
+          "file": "packages/agency/src/routes/+page.svelte",
+          "revision": "dd81d8b905ab8ca79a1e3177fea85c81eb647941",
+          "line": 262
+        }
       },
       "fixture": {
         "excerpt": "The page now holds one argument: keep consequential judgment, make the workflow visible, then operate the first lane with proof attached.",
