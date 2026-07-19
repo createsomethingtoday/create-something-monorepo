@@ -260,7 +260,7 @@ test('target-reader corpus keeps pass and revise coverage anchored to current so
   const corpus = JSON.parse(readFileSync(corpusPath, 'utf8'));
   assert.equal(corpus.version, 1);
   assert.equal(corpus.reader, 'junior-practitioner');
-  assert.equal(corpus.cases.length, 12);
+  assert.equal(corpus.cases.length, 14);
   assert.deepEqual(
     Object.fromEntries(
       ['pass', 'revise'].map((verdict) => [
@@ -268,7 +268,7 @@ test('target-reader corpus keeps pass and revise coverage anchored to current so
         corpus.cases.filter((entry) => entry.expected === verdict).length
       ])
     ),
-    { pass: 6, revise: 6 }
+    { pass: 7, revise: 7 }
   );
   assert.deepEqual([...new Set(corpus.cases.map((entry) => entry.property))].sort(), [
     'agency',
@@ -283,17 +283,26 @@ test('target-reader corpus keeps pass and revise coverage anchored to current so
   ]);
 
   for (const entry of corpus.cases) {
-    const sourcePath = path.join(repoRoot, entry.source.file);
-    assert(existsSync(sourcePath), `${entry.id} source file is missing`);
-    const sourceLines = readFileSync(sourcePath, 'utf8').split(/\r?\n/);
-    const nearbySource = sourceLines
-      .slice(Math.max(0, entry.source.line - 3), entry.source.line + 3)
-      .join(' ')
-      .replace(/\s+/g, ' ');
-    assert(
-      nearbySource.includes(entry.source.anchor),
-      `${entry.id} anchor drifted near ${entry.source.file}:${entry.source.line}`
-    );
+    if (entry.source) {
+      const sourcePath = path.join(repoRoot, entry.source.file);
+      assert(existsSync(sourcePath), `${entry.id} source file is missing`);
+      const sourceLines = readFileSync(sourcePath, 'utf8').split(/\r?\n/);
+      const nearbySource = sourceLines
+        .slice(Math.max(0, entry.source.line - 3), entry.source.line + 3)
+        .join(' ')
+        .replace(/\s+/g, ' ');
+      assert(
+        nearbySource.includes(entry.source.anchor),
+        `${entry.id} anchor drifted near ${entry.source.file}:${entry.source.line}`
+      );
+    } else {
+      assert.match(entry.fixture?.excerpt ?? '', /\S/, `${entry.id} fixture excerpt is missing`);
+      assert.match(
+        entry.fixture?.adjacentContext ?? '',
+        /\S/,
+        `${entry.id} fixture context is missing`
+      );
+    }
     assert.match(entry.reason, /\S/);
     assert(
       ['document-section', 'rendered-component'].includes(entry.reviewScope),

@@ -22,6 +22,24 @@ Over:
 
 Keep passive voice when the actor is unknown, irrelevant, intentionally withheld, or less important than the affected object.
 
+## Local Comprehension
+
+At the reader's first encounter with a claim, test for a recognizable actor, meaningful action, and observable result:
+
+1. Can the reader recognize who or what matters?
+2. Can the reader name what that actor does or decides?
+3. Can the reader observe the result, consequence, or changed state?
+
+The sentence need not state every detail, but it must carry enough local meaning for the reader to continue without guessing. A later card or definition cannot rescue an unexplained metaphor, artifact-facing meta-copy, or an abstract opening.
+
+Prefer:
+
+> Your team sets the limits before work moves. We map the handoff, test one workflow, and keep a record of every run.
+
+Over:
+
+> The page now holds one argument: keep consequential judgment, make the workflow visible, then operate the first lane with proof attached.
+
 ## Information Flow
 
 Shape sentences and paragraphs around reader expectations:

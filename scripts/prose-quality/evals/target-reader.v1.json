@@ -57,7 +57,7 @@
       "context": "Read the complete transformation-table row containing the discouraged phrase and its practical replacement.",
       "source": {
         "file": "packages/ltd/src/routes/voice/+page.svelte",
-        "line": 149,
+        "line": 212,
         "anchor": "MCP-enabled trust layer for enterprise automation"
       },
       "reason": "Shows the unclear label beside a concrete translation a practitioner can recognize."
@@ -213,6 +213,34 @@
         "anchor": "This framework proposes a hierarchical ontology"
       },
       "reason": "Introduces the ontology, typed artifacts, four cross-cutting concerns, control models, sampling, and embodied cognition before one concrete debugging or design consequence."
+    },
+    {
+      "id": "agency-operating-story-local-clarity",
+      "pair": "agency-operating-story",
+      "property": "agency",
+      "artifactType": "public-copy",
+      "expected": "revise",
+      "reviewScope": "rendered-component",
+      "context": "Read the operating-story heading, description, three visible stage labels, and first Boundary scene as one mobile component.",
+      "fixture": {
+        "excerpt": "The page now holds one argument: keep consequential judgment, make the workflow visible, then operate the first lane with proof attached.",
+        "adjacentContext": "Boundary. Map. Operate. The first scene later explains that work may run, wait for approval, or stop and that each action leaves a record."
+      },
+      "reason": "The first encounter describes the artifact and stacks internal abstractions before a recognizable actor, action, or observable result. Later scene copy cannot retroactively make the opening clear."
+    },
+    {
+      "id": "agency-operating-story-actor-action-result",
+      "pair": "agency-operating-story",
+      "property": "agency",
+      "artifactType": "public-copy",
+      "expected": "pass",
+      "reviewScope": "rendered-component",
+      "context": "Read the operating-story heading, description, three visible stage labels, and first Boundary scene as one mobile component.",
+      "fixture": {
+        "excerpt": "Your team sets the limits before work moves. We map the handoff, test one workflow, and keep a record of every run.",
+        "adjacentContext": "Boundary. Map. Operate. The first scene shows what happens before and after controlled delegation and names run, wait, and stop decisions."
+      },
+      "reason": "The opening gives decisions to a recognizable actor, expresses the method as actions, and translates proof into a record the reader can observe without relying on later definitions."
     }
   ]
 }
