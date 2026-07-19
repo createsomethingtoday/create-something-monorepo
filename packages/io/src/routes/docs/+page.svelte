@@ -1,245 +1,282 @@
 <script lang="ts">
-	const tools = [
-		{
-			name: 'Ground',
-			tagline: 'Grounded claims for code',
-			description: 'MCP server that prevents AI hallucination in code analysis. Verification-first patterns for duplicate detection, dead code, and orphan analysis.',
-			href: '/docs/ground',
-			npm: '@createsomething/ground-mcp',
-			features: ['Duplicate detection', 'Dead code analysis', 'Orphan detection', 'Design drift analysis']
-		},
-		{
-			name: 'Loom',
-			tagline: 'External memory for agents',
-			description: 'AI-native coordination layer. Multi-agent task routing, checkpointing, and crash recovery for AI coding assistants.',
-			href: '/docs/loom',
-			npm: '@createsomething/loom-mcp',
-			features: ['Task coordination', 'Crash recovery', 'Smart routing', 'Session checkpointing']
-		}
-	];
+  import OrientationOpening from '$lib/components/orientation/OrientationOpening.svelte';
+
+  const tools = [
+    {
+      name: 'Ground',
+      tagline: 'Grounded claims for code',
+      description:
+        'Verification-first code analysis for duplicates, dead code, orphans, environment leakage, and design drift.',
+      href: '/docs/ground',
+      npm: '@createsomething/ground-mcp',
+      command: 'npx @createsomething/ground-mcp',
+      features: [
+        'Duplicate detection',
+        'Dead code analysis',
+        'Orphan detection',
+        'Design drift analysis'
+      ],
+      state: 'Current analysis tool'
+    },
+    {
+      name: 'Loom',
+      tagline: 'Historical coordination proof',
+      description:
+        'The archived coordination system that proved the need for task ownership, routing, checkpointing, and crash recovery.',
+      href: '/docs/loom',
+      npm: '@createsomething/loom-mcp',
+      command: 'npx @createsomething/loom-mcp',
+      features: ['Task coordination', 'Crash recovery', 'Smart routing', 'Session checkpointing'],
+      state: 'Legacy reference; Linear is current'
+    }
+  ];
+
+  const supportedTools = [
+    'Claude Code',
+    'Claude Desktop',
+    'Cursor',
+    'Windsurf',
+    'VS Code + Copilot',
+    'Codex CLI',
+    'Gemini'
+  ];
 </script>
 
 <svelte:head>
-	<title>Documentation | CREATE SOMETHING</title>
-	<meta name="description" content="Documentation for CREATE SOMETHING tools: Ground (code analysis), Loom (agent coordination). MCP servers for Claude, Cursor, Windsurf, and other AI coding assistants." />
-	<meta name="keywords" content="MCP, Model Context Protocol, AI coding, Claude Code, Cursor, Windsurf, code analysis, agent coordination, documentation" />
+  <title>Documentation | CREATE SOMETHING</title>
+  <meta
+    name="description"
+    content="Documentation for Ground code analysis and the historical Loom agent-coordination system."
+  />
+  <meta
+    name="keywords"
+    content="MCP, Model Context Protocol, AI coding, Ground, Loom, code analysis, agent coordination, documentation"
+  />
+  <link rel="canonical" href="https://createsomething.io/docs" />
 </svelte:head>
 
-<main class="docs-index">
-	<header class="hero">
-		<h1>Documentation</h1>
-		<p class="tagline">Tools for AI-native development</p>
-		<p class="description">
-			MCP servers and CLI tools that extend Claude Code, Cursor, Windsurf, VS Code Copilot, and other AI coding assistants.
-		</p>
-	</header>
+<OrientationOpening
+  active="docs"
+  eyebrow="Documentation index"
+  title="Choose the boundary you need"
+  description="Use Ground to verify code claims. Use the Loom archive to understand the coordination lessons that now live in a Linear-first operating model."
+  summary={[
+    { label: 'Ground', value: 'Current' },
+    { label: 'Loom', value: 'Historical' },
+    { label: 'Protocol', value: 'MCP' }
+  ]}
+/>
 
-	<section class="tools-grid">
-		{#each tools as tool}
-			<a href={tool.href} class="tool-card">
-				<h2>{tool.name}</h2>
-				<p class="tool-tagline">{tool.tagline}</p>
-				<p class="tool-description">{tool.description}</p>
-				<code class="npm-package">{tool.npm}</code>
-				<ul class="features">
-					{#each tool.features as feature}
-						<li>{feature}</li>
-					{/each}
-				</ul>
-			</a>
-		{/each}
-	</section>
+<section class="orientation-collection" aria-labelledby="documentation-tools-title">
+  <div class="docs-inner">
+    <header>
+      <div>
+        <p>Two documented boundaries</p>
+        <h2 id="documentation-tools-title">Inspect before installing</h2>
+      </div>
+      <span>{supportedTools.length} supported clients</span>
+    </header>
 
-	<section class="quick-install">
-		<h2>Quick Install</h2>
-		<div class="install-grid">
-			<div class="install-option">
-				<h3>Ground</h3>
-				<pre><code>npx @createsomething/ground-mcp</code></pre>
-			</div>
-			<div class="install-option">
-				<h3>Loom</h3>
-				<pre><code>npx @createsomething/loom-mcp</code></pre>
-			</div>
-		</div>
-	</section>
+    <div class="tool-grid">
+      {#each tools as tool}
+        <article class="tool-card">
+          <div class="tool-heading">
+            <span>{tool.state}</span>
+            <h3>{tool.name}</h3>
+            <strong>{tool.tagline}</strong>
+            <p>{tool.description}</p>
+          </div>
 
-	<section class="supported-tools">
-		<h2>Supported Tools</h2>
-		<p>Works with any MCP-compatible AI coding assistant:</p>
-		<ul class="tool-list">
-			<li>Claude Code (CLI)</li>
-			<li>Claude Desktop</li>
-			<li>Cursor</li>
-			<li>Windsurf</li>
-			<li>VS Code + Copilot</li>
-			<li>Codex CLI</li>
-			<li>Gemini</li>
-		</ul>
-	</section>
-</main>
+          <code>{tool.npm}</code>
+
+          <ul>
+            {#each tool.features as feature}<li>{feature}</li>{/each}
+          </ul>
+
+          <div class="quick-install">
+            <span>Quick reference</span>
+            <pre><code>{tool.command}</code></pre>
+          </div>
+
+          <a href={tool.href}>Read {tool.name} documentation</a>
+        </article>
+      {/each}
+    </div>
+
+    <div class="supported" aria-label="Supported MCP clients">
+      <span>Supported MCP clients</span>
+      <ul>
+        {#each supportedTools as tool}<li>{tool}</li>{/each}
+      </ul>
+    </div>
+  </div>
+</section>
 
 <style>
-	.docs-index {
-		max-width: 1200px;
-		margin: 0 auto;
-		padding: var(--space-performance-lg);
-	}
+  .orientation-collection {
+    padding: clamp(2rem, 5vw, 4rem) 1.5rem clamp(4rem, 8vw, 6rem);
+    border-top: 1px solid var(--color-performance-border-default);
+  }
 
-	.hero {
-		text-align: center;
-		margin-bottom: var(--space-performance-xl);
-	}
+  .docs-inner {
+    display: grid;
+    width: min(72rem, 100%);
+    margin-inline: auto;
+    gap: var(--space-performance-lg);
+  }
 
-	.hero h1 {
-		font-size: var(--text-performance-display);
-		color: var(--color-performance-fg-primary);
-		margin-bottom: var(--space-performance-sm);
-	}
+  header {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: var(--space-performance-md);
+  }
 
-	.tagline {
-		font-size: var(--text-performance-h3);
-		color: var(--color-performance-fg-secondary);
-		margin-bottom: var(--space-performance-sm);
-	}
+  header > div {
+    display: grid;
+    gap: 0.35rem;
+  }
 
-	.description {
-		font-size: var(--text-performance-body-lg);
-		color: var(--color-performance-fg-tertiary);
-		max-width: 600px;
-		margin: 0 auto;
-	}
+  header p,
+  header h2 {
+    margin: 0;
+  }
 
-	.tools-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-		gap: var(--space-performance-lg);
-		margin-bottom: var(--space-performance-xl);
-	}
+  header p,
+  header > span,
+  .tool-heading > span,
+  .quick-install > span,
+  .supported > span {
+    color: var(--color-performance-fg-tertiary);
+    font-family: var(--font-performance-mono);
+    font-size: var(--text-performance-caption);
+    text-transform: uppercase;
+  }
 
-	.tool-card {
-		background: var(--color-performance-bg-surface);
-		border-radius: var(--radius-performance-scale-lg);
-		padding: var(--space-performance-lg);
-		text-decoration: none;
-		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
-	}
+  header h2 {
+    font-size: var(--text-performance-h2);
+  }
 
-	.tool-card:hover {
-		border-color: var(--color-border-hover);
-		transform: translateY(-2px);
-	}
+  .tool-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-performance-md);
+  }
 
-	.tool-card h2 {
-		font-size: var(--text-performance-h2);
-		color: var(--color-performance-fg-primary);
-		margin-bottom: var(--space-performance-xs);
-	}
+  .tool-card {
+    display: grid;
+    gap: var(--space-performance-md);
+    padding: var(--space-performance-lg);
+    border: 1px solid var(--color-performance-border-default);
+    background: var(--color-performance-bg-surface);
+  }
 
-	.tool-tagline {
-		font-size: var(--text-performance-body-lg);
-		color: var(--color-performance-fg-secondary);
-		margin-bottom: var(--space-performance-sm);
-	}
+  .tool-heading {
+    display: grid;
+    gap: var(--space-performance-xs);
+  }
 
-	.tool-description {
-		font-size: var(--text-performance-body);
-		color: var(--color-performance-fg-tertiary);
-		margin-bottom: var(--space-performance-md);
-	}
+  .tool-heading h3,
+  .tool-heading p {
+    margin: 0;
+  }
 
-	.npm-package {
-		display: inline-block;
-		background: var(--color-performance-bg-subtle);
-		padding: var(--space-performance-xs) var(--space-performance-sm);
-		border-radius: var(--radius-performance-scale-sm);
-		font-size: var(--text-performance-body-sm);
-		color: var(--color-performance-fg-secondary);
-		margin-bottom: var(--space-performance-md);
-	}
+  .tool-heading h3 {
+    font-size: var(--text-performance-h2);
+  }
 
-	.features {
-		list-style: none;
-		padding: 0;
-		margin: 0;
-	}
+  .tool-heading strong {
+    color: var(--color-performance-fg-secondary);
+  }
 
-	.features li {
-		font-size: var(--text-performance-body-sm);
-		color: var(--color-performance-fg-muted);
-		padding-left: var(--space-performance-md);
-		position: relative;
-		margin-bottom: var(--space-performance-xs);
-	}
+  .tool-heading p {
+    color: var(--color-performance-fg-tertiary);
+    line-height: var(--leading-performance-relaxed);
+  }
 
-	.features li::before {
-		content: '→';
-		position: absolute;
-		left: 0;
-		color: var(--color-performance-fg-muted);
-	}
+  .tool-card > code {
+    width: fit-content;
+    max-width: 100%;
+    padding: 0.4rem 0.6rem;
+    background: var(--color-performance-bg-subtle);
+    overflow-wrap: anywhere;
+  }
 
-	.quick-install {
-		border-radius: var(--radius-performance-scale-lg);
-		padding: var(--space-performance-lg);
-		margin-bottom: var(--space-performance-xl);
-	}
+  .tool-card ul {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin: 0;
+    padding: 0;
+    gap: var(--space-performance-xs);
+    list-style: none;
+  }
 
-	.quick-install h2 {
-		font-size: var(--text-performance-h3);
-		color: var(--color-performance-fg-primary);
-		margin-bottom: var(--space-performance-md);
-	}
+  .tool-card li {
+    color: var(--color-performance-fg-secondary);
+    font-size: var(--text-performance-body-sm);
+  }
 
-	.install-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-		gap: var(--space-performance-md);
-	}
+  .quick-install {
+    display: grid;
+    gap: var(--space-performance-xs);
+  }
 
-	.install-option h3 {
-		font-size: var(--text-performance-body-lg);
-		color: var(--color-performance-fg-secondary);
-		margin-bottom: var(--space-performance-xs);
-	}
+  pre {
+    max-width: 100%;
+    margin: 0;
+    padding: var(--space-performance-sm);
+    background: var(--color-performance-bg-pure);
+    overflow-x: auto;
+  }
 
-	.install-option pre {
-		background: var(--color-performance-bg-pure);
-		padding: var(--space-performance-sm);
-		border-radius: var(--radius-performance-scale-sm);
-		overflow-x: auto;
-	}
+  .tool-card > a {
+    width: fit-content;
+    color: var(--color-performance-fg-primary);
+    font-weight: var(--font-performance-semibold);
+    text-decoration: underline;
+  }
 
-	.install-option code {
-		font-size: var(--text-performance-body-sm);
-		color: var(--color-performance-fg-primary);
-	}
+  .supported {
+    display: grid;
+    gap: var(--space-performance-sm);
+    padding-block: var(--space-performance-md);
+    border-block: 1px solid var(--color-performance-border-default);
+  }
 
-	.supported-tools h2 {
-		font-size: var(--text-performance-h3);
-		color: var(--color-performance-fg-primary);
-		margin-bottom: var(--space-performance-sm);
-	}
+  .supported ul {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0;
+    padding: 0;
+    gap: var(--space-performance-xs);
+    list-style: none;
+  }
 
-	.supported-tools p {
-		color: var(--color-performance-fg-tertiary);
-		margin-bottom: var(--space-performance-md);
-	}
+  .supported li {
+    padding: 0.35rem 0.55rem;
+    background: var(--color-performance-bg-subtle);
+    color: var(--color-performance-fg-secondary);
+    font-size: var(--text-performance-body-sm);
+  }
 
-	.tool-list {
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--space-performance-sm);
-		list-style: none;
-		padding: 0;
-		margin: 0;
-	}
+  @media (max-width: 720px) {
+    .orientation-collection {
+      padding-inline: 1.25rem;
+    }
 
-	.tool-list li {
-		background: var(--color-performance-bg-subtle);
-		padding: var(--space-performance-xs) var(--space-performance-sm);
-		border-radius: var(--radius-performance-scale-sm);
-		font-size: var(--text-performance-body-sm);
-		color: var(--color-performance-fg-secondary);
-	}
+    header {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .tool-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 420px) {
+    .tool-card ul {
+      grid-template-columns: 1fr;
+    }
+  }
 </style>

@@ -1,365 +1,461 @@
 <script lang="ts">
-	const coreTools = [
-		{ name: 'ground_compare', description: 'Compare two files for similarity (0.0-1.0 score)' },
-		{ name: 'ground_count_uses', description: 'Count symbol uses; distinguishes runtime vs type-only usages' },
-		{ name: 'ground_check_connections', description: 'Check if module is connected (understands Cloudflare Workers)' },
-		{ name: 'ground_find_duplicate_functions', description: 'Find duplicates across AND within files; supports monorepos' }
-	];
+  import { PerformanceNarrativeStage } from '@create-something/canon';
+  import OrientationOpening from '$lib/components/orientation/OrientationOpening.svelte';
 
-	const claimTools = [
-		{ name: 'ground_claim_dead_code', description: 'Claim code is dead — blocked until you\'ve counted uses' },
-		{ name: 'ground_claim_orphan', description: 'Claim module is orphaned — blocked until you\'ve checked connections' }
-	];
+  const coreTools = [
+    { name: 'ground_compare', description: 'Compare two files for similarity (0.0-1.0 score)' },
+    {
+      name: 'ground_count_uses',
+      description: 'Count symbol uses; distinguish runtime from type-only usage'
+    },
+    {
+      name: 'ground_check_connections',
+      description: 'Check whether a module is connected, including Cloudflare Workers'
+    },
+    {
+      name: 'ground_find_duplicate_functions',
+      description: 'Find duplicates across and within files; supports monorepos'
+    }
+  ];
 
-	const discoveryTools = [
-		{ name: 'ground_find_orphans', description: 'Find modules nothing imports' },
-		{ name: 'ground_find_dead_exports', description: 'Find exports never imported elsewhere' },
-		{ name: 'ground_check_environment', description: 'Detect Workers/Node.js API leakage' },
-		{ name: 'ground_suggest_fix', description: 'Get suggestions for fixing duplications' }
-	];
+  const claimTools = [
+    {
+      name: 'ground_claim_dead_code',
+      description: 'Block a dead-code claim until uses have been counted'
+    },
+    {
+      name: 'ground_claim_orphan',
+      description: 'Block an orphan claim until connections have been checked'
+    }
+  ];
 
-	const graphTools = [
-		{ name: 'ground_build_graph', description: 'Build symbol graph for repo-wide analysis' },
-		{ name: 'ground_query_dead', description: 'Query graph for dead exports (filters framework conventions)' }
-	];
+  const discoveryTools = [
+    { name: 'ground_find_orphans', description: 'Find modules nothing imports' },
+    { name: 'ground_find_dead_exports', description: 'Find exports never imported elsewhere' },
+    { name: 'ground_check_environment', description: 'Detect Workers and Node.js API leakage' },
+    { name: 'ground_suggest_fix', description: 'Suggest repairs for detected duplication' }
+  ];
 
-	const aiTools = [
-		{ name: 'ground_analyze', description: 'Batch analysis: duplicates + dead exports + orphans + environment' },
-		{ name: 'ground_diff', description: 'Incremental analysis vs git baseline (only NEW issues)' },
-		{ name: 'ground_verify_fix', description: 'Verify a fix was applied correctly' }
-	];
+  const graphTools = [
+    { name: 'ground_build_graph', description: 'Build a symbol graph for repository analysis' },
+    {
+      name: 'ground_query_dead',
+      description: 'Query dead exports while filtering framework conventions'
+    }
+  ];
 
-	const designTools = [
-		{ name: 'ground_find_drift', description: 'Find design token violations (hardcoded colors, spacing, etc.)' },
-		{ name: 'ground_adoption_ratio', description: 'Calculate token adoption percentage with health thresholds' },
-		{ name: 'ground_suggest_pattern', description: 'Suggest tokens to replace hardcoded values' },
-		{ name: 'ground_mine_patterns', description: 'Discover implicit patterns that should become tokens' },
-		{ name: 'ground_explain', description: 'AI-native traceability — explain why files are excluded' }
-	];
+  const aiTools = [
+    {
+      name: 'ground_analyze',
+      description: 'Batch duplicates, dead exports, orphans, and environment analysis'
+    },
+    { name: 'ground_diff', description: 'Analyze only issues added after a git baseline' },
+    { name: 'ground_verify_fix', description: 'Verify that a proposed repair was applied' }
+  ];
+
+  const designTools = [
+    { name: 'ground_find_drift', description: 'Find design-token violations' },
+    {
+      name: 'ground_adoption_ratio',
+      description: 'Calculate token adoption with health thresholds'
+    },
+    { name: 'ground_suggest_pattern', description: 'Map hardcoded values to existing tokens' },
+    { name: 'ground_mine_patterns', description: 'Find repeated values that should become tokens' },
+    { name: 'ground_explain', description: 'Explain why a file or symbol was excluded' }
+  ];
+
+  const toolGroups = [
+    { title: 'Core analysis', tools: coreTools },
+    { title: 'Verified claims', tools: claimTools },
+    { title: 'Discovery', tools: discoveryTools },
+    { title: 'Graph analysis', tools: graphTools },
+    { title: 'AI-native checks', tools: aiTools },
+    { title: 'Design systems', tools: designTools }
+  ];
+
+  const scenes = [
+    {
+      id: 'boundary',
+      label: 'Boundary',
+      summary: 'Compute before claiming',
+      title: 'Ground separates inspection from judgment.',
+      detail:
+        'An agent may form a hypothesis, but it cannot publish a duplicate, dead-code, or orphan claim until the corresponding check has produced evidence.',
+      tone: 'review' as const,
+      evidence: [
+        'Compare before duplicate claims',
+        'Count uses before dead-code claims',
+        'Check connections before orphan claims'
+      ]
+    },
+    {
+      id: 'install',
+      label: 'Install',
+      summary: 'Choose one client path',
+      title: 'Install the same server through the client you already use.',
+      detail:
+        'Claude Code, Cursor, and generic MCP clients all point to the same package and stdio boundary.',
+      tone: 'allow' as const
+    },
+    {
+      id: 'operate',
+      label: 'Operate',
+      summary: 'Inspect the complete surface',
+      title: 'Start with one check; use the batch surface only when the question is broad.',
+      detail:
+        'The full tool inventory remains inspectable by role, with example prompts and configuration boundaries adjacent to the commands they affect.',
+      tone: 'neutral' as const,
+      evidence: ['20 documented tools', '4 example requests', '.ground.yml configuration']
+    }
+  ];
 </script>
 
 <svelte:head>
-	<title>Ground Documentation | CREATE SOMETHING</title>
-	<meta name="description" content="Ground MCP server documentation. Prevents AI hallucination in code analysis with verification-first patterns. Works with Claude Code, Cursor, Windsurf." />
-	<meta name="keywords" content="Ground, MCP server, code analysis, duplicate detection, dead code, orphan detection, AI hallucination prevention, Claude Code, Cursor, Windsurf" />
+  <title>Ground Documentation | CREATE SOMETHING</title>
+  <meta
+    name="description"
+    content="Ground MCP documentation: verification-first duplicate, dead-code, orphan, environment, and design-system analysis."
+  />
+  <meta
+    name="keywords"
+    content="Ground, MCP server, code analysis, duplicate detection, dead code, orphan detection, Claude Code, Cursor"
+  />
+  <link rel="canonical" href="https://createsomething.io/docs/ground" />
 </svelte:head>
 
-<main class="docs-page">
-	<nav class="breadcrumb">
-		<a href="/docs">Documentation</a> / <span>Ground</span>
-	</nav>
+<OrientationOpening
+  active="docs"
+  eyebrow="Documentation / Ground"
+  title="Grounded claims for code"
+  description="Use Ground when an agent needs to verify a code claim before turning computation into judgment."
+  summary={[
+    { label: 'Package', value: '@createsomething/ground-mcp' },
+    { label: 'Rule', value: 'Check first' },
+    { label: 'Surface', value: '20 tools' }
+  ]}
+/>
 
-	<header class="hero">
-		<h1>Ground</h1>
-		<p class="tagline">Grounded claims for code</p>
-		<p class="description">
-			An MCP server that prevents AI hallucination in code analysis. 
-			You can't claim something until you've checked it.
-		</p>
-		<code class="npm-package">npm install @createsomething/ground-mcp</code>
-	</header>
-
-	<section class="section">
-		<h2>The Problem</h2>
-		<p>
-			AI agents are confident. Too confident. They'll tell you two files are "95% similar" 
-			without ever comparing them. They'll declare code "dead" without checking who uses it.
-		</p>
-		<p>This is hallucination dressed up as analysis.</p>
-	</section>
-
-	<section class="section">
-		<h2>The Solution</h2>
-		<p><strong>You can't claim something until you've checked it.</strong></p>
-		<ul>
-			<li><strong>Duplicates</strong> → You have to compare the files first</li>
-			<li><strong>Dead code</strong> → You have to count the uses first</li>
-			<li><strong>Orphans</strong> → You have to check the connections first</li>
-		</ul>
-		<p>This prevents AI hallucination by requiring computation before synthesis.</p>
-	</section>
-
-	<section class="section">
-		<h2>Installation</h2>
-		
-		<h3>Claude Code (CLI)</h3>
-		<pre><code>npm install @createsomething/ground-mcp
-claude mcp add --scope user --transport stdio ground -- npx @createsomething/ground-mcp</code></pre>
-
-		<h3>Cursor (One-Click)</h3>
-		<p><a href="cursor://anysphere.cursor-deeplink/mcp/install?name=ground&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyJAY3JlYXRlc29tZXRoaW5nL2dyb3VuZC1tY3AiXX0%3D" class="install-button">Install in Cursor →</a></p>
-
-		<h3>Other Tools</h3>
-		<p>Add to your MCP config (<code>.mcp.json</code>, <code>claude_desktop_config.json</code>, etc.):</p>
-		<pre><code>{`{
+<div class="orientation-stage">
+  <PerformanceNarrativeStage
+    id="ground-documentation"
+    eyebrow="Verification-first operation"
+    title="Understand the boundary, install once, then choose the narrowest check."
+    description="Each scene answers one operator question without separating the evidence from the action it supports."
+    {scenes}
+    ariaLabel="Ground documentation"
+  >
+    {#snippet artifact(_scene, index)}
+      {#if index === 0}
+        <div class="boundary-artifact">
+          <article>
+            <span>Problem</span>
+            <h3>Confidence can masquerade as analysis.</h3>
+            <p>
+              An agent can report “95% similar,” “dead,” or “orphaned” without comparing files,
+              counting uses, or checking the module graph.
+            </p>
+          </article>
+          <div class="claim-sequence" aria-label="Ground claim sequence">
+            <div><strong>Duplicates</strong><span>ground_compare</span></div>
+            <div><strong>Dead code</strong><span>ground_count_uses</span></div>
+            <div><strong>Orphans</strong><span>ground_check_connections</span></div>
+          </div>
+          <p class="boundary-result">
+            Ground requires computation before synthesis: you cannot claim something until you have
+            checked it.
+          </p>
+        </div>
+      {:else if index === 1}
+        <div class="install-grid">
+          <article>
+            <span>Claude Code</span>
+            <pre><code
+                >npm install @createsomething/ground-mcp
+claude mcp add --scope user --transport stdio ground -- npx @createsomething/ground-mcp</code
+              ></pre>
+          </article>
+          <article>
+            <span>Cursor</span>
+            <p>Use the one-click installer when Cursor is the owning MCP client.</p>
+            <a
+              href="cursor://anysphere.cursor-deeplink/mcp/install?name=ground&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyJAY3JlYXRlc29tZXRoaW5nL2dyb3VuZC1tY3AiXX0%3D"
+              >Install Ground in Cursor</a
+            >
+          </article>
+          <article>
+            <span>Other MCP clients</span>
+            <pre><code
+                >{`{
   "mcpServers": {
     "ground": {
       "command": "npx",
       "args": ["@createsomething/ground-mcp"]
     }
   }
-}`}</code></pre>
-	</section>
+}`}</code
+              ></pre>
+          </article>
+        </div>
+      {:else}
+        <div class="operate-artifact">
+          <div class="tool-groups">
+            {#each toolGroups as group}
+              <article>
+                <h3>{group.title}</h3>
+                <ul>
+                  {#each group.tools as tool}
+                    <li><code>{tool.name}</code><span>{tool.description}</span></li>
+                  {/each}
+                </ul>
+              </article>
+            {/each}
+          </div>
 
-	<section class="section">
-		<h2>Available Tools</h2>
+          <div class="usage-grid">
+            <article>
+              <h3>Usage examples</h3>
+              <pre><code
+                  >Find duplicate functions in src/ with at least 10 lines
+Check if the old-utils module is still connected to anything
+Run ground_analyze on packages/sdk to find dead code
+What's the CSS token adoption ratio in packages/components?</code
+                ></pre>
+            </article>
+            <article>
+              <h3>Configuration</h3>
+              <p>Ground loads <code>.ground.yml</code> from the project root for:</p>
+              <ul>
+                <li>Ignore patterns for functions, files, and directories</li>
+                <li>Known drift exceptions with documented reasons</li>
+                <li>Context declarations for intentional exclusions</li>
+                <li>Similarity thresholds</li>
+              </ul>
+            </article>
+          </div>
+        </div>
+      {/if}
+    {/snippet}
+  </PerformanceNarrativeStage>
+</div>
 
-		<h3>Core Analysis</h3>
-		<div class="tools-table">
-			{#each coreTools as tool}
-				<div class="tool-row">
-					<code class="tool-name">{tool.name}</code>
-					<span class="tool-desc">{tool.description}</span>
-				</div>
-			{/each}
-		</div>
-
-		<h3>Verified Claims (Audit Trail)</h3>
-		<div class="tools-table">
-			{#each claimTools as tool}
-				<div class="tool-row">
-					<code class="tool-name">{tool.name}</code>
-					<span class="tool-desc">{tool.description}</span>
-				</div>
-			{/each}
-		</div>
-
-		<h3>Discovery Tools</h3>
-		<div class="tools-table">
-			{#each discoveryTools as tool}
-				<div class="tool-row">
-					<code class="tool-name">{tool.name}</code>
-					<span class="tool-desc">{tool.description}</span>
-				</div>
-			{/each}
-		</div>
-
-		<h3>Graph-Based Analysis</h3>
-		<div class="tools-table">
-			{#each graphTools as tool}
-				<div class="tool-row">
-					<code class="tool-name">{tool.name}</code>
-					<span class="tool-desc">{tool.description}</span>
-				</div>
-			{/each}
-		</div>
-
-		<h3>AI-Native Tools</h3>
-		<div class="tools-table">
-			{#each aiTools as tool}
-				<div class="tool-row">
-					<code class="tool-name">{tool.name}</code>
-					<span class="tool-desc">{tool.description}</span>
-				</div>
-			{/each}
-		</div>
-
-		<h3>Design System Analysis</h3>
-		<div class="tools-table">
-			{#each designTools as tool}
-				<div class="tool-row">
-					<code class="tool-name">{tool.name}</code>
-					<span class="tool-desc">{tool.description}</span>
-				</div>
-			{/each}
-		</div>
-	</section>
-
-	<section class="section">
-		<h2>Usage Examples</h2>
-		<p>Ask your AI assistant:</p>
-		<pre><code>Find duplicate functions in src/ with at least 10 lines</code></pre>
-		<pre><code>Check if the old-utils module is still connected to anything</code></pre>
-		<pre><code>Run ground_analyze on packages/sdk to find dead code</code></pre>
-		<pre><code>What's the CSS token adoption ratio in packages/components?</code></pre>
-	</section>
-
-	<section class="section">
-		<h2>Configuration</h2>
-		<p>Ground loads <code>.ground.yml</code> from your project root for:</p>
-		<ul>
-			<li>Ignore patterns (functions, files, directories)</li>
-			<li>Known drift exceptions with documented reasons</li>
-			<li>Context declarations for intentional exclusions</li>
-			<li>Similarity thresholds</li>
-		</ul>
-	</section>
-
-	<section class="section links">
-		<h2>Links</h2>
-		<ul>
-			<li><a href="https://www.npmjs.com/package/@createsomething/ground-mcp">npm Package</a></li>
-			<li><a href="https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/ground">GitHub Repository</a></li>
-			<li><a href="/papers/ground-evidence-based-claims">Research Paper: Evidence-Based Claims</a></li>
-			<li><a href="/docs/loom">Related: Loom (Agent Coordination)</a></li>
-		</ul>
-	</section>
-</main>
+<section class="orientation-handoff" aria-labelledby="ground-handoff-title">
+  <div>
+    <p>Inspect the source or the evidence</p>
+    <h2 id="ground-handoff-title">Continue from the question Ground should answer.</h2>
+    <div>
+      <a href="https://www.npmjs.com/package/@createsomething/ground-mcp">npm package</a>
+      <a
+        href="https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/ground"
+        >GitHub repository</a
+      >
+      <a href="/papers/ground-evidence-based-claims">Read the research paper</a>
+      <a href="/docs/loom">Compare the Loom archive</a>
+    </div>
+  </div>
+</section>
 
 <style>
-	.docs-page {
-		max-width: 800px;
-		margin: 0 auto;
-		padding: var(--space-performance-lg);
-	}
+  .boundary-artifact,
+  .operate-artifact {
+    display: grid;
+    gap: var(--space-performance-md);
+  }
 
-	.breadcrumb {
-		font-size: var(--text-performance-body-sm);
-		color: var(--color-performance-fg-muted);
-		margin-bottom: var(--space-performance-lg);
-	}
+  .boundary-artifact > article,
+  .install-grid article,
+  .usage-grid article {
+    display: grid;
+    gap: var(--space-performance-sm);
+    padding: var(--space-performance-md);
+    border: 1px solid var(--color-performance-border-default);
+    background: var(--color-performance-bg-surface);
+  }
 
-	.breadcrumb a {
-		color: var(--color-performance-fg-tertiary);
-		text-decoration: none;
-	}
+  .boundary-artifact span,
+  .install-grid article > span {
+    color: var(--color-performance-fg-tertiary);
+    font-family: var(--font-performance-mono);
+    font-size: var(--text-performance-caption);
+    text-transform: uppercase;
+  }
 
-	.breadcrumb a:hover {
-		color: var(--color-performance-fg-secondary);
-	}
+  .boundary-artifact h3,
+  .boundary-artifact p,
+  .install-grid p,
+  .usage-grid h3,
+  .usage-grid p {
+    margin: 0;
+  }
 
-	.hero {
-		margin-bottom: var(--space-performance-xl);
-	}
+  .boundary-artifact p,
+  .install-grid p,
+  .usage-grid p,
+  .usage-grid li {
+    color: var(--color-performance-fg-secondary);
+    line-height: var(--leading-performance-relaxed);
+  }
 
-	.hero h1 {
-		font-size: var(--text-performance-display);
-		color: var(--color-performance-fg-primary);
-		margin-bottom: var(--space-performance-xs);
-	}
+  .claim-sequence {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-performance-sm);
+  }
 
-	.tagline {
-		font-size: var(--text-performance-h3);
-		color: var(--color-performance-fg-secondary);
-		margin-bottom: var(--space-performance-sm);
-	}
+  .claim-sequence div {
+    display: grid;
+    gap: var(--space-performance-xs);
+    padding: var(--space-performance-sm);
+    background: var(--color-performance-bg-subtle);
+  }
 
-	.description {
-		font-size: var(--text-performance-body-lg);
-		color: var(--color-performance-fg-tertiary);
-		margin-bottom: var(--space-performance-md);
-	}
+  .claim-sequence span {
+    overflow-wrap: anywhere;
+    text-transform: none;
+  }
 
-	.npm-package {
-		display: inline-block;
-		background: var(--color-performance-bg-subtle);
-		padding: var(--space-performance-xs) var(--space-performance-sm);
-		border-radius: var(--radius-performance-scale-sm);
-		font-size: var(--text-performance-body);
-		color: var(--color-performance-fg-secondary);
-	}
+  .boundary-result {
+    padding-left: var(--space-performance-md);
+    border-left: 0.25rem solid var(--color-performance-fg-primary);
+    font-weight: var(--font-performance-semibold);
+  }
 
-	.section {
-		margin-bottom: var(--space-performance-xl);
-	}
+  .install-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-performance-sm);
+  }
 
-	.section h2 {
-		font-size: var(--text-performance-h2);
-		color: var(--color-performance-fg-primary);
-		margin-bottom: var(--space-performance-md);
-		padding-bottom: var(--space-performance-sm);
-	}
+  .install-grid a {
+    width: fit-content;
+    color: var(--color-performance-fg-primary);
+    font-weight: var(--font-performance-semibold);
+    text-decoration: underline;
+  }
 
-	.section h3 {
-		font-size: var(--text-performance-h3);
-		color: var(--color-performance-fg-secondary);
-		margin-top: var(--space-performance-lg);
-		margin-bottom: var(--space-performance-sm);
-	}
+  pre {
+    max-width: 100%;
+    margin: 0;
+    padding: var(--space-performance-sm);
+    background: var(--color-performance-bg-pure);
+    overflow-x: auto;
+  }
 
-	.section p {
-		font-size: var(--text-performance-body);
-		color: var(--color-performance-fg-tertiary);
-		margin-bottom: var(--space-performance-sm);
-		line-height: 1.6;
-	}
+  pre code {
+    white-space: pre;
+  }
 
-	.section ul {
-		padding-left: var(--space-performance-lg);
-		margin-bottom: var(--space-performance-md);
-	}
+  .tool-groups {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-performance-md);
+  }
 
-	.section li {
-		font-size: var(--text-performance-body);
-		color: var(--color-performance-fg-tertiary);
-		margin-bottom: var(--space-performance-xs);
-	}
+  .tool-groups article {
+    min-width: 0;
+  }
 
-	pre {
-		padding: var(--space-performance-md);
-		border-radius: var(--radius-performance-scale-md);
-		overflow-x: auto;
-		margin-bottom: var(--space-performance-md);
-	}
+  .tool-groups h3 {
+    margin: 0 0 var(--space-performance-sm);
+    font-size: var(--text-performance-body-lg);
+  }
 
-	pre code {
-		font-size: var(--text-performance-body-sm);
-		color: var(--color-performance-fg-primary);
-	}
+  .tool-groups ul,
+  .usage-grid ul {
+    display: grid;
+    margin: 0;
+    padding: 0;
+    gap: var(--space-performance-xs);
+    list-style: none;
+  }
 
-	.install-button {
-		display: inline-block;
-		background: var(--color-performance-bg-surface);
-		padding: var(--space-performance-sm) var(--space-performance-md);
-		border-radius: var(--radius-performance-scale-md);
-		color: var(--color-performance-fg-primary);
-		text-decoration: none;
-		font-size: var(--text-performance-body);
-		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
-	}
+  .tool-groups li {
+    display: grid;
+    grid-template-columns: minmax(10rem, 0.7fr) 1fr;
+    gap: var(--space-performance-sm);
+    padding-block: var(--space-performance-xs);
+    border-top: 1px solid var(--color-performance-border-default);
+  }
 
-	.install-button:hover {
-		border-color: var(--color-border-hover);
-		background: var(--color-performance-bg-subtle);
-	}
+  .tool-groups code {
+    overflow-wrap: anywhere;
+  }
 
-	.tools-table {
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-performance-xs);
-		margin-bottom: var(--space-performance-md);
-	}
+  .tool-groups span {
+    color: var(--color-performance-fg-tertiary);
+    font-size: var(--text-performance-body-sm);
+  }
 
-	.tool-row {
-		display: grid;
-		grid-template-columns: 280px 1fr;
-		gap: var(--space-performance-md);
-		padding: var(--space-performance-sm);
-		border-radius: var(--radius-performance-scale-sm);
-	}
+  .usage-grid {
+    display: grid;
+    grid-template-columns: 1.25fr 0.75fr;
+    gap: var(--space-performance-md);
+  }
 
-	.tool-name {
-		font-size: var(--text-performance-body-sm);
-		color: var(--color-performance-fg-primary);
-	}
+  .usage-grid li {
+    padding-left: var(--space-performance-sm);
+    border-left: 1px solid var(--color-performance-border-default);
+  }
 
-	.tool-desc {
-		font-size: var(--text-performance-body-sm);
-		color: var(--color-performance-fg-tertiary);
-	}
+  .orientation-handoff {
+    padding: clamp(3rem, 7vw, 5rem) 1.5rem;
+  }
 
-	.links ul {
-		list-style: none;
-		padding: 0;
-	}
+  .orientation-handoff > div {
+    display: grid;
+    width: min(72rem, 100%);
+    margin-inline: auto;
+    gap: var(--space-performance-md);
+  }
 
-	.links li {
-		margin-bottom: var(--space-performance-sm);
-	}
+  .orientation-handoff p,
+  .orientation-handoff h2 {
+    margin: 0;
+  }
 
-	.links a {
-		color: var(--color-performance-fg-secondary);
-		text-decoration: none;
-	}
+  .orientation-handoff p {
+    color: var(--color-performance-fg-tertiary);
+    font-family: var(--font-performance-mono);
+    font-size: var(--text-performance-caption);
+    text-transform: uppercase;
+  }
 
-	.links a:hover {
-		color: var(--color-performance-fg-primary);
-		text-decoration: underline;
-	}
+  .orientation-handoff h2 {
+    max-width: 25ch;
+    font-size: var(--text-performance-h2);
+  }
 
-	@media (max-width: 600px) {
-		.tool-row {
-			grid-template-columns: 1fr;
-		}
-	}
+  .orientation-handoff > div > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-performance-sm);
+  }
+
+  .orientation-handoff a {
+    padding: 0.65rem 0.85rem;
+    border: 1px solid var(--color-performance-border-default);
+    color: var(--color-performance-fg-primary);
+    font-weight: var(--font-performance-semibold);
+  }
+
+  @media (max-width: 800px) {
+    .install-grid,
+    .tool-groups,
+    .usage-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .claim-sequence {
+      grid-template-columns: 1fr;
+    }
+
+    .tool-groups li {
+      grid-template-columns: 1fr;
+    }
+
+    .orientation-handoff {
+      padding-inline: 1.25rem;
+    }
+  }
 </style>
