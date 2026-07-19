@@ -12,6 +12,7 @@ export { default as TasteProfileCard } from './TasteProfileCard.svelte';
 export { default as TrackedPattern } from './TrackedPattern.svelte';
 export { default as CanonIndexOpening } from './canon/CanonIndexOpening.svelte';
 export { default as CanonCollectionRail } from './canon/CanonCollectionRail.svelte';
+export { default as CanonReadingCompass } from './canon/CanonReadingCompass.svelte';
 export type { CanonCollectionItem } from './canon/CanonCollectionRail.svelte';
 
 // Taste components

@@ -68,7 +68,7 @@ sonnet: [add, update, fix]
 
 What must pass before work is considered complete. Domain-specific criteria.
 
-# Legal domain example
+### Legal domain example
 
 qualityGates:
 
@@ -140,11 +140,11 @@ Canon compliance, accessibility, animation auditing.
 
 
 ## Implementation
-# Auto-discovers config
+### Auto-discovers config
 
 harness work cs-xyz
 
-# Explicit config
+### Explicit config
 
 harness start spec.yaml --config custom.yaml
 
@@ -206,6 +206,5 @@ Crystallized constraints free AI to work without constant guidance.
 Crystallized judgment enables tools to recede. The harness disappears; work remains.
 
 Crystallized configs evolve. Each execution informs the next refinement.
-
 
 
