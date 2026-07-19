@@ -259,7 +259,7 @@
     id="agency-operating-story"
     eyebrow="One controlled operating story"
     title="Boundary. Map. Operate."
-    description="The page now holds one argument: keep consequential judgment, make the workflow visible, then operate the first lane with proof attached."
+    description="Keep consequential judgment with the operator. Make the workflow visible, then run the first lane with proof attached."
     scenes={agencyScenes}
     ariaLabel="Agency operating story"
   >

@@ -200,6 +200,16 @@ test('commercial decision routes lead with plain meaning before owned terminolog
   assert.match(proof, /prototype measurements, not customer ROI claims/);
 });
 
+test('the homepage operating story speaks to the reader instead of describing the page', () => {
+  const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
+
+  assert.doesNotMatch(home, /The page now holds one argument/i);
+  assert.match(
+    home,
+    /Keep consequential judgment with the operator\. Make the workflow visible, then run the first lane with proof attached\./
+  );
+});
+
 test('commercial decision routes use one primary and one conversational action', () => {
   const messaging = readFileSync(new URL('../src/lib/data/marketingCopy.ts', import.meta.url), 'utf8');
   const routes = [
