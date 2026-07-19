@@ -16,7 +16,9 @@
 
   // Track time spent on this lesson
   let startTime = $state(0);
+  let isStarting = $state(false);
   let isCompleting = $state(false);
+  let startError = $state('');
   let completionError = $state('');
 
   // Get progress for this lesson - needs to be derived to react to lesson changes
@@ -26,26 +28,46 @@
   $effect(() => {
     // Reset state for new lesson
     startTime = Date.now();
+    isStarting = false;
     isCompleting = false;
+    startError = '';
     completionError = '';
 
     // Public lessons remain readable without calling authenticated progress APIs.
     if (!data.user) return;
 
-    // Mark lesson as started
-    progress.startLesson(path.id, lesson.id).catch(() => {
-      completionError =
-        'Progress could not be saved. The lesson remains available; try again when the connection recovers.';
-    });
+    // Mark lesson as started without conflating a start failure with completion.
+    void handleStartLesson();
 
     // Fetch full progress
     progress.fetch();
   });
 
+  async function handleStartLesson() {
+    if (!data.user) return;
+
+    const requestedPathId = path.id;
+    const requestedLessonId = lesson.id;
+    isStarting = true;
+    startError = '';
+
+    try {
+      await progress.startLesson(requestedPathId, requestedLessonId);
+    } catch {
+      if (path.id === requestedPathId && lesson.id === requestedLessonId) {
+        startError =
+          'Your place could not be saved. The lesson remains available; try again when the connection recovers.';
+      }
+    } finally {
+      if (path.id === requestedPathId && lesson.id === requestedLessonId) isStarting = false;
+    }
+  }
+
   async function handleCompleteLesson() {
     if (isCompleting) return;
 
     isCompleting = true;
+    startError = '';
     completionError = '';
     const timeSpent = Math.floor((Date.now() - startTime) / 1000);
 
@@ -131,11 +153,22 @@
       </h2>
     </header>
 
+    {#if startError}
+      <div class="completion-error" role="alert">
+        <p>{startError}</p>
+        {#if data.user}
+          <button type="button" onclick={handleStartLesson} disabled={isStarting}>
+            {isStarting ? 'Saving...' : 'Try saving your place again'}
+          </button>
+        {/if}
+      </div>
+    {/if}
+
     {#if completionError}
       <div class="completion-error" role="alert">
         <p>{completionError}</p>
         {#if data.user}
-          <button type="button" onclick={handleCompleteLesson}>Try saving again</button>
+          <button type="button" onclick={handleCompleteLesson}>Try completing again</button>
         {/if}
       </div>
     {/if}

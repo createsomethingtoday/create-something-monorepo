@@ -81,6 +81,17 @@ test('keeps anonymous lessons public without calling authenticated progress APIs
   assert.match(lesson, /Progress could not be saved/);
 });
 
+test('retries the failed save operation without completing an unfinished lesson', () => {
+  const lesson = read(source('paths/[id]/[lesson]'));
+  const startRecovery = lesson.match(/{#if startError}[\s\S]*?{\/if}/)?.[0] ?? '';
+  const completionRecovery = lesson.match(/{#if completionError}[\s\S]*?{\/if}/)?.[0] ?? '';
+
+  assert.match(lesson, /async function handleStartLesson\(\)[\s\S]*progress\.startLesson/);
+  assert.match(startRecovery, /onclick={handleStartLesson}/);
+  assert.doesNotMatch(startRecovery, /handleCompleteLesson/);
+  assert.match(completionRecovery, /onclick={handleCompleteLesson}/);
+});
+
 test('contains lesson tables and inline code inside the mobile reading surface', () => {
   const lesson = read(source('paths/[id]/[lesson]'));
 
