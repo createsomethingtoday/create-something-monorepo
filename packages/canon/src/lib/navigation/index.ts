@@ -14,6 +14,12 @@ export { default as CommandPalette } from './CommandPalette.svelte';
 export { default as UnifiedSearch } from './UnifiedSearch.svelte';
 export { default as RelatedContent } from './RelatedContent.svelte';
 export { default as ConceptJourney } from './ConceptJourney.svelte';
+export type {
+	ConceptJourneyContentType,
+	ConceptJourneyProperty,
+	ConceptJourneySearchResult,
+	ConceptStory
+} from './concept-journey.js';
 export { default as MenuButton } from './MenuButton.svelte';
 export { default as Tabs } from './Tabs.svelte';
 export { default as MegaMenu } from './MegaMenu.svelte';

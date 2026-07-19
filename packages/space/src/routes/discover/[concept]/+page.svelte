@@ -26,42 +26,35 @@
   ]}
 />
 
-<main class="discover-page">
+<div class="discover-page">
   <ConceptJourney
     concept={data.concept}
     searchApiUrl={data.searchApiUrl}
+    initialStory={data.initialStory}
     maxItemsPerStage={5}
     showEmptyStages={false}
   />
 
-  <!-- Back Navigation -->
-  <nav class="discover-nav">
-    <a href="/" class="nav-link">
-      <svg
-        width="20"
-        height="20"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-      >
-        <path d="M19 12H5M12 19l-7-7 7-7" />
-      </svg>
-      Back to experiments
-    </a>
+  <nav class="discover-nav" aria-label="Continue exploring">
+    <a href="/discover" class="nav-link nav-link-primary">Choose another concept</a>
+    <a href="/" class="nav-link">Back to Workbench</a>
   </nav>
-</main>
+</div>
 
 <style>
   .discover-page {
     min-height: 100vh;
-    background: var(--color-bg-primary, #000);
+    background: var(--color-performance-bg-pure);
+    color: var(--color-performance-fg-primary);
   }
 
   .discover-nav {
     max-width: 800px;
     margin: 0 auto;
     padding: var(--space-performance-lg, 2.618rem) var(--space-performance-md, 1.618rem);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-performance-sm, 1rem);
   }
 
   .nav-link {
@@ -76,5 +69,10 @@
 
   .nav-link:hover {
     color: var(--color-performance-fg-primary, #fff);
+  }
+
+  .nav-link-primary {
+    color: var(--color-performance-fg-primary, #fff);
+    font-weight: var(--font-performance-medium, 500);
   }
 </style>

@@ -15,44 +15,20 @@
 	 * />
 	 */
 
-	import { onMount } from 'svelte';
 	import FlaskConical from 'lucide-svelte/icons/flask-conical';
 	import BookOpen from 'lucide-svelte/icons/book-open';
 	import Hammer from 'lucide-svelte/icons/hammer';
 	import Scroll from 'lucide-svelte/icons/scroll';
 	import GraduationCap from 'lucide-svelte/icons/graduation-cap';
+	import type {
+		ConceptJourneyContentType as ContentType,
+		ConceptJourneyProperty as Property,
+		ConceptStory
+	} from './concept-journey.js';
 
 	// =============================================================================
 	// TYPES
 	// =============================================================================
-
-	type Property = 'space' | 'io' | 'agency' | 'ltd' | 'lms';
-	type ContentType = 'paper' | 'experiment' | 'lesson' | 'principle' | 'pattern' | 'master' | 'service' | 'case-study';
-
-	interface SearchResult {
-		id: string;
-		title: string;
-		description: string;
-		property: Property;
-		type: ContentType;
-		url: string;
-		path: string;
-		score: number;
-		concepts?: string[];
-	}
-
-	interface ConceptStory {
-		concept: string;
-		description: string;
-		journey: {
-			canon?: SearchResult[];
-			learn?: SearchResult[];
-			explore?: SearchResult[];
-			study?: SearchResult[];
-			apply?: SearchResult[];
-		};
-		totalContent: number;
-	}
 
 	// =============================================================================
 	// JOURNEY STAGES
@@ -134,6 +110,12 @@
 		maxItemsPerStage?: number;
 		/** Show empty stages */
 		showEmptyStages?: boolean;
+		/** Story loaded by the owning route for meaningful server rendering */
+		initialStory?: ConceptStory | null;
+		/** Short context label above the answer-first heading */
+		eyebrow?: string;
+		/** Optional property-owned heading */
+		heading?: string;
 		/** Custom class name */
 		class?: string;
 	}
@@ -143,6 +125,9 @@
 		searchApiUrl = 'https://unified-search.createsomething.workers.dev',
 		maxItemsPerStage = 3,
 		showEmptyStages = false,
+		initialStory = null,
+		eyebrow = 'Concept journey',
+		heading,
 		class: className = ''
 	}: Props = $props();
 
@@ -150,9 +135,13 @@
 	// STATE
 	// =============================================================================
 
-	let isLoading = $state(true);
+	function getInitialStory() {
+		return initialStory;
+	}
+
+	let isLoading = $state(!getInitialStory());
 	let error = $state<string | null>(null);
-	let story = $state<ConceptStory | null>(null);
+	let story = $state<ConceptStory | null>(getInitialStory());
 
 	// =============================================================================
 	// DERIVED
@@ -170,6 +159,7 @@
 
 	// Total content count
 	let totalContent = $derived(() => story?.totalContent || 0);
+	let resolvedHeading = $derived(heading ?? `${concept}: from principle to practice`);
 
 	// =============================================================================
 	// FETCH STORY
@@ -184,6 +174,8 @@
 		isLoading = true;
 		error = null;
 
+		const requestedConcept = concept;
+
 		try {
 			const response = await fetch(
 				`${searchApiUrl}/story/${encodeURIComponent(concept)}`
@@ -193,24 +185,33 @@
 				throw new Error(`Failed to fetch: ${response.status}`);
 			}
 
-			story = await response.json();
+			const nextStory: ConceptStory = await response.json();
+			if (concept === requestedConcept) story = nextStory;
 		} catch (e) {
 			console.error('Failed to fetch concept story:', e);
-			error = 'Could not load concept journey';
-			story = null;
+			if (concept === requestedConcept) {
+				error = 'Could not load concept journey';
+				story = null;
+			}
 		} finally {
-			isLoading = false;
+			if (concept === requestedConcept) isLoading = false;
 		}
 	}
 
-	// Fetch on mount and when concept changes
-	onMount(() => {
-		fetchStory();
-	});
-
 	$effect(() => {
-		concept; // Track concept
-		fetchStory();
+		if (initialStory?.concept === concept && story?.concept !== concept) {
+			story = initialStory;
+			error = null;
+			isLoading = false;
+			return;
+		}
+
+		if (story?.concept === concept) {
+			isLoading = false;
+			return;
+		}
+
+		void fetchStory();
 	});
 </script>
 
@@ -218,8 +219,8 @@
 	<!-- Header -->
 	<header class="journey-header">
 		<h1 class="journey-title">
-			<span class="title-label">Journey:</span>
-			<span class="title-concept">{concept}</span>
+			<span class="title-label">{eyebrow}</span>
+			<span class="title-concept">{resolvedHeading}</span>
 		</h1>
 		{#if story}
 			<p class="journey-description">{story.description}</p>
