@@ -142,7 +142,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     'agency-account',
     'agency',
     ['account', 'login'],
-    'pending',
+    'migrated',
     contract(
       'tool',
       'Complete the identity or account task and return to owned work.',
