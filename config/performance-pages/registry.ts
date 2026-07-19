@@ -74,7 +74,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     'agency-delivery-tool',
     'agency',
     ['delivery/abundance'],
-    'pending',
+    'migrated',
     contract(
       'tool',
       'Review the delivery state and resolve the next client-safe question.',
