@@ -1,386 +1,282 @@
 <script lang="ts">
-	import { SEO } from '@create-something/canon';
+  import {
+    CanonCollectionRail,
+    CanonIndexOpening,
+    type CanonCollectionItem
+  } from '$lib/components';
+  import {
+    PerformanceNarrativeStage,
+    SEO,
+    type PerformanceNarrativeScene
+  } from '@create-something/canon';
+
+  const canonCollections: CanonCollectionItem[] = [
+    {
+      eyebrow: 'Start here',
+      title: 'Foundations',
+      detail:
+        'Colors, typography, spacing, and motion tokens you can copy directly into your project.',
+      href: '/canon/foundations/colors',
+      points: ['Color', 'Type', 'Space', 'Motion']
+    },
+    {
+      eyebrow: 'Build',
+      title: 'Components',
+      detail: 'Ready-to-use buttons, cards, navigation, and form elements with code examples.',
+      href: '/canon/components',
+      points: ['Clear components', 'Content', 'Data', 'Feedback']
+    },
+    {
+      eyebrow: 'Compose',
+      title: 'Patterns',
+      detail: 'How to handle forms, loading states, and navigation across your application.',
+      href: '/canon/patterns',
+      points: ['Forms', 'Loading', 'Accessibility']
+    },
+    {
+      eyebrow: 'Understand',
+      title: 'Philosophy',
+      detail: 'Why we made these choices. The principles that guide every design decision.',
+      href: '/canon/foundations/philosophy',
+      points: ['Less, but better', 'Tool transparency', 'The whole']
+    }
+  ];
+
+  const doctrineScenes: PerformanceNarrativeScene[] = [
+    {
+      id: 'decide',
+      label: 'Decide',
+      summary: 'Use three subtractive questions.',
+      title: 'How we decide what stays.',
+      detail: 'Before adding to Canon, test duplication, purpose, and connection to the whole.',
+      tone: 'review',
+      evidence: [
+        'Unify existing work',
+        'Remove unjustified elements',
+        'Reconnect every part to the system'
+      ]
+    },
+    {
+      id: 'tokens',
+      label: 'Tokens',
+      summary: 'Make the decision reusable.',
+      title: 'Spacing and color carry the same judgment.',
+      detail:
+        'The golden-ratio spacing scale and functional color hierarchy turn philosophy into repeatable interface choices.',
+      tone: 'allow',
+      evidence: [
+        'Golden-ratio spacing',
+        'Functional color hierarchy',
+        'Shared performance vocabulary'
+      ],
+      actions: [{ label: 'Inspect all tokens', href: '/canon/resources/tokens' }]
+    }
+  ];
 </script>
 
 <SEO
-	title="Canon"
-	description="Everything you need to build interfaces that feel right. Colors, typography, components, and the thinking behind each decision."
-	propertyName="ltd"
-	breadcrumbs={[
-		{ name: 'Home', url: 'https://createsomething.ltd' },
-		{ name: 'Canon', url: 'https://createsomething.ltd/canon' }
-	]}
+  title="Canon"
+  description="Everything you need to build interfaces that feel right. Colors, typography, components, and the thinking behind each decision."
+  propertyName="ltd"
+  breadcrumbs={[
+    { name: 'Home', url: 'https://createsomething.ltd' },
+    { name: 'Canon', url: 'https://createsomething.ltd/canon' }
+  ]}
 />
 
-<!-- Hero Section -->
-<header class="hero">
-	<p class="eyebrow">Design System</p>
-	<h1 class="hero-title">Canon</h1>
-	<p class="hero-subtitle">
-		Everything you need to build interfaces that feel right. Colors, typography, 
-		components, and the thinking behind each decision.
-	</p>
-</header>
+<CanonIndexOpening
+  current="canon"
+  title="Canon"
+  description="Everything you need to build interfaces that feel right: the foundations, components, patterns, and judgment behind each decision."
+  recommendation={{
+    label: 'Begin with Foundations',
+    detail:
+      'Start with the shared tokens before choosing a component or inventing another pattern.',
+    href: '/canon/foundations/colors'
+  }}
+/>
 
-<!-- Philosophy Quote -->
-<section class="philosophy-quote">
-	<blockquote>
-		<p>"Weniger, aber besser"</p>
-		<cite>— Dieter Rams (Less, but better)</cite>
-	</blockquote>
-</section>
+<CanonCollectionRail
+  id="canon-working-surfaces"
+  title="Choose a working surface."
+  description="Each source has one job. Start with foundations, then move to components, composition patterns, or the governing philosophy."
+  items={canonCollections}
+  columns={4}
+/>
 
-<!-- Quick Access Grid -->
-<section class="quick-access">
-	<h2 class="section-title">Explore the System</h2>
-
-	<div class="card-grid">
-		<!-- Foundations -->
-		<a href="/canon/foundations/colors" class="feature-card">
-			<div class="card-icon">
-				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<circle cx="12" cy="12" r="10" />
-					<circle cx="12" cy="12" r="4" />
-				</svg>
-			</div>
-			<h3>Foundations</h3>
-			<p>Start here. Colors, typography, spacing, and motion tokens you can copy directly into your project.</p>
-		</a>
-
-		<!-- Components -->
-		<a href="/canon/components" class="feature-card">
-			<div class="card-icon">
-				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<rect x="3" y="3" width="7" height="7" rx="1" />
-					<rect x="14" y="3" width="7" height="7" rx="1" />
-					<rect x="3" y="14" width="7" height="7" rx="1" />
-					<rect x="14" y="14" width="7" height="7" rx="1" />
-				</svg>
-			</div>
-			<h3>Components</h3>
-			<p>Ready-to-use buttons, cards, navigation, and form elements with code examples.</p>
-		</a>
-
-		<!-- Patterns -->
-		<a href="/canon/patterns" class="feature-card">
-			<div class="card-icon">
-				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<path d="M12 2L2 7l10 5 10-5-10-5z" />
-					<path d="M2 17l10 5 10-5" />
-					<path d="M2 12l10 5 10-5" />
-				</svg>
-			</div>
-			<h3>Patterns</h3>
-			<p>How to handle forms, loading states, and navigation across your application.</p>
-		</a>
-
-		<!-- Philosophy -->
-		<a href="/canon/foundations/philosophy" class="feature-card">
-			<div class="card-icon">
-				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<circle cx="12" cy="12" r="10" />
-					<path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-					<path d="M2 12h20" />
-				</svg>
-			</div>
-			<h3>Philosophy</h3>
-			<p>Why we made these choices. The principles that guide every design decision.</p>
-		</a>
-	</div>
-</section>
-
-<!-- Principles Section -->
-<section class="principles">
-	<h2 class="section-title">How We Decide What Stays</h2>
-	<p class="section-description">
-		Before adding anything to Canon, we ask three questions.
-	</p>
-
-	<div class="triad-grid">
-		<div class="triad-item">
-			<span class="triad-label">First</span>
-			<h3>Does it already exist?</h3>
-			<p class="triad-question">If we've built something similar, we combine them into one solution.</p>
-			<p class="triad-action">→ Unify</p>
-		</div>
-
-		<div class="triad-item">
-			<span class="triad-label">Second</span>
-			<h3>Does it earn its place?</h3>
-			<p class="triad-question">Every element needs a clear purpose. Decoration without function gets cut.</p>
-			<p class="triad-action">→ Remove</p>
-		</div>
-
-		<div class="triad-item">
-			<span class="triad-label">Third</span>
-			<h3>Does it fit the whole?</h3>
-			<p class="triad-question">Each piece should work with everything else. If it doesn't, we rethink it.</p>
-			<p class="triad-action">→ Reconnect</p>
-		</div>
-	</div>
-</section>
-
-<!-- Token Preview -->
-<section class="token-preview">
-	<h2 class="section-title">Spacing That Feels Natural</h2>
-	<p class="section-description">
-		We use the golden ratio (1.618) for spacing. It creates visual rhythm that feels 
-		balanced without you having to think about why.
-	</p>
-
-	<div class="token-examples">
-		<div class="token-group">
-			<h4>Spacing Scale</h4>
-			<div class="spacing-demo">
-				<div class="space-box space-xs"><span>xs</span></div>
-				<div class="space-box space-sm"><span>sm</span></div>
-				<div class="space-box space-md"><span>md</span></div>
-				<div class="space-box space-lg"><span>lg</span></div>
-				<div class="space-box space-xl"><span>xl</span></div>
-			</div>
-		</div>
-
-		<div class="token-group">
-			<h4>Color Hierarchy</h4>
-			<div class="color-demo">
-				<div class="color-swatch bg-pure"></div>
-				<div class="color-swatch bg-elevated"></div>
-				<div class="color-swatch bg-surface"></div>
-				<div class="color-swatch bg-subtle"></div>
-			</div>
-		</div>
-	</div>
-</section>
+<PerformanceNarrativeStage
+  id="canon-operating-doctrine"
+  eyebrow="One doctrine"
+  title="Use the system, then test the whole."
+  description="Weniger, aber besser — less, but better — becomes useful when it changes what the team keeps and how the interface behaves."
+  scenes={doctrineScenes}
+  ariaLabel="Canon operating doctrine"
+>
+  {#snippet artifact(scene)}
+    {#if scene.id === 'decide'}
+      <div class="decision-artifact">
+        <blockquote>
+          <p>“Weniger, aber besser”</p>
+          <cite>— Dieter Rams (Less, but better)</cite>
+        </blockquote>
+        <div class="triad-grid">
+          <article>
+            <span>First · Unify</span>
+            <strong>Does it already exist?</strong>
+            <p>If we have built something similar, combine the work into one source.</p>
+          </article>
+          <article>
+            <span>Second · Remove</span>
+            <strong>Does it earn its place?</strong>
+            <p>Every element needs a clear purpose. Decoration without function gets cut.</p>
+          </article>
+          <article>
+            <span>Third · Reconnect</span>
+            <strong>Does it fit the whole?</strong>
+            <p>Each piece should work with everything else. If it does not, rethink it.</p>
+          </article>
+        </div>
+      </div>
+    {:else}
+      <div class="token-artifact">
+        <article>
+          <span>Spacing Scale</span>
+          <div class="spacing-demo" aria-label="Golden ratio spacing scale">
+            <i style="--size: 0.382rem">xs</i>
+            <i style="--size: 0.618rem">sm</i>
+            <i style="--size: 1rem">md</i>
+            <i style="--size: 1.618rem">lg</i>
+            <i style="--size: 2.618rem">xl</i>
+          </div>
+        </article>
+        <article>
+          <span>Color Hierarchy</span>
+          <div class="color-demo" aria-label="Functional color hierarchy">
+            <i style="--tone: var(--color-performance-ink, #090909)">Ink</i>
+            <i style="--tone: var(--color-performance-muted, #5e6268)">Muted</i>
+            <i style="--tone: var(--color-performance-line, #d7d7d2)">Line</i>
+            <i style="--tone: var(--color-performance-panel, #fff)">Panel</i>
+          </div>
+        </article>
+      </div>
+    {/if}
+  {/snippet}
+</PerformanceNarrativeStage>
 
 <style>
-	/* Hero */
-	.hero {
-		text-align: center;
-		padding-bottom: var(--space-performance-xl);
-		margin-bottom: var(--space-performance-xl);
-	}
+  .decision-artifact,
+  .token-artifact {
+    min-width: 0;
+  }
 
-	.eyebrow {
-		font-size: var(--text-performance-caption);
-		text-transform: uppercase;
-		letter-spacing: var(--tracking-performance-widest);
-		color: var(--color-performance-fg-muted);
-		margin-bottom: var(--space-performance-sm);
-	}
+  .decision-artifact {
+    display: grid;
+    gap: 1rem;
+  }
 
-	.hero-title {
-		font-size: var(--text-performance-display);
-		font-weight: var(--font-performance-bold);
-		color: var(--color-performance-fg-primary);
-		margin-bottom: var(--space-performance-md);
-		letter-spacing: var(--tracking-performance-tight);
-	}
+  blockquote {
+    display: grid;
+    gap: 0.35rem;
+    margin: 0;
+    padding: 1rem;
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+    background: var(--color-performance-ink, #090909);
+    color: #fff;
+  }
 
-	.hero-subtitle {
-		font-size: var(--text-performance-body-lg);
-		color: var(--color-performance-fg-secondary);
-		max-width: 600px;
-		margin: 0 auto;
-		line-height: var(--leading-performance-relaxed);
-	}
+  blockquote p,
+  blockquote cite {
+    margin: 0;
+  }
 
-	/* Philosophy Quote */
-	.philosophy-quote {
-		padding: var(--space-performance-xl) 0;
-		margin-bottom: var(--space-performance-xl);
-	}
+  blockquote p {
+    font-size: clamp(1.5rem, 3vw, 2.4rem);
+  }
 
-	.philosophy-quote blockquote {
-		text-align: center;
-		margin: 0;
-	}
+  blockquote cite,
+  .triad-grid span,
+  .token-artifact article > span {
+    font-family: var(--font-performance-mono);
+    font-size: 0.7rem;
+    font-style: normal;
+    text-transform: uppercase;
+  }
 
-	.philosophy-quote p {
-		font-size: var(--text-performance-h2);
-		font-style: italic;
-		color: var(--color-performance-fg-primary);
-		margin-bottom: var(--space-performance-sm);
-	}
+  .triad-grid,
+  .token-artifact {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
 
-	.philosophy-quote cite {
-		font-size: var(--text-performance-body-sm);
-		color: var(--color-performance-fg-muted);
-		font-style: normal;
-	}
+  .triad-grid article,
+  .token-artifact article {
+    display: grid;
+    align-content: start;
+    gap: 0.65rem;
+    min-width: 0;
+    padding: 1rem;
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+    background: var(--color-performance-panel, #fff);
+  }
 
-	/* Sections */
-	.section-title {
-		font-size: var(--text-performance-h2);
-		font-weight: var(--font-performance-semibold);
-		color: var(--color-performance-fg-primary);
-		margin-bottom: var(--space-performance-sm);
-	}
+  .triad-grid strong {
+    font-size: 1.05rem;
+    font-weight: var(--font-performance-medium, 500);
+  }
 
-	.section-description {
-		font-size: var(--text-performance-body);
-		color: var(--color-performance-fg-secondary);
-		margin-bottom: var(--space-performance-lg);
-	}
+  .triad-grid p {
+    margin: 0;
+    color: var(--color-performance-muted, #5e6268);
+    font-size: 0.9rem;
+    line-height: 1.45;
+  }
 
-	/* Quick Access Grid */
-	.quick-access {
-		margin-bottom: var(--space-performance-xl);
-	}
+  .token-artifact {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 
-	.card-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-		gap: var(--space-performance-md);
-	}
+  .spacing-demo,
+  .color-demo {
+    display: flex;
+    min-width: 0;
+    align-items: end;
+    gap: 0.45rem;
+    overflow-x: auto;
+  }
 
-	.feature-card {
-		display: block;
-		padding: var(--space-performance-lg);
-		background: var(--color-performance-bg-surface);
-		border-radius: var(--radius-performance-scale-lg);
-		text-decoration: none;
-		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
-		position: relative;
-	}
+  .spacing-demo i {
+    display: grid;
+    width: calc(1.5rem + var(--size));
+    height: calc(1.5rem + var(--size));
+    flex: 0 0 auto;
+    place-items: center;
+    border: 1px solid var(--color-performance-line-strong, #9c9c96);
+    font-family: var(--font-performance-mono);
+    font-size: 0.62rem;
+    font-style: normal;
+  }
 
-	.feature-card:hover {
-		border-color: var(--color-performance-border-emphasis);
-		transform: translateY(-2px);
-	}
+  .color-demo i {
+    display: grid;
+    width: 4rem;
+    height: 4rem;
+    flex: 0 0 auto;
+    place-items: end start;
+    padding: 0.35rem;
+    border: 1px solid var(--color-performance-line-strong, #9c9c96);
+    background: var(--tone);
+    color: var(--color-performance-ink, #090909);
+    font-family: var(--font-performance-mono);
+    font-size: 0.6rem;
+    font-style: normal;
+    mix-blend-mode: difference;
+  }
 
-	.card-icon {
-		width: 48px;
-		height: 48px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		background: var(--color-performance-bg-subtle);
-		border-radius: var(--radius-performance-scale-md);
-		color: var(--color-performance-fg-secondary);
-		margin-bottom: var(--space-performance-md);
-	}
-
-	.feature-card h3 {
-		font-size: var(--text-performance-h3);
-		font-weight: var(--font-performance-semibold);
-		color: var(--color-performance-fg-primary);
-		margin-bottom: var(--space-performance-xs);
-	}
-
-	.feature-card p {
-		font-size: var(--text-performance-body-sm);
-		color: var(--color-performance-fg-secondary);
-		line-height: var(--leading-performance-relaxed);
-		margin: 0;
-	}
-
-	/* Principles */
-	.principles {
-		margin-bottom: var(--space-performance-xl);
-		padding: var(--space-performance-xl);
-		background: var(--color-performance-bg-surface);
-		border-radius: var(--radius-performance-scale-lg);
-	}
-
-	.triad-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-		gap: var(--space-performance-md);
-	}
-
-	.triad-item {
-		padding: var(--space-performance-md);
-		border-left: 2px solid var(--color-performance-border-emphasis);
-	}
-
-	.triad-label {
-		font-size: var(--text-performance-caption);
-		text-transform: uppercase;
-		letter-spacing: var(--tracking-performance-wider);
-		color: var(--color-performance-fg-muted);
-	}
-
-	.triad-item h3 {
-		font-size: var(--text-performance-h3);
-		font-weight: var(--font-performance-semibold);
-		color: var(--color-performance-fg-primary);
-		margin: var(--space-performance-xs) 0;
-	}
-
-	.triad-question {
-		font-size: var(--text-performance-body-sm);
-		color: var(--color-performance-fg-secondary);
-		font-style: italic;
-		margin-bottom: var(--space-performance-xs);
-	}
-
-	.triad-action {
-		font-size: var(--text-performance-body-sm);
-		color: var(--color-performance-fg-muted);
-		margin: 0;
-	}
-
-	/* Token Preview */
-	.token-preview {
-		margin-bottom: var(--space-performance-xl);
-	}
-
-	.token-examples {
-		display: grid;
-		gap: var(--space-performance-lg);
-	}
-
-	.token-group h4 {
-		font-size: var(--text-performance-body-sm);
-		font-weight: var(--font-performance-semibold);
-		color: var(--color-performance-fg-secondary);
-		margin-bottom: var(--space-performance-sm);
-		text-transform: uppercase;
-		letter-spacing: var(--tracking-performance-wide);
-	}
-
-	/* Spacing Demo */
-	.spacing-demo {
-		display: flex;
-		align-items: flex-end;
-		gap: var(--space-performance-xs);
-	}
-
-	.space-box {
-		background: var(--color-performance-bg-surface);
-		border-radius: var(--radius-performance-scale-sm);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
-	.space-box span {
-		font-size: var(--text-performance-caption);
-		color: var(--color-performance-fg-muted);
-		font-family: var(--font-performance-mono);
-	}
-
-	.space-xs { width: var(--space-performance-xs); height: var(--space-performance-xs); }
-	.space-sm { width: var(--space-performance-sm); height: var(--space-performance-sm); }
-	.space-md { width: var(--space-performance-md); height: var(--space-performance-md); }
-	.space-lg { width: var(--space-performance-lg); height: var(--space-performance-lg); }
-	.space-xl { width: var(--space-performance-xl); height: var(--space-performance-xl); }
-
-	/* Color Demo */
-	.color-demo {
-		display: flex;
-		gap: 2px;
-		border-radius: var(--radius-performance-scale-md);
-		overflow: hidden;
-	}
-
-	.color-swatch {
-		flex: 1;
-		height: 48px;
-	}
-
-	.bg-pure { background: var(--color-performance-bg-pure); }
-	.bg-elevated { background: var(--color-performance-bg-elevated); }
-	.bg-surface { background: var(--color-performance-bg-surface); }
-	.bg-subtle { background: var(--color-performance-bg-subtle); }
+  @media (max-width: 720px) {
+    .triad-grid,
+    .token-artifact {
+      grid-template-columns: 1fr;
+    }
+  }
 </style>

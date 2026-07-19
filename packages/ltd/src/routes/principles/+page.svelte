@@ -1,119 +1,118 @@
 <script lang="ts">
-	import { PrincipleCard } from '$lib/components';
-	import { SEO } from '@create-something/canon';
-	import type { PageData } from './$types';
+  import { CanonIndexOpening, PrincipleCard } from '$lib/components';
+  import { groupPrinciplesByMaster } from '$lib/canon-index';
+  import {
+    PerformanceNarrativeStage,
+    SEO,
+    type PerformanceNarrativeScene
+  } from '@create-something/canon';
+  import type { PageData } from './$types';
 
-	let { data }: { data: PageData } = $props();
+  let { data }: { data: PageData } = $props();
 
-	// Group principles by master
-	const principlesByMaster = $derived.by(() => {
-		const grouped: Record<string, { name: string; slug: string; principles: any[] }> = {};
+  const principlesByMaster = $derived(groupPrinciplesByMaster(data.principles));
 
-		data.principles.forEach((principle: any) => {
-			if (!grouped[principle.master_id]) {
-				grouped[principle.master_id] = {
-					name: principle.master_name,
-					slug: principle.master_slug,
-					principles: []
-				};
-			}
-			grouped[principle.master_id].principles.push(principle);
-		});
-
-		return Object.values(grouped);
-	});
+  const principleScenes = $derived(
+    principlesByMaster.map(
+      (master, index): PerformanceNarrativeScene => ({
+        id: master.slug,
+        label: master.name,
+        summary: `${master.principles.length} reusable ${master.principles.length === 1 ? 'principle' : 'principles'}`,
+        title: `Use ${master.name} when this discipline governs the decision.`,
+        detail:
+          'Inspect the complete principle set, then open the master record for its source and context.',
+        tone: index === 0 ? 'allow' : 'review',
+        evidence: master.principles.map((principle) => principle.title),
+        actions: [{ label: `Open ${master.name}`, href: `/masters/${master.slug}` }]
+      })
+    )
+  );
 </script>
 
 <SEO
-	title="Decision Principles"
-	description="Reusable principles that help CREATE SOMETHING teams decide what to keep, remove, prove, and ship."
-	propertyName="ltd"
-	breadcrumbs={[
-		{ name: 'Home', url: 'https://createsomething.ltd' },
-		{ name: 'Principles', url: 'https://createsomething.ltd/principles' }
-	]}
+  title="Decision Principles"
+  description="Reusable principles that help CREATE SOMETHING teams decide what to keep, remove, prove, and ship."
+  propertyName="ltd"
+  breadcrumbs={[
+    { name: 'Home', url: 'https://createsomething.ltd' },
+    { name: 'Principles', url: 'https://createsomething.ltd/principles' }
+  ]}
 />
 
-<!-- Header -->
-<section class="pt-24 pb-16 px-6 border-b border-canon">
-	<div class="max-w-7xl mx-auto">
-		<p class="type-sm tracking-widest uppercase opacity-60-canon mb-4">The Canon</p>
-		<h1 class="mb-6">Make judgment reusable.</h1>
-		<p class="type-xl opacity-70-canon max-w-3xl leading-relaxed">
-			Principles should help a team decide what to keep, remove, prove, or ship. Each one is a
-			reusable rule for making better work easier to recognize.
-		</p>
-	</div>
-</section>
+<CanonIndexOpening
+  current="principles"
+  title="Principles"
+  description="Choose the master whose discipline fits the decision, then use the principle as a rule the team can repeat."
+  recommendation={{
+    label: principlesByMaster[0]?.name || 'Begin with the Masters',
+    detail: principlesByMaster[0]
+      ? 'Start with the first available source, then compare its rules with the other disciplines.'
+      : 'The principle collection is unavailable, so begin with the master index.',
+    href: principlesByMaster[0] ? `/masters/${principlesByMaster[0].slug}` : '/masters'
+  }}
+/>
 
-<!-- Principles by Master -->
-<section class="py-16 px-6">
-	<div class="max-w-7xl mx-auto">
-		{#if principlesByMaster.length > 0}
-			{#each principlesByMaster as master, index}
-				<div class="mb-16 {index > 0 ? 'pt-16 border-t border-canon' : ''}">
-					<div class="mb-8">
-						<a
-							href="/masters/{master.slug}"
-							class="inline-block group hover:opacity-70-canon transition-opacity"
-						>
-							<h2 class="type-3xl font-bold mb-2">{master.name}</h2>
-							<p class="type-sm opacity-60-canon">
-								{master.principles.length}
-								{master.principles.length === 1 ? 'Principle' : 'Principles'} →
-							</p>
-						</a>
-					</div>
-
-					<div class="space-y-6">
-						{#each master.principles as principle}
-							<PrincipleCard {principle} />
-						{/each}
-					</div>
-				</div>
-			{/each}
-		{:else}
-			<div class="text-center py-24">
-				<p class="type-lg opacity-60-canon">Principles coming soon...</p>
-				<p class="type-sm opacity-40-canon mt-2">Database seeding in progress.</p>
-			</div>
-		{/if}
-	</div>
-</section>
+{#if principlesByMaster.length > 0}
+  <PerformanceNarrativeStage
+    id="principles-by-master"
+    eyebrow="Reusable judgment"
+    title="Choose the source before applying the rule."
+    description="Each scene keeps one master’s complete principle set together so the reader can compare disciplines without losing provenance."
+    scenes={principleScenes}
+    ariaLabel="Principles grouped by master"
+  >
+    {#snippet artifact(scene)}
+      {@const master = principlesByMaster.find((entry) => entry.slug === scene.id)}
+      {#if master}
+        <div class="principle-list">
+          <a class="master-link" href="/masters/{master.slug}">Open {master.name} →</a>
+          {#each master.principles as principle}
+            <PrincipleCard {principle} />
+          {/each}
+        </div>
+      {/if}
+    {/snippet}
+  </PerformanceNarrativeStage>
+{:else}
+  <section class="principles-empty" aria-labelledby="principles-empty-title">
+    <span>00 / Collection unavailable</span>
+    <h2 id="principles-empty-title">The principle records are not available yet.</h2>
+    <p>Continue with the master index while the collection is restored.</p>
+    <a href="/masters">Open Masters →</a>
+  </section>
+{/if}
 
 <style>
-	/* Typography */
-	.type-sm {
-		font-size: var(--text-performance-body-sm);
-	}
+  .principle-list {
+    display: grid;
+    gap: 0.75rem;
+    min-width: 0;
+  }
 
-	.type-lg {
-		font-size: var(--text-performance-body-lg);
-	}
+  .master-link {
+    width: fit-content;
+    font-family: var(--font-performance-mono);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+  }
 
-	.type-xl {
-		font-size: var(--text-performance-h3);
-	}
+  .principles-empty {
+    display: grid;
+    gap: 0.75rem;
+    width: min(48rem, calc(100% - 2rem));
+    margin: 3rem auto;
+    padding: 2rem;
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+  }
 
-	.type-3xl {
-		font-size: var(--text-performance-h1);
-	}
+  .principles-empty span {
+    font-family: var(--font-performance-mono);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+  }
 
-	/* Opacity as color tokens */
-	.opacity-40-canon {
-		color: var(--color-performance-fg-muted);
-	}
-
-	.opacity-60-canon {
-		color: var(--color-performance-fg-tertiary);
-	}
-
-	.opacity-70-canon {
-		color: var(--color-performance-fg-secondary);
-	}
-
-	/* Borders */
-	.border-canon {
-		border-color: var(--color-performance-border-default);
-	}
+  .principles-empty h2,
+  .principles-empty p {
+    margin: 0;
+  }
 </style>

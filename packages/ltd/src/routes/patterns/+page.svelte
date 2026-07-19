@@ -1,578 +1,393 @@
 <script lang="ts">
-	import { SEO } from '@create-something/canon';
+  import {
+    CanonCollectionRail,
+    CanonIndexOpening,
+    type CanonCollectionItem
+  } from '$lib/components';
+  import {
+    PerformanceNarrativeStage,
+    SEO,
+    type PerformanceNarrativeScene
+  } from '@create-something/canon';
+
+  const patternItems: CanonCollectionItem[] = [
+    {
+      title: 'Constraint as Liberation',
+      href: '/patterns/constraint-as-liberation',
+      detail:
+        'Start with constraints, not features. Limitation creates the boundary for useful invention.',
+      points: ['Limited palette', 'Restricted components', 'Fixed grid']
+    },
+    {
+      title: 'Breakdown and Repair',
+      href: '/patterns/breakdown-and-repair',
+      detail: 'Use a failure to reveal the system, repair it, and preserve what the failure taught.'
+    },
+    {
+      title: 'Functional Transparency',
+      href: '/patterns/functional-transparency',
+      detail: 'Make how the thing works evident through honest structure, code, and dependencies.',
+      points: ['Exposed structure', 'Self-documenting APIs', 'Clear dependency graphs']
+    },
+    {
+      title: 'Iterative Reduction',
+      href: '/patterns/iterative-reduction',
+      detail: 'Start complex, then remove relentlessly until only the useful structure remains.',
+      points: ['Ship and measure', 'Remove unused features', 'Refactor toward clarity']
+    },
+    {
+      title: 'Universal Utility',
+      href: '/patterns/universal-utility',
+      detail:
+        'Serve more people through accessibility, progressive enhancement, and sensible defaults.'
+    },
+    {
+      title: 'Timeless Materials',
+      href: '/patterns/timeless-materials',
+      detail:
+        'Choose standards and materials that age well instead of following a short-lived trend.'
+    },
+    {
+      title: 'Negative Space',
+      href: '/patterns/negative-space',
+      detail: 'Treat what you do not build as part of the system’s quality and hierarchy.'
+    },
+    {
+      title: 'Tool Complementarity',
+      href: '/patterns/tool-complementarity',
+      detail: 'Give each tool one domain and make the handoff clearer than the overlap.'
+    },
+    {
+      title: 'Dwelling in Tools',
+      href: '/patterns/dwelling-in-tools',
+      detail: 'Build habits and infrastructure that recede while the practitioner works.'
+    },
+    {
+      title: 'Principled Defaults',
+      href: '/patterns/principled-defaults',
+      detail: 'Trace configuration values to a principle instead of choosing arbitrary numbers.'
+    },
+    {
+      title: 'Subtractive Triad Audit',
+      href: '/patterns/subtractive-triad-audit',
+      detail:
+        'Unify duplication, remove what cannot justify itself, and reconnect the result to the whole.'
+    },
+    {
+      title: 'Hermeneutic Spiral',
+      href: '/patterns/hermeneutic-spiral',
+      detail: 'Carry context forward so each interaction deepens rather than resets understanding.'
+    },
+    {
+      title: 'Code Mode',
+      href: '/patterns/code-mode',
+      detail:
+        'Let tools recede through familiar code that composes operations instead of exposing schemas.'
+    },
+    {
+      title: 'Crystallization',
+      href: '/patterns/crystallization',
+      detail: 'Encode human judgment into constraints that an agent can execute within.'
+    }
+  ];
+
+  const quickStarts = [
+    {
+      question: 'Building something new?',
+      answer: 'Start with constraints, not features.',
+      label: 'Constraint as Liberation',
+      href: '/patterns/constraint-as-liberation'
+    },
+    {
+      question: 'Something broke?',
+      answer: 'Repair it, then preserve why it failed.',
+      label: 'Breakdown and Repair',
+      href: '/patterns/breakdown-and-repair'
+    },
+    {
+      question: 'Too much complexity?',
+      answer: 'Remove until only the essential structure remains.',
+      label: 'Iterative Reduction',
+      href: '/patterns/iterative-reduction'
+    }
+  ];
+
+  const antiPatterns = [
+    [
+      'Feature Creep',
+      'Adding features because you can, not because users need them.',
+      'Start with core functionality. Add only what proves necessary.'
+    ],
+    [
+      'Decorative Complexity',
+      'Ornamentation that serves ego rather than the reader or operator.',
+      'Keep only visual elements that communicate or assist.'
+    ],
+    [
+      'Trend Chasing',
+      'Choosing a framework, style, or method only because it is popular.',
+      'Choose from durable principles and standards.'
+    ],
+    [
+      'Premature Abstraction',
+      'Building for hypothetical cases before the pattern is visible.',
+      'Wait for repeated evidence, then abstract.'
+    ],
+    [
+      'Metric Vanity',
+      'Optimizing engagement or growth instead of useful outcomes.',
+      'Measure completion, error reduction, and time saved.'
+    ],
+    [
+      'Dishonest Documentation',
+      'Hiding limitations or presenting marketing as research.',
+      'Keep failures, limits, metrics, and methods visible.'
+    ],
+    [
+      'Tool Redundancy',
+      'Letting several tools compete for the same task.',
+      'Assign clear domains and explicit handoffs.'
+    ]
+  ];
+
+  const recognition = [
+    ['Iterative Reduction', 'Removing a feature makes the product better.'],
+    ['Constraint as Liberation', 'A real limitation forces a more coherent solution.'],
+    ['Functional Transparency', 'The structure explains the code without extra ceremony.'],
+    ['Tool Complementarity', 'Each tool has a clear domain and handoff.'],
+    ['Hermeneutic Spiral', 'A returning user does not have to repeat known context.'],
+    ['Code Mode', 'The operator composes tools as familiar code rather than invoking raw schemas.'],
+    [
+      'Crystallization',
+      'An approved configuration lets agents execute expert judgment within clear boundaries.'
+    ]
+  ];
+
+  const doctrineScenes: PerformanceNarrativeScene[] = [
+    {
+      id: 'choose',
+      label: 'Choose',
+      summary: 'Name the situation first',
+      title: 'Start with the condition you can observe.',
+      detail:
+        'The right pattern follows from the current constraint, breakdown, or excess—not from a preferred technique.',
+      tone: 'allow',
+      evidence: ['New work', 'A breakdown', 'Excess complexity']
+    },
+    {
+      id: 'reference',
+      label: 'Reference',
+      summary: 'See several patterns combine',
+      title: 'Terminal as Dwelling',
+      detail: 'A terminal configuration turns five patterns into inspectable choices.',
+      tone: 'review',
+      evidence: ['Five patterns applied', 'Two elements removed', 'Four values derived']
+    },
+    {
+      id: 'avoid',
+      label: 'Avoid',
+      summary: 'Recognize the failed move',
+      title: 'Anti-Patterns to Avoid',
+      detail: 'These moves add surface area while weakening utility, evidence, or ownership.',
+      tone: 'block',
+      evidence: antiPatterns.map(([name]) => name)
+    },
+    {
+      id: 'recognize',
+      label: 'Recognize',
+      summary: 'Find the pattern in practice',
+      title: 'Recognizing Patterns in Your Work',
+      detail: 'Name the pattern in current work.',
+      tone: 'allow',
+      evidence: recognition.map(([name]) => name)
+    }
+  ];
 </script>
 
 <SEO
-	title="Operational Patterns"
-	description="Reusable patterns for choosing constraints, repairing breakdowns, reducing complexity, and leaving proof behind."
-	propertyName="ltd"
-	breadcrumbs={[
-		{ name: 'Home', url: 'https://createsomething.ltd' },
-		{ name: 'Patterns', url: 'https://createsomething.ltd/patterns' }
-	]}
+  title="Operational Patterns"
+  description="Reusable patterns for choosing constraints, repairing breakdowns, reducing complexity, and leaving proof behind."
+  propertyName="ltd"
+  breadcrumbs={[
+    { name: 'Home', url: 'https://createsomething.ltd' },
+    { name: 'Patterns', url: 'https://createsomething.ltd/patterns' }
+  ]}
 />
 
-<!-- Header -->
-<section class="pt-24 pb-16 px-6 border-b border-canon">
-	<div class="max-w-4xl mx-auto text-center">
-		<p class="text-sm-canon tracking-widest uppercase opacity-60-canon mb-4">The Canon</p>
-		<h1 class="mb-6">Pick the pattern first.</h1>
-		<p class="text-xl-canon opacity-70-canon leading-relaxed">
-			A pattern should name the constraint, the repair, or the reduction before a team adds
-			more surface area.
-		</p>
-	</div>
-</section>
+<CanonIndexOpening
+  current="patterns"
+  title="Patterns"
+  description="Name the condition you can observe, then choose the pattern that changes what the team does next."
+  recommendation={{
+    label: 'Begin with Constraint as Liberation',
+    detail:
+      'When the situation is still unclear, start by defining the boundary before adding features.',
+    href: '/patterns/constraint-as-liberation'
+  }}
+/>
 
-<!-- Quick Start -->
-<section class="py-16 px-6">
-	<div class="max-w-5xl mx-auto">
-		<h2 class="mb-8">Where to Start</h2>
+<CanonCollectionRail
+  id="pattern-collection"
+  title="Choose the pattern that matches the condition."
+  description="Every card opens a direct pattern source. Use the condition and practical consequence to choose before reading the full doctrine."
+  items={patternItems}
+  emptyMessage="No pattern sources are available. Return to Canon foundations and begin with the governing constraints."
+  columns={3}
+/>
 
-		<div class="space-y-6 text-base-canon opacity-70-canon leading-relaxed mb-12">
-			<p>
-				Not sure which pattern you need? Here's how to choose:
-			</p>
-
-			<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-				<div class="border border-canon p-6">
-					<h3 class="text-lg-canon font-semibold mb-3">Building something new?</h3>
-					<p class="text-sm-canon opacity-60-canon mb-3">Start with constraints, not features.</p>
-					<a href="/patterns/constraint-as-liberation" class="text-sm-canon underline hover:opacity-70-canon">
-						Constraint as Liberation →
-					</a>
-				</div>
-
-				<div class="border border-canon p-6">
-					<h3 class="text-lg-canon font-semibold mb-3">Something broke?</h3>
-					<p class="text-sm-canon opacity-60-canon mb-3">Fix it, then document why.</p>
-					<a href="/patterns/breakdown-and-repair" class="text-sm-canon underline hover:opacity-70-canon">
-						Breakdown and Repair →
-					</a>
-				</div>
-
-				<div class="border border-canon p-6">
-					<h3 class="text-lg-canon font-semibold mb-3">Too much complexity?</h3>
-					<p class="text-sm-canon opacity-60-canon mb-3">Remove until only essential remains.</p>
-					<a href="/patterns/iterative-reduction" class="text-sm-canon underline hover:opacity-70-canon">
-						Iterative Reduction →
-					</a>
-				</div>
-			</div>
-		</div>
-	</div>
-</section>
-
-<!-- Good Patterns -->
-<section class="py-16 px-6 border-t border-canon">
-	<div class="max-w-5xl mx-auto">
-		<h2 class="mb-12">All Patterns</h2>
-
-		<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-			<!-- Pattern: Constraint as Liberation -->
-			<a href="/patterns/constraint-as-liberation" class="block border border-canon p-6 hover:border-hover transition-colors">
-				<h3 class="text-lg-canon font-semibold mb-3">Constraint as Liberation</h3>
-				<p class="text-sm-canon opacity-60-canon mb-4">
-					Limitation breeds creativity. Rams' 10 principles. Mies' steel and glass. The Eameses' plywood.
-				</p>
-				<div class="text-xs-canon opacity-40-canon font-mono">
-					<p class="mb-1">✓ Limited color palette</p>
-					<p class="mb-1">✓ Restricted component library</p>
-					<p>✓ Fixed grid system</p>
-				</div>
-			</a>
-
-			<!-- Pattern: Functional Transparency -->
-			<a href="/patterns/functional-transparency" class="block border border-canon p-6 hover:border-hover transition-colors">
-				<h3 class="text-lg-canon font-semibold mb-3">Functional Transparency</h3>
-				<p class="text-sm-canon opacity-60-canon mb-4">
-					How something works should be evident. No mystery. No magic. Honest materials, honest code.
-				</p>
-				<div class="text-xs-canon opacity-40-canon font-mono">
-					<p class="mb-1">✓ Exposed structure (like Eames chairs)</p>
-					<p class="mb-1">✓ Self-documenting APIs</p>
-					<p>✓ Clear dependency graphs</p>
-				</div>
-			</a>
-
-			<!-- Pattern: Iterative Reduction -->
-			<a href="/patterns/iterative-reduction" class="block border border-canon p-6 hover:border-hover transition-colors">
-				<h3 class="text-lg-canon font-semibold mb-3">Iterative Reduction</h3>
-				<p class="text-sm-canon opacity-60-canon mb-4">
-					Start complex, remove relentlessly. Rams revised his designs dozens of times. So should you.
-				</p>
-				<div class="text-xs-canon opacity-40-canon font-mono">
-					<p class="mb-1">✓ Ship, measure, simplify</p>
-					<p class="mb-1">✓ Kill features based on usage</p>
-					<p>✓ Refactor toward clarity</p>
-				</div>
-			</a>
-
-			<!-- Pattern: Universal Utility -->
-			<a href="/patterns/universal-utility" class="block border border-canon p-6 hover:border-hover transition-colors">
-				<h3 class="text-lg-canon font-semibold mb-3">Universal Utility</h3>
-				<p class="text-sm-canon opacity-60-canon mb-4">
-					The Eameses' "the best for the most for the least." Tools should serve everyone without compromise.
-				</p>
-				<div class="text-xs-canon opacity-40-canon font-mono">
-					<p class="mb-1">✓ Accessibility by default</p>
-					<p class="mb-1">✓ Progressive enhancement</p>
-					<p>✓ Zero-config options</p>
-				</div>
-			</a>
-
-			<!-- Pattern: Timeless Materials -->
-			<a href="/patterns/timeless-materials" class="block border border-canon p-6 hover:border-hover transition-colors">
-				<h3 class="text-lg-canon font-semibold mb-3">Timeless Materials</h3>
-				<p class="text-sm-canon opacity-60-canon mb-4">
-					Choose what ages well. Avoid trends. Mies used steel because it endures. What's the steel of software?
-				</p>
-				<div class="text-xs-canon opacity-40-canon font-mono">
-					<p class="mb-1">✓ Web standards over frameworks</p>
-					<p class="mb-1">✓ SQL over NoSQL (for most cases)</p>
-					<p>✓ HTTP over proprietary protocols</p>
-				</div>
-			</a>
-
-			<!-- Pattern: Negative Space -->
-			<a href="/patterns/negative-space" class="block border border-canon p-6 hover:border-hover transition-colors">
-				<h3 class="text-lg-canon font-semibold mb-3">Negative Space</h3>
-				<p class="text-sm-canon opacity-60-canon mb-4">
-					What you don't build matters as much as what you do. Whitespace in design. Silence in music. Restraint in code.
-				</p>
-				<div class="text-xs-canon opacity-40-canon font-mono">
-					<p class="mb-1">✓ Generous margins and padding</p>
-					<p class="mb-1">✓ Sparse UI with clear hierarchy</p>
-					<p>✓ Functions that do one thing</p>
-				</div>
-			</a>
-
-			<!-- Pattern: Tool Complementarity -->
-			<a href="/patterns/tool-complementarity" class="block border border-canon p-6 hover:border-hover transition-colors">
-				<h3 class="text-lg-canon font-semibold mb-3">Tool Complementarity</h3>
-				<p class="text-sm-canon opacity-60-canon mb-4">
-					Tools should not compete for the same ontological space. Each has a domain. Heidegger's Zuhandenheit—ready-to-hand tools recede from consciousness.
-				</p>
-				<div class="text-xs-canon opacity-40-canon font-mono">
-					<p class="mb-1">✓ Clear boundaries between tools</p>
-					<p class="mb-1">✓ Handoff protocols, not redundancy</p>
-					<p>✓ Creation vs. operation domains</p>
-				</div>
-			</a>
-
-			<!-- Pattern: Dwelling in Tools -->
-			<a href="/patterns/dwelling-in-tools" class="block border border-canon p-6 hover:border-hover transition-colors">
-				<h3 class="text-lg-canon font-semibold mb-3">Dwelling in Tools</h3>
-				<p class="text-sm-canon opacity-60-canon mb-4">
-					Build habits that make tools transparent. A carpenter forgets the hammer exists. Infrastructure should be invisible.
-				</p>
-				<div class="text-xs-canon opacity-40-canon font-mono">
-					<p class="mb-1">✓ Workflows that become automatic</p>
-					<p class="mb-1">✓ Configuration once, use forever</p>
-					<p>✓ Minimize conspicuousness, obtrusiveness, obstinacy</p>
-				</div>
-			</a>
-
-			<!-- Pattern: Principled Defaults -->
-			<a href="/patterns/principled-defaults" class="block border border-canon p-6 hover:border-hover transition-colors">
-				<h3 class="text-lg-canon font-semibold mb-3">Principled Defaults</h3>
-				<p class="text-sm-canon opacity-60-canon mb-4">
-					Every configuration value traces to a principle. Arbitrary numbers are decoration in disguise. 20px padding? Why 20?
-				</p>
-				<div class="text-xs-canon opacity-40-canon font-mono">
-					<p class="mb-1">✓ Spacing from golden ratio (1.618rem)</p>
-					<p class="mb-1">✓ Colors from functional meaning, not trends</p>
-					<p>✓ Typography from readability research</p>
-				</div>
-			</a>
-
-			<!-- Pattern: Subtractive Triad Audit -->
-			<a href="/patterns/subtractive-triad-audit" class="block border border-canon p-6 hover:border-hover transition-colors">
-				<h3 class="text-lg-canon font-semibold mb-3">Subtractive Triad Audit</h3>
-				<p class="text-sm-canon opacity-60-canon mb-4">
-					Three questions at three levels. DRY for implementation, Rams for artifacts, Heidegger for systems. Apply in order.
-				</p>
-				<div class="text-xs-canon opacity-40-canon font-mono">
-					<p class="mb-1">✓ "Have I built this before?" → Unify</p>
-					<p class="mb-1">✓ "Does this earn its existence?" → Remove</p>
-					<p>✓ "Does this serve the whole?" → Reconnect</p>
-				</div>
-			</a>
-
-			<!-- Pattern: Hermeneutic Spiral -->
-			<a href="/patterns/hermeneutic-spiral" class="block border border-canon p-6 hover:border-hover transition-colors">
-				<h3 class="text-lg-canon font-semibold mb-3">Hermeneutic Spiral</h3>
-				<p class="text-sm-canon opacity-60-canon mb-4">
-					Understanding accumulates—it doesn't reset. Each interaction deepens context. Parts inform the whole; the whole informs the parts.
-				</p>
-				<div class="text-xs-canon opacity-40-canon font-mono">
-					<p class="mb-1">✓ Remember what you learn, ask only what's new</p>
-					<p class="mb-1">✓ Delta intake over stateless repetition</p>
-					<p>✓ Returning users encounter evolved context</p>
-				</div>
-			</a>
-
-			<!-- Pattern: Code Mode -->
-			<a href="/patterns/code-mode" class="block border border-canon p-6 hover:border-hover transition-colors">
-				<h3 class="text-lg-canon font-semibold mb-3">Code Mode</h3>
-				<p class="text-sm-canon opacity-60-canon mb-4">
-					Tools recede when expressed as code. Heidegger's Zuhandenheit—ready-to-hand tools disappear into familiar patterns. The hammer vanishes when hammering.
-				</p>
-				<div class="text-xs-canon opacity-40-canon font-mono">
-					<p class="mb-1">✓ Write code that uses tools as libraries</p>
-					<p class="mb-1">✓ Familiar grammar enables tool-transparency</p>
-					<p>✓ Compose operations, don't invoke schemas</p>
-				</div>
-			</a>
-
-			<!-- Pattern: Crystallization -->
-			<a href="/patterns/crystallization" class="block border border-canon p-6 hover:border-hover transition-colors">
-				<h3 class="text-lg-canon font-semibold mb-3">Crystallization</h3>
-				<p class="text-sm-canon opacity-60-canon mb-4">
-					Encode human judgment into constraints that AI agents execute within. One expert's taste scales through curated autonomy.
-				</p>
-				<div class="text-xs-canon opacity-40-canon font-mono">
-					<p class="mb-1">✓ Config files over hardcoded heuristics</p>
-					<p class="mb-1">✓ Human decides boundaries, AI works within</p>
-					<p>✓ Expertise becomes portable infrastructure</p>
-				</div>
-			</a>
-		</div>
-	</div>
-</section>
-
-<!-- Reference Implementation -->
-<section class="py-16 px-6 border-t border-canon">
-	<div class="max-w-5xl mx-auto">
-		<h2 class="mb-6">Reference Implementation</h2>
-		<p class="text-base-canon opacity-60-canon mb-12 max-w-3xl">
-			How patterns combine in practice. A terminal configuration applying hermeneutic analysis.
-		</p>
-
-		<div class="border border-canon p-8">
-			<div class="flex items-start justify-between mb-6">
-				<div>
-					<h3 class="text-xl-canon font-semibold mb-2">Terminal as Dwelling</h3>
-					<p class="text-sm-canon opacity-50-canon">WezTerm + Shell Configuration</p>
-				</div>
-				<div class="text-xs-canon opacity-40-canon font-mono text-right">
-					<p>Patterns applied: 5</p>
-					<p>Elements removed: 2</p>
-					<p>Values derived: 4</p>
-				</div>
-			</div>
-
-			<div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-				<!-- What was derived -->
-				<div>
-					<h4 class="text-sm-canon font-semibold mb-4 opacity-70-canon">Derived from Canon</h4>
-					<div class="space-y-3 text-xs-canon font-mono opacity-50-canon">
-						<div class="flex justify-between">
-							<span>font_size</span>
-							<span>15pt ← canonical body (16-20px)</span>
-						</div>
-						<div class="flex justify-between">
-							<span>line_height</span>
-							<span>1.5 ← canonical body (1.5-1.6)</span>
-						</div>
-						<div class="flex justify-between">
-							<span>padding</span>
-							<span>26px ← golden ratio (--space-performance-md)</span>
-						</div>
-						<div class="flex justify-between">
-							<span>colors</span>
-							<span>muted ← functional, not iOS</span>
-						</div>
-					</div>
-				</div>
-
-				<!-- What was removed -->
-				<div>
-					<h4 class="text-sm-canon font-semibold mb-4 opacity-70-canon">Removed (Failed Justification)</h4>
-					<div class="space-y-3 text-xs-canon font-mono opacity-50-canon">
-						<div class="flex justify-between">
-							<span class="line-through">Claude launcher</span>
-							<span>feature creep</span>
-						</div>
-						<div class="flex justify-between">
-							<span class="line-through">Resize keybindings</span>
-							<span>system conflict</span>
-						</div>
-					</div>
-				</div>
-			</div>
-
-			<!-- Patterns demonstrated -->
-			<div class="border-t border-canon pt-6">
-				<h4 class="text-sm-canon font-semibold mb-4 opacity-70-canon">Patterns Demonstrated</h4>
-				<div class="flex flex-wrap gap-2">
-					<span class="text-xs-canon px-3 py-1 border border-emphasis">Dwelling in Tools</span>
-					<span class="text-xs-canon px-3 py-1 border border-emphasis">Principled Defaults</span>
-					<span class="text-xs-canon px-3 py-1 border border-emphasis">Iterative Reduction</span>
-					<span class="text-xs-canon px-3 py-1 border border-emphasis">Constraint as Liberation</span>
-					<span class="text-xs-canon px-3 py-1 border border-emphasis">Functional Transparency</span>
-				</div>
-			</div>
-
-			<!-- The hermeneutic test -->
-			<div class="border-t border-canon pt-6 mt-6">
-				<h4 class="text-sm-canon font-semibold mb-4 opacity-70-canon">Hermeneutic Verification</h4>
-				<div class="text-xs-canon opacity-50-canon space-y-2">
-					<p><strong>Part → Whole:</strong> Does this config reveal the CREATE SOMETHING ethos? Yes—black/white palette, mathematical spacing, no decoration.</p>
-					<p><strong>Whole → Part:</strong> Can every value trace to canon? Yes—typography, spacing, colors all derive from .ltd standards.</p>
-					<p><strong>Circle Closes:</strong> The tool recedes. The user dwells. Zuhandenheit achieved.</p>
-				</div>
-			</div>
-
-			<!-- Source -->
-			<div class="border-t border-canon pt-6 mt-6">
-				<h4 class="text-sm-canon font-semibold mb-4 opacity-70-canon">Source</h4>
-				<a
-					href="https://github.com/createsomethingtoday/create-something-monorepo/tree/main/terminal"
-					target="_blank"
-					rel="noopener noreferrer"
-					class="text-xs-canon font-mono opacity-50-canon hover:opacity-100 transition-opacity"
-				>
-					/terminal/wezterm.lua · shell-config.zsh
-				</a>
-			</div>
-		</div>
-	</div>
-</section>
-
-<!-- Anti-Patterns -->
-<section class="py-16 px-6 border-t border-canon">
-	<div class="max-w-5xl mx-auto">
-		<h2 class="mb-12">Anti-Patterns to Avoid</h2>
-
-		<div class="space-y-6">
-			<!-- Anti-Pattern: Feature Creep -->
-			<div class="border border-error bg-error-subtle p-6">
-				<div class="flex items-start gap-4">
-					<span class="text-2xl-canon">⚠</span>
-					<div class="flex-1">
-						<h3 class="text-lg-canon font-semibold mb-2">Feature Creep</h3>
-						<p class="text-sm-canon opacity-70-canon mb-3">
-							Adding features because you can, not because users need them. Every addition requires justification.
-						</p>
-						<div class="text-xs-canon opacity-50-canon">
-							<strong>Instead:</strong> Start with core functionality. Add only what proves necessary.
-						</div>
-					</div>
-				</div>
-			</div>
-
-			<!-- Anti-Pattern: Decorative Complexity -->
-			<div class="border border-error bg-error-subtle p-6">
-				<div class="flex items-start gap-4">
-					<span class="text-2xl-canon">⚠</span>
-					<div class="flex-1">
-						<h3 class="text-lg-canon font-semibold mb-2">Decorative Complexity</h3>
-						<p class="text-sm-canon opacity-70-canon mb-3">
-							Ornamentation that serves ego, not users. Animations without purpose. Gradients for "visual interest."
-						</p>
-						<div class="text-xs-canon opacity-50-canon">
-							<strong>Instead:</strong> Every visual element must communicate or assist. Otherwise, remove it.
-						</div>
-					</div>
-				</div>
-			</div>
-
-			<!-- Anti-Pattern: Trend Chasing -->
-			<div class="border border-error bg-error-subtle p-6">
-				<div class="flex items-start gap-4">
-					<span class="text-2xl-canon">⚠</span>
-					<div class="flex-1">
-						<h3 class="text-lg-canon font-semibold mb-2">Trend Chasing</h3>
-						<p class="text-sm-canon opacity-70-canon mb-3">
-							Adopting the latest framework, design style, or methodology because it's popular. This ages poorly.
-						</p>
-						<div class="text-xs-canon opacity-50-canon">
-							<strong>Instead:</strong> Choose based on fundamental principles. Trends fade. Standards endure.
-						</div>
-					</div>
-				</div>
-			</div>
-
-			<!-- Anti-Pattern: Premature Abstraction -->
-			<div class="border border-error bg-error-subtle p-6">
-				<div class="flex items-start gap-4">
-					<span class="text-2xl-canon">⚠</span>
-					<div class="flex-1">
-						<h3 class="text-lg-canon font-semibold mb-2">Premature Abstraction</h3>
-						<p class="text-sm-canon opacity-70-canon mb-3">
-							Building for hypothetical future use cases. Creating frameworks before you have two examples.
-						</p>
-						<div class="text-xs-canon opacity-50-canon">
-							<strong>Instead:</strong> Wait for the pattern to emerge three times. Then abstract.
-						</div>
-					</div>
-				</div>
-			</div>
-
-			<!-- Anti-Pattern: Metric Vanity -->
-			<div class="border border-error bg-error-subtle p-6">
-				<div class="flex items-start gap-4">
-					<span class="text-2xl-canon">⚠</span>
-					<div class="flex-1">
-						<h3 class="text-lg-canon font-semibold mb-2">Metric Vanity</h3>
-						<p class="text-sm-canon opacity-70-canon mb-3">
-							Optimizing for engagement, clicks, or growth over utility. Users as numbers instead of people.
-						</p>
-						<div class="text-xs-canon opacity-50-canon">
-							<strong>Instead:</strong> Measure what matters. Completion rates. Error reduction. Time saved.
-						</div>
-					</div>
-				</div>
-			</div>
-
-			<!-- Anti-Pattern: Dishonest Documentation -->
-			<div class="border border-error bg-error-subtle p-6">
-				<div class="flex items-start gap-4">
-					<span class="text-2xl-canon">⚠</span>
-					<div class="flex-1">
-						<h3 class="text-lg-canon font-semibold mb-2">Dishonest Documentation</h3>
-						<p class="text-sm-canon opacity-70-canon mb-3">
-							Hiding limitations. Cherry-picking results. Marketing copy disguised as research.
-						</p>
-						<div class="text-xs-canon opacity-50-canon">
-							<strong>Instead:</strong> Document failures alongside successes. Honest metrics. Transparent methodology.
-						</div>
-					</div>
-				</div>
-			</div>
-
-			<!-- Anti-Pattern: Tool Redundancy -->
-			<div class="border border-error bg-error-subtle p-6">
-				<div class="flex items-start gap-4">
-					<span class="text-2xl-canon">⚠</span>
-					<div class="flex-1">
-						<h3 class="text-lg-canon font-semibold mb-2">Tool Redundancy</h3>
-						<p class="text-sm-canon opacity-70-canon mb-3">
-							Multiple tools competing for the same task. Confusion about which to use. Duplicated capabilities without differentiation.
-						</p>
-						<div class="text-xs-canon opacity-50-canon">
-							<strong>Instead:</strong> Assign clear domains. Define handoff protocols. Eliminate overlap.
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
-</section>
-
-<!-- Pattern Recognition -->
-<section class="py-16 px-6 border-t border-canon">
-	<div class="max-w-3xl mx-auto">
-		<h2 class="mb-8">Recognizing Patterns in Your Work</h2>
-
-		<div class="space-y-6 text-base-canon opacity-70-canon leading-relaxed">
-			<p>
-				The masters didn't invent these patterns—they discovered them through decades of practice. You'll find them too.
-			</p>
-
-			<p>
-				When you remove a feature and the product gets better, that's <strong>Iterative Reduction</strong>.
-			</p>
-
-			<p>
-				When constraints force you to solve a problem elegantly, that's <strong>Constraint as Liberation</strong>.
-			</p>
-
-			<p>
-				When code needs no comments because the structure is self-evident, that's <strong>Functional Transparency</strong>.
-			</p>
-
-			<p>
-				When you stop asking "which tool should I use?" because each has a clear domain, that's <strong>Tool Complementarity</strong>.
-			</p>
-
-			<p>
-				When a returning user doesn't have to repeat themselves because the system remembers, that's the <strong>Hermeneutic Spiral</strong>.
-			</p>
-
-			<p>
-				When you write code that uses tools as libraries and forget you're invoking an API, that's <strong>Code Mode</strong>.
-			</p>
-
-			<p>
-				When you encode your judgment into a config file and AI agents execute flawlessly within those boundaries, that's <strong>Crystallization</strong>.
-			</p>
-
-			<div class="mt-12 p-6 border border-canon">
-				<p class="text-sm-canon opacity-60-canon italic">
-					"The ability to simplify means to eliminate the unnecessary so that the necessary may speak."
-				</p>
-				<p class="text-xs-canon opacity-40-canon mt-2">— Hans Hofmann</p>
-			</div>
-		</div>
-	</div>
-</section>
+<PerformanceNarrativeStage
+  id="pattern-operating-doctrine"
+  eyebrow="Apply the pattern"
+  title="Choose, inspect, avoid, recognize."
+  description="Supporting doctrine stays in one sequence after the direct collection, so it helps the decision without competing with it."
+  scenes={doctrineScenes}
+  ariaLabel="Pattern operating doctrine"
+>
+  {#snippet artifact(scene)}
+    {#if scene.id === 'choose'}
+      <div class="quick-start">
+        {#each quickStarts as item}
+          <article>
+            <strong>{item.question}</strong>
+            <p>{item.answer}</p>
+            <a href={item.href}>{item.label} →</a>
+          </article>
+        {/each}
+      </div>
+    {:else if scene.id === 'reference'}
+      <div class="reference">
+        <header>
+          <strong>Terminal as Dwelling</strong>
+          <span>WezTerm + Shell Configuration</span>
+        </header>
+        <div class="reference__grid">
+          <article>
+            <span>Derived</span>
+            <p>
+              15pt type, 1.5 line height, golden-ratio padding, and functional colors all trace to
+              Canon.
+            </p>
+          </article>
+          <article>
+            <span>Removed</span>
+            <p>
+              The Claude launcher failed the feature test; resize keybindings conflicted with the
+              system.
+            </p>
+          </article>
+          <article>
+            <span>Verified</span>
+            <p>
+              Part and whole agree: the palette, spacing, and restrained behavior reveal the same
+              ethos.
+            </p>
+          </article>
+        </div>
+        <a
+          href="https://github.com/createsomethingtoday/create-something-monorepo/tree/main/terminal"
+          target="_blank"
+          rel="noopener noreferrer">Inspect the terminal source →</a
+        >
+      </div>
+    {:else if scene.id === 'avoid'}
+      <div class="anti-patterns">
+        {#each antiPatterns as [name, failure, repair]}
+          <article>
+            <strong>{name}</strong>
+            <p>{failure}</p>
+            <span>Instead: {repair}</span>
+          </article>
+        {/each}
+      </div>
+    {:else}
+      <div class="recognition">
+        {#each recognition as [name, signal]}
+          <article>
+            <strong>{name}</strong>
+            <p>{signal}</p>
+          </article>
+        {/each}
+        <blockquote>
+          “The ability to simplify means to eliminate the unnecessary so that the necessary may
+          speak.” <cite>— Hans Hofmann</cite>
+        </blockquote>
+      </div>
+    {/if}
+  {/snippet}
+</PerformanceNarrativeStage>
 
 <style>
-	/* Typography */
-	.text-xs-canon {
-		font-size: var(--text-performance-caption);
-	}
+  .quick-start,
+  .reference__grid,
+  .anti-patterns,
+  .recognition {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+    min-width: 0;
+  }
 
-	.text-sm-canon {
-		font-size: var(--text-performance-body-sm);
-	}
+  .quick-start article,
+  .reference__grid article,
+  .anti-patterns article,
+  .recognition article {
+    display: grid;
+    align-content: start;
+    gap: 0.55rem;
+    min-width: 0;
+    padding: 1rem;
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+    background: var(--color-performance-panel, #fff);
+  }
 
-	.text-base-canon {
-		font-size: var(--text-performance-body);
-	}
+  .quick-start p,
+  .reference p,
+  .anti-patterns p,
+  .recognition p {
+    margin: 0;
+    color: var(--color-performance-muted, #5e6268);
+    font-size: 0.9rem;
+    line-height: 1.45;
+  }
 
-	.text-lg-canon {
-		font-size: var(--text-performance-body-lg);
-	}
+  .reference {
+    display: grid;
+    gap: 1rem;
+    min-width: 0;
+  }
 
-	.text-xl-canon {
-		font-size: var(--text-performance-h3);
-	}
+  .reference > header {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+  }
 
-	.text-2xl-canon {
-		font-size: var(--text-performance-h2);
-	}
+  .reference span,
+  .anti-patterns span,
+  blockquote cite {
+    font-family: var(--font-performance-mono);
+    font-size: 0.7rem;
+    font-style: normal;
+    text-transform: uppercase;
+  }
 
-	/* Opacity as color tokens */
-	.opacity-40-canon {
-		color: var(--color-performance-fg-muted);
-	}
+  .anti-patterns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 
-	.opacity-50-canon {
-		color: var(--color-performance-fg-muted);
-	}
+  blockquote {
+    grid-column: 1 / -1;
+    margin: 0;
+    padding: 1rem;
+    border: 1px solid var(--color-performance-line-strong, #9c9c96);
+  }
 
-	.opacity-60-canon {
-		color: var(--color-performance-fg-tertiary);
-	}
-
-	.opacity-70-canon {
-		color: var(--color-performance-fg-secondary);
-	}
-
-	/* Borders */
-	.border-canon {
-		border-color: var(--color-performance-border-default);
-	}
-
-	.border-emphasis {
-		border-color: var(--color-performance-border-emphasis);
-	}
-
-
-	/* Semantic colors */
-	.bg-error-subtle {
-		background: var(--color-performance-error-muted);
-	}
-
-	.border-error {
-		border-color: var(--color-performance-error-border);
-	}
-
-	/* Universal element styles */
-	section {
-		border-color: var(--color-performance-border-default);
-	}
+  @media (max-width: 720px) {
+    .quick-start,
+    .reference__grid,
+    .anti-patterns,
+    .recognition {
+      grid-template-columns: 1fr;
+    }
+  }
 </style>
