@@ -211,7 +211,7 @@
           {/each}
         </div>
       {:else}
-        <div class="methodology-artifact">
+        <div class="methodology-artifact methodology-map-artifact">
           <PublicAtlasStoryCanvas
             starterId="revops-lead-handoff"
             storyId="methodology-revops-lead-handoff-story"
@@ -318,6 +318,11 @@
     background: var(--color-performance-bg-pure);
     box-shadow: var(--glass-shine-soft);
     text-align: center;
+  }
+
+  .methodology-map-artifact {
+    min-width: 0;
+    overflow: hidden;
   }
 
   .principle-body {
