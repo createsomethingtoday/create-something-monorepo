@@ -217,7 +217,9 @@
     <div class="contact-info">
       <p>
         <strong class="contact-label">Email:</strong>
+        {@html '<!--email_off-->'}
         <a href="mailto:{contactEmail}" class="contact-link">{contactEmail}</a>
+        {@html '<!--/email_off-->'}
       </p>
       <p>
         <strong class="contact-label">Response time:</strong>

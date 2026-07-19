@@ -297,9 +297,11 @@
     <h3 class="subsection-title">12.1 Informal Resolution</h3>
     <p class="body-text">
       In the event of any dispute, claim, or controversy arising out of or relating to these Terms,
-      we encourage you to first contact us at <a href="mailto:{contactEmail}" class="terms-link"
-        >{contactEmail}</a
-      > to seek informal resolution.
+      we encourage you to first contact us at
+      {@html '<!--email_off-->'}
+      <a href="mailto:{contactEmail}" class="terms-link">{contactEmail}</a>
+      {@html '<!--/email_off-->'}
+      to seek informal resolution.
     </p>
 
     <h3 class="subsection-title">12.2 Binding Arbitration</h3>
@@ -371,7 +373,9 @@
     <div class="contact-info">
       <p>
         <strong class="contact-label">Email:</strong>
+        {@html '<!--email_off-->'}
         <a href="mailto:{contactEmail}" class="terms-link">{contactEmail}</a>
+        {@html '<!--/email_off-->'}
       </p>
       <p>
         <strong class="contact-label">Website:</strong>
