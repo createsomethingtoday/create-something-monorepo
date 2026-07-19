@@ -62,7 +62,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     'agency-delivery-index',
     'agency',
     ['delivery'],
-    'pending',
+    'migrated',
     contract(
       'index',
       'Choose the delivery record that needs review.',
@@ -86,7 +86,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     'agency-public-index',
     'agency',
     ['experiments', 'field-reports', 'products'],
-    'pending',
+    'migrated',
     contract(
       'index',
       'Choose the most useful proof or product path to inspect.',
