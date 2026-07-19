@@ -1,0 +1,4 @@
+First, a signal. Then, a decision. Only then, action and proof.
+
+Method: OpenAI gpt-4o-mini-transcribe over the final delivery audio.
+Result: narration matches the approved line; punctuation normalization is immaterial.

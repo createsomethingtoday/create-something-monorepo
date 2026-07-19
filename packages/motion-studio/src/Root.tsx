@@ -21,6 +21,10 @@ import { ExplainerVideo, calculateTotalDuration } from './compositions/Explainer
 import { ToolReceding } from './compositions/lessons/ToolReceding';
 import { IDEvsTerminal } from './compositions/lessons/IDEvsTerminal';
 import { TufteMorph, TUFTE_MORPH_CONFIG } from './compositions/TufteMorph';
+import {
+  SignalDecisionProof,
+  SIGNAL_DECISION_PROOF_CONFIG,
+} from './compositions/SignalDecisionProof';
 
 // Commercials (v1 - slide deck style)
 import { SeeingCommercial as SeeingCommercialV1, SEEING_COMMERCIAL_DURATION } from './compositions/commercials/SeeingCommercial';
@@ -319,6 +323,15 @@ const sampleScenes = [
 export const RemotionRoot: React.FC = () => {
   return (
     <>
+      <Composition
+        id="SignalDecisionProof"
+        component={SignalDecisionProof}
+        durationInFrames={SIGNAL_DECISION_PROOF_CONFIG.durationInFrames}
+        fps={SIGNAL_DECISION_PROOF_CONFIG.fps}
+        width={SIGNAL_DECISION_PROOF_CONFIG.width}
+        height={SIGNAL_DECISION_PROOF_CONFIG.height}
+      />
+
       {/* ========================================
           COMMERCIALS (V2 - Vox Kinetic Typography)
           Motion transitions, cutting on twos, analog texture

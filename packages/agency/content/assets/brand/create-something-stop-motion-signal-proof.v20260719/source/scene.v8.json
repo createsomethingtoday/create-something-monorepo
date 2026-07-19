@@ -1,0 +1,125 @@
+{
+  "$schema": "https://createsomething.agency/schemas/motion-scene.v1.json",
+  "id": "create-something.signal-decision-proof.v8",
+  "purpose": "Prove one signal moving monotonically through one connected decision tunnel before proof is issued.",
+  "format": {
+    "width": 1280,
+    "height": 720,
+    "aspectRatio": "16:9",
+    "deliveryDurationSeconds": 20,
+    "authoredFps": 12,
+    "deliveryFps": 24,
+    "burnedInCaptions": false
+  },
+  "elements": [
+    {
+      "id": "signal",
+      "asset": "performance-lab.signal.cobalt-cube.v1",
+      "role": "input",
+      "editable": true
+    },
+    {
+      "id": "decision-gate",
+      "asset": "performance-lab.decision-gate.onyx.v1",
+      "role": "judgment",
+      "editable": true
+    },
+    {
+      "id": "proof-receipt",
+      "asset": "performance-lab.proof-receipt.porcelain.v1",
+      "role": "evidence",
+      "editable": true
+    }
+  ],
+  "beats": [
+    {
+      "id": "establish",
+      "startSeconds": 0,
+      "endSeconds": 2,
+      "focus": ["signal", "decision-gate", "proof-receipt"],
+      "renderCell": "deterministic-master"
+    },
+    {
+      "id": "signal",
+      "startSeconds": 2,
+      "endSeconds": 6,
+      "focus": ["signal"],
+      "dependsOn": ["establish"],
+      "renderCell": "deterministic-master"
+    },
+    {
+      "id": "decision",
+      "startSeconds": 6,
+      "endSeconds": 10,
+      "focus": ["signal", "decision-gate"],
+      "dependsOn": ["signal"],
+      "renderCell": "deterministic-master"
+    },
+    {
+      "id": "action",
+      "startSeconds": 10,
+      "endSeconds": 15,
+      "focus": ["signal", "decision-gate"],
+      "dependsOn": ["decision"],
+      "renderCell": "deterministic-master"
+    },
+    {
+      "id": "proof",
+      "startSeconds": 15,
+      "endSeconds": 18,
+      "focus": ["signal", "proof-receipt"],
+      "dependsOn": ["action"],
+      "renderCell": "deterministic-master"
+    },
+    {
+      "id": "terminal-hold",
+      "startSeconds": 18,
+      "endSeconds": 20,
+      "focus": ["signal", "decision-gate", "proof-receipt"],
+      "dependsOn": ["proof"],
+      "renderCell": "deterministic-master"
+    }
+  ],
+  "renderCells": [
+    {
+      "id": "deterministic-master",
+      "startSeconds": 0,
+      "endSeconds": 20,
+      "source": "../exports/signal-decision-proof--v8--deterministic--20s--16x9--v20260719.mp4",
+      "generation": "cached"
+    }
+  ],
+  "producer": {
+    "engine": "remotion",
+    "composition": "SignalDecisionProof",
+    "source": "packages/motion-studio/src/compositions/SignalDecisionProof.tsx",
+    "cleanPlate": "clean-plate--v8--v20260719.png",
+    "openGatePlate": "open-gate-plate--v8--v20260719.png"
+  },
+  "audio": {
+    "narration": "First, a signal. Then, a decision. Only then, action—and proof.",
+    "music": "none"
+  },
+  "policy": {
+    "draft": {
+      "model": "sora-2",
+      "maximumAttemptsPerCell": 0,
+      "maximumSceneSpendUsd": 0
+    },
+    "final": {
+      "model": "sora-2-pro",
+      "rerenderInvalidatedCellsOnly": true,
+      "requiresApprovalAboveUsd": 0,
+      "maximumSceneSpendUsd": 0
+    }
+  },
+  "invariants": [
+    "one continuous acrylic tunnel",
+    "one cobalt signal cube",
+    "signal x-position never decreases",
+    "gate opens before the signal passes it",
+    "receipt remains hidden until the signal is beyond the gate",
+    "terminal state holds for two seconds",
+    "no burned-in captions, legible text, logos, watermarks, or people"
+  ]
+}

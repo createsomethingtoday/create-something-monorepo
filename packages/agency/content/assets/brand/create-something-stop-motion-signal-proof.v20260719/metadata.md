@@ -19,6 +19,12 @@
 | `source/scene.v3.json` | Addressable 18-second scene, render-cell dependencies, and cost policy |
 | `source/sora-prompt--proof-resolution--v3--v20260719.txt` | Exact prompt for the isolated proof-resolution cell |
 | `source/captions--en--v3--v20260719.vtt` | Player-rendered captions for the 18-second delivery |
+| `source/scene.v8.json` | Final 20-second deterministic scene contract and invariants |
+| `source/clean-plate--v8--v20260719.png` | AI-generated connected-tunnel plate with the gate closed |
+| `source/open-gate-plate--v8--v20260719.png` | Matching AI-generated plate with the gate open |
+| `source/captions--en--v8--v20260719.vtt` | Player-rendered captions for the 20-second delivery |
+| `source/sora-prompt--v7--connected-tunnel-pro--20s--v20260719.txt` | Exact prompt for the final whole-scene source generation |
+| `receipts/sora-single-shot--v7--v20260719.json` | Request and provider receipt for the retained V7 source |
 
 ## Generation
 
@@ -150,6 +156,54 @@ visible through a terminal hold instead of being cut at issuance.
 - [x] The generated continuation stayed inside its $1.60 draft budget without a Pro rerender.
 
 V3 verdict: complete internal pilot candidate. Publication remains a separate
+approval boundary.
+
+## Revision v8: deterministic connected-tunnel recreation
+
+V8 supersedes the stitched and fully generative candidates. The environment is
+AI-generated, while Remotion deterministically controls the cube, gate state,
+receipt timing, camera, and 12 fps pose cadence. This removes the topology and
+causal failures found in the prior renders and makes future element-level edits
+local and zero-generation-cost.
+
+| Field | Value |
+| --- | --- |
+| Source scene | `source/scene.v8.json` |
+| Composition | `packages/motion-studio/src/compositions/SignalDecisionProof.tsx` |
+| Final delivery | 1280x720, exactly 20 seconds, 480 frames at 24 fps |
+| Authored cadence | 12 sampled poses per second, duplicated for 24 fps delivery |
+| Camera | Locked wide, low three-quarter view |
+| Closed-gate plate hash | `3f5104194f05abb55994fb1a174e4da67ebe83e17136b0dfcd2d2ffc3842eab3` |
+| Open-gate plate hash | `7b9002b47875b8e6a516b2ac5760d87eb8d42d955904f8d8fda081be7e6b6a44` |
+| Composition hash | `04d2eebf46592ba0bfacd89852d7af37ad84182604f58c4739efefba51df860a` |
+| Final export hash | `8cb49efc5ff88f08ef654072fce72731bf833be78217589b24ce81b5c2e84500` |
+| Incremental AI video cost for the deterministic V8 pass | $0; V8 reuses the V7 source audio and uses image clean plates plus local rendering |
+| Recreation-sequence AI video spend | $10 total: two rejected $2 Sora 2 drafts plus the $6 Sora 2 Pro source used by V8 |
+| Cumulative pilot AI video spend | $18 through V8; image-edit tool usage is not included because no price receipt was exposed |
+
+### V8 programmatic receipts
+
+- `test/signal-decision-proof.test.ts` proves signal x-position never decreases,
+  passage precedes proof, and the receipt reaches its terminal state.
+- `receipts/final-ffprobe--v8--v20260719.json` proves the exact media contract.
+- `receipts/cadence-verification--v8--v20260719.txt` proves paired-frame cadence.
+- `receipts/audio-transcription--v8--v20260719.txt` independently verifies narration.
+- `receipts/final-contact-sheet--500ms--v8--v20260719.jpg` exposes the entire
+  sequence at half-second intervals for continuity review.
+
+### V8 review
+
+- [x] One unbroken acrylic channel remains visible throughout.
+- [x] The same cobalt cube moves only left to right.
+- [x] The gate opens before the cube passes through it.
+- [x] The cube is clearly beyond the gate before the receipt appears.
+- [x] The receipt completes its travel and the final state holds for two seconds.
+- [x] The delivery is exactly 20 seconds, 1280x720, and 480 frames at 24 fps.
+- [x] The encode contains video and audio streams and no subtitle stream.
+- [x] Narration independently transcribes as the approved line.
+- [x] No captions or legible text are burned into the video.
+
+V8 verdict: recreated internal pilot master. Publication remains a separate
 approval boundary.
 
 ## Boundary

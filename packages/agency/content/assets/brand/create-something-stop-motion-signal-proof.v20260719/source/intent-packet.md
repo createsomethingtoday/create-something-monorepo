@@ -1,16 +1,16 @@
 # CREATE SOMETHING Stop-Motion Pilot Intent Packet
 
-Linear: none
-Lane: solo-loop
+Linear: CRE-1333
+Lane: claim-worktree
 Tier: mixed
-Goal: Produce one auditable 10-second, 16:9 stop-motion marketing pilot that explains Signal -> Decision -> Proof.
+Goal: Produce one auditable 20-second, 16:9 stop-motion marketing pilot that explains Signal -> Decision -> Proof without spatial or causal discontinuity.
 
 ## Decisions
 
 - Internal CREATE SOMETHING campaign studio, not a general-purpose product.
 - CREATE SOMETHING Performance material language with Vox-style editorial explainer storytelling.
-- One 10-second 16:9 pilot only.
-- One continuous low three-quarter tracking shot with a 35mm-equivalent lens, a subtle push-in, and a final focus transfer.
+- One 20-second 16:9 pilot only.
+- One locked low three-quarter 35mm-equivalent camera showing the entire connected tunnel.
 - True 12 fps authored cadence delivered in a 24 fps MP4.
 - Recurring narration; no captions burned into the image.
 - Player captions remain a separate WebVTT delivery artifact.
@@ -25,13 +25,15 @@ Goal: Produce one auditable 10-second, 16:9 stop-motion marketing pilot that exp
 
 ## Acceptance criteria
 
-- Final MP4 is exactly 10 seconds, 1280x720, and 24 fps.
+- Final MP4 is exactly 20 seconds, 1280x720, and 24 fps.
 - Motion is conformed to 12 authored frames per second, with each pose held for two delivery frames.
 - The clip visibly communicates an incoming signal, a policy decision, an approved action, and a proof receipt.
-- The camera remains one continuous lateral tracking move with a subtle push-in.
-- Narration says: "AI work shouldn't just run. It should leave proof."
+- The camera remains locked and the tunnel remains one connected physical route.
+- The signal never reverses and is visibly beyond the gate before the proof receipt appears.
+- The completed proof state holds still for the final two seconds.
+- Narration says: "First, a signal. Then, a decision. Only then, action—and proof."
 - No captions or other legible text are burned into the video.
-- Prompt, scene spec, reference input, generation receipt, model, output hash, and WebVTT file are stored beside the export.
+- Scene spec, clean plates, deterministic composition, output hash, and WebVTT file are stored beside the export.
 
 ## Verification
 

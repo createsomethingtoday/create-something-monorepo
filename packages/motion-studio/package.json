@@ -26,6 +26,8 @@
     "build:scene": "tsc -p tsconfig.scene.json",
     "render": "remotion render",
     "render:still": "remotion still",
+    "render:signal-decision-proof": "remotion render SignalDecisionProof ../agency/content/assets/brand/create-something-stop-motion-signal-proof.v20260719/exports/signal-decision-proof--v8--deterministic--20s--16x9--v20260719.mp4 --codec=h264 --crf=15 --audio-codec=aac",
+    "sora:single-shot": "python3 scripts/sora-single-shot.py",
     "preview": "remotion preview",
     "lint": "pnpm run validate",
     "validate": "pnpm run typecheck && pnpm run validate:motion-studio",

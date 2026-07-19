@@ -1,0 +1,7 @@
+Final frames: 480
+Authored pose pairs: 240
+Pairwise SSIM Y: 0.999997
+Pairwise SSIM All: 0.999996
+
+Method: compare each even delivery frame with its following odd delivery frame.
+Result: the 24 fps encode preserves the intended 12-pose-per-second stop-motion cadence.

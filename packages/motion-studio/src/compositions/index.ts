@@ -10,6 +10,11 @@ export { DataVisualization } from './DataVisualization';
 export { ConceptBreakdown } from './ConceptBreakdown';
 export { ComparisonScene } from './ComparisonScene';
 export { TimelineScene } from './TimelineScene';
+export {
+  SignalDecisionProof,
+  SIGNAL_DECISION_PROOF_CONFIG,
+  getSignalDecisionProofState,
+} from './SignalDecisionProof';
 
 // Full video composition
 export { ExplainerVideo, calculateTotalDuration, createScene } from './ExplainerVideo';
