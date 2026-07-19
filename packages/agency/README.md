@@ -353,6 +353,10 @@ evidence.
 | **Enterprise Extension** | Extend for high-stakes, cross-system, and compliance-heavy workflows. | Custom governance boundaries + enterprise orchestration |
 | **Workflow Mapping Session** | Paid pre-implementation mapping to scope the workflow and operating boundary. | Pilot scope, operating boundary, and 30-day plan |
 
+The canonical Map-and-Build-to-Control activation persistence and projection
+boundary is documented in
+[`docs/CONTROL_ACTIVATION_LEDGER.md`](./docs/CONTROL_ACTIVATION_LEDGER.md).
+
 ---
 
 ## Public Map Starter Maps
