@@ -105,7 +105,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
       'products/proof',
       'products/signal'
     ],
-    'pending',
+    'migrated',
     contract(
       'editorial',
       'Understand the product or experiment boundary and decide where it applies.',
