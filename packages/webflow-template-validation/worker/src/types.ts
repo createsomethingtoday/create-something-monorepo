@@ -324,7 +324,6 @@ export interface PerformanceAnalysisResult {
 export interface AccessibilityAnalysisResult {
 	issues: ValidationIssue[];
 	stats: {
-		contrastViolations: number;
 		missingAltText: number;
 		headingStructureErrors: number;
 		wcagComplianceScore: number;
@@ -504,20 +503,10 @@ export interface PerformanceMetrics {
 }
 
 export interface AccessibilityAudit {
-	colorContrast: ContrastAudit[];
 	altTextCoverage: AltTextAudit;
 	headingStructure: HeadingStructureAudit;
 	formLabels: FormLabelAudit;
 	focusManagement: FocusAudit;
-}
-
-export interface ContrastAudit {
-	selector: string;
-	textColor: string;
-	backgroundColor: string;
-	contrastRatio: number;
-	wcagLevel: 'AA' | 'AAA' | 'FAIL';
-	recommendation?: string;
 }
 
 export interface AltTextAudit {
