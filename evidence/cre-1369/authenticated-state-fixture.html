@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>CRE-1369 authenticated-state fixture</title>
+		<style>
+			:root {
+				font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+				color: #111;
+				background: #f5f5f2;
+			}
+			* { box-sizing: border-box; }
+			body { margin: 0; }
+			.fixture-label {
+				padding: 0.75rem 1.25rem;
+				background: #fff3cd;
+				border-bottom: 1px solid #d8c57b;
+				font-size: 0.8rem;
+			}
+			nav {
+				display: flex;
+				gap: 1.25rem;
+				overflow-x: auto;
+				padding: 1rem 1.25rem;
+				background: white;
+				border-bottom: 1px solid #d9d9d4;
+				white-space: nowrap;
+			}
+			nav a { color: #555; text-decoration: none; }
+			nav a[aria-current="page"] { color: #111; font-weight: 700; }
+			main { max-width: 72rem; margin: auto; padding: 2.5rem 1.25rem; }
+			h1 { margin: 0; font-size: clamp(2rem, 4vw, 3rem); }
+			.lede { max-width: 46rem; color: #555; line-height: 1.55; }
+			.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-top: 2rem; }
+			.card { padding: 1.25rem; background: white; border: 1px solid #d9d9d4; border-radius: 0.5rem; }
+			.card h2 { margin: 0 0 0.4rem; font-size: 1rem; }
+			.card p { color: #555; line-height: 1.45; }
+			.alert { border-left: 4px solid #b42318; }
+			.receipt { border-left: 4px solid #16794b; }
+			.confirm { border-left: 4px solid #b77800; }
+			.actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+			button { min-height: 2.75rem; padding: 0.65rem 0.9rem; border: 1px solid #aaa; background: white; border-radius: 0.3rem; font: inherit; }
+			.danger { color: #9f1c13; border-color: #c7847f; }
+			.meta { font-size: 0.8rem; color: #666; }
+			@media (max-width: 42rem) {
+				.grid { grid-template-columns: 1fr; }
+				main { padding-top: 1.75rem; }
+			}
+		</style>
+	</head>
+	<body>
+		<div class="fixture-label">
+			Representative fixture only. It uses fake records, performs no requests, and is not an application route.
+		</div>
+		<nav aria-label="Admin tools">
+			<a href="#">Dashboard</a>
+			<a href="#">Drafts</a>
+			<a href="#" aria-current="page">Submissions</a>
+			<a href="#">Subscribers</a>
+			<a href="#">Experiments</a>
+			<a href="#">Analytics</a>
+			<a href="#">Analysis</a>
+			<a href="#">Observability</a>
+		</nav>
+		<main>
+			<h1>Contact Submissions</h1>
+			<p class="lede">Read an inquiry, set its status, and reply by email. Data: IO contact form submissions.</p>
+			<div class="grid">
+				<section class="card alert" role="alert">
+					<h2>Admin data unavailable</h2>
+					<p>The database did not return submissions. Existing records have not been replaced with zero totals.</p>
+					<div class="actions"><button type="button">Retry</button></div>
+				</section>
+				<section class="card">
+					<h2>No submissions yet</h2>
+					<p>The request succeeded and returned no records.</p>
+					<p class="meta">Empty is shown only after a successful request.</p>
+				</section>
+				<section class="card confirm" role="alert">
+					<h2>Delete the fake inquiry?</h2>
+					<p>This removes the inquiry and cannot be undone.</p>
+					<div class="actions">
+						<button type="button" class="danger">Delete permanently</button>
+						<button type="button">Keep submission</button>
+					</div>
+				</section>
+				<section class="card receipt" role="status">
+					<h2>Update recorded</h2>
+					<p>Submission marked responded.</p>
+					<p class="meta">The visible receipt closes the action boundary.</p>
+				</section>
+			</div>
+		</main>
+	</body>
+</html>

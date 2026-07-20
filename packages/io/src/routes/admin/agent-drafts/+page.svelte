@@ -12,6 +12,7 @@
 
 	import { SEO } from '@create-something/canon';
 	import { onMount } from 'svelte';
+	import { fetchAdminJson } from '$lib/admin/client';
 
 	interface Draft {
 		contact_id: number;
@@ -64,11 +65,8 @@ interface AgentActionResponse {
 	let contacts: ContactWithDraft[] = [];
 	let loading = true;
 	let error = '';
-	let metrics: AgentMetrics = {
-		approval_rate: 0,
-		total_decisions: 0,
-		escalation_rate: 0
-	};
+	let notice = '';
+	let metrics: AgentMetrics | null = null;
 
 	onMount(async () => {
 		await loadPendingReviews();
@@ -78,40 +76,32 @@ interface AgentActionResponse {
 	async function loadPendingReviews() {
 		loading = true;
 		error = '';
+		const result = await fetchAdminJson<AgentReviewsResponse>('/api/admin/agent-reviews');
 
-		try {
-			// Get all contacts that need review (in_progress or escalated)
-			const response = await fetch('/api/admin/agent-reviews');
-			const data = (await response.json()) as AgentReviewsResponse;
-
-			if (data.success) {
-				contacts = data.contacts ?? [];
-			} else {
-				error = data.error || 'Failed to load reviews';
-			}
-		} catch (err) {
-			error = err instanceof Error ? err.message : 'Unknown error loading reviews';
-		} finally {
-			loading = false;
+		if (result.ok && result.data.success) {
+			contacts = result.data.contacts ?? [];
+		} else {
+			contacts = [];
+			error = result.ok
+				? result.data.error || 'Could not load draft reviews.'
+				: result.error.message;
 		}
+		loading = false;
 	}
 
 	async function loadMetrics() {
-		try {
-			const response = await fetch('/api/admin/agent-metrics');
-			const data = (await response.json()) as AgentMetricsResponse;
-
-			if (data.success && data.metrics) {
-				metrics = data.metrics;
-			}
-		} catch (err) {
-			console.error('Failed to load metrics:', err);
+		const result = await fetchAdminJson<AgentMetricsResponse>('/api/admin/agent-metrics');
+		if (result.ok && result.data.success && result.data.metrics) {
+			metrics = result.data.metrics;
+		} else {
+			metrics = null;
 		}
 	}
 
 	async function approveDraft(contactId: number) {
-		try {
-			const response = await fetch('/api/agent', {
+		notice = '';
+		error = '';
+		const result = await fetchAdminJson<AgentActionResponse>('/api/agent', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
@@ -121,23 +111,21 @@ interface AgentActionResponse {
 				})
 			});
 
-			const data = (await response.json()) as AgentActionResponse;
-
-			if (data.success) {
-				alert('Draft approved! Remember to actually send the email.');
-				await loadPendingReviews();
-				await loadMetrics();
-			} else {
-				alert(`Error: ${data.error || 'Failed to approve draft'}`);
-			}
-		} catch (err) {
-			alert(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
+		if (result.ok && result.data.success) {
+			notice = 'Recorded as sent. This page did not send the email.';
+			await loadPendingReviews();
+			await loadMetrics();
+		} else {
+			error = result.ok
+				? result.data.error || 'Could not record this draft as sent.'
+				: result.error.message;
 		}
 	}
 
 	async function rejectDraft(contactId: number) {
-		try {
-			const response = await fetch('/api/agent', {
+		notice = '';
+		error = '';
+		const result = await fetchAdminJson<AgentActionResponse>('/api/agent', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
@@ -147,17 +135,12 @@ interface AgentActionResponse {
 				})
 			});
 
-			const data = (await response.json()) as AgentActionResponse;
-
-			if (data.success) {
-				alert('Draft rejected. You can manually respond to this contact.');
-				await loadPendingReviews();
-				await loadMetrics();
-			} else {
-				alert(`Error: ${data.error || 'Failed to reject draft'}`);
-			}
-		} catch (err) {
-			alert(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
+		if (result.ok && result.data.success) {
+			notice = 'Draft rejected. Reply manually if this inquiry still needs a response.';
+			await loadPendingReviews();
+			await loadMetrics();
+		} else {
+			error = result.ok ? result.data.error || 'Could not reject this draft.' : result.error.message;
 		}
 	}
 
@@ -165,26 +148,19 @@ interface AgentActionResponse {
 		loading = true;
 		error = '';
 
-		try {
-			const response = await fetch('/api/agent', {
+		const result = await fetchAdminJson<AgentActionResponse>('/api/agent', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ action: 'triage' })
 			});
 
-			const data = (await response.json()) as AgentActionResponse;
-
-			if (data.success) {
-				alert('Triage completed! Check results below.');
-				await loadPendingReviews();
-			} else {
-				error = data.error || 'Triage failed';
-			}
-		} catch (err) {
-			error = err instanceof Error ? err.message : 'Unknown error during triage';
-		} finally {
-			loading = false;
+		if (result.ok && result.data.success) {
+			notice = 'Triage complete. Review the updated queue below.';
+			await loadPendingReviews();
+		} else {
+			error = result.ok ? result.data.error || 'Triage failed.' : result.error.message;
 		}
+		loading = false;
 	}
 
 	function formatDate(isoString: string): string {
@@ -202,19 +178,28 @@ interface AgentActionResponse {
 <div class="container mx-auto px-4 py-8 max-w-6xl">
 	<header class="mb-8">
 		<h1 class="page-title">PM Agent Draft Review</h1>
-		<p class="page-subtitle">Experiment #3: AI PM Agent</p>
+		<p class="page-subtitle">
+			Review one proposed reply at a time. Data: IO contact submissions and saved agent decisions.
+		</p>
+		<p class="page-subtitle">This page never sends email. Send the reply first, then record it here.</p>
 	</header>
 
 	<!-- Metrics -->
 	<div class="grid grid-cols-3 gap-4 mb-8">
 		<div class="metric-card">
-			<div class="metric-value metric-value--approval">{metrics.approval_rate.toFixed(1)}%</div>
+			<div class="metric-value metric-value--approval">
+				{metrics ? `${metrics.approval_rate.toFixed(1)}%` : '—'}
+			</div>
 			<div class="metric-label">Approval Rate</div>
-			<div class="metric-subtext">{metrics.total_decisions} total decisions</div>
+			<div class="metric-subtext">
+				{metrics ? `${metrics.total_decisions} total decisions` : 'Metrics unavailable'}
+			</div>
 		</div>
 
 		<div class="metric-card">
-			<div class="metric-value metric-value--escalation">{metrics.escalation_rate.toFixed(1)}%</div>
+			<div class="metric-value metric-value--escalation">
+				{metrics ? `${metrics.escalation_rate.toFixed(1)}%` : '—'}
+			</div>
 			<div class="metric-label">Escalation Rate</div>
 		</div>
 
@@ -244,8 +229,14 @@ interface AgentActionResponse {
 	</div>
 
 	{#if error}
-		<div class="alert alert--error mb-6">
+		<div class="alert alert--error mb-6" role="alert">
 			{error}
+		</div>
+	{/if}
+
+	{#if notice}
+		<div class="alert mb-6" role="status">
+			{notice}
 		</div>
 	{/if}
 
@@ -312,7 +303,7 @@ interface AgentActionResponse {
 									on:click={() => approveDraft(contact.id)}
 									class="btn btn--approve"
 								>
-									✓ Approve & Send
+									Record sent
 								</button>
 								<button
 									on:click={() => rejectDraft(contact.id)}

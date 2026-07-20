@@ -184,7 +184,7 @@
 		<div>
 			<h1 class="page-title mb-2">Agent Observability</h1>
 			<p class="page-description max-w-xl">
-				Unified view of agent sessions, costs, and events.
+				Find failed, blocked, or costly agent runs. Data: IO agent session, iteration, and event records.
 			</p>
 		</div>
 

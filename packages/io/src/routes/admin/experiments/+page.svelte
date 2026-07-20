@@ -46,11 +46,11 @@
 	<header class="page-header">
 		<div>
 			<div class="title-row">
-				<h2 class="page-title">Experiments</h2>
+				<h1 class="page-title">Experiments</h1>
 				<span class="read-only-badge">Read-only</span>
 			</div>
 			<p class="page-subtitle">
-				Repository-owned experiment catalog. Changes ship through reviewed source artifacts.
+				Find a published experiment and open its public page. Source: reviewed repository records.
 			</p>
 		</div>
 		<a href="/experiments" class="public-link">View public catalog →</a>

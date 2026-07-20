@@ -176,19 +176,20 @@ If Vite build continues to fail, consider:
 
 ### Phase 2A: Smoke Test (15 minutes)
 
-1. **Verify API endpoints respond**
+1. **Verify the signed-out boundary**
    ```bash
    curl https://createsomething.io/api/agent?contact_id=1
    ```
 
-2. **Trigger triage on 3 test contacts**
-   ```bash
-   curl -X POST https://createsomething.io/api/agent \
-     -d '{"action": "triage"}'
-   ```
+   The unsigned request must return `401 Unauthorized`.
 
-3. **Check admin UI**
+2. **Sign in with a first-party IO admin account**
    - Visit `/admin/agent-drafts`
+   - Confirm the review queue loads without an authorization error
+
+3. **Check an existing review without changing production data**
+   - Confirm the page says that it does not send email
+   - Confirm metrics show unavailable rather than false zeroes when their request fails
    - Verify 1 draft (Alice) and 2 escalations (Bob, Charlie)
    - Review agent's reasoning
 

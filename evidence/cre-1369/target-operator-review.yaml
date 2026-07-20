@@ -1,0 +1,44 @@
+issue: CRE-1369
+date: 2026-07-20
+reader: least-tenured-authorized-io-operator
+verdict: pass-for-human-language-review
+production_mutation: false
+authenticated_runtime:
+  available: false
+  note: No current signed-in IO admin session was available. Historical signed-in evidence was not reused.
+  substitute:
+    - exact signed-out page and API boundary proof against the production build
+    - source-backed red-green operator contract
+    - clearly labeled fake-record rendered fixture for authenticated states
+tasks:
+  identify_task:
+    verdict: pass
+    evidence: Each protected page has one H1 and names the operator action in its opening.
+  identify_source:
+    verdict: pass
+    evidence: Each protected page names its repository or IO database source.
+  choose_safe_action:
+    verdict: pass
+    evidence: Draft review says to send email first; permanent deletion begins with a reversible confirmation step.
+  understand_effect:
+    verdict: pass
+    evidence: Action labels state their real effect and destructive confirmation says the record cannot be recovered.
+  stop_or_recover:
+    verdict: pass
+    evidence: Error states remain distinct from empty states and supply retry, cancel, or manual-inbox recovery.
+  verify_receipt:
+    verdict: pass
+    evidence: Draft, submission, and subscriber mutations leave visible status receipts.
+  mobile_and_keyboard:
+    verdict: pass
+    evidence: Mobile fixtures have no document overflow, navigation scrolls within its own region, and keyboard focus follows document order.
+  reduced_motion:
+    verdict: pass
+    evidence: Browser proof used reduced-motion preference and completed without console errors.
+  no_javascript:
+    verdict: pass
+    evidence: Login keeps its H1 and warning but hides the unusable form; only Back to Site remains operable.
+hold:
+  merge: true
+  deploy: true
+  reason: CRE-1369 requires final human operator-language approval.

@@ -69,8 +69,10 @@
 <div class="space-y-6">
 	<div class="flex items-center justify-between">
 		<div>
-			<h2 class="page-title mb-2">Analytics</h2>
-			<p class="page-description">First-party analytics across CREATE SOMETHING properties</p>
+			<h1 class="page-title mb-2">Analytics</h1>
+			<p class="page-description">
+				Check where people arrived, what they viewed, and what they did. Data: first-party IO events.
+			</p>
 		</div>
 
 		<select

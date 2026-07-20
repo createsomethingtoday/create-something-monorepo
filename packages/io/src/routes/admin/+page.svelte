@@ -38,8 +38,10 @@
 
 <div class="space-y-8">
 	<div>
-		<h2 class="page-title mb-2">Dashboard</h2>
-		<p class="page-description">Overview of CREATE SOMETHING systems</p>
+		<h1 class="page-title mb-2">Dashboard</h1>
+		<p class="page-description">
+			Choose the queue that needs attention. Data: repository experiment catalog and IO database.
+		</p>
 	</div>
 
 	{#if loadError}
@@ -122,21 +124,27 @@
 		</div>
 	</div>
 
-	<!-- System Info -->
+	<!-- Data boundaries -->
 	<div class="section-divider pt-8">
-		<h3 class="section-title mb-4">System Status</h3>
+		<h3 class="section-title mb-4">Data status</h3>
 		<div class="space-y-2">
 			<div class="flex justify-between system-info-row">
 				<span class="system-label">Database</span>
-				<span class="system-value-success">● create-something-db (Cloudflare D1)</span>
+				{#if loading}
+					<span class="system-value">Checking connection…</span>
+				{:else if loadError}
+					<span class="system-value">Not verified</span>
+				{:else}
+					<span class="system-value">Connected for current counts</span>
+				{/if}
 			</div>
 			<div class="flex justify-between system-info-row">
-				<span class="system-label">Properties</span>
-				<span class="system-value">.agency • .io • .space</span>
+				<span class="system-label">Experiment catalog</span>
+				<span class="system-value">Reviewed repository records</span>
 			</div>
 			<div class="flex justify-between system-info-row">
-				<span class="system-label">Admin Access</span>
-				<span class="system-value">Human-in-the-loop oversight</span>
+				<span class="system-label">Access</span>
+				<span class="system-value">Signed-in IO admins</span>
 			</div>
 		</div>
 	</div>
@@ -242,7 +250,4 @@
 		color: var(--color-performance-fg-primary);
 	}
 
-	.system-value-success {
-		color: var(--color-performance-success);
-	}
 </style>

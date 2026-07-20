@@ -405,16 +405,16 @@ export async function approveDraft(contactId: number, approved: boolean, env: PM
 		)
 		.run();
 
-	if (approved) {
-		// Update contact status to responded
-		await env.DB.prepare(
-			`UPDATE contact_submissions
-       SET status = 'responded',
-           responded_at = datetime('now'),
-           updated_at = datetime('now')
-       WHERE id = ?`
-		).bind(contactId).run();
-	}
+	const contactStatus = approved ? 'responded' : 'unread';
+	await env.DB.prepare(
+		`UPDATE contact_submissions
+	 SET status = ?,
+	     responded_at = CASE WHEN ? = 'responded' THEN datetime('now') ELSE NULL END,
+	     updated_at = datetime('now')
+	 WHERE id = ?`
+	)
+		.bind(contactStatus, contactStatus, contactId)
+		.run();
 
 	// Delete draft from KV after decision
 	await env.CACHE.delete(`draft:${contactId}`);
