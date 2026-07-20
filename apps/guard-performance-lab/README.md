@@ -37,6 +37,32 @@ The production preview runs at `http://127.0.0.1:4173` and is the owning surface
 
 The analyzer requires an operator-supplied source video and YOLOX ONNX model. Both remain outside version control. It decodes the complete source sequentially, captures one immutable analysis revision, and records unresolved target intervals rather than inventing positions. Revision 2 first rejects detections outside the foreground court closest to the camera, then classifies central-torso evidence using this game's white-jersey teammate / other-colored opponent rule. Opposite-court, official, and sideline detections stay in the audit receipt but never render as traffic. A deterministic full-track vote stabilizes team roles without another inference execution.
 
+### Local detector bake-off
+
+`film:bakeoff:tracking` compares a complete, source-bound candidate prediction set with the locked #13 identity and team fixtures. With no `--candidate-predictions`, it runs the Apache-2.0 RF-DETR Small COCO model locally on every locked source timestamp. Source frames and annotated evidence stay in the operator-selected private directory. The detector has no #13 identity authority: direct-number review, bounded continuity, reviewed SAM2 evidence, substitutions, and foreground-court rules remain fixed.
+
+The receipt fails closed when timestamps or source/model fingerprints differ, a hard negative is accepted, an inactive interval is bridged, opposite-court traffic becomes active, team accuracy regresses, or source-backed held-out court-line evidence is absent. A candidate is adopted only when every safety floor passes and target coverage, foreground-player coverage, or court error materially improves. A losing candidate leaves the production analyzer unchanged.
+
+```bash
+pnpm --filter @create-something/guard-performance-lab film:bakeoff:tracking \
+  --source /private/path/game.mp4 \
+  --source-sha256 <verified-source-sha256> \
+  --output /private/path/tracking-bakeoff-receipt.json \
+  --evidence-dir /private/path/tracking-bakeoff-evidence
+```
+
+To evaluate another local provider without changing the verifier, supply its `guard-film-player-detections-v1` JSON with `--candidate-predictions`. A source-backed court report may be supplied with `--court-report`; it must contain the source SHA plus held-out `medianErrorFeet` and `p95ErrorFeet` values.
+
+With explicit approval to send bounded frames to Roboflow, generate that court report separately. Inject the private inference key from a secret manager; never pass it as an argument or commit it. This adapter sends only the comma-delimited timestamps (seven representative frames by default), records competing court-hypothesis ambiguity, and evaluates held-out canonical landmarks. Its output can then be passed to the provider-neutral verifier with `--court-report`.
+
+```bash
+infisical run -- pnpm --filter @create-something/guard-performance-lab film:bakeoff:court:roboflow \
+  --source /private/path/game.mp4 \
+  --source-sha256 <verified-source-sha256> \
+  --output /private/path/roboflow-court-report.json \
+  --raw-output /private/path/roboflow-court-raw.json
+```
+
 Run the locked real-source team benchmark before the one authorized full revision. Its predictions must contain no correction overlays. Revision 1 remains auditable; the app selects the highest compatible revision for replay.
 
 ```bash
