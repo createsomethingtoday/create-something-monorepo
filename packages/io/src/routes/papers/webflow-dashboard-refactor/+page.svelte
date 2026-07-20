@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PaperReadingGuide from '$lib/components/papers/PaperReadingGuide.svelte';
 	/**
 	 * Webflow Dashboard Refactor: From Next.js to SvelteKit
 	 *
@@ -30,6 +31,7 @@
 		<div class="pb-8 paper-header">
 			<div class="font-mono mb-4 paper-id">PAPER-2026-001</div>
 			<h1 class="mb-3 paper-title">Webflow Dashboard Refactor</h1>
+		<PaperReadingGuide />
 			<p class="max-w-3xl paper-subtitle">
 				From Next.js to SvelteKit—how autonomous AI workflows completed 40% missing features
 				in 83 minutes, achieving 100% feature parity.
@@ -42,6 +44,9 @@
 				<span>Advanced</span>
 			</div>
 		</div>
+		<details class="paper-record-disclosure" data-paper-record id="full-paper" open>
+			<summary>Read the full paper</summary>
+			<div class="paper-record-body">
 
 		<!-- Abstract -->
 		<section class="pl-6 space-y-4 abstract-section">
@@ -54,7 +59,7 @@
 			</p>
 			<p class="leading-relaxed body-text">
 				The interesting part wasn't the technology swap itself. It was discovering that
-				AI-powered workflows could close a 40-50% feature gap in under 90 minutes of autonomous
+				Agent-run workflows could close a 40-50% feature gap in under 90 minutes of autonomous
 				work. This paper tells the story of how we did it, what we learned, and why systematic
 				analysis matters more than perfect code on the first try.
 			</p>
@@ -660,7 +665,10 @@ export const GET: RequestHandler = async ({ platform }) => {
 				<a href="/experiments" class="footer-link">View Experiments &rarr;</a>
 			</div>
 		</div>
-	</div>
+
+			</div>
+		</details>
+</div>
 </div>
 
 <style>

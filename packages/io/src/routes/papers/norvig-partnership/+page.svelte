@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PaperReadingGuide from '$lib/components/papers/PaperReadingGuide.svelte';
 	/**
 	 * The Norvig Partnership: When Empiricism Validates Phenomenology
 	 *
@@ -31,6 +32,7 @@
 		<div class="pb-8 paper-header">
 			<div class="font-mono mb-4 paper-id">PAPER-2026-001</div>
 			<h1 class="mb-3 paper-title">The Norvig Partnership</h1>
+		<PaperReadingGuide />
 			<p class="max-w-3xl paper-subtitle">
 				When Empiricism Validates Phenomenology—How Peter Norvig's Advent of Code 2025 experiments
 				confirm Heideggerian predictions about AI-human collaboration.
@@ -43,6 +45,9 @@
 				<span>Advanced</span>
 			</div>
 		</div>
+		<details class="paper-record-disclosure" data-paper-record id="full-paper" open>
+			<summary>Read the full paper</summary>
+			<div class="paper-record-body">
 
 		<!-- Abstract -->
 		<section class="pl-6 space-y-4 abstract-section">
@@ -769,7 +774,10 @@ Partnership time: 5 minutes</pre>
 				<a href="/papers/code-mode-hermeneutic-analysis" class="footer-link">Code Mode Analysis →</a>
 			</div>
 		</div>
-	</div>
+
+			</div>
+		</details>
+</div>
 </div>
 
 <style>

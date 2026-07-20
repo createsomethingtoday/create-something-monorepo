@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PaperReadingGuide from '$lib/components/papers/PaperReadingGuide.svelte';
 	import { SEO } from '@create-something/canon';
 	interface BeadsPattern {
 		id: string;
@@ -79,9 +80,13 @@ bd update cs-123 --status in-progress`
 		<header class="pb-8 paper-header">
 			<div class="font-mono mb-4 paper-id">PAPER-2026-002</div>
 			<h1 class="mb-3 paper-title">Beads Integration Patterns</h1>
+		<PaperReadingGuide />
 			<p class="mb-4 paper-subtitle">Issue Tracking for AI Agent Workflows</p>
 			<div class="paper-meta">Research Paper • 8 min read • Intermediate</div>
 		</header>
+		<details class="paper-record-disclosure" data-paper-record id="full-paper" open>
+			<summary>Read the full paper</summary>
+			<div class="paper-record-body">
 
 		<!-- Abstract -->
 		<section class="abstract-section space-y-4">
@@ -171,7 +176,10 @@ bd update cs-123 --status in-progress`
 				<li><a href="/papers/harness-agent-sdk-migration" class="text-link">Harness Agent SDK Migration</a></li>
 			</ul>
 		</section>
-	</div>
+
+			</div>
+		</details>
+</div>
 </div>
 
 <style>

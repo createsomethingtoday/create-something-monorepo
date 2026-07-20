@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PaperReadingGuide from '$lib/components/papers/PaperReadingGuide.svelte';
 	/**
 	 * Subtractive Form Design: When Absence Is Clearer Than Instruction
 	 *
@@ -29,6 +30,7 @@
 		<div class="pb-8 paper-header">
 			<div class="font-mono mb-4 paper-id">PAPER-2025-006</div>
 			<h1 class="mb-3 paper-title">Subtractive Form Design</h1>
+		<PaperReadingGuide />
 			<p class="max-w-3xl paper-subtitle">
 				When Absence Is Clearer Than Instruction—a case study in hermeneutic form architecture
 			</p>
@@ -40,6 +42,9 @@
 				<span>Intermediate</span>
 			</div>
 		</div>
+		<details class="paper-record-disclosure" data-paper-record id="full-paper" open>
+			<summary>Read the full paper</summary>
+			<div class="paper-record-body">
 
 		<!-- Abstract -->
 		<section class="pl-6 space-y-4 abstract-section">
@@ -540,7 +545,10 @@ if (name === 'productType' && value === 'digital') {
 				Commit <code class="inline-code">37e91a4</code> in <code class="inline-code">wf-bl-app-form-cloud</code> • December 2025
 			</p>
 		</div>
-	</div>
+
+			</div>
+		</details>
+</div>
 </div>
 
 <style>

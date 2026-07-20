@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PaperReadingGuide from '$lib/components/papers/PaperReadingGuide.svelte';
 	/**
 	 * Agent SDK Gemini Tools Integration
 	 *
@@ -30,6 +31,7 @@
 		<div class="pb-8 paper-header">
 			<div class="font-mono mb-4 paper-id">PAPER-2026-001</div>
 			<h1 class="mb-3 paper-title">Agent SDK Gemini Tools Integration</h1>
+		<PaperReadingGuide />
 			<p class="max-w-3xl paper-subtitle">
 				Documenting the integration of bash and file_read tools within the Agent SDK's Gemini provider,
 				focusing on implementation, safety, and agentic loop patterns.
@@ -42,6 +44,9 @@
 				<span>Advanced</span>
 			</div>
 		</div>
+		<details class="paper-record-disclosure" data-paper-record id="full-paper" open>
+			<summary>Read the full paper</summary>
+			<div class="paper-record-body">
 
 		<!-- Abstract -->
 		<section class="abstract-section space-y-4">
@@ -401,7 +406,10 @@ FILE_READ_TOOL_SCHEMA = {'{'}
 				<a href="/papers/beads-cross-session-memory" class="hover:underline">Beads Memory Patterns →</a>
 			</div>
 		</footer>
-	</div>
+
+			</div>
+		</details>
+</div>
 </div>
 
 <style>

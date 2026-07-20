@@ -96,7 +96,7 @@
 
 	// Scale bar configuration
 	const scaleBarIntervals = [0, 5, 10, 15, 20]; // feet
-	const scaleBarY = svgHeight - 10; // Position near bottom
+	$: scaleBarY = svgHeight - 10; // Position near bottom
 	const scaleBarStartX = margin;
 </script>
 

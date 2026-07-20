@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PaperReadingGuide from '$lib/components/papers/PaperReadingGuide.svelte';
 	/**
 	 * Haiku + Ultrathink Validation
 	 *
@@ -29,6 +30,7 @@
 		<div class="pb-8 paper-header">
 			<div class="font-mono mb-4 paper-id">PAPER-2026-003</div>
 			<h1 class="mb-3 paper-title">Haiku + Ultrathink Validation</h1>
+		<PaperReadingGuide />
 			<p class="max-w-3xl paper-subtitle">
 				Can extended thinking mode close the gap between Haiku and Sonnet? An empirical test of
 				the community claim that Haiku 4.5 + ultrathink achieves ~90% of Sonnet's performance at
@@ -42,6 +44,9 @@
 				<span>Technical</span>
 			</div>
 		</div>
+		<details class="paper-record-disclosure" data-paper-record id="full-paper" open>
+			<summary>Read the full paper</summary>
+			<div class="paper-record-body">
 
 		<!-- Status Notice -->
 		<section class="p-6 comparison-warning">
@@ -526,7 +531,10 @@
 				</div>
 			</div>
 		</section>
-	</div>
+
+			</div>
+		</details>
+</div>
 </div>
 
 <style>

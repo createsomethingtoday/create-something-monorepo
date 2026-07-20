@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PaperReadingGuide from '$lib/components/papers/PaperReadingGuide.svelte';
 	/**
 	 * Haiku Optimization Paper
 	 *
@@ -33,6 +34,7 @@
 		<div class="pb-8 paper-header">
 			<div class="font-mono mb-4 paper-id">PAPER-2026-001</div>
 			<h1 class="mb-3 paper-title">Haiku Optimization: Intelligent Model Routing for AI-Native Development</h1>
+		<PaperReadingGuide />
 			<p class="max-w-3xl paper-subtitle">
 				Validating that Haiku achieves 90% of Sonnet's performance on well-defined tasks
 				at 10x lower cost through intelligent model routing—Plan (Sonnet) → Execute (Haiku)
@@ -46,6 +48,9 @@
 				<span>Intermediate</span>
 			</div>
 		</div>
+		<details class="paper-record-disclosure" data-paper-record id="full-paper" open>
+			<summary>Read the full paper</summary>
+			<div class="paper-record-body">
 
 		<!-- Abstract -->
 		<section class="abstract-section space-y-4">
@@ -660,7 +665,10 @@
 				</p>
 			</div>
 		</section>
-	</div>
+
+			</div>
+		</details>
+</div>
 </div>
 
 <style>

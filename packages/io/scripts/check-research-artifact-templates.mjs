@@ -144,8 +144,10 @@ if (newStaticExperimentRoutes.length > 0) {
 }
 
 const paperDynamicRoute = readText(path.join(papersRouteDir, '[slug]/+page.svelte'));
-if (!paperDynamicRoute.includes('ResearchArtifactPage')) {
-	failures.push('papers/[slug]/+page.svelte must render through ResearchArtifactPage.');
+if (!paperDynamicRoute.includes('PaperArtifactPage')) {
+	failures.push(
+		'papers/[slug]/+page.svelte must render through the IO-owned PaperArtifactPage reader contract.'
+	);
 }
 
 const experimentDynamicRoute = readText(path.join(experimentsRouteDir, '[slug]/+page.svelte'));

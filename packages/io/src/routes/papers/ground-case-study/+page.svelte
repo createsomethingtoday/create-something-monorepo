@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PaperReadingGuide from '$lib/components/papers/PaperReadingGuide.svelte';
 	const metrics = [
 		{ label: 'Duplicate functions found', value: '47', context: 'across 12 packages' },
 		{ label: 'False positives', value: '<5%', context: 'vs 30%+ with grep patterns' },
@@ -38,9 +39,13 @@
 	<header class="paper-header">
 		<span class="category">Case Study</span>
 		<h1>Ground: Verification-First Code Analysis</h1>
+		<PaperReadingGuide />
 		<p class="subtitle">How computed claims replaced guesswork in an 80+ package monorepo</p>
 		<time datetime="2026-01">January 2026</time>
 	</header>
+	<details class="paper-record-disclosure" data-paper-record id="full-paper" open>
+		<summary>Read the full paper</summary>
+		<div class="paper-record-body">
 
 	<section class="abstract">
 		<h2>Summary</h2>
@@ -254,6 +259,9 @@
 			<a href="/docs/ground">Read the documentation →</a>
 		</p>
 	</section>
+
+		</div>
+	</details>
 </article>
 
 <style>

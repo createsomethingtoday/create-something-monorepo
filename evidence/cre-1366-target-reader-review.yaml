@@ -1,0 +1,83 @@
+issue: CRE-1366
+date: 2026-07-20
+family: IO paper detail
+reviewer_role: least-tenured credible practitioner
+status: ready_for_human_review
+promotion:
+  merge: hold
+  deploy: hold
+  reason: Consequential public prose requires explicit human final approval.
+scope:
+  implementations: 41
+  public_destinations: 50
+  editorial_destinations: 49
+  tool_destinations: 1
+reader_contract:
+  find_the_question:
+    result: pass
+    evidence: Every destination begins with a direct question after its H1.
+  restate_the_answer:
+    result: pass
+    evidence: Every destination provides a plain thesis before the full record or tool workspace.
+  find_the_proof:
+    result: pass
+    evidence: Every guide names what to inspect and the rendered page retains its complete evidence.
+  understand_the_limit:
+    result: pass
+    evidence: Every guide states where the evidence stops.
+  choose_the_next_action:
+    result: pass
+    evidence: Editorial pages offer the full record and one continuation; the tool offers one continuation without pretending to be an article.
+  local_comprehension:
+    result: pass
+    evidence: Questions and theses reject artifact-facing meta-copy and unexplained framework vocabulary.
+  optional_depth:
+    result: pass
+    evidence: Editorial depth is collapsed only after enhancement and remains open without JavaScript.
+  accessibility:
+    result: pass
+    evidence: Deep-link focus, native disclosure, teaching consent recovery, threshold Escape recovery, named controls, reduced motion, and containment pass.
+rendered_evidence:
+  mobile:
+    destinations: 50
+    http_200: 50
+    title_then_guide: 50
+    contained: 50
+    console_clean: 50
+    unnamed_control_free: 50
+    invalid_svg_free: 50
+    max_default_height_px: 5536
+  desktop:
+    destinations: 50
+    http_200: 50
+    title_then_guide: 50
+    contained: 50
+    console_clean: 50
+    max_default_height_px: 4272
+  no_javascript:
+    destinations: 50
+    title_then_guide: 50
+    contained: 50
+    editorial_records_open: 49
+    dead_main_control_free: 50
+  dynamic_records:
+    configured_200: 12
+    configured_total: 12
+    invented_slug_status: 404
+known_issue:
+  inherited_duplicate_canonical:
+    affected_destinations: 49
+    disposition: recorded_for_owning_layout_lane
+machine_checks:
+  focused_contract: 7/7
+  io_check: pass
+  io_build: pass
+  canon_depth: 854/854
+  performance_registry: 229/229
+  performance_tests: 3/3
+  prose_blocking: 0
+  prose_review: 30
+human_review:
+  required: true
+  completed: false
+  instruction: Read the rendered openings and approve or request changes before merge or deployment.

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PaperReadingGuide from '$lib/components/papers/PaperReadingGuide.svelte';
 	/**
 	 * Tufte for Mobile: Design Intent Across Screen Sizes
 	 *
@@ -32,6 +33,7 @@
 		<div class="pb-8 paper-header">
 			<div class="font-mono mb-4 paper-id">PAPER-2026-007</div>
 			<h1 class="mb-3 paper-title">Tufte for Mobile</h1>
+		<PaperReadingGuide />
 			<p class="max-w-3xl paper-subtitle">
 				Design Intent Across Screen Sizes: Applying Edward Tufte's Principles to Responsive Transformation
 			</p>
@@ -43,6 +45,9 @@
 				<span>Intermediate</span>
 			</div>
 		</div>
+		<details class="paper-record-disclosure" data-paper-record id="full-paper" open>
+			<summary>Read the full paper</summary>
+			<div class="paper-record-body">
 
 		<!-- Abstract -->
 		<section class="pl-6 space-y-4 abstract-section">
@@ -477,7 +482,10 @@ interface DashboardCardProps &#123;
 				<a href="/experiments/agentic-visualization" class="link">Agentic Visualization</a>
 			</p>
 		</footer>
-	</div>
+
+			</div>
+		</details>
+</div>
 </div>
 
 <style>
@@ -701,6 +709,7 @@ interface DashboardCardProps &#123;
 
 	/* Sparkline containers */
 	.sparkline-container {
+		box-sizing: border-box;
 		height: 2rem;
 		width: 100%;
 		background: var(--color-performance-bg-subtle, rgba(255, 255, 255, 0.05));
@@ -711,6 +720,7 @@ interface DashboardCardProps &#123;
 	}
 
 	.sparkline-container-lg {
+		box-sizing: border-box;
 		height: 2.5rem;
 		background: var(--color-performance-bg-subtle, rgba(255, 255, 255, 0.05));
 		border-radius: var(--radius-performance-scale-sm, 4px);

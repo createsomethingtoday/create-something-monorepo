@@ -1,12 +1,19 @@
 <script lang="ts">
-	import { ArticleHeader, ArticleContent } from '@create-something/canon/domains/io';
+	import { onMount } from 'svelte';
+	import { ArticleContent } from '@create-something/canon/domains/io';
 	import { SEO, ShareButtons, PageActions, MarkdownPreviewModal } from '@create-something/canon';
 	import type { Paper } from '@create-something/canon/types';
+	import PaperArticleHeader from '$lib/components/papers/PaperArticleHeader.svelte';
 
 	import rawMarkdown from '../../../../../../papers/published/webflow-template-review-webmcp.md?raw';
 
 	let showMarkdownPreview = $state(false);
 	let markdownContent = $state('');
+	let enhanced = $state(false);
+
+	onMount(() => {
+		enhanced = true;
+	});
 
 	function handlePreview(markdown: string) {
 		markdownContent = markdown;
@@ -96,28 +103,35 @@ ${paper.content || ''}
 />
 
 <div class="min-h-screen page-container">
-	<ArticleHeader {paper} />
+	<PaperArticleHeader {paper} />
 
 	<div class="shell-inner-pad">
 		<div class="grid grid-cols-1 lg:grid-cols-[80px_1fr] gap-12">
+			{#if enhanced}
 			<aside class="hidden lg:block">
 				<div class="flex flex-col gap-4">
 					<ShareButtons title={paper.title} url={fullUrl} />
-					<PageActions
-						title={paper.title}
-						content={exportMarkdown}
-						metadata={{
-							category: paper.category,
-							sourceUrl: fullUrl
-						}}
-						claudePrompt="Help me understand this paper and turn it into a reviewer checklist."
-						onpreview={handlePreview}
-					/>
+						<PageActions
+							title={paper.title}
+							content={exportMarkdown}
+							metadata={{
+								category: paper.category,
+								sourceUrl: fullUrl
+							}}
+							claudePrompt="Help me understand this paper and turn it into a reviewer checklist."
+							onpreview={handlePreview}
+						/>
 				</div>
 			</aside>
+			{/if}
 
 			<div class="min-w-0">
-				<ArticleContent {paper} />
+				<details class="paper-record-disclosure" data-paper-record id="full-paper" open>
+					<summary>Read the full paper</summary>
+					<div class="paper-record-body">
+						<ArticleContent {paper} />
+					</div>
+				</details>
 			</div>
 		</div>
 	</div>
@@ -137,7 +151,9 @@ ${paper.content || ''}
 	</div>
 </div>
 
-<MarkdownPreviewModal bind:open={showMarkdownPreview} content={markdownContent} title="Paper Markdown" />
+{#if enhanced}
+	<MarkdownPreviewModal bind:open={showMarkdownPreview} content={markdownContent} title="Paper Markdown" />
+{/if}
 
 <style>
 	.page-container {

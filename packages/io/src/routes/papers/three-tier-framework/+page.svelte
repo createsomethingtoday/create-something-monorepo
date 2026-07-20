@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PaperReadingGuide from '$lib/components/papers/PaperReadingGuide.svelte';
 	/**
 	 * The Three-Tier Framework: Database, Rules, Policy
 	 *
@@ -29,6 +30,7 @@
 		<div class="pb-8 paper-header">
 			<div class="font-mono mb-4 paper-id">PAPER-2026-001</div>
 			<h1 class="mb-3 paper-title">The Three-Tier Framework</h1>
+		<PaperReadingGuide />
 			<p class="max-w-3xl paper-subtitle">
 				A structural model for agent systems, realized through Model Context Protocol
 			</p>
@@ -43,6 +45,9 @@
 				<span>With contributions from Joey (Senior System Architect, Webflow)</span>
 			</div>
 		</div>
+		<details class="paper-record-disclosure" data-paper-record id="full-paper" open>
+			<summary>Read the full paper</summary>
+			<div class="paper-record-body">
 
 		<!-- I. Abstract -->
 		<section class="space-y-6">
@@ -1018,7 +1023,10 @@
 				<a href="/papers/code-mode-hermeneutic-analysis" class="footer-link">Code Mode Analysis →</a>
 			</div>
 		</div>
-	</div>
+
+			</div>
+		</details>
+</div>
 </div>
 
 <style>
