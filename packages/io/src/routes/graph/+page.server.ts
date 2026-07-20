@@ -7,19 +7,16 @@
 
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import type { GraphData, GraphNode, GraphEdge, BuildMetadata } from '$lib/graph';
+import type { BuildMetadata } from '$lib/graph';
 
 export const load: PageServerLoad = async ({ fetch }) => {
 	try {
-		// Fetch graph data from static assets
-		const [nodesRes, edgesRes, metadataRes] = await Promise.all([
-			fetch('/.graph/nodes.json'),
-			fetch('/.graph/edges.json'),
-			fetch('/.graph/metadata.json'),
-		]);
+		// Keep the multi-megabyte graph out of server-rendered HTML. The browser
+		// loads nodes and edges only when the workspace is ready to use them.
+		const metadataRes = await fetch('/.graph/metadata.json');
 
 		// Check if all files exist
-		if (!nodesRes.ok || !edgesRes.ok || !metadataRes.ok) {
+		if (!metadataRes.ok) {
 			throw error(404, {
 				message:
 					'Knowledge graph not found. Run `pnpm graph:build` to generate graph data.',
@@ -27,19 +24,8 @@ export const load: PageServerLoad = async ({ fetch }) => {
 		}
 
 		// Parse JSON responses with type assertions
-		const [nodes, edges, metadata] = await Promise.all([
-			nodesRes.json() as Promise<GraphNode[]>,
-			edgesRes.json() as Promise<GraphEdge[]>,
-			metadataRes.json() as Promise<BuildMetadata>,
-		]);
-
-		const data: GraphData = {
-			nodes,
-			edges,
-			metadata,
-		};
-
-		return { data };
+		const metadata = (await metadataRes.json()) as BuildMetadata;
+		return { metadata };
 	} catch (err) {
 		if ((err as { status?: number }).status === 404) {
 			throw err;

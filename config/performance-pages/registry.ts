@@ -497,10 +497,10 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     'io-public-tools',
     'io',
     ['graph', 'status'],
-    'pending',
+    'migrated',
     contract(
       'tool',
-      'Inspect the current system state and decide what to investigate next.',
+      'Inspect the current state and decide what to investigate next.',
       'The graph or status surface exposes source state, health, and evidence.',
       'Open the relevant record or recovery path'
     )
