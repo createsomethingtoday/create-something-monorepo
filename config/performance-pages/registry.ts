@@ -239,13 +239,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
   group(
     'ltd-editorial',
     'ltd',
-    [
-      'ethos',
-      'experiments/the-circle-closes',
-      'standards',
-      'taste',
-      'voice'
-    ],
+    ['ethos', 'experiments/the-circle-closes', 'standards', 'taste', 'voice'],
     'migrated',
     contract(
       'editorial',
@@ -623,7 +617,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     'learn-account',
     'lms',
     ['account', 'auth/magic', 'login', 'signup'],
-    'pending',
+    'migrated',
     contract(
       'tool',
       'Complete the identity or account task and return to learning.',
