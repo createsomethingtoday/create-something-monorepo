@@ -181,6 +181,14 @@ export function receiptsForSelected(state: LabState): Receipt[] {
   return state.receipts.filter((receipt) => receipt.playerId === state.selectedPlayerId);
 }
 
+export function latestFilmAnalysisForPlayer(state: LabState, playerId: string): FilmAnalysisRecord | undefined {
+  return state.filmAnalyses
+    .filter((analysis) => analysis.playerId === playerId)
+    .toSorted((a, b) => b.analysis.revision - a.analysis.revision
+      || Number(Boolean(b.analysis.playStateVerification)) - Number(Boolean(a.analysis.playStateVerification))
+      || b.createdAt.localeCompare(a.createdAt))[0];
+}
+
 export type EvidenceDraft = Omit<EvidenceArtifact, 'id' | 'playerId' | 'capturedAt' | 'verification'>;
 
 export function validateArtifact(draft: EvidenceDraft): string[] {

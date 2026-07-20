@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { FILM_BENCHMARK_PROFILE, FILM_IDENTITY_BENCHMARK_PROFILE, FILM_MASK_TRACK_PROFILE, applyFilmCorrections, captureFilmAnalysis, capturedFilmAnalysisSchema, combineFilmMaskTracks, deriveFilmIdentityCandidate, fuseFilmMaskTrack, finalizeFilmIdentityRevision, filmFrameAt, resolveFilmTrafficAt, scoreFilmBenchmark, scoreFilmIdentityBenchmark, scoreFilmTeamBenchmark, summarizeFilmTargetCoverage, validateFilmBenchmark, validateFilmIdentityBenchmark, validateFilmMaskTrack, validateFilmTeamBenchmark, verifyFilmIdentityCandidate } from './film.js';
+import { FILM_BENCHMARK_PROFILE, FILM_IDENTITY_BENCHMARK_PROFILE, FILM_MASK_TRACK_PROFILE, FILM_PLAY_STATE_PROFILE, applyFilmCorrections, applyFilmPlayStateLedger, captureFilmAnalysis, capturedFilmAnalysisSchema, combineFilmMaskTracks, deriveFilmIdentityCandidate, fuseFilmMaskTrack, finalizeFilmIdentityRevision, filmFrameAt, resolveFilmTrafficAt, scoreFilmBenchmark, scoreFilmIdentityBenchmark, scoreFilmTeamBenchmark, summarizeFilmTargetCoverage, validateFilmBenchmark, validateFilmIdentityBenchmark, validateFilmMaskTrack, validateFilmTeamBenchmark, verifyFilmIdentityCandidate } from './film.js';
 
 const source = { sha256: 'a'.repeat(64), durationMs: 5000, width: 1920, height: 1080, fps: 30, byteSize: 1000, linkedPath: '/private/source.mp4' };
 const annotations = (startMs: number) => Array.from({ length: 20 }, (_, index) => ({ timeMs: startMs + index * 1000, target: { status: 'visible' as const, court: [index, 10] as [number, number], zone: 'frontcourt', trackId: '13', provenance: 'manual' as const } }));
@@ -36,6 +36,95 @@ describe('film benchmark contract', () => {
     expect(captured.analysis.executionCount).toBe(1);
   });
 
+  it('attaches a complete play-state ledger without rewriting captured traffic', () => {
+    const captured = captureFilmAnalysis({ source, analyzedAt: '2026-07-19T12:00:00.000Z', frames: [
+      { timeMs: 0, players: [{ trackId: '13', team: 'target', court: [10, 20], confidence: 0.9 }] },
+      { timeMs: 1000, players: [{ trackId: '13', team: 'target', court: [12, 20], confidence: 0.9 }] },
+      { timeMs: 2000, players: [{ trackId: '13', team: 'target', court: [14, 20], confidence: 0.9 }] },
+      { timeMs: 3000, players: [{ trackId: '13', team: 'target', court: [16, 20], confidence: 0.9 }] },
+      { timeMs: 4000, players: [{ trackId: '13', team: 'target', court: [18, 20], confidence: 0.9 }] },
+      { timeMs: 5000, players: [{ trackId: '13', team: 'target', court: [20, 20], confidence: 0.9 }] }
+    ] });
+    const ledger = {
+      version: 1,
+      profile: FILM_PLAY_STATE_PROFILE,
+      sourceSha256: source.sha256,
+      intervals: [
+        { id: 'live-defense', startMs: 0, endMs: 999, state: 'live-defense', evidence: { method: 'source-review', reviewer: 'codex', note: 'Ball live and dark jerseys possess.' } },
+        { id: 'dead-ball', startMs: 1000, endMs: 1999, state: 'dead-ball', evidence: { method: 'source-review', reviewer: 'codex', note: 'Whistle and official controls the ball.' } },
+        { id: 'substitution', startMs: 2000, endMs: 2999, state: 'substitution', evidence: { method: 'source-review', reviewer: 'codex', note: '#13 moves to the bench.' } },
+        { id: 'transition-offense', startMs: 3000, endMs: 3999, state: 'transition-offense', evidence: { method: 'source-review', reviewer: 'codex', note: '#13 advances the ball before the defense is set.' } },
+        { id: 'free-throw', startMs: 4000, endMs: 5000, state: 'free-throw', evidence: { method: 'source-review', reviewer: 'codex', note: 'Players line up for a free throw.' } }
+      ]
+    };
+
+    const enriched = applyFilmPlayStateLedger(captured, ledger);
+    expect(enriched.frames.map((frame) => frame.playState)).toEqual(['live-defense', 'dead-ball', 'substitution', 'transition-offense', 'free-throw', 'free-throw']);
+    expect(enriched.frames.map((frame) => frame.players)).toEqual(captured.frames.map((frame) => frame.players));
+    expect(enriched.analysis).toMatchObject({ executionCount: 1, playStateVerification: { profile: FILM_PLAY_STATE_PROFILE, intervalCount: 5, frameCount: 6, unknownFrameCount: 0 } });
+    expect(() => applyFilmPlayStateLedger(captured, { ...ledger, sourceSha256: 'b'.repeat(64) })).toThrow(/source hash/i);
+    expect(() => applyFilmPlayStateLedger(captured, { ...ledger, intervals: ledger.intervals.filter((interval) => interval.id !== 'dead-ball') })).toThrow(/gap/i);
+  });
+
+  it('keeps non-live movement out of the live wake while preserving captured context', () => {
+    const captured = captureFilmAnalysis({ source, frames: [
+      { timeMs: 0, players: [{ trackId: '13', team: 'target', court: [10, 20], confidence: 0.9 }] },
+      { timeMs: 1000, players: [{ trackId: '13', team: 'target', court: [12, 20], confidence: 0.9 }] },
+      { timeMs: 2000, players: [{ trackId: '13', team: 'target', court: [14, 20], confidence: 0.9 }] },
+      { timeMs: 3000, players: [{ trackId: '13', team: 'target', court: [16, 20], confidence: 0.9 }] },
+      { timeMs: 4000, players: [{ trackId: '13', team: 'target', court: [18, 20], confidence: 0.9 }] },
+      { timeMs: 5000, players: [{ trackId: '13', team: 'target', court: [20, 20], confidence: 0.9 }] }
+    ] });
+    const enriched = applyFilmPlayStateLedger(captured, {
+      version: 1,
+      profile: FILM_PLAY_STATE_PROFILE,
+      sourceSha256: source.sha256,
+      intervals: [
+        { id: 'live-defense', startMs: 0, endMs: 999, state: 'live-defense', evidence: { method: 'source-review', reviewer: 'codex', note: 'Ball live.' } },
+        { id: 'dead-ball', startMs: 1000, endMs: 1999, state: 'dead-ball', evidence: { method: 'source-review', reviewer: 'codex', note: 'Official controls the ball.' } },
+        { id: 'substitution', startMs: 2000, endMs: 2999, state: 'substitution', evidence: { method: 'source-review', reviewer: 'codex', note: '#13 moves to the bench.' } },
+        { id: 'transition-offense', startMs: 3000, endMs: 3999, state: 'transition-offense', evidence: { method: 'source-review', reviewer: 'codex', note: '#13 advances before the defense is set.' } },
+        { id: 'free-throw', startMs: 4000, endMs: 5000, state: 'free-throw', evidence: { method: 'source-review', reviewer: 'codex', note: 'Free-throw alignment.' } }
+      ]
+    });
+
+    const liveOnly = resolveFilmTrafficAt(enriched, 5000, 5000, { movementMode: 'live-only' });
+    expect(liveOnly.currentPlayState).toBe('free-throw');
+    expect(liveOnly.targetWake.map((segment) => segment.map((sample) => sample.timeMs))).toEqual([[0], [3000]]);
+    expect(liveOnly.contextWake).toEqual([]);
+
+    const allCaptured = resolveFilmTrafficAt(enriched, 5000, 5000, { movementMode: 'all-captured' });
+    expect(allCaptured.targetWake.map((segment) => segment.map((sample) => sample.timeMs))).toEqual([[0], [3000]]);
+    expect(allCaptured.contextWake.map((segment) => ({ playState: segment.playState, times: segment.points.map((sample) => sample.timeMs) }))).toEqual([
+      { playState: 'dead-ball', times: [1000] },
+      { playState: 'substitution', times: [2000] },
+      { playState: 'free-throw', times: [4000, 5000] }
+    ]);
+  });
+
+  it('locks the real 32:05 bench and 51:40 free-throw negatives out of live movement', () => {
+    const ledger = JSON.parse(readFileSync(new URL('../../fixtures/film/player-13-play-state-ledger.json', import.meta.url), 'utf8'));
+    const realSource = { ...source, sha256: ledger.sourceSha256, durationMs: 3395733 };
+    const enriched = applyFilmPlayStateLedger(captureFilmAnalysis({ source: realSource, frames: [
+      { timeMs: 1923000, players: [{ trackId: '13', team: 'target', court: [41, 50], confidence: 1 }] },
+      { timeMs: 1929000, players: [{ trackId: '13', team: 'target', court: [49, 14], confidence: 1 }] },
+      { timeMs: 3096000, players: [{ trackId: '13', team: 'target', court: [70, 21], confidence: 1 }] },
+      { timeMs: 3101000, players: [{ trackId: '13', team: 'target', court: [88, 20], confidence: 1 }] },
+      { timeMs: 3102000, players: [{ trackId: '13', team: 'target', court: [82, 20], confidence: 1 }] },
+      { timeMs: 3114000, players: [{ trackId: '13', team: 'target', court: [81, 21], confidence: 1 }] }
+    ] }), ledger);
+
+    expect(enriched.frames.map((frame) => frame.playState)).toEqual(['substitution', 'substitution', 'transition-offense', 'transition-offense', 'free-throw', 'free-throw']);
+    const bench = resolveFilmTrafficAt(enriched, 1929000, 10000, { movementMode: 'all-captured' });
+    expect(bench.targetWake).toEqual([]);
+    expect(bench.contextWake.map((segment) => segment.playState)).toEqual(['substitution']);
+    const transitionToLine = resolveFilmTrafficAt(enriched, 3114000, 20000, { movementMode: 'all-captured' });
+    expect(transitionToLine.targetWake.flatMap((segment) => segment.map((sample) => sample.timeMs))).toEqual([3096000, 3101000]);
+    expect(transitionToLine.contextWake.map((segment) => ({ playState: segment.playState, times: segment.points.map((sample) => sample.timeMs) }))).toEqual([
+      { playState: 'free-throw', times: [3102000, 3114000] }
+    ]);
+  });
+
   it('accepts a separate revision 2 while retaining ignored opposite-court audit evidence', () => {
     const revision1 = captureFilmAnalysis({ source, frames: [{ timeMs: 0, players: [] }] });
     const revision2 = { ...revision1, analysis: { ...revision1.analysis, revision: 2 as const }, frames: [{ timeMs: 0, targetStatus: 'out-of-frame' as const, players: [], ignored: [{ trackId: 'far-1', role: 'ignore' as const, image: [0.1, 0.5] as [number, number], confidence: 0.9, courtMembership: 'opposite-court' as const, reason: 'outside-foreground-court-calibration', classification: {} }] }] };
@@ -52,11 +141,21 @@ describe('film benchmark contract', () => {
       { timeMs: 3000, players: [{ trackId: '13', team: 'target', court: [16, 20], confidence: 0.9 }] },
       { timeMs: 4000, players: [{ trackId: '13', team: 'target', court: [18, 20], confidence: 0.9 }] }
     ] });
-    const forward = resolveFilmTrafficAt(captured, 3500, 5000);
-    const backward = resolveFilmTrafficAt(captured, 500, 5000);
+    const enriched = applyFilmPlayStateLedger(captured, {
+      version: 1,
+      profile: FILM_PLAY_STATE_PROFILE,
+      sourceSha256: source.sha256,
+      intervals: [
+        { id: 'first-live', startMs: 0, endMs: 1999, state: 'live-offense', evidence: { method: 'source-review', reviewer: 'codex', note: 'Ball is live.' } },
+        { id: 'unreviewed-gap', startMs: 2000, endMs: 2999, state: 'unknown', evidence: { method: 'unreviewed', reviewer: 'codex', note: 'No play-state claim.' } },
+        { id: 'second-live', startMs: 3000, endMs: 5000, state: 'live-offense', evidence: { method: 'source-review', reviewer: 'codex', note: 'Ball is live after the gap.' } }
+      ]
+    });
+    const forward = resolveFilmTrafficAt(enriched, 3500, 5000);
+    const backward = resolveFilmTrafficAt(enriched, 500, 5000);
     expect(forward.players.find((player) => player.team === 'target')?.court).toEqual([17, 20]);
     expect(forward.targetWake.map((segment) => segment.map((sample) => sample.timeMs))).toEqual([[0, 1000], [3000, 3500]]);
-    expect(resolveFilmTrafficAt(captured, 3500, 5000)).toEqual(forward);
+    expect(resolveFilmTrafficAt(enriched, 3500, 5000)).toEqual(forward);
     expect(backward.players.find((player) => player.team === 'target')?.court).toEqual([11, 20]);
     expect(captured.analysis.executionCount).toBe(1);
   });
@@ -94,7 +193,17 @@ describe('film benchmark contract', () => {
 
     expect(revision3.analysis).toMatchObject({ revision: 3, derivedFromRevision: 2, personDetectionExecuted: false, identityExecutionCount: 1 });
     expect(revision3.frames[2]?.targetStatus).toBe('inactive');
-    expect(resolveFilmTrafficAt(revision3, 4000, 5000).targetWake.map((segment) => segment.map((sample) => sample.timeMs))).toEqual([[0, 1000], [3000, 4000]]);
+    const enriched = applyFilmPlayStateLedger(revision3, {
+      version: 1,
+      profile: FILM_PLAY_STATE_PROFILE,
+      sourceSha256: source.sha256,
+      intervals: [
+        { id: 'first-live', startMs: 0, endMs: 1999, state: 'live-offense', evidence: { method: 'source-review', reviewer: 'codex', note: 'Ball is live.' } },
+        { id: 'substitution', startMs: 2000, endMs: 2999, state: 'substitution', evidence: { method: 'source-review', reviewer: 'codex', note: '#13 is substituted out.' } },
+        { id: 'second-live', startMs: 3000, endMs: 5000, state: 'live-offense', evidence: { method: 'source-review', reviewer: 'codex', note: 'Ball is live after verified re-entry.' } }
+      ]
+    });
+    expect(resolveFilmTrafficAt(enriched, 4000, 5000).targetWake.map((segment) => segment.map((sample) => sample.timeMs))).toEqual([[0, 1000], [3000, 4000]]);
   });
 
   it('reports identity coverage separately from benchmark precision', () => {

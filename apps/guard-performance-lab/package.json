@@ -36,6 +36,7 @@
     "film:derive:identity": "tsx scripts/derive-film-identity.ts",
     "film:verify:identity": "tsx scripts/verify-film-identity.ts",
     "film:finalize:identity": "tsx scripts/finalize-film-identity.ts",
+    "film:apply:play-state": "tsx scripts/apply-film-play-state.ts",
     "film:stabilize:team": "uv run --script scripts/stabilize-film-team.py",
     "film:import": "tsx scripts/import-film.ts",
     "film:import:http": "tsx scripts/import-film-http.ts",

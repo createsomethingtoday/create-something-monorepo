@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { createInitialState, createPlayer, emptyReceipt, parseState, receiptsForSelected, saveReceipt, validateReceipt } from './model.js';
+import { applyFilmPlayStateLedger, captureFilmAnalysis, FILM_PLAY_STATE_PROFILE } from './film.js';
+import { createInitialState, createPlayer, emptyReceipt, latestFilmAnalysisForPlayer, parseState, receiptsForSelected, saveReceipt, validateReceipt } from './model.js';
 
 describe('guard performance local model', () => {
   it('recovers from missing and corrupt storage', () => {
@@ -37,5 +38,31 @@ describe('guard performance local model', () => {
     const draft = emptyReceipt('2026-07-12');
     expect(validateReceipt(draft)).toHaveLength(3);
     expect(saveReceipt(state, draft)).toBe(state);
+  });
+
+  it('prefers a play-state-reviewed overlay when immutable analysis revisions match', () => {
+    const sourceSha256 = 'd'.repeat(64);
+    const analysis = captureFilmAnalysis({
+      source: { sha256: sourceSha256, durationMs: 2000, width: 1920, height: 1080, fps: 30, byteSize: 1000, linkedPath: '/private/game.mp4' },
+      frames: [{ timeMs: 0, players: [{ trackId: '13', team: 'target', court: [10, 20], confidence: 0.9 }] }]
+    });
+    const reviewed = applyFilmPlayStateLedger(analysis, {
+      version: 1,
+      profile: FILM_PLAY_STATE_PROFILE,
+      sourceSha256,
+      intervals: [{
+        id: 'reviewed', startMs: 0, endMs: 2000, state: 'live-defense',
+        evidence: { method: 'source-review', reviewer: 'codex', note: 'Reviewed live possession.' }
+      }]
+    });
+    const state = {
+      ...createInitialState(),
+      filmAnalyses: [
+        { ...analysis, id: 'base', playerId: 'developing-guard', title: 'Base', createdAt: '2026-07-19T00:00:00.000Z', corrections: [] },
+        { ...reviewed, id: 'reviewed', playerId: 'developing-guard', title: 'Reviewed', createdAt: '2026-07-19T00:01:00.000Z', corrections: [] }
+      ]
+    };
+
+    expect(latestFilmAnalysisForPlayer(state, 'developing-guard')?.id).toBe('reviewed');
   });
 });

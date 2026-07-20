@@ -5,12 +5,13 @@
   import type { GuideOutput } from '$lib/guide.js';
   import type { WorkspaceCommand } from '$lib/workspace-api.js';
   import FilmTrafficCourt from '$lib/FilmTrafficCourt.svelte';
-  import { applyFilmCorrections, resolveFilmTrafficAt, summarizeFilmTargetCoverage } from '$lib/film.js';
+  import { applyFilmCorrections, resolveFilmTrafficAt, summarizeFilmTargetCoverage, type FilmMovementMode } from '$lib/film.js';
   import {
     createInitialState,
     artifactsForSelected,
     engagementsForSelected,
     emptyReceipt,
+    latestFilmAnalysisForPlayer,
     receiptsForSelected,
     validateReceipt,
     validateArtifact,
@@ -77,6 +78,7 @@
   let artifactDraft = $state<EvidenceDraft>({ kind: 'coach-observation', title: '', sourceLabel: 'Coach', sourceUrl: '', level: 'youth', jurisdiction: '', observation: '' });
   let filmTimeMs = $state(0);
   let filmWakeMs = $state(5000);
+  let filmMovementMode = $state<FilmMovementMode>('live-only');
   let correctionX = $state(47);
   let correctionY = $state(25);
   let correctionStatus = $state<'resolved' | 'unresolved' | 'out-of-frame' | 'inactive'>('resolved');
@@ -88,9 +90,9 @@
   let receipts = $derived(receiptsForSelected(labState));
   let artifacts = $derived(artifactsForSelected(labState));
   let engagements = $derived(engagementsForSelected(labState));
-  let activeFilm = $derived(labState.filmAnalyses.filter((analysis) => analysis.playerId === labState.selectedPlayerId).toSorted((a, b) => b.analysis.revision - a.analysis.revision)[0]);
+  let activeFilm = $derived(latestFilmAnalysisForPlayer(labState, labState.selectedPlayerId));
   let correctedFilm = $derived(activeFilm ? applyFilmCorrections(activeFilm) : null);
-  let filmTraffic = $derived(correctedFilm ? resolveFilmTrafficAt(correctedFilm, filmTimeMs, filmWakeMs) : null);
+  let filmTraffic = $derived(correctedFilm ? resolveFilmTrafficAt(correctedFilm, filmTimeMs, filmWakeMs, { movementMode: filmMovementMode }) : null);
   let filmCoverage = $derived(correctedFilm ? summarizeFilmTargetCoverage(correctedFilm) : null);
   let filteredTerms = $derived(glossary.filter(([term, meaning, phase]) => {
     const matchesPhase = termPhase === 'all' || phase === termPhase;
@@ -340,17 +342,19 @@
           <div><span class="mono">Time</span><strong>{formatFilmTime(filmTraffic.timeMs)}</strong></div>
           <div><span class="mono">Traffic</span><strong>{filmTraffic.players.length} tokens</strong></div>
           <div><span class="mono">Target</span><strong>{activeFilm.frames.findLast((frame) => frame.timeMs <= filmTimeMs)?.targetStatus ?? 'out-of-frame'}</strong></div>
+          <div><span class="mono">Play state</span><strong>{filmTraffic.currentPlayState}</strong></div>
           <div><span class="mono">Coverage</span><strong>{filmCoverage?.resolvedFrames ?? 0}/{filmCoverage?.frameCount ?? 0} · {filmCoverage?.resolvedPercent ?? 0}%</strong></div>
           <div><span class="mono">Projection</span><strong>{filmCoverage?.calibratedTargetFrames ? 'calibrated' : 'estimated'}</strong></div>
         </section>
         <div class="film-stage">
-          <FilmTrafficCourt analysis={activeFilm} timeMs={filmTimeMs} wakeMs={filmWakeMs} />
+          <FilmTrafficCourt analysis={activeFilm} timeMs={filmTimeMs} wakeMs={filmWakeMs} movementMode={filmMovementMode} />
           <aside class="film-legend">
             <p class="eyebrow">Traffic key</p>
             <div><i class="traffic-dot target"></i><span>Player #13 + wake</span></div>
             <div><i class="traffic-dot teammate"></i><span>Foreground-court teammate</span></div>
             <div><i class="traffic-dot opponent"></i><span>Foreground-court opponent</span></div>
-            <p>Opposite-court, official, and sideline detections remain in the audit receipt but never render as traffic. Unresolved intervals and verified inactive substitutions break the orange wake.</p>
+            <p>Orange wake is verified live basketball. In all-captured mode, gray dashed wake preserves dead-ball, free-throw, substitution, and unknown movement without counting it as positioning or lane running.</p>
+            <p class="mono">PLAY STATE / {filmTraffic.currentPlayState} / {filmTraffic.currentPlayStateEvidence?.method ?? 'unreviewed'}{activeFilm.analysis.playStateVerification ? ` / ${activeFilm.analysis.playStateVerification.liveFrameCount} LIVE / ${activeFilm.analysis.playStateVerification.nonLiveFrameCount} NON-LIVE / ${activeFilm.analysis.playStateVerification.unknownFrameCount} UNKNOWN` : ''}</p>
             {#if activeFilm.analysis.identityVerification}<p class="mono">ID PRECISION / {Math.round(activeFilm.analysis.identityVerification.positiveRecall * 100)}% #13 / {Math.round(activeFilm.analysis.identityVerification.hardNegativePrecision * 100)}% NEG / COVERAGE {filmCoverage?.resolvedPercent ?? 0}%</p>{/if}
             <dl><dt>Source</dt><dd>{activeFilm.source.sha256.slice(0, 12)}…</dd><dt>Frames</dt><dd>{activeFilm.frames.length}</dd><dt>Corrections</dt><dd>{activeFilm.corrections.length}</dd></dl>
           </aside>
@@ -359,6 +363,7 @@
           <div class="film-seek-row"><button class="button" onclick={() => seekFilm(-5000)}>− 5 sec</button><output aria-live="polite">{formatFilmTime(filmTimeMs)}</output><button class="button" onclick={() => seekFilm(5000)}>+ 5 sec</button></div>
           <label class="field full"><span>Traffic time / scrub in either direction</span><input aria-label="Film traffic time" type="range" min="0" max={activeFilm.frames.at(-1)?.timeMs ?? 0} step="500" bind:value={filmTimeMs} /></label>
           <label class="field"><span>#13 wake</span><select class="input" bind:value={filmWakeMs}><option value={3000}>3 seconds</option><option value={5000}>5 seconds</option><option value={10000}>10 seconds</option><option value={20000}>20 seconds</option></select></label>
+          <label class="field"><span>Movement evidence</span><select aria-label="Film movement evidence" class="input" bind:value={filmMovementMode}><option value="live-only">Live basketball only</option><option value="all-captured">All captured movement</option></select></label>
           <div class="film-export"><button class="button" onclick={exportFilmJson}>Export captured JSON</button><button class="button" onclick={exportFilmSvg}>Export canvas SVG</button></div>
         </section>
         {#if operator}

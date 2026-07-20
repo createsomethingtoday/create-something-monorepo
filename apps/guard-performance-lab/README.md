@@ -1,6 +1,6 @@
 # Guard Performance Lab
 
-A standalone, private-first coaching system for developing guards. Version 0.5 adds an immutable film-trace workflow: a supplied game is analyzed once, the derived player traffic is stored privately, and the operator can scrub, correct, reload, and export the captured revision without rerunning inference. Identity-only revision 3 preserves the revision-2 player field and associates #13 from direct jersey evidence plus bounded continuity; verified substitutions are stored as `inactive`, while ambiguous spans fail closed as `unresolved`.
+A standalone, private-first coaching system for developing guards. Version 0.5 adds an immutable film-trace workflow: a supplied game is analyzed once, the derived player traffic is stored privately, and the operator can scrub, correct, reload, and export the captured revision without rerunning inference. Identity-only revision 3 preserves the revision-2 player field and associates #13 from direct jersey evidence plus bounded continuity; verified substitutions are stored as `inactive`, while ambiguous spans fail closed as `unresolved`. A separate reviewed play-state ledger labels live offense, live defense, transitions, dead balls, free throws, substitutions, and unknown spans without rewriting frames or running detection again.
 
 ## Privacy model
 
@@ -93,7 +93,21 @@ pnpm --filter @create-something/guard-performance-lab film:finalize:identity -- 
   --analyzed-at <fixed-receipt-time>
 ```
 
-`Film trace` then replays the captured top-down traffic. The slider works in both directions, #13 carries an adjustable wake that breaks across unresolved gaps and inactive substitutions, and JSON/SVG exports are derived from the persisted revision. Operator corrections require direct-evidence text and append provenance; player-scoped identities cannot attach or correct analyses and can read only their assigned player.
+Attach reviewed play context to that same immutable revision with a complete, non-overlapping ledger. `unknown` intervals require explicit unreviewed provenance and fail closed; every other state requires source-review evidence. The command verifies source identity and complete duration coverage, then writes a new artifact with the original frames, players, identity fingerprint, revision, and execution count intact.
+
+```bash
+pnpm --filter @create-something/guard-performance-lab film:apply:play-state -- \
+  --analysis /private/path/full-analysis-r3.json \
+  --ledger fixtures/film/player-13-play-state-ledger.json \
+  --output /private/path/full-analysis-r3-play-state.json \
+  --receipt /private/path/play-state-receipt.json
+
+pnpm --filter @create-something/guard-performance-lab film:import:http -- \
+  --analysis /private/path/full-analysis-r3-play-state.json \
+  --corrections /private/path/empty-corrections.json
+```
+
+`Film trace` then replays the captured top-down traffic. The slider works in both directions. `Live basketball only` is the default and draws an orange #13 wake only for verified live offense, live defense, and transition states. `All captured movement` keeps dead-ball, free-throw, substitution, and unknown movement available as a gray dashed context wake without counting it as positioning or lane running. Wake segments break across state changes, unresolved gaps, and inactive substitutions. JSON/SVG exports are derived from the persisted revision. Operator corrections require direct-evidence text and append provenance; player-scoped identities cannot attach or correct analyses and can read only their assigned player.
 
 ### Local segmentation-mask tracking
 

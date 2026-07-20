@@ -1,11 +1,11 @@
 <script lang="ts">
   import type { FilmAnalysisRecord } from './model.js';
-  import { applyFilmCorrections, resolveFilmTrafficAt } from './film.js';
+  import { applyFilmCorrections, resolveFilmTrafficAt, type FilmMovementMode } from './film.js';
   import { FULL_COURT_94X50, courtToSvg } from './court.js';
 
-  let { analysis, timeMs, wakeMs }: { analysis: FilmAnalysisRecord; timeMs: number; wakeMs: number } = $props();
+  let { analysis, timeMs, wakeMs, movementMode }: { analysis: FilmAnalysisRecord; timeMs: number; wakeMs: number; movementMode: FilmMovementMode } = $props();
   let corrected = $derived(applyFilmCorrections(analysis));
-  let traffic = $derived(resolveFilmTrafficAt(corrected, timeMs, wakeMs));
+  let traffic = $derived(resolveFilmTrafficAt(corrected, timeMs, wakeMs, { movementMode }));
   let teammateCount = $derived(traffic.players.filter((player) => player.team === 'teammate').length);
   let opponentCount = $derived(traffic.players.filter((player) => player.team === 'opponent').length);
   let targetCount = $derived(traffic.players.filter((player) => player.team === 'target').length);
@@ -25,8 +25,8 @@
 </script>
 
 <svg id="film-traffic-court" class="traffic-court" viewBox="0 0 940 500" role="img" aria-labelledby="traffic-title traffic-desc" xmlns="http://www.w3.org/2000/svg">
-  <title id="traffic-title">Player traffic at {Math.round(traffic.timeMs / 100) / 10} seconds</title>
-  <desc id="traffic-desc">A top-down basketball court with {traffic.players.length} foreground-court players: {teammateCount} teammates, {opponentCount} opponents, target count {targetCount}. Opposite-court, official, and sideline detections are excluded. Number 13 is highlighted with a wake that breaks across unresolved or inactive intervals.</desc>
+  <title id="traffic-title">Player traffic at {Math.round(traffic.timeMs / 100) / 10} seconds / {traffic.currentPlayState}</title>
+  <desc id="traffic-desc">A top-down basketball court with {traffic.players.length} foreground-court players: {teammateCount} teammates, {opponentCount} opponents, target count {targetCount}. The current play state is {traffic.currentPlayState}. Orange wake includes verified live basketball only. {movementMode === 'all-captured' ? 'Gray wake preserves non-live and unknown captured movement.' : 'Non-live and unknown movement is hidden from the wake.'}</desc>
   <rect width="940" height="500" fill="#f8f7f1" />
   <g class="court-lines" fill="none" stroke="#171717">
     <rect x="2" y="2" width="936" height="496" stroke-width="4" />
@@ -50,6 +50,11 @@
     {#each traffic.targetWake as segment}
       <path d={wakePath(segment)} stroke-width="9" opacity=".18" />
       <path d={wakePath(segment)} stroke-width="3" opacity=".9" />
+    {/each}
+  </g>
+  <g class="context-wake" fill="none" stroke="#77756d" stroke-linecap="round" stroke-linejoin="round">
+    {#each traffic.contextWake as segment}
+      <path data-play-state={segment.playState} d={wakePath(segment.points)} stroke-width="7" stroke-dasharray="6 7" opacity=".28" />
     {/each}
   </g>
   <g class="traffic-players">
