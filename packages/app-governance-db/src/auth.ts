@@ -43,13 +43,16 @@ async function sha256hex(input: string): Promise<string> {
 }
 
 /**
- * Resolve the bearer token (Authorization header, or ?key= for WebSocket/browser
- * clients that cannot set headers) to an operator identity. The legacy shared
+ * Resolve the bearer token to an operator identity. The legacy shared
  * MCP_API_KEY resolves to 'shared'; per-operator keys live hashed in api_keys.
+ * `allowQueryKey` permits ?key= as a fallback for WebSocket/browser clients
+ * (/presence and /live) that cannot set headers; all other endpoints require
+ * the Authorization: Bearer header.
  */
 export async function resolveOperator(
   request: Request,
   env: { DB: D1Database; MCP_API_KEY?: string },
+  options?: { allowQueryKey?: boolean },
 ): Promise<{ operator: string } | Response> {
   if (!env.MCP_API_KEY) {
     return misconfiguredResponse('MCP_API_KEY is not configured for this deployment.');
@@ -57,14 +60,22 @@ export async function resolveOperator(
   const authHeader = request.headers.get('Authorization');
   const provided = authHeader?.startsWith('Bearer ')
     ? authHeader.slice('Bearer '.length).trim()
-    : new URL(request.url).searchParams.get('key')?.trim();
+    : options?.allowQueryKey
+      ? new URL(request.url).searchParams.get('key')?.trim()
+      : undefined;
   if (!provided) {
-    return unauthorizedResponse('Missing Authorization: Bearer <key> header (or ?key= for WebSocket clients).');
+    return unauthorizedResponse(
+      options?.allowQueryKey
+        ? 'Missing Authorization: Bearer <key> header (or ?key= for WebSocket clients).'
+        : 'Missing Authorization: Bearer <key> header.',
+    );
   }
-  if (provided === env.MCP_API_KEY) {
+  // Compare SHA-256 digests rather than raw strings so the shared-key check is
+  // not a variable-time string comparison over the secret.
+  const [hash, sharedHash] = await Promise.all([sha256hex(provided), sha256hex(env.MCP_API_KEY)]);
+  if (hash === sharedHash) {
     return { operator: 'shared' };
   }
-  const hash = await sha256hex(provided);
   const row = await env.DB.prepare('SELECT label FROM api_keys WHERE token_hash = ? AND active = 1')
     .bind(hash)
     .first<{ label: string }>();

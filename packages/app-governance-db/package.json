@@ -5,8 +5,6 @@
   "type": "module",
   "scripts": {
     "atlas:import": "node scripts/import-atlas-session.mjs",
-    "notion:connector-plan": "node scripts/notion-connector-export-plan.mjs",
-    "notion:relations": "node scripts/sync-notion-relations.mjs",
     "test": "node --test test/*.test.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "pnpm run typecheck"

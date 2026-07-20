@@ -9,18 +9,17 @@ function json(data: unknown) {
   };
 }
 
-async function writeEvent(
+function eventInsertStatement(
   db: D1Database,
   actor: string,
   action: string,
   entityType: string,
   entityId: string | number | null,
   payload?: unknown,
-): Promise<void> {
-  await db
+): D1PreparedStatement {
+  return db
     .prepare('INSERT INTO events (actor, action, entity_type, entity_id, payload_json) VALUES (?, ?, ?, ?, ?)')
-    .bind(actor, action, entityType, entityId === null ? null : String(entityId), payload ? JSON.stringify(payload) : null)
-    .run();
+    .bind(actor, action, entityType, entityId === null ? null : String(entityId), payload ? JSON.stringify(payload) : null);
 }
 
 interface SubscriptionRow {
@@ -477,9 +476,53 @@ function relationRank(relation: { evidence_kind: string; confidence: number }): 
 
 export type PresencePublish = (event: Record<string, unknown>) => void;
 
-export function registerTools(server: McpServer, getDb: GetDb, publish?: PresencePublish): void {
-  // Shadows the module-level writer: every audited write also fans out to the
-  // presence hub (fire-and-forget) so connected clients see live collaboration.
+export function registerTools(server: McpServer, getDb: GetDb, publish?: PresencePublish, operator?: string): void {
+  // Audit attribution binds to the authenticated operator resolved at the
+  // worker boundary. The client-supplied actor arg is only trusted when the
+  // operator is unknown or the legacy shared key ('shared') is in use; when it
+  // differs from the recorded actor it is preserved as claimed_actor.
+  const auditActor = (claimedActor: string): string =>
+    operator && operator !== 'unknown' && operator !== 'shared' ? operator : claimedActor;
+
+  const auditPayload = (claimedActor: string, payload?: unknown): unknown => {
+    if (auditActor(claimedActor) === claimedActor) return payload;
+    const base =
+      payload && typeof payload === 'object' && !Array.isArray(payload)
+        ? (payload as Record<string, unknown>)
+        : payload === undefined
+          ? {}
+          : { payload };
+    return { ...base, claimed_actor: claimedActor };
+  };
+
+  // Prepared (unexecuted) audit insert so multi-statement tools can include the
+  // event in a db.batch() alongside their writes.
+  const eventStatement = (
+    db: D1Database,
+    claimedActor: string,
+    action: string,
+    entityType: string,
+    entityId: string | number | null,
+    payload?: unknown,
+  ): D1PreparedStatement =>
+    eventInsertStatement(db, auditActor(claimedActor), action, entityType, entityId, auditPayload(claimedActor, payload));
+
+  // Every audited write also fans out to the presence hub (fire-and-forget)
+  // so connected clients see live collaboration.
+  const publishEvent = (claimedActor: string, action: string, entityType: string, entityId: string | number | null): void => {
+    try {
+      publish?.({
+        ts: new Date().toISOString(),
+        actor: auditActor(claimedActor),
+        action,
+        entity_type: entityType,
+        entity_id: entityId === null ? null : String(entityId),
+      });
+    } catch {
+      // presence is best-effort; never fail a write over it
+    }
+  };
+
   const logEvent = async (
     db: D1Database,
     actor: string,
@@ -488,18 +531,8 @@ export function registerTools(server: McpServer, getDb: GetDb, publish?: Presenc
     entityId: string | number | null,
     payload?: unknown,
   ): Promise<void> => {
-    await writeEvent(db, actor, action, entityType, entityId, payload);
-    try {
-      publish?.({
-        ts: new Date().toISOString(),
-        actor,
-        action,
-        entity_type: entityType,
-        entity_id: entityId === null ? null : String(entityId),
-      });
-    } catch {
-      // presence is best-effort; never fail a write over it
-    }
+    await eventStatement(db, actor, action, entityType, entityId, payload).run();
+    publishEvent(actor, action, entityType, entityId);
   };
   server.tool(
     'governance_sync_status',
@@ -560,7 +593,8 @@ export function registerTools(server: McpServer, getDb: GetDb, publish?: Presenc
             payload_json: z.string().optional().describe('Raw payload as JSON string'),
           }),
         )
-        .min(1),
+        .min(1)
+        .max(500),
       cursor_value: z.string().optional().describe('New high-water mark (newest Slack ts recorded)'),
       synced_by: z.string().default('claude-code').describe('Agent/session identifier for audit'),
     },
@@ -667,7 +701,7 @@ export function registerTools(server: McpServer, getDb: GetDb, publish?: Presenc
     'governance_categorize_items',
     'Categorize or route triaged items: assign a category, attach to a finding, or mark ignored. Sets triage_state accordingly.',
     {
-      item_ids: z.array(z.number().int()).min(1),
+      item_ids: z.array(z.number().int()).min(1).max(500),
       category_id: z.string().optional(),
       finding_id: z.number().int().optional().describe('Attach items to this finding (triage_state becomes linked)'),
       triage_state: z.enum(TRIAGE_STATES).optional().describe('Override; defaults to linked when finding_id set, else categorized'),
@@ -752,21 +786,28 @@ export function registerTools(server: McpServer, getDb: GetDb, publish?: Presenc
         .run();
       const findingId = result.meta.last_row_id;
 
+      // The finding insert runs first (its last_row_id feeds everything else);
+      // the links, item updates, and audit event then land atomically.
+      const statements: D1PreparedStatement[] = [];
       for (const link of input.links ?? []) {
-        await db
-          .prepare('INSERT INTO links (finding_id, kind, url, label) VALUES (?, ?, ?, ?)')
-          .bind(findingId, link.kind, link.url, link.label ?? null)
-          .run();
+        statements.push(
+          db
+            .prepare('INSERT INTO links (finding_id, kind, url, label) VALUES (?, ?, ?, ?)')
+            .bind(findingId, link.kind, link.url, link.label ?? null),
+        );
       }
-      if (input.item_ids?.length) {
-        for (const itemId of input.item_ids) {
-          await db
+      for (const itemId of input.item_ids ?? []) {
+        statements.push(
+          db
             .prepare("UPDATE items SET finding_id = ?, triage_state = 'linked', updated_at = datetime('now') WHERE id = ?")
-            .bind(findingId, itemId)
-            .run();
-        }
+            .bind(findingId, itemId),
+        );
       }
-      await logEvent(db, input.actor, 'create_finding', 'finding', findingId, { title: input.title, category_id: input.category_id });
+      statements.push(
+        eventStatement(db, input.actor, 'create_finding', 'finding', findingId, { title: input.title, category_id: input.category_id }),
+      );
+      await db.batch(statements);
+      publishEvent(input.actor, 'create_finding', 'finding', findingId);
       const finding = await db.prepare('SELECT * FROM findings WHERE id = ?').bind(findingId).first();
       return json({ ok: true, finding });
     },
@@ -948,7 +989,8 @@ export function registerTools(server: McpServer, getDb: GetDb, publish?: Presenc
             payload_json: z.string().optional(),
           }),
         )
-        .min(1),
+        .min(1)
+        .max(1000),
       synced_by: z.string().default('claude-code'),
     },
     async ({ apps, synced_by }) => {
@@ -1389,6 +1431,7 @@ export function registerTools(server: McpServer, getDb: GetDb, publish?: Presenc
             error: z.string().optional(),
           }),
         )
+        .max(500)
         .default([]),
       actor: z.string().default('claude-code'),
     },
@@ -3368,10 +3411,11 @@ export function registerTools(server: McpServer, getDb: GetDb, publish?: Presenc
           gapWhere.push('candidate.review_kind = ?');
           gapParams.push(review_kind);
         }
-        if (status) {
-          gapWhere.push('? = ?');
-          gapParams.push(status, 'open');
-        }
+        // Open gaps are, by construction, records whose review is missing or
+        // still 'open'; filter on that status regardless of the caller's
+        // `status` arg (which scopes the reviews list above, not the gaps).
+        gapWhere.push("COALESCE(review.status, 'open') = ?");
+        gapParams.push('open');
         openGaps = (
           await db
             .prepare(
@@ -3934,44 +3978,43 @@ export function registerTools(server: McpServer, getDb: GetDb, publish?: Presenc
         });
       }
 
-      await db
-        .prepare(
-          `UPDATE workflow_actions
-           SET status = ?,
-               approved_by = COALESCE(approved_by, ?),
-               approved_at = COALESCE(approved_at, datetime('now')),
-               completed_at = CASE WHEN ? = 'completed' THEN COALESCE(completed_at, datetime('now')) ELSE NULL END,
-               evidence = ?,
-               artifact_url = COALESCE(?, artifact_url),
-               updated_at = datetime('now')
-           WHERE action_id = ?`,
-        )
-        .bind(nextActionStatus, actor, nextActionStatus, evidence, artifact_url ?? null, action_id)
-        .run();
-
-      await db
-        .prepare(
-          `UPDATE source_record_transfer_reviews
-           SET status = ?,
-               reason = ?,
-               reviewed_by = ?,
-               updated_at = datetime('now')
-           WHERE id = ?`,
-        )
-        .bind(nextReviewStatus, evidence, actor, action.review_id)
-        .run();
-
-      const receipt = await db
-        .prepare(
-          `INSERT INTO workflow_receipts (
-             canvas_id, node_id, receipt_type, summary, artifact_url, payload_json, created_by
-           )
-           VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        )
-        .bind(action.canvas_id, action.node_id, receiptType, receiptSummary, artifact_url ?? '/sources', JSON.stringify(payload), actor)
-        .run();
-
-      await logEvent(db, actor, 'record_source_update_result', 'workflow_action', action_id, payload);
+      // Action update, review update, receipt, and audit event land atomically.
+      const batchResults = await db.batch([
+        db
+          .prepare(
+            `UPDATE workflow_actions
+             SET status = ?,
+                 approved_by = COALESCE(approved_by, ?),
+                 approved_at = COALESCE(approved_at, datetime('now')),
+                 completed_at = CASE WHEN ? = 'completed' THEN COALESCE(completed_at, datetime('now')) ELSE NULL END,
+                 evidence = ?,
+                 artifact_url = COALESCE(?, artifact_url),
+                 updated_at = datetime('now')
+             WHERE action_id = ?`,
+          )
+          .bind(nextActionStatus, actor, nextActionStatus, evidence, artifact_url ?? null, action_id),
+        db
+          .prepare(
+            `UPDATE source_record_transfer_reviews
+             SET status = ?,
+                 reason = ?,
+                 reviewed_by = ?,
+                 updated_at = datetime('now')
+             WHERE id = ?`,
+          )
+          .bind(nextReviewStatus, evidence, actor, action.review_id),
+        db
+          .prepare(
+            `INSERT INTO workflow_receipts (
+               canvas_id, node_id, receipt_type, summary, artifact_url, payload_json, created_by
+             )
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          )
+          .bind(action.canvas_id, action.node_id, receiptType, receiptSummary, artifact_url ?? '/sources', JSON.stringify(payload), actor),
+        eventStatement(db, actor, 'record_source_update_result', 'workflow_action', action_id, payload),
+      ]);
+      const receipt = batchResults[2];
+      publishEvent(actor, 'record_source_update_result', 'workflow_action', action_id);
 
       const [updatedAction, updatedReview] = await Promise.all([
         db.prepare('SELECT * FROM workflow_actions WHERE action_id = ?').bind(action_id).first(),
@@ -4953,64 +4996,90 @@ export function registerTools(server: McpServer, getDb: GetDb, publish?: Presenc
 
         const canvasId = `${canvas_prefix}-${slugId(client.title ?? client.external_id)}-${hashId(client.substrate_id ?? client.external_id)}`;
         const clientNodeId = `${canvasId}_client`;
-        await db
-          .prepare(
-            `INSERT INTO atlas_canvases (canvas_id, title, client, workflow, owner, status, source_kind, source_id, metadata_json)
-             VALUES (?, ?, ?, 'Client workflow source projection', ?, ?, 'client_source_projection', ?, ?)
-             ON CONFLICT (canvas_id)
-             DO UPDATE SET
-               title = excluded.title,
-               client = excluded.client,
-               workflow = excluded.workflow,
-               owner = COALESCE(excluded.owner, atlas_canvases.owner),
-               status = excluded.status,
-               source_kind = excluded.source_kind,
-               source_id = excluded.source_id,
-               metadata_json = excluded.metadata_json,
-               updated_at = datetime('now')`,
-          )
-          .bind(
-            canvasId,
-            `${client.title ?? client.external_id} Client Workflow Map`,
-            client.title ?? client.external_id,
-            actor,
-            atlasStatusFromRecord(client),
-            client.substrate_id ?? client.external_id,
-            JSON.stringify({ aliases: uniqueAliases, source_record_id: client.id, source_external_id: client.source_external_id }),
-          )
-          .run();
 
-        await db
-          .prepare(
-            `DELETE FROM atlas_edges
-             WHERE canvas_id = ?
-               AND (instr(edge_id, '_client_match_') > 0 OR instr(edge_id, '_source_relation_') > 0)`,
-          )
-          .bind(canvasId)
-          .run();
+        let edges = 0;
+        const nodeIdBySourceRecordId = new Map<number, string>([[client.id, clientNodeId]]);
+        for (const { record } of matches) {
+          nodeIdBySourceRecordId.set(record.id, `${canvasId}_${atlasNodeIdForSourceRecord(record.substrate_id ?? record.external_id, record.external_id)}`);
+        }
 
-        await db
-          .prepare(
-            `DELETE FROM source_record_atlas_bindings
-             WHERE canvas_id = ?
-               AND binding_kind = 'client_map'`,
-          )
-          .bind(canvasId)
-          .run();
+        // Read intra-canvas relations up front so every write for this canvas
+        // can be issued through db.batch() below.
+        const canvasRecordIds = [...nodeIdBySourceRecordId.keys()];
+        const intraCanvasRelationsById = new Map<number, SourceRecordRelationRow>();
+        for (const sourceIdBatch of chunkArray(canvasRecordIds, 40)) {
+          for (const targetIdBatch of chunkArray(canvasRecordIds, 40)) {
+            const intraCanvasRelations = await db
+              .prepare(
+                `SELECT id, source_record_id, target_source_record_id, relation_kind, evidence_kind, confidence, reason, metadata_json
+                 FROM source_record_relations
+                 WHERE source_record_id IN (${sourceIdBatch.map(() => '?').join(',')})
+                   AND target_source_record_id IN (${targetIdBatch.map(() => '?').join(',')})`,
+              )
+              .bind(...sourceIdBatch, ...targetIdBatch)
+              .all<SourceRecordRelationRow>();
+            for (const relation of intraCanvasRelations.results) {
+              if (relation.source_record_id === relation.target_source_record_id) continue;
+              if (relation.source_record_id === client.id && relation.relation_kind === 'owns') continue;
+              intraCanvasRelationsById.set(relation.id, relation);
+            }
+          }
+        }
 
-        await db
-          .prepare(
-            `DELETE FROM atlas_nodes
-             WHERE canvas_id = ?
-               AND (node_id = ? OR instr(node_id, '_source_record_') > 0)
-               AND NOT EXISTS (SELECT 1 FROM workflow_runs wr WHERE wr.node_id = atlas_nodes.node_id)
-               AND NOT EXISTS (SELECT 1 FROM workflow_receipts receipt WHERE receipt.node_id = atlas_nodes.node_id)
-               AND NOT EXISTS (SELECT 1 FROM workflow_actions action WHERE action.node_id = atlas_nodes.node_id)`,
-          )
-          .bind(canvasId, clientNodeId)
-          .run();
+        const prefixStatements: D1PreparedStatement[] = [
+          db
+            .prepare(
+              `INSERT INTO atlas_canvases (canvas_id, title, client, workflow, owner, status, source_kind, source_id, metadata_json)
+               VALUES (?, ?, ?, 'Client workflow source projection', ?, ?, 'client_source_projection', ?, ?)
+               ON CONFLICT (canvas_id)
+               DO UPDATE SET
+                 title = excluded.title,
+                 client = excluded.client,
+                 workflow = excluded.workflow,
+                 owner = COALESCE(excluded.owner, atlas_canvases.owner),
+                 status = excluded.status,
+                 source_kind = excluded.source_kind,
+                 source_id = excluded.source_id,
+                 metadata_json = excluded.metadata_json,
+                 updated_at = datetime('now')`,
+            )
+            .bind(
+              canvasId,
+              `${client.title ?? client.external_id} Client Workflow Map`,
+              client.title ?? client.external_id,
+              actor,
+              atlasStatusFromRecord(client),
+              client.substrate_id ?? client.external_id,
+              JSON.stringify({ aliases: uniqueAliases, source_record_id: client.id, source_external_id: client.source_external_id }),
+            ),
+          db
+            .prepare(
+              `DELETE FROM atlas_edges
+               WHERE canvas_id = ?
+                 AND (instr(edge_id, '_client_match_') > 0 OR instr(edge_id, '_source_relation_') > 0)`,
+            )
+            .bind(canvasId),
+          db
+            .prepare(
+              `DELETE FROM source_record_atlas_bindings
+               WHERE canvas_id = ?
+                 AND binding_kind = 'client_map'`,
+            )
+            .bind(canvasId),
+          db
+            .prepare(
+              `DELETE FROM atlas_nodes
+               WHERE canvas_id = ?
+                 AND (node_id = ? OR instr(node_id, '_source_record_') > 0)
+                 AND NOT EXISTS (SELECT 1 FROM workflow_runs wr WHERE wr.node_id = atlas_nodes.node_id)
+                 AND NOT EXISTS (SELECT 1 FROM workflow_receipts receipt WHERE receipt.node_id = atlas_nodes.node_id)
+                 AND NOT EXISTS (SELECT 1 FROM workflow_actions action WHERE action.node_id = atlas_nodes.node_id)`,
+            )
+            .bind(canvasId, clientNodeId),
+        ];
 
-        await db
+        const insertStatements: D1PreparedStatement[] = [];
+        insertStatements.push(db
           .prepare(
             `INSERT INTO atlas_nodes (node_id, canvas_id, kind, label, status, notes, evidence, metadata_json)
              VALUES (?, ?, 'human', ?, ?, 'Client source record', ?, ?)
@@ -5037,25 +5106,20 @@ export function registerTools(server: McpServer, getDb: GetDb, publish?: Presenc
               source_record_external_id: client.external_id,
               payload: payload,
             }),
-          )
-          .run();
+          ));
 
-        await db
+        insertStatements.push(db
           .prepare(
             `INSERT INTO source_record_atlas_bindings (source_record_id, canvas_id, node_id, binding_kind, confidence, reason, metadata_json)
              VALUES (?, ?, ?, 'client_map', 1.0, 'client root node', ?)
              ON CONFLICT (source_record_id, canvas_id, node_id, binding_kind)
              DO UPDATE SET confidence = excluded.confidence, reason = excluded.reason, metadata_json = excluded.metadata_json, updated_at = datetime('now')`,
           )
-          .bind(client.id, canvasId, clientNodeId, JSON.stringify({ aliases: uniqueAliases }))
-          .run();
+          .bind(client.id, canvasId, clientNodeId, JSON.stringify({ aliases: uniqueAliases })));
 
-        let edges = 0;
-        const nodeIdBySourceRecordId = new Map<number, string>([[client.id, clientNodeId]]);
         for (const { record, reason, confidence, evidence_kind, relation_id } of matches) {
-          const nodeId = `${canvasId}_${atlasNodeIdForSourceRecord(record.substrate_id ?? record.external_id, record.external_id)}`;
-          nodeIdBySourceRecordId.set(record.id, nodeId);
-          await db
+          const nodeId = nodeIdBySourceRecordId.get(record.id) ?? `${canvasId}_${atlasNodeIdForSourceRecord(record.substrate_id ?? record.external_id, record.external_id)}`;
+          insertStatements.push(db
             .prepare(
               `INSERT INTO atlas_nodes (node_id, canvas_id, kind, label, status, notes, evidence, metadata_json)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -5087,10 +5151,9 @@ export function registerTools(server: McpServer, getDb: GetDb, publish?: Presenc
                 relation_evidence_kind: evidence_kind,
                 payload: safeParseObject(record.payload_json),
               }),
-            )
-            .run();
+            ));
 
-          await db
+          insertStatements.push(db
             .prepare(
               `INSERT INTO source_record_atlas_bindings (source_record_id, canvas_id, node_id, binding_kind, confidence, reason, metadata_json)
                VALUES (?, ?, ?, 'client_map', ?, ?, ?)
@@ -5104,11 +5167,10 @@ export function registerTools(server: McpServer, getDb: GetDb, publish?: Presenc
               confidence,
               reason,
               JSON.stringify({ client_source_record_id: client.id, aliases: uniqueAliases, relation_id, relation_evidence_kind: evidence_kind }),
-            )
-            .run();
+            ));
 
           const edgeId = `${canvasId}_client_match_${hashId(`${client.id}:${record.id}:${reason}`)}`;
-          await db
+          insertStatements.push(db
             .prepare(
               `INSERT INTO atlas_edges (edge_id, canvas_id, source_node_id, target_node_id, label, evidence, metadata_json)
                VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -5136,30 +5198,8 @@ export function registerTools(server: McpServer, getDb: GetDb, publish?: Presenc
                 source_record_relation_id: relation_id,
                 relation_evidence_kind: evidence_kind,
               }),
-            )
-            .run();
+            ));
           edges += 1;
-        }
-
-        const canvasRecordIds = [...nodeIdBySourceRecordId.keys()];
-        const intraCanvasRelationsById = new Map<number, SourceRecordRelationRow>();
-        for (const sourceIdBatch of chunkArray(canvasRecordIds, 40)) {
-          for (const targetIdBatch of chunkArray(canvasRecordIds, 40)) {
-            const intraCanvasRelations = await db
-              .prepare(
-                `SELECT id, source_record_id, target_source_record_id, relation_kind, evidence_kind, confidence, reason, metadata_json
-                 FROM source_record_relations
-                 WHERE source_record_id IN (${sourceIdBatch.map(() => '?').join(',')})
-                   AND target_source_record_id IN (${targetIdBatch.map(() => '?').join(',')})`,
-              )
-              .bind(...sourceIdBatch, ...targetIdBatch)
-              .all<SourceRecordRelationRow>();
-            for (const relation of intraCanvasRelations.results) {
-              if (relation.source_record_id === relation.target_source_record_id) continue;
-              if (relation.source_record_id === client.id && relation.relation_kind === 'owns') continue;
-              intraCanvasRelationsById.set(relation.id, relation);
-            }
-          }
         }
 
         for (const relation of intraCanvasRelationsById.values()) {
@@ -5167,7 +5207,7 @@ export function registerTools(server: McpServer, getDb: GetDb, publish?: Presenc
           const targetNodeId = nodeIdBySourceRecordId.get(relation.target_source_record_id);
           if (!sourceNodeId || !targetNodeId) continue;
           const edgeId = `${canvasId}_source_relation_${relation.id}`;
-          await db
+          insertStatements.push(db
             .prepare(
               `INSERT INTO atlas_edges (edge_id, canvas_id, source_node_id, target_node_id, label, evidence, metadata_json)
                VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -5195,12 +5235,11 @@ export function registerTools(server: McpServer, getDb: GetDb, publish?: Presenc
                 relation_kind: relation.relation_kind,
                 intra_canvas_relation: true,
               }),
-            )
-            .run();
+            ));
           edges += 1;
         }
 
-        await db
+        insertStatements.push(db
           .prepare(
             `INSERT INTO workflow_receipts (canvas_id, receipt_type, summary, payload_json, created_by)
              VALUES (?, 'sync', ?, ?, ?)`,
@@ -5210,8 +5249,16 @@ export function registerTools(server: McpServer, getDb: GetDb, publish?: Presenc
             `Projected ${matches.length} matched source records into client workflow map`,
             JSON.stringify({ client_source_record_id: client.id, matches: matches.length, aliases: uniqueAliases }),
             actor,
-          )
-          .run();
+          ));
+
+        // The deletes and the first insert chunk commit atomically so a mid-run
+        // failure can never leave the canvas wiped-and-empty; any remaining
+        // inserts (idempotent upserts) follow in bounded chunks.
+        const [firstChunk = [], ...restChunks] = chunkArray(insertStatements, 50);
+        await db.batch([...prefixStatements, ...firstChunk]);
+        for (const chunk of restChunks) {
+          await db.batch(chunk);
+        }
 
         canvases.push({ canvas_id: canvasId, client: client.title, matches: matches.length, nodes: matches.length + 1, edges });
       }
@@ -5318,15 +5365,20 @@ export function registerTools(server: McpServer, getDb: GetDb, publish?: Presenc
       if (!loc) {
         return json({ ok: false, error: `Unknown doc location: ${path}. Register it first.` });
       }
+      // Callers send offset-bearing ISO strings (git %cI); compare epoch millis
+      // rather than lexicographically, and persist a normalized UTC ISO string.
+      const commitMs = new Date(commit_iso).getTime();
+      const normalizedCommitIso = Number.isNaN(commitMs) ? commit_iso : new Date(commitMs).toISOString();
       if (!loc.last_verified_at) {
-        await db.prepare('UPDATE doc_locations SET last_verified_at = ? WHERE id = ?').bind(commit_iso, loc.id).run();
+        await db.prepare('UPDATE doc_locations SET last_verified_at = ? WHERE id = ?').bind(normalizedCommitIso, loc.id).run();
         await logEvent(db, actor, 'doc_baseline', 'doc_location', loc.id, { path, commit_iso });
-        return json({ ok: true, action: 'baseline', path, verified_at: commit_iso });
+        return json({ ok: true, action: 'baseline', path, verified_at: normalizedCommitIso });
       }
-      if (commit_iso <= loc.last_verified_at) {
+      const lastVerifiedMs = new Date(loc.last_verified_at).getTime();
+      if (!Number.isNaN(commitMs) && !Number.isNaN(lastVerifiedMs) && commitMs <= lastVerifiedMs) {
         return json({ ok: true, action: 'unchanged', path, verified_at: loc.last_verified_at });
       }
-      await db.prepare('UPDATE doc_locations SET last_verified_at = ? WHERE id = ?').bind(commit_iso, loc.id).run();
+      await db.prepare('UPDATE doc_locations SET last_verified_at = ? WHERE id = ?').bind(normalizedCommitIso, loc.id).run();
       const subs = await matchSubscriptions(db, { docPath: path, categoryId: loc.category_id ?? undefined });
       const body = [
         `Governed doc changed: ${loc.title ?? path}`,
@@ -5336,7 +5388,7 @@ export function registerTools(server: McpServer, getDb: GetDb, publish?: Presenc
       ].join('\n');
       const queued = await queueNotifications(db, subs, body, null, actor);
       await logEvent(db, actor, 'doc_changed', 'doc_location', loc.id, { path, commit_iso, commit_summary, notified: queued });
-      return json({ ok: true, action: 'changed', path, verified_at: commit_iso, subscribers_notified: queued });
+      return json({ ok: true, action: 'changed', path, verified_at: normalizedCommitIso, subscribers_notified: queued });
     },
   );
 
@@ -5418,6 +5470,7 @@ export function registerTools(server: McpServer, getDb: GetDb, publish?: Presenc
             metadata_json: z.string().optional(),
           }),
         )
+        .max(1000)
         .default([]),
       edges: z
         .array(
@@ -5430,6 +5483,7 @@ export function registerTools(server: McpServer, getDb: GetDb, publish?: Presenc
             metadata_json: z.string().optional(),
           }),
         )
+        .max(2000)
         .default([]),
       actor: z.string().default('claude-code'),
     },

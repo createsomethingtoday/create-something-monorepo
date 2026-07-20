@@ -39,92 +39,7 @@ execution. It must open or enhance the Cloudflare surfaces above; it must not
 fork dashboard UI, source records, Atlas maps, workflow actions, receipts, or
 review state into desktop-only storage.
 
-## Notion-to-Atlas migration contract
-
-CREATE SOMETHING's own Notion transfer is the product dogfood path. The database layer treats Notion rows as source evidence first, not as Atlas nodes immediately:
-
-1. Record rows into `source_records` with `governance_record_source_records`.
-2. Inspect `governance_source_hygiene` and resolve `missing_substrate`, `duplicate`, or `blocked` identity states before projection.
-3. Attach `substrate_id`, `canonical_type`, and Atlas bindings with `governance_update_source_record_mapping`.
-4. Record source relation properties with `governance_record_source_record_relations` when the connector can see explicit Notion relations, then run `governance_extract_source_record_relations` for fallback payload/title/alias evidence. Explicit/imported evidence and inferred evidence are separated by `evidence_kind`, `confidence`, and `reason`.
-5. Project clean records into `atlas_canvases` / `atlas_nodes` / `atlas_edges` and preserve receipts with `governance_record_workflow_receipt`.
-
-`source_import_runs` records each batch, cursor, retry-after, rate-limit, and error condition. This is what makes Notion import resumable and agent-safe: a failed or rate-limited pass leaves a database receipt and a cursor/backoff state instead of depending on chat memory.
-
-The dashboard `/sources` route is the operator view for this migration. It now surfaces the Notion transfer readiness verdict, blocker counts, latest import warnings, source-update queue, and client-map coverage from D1 so the MCP/API completion audit and the human close-loop view agree.
-
-Explicit Notion relation import is handled by:
-
-```bash
-node packages/app-governance-db/scripts/sync-notion-relations.mjs --dry-run
-node packages/app-governance-db/scripts/sync-notion-relations.mjs --write
-```
-
-The runner reads captured `source_records` from the app-governance MCP, queries
-matching Notion data sources through `createsomething-notion`, extracts Notion
-relation properties, normalizes page IDs, and writes explicit relations through
-`governance_record_source_record_relations`. It orients client relations as
-`client owns record`; other relation properties become `references`,
-`depends_on`, `blocks`, or `corresponds_to` based on property name and record
-types.
-
-When the direct `createsomething-notion` MCP bearer is stale, use the installed
-Notion connector as a read surface and save its SQL query output into a connector
-export bundle:
-
-```bash
-pnpm --filter @create-something/app-governance-db notion:connector-plan
-pnpm --filter @create-something/app-governance-db notion:connector-plan -- --format json > /tmp/notion-connector-export.json
-```
-
-The manifest lives at
-`packages/app-governance-db/config/notion-connector-relation-sources.json`.
-It covers the CREATE SOMETHING Notion graph sources expected by the transfer
-readiness audit: `Clients`, `Engagements`, `Workstreams`, `Tasks / Actions`,
-`Evidence`, `Decisions`, `Risks / Blockers`, `Deliverables`,
-`Delivery Milestones`, `Agents`, and `MCP Services`. The planner prints the SQL
-each agent should run through the installed Notion connector and an empty bundle
-shape to fill with returned rows. Queries use the connector's
-`collection://...` table names, not display-name aliases:
-
-```json
-{
-  "connector_exports": [
-    {
-      "name": "Engagements",
-      "data_source_id": "collection://d3873b66-762c-4f3a-bd9e-97267f58faf5",
-      "relation_properties": ["Client", "Workstreams", "Tasks / Actions", "Deliverables", "Evidence", "Services used"],
-      "rows": [
-        {
-          "url": "https://app.notion.com/359fa8740b1581058193e9cfbc5f2f6e",
-          "Name": "Cato Supply - Webflow Insights CMS build",
-          "Client": "[\"https://app.notion.com/359fa8740b15816799c3d05f8b892ea3\"]"
-        }
-      ]
-    }
-  ]
-}
-```
-
-Then run:
-
-```bash
-node packages/app-governance-db/scripts/sync-notion-relations.mjs \
-  --connector-export /path/to/notion-connector-export.json \
-  --dry-run
-
-node packages/app-governance-db/scripts/sync-notion-relations.mjs \
-  --connector-export /path/to/notion-connector-export.json \
-  --write
-```
-
-The connector export path still reads current `source_records` from the
-app-governance MCP, normalizes compact/dashed/full Notion page URLs, and writes
-through `governance_record_source_record_relations`. `relation_properties` is
-required for connector SQL rows so people/user/file JSON arrays are not treated
-as page relations.
-
-### Why agent-mediated sync
+## Why agent-mediated sync
 
 The source channels live in `webflow.enterprise.slack.com`, where we have no bot token for a headless worker. The Claude Code agent **is** the sync runtime: it reads channels through the Slack MCP (user-scoped OAuth) and writes normalized items through this MCP. Cursors in `sync_cursors` make the sync idempotent and resumable across sessions — any agent can pick up where the last one stopped.
 
@@ -155,6 +70,7 @@ Slack channels/canvas ──(Slack MCP, read)──▶ Claude Code agent ──(
 | `governance_list_categories` | The taxonomy (§1–§8 + triage-ops) |
 | `governance_record_apps` | Upsert Webflow Apps admin snapshots and detect listing drift |
 | `governance_list_apps` | List synced marketplace apps and recent drift |
+| `governance_record_app_endpoint_access` | Record Webflow Admin endpoint capability/readback state (MRP id, no-op read/write support, verified/unsupported/error status) and an optional operator-approved write receipt for an app or unsupported template — no secrets stored |
 | `governance_set_cursor` | Set a high-water mark for non-item sync mechanisms |
 | `governance_record_source_records` | Idempotently record row-level source records from Notion or another database source |
 | `governance_list_source_records` | Inspect source records and identity/migration filters, including missing Substrate IDs |
@@ -263,7 +179,7 @@ pnpm deploy                     # wraps scripts/run-wrangler.mjs
 infisical run -- sh -c 'echo "$APP_GOVERNANCE_MCP_KEY" | npx wrangler secret put MCP_API_KEY'
 ```
 
-Migrations are plain SQL in `migrations/`; apply in order with `wrangler d1 execute app-governance-db --remote --file=migrations/<nnnn_name>.sql`. `0006_atlas_workflows.sql` adds the canonical Atlas/workflow runtime tables used by the `/atlas` dashboard view and Atlas MCP tools. `0007_source_record_imports.sql` adds the row-level source-record ledger and import-run tables used by the `/sources` dashboard view and Notion migration MCP tools.
+Migrations are plain SQL in `migrations/`; apply in order (lexical filename sort) with `wrangler d1 execute app-governance-db --remote --file=migrations/<nnnn_name>.sql`. `0006_atlas_workflows.sql` adds the canonical Atlas/workflow runtime tables used by the `/atlas` dashboard view and Atlas MCP tools. `0007_source_record_imports.sql` adds the row-level source-record ledger and import-run tables used by the `/sources` dashboard view and Notion migration MCP tools. `0012_app_admin_endpoint_access.sql` (renamed from `0006_app_admin_endpoint_access.sql`, which collided with the atlas file; prod applied it under the old name) adds the apps MRP columns and admin-endpoint capability/receipt tables — **not idempotent**: its bare `ALTER TABLE ADD COLUMN` statements fail on re-apply, so skip it when `PRAGMA table_info(apps)` already shows the `mrp_*` columns. `0013_seed_platform_api_gaps.sql` seeds the `platform-api-gaps` category (already present in prod; the seed keeps fresh bootstraps aligned).
 
 Dashboard deploys are separate because the dashboard is a SvelteKit Worker with
 static assets:

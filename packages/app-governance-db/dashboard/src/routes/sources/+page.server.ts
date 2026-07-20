@@ -113,7 +113,9 @@ export const load: PageServerLoad = async ({ platform, url }) => {
     latestImportWarnings,
     clientMapCoverage,
     blockerPlanRows,
-    blockerHandoffActions
+    blockerHandoffActions,
+    openTransferGapCount,
+    missingRecordCount
   ] = await Promise.all([
     db
       .prepare(
@@ -510,7 +512,51 @@ export const load: PageServerLoad = async ({ platform, url }) => {
            AND status IN ('proposed', 'approved', 'ready', 'running', 'blocked')
          ORDER BY updated_at DESC`
       )
-      .all<SourceBlockerHandoffActionRow>()
+      .all<SourceBlockerHandoffActionRow>(),
+    db
+      .prepare(
+        `SELECT
+           (SELECT COUNT(*)
+            FROM source_records r
+            JOIN sources s ON s.id = r.source_id
+            WHERE s.source_type = 'notion_database'
+              AND NOT EXISTS (SELECT 1 FROM source_record_atlas_bindings b WHERE b.source_record_id = r.id)
+              AND NOT EXISTS (
+                SELECT 1
+                FROM source_record_transfer_reviews review
+                WHERE review.source_record_id = r.id
+                  AND review.review_kind = 'binding_gap'
+                  AND review.status IN ('reviewed', 'waived', 'needs_source_update', 'resolved')
+              ))
+           +
+           (SELECT COUNT(*)
+            FROM source_records r
+            JOIN sources s ON s.id = r.source_id
+            WHERE s.source_type = 'notion_database'
+              AND NOT EXISTS (
+                SELECT 1
+                FROM source_record_relations rel
+                WHERE rel.source_record_id = r.id OR rel.target_source_record_id = r.id
+              )
+              AND NOT EXISTS (
+                SELECT 1
+                FROM source_record_transfer_reviews review
+                WHERE review.source_record_id = r.id
+                  AND review.review_kind = 'relation_island'
+                  AND review.status IN ('reviewed', 'waived', 'needs_source_update', 'resolved')
+              )) AS n`
+      )
+      .first<{ n: number }>(),
+    db
+      .prepare(
+        `SELECT COUNT(*) AS n
+         FROM source_records r
+         JOIN sources s ON s.id = r.source_id
+         WHERE s.source_type IN (${placeholders})
+           AND (r.substrate_id IS NULL OR r.substrate_id = '' OR r.identity_state IN ('missing_substrate', 'blocked', 'duplicate'))`
+      )
+      .bind(...APP_GOVERNANCE_ALL_SOURCE_TYPES)
+      .first<{ n: number }>()
   ]);
 
   const actualTransferSources = new Map(transferAudit.results.map((source) => [source.external_id, source]));
@@ -867,8 +913,11 @@ export const load: PageServerLoad = async ({ platform, url }) => {
     latestImportWarnings: latestImportWarnings.results,
     transferAudit: transferAudit.results,
     openTransferGaps: openTransferGaps.results,
+    openTransferGapsTotal: Number(openTransferGapCount?.n ?? 0),
     sourceUpdateReviews: sourceUpdateReviews.results,
+    sourceUpdateReviewsTotal: needsSourceUpdateReviews,
     missingRecords: missingRecords.results,
+    missingRecordsTotal: Number(missingRecordCount?.n ?? 0),
     recentRuns: recentRuns.results
   };
 };

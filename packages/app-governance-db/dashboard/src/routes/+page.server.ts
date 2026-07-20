@@ -1,13 +1,14 @@
+import { ageHours } from '$lib/format';
 import { requireDb } from '$lib/server/db';
 import { APP_GOVERNANCE_SOURCE_TYPES, sourceTypePlaceholders } from '$lib/server/source-scope';
-import type { CountRow, CursorRow, EventRow } from '$lib/types';
+import type { CountRow, CursorRow, EventRow, SyncFreshnessRow } from '$lib/types';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ platform }) => {
   const db = requireDb(platform);
   const placeholders = sourceTypePlaceholders();
 
-  const [cursors, triageCounts, findingCounts, notificationCounts, recentEvents] =
+  const [cursors, triageCounts, findingCounts, notificationCounts, recentEvents, syncCursors] =
     await Promise.all([
       db
         .prepare(
@@ -48,14 +49,31 @@ export const load: PageServerLoad = async ({ platform }) => {
            ORDER BY e.id DESC LIMIT 12`
         )
         .bind(...APP_GOVERNANCE_SOURCE_TYPES)
-        .all<EventRow>()
+        .all<EventRow>(),
+      db
+        .prepare(
+          `SELECT c.source_type, c.source_external_id, c.last_synced_at,
+                  COALESCE(s.name, c.source_external_id) AS name
+           FROM sync_cursors c
+           LEFT JOIN sources s
+             ON s.source_type = c.source_type
+            AND s.external_id = c.source_external_id
+           ORDER BY c.last_synced_at`
+        )
+        .all<Omit<SyncFreshnessRow, 'hours_since_sync'>>()
     ]);
 
   const count = (rows: CountRow[], key: string) => rows.find((r) => r.key === key)?.n ?? 0;
   const total = (rows: CountRow[]) => rows.reduce((sum, r) => sum + r.n, 0);
 
+  const syncFreshness: SyncFreshnessRow[] = syncCursors.results.map((row) => {
+    const hours = ageHours(row.last_synced_at);
+    return { ...row, hours_since_sync: Number.isFinite(hours) ? Math.round(hours * 10) / 10 : null };
+  });
+
   return {
     cursors: cursors.results,
+    syncFreshness,
     triageCounts: triageCounts.results,
     findingCounts: findingCounts.results,
     notificationCounts: notificationCounts.results,

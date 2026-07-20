@@ -65,6 +65,32 @@
     {/if}
   </Panel>
 
+  <!-- Sync freshness: staleness at a glance -->
+  <Panel title="Sync freshness" count={data.syncFreshness.length} class="lg:col-span-2">
+    {#if data.syncFreshness.length === 0}
+      <p class="empty-note">No sync cursors recorded yet.</p>
+    {:else}
+      <ul>
+        {#each data.syncFreshness as row (row.source_type + row.source_external_id)}
+          {@const freshness = freshnessBadge(row.last_synced_at)}
+          <li class="cursor-row flex flex-wrap items-baseline gap-x-4 gap-y-1">
+            <StatusBadge label={freshness.label} tone={freshness.tone} variant="dot" />
+            <span class="cursor-name">{row.name}</span>
+            <span class="mono-caption">{row.source_type}</span>
+            <span class="ml-auto flex items-baseline gap-3">
+              <span class="mono-caption" title={row.last_synced_at ?? 'never synced'}>
+                {shortTimestamp(row.last_synced_at)}
+              </span>
+              <span class="cursor-time">
+                {row.hours_since_sync === null ? 'never synced' : `${row.hours_since_sync}h ago`}
+              </span>
+            </span>
+          </li>
+        {/each}
+      </ul>
+    {/if}
+  </Panel>
+
   <!-- Findings by status -->
   <Panel title="Findings by status">
     {#if data.findingCounts.length === 0}

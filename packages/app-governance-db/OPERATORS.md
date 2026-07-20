@@ -12,7 +12,7 @@ The database (Cloudflare D1) is the source of truth. Airtable is a projection fo
 
 | Surface | Where | Access |
 |---|---|---|
-| Dashboard (read-only) | https://app-governance-dash.createsomething.agency | Access key — Infisical `APP_GOVERNANCE_DASHBOARD_KEY` |
+| Dashboard (reads everywhere; audited transfer-review/workflow write actions on /sources) | https://app-governance-dash.createsomething.agency | Access key — Infisical `APP_GOVERNANCE_DASHBOARD_KEY` |
 | Governance MCP (agents & scripts) | https://app-governance.mcp.createsomething.agency/mcp | Bearer — Infisical `APP_GOVERNANCE_MCP_KEY` |
 | Notifications | Posted to Slack targets (e.g. #triage-marketplace-apps) | Released by a human — see below |
 | Tracker canvas | Slack canvas `F0BB96552KG` | Narrative home; synced into the DB as items |
@@ -86,7 +86,7 @@ The Events page is the append-only audit log: every sync, categorization, findin
 | Symptom | Meaning | Fix |
 |---|---|---|
 | Dashboard bounces back to the key form | Wrong/expired key cookie | Re-enter the key from Infisical |
-| A source shows AGING for hours | Normal between cycles | Cycles run every ~2h; on-demand syncs any time |
+| A source shows AGING for hours | Normal between syncs | Syncs are agent-mediated on demand (the only scheduled job is the daily 9:17 admin-apps sync via launchd); run one any time |
 | A source shows NEVER SYNCED (not "on-demand") | Its mechanism hasn't run | Run the triage cycle; for Apps Admin, check the login |
 | Admin sync log shows exit 2 | Okta session expired or Tailscale down | `--login` run (above) |
 | Doc check prints "fetch failed" | openapi-internal fetch couldn't reach GitHub | Needs `gh` auth for `micahwithwf`; check `gh auth status` |
@@ -97,4 +97,4 @@ The Events page is the append-only audit log: every sync, categorization, findin
 - D1 is the source of truth; Airtable is a projection.
 - Agents write only through the MCP — every write is audited.
 - Nothing posts to shared channels without explicit human authorization.
-- All syncs are idempotent — re-running anything is always safe.
+- All syncs are idempotent — re-running anything is always safe. (One migration exception: `migrations/0012_app_admin_endpoint_access.sql` uses bare `ALTER TABLE ADD COLUMN` and fails if re-applied; skip it when the columns already exist.)

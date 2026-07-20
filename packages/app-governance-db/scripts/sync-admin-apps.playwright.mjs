@@ -19,6 +19,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const ARGS = new Set(process.argv.slice(2));
 const HEADED = ARGS.has('--login');
@@ -27,11 +28,14 @@ const PUSH = !ARGS.has('--no-push');
 
 const PROFILE_DIR = path.join(os.homedir(), '.config', 'webflow-admin-sync', 'profile');
 const OUT_DIR = path.join(os.homedir(), '.config', 'webflow-admin-sync');
-const REPO_ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../../..');
+const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 
 const CONFIG = {
   RATE_LIMIT_MS: 500,
   LOAD_MORE_WAIT_MS: 1500,
+  // Prod baseline is ~645 apps; well under this means the load-more loop
+  // stopped early (broken selector) and the snapshot is partial.
+  MIN_EXPECTED_APPS: 400,
   LOAD_MORE_SELECTOR: '[data-automation-id="collection-list-load-more"]',
   APP_LINK_SELECTOR: 'a[href^="/apps/detail/"]',
   VISIBILITY_TOKENS: ['PUBLIC', 'PRIVATE'],
@@ -144,6 +148,16 @@ snapshot.admin_api_routes = [...apiRoutes.entries()]
   .sort((a, b) => b[1] - a[1])
   .map(([route, count]) => ({ route, count }));
 console.log(`✓ snapshot captured: ${snapshot.count} apps (${ENRICH ? 'enriched' : 'listing-only'})`);
+
+// A partial capture must never be pushed: a broken load-more selector silently
+// caps capture at page 1, and drift detection over a partial snapshot would
+// misreport the missing apps. Abort well under the prod baseline (~645).
+if (snapshot.count < CONFIG.MIN_EXPECTED_APPS) {
+  console.error(
+    `✗ Only ${snapshot.count} apps captured (< MIN_EXPECTED_APPS=${CONFIG.MIN_EXPECTED_APPS}) — load-more loop likely stopped early (selector drift?). Aborting without push.`,
+  );
+  process.exit(2);
+}
 
 // Defense in depth: an admin-view capture must yield client_ids. A snapshot with
 // none means we scraped the wrong surface — never push it.

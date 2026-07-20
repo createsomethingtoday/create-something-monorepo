@@ -58,8 +58,22 @@ if (process.argv.includes('--pull')) {
   try {
     // The checkout needs the micahwithwf account; the ambient credential helper
     // serves the active gh account, so fetch with an explicit account token.
+    // Pass the token via an extraheader git config (not the URL) so it never
+    // appears in process listings. The config itself rides GIT_CONFIG_* env
+    // vars rather than `-c` because argv is also visible in ps.
     const token = execFileSync('gh', ['auth', 'token', '--user', 'micahwithwf'], { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
-    execFileSync('git', ['fetch', `https://micahwithwf:${token}@github.com/webflow/openapi-internal.git`, '+refs/heads/main:refs/remotes/origin/main'], { cwd: REPO, encoding: 'utf-8', stdio: ['ignore', 'pipe', 'pipe'] });
+    const basic = Buffer.from(`x-access-token:${token}`).toString('base64');
+    execFileSync('git', ['fetch', 'https://github.com/webflow/openapi-internal.git', '+refs/heads/main:refs/remotes/origin/main'], {
+      cwd: REPO,
+      encoding: 'utf-8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+      env: {
+        ...process.env,
+        GIT_CONFIG_COUNT: '1',
+        GIT_CONFIG_KEY_0: 'http.https://github.com/.extraheader',
+        GIT_CONFIG_VALUE_0: `AUTHORIZATION: basic ${basic}`,
+      },
+    });
     console.log('origin/main fetched');
   } catch {
     console.log('fetch failed (offline or token unavailable) — checking against last-known origin/main');
@@ -81,6 +95,9 @@ for (const [i, loc] of locations.entries()) {
   try {
     commitIso = execFileSync('git', ['log', REF, '-1', '--format=%cI', '--', loc.path], { cwd: REPO, encoding: 'utf-8' }).trim();
     subject = execFileSync('git', ['log', REF, '-1', '--format=%s', '--', loc.path], { cwd: REPO, encoding: 'utf-8' }).trim();
+    // git %cI carries the committer's local UTC offset; normalize to UTC so
+    // stored timestamps compare consistently server-side.
+    if (commitIso) commitIso = new Date(commitIso).toISOString();
   } catch {
     commitIso = '';
   }

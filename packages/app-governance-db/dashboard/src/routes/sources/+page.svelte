@@ -1,11 +1,12 @@
 <script lang="ts">
+  import { enhance } from '$app/forms';
   import { StatusBadge } from '@create-something/canon/components';
   import Panel from '$lib/components/Panel.svelte';
   import { relativeTime, shortTimestamp, truncateMiddle } from '$lib/format';
   import { freshnessBadge, identityBadge, migrationBadge, stateLabel } from '$lib/status';
-  import type { PageData } from './$types';
+  import type { ActionData, PageData } from './$types';
 
-  let { data }: { data: PageData } = $props();
+  let { data, form }: { data: PageData; form: ActionData } = $props();
 
   const totals = $derived({
     sources: data.sources.length,
@@ -43,12 +44,18 @@
   const planActionLabel = (action: string) => action.replaceAll('_', ' ');
   const blockerTone = (kind: string) =>
     kind === 'source_update_action' ? 'error' : kind === 'binding_gap' ? 'warning' : 'info';
+  /** Honest panel count: "shown of total" when the list is truncated. */
+  const panelCount = (shown: number, total: number) => (total > shown ? `${shown} of ${total}` : shown);
 </script>
 
 <h1 class="page-title">Sources</h1>
 <p class="page-note mt-2">
   Row-level source records, identity hygiene, cursors, and import runs before projection into Atlas.
 </p>
+
+{#if form?.error}
+  <p class="form-error mt-4" role="alert">{form.error}</p>
+{/if}
 
 <div class="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4 xl:grid-cols-6">
   <div class="metric-cell">
@@ -241,31 +248,31 @@
                     <span class="mono-caption">{shortTimestamp(group.handoff_action_updated_at)}</span>
                   {/if}
                   {#if group.handoff_action_status === 'proposed'}
-                    <form method="POST" action="?/updateBlockerReviewHandoffStatus">
+                    <form method="POST" action="?/updateBlockerReviewHandoffStatus" use:enhance>
                       <input type="hidden" name="action_id" value={group.handoff_action_id ?? ''} />
                       <input type="hidden" name="status" value="running" />
                       <button type="submit" class="inline-action">Start handoff</button>
                     </form>
-                    <form method="POST" action="?/updateBlockerReviewHandoffStatus">
+                    <form method="POST" action="?/updateBlockerReviewHandoffStatus" use:enhance>
                       <input type="hidden" name="action_id" value={group.handoff_action_id ?? ''} />
                       <input type="hidden" name="status" value="blocked" />
                       <button type="submit" class="inline-action">Block</button>
                     </form>
                   {:else if group.handoff_action_status === 'running'}
-                    <form method="POST" action="?/updateBlockerReviewHandoffStatus">
+                    <form method="POST" action="?/updateBlockerReviewHandoffStatus" use:enhance>
                       <input type="hidden" name="action_id" value={group.handoff_action_id ?? ''} />
                       <input type="hidden" name="status" value="blocked" />
                       <button type="submit" class="inline-action">Block</button>
                     </form>
                   {:else if group.handoff_action_status === 'blocked'}
-                    <form method="POST" action="?/updateBlockerReviewHandoffStatus">
+                    <form method="POST" action="?/updateBlockerReviewHandoffStatus" use:enhance>
                       <input type="hidden" name="action_id" value={group.handoff_action_id ?? ''} />
                       <input type="hidden" name="status" value="proposed" />
                       <button type="submit" class="inline-action">Reopen</button>
                     </form>
                   {/if}
                 {:else}
-                  <form method="POST" action="?/createBlockerReviewHandoff">
+                  <form method="POST" action="?/createBlockerReviewHandoff" use:enhance>
                     <input type="hidden" name="source_external_id" value={group.source_external_id} />
                     <input type="hidden" name="canonical_type" value={group.canonical_type} />
                     <button type="submit" class="inline-action">Create handoff</button>
@@ -359,7 +366,7 @@
               </div>
               {#if row.blocker_kind !== 'source_update_action'}
                 <div class="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                  <form method="POST" action="?/reviewTransferGap">
+                  <form method="POST" action="?/reviewTransferGap" use:enhance>
                     <input type="hidden" name="source_record_id" value={row.source_record_id} />
                     <input type="hidden" name="review_kind" value={row.blocker_kind} />
                     <input type="hidden" name="status" value="reviewed" />
@@ -367,7 +374,7 @@
                     <input type="hidden" name="handoff_action_id" value={data.selectedHandoff.action_id} />
                     <button type="submit" class="inline-action">Review</button>
                   </form>
-                  <form method="POST" action="?/reviewTransferGap">
+                  <form method="POST" action="?/reviewTransferGap" use:enhance>
                     <input type="hidden" name="source_record_id" value={row.source_record_id} />
                     <input type="hidden" name="review_kind" value={row.blocker_kind} />
                     <input type="hidden" name="status" value="waived" />
@@ -375,7 +382,7 @@
                     <input type="hidden" name="handoff_action_id" value={data.selectedHandoff.action_id} />
                     <button type="submit" class="inline-action">Waive</button>
                   </form>
-                  <form method="POST" action="?/reviewTransferGap">
+                  <form method="POST" action="?/reviewTransferGap" use:enhance>
                     <input type="hidden" name="source_record_id" value={row.source_record_id} />
                     <input type="hidden" name="review_kind" value={row.blocker_kind} />
                     <input type="hidden" name="status" value="needs_source_update" />
@@ -439,7 +446,7 @@
   </Panel>
 
   <div class="flex min-w-0 flex-col gap-6">
-    <Panel title="Open transfer queue" count={data.openTransferGaps.length}>
+    <Panel title="Open transfer queue" count={panelCount(data.openTransferGaps.length, data.openTransferGapsTotal)}>
       {#if data.openTransferGaps.length === 0}
         <p class="empty-note">No open binding or relation-island reviews.</p>
       {:else}
@@ -465,7 +472,7 @@
               {#if gap.reason}
                 <p class="run-error mt-1">{gap.reason}</p>
               {/if}
-              <form method="POST" action="?/markNeedsSourceUpdate" class="mt-2">
+              <form method="POST" action="?/markNeedsSourceUpdate" class="mt-2" use:enhance>
                 <input type="hidden" name="source_record_id" value={gap.source_record_id} />
                 <input type="hidden" name="review_kind" value={gap.review_kind} />
                 <input type="hidden" name="title" value={gap.title ?? gap.external_id} />
@@ -477,7 +484,7 @@
       {/if}
     </Panel>
 
-    <Panel title="Source update queue" count={data.sourceUpdateReviews.length}>
+    <Panel title="Source update queue" count={panelCount(data.sourceUpdateReviews.length, data.sourceUpdateReviewsTotal)}>
       {#if data.sourceUpdateReviews.length === 0}
         <p class="empty-note">No reviewed source-update handoffs.</p>
       {:else}
@@ -500,23 +507,23 @@
                     {review.workflow_action_priority ?? 'P?'} {truncateMiddle(review.workflow_action_id, 34)}
                   </span>
                   {#if review.workflow_action_status === 'proposed'}
-                    <form method="POST" action="?/updateSourceUpdateActionStatus">
+                    <form method="POST" action="?/updateSourceUpdateActionStatus" use:enhance>
                       <input type="hidden" name="action_id" value={review.workflow_action_id} />
                       <input type="hidden" name="status" value="running" />
                       <button type="submit" class="inline-action">Start action</button>
                     </form>
-                    <form method="POST" action="?/updateSourceUpdateActionStatus">
+                    <form method="POST" action="?/updateSourceUpdateActionStatus" use:enhance>
                       <input type="hidden" name="action_id" value={review.workflow_action_id} />
                       <input type="hidden" name="status" value="blocked" />
                       <button type="submit" class="inline-action">Block</button>
                     </form>
                   {:else if review.workflow_action_status === 'running'}
-                    <form method="POST" action="?/updateSourceUpdateActionStatus">
+                    <form method="POST" action="?/updateSourceUpdateActionStatus" use:enhance>
                       <input type="hidden" name="action_id" value={review.workflow_action_id} />
                       <input type="hidden" name="status" value="blocked" />
                       <button type="submit" class="inline-action">Block</button>
                     </form>
-                    <form method="POST" action="?/recordSourceUpdateResult" class="proof-form">
+                    <form method="POST" action="?/recordSourceUpdateResult" class="proof-form" use:enhance>
                       <input type="hidden" name="action_id" value={review.workflow_action_id} />
                       <textarea
                         name="evidence"
@@ -530,7 +537,7 @@
                       <button type="submit" class="inline-action">Record proof</button>
                     </form>
                   {:else if review.workflow_action_status === 'blocked'}
-                    <form method="POST" action="?/updateSourceUpdateActionStatus">
+                    <form method="POST" action="?/updateSourceUpdateActionStatus" use:enhance>
                       <input type="hidden" name="action_id" value={review.workflow_action_id} />
                       <input type="hidden" name="status" value="proposed" />
                       <button type="submit" class="inline-action">Reopen</button>
@@ -591,7 +598,7 @@
       {/if}
     </Panel>
 
-    <Panel title="Identity gaps" count={data.missingRecords.length}>
+    <Panel title="Identity gaps" count={panelCount(data.missingRecords.length, data.missingRecordsTotal)}>
       {#if data.missingRecords.length === 0}
         <p class="empty-note">No unresolved source-record identity gaps.</p>
       {:else}
@@ -657,6 +664,15 @@
   .page-note {
     font-size: var(--text-body-sm);
     color: var(--color-fg-muted);
+  }
+
+  .form-error {
+    border: 1px solid var(--color-error);
+    border-radius: var(--radius-sm);
+    background: var(--color-shell-surface);
+    padding: var(--space-xs) var(--space-sm);
+    font-size: var(--text-body-sm);
+    color: var(--color-error);
   }
 
   .metric-cell {
