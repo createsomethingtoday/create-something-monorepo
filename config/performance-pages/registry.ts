@@ -270,7 +270,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     'ltd-public-tools',
     'ltd',
     ['brand', 'taste/insights'],
-    'pending',
+    'migrated',
     contract(
       'tool',
       'Inspect the current brand or taste system state and decide what to use next.',
