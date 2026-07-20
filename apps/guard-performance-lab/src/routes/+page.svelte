@@ -1,7 +1,22 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import type { PageData } from './$types';
-  import { glossary, progressionPhases, sessionBlocks } from '$lib/data.js';
+  import {
+    accessHandoff,
+    clockPhases,
+    courtReadOrder,
+    evidenceFlow,
+    guardSchemeLibrary,
+    glossary,
+    introductionFlow,
+    levelSources,
+    levelTransitions,
+    progressionPhases,
+    roleMap,
+    schemeReadMap,
+    sessionBlocks,
+    sessionOneBoundary
+  } from '$lib/data.js';
   import type { GuideOutput } from '$lib/guide.js';
   import type { WorkspaceCommand } from '$lib/workspace-api.js';
   import {
@@ -23,10 +38,10 @@
 
   let { data }: { data: PageData } = $props();
 
-  type View = 'dashboard' | 'guide' | 'plan' | 'language' | 'reads' | 'receipt' | 'progress' | 'players';
+  type View = 'dashboard' | 'introduction' | 'guide' | 'plan' | 'language' | 'reads' | 'schemes' | 'receipt' | 'progress' | 'players';
   const views: { key: View; label: string }[] = [
-    { key: 'dashboard', label: 'Today' }, { key: 'guide', label: 'Agent + evidence' }, { key: 'plan', label: 'Session plan' },
-    { key: 'language', label: 'Shared language' }, { key: 'reads', label: 'Court reads' },
+    { key: 'dashboard', label: 'Today' }, { key: 'introduction', label: 'Introduction map' }, { key: 'guide', label: 'Agent + evidence' }, { key: 'plan', label: 'Session plan' },
+    { key: 'language', label: 'Shared language' }, { key: 'reads', label: 'Court reads' }, { key: 'schemes', label: 'Scheme library' },
     { key: 'receipt', label: 'Receipt' }, { key: 'progress', label: 'Progression' },
     { key: 'players', label: 'Players + data' }
   ];
@@ -45,6 +60,8 @@
   let syncError = $state('');
   let search = $state('');
   let termPhase = $state<'all' | 'now' | 'next' | 'later'>('all');
+  let schemeSearch = $state('');
+  let schemePhase = $state<'all' | 'now' | 'next' | 'later'>('all');
   let activeRead = $state<keyof typeof readAnswers>('none');
   let playerName = $state('Player 01');
   let newPlayerAge = $state<number | null>(12);
@@ -83,6 +100,11 @@
     const matchesPhase = termPhase === 'all' || phase === termPhase;
     const needle = search.trim().toLowerCase();
     return matchesPhase && (!needle || `${term} ${meaning}`.toLowerCase().includes(needle));
+  }));
+  let filteredSchemes = $derived(guardSchemeLibrary.filter((scheme) => {
+    const matchesPhase = schemePhase === 'all' || scheme.phase === schemePhase;
+    const needle = schemeSearch.trim().toLowerCase();
+    return matchesPhase && (!needle || `${scheme.label} ${scheme.family} ${scheme.picture} ${scheme.read} ${scheme.firstAnswer}`.toLowerCase().includes(needle));
   }));
 
   $effect(() => {
@@ -281,6 +303,82 @@
         <article class="receipt"><time>{receipts[0].date}</time><div><strong>{receipts[0].strength}</strong><p>Observable strength</p></div><div><strong>{receipts[0].nextFocus}</strong><p>Next focus</p></div></article>
       {:else}<div class="empty">Complete the session receipt after the workout—not before it.</div>{/if}
 
+    {:else if view === 'introduction'}
+      <section class="map-hero" aria-labelledby="introduction-title">
+        <div>
+          <p class="eyebrow">Session 01 / operating map</p>
+          <h1 id="introduction-title">How the first interaction works.</h1>
+        </div>
+        <p>One shared map connects the player’s independent preparation, the agent-guided hour, the coach’s requested context, Codex research, and the private evidence receipt.</p>
+      </section>
+
+      <div class="section-head"><h2>Sunday / one continuous handoff</h2><p>The system preserves autonomy at 10:00, adds live context at 10:30, and closes with evidence at 11:30.</p></div>
+      <ol class="map-flow" aria-label="Sunday introduction sequence">
+        {#each introductionFlow as step}
+          <li><time>{step.time}</time><strong>{step.label}</strong><p>{step.detail}</p></li>
+        {/each}
+      </ol>
+
+      <div class="section-head"><h2>Who owns what</h2><p>The coach is a source of real-time context. The program—not a coach personality—guides the interaction.</p></div>
+      <div class="role-grid introduction-roles">
+        {#each roleMap as role}
+          <article><span class="mono">{role.owner}</span><strong>{role.job}</strong><p>{role.boundary}</p></article>
+        {/each}
+      </div>
+
+      <div class="section-head"><h2>Access handoff</h2><p>The first session does not depend on inventing a player credential or weakening the private boundary.</p></div>
+      <div class="boundary-grid access-handoff">
+        {#each accessHandoff as step}
+          <article><span class="mono">{step.label}</span><p><strong>{step.detail}</strong><br/>{step.boundary}</p></article>
+        {/each}
+      </div>
+
+      <div class="section-head"><h2>Level transition / what changes</h2><p>Orientation, not prediction. Rules and markings must be checked against the player’s current league, state, and season.</p></div>
+      <div class="level-map">
+        {#each levelTransitions as level}
+          <article>
+            <div class="level-label"><span class="mono">{level.id}</span><h3>{level.level}</h3></div>
+            <dl>
+              <div><dt>Court</dt><dd>{level.court}</dd></div>
+              <div><dt>Clock</dt><dd>{level.clock}</dd></div>
+              <div><dt>Guard pressure</dt><dd>{level.change}</dd></div>
+              <div><dt>Verify</dt><dd>{level.verify}</dd></div>
+            </dl>
+          </article>
+        {/each}
+      </div>
+      <div class="callout pressure"><strong>College spacing correction</strong><span>College is not a wider court. The 94-foot length, deeper men’s arc, precise spacing, defensive length, and 30-second clock compress the decision window.</span></div>
+      <div class="source-row" aria-label="Official rule sources">
+        <span class="mono">Rule sources / recheck before use</span>
+        {#each levelSources as source}<a href={source.url} target="_blank" rel="noreferrer noopener">{source.label} ↗</a>{/each}
+      </div>
+
+      <div class="section-head"><h2>Clock map / college orientation</h2><p>The clock is a decision framework, not a reason to rush.</p></div>
+      <div class="clock-map">
+        {#each clockPhases as phase}
+          <article><span class="mono">{phase.college}</span><strong>{phase.label}</strong><p>{phase.purpose}</p></article>
+        {/each}
+      </div>
+
+      <div class="section-head"><h2>Schemes become readable pictures</h2><p>Teach the defender picture, the guard’s choice, and the proof before adding vocabulary or another counter.</p></div>
+      <div class="scheme-map">
+        {#each schemeReadMap as item, index}
+          <article><span class="scheme-index mono">0{index + 1}</span><div><h3>{item.label}</h3><p><strong>Picture:</strong> {item.picture}</p><p><strong>Choice:</strong> {item.choice}</p><p class="proof"><strong>Proof:</strong> {item.proof}</p></div></article>
+        {/each}
+      </div>
+
+      <div class="section-head"><h2>Artifact → interaction → receipt</h2><p>College and professional examples can inform the next picture without becoming a comparison score.</p></div>
+      <ol class="evidence-flow" aria-label="Evidence review sequence">
+        {#each evidenceFlow as step}
+          <li><span class="mono">{step.label}</span><p>{step.detail}</p><small>{step.boundary}</small></li>
+        {/each}
+      </ol>
+
+      <div class="boundary-grid">
+        <article><span class="mono">Include now</span><p>{sessionOneBoundary.include}.</p></article>
+        <article><span class="mono">Defer</span><p>{sessionOneBoundary.defer}.</p></article>
+      </div>
+
     {:else if view === 'guide'}
       <div class="section-head"><h2>Agent-guided interaction</h2><p>The program owns the sequence. Add only the live context it requests; the coach is not the narrator or personality.</p></div>
       <div class="court-layout">
@@ -348,6 +446,11 @@
 
     {:else if view === 'reads'}
       <div class="section-head"><h2>Where the read lives</h2><p>Point to the picture before naming a scheme. Defender position creates the answer.</p></div>
+      <ol class="read-order" aria-label="Guard read order">
+        {#each courtReadOrder as read, index}
+          <li class:next={read.session === 'next'}><span class="mono">0{index + 1} / {read.session}</span><strong>{read.location}</strong><p>{read.question}</p></li>
+        {/each}
+      </ol>
       <div class="court-layout">
         <svg class="court" viewBox="0 0 760 520" role="img" aria-labelledby="court-title court-desc">
           <title id="court-title">Half-court help read</title><desc id="court-desc">A wing drive enters the lane. The nail and low-man help positions create three possible answers.</desc>
@@ -365,6 +468,28 @@
           <div class="answer"><strong>{readAnswers[activeRead][0]}:</strong> {readAnswers[activeRead][1]}</div>
         </section>
       </div>
+
+    {:else if view === 'schemes'}
+      <div class="section-head"><h2>Guard scheme library</h2><p>Recognition roadmap—not Session 01. Start with the picture, name the read, then use one simple answer.</p></div>
+      <div class="callout"><strong>Learn families, not play names.</strong><span>Teams rename actions. The spacing, screen angle, coverage, helper, and advantage are the transferable parts.</span></div>
+      <div class="toolbar scheme-toolbar">
+        <input class="input" type="search" bind:value={schemeSearch} aria-label="Search guard schemes" placeholder="Search action, coverage, or read" />
+        {#each ['all', 'now', 'next', 'later'] as phase}<button class:active={schemePhase === phase} class="filter mono" onclick={() => schemePhase = phase as typeof schemePhase}>{phase}</button>{/each}
+      </div>
+      <div class="scheme-library">
+        {#each filteredSchemes as scheme}
+          <article>
+            <header><span class="mono">{scheme.family}</span><span class="pill">{scheme.phase}</span></header>
+            <h3>{scheme.label}</h3>
+            <dl>
+              <div><dt>Picture</dt><dd>{scheme.picture}</dd></div>
+              <div><dt>Guard read</dt><dd>{scheme.read}</dd></div>
+              <div><dt>First answer</dt><dd>{scheme.firstAnswer}</dd></div>
+            </dl>
+          </article>
+        {/each}
+      </div>
+      {#if filteredSchemes.length === 0}<div class="empty">No scheme matches that search and phase.</div>{/if}
 
     {:else if view === 'receipt'}
       <div class="section-head"><h2>Session receipt</h2><p>Record behavior, player words, and the next decision. Makes and misses are not the receipt.</p></div>
@@ -429,6 +554,6 @@
       <button class="button danger" disabled={commandBusy} onclick={resetData}>{resetArmed ? 'Confirm reset' : 'Reset workspace'}</button>{/if}
     {/if}
 
-    <footer class="footer">FIELD TEST / V0.4 &nbsp; STATUS / {hydrated ? 'IDENTITY SCOPED' : 'LOADING'} &nbsp; REV / {labState.revision} &nbsp; FIRST-PARTY AUTH</footer>
+    <footer class="footer">FIELD TEST / V0.5 &nbsp; STATUS / {hydrated ? 'IDENTITY SCOPED' : 'LOADING'} &nbsp; REV / {labState.revision} &nbsp; FIRST-PARTY AUTH</footer>
   </main>
 </div>
