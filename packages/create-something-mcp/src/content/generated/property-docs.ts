@@ -6380,8 +6380,8 @@ interface PluginProvides {
 
 2. **Hero Section** (pt-8 pb-16)
    - Category badge, version badge, last updated date
-   - Plugin name (--text-display size)
-   - Description (--text-body-lg)
+   - Plugin name (--text-performance-display size)
+   - Description (--text-performance-body-lg)
    - Tag list
 
 3. **Features Section** (py-16)
@@ -6420,7 +6420,7 @@ interface PluginProvides {
 | \`--space-*\` | All spacing (golden ratio) |
 | \`--text-*\` | Typography scale |
 | \`--duration-*\` | Animation timing |
-| \`--ease-standard\` | Standard easing |
+| \`--ease-performance-standard\` | Standard easing |
 
 **Key Classes**:
 - \`.page-title\`: Display size, bold, primary color
@@ -6432,9 +6432,9 @@ interface PluginProvides {
 - \`.animate-reveal\`: Entrance animation with staggered delay
 
 **Motion**:
-- Category chips: \`--duration-micro\` (200ms) on hover
+- Category chips: \`--duration-performance-micro\` (200ms) on hover
 - Copy buttons: Color transition on hover
-- Related cards: \`--duration-micro\` transform on hover
+- Related cards: \`--duration-performance-micro\` transform on hover
 
 ## Query Functions
 
@@ -6520,7 +6520,7 @@ getRelatedPlugins(slug: string): Plugin[]
 
 - **Color Contrast**: All tokens meet WCAG AA (4.5:1+)
 - **Semantic HTML**: Proper heading hierarchy (h1 → h2 → h3)
-- **Focus States**: via Canon \`--color-focus\` token (WCAG AA compliant 5.28:1)
+- **Focus States**: via Canon \`--color-performance-focus\` token (WCAG AA compliant 5.28:1)
 - **Reduced Motion**: @media (prefers-reduced-motion: reduce) disables .animate-reveal
 - **Copy Buttons**: aria-label on all copy buttons
 - **Links**: Back navigation explicit, related plugin cards are links
@@ -6680,7 +6680,7 @@ src/routes/api/plugins/+server.ts
 **For Paper System**:
 1. **\`src/routes/experiments/[slug]/+page.svelte\`** — How papers are rendered
 2. **\`src/routes/methodology/+page.svelte\`** — Research methodology
-3. **\`src/routes/admin/experiments/+page.svelte\`** — How papers are managed
+3. **\`src/routes/admin/experiments/+page.svelte\`** — Read-only operator view of the repository catalog
 
 ## Key Concepts
 
@@ -6708,7 +6708,7 @@ src/routes/api/plugins/+server.ts
 | Task | Start Here |
 |------|------------|
 | Read a paper | \`/experiments/[slug]\` |
-| Create a new paper | \`/admin/experiments/new\` |
+| Create a new experiment | Add a reviewed file-backed artifact through \`src/lib/config/fileBasedExperiments.ts\` |
 | View analytics | \`/admin/analytics\` |
 | Review AI drafts | \`/admin/agent-drafts\` |
 | Add a new plugin | Modify \`src/lib/config/plugins.ts\` |
@@ -9254,12 +9254,12 @@ Spacing tokens follow the golden ratio. [PAUSE] Phi equals 1.618.
 
 [PAUSE]
 
-\`--space-xs\` is 0.5 rem.
-\`--space-sm\` is 1 rem.
-\`--space-md\` is 1.618 rem.
-\`--space-lg\` is 2.618 rem.
-\`--space-xl\` is 4.236 rem.
-\`--space-2xl\` is 6.854 rem.
+\`--space-performance-xs\` is 0.5 rem.
+\`--space-performance-sm\` is 1 rem.
+\`--space-performance-md\` is 1.618 rem.
+\`--space-performance-lg\` is 2.618 rem.
+\`--space-performance-xl\` is 4.236 rem.
+\`--space-performance-2xl\` is 6.854 rem.
 
 [PAUSE 2s]
 
@@ -9267,7 +9267,7 @@ Each step multiplies by phi. [PAUSE] Natural proportions create visual rhythm—
 
 [PAUSE]
 
-When you use \`--space-md\`, you're using mathematics that's been aesthetically validated for millennia.
+When you use \`--space-performance-md\`, you're using mathematics that's been aesthetically validated for millennia.
 
 ---
 
@@ -9285,9 +9285,9 @@ Display sizes use clamp functions—they scale fluidly between viewport sizes.
 
 [PAUSE]
 
-\`--text-display-xl\` starts at 3.5 rem, scales up to 7 rem.
+\`--text-performance-display-xl\` starts at 3.5 rem, scales up to 7 rem.
 
-\`--text-display\` starts at 2.5 rem, scales up to 5 rem.
+\`--text-performance-display\` starts at 2.5 rem, scales up to 5 rem.
 
 Headings—H1, H2, H3—follow the same fluid pattern.
 
@@ -9313,15 +9313,15 @@ Motion should reveal state changes, not seek attention.
 
 [PAUSE]
 
-\`--duration-micro\` is 200 milliseconds. [PAUSE] Use for hover states, toggles, micro-interactions.
+\`--duration-performance-micro\` is 200 milliseconds. [PAUSE] Use for hover states, toggles, micro-interactions.
 
-\`--duration-standard\` is 300 milliseconds. [PAUSE] Use for page transitions, modals.
+\`--duration-performance-standard\` is 300 milliseconds. [PAUSE] Use for page transitions, modals.
 
-\`--duration-complex\` is 500 milliseconds. [PAUSE] Use for orchestrated sequences.
+\`--duration-performance-complex\` is 500 milliseconds. [PAUSE] Use for orchestrated sequences.
 
 [PAUSE 2s]
 
-One easing curve for everything: \`--ease-standard\`. [PAUSE] Cubic bezier 0.4, 0, 0.2, 1.
+One easing curve for everything: \`--ease-performance-standard\`. [PAUSE] Cubic bezier 0.4, 0, 0.2, 1.
 
 [PAUSE]
 
@@ -9389,7 +9389,7 @@ Most components use all three approaches together.
 
 Tailwind for composition: \`flex items-center gap-4 p-6\`
 
-Canon for design: \`background: var(--color-bg-surface)\`
+Canon for design: \`background: var(--color-performance-bg-surface)\`
 
 Inline styles for dynamic values: \`style="--delay: {index * 100}ms"\`
 
@@ -9413,11 +9413,11 @@ What breaks Canon coherence.
 
 [PAUSE]
 
-Hardcoded colors. [PAUSE] \`bg-white/10\` instead of \`var(--color-bg-surface)\`.
+Hardcoded colors. [PAUSE] \`bg-white/10\` instead of \`var(--color-performance-bg-surface)\`.
 
-Inline styles for static values. [PAUSE] \`style="border-radius: 12px"\` instead of \`var(--radius-lg)\`.
+Inline styles for static values. [PAUSE] \`style="border-radius: 12px"\` instead of \`var(--radius-performance-scale-lg)\`.
 
-Arbitrary typography. [PAUSE] \`text-3xl\` instead of \`var(--text-h2)\`.
+Arbitrary typography. [PAUSE] \`text-3xl\` instead of \`var(--text-performance-h2)\`.
 
 Utility classes for motion. [PAUSE] \`transition: all 0.2s\` instead of Canon tokens.
 
@@ -9751,7 +9751,7 @@ Design utilities—avoid them. Use Canon tokens instead.
 
 [PAUSE]
 
-The table shows the mapping. \`rounded-md\` becomes \`var(--radius-md)\`. \`bg-white/10\` becomes \`var(--color-bg-surface)\`.
+The table shows the mapping. \`rounded-md\` becomes \`var(--radius-performance-scale-md)\`. \`bg-white/10\` becomes \`var(--color-performance-bg-surface)\`.
 
 [PAUSE 2s]
 
@@ -11945,7 +11945,7 @@ Rules files capture breakdowns as repair. Cloudflare patterns. CSS canon. Beads 
 
 [PAUSE]
 
-Canon tokens give you CSS values that trace to principles. You don't think about spacing—you use \`--space-md\`.
+Canon tokens give you CSS values that trace to principles. You don't think about spacing—you use \`--space-performance-md\`.
 
 [PAUSE]
 
@@ -23640,7 +23640,7 @@ Notion (A&amp;R Review Queue)
 
 - Boot: \`pnpm dev\`
 - Smoke: \`pnpm check\`
-- Escalate if Auth0, D1, or client-delivery data is needed and not available through local fixtures or Infisical-backed environment.
+- Escalate if CREATE SOMETHING Identity, D1, or client-delivery data is needed and not available through local fixtures or Infisical-backed environment.
 `
   },
   {
@@ -23858,22 +23858,22 @@ The .agency property has **excellent Canon compliance** for the critical path. R
   {
     id: "agency:canon-overlay/copy-rules",
     property: "agency",
-    title: "Agency Atlas Public Overlay Copy Rules",
-    description: "Agency Atlas Public Overlay Copy Rules",
+    title: "Agency Map Public Overlay Copy Rules",
+    description: "Agency Map Public Overlay Copy Rules",
     section: "canon-overlay",
     path: "canon-overlay/copy-rules.md",
     slug: "canon-overlay/copy-rules",
     uri: "docs://agency/canon-overlay/copy-rules",
-    content: `# Agency Atlas Public Overlay Copy Rules
+    content: `# Agency Map Public Overlay Copy Rules
 
-Use this file to define Agency Atlas language while preserving Canon structure.
+Use this file to define public Map language while preserving the internal Canon Atlas structure.
 
 ## Rules
 
 - Name the workflow object before the action.
 - Name the owner, evidence, receipt, and next action when a surface asks for trust.
 - Keep state words stable across modalities: \`ready\`, \`review\`, \`blocked\`, \`complete\`.
-- For Atlas, prefer the operational state words already visible in the canvas: \`run\`, \`wait\`, \`stop\`, \`proof\`, and \`unknown\`.
+- For Map, prefer the operational state words already visible in the canvas: \`run\`, \`wait\`, \`stop\`, \`proof\`, and \`unknown\`.
 - Public copy must make the boundary explicit: the visitor edits a prospect map; production tools and private systems stay outside the surface.
 - Booking copy must carry the readiness signal and next decision, not a generic consultation pitch.
 - Keep reasoning and policy details off thin displays; summarize the decision and route to the full receipt.
@@ -23891,29 +23891,29 @@ Use this file to define Agency Atlas language while preserving Canon structure.
 - Put proof beside claims.
 - Use action labels that describe the result, not the component.
 - Keep local marketing tone in project copy files, not Canon primitives.
-- On \`/atlas\`, connect story, editable map, readiness, and booking handoff in that order.
+- On \`/map\`, connect story, editable map, readiness, and booking handoff in that order.
 `
   },
   {
     id: "agency:canon-overlay/surface-policy",
     property: "agency",
-    title: "Agency Atlas Public Overlay Surface Policy",
-    description: "Agency Atlas Public Overlay Surface Policy",
+    title: "Agency Map Public Overlay Surface Policy",
+    description: "Agency Map Public Overlay Surface Policy",
     section: "canon-overlay",
     path: "canon-overlay/surface-policy.md",
     slug: "canon-overlay/surface-policy",
     uri: "docs://agency/canon-overlay/surface-policy",
-    content: `# Agency Atlas Public Overlay Surface Policy
+    content: `# Agency Map Public Overlay Surface Policy
 
-This policy keeps @create-something/agency Atlas overlays portable across web, chat, app without forking Canon.
+This policy keeps @create-something/agency Map overlays portable across web, chat, and app without forking internal Canon Atlas primitives.
 
 ## Web
 
 - Use Canon components and tokens first.
 - Add project-local layout, copy, and theme aliases only when the consuming route needs them.
 - Keep receipt, evidence, and owner metadata visible near decisions.
-- Treat \`/atlas\`, \`/services\`, \`/methodology\`, \`/stack\`, \`/products\`, \`/products/signal\`, \`/products/decision\`, and \`/products/proof\` as public proof routes.
-- The public route can demonstrate Canon Atlas, but it must not require credentials, private workspace data, or production MCP calls.
+- Treat \`/map\`, \`/services\`, \`/methodology\`, \`/stack\`, \`/products\`, \`/products/signal\`, \`/products/decision\`, and \`/products/proof\` as public proof routes.
+- The public route can demonstrate Map through Canon Atlas, but it must not require credentials, private workspace data, or production MCP calls.
 
 ## Chat
 
@@ -23946,13 +23946,13 @@ Project overlays can become Canon candidates only after repeated-surface evidenc
   {
     id: "agency:canon-overlay/templates/README",
     property: "agency",
-    title: "Agency Atlas Public Overlay Templates",
-    description: "Agency Atlas Public Overlay Templates",
+    title: "Agency Map Public Overlay Templates",
+    description: "Agency Map Public Overlay Templates",
     section: "canon-overlay",
     path: "canon-overlay/templates/README.md",
     slug: "canon-overlay/templates/README",
     uri: "docs://agency/canon-overlay/templates/README",
-    content: `# Agency Atlas Public Overlay Templates
+    content: `# Agency Map Public Overlay Templates
 
 Copy these templates into project surfaces and fill in project-specific details.
 
@@ -23970,22 +23970,22 @@ Copy these templates into project surfaces and fill in project-specific details.
   {
     id: "agency:canon-overlay/templates/surface-brief",
     property: "agency",
-    title: "Agency Atlas Public Overlay Brief",
-    description: "Agency Atlas Public Overlay Brief",
+    title: "Agency Map Public Overlay Brief",
+    description: "Agency Map Public Overlay Brief",
     section: "canon-overlay",
     path: "canon-overlay/templates/surface-brief.md",
     slug: "canon-overlay/templates/surface-brief",
     uri: "docs://agency/canon-overlay/templates/surface-brief",
-    content: `# Agency Atlas Public Overlay Brief
+    content: `# Agency Map Public Overlay Brief
 
-Overlay: Agency Atlas Public Overlay (overlay.agency-atlas-public)
+Overlay: Agency Map Public Overlay (overlay.agency-atlas-public)
 
 ## Candidate
 
-- Name: Public Atlas workflow proof surface
+- Name: Public Map workflow proof surface
 - Modalities: web, chat, app, voice, glasses
 - Owner: agency-team
-- Primary source path: \`src/routes/atlas/+page.svelte\`
+- Primary source path: \`src/routes/map/+page.svelte\`
 
 ## Workflow Need
 
@@ -24000,13 +24000,13 @@ Public readers need to test CREATE SOMETHING's workflow mapping method before a 
 ## Local Overlay
 
 - Theme changes: agency-local aliases only; no new Canon token scale.
-- Copy rules: name the workflow object, readiness, owner, proof, and next step in every public Atlas handoff.
-- Surface policy: \`/atlas\`, \`/services\`, \`/methodology\`, \`/stack\`, and product proof routes carry the same public-proof boundary.
+- Copy rules: name the workflow object, readiness, owner, proof, and next step in every public Map handoff.
+- Surface policy: \`/map\`, \`/services\`, \`/methodology\`, \`/stack\`, and product proof routes carry the same public-proof boundary.
 - Templates: use this brief for future public workflow proof surfaces before proposing Canon promotion.
 
 ## Evidence
 
-- Route proof: \`src/routes/atlas/+page.svelte\` composes story, canvas, and booking handoff around Canon Atlas.
+- Route proof: \`src/routes/map/+page.svelte\` composes the public Map story, canvas, and booking handoff around Canon Atlas.
 - Chat proof: \`src/lib/components/PublicAtlasCanvas.svelte\` sends bounded visitor prompts to \`src/routes/api/atlas/public-agent/+server.ts\`.
 - App proof: \`buildBookingUrl\` carries readiness, lane, score, session, and message metadata to \`/book\`.
 - Voice proof: \`canon-overlay/copy-rules.md\` constrains spoken handoffs to owner, proof, durable record, and next action.
@@ -38788,6 +38788,105 @@ All endpoints return consistent error responses:
 `
   },
   {
+    id: "agency:docs/CONTROL_ACTIVATION_LEDGER",
+    property: "agency",
+    title: "Control activation ledger",
+    description: "Control activation ledger",
+    section: "docs",
+    path: "docs/CONTROL_ACTIVATION_LEDGER.md",
+    slug: "docs/CONTROL_ACTIVATION_LEDGER",
+    uri: "docs://agency/docs/CONTROL_ACTIVATION_LEDGER",
+    content: `# Control activation ledger
+
+Agency D1 is the authoritative persistence seam for customer Control
+activations. It already owns first-party account, tenant, workspace, Map,
+handoff, and entitlement state. Interaction Atlas and the Control runtime are
+projection consumers through \`customer_control_activation_outbox\`; neither may
+create or rewrite an activation definition.
+
+## Frozen activation contract
+
+Every activation version stores:
+
+- exact account, tenant, and workspace scope;
+- exact Map row, version row, stored canvas SHA-256, accepted handoff ID, and
+  Build-package handoff receipt SHA-256;
+- exact Build release, manifest, canonical artifact-set, terminal acceptance
+  receipt ID, and acceptance receipt SHA-256;
+- policy version and SHA-256 plus sorted, de-duplicated allowed tools and
+  resources;
+- first-party entitlement snapshot and SHA-256, actor subject and role, status,
+  timestamps, idempotency receipt, predecessor, and rollback target.
+
+\`controlActivationSourceFromBuildInspection(...)\` accepts only a clean
+\`@create-something/delivery-schema\` inspection whose Map handoff and terminal
+Build decision are accepted. An Agency operator must register that inspection
+as immutable \`customer_control_build_evidence\` before activation. The D1
+repository reads the accepted handoff and exact Map version in the same tenant
+scope, verifies the stored \`canvas_json\` hash, and requires every Build ID and
+hash on the activation to match that verified evidence row. Database triggers
+repeat the exact source match so a concurrent or alternate adapter fails closed.
+Application and projection adapters are not granted raw D1 write access. A D1
+administrator can bypass application verification by definition and remains a
+privileged operational trust boundary; backfills therefore must use the same
+verified registration path and normal migration review.
+
+## Lifecycle
+
+- \`activate\` creates version 1 when no current version exists.
+- \`supersede\` creates a new immutable version and atomically makes the previous
+  active or suspended version historical.
+- \`suspend\` preserves the frozen contract and changes only bounded status facts.
+- \`rollback\` never reactivates an old row. It creates a new version whose Map,
+  Build, artifact, and policy contract exactly matches an earlier target while
+  retaining the immediately preceding version as lineage.
+- Runtime drift and incidents create immutable \`proposed\` links to either a Map
+  revision or Build change request. They do not edit approved source records;
+  the same incident may be linked independently to multiple activation versions.
+
+All mutations use a tenant-scoped idempotency key and semantic command hash.
+Replaying the same command returns its stored result; reusing the key for a
+different command fails. D1 batches the command receipt, state transition,
+activation/change record, and outbox event in one transaction. Database
+triggers make a missing predecessor, rejected handoff, cross-scope source, or
+incomplete transition abort the batch.
+
+## Projection and transport boundary
+
+Outbox payloads are immutable and SHA-256-bound. Publishing may set
+\`published_at\` once; retrying returns the original publish receipt and cannot
+replace payload or policy. The shared transport handler is the authority for
+both API and MCP adapters, and the exported operation lists are parity-checked.
+Authorization remains inside the ledger: every read and write requires the
+first-party actor to match the scope and carry a matching allowed entitlement;
+writes additionally require \`agency_operator\` or \`account_owner\`.
+
+\`GET /api/control/activations\` and
+\`GET /api/control/activations?activation_id=...\` are the authenticated read
+adapter. They derive scope and entitlement from the verified first-party
+session and never accept account IDs from the request. Mutation operations are
+not exposed as customer HTTP actions in this slice.
+
+This slice creates schema and code only. It does not execute a workflow,
+activate a customer, enable checkout, or grant production authority.
+
+## Verification
+
+\`\`\`bash
+cd packages/agency
+node --import ./test/register-sveltekit-test-loader.mjs --import tsx --test \\
+  test/control-activation-d1.test.ts test/control-activation-migration.test.ts \\
+  test/control-activation.test.ts
+pnpm exec tsc --noEmit
+\`\`\`
+
+The tests cover migration invariants, accepted-source enforcement, tenant
+isolation, role and entitlement denial, conflicts, idempotent retries,
+supersession, suspension, rollback, change proposals, projection replay, and
+API/MCP parity.
+`
+  },
+  {
     id: "agency:docs/MOBILE_EXPERIENCE_REVIEW_2026-02-25",
     property: "agency",
     title: ".Agency Mobile Experience Review (2026-02-25)",
@@ -38918,7 +39017,10 @@ We make one business workflow safe to delegate.
 | **AI workflow systems** | Public category: business workflows with connected tools, scoped AI tasks, approvals, stop conditions, and audit trails. |
 | **Delegated Work Control** | Internal thesis layer: what can run, what waits, what stops, who owns the decision, and what evidence proves the work. |
 | **Workflow Trust Layer** | Internal service-language layer for governed execution around a workflow. |
-| **Policy OS** | Canonical paid package for governed execution, approval rules, runbooks, golden tasks, and recurring tuning. |
+| **CREATE SOMETHING Map** | Standalone subscription for a living workflow definition. |
+| **CREATE SOMETHING Build** | Implementation service that turns an approved Map into an owned system. |
+| **CREATE SOMETHING Control** | Standalone governed-execution subscription; Control includes Map. |
+| **Policy OS / Atlas** | Internal and compatibility names retained for package, entitlement, schema, and implementation contracts. |
 | **MCP-only** | Constrained discovery or compliance entry path, not the default paid offer. |
 
 The clearest public operating loop is:
@@ -38958,7 +39060,7 @@ Use this order:
 2. Name the business situation: one messy handoff, repeated workflow, or live
    operating risk.
 3. State the operating loop: Signals, Decisions, and Proof.
-4. Show the proof object: an Atlas map, decision inbox, delivery record, or
+4. Show the proof object: a CREATE SOMETHING Map, decision inbox, delivery record, or
    audit trail.
 5. Explain the stack only after the workflow boundary is visible.
 
@@ -39005,6 +39107,9 @@ Validation:
   approved plain-language replacements, then reruns the audit.
 - Add a rule to \`scripts/check-public-copy.mjs\` when a phrase becomes a private
   planning term instead of public language.
+- The root \`pnpm prose:check\` command imports this package's \`PUBLIC_COPY_RULES\`
+  as its \`.agency\` overlay. Keep \`pnpm copy:check\` as the package authority; do
+  not duplicate or weaken its rule list in the root adapter.
 
 ### Platform Conviction Contract
 
@@ -39078,21 +39183,22 @@ The managed portfolio covers the high-intent public funnel:
 | Core services | \`/services\` | - |
 | Stack boundary | \`/stack\` | - |
 | Workflow tool stack | \`/partners\` | \`/cloudflare\` |
-| Dify | \`/dify\` | \`/dify/mcp-control-plane\`, \`/dify/agent-eval-gates\`, \`/dify/ship-dify-app-with-mcp-tools\`, \`/dify/template-marketplace-proof\` |
+| Archived Dify education | \`/dify\` → \`/stack\` | Nested Dify routes also redirect to \`/stack\` and remain source-only rollback history. |
+| Delegation Practice | \`/practice\` | Interactive field school linked to \`/methodology\`, \`/map\`, and \`/proof/marketplace-workflow\`. |
 | Products | \`/products\` | - |
 | Field Reports | \`/field-reports\` | \`/field-reports/template-review\` |
 | Business use case | \`/use-cases/business\` | - |
 | Enterprise use case | \`/use-cases/enterprise\` | - |
 
-The Dify cluster is the first multi-page content system:
+The former Dify cluster is archived after the owned-runtime graduation. Its source remains useful historical education and rollback evidence, but every route redirects to \`/stack\`, is excluded from search, and is not a current delivery lane:
 
 | Page | Role | Funnel job |
 |------|------|------------|
-| \`/dify\` | Pillar | Explain the Dify workflow path and route readers into the cluster. |
-| \`/dify/mcp-control-plane\` | Support | Teach the operating model: Dify surface, MCP boundary, Policy OS rule. |
-| \`/dify/agent-eval-gates\` | Operations | Show the gates that prove a Dify workflow can operate safely. |
-| \`/dify/ship-dify-app-with-mcp-tools\` | Implementation | Give a practical shipping checklist for Dify plus MCP systems. |
-| \`/dify/template-marketplace-proof\` | Implementation | Package the first Dify marketplace template as public proof without leaking private delivery evidence. |
+| \`/dify\` | Archived pillar | Redirect to the current owned stack boundary. |
+| \`/dify/mcp-control-plane\` | Archived support | Preserve historical control-plane education without presenting Dify as current runtime. |
+| \`/dify/agent-eval-gates\` | Archived operations | Preserve historical eval guidance as rollback evidence. |
+| \`/dify/ship-dify-app-with-mcp-tools\` | Archived implementation | Preserve the former shipping checklist outside the public index. |
+| \`/dify/template-marketplace-proof\` | Archived implementation | Preserve the former marketplace packaging evidence outside the public index. |
 
 The durable SEO/AEO strategy is:
 
@@ -39136,7 +39242,7 @@ Use the hybrid boundary:
 - Homepage, services, editorial, case-study, and social surfaces may use
   original human motion, material studies, technical annotation, and temporal
   composition.
-- Products, Atlas, proof, booking, and operator surfaces keep workflow evidence
+- Products, Map, proof, booking, and operator surfaces keep workflow evidence
   primary and use the same energy through hierarchy, state, measurement, and
   semantic motion.
 
@@ -39155,7 +39261,7 @@ Those six patterns are implemented by Canon as \`PerformanceCampaignOpening\`,
 \`PerformanceThesisConditions\`, \`PerformanceFieldSequence\`,
 \`PerformanceContrastChapter\`, \`PerformanceEvidenceIndex\`, and
 \`PerformanceConversionHandoff\`. The homepage, services, Dify control-plane,
-products, Atlas, and booking routes are the \`.agency\` reference set. Their
+products, Map, and booking routes are the \`.agency\` reference set. Their
 copy, media, canvases, and forms stay local; shared composition and responsive
 behavior do not.
 
@@ -39187,7 +39293,7 @@ Default public-page hierarchy:
 
 1. Name the category: \`AI workflow systems\`.
 2. State the outcome: turn one messy business handoff into a reliable AI-assisted workflow.
-3. Show the Delegation Card or Atlas map before explaining the stack.
+3. Show the Delegation Card or Map before explaining the stack.
 4. Name what can run, what waits, what stops, who owns the decision, and what
    receipt proves the work.
 5. Use one direct action: map one workflow.
@@ -39243,16 +39349,21 @@ evidence.
 
 | Offer | Description | Typical Output |
 |-------|-------------|----------------|
-| **Workflow Map / Pilot** | Map one business handoff, then build the first controlled AI-assisted path when the boundary is clear. | Workflow map, pilot implementation, runbook |
-| **Policy OS** | Add policy controls, release gates, approval rules, incident loops, and recurring governed-execution operations. | Governed runtime behavior + release evidence |
+| **CREATE SOMETHING Map** | Keep one living workflow definition with owners, systems, approvals, stops, and proof requirements. | Standalone monthly or yearly subscription |
+| **CREATE SOMETHING Build** | Turn an approved Map into an owned AI-assisted workflow when implementation is required. | Scoped implementation, runbook, and handoff |
+| **CREATE SOMETHING Control** | Add policy controls, approval rules, incident loops, and recurring governed execution. Includes Map. | Standalone monthly or yearly subscription + governed runtime evidence |
 | **Enterprise Extension** | Extend for high-stakes, cross-system, and compliance-heavy workflows. | Custom governance boundaries + enterprise orchestration |
 | **Workflow Mapping Session** | Paid pre-implementation mapping to scope the workflow and operating boundary. | Pilot scope, operating boundary, and 30-day plan |
 
+The canonical Map-and-Build-to-Control activation persistence and projection
+boundary is documented in
+[\`docs/CONTROL_ACTIVATION_LEDGER.md\`](./docs/CONTROL_ACTIVATION_LEDGER.md).
+
 ---
 
-## Public Atlas Starter Maps
+## Public Map Starter Maps
 
-The public Atlas canvas is the give-first surface for prospects. It lets a visitor
+The public Map canvas is the give-first surface for prospects. It lets a visitor
 start from a concrete industry workflow, edit the owner/systems/approval boundary,
 and carry the summary into booking without exposing production systems.
 
@@ -39271,7 +39382,7 @@ Current starter maps:
 | Marketplace review queue | Marketplace operations | Stop before ungrounded approval, rejection, or security claims |
 | Insurance claims intake | Insurance operations | Stop before payout, denial, fraud escalation, or sensitive decisioning |
 
-Each starter map must include all public Atlas dimensions: \`Actor\`, \`Human task\`,
+Each starter map must include all public Map dimensions: \`Actor\`, \`Human task\`,
 \`AI task\`, \`System operation\`, \`Data artifact\`, \`Constraint\`, and \`Touchpoint\`.
 Each map must also expose at least one \`run\`, one \`wait\`, and one \`stop\` node so
 the prospect sees the action boundary before the sales conversation.
@@ -39316,7 +39427,7 @@ Implementation surface:
   the chosen map into booking context; it is the \`.agency\` intake surface.
 - \`test/public-atlas-starter-maps.test.ts\` verifies coverage and policy-boundary
   shape.
-- \`test/public-atlas-route.test.ts\` verifies that \`/\`, \`/atlas\`, and
+- \`test/public-atlas-route.test.ts\` verifies that \`/\`, \`/map\`, and
   \`/services\` present the story canvas before the editable public canvas where
   applicable, and that \`/methodology\`, \`/stack\`, and \`/products\` can use the
   same story surface without mounting the editable canvas.
@@ -39358,7 +39469,7 @@ Renderer rule:
 - Story canvases should animate only chapter focus, handoff traces, stop
   boundaries, and proof reveals. The \`accessibilitySummary\` must remain complete
   when motion is disabled.
-- \`/atlas\` presents the read-only story canvas before the editable public Atlas
+- \`/map\` presents the read-only story canvas before the editable public Map
   canvas so visitors can understand the workflow language before using the agent.
 - \`/methodology\` uses a read-only story canvas to explain the method without
   collecting booking context.
@@ -39383,9 +39494,9 @@ Renderer rule:
 └─────────────────────────────────────────────────────────────┘
 \`\`\`
 
-**Entry point**: Workflow Map, a scoped diagnostic for one workflow, its owners, and its first controlled point
-**Default build**: Workflow Pilot, one workflow rebuilt with clear rules, handoffs, runbooks, and release evidence
-**Expansion**: Ongoing Workflow Control for governed execution, then Enterprise Extension based on risk and workflow complexity
+**Standalone definition**: CREATE SOMETHING Map, a living workflow model with owners, systems, approvals, stops, and proof requirements
+**Implementation bridge**: CREATE SOMETHING Build, a scoped service that connects the approved Map and hands back an owned system
+**Governed operation**: CREATE SOMETHING Control, a standalone subscription for live Signal, Decision, and Proof; Control includes Map
 
 ---
 
@@ -39474,7 +39585,7 @@ packages/agency/
 | Smoke command | \`pnpm check\` |
 | Validation surfaces | Svelte check output, Cloudflare Pages build output, route preview, sales content review |
 | UI validation path | \`/\`, \`/services\` |
-| Escalation rule | stop if Auth0, D1, or client-delivery data is required and cannot be reproduced from local fixtures or Infisical-backed environment |
+| Escalation rule | stop if CREATE SOMETHING Identity, D1, or client-delivery data is required and cannot be reproduced from local fixtures or Infisical-backed environment |
 
 ## Sales Assets
 
@@ -39542,90 +39653,30 @@ pnpm --filter @create-something/agency research:clarity-capture
 The capture hashes visible copy, fails closed when a route is unavailable, and
 is useful for before/after review. It is not evidence of human comprehension.
 
-## Auth0 And Infisical
+## CREATE SOMETHING Identity
 
-\`.agency\` now treats Auth0 as the identity source of truth. Browser login flows redirect through Auth0 Universal Login, the Auth0 callback is handled at \`/auth/callback\`, and server-side session validation accepts Auth0-issued tokens through the shared Canon auth layer.
+\`.agency\` uses CREATE SOMETHING Identity as its only browser identity provider. The
+Performance-styled login form submits credentials directly to the first-party
+Identity Worker, and the application verifies ES256 session tokens against the
+published JWKS for the \`client-workspace\` audience.
 
-Tenant export uses \`a0deploy\`, not \`auth0\`. The repo-level export wrapper is:
-
-\`\`\`bash
-cp auth0/config.example.json auth0/config.json
-pnpm auth0:export
-\`\`\`
-
-The export wrapper expects \`AUTH0_DOMAIN\`, \`AUTH0_CLIENT_ID\`, and \`AUTH0_CLIENT_SECRET\` in your environment, then runs:
+The public verification contract is checked into \`wrangler.jsonc\`:
 
 \`\`\`bash
-a0deploy export -c auth0/config.json -f yaml -o auth0/export
+IDENTITY_API_URL=https://id.createsomething.space
+CS_IDENTITY_ISSUER=https://id.createsomething.space
+CS_IDENTITY_JWKS_URL=https://id.createsomething.space/.well-known/jwks.json
+CS_IDENTITY_AUDIENCE=client-workspace
 \`\`\`
 
-Required Pages secrets:
+Provisioning and Stripe webhook flows also use the private
+\`IDENTITY_WORKER_ADMIN_API_KEY\` and \`IDENTITY_WORKER_SECRET\` bindings. Keep secret
+values in the owning deployment secret store; never add them to the repository or
+duplicate them as browser-visible variables. See
+[\`FIRST_PARTY_AUTH_PLATFORM.md\`](../../docs/guides/FIRST_PARTY_AUTH_PLATFORM.md)
+for the shared verification and application-access policy contract.
 
-\`\`\`bash
-AUTH0_DOMAIN
-AUTH0_CLIENT_ID
-AUTH0_CLIENT_SECRET
-AUTH0_ISSUER_BASE_URL
-AUTH0_JWKS_URL
-\`\`\`
-
-Optional Pages secrets:
-
-\`\`\`bash
-AUTH0_AUDIENCE
-AUTH0_SCOPE
-AUTH0_CLAIMS_NAMESPACE
-AUTH0_REDIRECT_URI
-\`\`\`
-
-Do not point \`AUTH0_AUDIENCE\` at the Auth0 Management API (\`https://<tenant>/api/v2/\`) for browser sign-in. \`.agency\` only needs the ID token for the property session; the Management API audience is a machine-to-machine setting and can break Universal Login flows.
-
-If Auth0 login is fronted by a custom domain, preview hostname, or proxy that differs from the incoming Worker request host, set:
-
-\`\`\`bash
-AUTH0_REDIRECT_URI=https://createsomething.agency/auth/callback
-\`\`\`
-
-and add that exact URL to the Auth0 application's Allowed Callback URLs.
-
-Recommended Infisical path:
-
-\`\`\`bash
-/agency/auth
-\`\`\`
-
-Auth0 secrets must live only under \`/agency/auth\`. Do not store duplicate \`AUTH0_*\` keys at the Infisical root path \`/\`; the seed/sync scripts now fail closed when root-path drift is present.
-
-Seed Auth0 tenant values into Infisical:
-
-\`\`\`bash
-AUTH0_DOMAIN=...
-AUTH0_CLIENT_ID=...
-AUTH0_CLIENT_SECRET=...
-AUTH0_ISSUER_BASE_URL=...
-AUTH0_JWKS_URL=...
-AUTH0_REDIRECT_URI=https://createsomething.agency/auth/callback
-pnpm agency:auth0:seed
-\`\`\`
-
-Sync Auth0 secrets from Infisical into the Cloudflare Pages project:
-
-\`\`\`bash
-pnpm agency:auth0:sync
-\`\`\`
-
-Useful overrides:
-
-\`\`\`bash
-PROJECT_NAME=create-something-agency
-INFISICAL_ENV=prod
-INFISICAL_PATH=/agency/auth
-INFISICAL_PROJECT_ID=<optional>
-DRY_RUN=true
-CLOUDFLARE_ACCOUNT_ID=<required when Wrangler has multiple accounts>
-\`\`\`
-
-After syncing secrets, deploy normally:
+Deploy normally after the package gates pass:
 
 \`\`\`bash
 pnpm --filter @create-something/canon package
@@ -40106,7 +40157,6 @@ Sources used:
 - \`linear.svg\`: \`https://linear.app/static/favicon.svg\`
 - \`trmnl.png\`: \`https://trmnl.com/images/favicons/apple-touch-icon-180x180.png\`
 - \`infisical.png\`: generated from \`https://infisical.com/infisical.ico\`
-- \`auth0.svg\`: \`https://cdn.auth0.com/website/website/favicons/auth0-favicon.svg\`
 `
   },
   {
