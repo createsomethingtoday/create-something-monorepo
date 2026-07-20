@@ -24,29 +24,21 @@ export function schedulerPage(input: { nonce: string; turnstileSiteKey?: string 
   <style nonce="${input.nonce}">
     ${performanceDocumentCss}
     * { box-sizing:border-box; }
-    body { margin:0; min-width:320px; min-height:100vh; background-color:var(--color-performance-paper); background-image:linear-gradient(var(--color-performance-grid) 1px,transparent 1px),linear-gradient(90deg,var(--color-performance-grid) 1px,transparent 1px); background-size:40px 40px; color:var(--color-performance-ink); font-size:16px; line-height:1.5; }
-    main { width:min(1360px,100%); margin:0 auto; padding:clamp(16px,4vw,56px); }
-    .system-bar { display:grid; grid-template-columns:repeat(4,1fr); border:1px solid var(--color-performance-line); background:var(--color-performance-panel); }
-    .system-bar > div { display:grid; gap:7px; min-width:0; padding:13px 16px; border-right:1px solid var(--color-performance-line); }
-    .system-bar > div:last-child { border-right:0; }
-    .system-bar span,.detail span,.field-label { color:var(--color-performance-muted); font:700 9px/1.2 var(--font-mono); letter-spacing:.07em; text-transform:uppercase; }
-    .system-bar strong { font:700 12px/1.2 var(--font-mono); text-transform:uppercase; }
-    .state-controlled { display:flex; gap:8px; align-items:center; }
-    .state-controlled::before { width:8px; height:8px; background:var(--color-performance-signal); content:""; }
-    header { display:grid; grid-template-columns:minmax(0,1.45fr) minmax(280px,.55fr); gap:clamp(28px,6vw,80px); align-items:end; margin:20px 0 32px; padding:clamp(28px,5vw,64px); border-bottom:5px solid var(--color-performance-signal); background:var(--color-performance-ink); color:white; }
+    body { margin:0; min-width:280px; min-height:100vh; background-color:var(--color-performance-paper); background-image:linear-gradient(var(--color-performance-grid) 1px,transparent 1px),linear-gradient(90deg,var(--color-performance-grid) 1px,transparent 1px); background-size:40px 40px; color:var(--color-performance-ink); font-size:16px; line-height:1.5; }
+    main { width:min(920px,100%); margin:0 auto; padding:clamp(16px,4vw,48px); }
+    header { margin:0 0 24px; padding:clamp(24px,5vw,48px); border-bottom:5px solid var(--color-performance-signal); background:var(--color-performance-ink); color:white; }
     .eyebrow { color:#8fc1f2; font:700 10px/1 var(--font-mono); letter-spacing:.1em; text-transform:uppercase; }
-    h1 { margin:16px 0 0; max-width:850px; font-size:clamp(2.7rem,7.4vw,6.7rem); text-transform:uppercase; }
-    .hero-spec { display:grid; gap:22px; align-self:stretch; padding-left:22px; border-left:1px solid rgba(255,255,255,.24); }
-    .lede { margin:0; max-width:460px; color:rgba(255,255,255,.72); font-size:clamp(1rem,1.8vw,1.25rem); }
-    .spec-grid { display:grid; border-top:1px solid rgba(255,255,255,.24); }
-    .spec-row { display:grid; grid-template-columns:88px 1fr; gap:12px; padding:10px 0; border-bottom:1px solid rgba(255,255,255,.16); }
-    .spec-row span { color:rgba(255,255,255,.5); font:700 9px/1.2 var(--font-mono); letter-spacing:.07em; text-transform:uppercase; }
-    .spec-row strong { font:700 10px/1.2 var(--font-mono); text-transform:uppercase; }
-    .layout { display:grid; grid-template-columns:minmax(0,1fr) minmax(280px,360px); gap:24px; align-items:start; }
+    h1 { margin:14px 0 0; font-size:clamp(2.6rem,7vw,5.5rem); text-transform:uppercase; }
+    .lede,.outcome { max-width:640px; font-size:clamp(1rem,2vw,1.2rem); }
+    .lede { margin:20px 0 0; color:rgba(255,255,255,.75); }
+    .outcome { margin:12px 0 0; color:white; }
+    .layout { display:grid; gap:20px; }
     .panel { min-width:0; padding:24px; border:1px solid var(--color-performance-line); border-top:4px solid var(--color-performance-ink); background:var(--color-performance-panel); }
-    .details { display:grid; position:sticky; top:24px; border:1px solid var(--color-performance-line); border-top:4px solid var(--color-performance-ink); background:var(--color-performance-panel); }
-    .detail { display:grid; grid-template-columns:92px 1fr; gap:14px; padding:16px 18px; border-bottom:1px solid var(--color-performance-line); }
-    .detail:last-child { border-bottom:0; }
+    .meeting-summary { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); border:1px solid var(--color-performance-line); border-top:4px solid var(--color-performance-ink); background:var(--color-performance-panel); }
+    .detail { display:grid; gap:7px; min-width:0; padding:14px; border-right:1px solid var(--color-performance-line); }
+    .detail:last-child { border-right:0; }
+    .detail span,.field-label { color:var(--color-performance-muted); font:700 9px/1.2 var(--font-mono); letter-spacing:.07em; text-transform:uppercase; }
+    .detail strong { font-size:.9rem; overflow-wrap:anywhere; }
     h2 { margin:0 0 18px; font-size:clamp(1.35rem,2.4vw,2rem); text-transform:uppercase; }
     .steps { display:grid; grid-template-columns:repeat(3,1fr); margin:0 0 24px; border:1px solid var(--color-performance-line); background:var(--color-performance-paper); }
     .steps span { padding:11px 12px; border-right:1px solid var(--color-performance-line); color:var(--color-performance-muted); font:700 9px/1.2 var(--font-mono); letter-spacing:.06em; text-transform:uppercase; }
@@ -89,35 +81,33 @@ export function schedulerPage(input: { nonce: string; turnstileSiteKey?: string 
     .confirmation { display:grid; gap:18px; }
     .confirmation h2 { margin:0; font-size:clamp(2rem,5vw,4rem); text-transform:uppercase; }
     .receipt { overflow-wrap:anywhere; padding:16px; border:1px solid var(--color-performance-line); border-left:5px solid var(--color-performance-signal); background:var(--color-performance-paper); font:12px/1.6 var(--font-mono); text-transform:uppercase; }
-    .proof-footer { display:grid; grid-template-columns:repeat(4,1fr); margin-top:24px; border:1px solid var(--color-performance-line); border-top:4px solid var(--color-performance-ready); background:var(--color-performance-panel); }
-    .proof-footer > div { display:grid; gap:7px; min-width:0; padding:15px 18px; border-right:1px solid var(--color-performance-line); }
-    .proof-footer > div:last-child { border-right:0; }
-    .proof-footer span { color:var(--color-performance-muted); font:700 9px/1.2 var(--font-mono); letter-spacing:.07em; text-transform:uppercase; }
-    .proof-footer strong { font-size:.85rem; }
     [hidden] { display:none !important; }
-    @media (max-width:760px) { .system-bar,.proof-footer { grid-template-columns:repeat(2,1fr); } .system-bar > div:nth-child(2),.proof-footer > div:nth-child(2) { border-right:0; } .system-bar > div:nth-child(-n+2),.proof-footer > div:nth-child(-n+2) { border-bottom:1px solid var(--color-performance-line); } header { grid-template-columns:1fr; } .hero-spec { padding:20px 0 0; border-top:1px solid rgba(255,255,255,.24); border-left:0; } .layout { grid-template-columns:1fr; } .details { position:static; order:-1; } .detail { grid-template-columns:84px 1fr; } .panel { padding:18px; } #status { grid-template-columns:82px 1fr; } .date-rail { grid-template-columns:repeat(2,1fr); } .day-head { align-items:flex-start; flex-direction:column; gap:6px; } }
+    @media (max-width:760px) { .meeting-summary { grid-template-columns:repeat(2,1fr); } .detail { border-right:1px solid var(--color-performance-line); border-bottom:1px solid var(--color-performance-line); } .detail:nth-child(2n) { border-right:0; } .detail:last-child { grid-column:1/-1; border-right:0; border-bottom:0; } .panel { padding:18px; } #status { grid-template-columns:82px 1fr; } .date-rail { grid-template-columns:repeat(2,1fr); } .day-head { align-items:flex-start; flex-direction:column; gap:6px; } }
     @media (prefers-reduced-motion:no-preference) { button { transition:background-color .14s,color .14s,border-color .14s; } }
   </style>
 </head>
 <body data-performance-surface="booking" data-performance-contract="${PERFORMANCE_DOCUMENT_STYLE_VERSION}">
 <main>
-  <section class="system-bar" aria-label="Scheduler control state">
-    <div><span>Surface</span><strong>Booking / 01</strong></div>
-    <div><span>Mode</span><strong class="state-controlled">Controlled</strong></div>
-    <div><span>Interfaces</span><strong>API + MCP</strong></div>
-    <div><span>Proof</span><strong>Receipt issued</strong></div>
-  </section>
   <header>
-    <div><div class="eyebrow">CREATE SOMETHING · PERFORMANCE LAB · SCHEDULER</div><h1>Map One Workflow</h1></div>
-    <div class="hero-spec"><p class="lede">Choose an open time for a focused, 30- or 60-minute workflow mapping session with Micah Johnson. Bring one real handoff, its decision owner, and the proof your team needs next.</p><div class="spec-grid"><div class="spec-row"><span>Policy</span><strong>Workflow Mapping / V2</strong></div><div class="spec-row"><span>Window</span><strong>28 Days / Live Conflicts</strong></div><div class="spec-row"><span>Calendar</span><strong>Google Calendar</strong></div></div></div>
+    <div class="eyebrow">Workflow mapping session with Micah Johnson</div>
+    <h1>Choose a time</h1>
+    <p class="lede">Pick 30 or 60 minutes. We check every opening against the live calendar before showing it.</p>
+    <p class="outcome">After you confirm, we create a Google Calendar event with a Google Meet link and show your booking receipt.</p>
   </header>
   <div class="layout">
+    <aside class="meeting-summary" aria-label="Meeting details">
+      <div class="detail"><span>Host</span><strong>Micah Johnson</strong></div>
+      <div class="detail"><span>Length</span><strong id="duration-summary">30 minutes</strong></div>
+      <div class="detail"><span>Where</span><strong>Google Meet</strong></div>
+      <div class="detail"><span>Usually open</span><strong>Tue + Thu<br>11 AM–5 PM Central</strong></div>
+      <div class="detail"><span>Selected</span><strong id="selected-summary">Choose a time</strong></div>
+    </aside>
     <section class="panel" aria-labelledby="booking-heading">
       <div id="scheduler-view">
         <nav class="steps" aria-label="Booking progress"><span data-step="1" aria-current="step">01 · Time</span><span data-step="2">02 · Details</span><span data-step="3">03 · Confirm</span></nav>
-        <h2 id="booking-heading">Choose a time</h2>
+        <h2 id="booking-heading">Available times</h2>
         <fieldset class="duration-picker" aria-label="Meeting duration"><legend>Meeting duration</legend><button type="button" data-duration="30" aria-pressed="true">30 minutes</button><button type="button" data-duration="60" aria-pressed="false">60 minutes</button></fieldset>
-        <p id="status" data-kind="controlled" role="status" aria-live="polite"><span id="status-state">Controlled</span><span id="status-message">Checking the calendar…</span></p>
+        <p id="status" data-kind="controlled" role="status" aria-live="polite"><span id="status-state">Loading</span><span id="status-message">Checking the calendar…</span></p>
         <div id="days" class="days" aria-label="Available meeting times"></div>
         <form id="identity" hidden>
           <h2>Your details</h2>
@@ -129,20 +119,7 @@ export function schedulerPage(input: { nonce: string; turnstileSiteKey?: string 
       </div>
       <div id="confirmation" class="confirmation" hidden></div>
     </section>
-    <aside class="details" aria-label="Meeting details">
-      <div class="detail"><span>Host</span><strong>Micah Johnson</strong></div>
-      <div class="detail"><span>Length</span><strong id="duration-summary">30 minutes</strong></div>
-      <div class="detail"><span>Where</span><strong>Google Meet</strong></div>
-      <div class="detail"><span>Baseline</span><strong>Tue + Thu<br>11 AM–5 PM Central</strong></div>
-      <div class="detail"><span>Selected</span><strong id="selected-summary">Choose a time</strong></div>
-    </aside>
   </div>
-  <footer class="proof-footer" aria-label="Scheduler proof contract">
-    <div><span>Calendar</span><strong>Conflict checked</strong></div>
-    <div><span>Commit</span><strong>Explicit intent</strong></div>
-    <div><span>Evidence</span><strong>Receipt issued</strong></div>
-    <div><span>Recovery</span><strong>Fail closed</strong></div>
-  </footer>
 </main>
 <script nonce="${input.nonce}">
 (() => {
@@ -213,7 +190,18 @@ export function schedulerPage(input: { nonce: string; turnstileSiteKey?: string 
     },'https://createsomething.agency');
   }
 
-  function setStatus(message, kind = 'controlled') { const labels={controlled:'Controlled',ready:'Ready',review:'Review',stop:'Stop'}; statusState.textContent=labels[kind] || 'Controlled'; statusMessage.textContent=message; status.dataset.kind=kind; }
+  let lastReportedHeight=0;
+  function notifyHeight() {
+    if (parent === window) return;
+    const height=Math.ceil(Math.max(document.body.scrollHeight,document.documentElement.scrollHeight));
+    if (!Number.isInteger(height) || height === lastReportedHeight) return;
+    lastReportedHeight=height;
+    parent.postMessage({type:'create-something:scheduler-height',height},'https://createsomething.agency');
+  }
+  new ResizeObserver(notifyHeight).observe(document.body);
+  addEventListener('load',notifyHeight);
+
+  function setStatus(message, kind = 'controlled') { const labels={controlled:'Loading',ready:'Ready',review:'Selected',stop:'Unavailable'}; statusState.textContent=labels[kind] || 'Loading'; statusMessage.textContent=message; status.dataset.kind=kind; }
   function updateSteps(current) { for (const step of stepNodes) { if (Number(step.dataset.step) === current) step.setAttribute('aria-current','step'); else step.removeAttribute('aria-current'); } }
   function idempotency(prefix) { return prefix + ':' + crypto.randomUUID(); }
   function formatTime(value) { return new Intl.DateTimeFormat(undefined,{hour:'numeric',minute:'2-digit',timeZone:timezone}).format(new Date(value)); }
@@ -246,7 +234,7 @@ export function schedulerPage(input: { nonce: string; turnstileSiteKey?: string 
       renderSlots();
       setStatus(result.slots.length ? result.slots.length + ' verified '+state.durationMinutes+'-minute openings · ' + timezone.replaceAll('_',' ') + '.' : 'No open times in the next four weeks.',result.slots.length ? 'ready' : 'review');
     } catch (error) {
-      setStatus(error.message + ' No time can be booked until Calendar is confirmed.', 'stop');
+      setStatus(error.message + ' We cannot show or book a time right now.', 'stop');
     }
   }
 
@@ -271,7 +259,7 @@ export function schedulerPage(input: { nonce: string; turnstileSiteKey?: string 
     const activeSlots=grouped.get(state.selectedDay) || [];
     const timePanel=document.createElement('section'); timePanel.className='time-panel';
     const heading = document.createElement('h3'); heading.textContent=state.selectedDay;
-    const meta = document.createElement('span'); meta.className='day-meta'; meta.textContent='Trial '+String(activeIndex+1).padStart(2,'0')+' · '+activeSlots.length+' openings';
+    const meta = document.createElement('span'); meta.className='day-meta'; meta.textContent='Date '+String(activeIndex+1).padStart(2,'0')+' · '+activeSlots.length+' openings';
     const head = document.createElement('div'); head.className='day-head'; head.append(heading,meta);
     const list = document.createElement('div'); list.className='slots';
     for (const slot of activeSlots) {

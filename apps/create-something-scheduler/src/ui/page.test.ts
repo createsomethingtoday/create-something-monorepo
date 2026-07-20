@@ -26,19 +26,16 @@ describe('scheduler public page', () => {
     expect(html).toContain('--font-performance-display-weight:500');
     expect(html).not.toContain('--font-display:Arial');
     expect(html).not.toContain('--font-mono:ui-monospace');
-    expect(html).toContain('class="system-bar"');
-    expect(html).toContain('class="hero-spec"');
-    expect(html).toContain('class="proof-footer"');
+    expect(html).not.toContain('class="system-bar"');
+    expect(html).not.toContain('class="hero-spec"');
+    expect(html).not.toContain('class="proof-footer"');
     expect(html).toContain('<title>Workflow Mapping Session | CREATE SOMETHING</title>');
-    expect(html).toContain('<h1>Map One Workflow</h1>');
-    expect(html).toContain('30- or 60-minute workflow mapping session with Micah Johnson');
-    expect(html).toContain(
-      'Bring one real handoff, its decision owner, and the proof your team needs next.'
+    expect(html).toContain('<h1>Choose a time</h1>');
+    expect(html).toMatch(/Pick 30 or 60 minutes/);
+    expect(html).toMatch(
+      /you confirm[\s\S]*Google Calendar[\s\S]*Google Meet[\s\S]*booking receipt/i
     );
-    expect(html).toContain('<span>Policy</span><strong>Workflow Mapping / V2</strong>');
-    expect(html).toContain('<span>Calendar</span><strong>Google Calendar</strong>');
-    expect(html).not.toContain('focused, 30- or 60-minute conversation');
-    expect(html).not.toContain('Createsomething Together / V2');
+    expect(html).not.toMatch(/decision owner|explicit intent|receipt issued|fail closed/i);
     expect(html).toContain('class="steps"');
     expect(html).toContain('aria-label="Booking progress"');
     expect(html).toContain('aria-label="Meeting duration"');

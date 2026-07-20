@@ -114,11 +114,22 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     )
   ),
   group(
+    'agency-booking-tool',
+    'agency',
+    ['book'],
+    'migrated',
+    contract(
+      'tool',
+      'Choose a meeting length and an available time.',
+      'A confirmed booking creates a Google Calendar event, Google Meet link, and receipt.',
+      'Choose a time'
+    )
+  ),
+  group(
     'agency-public-tools',
     'agency',
     [
       'basketball-systems-lab',
-      'book',
       'dashboard',
       'map',
       'map/share/[token]',

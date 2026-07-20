@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import test from 'node:test';
 import {
 	buildFirstPartySchedulerUrl,
+	normalizeSchedulerHeightMessage,
 	normalizeSchedulerLifecycleMessage,
 	normalizeSchedulerAccessUrl,
 	schedulerHandoffContext
@@ -10,7 +11,10 @@ import {
 
 const bookRoute = readFileSync(new URL('../src/routes/book/+page.svelte', import.meta.url), 'utf8');
 const mapRoute = readFileSync(new URL('../src/routes/map/+page.svelte', import.meta.url), 'utf8');
-const contactRoute = readFileSync(new URL('../src/routes/contact/+page.svelte', import.meta.url), 'utf8');
+const contactRoute = readFileSync(
+	new URL('../src/routes/contact/+page.svelte', import.meta.url),
+	'utf8'
+);
 const textRevelation = readFileSync(
 	new URL('../../canon/src/lib/domains/agency/TextRevelation.svelte', import.meta.url),
 	'utf8'
@@ -32,19 +36,30 @@ test('owned /book route embeds the first-party scheduler and remains the Map des
 	assert.equal(bookRoute.toLowerCase().includes('savvycal'), false);
 });
 
-test('owned /book route uses the Canon product-mode handoff with the scheduler as its proof artifact', () => {
-	assert.ok(bookRoute.includes('PerformanceConversionHandoff'));
-	assert.ok(bookRoute.includes('artifactPlacement="full-width"'));
-	assert.ok(bookRoute.includes('{#snippet aside()}'));
+test('owned /book route gives the scheduler one direct task surface', () => {
+	assert.equal(bookRoute.includes('PerformanceConversionHandoff'), false);
+	assert.equal(bookRoute.includes('<main'), false);
+	assert.ok(bookRoute.includes('<h1 id="booking-title">'));
 	assert.ok(bookRoute.includes('id="first-party-scheduler"'));
 	assert.equal(bookRoute.includes('PerformanceCampaignOpening'), false);
 	assert.equal(bookRoute.includes('pressure-boundary-natural.webp'), false);
 });
 
 test('shared scheduling CTA is provider-neutral and preserves the owned route', () => {
-	assert.ok(existsSync(new URL('../../canon/src/lib/domains/agency/ScheduleButton.svelte', import.meta.url)));
-	assert.equal(existsSync(new URL('../../canon/src/lib/domains/agency/SavvyCalButton.svelte', import.meta.url)), false);
-	assert.ok(agencyDomainIndex.includes("export { default as ScheduleButton } from './ScheduleButton.svelte'"));
+	assert.ok(
+		existsSync(new URL('../../canon/src/lib/domains/agency/ScheduleButton.svelte', import.meta.url))
+	);
+	assert.equal(
+		existsSync(
+			new URL('../../canon/src/lib/domains/agency/SavvyCalButton.svelte', import.meta.url)
+		),
+		false
+	);
+	assert.ok(
+		agencyDomainIndex.includes(
+			"export { default as ScheduleButton } from './ScheduleButton.svelte'"
+		)
+	);
 	assert.equal(agencyDomainIndex.includes('SavvyCalButton'), false);
 	assert.ok(contactRoute.includes('ScheduleButton'));
 	assert.ok(textRevelation.includes('ScheduleButton'));
@@ -52,12 +67,19 @@ test('shared scheduling CTA is provider-neutral and preserves the owned route', 
 
 test('obsolete provider-specific agency booking adapters are removed', () => {
 	assert.equal(existsSync(new URL('../src/lib/utils/savvycal.ts', import.meta.url)), false);
-	assert.equal(existsSync(new URL('../src/routes/api/booking/slots/+server.ts', import.meta.url)), false);
-	assert.equal(existsSync(new URL('../src/routes/api/booking/create/+server.ts', import.meta.url)), false);
+	assert.equal(
+		existsSync(new URL('../src/routes/api/booking/slots/+server.ts', import.meta.url)),
+		false
+	);
+	assert.equal(
+		existsSync(new URL('../src/routes/api/booking/create/+server.ts', import.meta.url)),
+		false
+	);
 });
 
 test('Atlas attribution reaches the owned iframe while unknown query data is dropped', () => {
-	const search = '?source=atlas-canvas&intent=workflow-map&lane=fit&warmup=atlas_canvas&readiness=ready&score=84&atlas_session_id=session_123&agent_messages=7&secret=do-not-forward';
+	const search =
+		'?source=atlas-canvas&intent=workflow-map&lane=fit&warmup=atlas_canvas&readiness=ready&score=84&atlas_session_id=session_123&agent_messages=7&secret=do-not-forward';
 	const iframe = new URL(buildFirstPartySchedulerUrl(search));
 	assert.equal(iframe.pathname, '/createsomething/together');
 	assert.equal(iframe.searchParams.get('source'), 'atlas-canvas');
@@ -112,12 +134,18 @@ test('emailed management access crosses the owned page only through a stripped f
 	const iframe = new URL(buildFirstPartySchedulerUrl('?booking=booking_controlled&access=drop-me'));
 	assert.equal(iframe.searchParams.get('booking'), 'booking_controlled');
 	assert.equal(iframe.searchParams.has('access'), false);
-	assert.equal(normalizeSchedulerAccessUrl(
-		'https://createsomething.agency/book?booking=booking_controlled&access=must-not-be-query'
-	), null);
-	assert.equal(normalizeSchedulerAccessUrl(
-		'https://createsomething.agency/book?booking=../booking#access=controlled.action-token'
-	), null);
+	assert.equal(
+		normalizeSchedulerAccessUrl(
+			'https://createsomething.agency/book?booking=booking_controlled&access=must-not-be-query'
+		),
+		null
+	);
+	assert.equal(
+		normalizeSchedulerAccessUrl(
+			'https://createsomething.agency/book?booking=../booking#access=controlled.action-token'
+		),
+		null
+	);
 });
 
 test('explicit test traffic survives the owned scheduler handoff without forwarding arbitrary query data', () => {
@@ -164,6 +192,30 @@ test('scheduler lifecycle messages are allowlisted and stripped to privacy-safe 
 	);
 });
 
+test('scheduler height messages are integer-bounded before changing the cross-origin frame', () => {
+	assert.equal(
+		normalizeSchedulerHeightMessage({
+			type: 'create-something:scheduler-height',
+			height: 1480
+		}),
+		1480
+	);
+	assert.equal(
+		normalizeSchedulerHeightMessage({
+			type: 'create-something:scheduler-height',
+			height: 20_000
+		}),
+		null
+	);
+	assert.equal(
+		normalizeSchedulerHeightMessage({
+			type: 'create-something:scheduler-height',
+			height: '1480'
+		}),
+		null
+	);
+});
+
 test('scheduler and parent wire the allowlisted lifecycle bridge across the exact owned origin', () => {
 	assert.ok(bookRoute.includes("from '@create-something/canon/analytics'"));
 	assert.ok(bookRoute.includes('normalizeSchedulerLifecycleMessage'));
@@ -182,9 +234,11 @@ test('the parent strips emailed access before handing it to the exact scheduler 
 	assert.ok(bookRoute.includes("type: 'create-something:scheduler-access'"));
 	assert.ok(bookRoute.includes('schedulerFrame?.contentWindow?.postMessage'));
 	assert.ok(schedulerPage.includes("event.data?.type === 'create-something:scheduler-access'"));
-	assert.ok(schedulerPage.includes("event.source !== parent"));
+	assert.ok(schedulerPage.includes('event.source !== parent'));
 	assert.ok(schedulerPage.includes("event.origin !== 'https://createsomething.agency'"));
-	assert.ok(schedulerPage.includes('sessionStorage.setItem(tokenKey(access.bookingId),access.actionToken)'));
+	assert.ok(
+		schedulerPage.includes('sessionStorage.setItem(tokenKey(access.bookingId),access.actionToken)')
+	);
 	assert.equal(bookRoute.includes('location.hash.slice'), false);
 });
 
@@ -192,5 +246,7 @@ test('the client updates iframe attribution only after hydration', () => {
 	assert.equal(bookRoute.includes("from '$app/environment'"), false);
 	assert.equal(bookRoute.includes('if (browser)'), false);
 	assert.ok(bookRoute.includes('onMount(() =>'));
-	assert.ok(bookRoute.includes('schedulerHref = buildFirstPartySchedulerUrl(window.location.search)'));
+	assert.ok(
+		bookRoute.includes('schedulerHref = buildFirstPartySchedulerUrl(window.location.search)')
+	);
 });

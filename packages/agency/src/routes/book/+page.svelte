@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { Button, PerformanceConversionHandoff, SEO } from '@create-something/canon';
+	import { Button, SEO } from '@create-something/canon';
 	import { getAnalytics } from '@create-something/canon/analytics';
 	import { PUBLIC_ATLAS_STORAGE_KEYS } from '$lib/atlas/intake-policy';
 	import {
 		buildFirstPartySchedulerUrl,
 		FIRST_PARTY_SCHEDULER_ORIGIN,
 		normalizeSchedulerAccessUrl,
+		normalizeSchedulerHeightMessage,
 		normalizeSchedulerLifecycleMessage,
 		schedulerHandoffContext,
 		type SchedulerAccess
@@ -16,6 +17,8 @@
 	let schedulerFrame: HTMLIFrameElement;
 	let handoffContext = schedulerHandoffContext();
 	let schedulerAccess: SchedulerAccess | null = null;
+	let schedulerHeight = 900;
+	let javascriptReady = false;
 
 	function sendSchedulerContext() {
 		schedulerFrame?.contentWindow?.postMessage(
@@ -37,6 +40,11 @@
 	function receiveSchedulerLifecycle(event: MessageEvent) {
 		if (event.origin !== FIRST_PARTY_SCHEDULER_ORIGIN) return;
 		if (event.source !== schedulerFrame?.contentWindow) return;
+		const height = normalizeSchedulerHeightMessage(event.data);
+		if (height !== null) {
+			schedulerHeight = height;
+			return;
+		}
 		const lifecycle = normalizeSchedulerLifecycleMessage(event.data);
 		if (!lifecycle) return;
 
@@ -55,9 +63,10 @@
 			window.history.replaceState(window.history.state, '', schedulerAccess.cleanPath);
 		}
 		schedulerHref = buildFirstPartySchedulerUrl(window.location.search);
-		const warmupNotes = window.localStorage.getItem(PUBLIC_ATLAS_STORAGE_KEYS.warmupSummary) ?? undefined;
+		const warmupNotes =
+			window.localStorage.getItem(PUBLIC_ATLAS_STORAGE_KEYS.warmupSummary) ?? undefined;
 		handoffContext = schedulerHandoffContext(window.location.search, warmupNotes);
-		sendSchedulerContext();
+		javascriptReady = true;
 		return () => window.removeEventListener('message', receiveSchedulerLifecycle);
 	});
 </script>
@@ -68,62 +77,55 @@
 	propertyName="agency"
 />
 
-<main class="booking-page" data-performance-surface="booking">
-	<PerformanceConversionHandoff
-		eyebrow="Workflow mapping session"
-		title="Map the workflow before the build decision."
-		description="Choose a verified 30- or 60-minute opening through the owned scheduler. Use this controlled path to bring one real handoff, its decision owner, and the audit trail your team needs next."
-		handoff={{
-			owner: 'Micah Johnson',
-			authority: 'Conflict-checked scheduling policy',
-			proof: 'Calendar event and booking receipt',
-			state: 'ready'
-		}}
-		steps={[
-			{
-				label: 'Time',
-				title: 'Choose 30 or 60 minutes',
-				detail: 'Every opening is checked against the live calendar before it is offered.'
-			},
-			{
-				label: 'Details',
-				title: 'Name the people in the handoff',
-				detail: 'Your name and email are used to create the calendar event and meeting receipt.'
-			},
-			{
-				label: 'Confirm',
-				title: 'Commit with explicit intent',
-				detail: 'The booking is created only after confirmation, with Google Meet included.'
-			}
-		]}
-		headingLevel="h1"
-		artifactPlacement="full-width"
-	>
-		{#snippet actions()}
-			<Button href="#first-party-scheduler">Choose a time</Button>
-			<Button href="/map" variant="secondary">Map one workflow first</Button>
-		{/snippet}
-		{#snippet aside()}
-			<section id="first-party-scheduler" class="scheduler-shell" aria-label="Choose a verified opening">
-				<iframe
-					bind:this={schedulerFrame}
-					src={schedulerHref}
-					title="Schedule a CREATE SOMETHING mapping session"
-					loading="eager"
-					referrerpolicy="no-referrer"
-					sandbox="allow-forms allow-popups allow-same-origin allow-scripts"
-					onload={sendSchedulerContext}
-				></iframe>
+<div class="booking-page" data-performance-surface="booking">
+	<section class="booking-intro" aria-labelledby="booking-title">
+		<div class="booking-intro__inner">
+			<p class="booking-intro__eyebrow">Workflow mapping session</p>
+			<h1 id="booking-title">Choose a time to map your workflow.</h1>
+			<p class="booking-intro__lede">
+				Pick 30 or 60 minutes with Micah. Bring one workflow that is slow, unclear, or hard to hand
+				off.
+			</p>
+			<p class="booking-intro__outcome">
+				After you confirm, we’ll create a Google Calendar event with a Google Meet link and send a
+				booking receipt.
+			</p>
+			<div class="booking-intro__actions">
+				<Button href="#first-party-scheduler">Choose a time</Button>
+				<Button href="/map" variant="secondary">Map one workflow first</Button>
+			</div>
+		</div>
+	</section>
 
-				<p class="scheduler-shell__fallback">
-					If the embedded scheduler is unavailable,
-					<a href={schedulerHref} target="_blank" rel="noopener noreferrer">open the first-party scheduler</a>.
-					Review <a href="/services">the workflow mapping service</a> before choosing a time.
+	<section id="first-party-scheduler" class="scheduler-shell" aria-label="Choose an available time">
+		{#if javascriptReady}
+			<iframe
+				bind:this={schedulerFrame}
+				src={schedulerHref}
+				title="Schedule a CREATE SOMETHING mapping session"
+				loading="eager"
+				referrerpolicy="no-referrer"
+				sandbox="allow-forms allow-popups allow-same-origin allow-scripts"
+				style:height={`${schedulerHeight + 2}px`}
+				onload={sendSchedulerContext}
+			></iframe>
+
+			<p class="scheduler-shell__fallback">
+				If the calendar does not load,
+				<a href={schedulerHref} target="_blank" rel="noopener noreferrer"
+					>open the scheduler in a new tab</a
+				>.
+			</p>
+		{:else}
+			<noscript>
+				<p class="scheduler-shell__no-script">
+					Scheduling needs JavaScript to show live availability. If you cannot enable it,
+					<a href="/contact">contact us to arrange a time</a>.
 				</p>
-			</section>
-		{/snippet}
-	</PerformanceConversionHandoff>
-</main>
+			</noscript>
+		{/if}
+	</section>
+</div>
 
 <style>
 	.booking-page {
@@ -131,15 +133,71 @@
 		color: var(--color-performance-ink, #090909);
 	}
 
+	.booking-intro {
+		padding: clamp(3.5rem, 8vw, 7rem) clamp(1rem, 5vw, 4rem);
+		background: var(--color-performance-ink, #090909);
+		color: white;
+	}
+
+	.booking-intro__inner {
+		width: min(100%, 56rem);
+		margin: 0 auto;
+	}
+
+	.booking-intro__eyebrow {
+		margin: 0 0 1.25rem;
+		color: #8fc1f2;
+		font-family: var(--font-performance-mono, monospace);
+		font-size: 0.75rem;
+		font-weight: 700;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+	}
+
+	h1 {
+		max-width: 14ch;
+		margin: 0;
+		font-size: clamp(3rem, 7vw, 6.5rem);
+		font-weight: 500;
+		letter-spacing: -0.04em;
+		line-height: 0.96;
+	}
+
+	.booking-intro__lede,
+	.booking-intro__outcome {
+		max-width: 42rem;
+		font-size: clamp(1.05rem, 2vw, 1.3rem);
+		line-height: 1.55;
+	}
+
+	.booking-intro__lede {
+		margin: 2rem 0 0;
+		color: rgb(255 255 255 / 0.78);
+	}
+
+	.booking-intro__outcome {
+		margin: 1rem 0 0;
+		color: white;
+	}
+
+	.booking-intro__actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.75rem;
+		margin-top: 2rem;
+	}
+
 	.scheduler-shell {
-		width: 100%;
+		width: min(100%, 76rem);
+		margin: 0 auto;
+		padding: clamp(1rem, 4vw, 3rem);
 		scroll-margin-top: 5rem;
 	}
 
 	iframe {
 		display: block;
 		width: 100%;
-		min-height: 860px;
+		min-height: 640px;
 		border: 1px solid var(--color-performance-line, #d7d7d2);
 		background: var(--color-performance-panel, #ffffff);
 	}
@@ -155,14 +213,17 @@
 		font-size: 0.78rem;
 	}
 
-	.scheduler-shell__fallback a {
-		color: var(--color-performance-ink, #090909);
-		font-weight: 700;
+	.scheduler-shell__no-script {
+		margin: 0;
+		padding: 1.25rem;
+		border: 1px solid var(--color-performance-line, #d7d7d2);
+		background: var(--color-performance-panel, #ffffff);
+		font-size: 1rem;
 	}
 
-	@media (max-width: 720px) {
-		iframe {
-			min-height: 940px;
-		}
+	.scheduler-shell__fallback a,
+	.scheduler-shell__no-script a {
+		color: var(--color-performance-ink, #090909);
+		font-weight: 700;
 	}
 </style>

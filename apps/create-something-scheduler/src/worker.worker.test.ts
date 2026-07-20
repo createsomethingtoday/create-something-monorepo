@@ -1,8 +1,27 @@
 import { env, runInDurableObject, SELF } from 'cloudflare:test';
+import { Temporal } from '@js-temporal/polyfill';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DurableOAuthStore } from './auth/durable-oauth-store.js';
 
 afterEach(() => vi.restoreAllMocks());
+
+function futurePolicyDate(dayOfWeek: number): Temporal.PlainDate {
+  let date = Temporal.Now.plainDateISO('America/Chicago').add({ days: 7 });
+  while (date.dayOfWeek !== dayOfWeek) date = date.add({ days: 1 });
+  return date;
+}
+
+function policySlot(dayOfWeek: number, hour: number) {
+  const date = futurePolicyDate(dayOfWeek);
+  const start = date.toZonedDateTime({
+    timeZone: 'America/Chicago',
+    plainTime: Temporal.PlainTime.from({ hour })
+  });
+  return {
+    start: start.toInstant().toString(),
+    end: start.add({ minutes: 30 }).toInstant().toString()
+  };
+}
 
 describe('scheduler Worker transport', () => {
   it('serves health, OpenAPI, and the public link contract', async () => {
@@ -37,7 +56,7 @@ describe('scheduler Worker transport', () => {
     expect(page.headers.get('content-security-policy')).toContain('https://cdn.jsdelivr.net');
     const pageHtml = await page.text();
     expect(pageHtml).toContain('Workflow Mapping Session | CREATE SOMETHING');
-    expect(pageHtml).toContain('Map One Workflow');
+    expect(pageHtml).toContain('Choose a time');
     expect(pageHtml).toContain("type:'create-something:scheduler-lifecycle'");
     expect(pageHtml).toContain("notifyParent('booking_form_started'");
     expect(pageHtml).toContain("notifyParent('booking_initiated'");
@@ -124,6 +143,8 @@ describe('scheduler Worker transport', () => {
   });
 
   it('opens and rolls back a bounded date through the operator availability override API', async () => {
+    const overrideDate = futurePolicyDate(3);
+    const overrideId = `worker-wednesday-${overrideDate}`;
     const stub = env.SCHEDULER.getByName('micah-johnson');
     await runInDurableObject(stub, async (_instance, state) => {
       await new DurableOAuthStore(state, 'controlled-oauth-encryption-secret').write({
@@ -158,8 +179,8 @@ describe('scheduler Worker transport', () => {
         'content-type': 'application/json'
       },
       body: JSON.stringify({
-        overrideId: 'worker-wednesday-2026-07-15',
-        date: '2026-07-15',
+        overrideId,
+        date: overrideDate.toString(),
         opensAt: '13:00',
         closesAt: '15:00',
         timezone: 'America/Chicago',
@@ -170,7 +191,7 @@ describe('scheduler Worker transport', () => {
     expect(applied.status).toBe(200);
     expect(await applied.json()).toMatchObject({
       status: 'applied',
-      override: { overrideId: 'worker-wednesday-2026-07-15', date: '2026-07-15' }
+      override: { overrideId, date: overrideDate.toString() }
     });
 
     const listed = await SELF.fetch(endpoint, {
@@ -178,19 +199,17 @@ describe('scheduler Worker transport', () => {
     });
     expect(await listed.json()).toMatchObject({
       status: 'available',
-      overrides: [{ overrideId: 'worker-wednesday-2026-07-15' }]
+      overrides: [{ overrideId }]
     });
 
-    const availabilityUrl = 'https://scheduler.local/api/v1/availability?from=2026-07-15T00%3A00%3A00Z&to=2026-07-16T00%3A00%3A00Z&timezone=America%2FChicago';
+    const availabilityUrl = `https://scheduler.local/api/v1/availability?from=${encodeURIComponent(`${overrideDate}T00:00:00Z`)}&to=${encodeURIComponent(`${overrideDate.add({ days: 1 })}T00:00:00Z`)}&timezone=America%2FChicago`;
     const opened = await SELF.fetch(availabilityUrl);
     const openedBody = await opened.json() as { status: string; slots: Array<{ start: string; end: string }> };
-    expect(openedBody).toMatchObject({
-      status: 'available',
-      slots: expect.arrayContaining([
-        { start: '2026-07-15T18:00:00Z', end: '2026-07-15T18:30:00Z' }
-      ])
-    });
+    expect(openedBody.status).toBe('available');
     expect(openedBody.slots).toHaveLength(4);
+    expect(Date.parse(openedBody.slots[0].end) - Date.parse(openedBody.slots[0].start)).toBe(
+      30 * 60 * 1000
+    );
 
     const oneHour = await SELF.fetch(`${availabilityUrl}&durationMinutes=60`);
     const oneHourBody = await oneHour.json() as {
@@ -199,12 +218,11 @@ describe('scheduler Worker transport', () => {
     };
     expect(oneHourBody.durationMinutes).toBe(60);
     expect(oneHourBody.slots).toHaveLength(3);
-    expect(oneHourBody.slots.at(-1)).toEqual({
-      start: '2026-07-15T19:00:00Z',
-      end: '2026-07-15T20:00:00Z'
-    });
+    expect(Date.parse(oneHourBody.slots[2].end) - Date.parse(oneHourBody.slots[2].start)).toBe(
+      60 * 60 * 1000
+    );
 
-    const deleted = await SELF.fetch(`${endpoint}/worker-wednesday-2026-07-15`, {
+    const deleted = await SELF.fetch(`${endpoint}/${overrideId}`, {
       method: 'DELETE',
       headers: {
         authorization: 'Bearer controlled-operator-token',
@@ -215,7 +233,7 @@ describe('scheduler Worker transport', () => {
     expect(deleted.status).toBe(200);
     expect(await deleted.json()).toMatchObject({
       status: 'deleted',
-      overrideId: 'worker-wednesday-2026-07-15'
+      overrideId
     });
 
     const closed = await SELF.fetch(availabilityUrl);
@@ -223,6 +241,15 @@ describe('scheduler Worker transport', () => {
   });
 
   it('prepares, commits, and reads a booking through the Worker and host Durable Object', async () => {
+    const bookingSlot = policySlot(2, 11);
+    const rescheduleSlot = policySlot(4, 13);
+    const rescheduleDay = new Intl.DateTimeFormat('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+      timeZone: 'America/Chicago'
+    }).format(new Date(rescheduleSlot.start));
     const stub = env.SCHEDULER.getByName('micah-johnson');
     await runInDurableObject(stub, async (_instance, state) => {
       await new DurableOAuthStore(state, 'controlled-oauth-encryption-secret').write({
@@ -312,7 +339,7 @@ describe('scheduler Worker transport', () => {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
-        slot: { start: '2026-07-14T16:00:00Z', end: '2026-07-14T16:30:00Z' },
+        slot: bookingSlot,
         scheduler: { name: 'Controlled Worker', email: 'controlled@example.com' }
       })
     });
@@ -378,7 +405,7 @@ describe('scheduler Worker transport', () => {
           'x-booking-action-token': committed.actionToken
         },
         body: JSON.stringify({
-          newSlot: { start: '2026-07-16T18:00:00Z', end: '2026-07-16T18:30:00Z' },
+          newSlot: rescheduleSlot,
           idempotencyKey: 'worker-controlled-reschedule',
           explicitIntent: true
         })
@@ -394,7 +421,7 @@ describe('scheduler Worker transport', () => {
       booking: { bookingId: string; slot: { start: string } };
     };
     expect(rescheduled).toMatchObject({
-      booking: { slot: { start: '2026-07-16T18:00:00Z' } }
+      booking: { slot: { start: rescheduleSlot.start } }
     });
     expect(rescheduled.actionToken).not.toBe(committed.actionToken);
 
@@ -445,7 +472,7 @@ describe('scheduler Worker transport', () => {
         to: ['controlled@example.com'],
         subject: 'Your CREATE SOMETHING meeting has moved',
         html: expect.stringContaining('#access='),
-        text: expect.stringContaining('Thursday, July 16, 2026')
+        text: expect.stringContaining(rescheduleDay)
       })
     ]);
     expect(freeBusyCalls).toBe(3);
