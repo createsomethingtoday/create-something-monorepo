@@ -303,6 +303,11 @@ test('integration proof keeps compatibility distinct from partnership and delive
     new URL('../src/lib/components/IntegrationCatalog.svelte', import.meta.url),
     'utf8'
   );
+  const map = readFileSync(new URL('../src/routes/map/+page.svelte', import.meta.url), 'utf8');
+  const mapCanvas = readFileSync(
+    new URL('../src/lib/components/PublicAtlasCanvas.svelte', import.meta.url),
+    'utf8'
+  );
 
   assert.match(home, /IntegrationCompatibilityRail surface="homepage"/);
   assert.match(partners, /IntegrationCompatibilityRail surface="partners"/);
@@ -310,5 +315,10 @@ test('integration proof keeps compatibility distinct from partnership and delive
   assert.match(rail, /Brand marks identify tool paths, not partnerships or endorsements/);
   assert.match(catalog, /Connector available ≠ connected or write-authorized/);
   assert.match(catalog, /not a live customer connection/);
+  assert.match(catalog, /integration_name=/);
+  assert.match(map, /initialIntegration=/);
+  assert.match(map, /initialIntegrationName=/);
+  assert.match(mapCanvas, /seedIntegrationContext\(\)/);
+  assert.match(mapCanvas, /Connector context added/);
   assert.doesNotMatch(`${rail}\n${catalog}`, /certified integration|official partner|1,041/gi);
 });

@@ -21,7 +21,7 @@
   $: visibleIntegrations = filteredIntegrations.slice(0, visibleCount);
 
   function mapHref(integration: IntegrationCatalogEntry) {
-    return `/map?source=integration-catalog&integration=${encodeURIComponent(integration.slug)}`;
+    return `/map?source=integration-catalog&integration=${encodeURIComponent(integration.slug)}&integration_name=${encodeURIComponent(integration.name)}`;
   }
 
   function trackResult(integration: IntegrationCatalogEntry) {

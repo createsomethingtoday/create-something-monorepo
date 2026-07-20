@@ -8,6 +8,7 @@ import {
   integrationCatalogSourceVersion
 } from '../src/lib/data/integrationCatalog.generated.ts';
 import { integrationProofItems } from '../src/lib/data/integrationProof.ts';
+import { normalizeIntegrationMapContext } from '../src/lib/atlas/integration-context.ts';
 
 const registry = JSON.parse(
   readFileSync(new URL('../../../config/mcp-hub/registry.json', import.meta.url), 'utf8')
@@ -50,4 +51,13 @@ test('public catalog does not expose registry transport or descriptive metadata'
   assert.doesNotMatch(serializedCatalog, /createsomething\.workers\.dev|estimated_tool_count|catalog_exposure_mode/);
   assert.ok(excludedRegistryIds.length > 0);
   assert.ok(excludedRegistryIds.every((id) => !integrationCatalog.some((entry) => entry.id === id)));
+});
+
+test('catalog connector context is bounded before it enters the public map', () => {
+  assert.deepEqual(normalizeIntegrationMapContext('salesforce_service_cloud', 'Salesforce Service Cloud'), {
+    slug: 'salesforce_service_cloud',
+    name: 'Salesforce Service Cloud'
+  });
+  assert.equal(normalizeIntegrationMapContext('../internal', 'Internal'), null);
+  assert.equal(normalizeIntegrationMapContext('salesforce', '\u0000\u0007'), null);
 });
