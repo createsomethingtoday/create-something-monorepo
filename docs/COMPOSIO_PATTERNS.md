@@ -82,6 +82,12 @@ pnpm mcp:composio:quickbooks create
 
 The helper delegates through `@create-something/composio-bridge` so SDK plumbing stays centralized. It is separate from the deployed `composio-toolkit-mcp` Worker, which exposes `/mcp/quickbooks` through the CREATE SOMETHING Hub registry.
 
+## Claude operator, client-owned downstream account
+
+Use [packages/canva-client-operator-mcp](../packages/canva-client-operator-mcp) when the Claude user operating an MCP is not the person who owns the downstream SaaS account. Claude authenticates the operator through CREATE SOMETHING Identity; the client authorizes Canva through a Composio Connect Link. The wrapper atomically locks the first completed `connectedAccountId`, supplies that ID on every tool call, and requires an admin-scoped, confirmed reset before a different account can connect.
+
+Do not point Claude directly at the Composio session MCP for this pattern. The wrapper is the policy boundary that separates operator identity from client OAuth, hides tools by operator scope, prevents ambient connected-account selection, and owns revoke/rebind receipts.
+
 ## Related
 
 - **CLAUDE.md** — Architecture § Integration connectivity (Composio)
