@@ -1,6 +1,7 @@
+import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { capturedFilmAnalysisSchema, filmCorrectionSchema } from '../src/lib/film.js';
+import { capturedFilmAnalysisSchema, filmCorrectionSchema, validateFilmImportGate } from '../src/lib/film.js';
 
 function argument(name: string, fallback?: string) {
   const index = process.argv.indexOf(name);
@@ -14,8 +15,15 @@ function optionalArgument(name: string) {
   return index >= 0 ? process.argv[index + 1] : undefined;
 }
 
-const analysis = capturedFilmAnalysisSchema.parse(JSON.parse(await readFile(resolve(argument('--analysis')), 'utf8')));
-const corrections = filmCorrectionSchema.array().parse(JSON.parse(await readFile(resolve(argument('--corrections')), 'utf8')));
+const [analysisText, correctionsText, gateText] = await Promise.all([
+  readFile(resolve(argument('--analysis')), 'utf8'),
+  readFile(resolve(argument('--corrections')), 'utf8'),
+  readFile(resolve(argument('--gate')), 'utf8')
+]);
+const analysis = capturedFilmAnalysisSchema.parse(JSON.parse(analysisText));
+const corrections = filmCorrectionSchema.array().parse(JSON.parse(correctionsText));
+const digest = (text: string) => createHash('sha256').update(text).digest('hex');
+validateFilmImportGate(analysis, corrections, JSON.parse(gateText), { analysisSha256: digest(analysisText), correctionsSha256: digest(correctionsText) });
 const url = new URL('/api/workspace/command', argument('--url', 'http://127.0.0.1:4173'));
 const playerId = argument('--player', 'developing-guard');
 const tokenUrl = optionalArgument('--token-url');
@@ -37,7 +45,9 @@ async function command(body: unknown) {
   return result;
 }
 let workspace = await command({ action: 'attach-film-analysis', playerId, title: argument('--title', 'Burton Angels Summer League / player #13'), analysis });
-const record = workspace.workspace?.filmAnalyses?.find((item) => item.source.sha256 === analysis.source.sha256 && item.analysis.revision === analysis.analysis.revision);
+const playStateFingerprint = analysis.analysis.playStateVerification?.ledgerFingerprint ?? null;
+const record = workspace.workspace?.filmAnalyses?.find((item) => item.source.sha256 === analysis.source.sha256 && item.analysis.revision === analysis.analysis.revision
+  && ((item.analysis as typeof analysis.analysis).playStateVerification?.ledgerFingerprint ?? null) === playStateFingerprint);
 if (!record) throw new Error('Attached film analysis was not returned by the scoped workspace.');
 for (const correction of corrections) {
   workspace = await command({ action: 'correct-film-analysis', playerId, analysisId: record.id, correction });

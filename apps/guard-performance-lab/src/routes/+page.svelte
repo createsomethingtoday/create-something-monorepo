@@ -341,7 +341,7 @@
           <div><span class="mono">Identity</span><strong>{activeFilm.analysis.identityExecutionCount ? `${activeFilm.analysis.identityExecutionCount}x / r${activeFilm.analysis.derivedFromRevision}` : 'legacy'}</strong></div>
           <div><span class="mono">Time</span><strong>{formatFilmTime(filmTraffic.timeMs)}</strong></div>
           <div><span class="mono">Traffic</span><strong>{filmTraffic.players.length} tokens</strong></div>
-          <div><span class="mono">Target</span><strong>{activeFilm.frames.findLast((frame) => frame.timeMs <= filmTimeMs)?.targetStatus ?? 'out-of-frame'}</strong></div>
+          <div><span class="mono">Target</span><strong>{filmTraffic.currentTargetStatus}</strong></div>
           <div><span class="mono">Play state</span><strong>{filmTraffic.currentPlayState}</strong></div>
           <div><span class="mono">Coverage</span><strong>{filmCoverage?.resolvedFrames ?? 0}/{filmCoverage?.frameCount ?? 0} · {filmCoverage?.resolvedPercent ?? 0}%</strong></div>
           <div><span class="mono">Projection</span><strong>{filmCoverage?.calibratedTargetFrames ? 'calibrated' : 'estimated'}</strong></div>

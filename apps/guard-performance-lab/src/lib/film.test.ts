@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { FILM_BENCHMARK_PROFILE, FILM_IDENTITY_BENCHMARK_PROFILE, FILM_MASK_TRACK_PROFILE, FILM_PLAY_STATE_PROFILE, applyFilmCorrections, applyFilmPlayStateLedger, captureFilmAnalysis, capturedFilmAnalysisSchema, combineFilmMaskTracks, deriveFilmIdentityCandidate, fuseFilmMaskTrack, finalizeFilmIdentityRevision, filmFrameAt, resolveFilmTrafficAt, scoreFilmBenchmark, scoreFilmIdentityBenchmark, scoreFilmTeamBenchmark, summarizeFilmTargetCoverage, validateFilmBenchmark, validateFilmIdentityBenchmark, validateFilmMaskTrack, validateFilmTeamBenchmark, verifyFilmIdentityCandidate } from './film.js';
+import { FILM_BENCHMARK_PROFILE, FILM_IDENTITY_BENCHMARK_PROFILE, FILM_MASK_TRACK_PROFILE, FILM_PLAY_STATE_PROFILE, applyFilmCorrections, applyFilmPlayStateLedger, captureFilmAnalysis, capturedFilmAnalysisSchema, combineFilmMaskTracks, createFilmImportGate, deriveFilmIdentityCandidate, fuseFilmMaskTrack, finalizeFilmIdentityRevision, filmFrameAt, resolveFilmTrafficAt, scoreFilmBenchmark, scoreFilmIdentityBenchmark, scoreFilmTeamBenchmark, summarizeFilmTargetCoverage, validateFilmBenchmark, validateFilmIdentityBenchmark, validateFilmImportGate, validateFilmMaskTrack, validateFilmTeamBenchmark, verifyFilmIdentityCandidate } from './film.js';
 
 const source = { sha256: 'a'.repeat(64), durationMs: 5000, width: 1920, height: 1080, fps: 30, byteSize: 1000, linkedPath: '/private/source.mp4' };
 const annotations = (startMs: number) => Array.from({ length: 20 }, (_, index) => ({ timeMs: startMs + index * 1000, target: { status: 'visible' as const, court: [index, 10] as [number, number], zone: 'frontcourt', trackId: '13', provenance: 'manual' as const } }));
@@ -34,6 +34,23 @@ describe('film benchmark contract', () => {
     expect(filmFrameAt(captured, 999)?.timeMs).toBe(0);
     expect(filmFrameAt(captured, 999)).toEqual(filmFrameAt(captured, 999));
     expect(captured.analysis.executionCount).toBe(1);
+  });
+
+  it('requires an exact analysis-bound passing gate before an import can attach film', () => {
+    const captured = captureFilmAnalysis({ source, frames: [{ timeMs: 0, players: [] }, { timeMs: 5000, players: [] }] });
+    const hashes = { analysisSha256: 'b'.repeat(64), correctionsSha256: 'c'.repeat(64) };
+    expect(() => createFilmImportGate(captured, [], hashes, '2026-07-20T12:00:00.000Z')).toThrow(/passing benchmark report/i);
+
+    const gate = createFilmImportGate(captured, [], hashes, '2026-07-20T12:00:00.000Z', {
+      ok: true,
+      sourceSha256: source.sha256,
+      analysisSha256: hashes.analysisSha256,
+      correctionsSha256: hashes.correctionsSha256,
+      analysisRevision: 1,
+      correctionCount: 0
+    });
+    expect(validateFilmImportGate(captured, [], gate, hashes)).toMatchObject({ ok: true, analysisSha256: hashes.analysisSha256 });
+    expect(() => validateFilmImportGate(captured, [], gate, { ...hashes, analysisSha256: 'd'.repeat(64) })).toThrow(/analysis hash/i);
   });
 
   it('attaches a complete play-state ledger without rewriting captured traffic', () => {
@@ -246,6 +263,7 @@ describe('film benchmark contract', () => {
     expect(corrected.frames[0]?.players).toHaveLength(10);
     expect(corrected.frames[0]?.players.filter((player) => player.trackId === 'p-2')).toHaveLength(1);
     expect(corrected.frames[0]?.players.find((player) => player.trackId === 'p-2')).toMatchObject({ team: 'target', court: [4, 21], provenance: 'corrected' });
+    expect(resolveFilmTrafficAt(corrected, 0).currentTargetStatus).toBe('resolved');
   });
 
   it('fuses a reviewed segmentation mask onto one foreground teammate and fails closed at ambiguity', () => {

@@ -67,6 +67,13 @@ def sha256(path: str):
     return digest.hexdigest()
 
 
+def verify_source_sha256(source_path: Path, expected: str):
+    actual = sha256(str(source_path))
+    if actual != expected.lower():
+        raise SystemExit(f"The linked source SHA-256 {actual} does not match the supplied receipt {expected}.")
+    return actual
+
+
 def preprocess(image: np.ndarray, size: int = 640):
     ratio = min(size / image.shape[0], size / image.shape[1])
     resized = cv2.resize(image, (int(image.shape[1] * ratio), int(image.shape[0] * ratio)))
@@ -324,8 +331,9 @@ def main():
     source_path, model_path = Path(args.source), Path(args.model)
     if not source_path.is_file() or not model_path.is_file():
         raise SystemExit("The linked source and operator-supplied model must both exist.")
-    if len(args.source_sha256) != 64:
+    if len(args.source_sha256) != 64 or any(character not in "0123456789abcdefABCDEF" for character in args.source_sha256):
         raise SystemExit("--source-sha256 must be the previously verified 64-character receipt hash.")
+    verified_source_sha256 = verify_source_sha256(source_path, args.source_sha256)
     seeds = []
     for value in args.target_seed:
         time_ms, x, y = value.split(":")
@@ -449,7 +457,7 @@ def main():
     output = {
         "version": 1,
         "source": {
-            "sha256": args.source_sha256,
+            "sha256": verified_source_sha256,
             "durationMs": duration_ms,
             "width": width,
             "height": height,

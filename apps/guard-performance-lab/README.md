@@ -66,9 +66,16 @@ pnpm --filter @create-something/guard-performance-lab film:verify \
   --svg /private/path/benchmark-evidence.svg \
   --expected-revision 2
 
+pnpm --filter @create-something/guard-performance-lab film:verify:import -- \
+  --analysis /private/path/full-analysis-r2.json \
+  --corrections /private/path/benchmark-corrections.json \
+  --benchmark-report /private/path/benchmark-report.json \
+  --output /private/path/import-gate-r2.json
+
 pnpm --filter @create-something/guard-performance-lab film:import:http \
   --analysis /private/path/full-analysis-r2.json \
-  --corrections /private/path/benchmark-corrections.json
+  --corrections /private/path/benchmark-corrections.json \
+  --gate /private/path/import-gate-r2.json
 ```
 
 Repairing identity does not rerun person detection or team classification. The locked #13 fixture contains readable positives across four live-play segments plus #5, #11, #15, unreadable, tracker-handoff, and substitution negatives. Create a candidate, verify it, and only then finalize the one identity receipt:
@@ -102,10 +109,18 @@ pnpm --filter @create-something/guard-performance-lab film:apply:play-state -- \
   --output /private/path/full-analysis-r3-play-state.json \
   --receipt /private/path/play-state-receipt.json
 
+pnpm --filter @create-something/guard-performance-lab film:verify:import -- \
+  --analysis /private/path/full-analysis-r3-play-state.json \
+  --corrections /private/path/empty-corrections.json \
+  --output /private/path/import-gate-r3-play-state.json
+
 pnpm --filter @create-something/guard-performance-lab film:import:http -- \
   --analysis /private/path/full-analysis-r3-play-state.json \
-  --corrections /private/path/empty-corrections.json
+  --corrections /private/path/empty-corrections.json \
+  --gate /private/path/import-gate-r3-play-state.json
 ```
+
+Both local and HTTP imports reject analyses that are not bound to an exact SHA-256 import gate. Revision 1/2 gates consume the passing fixed benchmark report and its exact correction overlay; revision 3 gates require the embedded locked identity benchmark. Play-state receipt counts are recomputed from the captured frames before a gate can be issued. The analyzer also hashes the linked video bytes itself and rejects a mismatched supplied source receipt before inference starts.
 
 `Film trace` then replays the captured top-down traffic. The slider works in both directions. `Live basketball only` is the default and draws an orange #13 wake only for verified live offense, live defense, and transition states. `All captured movement` keeps dead-ball, free-throw, substitution, and unknown movement available as a gray dashed context wake without counting it as positioning or lane running. Wake segments break across state changes, unresolved gaps, and inactive substitutions. JSON/SVG exports are derived from the persisted revision. Operator corrections require direct-evidence text and append provenance; player-scoped identities cannot attach or correct analyses and can read only their assigned player.
 

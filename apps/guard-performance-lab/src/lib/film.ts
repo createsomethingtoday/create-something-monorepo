@@ -6,6 +6,7 @@ export const FILM_TEAM_BENCHMARK_PROFILE = 'guard-player-team-benchmark-v2';
 export const FILM_IDENTITY_BENCHMARK_PROFILE = 'guard-player-13-identity-v3';
 export const FILM_MASK_TRACK_PROFILE = 'guard-player-mask-track-v1';
 export const FILM_PLAY_STATE_PROFILE = 'guard-player-play-state-v1';
+export const FILM_IMPORT_GATE_PROFILE = 'guard-film-import-gate-v1';
 
 const pointSchema = z.tuple([z.number(), z.number()]);
 const capturedTargetStatusSchema = z.enum(['resolved', 'unresolved', 'out-of-frame', 'inactive']);
@@ -948,6 +949,107 @@ export const filmCorrectionSchema = z.object({
 export type FilmCorrection = z.infer<typeof filmCorrectionSchema>;
 export type FilmCorrectionDraft = Pick<FilmCorrection, 'timeMs' | 'court' | 'targetStatus' | 'reason'> & Partial<Pick<FilmCorrection, 'trackId'>>;
 
+const sha256Schema = z.string().regex(/^[a-f0-9]{64}$/);
+const filmBenchmarkImportReportSchema = z.object({
+  ok: z.literal(true),
+  sourceSha256: sha256Schema,
+  analysisSha256: sha256Schema,
+  correctionsSha256: sha256Schema,
+  analysisRevision: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+  correctionCount: z.number().int().nonnegative()
+});
+
+export const filmImportGateSchema = z.object({
+  version: z.literal(1),
+  profile: z.literal(FILM_IMPORT_GATE_PROFILE),
+  ok: z.literal(true),
+  analysisSha256: sha256Schema,
+  correctionsSha256: sha256Schema,
+  sourceSha256: sha256Schema,
+  analysisRevision: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+  analysisExecutionCount: z.literal(1),
+  frameCount: z.number().int().positive(),
+  correctionCount: z.number().int().nonnegative(),
+  benchmarkProfile: z.union([z.literal(FILM_BENCHMARK_PROFILE), z.literal(FILM_IDENTITY_BENCHMARK_PROFILE)]),
+  identityFingerprint: z.string().min(1).nullable(),
+  playStateFingerprint: z.string().min(1).nullable(),
+  verifiedAt: z.string().min(1)
+});
+
+type FilmImportHashes = { analysisSha256: string; correctionsSha256: string };
+
+function assertVerifiedPlayStateReceipt(analysis: CapturedFilmAnalysis) {
+  const receipt = analysis.analysis.playStateVerification;
+  if (!receipt) return;
+  const liveFrameCount = analysis.frames.filter((frame) => isLiveFilmPlayState(frame.playState)).length;
+  const unknownFrameCount = analysis.frames.filter((frame) => frame.playState === 'unknown').length;
+  const nonLiveFrameCount = analysis.frames.length - liveFrameCount - unknownFrameCount;
+  if (analysis.frames.some((frame) => !frame.playStateEvidence)) throw new Error('The play-state import receipt does not provide evidence for every captured frame.');
+  if (receipt.frameCount !== analysis.frames.length || receipt.liveFrameCount !== liveFrameCount || receipt.nonLiveFrameCount !== nonLiveFrameCount || receipt.unknownFrameCount !== unknownFrameCount) {
+    throw new Error('The play-state import receipt counts do not match the captured frames.');
+  }
+}
+
+export function createFilmImportGate(
+  analysisInput: unknown,
+  correctionsInput: unknown,
+  hashes: FilmImportHashes,
+  verifiedAt: string,
+  benchmarkReportInput?: unknown
+) {
+  const analysis = capturedFilmAnalysisSchema.parse(analysisInput);
+  const corrections = z.array(filmCorrectionSchema).parse(correctionsInput);
+  sha256Schema.parse(hashes.analysisSha256);
+  sha256Schema.parse(hashes.correctionsSha256);
+  assertVerifiedPlayStateReceipt(analysis);
+
+  let benchmarkProfile: typeof FILM_BENCHMARK_PROFILE | typeof FILM_IDENTITY_BENCHMARK_PROFILE;
+  if (analysis.analysis.revision === 3) {
+    if (!analysis.analysis.identityVerification) throw new Error('Revision 3 requires its passing embedded identity benchmark before import.');
+    benchmarkProfile = analysis.analysis.identityVerification.benchmarkProfile;
+  } else {
+    if (!benchmarkReportInput) throw new Error('Revision 1 or 2 import requires a passing benchmark report bound to the exact analysis and corrections.');
+    const report = filmBenchmarkImportReportSchema.parse(benchmarkReportInput);
+    if (report.sourceSha256 !== analysis.source.sha256 || report.analysisSha256 !== hashes.analysisSha256 || report.correctionsSha256 !== hashes.correctionsSha256
+      || report.analysisRevision !== analysis.analysis.revision || report.correctionCount !== corrections.length) {
+      throw new Error('The passing benchmark report does not match this analysis and correction overlay.');
+    }
+    benchmarkProfile = FILM_BENCHMARK_PROFILE;
+  }
+
+  return filmImportGateSchema.parse({
+    version: 1,
+    profile: FILM_IMPORT_GATE_PROFILE,
+    ok: true,
+    analysisSha256: hashes.analysisSha256,
+    correctionsSha256: hashes.correctionsSha256,
+    sourceSha256: analysis.source.sha256,
+    analysisRevision: analysis.analysis.revision,
+    analysisExecutionCount: analysis.analysis.executionCount,
+    frameCount: analysis.frames.length,
+    correctionCount: corrections.length,
+    benchmarkProfile,
+    identityFingerprint: analysis.analysis.identityVerification?.candidateFingerprint ?? null,
+    playStateFingerprint: analysis.analysis.playStateVerification?.ledgerFingerprint ?? null,
+    verifiedAt
+  });
+}
+
+export function validateFilmImportGate(analysisInput: unknown, correctionsInput: unknown, gateInput: unknown, hashes: FilmImportHashes) {
+  const analysis = capturedFilmAnalysisSchema.parse(analysisInput);
+  const corrections = z.array(filmCorrectionSchema).parse(correctionsInput);
+  const gate = filmImportGateSchema.parse(gateInput);
+  assertVerifiedPlayStateReceipt(analysis);
+  if (gate.analysisSha256 !== hashes.analysisSha256) throw new Error('The import gate analysis hash does not match the exact analysis artifact.');
+  if (gate.correctionsSha256 !== hashes.correctionsSha256) throw new Error('The import gate corrections hash does not match the exact correction overlay.');
+  if (gate.sourceSha256 !== analysis.source.sha256 || gate.analysisRevision !== analysis.analysis.revision || gate.analysisExecutionCount !== analysis.analysis.executionCount
+    || gate.frameCount !== analysis.frames.length || gate.correctionCount !== corrections.length) throw new Error('The import gate does not match this captured film revision.');
+  if (gate.identityFingerprint !== (analysis.analysis.identityVerification?.candidateFingerprint ?? null)) throw new Error('The import gate identity fingerprint does not match this analysis.');
+  if (gate.playStateFingerprint !== (analysis.analysis.playStateVerification?.ledgerFingerprint ?? null)) throw new Error('The import gate play-state fingerprint does not match this analysis.');
+  if (analysis.analysis.revision === 3 && gate.benchmarkProfile !== FILM_IDENTITY_BENCHMARK_PROFILE) throw new Error('Revision 3 import requires the locked identity benchmark gate.');
+  return gate;
+}
+
 export function captureFilmAnalysis(input: { source: unknown; frames: unknown; analyzedAt?: string }): CapturedFilmAnalysis {
   const source = filmSourceSchema.parse(input.source);
   const frames = z.array(capturedFrameSchema).parse(input.frames).sort((a, b) => a.timeMs - b.timeMs);
@@ -1082,6 +1184,7 @@ export function resolveFilmTrafficAt(analysis: CapturedFilmAnalysis, requestedTi
     players,
     targetWake,
     contextWake,
+    currentTargetStatus: before?.targetStatus ?? 'out-of-frame',
     currentPlayState: before?.playState ?? 'unknown',
     currentPlayStateEvidence: before?.playStateEvidence,
     movementMode,

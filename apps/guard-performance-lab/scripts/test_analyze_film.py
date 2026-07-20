@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import importlib.util
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -83,6 +84,21 @@ class TargetAssociationTest(unittest.TestCase):
 
         lookalike = detection("p-0099", "teammate", [1.0, 0.0], (505, 700))
         self.assertIsNone(MODULE.select_target(state, [lookalike], 3000, 1920, 1080))
+
+
+class SourceReceiptTest(unittest.TestCase):
+    def test_rejects_a_source_when_the_supplied_digest_does_not_match_its_bytes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "game.mp4"
+            source.write_bytes(b"verified private source")
+
+            with self.assertRaisesRegex(SystemExit, "does not match"):
+                MODULE.verify_source_sha256(source, "0" * 64)
+
+            self.assertEqual(
+                MODULE.verify_source_sha256(source, MODULE.sha256(str(source))),
+                MODULE.sha256(str(source)),
+            )
 
 
 class TeamRoleStabilizationTest(unittest.TestCase):
