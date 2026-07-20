@@ -307,7 +307,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
       'presentations/user-onboarding',
       'presentations/workway'
     ],
-    'pending',
+    'migrated',
     contract(
       'editorial',
       'Follow the presentation argument and decide which practice it supports.',

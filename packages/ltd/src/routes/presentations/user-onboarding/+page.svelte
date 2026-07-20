@@ -29,7 +29,7 @@
 	]}
 />
 
-<Presentation title="User Onboarding" subtitle="Enable a Workflow" scriptUrl="/presentations/user-onboarding/script">
+<Presentation title="User Onboarding" subtitle="Connect one workflow and verify that it runs." scriptUrl="/presentations/user-onboarding/script">
 	<!-- ═══════════════════════════════════════════════════════════════════
 	     PART 1: The Reality
 	     ═══════════════════════════════════════════════════════════════════ -->
@@ -38,8 +38,8 @@
 	<Slide type="title">
 		<span class="number">01</span>
 		<h1>WORKWAY</h1>
-		<p class="subtitle">Your tools don't talk to each other.</p>
-		<p class="subtitle">This fixes that.</p>
+		<p class="subtitle">Connect your tools for one repeatable workflow.</p>
+		<p class="subtitle">Then verify that it runs.</p>
 	</Slide>
 
 	<!-- Slide 2: The Problem -->

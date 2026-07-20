@@ -87,6 +87,11 @@ import { ExperimentRuntime, BeadsGraph } from '@create-something/canon/domains/s
 // .io domain (Research)
 import { TufteDashboard, Paper } from '@create-something/canon/domains/io';
 ```
+### LTD presentation contract
+
+`Presentation` and `Slide` form one progressively enhanced editorial surface. The server-rendered reading path exposes every slide in order. JavaScript may focus the reader on one slide, add controls, and report progress. It must not become the only way to reach the argument.
+
+Presentation controls stay in document flow so long slides cannot disappear behind them. The shared toolbar keeps the collection return and optional script handoff visible at desktop and mobile sizes. Keyboard shortcuts apply only while a presentation control is focused; they must not override links or ordinary browser activation. A companion script route should render semantic sections first and preserve the exact raw markdown as a secondary production artifact.
 
 ## Structure
 

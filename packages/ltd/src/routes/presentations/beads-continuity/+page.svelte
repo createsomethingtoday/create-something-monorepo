@@ -30,7 +30,7 @@
 	]}
 />
 
-<Presentation title="BEADS: CONTINUITY" subtitle="Memory across context boundaries." scriptUrl="/presentations/beads-continuity/script">
+<Presentation title="BEADS: CONTINUITY" subtitle="Keep task context when an AI session ends." scriptUrl="/presentations/beads-continuity/script">
 	<!-- ═══════════════════════════════════════════════════════════════════
 	     PART 1: Part → Whole (The Problem: Context Resets)
 	     ═══════════════════════════════════════════════════════════════════ -->
@@ -39,8 +39,8 @@
 	<Slide type="title">
 		<span class="number">01</span>
 		<h1>BEADS: CONTINUITY</h1>
-		<p class="subtitle">Agent-native task tracking.</p>
-		<p class="subtitle">Memory that persists.</p>
+		<p class="subtitle">Track work across AI sessions.</p>
+		<p class="subtitle">Keep decisions, dependencies, and next steps.</p>
 	</Slide>
 
 	<!-- Slide 2: The Problem -->

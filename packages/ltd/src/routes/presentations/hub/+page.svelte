@@ -17,12 +17,12 @@
 	]}
 />
 
-<Presentation title="HUB" subtitle="The governed MCP surface" scriptUrl="/presentations/hub/script">
+<Presentation title="HUB" subtitle="Control which tools Codex can see and what they are allowed to do." scriptUrl="/presentations/hub/script">
 	<Slide type="title">
 		<span class="number">01</span>
 		<h1>HUB</h1>
-		<p class="subtitle">The governed MCP surface.</p>
-		<p class="subtitle">One house layer between Codex and connector sprawl.</p>
+		<p class="subtitle">Control which tools Codex can see and what they are allowed to do.</p>
+		<p class="subtitle">Keep connector details behind one controlled layer.</p>
 	</Slide>
 
 	<Slide type="content">
