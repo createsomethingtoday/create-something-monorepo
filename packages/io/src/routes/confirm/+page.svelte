@@ -1,118 +1,137 @@
 <script lang="ts">
-	import { SEO } from '@create-something/canon';
-	import type { PageData } from './$types';
+  import { SEO } from '@create-something/canon';
+  import type { PageData } from './$types';
 
-	let { data }: { data: PageData } = $props();
+  let { data }: { data: PageData } = $props();
+
+  const title = $derived(
+    data.success
+      ? data.alreadyConfirmed
+        ? 'Already confirmed.'
+        : 'Research note confirmed.'
+      : 'Confirmation needs another link.'
+  );
 </script>
 
 <SEO
-	title="Confirm Subscription"
-	description="Confirm your newsletter subscription to CREATE SOMETHING."
-	propertyName="io"
-	noindex={true}
+  title="Confirm Research Note"
+  description="Confirm your CREATE SOMETHING research note subscription."
+  propertyName="io"
+  noindex={true}
 />
 
-<div class="confirm-container">
-	<div class="confirm-card">
-		{#if data.success}
-			<div class="icon success-icon">
-				<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-					<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-					<polyline points="22 4 12 14.01 9 11.01"></polyline>
-				</svg>
-			</div>
-			<h1 class="title">{data.alreadyConfirmed ? 'Already Confirmed' : 'Subscription Confirmed'}</h1>
-			<p class="message">{data.message}</p>
-			{#if data.email}
-				<p class="email">{data.email}</p>
-			{/if}
-			<a href="/" class="cta">Explore CREATE SOMETHING</a>
-		{:else}
-			<div class="icon error-icon">
-				<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-					<circle cx="12" cy="12" r="10"></circle>
-					<line x1="15" y1="9" x2="9" y2="15"></line>
-					<line x1="9" y1="9" x2="15" y2="15"></line>
-				</svg>
-			</div>
-			<h1 class="title">Confirmation Failed</h1>
-			<p class="message">{data.message}</p>
-			<a href="/" class="cta secondary">Return Home</a>
-		{/if}
-	</div>
-</div>
+<section
+  class="confirmation-page"
+  data-page-chapter="confirmation"
+  aria-labelledby="confirmation-title"
+>
+  <div class="confirmation-card" class:confirmation-card--success={data.success}>
+    <p class="eyebrow">IO research notes</p>
+    <h1 id="confirmation-title">{title}</h1>
+    <p class="message" role={data.success ? 'status' : 'alert'}>{data.message}</p>
+
+    {#if data.success}
+      {#if data.email}
+        <p class="email">{data.email}</p>
+      {/if}
+      <a href="/papers" class="primary-action">Read the research</a>
+    {:else}
+      <p class="recovery">
+        Enter your email again. If the address still needs confirmation, we will send a fresh link.
+      </p>
+      <a href="/subscribe" class="primary-action">Request a new confirmation email</a>
+    {/if}
+  </div>
+</section>
 
 <style>
-	.confirm-container {
-		min-height: calc(100vh - 200px);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		padding: var(--space-performance-lg);
-	}
+  .confirmation-page {
+    min-height: min(48rem, calc(100vh - var(--height-performance-header, 4.5rem)));
+    display: grid;
+    place-items: center;
+    padding: clamp(3rem, 8vw, 7rem) 1.25rem;
+    background: var(--color-performance-paper, #f3f3f0);
+    color: var(--color-performance-ink, #090909);
+  }
 
-	.confirm-card {
-		max-width: 480px;
-		text-align: center;
-		padding: var(--space-performance-xl);
-		background: var(--color-performance-bg-surface);
-		border-radius: var(--radius-performance-scale-lg);
-	}
+  .confirmation-card {
+    display: grid;
+    gap: 1.25rem;
+    width: min(42rem, 100%);
+    padding: clamp(1.5rem, 5vw, 3rem);
+    border: 1px solid var(--color-performance-border, #d0d0c8);
+    border-left: 0.25rem solid var(--color-performance-error, #b42318);
+    background: #ffffff;
+  }
 
-	.icon {
-		margin-bottom: var(--space-performance-md);
-	}
+  .confirmation-card--success {
+    border-left-color: var(--color-performance-success, #067647);
+  }
 
-	.success-icon {
-		color: var(--color-performance-success);
-	}
+  .eyebrow,
+  h1,
+  p {
+    margin: 0;
+  }
 
-	.error-icon {
-		color: var(--color-performance-error);
-	}
+  .eyebrow {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-performance-ink-muted, #66665f);
+  }
 
-	.title {
-		font-size: var(--text-performance-h2);
-		color: var(--color-performance-fg-primary);
-		margin-bottom: var(--space-performance-sm);
-	}
+  h1 {
+    max-width: 16ch;
+    font-size: clamp(2.4rem, 7vw, 4.5rem);
+    font-weight: 600;
+    letter-spacing: -0.045em;
+    line-height: 1;
+  }
 
-	.message {
-		font-size: var(--text-performance-body);
-		color: var(--color-performance-fg-secondary);
-		margin-bottom: var(--space-performance-sm);
-	}
+  .message {
+    max-width: 38rem;
+    font-size: clamp(1.1rem, 2vw, 1.3rem);
+    line-height: 1.55;
+  }
 
-	.email {
-		font-size: var(--text-performance-body-sm);
-		color: var(--color-performance-fg-muted);
-		font-family: var(--font-performance-mono);
-		margin-bottom: var(--space-performance-md);
-	}
+  .email {
+    width: fit-content;
+    max-width: 100%;
+    padding: 0.55rem 0.75rem;
+    overflow-wrap: anywhere;
+    background: var(--color-performance-paper, #f3f3f0);
+    font-family: var(--font-performance-mono, ui-monospace, monospace);
+    font-size: 0.86rem;
+  }
 
-	.cta {
-		display: inline-block;
-		margin-top: var(--space-performance-md);
-		padding: var(--space-performance-sm) var(--space-performance-md);
-		background: var(--color-performance-fg-primary);
-		color: var(--color-performance-bg-pure);
-		text-decoration: none;
-		font-weight: 500;
-		border-radius: var(--radius-performance-scale-md);
-		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
-	}
+  .recovery {
+    max-width: 36rem;
+    line-height: 1.6;
+    color: var(--color-performance-ink-muted, #5f5f58);
+  }
 
-	.cta:hover {
-		opacity: 0.9;
-		transform: translateY(-1px);
-	}
+  .primary-action {
+    width: fit-content;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.8rem 1.1rem;
+    border: 1px solid var(--color-performance-ink, #090909);
+    background: var(--color-performance-ink, #090909);
+    color: #ffffff;
+    font-weight: 700;
+    text-decoration: none;
+  }
 
-	.cta.secondary {
-		background: var(--color-performance-bg-subtle);
-		color: var(--color-performance-fg-primary);
-	}
+  .primary-action:hover {
+    background: #252525;
+  }
 
-	.cta.secondary:hover {
-		background: var(--color-performance-hover);
-	}
+  .primary-action:focus-visible {
+    outline: 3px solid var(--color-performance-signal, #315cff);
+    outline-offset: 3px;
+  }
 </style>

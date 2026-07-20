@@ -12,9 +12,10 @@
 
   interface Props {
     property: 'io' | 'space' | 'agency' | 'ltd' | 'lms';
+    noindex?: boolean;
   }
 
-  let { property }: Props = $props();
+  let { property, noindex = false }: Props = $props();
 
   const propertyConfig = {
     io: {
@@ -111,7 +112,7 @@
   <title>{config.name}</title>
   <meta name="title" content={config.name} />
   <meta name="description" content={config.description} />
-  <meta name="robots" content="index, follow" />
+  <meta name="robots" content={`${noindex ? 'noindex' : 'index'}, follow`} />
   <meta name="author" content="Create Something" />
   <meta name="theme-color" content={config.color} />
 

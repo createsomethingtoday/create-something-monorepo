@@ -1,615 +1,249 @@
 <script lang="ts">
-	import { SEO } from '@create-something/canon';
-	import {
-		Bot,
-		Component,
-		Video,
-		BookOpen,
-		Zap,
-		MessageCircle,
-		Check,
-		Circle,
-		ArrowRight
-	} from 'lucide-svelte';
+  import { SEO } from '@create-something/canon';
+  import { NewsletterSignup } from '@create-something/canon/newsletter';
+  import type { PageData } from './$types';
 
-	let email = '';
-	let submitted = false;
-	let error = '';
-
-	async function handleSubmit(e: Event) {
-		e.preventDefault();
-		error = '';
-
-		try {
-			const response = await fetch('/api/newsletter', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ email })
-			});
-
-			if (!response.ok) {
-				const data = (await response.json()) as { error?: string };
-				throw new Error(data.error || 'Failed to subscribe');
-			}
-
-			submitted = true;
-			email = '';
-		} catch (err) {
-			error = err instanceof Error ? err.message : 'Something went wrong';
-		}
-	}
+  let { data }: { data: PageData } = $props();
 </script>
 
 <SEO
-	title="Subscribe | CREATE SOMETHING.io"
-	description="Get early access to autonomous agents, agentic component libraries, and recorded workshops. Launch January 2025."
-	keywords="subscription, autonomous agents, agentic systems, component library, workshops"
-	ogImage="/og-image.svg"
-	propertyName="io"
+  title="Research Notes | CREATE SOMETHING.io"
+  description="Request occasional CREATE SOMETHING notes on research, runtime evidence, and operating patterns. Confirm by email before you are subscribed."
+  keywords="AI-native development research, runtime evidence, operating patterns, research notes"
+  ogImage="/og-image.svg"
+  propertyName="io"
 />
 
-<div class="page-container min-h-screen">
-	<div class="max-w-4xl mx-auto px-6 py-16">
-		<!-- Header -->
-		<div class="mb-12">
-			<div class="launch-badge inline-block px-4 py-1.5 mb-6 font-mono">
-				LAUNCHING JANUARY 2025
-			</div>
-			<h1 class="page-title mb-6">Build Autonomous Software</h1>
-			<p class="page-subtitle max-w-2xl">
-				Get access to production-ready agents, agentic component libraries, and recorded workshops.
-				Everything you need to build software that encodes expertise.
-			</p>
-		</div>
+<div class="subscription-page">
+  <section class="subscription-opening" data-page-chapter="offer" aria-labelledby="subscribe-title">
+    <div class="subscription-opening__inner">
+      <p class="eyebrow">IO research notes</p>
+      <h1 id="subscribe-title">Get the research note.</h1>
+      <p class="lede">
+        Receive occasional notes on research, runtime evidence, and operating patterns that make the
+        next technical decision easier to defend.
+      </p>
+      <div class="offer-boundary" aria-label="Publication boundary">
+        <p>
+          <strong>What arrives</strong><span>A concise email when the evidence earns one.</span>
+        </p>
+        <p>
+          <strong>What does not</strong><span
+            >No software access, paid plan, or launch promise.</span
+          >
+        </p>
+      </div>
+    </div>
+  </section>
 
-		<!-- What's Included -->
-		<div class="mb-16">
-			<h2 class="section-title mb-8">What's Included</h2>
+  <div class="signup-chapter" data-page-chapter="request">
+    <NewsletterSignup
+      eyebrow="Request"
+      headline="Ask for the next note."
+      description="Enter your email. We will send a confirmation link. You are not added until you confirm."
+      actionLabel="Confirm by email"
+      submitLabel="Send confirmation link"
+      note="Occasional notes. Unsubscribe from any email."
+      source="io"
+      turnstileSiteKey={data.turnstileSiteKey}
+      noScriptContactHref="mailto:micah@createsomething.io?subject=IO%20research%20note"
+    />
+  </div>
 
-			<div class="grid md:grid-cols-2 gap-6">
-				<!-- Autonomous Agents -->
-				<div class="feature-card p-6">
-					<Bot class="w-8 h-8 mb-3 icon-secondary" />
-					<h3 class="card-title mb-2">Autonomous Agents</h3>
-					<p class="card-description mb-4">
-						Production-ready agents built from real client projects
-					</p>
-					<ul class="space-y-2 list-text">
-						<li class="flex items-start gap-2">
-							<Check class="w-4 h-4 icon-success mt-0.5 flex-shrink-0" />
-							<span>Gmail to Notion sync agent</span>
-						</li>
-						<li class="flex items-start gap-2">
-							<Check class="w-4 h-4 icon-success mt-0.5 flex-shrink-0" />
-							<span>Notion deduplication agent</span>
-						</li>
-						<li class="flex items-start gap-2">
-							<Check class="w-4 h-4 icon-success mt-0.5 flex-shrink-0" />
-							<span>Claude Code skills & patterns</span>
-						</li>
-						<li class="flex items-start gap-2">
-							<Circle class="w-4 h-4 icon-muted mt-0.5 flex-shrink-0" />
-							<span>More agents added as projects complete</span>
-						</li>
-					</ul>
-				</div>
-
-				<!-- Component Libraries -->
-				<div class="feature-card p-6">
-					<Component class="w-8 h-8 mb-3 icon-secondary" />
-					<h3 class="card-title mb-2">Agentic Components</h3>
-					<p class="card-description mb-4">
-						UI components that embody expert knowledge
-					</p>
-					<ul class="space-y-2 list-text">
-						<li class="flex items-start gap-2">
-							<Check class="w-4 h-4 icon-success mt-0.5 flex-shrink-0" />
-							<span>@create-something/tufte (visualization)</span>
-						</li>
-						<li class="flex items-start gap-2">
-							<Check class="w-4 h-4 icon-success mt-0.5 flex-shrink-0" />
-							<span>@create-something/canon (UI primitives)</span>
-						</li>
-						<li class="flex items-start gap-2">
-							<Circle class="w-4 h-4 icon-muted mt-0.5 flex-shrink-0" />
-							<span>@create-something/agents (coming soon)</span>
-						</li>
-						<li class="flex items-start gap-2">
-							<Circle class="w-4 h-4 icon-muted mt-0.5 flex-shrink-0" />
-							<span>@create-something/claude-patterns (coming soon)</span>
-						</li>
-					</ul>
-				</div>
-
-				<!-- Video Walkthroughs -->
-				<div class="feature-card p-6">
-					<Video class="w-8 h-8 mb-3 icon-secondary" />
-					<h3 class="card-title mb-2">Video Walkthroughs</h3>
-					<p class="card-description mb-4">
-						Recorded tutorials showing how to use and extend each agent
-					</p>
-					<ul class="space-y-2 list-text">
-						<li class="flex items-start gap-2">
-							<Circle class="w-4 h-4 icon-muted mt-0.5 flex-shrink-0" />
-							<span>Installation & configuration (15-20 min each)</span>
-						</li>
-						<li class="flex items-start gap-2">
-							<Circle class="w-4 h-4 icon-muted mt-0.5 flex-shrink-0" />
-							<span>Extension & customization (20-30 min each)</span>
-						</li>
-						<li class="flex items-start gap-2">
-							<Circle class="w-4 h-4 icon-muted mt-0.5 flex-shrink-0" />
-							<span>Real-world deployment examples</span>
-						</li>
-					</ul>
-				</div>
-
-				<!-- Recorded Workshops -->
-				<div class="feature-card p-6">
-					<BookOpen class="w-8 h-8 mb-3 icon-secondary" />
-					<h3 class="card-title mb-2">Recorded Workshops</h3>
-					<p class="card-description mb-4">
-						Deep-dive workshops on building agentic systems (60-90 min)
-					</p>
-					<ul class="space-y-2 list-text">
-						<li class="flex items-start gap-2">
-							<Circle class="w-4 h-4 icon-muted mt-0.5 flex-shrink-0" />
-							<span>Building agentic integrations</span>
-						</li>
-						<li class="flex items-start gap-2">
-							<Circle class="w-4 h-4 icon-muted mt-0.5 flex-shrink-0" />
-							<span>Cloudflare Workers AI patterns</span>
-						</li>
-						<li class="flex items-start gap-2">
-							<Circle class="w-4 h-4 icon-muted mt-0.5 flex-shrink-0" />
-							<span>Claude Code skills development</span>
-						</li>
-					</ul>
-				</div>
-
-				<!-- Templates & Starter Projects -->
-				<div class="feature-card p-6">
-					<Zap class="w-8 h-8 mb-3 icon-secondary" />
-					<h3 class="card-title mb-2">Templates & Starters</h3>
-					<p class="card-description mb-4">
-						Ready-to-deploy infrastructure and configuration templates
-					</p>
-					<ul class="space-y-2 list-text">
-						<li class="flex items-start gap-2">
-							<Circle class="w-4 h-4 icon-muted mt-0.5 flex-shrink-0" />
-							<span>Cloudflare Workers deployment templates</span>
-						</li>
-						<li class="flex items-start gap-2">
-							<Circle class="w-4 h-4 icon-muted mt-0.5 flex-shrink-0" />
-							<span>SvelteKit + Cloudflare starter</span>
-						</li>
-						<li class="flex items-start gap-2">
-							<Circle class="w-4 h-4 icon-muted mt-0.5 flex-shrink-0" />
-							<span>Agent architecture patterns</span>
-						</li>
-					</ul>
-				</div>
-
-				<!-- Support & Community -->
-				<div class="feature-card p-6">
-					<MessageCircle class="w-8 h-8 mb-3 icon-secondary" />
-					<h3 class="card-title mb-2">Async Support</h3>
-					<p class="card-description mb-4">
-						Email support and asynchronous community resources
-					</p>
-					<ul class="space-y-2 list-text">
-						<li class="flex items-start gap-2">
-							<Circle class="w-4 h-4 icon-muted mt-0.5 flex-shrink-0" />
-							<span>Priority email support (24-48hr response)</span>
-						</li>
-						<li class="flex items-start gap-2">
-							<Circle class="w-4 h-4 icon-muted mt-0.5 flex-shrink-0" />
-							<span>GitHub Discussions access</span>
-						</li>
-						<li class="flex items-start gap-2">
-							<Circle class="w-4 h-4 icon-muted mt-0.5 flex-shrink-0" />
-							<span>Quarterly recorded Q&A sessions</span>
-						</li>
-					</ul>
-				</div>
-			</div>
-		</div>
-
-		<!-- The Philosophy -->
-		<div class="philosophy-card mb-16 p-8">
-			<h2 class="section-title mb-4">Why This Model?</h2>
-			<div class="space-y-4 body-text">
-				<p>
-					CREATE SOMETHING practices what it preaches. If agentic systems are about encoding
-					expertise so humans don't need to be constantly involved, then our business model should
-					reflect that.
-				</p>
-				<p>
-					<strong class="text-primary">No forced schedules.</strong> New agents, videos, and workshops
-					are released when projects complete—quality over arbitrary deadlines.
-				</p>
-				<p>
-					<strong class="text-primary">No mandatory community.</strong> Everything works asynchronously.
-					Recorded videos, documented code, self-service resources. Engage when you want, how you want.
-				</p>
-				<p>
-					<strong class="text-primary">Real client work.</strong> Every agent in the library has been
-					proven in production. Not toy examples—actual systems that solve real problems.
-				</p>
-			</div>
-		</div>
-
-		<!-- Pricing Preview -->
-		<div class="mb-16">
-			<h2 class="section-title mb-8">Pricing (Preview)</h2>
-
-			<div class="grid md:grid-cols-3 gap-6">
-				<!-- Free Tier -->
-				<div class="pricing-card p-6">
-					<div class="tier-label mb-2">EXPLORE</div>
-					<div class="tier-price mb-4">Free</div>
-					<ul class="space-y-3 list-text mb-6">
-						<li class="flex items-start gap-2">
-							<Check class="w-4 h-4 icon-muted flex-shrink-0" />
-							<span>Component documentation</span>
-						</li>
-						<li class="flex items-start gap-2">
-							<Check class="w-4 h-4 icon-muted flex-shrink-0" />
-							<span>Selected experiments & papers</span>
-						</li>
-						<li class="flex items-start gap-2">
-							<Check class="w-4 h-4 icon-muted flex-shrink-0" />
-							<span>Sample agent code</span>
-						</li>
-					</ul>
-				</div>
-
-				<!-- Paid Tier -->
-				<div class="pricing-card-featured p-6 relative">
-					<div class="recommended-badge">
-						RECOMMENDED
-					</div>
-					<div class="tier-label-featured mb-2">BUILD</div>
-					<div class="tier-price mb-1">$40</div>
-					<div class="tier-period mb-4">/month</div>
-					<ul class="space-y-3 list-text mb-6">
-						<li class="flex items-start gap-2">
-							<Check class="w-4 h-4 icon-success flex-shrink-0" />
-							<span>Full agent library</span>
-						</li>
-						<li class="flex items-start gap-2">
-							<Check class="w-4 h-4 icon-success flex-shrink-0" />
-							<span>All video walkthroughs</span>
-						</li>
-						<li class="flex items-start gap-2">
-							<Check class="w-4 h-4 icon-success flex-shrink-0" />
-							<span>All recorded workshops</span>
-						</li>
-						<li class="flex items-start gap-2">
-							<Check class="w-4 h-4 icon-success flex-shrink-0" />
-							<span>Template repositories</span>
-						</li>
-						<li class="flex items-start gap-2">
-							<Check class="w-4 h-4 icon-success flex-shrink-0" />
-							<span>Email support</span>
-						</li>
-						<li class="flex items-start gap-2">
-							<Check class="w-4 h-4 icon-success flex-shrink-0" />
-							<span>Early access to new releases</span>
-						</li>
-					</ul>
-				</div>
-
-				<!-- Enterprise Tier -->
-				<div class="pricing-card p-6">
-					<div class="tier-label mb-2">DEPLOY</div>
-					<div class="tier-price mb-4">Custom</div>
-					<ul class="space-y-3 list-text mb-6">
-						<li class="flex items-start gap-2">
-							<Check class="w-4 h-4 icon-muted flex-shrink-0" />
-							<span>Everything in Build</span>
-						</li>
-						<li class="flex items-start gap-2">
-							<Check class="w-4 h-4 icon-muted flex-shrink-0" />
-							<span>Consultancy hours</span>
-						</li>
-						<li class="flex items-start gap-2">
-							<Check class="w-4 h-4 icon-muted flex-shrink-0" />
-							<span>Custom agent development</span>
-						</li>
-						<li class="flex items-start gap-2">
-							<Check class="w-4 h-4 icon-muted flex-shrink-0" />
-							<span>Private repository access</span>
-						</li>
-					</ul>
-				</div>
-			</div>
-		</div>
-
-		<!-- Early Access Signup -->
-		<div class="max-w-xl mx-auto text-center">
-			<h2 class="cta-title mb-4">Get Early Access</h2>
-			<p class="body-text mb-8">
-				Sign up to be notified when subscriptions launch in January 2025. Early subscribers get
-				founding member pricing.
-			</p>
-
-			{#if submitted}
-				<div class="success-banner p-6">
-					<div class="success-title mb-2">You're on the list!</div>
-					<p class="success-description">
-						We'll email you when subscriptions open in January.
-					</p>
-				</div>
-			{:else}
-				<form on:submit={handleSubmit} class="space-y-4">
-					<div>
-						<label for="subscribe-email" class="sr-only">Email address</label>
-						<input
-							id="subscribe-email"
-							type="email"
-							bind:value={email}
-							placeholder="your@email.com"
-							required
-							class="email-input w-full px-4 py-3"
-						/>
-					</div>
-
-					{#if error}
-						<div class="error-banner p-3">
-							{error}
-						</div>
-					{/if}
-
-					<button
-						type="submit"
-						class="submit-button w-full px-6 py-3 font-medium"
-					>
-						Notify Me at Launch
-					</button>
-				</form>
-			{/if}
-
-			<p class="caption-text mt-4">
-				No spam. Just one email when subscriptions open in January 2025.
-			</p>
-		</div>
-
-		<!-- Footer Links -->
-		<div class="footer-section mt-16 pt-8 text-center">
-			<p>
-				Questions? Email <a href="mailto:micah@createsomething.io" class="footer-link">micah@createsomething.io</a>
-				·
-				<a href="/" class="footer-link">Back to experiments</a>
-			</p>
-		</div>
-	</div>
+  <section class="subscription-process" data-page-chapter="next" aria-labelledby="next-title">
+    <div class="subscription-process__inner">
+      <div>
+        <p class="eyebrow">What happens next</p>
+        <h2 id="next-title">One request. One confirmation.</h2>
+      </div>
+      <ol>
+        <li>
+          <span>01</span>
+          <p><strong>Request the note.</strong> Enter the address that should receive it.</p>
+        </li>
+        <li>
+          <span>02</span>
+          <p>
+            <strong>Open the confirmation email.</strong> The link proves the address belongs to you.
+          </p>
+        </li>
+        <li>
+          <span>03</span>
+          <p>
+            <strong>Confirm or stop.</strong> Join only after confirming, then unsubscribe whenever the
+            note stops helping.
+          </p>
+        </li>
+      </ol>
+      <a href="/papers" class="research-link">Browse the research</a>
+    </div>
+  </section>
 </div>
 
 <style>
-	/* Page Layout */
-	.page-container {
-		background: var(--color-performance-bg-pure);
-		color: var(--color-performance-fg-primary);
-	}
+  .subscription-page {
+    background: var(--color-performance-paper, #f3f3f0);
+    color: var(--color-performance-ink, #090909);
+  }
 
-	/* Typography */
-	.page-title {
-		font-size: var(--text-performance-h1);
-		font-weight: var(--font-performance-bold);
-		color: var(--color-performance-fg-primary);
-	}
+  .subscription-opening,
+  .subscription-process {
+    padding: clamp(4.5rem, 10vw, 8rem) 1.25rem;
+  }
 
-	.page-subtitle {
-		font-size: var(--text-performance-h3);
-		color: var(--color-performance-fg-tertiary);
-	}
+  .subscription-opening__inner,
+  .subscription-process__inner {
+    width: min(70rem, 100%);
+    margin: 0 auto;
+  }
 
-	.section-title {
-		font-size: var(--text-performance-h2);
-		font-weight: 700;
-		color: var(--color-performance-fg-primary);
-	}
+  .subscription-opening__inner {
+    display: grid;
+    gap: 1.5rem;
+  }
 
-	.cta-title {
-		font-size: clamp(1.5rem, 3vw, 2rem);
-		font-weight: 700;
-		color: var(--color-performance-fg-primary);
-	}
+  .eyebrow {
+    margin: 0;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-performance-ink-muted, #66665f);
+  }
 
-	.card-title {
-		font-size: var(--text-performance-body-lg);
-		font-weight: 700;
-		color: var(--color-performance-fg-primary);
-	}
+  h1,
+  h2 {
+    margin: 0;
+    font-weight: 600;
+    letter-spacing: -0.045em;
+    line-height: 0.98;
+  }
 
-	.card-description {
-		font-size: var(--text-performance-body-sm);
-		color: var(--color-performance-fg-tertiary);
-	}
+  h1 {
+    max-width: 11ch;
+    font-size: clamp(3.2rem, 9vw, 7.5rem);
+  }
 
-	.body-text {
-		color: var(--color-performance-fg-tertiary);
-	}
+  h2 {
+    max-width: 14ch;
+    font-size: clamp(2.25rem, 6vw, 4.75rem);
+  }
 
-	.list-text {
-		font-size: var(--text-performance-body-sm);
-		color: var(--color-performance-fg-tertiary);
-	}
+  .lede {
+    max-width: 42rem;
+    margin: 0;
+    font-size: clamp(1.15rem, 2.4vw, 1.55rem);
+    line-height: 1.55;
+    color: var(--color-performance-ink-muted, #5f5f58);
+  }
 
-	.caption-text {
-		font-size: var(--text-performance-caption);
-		color: var(--color-performance-fg-muted);
-	}
+  .offer-boundary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: clamp(1rem, 3vw, 2rem);
+    border: 1px solid var(--color-performance-border, #d0d0c8);
+  }
 
-	.text-primary {
-		color: var(--color-performance-fg-primary);
-	}
+  .offer-boundary p {
+    display: grid;
+    gap: 0.55rem;
+    margin: 0;
+    padding: 1.5rem;
+  }
 
-	/* Launch Badge */
-	.launch-badge {
-		font-size: var(--text-performance-body-sm);
-		background: var(--color-performance-bg-surface);
-		border: 1px solid var(--color-performance-border-emphasis);
-		border-radius: var(--radius-performance-scale-sm);
-		color: var(--color-performance-fg-primary);
-	}
+  .offer-boundary p + p {
+    border-left: 1px solid var(--color-performance-border, #d0d0c8);
+  }
 
-	/* Feature Cards */
-	.feature-card {
-		background: var(--color-performance-bg-subtle);
-		border-radius: var(--radius-performance-scale-lg);
-	}
+  .offer-boundary strong {
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
 
-	/* Philosophy Card */
-	.philosophy-card {
-		background: var(--color-performance-bg-subtle);
-		border-radius: var(--radius-performance-scale-lg);
-	}
+  .offer-boundary span {
+    line-height: 1.55;
+    color: var(--color-performance-ink-muted, #5f5f58);
+  }
 
-	/* Pricing Cards */
-	.pricing-card {
-		background: var(--color-performance-bg-subtle);
-		border-radius: var(--radius-performance-scale-lg);
-	}
+  .signup-chapter {
+    border-block: 1px solid var(--color-performance-ink, #090909);
+  }
 
-	.pricing-card-featured {
-		background: var(--color-performance-bg-surface);
-		border: 2px solid var(--color-performance-border-strong);
-		border-radius: var(--radius-performance-scale-lg);
-	}
+  .subscription-process__inner {
+    display: grid;
+    grid-template-columns: minmax(0, 0.85fr) minmax(20rem, 1fr);
+    gap: clamp(2.5rem, 7vw, 6rem);
+    align-items: start;
+  }
 
-	.tier-label {
-		font-size: var(--text-performance-body-sm);
-		font-family: ui-monospace, monospace;
-		color: var(--color-performance-fg-muted);
-	}
+  .subscription-process__inner > div {
+    display: grid;
+    gap: 1rem;
+  }
 
-	.tier-label-featured {
-		font-size: var(--text-performance-body-sm);
-		font-family: ui-monospace, monospace;
-		color: var(--color-performance-fg-tertiary);
-	}
+  ol {
+    display: grid;
+    gap: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border-top: 1px solid var(--color-performance-border, #d0d0c8);
+  }
 
-	.tier-price {
-		font-size: clamp(1.5rem, 3vw, 2rem);
-		font-weight: 700;
-		color: var(--color-performance-fg-primary);
-	}
+  li {
+    display: grid;
+    grid-template-columns: 2.5rem 1fr;
+    gap: 1rem;
+    padding: 1.4rem 0;
+    border-bottom: 1px solid var(--color-performance-border, #d0d0c8);
+  }
 
-	.tier-period {
-		font-size: var(--text-performance-caption);
-		color: var(--color-performance-fg-muted);
-	}
+  li > span {
+    font-family: var(--font-performance-mono, ui-monospace, monospace);
+    font-size: 0.78rem;
+    color: var(--color-performance-ink-muted, #66665f);
+  }
 
-	.recommended-badge {
-		position: absolute;
-		top: -0.75rem;
-		left: 50%;
-		transform: translateX(-50%);
-		padding: 0.25rem 0.75rem;
-		background: var(--color-performance-fg-primary);
-		color: var(--color-performance-bg-pure);
-		font-size: var(--text-performance-caption);
-		font-weight: 700;
-		border-radius: var(--radius-performance-scale-full);
-	}
+  li p {
+    margin: 0;
+    line-height: 1.55;
+  }
 
-	/* Icons */
-	:global(.icon-secondary) {
-		color: var(--color-performance-fg-secondary);
-	}
+  li strong {
+    display: block;
+    margin-bottom: 0.25rem;
+  }
 
-	:global(.icon-success) {
-		color: var(--color-performance-success);
-	}
+  .research-link {
+    grid-column: 2;
+    justify-self: start;
+    color: inherit;
+    font-weight: 700;
+    text-underline-offset: 0.25em;
+  }
 
-	:global(.icon-muted) {
-		color: var(--color-performance-fg-subtle);
-	}
+  @media (max-width: 47.99rem) {
+    .offer-boundary,
+    .subscription-process__inner {
+      grid-template-columns: 1fr;
+    }
 
-	/* Form Elements */
-	.success-banner {
-		background: var(--color-performance-success-muted);
-		border: 1px solid var(--color-performance-success-border);
-		border-radius: var(--radius-performance-scale-lg);
-	}
+    .offer-boundary p + p {
+      border-top: 1px solid var(--color-performance-border, #d0d0c8);
+      border-left: 0;
+    }
 
-	.success-title {
-		color: var(--color-performance-success);
-		font-size: var(--text-performance-body-lg);
-		font-weight: 500;
-	}
+    .research-link {
+      grid-column: 1;
+    }
+  }
 
-	.success-description {
-		color: var(--color-performance-fg-tertiary);
-		font-size: var(--text-performance-body-sm);
-	}
-
-	.error-banner {
-		background: var(--color-performance-error-muted);
-		border: 1px solid var(--color-performance-error-border);
-		border-radius: var(--radius-performance-scale-sm);
-		color: var(--color-performance-error);
-		font-size: var(--text-performance-body-sm);
-	}
-
-	.email-input {
-		background: var(--color-performance-bg-surface);
-		border: 1px solid var(--color-performance-border-emphasis);
-		border-radius: var(--radius-performance-scale-lg);
-		color: var(--color-performance-fg-primary);
-	}
-
-	.email-input::placeholder {
-		color: var(--color-performance-fg-muted);
-	}
-
-	.email-input:focus {
-		outline: 2px solid var(--color-performance-focus);
-		outline-offset: 2px;
-		border-color: var(--color-performance-border-strong);
-	}
-
-	.submit-button {
-		background: var(--color-performance-fg-primary);
-		color: var(--color-performance-bg-pure);
-		border-radius: var(--radius-performance-scale-lg);
-		transition: opacity var(--duration-performance-micro) var(--ease-performance-standard);
-	}
-
-	.submit-button:hover {
-		opacity: 0.9;
-	}
-
-	.submit-button:focus-visible {
-		outline: 2px solid var(--color-performance-focus);
-		outline-offset: 2px;
-	}
-	.footer-section {
-		font-size: var(--text-performance-body-sm);
-		color: var(--color-performance-fg-muted);
-	}
-
-	.footer-link {
-		text-decoration: underline;
-		transition: color var(--duration-performance-micro) var(--ease-performance-standard);
-	}
-
-	.footer-link:hover {
-		color: var(--color-performance-fg-tertiary);
-	}
-
-	/* Screen reader only - visually hidden but accessible */
-	.sr-only {
-		position: absolute;
-		width: 1px;
-		height: 1px;
-		padding: 0;
-		margin: -1px;
-		overflow: hidden;
-		clip: rect(0, 0, 0, 0);
-		white-space: nowrap;
-		border: 0;
-	}
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      scroll-behavior: auto !important;
+    }
+  }
 </style>

@@ -13,16 +13,16 @@ import type { UnsubscribeResult } from './types.js';
  * D1 Database interface (minimal)
  */
 interface D1Database {
-	prepare(query: string): D1PreparedStatement;
+  prepare(query: string): D1PreparedStatement;
 }
 
 interface D1PreparedStatement {
-	bind(...args: unknown[]): D1PreparedStatement;
-	run(): Promise<D1Result>;
+  bind(...args: unknown[]): D1PreparedStatement;
+  run(): Promise<D1Result>;
 }
 
 interface D1Result {
-	success: boolean;
+  success: boolean;
 }
 
 /**
@@ -42,74 +42,77 @@ interface D1Result {
  * ```
  */
 export async function processUnsubscribe(
-	token: string | null,
-	db: D1Database | undefined
+  token: string | null,
+  db: D1Database | undefined
 ): Promise<UnsubscribeResult> {
-	if (!token) {
-		return {
-			success: false,
-			error: 'Missing unsubscribe token',
-			email: null,
-		};
-	}
+  if (!token) {
+    return {
+      success: false,
+      error: 'This unsubscribe link is missing part of its address.',
+      email: null
+    };
+  }
 
-	// Decode the token (format: base64(email:timestamp))
-	let email: string;
-	try {
-		const decoded = atob(token);
-		const parts = decoded.split(':');
-		if (parts.length < 2) {
-			throw new Error('Invalid token format');
-		}
-		email = parts[0];
+  // Decode the token (format: base64(email:timestamp))
+  let email: string;
+  try {
+    const decoded = atob(token);
+    const separator = decoded.lastIndexOf(':');
+    if (separator < 1) {
+      throw new Error('Invalid token format');
+    }
+    email = decoded.slice(0, separator);
 
-		// Basic email validation
-		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-		if (!emailRegex.test(email)) {
-			throw new Error('Invalid email in token');
-		}
-	} catch {
-		return {
-			success: false,
-			error: 'Invalid unsubscribe token',
-			email: null,
-		};
-	}
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      throw new Error('Invalid email in token');
+    }
+  } catch {
+    return {
+      success: false,
+      error: 'This unsubscribe link is invalid.',
+      email: null
+    };
+  }
 
-	if (!db) {
-		console.error('Database not available');
-		return {
-			success: false,
-			error: 'Service temporarily unavailable',
-			email: null,
-		};
-	}
+  if (!db) {
+    console.error('Database not available');
+    return {
+      success: false,
+      error: 'Service temporarily unavailable',
+      email: null
+    };
+  }
 
-	try {
-		// Update the subscriber record - handle both schema variations
-		// Schema 1: has unsubscribed_at column
-		// Schema 2: has status column
-		await db
-			.prepare(
-				`UPDATE newsletter_subscribers
+  try {
+    // Update the subscriber record - handle both schema variations
+    // Schema 1: has unsubscribed_at column
+    // Schema 2: has status column
+    await db
+      .prepare(
+        `UPDATE newsletter_subscribers
 			 SET unsubscribed_at = datetime('now'),
+			     active = 0,
 			     status = 'unsubscribed'
-			 WHERE email = ? AND (unsubscribed_at IS NULL OR status = 'active')`
-			)
-			.bind(email)
-			.run();
+			 WHERE email = ?
+			   AND unsubscribe_token = ?
+			   AND (unsubscribed_at IS NULL OR status = 'active')`
+      )
+      .bind(email, token)
+      .run();
 
-		return {
-			success: true,
-			error: null,
-			email,
-		};
-	} catch (dbError) {
-		console.error('Unsubscribe error:', dbError);
-		return {
-			success: false,
-			error: 'Failed to process unsubscribe request',
-			email: null,
-		};
-	}
+    return {
+      success: true,
+      error: null,
+      email
+    };
+  } catch (dbError) {
+    console.error('Unsubscribe error:', dbError);
+    return {
+      success: false,
+      error: 'Failed to process unsubscribe request',
+      email: null
+    };
+  }
 }

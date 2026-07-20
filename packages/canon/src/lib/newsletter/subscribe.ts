@@ -343,6 +343,8 @@ export async function processSubscription(
 				     unsubscribe_token = ?,
 				     unsubscribed_at = NULL,
 				     confirmed_at = NULL,
+				     active = 1,
+				     status = 'active',
 				     subscribed_at = datetime('now'),
 				     source = ?
 				 WHERE email = ?`
