@@ -158,6 +158,22 @@ Historical client integrations may remain as delivery evidence or compatibility
 code, but they must not be presented as the current CREATE SOMETHING operating
 architecture.
 
+### Compatibility Proof Contract
+
+Compatibility proof may appear only after the workflow boundary is visible.
+Use a small, static set of high-leverage brand marks on commercial routes and
+send visitors to the searchable directory for the complete public catalog.
+
+The directory is generated only from registry entries explicitly labeled as
+brokered Composio toolkit gateways. It must exclude owned, internal, and
+client-specific registry records and their descriptions.
+
+`Connector available` means a brokered tool path is present. It does not mean
+the account is connected, an integration has been delivered, write access is
+authorized, or the vendor certifies, partners with, or endorses CREATE
+SOMETHING. Connection, permissions, actions, approval rules, and evidence are
+scoped during workflow mapping.
+
 ### Marketing Page Portfolio
 
 Public SEO/AEO pages should operate as a funnel portfolio, not a pile of

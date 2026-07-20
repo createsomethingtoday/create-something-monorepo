@@ -13,6 +13,7 @@
   } from '@create-something/canon';
   import { controlledFlowMedia } from '@create-something/canon/components/performance/media/controlled-flow';
   import HeroTrustArtifact from '$lib/components/HeroTrustArtifact.svelte';
+  import IntegrationCompatibilityRail from '$lib/components/IntegrationCompatibilityRail.svelte';
   import PublicSubstrateCanvas from '$lib/components/PublicSubstrateCanvas.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
@@ -254,6 +255,8 @@
       <Button href="/proof/marketplace-workflow" variant="secondary">See a worked example</Button>
     {/snippet}
   </PerformanceCampaignOpening>
+
+  <IntegrationCompatibilityRail surface="homepage" />
 
   <PerformanceNarrativeStage
     id="agency-operating-story"

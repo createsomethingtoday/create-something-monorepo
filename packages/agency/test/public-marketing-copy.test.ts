@@ -285,4 +285,40 @@ test('agency README documents the public copy contract', () => {
   assert.match(source, /CREATE SOMETHING owns the system/);
   assert.match(source, /Cloudflare provides infrastructure/);
   assert.match(source, /OpenAI[\s>]+provides intelligence/);
+  assert.match(source, /### Compatibility Proof Contract/);
+  assert.match(source, /`Connector available` means a brokered tool path is present/);
+});
+
+test('integration proof keeps compatibility distinct from partnership and delivery', () => {
+  const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
+  const partners = readFileSync(
+    new URL('../src/routes/partners/+page.svelte', import.meta.url),
+    'utf8'
+  );
+  const rail = readFileSync(
+    new URL('../src/lib/components/IntegrationCompatibilityRail.svelte', import.meta.url),
+    'utf8'
+  );
+  const catalog = readFileSync(
+    new URL('../src/lib/components/IntegrationCatalog.svelte', import.meta.url),
+    'utf8'
+  );
+  const map = readFileSync(new URL('../src/routes/map/+page.svelte', import.meta.url), 'utf8');
+  const mapCanvas = readFileSync(
+    new URL('../src/lib/components/PublicAtlasCanvas.svelte', import.meta.url),
+    'utf8'
+  );
+
+  assert.match(home, /IntegrationCompatibilityRail surface="homepage"/);
+  assert.match(partners, /IntegrationCompatibilityRail surface="partners"/);
+  assert.match(partners, /<IntegrationCatalog \/>/);
+  assert.match(rail, /Brand marks identify tool paths, not partnerships or endorsements/);
+  assert.match(catalog, /Connector available ≠ connected or write-authorized/);
+  assert.match(catalog, /not a live customer connection/);
+  assert.match(catalog, /integration_name=/);
+  assert.match(map, /initialIntegration=/);
+  assert.match(map, /initialIntegrationName=/);
+  assert.match(mapCanvas, /seedIntegrationContext\(\)/);
+  assert.match(mapCanvas, /Connector context added/);
+  assert.doesNotMatch(`${rail}\n${catalog}`, /certified integration|official partner|1,041/gi);
 });

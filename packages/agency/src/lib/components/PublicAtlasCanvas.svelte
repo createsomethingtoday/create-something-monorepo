@@ -24,6 +24,7 @@
 	} from '$lib/atlas/public';
 	import { buildPublicAtlasBookingUrl } from '$lib/atlas/public-booking';
 	import { PUBLIC_ATLAS_LIMITS, PUBLIC_ATLAS_STORAGE_KEYS } from '$lib/atlas/intake-policy';
+	import { normalizeIntegrationMapContext } from '$lib/atlas/integration-context';
 
 	type AgentMessage = {
 		role: 'assistant' | 'visitor';
@@ -51,6 +52,8 @@
 	export let compact = false;
 	export let bookingHref = '/book';
 	export let flowId = 'public-atlas-flow';
+	export let initialIntegration = '';
+	export let initialIntegrationName = '';
 
 	let canvas = createPublicAtlasCanvas();
 	let selectedNodeId = 'data_workflow';
@@ -339,6 +342,59 @@
 		agentSuggestions = ['Name the owner', 'Find the approval point', 'Mark the riskiest handoff'];
 	}
 
+	function seedIntegrationContext() {
+		const integration = normalizeIntegrationMapContext(
+			initialIntegration,
+			initialIntegrationName
+		);
+		if (!integration) return;
+
+		const nodeId = `system_integration_${integration.slug.replaceAll('-', '_')}`;
+		const existingNode = canvas.nodes.find((node) => node.id === nodeId);
+		if (existingNode) {
+			selectedNodeId = existingNode.id;
+			selectedSourceId = existingNode.id;
+			return;
+		}
+
+		const integrationNode = createPublicAtlasNode('system', {
+			id: nodeId,
+			label: integration.name,
+			notes:
+				'Selected from the connector directory. Confirm account ownership, permissions, allowed actions, and approval rules before this tool can run.',
+			createdBy: 'visitor',
+			status: 'unknown'
+		});
+		const workflowNode = canvas.nodes.find((node) => node.id === 'data_workflow');
+		canvas = normalizePublicAtlasCanvas({
+			...canvas,
+			nodes: [...canvas.nodes, integrationNode],
+			edges: workflowNode
+				? [
+						...canvas.edges,
+						createPublicAtlasEdge(workflowNode.id, integrationNode.id, {
+							id: `edge_workflow_integration_${integration.slug.replaceAll('-', '_')}`,
+							label: 'uses tool',
+							createdBy: 'visitor'
+						})
+					]
+				: canvas.edges,
+			mutationCount: canvas.mutationCount + 1,
+			updatedAt: new Date().toISOString()
+		});
+		selectedNodeId = integrationNode.id;
+		selectedSourceId = integrationNode.id;
+		agentInput = `Map a workflow using ${integration.name}. Confirm account ownership, permissions, allowed actions, and approval rules.`;
+		messages = [
+			...messages,
+			{
+				role: 'assistant',
+				text: `${integration.name} is attached as the selected tool. Confirm its account, permissions, actions, approval points, and proof before it can run.`
+			}
+		];
+		saveState = 'Connector context added';
+	}
+
 	onMount(() => {
 		const raw = window.localStorage.getItem(PUBLIC_ATLAS_STORAGE_KEYS.canvas);
 		if (raw) {
@@ -351,6 +407,7 @@
 				saveState = 'Draft not saved';
 			}
 		}
+		seedIntegrationContext();
 		hydrated = true;
 	});
 
