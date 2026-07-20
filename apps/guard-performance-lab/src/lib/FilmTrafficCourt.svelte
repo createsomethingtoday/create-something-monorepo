@@ -9,6 +9,7 @@
   let teammateCount = $derived(traffic.players.filter((player) => player.team === 'teammate').length);
   let opponentCount = $derived(traffic.players.filter((player) => player.team === 'opponent').length);
   let targetCount = $derived(traffic.players.filter((player) => player.team === 'target').length);
+  let candidateFingerprint = $derived(analysis.analysis.fullFlowVerification?.candidateFingerprint ?? analysis.analysis.identityVerification?.candidateFingerprint);
   const scale = 10;
   const x = (feet: number) => courtToSvg([feet, 0], scale)[0];
   const y = (feet: number) => courtToSvg([0, feet], scale)[1];
@@ -24,7 +25,18 @@
   const wakePath = (segment: Array<{ court: [number, number] }>) => segment.map((sample, index) => `${index ? 'L' : 'M'} ${x(sample.court[0])} ${y(sample.court[1])}`).join(' ');
 </script>
 
-<svg id="film-traffic-court" class="traffic-court" viewBox="0 0 940 500" role="img" aria-labelledby="traffic-title traffic-desc" xmlns="http://www.w3.org/2000/svg">
+<svg
+  id="film-traffic-court"
+  class="traffic-court"
+  viewBox="0 0 940 500"
+  role="img"
+  aria-labelledby="traffic-title traffic-desc"
+  xmlns="http://www.w3.org/2000/svg"
+  data-source-sha256={analysis.source.sha256}
+  data-analysis-id={analysis.id}
+  data-analysis-revision={analysis.analysis.revision}
+  data-candidate-fingerprint={candidateFingerprint}
+>
   <title id="traffic-title">Player traffic at {Math.round(traffic.timeMs / 100) / 10} seconds / {traffic.currentPlayState}</title>
   <desc id="traffic-desc">A top-down basketball court with {traffic.players.length} foreground-court players: {teammateCount} teammates, {opponentCount} opponents, target count {targetCount}. The current play state is {traffic.currentPlayState}. Orange wake includes verified live basketball only. {movementMode === 'all-captured' ? 'Gray wake preserves non-live and unknown captured movement.' : 'Non-live and unknown movement is hidden from the wake.'}</desc>
   <rect width="940" height="500" fill="#f8f7f1" />

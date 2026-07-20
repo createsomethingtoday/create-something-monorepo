@@ -35,6 +35,7 @@ def arguments():
     parser.add_argument("--seed-box", required=True, help="x,y,width,height in extracted-frame pixels")
     parser.add_argument("--reviewer", choices=["user", "codex"], default="user")
     parser.add_argument("--output", required=True)
+    parser.add_argument("--diagnostics-output", help="Optional private JSON file containing per-frame mask-logit diagnostics")
     parser.add_argument("--device", choices=["mps", "cpu"], default="mps")
     return parser.parse_args()
 
@@ -67,6 +68,16 @@ def mask_sample(frame_index: int, logits: torch.Tensor, start_ms: int, sample_fp
     }
 
 
+def mask_diagnostic(frame_index: int, logits: torch.Tensor):
+    scores = logits.detach().float().cpu().numpy().squeeze()
+    return {
+        "frameIndex": frame_index,
+        "minLogit": round(float(scores.min()), 4),
+        "maxLogit": round(float(scores.max()), 4),
+        "positivePixels": int((scores > 0).sum()),
+    }
+
+
 def main():
     args = arguments()
     frames_path = Path(args.frames).resolve()
@@ -94,6 +105,7 @@ def main():
     predictor.add_new_points_or_box(state, frame_idx=args.seed_frame, obj_id=13, box=box)
 
     samples = []
+    diagnostics = []
     directions = [(False, len(frame_paths)), (True, args.seed_frame)] if args.seed_frame else [(False, len(frame_paths))]
     for reverse, count in directions:
         for frame_index, object_ids, mask_logits in predictor.propagate_in_video(
@@ -103,7 +115,9 @@ def main():
             reverse=reverse,
         ):
             target_index = object_ids.index(13)
-            sample = mask_sample(frame_index, mask_logits[target_index], args.start_ms, args.sample_fps, args.seed_frame, scale_x, scale_y)
+            target_logits = mask_logits[target_index]
+            diagnostics.append({**mask_diagnostic(frame_index, target_logits), "reverse": reverse})
+            sample = mask_sample(frame_index, target_logits, args.start_ms, args.sample_fps, args.seed_frame, scale_x, scale_y)
             if sample is not None:
                 samples.append(sample)
 
@@ -134,6 +148,12 @@ def main():
     temporary = destination.with_suffix(destination.suffix + ".tmp")
     temporary.write_text(json.dumps(receipt, indent=2) + "\n")
     temporary.replace(destination)
+    if args.diagnostics_output:
+        diagnostic_destination = Path(args.diagnostics_output)
+        diagnostic_destination.parent.mkdir(parents=True, exist_ok=True)
+        diagnostic_temporary = diagnostic_destination.with_suffix(diagnostic_destination.suffix + ".tmp")
+        diagnostic_temporary.write_text(json.dumps(diagnostics, indent=2) + "\n")
+        diagnostic_temporary.replace(diagnostic_destination)
     print(json.dumps({"ok": True, "output": str(destination), "device": str(device), "frames": len(frame_paths), "samples": len(samples)}, indent=2))
 
 
