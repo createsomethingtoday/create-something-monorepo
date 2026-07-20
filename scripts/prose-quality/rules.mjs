@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
 import {
+  discoverActivePublicCopyFiles,
   discoverPublicCopyFiles,
   PUBLIC_COPY_RULES
 } from '../../packages/agency/scripts/check-public-copy.mjs';
@@ -9,6 +10,16 @@ import {
 export const prosePolicy = JSON.parse(
   readFileSync(
     new URL('../../docs/policies/v1/policy.prose-quality.v1.json', import.meta.url),
+    'utf8'
+  )
+);
+
+export const stePolicy = JSON.parse(
+  readFileSync(
+    new URL(
+      '../../docs/policies/v1/policy.simplified-technical-english.v1.json',
+      import.meta.url
+    ),
     'utf8'
   )
 );
@@ -32,6 +43,10 @@ export const agencyOverlayRules = PUBLIC_COPY_RULES.map((rule) => ({
 
 export const agencyOverlayFiles = new Set(
   discoverPublicCopyFiles().map((file) => path.resolve(file))
+);
+
+export const agencyActiveFiles = new Set(
+  discoverActivePublicCopyFiles().map((file) => path.resolve(file))
 );
 
 export const reviewRules = Object.fromEntries(

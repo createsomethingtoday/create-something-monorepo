@@ -139,7 +139,7 @@
   <PerformanceContrastChapter
     eyebrow="Map before booking"
     title="See the workflow before deciding to build."
-    description="CREATE SOMETHING Map turns one workflow into a first plan: the systems involved, which signals matter, what AI can handle, where people approve, and what proof records the outcome. It does not touch production systems."
+    description="CREATE SOMETHING Map turns one workflow into a first plan. It shows the systems, signals, AI tasks, where people approve, and which record proves the outcome. It does not touch production systems."
     intervention={{ label: 'Read-only warmup', title: 'Public Map canvas', detail: 'Explore the operating path without touching production systems.' }}
     artifactPlacement="full-width"
   >

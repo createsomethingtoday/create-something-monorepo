@@ -6,6 +6,7 @@ import process from 'node:process';
 import { spawnSync } from 'node:child_process';
 
 import {
+  agencyActiveFiles,
   agencyOverlayFiles,
   agencyOverlayRules,
   autoExcludedPrefixes,
@@ -14,6 +15,7 @@ import {
   deterministicRules,
   prosePolicy,
   reviewRules,
+  stePolicy,
   supportedProseExtensions
 } from './rules.mjs';
 
@@ -22,7 +24,7 @@ const repoRoot = process.cwd();
 function usage(message) {
   if (message) console.error(message);
   console.error(
-    'Usage: node scripts/prose-quality/index.mjs <check|audit> [file...] [--changed-from ref] [--format text|json]'
+    'Usage: node scripts/prose-quality/index.mjs <check|audit> [file...] [--changed-from ref] [--profile agency-ste] [--scope agency-active] [--format text|json]'
   );
   process.exit(2);
 }
@@ -34,6 +36,8 @@ function parseArgs(argv) {
   const files = [];
   let format = 'text';
   let changedFrom = null;
+  let profile = null;
+  let scope = null;
 
   for (let index = 0; index < rest.length; index += 1) {
     const arg = rest[index];
@@ -57,17 +61,46 @@ function parseArgs(argv) {
       changedFrom = arg.slice('--changed-from='.length);
       continue;
     }
+    if (arg === '--profile') {
+      profile = rest[index + 1];
+      if (!profile) usage('Missing value after --profile.');
+      index += 1;
+      continue;
+    }
+    if (arg.startsWith('--profile=')) {
+      profile = arg.slice('--profile='.length);
+      continue;
+    }
+    if (arg === '--scope') {
+      scope = rest[index + 1];
+      if (!scope) usage('Missing value after --scope.');
+      index += 1;
+      continue;
+    }
+    if (arg.startsWith('--scope=')) {
+      scope = arg.slice('--scope='.length);
+      continue;
+    }
     if (arg === '--help' || arg === '-h') usage();
     if (arg.startsWith('-')) usage(`Unknown option: ${arg}`);
     files.push(arg);
   }
 
   if (format !== 'text' && format !== 'json') usage('Format must be text or json.');
+  if (profile !== null && profile !== 'agency-ste') {
+    usage(`Unsupported profile: ${profile}`);
+  }
+  if (scope !== null && scope !== 'agency-active') {
+    usage(`Unsupported scope: ${scope}`);
+  }
   if (files.length > 0 && changedFrom) {
     usage('Use explicit files or --changed-from, not both.');
   }
+  if (scope && (files.length > 0 || changedFrom)) {
+    usage('Use --scope without explicit files or --changed-from.');
+  }
 
-  return { mode, files, format, changedFrom };
+  return { mode, files, format, changedFrom, profile, scope };
 }
 
 function positionAt(source, offset) {
@@ -103,7 +136,15 @@ function isAutoIncluded(file) {
   return supportedProseExtensions.has(path.extname(normalized));
 }
 
-function resolveSelection({ mode, files, changedFrom }) {
+function resolveSelection({ mode, files, changedFrom, scope }) {
+  if (scope === 'agency-active') {
+    return {
+      baseline: null,
+      scope,
+      files: [...agencyActiveFiles].map(repoRelative).sort()
+    };
+  }
+
   if (files.length > 0) return { baseline: null, files };
 
   if (changedFrom || mode === 'check') {
@@ -201,7 +242,18 @@ function parseIgnoredRanges(source, file) {
   return { findings, masked };
 }
 
-function reviewSentences(source, file) {
+function resolveContentProfile(source, absoluteFile, requestedProfile) {
+  if (requestedProfile !== 'agency-ste') return null;
+
+  const explicit = source.match(
+    /<!--\s*prose-profile:\s*(procedure|description|brand-heading|exact-content)\s*-->/i
+  )?.[1];
+  if (explicit) return explicit.toLowerCase();
+  if (agencyActiveFiles.has(absoluteFile)) return stePolicy.scope.default_public_profile;
+  return null;
+}
+
+function reviewSentences(source, file, contentProfile = null) {
   const findings = [];
   const sentencePattern = /[^.!?\n]+[.!?]/g;
 
@@ -212,8 +264,24 @@ function reviewSentences(source, file) {
     const prose = excerpt.replace(/`[^`]*`/g, ' ').replace(/<[^>]*>/g, ' ');
     const words = prose.match(/[\p{L}\p{N}][\p{L}\p{N}'’-]*/gu) ?? [];
 
+    const steProfile = contentProfile ? stePolicy.content_profiles[contentProfile] : null;
+    const steMaxWords = steProfile?.automatic_enforcement ? steProfile.max_words : null;
     const longSentence = reviewRules.longSentence;
-    if (words.length > longSentence.maxWords) {
+    if (steMaxWords !== null && words.length > steMaxWords) {
+      findings.push({
+        file,
+        line,
+        column,
+        rule: `ste/${contentProfile}-sentence-length`,
+        severity: 'error',
+        message: `This ${contentProfile} sentence has ${words.length} words; the STE-aligned limit is ${steMaxWords}.`,
+        suggestion:
+          contentProfile === 'procedure'
+            ? 'Write one instruction in 20 words or fewer.'
+            : 'Split the description so each sentence has 25 words or fewer.',
+        excerpt
+      });
+    } else if (steMaxWords === null && !steProfile && words.length > longSentence.maxWords) {
       findings.push({
         file,
         line,
@@ -260,7 +328,7 @@ function reviewSentences(source, file) {
   return findings;
 }
 
-function auditSource(source, relativeFile, absoluteFile) {
+function auditSource(source, relativeFile, absoluteFile, requestedProfile = null) {
   const ignored = parseIgnoredRanges(source, relativeFile);
   const lintableSource = ignored.masked;
   const findings = [...ignored.findings];
@@ -304,18 +372,24 @@ function auditSource(source, relativeFile, absoluteFile) {
     }
   }
 
-  findings.push(...reviewSentences(lintableSource, relativeFile));
+  const contentProfile = resolveContentProfile(lintableSource, absoluteFile, requestedProfile);
+  findings.push(...reviewSentences(lintableSource, relativeFile, contentProfile));
 
   return findings.sort((left, right) => left.line - right.line || left.column - right.column);
 }
 
-function auditFile(file) {
+function auditFile(file, requestedProfile = null) {
   const absoluteFile = path.resolve(repoRoot, file);
   if (!statSync(absoluteFile).isFile()) usage(`Not a file: ${file}`);
-  return auditSource(readFileSync(absoluteFile, 'utf8'), repoRelative(absoluteFile), absoluteFile);
+  return auditSource(
+    readFileSync(absoluteFile, 'utf8'),
+    repoRelative(absoluteFile),
+    absoluteFile,
+    requestedProfile
+  );
 }
 
-function baselineFindings(baseline, file) {
+function baselineFindings(baseline, file, requestedProfile = null) {
   const result = spawnSync('git', ['show', `${baseline}:${file}`], {
     cwd: repoRoot,
     encoding: 'utf8'
@@ -323,7 +397,7 @@ function baselineFindings(baseline, file) {
   if (result.status !== 0) return [];
 
   const absoluteFile = path.resolve(repoRoot, file);
-  return auditSource(result.stdout, file, absoluteFile);
+  return auditSource(result.stdout, file, absoluteFile, requestedProfile);
 }
 
 function findingSignature(finding) {
@@ -346,11 +420,11 @@ function introducedFindings(current, baseline) {
   });
 }
 
-function buildReport(mode, selection) {
+function buildReport(mode, selection, profile) {
   const findings = selection.files.flatMap((file) => {
-    const current = auditFile(file);
+    const current = auditFile(file, profile);
     if (!selection.baseline) return current;
-    return introducedFindings(current, baselineFindings(selection.baseline, file));
+    return introducedFindings(current, baselineFindings(selection.baseline, file, profile));
   });
   const blocking = findings.filter((finding) => finding.severity === 'error').length;
   const review = findings.length - blocking;
@@ -362,9 +436,12 @@ function buildReport(mode, selection) {
       version: prosePolicy.version
     },
     mode,
-    selection: selection.baseline
-      ? { kind: 'changed', baseline: selection.baseline }
-      : { kind: 'explicit-or-full' },
+    ...(profile ? { profile } : {}),
+    selection: selection.scope
+      ? { kind: 'scope', scope: selection.scope }
+      : selection.baseline
+        ? { kind: 'changed', baseline: selection.baseline }
+        : { kind: 'explicit-or-full' },
     status: blocking > 0 ? 'block' : review > 0 ? 'review' : 'pass',
     summary: {
       files: selection.files.length,
@@ -391,7 +468,7 @@ function renderText(report) {
 
 const parsed = parseArgs(process.argv.slice(2));
 const selection = resolveSelection(parsed);
-const report = buildReport(parsed.mode, selection);
+const report = buildReport(parsed.mode, selection, parsed.profile);
 
 if (parsed.format === 'json') {
   console.log(JSON.stringify(report, null, 2));

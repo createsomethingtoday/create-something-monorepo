@@ -94,7 +94,7 @@
       summary: 'One owned system',
       title: 'Map and Control use the same operating foundation.',
       detail:
-        'Substrate keeps the records, Topology supplies derived system context, the shared canvas carries the workflow definition, and the governed runtime preserves approvals, runs, receipts, and recovery.',
+        'Substrate keeps the records, and Topology supplies system context. The shared canvas carries the workflow definition. The governed runtime preserves approvals, runs, receipts, and recovery.',
       tone: 'neutral',
       receipts: ['Substrate', 'Topology', 'shared canvas', 'governed runtime']
     }
@@ -136,7 +136,7 @@
     id="control-operating-story"
     eyebrow="One governed product"
     title="Boundary. Operate. Cadence. Foundation."
-    description="Control reads as one operating decision: establish the shared workflow boundary, see how judgment moves, choose a review rhythm, and keep every state in one owned system."
+    description="Control shows one operating decision at a time. Set the workflow boundary, see where judgment moves, choose a review rhythm, and keep every state in one owned system."
     scenes={controlScenes}
     ariaLabel="Control operating story"
   >
