@@ -1,6 +1,9 @@
 <script lang="ts">
 	import { QuoteBlock, SEO } from '@create-something/canon';
+	import ExperimentOrientation from '$lib/components/ExperimentOrientation.svelte';
+	import ProgressiveExperiment from '$lib/components/ProgressiveExperiment.svelte';
 	import ExperimentVisualSummary from '$lib/components/ExperimentVisualSummary.svelte';
+	import { experimentGuides } from '$lib/config/experimentSharpness';
 	import { Spritz } from '@create-something/spritz';
 	import type { PageData } from './$types';
 
@@ -78,6 +81,8 @@
 		<h1>{experiment.title}</h1>
 		<p class="subtitle">{experiment.description}</p>
 	</header>
+	<ExperimentOrientation guide={experimentGuides['experiments/spritz']} />
+	<ProgressiveExperiment fallback="The experiment question and comprehension limit remain available above. Enable JavaScript to control the reading speed.">
 
 	<!-- ASCII Art -->
 	{#if experiment.ascii_art}
@@ -349,6 +354,7 @@ engine.play();`}</pre>
 			Tests: {experiment.tests_principles?.join(', ') ?? 'N/A'}
 		</p>
 	</footer>
+	</ProgressiveExperiment>
 </article>
 
 <style>

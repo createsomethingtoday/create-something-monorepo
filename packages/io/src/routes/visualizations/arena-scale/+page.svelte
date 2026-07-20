@@ -1,7 +1,12 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { SEO } from '@create-something/canon';
+	import ExperimentOrientation from '$lib/components/ExperimentOrientation.svelte';
+	import ProgressiveExperiment from '$lib/components/ProgressiveExperiment.svelte';
+	import { experimentGuides } from '$lib/config/experimentSharpness';
 
 	let mounted = false;
+	let reduceMotion = false;
 	let time = 0;
 	let hoveredArena: string | null = null;
 	let activePattern: number | null = null;
@@ -29,6 +34,10 @@
 	// Animation loop
 	onMount(() => {
 		mounted = true;
+		reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+		if (reduceMotion) {
+			return;
+		}
 		let frame: number;
 		const animate = () => {
 			time += 0.008;
@@ -68,20 +77,21 @@
 	}
 </script>
 
-<svelte:head>
-	<title>Arena-Scale AI-Native Automation | CREATE SOMETHING</title>
-	<meta
-		name="description"
-		content="Visualizing how pattern collection enables AI-native automation at arena scale"
-	/>
-</svelte:head>
+<SEO
+	title="Arena-Scale Automation | CREATE SOMETHING"
+	description="A three-step model for supervising many venues: set authority, map the work, and inspect proof."
+	propertyName="io"
+	canonical="https://createsomething.io/visualizations/arena-scale"
+/>
 
 <div class="container">
 	<header>
-		<h1>Arena-Scale Automation</h1>
-		<p class="subtitle">How Pattern Collection Enables AI-Native Systems Across Industries</p>
+		<h1>Coordinate Many Venues</h1>
+		<p class="subtitle">Set authority, map the work, then inspect proof.</p>
 	</header>
+	<ExperimentOrientation guide={experimentGuides['visualizations/arena-scale']} />
 
+	<ProgressiveExperiment fallback="The three-step operating model is summarized above. Enable JavaScript to explore venue relationships and pattern flows.">
 	<div class="visualization-wrapper">
 		<svg viewBox="0 0 800 800" class="arena-viz">
 			<defs>
@@ -185,7 +195,7 @@
 							/>
 
 							<!-- Animated particle along path -->
-							{#if mounted}
+							{#if mounted && !reduceMotion}
 								<circle r="3" fill={fromArena.color} filter="url(#glow)">
 									<animateMotion dur="{2 + i * 0.3}s" repeatCount="indefinite" path={path} />
 								</circle>
@@ -227,7 +237,7 @@
 					/>
 
 					<!-- Pulsing indicator -->
-					{#if mounted}
+					{#if mounted && !reduceMotion}
 						<circle cx={pos.x} cy={pos.y} r="45" fill="none" stroke={arena.color} stroke-width="1">
 							<animate
 								attributeName="r"
@@ -358,6 +368,7 @@
 			</div>
 		</div>
 	</div>
+	</ProgressiveExperiment>
 
 	<section class="insight">
 		<h2>Financial Freedom Through Pattern Leverage</h2>
@@ -384,7 +395,7 @@
 <style>
 	:global(body) {
 		background: #0a0a0f;
-		color: #e0e0e0;
+		color: #111;
 		font-family: 'JetBrains Mono', 'SF Mono', monospace;
 	}
 
@@ -403,15 +414,13 @@
 		font-size: 2.5rem;
 		font-weight: 300;
 		letter-spacing: 0.1em;
-		background: linear-gradient(135deg, #00d4aa 0%, #7b61ff 50%, #ffb800 100%);
-		-webkit-background-clip: text;
-		-webkit-text-fill-color: transparent;
-		background-clip: text;
+		color: #111 !important;
+		-webkit-text-fill-color: #111 !important;
 		margin-bottom: 0.5rem;
 	}
 
 	.subtitle {
-		color: #666;
+		color: #555;
 		font-size: 1rem;
 		letter-spacing: 0.05em;
 	}

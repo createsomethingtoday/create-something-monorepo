@@ -10,7 +10,10 @@
 	 */
 
 	import { SEO } from '@create-something/canon';
+	import ExperimentOrientation from '$lib/components/ExperimentOrientation.svelte';
+	import ProgressiveExperiment from '$lib/components/ProgressiveExperiment.svelte';
 	import ExperimentVisualSummary from '$lib/components/ExperimentVisualSummary.svelte';
+	import { experimentGuides } from '$lib/config/experimentSharpness';
 	import {
 		KnowledgeGraphCanvas,
 		CanvasDiagram,
@@ -209,6 +212,8 @@
 			Demonstrating force-directed graphs, animation timelines, and exportable diagrams.
 		</p>
 	</header>
+	<ExperimentOrientation guide={experimentGuides['experiments/canvas-interactivity']} />
+	<ProgressiveExperiment fallback="The experiment question and evidence test remain available above. Enable JavaScript to manipulate and export the canvases.">
 
 	<ExperimentVisualSummary visual={experiment.visual_summary} />
 
@@ -363,6 +368,7 @@
 			</div>
 		</div>
 	</section>
+	</ProgressiveExperiment>
 </div>
 
 <style>

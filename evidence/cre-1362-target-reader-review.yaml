@@ -1,0 +1,61 @@
+issue: CRE-1362
+date: 2026-07-20
+scope: io-experiment-detail-family
+reader:
+  description: A junior operator who can use a website but does not know CREATE SOMETHING vocabulary.
+  required_path:
+    - State the experiment question from the opening.
+    - Identify the action to take.
+    - Identify what counts as evidence and what the result cannot prove.
+    - Use a live tool or open a complete research record.
+    - Continue to a related experiment.
+verdict: pass
+material_friction: []
+checks:
+  first_encounter:
+    result: pass
+    evidence: Every implementation states a plain question and action before relying on internal methods or vocabulary.
+  default_path:
+    result: pass
+    evidence: Start here presents question, action, evidence, limit, and continuation in one bounded block.
+  report_scan_path:
+    result: pass
+    evidence: Seven reports keep the complete research record in a native disclosure; six dedicated reports are 74 to 84 percent shorter before expansion.
+  tool_path:
+    result: pass
+    evidence: Interactive routes retain their work surfaces after enhancement and show an honest requirement when JavaScript is unavailable.
+  proof:
+    result: pass
+    evidence: The preservation contract retains representative results, calculations, demonstrations, sources, and handoffs across all 19 implementations.
+  data_truth:
+    result: pass
+    evidence: Agent Operations distinguishes unavailable data, no recorded runs, and measured success instead of converting absence to 100 percent.
+  mobile:
+    result: pass
+    evidence: All 19 mobile routes render one visible H1, one main, exact width, and the same reader orientation.
+  no_javascript:
+    result: pass
+    evidence: The dynamic report and all previously affected tools retain meaning with zero visible dead main controls.
+  reduced_motion:
+    result: pass
+    evidence: Living Arena and Coordinate Many Venues report zero running animations under reduced motion.
+  recovery_and_boundary:
+    result: pass
+    evidence: Missing local production tables are named as fixture limits; cross-property redirects remain exact; inherited metadata ownership is not misrepresented.
+  terminal_handoff:
+    result: pass
+    evidence: Every reader guide names a related experiment or the complete experiment catalog.
+review_notes:
+  - The first rendered pass still placed the dynamic artifact before the reader question. The orientation was moved directly under the title and re-rendered.
+  - The first Arena Scale repair made the title technically visible but still low contrast. Its opening became Coordinate Many Venues with the operating sequence in plain language.
+  - Long interactive demonstrations remain available because their controls and resulting states are the evidence. The orientation makes their purpose and limit clear before the work surface.
+  - IO root metadata duplication remains owned by the shared layout and needs a separate coordinated repair.
+approval:
+  human_final_prose_review: pending
+  merge: held
+  deployment: held
+evidence:
+  baseline: evidence/cre-1362/source-and-rendered-baseline.md
+  fail_first: evidence/cre-1362/fail-first-contract.md
+  final_verification: evidence/cre-1362/final-verification.md
+  screenshots: evidence/cre-1362/final-screenshots

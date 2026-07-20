@@ -10,7 +10,10 @@
 	 */
 
 	import { SEO } from '@create-something/canon';
+	import ExperimentOrientation from '$lib/components/ExperimentOrientation.svelte';
+	import ExperimentRecord from '$lib/components/ExperimentRecord.svelte';
 	import ExperimentVisualSummary from '$lib/components/ExperimentVisualSummary.svelte';
+	import { experimentGuides } from '$lib/config/experimentSharpness';
 	import {
 		ComparativeSparklines,
 		DistributionBar,
@@ -119,6 +122,8 @@
 			transforming visualization from manual craft into intelligent revelation.
 		</p>
 	</div>
+	<ExperimentOrientation guide={experimentGuides['experiments/agentic-visualization']} />
+	<ExperimentRecord>
 
 	<ExperimentVisualSummary visual={experiment.visual_summary} />
 
@@ -543,6 +548,7 @@
 		</div>
 	</section>
 
+	</ExperimentRecord>
 		<!-- Footer -->
 		<div class="section-divider pt-6">
 			<p class="text-body-sm text-muted">

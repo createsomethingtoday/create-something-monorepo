@@ -7,7 +7,9 @@
 	 */
 
 	import { SEO } from '@create-something/canon';
+	import ExperimentOrientation from '$lib/components/ExperimentOrientation.svelte';
 	import ExperimentVisualSummary from '$lib/components/ExperimentVisualSummary.svelte';
+	import { experimentGuides } from '$lib/config/experimentSharpness';
 	import {
 		ComparativeSparklines,
 		TrendIndicator,
@@ -113,6 +115,7 @@
 				trends, and anomalies without manual analysis. The components make the insights obvious.
 			</p>
 		</div>
+		<ExperimentOrientation guide={experimentGuides['experiments/data-patterns']} />
 
 		<ExperimentVisualSummary visual={experiment.visual_summary} />
 

@@ -239,13 +239,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
   group(
     'ltd-editorial',
     'ltd',
-    [
-      'ethos',
-      'experiments/the-circle-closes',
-      'standards',
-      'taste',
-      'voice'
-    ],
+    ['ethos', 'experiments/the-circle-closes', 'standards', 'taste', 'voice'],
     'migrated',
     contract(
       'editorial',
@@ -462,34 +456,47 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     )
   ),
   group(
-    'io-experiments',
+    'io-experiment-reports',
     'io',
     [
       'experiments/[slug]',
-      'experiments/agent-operations',
       'experiments/agentic-visualization',
-      'experiments/ai-native-filtering',
-      'experiments/ascii-renderer',
       'experiments/awwwards-patterns',
-      'experiments/canvas-interactivity',
-      'experiments/data-patterns',
-      'experiments/diagrams',
       'experiments/hybrid-scheduling',
       'experiments/ic-mvp-pipeline',
       'experiments/kinetic-typography',
+      'experiments/text-revelation'
+    ],
+    'migrated',
+    contract(
+      'editorial',
+      'Understand what the experiment tested and what its result supports.',
+      'The result, evidence test, limit, and complete research record remain available.',
+      'Open the full record or continue to the related experiment'
+    )
+  ),
+  group(
+    'io-experiment-tools',
+    'io',
+    [
+      'experiments/agent-operations',
+      'experiments/ai-native-filtering',
+      'experiments/ascii-renderer',
+      'experiments/canvas-interactivity',
+      'experiments/data-patterns',
+      'experiments/diagrams',
       'experiments/living-arena',
       'experiments/living-arena-gpu',
       'experiments/render-preview',
       'experiments/render-studio',
       'experiments/spritz',
-      'experiments/text-revelation',
       'visualizations/arena-scale'
     ],
-    'pending',
+    'migrated',
     contract(
       'tool',
-      'Exercise the experiment and decide what its resulting state proves.',
-      'The live work surface, controls, and resulting state expose the experiment evidence.',
+      'Exercise one visible experiment and decide what its result supports.',
+      'The work surface, result, evidence test, and limit stay together.',
       'Continue to the related research or next test'
     )
   ),

@@ -15,6 +15,8 @@
     type TimelineData,
     type MatrixData,
   } from '@create-something/canon';
+  import ExperimentOrientation from '$lib/components/ExperimentOrientation.svelte';
+  import { experimentGuides } from '$lib/config/experimentSharpness';
 
   // Flow diagram data
   const flowData: FlowDiagramData = {
@@ -141,6 +143,7 @@
     <h1>Diagram Components</h1>
     <p class="subtitle">Canon-compliant data visualization with property-aware theming</p>
   </header>
+  <ExperimentOrientation guide={experimentGuides['experiments/diagrams']} />
 
   <section class="diagram-section">
     <h2>Flow Diagram</h2>

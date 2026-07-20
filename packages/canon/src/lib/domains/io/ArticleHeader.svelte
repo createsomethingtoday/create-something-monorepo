@@ -5,9 +5,18 @@
 
 	interface Props {
 		paper: Paper;
+		prioritizeTitle?: boolean;
+		orientation?: {
+			question: string;
+			action: string;
+			evidence: string;
+			limit: string;
+			nextLabel: string;
+			nextHref: string;
+		} | null;
 	}
 
-	let { paper }: Props = $props();
+	let { paper, prioritizeTitle = false, orientation = null }: Props = $props();
 
 	const categoryDisplayNames: Record<string, string> = {
 		automation: 'Automation',
@@ -38,7 +47,7 @@
 	};
 </script>
 
-<header class="article-header w-full max-w-5xl mx-auto px-6 py-12 animate-reveal">
+<header class="article-header w-full max-w-5xl mx-auto px-6 py-12 animate-reveal" class:prioritize-title={prioritizeTitle}>
 	<!-- ASCII Art Hero -->
 	<div class="ascii-hero mb-8 overflow-hidden">
 		<div class="ascii-hero-frame aspect-[21/9] flex items-center justify-center p-8">
@@ -58,7 +67,7 @@
 	</div>
 
 	<!-- Category Tag -->
-	<div class="mb-6 animate-slide-in" style="--delay: 2">
+	<div class="category-row mb-6 animate-slide-in" style="--delay: 2">
 		<span class="category-tag">
 			{categoryDisplayName}
 		</span>
@@ -68,6 +77,19 @@
 	<h1 class="article-title mb-6 animate-reveal" style="--delay: 3">
 		{paper.title}
 	</h1>
+
+	{#if orientation}
+		<section class="experiment-orientation" aria-labelledby="experiment-question">
+			<p class="orientation-label">Start here</p>
+			<h2 id="experiment-question">{orientation.question}</h2>
+			<p>{orientation.action}</p>
+			<div class="orientation-checks">
+				<p><strong>What counts as evidence</strong>{orientation.evidence}</p>
+				<p><strong>Keep in mind</strong>{orientation.limit}</p>
+			</div>
+			<a href={orientation.nextHref}>{orientation.nextLabel} →</a>
+		</section>
+	{/if}
 
 	<!-- Excerpt -->
 	{#if paper.excerpt_long}
@@ -142,12 +164,12 @@
 	</div>
 
 	<!-- Tracked Experiment Badge -->
-	<div class="mt-8 animate-reveal" style="--delay: 6">
+	<div class="experiment-badge mt-8 animate-reveal" style="--delay: 6">
 		<TrackedExperimentBadge {paper} showFullStats={true} />
 	</div>
 
 	{#if paper.visual_summary}
-		<div class="animate-reveal" style="--delay: 7">
+		<div class="visual-summary animate-reveal" style="--delay: 7">
 			<ArtifactVisualSummary visual={paper.visual_summary} />
 		</div>
 	{/if}
@@ -158,6 +180,29 @@
 		background: var(--color-performance-bg-pure);
 		border-radius: var(--radius-performance-scale-lg);
 	}
+
+	.prioritize-title {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.prioritize-title .category-row { order: 1; }
+	.prioritize-title .article-title { order: 2; }
+	.prioritize-title .experiment-orientation { order: 3; }
+	.prioritize-title .article-excerpt { order: 4; }
+	.prioritize-title .metadata-row { order: 5; }
+	.prioritize-title .ascii-hero { order: 6; margin-top: 2rem; margin-bottom: 0; }
+	.prioritize-title .experiment-badge { order: 7; }
+	.prioritize-title .visual-summary { order: 8; }
+
+	.experiment-orientation { max-width: 52rem; margin-block: 0 2rem; padding: clamp(1.25rem, 3vw, 2rem); border: 1px solid var(--color-performance-border-subtle); background: var(--color-performance-bg-surface); }
+	.orientation-label { margin: 0 0 .5rem; font-size: .75rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+	.experiment-orientation h2 { margin: 0; max-width: 24ch; font-size: clamp(1.4rem, 3vw, 2rem); line-height: 1.12; }
+	.experiment-orientation > p:not(.orientation-label) { max-width: 58ch; line-height: 1.6; }
+	.orientation-checks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-block: 1.25rem; }
+	.orientation-checks p { margin: 0; line-height: 1.5; }
+	.orientation-checks strong { display: block; margin-bottom: .2rem; font-size: .75rem; text-transform: uppercase; }
+	@media (max-width: 38rem) { .orientation-checks { grid-template-columns: 1fr; } }
 
 	.ascii-art {
 		font-family: monospace;

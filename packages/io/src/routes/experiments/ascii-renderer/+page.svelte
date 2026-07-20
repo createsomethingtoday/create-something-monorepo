@@ -8,7 +8,10 @@
 	 * @see https://alexharri.com/blog/ascii-rendering
 	 */
 	import { SEO } from '@create-something/canon';
+	import ExperimentOrientation from '$lib/components/ExperimentOrientation.svelte';
+	import ProgressiveExperiment from '$lib/components/ProgressiveExperiment.svelte';
 	import ExperimentVisualSummary from '$lib/components/ExperimentVisualSummary.svelte';
+	import { experimentGuides } from '$lib/config/experimentSharpness';
 	import type { PageData } from './$types';
 	import { onMount } from 'svelte';
 
@@ -528,6 +531,8 @@
 			>.
 		</p>
 	</header>
+	<ExperimentOrientation guide={experimentGuides['experiments/ascii-renderer']} />
+	<ProgressiveExperiment fallback="The experiment question and limits remain available above. Enable JavaScript to render an image as text and adjust the matching controls.">
 
 	<ExperimentVisualSummary visual={experiment.visual_summary} />
 
@@ -647,6 +652,7 @@
 			</div>
 		</div>
 	</section>
+	</ProgressiveExperiment>
 </div>
 
 <style>

@@ -10,6 +10,9 @@
 	 */
 
 	import { SEO } from '@create-something/canon';
+	import ExperimentOrientation from '$lib/components/ExperimentOrientation.svelte';
+	import ExperimentRecord from '$lib/components/ExperimentRecord.svelte';
+	import { experimentGuides } from '$lib/config/experimentSharpness';
 
 	// Cost comparison data
 	const modalLimitations = {
@@ -58,6 +61,8 @@
 				overcoming free tier limitations while maintaining cost efficiency.
 			</p>
 		</div>
+		<ExperimentOrientation guide={experimentGuides['experiments/hybrid-scheduling']} />
+		<ExperimentRecord>
 
 		<!-- Abstract -->
 		<section class="abstract-section pl-6 space-y-4">
@@ -542,6 +547,7 @@
 			</div>
 		</section>
 
+		</ExperimentRecord>
 		<!-- Footer -->
 		<div class="section-divider pt-6">
 			<p class="text-body-sm text-muted">
