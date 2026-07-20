@@ -438,12 +438,12 @@ describe('identity-only candidate derivation', () => {
       profile: FILM_BENCHMARK_PROFILE,
       analysis: { revision: 2, executionCount: 1, analyzedAt: '2026-07-19T19:00:00.000Z', classification: { executionCount: 1 } },
       frames: [
-        { timeMs: 0, players: [{ trackId: 'wrong-old-target', team: 'target', court: [40, 20], confidence: 0.7 }, { trackId: 'p-13', team: 'teammate', court: [10, 20], confidence: 0.9 }] },
+        { timeMs: 0, players: [{ trackId: 'wrong-old-target', team: 'target', court: [40, 20], confidence: 0.7 }, { trackId: 'p-13', team: 'teammate', court: [10, 20], cropBounds: [10, 10, 20, 40], confidence: 0.9 }] },
         { timeMs: 1000, players: [{ trackId: 'p-5', team: 'teammate', court: [20, 20], confidence: 0.9 }] },
         { timeMs: 2000, players: [{ trackId: 'p-13-next', team: 'teammate', court: [30, 20], confidence: 0.9 }] },
-        { timeMs: 3000, players: [{ trackId: 'p-13', team: 'teammate', court: [32, 20], confidence: 0.9 }] },
-        { timeMs: 4000, players: [{ trackId: 'p-13', team: 'teammate', court: [34, 20], confidence: 0.9 }] },
-        { timeMs: 5000, players: [{ trackId: 'p-13', team: 'teammate', court: [36, 20], confidence: 0.9 }] }
+        { timeMs: 3000, players: [{ trackId: 'p-13', team: 'teammate', court: [32, 20], cropBounds: [10, 10, 20, 40], confidence: 0.9 }] },
+        { timeMs: 4000, players: [{ trackId: 'p-13', team: 'teammate', court: [34, 20], cropBounds: [10, 10, 20, 40], confidence: 0.9 }] },
+        { timeMs: 5000, players: [{ trackId: 'p-13', team: 'teammate', court: [36, 20], cropBounds: [10, 10, 20, 40], confidence: 0.9 }] }
       ]
     });
     const candidate = deriveFilmIdentityCandidate(revision2, [
@@ -507,6 +507,38 @@ describe('identity-only candidate derivation', () => {
 
     const receipt = verifyFilmIdentityCandidate(revision2, candidate, fixture);
     expect(receipt).toMatchObject({ ok: true, invariantIssues: [], positiveRecall: 1, hardNegativePrecision: 1, substitutionAccuracy: 1, correctionOverlayCount: 0 });
+
+    const maskCandidate = {
+      ...structuredClone(candidate),
+      identityPolicy: 'segmentation-mask-direct-reseed-fail-closed-v1',
+      frames: candidate.frames.map((frame) => ({
+        ...frame,
+        identityEvidence: frame.targetStatus === 'resolved'
+          ? { method: 'segmentation-mask', segmentId: `segment-${frame.timeMs}`, engine: 'sam2.1-video-local', confidence: 0.98 }
+          : frame.targetStatus === 'inactive'
+            ? { method: 'substitution-ledger', evidence: 'reviewed substitution boundary' }
+            : undefined
+      }))
+    };
+    const maskFixture = {
+      ...fixture,
+      annotations: fixture.annotations.map((annotation) => annotation.expectedIdentity === '13' && annotation.participation === 'active'
+        ? {
+            ...annotation,
+            trackId: `prior-${annotation.trackId}`,
+            cropBounds: [0, 0, 100, 100],
+            provenance: { ...annotation.provenance, cropBounds: [0, 0, 100, 100] }
+          }
+        : annotation)
+    };
+    expect(verifyFilmIdentityCandidate(revision2, maskCandidate, maskFixture)).toMatchObject({
+      ok: true,
+      invariantIssues: [],
+      positiveRecall: 1,
+      hardNegativePrecision: 1,
+      substitutionAccuracy: 1
+    });
+
     const revision3 = finalizeFilmIdentityRevision(revision2, candidate, receipt, '2026-07-19T20:00:00.000Z');
     expect(revision3.analysis).toMatchObject({ revision: 3, executionCount: 1, derivedFromRevision: 2, personDetectionExecuted: false, identityExecutionCount: 1 });
     expect(revision3.frames).toEqual(candidate.frames);

@@ -28,7 +28,7 @@ def main():
     if analysis.get("analysis", {}).get("revision") != 2 or analysis.get("analysis", {}).get("executionCount") != 1:
         raise SystemExit("Stable team derivation requires the completed one-run revision 2 receipt.")
     analysis["frames"] = stabilize_team_roles(analysis["frames"])
-    analysis["analysis"]["classification"]["trackAggregation"] = "ema-with-hysteresis-plus-full-track-confidence-vote"
+    analysis["analysis"]["classification"]["trackAggregation"] = "high-confidence-frame-uniform-with-track-vote-fallback-v1"
     analysis["analysis"]["classification"]["derivedFromRawArtifact"] = source.name
     temporary = destination.with_suffix(destination.suffix + ".tmp")
     temporary.write_text(json.dumps(analysis, separators=(",", ":")))

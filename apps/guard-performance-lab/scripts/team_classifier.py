@@ -20,6 +20,7 @@ FOREGROUND_CENTER_X = 0.55
 FOREGROUND_BASE_Y = 0.51
 FOREGROUND_EDGE_SLOPE = 0.10
 TEAM_SCORE_THRESHOLD = 0.31
+FRAME_ROLE_OVERRIDE_CONFIDENCE = 0.78
 
 
 @dataclass(frozen=True)
@@ -112,30 +113,37 @@ def classify_team(image: np.ndarray, box: np.ndarray | list[float]):
 
 
 def stabilize_team_roles(frames: list[dict]):
-    """Resolve one immutable role per continuous tracker id without inference.
+    """Resolve traffic roles without letting a reused tracker id override clear uniforms.
 
     The raw frame role and torso evidence remain embedded in `classification`;
-    this derived vote only controls the captured traffic role. Target samples are
-    excluded from the vote because #13 identity is a separate contract.
+    high-confidence white-versus-other evidence controls the current frame while
+    the full-track vote is retained as a fallback for ambiguous crops. Target
+    samples are excluded because #13 identity is a separate contract.
     """
     votes: dict[str, list[float]] = defaultdict(lambda: [0.0, 0.0])
     for frame in frames:
         for player in frame["players"]:
             if player["team"] == "target":
                 continue
-            index = 0 if player["team"] == "teammate" else 1
+            raw_role = player.get("classification", {}).get("role", player["team"])
+            index = 0 if raw_role == "teammate" else 1
             votes[player["trackId"]][index] += float(player["confidence"])
     stable_roles = {track_id: "teammate" if weights[0] >= weights[1] else "opponent" for track_id, weights in votes.items()}
     for frame in frames:
         for player in frame["players"]:
             if player["team"] == "target":
                 continue
-            raw_role = player["team"]
+            classification = player.setdefault("classification", {})
+            raw_role = classification.get("role", player["team"])
             stable_role = stable_roles[player["trackId"]]
-            player["team"] = stable_role
-            player.setdefault("classification", {})["frameRole"] = raw_role
-            player["classification"]["trackRole"] = stable_role
-            player["classification"]["trackVote"] = {
+            frame_confidence = float(classification.get("confidence", 0))
+            use_frame_role = raw_role in {"teammate", "opponent"} and frame_confidence >= FRAME_ROLE_OVERRIDE_CONFIDENCE
+            player["team"] = raw_role if use_frame_role else stable_role
+            classification["frameRole"] = raw_role
+            classification["trackRole"] = stable_role
+            classification["resolvedRole"] = player["team"]
+            classification["roleSource"] = "high-confidence-frame-uniform" if use_frame_role else "track-vote-fallback"
+            classification["trackVote"] = {
                 "teammate": round(votes[player["trackId"]][0], 4),
                 "opponent": round(votes[player["trackId"]][1], 4),
             }

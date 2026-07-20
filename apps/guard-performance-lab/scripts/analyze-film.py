@@ -469,7 +469,7 @@ def main():
                 "name": "foreground-court-central-torso-v2",
                 "courtMembership": "half-court-perspective-calibration",
                 "teamRule": "white-jersey-teammate-versus-other-opponent",
-                "trackAggregation": "ema-with-hysteresis-plus-full-track-confidence-vote",
+                "trackAggregation": "high-confidence-frame-uniform-with-track-vote-fallback-v1",
                 "maxActivePlayers": 10,
             },
         },

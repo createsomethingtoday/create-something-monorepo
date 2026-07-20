@@ -477,6 +477,11 @@ const capturedFrameSchema = z.object({
   ignored: z.array(ignoredDetectionSchema).default([])
 }).passthrough();
 
+const filmIdentityPolicySchema = z.enum([
+  'direct-number-or-bounded-continuity-fail-closed-v1',
+  'segmentation-mask-direct-reseed-fail-closed-v1'
+]);
+
 const capturedAnalysisReceiptSchema = z.object({
   revision: z.union([z.literal(1), z.literal(2), z.literal(3)]),
   executionCount: z.literal(1),
@@ -484,7 +489,7 @@ const capturedAnalysisReceiptSchema = z.object({
   derivedFromRevision: z.literal(2).optional(),
   personDetectionExecuted: z.literal(false).optional(),
   identityExecutionCount: z.literal(1).optional(),
-  identityPolicy: z.literal('direct-number-or-bounded-continuity-fail-closed-v1').optional(),
+  identityPolicy: filmIdentityPolicySchema.optional(),
   identityVerification: z.object({
     benchmarkProfile: z.literal(FILM_IDENTITY_BENCHMARK_PROFILE),
     candidateFingerprint: z.string().min(1),
@@ -666,7 +671,7 @@ const filmIdentityCandidateSchema = z.object({
   profile: z.literal(FILM_BENCHMARK_PROFILE),
   derivedFromRevision: z.literal(2),
   personDetectionExecuted: z.literal(false),
-  identityPolicy: z.literal('direct-number-or-bounded-continuity-fail-closed-v1'),
+  identityPolicy: filmIdentityPolicySchema,
   frames: z.array(capturedFrameSchema)
 }).passthrough();
 
@@ -688,6 +693,15 @@ function filmIdentityCandidateFingerprint(candidate: z.infer<typeof filmIdentity
 function identityNeutralPlayer(player: CapturedPlayer) {
   const { team, identity: _identity, identityEvidence: _identityEvidence, identityPreviousRole: _identityPreviousRole, ...rest } = player;
   return { ...rest, team: team === 'target' ? 'teammate' : team };
+}
+
+function reviewCropContainsPlayerCenter(reviewCrop: [number, number, number, number], playerCrop?: [number, number, number, number]) {
+  if (!playerCrop) return false;
+  const [left, top, right, bottom] = reviewCrop;
+  const [x, y, width, height] = playerCrop;
+  const centerX = x + width / 2;
+  const centerY = y + height / 2;
+  return right > left && bottom > top && centerX >= left && centerX <= right && centerY >= top && centerY <= bottom;
 }
 
 export function verifyFilmIdentityCandidate(revision2Input: unknown, candidateInput: unknown, benchmarkInput: unknown) {
@@ -725,9 +739,9 @@ export function verifyFilmIdentityCandidate(revision2Input: unknown, candidateIn
     if (targets.length > 1) invariantIssues.push(`Candidate contains multiple targets at ${prior.timeMs}ms.`);
     if (next.targetStatus === 'resolved') {
       if (targets.length !== 1) invariantIssues.push(`Resolved frame ${prior.timeMs}ms must contain exactly one target.`);
-      if (!next.identityEvidence || !['direct-number', 'bounded-continuity'].includes(String((next.identityEvidence as { method?: string }).method))) invariantIssues.push(`Resolved frame ${prior.timeMs}ms lacks direct-number or bounded-continuity evidence.`);
+      if (!next.identityEvidence || !['direct-number', 'bounded-continuity', 'segmentation-mask'].includes(String((next.identityEvidence as { method?: string }).method))) invariantIssues.push(`Resolved frame ${prior.timeMs}ms lacks direct-number, bounded-continuity, or reviewed segmentation-mask evidence.`);
     } else if (targets.length) invariantIssues.push(`Non-resolved frame ${prior.timeMs}ms contains a target.`);
-    if (next.targetStatus === 'inactive' && (next.identityEvidence as { method?: string } | undefined)?.method !== 'substitution') invariantIssues.push(`Inactive frame ${prior.timeMs}ms lacks substitution evidence.`);
+    if (next.targetStatus === 'inactive' && !['substitution', 'substitution-ledger'].includes(String((next.identityEvidence as { method?: string } | undefined)?.method))) invariantIssues.push(`Inactive frame ${prior.timeMs}ms lacks substitution evidence.`);
     if (targets.some((target) => target.provenance === 'corrected' || target.correctionId)) invariantIssues.push(`Candidate uses a correction overlay at ${prior.timeMs}ms.`);
   }
 
@@ -736,15 +750,19 @@ export function verifyFilmIdentityCandidate(revision2Input: unknown, candidateIn
     const frame = frameByTime.get(annotation.associationTimeMs);
     const target = frame?.players.find((player) => player.team === 'target');
     const evidenceMethod = (frame?.identityEvidence as { method?: string } | undefined)?.method;
+    const targetMatchesReview = target?.trackId === annotation.trackId || (
+      candidate.identityPolicy === 'segmentation-mask-direct-reseed-fail-closed-v1'
+      && reviewCropContainsPlayerCenter(annotation.cropBounds, target?.cropBounds)
+    );
     return {
       id: annotation.id,
       predictedIdentity: frame?.targetStatus === 'inactive'
         ? '13' as const
-        : target?.trackId === annotation.trackId
+        : target && targetMatchesReview
           ? '13' as const
           : 'unresolved' as const,
       targetStatus: frame?.targetStatus ?? 'unresolved' as const,
-      evidence: evidenceMethod === 'direct-number' ? 'direct-number' as const : evidenceMethod === 'bounded-continuity' ? 'bounded-continuity' as const : evidenceMethod === 'substitution' ? 'substitution' as const : 'none' as const,
+      evidence: evidenceMethod === 'direct-number' ? 'direct-number' as const : evidenceMethod === 'bounded-continuity' || evidenceMethod === 'segmentation-mask' ? 'bounded-continuity' as const : evidenceMethod === 'substitution' || evidenceMethod === 'substitution-ledger' ? 'substitution' as const : 'none' as const,
       corrected: Boolean(target?.provenance === 'corrected' || target?.correctionId)
     };
   });

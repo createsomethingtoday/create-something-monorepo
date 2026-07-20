@@ -85,5 +85,34 @@ class TargetAssociationTest(unittest.TestCase):
         self.assertIsNone(MODULE.select_target(state, [lookalike], 3000, 1920, 1080))
 
 
+class TeamRoleStabilizationTest(unittest.TestCase):
+    def test_high_confidence_frame_uniform_overrides_a_reused_track_vote(self):
+        def player(time_role: str, classification_confidence: float):
+            return {
+                "trackId": "reused-track",
+                "team": "opponent",
+                "confidence": 0.9,
+                "classification": {
+                    "role": time_role,
+                    "confidence": classification_confidence,
+                    "reason": "central-torso-uniform-evidence",
+                },
+            }
+
+        frames = [
+            {"players": [player("opponent", 0.95)]},
+            {"players": [player("opponent", 0.95)]},
+            {"players": [player("opponent", 0.95)]},
+            {"players": [player("teammate", 0.99)]},
+            {"players": [player("teammate", 0.74)]},
+        ]
+
+        stabilized = MODULE.stabilize_team_roles(frames)
+
+        self.assertEqual([frame["players"][0]["team"] for frame in stabilized], ["opponent", "opponent", "opponent", "teammate", "opponent"])
+        self.assertEqual(stabilized[3]["players"][0]["classification"]["roleSource"], "high-confidence-frame-uniform")
+        self.assertEqual(stabilized[4]["players"][0]["classification"]["roleSource"], "track-vote-fallback")
+
+
 if __name__ == "__main__":
     unittest.main()
