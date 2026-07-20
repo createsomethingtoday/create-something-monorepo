@@ -68,6 +68,12 @@ The root prose interface owns profile enforcement. Changed-file checks block int
 
 Sentence length is necessary but not sufficient. Automated checks do not prove comprehension, correct vocabulary meaning, correct grammar, or full ASD-STE100 compliance. Human review remains authoritative for meaning, claims, evidence, voice, and rendered reading order.
 
+### Vale integration boundary
+
+Vale can provide a secondary editor and Markdown/HTML lint adapter. It does not replace the root prose interface. Agency copy often appears in Svelte component properties, and Vale does not list Svelte as a built-in markup format. A required Vale gate needs a pinned runtime, an owned style package, Svelte-aware extraction, and parity fixtures against this policy before it can block publication.
+
+If the team adds the Docker adapter, pin the image version and mount only the repository config, style directory, and selected documents. Do not use an unpinned container or treat a clean Vale result as proof that Svelte copy passed the canonical profile.
+
 ## Evidence
 
 - The machine-readable contract is `docs/policies/v1/policy.simplified-technical-english.v1.json`.

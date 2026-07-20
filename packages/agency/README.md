@@ -145,6 +145,10 @@ Validation:
 - Keep sentence length, vocabulary checks, and other automated signals
   subordinate to technical meaning, claim preservation, and the rendered human
   read.
+- Use Vale only as a secondary editor or Markdown/HTML adapter until a pinned
+  runtime and Svelte-aware extraction fixtures prove parity with the root prose
+  interface. A clean Vale result alone does not cover copy stored in Svelte
+  component properties.
 
 ### Platform Conviction Contract
 
