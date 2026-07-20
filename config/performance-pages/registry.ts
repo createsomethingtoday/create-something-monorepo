@@ -239,13 +239,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
   group(
     'ltd-editorial',
     'ltd',
-    [
-      'ethos',
-      'experiments/the-circle-closes',
-      'standards',
-      'taste',
-      'voice'
-    ],
+    ['ethos', 'experiments/the-circle-closes', 'standards', 'taste', 'voice'],
     'migrated',
     contract(
       'editorial',
@@ -611,7 +605,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     'learn-progress',
     'lms',
     ['progress'],
-    'pending',
+    'migrated',
     contract(
       'tool',
       'Inspect learning state and choose the next incomplete objective.',
