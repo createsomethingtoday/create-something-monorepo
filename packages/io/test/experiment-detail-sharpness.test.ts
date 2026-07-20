@@ -94,6 +94,39 @@ test('renders the shared orientation on every source without replacing its evide
   contains(dynamic, 'sharpenExperiment', 'dynamic experiments need the Canon experiment path');
 });
 
+test('puts the reader question directly after the title, before descriptive prose or artifacts', () => {
+  for (const route of allRoutes.filter((route) => route !== 'experiments/[slug]')) {
+    const source = readRoute(route);
+    const title = source.indexOf('<h1');
+    const orientation = source.indexOf('<ExperimentOrientation');
+    const nextParagraph = source.indexOf('<p', title);
+
+    assert.ok(title >= 0, `${route} needs an H1`);
+    assert.ok(orientation > title, `${route} must orient the reader after the H1`);
+    assert.ok(
+      nextParagraph < 0 || orientation < nextParagraph,
+      `${route} must orient the reader before descriptive prose`
+    );
+  }
+
+  const articleHeader = read('packages/canon/src/lib/domains/io/ArticleHeader.svelte');
+  contains(
+    articleHeader,
+    '{#if !prioritizeTitle}',
+    'ordinary articles may keep the artifact-first header'
+  );
+  contains(
+    articleHeader,
+    '{#if prioritizeTitle}',
+    'sharpened experiments need a title-first DOM branch'
+  );
+  lacks(
+    articleHeader,
+    /\.prioritize-title \.ascii-hero\s*\{\s*order:/,
+    'CSS reordering does not repair reading or no-JavaScript DOM order'
+  );
+});
+
 test('moves long reports behind a native full-record disclosure', () => {
   for (const route of reportRoutes.filter((route) => route !== 'experiments/[slug]')) {
     contains(readRoute(route), 'ExperimentRecord', `${route} needs a bounded full record`);

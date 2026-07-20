@@ -110,12 +110,12 @@
 		<!-- Header -->
 		<div class="header-section pb-8">
 			<h1 class="page-title mb-3">Revealing Data Patterns</h1>
+			<ExperimentOrientation guide={experimentGuides['experiments/data-patterns']} />
 			<p class="text-secondary max-w-3xl">
 				A demonstration of how agentic visualization components automatically reveal patterns,
 				trends, and anomalies without manual analysis. The components make the insights obvious.
 			</p>
 		</div>
-		<ExperimentOrientation guide={experimentGuides['experiments/data-patterns']} />
 
 		<ExperimentVisualSummary visual={experiment.visual_summary} />
 

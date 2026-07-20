@@ -524,6 +524,7 @@
 <div class="experiment-page">
 	<header class="page-header">
 		<h1>Shape-Aware ASCII Renderer</h1>
+		<ExperimentOrientation guide={experimentGuides['experiments/ascii-renderer']} />
 		<p class="subtitle">
 			6D character matching with contrast enhancement for high-quality ASCII art.
 			Based on <a href="https://alexharri.com/blog/ascii-rendering" target="_blank" rel="noopener"
@@ -531,7 +532,6 @@
 			>.
 		</p>
 	</header>
-	<ExperimentOrientation guide={experimentGuides['experiments/ascii-renderer']} />
 	<ProgressiveExperiment fallback="The experiment question and limits remain available above. Enable JavaScript to render an image as text and adjust the matching controls.">
 
 	<ExperimentVisualSummary visual={experiment.visual_summary} />

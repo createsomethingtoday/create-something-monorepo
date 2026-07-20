@@ -207,12 +207,12 @@
 <div class="experiment-page">
 	<header class="page-header">
 		<h1>Canvas Interactivity</h1>
+		<ExperimentOrientation guide={experimentGuides['experiments/canvas-interactivity']} />
 		<p class="subtitle">
 			High-performance canvas-based interactive components for SvelteKit.
 			Demonstrating force-directed graphs, animation timelines, and exportable diagrams.
 		</p>
 	</header>
-	<ExperimentOrientation guide={experimentGuides['experiments/canvas-interactivity']} />
 	<ProgressiveExperiment fallback="The experiment question and evidence test remain available above. Enable JavaScript to manipulate and export the canvases.">
 
 	<ExperimentVisualSummary visual={experiment.visual_summary} />

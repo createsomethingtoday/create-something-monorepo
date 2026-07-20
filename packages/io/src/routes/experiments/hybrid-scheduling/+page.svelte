@@ -56,12 +56,12 @@
 		<!-- Header -->
 		<div class="header-section pb-8">
 			<h1 class="page-title mb-3">Hybrid Scheduling Experiment</h1>
+			<ExperimentOrientation guide={experimentGuides['experiments/hybrid-scheduling']} />
 			<p class="text-secondary max-w-3xl">
 				Exploring how Cloudflare Workers Cron Triggers can complement Modal's scheduled jobs,
 				overcoming free tier limitations while maintaining cost efficiency.
 			</p>
 		</div>
-		<ExperimentOrientation guide={experimentGuides['experiments/hybrid-scheduling']} />
 		<ExperimentRecord>
 
 		<!-- Abstract -->

@@ -32,9 +32,9 @@
 			<span class="reading-time">{experiment.reading_time_minutes} min read</span>
 		</div>
 		<h1>{experiment.title}</h1>
+		<ExperimentOrientation guide={experimentGuides['experiments/kinetic-typography']} />
 		<p class="subtitle">{experiment.description}</p>
 	</header>
-	<ExperimentOrientation guide={experimentGuides['experiments/kinetic-typography']} />
 	<ExperimentRecord>
 
 	<!-- ASCII Art -->

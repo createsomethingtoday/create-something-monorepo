@@ -80,11 +80,11 @@
 			<span class="reading-time">8 min read</span>
 		</div>
 		<h1>Award-Winning Patterns in Monochrome</h1>
+		<ExperimentOrientation guide={experimentGuides['experiments/awwwards-patterns']} />
 		<p class="subtitle">
 			How constraint produces excellence: black & white design patterns from 2024 Awwwards winners
 		</p>
 	</header>
-	<ExperimentOrientation guide={experimentGuides['experiments/awwwards-patterns']} />
 	<ExperimentRecord>
 
 	<!-- Abstract -->

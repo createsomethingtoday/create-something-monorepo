@@ -33,9 +33,9 @@
 			<span class="status validated">✓ VALIDATED</span>
 		</div>
 		<h1>{experiment.title}</h1>
+		<ExperimentOrientation guide={experimentGuides['experiments/ic-mvp-pipeline']} />
 		<p class="subtitle">{experiment.description}</p>
 	</header>
-	<ExperimentOrientation guide={experimentGuides['experiments/ic-mvp-pipeline']} />
 	<ExperimentRecord>
 
 	<!-- ASCII Art -->

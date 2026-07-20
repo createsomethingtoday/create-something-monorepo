@@ -431,6 +431,7 @@
 		<div class="header-content">
 			<span class="experiment-label">Experiment</span>
 			<h1 class="experiment-title">Living Arena <span class="gpu-badge"><Cpu size={20} /> GPU</span></h1>
+			<ExperimentOrientation guide={experimentGuides['experiments/living-arena-gpu']} />
 			<p class="experiment-description">
 				WebGPU-accelerated crowd simulation with <strong>{agentCount.toLocaleString()} agents</strong> showing
 				emergent behaviors—bottleneck formation, wave propagation, and panic spreading.
@@ -458,7 +459,6 @@
 		</div>
 		</ProgressiveExperiment>
 	</header>
-	<ExperimentOrientation guide={experimentGuides['experiments/living-arena-gpu']} />
 	<ProgressiveExperiment fallback="This is a simulated crowd model. Enable JavaScript to choose scenarios and inspect live movement.">
 
 	<ExperimentVisualSummary visual={experiment.visual_summary} />

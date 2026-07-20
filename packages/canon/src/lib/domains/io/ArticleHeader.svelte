@@ -47,9 +47,8 @@
 	};
 </script>
 
-<header class="article-header w-full max-w-5xl mx-auto px-6 py-12 animate-reveal" class:prioritize-title={prioritizeTitle}>
-	<!-- ASCII Art Hero -->
-	<div class="ascii-hero mb-8 overflow-hidden">
+{#snippet asciiHero(experimentArtifact: boolean)}
+	<div class="ascii-hero mb-8 overflow-hidden" class:experiment-artifact={experimentArtifact}>
 		<div class="ascii-hero-frame aspect-[21/9] flex items-center justify-center p-8">
 			{#if paper.ascii_art}
 				<pre class="ascii-art ascii-art-real">{paper.ascii_art}</pre>
@@ -65,6 +64,13 @@
 			{/if}
 		</div>
 	</div>
+{/snippet}
+
+<header class="article-header w-full max-w-5xl mx-auto px-6 py-12 animate-reveal">
+	<!-- ASCII Art Hero -->
+	{#if !prioritizeTitle}
+		{@render asciiHero(false)}
+	{/if}
 
 	<!-- Category Tag -->
 	<div class="category-row mb-6 animate-slide-in" style="--delay: 2">
@@ -96,6 +102,10 @@
 		<p class="article-excerpt mb-8 max-w-3xl animate-reveal" style="--delay: 4">
 			{paper.excerpt_long}
 		</p>
+	{/if}
+
+	{#if prioritizeTitle}
+		{@render asciiHero(true)}
 	{/if}
 
 	<!-- Metadata Row -->
@@ -181,19 +191,7 @@
 		border-radius: var(--radius-performance-scale-lg);
 	}
 
-	.prioritize-title {
-		display: flex;
-		flex-direction: column;
-	}
-
-	.prioritize-title .category-row { order: 1; }
-	.prioritize-title .article-title { order: 2; }
-	.prioritize-title .experiment-orientation { order: 3; }
-	.prioritize-title .article-excerpt { order: 4; }
-	.prioritize-title .metadata-row { order: 5; }
-	.prioritize-title .ascii-hero { order: 6; margin-top: 2rem; margin-bottom: 0; }
-	.prioritize-title .experiment-badge { order: 7; }
-	.prioritize-title .visual-summary { order: 8; }
+	.experiment-artifact { margin-top: 2rem; }
 
 	.experiment-orientation { max-width: 52rem; margin-block: 0 2rem; padding: clamp(1.25rem, 3vw, 2rem); border: 1px solid var(--color-performance-border-subtle); background: var(--color-performance-bg-surface); }
 	.orientation-label { margin: 0 0 .5rem; font-size: .75rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }

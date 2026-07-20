@@ -139,12 +139,12 @@
 		<!-- Header -->
 		<div class="header-section pb-8">
 			<h1 class="page-title mb-3">Agent Operations Tracking</h1>
+			<ExperimentOrientation guide={experimentGuides['experiments/agent-operations']} />
 			<p class="text-secondary max-w-3xl">
 				Real-time monitoring of CREATE SOMETHING's Modal-deployed agents. These autonomous
 				agents handle infrastructure monitoring, code review, content generation, and deployments.
 			</p>
 		</div>
-		<ExperimentOrientation guide={experimentGuides['experiments/agent-operations']} />
 
 		<!-- Overall Status Banner -->
 		{#if data.status}

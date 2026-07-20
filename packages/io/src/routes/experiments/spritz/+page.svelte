@@ -79,9 +79,9 @@
 			<span class="reading-time">{experiment.reading_time_minutes} min read</span>
 		</div>
 		<h1>{experiment.title}</h1>
+		<ExperimentOrientation guide={experimentGuides['experiments/spritz']} />
 		<p class="subtitle">{experiment.description}</p>
 	</header>
-	<ExperimentOrientation guide={experimentGuides['experiments/spritz']} />
 	<ProgressiveExperiment fallback="The experiment question and comprehension limit remain available above. Enable JavaScript to control the reading speed.">
 
 	<!-- ASCII Art -->

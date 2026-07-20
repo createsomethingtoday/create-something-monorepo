@@ -141,9 +141,9 @@
 <div class="container">
   <header>
     <h1>Diagram Components</h1>
+    <ExperimentOrientation guide={experimentGuides['experiments/diagrams']} />
     <p class="subtitle">Canon-compliant data visualization with property-aware theming</p>
   </header>
-  <ExperimentOrientation guide={experimentGuides['experiments/diagrams']} />
 
   <section class="diagram-section">
     <h2>Flow Diagram</h2>

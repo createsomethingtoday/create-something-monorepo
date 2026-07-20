@@ -342,9 +342,9 @@
 			<span class="reading-time">{experiment.reading_time_minutes} min read</span>
 		</div>
 		<h1>{experiment.title}</h1>
+		<ExperimentOrientation guide={experimentGuides['experiments/render-preview']} />
 		<p class="subtitle">{experiment.description}</p>
 	</header>
-	<ExperimentOrientation guide={experimentGuides['experiments/render-preview']} />
 	<ProgressiveExperiment fallback="The experiment question and evidence test remain available above. Enable JavaScript to load a floor plan and compare its preview with a render.">
 
 	<!-- ASCII Art -->

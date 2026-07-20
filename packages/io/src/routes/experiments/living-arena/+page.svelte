@@ -239,6 +239,7 @@
 		<div class="header-content">
 			<span class="experiment-label">Experiment</span>
 			<h1 class="experiment-title">Living Arena</h1>
+			<ExperimentOrientation guide={experimentGuides['experiments/living-arena']} />
 			<p class="experiment-description">
 				What if your building could help people without them having to ask?
 				The lights guide you to your seat. The air feels right before you notice.
@@ -259,7 +260,6 @@
 		</div>
 		</ProgressiveExperiment>
 	</header>
-	<ExperimentOrientation guide={experimentGuides['experiments/living-arena']} />
 	<ProgressiveExperiment fallback="This is a simulated venue model. Enable JavaScript to change scenarios and inspect system responses.">
 
 	<ExperimentVisualSummary visual={experiment.visual_summary} />

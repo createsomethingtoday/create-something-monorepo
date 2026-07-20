@@ -23,3 +23,23 @@ contracts identify the implementation work:
 7. Repair the observed Living Arena and Arena Scale runtime defects.
 
 This is a fail-first baseline, not completion evidence.
+
+## Post-preview reopening
+
+The first exact-head preview passed every automated check, but a fresh
+first-encounter read showed that technical descriptions such as
+`Modal-deployed agents`, `6D character matching`, and `ControlNet` still came
+before the plain orientation. The dynamic record also used CSS ordering, so its
+artifact still preceded the title in DOM and no-JavaScript reading order.
+
+A ninth structural test was added before the repair. The then-current source
+failed 8/9 on:
+
+```text
+experiments/agentic-visualization must orient the reader before descriptive prose
+```
+
+The contract now requires every static route to place the shared orientation
+directly after the H1 and before descriptive prose, and requires a real
+title-first DOM branch for sharpened dynamic experiments. This second red state
+is why the first green preview was not accepted as reader proof.

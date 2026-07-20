@@ -20,16 +20,21 @@ editorial experiment reports from twelve experiment tools.
 ## Source contract
 
 The focused contract moved from one preservation pass and seven expected
-failures to eight passes:
+failures to eight passes. A deployed-preview reader audit then exposed a
+missing requirement: the orientation existed, but technical descriptions still
+preceded it on static routes and CSS alone reordered the dynamic artifact. The
+new structural check failed 8/9 before the repair and the final suite passes
+9/9:
 
 ```text
 node --import tsx --test packages/io/test/experiment-detail-sharpness.test.ts
-tests 8, pass 8, fail 0
+tests 9, pass 9, fail 0
 ```
 
 It verifies registry ownership, all 19 centralized reader guides, shared
-orientation, native full-record disclosure, progressive controls, honest Agent
-Operations availability, the observed arena repairs, and representative source
+orientation immediately after the H1 and before descriptive prose or artifacts,
+native full-record disclosure, progressive controls, honest Agent Operations
+availability, the observed arena repairs, and representative source
 preservation.
 
 ## Rendered matrix
@@ -39,6 +44,12 @@ The production build was tested at 390 x 844 and 1440 x 900.
 - All 19 routes returned HTTP 200 at both viewports.
 - Every route rendered one visible H1, one layout-owned main, exact viewport
   width, and the Start here orientation.
+- In actual DOM order, all 19 routes now render H1, Start here, then technical
+  description or artifact. This is true for visual, keyboard, no-JavaScript,
+  and assistive reading order; it does not depend on CSS `order`.
+- A shared-header regression check confirmed that an ordinary paper still
+  renders its ASCII artifact before the H1; the title-first branch applies only
+  to sharpened experiments.
 - No successful route emitted a console error.
 - The file-backed dynamic fixture was `/experiments/meeting-capture`.
 - All seven report implementations rendered a closed native full-record
@@ -86,7 +97,7 @@ chooses the full record:
 
 ## Local gates
 
-- Focused sharpness contract: 8/8.
+- Focused sharpness contract: 9/9.
 - IO Svelte check: 0 errors, 0 warnings.
 - IO production build: pass.
 - Canon package and full Canon check: pass.
@@ -95,7 +106,7 @@ chooses the full record:
 - Performance page registry: 229/229 registered, 55 migrated, 162 pending, 12
   technical exclusions.
 - Scoped prose: seven files, zero findings.
-- Scoped Prettier and `git diff --check`: pass.
+- Scoped diff review and `git diff --check`: pass.
 - Full workspace `pnpm check`: pass; Webflow template search completed 69/69.
 
 ## Boundaries

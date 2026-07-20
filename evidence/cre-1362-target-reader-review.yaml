@@ -14,7 +14,7 @@ material_friction: []
 checks:
   first_encounter:
     result: pass
-    evidence: Every implementation states a plain question and action before relying on internal methods or vocabulary.
+    evidence: Every implementation renders H1, Start here, then technical description or artifact in actual DOM order, so the plain question and action precede internal methods or vocabulary for visual, keyboard, no-JavaScript, and assistive readers.
   default_path:
     result: pass
     evidence: Start here presents question, action, evidence, limit, and continuation in one bounded block.
@@ -46,7 +46,9 @@ checks:
     result: pass
     evidence: Every reader guide names a related experiment or the complete experiment catalog.
 review_notes:
-  - The first rendered pass still placed the dynamic artifact before the reader question. The orientation was moved directly under the title and re-rendered.
+  - The first exact-head preview passed every automated check but failed a fresh local-comprehension read. Static routes still introduced terms such as Modal-deployed agents, 6D character matching, ControlNet, and RSVP before Start here, while the dynamic artifact relied on visual CSS ordering. The packet was reopened rather than accepted.
+  - A new fail-first structural contract requires H1, Start here, then description or artifact. It failed 8/9 before the repair and now passes 9/9 across all 19 sources.
+  - The dynamic title-first path now uses real conditional DOM order rather than CSS order, preserving the same first encounter without JavaScript and for assistive reading.
   - The first Arena Scale repair made the title technically visible but still low contrast. Its opening became Coordinate Many Venues with the operating sequence in plain language.
   - Long interactive demonstrations remain available because their controls and resulting states are the evidence. The orientation makes their purpose and limit clear before the work surface.
   - IO root metadata duplication remains owned by the shared layout and needs a separate coordinated repair.

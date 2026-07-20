@@ -87,9 +87,9 @@
 <div class="container">
 	<header>
 		<h1>Coordinate Many Venues</h1>
+		<ExperimentOrientation guide={experimentGuides['visualizations/arena-scale']} />
 		<p class="subtitle">Set authority, map the work, then inspect proof.</p>
 	</header>
-	<ExperimentOrientation guide={experimentGuides['visualizations/arena-scale']} />
 
 	<ProgressiveExperiment fallback="The three-step operating model is summarized above. Enable JavaScript to explore venue relationships and pattern flows.">
 	<div class="visualization-wrapper">

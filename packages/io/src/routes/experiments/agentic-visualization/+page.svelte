@@ -116,13 +116,13 @@
 	<!-- Header -->
 	<div class="header-section pb-8">
 		<h1 class="page-title mb-3">Agentic Visualization Experiment</h1>
+		<ExperimentOrientation guide={experimentGuides['experiments/agentic-visualization']} />
 		<p class="text-secondary max-w-3xl">
 			Research experiment demonstrating autonomous UI components that embody Edward Tufte's principles
 			for displaying quantitative information. Components make intelligent decisions about data presentation,
 			transforming visualization from manual craft into intelligent revelation.
 		</p>
 	</div>
-	<ExperimentOrientation guide={experimentGuides['experiments/agentic-visualization']} />
 	<ExperimentRecord>
 
 	<ExperimentVisualSummary visual={experiment.visual_summary} />
