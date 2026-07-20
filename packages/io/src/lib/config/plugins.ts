@@ -6,7 +6,7 @@ export const PLUGINS: Plugin[] = [
 		slug: 'canon',
 		name: 'Canon',
 		description:
-			'Design system enforcement based on the Subtractive Triad. Operationalizes Dieter Rams\' "Weniger, aber besser" across all CREATE SOMETHING properties.',
+			'Checks interface code against CREATE SOMETHING design rules so changes stay consistent across every property.',
 		category: 'Design',
 		tags: ['design', 'canon', 'dieter-rams', 'subtractive-triad'],
 		features: [
@@ -40,7 +40,7 @@ export const PLUGINS: Plugin[] = [
 		slug: 'hermeneutic-review',
 		name: 'Hermeneutic Review',
 		description:
-			'Code review through the Subtractive Triad lens. Three-pass methodology: Unify (DRY), Remove (Rams), Reconnect (Heidegger).',
+			'Reviews code in three passes: remove duplication, question unnecessary additions, and check how the change fits the system.',
 		category: 'Code Review',
 		tags: ['review', 'architecture', 'subtractive-triad', 'pr-review'],
 		features: [
@@ -73,8 +73,7 @@ export const PLUGINS: Plugin[] = [
 	{
 		slug: 'voice-validator',
 		name: 'Voice Validator',
-		description:
-			'Content validation against the Five Principles: Clarity over cleverness, Specificity over generality, Honesty over polish, Useful over interesting, Grounded over trendy.',
+		description: 'Checks whether content is clear, specific, honest, useful, and grounded before it is published.',
 		category: 'Content',
 		tags: ['voice', 'content', 'writing', 'five-principles'],
 		features: [
@@ -109,14 +108,14 @@ export const PLUGINS: Plugin[] = [
 		slug: 'understanding-graphs',
 		name: 'Understanding Graphs',
 		description:
-			'Create UNDERSTANDING.md files—minimal dependency graphs for codebase comprehension. "Less, but better" applied to documentation.',
+			'Creates a compact map of the files, dependencies, critical paths, and traps a new contributor needs first.',
 		category: 'Documentation',
 		tags: ['documentation', 'dependencies', 'onboarding', 'navigation'],
 		features: [
 			'Document understanding-critical relationships only',
 			'Generate critical paths (User Action → Result)',
 			'Identify key files with purpose/deps/consumers',
-			'Capture common traps and solutions'
+				'Capture common traps and ways around them'
 		],
 		provides: {
 			agents: [

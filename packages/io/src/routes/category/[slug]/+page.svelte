@@ -1,21 +1,33 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { PaperCard } from '@create-something/canon';
-  import type { PageData } from './$types';
   import type { Paper } from '@create-something/canon/types';
+  import CatalogDetailOpening from '$lib/components/catalog/CatalogDetailOpening.svelte';
+  import type { PageData } from './$types';
 
-  export let data: PageData;
-  const papers = data.papers as Paper[];
-  const { category } = data;
+  let { data }: { data: PageData } = $props();
+  const papers = $derived(data.papers as Array<Paper & { route: string }>);
+  const category = $derived(data.category);
+  let enhanced = $state(false);
+  let showAll = $state(false);
+  const visiblePapers = $derived(showAll ? papers : enhanced ? papers.slice(0, 12) : papers);
+
+  onMount(() => {
+    enhanced = true;
+  });
 
   const categoryDescriptions: Record<string, string> = {
-    automation: 'Learn about automation systems, workflow integrations, and productivity tools. Discover how to build efficient automated solutions.',
-    development: 'Modern web development tutorials covering React, Next.js, TanStack, and full-stack development practices.',
-    infrastructure: 'Cloud infrastructure, serverless architecture, and edge computing guides. Learn Cloudflare Workers, D1, and modern deployment strategies.',
-    webflow: 'Webflow development guides, custom implementations, and no-code solutions for building powerful websites.',
+    research: 'Evidence-backed papers on building, testing, and governing AI-native systems.',
+    'case-study':
+      'Real implementations explained through the decisions, failures, and evidence that shaped them.',
+    methodology: 'Practical methods for designing, evaluating, and reviewing agentic systems.'
   };
 
-  const description = categoryDescriptions[category.slug] || `Explore our collection of ${papers.length} technical papers on ${category.name}.`;
-  const url = `https://createsomething.io/category/${category.slug}`;
+  const description = $derived(
+    categoryDescriptions[category.slug] ??
+      `${papers.length} papers that share the ${category.name} research topic.`
+  );
+  const url = $derived(`https://createsomething.io/category/${category.slug}`);
 </script>
 
 <svelte:head>
@@ -23,7 +35,6 @@
   <meta name="description" content={description} />
   <meta name="keywords" content="{category.slug}, technical papers, tutorials, {category.name}" />
 
-  <!-- Open Graph -->
   <meta property="og:type" content="website" />
   <meta property="og:url" content={url} />
   <meta property="og:title" content="{category.name} Articles | CREATE SOMETHING" />
@@ -31,7 +42,6 @@
   <meta property="og:image" content="https://createsomething.io/og-image.png" />
   <meta property="og:site_name" content="CREATE SOMETHING" />
 
-  <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:url" content={url} />
   <meta name="twitter:title" content="{category.name} Articles" />
@@ -44,91 +54,152 @@
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
     name: `${category.name} Articles`,
-    description: description,
-    url: url,
+    description,
+    url,
     publisher: {
       '@type': 'Organization',
       name: 'CREATE SOMETHING',
-      url: 'https://createsomething.io',
+      url: 'https://createsomething.io'
     },
-    numberOfItems: papers.length,
+    numberOfItems: papers.length
   })}<\/script>`}
 </svelte:head>
 
+<CatalogDetailOpening
+  backHref="/categories"
+  backLabel="research topics"
+  eyebrow="Research topic"
+  title={category.name}
+  {description}
+  summary={[
+    { label: 'Papers', value: String(papers.length) },
+    { label: 'Order', value: 'Newest first' }
+  ]}
+  action={{ href: '#papers', label: 'Choose a paper' }}
+/>
 
-  <!-- Hero Section -->
-  <section class="relative pt-32 pb-16 px-6">
-    <div class="max-w-7xl mx-auto">
-      <div class="text-center space-y-4 animate-reveal">
-        <h1 class="hero-title">
-          {category.name}
-        </h1>
-        <p class="hero-subtitle">
-          {papers.length} {papers.length === 1 ? 'article' : 'articles'}
-        </p>
+<section id="papers" class="catalog-detail-collection" aria-labelledby="papers-title">
+  <div class="catalog-detail-collection__inner">
+    <header>
+      <div>
+        <p>Read within this topic</p>
+        <h2 id="papers-title">Choose a paper</h2>
       </div>
-    </div>
-  </section>
+      <span>{visiblePapers.length} of {papers.length} shown</span>
+    </header>
 
-  <!-- Papers Grid -->
-  <section class="py-16 px-6">
-    <div class="max-w-7xl mx-auto">
-      {#if papers.length > 0}
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {#each papers as paper, index}
-            <div class="animate-reveal" style="--delay: {index + 1}">
-              <PaperCard {paper} rotation={0} {index} />
-            </div>
-          {/each}
-        </div>
-      {:else}
-        <div class="text-center py-16">
-          <p class="empty-message">No articles found in this category yet.</p>
-        </div>
-      {/if}
+    <div class="paper-grid">
+      {#each visiblePapers as paper}
+        <PaperCard {paper} rotation={0} index={0} animate={false} />
+      {/each}
     </div>
-  </section>
+
+    {#if enhanced}
+      <button
+        class="show-all"
+        type="button"
+        aria-disabled={showAll}
+        onclick={() => {
+          if (!showAll) showAll = true;
+        }}
+      >
+        {showAll ? `All ${papers.length} papers shown` : `Show all ${papers.length} papers`}
+      </button>
+    {/if}
+
+    <a class="collection-handoff" href="/papers">Browse every paper</a>
+  </div>
+</section>
 
 <style>
-  /* Hero Section */
-  /* Entity title - uses --text-performance-h1 for potentially long category names */
-  .hero-title {
-    font-size: var(--text-performance-h1);
-    font-weight: var(--font-performance-bold);
+  .catalog-detail-collection {
+    padding: clamp(3rem, 6vw, 5rem) 1.5rem;
+    border-top: 1px solid var(--color-performance-border-default);
+  }
+
+  .catalog-detail-collection__inner {
+    display: grid;
+    width: min(72rem, 100%);
+    margin-inline: auto;
+    gap: var(--space-performance-lg);
+  }
+
+  header {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: var(--space-performance-md);
+  }
+
+  header div {
+    display: grid;
+    gap: var(--space-performance-xs);
+  }
+
+  header p,
+  header h2,
+  header > span {
+    margin: 0;
+  }
+
+  header p,
+  header > span {
+    color: var(--color-performance-fg-tertiary);
+    font-family: var(--font-performance-mono);
+    font-size: var(--text-performance-caption);
+    text-transform: uppercase;
+  }
+
+  header h2 {
     color: var(--color-performance-fg-primary);
+    font-size: var(--text-performance-h2);
   }
 
-  .hero-subtitle {
-    font-size: var(--text-performance-body-lg);
-    color: var(--color-performance-fg-tertiary);
+  .paper-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-performance-md);
   }
 
-  /* Empty State */
-  .empty-message {
-    font-size: var(--text-performance-body-lg);
-    color: var(--color-performance-fg-tertiary);
+  .show-all {
+    width: fit-content;
+    padding: 0.7rem 0.9rem;
+    border: 1px solid var(--color-performance-border-strong);
+    border-radius: var(--radius-performance-scale-sm);
+    background: var(--color-performance-bg-surface);
+    color: var(--color-performance-fg-primary);
+    font-weight: var(--font-performance-semibold);
   }
 
-  /* Animation */
-  .animate-reveal {
-    opacity: 0;
-    transform: translateY(20px);
-    animation: reveal var(--duration-performance-complex) var(--ease-performance-standard) forwards;
-    animation-delay: calc(var(--delay, 0) * 100ms);
+  .show-all:hover {
+    background: var(--color-performance-fg-primary);
+    color: var(--color-performance-bg-pure, #ffffff);
   }
 
-  @keyframes reveal {
-    to {
-      opacity: 1;
-      transform: translateY(0);
+  .collection-handoff {
+    width: fit-content;
+    font-weight: var(--font-performance-semibold);
+    text-decoration: underline;
+  }
+
+  @media (max-width: 900px) {
+    .paper-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    .animate-reveal {
-      animation: none;
-      opacity: 1;
-      transform: none;
+  @media (max-width: 640px) {
+    .catalog-detail-collection {
+      padding: 3rem 1.25rem;
+    }
+
+    header {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .paper-grid {
+      grid-template-columns: 1fr;
     }
   }
 </style>

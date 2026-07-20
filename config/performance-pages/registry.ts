@@ -381,7 +381,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     'io-catalog-details',
     'io',
     ['agents/[slug]', 'category/[slug]', 'mcp/[slug]', 'plugins/[slug]'],
-    'pending',
+    'migrated',
     contract(
       'editorial',
       'Assess the artifact boundary and decide whether it fits the current work.',
