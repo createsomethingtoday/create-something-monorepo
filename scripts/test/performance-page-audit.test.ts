@@ -174,8 +174,8 @@ test('covers every current CREATE SOMETHING page implementation and emits bounde
   assert.deepEqual(result.totals, {
     discovered: 229,
     registered: 229,
-    migrated: 42,
-    pending: 175,
+		migrated: 46,
+		pending: 171,
     excluded: 12
   });
   assert.deepEqual(
