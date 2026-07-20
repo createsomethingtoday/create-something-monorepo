@@ -1,7 +1,10 @@
 "use strict";
 (() => {
   // src/utils.ts
-  var EXTENSION_VERSION = "1.2.0";
+  var EXTENSION_VERSION = "1.2.1";
+  function filterRetiredAccessibilityIssues(issues) {
+    return issues.filter((issue) => issue.id !== "color-contrast-violations");
+  }
   function escapeHtml(value) {
     return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   }
@@ -1379,7 +1382,9 @@
     }
   }
   function getSurfacedAccessibilityIssues(accessibilityAnalysis, contentAnalysisIncluded) {
-    const issues = Array.isArray(accessibilityAnalysis?.issues) ? accessibilityAnalysis.issues : [];
+    const issues = filterRetiredAccessibilityIssues(
+      Array.isArray(accessibilityAnalysis?.issues) ? accessibilityAnalysis.issues : []
+    );
     if (!contentAnalysisIncluded) {
       return issues;
     }

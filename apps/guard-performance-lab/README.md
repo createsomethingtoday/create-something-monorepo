@@ -1,16 +1,18 @@
 # Guard Performance Lab
 
-A standalone, private-first coaching system for developing guards. Version 0.4 adds player-owned structured profiles to the first-party identity, exact operator/player authorization, remote MCP verification, and durable production storage workflow.
+A standalone, private-first coaching system for developing guards. Version 0.5 adds an immutable film-trace workflow: a supplied game is analyzed once, the derived player traffic is stored privately, and the operator can scrub, correct, reload, and export the captured revision without rerunning inference. Identity-only revision 3 preserves the revision-2 player field and associates #13 from direct jersey evidence plus bounded continuity; verified substitutions are stored as `inactive`, while ambiguous spans fail closed as `unresolved`. A separate reviewed play-state ledger labels live offense, live defense, transitions, dead balls, free throws, substitutions, and unknown spans without rewriting frames or running detection again.
 
 ## Privacy model
 
-- Player profiles, receipts, evidence, and engagement state use a versioned app-owned local datastore at `.data/workspace.json` relative to the app process working directory (gitignored). Set `GUARD_LAB_DATA_PATH` to use an explicit private path.
+- Player profiles, receipts, evidence, engagement state, derived film coordinates, and correction provenance use a versioned app-owned local datastore at `.data/workspace.json` relative to the app process working directory (gitignored). Set `GUARD_LAB_DATA_PATH` to use an explicit private path.
 - Production uses the private `GUARD_LAB_DB` Cloudflare D1 binding. The runtime fails closed when `ENVIRONMENT=production` and that durable binding is absent; the JSON file store remains development-only.
+- D1 stores immutable film frames in ordered chunks so large captured traces do not exceed SQLite row-value limits. Corrections remain a small append-only overlay and do not rewrite or increment the analysis revision.
 - Every mutation goes through one typed command service. An atomic cross-process lock prevents browser and Codex writes from overwriting one another; the visible workspace revision increments after each accepted command.
 - Protected workspace data is never restored from browser storage; the server-scoped response is authoritative for every identity.
 - The app has no analytics or domain-external data writes. Network access is limited to first-party identity verification/login and operator-requested source links.
 - The starter profile is generic and contains no child-identifying information.
 - Resetting local data restores the generic profile and removes saved receipts, evidence, and engagement events.
+- Source-video bytes and detector weights are never written to the application datastore or committed. Only hashes, model provenance, derived coordinates, unresolved intervals, and correction receipts persist.
 
 This is a development aid, not medical guidance, a talent ranking, or a recruiting projection.
 
@@ -31,6 +33,168 @@ pnpm --filter @create-something/guard-performance-lab preview
 
 The production preview runs at `http://127.0.0.1:4173` and is the owning surface for the Playwright workflow recorded in `.codex/guard-performance-lab-app/goal.md`.
 
+## One-run film trace
+
+The analyzer requires an operator-supplied source video and YOLOX ONNX model. Both remain outside version control. It decodes the complete source sequentially, captures one immutable analysis revision, and records unresolved target intervals rather than inventing positions. Revision 2 first rejects detections outside the foreground court closest to the camera, then classifies central-torso evidence using this game's white-jersey teammate / other-colored opponent rule. Opposite-court, official, and sideline detections stay in the audit receipt but never render as traffic. A deterministic full-track vote stabilizes team roles without another inference execution.
+
+### Local detector bake-off
+
+`film:bakeoff:tracking` compares a complete, source-bound candidate prediction set with the locked #13 identity and team fixtures. With no `--candidate-predictions`, it runs the Apache-2.0 RF-DETR Small COCO model locally on every locked source timestamp. Source frames and annotated evidence stay in the operator-selected private directory. The detector has no #13 identity authority: direct-number review, bounded continuity, reviewed SAM2 evidence, substitutions, and foreground-court rules remain fixed.
+
+The receipt fails closed when timestamps or source/model fingerprints differ, a hard negative is accepted, an inactive interval is bridged, opposite-court traffic becomes active, team accuracy regresses, or source-backed held-out court-line evidence is absent. A candidate is adopted only when every safety floor passes and target coverage, foreground-player coverage, or court error materially improves. A losing candidate leaves the production analyzer unchanged.
+
+```bash
+pnpm --filter @create-something/guard-performance-lab film:bakeoff:tracking \
+  --source /private/path/game.mp4 \
+  --source-sha256 <verified-source-sha256> \
+  --output /private/path/tracking-bakeoff-receipt.json \
+  --evidence-dir /private/path/tracking-bakeoff-evidence
+```
+
+To evaluate another local provider without changing the verifier, supply its `guard-film-player-detections-v1` JSON with `--candidate-predictions`. A source-backed court report may be supplied with `--court-report`; it must contain the source SHA plus held-out `medianErrorFeet` and `p95ErrorFeet` values.
+
+With explicit approval to send bounded frames to Roboflow, generate that court report separately. Inject the private inference key from a secret manager; never pass it as an argument or commit it. This adapter sends only the comma-delimited timestamps (seven representative frames by default), records competing court-hypothesis ambiguity, and evaluates held-out canonical landmarks. Its output can then be passed to the provider-neutral verifier with `--court-report`.
+
+```bash
+infisical run -- pnpm --filter @create-something/guard-performance-lab film:bakeoff:court:roboflow \
+  --source /private/path/game.mp4 \
+  --source-sha256 <verified-source-sha256> \
+  --output /private/path/roboflow-court-report.json \
+  --raw-output /private/path/roboflow-court-raw.json
+```
+
+Run the locked real-source team benchmark before the one authorized full revision. Its predictions must contain no correction overlays. Revision 1 remains auditable; the app selects the highest compatible revision for replay.
+
+```bash
+pnpm --filter @create-something/guard-performance-lab film:classify:team \
+  --source /private/path/game.mp4 \
+  --source-sha256 <verified-source-sha256> \
+  --fixture fixtures/film/player-team-benchmark.json \
+  --output /private/path/team-predictions.json
+
+pnpm --filter @create-something/guard-performance-lab film:verify:team \
+  fixtures/film/player-team-benchmark.json \
+  /private/path/team-predictions.json \
+  /private/path/team-report.json
+
+pnpm --filter @create-something/guard-performance-lab film:analyze \
+  --source /private/path/game.mp4 \
+  --source-sha256 <verified-source-sha256> \
+  --model /private/path/yolox_s.onnx \
+  --target-seed <timeMs:footX:footY> \
+  --output /private/path/full-analysis-r2.json
+
+pnpm --filter @create-something/guard-performance-lab film:verify \
+  --analysis /private/path/full-analysis-r2.json \
+  --benchmark fixtures/film/player-13-golden.json \
+  --report /private/path/benchmark-report.json \
+  --corrections /private/path/benchmark-corrections.json \
+  --svg /private/path/benchmark-evidence.svg \
+  --expected-revision 2
+
+pnpm --filter @create-something/guard-performance-lab film:verify:import -- \
+  --analysis /private/path/full-analysis-r2.json \
+  --corrections /private/path/benchmark-corrections.json \
+  --benchmark-report /private/path/benchmark-report.json \
+  --output /private/path/import-gate-r2.json
+
+pnpm --filter @create-something/guard-performance-lab film:import:http \
+  --analysis /private/path/full-analysis-r2.json \
+  --corrections /private/path/benchmark-corrections.json \
+  --gate /private/path/import-gate-r2.json
+```
+
+Repairing identity does not rerun person detection or team classification. The locked #13 fixture contains readable positives across four live-play segments plus #5, #11, #15, unreadable, tracker-handoff, and substitution negatives. Create a candidate, verify it, and only then finalize the one identity receipt:
+
+```bash
+pnpm --filter @create-something/guard-performance-lab film:derive:identity -- \
+  --revision2 /private/path/full-analysis-r2.json \
+  --assignments fixtures/film/player-13-identity-assignments.json \
+  --output /private/path/full-analysis-r3-candidate.json
+
+pnpm --filter @create-something/guard-performance-lab film:verify:identity -- \
+  --analysis /private/path/full-analysis-r2.json \
+  --candidate /private/path/full-analysis-r3-candidate.json \
+  --fixture fixtures/film/player-13-identity-benchmark.json \
+  --report /private/path/identity-verifier-r3-candidate.json
+
+pnpm --filter @create-something/guard-performance-lab film:finalize:identity -- \
+  --revision2 /private/path/full-analysis-r2.json \
+  --candidate /private/path/full-analysis-r3-candidate.json \
+  --receipt /private/path/identity-verifier-r3-candidate.json \
+  --output /private/path/full-analysis-r3.json \
+  --analyzed-at <fixed-receipt-time>
+```
+
+Attach reviewed play context to that same immutable revision with a complete, non-overlapping ledger. `unknown` intervals require explicit unreviewed provenance and fail closed; every other state requires source-review evidence. The command verifies source identity and complete duration coverage, then writes a new artifact with the original frames, players, identity fingerprint, revision, and execution count intact.
+
+```bash
+pnpm --filter @create-something/guard-performance-lab film:apply:play-state -- \
+  --analysis /private/path/full-analysis-r3.json \
+  --ledger fixtures/film/player-13-play-state-ledger.json \
+  --output /private/path/full-analysis-r3-play-state.json \
+  --receipt /private/path/play-state-receipt.json
+
+pnpm --filter @create-something/guard-performance-lab film:verify:import -- \
+  --analysis /private/path/full-analysis-r3-play-state.json \
+  --corrections /private/path/empty-corrections.json \
+  --output /private/path/import-gate-r3-play-state.json
+
+pnpm --filter @create-something/guard-performance-lab film:import:http -- \
+  --analysis /private/path/full-analysis-r3-play-state.json \
+  --corrections /private/path/empty-corrections.json \
+  --gate /private/path/import-gate-r3-play-state.json
+```
+
+Both local and HTTP imports reject analyses that are not bound to an exact SHA-256 import gate. Revision 1/2 gates consume the passing fixed benchmark report and its exact correction overlay; revision 3 gates require the embedded locked identity benchmark. Play-state receipt counts are recomputed from the captured frames before a gate can be issued. The analyzer also hashes the linked video bytes itself and rejects a mismatched supplied source receipt before inference starts.
+
+`Film trace` then replays the captured top-down traffic. The slider works in both directions. `Live basketball only` is the default and draws an orange #13 wake only for verified live offense, live defense, and transition states. `All captured movement` keeps dead-ball, free-throw, substitution, and unknown movement available as a gray dashed context wake without counting it as positioning or lane running. Wake segments break across state changes, unresolved gaps, and inactive substitutions. JSON/SVG exports are derived from the persisted revision. Operator corrections require direct-evidence text and append provenance; player-scoped identities cannot attach or correct analyses and can read only their assigned player.
+
+### Local segmentation-mask tracking
+
+Color histograms and detector track IDs are discovery signals, not sufficient #13 identity evidence: a track ID can transfer at a player crossing. For a substantially stronger local pass, use a reviewed #13 box to initialize SAM 2.1 on each verified active stint. The resulting silhouette receipt is fused back onto the person field only when all of these gates agree:
+
+- the source hash and full-resolution coordinate space match;
+- the mask overlaps exactly one foreground-court player with a safe margin;
+- that player is classified as a white-jersey teammate, never an opponent;
+- mask confidence remains above the acceptance floor;
+- a user-reviewed participation ledger marks the interval active.
+
+Ambiguous overlaps, substitutions, long gaps, and off-screen exits break the wake. They never trigger appearance-only re-identification. Re-seed from another frame where `13` is directly readable.
+
+The official SAM 2 notebook includes an Apple MPS path with CPU fallback. MPS support is preliminary, so every stint still needs held-out visual review. On an M2 Pro proof, `sam2.1_hiera_small` processed a 960×540 sequence locally; source bytes were not uploaded. Set up the ignored local runtime and checkpoint outside the application datastore, extract a bounded frame sequence, and run:
+
+```bash
+PYTORCH_ENABLE_MPS_FALLBACK=1 \
+/private/path/sam2-env/bin/python scripts/track-player-mask-sam2.py \
+  --frames /private/path/stint-frames \
+  --checkpoint /private/path/sam2.1_hiera_small.pt \
+  --source-sha256 <verified-source-sha256> \
+  --source-width 1920 \
+  --source-height 1080 \
+  --segment-id on-court-17m40 \
+  --start-ms 1060000 \
+  --sample-fps 5 \
+  --seed-frame 0 \
+  --seed-box 326,261,30,96 \
+  --reviewer user \
+  --output /private/path/on-court-17m40-mask.json \
+  --device mps
+```
+
+`--seed-box` uses the extracted-frame coordinate space; the receipt scales every box and foot point back to the declared source dimensions. The script records the exact model SHA-256, device, seed, samples, and evidence. A mask receipt is a private candidate, not a promotable film revision by itself; benchmark and court-calibration gates still apply.
+
+Combine reviewed stint receipts and fuse them against the reprocessed detector field. Same-state overlaps are merged so a direct-number reseed can safely bridge a chunk boundary; conflicting participation states, mixed sources, coordinate spaces, or model receipts are rejected. Fusion also rejects raw opponent evidence and terminates a seed after more than 3.5 seconds without an accepted target, even if SAM2 later attaches to another player. The command writes both the combined audit receipt and a non-promotable candidate for held-out review:
+
+```bash
+pnpm --filter @create-something/guard-performance-lab film:fuse:mask-tracks \
+  --analysis /private/path/full-analysis-r2-reprocessed.json \
+  --mask-track /private/path/stint-1-mask.json \
+  --mask-track /private/path/stint-2-mask.json \
+  --receipt-output /private/path/player-13-mask-track.json \
+  --candidate-output /private/path/player-13-mask-candidate.json
+```
+
 ## AI-native contract
 
 One typed guidance engine owns program stage, requested coach context, safety state, evidence separation, and the next interaction. It is used by:
@@ -39,7 +203,7 @@ One typed guidance engine owns program stage, requested coach context, safety st
 - `POST /api/guide`;
 - the local stdio MCP server.
 
-Browser mutations use `POST /api/workspace/command` with typed actions for selecting or creating a player, updating one player-owned profile, saving a receipt, registering evidence, or recording engagement. Whole-workspace `PUT` replacement is intentionally unsupported.
+Browser mutations use `POST /api/workspace/command` with typed actions for selecting or creating a player, updating one player-owned profile, saving a receipt, registering evidence, recording engagement, attaching one completed film revision, or appending a correction. Whole-workspace `PUT` replacement is intentionally unsupported.
 
 The coach supplies short observations only when requested. The agent/program owns the sequence and receipt cues.
 

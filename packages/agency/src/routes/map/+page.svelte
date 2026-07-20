@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { page } from '$app/stores';
 	import {
 		Button,
 		PerformanceCampaignOpening,
@@ -87,8 +88,14 @@
 		description="Cold readers can test the method without exposing credentials. Warm teams leave with a summary, readiness signal, and workflow definition that can stand alone or move into Build and Control."
 	>
 		{#snippet after()}
-			<PublicAtlasCanvas bookingHref="/book" />
+			<PublicAtlasCanvas bookingHref="/book"
+				initialIntegration={$page.url.searchParams.get('source') === 'integration-catalog'
+					? ($page.url.searchParams.get('integration') ?? '')
+					: ''}
+				initialIntegrationName={$page.url.searchParams.get('source') === 'integration-catalog'
+					? ($page.url.searchParams.get('integration_name') ?? '')
+					: ''}
+			/>
 		{/snippet}
 	</PerformancePageSection>
 </main>
-

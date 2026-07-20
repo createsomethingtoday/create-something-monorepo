@@ -1,0 +1,1773 @@
+{
+  "version": 1,
+  "profile": "guard-player-team-benchmark-v2",
+  "sourceSha256": "94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0",
+  "reviewRule": "Only people participating on the foreground court closest to the camera are active player traffic.",
+  "annotations": [
+    {
+      "id": "240000-0",
+      "clipId": "clear-half-court",
+      "timeMs": 240000,
+      "box": [
+        1630,
+        506,
+        1724,
+        768
+      ],
+      "expectedRole": "teammate",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.8867,
+        "cropBounds": [
+          1630,
+          506,
+          1724,
+          768
+        ],
+        "legacyWholeBoxWhiteRatio": 0.379753
+      }
+    },
+    {
+      "id": "240000-1",
+      "clipId": "clear-half-court",
+      "timeMs": 240000,
+      "box": [
+        602,
+        476,
+        687,
+        773
+      ],
+      "expectedRole": "teammate",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.8372,
+        "cropBounds": [
+          602,
+          476,
+          687,
+          773
+        ],
+        "legacyWholeBoxWhiteRatio": 0.225131
+      }
+    },
+    {
+      "id": "240000-4",
+      "clipId": "clear-half-court",
+      "timeMs": 240000,
+      "box": [
+        835,
+        439,
+        898,
+        616
+      ],
+      "expectedRole": "teammate",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.7014,
+        "cropBounds": [
+          835,
+          439,
+          898,
+          616
+        ],
+        "legacyWholeBoxWhiteRatio": 0.222722
+      }
+    },
+    {
+      "id": "240000-5",
+      "clipId": "clear-half-court",
+      "timeMs": 240000,
+      "box": [
+        1088,
+        429,
+        1148,
+        602
+      ],
+      "expectedRole": "teammate",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.6847,
+        "cropBounds": [
+          1088,
+          429,
+          1148,
+          602
+        ],
+        "legacyWholeBoxWhiteRatio": 0.452016
+      }
+    },
+    {
+      "id": "244000-0",
+      "clipId": "clear-half-court",
+      "timeMs": 244000,
+      "box": [
+        844,
+        525,
+        1010,
+        892
+      ],
+      "expectedRole": "teammate",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.8976,
+        "cropBounds": [
+          844,
+          525,
+          1010,
+          892
+        ],
+        "legacyWholeBoxWhiteRatio": 0.542397
+      }
+    },
+    {
+      "id": "244000-1",
+      "clipId": "clear-half-court",
+      "timeMs": 244000,
+      "box": [
+        1194,
+        546,
+        1300,
+        791
+      ],
+      "expectedRole": "teammate",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.8617,
+        "cropBounds": [
+          1194,
+          546,
+          1300,
+          791
+        ],
+        "legacyWholeBoxWhiteRatio": 0.644994
+      }
+    },
+    {
+      "id": "244000-3",
+      "clipId": "clear-half-court",
+      "timeMs": 244000,
+      "box": [
+        1095,
+        467,
+        1181,
+        715
+      ],
+      "expectedRole": "teammate",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.821,
+        "cropBounds": [
+          1095,
+          467,
+          1181,
+          715
+        ],
+        "legacyWholeBoxWhiteRatio": 0.586752
+      }
+    },
+    {
+      "id": "244000-7",
+      "clipId": "clear-half-court",
+      "timeMs": 244000,
+      "box": [
+        1389,
+        439,
+        1465,
+        660
+      ],
+      "expectedRole": "teammate",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.7345,
+        "cropBounds": [
+          1389,
+          439,
+          1465,
+          660
+        ],
+        "legacyWholeBoxWhiteRatio": 0.39093
+      }
+    },
+    {
+      "id": "248000-0",
+      "clipId": "clear-half-court",
+      "timeMs": 248000,
+      "box": [
+        1169,
+        530,
+        1289,
+        779
+      ],
+      "expectedRole": "teammate",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.8509,
+        "cropBounds": [
+          1169,
+          530,
+          1289,
+          779
+        ],
+        "legacyWholeBoxWhiteRatio": 0.659404
+      }
+    },
+    {
+      "id": "248000-1",
+      "clipId": "clear-half-court",
+      "timeMs": 248000,
+      "box": [
+        1347,
+        528,
+        1434,
+        731
+      ],
+      "expectedRole": "teammate",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.8405,
+        "cropBounds": [
+          1347,
+          528,
+          1434,
+          731
+        ],
+        "legacyWholeBoxWhiteRatio": 0.462053
+      }
+    },
+    {
+      "id": "248000-2",
+      "clipId": "clear-half-court",
+      "timeMs": 248000,
+      "box": [
+        838,
+        541,
+        928,
+        828
+      ],
+      "expectedRole": "teammate",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.8273,
+        "cropBounds": [
+          838,
+          541,
+          928,
+          828
+        ],
+        "legacyWholeBoxWhiteRatio": 0.534628
+      }
+    },
+    {
+      "id": "248000-5",
+      "clipId": "clear-half-court",
+      "timeMs": 248000,
+      "box": [
+        1298,
+        545,
+        1346,
+        708
+      ],
+      "expectedRole": "teammate",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.6903,
+        "cropBounds": [
+          1298,
+          545,
+          1346,
+          708
+        ],
+        "legacyWholeBoxWhiteRatio": 0.393875
+      }
+    },
+    {
+      "id": "1698000-3",
+      "clipId": "transition-wide",
+      "timeMs": 1698000,
+      "box": [
+        317,
+        478,
+        419,
+        662
+      ],
+      "expectedRole": "teammate",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.7951,
+        "cropBounds": [
+          317,
+          478,
+          419,
+          662
+        ],
+        "legacyWholeBoxWhiteRatio": 0.388518
+      }
+    },
+    {
+      "id": "1698000-5",
+      "clipId": "transition-wide",
+      "timeMs": 1698000,
+      "box": [
+        1022,
+        511,
+        1096,
+        690
+      ],
+      "expectedRole": "teammate",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.6673,
+        "cropBounds": [
+          1022,
+          511,
+          1096,
+          690
+        ],
+        "legacyWholeBoxWhiteRatio": 0.423881
+      }
+    },
+    {
+      "id": "1698000-6",
+      "clipId": "transition-wide",
+      "timeMs": 1698000,
+      "box": [
+        823,
+        487,
+        866,
+        628
+      ],
+      "expectedRole": "teammate",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.5859,
+        "cropBounds": [
+          823,
+          487,
+          866,
+          628
+        ],
+        "legacyWholeBoxWhiteRatio": 0.515082
+      }
+    },
+    {
+      "id": "1698000-8",
+      "clipId": "transition-wide",
+      "timeMs": 1698000,
+      "box": [
+        750,
+        511,
+        800,
+        694
+      ],
+      "expectedRole": "teammate",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.4047,
+        "cropBounds": [
+          750,
+          511,
+          800,
+          694
+        ],
+        "legacyWholeBoxWhiteRatio": 0.392672
+      }
+    },
+    {
+      "id": "1704000-5",
+      "clipId": "transition-wide",
+      "timeMs": 1704000,
+      "box": [
+        881,
+        556,
+        996,
+        743
+      ],
+      "expectedRole": "teammate",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.6852,
+        "cropBounds": [
+          881,
+          556,
+          996,
+          743
+        ],
+        "legacyWholeBoxWhiteRatio": 0.519208
+      }
+    },
+    {
+      "id": "1704000-7",
+      "clipId": "transition-wide",
+      "timeMs": 1704000,
+      "box": [
+        1514,
+        530,
+        1626,
+        704
+      ],
+      "expectedRole": "teammate",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.5535,
+        "cropBounds": [
+          1514,
+          530,
+          1626,
+          704
+        ],
+        "legacyWholeBoxWhiteRatio": 0.225429
+      }
+    },
+    {
+      "id": "1704000-11",
+      "clipId": "transition-wide",
+      "timeMs": 1704000,
+      "box": [
+        1143,
+        517,
+        1189,
+        619
+      ],
+      "expectedRole": "opponent",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.2323,
+        "cropBounds": [
+          1143,
+          517,
+          1189,
+          619
+        ],
+        "legacyWholeBoxWhiteRatio": 0.244789,
+        "reviewCorrection": {
+          "priorRole": "teammate",
+          "correctedRole": "opponent",
+          "reason": "Full-crop review shows the black/red opponent jersey; the initial contact-sheet label overlapped a white teammate."
+        }
+      }
+    },
+    {
+      "id": "2334000-1",
+      "clipId": "pan-occlusion",
+      "timeMs": 2334000,
+      "box": [
+        721,
+        504,
+        771,
+        654
+      ],
+      "expectedRole": "teammate",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.806,
+        "cropBounds": [
+          721,
+          504,
+          771,
+          654
+        ],
+        "legacyWholeBoxWhiteRatio": 0.428333
+      }
+    },
+    {
+      "id": "2334000-4",
+      "clipId": "pan-occlusion",
+      "timeMs": 2334000,
+      "box": [
+        574,
+        474,
+        624,
+        596
+      ],
+      "expectedRole": "teammate",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.7405,
+        "cropBounds": [
+          574,
+          474,
+          624,
+          596
+        ],
+        "legacyWholeBoxWhiteRatio": 0.231034
+      }
+    },
+    {
+      "id": "2342000-0",
+      "clipId": "pan-occlusion",
+      "timeMs": 2342000,
+      "box": [
+        1258,
+        632,
+        1412,
+        934
+      ],
+      "expectedRole": "teammate",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.8647,
+        "cropBounds": [
+          1258,
+          632,
+          1412,
+          934
+        ],
+        "legacyWholeBoxWhiteRatio": 0.715842
+      }
+    },
+    {
+      "id": "2342000-1",
+      "clipId": "pan-occlusion",
+      "timeMs": 2342000,
+      "box": [
+        877,
+        509,
+        946,
+        686
+      ],
+      "expectedRole": "teammate",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.7379,
+        "cropBounds": [
+          877,
+          509,
+          946,
+          686
+        ],
+        "legacyWholeBoxWhiteRatio": 0.580965
+      }
+    },
+    {
+      "id": "2342000-2",
+      "clipId": "pan-occlusion",
+      "timeMs": 2342000,
+      "box": [
+        443,
+        490,
+        506,
+        655
+      ],
+      "expectedRole": "teammate",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.6751,
+        "cropBounds": [
+          443,
+          490,
+          506,
+          655
+        ],
+        "legacyWholeBoxWhiteRatio": 0.558111
+      }
+    },
+    {
+      "id": "240000-2",
+      "clipId": "clear-half-court",
+      "timeMs": 240000,
+      "box": [
+        1383,
+        455,
+        1457,
+        692
+      ],
+      "expectedRole": "opponent",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.8365,
+        "cropBounds": [
+          1383,
+          455,
+          1457,
+          692
+        ],
+        "legacyWholeBoxWhiteRatio": 0.354531
+      }
+    },
+    {
+      "id": "240000-3",
+      "clipId": "clear-half-court",
+      "timeMs": 240000,
+      "box": [
+        919,
+        505,
+        1015,
+        721
+      ],
+      "expectedRole": "opponent",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.7485,
+        "cropBounds": [
+          919,
+          505,
+          1015,
+          721
+        ],
+        "legacyWholeBoxWhiteRatio": 0.221841
+      }
+    },
+    {
+      "id": "240000-6",
+      "clipId": "clear-half-court",
+      "timeMs": 240000,
+      "box": [
+        660,
+        484,
+        717,
+        709
+      ],
+      "expectedRole": "opponent",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.6574,
+        "cropBounds": [
+          660,
+          484,
+          717,
+          709
+        ],
+        "legacyWholeBoxWhiteRatio": 0.174247
+      }
+    },
+    {
+      "id": "240000-8",
+      "clipId": "clear-half-court",
+      "timeMs": 240000,
+      "box": [
+        977,
+        424,
+        1029,
+        588
+      ],
+      "expectedRole": "opponent",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.2992,
+        "cropBounds": [
+          977,
+          424,
+          1029,
+          588
+        ],
+        "legacyWholeBoxWhiteRatio": 0.109681
+      }
+    },
+    {
+      "id": "244000-2",
+      "clipId": "clear-half-court",
+      "timeMs": 244000,
+      "box": [
+        1680,
+        491,
+        1790,
+        890
+      ],
+      "expectedRole": "opponent",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.8212,
+        "cropBounds": [
+          1680,
+          491,
+          1790,
+          890
+        ],
+        "legacyWholeBoxWhiteRatio": 0.26465
+      }
+    },
+    {
+      "id": "244000-4",
+      "clipId": "clear-half-court",
+      "timeMs": 244000,
+      "box": [
+        702,
+        457,
+        794,
+        715
+      ],
+      "expectedRole": "opponent",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.7966,
+        "cropBounds": [
+          702,
+          457,
+          794,
+          715
+        ],
+        "legacyWholeBoxWhiteRatio": 0.124559
+      }
+    },
+    {
+      "id": "244000-5",
+      "clipId": "clear-half-court",
+      "timeMs": 244000,
+      "box": [
+        985,
+        509,
+        1077,
+        776
+      ],
+      "expectedRole": "opponent",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.7891,
+        "cropBounds": [
+          985,
+          509,
+          1077,
+          776
+        ],
+        "legacyWholeBoxWhiteRatio": 0.356941
+      }
+    },
+    {
+      "id": "244000-8",
+      "clipId": "clear-half-court",
+      "timeMs": 244000,
+      "box": [
+        655,
+        428,
+        736,
+        659
+      ],
+      "expectedRole": "opponent",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.6695,
+        "cropBounds": [
+          655,
+          428,
+          736,
+          659
+        ],
+        "legacyWholeBoxWhiteRatio": 0.118176
+      }
+    },
+    {
+      "id": "248000-3",
+      "clipId": "clear-half-court",
+      "timeMs": 248000,
+      "box": [
+        296,
+        478,
+        397,
+        638
+      ],
+      "expectedRole": "opponent",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.762,
+        "cropBounds": [
+          296,
+          478,
+          397,
+          638
+        ],
+        "legacyWholeBoxWhiteRatio": 0.162979
+      }
+    },
+    {
+      "id": "248000-6",
+      "clipId": "clear-half-court",
+      "timeMs": 248000,
+      "box": [
+        1056,
+        565,
+        1139,
+        755
+      ],
+      "expectedRole": "opponent",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.625,
+        "cropBounds": [
+          1056,
+          565,
+          1139,
+          755
+        ],
+        "legacyWholeBoxWhiteRatio": 0.505758
+      }
+    },
+    {
+      "id": "248000-7",
+      "clipId": "clear-half-court",
+      "timeMs": 248000,
+      "box": [
+        924,
+        488,
+        983,
+        654
+      ],
+      "expectedRole": "opponent",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.5733,
+        "cropBounds": [
+          924,
+          488,
+          983,
+          654
+        ],
+        "legacyWholeBoxWhiteRatio": 0.316622
+      }
+    },
+    {
+      "id": "248000-9",
+      "clipId": "clear-half-court",
+      "timeMs": 248000,
+      "box": [
+        1172,
+        456,
+        1214,
+        561
+      ],
+      "expectedRole": "opponent",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.4766,
+        "cropBounds": [
+          1172,
+          456,
+          1214,
+          561
+        ],
+        "legacyWholeBoxWhiteRatio": 0.195873
+      }
+    },
+    {
+      "id": "1698000-0",
+      "clipId": "transition-wide",
+      "timeMs": 1698000,
+      "box": [
+        1582,
+        560,
+        1691,
+        814
+      ],
+      "expectedRole": "opponent",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.8775,
+        "cropBounds": [
+          1582,
+          560,
+          1691,
+          814
+        ],
+        "legacyWholeBoxWhiteRatio": 0.375643
+      }
+    },
+    {
+      "id": "1698000-1",
+      "clipId": "transition-wide",
+      "timeMs": 1698000,
+      "box": [
+        646,
+        551,
+        786,
+        833
+      ],
+      "expectedRole": "opponent",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.8689,
+        "cropBounds": [
+          646,
+          551,
+          786,
+          833
+        ],
+        "legacyWholeBoxWhiteRatio": 0.552111
+      }
+    },
+    {
+      "id": "1698000-2",
+      "clipId": "transition-wide",
+      "timeMs": 1698000,
+      "box": [
+        1069,
+        521,
+        1156,
+        776
+      ],
+      "expectedRole": "opponent",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.8321,
+        "cropBounds": [
+          1069,
+          521,
+          1156,
+          776
+        ],
+        "legacyWholeBoxWhiteRatio": 0.411092
+      }
+    },
+    {
+      "id": "1698000-4",
+      "clipId": "transition-wide",
+      "timeMs": 1698000,
+      "box": [
+        1732,
+        516,
+        1808,
+        710
+      ],
+      "expectedRole": "opponent",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.7885,
+        "cropBounds": [
+          1732,
+          516,
+          1808,
+          710
+        ],
+        "legacyWholeBoxWhiteRatio": 0.216585
+      }
+    },
+    {
+      "id": "1704000-0",
+      "clipId": "transition-wide",
+      "timeMs": 1704000,
+      "box": [
+        1739,
+        573,
+        1839,
+        786
+      ],
+      "expectedRole": "opponent",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.8052,
+        "cropBounds": [
+          1739,
+          573,
+          1839,
+          786
+        ],
+        "legacyWholeBoxWhiteRatio": 0.203399
+      }
+    },
+    {
+      "id": "1704000-1",
+      "clipId": "transition-wide",
+      "timeMs": 1704000,
+      "box": [
+        1173,
+        532,
+        1282,
+        690
+      ],
+      "expectedRole": "teammate",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.7881,
+        "cropBounds": [
+          1173,
+          532,
+          1282,
+          690
+        ],
+        "legacyWholeBoxWhiteRatio": 0.551433,
+        "reviewCorrection": {
+          "priorRole": "opponent",
+          "correctedRole": "teammate",
+          "reason": "Full-crop review shows a white Angels jersey; the initial contact-sheet label was read from an overlapping detector box."
+        }
+      }
+    },
+    {
+      "id": "1704000-2",
+      "clipId": "transition-wide",
+      "timeMs": 1704000,
+      "box": [
+        1271,
+        511,
+        1346,
+        664
+      ],
+      "expectedRole": "opponent",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.7256,
+        "cropBounds": [
+          1271,
+          511,
+          1346,
+          664
+        ],
+        "legacyWholeBoxWhiteRatio": 0.306545
+      }
+    },
+    {
+      "id": "1704000-4",
+      "clipId": "transition-wide",
+      "timeMs": 1704000,
+      "box": [
+        959,
+        559,
+        1061,
+        751
+      ],
+      "expectedRole": "opponent",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.6913,
+        "cropBounds": [
+          959,
+          559,
+          1061,
+          751
+        ],
+        "legacyWholeBoxWhiteRatio": 0.514351
+      }
+    },
+    {
+      "id": "1704000-6",
+      "clipId": "transition-wide",
+      "timeMs": 1704000,
+      "box": [
+        1058,
+        538,
+        1121,
+        680
+      ],
+      "expectedRole": "opponent",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.6184,
+        "cropBounds": [
+          1058,
+          538,
+          1121,
+          680
+        ],
+        "legacyWholeBoxWhiteRatio": 0.27202
+      }
+    },
+    {
+      "id": "2334000-2",
+      "clipId": "pan-occlusion",
+      "timeMs": 2334000,
+      "box": [
+        503,
+        472,
+        566,
+        621
+      ],
+      "expectedRole": "opponent",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.7657,
+        "cropBounds": [
+          503,
+          472,
+          566,
+          621
+        ],
+        "legacyWholeBoxWhiteRatio": 0.123869
+      }
+    },
+    {
+      "id": "2334000-3",
+      "clipId": "pan-occlusion",
+      "timeMs": 2334000,
+      "box": [
+        800,
+        475,
+        855,
+        640
+      ],
+      "expectedRole": "opponent",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.7437,
+        "cropBounds": [
+          800,
+          475,
+          855,
+          640
+        ],
+        "legacyWholeBoxWhiteRatio": 0.379507
+      }
+    },
+    {
+      "id": "2334000-5",
+      "clipId": "pan-occlusion",
+      "timeMs": 2334000,
+      "box": [
+        1248,
+        514,
+        1308,
+        678
+      ],
+      "expectedRole": "opponent",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.6745,
+        "cropBounds": [
+          1248,
+          514,
+          1308,
+          678
+        ],
+        "legacyWholeBoxWhiteRatio": 0.350424
+      }
+    },
+    {
+      "id": "2334000-10",
+      "clipId": "pan-occlusion",
+      "timeMs": 2334000,
+      "box": [
+        1032,
+        477,
+        1069,
+        586
+      ],
+      "expectedRole": "teammate",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.2815,
+        "cropBounds": [
+          1032,
+          477,
+          1069,
+          586
+        ],
+        "legacyWholeBoxWhiteRatio": 0.23562,
+        "reviewCorrection": {
+          "priorRole": "opponent",
+          "correctedRole": "teammate",
+          "reason": "Full-crop review shows a white jersey with blue numbering; the small contact-sheet label obscured the uniform."
+        }
+      }
+    },
+    {
+      "id": "2342000-3",
+      "clipId": "pan-occlusion",
+      "timeMs": 2342000,
+      "box": [
+        615,
+        504,
+        685,
+        650
+      ],
+      "expectedRole": "opponent",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.6656,
+        "cropBounds": [
+          615,
+          504,
+          685,
+          650
+        ],
+        "legacyWholeBoxWhiteRatio": 0.35415
+      }
+    },
+    {
+      "id": "2342000-4",
+      "clipId": "pan-occlusion",
+      "timeMs": 2342000,
+      "box": [
+        1352,
+        513,
+        1421,
+        651
+      ],
+      "expectedRole": "opponent",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.6634,
+        "cropBounds": [
+          1352,
+          513,
+          1421,
+          651
+        ],
+        "legacyWholeBoxWhiteRatio": 0.28883
+      }
+    },
+    {
+      "id": "2342000-5",
+      "clipId": "pan-occlusion",
+      "timeMs": 2342000,
+      "box": [
+        1242,
+        539,
+        1310,
+        665
+      ],
+      "expectedRole": "opponent",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.565,
+        "cropBounds": [
+          1242,
+          539,
+          1310,
+          665
+        ],
+        "legacyWholeBoxWhiteRatio": 0.389869
+      }
+    },
+    {
+      "id": "2342000-7",
+      "clipId": "pan-occlusion",
+      "timeMs": 2342000,
+      "box": [
+        1141,
+        528,
+        1199,
+        640
+      ],
+      "expectedRole": "opponent",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.3626,
+        "cropBounds": [
+          1141,
+          528,
+          1199,
+          640
+        ],
+        "legacyWholeBoxWhiteRatio": 0.489009
+      }
+    },
+    {
+      "id": "2342000-8",
+      "clipId": "pan-occlusion",
+      "timeMs": 2342000,
+      "box": [
+        789,
+        487,
+        820,
+        582
+      ],
+      "expectedRole": "opponent",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.3521,
+        "cropBounds": [
+          789,
+          487,
+          820,
+          582
+        ],
+        "legacyWholeBoxWhiteRatio": 0.243359
+      }
+    },
+    {
+      "id": "2342000-9",
+      "clipId": "pan-occlusion",
+      "timeMs": 2342000,
+      "box": [
+        823,
+        496,
+        858,
+        594
+      ],
+      "expectedRole": "opponent",
+      "courtMembership": "foreground-court",
+      "ignoreReason": null,
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.3087,
+        "cropBounds": [
+          823,
+          496,
+          858,
+          594
+        ],
+        "legacyWholeBoxWhiteRatio": 0.458776
+      }
+    },
+    {
+      "id": "240000-7",
+      "clipId": "clear-half-court",
+      "timeMs": 240000,
+      "box": [
+        1022,
+        399,
+        1065,
+        564
+      ],
+      "expectedRole": "ignore",
+      "courtMembership": "foreground-court",
+      "ignoreReason": "official",
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.3494,
+        "cropBounds": [
+          1022,
+          399,
+          1065,
+          564
+        ],
+        "legacyWholeBoxWhiteRatio": 0.319669
+      }
+    },
+    {
+      "id": "244000-11",
+      "clipId": "clear-half-court",
+      "timeMs": 244000,
+      "box": [
+        1010,
+        397,
+        1054,
+        513
+      ],
+      "expectedRole": "ignore",
+      "courtMembership": "foreground-court",
+      "ignoreReason": "official",
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.2782,
+        "cropBounds": [
+          1010,
+          397,
+          1054,
+          513
+        ],
+        "legacyWholeBoxWhiteRatio": 0.280942
+      }
+    },
+    {
+      "id": "248000-4",
+      "clipId": "clear-half-court",
+      "timeMs": 248000,
+      "box": [
+        568,
+        434,
+        616,
+        566
+      ],
+      "expectedRole": "ignore",
+      "courtMembership": "foreground-court",
+      "ignoreReason": "official",
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.692,
+        "cropBounds": [
+          568,
+          434,
+          616,
+          566
+        ],
+        "legacyWholeBoxWhiteRatio": 0.357237
+      }
+    },
+    {
+      "id": "248000-10",
+      "clipId": "clear-half-court",
+      "timeMs": 248000,
+      "box": [
+        1435,
+        460,
+        1476,
+        572
+      ],
+      "expectedRole": "ignore",
+      "courtMembership": "foreground-court",
+      "ignoreReason": "official",
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.3235,
+        "cropBounds": [
+          1435,
+          460,
+          1476,
+          572
+        ],
+        "legacyWholeBoxWhiteRatio": 0.302439
+      }
+    },
+    {
+      "id": "1698000-9",
+      "clipId": "transition-wide",
+      "timeMs": 1698000,
+      "box": [
+        510,
+        450,
+        564,
+        575
+      ],
+      "expectedRole": "ignore",
+      "courtMembership": "foreground-court",
+      "ignoreReason": "official",
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.365,
+        "cropBounds": [
+          510,
+          450,
+          564,
+          575
+        ],
+        "legacyWholeBoxWhiteRatio": 0.225309
+      }
+    },
+    {
+      "id": "1698000-7",
+      "clipId": "transition-wide",
+      "timeMs": 1698000,
+      "box": [
+        1165,
+        467,
+        1206,
+        584
+      ],
+      "expectedRole": "ignore",
+      "courtMembership": "foreground-court",
+      "ignoreReason": "sideline-or-non-player-traffic",
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.4889,
+        "cropBounds": [
+          1165,
+          467,
+          1206,
+          584
+        ],
+        "legacyWholeBoxWhiteRatio": 0.562718
+      }
+    },
+    {
+      "id": "1704000-3",
+      "clipId": "transition-wide",
+      "timeMs": 1704000,
+      "box": [
+        283,
+        449,
+        331,
+        583
+      ],
+      "expectedRole": "ignore",
+      "courtMembership": "foreground-court",
+      "ignoreReason": "sideline-or-non-player-traffic",
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.714,
+        "cropBounds": [
+          283,
+          449,
+          331,
+          583
+        ],
+        "legacyWholeBoxWhiteRatio": 0.159722
+      }
+    },
+    {
+      "id": "1704000-8",
+      "clipId": "transition-wide",
+      "timeMs": 1704000,
+      "box": [
+        502,
+        463,
+        557,
+        604
+      ],
+      "expectedRole": "ignore",
+      "courtMembership": "foreground-court",
+      "ignoreReason": "official",
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.5059,
+        "cropBounds": [
+          502,
+          463,
+          557,
+          604
+        ],
+        "legacyWholeBoxWhiteRatio": 0.288569
+      }
+    },
+    {
+      "id": "1704000-10",
+      "clipId": "transition-wide",
+      "timeMs": 1704000,
+      "box": [
+        152,
+        447,
+        193,
+        540
+      ],
+      "expectedRole": "ignore",
+      "courtMembership": "opposite-court",
+      "ignoreReason": "opposite-court",
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.287,
+        "cropBounds": [
+          152,
+          447,
+          193,
+          540
+        ],
+        "legacyWholeBoxWhiteRatio": 0.178492
+      }
+    },
+    {
+      "id": "1704000-12",
+      "clipId": "transition-wide",
+      "timeMs": 1704000,
+      "box": [
+        207,
+        456,
+        247,
+        550
+      ],
+      "expectedRole": "ignore",
+      "courtMembership": "opposite-court",
+      "ignoreReason": "opposite-court",
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.2113,
+        "cropBounds": [
+          207,
+          456,
+          247,
+          550
+        ],
+        "legacyWholeBoxWhiteRatio": 0.342537
+      }
+    },
+    {
+      "id": "2334000-0",
+      "clipId": "pan-occlusion",
+      "timeMs": 2334000,
+      "box": [
+        175,
+        444,
+        236,
+        610
+      ],
+      "expectedRole": "ignore",
+      "courtMembership": "foreground-court",
+      "ignoreReason": "official",
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.8207,
+        "cropBounds": [
+          175,
+          444,
+          236,
+          610
+        ],
+        "legacyWholeBoxWhiteRatio": 0.14024
+      }
+    },
+    {
+      "id": "2334000-6",
+      "clipId": "pan-occlusion",
+      "timeMs": 2334000,
+      "box": [
+        1555,
+        458,
+        1613,
+        591
+      ],
+      "expectedRole": "ignore",
+      "courtMembership": "foreground-court",
+      "ignoreReason": "sideline-or-non-player-traffic",
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.6647,
+        "cropBounds": [
+          1555,
+          458,
+          1613,
+          591
+        ],
+        "legacyWholeBoxWhiteRatio": 0.162432
+      }
+    },
+    {
+      "id": "2334000-7",
+      "clipId": "pan-occlusion",
+      "timeMs": 2334000,
+      "box": [
+        1683,
+        452,
+        1746,
+        621
+      ],
+      "expectedRole": "ignore",
+      "courtMembership": "foreground-court",
+      "ignoreReason": "sideline-or-non-player-traffic",
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.4257,
+        "cropBounds": [
+          1683,
+          452,
+          1746,
+          621
+        ],
+        "legacyWholeBoxWhiteRatio": 0.198872
+      }
+    },
+    {
+      "id": "2342000-6",
+      "clipId": "pan-occlusion",
+      "timeMs": 2342000,
+      "box": [
+        495,
+        447,
+        546,
+        568
+      ],
+      "expectedRole": "ignore",
+      "courtMembership": "foreground-court",
+      "ignoreReason": "official",
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.4852,
+        "cropBounds": [
+          495,
+          447,
+          546,
+          568
+        ],
+        "legacyWholeBoxWhiteRatio": 0.204868
+      }
+    },
+    {
+      "id": "2342000-10",
+      "clipId": "pan-occlusion",
+      "timeMs": 2342000,
+      "box": [
+        213,
+        497,
+        270,
+        569
+      ],
+      "expectedRole": "ignore",
+      "courtMembership": "foreground-court",
+      "ignoreReason": "sideline-or-non-player-traffic",
+      "provenance": {
+        "method": "manual-review",
+        "detectorConfidence": 0.2669,
+        "cropBounds": [
+          213,
+          497,
+          270,
+          569
+        ],
+        "legacyWholeBoxWhiteRatio": 0.158927
+      }
+    }
+  ]
+}

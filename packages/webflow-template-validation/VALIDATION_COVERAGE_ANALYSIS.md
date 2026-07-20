@@ -54,7 +54,7 @@ The **Webflow Way Validator** provides **70-75% automated coverage** of standard
 | **No more than 3-4 combo classes per element** | ❌ MANUAL | N/A | Element-level analysis not available | **Manual**: Spot-check complex elements for class stacking |
 | **Below-fold images lazy-loaded** | ⚠️ PARTIAL | 🌐 SERVER | Basic lazy loading detection | **Manual**: Verify implementation quality and performance impact |
 | **Videos compressed, no autoplay without controls** | ❌ MANUAL | N/A | Video analysis not available | **Manual**: Test all video elements for compression and UX |
-| **WCAG color contrast compliance** | ⚠️ PARTIAL | 🌐 SERVER | Basic contrast checking | **Manual**: Comprehensive accessibility audit across all states |
+| **WCAG color contrast compliance** | ❌ MANUAL | N/A | Automated check removed because static HTML and stylesheet heuristics do not represent browser-computed styles | **Manual**: Audit rendered pages and interaction states with browser accessibility tooling |
 | **Images have defined width/height** | ❌ MANUAL | N/A | Layout shift analysis not available | **Manual**: Check for layout shift prevention |
 | **Simple CSS transitions for hover/press** | ❌ MANUAL | N/A | Transition analysis not available | **Manual**: Test all interactive states |
 | **Large videos have pause/skip options** | ❌ MANUAL | N/A | Video UX analysis not available | **Manual**: Test video controls and accessibility |
