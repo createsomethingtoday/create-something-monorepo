@@ -88,7 +88,8 @@ export class LabService {
       const duplicate = state.filmAnalyses.some((record) => record.playerId === playerId
         && record.source.sha256 === analysis.source.sha256
         && record.profile === analysis.profile
-        && record.analysis.revision === analysis.analysis.revision);
+        && record.analysis.revision === analysis.analysis.revision
+        && (record.analysis.playStateVerification?.ledgerFingerprint ?? null) === (analysis.analysis.playStateVerification?.ledgerFingerprint ?? null));
       if (duplicate) throw new Error('This source and analysis revision is already captured for the player.');
       const now = new Date().toISOString();
       return {

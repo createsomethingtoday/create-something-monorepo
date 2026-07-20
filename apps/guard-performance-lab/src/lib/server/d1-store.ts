@@ -68,6 +68,13 @@ export class D1LabStore implements LabStore {
       await this.db.prepare('INSERT INTO guard_film_chunks (analysis_id, chunk_index, frames_json) VALUES (?, ?, ?) ON CONFLICT(analysis_id, chunk_index) DO UPDATE SET frames_json = excluded.frames_json')
         .bind(chunk.analysisId, chunk.chunkIndex, chunk.framesJson).run();
     }
+    return new Set(prepared.chunks.map((chunk) => chunk.analysisId));
+  }
+
+  private async deleteFilmChunks(analysisIds: ReadonlySet<string>) {
+    for (const analysisId of analysisIds) {
+      await this.db.prepare('DELETE FROM guard_film_chunks WHERE analysis_id = ?').bind(analysisId).run();
+    }
   }
 
   private async deleteRemovedFilmChunks(current: LabState, next: LabState) {
@@ -90,18 +97,25 @@ export class D1LabStore implements LabStore {
         ...await transform(current),
         revision: current.revision + 1
       }));
-      await this.writeNewFilmChunks(current, next);
+      const attemptedAnalysisIds = await this.writeNewFilmChunks(current, next);
       const existingIds = new Set(current.filmAnalyses.map((analysis) => analysis.id));
       const encoded = JSON.stringify(prepareD1Workspace(next, 40, existingIds).workspace);
-      const result = row
-        ? await this.db.prepare('UPDATE guard_workspace SET revision = ?, data = ?, updated_at = CURRENT_TIMESTAMP WHERE id = 1 AND revision = ?')
-          .bind(next.revision, encoded, row.revision).run()
-        : await this.db.prepare('INSERT OR IGNORE INTO guard_workspace (id, revision, data) VALUES (1, ?, ?)')
-          .bind(next.revision, encoded).run();
+      let result;
+      try {
+        result = row
+          ? await this.db.prepare('UPDATE guard_workspace SET revision = ?, data = ?, updated_at = CURRENT_TIMESTAMP WHERE id = 1 AND revision = ?')
+            .bind(next.revision, encoded, row.revision).run()
+          : await this.db.prepare('INSERT OR IGNORE INTO guard_workspace (id, revision, data) VALUES (1, ?, ?)')
+            .bind(next.revision, encoded).run();
+      } catch (error) {
+        await this.deleteFilmChunks(attemptedAnalysisIds);
+        throw error;
+      }
       if ((result.meta.changes ?? 0) === 1) {
         await this.deleteRemovedFilmChunks(current, next);
         return next;
       }
+      await this.deleteFilmChunks(attemptedAnalysisIds);
     }
     throw new Error('The durable Guard Lab workspace changed concurrently. Retry the operation.');
   }

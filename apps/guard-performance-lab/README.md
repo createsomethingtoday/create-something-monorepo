@@ -1,6 +1,6 @@
 # Guard Performance Lab
 
-A standalone, private-first coaching system for developing guards. Version 0.5 adds an immutable film-trace workflow: a supplied game is analyzed once, the derived player traffic is stored privately, and the operator can scrub, correct, reload, and export the captured revision without rerunning inference. Identity-only revision 3 preserves the revision-2 player field and associates #13 from direct jersey evidence plus bounded continuity; verified substitutions are stored as `inactive`, while ambiguous spans fail closed as `unresolved`.
+A standalone, private-first coaching system for developing guards. Version 0.5 adds an immutable film-trace workflow: a supplied game is analyzed once, the derived player traffic is stored privately, and the operator can scrub, correct, reload, and export the captured revision without rerunning inference. Identity-only revision 3 preserves the revision-2 player field and associates #13 from direct jersey evidence plus bounded continuity; verified substitutions are stored as `inactive`, while ambiguous spans fail closed as `unresolved`. A separate reviewed play-state ledger labels live offense, live defense, transitions, dead balls, free throws, substitutions, and unknown spans without rewriting frames or running detection again.
 
 ## Privacy model
 
@@ -66,9 +66,16 @@ pnpm --filter @create-something/guard-performance-lab film:verify \
   --svg /private/path/benchmark-evidence.svg \
   --expected-revision 2
 
+pnpm --filter @create-something/guard-performance-lab film:verify:import -- \
+  --analysis /private/path/full-analysis-r2.json \
+  --corrections /private/path/benchmark-corrections.json \
+  --benchmark-report /private/path/benchmark-report.json \
+  --output /private/path/import-gate-r2.json
+
 pnpm --filter @create-something/guard-performance-lab film:import:http \
   --analysis /private/path/full-analysis-r2.json \
-  --corrections /private/path/benchmark-corrections.json
+  --corrections /private/path/benchmark-corrections.json \
+  --gate /private/path/import-gate-r2.json
 ```
 
 Repairing identity does not rerun person detection or team classification. The locked #13 fixture contains readable positives across four live-play segments plus #5, #11, #15, unreadable, tracker-handoff, and substitution negatives. Create a candidate, verify it, and only then finalize the one identity receipt:
@@ -93,7 +100,74 @@ pnpm --filter @create-something/guard-performance-lab film:finalize:identity -- 
   --analyzed-at <fixed-receipt-time>
 ```
 
-`Film trace` then replays the captured top-down traffic. The slider works in both directions, #13 carries an adjustable wake that breaks across unresolved gaps and inactive substitutions, and JSON/SVG exports are derived from the persisted revision. Operator corrections require direct-evidence text and append provenance; player-scoped identities cannot attach or correct analyses and can read only their assigned player.
+Attach reviewed play context to that same immutable revision with a complete, non-overlapping ledger. `unknown` intervals require explicit unreviewed provenance and fail closed; every other state requires source-review evidence. The command verifies source identity and complete duration coverage, then writes a new artifact with the original frames, players, identity fingerprint, revision, and execution count intact.
+
+```bash
+pnpm --filter @create-something/guard-performance-lab film:apply:play-state -- \
+  --analysis /private/path/full-analysis-r3.json \
+  --ledger fixtures/film/player-13-play-state-ledger.json \
+  --output /private/path/full-analysis-r3-play-state.json \
+  --receipt /private/path/play-state-receipt.json
+
+pnpm --filter @create-something/guard-performance-lab film:verify:import -- \
+  --analysis /private/path/full-analysis-r3-play-state.json \
+  --corrections /private/path/empty-corrections.json \
+  --output /private/path/import-gate-r3-play-state.json
+
+pnpm --filter @create-something/guard-performance-lab film:import:http -- \
+  --analysis /private/path/full-analysis-r3-play-state.json \
+  --corrections /private/path/empty-corrections.json \
+  --gate /private/path/import-gate-r3-play-state.json
+```
+
+Both local and HTTP imports reject analyses that are not bound to an exact SHA-256 import gate. Revision 1/2 gates consume the passing fixed benchmark report and its exact correction overlay; revision 3 gates require the embedded locked identity benchmark. Play-state receipt counts are recomputed from the captured frames before a gate can be issued. The analyzer also hashes the linked video bytes itself and rejects a mismatched supplied source receipt before inference starts.
+
+`Film trace` then replays the captured top-down traffic. The slider works in both directions. `Live basketball only` is the default and draws an orange #13 wake only for verified live offense, live defense, and transition states. `All captured movement` keeps dead-ball, free-throw, substitution, and unknown movement available as a gray dashed context wake without counting it as positioning or lane running. Wake segments break across state changes, unresolved gaps, and inactive substitutions. JSON/SVG exports are derived from the persisted revision. Operator corrections require direct-evidence text and append provenance; player-scoped identities cannot attach or correct analyses and can read only their assigned player.
+
+### Local segmentation-mask tracking
+
+Color histograms and detector track IDs are discovery signals, not sufficient #13 identity evidence: a track ID can transfer at a player crossing. For a substantially stronger local pass, use a reviewed #13 box to initialize SAM 2.1 on each verified active stint. The resulting silhouette receipt is fused back onto the person field only when all of these gates agree:
+
+- the source hash and full-resolution coordinate space match;
+- the mask overlaps exactly one foreground-court player with a safe margin;
+- that player is classified as a white-jersey teammate, never an opponent;
+- mask confidence remains above the acceptance floor;
+- a user-reviewed participation ledger marks the interval active.
+
+Ambiguous overlaps, substitutions, long gaps, and off-screen exits break the wake. They never trigger appearance-only re-identification. Re-seed from another frame where `13` is directly readable.
+
+The official SAM 2 notebook includes an Apple MPS path with CPU fallback. MPS support is preliminary, so every stint still needs held-out visual review. On an M2 Pro proof, `sam2.1_hiera_small` processed a 960×540 sequence locally; source bytes were not uploaded. Set up the ignored local runtime and checkpoint outside the application datastore, extract a bounded frame sequence, and run:
+
+```bash
+PYTORCH_ENABLE_MPS_FALLBACK=1 \
+/private/path/sam2-env/bin/python scripts/track-player-mask-sam2.py \
+  --frames /private/path/stint-frames \
+  --checkpoint /private/path/sam2.1_hiera_small.pt \
+  --source-sha256 <verified-source-sha256> \
+  --source-width 1920 \
+  --source-height 1080 \
+  --segment-id on-court-17m40 \
+  --start-ms 1060000 \
+  --sample-fps 5 \
+  --seed-frame 0 \
+  --seed-box 326,261,30,96 \
+  --reviewer user \
+  --output /private/path/on-court-17m40-mask.json \
+  --device mps
+```
+
+`--seed-box` uses the extracted-frame coordinate space; the receipt scales every box and foot point back to the declared source dimensions. The script records the exact model SHA-256, device, seed, samples, and evidence. A mask receipt is a private candidate, not a promotable film revision by itself; benchmark and court-calibration gates still apply.
+
+Combine reviewed stint receipts and fuse them against the reprocessed detector field. Same-state overlaps are merged so a direct-number reseed can safely bridge a chunk boundary; conflicting participation states, mixed sources, coordinate spaces, or model receipts are rejected. Fusion also rejects raw opponent evidence and terminates a seed after more than 3.5 seconds without an accepted target, even if SAM2 later attaches to another player. The command writes both the combined audit receipt and a non-promotable candidate for held-out review:
+
+```bash
+pnpm --filter @create-something/guard-performance-lab film:fuse:mask-tracks \
+  --analysis /private/path/full-analysis-r2-reprocessed.json \
+  --mask-track /private/path/stint-1-mask.json \
+  --mask-track /private/path/stint-2-mask.json \
+  --receipt-output /private/path/player-13-mask-track.json \
+  --candidate-output /private/path/player-13-mask-candidate.json
+```
 
 ## AI-native contract
 

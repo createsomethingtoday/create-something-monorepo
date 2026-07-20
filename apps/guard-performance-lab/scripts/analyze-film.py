@@ -67,6 +67,13 @@ def sha256(path: str):
     return digest.hexdigest()
 
 
+def verify_source_sha256(source_path: Path, expected: str):
+    actual = sha256(str(source_path))
+    if actual != expected.lower():
+        raise SystemExit(f"The linked source SHA-256 {actual} does not match the supplied receipt {expected}.")
+    return actual
+
+
 def preprocess(image: np.ndarray, size: int = 640):
     ratio = min(size / image.shape[0], size / image.shape[1])
     resized = cv2.resize(image, (int(image.shape[1] * ratio), int(image.shape[0] * ratio)))
@@ -188,6 +195,92 @@ class Track:
     last_ms: int
 
 
+@dataclass
+class TargetState:
+    trusted_track_ids: set[str]
+    reference: np.ndarray | None = None
+    last_hist: np.ndarray | None = None
+    last_foot: tuple[float, float] | None = None
+    last_ms: int | None = None
+
+
+def seed_target(
+    state: TargetState,
+    detections: list[Detection],
+    time_ms: int,
+    seed_x: float,
+    seed_y: float,
+    max_distance: float = 96.0,
+):
+    """Lock a user-reviewed frame to the nearest detection, or fail closed."""
+    if not detections:
+        return None
+    seeded = min(detections, key=lambda detection: math.hypot(detection.foot_x - seed_x, detection.foot_y - seed_y))
+    if math.hypot(seeded.foot_x - seed_x, seeded.foot_y - seed_y) > max_distance:
+        return None
+    state.trusted_track_ids = {seeded.track_id}
+    state.reference = seeded.hist.copy() if state.reference is None else state.reference * 0.5 + seeded.hist * 0.5
+    state.reference /= max(float(np.linalg.norm(state.reference)), 1e-8)
+    state.last_hist = seeded.hist.copy()
+    state.last_foot = (seeded.foot_x, seeded.foot_y)
+    state.last_ms = time_ms
+    return seeded
+
+
+def select_target(
+    state: TargetState,
+    detections: list[Detection],
+    time_ms: int,
+    frame_width: int,
+    frame_height: int,
+):
+    """Continue #13 only while teammate, appearance, and motion evidence agree.
+
+    A detector track ID is deliberately not identity evidence: IDs can hand off
+    at crossings. Once a trusted ID is classified as an opponent, it is revoked
+    instead of silently carrying the target label onto the other jersey.
+    """
+    if state.reference is None or state.last_ms is None or state.last_foot is None:
+        return None
+    gap_ms = time_ms - state.last_ms
+    if gap_ms > 1500:
+        return None
+
+    candidates: list[tuple[float, float, Detection]] = []
+    for detection in detections:
+        if detection.track_id in state.trusted_track_ids and detection.raw_role != "teammate":
+            state.trusted_track_ids.discard(detection.track_id)
+            continue
+        if detection.raw_role != "teammate":
+            continue
+        reference_similarity = similarity(state.reference, detection.hist)
+        recent_similarity = similarity(state.last_hist, detection.hist) if state.last_hist is not None else reference_similarity
+        dx = (detection.foot_x - state.last_foot[0]) / max(frame_width, 1)
+        dy = (detection.foot_y - state.last_foot[1]) / max(frame_height, 1)
+        normalized_motion = math.hypot(dx, dy) / max(gap_ms / 1000, 0.001)
+        if normalized_motion > 0.52:
+            continue
+        trusted_bonus = 0.08 if detection.track_id in state.trusted_track_ids else 0.0
+        identity_score = reference_similarity * 0.55 + recent_similarity * 0.45
+        score = identity_score + trusted_bonus - normalized_motion * 0.18
+        candidates.append((score, identity_score, detection))
+
+    candidates.sort(key=lambda item: item[0], reverse=True)
+    if not candidates:
+        return None
+    best_score, best_identity, target = candidates[0]
+    runner_up_score = candidates[1][0] if len(candidates) > 1 else -1.0
+    runner_up_identity = candidates[1][1] if len(candidates) > 1 else -1.0
+    if best_score < 0.79 or best_score - runner_up_score < 0.035 or best_identity - runner_up_identity < 0.035:
+        return None
+
+    state.trusted_track_ids.add(target.track_id)
+    state.last_hist = target.hist.copy()
+    state.last_foot = (target.foot_x, target.foot_y)
+    state.last_ms = time_ms
+    return target
+
+
 def similarity(a: np.ndarray, b: np.ndarray):
     return float(np.dot(a, b))
 
@@ -238,8 +331,9 @@ def main():
     source_path, model_path = Path(args.source), Path(args.model)
     if not source_path.is_file() or not model_path.is_file():
         raise SystemExit("The linked source and operator-supplied model must both exist.")
-    if len(args.source_sha256) != 64:
+    if len(args.source_sha256) != 64 or any(character not in "0123456789abcdefABCDEF" for character in args.source_sha256):
         raise SystemExit("--source-sha256 must be the previously verified 64-character receipt hash.")
+    verified_source_sha256 = verify_source_sha256(source_path, args.source_sha256)
     seeds = []
     for value in args.target_seed:
         time_ms, x, y = value.split(":")
@@ -253,8 +347,7 @@ def main():
     interval = max(1, round(fps / args.sample_fps))
     detector = PersonDetector(str(model_path))
     tracks: dict[str, Track] = {}
-    target_track_ids: set[str] = set()
-    target_reference: np.ndarray | None = None
+    target_state = TargetState(set())
     next_id, index, sampled = 1, -1, 0
     previous_gray, cumulative_shift = None, 0.0
     provisional = []
@@ -286,21 +379,12 @@ def main():
         next_id = assign_tracks(detections, tracks, time_ms, next_id)
         all_pano.extend(detection.pano_x for detection in detections if detection.role != "ignore")
 
+        target = None
         for seed_ms, seed_x, seed_y in seeds:
             if abs(seed_ms - time_ms) <= 250 and detections:
-                seeded = min(detections, key=lambda detection: math.hypot(detection.foot_x - seed_x, detection.foot_y - seed_y))
-                if math.hypot(seeded.foot_x - seed_x, seeded.foot_y - seed_y) <= 180:
-                    target_track_ids.add(seeded.track_id)
-                    target_reference = seeded.hist if target_reference is None else (target_reference + seeded.hist) / 2
-                    target_reference /= max(float(np.linalg.norm(target_reference)), 1e-8)
-
-        target = next((detection for detection in detections if detection.track_id in target_track_ids), None)
-        if target is None and target_reference is not None:
-            candidates = [(similarity(target_reference, detection.hist) + detection.white * 0.3, detection) for detection in detections if detection.role == "teammate"]
-            candidates.sort(key=lambda item: item[0], reverse=True)
-            if candidates and candidates[0][0] >= 0.86 and (len(candidates) == 1 or candidates[0][0] - candidates[1][0] >= 0.05):
-                target = candidates[0][1]
-                target_track_ids.add(target.track_id)
+                target = seed_target(target_state, detections, time_ms, seed_x, seed_y) or target
+        if target is None:
+            target = select_target(target_state, detections, time_ms, width, height)
 
         provisional.append({
             "timeMs": time_ms,
@@ -332,6 +416,12 @@ def main():
                     "trackId": detection.track_id,
                     "role": "ignore",
                     "image": [round(detection.foot_x / width, 5), round(detection.foot_y / height, 5)],
+                    "cropBounds": [
+                        max(0, round(float(detection.box[0]))),
+                        max(0, round(float(detection.box[1]))),
+                        max(1, round(float(detection.box[2] - detection.box[0]))),
+                        max(1, round(float(detection.box[3] - detection.box[1]))),
+                    ],
                     "confidence": round(detection.score * detection.classification["confidence"], 4),
                     "courtMembership": detection.classification["courtMembership"],
                     "reason": detection.classification["reason"] if detection.role == "ignore" else "active-court-cap",
@@ -347,6 +437,12 @@ def main():
                 "team": team,
                 "court": [round(court_x, 3), round(court_y, 3)],
                 "image": [round(detection.foot_x / width, 5), round(detection.foot_y / height, 5)],
+                "cropBounds": [
+                    max(0, round(float(detection.box[0]))),
+                    max(0, round(float(detection.box[1]))),
+                    max(1, round(float(detection.box[2] - detection.box[0]))),
+                    max(1, round(float(detection.box[3] - detection.box[1]))),
+                ],
                 "confidence": round(detection.score * max(frame["pan"]["confidence"], 0.35), 4),
                 "provenance": "model",
                 "projection": "estimated",
@@ -361,7 +457,7 @@ def main():
     output = {
         "version": 1,
         "source": {
-            "sha256": args.source_sha256,
+            "sha256": verified_source_sha256,
             "durationMs": duration_ms,
             "width": width,
             "height": height,
@@ -381,7 +477,7 @@ def main():
                 "name": "foreground-court-central-torso-v2",
                 "courtMembership": "half-court-perspective-calibration",
                 "teamRule": "white-jersey-teammate-versus-other-opponent",
-                "trackAggregation": "ema-with-hysteresis-plus-full-track-confidence-vote",
+                "trackAggregation": "high-confidence-frame-uniform-with-track-vote-fallback-v1",
                 "maxActivePlayers": 10,
             },
         },

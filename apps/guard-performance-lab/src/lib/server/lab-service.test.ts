@@ -4,8 +4,7 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { JsonFileLabStore } from './store.js';
 import { LabService } from './lab-service.js';
-import { captureFilmAnalysis } from '../film.js';
-import { applyFilmCorrections } from '../film.js';
+import { applyFilmCorrections, applyFilmPlayStateLedger, captureFilmAnalysis, FILM_PLAY_STATE_PROFILE } from '../film.js';
 
 let dir = '';
 afterEach(async () => { if (dir) await rm(dir, { recursive: true, force: true }); });
@@ -67,6 +66,40 @@ describe('Guard Lab command service', () => {
       { playerId, title: 'Burton Angels / #13 / team-aware', analysis: { revision: 2, executionCount: 1 } }
     ]);
     expect((await service.getPlayerWorkspace(otherPlayerId)).workspace.filmAnalyses).toHaveLength(0);
+  });
+
+  it('accepts one distinct play-state overlay for an immutable analysis revision and rejects its duplicate', async () => {
+    dir = await mkdtemp(join(tmpdir(), 'guard-film-play-state-'));
+    const service = new LabService(new JsonFileLabStore(join(dir, 'workspace.json')));
+    const playerId = (await service.getWorkspace()).workspace.selectedPlayerId;
+    const sourceSha256 = 'b'.repeat(64);
+    const analysis = captureFilmAnalysis({
+      source: { sha256: sourceSha256, durationMs: 2000, width: 1920, height: 1080, fps: 30, byteSize: 1000, linkedPath: '/private/game.mp4' },
+      frames: [{ timeMs: 0, players: [{ trackId: '13', team: 'target', court: [10, 20], confidence: 0.9 }] }]
+    });
+    const playStateOverlay = applyFilmPlayStateLedger(analysis, {
+      version: 1,
+      profile: FILM_PLAY_STATE_PROFILE,
+      sourceSha256,
+      intervals: [{
+        id: 'reviewed-live-play', startMs: 0, endMs: 2000, state: 'live-offense',
+        evidence: { method: 'source-review', reviewer: 'codex', note: 'Reviewed live possession.' }
+      }]
+    });
+
+    await service.attachFilmAnalysis(playerId, 'Original analysis', analysis);
+    await service.attachFilmAnalysis(playerId, 'Play-state reviewed', playStateOverlay);
+    await expect(service.attachFilmAnalysis(playerId, 'Duplicate overlay', playStateOverlay)).rejects.toThrow(/already captured/i);
+
+    const records = (await service.getPlayerWorkspace(playerId)).workspace.filmAnalyses;
+    expect(records).toHaveLength(2);
+    expect(records.map((record) => record.analysis.executionCount)).toEqual([1, 1]);
+    expect(records[0]?.analysis.playStateVerification).toBeUndefined();
+    expect(records[1]?.analysis.playStateVerification).toMatchObject({
+      profile: FILM_PLAY_STATE_PROFILE,
+      frameCount: 1,
+      liveFrameCount: 1
+    });
   });
 
   it('persists a correction overlay without incrementing or replacing the captured analysis', async () => {

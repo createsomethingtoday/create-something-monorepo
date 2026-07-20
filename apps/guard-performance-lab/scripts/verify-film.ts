@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { applyFilmCorrections, capturedFilmAnalysisSchema, filmBenchmarkSchema, scoreFilmBenchmark, type CapturedFilmAnalysis, type FilmCorrection } from '../src/lib/film.js';
@@ -63,7 +64,8 @@ const benchmarkPath = resolve(argument('--benchmark'));
 const reportPath = resolve(argument('--report'));
 const correctionsPath = resolve(argument('--corrections'));
 const svgPath = resolve(argument('--svg'));
-const analysis = capturedFilmAnalysisSchema.parse(JSON.parse(await readFile(analysisPath, 'utf8')));
+const analysisText = await readFile(analysisPath, 'utf8');
+const analysis = capturedFilmAnalysisSchema.parse(JSON.parse(analysisText));
 const benchmark = filmBenchmarkSchema.parse(JSON.parse(await readFile(benchmarkPath, 'utf8')));
 const invariantIssues: string[] = [];
 const expectedRevision = Number(optionalArgument('--expected-revision') ?? analysis.analysis.revision);
@@ -108,9 +110,14 @@ const corrections = correctionPlan(analysis, benchmark);
 const corrected = applyFilmCorrections({ ...analysis, corrections });
 const rawScore = scoreFilmBenchmark(benchmark, predictions(analysis));
 const correctedScore = scoreFilmBenchmark(benchmark, predictions(corrected, corrections));
+const correctionsText = JSON.stringify(corrections, null, 2);
+const digest = (text: string) => createHash('sha256').update(text).digest('hex');
 const report = {
   ok: invariantIssues.length === 0 && correctedScore.ok,
   sourceSha256: analysis.source.sha256,
+  analysisSha256: digest(analysisText),
+  correctionsSha256: digest(correctionsText),
+  analysisRevision: analysis.analysis.revision,
   analysis: analysis.analysis,
   coverage: { frames: analysis.frames.length, firstTimeMs: analysis.frames[0]?.timeMs, lastTimeMs: analysis.frames.at(-1)?.timeMs },
   invariantIssues,
@@ -126,7 +133,7 @@ const report = {
 await mkdir(dirname(reportPath), { recursive: true });
 await Promise.all([
   writeFile(reportPath, JSON.stringify(report, null, 2)),
-  writeFile(correctionsPath, JSON.stringify(corrections, null, 2)),
+  writeFile(correctionsPath, correctionsText),
   writeFile(svgPath, annotatedSvg(benchmark))
 ]);
 console.log(JSON.stringify(report, null, 2));
