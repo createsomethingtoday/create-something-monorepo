@@ -871,6 +871,14 @@ const OAUTH_APPLICATION_ACCESS_POLICIES = new Map<string, {
 			expiresIn: OAUTH_APPLICATION_ACCESS_TOKEN_EXPIRES_IN,
 		},
 	],
+	[
+		'https://halfdozen-onboarding-mcp.half-dozen.workers.dev/mcp',
+		{
+			applicationId: 'halfdozen-onboarding-mcp',
+			resource: 'https://halfdozen-onboarding-mcp.half-dozen.workers.dev/mcp',
+			expiresIn: OAUTH_APPLICATION_ACCESS_TOKEN_EXPIRES_IN,
+		},
+	],
 ]);
 
 export const CONTROL_RUNTIME_RESOURCE =

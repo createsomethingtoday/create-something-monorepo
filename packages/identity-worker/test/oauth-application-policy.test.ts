@@ -26,6 +26,24 @@ test('Template Review OAuth uses an explicit resource-bound application policy',
 	});
 });
 
+test('Half Dozen onboarding OAuth uses an exact resource-bound application policy', () => {
+	const policy = resolveOAuthApplicationAccessPolicy(
+		'https://halfdozen-onboarding-mcp.half-dozen.workers.dev/mcp'
+	);
+
+	assert.deepEqual(policy, {
+		applicationId: 'halfdozen-onboarding-mcp',
+		resource: 'https://halfdozen-onboarding-mcp.half-dozen.workers.dev/mcp',
+		expiresIn: 3600,
+	});
+	assert.equal(
+		resolveOAuthApplicationAccessPolicy(
+			'https://halfdozen-onboarding-mcp.half-dozen.workers.dev'
+		),
+		null
+	);
+});
+
 test('unknown OAuth resources do not bypass managed bearer governance', () => {
 	assert.equal(resolveOAuthApplicationAccessPolicy('https://unknown.example/mcp'), null);
 	assert.deepEqual(
