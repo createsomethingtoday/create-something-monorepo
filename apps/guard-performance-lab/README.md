@@ -129,6 +129,17 @@ PYTORCH_ENABLE_MPS_FALLBACK=1 \
 
 `--seed-box` uses the extracted-frame coordinate space; the receipt scales every box and foot point back to the declared source dimensions. The script records the exact model SHA-256, device, seed, samples, and evidence. A mask receipt is a private candidate, not a promotable film revision by itself; benchmark and court-calibration gates still apply.
 
+Combine reviewed stint receipts and fuse them against the reprocessed detector field. Same-state overlaps are merged so a direct-number reseed can safely bridge a chunk boundary; conflicting participation states, mixed sources, coordinate spaces, or model receipts are rejected. Fusion also rejects raw opponent evidence and terminates a seed after more than 3.5 seconds without an accepted target, even if SAM2 later attaches to another player. The command writes both the combined audit receipt and a non-promotable candidate for held-out review:
+
+```bash
+pnpm --filter @create-something/guard-performance-lab film:fuse:mask-tracks \
+  --analysis /private/path/full-analysis-r2-reprocessed.json \
+  --mask-track /private/path/stint-1-mask.json \
+  --mask-track /private/path/stint-2-mask.json \
+  --receipt-output /private/path/player-13-mask-track.json \
+  --candidate-output /private/path/player-13-mask-candidate.json
+```
+
 ## AI-native contract
 
 One typed guidance engine owns program stage, requested coach context, safety state, evidence separation, and the next interaction. It is used by:

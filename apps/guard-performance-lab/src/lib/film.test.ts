@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { FILM_BENCHMARK_PROFILE, FILM_IDENTITY_BENCHMARK_PROFILE, FILM_MASK_TRACK_PROFILE, applyFilmCorrections, captureFilmAnalysis, capturedFilmAnalysisSchema, deriveFilmIdentityCandidate, fuseFilmMaskTrack, finalizeFilmIdentityRevision, filmFrameAt, resolveFilmTrafficAt, scoreFilmBenchmark, scoreFilmIdentityBenchmark, scoreFilmTeamBenchmark, summarizeFilmTargetCoverage, validateFilmBenchmark, validateFilmIdentityBenchmark, validateFilmMaskTrack, validateFilmTeamBenchmark, verifyFilmIdentityCandidate } from './film.js';
+import { FILM_BENCHMARK_PROFILE, FILM_IDENTITY_BENCHMARK_PROFILE, FILM_MASK_TRACK_PROFILE, applyFilmCorrections, captureFilmAnalysis, capturedFilmAnalysisSchema, combineFilmMaskTracks, deriveFilmIdentityCandidate, fuseFilmMaskTrack, finalizeFilmIdentityRevision, filmFrameAt, resolveFilmTrafficAt, scoreFilmBenchmark, scoreFilmIdentityBenchmark, scoreFilmTeamBenchmark, summarizeFilmTargetCoverage, validateFilmBenchmark, validateFilmIdentityBenchmark, validateFilmMaskTrack, validateFilmTeamBenchmark, verifyFilmIdentityCandidate } from './film.js';
 
 const source = { sha256: 'a'.repeat(64), durationMs: 5000, width: 1920, height: 1080, fps: 30, byteSize: 1000, linkedPath: '/private/source.mp4' };
 const annotations = (startMs: number) => Array.from({ length: 20 }, (_, index) => ({ timeMs: startMs + index * 1000, target: { status: 'visible' as const, court: [index, 10] as [number, number], zone: 'frontcourt', trackId: '13', provenance: 'manual' as const } }));
@@ -192,6 +192,59 @@ describe('film benchmark contract', () => {
     expect(fuseFilmMaskTrack(captured, receipt).frames[0]).toMatchObject({ targetStatus: 'unresolved' });
     expect(() => fuseFilmMaskTrack(captured, { ...receipt, sourceSha256: 'd'.repeat(64) })).toThrow(/source hash/i);
     expect(() => fuseFilmMaskTrack(captured, { ...receipt, coordinateSpace: { width: 960, height: 540 } })).toThrow(/coordinate space/i);
+  });
+
+  it('combines reviewed local mask stints only when their source and model receipts match', () => {
+    const receipt = (id: string, startMs: number, modelSha256 = 'b'.repeat(64)) => ({
+      version: 1 as const,
+      profile: FILM_MASK_TRACK_PROFILE,
+      sourceSha256: source.sha256,
+      coordinateSpace: { width: 1920, height: 1080 },
+      engine: { name: 'sam2.1-video-local', model: 'sam2.1_hiera_small', modelSha256 },
+      participation: [{ startMs, endMs: startMs + 500, state: 'active' as const, evidence: `reviewed ${id}` }],
+      segments: [{
+        id,
+        startMs,
+        endMs: startMs + 500,
+        seed: { timeMs: startMs, box: [400, 300, 160, 440] as [number, number, number, number], reviewer: 'user' as const },
+        samples: [{ timeMs: startMs, box: [400, 300, 160, 440] as [number, number, number, number], foot: [480, 740] as [number, number], confidence: 1, provenance: 'seed' as const }]
+      }]
+    });
+
+    const combined = combineFilmMaskTracks([receipt('stint-2', 400), receipt('stint-1', 0)]);
+    expect(combined.segments.map((segment) => segment.id)).toEqual(['stint-1', 'stint-2']);
+    expect(combined.participation).toEqual([{ startMs: 0, endMs: 900, state: 'active', evidence: 'reviewed stint-1; reviewed stint-2' }]);
+    expect(validateFilmMaskTrack(combined)).toMatchObject({ ok: true, segmentCount: 2, sampleCount: 2 });
+    expect(() => combineFilmMaskTracks([receipt('stint-1', 0), receipt('stint-2', 1000, 'c'.repeat(64))])).toThrow(/model receipt/i);
+  });
+
+  it('terminates a mask seed after an accepted-target gap and rejects raw opponent evidence', () => {
+    const captured = captureFilmAnalysis({ source, frames: [
+      { timeMs: 0, targetStatus: 'unresolved', players: [{ trackId: 'p-13', team: 'teammate', court: [10, 20], cropBounds: [400, 300, 160, 440], confidence: 0.9, classification: { role: 'teammate' } }] },
+      { timeMs: 1000, targetStatus: 'unresolved', players: [{ trackId: 'opp-handoff', team: 'teammate', court: [12, 20], cropBounds: [420, 300, 160, 440], confidence: 0.9, classification: { role: 'opponent' } }] },
+      { timeMs: 5000, targetStatus: 'unresolved', players: [{ trackId: 'p-15', team: 'teammate', court: [14, 20], cropBounds: [440, 300, 160, 440], confidence: 0.9, classification: { role: 'teammate' } }] }
+    ] });
+    const receipt = {
+      version: 1,
+      profile: FILM_MASK_TRACK_PROFILE,
+      sourceSha256: source.sha256,
+      coordinateSpace: { width: 1920, height: 1080 },
+      engine: { name: 'sam2.1-video-local', model: 'sam2.1_hiera_small', modelSha256: 'b'.repeat(64) },
+      participation: [{ startMs: 0, endMs: 5000, state: 'active', evidence: 'reviewed seed' }],
+      segments: [{
+        id: 'stint-1', startMs: 0, endMs: 5000,
+        seed: { timeMs: 0, box: [400, 300, 160, 440], reviewer: 'user' },
+        samples: [
+          { timeMs: 0, box: [400, 300, 160, 440], foot: [480, 740], confidence: 1, provenance: 'seed' },
+          { timeMs: 1000, box: [420, 300, 160, 440], foot: [500, 740], confidence: 0.98, provenance: 'propagated' },
+          { timeMs: 5000, box: [440, 300, 160, 440], foot: [520, 740], confidence: 0.98, provenance: 'propagated' }
+        ]
+      }]
+    };
+
+    const fused = fuseFilmMaskTrack(captured, receipt);
+    expect(fused.frames.map((frame) => frame.targetStatus)).toEqual(['resolved', 'unresolved', 'unresolved']);
+    expect(fused.frames.slice(1).flatMap((frame) => frame.players).some((player) => player.team === 'target')).toBe(false);
   });
 
   it('enforces fixed identity, court-error, zone, and correction-provenance gates', () => {

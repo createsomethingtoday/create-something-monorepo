@@ -185,6 +185,44 @@ export function validateFilmMaskTrack(input: unknown) {
   const sampleCount = parsed.data.segments.reduce((count, segment) => count + segment.samples.length, 0);
   return { ok: issues.length === 0, issues, segmentCount: parsed.data.segments.length, sampleCount };
 }
+
+export function combineFilmMaskTracks(inputs: unknown[]) {
+  if (inputs.length === 0) throw new Error('At least one reviewed mask track is required.');
+  const tracks = inputs.map((input, index) => {
+    const validation = validateFilmMaskTrack(input);
+    if (!validation.ok) throw new Error(`Invalid mask track ${index + 1}: ${validation.issues.join(' ')}`);
+    return filmMaskTrackSchema.parse(input);
+  });
+  const first = tracks[0]!;
+  for (const track of tracks.slice(1)) {
+    if (track.sourceSha256 !== first.sourceSha256) throw new Error('Mask track source receipts do not match.');
+    if (track.coordinateSpace.width !== first.coordinateSpace.width || track.coordinateSpace.height !== first.coordinateSpace.height) throw new Error('Mask track coordinate spaces do not match.');
+    if (track.engine.name !== first.engine.name || track.engine.model !== first.engine.model || track.engine.modelSha256 !== first.engine.modelSha256) throw new Error('Mask track model receipts do not match.');
+  }
+  const participation: z.infer<typeof filmMaskTrackSchema>['participation'] = [];
+  for (const interval of tracks.flatMap((track) => track.participation).toSorted((a, b) => a.startMs - b.startMs)) {
+    const prior = participation.at(-1);
+    if (!prior || interval.startMs > prior.endMs) {
+      participation.push({ ...interval });
+      continue;
+    }
+    if (interval.state !== prior.state) throw new Error('Overlapping mask participation receipts disagree about player state.');
+    prior.endMs = Math.max(prior.endMs, interval.endMs);
+    if (!prior.evidence.split('; ').includes(interval.evidence)) prior.evidence = `${prior.evidence}; ${interval.evidence}`;
+  }
+  const combined = {
+    version: 1 as const,
+    profile: FILM_MASK_TRACK_PROFILE,
+    sourceSha256: first.sourceSha256,
+    coordinateSpace: first.coordinateSpace,
+    engine: first.engine,
+    participation,
+    segments: tracks.flatMap((track) => track.segments).toSorted((a, b) => a.startMs - b.startMs)
+  };
+  const validation = validateFilmMaskTrack(combined);
+  if (!validation.ok) throw new Error(`Combined mask track is invalid: ${validation.issues.join(' ')}`);
+  return combined;
+}
 const teamAnnotationSchema = z.object({
   id: z.string().min(1),
   clipId: z.enum(['clear-half-court', 'transition-wide', 'pan-occlusion']),
@@ -495,7 +533,7 @@ export function fuseFilmMaskTrack(analysisInput: unknown, maskTrackInput: unknow
   if (maskTrack.sourceSha256 !== analysis.source.sha256) throw new Error('Mask track source hash does not match the captured film source hash.');
   if (maskTrack.coordinateSpace.width !== analysis.source.width || maskTrack.coordinateSpace.height !== analysis.source.height) throw new Error('Mask track coordinate space does not match the captured film source dimensions.');
 
-  const frames = analysis.frames.map((frame) => {
+  const rawFrames = analysis.frames.map((frame) => {
     const players: CapturedPlayer[] = frame.players.map((player) => ({ ...player, team: player.team === 'target' ? 'teammate' : player.team }));
     const participation = maskTrack.participation.find((interval) => frame.timeMs >= interval.startMs && frame.timeMs <= interval.endMs);
     if (participation?.state === 'inactive') return { ...frame, targetStatus: 'inactive' as const, players, identityEvidence: { method: 'substitution-ledger', evidence: participation.evidence } };
@@ -509,11 +547,43 @@ export function fuseFilmMaskTrack(analysisInput: unknown, maskTrackInput: unknow
     const overlaps = players.flatMap((player) => player.cropBounds ? [{ player, overlap: boxIntersectionOverUnion(player.cropBounds, sample.box) }] : []).toSorted((a, b) => b.overlap - a.overlap);
     const best = overlaps[0];
     const runnerUp = overlaps[1];
-    if (!best || best.player.team !== 'teammate' || best.overlap < 0.35 || (runnerUp && best.overlap - runnerUp.overlap < 0.12)) return { ...frame, targetStatus: 'unresolved' as const, players };
+    const rawRole = (best?.player.classification as { role?: string } | undefined)?.role;
+    if (!best || best.player.team !== 'teammate' || (rawRole && rawRole !== 'teammate') || best.overlap < 0.35 || (runnerUp && best.overlap - runnerUp.overlap < 0.12)) return { ...frame, targetStatus: 'unresolved' as const, players };
     best.player.team = 'target';
     best.player.confidence = Math.min(best.player.confidence, sample.confidence);
     Object.assign(best.player, { identity: '13', identityEvidence: { method: 'segmentation-mask', segmentId: segment.id, engine: maskTrack.engine.name, confidence: sample.confidence } });
     return { ...frame, targetStatus: 'resolved' as const, players, identityEvidence: { method: 'segmentation-mask', segmentId: segment.id, engine: maskTrack.engine.name, confidence: sample.confidence } };
+  });
+  const acceptedBySegment = new Map<string, number[]>();
+  for (const frame of rawFrames) {
+    const evidence = (frame as CapturedFrame & { identityEvidence?: { method?: string; segmentId?: string } }).identityEvidence;
+    if (frame.targetStatus !== 'resolved' || evidence?.method !== 'segmentation-mask' || !evidence.segmentId) continue;
+    acceptedBySegment.set(evidence.segmentId, [...(acceptedBySegment.get(evidence.segmentId) ?? []), frame.timeMs]);
+  }
+  const allowed = new Set<string>();
+  const maximumAcceptedGapMs = 3500;
+  for (const segment of maskTrack.segments) {
+    const times = (acceptedBySegment.get(segment.id) ?? []).toSorted((a, b) => a - b);
+    if (!times.length) continue;
+    let anchorIndex = 0;
+    for (let index = 1; index < times.length; index += 1) {
+      if (Math.abs(times[index]! - segment.seed.timeMs) < Math.abs(times[anchorIndex]! - segment.seed.timeMs)) anchorIndex = index;
+    }
+    if (Math.abs(times[anchorIndex]! - segment.seed.timeMs) > maximumAcceptedGapMs) continue;
+    allowed.add(`${segment.id}:${times[anchorIndex]}`);
+    for (let index = anchorIndex - 1; index >= 0 && times[index + 1]! - times[index]! <= maximumAcceptedGapMs; index -= 1) allowed.add(`${segment.id}:${times[index]}`);
+    for (let index = anchorIndex + 1; index < times.length && times[index]! - times[index - 1]! <= maximumAcceptedGapMs; index += 1) allowed.add(`${segment.id}:${times[index]}`);
+  }
+  const frames = rawFrames.map((frame) => {
+    const evidence = (frame as CapturedFrame & { identityEvidence?: { method?: string; segmentId?: string } }).identityEvidence;
+    if (frame.targetStatus !== 'resolved' || evidence?.method !== 'segmentation-mask' || !evidence.segmentId || allowed.has(`${evidence.segmentId}:${frame.timeMs}`)) return frame;
+    const players = frame.players.map((player) => {
+      if (player.team !== 'target') return player;
+      const { identity: _identity, identityEvidence: _identityEvidence, identityPreviousRole: _identityPreviousRole, ...neutral } = player as CapturedPlayer & { identity?: string; identityEvidence?: unknown; identityPreviousRole?: unknown };
+      return { ...neutral, team: 'teammate' as const };
+    });
+    const { identityEvidence: _identityEvidence, ...neutralFrame } = frame;
+    return { ...neutralFrame, targetStatus: 'unresolved' as const, players };
   });
   return {
     version: 1 as const,
