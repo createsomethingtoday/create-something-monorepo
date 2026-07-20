@@ -102,7 +102,8 @@ export function normalizeSchedulerAccessUrl(value: string | URL): SchedulerAcces
 		!actionToken ||
 		!ACTION_TOKEN.test(actionToken) ||
 		Array.from(fragment.keys()).some((key) => key !== 'access')
-	) return null;
+	)
+		return null;
 	return {
 		bookingId,
 		actionToken,
@@ -110,7 +111,10 @@ export function normalizeSchedulerAccessUrl(value: string | URL): SchedulerAcces
 	};
 }
 
-export function schedulerHandoffContext(search = '', warmupNotes?: string): SchedulerHandoffContext {
+export function schedulerHandoffContext(
+	search = '',
+	warmupNotes?: string
+): SchedulerHandoffContext {
 	const params = new URLSearchParams(search);
 	const context: SchedulerHandoffContext = {};
 	const copy = (key: string, target: keyof SchedulerHandoffContext, max: number) => {
@@ -135,9 +139,7 @@ export function schedulerHandoffContext(search = '', warmupNotes?: string): Sche
 			context.agentMessages = agentMessages;
 		}
 	}
-	const notes = warmupNotes
-		?.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, '')
-		.trim();
+	const notes = warmupNotes?.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, '').trim();
 	if (notes) context.warmupNotes = notes.slice(0, 2000);
 	return context;
 }
@@ -171,4 +173,12 @@ export function normalizeSchedulerLifecycleMessage(
 			...(durationMinutes ? { durationMinutes } : {})
 		}
 	};
+}
+
+export function normalizeSchedulerHeightMessage(input: unknown): number | null {
+	if (!input || typeof input !== 'object') return null;
+	const candidate = input as Record<string, unknown>;
+	if (candidate.type !== 'create-something:scheduler-height') return null;
+	if (typeof candidate.height !== 'number' || !Number.isInteger(candidate.height)) return null;
+	return candidate.height >= 640 && candidate.height <= 4000 ? candidate.height : null;
 }
