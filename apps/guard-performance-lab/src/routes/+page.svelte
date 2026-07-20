@@ -4,11 +4,14 @@
   import { glossary, progressionPhases, sessionBlocks } from '$lib/data.js';
   import type { GuideOutput } from '$lib/guide.js';
   import type { WorkspaceCommand } from '$lib/workspace-api.js';
+  import FilmTrafficCourt from '$lib/FilmTrafficCourt.svelte';
+  import { applyFilmCorrections, resolveFilmTrafficAt, summarizeFilmTargetCoverage, type FilmMovementMode } from '$lib/film.js';
   import {
     createInitialState,
     artifactsForSelected,
     engagementsForSelected,
     emptyReceipt,
+    latestFilmAnalysisForPlayer,
     receiptsForSelected,
     validateReceipt,
     validateArtifact,
@@ -23,9 +26,9 @@
 
   let { data }: { data: PageData } = $props();
 
-  type View = 'dashboard' | 'guide' | 'plan' | 'language' | 'reads' | 'receipt' | 'progress' | 'players';
+  type View = 'dashboard' | 'film' | 'guide' | 'plan' | 'language' | 'reads' | 'receipt' | 'progress' | 'players';
   const views: { key: View; label: string }[] = [
-    { key: 'dashboard', label: 'Today' }, { key: 'guide', label: 'Agent + evidence' }, { key: 'plan', label: 'Session plan' },
+    { key: 'dashboard', label: 'Today' }, { key: 'film', label: 'Film trace' }, { key: 'guide', label: 'Agent + evidence' }, { key: 'plan', label: 'Session plan' },
     { key: 'language', label: 'Shared language' }, { key: 'reads', label: 'Court reads' },
     { key: 'receipt', label: 'Receipt' }, { key: 'progress', label: 'Progression' },
     { key: 'players', label: 'Players + data' }
@@ -73,12 +76,24 @@
   let engagementNote = $state('');
   let artifactErrors = $state<string[]>([]);
   let artifactDraft = $state<EvidenceDraft>({ kind: 'coach-observation', title: '', sourceLabel: 'Coach', sourceUrl: '', level: 'youth', jurisdiction: '', observation: '' });
+  let filmTimeMs = $state(0);
+  let filmWakeMs = $state(5000);
+  let filmMovementMode = $state<FilmMovementMode>('live-only');
+  let correctionX = $state(47);
+  let correctionY = $state(25);
+  let correctionStatus = $state<'resolved' | 'unresolved' | 'out-of-frame' | 'inactive'>('resolved');
+  let correctionReason = $state('');
+  let correctionSaved = $state(false);
   let operator = $derived(data.guardAccess.scope?.role === 'operator');
 
   let player = $derived(labState.players.find((item) => item.id === labState.selectedPlayerId) ?? labState.players[0]);
   let receipts = $derived(receiptsForSelected(labState));
   let artifacts = $derived(artifactsForSelected(labState));
   let engagements = $derived(engagementsForSelected(labState));
+  let activeFilm = $derived(latestFilmAnalysisForPlayer(labState, labState.selectedPlayerId));
+  let correctedFilm = $derived(activeFilm ? applyFilmCorrections(activeFilm) : null);
+  let filmTraffic = $derived(correctedFilm ? resolveFilmTrafficAt(correctedFilm, filmTimeMs, filmWakeMs, { movementMode: filmMovementMode }) : null);
+  let filmCoverage = $derived(correctedFilm ? summarizeFilmTargetCoverage(correctedFilm) : null);
   let filteredTerms = $derived(glossary.filter(([term, meaning, phase]) => {
     const matchesPhase = termPhase === 'all' || phase === termPhase;
     const needle = search.trim().toLowerCase();
@@ -215,6 +230,42 @@
     } catch (error) { syncError = error instanceof Error ? error.message : 'Reset failed.'; }
     finally { commandBusy = false; }
   }
+
+  function formatFilmTime(value: number) {
+    const total = Math.max(0, Math.floor(value / 1000));
+    return `${Math.floor(total / 60).toString().padStart(2, '0')}:${(total % 60).toString().padStart(2, '0')}`;
+  }
+
+  function seekFilm(deltaMs: number) {
+    if (!activeFilm) return;
+    filmTimeMs = Math.max(0, Math.min(activeFilm.frames.at(-1)?.timeMs ?? 0, filmTimeMs + deltaMs));
+  }
+
+  function downloadFilm(name: string, type: string, contents: string) {
+    const url = URL.createObjectURL(new Blob([contents], { type }));
+    const anchor = document.createElement('a');
+    anchor.href = url; anchor.download = name; anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function exportFilmJson() {
+    if (!activeFilm) return;
+    downloadFilm(`player-13-trace-r${activeFilm.analysis.revision}.json`, 'application/json', JSON.stringify(activeFilm, null, 2));
+  }
+
+  function exportFilmSvg() {
+    const svg = document.getElementById('film-traffic-court');
+    if (svg) downloadFilm(`player-13-trace-${filmTimeMs}ms.svg`, 'image/svg+xml', svg.outerHTML);
+  }
+
+  async function saveFilmCorrection() {
+    if (!activeFilm || !correctionReason.trim()) { syncError = 'Add direct correction evidence before saving.'; return; }
+    correctionSaved = false;
+    const court = correctionStatus === 'resolved' ? [correctionX, correctionY] as [number, number] : null;
+    if (!await runCommand({ action: 'correct-film-analysis', playerId: labState.selectedPlayerId, analysisId: activeFilm.id, correction: { timeMs: filmTimeMs, court, targetStatus: correctionStatus, reason: correctionReason } })) return;
+    correctionReason = '';
+    correctionSaved = true;
+  }
 </script>
 
 <svelte:head>
@@ -280,6 +331,56 @@
       {#if receipts[0]}
         <article class="receipt"><time>{receipts[0].date}</time><div><strong>{receipts[0].strength}</strong><p>Observable strength</p></div><div><strong>{receipts[0].nextFocus}</strong><p>Next focus</p></div></article>
       {:else}<div class="empty">Complete the session receipt after the workout—not before it.</div>{/if}
+
+    {:else if view === 'film'}
+      <div class="section-head"><h2>Player traffic / #13</h2><p>The video was analyzed once. This canvas replays the captured revision; scrubbing, correction, reload, and export do not run inference.</p></div>
+      {#if activeFilm && filmTraffic}
+        <section class="film-status" aria-label="Captured film status">
+          <div><span class="mono">Analysis</span><strong>{activeFilm.analysis.executionCount}x / captured</strong></div>
+          <div><span class="mono">Revision</span><strong>{activeFilm.analysis.revision}</strong></div>
+          <div><span class="mono">Identity</span><strong>{activeFilm.analysis.identityExecutionCount ? `${activeFilm.analysis.identityExecutionCount}x / r${activeFilm.analysis.derivedFromRevision}` : 'legacy'}</strong></div>
+          <div><span class="mono">Time</span><strong>{formatFilmTime(filmTraffic.timeMs)}</strong></div>
+          <div><span class="mono">Traffic</span><strong>{filmTraffic.players.length} tokens</strong></div>
+          <div><span class="mono">Target</span><strong>{filmTraffic.currentTargetStatus}</strong></div>
+          <div><span class="mono">Play state</span><strong>{filmTraffic.currentPlayState}</strong></div>
+          <div><span class="mono">Coverage</span><strong>{filmCoverage?.resolvedFrames ?? 0}/{filmCoverage?.frameCount ?? 0} · {filmCoverage?.resolvedPercent ?? 0}%</strong></div>
+          <div><span class="mono">Projection</span><strong>{filmCoverage?.calibratedTargetFrames ? 'calibrated' : 'estimated'}</strong></div>
+        </section>
+        <div class="film-stage">
+          <FilmTrafficCourt analysis={activeFilm} timeMs={filmTimeMs} wakeMs={filmWakeMs} movementMode={filmMovementMode} />
+          <aside class="film-legend">
+            <p class="eyebrow">Traffic key</p>
+            <div><i class="traffic-dot target"></i><span>Player #13 + wake</span></div>
+            <div><i class="traffic-dot teammate"></i><span>Foreground-court teammate</span></div>
+            <div><i class="traffic-dot opponent"></i><span>Foreground-court opponent</span></div>
+            <p>Orange wake is verified live basketball. In all-captured mode, gray dashed wake preserves dead-ball, free-throw, substitution, and unknown movement without counting it as positioning or lane running.</p>
+            <p class="mono">PLAY STATE / {filmTraffic.currentPlayState} / {filmTraffic.currentPlayStateEvidence?.method ?? 'unreviewed'}{activeFilm.analysis.playStateVerification ? ` / ${activeFilm.analysis.playStateVerification.liveFrameCount} LIVE / ${activeFilm.analysis.playStateVerification.nonLiveFrameCount} NON-LIVE / ${activeFilm.analysis.playStateVerification.unknownFrameCount} UNKNOWN` : ''}</p>
+            {#if activeFilm.analysis.identityVerification}<p class="mono">ID PRECISION / {Math.round(activeFilm.analysis.identityVerification.positiveRecall * 100)}% #13 / {Math.round(activeFilm.analysis.identityVerification.hardNegativePrecision * 100)}% NEG / COVERAGE {filmCoverage?.resolvedPercent ?? 0}%</p>{/if}
+            <dl><dt>Source</dt><dd>{activeFilm.source.sha256.slice(0, 12)}…</dd><dt>Frames</dt><dd>{activeFilm.frames.length}</dd><dt>Corrections</dt><dd>{activeFilm.corrections.length}</dd></dl>
+          </aside>
+        </div>
+        <section class="film-controls" aria-label="Film traffic controls">
+          <div class="film-seek-row"><button class="button" onclick={() => seekFilm(-5000)}>− 5 sec</button><output aria-live="polite">{formatFilmTime(filmTimeMs)}</output><button class="button" onclick={() => seekFilm(5000)}>+ 5 sec</button></div>
+          <label class="field full"><span>Traffic time / scrub in either direction</span><input aria-label="Film traffic time" type="range" min="0" max={activeFilm.frames.at(-1)?.timeMs ?? 0} step="500" bind:value={filmTimeMs} /></label>
+          <label class="field"><span>#13 wake</span><select class="input" bind:value={filmWakeMs}><option value={3000}>3 seconds</option><option value={5000}>5 seconds</option><option value={10000}>10 seconds</option><option value={20000}>20 seconds</option></select></label>
+          <label class="field"><span>Movement evidence</span><select aria-label="Film movement evidence" class="input" bind:value={filmMovementMode}><option value="live-only">Live basketball only</option><option value="all-captured">All captured movement</option></select></label>
+          <div class="film-export"><button class="button" onclick={exportFilmJson}>Export captured JSON</button><button class="button" onclick={exportFilmSvg}>Export canvas SVG</button></div>
+        </section>
+        {#if operator}
+          <section class="film-correction">
+            <div><p class="eyebrow">Correction overlay</p><h3>Correct evidence, never rerun the film.</h3><p>The raw revision stays captured. This append-only note changes the rendered sample and records why.</p></div>
+            <div class="film-correction-form">
+              <label class="field"><span>Status</span><select class="input" bind:value={correctionStatus}><option value="resolved">Resolved</option><option value="unresolved">Unresolved</option><option value="out-of-frame">Out of frame</option><option value="inactive">Inactive / substituted</option></select></label>
+              <label class="field"><span>Court X / feet</span><input class="input" type="number" min="0" max="94" step="0.5" bind:value={correctionX} disabled={correctionStatus !== 'resolved'} /></label>
+              <label class="field"><span>Court Y / feet</span><input class="input" type="number" min="0" max="50" step="0.5" bind:value={correctionY} disabled={correctionStatus !== 'resolved'} /></label>
+              <label class="field full"><span>Direct evidence</span><input class="input" bind:value={correctionReason} placeholder="Example: both feet verified against the near lane mark" /></label>
+              <div class="actions"><button class="button primary" disabled={commandBusy} onclick={saveFilmCorrection}>Save correction at {formatFilmTime(filmTimeMs)}</button>{#if correctionSaved}<span class="success">CORRECTION SAVED / ANALYSIS STILL 1x</span>{/if}</div>
+            </div>
+          </section>
+        {/if}
+      {:else}
+        <div class="empty"><strong>No captured trace for {player?.name}.</strong><br />An operator must attach a completed one-run analysis revision before this view can replay traffic.</div>
+      {/if}
 
     {:else if view === 'guide'}
       <div class="section-head"><h2>Agent-guided interaction</h2><p>The program owns the sequence. Add only the live context it requests; the coach is not the narrator or personality.</p></div>
@@ -429,6 +530,6 @@
       <button class="button danger" disabled={commandBusy} onclick={resetData}>{resetArmed ? 'Confirm reset' : 'Reset workspace'}</button>{/if}
     {/if}
 
-    <footer class="footer">FIELD TEST / V0.4 &nbsp; STATUS / {hydrated ? 'IDENTITY SCOPED' : 'LOADING'} &nbsp; REV / {labState.revision} &nbsp; FIRST-PARTY AUTH</footer>
+    <footer class="footer">FIELD TEST / V0.5 &nbsp; STATUS / {hydrated ? 'IDENTITY SCOPED' : 'LOADING'} &nbsp; REV / {labState.revision} &nbsp; FIRST-PARTY AUTH</footer>
   </main>
 </div>
