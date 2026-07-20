@@ -5,7 +5,7 @@
   import type { GuideOutput } from '$lib/guide.js';
   import type { WorkspaceCommand } from '$lib/workspace-api.js';
   import FilmTrafficCourt from '$lib/FilmTrafficCourt.svelte';
-  import { applyFilmCorrections, resolveFilmTrafficAt } from '$lib/film.js';
+  import { applyFilmCorrections, resolveFilmTrafficAt, summarizeFilmTargetCoverage } from '$lib/film.js';
   import {
     createInitialState,
     artifactsForSelected,
@@ -91,6 +91,7 @@
   let activeFilm = $derived(labState.filmAnalyses.filter((analysis) => analysis.playerId === labState.selectedPlayerId).toSorted((a, b) => b.analysis.revision - a.analysis.revision)[0]);
   let correctedFilm = $derived(activeFilm ? applyFilmCorrections(activeFilm) : null);
   let filmTraffic = $derived(correctedFilm ? resolveFilmTrafficAt(correctedFilm, filmTimeMs, filmWakeMs) : null);
+  let filmCoverage = $derived(correctedFilm ? summarizeFilmTargetCoverage(correctedFilm) : null);
   let filteredTerms = $derived(glossary.filter(([term, meaning, phase]) => {
     const matchesPhase = termPhase === 'all' || phase === termPhase;
     const needle = search.trim().toLowerCase();
@@ -339,6 +340,8 @@
           <div><span class="mono">Time</span><strong>{formatFilmTime(filmTraffic.timeMs)}</strong></div>
           <div><span class="mono">Traffic</span><strong>{filmTraffic.players.length} tokens</strong></div>
           <div><span class="mono">Target</span><strong>{activeFilm.frames.findLast((frame) => frame.timeMs <= filmTimeMs)?.targetStatus ?? 'out-of-frame'}</strong></div>
+          <div><span class="mono">Coverage</span><strong>{filmCoverage?.resolvedFrames ?? 0}/{filmCoverage?.frameCount ?? 0} · {filmCoverage?.resolvedPercent ?? 0}%</strong></div>
+          <div><span class="mono">Projection</span><strong>{filmCoverage?.calibratedTargetFrames ? 'calibrated' : 'estimated'}</strong></div>
         </section>
         <div class="film-stage">
           <FilmTrafficCourt analysis={activeFilm} timeMs={filmTimeMs} wakeMs={filmWakeMs} />
@@ -348,7 +351,7 @@
             <div><i class="traffic-dot teammate"></i><span>Foreground-court teammate</span></div>
             <div><i class="traffic-dot opponent"></i><span>Foreground-court opponent</span></div>
             <p>Opposite-court, official, and sideline detections remain in the audit receipt but never render as traffic. Unresolved intervals and verified inactive substitutions break the orange wake.</p>
-            {#if activeFilm.analysis.identityVerification}<p class="mono">ID PROOF / {Math.round(activeFilm.analysis.identityVerification.positiveRecall * 100)}% #13 / {Math.round(activeFilm.analysis.identityVerification.hardNegativePrecision * 100)}% NEG / NO DETECTOR RERUN</p>{/if}
+            {#if activeFilm.analysis.identityVerification}<p class="mono">ID PRECISION / {Math.round(activeFilm.analysis.identityVerification.positiveRecall * 100)}% #13 / {Math.round(activeFilm.analysis.identityVerification.hardNegativePrecision * 100)}% NEG / COVERAGE {filmCoverage?.resolvedPercent ?? 0}%</p>{/if}
             <dl><dt>Source</dt><dd>{activeFilm.source.sha256.slice(0, 12)}…</dd><dt>Frames</dt><dd>{activeFilm.frames.length}</dd><dt>Corrections</dt><dd>{activeFilm.corrections.length}</dd></dl>
           </aside>
         </div>

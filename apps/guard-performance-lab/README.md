@@ -95,6 +95,40 @@ pnpm --filter @create-something/guard-performance-lab film:finalize:identity -- 
 
 `Film trace` then replays the captured top-down traffic. The slider works in both directions, #13 carries an adjustable wake that breaks across unresolved gaps and inactive substitutions, and JSON/SVG exports are derived from the persisted revision. Operator corrections require direct-evidence text and append provenance; player-scoped identities cannot attach or correct analyses and can read only their assigned player.
 
+### Local segmentation-mask tracking
+
+Color histograms and detector track IDs are discovery signals, not sufficient #13 identity evidence: a track ID can transfer at a player crossing. For a substantially stronger local pass, use a reviewed #13 box to initialize SAM 2.1 on each verified active stint. The resulting silhouette receipt is fused back onto the person field only when all of these gates agree:
+
+- the source hash and full-resolution coordinate space match;
+- the mask overlaps exactly one foreground-court player with a safe margin;
+- that player is classified as a white-jersey teammate, never an opponent;
+- mask confidence remains above the acceptance floor;
+- a user-reviewed participation ledger marks the interval active.
+
+Ambiguous overlaps, substitutions, long gaps, and off-screen exits break the wake. They never trigger appearance-only re-identification. Re-seed from another frame where `13` is directly readable.
+
+The official SAM 2 notebook includes an Apple MPS path with CPU fallback. MPS support is preliminary, so every stint still needs held-out visual review. On an M2 Pro proof, `sam2.1_hiera_small` processed a 960×540 sequence locally; source bytes were not uploaded. Set up the ignored local runtime and checkpoint outside the application datastore, extract a bounded frame sequence, and run:
+
+```bash
+PYTORCH_ENABLE_MPS_FALLBACK=1 \
+/private/path/sam2-env/bin/python scripts/track-player-mask-sam2.py \
+  --frames /private/path/stint-frames \
+  --checkpoint /private/path/sam2.1_hiera_small.pt \
+  --source-sha256 <verified-source-sha256> \
+  --source-width 1920 \
+  --source-height 1080 \
+  --segment-id on-court-17m40 \
+  --start-ms 1060000 \
+  --sample-fps 5 \
+  --seed-frame 0 \
+  --seed-box 326,261,30,96 \
+  --reviewer user \
+  --output /private/path/on-court-17m40-mask.json \
+  --device mps
+```
+
+`--seed-box` uses the extracted-frame coordinate space; the receipt scales every box and foot point back to the declared source dimensions. The script records the exact model SHA-256, device, seed, samples, and evidence. A mask receipt is a private candidate, not a promotable film revision by itself; benchmark and court-calibration gates still apply.
+
 ## AI-native contract
 
 One typed guidance engine owns program stage, requested coach context, safety state, evidence separation, and the next interaction. It is used by:

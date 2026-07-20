@@ -1,8 +1,10 @@
 import { z } from 'zod';
+import { courtZone } from './court.js';
 
 export const FILM_BENCHMARK_PROFILE = 'guard-player-trace-v1';
 export const FILM_TEAM_BENCHMARK_PROFILE = 'guard-player-team-benchmark-v2';
 export const FILM_IDENTITY_BENCHMARK_PROFILE = 'guard-player-13-identity-v3';
+export const FILM_MASK_TRACK_PROFILE = 'guard-player-mask-track-v1';
 
 const pointSchema = z.tuple([z.number(), z.number()]);
 const capturedTargetStatusSchema = z.enum(['resolved', 'unresolved', 'out-of-frame', 'inactive']);
@@ -128,6 +130,61 @@ export function scoreFilmBenchmark(benchmarkInput: unknown, predictionInput: unk
 const teamRoleSchema = z.enum(['teammate', 'opponent', 'ignore']);
 const courtMembershipSchema = z.enum(['foreground-court', 'opposite-court']);
 const cropBoundsSchema = z.tuple([z.number().int().nonnegative(), z.number().int().nonnegative(), z.number().int().positive(), z.number().int().positive()]);
+const maskTrackSampleSchema = z.object({
+  timeMs: z.number().int().nonnegative(),
+  box: cropBoundsSchema,
+  foot: pointSchema,
+  confidence: z.number().min(0).max(1),
+  provenance: z.enum(['seed', 'propagated', 'reviewed'])
+});
+export const filmMaskTrackSchema = z.object({
+  version: z.literal(1),
+  profile: z.literal(FILM_MASK_TRACK_PROFILE),
+  sourceSha256: z.string().regex(/^[a-f0-9]{64}$/),
+  coordinateSpace: z.object({ width: z.number().int().positive(), height: z.number().int().positive() }),
+  engine: z.object({
+    name: z.string().min(1),
+    model: z.string().min(1),
+    modelSha256: z.string().regex(/^[a-f0-9]{64}$/),
+    device: z.string().min(1).optional()
+  }),
+  participation: z.array(z.object({
+    startMs: z.number().int().nonnegative(),
+    endMs: z.number().int().nonnegative(),
+    state: z.enum(['active', 'inactive', 'unknown', 'out-of-frame']),
+    evidence: z.string().trim().min(1)
+  })),
+  segments: z.array(z.object({
+    id: z.string().min(1),
+    startMs: z.number().int().nonnegative(),
+    endMs: z.number().int().nonnegative(),
+    seed: z.object({ timeMs: z.number().int().nonnegative(), box: cropBoundsSchema, reviewer: z.enum(['user', 'codex']) }),
+    samples: z.array(maskTrackSampleSchema)
+  }))
+});
+
+export function validateFilmMaskTrack(input: unknown) {
+  const parsed = filmMaskTrackSchema.safeParse(input);
+  if (!parsed.success) return { ok: false as const, issues: parsed.error.issues.map((issue) => issue.message), segmentCount: 0, sampleCount: 0 };
+  const issues: string[] = [];
+  const ids = new Set<string>();
+  for (const segment of parsed.data.segments) {
+    if (ids.has(segment.id)) issues.push(`Duplicate mask segment id: ${segment.id}.`);
+    ids.add(segment.id);
+    if (segment.endMs < segment.startMs) issues.push(`${segment.id} ends before it starts.`);
+    if (segment.seed.timeMs < segment.startMs || segment.seed.timeMs > segment.endMs) issues.push(`${segment.id} seed is outside its segment.`);
+    if (!segment.samples.some((sample) => sample.timeMs === segment.seed.timeMs && sample.provenance === 'seed')) issues.push(`${segment.id} requires a seed sample at the reviewed seed frame.`);
+    if (segment.samples.some((sample) => sample.timeMs < segment.startMs || sample.timeMs > segment.endMs)) issues.push(`${segment.id} contains a sample outside its segment.`);
+  }
+  const participation = [...parsed.data.participation].sort((a, b) => a.startMs - b.startMs);
+  for (let index = 0; index < participation.length; index += 1) {
+    const interval = participation[index]!;
+    if (interval.endMs < interval.startMs) issues.push(`Participation interval ${index + 1} ends before it starts.`);
+    if (index > 0 && interval.startMs <= participation[index - 1]!.endMs) issues.push(`Participation interval ${index + 1} overlaps the prior interval.`);
+  }
+  const sampleCount = parsed.data.segments.reduce((count, segment) => count + segment.samples.length, 0);
+  return { ok: issues.length === 0, issues, segmentCount: parsed.data.segments.length, sampleCount };
+}
 const teamAnnotationSchema = z.object({
   id: z.string().min(1),
   clipId: z.enum(['clear-half-court', 'transition-wide', 'pan-occlusion']),
@@ -274,7 +331,7 @@ export const filmIdentityBenchmarkSchema = z.object({
 
 export function validateFilmIdentityBenchmark(input: unknown) {
   const parsed = filmIdentityBenchmarkSchema.safeParse(input);
-  if (!parsed.success) return { ok: false as const, issues: parsed.error.issues.map((issue) => issue.message), positiveCount: 0, negativeCount: 0, positiveSegmentCount: 0 };
+  if (!parsed.success) return { ok: false as const, issues: parsed.error.issues.map((issue) => issue.message), positiveCount: 0, negativeCount: 0, positiveSegmentCount: 0, positiveDecisionCount: 0, negativeDecisionCount: 0 };
   const issues: string[] = [];
   const ids = new Set<string>();
   for (const annotation of parsed.data.annotations) {
@@ -290,13 +347,17 @@ export function validateFilmIdentityBenchmark(input: unknown) {
   const positive = parsed.data.annotations.filter((annotation) => annotation.expectedIdentity === '13' && annotation.visibleNumber === '13' && annotation.participation === 'active');
   const negative = parsed.data.annotations.filter((annotation) => annotation.expectedIdentity !== '13' || annotation.participation !== 'active');
   const positiveSegmentCount = new Set(positive.map((annotation) => annotation.segmentId)).size;
+  const positiveDecisionCount = new Set(positive.map((annotation) => annotation.associationTimeMs)).size;
+  const negativeDecisionCount = new Set(negative.map((annotation) => `${annotation.associationTimeMs}:${annotation.negativeClass}`)).size;
   if (positive.length < 30) issues.push('The identity benchmark requires at least 30 readable #13 crops.');
   if (positiveSegmentCount < 3) issues.push('The identity benchmark requires readable #13 evidence across at least three on-court segments.');
+  if (positiveDecisionCount < 4) issues.push('The identity benchmark requires at least four unique positive association frames.');
   if (negative.length < 30) issues.push('The identity benchmark requires at least 30 hard-negative crops.');
+  if (negativeDecisionCount < 6) issues.push('The identity benchmark requires at least six unique hard-negative decisions.');
   for (const negativeClass of identityNegativeClassSchema.options) {
     if (!negative.some((annotation) => annotation.negativeClass === negativeClass)) issues.push(`The identity benchmark is missing required ${negativeClass} hard-negative evidence.`);
   }
-  return { ok: issues.length === 0, issues, positiveCount: positive.length, negativeCount: negative.length, positiveSegmentCount };
+  return { ok: issues.length === 0, issues, positiveCount: positive.length, negativeCount: negative.length, positiveSegmentCount, positiveDecisionCount, negativeDecisionCount };
 }
 
 const identityPredictionSchema = z.object({
@@ -319,18 +380,26 @@ export function scoreFilmIdentityBenchmark(benchmarkInput: unknown, predictionIn
   const positive = parsedBenchmark.data.annotations.filter((annotation) => annotation.expectedIdentity === '13' && annotation.participation === 'active');
   const negative = parsedBenchmark.data.annotations.filter((annotation) => annotation.expectedIdentity !== '13');
   const substitutions = parsedBenchmark.data.annotations.filter((annotation) => annotation.expectedIdentity === '13' && annotation.participation === 'inactive' && annotation.negativeClass === 'substitution');
+  const group = <T>(items: T[], key: (item: T) => string | number) => {
+    const grouped = new Map<string | number, T[]>();
+    for (const item of items) grouped.set(key(item), [...(grouped.get(key(item)) ?? []), item]);
+    return [...grouped.values()];
+  };
+  const positiveDecisions = group(positive, (annotation) => annotation.associationTimeMs);
+  const negativeDecisions = group(negative, (annotation) => `${annotation.associationTimeMs}:${annotation.negativeClass}`);
+  const substitutionDecisions = group(substitutions, (annotation) => annotation.associationTimeMs);
   for (const annotation of parsedBenchmark.data.annotations) {
     if (!predictions.has(annotation.id)) issues.push(`Missing identity prediction: ${annotation.id}.`);
   }
-  const positiveRecall = positive.length ? positive.filter((annotation) => {
+  const positiveRecall = positiveDecisions.length ? positiveDecisions.filter((decision) => decision.every((annotation) => {
     const prediction = predictions.get(annotation.id);
     return prediction?.predictedIdentity === '13' && prediction.targetStatus === 'resolved' && prediction.evidence !== 'none' && !prediction.corrected;
-  }).length / positive.length : 0;
-  const hardNegativePrecision = negative.length ? negative.filter((annotation) => predictions.get(annotation.id)?.predictedIdentity !== '13').length / negative.length : 0;
-  const substitutionAccuracy = substitutions.length ? substitutions.filter((annotation) => {
+  })).length / positiveDecisions.length : 0;
+  const hardNegativePrecision = negativeDecisions.length ? negativeDecisions.filter((decision) => decision.every((annotation) => predictions.get(annotation.id)?.predictedIdentity !== '13')).length / negativeDecisions.length : 0;
+  const substitutionAccuracy = substitutionDecisions.length ? substitutionDecisions.filter((decision) => decision.every((annotation) => {
     const prediction = predictions.get(annotation.id);
     return prediction?.predictedIdentity === '13' && prediction?.targetStatus === 'inactive' && prediction.evidence !== 'none' && !prediction.corrected;
-  }).length / substitutions.length : 0;
+  })).length / substitutionDecisions.length : 0;
   const unprovenTargets = parsedPredictions.data.filter((prediction) => prediction.predictedIdentity === '13' && (!['resolved', 'inactive'].includes(prediction.targetStatus) || prediction.evidence === 'none' || prediction.corrected));
   if (positiveRecall < 0.95) issues.push(`Readable #13 recall ${Math.round(positiveRecall * 1000) / 10}% is below 95%.`);
   if (hardNegativePrecision < 1) issues.push(`Readable hard-negative precision ${Math.round(hardNegativePrecision * 1000) / 10}% must be 100%.`);
@@ -347,6 +416,7 @@ const capturedPlayerSchema = z.object({
   provenance: z.enum(['model', 'corrected']).default('model'),
   correctionId: z.string().optional(),
   image: pointSchema.optional(),
+  cropBounds: cropBoundsSchema.optional(),
   projection: z.enum(['estimated', 'calibrated']).optional(),
   zone: z.string().optional(),
   courtMembership: z.literal('foreground-court').optional(),
@@ -404,6 +474,65 @@ export const capturedFilmAnalysisSchema = z.object({
 export type CapturedPlayer = z.infer<typeof capturedPlayerSchema>;
 export type CapturedFrame = z.infer<typeof capturedFrameSchema>;
 export type CapturedFilmAnalysis = z.infer<typeof capturedFilmAnalysisSchema>;
+
+function boxIntersectionOverUnion(first: [number, number, number, number], second: [number, number, number, number]) {
+  const firstRight = first[0] + first[2];
+  const firstBottom = first[1] + first[3];
+  const secondRight = second[0] + second[2];
+  const secondBottom = second[1] + second[3];
+  const intersectionWidth = Math.max(0, Math.min(firstRight, secondRight) - Math.max(first[0], second[0]));
+  const intersectionHeight = Math.max(0, Math.min(firstBottom, secondBottom) - Math.max(first[1], second[1]));
+  const intersection = intersectionWidth * intersectionHeight;
+  const union = first[2] * first[3] + second[2] * second[3] - intersection;
+  return union ? intersection / union : 0;
+}
+
+export function fuseFilmMaskTrack(analysisInput: unknown, maskTrackInput: unknown) {
+  const analysis = capturedFilmAnalysisSchema.parse(analysisInput);
+  const validation = validateFilmMaskTrack(maskTrackInput);
+  if (!validation.ok) throw new Error(`Invalid mask track: ${validation.issues.join(' ')}`);
+  const maskTrack = filmMaskTrackSchema.parse(maskTrackInput);
+  if (maskTrack.sourceSha256 !== analysis.source.sha256) throw new Error('Mask track source hash does not match the captured film source hash.');
+  if (maskTrack.coordinateSpace.width !== analysis.source.width || maskTrack.coordinateSpace.height !== analysis.source.height) throw new Error('Mask track coordinate space does not match the captured film source dimensions.');
+
+  const frames = analysis.frames.map((frame) => {
+    const players: CapturedPlayer[] = frame.players.map((player) => ({ ...player, team: player.team === 'target' ? 'teammate' : player.team }));
+    const participation = maskTrack.participation.find((interval) => frame.timeMs >= interval.startMs && frame.timeMs <= interval.endMs);
+    if (participation?.state === 'inactive') return { ...frame, targetStatus: 'inactive' as const, players, identityEvidence: { method: 'substitution-ledger', evidence: participation.evidence } };
+    if (participation?.state === 'out-of-frame') return { ...frame, targetStatus: 'out-of-frame' as const, players, identityEvidence: { method: 'participation-ledger', evidence: participation.evidence } };
+    if (!participation || participation.state === 'unknown') return { ...frame, targetStatus: 'unresolved' as const, players };
+
+    const segment = maskTrack.segments.find((candidate) => frame.timeMs >= candidate.startMs && frame.timeMs <= candidate.endMs);
+    const sample = segment?.samples.toSorted((a, b) => Math.abs(a.timeMs - frame.timeMs) - Math.abs(b.timeMs - frame.timeMs))[0];
+    if (!segment || !sample || Math.abs(sample.timeMs - frame.timeMs) > 300 || sample.confidence < 0.7) return { ...frame, targetStatus: 'unresolved' as const, players };
+
+    const overlaps = players.flatMap((player) => player.cropBounds ? [{ player, overlap: boxIntersectionOverUnion(player.cropBounds, sample.box) }] : []).toSorted((a, b) => b.overlap - a.overlap);
+    const best = overlaps[0];
+    const runnerUp = overlaps[1];
+    if (!best || best.player.team !== 'teammate' || best.overlap < 0.35 || (runnerUp && best.overlap - runnerUp.overlap < 0.12)) return { ...frame, targetStatus: 'unresolved' as const, players };
+    best.player.team = 'target';
+    best.player.confidence = Math.min(best.player.confidence, sample.confidence);
+    Object.assign(best.player, { identity: '13', identityEvidence: { method: 'segmentation-mask', segmentId: segment.id, engine: maskTrack.engine.name, confidence: sample.confidence } });
+    return { ...frame, targetStatus: 'resolved' as const, players, identityEvidence: { method: 'segmentation-mask', segmentId: segment.id, engine: maskTrack.engine.name, confidence: sample.confidence } };
+  });
+  return {
+    version: 1 as const,
+    source: analysis.source,
+    profile: analysis.profile,
+    derivedFromRevision: analysis.analysis.revision,
+    personDetectionExecuted: false as const,
+    identityPolicy: 'segmentation-mask-direct-reseed-fail-closed-v1' as const,
+    maskTrack: {
+      profile: maskTrack.profile,
+      sourceSha256: maskTrack.sourceSha256,
+      coordinateSpace: maskTrack.coordinateSpace,
+      engine: maskTrack.engine,
+      segmentCount: validation.segmentCount,
+      sampleCount: validation.sampleCount
+    },
+    frames
+  };
+}
 const identityAssignmentSchema = z.object({
   timeMs: z.number().int().nonnegative(),
   trackId: z.string().min(1).optional(),
@@ -638,10 +767,31 @@ export function filmFrameAt(analysis: CapturedFilmAnalysis, timeMs: number): Cap
   return frame;
 }
 
+export function summarizeFilmTargetCoverage(analysisInput: unknown) {
+  const analysis = capturedFilmAnalysisSchema.parse(analysisInput);
+  const count = (status: z.infer<typeof capturedTargetStatusSchema>) => analysis.frames.filter((frame) => frame.targetStatus === status).length;
+  const targets = analysis.frames.flatMap((frame) => frame.players.filter((player) => player.team === 'target'));
+  const percent = (value: number) => analysis.frames.length ? Math.round(value / analysis.frames.length * 10_000) / 100 : 0;
+  const resolvedFrames = count('resolved');
+  const unresolvedFrames = count('unresolved');
+  const inactiveFrames = count('inactive');
+  const outOfFrameFrames = count('out-of-frame');
+  return {
+    frameCount: analysis.frames.length,
+    resolvedFrames,
+    unresolvedFrames,
+    inactiveFrames,
+    outOfFrameFrames,
+    resolvedPercent: percent(resolvedFrames),
+    knownStatePercent: percent(resolvedFrames + inactiveFrames + outOfFrameFrames),
+    estimatedTargetFrames: targets.filter((player) => player.projection === 'estimated').length,
+    calibratedTargetFrames: targets.filter((player) => player.projection === 'calibrated' && player.provenance !== 'corrected').length,
+    correctedTargetFrames: targets.filter((player) => player.provenance === 'corrected').length
+  };
+}
+
 export function filmZone(court: [number, number]) {
-  const side = court[0] < 47 ? 'left' : 'right';
-  const band = court[1] < 50 / 3 ? 'near' : court[1] > 100 / 3 ? 'far' : 'middle';
-  return `${side}-${band}`;
+  return courtZone(court);
 }
 
 export function applyFilmCorrections(analysis: CapturedFilmAnalysis & { corrections?: FilmCorrection[] }): CapturedFilmAnalysis {
@@ -655,7 +805,7 @@ export function applyFilmCorrections(analysis: CapturedFilmAnalysis & { correcti
     if (!frame || Math.abs(frame.timeMs - correction.timeMs) > 500) continue;
     const status = correction.targetStatus ?? (correction.court ? 'resolved' : 'unresolved');
     frame.targetStatus = status;
-    frame.players = frame.players.filter((player) => player.team !== 'target');
+    frame.players = frame.players.filter((player) => player.team !== 'target' && (status !== 'resolved' || player.trackId !== correction.trackId));
     if (status === 'resolved' && correction.court) {
       frame.players.push({ trackId: correction.trackId, team: 'target', court: correction.court, confidence: 1, provenance: 'corrected', correctionId: correction.id, projection: 'calibrated', zone: filmZone(correction.court) });
     }
@@ -682,7 +832,8 @@ export function resolveFilmTrafficAt(analysis: CapturedFilmAnalysis, requestedTi
   if (before && after && before.targetStatus === 'resolved' && after.targetStatus === 'resolved' && after.timeMs > before.timeMs) {
     const ratio = (timeMs - before.timeMs) / (after.timeMs - before.timeMs);
     players = before.players.flatMap((player) => {
-      const next = after.players.find((candidate) => candidate.trackId === player.trackId);
+      const next = after.players.find((candidate) => candidate.trackId === player.trackId)
+        ?? (player.team === 'target' ? after.players.find((candidate) => candidate.team === 'target') : undefined);
       return next ? [interpolatePlayer(player, next, ratio)] : [player];
     });
   }

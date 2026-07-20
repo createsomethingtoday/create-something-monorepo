@@ -27,6 +27,8 @@
     "mcp:parity": "tsx src/mcp/parity.ts",
     "auth:browser-fixture": "node scripts/browser-auth-fixture.mjs",
     "film:analyze": "uv run --script scripts/analyze-film.py",
+    "film:test:analyzer": "uv run --script scripts/test_analyze_film.py",
+    "film:track:mask:sam2": "python scripts/track-player-mask-sam2.py",
     "film:verify": "tsx scripts/verify-film.ts",
     "film:classify:team": "uv run --script scripts/classify-team-benchmark.py",
     "film:verify:team": "tsx scripts/verify-film-team.ts",

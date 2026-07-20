@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { FilmAnalysisRecord } from './model.js';
   import { applyFilmCorrections, resolveFilmTrafficAt } from './film.js';
+  import { FULL_COURT_94X50, courtToSvg } from './court.js';
 
   let { analysis, timeMs, wakeMs }: { analysis: FilmAnalysisRecord; timeMs: number; wakeMs: number } = $props();
   let corrected = $derived(applyFilmCorrections(analysis));
@@ -8,8 +9,18 @@
   let teammateCount = $derived(traffic.players.filter((player) => player.team === 'teammate').length);
   let opponentCount = $derived(traffic.players.filter((player) => player.team === 'opponent').length);
   let targetCount = $derived(traffic.players.filter((player) => player.team === 'target').length);
-  const x = (feet: number) => feet * 10;
-  const y = (feet: number) => 500 - feet * 10;
+  const scale = 10;
+  const x = (feet: number) => courtToSvg([feet, 0], scale)[0];
+  const y = (feet: number) => courtToSvg([0, feet], scale)[1];
+  const laneY = y((FULL_COURT_94X50.width + FULL_COURT_94X50.laneWidth) / 2);
+  const laneHeight = FULL_COURT_94X50.laneWidth * scale;
+  const laneDepth = FULL_COURT_94X50.laneDepth * scale;
+  const leftHoopX = FULL_COURT_94X50.hoopFromBaseline * scale;
+  const rightHoopX = (FULL_COURT_94X50.length - FULL_COURT_94X50.hoopFromBaseline) * scale;
+  const threeRadius = FULL_COURT_94X50.threePointRadius * scale;
+  const threeEndpointOffset = Math.sqrt(threeRadius ** 2 - leftHoopX ** 2);
+  const threeTop = FULL_COURT_94X50.width * scale / 2 - threeEndpointOffset;
+  const threeBottom = FULL_COURT_94X50.width * scale / 2 + threeEndpointOffset;
   const wakePath = (segment: Array<{ court: [number, number] }>) => segment.map((sample, index) => `${index ? 'L' : 'M'} ${x(sample.court[0])} ${y(sample.court[1])}`).join(' ');
 </script>
 
@@ -21,13 +32,15 @@
     <rect x="2" y="2" width="936" height="496" stroke-width="4" />
     <path d="M470 2V498" stroke-width="3" />
     <circle cx="470" cy="250" r="60" stroke-width="3" />
-    <path d="M2 60H190V440H2M938 60H750V440H938" stroke-width="3" />
+    <rect x="2" y={laneY} width={laneDepth - 2} height={laneHeight} stroke-width="3" />
+    <rect x={FULL_COURT_94X50.length * scale - laneDepth} y={laneY} width={laneDepth - 2} height={laneHeight} stroke-width="3" />
     <circle cx="190" cy="250" r="60" stroke-width="3" />
     <circle cx="750" cy="250" r="60" stroke-width="3" />
-    <path d="M52 220V280M888 220V280" stroke-width="6" />
-    <circle cx="52" cy="250" r="7" stroke-width="4" />
-    <circle cx="888" cy="250" r="7" stroke-width="4" />
-    <path d="M2 20A235 235 0 0 1 2 480M938 20A235 235 0 0 0 938 480" stroke-width="3" />
+    <path d="M40 220V280M900 220V280" stroke-width="6" />
+    <circle cx={leftHoopX} cy="250" r="7" stroke-width="4" />
+    <circle cx={rightHoopX} cy="250" r="7" stroke-width="4" />
+    <path d={`M${leftHoopX} 210A40 40 0 0 1 ${leftHoopX} 290M${rightHoopX} 210A40 40 0 0 0 ${rightHoopX} 290`} stroke-width="2" />
+    <path d={`M0 ${threeTop}A${threeRadius} ${threeRadius} 0 0 1 0 ${threeBottom}M940 ${threeTop}A${threeRadius} ${threeRadius} 0 0 0 940 ${threeBottom}`} stroke-width="3" />
   </g>
   <g class="court-guides" stroke="#cbc9c0" stroke-dasharray="5 8">
     <path d="M235 2V498M705 2V498" />
