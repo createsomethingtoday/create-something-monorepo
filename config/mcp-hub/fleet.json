@@ -447,7 +447,7 @@
         "infisical_path": "/mcp-hub/hubs"
       },
       "related_deployments": ["cracked-notion", "halfdozen-operator-notion-mcp"],
-      "notes": "Operator-invoked reconciliation MCP for Cracked Live source ticket data to Half Dozen ticket rows and mapped HD status back to the source. Current surface is agent/operator control; future scale should move normal incremental sync to Notion webhooks plus a persisted sync index."
+      "notes": "Operator-invoked reconciliation MCP for Cracked Live source ticket data to Half Dozen ticket rows and mapped HD status back to the source. The Hub and existing Notion custom agent retain shared bearer auth; Claude Enterprise connects directly through resource-bound CREATE SOMETHING Identity OAuth with an exact email allowlist. Current surface is agent/operator control; future scale should move normal incremental sync to Notion webhooks plus a persisted sync index."
     },
     "halfdozen-lightswitch-sync-mcp": {
       "type": "remote_mcp_server",

@@ -28,6 +28,10 @@ CLIENT_SUPPORT_TICKETS_DATA_SOURCE_TITLE = "Support Tickets [OS]"
 HALFDOZEN_TICKETS_DATA_SOURCE_ID = "2a101918-7ac5-8074-bf06-000b97592481"
 HALFDOZEN_TICKETS_DATA_SOURCE_TITLE = "Tickets [HD]"
 CLIENT_OS_STATUS_PROPERTY = "Status"
+CS_IDENTITY_ISSUER = "https://id.createsomething.space"
+# Claude connector access is intentionally operator-specific even when the
+# connector definition is shared within an organization.
+OAUTH_ALLOWED_EMAILS = "micah@webflow.com,micah@createsomething.io"
 
 # Required secrets before live writes:
 # MCP_API_KEY

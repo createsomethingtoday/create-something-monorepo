@@ -26,6 +26,23 @@ test('Template Review OAuth uses an explicit resource-bound application policy',
 	});
 });
 
+test('Cracked Live Ticket Sync OAuth uses an exact resource-bound application policy', () => {
+	const resource = 'https://halfdozen-cracked-sync-mcp.createsomething.workers.dev/mcp';
+	const policy = resolveOAuthApplicationAccessPolicy(resource);
+
+	assert.deepEqual(policy, {
+		applicationId: 'halfdozen-cracked-sync-mcp',
+		resource,
+		expiresIn: 3600,
+	});
+	assert.equal(
+		resolveOAuthApplicationAccessPolicy(
+			'https://halfdozen-cracked-sync-mcp.createsomething.workers.dev'
+		),
+		null
+	);
+});
+
 test('Half Dozen onboarding OAuth uses an exact resource-bound application policy', () => {
 	const policy = resolveOAuthApplicationAccessPolicy(
 		'https://halfdozen-onboarding-mcp.half-dozen.workers.dev/mcp'
