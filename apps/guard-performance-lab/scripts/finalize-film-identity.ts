@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { finalizeFilmIdentityRevision } from '../src/lib/film.js';
@@ -19,13 +20,19 @@ const receiptPath = resolve(argument('--receipt'));
 const outputPath = resolve(argument('--output'));
 const analyzedAt = argument('--analyzed-at');
 const fullFlowReceiptPath = optionalArgument('--full-flow-receipt');
-const [sourceRevision, candidate, receipt, fullFlowReceipt] = await Promise.all([
+const migrationTraceReceiptPath = optionalArgument('--migration-trace-receipt');
+const [sourceRevision, candidate, receipt, fullFlowReceiptText, migrationTraceReceipt] = await Promise.all([
   readFile(sourceRevisionPath, 'utf8').then(JSON.parse),
   readFile(candidatePath, 'utf8').then(JSON.parse),
   readFile(receiptPath, 'utf8').then(JSON.parse),
-  fullFlowReceiptPath ? readFile(resolve(fullFlowReceiptPath), 'utf8').then(JSON.parse) : Promise.resolve(undefined)
+  fullFlowReceiptPath ? readFile(resolve(fullFlowReceiptPath), 'utf8') : Promise.resolve(undefined),
+  migrationTraceReceiptPath ? readFile(resolve(migrationTraceReceiptPath), 'utf8').then(JSON.parse) : Promise.resolve(undefined)
 ]);
-const nextRevision = finalizeFilmIdentityRevision(sourceRevision, candidate, receipt, analyzedAt, fullFlowReceipt);
+const fullFlowReceipt = fullFlowReceiptText ? JSON.parse(fullFlowReceiptText) : undefined;
+if (migrationTraceReceipt && (!fullFlowReceiptText || migrationTraceReceipt.fingerprints?.fullFlowReceiptSha256 !== createHash('sha256').update(fullFlowReceiptText).digest('hex'))) {
+  throw new Error('The migration-trace receipt does not bind the exact full-flow receipt bytes.');
+}
+const nextRevision = finalizeFilmIdentityRevision(sourceRevision, candidate, receipt, analyzedAt, fullFlowReceipt, migrationTraceReceipt);
 await writeFile(outputPath, `${JSON.stringify(nextRevision, null, 2)}\n`);
 console.log(JSON.stringify({
   ok: true,
@@ -35,6 +42,8 @@ console.log(JSON.stringify({
   derivedFromRevision: nextRevision.analysis.derivedFromRevision,
   personDetectionExecuted: nextRevision.analysis.personDetectionExecuted,
   fullFlowProfile: nextRevision.analysis.fullFlowVerification?.profile ?? null,
+  migrationTraceProfile: nextRevision.analysis.migrationTraceVerification?.profile ?? null,
+  activeVisibleCoverage: nextRevision.analysis.migrationTraceVerification?.coverage ?? null,
   frames: nextRevision.frames.length,
   outputPath
 }, null, 2));

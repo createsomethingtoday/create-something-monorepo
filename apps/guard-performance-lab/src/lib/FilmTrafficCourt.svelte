@@ -10,6 +10,7 @@
   let opponentCount = $derived(traffic.players.filter((player) => player.team === 'opponent').length);
   let targetCount = $derived(traffic.players.filter((player) => player.team === 'target').length);
   let candidateFingerprint = $derived(analysis.analysis.fullFlowVerification?.candidateFingerprint ?? analysis.analysis.identityVerification?.candidateFingerprint);
+  let migrationTrace = $derived(analysis.analysis.migrationTraceVerification);
   const scale = 10;
   const x = (feet: number) => courtToSvg([feet, 0], scale)[0];
   const y = (feet: number) => courtToSvg([0, feet], scale)[1];
@@ -23,6 +24,11 @@
   const threeTop = FULL_COURT_94X50.width * scale / 2 - threeEndpointOffset;
   const threeBottom = FULL_COURT_94X50.width * scale / 2 + threeEndpointOffset;
   const wakePath = (segment: Array<{ court: [number, number] }>) => segment.map((sample, index) => `${index ? 'L' : 'M'} ${x(sample.court[0])} ${y(sample.court[1])}`).join(' ');
+  const contextOpacity = (points: Array<{ timeMs: number }>) => {
+    const ageMs = Math.max(0, traffic.timeMs - (points.at(-1)?.timeMs ?? traffic.timeMs));
+    const historyMs = Math.max(1, Math.min(wakeMs, traffic.timeMs || wakeMs));
+    return Math.round((0.14 + 0.38 * (1 - Math.min(1, ageMs / historyMs))) * 100) / 100;
+  };
 </script>
 
 <svg
@@ -36,6 +42,13 @@
   data-analysis-id={analysis.id}
   data-analysis-revision={analysis.analysis.revision}
   data-candidate-fingerprint={candidateFingerprint}
+  data-migration-profile={migrationTrace?.profile}
+  data-active-visible-coverage={migrationTrace?.coverage}
+  data-path-segment-count={migrationTrace?.pathSegmentCount}
+  data-longest-unresolved-gap-ms={migrationTrace?.longestUnresolvedGapMs}
+  data-participation-sha256={migrationTrace?.participationSha256}
+  data-migration-candidate-sha256={migrationTrace?.candidateSha256}
+  data-full-flow-receipt-sha256={migrationTrace?.fullFlowReceiptSha256}
 >
   <title id="traffic-title">Player traffic at {Math.round(traffic.timeMs / 100) / 10} seconds / {traffic.currentPlayState}</title>
   <desc id="traffic-desc">A top-down basketball court with {traffic.players.length} foreground-court players: {teammateCount} teammates, {opponentCount} opponents, target count {targetCount}. The current play state is {traffic.currentPlayState}. Orange wake includes verified live basketball only. {movementMode === 'all-captured' ? 'Gray wake preserves non-live and unknown captured movement.' : 'Non-live and unknown movement is hidden from the wake.'}</desc>
@@ -66,7 +79,8 @@
   </g>
   <g class="context-wake" fill="none" stroke="#77756d" stroke-linecap="round" stroke-linejoin="round">
     {#each traffic.contextWake as segment}
-      <path data-play-state={segment.playState} d={wakePath(segment.points)} stroke-width="7" stroke-dasharray="6 7" opacity=".28" />
+      <path data-play-state={segment.playState} data-start-ms={segment.points[0]?.timeMs} data-end-ms={segment.points.at(-1)?.timeMs} d={wakePath(segment.points)} stroke-width="7" stroke-dasharray="6 7" opacity={contextOpacity(segment.points)} />
+      {#if segment.points.at(-1)}<circle cx={x(segment.points.at(-1)!.court[0])} cy={y(segment.points.at(-1)!.court[1])} r="5" fill="#77756d" opacity={contextOpacity(segment.points)} />{/if}
     {/each}
   </g>
   <g class="traffic-players">

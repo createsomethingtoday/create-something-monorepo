@@ -36,6 +36,7 @@
     "film:review:mask-stint": "tsx scripts/review-film-mask-stint.ts",
     "film:verify:participation": "tsx scripts/verify-film-participation.ts",
     "film:verify:full-flow": "tsx scripts/verify-film-full-flow.ts",
+    "film:verify:migration-trace": "tsx scripts/verify-film-migration-trace.ts",
     "film:fuse:mask-tracks": "tsx scripts/fuse-film-mask-tracks.ts",
     "film:apply:identity-assignments": "tsx scripts/apply-film-identity-assignments.ts",
     "film:verify": "tsx scripts/verify-film.ts",
