@@ -31,8 +31,10 @@ path.
   `https://halfdozen-cracked-sync-mcp.createsomething.workers.dev/.well-known/oauth-protected-resource`
 - Authorization server: `https://id.createsomething.space`
 - OAuth scopes: `cracked-sync:read` and `cracked-sync:write`
-- Admission: exact verified emails in `OAUTH_ALLOWED_EMAILS`; an empty allowlist
-  fails closed
+- Admission: exact verified emails in `OAUTH_ALLOWED_EMAILS` and/or exact
+  verified email domains in `OAUTH_ALLOWED_DOMAINS`; empty allowlists fail
+  closed. Cracked Live production accepts `halfdozen.co` and
+  `createsomething.io`.
 
 Claude registers through Dynamic Client Registration and each admitted
 operator signs in through CREATE SOMETHING Identity. A read-only token sees

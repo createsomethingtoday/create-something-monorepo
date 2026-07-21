@@ -5,6 +5,7 @@ import {
   SCOPE_READ,
   SCOPE_WRITE,
   buildProtectedResourceMetadata,
+  parseAllowedDomains,
   parseAllowedEmails,
   resolveIdentityOAuthRequest,
 } from '../src/oauth-access.js';
@@ -38,7 +39,83 @@ test('Cracked Live OAuth accepts a verified, explicitly allowlisted Identity use
   });
 });
 
-test('Cracked Live OAuth fails closed when its exact email allowlist is missing', async () => {
+for (const email of ['producer@halfdozen.co', 'operator@createsomething.io']) {
+  test(`Cracked Live OAuth accepts a verified ${email.split('@')[1]} identity`, async () => {
+    const result = await resolveIdentityOAuthRequest({
+      request: new Request(resource, {
+        headers: { Authorization: 'Bearer identity-token' },
+      }),
+      issuer: 'https://id.example.test',
+      expectedResource: resource,
+      allowedEmails: new Set(),
+      allowedDomains: parseAllowedDomains('halfdozen.co,createsomething.io'),
+      fetch: async () => Response.json({
+        sub: `user_${email}`,
+        email,
+        email_verified: true,
+        resource,
+        scope: `${SCOPE_READ} ${SCOPE_WRITE}`,
+      }),
+    });
+
+    assert.equal(result.ok, true);
+    if (result.ok) assert.equal(result.email, email);
+  });
+}
+
+test('Cracked Live OAuth rejects a lookalike Half Dozen domain', async () => {
+  const result = await resolveIdentityOAuthRequest({
+    request: new Request(resource, {
+      headers: { Authorization: 'Bearer identity-token' },
+    }),
+    issuer: 'https://id.example.test',
+    expectedResource: resource,
+    allowedEmails: new Set(),
+    allowedDomains: parseAllowedDomains('halfdozen.co,createsomething.io'),
+    fetch: async () => Response.json({
+      sub: 'user_spoofed',
+      email: 'producer@halfdozen.co.example.com',
+      email_verified: true,
+      resource,
+      scope: `${SCOPE_READ} ${SCOPE_WRITE}`,
+    }),
+  });
+
+  assert.deepEqual(result, {
+    ok: false,
+    status: 403,
+    code: 'forbidden',
+    message: 'You are not on the Cracked Live Ticket Sync access list.',
+  });
+});
+
+test('Cracked Live OAuth rejects a malformed email that only names an allowed domain', async () => {
+  const result = await resolveIdentityOAuthRequest({
+    request: new Request(resource, {
+      headers: { Authorization: 'Bearer identity-token' },
+    }),
+    issuer: 'https://id.example.test',
+    expectedResource: resource,
+    allowedEmails: new Set(),
+    allowedDomains: parseAllowedDomains('halfdozen.co,createsomething.io'),
+    fetch: async () => Response.json({
+      sub: 'user_malformed',
+      email: 'halfdozen.co',
+      email_verified: true,
+      resource,
+      scope: `${SCOPE_READ} ${SCOPE_WRITE}`,
+    }),
+  });
+
+  assert.deepEqual(result, {
+    ok: false,
+    status: 403,
+    code: 'forbidden',
+    message: 'You are not on the Cracked Live Ticket Sync access list.',
+  });
+});
+
+test('Cracked Live OAuth fails closed when its email and domain allowlists are missing', async () => {
   const result = await resolveIdentityOAuthRequest({
     request: new Request(resource, {
       headers: { Authorization: 'Bearer identity-token' },
@@ -59,7 +136,7 @@ test('Cracked Live OAuth fails closed when its exact email allowlist is missing'
     ok: false,
     status: 500,
     code: 'misconfigured',
-    message: 'Cracked Live OAuth access requires an explicit OAUTH_ALLOWED_EMAILS allowlist.',
+    message: 'Cracked Live OAuth access requires an explicit email or domain allowlist.',
   });
 });
 
