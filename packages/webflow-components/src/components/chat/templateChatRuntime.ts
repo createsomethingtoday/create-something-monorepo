@@ -104,6 +104,31 @@ export function isHostOverlayBlocking(
   });
 }
 
+/** Returns the visible height of a bottom-anchored host overlay that owns interaction. */
+export function getHostOverlayBottomInset(
+  documentLike: HostOverlayDocument,
+  selectors: string,
+  viewportWidth: number,
+  viewportHeight: number,
+): number {
+  if (!isHostOverlayBlocking(documentLike, selectors, viewportWidth, viewportHeight)) return 0;
+
+  let overlays: Element[];
+  try {
+    overlays = Array.from(documentLike.querySelectorAll(selectors));
+  } catch {
+    return 0;
+  }
+
+  return overlays.reduce((largest, overlay) => {
+    const rect = overlay.getBoundingClientRect();
+    const intersectsViewport = rect.width > 0 && rect.height > 0 && rect.right > 0 && rect.left < viewportWidth;
+    const reachesViewportBottom = rect.bottom >= viewportHeight - 1 && rect.top < viewportHeight;
+    if (!intersectsViewport || !reachesViewportBottom) return largest;
+    return Math.max(largest, Math.ceil(viewportHeight - Math.max(0, rect.top)));
+  }, 0);
+}
+
 export interface HighlightMissState {
   add(slugs: readonly string[]): void;
   snapshot(): string[];
