@@ -13,6 +13,7 @@ import {
 } from '../src/cloudflare-access.js';
 import { DEFAULT_AIRTABLE_BASE_ID, DEFAULT_GOVERNANCE_FINDINGS_TABLE_ID } from '../src/schema.js';
 import { registerPrompts } from '../src/prompts.js';
+import { attachRequestProps } from '../src/request-context.js';
 import { registerResources } from '../src/resources.js';
 import { registerTools } from '../src/tools.js';
 
@@ -155,7 +156,7 @@ export default {
         : WebflowAppReviewMCP.serve('/access/mcp');
       const result = await authenticateWithCloudflareAccess(request, env);
       if (result instanceof Response) return result;
-      return serve.fetch(request, env, { ...ctx, props: result.props });
+      return serve.fetch(request, env, attachRequestProps(ctx, result.props));
     }
 
     if (url.pathname === '/mcp' || url.pathname.startsWith('/mcp/') || url.pathname === '/sse' || url.pathname.startsWith('/sse/')) {
@@ -164,23 +165,25 @@ export default {
     }
 
     if (url.pathname === '/mcp' || url.pathname.startsWith('/mcp/')) {
-      return WebflowAppReviewMCP.serve('/mcp').fetch(request, env, {
-        ...ctx,
-        props: {
+      return WebflowAppReviewMCP.serve('/mcp').fetch(
+        request,
+        env,
+        attachRequestProps(ctx, {
           authMode: 'legacy' as const,
           ...(env.MCP_ACCOUNT_ID?.trim() ? { accountId: env.MCP_ACCOUNT_ID.trim() } : {}),
-        },
-      });
+        }),
+      );
     }
 
     if (url.pathname === '/sse' || url.pathname.startsWith('/sse/')) {
-      return WebflowAppReviewMCP.serveSSE('/sse').fetch(request, env, {
-        ...ctx,
-        props: {
+      return WebflowAppReviewMCP.serveSSE('/sse').fetch(
+        request,
+        env,
+        attachRequestProps(ctx, {
           authMode: 'legacy' as const,
           ...(env.MCP_ACCOUNT_ID?.trim() ? { accountId: env.MCP_ACCOUNT_ID.trim() } : {}),
-        },
-      });
+        }),
+      );
     }
 
     if (url.pathname === '/' || url.pathname === '/health') {
