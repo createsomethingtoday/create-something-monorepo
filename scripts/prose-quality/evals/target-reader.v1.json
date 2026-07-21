@@ -30,7 +30,7 @@
       "source": {
         "file": "packages/agency/src/routes/+page.svelte",
         "line": 170,
-        "anchor": "Evidence collection completed for 49 of 50 selected cases."
+        "anchor": "Evidence collection finished for 49 of 50 selected cases."
       },
       "reason": "Pairs a concrete result with explicit limits on automated judgment and unmeasured time savings."
     },
@@ -57,7 +57,7 @@
       "context": "Read the complete transformation-table row containing the discouraged phrase and its practical replacement.",
       "source": {
         "file": "packages/ltd/src/routes/voice/+page.svelte",
-        "line": 149,
+        "line": 212,
         "anchor": "MCP-enabled trust layer for enterprise automation"
       },
       "reason": "Shows the unclear label beside a concrete translation a practitioner can recognize."

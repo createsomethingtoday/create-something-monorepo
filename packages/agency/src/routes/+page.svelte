@@ -56,7 +56,7 @@
     {
       question: 'What does CREATE SOMETHING build?',
       answer:
-        'CREATE SOMETHING builds AI workflow systems that make one business workflow safe to delegate: Signals from your tools, Decisions routed to the right human or agent, and Proof that records what happened.'
+        'CREATE SOMETHING builds AI workflow systems that make one business workflow safe to delegate. Signals show what changed. Decisions reach the right person or agent. Proof records what happened.'
     },
     {
       question: 'What makes a workflow reliable?',
@@ -233,7 +233,7 @@
 
 <SEO
   title="AI Workflow Systems | CREATE SOMETHING .agency"
-  description="CREATE SOMETHING builds AI workflow systems for business operations: one messy handoff becomes Signals, Decisions, Proof, connected tools, approvals, stop conditions, and an audit trail."
+  description="CREATE SOMETHING builds AI workflow systems for business operations. We connect tools, approvals, stop conditions, and an audit trail around one messy handoff."
   keywords="AI workflow systems, workflow automation consultant, governed AI workflows, workflow control layer, workflow mapping, workflow pilot, production automation, technical operators"
   ogImage="/og-image.png"
   propertyName="agency"
