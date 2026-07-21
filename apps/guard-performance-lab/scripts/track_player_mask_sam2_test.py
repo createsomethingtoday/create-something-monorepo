@@ -26,6 +26,21 @@ class MaskDiagnosticTest(unittest.TestCase):
             },
         )
 
+    def test_parses_periodic_reseed_boxes_without_reusing_the_entry_seed(self):
+        reseeds = MODULE.parse_reseeds(["30:10,20,40,80", "75:100,200,50,90"], frame_count=100)
+
+        self.assertEqual(
+            reseeds,
+            [
+                {"frameIndex": 30, "box": [10, 20, 40, 80]},
+                {"frameIndex": 75, "box": [100, 200, 50, 90]},
+            ],
+        )
+
+    def test_rejects_out_of_range_reseed_frames(self):
+        with self.assertRaisesRegex(ValueError, "outside the extracted frame sequence"):
+            MODULE.parse_reseeds(["100:10,20,40,80"], frame_count=100)
+
 
 if __name__ == "__main__":
     unittest.main()

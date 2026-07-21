@@ -122,9 +122,24 @@ pnpm --filter @create-something/guard-performance-lab film:finalize:identity -- 
   --revision2 /private/path/full-analysis-r2.json \
   --candidate /private/path/full-analysis-r3-candidate.json \
   --receipt /private/path/identity-verifier-r3-candidate.json \
+  --full-flow-receipt /private/path/full-flow-receipt.json \
+  --migration-trace-receipt /private/path/migration-trace-receipt.json \
   --output /private/path/full-analysis-r3.json \
   --analyzed-at <fixed-receipt-time>
 ```
+
+For a dense migration trace, verify at least 90% of the source-reviewed active-visible samples before finalization. The verifier also records every unresolved path break and rejects any coordinate labeled calibrated unless its timestamp belongs to a passing source-bound camera state with held-out median error at or below 2 feet and p95 error at or below 4 feet.
+
+```bash
+pnpm --filter @create-something/guard-performance-lab film:verify:migration-trace -- \
+  --candidate /private/path/full-analysis-r3-candidate.json \
+  --participation /private/path/player-13-participation.json \
+  --full-flow-receipt /private/path/full-flow-receipt.json \
+  --camera-states /private/path/passing-camera-states.json \
+  --output /private/path/migration-trace-receipt.json
+```
+
+Omit `--camera-states` when the source cannot support an independently reviewed calibration. In that case every accepted coordinate must remain explicitly estimated.
 
 Attach reviewed play context to that same immutable revision with a complete, non-overlapping ledger. `unknown` intervals require explicit unreviewed provenance and fail closed; every other state requires source-review evidence. The command verifies source identity and complete duration coverage, then writes a new artifact with the original frames, players, identity fingerprint, revision, and execution count intact.
 
@@ -148,7 +163,7 @@ pnpm --filter @create-something/guard-performance-lab film:import:http -- \
 
 Both local and HTTP imports reject analyses that are not bound to an exact SHA-256 import gate. Revision 1/2 gates consume the passing fixed benchmark report and its exact correction overlay; revision 3 gates require the embedded locked identity benchmark. Play-state receipt counts are recomputed from the captured frames before a gate can be issued. The analyzer also hashes the linked video bytes itself and rejects a mismatched supplied source receipt before inference starts.
 
-`Film trace` then replays the captured top-down traffic. The slider works in both directions. `Live basketball only` is the default and draws an orange #13 wake only for verified live offense, live defense, and transition states. `All captured movement` keeps dead-ball, free-throw, substitution, and unknown movement available as a gray dashed context wake without counting it as positioning or lane running. Wake segments break across state changes, unresolved gaps, and inactive substitutions. JSON/SVG exports are derived from the persisted revision. Operator corrections require direct-evidence text and append provenance; player-scoped identities cannot attach or correct analyses and can read only their assigned player.
+`Film trace` then replays the captured top-down traffic. The slider works in both directions. `All verified #13 positions` is the default and keeps every identity-resolved position visible as a gray dashed context wake even when play state is unreviewed; `Reviewed live basketball only` draws an orange wake only for verified live offense, live defense, and transition states. `All verified history` shows the complete trace up to the current scrub time with older segments faded and each segment endpoint marked. Wake segments break across state changes, unresolved gaps, and inactive substitutions. JSON/SVG exports carry the persisted identity and migration fingerprints. Operator corrections require direct-evidence text and append provenance; player-scoped identities cannot attach or correct analyses and can read only their assigned player.
 
 ### Local segmentation-mask tracking
 
@@ -177,12 +192,13 @@ PYTORCH_ENABLE_MPS_FALLBACK=1 \
   --sample-fps 5 \
   --seed-frame 0 \
   --seed-box 326,261,30,96 \
+  --reseed 30:352,258,31,94 \
   --reviewer user \
   --output /private/path/on-court-17m40-mask.json \
   --device mps
 ```
 
-`--seed-box` uses the extracted-frame coordinate space; the receipt scales every box and foot point back to the declared source dimensions. The script records the exact model SHA-256, device, seed, samples, and evidence. A mask receipt is a private candidate, not a promotable film revision by itself; benchmark and court-calibration gates still apply.
+`--seed-box` and each repeatable `--reseed frameIndex:x,y,width,height` use the extracted-frame coordinate space; the receipt scales every box and foot point back to the declared source dimensions. Reseeds require direct source review and become explicit reviewed anchors, never automatic appearance re-identification. The script records the exact model SHA-256, device, seed, reseeds, samples, and evidence. A mask receipt is a private candidate, not a promotable film revision by itself; benchmark and court-calibration gates still apply.
 
 Combine reviewed stint receipts and fuse them against the reprocessed detector field. Same-state overlaps are merged so a direct-number reseed can safely bridge a chunk boundary; conflicting participation states, mixed sources, coordinate spaces, or model receipts are rejected. Fusion also rejects raw opponent evidence and terminates a seed after more than 3.5 seconds without an accepted target, even if SAM2 later attaches to another player. The command writes both the combined audit receipt and a non-promotable candidate for held-out review:
 
@@ -191,6 +207,7 @@ pnpm --filter @create-something/guard-performance-lab film:fuse:mask-tracks \
   --analysis /private/path/full-analysis-r2-reprocessed.json \
   --mask-track /private/path/stint-1-mask.json \
   --mask-track /private/path/stint-2-mask.json \
+  --participation-ledger /private/path/player-13-participation.json \
   --receipt-output /private/path/player-13-mask-track.json \
   --candidate-output /private/path/player-13-mask-candidate.json
 ```

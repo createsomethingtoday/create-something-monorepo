@@ -242,6 +242,20 @@ export function combineFilmMaskTracks(inputs: unknown[]) {
   return combined;
 }
 
+export function bindFilmMaskTrackParticipation(
+  input: unknown,
+  participationInput: unknown
+) {
+  const validation = validateFilmMaskTrack(input);
+  if (!validation.ok) throw new Error(`Invalid mask track: ${validation.issues.join(' ')}`);
+  const maskTrack = filmMaskTrackSchema.parse(input);
+  const participation = filmMaskTrackSchema.shape.participation.parse(participationInput);
+  const bound = { ...maskTrack, participation };
+  const boundValidation = validateFilmMaskTrack(bound);
+  if (!boundValidation.ok) throw new Error(`Invalid bound mask participation: ${boundValidation.issues.join(' ')}`);
+  return bound;
+}
+
 export function reviewFilmMaskTrackStint(
   input: unknown,
   review: { segmentId: string; startMs: number; endMs: number; evidence: string }
@@ -557,6 +571,48 @@ const promotableFullFlowReceiptSchema = z.object({
   stateTotals: fullFlowVerificationSchema.shape.stateTotals
 }).passthrough();
 
+const migrationTraceVerificationSchema = z.object({
+  profile: z.literal('guard-player-13-migration-trace-v1'),
+  candidateFingerprint: z.string().min(1),
+  participationSha256: z.string().regex(/^[a-f0-9]{64}$/),
+  candidateSha256: z.string().regex(/^[a-f0-9]{64}$/),
+  fullFlowReceiptSha256: z.string().regex(/^[a-f0-9]{64}$/),
+  activeVisibleFrameCount: z.number().int().positive(),
+  resolvedActiveVisibleFrames: z.number().int().nonnegative(),
+  coverage: z.number().min(0.9).max(1),
+  pathSegmentCount: z.number().int().positive(),
+  longestUnresolvedGapMs: z.number().int().nonnegative(),
+  estimatedCoordinates: z.number().int().nonnegative(),
+  calibratedCoordinates: z.number().int().nonnegative(),
+  passingCameraStates: z.number().int().nonnegative()
+});
+
+const promotableMigrationTraceReceiptSchema = z.object({
+  profile: z.literal('guard-player-13-migration-trace-v1'),
+  ok: z.literal(true),
+  promotable: z.literal(true),
+  sourceSha256: z.string().regex(/^[a-f0-9]{64}$/),
+  sourceRevision: z.union([z.literal(1), z.literal(2)]),
+  candidateFingerprint: z.string().min(1),
+  fingerprints: z.object({
+    participationSha256: z.string().regex(/^[a-f0-9]{64}$/),
+    candidateSha256: z.string().regex(/^[a-f0-9]{64}$/),
+    fullFlowReceiptSha256: z.string().regex(/^[a-f0-9]{64}$/)
+  }),
+  activeVisible: z.object({
+    frameCount: z.number().int().positive(),
+    resolved: z.number().int().nonnegative(),
+    coverage: z.number().min(0.9).max(1),
+    pathSegmentCount: z.number().int().positive(),
+    longestUnresolvedGapMs: z.number().int().nonnegative()
+  }),
+  coordinates: z.object({
+    estimated: z.number().int().nonnegative(),
+    calibrated: z.number().int().nonnegative(),
+    passingCameraStates: z.number().int().nonnegative()
+  })
+}).passthrough();
+
 const capturedAnalysisReceiptSchema = z.object({
   revision: z.union([z.literal(1), z.literal(2), z.literal(3)]),
   executionCount: z.literal(1),
@@ -574,6 +630,7 @@ const capturedAnalysisReceiptSchema = z.object({
     correctionOverlayCount: z.literal(0)
   }).optional(),
   fullFlowVerification: fullFlowVerificationSchema.optional(),
+  migrationTraceVerification: migrationTraceVerificationSchema.optional(),
   playStateVerification: z.object({
     profile: z.literal(FILM_PLAY_STATE_PROFILE),
     ledgerFingerprint: z.string().min(1),
@@ -695,6 +752,21 @@ function boxIntersectionOverUnion(first: [number, number, number, number], secon
   return union ? intersection / union : 0;
 }
 
+function sourcePlayerMaskCorridorScore(
+  image: [number, number],
+  maskBox: [number, number, number, number],
+  width: number,
+  height: number
+) {
+  const centerX = (maskBox[0] + maskBox[2] / 2) / width;
+  const maskBottom = (maskBox[1] + maskBox[3]) / height;
+  const maskHeight = maskBox[3] / height;
+  const corridorTop = maskBottom - Math.max(0.02, maskHeight * 0.12);
+  const corridorBottom = Math.min(1, maskBottom + Math.max(0.04, maskHeight * 1.1));
+  const verticalPenalty = Math.max(0, corridorTop - image[1], image[1] - corridorBottom);
+  return Math.abs(image[0] - centerX) + verticalPenalty;
+}
+
 export function fuseFilmMaskTrack(analysisInput: unknown, maskTrackInput: unknown) {
   const analysis = capturedFilmAnalysisSchema.parse(analysisInput);
   const validation = validateFilmMaskTrack(maskTrackInput);
@@ -726,12 +798,14 @@ export function fuseFilmMaskTrack(analysisInput: unknown, maskTrackInput: unknow
         association = 'crop-iou';
       }
     } else {
-      const maskFoot: [number, number] = [sample.foot[0] / analysis.source.width, sample.foot[1] / analysis.source.height];
-      const distances = players.flatMap((player) => player.image ? [{ player, distance: Math.hypot(player.image[0] - maskFoot[0], player.image[1] - maskFoot[1]) }] : []).toSorted((a, b) => a.distance - b.distance);
+      const distances = players.flatMap((player) => player.image ? [{
+        player,
+        distance: sourcePlayerMaskCorridorScore(player.image, sample.box, analysis.source.width, analysis.source.height)
+      }] : []).toSorted((a, b) => a.distance - b.distance);
       const best = distances[0];
       const runnerUp = distances[1];
       const rawRole = (best?.player.classification as { role?: string } | undefined)?.role;
-      if (best && best.player.team === 'teammate' && (!rawRole || rawRole === 'teammate') && best.distance <= 0.04 && (!runnerUp || runnerUp.distance - best.distance >= 0.02)) {
+      if (best && best.player.team === 'teammate' && (!rawRole || rawRole === 'teammate') && best.distance <= 0.06 && (!runnerUp || runnerUp.distance - best.distance >= 0.015)) {
         selected = best.player;
         association = 'source-footpoint';
       }
@@ -742,8 +816,51 @@ export function fuseFilmMaskTrack(analysisInput: unknown, maskTrackInput: unknow
     Object.assign(selected, { identity: '13', identityEvidence: { method: 'segmentation-mask', segmentId: segment.id, engine: maskTrack.engine.name, confidence: sample.confidence, association } });
     return { ...frame, targetStatus: 'resolved' as const, players, identityEvidence: { method: 'segmentation-mask', segmentId: segment.id, engine: maskTrack.engine.name, confidence: sample.confidence } };
   });
+  const bracketedFrames = rawFrames.map((frame, frameIndex, frames) => {
+    if (frame.targetStatus !== 'unresolved') return frame;
+    const participation = maskTrack.participation.find((interval) => frame.timeMs >= interval.startMs && frame.timeMs <= interval.endMs);
+    if (participation?.state !== 'active') return frame;
+    const segment = maskTrack.segments.find((candidate) => frame.timeMs >= candidate.startMs && frame.timeMs <= candidate.endMs);
+    const sample = segment?.samples.toSorted((left, right) => Math.abs(left.timeMs - frame.timeMs) - Math.abs(right.timeMs - frame.timeMs))[0];
+    if (!segment || !sample || Math.abs(sample.timeMs - frame.timeMs) > 300 || sample.confidence < 0.7) return frame;
+
+    let previousIndex = frameIndex - 1;
+    while (previousIndex >= 0 && frame.timeMs - frames[previousIndex]!.timeMs <= 3000 && frames[previousIndex]!.targetStatus !== 'resolved') previousIndex -= 1;
+    let nextIndex = frameIndex + 1;
+    while (nextIndex < frames.length && frames[nextIndex]!.timeMs - frame.timeMs <= 3000 && frames[nextIndex]!.targetStatus !== 'resolved') nextIndex += 1;
+    const previous = frames[previousIndex];
+    const next = frames[nextIndex];
+    if (!previous || !next || previous.targetStatus !== 'resolved' || next.targetStatus !== 'resolved') return frame;
+    if (frame.timeMs - previous.timeMs > 3000 || next.timeMs - frame.timeMs > 3000) return frame;
+    const previousEvidence = previous.identityEvidence as { method?: string; segmentId?: string } | undefined;
+    const nextEvidence = next.identityEvidence as { method?: string; segmentId?: string } | undefined;
+    if (previousEvidence?.method !== 'segmentation-mask' || nextEvidence?.method !== 'segmentation-mask' || previousEvidence.segmentId !== segment.id || nextEvidence.segmentId !== segment.id) return frame;
+    const previousTarget = previous.players.find((player) => player.team === 'target');
+    const nextTarget = next.players.find((player) => player.team === 'target');
+    if (!previousTarget?.image || !nextTarget?.image) return frame;
+
+    const progress = (frame.timeMs - previous.timeMs) / (next.timeMs - previous.timeMs);
+    const expected: [number, number] = [
+      previousTarget.image[0] + (nextTarget.image[0] - previousTarget.image[0]) * progress,
+      previousTarget.image[1] + (nextTarget.image[1] - previousTarget.image[1]) * progress
+    ];
+    const candidates = frame.players.flatMap((player) => {
+      const rawRole = (player.classification as { role?: string } | undefined)?.role;
+      if (player.team !== 'teammate' || (rawRole && rawRole !== 'teammate') || !player.image) return [];
+      const maskScore = sourcePlayerMaskCorridorScore(player.image, sample.box, analysis.source.width, analysis.source.height);
+      const motionScore = Math.abs(player.image[0] - expected[0]) + Math.abs(player.image[1] - expected[1]);
+      return [{ player, maskScore, motionScore, totalScore: maskScore + motionScore }];
+    }).toSorted((left, right) => left.totalScore - right.totalScore);
+    const best = candidates[0];
+    const runnerUp = candidates[1];
+    if (!best || best.maskScore > 0.12 || best.motionScore > 0.13 || best.totalScore > 0.2 || (runnerUp && runnerUp.totalScore - best.totalScore < 0.02)) return frame;
+    best.player.team = 'target';
+    best.player.confidence = Math.min(best.player.confidence, sample.confidence);
+    Object.assign(best.player, { identity: '13', identityEvidence: { method: 'segmentation-mask', segmentId: segment.id, engine: maskTrack.engine.name, confidence: sample.confidence, association: 'temporal-bracket' } });
+    return { ...frame, targetStatus: 'resolved' as const, identityEvidence: { method: 'segmentation-mask', segmentId: segment.id, engine: maskTrack.engine.name, confidence: sample.confidence }, players: frame.players };
+  });
   const acceptedBySegment = new Map<string, number[]>();
-  for (const frame of rawFrames) {
+  for (const frame of bracketedFrames) {
     const evidence = (frame as CapturedFrame & { identityEvidence?: { method?: string; segmentId?: string } }).identityEvidence;
     if (frame.targetStatus !== 'resolved' || evidence?.method !== 'segmentation-mask' || !evidence.segmentId) continue;
     acceptedBySegment.set(evidence.segmentId, [...(acceptedBySegment.get(evidence.segmentId) ?? []), frame.timeMs]);
@@ -753,16 +870,21 @@ export function fuseFilmMaskTrack(analysisInput: unknown, maskTrackInput: unknow
   for (const segment of maskTrack.segments) {
     const times = (acceptedBySegment.get(segment.id) ?? []).toSorted((a, b) => a - b);
     if (!times.length) continue;
-    let anchorIndex = 0;
-    for (let index = 1; index < times.length; index += 1) {
-      if (Math.abs(times[index]! - segment.seed.timeMs) < Math.abs(times[anchorIndex]! - segment.seed.timeMs)) anchorIndex = index;
+    const reviewedAnchorTimes = segment.samples.filter((sample) => sample.provenance === 'seed' || sample.provenance === 'reviewed').map((sample) => sample.timeMs);
+    const anchorIndexes = [...new Set(reviewedAnchorTimes.flatMap((anchorTime) => {
+      let nearestIndex = 0;
+      for (let index = 1; index < times.length; index += 1) {
+        if (Math.abs(times[index]! - anchorTime) < Math.abs(times[nearestIndex]! - anchorTime)) nearestIndex = index;
+      }
+      return Math.abs(times[nearestIndex]! - anchorTime) <= maximumAcceptedGapMs ? [nearestIndex] : [];
+    }))];
+    for (const anchorIndex of anchorIndexes) {
+      allowed.add(`${segment.id}:${times[anchorIndex]}`);
+      for (let index = anchorIndex - 1; index >= 0 && times[index + 1]! - times[index]! <= maximumAcceptedGapMs; index -= 1) allowed.add(`${segment.id}:${times[index]}`);
+      for (let index = anchorIndex + 1; index < times.length && times[index]! - times[index - 1]! <= maximumAcceptedGapMs; index += 1) allowed.add(`${segment.id}:${times[index]}`);
     }
-    if (Math.abs(times[anchorIndex]! - segment.seed.timeMs) > maximumAcceptedGapMs) continue;
-    allowed.add(`${segment.id}:${times[anchorIndex]}`);
-    for (let index = anchorIndex - 1; index >= 0 && times[index + 1]! - times[index]! <= maximumAcceptedGapMs; index -= 1) allowed.add(`${segment.id}:${times[index]}`);
-    for (let index = anchorIndex + 1; index < times.length && times[index]! - times[index - 1]! <= maximumAcceptedGapMs; index += 1) allowed.add(`${segment.id}:${times[index]}`);
   }
-  const frames = rawFrames.map((frame) => {
+  const frames = bracketedFrames.map((frame) => {
     const evidence = (frame as CapturedFrame & { identityEvidence?: { method?: string; segmentId?: string } }).identityEvidence;
     if (frame.targetStatus !== 'resolved' || evidence?.method !== 'segmentation-mask' || !evidence.segmentId || allowed.has(`${evidence.segmentId}:${frame.timeMs}`)) return frame;
     const players = frame.players.map((player) => {
@@ -968,7 +1090,7 @@ export function verifyFilmIdentityCandidate(sourceRevisionInput: unknown, candid
     const targetMatchesReview = target?.trackId === annotation.trackId || (
       candidate.identityPolicy === 'segmentation-mask-direct-reseed-fail-closed-v1'
       && reviewCropContainsPlayerCenter(annotation.cropBounds, target?.cropBounds)
-    ) || (candidate.derivedFromRevision === 1 && evidenceMethod === 'direct-number' && annotation.expectedIdentity === '13');
+    ) || (evidenceMethod === 'direct-number' && annotation.expectedIdentity === '13');
     return {
       id: annotation.id,
       predictedIdentity: frame?.targetStatus === 'inactive'
@@ -1012,7 +1134,7 @@ const filmIdentityVerificationReceiptSchema = z.object({
   scoreIssues: z.array(z.never()).length(0)
 }).passthrough();
 
-export function finalizeFilmIdentityRevision(sourceRevisionInput: unknown, candidateInput: unknown, receiptInput: unknown, analyzedAt = new Date().toISOString(), fullFlowReceiptInput?: unknown) {
+export function finalizeFilmIdentityRevision(sourceRevisionInput: unknown, candidateInput: unknown, receiptInput: unknown, analyzedAt = new Date().toISOString(), fullFlowReceiptInput?: unknown, migrationTraceReceiptInput?: unknown) {
   const sourceRevision = capturedFilmAnalysisSchema.parse(sourceRevisionInput);
   const candidate = filmIdentityCandidateSchema.parse(candidateInput);
   const parsedReceipt = filmIdentityVerificationReceiptSchema.safeParse(receiptInput);
@@ -1021,6 +1143,8 @@ export function finalizeFilmIdentityRevision(sourceRevisionInput: unknown, candi
   if (parsedReceipt.data.sourceSha256 !== sourceRevision.source.sha256 || parsedReceipt.data.candidateFingerprint !== filmIdentityCandidateFingerprint(candidate)) throw new Error('The passing identity verification receipt does not match this candidate.');
   const fullFlowReceipt = fullFlowReceiptInput === undefined ? undefined : promotableFullFlowReceiptSchema.parse(fullFlowReceiptInput);
   if (fullFlowReceipt && (fullFlowReceipt.sourceSha256 !== sourceRevision.source.sha256 || fullFlowReceipt.sourceRevision !== sourceRevision.analysis.revision || fullFlowReceipt.candidateFingerprint !== filmIdentityCandidateFingerprint(candidate))) throw new Error('The promotable full-flow receipt does not match this source revision and candidate.');
+  const migrationTraceReceipt = migrationTraceReceiptInput === undefined ? undefined : promotableMigrationTraceReceiptSchema.parse(migrationTraceReceiptInput);
+  if (migrationTraceReceipt && (!fullFlowReceipt || migrationTraceReceipt.sourceSha256 !== sourceRevision.source.sha256 || migrationTraceReceipt.sourceRevision !== sourceRevision.analysis.revision || migrationTraceReceipt.candidateFingerprint !== filmIdentityCandidateFingerprint(candidate) || migrationTraceReceipt.fingerprints.candidateSha256 !== fullFlowReceipt.fingerprints.candidateSha256 || migrationTraceReceipt.fingerprints.participationSha256 !== fullFlowReceipt.fingerprints.participationSha256)) throw new Error('The promotable migration-trace receipt does not match this source revision, candidate, and full-flow receipt.');
   const nextRevision = sourceRevision.analysis.revision + 1;
   return capturedFilmAnalysisSchema.parse({
     version: 1,
@@ -1051,6 +1175,21 @@ export function finalizeFilmIdentityRevision(sourceRevisionInput: unknown, candi
         maskTrackSha256: fullFlowReceipt.fingerprints.maskTrackSha256,
         candidateSha256: fullFlowReceipt.fingerprints.candidateSha256,
         stateTotals: fullFlowReceipt.stateTotals
+      } : undefined,
+      migrationTraceVerification: migrationTraceReceipt ? {
+        profile: migrationTraceReceipt.profile,
+        candidateFingerprint: migrationTraceReceipt.candidateFingerprint,
+        participationSha256: migrationTraceReceipt.fingerprints.participationSha256,
+        candidateSha256: migrationTraceReceipt.fingerprints.candidateSha256,
+        fullFlowReceiptSha256: migrationTraceReceipt.fingerprints.fullFlowReceiptSha256,
+        activeVisibleFrameCount: migrationTraceReceipt.activeVisible.frameCount,
+        resolvedActiveVisibleFrames: migrationTraceReceipt.activeVisible.resolved,
+        coverage: migrationTraceReceipt.activeVisible.coverage,
+        pathSegmentCount: migrationTraceReceipt.activeVisible.pathSegmentCount,
+        longestUnresolvedGapMs: migrationTraceReceipt.activeVisible.longestUnresolvedGapMs,
+        estimatedCoordinates: migrationTraceReceipt.coordinates.estimated,
+        calibratedCoordinates: migrationTraceReceipt.coordinates.calibrated,
+        passingCameraStates: migrationTraceReceipt.coordinates.passingCameraStates
       } : undefined
     },
     frames: candidate.frames

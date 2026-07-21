@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { FILM_BENCHMARK_PROFILE, FILM_IDENTITY_BENCHMARK_PROFILE, FILM_MASK_TRACK_PROFILE, FILM_PLAY_STATE_PROFILE, applyFilmCorrections, applyFilmIdentityAssignments, applyFilmPlayStateLedger, captureFilmAnalysis, capturedFilmAnalysisSchema, combineFilmMaskTracks, createFilmImportGate, deriveFilmIdentityCandidate, fuseFilmMaskTrack, finalizeFilmIdentityRevision, filmFrameAt, resolveFilmTrafficAt, reviewFilmMaskTrackStint, scoreFilmBenchmark, scoreFilmIdentityBenchmark, scoreFilmTeamBenchmark, summarizeFilmTargetCoverage, validateFilmBenchmark, validateFilmIdentityBenchmark, validateFilmImportGate, validateFilmMaskTrack, validateFilmTeamBenchmark, verifyFilmIdentityCandidate } from './film.js';
+import { FILM_BENCHMARK_PROFILE, FILM_IDENTITY_BENCHMARK_PROFILE, FILM_MASK_TRACK_PROFILE, FILM_PLAY_STATE_PROFILE, applyFilmCorrections, applyFilmIdentityAssignments, applyFilmPlayStateLedger, bindFilmMaskTrackParticipation, captureFilmAnalysis, capturedFilmAnalysisSchema, combineFilmMaskTracks, createFilmImportGate, deriveFilmIdentityCandidate, fuseFilmMaskTrack, finalizeFilmIdentityRevision, filmFrameAt, resolveFilmTrafficAt, reviewFilmMaskTrackStint, scoreFilmBenchmark, scoreFilmIdentityBenchmark, scoreFilmTeamBenchmark, summarizeFilmTargetCoverage, validateFilmBenchmark, validateFilmIdentityBenchmark, validateFilmImportGate, validateFilmMaskTrack, validateFilmTeamBenchmark, verifyFilmIdentityCandidate } from './film.js';
 
 const source = { sha256: 'a'.repeat(64), durationMs: 5000, width: 1920, height: 1080, fps: 30, byteSize: 1000, linkedPath: '/private/source.mp4' };
 const annotations = (startMs: number) => Array.from({ length: 20 }, (_, index) => ({ timeMs: startMs + index * 1000, target: { status: 'visible' as const, court: [index, 10] as [number, number], zone: 'frontcourt', trackId: '13', provenance: 'manual' as const } }));
@@ -346,6 +346,97 @@ describe('film benchmark contract', () => {
     expect(fused.frames[0]?.players.find((player) => player.team === 'target')?.trackId).toBe('p-13');
   });
 
+  it('associates a body-only mask with the uniquely aligned source player corridor', () => {
+    const captured = captureFilmAnalysis({ source, frames: [{
+      timeMs: 0,
+      targetStatus: 'unresolved',
+      players: [
+        { trackId: 'p-13', team: 'teammate', court: [10, 20], image: [0.37, 0.7], confidence: 0.9 },
+        { trackId: 'p-5', team: 'teammate', court: [20, 20], image: [0.48, 0.65], confidence: 0.9 }
+      ]
+    }] });
+    const receipt = {
+      version: 1,
+      profile: FILM_MASK_TRACK_PROFILE,
+      sourceSha256: source.sha256,
+      coordinateSpace: { width: 1920, height: 1080 },
+      engine: { name: 'sam2.1-video-local', model: 'sam2.1_hiera_small', modelSha256: 'b'.repeat(64) },
+      participation: [{ startMs: 0, endMs: 0, state: 'active', evidence: 'reviewed body-only seed' }],
+      segments: [{
+        id: 'body-only', startMs: 0, endMs: 0,
+        seed: { timeMs: 0, box: [650, 470, 120, 120], reviewer: 'codex' },
+        samples: [{ timeMs: 0, box: [650, 470, 120, 120], foot: [710, 590], confidence: 0.98, provenance: 'seed' }]
+      }]
+    };
+
+    const fused = fuseFilmMaskTrack(captured, receipt);
+    expect(fused.frames[0]).toMatchObject({ targetStatus: 'resolved' });
+    expect(fused.frames[0]?.players.find((player) => player.team === 'target')?.trackId).toBe('p-13');
+  });
+
+  it('uses a short resolved temporal bracket to disambiguate an existing teammate under the mask', () => {
+    const captured = captureFilmAnalysis({ source, frames: [
+      { timeMs: 0, targetStatus: 'unresolved', players: [{ trackId: 'target-before', team: 'teammate', court: [10, 20], image: [0.2, 0.7], confidence: 0.9 }] },
+      { timeMs: 1000, targetStatus: 'unresolved', players: [
+        { trackId: 'target-middle', team: 'teammate', court: [12, 20], image: [0.25, 0.7], confidence: 0.9 },
+        { trackId: 'nearby-middle', team: 'teammate', court: [18, 20], image: [0.3, 0.7], confidence: 0.9 }
+      ] },
+      { timeMs: 2000, targetStatus: 'unresolved', players: [{ trackId: 'target-after', team: 'teammate', court: [14, 20], image: [0.3, 0.7], confidence: 0.9 }] }
+    ] });
+    const boxAt = (centerX: number) => [Math.round(centerX * 1920 - 60), 470, 120, 120] as [number, number, number, number];
+    const receipt = {
+      version: 1,
+      profile: FILM_MASK_TRACK_PROFILE,
+      sourceSha256: source.sha256,
+      coordinateSpace: { width: 1920, height: 1080 },
+      engine: { name: 'sam2.1-video-local', model: 'sam2.1_hiera_small', modelSha256: 'b'.repeat(64) },
+      participation: [{ startMs: 0, endMs: 2000, state: 'active', evidence: 'reviewed short mask continuity' }],
+      segments: [{
+        id: 'short-bracket', startMs: 0, endMs: 2000,
+        seed: { timeMs: 0, box: boxAt(0.2), reviewer: 'codex' },
+        samples: [
+          { timeMs: 0, box: boxAt(0.2), foot: [384, 590], confidence: 0.98, provenance: 'seed' },
+          { timeMs: 1000, box: boxAt(0.28), foot: [538, 590], confidence: 0.98, provenance: 'propagated' },
+          { timeMs: 2000, box: boxAt(0.3), foot: [576, 590], confidence: 0.98, provenance: 'propagated' }
+        ]
+      }]
+    };
+
+    const fused = fuseFilmMaskTrack(captured, receipt);
+    expect(fused.frames.map((frame) => frame.targetStatus)).toEqual(['resolved', 'resolved', 'resolved']);
+    expect(fused.frames[1]?.players.find((player) => player.team === 'target')?.trackId).toBe('target-middle');
+    expect(fused.frames[1]?.players.find((player) => player.team === 'target')?.identityEvidence).toMatchObject({ association: 'temporal-bracket' });
+  });
+
+  it('starts a new accepted component only at a reviewed mask reseed after a long gap', () => {
+    const captured = captureFilmAnalysis({ source, frames: [0, 1000, 5000, 6000].map((timeMs) => ({
+      timeMs,
+      targetStatus: 'unresolved' as const,
+      players: [{ trackId: `p-${timeMs}`, team: 'teammate' as const, court: [10, 20] as [number, number], image: [0.25, 0.7] as [number, number], confidence: 0.9 }]
+    })) });
+    const receipt = {
+      version: 1,
+      profile: FILM_MASK_TRACK_PROFILE,
+      sourceSha256: source.sha256,
+      coordinateSpace: { width: 1920, height: 1080 },
+      engine: { name: 'sam2.1-video-local', model: 'sam2.1_hiera_small', modelSha256: 'b'.repeat(64) },
+      participation: [{ startMs: 0, endMs: 6000, state: 'active', evidence: 'reviewed seed and reseed' }],
+      segments: [{
+        id: 'reseeded', startMs: 0, endMs: 6000,
+        seed: { timeMs: 0, box: [400, 300, 160, 440], reviewer: 'codex' },
+        samples: [
+          { timeMs: 0, box: [400, 300, 160, 440], foot: [480, 756], confidence: 0.98, provenance: 'seed' },
+          { timeMs: 1000, box: [400, 300, 160, 440], foot: [480, 756], confidence: 0.98, provenance: 'propagated' },
+          { timeMs: 5000, box: [400, 300, 160, 440], foot: [480, 756], confidence: 0.98, provenance: 'reviewed' },
+          { timeMs: 6000, box: [400, 300, 160, 440], foot: [480, 756], confidence: 0.98, provenance: 'propagated' }
+        ]
+      }]
+    };
+
+    const fused = fuseFilmMaskTrack(captured, receipt);
+    expect(fused.frames.map((frame) => frame.targetStatus)).toEqual(['resolved', 'resolved', 'resolved', 'resolved']);
+  });
+
   it('combines reviewed local mask stints only when their source and model receipts match', () => {
     const receipt = (id: string, startMs: number, modelSha256 = 'b'.repeat(64)) => ({
       version: 1 as const,
@@ -368,6 +459,34 @@ describe('film benchmark contract', () => {
     expect(combined.participation).toEqual([{ startMs: 0, endMs: 900, state: 'active', evidence: 'reviewed stint-1; reviewed stint-2' }]);
     expect(validateFilmMaskTrack(combined)).toMatchObject({ ok: true, segmentCount: 2, sampleCount: 2 });
     expect(() => combineFilmMaskTracks([receipt('stint-1', 0), receipt('stint-2', 1000, 'c'.repeat(64))])).toThrow(/model receipt/i);
+  });
+
+  it('binds the complete reviewed participation ledger without changing mask segments', () => {
+    const receipt = {
+      version: 1,
+      profile: FILM_MASK_TRACK_PROFILE,
+      sourceSha256: source.sha256,
+      coordinateSpace: { width: 1920, height: 1080 },
+      engine: { name: 'sam2.1-video-local', model: 'sam2.1_hiera_small', modelSha256: 'b'.repeat(64) },
+      participation: [{ startMs: 1000, endMs: 1999, state: 'active', evidence: 'diagnostic interval' }],
+      segments: [{
+        id: 'reviewed-stint', startMs: 1000, endMs: 1999,
+        seed: { timeMs: 1000, box: [400, 300, 160, 440], reviewer: 'codex' },
+        samples: [{ timeMs: 1000, box: [400, 300, 160, 440], foot: [480, 740], confidence: 1, provenance: 'seed' }]
+      }]
+    };
+    const participation = [
+      { startMs: 0, endMs: 999, state: 'unknown' as const, evidence: 'unreviewed opening' },
+      { startMs: 1000, endMs: 1999, state: 'active' as const, evidence: 'direct-number source review' },
+      { startMs: 2000, endMs: 2999, state: 'inactive' as const, evidence: 'reviewed substitution' },
+      { startMs: 3000, endMs: 5000, state: 'out-of-frame' as const, evidence: 'reviewed camera exclusion' }
+    ];
+
+    const bound = bindFilmMaskTrackParticipation(receipt, participation);
+    expect(bound.participation).toEqual(participation);
+    expect(bound.segments).toEqual(receipt.segments);
+    expect(validateFilmMaskTrack(bound)).toMatchObject({ ok: true, segmentCount: 1, sampleCount: 1 });
+    expect(receipt.participation).toEqual([{ startMs: 1000, endMs: 1999, state: 'active', evidence: 'diagnostic interval' }]);
   });
 
   it('clips a diagnostic mask run to a direct-seeded reviewed stint before fusion', () => {
@@ -721,6 +840,20 @@ describe('identity-only candidate derivation', () => {
     const receipt = verifyFilmIdentityCandidate(revision2, candidate, fixture);
     expect(receipt).toMatchObject({ ok: true, invariantIssues: [], positiveRecall: 1, hardNegativePrecision: 1, substitutionAccuracy: 1, correctionOverlayCount: 0 });
 
+    const renamedTrackFixture = {
+      ...fixture,
+      annotations: fixture.annotations.map((annotation) => annotation.expectedIdentity === '13' && annotation.participation === 'active'
+        ? { ...annotation, trackId: `prior-${annotation.trackId}` }
+        : annotation)
+    };
+    expect(verifyFilmIdentityCandidate(revision2, candidate, renamedTrackFixture)).toMatchObject({
+      ok: true,
+      invariantIssues: [],
+      positiveRecall: 1,
+      hardNegativePrecision: 1,
+      substitutionAccuracy: 1
+    });
+
     const maskCandidate = {
       ...structuredClone(candidate),
       identityPolicy: 'segmentation-mask-direct-reseed-fail-closed-v1',
@@ -752,8 +885,35 @@ describe('identity-only candidate derivation', () => {
       substitutionAccuracy: 1
     });
 
-    const revision3 = finalizeFilmIdentityRevision(revision2, candidate, receipt, '2026-07-19T20:00:00.000Z');
-    expect(revision3.analysis).toMatchObject({ revision: 3, executionCount: 1, derivedFromRevision: 2, personDetectionExecuted: false, identityExecutionCount: 1 });
+    const revision3FullFlowReceipt = {
+      profile: 'guard-player-13-full-flow-v1', ok: true, promotable: true, sourceSha256: source.sha256, sourceRevision: 2,
+      candidateFingerprint: receipt.candidateFingerprint,
+      fingerprints: { analysisSha256: 'a'.repeat(64), participationSha256: 'b'.repeat(64), maskTrackSha256: 'c'.repeat(64), candidateSha256: 'd'.repeat(64) },
+      stateTotals: { frameCount: candidate.frames.length, resolved: candidate.frames.filter((frame) => frame.targetStatus === 'resolved').length, unresolved: candidate.frames.filter((frame) => frame.targetStatus === 'unresolved').length, inactive: candidate.frames.filter((frame) => frame.targetStatus === 'inactive').length, outOfFrame: candidate.frames.filter((frame) => frame.targetStatus === 'out-of-frame').length }
+    };
+    const migrationTraceReceipt = {
+      profile: 'guard-player-13-migration-trace-v1', ok: true, promotable: true, sourceSha256: source.sha256, sourceRevision: 2,
+      candidateFingerprint: receipt.candidateFingerprint,
+      fingerprints: { participationSha256: 'b'.repeat(64), candidateSha256: 'd'.repeat(64), fullFlowReceiptSha256: 'e'.repeat(64) },
+      activeVisible: { frameCount: 5, resolved: 5, coverage: 1, pathSegmentCount: 2, longestUnresolvedGapMs: 0 },
+      coordinates: { estimated: 5, calibrated: 0, passingCameraStates: 0 }
+    };
+    const revision3 = finalizeFilmIdentityRevision(revision2, candidate, receipt, '2026-07-19T20:00:00.000Z', revision3FullFlowReceipt, migrationTraceReceipt);
+    expect(revision3.analysis).toMatchObject({
+      revision: 3,
+      executionCount: 1,
+      derivedFromRevision: 2,
+      personDetectionExecuted: false,
+      identityExecutionCount: 1,
+      migrationTraceVerification: {
+        profile: 'guard-player-13-migration-trace-v1',
+        coverage: 1,
+        pathSegmentCount: 2,
+        participationSha256: 'b'.repeat(64),
+        candidateSha256: 'd'.repeat(64),
+        fullFlowReceiptSha256: 'e'.repeat(64)
+      }
+    });
     expect(revision3.frames).toEqual(candidate.frames);
 
     const revision1 = { ...structuredClone(revision2), analysis: { ...revision2.analysis, revision: 1 } };
