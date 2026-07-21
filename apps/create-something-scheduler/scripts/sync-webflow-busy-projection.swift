@@ -229,8 +229,9 @@ do {
     print("projection=dry-run source=\(config.source) calendar=\(config.calendar) intervals=\(intervals.count) rangeEnd=\(projection.rangeEnd) expiresAt=\(projection.expiresAt)")
   } else {
     let environment = ProcessInfo.processInfo.environment
-    guard let token = environment["OPERATOR_API_TOKEN"], !token.isEmpty else {
-      throw SyncError.configuration("OPERATOR_API_TOKEN is required unless --dry-run is used.")
+    guard let token = environment["SCHEDULER_OPERATOR_API_TOKEN"] ?? environment["OPERATOR_API_TOKEN"],
+          !token.isEmpty else {
+      throw SyncError.configuration("SCHEDULER_OPERATOR_API_TOKEN or OPERATOR_API_TOKEN is required unless --dry-run is used.")
     }
     let receipt = try send(projection, endpoint: config.endpoint, token: token)
     guard receipt.status == "accepted" else {

@@ -58,7 +58,7 @@ The scheduler OAuth identity remains `micah@createsomething.io`. The Webflow-man
 4. Cover at least the next 28 days. Operator status must report `webflowProjectionFresh: true` and `webflowProjectionHorizonCovered: true` before `/ready` can pass.
 5. Confirm a real Webflow busy interval is absent from Browser, API, and MCP availability while a neighboring open interval remains. Record only timestamps and receipt IDs in CRE-1376.
 
-The production sync command is `OPERATOR_API_TOKEN=... pnpm --filter @create-something/create-something-scheduler sync:webflow-busy`. Supply the token at runtime from the approved secret manager; never place it in the repository, automation prompt, arguments, or logs. The committed defaults intentionally bind to one source/calendar pair and abort if the match is missing or ambiguous.
+The production sync command is `infisical run --env=prod --path=/ --include-imports=true -- pnpm --filter @create-something/create-something-scheduler sync:webflow-busy`. The script reads the scoped `SCHEDULER_OPERATOR_API_TOKEN` injected at runtime; never place it in the repository, automation prompt, arguments, or logs. The committed defaults intentionally bind to one source/calendar pair and abort if the match is missing or ambiguous.
 
 The recurring job is an ingestion producer, not a runtime dependency. If it stops, the projection expires, `/ready` returns unavailable, and public availability exposes no bookable slots. Restore the job and publish a fresh full replacement; do not extend expiry or disable the projection requirement to make readiness green.
 
