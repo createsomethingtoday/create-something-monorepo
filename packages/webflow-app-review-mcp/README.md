@@ -17,13 +17,25 @@ Remote MCP server for Webflow App Review workflows and the Airtable-backed Webfl
 
 ## Auth
 
-Worker boundary bearer auth:
+The Worker has two deliberately separate authentication surfaces:
 
-- Header: `Authorization: Bearer <MCP_API_KEY>`
-- Configure with:
-  - `wrangler secret put MCP_API_KEY`
-- `MCP_API_KEY` is required in all environments.
-- If `MCP_API_KEY` is missing, `/mcp` and `/sse` return `503` with `MISCONFIGURED`.
+- `/mcp` and `/sse` retain the shared bearer boundary for existing Hub and
+  Dify integrations. `MCP_API_KEY` remains required for these paths.
+- `/access/mcp` and `/access/sse` are reserved for the Webflow-owned Cloud
+  adapter. Cloudflare Access Managed OAuth sends users through Webflow Okta,
+  then adds a signed `Cf-Access-Jwt-Assertion` for the origin request.
+
+The Access assertion is verified against the exact
+`https://webflow.cloudflareaccess.com` issuer, the dedicated App Review Access
+application audience, RS256, expiry, and the `type=app` claim. The Worker then
+applies the App Review email allowlist and maps a known email to the canonical
+account in `REVIEWER_DIRECTORY_JSON`. It does not trust an opaque Managed OAuth
+bearer or an unsigned forwarded-email header.
+
+The dedicated audience is intentionally empty until the Webflow Cloud hostname
+and Okta-backed Access application are provisioned. Until then,
+`/access/mcp` fails closed with `503 MISCONFIGURED`; the existing `/mcp` route
+continues to provide the rollback path.
 
 ## Secrets / Vars
 
@@ -38,6 +50,12 @@ Optional:
 - `AIRTABLE_GOVERNANCE_API_KEY` (optional PAT for a separate tracker base; falls back to `AIRTABLE_API_KEY`)
 - `AIRTABLE_GOVERNANCE_BASE_ID` (optional separate tracker base; discovered tracker base: `app1Q0o9xw2Zny7gw`)
 - `AIRTABLE_GOVERNANCE_FINDINGS_TABLE_ID` (defaults to table name `App Review Governance Findings`)
+- `OAUTH_ALLOWED_EMAIL_DOMAIN` (defaults to `webflow.com`)
+- `OAUTH_ALLOWED_EMAILS` (explicit App Review sign-in allowlist)
+- `REVIEWER_DIRECTORY_JSON` (optional canonical account mapping for Access telemetry)
+- `REVIEWER_AUTH_EMAIL_ALIASES_JSON` (optional canonical-account email aliases)
+- `CF_ACCESS_TEAM_DOMAIN` (exact Cloudflare Access issuer)
+- `CF_ACCESS_AUD` (exact App Review Access application audience; no default)
 
 ## Tools
 
