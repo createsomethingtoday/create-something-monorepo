@@ -4,6 +4,7 @@ import {
   SCOPE_READ,
   SCOPE_WRITE,
   buildProtectedResourceMetadata,
+  parseAllowedDomains,
   parseAllowedEmails,
   resolveIdentityOAuthRequest,
 } from './oauth-access.js';
@@ -94,7 +95,9 @@ export function createTicketSyncWorker(serveMcp: ServeMcp) {
             oauth: {
               flow: 'OAuth 2.1 + PKCE with Dynamic Client Registration (CREATE SOMETHING Identity)',
               configured: Boolean(issuer),
-              allowlist_configured: parseAllowedEmails(env.OAUTH_ALLOWED_EMAILS).size > 0,
+              allowlist_configured:
+                parseAllowedEmails(env.OAUTH_ALLOWED_EMAILS).size > 0
+                || parseAllowedDomains(env.OAUTH_ALLOWED_DOMAINS).size > 0,
               authorization_server: issuer || null,
               scopes: [SCOPE_READ, SCOPE_WRITE],
             },
@@ -133,6 +136,7 @@ export function createTicketSyncWorker(serveMcp: ServeMcp) {
           issuer,
           expectedResource: `${url.origin}/mcp`,
           allowedEmails: parseAllowedEmails(env.OAUTH_ALLOWED_EMAILS),
+          allowedDomains: parseAllowedDomains(env.OAUTH_ALLOWED_DOMAINS),
         });
         if (result.ok === false) {
           if (result.status === 401) return oauthUnauthorized(url.origin, result.message);

@@ -7,7 +7,7 @@ import type { Env } from '../src/types.js';
 const origin = 'https://halfdozen-cracked-sync-mcp.createsomething.workers.dev';
 const env = {
   CS_IDENTITY_ISSUER: 'https://id.createsomething.space',
-  OAUTH_ALLOWED_EMAILS: 'operator@createsomething.io',
+  OAUTH_ALLOWED_DOMAINS: 'halfdozen.co,createsomething.io',
   SYNC_SERVER_NAME: 'halfdozen-cracked-sync-mcp',
   SYNC_CLIENT_SLUG: 'cracked',
   SYNC_TENANT_SLUG: 'cracked-live',

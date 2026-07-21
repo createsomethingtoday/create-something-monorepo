@@ -44,6 +44,15 @@ export function parseAllowedEmails(raw?: string | null): Set<string> {
   );
 }
 
+export function parseAllowedDomains(raw?: string | null): Set<string> {
+  return new Set(
+    (raw ?? '')
+      .split(',')
+      .map((entry) => entry.trim().toLowerCase().replace(/^@/, ''))
+      .filter(Boolean),
+  );
+}
+
 async function fetchIdentityUserInfo(input: {
   issuer: string;
   token: string;
@@ -110,6 +119,7 @@ export async function resolveIdentityOAuthRequest(input: {
   issuer: string;
   expectedResource: string;
   allowedEmails: Set<string>;
+  allowedDomains?: Set<string>;
   fetch?: typeof globalThis.fetch;
 }): Promise<IdentityOAuthRequestResult> {
   const token = input.request.headers.get('Authorization')?.match(/^Bearer\s+(.+)$/i)?.[1]?.trim();
@@ -119,12 +129,13 @@ export async function resolveIdentityOAuthRequest(input: {
   if (!input.issuer.trim()) {
     return { ok: false, status: 500, code: 'misconfigured', message: 'CREATE SOMETHING Identity is not configured.' };
   }
-  if (input.allowedEmails.size === 0) {
+  const allowedDomains = input.allowedDomains ?? new Set<string>();
+  if (input.allowedEmails.size === 0 && allowedDomains.size === 0) {
     return {
       ok: false,
       status: 500,
       code: 'misconfigured',
-      message: 'Cracked Live OAuth access requires an explicit OAUTH_ALLOWED_EMAILS allowlist.',
+      message: 'Cracked Live OAuth access requires an explicit email or domain allowlist.',
     };
   }
 
@@ -154,7 +165,11 @@ export async function resolveIdentityOAuthRequest(input: {
     };
   }
 
-  if (!input.allowedEmails.has(identity.email)) {
+  const atIndex = identity.email.lastIndexOf('@');
+  const emailDomain = atIndex > 0 && atIndex < identity.email.length - 1
+    ? identity.email.slice(atIndex + 1)
+    : '';
+  if (!input.allowedEmails.has(identity.email) && !allowedDomains.has(emailDomain)) {
     return {
       ok: false,
       status: 403,
