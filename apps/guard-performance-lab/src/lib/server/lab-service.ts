@@ -14,6 +14,7 @@ import {
   type ReceiptDraft
 } from '../model.js';
 import type { CapturedFilmAnalysis, FilmCorrectionDraft } from '../film.js';
+import { validateFilmPlayReviewPacket, type FilmPlayReviewPacket } from '../film-play-review.js';
 import { labStore, type LabStore } from './store.js';
 
 export type ServiceResult = { ok: true; workspace: LabState };
@@ -94,7 +95,31 @@ export class LabService {
       const now = new Date().toISOString();
       return {
         ...state,
-        filmAnalyses: [...state.filmAnalyses, { ...analysis, id: crypto.randomUUID(), playerId, title: cleanTitle, createdAt: now, corrections: [] }]
+        filmAnalyses: [...state.filmAnalyses, { ...analysis, id: crypto.randomUUID(), playerId, title: cleanTitle, createdAt: now, corrections: [], playReviews: [] }]
+      };
+    }) };
+  }
+
+  async attachFilmPlayReview(playerId: string, analysisId: string, review: FilmPlayReviewPacket): Promise<ServiceResult> {
+    return { ok: true, workspace: await this.store.mutate((state) => {
+      requirePlayer(state, playerId);
+      const analysis = state.filmAnalyses.find((record) => record.id === analysisId && record.playerId === playerId);
+      if (!analysis) throw new Error('The player film analysis does not exist.');
+      const validation = validateFilmPlayReviewPacket(review, {
+        sourceSha256: analysis.source.sha256,
+        sourceDurationMs: analysis.source.durationMs,
+        analysisRevision: analysis.analysis.revision,
+        analysisExecutionCount: analysis.analysis.executionCount
+      });
+      if (!validation.ok) throw new Error(`The play review failed source and privacy verification. ${validation.issues.join(' ')}`);
+      if ((analysis.playReviews ?? []).some((packet) => packet.profile === review.profile && packet.sourceSha256 === review.sourceSha256)) {
+        throw new Error('This source-bound play review is already attached.');
+      }
+      return {
+        ...state,
+        filmAnalyses: state.filmAnalyses.map((record) => record.id === analysisId
+          ? { ...record, playReviews: [...(record.playReviews ?? []), review] }
+          : record)
       };
     }) };
   }

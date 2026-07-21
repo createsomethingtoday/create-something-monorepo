@@ -6,7 +6,7 @@ export const FILM_ANALYSIS_EXPORT_PROFILE = 'guard-film-analysis-export-v1' as c
 
 export type FilmAnalysisExportOptions = {
   sourceSha256: string;
-  revision: 1 | 2 | 3;
+  revision: 1 | 2 | 3 | 4;
   analysisId?: string;
 };
 
@@ -59,4 +59,3 @@ export function exportFilmAnalysisFromWorkspace(workspaceInput: unknown, options
     }
   };
 }
-

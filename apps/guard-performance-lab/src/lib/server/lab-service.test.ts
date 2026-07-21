@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { JsonFileLabStore } from './store.js';
 import { LabService } from './lab-service.js';
 import { applyFilmCorrections, applyFilmPlayStateLedger, captureFilmAnalysis, FILM_PLAY_STATE_PROFILE } from '../film.js';
+import { FILM_PLAY_REVIEW_PROFILE, type FilmPlayReviewPacket } from '../film-play-review.js';
 
 let dir = '';
 afterEach(async () => { if (dir) await rm(dir, { recursive: true, force: true }); });
@@ -121,5 +122,46 @@ describe('Guard Lab command service', () => {
     expect(applyFilmCorrections(stored).frames[0]?.players[0]).toMatchObject({ court: [14, 22], provenance: 'corrected' });
     await expect(service.correctFilmAnalysis(playerId, analysisId, { timeMs: 1000, court: null, targetStatus: 'resolved', reason: 'Invalid resolved correction.' })).rejects.toThrow(/requires a court position/i);
     await expect(service.correctFilmAnalysis(playerId, analysisId, { timeMs: 5000, court: null, targetStatus: 'unresolved', reason: 'Invalid time correction.' })).rejects.toThrow(/outside the captured revision/i);
+  });
+
+  it('attaches a source-bound anonymized play review without rerunning the analysis', async () => {
+    dir = await mkdtemp(join(tmpdir(), 'guard-film-review-'));
+    const service = new LabService(new JsonFileLabStore(join(dir, 'workspace.json')));
+    const playerId = (await service.getWorkspace()).workspace.selectedPlayerId;
+    const sourceSha256 = 'd'.repeat(64);
+    const analysis = captureFilmAnalysis({
+      source: { sha256: sourceSha256, durationMs: 2000, width: 1920, height: 1080, fps: 30, byteSize: 1000, linkedPath: '/private/game.mp4' },
+      frames: [{ timeMs: 1000, players: [{ trackId: '13', team: 'target', court: [10, 20], confidence: 0.9 }] }]
+    });
+    const attached = await service.attachFilmAnalysis(playerId, 'Review game', analysis);
+    const analysisId = attached.workspace.filmAnalyses[0]!.id;
+    const review: FilmPlayReviewPacket = {
+      version: 1,
+      profile: FILM_PLAY_REVIEW_PROFILE,
+      sourceSha256,
+      analysisRevision: 1,
+      analysisExecutionCount: 1,
+      reviewer: 'codex',
+      reviewedAt: '2026-07-20T20:00:00.000Z',
+      cards: [{
+        id: 'perimeter-defense', startMs: 0, representativeTimeMs: 1000, endMs: 2000,
+        possession: 'opponent', phase: 'half-court-defense', position: 'Right-side perimeter',
+        observation: '#13 remains connected to the perimeter action.',
+        interpretation: 'The stance preserves containment.',
+        limitation: 'The called matchup is not visible.',
+        image: {
+          mediaType: 'image/webp', dataUrl: `data:image/webp;base64,${Buffer.from('pixelated').toString('base64')}`,
+          sha256: 'e'.repeat(64), width: 960, height: 540,
+          anonymization: { method: 'whole-frame-pixelation-v1', sourceWidth: 1920, sourceHeight: 1080, pixelWidth: 160, pixelHeight: 90, rawSourceIncluded: false, marker: { label: '13', style: 'synthetic-orange-v1', normalizedPoint: [0.4, 0.6] } }
+        }
+      }]
+    };
+
+    await service.attachFilmPlayReview(playerId, analysisId, review);
+    const stored = (await service.getPlayerWorkspace(playerId)).workspace.filmAnalyses[0]!;
+    expect(stored.analysis.executionCount).toBe(1);
+    expect(stored.playReviews).toMatchObject([{ profile: FILM_PLAY_REVIEW_PROFILE, cards: [{ id: 'perimeter-defense' }] }]);
+    await expect(service.attachFilmPlayReview(playerId, analysisId, review)).rejects.toThrow(/already attached/i);
+    await expect(service.attachFilmPlayReview(playerId, analysisId, { ...review, sourceSha256: 'f'.repeat(64) })).rejects.toThrow(/source/i);
   });
 });

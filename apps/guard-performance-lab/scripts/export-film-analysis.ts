@@ -18,12 +18,12 @@ async function atomicWrite(path: string, value: unknown) {
 
 const workspacePath = resolve(argument('--data'));
 const revision = Number(argument('--revision'));
-if (![1, 2, 3].includes(revision)) throw new Error('--revision must be 1, 2, or 3.');
+if (![1, 2, 3, 4].includes(revision)) throw new Error('--revision must be 1, 2, 3, or 4.');
 const analysisIdIndex = process.argv.indexOf('--analysis-id');
 const analysisId = analysisIdIndex >= 0 ? process.argv[analysisIdIndex + 1] : undefined;
 const exported = exportFilmAnalysisFromWorkspace(JSON.parse(await readFile(workspacePath, 'utf8')), {
   sourceSha256: argument('--source-sha256'),
-  revision: revision as 1 | 2 | 3,
+  revision: revision as 1 | 2 | 3 | 4,
   analysisId
 });
 const analysisOutput = resolve(argument('--analysis-output'));
@@ -46,4 +46,3 @@ console.log(JSON.stringify({
   analysisSha256: exported.receipt.analysisSha256,
   correctionsSha256: exported.receipt.correctionsSha256
 }, null, 2));
-
