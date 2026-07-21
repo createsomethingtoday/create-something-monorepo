@@ -65,7 +65,7 @@ describe('scheduler Worker transport', () => {
       service: 'create-something-scheduler'
     });
     const response = await SELF.fetch(
-      'https://scheduler.local/api/v1/availability?from=2026-07-14T00%3A00%3A00Z&to=2026-07-15T00%3A00%3A00Z&timezone=America%2FChicago'
+      'https://scheduler.local/api/v1/availability?from=2037-07-14T00%3A00%3A00Z&to=2037-07-15T00%3A00%3A00Z&timezone=America%2FChicago'
     );
 
     expect(response.status).toBe(503);
@@ -76,7 +76,57 @@ describe('scheduler Worker transport', () => {
     });
   });
 
-  it('retries Calendar discovery through an operator-only recovery route', async () => {
+  it('fails closed when persisted discovery omits a required conflict calendar', async () => {
+    const stub = env.SCHEDULER.getByName('micah-johnson');
+    await runInDurableObject(stub, async (_instance, state) => {
+      await new DurableOAuthStore(state, 'controlled-oauth-encryption-secret').write({
+        accessToken: 'controlled-access-token',
+        refreshToken: 'controlled-refresh-token',
+        expiresAt: '2099-07-11T18:00:00Z',
+        grantedScopes: [
+          'https://www.googleapis.com/auth/calendar.events',
+          'https://www.googleapis.com/auth/calendar.freebusy',
+          'https://www.googleapis.com/auth/calendar.calendarlist.readonly'
+        ]
+      });
+      state.storage.kv.put('google:calendar-configuration', {
+        selectedCalendarIds: ['micah@createsomething.io'],
+        eventCalendarId: 'micah@createsomething.io'
+      });
+    });
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
+      expect(String(input)).toBe('https://www.googleapis.com/calendar/v3/freeBusy');
+      expect(JSON.parse(String(init?.body))).toMatchObject({
+        items: [
+          { id: 'micah@createsomething.io' },
+          { id: 'micah@webflow.com' }
+        ]
+      });
+      return Response.json({
+        calendars: { 'micah@createsomething.io': { busy: [] } }
+      });
+    });
+
+    const readiness = await SELF.fetch('https://scheduler.local/ready');
+    expect(readiness.status).toBe(503);
+    expect(await readiness.json()).toEqual({
+      ready: false,
+      service: 'create-something-scheduler'
+    });
+
+    const response = await SELF.fetch(
+      'https://scheduler.local/api/v1/availability?from=2037-07-28T00%3A00%3A00Z&to=2037-07-29T00%3A00%3A00Z&timezone=America%2FChicago'
+    );
+
+    expect(response.status).toBe(503);
+    expect(await response.json()).toMatchObject({
+      status: 'retryable',
+      reason: 'provider_calendar_error',
+      slots: []
+    });
+  });
+
+  it('fails operator Calendar discovery when a required conflict calendar is inaccessible', async () => {
     const stub = env.SCHEDULER.getByName('micah-johnson');
     await runInDurableObject(stub, async (_instance, state) => {
       await new DurableOAuthStore(state, 'controlled-oauth-encryption-secret').write({
@@ -115,11 +165,10 @@ describe('scheduler Worker transport', () => {
         headers: { authorization: 'Bearer controlled-operator-token' }
       }
     );
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(503);
     expect(await response.json()).toEqual({
-      status: 'available',
-      selectedCalendarIds: ['micah@createsomething.io'],
-      eventCalendarId: 'micah@createsomething.io'
+      status: 'unavailable',
+      reason: 'required_conflict_calendar_missing'
     });
   });
 
@@ -137,14 +186,17 @@ describe('scheduler Worker transport', () => {
         ]
       });
       state.storage.kv.put('google:calendar-configuration', {
-        selectedCalendarIds: ['micah@createsomething.io'],
+        selectedCalendarIds: ['micah@createsomething.io', 'micah@webflow.com'],
         eventCalendarId: 'micah@createsomething.io'
       });
     });
     vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
       expect(String(input)).toBe('https://www.googleapis.com/calendar/v3/freeBusy');
       return Response.json({
-        calendars: { 'micah@createsomething.io': { busy: [] } }
+        calendars: {
+          'micah@createsomething.io': { busy: [] },
+          'micah@webflow.com': { busy: [] }
+        }
       });
     });
 
@@ -158,8 +210,8 @@ describe('scheduler Worker transport', () => {
         'content-type': 'application/json'
       },
       body: JSON.stringify({
-        overrideId: 'worker-wednesday-2026-07-15',
-        date: '2026-07-15',
+        overrideId: 'worker-wednesday-2037-07-15',
+        date: '2037-07-15',
         opensAt: '13:00',
         closesAt: '15:00',
         timezone: 'America/Chicago',
@@ -170,7 +222,7 @@ describe('scheduler Worker transport', () => {
     expect(applied.status).toBe(200);
     expect(await applied.json()).toMatchObject({
       status: 'applied',
-      override: { overrideId: 'worker-wednesday-2026-07-15', date: '2026-07-15' }
+      override: { overrideId: 'worker-wednesday-2037-07-15', date: '2037-07-15' }
     });
 
     const listed = await SELF.fetch(endpoint, {
@@ -178,16 +230,16 @@ describe('scheduler Worker transport', () => {
     });
     expect(await listed.json()).toMatchObject({
       status: 'available',
-      overrides: [{ overrideId: 'worker-wednesday-2026-07-15' }]
+      overrides: [{ overrideId: 'worker-wednesday-2037-07-15' }]
     });
 
-    const availabilityUrl = 'https://scheduler.local/api/v1/availability?from=2026-07-15T00%3A00%3A00Z&to=2026-07-16T00%3A00%3A00Z&timezone=America%2FChicago';
+    const availabilityUrl = 'https://scheduler.local/api/v1/availability?from=2037-07-15T00%3A00%3A00Z&to=2037-07-16T00%3A00%3A00Z&timezone=America%2FChicago';
     const opened = await SELF.fetch(availabilityUrl);
     const openedBody = await opened.json() as { status: string; slots: Array<{ start: string; end: string }> };
     expect(openedBody).toMatchObject({
       status: 'available',
       slots: expect.arrayContaining([
-        { start: '2026-07-15T18:00:00Z', end: '2026-07-15T18:30:00Z' }
+        { start: '2037-07-15T18:00:00Z', end: '2037-07-15T18:30:00Z' }
       ])
     });
     expect(openedBody.slots).toHaveLength(4);
@@ -200,11 +252,11 @@ describe('scheduler Worker transport', () => {
     expect(oneHourBody.durationMinutes).toBe(60);
     expect(oneHourBody.slots).toHaveLength(3);
     expect(oneHourBody.slots.at(-1)).toEqual({
-      start: '2026-07-15T19:00:00Z',
-      end: '2026-07-15T20:00:00Z'
+      start: '2037-07-15T19:00:00Z',
+      end: '2037-07-15T20:00:00Z'
     });
 
-    const deleted = await SELF.fetch(`${endpoint}/worker-wednesday-2026-07-15`, {
+    const deleted = await SELF.fetch(`${endpoint}/worker-wednesday-2037-07-15`, {
       method: 'DELETE',
       headers: {
         authorization: 'Bearer controlled-operator-token',
@@ -215,7 +267,7 @@ describe('scheduler Worker transport', () => {
     expect(deleted.status).toBe(200);
     expect(await deleted.json()).toMatchObject({
       status: 'deleted',
-      overrideId: 'worker-wednesday-2026-07-15'
+      overrideId: 'worker-wednesday-2037-07-15'
     });
 
     const closed = await SELF.fetch(availabilityUrl);
@@ -236,7 +288,7 @@ describe('scheduler Worker transport', () => {
         ]
       });
       state.storage.kv.put('google:calendar-configuration', {
-        selectedCalendarIds: ['micah@createsomething.io'],
+        selectedCalendarIds: ['micah@createsomething.io', 'micah@webflow.com'],
         eventCalendarId: 'micah@createsomething.io'
       });
     });
@@ -260,7 +312,10 @@ describe('scheduler Worker transport', () => {
       if (url === 'https://www.googleapis.com/calendar/v3/freeBusy') {
         freeBusyCalls += 1;
         return Response.json({
-          calendars: { 'micah@createsomething.io': { busy: [] } }
+          calendars: {
+            'micah@createsomething.io': { busy: [] },
+            'micah@webflow.com': { busy: [] }
+          }
         });
       }
       if (url.startsWith(
@@ -300,9 +355,12 @@ describe('scheduler Worker transport', () => {
       ready: true,
       oauthConnected: true,
       calendarDiscovered: true,
-      selectedCalendarCount: 1,
+      requiredCalendarCount: 2,
+      requiredCalendarsDiscovered: true,
+      selectedCalendarCount: 2,
       configuration: {
         googleOAuth: true,
+        requiredConflictCalendars: true,
         reminders: true,
         browserProof: true
       }
@@ -312,7 +370,7 @@ describe('scheduler Worker transport', () => {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
-        slot: { start: '2026-07-14T16:00:00Z', end: '2026-07-14T16:30:00Z' },
+        slot: { start: '2037-07-14T16:00:00Z', end: '2037-07-14T16:30:00Z' },
         scheduler: { name: 'Controlled Worker', email: 'controlled@example.com' }
       })
     });
@@ -378,7 +436,7 @@ describe('scheduler Worker transport', () => {
           'x-booking-action-token': committed.actionToken
         },
         body: JSON.stringify({
-          newSlot: { start: '2026-07-16T18:00:00Z', end: '2026-07-16T18:30:00Z' },
+          newSlot: { start: '2037-07-16T18:00:00Z', end: '2037-07-16T18:30:00Z' },
           idempotencyKey: 'worker-controlled-reschedule',
           explicitIntent: true
         })
@@ -394,7 +452,7 @@ describe('scheduler Worker transport', () => {
       booking: { bookingId: string; slot: { start: string } };
     };
     expect(rescheduled).toMatchObject({
-      booking: { slot: { start: '2026-07-16T18:00:00Z' } }
+      booking: { slot: { start: '2037-07-16T18:00:00Z' } }
     });
     expect(rescheduled.actionToken).not.toBe(committed.actionToken);
 
@@ -445,7 +503,7 @@ describe('scheduler Worker transport', () => {
         to: ['controlled@example.com'],
         subject: 'Your CREATE SOMETHING meeting has moved',
         html: expect.stringContaining('#access='),
-        text: expect.stringContaining('Thursday, July 16, 2026')
+        text: expect.stringContaining('Thursday, July 16, 2037')
       })
     ]);
     expect(freeBusyCalls).toBe(3);
@@ -458,7 +516,7 @@ describe('scheduler Worker transport', () => {
       subjectHash: 'already-hashed-subject',
       limit: 2,
       windowMilliseconds: 60_000,
-      now: Date.parse('2026-07-11T18:00:00Z')
+      now: Date.parse('2037-07-11T18:00:00Z')
     };
     await expect(stub.consumeRateLimit(input)).resolves.toBe(true);
     await expect(stub.consumeRateLimit(input)).resolves.toBe(true);

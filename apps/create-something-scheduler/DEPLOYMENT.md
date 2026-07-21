@@ -18,6 +18,7 @@ Non-secret Worker variables:
 
 - `GOOGLE_EVENT_CALENDAR_ID=micah@createsomething.io`
 - `GOOGLE_SELECTED_CALENDAR_IDS=micah@createsomething.io` initially; the approved OAuth callback discovers and durably persists all Calendar-list entries marked selected.
+- `GOOGLE_REQUIRED_CONFLICT_CALENDAR_IDS=micah@createsomething.io,micah@webflow.com`; required calendars are unioned into every free/busy request, and readiness plus public availability fail closed if discovery or Google access omits either calendar.
 - `GOOGLE_REDIRECT_URI=https://<approved-preview-host>/oauth/google/callback`
 - `RESEND_FROM=CREATE SOMETHING <noreply@createsomething.io>`
 - `TURNSTILE_EXPECTED_HOSTNAME=<approved-preview-host>`
@@ -46,6 +47,18 @@ Google OAuth scopes are limited to:
 - `https://www.googleapis.com/auth/calendar.events`
 - `https://www.googleapis.com/auth/calendar.freebusy`
 - `https://www.googleapis.com/auth/calendar.calendarlist.readonly`
+
+## Required conflict-calendar activation
+
+The scheduler OAuth identity is `micah@createsomething.io`. Before deploying a build that requires the Webflow calendar:
+
+1. Grant `micah@createsomething.io` least-privilege free/busy access to `micah@webflow.com` through the owning Google Workspace calendar policy. This external sharing change requires explicit operator approval.
+2. Confirm a bounded Google Calendar free/busy request from the scheduler identity can read `micah@webflow.com`; a per-calendar `notFound` or authorization error is a stop condition.
+3. Deploy the Worker configuration containing `GOOGLE_REQUIRED_CONFLICT_CALENDAR_IDS` only after both calendars are readable.
+4. Call `POST /api/v1/operator/calendars/discover` with operator authorization. Require `status: available` and confirm the operator status reports `requiredCalendarsDiscovered: true` and `requiredCalendarCount: 2`.
+5. Create or identify an approved controlled busy interval on the Webflow calendar. Confirm the overlapping slot is absent from Browser, API, and MCP availability, then record the receipts in CRE-1376.
+
+If required-calendar access is absent or later revoked, `/ready` returns unavailable and public availability exposes no bookable slots. Restore the sharing policy and rerun discovery; do not remove the required calendar to make readiness green.
 
 ## Approval gates
 

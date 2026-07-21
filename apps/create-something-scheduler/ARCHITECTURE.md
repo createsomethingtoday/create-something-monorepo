@@ -8,6 +8,8 @@ Concept: A provider-backed appointment booking link for one CREATE SOMETHING hos
 
 Current interface: The first-party scheduler owns the complete workflow. The repo's `schedule-mcp` owns internal D1 calendars, events, members, backfill, forecast, and conflict analysis. CLEARWAY owns facility/court reservations. Those systems remain separate from this secure Google-backed public booking lifecycle shared by Browser, JSON API, and MCP clients.
 
+Conflict policy: required calendars are explicit Worker configuration, not an incidental projection of Google Calendar's UI-selected list. Discovery unions required calendars into the persisted conflict set. Runtime free/busy queries also union them into stale persisted state, while readiness remains false until every required calendar is discovered. Any missing or inaccessible required calendar produces no bookable slots.
+
 Problem: Adding public appointment booking directly to `schedule-mcp` would make callers understand its unrelated member/unit/template model and would mix its authoritative internal calendar CRUD with Google Calendar's external authority. Reusing CLEARWAY would leak facility, court, payment, and reservation concepts. A separate UI plus separate MCP server would duplicate lifecycle behavior and deploy state.
 
 Proposed interface: One `BookingService` owns link reads, conflict-checked availability, booking lifecycle, receipt reads, and operator-owned availability overrides. HTTP API, MCP, Browser, and operator adapters translate to this interface and return the same typed outcomes and receipt identifiers.

@@ -65,6 +65,7 @@ export class GoogleCalendarPort implements CalendarPort {
   constructor(
     private readonly config: {
       selectedCalendarIds: string[];
+      requiredCalendarIds?: string[];
       eventCalendarId: string;
       accessTokens: AccessTokenProvider;
       fetch?: typeof fetch;
@@ -153,11 +154,20 @@ export class GoogleCalendarPort implements CalendarPort {
         ?.includes('hangoutsMeet')) {
         return { status: 'unavailable', reason: 'event_calendar_meet_unavailable' };
       }
+      const accessibleCalendarIds = new Set(calendars.map((calendar) => calendar.id));
+      const requiredCalendarIds = this.config.requiredCalendarIds ?? [];
+      if (requiredCalendarIds.some((calendarId) => !accessibleCalendarIds.has(calendarId))) {
+        return { status: 'unavailable', reason: 'required_conflict_calendar_missing' };
+      }
+      const selectedCalendarIds = new Set(
+        calendars
+          .filter((calendar) => calendar.selected === true)
+          .map((calendar) => calendar.id)
+      );
+      for (const calendarId of requiredCalendarIds) selectedCalendarIds.add(calendarId);
       return {
         status: 'available',
-        selectedCalendarIds: calendars
-          .filter((calendar) => calendar.selected === true)
-          .map((calendar) => calendar.id),
+        selectedCalendarIds: [...selectedCalendarIds],
         eventCalendarId: eventCalendar.id
       };
     } catch {

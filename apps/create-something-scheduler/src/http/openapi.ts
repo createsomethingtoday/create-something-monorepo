@@ -225,10 +225,12 @@ export const schedulerOpenApi = {
         ready: { type: 'boolean' },
         oauthConnected: { type: 'boolean' },
         calendarDiscovered: { type: 'boolean' },
+        requiredCalendarCount: { type: 'integer', minimum: 1 },
+        requiredCalendarsDiscovered: { type: 'boolean' },
         selectedCalendarCount: { type: 'integer', minimum: 0 },
         eventCalendarId: { type: ['string', 'null'] },
         configuration: { type: 'object', additionalProperties: { type: 'boolean' } }
-      }, ['ready', 'oauthConnected', 'calendarDiscovered', 'selectedCalendarCount', 'configuration']),
+      }, ['ready', 'oauthConnected', 'calendarDiscovered', 'requiredCalendarCount', 'requiredCalendarsDiscovered', 'selectedCalendarCount', 'configuration']),
       CalendarDiscovery: object({
         status: { const: 'available' },
         selectedCalendarIds: { type: 'array', items: { type: 'string' } },

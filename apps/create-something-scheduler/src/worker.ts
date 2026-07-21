@@ -44,6 +44,7 @@ export interface Env {
   GOOGLE_REDIRECT_URI?: string;
   GOOGLE_EVENT_CALENDAR_ID?: string;
   GOOGLE_SELECTED_CALENDAR_IDS?: string;
+  GOOGLE_REQUIRED_CONFLICT_CALENDAR_IDS?: string;
   OAUTH_ENCRYPTION_SECRET?: string;
   PROPOSAL_SIGNING_SECRET?: string;
   ACTION_SIGNING_SECRET?: string;
@@ -254,6 +255,7 @@ export class SchedulerDurableObject extends DurableObject<Env> {
     const configured = this.calendarConfiguration();
     const port = new GoogleCalendarPort({
       selectedCalendarIds: [],
+      requiredCalendarIds: this.requiredConflictCalendarIds(configured.eventCalendarId),
       eventCalendarId: configured.eventCalendarId,
       accessTokens: this.oauthClient()
     });
@@ -360,6 +362,7 @@ export class SchedulerDurableObject extends DurableObject<Env> {
         this.env.GOOGLE_CLIENT_SECRET &&
         this.env.GOOGLE_REDIRECT_URI
       ),
+      requiredConflictCalendars: Boolean(this.env.GOOGLE_REQUIRED_CONFLICT_CALENDAR_IDS),
       credentialEncryption: Boolean(this.env.OAUTH_ENCRYPTION_SECRET),
       proposalSigning: Boolean(this.env.PROPOSAL_SIGNING_SECRET),
       actionSigning: Boolean(this.env.ACTION_SIGNING_SECRET),
@@ -386,10 +389,18 @@ export class SchedulerDurableObject extends DurableObject<Env> {
     const discovered = this.ctx.storage.kv.get<CalendarConfiguration>(
       'google:calendar-configuration'
     );
+    const eventCalendarId = this.env.GOOGLE_EVENT_CALENDAR_ID ?? eventCalendarDefault;
+    const requiredCalendarIds = this.requiredConflictCalendarIds(eventCalendarId);
+    const requiredCalendarsDiscovered = Boolean(
+      discovered && requiredCalendarIds.every(
+        (calendarId) => discovered.selectedCalendarIds.includes(calendarId)
+      )
+    );
     const calendarDiscovered = Boolean(
       discovered &&
       discovered.eventCalendarId &&
-      discovered.selectedCalendarIds.length > 0
+      discovered.selectedCalendarIds.length > 0 &&
+      requiredCalendarsDiscovered
     );
     const configured = Object.values(configuration).every(Boolean);
     return {
@@ -397,6 +408,8 @@ export class SchedulerDurableObject extends DurableObject<Env> {
       configuration,
       oauthConnected,
       calendarDiscovered,
+      requiredCalendarCount: requiredCalendarIds.length,
+      requiredCalendarsDiscovered,
       selectedCalendarCount: discovered?.selectedCalendarIds.length ?? 0,
       eventCalendarId: discovered?.eventCalendarId ?? null,
       conferencingProvider: this.env.CONFERENCING_PROVIDER ?? 'google_meet'
@@ -420,11 +433,30 @@ export class SchedulerDurableObject extends DurableObject<Env> {
 
   private calendarConfiguration(): CalendarConfiguration {
     const eventCalendarId = this.env.GOOGLE_EVENT_CALENDAR_ID ?? eventCalendarDefault;
-    return this.ctx.storage.kv.get<CalendarConfiguration>('google:calendar-configuration') ?? {
-      selectedCalendarIds: this.env.GOOGLE_SELECTED_CALENDAR_IDS
-        ?.split(',').map((value) => value.trim()).filter(Boolean) ?? [eventCalendarId],
+    const discovered = this.ctx.storage.kv.get<CalendarConfiguration>(
+      'google:calendar-configuration'
+    );
+    const selectedCalendarIds = discovered?.selectedCalendarIds ?? (
+      this.env.GOOGLE_SELECTED_CALENDAR_IDS
+        ?.split(',').map((value) => value.trim()).filter(Boolean) ?? [eventCalendarId]
+    );
+    return {
+      selectedCalendarIds: [...new Set([
+        ...selectedCalendarIds,
+        ...this.requiredConflictCalendarIds(eventCalendarId)
+      ])],
       eventCalendarId
     };
+  }
+
+  private requiredConflictCalendarIds(eventCalendarId: string): string[] {
+    return [...new Set([
+      eventCalendarId,
+      ...(
+        this.env.GOOGLE_REQUIRED_CONFLICT_CALENDAR_IDS
+          ?.split(',').map((value) => value.trim()).filter(Boolean) ?? []
+      )
+    ])];
   }
 }
 
@@ -723,6 +755,7 @@ function serviceRuntimeConfigured(env: Env): boolean {
     env.GOOGLE_CLIENT_ID &&
     env.GOOGLE_CLIENT_SECRET &&
     env.GOOGLE_REDIRECT_URI &&
+    env.GOOGLE_REQUIRED_CONFLICT_CALENDAR_IDS &&
     env.OAUTH_ENCRYPTION_SECRET &&
     env.PROPOSAL_SIGNING_SECRET
   );

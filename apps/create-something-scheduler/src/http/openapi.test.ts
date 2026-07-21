@@ -44,5 +44,10 @@ describe('scheduler OpenAPI contract', () => {
       .toEqual([{ operatorBearer: [] }, {}]);
     expect(schedulerOpenApi.components.schemas.JoinCredentialResult.properties.cacheControl)
       .toEqual({ const: 'no-store' });
+    expect(schedulerOpenApi.components.schemas.RuntimeStatus.properties)
+      .toMatchObject({
+        requiredCalendarCount: { type: 'integer', minimum: 1 },
+        requiredCalendarsDiscovered: { type: 'boolean' }
+      });
   });
 });

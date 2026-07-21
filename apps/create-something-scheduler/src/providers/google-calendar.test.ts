@@ -10,7 +10,7 @@ describe('GoogleCalendarPort', () => {
         timeZone: 'UTC',
         items: [
           { id: 'micah@createsomething.io' },
-          { id: 'secondary-calendar-id' }
+          { id: 'micah@webflow.com' }
         ]
       });
       return Response.json({
@@ -20,7 +20,7 @@ describe('GoogleCalendarPort', () => {
               { start: '2026-07-14T18:00:00Z', end: '2026-07-14T18:30:00Z' }
             ]
           },
-          'secondary-calendar-id': {
+          'micah@webflow.com': {
             busy: [
               { start: '2026-07-14T16:00:00Z', end: '2026-07-14T17:00:00Z' }
             ]
@@ -29,7 +29,7 @@ describe('GoogleCalendarPort', () => {
       });
     });
     const port = new GoogleCalendarPort({
-      selectedCalendarIds: ['micah@createsomething.io', 'secondary-calendar-id'],
+      selectedCalendarIds: ['micah@createsomething.io', 'micah@webflow.com'],
       eventCalendarId: 'micah@createsomething.io',
       accessTokens: { getAccessToken: async () => 'controlled-access-token' },
       fetch
@@ -164,9 +164,9 @@ describe('GoogleCalendarPort', () => {
           }
         },
         {
-          id: 'selected-readonly-calendar',
+          id: 'micah@webflow.com',
           summary: 'Conflicts',
-          selected: true,
+          selected: false,
           accessRole: 'freeBusyReader'
         },
         {
@@ -179,6 +179,7 @@ describe('GoogleCalendarPort', () => {
     }));
     const port = new GoogleCalendarPort({
       selectedCalendarIds: [],
+      requiredCalendarIds: ['micah@createsomething.io', 'micah@webflow.com'],
       eventCalendarId: 'micah@createsomething.io',
       accessTokens: { getAccessToken: async () => 'controlled-access-token' },
       fetch
@@ -188,7 +189,7 @@ describe('GoogleCalendarPort', () => {
       status: 'available',
       selectedCalendarIds: [
         'micah@createsomething.io',
-        'selected-readonly-calendar'
+        'micah@webflow.com'
       ],
       eventCalendarId: 'micah@createsomething.io'
     });
@@ -198,6 +199,31 @@ describe('GoogleCalendarPort', () => {
         headers: { authorization: 'Bearer controlled-access-token' }
       })
     );
+  });
+
+  it('fails discovery when a required conflict calendar is inaccessible', async () => {
+    const fetch = vi.fn(async () => Response.json({
+      items: [{
+        id: 'micah@createsomething.io',
+        selected: true,
+        accessRole: 'owner',
+        conferenceProperties: {
+          allowedConferenceSolutionTypes: ['hangoutsMeet']
+        }
+      }]
+    }));
+    const port = new GoogleCalendarPort({
+      selectedCalendarIds: [],
+      requiredCalendarIds: ['micah@createsomething.io', 'micah@webflow.com'],
+      eventCalendarId: 'micah@createsomething.io',
+      accessTokens: { getAccessToken: async () => 'controlled-access-token' },
+      fetch
+    });
+
+    await expect(port.discoverCalendars()).resolves.toEqual({
+      status: 'unavailable',
+      reason: 'required_conflict_calendar_missing'
+    });
   });
 
   it('invokes the runtime fetch function with the global receiver', async () => {
