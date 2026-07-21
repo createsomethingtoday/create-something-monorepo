@@ -1,4 +1,8 @@
-# Webflow Way Validator v1.0.0
+# Webflow Way Validator v1.2.2
+
+## Marketplace Custom-Code Enforcement
+- Blocks prohibited inline and external custom code with a dedicated validation category.
+- Binds persisted results to the current published custom-code surface and policy version.
 
 ## New Features
 - Error Checklist tab with progress tracking

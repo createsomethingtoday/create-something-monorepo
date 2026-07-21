@@ -1,5 +1,8 @@
 import type { PublishedUrlValidationSummary } from '../intake/published-url';
-import type { ValidatorAppPreflight } from '../intake/validator-app';
+import {
+  runValidatorAppSubmissionPreflight,
+  type ValidatorAppPreflight
+} from '../intake/validator-app';
 
 // Successful validations are cached briefly so the final submission does not
 // re-run the multi-minute published-site crawl the creator just completed via
@@ -72,4 +75,15 @@ export async function storeCachedPublishedValidation(
   } catch {
     // Best-effort cache; submission falls back to a fresh validation run.
   }
+}
+
+export async function revalidateCachedPublishedValidation(
+  entry: CachedPublishedValidation,
+  runPreflight: (url: string) => Promise<ValidatorAppPreflight> = runValidatorAppSubmissionPreflight
+) {
+  const validatorPreflight = await runPreflight(entry.normalizedUrl);
+  return {
+    accepted: !validatorPreflight.required || validatorPreflight.passed,
+    validatorPreflight
+  };
 }

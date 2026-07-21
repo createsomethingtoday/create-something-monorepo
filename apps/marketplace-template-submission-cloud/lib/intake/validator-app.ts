@@ -1,3 +1,9 @@
+import {
+  analyzeCustomCodeHtml,
+  createCustomCodeSurfaceHash,
+  CUSTOM_CODE_POLICY_VERSION
+} from '../../../../packages/webflow-template-validation/policy/custom-code-policy.js';
+
 const DEFAULT_VALIDATOR_WORKER_URL = 'https://validation-worker.createsomething.workers.dev';
 const DEFAULT_VALIDATOR_APP_INSTALL_URL =
   'https://webflow.com/oauth/authorize?response_type=code&client_id=28685cff5fef23c426a670bb57bf383b25cd16125bc5bba2103d899b3f4a7092&workspace=createsomethingagency';
@@ -5,6 +11,8 @@ const REVIEW_SNIPPET_MARKER = '__wf_review_snippet_v1';
 const REVIEW_SNIPPET_PATH = '/app-validator/snippet/review.js';
 const HTML_FETCH_TIMEOUT_MS = 12_000;
 const WORKER_FETCH_TIMEOUT_MS = 8_000;
+const VALIDATOR_RESULT_MAX_AGE_MS = 30 * 60 * 1000;
+const VALIDATOR_RESULT_FUTURE_TOLERANCE_MS = 5 * 60 * 1000;
 
 export type ValidatorAppPreflightPolicy = 'disabled' | 'warn' | 'enforce';
 
@@ -13,6 +21,9 @@ export type ValidatorAppPreflightStatus =
   | 'bridge_missing'
   | 'result_missing'
   | 'result_failed'
+  | 'result_stale'
+  | 'result_content_mismatch'
+  | 'result_policy_outdated'
   | 'validator_app_unavailable'
   | 'not_required';
 
@@ -39,6 +50,9 @@ export type ValidatorAppPreflight = {
     available: boolean;
     passed: boolean;
     submittedAt?: string;
+    siteUrl?: string;
+    customCodePolicyVersion?: string;
+    customCodeSurfaceHash?: string;
     totalErrors: number;
     totalWarnings: number;
     passedCategories: number;
@@ -64,6 +78,9 @@ type LatestValidatorResult = {
   status?: string;
   passed?: boolean;
   submittedAt?: string;
+  siteUrl?: string;
+  customCodePolicyVersion?: string;
+  customCodeSurfaceHash?: string;
   summary?: {
     totalErrors?: number;
     totalWarnings?: number;
@@ -124,10 +141,7 @@ function emptyBridge(): ValidatorAppPreflight['bridge'] {
   };
 }
 
-function withTimeout<T>(
-  fn: (signal: AbortSignal) => Promise<T>,
-  timeoutMs: number
-): Promise<T> {
+function withTimeout<T>(fn: (signal: AbortSignal) => Promise<T>, timeoutMs: number): Promise<T> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
   return fn(controller.signal).finally(() => clearTimeout(timeoutId));
@@ -237,12 +251,17 @@ function preflightFailure(params: {
   };
 }
 
-function toResult(data: LatestValidatorResult | null): NonNullable<ValidatorAppPreflight['result']> {
+function toResult(
+  data: LatestValidatorResult | null
+): NonNullable<ValidatorAppPreflight['result']> {
   const summary = data?.summary || {};
   return {
     available: Boolean(data),
     passed: data?.passed === true || summary.passed === true,
     submittedAt: data?.submittedAt,
+    siteUrl: data?.siteUrl,
+    customCodePolicyVersion: data?.customCodePolicyVersion,
+    customCodeSurfaceHash: data?.customCodeSurfaceHash,
     totalErrors: summary.totalErrors || 0,
     totalWarnings: summary.totalWarnings || 0,
     passedCategories: summary.passedCategories || 0,
@@ -259,10 +278,30 @@ function toResult(data: LatestValidatorResult | null): NonNullable<ValidatorAppP
   };
 }
 
+function normalizeComparablePublishedUrl(value: string | undefined) {
+  if (!value) return undefined;
+  try {
+    const url = new URL(value);
+    const pathname = url.pathname === '/' ? '/' : url.pathname.replace(/\/+$/, '');
+    return `${url.origin}${pathname}`;
+  } catch {
+    return undefined;
+  }
+}
+
+function isFreshValidatorResult(submittedAt: string | undefined, now = Date.now()) {
+  if (!submittedAt) return false;
+  const submittedAtMs = Date.parse(submittedAt);
+  if (!Number.isFinite(submittedAtMs)) return false;
+  const age = now - submittedAtMs;
+  return age >= -VALIDATOR_RESULT_FUTURE_TOLERANCE_MS && age <= VALIDATOR_RESULT_MAX_AGE_MS;
+}
+
 function formatCategoryDetail(detail: ValidatorCategoryDetail) {
-  const category = typeof detail.category === 'string' && detail.category.trim() !== ''
-    ? detail.category.trim()
-    : 'Uncategorized';
+  const category =
+    typeof detail.category === 'string' && detail.category.trim() !== ''
+      ? detail.category.trim()
+      : 'Uncategorized';
   const issueMessages = Array.isArray(detail.issues)
     ? detail.issues
         .filter((issue) => typeof issue.message === 'string' && issue.message.trim() !== '')
@@ -354,6 +393,28 @@ export async function runValidatorAppSubmissionPreflight(
     });
   }
 
+  const currentCustomCode = analyzeCustomCodeHtml(html, normalizedPublishedUrl);
+  if (!currentCustomCode.passed) {
+    return preflightFailure({
+      policy,
+      status: 'result_failed',
+      message:
+        'The published site contains custom code that is not allowed for Marketplace templates.',
+      issues: currentCustomCode.findings
+        .slice(0, 5)
+        .map((finding) =>
+          finding.kind === 'external' && finding.source
+            ? `${finding.message} Found at: ${finding.source}`
+            : finding.message
+        ),
+      bridge
+    });
+  }
+  const currentCustomCodeSurfaceHash = await createCustomCodeSurfaceHash(
+    html,
+    normalizedPublishedUrl
+  );
+
   let latest: Awaited<ReturnType<typeof fetchLatestValidatorResult>>;
   try {
     latest = await fetchLatestValidatorResult(bridge);
@@ -411,12 +472,65 @@ export async function runValidatorAppSubmissionPreflight(
     });
   }
 
+  if (result.customCodePolicyVersion !== CUSTOM_CODE_POLICY_VERSION) {
+    return preflightFailure({
+      policy,
+      status: 'result_policy_outdated',
+      message: 'Rerun the Webflow Way Validator with the current Marketplace custom-code policy.',
+      issues: [
+        `The latest result used ${result.customCodePolicyVersion || 'an older policy'}; ${CUSTOM_CODE_POLICY_VERSION} is required.`
+      ],
+      bridge,
+      result
+    });
+  }
+
+  if (!isFreshValidatorResult(result.submittedAt)) {
+    return preflightFailure({
+      policy,
+      status: 'result_stale',
+      message: 'The Webflow Way Validator result is no longer fresh enough for submission.',
+      issues: [
+        'Rerun validation on the currently published site and submit again within 30 minutes.'
+      ],
+      bridge,
+      result
+    });
+  }
+
+  if (
+    normalizeComparablePublishedUrl(result.siteUrl) !==
+    normalizeComparablePublishedUrl(normalizedPublishedUrl)
+  ) {
+    return preflightFailure({
+      policy,
+      status: 'result_content_mismatch',
+      message: 'The latest Validator result belongs to a different published URL.',
+      issues: ['Rerun validation from this template project after publishing the current site.'],
+      bridge,
+      result
+    });
+  }
+
+  if (result.customCodeSurfaceHash !== currentCustomCodeSurfaceHash) {
+    return preflightFailure({
+      policy,
+      status: 'result_content_mismatch',
+      message: 'The published custom-code surface changed after the latest Validator run.',
+      issues: [
+        'Rerun validation after the latest publish so the submission is bound to the current custom-code surface.'
+      ],
+      bridge,
+      result
+    });
+  }
+
   return {
     required: policy === 'enforce',
     policy,
     passed: true,
     status: 'passed',
-    message: 'Webflow Way Validator bridge and 100% pass result confirmed.',
+    message: 'Current published custom code and a fresh 100% Validator result confirmed.',
     issues: [],
     installUrl: getValidatorAppInstallUrl(),
     bridge,

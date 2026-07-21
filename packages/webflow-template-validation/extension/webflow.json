@@ -2,7 +2,7 @@
   "name": "Webflow Way Validator",
   "apiVersion": "2",
   "slug": "webflow-way-validator",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "manifestVersion": 1,
   "size": "large",
   "publicDir": "public",

@@ -14,6 +14,7 @@ import { validateContent } from './validators/content-validator';
 import { validateAccessibility } from './validators/accessibility-validator';
 import { validateDesignerData } from './validators/designer-validator';
 import { validateInteractions, type CmsTemplateHint } from './validators/interactions-validator';
+import { validateCustomCode } from './validators/custom-code-validator';
 import { fetchHTML } from './utils/fetch-utils';
 import { Langfuse } from 'langfuse';
 import {
@@ -38,7 +39,7 @@ import {
 } from './types';
 
 const REVIEW_SNIPPET_VERSION = '0.3.0';
-const WORKER_VERSION = '2.3.1';
+const WORKER_VERSION = '2.3.2';
 const REVIEW_SNIPPET_MARKER = '__wf_review_snippet_v1';
 const REVIEW_SNIPPET_ASSET_PATH = '/app-validator/snippet/review.js';
 const REVIEW_JOB_RETENTION_MS = 30 * 60 * 1000;
@@ -165,13 +166,15 @@ interface ValidationCategoryDetail {
 }
 
 interface ValidationResultRecord {
-	schemaVersion: 'validator_app_submission_latest.v0.1';
+	schemaVersion: 'validator_app_submission_latest.v0.2';
 	siteId: string;
 	siteName: string | null;
 	siteUrl?: string;
 	submittedAt: string;
 	correlationId: string;
 	payloadHash: string;
+	customCodePolicyVersion?: string;
+	customCodeSurfaceHash?: string;
 	rawBridgeTokenStored: false;
 	summary: ValidationSubmissionSummary;
 	failedCategoryDetails?: ValidationCategoryDetail[];
@@ -198,6 +201,8 @@ interface BridgeUsageLatestResultSnapshot {
 	submittedAt: string;
 	correlationId: string;
 	payloadHash: string;
+	customCodePolicyVersion?: string;
+	customCodeSurfaceHash?: string;
 	passed: boolean;
 	summary: ValidationSubmissionSummary;
 	artifact: ValidationResultArtifactPersistResult;
@@ -1054,13 +1059,15 @@ async function handleValidationSubmit(
 		validationResults: sanitizedResults
 	});
 	const latestResult: ValidationResultRecord = {
-		schemaVersion: 'validator_app_submission_latest.v0.1',
+		schemaVersion: 'validator_app_submission_latest.v0.2',
 		siteId,
 		siteName,
 		siteUrl,
 		submittedAt,
 		correlationId,
 		payloadHash,
+		customCodePolicyVersion: sanitizedResults.customCodePolicyVersion,
+		customCodeSurfaceHash: sanitizedResults.customCodeSurfaceHash,
 		rawBridgeTokenStored: false,
 		summary: summarizeValidationSubmission(sanitizedResults),
 		failedCategoryDetails: getFailedCategoryDetails(sanitizedResults),
@@ -1284,6 +1291,8 @@ async function handleValidationSubmissionLatest(
 			submittedAt: record.submittedAt,
 			correlationId: record.correlationId,
 			payloadHash: record.payloadHash,
+			customCodePolicyVersion: record.customCodePolicyVersion,
+			customCodeSurfaceHash: record.customCodeSurfaceHash,
 			rawBridgeTokenStored: false,
 			summary: record.summary,
 			failedCategoryDetails: record.failedCategoryDetails || [],
@@ -1562,12 +1571,16 @@ async function performEnhancedValidation(body: ValidationRequest): Promise<Valid
 		maxPages: options.maxPages,
 		cmsTemplateHints
 	});
+	const customCodePromise = validateCustomCode(body.siteUrl, body.pageSlugs, {
+		maxPages: options.maxPages
+	});
 
-	const [assetAnalysis, contentAnalysis, accessibilityAnalysis, interactionsAnalysis] = await Promise.all([
+	const [assetAnalysis, contentAnalysis, accessibilityAnalysis, interactionsAnalysis, customCodeAnalysis] = await Promise.all([
 		assetPromise,
 		contentPromise,
 		accessibilityPromise,
-		interactionsPromise
+		interactionsPromise,
+		customCodePromise
 	]);
 
 	return {
@@ -1578,19 +1591,22 @@ async function performEnhancedValidation(body: ValidationRequest): Promise<Valid
 			assets: assetAnalysis,
 			content: contentAnalysis,
 			accessibility: accessibilityAnalysis,
-			interactions: interactionsAnalysis
+			interactions: interactionsAnalysis,
+			customCode: customCodeAnalysis
 		},
 		summary: {
 			totalIssues:
 				assetAnalysis.issues.length +
 				contentAnalysis.issues.length +
 				accessibilityAnalysis.issues.length +
-				interactionsAnalysis.issues.length,
+				interactionsAnalysis.issues.length +
+				customCodeAnalysis.issues.length,
 			criticalErrors: countCriticalErrors([
 				assetAnalysis,
 				contentAnalysis,
 				accessibilityAnalysis,
-				interactionsAnalysis
+				interactionsAnalysis,
+				customCodeAnalysis
 			]),
 			coverageImprovement: '+27 percentage points'
 		}
@@ -1660,6 +1676,16 @@ function mergeReviewResults(
 				stats: enhancedResult.analysis.interactions.stats
 			});
 		}
+		if (enhancedResult.analysis?.customCode) {
+			categories.push({
+				category: 'Custom Code & Site Settings',
+				passed: enhancedResult.analysis.customCode.issues.filter((i: any) => i.severity === 'error').length === 0,
+				issues: enhancedResult.analysis.customCode.issues,
+				stats: enhancedResult.analysis.customCode.stats,
+				policyVersion: enhancedResult.analysis.customCode.policyVersion,
+				homepageSurfaceHash: enhancedResult.analysis.customCode.homepageSurfaceHash
+			});
+		}
 		const summary = summarizeSummaryFromCategories(categories);
 		return {
 			url: siteUrl,
@@ -1715,6 +1741,17 @@ function mergeReviewResults(
 			passed: enhancedResult.analysis.interactions.issues.filter((i: any) => i.severity === 'error').length === 0,
 			issues: enhancedResult.analysis.interactions.issues,
 			stats: enhancedResult.analysis.interactions.stats
+		});
+	}
+
+	if (enhancedResult?.analysis?.customCode) {
+		merged.categories.push({
+			category: 'Custom Code & Site Settings',
+			passed: enhancedResult.analysis.customCode.issues.filter((i: any) => i.severity === 'error').length === 0,
+			issues: enhancedResult.analysis.customCode.issues,
+			stats: enhancedResult.analysis.customCode.stats,
+			policyVersion: enhancedResult.analysis.customCode.policyVersion,
+			homepageSurfaceHash: enhancedResult.analysis.customCode.homepageSurfaceHash
 		});
 	}
 
@@ -2121,6 +2158,8 @@ function snapshotLatestResultForBridgeUsage(record: ValidationResultRecord): Bri
 		submittedAt: record.submittedAt,
 		correlationId: record.correlationId,
 		payloadHash: record.payloadHash,
+		customCodePolicyVersion: record.customCodePolicyVersion,
+		customCodeSurfaceHash: record.customCodeSurfaceHash,
 		passed: record.summary.passed,
 		summary: record.summary,
 		artifact: record.artifact
@@ -2189,6 +2228,9 @@ function reviveBridgeUsageLatestResult(raw: unknown): BridgeUsageLatestResultSna
 		submittedAt,
 		correlationId: typeof value.correlationId === 'string' ? value.correlationId : '',
 		payloadHash: typeof value.payloadHash === 'string' ? value.payloadHash : '',
+		customCodePolicyVersion:
+			typeof value.customCodePolicyVersion === 'string' ? value.customCodePolicyVersion : undefined,
+		customCodeSurfaceHash: normalizeSha256(value.customCodeSurfaceHash) || undefined,
 		passed: Boolean(value.passed),
 		summary: value.summary as ValidationSubmissionSummary,
 		artifact: value.artifact || { persisted: false, reason: 'r2_not_configured' }
@@ -2616,6 +2658,13 @@ function sanitizeValidationResults(
 			typeof validationResults?.url === 'string' && validationResults.url.trim() !== ''
 				? validationResults.url.trim()
 				: undefined,
+		customCodePolicyVersion:
+			typeof validationResults?.customCodePolicyVersion === 'string' &&
+			validationResults.customCodePolicyVersion.trim().length <= 128
+				? validationResults.customCodePolicyVersion.trim()
+				: undefined,
+		customCodeSurfaceHash:
+			normalizeSha256(validationResults?.customCodeSurfaceHash) || undefined,
 		summary,
 		categories
 	};

@@ -1,5 +1,12 @@
 # Webflow Way Validator - Release Notes
 
+## Version 1.2.2 - Marketplace Custom-Code Enforcement
+
+- Added a blocking Custom Code & Site Settings category for prohibited inline and external scripts.
+- Persisted the versioned custom-code policy and published surface hash so submissions can reject stale or changed results.
+
+---
+
 ## Version 1.2.1 - Contrast Check Removal
 
 - Removed the unreliable automated color-contrast check.

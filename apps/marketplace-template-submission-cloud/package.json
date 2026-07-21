@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "check": "tsc --noEmit",
+		"test": "tsx --test lib/**/*.test.ts app/**/*.test.ts",
     "test:browser": "playwright test",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"

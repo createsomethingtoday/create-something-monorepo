@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  buildValidationSubmitPayload,
   escapeHtml,
   decodeCommonHtmlEntities,
   ensureHttps,
@@ -10,6 +11,27 @@ import {
   normalizeSiteInfo,
   selectValidationDomain,
 } from '../src/utils';
+
+describe('buildValidationSubmitPayload', () => {
+  it('carries the versioned custom-code surface identity into persisted results', () => {
+    const payload = buildValidationSubmitPayload({
+      url: 'https://example.webflow.io/',
+      summary: { totalErrors: 0 },
+      categories: [
+        {
+          category: 'Custom Code & Site Settings',
+          passed: true,
+          issues: [],
+          policyVersion: 'marketplace-custom-code.v1',
+          homepageSurfaceHash: 'a'.repeat(64),
+        },
+      ],
+    });
+
+    expect(payload.customCodePolicyVersion).toBe('marketplace-custom-code.v1');
+    expect(payload.customCodeSurfaceHash).toBe('a'.repeat(64));
+  });
+});
 
 describe('filterRetiredAccessibilityIssues', () => {
   it('removes only legacy color-contrast findings', () => {

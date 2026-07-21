@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import {
+  CUSTOM_CODE_POLICY_IDS,
+  classifyExternalScriptSource,
+  classifyInlineScript
+} from '../../webflow-template-validation/policy/custom-code-policy.js';
 
 const source = fs.readFileSync(new URL('../src/worker.js', import.meta.url), 'utf8');
 const start = source.indexOf('var IX2_REJECTION_MESSAGE');
@@ -14,6 +19,9 @@ const sandbox = {
   console,
   Set,
   URL,
+  CUSTOM_CODE_POLICY_IDS,
+  classifyExternalScriptSource,
+  classifyInlineScript,
   __name: (target) => target
 };
 
@@ -205,7 +213,7 @@ const bridgeWithExtraCodeResult = sandbox.validateGsapUsage(
 assert.equal(bridgeWithExtraCodeResult.passed, false);
 assert.ok(
   bridgeWithExtraCodeResult.details.flaggedCode.some(
-    (issue) => issue.message === 'Custom script detected without approved GSAP patterns'
+    (issue) => issue.policy === 'custom-code.inline-script-not-allowed'
   ),
   'expected extra code appended to bridge config to remain blocked'
 );
@@ -231,14 +239,12 @@ const googleTagResult = sandbox.validateGsapUsage(
   'https://avix-studio.webflow.io/'
 );
 
-assert.equal(googleTagResult.passed, true);
-assert.equal(googleTagResult.summary.flaggedCodeCount, 0);
-assert.equal(
-  googleTagResult.details.allowedCustomCode.filter(
-    (issue) => issue.policy === 'analytics-google-tag'
-  ).length,
-  2,
-  'expected Google tag bootstrap scripts to be allowed'
+assert.equal(googleTagResult.passed, false);
+assert.ok(
+  googleTagResult.details.flaggedCode.every(
+    (issue) => issue.policy === 'custom-code.inline-script-not-allowed'
+  ),
+  'expected Google tag bootstrap scripts to be rejected by the Marketplace custom-code policy'
 );
 
 const googleTagWithExtraCodeResult = sandbox.validateGsapUsage(
@@ -252,9 +258,103 @@ const googleTagWithExtraCodeResult = sandbox.validateGsapUsage(
 assert.equal(googleTagWithExtraCodeResult.passed, false);
 assert.ok(
   googleTagWithExtraCodeResult.details.flaggedCode.some(
-    (issue) => issue.message === 'Custom script detected without approved GSAP patterns'
+    (issue) => issue.policy === 'custom-code.inline-script-not-allowed'
   ),
   'expected custom code appended to Google tag bootstrap to remain blocked'
+);
+
+const prohibitedExternalFixtures = [
+  {
+    name: 'Eric\'s exact Finsweet Attributes v2 module embed',
+    html: `<!-- Finsweet Attributes -->
+      <script async type="module"
+      src="https://cdn.jsdelivr.net/npm/@finsweet/attributes@2/attributes.js"
+      fs-list
+      ></script>`,
+    expectedSource: 'https://cdn.jsdelivr.net/npm/@finsweet/attributes@2/attributes.js'
+  },
+  {
+    name: 'Finsweet Attributes v1',
+    html: '<script src="https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsfilter@1/cmsfilter.js"></script>',
+    expectedSource: 'https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsfilter@1/cmsfilter.js'
+  },
+  {
+    name: 'arbitrary jsDelivr dependency',
+    html: '<script src="https://cdn.jsdelivr.net/npm/lodash@4/lodash.min.js"></script>',
+    expectedSource: 'https://cdn.jsdelivr.net/npm/lodash@4/lodash.min.js'
+  },
+  {
+    name: 'arbitrary unpkg dependency',
+    html: '<script src="https://unpkg.com/alpinejs@3/dist/cdn.min.js"></script>',
+    expectedSource: 'https://unpkg.com/alpinejs@3/dist/cdn.min.js'
+  },
+  {
+    name: 'unquoted external dependency source',
+    html: '<script src=https://cdn.jsdelivr.net/npm/lodash@4/lodash.min.js></script>',
+    expectedSource: 'https://cdn.jsdelivr.net/npm/lodash@4/lodash.min.js'
+  }
+];
+
+for (const fixture of prohibitedExternalFixtures) {
+  const result = sandbox.validateGsapUsage(fixture.html, 'https://custom-code-template.webflow.io/');
+  const finding = result.details.flaggedCode.find(
+    (issue) => issue.policy === 'custom-code.external-library-not-allowed'
+  );
+
+  assert.equal(result.passed, false, `expected ${fixture.name} to fail`);
+  assert.ok(finding, `expected a stable external custom-code policy finding for ${fixture.name}`);
+  assert.equal(finding.externalScript, fixture.expectedSource);
+}
+
+const approvedGsapExternalResult = sandbox.validateGsapUsage(
+  '<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>',
+  'https://gsap-template.webflow.io/'
+);
+
+assert.equal(approvedGsapExternalResult.passed, true);
+assert.equal(
+  approvedGsapExternalResult.details.flaggedCode.some(
+    (issue) => issue.policy === 'custom-code.external-library-not-allowed'
+  ),
+  false,
+  'expected approved GSAP CDN source to remain accepted'
+);
+
+for (const source of [
+  'https://cdn.prod.website-files.com/gsap/3.14.2/SplitText.min.js',
+  'https://assets.codepen.io/assets/common/gsap/3.12.5/gsap.min.js'
+]) {
+  const result = sandbox.validateGsapUsage(
+    `<script src="${source}"></script>`,
+    'https://gsap-template.webflow.io/'
+  );
+  assert.equal(result.passed, true, `expected approved GSAP source to pass: ${source}`);
+}
+
+const scrollSmootherResult = sandbox.validateGsapUsage(
+  '<script src="https://cdn.prod.website-files.com/gsap/3.14.2/ScrollSmoother.min.js"></script>',
+  'https://scroll-smoother-template.webflow.io/'
+);
+
+assert.equal(scrollSmootherResult.passed, false);
+assert.ok(
+  scrollSmootherResult.details.flaggedCode.some(
+    (issue) => issue.policy === 'gsap.scroll-smoother-not-allowed'
+  ),
+  'expected ScrollSmoother to remain rejected'
+);
+
+const prohibitedShortInlineResult = sandbox.validateGsapUsage(
+  '<script>document.body.dataset.mode = "custom";</script>',
+  'https://short-inline-template.webflow.io/'
+);
+
+assert.equal(prohibitedShortInlineResult.passed, false);
+assert.ok(
+  prohibitedShortInlineResult.details.flaggedCode.some(
+    (issue) => issue.policy === 'custom-code.inline-script-not-allowed'
+  ),
+  'expected short inline custom code to fail instead of passing a length threshold'
 );
 
 console.log('GSAP validation regression passed.');

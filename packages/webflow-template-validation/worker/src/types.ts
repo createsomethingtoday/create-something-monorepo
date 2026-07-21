@@ -43,6 +43,7 @@ export interface ValidationResponse {
 		content: ContentAnalysisResult;
 		accessibility: AccessibilityAnalysisResult;
 		interactions: InteractionsAnalysisResult;
+		customCode: CustomCodeAnalysisResult;
 		// performance removed: too estimative without real browser metrics
 	};
 	summary: {
@@ -117,6 +118,8 @@ export interface ValidationSubmitRequest {
 	siteUrl?: string;
 	validationResults: {
 		url?: string;
+		customCodePolicyVersion?: string;
+		customCodeSurfaceHash?: string;
 		summary?: Record<string, unknown>;
 		categories?: Array<{
 			category?: string;
@@ -385,6 +388,27 @@ export interface AnalyzedAsset {
 	usageCount: number;
 	hasLicensingIssues: boolean;
 	recommendedAction?: string;
+}
+
+export interface CustomCodeAnalysisResult {
+	issues: ValidationIssue[];
+	policyVersion: string;
+	homepageSurfaceHash?: string;
+	stats: {
+		externalScriptCount: number;
+		inlineScriptCount: number;
+		rejectedScriptCount: number;
+		pagesRequested: number;
+		pagesAnalyzed: number;
+		pagesFailed: number;
+		analysisComplete: boolean;
+	};
+	pages: Array<{
+		url: string;
+		passed: boolean;
+		rejectedScriptCount: number;
+		errorMessage?: string;
+	}>;
 }
 
 export interface AnalyzedPage {

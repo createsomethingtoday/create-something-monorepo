@@ -21,7 +21,10 @@ import {
   runPublishedUrlValidation,
   type PublishedUrlValidationSummary
 } from '../../../../lib/intake/published-url';
-import { getCachedPublishedValidation } from '../../../../lib/server/published-validation-cache';
+import {
+  getCachedPublishedValidation,
+  revalidateCachedPublishedValidation
+} from '../../../../lib/server/published-validation-cache';
 import { runValidatorAppSubmissionPreflight } from '../../../../lib/intake/validator-app';
 import { validateTemplateNameSyntax } from '../../../../lib/intake/template-name';
 import { waitForTemplateSubmissionReceipt } from '../../../../lib/intake/submission-receipt';
@@ -313,14 +316,28 @@ export async function POST(request: Request) {
     let validatorConfirmation: { passed: boolean; score?: number };
 
     if (cachedValidation) {
+      const cachedRecheck = await revalidateCachedPublishedValidation(cachedValidation);
+      const validatorPreflight = cachedRecheck.validatorPreflight;
+      if (!cachedRecheck.accepted) {
+        return jsonNoStore(
+          {
+            error: validatorPreflight.message,
+            validationIssues: validatorPreflight.issues,
+            validatorPreflight
+          },
+          {
+            status: validatorPreflight.status === 'validator_app_unavailable' ? 503 : 400
+          }
+        );
+      }
       publishedUrlResult = {
         normalizedUrl: cachedValidation.normalizedUrl,
         gsapDetected: cachedValidation.summary.gsapDetected,
         siteResults: cachedValidation.summary.siteResults
       };
       validatorConfirmation = {
-        passed: cachedValidation.validatorPreflight?.passed ?? true,
-        score: cachedValidation.validatorPreflight?.result?.score
+        passed: validatorPreflight.passed,
+        score: validatorPreflight.result?.score
       };
     } else {
       const settled = await publishedValidationPromise!;

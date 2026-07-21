@@ -3,6 +3,7 @@
 
 import {
   EXTENSION_VERSION,
+  buildValidationSubmitPayload,
   escapeHtml,
   decodeCommonHtmlEntities,
   ensureHttps,
@@ -74,6 +75,8 @@ interface CategoryResult {
   passed: boolean;
   issues: ValidationIssue[];
   stats?: Record<string, any>;
+  policyVersion?: string;
+  homepageSurfaceHash?: string;
 }
 
 interface ValidationResponse {
@@ -838,25 +841,6 @@ async function fetchJsonWithRetry<T>(
   }
 
   throw lastError instanceof Error ? lastError : new Error('Request failed');
-}
-
-function buildValidationSubmitPayload(validationResults: ValidationResponse): Record<string, any> {
-  return {
-    url: validationResults.url,
-    summary: validationResults.summary,
-    categories: Array.isArray(validationResults.categories)
-      ? validationResults.categories.map((category) => ({
-          category: category.category,
-          passed: category.passed,
-          issues: Array.isArray(category.issues)
-            ? category.issues.map((issue) => ({
-                severity: issue.severity,
-                message: issue.message,
-              }))
-            : [],
-        }))
-      : [],
-  };
 }
 
 async function submitValidationResults({
@@ -1797,6 +1781,19 @@ function mergeEnhancedValidation(designerResults: ValidationResponse, enhancedRe
         passed: !hasErrors,
         issues: analysis.interactions.issues,
         stats: analysis.interactions.stats
+      });
+    }
+
+    if (analysis.customCode) {
+      console.log('Adding Custom Code & Site Settings category');
+      const hasErrors = analysis.customCode.issues.filter((i: any) => i.severity === 'error').length > 0;
+      designerResults.categories.push({
+        category: 'Custom Code & Site Settings',
+        passed: !hasErrors,
+        issues: analysis.customCode.issues,
+        stats: analysis.customCode.stats,
+        policyVersion: analysis.customCode.policyVersion,
+        homepageSurfaceHash: analysis.customCode.homepageSurfaceHash
       });
     }
 

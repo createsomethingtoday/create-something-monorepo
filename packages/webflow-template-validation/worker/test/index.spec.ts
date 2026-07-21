@@ -52,6 +52,7 @@ import { validateDesignerData } from '../src/validators/designer-validator';
 import { generateContentIssues, validateContent } from '../src/validators/content-validator';
 import { validateAccessibility } from '../src/validators/accessibility-validator';
 import { validateInteractions } from '../src/validators/interactions-validator';
+import { validateCustomCode } from '../src/validators/custom-code-validator';
 import { generateAssetIssues } from '../src/validators/asset-validator';
 import { analyzeImageOptimization } from '../src/utils/asset-utils';
 import { fetchHTML, parseHTML } from '../src/utils/fetch-utils';
@@ -116,6 +117,90 @@ async function sha256ForTest(value: string) {
 		.map((byte) => byte.toString(16).padStart(2, '0'))
 		.join('');
 }
+
+describe('Custom Code Validator', () => {
+	it('rejects the reported Finsweet Attributes embed with the shared policy ID', async () => {
+		vi.mocked(fetchHTML).mockResolvedValue({
+			html: `<!doctype html><html><head>
+				<script async type="module" src="https://cdn.jsdelivr.net/npm/@finsweet/attributes@2/attributes.js" fs-list></script>
+			</head><body></body></html>`,
+			status: 200,
+			headers: {},
+			size: 0,
+			loadTime: 0
+		});
+
+		const result = await validateCustomCode('https://finsweet-template.webflow.io');
+
+		expect(result.policyVersion).toBe('marketplace-custom-code.v1');
+		expect(result.homepageSurfaceHash).toMatch(/^[a-f0-9]{64}$/);
+		expect(result.issues).toEqual([
+			expect.objectContaining({
+				id: 'custom-code.external-library-not-allowed',
+				severity: 'error',
+				location: 'https://finsweet-template.webflow.io/'
+			})
+		]);
+	});
+
+	it('accepts Webflow platform scripts, approved GSAP, and the Validator bridge', async () => {
+		vi.mocked(fetchHTML).mockResolvedValue({
+			html: `<!doctype html><html><head>
+				<script src="https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js"></script>
+				<script>WebFont.load({ google: { families: ["Inter:400"] } });</script>
+				<script>!function(o,c){var n=c.documentElement,t=" w-mod-";n.className+=t+"js"}(window,document);</script>
+				<script>window.__WF_REVIEW_BRIDGE = { siteId: "site_1", version: "0.3.0", marker: "__wf_review_snippet_v1", bridgeToken: "wfbt_0123456789abcdef0123456789abcdef", reviewSurface: "published-review", reviewScriptUrl: "https://validation-worker.createsomething.workers.dev/app-validator/snippet/review.js" };</script>
+				<script src="https://validation-worker.createsomething.workers.dev/app-validator/snippet/review.js"></script>
+			</head><body>
+				<script src="https://d3e54v103j8qbb.cloudfront.net/js/jquery-3.5.1.min.dc5e7f18c8.js?site=0123456789abcdef01234567"></script>
+				<script src="https://cdn.prod.website-files.com/0123456789abcdef01234567/js/webflow.schunk.0e77e8610c42c2bf.js"></script>
+				<script src="https://cdn.prod.website-files.com/gsap/3.14.2/gsap.min.js"></script>
+				<script>gsap.to('.card', { opacity: 1 });</script>
+			</body></html>`,
+			status: 200,
+			headers: {},
+			size: 0,
+			loadTime: 0
+		});
+
+		const result = await validateCustomCode('https://approved-template.webflow.io');
+
+		expect(result.issues).toEqual([]);
+		expect(result.stats.rejectedScriptCount).toBe(0);
+		expect(result.stats.analysisComplete).toBe(true);
+	});
+
+	it('returns the custom-code failure through the public validation HTTP route', async () => {
+		vi.mocked(fetchHTML).mockResolvedValue({
+			html: '<script src="https://unpkg.com/alpinejs@3/dist/cdn.min.js"></script>',
+			status: 200,
+			headers: {},
+			size: 0,
+			loadTime: 0
+		});
+
+		const response = await worker.fetch(
+			new Request('https://validation-worker.createsomething.workers.dev/validate', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					siteUrl: 'https://http-surface.webflow.io',
+					designerData: { components: [], styles: [], pages: [], assets: [] },
+					options: { skipAssets: true, skipContent: true, skipAccessibility: true }
+				})
+			}),
+			{},
+			createExecutionContext()
+		);
+		const payload = await response.json() as any;
+
+		expect(response.status).toBe(200);
+		expect(payload.analysis.customCode.policyVersion).toBe('marketplace-custom-code.v1');
+		expect(payload.analysis.customCode.issues).toEqual([
+			expect.objectContaining({ id: 'custom-code.external-library-not-allowed' })
+		]);
+	});
+});
 
 describe('Designer Validator', () => {
 	it('reports missing core designer primitives instead of skipping the categories', async () => {
@@ -1436,6 +1521,7 @@ describe('Interactions Validator', () => {
 		]);
 		expect(fetchHtmlMock.mock.calls.map(([url]) => url)).toEqual([
 			'https://example.webflow.io/',
+			'https://example.webflow.io/',
 			'https://example.webflow.io/blog-posts/from-homepage',
 			'https://example.webflow.io/project/from-homepage'
 		]);
@@ -1517,6 +1603,7 @@ describe('Interactions Validator', () => {
 			validatedUrls: ['https://example.webflow.io/blog-posts/from-sitemap']
 		}));
 		expect(fetchHtmlMock.mock.calls.map(([url]) => url)).toEqual([
+			'https://example.webflow.io/',
 			'https://example.webflow.io/',
 			'https://example.webflow.io/blog-posts/from-sitemap'
 		]);
@@ -1863,6 +1950,8 @@ describe('Validation Submission Endpoint', () => {
 					siteUrl: 'https://latest-result.webflow.io',
 					validationResults: {
 						url: 'https://latest-result.webflow.io',
+						customCodePolicyVersion: 'marketplace-custom-code.v1',
+						customCodeSurfaceHash: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
 						summary: { totalErrors: 0, totalWarnings: 1, passedCategories: 4, failedCategories: 0 },
 						categories: [
 							{ category: 'Assets & Images', passed: true, issues: [] },
@@ -1906,6 +1995,8 @@ describe('Validation Submission Endpoint', () => {
 		expect(byTokenPayload.passed).toBe(true);
 		expect(byTokenPayload.summary.score).toBe(100);
 		expect(byTokenPayload.summary.totalCategories).toBe(4);
+		expect(byTokenPayload.customCodePolicyVersion).toBe('marketplace-custom-code.v1');
+		expect(byTokenPayload.customCodeSurfaceHash).toBe('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
 		expect(byTokenPayload.rawBridgeTokenStored).toBe(false);
 		expect(JSON.stringify(byTokenPayload)).not.toContain(installPayload.bridgeToken);
 	});

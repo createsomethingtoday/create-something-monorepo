@@ -1,7 +1,26 @@
 "use strict";
 (() => {
   // src/utils.ts
-  var EXTENSION_VERSION = "1.2.1";
+  var EXTENSION_VERSION = "1.2.2";
+  function buildValidationSubmitPayload(validationResults) {
+    const customCodeCategory = validationResults.categories?.find(
+      (category) => category.category === "Custom Code & Site Settings"
+    );
+    return {
+      url: validationResults.url,
+      summary: validationResults.summary,
+      customCodePolicyVersion: customCodeCategory?.policyVersion,
+      customCodeSurfaceHash: customCodeCategory?.homepageSurfaceHash,
+      categories: Array.isArray(validationResults.categories) ? validationResults.categories.map((category) => ({
+        category: category.category,
+        passed: category.passed,
+        issues: Array.isArray(category.issues) ? category.issues.map((issue) => ({
+          severity: issue.severity,
+          message: issue.message
+        })) : []
+      })) : []
+    };
+  }
   function filterRetiredAccessibilityIssues(issues) {
     return issues.filter((issue) => issue.id !== "color-contrast-violations");
   }
@@ -563,20 +582,6 @@
       }
     }
     throw lastError instanceof Error ? lastError : new Error("Request failed");
-  }
-  function buildValidationSubmitPayload(validationResults) {
-    return {
-      url: validationResults.url,
-      summary: validationResults.summary,
-      categories: Array.isArray(validationResults.categories) ? validationResults.categories.map((category) => ({
-        category: category.category,
-        passed: category.passed,
-        issues: Array.isArray(category.issues) ? category.issues.map((issue) => ({
-          severity: issue.severity,
-          message: issue.message
-        })) : []
-      })) : []
-    };
   }
   async function submitValidationResults({
     siteId,
@@ -1363,6 +1368,18 @@
           passed: !hasErrors,
           issues: analysis.interactions.issues,
           stats: analysis.interactions.stats
+        });
+      }
+      if (analysis.customCode) {
+        console.log("Adding Custom Code & Site Settings category");
+        const hasErrors = analysis.customCode.issues.filter((i) => i.severity === "error").length > 0;
+        designerResults.categories.push({
+          category: "Custom Code & Site Settings",
+          passed: !hasErrors,
+          issues: analysis.customCode.issues,
+          stats: analysis.customCode.stats,
+          policyVersion: analysis.customCode.policyVersion,
+          homepageSurfaceHash: analysis.customCode.homepageSurfaceHash
         });
       }
       const allIssues = designerResults.categories.flatMap((cat) => cat.issues || []);

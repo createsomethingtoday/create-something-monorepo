@@ -1,7 +1,31 @@
 // Pure helpers shared across the extension. No DOM, no Designer API —
 // everything here is unit-testable in isolation.
 
-export const EXTENSION_VERSION = '1.2.1';
+export const EXTENSION_VERSION = '1.2.2';
+
+export function buildValidationSubmitPayload(validationResults: any): Record<string, any> {
+  const customCodeCategory = validationResults.categories?.find(
+    (category: any) => category.category === 'Custom Code & Site Settings'
+  );
+  return {
+    url: validationResults.url,
+    summary: validationResults.summary,
+    customCodePolicyVersion: customCodeCategory?.policyVersion,
+    customCodeSurfaceHash: customCodeCategory?.homepageSurfaceHash,
+    categories: Array.isArray(validationResults.categories)
+      ? validationResults.categories.map((category: any) => ({
+          category: category.category,
+          passed: category.passed,
+          issues: Array.isArray(category.issues)
+            ? category.issues.map((issue: any) => ({
+                severity: issue.severity,
+                message: issue.message,
+              }))
+            : [],
+        }))
+      : [],
+  };
+}
 
 export function filterRetiredAccessibilityIssues<T extends { id: string }>(issues: readonly T[]): T[] {
   return issues.filter((issue) => issue.id !== 'color-contrast-violations');

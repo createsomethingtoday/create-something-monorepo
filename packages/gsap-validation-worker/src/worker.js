@@ -1,3 +1,9 @@
+import {
+  CUSTOM_CODE_POLICY_IDS,
+  classifyExternalScriptSource,
+  classifyInlineScript
+} from "../../webflow-template-validation/policy/custom-code-policy.js";
+
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require : typeof Proxy !== "undefined" ? new Proxy(x, {
@@ -160,43 +166,6 @@ function isValidatorReviewBridgeScript(script) {
   return hasReviewScriptUrl && withoutAllowedLoader.trim() === "";
 }
 __name(isValidatorReviewBridgeScript, "isValidatorReviewBridgeScript");
-function isGoogleTagFirstPartyBootstrap(script) {
-  return /^\s*\(\s*function\s*\(\s*w\s*,\s*i\s*,\s*g\s*\)\s*\{\s*w\s*\[\s*g\s*\]\s*=\s*w\s*\[\s*g\s*\]\s*\|\|\s*\[\]\s*;\s*if\s*\(\s*typeof\s+w\s*\[\s*g\s*\]\s*\.\s*push\s*==\s*["']function["']\s*\)(?:\s*w\s*\[\s*g\s*\]\s*\.\s*push\s*\(\s*i\s*\)|\s*w\s*\[\s*g\s*\]\s*\.\s*push\s*\.\s*apply\s*\(\s*w\s*\[\s*g\s*\]\s*,\s*Array\s*\.\s*isArray\s*\(\s*i\s*\)\s*\?\s*i\s*:\s*\[\s*i\s*\]\s*\))\s*;?\s*\}\s*\)\s*\(\s*window\s*,\s*\[\s*["']G-[A-Z0-9]+["'](?:\s*,\s*["']G-[A-Z0-9]+["'])*\s*\]\s*,\s*["']google_tags_first_party["']\s*\)\s*;?\s*$/i.test(script);
-}
-__name(isGoogleTagFirstPartyBootstrap, "isGoogleTagFirstPartyBootstrap");
-function isGoogleTagDataLayerBootstrap(script) {
-  let remainder = script.trim();
-  remainder = remainder.replace(/^window\s*\.\s*dataLayer\s*=\s*window\s*\.\s*dataLayer\s*\|\|\s*\[\]\s*;?\s*/i, "");
-  remainder = remainder.replace(/^function\s+gtag\s*\(\s*\)\s*\{\s*dataLayer\s*\.\s*push\s*\(\s*arguments\s*\)\s*;?\s*\}\s*/i, "");
-  if (remainder === script.trim()) {
-    return false;
-  }
-  const allowedStatements = [
-    /^gtag\s*\(\s*["']set["']\s*,\s*["']developer_id\.[^"']+["']\s*,\s*true\s*\)\s*;?\s*/i,
-    /^gtag\s*\(\s*["']js["']\s*,\s*new\s+Date\s*\(\s*\)\s*\)\s*;?\s*/i,
-    /^gtag\s*\(\s*["']config["']\s*,\s*["']G-[A-Z0-9]+["'](?:\s*,\s*\{[\s\S]*?\})?\s*\)\s*;?\s*/i
-  ];
-  let sawConfig = false;
-  while (remainder.trim()) {
-    const before = remainder;
-    for (const pattern of allowedStatements) {
-      const match = remainder.match(pattern);
-      if (!match) continue;
-      sawConfig = sawConfig || /^gtag\s*\(\s*["']config["']/i.test(match[0]);
-      remainder = remainder.slice(match[0].length).trimStart();
-      break;
-    }
-    if (remainder === before) {
-      return false;
-    }
-  }
-  return sawConfig && !containsPotentiallyHarmfulCode(script);
-}
-__name(isGoogleTagDataLayerBootstrap, "isGoogleTagDataLayerBootstrap");
-function isGoogleTagScript(script) {
-  return isGoogleTagFirstPartyBootstrap(script) || isGoogleTagDataLayerBootstrap(script);
-}
-__name(isGoogleTagScript, "isGoogleTagScript");
 function validateGsapUsage(html, pageUrl, customPatterns = []) {
   const defaultPatterns = [
     // Core GSAP object and method access
@@ -454,18 +423,6 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
     /new\s+ScrollSmoother\s*\(/g
     // new ScrollSmoother() - alternative initialization
   ];
-  const approvedGsapCDNs = [
-    /cdn\.prod\.website-files\.com\/gsap\//i,
-    // Webflow's official GSAP CDN
-    /cdnjs\.cloudflare\.com\/ajax\/libs\/gsap\//i,
-    // cdnjs GSAP library
-    /unpkg\.com\/@?gsap\//i,
-    // unpkg GSAP library
-    /cdn\.jsdelivr\.net\/npm\/@?gsap\//i,
-    // jsDelivr GSAP library
-    /assets\.codepen\.io\/assets\/common\/gsap/i
-    // CodePen GSAP assets
-  ];
   const securityRiskPatterns = [
     // Direct data exfiltration
     /new\s+Image\s*\(\s*\)\s*\.\s*src\s*=\s*['"]/i,
@@ -651,11 +608,37 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
       });
       return;
     }
-    if (isGoogleTagScript(script)) {
+    const isContextuallyAllowedIx2Runtime =
+      /Webflow\.require\s*\(\s*["']ix2["']\s*\)/i.test(script) &&
+      (results.legacyIx2Exempted === true ||
+        (!ix2Detection.detected && hasLottieIx2Usage(html)));
+    if (isContextuallyAllowedIx2Runtime) {
       results.allowedCustomCode.push({
         scriptIndex: index,
-        message: "Google tag script (allowed)",
-        policy: "analytics-google-tag"
+        message: results.legacyIx2Exempted
+          ? "Approved legacy IX2 exception runtime"
+          : "Webflow Lottie runtime data (allowed)",
+        policy: results.legacyIx2Exempted
+          ? "ix2-approved-exception"
+          : CUSTOM_CODE_POLICY_IDS.WEBFLOW_PLATFORM_SCRIPT
+      });
+      return;
+    }
+    const inlinePolicyVerdict = classifyInlineScript(script);
+    if (!inlinePolicyVerdict.allowed) {
+      results.flaggedCode.push({
+        scriptIndex: index,
+        message: inlinePolicyVerdict.message,
+        policy: inlinePolicyVerdict.policy,
+        flaggedCode: [truncateScript(script, 200)]
+      });
+      return;
+    }
+    if (inlinePolicyVerdict.disposition === "allowed") {
+      results.allowedCustomCode.push({
+        scriptIndex: index,
+        message: inlinePolicyVerdict.message,
+        policy: inlinePolicyVerdict.policy
       });
       return;
     }
@@ -667,14 +650,6 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
         scriptIndex: index,
         message: "Custom animation detected - should use GSAP for animations",
         flaggedCode: [`Contains custom animation patterns: ${matchedPatterns.join(", ")}`, truncateScript(script, 200)]
-      });
-      return;
-    }
-    const isDefaultScript = defaultAllowedScripts.some((pattern) => pattern.test(script));
-    if (isDefaultScript) {
-      results.allowedCustomCode.push({
-        scriptIndex: index,
-        message: "Webflow default or approved script"
       });
       return;
     }
@@ -711,14 +686,6 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
       /Draggable/g
     ];
     const hasCoreGsapUsage = coreGsapPatterns.some((pattern) => pattern.test(script));
-    const maxLength = 150;
-    if (script.trim().length < maxLength && !containsPotentiallyHarmfulCode(script)) {
-      results.allowedCustomCode.push({
-        scriptIndex: index,
-        message: "Simple initialization script (allowed)"
-      });
-      return;
-    }
     if (hasGsapUsage) {
       if (hasGsapUsage && !hasCoreGsapUsage) {
         const pluginSpecificPatterns = [
@@ -813,10 +780,29 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
             `Found at: ${externalScript.src}`
           ],
           externalScript: externalScript.src,
+          policy: "gsap.scroll-smoother-not-allowed",
           fixable: true
           // Indicates this can be fixed in Webflow settings
         });
+        return;
       }
+      const externalPolicyVerdict = classifyExternalScriptSource(externalScript.src, pageUrl);
+      if (externalPolicyVerdict.allowed) {
+        results.allowedCustomCode.push({
+          scriptIndex: `external-${index}`,
+          message: externalPolicyVerdict.message,
+          policy: externalPolicyVerdict.policy,
+          externalScript: externalPolicyVerdict.resolvedSrc
+        });
+        return;
+      }
+      results.flaggedCode.push({
+        scriptIndex: `external-${index}`,
+        message: externalPolicyVerdict.message,
+        policy: CUSTOM_CODE_POLICY_IDS.EXTERNAL_LIBRARY_NOT_ALLOWED,
+        flaggedCode: [`Found at: ${externalPolicyVerdict.resolvedSrc}`],
+        externalScript: externalScript.src
+      });
     });
   }
   const hasFlaggedCode = results.flaggedCode.length > 0;
@@ -910,12 +896,12 @@ function appendDynamicExternalScripts(html, externalScripts, seenScriptSources) 
 __name(appendDynamicExternalScripts, "appendDynamicExternalScripts");
 function extractExternalScripts(html) {
   if (typeof window === "undefined" && typeof __require === "undefined") {
-    const scriptRegex = /<script[^>]+src\s*=\s*['"]([^'"]+)['"][^>]*>/gi;
+    const scriptRegex = /<script[^>]+src\s*=\s*(?:(['"])(.*?)\1|([^\s>]+))[^>]*>/gi;
     const externalScripts = [];
     const seenScriptSources = /* @__PURE__ */ new Set();
     let match;
     while ((match = scriptRegex.exec(html)) !== null) {
-      appendExternalScript(externalScripts, seenScriptSources, match[1]);
+      appendExternalScript(externalScripts, seenScriptSources, match[2] || match[3]);
     }
     appendDynamicExternalScripts(html, externalScripts, seenScriptSources);
     return externalScripts;
@@ -934,12 +920,12 @@ function extractExternalScripts(html) {
       appendDynamicExternalScripts(html, externalScripts, seenScriptSources);
       return externalScripts;
     } catch (error) {
-      const scriptRegex = /<script[^>]+src\s*=\s*['"]([^'"]+)['"][^>]*>/gi;
+      const scriptRegex = /<script[^>]+src\s*=\s*(?:(['"])(.*?)\1|([^\s>]+))[^>]*>/gi;
       const externalScripts = [];
       const seenScriptSources = /* @__PURE__ */ new Set();
       let match;
       while ((match = scriptRegex.exec(html)) !== null) {
-        appendExternalScript(externalScripts, seenScriptSources, match[1]);
+        appendExternalScript(externalScripts, seenScriptSources, match[2] || match[3]);
       }
       appendDynamicExternalScripts(html, externalScripts, seenScriptSources);
       return externalScripts;
@@ -1450,8 +1436,8 @@ function generateMarkdownReport(results) {
     markdown += "1. **Review Flagged Code**: Check all flagged code snippets for potential issues.\n";
     markdown += "2. **Fix Security Risks**: Immediately address any security risk issues identified.\n";
     markdown += "3. **Verify GSAP Usage**: Ensure GSAP is properly imported and used in your templates.\n";
-    markdown += "4. **Minimize External Scripts**: Reduce reliance on external scripts when possible.\n";
-    markdown += "5. **Use Official CDNs**: When using external libraries, use official CDNs like cdnjs, unpkg, or jsdelivr.\n";
+    markdown += "4. **Remove External Libraries**: Marketplace templates may not load third-party custom-code libraries outside the approved GSAP sources.\n";
+    markdown += "5. **Publish and Revalidate**: Publish the corrected site and rerun validation so the result binds to the current custom-code surface.\n";
   }
   markdown += `
 ---

@@ -1,6 +1,6 @@
 {
   "name": "@create-something/webflow-template-validation-extension",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "private": true,
   "description": "Webflow Designer Extension for validating projects against Webflow Way best practices",
   "main": "public/index.js",
