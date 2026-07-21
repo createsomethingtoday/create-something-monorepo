@@ -522,6 +522,18 @@ const capturedPlayerSchema = z.object({
   cropBounds: cropBoundsSchema.optional(),
   projection: z.enum(['estimated', 'calibrated']).optional(),
   zone: z.string().optional(),
+  courtGeometry: z.object({
+    profile: z.literal('fieldhouseusa-mansfield-high-school-84x50-v1'),
+    cameraStateId: z.string().min(1),
+    floorContactMethod: z.enum(['segmentation-mask-bottom', 'source-footpoint']),
+    uncertaintyFeet: z.number().nonnegative().max(1),
+    nearestMarkings: z.array(z.object({
+      id: z.string().min(1),
+      label: z.string().min(1),
+      kind: z.enum(['line-segment', 'circle', 'arc']),
+      distanceFeet: z.number().nonnegative()
+    })).min(1)
+  }).optional(),
   courtMembership: z.literal('foreground-court').optional(),
   classification: z.record(z.unknown()).optional()
 }).passthrough();
@@ -614,10 +626,10 @@ const promotableMigrationTraceReceiptSchema = z.object({
 }).passthrough();
 
 const capturedAnalysisReceiptSchema = z.object({
-  revision: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+  revision: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]),
   executionCount: z.literal(1),
   analyzedAt: z.string().min(1),
-  derivedFromRevision: z.union([z.literal(1), z.literal(2)]).optional(),
+  derivedFromRevision: z.union([z.literal(1), z.literal(2), z.literal(3)]).optional(),
   personDetectionExecuted: z.literal(false).optional(),
   identityExecutionCount: z.literal(1).optional(),
   identityPolicy: filmIdentityPolicySchema.optional(),
@@ -631,6 +643,17 @@ const capturedAnalysisReceiptSchema = z.object({
   }).optional(),
   fullFlowVerification: fullFlowVerificationSchema.optional(),
   migrationTraceVerification: migrationTraceVerificationSchema.optional(),
+  courtCalibrationVerification: z.object({
+    profile: z.literal('fieldhouseusa-mansfield-high-school-84x50-v1'),
+    method: z.literal('source-camera-state-homography-held-out-v2'),
+    sourceSha256: z.string().regex(/^[a-f0-9]{64}$/),
+    requiredP95ErrorFeet: z.literal(1),
+    passingCameraStates: z.number().int().positive(),
+    calibratedCoordinates: z.number().int().positive(),
+    estimatedCoordinates: z.number().int().nonnegative(),
+    maximumStateP95ErrorFeet: z.number().nonnegative().max(1),
+    personDetectionExecuted: z.literal(false)
+  }).optional(),
   playStateVerification: z.object({
     profile: z.literal(FILM_PLAY_STATE_PROFILE),
     ledgerFingerprint: z.string().min(1),
@@ -641,11 +664,17 @@ const capturedAnalysisReceiptSchema = z.object({
     unknownFrameCount: z.number().int().nonnegative()
   }).optional()
 }).passthrough().superRefine((receipt, context) => {
-  if (receipt.revision !== 3) return;
-  if (receipt.derivedFromRevision !== 2) context.addIssue({ code: z.ZodIssueCode.custom, path: ['derivedFromRevision'], message: 'Revision 3 must be derived from revision 2.' });
-  if (receipt.personDetectionExecuted !== false) context.addIssue({ code: z.ZodIssueCode.custom, path: ['personDetectionExecuted'], message: 'Revision 3 must prove person detection was not executed.' });
-  if (receipt.identityExecutionCount !== 1) context.addIssue({ code: z.ZodIssueCode.custom, path: ['identityExecutionCount'], message: 'Revision 3 requires exactly one identity execution.' });
-  if (!receipt.identityVerification) context.addIssue({ code: z.ZodIssueCode.custom, path: ['identityVerification'], message: 'Revision 3 requires the locked identity verification receipt.' });
+  if (receipt.revision === 3) {
+    if (receipt.derivedFromRevision !== 2) context.addIssue({ code: z.ZodIssueCode.custom, path: ['derivedFromRevision'], message: 'Revision 3 must be derived from revision 2.' });
+    if (receipt.personDetectionExecuted !== false) context.addIssue({ code: z.ZodIssueCode.custom, path: ['personDetectionExecuted'], message: 'Revision 3 must prove person detection was not executed.' });
+    if (receipt.identityExecutionCount !== 1) context.addIssue({ code: z.ZodIssueCode.custom, path: ['identityExecutionCount'], message: 'Revision 3 requires exactly one identity execution.' });
+    if (!receipt.identityVerification) context.addIssue({ code: z.ZodIssueCode.custom, path: ['identityVerification'], message: 'Revision 3 requires the locked identity verification receipt.' });
+  }
+  if (receipt.revision === 4) {
+    if (receipt.derivedFromRevision !== 3) context.addIssue({ code: z.ZodIssueCode.custom, path: ['derivedFromRevision'], message: 'Revision 4 must be derived from immutable revision 3.' });
+    if (receipt.personDetectionExecuted !== false) context.addIssue({ code: z.ZodIssueCode.custom, path: ['personDetectionExecuted'], message: 'Revision 4 must prove person detection was not executed.' });
+    if (!receipt.courtCalibrationVerification) context.addIssue({ code: z.ZodIssueCode.custom, path: ['courtCalibrationVerification'], message: 'Revision 4 requires a passing source-bound Mansfield court calibration receipt.' });
+  }
 });
 
 export const capturedFilmAnalysisSchema = z.object({
@@ -1213,7 +1242,7 @@ const filmBenchmarkImportReportSchema = z.object({
   sourceSha256: sha256Schema,
   analysisSha256: sha256Schema,
   correctionsSha256: sha256Schema,
-  analysisRevision: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+  analysisRevision: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]),
   correctionCount: z.number().int().nonnegative()
 });
 
@@ -1224,7 +1253,7 @@ export const filmImportGateSchema = z.object({
   analysisSha256: sha256Schema,
   correctionsSha256: sha256Schema,
   sourceSha256: sha256Schema,
-  analysisRevision: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+  analysisRevision: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]),
   analysisExecutionCount: z.literal(1),
   frameCount: z.number().int().positive(),
   correctionCount: z.number().int().nonnegative(),
@@ -1305,6 +1334,7 @@ export function validateFilmImportGate(analysisInput: unknown, correctionsInput:
   if (gate.playStateFingerprint !== (analysis.analysis.playStateVerification?.ledgerFingerprint ?? null)) throw new Error('The import gate play-state fingerprint does not match this analysis.');
   if (analysis.analysis.identityVerification && gate.benchmarkProfile !== FILM_IDENTITY_BENCHMARK_PROFILE) throw new Error('An identity-only revision import requires the locked identity benchmark gate.');
   if (analysis.analysis.revision === 3 && !analysis.analysis.identityVerification) throw new Error('Revision 3 import requires its passing embedded identity benchmark.');
+  if (analysis.analysis.revision === 4 && !analysis.analysis.courtCalibrationVerification) throw new Error('Revision 4 import requires its passing embedded Mansfield court-calibration receipt.');
   return gate;
 }
 

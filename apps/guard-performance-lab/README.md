@@ -12,7 +12,8 @@ A standalone, private-first coaching system for developing guards. Version 0.5 a
 - The app has no analytics or domain-external data writes. Network access is limited to first-party identity verification/login and operator-requested source links.
 - The starter profile is generic and contains no child-identifying information.
 - Resetting local data restores the generic profile and removes saved receipts, evidence, and engagement events.
-- Source-video bytes and detector weights are never written to the application datastore or committed. Only hashes, model provenance, derived coordinates, unresolved intervals, and correction receipts persist.
+- Source-video bytes and detector weights are never written to the application datastore or committed. Only hashes, model provenance, derived coordinates, unresolved intervals, correction receipts, and explicitly anonymized review derivatives persist.
+- Play-review images are never public static assets. The builder reduces the complete 1920×1080 frame to a 160×90 pixel grid before upscaling, then adds a synthetic orange `13` marker. The stored packet contains no sharp frame, face crop, original jersey crop, or reversible layer and is returned only through the authenticated, player-scoped workspace.
 
 This is a development aid, not medical guidance, a talent ranking, or a recruiting projection.
 
@@ -141,6 +142,22 @@ pnpm --filter @create-something/guard-performance-lab film:verify:migration-trac
 
 Omit `--camera-states` when the source cannot support an independently reviewed calibration. In that case every accepted coordinate must remain explicitly estimated.
 
+### FieldhouseUSA Mansfield foot-level geometry
+
+Mansfield footage uses the explicit `fieldhouseusa-mansfield-high-school-84x50-v1` profile: an 84-by-50-foot floor, 12-foot-wide lanes, free-throw lines 19 feet from each baseline, and half court at 42 feet. The black basketball markings are authoritative; overlapping red volleyball markings and the visible background court are distractors. Legacy revisions retain their original 94-by-50 estimated coordinate system and are never silently rescaled.
+
+A revision 4 court-only successor can be created from immutable revision 3 without rerunning person detection. Each camera-state manifest supplies at least four reviewed line intersections plus at least two independent held-out intersections. Every state must pass p95 error at or below one foot. Calibrated target and context-player floor contacts receive three named marking distances, their camera-state ID, the floor-contact method, and the measured uncertainty. Missing, overlapping, out-of-court, or failing states remain estimated.
+
+```bash
+pnpm --filter @create-something/guard-performance-lab film:apply:court-calibration \
+  --source-revision /private/path/full-analysis-r3.json \
+  --manifest /private/path/mansfield-camera-states.json \
+  --output /private/path/full-analysis-r4.json \
+  --analyzed-at <fixed-receipt-time>
+```
+
+Roboflow court keypoints may seed a review, but they are never self-promoting. The benchmark remaps model landmarks to the Mansfield floor, reserves held-out points, rejects ambiguous court hypotheses, and supports offline rescoring of immutable raw predictions. A failed receipt is evidence to retain estimates, not permission to lower the one-foot gate.
+
 Attach reviewed play context to that same immutable revision with a complete, non-overlapping ledger. `unknown` intervals require explicit unreviewed provenance and fail closed; every other state requires source-review evidence. The command verifies source identity and complete duration coverage, then writes a new artifact with the original frames, players, identity fingerprint, revision, and execution count intact.
 
 ```bash
@@ -161,9 +178,29 @@ pnpm --filter @create-something/guard-performance-lab film:import:http -- \
   --gate /private/path/import-gate-r3-play-state.json
 ```
 
-Both local and HTTP imports reject analyses that are not bound to an exact SHA-256 import gate. Revision 1/2 gates consume the passing fixed benchmark report and its exact correction overlay; revision 3 gates require the embedded locked identity benchmark. Play-state receipt counts are recomputed from the captured frames before a gate can be issued. The analyzer also hashes the linked video bytes itself and rejects a mismatched supplied source receipt before inference starts.
+Both local and HTTP imports reject analyses that are not bound to an exact SHA-256 import gate. Revision 1/2 gates consume the passing fixed benchmark report and its exact correction overlay; revision 3 gates require the embedded locked identity benchmark; revision 4 also requires its embedded passing Mansfield court-calibration receipt. Play-state receipt counts are recomputed from the captured frames before a gate can be issued. The analyzer also hashes the linked video bytes itself and rejects a mismatched supplied source receipt before inference starts.
 
 `Film trace` then replays the captured top-down traffic. The slider works in both directions. `All verified #13 positions` is the default and keeps every identity-resolved position visible as a gray dashed context wake even when play state is unreviewed; `Reviewed live basketball only` draws an orange wake only for verified live offense, live defense, and transition states. `All verified history` shows the complete trace up to the current scrub time with older segments faded and each segment endpoint marked. Wake segments break across state changes, unresolved gaps, and inactive substitutions. JSON/SVG exports carry the persisted identity and migration fingerprints. Operator corrections require direct-evidence text and append provenance; player-scoped identities cannot attach or correct analyses and can read only their assigned player.
+
+### Anonymized possession review
+
+An operator can pair direct source-review notes with compact, anonymized evidence stills without another inference execution. Definitions contain the exact play range, representative frame, possession, phase, observable position, basketball interpretation, and an explicit `not proven` boundary. The builder resolves the already-verified #13 image point, pixelates the whole frame, and adds `13` synthetically after anonymization. It never persists the temporary sharp extraction.
+
+```bash
+pnpm --filter @create-something/guard-performance-lab film:build:play-review -- \
+  --analysis /private/path/full-analysis-r3.json \
+  --source /private/path/game.mp4 \
+  --definitions /private/path/player-13-review-definitions.json \
+  --output /private/path/player-13-play-review.json \
+  --image-dir /private/path/anonymized-review-stills
+
+pnpm --filter @create-something/guard-performance-lab film:attach:play-review -- \
+  --data /private/path/workspace.json \
+  --review /private/path/player-13-play-review.json \
+  --player developing-guard
+```
+
+The attach command fails closed when the source hash, analysis revision, one-run receipt, time domain, image media, pixelation receipt, or synthetic marker contract does not match. Player-scoped callers may read their assigned review cards but cannot attach or replace them. Selecting a card seeks the existing scrubber to the evidence frame; reload and export reuse the same private packet.
 
 ### Local segmentation-mask tracking
 

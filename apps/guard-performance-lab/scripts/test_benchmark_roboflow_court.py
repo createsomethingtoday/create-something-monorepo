@@ -36,6 +36,13 @@ class CourtBenchmarkTests(unittest.TestCase):
         self.assertEqual(margin, 1.0)
         self.assertFalse(ambiguous)
 
+    def test_mansfield_profile_uses_an_84_foot_court_and_12_foot_lane(self):
+        self.assertEqual(MODULE.COURT_POINTS_FT["19"], (42, 0))
+        self.assertEqual(MODULE.COURT_POINTS_FT["23"], (42, 50))
+        self.assertEqual(MODULE.COURT_POINTS_FT["12"], (19, 19))
+        self.assertEqual(MODULE.COURT_POINTS_FT["14"], (19, 31))
+        self.assertEqual(MODULE.COURT_POINTS_FT["41"], (84, 50))
+
 
 if __name__ == "__main__":
     unittest.main()

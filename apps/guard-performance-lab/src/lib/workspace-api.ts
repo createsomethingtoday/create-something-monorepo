@@ -2,6 +2,7 @@ import { z, ZodError } from 'zod';
 import { labService, type LabService } from './server/lab-service.js';
 import { isPlayerScope, type GuardAccessScope } from './server/scope.js';
 import { capturedFilmAnalysisSchema } from './film.js';
+import { filmPlayReviewPacketSchema } from './film-play-review.js';
 
 const evidenceValues = z.enum(['emerging', 'usable', 'repeatable']);
 const receiptSchema = z.object({
@@ -51,6 +52,7 @@ export const workspaceCommandSchema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('register-evidence'), playerId: z.string().min(1), evidence: artifactSchema }),
   z.object({ action: z.literal('record-engagement'), playerId: z.string().min(1), engagement: engagementSchema }),
   z.object({ action: z.literal('attach-film-analysis'), playerId: z.string().min(1), title: z.string().trim().min(1).max(160), analysis: capturedFilmAnalysisSchema }),
+  z.object({ action: z.literal('attach-film-play-review'), playerId: z.string().min(1), analysisId: z.string().min(1), review: filmPlayReviewPacketSchema }),
   z.object({ action: z.literal('correct-film-analysis'), playerId: z.string().min(1), analysisId: z.string().min(1), correction: filmCorrectionDraftSchema })
 ]);
 export type WorkspaceCommand = z.infer<typeof workspaceCommandSchema>;
@@ -63,7 +65,7 @@ export async function workspaceCommandResponse(
   try {
     const command = workspaceCommandSchema.parse(await request.json());
     if (isPlayerScope(scope)) {
-      if (command.action === 'create-player' || command.action === 'select-player' || command.action === 'attach-film-analysis' || command.action === 'correct-film-analysis') {
+      if (command.action === 'create-player' || command.action === 'select-player' || command.action === 'attach-film-analysis' || command.action === 'attach-film-play-review' || command.action === 'correct-film-analysis') {
         return Response.json({ ok: false, error: 'Player access cannot manage player profiles or analysis revisions.' }, { status: 403 });
       }
       if (command.playerId !== scope.playerId) {
@@ -77,6 +79,7 @@ export async function workspaceCommandResponse(
       : command.action === 'register-evidence' ? await service.registerEvidence(command.playerId, command.evidence)
       : command.action === 'record-engagement' ? await service.recordEngagement(command.playerId, command.engagement)
       : command.action === 'attach-film-analysis' ? await service.attachFilmAnalysis(command.playerId, command.title, command.analysis)
+      : command.action === 'attach-film-play-review' ? await service.attachFilmPlayReview(command.playerId, command.analysisId, command.review)
       : await service.correctFilmAnalysis(command.playerId, command.analysisId, command.correction);
     return Response.json(isPlayerScope(scope) ? await service.getPlayerWorkspace(scope.playerId) : result);
   } catch (error) {
