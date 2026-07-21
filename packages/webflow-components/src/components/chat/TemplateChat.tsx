@@ -20,6 +20,7 @@ import {
   createHighlightMissState,
   createTextDeltaBatcher,
   discoverOpenRoots,
+  getHostOverlayBottomInset,
   isHostOverlayBlocking,
   queryDiscoveredRoots,
   type TextDeltaBatcher,
@@ -244,6 +245,13 @@ export function limitTemplateChatInput(value: string): string {
   return value.slice(0, MAX_REQUEST_MESSAGE_CHARS);
 }
 
+export function getPreviewReturnImmersive(
+  openedImmersive: boolean | null,
+  currentImmersive: boolean,
+): boolean {
+  return openedImmersive ?? currentImmersive;
+}
+
 const CHAT_STYLES = `
 .tmchat-launcher {
   position: fixed; right: 24px; bottom: 24px; z-index: 9000;
@@ -255,6 +263,19 @@ const CHAT_STYLES = `
   transition: background 160ms ease, transform 160ms ease;
 }
 .tmchat-launcher:hover { background: #0f5cd0; transform: translateY(-1px); }
+.tmchat-launcher:focus-visible,
+.tmchat-iconbtn:focus-visible,
+.tmchat-intro-toggle:focus-visible,
+.tmchat-chip:focus-visible,
+.tmchat-jump:focus-visible,
+.tmchat-send:focus-visible,
+.tmchat-preview-back:focus-visible,
+.tmchat-devicebtn:focus-visible,
+.tmchat-preview-open:focus-visible,
+.tmchat-preview-cta:focus-visible,
+.tmchat-input:focus-visible {
+  outline: 2px solid #146ef5; outline-offset: 2px;
+}
 .tmchat-backdrop {
   position: fixed; inset: 0; z-index: 99999998;
   background: rgba(8,8,8,0.44);
@@ -270,6 +291,7 @@ const CHAT_STYLES = `
   background: #fff; box-shadow: 0 12px 48px rgba(0,0,0,0.22);
   font-family: "WF Visual Sans Variable", "Inter", system-ui, sans-serif;
   color: #080808; font-size: 14px; line-height: 1.45;
+  transition: bottom 160ms ease;
 }
 .tmchat-panel.entering { animation: tmchat-in 220ms cubic-bezier(0.2, 0, 0, 1); }
 @keyframes tmchat-in { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: none; } }
@@ -326,6 +348,11 @@ const CHAT_STYLES = `
 .tmchat-panel.immersive .tmchat-msg { max-width: 680px; font-size: 15px; }
 .tmchat-msg.user { align-self: flex-end; background: #146ef5; color: #fff; padding: 9px 13px; border-radius: 14px 14px 4px 14px; }
 .tmchat-msg.assistant { align-self: flex-start; background: #f5f5f5; padding: 9px 13px; border-radius: 14px 14px 14px 4px; }
+.tmchat-turn-status { align-self: flex-start; color: #5b5b5b; font-size: 12px; font-weight: 600; }
+.tmchat-sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
 .tmchat-intro {
   align-self: flex-start; max-width: 92%; color: #5b5b5b; font-size: 12px;
   border: 1px solid #ececec; border-radius: 8px; background: #fafafa;
@@ -335,7 +362,6 @@ const CHAT_STYLES = `
   color: #404040; font: inherit; font-weight: 600; text-align: left;
 }
 .tmchat-intro-toggle:hover { color: #080808; }
-.tmchat-intro-toggle:focus-visible { outline: 2px solid #146ef5; outline-offset: 2px; border-radius: 6px; }
 .tmchat-intro-copy { padding: 0 10px 9px; max-width: 560px; }
 .tmchat-intro-copy[hidden] { display: none; }
 .tmchat-caret {
@@ -433,7 +459,6 @@ const CHAT_STYLES = `
   box-sizing: border-box;
   border: 1px solid #e0e0e0; border-radius: 8px; font: inherit; resize: none; overflow-y: auto;
 }
-.tmchat-input:focus-visible { outline: 2px solid #146ef5; outline-offset: 1px; }
 .tmchat-inputfield { flex: 1 1 auto; min-width: 0; }
 .tmchat-inputmeta { margin: 4px 2px 0; color: #757575; font-size: 11px; line-height: 1.25; }
 .tmchat-send {
@@ -546,7 +571,7 @@ const CHAT_STYLES = `
   .tmchat-msg, .tmchat-display, .tmchat-typing, .tmchat-progress, .tmchat-progress-skeleton-card, .tmchat-followups .tmchat-chip,
   .tmchat-jump, .tmchat-grid > div, .tmchat-strip > div, .tmchat-preview,
   .tmchat-preview.closing { animation: none; }
-  .tmchat-chip, .tmchat-send, .tmchat-launcher, .tmchat-devicebtn,
+  .tmchat-panel, .tmchat-chip, .tmchat-send, .tmchat-launcher, .tmchat-devicebtn,
   .tmchat-preview-back, .tmchat-preview-cta { transition: none; }
   .tmchat-chip:hover, .tmchat-launcher:hover, .tmchat-send:active:not(:disabled) { transform: none; }
 }
@@ -576,6 +601,7 @@ interface PersistedSession {
   followups: string[];
   known: AgentTemplateItem[];
   contextToken?: string;
+  stoppedPrompt?: string;
   open: boolean;
 }
 
@@ -597,6 +623,7 @@ function loadPersistedSession(storageKey: string): PersistedSession | null {
       followups: Array.isArray(parsed.followups) ? parsed.followups.filter((f) => typeof f === 'string') : [],
       known: Array.isArray(parsed.known) ? parsed.known.filter((item) => item && typeof item.template_slug === 'string') : [],
       contextToken: typeof parsed.contextToken === 'string' ? parsed.contextToken : undefined,
+      stoppedPrompt: typeof parsed.stoppedPrompt === 'string' ? parsed.stoppedPrompt : undefined,
       open: Boolean(parsed.open),
     };
   } catch {
@@ -1219,6 +1246,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   const [immersive, setImmersive] = useState(defaultImmersive);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [hostOverlayBlocking, setHostOverlayBlocking] = useState(false);
+  const [hostOverlayBottomInset, setHostOverlayBottomInset] = useState(0);
   const [messages, setMessages] = useState<ChatMessage[]>(persisted?.messages ?? []);
   const [input, setInput] = useState('');
   const [introExpanded, setIntroExpanded] = useState(false);
@@ -1228,10 +1256,12 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   const [pageAction, setPageAction] = useState<PageActionPayload | null>(null);
   const [working, setWorking] = useState(false);
   const [atBottom, setAtBottom] = useState(true);
-  const [retryText, setRetryText] = useState<string | null>(null);
+  const [retryText, setRetryText] = useState<string | null>(persisted?.stoppedPrompt ?? null);
+  const [stoppedPrompt, setStoppedPrompt] = useState<string | null>(persisted?.stoppedPrompt ?? null);
   // Template being live-previewed in the in-panel iframe (null = chat view).
   // Position/layout are kept for conversion attribution on the preview CTA.
   const [preview, setPreview] = useState<{ item: AgentTemplateItem; position: number; layout: string } | null>(null);
+  const previewOpenedImmersiveRef = useRef<boolean | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const launcherRef = useRef<HTMLButtonElement>(null);
@@ -1262,12 +1292,22 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   }, []);
 
   const syncHostOverlay = useCallback(() => {
-    if (isInline || typeof window === 'undefined' || typeof document === 'undefined' || window.innerWidth > 560) {
+    if (isInline || typeof window === 'undefined' || typeof document === 'undefined') {
       setHostOverlayBlocking(false);
+      setHostOverlayBottomInset(0);
       return;
     }
-    setHostOverlayBlocking(
-      isHostOverlayBlocking(document, hostOverlaySelectors, window.innerWidth, window.innerHeight),
+    const blocking = isHostOverlayBlocking(document, hostOverlaySelectors, window.innerWidth, window.innerHeight);
+    if (window.innerWidth <= 560) {
+      setHostOverlayBlocking(blocking);
+      setHostOverlayBottomInset(0);
+      return;
+    }
+    setHostOverlayBlocking(false);
+    setHostOverlayBottomInset(
+      blocking
+        ? getHostOverlayBottomInset(document, hostOverlaySelectors, window.innerWidth, window.innerHeight)
+        : 0,
     );
   }, [hostOverlaySelectors, isInline]);
 
@@ -1299,10 +1339,10 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   }, [syncHostOverlay]);
 
   useEffect(() => {
-    if (!hostOverlayBlocking || typeof window === 'undefined') return;
+    if ((!hostOverlayBlocking && hostOverlayBottomInset === 0) || typeof window === 'undefined') return;
     const interval = window.setInterval(syncHostOverlay, 500);
     return () => window.clearInterval(interval);
-  }, [hostOverlayBlocking, syncHostOverlay]);
+  }, [hostOverlayBlocking, hostOverlayBottomInset, syncHostOverlay]);
 
   useEffect(() => {
     if (hostOverlayBlocking && !isInline && open) setOpen(false);
@@ -1392,13 +1432,14 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
         followups,
         known: Array.from(knownTemplatesRef.current.values()).slice(-40),
         contextToken: contextTokenRef.current ?? undefined,
+        stoppedPrompt: stoppedPrompt ?? undefined,
         open: isInline ? false : open,
       };
       window.sessionStorage.setItem(storageKey, JSON.stringify(state));
     } catch {
       // Storage unavailable (private mode, iframe policy) — chat still works.
     }
-  }, [messages, followups, open, streaming, isInline, storageKey]);
+  }, [messages, followups, open, stoppedPrompt, streaming, isInline, storageKey]);
 
   // Stick-to-bottom: only auto-follow when the reader is already at the end.
   const handleScroll = useCallback(() => {
@@ -1456,6 +1497,14 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
     flipRectRef.current = panelRef.current?.getBoundingClientRect() ?? null;
     setImmersive(next);
   }, []);
+
+  const closePreview = useCallback(() => {
+    const returnImmersive = getPreviewReturnImmersive(previewOpenedImmersiveRef.current, immersive);
+    previewOpenedImmersiveRef.current = null;
+    setPreview(null);
+    if (returnImmersive !== immersive) setImmersiveAnimated(returnImmersive);
+    inputRef.current?.focus();
+  }, [immersive, setImmersiveAnimated]);
 
   useEffect(() => {
     const first = flipRectRef.current;
@@ -1523,14 +1572,13 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
       if (preview) {
-        setPreview(null);
-        inputRef.current?.focus();
+        closePreview();
       } else if (immersive) setImmersiveAnimated(false);
       else if (!isInline) setOpen(false);
     };
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
-  }, [open, immersive, isInline, preview, setImmersiveAnimated]);
+  }, [closePreview, open, immersive, isInline, preview, setImmersiveAnimated]);
 
   // The preview reads best on a wide canvas: opening one from a desktop docked
   // panel expands to immersive. Phones already use the full-screen surface, so
@@ -1538,6 +1586,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   const openPreview = useCallback(
     (item: AgentTemplateItem, position: number, layout: string) => {
       if (!item.website_url) return;
+      previewOpenedImmersiveRef.current = immersive;
       setPreview({ item, position, layout });
       track('live_preview_opened', {
         template_slug: item.template_slug,
@@ -1609,6 +1658,8 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
     setInput('');
     setIntroExpanded(false);
     setRetryText(null);
+    setStoppedPrompt(null);
+    previewOpenedImmersiveRef.current = null;
     setPreview(null);
     track('chat_reset');
     try {
@@ -1643,6 +1694,10 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
       setFollowups([]);
       setInput('');
       setRetryText(null);
+      const stoppedBase = stoppedPrompt
+        ? messages.slice(0, messages[messages.length - 1]?.role === 'assistant' ? -2 : -1)
+        : messages;
+      setStoppedPrompt(null);
       setStreaming(true);
       setStatus('thinking');
       setPageAction(null);
@@ -1651,7 +1706,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
       atBottomRef.current = true;
       setAtBottom(true);
 
-      const base = baseOverride ?? messages;
+      const base = baseOverride ?? stoppedBase;
       const history = [...base, { role: 'user' as const, content: trimmed, displays: [] }];
       setMessages([...history, { role: 'assistant', content: '', displays: [] }]);
 
@@ -1813,6 +1868,16 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
       } finally {
         textBatcher.flushNow();
         if (streamBatcherRef.current === textBatcher) streamBatcherRef.current = null;
+        if (controller.signal.aborted) {
+          setRetryText(trimmed);
+          setStoppedPrompt(trimmed);
+          setMessages((current) => {
+            const last = current[current.length - 1];
+            return last?.role === 'assistant' && !last.content && last.displays.length === 0
+              ? current.slice(0, -1)
+              : current;
+          });
+        }
         setWorkingState(false);
         setStreaming(false);
         track('response_completed', {
@@ -1826,10 +1891,11 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
         });
       }
     },
-    [apiBase, messages, streaming, immersive, setWorkingState, track, getSessionToken],
+    [apiBase, messages, stoppedPrompt, streaming, immersive, setWorkingState, track, getSessionToken],
   );
 
   if (!open) {
+    const launcherStyle = hostOverlayBottomInset > 0 ? { bottom: hostOverlayBottomInset + 16 } : undefined;
     return (
       <>
         <style dangerouslySetInnerHTML={{ __html: CHAT_STYLES }} />
@@ -1838,6 +1904,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
           type="button"
           className="tmchat-launcher"
           data-host-overlay-policy="yield"
+          style={launcherStyle}
           hidden={hostOverlayBlocking}
           aria-hidden={hostOverlayBlocking || undefined}
           disabled={hostOverlayBlocking}
@@ -1851,11 +1918,27 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   }
 
   const panelClass = `tmchat-panel entering${immersive ? ' immersive' : isInline ? ' inline' : ''}`;
+  const panelStyle = !isInline && !immersive && hostOverlayBottomInset > 0
+    ? {
+        bottom: hostOverlayBottomInset + 16,
+        height: `min(640px, calc(100vh - ${hostOverlayBottomInset + 32}px))`,
+      }
+    : undefined;
   const showConversationChips = !streaming && followups.length > 0;
   const showStarterChips = !streaming && messages.length === 0 && starters.length > 0;
   const showRetry = !streaming && retryText !== null;
   const hasDisplayedResults = messages.some((message) => message.displays.length > 0);
   const lastIndex = messages.length - 1;
+  const latestAssistant = messages.slice().reverse().find((message) => message.role === 'assistant');
+  const latestResultCount = latestAssistant?.displays.reduce((count, display) => count + display.items.length, 0) ?? 0;
+  const outcomeAnnouncement = !streaming && !stoppedPrompt && latestAssistant
+    ? [
+        latestAssistant.content.trim(),
+        latestResultCount > 0
+          ? `${latestResultCount} template ${latestResultCount === 1 ? 'recommendation is' : 'recommendations are'} ready.`
+          : '',
+      ].filter(Boolean).join(' ')
+    : '';
 
   return (
     <>
@@ -1866,7 +1949,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
           onClick={() => {
             // Layered dismissal, matching Esc: leave the preview first, then
             // the immersive state — never both in one click.
-            if (preview) setPreview(null);
+            if (preview) closePreview();
             else setImmersiveAnimated(false);
           }}
         />
@@ -1874,6 +1957,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
       <div
         ref={panelRef}
         className={panelClass}
+        style={panelStyle}
         role={isInline && !immersive ? undefined : 'dialog'}
         aria-label={title}
         aria-modal={isModalSurface || undefined}
@@ -1901,6 +1985,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
                 className="tmchat-iconbtn"
                 aria-label="Close chat"
                 onClick={() => {
+                  previewOpenedImmersiveRef.current = null;
                   setPreview(null);
                   if (immersive) setImmersiveAnimated(false);
                   if (!isInline) setOpen(false);
@@ -1966,9 +2051,15 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
               ))}
             </React.Fragment>
           ))}
+          {outcomeAnnouncement ? (
+            <div className="tmchat-outcome-announcement tmchat-sr-only" role="status" aria-live="polite" aria-atomic="true">
+              {outcomeAnnouncement}
+            </div>
+          ) : null}
           {streaming && working ? (
             <AgentProgress status={status} pageAction={pageAction} />
           ) : null}
+          {!streaming && stoppedPrompt ? <div className="tmchat-turn-status" role="status">Stopped</div> : null}
           {showRetry ? (
             <div className="tmchat-followups">
               <button
@@ -1976,7 +2067,9 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
                 className="tmchat-chip"
                 onClick={() => {
                   if (!retryText) return;
-                  const base = messages.slice(0, -2);
+                  const base = stoppedPrompt
+                    ? messages.slice(0, messages[messages.length - 1]?.role === 'assistant' ? -2 : -1)
+                    : messages.slice(0, -2);
                   void send(retryText, base, 'retry');
                 }}
               >
@@ -2019,6 +2112,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
               className="tmchat-input"
               rows={1}
               maxLength={MAX_REQUEST_MESSAGE_CHARS}
+              aria-label="Describe the site you want to build"
               aria-describedby={inputLimitId}
               placeholder={placeholder}
               value={input}
@@ -2050,10 +2144,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
             key={preview.item.template_slug}
             item={preview.item}
             onEvent={handlePreviewEvent}
-            onClose={() => {
-              setPreview(null);
-              inputRef.current?.focus();
-            }}
+            onClose={closePreview}
           />
         ) : null}
         </div>

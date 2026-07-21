@@ -7,6 +7,7 @@ import {
   AgentProgress,
   buildMessageSentAnalytics,
   getAgentProgressView,
+  getPreviewReturnImmersive,
   getTemplateChatStorageKey,
   limitTemplateChatInput,
   summarizePageAction,
@@ -16,6 +17,7 @@ import {
   createHighlightMissState,
   createTextDeltaBatcher,
   discoverOpenRoots,
+  getHostOverlayBottomInset,
   isHostOverlayBlocking,
   queryDiscoveredRoots,
 } from '../src/components/chat/templateChatRuntime';
@@ -26,6 +28,29 @@ test('TemplateChat is available from the current main lineage as a floating Temp
   assert.match(html, /Template finder/);
   assert.match(html, /class="tmchat-panel/);
   assert.match(html, /class="tmchat-turnstile"/);
+});
+
+test('every chat control uses the Webflow focus treatment and the composer has a stable accessible name', () => {
+  const html = renderToStaticMarkup(<TemplateChat defaultOpen enableAnalytics={false} />);
+  const focusSelectors = [
+    'tmchat-launcher',
+    'tmchat-iconbtn',
+    'tmchat-intro-toggle',
+    'tmchat-chip',
+    'tmchat-jump',
+    'tmchat-send',
+    'tmchat-preview-back',
+    'tmchat-devicebtn',
+    'tmchat-preview-open',
+    'tmchat-preview-cta',
+    'tmchat-input',
+  ];
+
+  for (const selector of focusSelectors) {
+    assert.match(html, new RegExp(`\\.${selector}:focus-visible`));
+  }
+  assert.match(html, /outline: 2px solid #146ef5; outline-offset: 2px;/);
+  assert.match(html, /<textarea[^>]*aria-label="Describe the site you want to build"/);
 });
 
 test('an active conversation compacts first-use guidance behind an explicit disclosure button', () => {
@@ -179,31 +204,39 @@ test('every recommendation layout explains fit and labels the contextual refinem
     assert.match(html, /class="tmchat-refine-label">Refine these results/);
     assert.match(html, />Show free options</);
     assert.match(html, />More upscale and minimal</);
+    assert.match(
+      html,
+      /class="tmchat-outcome-announcement tmchat-sr-only" role="status" aria-live="polite" aria-atomic="true">These are the strongest fits\. 5 template recommendations are ready\./,
+    );
   } finally {
     if (originalWindow === undefined) delete (globalThis as { window?: Window }).window;
     else globalThis.window = originalWindow;
   }
 });
 
-test('host overlays gate chat only when they actually own a mobile interaction point', () => {
+test('host overlays gate chat only when they actually own an interaction point', () => {
   const hostOverlay = {
     contains(node: unknown) {
       return node === coveredControl;
     },
+    getBoundingClientRect() {
+      return { top: 700, right: 1280, bottom: 844, left: 0, width: 1280, height: 144 };
+    },
   } as unknown as Element;
   const coveredControl = {} as Element;
-  const pageContent = {} as Element;
   const fakeDocument = {
     querySelectorAll(selector: string) {
       return selector === '#consent' ? [hostOverlay] : [];
     },
-    elementFromPoint(x: number) {
-      return x === 195 ? coveredControl : pageContent;
+    elementFromPoint() {
+      return coveredControl;
     },
   };
 
   assert.equal(isHostOverlayBlocking(fakeDocument, '#consent', 390, 844), true);
   assert.equal(isHostOverlayBlocking(fakeDocument, '#missing', 390, 844), false);
+  assert.equal(getHostOverlayBottomInset(fakeDocument, '#consent', 1280, 844), 144);
+  assert.equal(getHostOverlayBottomInset(fakeDocument, '#missing', 1280, 844), 0);
 });
 
 test('one bounded shadow-root discovery serves all selectors in a page-action cycle', () => {
@@ -300,6 +333,12 @@ test('message analytics record prompt metadata without copying prompt text', () 
   assert.equal('message' in payload, false);
 });
 
+test('closing preview restores the surface mode that opened it', () => {
+  assert.equal(getPreviewReturnImmersive(false, true), false);
+  assert.equal(getPreviewReturnImmersive(true, true), true);
+  assert.equal(getPreviewReturnImmersive(null, true), true);
+});
+
 test('TemplateChat exposes the worker prompt limit before submission', () => {
   const html = renderToStaticMarkup(<TemplateChat defaultOpen enableAnalytics={false} />);
 
@@ -307,6 +346,37 @@ test('TemplateChat exposes the worker prompt limit before submission', () => {
   assert.match(html, /maxLength="4000"/);
   assert.match(html, /aria-describedby="tmchat-input-limit-/);
   assert.match(html, /4,000 character limit/);
+});
+
+test('a stopped turn is acknowledged and can be retried without an empty assistant artifact', () => {
+  const originalWindow = globalThis.window;
+  Object.defineProperty(globalThis, 'window', {
+    configurable: true,
+    writable: true,
+    value: {
+      sessionStorage: {
+        getItem: () =>
+          JSON.stringify({
+            messages: [{ role: 'user', content: 'A restaurant site with a menu', displays: [] }],
+            followups: [],
+            known: [],
+            stoppedPrompt: 'A restaurant site with a menu',
+            open: true,
+          }),
+      },
+    },
+  });
+
+  try {
+    const html = renderToStaticMarkup(<TemplateChat defaultOpen enableAnalytics={false} />);
+
+    assert.match(html, /class="tmchat-turn-status"[^>]*role="status"[^>]*>Stopped</);
+    assert.match(html, />Try again</);
+    assert.equal((html.match(/class="tmchat-msg assistant"/g) ?? []).length, 0);
+  } finally {
+    if (originalWindow === undefined) delete (globalThis as { window?: Window }).window;
+    else globalThis.window = originalWindow;
+  }
 });
 
 test('the React input boundary truncates autofill and host-script values to the worker limit', () => {
