@@ -58,7 +58,7 @@ interface DisplayPayload {
 // Filters/sort/highlights the agent wants applied to the host page's template
 // grid (via the marketplace components' URL-param + templateFiltersChanged
 // contract). Highlight slugs are already validated server-side.
-interface PageActionPayload {
+export interface PageActionPayload {
   q?: string | null;
   category_group_slug?: string | null;
   styles?: string[] | null;
@@ -123,11 +123,106 @@ export interface TemplateChatProps {
 const DEFAULT_STARTERS =
   'A portfolio with bold animations, An online store for a clothing brand, A restaurant site with a menu, A SaaS landing page with a blog';
 
-const STATUS_LABELS: Record<AgentStatus, string> = {
-  thinking: 'Thinking',
-  searching: 'Searching templates',
-  curating: 'Curating picks',
-};
+export interface AgentProgressView {
+  activeIndex: number;
+  title: string;
+  detail: string;
+  receipt: string | null;
+}
+
+function humanizeAgentValue(value: string): string {
+  return value
+    .trim()
+    .replace(/[-_]+/g, ' ')
+    .replace(/\b\w/g, (letter) => letter.toUpperCase())
+    .replace(/\bAnd\b/g, '&');
+}
+
+export function summarizePageAction(payload: PageActionPayload | null): string | null {
+  if (!payload) return null;
+  const details: string[] = [];
+
+  if (payload.category_group_slug) details.push(humanizeAgentValue(payload.category_group_slug));
+  for (const style of payload.styles ?? []) details.push(humanizeAgentValue(style));
+  for (const type of payload.types ?? []) details.push(humanizeAgentValue(type));
+  if (payload.free_only === true) details.push('Free only');
+  if (payload.sort) details.push(`Sorted by ${humanizeAgentValue(payload.sort)}`);
+  const highlightCount = payload.highlight_slugs?.length ?? 0;
+  if (highlightCount > 0) details.push(`Highlighted ${highlightCount} ${highlightCount === 1 ? 'match' : 'matches'}`);
+
+  if (details.length > 0) return `Page updated · ${details.join(' · ')}`;
+  if (payload.clear_filters) return 'Reset the page filters';
+  if (payload.q != null) return 'Updated the page search';
+  return null;
+}
+
+export function getAgentProgressView(status: AgentStatus, payload: PageActionPayload | null): AgentProgressView {
+  const progress: Record<AgentStatus, Omit<AgentProgressView, 'receipt'>> = {
+    thinking: {
+      activeIndex: 0,
+      title: 'Understanding your request',
+      detail: 'Identifying the requirements that matter most.',
+    },
+    searching: {
+      activeIndex: 1,
+      title: 'Searching templates',
+      detail: 'Checking the template catalog for strong matches.',
+    },
+    curating: {
+      activeIndex: 2,
+      title: 'Curating the strongest matches',
+      detail: 'Comparing fit, style, and useful features.',
+    },
+  };
+
+  return {
+    ...progress[status],
+    receipt: summarizePageAction(payload),
+  };
+}
+
+export function AgentProgress({
+  status,
+  pageAction,
+}: {
+  status: AgentStatus;
+  pageAction: PageActionPayload | null;
+}): React.ReactElement {
+  const view = getAgentProgressView(status, pageAction);
+  const steps = [
+    'Understanding your request',
+    'Searching templates',
+    'Curating the strongest matches',
+  ];
+
+  return (
+    <div className="tmchat-progress" role="status" aria-live="polite" aria-atomic="true">
+      <div className="tmchat-progress-current">
+        <span className="tmchat-progress-mark" aria-hidden="true"><UiIcon name="sparkles" size={15} /></span>
+        <span>
+          <strong>{view.title}</strong>
+          <span className="tmchat-progress-detail">{view.detail}</span>
+        </span>
+        <span className="tmchat-dots" aria-hidden="true"><span /><span /><span /></span>
+      </div>
+      <ol className="tmchat-progress-steps" aria-label="Template search progress">
+        {steps.map((label, index) => {
+          const state = index < view.activeIndex ? 'complete' : index === view.activeIndex ? 'current' : 'upcoming';
+          return (
+            <li key={label} data-state={state}>
+              <span>{label}</span>
+              <span className="tmchat-progress-stepmark" aria-hidden="true">{state === 'complete' ? '✓' : ''}</span>
+            </li>
+          );
+        })}
+      </ol>
+      {view.receipt ? <div className="tmchat-progress-receipt">{view.receipt}</div> : null}
+      <div className="tmchat-progress-preview" aria-hidden="true">
+        {steps.map((label) => <span key={label} className="tmchat-progress-skeleton-card" />)}
+      </div>
+    </div>
+  );
+}
 
 const STORAGE_KEY = 'tmchat-session-v1';
 const MAX_PERSISTED_MESSAGES = 30;
@@ -231,6 +326,18 @@ const CHAT_STYLES = `
 .tmchat-panel.immersive .tmchat-msg { max-width: 680px; font-size: 15px; }
 .tmchat-msg.user { align-self: flex-end; background: #146ef5; color: #fff; padding: 9px 13px; border-radius: 14px 14px 4px 14px; }
 .tmchat-msg.assistant { align-self: flex-start; background: #f5f5f5; padding: 9px 13px; border-radius: 14px 14px 14px 4px; }
+.tmchat-intro {
+  align-self: flex-start; max-width: 92%; color: #5b5b5b; font-size: 12px;
+  border: 1px solid #ececec; border-radius: 8px; background: #fafafa;
+}
+.tmchat-intro-toggle {
+  width: 100%; border: 0; background: transparent; cursor: pointer; padding: 7px 10px;
+  color: #404040; font: inherit; font-weight: 600; text-align: left;
+}
+.tmchat-intro-toggle:hover { color: #080808; }
+.tmchat-intro-toggle:focus-visible { outline: 2px solid #146ef5; outline-offset: 2px; border-radius: 6px; }
+.tmchat-intro-copy { padding: 0 10px 9px; max-width: 560px; }
+.tmchat-intro-copy[hidden] { display: none; }
 .tmchat-caret {
   display: inline-block; width: 2px; height: 1em; margin-left: 2px;
   background: currentColor; vertical-align: -0.15em;
@@ -253,6 +360,8 @@ const CHAT_STYLES = `
 .tmchat-strip > * { flex: 0 0 220px; }
 .tmchat-panel.immersive .tmchat-strip > * { flex-basis: 260px; }
 .tmchat-followups { display: flex; flex-wrap: wrap; gap: 8px; }
+.tmchat-refine { display: grid; gap: 7px; }
+.tmchat-refine-label { color: #5b5b5b; font-size: 11px; font-weight: 600; letter-spacing: 0.01em; }
 .tmchat-chip {
   border: 1px solid #dbe6fb; border-radius: 999px; background: #f2f7ff;
   color: #0f5cd0; padding: 7px 12px; font-size: 13px; cursor: pointer; font-family: inherit;
@@ -261,6 +370,34 @@ const CHAT_STYLES = `
 .tmchat-chip:hover { background: #e3edfd; transform: translateY(-1px); }
 .tmchat-chip:active { transform: translateY(0); }
 .tmchat-typing { align-self: flex-start; color: #757575; font-size: 13px; display: inline-flex; align-items: baseline; gap: 6px; }
+.tmchat-progress {
+  align-self: stretch; padding: 13px; border: 1px solid #ececec; border-radius: 8px;
+  background: #fafafa; color: #404040;
+  animation: tmchat-rise 180ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+.tmchat-progress-current { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 9px; align-items: start; }
+.tmchat-progress-current strong { display: block; color: #080808; font-size: 13px; line-height: 1.35; }
+.tmchat-progress-detail { display: block; margin-top: 2px; color: #5b5b5b; font-size: 12px; line-height: 1.4; }
+.tmchat-progress-mark {
+  width: 28px; height: 28px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center;
+  background: #f0f0f0; color: #146ef5;
+}
+.tmchat-progress-steps { display: grid; gap: 5px; margin: 11px 0 0 37px; padding: 0; list-style: none; }
+.tmchat-progress-steps li { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #6b6b6b; font-size: 11px; }
+.tmchat-progress-steps li[data-state="current"] { color: #146ef5; font-weight: 600; }
+.tmchat-progress-steps li[data-state="complete"] { color: #5b5b5b; }
+.tmchat-progress-stepmark { min-width: 12px; color: #146ef5; text-align: center; }
+.tmchat-progress-receipt {
+  margin: 10px 0 0 37px; padding-top: 9px; border-top: 1px solid #ececec;
+  color: #5b5b5b; font-size: 11px; font-weight: 600;
+}
+.tmchat-progress-preview { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; margin-top: 12px; }
+.tmchat-progress-skeleton-card {
+  height: 42px; border-radius: 7px;
+  background: linear-gradient(100deg, #ececec 20%, #f5f5f5 40%, #ececec 60%);
+  background-size: 200% 100%; animation: tmchat-progress-shimmer 1.4s linear infinite;
+}
+@keyframes tmchat-progress-shimmer { to { background-position-x: -200%; } }
 .tmchat-dots { display: inline-flex; gap: 3px; }
 .tmchat-dots span {
   width: 4px; height: 4px; border-radius: 50%; background: #757575;
@@ -406,7 +543,7 @@ const CHAT_STYLES = `
 }
 @media (prefers-reduced-motion: reduce) {
   .tmchat-panel.entering, .tmchat-backdrop, .tmchat-dots span, .tmchat-caret,
-  .tmchat-msg, .tmchat-display, .tmchat-typing, .tmchat-followups .tmchat-chip,
+  .tmchat-msg, .tmchat-display, .tmchat-typing, .tmchat-progress, .tmchat-progress-skeleton-card, .tmchat-followups .tmchat-chip,
   .tmchat-jump, .tmchat-grid > div, .tmchat-strip > div, .tmchat-preview,
   .tmchat-preview.closing { animation: none; }
   .tmchat-chip, .tmchat-send, .tmchat-launcher, .tmchat-devicebtn,
@@ -827,7 +964,6 @@ function DisplayArtifact({
 }): React.ReactElement {
   const isStrip = payload.layout === 'carousel';
   const isSingle = payload.layout === 'spotlight' || payload.items.length === 1;
-  const showReasons = payload.layout === 'shortlist' || payload.layout === 'spotlight' || payload.layout === 'comparison';
 
   const cards = payload.items.map((entry, index) => (
     <div
@@ -860,7 +996,7 @@ function DisplayArtifact({
           entry.item.thumbnail_image_url ? { src: entry.item.thumbnail_image_url, alt: entry.item.name } : undefined
         }
         cumulativePurchases={entry.item.cumulative_purchases ?? undefined}
-        agentNote={showReasons ? entry.reason : undefined}
+        agentNote={entry.reason ? `Why it fits — ${entry.reason}` : undefined}
         showCategoryMeta={false}
         showPreviewLink={Boolean(onPreview && entry.item.website_url)}
         previewLabel="Live preview"
@@ -1074,6 +1210,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   const isInline = variant === 'inline';
   const storageKey = getTemplateChatStorageKey(sessionScope);
   const inputLimitId = `tmchat-input-limit-${useId().replace(/:/g, '')}`;
+  const introId = `tmchat-intro-${useId().replace(/:/g, '')}`;
   useMarketplaceComponentErrorTracking('TemplateChat', enableAnalytics);
   const [persisted] = useState<PersistedSession | null>(() =>
     typeof window === 'undefined' ? null : loadPersistedSession(storageKey),
@@ -1084,9 +1221,11 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   const [hostOverlayBlocking, setHostOverlayBlocking] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>(persisted?.messages ?? []);
   const [input, setInput] = useState('');
+  const [introExpanded, setIntroExpanded] = useState(false);
   const [streaming, setStreaming] = useState(false);
   const [followups, setFollowups] = useState<string[]>(persisted?.followups ?? []);
   const [status, setStatus] = useState<AgentStatus>('thinking');
+  const [pageAction, setPageAction] = useState<PageActionPayload | null>(null);
   const [working, setWorking] = useState(false);
   const [atBottom, setAtBottom] = useState(true);
   const [retryText, setRetryText] = useState<string | null>(null);
@@ -1452,6 +1591,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   const stopStreaming = useCallback(() => {
     streamBatcherRef.current?.flushNow();
     streamAbortRef.current?.abort();
+    inputRef.current?.focus();
   }, []);
 
   const resetChat = useCallback(() => {
@@ -1465,7 +1605,9 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
     contextTokenRef.current = null;
     setMessages([]);
     setFollowups([]);
+    setPageAction(null);
     setInput('');
+    setIntroExpanded(false);
     setRetryText(null);
     setPreview(null);
     track('chat_reset');
@@ -1503,6 +1645,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
       setRetryText(null);
       setStreaming(true);
       setStatus('thinking');
+      setPageAction(null);
       setWorkingState(true);
       inputRef.current?.focus();
       atBottomRef.current = true;
@@ -1609,6 +1752,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
               setWorkingState(true);
             } else if (event.type === 'display') {
               textBatcher.flushNow();
+              setWorkingState(false);
               for (const entry of event.payload.items) knownTemplatesRef.current.set(entry.template_slug, entry.item);
               appendToAssistant((message) => ({ ...message, displays: [...message.displays, event.payload] }));
               if (event.payload.followups?.length) setFollowups(event.payload.followups);
@@ -1623,6 +1767,8 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
               });
             } else if (event.type === 'page_action') {
               textBatcher.flushNow();
+              setPageAction(event.payload);
+              setWorkingState(true);
               applyPageAction(event.payload, highlightMissesRef.current, pageActionTimersRef.current);
               pageActionsApplied += 1;
               track('page_action_applied', {
@@ -1708,6 +1854,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   const showConversationChips = !streaming && followups.length > 0;
   const showStarterChips = !streaming && messages.length === 0 && starters.length > 0;
   const showRetry = !streaming && retryText !== null;
+  const hasDisplayedResults = messages.some((message) => message.displays.length > 0);
   const lastIndex = messages.length - 1;
 
   return (
@@ -1768,7 +1915,27 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
         <div className="tmchat-body">
         <div className="tmchat-scrollwrap">
         <div ref={scrollRef} className="tmchat-scroll" onScroll={handleScroll}>
-          <div className="tmchat-msg assistant">{welcomeMessage}</div>
+          {messages.length === 0 ? (
+            <div className="tmchat-msg assistant">{welcomeMessage}</div>
+          ) : (
+            <div className="tmchat-intro">
+              <button
+                type="button"
+                className="tmchat-intro-toggle"
+                aria-expanded={introExpanded}
+                aria-controls={introId}
+                onClick={() => setIntroExpanded((current) => !current)}
+                onKeyDown={(event) => {
+                  if (event.key !== 'Enter' && event.key !== ' ') return;
+                  event.preventDefault();
+                  setIntroExpanded((current) => !current);
+                }}
+              >
+                How Template finder works
+              </button>
+              <div id={introId} className="tmchat-intro-copy" hidden={!introExpanded}>{welcomeMessage}</div>
+            </div>
+          )}
           {showStarterChips ? (
             <div className="tmchat-followups">
               {starters.map((suggestion, index) => (
@@ -1800,14 +1967,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
             </React.Fragment>
           ))}
           {streaming && working ? (
-            <div className="tmchat-typing" aria-live="polite">
-              {STATUS_LABELS[status]}
-              <span className="tmchat-dots">
-                <span />
-                <span />
-                <span />
-              </span>
-            </div>
+            <AgentProgress status={status} pageAction={pageAction} />
           ) : null}
           {showRetry ? (
             <div className="tmchat-followups">
@@ -1825,18 +1985,21 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
             </div>
           ) : null}
           {showConversationChips ? (
-            <div className="tmchat-followups">
-              {followups.map((suggestion, index) => (
-                <button
-                  key={suggestion}
-                  type="button"
-                  className="tmchat-chip"
-                  style={{ animationDelay: `${120 + index * 50}ms` }}
-                  onClick={() => void send(suggestion, undefined, 'followup')}
-                >
-                  {suggestion}
-                </button>
-              ))}
+            <div className="tmchat-refine">
+              {hasDisplayedResults ? <div className="tmchat-refine-label">Refine these results</div> : null}
+              <div className="tmchat-followups">
+                {followups.map((suggestion, index) => (
+                  <button
+                    key={suggestion}
+                    type="button"
+                    className="tmchat-chip"
+                    style={{ animationDelay: `${120 + index * 50}ms` }}
+                    onClick={() => void send(suggestion, undefined, 'followup')}
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
             </div>
           ) : null}
         </div>

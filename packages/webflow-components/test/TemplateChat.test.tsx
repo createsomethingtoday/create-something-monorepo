@@ -4,9 +4,12 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { TemplateChat } from '../src/index';
 import {
+  AgentProgress,
   buildMessageSentAnalytics,
+  getAgentProgressView,
   getTemplateChatStorageKey,
   limitTemplateChatInput,
+  summarizePageAction,
 } from '../src/components/chat/TemplateChat';
 import { MAX_REQUEST_MESSAGE_CHARS } from '../src/components/chat/templateAgentSession';
 import {
@@ -23,6 +26,163 @@ test('TemplateChat is available from the current main lineage as a floating Temp
   assert.match(html, /Template finder/);
   assert.match(html, /class="tmchat-panel/);
   assert.match(html, /class="tmchat-turnstile"/);
+});
+
+test('an active conversation compacts first-use guidance behind an explicit disclosure button', () => {
+  const originalWindow = globalThis.window;
+  Object.defineProperty(globalThis, 'window', {
+    configurable: true,
+    writable: true,
+    value: {
+      sessionStorage: {
+        getItem: () =>
+          JSON.stringify({
+            messages: [
+              { role: 'user', content: 'A restaurant site with a menu', displays: [] },
+              { role: 'assistant', content: 'Here are three focused options.', displays: [] },
+            ],
+            followups: [],
+            known: [],
+            open: true,
+          }),
+      },
+    },
+  });
+
+  try {
+    const html = renderToStaticMarkup(<TemplateChat defaultOpen enableAnalytics={false} />);
+
+    assert.match(html, /<div class="tmchat-intro"/);
+    assert.match(html, /<button[^>]*class="tmchat-intro-toggle"[^>]*aria-expanded="false"[^>]*aria-controls="tmchat-intro-/);
+    assert.match(html, />How Template finder works<\/button>/);
+    assert.match(html, /class="tmchat-intro-copy" hidden=""/);
+    assert.doesNotMatch(html, /class="tmchat-msg assistant">Hi!/);
+  } finally {
+    if (originalWindow === undefined) delete (globalThis as { window?: Window }).window;
+    else globalThis.window = originalWindow;
+  }
+});
+
+test('agent progress maps protocol status and page actions to factual user-facing work', () => {
+  const action = {
+    category_group_slug: 'food-and-drink',
+    free_only: true,
+    highlight_slugs: ['bistro', 'supper-club'],
+  };
+
+  assert.deepEqual(getAgentProgressView('searching', action), {
+    activeIndex: 1,
+    title: 'Searching templates',
+    detail: 'Checking the template catalog for strong matches.',
+    receipt: 'Page updated · Food & Drink · Free only · Highlighted 2 matches',
+  });
+  assert.equal(summarizePageAction({ q: 'private restaurant launch' }), 'Updated the page search');
+  assert.equal(summarizePageAction({ q: 'private restaurant launch' })?.includes('private'), false);
+});
+
+test('agent progress renders an accessible three-stage work surface with loading structure', () => {
+  const html = renderToStaticMarkup(
+    <AgentProgress
+      status="searching"
+      pageAction={{ category_group_slug: 'food-and-drink', highlight_slugs: ['bistro'] }}
+    />,
+  );
+
+  assert.match(html, /class="tmchat-progress"/);
+  assert.match(html, /role="status"/);
+  assert.match(html, /aria-live="polite"/);
+  assert.match(html, /Understanding your request/);
+  assert.match(html, /data-state="current"[^>]*>[^<]*<[^>]*>Searching templates/s);
+  assert.match(html, /Curating the strongest matches/);
+  assert.match(html, /Page updated · Food &amp; Drink · Highlighted 1 match/);
+  assert.equal((html.match(/tmchat-progress-skeleton-card/g) ?? []).length, 3);
+});
+
+test('agent progress uses Webflow-neutral surfaces with blue reserved for current state', () => {
+  const html = renderToStaticMarkup(<TemplateChat defaultOpen enableAnalytics={false} />);
+
+  assert.match(
+    html,
+    /\.tmchat-progress\s*\{[^}]*border: 1px solid #ececec; border-radius: 8px;[^}]*background: #fafafa;/s,
+  );
+  assert.match(html, /\.tmchat-progress-mark\s*\{[^}]*background: #f0f0f0; color: #146ef5;/s);
+  assert.match(html, /\.tmchat-progress-steps li\s*\{[^}]*color: #6b6b6b;/s);
+  assert.match(
+    html,
+    /\.tmchat-progress-receipt\s*\{[^}]*border-top: 1px solid #ececec;[^}]*color: #5b5b5b;/s,
+  );
+  assert.match(
+    html,
+    /\.tmchat-progress-skeleton-card\s*\{[^}]*#ececec 20%, #f5f5f5 40%, #ececec 60%/s,
+  );
+  assert.doesNotMatch(html, /\.tmchat-progress\s*\{[^}]*linear-gradient/s);
+});
+
+test('every recommendation layout explains fit and labels the contextual refinement handoff', () => {
+  const originalWindow = globalThis.window;
+  const layouts = ['gallery', 'carousel', 'shortlist', 'spotlight', 'comparison'] as const;
+  const displays = layouts.map((layout, index) => ({
+    layout,
+    title: `${layout} recommendations`,
+    items: [
+      {
+        template_slug: `${layout}-template`,
+        reason: `Reason for ${layout}.`,
+        item: {
+          template_slug: `${layout}-template`,
+          name: `${layout} template`,
+          url: `/template/${layout}`,
+          creator_name: 'Studio One',
+          creator_profile_url: null,
+          creator_avatar_url: null,
+          creator_avatar_alt: null,
+          thumbnail_image_url: null,
+          price: 49 + index,
+          is_free: false,
+          features: ['CMS'],
+          cumulative_purchases: 12,
+        },
+      },
+    ],
+  }));
+  Object.defineProperty(globalThis, 'window', {
+    configurable: true,
+    writable: true,
+    value: {
+      sessionStorage: {
+        getItem: () =>
+          JSON.stringify({
+            messages: [
+              { role: 'user', content: 'A restaurant site with a menu', displays: [] },
+              {
+                role: 'assistant',
+                content: 'These are the strongest fits.',
+                displays,
+              },
+            ],
+            followups: ['Show free options', 'More upscale and minimal'],
+            known: [],
+            open: true,
+          }),
+      },
+    },
+  });
+
+  try {
+    const html = renderToStaticMarkup(<TemplateChat defaultOpen enableAnalytics={false} />);
+
+    for (const layout of layouts) {
+      assert.match(html, new RegExp(`Why it fits — Reason for ${layout}\\.`));
+    }
+    assert.equal((html.match(/class="tmchat-display"/g) ?? []).length, layouts.length);
+    assert.match(html, /class="tmchat-strip"/);
+    assert.match(html, /class="tmchat-refine-label">Refine these results/);
+    assert.match(html, />Show free options</);
+    assert.match(html, />More upscale and minimal</);
+  } finally {
+    if (originalWindow === undefined) delete (globalThis as { window?: Window }).window;
+    else globalThis.window = originalWindow;
+  }
 });
 
 test('host overlays gate chat only when they actually own a mobile interaction point', () => {
