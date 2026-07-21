@@ -115,6 +115,12 @@ export default declareComponent(TemplateGrid, {
       tooltip:
         'Show compact display-only signals from the search API, such as Popular, purchases, and views. Does not add new filters or sorting.',
     }),
+    showMcpCampaign: props.Boolean({
+      name: 'Show MCP 2.0 Campaign',
+      defaultValue: true,
+      tooltip:
+        'Show the Webflow MCP 2.0 video campaign after the first complete row on broad All and Featured result sets. Hidden during search and narrower filtered views.',
+    }),
     enableAnalytics: props.Boolean({
       name: 'Enable Analytics',
       defaultValue: true,

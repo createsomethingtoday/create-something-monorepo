@@ -10,6 +10,7 @@ import React, {
 import { TemplateCard, TEMPLATE_CARD_STYLES, type TemplateCardBadge, type TemplateCardLink } from '../cards/TemplateCard';
 import { trackMarketplaceEvent } from '../marketplace/analytics';
 import { FeaturedTemplatePreview } from '../marketplace/FeaturedTemplatePreview';
+import { TemplateCampaignLane } from '../marketplace/TemplateCampaignLane';
 import {
   MarketplaceComponentErrorBoundary,
   useMarketplaceComponentErrorTracking,
@@ -103,6 +104,68 @@ interface FeaturedPreviewSession {
   total: number;
   filters: FilterState;
   loadingNext: boolean;
+}
+
+export type TemplateGridDisplayItem<T> =
+  | { kind: 'template'; item: T; sourceIndex: number }
+  | { kind: 'campaign'; campaignId: 'webflow-mcp-2' };
+
+export interface TemplateGridCampaignContext {
+  enabled: boolean;
+  query: string;
+  scope: TemplateScope;
+  categoryGroupSlug: string | null;
+  childCategorySlug: string | null;
+  creatorSlug: string | null;
+  styleSlug: string | null;
+  tagSlug: string | null;
+  styles: readonly string[];
+  tags: readonly string[];
+  types: readonly string[];
+  freeOnly: boolean;
+}
+
+export function shouldShowTemplateGridCampaign(context: TemplateGridCampaignContext): boolean {
+  if (!context.enabled || context.query.trim()) return false;
+  if (context.scope !== 'all' && context.scope !== 'featured') return false;
+  return (
+    !context.categoryGroupSlug &&
+    !context.childCategorySlug &&
+    !context.creatorSlug &&
+    !context.styleSlug &&
+    !context.tagSlug &&
+    context.styles.length === 0 &&
+    context.tags.length === 0 &&
+    context.types.length === 0 &&
+    !context.freeOnly
+  );
+}
+
+export function templateGridColumnCount(viewportWidth: number): 1 | 2 | 3 | 4 {
+  if (viewportWidth <= 479) return 1;
+  if (viewportWidth <= 767) return 2;
+  if (viewportWidth <= 991) return 3;
+  return 4;
+}
+
+export function buildTemplateGridDisplayItems<T>(
+  items: readonly T[],
+  campaignInsertAfter: number,
+  showCampaign: boolean,
+): TemplateGridDisplayItem<T>[] {
+  const templateItems: TemplateGridDisplayItem<T>[] = items.map((item, sourceIndex) => ({
+    kind: 'template',
+    item,
+    sourceIndex,
+  }));
+  const insertionIndex = Math.max(1, Math.floor(campaignInsertAfter));
+  if (!showCampaign || items.length < insertionIndex) return templateItems;
+
+  return [
+    ...templateItems.slice(0, insertionIndex),
+    { kind: 'campaign', campaignId: 'webflow-mcp-2' },
+    ...templateItems.slice(insertionIndex),
+  ];
 }
 
 export function appendUniqueFeaturedPreviewItems<T extends { id: string; template_slug: string }>(
@@ -207,6 +270,8 @@ export interface TemplateGridProps {
   showFeaturedBadge?: boolean;
   /** Show compact social-proof signals from the search API on each card. */
   showMarketplaceSignals?: boolean;
+  /** Show the Webflow MCP 2.0 campaign on broad All and Featured result sets. */
+  showMcpCampaign?: boolean;
   /**
    * Emit aggregate marketplace health telemetry for successful result batches
    * and component errors. Does not send raw query text, template names, or
@@ -1183,6 +1248,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
   showPreviewLink = false,
   showFeaturedBadge = false,
   showMarketplaceSignals = false,
+  showMcpCampaign = true,
   enableAnalytics = true,
 }) => {
   useMarketplaceComponentErrorTracking('TemplateGrid', enableAnalytics);
@@ -1222,6 +1288,9 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
   const [emptyRecommendationsTitleState, setEmptyRecommendationsTitleState] = useState(emptyRecommendationsTitle);
   const [emptyRecommendationsLoading, setEmptyRecommendationsLoading] = useState(false);
   const [featuredPreview, setFeaturedPreview] = useState<FeaturedPreviewSession | null>(null);
+  const [campaignInsertAfter, setCampaignInsertAfter] = useState<1 | 2 | 3 | 4>(() =>
+    typeof window === 'undefined' ? 4 : templateGridColumnCount(window.innerWidth),
+  );
 
   // Stale-fetch guard: every new filter/sort change increments this
   const fetchEpochRef = useRef(0);
@@ -1231,6 +1300,14 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
   const featuredPreviewRef = useRef<FeaturedPreviewSession | null>(null);
   const lastHrefRef = useRef(typeof window === 'undefined' ? '' : window.location.href);
   featuredPreviewRef.current = featuredPreview;
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const syncCampaignRow = () => setCampaignInsertAfter(templateGridColumnCount(window.innerWidth));
+    syncCampaignRow();
+    window.addEventListener('resize', syncCampaignRow);
+    return () => window.removeEventListener('resize', syncCampaignRow);
+  }, []);
 
   // Keep Designer prop edits and production URL changes aligned after mount.
   useEffect(() => {
@@ -2094,6 +2171,21 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
   }
 
   const isRefreshing = loading && items.length > 0;
+  const shouldShowMcpCampaign = shouldShowTemplateGridCampaign({
+    enabled: showMcpCampaign,
+    query: filters.q,
+    scope: filters.scope,
+    categoryGroupSlug: filters.categoryGroupSlug,
+    childCategorySlug: filters.childCategorySlug,
+    creatorSlug: filters.creatorSlug,
+    styleSlug: filters.styleSlug,
+    tagSlug: filters.tagSlug,
+    styles: filters.styles,
+    tags: filters.tags,
+    types: filters.types,
+    freeOnly: filters.freeOnly,
+  });
+  const displayItems = buildTemplateGridDisplayItems(items, campaignInsertAfter, shouldShowMcpCampaign);
 
   return withFeaturedPreview(
     <div style={S.root} aria-busy={isRefreshing ? true : undefined}>
@@ -2111,7 +2203,11 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
           </div>
         )}
         <div className="tmgrid-grid">
-          {items.map((item, i) => renderTemplateGridItem(item, i))}
+          {displayItems.map((displayItem) =>
+            displayItem.kind === 'campaign'
+              ? <TemplateCampaignLane key={displayItem.campaignId} enableAnalytics={enableAnalytics} />
+              : renderTemplateGridItem(displayItem.item, displayItem.sourceIndex),
+          )}
         </div>
       </div>
 
