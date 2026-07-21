@@ -49,10 +49,14 @@ function template(index) {
   };
 }
 
-function displayEvent(spotlight) {
+function displayEvent(spotlight, restaurant = false) {
   const items = (spotlight ? [template(0)] : names.map((_, index) => template(index))).map((item) => ({
     template_slug: item.template_slug,
-    reason: spotlight ? 'A focused documentation starting point.' : undefined,
+    reason: restaurant
+      ? `${item.name} pairs a clear menu-ready structure with easy CMS editing.`
+      : spotlight
+        ? 'A focused documentation starting point.'
+        : `${item.name} is a strong starting point with flexible CMS support.`,
     item,
   }));
   return {
@@ -98,28 +102,53 @@ const server = createServer(async (request, response) => {
     const lastMessage = parsed.messages?.at(-1)?.content ?? '';
     const spotlight = /spotlight|one template/i.test(lastMessage);
     const stress = /stress|performance/i.test(lastMessage);
-    const events = stress
+    const restaurant = /restaurant|menu/i.test(lastMessage);
+    const sequence = stress
       ? [
-          { type: 'status', label: 'searching' },
+          { event: { type: 'status', label: 'searching' }, delay: 0 },
           ...Array.from({ length: 240 }, (_, index) => ({
-            type: 'text_delta',
-            text: index === 0 ? 'Performance response ' : `${index} `,
+            event: {
+              type: 'text_delta',
+              text: index === 0 ? 'Performance response ' : `${index} `,
+            },
+            delay: 0,
           })),
-          { type: 'page_action', payload: { q: 'portfolio', highlight_slugs: ['missing-template'] } },
-          displayEvent(false),
-          { type: 'done' },
+          { event: { type: 'page_action', payload: { q: 'portfolio', highlight_slugs: ['missing-template'] } }, delay: 0 },
+          { event: displayEvent(false), delay: 0 },
+          { event: { type: 'done' }, delay: 0 },
         ]
       : [
-          { type: 'text_delta', text: spotlight ? 'Here is one strong starting point.' : 'Here are three popular starting points.' },
-          displayEvent(spotlight),
-          { type: 'done' },
+          { event: { type: 'status', label: 'thinking' }, delay: 800 },
+          { event: { type: 'status', label: 'searching' }, delay: 1500 },
+          {
+            event: {
+              type: 'page_action',
+              payload: restaurant
+                ? { category_group_slug: 'food-and-drink', highlight_slugs: ['flowguide', 'notate', 'knowledgehub-x'] }
+                : { highlight_slugs: ['flowguide', 'notate', 'knowledgehub-x'] },
+            },
+            delay: 1500,
+          },
+          { event: { type: 'status', label: 'curating' }, delay: 1500 },
+          {
+            event: {
+              type: 'text_delta',
+              text: spotlight ? 'Here is one strong starting point.' : 'Here are three popular starting points.',
+            },
+            delay: 1000,
+          },
+          { event: displayEvent(spotlight, restaurant), delay: 300 },
+          { event: { type: 'done' }, delay: 0 },
         ];
     response.writeHead(200, {
       'content-type': 'text/event-stream; charset=utf-8',
       'cache-control': 'no-cache',
       connection: 'keep-alive',
     });
-    for (const event of events) response.write(`data: ${JSON.stringify(event)}\n\n`);
+    for (const { event, delay } of sequence) {
+      if (delay > 0) await new Promise((resolve) => setTimeout(resolve, delay));
+      response.write(`data: ${JSON.stringify(event)}\n\n`);
+    }
     response.end();
     return;
   }
