@@ -18,6 +18,7 @@
     "build": "pnpm build:room-client && wrangler deploy --dry-run --outdir dist",
     "check": "tsc --noEmit",
     "dev": "pnpm build:room-client && wrangler dev",
+    "sync:webflow-busy": "swift scripts/sync-webflow-busy-projection.swift",
     "test": "vitest run && vitest run --config vitest.worker.config.ts",
     "test:unit": "vitest run",
     "test:worker": "vitest run --config vitest.worker.config.ts",

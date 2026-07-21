@@ -7,6 +7,7 @@
   "vars": {
     "GOOGLE_EVENT_CALENDAR_ID": "micah@createsomething.io",
     "GOOGLE_SELECTED_CALENDAR_IDS": "micah@createsomething.io",
+    "WEBFLOW_BUSY_PROJECTION_REQUIRED": "true",
     "GOOGLE_REDIRECT_URI": "https://create-something-scheduler.createsomething.workers.dev/oauth/google/callback",
     "RESEND_FROM": "CREATE SOMETHING <noreply@createsomething.io>",
     "TURNSTILE_SITE_KEY": "0x4AAAAAADz8zw7ebYd-V5eU",
