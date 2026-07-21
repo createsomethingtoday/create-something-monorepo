@@ -125,6 +125,7 @@ The current package contains both Canon exports and compatibility exports. The l
 | Component | Description | Key Props |
 |-----------|-------------|-----------|
 | **Template Card** | CMS-bindable marketplace template card | `templateName`, `templateLink`, `primaryImage`, `creatorName`, `creatorIcon`, `popularityScore` |
+| **Template Chat** | Turnstile-backed conversational template finder with floating, inline, and immersive surfaces | `apiBase`, `variant`, `sessionScope`, `hostOverlaySelectors`, `starterPrompts`, `enableAnalytics` |
 | **Template Grid** | Worker-backed template search grid | `apiBase`, `categorySlug`, `creatorSlug`, `creatorRecordId`, `scopeOverride`, `initialSort`, `pageSize` |
 | **Template Filter Bar** | Worker-backed marketplace filters and pills | `apiBase`, `categorySlug`, `creatorSlug`, `creatorRecordId`, `scopeOverride`, `defaultSort` |
 | **Template Search Box** | Shared marketplace search input that routes to the standalone search page or filters the current page | `mode`, `variant`, `searchAction`, `queryParam`, `placeholder`, `showButton` |
@@ -138,6 +139,14 @@ The current package contains both Canon exports and compatibility exports. The l
 | **Marketplace FAQ** | Accessible marketplace FAQ accordion with optional FAQPage JSON-LD | `items`, `openFirst`, `allowMultipleOpen`, `includeStructuredData`, `enableAnalytics` |
 | **Marketplace Landing Experiment Gate** | Optimizely-compatible test gate for control/treatment reveal and exposure tracking | `mode`, `trafficPercent`, `controlSelector`, `treatmentSelector`, `optimizelyExposureEvent` |
 | **Featured Creator Card** | CMS-bindable monthly featured creator card | `creatorName`, `creatorLink`, `creatorAvatar`, `headline`, `featuredTemplateCount`, `newTemplates90d`, `buyerDemand`, `categoryBreadth`, `topTemplateName`, `topTemplateImage` |
+
+#### Template Chat multisurface contract
+
+- Give every independent surface a stable, distinct `sessionScope`. The Marketplace default remains `marketplace` so existing same-tab continuity is preserved.
+- Keep `hostOverlaySelectors` pointed at host-owned consent/modal layers. On phone viewports, Template Chat yields the composer zone while one of those layers owns interaction and returns the launcher after dismissal.
+- User prompts are limited to 4,000 characters at both the DOM and React state boundaries. Agent requests remain capped at 20 messages and 40,000 total characters.
+- Default analytics emit prompt length and interaction metadata, never raw prompt content. Template-card slugs and conversion attribution remain enabled.
+- Library share and site publication remain separate approval-gated promotion actions; a successful local bundle does not publish the component.
 
 #### Template detail category links
 
