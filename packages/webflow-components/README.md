@@ -125,7 +125,7 @@ The current package contains both Canon exports and compatibility exports. The l
 | Component | Description | Key Props |
 |-----------|-------------|-----------|
 | **Template Card** | CMS-bindable marketplace template card | `templateName`, `templateLink`, `primaryImage`, `creatorName`, `creatorIcon`, `popularityScore` |
-| **Template Grid** | Worker-backed template search grid | `apiBase`, `categorySlug`, `creatorSlug`, `creatorRecordId`, `scopeOverride`, `initialSort`, `pageSize` |
+| **Template Grid** | Worker-backed template search grid with an optional MCP 2.0 campaign lane | `apiBase`, `categorySlug`, `creatorSlug`, `creatorRecordId`, `scopeOverride`, `initialSort`, `pageSize`, `showMcpCampaign` |
 | **Template Filter Bar** | Worker-backed marketplace filters and pills | `apiBase`, `categorySlug`, `creatorSlug`, `creatorRecordId`, `scopeOverride`, `defaultSort` |
 | **Template Search Box** | Shared marketplace search input that routes to the standalone search page or filters the current page | `mode`, `variant`, `searchAction`, `queryParam`, `placeholder`, `showButton` |
 | **Template Search Page** | Standalone marketplace search experiment surface with search, filter sidebar, active chips, result grid, and no-results recovery | `apiBase`, `title`, `quickSearches`, `scopeOverride`, `defaultSort`, `noindex` |
@@ -146,6 +146,22 @@ For **Template Detail Hero**, prefer binding `Category URLs` from Airtable/Webfl
 #### Designer profile listings
 
 Use **Template Filter Bar** and **Template Grid** together on `/templates/designers/{slug}` pages to replace the native Webflow Collection List. Both components auto-detect the designer slug from the published URL and pass `creator_slug` to the template search API. When the Designer CMS item exposes the Airtable/Webflow sync record ID, bind it to `creatorRecordId` on both components for the narrowest possible match; otherwise the slug route is sufficient.
+
+#### Template Grid MCP 2.0 campaign
+
+`showMcpCampaign` defaults to `true`. On broad All and Featured result sets,
+Template Grid inserts one full-width Webflow MCP 2.0 campaign after the first
+complete responsive row. The campaign remains outside template API totals,
+sorting, source positions, infinite-scroll pagination, and Featured-preview
+navigation. It is suppressed during active search and on narrower category,
+creator, style, tag, type, and Free result sets.
+
+The campaign loads the official video thumbnail first and creates the
+privacy-enhanced YouTube iframe only after the visitor opens the accessible
+video modal. Campaign analytics use `TemplateCampaignLane` with the scopes
+`campaign_impression`, `campaign_video_opened`, `campaign_video_closed`, and
+`campaign_mcp_setup_clicked`; they do not include raw search, template, or
+creator values.
 
 ### Forms (Group: Forms)
 
