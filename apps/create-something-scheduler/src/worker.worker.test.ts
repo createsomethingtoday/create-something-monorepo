@@ -4,6 +4,17 @@ import { DurableOAuthStore } from './auth/durable-oauth-store.js';
 
 afterEach(() => vi.restoreAllMocks());
 
+function seedFreshWebflowProjection(state: DurableObjectState): void {
+  state.storage.kv.put('projection:webflow-google-calendar', {
+    source: 'webflow-google-calendar',
+    rangeStart: '2020-01-01T00:00:00Z',
+    rangeEnd: '2099-12-31T00:00:00Z',
+    observedAt: '2099-07-11T16:30:00Z',
+    expiresAt: '2099-07-11T17:00:00Z',
+    intervals: []
+  });
+}
+
 describe('scheduler Worker transport', () => {
   it('serves health, OpenAPI, and the public link contract', async () => {
     const health = await SELF.fetch('https://scheduler.local/health');
@@ -71,12 +82,12 @@ describe('scheduler Worker transport', () => {
     expect(response.status).toBe(503);
     expect(await response.json()).toMatchObject({
       status: 'retryable',
-      reason: 'provider_unavailable',
+      reason: 'webflow_projection_missing',
       slots: []
     });
   });
 
-  it('fails closed when persisted discovery omits a required conflict calendar', async () => {
+  it('fails closed when the Webflow projection is missing', async () => {
     const stub = env.SCHEDULER.getByName('micah-johnson');
     await runInDurableObject(stub, async (_instance, state) => {
       await new DurableOAuthStore(state, 'controlled-oauth-encryption-secret').write({
@@ -94,18 +105,7 @@ describe('scheduler Worker transport', () => {
         eventCalendarId: 'micah@createsomething.io'
       });
     });
-    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
-      expect(String(input)).toBe('https://www.googleapis.com/calendar/v3/freeBusy');
-      expect(JSON.parse(String(init?.body))).toMatchObject({
-        items: [
-          { id: 'micah@createsomething.io' },
-          { id: 'micah@webflow.com' }
-        ]
-      });
-      return Response.json({
-        calendars: { 'micah@createsomething.io': { busy: [] } }
-      });
-    });
+    const provider = vi.spyOn(globalThis, 'fetch');
 
     const readiness = await SELF.fetch('https://scheduler.local/ready');
     expect(readiness.status).toBe(503);
@@ -121,12 +121,13 @@ describe('scheduler Worker transport', () => {
     expect(response.status).toBe(503);
     expect(await response.json()).toMatchObject({
       status: 'retryable',
-      reason: 'provider_calendar_error',
+      reason: 'webflow_projection_missing',
       slots: []
     });
+    expect(provider).not.toHaveBeenCalled();
   });
 
-  it('fails operator Calendar discovery when a required conflict calendar is inaccessible', async () => {
+  it('discovers the direct Google calendar independently from the Webflow projection', async () => {
     const stub = env.SCHEDULER.getByName('micah-johnson');
     await runInDurableObject(stub, async (_instance, state) => {
       await new DurableOAuthStore(state, 'controlled-oauth-encryption-secret').write({
@@ -165,10 +166,105 @@ describe('scheduler Worker transport', () => {
         headers: { authorization: 'Bearer controlled-operator-token' }
       }
     );
-    expect(response.status).toBe(503);
+    expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
-      status: 'unavailable',
-      reason: 'required_conflict_calendar_missing'
+      status: 'available',
+      selectedCalendarIds: ['micah@createsomething.io'],
+      eventCalendarId: 'micah@createsomething.io'
+    });
+  });
+
+  it('ingests a busy-only Webflow projection and removes the overlapping public slot', async () => {
+    const stub = env.SCHEDULER.getByName('micah-johnson');
+    await runInDurableObject(stub, async (_instance, state) => {
+      await new DurableOAuthStore(state, 'controlled-oauth-encryption-secret').write({
+        accessToken: 'controlled-access-token',
+        refreshToken: 'controlled-refresh-token',
+        expiresAt: '2099-07-11T18:00:00Z',
+        grantedScopes: [
+          'https://www.googleapis.com/auth/calendar.events',
+          'https://www.googleapis.com/auth/calendar.freebusy',
+          'https://www.googleapis.com/auth/calendar.calendarlist.readonly'
+        ]
+      });
+      state.storage.kv.put('google:calendar-configuration', {
+        selectedCalendarIds: ['micah@createsomething.io'],
+        eventCalendarId: 'micah@createsomething.io'
+      });
+    });
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+      expect(String(input)).toBe('https://www.googleapis.com/calendar/v3/freeBusy');
+      return Response.json({
+        calendars: { 'micah@createsomething.io': { busy: [] } }
+      });
+    });
+
+    const endpoint = 'https://scheduler.local/api/v1/operator/conflict-projections/webflow-google-calendar';
+    expect((await SELF.fetch(endpoint, { method: 'PUT' })).status).toBe(403);
+
+    const rejectedFutureProjection = await SELF.fetch(endpoint, {
+      method: 'PUT',
+      headers: {
+        authorization: 'Bearer controlled-operator-token',
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        source: 'webflow-google-calendar',
+        rangeStart: '2037-07-01T00:00:00Z',
+        rangeEnd: '2037-08-20T00:00:00Z',
+        observedAt: '2099-07-11T16:30:00Z',
+        expiresAt: '2099-07-11T17:00:00Z',
+        intervals: [],
+        explicitIntent: true
+      })
+    });
+    expect(rejectedFutureProjection.status).toBe(400);
+
+    const observedAt = new Date();
+    const expiresAt = new Date(observedAt.getTime() + 30 * 60 * 1_000);
+
+    const ingested = await SELF.fetch(endpoint, {
+      method: 'PUT',
+      headers: {
+        authorization: 'Bearer controlled-operator-token',
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        source: 'webflow-google-calendar',
+        rangeStart: new Date(observedAt.getTime() - 24 * 60 * 60 * 1_000).toISOString(),
+        rangeEnd: '2037-08-20T00:00:00Z',
+        observedAt: observedAt.toISOString(),
+        expiresAt: expiresAt.toISOString(),
+        intervals: [{
+          start: '2037-07-14T18:00:00Z',
+          end: '2037-07-14T18:30:00Z'
+        }],
+        explicitIntent: true
+      })
+    });
+    expect(ingested.status).toBe(200);
+    expect(await ingested.json()).toMatchObject({
+      status: 'accepted',
+      source: 'webflow-google-calendar',
+      intervalCount: 1
+    });
+
+    const availability = await SELF.fetch(
+      'https://scheduler.local/api/v1/availability?from=2037-07-14T00%3A00%3A00Z&to=2037-07-15T00%3A00%3A00Z&timezone=America%2FChicago'
+    );
+    expect(availability.status).toBe(200);
+    const result = await availability.json() as {
+      status: string;
+      slots: Array<{ start: string; end: string }>;
+    };
+    expect(result.status).toBe('available');
+    expect(result.slots).not.toContainEqual({
+      start: '2037-07-14T18:00:00Z',
+      end: '2037-07-14T18:30:00Z'
+    });
+    expect(result.slots).toContainEqual({
+      start: '2037-07-14T18:30:00Z',
+      end: '2037-07-14T19:00:00Z'
     });
   });
 
@@ -186,16 +282,16 @@ describe('scheduler Worker transport', () => {
         ]
       });
       state.storage.kv.put('google:calendar-configuration', {
-        selectedCalendarIds: ['micah@createsomething.io', 'micah@webflow.com'],
+        selectedCalendarIds: ['micah@createsomething.io'],
         eventCalendarId: 'micah@createsomething.io'
       });
+      seedFreshWebflowProjection(state);
     });
     vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
       expect(String(input)).toBe('https://www.googleapis.com/calendar/v3/freeBusy');
       return Response.json({
         calendars: {
-          'micah@createsomething.io': { busy: [] },
-          'micah@webflow.com': { busy: [] }
+          'micah@createsomething.io': { busy: [] }
         }
       });
     });
@@ -288,9 +384,10 @@ describe('scheduler Worker transport', () => {
         ]
       });
       state.storage.kv.put('google:calendar-configuration', {
-        selectedCalendarIds: ['micah@createsomething.io', 'micah@webflow.com'],
+        selectedCalendarIds: ['micah@createsomething.io'],
         eventCalendarId: 'micah@createsomething.io'
       });
+      seedFreshWebflowProjection(state);
     });
     let freeBusyCalls = 0;
     const providerRequests: Array<{ url: string; method: string }> = [];
@@ -313,8 +410,7 @@ describe('scheduler Worker transport', () => {
         freeBusyCalls += 1;
         return Response.json({
           calendars: {
-            'micah@createsomething.io': { busy: [] },
-            'micah@webflow.com': { busy: [] }
+            'micah@createsomething.io': { busy: [] }
           }
         });
       }
@@ -355,12 +451,12 @@ describe('scheduler Worker transport', () => {
       ready: true,
       oauthConnected: true,
       calendarDiscovered: true,
-      requiredCalendarCount: 2,
-      requiredCalendarsDiscovered: true,
-      selectedCalendarCount: 2,
+      webflowProjectionFresh: true,
+      webflowProjectionHorizonCovered: true,
+      selectedCalendarCount: 1,
       configuration: {
         googleOAuth: true,
-        requiredConflictCalendars: true,
+        webflowBusyProjection: true,
         reminders: true,
         browserProof: true
       }

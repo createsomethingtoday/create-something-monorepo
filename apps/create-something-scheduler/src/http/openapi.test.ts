@@ -19,6 +19,7 @@ describe('scheduler OpenAPI contract', () => {
       '/api/v1/receipts/{receiptId}',
       '/api/v1/operator/status',
       '/api/v1/operator/calendars/discover',
+      '/api/v1/operator/conflict-projections/webflow-google-calendar',
       '/api/v1/operator/availability-overrides',
       '/api/v1/operator/availability-overrides/{overrideId}'
     ]);
@@ -36,6 +37,8 @@ describe('scheduler OpenAPI contract', () => {
     });
     expect(schedulerOpenApi.paths['/api/v1/operator/availability-overrides'].post.security)
       .toEqual([{ operatorBearer: [] }]);
+    expect(schedulerOpenApi.paths['/api/v1/operator/conflict-projections/webflow-google-calendar'].put.security)
+      .toEqual([{ operatorBearer: [] }]);
     expect(schedulerOpenApi.paths['/api/v1/rooms'].post.security)
       .toEqual([{ operatorBearer: [] }]);
     expect(schedulerOpenApi.paths['/api/v1/rooms/{roomId}/credentials'].post.security)
@@ -46,8 +49,8 @@ describe('scheduler OpenAPI contract', () => {
       .toEqual({ const: 'no-store' });
     expect(schedulerOpenApi.components.schemas.RuntimeStatus.properties)
       .toMatchObject({
-        requiredCalendarCount: { type: 'integer', minimum: 1 },
-        requiredCalendarsDiscovered: { type: 'boolean' }
+        webflowProjectionFresh: { type: 'boolean' },
+        webflowProjectionHorizonCovered: { type: 'boolean' }
       });
   });
 });

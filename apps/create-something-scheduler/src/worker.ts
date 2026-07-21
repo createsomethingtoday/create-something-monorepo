@@ -1,5 +1,7 @@
 import { DurableObject } from 'cloudflare:workers';
+import { Temporal } from '@js-temporal/polyfill';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
+import { z } from 'zod';
 import {
   BookingService,
   type AvailabilityInput,
@@ -24,6 +26,10 @@ import { handleApiRequest, type ApiScope } from './http/api.js';
 import { schedulerOpenApi } from './http/openapi.js';
 import { createSchedulerMcpServer } from './mcp/server.js';
 import { GoogleCalendarPort } from './providers/google-calendar.js';
+import {
+  ProjectedConflictCalendarPort,
+  type BusyProjection
+} from './providers/projected-calendar.js';
 import { ResendNotificationPort } from './providers/resend.js';
 import {
   bookingActionExpiresAt,
@@ -32,6 +38,7 @@ import {
 import { RealtimeKitProvider } from './providers/realtimekit.js';
 import { DurableObjectBookingStore } from './storage/durable-booking-store.js';
 import { DurableAvailabilityOverrideStore } from './storage/durable-availability-overrides.js';
+import { DurableBusyProjectionStore } from './storage/durable-busy-projection.js';
 import { DurableRoomStore } from './storage/durable-room-store.js';
 import { schedulerPage } from './ui/page.js';
 import { roomPage } from './ui/room-page.js';
@@ -44,7 +51,7 @@ export interface Env {
   GOOGLE_REDIRECT_URI?: string;
   GOOGLE_EVENT_CALENDAR_ID?: string;
   GOOGLE_SELECTED_CALENDAR_IDS?: string;
-  GOOGLE_REQUIRED_CONFLICT_CALENDAR_IDS?: string;
+  WEBFLOW_BUSY_PROJECTION_REQUIRED?: string;
   OAUTH_ENCRYPTION_SECRET?: string;
   PROPOSAL_SIGNING_SECRET?: string;
   ACTION_SIGNING_SECRET?: string;
@@ -93,6 +100,22 @@ const accountId = '9645bd52e640b8a4f40a3a55ff1dd75a';
 const publicOriginDefault = 'https://create-something-scheduler.createsomething.workers.dev';
 const bookingPublicOrigin = 'https://createsomething.agency';
 const clock = { now: () => new Date().toISOString() };
+const projectionReadinessHorizonDays = 28;
+const maximumProjectionTtlMinutes = 90;
+const maximumProjectionClockSkewMinutes = 5;
+
+const busyProjectionInputSchema = z.object({
+  source: z.literal('webflow-google-calendar'),
+  rangeStart: z.string().datetime({ offset: true }),
+  rangeEnd: z.string().datetime({ offset: true }),
+  observedAt: z.string().datetime({ offset: true }),
+  expiresAt: z.string().datetime({ offset: true }),
+  intervals: z.array(z.object({
+    start: z.string().datetime({ offset: true }),
+    end: z.string().datetime({ offset: true })
+  }).strict()).max(2_000),
+  explicitIntent: z.boolean()
+}).strict();
 
 export class SchedulerDurableObject extends DurableObject<Env> {
   private bookingService(): BookingService {
@@ -109,10 +132,15 @@ export class SchedulerDurableObject extends DurableObject<Env> {
       credentials: oauthStore
     });
     const configured = this.calendarConfiguration();
-    const calendar = new GoogleCalendarPort({
+    const primaryCalendar = new GoogleCalendarPort({
       selectedCalendarIds: configured.selectedCalendarIds,
       eventCalendarId: configured.eventCalendarId,
       accessTokens: oauth
+    });
+    const calendar = new ProjectedConflictCalendarPort({
+      primary: primaryCalendar,
+      projection: new DurableBusyProjectionStore(this.ctx),
+      clock
     });
     const bookingStore = new DurableObjectBookingStore(this.ctx);
     const conferencing = this.env.CONFERENCING_PROVIDER === 'first_party'
@@ -233,6 +261,72 @@ export class SchedulerDurableObject extends DurableObject<Env> {
     return this.bookingService().deleteAvailabilityOverride(input);
   }
 
+  async upsertWebflowBusyProjection(input: unknown) {
+    const parsed = busyProjectionInputSchema.safeParse(input);
+    if (!parsed.success) {
+      return { status: 'rejected' as const, reason: 'webflow_projection_input_invalid' };
+    }
+    if (!parsed.data.explicitIntent) {
+      return { status: 'operator_required' as const, reason: 'explicit_intent_required' };
+    }
+
+    const rangeStart = Temporal.Instant.from(parsed.data.rangeStart);
+    const rangeEnd = Temporal.Instant.from(parsed.data.rangeEnd);
+    const observedAt = Temporal.Instant.from(parsed.data.observedAt);
+    const expiresAt = Temporal.Instant.from(parsed.data.expiresAt);
+    const now = Temporal.Instant.from(clock.now());
+    if (
+      Temporal.Instant.compare(rangeStart, rangeEnd) >= 0 ||
+      Temporal.Instant.compare(observedAt, expiresAt) >= 0 ||
+      Temporal.Instant.compare(
+        observedAt,
+        now.add({ minutes: maximumProjectionClockSkewMinutes })
+      ) > 0 ||
+      Temporal.Instant.compare(
+        expiresAt,
+        now.add({ minutes: maximumProjectionTtlMinutes + maximumProjectionClockSkewMinutes })
+      ) > 0 ||
+      Temporal.Instant.compare(
+        expiresAt,
+        observedAt.add({ minutes: maximumProjectionTtlMinutes })
+      ) > 0 ||
+      parsed.data.intervals.some((interval) => {
+        const start = Temporal.Instant.from(interval.start);
+        const end = Temporal.Instant.from(interval.end);
+        return Temporal.Instant.compare(start, end) >= 0 ||
+          Temporal.Instant.compare(start, rangeStart) < 0 ||
+          Temporal.Instant.compare(end, rangeEnd) > 0;
+      })
+    ) {
+      return { status: 'rejected' as const, reason: 'webflow_projection_window_invalid' };
+    }
+
+    const projection: BusyProjection = {
+      source: parsed.data.source,
+      rangeStart: rangeStart.toString(),
+      rangeEnd: rangeEnd.toString(),
+      observedAt: observedAt.toString(),
+      expiresAt: expiresAt.toString(),
+      intervals: parsed.data.intervals
+        .map((interval) => ({
+          start: Temporal.Instant.from(interval.start).toString(),
+          end: Temporal.Instant.from(interval.end).toString()
+        }))
+        .sort((left, right) => left.start.localeCompare(right.start))
+    };
+    await new DurableBusyProjectionStore(this.ctx).write(projection);
+    return {
+      status: 'accepted' as const,
+      receiptId: `projection_${crypto.randomUUID().replaceAll('-', '')}`,
+      source: projection.source,
+      intervalCount: projection.intervals.length,
+      rangeStart: projection.rangeStart,
+      rangeEnd: projection.rangeEnd,
+      observedAt: projection.observedAt,
+      expiresAt: projection.expiresAt
+    };
+  }
+
   async createGoogleAuthorizationRequest() {
     return this.oauthClient().createAuthorizationRequest();
   }
@@ -255,7 +349,6 @@ export class SchedulerDurableObject extends DurableObject<Env> {
     const configured = this.calendarConfiguration();
     const port = new GoogleCalendarPort({
       selectedCalendarIds: [],
-      requiredCalendarIds: this.requiredConflictCalendarIds(configured.eventCalendarId),
       eventCalendarId: configured.eventCalendarId,
       accessTokens: this.oauthClient()
     });
@@ -362,7 +455,7 @@ export class SchedulerDurableObject extends DurableObject<Env> {
         this.env.GOOGLE_CLIENT_SECRET &&
         this.env.GOOGLE_REDIRECT_URI
       ),
-      requiredConflictCalendars: Boolean(this.env.GOOGLE_REQUIRED_CONFLICT_CALENDAR_IDS),
+      webflowBusyProjection: this.env.WEBFLOW_BUSY_PROJECTION_REQUIRED === 'true',
       credentialEncryption: Boolean(this.env.OAUTH_ENCRYPTION_SECRET),
       proposalSigning: Boolean(this.env.PROPOSAL_SIGNING_SECRET),
       actionSigning: Boolean(this.env.ACTION_SIGNING_SECRET),
@@ -390,26 +483,36 @@ export class SchedulerDurableObject extends DurableObject<Env> {
       'google:calendar-configuration'
     );
     const eventCalendarId = this.env.GOOGLE_EVENT_CALENDAR_ID ?? eventCalendarDefault;
-    const requiredCalendarIds = this.requiredConflictCalendarIds(eventCalendarId);
-    const requiredCalendarsDiscovered = Boolean(
-      discovered && requiredCalendarIds.every(
-        (calendarId) => discovered.selectedCalendarIds.includes(calendarId)
-      )
-    );
     const calendarDiscovered = Boolean(
       discovered &&
       discovered.eventCalendarId &&
-      discovered.selectedCalendarIds.length > 0 &&
-      requiredCalendarsDiscovered
+      discovered.selectedCalendarIds.length > 0
+    );
+    const projection = await new DurableBusyProjectionStore(this.ctx).read();
+    const now = Temporal.Instant.from(clock.now());
+    const projectionFresh = Boolean(
+      projection && Temporal.Instant.compare(Temporal.Instant.from(projection.expiresAt), now) > 0
+    );
+    const projectionHorizonCovered = Boolean(
+      projection &&
+      Temporal.Instant.compare(Temporal.Instant.from(projection.rangeStart), now) <= 0 &&
+      Temporal.Instant.compare(
+        Temporal.Instant.from(projection.rangeEnd),
+        now.add({ hours: projectionReadinessHorizonDays * 24 })
+      ) >= 0
     );
     const configured = Object.values(configuration).every(Boolean);
     return {
-      ready: configured && oauthConnected && calendarDiscovered,
+      ready: configured && oauthConnected && calendarDiscovered &&
+        projectionFresh && projectionHorizonCovered,
       configuration,
       oauthConnected,
       calendarDiscovered,
-      requiredCalendarCount: requiredCalendarIds.length,
-      requiredCalendarsDiscovered,
+      webflowProjectionFresh: projectionFresh,
+      webflowProjectionHorizonCovered: projectionHorizonCovered,
+      webflowProjectionObservedAt: projection?.observedAt ?? null,
+      webflowProjectionExpiresAt: projection?.expiresAt ?? null,
+      webflowProjectionRangeEnd: projection?.rangeEnd ?? null,
       selectedCalendarCount: discovered?.selectedCalendarIds.length ?? 0,
       eventCalendarId: discovered?.eventCalendarId ?? null,
       conferencingProvider: this.env.CONFERENCING_PROVIDER ?? 'google_meet'
@@ -440,23 +543,7 @@ export class SchedulerDurableObject extends DurableObject<Env> {
       this.env.GOOGLE_SELECTED_CALENDAR_IDS
         ?.split(',').map((value) => value.trim()).filter(Boolean) ?? [eventCalendarId]
     );
-    return {
-      selectedCalendarIds: [...new Set([
-        ...selectedCalendarIds,
-        ...this.requiredConflictCalendarIds(eventCalendarId)
-      ])],
-      eventCalendarId
-    };
-  }
-
-  private requiredConflictCalendarIds(eventCalendarId: string): string[] {
-    return [...new Set([
-      eventCalendarId,
-      ...(
-        this.env.GOOGLE_REQUIRED_CONFLICT_CALENDAR_IDS
-          ?.split(',').map((value) => value.trim()).filter(Boolean) ?? []
-      )
-    ])];
+    return { selectedCalendarIds, eventCalendarId };
   }
 }
 
@@ -548,6 +635,25 @@ export default {
       if (!isOperator(request, env)) return unauthorized('operator_scope_required');
       const result = await stub.discoverAndPersistCalendars();
       return json(result, result.status === 'available' ? 200 : 503);
+    }
+    if (
+      request.method === 'PUT' &&
+      url.pathname === '/api/v1/operator/conflict-projections/webflow-google-calendar'
+    ) {
+      if (!isOperator(request, env)) return unauthorized('operator_scope_required');
+      try {
+        const result = await stub.upsertWebflowBusyProjection(await request.json());
+        return json(
+          result,
+          result.status === 'accepted'
+            ? 200
+            : result.status === 'operator_required'
+              ? 428
+              : 400
+        );
+      } catch {
+        return json({ status: 'rejected', reason: 'webflow_projection_input_invalid' }, 400);
+      }
     }
     if (url.pathname === '/api/v1/operator/availability-overrides') {
       if (!isOperator(request, env)) return unauthorized('operator_scope_required');
@@ -755,7 +861,7 @@ function serviceRuntimeConfigured(env: Env): boolean {
     env.GOOGLE_CLIENT_ID &&
     env.GOOGLE_CLIENT_SECRET &&
     env.GOOGLE_REDIRECT_URI &&
-    env.GOOGLE_REQUIRED_CONFLICT_CALENDAR_IDS &&
+    env.WEBFLOW_BUSY_PROJECTION_REQUIRED === 'true' &&
     env.OAUTH_ENCRYPTION_SECRET &&
     env.PROPOSAL_SIGNING_SECRET
   );

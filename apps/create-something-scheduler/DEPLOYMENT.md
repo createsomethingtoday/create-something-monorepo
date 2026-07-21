@@ -18,7 +18,7 @@ Non-secret Worker variables:
 
 - `GOOGLE_EVENT_CALENDAR_ID=micah@createsomething.io`
 - `GOOGLE_SELECTED_CALENDAR_IDS=micah@createsomething.io` initially; the approved OAuth callback discovers and durably persists all Calendar-list entries marked selected.
-- `GOOGLE_REQUIRED_CONFLICT_CALENDAR_IDS=micah@createsomething.io,micah@webflow.com`; required calendars are unioned into every free/busy request, and readiness plus public availability fail closed if discovery or Google access omits either calendar.
+- `WEBFLOW_BUSY_PROJECTION_REQUIRED=true`; readiness and public availability fail closed unless the Webflow projection is fresh and covers the requested window.
 - `GOOGLE_REDIRECT_URI=https://<approved-preview-host>/oauth/google/callback`
 - `RESEND_FROM=CREATE SOMETHING <noreply@createsomething.io>`
 - `TURNSTILE_EXPECTED_HOSTNAME=<approved-preview-host>`
@@ -48,17 +48,19 @@ Google OAuth scopes are limited to:
 - `https://www.googleapis.com/auth/calendar.freebusy`
 - `https://www.googleapis.com/auth/calendar.calendarlist.readonly`
 
-## Required conflict-calendar activation
+## Webflow conflict-projection activation
 
-The scheduler OAuth identity is `micah@createsomething.io`. Before deploying a build that requires the Webflow calendar:
+The scheduler OAuth identity remains `micah@createsomething.io`. The Webflow-managed account cannot depend on cross-organization sharing, so the local EventKit producer publishes busy-only state from the exact macOS Calendar source `WEBFLOW` and calendar `micah@webflow.com`:
 
-1. Grant `micah@createsomething.io` least-privilege free/busy access to `micah@webflow.com` through the owning Google Workspace calendar policy. This external sharing change requires explicit operator approval.
-2. Confirm a bounded Google Calendar free/busy request from the scheduler identity can read `micah@webflow.com`; a per-calendar `notFound` or authorization error is a stop condition.
-3. Deploy the Worker configuration containing `GOOGLE_REQUIRED_CONFLICT_CALENDAR_IDS` only after both calendars are readable.
-4. Call `POST /api/v1/operator/calendars/discover` with operator authorization. Require `status: available` and confirm the operator status reports `requiredCalendarsDiscovered: true` and `requiredCalendarCount: 2`.
-5. Create or identify an approved controlled busy interval on the Webflow calendar. Confirm the overlapping slot is absent from Browser, API, and MCP availability, then record the receipts in CRE-1376.
+1. Run `pnpm --filter @create-something/create-something-scheduler sync:webflow-busy -- --dry-run` to verify EventKit access and the exact calendar match without making a network request. The producer projects event data immediately to opaque `{ start, end }` intervals; it never reads titles, attendees, descriptions, locations, or private Calendar URLs into the output or Worker payload.
+2. Send the complete replacement projection to `PUT /api/v1/operator/conflict-projections/webflow-google-calendar` with operator authorization and `explicitIntent: true`. The payload must include `source`, `rangeStart`, `rangeEnd`, `observedAt`, `expiresAt`, and `intervals`.
+3. Keep `expiresAt` no more than 90 minutes after `observedAt`. Production cadence is 15 minutes, so a missed run has bounded grace while repeated failures quickly fail closed.
+4. Cover at least the next 28 days. Operator status must report `webflowProjectionFresh: true` and `webflowProjectionHorizonCovered: true` before `/ready` can pass.
+5. Confirm a real Webflow busy interval is absent from Browser, API, and MCP availability while a neighboring open interval remains. Record only timestamps and receipt IDs in CRE-1376.
 
-If required-calendar access is absent or later revoked, `/ready` returns unavailable and public availability exposes no bookable slots. Restore the sharing policy and rerun discovery; do not remove the required calendar to make readiness green.
+The production sync command is `OPERATOR_API_TOKEN=... pnpm --filter @create-something/create-something-scheduler sync:webflow-busy`. Supply the token at runtime from the approved secret manager; never place it in the repository, automation prompt, arguments, or logs. The committed defaults intentionally bind to one source/calendar pair and abort if the match is missing or ambiguous.
+
+The recurring job is an ingestion producer, not a runtime dependency. If it stops, the projection expires, `/ready` returns unavailable, and public availability exposes no bookable slots. Restore the job and publish a fresh full replacement; do not extend expiry or disable the projection requirement to make readiness green.
 
 ## Approval gates
 
