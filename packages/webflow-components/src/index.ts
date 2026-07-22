@@ -235,6 +235,9 @@ export { Footer } from './components/layout/Footer';
 export type { FooterProps, FooterColumn, SocialLink } from './components/layout/Footer';
 
 // Template Marketplace
+export { TemplateChat } from './components/chat/TemplateChat';
+export type { TemplateChatProps } from './components/chat/TemplateChat';
+
 export { TemplateSearch } from './components/search/TemplateSearch';
 export type { TemplateSearchProps, SuggestItem } from './components/search/TemplateSearch';
 
