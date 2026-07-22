@@ -110,8 +110,11 @@ export type TemplateGridDisplayItem<T> =
   | { kind: 'template'; item: T; sourceIndex: number }
   | { kind: 'campaign'; campaignId: 'webflow-mcp-2' };
 
+export type TemplateGridCampaignCoverage = 'all_listings' | 'broad' | 'off';
+
 export interface TemplateGridCampaignContext {
   enabled: boolean;
+  coverage: TemplateGridCampaignCoverage;
   query: string;
   scope: TemplateScope;
   categoryGroupSlug: string | null;
@@ -126,7 +129,8 @@ export interface TemplateGridCampaignContext {
 }
 
 export function shouldShowTemplateGridCampaign(context: TemplateGridCampaignContext): boolean {
-  if (!context.enabled || context.query.trim()) return false;
+  if (!context.enabled || context.coverage === 'off' || context.query.trim()) return false;
+  if (context.coverage === 'all_listings') return true;
   if (context.scope !== 'all' && context.scope !== 'featured') return false;
   return (
     !context.categoryGroupSlug &&
@@ -270,8 +274,10 @@ export interface TemplateGridProps {
   showFeaturedBadge?: boolean;
   /** Show compact social-proof signals from the search API on each card. */
   showMarketplaceSignals?: boolean;
-  /** Show the Webflow MCP 2.0 campaign on broad All and Featured result sets. */
+  /** Show the Webflow MCP 2.0 campaign when campaignCoverage permits it. */
   showMcpCampaign?: boolean;
+  /** Choose whether the campaign appears across all listings, broad listings only, or nowhere. */
+  campaignCoverage?: TemplateGridCampaignCoverage;
   /**
    * Emit aggregate marketplace health telemetry for successful result batches
    * and component errors. Does not send raw query text, template names, or
@@ -1249,6 +1255,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
   showFeaturedBadge = false,
   showMarketplaceSignals = false,
   showMcpCampaign = true,
+  campaignCoverage = 'all_listings',
   enableAnalytics = true,
 }) => {
   useMarketplaceComponentErrorTracking('TemplateGrid', enableAnalytics);
@@ -2173,6 +2180,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
   const isRefreshing = loading && items.length > 0;
   const shouldShowMcpCampaign = shouldShowTemplateGridCampaign({
     enabled: showMcpCampaign,
+    coverage: campaignCoverage,
     query: filters.q,
     scope: filters.scope,
     categoryGroupSlug: filters.categoryGroupSlug,

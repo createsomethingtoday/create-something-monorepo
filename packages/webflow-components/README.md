@@ -126,7 +126,7 @@ The current package contains both Canon exports and compatibility exports. The l
 |-----------|-------------|-----------|
 | **Template Card** | CMS-bindable marketplace template card | `templateName`, `templateLink`, `primaryImage`, `creatorName`, `creatorIcon`, `popularityScore` |
 | **Template Chat** | Turnstile-backed conversational template finder with floating, inline, and immersive surfaces | `apiBase`, `variant`, `sessionScope`, `hostOverlaySelectors`, `starterPrompts`, `enableAnalytics` |
-| **Template Grid** | Worker-backed template search grid with an optional MCP 2.0 campaign lane | `apiBase`, `categorySlug`, `creatorSlug`, `creatorRecordId`, `scopeOverride`, `initialSort`, `pageSize`, `showMcpCampaign` |
+| **Template Grid** | Worker-backed template search grid with an optional MCP 2.0 campaign lane | `apiBase`, `categorySlug`, `creatorSlug`, `creatorRecordId`, `scopeOverride`, `initialSort`, `pageSize`, `showMcpCampaign`, `campaignCoverage` |
 | **Template Filter Bar** | Worker-backed marketplace filters and pills | `apiBase`, `categorySlug`, `creatorSlug`, `creatorRecordId`, `scopeOverride`, `defaultSort` |
 | **Template Search Box** | Shared marketplace search input that routes to the standalone search page or filters the current page | `mode`, `variant`, `searchAction`, `queryParam`, `placeholder`, `showButton` |
 | **Template Search Page** | Standalone marketplace search experiment surface with search, filter sidebar, active chips, result grid, and no-results recovery | `apiBase`, `title`, `quickSearches`, `scopeOverride`, `defaultSort`, `noindex` |
@@ -158,12 +158,18 @@ Use **Template Filter Bar** and **Template Grid** together on `/templates/design
 
 #### Template Grid MCP 2.0 campaign
 
-`showMcpCampaign` defaults to `true`. On broad All and Featured result sets,
-Template Grid inserts one full-width Webflow MCP 2.0 campaign after the first
-complete responsive row. The campaign remains outside template API totals,
-sorting, source positions, infinite-scroll pagination, and Featured-preview
-navigation. It is suppressed during active search and on narrower category,
-creator, style, tag, type, and Free result sets.
+`showMcpCampaign` defaults to `true`, and `campaignCoverage` defaults to
+`all_listings`. Template Grid inserts one full-width Webflow MCP 2.0 campaign
+after the first complete responsive row on All, Featured, category,
+subcategory, creator, style, tag, type, Landing Page, and Free listings. The
+campaign remains outside template API totals, sorting, source positions,
+infinite-scroll pagination, and Featured-preview navigation. It is suppressed
+during active keyword search and whenever there are not enough results to
+complete the first responsive row.
+
+Set `campaignCoverage` to `broad` to retain the earlier unfiltered All and
+Featured-only behavior, or `off` to disable the campaign independently of the
+legacy boolean control.
 
 The campaign renders a CSP-safe Webflow-hosted poster without loading video
 data. After the visitor opens the accessible modal, a native player loads the
