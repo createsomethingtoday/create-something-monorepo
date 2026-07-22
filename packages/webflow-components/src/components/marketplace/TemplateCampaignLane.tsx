@@ -10,7 +10,47 @@ export interface TemplateCampaignLaneProps {
 const CAMPAIGN_ID = 'webflow-mcp-2';
 const VIDEO_ID = '04xmzvomt2I';
 const DEFAULT_SETUP_HREF = 'https://developers.webflow.com/mcp/reference/getting-started';
-const VIDEO_SOURCE_URL = 'https://pub-fb87e05654104f5fbb33989fc4dca65b.r2.dev/webflow/mcp-2/introducing-mcp-2-0-1080p.mp4';
+const VIDEO_SOURCE_URL = 'https://media.createsomething.io/webflow/mcp-2/introducing-mcp-2-0-1080p.mp4';
+const VIDEO_CAPTIONS_URL = 'https://media.createsomething.io/webflow/mcp-2/introducing-mcp-2-0-en.vtt';
+const VIDEO_POSTER_URL = 'https://cdn.prod.website-files.com/5e593fb060cf87bbaf75dd20/6a60539b9ab1dec9cf71cd3a_webflow-mcp-2-video-poster.jpg';
+const CAMPAIGN_IMPRESSION_THRESHOLD = 0.5;
+
+export function templateCampaignPlaybackPolicy(prefersReducedMotion: boolean): {
+  autoPlay: boolean;
+  muted: boolean;
+} {
+  return prefersReducedMotion
+    ? { autoPlay: false, muted: false }
+    : { autoPlay: true, muted: true };
+}
+
+export function isCampaignImpressionVisible(entry: {
+  isIntersecting: boolean;
+  intersectionRatio: number;
+}): boolean {
+  return entry.isIntersecting && entry.intersectionRatio >= CAMPAIGN_IMPRESSION_THRESHOLD;
+}
+
+function reducedMotionIsPreferred(): boolean {
+  return typeof window !== 'undefined'
+    && typeof window.matchMedia === 'function'
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+function usePrefersReducedMotion(): boolean {
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(reducedMotionIsPreferred);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
+    const query = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const updatePreference = () => setPrefersReducedMotion(query.matches);
+    updatePreference();
+    query.addEventListener?.('change', updatePreference);
+    return () => query.removeEventListener?.('change', updatePreference);
+  }, []);
+
+  return prefersReducedMotion;
+}
 
 export function templateCampaignEventData(scope: string): Record<string, string> {
   return {
@@ -119,74 +159,21 @@ const TEMPLATE_CAMPAIGN_STYLES = `
   border: 1px solid rgba(255,255,255,.24);
   border-radius: 9px;
   color: #fff;
-  background:
-    radial-gradient(circle at 82% 18%, rgba(20,110,245,.64), transparent 24%),
-    radial-gradient(circle at 20% 88%, rgba(111,76,255,.34), transparent 30%),
-    linear-gradient(145deg, #181818 0%, #050505 72%);
+  background: #050505;
   box-shadow: 0 22px 54px rgba(0,0,0,.42);
   cursor: pointer;
   text-decoration: none;
 }
 .tmcampaign-media::before {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(255,255,255,.055) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,.055) 1px, transparent 1px);
-  background-size: 32px 32px;
-  content: "";
-  mask-image: linear-gradient(135deg, rgba(0,0,0,.9), transparent 82%);
+  content: none;
 }
 .tmcampaign-media::after {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, transparent 48%, rgba(0,0,0,.3));
+  background: linear-gradient(180deg, rgba(0,0,0,.08), transparent 48%, rgba(0,0,0,.5));
   content: "";
 }
-.tmcampaign-media-art {
-  position: absolute;
-  z-index: 1;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 22px;
-}
-.tmcampaign-media-status,
-.tmcampaign-media-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  color: rgba(255,255,255,.68);
-  font-size: 11px;
-  font-weight: 620;
-  letter-spacing: .035em;
-  line-height: 1.2;
-  text-transform: uppercase;
-}
-.tmcampaign-media-status > span:first-child { display: inline-flex; align-items: center; gap: 7px; }
-.tmcampaign-media-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #38d996;
-  box-shadow: 0 0 0 4px rgba(56,217,150,.12);
-}
-.tmcampaign-media-prompt {
-  width: min(76%, 300px);
-  margin: 0;
-  padding: 14px 15px;
-  border: 1px solid rgba(255,255,255,.17);
-  border-radius: 8px;
-  color: rgba(255,255,255,.9);
-  background: rgba(8,8,8,.7);
-  box-shadow: 0 14px 32px rgba(0,0,0,.25);
-  font-size: 14px;
-  line-height: 1.38;
-  backdrop-filter: blur(8px);
-}
-.tmcampaign-media-footer { padding-right: 72px; color: rgba(255,255,255,.5); }
+.tmcampaign-media-image { display: block; width: 100%; height: 100%; object-fit: cover; }
 .tmcampaign-play {
   position: absolute;
   z-index: 1;
@@ -276,6 +263,50 @@ const TEMPLATE_CAMPAIGN_STYLES = `
   background: #000;
 }
 .tmcampaign-video { display: block; width: 100%; height: 100%; border: 0; background: #000; object-fit: contain; }
+.tmcampaign-video-state {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  color: rgba(255,255,255,.82);
+  background: rgba(0,0,0,.5);
+  text-align: center;
+}
+.tmcampaign-video-state-card { display: grid; justify-items: center; gap: 13px; max-width: 360px; }
+.tmcampaign-video-state[data-state="error"] .tmcampaign-video-state-card,
+.tmcampaign-video-state[data-state="ended"] .tmcampaign-video-state-card {
+  padding: 18px;
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 8px;
+  background: rgba(8,8,8,.84);
+  box-shadow: 0 14px 34px rgba(0,0,0,.34);
+}
+.tmcampaign-video-state-copy { margin: 0; font-size: 14px; line-height: 1.45; }
+.tmcampaign-video-spinner {
+  width: 28px;
+  height: 28px;
+  border: 2px solid rgba(255,255,255,.25);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: tmcampaign-spin 800ms linear infinite;
+}
+.tmcampaign-video-retry {
+  min-height: 40px;
+  padding: 0 15px;
+  border: 1px solid rgba(255,255,255,.42);
+  border-radius: 6px;
+  color: #fff;
+  background: #161616;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 620;
+  cursor: pointer;
+}
+.tmcampaign-video-retry:hover { border-color: #fff; background: #242424; }
+.tmcampaign-video-retry:focus-visible { outline: 3px solid #8db9ff; outline-offset: 3px; }
+@keyframes tmcampaign-spin { to { transform: rotate(360deg); } }
 .tmcampaign-modal-footer {
   display: flex;
   align-items: center;
@@ -319,8 +350,6 @@ const TEMPLATE_CAMPAIGN_STYLES = `
   .tmcampaign-description { font-size: 15px; }
   .tmcampaign-actions { display: grid; grid-template-columns: 1fr; }
   .tmcampaign-action { width: 100%; }
-  .tmcampaign-media-art { padding: 16px; }
-  .tmcampaign-media-prompt { width: 78%; padding: 11px 12px; font-size: 12px; }
   .tmcampaign-play { right: 15px; bottom: 14px; width: 52px; height: 52px; }
   .tmcampaign-duration { top: 12px; right: 12px; }
 }
@@ -344,6 +373,7 @@ const TEMPLATE_CAMPAIGN_STYLES = `
 @media (prefers-reduced-motion: reduce) {
   .tmcampaign-action,
   .tmcampaign-play { transition: none; }
+  .tmcampaign-video-spinner { animation: none; border-color: rgba(255,255,255,.5); }
 }
 `;
 
@@ -351,12 +381,15 @@ export interface TemplateCampaignVideoModalProps {
   onClose: () => void;
   onSetupClick?: () => void;
   setupHref?: string;
+  videoSrc?: string;
+  posterSrc?: string;
+  captionsSrc?: string;
 }
 
 function focusableElements(root: HTMLElement): HTMLElement[] {
   return Array.from(
     root.querySelectorAll<HTMLElement>(
-      'button:not([disabled]), a[href], iframe, [tabindex]:not([tabindex="-1"])',
+      'button:not([disabled]), a[href], video[controls], [tabindex]:not([tabindex="-1"])',
     ),
   ).filter((element) => !element.hasAttribute('disabled'));
 }
@@ -365,14 +398,35 @@ export const TemplateCampaignVideoModal: React.FC<TemplateCampaignVideoModalProp
   onClose,
   onSetupClick,
   setupHref = DEFAULT_SETUP_HREF,
+  videoSrc = VIDEO_SOURCE_URL,
+  posterSrc = VIDEO_POSTER_URL,
+  captionsSrc = VIDEO_CAPTIONS_URL,
 }) => {
   const titleId = useId();
   const descriptionId = useId();
   const dialogRef = useRef<HTMLElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
   const onCloseRef = useRef(onClose);
+  const prefersReducedMotion = usePrefersReducedMotion();
+  const playbackPolicy = templateCampaignPlaybackPolicy(prefersReducedMotion);
+  const [mediaState, setMediaState] = useState<'loading' | 'ready' | 'playing' | 'buffering' | 'ended' | 'error'>('loading');
+  const [retryAttempt, setRetryAttempt] = useState(0);
   onCloseRef.current = onClose;
+
+  const retryVideo = () => {
+    setMediaState('loading');
+    setRetryAttempt((attempt) => attempt + 1);
+  };
+
+  const replayVideo = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.currentTime = 0;
+    setMediaState('loading');
+    void video.play().catch(() => setMediaState('ready'));
+  };
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
@@ -441,17 +495,70 @@ export const TemplateCampaignVideoModal: React.FC<TemplateCampaignVideoModalProp
             <span aria-hidden="true">×</span>
           </button>
         </header>
-        <div className="tmcampaign-video-wrap">
+        <div className="tmcampaign-video-wrap" aria-busy={mediaState === 'loading' || mediaState === 'buffering'}>
           <video
+            key={retryAttempt}
+            ref={videoRef}
             className="tmcampaign-video"
-            src={VIDEO_SOURCE_URL}
+            src={videoSrc}
+            poster={posterSrc}
             controls
-            autoPlay
+            autoPlay={playbackPolicy.autoPlay}
+            muted={playbackPolicy.muted}
             playsInline
             preload="metadata"
+            crossOrigin="anonymous"
+            onCanPlay={() => setMediaState((state) => (
+              state === 'loading' || state === 'buffering' ? 'ready' : state
+            ))}
+            onPlaying={() => setMediaState('playing')}
+            onWaiting={() => setMediaState((state) => (
+              state === 'ended' || state === 'error' ? state : 'buffering'
+            ))}
+            onEnded={() => setMediaState('ended')}
+            onError={() => setMediaState('error')}
           >
+            <track
+              kind="captions"
+              src={captionsSrc}
+              srcLang="en"
+              label="English"
+              default
+            />
             Your browser does not support the video element.
           </video>
+          {mediaState === 'loading' || mediaState === 'buffering' ? (
+            <div className="tmcampaign-video-state" role="status" aria-live="polite">
+              <div className="tmcampaign-video-state-card">
+                <span className="tmcampaign-video-spinner" aria-hidden="true" />
+                <p className="tmcampaign-video-state-copy">
+                  {mediaState === 'buffering' ? 'Buffering video…' : 'Loading video…'}
+                </p>
+              </div>
+            </div>
+          ) : null}
+          {mediaState === 'error' ? (
+            <div className="tmcampaign-video-state" data-state="error" role="alert">
+              <div className="tmcampaign-video-state-card">
+                <p className="tmcampaign-video-state-copy">
+                  The video could not be loaded. Check your connection and try again.
+                </p>
+                <button type="button" className="tmcampaign-video-retry" onClick={retryVideo}>
+                  Retry video
+                </button>
+              </div>
+            </div>
+          ) : null}
+          {mediaState === 'ended' ? (
+            <div className="tmcampaign-video-state" data-state="ended" role="status" aria-live="polite">
+              <div className="tmcampaign-video-state-card">
+                <p className="tmcampaign-video-state-copy">You’ve reached the end of the video.</p>
+                <button type="button" className="tmcampaign-video-retry" onClick={replayVideo}>
+                  Replay video
+                </button>
+              </div>
+            </div>
+          ) : null}
         </div>
         <footer className="tmcampaign-modal-footer">
           <p id={descriptionId} className="tmcampaign-modal-copy">
@@ -479,12 +586,30 @@ export const TemplateCampaignLane: React.FC<TemplateCampaignLaneProps> = ({
   setupHref = DEFAULT_SETUP_HREF,
 }) => {
   const titleId = useId();
+  const laneRef = useRef<HTMLElement>(null);
   const [videoOpen, setVideoOpen] = useState(false);
 
   useEffect(() => {
     if (!enableAnalytics || trackedCampaignImpressions.has(CAMPAIGN_ID)) return;
-    trackedCampaignImpressions.add(CAMPAIGN_ID);
-    trackCampaignEvent('campaign_impression', true);
+    const lane = laneRef.current;
+    if (!lane || typeof IntersectionObserver === 'undefined') {
+      trackedCampaignImpressions.add(CAMPAIGN_ID);
+      trackCampaignEvent('campaign_impression', true);
+      return;
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      if (trackedCampaignImpressions.has(CAMPAIGN_ID)) {
+        observer.disconnect();
+        return;
+      }
+      if (!entries.some(isCampaignImpressionVisible)) return;
+      trackedCampaignImpressions.add(CAMPAIGN_ID);
+      trackCampaignEvent('campaign_impression', true);
+      observer.disconnect();
+    }, { threshold: CAMPAIGN_IMPRESSION_THRESHOLD });
+    observer.observe(lane);
+    return () => observer.disconnect();
   }, [enableAnalytics]);
 
   const openVideo = () => {
@@ -503,7 +628,7 @@ export const TemplateCampaignLane: React.FC<TemplateCampaignLaneProps> = ({
 
   return (
     <>
-      <section className="tmcampaign-lane" data-campaign-id={CAMPAIGN_ID} aria-labelledby={titleId}>
+      <section ref={laneRef} className="tmcampaign-lane" data-campaign-id={CAMPAIGN_ID} aria-labelledby={titleId}>
         <style dangerouslySetInnerHTML={{ __html: TEMPLATE_CAMPAIGN_STYLES }} />
         <div className="tmcampaign-surface">
           <div className="tmcampaign-copy">
@@ -546,15 +671,16 @@ export const TemplateCampaignLane: React.FC<TemplateCampaignLaneProps> = ({
             data-video-destination="cloudflare"
             onClick={openVideo}
           >
-            <span className="tmcampaign-media-art" aria-hidden="true">
-              <span className="tmcampaign-media-status">
-                <span><span className="tmcampaign-media-dot" /> Agent connected</span>
-              </span>
-              <span className="tmcampaign-media-prompt">“Use this template to build our next launch page.”</span>
-              <span className="tmcampaign-media-footer"><span>Webflow MCP 2.0</span><span>Ready</span></span>
-            </span>
+            <img
+              className="tmcampaign-media-image"
+              src={VIDEO_POSTER_URL}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              draggable={false}
+            />
             <span className="tmcampaign-play" aria-hidden="true">▶</span>
-            <span className="tmcampaign-duration" aria-hidden="true">5:28</span>
+            <span className="tmcampaign-duration" aria-hidden="true">5:29</span>
           </button>
         </div>
       </section>

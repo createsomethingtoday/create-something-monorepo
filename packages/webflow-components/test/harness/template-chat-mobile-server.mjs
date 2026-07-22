@@ -90,6 +90,17 @@ const server = createServer(async (request, response) => {
     response.end('{"ok":true}');
     return;
   }
+  if (url.pathname === '/missing-campaign-video.mp4') {
+    response.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' });
+    response.end('Missing campaign video verifier');
+    return;
+  }
+  if (url.pathname === '/delayed-campaign-video.mp4') {
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+    response.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' });
+    response.end('Delayed campaign video verifier');
+    return;
+  }
   if (url.pathname === '/api/templates/agent/session' && request.method === 'POST') {
     response.writeHead(200, { 'content-type': 'application/json' });
     response.end(JSON.stringify({ session_token: 's'.repeat(64) }));
