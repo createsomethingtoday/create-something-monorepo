@@ -10,8 +10,7 @@ export interface TemplateCampaignLaneProps {
 const CAMPAIGN_ID = 'webflow-mcp-2';
 const VIDEO_ID = '04xmzvomt2I';
 const DEFAULT_SETUP_HREF = 'https://developers.webflow.com/mcp/reference/getting-started';
-const VIDEO_THUMBNAIL_URL = `https://i.ytimg.com/vi/${VIDEO_ID}/hqdefault.jpg`;
-const VIDEO_EMBED_URL = `https://www.youtube-nocookie.com/embed/${VIDEO_ID}?autoplay=1&rel=0&cc_load_policy=1`;
+const VIDEO_SOURCE_URL = 'https://pub-fb87e05654104f5fbb33989fc4dca65b.r2.dev/webflow/mcp-2/introducing-mcp-2-0-1080p.mp4';
 
 export function templateCampaignEventData(scope: string): Record<string, string> {
   return {
@@ -38,6 +37,8 @@ const TEMPLATE_CAMPAIGN_STYLES = `
   max-width: 100% !important;
   min-width: 0 !important;
   color: #fff;
+  container: tmcampaign / inline-size;
+  container-type: inline-size;
   font-family: "WF Visual Sans Variable", "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 .tmcampaign-surface {
@@ -46,8 +47,8 @@ const TEMPLATE_CAMPAIGN_STYLES = `
   width: 100%;
   min-height: 300px;
   overflow: hidden;
-  grid-template-columns: minmax(0, 1fr) minmax(360px, .92fr);
-  gap: 38px;
+  grid-template-columns: minmax(0, 1.08fr) minmax(340px, .92fr);
+  gap: 34px;
   align-items: center;
   padding: 38px;
   border: 1px solid rgba(255,255,255,.16);
@@ -71,10 +72,10 @@ const TEMPLATE_CAMPAIGN_STYLES = `
   max-width: 620px;
   margin: 0;
   color: #fff;
-  font-size: clamp(30px, 3.4vw, 52px);
+  font-size: clamp(38px, 4.3cqi, 52px);
   font-weight: 580;
   letter-spacing: -.035em;
-  line-height: .98;
+  line-height: 1;
 }
 .tmcampaign-description {
   max-width: 610px;
@@ -117,22 +118,80 @@ const TEMPLATE_CAMPAIGN_STYLES = `
   padding: 0;
   border: 1px solid rgba(255,255,255,.24);
   border-radius: 9px;
-  background: #000;
+  color: #fff;
+  background:
+    radial-gradient(circle at 82% 18%, rgba(20,110,245,.64), transparent 24%),
+    radial-gradient(circle at 20% 88%, rgba(111,76,255,.34), transparent 30%),
+    linear-gradient(145deg, #181818 0%, #050505 72%);
   box-shadow: 0 22px 54px rgba(0,0,0,.42);
   cursor: pointer;
+  text-decoration: none;
 }
-.tmcampaign-thumbnail { display: block; width: 100%; height: 100%; object-fit: cover; }
+.tmcampaign-media::before {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.055) 1px, transparent 1px);
+  background-size: 32px 32px;
+  content: "";
+  mask-image: linear-gradient(135deg, rgba(0,0,0,.9), transparent 82%);
+}
 .tmcampaign-media::after {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, transparent 55%, rgba(0,0,0,.38));
+  background: linear-gradient(180deg, transparent 48%, rgba(0,0,0,.3));
   content: "";
 }
+.tmcampaign-media-art {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 22px;
+}
+.tmcampaign-media-status,
+.tmcampaign-media-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: rgba(255,255,255,.68);
+  font-size: 11px;
+  font-weight: 620;
+  letter-spacing: .035em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+.tmcampaign-media-status > span:first-child { display: inline-flex; align-items: center; gap: 7px; }
+.tmcampaign-media-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #38d996;
+  box-shadow: 0 0 0 4px rgba(56,217,150,.12);
+}
+.tmcampaign-media-prompt {
+  width: min(76%, 300px);
+  margin: 0;
+  padding: 14px 15px;
+  border: 1px solid rgba(255,255,255,.17);
+  border-radius: 8px;
+  color: rgba(255,255,255,.9);
+  background: rgba(8,8,8,.7);
+  box-shadow: 0 14px 32px rgba(0,0,0,.25);
+  font-size: 14px;
+  line-height: 1.38;
+  backdrop-filter: blur(8px);
+}
+.tmcampaign-media-footer { padding-right: 72px; color: rgba(255,255,255,.5); }
 .tmcampaign-play {
   position: absolute;
   z-index: 1;
-  top: 50%;
-  left: 50%;
+  right: 22px;
+  bottom: 18px;
   display: grid;
   width: 62px;
   height: 62px;
@@ -143,13 +202,14 @@ const TEMPLATE_CAMPAIGN_STYLES = `
   background: rgba(255,255,255,.94);
   box-shadow: 0 12px 28px rgba(0,0,0,.3);
   font-size: 20px;
-  transform: translate(-50%, -50%);
+  transition: transform 160ms ease, background 160ms ease;
 }
+.tmcampaign-media:hover .tmcampaign-play { background: #fff; transform: scale(1.05); }
 .tmcampaign-duration {
   position: absolute;
   z-index: 1;
-  right: 10px;
-  bottom: 9px;
+  top: 17px;
+  right: 17px;
   padding: 4px 6px;
   border-radius: 4px;
   color: #fff;
@@ -174,7 +234,7 @@ const TEMPLATE_CAMPAIGN_STYLES = `
   backdrop-filter: blur(8px);
 }
 .tmcampaign-modal {
-  width: min(1120px, 100%);
+  width: min(1040px, 100%);
   overflow: hidden;
   border: 1px solid rgba(255,255,255,.18);
   border-radius: 12px;
@@ -209,8 +269,13 @@ const TEMPLATE_CAMPAIGN_STYLES = `
 .tmcampaign-modal-close:hover { border-color: #fff; background: rgba(255,255,255,.08); }
 .tmcampaign-modal-close:focus-visible,
 .tmcampaign-modal-setup:focus-visible { outline: 3px solid #8db9ff; outline-offset: 3px; }
-.tmcampaign-video-wrap { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #000; }
-.tmcampaign-video { display: block; width: 100%; height: 100%; border: 0; }
+.tmcampaign-video-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+}
+.tmcampaign-video { display: block; width: 100%; height: 100%; border: 0; background: #000; object-fit: contain; }
 .tmcampaign-modal-footer {
   display: flex;
   align-items: center;
@@ -236,6 +301,29 @@ const TEMPLATE_CAMPAIGN_STYLES = `
   text-decoration: none;
 }
 .tmcampaign-modal-setup:hover { background: #3b86f7; }
+@container tmcampaign (max-width: 1160px) {
+  .tmcampaign-surface { min-height: 292px; grid-template-columns: minmax(0, 1.08fr) minmax(330px, .92fr); gap: 28px; padding: 32px; }
+  .tmcampaign-title { max-width: 560px; font-size: clamp(38px, 4.25cqi, 46px); }
+  .tmcampaign-description { margin-top: 16px; font-size: 15px; }
+  .tmcampaign-actions { margin-top: 21px; }
+}
+@container tmcampaign (max-width: 820px) {
+  .tmcampaign-surface { grid-template-columns: 1fr; gap: 28px; padding: 30px; }
+  .tmcampaign-copy { max-width: 620px; }
+  .tmcampaign-title { max-width: 620px; font-size: clamp(36px, 7cqi, 48px); }
+  .tmcampaign-media { max-width: 720px; }
+}
+@container tmcampaign (max-width: 520px) {
+  .tmcampaign-surface { gap: 22px; min-height: 0; padding: 22px; border-radius: 9px; }
+  .tmcampaign-title { font-size: 32px; }
+  .tmcampaign-description { font-size: 15px; }
+  .tmcampaign-actions { display: grid; grid-template-columns: 1fr; }
+  .tmcampaign-action { width: 100%; }
+  .tmcampaign-media-art { padding: 16px; }
+  .tmcampaign-media-prompt { width: 78%; padding: 11px 12px; font-size: 12px; }
+  .tmcampaign-play { right: 15px; bottom: 14px; width: 52px; height: 52px; }
+  .tmcampaign-duration { top: 12px; right: 12px; }
+}
 @media (max-width: 900px) {
   .tmcampaign-surface { grid-template-columns: 1fr; gap: 28px; padding: 30px; }
   .tmcampaign-media { max-width: 720px; }
@@ -246,7 +334,7 @@ const TEMPLATE_CAMPAIGN_STYLES = `
   .tmcampaign-description { font-size: 15px; }
   .tmcampaign-actions { display: grid; grid-template-columns: 1fr; }
   .tmcampaign-action { width: 100%; }
-  .tmcampaign-play { width: 54px; height: 54px; }
+  .tmcampaign-play { width: 52px; height: 52px; }
   .tmcampaign-modal-backdrop { align-items: start; padding: 12px; }
   .tmcampaign-modal { margin-top: 5vh; border-radius: 9px; }
   .tmcampaign-modal-header { min-height: 52px; padding-left: 14px; }
@@ -254,7 +342,8 @@ const TEMPLATE_CAMPAIGN_STYLES = `
   .tmcampaign-modal-setup { width: 100%; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .tmcampaign-action { transition: none; }
+  .tmcampaign-action,
+  .tmcampaign-play { transition: none; }
 }
 `;
 
@@ -353,14 +442,16 @@ export const TemplateCampaignVideoModal: React.FC<TemplateCampaignVideoModalProp
           </button>
         </header>
         <div className="tmcampaign-video-wrap">
-          <iframe
+          <video
             className="tmcampaign-video"
-            src={VIDEO_EMBED_URL}
-            title="Introducing Webflow MCP 2.0"
-            allow="autoplay; encrypted-media; picture-in-picture; web-share"
-            referrerPolicy="strict-origin-when-cross-origin"
-            allowFullScreen
-          />
+            src={VIDEO_SOURCE_URL}
+            controls
+            autoPlay
+            playsInline
+            preload="metadata"
+          >
+            Your browser does not support the video element.
+          </video>
         </div>
         <footer className="tmcampaign-modal-footer">
           <p id={descriptionId} className="tmcampaign-modal-copy">
@@ -452,14 +543,16 @@ export const TemplateCampaignLane: React.FC<TemplateCampaignLaneProps> = ({
             aria-label="Watch Webflow MCP 2.0 video"
             aria-haspopup="dialog"
             aria-expanded={videoOpen}
+            data-video-destination="cloudflare"
             onClick={openVideo}
           >
-            <img
-              className="tmcampaign-thumbnail"
-              src={VIDEO_THUMBNAIL_URL}
-              alt="Webflow MCP 2.0 video title card"
-              loading="lazy"
-            />
+            <span className="tmcampaign-media-art" aria-hidden="true">
+              <span className="tmcampaign-media-status">
+                <span><span className="tmcampaign-media-dot" /> Agent connected</span>
+              </span>
+              <span className="tmcampaign-media-prompt">“Use this template to build our next launch page.”</span>
+              <span className="tmcampaign-media-footer"><span>Webflow MCP 2.0</span><span>Ready</span></span>
+            </span>
             <span className="tmcampaign-play" aria-hidden="true">▶</span>
             <span className="tmcampaign-duration" aria-hidden="true">5:28</span>
           </button>

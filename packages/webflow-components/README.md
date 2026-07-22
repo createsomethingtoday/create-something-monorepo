@@ -165,9 +165,10 @@ sorting, source positions, infinite-scroll pagination, and Featured-preview
 navigation. It is suppressed during active search and on narrower category,
 creator, style, tag, type, and Free result sets.
 
-The campaign loads the official video thumbnail first and creates the
-privacy-enhanced YouTube iframe only after the visitor opens the accessible
-video modal. Campaign analytics use `TemplateCampaignLane` with the scopes
+The campaign renders a CSP-safe local title card without loading video data.
+After the visitor opens the accessible modal, a native player loads the
+Cloudflare-hosted 1080p MP4 with byte-range playback. Campaign analytics use
+`TemplateCampaignLane` with the scopes
 `campaign_impression`, `campaign_video_opened`, `campaign_video_closed`, and
 `campaign_mcp_setup_clicked`; they do not include raw search, template, or
 creator values.
