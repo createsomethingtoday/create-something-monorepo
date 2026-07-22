@@ -165,13 +165,18 @@ sorting, source positions, infinite-scroll pagination, and Featured-preview
 navigation. It is suppressed during active search and on narrower category,
 creator, style, tag, type, and Free result sets.
 
-The campaign renders a CSP-safe local title card without loading video data.
-After the visitor opens the accessible modal, a native player loads the
-Cloudflare-hosted 1080p MP4 with byte-range playback. Campaign analytics use
-`TemplateCampaignLane` with the scopes
+The campaign renders a CSP-safe Webflow-hosted poster without loading video
+data. After the visitor opens the accessible modal, a native player loads the
+Cloudflare custom-domain 1080p MP4 with byte-range playback and timed English
+captions. Normal playback starts muted; reduced-motion visitors receive a
+paused, audible player. Loading, buffering, ended/replay, and retryable failure
+states remain inside the accessible dialog and native controls participate in
+its keyboard focus boundary. Campaign analytics use `TemplateCampaignLane`
+with the scopes
 `campaign_impression`, `campaign_video_opened`, `campaign_video_closed`, and
-`campaign_mcp_setup_clicked`; they do not include raw search, template, or
-creator values.
+`campaign_mcp_setup_clicked`; impressions fire once when at least half of the
+campaign enters the viewport, and events do not include raw search, template,
+or creator values.
 
 ### Forms (Group: Forms)
 

@@ -1,7 +1,10 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { TemplateChat } from '../../src/components/chat/TemplateChat';
-import { TemplateCampaignLane } from '../../src/components/marketplace/TemplateCampaignLane';
+import {
+  TemplateCampaignLane,
+  TemplateCampaignVideoModal,
+} from '../../src/components/marketplace/TemplateCampaignLane';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('Missing #root');
@@ -16,9 +19,38 @@ window.turnstile = {
 
 const twoInstances = new URLSearchParams(window.location.search).has('two');
 const combinedLibrary = new URLSearchParams(window.location.search).has('combined');
+const campaignOnly = new URLSearchParams(window.location.search).has('campaign');
+const campaignError = new URLSearchParams(window.location.search).has('campaign-error');
+const campaignAnalytics = new URLSearchParams(window.location.search).has('campaign-analytics');
+const campaignLoading = new URLSearchParams(window.location.search).has('campaign-loading');
 
 createRoot(root).render(
-  combinedLibrary ? (
+  campaignLoading ? (
+    <TemplateCampaignVideoModal
+      onClose={() => undefined}
+      videoSrc="/delayed-campaign-video.mp4"
+      setupHref="#mcp-setup"
+    />
+  ) : campaignAnalytics ? (
+    <main className="harness-combined">
+      <div aria-hidden="true" style={{ height: 1200 }} />
+      <TemplateCampaignLane enableAnalytics setupHref="#mcp-setup" />
+    </main>
+  ) : campaignError ? (
+    <TemplateCampaignVideoModal
+      onClose={() => undefined}
+      videoSrc="/missing-campaign-video.mp4"
+      setupHref="#mcp-setup"
+    />
+  ) : campaignOnly ? (
+    <main className="harness-combined">
+      <header className="harness-heading">
+        <p>Template Marketplace campaign verification</p>
+        <h1>Featured website templates</h1>
+      </header>
+      <TemplateCampaignLane enableAnalytics={false} setupHref="#mcp-setup" />
+    </main>
+  ) : combinedLibrary ? (
     <main className="harness-combined">
       <header className="harness-heading">
         <p>Combined Marketplace library verification</p>

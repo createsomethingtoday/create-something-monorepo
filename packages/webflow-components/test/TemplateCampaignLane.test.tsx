@@ -3,6 +3,8 @@ import { test } from 'node:test';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
+  isCampaignImpressionVisible,
+  templateCampaignPlaybackPolicy,
   TemplateCampaignLane,
   TemplateCampaignVideoModal,
   templateCampaignEventData,
@@ -21,8 +23,10 @@ test('renders the MCP 2.0 launch campaign without loading video before activatio
   assert.match(html, /data-video-destination="cloudflare"/);
   assert.match(html, /container-type:\s*inline-size/);
   assert.match(html, /@container tmcampaign/);
+  assert.match(html, /<img/);
+  assert.match(html, /src="https:\/\/cdn\.prod\.website-files\.com\/5e593fb060cf87bbaf75dd20\/6a60539b9ab1dec9cf71cd3a_webflow-mcp-2-video-poster\.jpg"/);
+  assert.match(html, /loading="lazy"/);
   assert.doesNotMatch(html, /i\.ytimg\.com/);
-  assert.doesNotMatch(html, /<img/);
   assert.doesNotMatch(html, /<video/);
   assert.doesNotMatch(html, /<iframe/);
   assert.doesNotMatch(html, /youtu(?:be|\.be)/);
@@ -35,15 +39,37 @@ test('renders the Cloudflare-hosted video in an accessible native-player modal',
   assert.match(html, /aria-modal="true"/);
   assert.match(html, /Introducing MCP 2\.0/);
   assert.match(html, /<video/);
-  assert.match(html, /src="https:\/\/pub-fb87e05654104f5fbb33989fc4dca65b\.r2\.dev\/webflow\/mcp-2\/introducing-mcp-2-0-1080p\.mp4"/);
+  assert.match(html, /src="https:\/\/media\.createsomething\.io\/webflow\/mcp-2\/introducing-mcp-2-0-1080p\.mp4"/);
+  assert.match(html, /poster="https:\/\/cdn\.prod\.website-files\.com\/5e593fb060cf87bbaf75dd20\/6a60539b9ab1dec9cf71cd3a_webflow-mcp-2-video-poster\.jpg"/);
   assert.match(html, /controls=""/);
+  assert.match(html, /autoplay=""/);
+  assert.match(html, /muted=""/);
   assert.match(html, /playsinline=""/);
+  assert.match(html, /crossorigin="anonymous"/);
   assert.match(html, /preload="metadata"/);
+  assert.match(html, /kind="captions"/);
+  assert.match(html, /src="https:\/\/media\.createsomething\.io\/webflow\/mcp-2\/introducing-mcp-2-0-en\.vtt"/);
+  assert.match(html, /srcLang="en"/);
+  assert.match(html, /label="English"/);
+  assert.match(html, /default=""/);
+  assert.match(html, /Loading video/);
+  assert.match(html, /role="status"/);
   assert.doesNotMatch(html, /<iframe/);
   assert.doesNotMatch(html, /i\.ytimg\.com/);
   assert.doesNotMatch(html, /youtu(?:be|\.be)/);
   assert.match(html, /Close video/);
   assert.match(html, /Get started with MCP/);
+});
+
+test('disables autoplay and motion-dependent muting when reduced motion is requested', () => {
+  assert.deepEqual(templateCampaignPlaybackPolicy(false), { autoPlay: true, muted: true });
+  assert.deepEqual(templateCampaignPlaybackPolicy(true), { autoPlay: false, muted: false });
+});
+
+test('qualifies an impression only when at least half of the campaign is visible', () => {
+  assert.equal(isCampaignImpressionVisible({ isIntersecting: true, intersectionRatio: 0.49 }), false);
+  assert.equal(isCampaignImpressionVisible({ isIntersecting: false, intersectionRatio: 0.9 }), false);
+  assert.equal(isCampaignImpressionVisible({ isIntersecting: true, intersectionRatio: 0.5 }), true);
 });
 
 test('emits a stable campaign-only analytics payload', () => {
