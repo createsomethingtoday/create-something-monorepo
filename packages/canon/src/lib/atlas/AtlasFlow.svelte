@@ -60,7 +60,7 @@
 
 	const controlsFitViewOptions = {
 		padding: 0.12,
-		minZoom: 0.7,
+		minZoom: 0.2,
 		maxZoom: 1
 	};
 
@@ -84,7 +84,7 @@
 		y: 0,
 		zoom: 1
 	};
-	export let minZoom = 0.7;
+	export let minZoom = 0.2;
 	export let maxZoom = 1.45;
 
 	$: focusedNodeSet = new Set(focusedNodeIds);

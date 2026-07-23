@@ -3,7 +3,7 @@
 Status: implementation brief
 Owner: CREATE SOMETHING
 Linear: CRE-1393
-Last reviewed: 2026-07-22
+Last reviewed: 2026-07-23
 Refresh due: 2026-08-21
 
 ## Decision
@@ -174,6 +174,8 @@ The graph and inspector use a `minmax(0, 1.65fr) minmax(18rem, .75fr)` split. Th
 
 The inspector moves below the graph. Lens buttons form a two-column grid. The graph uses the mobile projection rather than horizontal scrolling. The receipt rail becomes a vertical definition list.
 
+The existing editable Map remains the one exception because it is the working canvas, not a second system-context graph. At the mobile verifier width, `Fit view` must zoom far enough to show the complete bounded workflow inside the canvas without creating horizontal page overflow. That fitted state is an overview; the existing zoom controls return the canvas to a readable editing scale.
+
 ## Interaction states
 
 ### Dependencies
@@ -230,6 +232,18 @@ Emphasize evidence, receipts, and recovery. Selecting `Trace proof` focuses the 
 - Status rings and labels remain quiet. No glowing AI atmosphere, decorative circuitry, or fake monitoring data.
 
 Editable visual briefs live under `packages/agency/content/assets/brand/system-context-operating-artifact.v20260722/source/`. They are design inputs, not production screenshots or runtime proof.
+
+## Analogy-to-visual rule
+
+Written operating analogies should resolve into one reusable visual grammar instead of separate decorative illustrations:
+
+- `Map -> Build -> Control` is the outer journey and remains the only product structure.
+- Map owns the one editable workflow canvas.
+- Control owns the `Signal -> Decision -> Proof` operating loop and the shared system-context artifact.
+- Dependencies, Authority, Change, and Proof are views over that artifact, not new products or additional graphs.
+- Owner, evidence, freshness, and recovery remain attached to the selected operating record.
+
+The v1 route work keeps this grammar inside the existing Map canvas, Control artifact, and field-report adaptation. Moving a compact schematic earlier in the wider `.agency` story is a follow-on design decision after this exact experience is promoted; it must reuse the grammar above and must not introduce internal architecture vocabulary or decorative AI imagery.
 
 ## Redaction policy
 

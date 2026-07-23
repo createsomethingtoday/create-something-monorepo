@@ -6,6 +6,10 @@ import {
   TEMPLATE_REVIEW_SYSTEM_CONTEXT,
   getTemplateReviewSystemContext
 } from '../src/lib/system-context/template-review.ts';
+import {
+  createPublicAtlasCanvas,
+  summarizePublicAtlasCanvas
+} from '../../canon/src/lib/atlas/headless.ts';
 
 const controlRoute = readFileSync(new URL('../src/routes/control/+page.svelte', import.meta.url), 'utf8');
 const mapRoute = readFileSync(new URL('../src/routes/map/+page.svelte', import.meta.url), 'utf8');
@@ -93,4 +97,18 @@ test('visitor-facing system-context markup excludes internal architecture vocabu
   assert.doesNotMatch(publicMarkup, /\b(?:node|edge) count\b/i);
   assert.doesNotMatch(publicFlow, /canvas\.nodes\.length[\s\S]*canvas\.edges\.length/);
   assert.match(publicFlow, /contextLabel = 'Editable workflow'/);
+});
+
+test('the public Map booking summary hides compatibility vocabulary and identifiers', () => {
+  const summary = summarizePublicAtlasCanvas(createPublicAtlasCanvas());
+
+  assert.match(summary, /^Map workflow summary$/m);
+  assert.match(summary, /^Map reference: map_/m);
+  assert.match(summary, /^Map edits: 0$/m);
+  assert.doesNotMatch(summary, /\bAtlas\b|public_atlas|Canvas mutations/);
+});
+
+test('Map Fit View can include the complete workflow at the mobile verifier width', () => {
+  assert.match(publicFlow, /const controlsFitViewOptions = \{[\s\S]*minZoom: 0\.2/);
+  assert.match(publicFlow, /export let minZoom = 0\.2/);
 });
