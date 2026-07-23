@@ -1,5 +1,5 @@
 /**
- * Generate "Proof in Motion", an original 30-second modal tenor-quartet cue
+ * Generate "Proof in Motion", an original 30-second modal tenor cinematic cue
  * for the CREATE SOMETHING workflow reel.
  *
  * The arrangement is deterministic and its structural hits share the reel's
@@ -100,6 +100,97 @@ const addQuartalPianoChord = (
       gain / Math.sqrt(notes.length),
       (position * 2 - 1) * spread
     );
+  });
+};
+
+const addStringNote = (
+  startBeat: number,
+  durationBeats: number,
+  midi: number,
+  gain: number,
+  pan: number,
+  crescendo = 0.2
+): void => {
+  const frequency = midiToFrequency(midi);
+  const duration = beatToSeconds(durationBeats);
+  let phase = 0;
+  let phaseWide = 0;
+  let previousNoise = 0;
+
+  forEvent(beatToSeconds(startBeat), duration, (time, progress, sampleIndex) => {
+    const vibrato = 1 + Math.sin(TAU * 5.35 * time) * 0.0018 * Math.min(1, time / 0.45);
+    phase += (TAU * frequency * vibrato) / SAMPLE_RATE;
+    phaseWide += (TAU * frequency * 1.0027 * vibrato) / SAMPLE_RATE;
+    const bowNoise = deterministicNoise();
+    const bowEdge = bowNoise - previousNoise * 0.86;
+    previousNoise = bowNoise;
+    const tone =
+      Math.sin(phase) * 0.5 +
+      Math.sin(phase * 2 + 0.18) * 0.23 +
+      Math.sin(phaseWide) * 0.19 +
+      Math.sin(phase * 3 + 0.44) * 0.08 +
+      bowEdge * 0.018;
+    const expression = 0.72 + progress * crescendo;
+    const envelope = smoothEnvelope(progress, 0.12, 0.26) * expression;
+    addStereo(sampleIndex, Math.tanh(tone * 1.05) * envelope * gain, pan);
+  });
+};
+
+const addStringChord = (
+  startBeat: number,
+  durationBeats: number,
+  notes: readonly number[],
+  gain: number,
+  crescendo = 0.2
+): void => {
+  notes.forEach((note, index) => {
+    const position = notes.length === 1 ? 0 : index / (notes.length - 1);
+    addStringNote(
+      startBeat,
+      durationBeats,
+      note,
+      gain / Math.sqrt(notes.length),
+      (position * 2 - 1) * 0.62,
+      crescendo
+    );
+  });
+};
+
+const addFrenchHornNote = (
+  startBeat: number,
+  durationBeats: number,
+  midi: number,
+  gain: number,
+  pan: number
+): void => {
+  const frequency = midiToFrequency(midi);
+  let phase = 0;
+  forEvent(
+    beatToSeconds(startBeat),
+    beatToSeconds(durationBeats),
+    (time, progress, sampleIndex) => {
+      const vibrato = 1 + Math.sin(TAU * 4.7 * time) * 0.0011 * Math.min(1, time / 0.55);
+      phase += (TAU * frequency * vibrato) / SAMPLE_RATE;
+      const brass =
+        Math.sin(phase) * 0.62 +
+        Math.sin(phase * 2 + 0.08) * 0.24 +
+        Math.sin(phase * 3 + 0.17) * 0.1 +
+        Math.sin(phase * 4 + 0.29) * 0.04;
+      const envelope = smoothEnvelope(progress, 0.11, 0.24) * (0.82 + progress * 0.16);
+      addStereo(sampleIndex, Math.tanh(brass * 1.18) * envelope * gain, pan);
+    }
+  );
+};
+
+const addTimpani = (beat: number, midi: number, gain: number): void => {
+  const frequency = midiToFrequency(midi);
+  forEvent(beatToSeconds(beat), 1.15, (time, _progress, sampleIndex) => {
+    const pitch = frequency * (1 + Math.exp(-time * 15) * 0.12);
+    const body =
+      Math.sin(TAU * pitch * time) * 0.72 +
+      Math.sin(TAU * pitch * 1.48 * time + 0.28) * 0.2 +
+      deterministicNoise() * Math.exp(-time * 38) * 0.08;
+    addStereo(sampleIndex, body * Math.exp(-time * 3.2) * gain, 0);
   });
 };
 
@@ -265,6 +356,42 @@ for (let index = 0; index < harmony.length; index += 1) {
   }
 }
 
+// Long-lined strings widen the quartet without replacing its athletic pulse.
+// Each change follows a narrative section: pressure grows through Friction,
+// opens at Map, then rises into Proof and the closing call to action.
+for (const [beat, duration, notes, gain, crescendo] of [
+  [0, 10, [50, 57, 60, 65], 0.043, 0.12],
+  [10, 12, [50, 58, 63, 68], 0.057, 0.34],
+  [22, 12, [50, 57, 62, 67], 0.047, 0.18],
+  [34, 10, [48, 55, 60, 65], 0.06, 0.34],
+  [44, 8, [50, 57, 62, 69], 0.07, 0.42],
+  [52, 8, [50, 57, 62, 67, 74], 0.076, 0.22]
+] as const) {
+  addStringChord(beat, duration, notes, gain, crescendo);
+}
+
+// A wholly original four-note D-modal leitmotif: root, fifth, minor seventh,
+// fourth. Its compact intervals echo Signal -> Decision -> Proof without
+// borrowing a pre-existing melody.
+const originalLeitmotif = [50, 57, 60, 55] as const;
+const leitmotifDurations = [1, 0.75, 1, 1.5] as const;
+const addLeitmotif = (startBeat: number, gain: number, transpose = 0): void => {
+  let cursor = startBeat;
+  originalLeitmotif.forEach((note, index) => {
+    const duration = leitmotifDurations[index];
+    addFrenchHornNote(cursor, duration, note + transpose, gain, index % 2 === 0 ? -0.16 : 0.14);
+    cursor += duration + 0.25;
+  });
+};
+
+addLeitmotif(0.25, 0.036);
+addLeitmotif(22.25, 0.048);
+addLeitmotif(52, 0.066, 12);
+
+// Restrained horn pillars make the proof and close feel earned, not trailer-like.
+for (const note of [50, 57, 62] as const) addFrenchHornNote(44, 3.5, note, 0.032, 0);
+for (const note of [50, 57, 62, 67] as const) addFrenchHornNote(58, 2, note, 0.043, 0);
+
 for (let beat = 0; beat < 60; beat += 1) {
   const barBeat = beat % 4;
   const intensity =
@@ -367,13 +494,14 @@ const narrativeHitBeats = Object.values(WORKFLOW_REEL_SPEC.music.hitFrames).map(
 );
 
 for (const beat of narrativeHitBeats) {
-  if (beat > 0) {
-    addRim(beat, beat >= 52 ? 0.12 : 0.09);
-    addCymbal(beat, beat >= 52 ? 0.055 : 0.035);
-  }
+  const isFinalAct = beat >= 44;
+  addTimpani(beat, beat >= 52 ? 38 : 36, beat === 0 ? 0.085 : isFinalAct ? 0.14 : 0.105);
+  if (beat === 0) continue;
+  addRim(beat, beat >= 52 ? 0.12 : 0.09);
+  addCymbal(beat, beat >= 52 ? 0.055 : 0.035);
 }
 
-// Small deterministic room: crossed early reflections keep the quartet
+// Small deterministic room: crossed early reflections keep the ensemble
 // cohesive without washing out the frame-accurate narrative attacks.
 const leftDelay = Math.round(SAMPLE_RATE * 0.071);
 const rightDelay = Math.round(SAMPLE_RATE * 0.109);

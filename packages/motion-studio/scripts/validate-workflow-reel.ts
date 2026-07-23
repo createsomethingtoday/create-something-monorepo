@@ -60,6 +60,14 @@ if (existsSync(musicGeneratorPath)) {
   if (!musicGeneratorSource.includes('addTenorNote')) {
     errors.push('Workflow jazz generator does not contain the modal tenor voice');
   }
+  for (const orchestralVoice of ['addStringNote', 'addFrenchHornNote', 'addTimpani']) {
+    if (!musicGeneratorSource.includes(orchestralVoice)) {
+      errors.push(`Workflow score generator does not contain ${orchestralVoice}`);
+    }
+  }
+  if (!musicGeneratorSource.includes('originalLeitmotif')) {
+    errors.push('Workflow score generator does not declare its original leitmotif');
+  }
   if (!/quartal/i.test(musicGeneratorSource)) {
     errors.push('Workflow jazz generator does not declare quartal harmony');
   }
@@ -79,6 +87,9 @@ if (existsSync(compositionPath)) {
   }
   if (!compositionSource.includes('WORKFLOW_REEL_SPEC.music.asset')) {
     errors.push('Workflow reel composition does not load its score from the timing contract');
+  }
+  if (!compositionSource.includes('CinematicAccent')) {
+    errors.push('Workflow reel composition does not contain score-synchronized cinematic accents');
   }
 }
 
@@ -155,8 +166,8 @@ if (existsSync(specPath)) {
       if (spec.music.bpm !== 120 || spec.music.beatFrames !== calculatedBeatFrames) {
         errors.push('Workflow jazz cue must use the approved 120 BPM / 15-frame beat grid');
       }
-      if (spec.music.character !== 'modal tenor quartet') {
-        errors.push('Workflow jazz cue must preserve the approved modal tenor quartet direction');
+      if (spec.music.character !== 'modal tenor cinematic ensemble') {
+        errors.push('Workflow score must preserve the approved modal tenor cinematic direction');
       }
 
       const sceneStarts = Object.values(spec.scenes).map((scene) => scene.start);

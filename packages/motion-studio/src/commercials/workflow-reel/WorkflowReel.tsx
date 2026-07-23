@@ -897,6 +897,62 @@ const CloseScene: React.FC = () => {
   );
 };
 
+const CinematicAccent: React.FC = () => {
+  const frame = useCurrentFrame();
+  const hitStrength = Object.values(WORKFLOW_REEL_SPEC.music.hitFrames).reduce<number>(
+    (strongest, hitFrame) => {
+      const delta = frame - hitFrame;
+      if (delta < -4 || delta > 22) return strongest;
+      const strength =
+        delta < 0
+          ? interpolate(delta, [-4, 0], [0, 0.42])
+          : interpolate(delta, [0, 22], [1, 0], {
+              extrapolateLeft: 'clamp',
+              extrapolateRight: 'clamp'
+            });
+      return Math.max(strongest, strength);
+    },
+    0
+  );
+  const beatPhase =
+    (frame % WORKFLOW_REEL_SPEC.music.beatFrames) / WORKFLOW_REEL_SPEC.music.beatFrames;
+  const instrumentPulse = interpolate(beatPhase, [0, 0.18, 1], [0.12, 0.035, 0], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp'
+  });
+
+  return (
+    <AbsoluteFill style={{ pointerEvents: 'none', zIndex: 18 }}>
+      <AbsoluteFill
+        style={{
+          background: `radial-gradient(circle at 50% 48%, ${color.signalSoft} 0%, transparent 64%)`,
+          opacity: hitStrength * 0.23,
+          mixBlendMode: 'screen'
+        }}
+      />
+      <div
+        style={{
+          position: 'absolute',
+          inset: 22,
+          border: `1px solid ${color.signal}`,
+          opacity: hitStrength * 0.36
+        }}
+      />
+      <div
+        style={{
+          position: 'absolute',
+          left: safeArea.left,
+          right: safeArea.right,
+          top: safeArea.top - 28,
+          height: 2,
+          background: color.signal,
+          opacity: Math.max(hitStrength * 0.42, instrumentPulse)
+        }}
+      />
+    </AbsoluteFill>
+  );
+};
+
 const ProgressRail: React.FC = () => {
   const frame = useCurrentFrame();
   const progress = frame / (WORKFLOW_REEL_SPEC.durationInFrames - 1);
@@ -959,6 +1015,7 @@ export const WorkflowReel: React.FC = () => (
       <CloseScene />
     </Sequence>
 
+    <CinematicAccent />
     <ProgressRail />
   </AbsoluteFill>
 );
