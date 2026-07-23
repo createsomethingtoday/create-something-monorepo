@@ -16,10 +16,11 @@ Read in this order when you need broad repo context:
 6. [MCP_FIRST_THESIS.md](./MCP_FIRST_THESIS.md) — strategic thesis, packaging, and market framing
 7. [THREE_TIER_FRAMEWORK.md](./THREE_TIER_FRAMEWORK.md) — Database / Automation / Judgment model
 8. [AGENT_RUN_RECEIPT_CHARTER.md](./AGENT_RUN_RECEIPT_CHARTER.md) — agent-run-with-receipts operating charter
-9. [CREATE_SOMETHING_DATABASE_LAYER.md](./CREATE_SOMETHING_DATABASE_LAYER.md) — reusable database-layer product direction
-10. [packages/database-layer/docs/agent-wiki/business-recommendations.md](../packages/database-layer/docs/agent-wiki/business-recommendations.md) — generated operating lanes for CREATE SOMETHING business recommendations
-11. [POLICY_OS_PRODUCT_DEFINITION.md](./POLICY_OS_PRODUCT_DEFINITION.md) — Control product definition and Policy OS compatibility contract
-12. [policies/README.md](./policies/README.md) — versioned policy artifacts
+9. [CREATE_SOMETHING_REFERENCE_MISSION.md](./CREATE_SOMETHING_REFERENCE_MISSION.md) — canonical internal delivery mission and machine-readable identity/proof contract
+10. [CREATE_SOMETHING_DATABASE_LAYER.md](./CREATE_SOMETHING_DATABASE_LAYER.md) — reusable database-layer product direction
+11. [packages/database-layer/docs/agent-wiki/business-recommendations.md](../packages/database-layer/docs/agent-wiki/business-recommendations.md) — generated operating lanes for CREATE SOMETHING business recommendations
+12. [POLICY_OS_PRODUCT_DEFINITION.md](./POLICY_OS_PRODUCT_DEFINITION.md) — Control product definition and Policy OS compatibility contract
+13. [policies/README.md](./policies/README.md) — versioned policy artifacts
 
 ## Navigation by task
 
@@ -33,6 +34,7 @@ Read in this order when you need broad repo context:
 - [thesis/README.md](./thesis/README.md)
 - [MCP_FIRST_THESIS.md](./MCP_FIRST_THESIS.md)
 - [AGENT_RUN_RECEIPT_CHARTER.md](./AGENT_RUN_RECEIPT_CHARTER.md)
+- [CREATE_SOMETHING_REFERENCE_MISSION.md](./CREATE_SOMETHING_REFERENCE_MISSION.md)
 - [CREATE_SOMETHING_DATABASE_LAYER.md](./CREATE_SOMETHING_DATABASE_LAYER.md)
 - [packages/database-layer/docs/agent-wiki/business-recommendations.md](../packages/database-layer/docs/agent-wiki/business-recommendations.md)
 - [POLICY_OS_PRODUCT_DEFINITION.md](./POLICY_OS_PRODUCT_DEFINITION.md)
@@ -99,6 +101,7 @@ Read in this order when you need broad repo context:
 - [guides/CODING_AGENT_HARNESS_PATTERN.md](./guides/CODING_AGENT_HARNESS_PATTERN.md)
 - [guides/SOLO_OPERATOR_AGENT_LOOP.md](./guides/SOLO_OPERATOR_AGENT_LOOP.md)
 - [AGENT_RUN_RECEIPT_CHARTER.md](./AGENT_RUN_RECEIPT_CHARTER.md)
+- [CREATE_SOMETHING_REFERENCE_MISSION.md](./CREATE_SOMETHING_REFERENCE_MISSION.md)
 - [guides/ZELLIJ_AGENT_COCKPIT.md](./guides/ZELLIJ_AGENT_COCKPIT.md)
 - [guides/OPERATOR_AGENT_SYSTEM.md](./guides/OPERATOR_AGENT_SYSTEM.md)
 - [guides/OPERATOR_AGENT_PUBLIC_ACCESS.md](./guides/OPERATOR_AGENT_PUBLIC_ACCESS.md)

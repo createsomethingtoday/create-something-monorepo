@@ -8,6 +8,11 @@ It answers the CRE-1191 experiment:
 
 The first vertical is the Webflow Marketplace template lifecycle: submission, validation, review, approval, publishing, and post-launch monitoring.
 
+The CREATE SOMETHING internal-delivery fixture is the canonical reference
+mission behind the Performance Lab identity. It composes Linear, the agent
+harness, repository checks, promotion authority, live verification, recovery,
+and Canon lessons without claiming ownership of those runtimes.
+
 ## Module design
 
 **Concept:** workflow-to-runtime compilation.
@@ -20,7 +25,7 @@ The first vertical is the Webflow Marketplace template lifecycle: submission, va
 import {
   compileWorkflowDefinition,
   replayWorkflow,
-  writeCompiledWorkflowArtifacts,
+  writeCompiledWorkflowArtifacts
 } from '@create-something/workflow-compiler';
 ```
 
@@ -30,14 +35,14 @@ import {
 
 ## Agent Legibility Contract
 
-| Field | Value |
-| --- | --- |
-| Entry point | `src/index.ts`, `src/compile.ts`, `src/replay.ts`, `src/artifacts.ts`, `src/cli.ts` |
-| Boot command | `pnpm build` |
-| Smoke command | `pnpm check && pnpm test && pnpm test:acceptance` |
-| Validation surfaces | TypeScript output, node test output, workflow diagnostics, content-hashed manifest, replay report, evidence ledger, acceptance summary |
-| UI validation path | Serve the generated `operator-console/` and verify overview, approval-required, blocked, reload, and browser-console states with Playwright |
-| Escalation rule | Stop before live mutation or execution controls, and stop when authority, evidence, approval, receipt, recovery, or owning-system boundaries cannot be proven |
+| Field               | Value                                                                                                                                                         |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Entry point         | `src/index.ts`, `src/compile.ts`, `src/replay.ts`, `src/artifacts.ts`, `src/cli.ts`                                                                           |
+| Boot command        | `pnpm build`                                                                                                                                                  |
+| Smoke command       | `pnpm check && pnpm test && pnpm test:acceptance`                                                                                                             |
+| Validation surfaces | TypeScript output, node test output, workflow diagnostics, content-hashed manifest, replay report, evidence ledger, acceptance summary                        |
+| UI validation path  | Serve the generated `operator-console/` and verify overview, approval-required, blocked, reload, and browser-console states with Playwright                   |
+| Escalation rule     | Stop before live mutation or execution controls, and stop when authority, evidence, approval, receipt, recovery, or owning-system boundaries cannot be proven |
 
 ## Compile the marketplace fixture
 
@@ -72,6 +77,20 @@ node packages/workflow-compiler/dist/cli.js serve \
   --dir /tmp/marketplace-workflow-compiler \
   --port 4173
 ```
+
+Compile the internal-delivery reference mission:
+
+```bash
+node packages/workflow-compiler/dist/cli.js compile \
+  --workflow packages/workflow-compiler/fixtures/internal-delivery/workflow.json \
+  --cases packages/workflow-compiler/fixtures/internal-delivery/cases.json \
+  --out /tmp/create-something-reference-mission
+```
+
+Its identity invariants, state translations, receipt envelope, public
+projection, and agent extension declaration live beside the fixture in
+`fixtures/internal-delivery/identity.json` and are documented in
+`docs/CREATE_SOMETHING_REFERENCE_MISSION.md`.
 
 ## Acceptance verifier
 
