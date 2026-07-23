@@ -5,11 +5,14 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { TemplateChat } from '../src/index';
 import {
   AgentProgress,
+  createAgentProgressState,
   buildMessageSentAnalytics,
+  getAgentOutcomeReceipt,
   getAgentProgressView,
   getPreviewReturnImmersive,
   getTemplateChatStorageKey,
   limitTemplateChatInput,
+  reduceAgentProgress,
   summarizePageAction,
 } from '../src/components/chat/TemplateChat';
 import { MAX_REQUEST_MESSAGE_CHARS } from '../src/components/chat/templateAgentSession';
@@ -95,32 +98,118 @@ test('agent progress maps protocol status and page actions to factual user-facin
     highlight_slugs: ['bistro', 'supper-club'],
   };
 
-  assert.deepEqual(getAgentProgressView('searching', action), {
+  let progress = createAgentProgressState();
+  progress = reduceAgentProgress(progress, { type: 'connected' });
+  progress = reduceAgentProgress(progress, { type: 'agent_status', status: 'searching' });
+  progress = reduceAgentProgress(progress, { type: 'page_action', payload: action });
+
+  assert.deepEqual(getAgentProgressView(progress), {
     activeIndex: 1,
-    title: 'Searching templates',
+    title: 'Searching the template catalog',
     detail: 'Checking the template catalog for strong matches.',
     receipt: 'Page updated · Food & Drink · Free only · Highlighted 2 matches',
+    announcement: 'Searching the template catalog. Page updated · Food & Drink · Free only · Highlighted 2 matches.',
   });
   assert.equal(summarizePageAction({ q: 'private restaurant launch' }), 'Updated the page search');
   assert.equal(summarizePageAction({ q: 'private restaurant launch' })?.includes('private'), false);
 });
 
-test('agent progress renders an accessible three-stage work surface with loading structure', () => {
+test('agent progress never moves backward when the worker returns to thinking after search', () => {
+  let progress = createAgentProgressState();
+  progress = reduceAgentProgress(progress, { type: 'connected' });
+  progress = reduceAgentProgress(progress, { type: 'agent_status', status: 'searching' });
+  progress = reduceAgentProgress(progress, { type: 'agent_status', status: 'thinking' });
+
+  assert.equal(progress.phase, 'searching');
+});
+
+test('agent progress stays stable through streamed activity and becomes a durable result receipt', () => {
+  let progress = createAgentProgressState();
+  progress = reduceAgentProgress(progress, { type: 'connected' });
+  progress = reduceAgentProgress(progress, { type: 'agent_status', status: 'searching' });
+  progress = reduceAgentProgress(progress, { type: 'text' });
+  progress = reduceAgentProgress(progress, {
+    type: 'page_action',
+    payload: { category_group_slug: 'food-and-drink', highlight_slugs: ['bistro'] },
+  });
+
+  assert.equal(progress.phase, 'searching');
+  assert.equal(progress.outcome, 'active');
+  assert.equal(progress.pageAction?.category_group_slug, 'food-and-drink');
+
+  progress = reduceAgentProgress(progress, { type: 'display', resultCount: 3 });
+  progress = reduceAgentProgress(progress, { type: 'done' });
+
+  assert.equal(progress.phase, 'presenting');
+  assert.equal(progress.outcome, 'completed');
+  assert.equal(progress.resultCount, 3);
+});
+
+test('slow progress stays actionable and retry starts from truthful preparation', () => {
+  let progress = createAgentProgressState();
+  progress = reduceAgentProgress(progress, { type: 'connected' });
+  progress = reduceAgentProgress(progress, { type: 'agent_status', status: 'searching' });
+  progress = reduceAgentProgress(progress, { type: 'slow' });
+
+  assert.deepEqual(getAgentProgressView(progress), {
+    activeIndex: 1,
+    title: 'Searching the template catalog',
+    detail: 'This is taking longer than usual. You can keep waiting or stop and try again.',
+    receipt: null,
+    announcement: 'Searching the template catalog. This is taking longer than usual.',
+  });
+
+  progress = reduceAgentProgress(progress, { type: 'stop' });
+  assert.equal(progress.outcome, 'stopped');
+  progress = reduceAgentProgress(progress, { type: 'retry' });
+  assert.deepEqual(progress, createAgentProgressState());
+});
+
+test('completed, stopped, and failed turns have distinct durable receipts', () => {
+  let completed = createAgentProgressState();
+  completed = reduceAgentProgress(completed, {
+    type: 'page_action',
+    payload: { category_group_slug: 'food-and-drink' },
+  });
+  completed = reduceAgentProgress(completed, { type: 'display', resultCount: 3 });
+  completed = reduceAgentProgress(completed, { type: 'done' });
+
+  assert.equal(
+    getAgentOutcomeReceipt(completed),
+    '3 template recommendations ready · Page updated · Food & Drink',
+  );
+  assert.equal(
+    getAgentOutcomeReceipt(reduceAgentProgress(createAgentProgressState(), { type: 'stop' })),
+    'Search stopped',
+  );
+  assert.equal(
+    getAgentOutcomeReceipt(reduceAgentProgress(createAgentProgressState(), { type: 'fail' })),
+    'Search interrupted',
+  );
+});
+
+test('agent progress renders an accessible four-stage work surface with loading structure', () => {
+  let progress = createAgentProgressState();
+  progress = reduceAgentProgress(progress, { type: 'connected' });
+  progress = reduceAgentProgress(progress, { type: 'agent_status', status: 'searching' });
+  progress = reduceAgentProgress(progress, {
+    type: 'page_action',
+    payload: { category_group_slug: 'food-and-drink', highlight_slugs: ['bistro'] },
+  });
   const html = renderToStaticMarkup(
-    <AgentProgress
-      status="searching"
-      pageAction={{ category_group_slug: 'food-and-drink', highlight_slugs: ['bistro'] }}
-    />,
+    <AgentProgress progress={progress} />,
   );
 
   assert.match(html, /class="tmchat-progress"/);
-  assert.match(html, /role="status"/);
+  assert.match(html, /aria-label="Template search activity"/);
+  assert.match(html, /class="tmchat-sr-only" role="status"/);
   assert.match(html, /aria-live="polite"/);
-  assert.match(html, /Understanding your request/);
-  assert.match(html, /data-state="current"[^>]*>[^<]*<[^>]*>Searching templates/s);
-  assert.match(html, /Curating the strongest matches/);
+  assert.match(html, /Preparing search/);
+  assert.match(html, /data-state="current"[^>]*>[^<]*<[^>]*>Searching catalog/s);
+  assert.match(html, /Comparing matches/);
+  assert.match(html, /Presenting results/);
   assert.match(html, /Page updated · Food &amp; Drink · Highlighted 1 match/);
-  assert.equal((html.match(/tmchat-progress-skeleton-card/g) ?? []).length, 3);
+  assert.equal((html.match(/tmchat-progress-skeleton-card/g) ?? []).length, 4);
 });
 
 test('agent progress uses Webflow-neutral surfaces with blue reserved for current state', () => {
@@ -206,7 +295,7 @@ test('every recommendation layout explains fit and labels the contextual refinem
     assert.match(html, />More upscale and minimal</);
     assert.match(
       html,
-      /class="tmchat-outcome-announcement tmchat-sr-only" role="status" aria-live="polite" aria-atomic="true">These are the strongest fits\. 5 template recommendations are ready\./,
+      /class="tmchat-outcome-announcement tmchat-sr-only" role="status" aria-live="polite" aria-atomic="true">These are the strongest fits\. 5 template recommendations ready\./,
     );
   } finally {
     if (originalWindow === undefined) delete (globalThis as { window?: Window }).window;
@@ -370,7 +459,8 @@ test('a stopped turn is acknowledged and can be retried without an empty assista
   try {
     const html = renderToStaticMarkup(<TemplateChat defaultOpen enableAnalytics={false} />);
 
-    assert.match(html, /class="tmchat-turn-status"[^>]*role="status"[^>]*>Stopped</);
+    assert.match(html, /class="tmchat-turn-status" data-outcome="stopped">Search stopped</);
+    assert.match(html, /class="tmchat-outcome-announcement tmchat-sr-only"[^>]*>Search stopped\.</);
     assert.match(html, />Try again</);
     assert.equal((html.match(/class="tmchat-msg assistant"/g) ?? []).length, 0);
   } finally {
