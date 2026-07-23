@@ -61,6 +61,9 @@ test('public Field Report leads with the decision and keeps eval scope explicit'
   assert.match(route, /title=\{templateReviewFieldReport\.title\}/);
   assert.match(route, /49 of 50 selected cases/i);
   assert.match(route, /promotion blocked/i);
+  assert.match(route, /class="failed-boundary__metric-value">1 \/ 2<\/span>/i);
+  assert.match(route, /class="failed-boundary__metric-qualifier">missed<\/span>/i);
+  assert.match(route, /container-type:\s*inline-size/i);
   assert.match(route, /missed one of two historical exceptional examples/i);
   assert.match(route, /synthetic/i);
   assert.match(route, /32 live boundary scenarios/i);
