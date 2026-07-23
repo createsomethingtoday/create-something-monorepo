@@ -21,6 +21,10 @@ import {
   writeTemplateAttribution,
   type TemplateMarketplaceAttribution,
 } from '../marketplace/templateAttribution';
+import {
+  normalizeTemplateSort as normalizeSort,
+  type TemplateSort,
+} from '../marketplace/templateRoute';
 
 // ─── API types ────────────────────────────────────────────────────────────────
 
@@ -77,7 +81,6 @@ interface ApiResponse {
 
 // ─── Filter / route state ─────────────────────────────────────────────────────
 
-type TemplateSort = 'popular' | 'newest' | 'price_asc' | 'price_desc';
 type TemplateScope = 'all' | 'featured' | 'free' | 'landing_pages';
 
 interface FilterState {
@@ -367,27 +370,6 @@ function toFilterSlug(name: string): string {
 
 function toStyleSlug(name: string): string {
   return toFilterSlug(name);
-}
-
-function normalizeSort(value: string | null | undefined, fallback: TemplateSort = 'popular'): TemplateSort {
-  switch ((value ?? '').trim()) {
-    case 'newest':
-    case 'approval-date':
-    case 'approval-date-desc':
-      return 'newest';
-    case 'price_asc':
-    case 'price-asc':
-      return 'price_asc';
-    case 'price_desc':
-    case 'price-desc':
-      return 'price_desc';
-    case 'popular':
-    case 'popularity-score':
-    case 'popularity-score-desc':
-      return 'popular';
-    default:
-      return fallback;
-  }
 }
 
 function resolveScopeOverride(scopeOverrideParam?: TemplateScope): TemplateScope | undefined {
