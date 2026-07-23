@@ -1,4 +1,4 @@
-export type TemplateSort = 'popular' | 'newest' | 'price_asc' | 'price_desc';
+export type TemplateSort = 'popular' | 'best_selling' | 'newest' | 'price_asc' | 'price_desc';
 export type TemplateScope = 'all' | 'featured' | 'free' | 'landing_pages';
 export type TemplatePathKind =
   | 'auto'
@@ -27,6 +27,34 @@ export interface TemplateRouteState {
   isSearchRoute: boolean;
   categoryIsRoute: boolean;
   childCategoryIsRoute: boolean;
+}
+
+export interface TemplateSortOption {
+  value: TemplateSort;
+  label: string;
+}
+
+export const TEMPLATE_SORT_OPTIONS: ReadonlyArray<TemplateSortOption> = [
+  { value: 'popular', label: 'Popular' },
+  { value: 'best_selling', label: 'Best Sellers' },
+  { value: 'newest', label: 'Newest' },
+  { value: 'price_asc', label: 'Price: Low to High' },
+  { value: 'price_desc', label: 'Price: High to Low' },
+];
+
+export const TEMPLATE_SORT_LABELS: Readonly<Record<TemplateSort, string>> = {
+  popular: 'Popular',
+  best_selling: 'Best Sellers',
+  newest: 'Newest',
+  price_asc: 'Price: Low to High',
+  price_desc: 'Price: High to Low',
+};
+
+export function getTemplateSortOptions(scope: TemplateScope): ReadonlyArray<TemplateSortOption> {
+  if (scope !== 'free') return TEMPLATE_SORT_OPTIONS;
+  return TEMPLATE_SORT_OPTIONS.filter(
+    (option) => option.value === 'popular' || option.value === 'newest',
+  );
 }
 
 interface ParseTemplateRouteOptions {
@@ -117,6 +145,11 @@ export function normalizeTemplateSort(
     case 'price_desc':
     case 'price-desc':
       return 'price_desc';
+    case 'best_selling':
+    case 'best-selling':
+    case 'best_sellers':
+    case 'best-sellers':
+      return 'best_selling';
     case 'popular':
     case 'popularity-score':
     case 'popularity-score-desc':

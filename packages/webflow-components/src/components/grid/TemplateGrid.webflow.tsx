@@ -53,7 +53,7 @@ export default declareComponent(TemplateGrid, {
     }),
     initialSort: props.Variant({
       name: 'Default Sort',
-      options: ['popular', 'newest', 'price_asc', 'price_desc'],
+      options: ['popular', 'best_selling', 'newest', 'price_asc', 'price_desc'],
       defaultValue: 'popular',
       tooltip: 'Fallback sort when no ?sort= query param is present in the URL.',
     }),
