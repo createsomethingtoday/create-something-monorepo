@@ -216,9 +216,12 @@
       {:else if scene.id === 'boundary'}
         <section class="failed-boundary" aria-labelledby="failed-boundary-title">
           <div class="failed-boundary__status">
-            <span>Promotion blocked</span><strong>1 / 2 missed</strong><small
-              >Best current specialist run</small
-            >
+            <span>Promotion blocked</span>
+            <strong>
+              <span class="failed-boundary__metric-value">1 / 2</span>
+              <span class="failed-boundary__metric-qualifier">missed</span>
+            </strong>
+            <small>Best current specialist run</small>
           </div>
           <div>
             <span>Failed boundary / Judgment</span>
@@ -494,16 +497,37 @@
   }
   .failed-boundary__status {
     display: grid;
+    container-type: inline-size;
     align-content: space-between;
     gap: 2rem;
+    padding-inline: clamp(2rem, 12%, 4rem);
     border-right: 1px solid var(--color-performance-ink, #090909);
     background: var(--color-performance-risk, #c62026);
     color: #fff;
   }
   .failed-boundary__status strong {
+    display: grid;
+    gap: 0.5rem;
+    min-width: 0;
     font-family: var(--font-performance-mono);
-    font-size: clamp(3rem, 6vw, 6rem);
     font-variant-numeric: tabular-nums;
+  }
+  .failed-boundary__status .failed-boundary__metric-value {
+    font-family: inherit;
+    font-size: clamp(3rem, 20cqi, 6rem);
+    line-height: 0.9;
+    text-transform: none;
+    white-space: nowrap;
+  }
+  .failed-boundary__status .failed-boundary__metric-qualifier {
+    max-width: 100%;
+    font-family: inherit;
+    font-size: clamp(0.85rem, 5cqi, 1.25rem);
+    font-weight: var(--font-performance-semibold, 600);
+    letter-spacing: 0.04em;
+    line-height: 1;
+    overflow-wrap: anywhere;
+    text-transform: uppercase;
   }
   .failed-boundary__status small {
     color: rgba(255, 255, 255, 0.72);
