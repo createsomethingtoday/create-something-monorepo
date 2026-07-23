@@ -3,13 +3,16 @@
  * for the CREATE SOMETHING workflow reel.
  *
  * The arrangement is deterministic and its structural hits share the reel's
- * 120 BPM / 15-frame beat grid. It uses no samples or third-party musical
- * material. The generated MP3 is committed so Remotion renders remain portable.
+ * 120 BPM / 15-frame beat grid. Its piano uses a compact, repo-owned subset of
+ * Versilian Studios' CC0 VCSL Keys library; every other voice is original and
+ * synthesized here. The generated MP3 is committed so Remotion renders remain
+ * portable.
  *
  * Run: pnpm generate:workflow-score
  */
 
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -23,9 +26,113 @@ const DURATION_SECONDS = WORKFLOW_REEL_SPEC.durationInFrames / WORKFLOW_REEL_SPE
 const TOTAL_SAMPLES = Math.round(SAMPLE_RATE * DURATION_SECONDS);
 const SECONDS_PER_BEAT = 60 / WORKFLOW_REEL_SPEC.music.bpm;
 const TAU = Math.PI * 2;
+const scriptDirectory = dirname(fileURLToPath(import.meta.url));
+const packageRoot = join(scriptDirectory, '..');
+const pianoRoot = join(packageRoot, 'public/audio/workflow-reel/instruments/vcsl-upright-knight');
+
+type PianoFile = {
+  localPath: string;
+  sha256: string;
+};
+
+type PianoRelease = PianoFile & {
+  keyCenter: number;
+  tuneCents: number;
+  offsetSamples: number;
+};
+
+type PianoRegion = {
+  keyCenter: number;
+  keyRange: readonly [number, number];
+  tuneCents: number;
+  offsetSamples: number;
+  sustain: PianoFile;
+  release: PianoRelease;
+};
+
+type PianoManifest = {
+  license: { spdx: string };
+  selection: { requiredMidiNotes: number[] };
+  regions: PianoRegion[];
+};
+
+type DecodedSample = {
+  interleaved: Float32Array;
+  frames: number;
+  peak: number;
+};
+
+const pianoManifest = JSON.parse(
+  readFileSync(join(pianoRoot, 'manifest.json'), 'utf8')
+) as PianoManifest;
+// The real hammer transient reads clearly at low level; keep it subordinate to
+// the pad and pulse so the score remains a product-film bed, not a piano lead.
+const sampledPianoMixGain = 0.42;
+
+if (pianoManifest.license.spdx !== 'CC0-1.0') {
+  throw new Error(`Workflow piano must be CC0-1.0, received ${pianoManifest.license.spdx}`);
+}
+
+const decodedSampleCache = new Map<string, DecodedSample>();
+
+const loadPianoSample = (file: PianoFile): DecodedSample => {
+  const cached = decodedSampleCache.get(file.localPath);
+  if (cached) return cached;
+
+  const path = join(pianoRoot, file.localPath);
+  const encoded = readFileSync(path);
+  const hash = createHash('sha256').update(encoded).digest('hex');
+  if (hash !== file.sha256) {
+    throw new Error(`Workflow piano sample hash mismatch for ${file.localPath}`);
+  }
+
+  const decoded = spawnSync(
+    'ffmpeg',
+    [
+      '-v',
+      'error',
+      '-i',
+      path,
+      '-f',
+      'f32le',
+      '-acodec',
+      'pcm_f32le',
+      '-ar',
+      String(SAMPLE_RATE),
+      '-ac',
+      String(CHANNELS),
+      'pipe:1'
+    ],
+    { encoding: null, maxBuffer: 256 * 1024 * 1024 }
+  );
+
+  if (decoded.status !== 0) {
+    throw new Error(
+      `ffmpeg failed to decode workflow piano sample ${file.localPath}: ${decoded.stderr.toString()}`
+    );
+  }
+  if (decoded.stdout.byteLength % (Float32Array.BYTES_PER_ELEMENT * CHANNELS) !== 0) {
+    throw new Error(`Unexpected decoded sample length for ${file.localPath}`);
+  }
+
+  const interleaved = new Float32Array(
+    decoded.stdout.buffer,
+    decoded.stdout.byteOffset,
+    decoded.stdout.byteLength / Float32Array.BYTES_PER_ELEMENT
+  );
+  let peak = 0;
+  for (let index = 0; index < interleaved.length; index += 1) {
+    peak = Math.max(peak, Math.abs(interleaved[index]));
+  }
+  const result = { interleaved, frames: interleaved.length / CHANNELS, peak };
+  decodedSampleCache.set(file.localPath, result);
+  return result;
+};
 
 const left = new Float32Array(TOTAL_SAMPLES);
 const right = new Float32Array(TOTAL_SAMPLES);
+const pianoLeft = new Float32Array(TOTAL_SAMPLES);
+const pianoRight = new Float32Array(TOTAL_SAMPLES);
 
 let randomState = 0x43524541;
 const deterministicNoise = (): number => {
@@ -41,6 +148,17 @@ const addStereo = (sampleIndex: number, sample: number, pan = 0): void => {
   const angle = ((pan + 1) * Math.PI) / 4;
   left[sampleIndex] += sample * Math.cos(angle);
   right[sampleIndex] += sample * Math.sin(angle);
+};
+
+const addPianoStereoPair = (
+  sampleIndex: number,
+  sampleLeft: number,
+  sampleRight: number,
+  pan = 0
+): void => {
+  if (sampleIndex < 0 || sampleIndex >= TOTAL_SAMPLES) return;
+  pianoLeft[sampleIndex] += sampleLeft * (pan > 0 ? 1 - pan : 1);
+  pianoRight[sampleIndex] += sampleRight * (pan < 0 ? 1 + pan : 1);
 };
 
 const forEvent = (
@@ -113,47 +231,79 @@ const addWarmPad = (
   });
 };
 
-const addFeltPianoNote = (
+const addSampledPianoNote = (
   startBeat: number,
   durationBeats: number,
   midi: number,
   gain: number,
   pan = 0
 ): void => {
-  const frequency = midiToFrequency(midi);
-  const tripleStringDetune = [-0.00072, 0, 0.00064] as const;
-  const inharmonicity = 0.00013 + Math.max(0, midi - 60) * 0.000004;
-  const damping = 0.88 + Math.max(0, midi - 48) * 0.016;
-  let feltHammer = 0;
+  const region = pianoManifest.regions.find(
+    ({ keyRange }) => midi >= keyRange[0] && midi <= keyRange[1]
+  );
+  if (!region) throw new Error(`No VCSL Upright Knight region covers MIDI note ${midi}`);
+
+  const sustain = loadPianoSample(region.sustain);
+  const noteDuration = beatToSeconds(durationBeats);
+  const sustainRatio = 2 ** ((midi - region.keyCenter - region.tuneCents / 100) / 12);
+  let filteredLeft = 0;
+  let filteredRight = 0;
+
+  forEvent(beatToSeconds(startBeat), noteDuration, (time, _progress, sampleIndex) => {
+    const sourcePosition = region.offsetSamples + time * SAMPLE_RATE * sustainRatio;
+    const sourceFrame = Math.floor(sourcePosition);
+    if (sourceFrame + 1 >= sustain.frames) return;
+    const fraction = sourcePosition - sourceFrame;
+    const sampleLeft =
+      sustain.interleaved[sourceFrame * 2] * (1 - fraction) +
+      sustain.interleaved[(sourceFrame + 1) * 2] * fraction;
+    const sampleRight =
+      sustain.interleaved[sourceFrame * 2 + 1] * (1 - fraction) +
+      sustain.interleaved[(sourceFrame + 1) * 2 + 1] * fraction;
+    // A gentle low-pass keeps the real hammer detail behind the product-film bed.
+    filteredLeft += (sampleLeft - filteredLeft) * 0.2;
+    filteredRight += (sampleRight - filteredRight) * 0.2;
+    const envelope =
+      Math.min(1, time / 0.016) * Math.min(1, Math.max(0, noteDuration - time) / 0.11);
+    const level = (gain * sampledPianoMixGain) / Math.max(sustain.peak, 0.001);
+    addPianoStereoPair(
+      sampleIndex,
+      filteredLeft * envelope * level,
+      filteredRight * envelope * level,
+      pan
+    );
+  });
+
+  const release = loadPianoSample(region.release);
+  const releaseRatio =
+    2 ** ((midi - region.release.keyCenter - region.release.tuneCents / 100) / 12);
+  const releaseDuration = Math.min(0.58, release.frames / SAMPLE_RATE / releaseRatio);
+  let releaseLeft = 0;
+  let releaseRight = 0;
   forEvent(
-    beatToSeconds(startBeat),
-    beatToSeconds(durationBeats),
+    beatToSeconds(startBeat) + noteDuration,
+    releaseDuration,
     (time, progress, sampleIndex) => {
-      const stringFundamental =
-        tripleStringDetune.reduce(
-          (sum, detune, stringIndex) =>
-            sum + Math.sin(TAU * frequency * (1 + detune) * time + stringIndex * 0.045),
-          0
-        ) / tripleStringDetune.length;
-      const secondPartial = Math.sin(
-        TAU * frequency * 2 * Math.sqrt(1 + inharmonicity * 4) * time + 0.13
+      const sourcePosition = region.release.offsetSamples + time * SAMPLE_RATE * releaseRatio;
+      const sourceFrame = Math.floor(sourcePosition);
+      if (sourceFrame + 1 >= release.frames) return;
+      const fraction = sourcePosition - sourceFrame;
+      const sampleLeft =
+        release.interleaved[sourceFrame * 2] * (1 - fraction) +
+        release.interleaved[(sourceFrame + 1) * 2] * fraction;
+      const sampleRight =
+        release.interleaved[sourceFrame * 2 + 1] * (1 - fraction) +
+        release.interleaved[(sourceFrame + 1) * 2 + 1] * fraction;
+      releaseLeft += (sampleLeft - releaseLeft) * 0.18;
+      releaseRight += (sampleRight - releaseRight) * 0.18;
+      const envelope = Math.min(1, time / 0.1) * Math.min(1, (1 - progress) / 0.24);
+      const level = (gain * sampledPianoMixGain * 0.075) / Math.max(release.peak, 0.001);
+      addPianoStereoPair(
+        sampleIndex,
+        releaseLeft * envelope * level,
+        releaseRight * envelope * level,
+        pan
       );
-      const thirdPartial = Math.sin(
-        TAU * frequency * 3 * Math.sqrt(1 + inharmonicity * 9) * time + 0.31
-      );
-      feltHammer = feltHammer * 0.82 + deterministicNoise() * 0.18;
-      const hammerTransient = feltHammer * Math.exp(-time * 29) * 0.018;
-      const soundboardResonance =
-        Math.sin(TAU * frequency * 0.5 * time + 0.21) * Math.exp(-time * 0.54) * 0.052 +
-        Math.sin(TAU * 92 * time + midi * 0.07) * Math.exp(-time * 1.25) * 0.018;
-      const tone =
-        stringFundamental * 0.81 +
-        secondPartial * 0.125 * Math.exp(-time * 2.7) +
-        thirdPartial * 0.032 * Math.exp(-time * 5.4);
-      const envelope =
-        Math.min(1, time / 0.018) * Math.exp(-time * damping) * Math.min(1, (1 - progress) / 0.15);
-      addStereo(sampleIndex, (tone + hammerTransient) * envelope * gain, pan);
-      addStereo(sampleIndex, soundboardResonance * envelope * gain * 0.42, pan * -0.45);
     }
   );
 };
@@ -272,7 +422,7 @@ const addClarityMotif = (startBeat: number, gain: number): void => {
   const offsets = [0, 1.5, 3.5] as const;
   originalClarityMotif.forEach((note, index) => {
     addGlassNote(startBeat + offsets[index], 2.2, note, gain, index === 1 ? -0.18 : 0.16);
-    addFeltPianoNote(
+    addSampledPianoNote(
       startBeat + offsets[index],
       2,
       note - 12,
@@ -303,7 +453,7 @@ for (const [beat, midi, gain, pan] of [
   [56, 69, 0.078, -0.1],
   [58, 74, 0.09, 0.1]
 ] as const) {
-  addFeltPianoNote(beat, 2.4, midi, gain * pianoBackgroundGain, pan);
+  addSampledPianoNote(beat, 2.4, midi, gain * pianoBackgroundGain, pan);
 }
 
 const narrativeHitBeats = Object.values(WORKFLOW_REEL_SPEC.music.hitFrames).map(
@@ -314,6 +464,19 @@ for (const beat of narrativeHitBeats) {
   if (beat > 0) addAirSwell(beat - 0.8, 0.8, beat >= 44 ? 0.026 : 0.018);
   addSoftImpact(beat, beat === 0 ? 0.08 : beat >= 44 ? 0.135 : 0.105);
   if (beat >= 44) addGlassNote(beat, 2, beat >= 52 ? 86 : 81, 0.022, 0.24);
+}
+
+let bedEnergy = 0;
+let pianoEnergy = 0;
+for (let index = 0; index < TOTAL_SAMPLES; index += 1) {
+  bedEnergy += left[index] ** 2 + right[index] ** 2;
+  pianoEnergy += pianoLeft[index] ** 2 + pianoRight[index] ** 2;
+  left[index] += pianoLeft[index];
+  right[index] += pianoRight[index];
+}
+const pianoToBedDb = 10 * Math.log10(pianoEnergy / Math.max(bedEnergy, Number.EPSILON));
+if (pianoToBedDb > -14) {
+  throw new Error(`Workflow piano is too prominent at ${pianoToBedDb.toFixed(1)} dB vs dry bed`);
 }
 
 // Short, quiet early reflections preserve precise attacks while adding depth.
@@ -363,8 +526,6 @@ for (let index = 0; index < TOTAL_SAMPLES; index += 1) {
   wav.writeInt16LE(Math.round(Math.max(-1, Math.min(1, right[index])) * 32_767), offset + 2);
 }
 
-const scriptDirectory = dirname(fileURLToPath(import.meta.url));
-const packageRoot = join(scriptDirectory, '..');
 const outputPath = join(packageRoot, 'public', WORKFLOW_REEL_SPEC.music.asset);
 const temporaryDirectory = mkdtempSync(join(tmpdir(), 'workflow-score-'));
 const temporaryWav = join(temporaryDirectory, 'proof-in-motion.wav');
@@ -405,5 +566,5 @@ if (encode.status !== 0) {
 }
 
 console.log(
-  `generated ${WORKFLOW_REEL_SPEC.music.title}: ${DURATION_SECONDS}s, ${WORKFLOW_REEL_SPEC.music.bpm} BPM, ${outputPath}`
+  `generated ${WORKFLOW_REEL_SPEC.music.title}: ${DURATION_SECONDS}s, ${WORKFLOW_REEL_SPEC.music.bpm} BPM, piano ${pianoToBedDb.toFixed(1)} dB vs dry bed, ${outputPath}`
 );
