@@ -87,6 +87,28 @@ test('public Field Report leads with the decision and keeps eval scope explicit'
   assert.doesNotMatch(route, /layoff|head[ -]?count|replace(?:d|ment)? people/i);
 });
 
+test('Result metrics preserve the evidence and scale from their Performance cells', () => {
+  const route = readFileSync(
+    new URL('../src/routes/field-reports/template-review/+page.svelte', import.meta.url),
+    'utf8'
+  );
+  const metricCellRule = route.match(/\.field-result__metrics > div \{([\s\S]*?)\n\s*\}/)?.[1];
+  const metricValueRule = route.match(/\.field-result__metrics dd \{([\s\S]*?)\n\s*\}/)?.[1];
+
+  assert.match(route, /<dd>49 \/ 50<\/dd>/);
+  assert.match(route, /<dd>Blocked<\/dd>/);
+  assert.match(route, /<dd>Unmeasured<\/dd>/);
+  assert.ok(metricCellRule, 'Result metric cell rule is present');
+  assert.ok(metricValueRule, 'Result metric value rule is present');
+  assert.match(metricCellRule, /container-type:\s*inline-size;/);
+  assert.match(metricValueRule, /16cqi/);
+  assert.match(route, /var\(--space-performance-md/);
+  assert.match(route, /var\(--text-performance-display-sm/);
+  assert.match(route, /data-tone="growth"/);
+  assert.match(route, /data-tone="risk"/);
+  assert.doesNotMatch(metricValueRule, /4vw/);
+});
+
 test('public Field Report orders the evidence argument before one combined economics scene', () => {
   const route = readFileSync(
     new URL('../src/routes/field-reports/template-review/+page.svelte', import.meta.url),
