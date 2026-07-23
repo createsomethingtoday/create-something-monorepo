@@ -25,6 +25,7 @@ type WorkflowReelSpec = {
   callToAction: string;
   music: {
     asset: string;
+    character: string;
     bpm: number;
     beatFrames: number;
     hitFrames: Record<string, number>;
@@ -55,6 +56,12 @@ if (existsSync(musicGeneratorPath)) {
   const musicGeneratorSource = readFileSync(musicGeneratorPath, 'utf8');
   if (/Math\.random\(|Date\.now\(|new Date\(/.test(musicGeneratorSource)) {
     errors.push('Workflow jazz generator contains nondeterministic time or randomness');
+  }
+  if (!musicGeneratorSource.includes('addTenorNote')) {
+    errors.push('Workflow jazz generator does not contain the modal tenor voice');
+  }
+  if (!/quartal/i.test(musicGeneratorSource)) {
+    errors.push('Workflow jazz generator does not declare quartal harmony');
   }
 }
 
@@ -147,6 +154,9 @@ if (existsSync(specPath)) {
       const calculatedBeatFrames = Math.round((60 / spec.music.bpm) * spec.fps);
       if (spec.music.bpm !== 120 || spec.music.beatFrames !== calculatedBeatFrames) {
         errors.push('Workflow jazz cue must use the approved 120 BPM / 15-frame beat grid');
+      }
+      if (spec.music.character !== 'modal tenor quartet') {
+        errors.push('Workflow jazz cue must preserve the approved modal tenor quartet direction');
       }
 
       const sceneStarts = Object.values(spec.scenes).map((scene) => scene.start);

@@ -1,6 +1,6 @@
 /**
- * Generate "Proof in Motion", an original 30-second brushed-jazz cue for the
- * CREATE SOMETHING workflow reel.
+ * Generate "Proof in Motion", an original 30-second modal tenor-quartet cue
+ * for the CREATE SOMETHING workflow reel.
  *
  * The arrangement is deterministic and its structural hits share the reel's
  * 120 BPM / 15-frame beat grid. No sampled or third-party musical material is
@@ -64,7 +64,7 @@ const smoothEnvelope = (progress: number, attack = 0.04, release = 0.2): number 
   return Math.max(0, Math.min(attackGain, releaseGain));
 };
 
-const addRhodesNote = (
+const addPianoNote = (
   startBeat: number,
   durationBeats: number,
   midi: number,
@@ -74,17 +74,17 @@ const addRhodesNote = (
   const frequency = midiToFrequency(midi);
   const duration = beatToSeconds(durationBeats);
   forEvent(beatToSeconds(startBeat), duration, (time, progress, sampleIndex) => {
-    const envelope = smoothEnvelope(progress, 0.025, 0.28) * Math.exp(-time * 0.22);
-    const tremolo = 0.94 + Math.sin(TAU * 4.8 * time) * 0.06;
+    const envelope = smoothEnvelope(progress, 0.018, 0.24) * (0.34 + Math.exp(-time * 1.1) * 0.66);
     const tone =
-      Math.sin(TAU * frequency * time) * 0.72 +
-      Math.sin(TAU * frequency * 2 * time + 0.18) * 0.2 +
-      Math.sin(TAU * frequency * 4 * time + 0.42) * 0.08 * Math.exp(-time * 3.2);
-    addStereo(sampleIndex, tone * envelope * tremolo * gain, pan);
+      Math.sin(TAU * frequency * time) * 0.62 +
+      Math.sin(TAU * frequency * 2 * time + 0.12) * 0.22 * Math.exp(-time * 0.8) +
+      Math.sin(TAU * frequency * 3 * time + 0.31) * 0.11 * Math.exp(-time * 1.6) +
+      Math.sin(TAU * frequency * 4 * time + 0.48) * 0.05 * Math.exp(-time * 2.8);
+    addStereo(sampleIndex, tone * envelope * gain, pan);
   });
 };
 
-const addRhodesChord = (
+const addQuartalPianoChord = (
   startBeat: number,
   durationBeats: number,
   notes: readonly number[],
@@ -93,7 +93,7 @@ const addRhodesChord = (
 ): void => {
   notes.forEach((note, index) => {
     const position = notes.length === 1 ? 0 : index / (notes.length - 1);
-    addRhodesNote(
+    addPianoNote(
       startBeat,
       durationBeats,
       note,
@@ -101,6 +101,45 @@ const addRhodesChord = (
       (position * 2 - 1) * spread
     );
   });
+};
+
+const addTenorNote = (
+  startBeat: number,
+  durationBeats: number,
+  midi: number,
+  gain: number,
+  intensity = 0.5
+): void => {
+  const frequency = midiToFrequency(midi);
+  let phase = 0;
+  let previousBreath = 0;
+
+  forEvent(
+    beatToSeconds(startBeat),
+    beatToSeconds(durationBeats),
+    (time, progress, sampleIndex) => {
+      const vibratoEntrance = Math.min(1, Math.max(0, (time - 0.16) / 0.24));
+      const pitchScoop = 1 - Math.exp(-time * 17) * 0.018;
+      const vibrato = Math.sin(TAU * 5.1 * time) * 0.0032 * vibratoEntrance;
+      const growl = Math.sin(TAU * 27 * time) * 0.0012 * intensity;
+      phase += (TAU * frequency * (pitchScoop + vibrato + growl)) / SAMPLE_RATE;
+
+      const reed =
+        Math.sin(phase) * 0.54 +
+        Math.sin(phase * 2 + 0.2) * 0.27 +
+        Math.sin(phase * 3 + 0.47) * 0.13 +
+        Math.sin(phase * 4 + 0.7) * 0.06;
+      const breath = deterministicNoise();
+      const breathEdge = breath - previousBreath * 0.74;
+      previousBreath = breath;
+      const envelope =
+        smoothEnvelope(progress, 0.045, 0.18) *
+        Math.min(1, time / 0.035) *
+        (0.86 + Math.sin(TAU * 0.82 * time) * 0.05);
+      const tone = Math.tanh(reed * (1.35 + intensity * 0.38)) * 0.94 + breathEdge * 0.06;
+      addStereo(sampleIndex, tone * envelope * gain, 0.06);
+    }
+  );
 };
 
 const addBass = (startBeat: number, midi: number, gain: number): void => {
@@ -122,6 +161,14 @@ const addKick = (beat: number, gain: number): void => {
     const frequency = 54 + 76 * Math.exp(-time * 20);
     const body = Math.sin(TAU * frequency * time) * Math.exp(-time * 13);
     addStereo(sampleIndex, body * gain, 0);
+  });
+};
+
+const addTom = (beat: number, frequency: number, gain: number, pan: number): void => {
+  forEvent(beatToSeconds(beat), 0.38, (time, _progress, sampleIndex) => {
+    const pitch = frequency * (1 + Math.exp(-time * 18) * 0.34);
+    const body = Math.sin(TAU * pitch * time) * 0.82 + Math.sin(TAU * pitch * 1.52 * time) * 0.18;
+    addStereo(sampleIndex, body * Math.exp(-time * 8.5) * gain, pan);
   });
 };
 
@@ -175,55 +222,144 @@ type HarmonyChange = {
 };
 
 const harmony: HarmonyChange[] = [
-  { beat: 0, root: 36, chord: [60, 64, 67, 71, 74], accent: true },
-  { beat: 4, root: 45, chord: [55, 61, 64, 67, 71] },
-  { beat: 8, root: 38, chord: [53, 57, 60, 64] },
-  { beat: 10, root: 43, chord: [53, 57, 59, 64], accent: true },
-  { beat: 14, root: 36, chord: [52, 55, 59, 62] },
-  { beat: 18, root: 45, chord: [55, 58, 61, 64] },
-  { beat: 22, root: 38, chord: [53, 57, 60, 64], accent: true },
-  { beat: 26, root: 43, chord: [53, 57, 59, 64] },
-  { beat: 30, root: 36, chord: [52, 55, 59, 62] },
-  { beat: 34, root: 41, chord: [52, 57, 60, 64], accent: true },
-  { beat: 38, root: 40, chord: [50, 56, 59, 62] },
-  { beat: 40, root: 45, chord: [55, 59, 60, 64], accent: true },
-  { beat: 44, root: 38, chord: [53, 57, 60, 64], accent: true },
-  { beat: 48, root: 43, chord: [53, 57, 59, 64], accent: true },
-  { beat: 52, root: 36, chord: [52, 55, 59, 62], accent: true },
-  { beat: 56, root: 41, chord: [52, 57, 60, 64], accent: true },
-  { beat: 58, root: 36, chord: [52, 55, 57, 62], accent: true }
+  // D pedal with fourth-stacked voicings: modal movement instead of a tune-based progression.
+  { beat: 0, root: 38, chord: [57, 62, 67, 72], accent: true },
+  { beat: 4, root: 38, chord: [55, 60, 65, 70] },
+  { beat: 8, root: 38, chord: [58, 63, 68, 73] },
+  { beat: 10, root: 38, chord: [58, 63, 68, 73], accent: true },
+  { beat: 14, root: 38, chord: [60, 65, 70, 75] },
+  { beat: 18, root: 38, chord: [57, 62, 67, 72] },
+  { beat: 22, root: 38, chord: [57, 62, 67, 72], accent: true },
+  { beat: 26, root: 38, chord: [55, 60, 65, 70] },
+  { beat: 30, root: 38, chord: [57, 62, 67, 72] },
+  { beat: 34, root: 38, chord: [60, 65, 70, 75], accent: true },
+  { beat: 38, root: 38, chord: [58, 63, 68, 73] },
+  { beat: 40, root: 38, chord: [57, 62, 67, 72], accent: true },
+  { beat: 44, root: 38, chord: [57, 62, 67, 72], accent: true },
+  { beat: 48, root: 38, chord: [55, 60, 65, 70], accent: true },
+  { beat: 52, root: 38, chord: [57, 62, 67, 72], accent: true },
+  { beat: 56, root: 38, chord: [57, 62, 67, 72], accent: true },
+  { beat: 58, root: 38, chord: [57, 62, 67, 71, 74], accent: true }
 ];
 
 for (let index = 0; index < harmony.length; index += 1) {
   const change = harmony[index];
   const nextBeat = harmony[index + 1]?.beat ?? 60;
   const duration = Math.max(1, nextBeat - change.beat);
-  addRhodesChord(change.beat, duration, change.chord, change.accent ? 0.24 : 0.18);
+  addQuartalPianoChord(change.beat, duration, change.chord, change.accent ? 0.17 : 0.12);
 
   if (duration >= 3) {
-    addRhodesChord(
+    addQuartalPianoChord(
       change.beat + 2 + 2 / 3,
       Math.min(1.1, duration - 2.5),
       change.chord.slice(1),
-      0.075,
+      0.065,
       0.34
     );
   }
 
   for (let beat = change.beat; beat < nextBeat; beat += 1) {
     const step = beat - change.beat;
-    const walk = [0, 7, 10, 11][step % 4];
-    addBass(beat, change.root + walk, change.accent && beat === change.beat ? 0.22 : 0.17);
+    const pedalFigure = [0, 12, 7, 10][step % 4];
+    addBass(beat, change.root + pedalFigure, change.accent && beat === change.beat ? 0.2 : 0.155);
   }
 }
 
 for (let beat = 0; beat < 60; beat += 1) {
   const barBeat = beat % 4;
-  const density = beat < 8 ? 0.58 : beat >= 52 ? 0.74 : 1;
-  if (barBeat === 0 || barBeat === 2) addKick(beat, 0.22 * density);
-  if (barBeat === 1 || barBeat === 3) addBrush(beat, 0.11 * density, barBeat === 1 ? -0.22 : 0.2);
-  addRide(beat, 0.055 * density, 0.32);
-  addRide(beat + 2 / 3, 0.035 * density, 0.38);
+  const intensity =
+    beat < 10
+      ? 0.58
+      : beat < 22
+        ? 0.88
+        : beat < 34
+          ? 0.72
+          : beat < 44
+            ? 0.9
+            : beat < 52
+              ? 1.1
+              : 0.82;
+  if (barBeat === 0 || barBeat === 2) addKick(beat, 0.2 * intensity);
+  if (barBeat === 1 || barBeat === 3) {
+    addBrush(beat, 0.1 * intensity, barBeat === 1 ? -0.22 : 0.2);
+  }
+  addRide(beat, 0.058 * intensity, 0.32);
+  addRide(beat + 2 / 3, 0.043 * intensity, 0.38);
+  if (beat >= 44 && beat < 52) addRide(beat + 1 / 3, 0.026 * intensity, 0.26);
+}
+
+for (const [beat, frequency, gain, pan] of [
+  [34 + 2 / 3, 128, 0.14, -0.22],
+  [38 + 1 / 3, 108, 0.13, 0.2],
+  [39 + 2 / 3, 146, 0.16, -0.14],
+  [44 + 1 / 3, 122, 0.15, 0.18],
+  [45 + 2 / 3, 154, 0.14, -0.2],
+  [47 + 1 / 3, 112, 0.16, 0.22],
+  [48 + 2 / 3, 144, 0.16, -0.18],
+  [50 + 1 / 3, 104, 0.17, 0.24],
+  [51 + 2 / 3, 164, 0.18, -0.2]
+] as const) {
+  addTom(beat, frequency, gain, pan);
+}
+
+// Original D-Dorian tenor line. Sparse calls become triplet momentum through
+// friction, open again over the map, then crest across proof and the CTA.
+const tenorLine: ReadonlyArray<readonly [number, number, number, number, number]> = [
+  [1, 1.5, 62, 0.15, 0.42],
+  [3 + 1 / 3, 2 / 3, 65, 0.14, 0.46],
+  [4, 1 + 1 / 3, 67, 0.15, 0.48],
+  [6 + 2 / 3, 1, 72, 0.16, 0.52],
+  [8 + 2 / 3, 2 / 3, 61, 0.13, 0.58],
+  [10, 2 / 3, 62, 0.16, 0.62],
+  [10 + 2 / 3, 2 / 3, 65, 0.15, 0.64],
+  [11 + 1 / 3, 1 + 1 / 3, 69, 0.17, 0.68],
+  [13, 2 / 3, 72, 0.17, 0.72],
+  [13 + 2 / 3, 2 / 3, 69, 0.15, 0.7],
+  [14 + 1 / 3, 1 + 2 / 3, 67, 0.17, 0.72],
+  [16 + 2 / 3, 2 / 3, 65, 0.15, 0.76],
+  [17 + 1 / 3, 2 / 3, 68, 0.15, 0.8],
+  [18, 2 / 3, 67, 0.16, 0.78],
+  [18 + 2 / 3, 2 / 3, 65, 0.15, 0.74],
+  [19 + 1 / 3, 1 + 1 / 3, 62, 0.17, 0.7],
+  [21, 2 / 3, 61, 0.14, 0.66],
+  [22, 1.5, 69, 0.17, 0.56],
+  [24 + 1 / 3, 2 / 3, 67, 0.14, 0.52],
+  [25, 1, 65, 0.15, 0.5],
+  [26 + 2 / 3, 1 + 1 / 3, 62, 0.16, 0.48],
+  [29 + 1 / 3, 2 / 3, 65, 0.14, 0.52],
+  [30, 1, 69, 0.16, 0.56],
+  [32, 1.5, 72, 0.17, 0.58],
+  [34, 1.5, 74, 0.18, 0.68],
+  [36 + 2 / 3, 2 / 3, 72, 0.15, 0.7],
+  [37 + 1 / 3, 2 / 3, 69, 0.15, 0.72],
+  [38, 1, 68, 0.16, 0.82],
+  [39 + 1 / 3, 2 / 3, 61, 0.15, 0.78],
+  [40, 1 + 2 / 3, 62, 0.19, 0.7],
+  [42 + 1 / 3, 2 / 3, 65, 0.15, 0.72],
+  [43, 1, 69, 0.17, 0.76],
+  [44, 2 / 3, 74, 0.18, 0.88],
+  [44 + 2 / 3, 2 / 3, 72, 0.17, 0.88],
+  [45 + 1 / 3, 2 / 3, 69, 0.17, 0.9],
+  [46, 2 / 3, 67, 0.16, 0.9],
+  [46 + 2 / 3, 2 / 3, 65, 0.16, 0.92],
+  [47 + 1 / 3, 2 / 3, 62, 0.17, 0.9],
+  [48, 2 / 3, 65, 0.17, 0.9],
+  [48 + 2 / 3, 2 / 3, 67, 0.17, 0.92],
+  [49 + 1 / 3, 2 / 3, 69, 0.18, 0.94],
+  [50, 2 / 3, 72, 0.18, 0.94],
+  [50 + 2 / 3, 2 / 3, 74, 0.18, 0.96],
+  [51 + 1 / 3, 2 / 3, 77, 0.19, 0.98],
+  [52, 1 + 1 / 3, 74, 0.18, 0.72],
+  [54, 2 / 3, 72, 0.15, 0.64],
+  [54 + 2 / 3, 2 / 3, 69, 0.15, 0.62],
+  [55 + 1 / 3, 2 / 3, 67, 0.15, 0.6],
+  [56, 1 + 1 / 3, 69, 0.18, 0.64],
+  [57 + 2 / 3, 1 / 3, 73, 0.14, 0.58],
+  [58, 1.8, 74, 0.2, 0.54]
+];
+
+for (const [beat, duration, midi, gain, intensity] of tenorLine) {
+  addTenorNote(beat, duration, midi, gain, intensity);
 }
 
 const narrativeHitBeats = Object.values(WORKFLOW_REEL_SPEC.music.hitFrames).map(
@@ -235,6 +371,15 @@ for (const beat of narrativeHitBeats) {
     addRim(beat, beat >= 52 ? 0.12 : 0.09);
     addCymbal(beat, beat >= 52 ? 0.055 : 0.035);
   }
+}
+
+// Small deterministic room: crossed early reflections keep the quartet
+// cohesive without washing out the frame-accurate narrative attacks.
+const leftDelay = Math.round(SAMPLE_RATE * 0.071);
+const rightDelay = Math.round(SAMPLE_RATE * 0.109);
+for (let index = rightDelay; index < TOTAL_SAMPLES; index += 1) {
+  left[index] += right[index - rightDelay] * 0.055;
+  right[index] += left[index - leftDelay] * 0.048;
 }
 
 let peak = 0;
