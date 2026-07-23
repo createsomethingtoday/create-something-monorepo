@@ -54,8 +54,8 @@ export const WORKFLOW_REEL_SPEC = {
   music: {
     title: 'Proof in Motion',
     credit: 'Original score for CREATE SOMETHING',
-    character: 'modal tenor cinematic ensemble',
-    asset: 'audio/workflow-reel/proof-in-motion-jazz.mp3',
+    character: 'minimal product-film score',
+    asset: 'audio/workflow-reel/proof-in-motion.mp3',
     bpm: 120,
     beatFrames: 15,
     hitFrames: {

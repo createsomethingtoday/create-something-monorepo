@@ -38,7 +38,7 @@ const reelRoot = join(packageRoot, 'src/commercials/workflow-reel');
 const specPath = join(reelRoot, 'spec.ts');
 const compositionPath = join(reelRoot, 'WorkflowReel.tsx');
 const performancePath = join(reelRoot, 'performance.ts');
-const musicGeneratorPath = join(packageRoot, 'scripts/generate-workflow-jazz.ts');
+const musicGeneratorPath = join(packageRoot, 'scripts/generate-workflow-score.ts');
 const rootPath = join(packageRoot, 'src/Root.tsx');
 
 const errors: string[] = [];
@@ -47,7 +47,7 @@ for (const [label, path] of [
   ['workflow reel spec', specPath],
   ['workflow reel composition', compositionPath],
   ['Performance token projection', performancePath],
-  ['workflow jazz generator', musicGeneratorPath]
+  ['workflow score generator', musicGeneratorPath]
 ] as const) {
   if (!existsSync(path)) errors.push(`Missing ${label}: ${path}`);
 }
@@ -57,19 +57,21 @@ if (existsSync(musicGeneratorPath)) {
   if (/Math\.random\(|Date\.now\(|new Date\(/.test(musicGeneratorSource)) {
     errors.push('Workflow jazz generator contains nondeterministic time or randomness');
   }
-  if (!musicGeneratorSource.includes('addTenorNote')) {
-    errors.push('Workflow jazz generator does not contain the modal tenor voice');
-  }
-  for (const orchestralVoice of ['addStringNote', 'addFrenchHornNote', 'addTimpani']) {
-    if (!musicGeneratorSource.includes(orchestralVoice)) {
-      errors.push(`Workflow score generator does not contain ${orchestralVoice}`);
+  for (const productFilmVoice of [
+    'addWarmPad',
+    'addFeltPianoNote',
+    'addSoftPulse',
+    'addGlassNote'
+  ]) {
+    if (!musicGeneratorSource.includes(productFilmVoice)) {
+      errors.push(`Workflow score generator does not contain ${productFilmVoice}`);
     }
   }
-  if (!musicGeneratorSource.includes('originalLeitmotif')) {
-    errors.push('Workflow score generator does not declare its original leitmotif');
+  if (!musicGeneratorSource.includes('originalClarityMotif')) {
+    errors.push('Workflow score generator does not declare its original clarity motif');
   }
-  if (!/quartal/i.test(musicGeneratorSource)) {
-    errors.push('Workflow jazz generator does not declare quartal harmony');
+  if (!/spatial texture/i.test(musicGeneratorSource)) {
+    errors.push('Workflow score generator does not declare its restrained spatial texture');
   }
 }
 
@@ -88,8 +90,10 @@ if (existsSync(compositionPath)) {
   if (!compositionSource.includes('WORKFLOW_REEL_SPEC.music.asset')) {
     errors.push('Workflow reel composition does not load its score from the timing contract');
   }
-  if (!compositionSource.includes('CinematicAccent')) {
-    errors.push('Workflow reel composition does not contain score-synchronized cinematic accents');
+  if (!compositionSource.includes('ProductFilmAccent')) {
+    errors.push(
+      'Workflow reel composition does not contain score-synchronized product-film accents'
+    );
   }
 }
 
@@ -164,10 +168,10 @@ if (existsSync(specPath)) {
     } else {
       const calculatedBeatFrames = Math.round((60 / spec.music.bpm) * spec.fps);
       if (spec.music.bpm !== 120 || spec.music.beatFrames !== calculatedBeatFrames) {
-        errors.push('Workflow jazz cue must use the approved 120 BPM / 15-frame beat grid');
+        errors.push('Workflow score must use the approved 120 BPM / 15-frame beat grid');
       }
-      if (spec.music.character !== 'modal tenor cinematic ensemble') {
-        errors.push('Workflow score must preserve the approved modal tenor cinematic direction');
+      if (spec.music.character !== 'minimal product-film score') {
+        errors.push('Workflow score must preserve the approved minimal product-film direction');
       }
 
       const sceneStarts = Object.values(spec.scenes).map((scene) => scene.start);
@@ -201,7 +205,7 @@ if (existsSync(specPath)) {
 
       const musicPath = join(packageRoot, 'public', spec.music.asset);
       if (!existsSync(musicPath)) {
-        errors.push(`Missing workflow jazz cue: ${musicPath}`);
+        errors.push(`Missing workflow score: ${musicPath}`);
       }
     }
   }
