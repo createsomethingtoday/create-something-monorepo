@@ -70,6 +70,11 @@ if (existsSync(musicGeneratorPath)) {
   if (!musicGeneratorSource.includes('originalClarityMotif')) {
     errors.push('Workflow score generator does not declare its original clarity motif');
   }
+  for (const pianoDetail of ['tripleStringDetune', 'feltHammer', 'soundboardResonance']) {
+    if (!musicGeneratorSource.includes(pianoDetail)) {
+      errors.push(`Workflow score piano model does not contain ${pianoDetail}`);
+    }
+  }
   if (!/spatial texture/i.test(musicGeneratorSource)) {
     errors.push('Workflow score generator does not declare its restrained spatial texture');
   }

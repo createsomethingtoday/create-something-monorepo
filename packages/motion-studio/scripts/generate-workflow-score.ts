@@ -121,18 +121,39 @@ const addFeltPianoNote = (
   pan = 0
 ): void => {
   const frequency = midiToFrequency(midi);
+  const tripleStringDetune = [-0.00072, 0, 0.00064] as const;
+  const inharmonicity = 0.00013 + Math.max(0, midi - 60) * 0.000004;
+  const damping = 0.88 + Math.max(0, midi - 48) * 0.016;
+  let feltHammer = 0;
   forEvent(
     beatToSeconds(startBeat),
     beatToSeconds(durationBeats),
     (time, progress, sampleIndex) => {
-      const felt = deterministicNoise() * Math.exp(-time * 32) * 0.025;
+      const stringFundamental =
+        tripleStringDetune.reduce(
+          (sum, detune, stringIndex) =>
+            sum + Math.sin(TAU * frequency * (1 + detune) * time + stringIndex * 0.045),
+          0
+        ) / tripleStringDetune.length;
+      const secondPartial = Math.sin(
+        TAU * frequency * 2 * Math.sqrt(1 + inharmonicity * 4) * time + 0.13
+      );
+      const thirdPartial = Math.sin(
+        TAU * frequency * 3 * Math.sqrt(1 + inharmonicity * 9) * time + 0.31
+      );
+      feltHammer = feltHammer * 0.82 + deterministicNoise() * 0.18;
+      const hammerTransient = feltHammer * Math.exp(-time * 29) * 0.018;
+      const soundboardResonance =
+        Math.sin(TAU * frequency * 0.5 * time + 0.21) * Math.exp(-time * 0.54) * 0.052 +
+        Math.sin(TAU * 92 * time + midi * 0.07) * Math.exp(-time * 1.25) * 0.018;
       const tone =
-        Math.sin(TAU * frequency * time) * 0.76 +
-        Math.sin(TAU * frequency * 2 * time + 0.16) * 0.17 * Math.exp(-time * 1.7) +
-        Math.sin(TAU * frequency * 3 * time + 0.38) * 0.07 * Math.exp(-time * 3.2);
+        stringFundamental * 0.81 +
+        secondPartial * 0.125 * Math.exp(-time * 2.7) +
+        thirdPartial * 0.032 * Math.exp(-time * 5.4);
       const envelope =
-        Math.min(1, time / 0.012) * Math.exp(-time * 1.35) * Math.min(1, (1 - progress) / 0.12);
-      addStereo(sampleIndex, (tone + felt) * envelope * gain, pan);
+        Math.min(1, time / 0.018) * Math.exp(-time * damping) * Math.min(1, (1 - progress) / 0.15);
+      addStereo(sampleIndex, (tone + hammerTransient) * envelope * gain, pan);
+      addStereo(sampleIndex, soundboardResonance * envelope * gain * 0.42, pan * -0.45);
     }
   );
 };
@@ -150,9 +171,9 @@ const addGlassNote = (
     beatToSeconds(durationBeats),
     (time, progress, sampleIndex) => {
       const tone =
-        Math.sin(TAU * frequency * time) * 0.65 +
-        Math.sin(TAU * frequency * 2.01 * time + 0.1) * 0.22 +
-        Math.sin(TAU * frequency * 3.96 * time + 0.36) * 0.13;
+        Math.sin(TAU * frequency * time) * 0.82 +
+        Math.sin(TAU * frequency * 2.01 * time + 0.1) * 0.13 +
+        Math.sin(TAU * frequency * 3.96 * time + 0.36) * 0.05;
       const envelope =
         Math.min(1, time / 0.008) * Math.exp(-time * 2.05) * Math.min(1, (1 - progress) / 0.16);
       addStereo(sampleIndex, tone * envelope * gain, pan);
@@ -255,15 +276,17 @@ const addClarityMotif = (startBeat: number, gain: number): void => {
       startBeat + offsets[index],
       2,
       note - 12,
-      gain * 0.72,
+      gain * 0.36,
       index === 1 ? -0.1 : 0.08
     );
   });
 };
 
-addClarityMotif(0.5, 0.072);
-addClarityMotif(22.25, 0.082);
-addClarityMotif(52, 0.1);
+addClarityMotif(0.5, 0.03);
+addClarityMotif(22.25, 0.034);
+addClarityMotif(52, 0.04);
+
+const pianoBackgroundGain = 0.56;
 
 for (const [beat, midi, gain, pan] of [
   [11, 59, 0.055, -0.12],
@@ -280,7 +303,7 @@ for (const [beat, midi, gain, pan] of [
   [56, 69, 0.078, -0.1],
   [58, 74, 0.09, 0.1]
 ] as const) {
-  addFeltPianoNote(beat, 2.4, midi, gain, pan);
+  addFeltPianoNote(beat, 2.4, midi, gain * pianoBackgroundGain, pan);
 }
 
 const narrativeHitBeats = Object.values(WORKFLOW_REEL_SPEC.music.hitFrames).map(
@@ -290,7 +313,7 @@ const narrativeHitBeats = Object.values(WORKFLOW_REEL_SPEC.music.hitFrames).map(
 for (const beat of narrativeHitBeats) {
   if (beat > 0) addAirSwell(beat - 0.8, 0.8, beat >= 44 ? 0.026 : 0.018);
   addSoftImpact(beat, beat === 0 ? 0.08 : beat >= 44 ? 0.135 : 0.105);
-  if (beat >= 44) addGlassNote(beat, 2, beat >= 52 ? 86 : 81, 0.04, 0.24);
+  if (beat >= 44) addGlassNote(beat, 2, beat >= 52 ? 86 : 81, 0.022, 0.24);
 }
 
 // Short, quiet early reflections preserve precise attacks while adding depth.
