@@ -1548,6 +1548,28 @@ importers:
         specifier: ^5.7.0
         version: 5.9.3
 
+  packages/github-actions-runner-broker:
+    dependencies:
+      '@cloudflare/containers':
+        specifier: 0.0.30
+        version: 0.0.30
+    devDependencies:
+      '@cloudflare/workers-types':
+        specifier: 4.20260621.1
+        version: 4.20260621.1
+      '@types/node':
+        specifier: 24.10.9
+        version: 24.10.9
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 3.2.4
+        version: 3.2.4(@types/debug@4.1.12)(@types/node@24.10.9)(jiti@2.6.1)(jsdom@27.4.0(@noble/hashes@1.8.0)(bufferutil@4.1.0)(utf-8-validate@6.0.6))(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
+      wrangler:
+        specifier: 4.103.0
+        version: 4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+
   packages/database-layer/worker:
     dependencies:
       '@create-something/database-layer':

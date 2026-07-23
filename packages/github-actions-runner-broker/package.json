@@ -1,0 +1,22 @@
+{
+  "name": "@create-something/github-actions-runner-broker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "test": "vitest run",
+    "deploy": "wrangler deploy",
+    "dry-run": "wrangler deploy --dry-run"
+  },
+  "dependencies": {
+    "@cloudflare/containers": "0.0.30"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "4.20260621.1",
+    "@types/node": "24.10.9",
+    "typescript": "5.9.3",
+    "vitest": "3.2.4",
+    "wrangler": "4.103.0"
+  }
+}
