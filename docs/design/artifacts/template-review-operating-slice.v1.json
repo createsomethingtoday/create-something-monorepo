@@ -1,0 +1,232 @@
+{
+  "version": "system-context.operating-slice.v1",
+  "id": "public-template-review-evidence-preparation",
+  "audience": "public",
+  "reviewStatus": "design_source",
+  "workflow": {
+    "label": "Template review evidence preparation",
+    "summary": "Evidence can move through a bounded preparation lane. Official judgment remains with the human reviewer.",
+    "boundary": "Public worked example. No production tools or private client records."
+  },
+  "source": {
+    "kind": "observed",
+    "label": "Template Review Field Report",
+    "href": "/field-reports/template-review",
+    "checkedAt": "2026-07-22T23:00:00-05:00",
+    "reviewBy": "2026-08-21T23:00:00-05:00",
+    "freshness": "current"
+  },
+  "comparison": {
+    "label": "Before bounded evidence preparation",
+    "checkedAt": "2026-07-10T12:00:00-05:00"
+  },
+  "nodes": [
+    {
+      "id": "review-owner",
+      "label": "Review queue owner",
+      "kind": "actor",
+      "summary": "Owns assignment, interpretation, and creator communication.",
+      "semantics": {
+        "coverage": "mapped",
+        "verification": "declared",
+        "health": "unknown",
+        "authority": "wait",
+        "proof": "attached",
+        "freshness": "current",
+        "change": "unchanged"
+      },
+      "provenance": {
+        "kind": "declared",
+        "sourceLabel": "Public workflow definition",
+        "explanation": "The owner role is part of the worked example, not a live staffing claim."
+      },
+      "owner": "Review operations",
+      "evidence": ["Owner role named"],
+      "recovery": "Return unresolved ownership to the review operations lead."
+    },
+    {
+      "id": "asset-packet",
+      "label": "Submitted asset packet",
+      "kind": "data",
+      "summary": "Submission context, validation output, policy flags, and reviewer notes.",
+      "semantics": {
+        "coverage": "mapped",
+        "verification": "verified",
+        "health": "healthy",
+        "authority": "run",
+        "proof": "attached",
+        "freshness": "current",
+        "change": "changed"
+      },
+      "provenance": {
+        "kind": "observed",
+        "sourceLabel": "Template Review Field Report",
+        "explanation": "The public report records 49 completed evidence packets in a 50-case shadow sample."
+      },
+      "owner": "Review operations",
+      "evidence": ["49 / 50 packet completion"],
+      "recovery": "Keep the case in human review when packet preparation is incomplete."
+    },
+    {
+      "id": "validation-checks",
+      "label": "Validation checks",
+      "kind": "system",
+      "summary": "Collect objective evidence and flag missing or contradictory context.",
+      "semantics": {
+        "coverage": "mapped",
+        "verification": "verified",
+        "health": "healthy",
+        "authority": "run",
+        "proof": "attached",
+        "freshness": "current",
+        "change": "changed"
+      },
+      "provenance": {
+        "kind": "observed",
+        "sourceLabel": "Template Review Field Report",
+        "explanation": "Packet collection is measured separately from judgment accuracy."
+      },
+      "owner": "Evidence preparation",
+      "evidence": ["Dated collection result"],
+      "recovery": "Stop the preparation lane and preserve the incomplete packet for reviewer inspection."
+    },
+    {
+      "id": "reviewer-brief",
+      "label": "Reviewer brief",
+      "kind": "ai",
+      "summary": "Summarizes evidence and questions without making the official decision.",
+      "semantics": {
+        "coverage": "mapped",
+        "verification": "declared",
+        "health": "unknown",
+        "authority": "run",
+        "proof": "attached",
+        "freshness": "current",
+        "change": "added"
+      },
+      "provenance": {
+        "kind": "derived",
+        "sourceLabel": "Bounded workflow definition",
+        "explanation": "The brief is a support task inferred from the evidence-preparation boundary."
+      },
+      "owner": "Evidence preparation",
+      "evidence": ["Brief attached to packet"],
+      "recovery": "Discard the brief and review source evidence directly."
+    },
+    {
+      "id": "reviewer-decision",
+      "label": "Reviewer decision",
+      "kind": "human",
+      "summary": "A person decides approve, reject, request changes, or escalate ambiguity.",
+      "semantics": {
+        "coverage": "mapped",
+        "verification": "verified",
+        "health": "healthy",
+        "authority": "wait",
+        "proof": "attached",
+        "freshness": "current",
+        "change": "unchanged"
+      },
+      "provenance": {
+        "kind": "observed",
+        "sourceLabel": "Template Review Field Report",
+        "explanation": "The published result explicitly retains official judgment with the human reviewer."
+      },
+      "owner": "Human reviewer",
+      "evidence": ["Judgment promotion remains blocked"],
+      "recovery": "Escalate policy ambiguity and keep the case in human review."
+    },
+    {
+      "id": "ungrounded-approval-stop",
+      "label": "No ungrounded approval",
+      "kind": "constraint",
+      "summary": "Stop before approval, rejection, security claims, or timeline promises without evidence.",
+      "semantics": {
+        "coverage": "mapped",
+        "verification": "verified",
+        "health": "healthy",
+        "authority": "stop",
+        "proof": "attached",
+        "freshness": "current",
+        "change": "unchanged"
+      },
+      "provenance": {
+        "kind": "observed",
+        "sourceLabel": "Template Review Field Report",
+        "explanation": "The public report keeps automated judgment blocked."
+      },
+      "owner": "Review policy",
+      "evidence": ["Promotion blocked"],
+      "recovery": "Return the decision to the named reviewer with the source packet."
+    },
+    {
+      "id": "evidence-record",
+      "label": "Evidence record",
+      "kind": "touchpoint",
+      "summary": "Preserves source evidence, reviewer state, bounded claims, and remaining unknowns.",
+      "semantics": {
+        "coverage": "mapped",
+        "verification": "verified",
+        "health": "healthy",
+        "authority": "run",
+        "proof": "attached",
+        "freshness": "current",
+        "change": "changed"
+      },
+      "provenance": {
+        "kind": "observed",
+        "sourceLabel": "Dated public evidence index",
+        "explanation": "The report attaches claims to dated public records."
+      },
+      "owner": "CREATE SOMETHING",
+      "evidence": ["Dated source list", "Measurement boundaries"],
+      "recovery": "Use the source records rather than the summary when a claim is disputed."
+    },
+    {
+      "id": "recovery-path",
+      "label": "Human review recovery",
+      "kind": "touchpoint",
+      "summary": "Returns incomplete, ambiguous, or unsupported work to a named human owner.",
+      "semantics": {
+        "coverage": "mapped",
+        "verification": "declared",
+        "health": "unknown",
+        "authority": "wait",
+        "proof": "not-required",
+        "freshness": "current",
+        "change": "added"
+      },
+      "provenance": {
+        "kind": "declared",
+        "sourceLabel": "Public recovery boundary",
+        "explanation": "The recovery path expresses the approved human fallback, not a measured runtime event."
+      },
+      "owner": "Human reviewer",
+      "evidence": [],
+      "recovery": "Keep the case in human review until evidence and authority are clear."
+    }
+  ],
+  "relationships": [
+    { "id": "owner-submission", "source": "review-owner", "target": "asset-packet", "relation": "owns", "provenance": "declared" },
+    { "id": "submission-checks", "source": "asset-packet", "target": "validation-checks", "relation": "feeds", "provenance": "observed" },
+    { "id": "checks-brief", "source": "validation-checks", "target": "reviewer-brief", "relation": "supports", "provenance": "derived" },
+    { "id": "brief-decision", "source": "reviewer-brief", "target": "reviewer-decision", "relation": "informs", "provenance": "declared" },
+    { "id": "checks-decision", "source": "validation-checks", "target": "reviewer-decision", "relation": "informs", "provenance": "observed" },
+    { "id": "stop-decision", "source": "ungrounded-approval-stop", "target": "reviewer-decision", "relation": "governs", "provenance": "observed" },
+    { "id": "decision-evidence", "source": "reviewer-decision", "target": "evidence-record", "relation": "records", "provenance": "declared" },
+    { "id": "stop-recovery", "source": "ungrounded-approval-stop", "target": "recovery-path", "relation": "routes", "provenance": "declared" },
+    { "id": "evidence-recovery", "source": "evidence-record", "target": "recovery-path", "relation": "supports", "provenance": "declared" }
+  ],
+  "lenses": {
+    "dependencies": ["review-owner", "asset-packet", "validation-checks", "reviewer-brief", "reviewer-decision", "evidence-record", "recovery-path"],
+    "authority": ["validation-checks", "reviewer-brief", "reviewer-decision", "ungrounded-approval-stop", "recovery-path"],
+    "change": ["asset-packet", "validation-checks", "reviewer-brief", "evidence-record", "recovery-path"],
+    "proof": ["asset-packet", "validation-checks", "reviewer-decision", "ungrounded-approval-stop", "evidence-record", "recovery-path"]
+  },
+  "receipt": {
+    "sourceLabel": "Template Review Field Report",
+    "lastCheckedLabel": "Checked Jul 22, 2026",
+    "changeLabel": "Evidence preparation bounded; human judgment retained",
+    "recoveryLabel": "Return unsupported work to human review"
+  }
+}

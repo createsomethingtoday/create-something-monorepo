@@ -60,7 +60,7 @@
 
 	const controlsFitViewOptions = {
 		padding: 0.12,
-		minZoom: 0.7,
+		minZoom: 0.2,
 		maxZoom: 1
 	};
 
@@ -71,6 +71,7 @@
 	export let selectedNodeId: string;
 	export let flowId = 'public-atlas-flow';
 	export let ariaLabel = 'Atlas workflow map';
+	export let contextLabel = 'Editable workflow';
 	export let onMoveNode: (nodeId: string, position: { x: number; y: number }) => void = noopMoveNode;
 	export let onSelectNode: (nodeId: string) => void = noopSelectNode;
 	export let readOnly = false;
@@ -83,10 +84,9 @@
 		y: 0,
 		zoom: 1
 	};
-	export let minZoom = 0.7;
+	export let minZoom = 0.2;
 	export let maxZoom = 1.45;
 
-	$: counts = `${canvas.nodes.length} nodes / ${canvas.edges.length} edges`;
 	$: focusedNodeSet = new Set(focusedNodeIds);
 	$: focusedEdgeSet = new Set(focusedEdgeIds);
 	$: hasFocus = dimUnfocused && (focusedNodeSet.size > 0 || focusedEdgeSet.size > 0);
@@ -163,7 +163,7 @@
 <div class="public-atlas-flow" aria-label={ariaLabel}>
 	<div class="public-atlas-kicker">
 		<strong>Workflow map</strong>
-		<small>{counts}</small>
+		<small>{contextLabel}</small>
 	</div>
 	<div class="public-atlas-legend">
 		<span class="run">Run</span>

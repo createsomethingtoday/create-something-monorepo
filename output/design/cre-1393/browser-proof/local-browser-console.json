@@ -1,0 +1,18 @@
+{
+  "baseUrl": "http://127.0.0.1:4173",
+  "checkedAt": "2026-07-23T12:40:00Z",
+  "routes": {
+    "/control": [],
+    "/map": [],
+    "/field-reports/template-review": []
+  },
+  "assetInventory": {
+    "total": 45,
+    "stylesheets": 10,
+    "scripts": 33,
+    "images": 1,
+    "other": 1,
+    "inlineSvgs": 5
+  },
+  "failedAssetsObserved": 0
+}

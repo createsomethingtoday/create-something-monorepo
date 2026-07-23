@@ -11,6 +11,7 @@
     type PerformanceEvidenceItem,
     type PerformanceNarrativeScene
   } from '@create-something/canon';
+  import SystemContextArtifact from '$lib/components/SystemContextArtifact.svelte';
   import {
     getTemplateReviewPacketCompletion,
     templateReviewFieldReport
@@ -288,6 +289,23 @@
     {/snippet}
   </PerformanceNarrativeStage>
 
+  <section class="field-context" aria-labelledby="field-context-title">
+    <header>
+      <span>Operating proof</span>
+      <h2 id="field-context-title">See exactly where preparation stops and human judgment begins.</h2>
+      <p>
+        This read-only change view uses the same public workflow definition as Control. It exposes
+        the owner, authority boundary, dated evidence, and recovery path without exposing private
+        records or implying live execution.
+      </p>
+    </header>
+    <SystemContextArtifact
+      defaultLens="change"
+      readOnly={true}
+      title="What changed around the review decision."
+    />
+  </section>
+
   <PerformanceConversionHandoff
     eyebrow="Business implication"
     title="Use automation to prepare evidence—not to assume judgment."
@@ -329,6 +347,28 @@
 </main>
 
 <style>
+  .field-context {
+    display: grid;
+    gap: clamp(1.5rem, 3vw, 2.5rem);
+    padding: clamp(4rem, 8vw, 8rem) clamp(1rem, 4vw, 4rem);
+    background: var(--color-performance-paper, #f3f3f0);
+  }
+  .field-context > header {
+    display: grid;
+    max-width: 52rem;
+    gap: .7rem;
+  }
+  .field-context > header span {
+    color: var(--color-performance-muted, #5e6268);
+    font-family: var(--font-performance-mono);
+    font-size: .7rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+  .field-context > header h2,
+  .field-context > header p { margin: 0; }
+  .field-context > header h2 { font-size: clamp(1.8rem, 4vw, 3.5rem); line-height: 1.02; }
+  .field-context > header p { max-width: 46rem; color: var(--color-performance-muted, #5e6268); line-height: 1.6; }
   .field-report {
     background: var(--color-performance-panel, #fff);
     color: var(--color-performance-ink, #090909);

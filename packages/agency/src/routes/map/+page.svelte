@@ -3,14 +3,13 @@
 	import {
 		Button,
 		PerformanceCampaignOpening,
-		PerformanceContrastChapter,
 		PerformancePageSection,
 		PerformanceThesisConditions,
 		SEO,
 		type PerformanceCondition
 	} from '@create-something/canon';
 	import PublicAtlasCanvas from '$lib/components/PublicAtlasCanvas.svelte';
-	import PublicAtlasStoryCanvas from '$lib/components/PublicAtlasStoryCanvas.svelte';
+	import SystemContextRail from '$lib/components/SystemContextRail.svelte';
 	import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
 	const mapProtocol: PerformanceCondition[] = [
@@ -66,20 +65,6 @@
 		ariaLabel="Public workflow mapping protocol"
 	/>
 
-	<PerformanceContrastChapter
-		eyebrow="Workflow story"
-		title="See the workflow as a story before editing the map."
-		description="The static story uses the same graph contract as the interactive canvas. It explains what can run, what waits for judgment, where execution must stop, and where proof lands."
-		intervention={{ label: 'Shared graph contract', title: 'Story before mutation', detail: 'The explanatory view and interactive canvas render the same operating model.' }}
-	>
-		{#snippet artifact()}
-			<PublicAtlasStoryCanvas
-				starterId="marketplace-review-queue"
-				storyId="map-page-marketplace-review-story"
-			/>
-		{/snippet}
-	</PerformanceContrastChapter>
-
 	<PerformancePageSection
 		id="canvas"
 		variant="white"
@@ -88,6 +73,7 @@
 		description="Cold readers can test the method without exposing credentials. Warm teams leave with a summary, readiness signal, and workflow definition that can stand alone or move into Build and Control."
 	>
 		{#snippet after()}
+			<SystemContextRail />
 			<PublicAtlasCanvas bookingHref="/book"
 				initialIntegration={$page.url.searchParams.get('source') === 'integration-catalog'
 					? ($page.url.searchParams.get('integration') ?? '')
