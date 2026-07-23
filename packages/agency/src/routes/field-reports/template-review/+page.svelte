@@ -114,7 +114,7 @@
 
 <SEO
   title="Template Review Field Report | CREATE SOMETHING .agency"
-  description="A Webflow template-review field report: evidence collection completed for 49 of 50 selected cases, automated judgment remains blocked, and reviewer time savings are not yet measured."
+  description="A Webflow template-review field report. Evidence collection completed for 49 of 50 cases. Automated judgment remains blocked, and reviewer time savings remain unmeasured."
   keywords="AI workflow field report, template review workflow, human in the loop review, Dify MCP workflow, workflow evidence"
   propertyName="agency"
 />
@@ -145,7 +145,7 @@
     id="result"
     eyebrow="One evidence argument"
     title="Result. Boundary. Economics. Evidence."
-    description="The report keeps four different questions separate: did collection work, did judgment earn promotion, what did one packet cost, and which claims remain measured or unresolved."
+    description="The report separates four questions: Did collection work? Did judgment earn promotion? What did one packet cost? Which claims remain measured or unresolved?"
     scenes={fieldReportScenes}
     ariaLabel="Template review Field Report argument"
   >
