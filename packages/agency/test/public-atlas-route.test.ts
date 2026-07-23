@@ -128,21 +128,11 @@ test('Delegation Practice is a bounded Atlas proof surface, not an editable prod
 	assert.equal(practiceRoute.includes('<PublicAtlasCanvas'), false);
 });
 
-test('Map route presents the story canvas before the editable canvas', () => {
-	const storyCanvasIndex = mapRoute.indexOf('<PublicAtlasStoryCanvas');
-	const editableCanvasIndex = mapRoute.indexOf('<PublicAtlasCanvas');
-
-	assert.notEqual(storyCanvasIndex, -1);
-	assert.notEqual(editableCanvasIndex, -1);
-	assert.ok(storyCanvasIndex < editableCanvasIndex);
-	assert.ok(mapRoute.includes('starterId="marketplace-review-queue"'));
-	assert.ok(mapRoute.includes('storyId="map-page-marketplace-review-story"'));
+test('Map route keeps one editable map with a compact worked-example rail', () => {
+	assert.equal(mapRoute.includes('<PublicAtlasStoryCanvas'), false);
+	assert.equal(mapRoute.match(/<PublicAtlasCanvas/g)?.length, 1);
+	assert.ok(mapRoute.includes('<SystemContextRail'));
 	assert.ok(mapRoute.includes('bookingHref="/book"'));
-});
-
-test('Map route labels the story and mapping surfaces distinctly', () => {
-	assert.ok(mapRoute.includes('eyebrow="Workflow story"'));
-	assert.ok(mapRoute.includes('same graph contract'));
 	assert.ok(mapRoute.includes('eyebrow="Public mapping surface"'));
 	assert.ok(mapRoute.includes('The canvas turns curiosity into operating context.'));
 });

@@ -13,14 +13,6 @@ const readiness = JSON.parse(fs.readFileSync(readinessPath, 'utf8'));
 const review = JSON.parse(fs.readFileSync(reviewPath, 'utf8'));
 const runtimeBindingCoverage = JSON.parse(fs.readFileSync(runtimeBindingCoveragePath, 'utf8'));
 const topology = JSON.parse(fs.readFileSync(topologyPath, 'utf8'));
-const runtimeBindingRefs = runtimeBindingCoverage.records.reduce(
-  (total, record) => total + record.bindings.length,
-  0
-);
-const runtimeRouteRefs = runtimeBindingCoverage.records.reduce(
-  (total, record) => total + record.routes.length,
-  0
-);
 
 test('operating slice readiness is derived from the current operating slice review', () => {
   assert.equal(readiness.id, 'substrate:create-something:operating-slice-readiness:internal');
@@ -39,16 +31,27 @@ test('operating slice readiness keeps promotion approval-gated', () => {
 test('worker operating slice joins topology records to Cloudflare runtime coverage', () => {
   const worker = readiness.items.find((item) => item.title === 'Automation worker Atlas coverage');
   const workerReview = review.slices.find((slice) => slice.title === 'Automation worker Atlas coverage');
+  const expectedRuntimeRecords = runtimeBindingCoverage.records.filter((record) =>
+    workerReview?.recordIds.includes(record.recordId)
+  );
+  const expectedBindingRefs = expectedRuntimeRecords.reduce(
+    (total, record) => total + record.bindings.length,
+    0
+  );
+  const expectedRouteRefs = expectedRuntimeRecords.reduce(
+    (total, record) => total + record.routes.length,
+    0
+  );
 
   assert.equal(worker?.surface, 'worker');
   assert.equal(worker?.recordCount, workerReview?.recordIds.length);
   assert.equal(worker?.mappedRecordCount, worker?.recordCount);
   assert.equal(worker?.missingRecordIds.length, 0);
   assert.equal(worker?.workerRuntime?.runtime, 'cloudflare');
-  assert.equal(worker?.workerRuntime?.runtimeConfigRecords, runtimeBindingCoverage.records.length);
+  assert.equal(worker?.workerRuntime?.runtimeConfigRecords, expectedRuntimeRecords.length);
   assert.equal(worker?.workerRuntime?.workerPackageRecords, 24);
-  assert.equal(worker?.workerRuntime?.bindingRefs, runtimeBindingRefs);
-  assert.equal(worker?.workerRuntime?.routeRefs, runtimeRouteRefs);
+  assert.equal(worker?.workerRuntime?.bindingRefs, expectedBindingRefs);
+  assert.equal(worker?.workerRuntime?.routeRefs, expectedRouteRefs);
   assert.ok(worker?.workerRuntime?.workersWithD1 >= 60);
   assert.ok(worker?.workerRuntime?.workersWithDurableObjects >= 30);
 });

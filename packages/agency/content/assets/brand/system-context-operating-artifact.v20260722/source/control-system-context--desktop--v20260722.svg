@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900" role="img" aria-labelledby="title desc">
+  <title id="title">Control system context desktop design</title>
+  <desc id="desc">A desktop operating artifact showing dependencies, authority, freshness, change, proof, and a human reviewer decision.</desc>
+  <defs>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" fill="none" stroke="#d9d9d2" stroke-opacity=".48"/></pattern>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0l10 5-10 5z" fill="#747873"/></marker>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="12" stdDeviation="18" flood-color="#111820" flood-opacity=".08"/></filter>
+    <style>
+      text{font-family:Inter,Arial,sans-serif;fill:#101316}.mono{font-family:"SFMono-Regular",Consolas,monospace;letter-spacing:.08em}.muted{fill:#666b6d}.small{font-size:12px}.meta{font-size:11px}.label{font-size:14px;font-weight:700}.title{font-size:29px;font-weight:650}.section{font-size:13px;font-weight:700;letter-spacing:.08em}.node{fill:#fff;stroke:#cfd1cc}.node-focus{fill:#fff;stroke:#235fdb;stroke-width:2}.chip{fill:#f0f1ed;stroke:#d6d8d1}.run{fill:#e8f3ec;stroke:#8fb29b}.wait{fill:#eef3ff;stroke:#94abe0}.stop{fill:#fff0f0;stroke:#d99a9a}.proof{fill:#eff7f4;stroke:#8fb8a8}
+    </style>
+  </defs>
+  <rect width="1440" height="900" fill="#efefe9"/>
+  <g filter="url(#shadow)">
+    <rect x="48" y="40" width="1344" height="820" rx="8" fill="#fbfbf7" stroke="#c9cbc5"/>
+  </g>
+  <rect x="49" y="41" width="1342" height="818" rx="7" fill="url(#grid)" opacity=".58"/>
+
+  <text x="82" y="84" class="mono meta muted">CREATE SOMETHING CONTROL / SYSTEM CONTEXT</text>
+  <text x="82" y="126" class="title">Template review evidence preparation</text>
+  <text x="82" y="154" font-size="15" class="muted">Evidence can move. Official judgment remains with the human reviewer.</text>
+  <g transform="translate(1007 71)">
+    <rect width="164" height="33" rx="16" class="chip"/><circle cx="18" cy="16.5" r="4" fill="#23774c"/><text x="30" y="21" class="mono meta">CHECKED JUL 22</text>
+    <rect x="174" width="116" height="33" rx="16" class="chip"/><circle cx="192" cy="16.5" r="4" fill="#235fdb"/><text x="204" y="21" class="mono meta">1 CHANGE</text>
+  </g>
+
+  <g transform="translate(82 184)">
+    <rect width="149" height="40" rx="4" fill="#fff" stroke="#d2d4ce"/><text x="18" y="25" class="label">Dependencies</text>
+    <rect x="157" width="124" height="40" rx="4" fill="#101316"/><text x="179" y="25" class="label" fill="#fff" style="fill:#fff">Authority</text>
+    <rect x="289" width="100" height="40" rx="4" fill="#fff" stroke="#d2d4ce"/><text x="313" y="25" class="label">Change</text>
+    <rect x="397" width="89" height="40" rx="4" fill="#fff" stroke="#d2d4ce"/><text x="420" y="25" class="label">Proof</text>
+  </g>
+
+  <rect x="82" y="240" width="894" height="493" rx="5" fill="#f8f8f3" stroke="#cfd1cc"/>
+  <rect x="998" y="240" width="360" height="493" rx="5" fill="#fff" stroke="#cfd1cc"/>
+
+  <g fill="none" stroke="#747873" stroke-width="1.5" marker-end="url(#arrow)">
+    <path d="M286 361H354"/><path d="M556 361H616"/><path d="M816 361H858"/><path d="M716 407V476"/><path d="M778 511H858"/><path d="M868 565H799V649"/>
+  </g>
+  <path d="M513 520H616" fill="none" stroke="#235fdb" stroke-width="2" stroke-dasharray="5 5" marker-end="url(#arrow)"/>
+
+  <g transform="translate(110 322)"><rect width="176" height="78" rx="5" class="node"/><text x="14" y="24" class="mono meta muted">OWNER · WAIT</text><text x="14" y="49" class="label">Review queue owner</text><text x="14" y="66" class="small muted">Role declared</text></g>
+  <g transform="translate(354 322)"><rect width="202" height="78" rx="5" class="node"/><text x="14" y="24" class="mono meta" fill="#23774c" style="fill:#23774c">SOURCE · RUN</text><text x="14" y="49" class="label">Submitted asset packet</text><text x="14" y="66" class="small muted">49 / 50 observed</text></g>
+  <g transform="translate(616 322)"><rect width="200" height="86" rx="5" class="node"/><text x="14" y="24" class="mono meta" fill="#23774c" style="fill:#23774c">SYSTEM · RUN</text><text x="14" y="49" class="label">Validation checks</text><text x="14" y="68" class="small muted">Evidence, not judgment</text></g>
+  <g transform="translate(858 322)"><rect width="92" height="86" rx="5" class="node"/><text x="12" y="24" class="mono meta" fill="#23774c" style="fill:#23774c">RUN</text><text x="12" y="48" class="label">Brief</text><text x="12" y="67" class="small muted">Support</text></g>
+  <g transform="translate(616 476)"><rect width="200" height="90" rx="5" class="node-focus"/><text x="14" y="24" class="mono meta" fill="#235fdb" style="fill:#235fdb">HUMAN · WAIT</text><text x="14" y="50" class="label">Reviewer decision</text><text x="14" y="70" class="small muted">Official judgment retained</text></g>
+  <g transform="translate(304 478)"><rect width="209" height="84" rx="5" class="stop"/><text x="14" y="24" class="mono meta" fill="#9b2020" style="fill:#9b2020">BOUNDARY · STOP</text><text x="14" y="49" class="label">No ungrounded approval</text><text x="14" y="68" class="small muted">Evidence required</text></g>
+  <g transform="translate(858 476)"><rect width="92" height="90" rx="5" class="proof"/><text x="12" y="24" class="mono meta" fill="#23774c" style="fill:#23774c">PROOF</text><text x="12" y="49" class="label">Record</text><text x="12" y="68" class="small muted">Dated</text></g>
+  <g transform="translate(616 622)"><rect width="183" height="68" rx="5" class="wait"/><text x="14" y="24" class="mono meta" fill="#235fdb" style="fill:#235fdb">RECOVERY · WAIT</text><text x="14" y="48" class="label">Human review</text></g>
+
+  <g transform="translate(1027 275)">
+    <text class="mono meta muted">SELECTED RECORD</text><text y="38" class="title" font-size="24">Reviewer decision</text>
+    <line y1="60" x2="302" y2="60" stroke="#d2d4ce"/>
+    <text y="94" class="mono meta muted">AUTHORITY</text><rect x="190" y="76" width="86" height="28" rx="14" class="wait"/><text x="215" y="95" class="mono meta" fill="#235fdb" style="fill:#235fdb">WAIT</text>
+    <text y="136" class="mono meta muted">OWNER</text><text x="190" y="136" class="label">Human reviewer</text>
+    <text y="176" class="mono meta muted">FRESHNESS</text><text x="190" y="176" class="label">Current</text>
+    <text y="216" class="mono meta muted">VERIFICATION</text><text x="190" y="216" class="label">Verified</text>
+    <line y1="240" x2="302" y2="240" stroke="#d2d4ce"/>
+    <text y="273" class="section">WHY THIS WAITS</text><text y="302" class="small muted">A person decides approve, reject,</text><text y="322" class="small muted">request changes, or escalate ambiguity.</text>
+    <text y="368" class="section">EVIDENCE</text><text y="397" class="small">Judgment promotion remains blocked</text>
+    <text y="420" class="section">RECOVERY</text><text y="447" class="small muted">Keep the case in human review.</text>
+  </g>
+
+  <g transform="translate(82 754)">
+    <rect width="1276" height="72" rx="4" fill="#101316"/>
+    <text x="22" y="25" class="mono meta" fill="#bfc4c1" style="fill:#bfc4c1">SOURCE</text><text x="22" y="49" class="small" fill="#fff" style="fill:#fff">Public field report</text>
+    <text x="295" y="25" class="mono meta" fill="#bfc4c1" style="fill:#bfc4c1">CHANGED</text><text x="295" y="49" class="small" fill="#fff" style="fill:#fff">Evidence preparation bounded</text>
+    <text x="656" y="25" class="mono meta" fill="#bfc4c1" style="fill:#bfc4c1">DECISION</text><text x="656" y="49" class="small" fill="#fff" style="fill:#fff">Human judgment retained</text>
+    <text x="987" y="25" class="mono meta" fill="#bfc4c1" style="fill:#bfc4c1">RECOVERY</text><text x="987" y="49" class="small" fill="#fff" style="fill:#fff">Return unsupported work to review</text>
+  </g>
+</svg>

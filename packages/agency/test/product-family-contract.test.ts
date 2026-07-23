@@ -105,7 +105,8 @@ test('Map is the canonical public canvas route and Atlas redirects for compatibi
   );
 
   assert.match(mapRoute, /CREATE SOMETHING Map/);
-  assert.match(mapRoute, /<PublicAtlasStoryCanvas/);
+  assert.match(mapRoute, /<SystemContextRail/);
+  assert.doesNotMatch(mapRoute, /<PublicAtlasStoryCanvas/);
   assert.match(mapRoute, /<PublicAtlasCanvas bookingHref="\/book"/);
   assert.doesNotMatch(mapRoute, /Public Atlas Canvas|eyebrow="Atlas/);
 

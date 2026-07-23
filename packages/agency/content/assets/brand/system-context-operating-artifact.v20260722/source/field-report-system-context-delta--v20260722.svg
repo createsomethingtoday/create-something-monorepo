@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="520" viewBox="0 0 1200 520" role="img" aria-labelledby="title desc">
+  <title id="title">Field report system-context delta design</title><desc id="desc">A read-only before and current evidence-preparation comparison with human judgment retained.</desc>
+  <defs><style>text{font-family:Inter,Arial,sans-serif;fill:#111417}.mono{font-family:"SFMono-Regular",Consolas,monospace;letter-spacing:.07em}.meta{font-size:10px}.small{font-size:12px}.label{font-size:14px;font-weight:700}.muted{fill:#666b6d}.panel{fill:#fff;stroke:#ced0ca}.changed{fill:#eef3ff;stroke:#94abe0}.stop{fill:#fff0f0;stroke:#d99a9a}.run{fill:#eaf4ed;stroke:#91b49c}</style></defs>
+  <rect width="1200" height="520" fill="#efefe9"/><rect x="30" y="26" width="1140" height="468" rx="6" fill="#fbfbf7" stroke="#c9cbc5"/>
+  <text x="58" y="60" class="mono meta muted">FIELD REPORT / CHANGE + PROOF</text><text x="58" y="94" font-size="24" font-weight="700">What changed—and what did not.</text><text x="58" y="118" class="small muted">Evidence preparation became bounded. Official judgment did not move to automation.</text>
+  <rect x="58" y="145" width="512" height="238" rx="4" class="panel"/><rect x="590" y="145" width="552" height="238" rx="4" class="panel"/>
+  <text x="82" y="176" class="mono meta muted">BEFORE · UNBOUNDED HANDOFF</text><text x="614" y="176" class="mono meta" fill="#235fdb" style="fill:#235fdb">CURRENT · BOUNDED PREPARATION</text>
+  <g stroke="#777c78" fill="none"><path d="M234 260H309"/><path d="M750 241H816"/><path d="M948 241H1004"/><path d="M884 275V317"/></g>
+  <g transform="translate(82 220)"><rect width="152" height="76" rx="4" class="panel"/><text x="12" y="23" class="mono meta">SOURCE</text><text x="12" y="47" class="label">Submitted work</text><text x="12" y="65" class="small muted">Context varies</text></g>
+  <g transform="translate(309 220)"><rect width="194" height="76" rx="4" class="panel"/><text x="12" y="23" class="mono meta">HUMAN RESCUE</text><text x="12" y="47" class="label">Reviewer assembles packet</text><text x="12" y="65" class="small muted">Boundary unclear</text></g>
+  <text x="82" y="339" class="small muted">Evidence collection and judgment are difficult to separate.</text>
+  <g transform="translate(614 204)"><rect width="136" height="76" rx="4" class="run"/><text x="12" y="23" class="mono meta">RUN</text><text x="12" y="47" class="label">Collect evidence</text><text x="12" y="65" class="small muted">49 / 50 packets</text></g>
+  <g transform="translate(816 204)"><rect width="132" height="76" rx="4" class="changed"/><text x="12" y="23" class="mono meta">ADDED</text><text x="12" y="47" class="label">Prepare brief</text><text x="12" y="65" class="small muted">Support only</text></g>
+  <g transform="translate(1004 204)"><rect width="112" height="76" rx="4" fill="#eef3ff" stroke="#94abe0"/><text x="12" y="23" class="mono meta">WAIT</text><text x="12" y="47" class="label">Reviewer</text><text x="12" y="65" class="small muted">Decides</text></g>
+  <g transform="translate(798 317)"><rect width="172" height="48" rx="4" class="stop"/><text x="12" y="20" class="mono meta">STOP</text><text x="12" y="38" class="label">No ungrounded approval</text></g>
+  <rect x="58" y="405" width="1084" height="60" rx="4" fill="#101316"/>
+  <text x="78" y="428" class="mono meta" fill="#bfc4c1" style="fill:#bfc4c1">OBSERVED</text><text x="78" y="449" class="small" fill="#fff" style="fill:#fff">49 / 50 evidence packets</text>
+  <text x="367" y="428" class="mono meta" fill="#bfc4c1" style="fill:#bfc4c1">BOUNDARY</text><text x="367" y="449" class="small" fill="#fff" style="fill:#fff">Judgment remains human</text>
+  <text x="656" y="428" class="mono meta" fill="#bfc4c1" style="fill:#bfc4c1">UNKNOWN</text><text x="656" y="449" class="small" fill="#fff" style="fill:#fff">Reviewer time savings unmeasured</text>
+  <text x="975" y="428" class="mono meta" fill="#bfc4c1" style="fill:#bfc4c1">SOURCE</text><text x="975" y="449" class="small" fill="#fff" style="fill:#fff">Dated public report</text>
+</svg>
