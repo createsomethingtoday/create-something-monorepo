@@ -61,7 +61,12 @@ The generic validator owns format integrity: frame/safe-area contract,
 contiguous scenes, actor/mode compatibility, ordered events, receipt parity,
 blocking-gate recovery, copy limits, time coverage, and beat-grid alignment.
 `validate:workflow-film` adds the concrete policy for the 24-hour launch-change
-proof, including its required actors, states, duration, promise, and CTA.
+proof, including its required actors, states, 60-second duration, promise, and
+CTA. Film duration is authored per spec as a positive integer number of frames
+that must end on its declared musical beat grid; the shared format does not
+assume a 30-second cut.
 
 Run `pnpm validate:workflow-film` from Motion Studio to validate the reference
-film.
+film. Run `pnpm generate:workflow-day-score` to reproduce its purpose-composed
+60-second score; `generate:workflow-score` continues to reproduce the preserved
+30-second reel score.

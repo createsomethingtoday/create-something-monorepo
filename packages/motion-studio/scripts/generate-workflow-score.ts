@@ -1,6 +1,7 @@
 /**
- * Generate "Proof in Motion", an original 30-second minimal product-film score
- * for the CREATE SOMETHING workflow reel.
+ * Generate the deterministic CREATE SOMETHING workflow-film scores: the
+ * 30-second "Proof in Motion" short or the purpose-composed 60-second
+ * "Proof Over Time" flagship arrangement.
  *
  * The arrangement is deterministic and its structural hits share the reel's
  * 120 BPM / 15-frame beat grid. Its piano uses a compact, repo-owned subset of
@@ -9,6 +10,7 @@
  * portable.
  *
  * Run: pnpm generate:workflow-score
+ *      pnpm generate:workflow-day-score
  */
 
 import { createHash } from 'node:crypto';
@@ -18,13 +20,16 @@ import { dirname, join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
+import { WORKFLOW_DAY_REEL_SPEC } from '../src/commercials/workflow-day-reel/spec';
 import { WORKFLOW_REEL_SPEC } from '../src/commercials/workflow-reel/spec';
 
+const isDayScore = process.argv.includes('--day');
+const SCORE_SPEC = isDayScore ? WORKFLOW_DAY_REEL_SPEC : WORKFLOW_REEL_SPEC;
 const SAMPLE_RATE = 44_100;
 const CHANNELS = 2;
-const DURATION_SECONDS = WORKFLOW_REEL_SPEC.durationInFrames / WORKFLOW_REEL_SPEC.fps;
+const DURATION_SECONDS = SCORE_SPEC.durationInFrames / SCORE_SPEC.fps;
 const TOTAL_SAMPLES = Math.round(SAMPLE_RATE * DURATION_SECONDS);
-const SECONDS_PER_BEAT = 60 / WORKFLOW_REEL_SPEC.music.bpm;
+const SECONDS_PER_BEAT = 60 / SCORE_SPEC.music.bpm;
 const TAU = Math.PI * 2;
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const packageRoot = join(scriptDirectory, '..');
@@ -384,7 +389,7 @@ const addSpatialTexture = (startBeat: number, durationBeats: number, gain: numbe
 };
 
 type ScoreSection = readonly [number, number, readonly number[], number, number];
-const sections: readonly ScoreSection[] = [
+const shortSections: readonly ScoreSection[] = [
   [0, 10, [50, 57, 62, 66], 0.068, 0.12],
   [10, 12, [47, 54, 59, 62], 0.078, 0.28],
   [22, 12, [43, 50, 57, 59], 0.067, 0.14],
@@ -392,14 +397,29 @@ const sections: readonly ScoreSection[] = [
   [44, 8, [43, 50, 57, 62], 0.088, 0.36],
   [52, 8, [50, 57, 62, 66, 69], 0.096, 0.18]
 ];
+const daySections: readonly ScoreSection[] = [
+  [0, 12, [50, 57, 62, 66], 0.061, 0.1],
+  [12, 16, [47, 54, 59, 62], 0.066, 0.18],
+  [28, 16, [45, 52, 57, 62], 0.069, 0.2],
+  [44, 14, [43, 50, 57, 59], 0.06, 0.1],
+  [58, 14, [45, 52, 57, 62], 0.064, 0.18],
+  [72, 16, [50, 57, 62, 66], 0.074, 0.26],
+  [88, 16, [43, 50, 57, 62], 0.063, 0.12],
+  [104, 8, [45, 52, 57, 62, 66], 0.082, 0.32],
+  [112, 8, [50, 57, 62, 66, 69], 0.09, 0.16]
+];
+const sections = isDayScore ? daySections : shortSections;
+const proofBeat = isDayScore ? 104 : 44;
+const closeBeat = isDayScore ? 112 : 52;
 
 for (const [beat, duration, notes, gain, lift] of sections) {
   addWarmPad(beat, duration, notes, gain, lift);
-  addSpatialTexture(beat, duration, beat >= 44 ? 0.016 : 0.011);
+  addSpatialTexture(beat, duration, beat >= proofBeat ? 0.016 : 0.011);
 }
 
-for (let beat = 0; beat < 60; beat += 1) {
-  const intensity =
+const scoreBeats = Math.round(DURATION_SECONDS / SECONDS_PER_BEAT);
+for (let beat = 0; beat < scoreBeats; beat += 1) {
+  const shortIntensity =
     beat < 10
       ? 0.075
       : beat < 22
@@ -411,8 +431,26 @@ for (let beat = 0; beat < 60; beat += 1) {
             : beat < 52
               ? 0.112
               : 0.085;
+  const dayIntensity =
+    beat < 12
+      ? 0.06
+      : beat < 44
+        ? 0.085
+        : beat < 58
+          ? 0.05
+          : beat < 72
+            ? 0.07
+            : beat < 88
+              ? 0.09
+              : beat < 104
+                ? 0.065
+                : beat < 112
+                  ? 0.1
+                  : 0.075;
+  const intensity = isDayScore ? dayIntensity : shortIntensity;
   addSoftPulse(beat, 38, intensity);
-  if (beat >= 10 && beat < 22 && beat % 2 === 1) addSoftPulse(beat + 0.5, 45, 0.028);
+  const activeRun = isDayScore ? beat >= 12 && beat < 44 : beat >= 10 && beat < 22;
+  if (activeRun && beat % 2 === 1) addSoftPulse(beat + 0.5, 45, 0.028);
 }
 
 // A wholly original three-note clarity motif: D, A, E. It is intentionally
@@ -432,13 +470,24 @@ const addClarityMotif = (startBeat: number, gain: number): void => {
   });
 };
 
-addClarityMotif(0.5, 0.03);
-addClarityMotif(22.25, 0.034);
-addClarityMotif(52, 0.04);
+const clarityMotifs: readonly (readonly [number, number])[] = isDayScore
+  ? [
+      [0.5, 0.026],
+      [28, 0.028],
+      [72, 0.032],
+      [104, 0.036],
+      [112, 0.038]
+    ]
+  : [
+      [0.5, 0.03],
+      [22.25, 0.034],
+      [52, 0.04]
+    ];
+for (const [beat, gain] of clarityMotifs) addClarityMotif(beat, gain);
 
-const pianoBackgroundGain = 0.56;
+const pianoBackgroundGain = isDayScore ? 0.48 : 0.56;
 
-for (const [beat, midi, gain, pan] of [
+const shortPianoNotes = [
   [11, 59, 0.055, -0.12],
   [13, 62, 0.058, 0.1],
   [15.5, 66, 0.055, -0.08],
@@ -452,18 +501,42 @@ for (const [beat, midi, gain, pan] of [
   [49, 74, 0.082, 0.12],
   [56, 69, 0.078, -0.1],
   [58, 74, 0.09, 0.1]
-] as const) {
+] as const;
+const dayPianoNotes = [
+  [14, 59, 0.05, -0.12],
+  [18, 62, 0.052, 0.1],
+  [22, 66, 0.05, -0.08],
+  [30, 62, 0.054, 0.12],
+  [36, 57, 0.052, -0.12],
+  [42, 62, 0.056, 0.1],
+  [50, 57, 0.048, -0.12],
+  [56, 62, 0.05, 0.1],
+  [62, 64, 0.052, -0.08],
+  [68, 62, 0.054, 0.12],
+  [74, 59, 0.056, -0.12],
+  [78, 62, 0.058, 0.1],
+  [82, 66, 0.056, -0.08],
+  [90, 57, 0.052, -0.12],
+  [96, 62, 0.054, 0.1],
+  [102, 64, 0.056, -0.08],
+  [106, 62, 0.06, -0.12],
+  [109, 66, 0.064, 0.1],
+  [112.5, 69, 0.068, -0.08],
+  [116, 74, 0.074, 0.12]
+] as const;
+const pianoNotes = isDayScore ? dayPianoNotes : shortPianoNotes;
+for (const [beat, midi, gain, pan] of pianoNotes) {
   addSampledPianoNote(beat, 2.4, midi, gain * pianoBackgroundGain, pan);
 }
 
-const narrativeHitBeats = Object.values(WORKFLOW_REEL_SPEC.music.hitFrames).map(
-  (frame) => frame / WORKFLOW_REEL_SPEC.music.beatFrames
+const narrativeHitBeats = Object.values(SCORE_SPEC.music.hitFrames).map(
+  (frame) => frame / SCORE_SPEC.music.beatFrames
 );
 
 for (const beat of narrativeHitBeats) {
-  if (beat > 0) addAirSwell(beat - 0.8, 0.8, beat >= 44 ? 0.026 : 0.018);
-  addSoftImpact(beat, beat === 0 ? 0.08 : beat >= 44 ? 0.135 : 0.105);
-  if (beat >= 44) addGlassNote(beat, 2, beat >= 52 ? 86 : 81, 0.022, 0.24);
+  if (beat > 0) addAirSwell(beat - 0.8, 0.8, beat >= proofBeat ? 0.026 : 0.018);
+  addSoftImpact(beat, beat === 0 ? 0.08 : beat >= proofBeat ? 0.135 : 0.105);
+  if (beat >= proofBeat) addGlassNote(beat, 2, beat >= closeBeat ? 86 : 81, 0.022, 0.24);
 }
 
 let bedEnergy = 0;
@@ -526,9 +599,12 @@ for (let index = 0; index < TOTAL_SAMPLES; index += 1) {
   wav.writeInt16LE(Math.round(Math.max(-1, Math.min(1, right[index])) * 32_767), offset + 2);
 }
 
-const outputPath = join(packageRoot, 'public', WORKFLOW_REEL_SPEC.music.asset);
+const outputPath = join(packageRoot, 'public', SCORE_SPEC.music.asset);
 const temporaryDirectory = mkdtempSync(join(tmpdir(), 'workflow-score-'));
-const temporaryWav = join(temporaryDirectory, 'proof-in-motion.wav');
+const temporaryWav = join(
+  temporaryDirectory,
+  isDayScore ? 'proof-over-time.wav' : 'proof-in-motion.wav'
+);
 
 mkdirSync(dirname(outputPath), { recursive: true });
 writeFileSync(temporaryWav, wav);
@@ -549,11 +625,11 @@ const encode = spawnSync(
     '-ar',
     String(SAMPLE_RATE),
     '-metadata',
-    `title=${WORKFLOW_REEL_SPEC.music.title}`,
+    `title=${SCORE_SPEC.music.title}`,
     '-metadata',
     'artist=CREATE SOMETHING',
     '-metadata',
-    `comment=${WORKFLOW_REEL_SPEC.music.credit}`,
+    `comment=${SCORE_SPEC.music.credit}`,
     outputPath
   ],
   { encoding: 'utf8' }
@@ -566,5 +642,5 @@ if (encode.status !== 0) {
 }
 
 console.log(
-  `generated ${WORKFLOW_REEL_SPEC.music.title}: ${DURATION_SECONDS}s, ${WORKFLOW_REEL_SPEC.music.bpm} BPM, piano ${pianoToBedDb.toFixed(1)} dB vs dry bed, ${outputPath}`
+  `generated ${SCORE_SPEC.music.title}: ${DURATION_SECONDS}s, ${SCORE_SPEC.music.bpm} BPM, piano ${pianoToBedDb.toFixed(1)} dB vs dry bed, ${outputPath}`
 );

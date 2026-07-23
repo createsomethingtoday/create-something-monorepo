@@ -3,12 +3,11 @@ import { AbsoluteFill, Audio, staticFile } from 'remotion';
 
 import { SoundCues } from '../shared/audio/SoundCues';
 import { WorkflowFilm } from '../workflow-film/WorkflowFilm';
-import { WORKFLOW_REEL_SPEC } from '../workflow-reel/spec';
 import { WORKFLOW_DAY_REEL_SPEC } from './spec';
 
 export const WorkflowDayReel: React.FC = () => (
   <AbsoluteFill>
-    <Audio src={staticFile(WORKFLOW_REEL_SPEC.music.asset)} volume={0.78} />
+    <Audio src={staticFile(WORKFLOW_DAY_REEL_SPEC.music.asset)} volume={0.74} />
     <SoundCues
       masterVolume={0.16}
       cues={[

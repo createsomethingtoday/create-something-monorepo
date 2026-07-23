@@ -6,7 +6,7 @@ export const WORKFLOW_DAY_REEL_SPEC = {
   fps: 30,
   width: 1080,
   height: 1920,
-  durationInFrames: 900,
+  durationInFrames: 1800,
   safeArea: {
     top: 150,
     right: 80,
@@ -25,7 +25,7 @@ export const WORKFLOW_DAY_REEL_SPEC = {
     {
       id: 'signal',
       start: 0,
-      duration: 120,
+      duration: 180,
       label: '01 / SIGNAL',
       title: 'One request starts the run.',
       caption: 'At 08:00, a launch change becomes governed work—not another email thread.',
@@ -34,8 +34,8 @@ export const WORKFLOW_DAY_REEL_SPEC = {
     },
     {
       id: 'autonomous',
-      start: 120,
-      duration: 210,
+      start: 180,
+      duration: 480,
       label: '02 / RUN',
       title: 'Agents gather. Functions verify.',
       caption:
@@ -45,8 +45,8 @@ export const WORKFLOW_DAY_REEL_SPEC = {
     },
     {
       id: 'wait',
-      start: 330,
-      duration: 210,
+      start: 660,
+      duration: 420,
       label: '03 / WAIT',
       title: 'Only the blocked decision waits.',
       caption: 'The live change pauses for a human. Safe preparation keeps moving.',
@@ -55,8 +55,8 @@ export const WORKFLOW_DAY_REEL_SPEC = {
     },
     {
       id: 'continue',
-      start: 540,
-      duration: 120,
+      start: 1080,
+      duration: 240,
       label: '04 / CONTINUE',
       title: 'Approval resumes the run.',
       caption:
@@ -66,8 +66,8 @@ export const WORKFLOW_DAY_REEL_SPEC = {
     },
     {
       id: 'overnight',
-      start: 660,
-      duration: 150,
+      start: 1320,
+      duration: 240,
       label: '05 / OVERNIGHT',
       title: 'The system keeps working.',
       caption: 'Agents synchronize and monitor overnight. Every transition leaves a receipt.',
@@ -76,8 +76,8 @@ export const WORKFLOW_DAY_REEL_SPEC = {
     },
     {
       id: 'proof',
-      start: 810,
-      duration: 90,
+      start: 1560,
+      duration: 240,
       label: '06 / PROOF',
       title: 'A full day becomes proof.',
       caption: 'At 07:58, the owner can see what ran, waited, continued, and completed.',
@@ -374,18 +374,21 @@ export const WORKFLOW_DAY_REEL_SPEC = {
   callToAction: 'Control one workflow.',
   destination: 'createsomething.agency/control',
   music: {
-    asset: 'audio/workflow-reel/proof-in-motion.mp3',
+    title: 'Proof Over Time',
+    credit: 'Original score for CREATE SOMETHING',
+    character: 'restrained 60-second product-film score',
+    asset: 'audio/workflow-day-reel/proof-over-time.mp3',
     bpm: 120,
     beatFrames: 15,
     hitFrames: {
       signal: 0,
-      autonomous: 120,
-      wait: 330,
-      safeWork: 420,
-      continue: 540,
-      overnight: 660,
-      proof: 810,
-      close: 855
+      autonomous: 180,
+      wait: 660,
+      safeWork: 870,
+      continue: 1080,
+      overnight: 1320,
+      proof: 1560,
+      close: 1680
     }
   }
 } as const satisfies WorkflowFilmSpec;

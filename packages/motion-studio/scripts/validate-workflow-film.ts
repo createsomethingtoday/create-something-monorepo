@@ -10,6 +10,8 @@ const primitivesPath = join(filmRoot, 'WorkflowFilm.tsx');
 const readmePath = join(filmRoot, 'README.md');
 const specPath = join(dayRoot, 'spec.ts');
 const compositionPath = join(dayRoot, 'WorkflowDayReel.tsx');
+const scoreGeneratorPath = join(packageRoot, 'scripts/generate-workflow-score.ts');
+const packageJsonPath = join(packageRoot, 'package.json');
 const rootPath = join(packageRoot, 'src/Root.tsx');
 
 const errors: string[] = [];
@@ -19,7 +21,8 @@ for (const [label, path] of [
   ['workflow-film shared renderer', primitivesPath],
   ['workflow-film authoring contract', readmePath],
   ['24-hour workflow spec', specPath],
-  ['24-hour workflow composition', compositionPath]
+  ['24-hour workflow composition', compositionPath],
+  ['workflow score generator', scoreGeneratorPath]
 ] as const) {
   if (!existsSync(path)) errors.push(`Missing ${label}: ${path}`);
 }
@@ -46,6 +49,7 @@ if (existsSync(schemaPath) && existsSync(specPath)) {
         receipt?: unknown;
         gate?: { onTimeout: { escalation: string } };
       }>;
+      durationInFrames: number;
     };
     const expectContractFailure = (
       label: string,
@@ -60,6 +64,20 @@ if (existsSync(schemaPath) && existsSync(specPath)) {
       }
     };
 
+    expectContractFailure(
+      'invalid duration',
+      (probe) => {
+        probe.durationInFrames = 0;
+      },
+      'positive integer frame duration'
+    );
+    expectContractFailure(
+      'off-grid duration',
+      (probe) => {
+        probe.durationInFrames = 1801;
+      },
+      'duration must end on the declared beat grid'
+    );
     expectContractFailure(
       'missing receipt',
       (probe) => delete probe.events[0].receipt,
@@ -85,7 +103,7 @@ if (existsSync(schemaPath) && existsSync(specPath)) {
       (probe) => {
         probe.scenes[1].start += 1;
       },
-      'expected 120'
+      'expected 180'
     );
     expectContractFailure(
       'incomplete time coverage',
@@ -106,12 +124,17 @@ if (existsSync(schemaPath) && existsSync(specPath)) {
   const daySpec = spec as {
     compositionId?: string;
     workflow?: { spanMinutes?: number };
+    durationInFrames?: number;
     events?: Array<{ actor?: string; state?: string }>;
     closingPromise?: string;
     callToAction?: string;
+    music?: { asset?: string };
   };
   if (daySpec.compositionId !== 'CreateSomethingWorkflowDayReel') {
     errors.push('24-hour proof spec must use CreateSomethingWorkflowDayReel');
+  }
+  if (daySpec.durationInFrames !== 1800) {
+    errors.push('24-hour proof spec must contain exactly 1,800 frames');
   }
   if (
     typeof daySpec.workflow?.spanMinutes !== 'number' ||
@@ -139,6 +162,42 @@ if (existsSync(schemaPath) && existsSync(specPath)) {
   if (daySpec.callToAction !== 'Control one workflow.') {
     errors.push('24-hour proof call to action has drifted');
   }
+  if (daySpec.music?.asset) {
+    const musicPath = join(packageRoot, 'public', daySpec.music.asset);
+    if (!existsSync(musicPath)) errors.push(`Missing 60-second workflow score: ${musicPath}`);
+  }
+}
+
+if (existsSync(scoreGeneratorPath)) {
+  const source = readFileSync(scoreGeneratorPath, 'utf8');
+  if (/Math\.random\(|Date\.now\(|new Date\(/.test(source)) {
+    errors.push('Workflow score generator contains nondeterministic time or randomness');
+  }
+  if (/https?:\/\//.test(source)) {
+    errors.push('Workflow score generator must not fetch assets over the network');
+  }
+  for (const forbidden of ['-stream_loop', 'atempo=', 'concat=n=']) {
+    if (source.includes(forbidden)) {
+      errors.push(`60-second workflow score must not use ${forbidden}`);
+    }
+  }
+  for (const required of [
+    'WORKFLOW_DAY_REEL_SPEC',
+    "process.argv.includes('--day')",
+    'daySections',
+    'dayPianoNotes'
+  ]) {
+    if (!source.includes(required)) {
+      errors.push(`60-second workflow score path does not contain ${required}`);
+    }
+  }
+}
+
+if (existsSync(packageJsonPath)) {
+  const source = readFileSync(packageJsonPath, 'utf8');
+  if (!source.includes('generate:workflow-day-score')) {
+    errors.push('Motion Studio does not register generate:workflow-day-score');
+  }
 }
 
 if (existsSync(compositionPath)) {
@@ -149,7 +208,7 @@ if (existsSync(compositionPath)) {
   for (const required of [
     'WorkflowFilm',
     'WORKFLOW_DAY_REEL_SPEC',
-    'WORKFLOW_REEL_SPEC.music.asset'
+    'WORKFLOW_DAY_REEL_SPEC.music.asset'
   ]) {
     if (!source.includes(required)) {
       errors.push(`Workflow day reel does not consume ${required}`);
@@ -174,5 +233,5 @@ if (errors.length > 0) {
 }
 
 console.log(
-  'workflow-film validation passed: typed 24-hour run, governed wait, receipts, 900 frames'
+  'workflow-film validation passed: typed 24-hour run, governed wait, receipts, 1,800 frames'
 );

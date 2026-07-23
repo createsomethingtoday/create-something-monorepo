@@ -96,6 +96,9 @@ export type WorkflowFilmSpec = {
   callToAction: string;
   destination: string;
   music: {
+    title: string;
+    credit: string;
+    character: string;
     asset: string;
     bpm: number;
     beatFrames: number;
@@ -125,8 +128,8 @@ export const validateWorkflowFilmSpec = (value: unknown): string[] => {
   if (spec.fps !== 30 || spec.width !== 1080 || spec.height !== 1920) {
     errors.push(`Workflow film must be 1080x1920 at 30 fps`);
   }
-  if (spec.durationInFrames !== 900) {
-    errors.push(`Workflow film must contain exactly 900 frames`);
+  if (!Number.isInteger(spec.durationInFrames) || spec.durationInFrames <= 0) {
+    errors.push(`Workflow film must declare a positive integer frame duration`);
   }
   if (!spec.workflow?.id?.trim() || !spec.workflow?.title?.trim()) {
     errors.push(`Workflow film must declare a workflow id and title`);
@@ -263,9 +266,19 @@ export const validateWorkflowFilmSpec = (value: unknown): string[] => {
     errors.push(`Workflow film must declare a closing promise, call to action, and destination`);
   }
 
-  if (!spec.music?.asset?.trim() || spec.music.bpm <= 0 || spec.music.beatFrames <= 0) {
-    errors.push(`Workflow film must declare a music asset, BPM, and beat grid`);
+  if (
+    !spec.music?.title?.trim() ||
+    !spec.music.credit?.trim() ||
+    !spec.music.character?.trim() ||
+    !spec.music.asset?.trim() ||
+    spec.music.bpm <= 0 ||
+    spec.music.beatFrames <= 0
+  ) {
+    errors.push(`Workflow film must declare music metadata, an asset, BPM, and beat grid`);
   } else {
+    if (spec.durationInFrames % spec.music.beatFrames !== 0) {
+      errors.push(`Workflow-film duration must end on the declared beat grid`);
+    }
     for (const [label, frame] of Object.entries(spec.music.hitFrames ?? {})) {
       if (
         !Number.isInteger(frame) ||

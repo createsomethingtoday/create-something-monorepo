@@ -20,6 +20,7 @@
     "generate-voiceover": "npx ts-node scripts/generate-voiceover.ts",
     "generate-sounds": "npx tsx scripts/generate-sounds.ts",
     "generate:workflow-score": "npx tsx scripts/generate-workflow-score.ts",
+    "generate:workflow-day-score": "npx tsx scripts/generate-workflow-score.ts --day",
     "generate:workflow-jazz": "pnpm run generate:workflow-score"
   },
   "dependencies": {
