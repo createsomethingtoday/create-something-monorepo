@@ -1,7 +1,7 @@
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
-  testDir: './tests/field-report-boundary',
+  testDir: './tests/field-report-geometry',
   timeout: 30_000,
   expect: {
     timeout: 5_000
@@ -19,6 +19,10 @@ export default defineConfig({
     {
       name: 'mobile',
       use: { viewport: { width: 390, height: 844 } }
+    },
+    {
+      name: 'desktop-threshold',
+      use: { viewport: { width: 1000, height: 900 } }
     },
     {
       name: 'desktop',
