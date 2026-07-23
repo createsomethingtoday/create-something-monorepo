@@ -62,6 +62,14 @@ export {
   HUB_ONBOARDING_SPEC,
 } from './hub-onboarding';
 
+// CREATE SOMETHING workflow-performance reel
+export {
+  WorkflowReel,
+  WORKFLOW_REEL_CONFIG,
+  WORKFLOW_REEL_SPEC,
+  workflowReelPerformance,
+} from './workflow-reel';
+
 // Shared primitives
 export {
   KineticHeadline,

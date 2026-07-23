@@ -11,6 +11,7 @@ import { SOUND_LIBRARY } from '../src/commercials/shared/audio/SoundCues';
 import { SPEC as TEND_SPEC } from '../src/commercials/tend/spec';
 import { WALKTHROUGH_SPEC } from '../src/commercials/tend-walkthrough/spec';
 import { TUFTE_MOBILE_SPEC } from '../src/commercials/tufte-mobile/spec';
+import { WORKFLOW_REEL_SPEC } from '../src/commercials/workflow-reel/spec';
 
 type TimedScene = {
   start: number;
@@ -34,6 +35,7 @@ const timedSpecs: Array<[string, TimedSpec]> = [
   ['TendWalkthroughCommercial', WALKTHROUGH_SPEC],
   ['TufteMobileCommercial', TUFTE_MOBILE_SPEC],
   ['HubOnboardingCommercial', HUB_ONBOARDING_SPEC],
+  ['CreateSomethingWorkflowReel', WORKFLOW_REEL_SPEC],
 ];
 
 const requiredAssets = [

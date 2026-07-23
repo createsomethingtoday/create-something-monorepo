@@ -2816,6 +2816,9 @@ importers:
       '@create-something/canon':
         specifier: workspace:*
         version: link:../canon
+      '@createsomething/canon-tokens':
+        specifier: workspace:*
+        version: link:../canon-tokens
       '@remotion/cli':
         specifier: 4.0.410
         version: 4.0.410(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@6.0.6)

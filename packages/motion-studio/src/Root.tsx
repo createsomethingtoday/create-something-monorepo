@@ -43,6 +43,8 @@ import {
   TUFTE_MOBILE_CONFIG,
   HubOnboardingCommercial,
   HUB_ONBOARDING_CONFIG,
+  WorkflowReel,
+  WORKFLOW_REEL_CONFIG,
 } from './commercials';
 
 // Primitives
@@ -319,6 +321,16 @@ const sampleScenes = [
 export const RemotionRoot: React.FC = () => {
   return (
     <>
+      {/* CREATE SOMETHING workflow-performance reel — sound-off-first 9:16 story */}
+      <Composition
+        id="CreateSomethingWorkflowReel"
+        component={WorkflowReel}
+        durationInFrames={WORKFLOW_REEL_CONFIG.durationInFrames}
+        fps={WORKFLOW_REEL_CONFIG.fps}
+        width={WORKFLOW_REEL_CONFIG.width}
+        height={WORKFLOW_REEL_CONFIG.height}
+      />
+
       {/* ========================================
           COMMERCIALS (V2 - Vox Kinetic Typography)
           Motion transitions, cutting on twos, analog texture

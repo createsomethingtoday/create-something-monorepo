@@ -12,13 +12,15 @@
     "render:still": "remotion still",
     "preview": "remotion preview",
     "lint": "pnpm run validate",
-    "validate": "pnpm run typecheck && pnpm run validate:motion-studio",
+    "validate": "pnpm run typecheck && pnpm run validate:motion-studio && pnpm run validate:workflow-reel",
     "validate:motion-studio": "npx tsx scripts/validate-motion-studio.ts",
+    "validate:workflow-reel": "npx tsx scripts/validate-workflow-reel.ts",
     "typecheck": "tsc --noEmit",
     "generate-voiceover": "npx ts-node scripts/generate-voiceover.ts",
     "generate-sounds": "npx tsx scripts/generate-sounds.ts"
   },
   "dependencies": {
+    "@createsomething/canon-tokens": "workspace:*",
     "@remotion/cli": "4.0.410",
     "@remotion/google-fonts": "4.0.410",
     "@remotion/player": "4.0.410",
