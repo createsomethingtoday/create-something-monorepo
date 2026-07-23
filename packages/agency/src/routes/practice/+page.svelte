@@ -12,6 +12,18 @@
   } from '@create-something/canon';
   import DelegationPracticeWorkbench from '$lib/components/DelegationPracticeWorkbench.svelte';
   import PublicAtlasStoryCanvas from '$lib/components/PublicAtlasStoryCanvas.svelte';
+  import ReferenceMissionProof from '$lib/components/ReferenceMissionProof.svelte';
+  import type { PageData } from './$types';
+
+  let { data }: { data: PageData } = $props();
+
+  const referenceMission = data.reference_mission;
+  const referenceMissionVerified = ['proven', 'recovered'].includes(referenceMission.state);
+  const referenceMissionEvidenceState: PerformanceEvidenceItem['state'] = referenceMissionVerified
+    ? 'verified'
+    : referenceMission.state === 'unavailable' || referenceMission.state === 'incomplete'
+      ? 'draft'
+      : 'review';
 
   const openingHandoff = {
     owner: 'Accountable operator',
@@ -76,13 +88,14 @@
       href: '/proof/marketplace-workflow'
     },
     {
-      id: 'DEFENSE-01',
-      kind: 'Flagship defense',
-      title: 'Governed Agent Delivery',
+      id: referenceMission.correlation_id ?? 'DEFENSE-01',
+      kind: 'Reference mission',
+      title: referenceMission.title ?? 'Governed Agent Delivery',
       detail:
-        'The repo-owned case follows a Linear signal through bounded implementation to production proof. It remains a proposed defense until the full evidence packet is examined.',
-      state: 'draft',
-      date: 'Not yet publicly defended'
+        referenceMission.proof_summary ??
+        'No source-backed production receipt is available. This case remains a proposal.',
+      state: referenceMissionEvidenceState,
+      date: referenceMission.freshness.observed_at ?? 'Not yet publicly defended'
     }
   ];
 
@@ -121,7 +134,9 @@
       summary: 'State and limits stay attached',
       title: 'Claims stay attached to state and limits.',
       detail:
-        'Verified, review, and draft records stay deliberately different. Governed Agent Delivery remains a proposed flagship defense until its artifacts, counterexamples, rollback, and independent verdict are examined.',
+        referenceMissionVerified
+          ? 'The reference mission is attached to a current governance chain. Its correlation, authority, verification, proof, recovery, and freshness remain inspectable.'
+          : 'Verified, review, and draft records stay deliberately different. Governed Agent Delivery remains a proposal until a complete source-backed chain passes.',
       tone: 'neutral',
       actions: [{ label: 'Inspect the bounded proof', href: '/proof/marketplace-workflow' }]
     }
@@ -182,20 +197,7 @@
             items={evidenceRecords}
             ariaLabel="Delegation Practice source evidence"
           />
-          <article class="flagship-defense">
-            <span>Flagship defense · unresolved boundary</span>
-            <h3>Governed Agent Delivery: from Linear signal to production proof.</h3>
-            <p>
-              This case follows work from a Linear issue to production. At every step, it must keep
-              the owner, allowed actions, required checks, approval points, and rollback evidence
-              visible.
-            </p>
-            <strong>A proposed case is not a passed defense.</strong>
-            <p>
-              Passing still requires artifact inspection, counterexample review, a rollback check,
-              and an independent verdict with real consequences.
-            </p>
-          </article>
+          <ReferenceMissionProof mission={data.reference_mission} />
         </div>
       {/if}
     {/snippet}
@@ -236,35 +238,4 @@
     gap: 1rem;
   }
 
-  .flagship-defense {
-    display: grid;
-    gap: 0.8rem;
-    padding: clamp(1.25rem, 4vw, 3rem);
-    border: 1px solid var(--color-performance-line-strong, #9c9c96);
-    background: var(--color-performance-ink, #090909);
-    color: var(--color-performance-panel, #fff);
-  }
-
-  .flagship-defense span {
-    font-family: var(--font-performance-mono);
-    font-size: 0.72rem;
-    text-transform: uppercase;
-  }
-
-  .flagship-defense h3,
-  .flagship-defense p {
-    margin: 0;
-  }
-
-  .flagship-defense h3 {
-    max-width: 22ch;
-    font-size: clamp(1.8rem, 4vw, 3.5rem);
-    line-height: 1;
-  }
-
-  .flagship-defense p {
-    max-width: 52rem;
-    color: rgb(255 255 255 / 0.72);
-    line-height: 1.55;
-  }
 </style>

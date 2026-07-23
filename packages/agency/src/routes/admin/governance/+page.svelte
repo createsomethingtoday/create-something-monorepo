@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { SEO } from '@create-something/canon';
+	import ReferenceMissionProof from '$lib/components/ReferenceMissionProof.svelte';
 	import { safeOperatorExternalHref } from '$lib/governance/operator-url';
 	import type { ActionData, PageData } from './$types';
 
@@ -147,6 +148,39 @@
 			Durable governance records are unavailable until migration 0030 is applied.
 		</div>
 	{/if}
+
+	<section class="reference-mission-block" aria-labelledby="operator-reference-mission">
+		<div class="section-heading">
+			<div>
+				<p class="eyebrow">Shared proof object</p>
+				<h2 id="operator-reference-mission">Reference mission</h2>
+			</div>
+			<a href="/api/reference-mission" target="_blank">Public projection</a>
+		</div>
+		<ReferenceMissionProof mission={data.reference_mission.public} />
+		{#if data.reference_mission.operator}
+			<div class="reference-mission-trace" aria-label="Authenticated reference mission source trace">
+				<div>
+					<span>Signal</span>
+					<code>{data.reference_mission.operator.source.signal_id}</code>
+				</div>
+				<div>
+					<span>Decision</span>
+					<code>{displayValue(data.reference_mission.operator.source.decision_id)}</code>
+				</div>
+				<div>
+					<span>Proof</span>
+					<code>{displayValue(data.reference_mission.operator.source.proof_id)}</code>
+				</div>
+				<div>
+					<span>Delivery receipt</span>
+					<code>{displayValue(data.reference_mission.operator.source.receipt_id)}</code>
+				</div>
+			</div>
+		{:else}
+			<p class="empty compact">No source-backed reference mission matches the public contract.</p>
+		{/if}
+	</section>
 
 	<section class="summary-grid" aria-label="Governance record summary">
 		<div class="metric">
@@ -1002,6 +1036,39 @@
 		margin: 24px 0;
 	}
 
+	.reference-mission-block {
+		display: grid;
+		gap: 16px;
+		margin: 24px 0;
+	}
+
+	.reference-mission-trace {
+		display: grid;
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+		gap: 1px;
+		background: #cbd5e1;
+	}
+
+	.reference-mission-trace > div {
+		display: grid;
+		gap: 6px;
+		min-width: 0;
+		background: #0f172a;
+		padding: 14px;
+		color: #f8fafc;
+	}
+
+	.reference-mission-trace span {
+		color: #94a3b8;
+		font-size: 0.72rem;
+		font-weight: 700;
+		text-transform: uppercase;
+	}
+
+	.reference-mission-trace code {
+		overflow-wrap: anywhere;
+	}
+
 	.metric,
 	.record,
 	.filters,
@@ -1423,6 +1490,7 @@
 
 		.hero,
 		.summary-grid,
+		.reference-mission-trace,
 		.connections-grid,
 		.connection-row,
 		.receipt-row,
