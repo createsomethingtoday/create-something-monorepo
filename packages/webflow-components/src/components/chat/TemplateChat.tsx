@@ -119,6 +119,15 @@ export interface TemplateChatProps {
   sessionScope?: string;
   /** CSS selector list for host-owned consent/modals that must win interaction. */
   hostOverlaySelectors?: string;
+  /**
+   * Whether the agent may drive the host page (apply filters/sort to the
+   * template grid, rewrite URL params, highlight cards). Disable on surfaces
+   * whose grid is not the template grid — e.g. Made in Webflow, where the
+   * listing shows community sites and page actions have nothing to act on.
+   * When false the agent is told there is no page grid and any page_action
+   * events it still emits are dropped without touching the page.
+   */
+  enablePageActions?: boolean;
 }
 
 const DEFAULT_STARTERS =
@@ -1233,6 +1242,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   enableAnalytics = true,
   sessionScope = 'marketplace',
   hostOverlaySelectors = '#transcend-consent-manager',
+  enablePageActions = true,
 }) => {
   const isInline = variant === 'inline';
   const storageKey = getTemplateChatStorageKey(sessionScope);
@@ -1761,7 +1771,9 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
                 // fit larger galleries; the agent sizes displays accordingly.
                 surface: immersive || (panelRef.current?.clientWidth ?? 0) >= 720 ? 'immersive' : 'compact',
                 // Whether the agent can drive this page's grid via update_page.
-                has_page_grid: pageHasTemplateGrid(),
+                // Surfaces without a template grid (e.g. Made in Webflow)
+                // disable page actions outright.
+                has_page_grid: enablePageActions && pageHasTemplateGrid(),
               },
             }),
           }),
@@ -1822,6 +1834,13 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
               });
             } else if (event.type === 'page_action') {
               textBatcher.flushNow();
+              if (!enablePageActions) {
+                // Defense in depth: the request already reports no page grid,
+                // but if the agent emits a page action anyway, drop it without
+                // touching the page (no URL rewrite, no dispatch, no receipt).
+                track('page_action_suppressed', { turn });
+                continue;
+              }
               setPageAction(event.payload);
               setWorkingState(true);
               applyPageAction(event.payload, highlightMissesRef.current, pageActionTimersRef.current);
