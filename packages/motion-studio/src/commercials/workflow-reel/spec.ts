@@ -50,7 +50,25 @@ export const WORKFLOW_REEL_SPEC = {
   },
   closingPromise: 'Less chasing. Clear decisions. Proof that work moved.',
   callToAction: 'Map one workflow.',
-  destination: 'createsomething.agency/map'
+  destination: 'createsomething.agency/map',
+  music: {
+    title: 'Proof in Motion',
+    credit: 'Original score for CREATE SOMETHING',
+    asset: 'audio/workflow-reel/proof-in-motion-jazz.mp3',
+    bpm: 120,
+    beatFrames: 15,
+    hitFrames: {
+      signal: 0,
+      scatter: 150,
+      map: 330,
+      decision: 510,
+      approval: 600,
+      proof: 660,
+      receipt: 720,
+      close: 780,
+      cta: 840
+    }
+  }
 } as const;
 
 export type WorkflowReelSceneName = keyof typeof WORKFLOW_REEL_SPEC.scenes;

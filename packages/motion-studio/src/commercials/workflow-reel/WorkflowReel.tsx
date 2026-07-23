@@ -29,6 +29,9 @@ import { WORKFLOW_REEL_SPEC } from './spec';
 
 const { color, font, motion } = performance;
 const { safeArea, scenes } = WORKFLOW_REEL_SPEC;
+const decisionApprovalFrame = WORKFLOW_REEL_SPEC.music.hitFrames.approval - scenes.decision.start;
+const proofReceiptFrame = WORKFLOW_REEL_SPEC.music.hitFrames.receipt - scenes.proof.start;
+const closeCtaFrame = WORKFLOW_REEL_SPEC.music.hitFrames.cta - scenes.close.start;
 
 type IconComponent = React.ComponentType<{ size?: number; strokeWidth?: number; color?: string }>;
 
@@ -399,7 +402,7 @@ const ScatterScene: React.FC = () => {
               background: color.ink,
               color: color.panel,
               textAlign: 'center',
-              ...enter(frame, 95, 18),
+              ...enter(frame, 90, 18),
               ...labelStyle,
               fontSize: 19
             }}
@@ -528,7 +531,7 @@ const DecisionScene: React.FC = () => {
     extrapolateRight: 'clamp',
     easing: motion.standardEase
   });
-  const approved = frame >= 88;
+  const approved = frame >= decisionApprovalFrame;
 
   return (
     <SceneShell step="04 / DECISION" caption={scenes.decision.caption}>
@@ -664,7 +667,14 @@ const DecisionScene: React.FC = () => {
           </div>
 
           {approved ? (
-            <div style={{ position: 'absolute', top: 745, right: 88, ...enter(frame, 90, 14) }}>
+            <div
+              style={{
+                position: 'absolute',
+                top: 745,
+                right: 88,
+                ...enter(frame, decisionApprovalFrame, 14)
+              }}
+            >
               <StatusPill
                 label="Decision recorded"
                 foreground={color.growth}
@@ -691,7 +701,7 @@ const ProofScene: React.FC = () => {
   const frame = useCurrentFrame();
   const stampProgress = spring({
     fps: 30,
-    frame: frame - 62,
+    frame: frame - proofReceiptFrame,
     config: { damping: 16, stiffness: 180, mass: 0.8 },
     durationInFrames: motion.slow
   });
@@ -797,7 +807,7 @@ const ProofScene: React.FC = () => {
 
 const CloseScene: React.FC = () => {
   const frame = useCurrentFrame();
-  const lineProgress = interpolate(frame, [motion.standard, 70], [0, 1], {
+  const lineProgress = interpolate(frame, [motion.standard, closeCtaFrame], [0, 1], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
     easing: motion.standardEase
@@ -851,7 +861,7 @@ const CloseScene: React.FC = () => {
             alignItems: 'center',
             justifyContent: 'space-between',
             gap: 30,
-            ...enter(frame, 66, 20)
+            ...enter(frame, closeCtaFrame, 20)
           }}
         >
           <div>
@@ -909,16 +919,16 @@ const ProgressRail: React.FC = () => {
 
 export const WorkflowReel: React.FC = () => (
   <AbsoluteFill style={{ backgroundColor: color.paper }}>
-    <Audio src={staticFile('sounds/ambient-drone.wav')} volume={0.035} loop />
+    <Audio src={staticFile(WORKFLOW_REEL_SPEC.music.asset)} volume={0.72} />
     <SoundCues
-      masterVolume={0.42}
+      masterVolume={0.2}
       cues={[
-        { frame: 18, sound: 'focus', volume: 0.28 },
-        { frame: scenes.scatter.start, sound: 'whoosh-soft', volume: 0.25 },
-        { frame: scenes.map.start, sound: 'resolve', volume: 0.25 },
-        { frame: scenes.decision.start + 88, sound: 'select', volume: 0.24 },
-        { frame: scenes.proof.start + 62, sound: 'success-soft', volume: 0.28 },
-        { frame: scenes.close.start, sound: 'success-chime', volume: 0.22 }
+        { frame: WORKFLOW_REEL_SPEC.music.hitFrames.signal + 15, sound: 'focus', volume: 0.2 },
+        { frame: WORKFLOW_REEL_SPEC.music.hitFrames.scatter, sound: 'whoosh-soft', volume: 0.16 },
+        { frame: WORKFLOW_REEL_SPEC.music.hitFrames.map, sound: 'resolve', volume: 0.16 },
+        { frame: WORKFLOW_REEL_SPEC.music.hitFrames.approval, sound: 'select', volume: 0.18 },
+        { frame: WORKFLOW_REEL_SPEC.music.hitFrames.receipt, sound: 'success-soft', volume: 0.2 },
+        { frame: WORKFLOW_REEL_SPEC.music.hitFrames.close, sound: 'success-chime', volume: 0.14 }
       ]}
     />
 

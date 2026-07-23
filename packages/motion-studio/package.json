@@ -17,7 +17,8 @@
     "validate:workflow-reel": "npx tsx scripts/validate-workflow-reel.ts",
     "typecheck": "tsc --noEmit",
     "generate-voiceover": "npx ts-node scripts/generate-voiceover.ts",
-    "generate-sounds": "npx tsx scripts/generate-sounds.ts"
+    "generate-sounds": "npx tsx scripts/generate-sounds.ts",
+    "generate:workflow-jazz": "npx tsx scripts/generate-workflow-jazz.ts"
   },
   "dependencies": {
     "@createsomething/canon-tokens": "workspace:*",

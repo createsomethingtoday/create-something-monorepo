@@ -46,6 +46,7 @@ const requiredAssets = [
   'audio/hub-onboarding/markers.json',
   'audio/hub-onboarding/voiceover.json',
   'audio/hub-onboarding/voiceover.mp3',
+  WORKFLOW_REEL_SPEC.music.asset,
   ...OUTERFIELDS_SPEC.videoCards.thumbnails.map((thumbnail) => `thumbnails/${thumbnail}`),
 ];
 

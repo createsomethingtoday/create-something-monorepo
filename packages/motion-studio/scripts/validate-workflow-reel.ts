@@ -23,6 +23,12 @@ type WorkflowReelSpec = {
   scenes: Record<string, ReelScene>;
   closingPromise: string;
   callToAction: string;
+  music: {
+    asset: string;
+    bpm: number;
+    beatFrames: number;
+    hitFrames: Record<string, number>;
+  };
 };
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -31,6 +37,7 @@ const reelRoot = join(packageRoot, 'src/commercials/workflow-reel');
 const specPath = join(reelRoot, 'spec.ts');
 const compositionPath = join(reelRoot, 'WorkflowReel.tsx');
 const performancePath = join(reelRoot, 'performance.ts');
+const musicGeneratorPath = join(packageRoot, 'scripts/generate-workflow-jazz.ts');
 const rootPath = join(packageRoot, 'src/Root.tsx');
 
 const errors: string[] = [];
@@ -38,9 +45,17 @@ const errors: string[] = [];
 for (const [label, path] of [
   ['workflow reel spec', specPath],
   ['workflow reel composition', compositionPath],
-  ['Performance token projection', performancePath]
+  ['Performance token projection', performancePath],
+  ['workflow jazz generator', musicGeneratorPath]
 ] as const) {
   if (!existsSync(path)) errors.push(`Missing ${label}: ${path}`);
+}
+
+if (existsSync(musicGeneratorPath)) {
+  const musicGeneratorSource = readFileSync(musicGeneratorPath, 'utf8');
+  if (/Math\.random\(|Date\.now\(|new Date\(/.test(musicGeneratorSource)) {
+    errors.push('Workflow jazz generator contains nondeterministic time or randomness');
+  }
 }
 
 if (existsSync(rootPath)) {
@@ -54,6 +69,9 @@ if (existsSync(compositionPath)) {
   const compositionSource = readFileSync(compositionPath, 'utf8');
   if (/Math\.random\(|Date\.now\(|new Date\(/.test(compositionSource)) {
     errors.push('Workflow reel composition contains nondeterministic time or randomness');
+  }
+  if (!compositionSource.includes('WORKFLOW_REEL_SPEC.music.asset')) {
+    errors.push('Workflow reel composition does not load its score from the timing contract');
   }
 }
 
@@ -121,6 +139,49 @@ if (existsSync(specPath)) {
     }
     if (spec.callToAction !== 'Map one workflow.') {
       errors.push('Call to action has drifted from the approved story contract');
+    }
+
+    if (!spec.music) {
+      errors.push('Workflow reel spec does not define a music timing contract');
+    } else {
+      const calculatedBeatFrames = Math.round((60 / spec.music.bpm) * spec.fps);
+      if (spec.music.bpm !== 120 || spec.music.beatFrames !== calculatedBeatFrames) {
+        errors.push('Workflow jazz cue must use the approved 120 BPM / 15-frame beat grid');
+      }
+
+      const sceneStarts = Object.values(spec.scenes).map((scene) => scene.start);
+      const hitFrames = Object.values(spec.music.hitFrames);
+      for (const frame of [...sceneStarts, ...hitFrames]) {
+        if (frame % spec.music.beatFrames !== 0) {
+          errors.push(
+            `Music hit at frame ${frame} falls outside the ${spec.music.beatFrames}-frame beat grid`
+          );
+        }
+      }
+
+      const expectedHits = {
+        signal: spec.scenes.signal.start,
+        scatter: spec.scenes.scatter.start,
+        map: spec.scenes.map.start,
+        decision: spec.scenes.decision.start,
+        approval: spec.scenes.decision.start + 90,
+        proof: spec.scenes.proof.start,
+        receipt: spec.scenes.proof.start + 60,
+        close: spec.scenes.close.start,
+        cta: spec.scenes.close.start + 60
+      };
+      for (const [name, expectedFrame] of Object.entries(expectedHits)) {
+        if (spec.music.hitFrames[name] !== expectedFrame) {
+          errors.push(
+            `${name} music hit is frame ${spec.music.hitFrames[name]}; expected ${expectedFrame}`
+          );
+        }
+      }
+
+      const musicPath = join(packageRoot, 'public', spec.music.asset);
+      if (!existsSync(musicPath)) {
+        errors.push(`Missing workflow jazz cue: ${musicPath}`);
+      }
     }
   }
 }
