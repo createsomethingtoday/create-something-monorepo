@@ -45,6 +45,8 @@ import {
   HUB_ONBOARDING_CONFIG,
   WorkflowReel,
   WORKFLOW_REEL_CONFIG,
+  WorkflowDayReel,
+  WORKFLOW_DAY_REEL_CONFIG,
 } from './commercials';
 
 // Primitives
@@ -329,6 +331,16 @@ export const RemotionRoot: React.FC = () => {
         fps={WORKFLOW_REEL_CONFIG.fps}
         width={WORKFLOW_REEL_CONFIG.width}
         height={WORKFLOW_REEL_CONFIG.height}
+      />
+
+      {/* AI-native 24-hour governed workflow — typed run / gate / receipt format */}
+      <Composition
+        id="CreateSomethingWorkflowDayReel"
+        component={WorkflowDayReel}
+        durationInFrames={WORKFLOW_DAY_REEL_CONFIG.durationInFrames}
+        fps={WORKFLOW_DAY_REEL_CONFIG.fps}
+        width={WORKFLOW_DAY_REEL_CONFIG.width}
+        height={WORKFLOW_DAY_REEL_CONFIG.height}
       />
 
       {/* ========================================

@@ -70,6 +70,29 @@ export {
   workflowReelPerformance,
 } from './workflow-reel';
 
+// Reusable AI-native workflow-film format and 24-hour proof composition
+export {
+  WorkflowFilm,
+  WorkflowFilmTimeRail,
+  WORKFLOW_FILM_FORMAT,
+  validateWorkflowFilmSpec,
+} from './workflow-film';
+export type {
+  WorkflowActor,
+  WorkflowExecutionMode,
+  WorkflowFilmEvent,
+  WorkflowFilmScene,
+  WorkflowFilmSpec,
+  WorkflowGate,
+  WorkflowReceipt,
+  WorkflowRunState,
+} from './workflow-film';
+export {
+  WorkflowDayReel,
+  WORKFLOW_DAY_REEL_CONFIG,
+  WORKFLOW_DAY_REEL_SPEC,
+} from './workflow-day-reel';
+
 // Shared primitives
 export {
   KineticHeadline,
