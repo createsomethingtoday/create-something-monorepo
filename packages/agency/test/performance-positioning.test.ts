@@ -12,10 +12,11 @@ const read = (relativePath: string) => {
 
 const layout = read('../src/routes/+layout.svelte');
 const home = read('../src/routes/+page.svelte');
+const services = read('../src/routes/services/+page.svelte');
 const handoff = read('../src/lib/components/AgencyPerformanceHandoff.svelte');
 const readback = read('../src/lib/components/AgencyPerformanceReadback.svelte');
 
-test('every indexed public marketing route receives the shared performance readback', () => {
+test('every indexed public marketing route receives a performance readback', () => {
   const indexedRoutes = marketingPagePortfolio.filter((entry) => entry.decision === 'index');
 
   assert.equal(indexedRoutes.length, 25);
@@ -24,12 +25,16 @@ test('every indexed public marketing route receives the shared performance readb
   assert.match(layout, /entry\.decision !== 'archive'/);
   assert.match(layout, /<AgencyPerformanceHandoff \/>/);
   assert.match(layout, /\$page\.url\.pathname !== '\/'/);
+  assert.match(layout, /\$page\.url\.pathname !== '\/services'/);
 
   assert.match(home, /AgencyPerformanceReadback/);
   assert.ok(
     home.indexOf('<AgencyPerformanceReadback') < home.indexOf('<PerformanceNarrativeStage'),
     'the concrete readback should appear before the deeper operating story'
   );
+
+  assert.match(services, /AgencyPerformanceReadback/);
+  assert.match(services, /AgencyPerformanceReadback embedded=\{true\}/);
 
   assert.match(handoff, /AgencyPerformanceReadback/);
   assert.match(handoff, /<AgencyPerformanceReadback compact=\{true\} \/>/);

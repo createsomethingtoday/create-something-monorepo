@@ -1,13 +1,14 @@
 <script lang="ts">
   import { templateReviewFieldReport } from '$lib/data/fieldReports';
 
-  let { compact = false }: { compact?: boolean } = $props();
+  let { compact = false, embedded = false }: { compact?: boolean; embedded?: boolean } = $props();
 
   const evidence = templateReviewFieldReport.evidence;
 </script>
 
 <section
   class:performance-readback--compact={compact}
+  class:performance-readback--embedded={embedded}
   class="performance-readback"
   data-performance-readback
   data-compact={compact}
@@ -103,6 +104,16 @@
     border: 0;
     background: transparent;
     color: inherit;
+  }
+
+  .performance-readback--embedded {
+    padding-block: clamp(1.5rem, 3vw, 2.5rem);
+    border-bottom: 0;
+    background: var(--color-performance-panel, #ffffff);
+  }
+
+  .performance-readback--embedded .performance-readback__inner {
+    width: min(var(--content-width-performance, 85rem), 100%);
   }
 
   .performance-readback--compact .performance-readback__inner {
