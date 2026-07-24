@@ -13,10 +13,33 @@ webflow-app-preflight/
 │   ├── app-types-and-registration.md     # building blocks, registration, CLI, credentials
 │   ├── oauth-scopes-and-security.md       # OAuth flow, full scope list, security patterns
 │   └── listing-and-submission.md          # assets, requirements, rejection grounds, timeline
-└── checklists/
-    ├── pre-submission-quality-gate.md     # the go/no-go checklist
-    └── governance-pitfalls.md             # the modal reasons apps fail review, and the fix
+├── checklists/
+│   ├── pre-submission-quality-gate.md     # the go/no-go checklist
+│   └── governance-pitfalls.md             # the modal reasons apps fail review, and the fix
+└── evals/
+    ├── trigger-positive.yml               # 8 prompts that should route here
+    ├── trigger-negative.yml               # 6 that should not
+    ├── quality.yml                        # output assertions from the fixture baseline
+    └── rubric.yml                         # weighted grading, passing_score 80
 ```
+
+## Measured baseline
+
+The skill was evaluated against a fixture app carrying **24 deliberately planted violations** across code, backend, config, and README.
+
+| | With skill | Unaided control |
+|---|---|---|
+| Caught | **24/24** | 14/24 |
+| Missed entirely | 0 | 5 |
+| Inverted advice | 0 | 3 |
+
+The unaided run got every issue inferable from general security instinct (hardcoded secret, credential harvesting, `eval`, the review-bypass loader) and then degraded on Webflow-specific governance — producing three confidently wrong recommendations now captured in the skill's **Anti-advice** section:
+
+- "Add exponential backoff and retry on the 401" (it's revocation — stop)
+- "Drop the extra scopes on uninstall" (you must retain cleanup scopes)
+- Accepting the claim that Webflow auto-removes injected scripts (it doesn't)
+
+The eval also caught two defects in the skill itself: a `redirect_uri` description that contradicted its own example, and a missing privacy/data-handling section. Re-run the evals in `evals/` before changing guidance.
 
 ## Using it
 
