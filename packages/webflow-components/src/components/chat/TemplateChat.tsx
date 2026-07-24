@@ -274,7 +274,7 @@ export function getAgentProgressView(state: AgentProgressState): AgentProgressVi
 
   const current = progress[state.phase];
   const detail = state.slow
-    ? 'This is taking longer than usual. You can keep waiting or stop and try again.'
+    ? 'Still working — this is taking a little longer than usual.'
     : current.detail;
 
   const receipt = summarizePageAction(state.pageAction);
