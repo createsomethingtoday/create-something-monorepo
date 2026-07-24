@@ -12,6 +12,9 @@
 	} from '$lib/data/controlledWaterway';
 
 	let activeStageId: WaterwayStage['id'] = 'map';
+	$: activeStage =
+		CONTROLLED_WATERWAY_STAGES.find((stage) => stage.id === activeStageId) ??
+		CONTROLLED_WATERWAY_STAGES[0];
 
 	function selectStageOnKeyboard(event: KeyboardEvent, stageId: WaterwayStage['id']): void {
 		if (event.key !== 'Enter' && event.key !== ' ') return;
@@ -39,7 +42,7 @@
 				type="button"
 				class:waterway__chapter--active={activeStageId === stage.id}
 				aria-pressed={activeStageId === stage.id}
-				aria-controls={`waterway-system-flow waterway-ledger-${stage.id}`}
+				aria-controls="waterway-system-flow waterway-active-chapter"
 				onclick={() => (activeStageId = stage.id)}
 				onkeydown={(event) => selectStageOnKeyboard(event, stage.id)}
 			>
@@ -60,8 +63,8 @@
 		<div class="waterway__scene">
 			<div id="waterway-flow-readout" class="waterway__flow-readout" aria-live="polite">
 				<span>Current position</span>
-				<strong>{CONTROLLED_WATERWAY_STAGES.find((stage) => stage.id === activeStageId)?.shortName}</strong>
-				<small>Water moving through: {CONTROLLED_WATERWAY_STAGES.find((stage) => stage.id === activeStageId)?.flowStatus}</small>
+				<strong>{activeStage.shortName}</strong>
+				<small>Water moving through: {activeStage.flowStatus}</small>
 			</div>
 			<svg class="waterway__pipeline" viewBox="0 0 1200 590" aria-hidden="true">
 				<defs>
@@ -141,7 +144,7 @@
 						<strong>{stage.shortName}</strong>
 						<small>{stage.verb}</small>
 
-						{#if stage.id === 'control'}
+						{#if stage.id === 'control' && activeStageId === 'control'}
 							<div class="waterway__control-region">
 								<ol aria-label="Control operating path">
 									{#each CONTROL_GATE as gate}
@@ -174,6 +177,35 @@
 		</figcaption>
 	</figure>
 
+	<section
+		id="waterway-active-chapter"
+		class="waterway__chapter-detail"
+		data-active-chapter={activeStageId}
+		aria-labelledby="waterway-active-chapter-title"
+	>
+		<header>
+			<span class="waterway__eyebrow">{activeStage.step} / {activeStage.shortName}</span>
+			<h3 id="waterway-active-chapter-title">{activeStage.customerJob}</h3>
+			<p>{activeStage.outcome}</p>
+		</header>
+
+		<article class="waterway__ledger-card" data-waterway-stage={activeStage.id}>
+			<header>
+				<span>Operating ledger</span>
+				<strong>What must remain true at this stage.</strong>
+			</header>
+			<dl>
+				<div><dt>Owner</dt><dd>{activeStage.ledger.owner}</dd></div>
+				<div><dt>Authority</dt><dd>{activeStage.ledger.authority}</dd></div>
+				<div><dt>Validation</dt><dd>{activeStage.ledger.validation}</dd></div>
+				<div><dt>State</dt><dd>{activeStage.ledger.state}</dd></div>
+				<div><dt>Evidence</dt><dd>{activeStage.ledger.evidence}</dd></div>
+				<div><dt>Recovery</dt><dd>{activeStage.ledger.recovery}</dd></div>
+			</dl>
+		</article>
+	</section>
+
+	{#if activeStageId === 'control'}
 	<section class="waterway__network" aria-labelledby="governed-network-title">
 		<header class="waterway__network-header">
 			<div>
@@ -308,30 +340,7 @@
 			<small>{BUSINESS_OUTCOME.measure}</small>
 		</article>
 	</section>
-	</div>
-
-	<div class="waterway__ledger" aria-label="Workflow operating ledger">
-		{#each CONTROLLED_WATERWAY_STAGES as stage}
-			<article
-				id={`waterway-ledger-${stage.id}`}
-				class="waterway__ledger-card"
-				class:waterway__ledger-card--active={activeStageId === stage.id}
-				data-waterway-stage={stage.id}
-			>
-				<header>
-					<span>{stage.step} / {stage.shortName}</span>
-					<strong>{stage.customerJob}</strong>
-				</header>
-				<dl>
-					<div><dt>Owner</dt><dd>{stage.ledger.owner}</dd></div>
-					<div><dt>Authority</dt><dd>{stage.ledger.authority}</dd></div>
-					<div><dt>Validation</dt><dd>{stage.ledger.validation}</dd></div>
-					<div><dt>State</dt><dd>{stage.ledger.state}</dd></div>
-					<div><dt>Evidence</dt><dd>{stage.ledger.evidence}</dd></div>
-					<div><dt>Recovery</dt><dd>{stage.ledger.recovery}</dd></div>
-				</dl>
-			</article>
-		{/each}
+	{/if}
 	</div>
 </section>
 
@@ -357,7 +366,8 @@
 		display: grid;
 		gap: clamp(1rem, 2vw, 1.5rem);
 		width: min(100%, 90rem);
-		margin: clamp(2rem, 5vw, 4rem) auto 0;
+		margin: 0 auto;
+		padding: 0;
 		color: var(--waterway-ink);
 	}
 
@@ -1193,34 +1203,66 @@
 	.waterway__business-outcome p { font-size: 0.86rem; line-height: 1.45; }
 	.waterway__business-outcome small { color: var(--waterway-ready); line-height: 1.4; }
 
-	.waterway__ledger {
+	.waterway__chapter-detail {
+		--waterway-chapter-accent: var(--waterway-signal);
 		display: grid;
-		grid-template-columns: repeat(3, minmax(0, 1fr));
+		grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
 		gap: 1px;
-		border: 1px solid var(--waterway-line-strong);
+		padding: 0;
+		border-top: 1px solid var(--waterway-line-strong);
 		background: var(--waterway-line);
 	}
 
-	.waterway__ledger article {
-		display: grid;
-		align-content: start;
-		background: var(--waterway-panel);
-		transition:
-			box-shadow var(--duration-performance-micro, 200ms) var(--ease-performance-standard, ease),
-			background var(--duration-performance-micro, 200ms) var(--ease-performance-standard, ease);
+	.waterway__chapter-detail[data-active-chapter='build'] {
+		--waterway-chapter-accent: var(--waterway-pressure);
 	}
 
-	.waterway__ledger .waterway__ledger-card--active {
-		position: relative;
-		z-index: 1;
-		background: var(--waterway-signal-soft);
-		box-shadow: inset 0 4px 0 var(--waterway-signal);
+	.waterway__chapter-detail[data-active-chapter='control'] {
+		--waterway-chapter-accent: var(--waterway-ready);
+	}
+
+	.waterway__chapter-detail > header {
+		display: grid;
+		align-content: start;
+		gap: 0.8rem;
+		padding: clamp(1.25rem, 2.5vw, 2rem);
+		border-top: 4px solid var(--waterway-chapter-accent);
+		background: var(--waterway-panel);
+	}
+
+	.waterway__chapter-detail > header .waterway__eyebrow { margin: 0; }
+
+	.waterway__chapter-detail > header h3,
+	.waterway__chapter-detail > header p {
+		margin: 0;
+	}
+
+	.waterway__chapter-detail > header h3 {
+		max-width: 22ch;
+		font-size: clamp(1.65rem, 2.7vw, 2.8rem);
+		font-weight: var(--font-performance-medium, 500);
+		letter-spacing: -0.035em;
+		line-height: 1.02;
+		text-wrap: balance;
+	}
+
+	.waterway__chapter-detail > header p {
+		max-width: 42rem;
+		color: var(--waterway-muted);
+		font-size: 0.95rem;
+		line-height: 1.5;
+	}
+
+	.waterway__ledger-card {
+		display: grid;
+		align-content: start;
+		border-top: 4px solid color-mix(in srgb, var(--waterway-chapter-accent) 28%, var(--waterway-line));
+		background: var(--waterway-panel);
 	}
 
 	.waterway__ledger-card header {
 		display: grid;
 		gap: 0.5rem;
-		min-height: 8rem;
 		padding: 1rem;
 		border-bottom: 1px solid var(--waterway-line);
 	}
@@ -1228,15 +1270,21 @@
 	.waterway__ledger-card header span { color: var(--waterway-signal); }
 	.waterway__ledger-card header strong { font-size: 1rem; line-height: 1.35; }
 
-	.waterway__ledger dl { margin: 0; }
-	.waterway__ledger dl div {
+	.waterway__ledger-card dl {
 		display: grid;
-		grid-template-columns: 5.5rem 1fr;
-		gap: 0.65rem;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		margin: 0;
+	}
+
+	.waterway__ledger-card dl div {
+		display: grid;
+		gap: 0.25rem;
 		padding: 0.75rem 1rem;
+		border-right: 1px solid var(--waterway-line);
 		border-bottom: 1px solid var(--waterway-line);
 	}
-	.waterway__ledger dl div:last-child { border-bottom: 0; }
+	.waterway__ledger-card dl div:nth-child(even) { border-right: 0; }
+	.waterway__ledger-card dl div:nth-last-child(-n + 2) { border-bottom: 0; }
 	dt { color: var(--waterway-muted); }
 	dd { margin: 0; font-size: 0.82rem; line-height: 1.4; }
 
@@ -1261,11 +1309,20 @@
 	}
 
 	@media (max-width: 760px) {
-		.waterway { margin-top: 2rem; }
 		.waterway__header { grid-template-columns: 1fr; gap: 1rem; }
 		.waterway__header h2 { font-size: clamp(2.25rem, 12vw, 3.8rem); }
-		.waterway__controls { grid-template-columns: 1fr; }
-		.waterway__controls button { min-height: 4rem; }
+		.waterway__controls { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+		.waterway__controls button {
+			grid-template-columns: 1fr;
+			justify-items: center;
+			gap: 0.2rem;
+			min-height: 3.8rem;
+			padding: 0.65rem 0.35rem;
+			text-align: center;
+		}
+		.waterway__controls span { grid-row: auto; }
+		.waterway__controls strong { font-size: 0.9rem; }
+		.waterway__controls small { display: none; }
 
 		.waterway__scene {
 			min-height: auto;
@@ -1283,39 +1340,11 @@
 		.waterway__milestones {
 			position: relative;
 			display: grid;
-			gap: 1rem;
-			padding: 0 0 0 1.4rem;
+			padding: 0;
 		}
 
-		.waterway__milestones::before {
-			content: '';
-			position: absolute;
-			left: 0.2rem;
-			top: 1.5rem;
-			bottom: 1.5rem;
-			width: 0.72rem;
-			border: 0.22rem solid var(--waterway-court);
-			border-radius: 999px;
-			background: linear-gradient(var(--waterway-signal-soft), var(--waterway-signal));
-		}
-
-		.waterway__milestones::after {
-			content: '';
-			position: absolute;
-			left: 0.42rem;
-			top: 1.72rem;
-			bottom: auto;
-			width: 0.28rem;
-			height: calc(var(--waterway-primary-progress) - 1.72rem);
-			border-radius: 999px;
-			background: repeating-linear-gradient(
-				180deg,
-				color-mix(in srgb, var(--waterway-panel) 92%, var(--waterway-signal)) 0 12px,
-				transparent 12px 24px
-			);
-			background-size: 100% 48px;
-			animation: waterway-mobile-current calc(var(--duration-performance-slow, 700ms) * 3) linear infinite;
-		}
+		.waterway__milestones::before,
+		.waterway__milestones::after { display: none; }
 
 		.waterway__milestones > li,
 		.waterway__milestones > li:nth-child(1),
@@ -1329,14 +1358,13 @@
 			min-width: 0;
 		}
 
+		.waterway__milestones > li:not(.waterway__milestone--active) { display: none; }
+
 		.waterway__milestones > li::after {
-			left: -1.65rem;
-			top: 1.1rem;
-			bottom: auto;
+			display: none;
 		}
 
-		.waterway__milestones > .waterway__milestone--active { transform: translateX(0.25rem); }
-		.waterway__milestones > li:not(.waterway__milestone--active) .waterway__control-region { display: none; }
+		.waterway__milestones > .waterway__milestone--active { transform: none; }
 		.waterway__control-region > ol,
 		.waterway__states { grid-template-columns: 1fr; }
 		.waterway__control-region small { font-size: 0.7rem; }
@@ -1376,8 +1404,15 @@
 			animation-name: waterway-network-mobile-current;
 		}
 		.waterway__pause-station > header { grid-template-columns: 1fr; }
-		.waterway__ledger { grid-template-columns: 1fr; }
-		.waterway__ledger-card header { min-height: auto; }
+		.waterway__chapter-detail { grid-template-columns: 1fr; }
+		.waterway__ledger-card dl { grid-template-columns: 1fr; }
+		.waterway__ledger-card dl div,
+		.waterway__ledger-card dl div:nth-child(even),
+		.waterway__ledger-card dl div:nth-last-child(-n + 2) {
+			border-right: 0;
+			border-bottom: 1px solid var(--waterway-line);
+		}
+		.waterway__ledger-card dl div:last-child { border-bottom: 0; }
 	}
 
 	@media (min-width: 761px) and (max-width: 1080px) {

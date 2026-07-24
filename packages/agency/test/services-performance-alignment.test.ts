@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import test from 'node:test';
+import { usesRouteOwnedAgencyPerformanceEnding } from '../src/lib/atlas/surface-policy.ts';
 
 const read = (relativePath: string) => {
   const url = new URL(relativePath, import.meta.url);
@@ -33,7 +34,8 @@ test('services keeps truthful proof beside the product path and avoids a duplica
   assert.match(services, /AgencyPerformanceReadback embedded=\{true\}/);
   assert.match(readback, /embedded = false/);
   assert.match(readback, /performance-readback--embedded/);
-  assert.match(layout, /\$page\.url\.pathname !== '\/services'/);
+  assert.match(layout, /usesRouteOwnedAgencyPerformanceEnding\(\$page\.url\.pathname\)/);
+  assert.equal(usesRouteOwnedAgencyPerformanceEnding('/services'), true);
 
   assert.match(services, /label: 'Owner', value: 'Named'/);
   assert.match(services, /label: 'Protected action', value: 'Held'/);
@@ -46,5 +48,6 @@ test('services preserves pipeline context without rendering inactive stages as d
 });
 
 test('services removes the fixed mode control from the CTA-heavy route', () => {
-  assert.match(layout, /\$page\.url\.pathname !== '\/services'/);
+  assert.match(layout, /routeOwnsPerformanceEnding/);
+  assert.equal(usesRouteOwnedAgencyPerformanceEnding('/services'), true);
 });
