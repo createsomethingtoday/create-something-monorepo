@@ -154,7 +154,7 @@ test('slow progress stays actionable and retry starts from truthful preparation'
   assert.deepEqual(getAgentProgressView(progress), {
     activeIndex: 1,
     title: 'Searching the template catalog',
-    detail: 'This is taking longer than usual. You can keep waiting or stop and try again.',
+    detail: 'Still working — this is taking a little longer than usual.',
     receipt: null,
     announcement: 'Searching the template catalog. This is taking longer than usual.',
   });
