@@ -171,6 +171,89 @@ test('serves global categories and article items from the public Insights endpoi
   }
 });
 
+test('keeps drafts off the public feed and exposes them only to the Cato preview origin', async () => {
+  const originalFetch = globalThis.fetch;
+  const requestedUrls = [];
+  globalThis.fetch = async (input) => {
+    const url = String(input);
+    requestedUrls.push(url);
+    if (!url.includes('/collections/insights/')) {
+      return new Response(JSON.stringify({ items: [] }));
+    }
+
+    return new Response(
+      JSON.stringify({
+        items: [
+          {
+            id: 'draft-insight',
+            isDraft: true,
+            lastPublished: null,
+            fieldData: {
+              name: 'Draft Ryan announcement',
+              slug: 'draft-ryan-announcement',
+              categories: ['69fd0f88dd6c789f8c5720ab']
+            }
+          },
+          {
+            id: 'published-insight',
+            isDraft: false,
+            lastPublished: '2026-07-24T12:00:00.000Z',
+            fieldData: {
+              name: 'Published announcement',
+              slug: 'published-announcement',
+              categories: ['69fd0f88dd6c789f8c5720ab']
+            }
+          }
+        ]
+      })
+    );
+  };
+
+  const env = {
+    WEBFLOW_AGENT_ACCESS: 'test-token',
+    WEBFLOW_INSIGHTS_COLLECTION_ID: 'insights'
+  };
+
+  try {
+    const publicResponse = await worker.fetch(
+      new Request('https://example.com/api/cato/insights'),
+      env
+    );
+    const publicPayload = await publicResponse.json();
+
+    assert.equal(publicResponse.status, 200);
+    assert.deepEqual(
+      publicPayload.items.map((item) => item.slug),
+      ['published-announcement']
+    );
+    assert.ok(requestedUrls.some((url) => url.includes('/collections/insights/items/live')));
+
+    const blockedResponse = await worker.fetch(
+      new Request('https://example.com/api/cato/preview/insights'),
+      env
+    );
+    assert.equal(blockedResponse.status, 403);
+
+    const previewOrigin = 'https://cato-supply.design.webflow.com';
+    const previewResponse = await worker.fetch(
+      new Request('https://example.com/api/cato/preview/insights', {
+        headers: { Origin: previewOrigin }
+      }),
+      env
+    );
+    const previewPayload = await previewResponse.json();
+
+    assert.equal(previewResponse.status, 200);
+    assert.equal(previewResponse.headers.get('access-control-allow-origin'), previewOrigin);
+    assert.deepEqual(
+      previewPayload.items.map((item) => item.slug),
+      ['draft-ryan-announcement', 'published-announcement']
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test('normalizes published resiliency insights with the existing endpoint shape', () => {
   const items = normalizeInsights(
     [
