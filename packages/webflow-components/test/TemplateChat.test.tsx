@@ -12,6 +12,7 @@ import {
   getPreviewReturnImmersive,
   getTemplateChatStorageKey,
   limitTemplateChatInput,
+  normalizePageActionPayload,
   reduceAgentProgress,
   summarizePageAction,
 } from '../src/components/chat/TemplateChat';
@@ -92,11 +93,12 @@ test('an active conversation compacts first-use guidance behind an explicit disc
 });
 
 test('agent progress maps protocol status and page actions to factual user-facing work', () => {
-  const action = {
-    category_group_slug: 'food-and-drink',
+  const action = normalizePageActionPayload({
+    category_group_slug: 'portfolio-agency',
+    types: ['One Page'],
     free_only: true,
     highlight_slugs: ['bistro', 'supper-club'],
-  };
+  });
 
   let progress = createAgentProgressState();
   progress = reduceAgentProgress(progress, { type: 'connected' });
@@ -107,11 +109,15 @@ test('agent progress maps protocol status and page actions to factual user-facin
     activeIndex: 1,
     title: 'Searching the template catalog',
     detail: 'Checking the template catalog for strong matches.',
-    receipt: 'Page updated · Food & Drink · Free only · Highlighted 2 matches',
-    announcement: 'Searching the template catalog. Page updated · Food & Drink · Free only · Highlighted 2 matches.',
+    receipt: 'Page update requested · Portfolio & Agency · One Page · Free only · 2 highlights requested',
+    announcement: 'Searching the template catalog. Page update requested · Portfolio & Agency · One Page · Free only · 2 highlights requested.',
   });
-  assert.equal(summarizePageAction({ q: 'private restaurant launch' }), 'Updated the page search');
+  assert.equal(summarizePageAction({ q: 'private restaurant launch' }), 'Page search update requested');
   assert.equal(summarizePageAction({ q: 'private restaurant launch' })?.includes('private'), false);
+  assert.deepEqual(normalizePageActionPayload({ category_group_slug: 'made-up-category', types: ['One Page'] }), {
+    types: ['One Page'],
+  });
+  assert.deepEqual(normalizePageActionPayload({ category_group_slug: 'made-up-category' }), {});
 });
 
 test('agent progress never moves backward when the worker returns to thinking after search', () => {
@@ -176,7 +182,7 @@ test('completed, stopped, and failed turns have distinct durable receipts', () =
 
   assert.equal(
     getAgentOutcomeReceipt(completed),
-    '3 template recommendations ready · Page updated · Food & Drink',
+    '3 template recommendations ready · Page update requested · Food & Drink',
   );
   assert.equal(
     getAgentOutcomeReceipt(reduceAgentProgress(createAgentProgressState(), { type: 'stop' })),
@@ -208,7 +214,7 @@ test('agent progress renders an accessible four-stage work surface with loading 
   assert.match(html, /data-state="current"[^>]*>[^<]*<[^>]*>Searching catalog/s);
   assert.match(html, /Comparing matches/);
   assert.match(html, /Presenting results/);
-  assert.match(html, /Page updated · Food &amp; Drink · Highlighted 1 match/);
+  assert.match(html, /Page update requested · Food &amp; Drink · Highlight requested/);
   assert.equal((html.match(/tmchat-progress-skeleton-card/g) ?? []).length, 4);
 });
 

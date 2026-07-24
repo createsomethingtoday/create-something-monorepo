@@ -777,6 +777,8 @@ function readRouteContext(
   const designerMatch = pathname.match(/\/templates\/designers\/([^/?#]+)/);
   const styleMatch = pathname.match(/\/templates\/style\/([^/?#]+)/);
   const tagMatch = pathname.match(/\/templates\/tag\/([^/?#]+)/);
+  const categoryParam = url.searchParams.get('category') ?? url.searchParams.get('category_group_slug');
+  const subcategoryParam = url.searchParams.get('subcategory') ?? url.searchParams.get('child_category_slug');
 
   let scope: RouteContext['scope'] = null;
   if (pathname === '/templates/featured') {
@@ -793,16 +795,10 @@ function readRouteContext(
 
   return {
     scope: scopeOverride && scopeOverride !== 'all' ? scopeOverride : scope,
-    categoryGroupSlug:
-      categorySlugOverride ||
-      (categoryMatch
-        ? categoryMatch[1]
-        : (url.searchParams.get('category') ?? url.searchParams.get('category_group_slug')) || null),
+    categoryGroupSlug: categoryParam || categorySlugOverride || (categoryMatch ? categoryMatch[1] : null),
     childCategorySlug:
-      subcategorySlugOverride ||
-      (subcategoryMatch
-        ? subcategoryMatch[1]
-        : (url.searchParams.get('subcategory') ?? url.searchParams.get('child_category_slug')) || null),
+      subcategoryParam ||
+      (categoryParam ? null : subcategorySlugOverride || (subcategoryMatch ? subcategoryMatch[1] : null)),
     creatorSlug:
       creatorSlugOverride ||
       (designerMatch
