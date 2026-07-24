@@ -72,6 +72,91 @@ export interface PageActionPayload {
 
 type AgentStatus = 'thinking' | 'searching' | 'curating';
 
+export type AgentProgressPhase = 'preparing' | 'understanding' | 'searching' | 'curating' | 'presenting';
+export type AgentProgressOutcome = 'active' | 'completed' | 'stopped' | 'failed';
+
+export interface AgentProgressState {
+  phase: AgentProgressPhase;
+  outcome: AgentProgressOutcome;
+  slow: boolean;
+  pageAction: PageActionPayload | null;
+  resultCount: number;
+}
+
+export type AgentProgressEvent =
+  | { type: 'connected' }
+  | { type: 'agent_status'; status: AgentStatus }
+  | { type: 'text' }
+  | { type: 'page_action'; payload: PageActionPayload }
+  | { type: 'display'; resultCount: number }
+  | { type: 'slow' }
+  | { type: 'done' }
+  | { type: 'stop' }
+  | { type: 'fail' }
+  | { type: 'retry' };
+
+const AGENT_PROGRESS_RANK: Record<AgentProgressPhase, number> = {
+  preparing: 0,
+  understanding: 1,
+  searching: 2,
+  curating: 3,
+  presenting: 4,
+};
+
+export function createAgentProgressState(): AgentProgressState {
+  return {
+    phase: 'preparing',
+    outcome: 'active',
+    slow: false,
+    pageAction: null,
+    resultCount: 0,
+  };
+}
+
+function advanceAgentProgressPhase(
+  state: AgentProgressState,
+  nextPhase: AgentProgressPhase,
+): AgentProgressState {
+  return AGENT_PROGRESS_RANK[nextPhase] > AGENT_PROGRESS_RANK[state.phase]
+    ? { ...state, phase: nextPhase }
+    : state;
+}
+
+export function reduceAgentProgress(
+  state: AgentProgressState,
+  event: AgentProgressEvent,
+): AgentProgressState {
+  switch (event.type) {
+    case 'connected':
+      return advanceAgentProgressPhase(state, 'understanding');
+    case 'agent_status':
+      return advanceAgentProgressPhase(
+        state,
+        event.status === 'thinking' ? 'understanding' : event.status,
+      );
+    case 'page_action':
+      return { ...state, pageAction: event.payload };
+    case 'display':
+      return {
+        ...advanceAgentProgressPhase(state, 'presenting'),
+        resultCount: state.resultCount + Math.max(0, event.resultCount),
+      };
+    case 'slow':
+      return state.outcome === 'active' ? { ...state, slow: true } : state;
+    case 'done':
+      return state.outcome === 'active' ? { ...state, outcome: 'completed', slow: false } : state;
+    case 'stop':
+      return state.outcome === 'active' ? { ...state, outcome: 'stopped', slow: false } : state;
+    case 'fail':
+      return state.outcome === 'active' ? { ...state, outcome: 'failed', slow: false } : state;
+    case 'retry':
+      return createAgentProgressState();
+    case 'text':
+    default:
+      return state;
+  }
+}
+
 type AgentSseEvent =
   | { type: 'text_delta'; text: string }
   | { type: 'display'; payload: DisplayPayload }
@@ -129,6 +214,7 @@ export interface AgentProgressView {
   title: string;
   detail: string;
   receipt: string | null;
+  announcement: string;
 }
 
 function humanizeAgentValue(value: string): string {
@@ -157,16 +243,21 @@ export function summarizePageAction(payload: PageActionPayload | null): string |
   return null;
 }
 
-export function getAgentProgressView(status: AgentStatus, payload: PageActionPayload | null): AgentProgressView {
-  const progress: Record<AgentStatus, Omit<AgentProgressView, 'receipt'>> = {
-    thinking: {
+export function getAgentProgressView(state: AgentProgressState): AgentProgressView {
+  const progress: Record<AgentProgressPhase, Omit<AgentProgressView, 'receipt' | 'announcement'>> = {
+    preparing: {
+      activeIndex: 0,
+      title: 'Preparing a secure search',
+      detail: 'Connecting securely to the template catalog.',
+    },
+    understanding: {
       activeIndex: 0,
       title: 'Understanding your request',
       detail: 'Identifying the requirements that matter most.',
     },
     searching: {
       activeIndex: 1,
-      title: 'Searching templates',
+      title: 'Searching the template catalog',
       detail: 'Checking the template catalog for strong matches.',
     },
     curating: {
@@ -174,30 +265,67 @@ export function getAgentProgressView(status: AgentStatus, payload: PageActionPay
       title: 'Curating the strongest matches',
       detail: 'Comparing fit, style, and useful features.',
     },
+    presenting: {
+      activeIndex: 3,
+      title: 'Preparing your recommendations',
+      detail: 'Organizing the strongest matches for review.',
+    },
   };
 
+  const current = progress[state.phase];
+  const detail = state.slow
+    ? 'This is taking longer than usual. You can keep waiting or stop and try again.'
+    : current.detail;
+
+  const receipt = summarizePageAction(state.pageAction);
+
   return {
-    ...progress[status],
-    receipt: summarizePageAction(payload),
+    ...current,
+    detail,
+    receipt,
+    announcement: [
+      `${current.title}.`,
+      state.slow ? 'This is taking longer than usual.' : '',
+      receipt ? `${receipt}.` : '',
+    ].filter(Boolean).join(' '),
   };
 }
 
+export function getAgentOutcomeReceipt(state: AgentProgressState): string | null {
+  if (state.outcome === 'active') return null;
+  if (state.outcome === 'stopped') return 'Search stopped';
+  if (state.outcome === 'failed') return 'Search interrupted';
+
+  const receipt = summarizePageAction(state.pageAction);
+  const result = state.resultCount > 0
+    ? `${state.resultCount} template ${state.resultCount === 1 ? 'recommendation' : 'recommendations'} ready`
+    : 'Response ready';
+  return [result, receipt].filter(Boolean).join(' · ');
+}
+
 export function AgentProgress({
-  status,
-  pageAction,
+  progress,
 }: {
-  status: AgentStatus;
-  pageAction: PageActionPayload | null;
+  progress: AgentProgressState;
 }): React.ReactElement {
-  const view = getAgentProgressView(status, pageAction);
+  const view = getAgentProgressView(progress);
   const steps = [
-    'Understanding your request',
-    'Searching templates',
-    'Curating the strongest matches',
+    'Preparing search',
+    'Searching catalog',
+    'Comparing matches',
+    'Presenting results',
   ];
 
   return (
-    <div className="tmchat-progress" role="status" aria-live="polite" aria-atomic="true">
+    <div
+      className="tmchat-progress"
+      data-phase={progress.phase}
+      data-slow={progress.slow || undefined}
+      aria-label="Template search activity"
+    >
+      <span className="tmchat-sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {view.announcement}
+      </span>
       <div className="tmchat-progress-current">
         <span className="tmchat-progress-mark" aria-hidden="true"><UiIcon name="sparkles" size={15} /></span>
         <span>
@@ -206,7 +334,7 @@ export function AgentProgress({
         </span>
         <span className="tmchat-dots" aria-hidden="true"><span /><span /><span /></span>
       </div>
-      <ol className="tmchat-progress-steps" aria-label="Template search progress">
+      <ol className="tmchat-progress-steps" aria-hidden="true">
         {steps.map((label, index) => {
           const state = index < view.activeIndex ? 'complete' : index === view.activeIndex ? 'current' : 'upcoming';
           return (
@@ -227,6 +355,7 @@ export function AgentProgress({
 
 const STORAGE_KEY = 'tmchat-session-v1';
 const MAX_PERSISTED_MESSAGES = 30;
+const SLOW_TURN_MS = 8_000;
 
 export function getTemplateChatStorageKey(sessionScope = 'marketplace'): string {
   const normalized = sessionScope.trim() || 'marketplace';
@@ -348,7 +477,10 @@ const CHAT_STYLES = `
 .tmchat-panel.immersive .tmchat-msg { max-width: 680px; font-size: 15px; }
 .tmchat-msg.user { align-self: flex-end; background: #146ef5; color: #fff; padding: 9px 13px; border-radius: 14px 14px 4px 14px; }
 .tmchat-msg.assistant { align-self: flex-start; background: #f5f5f5; padding: 9px 13px; border-radius: 14px 14px 14px 4px; }
-.tmchat-turn-status { align-self: flex-start; color: #5b5b5b; font-size: 12px; font-weight: 600; }
+.tmchat-turn-status {
+  align-self: flex-start; padding: 6px 9px; border: 1px solid #ececec; border-radius: 7px;
+  background: #fafafa; color: #5b5b5b; font-size: 12px; font-weight: 600;
+}
 .tmchat-sr-only {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
@@ -412,12 +544,13 @@ const CHAT_STYLES = `
 .tmchat-progress-steps li { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #6b6b6b; font-size: 11px; }
 .tmchat-progress-steps li[data-state="current"] { color: #146ef5; font-weight: 600; }
 .tmchat-progress-steps li[data-state="complete"] { color: #5b5b5b; }
+.tmchat-progress-steps li[data-state="upcoming"] { opacity: 0.58; }
 .tmchat-progress-stepmark { min-width: 12px; color: #146ef5; text-align: center; }
 .tmchat-progress-receipt {
   margin: 10px 0 0 37px; padding-top: 9px; border-top: 1px solid #ececec;
   color: #5b5b5b; font-size: 11px; font-weight: 600;
 }
-.tmchat-progress-preview { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; margin-top: 12px; }
+.tmchat-progress-preview { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; margin-top: 12px; }
 .tmchat-progress-skeleton-card {
   height: 42px; border-radius: 7px;
   background: linear-gradient(100deg, #ececec 20%, #f5f5f5 40%, #ececec 60%);
@@ -1252,8 +1385,15 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   const [introExpanded, setIntroExpanded] = useState(false);
   const [streaming, setStreaming] = useState(false);
   const [followups, setFollowups] = useState<string[]>(persisted?.followups ?? []);
-  const [status, setStatus] = useState<AgentStatus>('thinking');
-  const [pageAction, setPageAction] = useState<PageActionPayload | null>(null);
+  const [turnProgress, setTurnProgress] = useState<AgentProgressState>(() => {
+    let restored = createAgentProgressState();
+    if (persisted?.stoppedPrompt) return reduceAgentProgress(restored, { type: 'stop' });
+    const latestAssistant = persisted?.messages.slice().reverse().find((message) => message.role === 'assistant');
+    if (!latestAssistant) return restored;
+    const resultCount = latestAssistant.displays.reduce((count, display) => count + display.items.length, 0);
+    if (resultCount > 0) restored = reduceAgentProgress(restored, { type: 'display', resultCount });
+    return reduceAgentProgress(restored, { type: 'done' });
+  });
   const [working, setWorking] = useState(false);
   const [atBottom, setAtBottom] = useState(true);
   const [retryText, setRetryText] = useState<string | null>(persisted?.stoppedPrompt ?? null);
@@ -1268,6 +1408,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const streamAbortRef = useRef<AbortController | null>(null);
   const streamBatcherRef = useRef<TextDeltaBatcher | null>(null);
+  const slowTurnTimerRef = useRef<number | null>(null);
   const highlightMissesRef = useRef(createHighlightMissState());
   const pageActionTimersRef = useRef<PageActionTimers>(new Map());
   const turnstileRef = useRef<HTMLDivElement>(null);
@@ -1361,6 +1502,16 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
       workingRef.current = value;
       setWorking(value);
     }
+  }, []);
+
+  const updateTurnProgress = useCallback((event: AgentProgressEvent) => {
+    setTurnProgress((current) => reduceAgentProgress(current, event));
+  }, []);
+
+  const clearSlowTurnTimer = useCallback(() => {
+    if (slowTurnTimerRef.current === null || typeof window === 'undefined') return;
+    window.clearTimeout(slowTurnTimerRef.current);
+    slowTurnTimerRef.current = null;
   }, []);
 
   // Refs so track() stays referentially stable across immersive/turn changes.
@@ -1632,6 +1783,9 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
     () => () => {
       streamAbortRef.current?.abort();
       streamBatcherRef.current?.cancel();
+      if (slowTurnTimerRef.current !== null && typeof window !== 'undefined') {
+        window.clearTimeout(slowTurnTimerRef.current);
+      }
       clearPageActionTimers(pageActionTimersRef.current);
     },
     [],
@@ -1646,6 +1800,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   const resetChat = useCallback(() => {
     streamAbortRef.current?.abort();
     streamBatcherRef.current?.cancel();
+    clearSlowTurnTimer();
     clearPageActionTimers(pageActionTimersRef.current);
     highlightMissesRef.current.clear();
     knownTemplatesRef.current.clear();
@@ -1654,7 +1809,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
     contextTokenRef.current = null;
     setMessages([]);
     setFollowups([]);
-    setPageAction(null);
+    setTurnProgress(createAgentProgressState());
     setInput('');
     setIntroExpanded(false);
     setRetryText(null);
@@ -1668,7 +1823,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
       // Ignore storage errors.
     }
     inputRef.current?.focus();
-  }, [storageKey, track]);
+  }, [clearSlowTurnTimer, storageKey, track]);
 
   const getSessionToken = useCallback(async (): Promise<string> => {
     if (sessionTokenRef.current) return sessionTokenRef.current;
@@ -1699,9 +1854,15 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
         : messages;
       setStoppedPrompt(null);
       setStreaming(true);
-      setStatus('thinking');
-      setPageAction(null);
+      setTurnProgress(createAgentProgressState());
       setWorkingState(true);
+      clearSlowTurnTimer();
+      if (typeof window !== 'undefined') {
+        slowTurnTimerRef.current = window.setTimeout(() => {
+          slowTurnTimerRef.current = null;
+          updateTurnProgress({ type: 'slow' });
+        }, SLOW_TURN_MS);
+      }
       inputRef.current?.focus();
       atBottomRef.current = true;
       setAtBottom(true);
@@ -1767,6 +1928,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
           }),
         });
         if (!response.ok || !response.body) throw new Error(`Agent unavailable (${response.status}).`);
+        updateTurnProgress({ type: 'connected' });
         highlightMissesRef.current.clear();
 
         const reader = response.body.getReader();
@@ -1800,14 +1962,16 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
 
             if (event.type === 'text_delta') {
               setWorkingState(false);
+              updateTurnProgress({ type: 'text' });
               textBatcher.push(event.text);
             } else if (event.type === 'status') {
               textBatcher.flushNow();
-              setStatus(event.label);
+              updateTurnProgress({ type: 'agent_status', status: event.label });
               setWorkingState(true);
             } else if (event.type === 'display') {
               textBatcher.flushNow();
               setWorkingState(false);
+              updateTurnProgress({ type: 'display', resultCount: event.payload.items.length });
               for (const entry of event.payload.items) knownTemplatesRef.current.set(entry.template_slug, entry.item);
               appendToAssistant((message) => ({ ...message, displays: [...message.displays, event.payload] }));
               if (event.payload.followups?.length) setFollowups(event.payload.followups);
@@ -1822,7 +1986,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
               });
             } else if (event.type === 'page_action') {
               textBatcher.flushNow();
-              setPageAction(event.payload);
+              updateTurnProgress({ type: 'page_action', payload: event.payload });
               setWorkingState(true);
               applyPageAction(event.payload, highlightMissesRef.current, pageActionTimersRef.current);
               pageActionsApplied += 1;
@@ -1839,9 +2003,13 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
             } else if (event.type === 'context') {
               textBatcher.flushNow();
               contextTokenRef.current = event.payload.context_token;
+            } else if (event.type === 'done') {
+              textBatcher.flushNow();
+              updateTurnProgress({ type: 'done' });
             } else if (event.type === 'error') {
               textBatcher.flushNow();
               hadError = true;
+              updateTurnProgress({ type: 'fail' });
               track('chat_error', { turn, error_source: 'agent', message: String(event.message).slice(0, 200) });
               setRetryText(trimmed);
               appendToAssistant((message) => ({
@@ -1854,6 +2022,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
       } catch (error) {
         if (!controller.signal.aborted) {
           hadError = true;
+          updateTurnProgress({ type: 'fail' });
           track('chat_error', {
             turn,
             error_source: 'connection',
@@ -1866,9 +2035,11 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
           }));
         }
       } finally {
+        clearSlowTurnTimer();
         textBatcher.flushNow();
         if (streamBatcherRef.current === textBatcher) streamBatcherRef.current = null;
         if (controller.signal.aborted) {
+          updateTurnProgress({ type: 'stop' });
           setRetryText(trimmed);
           setStoppedPrompt(trimmed);
           setMessages((current) => {
@@ -1878,6 +2049,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
               : current;
           });
         }
+        if (!controller.signal.aborted && !hadError) updateTurnProgress({ type: 'done' });
         setWorkingState(false);
         setStreaming(false);
         track('response_completed', {
@@ -1891,7 +2063,18 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
         });
       }
     },
-    [apiBase, messages, stoppedPrompt, streaming, immersive, setWorkingState, track, getSessionToken],
+    [
+      apiBase,
+      clearSlowTurnTimer,
+      getSessionToken,
+      immersive,
+      messages,
+      setWorkingState,
+      stoppedPrompt,
+      streaming,
+      track,
+      updateTurnProgress,
+    ],
   );
 
   if (!open) {
@@ -1930,14 +2113,9 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   const hasDisplayedResults = messages.some((message) => message.displays.length > 0);
   const lastIndex = messages.length - 1;
   const latestAssistant = messages.slice().reverse().find((message) => message.role === 'assistant');
-  const latestResultCount = latestAssistant?.displays.reduce((count, display) => count + display.items.length, 0) ?? 0;
-  const outcomeAnnouncement = !streaming && !stoppedPrompt && latestAssistant
-    ? [
-        latestAssistant.content.trim(),
-        latestResultCount > 0
-          ? `${latestResultCount} template ${latestResultCount === 1 ? 'recommendation is' : 'recommendations are'} ready.`
-          : '',
-      ].filter(Boolean).join(' ')
+  const turnReceipt = getAgentOutcomeReceipt(turnProgress);
+  const outcomeAnnouncement = !streaming && turnReceipt
+    ? [latestAssistant?.content.trim() ?? '', `${turnReceipt}.`].filter(Boolean).join(' ')
     : '';
 
   return (
@@ -1999,7 +2177,12 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
 
         <div className="tmchat-body">
         <div className="tmchat-scrollwrap">
-        <div ref={scrollRef} className="tmchat-scroll" onScroll={handleScroll}>
+        <div
+          ref={scrollRef}
+          className="tmchat-scroll"
+          aria-busy={streaming || undefined}
+          onScroll={handleScroll}
+        >
           {messages.length === 0 ? (
             <div className="tmchat-msg assistant">{welcomeMessage}</div>
           ) : (
@@ -2056,10 +2239,12 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
               {outcomeAnnouncement}
             </div>
           ) : null}
-          {streaming && working ? (
-            <AgentProgress status={status} pageAction={pageAction} />
+          {streaming ? (
+            <AgentProgress progress={turnProgress} />
           ) : null}
-          {!streaming && stoppedPrompt ? <div className="tmchat-turn-status" role="status">Stopped</div> : null}
+          {!streaming && turnReceipt ? (
+            <div className="tmchat-turn-status" data-outcome={turnProgress.outcome}>{turnReceipt}</div>
+          ) : null}
           {showRetry ? (
             <div className="tmchat-followups">
               <button
