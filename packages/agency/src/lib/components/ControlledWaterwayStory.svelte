@@ -52,20 +52,25 @@
 
 	<figure class="waterway__figure" data-active-stage={activeStageId}>
 		<div class="waterway__scene">
+			<div class="waterway__flow-readout" aria-live="polite">
+				<span>Current position</span>
+				<strong>{CONTROLLED_WATERWAY_STAGES.find((stage) => stage.id === activeStageId)?.shortName}</strong>
+				<small>Water moving through the selected workflow stage.</small>
+			</div>
 			<svg class="waterway__pipeline" viewBox="0 0 1200 590" aria-hidden="true">
 				<defs>
-					<linearGradient id="water-flow" x1="0" y1="0" x2="1" y2="0">
+					<linearGradient id="water-flow" gradientUnits="userSpaceOnUse" x1="44" y1="368" x2="1181" y2="368">
 						<stop offset="0" stop-color="var(--color-performance-signal-soft)" />
 						<stop offset="0.5" stop-color="var(--color-performance-signal)" />
 						<stop offset="1" stop-color="var(--color-performance-controlled)" />
 					</linearGradient>
 					<filter id="water-glow" x="-30%" y="-30%" width="160%" height="160%">
-						<feGaussianBlur stdDeviation="7" result="blur" />
+						<feGaussianBlur stdDeviation="2.5" result="blur" />
 						<feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
 					</filter>
 				</defs>
 
-				<g class="waterway__input-shell">
+				<g class="waterway__input-shell" data-instrument-manifold>
 					<path d="M-24 176 H104 V344 H184" />
 					<path d="M-24 368 H184" />
 					<path d="M-24 560 H104 V392 H184" />
@@ -85,24 +90,42 @@
 					class="waterway__flow"
 					d="M44 368 H1181"
 				/>
-				<path
-					class="waterway__current"
-					d="M44 368 H1181"
-				/>
-
-				<g class="waterway__pipe-joints">
-					<path d="M176 319 V417 M190 319 V417" />
-					<path d="M1110 319 V417 M1124 319 V417" />
+				<g class="waterway__currents">
+					<path class="waterway__current" data-flow-segment="map" d="M44 368 H260" />
+					<path class="waterway__current" data-flow-segment="build" d="M260 368 H590" />
+					<path class="waterway__current" data-flow-segment="control" d="M590 368 H1181" />
 				</g>
 
-				<g class="waterway__valves">
-					<path d="M248 356 L260 368 L248 380 Z M272 356 L260 368 L272 380 Z" />
-					<path d="M578 356 L590 368 L578 380 Z M602 356 L590 368 L602 380 Z" />
-					<path d="M908 356 L920 368 L908 380 Z M932 356 L920 368 L932 380 Z" />
+				<g class="waterway__pipe-joints">
+					<path d="M178 340 V396 M188 340 V396" />
+					<path d="M1112 340 V396 M1122 340 V396" />
+				</g>
+
+				<g class="waterway__valves" stroke="currentColor">
+					<g class="waterway__instrument-valve" data-valve-stage="map" transform="translate(260 368)">
+						<circle class="waterway__valve-ring" r="16" />
+						<path class="waterway__valve-blade" d="M-9 -7 L0 0 L-9 7 M9 -7 L0 0 L9 7" />
+						<circle class="waterway__valve-core" r="3" />
+					</g>
+					<g class="waterway__instrument-valve" data-valve-stage="build" transform="translate(590 368)">
+						<circle class="waterway__valve-ring" r="16" />
+						<path class="waterway__valve-blade" d="M-9 -7 L0 0 L-9 7 M9 -7 L0 0 L9 7" />
+						<circle class="waterway__valve-core" r="3" />
+					</g>
+					<g class="waterway__instrument-valve" data-valve-stage="control" transform="translate(920 368)">
+						<circle class="waterway__valve-ring" r="16" />
+						<path class="waterway__valve-blade" d="M-9 -7 L0 0 L-9 7 M9 -7 L0 0 L9 7" />
+						<circle class="waterway__valve-core" r="3" />
+					</g>
+				</g>
+
+				<g class="waterway__terminal" data-pipeline-terminal>
+					<path d="M1152 352 V384" />
+					<path d="M1162 352 L1180 368 L1162 384" />
 				</g>
 			</svg>
 
-			<ol class="waterway__milestones" aria-label="Map, Build, and Control workflow path">
+			<ol class="waterway__milestones" data-mobile-current aria-label="Map, Build, and Control workflow path">
 				{#each CONTROLLED_WATERWAY_STAGES as stage}
 					<li
 						class:waterway__milestone--active={activeStageId === stage.id}
@@ -158,6 +181,9 @@
 		</header>
 
 		<div class="waterway__network-route" aria-label="Governed work route">
+			<div class="waterway__network-pipe" data-pipeline-rail aria-hidden="true">
+				<span></span>
+			</div>
 			<section class="waterway__network-node waterway__inlets" aria-labelledby="trigger-inlets-title">
 				<header>
 					<span>01 / Inputs</span>
@@ -166,7 +192,10 @@
 				<div class="waterway__trigger-list">
 					{#each WORKFLOW_TRIGGERS as trigger}
 						<article data-work-trigger={trigger.id}>
-							<span>{trigger.source}</span>
+							<div class="waterway__trigger-source">
+								<span class="waterway__source-icon" data-source-icon={trigger.id} aria-hidden="true"></span>
+								<span>{trigger.source}</span>
+							</div>
 							<strong>{trigger.label}</strong>
 							<p>{trigger.detail}</p>
 						</article>
@@ -454,6 +483,40 @@
 		pointer-events: none;
 	}
 
+	.waterway__flow-readout {
+		position: absolute;
+		left: clamp(1rem, 2vw, 1.5rem);
+		top: clamp(1rem, 2vw, 1.5rem);
+		z-index: 4;
+		display: grid;
+		grid-template-columns: auto auto;
+		gap: 0.2rem 0.75rem;
+		align-items: baseline;
+		padding: 0.65rem 0.8rem;
+		border: 1px solid color-mix(in srgb, var(--waterway-panel) 18%, transparent);
+		border-top: 2px solid var(--waterway-signal);
+		background: color-mix(in srgb, var(--waterway-ink) 88%, transparent);
+		color: var(--waterway-panel);
+		backdrop-filter: blur(8px);
+	}
+
+	.waterway__flow-readout span,
+	.waterway__flow-readout small {
+		font-family: var(--font-performance-mono, monospace);
+		font-size: 0.62rem;
+		font-weight: var(--font-performance-semibold, 600);
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+	}
+
+	.waterway__flow-readout span { color: var(--waterway-signal-soft); }
+	.waterway__flow-readout strong { font-size: 0.85rem; }
+	.waterway__flow-readout small {
+		grid-column: 1 / -1;
+		opacity: 0.62;
+		text-transform: none;
+	}
+
 	.waterway__pipeline {
 		position: absolute;
 		inset: 0;
@@ -470,15 +533,15 @@
 	}
 
 	.waterway__input-shell path {
-		stroke: var(--waterway-court);
-		stroke-width: 42;
-		opacity: 0.92;
+		stroke: color-mix(in srgb, var(--waterway-court) 78%, var(--waterway-line-strong));
+		stroke-width: 24;
+		opacity: 0.78;
 	}
 
 	.waterway__input-lines path {
-		stroke: var(--waterway-signal);
-		stroke-width: 24;
-		opacity: 0.9;
+		stroke: color-mix(in srgb, var(--waterway-signal) 82%, var(--waterway-ink-soft));
+		stroke-width: 10;
+		opacity: 0.94;
 	}
 
 	.waterway__pipe-shell,
@@ -490,34 +553,80 @@
 	}
 
 	.waterway__pipe-shell {
-		stroke: var(--waterway-court);
-		stroke-width: 82;
-		opacity: 0.92;
+		stroke: color-mix(in srgb, var(--waterway-court) 78%, var(--waterway-line-strong));
+		stroke-width: 44;
+		opacity: 0.84;
 	}
 
 	.waterway__flow {
-		stroke: var(--waterway-signal);
-		stroke-width: 52;
-		opacity: 0.9;
+		stroke: url(#water-flow);
+		stroke-width: 26;
+		opacity: 0.92;
 	}
 
 	.waterway__current {
-		stroke: color-mix(in srgb, var(--waterway-court-line) 82%, transparent);
-		stroke-width: 3;
-		stroke-dasharray: 12 20;
+		stroke: color-mix(in srgb, var(--waterway-panel) 88%, var(--waterway-signal-soft));
+		stroke-width: 4;
+		stroke-dasharray: 10 28;
+		stroke-linecap: round;
 		filter: url(#water-glow);
+		opacity: 0.12;
 		animation: waterway-current calc(var(--duration-performance-slow, 700ms) * 4) linear infinite;
+		transition: opacity var(--duration-performance-micro, 200ms) var(--ease-performance-standard, ease);
 	}
+
+	.waterway__current[data-flow-segment='build'] { animation-delay: -0.65s; }
+	.waterway__current[data-flow-segment='control'] { animation-delay: -1.3s; }
+	.waterway__figure[data-active-stage='map'] [data-flow-segment='map'],
+	.waterway__figure[data-active-stage='build'] [data-flow-segment='map'],
+	.waterway__figure[data-active-stage='build'] [data-flow-segment='build'],
+	.waterway__figure[data-active-stage='control'] [data-flow-segment] { opacity: 1; }
 
 	.waterway__pipe-joints path {
 		fill: none;
-		stroke: var(--waterway-line-strong);
-		stroke-width: 6;
+		stroke: color-mix(in srgb, var(--waterway-panel) 72%, var(--waterway-line-strong));
+		stroke-width: 3;
 	}
 
-	.waterway__valves path {
-		fill: var(--waterway-pressure);
+	.waterway__instrument-valve {
+		color: color-mix(in srgb, var(--waterway-line-strong) 80%, var(--waterway-panel));
+		transition:
+			color var(--duration-performance-micro, 200ms) var(--ease-performance-standard, ease),
+			filter var(--duration-performance-micro, 200ms) var(--ease-performance-standard, ease);
+	}
+
+	.waterway__valve-ring {
+		fill: var(--waterway-ink-soft);
+		stroke-width: 2;
+	}
+
+	.waterway__valve-blade {
+		fill: none;
+		stroke-width: 2;
+		stroke-linecap: square;
+		stroke-linejoin: miter;
+	}
+
+	.waterway__valve-core {
+		fill: currentColor;
 		stroke: none;
+	}
+
+	.waterway__figure[data-active-stage='map'] [data-valve-stage='map'],
+	.waterway__figure[data-active-stage='build'] [data-valve-stage='build'],
+	.waterway__figure[data-active-stage='control'] [data-valve-stage='control'] {
+		color: var(--waterway-pressure);
+		filter: drop-shadow(0 0 6px color-mix(in srgb, var(--waterway-pressure) 68%, transparent));
+	}
+
+	.waterway__figure[data-active-stage='build'] [data-valve-stage='map'],
+	.waterway__figure[data-active-stage='control'] [data-valve-stage='map'],
+	.waterway__figure[data-active-stage='control'] [data-valve-stage='build'] { color: var(--waterway-ready); }
+
+	.waterway__terminal {
+		fill: none;
+		stroke: color-mix(in srgb, var(--waterway-panel) 74%, var(--waterway-signal-soft));
+		stroke-width: 3;
 	}
 
 	.waterway__milestones {
@@ -537,8 +646,8 @@
 		padding: 0.8rem 0.9rem;
 		border: 1px solid color-mix(in srgb, var(--waterway-panel) 35%, transparent);
 		border-radius: var(--radius-performance-md, 4px);
-		background: color-mix(in srgb, var(--waterway-ink-soft) 88%, transparent);
-		box-shadow: var(--shadow-performance-node, none);
+		background: color-mix(in srgb, var(--waterway-ink) 86%, transparent);
+		box-shadow: 0 12px 30px color-mix(in srgb, var(--waterway-ink) 32%, transparent);
 		color: var(--waterway-panel);
 		backdrop-filter: blur(8px);
 		transition:
@@ -564,9 +673,12 @@
 	.waterway__milestones > li:nth-child(3) { right: 4%; top: 8%; width: min(29rem, 39%); }
 
 	.waterway__milestones > .waterway__milestone--active {
-		border-color: var(--waterway-signal-soft);
-		background: color-mix(in srgb, var(--waterway-signal) 58%, var(--waterway-ink-soft));
-		transform: translateY(-0.35rem);
+		border-color: var(--waterway-signal);
+		background: color-mix(in srgb, var(--waterway-ink) 82%, var(--waterway-signal));
+		box-shadow:
+			inset 3px 0 0 var(--waterway-signal),
+			0 16px 36px color-mix(in srgb, var(--waterway-ink) 46%, transparent);
+		transform: translateY(-0.18rem);
 	}
 
 	.waterway__milestones > li > span { color: var(--waterway-signal-soft); }
@@ -675,10 +787,35 @@
 	}
 
 	.waterway__network-route {
+		position: relative;
 		display: grid;
 		grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.95fr) minmax(0, 1.1fr) minmax(0, 1.15fr);
 		gap: 1px;
+		padding-top: 2px;
 		background: var(--waterway-line);
+	}
+
+	.waterway__network-pipe {
+		position: absolute;
+		inset: 0 0 auto;
+		z-index: 4;
+		height: 2px;
+		overflow: hidden;
+		background: var(--waterway-signal-soft);
+		pointer-events: none;
+	}
+
+	.waterway__network-pipe span {
+		display: block;
+		width: 100%;
+		height: 100%;
+		background: repeating-linear-gradient(
+			90deg,
+			var(--waterway-signal) 0 18px,
+			color-mix(in srgb, var(--waterway-panel) 84%, var(--waterway-signal)) 18px 28px
+		);
+		background-size: 56px 100%;
+		animation: waterway-network-current calc(var(--duration-performance-slow, 700ms) * 3) linear infinite;
 	}
 
 	.waterway__network-node {
@@ -694,11 +831,11 @@
 	.waterway__network-node::after {
 		content: '';
 		position: absolute;
-		top: 2rem;
-		right: -0.42rem;
+		top: 2.08rem;
+		right: -0.34rem;
 		z-index: 3;
-		width: 0.72rem;
-		height: 0.72rem;
+		width: 0.58rem;
+		height: 0.58rem;
 		border: 2px solid var(--waterway-panel);
 		border-radius: 50%;
 		background: var(--waterway-signal);
@@ -715,7 +852,6 @@
 	}
 
 	.waterway__network-node > header span,
-	.waterway__trigger-list article > span,
 	.waterway__work-cell li > span,
 	.waterway__decision-field article > span,
 	.waterway__pause-station span,
@@ -746,7 +882,56 @@
 		background: var(--waterway-signal-soft);
 	}
 
-	.waterway__trigger-list article > span { color: var(--waterway-signal); }
+	.waterway__trigger-source {
+		display: flex;
+		gap: 0.45rem;
+		align-items: center;
+		color: var(--waterway-signal);
+		font-family: var(--font-performance-mono, monospace);
+		font-size: 0.65rem;
+		font-weight: var(--font-performance-semibold, 600);
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+	}
+
+	.waterway__source-icon {
+		position: relative;
+		flex: 0 0 auto;
+		display: inline-block;
+		width: 0.78rem;
+		height: 0.78rem;
+		border: 1.5px solid currentColor;
+	}
+
+	.waterway__source-icon[data-source-icon='human'] {
+		border-radius: 50%;
+		box-shadow: inset 0 -0.23rem 0 color-mix(in srgb, var(--waterway-signal) 28%, transparent);
+	}
+
+	.waterway__source-icon[data-source-icon='system']::before,
+	.waterway__source-icon[data-source-icon='system']::after {
+		content: '';
+		position: absolute;
+		background: currentColor;
+	}
+
+	.waterway__source-icon[data-source-icon='system']::before { inset: 0.18rem; }
+	.waterway__source-icon[data-source-icon='system']::after {
+		left: -0.22rem;
+		right: -0.22rem;
+		top: 0.3rem;
+		height: 1px;
+		box-shadow: 0 -0.27rem 0 currentColor, 0 0.27rem 0 currentColor;
+	}
+
+	.waterway__source-icon[data-source-icon='agent'] {
+		width: 0.65rem;
+		height: 0.65rem;
+		margin-inline: 0.07rem;
+		transform: rotate(45deg);
+		background: color-mix(in srgb, var(--waterway-signal) 16%, transparent);
+	}
+
 	.waterway__trigger-list article strong { font-size: 0.86rem; }
 	.waterway__trigger-list article p,
 	.waterway__policy-gate > p {
@@ -961,6 +1146,14 @@
 		to { stroke-dashoffset: -64; }
 	}
 
+	@keyframes waterway-network-current {
+		to { background-position: 56px 0; }
+	}
+
+	@keyframes waterway-mobile-current {
+		to { background-position: 0 56px; }
+	}
+
 	@media (max-width: 760px) {
 		.waterway { margin-top: 2rem; }
 		.waterway__header { grid-template-columns: 1fr; gap: 1rem; }
@@ -975,6 +1168,12 @@
 		}
 
 		.waterway__pipeline { display: none; }
+		.waterway__flow-readout {
+			position: relative;
+			left: auto;
+			top: auto;
+			margin-bottom: 1rem;
+		}
 		.waterway__milestones {
 			position: relative;
 			display: grid;
@@ -992,6 +1191,23 @@
 			border: 0.22rem solid var(--waterway-court);
 			border-radius: 999px;
 			background: linear-gradient(var(--waterway-signal-soft), var(--waterway-signal));
+		}
+
+		.waterway__milestones::after {
+			content: '';
+			position: absolute;
+			left: 0.42rem;
+			top: 1.72rem;
+			bottom: 1.72rem;
+			width: 0.28rem;
+			border-radius: 999px;
+			background: repeating-linear-gradient(
+				180deg,
+				color-mix(in srgb, var(--waterway-panel) 92%, var(--waterway-signal)) 0 12px,
+				transparent 12px 24px
+			);
+			background-size: 100% 48px;
+			animation: waterway-mobile-current calc(var(--duration-performance-slow, 700ms) * 3) linear infinite;
 		}
 
 		.waterway__milestones > li,
@@ -1032,6 +1248,21 @@
 			bottom: -0.42rem;
 			left: 1.4rem;
 		}
+		.waterway__network-route { padding-top: 0; padding-left: 2px; }
+		.waterway__network-pipe {
+			inset: 0 auto 0 0;
+			width: 2px;
+			height: auto;
+		}
+		.waterway__network-pipe span {
+			background: repeating-linear-gradient(
+				180deg,
+				var(--waterway-signal) 0 18px,
+				color-mix(in srgb, var(--waterway-panel) 84%, var(--waterway-signal)) 18px 28px
+			);
+			background-size: 100% 56px;
+			animation-name: waterway-mobile-current;
+		}
 		.waterway__pause-station > header { grid-template-columns: 1fr; }
 		.waterway__ledger { grid-template-columns: 1fr; }
 		.waterway__ledger-card header { min-height: auto; }
@@ -1050,6 +1281,13 @@
 			animation-duration: 0.01ms !important;
 			animation-iteration-count: 1 !important;
 			transition-duration: 0.01ms !important;
+		}
+
+		.waterway__current,
+		.waterway__network-pipe span,
+		.waterway__milestones::after {
+			animation-play-state: paused !important;
+			stroke-dashoffset: 0;
 		}
 	}
 </style>

@@ -4,7 +4,8 @@ import test from 'node:test';
 import {
 	CONTROLLED_WATERWAY_STAGES,
 	CONTROL_GATE,
-	WATERWAY_STATES
+	WATERWAY_STATES,
+	WORKFLOW_TRIGGERS
 } from '../src/lib/data/controlledWaterway.ts';
 
 const servicesRoute = readFileSync(
@@ -167,4 +168,46 @@ test('the visual grammar is a direct engineered pipeline, not a winding waterway
 	assert.equal(/<path[^>]*d="[^"]*[CSQ]/.test(pipelineSvg), false, 'pipeline geometry must not meander');
 	assert.equal(component.includes('waterway__contours'), false);
 	assert.equal(component.includes('waterway__tributaries'), false);
+});
+
+test('stage selection controls the visible current and valve state', () => {
+	for (const stageId of ['map', 'build', 'control']) {
+		assert.ok(
+			component.includes(`data-flow-segment="${stageId}"`),
+			`the pipeline should expose a current segment for ${stageId}`
+		);
+		assert.ok(
+			component.includes(`data-valve-stage="${stageId}"`),
+			`the pipeline should expose a policy valve for ${stageId}`
+		);
+	}
+
+	assert.ok(component.includes('data-active-stage={activeStageId}'));
+	assert.ok(component.includes('Water moving through'));
+	assert.ok(component.includes('aria-live="polite"'));
+	assert.match(component, /\[data-active-stage='build'\][\s\S]*\[data-flow-segment='build'\]/);
+	assert.match(component, /@keyframes waterway-current/);
+});
+
+test('the governed handoff reads as one connected pipeline with typed source glyphs', () => {
+	assert.deepEqual(
+		WORKFLOW_TRIGGERS.map((trigger) => trigger.id),
+		['human', 'system', 'agent']
+	);
+	assert.ok(component.includes('data-source-icon={trigger.id}'));
+
+	assert.ok(component.includes('data-pipeline-rail'));
+	assert.ok(component.includes('data-mobile-current'));
+	assert.match(component, /@keyframes waterway-network-current/);
+	assert.match(component, /@media \(prefers-reduced-motion: reduce\)/);
+	assert.ok(component.includes('animation-play-state: paused'));
+});
+
+test('the primary pipeline uses precision instrumentation rather than plumbing clip art', () => {
+	assert.ok(component.includes('data-instrument-manifold'));
+	assert.ok(component.includes('data-pipeline-terminal'));
+	assert.equal(component.match(/class="waterway__instrument-valve"/g)?.length, 3);
+	assert.equal(component.match(/class="waterway__valve-ring"/g)?.length, 3);
+	assert.equal(component.match(/class="waterway__valve-core"/g)?.length, 3);
+	assert.ok(component.includes('stroke="currentColor"'));
 });
