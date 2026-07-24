@@ -1,0 +1,51 @@
+import assert from 'node:assert/strict';
+import { existsSync, readFileSync } from 'node:fs';
+import test from 'node:test';
+
+import { marketingPagePortfolio } from '../src/lib/data/marketingPages.ts';
+import { templateReviewFieldReport } from '../src/lib/data/fieldReports.ts';
+
+const read = (relativePath: string) => {
+  const url = new URL(relativePath, import.meta.url);
+  return existsSync(url) ? readFileSync(url, 'utf8') : '';
+};
+
+const layout = read('../src/routes/+layout.svelte');
+const home = read('../src/routes/+page.svelte');
+const handoff = read('../src/lib/components/AgencyPerformanceHandoff.svelte');
+const readback = read('../src/lib/components/AgencyPerformanceReadback.svelte');
+
+test('every indexed public marketing route receives the shared performance readback', () => {
+  const indexedRoutes = marketingPagePortfolio.filter((entry) => entry.decision === 'index');
+
+  assert.equal(indexedRoutes.length, 25);
+  assert.ok(indexedRoutes.some((entry) => entry.path === '/'));
+  assert.match(layout, /marketingPagePortfolio/);
+  assert.match(layout, /entry\.decision !== 'archive'/);
+  assert.match(layout, /<AgencyPerformanceHandoff \/>/);
+  assert.match(layout, /\$page\.url\.pathname !== '\/'/);
+
+  assert.match(home, /AgencyPerformanceReadback/);
+  assert.ok(
+    home.indexOf('<AgencyPerformanceReadback') < home.indexOf('<PerformanceNarrativeStage'),
+    'the concrete readback should appear before the deeper operating story'
+  );
+
+  assert.match(handoff, /AgencyPerformanceReadback/);
+  assert.match(handoff, /<AgencyPerformanceReadback compact=\{true\} \/>/);
+});
+
+test('the shared readback derives a measured example and its limits from field-report truth', () => {
+  assert.equal(templateReviewFieldReport.evidence.usableCases, 49);
+  assert.equal(templateReviewFieldReport.evidence.selectedCases, 50);
+  assert.equal(templateReviewFieldReport.limits.promotionStatus, 'blocked');
+  assert.equal(templateReviewFieldReport.savings.status, 'unmeasured');
+
+  assert.match(readback, /templateReviewFieldReport/);
+  assert.match(readback, /data-performance-readback/);
+  assert.match(readback, /Marketplace template review/);
+  assert.match(readback, /Routine work moves/);
+  assert.match(readback, /Automated judgment remains blocked/);
+  assert.match(readback, /Reviewer time savings remain unmeasured/);
+  assert.match(readback, /href="\/field-reports\/template-review"/);
+});
