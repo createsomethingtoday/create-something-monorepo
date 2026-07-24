@@ -489,9 +489,9 @@ function parseRouteState(
   return {
     q: qRaw.trim(),
     scope: resolvedScopeOverride ?? scope,
-    // Designer preview slug prop takes precedence over URL detection
-    categoryGroupSlug: categorySlugOverride || (categoryMatch ? categoryMatch[1] : categoryParam || null),
-    childCategorySlug: subcategoryMatch ? subcategoryMatch[1] : subcategoryParam || null,
+    // An explicit query-param filter can override a route/Designer default.
+    categoryGroupSlug: categoryParam || categorySlugOverride || (categoryMatch ? categoryMatch[1] : null),
+    childCategorySlug: subcategoryParam || (categoryParam ? null : subcategoryMatch ? subcategoryMatch[1] : null),
     creatorSlug: creatorSlugOverride || (designerMatch ? toFilterSlug(designerMatch[1]) : creatorParam ? toFilterSlug(creatorParam) : null),
     creatorRecordId: creatorRecordIdOverride || creatorRecordIdParam || null,
     styleSlug: styleSlugOverride

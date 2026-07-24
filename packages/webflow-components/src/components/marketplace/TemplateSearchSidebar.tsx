@@ -429,12 +429,16 @@ function readCurrentScope(): TemplateScope {
 }
 
 function readCurrentCategory(categorySlugOverride?: string): string | null {
-  if (categorySlugOverride) return categorySlugOverride;
-  if (typeof window === 'undefined') return null;
+  if (typeof window === 'undefined') return categorySlugOverride || null;
   const url = new URL(window.location.href);
   const pathname = url.pathname.replace(/\/+$/, '');
   const categoryMatch = pathname.match(/\/templates\/category\/([^/?#]+)/);
-  return categoryMatch ? categoryMatch[1] : url.searchParams.get('category') || url.searchParams.get('category_group_slug');
+  return (
+    url.searchParams.get('category') ||
+    url.searchParams.get('category_group_slug') ||
+    categorySlugOverride ||
+    (categoryMatch ? categoryMatch[1] : null)
+  );
 }
 
 function readCurrentQuery(): string {

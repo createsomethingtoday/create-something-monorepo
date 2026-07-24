@@ -3,6 +3,7 @@ import { TemplateCard, TEMPLATE_CARD_STYLES } from '../cards/TemplateCard';
 import { UiIcon } from '../primitives/UiIcon';
 import { trackMarketplaceEvent, type MarketplaceAnalyticsData } from '../marketplace/analytics';
 import { useMarketplaceComponentErrorTracking } from '../marketplace/MarketplaceComponentErrorBoundary';
+import { resolveTemplateCategoryRouteSlug } from '../marketplace/templateRoute';
 import {
   getSafeAnalyticsOverrides,
   writeTemplateAttribution,
@@ -68,6 +69,17 @@ export interface PageActionPayload {
   sort?: string | null;
   clear_filters?: boolean | null;
   highlight_slugs?: string[];
+}
+
+export function normalizePageActionPayload(payload: PageActionPayload): PageActionPayload {
+  const normalized = { ...payload };
+  const category = normalized.category_group_slug;
+  if (typeof category === 'string' && category.trim()) {
+    const resolved = resolveTemplateCategoryRouteSlug(category);
+    if (resolved) normalized.category_group_slug = resolved;
+    else delete normalized.category_group_slug;
+  }
+  return normalized;
 }
 
 type AgentStatus = 'thinking' | 'searching' | 'curating';
@@ -229,17 +241,21 @@ export function summarizePageAction(payload: PageActionPayload | null): string |
   if (!payload) return null;
   const details: string[] = [];
 
-  if (payload.category_group_slug) details.push(humanizeAgentValue(payload.category_group_slug));
+  if (payload.category_group_slug) {
+    details.push(humanizeAgentValue(payload.category_group_slug).replace(/\s+Websites$/, ''));
+  }
   for (const style of payload.styles ?? []) details.push(humanizeAgentValue(style));
   for (const type of payload.types ?? []) details.push(humanizeAgentValue(type));
   if (payload.free_only === true) details.push('Free only');
   if (payload.sort) details.push(`Sorted by ${humanizeAgentValue(payload.sort)}`);
   const highlightCount = payload.highlight_slugs?.length ?? 0;
-  if (highlightCount > 0) details.push(`Highlighted ${highlightCount} ${highlightCount === 1 ? 'match' : 'matches'}`);
+  if (highlightCount > 0) {
+    details.push(highlightCount === 1 ? 'Highlight requested' : `${highlightCount} highlights requested`);
+  }
 
-  if (details.length > 0) return `Page updated · ${details.join(' · ')}`;
-  if (payload.clear_filters) return 'Reset the page filters';
-  if (payload.q != null) return 'Updated the page search';
+  if (details.length > 0) return `Page update requested · ${details.join(' · ')}`;
+  if (payload.clear_filters) return 'Page filter reset requested';
+  if (payload.q != null) return 'Page search update requested';
   return null;
 }
 
@@ -1986,20 +2002,23 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
               });
             } else if (event.type === 'page_action') {
               textBatcher.flushNow();
-              updateTurnProgress({ type: 'page_action', payload: event.payload });
-              setWorkingState(true);
-              applyPageAction(event.payload, highlightMissesRef.current, pageActionTimersRef.current);
-              pageActionsApplied += 1;
-              track('page_action_applied', {
-                turn,
-                action_sort: event.payload.sort ?? null,
-                action_category: event.payload.category_group_slug ?? null,
-                action_styles: (event.payload.styles ?? []).join(',') || null,
-                action_free_only: event.payload.free_only ?? null,
-                action_clear_filters: event.payload.clear_filters ?? null,
-                action_q: event.payload.q ?? null,
-                highlight_count: event.payload.highlight_slugs?.length ?? 0,
-              });
+              const pageAction = normalizePageActionPayload(event.payload);
+              if (Object.keys(pageAction).length > 0) {
+                updateTurnProgress({ type: 'page_action', payload: pageAction });
+                setWorkingState(true);
+                applyPageAction(pageAction, highlightMissesRef.current, pageActionTimersRef.current);
+                pageActionsApplied += 1;
+                track('page_action_applied', {
+                  turn,
+                  action_sort: pageAction.sort ?? null,
+                  action_category: pageAction.category_group_slug ?? null,
+                  action_styles: (pageAction.styles ?? []).join(',') || null,
+                  action_free_only: pageAction.free_only ?? null,
+                  action_clear_filters: pageAction.clear_filters ?? null,
+                  action_q: pageAction.q ?? null,
+                  highlight_count: pageAction.highlight_slugs?.length ?? 0,
+                });
+              }
             } else if (event.type === 'context') {
               textBatcher.flushNow();
               contextTokenRef.current = event.payload.context_token;
