@@ -13,6 +13,7 @@
   } from '@create-something/canon';
   import { controlledFlowMedia } from '@create-something/canon/components/performance/media/controlled-flow';
   import HeroTrustArtifact from '$lib/components/HeroTrustArtifact.svelte';
+  import AgencyPerformanceReadback from '$lib/components/AgencyPerformanceReadback.svelte';
   import IntegrationCompatibilityRail from '$lib/components/IntegrationCompatibilityRail.svelte';
   import PublicSubstrateCanvas from '$lib/components/PublicSubstrateCanvas.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
@@ -213,8 +214,7 @@
       label: 'Operate',
       summary: 'Run → record',
       title: 'Notice the change. Route the decision. Record the result.',
-      detail:
-        'Start with one workflow. Add rules only when real work shows where they are needed.',
+      detail: 'Start with one workflow. Add rules only when real work shows where they are needed.',
       tone: 'neutral',
       evidence: [
         'Each request stays connected to its decision and record',
@@ -244,8 +244,8 @@
 <div class="home-pilot property-performance">
   <PerformanceCampaignOpening
     eyebrow={agencyCoreMessaging.categoryLabel}
-    title="Make one workflow safe to delegate."
-    lede="Choose one handoff your team still checks manually. We map what can run automatically, what must wait for a person, what must stop, and what record proves what happened."
+    title="Make one workflow safe to delegate—and easier to run."
+    lede="Choose one handoff your team still checks manually. We map what can run automatically, what must wait for a person, what must stop, and what record proves the result—so routine work moves without constant rescue."
     media={controlledFlowMedia}
     proof={heroProofItems}
     density="compact"
@@ -255,6 +255,8 @@
       <Button href="/proof/marketplace-workflow" variant="secondary">See a worked example</Button>
     {/snippet}
   </PerformanceCampaignOpening>
+
+  <AgencyPerformanceReadback />
 
   <IntegrationCompatibilityRail surface="homepage" />
 
@@ -348,8 +350,8 @@
         <div class="service-flow-action">
           <Button href={agencyCoreMessaging.selfMapHref}>{agencyCoreMessaging.selfMapLabel}</Button>
           <p>
-            See the <a href="/services">service path</a>, the <a href="/partners">tools we use</a>, or
-            the <a href="/products">evidence</a>.
+            See the <a href="/services">service path</a>, the <a href="/partners">tools we use</a>,
+            or the <a href="/products">evidence</a>.
           </p>
         </div>
         <div class="service-proof-row">
