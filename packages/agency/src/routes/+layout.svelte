@@ -12,6 +12,7 @@
   import { afterNavigate, disableScrollHandling, goto, onNavigate } from '$app/navigation';
   import {
     isAgencyDifyArticlePath,
+    usesRouteOwnedAgencyPerformanceEnding,
     usesCompactAgencyPrivacyPrompt
   } from '$lib/atlas/surface-policy';
   import { marketingPagePortfolio } from '$lib/data/marketingPages';
@@ -56,6 +57,9 @@
   const primaryCtaHref = agencyCoreMessaging.startWithWorkflowHref;
   const globalAnalyticsMetadata = $derived(getAgencyGlobalAnalyticsMetadata($page.url.pathname));
   const isDifyArticleRoute = $derived(isAgencyDifyArticlePath($page.url.pathname));
+  const routeOwnsPerformanceEnding = $derived(
+    usesRouteOwnedAgencyPerformanceEnding($page.url.pathname)
+  );
   const useCompactPrivacyPrompt = $derived(usesCompactAgencyPrivacyPrompt($page.url.pathname));
   const isPublicMarketingRoute = $derived(
     marketingPagePortfolio.some(
@@ -367,7 +371,7 @@
     {@render children()}
   </main>
 
-  {#if isPublicMarketingRoute && $page.url.pathname !== '/' && $page.url.pathname !== '/services' && $page.url.pathname !== '/products'}
+  {#if isPublicMarketingRoute && !routeOwnsPerformanceEnding}
     <AgencyPerformanceHandoff />
   {/if}
 
@@ -386,7 +390,7 @@
     visualStyle="performance"
   />
 
-  {#if $page.url.pathname !== '/' && $page.url.pathname !== '/services' && $page.url.pathname !== '/products' && $page.url.pathname !== '/basketball-systems-lab' && !isDifyArticleRoute}
+  {#if !routeOwnsPerformanceEnding && $page.url.pathname !== '/basketball-systems-lab' && !isDifyArticleRoute}
     <ModeIndicator current="agency" />
   {/if}
 </div>

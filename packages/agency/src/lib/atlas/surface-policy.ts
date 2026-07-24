@@ -25,6 +25,14 @@ export const AGENCY_COMPACT_PRIVACY_PATHS = [
   ...AGENCY_ATLAS_PROOF_PATHS
 ] as const;
 
+export const AGENCY_ROUTE_OWNED_PERFORMANCE_ENDING_PATHS = [
+  '/',
+  '/services',
+  '/products',
+  '/stack',
+  '/field-reports'
+] as const;
+
 function normalizeAgencyPathname(pathname: string): string {
   const normalized = pathname.split(/[?#]/)[0]?.replace(/\/+$/, '') || '/';
   return normalized === '' ? '/' : normalized;
@@ -48,5 +56,12 @@ export function usesCompactAgencyPrivacyPrompt(pathname: string): boolean {
     AGENCY_COMPACT_PRIVACY_PATHS.includes(
       normalized as (typeof AGENCY_COMPACT_PRIVACY_PATHS)[number]
     ) || isAgencyDifyArticlePath(normalized)
+  );
+}
+
+export function usesRouteOwnedAgencyPerformanceEnding(pathname: string): boolean {
+  const normalized = normalizeAgencyPathname(pathname);
+  return AGENCY_ROUTE_OWNED_PERFORMANCE_ENDING_PATHS.includes(
+    normalized as (typeof AGENCY_ROUTE_OWNED_PERFORMANCE_ENDING_PATHS)[number]
   );
 }
