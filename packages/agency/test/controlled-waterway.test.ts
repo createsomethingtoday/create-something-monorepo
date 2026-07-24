@@ -104,3 +104,44 @@ test('the controlled waterway remains lightweight and progressively enhanced', (
 		assert.ok(component.includes(token), `the waterway should use ${token}`);
 	}
 });
+
+test('Control exposes the governed handoff from typed trigger to business outcome', async () => {
+	const governedModel = await import('../src/lib/data/controlledWaterway.ts');
+	const governedSource = `${component}\n${model}`;
+	const triggers = governedModel.WORKFLOW_TRIGGERS;
+	const workTrace = governedModel.AGENT_WORK_TRACE;
+	const pauseStation = governedModel.PAUSE_STATION;
+	const outcome = governedModel.BUSINESS_OUTCOME;
+
+	assert.deepEqual(
+		triggers.map((trigger: { label: string }) => trigger.label),
+		['Human request', 'System event', 'Agent handoff']
+	);
+	assert.deepEqual(
+		workTrace.map((step: { label: string }) => step.label),
+		['Connect', 'Inspect', 'Verify', 'Receipt']
+	);
+	assert.equal(pauseStation.protectedState, 'Protected action held');
+	assert.equal(pauseStation.safeState, 'Safe work continues');
+	assert.equal(pauseStation.decisionOwner, 'Named human owner');
+	assert.equal(outcome.label, 'Proof + business outcome');
+
+	for (const contract of [
+		'data-work-trigger',
+		'data-work-cell',
+		'data-receipt',
+		'data-wait-station',
+		'data-business-outcome',
+		'The blocked action waits. The workflow does not have to.',
+		'Protected action held',
+		'Safe work continues',
+		'Named human owner',
+		'Proof + business outcome'
+	]) {
+		assert.ok(governedSource.includes(contract), `the Control network should expose ${contract}`);
+	}
+
+	const workIndex = component.indexOf('data-work-cell');
+	const receiptIndex = component.indexOf('data-receipt');
+	assert.ok(workIndex !== -1 && workIndex < receiptIndex, 'bounded work must precede its receipt');
+});

@@ -1,8 +1,13 @@
 <script lang="ts">
 	import {
+		AGENT_WORK_TRACE,
+		BUSINESS_OUTCOME,
 		CONTROL_GATE,
 		CONTROLLED_WATERWAY_STAGES,
+		GOVERNED_WORK_PACKET,
+		PAUSE_STATION,
 		WATERWAY_STATES,
+		WORKFLOW_TRIGGERS,
 		type WaterwayStage
 	} from '$lib/data/controlledWaterway';
 
@@ -18,12 +23,13 @@
 <section class="waterway" aria-labelledby="controlled-waterway-title">
 	<header class="waterway__header">
 		<div>
-			<span class="waterway__eyebrow">Controlled waterway</span>
-			<h2 id="controlled-waterway-title">One workflow, designed to hold its course.</h2>
+			<span class="waterway__eyebrow">Controlled work network</span>
+			<h2 id="controlled-waterway-title">One workflow. Many inlets. Every handoff governed.</h2>
 		</div>
 		<p>
-			Work moves like water. The system gives it a defined channel, validates every gate, and
-			leaves a receipt downstream.
+			A person, system, or agent can start the work. Bounded agents and integrations move it
+			forward; policy decides when to run, prepare and wait, or stop; every resolved step leaves
+			proof.
 		</p>
 	</header>
 
@@ -64,6 +70,12 @@
 					<path d="M-35 132 C145 53 258 211 438 126 S738 67 922 147 1140 195 1264 109" />
 					<path d="M-20 452 C151 376 288 521 459 441 S751 374 939 457 1133 510 1260 421" />
 					<path d="M-42 500 C153 421 283 570 465 489 S769 423 946 503 1144 559 1270 472" />
+				</g>
+
+				<g class="waterway__tributaries">
+					<path d="M-72 226 C18 228 32 302 111 349" />
+					<path d="M-72 368 C4 368 48 368 111 368" />
+					<path d="M-72 516 C18 500 38 425 111 387" />
 				</g>
 
 				<path
@@ -121,12 +133,140 @@
 			</ol>
 		</div>
 		<figcaption>
+			<span>Tributaries = typed triggers</span>
 			<span>Water = work in motion</span>
 			<span>Concrete = policy boundary</span>
-			<span>Gate = agent + human authority</span>
-			<span>Downstream receipt = Proof</span>
+			<span>Basin = prepare + wait</span>
+			<span>Downstream = proof + outcome</span>
 		</figcaption>
 	</figure>
+
+	<section class="waterway__network" aria-labelledby="governed-network-title">
+		<header class="waterway__network-header">
+			<div>
+				<span class="waterway__eyebrow">Inside Control / governed handoff</span>
+				<h3 id="governed-network-title">The blocked action waits. The workflow does not have to.</h3>
+			</div>
+			<p>
+				The same work packet can move between people, agents, and integrations without losing
+				context, authority, or recovery. A receipt appears only after work or judgment resolves.
+			</p>
+		</header>
+
+		<div class="waterway__network-route" aria-label="Governed work route">
+			<section class="waterway__network-node waterway__inlets" aria-labelledby="trigger-inlets-title">
+				<header>
+					<span>01 / Inlets</span>
+					<strong id="trigger-inlets-title">Triggers can come from anywhere.</strong>
+				</header>
+				<div class="waterway__trigger-list">
+					{#each WORKFLOW_TRIGGERS as trigger}
+						<article data-work-trigger={trigger.id}>
+							<span>{trigger.source}</span>
+							<strong>{trigger.label}</strong>
+							<p>{trigger.detail}</p>
+						</article>
+					{/each}
+				</div>
+			</section>
+
+			<article class="waterway__network-node waterway__packet">
+				<header>
+					<span>02 / Handoff</span>
+					<strong>Governed work packet</strong>
+				</header>
+				<dl>
+					{#each GOVERNED_WORK_PACKET as field}
+						<div><dt>{field.label}</dt><dd>{field.value}</dd></div>
+					{/each}
+				</dl>
+			</article>
+
+			<section class="waterway__network-node waterway__work-cell" data-work-cell aria-labelledby="work-cell-title">
+				<header>
+					<span>03 / Bounded work</span>
+					<strong id="work-cell-title">Agent + integration work</strong>
+				</header>
+				<ol>
+					{#each AGENT_WORK_TRACE as step}
+						<li
+							class:waterway__work-step--receipt={step.id === 'receipt'}
+							data-receipt={step.id === 'receipt' ? 'resolved' : undefined}
+						>
+							<span>{step.label}</span>
+							<small>{step.detail}</small>
+						</li>
+					{/each}
+				</ol>
+			</section>
+
+			<article class="waterway__network-node waterway__policy-gate">
+				<header>
+					<span>04 / Policy gate</span>
+					<strong>Run / Wait / Stop</strong>
+				</header>
+				<p>Policy and validation determine what may proceed, what needs judgment, and what must be contained.</p>
+				<div class="waterway__policy-states" aria-label="Governed decision states">
+					{#each WATERWAY_STATES as state}
+						<span class={`waterway__state waterway__state--${state.id}`}>
+							<strong>{state.label}</strong>
+							<small>{state.detail}</small>
+						</span>
+					{/each}
+				</div>
+			</article>
+		</div>
+
+		<div class="waterway__decision-field">
+			<article class="waterway__run-lane">
+				<span>Run</span>
+				<strong>Approved work keeps moving.</strong>
+				<p>The action stays inside the defined lane and leaves a result receipt.</p>
+			</article>
+
+			<article class="waterway__pause-station" data-wait-station>
+				<header>
+					<div>
+						<span>Wait station</span>
+						<strong>{PAUSE_STATION.label}</strong>
+					</div>
+					<small>Protected judgment / safe parallel work</small>
+				</header>
+				<div class="waterway__pause-lanes">
+					<section class="waterway__pause-lane waterway__pause-lane--protected">
+						<span>Held lane</span>
+						<strong>{PAUSE_STATION.protectedState}</strong>
+						<p>{PAUSE_STATION.protectedAction}</p>
+					</section>
+					<section class="waterway__pause-lane waterway__pause-lane--safe">
+						<span>Active lane</span>
+						<strong>{PAUSE_STATION.safeState}</strong>
+						<p>{PAUSE_STATION.safeWork}</p>
+					</section>
+					<section class="waterway__human-station">
+						<span>Decision owner</span>
+						<strong>{PAUSE_STATION.decisionOwner}</strong>
+						<p>{PAUSE_STATION.resume}</p>
+					</section>
+				</div>
+			</article>
+
+			<article class="waterway__stop-lane">
+				<span>Stop</span>
+				<strong>Consequential work is contained.</strong>
+				<p>{PAUSE_STATION.recovery}</p>
+			</article>
+		</div>
+
+		<article class="waterway__business-outcome" data-business-outcome>
+			<div>
+				<span>05 / Downstream</span>
+				<strong>{BUSINESS_OUTCOME.label}</strong>
+			</div>
+			<p>{BUSINESS_OUTCOME.operationalResult}</p>
+			<small>{BUSINESS_OUTCOME.measure}</small>
+		</article>
+	</section>
 
 	<div class="waterway__ledger" aria-label="Workflow operating ledger">
 		{#each CONTROLLED_WATERWAY_STAGES as stage}
@@ -167,8 +307,11 @@
 		--waterway-signal-soft: var(--color-performance-signal-soft, #dce8f5);
 		--waterway-pressure: var(--color-performance-pressure, #e54800);
 		--waterway-ready: var(--color-performance-ready, #007a4d);
+		--waterway-ready-soft: var(--color-performance-ready-soft, #dcece5);
 		--waterway-review: var(--color-performance-review, #8b6b00);
+		--waterway-review-soft: var(--color-performance-review-soft, #f1e7c8);
 		--waterway-stop: var(--color-performance-stop, #c62026);
+		--waterway-stop-soft: var(--color-performance-stop-soft, #f5dddd);
 		display: grid;
 		gap: clamp(1rem, 2vw, 1.5rem);
 		width: min(100%, 90rem);
@@ -320,6 +463,14 @@
 		stroke-width: 1.5;
 	}
 
+	.waterway__tributaries path {
+		fill: none;
+		stroke: var(--waterway-signal-soft);
+		stroke-width: 42;
+		stroke-linecap: round;
+		opacity: 0.72;
+	}
+
 	.waterway__concrete,
 	.waterway__water,
 	.waterway__current {
@@ -455,7 +606,7 @@
 
 	figcaption {
 		display: grid;
-		grid-template-columns: repeat(4, minmax(0, 1fr));
+		grid-template-columns: repeat(5, minmax(0, 1fr));
 		gap: 1px;
 		border-top: 1px solid color-mix(in srgb, var(--waterway-panel) 16%, transparent);
 		background: var(--waterway-ink);
@@ -466,6 +617,283 @@
 		padding: 0.8rem;
 		border-right: 1px solid color-mix(in srgb, var(--waterway-panel) 12%, transparent);
 	}
+
+	.waterway__network {
+		display: grid;
+		gap: 1px;
+		padding: 0;
+		border: 1px solid var(--waterway-line-strong);
+		background: var(--waterway-line);
+	}
+
+	.waterway__network-header {
+		display: grid;
+		grid-template-columns: minmax(0, 1.15fr) minmax(18rem, 0.85fr);
+		gap: clamp(1.5rem, 5vw, 5rem);
+		align-items: end;
+		padding: clamp(1.25rem, 3vw, 2.5rem);
+		background: var(--waterway-panel);
+	}
+
+	.waterway__network-header h3,
+	.waterway__network-header p,
+	.waterway__network-node p,
+	.waterway__decision-field p,
+	.waterway__business-outcome p {
+		margin: 0;
+	}
+
+	.waterway__network-header h3 {
+		max-width: 22ch;
+		font-size: clamp(1.75rem, 3.1vw, 3.5rem);
+		font-weight: var(--font-performance-medium, 500);
+		letter-spacing: -0.04em;
+		line-height: 1;
+		text-wrap: balance;
+	}
+
+	.waterway__network-header p {
+		max-width: 38rem;
+		color: var(--waterway-muted);
+		font-size: 1rem;
+		line-height: 1.55;
+	}
+
+	.waterway__network-route {
+		display: grid;
+		grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.95fr) minmax(0, 1.1fr) minmax(0, 1.15fr);
+		gap: 1px;
+		background: var(--waterway-line);
+	}
+
+	.waterway__network-node {
+		position: relative;
+		display: grid;
+		align-content: start;
+		gap: 1rem;
+		min-width: 0;
+		padding: 1rem;
+		background: var(--waterway-panel);
+	}
+
+	.waterway__network-node::after {
+		content: '';
+		position: absolute;
+		top: 2rem;
+		right: -0.42rem;
+		z-index: 3;
+		width: 0.72rem;
+		height: 0.72rem;
+		border: 2px solid var(--waterway-panel);
+		border-radius: 50%;
+		background: var(--waterway-signal);
+	}
+
+	.waterway__network-node:last-child::after { display: none; }
+
+	.waterway__network-node > header,
+	.waterway__pause-station > header {
+		display: grid;
+		gap: 0.35rem;
+		padding-bottom: 0.75rem;
+		border-bottom: 1px solid var(--waterway-line);
+	}
+
+	.waterway__network-node > header span,
+	.waterway__trigger-list article > span,
+	.waterway__work-cell li > span,
+	.waterway__decision-field article > span,
+	.waterway__pause-station span,
+	.waterway__business-outcome span,
+	.waterway__business-outcome small {
+		font-family: var(--font-performance-mono, monospace);
+		font-size: 0.65rem;
+		font-weight: var(--font-performance-semibold, 600);
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+	}
+
+	.waterway__network-node > header span,
+	.waterway__business-outcome span { color: var(--waterway-signal); }
+
+	.waterway__network-node > header strong { font-size: 0.95rem; line-height: 1.3; }
+
+	.waterway__trigger-list {
+		display: grid;
+		gap: 0.5rem;
+	}
+
+	.waterway__trigger-list article {
+		display: grid;
+		gap: 0.3rem;
+		padding: 0.7rem;
+		border-left: 3px solid var(--waterway-signal);
+		background: var(--waterway-signal-soft);
+	}
+
+	.waterway__trigger-list article > span { color: var(--waterway-signal); }
+	.waterway__trigger-list article strong { font-size: 0.86rem; }
+	.waterway__trigger-list article p,
+	.waterway__policy-gate > p {
+		color: var(--waterway-muted);
+		font-size: 0.75rem;
+		line-height: 1.4;
+	}
+
+	.waterway__packet dl {
+		display: grid;
+		gap: 0;
+		margin: 0;
+		border: 1px solid var(--waterway-line);
+	}
+
+	.waterway__packet dl div {
+		display: grid;
+		gap: 0.2rem;
+		padding: 0.55rem 0.6rem;
+		border-bottom: 1px solid var(--waterway-line);
+	}
+
+	.waterway__packet dl div:last-child { border-bottom: 0; }
+	.waterway__packet dd { font-size: 0.74rem; line-height: 1.35; }
+
+	.waterway__work-cell ol {
+		display: grid;
+		gap: 0.55rem;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.waterway__work-cell li {
+		position: relative;
+		display: grid;
+		gap: 0.2rem;
+		padding: 0.55rem 0.6rem 0.55rem 1.55rem;
+		border: 1px solid var(--waterway-line);
+		background: var(--waterway-panel);
+	}
+
+	.waterway__work-cell li::before {
+		content: '';
+		position: absolute;
+		left: 0.55rem;
+		top: 0.8rem;
+		width: 0.5rem;
+		height: 0.5rem;
+		border-radius: 50%;
+		background: var(--waterway-signal);
+		box-shadow: 0 0 0 3px var(--waterway-signal-soft);
+	}
+
+	.waterway__work-cell li:not(:last-child)::after {
+		content: '';
+		position: absolute;
+		left: 0.78rem;
+		top: 1.35rem;
+		bottom: -0.75rem;
+		width: 1px;
+		background: var(--waterway-signal);
+	}
+
+	.waterway__work-cell li small { color: var(--waterway-muted); font-size: 0.7rem; line-height: 1.35; }
+	.waterway__work-cell .waterway__work-step--receipt {
+		border-color: var(--waterway-ready);
+		background: var(--waterway-ready-soft);
+	}
+	.waterway__work-cell .waterway__work-step--receipt::before { background: var(--waterway-ready); }
+
+	.waterway__policy-states {
+		display: grid;
+		gap: 0.55rem;
+	}
+
+	.waterway__policy-states .waterway__state {
+		border-top: 1px solid var(--waterway-line);
+		border-right: 1px solid var(--waterway-line);
+		border-bottom: 1px solid var(--waterway-line);
+		background: var(--waterway-panel);
+	}
+
+	.waterway__decision-field {
+		display: grid;
+		grid-template-columns: minmax(0, 0.75fr) minmax(0, 2.5fr) minmax(0, 0.75fr);
+		gap: 1px;
+		background: var(--waterway-line);
+	}
+
+	.waterway__decision-field > article {
+		display: grid;
+		align-content: start;
+		gap: 0.6rem;
+		min-width: 0;
+		padding: 1rem;
+		background: var(--waterway-panel);
+	}
+
+	.waterway__decision-field p { color: var(--waterway-muted); font-size: 0.78rem; line-height: 1.45; }
+	.waterway__run-lane { border-top: 4px solid var(--waterway-ready); }
+	.waterway__run-lane > span { color: var(--waterway-ready); }
+	.waterway__stop-lane { border-top: 4px solid var(--waterway-stop); }
+	.waterway__stop-lane > span { color: var(--waterway-stop); }
+
+	.waterway__decision-field > .waterway__pause-station {
+		gap: 1rem;
+		border-top: 4px solid var(--waterway-review);
+		background: var(--waterway-review-soft);
+	}
+
+	.waterway__pause-station > header {
+		grid-template-columns: 1fr auto;
+		gap: 1rem;
+		align-items: end;
+		border-color: color-mix(in srgb, var(--waterway-review) 30%, transparent);
+	}
+
+	.waterway__pause-station > header div { display: grid; gap: 0.25rem; }
+	.waterway__pause-station > header span { color: var(--waterway-review); }
+	.waterway__pause-station > header strong { font-size: 1.05rem; }
+	.waterway__pause-station > header small {
+		font-family: var(--font-performance-mono, monospace);
+		font-size: 0.62rem;
+		letter-spacing: 0.03em;
+		text-transform: uppercase;
+	}
+
+	.waterway__pause-lanes {
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 0.65rem;
+	}
+
+	.waterway__pause-lanes > section {
+		display: grid;
+		align-content: start;
+		gap: 0.45rem;
+		padding: 0.75rem;
+		border: 1px solid color-mix(in srgb, var(--waterway-review) 28%, var(--waterway-panel));
+		background: color-mix(in srgb, var(--waterway-panel) 80%, transparent);
+	}
+
+	.waterway__pause-lane--protected { box-shadow: inset 0 3px 0 var(--waterway-review); }
+	.waterway__pause-lane--safe { box-shadow: inset 0 3px 0 var(--waterway-ready); }
+	.waterway__human-station { box-shadow: inset 0 3px 0 var(--waterway-signal); }
+	.waterway__pause-lanes strong { font-size: 0.8rem; line-height: 1.3; }
+
+	.waterway__business-outcome {
+		display: grid;
+		grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.25fr) minmax(0, 0.95fr);
+		gap: 1.5rem;
+		align-items: center;
+		padding: 1rem;
+		border-left: 5px solid var(--waterway-ready);
+		background: var(--waterway-ready-soft);
+	}
+
+	.waterway__business-outcome > div { display: grid; gap: 0.35rem; }
+	.waterway__business-outcome strong { font-size: 1rem; }
+	.waterway__business-outcome p { font-size: 0.86rem; line-height: 1.45; }
+	.waterway__business-outcome small { color: var(--waterway-ready); line-height: 1.4; }
 
 	.waterway__ledger {
 		display: grid;
@@ -576,8 +1004,28 @@
 
 		figcaption { grid-template-columns: 1fr 1fr; }
 		figcaption span { min-height: 3.6rem; }
+		figcaption span:last-child { grid-column: 1 / -1; }
+		.waterway__network-header { grid-template-columns: 1fr; gap: 1rem; }
+		.waterway__network-header h3 { font-size: clamp(2rem, 10vw, 3rem); }
+		.waterway__network-route,
+		.waterway__decision-field,
+		.waterway__pause-lanes,
+		.waterway__business-outcome { grid-template-columns: 1fr; }
+		.waterway__network-node::after {
+			top: auto;
+			right: auto;
+			bottom: -0.42rem;
+			left: 1.4rem;
+		}
+		.waterway__pause-station > header { grid-template-columns: 1fr; }
 		.waterway__ledger { grid-template-columns: 1fr; }
 		.waterway__ledger-card header { min-height: auto; }
+	}
+
+	@media (min-width: 761px) and (max-width: 1080px) {
+		.waterway__network-route { grid-template-columns: 1fr 1fr; }
+		.waterway__network-node:nth-child(2)::after { display: none; }
+		.waterway__decision-field { grid-template-columns: 1fr; }
 	}
 
 	@media (prefers-reduced-motion: reduce) {
