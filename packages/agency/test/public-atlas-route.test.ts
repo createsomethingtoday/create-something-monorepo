@@ -306,8 +306,9 @@ test('editable Atlas flow uses stable overridable ids instead of fixed DOM ids',
 	assert.ok(canonFlowComponent.includes('aria-label={ariaLabel}'));
 	assert.equal(canonFlowComponent.includes('public-atlas-flow__surface'), false);
 	assert.equal(canonFlowComponent.includes('<svg'), false);
-	assert.equal(canonFlowComponent.includes('\n\t\t\tfitView\n'), false);
-	assert.equal(canonFlowComponent.includes('fitViewOptions={{ padding: 0.18, minZoom: 0.2'), false);
+	assert.ok(canonFlowComponent.includes('export let fitView = false'));
+	assert.ok(canonFlowComponent.includes('{fitView}'));
+	assert.ok(canonFlowComponent.includes('{fitViewOptions}'));
 	assert.equal(canonFlowComponent.includes('aria-label="Svelte Atlas workflow map"'), false);
 	assert.equal(canonFlowComponent.includes('id="public-atlas-flow-arrow"'), false);
 	assert.equal(canonFlowComponent.includes('marker-end="url(#public-atlas-flow-arrow)"'), false);

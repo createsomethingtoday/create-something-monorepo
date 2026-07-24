@@ -63,7 +63,7 @@
 	let agentBusy = false;
 	let agentError = '';
 	let copyState = '';
-	let saveState = 'Draft not saved';
+	let saveState = 'Browser draft';
 	let starterState = '';
 	let hydrated = false;
 	let addMenuOpen = false;
@@ -162,7 +162,7 @@
 				)
 			})
 		);
-		saveState = 'Saved for booking';
+		saveState = 'Saved in this browser';
 	}
 
 	function loadStarterMap(starterId: string) {
@@ -495,16 +495,18 @@
 				</div>
 
 				<div class="atlas-flow-viewport" aria-label="Map flow canvas">
-					<PublicAtlasFlow
-						{canvas}
-						{flowId}
-						{selectedNodeId}
-						focusedNodeIds={activeFocusNodeIds}
-						focusedEdgeIds={activeFocusEdgeIds}
-						dimUnfocused
-						onMoveNode={moveNode}
-						onSelectNode={selectNode}
-					/>
+					{#key canvas.id}
+						<PublicAtlasFlow
+							{canvas}
+							{flowId}
+							{selectedNodeId}
+							focusedNodeIds={activeFocusNodeIds}
+							focusedEdgeIds={activeFocusEdgeIds}
+							dimUnfocused
+							onMoveNode={moveNode}
+							onSelectNode={selectNode}
+						/>
+					{/key}
 				</div>
 
 				<div class="handoffs">
@@ -559,8 +561,15 @@
 					</span>
 				</div>
 				<label class="email-field">
-					<span>{leadTierLabel}</span>
-					<input bind:value={visitorEmail} type="email" placeholder="you@example.com" />
+					<span>Work email (optional)</span>
+					<input
+						bind:value={visitorEmail}
+						type="email"
+						autocomplete="email"
+						placeholder="you@example.com"
+						aria-describedby={`${flowId}-email-help`}
+					/>
+					<small id={`${flowId}-email-help`}>Extends the public mapping allowance. It does not save the map.</small>
 				</label>
 				<div class="chat-log" aria-live="polite">
 					{#each messages as message}
@@ -582,7 +591,9 @@
 						void askAgent();
 					}}
 				>
+					<label class="agent-input-label" for={`${flowId}-agent-input`}>Workflow context</label>
 					<textarea
+						id={`${flowId}-agent-input`}
 						bind:value={agentInput}
 						maxlength={visitorEmail.trim()
 							? PUBLIC_ATLAS_LIMITS.warmLead.maxMessageChars
@@ -692,6 +703,7 @@
 						<span>Booking context</span>
 						<strong>{saveState}</strong>
 					</summary>
+					<p class="summary-note">Saved only in this browser. Use the authenticated Map workspace for durable versions, review, sharing, and export.</p>
 					<pre>{summary}</pre>
 					<div class="summary-actions">
 						<button type="button" onclick={copySummary}>{copyState || 'Copy summary'}</button>
@@ -1159,6 +1171,23 @@
 		padding: 0 0.85rem;
 	}
 
+	.email-field small,
+	.summary-note {
+		margin: 0;
+		color: var(--color-performance-muted, #5e6268);
+		font-size: 0.72rem;
+		line-height: 1.35;
+	}
+
+	.agent-input-label {
+		color: var(--color-performance-muted, #5e6268);
+		font-family: var(--font-performance-mono);
+		font-size: 0.72rem;
+		font-weight: 700;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+	}
+
 	.email-field input,
 	.inspector-panel input,
 	.inspector-panel select,
@@ -1350,6 +1379,10 @@
 		padding: 0.75rem;
 		white-space: pre-wrap;
 		word-break: break-word;
+	}
+
+	.summary-note {
+		padding: 0.75rem 0.85rem 0;
 	}
 
 	.summary-actions {

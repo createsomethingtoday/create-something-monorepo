@@ -86,6 +86,8 @@
 	};
 	export let minZoom = 0.2;
 	export let maxZoom = 1.45;
+	export let fitView = false;
+	export let fitViewOptions = controlsFitViewOptions;
 
 	$: focusedNodeSet = new Set(focusedNodeIds);
 	$: focusedEdgeSet = new Set(focusedEdgeIds);
@@ -177,6 +179,8 @@
 		bind:edges={flowEdges}
 		{nodeTypes}
 		{initialViewport}
+		{fitView}
+		{fitViewOptions}
 		{minZoom}
 		{maxZoom}
 		snapGrid={[8, 8]}
@@ -201,7 +205,7 @@
 		onselectionchange={handleSelectionChange}
 	>
 		{#if showControls}
-			<Controls showLock={false} fitViewOptions={controlsFitViewOptions} />
+			<Controls showLock={false} {fitViewOptions} />
 		{/if}
 		<Background gap={32} patternColor="#eeeee8" />
 	</SvelteFlow>

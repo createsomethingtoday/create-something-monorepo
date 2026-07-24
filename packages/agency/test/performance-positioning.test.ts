@@ -28,7 +28,7 @@ test('every indexed public marketing route receives a route-owned or shared Perf
   assert.match(layout, /<AgencyPerformanceHandoff \/>/);
   assert.match(layout, /isPublicMarketingRoute && !routeOwnsPerformanceEnding/);
 
-  for (const pathname of ['/', '/services', '/products', '/stack', '/field-reports']) {
+  for (const pathname of ['/', '/services', '/map', '/products', '/stack', '/field-reports']) {
     assert.equal(usesRouteOwnedAgencyPerformanceEnding(pathname), true, pathname);
   }
 
