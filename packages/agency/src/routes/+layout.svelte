@@ -367,7 +367,7 @@
     {@render children()}
   </main>
 
-  {#if isPublicMarketingRoute && $page.url.pathname !== '/' && $page.url.pathname !== '/services'}
+  {#if isPublicMarketingRoute && $page.url.pathname !== '/' && $page.url.pathname !== '/services' && $page.url.pathname !== '/products'}
     <AgencyPerformanceHandoff />
   {/if}
 
@@ -386,7 +386,7 @@
     visualStyle="performance"
   />
 
-  {#if $page.url.pathname !== '/' && $page.url.pathname !== '/services' && $page.url.pathname !== '/basketball-systems-lab' && !isDifyArticleRoute}
+  {#if $page.url.pathname !== '/' && $page.url.pathname !== '/services' && $page.url.pathname !== '/products' && $page.url.pathname !== '/basketball-systems-lab' && !isDifyArticleRoute}
     <ModeIndicator current="agency" />
   {/if}
 </div>

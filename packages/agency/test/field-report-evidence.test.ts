@@ -202,7 +202,11 @@ test('Products explains the product family and keeps operating surfaces inside C
     'utf8'
   );
 
-  assert.match(products, /Map -> Build -> Control/);
+  assert.match(products, /Choose where the workflow is now\./);
+  assert.match(products, /id: 'map'/);
+  assert.match(products, /id: 'build'/);
+  assert.match(products, /id: 'control'/);
+  assert.doesNotMatch(products, /id: 'proof'/);
   assert.match(products, /Two products and one implementation service\./);
   assert.match(products, /Signal, Decision, and Proof are operator surfaces\./);
   assert.match(products, /Control includes Map/);

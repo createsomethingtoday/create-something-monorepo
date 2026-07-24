@@ -13,6 +13,7 @@ const read = (relativePath: string) => {
 const layout = read('../src/routes/+layout.svelte');
 const home = read('../src/routes/+page.svelte');
 const services = read('../src/routes/services/+page.svelte');
+const products = read('../src/routes/products/+page.svelte');
 const handoff = read('../src/lib/components/AgencyPerformanceHandoff.svelte');
 const readback = read('../src/lib/components/AgencyPerformanceReadback.svelte');
 
@@ -26,6 +27,7 @@ test('every indexed public marketing route receives a performance readback', () 
   assert.match(layout, /<AgencyPerformanceHandoff \/>/);
   assert.match(layout, /\$page\.url\.pathname !== '\/'/);
   assert.match(layout, /\$page\.url\.pathname !== '\/services'/);
+  assert.match(layout, /\$page\.url\.pathname !== '\/products'/);
 
   assert.match(home, /AgencyPerformanceReadback/);
   assert.ok(
@@ -35,6 +37,7 @@ test('every indexed public marketing route receives a performance readback', () 
 
   assert.match(services, /AgencyPerformanceReadback/);
   assert.match(services, /AgencyPerformanceReadback embedded=\{true\}/);
+  assert.match(products, /AgencyPerformanceReadback embedded=\{true\}/);
 
   assert.match(handoff, /AgencyPerformanceReadback/);
   assert.match(handoff, /<AgencyPerformanceReadback compact=\{true\} \/>/);
