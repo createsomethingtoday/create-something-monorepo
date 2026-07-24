@@ -18,6 +18,8 @@ Supported category fields include the standard Webflow `name` and `slug` fields 
 
 `GET /api/cato/team` returns each published Team Member once. The top-level `group` is `leadership`, `board`, or `both`; a `both` member is included when either `?group=leadership` or `?group=board` is requested without duplicating the member in the unfiltered response.
 
+`GET /api/cato/preview/insights` reads Webflow's staged collection so draft Insights can render in the Cato Designer and `cato-supply.webflow.io` staging site. The Worker rejects requests without one of those exact browser origins and returns origin-scoped CORS headers. The public `/api/cato/insights` and `/api/cato/team` routes read Webflow's live endpoints and remain published-only.
+
 ## Validation
 
 ```bash

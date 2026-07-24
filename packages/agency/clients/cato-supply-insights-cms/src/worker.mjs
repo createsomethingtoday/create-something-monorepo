@@ -14,6 +14,11 @@ const DEFAULT_INSIGHTS_COLLECTION_ID = '69fd0ee732ea65ee49381665';
 const DEFAULT_SUBSCRIPTION_CTA_COLLECTION_ID = '6a596862b59c177c5b053de8';
 const DEFAULT_TEAM_COLLECTION_ID = '69255f78c214e919f388455c';
 
+const CATO_PREVIEW_ORIGINS = new Set([
+  'https://cato-supply.design.webflow.com',
+  'https://cato-supply.webflow.io'
+]);
+
 const INSIGHT_CATEGORY_IDS = {
   resiliency: '69fd0f88dd6c789f8c5720a5',
   'resiliency-reports': '69fd0f88dd6c789f8c5720a5',
@@ -147,6 +152,23 @@ function isPublished(item) {
   return !item.isArchived && Boolean(item.lastPublished);
 }
 
+function isPreviewVisible(item) {
+  return !item.isArchived;
+}
+
+function previewOriginFor(request) {
+  const origin = request.headers.get('origin') || '';
+  return CATO_PREVIEW_ORIGINS.has(origin) ? origin : '';
+}
+
+function previewCorsHeaders(origin) {
+  return {
+    ...CORS_HEADERS,
+    'access-control-allow-origin': origin,
+    vary: 'Origin'
+  };
+}
+
 async function fetchWebflowItems(env, collectionId, { live = false } = {}) {
   const token = env.WEBFLOW_AGENT_ACCESS || env.WEBFLOW_API_TOKEN;
   if (!token) {
@@ -224,10 +246,10 @@ function normalizeInsight(item) {
   };
 }
 
-export function normalizeInsights(items, { category } = {}) {
+export function normalizeInsights(items, { category, includeDrafts = false } = {}) {
   const categoryId = INSIGHT_CATEGORY_IDS[text(category).toLowerCase()];
   return items
-    .filter(isPublished)
+    .filter(includeDrafts ? isPreviewVisible : isPublished)
     .map(normalizeInsight)
     .filter((item) => Boolean(item.title))
     .filter((item) => {
@@ -393,46 +415,55 @@ export function normalizeTeam(items, { group } = {}) {
     .sort((a, b) => (a.order ?? 999) - (b.order ?? 999) || a.name.localeCompare(b.name));
 }
 
-async function handleInsights(url, env) {
+async function handleInsights(url, env, { includeDrafts = false, responseHeaders = {} } = {}) {
   const collectionId = env.WEBFLOW_INSIGHTS_COLLECTION_ID || DEFAULT_INSIGHTS_COLLECTION_ID;
   const categoriesCollectionId = env.WEBFLOW_INSIGHT_CATEGORIES_COLLECTION_ID;
   const subscriptionCollectionId =
     env.WEBFLOW_SUBSCRIPTION_CTA_COLLECTION_ID || DEFAULT_SUBSCRIPTION_CTA_COLLECTION_ID;
   const [items, categoryItems, subscriptionItems] = await Promise.all([
-    fetchWebflowItems(env, collectionId),
+    fetchWebflowItems(env, collectionId, { live: !includeDrafts }),
     categoriesCollectionId
-      ? fetchWebflowItems(env, categoriesCollectionId).catch(() => [])
+      ? fetchWebflowItems(env, categoriesCollectionId, { live: true }).catch(() => [])
       : Promise.resolve([]),
     fetchWebflowItems(env, subscriptionCollectionId, { live: true }).catch(() => [])
   ]);
   const normalized = normalizeInsights(items, {
-    category: url.searchParams.get('category') || url.searchParams.get('archive')
+    category: url.searchParams.get('category') || url.searchParams.get('archive'),
+    includeDrafts
   });
   const categories = normalizeInsightCategories(categoryItems);
   const subscription = normalizeSubscriptionCta(subscriptionItems);
   const limit = Number(url.searchParams.get('limit'));
   const limited = Number.isFinite(limit) && limit > 0 ? normalized.slice(0, limit) : normalized;
-  return json({ categories, subscription, items: limited });
+  return json({ categories, subscription, items: limited }, { headers: responseHeaders });
 }
 
 async function handleTeam(url, env) {
   const collectionId = env.WEBFLOW_TEAM_COLLECTION_ID || DEFAULT_TEAM_COLLECTION_ID;
-  const items = await fetchWebflowItems(env, collectionId);
+  const items = await fetchWebflowItems(env, collectionId, { live: true });
   const people = normalizeTeam(items, { group: url.searchParams.get('group') });
   return json({ people, items: people });
 }
 
 export default {
   async fetch(request, env) {
+    const url = new URL(request.url);
+    const isPreviewRequest = url.pathname === '/api/cato/preview/insights';
+    const previewOrigin = isPreviewRequest ? previewOriginFor(request) : '';
+
     if (request.method === 'OPTIONS') {
-      return new Response(null, { status: 204, headers: CORS_HEADERS });
+      if (isPreviewRequest && !previewOrigin) {
+        return json({ error: 'Preview origin not allowed' }, { status: 403 });
+      }
+      return new Response(null, {
+        status: 204,
+        headers: previewOrigin ? previewCorsHeaders(previewOrigin) : CORS_HEADERS
+      });
     }
 
     if (request.method !== 'GET') {
       return json({ error: 'Method not allowed' }, { status: 405 });
     }
-
-    const url = new URL(request.url);
 
     try {
       if (url.pathname === '/api/cato/health') {
@@ -440,6 +471,15 @@ export default {
       }
       if (url.pathname === '/api/cato/insights') {
         return await handleInsights(url, env);
+      }
+      if (isPreviewRequest) {
+        if (!previewOrigin) {
+          return json({ error: 'Preview origin not allowed' }, { status: 403 });
+        }
+        return await handleInsights(url, env, {
+          includeDrafts: true,
+          responseHeaders: previewCorsHeaders(previewOrigin)
+        });
       }
       if (url.pathname === '/api/cato/team') {
         return await handleTeam(url, env);
