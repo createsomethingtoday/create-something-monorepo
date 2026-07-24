@@ -18,6 +18,7 @@ export interface WaterwayLedger {
 interface WaterwayPresentation {
 	step: string;
 	verb: string;
+	flowStatus: string;
 	ledger: WaterwayLedger;
 }
 
@@ -81,6 +82,7 @@ const WATERWAY_PRESENTATION: Record<PublicProductId, WaterwayPresentation> = {
 	map: {
 		step: '01',
 		verb: 'Define the channel',
+		flowStatus: 'Inputs and governed context are being defined.',
 		ledger: {
 			owner: 'Workflow owner',
 			authority: 'Read-only discovery',
@@ -93,6 +95,7 @@ const WATERWAY_PRESENTATION: Record<PublicProductId, WaterwayPresentation> = {
 	build: {
 		step: '02',
 		verb: 'Construct the boundary',
+		flowStatus: 'The governed handoff is moving through bounded work.',
 		ledger: {
 			owner: 'Implementation lead',
 			authority: 'Approved scope only',
@@ -105,6 +108,7 @@ const WATERWAY_PRESENTATION: Record<PublicProductId, WaterwayPresentation> = {
 	control: {
 		step: '03',
 		verb: 'Operate the gate',
+		flowStatus: 'The full line is open through policy, proof, and outcome.',
 		ledger: {
 			owner: 'Named operator',
 			authority: 'Policy-bounded tools',
