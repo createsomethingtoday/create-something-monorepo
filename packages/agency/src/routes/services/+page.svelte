@@ -9,6 +9,7 @@
   } from '@create-something/canon';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
   import { getPublicProduct } from '$lib/data/productFamily';
+  import ControlledWaterwayStory from '$lib/components/ControlledWaterwayStory.svelte';
   import PublicAtlasCanvas from '$lib/components/PublicAtlasCanvas.svelte';
 
   const mapProduct = getPublicProduct('map');
@@ -131,6 +132,7 @@
     description="Map and Control are standalone subscriptions. Build is the implementation service between them when a team wants CREATE SOMETHING to turn the approved definition into an owned system. Control includes Map."
   >
     {#snippet after()}
+      <ControlledWaterwayStory />
       <PerformanceCardGrid items={familyCards} columns={3} ariaLabel="CREATE SOMETHING product and service family" />
     {/snippet}
   </PerformancePageSection>
