@@ -65,6 +65,13 @@ if (existsSync(schemaPath) && existsSync(specPath)) {
     };
 
     expectContractFailure(
+      'missing provenance',
+      (probe) => {
+        (probe as ContractProbe & { provenance?: unknown }).provenance = undefined;
+      },
+      'scenario and public-treatment provenance'
+    );
+    expectContractFailure(
       'invalid duration',
       (probe) => {
         probe.durationInFrames = 0;
@@ -126,6 +133,8 @@ if (existsSync(schemaPath) && existsSync(specPath)) {
     workflow?: { spanMinutes?: number };
     durationInFrames?: number;
     events?: Array<{ actor?: string; state?: string }>;
+    scenes?: Array<{ title?: string; caption?: string }>;
+    provenance?: { publicTreatment?: string; sourceArtifacts?: string[] };
     closingPromise?: string;
     callToAction?: string;
     music?: { asset?: string };
@@ -156,6 +165,39 @@ if (existsSync(schemaPath) && existsSync(specPath)) {
   if (daySpec.events?.filter((event) => event.state === 'waiting').length !== 1) {
     errors.push('24-hour proof spec must contain one primary waiting event');
   }
+  if (!daySpec.provenance?.publicTreatment?.includes('Anonymized')) {
+    errors.push('24-hour staffing proof must declare an anonymized public treatment');
+  }
+  for (const source of [
+    'packages/agency/src/lib/delivery/abundance-context.ts',
+    'evals/langfuse/dify/abundance-hub.eval.ts'
+  ]) {
+    if (!daySpec.provenance?.sourceArtifacts?.includes(source)) {
+      errors.push(`24-hour staffing proof must cite ${source}`);
+    }
+  }
+  const publicCopy = JSON.stringify({
+    workflow: (spec as { workflow?: unknown }).workflow,
+    scenes: daySpec.scenes,
+    events: daySpec.events
+  });
+  if (/\bNPG\b|Abundance|The NP Group/i.test(publicCopy)) {
+    errors.push('24-hour staffing proof must keep client identity out of public copy');
+  }
+  if (/Jotform|Mailchimp|WhatsApp/i.test(publicCopy)) {
+    errors.push('24-hour staffing proof must not name disconnected vendors in public copy');
+  }
+  for (const system of ['database', 'Jobs MCP', 'funnel', 'email', 'onboarding']) {
+    if (!publicCopy.toLowerCase().includes(system.toLowerCase())) {
+      errors.push(`24-hour staffing proof must include ${system}`);
+    }
+  }
+  if (!publicCopy.includes('send_job_to_funnel()')) {
+    errors.push('24-hour staffing proof must preserve the confirmation-gated funnel function');
+  }
+  if (!publicCopy.includes('remains unsent')) {
+    errors.push('24-hour staffing proof must keep disconnected outbound email unsent');
+  }
   if (daySpec.closingPromise !== 'Agents run. Humans decide. Every step leaves proof.') {
     errors.push('24-hour proof closing promise has drifted');
   }
@@ -165,6 +207,25 @@ if (existsSync(schemaPath) && existsSync(specPath)) {
   if (daySpec.music?.asset) {
     const musicPath = join(packageRoot, 'public', daySpec.music.asset);
     if (!existsSync(musicPath)) errors.push(`Missing 60-second workflow score: ${musicPath}`);
+  }
+}
+
+if (existsSync(primitivesPath)) {
+  const source = readFileSync(primitivesPath, 'utf8');
+  if (/EventCard[^>]*frame=\{frame\s*%/s.test(source)) {
+    errors.push('Workflow event-card reveal must not modulo-wrap during a long dwell');
+  }
+  if (!source.includes('activeEventFrame')) {
+    errors.push('Workflow event cards must use a monotonic event-relative reveal frame');
+  }
+  for (const required of [
+    'RECEIPT_REVEAL_FRAME',
+    'WorkTrace',
+    'activeEventFrame >= RECEIPT_REVEAL_FRAME'
+  ]) {
+    if (!source.includes(required)) {
+      errors.push(`Workflow event execution-to-receipt sequence does not contain ${required}`);
+    }
   }
 }
 

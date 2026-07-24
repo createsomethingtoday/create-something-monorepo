@@ -23,6 +23,7 @@ import type {
 } from './schema';
 
 const { color, font, motion } = performance;
+const RECEIPT_REVEAL_FRAME = 54;
 
 type IconComponent = React.ComponentType<{
   size?: number;
@@ -154,7 +155,7 @@ const formatSpan = (minute: number): string => {
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 };
 
-const minuteAtFrame = (spec: WorkflowFilmSpec, frame: number): number => {
+const momentAtFrame = (spec: WorkflowFilmSpec, frame: number) => {
   const scene =
     spec.scenes.find(
       (candidate) => frame >= candidate.start && frame < candidate.start + candidate.duration
@@ -174,14 +175,26 @@ const minuteAtFrame = (spec: WorkflowFilmSpec, frame: number): number => {
       })
     )
   );
-  return events[Math.max(0, activeIndex)]?.minute ?? 0;
+  const resolvedIndex = Math.max(0, activeIndex);
+  const activeEvent = events[resolvedIndex];
+  const activeEventStart =
+    resolvedIndex === 0
+      ? 0
+      : Math.ceil((resolvedIndex * Math.max(1, scene.duration - 1)) / events.length);
+  const activeEventFrame = Math.max(0, localFrame - activeEventStart);
+  return {
+    minute: activeEvent?.minute ?? 0,
+    receiptReady: activeEventFrame >= RECEIPT_REVEAL_FRAME
+  };
 };
 
 export const WorkflowFilmTimeRail: React.FC<{ spec: WorkflowFilmSpec }> = ({ spec }) => {
   const frame = useCurrentFrame();
-  const minute = minuteAtFrame(spec, frame);
+  const { minute, receiptReady } = momentAtFrame(spec, frame);
   const progress = minute / spec.workflow.spanMinutes;
-  const receiptCount = spec.events.filter((event) => event.minute <= minute).length;
+  const receiptCount = spec.events.filter(
+    (event) => event.minute < minute || (event.minute === minute && receiptReady)
+  ).length;
   const dark = frame >= spec.scenes.at(-1)!.start;
   const railLine = dark ? 'rgba(255,255,255,0.24)' : color.lineStrong;
   return (
@@ -430,6 +443,77 @@ const EventCard: React.FC<{ event: WorkflowFilmEvent; frame: number }> = ({ even
           </span>
         </div>
       ) : null}
+      <WorkTrace event={event} frame={frame} />
+    </div>
+  );
+};
+
+const workTraceLabels: Record<WorkflowActor, readonly [string, string, string]> = {
+  system: ['Capture', 'Normalize', 'Record'],
+  agent: ['Connect', 'Inspect', 'Verify'],
+  function: ['Load inputs', 'Execute', 'Read back'],
+  human: ['Review', 'Decide', 'Record']
+};
+
+const WorkTrace: React.FC<{ event: WorkflowFilmEvent; frame: number }> = ({ event, frame }) => {
+  const actor = actorMeta[event.actor];
+  const labels = workTraceLabels[event.actor];
+  const progress = interpolate(frame, [12, RECEIPT_REVEAL_FRAME], [0, 1], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+    easing: motion.enterEase
+  });
+  return (
+    <div style={{ marginTop: 24, paddingTop: 20, borderTop: `1px solid ${color.lineStrong}` }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ ...labelStyle, fontSize: 14, color: color.muted }}>Work trace</span>
+        <span style={{ ...labelStyle, fontSize: 13, color: actor.foreground }}>
+          {progress < 1 ? 'In progress' : 'Receipt ready'}
+        </span>
+      </div>
+      <div style={{ position: 'relative', marginTop: 18, display: 'flex' }}>
+        <div
+          style={{
+            position: 'absolute',
+            top: 8,
+            left: 8,
+            right: 8,
+            height: 2,
+            background: color.lineStrong
+          }}
+        >
+          <div
+            style={{ width: `${progress * 100}%`, height: '100%', background: actor.foreground }}
+          />
+        </div>
+        {labels.map((label, index) => {
+          const threshold = index / (labels.length - 1);
+          const reached = progress >= threshold;
+          return (
+            <div key={label} style={{ position: 'relative', flex: 1, zIndex: 1 }}>
+              <div
+                style={{
+                  width: 18,
+                  height: 18,
+                  borderRadius: 999,
+                  border: `2px solid ${reached ? actor.foreground : color.lineStrong}`,
+                  background: reached ? actor.foreground : color.panel
+                }}
+              />
+              <div
+                style={{
+                  ...labelStyle,
+                  fontSize: 12,
+                  marginTop: 10,
+                  color: reached ? color.inkSoft : color.muted
+                }}
+              >
+                {label}
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 };
@@ -473,8 +557,11 @@ const ActivityRail: React.FC<{
 const ReceiptStrip: React.FC<{
   receipts: readonly WorkflowFilmEvent[];
   activeIndex: number;
-}> = ({ receipts, activeIndex }) => {
-  const visible = receipts.slice(0, activeIndex + 1).slice(-3);
+  activeEventFrame: number;
+}> = ({ receipts, activeIndex, activeEventFrame }) => {
+  const completedIndex =
+    activeEventFrame >= RECEIPT_REVEAL_FRAME ? activeIndex + 1 : Math.max(0, activeIndex);
+  const visible = receipts.slice(0, completedIndex).slice(-3);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       {visible.map((event) => {
@@ -516,11 +603,11 @@ const ReceiptStrip: React.FC<{
 const GatePanel: React.FC<{
   gateEvent: WorkflowFilmEvent;
   safeEvent?: WorkflowFilmEvent;
-  frame: number;
-}> = ({ gateEvent, safeEvent, frame }) => {
+  safeEventFrame: number;
+}> = ({ gateEvent, safeEvent, safeEventFrame }) => {
   const gate = gateEvent.gate;
   if (!gate) return null;
-  const safeVisible = interpolate(frame, [70, 105], [0, 1], {
+  const safeVisible = interpolate(safeEventFrame, [0, 18], [0, 1], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp'
   });
@@ -591,6 +678,7 @@ const GatePanel: React.FC<{
         >
           {safeEvent?.title ?? gate.safeWorkWhileWaiting.join(' · ')}
         </div>
+        {safeEvent ? <WorkTrace event={safeEvent} frame={safeEventFrame} /> : null}
       </div>
     </div>
   );
@@ -688,7 +776,19 @@ const WorkflowScene: React.FC<{
     )
   );
   const activeEvent = events[Math.max(0, activeIndex)];
+  const activeEventStart =
+    activeIndex === 0
+      ? 0
+      : Math.ceil((activeIndex * Math.max(1, scene.duration - 1)) / events.length);
+  const activeEventFrame = Math.max(0, frame - activeEventStart);
   const gateEvent = events.find((event) => event.gate);
+  const safeEvent = gateEvent ? events.find((event) => event.id !== gateEvent.id) : undefined;
+  const safeEventIndex = safeEvent ? events.findIndex((event) => event.id === safeEvent.id) : -1;
+  const safeEventStart =
+    safeEventIndex <= 0
+      ? 0
+      : Math.ceil((safeEventIndex * Math.max(1, scene.duration - 1)) / events.length);
+  const safeEventFrame = Math.max(0, frame - safeEventStart);
   const isClose = sceneIndex === spec.scenes.length - 1;
 
   return (
@@ -714,15 +814,19 @@ const WorkflowScene: React.FC<{
             {gateEvent ? (
               <GatePanel
                 gateEvent={gateEvent}
-                safeEvent={events.find((event) => event.id !== gateEvent.id)}
-                frame={frame}
+                safeEvent={safeEvent}
+                safeEventFrame={safeEventFrame}
               />
             ) : (
-              <EventCard key={activeEvent.id} event={activeEvent} frame={frame % 70} />
+              <EventCard key={activeEvent.id} event={activeEvent} frame={activeEventFrame} />
             )}
           </div>
           <div style={{ marginTop: 26 }}>
-            <ReceiptStrip receipts={events} activeIndex={activeIndex} />
+            <ReceiptStrip
+              receipts={events}
+              activeIndex={activeIndex}
+              activeEventFrame={activeEventFrame}
+            />
           </div>
         </div>
       ) : (

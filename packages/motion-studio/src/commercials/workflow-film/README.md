@@ -17,6 +17,11 @@ Each event declares:
 - short operator-facing copy; and
 - a unique receipt containing state, owner, and evidence.
 
+Each film also carries internal provenance: the grounded scenario, its public
+treatment, and the repo-owned source artifacts used to author it. Provenance is
+not rendered as campaign copy; it lets validators keep an anonymized film tied
+to an explicit delivery contract.
+
 An `agent` event represents bounded work through an MCP-connected capability.
 It may expose a short rationale summary, but never hidden chain-of-thought. A
 `function` event is deterministic programmatic work. A `human` event is a
@@ -43,8 +48,9 @@ The shared renderer intentionally limits every frame to:
 
 1. one persistent run-time rail;
 2. one primary event card;
-3. one actor/execution/state signature; and
-4. a progressive receipt stream.
+3. one actor/execution/state signature;
+4. one connect/work/verify trace; and
+5. a progressive receipt stream that stamps only after the trace resolves.
 
 This keeps a broad system legible without turning it into a connector montage.
 Required meaning is burned into the frame so the film remains sound-off safe.
@@ -60,8 +66,9 @@ Required meaning is burned into the frame so the film remains sound-off safe.
 The generic validator owns format integrity: frame/safe-area contract,
 contiguous scenes, actor/mode compatibility, ordered events, receipt parity,
 blocking-gate recovery, copy limits, time coverage, and beat-grid alignment.
-`validate:workflow-film` adds the concrete policy for the 24-hour launch-change
-proof, including its required actors, states, 60-second duration, promise, and
+`validate:workflow-film` adds the concrete policy for the anonymized 24-hour
+staffing and onboarding proof, including its required systems, human approval,
+disconnected-channel boundary, actors, states, 60-second duration, promise, and
 CTA. Film duration is authored per spec as a positive integer number of frames
 that must end on its declared musical beat grid; the shared format does not
 assume a 30-second cut.

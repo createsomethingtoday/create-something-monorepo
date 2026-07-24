@@ -88,6 +88,11 @@ export type WorkflowFilmSpec = {
     dayEnd: string;
     spanMinutes: number;
   };
+  provenance: {
+    scenario: string;
+    publicTreatment: string;
+    sourceArtifacts: readonly string[];
+  };
   scenes: readonly WorkflowFilmScene[];
   events: readonly WorkflowFilmEvent[];
   closingLabel: string;
@@ -133,6 +138,15 @@ export const validateWorkflowFilmSpec = (value: unknown): string[] => {
   }
   if (!spec.workflow?.id?.trim() || !spec.workflow?.title?.trim()) {
     errors.push(`Workflow film must declare a workflow id and title`);
+  }
+  if (!spec.provenance?.scenario?.trim() || !spec.provenance?.publicTreatment?.trim()) {
+    errors.push(`Workflow film must declare scenario and public-treatment provenance`);
+  }
+  if (
+    !Array.isArray(spec.provenance?.sourceArtifacts) ||
+    spec.provenance.sourceArtifacts.length < 2
+  ) {
+    errors.push(`Workflow film must cite at least two source artifacts`);
   }
   if (
     !Number.isInteger(spec.workflow?.startMinuteOfDay) ||

@@ -14,65 +14,76 @@ export const WORKFLOW_DAY_REEL_SPEC = {
     left: 80
   },
   workflow: {
-    id: 'launch-change-24h',
-    title: 'Move Friday’s launch',
+    id: 'nurse-onboarding-24h',
+    title: 'Move one nurse into recruiter onboarding',
     startMinuteOfDay: 480,
     dayStart: '08:00',
     dayEnd: '07:58 +1',
     spanMinutes: 1438
+  },
+  provenance: {
+    scenario: 'Nurse intake through recruiter-approved onboarding handoff',
+    publicTreatment: 'Anonymized client-safe composite grounded in the NPG delivery contract',
+    sourceArtifacts: [
+      'packages/agency/src/lib/delivery/abundance-context.ts',
+      'docs/deliveries/abundance/2026-05-14-project-update.md',
+      'evals/langfuse/dify/abundance-hub.eval.ts',
+      'config/delivery/projects/abundance.json'
+    ]
   },
   scenes: [
     {
       id: 'signal',
       start: 0,
       duration: 180,
-      label: '01 / SIGNAL',
-      title: 'One request starts the run.',
-      caption: 'At 08:00, a launch change becomes governed work—not another email thread.',
-      eventIds: ['signal-request'],
-      focusEventId: 'signal-request'
+      label: '01 / INTAKE',
+      title: 'One intake starts the run.',
+      caption: 'At 08:00, a completed nurse intake becomes governed matching and onboarding work.',
+      eventIds: ['intake-received'],
+      focusEventId: 'intake-received'
     },
     {
       id: 'autonomous',
       start: 180,
       duration: 480,
-      label: '02 / RUN',
-      title: 'Agents gather. Functions verify.',
+      label: '02 / MATCH',
+      title: 'Agents search. Functions verify.',
       caption:
-        'Agents use connected capabilities. Deterministic functions verify what must be true.',
-      eventIds: ['agent-context', 'function-dependencies', 'agent-plan', 'function-safe-prep'],
-      focusEventId: 'agent-plan'
+        'Agents read approved systems. Deterministic checks verify fit, readiness, and gaps.',
+      eventIds: ['profile-context', 'role-discovery', 'requirements-check', 'shortlist-drafted'],
+      focusEventId: 'shortlist-drafted'
     },
     {
       id: 'wait',
       start: 660,
       duration: 420,
-      label: '03 / WAIT',
-      title: 'Only the blocked decision waits.',
-      caption: 'The live change pauses for a human. Safe preparation keeps moving.',
-      eventIds: ['approval-gate', 'safe-work'],
-      focusEventId: 'approval-gate'
+      label: '03 / APPROVAL',
+      title: 'Only recruiter judgment waits.',
+      caption: 'The protected funnel write pauses. Safe onboarding preparation keeps moving.',
+      eventIds: ['recruiter-gate', 'safe-onboarding-prep'],
+      focusEventId: 'recruiter-gate'
     },
     {
       id: 'continue',
       start: 1080,
       duration: 240,
-      label: '04 / CONTINUE',
+      label: '04 / ONBOARD',
       title: 'Approval resumes the run.',
       caption:
-        'The decision is recorded once. Programmatic execution continues from its checkpoint.',
-      eventIds: ['human-approval', 'function-apply'],
-      focusEventId: 'human-approval'
+        'One recruiter decision is recorded. Funnel and onboarding state advance from the checkpoint.',
+      eventIds: ['recruiter-approval', 'stage-role', 'onboarding-record'],
+      focusEventId: 'recruiter-approval'
     },
     {
       id: 'overnight',
       start: 1320,
       duration: 240,
-      label: '05 / OVERNIGHT',
-      title: 'The system keeps working.',
-      caption: 'Agents synchronize and monitor overnight. Every transition leaves a receipt.',
-      eventIds: ['agent-sync', 'overnight-monitor', 'function-reconcile'],
-      focusEventId: 'overnight-monitor'
+      label: '05 / SYSTEMS',
+      title: 'Every system keeps its boundary.',
+      caption:
+        'Database, funnel, email, and onboarding state reconcile without bypassing authorization.',
+      eventIds: ['email-handoff', 'systems-reconcile'],
+      focusEventId: 'systems-reconcile'
     },
     {
       id: 'proof',
@@ -80,274 +91,287 @@ export const WORKFLOW_DAY_REEL_SPEC = {
       duration: 240,
       label: '06 / PROOF',
       title: 'A full day becomes proof.',
-      caption: 'At 07:58, the owner can see what ran, waited, continued, and completed.',
-      eventIds: ['agent-proof', 'run-complete'],
+      caption: 'At 07:58, the recruiter sees what matched, waited, advanced, and stayed protected.',
+      eventIds: ['proof-assembled', 'run-complete'],
       focusEventId: 'run-complete'
     }
   ],
   events: [
     {
-      id: 'signal-request',
+      id: 'intake-received',
       minute: 0,
       clock: '08:00',
       actor: 'system',
       execution: 'observe',
       state: 'signal',
-      title: 'Launch change received',
-      summary: 'Move Friday’s customer launch without losing ownership, approval, or trace.',
+      title: 'Nurse intake received',
+      summary:
+        'A completed intake enters the run with its source, consent, and privacy boundary attached.',
       receipt: {
         id: 'R-001',
         state: 'signal',
-        label: 'Signal captured',
-        evidence: 'Request, requester, target date, and source attached',
-        owner: 'Launch operations'
+        label: 'Intake captured',
+        evidence: 'Sanitized profile context, source, consent, and intake time attached',
+        owner: 'Staffing operations'
       }
     },
     {
-      id: 'agent-context',
+      id: 'profile-context',
       minute: 4,
       clock: '08:04',
       actor: 'agent',
       execution: 'mcp',
       state: 'running',
-      title: 'Context gathered',
-      summary: 'The agent reads customer, project, and launch state through governed connections.',
-      capability: 'CRM + Project MCPs',
-      rationale: 'Gather current state before selecting any action.',
+      title: 'Profile context gathered',
+      summary:
+        'The agent reads sanctioned profile history from the staffing database through the Staff MCP.',
+      capability: 'Staffing DB + Staff MCP',
+      rationale: 'Read approved profile context before proposing any match.',
       receipt: {
         id: 'R-002',
         state: 'running',
-        label: 'Context read',
-        evidence: 'Four source records and current owners linked',
-        owner: 'Launch agent'
+        label: 'Profile context read',
+        evidence: 'Sanitized profile snapshot and intake history linked',
+        owner: 'Matching agent'
       }
     },
     {
-      id: 'function-dependencies',
+      id: 'role-discovery',
       minute: 35,
       clock: '08:35',
-      actor: 'function',
-      execution: 'programmatic',
-      state: 'running',
-      title: 'Dependencies verified',
-      summary:
-        'A deterministic function checks schedule, inventory, permissions, and downstream dates.',
-      capability: 'validate_launch_dependencies()',
-      receipt: {
-        id: 'R-003',
-        state: 'running',
-        label: '18 checks passed',
-        evidence: 'Versioned validation result and input hashes stored',
-        owner: 'Launch validator'
-      }
-    },
-    {
-      id: 'agent-plan',
-      minute: 92,
-      clock: '09:32',
       actor: 'agent',
       execution: 'mcp',
       state: 'running',
-      title: 'Safe sequence proposed',
-      summary: 'The agent separates reversible preparation from the approval-gated live change.',
-      capability: 'Calendar + Inventory MCPs',
-      rationale: 'Prepare everything safe before asking a human to unblock the mutation.',
+      title: 'Current roles discovered',
+      summary: 'The agent searches current public nursing roles through the read-only Jobs MCP.',
+      capability: 'Public Jobs MCP',
+      rationale: 'Ground recommendations in returned job facts without writing to the funnel.',
       receipt: {
-        id: 'R-004',
+        id: 'R-003',
         state: 'running',
-        label: 'Plan recorded',
-        evidence: 'Ordered actions, policy boundary, owner, and rollback path attached',
-        owner: 'Launch agent'
+        label: 'Job facts recorded',
+        evidence: 'Public role IDs, status, requirements, and source query linked',
+        owner: 'Matching agent'
       }
     },
     {
-      id: 'function-safe-prep',
-      minute: 180,
-      clock: '11:00',
+      id: 'requirements-check',
+      minute: 92,
+      clock: '09:32',
       actor: 'function',
       execution: 'programmatic',
       state: 'running',
-      title: 'Change set prepared',
-      summary: 'Draft updates are generated and validated without touching the live launch date.',
-      capability: 'prepare_change_set()',
+      title: 'Requirements verified',
+      summary:
+        'A deterministic function checks specialty, license, availability, and required profile fields.',
+      capability: 'validate_profile_requirements()',
       receipt: {
-        id: 'R-005',
+        id: 'R-004',
         state: 'running',
-        label: 'Draft ready',
-        evidence: 'Dry-run diff and rollback payload stored',
-        owner: 'Launch function'
+        label: 'Requirements checked',
+        evidence: 'Versioned checks, gaps, and input hashes stored',
+        owner: 'Matching validator'
       }
     },
     {
-      id: 'approval-gate',
+      id: 'shortlist-drafted',
+      minute: 180,
+      clock: '11:00',
+      actor: 'agent',
+      execution: 'mcp',
+      state: 'running',
+      title: 'Explainable shortlist drafted',
+      summary:
+        'The agent ranks roles with visible fit reasons, missing-information flags, and no outreach.',
+      capability: 'Jobs MCP + Matching DB',
+      rationale: 'Recommend from durable facts while keeping staffing judgment with the recruiter.',
+      receipt: {
+        id: 'R-005',
+        state: 'running',
+        label: 'Shortlist recorded',
+        evidence: 'Ranked roles, fit reasons, gaps, and source job IDs attached',
+        owner: 'Matching agent'
+      }
+    },
+    {
+      id: 'recruiter-gate',
       minute: 310,
       clock: '13:10',
       actor: 'agent',
       execution: 'mcp',
       state: 'waiting',
-      title: 'Live change needs approval',
-      summary: 'Only the external date mutation pauses. The rest of the run stays active.',
-      capability: 'Policy OS gate',
-      rationale: 'External commitments cross the declared human authority boundary.',
+      title: 'Onboarding handoff needs approval',
+      summary:
+        'Only funnel staging and candidate outreach pause. Read-only and draft work remains active.',
+      capability: 'Recruiter review gate',
+      rationale: 'A protected staffing step crosses the declared human authority boundary.',
       receipt: {
         id: 'R-006',
         state: 'waiting',
-        label: 'Waiting on owner',
-        evidence: 'Decision packet delivered with impact, diff, and rollback',
-        owner: 'Operations lead'
+        label: 'Waiting on recruiter',
+        evidence: 'Shortlist, fit reasons, gaps, exact role, and proposed handoff delivered',
+        owner: 'Recruiter / account owner'
       },
       gate: {
-        id: 'GATE-LAUNCH-DATE',
+        id: 'GATE-ONBOARDING-HANDOFF',
         blocking: true,
-        owner: 'Operations lead',
-        prompt: 'Approve moving the external launch date?',
-        safeWorkWhileWaiting: ['Draft customer updates', 'Prepare system changes'],
+        owner: 'Recruiter / account owner',
+        prompt: 'Approve this role for recruiter follow-up and onboarding preparation?',
+        safeWorkWhileWaiting: [
+          'Verify the role remains public',
+          'Prepare onboarding and email drafts'
+        ],
         onApprove: {
           state: 'continued',
-          receiptLabel: 'Approval recorded'
+          receiptLabel: 'Recruiter approval recorded'
         },
         onReject: {
           state: 'stopped',
-          receiptLabel: 'Change stopped by owner',
-          checkpoint: 'Validated draft remains resumable'
+          receiptLabel: 'Onboarding handoff stopped',
+          checkpoint: 'Verified shortlist remains resumable'
         },
         onTimeout: {
           state: 'stopped',
           afterMinutes: 170,
-          escalation: 'Notify workflow owner and hold the external date',
-          receiptLabel: 'Change stopped at deadline',
-          checkpoint: 'Validated draft remains resumable'
+          escalation: 'Notify the workflow owner and keep discovery read-only',
+          receiptLabel: 'Onboarding handoff stopped at deadline',
+          checkpoint: 'Verified shortlist remains resumable'
         }
       }
     },
     {
-      id: 'safe-work',
+      id: 'safe-onboarding-prep',
       minute: 342,
       clock: '13:42',
-      actor: 'agent',
-      execution: 'mcp',
+      actor: 'function',
+      execution: 'programmatic',
       state: 'running',
-      title: 'Safe work continues',
-      summary: 'The agent drafts customer updates and prepares reversible system changes.',
-      capability: 'Docs + Messaging MCPs',
-      rationale: 'Continue reversible work while the gated mutation remains locked.',
+      title: 'Safe onboarding prep continues',
+      summary:
+        'The system builds an onboarding checklist, email draft, and connector-status report without sending.',
+      capability: 'Email + Forms connection status',
       receipt: {
         id: 'R-007',
         state: 'running',
-        label: 'Preparation complete',
-        evidence: 'Draft messages and dry-run changes linked',
-        owner: 'Launch agent'
+        label: 'Draft handoff ready',
+        evidence: 'Checklist, unsent email, form needs, and connection states linked',
+        owner: 'Onboarding function'
       }
     },
     {
-      id: 'human-approval',
+      id: 'recruiter-approval',
       minute: 392,
       clock: '14:32',
       actor: 'human',
       execution: 'judgment',
       state: 'continued',
-      title: 'Operations lead approves',
-      summary: 'One blocking decision is recorded with owner, policy, impact, and time.',
+      title: 'Recruiter approves the handoff',
+      summary:
+        'One protected decision is recorded with approver, exact role, scope, policy, and time.',
       receipt: {
         id: 'R-008',
         state: 'continued',
         label: 'Run continued',
-        evidence: 'Approval identity and decision context stored',
-        owner: 'Operations lead'
+        evidence: 'Recruiter identity, selected role, approved scope, and timestamp stored',
+        owner: 'Recruiter / account owner'
       }
     },
     {
-      id: 'function-apply',
+      id: 'stage-role',
       minute: 395,
       clock: '14:35',
       actor: 'function',
       execution: 'programmatic',
       state: 'running',
-      title: 'Approved change applied',
-      summary: 'The validated mutation executes from the saved checkpoint with rollback attached.',
-      capability: 'apply_launch_change()',
+      title: 'Approved role staged',
+      summary: 'The confirmed role moves into the recruiter funnel from the saved checkpoint.',
+      capability: 'send_job_to_funnel()',
       receipt: {
         id: 'R-009',
         state: 'running',
-        label: 'Mutation applied',
-        evidence: 'Before, after, policy version, and rollback stored',
-        owner: 'Launch function'
+        label: 'Role staged',
+        evidence: 'Confirmation, before/after state, and idempotency key stored',
+        owner: 'Funnel function'
       }
     },
     {
-      id: 'agent-sync',
+      id: 'onboarding-record',
       minute: 540,
       clock: '17:00',
       actor: 'agent',
       execution: 'mcp',
       state: 'running',
-      title: 'Connected systems synchronized',
-      summary: 'The agent updates project, CRM, calendar, and customer-facing launch state.',
-      capability: 'CRM + Project + Calendar MCPs',
-      rationale: 'Propagate the approved source change through its governed dependencies.',
+      title: 'Onboarding record opened',
+      summary:
+        'The agent links the approved role, fit reasons, checklist, and recruiter-owned next step.',
+      capability: 'Staffing DB + Onboarding workspace',
+      rationale: 'Carry the approved decision forward without widening its authority.',
       receipt: {
         id: 'R-010',
         state: 'running',
-        label: 'Four systems aligned',
-        evidence: 'Per-system write receipts and readback attached',
-        owner: 'Launch agent'
+        label: 'Onboarding state opened',
+        evidence: 'Database record, selected role, checklist, and owner linked',
+        owner: 'Onboarding agent'
       }
     },
     {
-      id: 'overnight-monitor',
+      id: 'email-handoff',
       minute: 850,
       clock: '22:10',
       actor: 'agent',
       execution: 'mcp',
       state: 'running',
-      title: 'Overnight guardrail check',
-      summary: 'The agent watches for drift and stays inside the approved mutation boundary.',
-      capability: 'Monitoring MCP',
-      rationale: 'Observe downstream state and escalate only if the approved boundary is exceeded.',
+      title: 'Email handoff held safely',
+      summary:
+        'The draft remains unsent until the account owner authorizes the outbound connection.',
+      capability: 'Email connection gate',
+      rationale:
+        'Prepare candidate communication without claiming or bypassing channel authorization.',
       receipt: {
         id: 'R-011',
         state: 'running',
-        label: 'Guardrail healthy',
-        evidence: 'Observed state and policy evaluation stored',
-        owner: 'Launch monitor'
+        label: 'Unsent draft protected',
+        evidence: 'Draft, intended owner, connection state, and blocked-send reason stored',
+        owner: 'Onboarding agent'
       }
     },
     {
-      id: 'function-reconcile',
+      id: 'systems-reconcile',
       minute: 1120,
       clock: '02:40',
       actor: 'function',
       execution: 'programmatic',
       state: 'running',
-      title: 'Launch state reconciled',
-      summary: 'A deterministic check confirms no source or downstream state has drifted.',
-      capability: 'reconcile_launch_state()',
+      title: 'All system state reconciled',
+      summary:
+        'A deterministic check compares database, funnel, onboarding, and email authorization state.',
+      capability: 'reconcile_onboarding_state()',
       receipt: {
         id: 'R-012',
         state: 'running',
-        label: 'No drift found',
-        evidence: 'Source snapshots and comparison hash stored',
+        label: 'Boundaries intact',
+        evidence: 'Source snapshots, comparison hash, and unsent-email state stored',
         owner: 'Reconciliation function'
       }
     },
     {
-      id: 'agent-proof',
+      id: 'proof-assembled',
       minute: 1425,
       clock: '07:45 +1',
       actor: 'agent',
       execution: 'mcp',
       state: 'running',
-      title: 'Proof packet assembled',
-      summary: 'The agent connects every signal, decision, action, outcome, and recovery path.',
+      title: 'Recruiter proof assembled',
+      summary:
+        'The agent links intake, job facts, fit reasons, decision, onboarding state, and channel boundary.',
       capability: 'Receipt store',
-      rationale:
-        'Summarize the run from durable receipts rather than reconstructing it from messages.',
+      rationale: 'Summarize from durable receipts rather than reconstructing work from messages.',
       receipt: {
         id: 'R-013',
         state: 'running',
         label: 'Proof assembled',
-        evidence: 'Thirteen receipts linked into one run record',
-        owner: 'Launch agent'
+        evidence: 'Thirteen receipts linked into one recruiter review record',
+        owner: 'Matching agent'
       }
     },
     {
@@ -357,14 +381,15 @@ export const WORKFLOW_DAY_REEL_SPEC = {
       actor: 'system',
       execution: 'observe',
       state: 'completed',
-      title: 'Launch workflow complete',
-      summary: 'The owner sees what ran, what waited, who decided, and what changed.',
+      title: 'Onboarding workflow complete',
+      summary:
+        'The recruiter sees what ran, what waited, what advanced, and what remains protected.',
       receipt: {
         id: 'R-014',
         state: 'completed',
         label: 'Run complete',
-        evidence: 'Final state readback and complete receipt chain stored',
-        owner: 'Launch operations'
+        evidence: 'Final readback and complete receipt chain stored',
+        owner: 'Staffing operations'
       }
     }
   ],
