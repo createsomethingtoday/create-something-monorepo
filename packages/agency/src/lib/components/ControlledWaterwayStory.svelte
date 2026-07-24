@@ -39,7 +39,7 @@
 				type="button"
 				class:waterway__chapter--active={activeStageId === stage.id}
 				aria-pressed={activeStageId === stage.id}
-				aria-controls={`waterway-ledger-${stage.id}`}
+				aria-controls={`waterway-system-flow waterway-ledger-${stage.id}`}
 				onclick={() => (activeStageId = stage.id)}
 				onkeydown={(event) => selectStageOnKeyboard(event, stage.id)}
 			>
@@ -50,12 +50,18 @@
 		{/each}
 	</div>
 
-	<figure class="waterway__figure" data-active-stage={activeStageId}>
+	<div
+		id="waterway-system-flow"
+		class="waterway__system"
+		data-system-flow
+		data-flow-progress={activeStageId}
+	>
+		<figure class="waterway__figure" data-active-stage={activeStageId}>
 		<div class="waterway__scene">
-			<div class="waterway__flow-readout" aria-live="polite">
+			<div id="waterway-flow-readout" class="waterway__flow-readout" aria-live="polite">
 				<span>Current position</span>
 				<strong>{CONTROLLED_WATERWAY_STAGES.find((stage) => stage.id === activeStageId)?.shortName}</strong>
-				<small>Water moving through the selected workflow stage.</small>
+				<small>Water moving through: {CONTROLLED_WATERWAY_STAGES.find((stage) => stage.id === activeStageId)?.flowStatus}</small>
 			</div>
 			<svg class="waterway__pipeline" viewBox="0 0 1200 590" aria-hidden="true">
 				<defs>
@@ -184,7 +190,7 @@
 			<div class="waterway__network-pipe" data-pipeline-rail aria-hidden="true">
 				<span></span>
 			</div>
-			<section class="waterway__network-node waterway__inlets" aria-labelledby="trigger-inlets-title">
+			<section class="waterway__network-node waterway__inlets" data-flow-phase="map" aria-labelledby="trigger-inlets-title">
 				<header>
 					<span>01 / Inputs</span>
 					<strong id="trigger-inlets-title">Triggers enter one controlled line.</strong>
@@ -203,7 +209,7 @@
 				</div>
 			</section>
 
-			<article class="waterway__network-node waterway__packet">
+			<article class="waterway__network-node waterway__packet" data-flow-phase="map">
 				<header>
 					<span>02 / Handoff</span>
 					<strong>Governed work packet</strong>
@@ -215,7 +221,7 @@
 				</dl>
 			</article>
 
-			<section class="waterway__network-node waterway__work-cell" data-work-cell aria-labelledby="work-cell-title">
+			<section class="waterway__network-node waterway__work-cell" data-flow-phase="build" data-work-cell aria-labelledby="work-cell-title">
 				<header>
 					<span>03 / Bounded work</span>
 					<strong id="work-cell-title">Agent + integration work</strong>
@@ -233,7 +239,7 @@
 				</ol>
 			</section>
 
-			<article class="waterway__network-node waterway__policy-gate">
+			<article class="waterway__network-node waterway__policy-gate" data-flow-phase="control">
 				<header>
 					<span>04 / Policy gate</span>
 					<strong>Run / Wait / Stop</strong>
@@ -250,8 +256,9 @@
 			</article>
 		</div>
 
-		<div class="waterway__decision-field">
+		<div class="waterway__decision-field" data-flow-phase="control">
 			<article class="waterway__run-lane">
+				<div class="waterway__decision-current" data-decision-current aria-hidden="true"><span></span></div>
 				<span>Run</span>
 				<strong>Approved work keeps moving.</strong>
 				<p>The action stays inside the defined lane and leaves a result receipt.</p>
@@ -291,7 +298,8 @@
 			</article>
 		</div>
 
-		<article class="waterway__business-outcome" data-business-outcome>
+		<article class="waterway__business-outcome" data-flow-phase="control" data-business-outcome>
+			<span class="waterway__outcome-current" data-outcome-current aria-hidden="true"></span>
 			<div>
 				<span>05 / Output</span>
 				<strong>{BUSINESS_OUTCOME.label}</strong>
@@ -300,6 +308,7 @@
 			<small>{BUSINESS_OUTCOME.measure}</small>
 		</article>
 	</section>
+	</div>
 
 	<div class="waterway__ledger" aria-label="Workflow operating ledger">
 		{#each CONTROLLED_WATERWAY_STAGES as stage}
@@ -458,15 +467,39 @@
 		font-size: 0.64rem;
 	}
 
+	.waterway__system {
+		--waterway-route-progress: 50%;
+		--waterway-primary-progress: 31%;
+		display: grid;
+		gap: 0;
+		border: 1px solid var(--waterway-line-strong);
+		background: var(--waterway-line);
+	}
+
+	.waterway__system[data-flow-progress='map'] {
+		--waterway-route-progress: 50%;
+		--waterway-primary-progress: 31%;
+	}
+
+	.waterway__system[data-flow-progress='build'] {
+		--waterway-route-progress: 75%;
+		--waterway-primary-progress: 61%;
+	}
+
+	.waterway__system[data-flow-progress='control'] {
+		--waterway-route-progress: 100%;
+		--waterway-primary-progress: 100%;
+	}
+
 	.waterway__figure {
 		margin: 0;
-		border: 1px solid var(--waterway-line-strong);
+		border: 0;
 		background: var(--waterway-ink-soft);
 	}
 
 	.waterway__scene {
 		position: relative;
-		min-height: clamp(32rem, 47vw, 42rem);
+		min-height: clamp(28rem, 38vw, 34rem);
 		overflow: hidden;
 		background:
 			linear-gradient(to right, color-mix(in srgb, var(--waterway-court-line) 8%, transparent) 1px, transparent 1px) 0 0 / calc(100% / 12) 100%,
@@ -749,7 +782,8 @@
 		display: grid;
 		gap: 1px;
 		padding: 0;
-		border: 1px solid var(--waterway-line-strong);
+		border: 0;
+		border-top: 1px solid var(--waterway-line-strong);
 		background: var(--waterway-line);
 	}
 
@@ -758,7 +792,7 @@
 		grid-template-columns: minmax(0, 1.15fr) minmax(18rem, 0.85fr);
 		gap: clamp(1.5rem, 5vw, 5rem);
 		align-items: end;
-		padding: clamp(1.25rem, 3vw, 2.5rem);
+		padding: clamp(1.15rem, 2vw, 1.75rem);
 		background: var(--waterway-panel);
 	}
 
@@ -799,23 +833,46 @@
 		position: absolute;
 		inset: 0 0 auto;
 		z-index: 4;
-		height: 2px;
+		height: 4px;
 		overflow: hidden;
 		background: var(--waterway-signal-soft);
 		pointer-events: none;
 	}
 
 	.waterway__network-pipe span {
+		position: relative;
 		display: block;
-		width: 100%;
+		width: var(--waterway-route-progress);
 		height: 100%;
-		background: repeating-linear-gradient(
-			90deg,
-			var(--waterway-signal) 0 18px,
-			color-mix(in srgb, var(--waterway-panel) 84%, var(--waterway-signal)) 18px 28px
-		);
-		background-size: 56px 100%;
+		overflow: hidden;
+		background: var(--waterway-signal);
+		box-shadow: 0 0 8px color-mix(in srgb, var(--waterway-signal) 32%, transparent);
+		transition: width var(--duration-performance-standard, 350ms) var(--ease-performance-standard, ease);
+	}
+
+	.waterway__network-pipe span::after {
+		content: '';
+		position: absolute;
+		left: -4rem;
+		top: 0;
+		width: 4rem;
+		height: 100%;
+		background: linear-gradient(90deg, transparent, var(--waterway-panel), transparent);
 		animation: waterway-network-current calc(var(--duration-performance-slow, 700ms) * 3) linear infinite;
+	}
+
+	.waterway__system [data-flow-phase] {
+		opacity: 0.34;
+		transition:
+			opacity var(--duration-performance-standard, 350ms) var(--ease-performance-standard, ease),
+			filter var(--duration-performance-standard, 350ms) var(--ease-performance-standard, ease);
+	}
+
+	.waterway__system[data-flow-progress='map'] [data-flow-phase='map'],
+	.waterway__system[data-flow-progress='build'] [data-flow-phase='map'],
+	.waterway__system[data-flow-progress='build'] [data-flow-phase='build'],
+	.waterway__system[data-flow-progress='control'] [data-flow-phase] {
+		opacity: 1;
 	}
 
 	.waterway__network-node {
@@ -1016,6 +1073,7 @@
 	}
 
 	.waterway__decision-field {
+		position: relative;
 		display: grid;
 		grid-template-columns: minmax(0, 0.75fr) minmax(0, 2.5fr) minmax(0, 0.75fr);
 		gap: 1px;
@@ -1029,6 +1087,25 @@
 		min-width: 0;
 		padding: 1rem;
 		background: var(--waterway-panel);
+	}
+
+	.waterway__decision-current {
+		position: absolute;
+		inset: -4px 0 auto;
+		height: 4px;
+		overflow: hidden;
+		background: var(--waterway-ready);
+		pointer-events: none;
+	}
+
+	.waterway__decision-current span {
+		position: absolute;
+		left: -4rem;
+		top: 0;
+		width: 4rem;
+		height: 100%;
+		background: linear-gradient(90deg, transparent, var(--waterway-panel), transparent);
+		animation: waterway-network-current calc(var(--duration-performance-slow, 700ms) * 3) linear infinite;
 	}
 
 	.waterway__decision-field p { color: var(--waterway-muted); font-size: 0.78rem; line-height: 1.45; }
@@ -1081,6 +1158,7 @@
 	.waterway__pause-lanes strong { font-size: 0.8rem; line-height: 1.3; }
 
 	.waterway__business-outcome {
+		position: relative;
 		display: grid;
 		grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.25fr) minmax(0, 0.95fr);
 		gap: 1.5rem;
@@ -1088,6 +1166,26 @@
 		padding: 1rem;
 		border-left: 5px solid var(--waterway-ready);
 		background: var(--waterway-ready-soft);
+	}
+
+	.waterway__outcome-current {
+		position: absolute;
+		left: -5px;
+		top: 0;
+		bottom: 0;
+		width: 5px;
+		overflow: hidden;
+	}
+
+	.waterway__outcome-current::after {
+		content: '';
+		position: absolute;
+		left: 0;
+		top: -3rem;
+		width: 100%;
+		height: 3rem;
+		background: linear-gradient(180deg, transparent, var(--waterway-panel), transparent);
+		animation: waterway-outcome-current calc(var(--duration-performance-slow, 700ms) * 2) linear infinite;
 	}
 
 	.waterway__business-outcome > div { display: grid; gap: 0.35rem; }
@@ -1147,11 +1245,19 @@
 	}
 
 	@keyframes waterway-network-current {
-		to { background-position: 56px 0; }
+		to { transform: translateX(90rem); }
 	}
 
 	@keyframes waterway-mobile-current {
 		to { background-position: 0 56px; }
+	}
+
+	@keyframes waterway-network-mobile-current {
+		to { transform: translateY(100rem); }
+	}
+
+	@keyframes waterway-outcome-current {
+		to { transform: translateY(12rem); }
 	}
 
 	@media (max-width: 760px) {
@@ -1198,8 +1304,9 @@
 			position: absolute;
 			left: 0.42rem;
 			top: 1.72rem;
-			bottom: 1.72rem;
+			bottom: auto;
 			width: 0.28rem;
+			height: calc(var(--waterway-primary-progress) - 1.72rem);
 			border-radius: 999px;
 			background: repeating-linear-gradient(
 				180deg,
@@ -1229,6 +1336,7 @@
 		}
 
 		.waterway__milestones > .waterway__milestone--active { transform: translateX(0.25rem); }
+		.waterway__milestones > li:not(.waterway__milestone--active) .waterway__control-region { display: none; }
 		.waterway__control-region > ol,
 		.waterway__states { grid-template-columns: 1fr; }
 		.waterway__control-region small { font-size: 0.7rem; }
@@ -1251,17 +1359,21 @@
 		.waterway__network-route { padding-top: 0; padding-left: 2px; }
 		.waterway__network-pipe {
 			inset: 0 auto 0 0;
-			width: 2px;
+			width: 4px;
 			height: auto;
 		}
 		.waterway__network-pipe span {
-			background: repeating-linear-gradient(
-				180deg,
-				var(--waterway-signal) 0 18px,
-				color-mix(in srgb, var(--waterway-panel) 84%, var(--waterway-signal)) 18px 28px
-			);
-			background-size: 100% 56px;
-			animation-name: waterway-mobile-current;
+			width: 100%;
+			height: var(--waterway-route-progress);
+			transition: height var(--duration-performance-standard, 350ms) var(--ease-performance-standard, ease);
+		}
+		.waterway__network-pipe span::after {
+			left: 0;
+			top: -3rem;
+			width: 100%;
+			height: 3rem;
+			background: linear-gradient(180deg, transparent, var(--waterway-panel), transparent);
+			animation-name: waterway-network-mobile-current;
 		}
 		.waterway__pause-station > header { grid-template-columns: 1fr; }
 		.waterway__ledger { grid-template-columns: 1fr; }
@@ -1284,8 +1396,10 @@
 		}
 
 		.waterway__current,
-		.waterway__network-pipe span,
-		.waterway__milestones::after {
+		.waterway__network-pipe span::after,
+		.waterway__milestones::after,
+		.waterway__decision-current span,
+		.waterway__outcome-current::after {
 			animation-play-state: paused !important;
 			stroke-dashoffset: 0;
 		}

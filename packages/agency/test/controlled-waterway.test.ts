@@ -189,6 +189,36 @@ test('stage selection controls the visible current and valve state', () => {
 	assert.match(component, /@keyframes waterway-current/);
 });
 
+test('stage selection carries one current through the complete governed system', () => {
+	for (const contract of [
+		'data-system-flow',
+		'data-flow-progress={activeStageId}',
+		'data-flow-phase="map"',
+		'data-flow-phase="build"',
+		'data-flow-phase="control"',
+		'data-decision-current',
+		'data-outcome-current'
+	]) {
+		assert.ok(component.includes(contract), `the end-to-end instrument should expose ${contract}`);
+	}
+
+	assert.match(model, /flowStatus/);
+	assert.match(
+		component,
+		/\.waterway__system\[data-flow-progress='map'\][\s\S]*--waterway-route-progress:\s*50%/
+	);
+	assert.match(
+		component,
+		/\.waterway__system\[data-flow-progress='build'\][\s\S]*--waterway-route-progress:\s*75%/
+	);
+	assert.match(
+		component,
+		/\.waterway__system\[data-flow-progress='control'\][\s\S]*--waterway-route-progress:\s*100%/
+	);
+	assert.match(component, /@keyframes waterway-network-current/);
+	assert.match(component, /@keyframes waterway-outcome-current/);
+});
+
 test('the governed handoff reads as one connected pipeline with typed source glyphs', () => {
 	assert.deepEqual(
 		WORKFLOW_TRIGGERS.map((trigger) => trigger.id),
