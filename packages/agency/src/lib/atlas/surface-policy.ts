@@ -28,6 +28,7 @@ export const AGENCY_COMPACT_PRIVACY_PATHS = [
 export const AGENCY_ROUTE_OWNED_PERFORMANCE_ENDING_PATHS = [
   '/',
   '/services',
+  '/map',
   '/products',
   '/stack',
   '/field-reports'

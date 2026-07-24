@@ -3,6 +3,7 @@
 	import {
 		Button,
 		PerformanceCampaignOpening,
+		PerformanceConversionHandoff,
 		PerformancePageSection,
 		PerformanceThesisConditions,
 		SEO,
@@ -45,7 +46,7 @@
 	<PerformanceCampaignOpening
 		eyebrow="CREATE SOMETHING Map"
 		title="Map the workflow before the call."
-		lede="Use the constrained public canvas to name the owner, data, approvals, systems, risks, and inspection points. Map can stand alone as the living workflow definition, or carry approved context into Build and Control."
+		lede="Use the constrained public canvas to name the owner, data, approvals, systems, risks, and inspection points. This browser-local draft stays on this device until you carry it into booking or an authenticated Map workspace."
 		media={{ src: '/images/performance-lab/trace-wake-natural.webp', mobileSrc: '/images/performance-lab/trace-wake-natural-mobile.webp', alt: 'Aerial black-and-white view of a survey craft leaving a directional wake' }}
 		proof={[{ label: 'Input', value: 'Prospect map' }, { label: 'Boundary', value: 'No production tools' }, { label: 'Handoff', value: 'Build or Control' }]}
 	>
@@ -70,7 +71,7 @@
 		variant="white"
 		eyebrow="Public mapping surface"
 		title="The canvas turns curiosity into operating context."
-		description="Cold readers can test the method without exposing credentials. Warm teams leave with a summary, readiness signal, and workflow definition that can stand alone or move into Build and Control."
+		description="Cold readers can test the method without exposing credentials. The public draft stays in this browser; its summary and readiness signal can move into booking, a durable Map workspace, Build, or Control."
 	>
 		{#snippet after()}
 			<SystemContextRail />
@@ -84,4 +85,24 @@
 			/>
 		{/snippet}
 	</PerformancePageSection>
+
+	<PerformanceConversionHandoff
+		eyebrow="Continue the definition"
+		title="Keep the workflow definition alive."
+		description="The public canvas is a browser-local draft, not a durable workspace. Sign in to create an account-scoped Map with version history, review gates, sharing, export, and Build handoff—or bring this draft into a mapping session first."
+		density="compact"
+		handoff={{
+			owner: 'Workflow owner',
+			authority: 'Human approval',
+			proof: 'Map + versions + review record',
+			state: 'review'
+		}}
+	>
+		{#snippet actions()}
+			<Button href="/map/workspace">Open Map workspace</Button>
+			<Button href={agencyCoreMessaging.workflowMappingSessionHref} variant="secondary">
+				{agencyCoreMessaging.bookMappingSessionLabel}
+			</Button>
+		{/snippet}
+	</PerformanceConversionHandoff>
 </main>
