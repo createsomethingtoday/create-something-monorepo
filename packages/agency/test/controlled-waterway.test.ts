@@ -20,19 +20,24 @@ const modelUrl = new URL('../src/lib/data/controlledWaterway.ts', import.meta.ur
 const component = existsSync(componentUrl) ? readFileSync(componentUrl, 'utf8') : '';
 const model = existsSync(modelUrl) ? readFileSync(modelUrl, 'utf8') : '';
 
-test('How It Works places one controlled waterway before the commercial readback', () => {
+test('How It Works moves from product path to proof, pipeline, and editable Map preview', () => {
 	assert.ok(
 		servicesRoute.includes("from '$lib/components/ControlledWaterwayStory.svelte'"),
 		'the services route should own one controlled-waterway story component'
 	);
 
+	const productPathIndex = servicesRoute.indexOf('<ServicesProductPath');
+	const readbackIndex = servicesRoute.indexOf('<AgencyPerformanceReadback');
 	const waterwayIndex = servicesRoute.indexOf('<ControlledWaterwayStory');
-	const familyGridIndex = servicesRoute.indexOf('<PerformanceCardGrid');
-	const editableMapIndex = servicesRoute.indexOf('<PublicAtlasCanvas');
+	const mapPreviewIndex = servicesRoute.indexOf('<ServicesMapPreview');
 
+	assert.notEqual(productPathIndex, -1);
+	assert.notEqual(readbackIndex, -1);
 	assert.notEqual(waterwayIndex, -1);
-	assert.ok(waterwayIndex < familyGridIndex, 'the operating explanation should precede the offer cards');
-	assert.ok(familyGridIndex < editableMapIndex, 'the commercial readback should precede the Map warmup');
+	assert.notEqual(mapPreviewIndex, -1);
+	assert.ok(productPathIndex < readbackIndex, 'the product path should precede its proof readback');
+	assert.ok(readbackIndex < waterwayIndex, 'proof should precede the deeper operating instrument');
+	assert.ok(waterwayIndex < mapPreviewIndex, 'the operating instrument should precede the Map preview');
 	assert.equal(servicesRoute.match(/<ControlledWaterwayStory/g)?.length, 1);
 });
 
@@ -187,6 +192,29 @@ test('stage selection controls the visible current and valve state', () => {
 	assert.ok(component.includes('aria-live="polite"'));
 	assert.match(component, /\[data-active-stage='build'\][\s\S]*\[data-flow-segment='build'\]/);
 	assert.match(component, /@keyframes waterway-current/);
+});
+
+test('stage selection reveals one relevant operating chapter at a time', () => {
+	assert.match(component, /\$:\s*activeStage\s*=/);
+	assert.ok(component.includes('data-active-chapter={activeStageId}'));
+	assert.ok(component.includes('id="waterway-active-chapter"'));
+	assert.match(
+		component,
+		/\{#if activeStageId === 'control'\}[\s\S]*class="waterway__network"[\s\S]*\{\/if\}/
+	);
+	assert.equal(
+		component.match(/class="waterway__ledger-card"/g)?.length,
+		1,
+		'the selected chapter should own one operating ledger instead of rendering all three'
+	);
+	assert.match(
+		component,
+		/@media \(max-width: 760px\)[\s\S]*\.waterway__controls\s*\{\s*grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\)/
+	);
+	assert.match(
+		component,
+		/@media \(max-width: 760px\)[\s\S]*\.waterway__milestones > li:not\(\.waterway__milestone--active\)[\s\S]*display:\s*none/
+	);
 });
 
 test('stage selection carries one current through the complete governed system', () => {
