@@ -374,20 +374,22 @@ function normalizeTeamMember(item) {
     fieldData: sanitizedTeamFieldData(record)
   };
 
-  return normalizeTeamGroups(record).map((group) => ({
+  const groups = normalizeTeamGroups(record);
+  if (!groups.length) return null;
+
+  return {
     ...base,
-    id: group === 'board' ? `${base.id}:board` : `${base.id}:leadership`,
-    group
-  }));
+    group: groups.length > 1 ? 'both' : groups[0]
+  };
 }
 
 export function normalizeTeam(items, { group } = {}) {
   const groupFilter = text(group).toLowerCase();
   return items
     .filter(isPublished)
-    .flatMap(normalizeTeamMember)
-    .filter((person) => Boolean(person.name))
-    .filter((person) => !groupFilter || person.group === groupFilter)
+    .map(normalizeTeamMember)
+    .filter((person) => Boolean(person?.name))
+    .filter((person) => !groupFilter || person.group === 'both' || person.group === groupFilter)
     .sort((a, b) => (a.order ?? 999) - (b.order ?? 999) || a.name.localeCompare(b.name));
 }
 

@@ -258,13 +258,12 @@ test('normalizes team members for endpoint-driven leadership and board component
     people.map((person) => [person.name, person.group, person.imageUrl]),
     [
       ['Bala Iyer', 'board', 'https://cdn.example.com/bala.webp'],
-      ['Ryan Zackon', 'leadership', ''],
-      ['Ryan Zackon', 'board', '']
+      ['Ryan Zackon', 'both', '']
     ]
   );
 });
 
-test('filters team members by group after expanding both-group profiles', () => {
+test('includes one canonical both-group profile in filtered team responses', () => {
   const people = normalizeTeam(
     [
       {
@@ -282,7 +281,8 @@ test('filters team members by group after expanding both-group profiles', () => 
   );
 
   assert.equal(people.length, 1);
-  assert.equal(people[0].group, 'leadership');
+  assert.equal(people[0].id, 'ryan');
+  assert.equal(people[0].group, 'both');
 });
 
 test('converts Webflow rich text bio HTML to plain text for modals', () => {

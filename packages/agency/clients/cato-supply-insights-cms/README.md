@@ -16,6 +16,8 @@ The Cato Insights archive components use the singleton `subscription` object bef
 
 Supported category fields include the standard Webflow `name` and `slug` fields plus optional `mega-menu-label`, `mega-menu-summary`, and `sort-order` fields. `card-summary`, `short-summary`, or `summary` can supply the menu description when `mega-menu-summary` is absent.
 
+`GET /api/cato/team` returns each published Team Member once. The top-level `group` is `leadership`, `board`, or `both`; a `both` member is included when either `?group=leadership` or `?group=board` is requested without duplicating the member in the unfiltered response.
+
 ## Validation
 
 ```bash
