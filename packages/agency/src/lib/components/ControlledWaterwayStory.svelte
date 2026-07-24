@@ -23,13 +23,13 @@
 <section class="waterway" aria-labelledby="controlled-waterway-title">
 	<header class="waterway__header">
 		<div>
-			<span class="waterway__eyebrow">Controlled work network</span>
-			<h2 id="controlled-waterway-title">One workflow. Many inlets. Every handoff governed.</h2>
+			<span class="waterway__eyebrow">Controlled work pipeline</span>
+			<h2 id="controlled-waterway-title">One straight path. Many inputs. Every handoff governed.</h2>
 		</div>
 		<p>
-			A person, system, or agent can start the work. Bounded agents and integrations move it
-			forward; policy decides when to run, prepare and wait, or stop; every resolved step leaves
-			proof.
+			A person, system, or agent can enter the same controlled line. Bounded agents and
+			integrations move work forward; explicit valves decide when to run, prepare and wait, or
+			stop; every resolved step leaves proof.
 		</p>
 	</header>
 
@@ -52,7 +52,7 @@
 
 	<figure class="waterway__figure" data-active-stage={activeStageId}>
 		<div class="waterway__scene">
-			<svg class="waterway__channel" viewBox="0 0 1200 590" aria-hidden="true">
+			<svg class="waterway__pipeline" viewBox="0 0 1200 590" aria-hidden="true">
 				<defs>
 					<linearGradient id="water-flow" x1="0" y1="0" x2="1" y2="0">
 						<stop offset="0" stop-color="var(--color-performance-signal-soft)" />
@@ -65,36 +65,40 @@
 					</filter>
 				</defs>
 
-				<g class="waterway__contours">
-					<path d="M-50 85 C145 5 257 164 430 78 S731 21 910 100 1132 146 1260 61" />
-					<path d="M-35 132 C145 53 258 211 438 126 S738 67 922 147 1140 195 1264 109" />
-					<path d="M-20 452 C151 376 288 521 459 441 S751 374 939 457 1133 510 1260 421" />
-					<path d="M-42 500 C153 421 283 570 465 489 S769 423 946 503 1144 559 1270 472" />
+				<g class="waterway__input-shell">
+					<path d="M-24 176 H104 V344 H184" />
+					<path d="M-24 368 H184" />
+					<path d="M-24 560 H104 V392 H184" />
 				</g>
 
-				<g class="waterway__tributaries">
-					<path d="M-72 226 C18 228 32 302 111 349" />
-					<path d="M-72 368 C4 368 48 368 111 368" />
-					<path d="M-72 516 C18 500 38 425 111 387" />
+				<g class="waterway__input-lines">
+					<path d="M-24 176 H104 V344 H184" />
+					<path d="M-24 368 H184" />
+					<path d="M-24 560 H104 V392 H184" />
 				</g>
 
 				<path
-					class="waterway__concrete"
-					d="M44 368 C185 359 181 195 348 206 C529 219 500 387 679 372 C823 360 795 213 959 223 C1067 230 1111 314 1181 304"
+					class="waterway__pipe-shell"
+					d="M44 368 H1181"
 				/>
 				<path
-					class="waterway__water"
-					d="M44 368 C185 359 181 195 348 206 C529 219 500 387 679 372 C823 360 795 213 959 223 C1067 230 1111 314 1181 304"
+					class="waterway__flow"
+					d="M44 368 H1181"
 				/>
 				<path
 					class="waterway__current"
-					d="M44 368 C185 359 181 195 348 206 C529 219 500 387 679 372 C823 360 795 213 959 223 C1067 230 1111 314 1181 304"
+					d="M44 368 H1181"
 				/>
 
-				<g class="waterway__gate-lines">
-					<path d="M220 234 L265 320" />
-					<path d="M553 303 L600 389" />
-					<path d="M889 194 L933 280" />
+				<g class="waterway__pipe-joints">
+					<path d="M176 319 V417 M190 319 V417" />
+					<path d="M1110 319 V417 M1124 319 V417" />
+				</g>
+
+				<g class="waterway__valves">
+					<path d="M248 356 L260 368 L248 380 Z M272 356 L260 368 L272 380 Z" />
+					<path d="M578 356 L590 368 L578 380 Z M602 356 L590 368 L602 380 Z" />
+					<path d="M908 356 L920 368 L908 380 Z M932 356 L920 368 L932 380 Z" />
 				</g>
 			</svg>
 
@@ -133,11 +137,11 @@
 			</ol>
 		</div>
 		<figcaption>
-			<span>Tributaries = typed triggers</span>
-			<span>Water = work in motion</span>
-			<span>Concrete = policy boundary</span>
-			<span>Basin = prepare + wait</span>
-			<span>Downstream = proof + outcome</span>
+			<span>Inputs = typed triggers</span>
+			<span>Pipe = bounded work</span>
+			<span>Valves = policy gates</span>
+			<span>Hold = prepare + wait</span>
+			<span>Output = proof + outcome</span>
 		</figcaption>
 	</figure>
 
@@ -156,8 +160,8 @@
 		<div class="waterway__network-route" aria-label="Governed work route">
 			<section class="waterway__network-node waterway__inlets" aria-labelledby="trigger-inlets-title">
 				<header>
-					<span>01 / Inlets</span>
-					<strong id="trigger-inlets-title">Triggers can come from anywhere.</strong>
+					<span>01 / Inputs</span>
+					<strong id="trigger-inlets-title">Triggers enter one controlled line.</strong>
 				</header>
 				<div class="waterway__trigger-list">
 					{#each WORKFLOW_TRIGGERS as trigger}
@@ -260,7 +264,7 @@
 
 		<article class="waterway__business-outcome" data-business-outcome>
 			<div>
-				<span>05 / Downstream</span>
+				<span>05 / Output</span>
 				<strong>{BUSINESS_OUTCOME.label}</strong>
 			</div>
 			<p>{BUSINESS_OUTCOME.operationalResult}</p>
@@ -436,7 +440,8 @@
 		min-height: clamp(32rem, 47vw, 42rem);
 		overflow: hidden;
 		background:
-			radial-gradient(circle at 18% 10%, color-mix(in srgb, var(--waterway-court-line) 13%, transparent), transparent 28%),
+			linear-gradient(to right, color-mix(in srgb, var(--waterway-court-line) 8%, transparent) 1px, transparent 1px) 0 0 / calc(100% / 12) 100%,
+			linear-gradient(to bottom, color-mix(in srgb, var(--waterway-court-line) 8%, transparent) 1px, transparent 1px) 0 0 / 100% 25%,
 			linear-gradient(145deg, color-mix(in srgb, var(--waterway-ink-soft) 78%, var(--waterway-court)) 0%, var(--waterway-ink-soft) 50%, var(--waterway-ink) 100%);
 	}
 
@@ -444,12 +449,12 @@
 		content: '';
 		position: absolute;
 		inset: 0;
-		background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.16'/%3E%3C/svg%3E");
-		opacity: 0.18;
+		background: linear-gradient(90deg, transparent 0 94%, color-mix(in srgb, var(--waterway-court-line) 10%, transparent) 94% 94.15%, transparent 94.15%);
+		opacity: 0.7;
 		pointer-events: none;
 	}
 
-	.waterway__channel {
+	.waterway__pipeline {
 		position: absolute;
 		inset: 0;
 		z-index: 1;
@@ -457,37 +462,43 @@
 		height: 100%;
 	}
 
-	.waterway__contours path {
+	.waterway__input-shell path,
+	.waterway__input-lines path {
 		fill: none;
-		stroke: color-mix(in srgb, var(--waterway-court) 18%, transparent);
-		stroke-width: 1.5;
+		stroke-linecap: square;
+		stroke-linejoin: miter;
 	}
 
-	.waterway__tributaries path {
-		fill: none;
-		stroke: var(--waterway-signal-soft);
-		stroke-width: 42;
-		stroke-linecap: round;
-		opacity: 0.72;
-	}
-
-	.waterway__concrete,
-	.waterway__water,
-	.waterway__current {
-		fill: none;
-		stroke-linecap: round;
-		stroke-linejoin: round;
-	}
-
-	.waterway__concrete {
+	.waterway__input-shell path {
 		stroke: var(--waterway-court);
-		stroke-width: 118;
+		stroke-width: 42;
 		opacity: 0.92;
 	}
 
-	.waterway__water {
-		stroke: url(#water-flow);
-		stroke-width: 72;
+	.waterway__input-lines path {
+		stroke: var(--waterway-signal);
+		stroke-width: 24;
+		opacity: 0.9;
+	}
+
+	.waterway__pipe-shell,
+	.waterway__flow,
+	.waterway__current {
+		fill: none;
+		stroke-linecap: square;
+		stroke-linejoin: miter;
+	}
+
+	.waterway__pipe-shell {
+		stroke: var(--waterway-court);
+		stroke-width: 82;
+		opacity: 0.92;
+	}
+
+	.waterway__flow {
+		stroke: var(--waterway-signal);
+		stroke-width: 52;
+		opacity: 0.9;
 	}
 
 	.waterway__current {
@@ -498,11 +509,15 @@
 		animation: waterway-current calc(var(--duration-performance-slow, 700ms) * 4) linear infinite;
 	}
 
-	.waterway__gate-lines path {
+	.waterway__pipe-joints path {
 		fill: none;
-		stroke: var(--waterway-pressure);
-		stroke-width: 10;
-		stroke-linecap: round;
+		stroke: var(--waterway-line-strong);
+		stroke-width: 6;
+	}
+
+	.waterway__valves path {
+		fill: var(--waterway-pressure);
+		stroke: none;
 	}
 
 	.waterway__milestones {
@@ -544,8 +559,8 @@
 		box-shadow: 0 0 0 4px color-mix(in srgb, var(--waterway-signal) 20%, transparent);
 	}
 
-	.waterway__milestones > li:nth-child(1) { left: 6%; top: 18%; }
-	.waterway__milestones > li:nth-child(2) { left: 38%; top: 58%; }
+	.waterway__milestones > li:nth-child(1) { left: 14%; top: 40%; }
+	.waterway__milestones > li:nth-child(2) { left: 41%; top: 40%; }
 	.waterway__milestones > li:nth-child(3) { right: 4%; top: 8%; width: min(29rem, 39%); }
 
 	.waterway__milestones > .waterway__milestone--active {
@@ -959,7 +974,7 @@
 			background: linear-gradient(160deg, var(--waterway-ink-soft) 0%, var(--waterway-ink) 100%);
 		}
 
-		.waterway__channel { display: none; }
+		.waterway__pipeline { display: none; }
 		.waterway__milestones {
 			position: relative;
 			display: grid;

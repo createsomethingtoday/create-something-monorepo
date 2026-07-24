@@ -145,3 +145,26 @@ test('Control exposes the governed handoff from typed trigger to business outcom
 	const receiptIndex = component.indexOf('data-receipt');
 	assert.ok(workIndex !== -1 && workIndex < receiptIndex, 'bounded work must precede its receipt');
 });
+
+test('the visual grammar is a direct engineered pipeline, not a winding waterway', () => {
+	for (const contract of [
+		'Controlled work pipeline',
+		'One straight path. Many inputs. Every handoff governed.',
+		'Triggers enter one controlled line.',
+		'Inputs = typed triggers',
+		'Pipe = bounded work',
+		'Valves = policy gates',
+		'Hold = prepare + wait',
+		'Output = proof + outcome',
+		'class="waterway__pipeline"',
+		'd="M44 368 H1181"'
+	]) {
+		assert.ok(component.includes(contract), `the direct pipeline should expose ${contract}`);
+	}
+
+	const pipelineSvg = component.match(/<svg class="waterway__pipeline"[\s\S]*?<\/svg>/)?.[0] ?? '';
+	assert.notEqual(pipelineSvg, '', 'the engineered pipeline should remain an inspectable SVG');
+	assert.equal(/<path[^>]*d="[^"]*[CSQ]/.test(pipelineSvg), false, 'pipeline geometry must not meander');
+	assert.equal(component.includes('waterway__contours'), false);
+	assert.equal(component.includes('waterway__tributaries'), false);
+});
