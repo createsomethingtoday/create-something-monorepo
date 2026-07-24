@@ -4,6 +4,7 @@ import test from 'node:test';
 
 import { marketingPagePortfolio } from '../src/lib/data/marketingPages.ts';
 import { templateReviewFieldReport } from '../src/lib/data/fieldReports.ts';
+import { usesRouteOwnedAgencyPerformanceEnding } from '../src/lib/atlas/surface-policy.ts';
 
 const read = (relativePath: string) => {
   const url = new URL(relativePath, import.meta.url);
@@ -17,7 +18,7 @@ const products = read('../src/routes/products/+page.svelte');
 const handoff = read('../src/lib/components/AgencyPerformanceHandoff.svelte');
 const readback = read('../src/lib/components/AgencyPerformanceReadback.svelte');
 
-test('every indexed public marketing route receives a performance readback', () => {
+test('every indexed public marketing route receives a route-owned or shared Performance ending', () => {
   const indexedRoutes = marketingPagePortfolio.filter((entry) => entry.decision === 'index');
 
   assert.equal(indexedRoutes.length, 25);
@@ -25,9 +26,11 @@ test('every indexed public marketing route receives a performance readback', () 
   assert.match(layout, /marketingPagePortfolio/);
   assert.match(layout, /entry\.decision !== 'archive'/);
   assert.match(layout, /<AgencyPerformanceHandoff \/>/);
-  assert.match(layout, /\$page\.url\.pathname !== '\/'/);
-  assert.match(layout, /\$page\.url\.pathname !== '\/services'/);
-  assert.match(layout, /\$page\.url\.pathname !== '\/products'/);
+  assert.match(layout, /isPublicMarketingRoute && !routeOwnsPerformanceEnding/);
+
+  for (const pathname of ['/', '/services', '/products', '/stack', '/field-reports']) {
+    assert.equal(usesRouteOwnedAgencyPerformanceEnding(pathname), true, pathname);
+  }
 
   assert.match(home, /AgencyPerformanceReadback/);
   assert.ok(
