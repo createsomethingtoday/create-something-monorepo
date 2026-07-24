@@ -862,7 +862,7 @@
 	}
 
 	.waterway__system [data-flow-phase] {
-		opacity: 0.34;
+		opacity: 0.62;
 		transition:
 			opacity var(--duration-performance-standard, 350ms) var(--ease-performance-standard, ease),
 			filter var(--duration-performance-standard, 350ms) var(--ease-performance-standard, ease);
