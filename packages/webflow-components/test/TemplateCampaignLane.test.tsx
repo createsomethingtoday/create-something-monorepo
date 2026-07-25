@@ -1,0 +1,83 @@
+import assert from 'node:assert/strict';
+import { test } from 'node:test';
+import React from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import {
+  isCampaignImpressionVisible,
+  templateCampaignPlaybackPolicy,
+  TemplateCampaignLane,
+  TemplateCampaignVideoModal,
+  templateCampaignEventData,
+} from '../src/components/marketplace/TemplateCampaignLane';
+
+test('renders the MCP 2.0 launch campaign without loading video before activation', () => {
+  const html = renderToStaticMarkup(<TemplateCampaignLane enableAnalytics={false} />);
+
+  assert.match(html, /data-campaign-id="webflow-mcp-2"/);
+  assert.match(html, /New · Webflow MCP 2\.0/);
+  assert.match(html, /Start with a template\. Make it yours with an AI agent\./);
+  assert.match(html, /choose and install a Webflow template/i);
+  assert.match(html, /Watch MCP 2\.0/);
+  assert.match(html, /Get started with MCP/);
+  assert.match(html, /aria-haspopup="dialog"/);
+  assert.match(html, /data-video-destination="cloudflare"/);
+  assert.match(html, /container-type:\s*inline-size/);
+  assert.match(html, /@container tmcampaign/);
+  assert.match(html, /<img/);
+  assert.match(html, /src="https:\/\/cdn\.prod\.website-files\.com\/5e593fb060cf87bbaf75dd20\/6a60539b9ab1dec9cf71cd3a_webflow-mcp-2-video-poster\.jpg"/);
+  assert.match(html, /loading="lazy"/);
+  assert.doesNotMatch(html, /i\.ytimg\.com/);
+  assert.doesNotMatch(html, /<video/);
+  assert.doesNotMatch(html, /<iframe/);
+  assert.doesNotMatch(html, /youtu(?:be|\.be)/);
+});
+
+test('renders the Cloudflare-hosted video in an accessible native-player modal', () => {
+  const html = renderToStaticMarkup(<TemplateCampaignVideoModal onClose={() => undefined} />);
+
+  assert.match(html, /role="dialog"/);
+  assert.match(html, /aria-modal="true"/);
+  assert.match(html, /Introducing MCP 2\.0/);
+  assert.match(html, /<video/);
+  assert.match(html, /src="https:\/\/media\.createsomething\.io\/webflow\/mcp-2\/introducing-mcp-2-0-1080p\.mp4"/);
+  assert.match(html, /poster="https:\/\/cdn\.prod\.website-files\.com\/5e593fb060cf87bbaf75dd20\/6a60539b9ab1dec9cf71cd3a_webflow-mcp-2-video-poster\.jpg"/);
+  assert.match(html, /controls=""/);
+  assert.match(html, /autoplay=""/);
+  assert.match(html, /muted=""/);
+  assert.match(html, /playsinline=""/);
+  assert.match(html, /crossorigin="anonymous"/);
+  assert.match(html, /preload="metadata"/);
+  assert.match(html, /kind="captions"/);
+  assert.match(html, /src="https:\/\/media\.createsomething\.io\/webflow\/mcp-2\/introducing-mcp-2-0-en\.vtt"/);
+  assert.match(html, /srcLang="en"/);
+  assert.match(html, /label="English"/);
+  assert.match(html, /default=""/);
+  assert.match(html, /Loading video/);
+  assert.match(html, /role="status"/);
+  assert.doesNotMatch(html, /<iframe/);
+  assert.doesNotMatch(html, /i\.ytimg\.com/);
+  assert.doesNotMatch(html, /youtu(?:be|\.be)/);
+  assert.match(html, /Close video/);
+  assert.match(html, /Get started with MCP/);
+});
+
+test('disables autoplay and motion-dependent muting when reduced motion is requested', () => {
+  assert.deepEqual(templateCampaignPlaybackPolicy(false), { autoPlay: true, muted: true });
+  assert.deepEqual(templateCampaignPlaybackPolicy(true), { autoPlay: false, muted: false });
+});
+
+test('qualifies an impression only when at least half of the campaign is visible', () => {
+  assert.equal(isCampaignImpressionVisible({ isIntersecting: true, intersectionRatio: 0.49 }), false);
+  assert.equal(isCampaignImpressionVisible({ isIntersecting: false, intersectionRatio: 0.9 }), false);
+  assert.equal(isCampaignImpressionVisible({ isIntersecting: true, intersectionRatio: 0.5 }), true);
+});
+
+test('emits a stable campaign-only analytics payload', () => {
+  assert.deepEqual(templateCampaignEventData('campaign_video_opened'), {
+    component: 'TemplateCampaignLane',
+    scope: 'campaign_video_opened',
+    campaign_id: 'webflow-mcp-2',
+    placement: 'template_grid',
+    video_id: '04xmzvomt2I',
+  });
+});

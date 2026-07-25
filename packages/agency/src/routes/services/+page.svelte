@@ -1,15 +1,11 @@
 <script lang="ts">
-  import {
-    Button,
-    PerformanceCampaignOpening,
-    PerformanceCardGrid,
-    PerformanceContrastChapter,
-    PerformancePageSection,
-    SEO
-  } from '@create-something/canon';
+  import { Button, PerformanceCampaignOpening, SEO } from '@create-something/canon';
+  import AgencyPerformanceReadback from '$lib/components/AgencyPerformanceReadback.svelte';
+  import ControlledWaterwayStory from '$lib/components/ControlledWaterwayStory.svelte';
+  import ServicesMapPreview from '$lib/components/ServicesMapPreview.svelte';
+  import ServicesProductPath from '$lib/components/ServicesProductPath.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
   import { getPublicProduct } from '$lib/data/productFamily';
-  import PublicAtlasCanvas from '$lib/components/PublicAtlasCanvas.svelte';
 
   const mapProduct = getPublicProduct('map');
   const buildProduct = getPublicProduct('build');
@@ -47,30 +43,6 @@
     }
   ];
 
-  const familyCards = [
-    {
-      eyebrow: 'Standalone subscription',
-      title: mapProduct.name,
-      detail: mapProduct.outcome,
-      href: mapProduct.route,
-      points: ['Living workflow definition', 'Monthly or yearly', 'Useful without Build or Control']
-    },
-    {
-      eyebrow: 'Implementation service',
-      title: buildProduct.name,
-      detail: buildProduct.outcome,
-      href: agencyCoreMessaging.workflowMappingSessionHref,
-      points: ['Scoped implementation', 'Owned system and handoff', 'Quoted separately from software']
-    },
-    {
-      eyebrow: 'Standalone subscription',
-      title: controlProduct.name,
-      detail: controlProduct.outcome,
-      href: controlProduct.route,
-      points: ['Control includes Map', 'Monthly or yearly', 'Inbox / Map / Proof']
-    }
-  ];
-
   const faqItems = [
     {
       question: 'What is your primary service?',
@@ -93,7 +65,6 @@
         'Yes. Clients retain ownership of code, workflows, operating documentation, and approval authority.'
     }
   ];
-
 </script>
 
 <SEO
@@ -111,11 +82,19 @@
     eyebrow="How It Works"
     title="Map the workflow before deciding to build."
     lede="Bring one handoff your team still checks manually. We map the owner, systems, safe actions, approval point, stop condition, and evidence before anything touches customers, money, production, or accounts."
-    media={{ src: '/images/performance-lab/trace-wake-natural.webp', mobileSrc: '/images/performance-lab/trace-wake-natural-mobile.webp', alt: 'Aerial black-and-white view of a survey craft leaving a directional wake' }}
-    proof={[{ label: 'Boundary', value: 'Named' }, { label: 'Pressure', value: 'Held' }, { label: 'Evidence', value: 'Attached' }]}
+    media={{
+      src: '/images/performance-lab/trace-wake-natural.webp',
+      mobileSrc: '/images/performance-lab/trace-wake-natural-mobile.webp',
+      alt: 'Aerial black-and-white view of a survey craft leaving a directional wake'
+    }}
+    proof={[
+      { label: 'Owner', value: 'Named' },
+      { label: 'Protected action', value: 'Held' },
+      { label: 'Evidence', value: 'Attached' }
+    ]}
   >
     {#snippet actions()}
-      <Button href="#map-warmup">
+      <Button href={agencyCoreMessaging.selfMapHref}>
         {agencyCoreMessaging.selfMapLabel}
       </Button>
       <Button href={agencyCoreMessaging.servicesMappingSessionHref} variant="secondary">
@@ -124,28 +103,29 @@
     {/snippet}
   </PerformanceCampaignOpening>
 
-  <PerformancePageSection
-    variant="white"
-    eyebrow="Product and service path"
-    title="Map -> Build -> Control"
-    description="Map and Control are standalone subscriptions. Build is the implementation service between them when a team wants CREATE SOMETHING to turn the approved definition into an owned system. Control includes Map."
-  >
-    {#snippet after()}
-      <PerformanceCardGrid items={familyCards} columns={3} ariaLabel="CREATE SOMETHING product and service family" />
-    {/snippet}
-  </PerformancePageSection>
+  <ServicesProductPath />
+  <AgencyPerformanceReadback embedded={true} />
 
-  <div id="map-warmup">
-  <PerformanceContrastChapter
-    eyebrow="Map before booking"
-    title="See the workflow before deciding to build."
-    description="CREATE SOMETHING Map turns one workflow into a first plan: the systems involved, which signals matter, what AI can handle, where people approve, and what proof records the outcome. It does not touch production systems."
-    intervention={{ label: 'Read-only warmup', title: 'Public Map canvas', detail: 'Explore the operating path without touching production systems.' }}
-    artifactPlacement="full-width"
-  >
-    {#snippet artifact()}
-      <PublicAtlasCanvas />
-    {/snippet}
-  </PerformanceContrastChapter>
-  </div>
+  <section class="services-pipeline" aria-label="Controlled work pipeline">
+    <ControlledWaterwayStory />
+  </section>
+
+  <ServicesMapPreview />
 </div>
+
+<style>
+  .services-performance {
+    background: var(--color-performance-paper, #f3f3f0);
+  }
+
+  .services-pipeline {
+    padding: clamp(2rem, 5vw, 4.5rem) clamp(1.25rem, 5vw, 6rem);
+    border-block: 1px solid var(--color-performance-line, #d7d7d2);
+    background: var(--color-performance-panel, #ffffff);
+  }
+
+  .services-pipeline :global(.waterway) {
+    width: min(var(--content-width-performance, 85rem), 100%);
+    margin-inline: auto;
+  }
+</style>

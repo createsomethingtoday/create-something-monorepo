@@ -128,21 +128,11 @@ test('Delegation Practice is a bounded Atlas proof surface, not an editable prod
 	assert.equal(practiceRoute.includes('<PublicAtlasCanvas'), false);
 });
 
-test('Map route presents the story canvas before the editable canvas', () => {
-	const storyCanvasIndex = mapRoute.indexOf('<PublicAtlasStoryCanvas');
-	const editableCanvasIndex = mapRoute.indexOf('<PublicAtlasCanvas');
-
-	assert.notEqual(storyCanvasIndex, -1);
-	assert.notEqual(editableCanvasIndex, -1);
-	assert.ok(storyCanvasIndex < editableCanvasIndex);
-	assert.ok(mapRoute.includes('starterId="marketplace-review-queue"'));
-	assert.ok(mapRoute.includes('storyId="map-page-marketplace-review-story"'));
+test('Map route keeps one editable map with a compact worked-example rail', () => {
+	assert.equal(mapRoute.includes('<PublicAtlasStoryCanvas'), false);
+	assert.equal(mapRoute.match(/<PublicAtlasCanvas/g)?.length, 1);
+	assert.ok(mapRoute.includes('<SystemContextRail'));
 	assert.ok(mapRoute.includes('bookingHref="/book"'));
-});
-
-test('Map route labels the story and mapping surfaces distinctly', () => {
-	assert.ok(mapRoute.includes('eyebrow="Workflow story"'));
-	assert.ok(mapRoute.includes('same graph contract'));
 	assert.ok(mapRoute.includes('eyebrow="Public mapping surface"'));
 	assert.ok(mapRoute.includes('The canvas turns curiosity into operating context.'));
 });
@@ -316,8 +306,9 @@ test('editable Atlas flow uses stable overridable ids instead of fixed DOM ids',
 	assert.ok(canonFlowComponent.includes('aria-label={ariaLabel}'));
 	assert.equal(canonFlowComponent.includes('public-atlas-flow__surface'), false);
 	assert.equal(canonFlowComponent.includes('<svg'), false);
-	assert.equal(canonFlowComponent.includes('\n\t\t\tfitView\n'), false);
-	assert.equal(canonFlowComponent.includes('fitViewOptions={{ padding: 0.18, minZoom: 0.2'), false);
+	assert.ok(canonFlowComponent.includes('export let fitView = false'));
+	assert.ok(canonFlowComponent.includes('{fitView}'));
+	assert.ok(canonFlowComponent.includes('{fitViewOptions}'));
 	assert.equal(canonFlowComponent.includes('aria-label="Svelte Atlas workflow map"'), false);
 	assert.equal(canonFlowComponent.includes('id="public-atlas-flow-arrow"'), false);
 	assert.equal(canonFlowComponent.includes('marker-end="url(#public-atlas-flow-arrow)"'), false);

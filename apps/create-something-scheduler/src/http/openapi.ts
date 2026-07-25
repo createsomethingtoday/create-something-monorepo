@@ -85,6 +85,15 @@ export const schedulerOpenApi = {
         security: [{ operatorBearer: [] }]
       }
     },
+    '/api/v1/operator/conflict-projections/webflow-google-calendar': {
+      put: writeOperation(
+        'upsertWebflowBusyProjection',
+        'Replace the freshness-bounded Webflow busy projection',
+        'BusyProjectionInput',
+        'BusyProjectionResult',
+        [{ operatorBearer: [] }]
+      )
+    },
     '/api/v1/operator/availability-overrides': {
       get: {
         ...operation('listAvailabilityOverrides', 'List date-specific availability overrides', 'Operator-scoped bounded exceptions layered onto recurring availability.', 'AvailabilityOverrideList'),
@@ -225,10 +234,51 @@ export const schedulerOpenApi = {
         ready: { type: 'boolean' },
         oauthConnected: { type: 'boolean' },
         calendarDiscovered: { type: 'boolean' },
+        webflowProjectionFresh: { type: 'boolean' },
+        webflowProjectionHorizonCovered: { type: 'boolean' },
+        webflowProjectionObservedAt: { type: ['string', 'null'], format: 'date-time' },
+        webflowProjectionExpiresAt: { type: ['string', 'null'], format: 'date-time' },
+        webflowProjectionRangeEnd: { type: ['string', 'null'], format: 'date-time' },
         selectedCalendarCount: { type: 'integer', minimum: 0 },
         eventCalendarId: { type: ['string', 'null'] },
         configuration: { type: 'object', additionalProperties: { type: 'boolean' } }
-      }, ['ready', 'oauthConnected', 'calendarDiscovered', 'selectedCalendarCount', 'configuration']),
+      }, [
+        'ready',
+        'oauthConnected',
+        'calendarDiscovered',
+        'webflowProjectionFresh',
+        'webflowProjectionHorizonCovered',
+        'selectedCalendarCount',
+        'configuration'
+      ]),
+      BusyProjectionInput: object({
+        source: { const: 'webflow-google-calendar' },
+        rangeStart: { type: 'string', format: 'date-time' },
+        rangeEnd: { type: 'string', format: 'date-time' },
+        observedAt: { type: 'string', format: 'date-time' },
+        expiresAt: { type: 'string', format: 'date-time' },
+        intervals: { type: 'array', maxItems: 2000, items: ref('Slot') },
+        explicitIntent: { const: true }
+      }, [
+        'source',
+        'rangeStart',
+        'rangeEnd',
+        'observedAt',
+        'expiresAt',
+        'intervals',
+        'explicitIntent'
+      ]),
+      BusyProjectionResult: object({
+        status: { type: 'string', enum: ['accepted', 'rejected', 'operator_required'] },
+        receiptId: { type: 'string' },
+        source: { const: 'webflow-google-calendar' },
+        intervalCount: { type: 'integer', minimum: 0 },
+        rangeStart: { type: 'string', format: 'date-time' },
+        rangeEnd: { type: 'string', format: 'date-time' },
+        observedAt: { type: 'string', format: 'date-time' },
+        expiresAt: { type: 'string', format: 'date-time' },
+        reason: { type: 'string' }
+      }, ['status']),
       CalendarDiscovery: object({
         status: { const: 'available' },
         selectedCalendarIds: { type: 'array', items: { type: 'string' } },

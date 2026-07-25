@@ -9,6 +9,7 @@
     type PerformanceCardItem,
     type PerformanceNarrativeScene
   } from '@create-something/canon';
+  import SystemContextArtifact from '$lib/components/SystemContextArtifact.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
   import { getPublicProduct } from '$lib/data/productFamily';
 
@@ -89,14 +90,14 @@
       tone: 'neutral'
     },
     {
-      id: 'foundation',
-      label: 'Foundation',
-      summary: 'One owned system',
-      title: 'Map and Control use the same operating foundation.',
+      id: 'context',
+      label: 'System context',
+      summary: 'Dependencies, authority, change, and proof',
+      title: 'See the operating boundary before work runs.',
       detail:
-        'Substrate keeps the records, Topology supplies derived system context, the shared canvas carries the workflow definition, and the governed runtime preserves approvals, runs, receipts, and recovery.',
+        'Inspect what the workflow depends on, who can act, what changed, and which evidence supports the current state. Unknown and stale claims stay visible instead of becoming implied permission.',
       tone: 'neutral',
-      receipts: ['Substrate', 'Topology', 'shared canvas', 'governed runtime']
+      receipts: ['named owner', 'run / wait / stop', 'dated change', 'recovery path']
     }
   ];
 </script>
@@ -135,8 +136,8 @@
   <PerformanceNarrativeStage
     id="control-operating-story"
     eyebrow="One governed product"
-    title="Boundary. Operate. Cadence. Foundation."
-    description="Control reads as one operating decision: establish the shared workflow boundary, see how judgment moves, choose a review rhythm, and keep every state in one owned system."
+    title="Boundary. Operate. Cadence. System context."
+    description="Control shows one operating decision at a time. Set the workflow boundary, see where judgment moves, choose a review rhythm, and keep every state in one owned system."
     scenes={controlScenes}
     ariaLabel="Control operating story"
   >
@@ -170,12 +171,7 @@
           ariaLabel="Control subscription cadences"
         />
       {:else}
-        <aside class="foundation-receipt" aria-label="Map and Control shared foundation">
-          <span>Database</span><strong>Substrate records</strong>
-          <span>Context</span><strong>Topology derives</strong>
-          <span>Definition</span><strong>Shared canvas</strong>
-          <span>Operation</span><strong>Runs + receipts</strong>
-        </aside>
+        <SystemContextArtifact />
       {/if}
     {/snippet}
   </PerformanceNarrativeStage>
@@ -248,32 +244,6 @@
     background: var(--color-performance-paper, #f3f3f0);
   }
 
-  .foundation-receipt {
-    display: grid;
-    grid-template-columns: minmax(7rem, 0.35fr) minmax(0, 1fr);
-    border: 1px solid var(--color-performance-line, #d7d7d2);
-    border-radius: var(--radius-performance-sm, 4px);
-    overflow: hidden;
-    background: var(--color-performance-panel, #fff);
-  }
-
-  .foundation-receipt span,
-  .foundation-receipt strong {
-    padding: 0.85rem 1rem;
-    border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
-  }
-
-  .foundation-receipt span {
-    color: var(--color-performance-muted, #5e6268);
-    font-family: var(--font-performance-mono);
-    font-size: 0.72rem;
-    text-transform: uppercase;
-  }
-
-  .foundation-receipt > :nth-last-child(-n + 2) {
-    border-bottom: 0;
-  }
-
   @media (max-width: 640px) {
     .control-loop {
       grid-template-columns: 1fr;
@@ -289,12 +259,6 @@
     .control-loop footer {
       grid-column: auto;
       flex-direction: column;
-    }
-    .foundation-receipt {
-      grid-template-columns: 1fr;
-    }
-    .foundation-receipt > :nth-last-child(2) {
-      border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
     }
   }
 </style>

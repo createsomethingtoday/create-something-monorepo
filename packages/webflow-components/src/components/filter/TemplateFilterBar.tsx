@@ -6,10 +6,14 @@ import React, {
   useRef,
   useState,
 } from 'react';
+import {
+  getTemplateSortOptions,
+  normalizeTemplateSort as normalizeSort,
+  type TemplateSort,
+} from '../marketplace/templateRoute';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type TemplateSort = 'popular' | 'newest' | 'price_asc' | 'price_desc';
 type TemplateScope = 'all' | 'featured' | 'free' | 'landing_pages';
 type SortDisplay = 'auto' | 'dropdown' | 'segmented';
 
@@ -143,13 +147,6 @@ const CLOUD_APP_PREVIEW_ORIGIN = 'https://webflow-template-marketplace.webflow.i
 const FACETS_CACHE_TTL_MS = 5 * 60 * 1000;
 
 const facetsPayloadCache = new Map<string, { timestamp: number; data: FacetsPayload }>();
-
-const SORT_OPTIONS: Array<{ value: TemplateSort; label: string }> = [
-  { value: 'popular', label: 'Popular' },
-  { value: 'newest', label: 'Newest' },
-  { value: 'price_asc', label: 'Price: Low to High' },
-  { value: 'price_desc', label: 'Price: High to Low' },
-];
 
 type OpenPanel = 'search' | 'styles' | 'types' | 'sort' | null;
 
@@ -722,27 +719,6 @@ function titleCaseSlug(value: string): string {
     .replace(/\s+&\s+/g, ' & ');
 }
 
-function normalizeSort(value: string | null, fallback: TemplateSort = 'popular'): TemplateSort {
-  switch ((value ?? '').trim()) {
-    case 'newest':
-    case 'approval-date':
-    case 'approval-date-desc':
-      return 'newest';
-    case 'price_asc':
-    case 'price-asc':
-      return 'price_asc';
-    case 'price_desc':
-    case 'price-desc':
-      return 'price_desc';
-    case 'popular':
-    case 'popularity-score':
-    case 'popularity-score-desc':
-      return 'popular';
-    default:
-      return fallback;
-  }
-}
-
 function defaultUrlFilters(defaultSort: TemplateSort = 'popular'): LocalFilters {
   return { q: '', styles: [], tags: [], types: [], freeOnly: false, sort: defaultSort };
 }
@@ -801,6 +777,8 @@ function readRouteContext(
   const designerMatch = pathname.match(/\/templates\/designers\/([^/?#]+)/);
   const styleMatch = pathname.match(/\/templates\/style\/([^/?#]+)/);
   const tagMatch = pathname.match(/\/templates\/tag\/([^/?#]+)/);
+  const categoryParam = url.searchParams.get('category') ?? url.searchParams.get('category_group_slug');
+  const subcategoryParam = url.searchParams.get('subcategory') ?? url.searchParams.get('child_category_slug');
 
   let scope: RouteContext['scope'] = null;
   if (pathname === '/templates/featured') {
@@ -817,16 +795,10 @@ function readRouteContext(
 
   return {
     scope: scopeOverride && scopeOverride !== 'all' ? scopeOverride : scope,
-    categoryGroupSlug:
-      categorySlugOverride ||
-      (categoryMatch
-        ? categoryMatch[1]
-        : (url.searchParams.get('category') ?? url.searchParams.get('category_group_slug')) || null),
+    categoryGroupSlug: categoryParam || categorySlugOverride || (categoryMatch ? categoryMatch[1] : null),
     childCategorySlug:
-      subcategorySlugOverride ||
-      (subcategoryMatch
-        ? subcategoryMatch[1]
-        : (url.searchParams.get('subcategory') ?? url.searchParams.get('child_category_slug')) || null),
+      subcategoryParam ||
+      (categoryParam ? null : subcategorySlugOverride || (subcategoryMatch ? subcategoryMatch[1] : null)),
     creatorSlug:
       creatorSlugOverride ||
       (designerMatch
@@ -1041,11 +1013,8 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
   const hasSubcategoryPillContext = Boolean(routeContext.categoryGroupSlug || routeContext.childCategorySlug);
   const isFreeSortContext = routeContext.scope === 'free' || filters.freeOnly;
   const sortOptions = useMemo(
-    () =>
-      isFreeSortContext
-        ? SORT_OPTIONS.filter((option) => option.value === 'popular' || option.value === 'newest')
-        : SORT_OPTIONS,
-    [isFreeSortContext],
+    () => getTemplateSortOptions(isFreeSortContext ? 'free' : routeContext.scope ?? 'all'),
+    [isFreeSortContext, routeContext.scope],
   );
 
   const styleNameBySlug = useMemo(() => {
@@ -1179,9 +1148,9 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
   }, [defaultSort]);
 
   useEffect(() => {
-    if (!isFreeSortContext || (filters.sort !== 'price_asc' && filters.sort !== 'price_desc')) return;
-    applyFilter({ sort: defaultSort });
-  }, [applyFilter, defaultSort, filters.sort, isFreeSortContext]);
+    if (!isFreeSortContext || sortOptions.some((option) => option.value === filters.sort)) return;
+    applyFilter({ sort: defaultSort === 'newest' ? 'newest' : 'popular' });
+  }, [applyFilter, defaultSort, filters.sort, isFreeSortContext, sortOptions]);
 
   const onSearchChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {

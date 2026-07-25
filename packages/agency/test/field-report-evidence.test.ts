@@ -61,6 +61,9 @@ test('public Field Report leads with the decision and keeps eval scope explicit'
   assert.match(route, /title=\{templateReviewFieldReport\.title\}/);
   assert.match(route, /49 of 50 selected cases/i);
   assert.match(route, /promotion blocked/i);
+  assert.match(route, /class="failed-boundary__metric-value">1 \/ 2<\/span>/i);
+  assert.match(route, /class="failed-boundary__metric-qualifier">missed<\/span>/i);
+  assert.match(route, /container-type:\s*inline-size/i);
   assert.match(route, /missed one of two historical exceptional examples/i);
   assert.match(route, /synthetic/i);
   assert.match(route, /32 live boundary scenarios/i);
@@ -82,6 +85,28 @@ test('public Field Report leads with the decision and keeps eval scope explicit'
   assert.doesNotMatch(route, /eight reviewer buckets/i);
   assert.doesNotMatch(route, /One method\. One map\. Three operating surfaces\./i);
   assert.doesNotMatch(route, /layoff|head[ -]?count|replace(?:d|ment)? people/i);
+});
+
+test('Result metrics preserve the evidence and scale from their Performance cells', () => {
+  const route = readFileSync(
+    new URL('../src/routes/field-reports/template-review/+page.svelte', import.meta.url),
+    'utf8'
+  );
+  const metricCellRule = route.match(/\.field-result__metrics > div \{([\s\S]*?)\n\s*\}/)?.[1];
+  const metricValueRule = route.match(/\.field-result__metrics dd \{([\s\S]*?)\n\s*\}/)?.[1];
+
+  assert.match(route, /<dd>49 \/ 50<\/dd>/);
+  assert.match(route, /<dd>Blocked<\/dd>/);
+  assert.match(route, /<dd>Unmeasured<\/dd>/);
+  assert.ok(metricCellRule, 'Result metric cell rule is present');
+  assert.ok(metricValueRule, 'Result metric value rule is present');
+  assert.match(metricCellRule, /container-type:\s*inline-size;/);
+  assert.match(metricValueRule, /16cqi/);
+  assert.match(route, /var\(--space-performance-md/);
+  assert.match(route, /var\(--text-performance-display-sm/);
+  assert.match(route, /data-tone="growth"/);
+  assert.match(route, /data-tone="risk"/);
+  assert.doesNotMatch(metricValueRule, /4vw/);
 });
 
 test('public Field Report orders the evidence argument before one combined economics scene', () => {
@@ -177,7 +202,11 @@ test('Products explains the product family and keeps operating surfaces inside C
     'utf8'
   );
 
-  assert.match(products, /Map -> Build -> Control/);
+  assert.match(products, /Choose where the workflow is now\./);
+  assert.match(products, /id: 'map'/);
+  assert.match(products, /id: 'build'/);
+  assert.match(products, /id: 'control'/);
+  assert.doesNotMatch(products, /id: 'proof'/);
   assert.match(products, /Two products and one implementation service\./);
   assert.match(products, /Signal, Decision, and Proof are operator surfaces\./);
   assert.match(products, /Control includes Map/);
@@ -203,6 +232,7 @@ test('the homepage keeps measured Field Report proof inside the consolidated ser
   assert.match(home, /See what passed—and what did not/);
   assert.match(home, /href: '\/field-reports\/template-review'/);
   assert.match(home, /49 of 50 selected cases/);
-  assert.match(home, /automated judgment remains blocked/i);
+  assert.match(home, /(?:system|automation)[^.]*(?:cannot|blocked)[^.]*(?:decision|judgment)/i);
+  assert.match(home, /reviewer time savings[^.]*(?:not|never)[^.]*(?:measured|verified)/i);
   assert.doesNotMatch(home, /<PerformanceCampaignOpening[\s\S]*?>\s*>\s*\{#snippet actions\(\)\}/);
 });

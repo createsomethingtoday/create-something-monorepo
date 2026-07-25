@@ -32,6 +32,8 @@ import type {
   DatabaseLayerSubstrateComputeSnapshotOptions,
   DatabaseLayerTopologyNode,
   DatabaseLayerTopologyProjection,
+  DatabaseLayerTopologySemantics,
+  DatabaseLayerTopologySemanticsOptions,
   DatabaseLayerWorkflowAction
 } from './types.js';
 
@@ -94,9 +96,44 @@ function actionState(status: DatabaseLayerTopologyNode['status']): DatabaseLayer
 }
 
 function atlasStatus(status: DatabaseLayerTopologyNode['status']): DatabaseLayerAtlasNodeStatus {
-  if (status === 'mapped') return 'run';
+  if (status === 'mapped') return 'unknown';
   if (status === 'needs_substrate') return 'stop';
   return 'wait';
+}
+
+function freshnessState(options: DatabaseLayerTopologySemanticsOptions): DatabaseLayerTopologySemantics['freshness'] {
+  const checkedAt = options.checkedAt;
+  const reviewBy = options.reviewBy;
+  if (!checkedAt || !reviewBy) return { state: 'unknown', checkedAt, reviewBy };
+  const now = Date.parse(options.now ?? new Date().toISOString());
+  const review = Date.parse(reviewBy);
+  if (!Number.isFinite(now) || !Number.isFinite(review)) {
+    return { state: 'unknown', checkedAt, reviewBy };
+  }
+  return { state: now > review ? 'stale' : 'current', checkedAt, reviewBy };
+}
+
+export function projectTopologyNodeSemantics(
+  node: DatabaseLayerTopologyNode,
+  options: DatabaseLayerTopologySemanticsOptions = {}
+): DatabaseLayerTopologySemantics {
+  const coverage =
+    node.status === 'mapped' ? 'mapped' : node.status === 'needs_atlas' ? 'partial' : 'missing';
+  return {
+    coverage,
+    verification: options.verification ?? 'unverified',
+    health: options.health ?? 'unknown',
+    authority: options.authority ?? 'unknown',
+    proof: options.proof ?? 'unknown',
+    provenance:
+      options.provenance ?? {
+        kind: 'derived',
+        sourceLabel: 'Repo topology coverage',
+        explanation: 'Coverage is derived from discovered repo structure and does not prove runtime state.'
+      },
+    freshness: freshnessState(options),
+    change: options.change ?? 'unknown'
+  };
 }
 
 function atlasKind(node: DatabaseLayerTopologyNode): DatabaseLayerAtlasNodeKind {
@@ -411,7 +448,8 @@ export function projectTopologyToSourceRecords(
     relationCount: relationCount(topology, node.id),
     receiptId: `receipt:${node.id}`,
     updatedAt: topology.coverage.generatedAt,
-    summary: node.summary
+    summary: node.summary,
+    semantics: projectTopologyNodeSemantics(node, { checkedAt: topology.coverage.generatedAt })
   }));
 }
 
@@ -753,6 +791,13 @@ export function projectTopologyToSubstrateComputeSnapshot(
     generatedAt: options.generatedAt ?? topology.coverage.generatedAt,
     engine: 'cpu',
     source: options.source ?? 'substrate',
+    weightModel: {
+      kind: 'derived',
+      source: 'static_topology_heuristic',
+      observedTelemetry: false,
+      description:
+        'Weights are deterministic estimates derived from topology surface, status, and relationship structure. They are not observed runtime telemetry.'
+    },
     scenario,
     counts: {
       nodes: nodes.length,

@@ -41,6 +41,7 @@ export type DatabaseLayerSourceRecord = {
   receiptId: string;
   updatedAt: string;
   summary: string;
+  semantics: DatabaseLayerTopologySemantics;
 };
 
 export type DatabaseLayerAtlasBinding = {
@@ -287,6 +288,148 @@ export type DatabaseLayerTopologySurface =
   | 'config';
 
 export type DatabaseLayerTopologyNodeStatus = 'mapped' | 'needs_atlas' | 'needs_substrate';
+
+export type DatabaseLayerTopologyCoverageState = 'mapped' | 'partial' | 'missing';
+
+export type DatabaseLayerTopologyVerificationState = 'verified' | 'declared' | 'unverified';
+
+export type DatabaseLayerTopologyHealthState = 'healthy' | 'degraded' | 'unavailable' | 'unknown';
+
+export type DatabaseLayerTopologyAuthorityState = 'run' | 'wait' | 'stop' | 'unknown';
+
+export type DatabaseLayerTopologyProofState = 'attached' | 'missing' | 'not-required' | 'unknown';
+
+export type DatabaseLayerTopologyProvenanceKind = 'observed' | 'derived' | 'declared';
+
+export type DatabaseLayerTopologyFreshnessState = 'current' | 'stale' | 'unknown';
+
+export type DatabaseLayerTopologyChangeState = 'added' | 'changed' | 'removed' | 'unchanged' | 'unknown';
+
+export type DatabaseLayerTopologyProvenance = {
+  kind: DatabaseLayerTopologyProvenanceKind;
+  sourceLabel: string;
+  explanation: string;
+};
+
+export type DatabaseLayerTopologyFreshness = {
+  state: DatabaseLayerTopologyFreshnessState;
+  checkedAt?: string;
+  reviewBy?: string;
+};
+
+export type DatabaseLayerTopologySemantics = {
+  coverage: DatabaseLayerTopologyCoverageState;
+  verification: DatabaseLayerTopologyVerificationState;
+  health: DatabaseLayerTopologyHealthState;
+  authority: DatabaseLayerTopologyAuthorityState;
+  proof: DatabaseLayerTopologyProofState;
+  provenance: DatabaseLayerTopologyProvenance;
+  freshness: DatabaseLayerTopologyFreshness;
+  change: DatabaseLayerTopologyChangeState;
+};
+
+export type DatabaseLayerTopologySemanticsOptions = {
+  verification?: DatabaseLayerTopologyVerificationState;
+  health?: DatabaseLayerTopologyHealthState;
+  authority?: DatabaseLayerTopologyAuthorityState;
+  proof?: DatabaseLayerTopologyProofState;
+  provenance?: DatabaseLayerTopologyProvenance;
+  checkedAt?: string;
+  reviewBy?: string;
+  now?: string;
+  change?: DatabaseLayerTopologyChangeState;
+};
+
+export type DatabaseLayerSystemContextLens = 'dependencies' | 'authority' | 'change' | 'proof';
+
+export type DatabaseLayerSystemContextNodeKind =
+  | 'actor'
+  | 'human'
+  | 'ai'
+  | 'system'
+  | 'data'
+  | 'constraint'
+  | 'touchpoint';
+
+export type DatabaseLayerSystemContextNode = {
+  id: string;
+  label: string;
+  kind: DatabaseLayerSystemContextNodeKind;
+  summary: string;
+  semantics: Omit<DatabaseLayerTopologySemantics, 'provenance' | 'freshness'> & {
+    freshness: DatabaseLayerTopologyFreshnessState;
+  };
+  provenance: DatabaseLayerTopologyProvenance;
+  owner: string;
+  evidence: string[];
+  recovery: string;
+  visibility?: 'public' | 'client' | 'internal';
+  internal?: Record<string, unknown>;
+};
+
+export type DatabaseLayerSystemContextRelationship = {
+  id: string;
+  source: string;
+  target: string;
+  relation: string;
+  provenance: DatabaseLayerTopologyProvenanceKind;
+  visibility?: 'public' | 'client' | 'internal';
+  internal?: Record<string, unknown>;
+};
+
+export type DatabaseLayerSystemContextSource = {
+  version: 'system-context.operating-slice.v1';
+  id: string;
+  audience: 'internal' | 'client' | 'public';
+  reviewStatus: string;
+  workflow: {
+    label: string;
+    summary: string;
+    boundary: string;
+  };
+  source: {
+    kind: DatabaseLayerTopologyProvenanceKind;
+    label: string;
+    href?: string;
+    checkedAt?: string;
+    reviewBy?: string;
+    freshness: DatabaseLayerTopologyFreshnessState;
+  };
+  comparison?: {
+    label: string;
+    checkedAt?: string;
+  };
+  nodes: DatabaseLayerSystemContextNode[];
+  relationships: DatabaseLayerSystemContextRelationship[];
+  lenses: Record<DatabaseLayerSystemContextLens, string[]>;
+  receipt: {
+    sourceLabel: string;
+    lastCheckedLabel: string;
+    changeLabel: string;
+    recoveryLabel: string;
+  };
+};
+
+export type DatabaseLayerSystemContextProjection = Omit<
+  DatabaseLayerSystemContextSource,
+  'nodes' | 'relationships' | 'lenses'
+> & {
+  audience: 'internal' | 'client' | 'public';
+  selectedLens: DatabaseLayerSystemContextLens;
+  nodes: Array<Omit<DatabaseLayerSystemContextNode, 'internal'>>;
+  relationships: Array<Omit<DatabaseLayerSystemContextRelationship, 'internal'>>;
+  lenses: Record<DatabaseLayerSystemContextLens, string[]>;
+  visibleNodeIds: string[];
+  visibleRelationshipIds: string[];
+  redactions: string[];
+};
+
+export type DatabaseLayerSystemContextProjectionOptions = {
+  audience: 'internal' | 'client' | 'public';
+  lens?: DatabaseLayerSystemContextLens;
+  maxNodes?: number;
+  now?: string;
+};
 
 export type DatabaseLayerTopologyNode = {
   id: string;

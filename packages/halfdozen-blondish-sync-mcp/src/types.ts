@@ -1,6 +1,9 @@
 export interface Env {
   MCP_OBJECT: DurableObjectNamespace;
   MCP_API_KEY?: string;
+  CS_IDENTITY_ISSUER?: string;
+  OAUTH_ALLOWED_EMAILS?: string;
+  OAUTH_ALLOWED_DOMAINS?: string;
   CLIENT_NOTION_API_KEY?: string;
   BLONDISH_NOTION_API_KEY?: string;
   CLIENT_SUPPORT_TICKETS_DATA_SOURCE_ID?: string;

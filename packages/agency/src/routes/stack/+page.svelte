@@ -278,7 +278,7 @@
   id="stack-ownership-story"
   eyebrow="One ownership story"
   title="Path. Boundary. Ownership. Portability."
-  description="The stack becomes useful when the reader can trace the service path, see where work stops, identify the assets they keep, and understand which external platform earns which role."
+  description="The stack becomes useful when you can trace the service path and see where work stops. It shows what you keep and what each external platform provides."
   scenes={stackScenes}
   ariaLabel="Stack ownership story"
 >
@@ -291,7 +291,7 @@
         storyId="stack-insurance-claims-intake-story"
         eyebrow="Stack boundary canvas"
         title="The workflow boundary decides what tools are allowed to do."
-        description="This read-only map shows the stack promise in workflow terms: tools can route and prepare, but payout, denial, fraud, and sensitive decisions stop for named authority."
+        description="This read-only map shows the stack boundary. Tools can route and prepare work. Payout, denial, fraud, and other sensitive decisions stop for a named authority."
         compact
       />
     {:else if scene.id === 'ownership'}
@@ -326,7 +326,7 @@
 <PerformanceConversionHandoff
   eyebrow="Start with the workflow"
   title="Bring the workflow, the accounts, and the decision owner."
-  description="CREATE SOMETHING will map the stack boundary, define the first controlled path, identify what can be assigned, and show what stays visible to the operator before implementation starts."
+  description="CREATE SOMETHING maps the stack boundary and defines the first controlled path. Before implementation starts, you can see what tools may do and what stays visible."
   steps={ctaItems}
   handoff={{
     owner: 'Workflow owner',

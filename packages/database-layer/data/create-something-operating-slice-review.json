@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:operating-slice-review:internal",
-  "generatedAt": "2026-07-13T01:55:01.187Z",
+  "generatedAt": "2026-07-23T05:11:08.647Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceCoverageId": "substrate:create-something:atlas-coverage:internal",
@@ -94,6 +94,7 @@
         "substrate:create-something:worker:packages-notion-agent-wrangler-toml",
         "substrate:create-something:worker:packages-notion-sync-mcp-worker-wrangler-toml",
         "substrate:create-something:worker:packages-ona-agents-wrangler-toml",
+        "substrate:create-something:worker:packages-owned-agent-runtime-wrangler-jsonc",
         "substrate:create-something:worker:packages-playbook-mcp-worker-wrangler-toml",
         "substrate:create-something:worker:packages-quickbooks-notion-mcp-wrangler-toml",
         "substrate:create-something:worker:packages-relay-wrangler-jsonc",
@@ -142,7 +143,7 @@
       "owner": "CREATE SOMETHING",
       "tier": "Automation",
       "surface": "worker",
-      "nodeCount": 125,
+      "nodeCount": 126,
       "evidence": [
         "apps/bettermode-marketplace-creator-agent/wrangler.jsonc",
         "apps/create-something-scheduler/wrangler.jsonc",
@@ -199,6 +200,8 @@
         "substrate:create-something:policy:docs-policies-v1-policy-global-access-kill-switch-v1-md",
         "substrate:create-something:policy:docs-policies-v1-policy-hub-route-authorization-v1-json",
         "substrate:create-something:policy:docs-policies-v1-policy-hub-route-authorization-v1-md",
+        "substrate:create-something:policy:docs-policies-v1-policy-identity-subject-rebind-governance-v1-json",
+        "substrate:create-something:policy:docs-policies-v1-policy-identity-subject-rebind-governance-v1-md",
         "substrate:create-something:policy:docs-policies-v1-policy-integration-selection-v1-json",
         "substrate:create-something:policy:docs-policies-v1-policy-integration-selection-v1-md",
         "substrate:create-something:policy:docs-policies-v1-policy-judgment-baseline-v1-json",
@@ -221,10 +224,14 @@
         "substrate:create-something:policy:docs-policies-v1-policy-policy-lifecycle-governance-v1-md",
         "substrate:create-something:policy:docs-policies-v1-policy-progressive-profile-governance-v1-json",
         "substrate:create-something:policy:docs-policies-v1-policy-progressive-profile-governance-v1-md",
+        "substrate:create-something:policy:docs-policies-v1-policy-prose-quality-v1-json",
+        "substrate:create-something:policy:docs-policies-v1-policy-prose-quality-v1-md",
         "substrate:create-something:policy:docs-policies-v1-policy-prospect-hub-onboarding-v1-json",
         "substrate:create-something:policy:docs-policies-v1-policy-prospect-hub-onboarding-v1-md",
         "substrate:create-something:policy:docs-policies-v1-policy-service-tier-entitlement-v1-json",
         "substrate:create-something:policy:docs-policies-v1-policy-service-tier-entitlement-v1-md",
+        "substrate:create-something:policy:docs-policies-v1-policy-simplified-technical-english-v1-json",
+        "substrate:create-something:policy:docs-policies-v1-policy-simplified-technical-english-v1-md",
         "substrate:create-something:policy:docs-policies-v1-policy-tenant-tool-exposure-v1-json",
         "substrate:create-something:policy:docs-policies-v1-policy-tenant-tool-exposure-v1-md",
         "substrate:create-something:policy:docs-policies-v1-policy-user-bearer-token-governance-v1-json",
@@ -233,7 +240,7 @@
       "owner": "CREATE SOMETHING",
       "tier": "Judgment",
       "surface": "policy",
-      "nodeCount": 56,
+      "nodeCount": 62,
       "evidence": [
         "docs/policies/generated/fallback/policy.hub-route-authorization.v1.json",
         "docs/policies/generated/fallback/policy.judgment-baseline.v1.json",
@@ -276,6 +283,7 @@
         "substrate:create-something:guide:docs-guides-atlas-linear-integration-md",
         "substrate:create-something:guide:docs-guides-chatgpt-mcp-oauth-managed-bearer-md",
         "substrate:create-something:guide:docs-guides-cloudflare-bot-access-hardening-md",
+        "substrate:create-something:guide:docs-guides-codex-presence-even-g2-md",
         "substrate:create-something:guide:docs-guides-coding-agent-harness-pattern-md",
         "substrate:create-something:guide:docs-guides-component-guide-md",
         "substrate:create-something:guide:docs-guides-dify-bettermode-creator-agent-md",
@@ -291,6 +299,7 @@
         "substrate:create-something:guide:docs-guides-hydra-db-governed-recall-md",
         "substrate:create-something:guide:docs-guides-judgment-layer-dogfood-playbook-md",
         "substrate:create-something:guide:docs-guides-loops-above-agents-md",
+        "substrate:create-something:guide:docs-guides-map-product-operations-md",
         "substrate:create-something:guide:docs-guides-mcp-apps-integration-md",
         "substrate:create-something:guide:docs-guides-mcp-dui-organization-md",
         "substrate:create-something:guide:docs-guides-mcp-registry-workflow-md",
@@ -323,7 +332,7 @@
       "owner": "CREATE SOMETHING",
       "tier": "Mixed",
       "surface": "guide",
-      "nodeCount": 55,
+      "nodeCount": 57,
       "evidence": [
         "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
@@ -462,6 +471,7 @@
         "substrate:create-something:package:create-something-harness-packages-harness",
         "substrate:create-something:package:create-something-notion-agent-scheduler-packages-notion-agent-workers-scheduler",
         "substrate:create-something:package:create-something-notion-worker-experiments-packages-notion-worker-experiments",
+        "substrate:create-something:package:create-something-owned-agent-runtime-packages-owned-agent-runtime",
         "substrate:create-something:package:create-something-social-agent-packages-social-agent",
         "substrate:create-something:package:create-something-agentic-executor-packages-space-workers-agentic-executor",
         "substrate:create-something:package:create-something-webflow-apps-audit-agent-packages-webflow-apps-admin-workers-audit-agent"
@@ -469,7 +479,7 @@
       "owner": "CREATE SOMETHING",
       "tier": "Automation",
       "surface": "agent",
-      "nodeCount": 24,
+      "nodeCount": 25,
       "evidence": [
         "config/dify-agents/aaron-hub.json",
         "config/dify-agents/abundance-hub.json",
@@ -565,6 +575,7 @@
         "substrate:create-something:package:create-something-bundle-scanner-core-packages-bundle-scanner-core",
         "substrate:create-something:package:create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
         "substrate:create-something:package:create-something-cloudflare-sdk-packages-cloudflare-sdk",
+        "substrate:create-something:package:create-something-codex-presence-packages-codex-presence",
         "substrate:create-something:package:createsomething-motion-ontology-space-packages-huggingface-spaces-motion-ontology",
         "substrate:create-something:package:createsomething-seeing-packages-seeing",
         "substrate:create-something:package:create-something-simulation-packages-simulation",
@@ -579,7 +590,7 @@
       "owner": "CREATE SOMETHING",
       "tier": "Mixed",
       "surface": "package",
-      "nodeCount": 16,
+      "nodeCount": 17,
       "evidence": [
         "packages/app-governance-desktop",
         "packages/ascii-renderer",
@@ -587,12 +598,12 @@
         "packages/bundle-scanner-core",
         "packages/calm-operator-ink-firmware",
         "packages/cloudflare-sdk",
+        "packages/codex-presence",
         "packages/huggingface-spaces/motion-ontology",
         "packages/seeing",
         "packages/simulation",
         "packages/spritz",
-        "packages/tools/pencil-balance",
-        "packages/webflow-apps-admin"
+        "packages/tools/pencil-balance"
       ],
       "validationCommands": [
         "pnpm --filter @create-something/database-layer test"
@@ -651,6 +662,52 @@
       "nextAction": "Review the mapped slice and promote only approved records into production workflow use."
     },
     {
+      "id": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-judgment-surface-judgment-package",
+      "title": "Judgment package Atlas coverage",
+      "status": "review_ready",
+      "atlasCoverageGroupIds": [
+        "substrate:create-something:atlas-coverage-group:judgment-surface-judgment-package"
+      ],
+      "recordIds": [
+        "substrate:create-something:package:create-something-components-archive-components-deprecated",
+        "substrate:create-something:package:create-something-client-workspace-packages-client-workspace",
+        "substrate:create-something:package:create-something-delivery-schema-packages-delivery-schema",
+        "substrate:create-something:package:create-something-dotfiles-packages-dotfiles",
+        "substrate:create-something:package:create-something-eslint-plugin-canon-packages-eslint-plugin-canon",
+        "substrate:create-something:package:create-something-judgment-layer-packages-judgment-layer",
+        "substrate:create-something:package:create-something-motion-studio-packages-motion-studio",
+        "substrate:create-something:package:create-something-policy-os-engine-packages-policy-os-engine",
+        "substrate:create-something:package:create-something-render-pipeline-packages-render-pipeline",
+        "substrate:create-something:package:createsomething-triad-audit-packages-triad-audit",
+        "substrate:create-something:package:create-something-webflow-components-packages-webflow-components",
+        "substrate:create-something:package:create-something-workflow-historical-context-reconciler-packages-workflow-historical-context-reconciler"
+      ],
+      "owner": "CREATE SOMETHING",
+      "tier": "Judgment",
+      "surface": "package",
+      "nodeCount": 12,
+      "evidence": [
+        ".archive/components-deprecated",
+        "packages/client-workspace",
+        "packages/delivery-schema",
+        "packages/dotfiles",
+        "packages/eslint-plugin-canon",
+        "packages/judgment-layer",
+        "packages/motion-studio",
+        "packages/policy-os-engine",
+        "packages/render-pipeline",
+        "packages/triad-audit",
+        "packages/webflow-components",
+        "packages/workflow-historical-context-reconciler"
+      ],
+      "validationCommands": [
+        "pnpm --filter @create-something/database-layer test"
+      ],
+      "promotionBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
+      "rollbackNote": "Rollback is local-first: regenerate coverage artifacts from repo truth or revert the approved production write through its owning workflow. Do not delete external state from this artifact alone.",
+      "nextAction": "Review the mapped slice and promote only approved records into production workflow use."
+    },
+    {
       "id": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-mcp-surface-judgment-mcp",
       "title": "Judgment MCP Atlas coverage",
       "status": "review_ready",
@@ -694,50 +751,6 @@
       "promotionBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
       "rollbackNote": "Rollback is local-first: regenerate coverage artifacts from repo truth or revert the approved production write through its owning workflow. Do not delete external state from this artifact alone.",
       "nextAction": "Review tool risk, agent ownership, and MCP evidence before enabling production workflow use."
-    },
-    {
-      "id": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-judgment-surface-judgment-package",
-      "title": "Judgment package Atlas coverage",
-      "status": "review_ready",
-      "atlasCoverageGroupIds": [
-        "substrate:create-something:atlas-coverage-group:judgment-surface-judgment-package"
-      ],
-      "recordIds": [
-        "substrate:create-something:package:create-something-components-archive-components-deprecated",
-        "substrate:create-something:package:create-something-delivery-schema-packages-delivery-schema",
-        "substrate:create-something:package:create-something-dotfiles-packages-dotfiles",
-        "substrate:create-something:package:create-something-eslint-plugin-canon-packages-eslint-plugin-canon",
-        "substrate:create-something:package:create-something-judgment-layer-packages-judgment-layer",
-        "substrate:create-something:package:create-something-motion-studio-packages-motion-studio",
-        "substrate:create-something:package:create-something-policy-os-engine-packages-policy-os-engine",
-        "substrate:create-something:package:create-something-render-pipeline-packages-render-pipeline",
-        "substrate:create-something:package:createsomething-triad-audit-packages-triad-audit",
-        "substrate:create-something:package:create-something-webflow-components-packages-webflow-components",
-        "substrate:create-something:package:create-something-workflow-historical-context-reconciler-packages-workflow-historical-context-reconciler"
-      ],
-      "owner": "CREATE SOMETHING",
-      "tier": "Judgment",
-      "surface": "package",
-      "nodeCount": 11,
-      "evidence": [
-        ".archive/components-deprecated",
-        "packages/delivery-schema",
-        "packages/dotfiles",
-        "packages/eslint-plugin-canon",
-        "packages/judgment-layer",
-        "packages/motion-studio",
-        "packages/policy-os-engine",
-        "packages/render-pipeline",
-        "packages/triad-audit",
-        "packages/webflow-components",
-        "packages/workflow-historical-context-reconciler"
-      ],
-      "validationCommands": [
-        "pnpm --filter @create-something/database-layer test"
-      ],
-      "promotionBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
-      "rollbackNote": "Rollback is local-first: regenerate coverage artifacts from repo truth or revert the approved production write through its owning workflow. Do not delete external state from this artifact alone.",
-      "nextAction": "Review the mapped slice and promote only approved records into production workflow use."
     },
     {
       "id": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-automation-surface-judgment-worker",
@@ -965,6 +978,36 @@
       "nextAction": "Review the mapped slice and promote only approved records into production workflow use."
     },
     {
+      "id": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-package-surface-mixed-client",
+      "title": "Mixed client Atlas coverage",
+      "status": "review_ready",
+      "atlasCoverageGroupIds": [
+        "substrate:create-something:atlas-coverage-group:package-surface-mixed-client"
+      ],
+      "recordIds": [
+        "substrate:create-something:package:create-something-jandjhomehealth-packages-agency-clients-jandjhomehealth",
+        "substrate:create-something:package:create-something-outerfields-packages-agency-clients-outerfields",
+        "substrate:create-something:package:create-something-the-stack-packages-agency-clients-the-stack",
+        "substrate:create-something:package:create-something-client-workspace-demo-packages-client-workspace-clients-demo-frontend"
+      ],
+      "owner": "CREATE SOMETHING",
+      "tier": "Mixed",
+      "surface": "client",
+      "nodeCount": 4,
+      "evidence": [
+        "packages/agency/clients/jandjhomehealth",
+        "packages/agency/clients/outerfields",
+        "packages/agency/clients/the-stack",
+        "packages/client-workspace/clients/demo-frontend"
+      ],
+      "validationCommands": [
+        "pnpm --filter @create-something/database-layer test"
+      ],
+      "promotionBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
+      "rollbackNote": "Rollback is local-first: regenerate coverage artifacts from repo truth or revert the approved production write through its owning workflow. Do not delete external state from this artifact alone.",
+      "nextAction": "Review client overlay boundaries and promote approved slices into client-specific Atlas sessions."
+    },
+    {
       "id": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-automation-surface-mixed-worker",
       "title": "Mixed worker Atlas coverage",
       "status": "review_ready",
@@ -1004,7 +1047,7 @@
       ],
       "recordIds": [
         "substrate:create-something:app:create-something-bettermode-marketplace-creator-agent-apps-bettermode-marketplace-creator-agent",
-        "substrate:create-something:app:create-something-create-something-scheduler-apps-create-something-scheduler",
+        "substrate:create-something:app:create-something-even-codex-presence-apps-even-codex-presence",
         "substrate:create-something:app:create-something-even-operator-brief-apps-even-operator-brief"
       ],
       "owner": "CREATE SOMETHING",
@@ -1013,7 +1056,7 @@
       "nodeCount": 3,
       "evidence": [
         "apps/bettermode-marketplace-creator-agent",
-        "apps/create-something-scheduler",
+        "apps/even-codex-presence",
         "apps/even-operator-brief"
       ],
       "validationCommands": [
@@ -1081,32 +1124,30 @@
       "nextAction": "Review tool risk, agent ownership, and MCP evidence before enabling production workflow use."
     },
     {
-      "id": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-package-surface-mixed-client",
-      "title": "Mixed client Atlas coverage",
+      "id": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-application-surface-judgment-app",
+      "title": "Judgment app Atlas coverage",
       "status": "review_ready",
       "atlasCoverageGroupIds": [
-        "substrate:create-something:atlas-coverage-group:package-surface-mixed-client"
+        "substrate:create-something:atlas-coverage-group:application-surface-judgment-app"
       ],
       "recordIds": [
-        "substrate:create-something:package:create-something-jandjhomehealth-packages-agency-clients-jandjhomehealth",
-        "substrate:create-something:package:create-something-outerfields-packages-agency-clients-outerfields",
-        "substrate:create-something:package:create-something-the-stack-packages-agency-clients-the-stack"
+        "substrate:create-something:app:create-something-create-something-scheduler-apps-create-something-scheduler",
+        "substrate:create-something:app:create-something-guard-performance-lab-apps-guard-performance-lab"
       ],
       "owner": "CREATE SOMETHING",
-      "tier": "Mixed",
-      "surface": "client",
-      "nodeCount": 3,
+      "tier": "Judgment",
+      "surface": "app",
+      "nodeCount": 2,
       "evidence": [
-        "packages/agency/clients/jandjhomehealth",
-        "packages/agency/clients/outerfields",
-        "packages/agency/clients/the-stack"
+        "apps/create-something-scheduler",
+        "apps/guard-performance-lab"
       ],
       "validationCommands": [
         "pnpm --filter @create-something/database-layer test"
       ],
       "promotionBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
       "rollbackNote": "Rollback is local-first: regenerate coverage artifacts from repo truth or revert the approved production write through its owning workflow. Do not delete external state from this artifact alone.",
-      "nextAction": "Review client overlay boundaries and promote approved slices into client-specific Atlas sessions."
+      "nextAction": "Review the mapped slice and promote only approved records into production workflow use."
     },
     {
       "id": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-database-surface-database-agent",
@@ -1132,30 +1173,6 @@
       "promotionBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
       "rollbackNote": "Rollback is local-first: regenerate coverage artifacts from repo truth or revert the approved production write through its owning workflow. Do not delete external state from this artifact alone.",
       "nextAction": "Review tool risk, agent ownership, and MCP evidence before enabling production workflow use."
-    },
-    {
-      "id": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-application-surface-judgment-app",
-      "title": "Judgment app Atlas coverage",
-      "status": "review_ready",
-      "atlasCoverageGroupIds": [
-        "substrate:create-something:atlas-coverage-group:application-surface-judgment-app"
-      ],
-      "recordIds": [
-        "substrate:create-something:app:create-something-guard-performance-lab-apps-guard-performance-lab"
-      ],
-      "owner": "CREATE SOMETHING",
-      "tier": "Judgment",
-      "surface": "app",
-      "nodeCount": 1,
-      "evidence": [
-        "apps/guard-performance-lab"
-      ],
-      "validationCommands": [
-        "pnpm --filter @create-something/database-layer test"
-      ],
-      "promotionBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
-      "rollbackNote": "Rollback is local-first: regenerate coverage artifacts from repo truth or revert the approved production write through its owning workflow. Do not delete external state from this artifact alone.",
-      "nextAction": "Review the mapped slice and promote only approved records into production workflow use."
     }
   ]
 }
