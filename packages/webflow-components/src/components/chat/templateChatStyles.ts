@@ -1,16 +1,46 @@
 import { TEMPLATE_CARD_STYLES } from '../cards/TemplateCard';
 
+/**
+ * Accent used for outlines drawn on host-page elements. Those live in other
+ * components' shadow roots, where our custom properties do not resolve, so the
+ * literal has to travel with the inline style — from here, not by hand.
+ */
+export const TMCHAT_ACCENT = '#146ef5';
+export const TMCHAT_ACCENT_RGB = '20,110,245';
+
 export const CHAT_STYLES = `
+/* ── Theme tokens ───────────────────────────────────────────────────────────
+   The brand accent, launcher placement and stacking order were hex and pixel
+   literals spread through 330 lines of CSS, so a theme change meant a code
+   deploy. They are custom properties now, declared on every root this
+   stylesheet owns (the launcher and panel live in the component's shadow root;
+   the backdrop is a sibling of the panel).
+
+   Deliberately not switched by prefers-color-scheme: this component renders on
+   light marketplace pages, and following the OS would make it the only dark
+   element there. A host that wants a dark surface sets these instead. */
+.tmchat-launcher, .tmchat-panel, .tmchat-backdrop {
+  --tmchat-accent: #146ef5;
+  --tmchat-accent-hover: #0f5cd0;
+  --tmchat-launcher-inset: 24px;
+  --tmchat-z-launcher: 9000;
+  --tmchat-z-panel: 9001;
+  --tmchat-z-backdrop: 99999998;
+  --tmchat-z-immersive: 99999999;
+}
 .tmchat-launcher {
-  position: fixed; right: 24px; bottom: 24px; z-index: 9000;
+  position: fixed;
+  right: var(--tmchat-launcher-inset, 24px); bottom: var(--tmchat-launcher-inset, 24px);
+  z-index: var(--tmchat-z-launcher, 9000);
   display: inline-flex; align-items: center; gap: 8px;
   padding: 12px 18px; border: 0; border-radius: 999px; cursor: pointer;
-  background: #146ef5; color: #fff;
+  background: var(--tmchat-accent, #146ef5); color: #fff;
   font-family: "WF Visual Sans Variable", "Inter", system-ui, sans-serif;
   font-size: 14px; font-weight: 600; box-shadow: 0 6px 24px rgba(0,0,0,0.18);
   transition: background 160ms ease, transform 160ms ease;
 }
-.tmchat-launcher:hover { background: #0f5cd0; transform: translateY(-1px); }
+.tmchat-launcher:hover { background: var(--tmchat-accent-hover, #0f5cd0); transform: translateY(-1px); }
+.tmchat-undo:focus-visible,
 .tmchat-launcher:focus-visible,
 .tmchat-iconbtn:focus-visible,
 .tmchat-intro-toggle:focus-visible,
@@ -22,17 +52,19 @@ export const CHAT_STYLES = `
 .tmchat-preview-open:focus-visible,
 .tmchat-preview-cta:focus-visible,
 .tmchat-input:focus-visible {
-  outline: 2px solid #146ef5; outline-offset: 2px;
+  outline: 2px solid var(--tmchat-accent, #146ef5); outline-offset: 2px;
 }
 .tmchat-backdrop {
-  position: fixed; inset: 0; z-index: 99999998;
+  position: fixed; inset: 0; z-index: var(--tmchat-z-backdrop, 99999998);
   background: rgba(8,8,8,0.44);
   backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
   animation: tmchat-fade 200ms ease both;
 }
 @keyframes tmchat-fade { from { opacity: 0; } }
 .tmchat-panel {
-  position: fixed; right: 24px; bottom: 24px; z-index: 9001;
+  position: fixed;
+  right: var(--tmchat-launcher-inset, 24px); bottom: var(--tmchat-launcher-inset, 24px);
+  z-index: var(--tmchat-z-panel, 9001);
   display: flex; flex-direction: column;
   width: min(440px, calc(100vw - 32px)); height: min(640px, calc(100vh - 48px));
   border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden;
@@ -51,7 +83,7 @@ export const CHAT_STYLES = `
 .tmchat-panel.immersive {
   /* Above the webflow.com sticky navigation — the immersive state is a modal
      and nothing on the host page should paint over it. */
-  position: fixed; top: 24px; bottom: 24px; left: 0; right: 0; margin: 0 auto; z-index: 99999999;
+  position: fixed; top: 24px; bottom: 24px; left: 0; right: 0; margin: 0 auto; z-index: var(--tmchat-z-immersive, 99999999);
   width: min(1120px, calc(100vw - 48px)); height: auto; min-height: 0;
   border-radius: 16px; box-shadow: 0 24px 80px rgba(0,0,0,0.3);
 }
@@ -94,8 +126,16 @@ export const CHAT_STYLES = `
 @keyframes tmchat-card { from { opacity: 0; transform: translateY(10px) scale(0.98); } to { opacity: 1; transform: none; } }
 .tmchat-msg { max-width: 92%; white-space: pre-wrap; overflow-wrap: break-word; }
 .tmchat-panel.immersive .tmchat-msg { max-width: 680px; font-size: 15px; }
-.tmchat-msg.user { align-self: flex-end; background: #146ef5; color: #fff; padding: 9px 13px; border-radius: 14px 14px 4px 14px; }
+.tmchat-msg.user { align-self: flex-end; background: var(--tmchat-accent, #146ef5); color: #fff; padding: 9px 13px; border-radius: 14px 14px 4px 14px; }
 .tmchat-msg.assistant { align-self: flex-start; background: #f5f5f5; padding: 9px 13px; border-radius: 14px 14px 14px 4px; }
+.tmchat-turn-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; align-self: flex-start; }
+.tmchat-undo {
+  display: inline-flex; align-items: center; gap: 5px;
+  border: 1px solid #e0e0e0; border-radius: 7px; background: #fff; color: #404040;
+  padding: 5px 9px; font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer;
+  transition: background 120ms ease;
+}
+.tmchat-undo:hover { background: #f5f5f5; }
 .tmchat-turn-status {
   align-self: flex-start; padding: 6px 9px; border: 1px solid #ececec; border-radius: 7px;
   background: #fafafa; color: #5b5b5b; font-size: 12px; font-weight: 600;
@@ -160,14 +200,14 @@ export const CHAT_STYLES = `
 .tmchat-progress-detail { display: block; margin-top: 2px; color: #5b5b5b; font-size: 12px; line-height: 1.4; }
 .tmchat-progress-mark {
   width: 28px; height: 28px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center;
-  background: #f0f0f0; color: #146ef5;
+  background: #f0f0f0; color: var(--tmchat-accent, #146ef5);
 }
 .tmchat-progress-steps { display: grid; gap: 5px; margin: 11px 0 0 37px; padding: 0; list-style: none; }
 .tmchat-progress-steps li { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #6b6b6b; font-size: 11px; }
-.tmchat-progress-steps li[data-state="current"] { color: #146ef5; font-weight: 600; }
+.tmchat-progress-steps li[data-state="current"] { color: var(--tmchat-accent, #146ef5); font-weight: 600; }
 .tmchat-progress-steps li[data-state="complete"] { color: #5b5b5b; }
 .tmchat-progress-steps li[data-state="upcoming"] { color: #6e6e6e; }
-.tmchat-progress-stepmark { min-width: 12px; color: #146ef5; text-align: center; }
+.tmchat-progress-stepmark { min-width: 12px; color: var(--tmchat-accent, #146ef5); text-align: center; }
 .tmchat-progress-receipt {
   margin: 10px 0 0 37px; padding-top: 9px; border-top: 1px solid #ececec;
   color: #5b5b5b; font-size: 11px; font-weight: 600;
@@ -217,7 +257,7 @@ export const CHAT_STYLES = `
 .tmchat-inputfield { flex: 1 1 auto; min-width: 0; }
 .tmchat-inputmeta { margin: 4px 2px 0; color: #757575; font-size: 11px; line-height: 1.25; }
 .tmchat-send {
-  border: 0; border-radius: 8px; background: #146ef5; color: #fff;
+  border: 0; border-radius: 8px; background: var(--tmchat-accent, #146ef5); color: #fff;
   padding: 0 16px; font: inherit; font-weight: 600; cursor: pointer; align-self: flex-end; min-height: 40px;
   transition: background 140ms ease, transform 120ms ease;
 }
@@ -258,14 +298,14 @@ export const CHAT_STYLES = `
 }
 .tmchat-devicebtn { transition: background 140ms ease, color 140ms ease; }
 .tmchat-devicebtn + .tmchat-devicebtn { border-left: 1px solid #e0e0e0; }
-.tmchat-devicebtn.active { background: #f0f5ff; color: #146ef5; }
+.tmchat-devicebtn.active { background: #f0f5ff; color: var(--tmchat-accent, #146ef5); }
 .tmchat-preview-cta {
   display: inline-flex; align-items: center; gap: 6px; text-decoration: none;
-  height: 36px; border-radius: 8px; background: #146ef5; color: #fff; padding: 0 14px;
+  height: 36px; border-radius: 8px; background: var(--tmchat-accent, #146ef5); color: #fff; padding: 0 14px;
   font-family: inherit; font-size: 13px; font-weight: 600;
 }
 .tmchat-preview-cta { transition: background 140ms ease; }
-.tmchat-preview-cta:hover { background: #0f5cd0; }
+.tmchat-preview-cta:hover { background: var(--tmchat-accent-hover, #0f5cd0); }
 .tmchat-preview-open { display: inline-flex; align-items: center; gap: 5px; color: #757575; font-size: 12px; text-decoration: none; }
 .tmchat-preview-open:hover { color: #080808; }
 .tmchat-preview-stage {
@@ -326,7 +366,7 @@ export const CHAT_STYLES = `
   .tmchat-msg, .tmchat-display, .tmchat-typing, .tmchat-progress, .tmchat-progress-skeleton-card, .tmchat-followups .tmchat-chip,
   .tmchat-jump, .tmchat-grid > div, .tmchat-strip > div, .tmchat-preview,
   .tmchat-preview.closing { animation: none; }
-  .tmchat-panel, .tmchat-chip, .tmchat-send, .tmchat-launcher, .tmchat-devicebtn,
+  .tmchat-panel, .tmchat-chip, .tmchat-send, .tmchat-launcher, .tmchat-devicebtn, .tmchat-undo,
   .tmchat-preview-back, .tmchat-preview-cta { transition: none; }
   .tmchat-chip:hover, .tmchat-launcher:hover, .tmchat-send:active:not(:disabled) { transform: none; }
 }

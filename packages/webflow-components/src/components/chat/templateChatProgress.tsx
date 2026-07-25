@@ -1,6 +1,10 @@
 import React from 'react';
 import { UiIcon } from '../primitives/UiIcon';
 import type { AgentStatus, PageActionPayload } from './templateChatProtocol';
+import {
+  DEFAULT_TEMPLATE_CHAT_STRINGS,
+  type TemplateChatStrings,
+} from './templateChatStrings';
 
 // ── Turn progress model ──────────────────────────────────────────────────────
 // A monotonic phase machine over the agent protocol: the visible narration can
@@ -107,7 +111,10 @@ function humanizeAgentValue(value: string): string {
     .replace(/\bAnd\b/g, '&');
 }
 
-export function summarizePageAction(payload: PageActionPayload | null): string | null {
+export function summarizePageAction(
+  payload: PageActionPayload | null,
+  strings: TemplateChatStrings = DEFAULT_TEMPLATE_CHAT_STRINGS,
+): string | null {
   if (!payload) return null;
   const details: string[] = [];
 
@@ -116,91 +123,73 @@ export function summarizePageAction(payload: PageActionPayload | null): string |
   }
   for (const style of payload.styles ?? []) details.push(humanizeAgentValue(style));
   for (const type of payload.types ?? []) details.push(humanizeAgentValue(type));
-  if (payload.free_only === true) details.push('Free only');
-  if (payload.sort) details.push(`Sorted by ${humanizeAgentValue(payload.sort)}`);
+  if (payload.free_only === true) details.push(strings.receiptFreeOnly);
+  if (payload.sort) details.push(strings.receiptSortedBy(humanizeAgentValue(payload.sort)));
   const highlightCount = payload.highlight_slugs?.length ?? 0;
   if (highlightCount > 0) {
-    details.push(highlightCount === 1 ? 'Highlight requested' : `${highlightCount} highlights requested`);
+    details.push(strings.receiptHighlights(highlightCount));
   }
 
-  if (details.length > 0) return `Page update requested · ${details.join(' · ')}`;
-  if (payload.clear_filters) return 'Page filter reset requested';
-  if (payload.q != null) return 'Page search update requested';
+  if (details.length > 0) return strings.receiptPageUpdate(details.join(' · '));
+  if (payload.clear_filters) return strings.receiptFilterReset;
+  if (payload.q != null) return strings.receiptSearchUpdate;
   return null;
 }
 
-export function getAgentProgressView(state: AgentProgressState): AgentProgressView {
-  const progress: Record<AgentProgressPhase, Omit<AgentProgressView, 'receipt' | 'announcement'>> = {
-    preparing: {
-      activeIndex: 0,
-      title: 'Preparing a secure search',
-      detail: 'Connecting securely to the template catalog.',
-    },
-    understanding: {
-      activeIndex: 0,
-      title: 'Understanding your request',
-      detail: 'Identifying the requirements that matter most.',
-    },
-    searching: {
-      activeIndex: 1,
-      title: 'Searching the template catalog',
-      detail: 'Checking the template catalog for strong matches.',
-    },
-    curating: {
-      activeIndex: 2,
-      title: 'Curating the strongest matches',
-      detail: 'Comparing fit, style, and useful features.',
-    },
-    presenting: {
-      activeIndex: 3,
-      title: 'Preparing your recommendations',
-      detail: 'Organizing the strongest matches for review.',
-    },
-  };
+/** Which of the four visible steps each phase is working on. */
+const PHASE_STEP_INDEX: Record<AgentProgressPhase, number> = {
+  preparing: 0,
+  understanding: 0,
+  searching: 1,
+  curating: 2,
+  presenting: 3,
+};
 
-  const current = progress[state.phase];
-  const detail = state.slow
-    ? 'Still working — this is taking a little longer than usual.'
-    : current.detail;
-
-  const receipt = summarizePageAction(state.pageAction);
+export function getAgentProgressView(
+  state: AgentProgressState,
+  strings: TemplateChatStrings = DEFAULT_TEMPLATE_CHAT_STRINGS,
+): AgentProgressView {
+  const phase = strings.progressPhases[state.phase];
+  const detail = state.slow ? strings.progressSlowDetail : phase.detail;
+  const receipt = summarizePageAction(state.pageAction, strings);
 
   return {
-    ...current,
+    activeIndex: PHASE_STEP_INDEX[state.phase],
+    title: phase.title,
     detail,
     receipt,
     announcement: [
-      `${current.title}.`,
-      state.slow ? 'This is taking longer than usual.' : '',
+      `${phase.title}.`,
+      state.slow ? strings.progressSlowAnnouncement : '',
       receipt ? `${receipt}.` : '',
     ].filter(Boolean).join(' '),
   };
 }
 
-export function getAgentOutcomeReceipt(state: AgentProgressState): string | null {
+export function getAgentOutcomeReceipt(
+  state: AgentProgressState,
+  strings: TemplateChatStrings = DEFAULT_TEMPLATE_CHAT_STRINGS,
+): string | null {
   if (state.outcome === 'active') return null;
-  if (state.outcome === 'stopped') return 'Search stopped';
-  if (state.outcome === 'failed') return 'Search interrupted';
+  if (state.outcome === 'stopped') return strings.receiptStopped;
+  if (state.outcome === 'failed') return strings.receiptFailed;
 
-  const receipt = summarizePageAction(state.pageAction);
+  const receipt = summarizePageAction(state.pageAction, strings);
   const result = state.resultCount > 0
-    ? `${state.resultCount} template ${state.resultCount === 1 ? 'recommendation' : 'recommendations'} ready`
-    : 'Response ready';
+    ? strings.receiptRecommendations(state.resultCount)
+    : strings.receiptReady;
   return [result, receipt].filter(Boolean).join(' · ');
 }
 
 export function AgentProgress({
   progress,
+  strings = DEFAULT_TEMPLATE_CHAT_STRINGS,
 }: {
   progress: AgentProgressState;
+  strings?: TemplateChatStrings;
 }): React.ReactElement {
-  const view = getAgentProgressView(progress);
-  const steps = [
-    'Preparing search',
-    'Searching catalog',
-    'Comparing matches',
-    'Presenting results',
-  ];
+  const view = getAgentProgressView(progress, strings);
+  const steps = strings.progressSteps;
 
   return (
     <div

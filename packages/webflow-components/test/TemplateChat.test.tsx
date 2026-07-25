@@ -53,7 +53,8 @@ test('every chat control uses the Webflow focus treatment and the composer has a
   for (const selector of focusSelectors) {
     assert.match(html, new RegExp(`\\.${selector}:focus-visible`));
   }
-  assert.match(html, /outline: 2px solid #146ef5; outline-offset: 2px;/);
+  assert.match(html, /outline: 2px solid var\(--tmchat-accent, #146ef5\); outline-offset: 2px;/);
+  assert.match(html, /--tmchat-accent: #146ef5;/, 'the accent is themable, defaulting to Webflow blue');
   assert.match(html, /<textarea[^>]*aria-label="Describe the site you want to build"/);
 });
 
@@ -225,7 +226,10 @@ test('agent progress uses Webflow-neutral surfaces with blue reserved for curren
     html,
     /\.tmchat-progress\s*\{[^}]*border: 1px solid #ececec; border-radius: 8px;[^}]*background: #fafafa;/s,
   );
-  assert.match(html, /\.tmchat-progress-mark\s*\{[^}]*background: #f0f0f0; color: #146ef5;/s);
+  assert.match(
+    html,
+    /\.tmchat-progress-mark\s*\{[^}]*background: #f0f0f0; color: var\(--tmchat-accent, #146ef5\);/s,
+  );
   assert.match(html, /\.tmchat-progress-steps li\s*\{[^}]*color: #6b6b6b;/s);
   assert.match(
     html,

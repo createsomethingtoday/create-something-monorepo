@@ -3,26 +3,40 @@ import { TemplateCard } from '../cards/TemplateCard';
 import { isAnchorClickOn } from './templateChatAnalytics';
 import { safeImageUrl, safeMarketplaceUrl, safePreviewUrl } from './templateChatSafety';
 import type { AgentTemplateItem, DisplayPayload } from './templateChatProtocol';
+import {
+  DEFAULT_TEMPLATE_CHAT_STRINGS,
+  formatTemplatePrice,
+  type TemplateChatStrings,
+} from './templateChatStrings';
 
-function formatPrice(item: AgentTemplateItem): string {
-  if (item.is_free || item.price === 0) return 'Free';
-  return typeof item.price === 'number' ? `$${item.price} USD` : '';
+function formatPrice(
+  item: AgentTemplateItem,
+  freeLabel: string,
+  locale?: string,
+  currency?: string,
+): string {
+  if (item.is_free || item.price === 0) return freeLabel;
+  return typeof item.price === 'number' ? formatTemplatePrice(item.price, locale, currency) : '';
 }
 
 export function DisplayArtifact({
   payload,
   onPreview,
   onTemplateClick,
+  strings = DEFAULT_TEMPLATE_CHAT_STRINGS,
+  locale,
+  currency,
 }: {
   payload: DisplayPayload;
   onPreview?: (item: AgentTemplateItem, position: number, layout: string, trigger?: HTMLElement | null) => void;
   onTemplateClick?: (item: AgentTemplateItem, position: number, layout: string) => void;
+  strings?: TemplateChatStrings;
+  locale?: string;
+  currency?: string;
 }): React.ReactElement {
   // On phones a multi-card set becomes a horizontal snap deck. Without a group
   // label it is announced as a run of loose links with no sense of the set.
-  const deckLabel = payload.title
-    ? `${payload.title} — ${payload.items.length} templates`
-    : `${payload.items.length} template recommendations`;
+  const deckLabel = strings.deckLabel(payload.items.length, payload.title);
   const isStrip = payload.layout === 'carousel';
   const isSingle = payload.layout === 'spotlight' || payload.items.length === 1;
 
@@ -48,7 +62,7 @@ export function DisplayArtifact({
       <TemplateCard
         templateName={entry.item.name}
         templateLink={{ href: templateUrl ?? '#', target: '_blank' }}
-        price={formatPrice(entry.item)}
+        price={formatPrice(entry.item, strings.priceFree, locale, currency)}
         isFree={entry.item.is_free}
         creatorName={entry.item.creator_name ?? ''}
         creatorLink={creatorUrl ? { href: creatorUrl, target: '_blank' } : undefined}
@@ -62,10 +76,10 @@ export function DisplayArtifact({
         }
         primaryImage={thumbnailUrl ? { src: thumbnailUrl, alt: entry.item.name } : undefined}
         cumulativePurchases={entry.item.cumulative_purchases ?? undefined}
-        agentNote={entry.reason ? `Why it fits — ${entry.reason}` : undefined}
+        agentNote={entry.reason ? strings.whyItFits(entry.reason) : undefined}
         showCategoryMeta={false}
         showPreviewLink={Boolean(onPreview && previewUrl)}
-        previewLabel="Live preview"
+        previewLabel={strings.previewLabel}
         previewLink={
           onPreview && previewUrl
             ? {

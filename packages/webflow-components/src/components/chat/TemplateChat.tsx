@@ -32,7 +32,9 @@ import {
   applyPageAction,
   clearPageActionTimers,
   normalizePageActionPayload,
+  pageActionChangesFilters,
   pageHasTemplateGrid,
+  undoPageAction,
   type PageActionTimers,
 } from './templateChatPageAction';
 import {
@@ -47,6 +49,10 @@ import {
   type PersistedSession,
 } from './templateChatPersistence';
 import { safePreviewUrl } from './templateChatSafety';
+import {
+  resolveTemplateChatStrings,
+  type TemplateChatStringsOverride,
+} from './templateChatStrings';
 import { getTurnstileToken } from './templateChatTurnstile';
 import {
   classifyAgentResponseFailure,
@@ -131,7 +137,37 @@ export interface TemplateChatProps {
   sessionScope?: string;
   /** CSS selector list for host-owned consent/modals that must win interaction. */
   hostOverlaySelectors?: string;
+  /**
+   * Overrides for reader-facing copy. The Webflow prop panel exposes the
+   * high-traffic strings; everything else (progress narration, receipts,
+   * preview toolbar) is localized here.
+   */
+  strings?: TemplateChatStringsOverride;
+  /** BCP 47 tag used to format prices. Defaults to the document language. */
+  locale?: string;
+  /** ISO 4217 code for template prices. */
+  currency?: string;
 }
+
+// ── Layout and interaction constants ────────────────────────────────────────
+/** Panel width at which the agent may size galleries for a wide canvas. */
+const WIDE_SURFACE_MIN_WIDTH = 720;
+/** Distance from the end still treated as "following the conversation". */
+const STICK_TO_BOTTOM_SLACK_PX = 80;
+/** Composer grows to roughly four rows, then scrolls. */
+const COMPOSER_MAX_HEIGHT_PX = 120;
+/** Gap left between a host overlay and the surface that yields to it. */
+const HOST_OVERLAY_GAP_PX = 16;
+/** Docked panel height, matched to the stylesheet. */
+const DOCKED_PANEL_MAX_HEIGHT_PX = 640;
+/** Re-check cadence while a host overlay owns the composer area. */
+const HOST_OVERLAY_POLL_MS = 500;
+/**
+ * Stop re-checking after this long. If a consent layer is still up a minute
+ * later the reader is not trying to reach the launcher, and polling forever is
+ * main-thread work with nothing to show for it.
+ */
+const HOST_OVERLAY_POLL_DEADLINE_MS = 60_000;
 
 const DEFAULT_STARTERS =
   'A portfolio with bold animations, An online store for a clothing brand, A restaurant site with a menu, A SaaS landing page with a blog';
@@ -169,8 +205,18 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   enableAnalytics = true,
   sessionScope = 'marketplace',
   hostOverlaySelectors = '#transcend-consent-manager',
+  strings: stringsOverride,
+  locale,
+  currency = 'USD',
 }) => {
   const isInline = variant === 'inline';
+  const strings = resolveTemplateChatStrings(stringsOverride);
+  // Prices follow the page's language when the caller does not pin one. An empty
+  // string arrives from the Webflow panel's default, and Intl rejects it.
+  const priceLocale =
+    locale?.trim() ||
+    (typeof document === 'undefined' ? undefined : document.documentElement.lang.trim() || undefined);
+  const priceCurrency = currency.trim() || 'USD';
   const storageKey = getTemplateChatStorageKey(sessionScope);
   const inputLimitId = `tmchat-input-limit-${useId().replace(/:/g, '')}`;
   const introId = `tmchat-intro-${useId().replace(/:/g, '')}`;
@@ -202,6 +248,9 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   const [atBottom, setAtBottom] = useState(true);
   const [retryText, setRetryText] = useState<string | null>(persisted?.stoppedPrompt ?? null);
   const [stoppedPrompt, setStoppedPrompt] = useState<string | null>(persisted?.stoppedPrompt ?? null);
+  // URL of the grid as it stood before this turn touched it, so the reader can
+  // reverse an agent-applied filter set in one action.
+  const [undoHref, setUndoHref] = useState<string | null>(null);
   // Template being live-previewed in the in-panel iframe (null = chat view).
   // Position/layout are kept for conversion attribution on the preview CTA.
   const [preview, setPreview] = useState<{ item: AgentTemplateItem; position: number; layout: string } | null>(null);
@@ -287,7 +336,16 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
 
   useEffect(() => {
     if ((!hostOverlayBlocking && hostOverlayBottomInset === 0) || typeof window === 'undefined') return;
-    const interval = window.setInterval(syncHostOverlay, 500);
+    const startedAt = Date.now();
+    const interval = window.setInterval(() => {
+      // Nothing to reposition against while the tab is hidden.
+      if (document.visibilityState === 'hidden') return;
+      if (Date.now() - startedAt > HOST_OVERLAY_POLL_DEADLINE_MS) {
+        window.clearInterval(interval);
+        return;
+      }
+      syncHostOverlay();
+    }, HOST_OVERLAY_POLL_MS);
     return () => window.clearInterval(interval);
   }, [hostOverlayBlocking, hostOverlayBottomInset, syncHostOverlay]);
 
@@ -405,7 +463,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
-    const near = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+    const near = el.scrollHeight - el.scrollTop - el.clientHeight < STICK_TO_BOTTOM_SLACK_PX;
     atBottomRef.current = near;
     setAtBottom(near);
   }, []);
@@ -445,7 +503,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
     const el = inputRef.current;
     if (!el) return;
     el.style.height = 'auto';
-    el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
+    el.style.height = `${Math.min(el.scrollHeight, COMPOSER_MAX_HEIGHT_PX)}px`;
   }, [input]);
 
   // FLIP the docked panel <-> immersive transition: measure before the layout
@@ -620,6 +678,13 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
     [],
   );
 
+  const undoLastPageAction = useCallback(() => {
+    if (!undoHref) return;
+    undoPageAction(undoHref);
+    setUndoHref(null);
+    track('page_action_undone');
+  }, [track, undoHref]);
+
   const stopStreaming = useCallback(() => {
     streamBatcherRef.current?.flushNow();
     streamAbortRef.current?.abort();
@@ -643,6 +708,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
     setIntroExpanded(false);
     setRetryText(null);
     setStoppedPrompt(null);
+    setUndoHref(null);
     previewOpenedImmersiveRef.current = null;
     previewTriggerRef.current = null;
     setPreview(null);
@@ -686,6 +752,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
         ? messages.slice(0, messages[messages.length - 1]?.role === 'assistant' ? -2 : -1)
         : messages;
       setStoppedPrompt(null);
+      setUndoHref(null);
       setStreaming(true);
       setTurnProgress(createAgentProgressState());
       setWorkingState(true);
@@ -793,7 +860,10 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
                 highlight_misses: highlightMisses.length > 0 ? highlightMisses : undefined,
                 // Wide canvases (immersive, or an inline panel rendered wide)
                 // fit larger galleries; the agent sizes displays accordingly.
-                surface: immersive || (panelRef.current?.clientWidth ?? 0) >= 720 ? 'immersive' : 'compact',
+                surface:
+                  immersive || (panelRef.current?.clientWidth ?? 0) >= WIDE_SURFACE_MIN_WIDTH
+                    ? 'immersive'
+                    : 'compact',
                 // Whether the agent can drive this page's grid via update_page.
                 has_page_grid: pageHasTemplateGrid(),
               },
@@ -842,7 +912,17 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
               if (Object.keys(pageAction).length > 0) {
                 updateTurnProgress({ type: 'page_action', payload: pageAction });
                 setWorkingState(true);
-                applyPageAction(pageAction, highlightMissesRef.current, pageActionTimersRef.current);
+                // First filter change of the turn becomes its own history entry
+                // so Back reverses the agent; later ones in the same answer
+                // amend it rather than stacking entries.
+                const isFirstFilterChange =
+                  pageActionsApplied === 0 && pageActionChangesFilters(pageAction);
+                if (isFirstFilterChange && typeof window !== 'undefined') {
+                  setUndoHref(window.location.href);
+                }
+                applyPageAction(pageAction, highlightMissesRef.current, pageActionTimersRef.current, {
+                  history: isFirstFilterChange ? 'push' : 'replace',
+                });
                 pageActionsApplied += 1;
                 track('page_action_applied', {
                   turn,
@@ -1006,7 +1086,8 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   );
 
   if (!open) {
-    const launcherStyle = hostOverlayBottomInset > 0 ? { bottom: hostOverlayBottomInset + 16 } : undefined;
+    const launcherStyle =
+      hostOverlayBottomInset > 0 ? { bottom: hostOverlayBottomInset + HOST_OVERLAY_GAP_PX } : undefined;
     return (
       <>
         <style dangerouslySetInnerHTML={{ __html: CHAT_STYLES }} />
@@ -1031,8 +1112,10 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   const panelClass = `tmchat-panel entering${immersive ? ' immersive' : isInline ? ' inline' : ''}`;
   const panelStyle = !isInline && !immersive && hostOverlayBottomInset > 0
     ? {
-        bottom: hostOverlayBottomInset + 16,
-        height: `min(640px, calc(100vh - ${hostOverlayBottomInset + 32}px))`,
+        bottom: hostOverlayBottomInset + HOST_OVERLAY_GAP_PX,
+        height: `min(${DOCKED_PANEL_MAX_HEIGHT_PX}px, calc(100vh - ${
+          hostOverlayBottomInset + HOST_OVERLAY_GAP_PX * 2
+        }px))`,
       }
     : undefined;
   const showConversationChips = !streaming && followups.length > 0;
@@ -1041,7 +1124,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   const hasDisplayedResults = messages.some((message) => message.displays.length > 0);
   const lastIndex = messages.length - 1;
   const latestAssistant = messages.slice().reverse().find((message) => message.role === 'assistant');
-  const turnReceipt = getAgentOutcomeReceipt(turnProgress);
+  const turnReceipt = getAgentOutcomeReceipt(turnProgress, strings);
   const outcomeAnnouncement = !streaming && turnReceipt
     ? [latestAssistant?.content.trim() ?? '', `${turnReceipt}.`].filter(Boolean).join(' ')
     : '';
@@ -1073,15 +1156,15 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
           <h2 className="tmchat-header-title" id={titleId}>{title}</h2>
           <div className="tmchat-header-actions">
             {messages.length > 0 ? (
-              <button type="button" className="tmchat-iconbtn" aria-label="New chat" title="New chat" onClick={resetChat}>
+              <button type="button" className="tmchat-iconbtn" aria-label={strings.newChat} title={strings.newChat} onClick={resetChat}>
                 <UiIcon name="refresh-cw" />
               </button>
             ) : null}
             <button
               type="button"
               className="tmchat-iconbtn tmchat-expand"
-              aria-label={immersive ? 'Exit fullscreen' : 'Expand to fullscreen'}
-              title={immersive ? 'Exit fullscreen' : 'Expand'}
+              aria-label={immersive ? strings.exitFullscreen : strings.expand}
+              title={immersive ? strings.exitFullscreen : strings.expand}
               onClick={() => setImmersiveAnimated((current) => !current)}
             >
               <UiIcon name={immersive ? 'minimize-2' : 'maximize-2'} />
@@ -1090,7 +1173,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
               <button
                 type="button"
                 className="tmchat-iconbtn"
-                aria-label="Close chat"
+                aria-label={strings.closeChat}
                 onClick={() => {
                   previewOpenedImmersiveRef.current = null;
                   previewTriggerRef.current = null;
@@ -1129,7 +1212,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
                   setIntroExpanded((current) => !current);
                 }}
               >
-                How Template finder works
+                {strings.introToggle(title)}
               </button>
               <div id={introId} className="tmchat-intro-copy" hidden={!introExpanded}>{welcomeMessage}</div>
             </div>
@@ -1160,7 +1243,15 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
                 </div>
               ) : null}
               {message.displays.map((payload, displayIndex) => (
-                <DisplayArtifact key={displayIndex} payload={payload} onPreview={openPreview} onTemplateClick={handleTemplateClick} />
+                <DisplayArtifact
+                  key={displayIndex}
+                  payload={payload}
+                  onPreview={openPreview}
+                  onTemplateClick={handleTemplateClick}
+                  strings={strings}
+                  locale={priceLocale}
+                  currency={priceCurrency}
+                />
               ))}
             </React.Fragment>
           ))}
@@ -1170,10 +1261,17 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
             </div>
           ) : null}
           {streaming ? (
-            <AgentProgress progress={turnProgress} />
+            <AgentProgress progress={turnProgress} strings={strings} />
           ) : null}
           {!streaming && turnReceipt ? (
-            <div className="tmchat-turn-status" data-outcome={turnProgress.outcome}>{turnReceipt}</div>
+            <div className="tmchat-turn-row">
+              <div className="tmchat-turn-status" data-outcome={turnProgress.outcome}>{turnReceipt}</div>
+              {undoHref ? (
+                <button type="button" className="tmchat-undo" onClick={undoLastPageAction}>
+                  <UiIcon name="refresh-cw" size={13} /> {strings.undoPageUpdate}
+                </button>
+              ) : null}
+            </div>
           ) : null}
           {showRetry ? (
             <div className="tmchat-followups">
@@ -1188,13 +1286,13 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
                   void send(retryText, base, 'retry');
                 }}
               >
-                Try again
+                {strings.tryAgain}
               </button>
             </div>
           ) : null}
           {showConversationChips ? (
             <div className="tmchat-refine">
-              {hasDisplayedResults ? <div className="tmchat-refine-label">Refine these results</div> : null}
+              {hasDisplayedResults ? <div className="tmchat-refine-label">{strings.refineResults}</div> : null}
               <div className="tmchat-followups">
                 {followups.map((suggestion, index) => (
                   <button
@@ -1214,7 +1312,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
 
         {!atBottom && messages.length > 0 ? (
           <button type="button" className="tmchat-jump" onClick={() => scrollToBottom('smooth')}>
-            <UiIcon name="arrow-down" size={14} /> Latest
+            <UiIcon name="arrow-down" size={14} /> {strings.jumpToLatest}
           </button>
         ) : null}
         </div>
@@ -1227,7 +1325,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
               className="tmchat-input"
               rows={1}
               maxLength={MAX_REQUEST_MESSAGE_CHARS}
-              aria-label="Describe the site you want to build"
+              aria-label={strings.composerLabel}
               aria-describedby={inputLimitId}
               placeholder={placeholder}
               value={input}
@@ -1240,7 +1338,10 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
               }}
             />
             <div id={inputLimitId} className="tmchat-inputmeta">
-              {input.length.toLocaleString()} / {MAX_REQUEST_MESSAGE_CHARS.toLocaleString()} character limit
+              {strings.characterLimit(
+                input.length.toLocaleString(priceLocale),
+                MAX_REQUEST_MESSAGE_CHARS.toLocaleString(priceLocale),
+              )}
             </div>
           </div>
           {streaming ? (
@@ -1260,6 +1361,9 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
             item={preview.item}
             onEvent={handlePreviewEvent}
             onClose={closePreview}
+            strings={strings}
+            locale={priceLocale}
+            currency={priceCurrency}
           />
         ) : null}
         </div>

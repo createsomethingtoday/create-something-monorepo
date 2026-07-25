@@ -4,6 +4,11 @@ import { prefersReducedMotion } from './templateChatRuntime';
 import { safeMarketplaceUrl, safePreviewUrl } from './templateChatSafety';
 import type { ChatTrack } from './templateChatAnalytics';
 import type { AgentTemplateItem } from './templateChatProtocol';
+import {
+  DEFAULT_TEMPLATE_CHAT_STRINGS,
+  formatTemplatePrice,
+  type TemplateChatStrings,
+} from './templateChatStrings';
 
 /**
  * The framed document is a creator-authored site running its own scripts inside
@@ -23,10 +28,16 @@ export function TemplatePreviewPane({
   item,
   onClose,
   onEvent,
+  strings = DEFAULT_TEMPLATE_CHAT_STRINGS,
+  locale,
+  currency,
 }: {
   item: AgentTemplateItem;
   onClose: () => void;
   onEvent?: ChatTrack;
+  strings?: TemplateChatStrings;
+  locale?: string;
+  currency?: string;
 }): React.ReactElement {
   const [device, setDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [loaded, setLoaded] = useState(false);
@@ -85,21 +96,21 @@ export function TemplatePreviewPane({
     >
       <div className="tmchat-preview-bar">
         <button ref={backRef} type="button" className="tmchat-preview-back" onClick={requestClose}>
-          <UiIcon name="arrow-left" size={14} /> Back to chat
+          <UiIcon name="arrow-left" size={14} /> {strings.backToChat}
         </button>
         <span className="tmchat-preview-sep" aria-hidden="true" />
         <div className="tmchat-preview-meta">
           <span className="tmchat-preview-name" id={headingId}>{item.name}</span>
           {item.creator_name ? <span className="tmchat-preview-creator">by {item.creator_name}</span> : null}
         </div>
-        <div className="tmchat-devicetoggle" role="group" aria-label="Preview device">
+        <div className="tmchat-devicetoggle" role="group" aria-label={strings.previewDevice}>
           <button
             type="button"
             className={`tmchat-devicebtn${device === 'desktop' ? ' active' : ''}`}
             aria-pressed={device === 'desktop'}
             onClick={() => switchDevice('desktop')}
           >
-            <UiIcon name="monitor" size={14} /> Desktop
+            <UiIcon name="monitor" size={14} /> {strings.deviceDesktop}
           </button>
           <button
             type="button"
@@ -107,7 +118,7 @@ export function TemplatePreviewPane({
             aria-pressed={device === 'tablet'}
             onClick={() => switchDevice('tablet')}
           >
-            <UiIcon name="tablet" size={14} /> Tablet
+            <UiIcon name="tablet" size={14} /> {strings.deviceTablet}
           </button>
           <button
             type="button"
@@ -115,7 +126,7 @@ export function TemplatePreviewPane({
             aria-pressed={device === 'mobile'}
             onClick={() => switchDevice('mobile')}
           >
-            <UiIcon name="smartphone" size={14} /> Mobile
+            <UiIcon name="smartphone" size={14} /> {strings.deviceMobile}
           </button>
         </div>
         {previewUrl ? (
@@ -126,7 +137,7 @@ export function TemplatePreviewPane({
             rel="noopener noreferrer"
             onClick={() => onEvent?.('live_preview_site_opened', { template_slug: item.template_slug })}
           >
-            Open site <UiIcon name="external-link" size={12} />
+            {strings.openSite} <UiIcon name="external-link" size={12} />
           </a>
         ) : null}
         {ctaUrl ? (
@@ -144,17 +155,17 @@ export function TemplatePreviewPane({
             }
           >
             {item.is_free || item.price === 0
-              ? 'Use for free'
+              ? strings.useForFree
               : typeof item.price === 'number'
-                ? `Buy — $${item.price}`
-                : 'View template'}
+                ? strings.buyFor(formatTemplatePrice(item.price, locale, currency))
+                : strings.viewTemplate}
           </a>
         ) : null}
       </div>
       <div ref={stageRef} className={`tmchat-preview-stage ${device}`}>
         {!loaded ? (
           <div className="tmchat-preview-loading" aria-live="polite">
-            Loading live preview
+            {strings.loadingPreview}
             <span className="tmchat-dots">
               <span />
               <span />
@@ -167,7 +178,7 @@ export function TemplatePreviewPane({
           src={previewUrl ?? undefined}
           sandbox={PREVIEW_SANDBOX}
           referrerPolicy="no-referrer"
-          title={`${item.name} — live template preview`}
+          title={strings.previewOf(item.name)}
           loading="eager"
           onLoad={() => setLoaded(true)}
           style={{ opacity: loaded ? 1 : 0, transition: 'opacity 240ms ease' }}
