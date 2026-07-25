@@ -77,7 +77,7 @@ export async function workspaceCommandResponse(
       : command.action === 'update-player-profile' ? await service.updatePlayerProfile(command.playerId, command.profile)
       : command.action === 'save-receipt' ? await service.saveReceipt(command.playerId, command.receipt)
       : command.action === 'register-evidence' ? await service.registerEvidence(command.playerId, command.evidence)
-      : command.action === 'record-engagement' ? await service.recordEngagement(command.playerId, command.engagement)
+      : command.action === 'record-engagement' ? await service.recordEngagement(command.playerId, isPlayerScope(scope) ? { ...command.engagement, source: 'player' } : command.engagement)
       : command.action === 'attach-film-analysis' ? await service.attachFilmAnalysis(command.playerId, command.title, command.analysis)
       : command.action === 'attach-film-play-review' ? await service.attachFilmPlayReview(command.playerId, command.analysisId, command.review)
       : await service.correctFilmAnalysis(command.playerId, command.analysisId, command.correction);

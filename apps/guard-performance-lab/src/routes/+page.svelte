@@ -96,6 +96,10 @@
   let filmTraffic = $derived(correctedFilm ? resolveFilmTrafficAt(correctedFilm, filmTimeMs, filmWakeMs, { movementMode: filmMovementMode }) : null);
   let filmCoverage = $derived(correctedFilm ? summarizeFilmTargetCoverage(correctedFilm) : null);
   let migrationTrace = $derived(activeFilm?.analysis.migrationTraceVerification ?? null);
+  // The scrub step must match the captured sample interval, or half the steps land between frames.
+  let filmStepMs = $derived(activeFilm && activeFilm.frames.length > 1
+    ? Math.max(1, activeFilm.frames[1]!.timeMs - activeFilm.frames[0]!.timeMs)
+    : 500);
   let filteredTerms = $derived(glossary.filter(([term, meaning, phase]) => {
     const matchesPhase = termPhase === 'all' || phase === termPhase;
     const needle = search.trim().toLowerCase();
@@ -214,7 +218,7 @@
 
   async function recordEngagement() {
     if (!engagementNote.trim()) { syncError = 'Add one observable interaction note before recording engagement.'; return; }
-    if (!await runCommand({ action: 'record-engagement', playerId: labState.selectedPlayerId, engagement: { stage: guideStage, status: engagementStatus, source: 'coach', note: engagementNote } })) return;
+    if (!await runCommand({ action: 'record-engagement', playerId: labState.selectedPlayerId, engagement: { stage: guideStage, status: engagementStatus, source: operator ? 'coach' : 'player', note: engagementNote } })) return;
     engagementNote = '';
   }
 
@@ -250,8 +254,12 @@
   function downloadFilm(name: string, type: string, contents: string) {
     const url = URL.createObjectURL(new Blob([contents], { type }));
     const anchor = document.createElement('a');
-    anchor.href = url; anchor.download = name; anchor.click();
-    URL.revokeObjectURL(url);
+    anchor.href = url; anchor.download = name;
+    document.body.append(anchor);
+    anchor.click();
+    anchor.remove();
+    // Revoking in the same tick cancels the download in some browsers.
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
   function exportFilmJson() {
@@ -340,7 +348,7 @@
 
     {:else if view === 'film'}
       <div class="section-head"><h2>Player traffic / #13</h2><p>The video was analyzed once. This canvas replays the captured revision; scrubbing, correction, reload, and export do not run inference.</p></div>
-      {#if activeFilm && filmTraffic}
+      {#if activeFilm && correctedFilm && filmTraffic}
         <section class="film-status" aria-label="Captured film status">
           <div><span class="mono">Analysis</span><strong>{activeFilm.analysis.executionCount}x / captured</strong></div>
           <div><span class="mono">Revision</span><strong>{activeFilm.analysis.revision}</strong></div>
@@ -354,23 +362,26 @@
           <div><span class="mono">Projection</span><strong>{activeFilm.analysis.courtCalibrationVerification ? `${activeFilm.analysis.courtCalibrationVerification.calibratedCoordinates} calibrated · ≤${activeFilm.analysis.courtCalibrationVerification.maximumStateP95ErrorFeet}ft p95` : activeFilm.source.sha256 === '94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0' ? 'Mansfield geometry · wake estimated' : migrationTrace?.calibratedCoordinates ? `${migrationTrace.calibratedCoordinates} calibrated` : 'estimated'}</strong></div>
         </section>
         <div class="film-stage">
-          <FilmTrafficCourt analysis={activeFilm} timeMs={filmTimeMs} wakeMs={filmWakeMs} movementMode={filmMovementMode} />
+          <FilmTrafficCourt analysis={activeFilm} corrected={correctedFilm} timeMs={filmTimeMs} wakeMs={filmWakeMs} movementMode={filmMovementMode} />
           <aside class="film-legend">
             <p class="eyebrow">Traffic key</p>
             <div><i class="traffic-dot target"></i><span>Player #13 + wake</span></div>
             <div><i class="traffic-dot teammate"></i><span>Foreground-court teammate</span></div>
             <div><i class="traffic-dot opponent"></i><span>Foreground-court opponent</span></div>
             <p>Orange wake is verified live basketball. In all-captured mode, gray dashed wake preserves dead-ball, free-throw, substitution, and unknown movement without counting it as positioning or lane running.</p>
+            <p>A dashed ring on #13 means the token sits between two captured frames, so that single position is interpolated and is not itself evidence.</p>
             {#if migrationTrace}<p class="mono">MIGRATION / {Math.round(migrationTrace.coverage * 10_000) / 100}% ACTIVE-VISIBLE / {migrationTrace.pathSegmentCount} SEGMENTS / BREAKS ≤ {migrationTrace.longestUnresolvedGapMs / 1000}s</p>{/if}
-            <p class="mono">PLAY STATE / {filmTraffic.currentPlayState} / {filmTraffic.currentPlayStateEvidence?.method ?? 'unreviewed'}{activeFilm.analysis.playStateVerification ? ` / ${activeFilm.analysis.playStateVerification.liveFrameCount} LIVE / ${activeFilm.analysis.playStateVerification.nonLiveFrameCount} NON-LIVE / ${activeFilm.analysis.playStateVerification.unknownFrameCount} UNKNOWN` : ''}</p>
-            {#if activeFilm.analysis.identityVerification}<p class="mono">ID PRECISION / {Math.round(activeFilm.analysis.identityVerification.positiveRecall * 100)}% #13 / {Math.round(activeFilm.analysis.identityVerification.hardNegativePrecision * 100)}% NEG / {migrationTrace ? `${Math.round(migrationTrace.coverage * 10_000) / 100}% ACTIVE-VISIBLE` : `${filmCoverage?.resolvedPercent ?? 0}% FULL-VIDEO`}</p>{/if}
+            <p class="mono">PLAY STATE / {filmTraffic.currentPlayState} / {filmTraffic.currentPlayStateEvidence?.method ?? 'unreviewed'} / {filmTraffic.currentPlayStateEvidence?.reviewer ?? 'none'}{activeFilm.analysis.playStateVerification ? ` / ${activeFilm.analysis.playStateVerification.liveFrameCount} LIVE / ${activeFilm.analysis.playStateVerification.nonLiveFrameCount} NON-LIVE / ${activeFilm.analysis.playStateVerification.unknownFrameCount} UNKNOWN` : ''}</p>
+            <p class="mono">REVIEW / {filmCoverage?.userReviewedFrames ?? 0} USER-CONFIRMED / {filmCoverage?.agentReviewedFrames ?? 0} AGENT-REVIEWED / {filmCoverage?.unreviewedFrames ?? 0} UNREVIEWED</p>
+            {#if activeFilm.analysis.identityVerification}<p class="mono">ID PRECISION / {Math.round(activeFilm.analysis.identityVerification.positiveRecall * 100)}% #13 / {Math.round(activeFilm.analysis.identityVerification.hardNegativePrecision * 100)}% NEG / {migrationTrace ? `${Math.round(migrationTrace.coverage * 10_000) / 100}% ACTIVE-VISIBLE` : `${filmCoverage?.resolvedPercent ?? 0}% FULL-VIDEO`}{activeFilm.analysis.identityVerification.positiveDecisionCount ? ` / ${activeFilm.analysis.identityVerification.positiveDecisionCount} POSITIVE DECISIONS` : ' / DECISION COUNT NOT RECORDED'}</p>{/if}
             {#if activeFilm.analysis.courtCalibrationVerification}<p class="mono">COURT / FIELDHOUSEUSA MANSFIELD / 84 × 50 FT / 12 FT LANE / BLACK BASKETBALL MARKINGS / ≤1 FT P95 GATE</p>{/if}
+            {#if !filmTraffic.movementClaimSupported}<p class="mono">SAMPLING / {filmTraffic.sampleIntervalMs}MS BETWEEN SAMPLES / WAKE IS CONNECT-THE-DOTS, NOT AN OBSERVED PATH</p>{/if}
             <dl><dt>Source</dt><dd>{activeFilm.source.sha256.slice(0, 12)}…</dd><dt>Frames</dt><dd>{activeFilm.frames.length}</dd><dt>Corrections</dt><dd>{activeFilm.corrections.length}</dd></dl>
           </aside>
         </div>
         <section class="film-controls" aria-label="Film traffic controls">
           <div class="film-seek-row"><button class="button" onclick={() => seekFilm(-5000)}>− 5 sec</button><output aria-live="polite">{formatFilmTime(filmTimeMs)}</output><button class="button" onclick={() => seekFilm(5000)}>+ 5 sec</button></div>
-          <label class="field full"><span>Traffic time / scrub in either direction</span><input aria-label="Film traffic time" type="range" min="0" max={activeFilm.frames.at(-1)?.timeMs ?? 0} step="500" bind:value={filmTimeMs} /></label>
+          <label class="field full"><span>Traffic time / scrub in either direction</span><input aria-label="Film traffic time" type="range" min="0" max={activeFilm.frames.at(-1)?.timeMs ?? 0} step={filmStepMs} bind:value={filmTimeMs} /></label>
           <label class="field"><span>#13 wake</span><select class="input" bind:value={filmWakeMs}><option value={3000}>3 seconds</option><option value={5000}>5 seconds</option><option value={10000}>10 seconds</option><option value={20000}>20 seconds</option><option value={3600000}>All verified history</option></select></label>
           <label class="field"><span>Movement evidence</span><select aria-label="Film movement evidence" class="input" bind:value={filmMovementMode}><option value="all-captured">All verified #13 positions</option><option value="live-only">Reviewed live basketball only</option></select></label>
           <div class="film-export"><button class="button" onclick={exportFilmJson}>Export captured JSON</button><button class="button" onclick={exportFilmSvg}>Export canvas SVG</button></div>

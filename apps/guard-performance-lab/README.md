@@ -32,7 +32,7 @@ pnpm --filter @create-something/guard-performance-lab build
 pnpm --filter @create-something/guard-performance-lab preview
 ```
 
-The production preview runs at `http://127.0.0.1:4173` and is the owning surface for the Playwright workflow recorded in `.codex/guard-performance-lab-app/goal.md`.
+The production preview runs at `http://127.0.0.1:4173` and is the owning surface for the browser-auth-fixture + Playwright workflow recorded under `Primary verifier` in `.codex/guard-performance-lab-viewing-room/goal.md`. Rendering invariants that can be asserted without a browser belong in `src/lib/FilmTrafficCourt.test.ts` instead, so they stay in the suite.
 
 ## One-run film trace
 
@@ -202,6 +202,28 @@ pnpm --filter @create-something/guard-performance-lab film:attach:play-review --
 
 The attach command fails closed when the source hash, analysis revision, one-run receipt, time domain, image media, pixelation receipt, or synthetic marker contract does not match. Player-scoped callers may read their assigned review cards but cannot attach or replace them. Selecting a card seeks the existing scrubber to the evidence frame; reload and export reuse the same private packet.
 
+### Review provenance
+
+`reviewer: 'codex'` is an accepted `source-review` reviewer. Agent review counts as real evidence rather than a placeholder, and the trade is that no surface may present one blended "reviewed" number. `summarizeFilmTargetCoverage` reports `userReviewedFrames`, `agentReviewedFrames`, and `unreviewedFrames`; the film legend prints that split beside the precision receipt. Identity, team, mask, and play-state fixtures all carry `reviewer`, so an agent-authored benchmark stays auditable instead of invisible. Use the `guard-film-reviewer` agent (`.claude/agents/guard-film-reviewer.md`) to produce reviewed ledgers and fixtures under that policy.
+
+**Precision is not coverage.** The current #13 revision reports 100% identity precision across 117 resolved frames of 3,396 captured frames (3.4%), with 27 live-basketball frames and 3,306 unknown play-state frames. Read the coverage and review lines before quoting a precision number.
+
+A dashed ring on the #13 token means that rendered position was interpolated between two captured frames (`isInterpolatedPlayer`). The captured revision never stores a synthesized coordinate, and a request landing exactly on a captured frame is never rendered as interpolated.
+
+### Data validity invariants
+
+These four rules exist because a receipt that cannot fail is not evidence.
+
+**A benchmark must be able to fail.** `assessFilmIdentityIndependence` requires positive decisions at frames that were **not** tracker seeds, at least one directly readable jersey per on-court segment, and same-team confusable negatives (#5/#11/#15). Without them, positive recall re-reads its own seed frames and hard-negative precision is guaranteed by the fail-closed default rather than earned. Pass the seed frame times to `verifyFilmIdentityCandidate(..., seedTimesMs)`; `finalizeFilmIdentityRevision` refuses a receipt whose independence block is absent or failing. The locked #13 fixture **fails** this gate once its seeds are declared — that is the honest state, and `film.test.ts` asserts it.
+
+**A rate travels with its denominator.** The identity receipt now carries `positiveDecisionCount`, `negativeDecisionCount`, `substitutionDecisionCount`, and `independentPositiveDecisionCount`. The film legend prints the positive-decision count next to the percentage, or `DECISION COUNT NOT RECORDED` for revisions imported before this rule.
+
+**One zone taxonomy.** Zone is always derived from `court` through `filmZone`/`courtZone` (basketball geography: paint, slot, wing, corner, restricted area, center circle). The analyzer no longer writes its own `{side}-{near|middle|far}` camera-band vocabulary, and a stored `zone` on an older revision is ignored rather than trusted. Corrections no longer write a zone at all.
+
+**Projection labels state what happened.** `estimated` is an image-space approximation, `operator-stated` is a typed-in court position, and only `calibrated` means the point came through a validated held-out homography (see the Mansfield calibration path). An operator correction is `operator-stated`; it used to claim `calibrated`, which made one typed coordinate flip the whole view's projection badge.
+
+**Sampling bounds movement claims.** The analyzer defaults to `--sample-fps 5.0`. A guard covers roughly 20 ft/s, so at 200 ms between samples unobserved travel stays near the 4 ft position tolerance; above that (`MOVEMENT_CLAIM_MAX_INTERVAL_MS`), `resolveFilmTrafficAt` and `summarizeFilmTargetCoverage` report `movementClaimSupported: false` and the film legend states that the wake is connect-the-dots rather than an observed path. The current 1 fps revision is in that state.
+
 ### Local segmentation-mask tracking
 
 Color histograms and detector track IDs are discovery signals, not sufficient #13 identity evidence: a track ID can transfer at a player crossing. For a substantially stronger local pass, use a reviewed #13 box to initialize SAM 2.1 on each verified active stint. The resulting silhouette receipt is fused back onto the person field only when all of these gates agree:
@@ -288,7 +310,7 @@ Guard Lab accepts only exact server-side subject bindings:
 - `CS_IDENTITY_AUDIENCE=guard-performance-lab` with the standard CREATE SOMETHING issuer/JWKS variables.
 - `ALLOW_CS_AUTH_PREVIEW=true` requires an explicit non-production `GUARD_LAB_DEV_SCOPE=operator` or `player:<id>` and is rejected in production.
 
-Every layout and `/api/*` data route resolves Canon access. Player HTTP and MCP calls are scoped from the binding; a caller-supplied different player ID is denied. Stdio MCP requires `GUARD_LAB_MCP_LAUNCHER=trusted` and an explicit `GUARD_LAB_MCP_SCOPE`; remote MCP callers must pass bearer verification before a tool server is constructed.
+Every layout and `/api/*` data route resolves Canon access. Player HTTP and MCP calls are scoped from the binding; a caller-supplied different player ID is denied, and a player-scoped engagement write is attributed to `player` on both the HTTP and MCP surfaces even when the caller supplies another source. Stdio MCP requires `GUARD_LAB_MCP_LAUNCHER=trusted` and an explicit `GUARD_LAB_MCP_SCOPE`. There is no remote MCP transport; adding one is a separately approval-gated network-boundary change.
 
 Production hosting is Cloudflare Pages plus D1. Apply migrations before deploying. Keep a D1 export and the previous Pages deployment ID before promotion; rollback the Pages deployment first, then restore the corresponding D1 export only if the schema/data change requires it. Private player records are retained until an operator explicitly deletes or resets them; exports and rollback artifacts must remain private and follow the same deletion decision.
 
@@ -296,7 +318,7 @@ The MCP surface provides program/workspace resources plus guidance, evidence rev
 
 ## Fonts and network boundary
 
-Satoshi and IBM Plex Mono are self-hosted under `static/fonts/`. The app consumes Canon’s Performance color tokens without importing Canon’s remote Fontshare stylesheet or its all-language font bundle. Runtime network activity is limited to the app, CREATE SOMETHING Identity endpoints, the configured remote MCP boundary, and evidence links a person explicitly opens.
+Satoshi and IBM Plex Mono are self-hosted under `static/fonts/`. The app consumes Canon’s Performance color tokens without importing Canon’s remote Fontshare stylesheet or its all-language font bundle. Runtime network activity is limited to the app, CREATE SOMETHING Identity endpoints, and evidence links a person explicitly opens.
 
 Verify both MCP profiles:
 
