@@ -43,6 +43,17 @@ import {
   type PersistedSession,
 } from './templateChatPersistence';
 import { getTurnstileToken } from './templateChatTurnstile';
+import {
+  classifyAgentResponseFailure,
+  classifyAgentStreamFailure,
+  createStreamWatchdog,
+  AGENT_REQUEST_TIMEOUT_MS,
+  MAX_SSE_BUFFER_CHARS,
+  parseSseFrames,
+  type AgentFailure,
+  type AgentFailureCode,
+  type StreamWatchdog,
+} from './templateChatStream';
 import { CHAT_STYLES } from './templateChatStyles';
 import {
   buildChatAttribution,
@@ -120,6 +131,17 @@ export interface TemplateChatProps {
 const DEFAULT_STARTERS =
   'A portfolio with bold animations, An online store for a clothing brand, A restaurant site with a menu, A SaaS landing page with a blog';
 
+/** Carries a classified HTTP failure out of the request phase of a turn. */
+class AgentResponseError extends Error {
+  readonly failure: AgentFailure;
+
+  constructor(failure: AgentFailure) {
+    super(failure.code);
+    this.name = 'AgentResponseError';
+    this.failure = failure;
+  }
+}
+
 // The agent is prompted to emit plain text, but render defensively: turn any
 // **bold** spans into <strong> instead of showing raw asterisks.
 function renderMessageText(content: string): React.ReactNode {
@@ -183,6 +205,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   const launcherRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const streamAbortRef = useRef<AbortController | null>(null);
+  const sendingRef = useRef(false);
   const streamBatcherRef = useRef<TextDeltaBatcher | null>(null);
   const slowTurnTimerRef = useRef<number | null>(null);
   const highlightMissesRef = useRef(createHighlightMissState());
@@ -620,7 +643,10 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   const send = useCallback(
     async (text: string, baseOverride?: ChatMessage[], source: ChatMessageSource = 'input') => {
       const trimmed = limitTemplateChatInput(text).trim();
-      if (!trimmed || streaming || !apiBase) return;
+      // Guard on a ref, not on `streaming`: two Enter presses inside one tick
+      // both observe the pre-render state and would open two streams.
+      if (!trimmed || streaming || sendingRef.current || !apiBase) return;
+      sendingRef.current = true;
 
       setFollowups([]);
       setInput('');
@@ -654,10 +680,22 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
       let templatesShown = 0;
       let pageActionsApplied = 0;
       let hadError = false;
+      // Latency attribution: a slow turn is otherwise indistinguishable between
+      // minting a session, edge cold start, and model time.
+      let sessionMintMs: number | null = null;
+      let ttfbMs: number | null = null;
+      let firstTokenMs: number | null = null;
+      let responseStatus: number | null = null;
+      let failureCode: AgentFailureCode | null = null;
       track('message_sent', buildMessageSentAnalytics(source, turn, trimmed));
 
       const controller = new AbortController();
       streamAbortRef.current = controller;
+      // Set when a watchdog aborts, so the abort is reported as a stall or a
+      // timeout rather than as a reader-initiated stop.
+      let stalled = false;
+      let timedOut = false;
+      let requestWatchdog: StreamWatchdog | null = null;
 
       const appendToAssistant = (updater: (message: ChatMessage) => ChatMessage) => {
         setMessages((current) => {
@@ -673,10 +711,38 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
       streamBatcherRef.current?.cancel();
       streamBatcherRef.current = textBatcher;
 
+      // Armed once the session token is in hand — a challenge the reader has to
+      // interact with must never be the thing that trips this.
+      const stopRequestWatchdog = () => {
+        requestWatchdog?.stop();
+        requestWatchdog = null;
+      };
+      const armRequestWatchdog = () => {
+        stopRequestWatchdog();
+        requestWatchdog = createStreamWatchdog(
+          () => {
+            timedOut = true;
+            controller.abort();
+          },
+          AGENT_REQUEST_TIMEOUT_MS,
+        );
+      };
+
       try {
         const response = await fetchAuthorizedAgentRequest({
           url: `${apiBase.replace(/\/+$/, '')}/api/templates/agent/chat`,
-          getSessionToken,
+          getSessionToken: async () => {
+            const cached = sessionTokenRef.current;
+            if (!cached) {
+              const mintStartedAt = Date.now();
+              const minted = await getSessionToken();
+              sessionMintMs = Date.now() - mintStartedAt;
+              armRequestWatchdog();
+              return minted;
+            }
+            armRequestWatchdog();
+            return cached;
+          },
           clearSessionToken: () => {
             sessionTokenRef.current = null;
           },
@@ -703,40 +769,19 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
             }),
           }),
         });
-        if (!response.ok || !response.body) throw new Error(`Agent unavailable (${response.status}).`);
+        stopRequestWatchdog();
+        responseStatus = response.status;
+        ttfbMs = Date.now() - startedAt;
+        if (!response.ok || !response.body) {
+          const failure = classifyAgentResponseFailure(response.status, response.headers.get('Retry-After'));
+          throw new AgentResponseError(failure);
+        }
         updateTurnProgress({ type: 'connected' });
         highlightMissesRef.current.clear();
 
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = '';
-
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-
-          let separator = buffer.indexOf('\n\n');
-          while (separator >= 0) {
-            const frame = buffer.slice(0, separator);
-            buffer = buffer.slice(separator + 2);
-            separator = buffer.indexOf('\n\n');
-
-            const data = frame
-              .split('\n')
-              .filter((line) => line.startsWith('data: '))
-              .map((line) => line.slice(6))
-              .join('');
-            if (!data) continue;
-
-            let event: AgentSseEvent;
-            try {
-              event = JSON.parse(data) as AgentSseEvent;
-            } catch {
-              continue;
-            }
-
+        const handleAgentEvent = (event: AgentSseEvent): void => {
             if (event.type === 'text_delta') {
+              if (firstTokenMs === null) firstTokenMs = Date.now() - startedAt;
               setWorkingState(false);
               updateTurnProgress({ type: 'text' });
               textBatcher.push(event.text);
@@ -796,31 +841,96 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
                 content: message.content || `Sorry — ${event.message}`,
               }));
             }
+        };
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        // The Worker emits no keep-alive comments, so silence is the only stall
+        // signal available. Without this a hung upstream leaves the composer
+        // spinning with no exit but the Stop button.
+        const watchdog = createStreamWatchdog(() => {
+          stalled = true;
+          controller.abort();
+        });
+
+        try {
+          for (;;) {
+            const { value, done } = await reader.read();
+            // Flush the decoder on the final read so a split multi-byte
+            // character does not disappear with the last frame.
+            const chunk = done ? decoder.decode() : decoder.decode(value, { stream: true });
+            if (chunk) {
+              watchdog.touch();
+              buffer += chunk;
+            }
+            if (buffer.length > MAX_SSE_BUFFER_CHARS) {
+              throw new Error('Agent stream exceeded the frame buffer.');
+            }
+
+            // `done` dispatches a trailing frame that never received its blank
+            // line — that frame is often the continuity token.
+            const { events, rest } = parseSseFrames(buffer, done);
+            buffer = rest;
+
+            for (const data of events) {
+              let event: AgentSseEvent;
+              try {
+                event = JSON.parse(data) as AgentSseEvent;
+              } catch {
+                continue;
+              }
+              handleAgentEvent(event);
+            }
+
+            if (done) break;
           }
+        } finally {
+          watchdog.stop();
         }
       } catch (error) {
-        if (!controller.signal.aborted) {
+        const readerStopped = controller.signal.aborted && !stalled && !timedOut;
+        if (!readerStopped) {
+          const failure =
+            error instanceof AgentResponseError
+              ? error.failure
+              : classifyAgentStreamFailure(error, {
+                  stalled,
+                  timedOut,
+                  online: typeof navigator === 'undefined' ? undefined : navigator.onLine,
+                });
           hadError = true;
+          failureCode = failure.code;
           updateTurnProgress({ type: 'fail' });
+          // Codes, not upstream strings: a free-text message can echo payload
+          // fragments into Segment and Amplitude.
           track('chat_error', {
             turn,
-            error_source: 'connection',
-            message: (error instanceof Error ? error.message : String(error)).slice(0, 200),
+            error_source: failure.code === 'session' ? 'session' : 'connection',
+            error_code: failure.code,
+            status: responseStatus,
+            retry_after_seconds: failure.retryAfterSeconds,
           });
-          setRetryText(trimmed);
+          if (failure.retryable) setRetryText(trimmed);
           appendToAssistant((message) => ({
             ...message,
-            content: message.content || 'Sorry — I hit a connection problem.',
+            content: message.content || failure.message,
           }));
         }
       } finally {
+        stopRequestWatchdog();
         clearSlowTurnTimer();
         textBatcher.flushNow();
         if (streamBatcherRef.current === textBatcher) streamBatcherRef.current = null;
-        if (controller.signal.aborted) {
+        // A watchdog abort is a failure, not a reader-initiated stop; only the
+        // latter earns the "Search stopped" receipt and a resumable prompt.
+        const stoppedByReader = controller.signal.aborted && !stalled && !timedOut;
+        if (stoppedByReader) {
           updateTurnProgress({ type: 'stop' });
           setRetryText(trimmed);
           setStoppedPrompt(trimmed);
+        }
+        if (controller.signal.aborted) {
           setMessages((current) => {
             const last = current[current.length - 1];
             return last?.role === 'assistant' && !last.content && last.displays.length === 0
@@ -831,14 +941,22 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
         if (!controller.signal.aborted && !hadError) updateTurnProgress({ type: 'done' });
         setWorkingState(false);
         setStreaming(false);
+        sendingRef.current = false;
         track('response_completed', {
           turn,
           duration_ms: Date.now() - startedAt,
+          session_mint_ms: sessionMintMs,
+          ttfb_ms: ttfbMs,
+          first_token_ms: firstTokenMs,
+          status: responseStatus,
           displays_shown: displaysShown,
           templates_shown: templatesShown,
           page_actions_applied: pageActionsApplied,
           had_error: hadError,
-          stopped: controller.signal.aborted,
+          error_code: failureCode,
+          stalled,
+          timed_out: timedOut,
+          stopped: stoppedByReader,
         });
       }
     },
