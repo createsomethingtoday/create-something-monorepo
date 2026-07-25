@@ -64,6 +64,9 @@ const CREATOR_EMAIL_FORMULA_FIELDS = [
   '📧Emails (from 🎨Creator)'
 ] as const;
 
+// Email fields on the Creators table (the Assets fields above are lookups of these).
+const CREATOR_RECORD_EMAIL_FIELDS = ['📧Email', '📧WF Account Email', '📧Emails'] as const;
+
 const CATEGORY_FIELDS_PRIORITY = [
   '🏷️Category',
   '🏷️Categories',
@@ -315,22 +318,97 @@ function extractMarketplaceFreshness(
   };
 }
 
-export function escapeAirtableString(input: string): string {
+/**
+ * Renders a value as a quoted Airtable formula literal.
+ *
+ * Airtable has no parameter binding, so every embedded value has to be quoted
+ * here rather than at the call site. We pick the quote character the value does
+ * not contain instead of relying on escape sequences, and reject values holding
+ * both quote characters or control characters — a rejected value makes the query
+ * fail closed instead of altering the formula.
+ */
+export function airtableFormulaValue(input: string): string {
   if (typeof input !== 'string') {
     throw new Error('Input must be a string');
   }
 
-  return input.replace(/'/g, "''");
+  // eslint-disable-next-line no-control-regex
+  if (/[\u0000-\u001f\u007f]/.test(input)) {
+    throw new Error('Value contains control characters');
+  }
+
+  const hasSingleQuote = input.includes("'");
+  const hasDoubleQuote = input.includes('"');
+
+  if (hasSingleQuote && hasDoubleQuote) {
+    throw new Error('Value cannot contain both single and double quotes');
+  }
+
+  return hasSingleQuote ? `"${input}"` : `'${input}'`;
+}
+
+/**
+ * Splits an Airtable email field value into individual addresses.
+ * Lookup and rollup fields arrive as comma/semicolon/newline-joined strings.
+ */
+function splitEmailList(value: string): string[] {
+  return value
+    .toLowerCase()
+    .split(/[,;\s<>]+/)
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
+/**
+ * Exact-match one email against an Airtable field value.
+ *
+ * Substring matching here would grant one creator access to another whose
+ * address merely contains theirs (`webflow@x.com` inside `team+webflow@x.com`).
+ */
+export function fieldContainsEmail(fieldValue: unknown, normalizedEmail: string): boolean {
+  if (!normalizedEmail) return false;
+
+  if (Array.isArray(fieldValue)) {
+    return fieldValue.some((entry) => splitEmailList(String(entry)).includes(normalizedEmail));
+  }
+
+  if (typeof fieldValue === 'string') {
+    return splitEmailList(fieldValue).includes(normalizedEmail);
+  }
+
+  return false;
+}
+
+/**
+ * Builds an exact-match clause for one Airtable email field.
+ *
+ * ARRAYJOIN turns the field into a comma-separated list, so both sides are
+ * comma-wrapped to anchor the match to a whole address. Spaces are stripped
+ * because string fields may be written as "a@x.com, b@x.com".
+ */
+function buildEmailFieldMatchClause(field: string, emailLiteral: string): string {
+  const joined = `LOWER(ARRAYJOIN({${field}}, ","))`;
+  // Normalize the field into a comma-delimited list: strip spaces and treat
+  // display-name brackets ("Name <a@x.com>") as delimiters so an exact match
+  // still finds the address.
+  const normalized = `SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(${joined}, " ", ""), "<", ","), ">", ",")`;
+  const haystack = `',' & ${normalized} & ','`;
+  return `FIND(',' & ${emailLiteral} & ',', ${haystack}) > 0`;
+}
+
+function buildEmailMatchFormula(fields: readonly string[], email: string): string {
+  const emailLiteral = airtableFormulaValue(email.trim().toLowerCase());
+  const clauses = fields.map((field) => buildEmailFieldMatchClause(field, emailLiteral));
+
+  return `OR(${clauses.join(', ')})`;
 }
 
 export function buildCreatorEmailMatchFormula(email: string): string {
-  const normalizedEmail = email.trim().toLowerCase();
-  const escapedEmail = escapeAirtableString(normalizedEmail);
-  const clauses = CREATOR_EMAIL_FORMULA_FIELDS.map(
-    (field) => `FIND('${escapedEmail}', LOWER(ARRAYJOIN({${field}}, ","))) > 0`
-  );
+  return buildEmailMatchFormula(CREATOR_EMAIL_FORMULA_FIELDS, email);
+}
 
-  return `OR(${clauses.join(', ')})`;
+export function buildCreatorRecordEmailMatchFormula(email: string): string {
+  return buildEmailMatchFormula(CREATOR_RECORD_EMAIL_FIELDS, email);
 }
 
 export function buildAssetListFormula(email: string): string {
@@ -346,6 +424,13 @@ export function validateEmail(email: string): string {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   if (!emailRegex.test(trimmedEmail)) {
+    throw new Error('Invalid email format');
+  }
+
+  // Quoted local parts are legal but undeliverable in practice, and they are the
+  // only email shape that could reach an Airtable formula as a quote character.
+  // Apostrophes stay allowed — airtableFormulaValue() quotes those safely.
+  if (/["\\]/.test(trimmedEmail)) {
     throw new Error('Invalid email format');
   }
 
@@ -642,10 +727,10 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
 
   return {
     async findUserByEmail(email: string): Promise<{ id: string; email: string } | null> {
-      const escapedEmail = escapeAirtableString(email);
+      const emailLiteral = airtableFormulaValue(email.trim().toLowerCase());
       const records = await base(TABLES.USERS)
         .select({
-          filterByFormula: `{Email} = '${escapedEmail}'`
+          filterByFormula: `LOWER({Email}) = ${emailLiteral}`
         })
         .firstPage();
 
@@ -696,10 +781,10 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
     },
 
     async verifyToken(token: string): Promise<{ email: string; expired: boolean } | null> {
-      const escapedToken = escapeAirtableString(token);
+      const tokenLiteral = airtableFormulaValue(token);
       const records = await base(TABLES.USERS)
         .select({
-          filterByFormula: `{${FIELDS.VERIFICATION_TOKEN}} = '${escapedToken}'`
+          filterByFormula: `{${FIELDS.VERIFICATION_TOKEN}} = ${tokenLiteral}`
         })
         .firstPage();
 
@@ -745,8 +830,8 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
     async findTemplateSubmissionReceipt(
       input: TemplateSubmissionReceiptLookupInput
     ): Promise<TemplateSubmissionReceiptCandidate | null> {
-      const escapedName = escapeAirtableString(input.templateName.trim());
-      const formula = `AND(${buildCreatorEmailMatchFormula(input.creatorEmail)}, LOWER({Name}) = LOWER('${escapedName}'))`;
+      const nameLiteral = airtableFormulaValue(input.templateName.trim());
+      const formula = `AND(${buildCreatorEmailMatchFormula(input.creatorEmail)}, LOWER({Name}) = LOWER(${nameLiteral}))`;
       const assetRecords = await base(TABLES.ASSETS)
         .select({ filterByFormula: formula, maxRecords: 10 })
         .firstPage();
@@ -774,10 +859,10 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
 
       if (!assetRecord) return null;
 
-      const escapedAssetId = escapeAirtableString(assetRecord.id);
+      const assetRecordIdLiteral = airtableFormulaValue(assetRecord.id);
       const versionRecords = await base(TABLES.ASSET_VERSIONS)
         .select({
-          filterByFormula: `{⚙️👛Asset Record ID} = '${escapedAssetId}'`,
+          filterByFormula: `{⚙️👛Asset Record ID} = ${assetRecordIdLiteral}`,
           maxRecords: 10,
           sort: [{ field: '📅Submission Datetime', direction: 'desc' }]
         })
@@ -904,11 +989,11 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
 
     async verifyAssetOwnership(assetId: string, email: string): Promise<boolean> {
       const normalizedEmail = email.toLowerCase();
-      const escapedAssetId = escapeAirtableString(assetId);
+      const assetIdLiteral = airtableFormulaValue(assetId);
 
       try {
         const dashboardLikeFormula = `AND(
-          RECORD_ID() = '${escapedAssetId}',
+          RECORD_ID() = ${assetIdLiteral},
           ${buildCreatorEmailMatchFormula(normalizedEmail)}
         )`;
         const dashboardMatches = await base(TABLES.ASSETS)
@@ -931,14 +1016,8 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
           const fieldValue = record.fields[field];
           if (!fieldValue) continue;
 
-          if (Array.isArray(fieldValue)) {
-            if (fieldValue.some((value) => String(value).toLowerCase().includes(normalizedEmail))) {
-              return true;
-            }
-          } else if (typeof fieldValue === 'string') {
-            if (fieldValue.toLowerCase().includes(normalizedEmail)) {
-              return true;
-            }
+          if (fieldContainsEmail(fieldValue, normalizedEmail)) {
+            return true;
           }
         }
       } catch {
@@ -947,7 +1026,7 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
 
       try {
         const formula = `AND(
-          RECORD_ID() = '${escapedAssetId}',
+          RECORD_ID() = ${assetIdLiteral},
           ${buildCreatorEmailMatchFormula(normalizedEmail)}
         )`;
         const matches = await base(TABLES.ASSETS)
@@ -1010,13 +1089,11 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
         }
 
         if (Array.isArray(value)) {
-          const matched = value.some((item) =>
-            String(item).toLowerCase().includes(normalizedEmail)
-          );
+          const matched = fieldContainsEmail(value, normalizedEmail);
           fieldDiagnostics[field] = { present: true, type: 'array', matched, length: value.length };
           if (matched) anyFieldMatched = true;
         } else if (typeof value === 'string') {
-          const matched = value.toLowerCase().includes(normalizedEmail);
+          const matched = fieldContainsEmail(value, normalizedEmail);
           fieldDiagnostics[field] = {
             present: true,
             type: 'string',
@@ -1029,12 +1106,12 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
         }
       }
 
-      const escapedAssetId = escapeAirtableString(assetId);
+      const assetIdLiteral = airtableFormulaValue(assetId);
 
       let dashboardLikeFormulaMatched = false;
       try {
         const dashboardLikeFormula = `AND(
-          RECORD_ID() = '${escapedAssetId}',
+          RECORD_ID() = ${assetIdLiteral},
           ${buildCreatorEmailMatchFormula(normalizedEmail)}
         )`;
         const matches = await base(TABLES.ASSETS)
@@ -1048,7 +1125,7 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
       let formulaMatched = false;
       try {
         const formula = `AND(
-          RECORD_ID() = '${escapedAssetId}',
+          RECORD_ID() = ${assetIdLiteral},
           ${buildCreatorEmailMatchFormula(normalizedEmail)}
         )`;
         const matches = await base(TABLES.ASSETS)
@@ -1101,11 +1178,11 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
       name: string,
       excludeId?: string
     ): Promise<{ unique: boolean; existingId?: string }> {
-      const escapedName = escapeAirtableString(name.trim());
-      let formula = `LOWER({Name}) = LOWER('${escapedName}')`;
+      const nameLiteral = airtableFormulaValue(name.trim());
+      let formula = `LOWER({Name}) = LOWER(${nameLiteral})`;
 
       if (excludeId) {
-        formula = `AND(${formula}, RECORD_ID() != '${escapeAirtableString(excludeId)}')`;
+        formula = `AND(${formula}, RECORD_ID() != ${airtableFormulaValue(excludeId)})`;
       }
 
       const records = await base(TABLES.ASSETS)
@@ -1125,7 +1202,7 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
 
     async getCreatorByEmail(email: string): Promise<Creator | null> {
       try {
-        const formula = `OR(FIND("${email}", ARRAYJOIN({📧Email}, ",")) > 0, FIND("${email}", ARRAYJOIN({📧WF Account Email}, ",")) > 0, FIND("${email}", ARRAYJOIN({📧Emails}, ",")) > 0)`;
+        const formula = buildCreatorRecordEmailMatchFormula(email);
 
         const records = await base(TABLES.CREATORS)
           .select({
@@ -1340,10 +1417,10 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
     },
 
     async listApiKeys(creatorEmail: string): Promise<ApiKey[]> {
-      const escapedEmail = escapeAirtableString(creatorEmail);
+      const emailLiteral = airtableFormulaValue(creatorEmail.trim().toLowerCase());
       const records = await base(TABLES.API_KEYS)
         .select({
-          filterByFormula: `{Creator Email} = '${escapedEmail}'`,
+          filterByFormula: `LOWER({Creator Email}) = ${emailLiteral}`,
           sort: [{ field: 'Created At', direction: 'desc' }]
         })
         .all();
@@ -1402,11 +1479,11 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
       }
 
       const keyHash = createHash('sha256').update(key).digest('hex');
-      const escapedHash = escapeAirtableString(keyHash);
+      const keyHashLiteral = airtableFormulaValue(keyHash);
 
       const records = await base(TABLES.API_KEYS)
         .select({
-          filterByFormula: `AND({Key Hash} = '${escapedHash}', {Status} = 'Active')`,
+          filterByFormula: `AND({Key Hash} = ${keyHashLiteral}, {Status} = 'Active')`,
           maxRecords: 1
         })
         .firstPage();

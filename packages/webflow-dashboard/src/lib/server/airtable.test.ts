@@ -1,13 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import {
+	airtableFormulaValue,
 	buildAssetListFormula,
 	buildAssetVersionCreateFields,
 	buildAssetVersionSnapshot,
 	buildCreatorEmailMatchFormula,
+	buildCreatorRecordEmailMatchFormula,
 	cleanMarketplaceStatus,
 	cleanMarketplaceType,
 	mapAssetRecord,
+	recordMatchesCreatorEmail,
 	resolveAssetType,
+	validateEmail,
 	type Asset
 } from './airtable';
 
@@ -108,11 +112,44 @@ describe('cleanMarketplaceStatus', () => {
 	});
 });
 
+describe('airtableFormulaValue', () => {
+	it('quotes plain values with single quotes', () => {
+		expect(airtableFormulaValue('creator@example.com')).toBe("'creator@example.com'");
+	});
+
+	it('switches to double quotes for values containing an apostrophe', () => {
+		expect(airtableFormulaValue("o'connor@example.com")).toBe('"o\'connor@example.com"');
+	});
+
+	it('rejects values that could break out of either quote style', () => {
+		expect(() => airtableFormulaValue('a"b@example.com')).not.toThrow();
+		expect(() => airtableFormulaValue('a\'b"c@example.com')).toThrow(
+			/both single and double quotes/
+		);
+		expect(() => airtableFormulaValue('a\nb@example.com')).toThrow(/control characters/);
+	});
+
+	it('quotes a double-quoted value with single quotes so it cannot escape', () => {
+		expect(airtableFormulaValue('" , TRUE(), "')).toBe("'\" , TRUE(), \"'");
+	});
+});
+
+describe('validateEmail', () => {
+	it('rejects addresses containing quote or escape characters', () => {
+		expect(() => validateEmail('a"b@example.com')).toThrow(/Invalid email format/);
+		expect(() => validateEmail('a\\b@example.com')).toThrow(/Invalid email format/);
+	});
+
+	it('still accepts apostrophes, which are legal in real addresses', () => {
+		expect(validateEmail("O'Connor@Example.com")).toBe("o'connor@example.com");
+	});
+});
+
 describe('Airtable asset formulas', () => {
 	it('matches creator emails across all dashboard ownership fields', () => {
 		const formula = buildCreatorEmailMatchFormula('Creator@Example.com');
 
-		expect(formula).toContain("FIND('creator@example.com'");
+		expect(formula).toContain("'creator@example.com'");
 		expect(formula).toContain('{🎨📧 Creator Email}');
 		expect(formula).toContain('{🎨📧 Creator WF Account Email}');
 		expect(formula).toContain('{📧Emails (from 🎨Creator)}');
@@ -121,12 +158,84 @@ describe('Airtable asset formulas', () => {
 		expect(formula).toContain('LOWER(ARRAYJOIN(');
 	});
 
-	it('escapes single quotes and leaves asset type filtering to the caller', () => {
+	it('anchors the match to a whole address so substrings cannot match', () => {
+		const formula = buildCreatorEmailMatchFormula('creator@example.com');
+
+		// Comma-wrapped needle and haystack: ',creator@example.com,' must appear
+		// as a whole token, so 'team+creator@example.com' cannot satisfy it.
+		expect(formula).toContain("FIND(',' & 'creator@example.com' & ','");
+		expect(formula).toContain('SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(LOWER(ARRAYJOIN(');
+		expect(formula).not.toContain("FIND('creator@example.com'");
+	});
+
+	it('quotes apostrophe addresses instead of doubling them', () => {
 		const formula = buildAssetListFormula("o'connor@example.com");
 
-		expect(formula).toContain("o''connor@example.com");
+		expect(formula).toContain('"o\'connor@example.com"');
+		expect(formula).not.toContain("o''connor@example.com");
 		expect(formula).not.toContain("{🆎Type} = 'Template🏗️'");
 		expect(formula.startsWith('OR(')).toBe(true);
+	});
+
+	it('builds creator-table formulas from the Creators email fields', () => {
+		const formula = buildCreatorRecordEmailMatchFormula('creator@example.com');
+
+		expect(formula).toContain('{📧Email}');
+		expect(formula).toContain('{📧WF Account Email}');
+		expect(formula).toContain('{📧Emails}');
+		expect(formula).not.toContain('(from 🎨Creator)');
+	});
+});
+
+describe('recordMatchesCreatorEmail', () => {
+	const record = (fields: Record<string, unknown>) =>
+		({ fields }) as unknown as Parameters<typeof recordMatchesCreatorEmail>[0];
+
+	it('matches the owning creator on a lookup array field', () => {
+		expect(
+			recordMatchesCreatorEmail(
+				record({ '🎨📧 Creator Email': ['Creator@Example.com'] }),
+				'creator@example.com'
+			)
+		).toBe(true);
+	});
+
+	it('matches one address inside a comma-joined string field', () => {
+		expect(
+			recordMatchesCreatorEmail(
+				record({ '📧Emails (from 🎨Creator)': 'other@example.com, creator@example.com' }),
+				'creator@example.com'
+			)
+		).toBe(true);
+	});
+
+	it('rejects an email that is only a substring of the owner address', () => {
+		expect(
+			recordMatchesCreatorEmail(
+				record({ '🎨📧 Creator Email': ['team+webflow@agency.com'] }),
+				'webflow@agency.com'
+			)
+		).toBe(false);
+
+		expect(
+			recordMatchesCreatorEmail(record({ '🎨📧 Creator Email': ['aa@example.com'] }), 'a@example.com')
+		).toBe(false);
+	});
+
+	it('still matches a display-name formatted address', () => {
+		expect(
+			recordMatchesCreatorEmail(
+				record({ '🎨📧 Creator Email': ['Example Creator <creator@example.com>'] }),
+				'creator@example.com'
+			)
+		).toBe(true);
+	});
+
+	it('rejects an empty email and unrelated field shapes', () => {
+		expect(recordMatchesCreatorEmail(record({ '🎨📧 Creator Email': ['a@b.com'] }), '  ')).toBe(
+			false
+		);
+		expect(recordMatchesCreatorEmail(record({ '🎨📧 Creator Email': 42 }), 'a@b.com')).toBe(false);
 	});
 });
 
