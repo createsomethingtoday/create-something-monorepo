@@ -11,6 +11,7 @@
     type PerformanceEvidenceItem,
     type PerformanceNarrativeScene
   } from '@create-something/canon';
+  import SystemContextArtifact from '$lib/components/SystemContextArtifact.svelte';
   import {
     getTemplateReviewPacketCompletion,
     templateReviewFieldReport
@@ -113,7 +114,7 @@
 
 <SEO
   title="Template Review Field Report | CREATE SOMETHING .agency"
-  description="A Webflow template-review field report: evidence collection completed for 49 of 50 selected cases, automated judgment remains blocked, and reviewer time savings are not yet measured."
+  description="A Webflow template-review field report. Evidence collection completed for 49 of 50 cases. Automated judgment remains blocked, and reviewer time savings remain unmeasured."
   keywords="AI workflow field report, template review workflow, human in the loop review, Dify MCP workflow, workflow evidence"
   propertyName="agency"
 />
@@ -144,7 +145,7 @@
     id="result"
     eyebrow="One evidence argument"
     title="Four questions, kept separate on purpose."
-    description="The report keeps four different questions separate: did collection work, did judgment earn promotion, what did one packet cost, and which claims remain measured or unresolved."
+    description="The report separates four questions: Did collection work? Did judgment earn promotion? What did one packet cost? Which claims remain measured or unresolved?"
     scenes={fieldReportScenes}
     ariaLabel="Template review Field Report argument"
   >
@@ -159,17 +160,17 @@
             </div>
           </header>
           <dl class="field-result__metrics">
-            <div>
+            <div data-tone="growth">
               <dt>Packet completion</dt>
               <dd>49 / 50</dd>
               <small>{packetCompletion}% of selected cases</small>
             </div>
-            <div>
+            <div data-tone="risk">
               <dt>Judgment promotion</dt>
               <dd>Blocked</dd>
               <small>1 of 2 exceptional examples missed</small>
             </div>
-            <div>
+            <div data-tone="neutral">
               <dt>Reviewer time saved</dt>
               <dd>Unmeasured</dd>
               <small>Requires a matched pilot</small>
@@ -215,9 +216,12 @@
       {:else if scene.id === 'boundary'}
         <section class="failed-boundary" aria-labelledby="failed-boundary-title">
           <div class="failed-boundary__status">
-            <span>Promotion blocked</span><strong>1 / 2 missed</strong><small
-              >Best current specialist run</small
-            >
+            <span>Promotion blocked</span>
+            <strong>
+              <span class="failed-boundary__metric-value">1 / 2</span>
+              <span class="failed-boundary__metric-qualifier">missed</span>
+            </strong>
+            <small>Best current specialist run</small>
           </div>
           <div>
             <span>Failed boundary / Judgment</span>
@@ -288,6 +292,23 @@
     {/snippet}
   </PerformanceNarrativeStage>
 
+  <section class="field-context" aria-labelledby="field-context-title">
+    <header>
+      <span>Operating proof</span>
+      <h2 id="field-context-title">See exactly where preparation stops and human judgment begins.</h2>
+      <p>
+        This read-only change view uses the same public workflow definition as Control. It exposes
+        the owner, authority boundary, dated evidence, and recovery path without exposing private
+        records or implying live execution.
+      </p>
+    </header>
+    <SystemContextArtifact
+      defaultLens="change"
+      readOnly={true}
+      title="What changed around the review decision."
+    />
+  </section>
+
   <PerformanceConversionHandoff
     eyebrow="Business implication"
     title="Use automation to prepare evidence—not to assume judgment."
@@ -329,6 +350,28 @@
 </main>
 
 <style>
+  .field-context {
+    display: grid;
+    gap: clamp(1.5rem, 3vw, 2.5rem);
+    padding: clamp(4rem, 8vw, 8rem) clamp(1rem, 4vw, 4rem);
+    background: var(--color-performance-paper, #f3f3f0);
+  }
+  .field-context > header {
+    display: grid;
+    max-width: 52rem;
+    gap: .7rem;
+  }
+  .field-context > header span {
+    color: var(--color-performance-muted, #5e6268);
+    font-family: var(--font-performance-mono);
+    font-size: .7rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+  .field-context > header h2,
+  .field-context > header p { margin: 0; }
+  .field-context > header h2 { font-size: clamp(1.8rem, 4vw, 3.5rem); line-height: 1.02; }
+  .field-context > header p { max-width: 46rem; color: var(--color-performance-muted, #5e6268); line-height: 1.6; }
   .field-report {
     background: var(--color-performance-panel, #fff);
     color: var(--color-performance-ink, #090909);
@@ -425,10 +468,22 @@
     margin: 0;
   }
   .field-result__metrics > div {
+    --field-result-metric-accent: var(--color-performance-line-strong, #9c9c96);
     display: grid;
-    gap: 0.55rem;
-    min-height: 11rem;
-    padding: 1.25rem;
+    gap: var(--space-performance-xs, 0.5rem);
+    min-width: 0;
+    min-height: calc(
+      var(--space-performance-2xl, 6.854rem) + var(--space-performance-md, 1.618rem)
+    );
+    padding: var(--space-performance-md, 1.618rem);
+    border-top: 0.25rem solid var(--field-result-metric-accent);
+    container-type: inline-size;
+  }
+  .field-result__metrics > div[data-tone='growth'] {
+    --field-result-metric-accent: var(--color-performance-growth, #007a4d);
+  }
+  .field-result__metrics > div[data-tone='risk'] {
+    --field-result-metric-accent: var(--color-performance-risk, #c62026);
   }
   .field-result__metrics > div + div {
     border-left: 1px solid var(--color-performance-line-strong, #9c9c96);
@@ -436,8 +491,16 @@
   .field-result__metrics dd {
     margin: auto 0 0;
     font-family: var(--font-performance-mono);
-    font-size: clamp(2rem, 4vw, 3.5rem);
+    font-size: clamp(
+      var(--text-performance-h2, 1.618rem),
+      16cqi,
+      var(--text-performance-display-sm, 2.618rem)
+    );
+    font-weight: var(--font-performance-medium, 500);
     font-variant-numeric: tabular-nums;
+    letter-spacing: var(--tracking-performance-tight, -0.015em);
+    line-height: var(--leading-performance-tight, 1.25);
+    white-space: nowrap;
   }
   .field-result__metrics small {
     color: var(--color-performance-muted, #5e6268);
@@ -454,16 +517,37 @@
   }
   .failed-boundary__status {
     display: grid;
+    container-type: inline-size;
     align-content: space-between;
     gap: 2rem;
+    padding-inline: clamp(2rem, 12%, 4rem);
     border-right: 1px solid var(--color-performance-ink, #090909);
     background: var(--color-performance-risk, #c62026);
     color: #fff;
   }
   .failed-boundary__status strong {
+    display: grid;
+    gap: 0.5rem;
+    min-width: 0;
     font-family: var(--font-performance-mono);
-    font-size: clamp(3rem, 6vw, 6rem);
     font-variant-numeric: tabular-nums;
+  }
+  .failed-boundary__status .failed-boundary__metric-value {
+    font-family: inherit;
+    font-size: clamp(3rem, 20cqi, 6rem);
+    line-height: 0.9;
+    text-transform: none;
+    white-space: nowrap;
+  }
+  .failed-boundary__status .failed-boundary__metric-qualifier {
+    max-width: 100%;
+    font-family: inherit;
+    font-size: clamp(0.85rem, 5cqi, 1.25rem);
+    font-weight: var(--font-performance-semibold, 600);
+    letter-spacing: 0.04em;
+    line-height: 1;
+    overflow-wrap: anywhere;
+    text-transform: uppercase;
   }
   .failed-boundary__status small {
     color: rgba(255, 255, 255, 0.72);

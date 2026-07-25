@@ -12,6 +12,8 @@ The operator MCP profile may manage the full workspace. Player MCP mode requires
 
 `reviewer: 'codex'` is a valid `source-review` reviewer. Agent review is real evidence, so the obligation is transparency, not abstention: never collapse user-confirmed and agent-reviewed evidence into one "reviewed" count, and never present identity precision without the coverage and review split beside it (`summarizeFilmTargetCoverage`). Rendered positions synthesized between captured frames must stay distinguishable from captured ones (`isInterpolatedPlayer`); the captured revision never stores a synthesized coordinate.
 
+Four validity rules are enforced in code, not convention. A benchmark must be able to fail: declare tracker seed frames to `verifyFilmIdentityCandidate` and satisfy `assessFilmIdentityIndependence` (non-seed positives, a directly readable jersey per segment, same-team confusable negatives). A rate must travel with its denominator (`positiveDecisionCount` and siblings). Zone has exactly one taxonomy, derived from `court` via `filmZone` — never stored as a second opinion, never a camera-band vocabulary. Projection labels state what happened: `estimated`, `operator-stated`, or `calibrated`, and only the last means a validated held-out homography. Above `MOVEMENT_CLAIM_MAX_INTERVAL_MS` between samples, no surface may present the wake as an observed path.
+
 ## Design authority
 
 Consume Canon Performance tokens and components. Satoshi is the display/body face; IBM Plex Mono is the evidence/instrumentation face. Preserve hard geometry, decisive contrast, semantic rails, and visible receipts.

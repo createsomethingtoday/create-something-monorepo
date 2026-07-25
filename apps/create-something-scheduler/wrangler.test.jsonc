@@ -9,6 +9,7 @@
     "GOOGLE_REDIRECT_URI": "https://scheduler.local/oauth/google/callback",
     "GOOGLE_EVENT_CALENDAR_ID": "micah@createsomething.io",
     "GOOGLE_SELECTED_CALENDAR_IDS": "micah@createsomething.io",
+    "WEBFLOW_BUSY_PROJECTION_REQUIRED": "true",
     "OAUTH_ENCRYPTION_SECRET": "controlled-oauth-encryption-secret",
     "PROPOSAL_SIGNING_SECRET": "controlled-proposal-signing-secret",
     "ACTION_SIGNING_SECRET": "controlled-action-signing-secret",

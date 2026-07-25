@@ -6,8 +6,11 @@ import type { GuardD1Database } from './d1-store.js';
 type RuntimePlatform = { env?: { ENVIRONMENT?: string; GUARD_LAB_DB?: GuardD1Database } };
 
 export function storeForRuntime(platform?: RuntimePlatform): LabStore {
+  const processEnvironment = typeof process !== 'undefined' ? process.env.ENVIRONMENT : undefined;
+  const explicitLocalPath = typeof process !== 'undefined' ? process.env.GUARD_LAB_DATA_PATH?.trim() : undefined;
+  const environment = processEnvironment ?? platform?.env?.ENVIRONMENT;
+  if (explicitLocalPath && environment !== 'production') return new JsonFileLabStore(explicitLocalPath);
   if (platform?.env?.GUARD_LAB_DB) return new D1LabStore(platform.env.GUARD_LAB_DB);
-  const environment = platform?.env?.ENVIRONMENT ?? (typeof process !== 'undefined' ? process.env.ENVIRONMENT : undefined);
   if (environment === 'production') {
     throw new Error('Production Guard Lab requires the GUARD_LAB_DB durable D1 binding.');
   }

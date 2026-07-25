@@ -1,4 +1,4 @@
-export type TemplateSort = 'popular' | 'newest' | 'price_asc' | 'price_desc';
+export type TemplateSort = 'popular' | 'best_selling' | 'newest' | 'price_asc' | 'price_desc';
 export type TemplateScope = 'all' | 'featured' | 'free' | 'landing_pages';
 export type TemplatePathKind =
   | 'auto'
@@ -27,6 +27,34 @@ export interface TemplateRouteState {
   isSearchRoute: boolean;
   categoryIsRoute: boolean;
   childCategoryIsRoute: boolean;
+}
+
+export interface TemplateSortOption {
+  value: TemplateSort;
+  label: string;
+}
+
+export const TEMPLATE_SORT_OPTIONS: ReadonlyArray<TemplateSortOption> = [
+  { value: 'popular', label: 'Popular' },
+  { value: 'best_selling', label: 'Best Sellers' },
+  { value: 'newest', label: 'Newest' },
+  { value: 'price_asc', label: 'Price: Low to High' },
+  { value: 'price_desc', label: 'Price: High to Low' },
+];
+
+export const TEMPLATE_SORT_LABELS: Readonly<Record<TemplateSort, string>> = {
+  popular: 'Popular',
+  best_selling: 'Best Sellers',
+  newest: 'Newest',
+  price_asc: 'Price: Low to High',
+  price_desc: 'Price: High to Low',
+};
+
+export function getTemplateSortOptions(scope: TemplateScope): ReadonlyArray<TemplateSortOption> {
+  if (scope !== 'free') return TEMPLATE_SORT_OPTIONS;
+  return TEMPLATE_SORT_OPTIONS.filter(
+    (option) => option.value === 'popular' || option.value === 'newest',
+  );
 }
 
 interface ParseTemplateRouteOptions {
@@ -97,6 +125,27 @@ export function normalizeTemplateSlug(value: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
+const TEMPLATE_CATEGORY_INTENT_FILLER = new Set(['and', 'website', 'websites']);
+
+function templateCategoryIntentKey(value: string): string {
+  return normalizeTemplateSlug(value)
+    .split('-')
+    .filter((part) => part && !TEMPLATE_CATEGORY_INTENT_FILLER.has(part))
+    .join('-');
+}
+
+export function resolveTemplateCategoryRouteSlug(value: string): string | null {
+  const normalized = normalizeTemplateSlug(value);
+  if (!normalized) return null;
+  if (SUPPORTED_TEMPLATE_CATEGORY_ROUTE_SLUGS.has(normalized)) return normalized;
+
+  const intentKey = templateCategoryIntentKey(normalized);
+  const matches = Array.from(SUPPORTED_TEMPLATE_CATEGORY_ROUTE_SLUGS).filter(
+    (candidate) => templateCategoryIntentKey(candidate) === intentKey,
+  );
+  return matches.length === 1 ? matches[0] : null;
+}
+
 export function toTemplateStyleSlug(name: string): string {
   const slug = normalizeTemplateSlug(name);
   return STYLE_SLUG_ALIASES[slug] ?? slug;
@@ -117,6 +166,11 @@ export function normalizeTemplateSort(
     case 'price_desc':
     case 'price-desc':
       return 'price_desc';
+    case 'best_selling':
+    case 'best-selling':
+    case 'best_sellers':
+    case 'best-sellers':
+      return 'best_selling';
     case 'popular':
     case 'popularity-score':
     case 'popularity-score-desc':
@@ -272,8 +326,10 @@ export function parseTemplateRoute(options: ParseTemplateRouteOptions = {}): Tem
   return {
     q: queryValue.trim(),
     scope,
-    categoryGroupSlug: categorySlugOverride || (categoryMatch ? categoryMatch[1] : categoryFromParam || null),
-    childCategorySlug: childCategorySlugOverride || (childCategoryMatch ? childCategoryMatch[1] : childCategoryFromParam || null),
+    categoryGroupSlug: categoryFromParam || categorySlugOverride || (categoryMatch ? categoryMatch[1] : null),
+    childCategorySlug:
+      childCategoryFromParam ||
+      (categoryFromParam ? null : childCategorySlugOverride || (childCategoryMatch ? childCategoryMatch[1] : null)),
     styleSlug,
     tagSlug,
     styles,
@@ -282,7 +338,11 @@ export function parseTemplateRoute(options: ParseTemplateRouteOptions = {}): Tem
     sort: normalizeTemplateSort(params.get('sort'), defaultSort),
     pathKind,
     isSearchRoute: inferredPathKind === 'search' || pathKind === 'search',
-    categoryIsRoute: Boolean(categorySlugOverride ? pathKind === 'category' : categoryMatch),
-    childCategoryIsRoute: Boolean(childCategorySlugOverride ? pathKind === 'subcategory' : childCategoryMatch),
+    categoryIsRoute: Boolean(!categoryFromParam && (categorySlugOverride ? pathKind === 'category' : categoryMatch)),
+    childCategoryIsRoute: Boolean(
+      !categoryFromParam &&
+      !childCategoryFromParam &&
+      (childCategorySlugOverride ? pathKind === 'subcategory' : childCategoryMatch),
+    ),
   };
 }

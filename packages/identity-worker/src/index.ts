@@ -851,6 +851,8 @@ const OAUTH_SUPPORTED_SCOPES = [
 	'template-review:read',
 	'template-review:write',
 	'template-review:queue-read',
+	'cracked-sync:read',
+	'cracked-sync:write',
 ];
 const MIN_MCP_LEGACY_KEY_TTL_SECONDS = 3600;
 const DEFAULT_MCP_LEGACY_KEY_TTL_SECONDS = 7 * 24 * 60 * 60;
@@ -868,6 +870,22 @@ const OAUTH_APPLICATION_ACCESS_POLICIES = new Map<string, {
 		{
 			applicationId: 'webflow-template-review-mcp',
 			resource: 'https://webflow-template-review-mcp.createsomething.workers.dev/mcp',
+			expiresIn: OAUTH_APPLICATION_ACCESS_TOKEN_EXPIRES_IN,
+		},
+	],
+	[
+		'https://halfdozen-onboarding-mcp.half-dozen.workers.dev/mcp',
+		{
+			applicationId: 'halfdozen-onboarding-mcp',
+			resource: 'https://halfdozen-onboarding-mcp.half-dozen.workers.dev/mcp',
+			expiresIn: OAUTH_APPLICATION_ACCESS_TOKEN_EXPIRES_IN,
+		},
+	],
+	[
+		'https://halfdozen-cracked-sync-mcp.createsomething.workers.dev/mcp',
+		{
+			applicationId: 'halfdozen-cracked-sync-mcp',
+			resource: 'https://halfdozen-cracked-sync-mcp.createsomething.workers.dev/mcp',
 			expiresIn: OAUTH_APPLICATION_ACCESS_TOKEN_EXPIRES_IN,
 		},
 	],

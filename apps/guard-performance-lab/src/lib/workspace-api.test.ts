@@ -184,5 +184,34 @@ describe('workspace command HTTP contract', () => {
     }), service, { role: 'player', playerId });
     expect(deniedCorrection.status).toBe(403);
     expect((await service.getWorkspace()).workspace.filmAnalyses[0]?.corrections).toHaveLength(0);
+
+    const deniedReview = await workspaceCommandResponse(new Request('http://local/api/workspace/command', {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'attach-film-play-review',
+        playerId,
+        analysisId: attached.workspace.filmAnalyses[0].id,
+        review: {
+          version: 1,
+          profile: 'guard-player-13-play-review-v1',
+          sourceSha256: analysis.source.sha256,
+          analysisRevision: 1,
+          analysisExecutionCount: 1,
+          reviewer: 'codex',
+          reviewedAt: '2026-07-20T20:00:00.000Z',
+          cards: [{
+            id: 'private-review', startMs: 0, representativeTimeMs: 0, endMs: 1000,
+            possession: 'opponent', phase: 'half-court-defense', position: 'Perimeter',
+            observation: '#13 is visible in the defensive shell.', interpretation: 'The position preserves width.', limitation: 'The exact assignment is not shown.',
+            image: {
+              mediaType: 'image/webp', dataUrl: `data:image/webp;base64,${Buffer.from('pixelated').toString('base64')}`,
+              sha256: 'e'.repeat(64), width: 960, height: 540,
+              anonymization: { method: 'whole-frame-pixelation-v1', sourceWidth: 1920, sourceHeight: 1080, pixelWidth: 160, pixelHeight: 90, rawSourceIncluded: false, marker: { label: '13', style: 'synthetic-orange-v1', normalizedPoint: [0.4, 0.6] } }
+            }
+          }]
+        }
+      })
+    }), service, { role: 'player', playerId });
+    expect(deniedReview.status).toBe(403);
   });
 });

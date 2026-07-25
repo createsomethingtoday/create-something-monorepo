@@ -12,7 +12,8 @@ A standalone, private-first coaching system for developing guards. Version 0.5 a
 - The app has no analytics or domain-external data writes. Network access is limited to first-party identity verification/login and operator-requested source links.
 - The starter profile is generic and contains no child-identifying information.
 - Resetting local data restores the generic profile and removes saved receipts, evidence, and engagement events.
-- Source-video bytes and detector weights are never written to the application datastore or committed. Only hashes, model provenance, derived coordinates, unresolved intervals, and correction receipts persist.
+- Source-video bytes and detector weights are never written to the application datastore or committed. Only hashes, model provenance, derived coordinates, unresolved intervals, correction receipts, and explicitly anonymized review derivatives persist.
+- Play-review images are never public static assets. The builder reduces the complete 1920×1080 frame to a 160×90 pixel grid before upscaling, then adds a synthetic orange `13` marker. The stored packet contains no sharp frame, face crop, original jersey crop, or reversible layer and is returned only through the authenticated, player-scoped workspace.
 
 This is a development aid, not medical guidance, a talent ranking, or a recruiting projection.
 
@@ -36,6 +37,32 @@ The production preview runs at `http://127.0.0.1:4173` and is the owning surface
 ## One-run film trace
 
 The analyzer requires an operator-supplied source video and YOLOX ONNX model. Both remain outside version control. It decodes the complete source sequentially, captures one immutable analysis revision, and records unresolved target intervals rather than inventing positions. Revision 2 first rejects detections outside the foreground court closest to the camera, then classifies central-torso evidence using this game's white-jersey teammate / other-colored opponent rule. Opposite-court, official, and sideline detections stay in the audit receipt but never render as traffic. A deterministic full-track vote stabilizes team roles without another inference execution.
+
+### Local detector bake-off
+
+`film:bakeoff:tracking` compares a complete, source-bound candidate prediction set with the locked #13 identity and team fixtures. With no `--candidate-predictions`, it runs the Apache-2.0 RF-DETR Small COCO model locally on every locked source timestamp. Source frames and annotated evidence stay in the operator-selected private directory. The detector has no #13 identity authority: direct-number review, bounded continuity, reviewed SAM2 evidence, substitutions, and foreground-court rules remain fixed.
+
+The receipt fails closed when timestamps or source/model fingerprints differ, a hard negative is accepted, an inactive interval is bridged, opposite-court traffic becomes active, team accuracy regresses, or source-backed held-out court-line evidence is absent. A candidate is adopted only when every safety floor passes and target coverage, foreground-player coverage, or court error materially improves. A losing candidate leaves the production analyzer unchanged.
+
+```bash
+pnpm --filter @create-something/guard-performance-lab film:bakeoff:tracking \
+  --source /private/path/game.mp4 \
+  --source-sha256 <verified-source-sha256> \
+  --output /private/path/tracking-bakeoff-receipt.json \
+  --evidence-dir /private/path/tracking-bakeoff-evidence
+```
+
+To evaluate another local provider without changing the verifier, supply its `guard-film-player-detections-v1` JSON with `--candidate-predictions`. A source-backed court report may be supplied with `--court-report`; it must contain the source SHA plus held-out `medianErrorFeet` and `p95ErrorFeet` values.
+
+With explicit approval to send bounded frames to Roboflow, generate that court report separately. Inject the private inference key from a secret manager; never pass it as an argument or commit it. This adapter sends only the comma-delimited timestamps (seven representative frames by default), records competing court-hypothesis ambiguity, and evaluates held-out canonical landmarks. Its output can then be passed to the provider-neutral verifier with `--court-report`.
+
+```bash
+infisical run -- pnpm --filter @create-something/guard-performance-lab film:bakeoff:court:roboflow \
+  --source /private/path/game.mp4 \
+  --source-sha256 <verified-source-sha256> \
+  --output /private/path/roboflow-court-report.json \
+  --raw-output /private/path/roboflow-court-raw.json
+```
 
 Run the locked real-source team benchmark before the one authorized full revision. Its predictions must contain no correction overlays. Revision 1 remains auditable; the app selects the highest compatible revision for replay.
 
@@ -96,9 +123,40 @@ pnpm --filter @create-something/guard-performance-lab film:finalize:identity -- 
   --revision2 /private/path/full-analysis-r2.json \
   --candidate /private/path/full-analysis-r3-candidate.json \
   --receipt /private/path/identity-verifier-r3-candidate.json \
+  --full-flow-receipt /private/path/full-flow-receipt.json \
+  --migration-trace-receipt /private/path/migration-trace-receipt.json \
   --output /private/path/full-analysis-r3.json \
   --analyzed-at <fixed-receipt-time>
 ```
+
+For a dense migration trace, verify at least 90% of the source-reviewed active-visible samples before finalization. The verifier also records every unresolved path break and rejects any coordinate labeled calibrated unless its timestamp belongs to a passing source-bound camera state with held-out median error at or below 2 feet and p95 error at or below 4 feet.
+
+```bash
+pnpm --filter @create-something/guard-performance-lab film:verify:migration-trace -- \
+  --candidate /private/path/full-analysis-r3-candidate.json \
+  --participation /private/path/player-13-participation.json \
+  --full-flow-receipt /private/path/full-flow-receipt.json \
+  --camera-states /private/path/passing-camera-states.json \
+  --output /private/path/migration-trace-receipt.json
+```
+
+Omit `--camera-states` when the source cannot support an independently reviewed calibration. In that case every accepted coordinate must remain explicitly estimated.
+
+### FieldhouseUSA Mansfield foot-level geometry
+
+Mansfield footage uses the explicit `fieldhouseusa-mansfield-high-school-84x50-v1` profile: an 84-by-50-foot floor, 12-foot-wide lanes, free-throw lines 19 feet from each baseline, and half court at 42 feet. The black basketball markings are authoritative; overlapping red volleyball markings and the visible background court are distractors. Legacy revisions retain their original 94-by-50 estimated coordinate system and are never silently rescaled.
+
+A revision 4 court-only successor can be created from immutable revision 3 without rerunning person detection. Each camera-state manifest supplies at least four reviewed line intersections plus at least two independent held-out intersections. Every state must pass p95 error at or below one foot. Calibrated target and context-player floor contacts receive three named marking distances, their camera-state ID, the floor-contact method, and the measured uncertainty. Missing, overlapping, out-of-court, or failing states remain estimated.
+
+```bash
+pnpm --filter @create-something/guard-performance-lab film:apply:court-calibration \
+  --source-revision /private/path/full-analysis-r3.json \
+  --manifest /private/path/mansfield-camera-states.json \
+  --output /private/path/full-analysis-r4.json \
+  --analyzed-at <fixed-receipt-time>
+```
+
+Roboflow court keypoints may seed a review, but they are never self-promoting. The benchmark remaps model landmarks to the Mansfield floor, reserves held-out points, rejects ambiguous court hypotheses, and supports offline rescoring of immutable raw predictions. A failed receipt is evidence to retain estimates, not permission to lower the one-foot gate.
 
 Attach reviewed play context to that same immutable revision with a complete, non-overlapping ledger. `unknown` intervals require explicit unreviewed provenance and fail closed; every other state requires source-review evidence. The command verifies source identity and complete duration coverage, then writes a new artifact with the original frames, players, identity fingerprint, revision, and execution count intact.
 
@@ -120,9 +178,29 @@ pnpm --filter @create-something/guard-performance-lab film:import:http -- \
   --gate /private/path/import-gate-r3-play-state.json
 ```
 
-Both local and HTTP imports reject analyses that are not bound to an exact SHA-256 import gate. Revision 1/2 gates consume the passing fixed benchmark report and its exact correction overlay; revision 3 gates require the embedded locked identity benchmark. Play-state receipt counts are recomputed from the captured frames before a gate can be issued. The analyzer also hashes the linked video bytes itself and rejects a mismatched supplied source receipt before inference starts.
+Both local and HTTP imports reject analyses that are not bound to an exact SHA-256 import gate. Revision 1/2 gates consume the passing fixed benchmark report and its exact correction overlay; revision 3 gates require the embedded locked identity benchmark; revision 4 also requires its embedded passing Mansfield court-calibration receipt. Play-state receipt counts are recomputed from the captured frames before a gate can be issued. The analyzer also hashes the linked video bytes itself and rejects a mismatched supplied source receipt before inference starts.
 
-`Film trace` then replays the captured top-down traffic. The slider works in both directions. `Live basketball only` is the default and draws an orange #13 wake only for verified live offense, live defense, and transition states. `All captured movement` keeps dead-ball, free-throw, substitution, and unknown movement available as a gray dashed context wake without counting it as positioning or lane running. Wake segments break across state changes, unresolved gaps, and inactive substitutions. JSON/SVG exports are derived from the persisted revision. Operator corrections require direct-evidence text and append provenance; player-scoped identities cannot attach or correct analyses and can read only their assigned player.
+`Film trace` then replays the captured top-down traffic. The slider works in both directions. `All verified #13 positions` is the default and keeps every identity-resolved position visible as a gray dashed context wake even when play state is unreviewed; `Reviewed live basketball only` draws an orange wake only for verified live offense, live defense, and transition states. `All verified history` shows the complete trace up to the current scrub time with older segments faded and each segment endpoint marked. Wake segments break across state changes, unresolved gaps, and inactive substitutions. JSON/SVG exports carry the persisted identity and migration fingerprints. Operator corrections require direct-evidence text and append provenance; player-scoped identities cannot attach or correct analyses and can read only their assigned player.
+
+### Anonymized possession review
+
+An operator can pair direct source-review notes with compact, anonymized evidence stills without another inference execution. Definitions contain the exact play range, representative frame, possession, phase, observable position, basketball interpretation, and an explicit `not proven` boundary. The builder resolves the already-verified #13 image point, pixelates the whole frame, and adds `13` synthetically after anonymization. It never persists the temporary sharp extraction.
+
+```bash
+pnpm --filter @create-something/guard-performance-lab film:build:play-review -- \
+  --analysis /private/path/full-analysis-r3.json \
+  --source /private/path/game.mp4 \
+  --definitions /private/path/player-13-review-definitions.json \
+  --output /private/path/player-13-play-review.json \
+  --image-dir /private/path/anonymized-review-stills
+
+pnpm --filter @create-something/guard-performance-lab film:attach:play-review -- \
+  --data /private/path/workspace.json \
+  --review /private/path/player-13-play-review.json \
+  --player developing-guard
+```
+
+The attach command fails closed when the source hash, analysis revision, one-run receipt, time domain, image media, pixelation receipt, or synthetic marker contract does not match. Player-scoped callers may read their assigned review cards but cannot attach or replace them. Selecting a card seeks the existing scrubber to the evidence frame; reload and export reuse the same private packet.
 
 ### Review provenance
 
@@ -131,6 +209,20 @@ Both local and HTTP imports reject analyses that are not bound to an exact SHA-2
 **Precision is not coverage.** The current #13 revision reports 100% identity precision across 117 resolved frames of 3,396 captured frames (3.4%), with 27 live-basketball frames and 3,306 unknown play-state frames. Read the coverage and review lines before quoting a precision number.
 
 A dashed ring on the #13 token means that rendered position was interpolated between two captured frames (`isInterpolatedPlayer`). The captured revision never stores a synthesized coordinate, and a request landing exactly on a captured frame is never rendered as interpolated.
+
+### Data validity invariants
+
+These four rules exist because a receipt that cannot fail is not evidence.
+
+**A benchmark must be able to fail.** `assessFilmIdentityIndependence` requires positive decisions at frames that were **not** tracker seeds, at least one directly readable jersey per on-court segment, and same-team confusable negatives (#5/#11/#15). Without them, positive recall re-reads its own seed frames and hard-negative precision is guaranteed by the fail-closed default rather than earned. Pass the seed frame times to `verifyFilmIdentityCandidate(..., seedTimesMs)`; `finalizeFilmIdentityRevision` refuses a receipt whose independence block is absent or failing. The locked #13 fixture **fails** this gate once its seeds are declared — that is the honest state, and `film.test.ts` asserts it.
+
+**A rate travels with its denominator.** The identity receipt now carries `positiveDecisionCount`, `negativeDecisionCount`, `substitutionDecisionCount`, and `independentPositiveDecisionCount`. The film legend prints the positive-decision count next to the percentage, or `DECISION COUNT NOT RECORDED` for revisions imported before this rule.
+
+**One zone taxonomy.** Zone is always derived from `court` through `filmZone`/`courtZone` (basketball geography: paint, slot, wing, corner, restricted area, center circle). The analyzer no longer writes its own `{side}-{near|middle|far}` camera-band vocabulary, and a stored `zone` on an older revision is ignored rather than trusted. Corrections no longer write a zone at all.
+
+**Projection labels state what happened.** `estimated` is an image-space approximation, `operator-stated` is a typed-in court position, and only `calibrated` means the point came through a validated held-out homography (see the Mansfield calibration path). An operator correction is `operator-stated`; it used to claim `calibrated`, which made one typed coordinate flip the whole view's projection badge.
+
+**Sampling bounds movement claims.** The analyzer defaults to `--sample-fps 5.0`. A guard covers roughly 20 ft/s, so at 200 ms between samples unobserved travel stays near the 4 ft position tolerance; above that (`MOVEMENT_CLAIM_MAX_INTERVAL_MS`), `resolveFilmTrafficAt` and `summarizeFilmTargetCoverage` report `movementClaimSupported: false` and the film legend states that the wake is connect-the-dots rather than an observed path. The current 1 fps revision is in that state.
 
 ### Local segmentation-mask tracking
 
@@ -159,12 +251,13 @@ PYTORCH_ENABLE_MPS_FALLBACK=1 \
   --sample-fps 5 \
   --seed-frame 0 \
   --seed-box 326,261,30,96 \
+  --reseed 30:352,258,31,94 \
   --reviewer user \
   --output /private/path/on-court-17m40-mask.json \
   --device mps
 ```
 
-`--seed-box` uses the extracted-frame coordinate space; the receipt scales every box and foot point back to the declared source dimensions. The script records the exact model SHA-256, device, seed, samples, and evidence. A mask receipt is a private candidate, not a promotable film revision by itself; benchmark and court-calibration gates still apply.
+`--seed-box` and each repeatable `--reseed frameIndex:x,y,width,height` use the extracted-frame coordinate space; the receipt scales every box and foot point back to the declared source dimensions. Reseeds require direct source review and become explicit reviewed anchors, never automatic appearance re-identification. The script records the exact model SHA-256, device, seed, reseeds, samples, and evidence. A mask receipt is a private candidate, not a promotable film revision by itself; benchmark and court-calibration gates still apply.
 
 Combine reviewed stint receipts and fuse them against the reprocessed detector field. Same-state overlaps are merged so a direct-number reseed can safely bridge a chunk boundary; conflicting participation states, mixed sources, coordinate spaces, or model receipts are rejected. Fusion also rejects raw opponent evidence and terminates a seed after more than 3.5 seconds without an accepted target, even if SAM2 later attaches to another player. The command writes both the combined audit receipt and a non-promotable candidate for held-out review:
 
@@ -173,6 +266,7 @@ pnpm --filter @create-something/guard-performance-lab film:fuse:mask-tracks \
   --analysis /private/path/full-analysis-r2-reprocessed.json \
   --mask-track /private/path/stint-1-mask.json \
   --mask-track /private/path/stint-2-mask.json \
+  --participation-ledger /private/path/player-13-participation.json \
   --receipt-output /private/path/player-13-mask-track.json \
   --candidate-output /private/path/player-13-mask-candidate.json
 ```

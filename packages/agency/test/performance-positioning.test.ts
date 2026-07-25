@@ -4,6 +4,7 @@ import test from 'node:test';
 
 import { marketingPagePortfolio } from '../src/lib/data/marketingPages.ts';
 import { templateReviewFieldReport } from '../src/lib/data/fieldReports.ts';
+import { usesRouteOwnedAgencyPerformanceEnding } from '../src/lib/atlas/surface-policy.ts';
 
 const read = (relativePath: string) => {
   const url = new URL(relativePath, import.meta.url);
@@ -12,10 +13,12 @@ const read = (relativePath: string) => {
 
 const layout = read('../src/routes/+layout.svelte');
 const home = read('../src/routes/+page.svelte');
+const services = read('../src/routes/services/+page.svelte');
+const products = read('../src/routes/products/+page.svelte');
 const handoff = read('../src/lib/components/AgencyPerformanceHandoff.svelte');
 const readback = read('../src/lib/components/AgencyPerformanceReadback.svelte');
 
-test('every indexed public marketing route receives the shared performance readback', () => {
+test('every indexed public marketing route receives a route-owned or shared Performance ending', () => {
   const indexedRoutes = marketingPagePortfolio.filter((entry) => entry.decision === 'index');
 
   assert.equal(indexedRoutes.length, 25);
@@ -23,13 +26,21 @@ test('every indexed public marketing route receives the shared performance readb
   assert.match(layout, /marketingPagePortfolio/);
   assert.match(layout, /entry\.decision !== 'archive'/);
   assert.match(layout, /<AgencyPerformanceHandoff \/>/);
-  assert.match(layout, /\$page\.url\.pathname !== '\/'/);
+  assert.match(layout, /isPublicMarketingRoute && !routeOwnsPerformanceEnding/);
+
+  for (const pathname of ['/', '/services', '/map', '/products', '/stack', '/field-reports']) {
+    assert.equal(usesRouteOwnedAgencyPerformanceEnding(pathname), true, pathname);
+  }
 
   assert.match(home, /AgencyPerformanceReadback/);
   assert.ok(
     home.indexOf('<AgencyPerformanceReadback') < home.indexOf('<PerformanceNarrativeStage'),
     'the concrete readback should appear before the deeper operating story'
   );
+
+  assert.match(services, /AgencyPerformanceReadback/);
+  assert.match(services, /AgencyPerformanceReadback embedded=\{true\}/);
+  assert.match(products, /AgencyPerformanceReadback embedded=\{true\}/);
 
   assert.match(handoff, /AgencyPerformanceReadback/);
   assert.match(handoff, /<AgencyPerformanceReadback compact=\{true\} \/>/);

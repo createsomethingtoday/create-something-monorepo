@@ -661,6 +661,9 @@ test('management API reads slice detail and readiness by stable slug', () => {
   const first = api.listOperatingSlices()[0];
   const sliceResponse = api.handle('GET', first.apiPath);
   const readinessResponse = api.handle('GET', first.readinessApiPath);
+  const expectedRuntimeConfigRecords = runtimeBindingCoverage.records.filter((record) =>
+    operatingSliceReview.slices[0].recordIds.includes(record.recordId)
+  ).length;
 
   assert.equal(sliceResponse.status, 200);
   assert.equal(sliceResponse.body.id, operatingSliceReview.slices[0].id);
@@ -668,7 +671,7 @@ test('management API reads slice detail and readiness by stable slug', () => {
 
   assert.equal(readinessResponse.status, 200);
   assert.equal(readinessResponse.body.sliceId, operatingSliceReview.slices[0].id);
-  assert.equal(readinessResponse.body.workerRuntime.runtimeConfigRecords, runtimeBindingCoverage.records.length);
+  assert.equal(readinessResponse.body.workerRuntime.runtimeConfigRecords, expectedRuntimeConfigRecords);
 });
 
 test('management API serves Atlas session and runtime coverage resources as payloads', () => {

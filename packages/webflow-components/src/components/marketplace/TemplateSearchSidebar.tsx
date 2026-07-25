@@ -4,8 +4,8 @@ import {
   useMarketplaceComponentErrorTracking,
 } from './MarketplaceComponentErrorBoundary';
 import { TemplateSearchBox } from './TemplateSearchBox';
+import { normalizeTemplateSort } from './templateRoute';
 
-type TemplateSort = 'popular' | 'newest' | 'price_asc' | 'price_desc';
 type TemplateScope = 'all' | 'featured' | 'free' | 'landing_pages';
 type SidebarInteractionMode = 'navigate' | 'filter';
 type SidebarCountMode = 'global' | 'contextual';
@@ -429,12 +429,16 @@ function readCurrentScope(): TemplateScope {
 }
 
 function readCurrentCategory(categorySlugOverride?: string): string | null {
-  if (categorySlugOverride) return categorySlugOverride;
-  if (typeof window === 'undefined') return null;
+  if (typeof window === 'undefined') return categorySlugOverride || null;
   const url = new URL(window.location.href);
   const pathname = url.pathname.replace(/\/+$/, '');
   const categoryMatch = pathname.match(/\/templates\/category\/([^/?#]+)/);
-  return categoryMatch ? categoryMatch[1] : url.searchParams.get('category') || url.searchParams.get('category_group_slug');
+  return (
+    url.searchParams.get('category') ||
+    url.searchParams.get('category_group_slug') ||
+    categorySlugOverride ||
+    (categoryMatch ? categoryMatch[1] : null)
+  );
 }
 
 function readCurrentQuery(): string {
@@ -519,7 +523,7 @@ function notifySidebarFiltersChanged(source: string): void {
     tags: url.searchParams.getAll('tags').flatMap((value) => value.split(',')).filter(Boolean),
     types: url.searchParams.getAll('types').flatMap((value) => value.split(',')).filter(Boolean),
     freeOnly: ['1', 'true', 'yes', 'on'].includes((url.searchParams.get('free_only') ?? '').toLowerCase()),
-    sort: (url.searchParams.get('sort') as TemplateSort | null) ?? 'popular',
+    sort: normalizeTemplateSort(url.searchParams.get('sort')),
     href: window.location.href,
     source,
     updatedAt: Date.now(),

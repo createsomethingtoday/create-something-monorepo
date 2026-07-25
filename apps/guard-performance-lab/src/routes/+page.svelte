@@ -78,7 +78,7 @@
   let artifactDraft = $state<EvidenceDraft>({ kind: 'coach-observation', title: '', sourceLabel: 'Coach', sourceUrl: '', level: 'youth', jurisdiction: '', observation: '' });
   let filmTimeMs = $state(0);
   let filmWakeMs = $state(5000);
-  let filmMovementMode = $state<FilmMovementMode>('live-only');
+  let filmMovementMode = $state<FilmMovementMode>('all-captured');
   let correctionX = $state(47);
   let correctionY = $state(25);
   let correctionStatus = $state<'resolved' | 'unresolved' | 'out-of-frame' | 'inactive'>('resolved');
@@ -91,9 +91,11 @@
   let artifacts = $derived(artifactsForSelected(labState));
   let engagements = $derived(engagementsForSelected(labState));
   let activeFilm = $derived(latestFilmAnalysisForPlayer(labState, labState.selectedPlayerId));
+  let playReview = $derived(activeFilm?.playReviews?.at(-1) ?? null);
   let correctedFilm = $derived(activeFilm ? applyFilmCorrections(activeFilm) : null);
   let filmTraffic = $derived(correctedFilm ? resolveFilmTrafficAt(correctedFilm, filmTimeMs, filmWakeMs, { movementMode: filmMovementMode }) : null);
   let filmCoverage = $derived(correctedFilm ? summarizeFilmTargetCoverage(correctedFilm) : null);
+  let migrationTrace = $derived(activeFilm?.analysis.migrationTraceVerification ?? null);
   // The scrub step must match the captured sample interval, or half the steps land between frames.
   let filmStepMs = $derived(activeFilm && activeFilm.frames.length > 1
     ? Math.max(1, activeFilm.frames[1]!.timeMs - activeFilm.frames[0]!.timeMs)
@@ -240,6 +242,10 @@
     return `${Math.floor(total / 60).toString().padStart(2, '0')}:${(total % 60).toString().padStart(2, '0')}`;
   }
 
+  function formatFilmRange(startMs: number, endMs: number) {
+    return `${formatFilmTime(startMs)}–${formatFilmTime(endMs)}`;
+  }
+
   function seekFilm(deltaMs: number) {
     if (!activeFilm) return;
     filmTimeMs = Math.max(0, Math.min(activeFilm.frames.at(-1)?.timeMs ?? 0, filmTimeMs + deltaMs));
@@ -351,11 +357,12 @@
           <div><span class="mono">Traffic</span><strong>{filmTraffic.players.length} tokens</strong></div>
           <div><span class="mono">Target</span><strong>{filmTraffic.currentTargetStatus}</strong></div>
           <div><span class="mono">Play state</span><strong>{filmTraffic.currentPlayState}</strong></div>
-          <div><span class="mono">Coverage</span><strong>{filmCoverage?.resolvedFrames ?? 0}/{filmCoverage?.frameCount ?? 0} · {filmCoverage?.resolvedPercent ?? 0}%</strong></div>
-          <div><span class="mono">Projection</span><strong>{filmCoverage?.calibratedTargetFrames ? 'calibrated' : 'estimated'}</strong></div>
+          <div><span class="mono">Coverage</span><strong>{migrationTrace ? `${migrationTrace.resolvedActiveVisibleFrames}/${migrationTrace.activeVisibleFrameCount} · ${Math.round(migrationTrace.coverage * 10_000) / 100}% verified` : `${filmCoverage?.resolvedFrames ?? 0}/${filmCoverage?.frameCount ?? 0} · ${filmCoverage?.resolvedPercent ?? 0}%`}</strong></div>
+          <div><span class="mono">Path</span><strong>{migrationTrace ? `${migrationTrace.pathSegmentCount} segments / ${migrationTrace.longestUnresolvedGapMs / 1000}s max break` : 'legacy trace'}</strong></div>
+          <div><span class="mono">Projection</span><strong>{activeFilm.analysis.courtCalibrationVerification ? `${activeFilm.analysis.courtCalibrationVerification.calibratedCoordinates} calibrated · ≤${activeFilm.analysis.courtCalibrationVerification.maximumStateP95ErrorFeet}ft p95` : activeFilm.source.sha256 === '94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0' ? 'Mansfield geometry · wake estimated' : migrationTrace?.calibratedCoordinates ? `${migrationTrace.calibratedCoordinates} calibrated` : 'estimated'}</strong></div>
         </section>
         <div class="film-stage">
-          <FilmTrafficCourt analysis={correctedFilm} timeMs={filmTimeMs} wakeMs={filmWakeMs} movementMode={filmMovementMode} />
+          <FilmTrafficCourt analysis={activeFilm} corrected={correctedFilm} timeMs={filmTimeMs} wakeMs={filmWakeMs} movementMode={filmMovementMode} />
           <aside class="film-legend">
             <p class="eyebrow">Traffic key</p>
             <div><i class="traffic-dot target"></i><span>Player #13 + wake</span></div>
@@ -363,25 +370,63 @@
             <div><i class="traffic-dot opponent"></i><span>Foreground-court opponent</span></div>
             <p>Orange wake is verified live basketball. In all-captured mode, gray dashed wake preserves dead-ball, free-throw, substitution, and unknown movement without counting it as positioning or lane running.</p>
             <p>A dashed ring on #13 means the token sits between two captured frames, so that single position is interpolated and is not itself evidence.</p>
+            {#if migrationTrace}<p class="mono">MIGRATION / {Math.round(migrationTrace.coverage * 10_000) / 100}% ACTIVE-VISIBLE / {migrationTrace.pathSegmentCount} SEGMENTS / BREAKS ≤ {migrationTrace.longestUnresolvedGapMs / 1000}s</p>{/if}
             <p class="mono">PLAY STATE / {filmTraffic.currentPlayState} / {filmTraffic.currentPlayStateEvidence?.method ?? 'unreviewed'} / {filmTraffic.currentPlayStateEvidence?.reviewer ?? 'none'}{activeFilm.analysis.playStateVerification ? ` / ${activeFilm.analysis.playStateVerification.liveFrameCount} LIVE / ${activeFilm.analysis.playStateVerification.nonLiveFrameCount} NON-LIVE / ${activeFilm.analysis.playStateVerification.unknownFrameCount} UNKNOWN` : ''}</p>
             <p class="mono">REVIEW / {filmCoverage?.userReviewedFrames ?? 0} USER-CONFIRMED / {filmCoverage?.agentReviewedFrames ?? 0} AGENT-REVIEWED / {filmCoverage?.unreviewedFrames ?? 0} UNREVIEWED</p>
-            {#if activeFilm.analysis.identityVerification}<p class="mono">ID PRECISION / {Math.round(activeFilm.analysis.identityVerification.positiveRecall * 100)}% #13 / {Math.round(activeFilm.analysis.identityVerification.hardNegativePrecision * 100)}% NEG / COVERAGE {filmCoverage?.resolvedPercent ?? 0}%</p>{/if}
+            {#if activeFilm.analysis.identityVerification}<p class="mono">ID PRECISION / {Math.round(activeFilm.analysis.identityVerification.positiveRecall * 100)}% #13 / {Math.round(activeFilm.analysis.identityVerification.hardNegativePrecision * 100)}% NEG / {migrationTrace ? `${Math.round(migrationTrace.coverage * 10_000) / 100}% ACTIVE-VISIBLE` : `${filmCoverage?.resolvedPercent ?? 0}% FULL-VIDEO`}{activeFilm.analysis.identityVerification.positiveDecisionCount ? ` / ${activeFilm.analysis.identityVerification.positiveDecisionCount} POSITIVE DECISIONS` : ' / DECISION COUNT NOT RECORDED'}</p>{/if}
+            {#if activeFilm.analysis.courtCalibrationVerification}<p class="mono">COURT / FIELDHOUSEUSA MANSFIELD / 84 × 50 FT / 12 FT LANE / BLACK BASKETBALL MARKINGS / ≤1 FT P95 GATE</p>{/if}
+            {#if !filmTraffic.movementClaimSupported}<p class="mono">SAMPLING / {filmTraffic.sampleIntervalMs}MS BETWEEN SAMPLES / WAKE IS CONNECT-THE-DOTS, NOT AN OBSERVED PATH</p>{/if}
             <dl><dt>Source</dt><dd>{activeFilm.source.sha256.slice(0, 12)}…</dd><dt>Frames</dt><dd>{activeFilm.frames.length}</dd><dt>Corrections</dt><dd>{activeFilm.corrections.length}</dd></dl>
           </aside>
         </div>
         <section class="film-controls" aria-label="Film traffic controls">
           <div class="film-seek-row"><button class="button" onclick={() => seekFilm(-5000)}>− 5 sec</button><output aria-live="polite">{formatFilmTime(filmTimeMs)}</output><button class="button" onclick={() => seekFilm(5000)}>+ 5 sec</button></div>
           <label class="field full"><span>Traffic time / scrub in either direction</span><input aria-label="Film traffic time" type="range" min="0" max={activeFilm.frames.at(-1)?.timeMs ?? 0} step={filmStepMs} bind:value={filmTimeMs} /></label>
-          <label class="field"><span>#13 wake</span><select class="input" bind:value={filmWakeMs}><option value={3000}>3 seconds</option><option value={5000}>5 seconds</option><option value={10000}>10 seconds</option><option value={20000}>20 seconds</option></select></label>
-          <label class="field"><span>Movement evidence</span><select aria-label="Film movement evidence" class="input" bind:value={filmMovementMode}><option value="live-only">Live basketball only</option><option value="all-captured">All captured movement</option></select></label>
+          <label class="field"><span>#13 wake</span><select class="input" bind:value={filmWakeMs}><option value={3000}>3 seconds</option><option value={5000}>5 seconds</option><option value={10000}>10 seconds</option><option value={20000}>20 seconds</option><option value={3600000}>All verified history</option></select></label>
+          <label class="field"><span>Movement evidence</span><select aria-label="Film movement evidence" class="input" bind:value={filmMovementMode}><option value="all-captured">All verified #13 positions</option><option value="live-only">Reviewed live basketball only</option></select></label>
           <div class="film-export"><button class="button" onclick={exportFilmJson}>Export captured JSON</button><button class="button" onclick={exportFilmSvg}>Export canvas SVG</button></div>
         </section>
+        {#if playReview}
+          <section class="film-review" aria-labelledby="film-review-title">
+            <div class="film-review-head">
+              <div>
+                <p class="eyebrow">Source review / {playReview.cards.length} possessions</p>
+                <h3 id="film-review-title">What the film establishes</h3>
+                <p>Each note is paired with a whole-frame pixelated source still. The orange <strong>13</strong> is synthetic; no sharp face or jersey crop is stored.</p>
+              </div>
+              <div class="film-review-receipt mono">
+                <span>PRIVATE DERIVATIVE</span>
+                <strong>{playReview.sourceSha256.slice(0, 12)}… / R{playReview.analysisRevision} / {playReview.analysisExecutionCount}X</strong>
+                <small>{playReview.cards[0]?.image.anonymization.pixelWidth}×{playReview.cards[0]?.image.anonymization.pixelHeight} PIXEL GRID → 13 MARKER</small>
+              </div>
+            </div>
+            <div class="film-review-grid">
+              {#each playReview.cards as card}
+                <article class:active={filmTimeMs >= card.startMs && filmTimeMs <= card.endMs} class="film-review-card" data-review-id={card.id}>
+                  <button class="film-review-seek" aria-pressed={filmTimeMs >= card.startMs && filmTimeMs <= card.endMs} onclick={() => filmTimeMs = card.representativeTimeMs}>
+                    <span>Seek to possession</span><strong>{formatFilmRange(card.startMs, card.endMs)}</strong>
+                  </button>
+                  <img src={card.image.dataUrl} alt={`Anonymized court still at ${formatFilmTime(card.representativeTimeMs)} with a synthetic 13 marker for the tracked player.`} width={card.image.width} height={card.image.height} />
+                  <div class="film-review-copy">
+                    <div class="film-review-tags mono"><span>{card.possession} possession</span><span>{card.phase.replaceAll('-', ' ')}</span></div>
+                    <h4>{card.position}</h4>
+                    <dl>
+                      <div><dt>Observed</dt><dd>{card.observation}</dd></div>
+                      <div><dt>Basketball meaning</dt><dd>{card.interpretation}</dd></div>
+                      <div class="film-review-limit"><dt>Not proven</dt><dd>{card.limitation}</dd></div>
+                    </dl>
+                  </div>
+                </article>
+              {/each}
+            </div>
+          </section>
+        {/if}
         {#if operator}
           <section class="film-correction">
             <div><p class="eyebrow">Correction overlay</p><h3>Correct evidence, never rerun the film.</h3><p>The raw revision stays captured. This append-only note changes the rendered sample and records why.</p></div>
             <div class="film-correction-form">
               <label class="field"><span>Status</span><select class="input" bind:value={correctionStatus}><option value="resolved">Resolved</option><option value="unresolved">Unresolved</option><option value="out-of-frame">Out of frame</option><option value="inactive">Inactive / substituted</option></select></label>
-              <label class="field"><span>Court X / feet</span><input class="input" type="number" min="0" max="94" step="0.5" bind:value={correctionX} disabled={correctionStatus !== 'resolved'} /></label>
+              <label class="field"><span>Court X / feet</span><input class="input" type="number" min="0" max={activeFilm.analysis.courtCalibrationVerification ? 84 : 94} step="0.5" bind:value={correctionX} disabled={correctionStatus !== 'resolved'} /></label>
               <label class="field"><span>Court Y / feet</span><input class="input" type="number" min="0" max="50" step="0.5" bind:value={correctionY} disabled={correctionStatus !== 'resolved'} /></label>
               <label class="field full"><span>Direct evidence</span><input class="input" bind:value={correctionReason} placeholder="Example: both feet verified against the near lane mark" /></label>
               <div class="actions"><button class="button primary" disabled={commandBusy} onclick={saveFilmCorrection}>Save correction at {formatFilmTime(filmTimeMs)}</button>{#if correctionSaved}<span class="success">CORRECTION SAVED / ANALYSIS STILL 1x</span>{/if}</div>

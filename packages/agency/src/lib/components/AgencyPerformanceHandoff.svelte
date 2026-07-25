@@ -47,9 +47,11 @@
     background: var(--color-performance-ink, #090909);
     color: var(--color-performance-paper, #f3f3f0);
   }
+
   .performance-handoff__intro {
     max-width: 46rem;
   }
+
   .performance-handoff__eyebrow {
     display: block;
     margin-bottom: 0.9rem;
@@ -59,6 +61,7 @@
     letter-spacing: 0.1em;
     text-transform: uppercase;
   }
+
   h2 {
     max-width: 20ch;
     margin: 0;
@@ -66,6 +69,7 @@
     line-height: 0.96;
     letter-spacing: -0.045em;
   }
+
   p {
     max-width: 40rem;
     margin: 1.2rem 0 0;
@@ -73,6 +77,7 @@
     font-size: clamp(1rem, 1.4vw, 1.2rem);
     line-height: 1.55;
   }
+
   .performance-handoff__steps {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -82,49 +87,59 @@
       color-mix(in srgb, var(--color-performance-paper, #f3f3f0) 25%, transparent);
     list-style: none;
   }
+
   li {
     display: grid;
     gap: 0.6rem;
     min-height: 9rem;
     padding: 1.15rem;
   }
+
   li + li {
     border-left: 1px solid
       color-mix(in srgb, var(--color-performance-paper, #f3f3f0) 25%, transparent);
   }
+
   li strong {
     font-size: 1rem;
   }
+
   li span {
     color: color-mix(in srgb, var(--color-performance-paper, #f3f3f0) 68%, transparent);
     line-height: 1.45;
   }
+
   .performance-handoff__actions {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 1rem 1.5rem;
   }
+
   .performance-handoff__actions a {
     color: inherit;
     font-weight: 650;
     text-underline-offset: 0.22em;
   }
+
   .performance-handoff__primary {
     padding: 0.9rem 1.1rem;
     background: var(--color-performance-paper, #f3f3f0);
     color: var(--color-performance-ink, #090909) !important;
     text-decoration: none;
   }
+
   @media (max-width: 42rem) {
     .performance-handoff__steps {
       grid-template-columns: 1fr;
     }
+
     li + li {
       border-top: 1px solid
         color-mix(in srgb, var(--color-performance-paper, #f3f3f0) 25%, transparent);
       border-left: 0;
     }
+
     li {
       min-height: auto;
     }

@@ -8,6 +8,8 @@
     type PerformanceCardItem,
     type PerformanceCtaItem
   } from '@create-something/canon';
+  import IntegrationCatalog from '$lib/components/IntegrationCatalog.svelte';
+  import IntegrationCompatibilityRail from '$lib/components/IntegrationCompatibilityRail.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
   const fitCards: PerformanceCardItem[] = [
@@ -91,7 +93,7 @@
     {
       question: 'Why not lead with vendor badges?',
       answer:
-        'The durable value is the workflow boundary: what can run, what needs approval, what stops, who owns the account, and what evidence the operator keeps.'
+        'The durable value is the workflow boundary: what can run, what needs approval, what stops, who owns the account, and what evidence the operator keeps. Curated marks follow that boundary as compatibility evidence, while the full directory keeps availability distinct from a live connection.'
     },
     {
       question: 'How does this help a team choose the right path?',
@@ -136,6 +138,8 @@
 >
   {#snippet after()}
     <PerformanceCardGrid items={fitCards} columns={3} ariaLabel="Workflow tool fit" />
+    <IntegrationCompatibilityRail surface="partners" />
+    <IntegrationCatalog />
   {/snippet}
 </PerformancePageSection>
 

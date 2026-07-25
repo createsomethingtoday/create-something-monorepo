@@ -1,15 +1,16 @@
 <script lang="ts">
+	import { page } from '$app/stores';
 	import {
 		Button,
 		PerformanceCampaignOpening,
-		PerformanceContrastChapter,
+		PerformanceConversionHandoff,
 		PerformancePageSection,
 		PerformanceThesisConditions,
 		SEO,
 		type PerformanceCondition
 	} from '@create-something/canon';
 	import PublicAtlasCanvas from '$lib/components/PublicAtlasCanvas.svelte';
-	import PublicAtlasStoryCanvas from '$lib/components/PublicAtlasStoryCanvas.svelte';
+	import SystemContextRail from '$lib/components/SystemContextRail.svelte';
 	import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
 	const mapProtocol: PerformanceCondition[] = [
@@ -45,7 +46,7 @@
 	<PerformanceCampaignOpening
 		eyebrow="CREATE SOMETHING Map"
 		title="Make the workflow visible before you change it."
-		lede="Name the owner, the approvals, and the stop points on a public canvas. Map stands alone as the living workflow definition, and it carries approved context into Build and Control when you are ready."
+		lede="Use the constrained public canvas to name the owner, data, approvals, systems, risks, and inspection points. This browser-local draft stays on this device until you carry it into booking or an authenticated Map workspace."
 		media={{ src: '/images/performance-lab/trace-wake-natural.webp', mobileSrc: '/images/performance-lab/trace-wake-natural-mobile.webp', alt: 'Aerial black-and-white view of a survey craft leaving a directional wake' }}
 		proof={[{ label: 'Input', value: 'Prospect map' }, { label: 'Boundary', value: 'No production tools' }, { label: 'Handoff', value: 'Build or Control' }]}
 	>
@@ -65,30 +66,43 @@
 		ariaLabel="Public workflow mapping protocol"
 	/>
 
-	<PerformanceContrastChapter
-		eyebrow="Workflow story"
-		title="See the workflow as a story before editing the map."
-		description="The static story uses the same graph contract as the interactive canvas. It explains what can run, what waits for judgment, where execution must stop, and where proof lands."
-		intervention={{ label: 'Shared graph contract', title: 'Story before mutation', detail: 'The explanatory view and interactive canvas render the same operating model.' }}
-	>
-		{#snippet artifact()}
-			<PublicAtlasStoryCanvas
-				starterId="marketplace-review-queue"
-				storyId="map-page-marketplace-review-story"
-			/>
-		{/snippet}
-	</PerformanceContrastChapter>
-
 	<PerformancePageSection
 		id="canvas"
 		variant="white"
 		eyebrow="Public mapping surface"
 		title="The canvas turns curiosity into operating context."
-		description="Cold readers can test the method without exposing credentials. Warm teams leave with a summary, readiness signal, and workflow definition that can stand alone or move into Build and Control."
+		description="Cold readers can test the method without exposing credentials. The public draft stays in this browser; its summary and readiness signal can move into booking, a durable Map workspace, Build, or Control."
 	>
 		{#snippet after()}
-			<PublicAtlasCanvas bookingHref="/book" />
+			<SystemContextRail />
+			<PublicAtlasCanvas bookingHref="/book"
+				initialIntegration={$page.url.searchParams.get('source') === 'integration-catalog'
+					? ($page.url.searchParams.get('integration') ?? '')
+					: ''}
+				initialIntegrationName={$page.url.searchParams.get('source') === 'integration-catalog'
+					? ($page.url.searchParams.get('integration_name') ?? '')
+					: ''}
+			/>
 		{/snippet}
 	</PerformancePageSection>
-</main>
 
+	<PerformanceConversionHandoff
+		eyebrow="Continue the definition"
+		title="Keep the workflow definition alive."
+		description="The public canvas is a browser-local draft, not a durable workspace. Sign in to create an account-scoped Map with version history, review gates, sharing, export, and Build handoff—or bring this draft into a mapping session first."
+		density="compact"
+		handoff={{
+			owner: 'Workflow owner',
+			authority: 'Human approval',
+			proof: 'Map + versions + review record',
+			state: 'review'
+		}}
+	>
+		{#snippet actions()}
+			<Button href="/map/workspace">Open Map workspace</Button>
+			<Button href={agencyCoreMessaging.workflowMappingSessionHref} variant="secondary">
+				{agencyCoreMessaging.bookMappingSessionLabel}
+			</Button>
+		{/snippet}
+	</PerformanceConversionHandoff>
+</main>
