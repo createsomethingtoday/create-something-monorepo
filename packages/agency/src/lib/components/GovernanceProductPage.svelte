@@ -96,7 +96,7 @@
       id: 'connected-loop',
       label: 'Connected loop',
       summary: 'Continue with context',
-      title: 'Atlas connects this surface to the rest of the governance loop.',
+      title: 'Map connects this surface to the rest of the governance loop.',
       detail:
         'Production workflows need Map, Signal, Decision, and Proof attached to the same operating boundary.',
       tone: 'allow',

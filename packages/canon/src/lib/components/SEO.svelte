@@ -148,7 +148,7 @@
       ? [
         { '@type': 'Thing', name: 'AI workflow systems' },
         { '@type': 'Thing', name: 'Model Context Protocol' },
-        { '@type': 'Thing', name: 'Policy OS' },
+        { '@type': 'Thing', name: 'CREATE SOMETHING Control' },
         { '@type': 'Thing', name: 'Governed automation' }
       ]
       : undefined

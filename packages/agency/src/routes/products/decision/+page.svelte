@@ -148,8 +148,8 @@
 </script>
 
 <SEO
-  title="Decision Queue for App Governance | CREATE SOMETHING .agency"
-  description="Decision is the human-in-the-loop queue for app governance: route Signals into review, approval, policy action, stop states, and Proof."
+  title="Decision Queue | Inside CREATE SOMETHING Control"
+  description="Decision is the human-in-the-loop queue. Each Signal is routed to run, wait for approval, or stop with a reason."
   keywords="human in the loop decision queue, app governance approvals, policy review queue, workflow decision, workflow control"
   ogImage="/og-image.png"
   propertyName="agency"

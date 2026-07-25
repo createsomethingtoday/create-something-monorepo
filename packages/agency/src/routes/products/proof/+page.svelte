@@ -148,8 +148,8 @@
 </script>
 
 <SEO
-  title="Proof Graph for App Governance | CREATE SOMETHING .agency"
-  description="Proof is the ledger surface inside Control: evidence, decisions, outcomes, receipts, rollback notes, and audit trails attached to Map."
+  title="Proof Graph | Inside CREATE SOMETHING Control"
+  description="Proof is the ledger inside Control. Every decision keeps its evidence, its outcome, and its rollback note in one place."
   keywords="app governance proof graph, workflow ledger, decision receipts, audit trail, workflow control proof"
   ogImage="/og-image.png"
   propertyName="agency"

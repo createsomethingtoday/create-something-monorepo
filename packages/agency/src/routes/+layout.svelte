@@ -7,6 +7,7 @@
   import { getAgencyContentAssetAnalyticsMetadata } from '$lib/analytics/content-assets';
   import { getAgencyMarketingExperimentMetadata } from '$lib/analytics/marketing-experiment';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
+  import { PUBLIC_PRODUCT_SEQUENCE, getPublicProduct } from '$lib/data/productFamily';
   import { page } from '$app/stores';
   import { onMount } from 'svelte';
   import { afterNavigate, disableScrollHandling, goto, onNavigate } from '$app/navigation';
@@ -48,12 +49,21 @@
     });
   });
 
+  // Primary nav intentionally uses plain meaning, not owned product names: a
+  // first-time visitor does not yet know what Map or Control are. The spine is
+  // named in the footer and on /products. See the plain-meaning assertion in
+  // test/public-marketing-copy.test.ts.
   const navLinks = [
     { label: 'How It Works', href: '/services' },
     { label: 'What You Keep', href: '/stack' },
     { label: 'Products', href: '/products' },
     { label: 'Field Reports', href: '/field-reports' }
   ];
+  // Derived from the product family so the footer cannot drift from the source of truth.
+  const spineLinks = PUBLIC_PRODUCT_SEQUENCE.map((id) => {
+    const product = getPublicProduct(id);
+    return { label: product.shortName, href: product.route };
+  });
   const primaryCtaHref = agencyCoreMessaging.startWithWorkflowHref;
   const globalAnalyticsMetadata = $derived(getAgencyGlobalAnalyticsMetadata($page.url.pathname));
   const isDifyArticleRoute = $derived(isAgencyDifyArticlePath($page.url.pathname));
@@ -79,11 +89,15 @@
       ]
     },
     {
+      title: 'Products',
+      ariaLabel: 'Product spine',
+      links: spineLinks
+    },
+    {
       title: 'Tool Stack',
       ariaLabel: 'Workflow tool stack',
       links: [
         { label: 'Workflow Tool Stack', href: '/partners' },
-        { label: 'OpenAI', href: '/stack' },
         { label: 'Cloudflare', href: '/cloudflare' }
       ]
     },

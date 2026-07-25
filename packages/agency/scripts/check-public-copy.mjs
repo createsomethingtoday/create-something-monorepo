@@ -46,7 +46,7 @@ export const PUBLIC_COPY_RULES = [
   {
     id: 'workflow-trust-map',
     pattern: /Workflow\s+Trust\s+Map/g,
-    replacement: 'Atlas workflow map'
+    replacement: 'CREATE SOMETHING Map'
   },
   {
     id: 'workflow-trust-layer',
@@ -56,7 +56,7 @@ export const PUBLIC_COPY_RULES = [
   {
     id: 'trust-map-title',
     pattern: /Trust\s+Map/g,
-    replacement: 'Workflow Map'
+    replacement: 'CREATE SOMETHING Map'
   },
   {
     id: 'trust-map-sentence',
@@ -71,12 +71,12 @@ export const PUBLIC_COPY_RULES = [
   {
     id: 'trust-layer-title',
     pattern: /Trust\s+Layer/g,
-    replacement: 'Control Layer'
+    replacement: 'CREATE SOMETHING Control'
   },
   {
     id: 'trust-layer-sentence',
     pattern: /Trust\s+layer/g,
-    replacement: 'Control layer'
+    replacement: 'Control'
   },
   {
     id: 'trust-layer-lower',
@@ -262,6 +262,22 @@ export const PUBLIC_COPY_RULES = [
     id: 'commoditized-mcp-consumption',
     pattern: /\bMCP\s+consumption\s+is\s+commoditized\b/gi,
     replacement: 'tool connection is only the starting point'
+  },
+  // Policy OS is the internal architecture name for CREATE SOMETHING Control.
+  // See internalCompatibilityNames in src/lib/data/productFamily.ts. Public copy
+  // sells the product name, never the internal one. productFamily.ts is exempt
+  // because it is the declared home of the internal names.
+  {
+    id: 'policy-os-internal-name',
+    pattern: /\bPolicy\s+OS\b/g,
+    replacement: 'Control',
+    exempt: ['src/lib/data/productFamily.ts']
+  },
+  {
+    id: 'policy-os-internal-name-lower',
+    pattern: /\bpolicy os\b/g,
+    replacement: 'Control',
+    exempt: ['src/lib/data/productFamily.ts']
   }
 ];
 
@@ -359,6 +375,14 @@ export function discoverActivePublicCopyFiles() {
     const [firstSegment] = relative.split(path.sep);
     return !REDIRECTED_PUBLIC_ROUTE_SEGMENTS.has(firstSegment);
   });
+
+function isRuleExempt(rule, file) {
+  if (!rule.exempt) {
+    return false;
+  }
+
+  const relative = readableFile(file);
+  return rule.exempt.some((entry) => relative === entry || relative.endsWith(`/${entry}`));
 }
 
 export function auditPublicCopy(files = discoverPublicCopyFiles()) {
@@ -368,6 +392,10 @@ export function auditPublicCopy(files = discoverPublicCopyFiles()) {
     const source = readFileSync(file, 'utf8');
 
     for (const rule of PUBLIC_COPY_RULES) {
+      if (isRuleExempt(rule, file)) {
+        continue;
+      }
+
       const pattern = new RegExp(rule.pattern.source, rule.pattern.flags.includes('g') ? rule.pattern.flags : `${rule.pattern.flags}g`);
       const matches = source.matchAll(pattern);
 
@@ -396,6 +424,10 @@ export function healPublicCopy(files = discoverPublicCopyFiles()) {
     let next = source;
 
     for (const rule of PUBLIC_COPY_RULES) {
+      if (isRuleExempt(rule, file)) {
+        continue;
+      }
+
       next = next.replace(rule.pattern, rule.replacement);
     }
 
