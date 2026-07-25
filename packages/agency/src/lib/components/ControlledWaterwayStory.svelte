@@ -1,5 +1,6 @@
 <script lang="ts">
 	import PipelineCanvas from './PipelineCanvas.svelte';
+	import type { PipelineMarker } from '$lib/visual/pipelineRenderer';
 	import {
 		AGENT_WORK_TRACE,
 		BUSINESS_OUTCOME,
@@ -14,6 +15,22 @@
 
 	let activeStageId: WaterwayStage['id'] = 'map';
 	let pipelineRendererState: 'fallback' | 'loading' | 'ready' = 'fallback';
+	/**
+	 * Gate anchors projected from the rendered geometry. Until they arrive the CSS falls back to
+	 * the static SVG valve coordinates, so a label always points at the valve it names.
+	 */
+	let gateAnchorStyle = '';
+
+	function applyGateAnchors(markers: PipelineMarker[]): void {
+		gateAnchorStyle = markers
+			.filter((marker) => marker.visible)
+			.map(
+				(marker) =>
+					`--waterway-gate-${marker.id}-x:${(marker.x * 100).toFixed(3)}%;` +
+					`--waterway-gate-${marker.id}-y:${(marker.y * 100).toFixed(3)}%`
+			)
+			.join(';');
+	}
 	$: activeStage =
 		CONTROLLED_WATERWAY_STAGES.find((stage) => stage.id === activeStageId) ??
 		CONTROLLED_WATERWAY_STAGES[0];
@@ -62,7 +79,7 @@
 		data-flow-progress={activeStageId}
 	>
 		<figure class="waterway__figure" data-active-stage={activeStageId}>
-		<div class="waterway__scene">
+		<div class="waterway__scene" style={gateAnchorStyle}>
 			<div id="waterway-flow-readout" class="waterway__flow-readout" aria-live="polite">
 				<span>Current position</span>
 				<strong>{activeStage.shortName}</strong>
@@ -71,6 +88,7 @@
 			<PipelineCanvas
 				stage={activeStageId}
 				onstatechange={(state) => (pipelineRendererState = state)}
+				onmarkers={applyGateAnchors}
 			/>
 			<svg
 				class="waterway__pipeline"
@@ -154,31 +172,31 @@
 						<span>{stage.step}</span>
 						<strong>{stage.shortName}</strong>
 						<small>{stage.verb}</small>
-
-						{#if stage.id === 'control' && activeStageId === 'control'}
-							<div class="waterway__control-region">
-								<ol aria-label="Control operating path">
-									{#each CONTROL_GATE as gate}
-										<li>
-											<strong>{gate.label}</strong>
-											<small>{gate.detail}</small>
-										</li>
-									{/each}
-								</ol>
-								<div class="waterway__states" aria-label="Decision gate states">
-									{#each WATERWAY_STATES as state}
-										<span class={`waterway__state waterway__state--${state.id}`}>
-											<strong>{state.label}</strong>
-											<small>{state.detail}</small>
-										</span>
-									{/each}
-								</div>
-							</div>
-						{/if}
 					</li>
 				{/each}
 			</ol>
 		</div>
+
+		{#if activeStageId === 'control'}
+			<div class="waterway__control-region" data-control-ledger>
+				<ol aria-label="Control operating path">
+					{#each CONTROL_GATE as gate}
+						<li>
+							<strong>{gate.label}</strong>
+							<small>{gate.detail}</small>
+						</li>
+					{/each}
+				</ol>
+				<div class="waterway__states" aria-label="Decision gate states">
+					{#each WATERWAY_STATES as state}
+						<span class={`waterway__state waterway__state--${state.id}`}>
+							<strong>{state.label}</strong>
+							<small>{state.detail}</small>
+						</span>
+					{/each}
+				</div>
+			</div>
+		{/if}
 		<figcaption>
 			<span>Inputs = typed triggers</span>
 			<span>Pipe = bounded work</span>
@@ -701,10 +719,13 @@
 	}
 
 	.waterway__milestones > li {
+		--milestone-lift: 0rem;
 		position: absolute;
 		display: grid;
 		gap: 0.2rem;
 		min-width: 10rem;
+		/* Sit above the gate so the card never covers the valve it names. */
+		transform: translate(-50%, calc(-100% - 0.95rem - var(--milestone-lift)));
 		padding: 0.8rem 0.9rem;
 		border: 1px solid color-mix(in srgb, var(--waterway-panel) 35%, transparent);
 		border-radius: var(--radius-performance-md, 4px);
@@ -722,42 +743,102 @@
 		content: '';
 		position: absolute;
 		bottom: -0.36rem;
-		left: 0.9rem;
+		left: 50%;
 		width: 0.65rem;
 		height: 0.65rem;
 		border-radius: 50%;
 		background: var(--waterway-signal);
 		box-shadow: 0 0 0 4px color-mix(in srgb, var(--waterway-signal) 20%, transparent);
+		transform: translateX(-50%);
 	}
 
-	.waterway__milestones > li:nth-child(1) { left: 14%; top: 40%; }
-	.waterway__milestones > li:nth-child(2) { left: 41%; top: 40%; }
-	.waterway__milestones > li:nth-child(3) { right: 4%; top: 8%; width: min(29rem, 39%); }
+	/*
+	 * Anchors come from the rendered geometry when WebGL is live; the fallbacks are the static
+	 * SVG valve coordinates (260/590/920 of 1200, 368 of 590) so both instruments agree.
+	 */
+	.waterway__milestones > li {
+		max-width: min(13rem, 20%);
+	}
+
+	.waterway__milestones > li:nth-child(1) {
+		left: var(--waterway-gate-map-x, 21.7%);
+		top: var(--waterway-gate-map-y, 62.4%);
+	}
+
+	.waterway__milestones > li:nth-child(2) {
+		left: var(--waterway-gate-build-x, 49.2%);
+		top: var(--waterway-gate-build-y, 62.4%);
+	}
+
+	.waterway__milestones > li:nth-child(3) {
+		left: var(--waterway-gate-control-x, 76.7%);
+		top: var(--waterway-gate-control-y, 62.4%);
+	}
+
+	/*
+	 * Two gate pins plus a ledger panel need room. Between the mobile breakpoint and roughly
+	 * 1180px they cannot coexist without colliding, so the scene shows only the active chapter —
+	 * anchored to the foot of the canvas — rather than overlapping callouts.
+	 */
+	@media (min-width: 761px) and (max-width: 1180px) {
+		.waterway__milestones {
+			inset: auto 1rem 1rem 1rem;
+			display: grid;
+		}
+
+		.waterway__milestones > li,
+		.waterway__milestones > li:nth-child(1),
+		.waterway__milestones > li:nth-child(2),
+		.waterway__milestones > li:nth-child(3) {
+			position: relative;
+			left: auto;
+			right: auto;
+			top: auto;
+			width: auto;
+			max-width: none;
+			min-width: 0;
+			transform: none;
+		}
+
+		.waterway__milestones > li:not(.waterway__milestone--active) {
+			display: none;
+		}
+
+		.waterway__milestones > li::after {
+			content: none;
+		}
+	}
 
 	.waterway__milestones > .waterway__milestone--active {
+		--milestone-lift: 0.18rem;
 		border-color: var(--waterway-signal);
 		background: color-mix(in srgb, var(--waterway-ink) 82%, var(--waterway-signal));
 		box-shadow:
 			inset 3px 0 0 var(--waterway-signal),
 			0 16px 36px color-mix(in srgb, var(--waterway-ink) 46%, transparent);
-		transform: translateY(-0.18rem);
 	}
 
 	.waterway__milestones > li > span { color: var(--waterway-signal-soft); }
 	.waterway__milestones > li > strong { font-size: 1.2rem; }
 	.waterway__milestones > li > small { opacity: 0.68; }
 
+	/*
+	 * The Control operating loop is a ledger, not a pin. It sits below the instrument at full
+	 * width so it never covers the gate, proof ring, or outcome it describes.
+	 */
 	.waterway__control-region {
 		display: grid;
 		gap: 0.6rem;
-		margin-top: 0.7rem;
-		padding-top: 0.7rem;
-		border-top: 1px solid color-mix(in srgb, var(--waterway-panel) 22%, transparent);
+		padding: 0.9rem 1rem 1rem;
+		border-top: 1px solid var(--waterway-line-strong);
+		background: var(--waterway-ink);
+		color: var(--waterway-panel);
 	}
 
 	.waterway__control-region > ol {
 		display: grid;
-		grid-template-columns: repeat(3, minmax(0, 1fr));
+		/* Reflow rather than squeeze: the panel narrows with the scene. */
+		grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr));
 		gap: 0.35rem;
 		margin: 0;
 		padding: 0;
@@ -777,7 +858,7 @@
 
 	.waterway__states {
 		display: grid;
-		grid-template-columns: repeat(3, minmax(0, 1fr));
+		grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr));
 		gap: 0.35rem;
 	}
 
@@ -1375,6 +1456,7 @@
 			top: auto;
 			width: auto;
 			min-width: 0;
+			transform: none;
 		}
 
 		.waterway__milestones > li:not(.waterway__milestone--active) { display: none; }
