@@ -102,7 +102,7 @@
     knowsAbout: [
       'Model Context Protocol (MCP)',
       'MCP Server Development',
-      'Workflow Control Layer',
+      'Governed Workflow Operation',
       'AI Workflow Systems',
       'Controlled Automation',
       'Owned Agent Runtimes',
