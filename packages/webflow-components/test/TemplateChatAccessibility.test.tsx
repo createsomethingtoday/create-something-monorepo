@@ -88,6 +88,58 @@ test('a multi-card result set is announced as one labelled group', () => {
   }
 });
 
+test('a settled reply is announced exactly once', () => {
+  const originalWindow = globalThis.window;
+  Object.defineProperty(globalThis, 'window', {
+    configurable: true,
+    writable: true,
+    value: {
+      sessionStorage: {
+        getItem: () =>
+          JSON.stringify({
+            messages: [
+              { role: 'user', content: 'A restaurant site', displays: [] },
+              { role: 'assistant', content: 'These three fit your brief.', displays: [] },
+            ],
+            followups: [],
+            known: [],
+            open: true,
+          }),
+      },
+    },
+  });
+
+  try {
+    const html = renderToStaticMarkup(<TemplateChat defaultOpen enableAnalytics={false} />);
+
+    // The reply appears twice in the DOM — once visibly, once in the sr-only
+    // status — which is only safe because the visible copy is not itself a live
+    // region. If it ever becomes one, a screen reader reads the answer twice.
+    const visibleBubble = html.match(/<div class="tmchat-msg assistant">[^<]*/g) ?? [];
+    assert.ok(visibleBubble.length >= 1, 'the reply is rendered visibly');
+    assert.doesNotMatch(
+      html,
+      /<div class="tmchat-msg assistant"[^>]*(aria-live|role="status")/,
+      'the visible reply must not announce itself',
+    );
+
+    const liveRegions = html.match(/aria-live="polite"/g) ?? [];
+    assert.equal(liveRegions.length, 1, 'exactly one live region is mounted for a settled turn');
+    assert.match(
+      html,
+      /class="tmchat-outcome-announcement tmchat-sr-only" role="status" aria-live="polite" aria-atomic="true">These three fit your brief\./,
+      'and it carries the reply plus its receipt',
+    );
+
+    // The streaming narration and the settled receipt are mutually exclusive, so
+    // two regions never compete for the same announcement.
+    assert.doesNotMatch(html, /class="tmchat-progress"/, 'no progress surface once the turn settled');
+  } finally {
+    if (originalWindow === undefined) delete (globalThis as { window?: Window }).window;
+    else globalThis.window = originalWindow;
+  }
+});
+
 // ── host page inerting ───────────────────────────────────────────────────────
 
 function inertTarget(options: { holdsPanel?: boolean; preInert?: boolean; preHidden?: boolean } = {}) {
