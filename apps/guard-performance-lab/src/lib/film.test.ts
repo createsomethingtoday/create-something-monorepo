@@ -238,19 +238,40 @@ describe('film benchmark contract', () => {
       outOfFrameFrames: 1,
       resolvedPercent: 25,
       knownStatePercent: 75,
+      userReviewedFrames: 0,
+      agentReviewedFrames: 0,
+      unreviewedFrames: 4,
       estimatedTargetFrames: 1,
       calibratedTargetFrames: 0,
       correctedTargetFrames: 0
     });
   });
 
-  it('interpolates verified #13 identity across detector track handoffs', () => {
+  it('separates user-confirmed, agent-reviewed, and unreviewed play-state frames', () => {
+    const captured = captureFilmAnalysis({ source, frames: [
+      { timeMs: 0, targetStatus: 'resolved', playState: 'live-offense', playStateEvidence: { intervalId: 'live-1', method: 'source-review', reviewer: 'user', note: 'Held-out visual review.' }, players: [{ trackId: '13', team: 'target', court: [10, 20], confidence: 0.9 }] },
+      { timeMs: 1000, targetStatus: 'resolved', playState: 'live-offense', playStateEvidence: { intervalId: 'live-2', method: 'source-review', reviewer: 'codex', note: 'Agent-reviewed live possession.' }, players: [{ trackId: '13', team: 'target', court: [12, 20], confidence: 0.9 }] },
+      { timeMs: 2000, targetStatus: 'unresolved', playState: 'unknown', playStateEvidence: { intervalId: 'unknown-1', method: 'unreviewed', reviewer: 'codex', note: 'No source-reviewed claim.' }, players: [] }
+    ] });
+    expect(summarizeFilmTargetCoverage(captured)).toMatchObject({
+      frameCount: 3,
+      userReviewedFrames: 1,
+      agentReviewedFrames: 1,
+      unreviewedFrames: 1
+    });
+  });
+
+  it('interpolates verified #13 identity across detector track handoffs and marks the synthesized position', () => {
     const captured = captureFilmAnalysis({ source, frames: [
       { timeMs: 0, targetStatus: 'resolved', players: [{ trackId: 'p-before', team: 'target', court: [10, 20], confidence: 0.8 }] },
       { timeMs: 1000, targetStatus: 'resolved', players: [{ trackId: 'p-after', team: 'target', court: [20, 30], confidence: 0.7 }] }
     ] });
     const target = resolveFilmTrafficAt(captured, 500).players.find((player) => player.team === 'target');
-    expect(target).toMatchObject({ court: [15, 25], confidence: 0.7 });
+    expect(target).toMatchObject({ court: [15, 25], confidence: 0.7, interpolated: true });
+
+    const onFrame = resolveFilmTrafficAt(captured, 0).players.find((player) => player.team === 'target');
+    expect(onFrame).toMatchObject({ court: [10, 20] });
+    expect(onFrame).not.toHaveProperty('interpolated');
   });
 
   it('retags the selected player during correction instead of duplicating a physical token', () => {

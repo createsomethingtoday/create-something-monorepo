@@ -20,6 +20,9 @@ export const filmPlayStateSchema = z.enum([
   'substitution',
   'unknown'
 ]);
+// Review provenance policy: `reviewer: 'codex'` is an accepted source-review reviewer. Agent review
+// counts as real evidence rather than a placeholder, so the trade is that every consumer must report
+// the user/agent/unreviewed split (summarizeFilmTargetCoverage) instead of one blended "reviewed" number.
 const filmPlayStateEvidenceSchema = z.object({
   intervalId: z.string().min(1),
   method: z.enum(['source-review', 'unreviewed']),
@@ -1074,6 +1077,10 @@ export function summarizeFilmTargetCoverage(analysisInput: unknown) {
   const unresolvedFrames = count('unresolved');
   const inactiveFrames = count('inactive');
   const outOfFrameFrames = count('out-of-frame');
+  const reviewedBy = (reviewer: 'user' | 'codex') => analysis.frames.filter((frame) =>
+    frame.playStateEvidence?.method === 'source-review' && frame.playStateEvidence.reviewer === reviewer).length;
+  const userReviewedFrames = reviewedBy('user');
+  const agentReviewedFrames = reviewedBy('codex');
   return {
     frameCount: analysis.frames.length,
     resolvedFrames,
@@ -1082,6 +1089,9 @@ export function summarizeFilmTargetCoverage(analysisInput: unknown) {
     outOfFrameFrames,
     resolvedPercent: percent(resolvedFrames),
     knownStatePercent: percent(resolvedFrames + inactiveFrames + outOfFrameFrames),
+    userReviewedFrames,
+    agentReviewedFrames,
+    unreviewedFrames: analysis.frames.length - userReviewedFrames - agentReviewedFrames,
     estimatedTargetFrames: targets.filter((player) => player.projection === 'estimated').length,
     calibratedTargetFrames: targets.filter((player) => player.projection === 'calibrated' && player.provenance !== 'corrected').length,
     correctedTargetFrames: targets.filter((player) => player.provenance === 'corrected').length
@@ -1117,11 +1127,19 @@ function interpolatePlayer(before: CapturedPlayer, after: CapturedPlayer, ratio:
     ...before,
     court: [round(before.court[0] + (after.court[0] - before.court[0]) * ratio), round(before.court[1] + (after.court[1] - before.court[1]) * ratio)],
     confidence: Math.min(before.confidence, after.confidence),
-    provenance: before.provenance === 'corrected' || after.provenance === 'corrected' ? 'corrected' : 'model'
+    provenance: before.provenance === 'corrected' || after.provenance === 'corrected' ? 'corrected' : 'model',
+    // Rendering-only marker. The captured revision never stores a synthesized position, so a
+    // token drawn between two captured frames must declare that it is not itself evidence.
+    interpolated: true
   };
 }
 
 export type FilmMovementMode = 'live-only' | 'all-captured';
+
+/** True when a rendered token was synthesized between two captured frames rather than captured. */
+export function isInterpolatedPlayer(player: CapturedPlayer): boolean {
+  return (player as CapturedPlayer & { interpolated?: unknown }).interpolated === true;
+}
 
 export function isLiveFilmPlayState(state: FilmPlayState) {
   return ['live-offense', 'live-defense', 'transition-offense', 'transition-defense'].includes(state);
@@ -1134,8 +1152,9 @@ export function resolveFilmTrafficAt(analysis: CapturedFilmAnalysis, requestedTi
   const before = analysis.frames[beforeIndex];
   const after = analysis.frames.slice(beforeIndex + 1).find((frame) => frame.timeMs >= timeMs);
   let players = before?.players ?? [];
-  if (before && after && before.targetStatus === 'resolved' && after.targetStatus === 'resolved' && before.playState === after.playState && after.timeMs > before.timeMs) {
-    const ratio = (timeMs - before.timeMs) / (after.timeMs - before.timeMs);
+  const ratio = before && after && after.timeMs > before.timeMs ? (timeMs - before.timeMs) / (after.timeMs - before.timeMs) : 0;
+  // ratio 0 means the request landed exactly on a captured frame: render it as captured, never synthesized.
+  if (before && after && ratio > 0 && before.targetStatus === 'resolved' && after.targetStatus === 'resolved' && before.playState === after.playState) {
     players = before.players.flatMap((player) => {
       const next = after.players.find((candidate) => candidate.trackId === player.trackId)
         ?? (player.team === 'target' ? after.players.find((candidate) => candidate.team === 'target') : undefined);

@@ -6,7 +6,11 @@ This is a private-first player-development app. The app-owned local datastore is
 
 The `LabService` command interface owns all mutations. UI and MCP callers must not perform whole-workspace read–modify–write operations. `JsonFileLabStore.mutate` supplies the cross-process lock and revision increment.
 
-The operator MCP profile may manage the full workspace. Player MCP mode requires `GUARD_LAB_ROLE=player` and `GUARD_LAB_PLAYER_ID`; never expose operator reset/create-player capabilities, another player’s records, or an unscoped mutation response in that mode. Player engagement writes are always attributed to `player`.
+The operator MCP profile may manage the full workspace. Player MCP mode requires `GUARD_LAB_ROLE=player` and `GUARD_LAB_PLAYER_ID`; never expose operator reset/create-player capabilities, another player’s records, or an unscoped mutation response in that mode. Player engagement writes are always attributed to `player` — enforced on both the MCP surface and `POST /api/workspace/command`, not just one of them. Any new surface that accepts engagement must enforce the same override.
+
+## Evidence provenance
+
+`reviewer: 'codex'` is a valid `source-review` reviewer. Agent review is real evidence, so the obligation is transparency, not abstention: never collapse user-confirmed and agent-reviewed evidence into one "reviewed" count, and never present identity precision without the coverage and review split beside it (`summarizeFilmTargetCoverage`). Rendered positions synthesized between captured frames must stay distinguishable from captured ones (`isInterpolatedPlayer`); the captured revision never stores a synthesized coordinate.
 
 ## Design authority
 
@@ -21,4 +25,4 @@ pnpm --filter @create-something/guard-performance-lab build
 pnpm --filter @create-something/guard-performance-lab mcp:smoke
 ```
 
-Interactive changes also require the clean-state browser workflow in `.codex/guard-performance-lab-app/goal.md`.
+Interactive changes also require the clean-state browser workflow recorded under `Primary verifier` in `.codex/guard-performance-lab-viewing-room/goal.md`. Assert any rendering invariant that does not need a real browser as an SSR component test (`src/lib/FilmTrafficCourt.test.ts`).
