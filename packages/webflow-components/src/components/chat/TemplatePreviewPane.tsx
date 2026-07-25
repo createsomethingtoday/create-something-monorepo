@@ -1,8 +1,18 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { UiIcon } from '../primitives/UiIcon';
 import { prefersReducedMotion } from './templateChatRuntime';
+import { safeMarketplaceUrl, safePreviewUrl } from './templateChatSafety';
 import type { ChatTrack } from './templateChatAnalytics';
 import type { AgentTemplateItem } from './templateChatProtocol';
+
+/**
+ * The framed document is a creator-authored site running its own scripts inside
+ * a webflow.com page. Deny everything it does not need to render:
+ * `allow-top-navigation` is deliberately absent, so a template cannot navigate
+ * the marketplace away from itself, and `allow-same-origin` is absent so it
+ * gets an opaque origin with no access to marketplace storage.
+ */
+const PREVIEW_SANDBOX = 'allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox';
 
 // Live preview of the template's published .webflow.io site. The published
 // sites ship `frame-ancestors … *.webflow.com`, so embedding here is
@@ -23,6 +33,10 @@ export function TemplatePreviewPane({
   const [closing, setClosing] = useState(false);
   const backRef = useRef<HTMLButtonElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  // Validated locally as well as server-side: an index row cannot put an
+  // arbitrary origin into the frame or the toolbar links.
+  const previewUrl = safePreviewUrl(item.website_url);
+  const ctaUrl = safeMarketplaceUrl(item.purchase_url) ?? safeMarketplaceUrl(item.url);
 
   useEffect(() => {
     backRef.current?.focus();
@@ -102,10 +116,10 @@ export function TemplatePreviewPane({
             <UiIcon name="smartphone" size={14} /> Mobile
           </button>
         </div>
-        {item.website_url ? (
+        {previewUrl ? (
           <a
             className="tmchat-preview-open"
-            href={item.website_url}
+            href={previewUrl}
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => onEvent?.('live_preview_site_opened', { template_slug: item.template_slug })}
@@ -113,10 +127,10 @@ export function TemplatePreviewPane({
             Open site <UiIcon name="external-link" size={12} />
           </a>
         ) : null}
-        {item.purchase_url || item.url ? (
+        {ctaUrl ? (
           <a
             className="tmchat-preview-cta"
-            href={item.purchase_url ?? item.url ?? '#'}
+            href={ctaUrl}
             target="_blank"
             rel="noopener noreferrer"
             onClick={() =>
@@ -148,7 +162,9 @@ export function TemplatePreviewPane({
         ) : null}
         <iframe
           className="tmchat-preview-frame"
-          src={item.website_url ?? undefined}
+          src={previewUrl ?? undefined}
+          sandbox={PREVIEW_SANDBOX}
+          referrerPolicy="no-referrer"
           title={`${item.name} — live template preview`}
           loading="eager"
           onLoad={() => setLoaded(true)}

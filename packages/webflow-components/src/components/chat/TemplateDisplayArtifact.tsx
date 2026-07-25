@@ -1,6 +1,7 @@
 import React from 'react';
 import { TemplateCard } from '../cards/TemplateCard';
 import { isAnchorClickOn } from './templateChatAnalytics';
+import { safeImageUrl, safeMarketplaceUrl, safePreviewUrl } from './templateChatSafety';
 import type { AgentTemplateItem, DisplayPayload } from './templateChatProtocol';
 
 function formatPrice(item: AgentTemplateItem): string {
@@ -20,47 +21,52 @@ export function DisplayArtifact({
   const isStrip = payload.layout === 'carousel';
   const isSingle = payload.layout === 'spotlight' || payload.items.length === 1;
 
-  const cards = payload.items.map((entry, index) => (
+  const cards = payload.items.map((entry, index) => {
+    // Every URL below arrives from the search index through the agent. Validate
+    // locally too, so a poisoned row cannot place an arbitrary origin in a card.
+    const templateUrl = safeMarketplaceUrl(entry.item.url);
+    const creatorUrl = safeMarketplaceUrl(entry.item.creator_profile_url);
+    const avatarUrl = safeImageUrl(entry.item.creator_avatar_url);
+    const thumbnailUrl = safeImageUrl(entry.item.thumbnail_image_url);
+    const previewUrl = safePreviewUrl(entry.item.website_url);
+
+    return (
     <div
       key={entry.template_slug}
       style={{ animationDelay: `${Math.min(index, 8) * 45}ms` }}
       onClickCapture={(event) => {
-        if (isAnchorClickOn(event, entry.item.url)) {
+        if (isAnchorClickOn(event, templateUrl)) {
           onTemplateClick?.(entry.item, index + 1, payload.layout);
         }
       }}
     >
       <TemplateCard
         templateName={entry.item.name}
-        templateLink={{ href: entry.item.url ?? '#', target: '_blank' }}
+        templateLink={{ href: templateUrl ?? '#', target: '_blank' }}
         price={formatPrice(entry.item)}
         isFree={entry.item.is_free}
         creatorName={entry.item.creator_name ?? ''}
-        creatorLink={
-          entry.item.creator_profile_url ? { href: entry.item.creator_profile_url, target: '_blank' } : undefined
-        }
+        creatorLink={creatorUrl ? { href: creatorUrl, target: '_blank' } : undefined}
         creatorIcon={
-          entry.item.creator_avatar_url
+          avatarUrl
             ? {
-                src: entry.item.creator_avatar_url,
+                src: avatarUrl,
                 alt: entry.item.creator_avatar_alt ?? entry.item.creator_name ?? '',
               }
             : undefined
         }
-        primaryImage={
-          entry.item.thumbnail_image_url ? { src: entry.item.thumbnail_image_url, alt: entry.item.name } : undefined
-        }
+        primaryImage={thumbnailUrl ? { src: thumbnailUrl, alt: entry.item.name } : undefined}
         cumulativePurchases={entry.item.cumulative_purchases ?? undefined}
         agentNote={entry.reason ? `Why it fits — ${entry.reason}` : undefined}
         showCategoryMeta={false}
-        showPreviewLink={Boolean(onPreview && entry.item.website_url)}
+        showPreviewLink={Boolean(onPreview && previewUrl)}
         previewLabel="Live preview"
         previewLink={
-          onPreview && entry.item.website_url
+          onPreview && previewUrl
             ? {
                 // Plain click opens the in-chat preview; cmd/middle-click
                 // still opens the published site directly.
-                href: entry.item.website_url,
+                href: previewUrl,
                 target: '_blank',
                 onClick: (event) => {
                   if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
@@ -72,7 +78,8 @@ export function DisplayArtifact({
         }
       />
     </div>
-  ));
+    );
+  });
 
   return (
     <div className="tmchat-display">

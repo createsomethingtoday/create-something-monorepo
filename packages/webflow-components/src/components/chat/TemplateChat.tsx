@@ -38,10 +38,13 @@ import {
   getTemplateChatStorageKey,
   limitTemplateChatInput,
   loadPersistedSession,
+  MAX_PERSISTED_KNOWN_TEMPLATES,
   MAX_PERSISTED_MESSAGES,
+  serializePersistedSession,
   SLOW_TURN_MS,
   type PersistedSession,
 } from './templateChatPersistence';
+import { safePreviewUrl } from './templateChatSafety';
 import { getTurnstileToken } from './templateChatTurnstile';
 import {
   classifyAgentResponseFailure,
@@ -380,12 +383,15 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
       const state: PersistedSession = {
         messages: messages.slice(-MAX_PERSISTED_MESSAGES),
         followups,
-        known: Array.from(knownTemplatesRef.current.values()).slice(-40),
+        known: Array.from(knownTemplatesRef.current.values()).slice(-MAX_PERSISTED_KNOWN_TEMPLATES),
         contextToken: contextTokenRef.current ?? undefined,
         stoppedPrompt: stoppedPrompt ?? undefined,
         open: isInline ? false : open,
+        savedAt: Date.now(),
       };
-      window.sessionStorage.setItem(storageKey, JSON.stringify(state));
+      // Budgeted so an overflowing write cannot fail and leave an older
+      // snapshot behind to be restored as stale state.
+      window.sessionStorage.setItem(storageKey, serializePersistedSession(state));
     } catch {
       // Storage unavailable (private mode, iframe policy) — chat still works.
     }
@@ -535,7 +541,8 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   // toggling desktop immersive state there would only reintroduce wide padding.
   const openPreview = useCallback(
     (item: AgentTemplateItem, position: number, layout: string) => {
-      if (!item.website_url) return;
+      // Never open the surface for a site we would refuse to frame.
+      if (!safePreviewUrl(item.website_url)) return;
       previewOpenedImmersiveRef.current = immersive;
       setPreview({ item, position, layout });
       track('live_preview_opened', {
