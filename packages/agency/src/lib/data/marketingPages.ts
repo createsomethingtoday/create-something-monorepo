@@ -102,7 +102,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     intent: 'Explain the core service path: map one workflow before build work starts.',
     primaryAction: 'Map the workflow',
     requiredTerms: ['workflow', 'Map', 'Build', 'Control', 'Proof'],
-    requiredLinks: ['#map-warmup'],
+    requiredLinks: ['/map'],
     schema: 'faq',
     search: {
       changefreq: 'weekly',
