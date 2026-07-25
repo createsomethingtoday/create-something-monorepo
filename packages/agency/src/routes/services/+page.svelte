@@ -80,8 +80,8 @@
 <div class="services-performance property-performance">
   <PerformanceCampaignOpening
     eyebrow="How It Works"
-    title="Map the workflow before deciding to build."
-    lede="Bring one handoff your team still checks manually. We map the owner, systems, safe actions, approval point, stop condition, and evidence before anything touches customers, money, production, or accounts."
+    title="Nothing gets built until the map says what it should do."
+    lede="Bring one handoff your team still checks manually. We name the decision owner and the stop condition first, then build only what that map requires — before anything touches customers, money, or production."
     media={{
       src: '/images/performance-lab/trace-wake-natural.webp',
       mobileSrc: '/images/performance-lab/trace-wake-natural-mobile.webp',

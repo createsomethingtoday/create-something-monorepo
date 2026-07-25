@@ -62,7 +62,7 @@
 
   const laneOptions: Array<{ value: ServiceLane; label: string }> = [
     { value: 'not_sure', label: 'Not sure yet' },
-    { value: 'workflow_infrastructure', label: 'Workflow Map / Pilot' },
+    { value: 'workflow_infrastructure', label: 'Map / Build' },
     { value: 'reliability_and_control', label: 'Support Recovery / Ongoing Control' },
     { value: 'enterprise_extension', label: 'Enterprise Extension' },
     { value: 'system_development_referral', label: 'System Development Referral' }

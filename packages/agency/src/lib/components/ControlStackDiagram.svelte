@@ -24,7 +24,7 @@
       tone: 'entitlement'
     },
     {
-      label: 'Control Layer',
+      label: 'Control',
       detail: 'Rules decide whether work runs, pauses for review, or stops.',
       tone: 'control'
     },

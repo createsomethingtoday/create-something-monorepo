@@ -44,6 +44,27 @@ Water is useful because it makes governance visible without anthropomorphizing t
 | Clarity | Inspectable conditions | Waterline, refraction test, droplets on glass | Wellness purity language |
 | Turbulence | Exception and ambiguity | Measured vortex, disturbed surface | Generic storm photography |
 | Settlement | Resolved state | Calm basin, level line, collected receipt | Empty serenity image |
+| Dye trace | Correlation, provenance, run history | Injected marker in a clear channel, dye port, timed dispersion | Colored water as a mood or brand wash |
+
+### Coverage
+
+Reviewed 2026-07-25. The grammar defines eight devices. Four are built.
+
+| Device | Asset | Note |
+| --- | --- | --- |
+| Flow | `controlled-flow` | Built; aerial scale, scheduled for bench reshoot |
+| Pressure | `pressure-boundary` | Built; closest to bench scale today |
+| Boundary | `product-system` | Built; aerial scale |
+| Wake / trace | `trace-wake-natural` | Built; overused across unrelated routes |
+| Clarity | — | Not built |
+| Turbulence | — | Not built |
+| Settlement | — | Not built |
+| Dye trace | — | Not built; signature device |
+
+Clarity, turbulence, and settlement are the three devices that carry inspection, exception, and
+resolution. Their absence is why the material layer cannot currently speak to the Judgment tier,
+and why campaign sequences end on evidence rather than on a resolved state. Briefs for the four
+missing devices live in `docs/PERFORMANCE_LAB_WATER_ASSET_BRIEFS.md`.
 
 Preferred environments are engineered and observable: wave tanks, test basins, spillways, flumes,
 laboratory vessels, capillary tests, channel infrastructure, refraction rigs, and controlled impact.
