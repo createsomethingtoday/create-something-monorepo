@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { getSession } from '$lib/server/kv';
+import { SESSION_COOKIE_NAME, getSession } from '$lib/server/kv';
 
 /**
  * GET /api/auth/check-session
@@ -8,7 +8,7 @@ import { getSession } from '$lib/server/kv';
  * Validates the current session and returns user info.
  */
 export const GET: RequestHandler = async ({ platform, cookies }) => {
-	const sessionToken = cookies.get('session_token');
+	const sessionToken = cookies.get(SESSION_COOKIE_NAME);
 	const sessions = platform?.env?.SESSIONS;
 
 	if (!sessionToken) {
@@ -24,7 +24,7 @@ export const GET: RequestHandler = async ({ platform, cookies }) => {
 
 		if (!sessionData) {
 			// Clear invalid cookie
-			cookies.delete('session_token', { path: '/' });
+			cookies.delete(SESSION_COOKIE_NAME, { path: '/' });
 			return json({ authenticated: false }, { status: 401 });
 		}
 

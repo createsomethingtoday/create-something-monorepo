@@ -30,6 +30,10 @@ export const GET: RequestHandler = async ({ params, platform }) => {
 		const headers = new Headers();
 		headers.set('Content-Type', object.httpMetadata?.contentType || 'application/octet-stream');
 		headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+		// Stored objects are creator-supplied; never let the browser sniff a
+		// different content type than the one we recorded at upload time.
+		headers.set('X-Content-Type-Options', 'nosniff');
+		headers.set('Content-Security-Policy', "default-src 'none'; sandbox");
 
 		// Add ETag for caching
 		if (object.httpEtag) {

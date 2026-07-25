@@ -1,7 +1,14 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getAirtableClient, validateToken } from '$lib/server/airtable';
-import { createSessionHandoff, setSession, generateSessionToken, checkRateLimit } from '$lib/server/kv';
+import {
+	SESSION_COOKIE_NAME,
+	SESSION_COOKIE_OPTIONS,
+	checkRateLimit,
+	createSessionHandoff,
+	generateSessionToken,
+	setSession
+} from '$lib/server/kv';
 
 /**
  * POST /api/auth/verify-token
@@ -80,15 +87,7 @@ export const POST: RequestHandler = async ({ request, platform, cookies, getClie
 		await setSession(sessions, sessionToken, result.email);
 		const handoffToken = await createSessionHandoff(sessions, sessionToken, result.email);
 
-		// Set HTTP-only cookie
-		// Note: sameSite 'none' required for cross-origin Webflow integration
-		cookies.set('session_token', sessionToken, {
-			httpOnly: true,
-			secure: true,
-			path: '/',
-			maxAge: 60 * 60 * 2, // 2 hours
-			sameSite: 'none'
-		});
+		cookies.set(SESSION_COOKIE_NAME, sessionToken, SESSION_COOKIE_OPTIONS);
 
 		// Clear the verification token in Airtable
 		const user = await airtable.findUserByEmail(result.email);
