@@ -117,12 +117,64 @@ const server = createServer(async (request, response) => {
     const stress = /stress|performance/i.test(lastMessage);
     const slow = /slow|delayed/i.test(lastMessage);
     const failOnce = /fail once|failure once/i.test(lastMessage);
+    // Transport fixtures for the hardened stream path. Each reproduces a shape
+    // that used to lose events or hang the composer silently.
+    const crlfFraming = /crlf/i.test(lastMessage);
+    const tightData = /tight data|no space/i.test(lastMessage);
+    const unterminated = /unterminated|no trailing/i.test(lastMessage);
+    const stall = /stall|hang/i.test(lastMessage);
+    const throttled = /throttle|rate limit/i.test(lastMessage);
     const restaurant = /restaurant|menu/i.test(lastMessage);
     const attempt = (attempts.get(lastMessage) ?? 0) + 1;
     attempts.set(lastMessage, attempt);
     if (failOnce && attempt === 1) {
       response.writeHead(503, { 'content-type': 'application/json' });
       response.end('{"error":"Deterministic first-attempt failure"}');
+      return;
+    }
+    if (throttled) {
+      // Exercises the rate-limit class and Retry-After parsing.
+      response.writeHead(429, { 'content-type': 'application/json', 'retry-after': '12' });
+      response.end('{"error":"Deterministic throttle"}');
+      return;
+    }
+    if (crlfFraming || tightData || unterminated) {
+      response.writeHead(200, {
+        'content-type': 'text/event-stream; charset=utf-8',
+        'cache-control': 'no-cache',
+        connection: 'keep-alive',
+      });
+      const events = [
+        { type: 'status', label: 'searching' },
+        { type: 'text_delta', text: 'Transport fixture reply.' },
+        displayEvent(false),
+        // Continuity arrives last, which is exactly the frame a strict parser
+        // used to drop when the stream ended without a blank line.
+        { type: 'context', payload: { context_token: 'harness-context-token' } },
+      ];
+      for (const event of events) {
+        const field = tightData ? 'data:' : 'data: ';
+        const boundary = crlfFraming ? '\r\n\r\n' : '\n\n';
+        response.write(`${field}${JSON.stringify(event)}${boundary}`);
+        await new Promise((resolve) => setTimeout(resolve, 150));
+      }
+      // Deliberately no terminating boundary on the final frame.
+      if (unterminated) response.write(`data: ${JSON.stringify({ type: 'done' })}`);
+      else response.write(`data: ${JSON.stringify({ type: 'done' })}${crlfFraming ? '\r\n\r\n' : '\n\n'}`);
+      response.end();
+      return;
+    }
+    if (stall) {
+      // Headers, one frame, then silence: the composer must give up rather than
+      // spin forever. Held open past the client's stream watchdog.
+      response.writeHead(200, {
+        'content-type': 'text/event-stream; charset=utf-8',
+        'cache-control': 'no-cache',
+        connection: 'keep-alive',
+      });
+      response.write(`data: ${JSON.stringify({ type: 'status', label: 'searching' })}\n\n`);
+      await new Promise((resolve) => setTimeout(resolve, 45_000));
+      response.end();
       return;
     }
     const sequence = stress

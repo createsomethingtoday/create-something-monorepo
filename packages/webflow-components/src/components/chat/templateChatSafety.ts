@@ -10,17 +10,35 @@ const PREVIEW_HOST_SUFFIXES = ['.webflow.io'];
 /** Marketplace destinations: template detail pages, checkout, creator profiles. */
 const MARKETPLACE_HOST_SUFFIXES = ['webflow.com', '.webflow.com'];
 
-function parseHttpsUrl(value: string | null | undefined): URL | null {
+const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]', '::1']);
+
+/** Is this page itself being served from a developer machine? */
+function isLoopbackOrigin(origin: string | null): boolean {
+  if (!origin) return false;
+  try {
+    return LOOPBACK_HOSTS.has(new URL(origin).hostname);
+  } catch {
+    return false;
+  }
+}
+
+function currentOrigin(): string | null {
+  return typeof window === 'undefined' ? null : window.location?.origin ?? null;
+}
+
+function parseHttpsUrl(value: string | null | undefined, base = 'https://webflow.com'): URL | null {
   if (typeof value !== 'string' || !value.trim()) return null;
   let url: URL;
   try {
-    url = new URL(value, 'https://webflow.com');
+    url = new URL(value, base);
   } catch {
     return null;
   }
   // Anything but https is rejected outright, which also excludes javascript:,
-  // data: and blob: before they can reach a src or href.
-  return url.protocol === 'https:' ? url : null;
+  // data: and blob: before they can reach a src or href. http is allowed only
+  // for loopback, and only when the page itself is on loopback (see below).
+  if (url.protocol === 'https:') return url;
+  return url.protocol === 'http:' && LOOPBACK_HOSTS.has(url.hostname) ? url : null;
 }
 
 function hostMatches(host: string, suffixes: readonly string[]): boolean {
@@ -35,10 +53,20 @@ function hostMatches(host: string, suffixes: readonly string[]): boolean {
  * Published sites ship `frame-ancestors … *.webflow.com`, so the browser would
  * refuse anything else anyway — failing here keeps the empty frame off screen.
  */
-export function safePreviewUrl(value: string | null | undefined): string | null {
-  const url = parseHttpsUrl(value);
-  if (!url || !hostMatches(url.hostname, PREVIEW_HOST_SUFFIXES)) return null;
-  return url.toString();
+export function safePreviewUrl(
+  value: string | null | undefined,
+  pageOrigin: string | null = currentOrigin(),
+): string | null {
+  // Local harness and dev servers cannot own a *.webflow.io hostname, so a
+  // loopback preview is accepted — but only when the page itself is on
+  // loopback. Production data therefore can never point the frame anywhere but
+  // a published template site.
+  const devOrigin = isLoopbackOrigin(pageOrigin);
+  const url = parseHttpsUrl(value, devOrigin && pageOrigin ? pageOrigin : undefined);
+  if (!url) return null;
+  if (hostMatches(url.hostname, PREVIEW_HOST_SUFFIXES)) return url.toString();
+  if (devOrigin && LOOPBACK_HOSTS.has(url.hostname)) return url.toString();
+  return null;
 }
 
 /** Returns the URL when it points at a Webflow marketplace destination. */

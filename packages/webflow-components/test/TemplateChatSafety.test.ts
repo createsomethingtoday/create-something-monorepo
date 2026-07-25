@@ -41,6 +41,26 @@ test('non-https schemes never reach a src or href', () => {
   }
 });
 
+test('a loopback preview works on a dev origin and is refused in production', () => {
+  // The local harness cannot own a *.webflow.io hostname.
+  assert.equal(
+    safePreviewUrl('/preview/flowguide', 'http://127.0.0.1:4179'),
+    'http://127.0.0.1:4179/preview/flowguide',
+  );
+  assert.equal(safePreviewUrl('http://localhost:4179/preview/x', 'http://localhost:4179'), 'http://localhost:4179/preview/x');
+
+  // The same payload on a production page is refused, so index data can never
+  // aim the frame at a developer's machine.
+  assert.equal(safePreviewUrl('/preview/flowguide', 'https://webflow.com'), null);
+  assert.equal(safePreviewUrl('http://127.0.0.1:4179/preview/x', 'https://webflow.com'), null);
+  assert.equal(safePreviewUrl('http://localhost:4179/preview/x', 'https://webflow.com'), null);
+});
+
+test('a dev origin still cannot frame an arbitrary remote host', () => {
+  assert.equal(safePreviewUrl('https://evil.example.com', 'http://127.0.0.1:4179'), null);
+  assert.equal(safePreviewUrl('javascript:alert(1)', 'http://127.0.0.1:4179'), null);
+});
+
 test('marketplace links accept webflow.com and its subdomains only', () => {
   assert.equal(safeMarketplaceUrl('https://webflow.com/templates/x'), 'https://webflow.com/templates/x');
   assert.equal(safeMarketplaceUrl('https://templates.webflow.com/x'), 'https://templates.webflow.com/x');

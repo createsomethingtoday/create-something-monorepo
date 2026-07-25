@@ -39,6 +39,7 @@ import {
 } from './templateChatPageAction';
 import {
   getPreviewReturnImmersive,
+  getRetryBaseMessages,
   getTemplateChatStorageKey,
   limitTemplateChatInput,
   loadPersistedSession,
@@ -748,9 +749,8 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
       setFollowups([]);
       setInput('');
       setRetryText(null);
-      const stoppedBase = stoppedPrompt
-        ? messages.slice(0, messages[messages.length - 1]?.role === 'assistant' ? -2 : -1)
-        : messages;
+      // A stopped turn resends from before its abandoned exchange.
+      const stoppedBase = stoppedPrompt ? getRetryBaseMessages(messages, true) : messages;
       setStoppedPrompt(null);
       setUndoHref(null);
       setStreaming(true);
@@ -1280,10 +1280,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
                 className="tmchat-chip"
                 onClick={() => {
                   if (!retryText) return;
-                  const base = stoppedPrompt
-                    ? messages.slice(0, messages[messages.length - 1]?.role === 'assistant' ? -2 : -1)
-                    : messages.slice(0, -2);
-                  void send(retryText, base, 'retry');
+                  void send(retryText, getRetryBaseMessages(messages, Boolean(stoppedPrompt)), 'retry');
                 }}
               >
                 {strings.tryAgain}

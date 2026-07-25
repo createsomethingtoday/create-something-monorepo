@@ -29,6 +29,23 @@ export function getPreviewReturnImmersive(
   return openedImmersive ?? currentImmersive;
 }
 
+/**
+ * History to resend a prompt from, with the abandoned exchange removed.
+ *
+ * A stopped turn may have dropped its empty assistant artifact already, so the
+ * trailing pair is one or two messages depending on how it ended. Both the
+ * composer and the "Try again" control need the same answer; computing it twice
+ * is how they drift.
+ */
+export function getRetryBaseMessages(
+  messages: readonly ChatMessage[],
+  wasStopped: boolean,
+): ChatMessage[] {
+  if (!wasStopped) return messages.slice(0, -2);
+  const trailing = messages[messages.length - 1]?.role === 'assistant' ? -2 : -1;
+  return messages.slice(0, trailing);
+}
+
 // ── Session persistence (survive navigation/reload within the tab) ───────────
 
 export const MAX_PERSISTED_KNOWN_TEMPLATES = 40;
