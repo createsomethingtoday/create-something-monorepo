@@ -375,6 +375,7 @@ export function discoverActivePublicCopyFiles() {
     const [firstSegment] = relative.split(path.sep);
     return !REDIRECTED_PUBLIC_ROUTE_SEGMENTS.has(firstSegment);
   });
+}
 
 function isRuleExempt(rule, file) {
   if (!rule.exempt) {
