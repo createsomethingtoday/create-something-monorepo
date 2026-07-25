@@ -3,6 +3,91 @@ export function prefersReducedMotion(): boolean {
   return typeof window !== 'undefined' && Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
 }
 
+/**
+ * Properties that make an ancestor the containing block for `position: fixed`.
+ * Any of them turns the floating launcher and panel from viewport-anchored into
+ * ancestor-anchored, which puts them in the wrong place with no error.
+ */
+const FIXED_POSITION_BREAKERS = [
+  'transform',
+  'filter',
+  'backdropFilter',
+  'perspective',
+  'contain',
+  'willChange',
+] as const;
+
+export interface StyleProbe {
+  getPropertyValue?(property: string): string;
+  transform?: string;
+  filter?: string;
+  backdropFilter?: string;
+  perspective?: string;
+  contain?: string;
+  willChange?: string;
+}
+
+export interface PlacementAncestor {
+  tagName?: string;
+  className?: string;
+  parentElement?: PlacementAncestor | null;
+}
+
+export interface PlacementProblem {
+  property: string;
+  value: string;
+  /** Best-effort identifier for the offending element, for a log line. */
+  ancestor: string;
+}
+
+function describeAncestor(element: PlacementAncestor): string {
+  const tag = (element.tagName ?? 'element').toLowerCase();
+  const className = typeof element.className === 'string' ? element.className.trim() : '';
+  return className ? `${tag}.${className.split(/\s+/).slice(0, 2).join('.')}` : tag;
+}
+
+/**
+ * Walks up from the component's host element looking for an ancestor that
+ * captures fixed positioning. Returns the first problem found, or null.
+ *
+ * Placement is a Designer-time mistake with a silent runtime symptom, so
+ * detecting it is the difference between "the chat is in the wrong corner" and
+ * a report nobody can reproduce.
+ */
+export function findFixedPositionBreaker(
+  start: PlacementAncestor | null,
+  computeStyle: (element: PlacementAncestor) => StyleProbe | null,
+  maxDepth = 40,
+): PlacementProblem | null {
+  let current = start;
+  let depth = 0;
+
+  while (current && depth < maxDepth) {
+    const style = computeStyle(current);
+    if (style) {
+      for (const property of FIXED_POSITION_BREAKERS) {
+        const value =
+          style.getPropertyValue?.(property.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`)) ??
+          style[property] ??
+          '';
+        const normalized = value.trim();
+        if (!normalized || normalized === 'none' || normalized === 'auto' || normalized === 'normal') {
+          continue;
+        }
+        // `contain` only breaks fixed positioning for paint/layout containment.
+        if (property === 'contain' && !/paint|layout|strict|content/.test(normalized)) continue;
+        // `will-change` only matters when it names a breaking property.
+        if (property === 'willChange' && !/transform|filter|perspective/.test(normalized)) continue;
+        return { property, value: normalized, ancestor: describeAncestor(current) };
+      }
+    }
+    current = current.parentElement ?? null;
+    depth += 1;
+  }
+
+  return null;
+}
+
 export interface InertTarget {
   inert?: boolean;
   setAttribute(name: string, value: string): void;

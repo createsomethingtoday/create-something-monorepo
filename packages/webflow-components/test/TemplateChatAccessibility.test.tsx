@@ -3,7 +3,11 @@ import { test } from 'node:test';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { TemplateChat } from '../src/components/chat/TemplateChat';
-import { applyHostInert, type InertTarget } from '../src/components/chat/templateChatRuntime';
+import {
+  applyHostInert,
+  findFixedPositionBreaker,
+  type InertTarget,
+} from '../src/components/chat/templateChatRuntime';
 
 test('the panel is labelled by a real heading rather than a duplicated string', () => {
   const html = renderToStaticMarkup(<TemplateChat defaultOpen enableAnalytics={false} title="Template finder" />);
@@ -138,6 +142,72 @@ test('a settled reply is announced exactly once', () => {
     if (originalWindow === undefined) delete (globalThis as { window?: Window }).window;
     else globalThis.window = originalWindow;
   }
+});
+
+// ── fixed-position placement detection ───────────────────────────────────────
+
+function ancestry(chain: Array<Record<string, string>>) {
+  // Build innermost -> outermost, each element carrying its own computed style.
+  const nodes = chain.map((style, index) => ({
+    tagName: index === 0 ? 'DIV' : 'SECTION',
+    className: index === 0 ? 'tmchat-host' : `wrapper-${index}`,
+    style,
+    parentElement: null as unknown,
+  }));
+  nodes.forEach((node, index) => {
+    node.parentElement = nodes[index + 1] ?? null;
+  });
+  const compute = (element: unknown) => (element as { style: Record<string, string> }).style;
+  return { start: nodes[0] as never, compute: compute as never };
+}
+
+test('a transformed ancestor is reported, because it silently captures the launcher', () => {
+  const { start, compute } = ancestry([{}, { transform: 'translateZ(0)' }]);
+  const problem = findFixedPositionBreaker(start, compute);
+
+  assert.equal(problem?.property, 'transform');
+  assert.equal(problem?.value, 'translateZ(0)');
+  assert.equal(problem?.ancestor, 'section.wrapper-1');
+});
+
+test('every property that creates a containing block is caught', () => {
+  for (const [property, value] of [
+    ['transform', 'scale(1.01)'],
+    ['filter', 'blur(2px)'],
+    ['backdropFilter', 'saturate(1.2)'],
+    ['perspective', '800px'],
+    ['contain', 'paint'],
+    ['willChange', 'transform'],
+  ] as const) {
+    const { start, compute } = ancestry([{}, { [property]: value }]);
+    assert.equal(findFixedPositionBreaker(start, compute)?.property, property, `${property} caught`);
+  }
+});
+
+test('the neutral values a normal page is full of do not warn', () => {
+  const { start, compute } = ancestry([
+    { transform: 'none', filter: 'none' },
+    { perspective: 'none', contain: 'none', willChange: 'auto' },
+    { transform: '  ', contain: '' },
+  ]);
+  assert.equal(findFixedPositionBreaker(start, compute), null);
+});
+
+test('containment and will-change only warn for the values that actually break fixed', () => {
+  // `contain: size` and `will-change: opacity` do not create a containing block;
+  // warning on them would train people to ignore the warning.
+  const harmless = ancestry([{}, { contain: 'size', willChange: 'opacity, color' }]);
+  assert.equal(findFixedPositionBreaker(harmless.start, harmless.compute), null);
+
+  const breaking = ancestry([{}, { contain: 'layout paint' }]);
+  assert.equal(findFixedPositionBreaker(breaking.start, breaking.compute)?.property, 'contain');
+});
+
+test('the walk is bounded and survives a missing style', () => {
+  const deep = ancestry(Array.from({ length: 60 }, () => ({})));
+  assert.equal(findFixedPositionBreaker(deep.start, deep.compute, 5), null);
+  assert.equal(findFixedPositionBreaker(null, () => null), null);
+  assert.equal(findFixedPositionBreaker(deep.start, () => null), null);
 });
 
 // ── host page inerting ───────────────────────────────────────────────────────

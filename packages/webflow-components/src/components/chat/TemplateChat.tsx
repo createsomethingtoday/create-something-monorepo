@@ -13,10 +13,12 @@ import {
   applyHostInert,
   createHighlightMissState,
   createTextDeltaBatcher,
+  findFixedPositionBreaker,
   findHostPageBranch,
   getHostOverlayBottomInset,
   isHostOverlayBlocking,
   prefersReducedMotion,
+  type PlacementAncestor,
   type TextDeltaBatcher,
 } from './templateChatRuntime';
 import type { AgentSseEvent, AgentTemplateItem, ChatMessage } from './templateChatProtocol';
@@ -561,6 +563,30 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
       document.body.style.overflow = previous;
     };
   }, [isModalSurface]);
+
+  // The floating launcher and panel are position: fixed. Dropped inside a
+  // transformed or filtered ancestor they anchor to that box instead of the
+  // viewport and land in the wrong place, with no error to explain it. Detect it
+  // once so the mistake is reportable rather than mysterious.
+  const placementCheckedRef = useRef(false);
+  useEffect(() => {
+    if (isInline || placementCheckedRef.current || typeof window === 'undefined') return;
+    const host = findHostPageBranch(panelRef.current ?? launcherRef.current);
+    if (!host) return;
+    placementCheckedRef.current = true;
+    const problem = findFixedPositionBreaker(host as unknown as PlacementAncestor, (element) =>
+      element instanceof Element ? window.getComputedStyle(element) : null,
+    );
+    if (!problem) return;
+    // Surfaced both ways: the console line helps whoever placed it, the event
+    // tells us it is happening on a live page.
+    console.warn(
+      `[TemplateChat] Floating placement is captured by an ancestor: ${problem.ancestor} sets ` +
+        `${problem.property}: ${problem.value}. Move Template Chat to the page root, or use the ` +
+        'inline variant, so the launcher and panel anchor to the viewport.',
+    );
+    track('placement_warning', { property: problem.property, ancestor: problem.ancestor });
+  }, [isInline, open, track]);
 
   // aria-modal alone does not stop a screen reader from wandering into the page
   // behind the panel. Make the rest of the page inert for as long as the modal
