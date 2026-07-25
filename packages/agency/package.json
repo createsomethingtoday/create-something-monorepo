@@ -64,7 +64,8 @@
 		"react": "^19.2.4",
 		"react-dom": "^19.2.4",
 		"simple-icons": "15.22.0",
-		"stripe": "^18.5.0"
+		"stripe": "^18.5.0",
+		"three": "^0.170.0"
 	},
 	"devDependencies": {
 		"@cloudflare/workers-types": "4.20260621.1",
@@ -76,6 +77,7 @@
 		"@types/node": "24.10.1",
 		"@types/react": "^19.2.14",
 		"@types/react-dom": "^19.2.3",
+		"@types/three": "^0.170.0",
 		"autoprefixer": "10.4.22",
 		"highlight.js": "11.11.1",
 		"marked": "17.0.0",

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PipelineCanvas from './PipelineCanvas.svelte';
 	import {
 		AGENT_WORK_TRACE,
 		BUSINESS_OUTCOME,
@@ -12,6 +13,7 @@
 	} from '$lib/data/controlledWaterway';
 
 	let activeStageId: WaterwayStage['id'] = 'map';
+	let pipelineRendererState: 'fallback' | 'loading' | 'ready' = 'fallback';
 	$: activeStage =
 		CONTROLLED_WATERWAY_STAGES.find((stage) => stage.id === activeStageId) ??
 		CONTROLLED_WATERWAY_STAGES[0];
@@ -66,7 +68,16 @@
 				<strong>{activeStage.shortName}</strong>
 				<small>Water moving through: {activeStage.flowStatus}</small>
 			</div>
-			<svg class="waterway__pipeline" viewBox="0 0 1200 590" aria-hidden="true">
+			<PipelineCanvas
+				stage={activeStageId}
+				onstatechange={(state) => (pipelineRendererState = state)}
+			/>
+			<svg
+				class="waterway__pipeline"
+				class:waterway__pipeline--enhanced={pipelineRendererState === 'ready'}
+				viewBox="0 0 1200 590"
+				aria-hidden="true"
+			>
 				<defs>
 					<linearGradient id="water-flow" gradientUnits="userSpaceOnUse" x1="44" y1="368" x2="1181" y2="368">
 						<stop offset="0" stop-color="var(--color-performance-signal-soft)" />
@@ -462,6 +473,11 @@
 		color: var(--waterway-panel);
 	}
 
+	.waterway__controls button.waterway__chapter--active:hover {
+		background: var(--waterway-ink-soft);
+		color: var(--waterway-panel);
+	}
+
 	.waterway__controls span {
 		grid-row: 1 / span 2;
 		color: var(--waterway-signal);
@@ -566,7 +582,10 @@
 		z-index: 1;
 		width: 100%;
 		height: 100%;
+		transition: opacity var(--duration-performance-standard, 400ms) var(--ease-performance-standard, ease);
 	}
+
+	.waterway__pipeline--enhanced { opacity: 0; }
 
 	.waterway__input-shell path,
 	.waterway__input-lines path {
@@ -1422,6 +1441,7 @@
 	}
 
 	@media (prefers-reduced-motion: reduce) {
+		.waterway__pipeline { transition: none; }
 		.waterway *,
 		.waterway *::before,
 		.waterway *::after {
