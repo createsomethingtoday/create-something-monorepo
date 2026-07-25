@@ -3,6 +3,73 @@ export function prefersReducedMotion(): boolean {
   return typeof window !== 'undefined' && Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
 }
 
+export interface InertTarget {
+  inert?: boolean;
+  setAttribute(name: string, value: string): void;
+  removeAttribute(name: string): void;
+  hasAttribute(name: string): boolean;
+  contains(node: unknown): boolean;
+}
+
+/**
+ * Makes everything on the host page except `keep` unreachable while a modal
+ * conversation is open, then restores it.
+ *
+ * `aria-modal` alone does not stop a screen reader from wandering into the page
+ * behind the panel, and nothing stopped Tab from reaching host controls once
+ * focus left the trap. Only elements this call changed are restored, so a host
+ * page (or another modal) that already set inert keeps its own state.
+ */
+export function applyHostInert(
+  siblings: readonly InertTarget[],
+  keep: unknown,
+): () => void {
+  const changed: InertTarget[] = [];
+
+  for (const element of siblings) {
+    if (element.contains(keep)) continue;
+    if (element.inert === true || element.hasAttribute('aria-hidden')) continue;
+    element.inert = true;
+    element.setAttribute('aria-hidden', 'true');
+    changed.push(element);
+  }
+
+  return () => {
+    for (const element of changed) {
+      element.inert = false;
+      element.removeAttribute('aria-hidden');
+    }
+    changed.length = 0;
+  };
+}
+
+/**
+ * Resolves the top-level page element that contains this component. Webflow
+ * mounts code components inside a shadow root, so the panel's own ancestors
+ * stop at the shadow boundary and have to be crossed via the host element.
+ */
+export function findHostPageBranch(node: Node | null): Element | null {
+  const body = node?.ownerDocument?.body ?? null;
+  if (!body) return null;
+
+  let current: Node | null = node;
+  while (current) {
+    const parent: Node | null = current.parentNode;
+    if (parent === body) return current.nodeType === 1 ? (current as Element) : null;
+    if (parent) {
+      current = parent;
+      continue;
+    }
+    // No parent means a shadow root (or a detached tree): cross the boundary.
+    const root = current.getRootNode?.();
+    const host = root && (root as ShadowRoot).host ? (root as ShadowRoot).host : null;
+    if (!host) return null;
+    current = host;
+  }
+
+  return null;
+}
+
 export type FrameScheduler = (callback: () => void) => number;
 export type FrameCanceller = (handle: number) => void;
 

@@ -10,8 +10,10 @@ import {
   requestTemplateAgentSession,
 } from './templateAgentSession';
 import {
+  applyHostInert,
   createHighlightMissState,
   createTextDeltaBatcher,
+  findHostPageBranch,
   getHostOverlayBottomInset,
   isHostOverlayBlocking,
   prefersReducedMotion,
@@ -172,6 +174,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   const storageKey = getTemplateChatStorageKey(sessionScope);
   const inputLimitId = `tmchat-input-limit-${useId().replace(/:/g, '')}`;
   const introId = `tmchat-intro-${useId().replace(/:/g, '')}`;
+  const titleId = `tmchat-title-${useId().replace(/:/g, '')}`;
   useMarketplaceComponentErrorTracking('TemplateChat', enableAnalytics);
   const [persisted] = useState<PersistedSession | null>(() =>
     typeof window === 'undefined' ? null : loadPersistedSession(storageKey),
@@ -203,6 +206,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   // Position/layout are kept for conversion attribution on the preview CTA.
   const [preview, setPreview] = useState<{ item: AgentTemplateItem; position: number; layout: string } | null>(null);
   const previewOpenedImmersiveRef = useRef<boolean | null>(null);
+  const previewTriggerRef = useRef<HTMLElement | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const launcherRef = useRef<HTMLButtonElement>(null);
@@ -459,7 +463,13 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
     previewOpenedImmersiveRef.current = null;
     setPreview(null);
     if (returnImmersive !== immersive) setImmersiveAnimated(returnImmersive);
-    inputRef.current?.focus();
+    // Return focus to the card that opened the preview so a keyboard reader
+    // keeps their place in the result set; fall back to the composer only when
+    // that control is gone.
+    const trigger = previewTriggerRef.current;
+    previewTriggerRef.current = null;
+    if (trigger?.isConnected) trigger.focus();
+    else inputRef.current?.focus();
   }, [immersive, setImmersiveAnimated]);
 
   useEffect(() => {
@@ -491,6 +501,18 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
     return () => {
       document.body.style.overflow = previous;
     };
+  }, [isModalSurface]);
+
+  // aria-modal alone does not stop a screen reader from wandering into the page
+  // behind the panel. Make the rest of the page inert for as long as the modal
+  // surface is up, restoring only what we changed.
+  useEffect(() => {
+    if (!isModalSurface || typeof document === 'undefined') return;
+    const ours = findHostPageBranch(panelRef.current);
+    const siblings = Array.from(document.body.children).filter(
+      (element): element is HTMLElement => element instanceof HTMLElement && element !== ours,
+    );
+    return applyHostInert(siblings, panelRef.current);
   }, [isModalSurface]);
 
   // Keep Tab focus inside any modal conversation surface.
@@ -540,9 +562,10 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   // panel expands to immersive. Phones already use the full-screen surface, so
   // toggling desktop immersive state there would only reintroduce wide padding.
   const openPreview = useCallback(
-    (item: AgentTemplateItem, position: number, layout: string) => {
+    (item: AgentTemplateItem, position: number, layout: string, trigger?: HTMLElement | null) => {
       // Never open the surface for a site we would refuse to frame.
       if (!safePreviewUrl(item.website_url)) return;
+      previewTriggerRef.current = trigger ?? null;
       previewOpenedImmersiveRef.current = immersive;
       setPreview({ item, position, layout });
       track('live_preview_opened', {
@@ -621,6 +644,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
     setRetryText(null);
     setStoppedPrompt(null);
     previewOpenedImmersiveRef.current = null;
+    previewTriggerRef.current = null;
     setPreview(null);
     track('chat_reset');
     try {
@@ -1028,6 +1052,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
       {immersive ? (
         <div
           className="tmchat-backdrop"
+          aria-hidden="true"
           onClick={() => {
             // Layered dismissal, matching Esc: leave the preview first, then
             // the immersive state — never both in one click.
@@ -1041,11 +1066,11 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
         className={panelClass}
         style={panelStyle}
         role={isInline && !immersive ? undefined : 'dialog'}
-        aria-label={title}
+        aria-labelledby={titleId}
         aria-modal={isModalSurface || undefined}
       >
         <div className="tmchat-header">
-          <span className="tmchat-header-title">{title}</span>
+          <h2 className="tmchat-header-title" id={titleId}>{title}</h2>
           <div className="tmchat-header-actions">
             {messages.length > 0 ? (
               <button type="button" className="tmchat-iconbtn" aria-label="New chat" title="New chat" onClick={resetChat}>
@@ -1068,6 +1093,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
                 aria-label="Close chat"
                 onClick={() => {
                   previewOpenedImmersiveRef.current = null;
+                  previewTriggerRef.current = null;
                   setPreview(null);
                   if (immersive) setImmersiveAnimated(false);
                   if (!isInline) setOpen(false);
@@ -1193,7 +1219,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
         ) : null}
         </div>
 
-        <div ref={turnstileRef} className="tmchat-turnstile" aria-live="polite" />
+        <div ref={turnstileRef} className="tmchat-turnstile" />
         <div className="tmchat-inputrow">
           <div className="tmchat-inputfield">
             <textarea

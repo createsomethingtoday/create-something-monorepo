@@ -15,9 +15,14 @@ export function DisplayArtifact({
   onTemplateClick,
 }: {
   payload: DisplayPayload;
-  onPreview?: (item: AgentTemplateItem, position: number, layout: string) => void;
+  onPreview?: (item: AgentTemplateItem, position: number, layout: string, trigger?: HTMLElement | null) => void;
   onTemplateClick?: (item: AgentTemplateItem, position: number, layout: string) => void;
 }): React.ReactElement {
+  // On phones a multi-card set becomes a horizontal snap deck. Without a group
+  // label it is announced as a run of loose links with no sense of the set.
+  const deckLabel = payload.title
+    ? `${payload.title} — ${payload.items.length} templates`
+    : `${payload.items.length} template recommendations`;
   const isStrip = payload.layout === 'carousel';
   const isSingle = payload.layout === 'spotlight' || payload.items.length === 1;
 
@@ -71,7 +76,14 @@ export function DisplayArtifact({
                 onClick: (event) => {
                   if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
                   event.preventDefault();
-                  onPreview(entry.item, index + 1, payload.layout);
+                  // Hand back the control that opened the preview so focus can
+                  // return to this card instead of the composer on close.
+                  onPreview(
+                    entry.item,
+                    index + 1,
+                    payload.layout,
+                    event.currentTarget instanceof HTMLElement ? event.currentTarget : null,
+                  );
                 },
               }
             : undefined
@@ -85,12 +97,16 @@ export function DisplayArtifact({
     <div className="tmchat-display">
       {payload.title ? <div className="tmchat-display-title">{payload.title}</div> : null}
       {isStrip ? (
-        <div className="tmchat-strip">{cards}</div>
+        <div className="tmchat-strip" role="group" aria-label={deckLabel}>
+          {cards}
+        </div>
       ) : (
         <div
           className={`tmchat-grid${isSingle ? ' single' : ''}${
             payload.items.length === 3 || payload.items.length >= 6 ? ' wide' : ''
           }`}
+          role="group"
+          aria-label={deckLabel}
         >
           {cards}
         </div>

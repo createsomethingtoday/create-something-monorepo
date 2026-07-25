@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { UiIcon } from '../primitives/UiIcon';
 import { prefersReducedMotion } from './templateChatRuntime';
 import { safeMarketplaceUrl, safePreviewUrl } from './templateChatSafety';
@@ -32,6 +32,7 @@ export function TemplatePreviewPane({
   const [loaded, setLoaded] = useState(false);
   const [closing, setClosing] = useState(false);
   const backRef = useRef<HTMLButtonElement>(null);
+  const headingId = `tmchat-preview-title-${useId().replace(/:/g, '')}`;
   const stageRef = useRef<HTMLDivElement>(null);
   // Validated locally as well as server-side: an index row cannot put an
   // arbitrary origin into the frame or the toolbar links.
@@ -75,8 +76,9 @@ export function TemplatePreviewPane({
   return (
     <div
       className={`tmchat-preview${closing ? ' closing' : ''}`}
-      role="region"
-      aria-label={`Live preview of ${item.name}`}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={headingId}
       onAnimationEnd={(event) => {
         if (event.animationName === 'tmchat-preview-out') onClose();
       }}
@@ -87,7 +89,7 @@ export function TemplatePreviewPane({
         </button>
         <span className="tmchat-preview-sep" aria-hidden="true" />
         <div className="tmchat-preview-meta">
-          <span className="tmchat-preview-name">{item.name}</span>
+          <span className="tmchat-preview-name" id={headingId}>{item.name}</span>
           {item.creator_name ? <span className="tmchat-preview-creator">by {item.creator_name}</span> : null}
         </div>
         <div className="tmchat-devicetoggle" role="group" aria-label="Preview device">

@@ -59,7 +59,7 @@ export const CHAT_STYLES = `
   display: flex; align-items: center; justify-content: space-between; gap: 8px;
   padding: 14px 16px; border-bottom: 1px solid #ececec; background: #fafafa;
 }
-.tmchat-header-title { font-weight: 600; font-size: 15px; }
+.tmchat-header-title { margin: 0; font-weight: 600; font-size: 15px; line-height: 1.3; }
 .tmchat-panel.immersive .tmchat-header-title { font-size: 16px; }
 .tmchat-turnstile:empty { display: none; }
 .tmchat-turnstile:not(:empty) {
@@ -133,7 +133,10 @@ export const CHAT_STYLES = `
 .tmchat-panel.immersive .tmchat-grid { grid-template-columns: repeat(2, minmax(0, 420px)); justify-content: start; gap: 20px; }
 .tmchat-panel.immersive .tmchat-grid.wide { grid-template-columns: repeat(3, minmax(0, 380px)); gap: 16px; }
 .tmchat-panel.immersive .tmchat-grid.single { grid-template-columns: minmax(0, 420px); }
-.tmchat-strip { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 6px; -webkit-overflow-scrolling: touch; }
+.tmchat-strip {
+  display: flex; gap: 12px; overflow-x: auto; padding-bottom: 6px;
+  -webkit-overflow-scrolling: touch; scrollbar-width: thin;
+}
 .tmchat-strip > * { flex: 0 0 220px; }
 .tmchat-panel.immersive .tmchat-strip > * { flex-basis: 260px; }
 .tmchat-followups { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -163,7 +166,7 @@ export const CHAT_STYLES = `
 .tmchat-progress-steps li { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #6b6b6b; font-size: 11px; }
 .tmchat-progress-steps li[data-state="current"] { color: #146ef5; font-weight: 600; }
 .tmchat-progress-steps li[data-state="complete"] { color: #5b5b5b; }
-.tmchat-progress-steps li[data-state="upcoming"] { opacity: 0.58; }
+.tmchat-progress-steps li[data-state="upcoming"] { color: #6e6e6e; }
 .tmchat-progress-stepmark { min-width: 12px; color: #146ef5; text-align: center; }
 .tmchat-progress-receipt {
   margin: 10px 0 0 37px; padding-top: 9px; border-top: 1px solid #ececec;
@@ -219,7 +222,7 @@ export const CHAT_STYLES = `
   transition: background 140ms ease, transform 120ms ease;
 }
 .tmchat-send:active:not(:disabled) { transform: scale(0.97); }
-.tmchat-send:disabled { background: #a9c6f7; cursor: default; }
+.tmchat-send:disabled { background: #ececec; color: #5b5b5b; cursor: default; }
 .tmchat-send.stop { background: #fff; color: #404040; border: 1px solid #e0e0e0; }
 .tmchat-send.stop:hover { background: #f5f5f5; }
 /* ── Live template preview (published .webflow.io site in an iframe) ── */
@@ -300,7 +303,7 @@ export const CHAT_STYLES = `
     grid-auto-columns: min(76vw, 280px); justify-content: start;
     overflow-x: auto; overscroll-behavior-inline: contain;
     scroll-snap-type: x mandatory; padding-bottom: 6px;
-    -webkit-overflow-scrolling: touch;
+    -webkit-overflow-scrolling: touch; scrollbar-width: thin;
   }
   .tmchat-grid:not(.single) > *, .tmchat-panel.immersive .tmchat-grid:not(.single) > * { scroll-snap-align: start; }
   .tmchat-grid.single, .tmchat-panel.immersive .tmchat-grid.single {
