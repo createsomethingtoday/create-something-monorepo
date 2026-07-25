@@ -143,7 +143,7 @@
   <PerformanceNarrativeStage
     id="result"
     eyebrow="One evidence argument"
-    title="Result. Boundary. Economics. Evidence."
+    title="Four questions, kept separate on purpose."
     description="The report keeps four different questions separate: did collection work, did judgment earn promotion, what did one packet cost, and which claims remain measured or unresolved."
     scenes={fieldReportScenes}
     ariaLabel="Template review Field Report argument"
@@ -259,7 +259,7 @@
           <PerformanceEvidenceIndex
             eyebrow="Evidence basis"
             title="Open the dated source records."
-            description="The selected sample, packet result, failed judgment gate, synthetic runtime checks, and unresolved business measurement remain inspectable."
+            description="The sample, the packet result, and the failed judgment gate all remain inspectable — including the business measurement we could not close."
             items={evidenceItems}
             ariaLabel="Template review Field Report evidence records"
           />

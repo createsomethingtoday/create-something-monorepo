@@ -66,7 +66,7 @@
 
   const packageCards: PerformanceCardItem[] = [
     {
-      eyebrow: 'Workflow Pilot',
+      eyebrow: 'Build',
       icon: 'settings',
       title: '2-4 week implementation',
       detail: 'A scoped first build for one high-value workflow. Typical range: $2,000-$5,000.',
@@ -221,8 +221,8 @@
 </script>
 
 <SEO
-  title="Workflow Pilots for Small Teams | CREATE SOMETHING .agency"
-  description="Turn one painful workflow into a reliable system. CREATE SOMETHING maps the manual bridge, builds the first controlled pilot, and leaves the operator with code, policy, and runbook evidence."
+  title="Automate One Workflow for a Small Team | CREATE SOMETHING Build"
+  description="Turn one painful workflow into a reliable system. CREATE SOMETHING maps the manual bridge and builds the first controlled pilot. You keep the code, the policy, and the runbook."
   keywords="small business automation, workflow integration, custom MCP, HubSpot automation, Notion integration, ops automation, SMB AI"
   ogImage="/og-image.png"
   propertyName="agency"
@@ -259,7 +259,7 @@
 <PerformanceNarrativeStage
   id="business-pilot-story"
   eyebrow="One pilot story"
-  title="Path. Offer. Example. Fit."
+  title="One manual bridge deserves the first pilot. Pick it deliberately."
   description="A small team needs one legible decision: which manual bridge deserves the first controlled pilot, what that pilot costs, what useful proof looks like, and whether the operating conditions fit."
   scenes={businessScenes}
   ariaLabel="Small-team workflow pilot story"

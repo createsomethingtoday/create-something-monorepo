@@ -31,11 +31,11 @@
         'MCP server cards define what the agent can see, call, and describe without burying access in prompt text.'
     },
     {
-      eyebrow: 'Policy OS',
+      eyebrow: 'Control',
       icon: 'check',
       title: 'Approval and evidence layer',
       detail:
-        'Policy OS decides what can run automatically, what needs approval, and what stops with a reason.'
+        'Control decides what can run automatically, what needs approval, and what stops with a reason.'
     }
   ];
 
@@ -124,7 +124,7 @@
       icon: 'user',
       title: 'Make governance visible',
       detail:
-        'Use Policy OS to show approval states, blocked states, runbooks, and evidence before scale.'
+        'Use Control to show approval states, blocked states, runbooks, and evidence before scale.'
     },
     {
       eyebrow: 'Agencies',
@@ -162,24 +162,24 @@
 
 <SEO
   title="Dify + MCP Control Plane | CREATE SOMETHING .agency"
-  description="How CREATE SOMETHING packages Dify, MCP server cards, and Policy OS contract bundles into a governed control plane for agent workflows."
-  keywords="Dify MCP control plane, Dify agent governance, MCP server cards, Policy OS, contract bundle, Dify app templates"
+  description="How CREATE SOMETHING packages Dify, MCP server cards, and Control contract bundles into a governed control plane for agent workflows."
+  keywords="Dify MCP control plane, Dify agent governance, MCP server cards, Control, contract bundle, Dify app templates"
   ogType="article"
   ogImage="/og/dify-mcp-control-plane.png"
   publishedTime="2026-05-18"
   modifiedTime="2026-06-22"
   articleSection="Dify Implementation"
-  articleTags={['Dify', 'MCP', 'Policy OS', 'agent workflows']}
+  articleTags={['Dify', 'MCP', 'Control', 'agent workflows']}
   propertyName="agency"
   noindex={true}
 />
 
 <PerformanceCampaignOpening
   eyebrow="Dify + MCP Control Plane"
-  title="Dify is the surface. MCP is the boundary. Policy OS is the operating rule."
+  title="Dify is the surface. MCP is the boundary. Control is the operating rule."
   lede="The fastest path to serious Dify adoption is not another generic chatbot. It is a visible Dify app with scoped MCP tools, repo-owned manifests, eval gates, and an approval layer the operator can inspect."
   media={{ src: '/images/performance-lab/trace-wake-natural.webp', mobileSrc: '/images/performance-lab/trace-wake-natural-mobile.webp', alt: 'Aerial black-and-white view of a survey craft leaving a directional wake' }}
-  proof={[{ label: 'Surface', value: 'Dify' }, { label: 'Boundary', value: 'MCP' }, { label: 'Rule', value: 'Policy OS' }]}
+  proof={[{ label: 'Surface', value: 'Dify' }, { label: 'Boundary', value: 'MCP' }, { label: 'Rule', value: 'Control' }]}
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.workflowTeardownHref}>

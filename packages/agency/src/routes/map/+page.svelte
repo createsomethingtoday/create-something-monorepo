@@ -44,8 +44,8 @@
 <main class="map-page">
 	<PerformanceCampaignOpening
 		eyebrow="CREATE SOMETHING Map"
-		title="Map the workflow before the call."
-		lede="Use the constrained public canvas to name the owner, data, approvals, systems, risks, and inspection points. Map can stand alone as the living workflow definition, or carry approved context into Build and Control."
+		title="Make the workflow visible before you change it."
+		lede="Name the owner, the approvals, and the stop points on a public canvas. Map stands alone as the living workflow definition, and it carries approved context into Build and Control when you are ready."
 		media={{ src: '/images/performance-lab/trace-wake-natural.webp', mobileSrc: '/images/performance-lab/trace-wake-natural-mobile.webp', alt: 'Aerial black-and-white view of a survey craft leaving a directional wake' }}
 		proof={[{ label: 'Input', value: 'Prospect map' }, { label: 'Boundary', value: 'No production tools' }, { label: 'Handoff', value: 'Build or Control' }]}
 	>

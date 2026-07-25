@@ -109,8 +109,8 @@
 <div class="services-performance property-performance">
   <PerformanceCampaignOpening
     eyebrow="How It Works"
-    title="Map the workflow before deciding to build."
-    lede="Bring one handoff your team still checks manually. We map the owner, systems, safe actions, approval point, stop condition, and evidence before anything touches customers, money, production, or accounts."
+    title="Nothing gets built until the map says what it should do."
+    lede="Bring one handoff your team still checks manually. We name the decision owner and the stop condition first, then build only what that map requires — before anything touches customers, money, or production."
     media={{ src: '/images/performance-lab/trace-wake-natural.webp', mobileSrc: '/images/performance-lab/trace-wake-natural-mobile.webp', alt: 'Aerial black-and-white view of a survey craft leaving a directional wake' }}
     proof={[{ label: 'Boundary', value: 'Named' }, { label: 'Pressure', value: 'Held' }, { label: 'Evidence', value: 'Attached' }]}
   >
@@ -139,7 +139,7 @@
   <PerformanceContrastChapter
     eyebrow="Map before booking"
     title="See the workflow before deciding to build."
-    description="CREATE SOMETHING Map turns one workflow into a first plan: the systems involved, which signals matter, what AI can handle, where people approve, and what proof records the outcome. It does not touch production systems."
+    description="CREATE SOMETHING Map turns one workflow into a first plan. It names what AI can handle on its own and where a person still approves. It does not touch production systems."
     intervention={{ label: 'Read-only warmup', title: 'Public Map canvas', detail: 'Explore the operating path without touching production systems.' }}
     artifactPlacement="full-width"
   >

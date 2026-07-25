@@ -11,6 +11,7 @@
     type PerformanceFieldStudyProof,
     type PerformanceNarrativeScene
   } from '@create-something/canon';
+  import AgencyPerformanceReadback from '$lib/components/AgencyPerformanceReadback.svelte';
   import { controlledFlowMedia } from '@create-something/canon/components/performance/media/controlled-flow';
   import HeroTrustArtifact from '$lib/components/HeroTrustArtifact.svelte';
   import PublicSubstrateCanvas from '$lib/components/PublicSubstrateCanvas.svelte';
@@ -18,7 +19,7 @@
 
   const services = [
     {
-      name: 'Workflow Map',
+      name: 'Map',
       description:
         'A fixed first map of the workflow, systems, AI tasks, approval path, and first controlled pilot.',
       type: 'First workflow map',
@@ -26,7 +27,7 @@
       priceDescription: 'Map before any build decision'
     },
     {
-      name: 'Workflow Pilot',
+      name: 'Build',
       description:
         'One painful workflow turned into a reliable operating path with clear rules, clean handoffs, and ownership.',
       type: 'Implementation Sprint',
@@ -232,7 +233,7 @@
 
 <SEO
   title="AI Workflow Systems | CREATE SOMETHING .agency"
-  description="CREATE SOMETHING builds AI workflow systems for business operations: one messy handoff becomes Signals, Decisions, Proof, connected tools, approvals, stop conditions, and an audit trail."
+  description="CREATE SOMETHING builds AI workflow systems for business operations. One messy handoff becomes a workflow with named approvals, clear stop conditions, and an audit trail."
   keywords="AI workflow systems, workflow automation consultant, governed AI workflows, workflow control layer, workflow mapping, workflow pilot, production automation, technical operators"
   ogImage="/og-image.png"
   propertyName="agency"
@@ -243,8 +244,8 @@
 <div class="home-pilot property-performance">
   <PerformanceCampaignOpening
     eyebrow={agencyCoreMessaging.categoryLabel}
-    title="Make one workflow safe to delegate."
-    lede="Choose one handoff your team still checks manually. We map what can run automatically, what must wait for a person, what must stop, and what record proves what happened."
+    title="Make one workflow safe to delegate—and easier to run."
+    lede="Choose one handoff your team still checks manually. We map what can run automatically, what must wait for a person, what must stop, and what record proves the result—so routine work moves without constant rescue."
     media={controlledFlowMedia}
     proof={heroProofItems}
     density="compact"
@@ -255,10 +256,12 @@
     {/snippet}
   </PerformanceCampaignOpening>
 
+  <AgencyPerformanceReadback />
+
   <PerformanceNarrativeStage
     id="agency-operating-story"
     eyebrow="One controlled operating story"
-    title="Boundary. Map. Operate."
+    title="Keep the judgment. Delegate the rest."
     description="The page now holds one argument: keep consequential judgment, make the workflow visible, then operate the first lane with proof attached."
     scenes={agencyScenes}
     ariaLabel="Agency operating story"

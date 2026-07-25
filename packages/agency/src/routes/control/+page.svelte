@@ -5,14 +5,43 @@
     PerformanceCardGrid,
     PerformanceConversionHandoff,
     PerformanceNarrativeStage,
+    PerformanceThesisConditions,
     SEO,
     type PerformanceCardItem,
+    type PerformanceCondition,
     type PerformanceNarrativeScene
   } from '@create-something/canon';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
   import { getPublicProduct } from '$lib/data/productFamily';
 
   const mapProduct = getPublicProduct('map');
+
+  const channelConditions: PerformanceCondition[] = [
+    {
+      label: 'Pressure',
+      title: 'Test before you delegate.',
+      detail: 'Work is run against real conditions while a person is still watching it.',
+      tone: 'pressure'
+    },
+    {
+      label: 'Boundary',
+      title: 'Limits are visible, not implied.',
+      detail: 'Scope, authority, and stop conditions are declared before the first run.',
+      tone: 'signal'
+    },
+    {
+      label: 'Turbulence',
+      title: 'Ambiguity stops the run.',
+      detail: 'When the work leaves known conditions, Control waits for a named owner.',
+      tone: 'risk'
+    },
+    {
+      label: 'Settlement',
+      title: 'Every run reaches a resolved state.',
+      detail: 'Shipped, blocked, or recovered — with the receipt and the next owner attached.',
+      tone: 'growth'
+    }
+  ];
 
   const operatorSurfaces: PerformanceCardItem[] = [
     {
@@ -103,7 +132,7 @@
 
 <SEO
   title="CREATE SOMETHING Control | Governed Workflow Operation"
-  description="CREATE SOMETHING Control is a standalone subscription for approvals, policy, runs, evidence, and recovery. Control includes Map."
+  description="CREATE SOMETHING Control is a standalone subscription for running delegated work with approvals, evidence, and recovery. Control includes Map."
   keywords="AI workflow control, governed execution, human approval workflow, agent audit trail, workflow recovery"
   propertyName="agency"
 />
@@ -132,10 +161,18 @@
     {/snippet}
   </PerformanceCampaignOpening>
 
+  <PerformanceThesisConditions
+    eyebrow="Operating principle"
+    title="Governance is the channel, not the dam."
+    description="Control exists to keep delegated work moving. The boundary is what makes speed safe to grant, not a brake applied after the fact."
+    conditions={channelConditions}
+    ariaLabel="Control operating principle"
+  />
+
   <PerformanceNarrativeStage
     id="control-operating-story"
     eyebrow="One governed product"
-    title="Boundary. Operate. Cadence. Foundation."
+    title="Control is one operating decision, made once and kept."
     description="Control reads as one operating decision: establish the shared workflow boundary, see how judgment moves, choose a review rhythm, and keep every state in one owned system."
     scenes={controlScenes}
     ariaLabel="Control operating story"

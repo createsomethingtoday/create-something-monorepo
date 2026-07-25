@@ -207,7 +207,7 @@
 <PerformanceNarrativeStage
   id="about-operating-story"
   eyebrow="One operating story"
-  title="Origin. Method. Contract. System."
+  title="The biography only matters where it explains the work."
   description="The biography matters only where it explains the work: why control comes before scale, how the method protects the operator, what the engagement promises, and how the wider system contributes."
   scenes={aboutScenes}
   ariaLabel="About operating story"
