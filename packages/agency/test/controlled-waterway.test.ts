@@ -16,8 +16,13 @@ const componentUrl = new URL(
 	'../src/lib/components/ControlledWaterwayStory.svelte',
 	import.meta.url
 );
+const pipelineCanvasUrl = new URL(
+	'../src/lib/components/PipelineCanvas.svelte',
+	import.meta.url
+);
 const modelUrl = new URL('../src/lib/data/controlledWaterway.ts', import.meta.url);
 const component = existsSync(componentUrl) ? readFileSync(componentUrl, 'utf8') : '';
+const pipelineCanvas = existsSync(pipelineCanvasUrl) ? readFileSync(pipelineCanvasUrl, 'utf8') : '';
 const model = existsSync(modelUrl) ? readFileSync(modelUrl, 'utf8') : '';
 
 test('How It Works moves from product path to proof, pipeline, and editable Map preview', () => {
@@ -85,10 +90,20 @@ test('the visible operating story preserves its semantic and accessibility contr
 	assert.ok(component.includes('<svg'));
 });
 
-test('the controlled waterway remains lightweight and progressively enhanced', () => {
+test('the controlled waterway progressively enhances its complete static instrument', () => {
+	assert.ok(component.includes("from './PipelineCanvas.svelte'"));
+	assert.ok(component.includes('<PipelineCanvas'));
+	assert.ok(component.includes('<svg'), 'the semantic component should retain a static fallback');
+	assert.ok(pipelineCanvas.includes('<canvas'));
+	assert.ok(pipelineCanvas.includes('aria-hidden="true"'));
+	assert.ok(pipelineCanvas.includes("await import('$lib/visual/pipelineRenderer')"));
+	assert.ok(pipelineCanvas.includes('IntersectionObserver'));
+	assert.ok(pipelineCanvas.includes('ResizeObserver'));
+	assert.ok(pipelineCanvas.includes('prefers-reduced-motion: reduce'));
+
 	for (const prohibited of [
-		'three',
 		'@react-three/fiber',
+		'@threlte',
 		'gsap',
 		'lenis',
 		'.glb',
@@ -168,7 +183,7 @@ test('the visual grammar is a direct engineered pipeline, not a winding waterway
 		assert.ok(component.includes(contract), `the direct pipeline should expose ${contract}`);
 	}
 
-	const pipelineSvg = component.match(/<svg class="waterway__pipeline"[\s\S]*?<\/svg>/)?.[0] ?? '';
+	const pipelineSvg = component.match(/<svg[\s\S]*?class="waterway__pipeline"[\s\S]*?<\/svg>/)?.[0] ?? '';
 	assert.notEqual(pipelineSvg, '', 'the engineered pipeline should remain an inspectable SVG');
 	assert.equal(/<path[^>]*d="[^"]*[CSQ]/.test(pipelineSvg), false, 'pipeline geometry must not meander');
 	assert.equal(component.includes('waterway__contours'), false);
