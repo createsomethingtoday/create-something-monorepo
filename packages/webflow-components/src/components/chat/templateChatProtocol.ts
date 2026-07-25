@@ -1,7 +1,12 @@
 // ── Agent protocol ───────────────────────────────────────────────────────────
-// The single shared contract between TemplateChat and the webflow-template-agent
-// Worker. Both sides import these shapes so a protocol change cannot drift
-// silently between the browser and the edge.
+// The client half of the contract with the webflow-template-agent Worker.
+//
+// The Worker declares these shapes independently (packages/webflow-template-agent
+// is not on this branch yet), so the two copies CAN still drift. Until one side
+// imports the other, test/TemplateChatProtocol.test.ts pins every event the
+// Worker emits as bytes: a change here that stops accepting the real wire format
+// fails a test rather than failing in production. Move this module to a shared
+// package when the two converge, and delete this note.
 
 export type DisplayLayout = 'gallery' | 'carousel' | 'spotlight' | 'comparison' | 'shortlist';
 

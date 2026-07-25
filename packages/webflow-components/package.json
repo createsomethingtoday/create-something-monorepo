@@ -16,7 +16,8 @@
     "lint": "pnpm run typecheck",
     "test": "pnpm exec tsx --test test/*.test.ts test/*.test.tsx test/*.test.mjs",
     "typecheck": "tsc --noEmit",
-    "verify": "pnpm run check && pnpm run bundle"
+    "verify": "pnpm run check && pnpm run bundle",
+    "test:browser": "python3 test/browser/template-chat-smoke.py"
   },
   "dependencies": {
     "@create-something/delivery-schema": "workspace:*",
