@@ -1,3 +1,8 @@
+/** Host-environment probes and small scheduling primitives for TemplateChat. */
+export function prefersReducedMotion(): boolean {
+  return typeof window !== 'undefined' && Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
+}
+
 export type FrameScheduler = (callback: () => void) => number;
 export type FrameCanceller = (handle: number) => void;
 
