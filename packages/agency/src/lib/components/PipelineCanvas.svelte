@@ -1,7 +1,8 @@
 <script lang="ts">
-  import { onDestroy, onMount } from 'svelte';
+  import { onDestroy, onMount, tick } from 'svelte';
   import type { PublicProductId } from '$lib/data/productFamily';
   import type {
+    PipelineMarker,
     PipelineMotionMode,
     PipelineRendererHandle,
     PipelineRendererMetrics
@@ -10,9 +11,12 @@
   export let stage: PublicProductId;
   export let onstatechange: ((state: 'fallback' | 'loading' | 'ready') => void) | undefined =
     undefined;
+  export let onmarkers: ((markers: PipelineMarker[]) => void) | undefined = undefined;
 
   let hostEl: HTMLDivElement;
   let canvasEl: HTMLCanvasElement;
+  // A lost WebGL context cannot be revived on the same canvas, so recovery swaps the element.
+  let canvasGeneration = 0;
   let rendererHandle: PipelineRendererHandle | null = null;
   let rendererState: 'fallback' | 'loading' | 'ready' = 'fallback';
   let rendererMetrics: PipelineRendererMetrics | null = null;
@@ -22,6 +26,8 @@
   let resizeObserver: ResizeObserver | null = null;
   let reducedMotionQuery: MediaQueryList | null = null;
   let compactQuery: MediaQueryList | null = null;
+  let contextRecoveries = 0;
+  const MAX_CONTEXT_RECOVERIES = 2;
 
   function setRendererState(state: 'fallback' | 'loading' | 'ready'): void {
     rendererState = state;
@@ -55,7 +61,8 @@
       rendererHandle = createPipelineRenderer(canvasEl, hostEl, {
         stage,
         motionMode: motionMode(),
-        compact: compactQuery?.matches ?? false
+        compact: compactQuery?.matches ?? false,
+        onmarkers: (markers) => onmarkers?.(markers)
       });
       rendererHandle.setVisible(visible && !document.hidden);
       resize();
@@ -76,14 +83,26 @@
     rendererHandle?.setVisible(visible && !document.hidden);
   }
 
-  function handleContextLost(event: Event): void {
+  async function handleContextLost(event: Event): Promise<void> {
     event.preventDefault();
     disposeRenderer();
     setRendererState('fallback');
+    if (destroyed || contextRecoveries >= MAX_CONTEXT_RECOVERIES) return;
+    contextRecoveries += 1;
+    // Rebuild on a fresh canvas: a renderer cannot reclaim a torn-down context.
+    canvasGeneration += 1;
+    await tick();
+    if (destroyed || !visible) return;
+    void initializeRenderer();
   }
 
-  function handleContextRestored(): void {
-    void initializeRenderer();
+  function canvasListeners(node: HTMLCanvasElement) {
+    node.addEventListener('webglcontextlost', handleContextLost, false);
+    return {
+      destroy(): void {
+        node.removeEventListener('webglcontextlost', handleContextLost, false);
+      }
+    };
   }
 
   $: if (rendererHandle) {
@@ -96,8 +115,6 @@
     compactQuery = window.matchMedia('(max-width: 760px)');
     reducedMotionQuery.addEventListener('change', handleMotionChange);
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    canvasEl.addEventListener('webglcontextlost', handleContextLost, false);
-    canvasEl.addEventListener('webglcontextrestored', handleContextRestored, false);
 
     resizeObserver = new ResizeObserver(resize);
     resizeObserver.observe(hostEl);
@@ -125,8 +142,6 @@
     resizeObserver?.disconnect();
     reducedMotionQuery?.removeEventListener('change', handleMotionChange);
     document.removeEventListener('visibilitychange', handleVisibilityChange);
-    canvasEl?.removeEventListener('webglcontextlost', handleContextLost, false);
-    canvasEl?.removeEventListener('webglcontextrestored', handleContextRestored, false);
     disposeRenderer();
   });
 </script>
@@ -142,7 +157,9 @@
   data-pixel-ratio={rendererMetrics?.pixelRatio ?? 0}
   aria-hidden="true"
 >
-  <canvas bind:this={canvasEl} aria-hidden="true"></canvas>
+  {#key canvasGeneration}
+    <canvas bind:this={canvasEl} use:canvasListeners aria-hidden="true"></canvas>
+  {/key}
   <div class="pipeline-canvas__scan" aria-hidden="true"></div>
 </div>
 
