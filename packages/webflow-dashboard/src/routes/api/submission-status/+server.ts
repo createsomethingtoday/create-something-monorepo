@@ -1,16 +1,21 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
+import { checkRateLimit } from '$lib/server/kv';
 
 /**
  * Server-side proxy for submission status check
- * 
+ *
  * Proxies requests to the external Check-Asset-Name API.
  * This avoids CORS issues since server-to-server calls don't have CORS restrictions.
- * 
+ *
  * The external API is also used by Webflow forms, so we keep it centralized there.
- * 
+ *
+ * Requires a session, and always queries the session email — the response exposes
+ * a creator's submission and publish counts, so an attacker-supplied email would
+ * turn this into a creator-enumeration endpoint.
+ *
  * POST /api/submission-status
- * Body: { email: string }
- * 
+ * Body: {} (the queried email is the session email)
+ *
  * Returns:
  * {
  *   assetsSubmitted30: number,
@@ -35,21 +40,19 @@ interface ExternalApiResponse {
 const DEFAULT_EXTERNAL_API_URL = 'https://check-asset-name.vercel.app/api/checkTemplateuser';
 const REQUEST_TIMEOUT_MS = 10000; // 10 seconds
 
-export const POST: RequestHandler = async ({ request, platform }) => {
+export const POST: RequestHandler = async ({ locals, platform }) => {
 	try {
-		// Parse request body
-		const body = await request.json() as { email?: string };
-		const { email } = body;
+		// The queried email is always the session email — never a body value.
+		const email = locals.user?.email;
 
-		// Validate email
-		if (!email || typeof email !== 'string') {
+		if (!email) {
 			return json(
 				{
 					hasError: true,
-					message: 'Email is required',
+					message: 'Unauthorized',
 					assetsSubmitted30: 0
 				},
-				{ status: 400 }
+				{ status: 401 }
 			);
 		}
 
@@ -63,6 +66,30 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 				},
 				{ status: 400 }
 			);
+		}
+
+		// Bound the outbound calls this endpoint can make on one creator's behalf.
+		const sessions = platform?.env?.SESSIONS;
+		if (sessions) {
+			const rateLimit = await checkRateLimit(
+				sessions,
+				`submission-status:${email.toLowerCase()}`,
+				20,
+				300,
+				{ failOpen: true }
+			);
+
+			if (!rateLimit.allowed) {
+				return json(
+					{
+						hasError: true,
+						message: 'Too many submission status checks. Please try again shortly.',
+						assetsSubmitted30: 0,
+						retryAfter: rateLimit.retryAfter
+					},
+					{ status: 429 }
+				);
+			}
 		}
 
 		// Create abort controller for timeout
