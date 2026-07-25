@@ -3,6 +3,7 @@
   import { Navigation, Footer, ModeIndicator } from '@create-something/canon';
   import { UnifiedSearch } from '@create-something/canon/navigation';
   import PrivacyAnalytics from '$lib/components/PrivacyAnalytics.svelte';
+  import AgencyPerformanceHandoff from '$lib/components/AgencyPerformanceHandoff.svelte';
   import { getAgencyContentAssetAnalyticsMetadata } from '$lib/analytics/content-assets';
   import { getAgencyMarketingExperimentMetadata } from '$lib/analytics/marketing-experiment';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
@@ -11,8 +12,10 @@
   import { afterNavigate, disableScrollHandling, goto, onNavigate } from '$app/navigation';
   import {
     isAgencyDifyArticlePath,
+    usesRouteOwnedAgencyPerformanceEnding,
     usesCompactAgencyPrivacyPrompt
   } from '$lib/atlas/surface-policy';
+  import { marketingPagePortfolio } from '$lib/data/marketingPages';
 
   let { children, data } = $props();
 
@@ -54,7 +57,15 @@
   const primaryCtaHref = agencyCoreMessaging.startWithWorkflowHref;
   const globalAnalyticsMetadata = $derived(getAgencyGlobalAnalyticsMetadata($page.url.pathname));
   const isDifyArticleRoute = $derived(isAgencyDifyArticlePath($page.url.pathname));
+  const routeOwnsPerformanceEnding = $derived(
+    usesRouteOwnedAgencyPerformanceEnding($page.url.pathname)
+  );
   const useCompactPrivacyPrompt = $derived(usesCompactAgencyPrivacyPrompt($page.url.pathname));
+  const isPublicMarketingRoute = $derived(
+    marketingPagePortfolio.some(
+      (entry) => entry.path === $page.url.pathname && entry.decision !== 'archive'
+    )
+  );
   const footerQuickLinkGroups = [
     {
       title: 'Commercial',
@@ -193,7 +204,8 @@
     {
       id: 'nav-field-reports',
       label: 'Field Reports',
-      description: 'Measured workflow results, failed gates, evidence, and human decision boundaries',
+      description:
+        'Measured workflow results, failed gates, evidence, and human decision boundaries',
       href: '/field-reports',
       icon: 'FR',
       keywords: ['field reports', 'case studies', 'evidence', 'results', 'proof']
@@ -359,6 +371,10 @@
     {@render children()}
   </main>
 
+  {#if isPublicMarketingRoute && !routeOwnsPerformanceEnding}
+    <AgencyPerformanceHandoff />
+  {/if}
+
   <Footer
     mode="agency"
     showNewsletter={false}
@@ -374,7 +390,7 @@
     visualStyle="performance"
   />
 
-  {#if $page.url.pathname !== '/' && $page.url.pathname !== '/basketball-systems-lab' && !isDifyArticleRoute}
+  {#if !routeOwnsPerformanceEnding && $page.url.pathname !== '/basketball-systems-lab' && !isDifyArticleRoute}
     <ModeIndicator current="agency" />
   {/if}
 </div>

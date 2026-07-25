@@ -47,6 +47,12 @@ export type {
 export { TemplateGrid } from './components/grid/TemplateGrid';
 export type { TemplateGridProps } from './components/grid/TemplateGrid';
 
+export { TemplateCampaignLane, TemplateCampaignVideoModal } from './components/marketplace/TemplateCampaignLane';
+export type {
+  TemplateCampaignLaneProps,
+  TemplateCampaignVideoModalProps,
+} from './components/marketplace/TemplateCampaignLane';
+
 export { TemplateFilterBar } from './components/filter/TemplateFilterBar';
 export type { TemplateFilterBarProps } from './components/filter/TemplateFilterBar';
 
@@ -229,6 +235,9 @@ export { Footer } from './components/layout/Footer';
 export type { FooterProps, FooterColumn, SocialLink } from './components/layout/Footer';
 
 // Template Marketplace
+export { TemplateChat } from './components/chat/TemplateChat';
+export type { TemplateChatProps } from './components/chat/TemplateChat';
+
 export { TemplateSearch } from './components/search/TemplateSearch';
 export type { TemplateSearchProps, SuggestItem } from './components/search/TemplateSearch';
 

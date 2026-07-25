@@ -905,47 +905,26 @@ describe('Content Validator', () => {
 });
 
 describe('Accessibility Validator', () => {
-	it('does not invent contrast findings when no real contrast data exists', async () => {
+	it('does not calculate, fetch, or emit automated color-contrast findings', async () => {
+		const cssFetch = vi.fn(async () => new Response('', { status: 200 }));
+		vi.stubGlobal('fetch', cssFetch);
+
 		vi.mocked(parseHTML).mockReturnValue(createParsedHTML({
-			rawHtml: '<!doctype html><html><head><title>Plain Page</title></head><body><h1>Plain Page</h1><p>Normal readable text.</p></body></html>',
+			rawHtml: '<!doctype html><html><head><link rel="stylesheet" href="https://assets.website-files.com/site-styles.css"></head><body><h1 style="color:#fff;background:#fff">Styled</h1></body></html>',
 			document: {
 				querySelector: () => null,
 				querySelectorAll: () => [],
-				body: {
-					textContent: 'Plain Page Normal readable text.',
-					innerHTML: '<h1>Plain Page</h1><p>Normal readable text.</p>'
-				}
+				body: { textContent: 'Styled', innerHTML: '<h1>Styled</h1>' }
 			},
-			headings: [{ tagName: 'H1', textContent: 'Plain Page' }]
+			headings: [{ tagName: 'H1', textContent: 'Styled' }]
 		}));
 
-		const result = await validateAccessibility('https://example.com');
+		const result = await validateAccessibility('https://styled.webflow.io');
 
-		expect(result.stats.contrastViolations).toBe(0);
+		expect(cssFetch).not.toHaveBeenCalled();
 		expect(result.issues.some((issue) => issue.id === 'color-contrast-violations')).toBe(false);
-	});
-
-	it('does not flag syntax-highlighted Webflow code blocks as page contrast violations', async () => {
-		vi.mocked(parseHTML).mockReturnValue(createParsedHTML({
-			rawHtml: `<!doctype html><html><head><title>Install</title></head><body>
-				<h1>Install</h1>
-				<pre contenteditable="false" class="install-code-block w-code-block" style="display:block;overflow-x:auto;background:#2b2b2b;color:#f8f8f2;padding:0.5em"><code class="language-javascript"><span><span style="color:#dcc6e0">import</span><span> { Client } </span><span style="color:#dcc6e0">from</span><span> </span><span style="color:#abe338">&quot;@AEYE/product&quot;</span><span>;</span></span></code></pre>
-			</body></html>`,
-			document: {
-				querySelector: () => null,
-				querySelectorAll: () => [],
-				body: {
-					textContent: 'Install import { Client } from "@AEYE/product";',
-					innerHTML: '<h1>Install</h1>'
-				}
-			},
-			headings: [{ tagName: 'H1', textContent: 'Install' }]
-		}));
-
-		const result = await validateAccessibility('https://example.com/install');
-
-		expect(result.stats.contrastViolations).toBe(0);
-		expect(result.issues.some((issue) => issue.id === 'color-contrast-violations')).toBe(false);
+		expect(result.stats).not.toHaveProperty('contrastViolations');
+		expect(result.audit).not.toHaveProperty('colorContrast');
 	});
 
 	it('does not require labels for submit-style inputs with their own accessible value', async () => {

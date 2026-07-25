@@ -1,4 +1,33 @@
-import type { DatabaseLayerDemoState } from './types.js';
+import type {
+  DatabaseLayerDemoState,
+  DatabaseLayerTopologyAuthorityState,
+  DatabaseLayerTopologyProvenanceKind,
+  DatabaseLayerTopologySemantics,
+  DatabaseLayerTopologyVerificationState
+} from './types.js';
+
+function demoSemantics(
+  checkedAt: string,
+  authority: DatabaseLayerTopologyAuthorityState,
+  verification: DatabaseLayerTopologyVerificationState,
+  provenanceKind: DatabaseLayerTopologyProvenanceKind,
+  change: DatabaseLayerTopologySemantics['change'] = 'unchanged'
+): DatabaseLayerTopologySemantics {
+  return {
+    coverage: 'mapped',
+    verification,
+    health: 'healthy',
+    authority,
+    proof: 'attached',
+    provenance: {
+      kind: provenanceKind,
+      sourceLabel: 'Database layer demo record',
+      explanation: 'The demo state declares explicit semantics rather than deriving authority from coverage.'
+    },
+    freshness: { state: 'current', checkedAt, reviewBy: '2026-10-07T00:00:00.000Z' },
+    change
+  };
+}
 
 export const databaseLayerDemoState: DatabaseLayerDemoState = {
   runtime: {
@@ -26,7 +55,8 @@ export const databaseLayerDemoState: DatabaseLayerDemoState = {
       receiptId: 'receipt_transfer_ready',
       updatedAt: '2026-07-07T14:24:00.000Z',
       summary:
-        'Client source row captured, identified, projected into Atlas, and connected to the internal operating map.'
+        'Client source row captured, identified, projected into Atlas, and connected to the internal operating map.',
+      semantics: demoSemantics('2026-07-07T14:24:00.000Z', 'run', 'verified', 'observed')
     },
     {
       id: 'src_workstreams_agency_ops',
@@ -42,7 +72,8 @@ export const databaseLayerDemoState: DatabaseLayerDemoState = {
       receiptId: 'receipt_source_update_complete',
       updatedAt: '2026-07-07T14:26:00.000Z',
       summary:
-        'Workstream row has source relations, Atlas binding, completed source-update action, and proof receipt.'
+        'Workstream row has source relations, Atlas binding, completed source-update action, and proof receipt.',
+      semantics: demoSemantics('2026-07-07T14:26:00.000Z', 'run', 'verified', 'observed', 'changed')
     },
     {
       id: 'src_agents_reviewer',
@@ -58,7 +89,8 @@ export const databaseLayerDemoState: DatabaseLayerDemoState = {
       receiptId: 'receipt_reviewed_relation',
       updatedAt: '2026-07-07T14:29:00.000Z',
       summary:
-        'Agent source row is mapped and reviewed; next action is policy review before broader automation.'
+        'Agent source row is mapped and reviewed; next action is policy review before broader automation.',
+      semantics: demoSemantics('2026-07-07T14:29:00.000Z', 'wait', 'declared', 'declared')
     },
     {
       id: 'src_mcp_app_governance',
@@ -74,7 +106,8 @@ export const databaseLayerDemoState: DatabaseLayerDemoState = {
       receiptId: 'receipt_mcp_parity',
       updatedAt: '2026-07-07T14:31:00.000Z',
       summary:
-        'MCP service row points to the live API/MCP boundary and the app-governance proof instance.'
+        'MCP service row points to the live API/MCP boundary and the app-governance proof instance.',
+      semantics: demoSemantics('2026-07-07T14:31:00.000Z', 'run', 'verified', 'observed')
     }
   ],
   bindings: [

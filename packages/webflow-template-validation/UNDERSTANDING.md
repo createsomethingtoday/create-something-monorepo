@@ -77,7 +77,7 @@ packages/webflow-template-validation/
 │   │   │   ├── designer-validator.ts   → Variables, components, styles, pages
 │   │   │   ├── asset-validator.ts      → Image sizes, formats, optimization
 │   │   │   ├── content-validator.ts    → Lorem ipsum, headings, SEO
-│   │   │   └── accessibility-validator.ts → Alt text, contrast, structure
+│   │   │   └── accessibility-validator.ts → Alt text, structure, form labels, focus
 │   │   └── utils/
 │   │       ├── fetch-utils.ts    → HTML fetching, asset metadata (HEAD requests)
 │   │       └── asset-utils.ts    → Optimization analysis, size calculations
@@ -133,7 +133,7 @@ packages/webflow-template-validation/
 | Pages | designer-validator | SEO metadata, slug format, home page designation |
 | Assets | asset-validator | Size (150KB limit), format optimization, alt text |
 | Content | content-validator | Lorem ipsum, heading hierarchy, broken links |
-| Accessibility | accessibility-validator | Alt text coverage, contrast, form labels |
+| Accessibility | accessibility-validator | Alt text coverage, heading structure, form labels, focus management |
 
 ## API Endpoints
 

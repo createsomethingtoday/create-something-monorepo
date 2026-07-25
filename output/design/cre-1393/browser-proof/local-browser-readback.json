@@ -1,0 +1,115 @@
+{
+  "surface": "exact local production build",
+  "baseUrl": "http://127.0.0.1:4173",
+  "checkedAt": "2026-07-23T12:40:00Z",
+  "desktop": {
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "control": {
+      "route": "/control#control-operating-story-context",
+      "selectedLens": "Authority",
+      "selectedRecord": "Reviewer decision",
+      "authorityStates": ["run", "wait", "stop"],
+      "freshness": "Checked Jul 22, 2026",
+      "evidence": "Judgment promotion remains blocked",
+      "recovery": "Escalate policy ambiguity and keep the case in human review.",
+      "clientWidth": 1430,
+      "scrollWidth": 1430
+    },
+    "map": {
+      "route": "/map",
+      "applicationCount": 1,
+      "applicationLabel": "Workflow map",
+      "selectedRecord": "Approval boundary",
+      "fitView": true,
+      "productionBoundary": "No production tools",
+      "bookingSummary": {
+        "heading": "Map workflow summary",
+        "referencePrefix": "map_",
+        "mappingAgentTurns": 0,
+        "mapEdits": 0
+      },
+      "clientWidth": 1430,
+      "scrollWidth": 1430
+    },
+    "fieldReport": {
+      "route": "/field-reports/template-review",
+      "selectedLens": "Change",
+      "readOnly": true,
+      "selectedRecord": "Reviewer decision",
+      "freshness": "Checked Jul 22, 2026",
+      "evidence": "Judgment promotion remains blocked",
+      "clientWidth": 1430,
+      "scrollWidth": 1430
+    }
+  },
+  "mobile": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "control": {
+      "selectedLens": "Authority",
+      "selectedRecord": "Reviewer decision",
+      "authorityStates": ["run", "wait", "stop"],
+      "clientWidth": 380,
+      "scrollWidth": 380
+    },
+    "map": {
+      "applicationCount": 1,
+      "applicationLabel": "Workflow map",
+      "unknownRecord": "Workflow to map",
+      "fitViewIncludesApprovalBoundary": true,
+      "approvalBoundarySelectableAfterFit": true,
+      "clientWidth": 380,
+      "scrollWidth": 380
+    },
+    "fieldReport": {
+      "selectedLens": "Change",
+      "readOnly": true,
+      "selectedRecord": "Human review recovery",
+      "recovery": "Keep the case in human review until evidence and authority are clear.",
+      "clientWidth": 380,
+      "scrollWidth": 380
+    }
+  },
+  "negativeStates": {
+    "stale": {
+      "route": "/control#control-operating-story-context",
+      "browserClock": "2026-08-23T12:00:00-05:00",
+      "visibleLabel": "Review date reached",
+      "appearsVerified": false,
+      "authorityRemainsExplicit": true
+    },
+    "unknown": {
+      "route": "/map",
+      "record": "Workflow to map",
+      "visibleStatus": "unknown"
+    }
+  },
+  "accessibility": {
+    "contextRegionLabel": "Public workflow system context",
+    "mapApplicationLabel": "Workflow map",
+    "lensButtonsExposeAriaPressed": true,
+    "selectedRecordsExposeAriaPressed": true,
+    "focusedButtonTag": "BUTTON",
+    "focusedButtonOutline": "solid",
+    "reducedMotion": {
+      "mediaQueryMatches": true,
+      "transitionDuration": "1e-05s"
+    }
+  },
+  "publicVocabulary": {
+    "topology": false,
+    "atlas": false,
+    "substrate": false,
+    "canvasKernel": false,
+    "nodeOrEdgeCountMarketing": false
+  },
+  "interactionRepeats": {
+    "controlCleanNavigationCycles": 2,
+    "mapCleanNavigationCycles": 2
+  }
+}

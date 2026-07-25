@@ -1,4 +1,5 @@
 import type { CapturedFilmAnalysis, FilmCorrection } from './film.js';
+import type { FilmPlayReviewPacket } from './film-play-review.js';
 
 export const STORAGE_KEY = 'guard-performance-lab:v5';
 export const STATE_VERSION = 5;
@@ -60,6 +61,7 @@ export type FilmAnalysisRecord = CapturedFilmAnalysis & {
   title: string;
   createdAt: string;
   corrections: FilmCorrection[];
+  playReviews?: FilmPlayReviewPacket[];
 };
 export type LabState = {
   version: 5;
@@ -126,7 +128,18 @@ export function parseState(raw: string | null): LabState {
     if (![2, 3, 4, STATE_VERSION].includes(value.version as number) || !Array.isArray(value.players) || value.players.length === 0 || value.players.some((player) => !player || typeof player.id !== 'string' || typeof player.name !== 'string')) return createInitialState();
     const selected = value.players.some((p) => p.id === value.selectedPlayerId) ? value.selectedPlayerId! : value.players[0]!.id;
     const players = value.players.map((player) => ({ ...player, profile: normalizePlayerProfile(player.profile) }));
-    return { version: STATE_VERSION, revision: typeof value.revision === 'number' ? value.revision : 0, selectedPlayerId: selected, players, receipts: Array.isArray(value.receipts) ? value.receipts : [], artifacts: Array.isArray(value.artifacts) ? value.artifacts : [], engagements: Array.isArray(value.engagements) ? value.engagements : [], filmAnalyses: Array.isArray(value.filmAnalyses) ? value.filmAnalyses : [] };
+    return {
+      version: STATE_VERSION,
+      revision: typeof value.revision === 'number' ? value.revision : 0,
+      selectedPlayerId: selected,
+      players,
+      receipts: Array.isArray(value.receipts) ? value.receipts : [],
+      artifacts: Array.isArray(value.artifacts) ? value.artifacts : [],
+      engagements: Array.isArray(value.engagements) ? value.engagements : [],
+      filmAnalyses: Array.isArray(value.filmAnalyses)
+        ? value.filmAnalyses.map((analysis) => ({ ...analysis, playReviews: Array.isArray(analysis.playReviews) ? analysis.playReviews : [] }))
+        : []
+    };
   } catch {
     return createInitialState();
   }

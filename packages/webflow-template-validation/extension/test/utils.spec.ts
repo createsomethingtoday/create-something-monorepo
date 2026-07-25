@@ -3,12 +3,23 @@ import {
   escapeHtml,
   decodeCommonHtmlEntities,
   ensureHttps,
+  filterRetiredAccessibilityIssues,
   getSlugPathname,
   isInternalCmsTemplateSlug,
   isHtmlTagStyleName,
   normalizeSiteInfo,
   selectValidationDomain,
 } from '../src/utils';
+
+describe('filterRetiredAccessibilityIssues', () => {
+  it('removes only legacy color-contrast findings', () => {
+    const missingAltIssue = { id: 'missing-alt-text-critical', severity: 'error' };
+    expect(filterRetiredAccessibilityIssues([
+      { id: 'color-contrast-violations', severity: 'error' },
+      missingAltIssue,
+    ])).toEqual([missingAltIssue]);
+  });
+});
 
 describe('escapeHtml', () => {
   it('escapes markup-significant characters', () => {

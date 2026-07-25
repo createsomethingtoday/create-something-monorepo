@@ -20,6 +20,7 @@ const PUBLIC_ROUTE_SKIP_SEGMENTS = new Set([
 ]);
 
 const ROUTE_COPY_FILES = new Set(['+error.svelte', '+layout.svelte', '+page.svelte']);
+const REDIRECTED_PUBLIC_ROUTE_SEGMENTS = new Set(['dify', 'notion']);
 
 export const PUBLIC_COPY_RULES = [
   {
@@ -346,6 +347,18 @@ export function discoverPublicCopyFiles() {
   if (existsSync(schedulerEmail)) extraFiles.push(schedulerEmail);
 
   return uniqueSorted([...routeFiles, ...componentFiles, ...dataFiles, ...atlasFiles, ...extraFiles]);
+}
+
+export function discoverActivePublicCopyFiles() {
+  const routesRoot = path.join(packageRoot, 'src/routes');
+
+  return discoverPublicCopyFiles().filter((file) => {
+    const relative = path.relative(routesRoot, file);
+    if (relative.startsWith('..')) return true;
+
+    const [firstSegment] = relative.split(path.sep);
+    return !REDIRECTED_PUBLIC_ROUTE_SEGMENTS.has(firstSegment);
+  });
 }
 
 export function auditPublicCopy(files = discoverPublicCopyFiles()) {

@@ -2,8 +2,12 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { TemplateSearchBox } from './TemplateSearchBox';
 import { TemplateSearchResults } from './TemplateSearchResults';
 import { TemplateSearchSidebar } from './TemplateSearchSidebar';
+import {
+  normalizeTemplateSort as normalizeSort,
+  TEMPLATE_SORT_LABELS as SORT_LABELS,
+  type TemplateSort,
+} from './templateRoute';
 
-type TemplateSort = 'popular' | 'newest' | 'price_asc' | 'price_desc';
 type TemplateScope = 'all' | 'featured' | 'free' | 'landing_pages';
 
 interface SearchFilters {
@@ -413,34 +417,6 @@ const SEARCH_PAGE_STYLES = `
   }
 }
 `;
-
-const SORT_LABELS: Record<TemplateSort, string> = {
-  popular: 'Popular',
-  newest: 'Newest',
-  price_asc: 'Price: Low to High',
-  price_desc: 'Price: High to Low',
-};
-
-function normalizeSort(value: string | null | undefined, fallback: TemplateSort = 'popular'): TemplateSort {
-  switch ((value ?? '').trim()) {
-    case 'newest':
-    case 'approval-date':
-    case 'approval-date-desc':
-      return 'newest';
-    case 'price_asc':
-    case 'price-asc':
-      return 'price_asc';
-    case 'price_desc':
-    case 'price-desc':
-      return 'price_desc';
-    case 'popular':
-    case 'popularity-score':
-    case 'popularity-score-desc':
-      return 'popular';
-    default:
-      return fallback;
-  }
-}
 
 function toFilterSlug(value: string): string {
   return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
