@@ -20,6 +20,9 @@ export const filmPlayStateSchema = z.enum([
   'substitution',
   'unknown'
 ]);
+// Review provenance policy: `reviewer: 'codex'` is an accepted source-review reviewer. Agent review
+// counts as real evidence rather than a placeholder, so the trade is that every consumer must report
+// the user/agent/unreviewed split (summarizeFilmTargetCoverage) instead of one blended "reviewed" number.
 const filmPlayStateEvidenceSchema = z.object({
   intervalId: z.string().min(1),
   method: z.enum(['source-review', 'unreviewed']),
@@ -111,8 +114,11 @@ export function scoreFilmBenchmark(benchmarkInput: unknown, predictionInput: unk
   });
   const medianCourtErrorFeet = percentile(courtErrors, 0.5);
   const p95CourtErrorFeet = percentile(courtErrors, 0.95);
+  // Zone is a pure function of the court position (filmZone), never a stored second opinion, so both
+  // sides of this comparison speak one taxonomy. A stored analyzer-local zone is ignored.
   const zoned = matched.filter(({ annotation }) => annotation.target.zone);
-  const zoneAccuracy = zoned.length ? zoned.filter(({ annotation, prediction }) => prediction?.zone === annotation.target.zone).length / zoned.length : 0;
+  const zoneAccuracy = zoned.length ? zoned.filter(({ annotation, prediction }) =>
+    prediction?.targetStatus === 'resolved' && prediction.court && filmZone(prediction.court) === annotation.target.zone).length / zoned.length : 0;
   const statusAccuracy = allSamples.length ? allSamples.filter((annotation) => {
     const prediction = predictions.filter((candidate) => Math.abs(candidate.timeMs - annotation.timeMs) <= 500).sort((a, b) => Math.abs(a.timeMs - annotation.timeMs) - Math.abs(b.timeMs - annotation.timeMs))[0];
     const expected = annotation.target.status === 'visible' ? 'resolved' : annotation.target.status === 'out-of-frame' ? 'out-of-frame' : 'unresolved';
@@ -520,7 +526,12 @@ const capturedPlayerSchema = z.object({
   correctionId: z.string().optional(),
   image: pointSchema.optional(),
   cropBounds: cropBoundsSchema.optional(),
-  projection: z.enum(['estimated', 'calibrated']).optional(),
+  // 'estimated' is an image-space approximation, 'operator-stated' is a typed-in court position, and
+  // only 'calibrated' means the point came through a validated held-out homography.
+  projection: z.enum(['estimated', 'calibrated', 'operator-stated']).optional(),
+  // Legacy field: earlier revisions stored an analyzer-local zone vocabulary
+  // ({side}-{near|middle|far}) that does not match filmZone's basketball geography. Zone is always
+  // derived from `court` on read, so a stored value is ignored rather than trusted.
   zone: z.string().optional(),
   courtGeometry: z.object({
     profile: z.literal('fieldhouseusa-mansfield-high-school-84x50-v1'),
@@ -639,7 +650,14 @@ const capturedAnalysisReceiptSchema = z.object({
     positiveRecall: z.number().min(0.95),
     hardNegativePrecision: z.literal(1),
     substitutionAccuracy: z.literal(1),
-    correctionOverlayCount: z.literal(0)
+    correctionOverlayCount: z.literal(0),
+    // Optional so already-imported revisions still parse. Absent means the denominator was never
+    // recorded, which surfaces as "DECISION COUNT NOT RECORDED" rather than as a silent 100%.
+    positiveDecisionCount: z.number().int().nonnegative().optional(),
+    negativeDecisionCount: z.number().int().nonnegative().optional(),
+    substitutionDecisionCount: z.number().int().nonnegative().optional(),
+    independentPositiveDecisionCount: z.number().int().nonnegative().optional(),
+    directNumberSegmentCount: z.number().int().nonnegative().optional()
   }).optional(),
   fullFlowVerification: fullFlowVerificationSchema.optional(),
   migrationTraceVerification: migrationTraceVerificationSchema.optional(),
@@ -1069,7 +1087,56 @@ function reviewCropContainsPlayerCenter(reviewCrop: [number, number, number, num
   return right > left && bottom > top && centerX >= left && centerX <= right && centerY >= top && centerY <= bottom;
 }
 
-export function verifyFilmIdentityCandidate(sourceRevisionInput: unknown, candidateInput: unknown, benchmarkInput: unknown) {
+/**
+ * A benchmark whose positive frames are the same frames that seeded the tracker cannot fail: it
+ * re-reads its own input, and a frame that was never seeded is unresolved by construction, so
+ * hard-negative precision is guaranteed rather than earned. Independence therefore requires positive
+ * decisions at frames that were never seeds, at least one directly readable jersey per on-court
+ * segment, and same-team confusable negatives — the only negatives that can catch a mask drifting
+ * onto another white jersey.
+ */
+export const IDENTITY_INDEPENDENCE_MINIMUMS = Object.freeze({
+  independentPositiveDecisions: 2,
+  directNumberSegments: 1,
+  confusableTeammateNegatives: 2
+});
+
+const SAME_TEAM_NEGATIVE_CLASSES = new Set(['5', '11', '15']);
+
+export function assessFilmIdentityIndependence(benchmarkInput: unknown, seedTimesMs: readonly number[] = []) {
+  const benchmark = filmIdentityBenchmarkSchema.parse(benchmarkInput);
+  const seeds = new Set(seedTimesMs);
+  const positives = benchmark.annotations.filter((annotation) => annotation.expectedIdentity === '13' && annotation.participation === 'active');
+  const positiveDecisions = new Set(positives.map((annotation) => annotation.associationTimeMs));
+  const independentPositiveDecisions = [...positiveDecisions].filter((timeMs) => !seeds.has(timeMs));
+  const directNumberSegments = new Set(positives
+    .filter((annotation) => annotation.provenance.method === 'direct-number-review' && annotation.visibleNumber === '13')
+    .map((annotation) => annotation.segmentId));
+  const confusableDecisions = new Set(benchmark.annotations
+    .filter((annotation) => annotation.negativeClass && SAME_TEAM_NEGATIVE_CLASSES.has(annotation.negativeClass))
+    .map((annotation) => `${annotation.associationTimeMs}:${annotation.negativeClass}`));
+
+  const issues: string[] = [];
+  if (independentPositiveDecisions.length < IDENTITY_INDEPENDENCE_MINIMUMS.independentPositiveDecisions) {
+    issues.push(`Only ${independentPositiveDecisions.length} positive decision(s) sit at frames that were not tracker seeds; at least ${IDENTITY_INDEPENDENCE_MINIMUMS.independentPositiveDecisions} are required so the benchmark cannot pass by re-reading its own seeds.`);
+  }
+  if (directNumberSegments.size < IDENTITY_INDEPENDENCE_MINIMUMS.directNumberSegments) {
+    issues.push(`No on-court segment carries a directly readable #13 crop; at least ${IDENTITY_INDEPENDENCE_MINIMUMS.directNumberSegments} is required.`);
+  }
+  if (confusableDecisions.size < IDENTITY_INDEPENDENCE_MINIMUMS.confusableTeammateNegatives) {
+    issues.push(`Only ${confusableDecisions.size} same-team confusable negative decision(s) (#5/#11/#15) are present; at least ${IDENTITY_INDEPENDENCE_MINIMUMS.confusableTeammateNegatives} are required to catch a mask drifting onto another white jersey.`);
+  }
+  return {
+    ok: issues.length === 0,
+    seedDecisionCount: [...positiveDecisions].filter((timeMs) => seeds.has(timeMs)).length,
+    independentPositiveDecisionCount: independentPositiveDecisions.length,
+    directNumberSegmentCount: directNumberSegments.size,
+    confusableTeammateNegativeCount: confusableDecisions.size,
+    issues
+  };
+}
+
+export function verifyFilmIdentityCandidate(sourceRevisionInput: unknown, candidateInput: unknown, benchmarkInput: unknown, seedTimesMs: readonly number[] = []) {
   const sourceRevision = capturedFilmAnalysisSchema.parse(sourceRevisionInput);
   const candidate = filmIdentityCandidateSchema.parse(candidateInput);
   const benchmark = filmIdentityBenchmarkSchema.parse(benchmarkInput);
@@ -1135,8 +1202,11 @@ export function verifyFilmIdentityCandidate(sourceRevisionInput: unknown, candid
   const score = scoreFilmIdentityBenchmark(benchmark, predictions);
   const correctionOverlayCount = candidate.frames.reduce((count, frame) => count + frame.players.filter((player) => player.provenance === 'corrected' || player.correctionId).length, 0);
   if (correctionOverlayCount) invariantIssues.push(`Candidate contains ${correctionOverlayCount} correction overlay(s).`);
+  const independence = assessFilmIdentityIndependence(benchmark, seedTimesMs);
+  const decisionCount = (filter: (annotation: z.infer<typeof identityAnnotationSchema>) => boolean, key: (annotation: z.infer<typeof identityAnnotationSchema>) => string | number) =>
+    new Set(benchmark.annotations.filter(filter).map(key)).size;
   return {
-    ok: invariantIssues.length === 0 && score.ok,
+    ok: invariantIssues.length === 0 && score.ok && independence.ok,
     benchmarkProfile: FILM_IDENTITY_BENCHMARK_PROFILE,
     sourceSha256: sourceRevision.source.sha256,
     candidateFingerprint: filmIdentityCandidateFingerprint(candidate),
@@ -1145,6 +1215,11 @@ export function verifyFilmIdentityCandidate(sourceRevisionInput: unknown, candid
     positiveRecall: score.positiveRecall,
     hardNegativePrecision: score.hardNegativePrecision,
     substitutionAccuracy: score.substitutionAccuracy,
+    // Every rate travels with its denominator so a percentage can never be read alone.
+    positiveDecisionCount: decisionCount((annotation) => annotation.expectedIdentity === '13' && annotation.participation === 'active', (annotation) => annotation.associationTimeMs),
+    negativeDecisionCount: decisionCount((annotation) => annotation.expectedIdentity !== '13', (annotation) => `${annotation.associationTimeMs}:${annotation.negativeClass}`),
+    substitutionDecisionCount: decisionCount((annotation) => annotation.expectedIdentity === '13' && annotation.participation === 'inactive' && annotation.negativeClass === 'substitution', (annotation) => annotation.associationTimeMs),
+    independence,
     scoreIssues: score.issues,
     predictions
   };
@@ -1160,6 +1235,18 @@ const filmIdentityVerificationReceiptSchema = z.object({
   positiveRecall: z.number().min(0.95),
   hardNegativePrecision: z.literal(1),
   substitutionAccuracy: z.literal(1),
+  // A rate may not be finalized without its denominator, and a benchmark may not be finalized without
+  // evidence that it was capable of failing.
+  positiveDecisionCount: z.number().int().positive(),
+  negativeDecisionCount: z.number().int().positive(),
+  substitutionDecisionCount: z.number().int().nonnegative(),
+  independence: z.object({
+    ok: z.literal(true),
+    independentPositiveDecisionCount: z.number().int().min(IDENTITY_INDEPENDENCE_MINIMUMS.independentPositiveDecisions),
+    directNumberSegmentCount: z.number().int().min(IDENTITY_INDEPENDENCE_MINIMUMS.directNumberSegments),
+    confusableTeammateNegativeCount: z.number().int().min(IDENTITY_INDEPENDENCE_MINIMUMS.confusableTeammateNegatives),
+    issues: z.array(z.never()).length(0)
+  }).passthrough(),
   scoreIssues: z.array(z.never()).length(0)
 }).passthrough();
 
@@ -1193,7 +1280,12 @@ export function finalizeFilmIdentityRevision(sourceRevisionInput: unknown, candi
         positiveRecall: parsedReceipt.data.positiveRecall,
         hardNegativePrecision: parsedReceipt.data.hardNegativePrecision,
         substitutionAccuracy: parsedReceipt.data.substitutionAccuracy,
-        correctionOverlayCount: 0
+        correctionOverlayCount: 0,
+        positiveDecisionCount: parsedReceipt.data.positiveDecisionCount,
+        negativeDecisionCount: parsedReceipt.data.negativeDecisionCount,
+        substitutionDecisionCount: parsedReceipt.data.substitutionDecisionCount,
+        independentPositiveDecisionCount: parsedReceipt.data.independence.independentPositiveDecisionCount,
+        directNumberSegmentCount: parsedReceipt.data.independence.directNumberSegmentCount
       },
       fullFlowVerification: fullFlowReceipt ? {
         profile: fullFlowReceipt.profile,
@@ -1362,6 +1454,10 @@ export function summarizeFilmTargetCoverage(analysisInput: unknown) {
   const unresolvedFrames = count('unresolved');
   const inactiveFrames = count('inactive');
   const outOfFrameFrames = count('out-of-frame');
+  const reviewedBy = (reviewer: 'user' | 'codex') => analysis.frames.filter((frame) =>
+    frame.playStateEvidence?.method === 'source-review' && frame.playStateEvidence.reviewer === reviewer).length;
+  const userReviewedFrames = reviewedBy('user');
+  const agentReviewedFrames = reviewedBy('codex');
   return {
     frameCount: analysis.frames.length,
     resolvedFrames,
@@ -1370,10 +1466,27 @@ export function summarizeFilmTargetCoverage(analysisInput: unknown) {
     outOfFrameFrames,
     resolvedPercent: percent(resolvedFrames),
     knownStatePercent: percent(resolvedFrames + inactiveFrames + outOfFrameFrames),
+    userReviewedFrames,
+    agentReviewedFrames,
+    unreviewedFrames: analysis.frames.length - userReviewedFrames - agentReviewedFrames,
     estimatedTargetFrames: targets.filter((player) => player.projection === 'estimated').length,
     calibratedTargetFrames: targets.filter((player) => player.projection === 'calibrated' && player.provenance !== 'corrected').length,
-    correctedTargetFrames: targets.filter((player) => player.provenance === 'corrected').length
+    correctedTargetFrames: targets.filter((player) => player.provenance === 'corrected').length,
+    sampleIntervalMs: filmSampleIntervalMs(analysis),
+    movementClaimSupported: filmSampleIntervalMs(analysis) <= MOVEMENT_CLAIM_MAX_INTERVAL_MS
   };
+}
+
+/**
+ * Widest gap between consecutive captured samples. A single coarse stretch, not the average, decides
+ * whether a continuous path between samples can be claimed at all.
+ */
+export function filmSampleIntervalMs(analysis: CapturedFilmAnalysis): number {
+  let widest = 0;
+  for (let index = 1; index < analysis.frames.length; index += 1) {
+    widest = Math.max(widest, analysis.frames[index]!.timeMs - analysis.frames[index - 1]!.timeMs);
+  }
+  return widest;
 }
 
 export function filmZone(court: [number, number]) {
@@ -1393,7 +1506,9 @@ export function applyFilmCorrections(analysis: CapturedFilmAnalysis & { correcti
     frame.targetStatus = status;
     frame.players = frame.players.filter((player) => player.team !== 'target' && (status !== 'resolved' || player.trackId !== correction.trackId));
     if (status === 'resolved' && correction.court) {
-      frame.players.push({ trackId: correction.trackId, team: 'target', court: correction.court, confidence: 1, provenance: 'corrected', correctionId: correction.id, projection: 'calibrated', zone: filmZone(correction.court) });
+      // An operator-typed position is direct evidence, but it is not a calibrated projection, and its
+      // zone is derived on read like every other position.
+      frame.players.push({ trackId: correction.trackId, team: 'target', court: correction.court, confidence: 1, provenance: 'corrected', correctionId: correction.id, projection: 'operator-stated' });
     }
   }
   return capturedFilmAnalysisSchema.parse({ ...analysis, frames });
@@ -1405,11 +1520,26 @@ function interpolatePlayer(before: CapturedPlayer, after: CapturedPlayer, ratio:
     ...before,
     court: [round(before.court[0] + (after.court[0] - before.court[0]) * ratio), round(before.court[1] + (after.court[1] - before.court[1]) * ratio)],
     confidence: Math.min(before.confidence, after.confidence),
-    provenance: before.provenance === 'corrected' || after.provenance === 'corrected' ? 'corrected' : 'model'
+    provenance: before.provenance === 'corrected' || after.provenance === 'corrected' ? 'corrected' : 'model',
+    // Rendering-only marker. The captured revision never stores a synthesized position, so a
+    // token drawn between two captured frames must declare that it is not itself evidence.
+    interpolated: true
   };
 }
 
 export type FilmMovementMode = 'live-only' | 'all-captured';
+
+/**
+ * A guard covers roughly 20ft/s at speed, so 200ms between samples bounds unobserved travel at about
+ * 4ft. Above that interval the wake is connect-the-dots between captured samples rather than an
+ * observed path, and every surface that draws it must say so (`movementClaimSupported`).
+ */
+export const MOVEMENT_CLAIM_MAX_INTERVAL_MS = 200;
+
+/** True when a rendered token was synthesized between two captured frames rather than captured. */
+export function isInterpolatedPlayer(player: CapturedPlayer): boolean {
+  return (player as CapturedPlayer & { interpolated?: unknown }).interpolated === true;
+}
 
 export function isLiveFilmPlayState(state: FilmPlayState) {
   return ['live-offense', 'live-defense', 'transition-offense', 'transition-defense'].includes(state);
@@ -1417,13 +1547,15 @@ export function isLiveFilmPlayState(state: FilmPlayState) {
 
 export function resolveFilmTrafficAt(analysis: CapturedFilmAnalysis, requestedTimeMs: number, wakeMs = 5000, options: { movementMode?: FilmMovementMode } = {}) {
   const movementMode = options.movementMode ?? 'live-only';
+  const sampleIntervalMs = filmSampleIntervalMs(analysis);
   const timeMs = Math.max(0, Math.min(requestedTimeMs, analysis.source.durationMs));
   const beforeIndex = analysis.frames.findLastIndex((frame) => frame.timeMs <= timeMs);
   const before = analysis.frames[beforeIndex];
   const after = analysis.frames.slice(beforeIndex + 1).find((frame) => frame.timeMs >= timeMs);
   let players = before?.players ?? [];
-  if (before && after && before.targetStatus === 'resolved' && after.targetStatus === 'resolved' && before.playState === after.playState && after.timeMs > before.timeMs) {
-    const ratio = (timeMs - before.timeMs) / (after.timeMs - before.timeMs);
+  const ratio = before && after && after.timeMs > before.timeMs ? (timeMs - before.timeMs) / (after.timeMs - before.timeMs) : 0;
+  // ratio 0 means the request landed exactly on a captured frame: render it as captured, never synthesized.
+  if (before && after && ratio > 0 && before.targetStatus === 'resolved' && after.targetStatus === 'resolved' && before.playState === after.playState) {
     players = before.players.flatMap((player) => {
       const next = after.players.find((candidate) => candidate.trackId === player.trackId)
         ?? (player.team === 'target' ? after.players.find((candidate) => candidate.team === 'target') : undefined);
@@ -1476,6 +1608,8 @@ export function resolveFilmTrafficAt(analysis: CapturedFilmAnalysis, requestedTi
     currentPlayState: before?.playState ?? 'unknown',
     currentPlayStateEvidence: before?.playStateEvidence,
     movementMode,
-    analysisRevision: analysis.analysis.revision
+    analysisRevision: analysis.analysis.revision,
+    sampleIntervalMs,
+    movementClaimSupported: sampleIntervalMs <= MOVEMENT_CLAIM_MAX_INTERVAL_MS
   };
 }

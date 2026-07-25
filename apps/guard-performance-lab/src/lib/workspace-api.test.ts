@@ -49,6 +49,44 @@ describe('workspace command HTTP contract', () => {
     expect((await invalid.json()).error).toContain('Invalid workspace command');
   });
 
+  it('attributes a player-scoped engagement to the player even when the caller supplies another source', async () => {
+    dir = await mkdtemp(join(tmpdir(), 'guard-api-attribution-'));
+    const service = new LabService(new JsonFileLabStore(join(dir, 'workspace.json')));
+    const playerId = (await service.getWorkspace()).workspace.selectedPlayerId;
+
+    const response = await workspaceCommandResponse(
+      new Request('http://local/api/workspace/command', {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'record-engagement',
+          playerId,
+          engagement: { stage: 'baseline', status: 'active', source: 'coach', note: 'Player recorded his own interaction.' }
+        })
+      }),
+      service,
+      { role: 'player', playerId }
+    );
+
+    expect(response.status).toBe(200);
+    expect((await response.json()).workspace.engagements).toMatchObject([{ playerId, source: 'player' }]);
+
+    const operatorResponse = await workspaceCommandResponse(
+      new Request('http://local/api/workspace/command', {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'record-engagement',
+          playerId,
+          engagement: { stage: 'baseline', status: 'active', source: 'coach', note: 'Coach recorded court-side context.' }
+        })
+      }),
+      service,
+      { role: 'operator' }
+    );
+
+    expect(operatorResponse.status).toBe(200);
+    expect((await operatorResponse.json()).workspace.engagements[0]).toMatchObject({ source: 'coach' });
+  });
+
   it('denies a player-scoped caller that supplies another player id', async () => {
     dir = await mkdtemp(join(tmpdir(), 'guard-api-scope-'));
     const service = new LabService(new JsonFileLabStore(join(dir, 'workspace.json')));
