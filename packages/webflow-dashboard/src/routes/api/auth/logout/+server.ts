@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { deleteSession } from '$lib/server/kv';
+import { SESSION_COOKIE_NAME, SESSION_COOKIE_OPTIONS, deleteSession } from '$lib/server/kv';
 
 /**
  * POST /api/auth/logout
@@ -8,7 +8,7 @@ import { deleteSession } from '$lib/server/kv';
  * Invalidates the current session and clears the cookie.
  */
 export const POST: RequestHandler = async ({ platform, cookies }) => {
-	const sessionToken = cookies.get('session_token');
+	const sessionToken = cookies.get(SESSION_COOKIE_NAME);
 	const sessions = platform?.env?.SESSIONS;
 
 	if (sessionToken && sessions) {
@@ -21,12 +21,12 @@ export const POST: RequestHandler = async ({ platform, cookies }) => {
 		}
 	}
 
-	// Clear cookie with same flags used when setting
-	cookies.delete('session_token', { 
-		path: '/',
-		secure: true,
-		httpOnly: true,
-		sameSite: 'none'
+	// Clear cookie with the same flags used when setting it
+	cookies.delete(SESSION_COOKIE_NAME, {
+		path: SESSION_COOKIE_OPTIONS.path,
+		secure: SESSION_COOKIE_OPTIONS.secure,
+		httpOnly: SESSION_COOKIE_OPTIONS.httpOnly,
+		sameSite: SESSION_COOKIE_OPTIONS.sameSite
 	});
 
 	return json({ message: 'Logged out successfully' });

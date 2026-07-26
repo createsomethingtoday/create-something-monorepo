@@ -96,7 +96,7 @@ export default declareComponent(TemplateFilterBar, {
     }),
     defaultSort: props.Variant({
       name: 'Default Sort',
-      options: ['popular', 'newest', 'price_asc', 'price_desc'],
+      options: ['popular', 'best_selling', 'newest', 'price_asc', 'price_desc'],
       defaultValue: 'popular',
       tooltip: 'Fallback sort when no ?sort= param is present. Should match Template Grid\'s Default Sort.',
     }),

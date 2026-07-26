@@ -84,6 +84,12 @@ export type SubstrateComputeSnapshot = {
   generatedAt: string;
   engine: 'cpu';
   source: 'substrate' | 'atlas-session';
+  weightModel: {
+    kind: 'derived';
+    source: 'static_topology_heuristic';
+    observedTelemetry: false;
+    description: string;
+  };
   scenario: SubstrateComputeScenarioInput;
   counts: {
     nodes: number;

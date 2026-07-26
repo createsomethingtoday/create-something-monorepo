@@ -18,6 +18,7 @@ Non-secret Worker variables:
 
 - `GOOGLE_EVENT_CALENDAR_ID=micah@createsomething.io`
 - `GOOGLE_SELECTED_CALENDAR_IDS=micah@createsomething.io` initially; the approved OAuth callback discovers and durably persists all Calendar-list entries marked selected.
+- `WEBFLOW_BUSY_PROJECTION_REQUIRED=true`; readiness and public availability fail closed unless the Webflow projection is fresh and covers the requested window.
 - `GOOGLE_REDIRECT_URI=https://<approved-preview-host>/oauth/google/callback`
 - `RESEND_FROM=CREATE SOMETHING <noreply@createsomething.io>`
 - `TURNSTILE_EXPECTED_HOSTNAME=<approved-preview-host>`
@@ -46,6 +47,20 @@ Google OAuth scopes are limited to:
 - `https://www.googleapis.com/auth/calendar.events`
 - `https://www.googleapis.com/auth/calendar.freebusy`
 - `https://www.googleapis.com/auth/calendar.calendarlist.readonly`
+
+## Webflow conflict-projection activation
+
+The scheduler OAuth identity remains `micah@createsomething.io`. The Webflow-managed account cannot depend on cross-organization sharing, so the local EventKit producer publishes busy-only state from the exact macOS Calendar source `WEBFLOW` and calendar `micah@webflow.com`:
+
+1. Run `pnpm --filter @create-something/create-something-scheduler sync:webflow-busy -- --dry-run` to verify EventKit access and the exact calendar match without making a network request. The producer projects event data immediately to opaque `{ start, end }` intervals; it never reads titles, attendees, descriptions, locations, or private Calendar URLs into the output or Worker payload.
+2. Send the complete replacement projection to `PUT /api/v1/operator/conflict-projections/webflow-google-calendar` with operator authorization and `explicitIntent: true`. The payload must include `source`, `rangeStart`, `rangeEnd`, `observedAt`, `expiresAt`, and `intervals`.
+3. Keep `expiresAt` no more than 90 minutes after `observedAt`. Production cadence is 15 minutes, so a missed run has bounded grace while repeated failures quickly fail closed.
+4. Cover at least the next 28 days. Operator status must report `webflowProjectionFresh: true` and `webflowProjectionHorizonCovered: true` before `/ready` can pass.
+5. Confirm a real Webflow busy interval is absent from Browser, API, and MCP availability while a neighboring open interval remains. Record only timestamps and receipt IDs in CRE-1376.
+
+The production sync command is `infisical run --env=prod --path=/ --include-imports=true -- pnpm --filter @create-something/create-something-scheduler sync:webflow-busy`. The script reads the scoped `SCHEDULER_OPERATOR_API_TOKEN` injected at runtime; never place it in the repository, automation prompt, arguments, or logs. The committed defaults intentionally bind to one source/calendar pair and abort if the match is missing or ambiguous.
+
+The recurring job is an ingestion producer, not a runtime dependency. If it stops, the projection expires, `/ready` returns unavailable, and public availability exposes no bookable slots. Restore the job and publish a fresh full replacement; do not extend expiry or disable the projection requirement to make readiness green.
 
 ## Approval gates
 

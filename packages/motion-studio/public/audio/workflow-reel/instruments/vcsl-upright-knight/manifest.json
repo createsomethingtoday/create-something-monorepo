@@ -1,0 +1,171 @@
+{
+  "schemaVersion": 1,
+  "name": "VCSL Keys Upright Piano, Knight — workflow reel subset",
+  "license": {
+    "spdx": "CC0-1.0",
+    "sourceStatement": "VCSL Keys is released under CC0/public domain.",
+    "sourcePage": "https://versilian-studios.com/vcsl-keys/",
+    "legalCode": "https://creativecommons.org/publicdomain/zero/1.0/legalcode"
+  },
+  "source": {
+    "publisher": "Versilian Studios",
+    "library": "VCSL Keys",
+    "instrument": "Upright Piano, Knight",
+    "archiveUrl": "https://versilian-studios.com/Distro/VCSL_Keys.zip",
+    "archiveBytes": 655370475,
+    "archiveSha256": "2e91c9aa7b16d936f035963149df1fe4cbd65911116fb3e3ea6daca52e92024b",
+    "archiveLastModified": "Wed, 11 Oct 2023 03:35:43 GMT",
+    "archiveEtag": "271028eb-6076d72b82908",
+    "sfzPath": "Upright Piano, Knight.sfz",
+    "velocityLayer": "vl1",
+    "velocityRange": [0, 83],
+    "roundRobin": 1
+  },
+  "selection": {
+    "requiredMidiNotes": [57, 59, 62, 64, 66, 69, 74],
+    "comparisonPhraseEvents": 22,
+    "comparisonDurationSeconds": 30,
+    "uprightKnightSourceSustains": 7,
+    "uprightYSourceSustains": 4,
+    "uprightKnightMeanSpectralCentroidHz": 524.0,
+    "uprightYMeanSpectralCentroidHz": 528.53,
+    "uprightKnightMeanRolloffHz": 676.17,
+    "uprightYMeanRolloffHz": 702.57,
+    "decision": "Upright Knight was selected for its darker aggregate spectrum and denser key map, limiting reel-note pitch shifts to at most one semitone."
+  },
+  "regions": [
+    {
+      "keyCenter": 57,
+      "keyRange": [57, 58],
+      "tuneCents": -3,
+      "offsetSamples": 0,
+      "sustain": {
+        "upstreamPath": "Upright Piano, Knight/Sustains/Player_vl1_rr1_A2.flac",
+        "localPath": "sustains/a2.flac",
+        "sha256": "a7875e56ce445ca6e125988f974fd0d13f32755b57d4a01c1566ba4cb79526b0"
+      },
+      "release": {
+        "upstreamPath": "Upright Piano, Knight/Releases/Player_rel_rr1_A2.flac",
+        "localPath": "releases/a2.flac",
+        "keyCenter": 57,
+        "tuneCents": -7,
+        "offsetSamples": 0,
+        "sha256": "2e38dbc48fb3c69ca18276e6e03b56bbef7e6e6451c5452a36e883b8a48a2b62"
+      }
+    },
+    {
+      "keyCenter": 59,
+      "keyRange": [59, 60],
+      "tuneCents": 0,
+      "offsetSamples": 0,
+      "sustain": {
+        "upstreamPath": "Upright Piano, Knight/Sustains/Player_vl1_rr1_B2.flac",
+        "localPath": "sustains/b2.flac",
+        "sha256": "6756558fa22631091034b0e1f69db8a1adbe45b3ab624b3fb9229e591444cdab"
+      },
+      "release": {
+        "upstreamPath": "Upright Piano, Knight/Releases/Player_rel_rr1_B2.flac",
+        "localPath": "releases/b2.flac",
+        "keyCenter": 59,
+        "tuneCents": -5,
+        "offsetSamples": 0,
+        "sha256": "ebfc39bd047ac2da0d50ec38e648cbd34702751d1e7517ecc425c6e7928b9a15"
+      }
+    },
+    {
+      "keyCenter": 61,
+      "keyRange": [61, 62],
+      "tuneCents": 0,
+      "offsetSamples": 0,
+      "sustain": {
+        "upstreamPath": "Upright Piano, Knight/Sustains/Player_vl1_rr1_C#3.flac",
+        "localPath": "sustains/c-sharp-3.flac",
+        "sha256": "6205424cdfb70e3507d3f9f6ba44746dcaebb2a71eeccdf25945cf54c1807b77"
+      },
+      "release": {
+        "upstreamPath": "Upright Piano, Knight/Releases/Player_rel_rr1_C#3.flac",
+        "localPath": "releases/c-sharp-3.flac",
+        "keyCenter": 61,
+        "tuneCents": -5,
+        "offsetSamples": 0,
+        "sha256": "8bf97293a5a35a90d2977df6e46e895e61cce7ab29b21229733927a1d8c61665"
+      }
+    },
+    {
+      "keyCenter": 63,
+      "keyRange": [63, 64],
+      "tuneCents": -6,
+      "offsetSamples": 0,
+      "sustain": {
+        "upstreamPath": "Upright Piano, Knight/Sustains/Player_vl1_rr1_D#3.flac",
+        "localPath": "sustains/d-sharp-3.flac",
+        "sha256": "daab90bf13877d5c0efa461ee0c45e20d9c8a8f795ddb31992b2e2bb88b54545"
+      },
+      "release": {
+        "upstreamPath": "Upright Piano, Knight/Releases/Player_rel_rr1_D#3.flac",
+        "localPath": "releases/d-sharp-3.flac",
+        "keyCenter": 63,
+        "tuneCents": -6,
+        "offsetSamples": 0,
+        "sha256": "fa51741bf95007bdff31c568fc7a544deafc54aa78f848112f050c3f5a065503"
+      }
+    },
+    {
+      "keyCenter": 65,
+      "keyRange": [65, 66],
+      "tuneCents": -4,
+      "offsetSamples": 2,
+      "sustain": {
+        "upstreamPath": "Upright Piano, Knight/Sustains/Player_vl1_rr1_F3.flac",
+        "localPath": "sustains/f3.flac",
+        "sha256": "2f0e4c9ae8329f0c8f09d595e2bb3092f479d6e951978c70cb11dec1a2fafc06"
+      },
+      "release": {
+        "upstreamPath": "Upright Piano, Knight/Releases/Player_rel_rr1_F3.flac",
+        "localPath": "releases/f3.flac",
+        "keyCenter": 65,
+        "tuneCents": -9,
+        "offsetSamples": 0,
+        "sha256": "f6cd712793b5d02081def7ca8b9ece117455b334e7a756177e47233928e0482b"
+      }
+    },
+    {
+      "keyCenter": 69,
+      "keyRange": [69, 70],
+      "tuneCents": 0,
+      "offsetSamples": 0,
+      "sustain": {
+        "upstreamPath": "Upright Piano, Knight/Sustains/Player_vl1_rr1_A3.flac",
+        "localPath": "sustains/a3.flac",
+        "sha256": "8258bba2908579be3a401a498dc5a16ea8fea01b511da798719f4d3bf2284736"
+      },
+      "release": {
+        "upstreamPath": "Upright Piano, Knight/Releases/Player_rel_rr1_A3.flac",
+        "localPath": "releases/a3.flac",
+        "keyCenter": 69,
+        "tuneCents": -6,
+        "offsetSamples": 0,
+        "sha256": "e0c2b850705152a24618585c0394b48274ad6b092b24cbd346756ee478f21814"
+      }
+    },
+    {
+      "keyCenter": 73,
+      "keyRange": [73, 74],
+      "tuneCents": -4,
+      "offsetSamples": 0,
+      "sustain": {
+        "upstreamPath": "Upright Piano, Knight/Sustains/Player_vl1_rr1_C#4.flac",
+        "localPath": "sustains/c-sharp-4.flac",
+        "sha256": "a67b848d211692a49a005bcbcc206ded606f3571077bc41e5bbd41132725e175"
+      },
+      "release": {
+        "upstreamPath": "Upright Piano, Knight/Releases/Player_rel_rr1_C#4.flac",
+        "localPath": "releases/c-sharp-4.flac",
+        "keyCenter": 73,
+        "tuneCents": 0,
+        "offsetSamples": 0,
+        "sha256": "4b2649abd51b1af1bb3dcea58706cd9f8e785f44fb672635f0763f954ef0d4d7"
+      }
+    }
+  ]
+}

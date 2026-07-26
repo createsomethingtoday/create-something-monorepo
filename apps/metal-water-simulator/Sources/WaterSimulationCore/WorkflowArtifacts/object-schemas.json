@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "object_schemas.v0.1",
+  "workflowId": "webflow.marketplace.template-lifecycle",
+  "workflowVersion": "0.1.0",
+  "definitionHash": "sha256:96e880807497d7a417cbf7e7a009d9331996d55e249068767b2417131a91156f",
+  "objects": [
+    {
+      "id": "decision_receipt",
+      "title": "Decision receipt",
+      "sourceSystemId": "substrate",
+      "requiredFields": [
+        "action_id",
+        "correlation_id",
+        "outcome",
+        "workflow_id"
+      ]
+    },
+    {
+      "id": "review_evidence",
+      "title": "Review evidence",
+      "sourceSystemId": "substrate",
+      "requiredFields": [
+        "case_id",
+        "evidence_type",
+        "observed_at",
+        "source"
+      ]
+    },
+    {
+      "id": "template_submission",
+      "title": "Template submission",
+      "sourceSystemId": "airtable-marketplace",
+      "requiredFields": [
+        "asset_id",
+        "published_url",
+        "review_status",
+        "version_id"
+      ]
+    }
+  ]
+}

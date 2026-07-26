@@ -40,21 +40,21 @@
     {
       eyebrow: '01 Map',
       icon: 'folder',
-      title: 'Workflow Map',
+      title: 'Map',
       detail:
         'Name the workflow, source accounts, decision owner, first action boundary, and evidence needed before delegation.'
     },
     {
-      eyebrow: '02 Pilot',
+      eyebrow: '02 Build',
       icon: 'settings',
-      title: 'Workflow Pilot',
+      title: 'Build',
       detail:
         'Turn one repeated handoff into scoped actions, durable state, receipts, and a runbook only after the safe path is clear.'
     },
     {
       eyebrow: '03 Control',
       icon: 'check',
-      title: 'Ongoing Control',
+      title: 'Control',
       detail:
         'Classify live actions as auto-allowed, approval-needed, or blocked with a reason before the workflow touches risk.'
     }
@@ -277,8 +277,8 @@
 <PerformanceNarrativeStage
   id="stack-ownership-story"
   eyebrow="One ownership story"
-  title="Path. Boundary. Ownership. Portability."
-  description="The stack becomes useful when the reader can trace the service path, see where work stops, identify the assets they keep, and understand which external platform earns which role."
+  title="You should be able to leave with everything that matters."
+  description="The stack becomes useful when you can trace the service path and see where work stops. It shows what you keep and what each external platform provides."
   scenes={stackScenes}
   ariaLabel="Stack ownership story"
 >
@@ -291,7 +291,7 @@
         storyId="stack-insurance-claims-intake-story"
         eyebrow="Stack boundary canvas"
         title="The workflow boundary decides what tools are allowed to do."
-        description="This read-only map shows the stack promise in workflow terms: tools can route and prepare, but payout, denial, fraud, and sensitive decisions stop for named authority."
+        description="This read-only map shows the stack promise in workflow terms. Tools can route and prepare, but anything consequential stops for named authority."
         compact
       />
     {:else if scene.id === 'ownership'}
@@ -326,7 +326,7 @@
 <PerformanceConversionHandoff
   eyebrow="Start with the workflow"
   title="Bring the workflow, the accounts, and the decision owner."
-  description="CREATE SOMETHING will map the stack boundary, define the first controlled path, identify what can be assigned, and show what stays visible to the operator before implementation starts."
+  description="CREATE SOMETHING maps the stack boundary and defines the first controlled path. Before implementation starts, you can see what tools may do and what stays visible."
   steps={ctaItems}
   handoff={{
     owner: 'Workflow owner',

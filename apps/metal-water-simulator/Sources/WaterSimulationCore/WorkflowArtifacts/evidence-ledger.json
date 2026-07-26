@@ -1,0 +1,110 @@
+{
+  "schemaVersion": "evidence_ledger.v0.1",
+  "workflowId": "webflow.marketplace.template-lifecycle",
+  "workflowVersion": "0.1.0",
+  "definitionHash": "sha256:96e880807497d7a417cbf7e7a009d9331996d55e249068767b2417131a91156f",
+  "entries": [
+    {
+      "schemaVersion": "workflow_replay_receipt.v0.1",
+      "workflowId": "webflow.marketplace.template-lifecycle",
+      "workflowVersion": "0.1.0",
+      "definitionHash": "sha256:96e880807497d7a417cbf7e7a009d9331996d55e249068767b2417131a91156f",
+      "caseId": "approval-waits-for-reviewer",
+      "actionId": "approve_template",
+      "correlationId": "approval-waits-for-reviewer",
+      "outcome": "approval_required",
+      "receiptFields": {
+        "action_id": "approve_template",
+        "correlation_id": "approval-waits-for-reviewer",
+        "evidence_refs": [
+          "review_summary",
+          "reviewer_id",
+          "validation_result",
+          "version_id"
+        ],
+        "outcome": "approval_required",
+        "reviewer_id": "reviewer-fixture-001",
+        "workflow_id": "webflow.marketplace.template-lifecycle"
+      }
+    },
+    {
+      "schemaVersion": "workflow_replay_receipt.v0.1",
+      "workflowId": "webflow.marketplace.template-lifecycle",
+      "workflowVersion": "0.1.0",
+      "definitionHash": "sha256:96e880807497d7a417cbf7e7a009d9331996d55e249068767b2417131a91156f",
+      "caseId": "complete-validation-passes",
+      "actionId": "validate_submission",
+      "correlationId": "complete-validation-passes",
+      "outcome": "pass",
+      "receiptFields": {
+        "action_id": "validate_submission",
+        "correlation_id": "complete-validation-passes",
+        "evidence_refs": [
+          "asset_id",
+          "published_url",
+          "validation_result",
+          "version_id"
+        ],
+        "outcome": "pass",
+        "workflow_id": "webflow.marketplace.template-lifecycle"
+      }
+    },
+    {
+      "schemaVersion": "workflow_replay_receipt.v0.1",
+      "workflowId": "webflow.marketplace.template-lifecycle",
+      "workflowVersion": "0.1.0",
+      "definitionHash": "sha256:96e880807497d7a417cbf7e7a009d9331996d55e249068767b2417131a91156f",
+      "caseId": "creator-message-policy-block",
+      "actionId": "send_creator_decision",
+      "correlationId": "creator-message-policy-block",
+      "outcome": "blocked",
+      "receiptFields": {
+        "action_id": "send_creator_decision",
+        "correlation_id": "creator-message-policy-block",
+        "evidence_refs": [
+          "decision_receipt",
+          "human_send_confirmation",
+          "reviewer_id"
+        ],
+        "outcome": "blocked",
+        "workflow_id": "webflow.marketplace.template-lifecycle"
+      }
+    },
+    {
+      "schemaVersion": "workflow_replay_receipt.v0.1",
+      "workflowId": "webflow.marketplace.template-lifecycle",
+      "workflowVersion": "0.1.0",
+      "definitionHash": "sha256:96e880807497d7a417cbf7e7a009d9331996d55e249068767b2417131a91156f",
+      "caseId": "missing-validation-evidence-blocks",
+      "actionId": "validate_submission",
+      "correlationId": "missing-validation-evidence-blocks",
+      "outcome": "blocked",
+      "receiptFields": {
+        "action_id": "validate_submission",
+        "correlation_id": "missing-validation-evidence-blocks",
+        "evidence_refs": [
+          "asset_id",
+          "version_id"
+        ],
+        "outcome": "blocked",
+        "workflow_id": "webflow.marketplace.template-lifecycle"
+      }
+    },
+    {
+      "schemaVersion": "workflow_replay_receipt.v0.1",
+      "workflowId": "webflow.marketplace.template-lifecycle",
+      "workflowVersion": "0.1.0",
+      "definitionHash": "sha256:96e880807497d7a417cbf7e7a009d9331996d55e249068767b2417131a91156f",
+      "caseId": "unknown-action-blocks",
+      "actionId": "invented_publish_shortcut",
+      "correlationId": "unknown-action-blocks",
+      "outcome": "blocked",
+      "receiptFields": {
+        "workflow_id": "webflow.marketplace.template-lifecycle",
+        "action_id": "invented_publish_shortcut",
+        "correlation_id": "unknown-action-blocks",
+        "outcome": "blocked"
+      }
+    }
+  ]
+}

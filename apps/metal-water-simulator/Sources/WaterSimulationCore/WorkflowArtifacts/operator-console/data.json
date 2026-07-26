@@ -1,0 +1,720 @@
+{
+  "schemaVersion": "workflow_operator_console.v0.1",
+  "workflowId": "webflow.marketplace.template-lifecycle",
+  "workflowVersion": "0.1.0",
+  "definitionHash": "sha256:96e880807497d7a417cbf7e7a009d9331996d55e249068767b2417131a91156f",
+  "compilerVersion": "workflow-compiler-v0.1",
+  "title": "Webflow Marketplace template lifecycle",
+  "businessObjective": "Reduce objective submission and review work while preserving reviewer ownership of consequential decisions.",
+  "owners": {
+    "workflow": "marketplace-review-lead",
+    "policy": "senior-systems-architect",
+    "technical": "senior-systems-architect"
+  },
+  "workflowMap": {
+    "schemaVersion": "workflow_map.v0.1",
+    "workflowId": "webflow.marketplace.template-lifecycle",
+    "workflowVersion": "0.1.0",
+    "nodes": [
+      {
+        "id": "action:approve_template",
+        "kind": "action",
+        "title": "Approve template"
+      },
+      {
+        "id": "action:monitor_post_launch",
+        "kind": "action",
+        "title": "Monitor post-launch signals"
+      },
+      {
+        "id": "action:publish_template",
+        "kind": "action",
+        "title": "Publish template"
+      },
+      {
+        "id": "action:request_changes",
+        "kind": "action",
+        "title": "Request changes"
+      },
+      {
+        "id": "action:send_creator_decision",
+        "kind": "action",
+        "title": "Send creator-facing decision autonomously"
+      },
+      {
+        "id": "action:validate_submission",
+        "kind": "action",
+        "title": "Validate submission"
+      },
+      {
+        "id": "actor:marketplace-operator",
+        "kind": "actor",
+        "title": "Marketplace operator"
+      },
+      {
+        "id": "actor:marketplace-reviewer",
+        "kind": "actor",
+        "title": "Marketplace reviewer"
+      },
+      {
+        "id": "actor:workflow-runtime",
+        "kind": "actor",
+        "title": "Workflow runtime"
+      },
+      {
+        "id": "state:approved",
+        "kind": "state",
+        "title": "Approved"
+      },
+      {
+        "id": "state:changes_requested",
+        "kind": "state",
+        "title": "Changes requested"
+      },
+      {
+        "id": "state:monitored",
+        "kind": "state",
+        "title": "Monitored"
+      },
+      {
+        "id": "state:published",
+        "kind": "state",
+        "title": "Published"
+      },
+      {
+        "id": "state:ready_for_review",
+        "kind": "state",
+        "title": "Ready for review"
+      },
+      {
+        "id": "state:submitted",
+        "kind": "state",
+        "title": "Submitted"
+      }
+    ],
+    "edges": [
+      {
+        "id": "authority:marketplace-operator:publish_template",
+        "kind": "authorizes",
+        "from": "actor:marketplace-operator",
+        "to": "action:publish_template"
+      },
+      {
+        "id": "authority:marketplace-reviewer:approve_template",
+        "kind": "authorizes",
+        "from": "actor:marketplace-reviewer",
+        "to": "action:approve_template"
+      },
+      {
+        "id": "authority:marketplace-reviewer:request_changes",
+        "kind": "authorizes",
+        "from": "actor:marketplace-reviewer",
+        "to": "action:request_changes"
+      },
+      {
+        "id": "authority:marketplace-reviewer:send_creator_decision",
+        "kind": "authorizes",
+        "from": "actor:marketplace-reviewer",
+        "to": "action:send_creator_decision"
+      },
+      {
+        "id": "authority:workflow-runtime:monitor_post_launch",
+        "kind": "authorizes",
+        "from": "actor:workflow-runtime",
+        "to": "action:monitor_post_launch"
+      },
+      {
+        "id": "authority:workflow-runtime:validate_submission",
+        "kind": "authorizes",
+        "from": "actor:workflow-runtime",
+        "to": "action:validate_submission"
+      },
+      {
+        "id": "transition:approved-to-published:action",
+        "kind": "transitions",
+        "from": "state:approved",
+        "to": "action:publish_template"
+      },
+      {
+        "id": "transition:approved-to-published:state",
+        "kind": "transitions",
+        "from": "action:publish_template",
+        "to": "state:published"
+      },
+      {
+        "id": "transition:published-to-monitored:action",
+        "kind": "transitions",
+        "from": "state:published",
+        "to": "action:monitor_post_launch"
+      },
+      {
+        "id": "transition:published-to-monitored:state",
+        "kind": "transitions",
+        "from": "action:monitor_post_launch",
+        "to": "state:monitored"
+      },
+      {
+        "id": "transition:ready-to-approved:action",
+        "kind": "transitions",
+        "from": "state:ready_for_review",
+        "to": "action:approve_template"
+      },
+      {
+        "id": "transition:ready-to-approved:state",
+        "kind": "transitions",
+        "from": "action:approve_template",
+        "to": "state:approved"
+      },
+      {
+        "id": "transition:ready-to-changes:action",
+        "kind": "transitions",
+        "from": "state:ready_for_review",
+        "to": "action:request_changes"
+      },
+      {
+        "id": "transition:ready-to-changes:state",
+        "kind": "transitions",
+        "from": "action:request_changes",
+        "to": "state:changes_requested"
+      },
+      {
+        "id": "transition:submitted-to-ready:action",
+        "kind": "transitions",
+        "from": "state:submitted",
+        "to": "action:validate_submission"
+      },
+      {
+        "id": "transition:submitted-to-ready:state",
+        "kind": "transitions",
+        "from": "action:validate_submission",
+        "to": "state:ready_for_review"
+      }
+    ]
+  },
+  "decisionInventory": {
+    "schemaVersion": "decision_inventory.v0.1",
+    "workflowId": "webflow.marketplace.template-lifecycle",
+    "workflowVersion": "0.1.0",
+    "definitionHash": "sha256:96e880807497d7a417cbf7e7a009d9331996d55e249068767b2417131a91156f",
+    "decisions": [
+      {
+        "actionId": "approve_template",
+        "title": "Approve template",
+        "kind": "decision",
+        "authority": "marketplace-reviewer",
+        "autonomy": "approval_required",
+        "systemsTouched": [
+          "airtable-marketplace",
+          "policy-os",
+          "template-review-mcp"
+        ],
+        "requiredEvidence": [
+          "review_summary",
+          "reviewer_id",
+          "validation_result",
+          "version_id"
+        ],
+        "approvalOwner": "marketplace-reviewer",
+        "receiptFields": [
+          "action_id",
+          "correlation_id",
+          "evidence_refs",
+          "outcome",
+          "reviewer_id",
+          "workflow_id"
+        ],
+        "recovery": {
+          "mode": "manual_fallback",
+          "owner": "marketplace-reviewer",
+          "path": "Keep the version in review and resolve the approval manually in Airtable."
+        }
+      },
+      {
+        "actionId": "monitor_post_launch",
+        "title": "Monitor post-launch signals",
+        "kind": "read",
+        "authority": "workflow-runtime",
+        "autonomy": "auto_allow",
+        "systemsTouched": [
+          "airtable-marketplace",
+          "substrate"
+        ],
+        "requiredEvidence": [
+          "asset_id",
+          "observed_at",
+          "signal_type"
+        ],
+        "receiptFields": [
+          "action_id",
+          "correlation_id",
+          "evidence_refs",
+          "outcome",
+          "workflow_id"
+        ],
+        "recovery": {
+          "mode": "escalate",
+          "owner": "marketplace-operator",
+          "path": "Retain the last known signal state and request a manual health check."
+        }
+      },
+      {
+        "actionId": "publish_template",
+        "title": "Publish template",
+        "kind": "publish",
+        "authority": "marketplace-operator",
+        "autonomy": "manual_only",
+        "systemsTouched": [
+          "airtable-marketplace",
+          "policy-os"
+        ],
+        "requiredEvidence": [
+          "approval_receipt",
+          "operator_id",
+          "release_metadata",
+          "version_id"
+        ],
+        "approvalOwner": "marketplace-operator",
+        "receiptFields": [
+          "action_id",
+          "correlation_id",
+          "evidence_refs",
+          "operator_id",
+          "outcome",
+          "workflow_id"
+        ],
+        "recovery": {
+          "mode": "rollback",
+          "owner": "marketplace-operator",
+          "path": "Stop publication, preserve the approved version, and follow the marketplace release rollback runbook."
+        }
+      },
+      {
+        "actionId": "request_changes",
+        "title": "Request changes",
+        "kind": "decision",
+        "authority": "marketplace-reviewer",
+        "autonomy": "approval_required",
+        "systemsTouched": [
+          "airtable-marketplace",
+          "policy-os",
+          "template-review-mcp"
+        ],
+        "requiredEvidence": [
+          "review_feedback",
+          "review_summary",
+          "reviewer_id",
+          "version_id"
+        ],
+        "approvalOwner": "marketplace-reviewer",
+        "receiptFields": [
+          "action_id",
+          "correlation_id",
+          "evidence_refs",
+          "outcome",
+          "reviewer_id",
+          "workflow_id"
+        ],
+        "recovery": {
+          "mode": "manual_fallback",
+          "owner": "marketplace-reviewer",
+          "path": "Leave official state unchanged and record feedback manually in Airtable."
+        }
+      },
+      {
+        "actionId": "send_creator_decision",
+        "title": "Send creator-facing decision autonomously",
+        "kind": "write",
+        "authority": "marketplace-reviewer",
+        "autonomy": "blocked",
+        "systemsTouched": [
+          "policy-os",
+          "template-review-mcp"
+        ],
+        "requiredEvidence": [
+          "decision_receipt",
+          "human_send_confirmation",
+          "reviewer_id"
+        ],
+        "receiptFields": [
+          "action_id",
+          "correlation_id",
+          "evidence_refs",
+          "outcome",
+          "workflow_id"
+        ],
+        "recovery": {
+          "mode": "escalate",
+          "owner": "marketplace-reviewer",
+          "path": "Return a draft only and require the reviewer to send through the approved communication path."
+        }
+      },
+      {
+        "actionId": "validate_submission",
+        "title": "Validate submission",
+        "kind": "decision",
+        "authority": "workflow-runtime",
+        "autonomy": "auto_allow",
+        "systemsTouched": [
+          "airtable-marketplace",
+          "template-validation"
+        ],
+        "requiredEvidence": [
+          "asset_id",
+          "published_url",
+          "validation_result",
+          "version_id"
+        ],
+        "receiptFields": [
+          "action_id",
+          "correlation_id",
+          "evidence_refs",
+          "outcome",
+          "workflow_id"
+        ],
+        "recovery": {
+          "mode": "escalate",
+          "owner": "marketplace-reviewer",
+          "path": "Keep the submission in submitted state and request manual validation."
+        }
+      }
+    ]
+  },
+  "approvalSurfaces": {
+    "schemaVersion": "approval_surfaces.v0.1",
+    "workflowId": "webflow.marketplace.template-lifecycle",
+    "workflowVersion": "0.1.0",
+    "definitionHash": "sha256:96e880807497d7a417cbf7e7a009d9331996d55e249068767b2417131a91156f",
+    "actions": [
+      {
+        "actionId": "approve_template",
+        "title": "Approve template",
+        "mode": "approval_required",
+        "owner": "marketplace-reviewer",
+        "requiredEvidence": [
+          "review_summary",
+          "reviewer_id",
+          "validation_result",
+          "version_id"
+        ],
+        "recovery": {
+          "mode": "manual_fallback",
+          "owner": "marketplace-reviewer",
+          "path": "Keep the version in review and resolve the approval manually in Airtable."
+        }
+      },
+      {
+        "actionId": "publish_template",
+        "title": "Publish template",
+        "mode": "manual_only",
+        "owner": "marketplace-operator",
+        "requiredEvidence": [
+          "approval_receipt",
+          "operator_id",
+          "release_metadata",
+          "version_id"
+        ],
+        "recovery": {
+          "mode": "rollback",
+          "owner": "marketplace-operator",
+          "path": "Stop publication, preserve the approved version, and follow the marketplace release rollback runbook."
+        }
+      },
+      {
+        "actionId": "request_changes",
+        "title": "Request changes",
+        "mode": "approval_required",
+        "owner": "marketplace-reviewer",
+        "requiredEvidence": [
+          "review_feedback",
+          "review_summary",
+          "reviewer_id",
+          "version_id"
+        ],
+        "recovery": {
+          "mode": "manual_fallback",
+          "owner": "marketplace-reviewer",
+          "path": "Leave official state unchanged and record feedback manually in Airtable."
+        }
+      },
+      {
+        "actionId": "send_creator_decision",
+        "title": "Send creator-facing decision autonomously",
+        "mode": "blocked",
+        "owner": "marketplace-reviewer",
+        "requiredEvidence": [
+          "decision_receipt",
+          "human_send_confirmation",
+          "reviewer_id"
+        ],
+        "recovery": {
+          "mode": "escalate",
+          "owner": "marketplace-reviewer",
+          "path": "Return a draft only and require the reviewer to send through the approved communication path."
+        }
+      }
+    ]
+  },
+  "replayReport": {
+    "schemaVersion": "workflow_replay_report.v0.1",
+    "workflowId": "webflow.marketplace.template-lifecycle",
+    "workflowVersion": "0.1.0",
+    "definitionHash": "sha256:96e880807497d7a417cbf7e7a009d9331996d55e249068767b2417131a91156f",
+    "cases": [
+      {
+        "caseId": "approval-waits-for-reviewer",
+        "title": "Approval remains reviewer-owned",
+        "actionId": "approve_template",
+        "stateBefore": "ready_for_review",
+        "stateAfter": "ready_for_review",
+        "observedOutcome": "approval_required",
+        "expectedOutcome": "approval_required",
+        "expectationMatched": true,
+        "canExecute": false,
+        "reasonCode": "APPROVAL_REQUIRED",
+        "authority": "marketplace-reviewer",
+        "owner": "marketplace-reviewer",
+        "evidenceReferences": [
+          "review_summary",
+          "reviewer_id",
+          "validation_result",
+          "version_id"
+        ],
+        "missingEvidence": [],
+        "recovery": {
+          "mode": "manual_fallback",
+          "owner": "marketplace-reviewer",
+          "path": "Keep the version in review and resolve the approval manually in Airtable."
+        },
+        "receipt": {
+          "schemaVersion": "workflow_replay_receipt.v0.1",
+          "workflowId": "webflow.marketplace.template-lifecycle",
+          "workflowVersion": "0.1.0",
+          "definitionHash": "sha256:96e880807497d7a417cbf7e7a009d9331996d55e249068767b2417131a91156f",
+          "caseId": "approval-waits-for-reviewer",
+          "actionId": "approve_template",
+          "correlationId": "approval-waits-for-reviewer",
+          "outcome": "approval_required",
+          "receiptFields": {
+            "action_id": "approve_template",
+            "correlation_id": "approval-waits-for-reviewer",
+            "evidence_refs": [
+              "review_summary",
+              "reviewer_id",
+              "validation_result",
+              "version_id"
+            ],
+            "outcome": "approval_required",
+            "reviewer_id": "reviewer-fixture-001",
+            "workflow_id": "webflow.marketplace.template-lifecycle"
+          }
+        }
+      },
+      {
+        "caseId": "complete-validation-passes",
+        "title": "Complete objective validation advances the submission",
+        "actionId": "validate_submission",
+        "stateBefore": "submitted",
+        "stateAfter": "ready_for_review",
+        "observedOutcome": "pass",
+        "expectedOutcome": "pass",
+        "expectationMatched": true,
+        "canExecute": true,
+        "reasonCode": "ACTION_ALLOWED",
+        "authority": "workflow-runtime",
+        "owner": "marketplace-reviewer",
+        "evidenceReferences": [
+          "asset_id",
+          "published_url",
+          "validation_result",
+          "version_id"
+        ],
+        "missingEvidence": [],
+        "recovery": {
+          "mode": "escalate",
+          "owner": "marketplace-reviewer",
+          "path": "Keep the submission in submitted state and request manual validation."
+        },
+        "receipt": {
+          "schemaVersion": "workflow_replay_receipt.v0.1",
+          "workflowId": "webflow.marketplace.template-lifecycle",
+          "workflowVersion": "0.1.0",
+          "definitionHash": "sha256:96e880807497d7a417cbf7e7a009d9331996d55e249068767b2417131a91156f",
+          "caseId": "complete-validation-passes",
+          "actionId": "validate_submission",
+          "correlationId": "complete-validation-passes",
+          "outcome": "pass",
+          "receiptFields": {
+            "action_id": "validate_submission",
+            "correlation_id": "complete-validation-passes",
+            "evidence_refs": [
+              "asset_id",
+              "published_url",
+              "validation_result",
+              "version_id"
+            ],
+            "outcome": "pass",
+            "workflow_id": "webflow.marketplace.template-lifecycle"
+          }
+        }
+      },
+      {
+        "caseId": "creator-message-policy-block",
+        "title": "Autonomous creator messaging remains blocked",
+        "actionId": "send_creator_decision",
+        "stateBefore": "ready_for_review",
+        "stateAfter": "ready_for_review",
+        "observedOutcome": "blocked",
+        "expectedOutcome": "blocked",
+        "expectationMatched": true,
+        "canExecute": false,
+        "reasonCode": "POLICY_BLOCKED",
+        "authority": "marketplace-reviewer",
+        "owner": "marketplace-reviewer",
+        "evidenceReferences": [
+          "decision_receipt",
+          "human_send_confirmation",
+          "reviewer_id"
+        ],
+        "missingEvidence": [],
+        "recovery": {
+          "mode": "escalate",
+          "owner": "marketplace-reviewer",
+          "path": "Return a draft only and require the reviewer to send through the approved communication path."
+        },
+        "receipt": {
+          "schemaVersion": "workflow_replay_receipt.v0.1",
+          "workflowId": "webflow.marketplace.template-lifecycle",
+          "workflowVersion": "0.1.0",
+          "definitionHash": "sha256:96e880807497d7a417cbf7e7a009d9331996d55e249068767b2417131a91156f",
+          "caseId": "creator-message-policy-block",
+          "actionId": "send_creator_decision",
+          "correlationId": "creator-message-policy-block",
+          "outcome": "blocked",
+          "receiptFields": {
+            "action_id": "send_creator_decision",
+            "correlation_id": "creator-message-policy-block",
+            "evidence_refs": [
+              "decision_receipt",
+              "human_send_confirmation",
+              "reviewer_id"
+            ],
+            "outcome": "blocked",
+            "workflow_id": "webflow.marketplace.template-lifecycle"
+          }
+        }
+      },
+      {
+        "caseId": "missing-validation-evidence-blocks",
+        "title": "Incomplete validation cannot advance",
+        "actionId": "validate_submission",
+        "stateBefore": "submitted",
+        "stateAfter": "submitted",
+        "observedOutcome": "blocked",
+        "expectedOutcome": "blocked",
+        "expectationMatched": true,
+        "canExecute": false,
+        "reasonCode": "INSUFFICIENT_EVIDENCE",
+        "authority": "workflow-runtime",
+        "owner": "marketplace-reviewer",
+        "evidenceReferences": [
+          "asset_id",
+          "version_id"
+        ],
+        "missingEvidence": [
+          "published_url",
+          "validation_result"
+        ],
+        "recovery": {
+          "mode": "escalate",
+          "owner": "marketplace-reviewer",
+          "path": "Keep the submission in submitted state and request manual validation."
+        },
+        "receipt": {
+          "schemaVersion": "workflow_replay_receipt.v0.1",
+          "workflowId": "webflow.marketplace.template-lifecycle",
+          "workflowVersion": "0.1.0",
+          "definitionHash": "sha256:96e880807497d7a417cbf7e7a009d9331996d55e249068767b2417131a91156f",
+          "caseId": "missing-validation-evidence-blocks",
+          "actionId": "validate_submission",
+          "correlationId": "missing-validation-evidence-blocks",
+          "outcome": "blocked",
+          "receiptFields": {
+            "action_id": "validate_submission",
+            "correlation_id": "missing-validation-evidence-blocks",
+            "evidence_refs": [
+              "asset_id",
+              "version_id"
+            ],
+            "outcome": "blocked",
+            "workflow_id": "webflow.marketplace.template-lifecycle"
+          }
+        }
+      },
+      {
+        "caseId": "unknown-action-blocks",
+        "title": "Unknown action fails closed",
+        "actionId": "invented_publish_shortcut",
+        "stateBefore": "submitted",
+        "stateAfter": "submitted",
+        "observedOutcome": "blocked",
+        "expectedOutcome": "blocked",
+        "expectationMatched": true,
+        "canExecute": false,
+        "reasonCode": "UNKNOWN_ACTION",
+        "authority": "unresolved",
+        "owner": "marketplace-review-lead",
+        "evidenceReferences": [],
+        "missingEvidence": [],
+        "recovery": {
+          "mode": "escalate",
+          "owner": "marketplace-review-lead",
+          "path": "Stop execution and add or correct the action in the versioned workflow definition."
+        },
+        "receipt": {
+          "schemaVersion": "workflow_replay_receipt.v0.1",
+          "workflowId": "webflow.marketplace.template-lifecycle",
+          "workflowVersion": "0.1.0",
+          "definitionHash": "sha256:96e880807497d7a417cbf7e7a009d9331996d55e249068767b2417131a91156f",
+          "caseId": "unknown-action-blocks",
+          "actionId": "invented_publish_shortcut",
+          "correlationId": "unknown-action-blocks",
+          "outcome": "blocked",
+          "receiptFields": {
+            "workflow_id": "webflow.marketplace.template-lifecycle",
+            "action_id": "invented_publish_shortcut",
+            "correlation_id": "unknown-action-blocks",
+            "outcome": "blocked"
+          }
+        }
+      }
+    ],
+    "counts": {
+      "pass": 1,
+      "approval_required": 1,
+      "blocked": 3
+    },
+    "allExpectationsMatched": true
+  },
+  "acceptanceSummary": {
+    "schemaVersion": "workflow_acceptance_summary.v0.1",
+    "workflowId": "webflow.marketplace.template-lifecycle",
+    "workflowVersion": "0.1.0",
+    "definitionHash": "sha256:96e880807497d7a417cbf7e7a009d9331996d55e249068767b2417131a91156f",
+    "compilerVersion": "workflow-compiler-v0.1",
+    "caseCount": 5,
+    "counts": {
+      "pass": 1,
+      "approval_required": 1,
+      "blocked": 3
+    },
+    "allExpectationsMatched": true,
+    "governanceComplete": true,
+    "requiredCoverage": {
+      "pass": true,
+      "approvalRequired": true,
+      "blocked": true,
+      "insufficientEvidence": true,
+      "unknownAction": true
+    }
+  }
+}

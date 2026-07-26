@@ -105,8 +105,8 @@ describe('DurableObjectBookingStore', () => {
       proposalId: 'proposal_durable',
       status: 'committed',
       slot: {
-        start: '2026-07-14T16:00:00Z',
-        end: '2026-07-14T16:30:00Z'
+        start: '2037-07-14T16:00:00Z',
+        end: '2037-07-14T16:30:00Z'
       },
       scheduler: {
         name: 'Controlled Test',
@@ -125,7 +125,7 @@ describe('DurableObjectBookingStore', () => {
         receiptId: 'receipt_durable',
         status: 'committed',
         policyVersion: 'createsomething-together.v1',
-        occurredAt: '2026-07-13T15:00:00Z',
+        occurredAt: '2037-07-13T15:00:00Z',
         nextActions: ['get_booking'],
         bookingId: booking.bookingId
       } satisfies LifecycleReceipt
@@ -135,7 +135,7 @@ describe('DurableObjectBookingStore', () => {
       receiptId: 'receipt_reminder_durable',
       bookingId: booking.bookingId,
       policyVersion: 'createsomething-together.v1',
-      runAt: '2026-07-14T15:00:00Z',
+      runAt: '2037-07-14T15:00:00Z',
       status: 'pending' as const,
       scheduler: booking.scheduler,
       slot: booking.slot,
@@ -190,7 +190,7 @@ describe('DurableObjectBookingStore', () => {
         receiptId: 'receipt_binding_commit',
         status: 'committed' as const,
         policyVersion: 'createsomething-together.v1',
-        occurredAt: '2026-07-13T15:00:00Z',
+        occurredAt: '2037-07-13T15:00:00Z',
         nextActions: ['get_booking'],
         bookingId: original.bookingId
       }
@@ -198,7 +198,7 @@ describe('DurableObjectBookingStore', () => {
     const moved: Booking = {
       ...original,
       status: 'rescheduled',
-      slot: { start: '2026-07-16T18:00:00Z', end: '2026-07-16T18:30:00Z' }
+      slot: { start: '2037-07-16T18:00:00Z', end: '2037-07-16T18:30:00Z' }
     };
     const rescheduleInput = {
       bookingId: original.bookingId,
@@ -208,7 +208,7 @@ describe('DurableObjectBookingStore', () => {
         receiptId: 'receipt_binding_reschedule',
         status: 'rescheduled' as const,
         policyVersion: 'createsomething-together.v1',
-        occurredAt: '2026-07-13T16:00:00Z',
+        occurredAt: '2037-07-13T16:00:00Z',
         nextActions: ['get_booking'],
         bookingId: original.bookingId
       }
@@ -289,7 +289,7 @@ describe('DurableObjectBookingStore', () => {
           receiptId: 'receipt_binding_cancel',
           status: 'cancelled',
           policyVersion: 'createsomething-together.v1',
-          occurredAt: '2026-07-13T17:00:00Z',
+          occurredAt: '2037-07-13T17:00:00Z',
           nextActions: ['get_booking'],
           bookingId: original.bookingId
         }
@@ -312,15 +312,15 @@ describe('DurableObjectBookingStore', () => {
       receiptId: 'receipt_reminder_controlled',
       bookingId: 'booking_controlled',
       policyVersion: 'createsomething-together.v1',
-      runAt: '2026-07-14T15:00:00Z',
+      runAt: '2037-07-14T15:00:00Z',
       status: 'pending' as const,
       scheduler: {
         name: 'Controlled Test',
         email: 'controlled@example.com'
       },
       slot: {
-        start: '2026-07-14T16:00:00Z',
-        end: '2026-07-14T16:30:00Z'
+        start: '2037-07-14T16:00:00Z',
+        end: '2037-07-14T16:30:00Z'
       },
       meetUrl: 'https://meet.google.com/reminder-test'
     };
@@ -345,7 +345,7 @@ describe('DurableObjectBookingStore', () => {
           receiptId: 'receipt_reminder_booking',
           status: 'committed',
           policyVersion: reminder.policyVersion,
-          occurredAt: '2026-07-13T15:00:00Z',
+          occurredAt: '2037-07-13T15:00:00Z',
           nextActions: ['get_booking'],
           bookingId: booking.bookingId
         }
@@ -358,7 +358,7 @@ describe('DurableObjectBookingStore', () => {
     let sends = 0;
     const first = await runInDurableObject(stub, async (_instance, state) => {
       const store = new DurableObjectBookingStore(state);
-      return store.processDueReminders('2026-07-14T15:00:00Z', async (job) => {
+      return store.processDueReminders('2037-07-14T15:00:00Z', async (job) => {
         sends += 1;
         expect(job.reminderId).toBe(reminder.reminderId);
         return { messageId: 'resend-message-controlled' };
@@ -366,7 +366,7 @@ describe('DurableObjectBookingStore', () => {
     });
     const second = await runInDurableObject(stub, async (_instance, state) => {
       const store = new DurableObjectBookingStore(state);
-      return store.processDueReminders('2026-07-14T15:01:00Z', async () => {
+      return store.processDueReminders('2037-07-14T15:01:00Z', async () => {
         sends += 1;
         return { messageId: 'unexpected-message' };
       });
@@ -390,7 +390,7 @@ describe('DurableObjectBookingStore', () => {
       bookingId: 'booking_retry',
       proposalId: 'proposal_retry',
       status: 'committed',
-      slot: { start: '2026-07-14T16:00:00Z', end: '2026-07-14T16:30:00Z' },
+      slot: { start: '2037-07-14T16:00:00Z', end: '2037-07-14T16:30:00Z' },
       scheduler: { name: 'Controlled Retry', email: 'retry@example.com' },
       provider: {
         eventId: 'google-event-retry',
@@ -402,7 +402,7 @@ describe('DurableObjectBookingStore', () => {
       receiptId: 'receipt_reminder_retry',
       bookingId: booking.bookingId,
       policyVersion: 'createsomething-together.v1',
-      runAt: '2026-07-14T15:00:00Z',
+      runAt: '2037-07-14T15:00:00Z',
       status: 'pending' as const,
       scheduler: booking.scheduler,
       slot: booking.slot,
@@ -417,7 +417,7 @@ describe('DurableObjectBookingStore', () => {
           receiptId: 'receipt_retry_booking',
           status: 'committed',
           policyVersion: reminder.policyVersion,
-          occurredAt: '2026-07-13T15:00:00Z',
+          occurredAt: '2037-07-13T15:00:00Z',
           nextActions: ['get_booking'],
           bookingId: booking.bookingId
         }
@@ -427,23 +427,23 @@ describe('DurableObjectBookingStore', () => {
 
     const first = await runInDurableObject(stub, async (_instance, state) => ({
       result: await new DurableObjectBookingStore(state).processDueReminders(
-        '2026-07-14T15:00:00Z', fail
+        '2037-07-14T15:00:00Z', fail
       ),
       alarm: await state.storage.getAlarm()
     }));
     expect(first).toEqual({
       result: { sent: 0, retryable: 1, failed: 0 },
-      alarm: Date.parse('2026-07-14T15:01:00Z')
+      alarm: Date.parse('2037-07-14T15:01:00Z')
     });
 
     await runInDurableObject(stub, async (_instance, state) => {
       return new DurableObjectBookingStore(state).processDueReminders(
-        '2026-07-14T15:01:00Z', fail
+        '2037-07-14T15:01:00Z', fail
       );
     });
     const terminal = await runInDurableObject(stub, async (_instance, state) => ({
       result: await new DurableObjectBookingStore(state).processDueReminders(
-        '2026-07-14T15:02:00Z', fail
+        '2037-07-14T15:02:00Z', fail
       ),
       alarm: await state.storage.getAlarm(),
       receipt: await new DurableObjectBookingStore(state).getReceipt(reminder.receiptId)
@@ -458,7 +458,7 @@ describe('DurableObjectBookingStore', () => {
       ...reminder,
       reminderId: 'reminder_permanent_failure',
       receiptId: 'receipt_reminder_permanent_failure',
-      runAt: '2026-07-14T15:03:00Z'
+      runAt: '2037-07-14T15:03:00Z'
     };
     const permanent = await runInDurableObject(stub, async (_instance, state) => {
       const store = new DurableObjectBookingStore(state);
@@ -486,7 +486,7 @@ describe('DurableObjectBookingStore', () => {
       bookingId: 'booking_notification_retry',
       proposalId: 'proposal_notification_retry',
       status: 'committed',
-      slot: { start: '2026-07-14T16:00:00Z', end: '2026-07-14T16:30:00Z' },
+      slot: { start: '2037-07-14T16:00:00Z', end: '2037-07-14T16:30:00Z' },
       scheduler: { name: 'Controlled Retry', email: 'retry@example.com' },
       provider: {
         eventId: 'event_notification_retry',

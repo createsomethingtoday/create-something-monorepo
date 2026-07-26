@@ -3,7 +3,7 @@
   import type { Asset, AssetUpdateData } from '$lib/server/airtable';
   import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
-  import { sanitizeLongDescriptionHtml } from '@create-something/webflow-dashboard-core/long-description';
+  import { sanitizeFeedbackHtml, sanitizeLongDescription } from '$lib/utils/sanitize';
   import {
     Header,
     Card,
@@ -44,10 +44,6 @@
     formatWholeNumber
   } from '$lib/utils/format';
 
-  // Sanitize HTML to prevent XSS
-  function sanitizeHtml(html: string | undefined): string {
-    return sanitizeLongDescriptionHtml(html);
-  }
   import {
     Eye,
     ExternalLink,
@@ -640,7 +636,7 @@
                   {#if asset.descriptionLongHtml}
                     <div class="separator"></div>
                     <div class="description-long marketplace-long-description">
-                      {@html sanitizeHtml(asset.descriptionLongHtml)}
+                      {@html sanitizeLongDescription(asset.descriptionLongHtml)}
                     </div>
                   {:else if asset.description}
                     <p class="description-text">{asset.description}</p>
@@ -660,7 +656,7 @@
                   <CardContent>
                     {#if asset.rejectionFeedbackHtml}
                       <div class="rejection-content">
-                        {@html sanitizeHtml(asset.rejectionFeedbackHtml)}
+                        {@html sanitizeFeedbackHtml(asset.rejectionFeedbackHtml)}
                       </div>
                     {:else}
                       <p class="rejection-text">{asset.rejectionFeedback}</p>

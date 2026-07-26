@@ -10,6 +10,7 @@ on:
       - 'packages/cs-mcp-hub-remote/**'
       - 'scripts/cs-hub-fleet-deploy.sh'
       - 'scripts/cs-hub-fleet-verify.sh'
+      - 'scripts/composio-hub-deploy-eligibility.mjs'
       - 'package.json'
       - 'pnpm-lock.yaml'
       - '.github/workflows/composio-hub-deploy.yml'
@@ -50,6 +51,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 2
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -62,6 +65,15 @@ jobs:
           node-version: '22'
           cache: 'pnpm'
 
+      - name: Resolve deploy eligibility
+        id: deploy
+        shell: bash
+        run: |
+          node scripts/composio-hub-deploy-eligibility.mjs \
+            --event "${{ github.event_name }}" \
+            --before "${{ github.event.before }}" \
+            --after "${{ github.sha }}" >> "$GITHUB_OUTPUT"
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -72,18 +84,21 @@ jobs:
         run: pnpm --filter @create-something/composio-bridge build
 
       - name: Deploy Composio toolkit gateway
+        if: steps.deploy.outputs.eligible == 'true'
         run: pnpm --filter @create-something/composio-toolkit-mcp run deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_WORKERS_API_TOKEN != '' && secrets.CLOUDFLARE_WORKERS_API_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Deploy remote MCP hub fleet
+        if: steps.deploy.outputs.eligible == 'true'
         run: pnpm mcp:hub:fleet:deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_WORKERS_API_TOKEN != '' && secrets.CLOUDFLARE_WORKERS_API_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Verify remote MCP hub fleet
+        if: steps.deploy.outputs.eligible == 'true'
         run: pnpm mcp:hub:fleet:verify
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_WORKERS_API_TOKEN != '' && secrets.CLOUDFLARE_WORKERS_API_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
@@ -91,7 +106,7 @@ jobs:
           MCP_SESSION_ACCOUNT_ID: ${{ secrets.POLICY_OS_ACCOUNT_ID }}
 
       - name: Verify Policy OS live gating
-        if: vars.POLICY_OS_LIVE_VERIFY_ENABLED == 'true' && (env.IDENTITY_API_KEY != '' || env.IDENTITY_WORKER_ADMIN_API_KEY != '') && (env.HUB_API_TOKEN != '' || env.CS_MCP_HUB_REMOTE_API_TOKEN != '') && env.HUB_SESSION_RESOLVE_TOKEN != '' && env.MCP_ONLY_AUTH_SUBJECT != '' && env.MCP_ONLY_ACCOUNT_ID != '' && env.MCP_ONLY_TENANT_ID != '' && env.POLICY_OS_AUTH_SUBJECT != '' && env.POLICY_OS_ACCOUNT_ID != '' && env.POLICY_OS_TENANT_ID != ''
+        if: steps.deploy.outputs.eligible == 'true' && vars.POLICY_OS_LIVE_VERIFY_ENABLED == 'true' && (env.IDENTITY_API_KEY != '' || env.IDENTITY_WORKER_ADMIN_API_KEY != '') && (env.HUB_API_TOKEN != '' || env.CS_MCP_HUB_REMOTE_API_TOKEN != '') && env.HUB_SESSION_RESOLVE_TOKEN != '' && env.MCP_ONLY_AUTH_SUBJECT != '' && env.MCP_ONLY_ACCOUNT_ID != '' && env.MCP_ONLY_TENANT_ID != '' && env.POLICY_OS_AUTH_SUBJECT != '' && env.POLICY_OS_ACCOUNT_ID != '' && env.POLICY_OS_TENANT_ID != ''
         run: pnpm policy:os:verify:live
         env:
           AGENCY_BASE_URL: ${{ vars.AGENCY_BASE_URL }}
@@ -115,3 +130,8 @@ jobs:
           POLICY_OS_DENY_TENANT_ID: ${{ secrets.POLICY_OS_DENY_TENANT_ID }}
           POLICY_OS_DENY_EXPECTED_REASON: ${{ vars.POLICY_OS_DENY_EXPECTED_REASON }}
           REQUIRE_AGENCY_ENTITLEMENT_CHECK: ${{ secrets.AGENCY_INTERNAL_API_KEY != '' && 'true' || 'false' }}
+
+      - name: Skip Composio hub deploy
+        if: steps.deploy.outputs.eligible != 'true'
+        run: |
+          echo "Skipping Composio hub deploy and live verification: ${{ steps.deploy.outputs.reason }}"

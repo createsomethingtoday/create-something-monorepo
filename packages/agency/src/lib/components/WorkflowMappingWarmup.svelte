@@ -369,7 +369,7 @@
   $: warmupBookingHref = `${bookingPath}?source=atlas-warmup&intent=${readiness.intent}&lane=${readiness.lane}&warmup=atlas&readiness=${readiness.slug}&score=${readiness.score}`;
 </script>
 
-<div class="workflow-warmup" aria-label="Atlas-inspired workflow mapping warmup">
+<div class="workflow-warmup" aria-label="Workflow mapping warmup">
   <div class="warmup-intake">
     <label>
       <span>Workflow</span>

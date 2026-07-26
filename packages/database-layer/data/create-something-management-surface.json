@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:management-surface:internal",
-  "generatedAt": "2026-07-13T01:55:01.991Z",
+  "generatedAt": "2026-07-23T05:11:09.579Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceReadinessId": "substrate:create-something:operating-slice-readiness:internal",
@@ -335,6 +335,20 @@
       "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
       "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-app-create-something-create-something-scheduler-apps-create-something-scheduler",
       "mcpUri": "substrate://topology/internal/records/substrate-create-something-app-create-something-create-something-scheduler-apps-create-something-scheduler",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-app-create-something-even-codex-presence-apps-even-codex-presence",
+      "kind": "topology_record",
+      "title": "@create-something/even-codex-presence",
+      "recordId": "substrate:create-something:app:create-something-even-codex-presence-apps-even-codex-presence",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-app-create-something-even-codex-presence-apps-even-codex-presence",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-app-create-something-even-codex-presence-apps-even-codex-presence",
       "agentCommand": "databaseLayer.topology.records.get",
       "access": [
         "read"
@@ -902,6 +916,34 @@
       "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
     },
     {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-package-create-something-client-workspace-demo-packages-client-workspace-clients-demo-frontend",
+      "kind": "topology_record",
+      "title": "@create-something/client-workspace-demo",
+      "recordId": "substrate:create-something:package:create-something-client-workspace-demo-packages-client-workspace-clients-demo-frontend",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-package-create-something-client-workspace-demo-packages-client-workspace-clients-demo-frontend",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-package-create-something-client-workspace-demo-packages-client-workspace-clients-demo-frontend",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-package-create-something-client-workspace-packages-client-workspace",
+      "kind": "topology_record",
+      "title": "@create-something/client-workspace",
+      "recordId": "substrate:create-something:package:create-something-client-workspace-packages-client-workspace",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-package-create-something-client-workspace-packages-client-workspace",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-package-create-something-client-workspace-packages-client-workspace",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
       "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-package-create-something-cloudflare-sdk-packages-cloudflare-sdk",
       "kind": "topology_record",
       "title": "@create-something/cloudflare-sdk",
@@ -923,6 +965,20 @@
       "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
       "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-package-create-something-codebase-vector-database-packages-codebase-vector-database",
       "mcpUri": "substrate://topology/internal/records/substrate-create-something-package-create-something-codebase-vector-database-packages-codebase-vector-database",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-package-create-something-codex-presence-packages-codex-presence",
+      "kind": "topology_record",
+      "title": "@create-something/codex-presence",
+      "recordId": "substrate:create-something:package:create-something-codex-presence-packages-codex-presence",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-package-create-something-codex-presence-packages-codex-presence",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-package-create-something-codex-presence-packages-codex-presence",
       "agentCommand": "databaseLayer.topology.records.get",
       "access": [
         "read"
@@ -1917,6 +1973,20 @@
       "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
       "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-package-create-something-orchestration-packages-orchestration",
       "mcpUri": "substrate://topology/internal/records/substrate-create-something-package-create-something-orchestration-packages-orchestration",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-package-create-something-owned-agent-runtime-packages-owned-agent-runtime",
+      "kind": "topology_record",
+      "title": "@create-something/owned-agent-runtime",
+      "recordId": "substrate:create-something:package:create-something-owned-agent-runtime-packages-owned-agent-runtime",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-package-create-something-owned-agent-runtime-packages-owned-agent-runtime",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-package-create-something-owned-agent-runtime-packages-owned-agent-runtime",
       "agentCommand": "databaseLayer.topology.records.get",
       "access": [
         "read"
@@ -3926,6 +3996,20 @@
       "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
     },
     {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-worker-packages-owned-agent-runtime-wrangler-jsonc",
+      "kind": "topology_record",
+      "title": "packages/owned-agent-runtime/wrangler.jsonc",
+      "recordId": "substrate:create-something:worker:packages-owned-agent-runtime-wrangler-jsonc",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-worker-packages-owned-agent-runtime-wrangler-jsonc",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-worker-packages-owned-agent-runtime-wrangler-jsonc",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
       "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-worker-packages-playbook-mcp-worker-wrangler-toml",
       "kind": "topology_record",
       "title": "playbook-mcp worker",
@@ -4864,6 +4948,34 @@
       "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
     },
     {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-policy-docs-policies-v1-policy-identity-subject-rebind-governance-v1-json",
+      "kind": "topology_record",
+      "title": "policy.identity-subject-rebind-governance.v1.json",
+      "recordId": "substrate:create-something:policy:docs-policies-v1-policy-identity-subject-rebind-governance-v1-json",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-policy-docs-policies-v1-policy-identity-subject-rebind-governance-v1-json",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-policy-docs-policies-v1-policy-identity-subject-rebind-governance-v1-json",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-policy-docs-policies-v1-policy-identity-subject-rebind-governance-v1-md",
+      "kind": "topology_record",
+      "title": "policy.identity-subject-rebind-governance.v1.md",
+      "recordId": "substrate:create-something:policy:docs-policies-v1-policy-identity-subject-rebind-governance-v1-md",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-policy-docs-policies-v1-policy-identity-subject-rebind-governance-v1-md",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-policy-docs-policies-v1-policy-identity-subject-rebind-governance-v1-md",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
       "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-policy-docs-policies-v1-policy-integration-selection-v1-json",
       "kind": "topology_record",
       "title": "policy.integration-selection.v1.json",
@@ -5172,6 +5284,34 @@
       "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
     },
     {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-policy-docs-policies-v1-policy-prose-quality-v1-json",
+      "kind": "topology_record",
+      "title": "policy.prose-quality.v1.json",
+      "recordId": "substrate:create-something:policy:docs-policies-v1-policy-prose-quality-v1-json",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-policy-docs-policies-v1-policy-prose-quality-v1-json",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-policy-docs-policies-v1-policy-prose-quality-v1-json",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-policy-docs-policies-v1-policy-prose-quality-v1-md",
+      "kind": "topology_record",
+      "title": "policy.prose-quality.v1.md",
+      "recordId": "substrate:create-something:policy:docs-policies-v1-policy-prose-quality-v1-md",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-policy-docs-policies-v1-policy-prose-quality-v1-md",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-policy-docs-policies-v1-policy-prose-quality-v1-md",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
       "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-policy-docs-policies-v1-policy-prospect-hub-onboarding-v1-json",
       "kind": "topology_record",
       "title": "policy.prospect-hub-onboarding.v1.json",
@@ -5221,6 +5361,34 @@
       "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
       "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-policy-docs-policies-v1-policy-service-tier-entitlement-v1-md",
       "mcpUri": "substrate://topology/internal/records/substrate-create-something-policy-docs-policies-v1-policy-service-tier-entitlement-v1-md",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-policy-docs-policies-v1-policy-simplified-technical-english-v1-json",
+      "kind": "topology_record",
+      "title": "policy.simplified-technical-english.v1.json",
+      "recordId": "substrate:create-something:policy:docs-policies-v1-policy-simplified-technical-english-v1-json",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-policy-docs-policies-v1-policy-simplified-technical-english-v1-json",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-policy-docs-policies-v1-policy-simplified-technical-english-v1-json",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-policy-docs-policies-v1-policy-simplified-technical-english-v1-md",
+      "kind": "topology_record",
+      "title": "policy.simplified-technical-english.v1.md",
+      "recordId": "substrate:create-something:policy:docs-policies-v1-policy-simplified-technical-english-v1-md",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-policy-docs-policies-v1-policy-simplified-technical-english-v1-md",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-policy-docs-policies-v1-policy-simplified-technical-english-v1-md",
       "agentCommand": "databaseLayer.topology.records.get",
       "access": [
         "read"
@@ -5452,6 +5620,20 @@
       "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
     },
     {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-guide-docs-guides-codex-presence-even-g2-md",
+      "kind": "topology_record",
+      "title": "CODEX_PRESENCE_EVEN_G2.md",
+      "recordId": "substrate:create-something:guide:docs-guides-codex-presence-even-g2-md",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-guide-docs-guides-codex-presence-even-g2-md",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-guide-docs-guides-codex-presence-even-g2-md",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
       "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-guide-docs-guides-coding-agent-harness-pattern-md",
       "kind": "topology_record",
       "title": "CODING_AGENT_HARNESS_PATTERN.md",
@@ -5655,6 +5837,20 @@
       "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
       "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-guide-docs-guides-loops-above-agents-md",
       "mcpUri": "substrate://topology/internal/records/substrate-create-something-guide-docs-guides-loops-above-agents-md",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-guide-docs-guides-map-product-operations-md",
+      "kind": "topology_record",
+      "title": "MAP_PRODUCT_OPERATIONS.md",
+      "recordId": "substrate:create-something:guide:docs-guides-map-product-operations-md",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-guide-docs-guides-map-product-operations-md",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-guide-docs-guides-map-product-operations-md",
       "agentCommand": "databaseLayer.topology.records.get",
       "access": [
         "read"
@@ -6918,37 +7114,6 @@
       "policy": "Proposal and approval records are local review state until an owning production workflow promotes them."
     },
     {
-      "id": "substrate:create-something:management-resource:slice:substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-mcp-surface-judgment-mcp",
-      "kind": "slice",
-      "title": "Judgment MCP Atlas coverage",
-      "recordId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-mcp-surface-judgment-mcp",
-      "sourcePath": "packages/database-layer/data/create-something-operating-slice-review.json",
-      "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-mcp-surface-judgment-mcp",
-      "mcpUri": "substrate://operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-mcp-surface-judgment-mcp",
-      "agentCommand": "databaseLayer.operatingSlices.get",
-      "access": [
-        "read",
-        "propose"
-      ],
-      "policy": "Proposal and approval records are local review state until an owning production workflow promotes them."
-    },
-    {
-      "id": "substrate:create-something:management-resource:readiness:substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-mcp-surface-judgment-mcp",
-      "kind": "readiness",
-      "title": "Judgment MCP Atlas coverage readiness",
-      "recordId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-mcp-surface-judgment-mcp",
-      "sourcePath": "packages/database-layer/data/create-something-operating-slice-readiness.json",
-      "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-mcp-surface-judgment-mcp/readiness",
-      "mcpUri": "substrate://operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-mcp-surface-judgment-mcp/readiness",
-      "agentCommand": "databaseLayer.operatingSlices.readiness",
-      "access": [
-        "read",
-        "approve",
-        "receipt"
-      ],
-      "policy": "Proposal and approval records are local review state until an owning production workflow promotes them."
-    },
-    {
       "id": "substrate:create-something:management-resource:slice:substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-judgment-surface-judgment-package",
       "kind": "slice",
       "title": "Judgment package Atlas coverage",
@@ -6971,6 +7136,37 @@
       "sourcePath": "packages/database-layer/data/create-something-operating-slice-readiness.json",
       "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-judgment-surface-judgment-package/readiness",
       "mcpUri": "substrate://operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-judgment-surface-judgment-package/readiness",
+      "agentCommand": "databaseLayer.operatingSlices.readiness",
+      "access": [
+        "read",
+        "approve",
+        "receipt"
+      ],
+      "policy": "Proposal and approval records are local review state until an owning production workflow promotes them."
+    },
+    {
+      "id": "substrate:create-something:management-resource:slice:substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-mcp-surface-judgment-mcp",
+      "kind": "slice",
+      "title": "Judgment MCP Atlas coverage",
+      "recordId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-mcp-surface-judgment-mcp",
+      "sourcePath": "packages/database-layer/data/create-something-operating-slice-review.json",
+      "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-mcp-surface-judgment-mcp",
+      "mcpUri": "substrate://operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-mcp-surface-judgment-mcp",
+      "agentCommand": "databaseLayer.operatingSlices.get",
+      "access": [
+        "read",
+        "propose"
+      ],
+      "policy": "Proposal and approval records are local review state until an owning production workflow promotes them."
+    },
+    {
+      "id": "substrate:create-something:management-resource:readiness:substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-mcp-surface-judgment-mcp",
+      "kind": "readiness",
+      "title": "Judgment MCP Atlas coverage readiness",
+      "recordId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-mcp-surface-judgment-mcp",
+      "sourcePath": "packages/database-layer/data/create-something-operating-slice-readiness.json",
+      "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-mcp-surface-judgment-mcp/readiness",
+      "mcpUri": "substrate://operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-mcp-surface-judgment-mcp/readiness",
       "agentCommand": "databaseLayer.operatingSlices.readiness",
       "access": [
         "read",
@@ -7166,6 +7362,37 @@
       "policy": "Proposal and approval records are local review state until an owning production workflow promotes them."
     },
     {
+      "id": "substrate:create-something:management-resource:slice:substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-package-surface-mixed-client",
+      "kind": "slice",
+      "title": "Mixed client Atlas coverage",
+      "recordId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-package-surface-mixed-client",
+      "sourcePath": "packages/database-layer/data/create-something-operating-slice-review.json",
+      "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-package-surface-mixed-client",
+      "mcpUri": "substrate://operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-package-surface-mixed-client",
+      "agentCommand": "databaseLayer.operatingSlices.get",
+      "access": [
+        "read",
+        "propose"
+      ],
+      "policy": "Proposal and approval records are local review state until an owning production workflow promotes them."
+    },
+    {
+      "id": "substrate:create-something:management-resource:readiness:substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-package-surface-mixed-client",
+      "kind": "readiness",
+      "title": "Mixed client Atlas coverage readiness",
+      "recordId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-package-surface-mixed-client",
+      "sourcePath": "packages/database-layer/data/create-something-operating-slice-readiness.json",
+      "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-package-surface-mixed-client/readiness",
+      "mcpUri": "substrate://operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-package-surface-mixed-client/readiness",
+      "agentCommand": "databaseLayer.operatingSlices.readiness",
+      "access": [
+        "read",
+        "approve",
+        "receipt"
+      ],
+      "policy": "Proposal and approval records are local review state until an owning production workflow promotes them."
+    },
+    {
       "id": "substrate:create-something:management-resource:slice:substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-automation-surface-mixed-worker",
       "kind": "slice",
       "title": "Mixed worker Atlas coverage",
@@ -7290,13 +7517,13 @@
       "policy": "Proposal and approval records are local review state until an owning production workflow promotes them."
     },
     {
-      "id": "substrate:create-something:management-resource:slice:substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-package-surface-mixed-client",
+      "id": "substrate:create-something:management-resource:slice:substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-application-surface-judgment-app",
       "kind": "slice",
-      "title": "Mixed client Atlas coverage",
-      "recordId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-package-surface-mixed-client",
+      "title": "Judgment app Atlas coverage",
+      "recordId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-application-surface-judgment-app",
       "sourcePath": "packages/database-layer/data/create-something-operating-slice-review.json",
-      "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-package-surface-mixed-client",
-      "mcpUri": "substrate://operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-package-surface-mixed-client",
+      "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-application-surface-judgment-app",
+      "mcpUri": "substrate://operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-application-surface-judgment-app",
       "agentCommand": "databaseLayer.operatingSlices.get",
       "access": [
         "read",
@@ -7305,13 +7532,13 @@
       "policy": "Proposal and approval records are local review state until an owning production workflow promotes them."
     },
     {
-      "id": "substrate:create-something:management-resource:readiness:substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-package-surface-mixed-client",
+      "id": "substrate:create-something:management-resource:readiness:substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-application-surface-judgment-app",
       "kind": "readiness",
-      "title": "Mixed client Atlas coverage readiness",
-      "recordId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-package-surface-mixed-client",
+      "title": "Judgment app Atlas coverage readiness",
+      "recordId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-application-surface-judgment-app",
       "sourcePath": "packages/database-layer/data/create-something-operating-slice-readiness.json",
-      "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-package-surface-mixed-client/readiness",
-      "mcpUri": "substrate://operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-package-surface-mixed-client/readiness",
+      "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-application-surface-judgment-app/readiness",
+      "mcpUri": "substrate://operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-application-surface-judgment-app/readiness",
       "agentCommand": "databaseLayer.operatingSlices.readiness",
       "access": [
         "read",
@@ -7343,37 +7570,6 @@
       "sourcePath": "packages/database-layer/data/create-something-operating-slice-readiness.json",
       "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-database-surface-database-agent/readiness",
       "mcpUri": "substrate://operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-database-surface-database-agent/readiness",
-      "agentCommand": "databaseLayer.operatingSlices.readiness",
-      "access": [
-        "read",
-        "approve",
-        "receipt"
-      ],
-      "policy": "Proposal and approval records are local review state until an owning production workflow promotes them."
-    },
-    {
-      "id": "substrate:create-something:management-resource:slice:substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-application-surface-judgment-app",
-      "kind": "slice",
-      "title": "Judgment app Atlas coverage",
-      "recordId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-application-surface-judgment-app",
-      "sourcePath": "packages/database-layer/data/create-something-operating-slice-review.json",
-      "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-application-surface-judgment-app",
-      "mcpUri": "substrate://operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-application-surface-judgment-app",
-      "agentCommand": "databaseLayer.operatingSlices.get",
-      "access": [
-        "read",
-        "propose"
-      ],
-      "policy": "Proposal and approval records are local review state until an owning production workflow promotes them."
-    },
-    {
-      "id": "substrate:create-something:management-resource:readiness:substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-application-surface-judgment-app",
-      "kind": "readiness",
-      "title": "Judgment app Atlas coverage readiness",
-      "recordId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-application-surface-judgment-app",
-      "sourcePath": "packages/database-layer/data/create-something-operating-slice-readiness.json",
-      "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-application-surface-judgment-app/readiness",
-      "mcpUri": "substrate://operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-application-surface-judgment-app/readiness",
       "agentCommand": "databaseLayer.operatingSlices.readiness",
       "access": [
         "read",

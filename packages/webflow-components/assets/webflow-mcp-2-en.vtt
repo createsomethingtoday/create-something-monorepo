@@ -1,0 +1,270 @@
+WEBVTT
+
+00:03.920 --> 00:09.340
+The way marketing teams work is changing.
+Your design tools, your CMS, your
+
+00:09.340 --> 00:14.040
+analytics platform haven't gone anywhere,
+but more and more of the actual work is
+
+00:14.040 --> 00:18.980
+happening inside a chat window. And agents
+are increasingly becoming members of your
+
+00:18.980 --> 00:23.740
+extended team. But the stakes in the web
+are higher than writing in internal doc.
+
+00:24.400 --> 00:28.180
+When an agent makes a change to your
+website, it's visible to every customer,
+
+00:28.180 --> 00:33.780
+prospects, and AI search engine that
+discovers you. Marketing teams now have to
+
+00:33.780 --> 00:38.540
+move at the speed of AI without losing the
+governance, control, and scale that
+
+00:38.540 --> 00:44.320
+production sites demand. At Webflow, we're
+building the future of marketing, one
+
+00:44.320 --> 00:48.120
+where every digital experience is
+continuously growing, continuously getting
+
+00:48.120 --> 00:53.040
+better, different for every person who
+touches it, but unmistakably the same
+
+00:53.040 --> 00:59.380
+brand underneath. Today marks a major step
+towards that future with Webflow MCP 2.0.
+
+00:59.720 --> 01:04.400
+I can't wait for you all to see how it
+works. Keegan, take it away. Webflow has
+
+01:04.400 --> 01:08.320
+always given teams everything that they
+need to build confidently at scale, design
+
+01:08.320 --> 01:13.560
+tools, governance, and the platform
+underneath. MCP 2.0 is how we're bringing
+
+01:13.560 --> 01:18.880
+that same foundation to the way teams
+build with AI today. For some of you, this
+
+01:18.880 --> 01:22.820
+will be your first introduction to what
+Webflow's MCP can do. For the growing
+
+01:22.820 --> 01:26.700
+number of you already building with it,
+you're gonna see some big improvements. So
+
+01:26.700 --> 01:32.960
+let's get into it. For those who aren't
+already familiar, Webflow's MCP server
+
+01:32.960 --> 01:36.680
+makes it easy to connect Webflow to AI
+tools like Claude and Cursor, so you can
+
+01:36.680 --> 01:40.980
+design, build, and manage your sites
+through natural conversation or full-agent
+
+01:40.980 --> 01:46.480
+workflows. With MCP 2.0, we're making that
+experience a lot more powerful, so you can
+
+01:46.480 --> 01:50.840
+move faster with the control and
+governance that you need to scale. The
+
+01:50.840 --> 01:55.880
+first big update is deeper support for how
+teams build and update pages. Agents can
+
+01:55.880 --> 02:00.820
+now create and manage components with full
+support for props, variants, and slots.
+
+02:01.520 --> 02:06.160
+They can also connect components and
+elements to CMS data. So when you ask an
+
+02:06.160 --> 02:10.060
+AI tool to build something, it can deliver
+production-ready outputs that use your
+
+02:10.060 --> 02:14.640
+existing design system and work with
+dynamic data. Let's start with a prompt to
+
+02:14.640 --> 02:19.600
+build a new CMS collection page using our
+site's existing design system. We can go
+
+02:19.600 --> 02:24.200
+even further by asking you to import CMS
+items to populate that collection page and
+
+02:24.200 --> 02:29.080
+bind the data to fields that connect the
+content. I now have a dynamic page that is
+
+02:29.080 --> 02:34.140
+on-brand and ready to publish. Also,
+because it's built in Webflow, this is a
+
+02:34.140 --> 02:39.040
+production-ready page supported by all the
+tools you need to manage, optimize, and
+
+02:39.040 --> 02:45.320
+scale it from day one. AI can help you
+build fast by default, but getting output
+
+02:45.320 --> 02:50.340
+that's fast and yours requires providing
+your agents the right context. What your
+
+02:50.340 --> 02:54.260
+brand sounds like, how to apply your
+design system, what your legal team will
+
+02:54.260 --> 02:59.500
+care about the most. For most teams, this
+context exists, but it's fragmented. It's
+
+02:59.500 --> 03:03.840
+not readily available for agents to
+reference. Agent instructions fixes that.
+
+03:04.520 --> 03:09.620
+Now, your team can create and store your
+context once, directly in Webflow, and
+
+03:09.620 --> 03:13.860
+your agents can reference it wherever they
+work. Agent instructions can include
+
+03:13.860 --> 03:18.180
+anything from your design system resources
+to external references like legal policies
+
+03:18.180 --> 03:23.620
+or voice and tone guidelines. Once that
+context is in place, your agents have the
+
+03:23.620 --> 03:28.020
+same information as the rest of your team,
+and the work they produce actually shows
+
+03:28.020 --> 03:34.860
+it. MCP 2.0 also makes your analyzed data
+accessible directly inside of your AI
+
+03:34.860 --> 03:38.880
+workflows. You can ask an agent how your
+site is performing this week compared to
+
+03:38.880 --> 03:44.300
+last week. Things like traffic, top pages,
+sessions by channel, all of it, and you
+
+03:44.300 --> 03:49.160
+get answers without leaving your chat. But
+the real power is what you can do with the
+
+03:49.160 --> 03:52.680
+data once you have it. Because the MCP
+connects Webflow to the rest of your
+
+03:52.680 --> 03:56.560
+stack, you can pull site performance data
+directly into the tools that your team
+
+03:56.560 --> 04:01.420
+already works in. Share a weekly summary
+to Slack, push data into amplitude, or
+
+04:01.420 --> 04:05.660
+feed insights into whatever workflow makes
+sense for your team. Of course, giving
+
+04:05.660 --> 04:09.700
+agents more access and the right context
+is only part of the equation. The other
+
+04:09.700 --> 04:16.420
+part is making sure they're working within
+the right boundaries. MCP 2.0 works with
+
+04:16.420 --> 04:20.300
+the same roles and permissions that you've
+already configured in Webflow. It respects
+
+04:20.300 --> 04:24.800
+custom roles, granular access per site,
+per CMS collection, per page, and per
+
+04:24.800 --> 04:29.180
+locale. If a teammate connects Cloud
+through the MCP, they can only do what
+
+04:29.180 --> 04:34.240
+their Webflow role allows them to do. And
+just like page branching has enabled teams
+
+04:34.240 --> 04:39.000
+to work on page updates safely, your agent
+can now work on page branches as well, so
+
+04:39.000 --> 04:42.980
+that they're in an isolated environment
+without touching production content. For
+
+04:42.980 --> 04:47.000
+example, you can work on homepage updates
+in a branch to ensure your changes don't
+
+04:47.000 --> 04:51.560
+make it to your production site until
+you're absolutely ready. Finally, every
+
+04:51.560 --> 04:55.300
+change made through Webflow MCP is now
+logged in your site activity log with
+
+04:55.300 --> 04:59.740
+clear AI attribution. So you can see
+exactly what was changed, when, and
+
+04:59.740 --> 05:03.980
+whether it was a person or an agent. You
+can even query that log directly from your
+
+05:03.980 --> 05:08.640
+chat, so getting to the bottom of an issue
+takes seconds, not hours. So to sum it up,
+
+05:08.940 --> 05:13.860
+MCP 2.0 empowers you to move faster with
+everything that you need for what comes
+
+05:13.860 --> 05:19.120
+next. And it's free for everyone, so check
+out the link below to learn more. There's
+
+05:19.120 --> 05:22.020
+more coming this summer. We'll see you at
+Webflow.com.
+

@@ -18,6 +18,33 @@ Current Worker configs:
 | `wrangler.cracked.toml` | Cracked Live | `cracked_sync` |
 | `wrangler.lightswitch.toml` | Lightswitch | `lightswitch_sync` |
 
+## Claude Enterprise connector (Cracked Live)
+
+Cracked Live supports the same CREATE SOMETHING Identity connector pattern as
+Webflow Template Review MCP while preserving the existing Hub/Notion bearer
+path.
+
+- Connector name: `Cracked Live Ticket Sync MCP`
+- Connector URL:
+  `https://halfdozen-cracked-sync-mcp.createsomething.workers.dev/mcp`
+- OAuth discovery:
+  `https://halfdozen-cracked-sync-mcp.createsomething.workers.dev/.well-known/oauth-protected-resource`
+- Authorization server: `https://id.createsomething.space`
+- OAuth scopes: `cracked-sync:read` and `cracked-sync:write`
+- Admission: exact verified emails in `OAUTH_ALLOWED_EMAILS` and/or exact
+  verified email domains in `OAUTH_ALLOWED_DOMAINS`; empty allowlists fail
+  closed. Cracked Live production accepts `halfdozen.co` and
+  `createsomething.io`.
+
+Claude registers through Dynamic Client Registration and each admitted
+operator signs in through CREATE SOMETHING Identity. A read-only token sees
+only preflight, audit, and repair-planning tools. Write tools are registered
+only when Identity grants `cracked-sync:write`.
+
+The legacy `MCP_API_KEY` path remains active for the CREATE SOMETHING Hub and
+the existing Notion custom-agent connection. Do not remove or rotate that
+bearer as part of Claude connector rollout.
+
 ## Tools
 
 - `<prefix>_preflight` checks tokens, data source visibility, and schemas.
@@ -88,6 +115,26 @@ pnpm deploy:halfdozen-c3-management-sync-mcp
 pnpm deploy:halfdozen-cracked-sync-mcp
 pnpm deploy:halfdozen-lightswitch-sync-mcp
 ```
+
+For the first Cracked Live OAuth promotion, deploy and verify in this order:
+
+```bash
+pnpm --filter @create-something/identity-worker test
+pnpm --filter @create-something/identity-worker deploy
+pnpm --filter @create-something/halfdozen-blondish-sync-mcp typecheck
+pnpm --filter @create-something/halfdozen-blondish-sync-mcp test
+pnpm deploy:halfdozen-cracked-sync-mcp
+```
+
+Then add the connector URL in Claude Enterprise, complete one admitted-user
+sign-in, confirm all eight `cracked_sync_*` tools are visible for a write-scoped
+operator, and run `cracked_sync_preflight` followed by `cracked_sync_audit`.
+Those tools are read-only and provide the initial live receipt. Do not run a
+repair or reconciliation tool merely to prove connector readiness.
+
+Rollback the Cracked Live Worker to its previous Cloudflare version if OAuth
+resource handling breaks MCP traffic. The existing shared bearer path is the
+compatibility boundary and must remain live throughout rollout.
 
 Set secrets with Wrangler or Infisical-backed deployment:
 

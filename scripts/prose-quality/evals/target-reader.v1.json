@@ -30,7 +30,7 @@
       "source": {
         "file": "packages/agency/src/routes/+page.svelte",
         "line": 170,
-        "anchor": "Evidence collection completed for 49 of 50 selected cases."
+        "anchor": "Evidence collection finished for 49 of 50 selected cases."
       },
       "reason": "Pairs a concrete result with explicit limits on automated judgment and unmeasured time savings."
     },

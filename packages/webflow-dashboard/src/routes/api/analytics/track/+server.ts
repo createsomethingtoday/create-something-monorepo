@@ -3,6 +3,16 @@ import type { RequestHandler } from './$types';
 import { hashString } from '$lib/utils/hash';
 import { hasAdminAccess } from '$lib/server/security';
 
+/**
+ * Parses a bounded positive integer from a query string.
+ * `?days=abc` previously produced an Invalid Date and a 500.
+ */
+function parsePositiveInt(raw: string | null, fallback: number, max: number): number {
+	const parsed = Number.parseInt(raw ?? '', 10);
+	if (!Number.isFinite(parsed) || parsed < 1) return fallback;
+	return Math.min(parsed, max);
+}
+
 export const POST: RequestHandler = async ({ request, platform, locals }) => {
 	const db = platform?.env?.DB;
 	if (!db) {
@@ -22,8 +32,13 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
 			return json({ error: 'Event name required' }, { status: 400 });
 		}
 
-		// Hash user email for privacy
-		const userHash = locals.user ? await hashString(locals.user.email) : 'anonymous';
+		// Hash user email for privacy. This route sits behind the session check in
+		// hooks.server.ts, so an unauthenticated event cannot reach the insert.
+		if (!locals.user?.email) {
+			return json({ success: true });
+		}
+
+		const userHash = await hashString(locals.user.email);
 
 		// Store event
 		await db
@@ -64,8 +79,8 @@ export const GET: RequestHandler = async ({ platform, locals, url }) => {
 
 	try {
 		const eventName = url.searchParams.get('event');
-		const days = parseInt(url.searchParams.get('days') || '7');
-		const limit = Math.min(parseInt(url.searchParams.get('limit') || '100'), 1000);
+		const days = parsePositiveInt(url.searchParams.get('days'), 7, 365);
+		const limit = parsePositiveInt(url.searchParams.get('limit'), 100, 1000);
 
 		const dateFilter = new Date();
 		dateFilter.setDate(dateFilter.getDate() - days);

@@ -52,7 +52,7 @@ export default declareComponent(TemplateCarouselSection, {
     }),
     sortOverride: props.Variant({
       name: 'Sort Override',
-      options: ['auto', 'popular', 'newest', 'price_asc', 'price_desc'],
+      options: ['auto', 'popular', 'best_selling', 'newest', 'price_asc', 'price_desc'],
       defaultValue: 'auto',
       tooltip: 'Auto uses the selected preset sort.',
     }),

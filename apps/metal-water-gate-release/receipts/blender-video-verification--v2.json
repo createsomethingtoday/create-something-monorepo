@@ -1,0 +1,28 @@
+{
+  "audioCodec": "aac",
+  "checks": {
+    "aacAudio": true,
+    "codec": true,
+    "dimensions": true,
+    "duration": true,
+    "frameCount": true,
+    "frameRate": true,
+    "fullDecode": true,
+    "noCaptions": true,
+    "pixelFormat": true
+  },
+  "durationSeconds": 8.0,
+  "frameRate": "24/1",
+  "height": 720,
+  "passed": true,
+  "path": "/Users/micahjohnson/Code/create-something-monorepo/apps/metal-water-gate-release/exports/create-something--sph-blender-gate-release--8s--16x9--v2.mp4",
+  "pixelFormat": "yuv420p",
+  "profile": "High",
+  "schemaVersion": 1,
+  "sha256": "9a862682d2b6b4e4b30b3499ab33963c7f61f29a786c4fd7d06d3c62181ac7e3",
+  "sizeBytes": 1535862,
+  "subtitleStreamCount": 0,
+  "videoCodec": "h264",
+  "videoFrameCount": 192,
+  "width": 1280
+}

@@ -11,6 +11,8 @@ import { SOUND_LIBRARY } from '../src/commercials/shared/audio/SoundCues';
 import { SPEC as TEND_SPEC } from '../src/commercials/tend/spec';
 import { WALKTHROUGH_SPEC } from '../src/commercials/tend-walkthrough/spec';
 import { TUFTE_MOBILE_SPEC } from '../src/commercials/tufte-mobile/spec';
+import { WORKFLOW_REEL_SPEC } from '../src/commercials/workflow-reel/spec';
+import { WORKFLOW_DAY_REEL_SPEC } from '../src/commercials/workflow-day-reel/spec';
 
 type TimedScene = {
   start: number;
@@ -19,7 +21,7 @@ type TimedScene = {
 
 type TimedSpec = {
   durationInFrames: number;
-  scenes: Record<string, TimedScene>;
+  scenes: Record<string, TimedScene> | readonly TimedScene[];
 };
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -34,6 +36,8 @@ const timedSpecs: Array<[string, TimedSpec]> = [
   ['TendWalkthroughCommercial', WALKTHROUGH_SPEC],
   ['TufteMobileCommercial', TUFTE_MOBILE_SPEC],
   ['HubOnboardingCommercial', HUB_ONBOARDING_SPEC],
+  ['CreateSomethingWorkflowReel', WORKFLOW_REEL_SPEC],
+  ['CreateSomethingWorkflowDayReel', WORKFLOW_DAY_REEL_SPEC]
 ];
 
 const requiredAssets = [
@@ -44,7 +48,9 @@ const requiredAssets = [
   'audio/hub-onboarding/markers.json',
   'audio/hub-onboarding/voiceover.json',
   'audio/hub-onboarding/voiceover.mp3',
-  ...OUTERFIELDS_SPEC.videoCards.thumbnails.map((thumbnail) => `thumbnails/${thumbnail}`),
+  WORKFLOW_REEL_SPEC.music.asset,
+  WORKFLOW_DAY_REEL_SPEC.music.asset,
+  ...OUTERFIELDS_SPEC.videoCards.thumbnails.map((thumbnail) => `thumbnails/${thumbnail}`)
 ];
 
 const errors: string[] = [];

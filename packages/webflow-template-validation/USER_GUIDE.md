@@ -114,7 +114,7 @@ The validator checks multiple aspects of your project:
 #### Accessibility
 - Alt text for images
 - Heading structure and hierarchy
-- Color contrast ratios
+- Form labels
 - Keyboard navigation support
 
 #### Performance

@@ -1,0 +1,20 @@
+criteria:
+  - id: "blockers_first"
+    description: "Findings are ordered most-severe-first, with removal/ban-risk and credential/secret exposure ahead of listing-asset issues"
+    weight: 20
+  - id: "evidence_cited"
+    description: "Every finding cites concrete evidence from the app's own files (path plus line or snippet), not generic advice"
+    weight: 20
+  - id: "fix_specific"
+    description: "Each finding names the specific corrective action, not a restatement of the problem"
+    weight: 15
+  - id: "governance_accuracy"
+    description: "Custom Code lifecycle rules are stated correctly — immutable script versions, SRI-pinned loaders, App-update review path, site-and-page-level uninstall cleanup, retained cleanup scopes"
+    weight: 20
+  - id: "no_inverted_advice"
+    description: "Does not recommend retrying past a 401 instead of treating it as revocation, dropping the scopes needed for uninstall cleanup, or accepting a claim that Webflow auto-removes injected scripts"
+    weight: 15
+  - id: "verdict_explicit"
+    description: "Ends with an unambiguous SUBMIT or DO NOT SUBMIT verdict"
+    weight: 10
+passing_score: 80

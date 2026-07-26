@@ -1,0 +1,94 @@
+name: Webflow Dashboard Snapshot Cron
+
+# Cloudflare Pages has no cron triggers (that is a Workers feature), so the
+# dashboard's /api/cron/snapshot endpoint needs an external scheduler. Without
+# one, marketplace_leaderboard_snapshots never accumulates and every Top
+# Performers card renders "Trend unavailable".
+#
+# Source data refreshes Mondays 16:00 UTC and leaderboard snapshots are
+# normalized to that weekly boundary, so a daily run is idempotent
+# (INSERT OR REPLACE on the same snapshot_at) while still giving the asset and
+# category tables daily granularity.
+
+on:
+  schedule:
+    - cron: '30 18 * * *'
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: 'Dashboard base URL to snapshot.'
+        required: false
+        default: 'https://webflow-dashboard.pages.dev'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: webflow-dashboard-snapshot-cron
+  cancel-in-progress: false
+
+jobs:
+  capture-snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      DASHBOARD_BASE_URL: ${{ github.event_name == 'workflow_dispatch' && inputs.base_url || 'https://webflow-dashboard.pages.dev' }}
+      CRON_SECRET: ${{ secrets.WEBFLOW_DASHBOARD_CRON_SECRET }}
+    steps:
+      - name: Verify cron credential
+        run: |
+          if [ -z "$CRON_SECRET" ]; then
+            echo "WEBFLOW_DASHBOARD_CRON_SECRET GitHub secret is required."
+            echo "It must match the CRON_SECRET set on the Pages project."
+            exit 1
+          fi
+
+      - name: Capture analytics + marketplace snapshots
+        run: |
+          set -euo pipefail
+
+          status=$(curl -sS \
+            --max-time 120 \
+            --retry 3 \
+            --retry-delay 20 \
+            --retry-all-errors \
+            -o response.json \
+            -w '%{http_code}' \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            "$DASHBOARD_BASE_URL/api/cron/snapshot")
+
+          echo "HTTP $status"
+          jq '.' response.json || cat response.json
+
+          if [ "$status" != "200" ]; then
+            echo "Snapshot request failed with HTTP $status."
+            exit 1
+          fi
+
+      - name: Assert marketplace capture succeeded
+        run: |
+          set -euo pipefail
+
+          # The endpoint returns 200 even when the marketplace capture fails,
+          # so the nested status is the real signal for trend data.
+          if [ "$(jq -r '.marketplace.success' response.json)" != "true" ]; then
+            echo "Marketplace snapshot failed: $(jq -r '.marketplace.error // "unknown error"' response.json)"
+            exit 1
+          fi
+
+          captured=$(jq -r '.marketplace.leaderboard.captured // 0' response.json)
+          echo "Captured $captured leaderboard rows at $(jq -r '.marketplace.leaderboard.snapshotAt' response.json)."
+
+          if [ "$captured" -eq 0 ]; then
+            echo "Leaderboard capture wrote 0 rows; trends will not accumulate."
+            exit 1
+          fi
+
+      - name: Upload snapshot receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: webflow-dashboard-snapshot-${{ github.run_id }}
+          path: response.json
+          if-no-files-found: warn
+          retention-days: 30
