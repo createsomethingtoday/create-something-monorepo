@@ -259,6 +259,24 @@ export function createCTATracker(
 		client.buttonClick(ctaId, buttonType ?? 'cta');
 
 		const href = cta instanceof HTMLAnchorElement ? cta.href : cta.getAttribute('href');
+		const funnelSource = cta.getAttribute('data-funnel-source');
+		const funnelIntent = cta.getAttribute('data-funnel-intent');
+		const funnelStage = cta.getAttribute('data-funnel-stage');
+		const funnelLane = cta.getAttribute('data-funnel-lane');
+
+		if (funnelSource && funnelIntent && funnelStage && funnelLane) {
+			client.track('conversion', 'funnel_handoff', {
+				target: ctaId,
+				metadata: {
+					source: funnelSource,
+					intent: funnelIntent,
+					stage: funnelStage,
+					lane: funnelLane,
+					href: href ? new URL(href, window.location.href).pathname : undefined
+				}
+			});
+		}
+
 		if (href) {
 			try {
 				const parsed = new URL(href, window.location.href);

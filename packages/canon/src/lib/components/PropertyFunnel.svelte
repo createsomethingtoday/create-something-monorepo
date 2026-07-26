@@ -1,126 +1,59 @@
 <script lang="ts">
-  type FunnelProperty = 'ltd' | 'io' | 'space' | 'agency';
+  import { getAnalytics } from '../analytics/index.js';
+  import {
+    PROPERTY_FUNNEL_STEPS,
+    getPropertyFunnelActions,
+    withJourneyContext,
+    type FunnelProperty,
+    type PropertyFunnelAction
+  } from '../funnel/property-intent.js';
 
-  type FunnelStep = {
-    id: FunnelProperty;
-    label: string;
-    role: string;
-    href: string;
-    summary: string;
-  };
-
-  type FunnelAction = {
-    label: string;
-    href: string;
-    cta: string;
-    type: 'cta' | 'nav' | 'action';
-  };
+  export interface PropertyFunnelHandoff {
+    owner: string;
+    authority: string;
+    proof: string;
+    state: 'draft' | 'review' | 'ready' | 'stop';
+  }
 
   interface Props {
     current: FunnelProperty;
     eyebrow?: string;
     heading?: string;
     description?: string;
+    density?: 'standard' | 'compact';
+    handoff?: PropertyFunnelHandoff;
   }
 
   let {
     current,
     eyebrow = 'Property progression',
     heading = 'Follow the work from principle to delivery.',
-    description = 'Each CREATE SOMETHING property has one job in the path: clarify the judgment, publish the evidence, validate the runtime, then scope the workflow.'
+    description = 'Each CREATE SOMETHING property has one job in the path: clarify the judgment, publish the evidence, teach the practice, validate the runtime, then map the workflow.',
+    density = 'standard',
+    handoff
   }: Props = $props();
 
-  const steps: FunnelStep[] = [
-    {
-      id: 'ltd',
-      label: '.ltd',
-      role: 'Canon',
-      href: 'https://createsomething.ltd',
-      summary: 'Clarify the principles, standards, and judgment that should guide the work.'
-    },
-    {
-      id: 'io',
-      label: '.io',
-      role: 'Research',
-      href: 'https://createsomething.io',
-      summary: 'Read the evidence, patterns, and operating notes that make the claim defensible.'
-    },
-    {
-      id: 'space',
-      label: '.space',
-      role: 'Workbench',
-      href: 'https://createsomething.space',
-      summary: 'Try the routes, tools, and runtime behavior before the pattern becomes delivery.'
-    },
-    {
-      id: 'agency',
-      label: '.agency',
-      role: 'Build',
-      href: 'https://createsomething.agency',
-      summary: 'Turn the fit into a scoped workflow with controls, owners, and handoff notes.'
-    }
-  ];
+  const currentStep = $derived(
+    PROPERTY_FUNNEL_STEPS.find((step) => step.id === current) ?? PROPERTY_FUNNEL_STEPS[0]
+  );
+  const actions = $derived(getPropertyFunnelActions(current));
 
-  const primaryActions: Record<FunnelProperty, FunnelAction> = {
-    ltd: {
-      label: 'Map a policy-backed workflow',
-      href: 'https://createsomething.agency/book?source=ltd&intent=policy-to-workflow&lane=policy_os',
-      cta: 'property-funnel-book-ltd',
-      type: 'cta'
-    },
-    io: {
-      label: 'Turn research into a build',
-      href: 'https://createsomething.agency/book?source=io&intent=research-to-implementation&lane=workflow_infrastructure',
-      cta: 'property-funnel-book-io',
-      type: 'cta'
-    },
-    space: {
-      label: 'Bring a validated workflow',
-      href: 'https://createsomething.agency/book?source=space&intent=runtime-validation&lane=workflow_infrastructure',
-      cta: 'property-funnel-book-space',
-      type: 'cta'
-    },
-    agency: {
-      label: 'Book a mapping session',
-      href: '/book?source=agency&intent=workflow-mapping&lane=workflow_infrastructure',
-      cta: 'property-funnel-book-agency',
-      type: 'cta'
-    }
-  };
+  function carryJourney(event: MouseEvent, action: PropertyFunnelAction) {
+    const analytics = getAnalytics();
+    if (!analytics || analytics.isTrackingDisabled()) return;
 
-  const secondaryActions: Record<FunnelProperty, FunnelAction> = {
-    ltd: {
-      label: 'Read the research',
-      href: 'https://createsomething.io',
-      cta: 'property-funnel-next-io',
-      type: 'nav'
-    },
-    io: {
-      label: 'Try the workbench',
-      href: 'https://createsomething.space',
-      cta: 'property-funnel-next-space',
-      type: 'nav'
-    },
-    space: {
-      label: 'Read the pattern',
-      href: 'https://createsomething.io',
-      cta: 'property-funnel-next-io',
-      type: 'nav'
-    },
-    agency: {
-      label: 'Review the operating model',
-      href: '/services',
-      cta: 'property-funnel-services-agency',
-      type: 'action'
-    }
-  };
-
-  const currentStep = $derived(steps.find((step) => step.id === current) ?? steps[0]);
-  const primaryAction = $derived(primaryActions[current]);
-  const secondaryAction = $derived(secondaryActions[current]);
+    const anchor = event.currentTarget as HTMLAnchorElement;
+    anchor.href = withJourneyContext(anchor.href, {
+      journeyId: analytics.getSessionId(),
+      source: current,
+      intent: action.intent,
+      stage: action.stage,
+      lane: action.lane
+    });
+  }
 </script>
 
-<section class="property-funnel" aria-labelledby="property-funnel-heading">
+<section class="property-funnel" data-density={density} aria-labelledby="property-funnel-heading">
   <div class="shell-inner-pad property-funnel__inner">
     <div class="property-funnel__copy">
       <span class="property-funnel__eyebrow">{eyebrow}</span>
@@ -133,8 +66,29 @@
       <strong>{currentStep.label} {currentStep.role}</strong>
     </div>
 
+    {#if handoff}
+      <dl class="property-funnel__handoff" data-state={handoff.state} aria-label="Handoff boundary">
+        <div>
+          <dt>Owner</dt>
+          <dd>{handoff.owner}</dd>
+        </div>
+        <div>
+          <dt>Authority</dt>
+          <dd>{handoff.authority}</dd>
+        </div>
+        <div>
+          <dt>Proof</dt>
+          <dd>{handoff.proof}</dd>
+        </div>
+        <div>
+          <dt>State</dt>
+          <dd>{handoff.state}</dd>
+        </div>
+      </dl>
+    {/if}
+
     <ol class="property-funnel__steps">
-      {#each steps as step, index}
+      {#each PROPERTY_FUNNEL_STEPS as step, index}
         <li class:property-funnel__step--active={step.id === current}>
           <a
             href={step.href}
@@ -153,22 +107,23 @@
     </ol>
 
     <div class="property-funnel__actions" aria-label="Recommended next actions">
-      <a
-        href={primaryAction.href}
-        class="property-funnel__button property-funnel__button--primary"
-        data-cta={primaryAction.cta}
-        data-cta-type={primaryAction.type}
-      >
-        {primaryAction.label}
-      </a>
-      <a
-        href={secondaryAction.href}
-        class="property-funnel__button property-funnel__button--secondary"
-        data-cta={secondaryAction.cta}
-        data-cta-type={secondaryAction.type}
-      >
-        {secondaryAction.label}
-      </a>
+      {#each actions as action, index}
+        <a
+          href={action.href}
+          class:property-funnel__button--primary={index === 0}
+          class:property-funnel__button--secondary={index !== 0}
+          class="property-funnel__button"
+          data-cta={action.cta}
+          data-cta-type={action.type}
+          data-funnel-source={current}
+          data-funnel-intent={action.intent}
+          data-funnel-stage={action.stage}
+          data-funnel-lane={action.lane}
+          onclick={(event) => carryJourney(event, action)}
+        >
+          {action.label}
+        </a>
+      {/each}
     </div>
   </div>
 </section>
@@ -179,6 +134,10 @@
     background: var(--color-performance-panel, #ffffff);
     border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
     color: var(--color-performance-ink, #090909);
+  }
+
+  .property-funnel[data-density='compact'] {
+    padding-block: 3rem;
   }
 
   .property-funnel__inner {
@@ -237,6 +196,43 @@
     background: var(--color-performance-paper, #f3f3f0);
   }
 
+  .property-funnel__handoff {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin: 0;
+    border-top: 3px solid var(--color-performance-signal, #315cff);
+    border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
+  }
+
+  .property-funnel__handoff[data-state='ready'] {
+    border-top-color: var(--color-performance-growth, #007a4d);
+  }
+
+  .property-funnel__handoff > div {
+    display: grid;
+    gap: 0.3rem;
+    padding: 0.75rem;
+    border-right: 1px solid var(--color-performance-line, #d7d7d2);
+  }
+
+  .property-funnel__handoff > div:last-child {
+    border-right: 0;
+  }
+
+  .property-funnel__handoff dt {
+    color: var(--color-performance-muted, #5e6268);
+    font-family: var(--font-performance-mono);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+  }
+
+  .property-funnel__handoff dd {
+    margin: 0;
+    font-size: 0.88rem;
+    line-height: 1.35;
+  }
+
   .property-funnel__status strong {
     color: var(--color-performance-ink, #090909);
     font-size: 1rem;
@@ -247,7 +243,7 @@
   .property-funnel__steps {
     grid-column: 1 / -1;
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 0.85rem;
     margin: 0;
     padding: 0;
@@ -273,6 +269,27 @@
     transition:
       border-color var(--duration-performance-micro) var(--ease-performance-standard),
       background var(--duration-performance-micro) var(--ease-performance-standard);
+  }
+
+  .property-funnel[data-density='compact'] .property-funnel__steps {
+    gap: 0;
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+  }
+
+  .property-funnel[data-density='compact'] .property-funnel__step {
+    min-height: 0;
+    height: 100%;
+    padding: 0.85rem;
+    border: 0;
+    border-right: 1px solid var(--color-performance-line, #d7d7d2);
+    border-radius: 0;
+  }
+
+  .property-funnel[data-density='compact']
+    .property-funnel__steps
+    li:last-child
+    .property-funnel__step {
+    border-right: 0;
   }
 
   .property-funnel__step:hover {
@@ -375,11 +392,33 @@
     .property-funnel__steps {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+
+    .property-funnel[data-density='compact'] .property-funnel__steps {
+      grid-template-columns: 1fr;
+    }
+
+    .property-funnel[data-density='compact'] .property-funnel__step {
+      grid-template-columns: 2.25rem 5.5rem minmax(7rem, 0.4fr) minmax(0, 1fr);
+      align-items: baseline;
+      border-right: 0;
+      border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
+    }
+
+    .property-funnel[data-density='compact']
+      .property-funnel__steps
+      li:last-child
+      .property-funnel__step {
+      border-bottom: 0;
+    }
   }
 
   @media (max-width: 700px) {
     .property-funnel {
       padding-block: 2.75rem;
+    }
+
+    .property-funnel[data-density='compact'] {
+      padding-block: 2.25rem;
     }
 
     .property-funnel__inner {
@@ -398,6 +437,28 @@
 
     .property-funnel__steps {
       grid-template-columns: 1fr;
+    }
+
+    .property-funnel__handoff {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .property-funnel__handoff > div:nth-child(2) {
+      border-right: 0;
+    }
+
+    .property-funnel__handoff > div:nth-child(-n + 2) {
+      border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
+    }
+
+    .property-funnel[data-density='compact'] .property-funnel__step {
+      grid-template-columns: 2rem minmax(5rem, 0.35fr) minmax(0, 1fr);
+      gap: 0.5rem;
+      padding: 0.75rem;
+    }
+
+    .property-funnel[data-density='compact'] .property-funnel__step-summary {
+      grid-column: 2 / -1;
     }
 
     .property-funnel__step {

@@ -3,6 +3,17 @@ import type { MarketplaceFreshnessMetadata } from './airtable';
 const LEADERBOARD_TABLE = 'marketplace_leaderboard_snapshots';
 const CATEGORY_TABLE = 'marketplace_category_snapshots';
 const DEFAULT_MARKETPLACE_TREND_POINTS = 8;
+/**
+ * Sparklines draw points as evenly spaced steps, so a series that straddles a
+ * long capture outage misrepresents time (e.g. an April point joined to a July
+ * point reads as one tick). Series are truncated at the first gap wider than
+ * this, keeping only the contiguous run that ends at the current snapshot.
+ *
+ * Leaderboard snapshots are normalized to the weekly Monday 16:00 UTC sync
+ * boundary, so the healthy gap is 7 days; 21 days tolerates two missed captures
+ * before a trend is withheld.
+ */
+const DEFAULT_MARKETPLACE_TREND_MAX_GAP_DAYS = 21;
 const LEGACY_LEADERBOARD_KEY_COLUMN = 'entry_key';
 const LEGACY_CATEGORY_KEY_COLUMN = 'category_key';
 const CANONICAL_KEY_COLUMN = 'record_key';
@@ -32,6 +43,13 @@ export interface MarketplaceCategoryRecord {
 
 export interface MarketplaceLeaderboardTrendRecord extends MarketplaceLeaderboardRecord {
 	trendData?: number[];
+}
+
+export interface MarketplaceTrendOptions {
+	now?: Date;
+	maxPoints?: number;
+	/** Widest gap between consecutive snapshots that still counts as one series. */
+	maxGapDays?: number;
 }
 
 export interface MarketplaceCategoryTrendRecord extends MarketplaceCategoryRecord {
@@ -103,7 +121,7 @@ export async function enrichLeaderboardWithHistory(
 	db: D1Database | undefined,
 	records: MarketplaceLeaderboardRecord[],
 	freshness: MarketplaceFreshnessMetadata,
-	options: { now?: Date; maxPoints?: number } = {}
+	options: MarketplaceTrendOptions = {}
 ): Promise<MarketplaceLeaderboardTrendRecord[]> {
 	if (!db || records.length === 0) return records;
 
@@ -115,7 +133,7 @@ export async function enrichCategoriesWithHistory(
 	db: D1Database | undefined,
 	records: MarketplaceCategoryRecord[],
 	freshness: MarketplaceFreshnessMetadata,
-	options: { now?: Date; maxPoints?: number } = {}
+	options: MarketplaceTrendOptions = {}
 ): Promise<MarketplaceCategoryTrendRecord[]> {
 	if (!db || records.length === 0) return records;
 
@@ -127,11 +145,12 @@ export function enrichLeaderboardRecordsWithHistory(
 	records: MarketplaceLeaderboardRecord[],
 	historyRows: ReadonlyArray<LeaderboardHistoryRow>,
 	freshness: MarketplaceFreshnessMetadata,
-	options: { now?: Date; maxPoints?: number } = {}
+	options: MarketplaceTrendOptions = {}
 ): MarketplaceLeaderboardTrendRecord[] {
 	const snapshotMeta = buildSnapshotMetadata(freshness, options.now);
 	const currentSnapshotAt = normalizeLeaderboardSnapshotTimestamp(snapshotMeta.snapshotAt);
 	const maxPoints = options.maxPoints ?? DEFAULT_MARKETPLACE_TREND_POINTS;
+	const maxGapDays = options.maxGapDays ?? DEFAULT_MARKETPLACE_TREND_MAX_GAP_DAYS;
 	const historyByKey = buildMetricPointMap(historyRows, (row) => ({
 		recordKey: getLeaderboardHistoryKey(row),
 		snapshotAt: normalizeLeaderboardSnapshotTimestamp(row.snapshot_at),
@@ -142,7 +161,8 @@ export function enrichLeaderboardRecordsWithHistory(
 		const series = mergeCurrentPoint(
 			historyByKey.get(buildLeaderboardSnapshotKey(record)) ?? [],
 			{ snapshotAt: currentSnapshotAt, value: record.totalSales30d },
-			maxPoints
+			maxPoints,
+			maxGapDays
 		);
 
 		return series.length < 2
@@ -155,10 +175,11 @@ export function enrichCategoryRecordsWithHistory(
 	records: MarketplaceCategoryRecord[],
 	historyRows: ReadonlyArray<CategoryHistoryRow>,
 	freshness: MarketplaceFreshnessMetadata,
-	options: { now?: Date; maxPoints?: number } = {}
+	options: MarketplaceTrendOptions = {}
 ): MarketplaceCategoryTrendRecord[] {
 	const snapshotMeta = buildSnapshotMetadata(freshness, options.now);
 	const maxPoints = options.maxPoints ?? DEFAULT_MARKETPLACE_TREND_POINTS;
+	const maxGapDays = options.maxGapDays ?? DEFAULT_MARKETPLACE_TREND_MAX_GAP_DAYS;
 	const historyByKey = buildMetricPointMap(historyRows, (row) => ({
 		recordKey: row.record_key,
 		snapshotAt: row.snapshot_at,
@@ -169,7 +190,8 @@ export function enrichCategoryRecordsWithHistory(
 		const series = mergeCurrentPoint(
 			historyByKey.get(buildCategorySnapshotKey(record)) ?? [],
 			{ snapshotAt: snapshotMeta.snapshotAt, value: record.avgRevenuePerTemplate },
-			maxPoints
+			maxPoints,
+			maxGapDays
 		);
 
 		if (series.length < 2) return record;
@@ -568,7 +590,8 @@ function getLeaderboardHistoryKey(row: LeaderboardHistoryRow): string {
 function mergeCurrentPoint(
 	history: ReadonlyArray<MetricPoint>,
 	currentPoint: MetricPoint,
-	maxPoints: number
+	maxPoints: number,
+	maxGapDays: number
 ): MetricPoint[] {
 	const deduped = new Map<string, MetricPoint>();
 
@@ -579,9 +602,44 @@ function mergeCurrentPoint(
 
 	deduped.set(currentPoint.snapshotAt, currentPoint);
 
-	return Array.from(deduped.values())
-		.sort((a, b) => a.snapshotAt.localeCompare(b.snapshotAt))
-		.slice(-Math.max(1, maxPoints));
+	const ordered = Array.from(deduped.values()).sort((a, b) =>
+		a.snapshotAt.localeCompare(b.snapshotAt)
+	);
+
+	return takeContiguousRun(ordered, maxGapDays).slice(-Math.max(1, maxPoints));
+}
+
+/**
+ * Returns the trailing run of points with no gap wider than `maxGapDays`.
+ * A capture outage therefore yields a single point (the current snapshot),
+ * which callers treat as "no trend" rather than drawing across the hole.
+ */
+function takeContiguousRun(
+	points: ReadonlyArray<MetricPoint>,
+	maxGapDays: number
+): MetricPoint[] {
+	if (points.length === 0) return [];
+
+	const maxGapMs = Math.max(0, maxGapDays) * 24 * 60 * 60 * 1000;
+	let startIndex = points.length - 1;
+
+	for (let index = points.length - 1; index > 0; index--) {
+		const gapMs = getSnapshotGapMs(points[index - 1], points[index]);
+		if (gapMs === null || gapMs > maxGapMs) break;
+		startIndex = index - 1;
+	}
+
+	return points.slice(startIndex);
+}
+
+function getSnapshotGapMs(earlier: MetricPoint, later: MetricPoint): number | null {
+	const earlierMs = Date.parse(earlier.snapshotAt);
+	const laterMs = Date.parse(later.snapshotAt);
+
+	// Unparseable timestamps cannot be spaced reliably; treat them as a break.
+	if (Number.isNaN(earlierMs) || Number.isNaN(laterMs)) return null;
+
+	return laterMs - earlierMs;
 }
 
 function calculateChangePercent(current: number, previous: number | undefined): number | null {

@@ -4,6 +4,7 @@
 	type ClearSectionVariant = 'hero' | 'porcelain' | 'white' | 'soft';
 	type ClearSectionLayout = 'stack' | 'split';
 	type ClearHeadingLevel = 'h1' | 'h2' | 'h3';
+	type ClearSectionDensity = 'standard' | 'compact';
 
 	interface Props {
 		id?: string;
@@ -13,6 +14,7 @@
 		titleLevel?: ClearHeadingLevel;
 		variant?: ClearSectionVariant;
 		layout?: ClearSectionLayout;
+		density?: ClearSectionDensity;
 		ariaLabel?: string;
 		class?: string;
 		children?: Snippet;
@@ -29,6 +31,7 @@
 		titleLevel = 'h2',
 		variant = 'porcelain',
 		layout = 'stack',
+		density = 'standard',
 		ariaLabel,
 		class: className = '',
 		children,
@@ -42,7 +45,7 @@
 	);
 </script>
 
-<section {id} class={sectionClass} aria-label={ariaLabel}>
+<section {id} class={sectionClass} data-density={density} aria-label={ariaLabel}>
 	<div class="clear-page-section__inner">
 		<div class="clear-page-section__layout">
 			<div class="clear-page-section__copy">
@@ -100,11 +103,18 @@
 		scroll-margin-top: 5.25rem;
 	}
 
+	.clear-page-section[data-density='compact'] {
+		padding-block: 3rem;
+	}
+
+	.clear-page-section[data-density='compact'] .clear-page-section__after {
+		margin-top: 2rem;
+	}
+
 	.clear-page-section--hero {
 		padding-block: 5.35rem 4rem;
 		background:
-			linear-gradient(90deg, rgba(10, 14, 25, 0.035) 1px, transparent 1px) 0 0 / 4.25rem
-				4.25rem,
+			linear-gradient(90deg, rgba(10, 14, 25, 0.035) 1px, transparent 1px) 0 0 / 4.25rem 4.25rem,
 			linear-gradient(180deg, var(--color-performance-panel, #ffffff) 0%, #fbfbfb 100%);
 	}
 
@@ -164,11 +174,16 @@
 	.clear-page-section__title {
 		margin: 0;
 		color: var(--color-performance-ink, #090909);
-		font-family: var(--font-performance-display, var(--font-performance-display, var(--font-performance-sans)));
+		font-family: var(
+			--font-performance-display,
+			var(--font-performance-display, var(--font-performance-sans))
+		);
 		font-size: 3.1rem;
 		font-weight: var(--font-performance-display-weight, var(--font-performance-medium, 500));
 		font-kerning: normal;
-		font-feature-settings: "kern" 1, "liga" 1;
+		font-feature-settings:
+			'kern' 1,
+			'liga' 1;
 		line-height: 1;
 		letter-spacing: var(--tracking-performance-display, -0.03em);
 		text-wrap: balance;
@@ -265,6 +280,14 @@
 		.clear-page-section {
 			padding-block: 2.75rem;
 			scroll-margin-top: 4.9rem;
+		}
+
+		.clear-page-section[data-density='compact'] {
+			padding-block: 2.25rem;
+		}
+
+		.clear-page-section[data-density='compact'] .clear-page-section__after {
+			margin-top: 1.5rem;
 		}
 
 		.clear-page-section--hero {

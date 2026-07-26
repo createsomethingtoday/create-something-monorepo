@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "flow.business-digital-thread.performance-baseline.v1",
+  "measuredAt": "2026-07-23T18:00:00Z",
+  "fixtureId": "bdt-fixture-ten-year-30000-v1",
+  "method": "One warm-up contract check followed by three serial measured scale-probe processes.",
+  "environment": {
+    "node": "v22.21.1",
+    "platform": "darwin",
+    "architecture": "arm64",
+    "cpu": "Apple M2 Pro"
+  },
+  "counts": {
+    "months": 120,
+    "participantRelationships": 30000,
+    "participantRelationshipStartBuckets": 120
+  },
+  "runs": [
+    {
+      "generationMs": 74.687,
+      "buildIndexesMs": 4.475,
+      "evaluate120AsOfCountsMs": 738.821,
+      "jsonEncodeDecodeMs": 19.233,
+      "peakRssDeltaMiB": 58.109
+    },
+    {
+      "generationMs": 73.659,
+      "buildIndexesMs": 4.624,
+      "evaluate120AsOfCountsMs": 940.481,
+      "jsonEncodeDecodeMs": 54.95,
+      "peakRssDeltaMiB": 35.656
+    },
+    {
+      "generationMs": 69.366,
+      "buildIndexesMs": 4.437,
+      "evaluate120AsOfCountsMs": 739.883,
+      "jsonEncodeDecodeMs": 17.03,
+      "peakRssDeltaMiB": 58.313
+    }
+  ],
+  "summary": {
+    "generateParticipantRelationshipsMs": {
+      "p50": 73.659,
+      "p95NearestRank": 74.687,
+      "budget": 1500
+    },
+    "buildIndexesMs": { "p50": 4.475, "p95NearestRank": 4.624, "budget": 750 },
+    "evaluate120AsOfCountsMs": { "p50": 739.883, "p95NearestRank": 940.481, "budget": 1500 },
+    "jsonEncodeDecodeMs": { "p50": 19.233, "p95NearestRank": 54.95, "budget": 3000 },
+    "peakRssDeltaMiB": { "p50": 58.109, "p95NearestRank": 58.313, "budget": 512 }
+  },
+  "semanticDigest": "dcf7f1769a0333b2194ca351a7809ab3f9838695c54ef1ac9d5500204e86af66",
+  "budgetRationale": [
+    "Scale-probe ceilings retain headroom for the richer typed Phase 3 fixture while remaining low enough to detect accidental quadratic work or unbounded memory growth.",
+    "Full-verifier query budgets preserve the package's Obsidian-like direct-navigation design goal and are looser than the scale-probe lower bound because Phase 3 must add integrity, bitemporal, trace, authority, and migration semantics.",
+    "Budgets are frozen before runtime implementation. Changes require a reviewed verifier-version change and may not be made merely to obtain a pass."
+  ],
+  "status": "pass"
+}

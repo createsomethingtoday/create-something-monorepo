@@ -2,6 +2,17 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { hasAdminAccess } from '$lib/server/security';
 
+/**
+ * Parses a bounded positive integer from a query string.
+ * A bare parseInt lets `?limit=abc` reach D1 as the string "NaN", which fails
+ * as a 500 instead of a 400.
+ */
+function parsePositiveInt(raw: string | null, fallback: number, max: number): number {
+	const parsed = Number.parseInt(raw ?? '', 10);
+	if (!Number.isFinite(parsed) || parsed < 1) return fallback;
+	return Math.min(parsed, max);
+}
+
 export const POST: RequestHandler = async ({ request, platform, locals }) => {
 	if (!locals.user) {
 		return json({ error: 'Unauthorized' }, { status: 401 });
@@ -70,7 +81,7 @@ export const GET: RequestHandler = async ({ platform, locals, url }) => {
 	}
 
 	try {
-		const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 100);
+		const limit = parsePositiveInt(url.searchParams.get('limit'), 50, 100);
 		const type = url.searchParams.get('type');
 
 		let query = 'SELECT * FROM feedback';

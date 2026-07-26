@@ -109,6 +109,42 @@ Validation:
   as its `.agency` overlay. Keep `pnpm copy:check` as the package authority; do
   not duplicate or weaken its rule list in the root adapter.
 
+### Simplified Technical English Contract
+
+Public `.agency` content uses the `STE-aligned` profile in
+`policy.simplified-technical-english.v1`. This profile uses public guidance from
+the ASD Simplified Technical English Maintenance Group. It does not claim ASD
+certification, ASD endorsement, or complete ASD-STE100 compliance.
+
+Use these content profiles:
+
+- **Procedure:** instructions, forms, errors, recovery steps, and operator
+  actions. Use one instruction per sentence and no more than 20 words.
+- **Description:** services, FAQs, field reports, technical explanations, and
+  supporting marketing copy. Use one topic per paragraph and no more than 25
+  words per sentence.
+- **Brand heading:** campaign titles, product names, and short display headings.
+  A brand heading still needs a clear rendered context and a final human read.
+- **Exact content:** code, quotations, proof identifiers, vendor names, and
+  legally controlled text. Keep this exception narrow.
+
+The `.agency` technical-term registry preserves exact terms such as `workflow`,
+`agent`, `MCP`, `Substrate`, `Map`, `Build`, `Control`, `Signal`, `Decision`,
+`Proof`, `receipt`, and `audit trail`. Define or demonstrate the local meaning
+before a visitor must rely on the term.
+
+The first route set is `/`, `/services`, `/stack`, `/map`, `/control`, and
+`/book`. Retired Dify source and redirected Notion source do not count as active
+public migration failures.
+
+Validation:
+
+- Run `pnpm prose:ste:check` to block newly introduced profile violations.
+- Run `pnpm prose:ste:audit` to report the active public backlog without making
+  existing debt block unrelated work.
+- Keep sentence length, vocabulary checks, and other automated signals
+  subordinate to technical meaning, claim preservation, and the rendered human
+  read.
 ### Platform Conviction Contract
 
 Public platform language follows
@@ -157,6 +193,22 @@ Substrate is the owned database and operator layer.
 Historical client integrations may remain as delivery evidence or compatibility
 code, but they must not be presented as the current CREATE SOMETHING operating
 architecture.
+
+### Compatibility Proof Contract
+
+Compatibility proof may appear only after the workflow boundary is visible.
+Use a small, static set of high-leverage brand marks on commercial routes and
+send visitors to the searchable directory for the complete public catalog.
+
+The directory is generated only from registry entries explicitly labeled as
+brokered Composio toolkit gateways. It must exclude owned, internal, and
+client-specific registry records and their descriptions.
+
+`Connector available` means a brokered tool path is present. It does not mean
+the account is connected, an integration has been delivered, write access is
+authorized, or the vendor certifies, partners with, or endorses CREATE
+SOMETHING. Connection, permissions, actions, approval rules, and evidence are
+scoped during workflow mapping.
 
 ### Marketing Page Portfolio
 
@@ -352,6 +404,10 @@ evidence.
 | **CREATE SOMETHING Control** | Add policy controls, approval rules, incident loops, and recurring governed execution. Includes Map. | Standalone monthly or yearly subscription + governed runtime evidence |
 | **Enterprise Extension** | Extend for high-stakes, cross-system, and compliance-heavy workflows. | Custom governance boundaries + enterprise orchestration |
 | **Workflow Mapping Session** | Paid pre-implementation mapping to scope the workflow and operating boundary. | Pilot scope, operating boundary, and 30-day plan |
+
+The canonical Map-and-Build-to-Control activation persistence and projection
+boundary is documented in
+[`docs/CONTROL_ACTIVATION_LEDGER.md`](./docs/CONTROL_ACTIVATION_LEDGER.md).
 
 ---
 
@@ -579,7 +635,7 @@ packages/agency/
 | Smoke command | `pnpm check` |
 | Validation surfaces | Svelte check output, Cloudflare Pages build output, route preview, sales content review |
 | UI validation path | `/`, `/services` |
-| Escalation rule | stop if Auth0, D1, or client-delivery data is required and cannot be reproduced from local fixtures or Infisical-backed environment |
+| Escalation rule | stop if CREATE SOMETHING Identity, D1, or client-delivery data is required and cannot be reproduced from local fixtures or Infisical-backed environment |
 
 ## Sales Assets
 
@@ -647,90 +703,30 @@ pnpm --filter @create-something/agency research:clarity-capture
 The capture hashes visible copy, fails closed when a route is unavailable, and
 is useful for before/after review. It is not evidence of human comprehension.
 
-## Auth0 And Infisical
+## CREATE SOMETHING Identity
 
-`.agency` now treats Auth0 as the identity source of truth. Browser login flows redirect through Auth0 Universal Login, the Auth0 callback is handled at `/auth/callback`, and server-side session validation accepts Auth0-issued tokens through the shared Canon auth layer.
+`.agency` uses CREATE SOMETHING Identity as its only browser identity provider. The
+Performance-styled login form submits credentials directly to the first-party
+Identity Worker, and the application verifies ES256 session tokens against the
+published JWKS for the `client-workspace` audience.
 
-Tenant export uses `a0deploy`, not `auth0`. The repo-level export wrapper is:
-
-```bash
-cp auth0/config.example.json auth0/config.json
-pnpm auth0:export
-```
-
-The export wrapper expects `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`, and `AUTH0_CLIENT_SECRET` in your environment, then runs:
+The public verification contract is checked into `wrangler.jsonc`:
 
 ```bash
-a0deploy export -c auth0/config.json -f yaml -o auth0/export
+IDENTITY_API_URL=https://id.createsomething.space
+CS_IDENTITY_ISSUER=https://id.createsomething.space
+CS_IDENTITY_JWKS_URL=https://id.createsomething.space/.well-known/jwks.json
+CS_IDENTITY_AUDIENCE=client-workspace
 ```
 
-Required Pages secrets:
+Provisioning and Stripe webhook flows also use the private
+`IDENTITY_WORKER_ADMIN_API_KEY` and `IDENTITY_WORKER_SECRET` bindings. Keep secret
+values in the owning deployment secret store; never add them to the repository or
+duplicate them as browser-visible variables. See
+[`FIRST_PARTY_AUTH_PLATFORM.md`](../../docs/guides/FIRST_PARTY_AUTH_PLATFORM.md)
+for the shared verification and application-access policy contract.
 
-```bash
-AUTH0_DOMAIN
-AUTH0_CLIENT_ID
-AUTH0_CLIENT_SECRET
-AUTH0_ISSUER_BASE_URL
-AUTH0_JWKS_URL
-```
-
-Optional Pages secrets:
-
-```bash
-AUTH0_AUDIENCE
-AUTH0_SCOPE
-AUTH0_CLAIMS_NAMESPACE
-AUTH0_REDIRECT_URI
-```
-
-Do not point `AUTH0_AUDIENCE` at the Auth0 Management API (`https://<tenant>/api/v2/`) for browser sign-in. `.agency` only needs the ID token for the property session; the Management API audience is a machine-to-machine setting and can break Universal Login flows.
-
-If Auth0 login is fronted by a custom domain, preview hostname, or proxy that differs from the incoming Worker request host, set:
-
-```bash
-AUTH0_REDIRECT_URI=https://createsomething.agency/auth/callback
-```
-
-and add that exact URL to the Auth0 application's Allowed Callback URLs.
-
-Recommended Infisical path:
-
-```bash
-/agency/auth
-```
-
-Auth0 secrets must live only under `/agency/auth`. Do not store duplicate `AUTH0_*` keys at the Infisical root path `/`; the seed/sync scripts now fail closed when root-path drift is present.
-
-Seed Auth0 tenant values into Infisical:
-
-```bash
-AUTH0_DOMAIN=...
-AUTH0_CLIENT_ID=...
-AUTH0_CLIENT_SECRET=...
-AUTH0_ISSUER_BASE_URL=...
-AUTH0_JWKS_URL=...
-AUTH0_REDIRECT_URI=https://createsomething.agency/auth/callback
-pnpm agency:auth0:seed
-```
-
-Sync Auth0 secrets from Infisical into the Cloudflare Pages project:
-
-```bash
-pnpm agency:auth0:sync
-```
-
-Useful overrides:
-
-```bash
-PROJECT_NAME=create-something-agency
-INFISICAL_ENV=prod
-INFISICAL_PATH=/agency/auth
-INFISICAL_PROJECT_ID=<optional>
-DRY_RUN=true
-CLOUDFLARE_ACCOUNT_ID=<required when Wrangler has multiple accounts>
-```
-
-After syncing secrets, deploy normally:
+Deploy normally after the package gates pass:
 
 ```bash
 pnpm --filter @create-something/canon package

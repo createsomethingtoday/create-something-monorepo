@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { guideInputSchema, getNextInteraction, reviewEvidence } from '../lib/guide.js';
 import type { EvidenceDraft, PlayerProfileInput } from '../lib/model.js';
 import { LabService } from '../lib/server/lab-service.js';
-import { JsonFileLabStore, labStore, type LabStore } from '../lib/server/store.js';
+import { JsonFileLabStore, type LabStore } from '../lib/server/store.js';
 import type { GuardAccessScope } from '../lib/server/scope.js';
 
 const textResult = (value: unknown) => ({ content: [{ type: 'text' as const, text: JSON.stringify(value, null, 2) }], structuredContent: value as Record<string, unknown> });
@@ -25,7 +25,7 @@ const playerProfileInputSchema = z.object({
 
 export type GuardMcpScope = GuardAccessScope;
 
-export function createGuardLabMcpServer(store: LabStore = labStore, scope: GuardMcpScope) {
+export function createGuardLabMcpServer(store: LabStore, scope: GuardMcpScope) {
   const service = new LabService(store);
   const readWorkspace = async () => scope.role === 'player' ? service.getPlayerWorkspace(scope.playerId) : service.getWorkspace();
   const targetPlayerId = async (requested?: string) => {
@@ -36,7 +36,7 @@ export function createGuardLabMcpServer(store: LabStore = labStore, scope: Guard
     return requested ?? (await service.getWorkspace()).workspace.selectedPlayerId;
   };
   const mutationResult = async (result: Promise<unknown>) => { await result; return scope.role === 'player' ? service.getPlayerWorkspace(scope.playerId) : result; };
-  const server = new McpServer({ name: 'guard-performance-lab', version: '0.4.0' });
+  const server = new McpServer({ name: 'guard-performance-lab', version: '0.5.0' });
   server.registerResource('guard-program-session-01', 'guard://program/session-01', { title: 'Guard Performance Lab Session 01', description: 'The controlled program sequence, context-provider boundary, safety stops, and evidence policy.', mimeType: 'application/json' }, async (uri) => ({ contents: [{ uri: uri.href, mimeType: 'application/json', text: JSON.stringify({ thesis: 'See it early. Create an angle. Read the help. Leave balanced.', sequence: ['prepare','connect','baseline','advantage','help','misdirection','live','receipt'], coachRole: 'Provide concise real-time context only when requested.', agentRole: 'Own sequence, requested context, safety policy, evidence review, and next interaction.', evidencePolicy: 'Separate sourced observation, coach context, and inference. Never rank or diagnose a child.' }, null, 2) }] }));
   server.registerResource('guard-workspace', 'guard://workspace/current', { title: 'Current Guard Lab Workspace', description: scope.role === 'player' ? 'The assigned player’s private records only.' : 'Private local players, receipts, evidence, and engagement managed by the app.', mimeType: 'application/json' }, async (uri) => ({ contents: [{ uri: uri.href, mimeType: 'application/json', text: JSON.stringify((await readWorkspace()).workspace, null, 2) }] }));
 

@@ -1,682 +1,434 @@
 <script lang="ts">
-	import { SEO } from '@create-something/canon';
+  import {
+    Button,
+    PerformanceCampaignOpening,
+    PerformanceConversionHandoff,
+    PerformanceNarrativeStage,
+    SEO,
+    type PerformanceNarrativeScene
+  } from '@create-something/canon';
 
-	// Copy states
-	let copiedNpm = $state(false);
-	let copiedClaude = $state(false);
-	let copiedWindsurf = $state(false);
-	let copiedCodex = $state(false);
+  const installs = [
+    {
+      id: 'claude',
+      label: 'Claude Desktop',
+      command: 'npx --yes -p @createsomething/ground-mcp ground-mcp',
+      note: 'Add to claude_desktop_config.json'
+    },
+    {
+      id: 'windsurf',
+      label: 'Windsurf',
+      command: '{"mcpServers":{"ground":{"command":"npx","args":["@createsomething/ground-mcp"]}}}',
+      note: 'Settings -> MCP -> View raw config'
+    },
+    {
+      id: 'codex',
+      label: 'Codex CLI',
+      command: 'codex mcp add ground --command "npx @createsomething/ground-mcp"',
+      note: 'Register Ground as a local MCP server'
+    },
+    {
+      id: 'npm',
+      label: 'npm',
+      command: 'npm install -g @createsomething/ground-mcp',
+      note: 'Works with any MCP client'
+    }
+  ];
 
-	function copyToClipboard(text: string, setter: (v: boolean) => void) {
-		navigator.clipboard.writeText(text);
-		setter(true);
-		setTimeout(() => setter(false), 2000);
-	}
+  const toolGroups = [
+    {
+      title: 'Verify',
+      tools: [
+        ['ground_compare', 'See how similar two files actually are'],
+        ['ground_count_uses', 'Find whether a function is actually used'],
+        ['ground_check_connections', 'See whether a module is connected'],
+        ['ground_check_environment', 'Catch runtime APIs in the wrong environment']
+      ]
+    },
+    {
+      title: 'Find problems',
+      tools: [
+        ['ground_find_duplicate_functions', 'Find copy-pasted code'],
+        ['ground_find_orphans', 'Find files nothing imports'],
+        ['ground_find_dead_exports', 'Find exports nobody uses'],
+        ['ground_find_drift', 'Find divergence from an owned pattern']
+      ]
+    },
+    {
+      title: 'Understand patterns',
+      tools: [
+        ['ground_adoption_ratio', 'Measure token or pattern adoption'],
+        ['ground_suggest_pattern', 'Suggest from the code already present'],
+        ['ground_mine_patterns', 'Discover repeated structures']
+      ]
+    },
+    {
+      title: 'Report findings',
+      tools: [
+        ['ground_claim_duplicate', 'Report a verified duplicate'],
+        ['ground_claim_dead_code', 'Report verified dead code'],
+        ['ground_claim_orphan', 'Report a verified orphan']
+      ]
+    }
+  ];
+
+  const scenes: PerformanceNarrativeScene[] = [
+    {
+      id: 'install',
+      label: 'Install Ground',
+      summary: 'Connect',
+      title: 'Put the check beside the agent.',
+      detail: 'Choose one client. Every command points to the same open-source Ground MCP package.',
+      tone: 'allow',
+      evidence: ['Four client-ready configurations', 'Commands remain visible without JavaScript'],
+      receipts: ['Free', 'Open source', '@createsomething/ground-mcp']
+    },
+    {
+      id: 'guardrail',
+      label: 'Run the guardrail',
+      summary: 'Verify',
+      title: 'Check first. Then claim. Block otherwise.',
+      detail:
+        'Ground turns verification from a suggestion into a required sequence before an agent reports a code finding.',
+      tone: 'review',
+      evidence: ['Check first', 'Then claim', 'Blocked otherwise'],
+      receipts: ['Compared inputs', 'Evidence-bound claim']
+    },
+    {
+      id: 'proof',
+      label: 'Inspect the proof',
+      summary: 'Trust',
+      title: 'A smaller tool surface produces stronger claims.',
+      detail:
+        'The tool inventory supports one operating rule, and the Kickstand audit shows the rule applied to production code.',
+      tone: 'neutral',
+      evidence: ['20+ evidence tools', '155 scripts became 13', 'Zero reported false positives'],
+      receipts: ['92% script reduction', 'Published case study'],
+      actions: [
+        {
+          label: 'Read the Kickstand audit',
+          href: 'https://createsomething.io/papers/kickstand-triad-audit'
+        }
+      ]
+    }
+  ];
+
+  let copied = $state<string | null>(null);
+
+  async function copyCommand(id: string, command: string) {
+    await navigator.clipboard.writeText(command);
+    copied = id;
+    setTimeout(() => {
+      if (copied === id) copied = null;
+    }, 2000);
+  }
 </script>
 
 <SEO
-	title="Ground MCP | Grounded AI Code Analysis"
-	description="Stop AI agent hallucinations in code analysis. An MCP server that requires verification before claims. Find duplicates, dead code, and orphans with evidence."
-	keywords="MCP, Model Context Protocol, agent code analysis, AI agents, duplicate detection, dead code, Claude, Cursor, VS Code, Copilot"
-	ogImage="/og-image.png"
-	propertyName="agency"
+  title="Ground MCP | Grounded AI Code Analysis"
+  description="Stop AI agent hallucinations in code analysis. Ground requires verification before claims and reports evidence for duplicates, dead code, and orphans."
+  keywords="MCP, Model Context Protocol, agent code analysis, AI agents, duplicate detection, dead code, evidence"
+  ogImage="/og-image.png"
+  propertyName="agency"
 />
 
-<main class="ground-page">
-	<!-- Hero Section -->
-	<section class="hero">
-		<div class="hero-badge">Free & Open Source</div>
-		<h1 class="hero-title">Ground</h1>
-		<p class="hero-tagline">Code analysis that checks before it claims</p>
-		<p class="hero-description">
-			AI agents will tell you files are "95% similar" without actually comparing them.
-			Ground fixes this. It requires your agents to <strong>verify before claiming</strong>—no more hallucinated duplicates or false positives.
-		</p>
-	</section>
+<PerformanceCampaignOpening
+  eyebrow="Free and open source"
+  title="Code analysis that checks before it claims."
+  lede="Agents can report confident similarities without comparing the files. Ground makes verification a prerequisite, so every duplicate, dead-code, or orphan claim starts with evidence."
+  density="compact"
+  media={{
+    src: '/images/performance-lab/pressure-boundary-natural.webp',
+    mobileSrc: '/images/performance-lab/pressure-boundary-natural-mobile.webp',
+    alt: 'Black-and-white view of a controlled pressure boundary holding a precise line'
+  }}
+  proof={[
+    { label: 'Rule', value: 'Verify first' },
+    { label: 'Package', value: 'Ground MCP' },
+    { label: 'Cost', value: 'Free' }
+  ]}
+>
+  {#snippet actions()}
+    <Button href="#ground-operating-path">Choose your install</Button>
+  {/snippet}
+</PerformanceCampaignOpening>
 
-	<!-- Install Section -->
-	<section class="install-section">
-		<h2 class="section-title">Install in 2 minutes</h2>
-		<p class="section-subtitle">Copy the config for your agent client</p>
+<PerformanceNarrativeStage
+  id="ground-operating-path"
+  eyebrow="Ground operating path"
+  title="Verification happens before the answer, not after."
+  description="One indexed surface keeps installation, enforcement, and production evidence together."
+  {scenes}
+  ariaLabel="Ground operating path"
+>
+  {#snippet artifact(_scene, index)}
+    {#if index === 0}
+      <div class="install-grid" aria-label="Ground MCP install commands">
+        {#each installs as install}
+          <article class="install-card">
+            <div><span>{install.label}</span><small>{install.note}</small></div>
+            <code>{install.command}</code>
+            <button type="button" onclick={() => copyCommand(install.id, install.command)}>
+              {copied === install.id ? 'Copied' : 'Copy command'}
+            </button>
+          </article>
+        {/each}
+      </div>
+    {:else if index === 1}
+      <div class="guardrail-artifact">
+        <ol>
+          <li>
+            <span>01</span><strong>Check first</strong>
+            <p>Compare the files or count the uses.</p>
+          </li>
+          <li>
+            <span>02</span><strong>Then claim</strong>
+            <p>Attach the finding to what was checked.</p>
+          </li>
+          <li>
+            <span>03</span><strong>Blocked otherwise</strong>
+            <p>Stop an unsupported conclusion before it spreads.</p>
+          </li>
+        </ol>
+        <pre aria-label="Ground verification example"><code
+            ><span># First, compare the files</span>
+ground compare utils.ts helpers.ts
 
-		<!-- 2x2 grid -->
-		<div class="install-grid">
-			<!-- Claude Desktop -->
-			<div class="install-card">
-				<div class="card-header">
-					<span class="card-icon">
-						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<path d="M12 3L13.5 8.5L19 7L14.5 11L19 15L13.5 13.5L12 19L10.5 13.5L5 15L9.5 11L5 7L10.5 8.5L12 3Z" fill="currentColor"/>
-						</svg>
-					</span>
-					<span class="card-name">Claude Desktop</span>
-				</div>
-				<button
-					class="install-button secondary"
-					onclick={() => copyToClipboard('npx --yes -p @createsomething/ground-mcp ground-mcp', (v) => copiedClaude = v)}
-				>
-					{copiedClaude ? 'Copied!' : 'Copy command'}
-				</button>
-				<p class="card-note">Add to claude_desktop_config.json</p>
-			</div>
+<span># Then make the evidence-bound claim</span>
+ground claim duplicate utils.ts helpers.ts "same validation logic"
 
-			<!-- Windsurf -->
-			<div class="install-card">
-				<div class="card-header">
-					<span class="card-icon">
-						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<path d="M3 12C3 12 5 8 9 8C13 8 12 12 16 12C20 12 21 9 21 9" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-							<path d="M3 17C3 17 5 13 9 13C13 13 12 17 16 17C20 17 21 14 21 14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-						</svg>
-					</span>
-					<span class="card-name">Windsurf</span>
-				</div>
-				<button
-					class="install-button secondary"
-					onclick={() => copyToClipboard('{"mcpServers":{"ground":{"command":"npx","args":["@createsomething/ground-mcp"]}}}', (v) => copiedWindsurf = v)}
-				>
-					{copiedWindsurf ? 'Copied!' : 'Copy config'}
-				</button>
-				<p class="card-note">Settings → MCP → View raw config</p>
-			</div>
+<strong>Claim blocked: compare these files first.</strong></code
+          ></pre>
+      </div>
+    {:else}
+      <div class="proof-artifact">
+        <div class="tool-groups">
+          {#each toolGroups as group}
+            <article>
+              <h3>{group.title}</h3>
+              <ul>
+                {#each group.tools as tool}<li>
+                    <code>{tool[0]}</code><span>{tool[1]}</span>
+                  </li>{/each}
+              </ul>
+            </article>
+          {/each}
+        </div>
+        <aside class="case-proof">
+          <span>Published case study</span>
+          <h3>Kickstand: 155 scripts became 13</h3>
+          <p>
+            Verified findings supported a 92% script reduction with zero reported false positives.
+          </p>
+          <dl>
+            <div>
+              <dt>Reduction</dt>
+              <dd>92%</dd>
+            </div>
+            <div>
+              <dt>False positives</dt>
+              <dd>0</dd>
+            </div>
+            <div>
+              <dt>Scripts</dt>
+              <dd>155 -> 13</dd>
+            </div>
+          </dl>
+        </aside>
+      </div>
+    {/if}
+  {/snippet}
+</PerformanceNarrativeStage>
 
-			<!-- Codex CLI -->
-			<div class="install-card">
-				<div class="card-header">
-					<span class="card-icon">
-						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<rect x="2" y="4" width="20" height="16" rx="2" fill="currentColor" opacity="0.15"/>
-							<rect x="2" y="4" width="20" height="16" rx="2" stroke="currentColor" stroke-width="2"/>
-							<path d="M6 9L10 12L6 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-							<path d="M12 15H18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-						</svg>
-					</span>
-					<span class="card-name">Codex CLI</span>
-				</div>
-				<button
-					class="install-button secondary"
-					onclick={() => copyToClipboard('codex mcp add ground --command "npx @createsomething/ground-mcp"', (v) => copiedCodex = v)}
-				>
-					{copiedCodex ? 'Copied!' : 'Copy command'}
-				</button>
-				<p class="card-note">codex mcp add ground</p>
-			</div>
-
-			<!-- npm (fallback) -->
-			<div class="install-card">
-				<div class="card-header">
-					<span class="card-icon">
-						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<rect x="2" y="6" width="20" height="12" rx="1" fill="currentColor"/>
-							<path d="M5 15V9H8V14H9.5V9H11V15H5Z" fill="var(--color-performance-bg-surface)"/>
-							<path d="M12.5 9V15H15.5V10.5H17V15H19V9H12.5Z" fill="var(--color-performance-bg-surface)"/>
-						</svg>
-					</span>
-					<span class="card-name">npm</span>
-				</div>
-				<button
-					class="install-button secondary"
-					onclick={() => copyToClipboard('npm install -g @createsomething/ground-mcp', (v) => copiedNpm = v)}
-				>
-					{copiedNpm ? 'Copied!' : 'Copy command'}
-				</button>
-				<p class="card-note">Works with any MCP client</p>
-			</div>
-		</div>
-	</section>
-
-	<!-- How It Works -->
-	<section class="how-section">
-		<h2 class="section-title">How it works</h2>
-
-		<div class="how-grid">
-			<div class="how-step">
-				<span class="step-number">1</span>
-				<h3 class="step-title">Check first</h3>
-				<p class="step-description">Your agent runs a verification command to actually compare files or count uses</p>
-			</div>
-			<div class="how-step">
-				<span class="step-number">2</span>
-				<h3 class="step-title">Then claim</h3>
-				<p class="step-description">Only after checking can it report something as a duplicate, dead code, or orphan</p>
-			</div>
-			<div class="how-step">
-				<span class="step-number">3</span>
-				<h3 class="step-title">Blocked otherwise</h3>
-				<p class="step-description">If it tries to claim without checking first, Ground stops it</p>
-			</div>
-		</div>
-
-		<div class="code-example">
-			<pre><code><span class="comment"># First, compare the files</span>
-<span class="command">ground compare</span> utils.ts helpers.ts
-
-<span class="comment"># Then, make a claim (only works if you've compared)</span>
-<span class="command">ground claim duplicate</span> utils.ts helpers.ts <span class="string">"same validation logic"</span>
-
-<span class="comment"># Try to claim without checking? Blocked.</span>
-<span class="error">✗ Claim blocked</span>
-<span class="error-detail">  You need to compare these files first:</span>
-<span class="error-detail">  ground compare utils.ts helpers.ts</span></code></pre>
-		</div>
-	</section>
-
-	<!-- Tools Section -->
-	<section class="tools-section">
-		<h2 class="section-title">What you can do</h2>
-		<p class="section-subtitle">20+ tools for finding real problems in your code</p>
-
-		<div class="tools-grid">
-			<div class="tool-category">
-				<h3 class="category-title">Verify</h3>
-				<ul class="tool-list">
-					<li><code>ground_compare</code> — See how similar two files actually are</li>
-					<li><code>ground_count_uses</code> — Find if a function is actually used anywhere</li>
-					<li><code>ground_check_connections</code> — See if a module is connected to your app</li>
-					<li><code>ground_check_environment</code> — Catch Node.js APIs leaking into Workers</li>
-				</ul>
-			</div>
-
-			<div class="tool-category">
-				<h3 class="category-title">Find problems</h3>
-				<ul class="tool-list">
-					<li><code>ground_find_duplicate_functions</code> — Find copy-pasted code</li>
-					<li><code>ground_find_orphans</code> — Find files nothing imports</li>
-					<li><code>ground_find_dead_exports</code> — Find exports nobody uses</li>
-					<li><code>ground_find_drift</code> — Find where code drifted from your design system</li>
-				</ul>
-			</div>
-
-			<div class="tool-category">
-				<h3 class="category-title">Understand patterns</h3>
-				<ul class="tool-list">
-					<li><code>ground_adoption_ratio</code> — See how consistently you use your tokens</li>
-					<li><code>ground_suggest_pattern</code> — Get suggestions based on your existing code</li>
-					<li><code>ground_mine_patterns</code> — Discover patterns you're already using</li>
-				</ul>
-			</div>
-
-			<div class="tool-category">
-				<h3 class="category-title">Report findings</h3>
-				<ul class="tool-list">
-					<li><code>ground_claim_duplicate</code> — Report a duplicate (requires verification first)</li>
-					<li><code>ground_claim_dead_code</code> — Report dead code (requires verification first)</li>
-					<li><code>ground_claim_orphan</code> — Report an orphan (requires verification first)</li>
-				</ul>
-			</div>
-		</div>
-	</section>
-
-	<!-- Case Study -->
-	<section class="case-study-section">
-		<div class="case-study-card">
-			<span class="case-study-label">Case Study</span>
-			<h3 class="case-study-title">Kickstand: 155 scripts became 13</h3>
-			<p class="case-study-description">
-				We used Ground to find and consolidate duplicate code in a production codebase.
-				Because every finding was verified, we had zero false positives—every deletion was safe.
-			</p>
-			<div class="case-study-stats">
-				<div class="stat">
-					<span class="stat-value">92%</span>
-					<span class="stat-label">code reduction</span>
-				</div>
-				<div class="stat">
-					<span class="stat-value">0</span>
-					<span class="stat-label">false positives</span>
-				</div>
-				<div class="stat">
-					<span class="stat-value">155→13</span>
-					<span class="stat-label">scripts</span>
-				</div>
-			</div>
-			<a href="https://createsomething.io/papers/kickstand-triad-audit" class="case-study-link">
-				Read the full case study →
-			</a>
-		</div>
-	</section>
-
-	<!-- Links -->
-	<section class="links-section">
-		<div class="links-grid">
-			<a href="/products" class="link-card">
-				<span class="link-icon">
-					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-						<path d="M4 6h16M4 12h16M4 18h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-					</svg>
-				</span>
-				<span class="link-text">Proof and Receipts</span>
-			</a>
-			<a href="https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/ground" class="link-card">
-				<span class="link-icon">
-					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-						<path d="M12 2C6.477 2 2 6.477 2 12C2 16.419 4.865 20.166 8.839 21.489C9.339 21.581 9.521 21.273 9.521 21.007C9.521 20.769 9.513 20.14 9.508 19.305C6.726 19.907 6.139 17.962 6.139 17.962C5.685 16.812 5.029 16.504 5.029 16.504C4.121 15.881 5.098 15.894 5.098 15.894C6.102 15.964 6.629 16.926 6.629 16.926C7.521 18.455 8.97 18.013 9.539 17.756C9.631 17.11 9.889 16.669 10.175 16.42C7.954 16.168 5.62 15.31 5.62 11.477C5.62 10.386 6.01 9.494 6.649 8.794C6.546 8.542 6.203 7.524 6.747 6.148C6.747 6.148 7.587 5.88 9.497 7.173C10.295 6.95 11.15 6.839 12 6.835C12.85 6.839 13.705 6.95 14.505 7.173C16.413 5.88 17.251 6.148 17.251 6.148C17.797 7.524 17.453 8.542 17.351 8.794C17.991 9.494 18.379 10.386 18.379 11.477C18.379 15.32 16.042 16.165 13.813 16.412C14.172 16.72 14.492 17.329 14.492 18.263C14.492 19.6 14.48 20.679 14.48 21.007C14.48 21.275 14.66 21.586 15.168 21.488C19.138 20.163 22 16.418 22 12C22 6.477 17.523 2 12 2Z" fill="currentColor"/>
-					</svg>
-				</span>
-				<span class="link-text">GitHub</span>
-			</a>
-			<a href="https://www.npmjs.com/package/@createsomething/ground-mcp" class="link-card">
-				<span class="link-icon">
-					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-						<rect x="2" y="2" width="20" height="20" fill="currentColor"/>
-						<path d="M5 19V5H11V17H14V5H19V19H5Z" fill="var(--color-performance-bg-surface)"/>
-					</svg>
-				</span>
-				<span class="link-text">npm</span>
-			</a>
-		</div>
-	</section>
-</main>
+<PerformanceConversionHandoff
+  eyebrow="Ground handoff"
+  title="Put evidence before the next code claim."
+  description="Install Ground in one agent client, run a real verification, and preserve the checked inputs with the finding."
+  density="compact"
+  handoff={{
+    owner: 'Codebase operator',
+    authority: 'Verify-before-claiming policy',
+    proof: 'Checked inputs + finding',
+    state: 'ready'
+  }}
+>
+  {#snippet actions()}
+    <Button
+      href="https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/ground"
+      >Inspect Ground on GitHub</Button
+    >
+    <Button href="https://www.npmjs.com/package/@createsomething/ground-mcp" variant="secondary"
+      >Open the npm package</Button
+    >
+    <Button href="/products" variant="secondary">Return to products</Button>
+  {/snippet}
+</PerformanceConversionHandoff>
 
 <style>
-	.ground-page {
-		max-width: var(--content-width-xl);
-		margin: 0 auto;
-		padding: var(--space-performance-xl) var(--space-performance-lg);
-		background: var(--color-performance-panel, #ffffff);
-		color: var(--color-performance-ink, #090909);
-		--color-performance-fg-primary: var(--color-performance-ink, #090909);
-		--color-performance-fg-secondary: #252a34;
-		--color-performance-fg-muted: var(--color-performance-muted, #5e6268);
-		--color-performance-fg-tertiary: var(--color-performance-muted, #5e6268);
-		--color-performance-bg-pure: var(--color-performance-panel, #ffffff);
-		--color-performance-bg-surface: var(--color-performance-panel, #ffffff);
-		--color-performance-bg-subtle: var(--color-performance-paper, #f3f3f0);
-		--color-performance-border-emphasis: var(--color-performance-line, #d7d7d2);
-	}
+  .install-grid,
+  .tool-groups {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
 
-	/* Hero */
-	.hero {
-		text-align: center;
-		padding: 6rem 0 var(--space-performance-xl);
-		border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
-		background:
-			linear-gradient(90deg, rgba(10, 14, 25, 0.035) 1px, transparent 1px) 0 0 / 4.25rem
-				4.25rem,
-			linear-gradient(180deg, var(--color-performance-panel, #ffffff) 0%, #fbfbfb 100%);
-	}
+  .install-card,
+  .tool-groups article,
+  .case-proof {
+    min-width: 0;
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+    background: var(--color-performance-panel, #fff);
+  }
 
-	.hero-badge {
-		display: inline-block;
-		padding: 0.25rem 1rem;
-		font-size: var(--text-performance-body-sm);
-		font-weight: var(--font-performance-semibold);
-		color: var(--color-performance-success);
-		background: var(--color-performance-success-muted);
-		border-radius: var(--radius-performance-scale-full);
-		margin-bottom: var(--space-performance-md);
-	}
+  .install-card {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: 0.8rem;
+    padding: 1rem;
+  }
 
-	.hero-title {
-		font-size: var(--text-performance-display);
-		font-weight: var(--font-performance-bold);
-		color: var(--color-performance-fg-primary);
-		margin-bottom: var(--space-performance-xs);
-	}
+  .install-card > div {
+    display: grid;
+    gap: 0.2rem;
+  }
+  .install-card span,
+  .case-proof > span {
+    font-family: var(--font-performance-mono);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+  }
+  .install-card small {
+    color: var(--color-performance-muted, #5e6268);
+  }
+  .install-card code {
+    overflow-wrap: anywhere;
+    font-size: 0.78rem;
+    line-height: 1.5;
+  }
+  .install-card button {
+    min-height: 2.5rem;
+    border: 1px solid var(--color-performance-ink, #090909);
+    background: var(--color-performance-ink, #090909);
+    color: #fff;
+    cursor: pointer;
+  }
 
-	.hero-tagline {
-		font-size: var(--text-performance-h3);
-		color: var(--color-performance-fg-muted);
-		font-style: italic;
-		margin-bottom: var(--space-performance-lg);
-	}
+  .guardrail-artifact {
+    display: grid;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    gap: 1rem;
+  }
+  .guardrail-artifact ol {
+    display: grid;
+    gap: 0;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--color-performance-line);
+    list-style: none;
+  }
+  .guardrail-artifact li {
+    display: grid;
+    grid-template-columns: 2.5rem 1fr;
+    gap: 0.25rem 0.75rem;
+    padding: 0.85rem 0;
+    border-bottom: 1px solid var(--color-performance-line);
+  }
+  .guardrail-artifact li span {
+    grid-row: 1 / span 2;
+    font-family: var(--font-performance-mono);
+    font-size: 0.7rem;
+  }
+  .guardrail-artifact li p {
+    margin: 0;
+    color: var(--color-performance-muted);
+    font-size: 0.85rem;
+  }
+  .guardrail-artifact pre {
+    min-width: 0;
+    margin: 0;
+    padding: 1rem;
+    overflow: auto;
+    background: var(--color-performance-ink);
+    color: #fff;
+    font-size: 0.78rem;
+    line-height: 1.65;
+  }
+  .guardrail-artifact pre span {
+    color: #9ca3af;
+  }
+  .guardrail-artifact pre strong {
+    color: #ff8c5a;
+  }
 
-	.hero-description {
-		font-size: var(--text-performance-body-lg);
-		color: var(--color-performance-fg-tertiary);
-		line-height: 1.7;
-		max-width: var(--content-width-xl);
-		margin: 0 auto;
-	}
+  .proof-artifact {
+    display: grid;
+    gap: 1rem;
+  }
+  .tool-groups article {
+    padding: 1rem;
+  }
+  .tool-groups h3,
+  .case-proof h3 {
+    margin: 0 0 0.75rem;
+    font-size: 1rem;
+  }
+  .tool-groups ul {
+    display: grid;
+    gap: 0.65rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .tool-groups li {
+    display: grid;
+    gap: 0.15rem;
+  }
+  .tool-groups li code {
+    overflow-wrap: anywhere;
+    font-size: 0.74rem;
+  }
+  .tool-groups li span {
+    color: var(--color-performance-muted);
+    font-size: 0.8rem;
+  }
+  .case-proof {
+    padding: 1rem;
+    background: var(--color-performance-paper, #f3f3f0);
+  }
+  .case-proof p {
+    max-width: 48rem;
+    color: var(--color-performance-muted);
+  }
+  .case-proof dl {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    margin: 1rem 0 0;
+    border-top: 1px solid var(--color-performance-line);
+  }
+  .case-proof dl > div {
+    padding: 0.8rem 0;
+  }
+  .case-proof dt {
+    color: var(--color-performance-muted);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+  }
+  .case-proof dd {
+    margin: 0.2rem 0 0;
+    font-size: 1.4rem;
+  }
 
-	.hero-description strong {
-		color: var(--color-performance-fg-secondary);
-	}
-
-	/* Section Styles */
-	.section-title {
-		font-size: var(--text-performance-h2);
-		font-weight: var(--font-performance-bold);
-		color: var(--color-performance-fg-primary);
-		text-align: center;
-		margin-bottom: var(--space-performance-xs);
-	}
-
-	.section-subtitle {
-		font-size: var(--text-performance-body);
-		color: var(--color-performance-fg-muted);
-		text-align: center;
-		margin-bottom: var(--space-performance-lg);
-	}
-
-	/* Install Section */
-	.install-section {
-		padding: var(--space-performance-xl) 0;
-	}
-
-	/* 2x2 grid */
-	.install-grid {
-		display: grid;
-		grid-template-columns: repeat(2, 1fr);
-		gap: var(--space-performance-md);
-		max-width: var(--content-width-xl);
-		margin: 0 auto;
-	}
-
-	/* Cards */
-	.install-card {
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-performance-xs);
-		padding: var(--space-performance-md);
-		background: var(--color-performance-bg-surface);
-		border-radius: var(--radius-performance-scale-lg);
-		transition: border-color var(--duration-performance-micro) var(--ease-performance-standard);
-	}
-
-	.install-card:hover {
-		border-color: var(--color-performance-border-emphasis);
-	}
-
-	/* Card header */
-	.card-header {
-		display: flex;
-		align-items: center;
-		gap: var(--space-performance-xs);
-		margin-bottom: var(--space-performance-xs);
-	}
-
-	.card-icon {
-		color: var(--color-performance-fg-muted);
-		flex-shrink: 0;
-	}
-
-	.card-name {
-		font-size: var(--text-performance-body);
-		font-weight: var(--font-performance-semibold);
-		color: var(--color-performance-fg-primary);
-		flex-grow: 1;
-	}
-
-	/* Buttons */
-	.install-button {
-		display: block;
-		width: 100%;
-		padding: var(--space-performance-sm) var(--space-performance-md);
-		font-size: var(--text-performance-body-sm);
-		font-weight: var(--font-performance-semibold);
-		text-align: center;
-		border-radius: var(--radius-performance-scale-md);
-		border: none;
-		cursor: pointer;
-		transition: opacity var(--duration-performance-micro) var(--ease-performance-standard);
-	}
-
-	.install-button:hover {
-		opacity: 0.9;
-	}
-
-	.install-button.secondary {
-		background: var(--color-performance-bg-subtle);
-		color: var(--color-performance-fg-secondary);
-	}
-
-	/* Card note */
-	.card-note {
-		font-size: var(--text-performance-caption);
-		color: var(--color-performance-fg-muted);
-		line-height: 1.3;
-	}
-
-	/* How Section */
-	.how-section {
-		padding: var(--space-performance-xl) 0;
-	}
-
-	.how-grid {
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: var(--space-performance-lg);
-		margin-bottom: var(--space-performance-xl);
-	}
-
-	.how-step {
-		text-align: center;
-	}
-
-	.step-number {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		width: 2.5rem;
-		height: 2.5rem;
-		font-size: var(--text-performance-body);
-		font-weight: var(--font-performance-bold);
-		color: var(--color-performance-fg-primary);
-		background: var(--color-performance-bg-subtle);
-		border-radius: var(--radius-performance-scale-full);
-		margin-bottom: var(--space-performance-sm);
-	}
-
-	.step-title {
-		font-size: var(--text-performance-body);
-		font-weight: var(--font-performance-semibold);
-		color: var(--color-performance-fg-primary);
-		margin-bottom: var(--space-performance-xs);
-	}
-
-	.step-description {
-		font-size: var(--text-performance-body-sm);
-		color: var(--color-performance-fg-tertiary);
-	}
-
-	.code-example {
-		border-radius: var(--radius-performance-scale-lg);
-		padding: var(--space-performance-lg);
-		overflow-x: auto;
-	}
-
-	.code-example pre {
-		margin: 0;
-		font-family: monospace;
-		font-size: var(--text-performance-body-sm);
-		line-height: 1.6;
-	}
-
-	.code-example .comment {
-		color: var(--color-performance-fg-muted);
-	}
-
-	.code-example .command {
-		color: var(--color-performance-success);
-		font-weight: var(--font-performance-semibold);
-	}
-
-	.code-example .string {
-		color: var(--color-performance-warning);
-	}
-
-	.code-example .error {
-		color: var(--color-performance-error);
-	}
-
-	.code-example .error-detail {
-		color: var(--color-performance-fg-muted);
-	}
-
-	/* Tools Section */
-	.tools-section {
-		padding: var(--space-performance-xl) 0;
-	}
-
-	.tools-grid {
-		display: grid;
-		grid-template-columns: repeat(2, 1fr);
-		gap: var(--space-performance-lg);
-	}
-
-	.tool-category {
-		padding: var(--space-performance-md);
-		background: var(--color-performance-bg-surface);
-		border-radius: var(--radius-performance-scale-lg);
-	}
-
-	.category-title {
-		font-size: var(--text-performance-body-sm);
-		font-weight: var(--font-performance-semibold);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		color: var(--color-performance-fg-muted);
-		margin-bottom: var(--space-performance-sm);
-	}
-
-	.tool-list {
-		list-style: none;
-		padding: 0;
-		margin: 0;
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-performance-xs);
-	}
-
-	.tool-list li {
-		font-size: var(--text-performance-body-sm);
-		color: var(--color-performance-fg-tertiary);
-	}
-
-	.tool-list code {
-		font-family: monospace;
-		color: var(--color-performance-fg-secondary);
-		background: var(--color-performance-bg-subtle);
-		padding: 0.125rem 0.375rem;
-		border-radius: var(--radius-performance-scale-sm);
-	}
-
-	/* Case Study */
-	.case-study-section {
-		padding: var(--space-performance-xl) 0;
-	}
-
-	.case-study-card {
-		text-align: center;
-		padding: var(--space-performance-xl);
-		border-radius: var(--radius-performance-scale-lg);
-	}
-
-	.case-study-label {
-		font-size: var(--text-performance-caption);
-		font-weight: var(--font-performance-semibold);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		color: var(--color-performance-fg-muted);
-	}
-
-	.case-study-title {
-		font-size: var(--text-performance-h2);
-		font-weight: var(--font-performance-bold);
-		color: var(--color-performance-fg-primary);
-		margin: var(--space-performance-sm) 0;
-	}
-
-	.case-study-description {
-		font-size: var(--text-performance-body);
-		color: var(--color-performance-fg-tertiary);
-		max-width: var(--content-width-xl);
-		margin: 0 auto var(--space-performance-lg);
-	}
-
-	.case-study-stats {
-		display: flex;
-		justify-content: center;
-		gap: var(--space-performance-xl);
-		margin-bottom: var(--space-performance-lg);
-	}
-
-	.stat {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-	}
-
-	.stat-value {
-		font-size: var(--text-performance-h2);
-		font-weight: var(--font-performance-bold);
-		color: var(--color-performance-fg-primary);
-	}
-
-	.stat-label {
-		font-size: var(--text-performance-caption);
-		color: var(--color-performance-fg-muted);
-	}
-
-	.case-study-link {
-		font-size: var(--text-performance-body);
-		font-weight: var(--font-performance-semibold);
-		color: var(--color-performance-fg-secondary);
-		transition: color var(--duration-performance-micro) var(--ease-performance-standard);
-	}
-
-	.case-study-link:hover {
-		color: var(--color-performance-fg-primary);
-	}
-
-	/* Links Section */
-	.links-section {
-		padding: var(--space-performance-xl) 0;
-	}
-
-	.links-grid {
-		display: flex;
-		justify-content: center;
-		gap: var(--space-performance-md);
-		flex-wrap: wrap;
-	}
-
-	.link-card {
-		display: flex;
-		align-items: center;
-		gap: var(--space-performance-xs);
-		padding: var(--space-performance-sm) var(--space-performance-md);
-		background: var(--color-performance-bg-surface);
-		border-radius: var(--radius-performance-scale-full);
-		font-size: var(--text-performance-body-sm);
-		color: var(--color-performance-fg-secondary);
-		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
-	}
-
-	.link-card:hover {
-		border-color: var(--color-performance-border-emphasis);
-		color: var(--color-performance-fg-primary);
-	}
-
-	.link-icon {
-		display: flex;
-	}
-
-	/* Responsive */
-	@media (max-width: 768px) {
-		.hero-title {
-			font-size: var(--text-performance-h1);
-		}
-
-		.how-grid {
-			grid-template-columns: 1fr;
-		}
-
-		.tools-grid {
-			grid-template-columns: 1fr;
-		}
-
-		.case-study-stats {
-			flex-direction: column;
-			gap: var(--space-performance-md);
-		}
-	}
-
-	@media (max-width: 480px) {
-		/* Stack cards on small screens */
-		.install-grid {
-			grid-template-columns: 1fr;
-		}
-	}
+  @media (max-width: 48rem) {
+    .install-grid,
+    .tool-groups,
+    .guardrail-artifact {
+      grid-template-columns: 1fr;
+    }
+    .case-proof dl {
+      grid-template-columns: 1fr;
+    }
+    .case-proof dl > div {
+      border-bottom: 1px solid var(--color-performance-line);
+    }
+  }
 </style>

@@ -1,5 +1,12 @@
 # Webflow Way Validator - Release Notes
 
+## Version 1.2.1 - Contrast Check Removal
+
+- Removed the unreliable automated color-contrast check.
+- Ignore legacy color-contrast findings returned by an older worker while preserving all other accessibility issues.
+
+---
+
 ## Version 1.0.0 - Initial Release
 
 ---

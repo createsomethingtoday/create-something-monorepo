@@ -2,18 +2,33 @@
 
 The Performance design system is one Canon-owned namespace for presenting and operating an AI workflow system from claim through handoff. It applies to campaign, editorial, research, learning, product, evidence, and operator surfaces. It owns shared typography, spacing, contrast, responsive behavior, state, proof, motion, and composition so properties do not reconstruct those decisions route by route.
 
-## The six-pattern sequence
+## The composition grammar
 
-| Pattern | Component | Owns |
-|---|---|---|
-| Campaign opening | `PerformanceCampaignOpening` | Static-first first viewport, optional progressive video enhancement, responsive image source, claim hierarchy, actions, and campaign proof rail |
-| Thesis + conditions | `PerformanceThesisConditions` | One governing proposition paired with explicit signal, pressure, growth, risk, or neutral conditions |
-| Sequential field tests | `PerformanceFieldSequence` | Ordered studies, figure numbering, alternating media, optional sticky progression, and reduced-motion fallback |
-| Contrast chapter | `PerformanceContrastChapter` | The black/white principle-to-intervention break and an inline or full-width slot for a real route-owned artifact |
-| Evidence index | `PerformanceEvidenceIndex` | Inspectable public evidence rows, receipt state, links, and an explicit empty state |
-| Conversion handoff | `PerformanceConversionHandoff` | Owner, authority, proof, state, optional staged steps, actions, and compact or full-width artifact placement at the next boundary |
+| Pattern                | Component                      | Owns                                                                                                                                            |
+| ---------------------- | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Campaign opening       | `PerformanceCampaignOpening`   | Static-first first viewport, optional progressive video enhancement, responsive image source, claim hierarchy, actions, and campaign proof rail |
+| Thesis + conditions    | `PerformanceThesisConditions`  | One governing proposition paired with explicit signal, pressure, growth, risk, or neutral conditions                                            |
+| Sequential field tests | `PerformanceFieldSequence`     | Ordered studies, figure numbering, alternating media, optional sticky progression, and reduced-motion fallback                                  |
+| Contrast chapter       | `PerformanceContrastChapter`   | The black/white principle-to-intervention break and an inline or full-width slot for a real route-owned artifact                                |
+| Evidence index         | `PerformanceEvidenceIndex`     | Inspectable public evidence rows, receipt state, links, and an explicit empty state                                                             |
+| Indexed narrative      | `PerformanceNarrativeStage`    | A persistent scene index, one focused property-owned artifact, URL state, pointer/touch/keyboard controls, and complete SSR/no-JavaScript order |
+| Conversion handoff     | `PerformanceConversionHandoff` | Owner, authority, proof, state, optional staged steps, actions, and compact or full-width artifact placement at the next boundary               |
 
-Not every page needs all six patterns, but every Performance surface must compose from this system before inventing another route-level shell. The order is a narrative protocol, not a mandatory template: claim, conditions, tests, intervention, evidence, handoff. Product and operator surfaces normally emphasize conditions, evidence, and handoff; campaign and editorial surfaces may use the full sequence.
+These seven patterns are a grammar, not seven required page sections. Every Performance surface must compose from this system before inventing another route-level shell, but adjacent ideas should share one chapter when they support the same decision. The narrative protocol remains claim, conditions, tests, intervention, evidence, handoff; a homepage should normally land that protocol in three to five top-level sections.
+
+Use `PerformanceNarrativeStage` when two or more adjacent chapters are parts of one operating decision and each has a meaningful property-owned artifact. The ordered index keeps every scene label, summary, state, and primary destination visible; the active panel concentrates the complete detail, evidence, receipts, and artifact. Selection is always explicit—never autoplayed—and supports pointer, touch, roving arrow/Home/End keys, previous/next controls, and stable URL fragments. Canon renders every panel in document order during SSR, then hides inactive panels only after hydration. This is progressive disclosure, not content removal.
+
+Judge the stage in the complete page. The opening must create the question, the stage must resolve it with proof, and the final handoff must be the earned next action. Do not use the stage to combine unrelated ideas, preserve duplicated introductions, or add motion that competes with the page argument. Property artifacts stay behind the scene-aware `artifact` snippet; Canon owns only selection, responsive composition, focus, state, and fallback behavior.
+
+## Whole-page sharpness contract
+
+The composition grammar sits inside a stricter whole-page contract. Every CREATE SOMETHING page declares one decision, one narrative or task spine, bounded chapter roles, one primary proof location, and one earned handoff. The stable archetypes are `landing`, `commercial`, `editorial`, `index`, `learning`, and `tool`; each has a different chapter budget and canonical spine. A long article body, collection, learning sequence, or live workspace remains one top-level chapter even when its internal structure is rich.
+
+Use `validatePerformancePageContract` and the exported `PerformancePage*` types to validate the contract through Canon's public interface. The cross-property registry and fail-closed commands are documented in [`docs/PERFORMANCE_PAGE_SHARPNESS.md`](../../../../../../docs/PERFORMANCE_PAGE_SHARPNESS.md). A new route must be registered explicitly; authenticated and operator pages use the `tool` contract rather than escaping the system.
+
+The universal sequence is not permission to make properties or page types look alike. Canon owns the vocabulary, budgets, responsive behavior, and validation. Properties keep their words, media, evidence, data, and domain action. Choose a static chapter, index, field sequence, narrative stage, editorial body, or work surface according to the communication problem.
+
+Use `density="compact"` on `PerformanceCampaignOpening`, `PerformancePageSection`, `PerformanceDecisionPanel`, `PerformanceConversionHandoff`, and `PropertyFunnel` when the full content contract can remain visible with a shorter vertical commitment. Compact density changes spacing and responsive composition only. It must not hide summaries, remove evidence, or turn multiple unchanged chapters into one wrapper. `PropertyFunnel` may also carry a compact `handoff` ledger when progression and the final authority boundary belong to the same decision.
 
 ## Ownership boundary
 
@@ -61,6 +76,10 @@ Satoshi is loaded from Fontshare's official hosted service under the ITF Free Fo
 </PerformanceContrastChapter>
 
 <PerformanceEvidenceIndex title="Evidence index" items={evidence} />
+
+<PerformanceNarrativeStage id="operating-story" title="Map. Decide. Prove." {scenes}>
+  {#snippet artifact(scene)}<!-- route-owned artifact for this scene -->{/snippet}
+</PerformanceNarrativeStage>
 
 <PerformanceConversionHandoff
   {handoff}

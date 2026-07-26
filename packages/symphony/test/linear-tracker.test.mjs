@@ -101,6 +101,27 @@ test('fetch_candidate_issues requires all configured tracker labels', async () =
   );
 });
 
+test('fetch_handoff_issues scopes the Linear fallback ledger by required labels', async () => {
+  const client = new LinearTrackerClient(
+    {
+      ...createConfig({ label: 'code-quality' }),
+      completion: { handoff_state: 'In Review' },
+    },
+    logger,
+    createFetch([
+      createIssue('CRE-1300', ['code-quality']),
+      createIssue('CRE-OTHER', ['another-workflow']),
+    ]),
+  );
+
+  const handoffs = await client.fetch_handoff_issues();
+
+  assert.deepEqual(
+    handoffs.map((issue) => issue.identifier),
+    ['CRE-1300'],
+  );
+});
+
 test('fetch_issue_by_identifier selects an active labeled issue without project membership', async () => {
   const node = createIssue('CRE-1154', ['code-quality']);
   const client = new LinearTrackerClient(
@@ -122,4 +143,132 @@ test('fetch_issue_by_identifier selects an active labeled issue without project 
   assert.equal(issue.identifier, 'CRE-1154');
   assert.equal(issue.state, 'Todo');
   assert.deepEqual(issue.labels, ['code-quality']);
+});
+
+test('fetch_issue_identity_by_identifier reads a handoff issue without dispatch filtering', async () => {
+  const client = new LinearTrackerClient(
+    createConfig(),
+    logger,
+    async (_url, init) => {
+      const payload = JSON.parse(init.body);
+      assert.match(payload.query, /query SymphonyIssueIdentity/);
+      assert.equal(payload.variables.id, 'CRE-1304');
+      return new Response(JSON.stringify({
+        data: {
+          issue: {
+            id: 'id-CRE-1304',
+            identifier: 'CRE-1304',
+          },
+        },
+      }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    },
+  );
+
+  const identity = await client.fetch_issue_identity_by_identifier('CRE-1304');
+
+  assert.deepEqual(identity, { id: 'id-CRE-1304', identifier: 'CRE-1304' });
+});
+
+test('handoff_issue moves evidence-only work to the exact non-active handoff state', async () => {
+  const issueNode = createIssue('CRE-1300', ['code-quality']);
+  const client = new LinearTrackerClient(
+    {
+      ...createConfig(),
+      completion: { handoff_state: 'In Review' },
+    },
+    logger,
+    async (_url, init) => {
+      const payload = JSON.parse(init.body);
+      if (payload.query.includes('query SymphonyBootstrap')) {
+        return new Response(JSON.stringify({
+          data: {
+            viewer: { id: 'viewer-1' },
+            workflowStates: {
+              nodes: [
+                { id: 'state-progress', name: 'In Progress', type: 'started' },
+                { id: 'state-review', name: 'In Review', type: 'started' },
+                { id: 'state-done', name: 'Done', type: 'completed' },
+              ],
+            },
+          },
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+      assert.match(payload.query, /mutation SymphonyUpdateIssue/);
+      assert.deepEqual(payload.variables.input, { stateId: 'state-review' });
+      return new Response(JSON.stringify({
+        data: {
+          issueUpdate: {
+            success: true,
+            issue: {
+              ...issueNode,
+              state: { id: 'state-review', name: 'In Review', type: 'started' },
+            },
+          },
+        },
+      }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    },
+  );
+
+  const handedOff = await client.handoff_issue({
+    id: issueNode.id,
+    identifier: issueNode.identifier,
+    state: 'In Progress',
+  });
+
+  assert.equal(handedOff.state, 'In Review');
+});
+
+test('complete_issue posts evidence before the terminal state mutation', async () => {
+  const operations = [];
+  const client = new LinearTrackerClient(createConfig(), logger, createFetch([]));
+  client.bootstrap = async () => ({
+    viewer: { id: 'viewer-1' },
+    workflow_states: [{ id: 'state-done', name: 'Done', type: 'completed' }],
+  });
+  client.comment_issue = async (_issueId, body) => {
+    operations.push('comment');
+    assert.match(body, /^Evidence:\n\nCanonical harness receipt:/);
+  };
+  client.update_issue = async () => {
+    operations.push('update');
+    return { id: 'id-CRE-1304', identifier: 'CRE-1304', state: 'Done' };
+  };
+
+  const completed = await client.complete_issue(
+    { id: 'id-CRE-1304', identifier: 'CRE-1304' },
+    { message: 'Canonical harness receipt: /tmp/receipt.v1.json' },
+  );
+
+  assert.deepEqual(operations, ['comment', 'update']);
+  assert.equal(completed.state, 'Done');
+});
+
+test('complete_issue does not mutate terminal state when evidence publication fails', async () => {
+  const operations = [];
+  const client = new LinearTrackerClient(createConfig(), logger, createFetch([]));
+  client.bootstrap = async () => ({
+    viewer: { id: 'viewer-1' },
+    workflow_states: [{ id: 'state-done', name: 'Done', type: 'completed' }],
+  });
+  client.comment_issue = async () => {
+    operations.push('comment');
+    throw new Error('evidence publication failed');
+  };
+  client.update_issue = async () => {
+    operations.push('update');
+    return { id: 'id-CRE-1304', identifier: 'CRE-1304', state: 'Done' };
+  };
+
+  await assert.rejects(
+    client.complete_issue(
+      { id: 'id-CRE-1304', identifier: 'CRE-1304' },
+      { message: 'Canonical harness receipt: /tmp/receipt.v1.json' },
+    ),
+    /evidence publication failed/,
+  );
+
+  assert.deepEqual(operations, ['comment']);
 });

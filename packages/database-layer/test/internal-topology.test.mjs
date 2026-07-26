@@ -31,7 +31,11 @@ test('internal topology covers the current repo package and runtime surfaces', (
   assert.ok(topology.coverage.policyCount >= 40);
   assert.ok(topology.coverage.guideCount >= 40);
   assert.ok(topology.coverage.configCount >= 20);
-  assert.equal(topology.coverage.clientOverlayCount, 6);
+  assert.equal(
+    topology.coverage.clientOverlayCount,
+    topology.nodes.filter((node) => node.surface === 'client').length
+  );
+  assert.ok(topology.coverage.clientOverlayCount >= 6);
 });
 
 test('internal topology includes the key Atlas and Substrate packages', () => {

@@ -1077,17 +1077,17 @@ const ROOT_COMPONENT_STABLE_ITEMS: CanonRegistryManifest['items'] = [
 		id: 'component.property-funnel',
 		name: 'PropertyFunnel',
 		description:
-			'Property conversion funnel primitive for routing visitors from property context to the next owned action.',
+			'Intent-aware property funnel for routing visitors through Canon, Research, School, Workbench, and Build without forcing cold traffic into booking.',
 		tags: ['property', 'funnel', 'conversion'],
 		modalities: ['web', 'app', 'chat', 'voice', 'glasses'],
 		dependencies: ['token.performance-core', 'component.clear-cta-band', 'component.conversion-sticky-cta'],
 		contract: {
 			accessibility:
-				'Funnels must expose current property, offer, qualifying context, primary action, secondary action, and dismissal state.',
+				'Funnels must expose the current property role, all five property jobs, and distinct local, next-capability, practice, or qualified booking actions.',
 			evidence:
-				'Funnel data must preserve property, audience segment, offer, destination, stage, proof reference, and conversion event.',
+				'Funnel handoffs must preserve source property, bounded intent, stage, lane, destination, consent-gated journey identifier, and conversion event.',
 			extension:
-				'Keep stable while funnel stage policy, offer schema, analytics boundaries, and cross-property handoff stay documented.'
+				'Keep stable while the five property roles, booking boundary, analytics consent, and cross-property journey contract stay documented.'
 		}
 	}),
 	createRootComponentStableItem({

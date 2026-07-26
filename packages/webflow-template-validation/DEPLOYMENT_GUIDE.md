@@ -43,7 +43,7 @@ The extension has already been updated and compiled with this URL. You're ready 
    - **Assets & Images** (150KB limits, optimization)
    - **Content & Accessibility** (Lorem Ipsum, alt text)
    - **Performance & Optimization** (Core Web Vitals)
-   - **Accessibility & WCAG** (contrast ratios, WCAG compliance)
+   - **Accessibility & WCAG** (alt text, headings, form labels, keyboard navigation)
 
 ## 🎯 Expected Results
 

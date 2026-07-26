@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "flow.topology.current.v1",
+  "generatedAt": "2026-07-23T18:00:00Z",
+  "nodes": [
+    {
+      "id": "current-node",
+      "updatedAt": "2026-07-23T18:00:00Z"
+    }
+  ],
+  "edges": []
+}

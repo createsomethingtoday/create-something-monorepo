@@ -245,11 +245,12 @@ export function buildProtectedResourceMetadata(options: {
   resourceOrigin: string;
   resourcePath: string;
   authorizationServer: string;
+  scopesSupported?: string[];
 }): Record<string, unknown> {
   return {
     resource: `${options.resourceOrigin}${options.resourcePath}`,
     authorization_servers: [options.authorizationServer],
-    scopes_supported: [SCOPE_QUEUE_READ, SCOPE_READ, SCOPE_WRITE],
+    scopes_supported: options.scopesSupported ?? [SCOPE_QUEUE_READ, SCOPE_READ, SCOPE_WRITE],
     bearer_methods_supported: ['header'],
     resource_name: 'Webflow Template Review MCP',
   };

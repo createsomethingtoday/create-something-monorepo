@@ -1,0 +1,30 @@
+{
+  "acceptedCapture": {
+    "path": "apps/metal-water-gate-release/output/sph-field--v1.json",
+    "sha256": "9b47b64842431da837b228df80e72874aff1cba648900fdf36b46a4f9c8fcf5f"
+  },
+  "acceptedFirstDownstreamFrame": 73,
+  "checks": {
+    "maximumDownstreamAbsoluteDriftAtMostThirtyTwoParticles": true,
+    "noDownstreamAtGateFrame": true,
+    "normalizedFieldMAEAtMostOnePercent": true,
+    "sameFirstDownstreamFrame": true,
+    "zeroOverflow": true
+  },
+  "fieldCellCount": 1769472,
+  "fieldMAE": 0.855276037145544,
+  "fieldRMSE": 2.0896752701211367,
+  "maximumCellDelta": 34,
+  "maximumDownstreamAbsoluteDrift": 25,
+  "maximumDownstreamRelativeDrift": 0.022222222222222223,
+  "maximumFieldValue": 117,
+  "maximumOverflowCount": 0,
+  "normalizedFieldMAE": 0.007310051599534564,
+  "passed": true,
+  "replayCapture": {
+    "path": "apps/metal-water-gate-release/output/sph-field--v1-replay.json",
+    "sha256": "a5028a78b948f10578e0540c1cd6c72871ff0de7dbfd1f8229dfe47ecd9af57f"
+  },
+  "replayFirstDownstreamFrame": 73,
+  "schemaVersion": 1
+}

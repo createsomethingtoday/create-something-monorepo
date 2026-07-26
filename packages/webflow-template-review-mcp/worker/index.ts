@@ -11,15 +11,13 @@ import {
 } from '../src/cloudflare-access.js';
 import { DEFAULT_AIRTABLE_BASE_ID, TABLE_IDS } from '../src/schema.js';
 import {
-  SCOPE_READ,
-  SCOPE_QUEUE_READ,
-  SCOPE_WRITE,
   buildProtectedResourceMetadata,
   parseAllowedEmails,
   resolveIdentityOAuthRequest,
 } from '../src/oauth-access.js';
 import { registerPrompts, SERVER_INSTRUCTIONS } from '../src/prompts.js';
 import { registerResources } from '../src/resources.js';
+import { parseBooleanFlag, resolveRuntimePolicy } from '../src/runtime-policy.js';
 import {
   applyReviewerAuthEmailAliases,
   parseReviewerDirectory,
@@ -45,6 +43,10 @@ interface Env {
   WEBFLOW_TEMPLATE_VALIDATION_WORKER_URL?: string;
   GSAP_VALIDATION_WORKER_URL?: string;
   TEMPLATE_REVIEW_VALIDATION_TIMEOUT_MS?: string;
+  E2B_API_KEY?: string;
+  E2B_BROWSER_TEMPLATE?: string;
+  TEMPLATE_REVIEW_ENVIRONMENT?: string;
+  TEMPLATE_REVIEW_FORCE_READ_ONLY?: string;
 }
 
 type RequestProps = {
@@ -92,16 +94,11 @@ export class WebflowTemplateReviewMCP extends McpAgent<Env, unknown, RequestProp
       return getReviewerProfileForAccount(reviewerDirectory, this.props?.accountId ?? null);
     };
 
-    // Legacy (hub bridge) sessions keep the full tool surface. OAuth sessions
-    // only see write tools when the grant carries the write scope, which is
-    // issued to allowlisted reviewers at sign-in.
-    const allowWrites =
-      this.props?.authMode !== 'oauth' || (this.props?.scopes ?? []).includes(SCOPE_WRITE);
-    const queueReadOnly =
-      this.props?.authMode === 'oauth'
-      && (this.props?.scopes ?? []).includes(SCOPE_QUEUE_READ)
-      && !(this.props?.scopes ?? []).includes(SCOPE_READ)
-      && !(this.props?.scopes ?? []).includes(SCOPE_WRITE);
+    const runtimePolicy = resolveRuntimePolicy({
+      authMode: this.props?.authMode,
+      scopes: this.props?.scopes,
+      forceReadOnly: parseBooleanFlag(this.env.TEMPLATE_REVIEW_FORCE_READ_ONLY),
+    });
 
     registerResources(this.server, getClient, getReviewer);
     registerTools(
@@ -114,10 +111,14 @@ export class WebflowTemplateReviewMCP extends McpAgent<Env, unknown, RequestProp
         timeoutMs: this.env.TEMPLATE_REVIEW_VALIDATION_TIMEOUT_MS
           ? Number(this.env.TEMPLATE_REVIEW_VALIDATION_TIMEOUT_MS)
           : undefined,
+        sandboxExecution: {
+          apiKey: this.env.E2B_API_KEY,
+          template: this.env.E2B_BROWSER_TEMPLATE,
+        },
       },
       {
-        allowWrites,
-        ...(queueReadOnly ? { allowedToolNames: new Set(['template_review_list_queue']) } : {}),
+        allowWrites: runtimePolicy.allowWrites,
+        ...(runtimePolicy.queueReadOnly ? { allowedToolNames: new Set(['template_review_list_queue']) } : {}),
       },
     );
     registerPrompts(this.server);
@@ -251,8 +252,16 @@ function protectedResourceResponse(env: Env, origin: string, resourcePath: strin
   if (!authorizationServer) {
     return misconfiguredResponse('CS_IDENTITY_ISSUER is missing; cannot advertise the authorization server.');
   }
+  const runtimePolicy = resolveRuntimePolicy({
+    forceReadOnly: parseBooleanFlag(env.TEMPLATE_REVIEW_FORCE_READ_ONLY),
+  });
   return new Response(
-    JSON.stringify(buildProtectedResourceMetadata({ resourceOrigin: origin, resourcePath, authorizationServer }), null, 2),
+    JSON.stringify(buildProtectedResourceMetadata({
+      resourceOrigin: origin,
+      resourcePath,
+      authorizationServer,
+      scopesSupported: runtimePolicy.scopesSupported,
+    }), null, 2),
     { headers: JSON_HEADERS },
   );
 }
@@ -316,6 +325,9 @@ export default {
     }
 
     if (url.pathname === '/' || url.pathname === '/health') {
+      const runtimePolicy = resolveRuntimePolicy({
+        forceReadOnly: parseBooleanFlag(env.TEMPLATE_REVIEW_FORCE_READ_ONLY),
+      });
       return new Response(
         JSON.stringify(
           {
@@ -323,6 +335,8 @@ export default {
             version: '1.0.0',
             description:
               'Webflow Template Review MCP — Airtable-scoped review workflows for template Assets + Asset Versions',
+            environment: env.TEMPLATE_REVIEW_ENVIRONMENT?.trim() || 'production',
+            readOnly: !runtimePolicy.allowWrites,
             auth: {
               modes: {
                 oauth: {
@@ -330,7 +344,7 @@ export default {
                   authorizationServer: identityIssuer(env) || null,
                   configured: Boolean(identityIssuer(env)),
                   discovery: '/.well-known/oauth-protected-resource',
-                  scopes: [SCOPE_READ, SCOPE_WRITE],
+                  scopes: runtimePolicy.scopesSupported,
                 },
                 cloudflareAccess: {
                   flow: 'Cloudflare Access Managed OAuth with a signed application assertion',
@@ -338,7 +352,7 @@ export default {
                   teamDomain: env.CF_ACCESS_TEAM_DOMAIN?.trim().replace(/\/+$/, '') || null,
                   audienceConfigured: Boolean(env.CF_ACCESS_AUD?.trim()),
                   configured: Boolean(env.CF_ACCESS_TEAM_DOMAIN?.trim() && env.CF_ACCESS_AUD?.trim()),
-                  scopes: [SCOPE_READ, SCOPE_WRITE],
+                  scopes: runtimePolicy.scopesSupported,
                 },
                 legacy: {
                   flow: 'Shared bearer token (hub bridges only)',

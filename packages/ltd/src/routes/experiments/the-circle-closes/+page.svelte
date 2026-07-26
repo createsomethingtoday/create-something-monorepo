@@ -10,7 +10,14 @@
    * "The tool reveals its own concealment."
    */
 
-  import { TriadHealth, HermeneuticCircle, IsometricAssembly, SEO } from '@create-something/canon';
+  import {
+    HermeneuticCircle,
+    IsometricAssembly,
+    PerformanceNarrativeStage,
+    SEO,
+    TriadHealth,
+    type PerformanceNarrativeScene
+  } from '@create-something/canon';
 
   let { data } = $props();
 
@@ -20,6 +27,36 @@
     io: 'https://createsomething.io',
     agency: 'https://createsomething.agency'
   };
+
+  const proofScenes: PerformanceNarrativeScene[] = [
+    {
+      id: 'self-audit',
+      label: 'Self-audit',
+      summary: 'Measure the codebase',
+      title: 'The system examines itself.',
+      detail: 'The Subtractive Triad becomes a live audit across duplication, artifact quality, and system coherence.',
+      tone: 'allow',
+      evidence: ['DRY', 'Rams', 'Heidegger']
+    },
+    {
+      id: 'visibility',
+      label: 'Visibility',
+      summary: 'Render the connections',
+      title: 'The whole becomes inspectable.',
+      detail: 'The property graph exposes connections and gaps so the hermeneutic circle can be reviewed rather than merely described.',
+      tone: 'review',
+      evidence: ['.ltd', '.io', '.space', '.agency']
+    },
+    {
+      id: 'feedback',
+      label: 'Feedback',
+      summary: 'Return practice evidence',
+      title: 'Execution pressures the canon.',
+      detail: 'Experiments declare which principles they test and accumulate evidence that can corroborate or refute the governing idea.',
+      tone: 'neutral',
+      receipts: ['Experiment records', 'Evidence counts', 'Principle status']
+    }
+  ];
 
   function getStatusColor(status: string): string {
     switch (status) {
@@ -96,7 +133,17 @@
     </details>
   </header>
 
-  <div class="three-proofs">
+  <PerformanceNarrativeStage
+    id="circle-proof-story"
+    eyebrow="Three proofs"
+    title="Measure. Reveal. Return."
+    description="The experiment closes the circle through three inspectable proof states. Focus one state at a time without separating it from the complete argument."
+    scenes={proofScenes}
+    ariaLabel="The Circle Closes proof sequence"
+  >
+    {#snippet artifact(scene: PerformanceNarrativeScene)}
+      <div class="experiment-scene-artifact">
+        {#if scene.id === 'self-audit'}
     <!-- Section 1: Self-Audit -->
     <section class="proof-section" id="self-audit">
       <h2 class="section-title">
@@ -116,6 +163,8 @@
         />
       </div>
     </section>
+
+        {:else if scene.id === 'visibility'}
 
     <!-- Section 2: Visibility -->
     <section class="proof-section" id="visibility">
@@ -148,6 +197,8 @@
         {/if}
       {/if}
     </section>
+
+        {:else}
 
     <!-- Section 3: Feedback -->
     <section class="proof-section" id="feedback">
@@ -209,7 +260,10 @@
         {/if}
       {/if}
     </section>
-  </div>
+        {/if}
+      </div>
+    {/snippet}
+  </PerformanceNarrativeStage>
 
   <!-- Synthesis -->
   <section class="synthesis">
@@ -246,6 +300,16 @@
     padding: var(--space-performance-lg);
     font-family: var(--font-performance-sans);
     color: var(--color-performance-fg-secondary);
+  }
+
+  .experiment-scene-artifact {
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .experiment-scene-artifact :global(*) {
+    min-width: 0;
+    max-width: 100%;
   }
 
   /* Header */
@@ -338,14 +402,6 @@
     border-radius: var(--radius-performance-scale-full);
     font-size: var(--text-performance-caption);
     color: var(--color-performance-fg-tertiary);
-  }
-
-  /* Three Proofs - Stacked Layout */
-  .three-proofs {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-performance-lg);
-    margin-bottom: var(--space-performance-xl);
   }
 
   /* Proof Sections */

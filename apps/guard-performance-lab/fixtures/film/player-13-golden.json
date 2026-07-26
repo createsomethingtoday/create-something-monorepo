@@ -1,0 +1,530 @@
+{
+  "profile": "guard-player-trace-v1",
+  "clips": [
+    {
+      "id": "clear-half-court",
+      "startMs": 235000,
+      "endMs": 255000,
+      "annotations": [
+        {
+          "timeMs": 235000,
+          "target": {
+            "status": "unresolved",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 236000,
+          "target": {
+            "status": "unresolved",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 237000,
+          "target": {
+            "status": "unresolved",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 238000,
+          "target": {
+            "status": "unresolved",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 239000,
+          "target": {
+            "status": "unresolved",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 240000,
+          "target": {
+            "status": "visible",
+            "court": [
+              18,
+              30
+            ],
+            "zone": "left-paint",
+            "trackId": "13",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 241000,
+          "target": {
+            "status": "visible",
+            "court": [
+              18,
+              30
+            ],
+            "zone": "left-paint",
+            "trackId": "13",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 242000,
+          "target": {
+            "status": "visible",
+            "court": [
+              19,
+              34
+            ],
+            "zone": "left-wing",
+            "trackId": "13",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 243000,
+          "target": {
+            "status": "visible",
+            "court": [
+              20,
+              36
+            ],
+            "zone": "left-wing",
+            "trackId": "13",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 244000,
+          "target": {
+            "status": "visible",
+            "court": [
+              23,
+              42
+            ],
+            "zone": "left-wing",
+            "trackId": "13",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 245000,
+          "target": {
+            "status": "visible",
+            "court": [
+              27,
+              48
+            ],
+            "zone": "left-wing",
+            "trackId": "13",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 246000,
+          "target": {
+            "status": "visible",
+            "court": [
+              30,
+              49
+            ],
+            "zone": "left-wing",
+            "trackId": "13",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 247000,
+          "target": {
+            "status": "visible",
+            "court": [
+              27,
+              43
+            ],
+            "zone": "left-wing",
+            "trackId": "13",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 248000,
+          "target": {
+            "status": "visible",
+            "court": [
+              22,
+              36
+            ],
+            "zone": "left-wing",
+            "trackId": "13",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 249000,
+          "target": {
+            "status": "visible",
+            "court": [
+              24,
+              33
+            ],
+            "zone": "left-slot",
+            "trackId": "13",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 250000,
+          "target": {
+            "status": "visible",
+            "court": [
+              26,
+              31
+            ],
+            "zone": "left-slot",
+            "trackId": "13",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 251000,
+          "target": {
+            "status": "unresolved",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 252000,
+          "target": {
+            "status": "unresolved",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 253000,
+          "target": {
+            "status": "unresolved",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 254000,
+          "target": {
+            "status": "unresolved",
+            "provenance": "manual"
+          }
+        }
+      ]
+    },
+    {
+      "id": "transition-wide",
+      "startMs": 1700000,
+      "endMs": 1720000,
+      "annotations": [
+        {
+          "timeMs": 1700000,
+          "target": {
+            "status": "out-of-frame",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 1701000,
+          "target": {
+            "status": "out-of-frame",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 1702000,
+          "target": {
+            "status": "out-of-frame",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 1703000,
+          "target": {
+            "status": "out-of-frame",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 1704000,
+          "target": {
+            "status": "out-of-frame",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 1705000,
+          "target": {
+            "status": "out-of-frame",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 1706000,
+          "target": {
+            "status": "out-of-frame",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 1707000,
+          "target": {
+            "status": "out-of-frame",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 1708000,
+          "target": {
+            "status": "out-of-frame",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 1709000,
+          "target": {
+            "status": "out-of-frame",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 1710000,
+          "target": {
+            "status": "out-of-frame",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 1711000,
+          "target": {
+            "status": "out-of-frame",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 1712000,
+          "target": {
+            "status": "out-of-frame",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 1713000,
+          "target": {
+            "status": "out-of-frame",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 1714000,
+          "target": {
+            "status": "out-of-frame",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 1715000,
+          "target": {
+            "status": "out-of-frame",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 1716000,
+          "target": {
+            "status": "out-of-frame",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 1717000,
+          "target": {
+            "status": "out-of-frame",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 1718000,
+          "target": {
+            "status": "out-of-frame",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 1719000,
+          "target": {
+            "status": "out-of-frame",
+            "provenance": "manual"
+          }
+        }
+      ]
+    },
+    {
+      "id": "pan-occlusion",
+      "startMs": 2325000,
+      "endMs": 2345000,
+      "annotations": [
+        {
+          "timeMs": 2325000,
+          "target": {
+            "status": "out-of-frame",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 2326000,
+          "target": {
+            "status": "out-of-frame",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 2327000,
+          "target": {
+            "status": "out-of-frame",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 2328000,
+          "target": {
+            "status": "out-of-frame",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 2329000,
+          "target": {
+            "status": "out-of-frame",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 2330000,
+          "target": {
+            "status": "out-of-frame",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 2331000,
+          "target": {
+            "status": "out-of-frame",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 2332000,
+          "target": {
+            "status": "out-of-frame",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 2333000,
+          "target": {
+            "status": "out-of-frame",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 2334000,
+          "target": {
+            "status": "out-of-frame",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 2335000,
+          "target": {
+            "status": "out-of-frame",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 2336000,
+          "target": {
+            "status": "out-of-frame",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 2337000,
+          "target": {
+            "status": "out-of-frame",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 2338000,
+          "target": {
+            "status": "out-of-frame",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 2339000,
+          "target": {
+            "status": "out-of-frame",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 2340000,
+          "target": {
+            "status": "unresolved",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 2341000,
+          "target": {
+            "status": "unresolved",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 2342000,
+          "target": {
+            "status": "visible",
+            "court": [
+              90,
+              5
+            ],
+            "zone": "right-corner",
+            "trackId": "13",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 2343000,
+          "target": {
+            "status": "visible",
+            "court": [
+              89,
+              8
+            ],
+            "zone": "right-corner",
+            "trackId": "13",
+            "provenance": "manual"
+          }
+        },
+        {
+          "timeMs": 2344000,
+          "target": {
+            "status": "visible",
+            "court": [
+              85,
+              12
+            ],
+            "zone": "right-wing",
+            "trackId": "13",
+            "provenance": "manual"
+          }
+        }
+      ]
+    }
+  ]
+}

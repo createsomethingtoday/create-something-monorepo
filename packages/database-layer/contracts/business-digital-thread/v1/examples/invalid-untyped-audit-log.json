@@ -1,0 +1,74 @@
+{
+  "schemaVersion": "flow.business-digital-thread.v1",
+  "threadId": "bdt:cs:thread:create-something",
+  "tenantId": "tenant:create-something",
+  "businessId": "bdt:cs:business:create-something",
+  "recordedAt": "2020-06-01T00:00:00Z",
+  "records": [
+    {
+      "id": "bdt:cs:event:approved",
+      "revisionId": "bdtr:cs:event:approved:r1",
+      "tenantId": "tenant:create-something",
+      "kind": "event",
+      "title": "Something was approved",
+      "validTime": {
+        "from": "2020-06-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-06-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "untyped-event",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "payload": {
+        "data": {
+          "arbitrary": true
+        }
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    }
+  ],
+  "links": [],
+  "provenance": {
+    "inputMode": "deterministic_fixture",
+    "generator": "verify-business-digital-thread-contract.mjs",
+    "generatorVersion": "1.0.0",
+    "authoritativeInputs": []
+  },
+  "exportManifest": {
+    "manifestVersion": "flow.business-digital-thread.export.v1",
+    "exportedAt": "2020-06-01T00:00:00Z",
+    "sourceThreadId": "bdt:cs:thread:create-something",
+    "recordRevisionCount": 1,
+    "linkRevisionCount": 0,
+    "adapters": [
+      {
+        "adapterId": "adapter.contract-prototype.v1",
+        "version": "1.0.0",
+        "sourceNamespace": "contract-prototype",
+        "supportedSchemaRange": "flow.business-digital-thread.v1",
+        "lossPolicy": "lossless",
+        "replacementStrategy": "Replace adapter while preserving canonical IDs and emit a migration receipt."
+      }
+    ],
+    "semanticQuerySet": "bdt-semantic-oracle-v1",
+    "canonicalDigest": "823df3ebebc142d2bb03484158e7b28912b9563797c0f50a4d3f1522e650eee4"
+  },
+  "integrity": {
+    "algorithm": "sha256",
+    "canonicalization": "JCS-RFC8785",
+    "recordsRootHash": "9299ba20c2d5d20425439977ee7ca28a9edafe0ec7caee4df831f71f1523291c",
+    "linksRootHash": "716be257baba7b515c06dc7b192e2a44fe1cc8628f0fa1173d704c3b98d8c7bc",
+    "semanticDigest": "89970bddcc6b3e156723ca1e12127538d3d2ec3468bebdf0d3024079c18575e9"
+  }
+}

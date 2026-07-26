@@ -36,6 +36,9 @@ codex:
   turn_timeout_ms: 3600000
   read_timeout_ms: 10000
   stall_timeout_ms: 300000
+completion:
+  mode: evidence_only
+  handoff_state: In Review
 server:
   port: 4780
 ---
@@ -51,7 +54,7 @@ Linear issue:
 
 Operating rules:
 - Work only inside the current git worktree.
-- Do not mutate Linear issue state directly. Symphony has already claimed this issue and will complete it when your run succeeds.
+- Do not mutate Linear issue state directly. Symphony has already claimed this issue and will preserve your workspace plus an evidence-only handoff when your run succeeds. A separate completion gate owns any terminal transition.
 - Preserve unrelated changes.
 - Prefer the smallest defensible fix that resolves the stated code-quality issue.
 - Start by identifying the narrowest relevant checks for this repo:

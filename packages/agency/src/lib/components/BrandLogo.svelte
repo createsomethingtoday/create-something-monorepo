@@ -17,8 +17,7 @@
     Webflow: '/images/stack/webflow.png',
     Linear: '/images/stack/linear.svg',
     TRMNL: '/images/stack/trmnl.png',
-    Infisical: '/images/stack/infisical.png',
-    Auth0: '/images/stack/auth0.svg'
+    Infisical: '/images/stack/infisical.png'
   };
 
   const invertImageNames = new Set(['OpenAI']);

@@ -663,26 +663,26 @@ promotion waits on a second consuming surface. Design source:
 <div class="token-grid">
 <div class="token-category">
 <h3>Colors</h3>
-<code>--color-bg-surface</code>
-<code>--color-fg-primary</code>
-<code>--color-border-default</code>
+<code>--color-performance-bg-surface</code>
+<code>--color-performance-fg-primary</code>
+<code>--color-performance-border-default</code>
 </div>
 <div class="token-category">
 <h3>Motion</h3>
-<code>--duration-micro</code>
-<code>--ease-standard</code>
+<code>--duration-performance-micro</code>
+<code>--ease-performance-standard</code>
 </div>
 <div class="token-category">
 <h3>Spacing</h3>
-<code>--space-xs</code>
-<code>--space-sm</code>
-<code>--space-md</code>
+<code>--space-performance-xs</code>
+<code>--space-performance-sm</code>
+<code>--space-performance-md</code>
 </div>
 <div class="token-category">
 <h3>Borders</h3>
-<code>--radius-sm</code>
-<code>--radius-md</code>
-<code>--radius-lg</code>
+<code>--radius-performance-scale-sm</code>
+<code>--radius-performance-scale-md</code>
+<code>--radius-performance-scale-lg</code>
 </div>
 </div>
 </section>`
@@ -2677,10 +2677,10 @@ Four levels from pure black to subtle grey. Stack them to create depth—like la
 
 | Token | Value | Description |
 |-------|-------|-------------|
-| \`--color-bg-pure\` | \`#000000\` | Pure black, the canvas |
+| \`--color-performance-bg-pure\` | \`#000000\` | Pure black, the canvas |
 | \`--color-bg-base\` | \`#0a0a0a\` | Slight lift for main surfaces |
-| \`--color-bg-surface\` | \`#111111\` | Cards and elevated elements |
-| \`--color-bg-elevated\` | \`#1a1a1a\` | Modals and popovers |
+| \`--color-performance-bg-surface\` | \`#111111\` | Cards and elevated elements |
+| \`--color-performance-bg-elevated\` | \`#1a1a1a\` | Modals and popovers |
 
 ## Foregrounds
 
@@ -2688,13 +2688,13 @@ Five text colors, all white at different opacities. Use brighter for headlines, 
 
 | Token | Value | Contrast | Description |
 |-------|-------|----------|-------------|
-| \`--color-fg-primary\` | \`rgba(255,255,255,1)\` | 21:1 | Headlines, emphasis |
-| \`--color-fg-secondary\` | \`rgba(255,255,255,0.8)\` | 13.7:1 | Body text |
-| \`--color-fg-tertiary\` | \`rgba(255,255,255,0.6)\` | 9.7:1 | Secondary information |
-| \`--color-fg-muted\` | \`rgba(255,255,255,0.46)\` | 4.56:1 | Captions, hints |
-| \`--color-fg-subtle\` | \`rgba(255,255,255,0.2)\` | 2.1:1 | Decorative only |
+| \`--color-performance-fg-primary\` | \`rgba(255,255,255,1)\` | 21:1 | Headlines, emphasis |
+| \`--color-performance-fg-secondary\` | \`rgba(255,255,255,0.8)\` | 13.7:1 | Body text |
+| \`--color-performance-fg-tertiary\` | \`rgba(255,255,255,0.6)\` | 9.7:1 | Secondary information |
+| \`--color-performance-fg-muted\` | \`rgba(255,255,255,0.46)\` | 4.56:1 | Captions, hints |
+| \`--color-performance-fg-subtle\` | \`rgba(255,255,255,0.2)\` | 2.1:1 | Decorative only |
 
-**WCAG Compliance:** \`--color-fg-muted\` (4.56:1) meets AA for normal text. \`--color-fg-subtle\` should only be used for decorative elements.
+**WCAG Compliance:** \`--color-performance-fg-muted\` (4.56:1) meets AA for normal text. \`--color-performance-fg-subtle\` should only be used for decorative elements.
 
 ## Borders
 
@@ -2702,9 +2702,9 @@ Three border levels for separation and emphasis.
 
 | Token | Value | Description |
 |-------|-------|-------------|
-| \`--color-border-default\` | \`rgba(255,255,255,0.1)\` | Subtle separation |
-| \`--color-border-emphasis\` | \`rgba(255,255,255,0.2)\` | Hover states |
-| \`--color-border-strong\` | \`rgba(255,255,255,0.3)\` | Active states |
+| \`--color-performance-border-default\` | \`rgba(255,255,255,0.1)\` | Subtle separation |
+| \`--color-performance-border-emphasis\` | \`rgba(255,255,255,0.2)\` | Hover states |
+| \`--color-performance-border-strong\` | \`rgba(255,255,255,0.3)\` | Active states |
 
 ## Performance Lab Readability Palette
 
@@ -2739,10 +2739,10 @@ Four colors that mean something: success, error, warning, info. Each comes with 
 
 | Token | Value | Use |
 |-------|-------|-----|
-| \`--color-success\` | \`#22c55e\` | Positive feedback |
-| \`--color-error\` | \`#ef4444\` | Errors, destructive actions |
-| \`--color-warning\` | \`#f59e0b\` | Caution states |
-| \`--color-info\` | \`#3b82f6\` | Informational |
+| \`--color-performance-success\` | \`#22c55e\` | Positive feedback |
+| \`--color-performance-error\` | \`#ef4444\` | Errors, destructive actions |
+| \`--color-performance-warning\` | \`#f59e0b\` | Caution states |
+| \`--color-performance-info\` | \`#3b82f6\` | Informational |
 
 ### Variants
 
@@ -2750,44 +2750,44 @@ Each semantic color has muted and border variants:
 
 \`\`\`css
 /* Success variants */
---color-success: #22c55e;
---color-success-muted: rgba(34, 197, 94, 0.1);
---color-success-border: rgba(34, 197, 94, 0.3);
+--color-performance-success: #22c55e;
+--color-performance-success-muted: rgba(34, 197, 94, 0.1);
+--color-performance-success-border: rgba(34, 197, 94, 0.3);
 
 /* Error variants */
---color-error: #ef4444;
---color-error-muted: rgba(239, 68, 68, 0.1);
---color-error-border: rgba(239, 68, 68, 0.3);
+--color-performance-error: #ef4444;
+--color-performance-error-muted: rgba(239, 68, 68, 0.1);
+--color-performance-error-border: rgba(239, 68, 68, 0.3);
 \`\`\`
 
 ## Interactive States
 
 | Token | Value | Use |
 |-------|-------|-----|
-| \`--color-hover\` | \`rgba(255,255,255,0.05)\` | Hover backgrounds |
-| \`--color-active\` | \`rgba(255,255,255,0.1)\` | Active/pressed states |
-| \`--color-focus\` | \`rgba(255,255,255,0.5)\` | Focus rings |
+| \`--color-performance-hover\` | \`rgba(255,255,255,0.05)\` | Hover backgrounds |
+| \`--color-performance-active\` | \`rgba(255,255,255,0.1)\` | Active/pressed states |
+| \`--color-performance-focus\` | \`rgba(255,255,255,0.5)\` | Focus rings |
 
 ## Usage Example
 
 \`\`\`css
 .card {
-  background: var(--color-bg-surface);
-  border: 1px solid var(--color-border-default);
-  color: var(--color-fg-secondary);
+  background: var(--color-performance-bg-surface);
+  border: 1px solid var(--color-performance-border-default);
+  color: var(--color-performance-fg-secondary);
 }
 
 .card:hover {
-  border-color: var(--color-border-emphasis);
-  background: var(--color-hover);
+  border-color: var(--color-performance-border-emphasis);
+  background: var(--color-performance-hover);
 }
 
 .card-title {
-  color: var(--color-fg-primary);
+  color: var(--color-performance-fg-primary);
 }
 
 .card-meta {
-  color: var(--color-fg-muted);
+  color: var(--color-performance-fg-muted);
 }
 \`\`\``
   },
@@ -2802,17 +2802,17 @@ Three levels of elevation for clear visual hierarchy.
 
 | Token | Use |
 |-------|-----|
-| \`--shadow-sm\` | Buttons, inputs, subtle lift |
-| \`--shadow-md\` | Cards, dropdowns |
-| \`--shadow-lg\` | Modals, popovers |
+| \`--shadow-performance-scale-sm\` | Buttons, inputs, subtle lift |
+| \`--shadow-performance-scale-md\` | Cards, dropdowns |
+| \`--shadow-performance-scale-lg\` | Modals, popovers |
 
 ## Shadow Values
 
 \`\`\`css
---shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
---shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1),\u0020
+--shadow-performance-scale-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+--shadow-performance-scale-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
              0 2px 4px -1px rgba(0, 0, 0, 0.06);
---shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1),\u0020
+--shadow-performance-scale-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
              0 4px 6px -2px rgba(0, 0, 0, 0.05);
 \`\`\`
 
@@ -2822,11 +2822,11 @@ Three levels of elevation for clear visual hierarchy.
 
 \`\`\`css
 .card {
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-performance-scale-md);
 }
 
 .card:hover {
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-performance-scale-lg);
   transform: translateY(-2px);
 }
 \`\`\`
@@ -2835,7 +2835,7 @@ Three levels of elevation for clear visual hierarchy.
 
 \`\`\`css
 .modal {
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-performance-scale-lg);
 }
 \`\`\`
 
@@ -2843,7 +2843,7 @@ Three levels of elevation for clear visual hierarchy.
 
 \`\`\`css
 .button {
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-performance-scale-sm);
 }
 
 .button:active {
@@ -2857,10 +2857,10 @@ Consistent stacking order for overlapping elements.
 
 | Token | Value | Use |
 |-------|-------|-----|
-| \`--z-dropdown\` | 100 | Dropdowns, tooltips |
-| \`--z-modal\` | 200 | Modal dialogs |
+| \`--z-performance-dropdown\` | 100 | Dropdowns, tooltips |
+| \`--z-performance-modal\` | 200 | Modal dialogs |
 | \`--z-toast\` | 300 | Toast notifications |
-| \`--z-tooltip\` | 400 | Tooltips on top |
+| \`--z-performance-tooltip\` | 400 | Tooltips on top |
 
 ## Best Practices
 
@@ -2872,8 +2872,8 @@ Consistent stacking order for overlapping elements.
 \`\`\`css
 /* Elevation transition */
 .card {
-  transition: box-shadow var(--duration-fast) var(--ease-standard),
-              transform var(--duration-fast) var(--ease-standard);
+  transition: box-shadow var(--duration-performance-fast) var(--ease-performance-standard),
+              transform var(--duration-performance-fast) var(--ease-performance-standard);
 }
 \`\`\``
   },
@@ -2888,28 +2888,28 @@ Consistent max-widths for content containment.
 
 | Token | Value | Use |
 |-------|-------|-----|
-| \`--container-sm\` | 640px | Narrow content |
-| \`--container-md\` | 768px | Articles, forms |
-| \`--container-lg\` | 1024px | Standard pages |
-| \`--container-xl\` | 1280px | Wide layouts |
-| \`--container-2xl\` | 1536px | Full-width |
+| \`--container-performance-sm\` | 640px | Narrow content |
+| \`--container-performance-md\` | 768px | Articles, forms |
+| \`--container-performance-lg\` | 1024px | Standard pages |
+| \`--container-performance-xl\` | 1280px | Wide layouts |
+| \`--container-performance-2xl\` | 1536px | Full-width |
 
 ## Container Usage
 
 \`\`\`css
 .container {
   width: 100%;
-  max-width: var(--container-lg);
+  max-width: var(--container-performance-lg);
   margin: 0 auto;
-  padding: 0 var(--space-lg);
+  padding: 0 var(--space-performance-lg);
 }
 
 .container-narrow {
-  max-width: var(--container-md);
+  max-width: var(--container-performance-md);
 }
 
 .container-wide {
-  max-width: var(--container-xl);
+  max-width: var(--container-performance-xl);
 }
 \`\`\`
 
@@ -2921,7 +2921,7 @@ A 12-column grid for flexible layouts.
 .grid {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
-  gap: var(--space-lg);
+  gap: var(--space-performance-lg);
 }
 
 .col-span-4 { grid-column: span 4; }
@@ -2937,7 +2937,7 @@ A 12-column grid for flexible layouts.
 \`\`\`css
 .responsive-grid {
   display: grid;
-  gap: var(--space-lg);
+  gap: var(--space-performance-lg);
   grid-template-columns: 1fr;
 }
 
@@ -2959,7 +2959,7 @@ A 12-column grid for flexible layouts.
 \`\`\`css
 .auto-grid {
   display: grid;
-  gap: var(--space-lg);
+  gap: var(--space-performance-lg);
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 }
 \`\`\`
@@ -2968,11 +2968,11 @@ A 12-column grid for flexible layouts.
 
 | Token | Value | Target |
 |-------|-------|--------|
-| \`--breakpoint-sm\` | 640px | Mobile landscape |
-| \`--breakpoint-md\` | 768px | Tablet |
-| \`--breakpoint-lg\` | 1024px | Desktop |
-| \`--breakpoint-xl\` | 1280px | Large desktop |
-| \`--breakpoint-2xl\` | 1536px | Ultra-wide |
+| \`--breakpoint-performance-sm\` | 640px | Mobile landscape |
+| \`--breakpoint-performance-md\` | 768px | Tablet |
+| \`--breakpoint-performance-lg\` | 1024px | Desktop |
+| \`--breakpoint-performance-xl\` | 1280px | Large desktop |
+| \`--breakpoint-performance-2xl\` | 1536px | Ultra-wide |
 
 ## Flexbox Utilities
 
@@ -2981,7 +2981,7 @@ A 12-column grid for flexible layouts.
 .flex-col { flex-direction: column; }
 .items-center { align-items: center; }
 .justify-between { justify-content: space-between; }
-.gap-md { gap: var(--space-md); }
+.gap-md { gap: var(--space-performance-md); }
 \`\`\``
   },
   {
@@ -3031,18 +3031,18 @@ Five duration levels from instant feedback to deliberate reveals.
 
 | Token | Value | Use Case |
 |-------|-------|----------|
-| \`--duration-instant\` | 0ms | Immediate state changes |
-| \`--duration-micro\` | 100ms | Hover states, button feedback |
-| \`--duration-fast\` | 200ms | Tooltips, dropdowns |
+| \`--duration-performance-instant\` | 0ms | Immediate state changes |
+| \`--duration-performance-micro\` | 100ms | Hover states, button feedback |
+| \`--duration-performance-fast\` | 200ms | Tooltips, dropdowns |
 | \`--duration-normal\` | 300ms | Modal transitions, page elements |
-| \`--duration-slow\` | 500ms | Complex reveals, hero animations |
+| \`--duration-performance-slow\` | 500ms | Complex reveals, hero animations |
 
 ## Easing
 
 Canon uses a single easing curve for consistency:
 
 \`\`\`css
---ease-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
+--ease-performance-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
 \`\`\`
 
 This is Material Design's standard easing—quick acceleration, gradual deceleration. It feels natural because it mimics physical motion.
@@ -3069,7 +3069,7 @@ Always respect user preferences:
 
 \`\`\`css
 .button {
-  transition: all var(--duration-micro) var(--ease-standard);
+  transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 }
 
 .button:hover {
@@ -3081,7 +3081,7 @@ Always respect user preferences:
 
 \`\`\`css
 .modal {
-  animation: fadeIn var(--duration-normal) var(--ease-standard);
+  animation: fadeIn var(--duration-normal) var(--ease-performance-standard);
 }
 
 @keyframes fadeIn {
@@ -3094,8 +3094,8 @@ Always respect user preferences:
 
 \`\`\`css
 .dropdown {
-  transition: opacity var(--duration-fast) var(--ease-standard),
-              transform var(--duration-fast) var(--ease-standard);
+  transition: opacity var(--duration-performance-fast) var(--ease-performance-standard),
+              transform var(--duration-performance-fast) var(--ease-performance-standard);
 }
 
 .dropdown[data-state="closed"] {
@@ -3148,7 +3148,7 @@ Always respect user preferences:
 </blockquote>
 <p>
 		Canon's goal is Zuhandenheit: a design system that disappears into use. When you reach for
-		<code>var(--space-md)</code>, you shouldn't think about the golden ratio—you
+		<code>var(--space-performance-md)</code>, you shouldn't think about the golden ratio—you
 		achieve the spacing that feels right.
 	</p>
 
@@ -3282,27 +3282,27 @@ Always respect user preferences:
 </div>
 <div class="phi-values">
 <div class="phi-row">
-<code>--space-xs</code>
+<code>--space-performance-xs</code>
 <span>0.5rem</span>
 <span class="phi-note">φ⁻²</span>
 </div>
 <div class="phi-row">
-<code>--space-sm</code>
+<code>--space-performance-sm</code>
 <span>1rem</span>
 <span class="phi-note">φ⁻¹</span>
 </div>
 <div class="phi-row">
-<code>--space-md</code>
+<code>--space-performance-md</code>
 <span>1.618rem</span>
 <span class="phi-note">φ⁰ × base</span>
 </div>
 <div class="phi-row">
-<code>--space-lg</code>
+<code>--space-performance-lg</code>
 <span>2.618rem</span>
 <span class="phi-note">φ¹</span>
 </div>
 <div class="phi-row">
-<code>--space-xl</code>
+<code>--space-performance-xl</code>
 <span>4.236rem</span>
 <span class="phi-note">φ²</span>
 </div>
@@ -3321,7 +3321,7 @@ Always respect user preferences:
 <div class="callout-info">
 <h3 class="callout-heading">Why This Matters</h3>
 <p>
-			The golden ratio isn't decoration—it's practical. When spacing follows φ, layouts compose predictably. A card with <code>--space-md</code> padding naturally nests inside a section with <code>--space-lg</code> margins. The proportions align without manual adjustment. This is why Zuhandenheit works: the system makes correct spacing automatic.
+			The golden ratio isn't decoration—it's practical. When spacing follows φ, layouts compose predictably. A card with <code>--space-performance-md</code> padding naturally nests inside a section with <code>--space-performance-lg</code> margins. The proportions align without manual adjustment. This is why Zuhandenheit works: the system makes correct spacing automatic.
 		</p>
 </div>
 
@@ -3369,20 +3369,20 @@ Always respect user preferences:
 /* Subtractive Triad Applied */
 .card {
   /* 1. DRY: Use existing tokens, don't reinvent */
-  padding: var(--space-md);
-  border-radius: var(--radius-lg);
+  padding: var(--space-performance-md);
+  border-radius: var(--radius-performance-scale-lg);
 \u0020\u0020
   /* 2. Rams: Only necessary properties */
-  background: var(--color-bg-surface);
-  border: 1px solid var(--color-border-default);
+  background: var(--color-performance-bg-surface);
+  border: 1px solid var(--color-performance-border-default);
 \u0020\u0020
   /* 3. Heidegger: Serve the system's coherence */
-  transition: all var(--duration-micro) var(--ease-standard);
+  transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 }
 
 .card:hover {
   /* Consistent hover states with other components */
-  border-color: var(--color-border-emphasis);
+  border-color: var(--color-performance-border-emphasis);
   /* No gradients, shadows, or decoration */
 }
 \`\`\``
@@ -3398,25 +3398,25 @@ Built on the golden ratio (φ = 1.618). Each step is derived from φⁿ where ba
 
 | Token | Value | Derivation | Recommended Use |
 |-------|-------|------------|-----------------|
-| \`--space-xs\` | 0.618rem (~10px) | φ⁻¹ | Tight gaps, inline elements |
-| \`--space-sm\` | 1rem (16px) | φ⁰ (base) | Form element gaps, small padding |
-| \`--space-md\` | 1.618rem (~26px) | φ¹ | Default component spacing |
-| \`--space-lg\` | 2.618rem (~42px) | φ² | Card padding, section gaps |
-| \`--space-xl\` | 4.236rem (~68px) | φ³ | Large component gaps |
-| \`--space-2xl\` | 6.854rem (~110px) | φ⁴ | *See guidance below* |
-| \`--space-3xl\` | 11.09rem (~177px) | φ⁵ | *See guidance below* |
+| \`--space-performance-xs\` | 0.618rem (~10px) | φ⁻¹ | Tight gaps, inline elements |
+| \`--space-performance-sm\` | 1rem (16px) | φ⁰ (base) | Form element gaps, small padding |
+| \`--space-performance-md\` | 1.618rem (~26px) | φ¹ | Default component spacing |
+| \`--space-performance-lg\` | 2.618rem (~42px) | φ² | Card padding, section gaps |
+| \`--space-performance-xl\` | 4.236rem (~68px) | φ³ | Large component gaps |
+| \`--space-performance-2xl\` | 6.854rem (~110px) | φ⁴ | *See guidance below* |
+| \`--space-performance-3xl\` | 11.09rem (~177px) | φ⁵ | *See guidance below* |
 
 ## Tailwind for Structure, Canon for Aesthetics
 
-**Important**: The golden ratio produces mathematically elegant values, but \`--space-2xl\` (110px) and \`--space-3xl\` (177px) are impractical for most page-level padding.
+**Important**: The golden ratio produces mathematically elegant values, but \`--space-performance-2xl\` (110px) and \`--space-performance-3xl\` (177px) are impractical for most page-level padding.
 
 **Use Tailwind utilities for layout spacing:**
 - Page padding: \`py-16\`, \`py-24\`, \`px-6\`
 - Section gaps: \`gap-8\`, \`space-y-12\`
-- Nav offset: \`calc(var(--header-height) + var(--space-md))\`
+- Nav offset: \`calc(var(--height-performance-header) + var(--space-performance-md))\`
 
 **Use Canon tokens for component internals:**
-- \`--space-xs\` through \`--space-xl\` work well for component padding, gaps, and margins
+- \`--space-performance-xs\` through \`--space-performance-xl\` work well for component padding, gaps, and margins
 
 ## Usage Patterns
 
@@ -3424,15 +3424,15 @@ Built on the golden ratio (φ = 1.618). Each step is derived from φⁿ where ba
 
 \`\`\`css
 .button {
-  padding: var(--space-xs) var(--space-sm);
+  padding: var(--space-performance-xs) var(--space-performance-sm);
 }
 
 .card {
-  padding: var(--space-lg);
+  padding: var(--space-performance-lg);
 }
 
 .modal {
-  padding: var(--space-xl);
+  padding: var(--space-performance-xl);
 }
 \`\`\`
 
@@ -3440,11 +3440,11 @@ Built on the golden ratio (φ = 1.618). Each step is derived from φⁿ where ba
 
 \`\`\`css
 .stack > * + * {
-  margin-top: var(--space-md);
+  margin-top: var(--space-performance-md);
 }
 
 .stack-lg > * + * {
-  margin-top: var(--space-lg);
+  margin-top: var(--space-performance-lg);
 }
 \`\`\`
 
@@ -3452,11 +3452,11 @@ Built on the golden ratio (φ = 1.618). Each step is derived from φⁿ where ba
 
 \`\`\`css
 .grid {
-  gap: var(--space-lg);
+  gap: var(--space-performance-lg);
 }
 
 .grid-tight {
-  gap: var(--space-sm);
+  gap: var(--space-performance-sm);
 }
 \`\`\`
 
@@ -3464,10 +3464,10 @@ Built on the golden ratio (φ = 1.618). Each step is derived from φⁿ where ba
 
 When spacing follows φ, adjacent elements feel balanced:
 
-- \`--space-xs\` × φ = \`--space-sm\`
-- \`--space-sm\` × φ = \`--space-md\`
-- \`--space-md\` × φ = \`--space-lg\`
-- \`--space-lg\` × φ = \`--space-xl\`
+- \`--space-performance-xs\` × φ = \`--space-performance-sm\`
+- \`--space-performance-sm\` × φ = \`--space-performance-md\`
+- \`--space-performance-md\` × φ = \`--space-performance-lg\`
+- \`--space-performance-lg\` × φ = \`--space-performance-xl\`
 
 This creates rhythm without manual calculation.
 
@@ -3489,7 +3489,7 @@ For page-level spacing, use Tailwind utilities which provide more practical valu
 </section>
 
 <!-- Fixed nav offset -->
-<main class="pt-[calc(var(--header-height)+1.618rem)]">
+<main class="pt-[calc(var(--height-performance-header)+1.618rem)]">
   <!-- content -->
 </main>
 \`\`\``
@@ -3514,43 +3514,43 @@ Built on the golden ratio (φ = 1.618). Each step multiplies by φ for natural v
 | \`--text-3xl\` | 1.875rem | H3 headings |
 | \`--text-4xl\` | 2.25rem | H2 headings |
 | \`--text-5xl\` | 3rem | H1 headings |
-| \`--text-display\` | 4rem | Hero text |
+| \`--text-performance-display\` | 4rem | Hero text |
 
 ## Font Weights
 
 | Token | Weight | Use |
 |-------|--------|-----|
-| \`--font-light\` | 300 | Display text |
+| \`--font-performance-light\` | 300 | Display text |
 | \`--font-normal\` | 400 | Body text |
-| \`--font-medium\` | 500 | Emphasis |
-| \`--font-semibold\` | 600 | Subheadings |
-| \`--font-bold\` | 700 | Headings |
+| \`--font-performance-medium\` | 500 | Emphasis |
+| \`--font-performance-semibold\` | 600 | Subheadings |
+| \`--font-performance-bold\` | 700 | Headings |
 
 ## Line Height
 
 | Token | Value | Use |
 |-------|-------|-----|
 | \`--leading-none\` | 1 | Single-line text |
-| \`--leading-tight\` | 1.25 | Headings |
-| \`--leading-normal\` | 1.5 | Body text |
-| \`--leading-relaxed\` | 1.75 | Long-form reading |
+| \`--leading-performance-tight\` | 1.25 | Headings |
+| \`--leading-performance-normal\` | 1.5 | Body text |
+| \`--leading-performance-relaxed\` | 1.75 | Long-form reading |
 
 ## Letter Spacing
 
 | Token | Value | Use |
 |-------|-------|-----|
-| \`--tracking-tight\` | -0.025em | Large headings |
-| \`--tracking-normal\` | 0 | Body text |
-| \`--tracking-wide\` | 0.025em | Buttons |
-| \`--tracking-widest\` | 0.1em | Labels, caps |
+| \`--tracking-performance-tight\` | -0.025em | Large headings |
+| \`--tracking-performance-normal\` | 0 | Body text |
+| \`--tracking-performance-wide\` | 0.025em | Buttons |
+| \`--tracking-performance-widest\` | 0.1em | Labels, caps |
 
 ## Font Stack
 
 \`\`\`css
---font-sans: Arial, 'Helvetica Neue', Helvetica, system-ui, sans-serif;
---font-display: var(--font-sans);
---font-mono: ui-monospace, 'SFMono-Regular', 'SF Mono', Menlo, Consolas, monospace;
---font-serif: Georgia, 'Times New Roman', serif;
+--font-performance-sans: Arial, 'Helvetica Neue', Helvetica, system-ui, sans-serif;
+--font-performance-display: var(--font-performance-sans);
+--font-performance-mono: ui-monospace, 'SFMono-Regular', 'SF Mono', Menlo, Consolas, monospace;
+--font-performance-serif: Georgia, 'Times New Roman', serif;
 \`\`\`
 
 The Performance Lab layer uses the local/system sans stack for interface and body text, the platform
@@ -3567,7 +3567,7 @@ short state labels and identifiers, not long explanatory paragraphs.
 Display text scales with viewport:
 
 \`\`\`css
---text-display: clamp(2.5rem, 4vw + 1.5rem, 4.5rem);
+--text-performance-display: clamp(2.5rem, 4vw + 1.5rem, 4.5rem);
 \`\`\`
 
 ## Usage Example
@@ -3575,21 +3575,21 @@ Display text scales with viewport:
 \`\`\`css
 .article-title {
   font-size: var(--text-4xl);
-  font-weight: var(--font-bold);
-  line-height: var(--leading-tight);
-  letter-spacing: var(--tracking-tight);
+  font-weight: var(--font-performance-bold);
+  line-height: var(--leading-performance-tight);
+  letter-spacing: var(--tracking-performance-tight);
 }
 
 .article-body {
   font-size: var(--text-base);
   font-weight: var(--font-normal);
-  line-height: var(--leading-relaxed);
+  line-height: var(--leading-performance-relaxed);
 }
 
 .article-meta {
   font-size: var(--text-sm);
-  color: var(--color-fg-muted);
-  letter-spacing: var(--tracking-wide);
+  color: var(--color-performance-fg-muted);
+  letter-spacing: var(--tracking-performance-wide);
 }
 \`\`\``
   },
@@ -3604,11 +3604,11 @@ All text in the Canon system meets WCAG AA contrast requirements. The minimum ra
 
 | Text Type | Ratio | Token |
 |-----------|-------|-------|
-| Primary Text | 21:1 | \`--color-fg-primary\` |
-| Secondary Text | 13.7:1 | \`--color-fg-secondary\` |
-| Muted Text | 4.56:1 | \`--color-fg-muted\` |
+| Primary Text | 21:1 | \`--color-performance-fg-primary\` |
+| Secondary Text | 13.7:1 | \`--color-performance-fg-secondary\` |
+| Muted Text | 4.56:1 | \`--color-performance-fg-muted\` |
 
-**Note:** \`--color-fg-subtle\` (0.2 opacity) does not meet AA contrast and should only be used for decorative elements, never for informational content.
+**Note:** \`--color-performance-fg-subtle\` (0.2 opacity) does not meet AA contrast and should only be used for decorative elements, never for informational content.
 
 ### Clear Proof and Status Surfaces
 
@@ -3629,14 +3629,14 @@ All interactive elements must have visible focus indicators. Canon uses a consis
 \`\`\`css
 /* Standard focus pattern */
 .interactive:focus-visible {
-  outline: 2px solid var(--color-focus);
+  outline: 2px solid var(--color-performance-focus);
   outline-offset: 2px;
 }
 
 /* High contrast mode enhancement */
 @media (prefers-contrast: more) {
   .interactive:focus-visible {
-    outline: 3px solid var(--color-focus);
+    outline: 3px solid var(--color-performance-focus);
     outline-offset: 3px;
   }
 }
@@ -3718,9 +3718,9 @@ Canon supports \`prefers-contrast: more\` with enhanced visibility tokens.
 
 | Token | Standard | High Contrast |
 |-------|----------|---------------|
-| \`--color-fg-muted\` | 0.46 opacity | 0.75 opacity |
-| \`--color-border-default\` | 0.1 opacity | 0.3 opacity |
-| \`--color-focus\` | 0.5 opacity | 0.9 opacity |
+| \`--color-performance-fg-muted\` | 0.46 opacity | 0.75 opacity |
+| \`--color-performance-border-default\` | 0.1 opacity | 0.3 opacity |
+| \`--color-performance-focus\` | 0.5 opacity | 0.9 opacity |
 
 ## Checklist
 
@@ -4050,20 +4050,20 @@ Start with mobile styles, add complexity for larger screens.
 \`\`\`css
 /* Base: Mobile */
 .card {
-  padding: var(--space-md);
+  padding: var(--space-performance-md);
 }
 
 /* Enhancement: Tablet+ */
 @media (min-width: 768px) {
   .card {
-    padding: var(--space-lg);
+    padding: var(--space-performance-lg);
   }
 }
 
 /* Enhancement: Desktop+ */
 @media (min-width: 1024px) {
   .card {
-    padding: var(--space-xl);
+    padding: var(--space-performance-xl);
   }
 }
 \`\`\`
@@ -4114,9 +4114,9 @@ Scale spacing proportionally:
 
 | Context | Mobile | Tablet | Desktop |
 |---------|--------|--------|---------|
-| Section padding | \`--space-lg\` | \`--space-xl\` | \`--space-2xl\` |
-| Card padding | \`--space-md\` | \`--space-lg\` | \`--space-lg\` |
-| Stack gap | \`--space-sm\` | \`--space-md\` | \`--space-md\` |
+| Section padding | \`--space-performance-lg\` | \`--space-performance-xl\` | \`--space-performance-2xl\` |
+| Card padding | \`--space-performance-md\` | \`--space-performance-lg\` | \`--space-performance-lg\` |
+| Stack gap | \`--space-performance-sm\` | \`--space-performance-md\` | \`--space-performance-md\` |
 
 ## Layout Patterns
 
@@ -4125,7 +4125,7 @@ Scale spacing proportionally:
 \`\`\`css
 .features {
   display: grid;
-  gap: var(--space-lg);
+  gap: var(--space-performance-lg);
   grid-template-columns: 1fr;
 }
 
@@ -4174,7 +4174,7 @@ Minimum touch target size: 44×44px
 .button {
   min-height: 44px;
   min-width: 44px;
-  padding: var(--space-sm) var(--space-md);
+  padding: var(--space-performance-sm) var(--space-performance-md);
 }
 \`\`\`
 
@@ -4204,27 +4204,27 @@ Themes should extend, not replace. Canon provides a complete token system that e
 These tokens form the theming surface. Override them to create custom themes.
 
 ### Background Tokens
-- \`--color-bg-pure\`
+- \`--color-performance-bg-pure\`
 - \`--color-bg-base\`
-- \`--color-bg-surface\`
-- \`--color-bg-elevated\`
+- \`--color-performance-bg-surface\`
+- \`--color-performance-bg-elevated\`
 
 ### Foreground Tokens
-- \`--color-fg-primary\`
-- \`--color-fg-secondary\`
-- \`--color-fg-tertiary\`
-- \`--color-fg-muted\`
+- \`--color-performance-fg-primary\`
+- \`--color-performance-fg-secondary\`
+- \`--color-performance-fg-tertiary\`
+- \`--color-performance-fg-muted\`
 
 ### Border Tokens
-- \`--color-border-default\`
-- \`--color-border-emphasis\`
-- \`--color-border-strong\`
+- \`--color-performance-border-default\`
+- \`--color-performance-border-emphasis\`
+- \`--color-performance-border-strong\`
 
 ### Semantic Tokens
-- \`--color-success\`
-- \`--color-error\`
-- \`--color-warning\`
-- \`--color-info\`
+- \`--color-performance-success\`
+- \`--color-performance-error\`
+- \`--color-performance-warning\`
+- \`--color-performance-info\`
 
 ## Creating a Custom Theme
 
@@ -4237,10 +4237,10 @@ Override Canon's tokens at the root level:
   --color-accent-muted: rgba(99, 102, 241, 0.1);
 \u0020\u0020
   /* Custom backgrounds */
-  --color-bg-pure: #0f0f23;
+  --color-performance-bg-pure: #0f0f23;
   --color-bg-base: #1a1a2e;
-  --color-bg-surface: #252538;
-  --color-bg-elevated: #2f2f45;
+  --color-performance-bg-surface: #252538;
+  --color-performance-bg-elevated: #2f2f45;
 }
 \`\`\`
 
@@ -4251,18 +4251,18 @@ Canon defaults to dark mode. Add light mode with a theme attribute:
 \`\`\`css
 /* Dark mode (default) */
 :root {
-  --color-bg-pure: #000000;
+  --color-performance-bg-pure: #000000;
   --color-bg-base: #0a0a0a;
-  --color-fg-primary: rgba(255, 255, 255, 1);
-  --color-fg-secondary: rgba(255, 255, 255, 0.8);
+  --color-performance-fg-primary: rgba(255, 255, 255, 1);
+  --color-performance-fg-secondary: rgba(255, 255, 255, 0.8);
 }
 
 /* Light mode override */
 [data-theme="light"] {
-  --color-bg-pure: #ffffff;
+  --color-performance-bg-pure: #ffffff;
   --color-bg-base: #fafafa;
-  --color-fg-primary: rgba(0, 0, 0, 0.9);
-  --color-fg-secondary: rgba(0, 0, 0, 0.7);
+  --color-performance-fg-primary: rgba(0, 0, 0, 0.9);
+  --color-performance-fg-secondary: rgba(0, 0, 0, 0.7);
 }
 \`\`\`
 
@@ -4287,7 +4287,7 @@ Respect user's system preference:
 \`\`\`css
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
-    --color-bg-pure: #ffffff;
+    --color-performance-bg-pure: #ffffff;
     --color-bg-base: #fafafa;
     /* ... light mode tokens ... */
   }
@@ -4307,25 +4307,25 @@ Respect user's system preference:
 \`\`\`css
 [data-theme="light"] {
   /* Backgrounds - inverted */
-  --color-bg-pure: #ffffff;
+  --color-performance-bg-pure: #ffffff;
   --color-bg-base: #fafafa;
-  --color-bg-surface: #f5f5f5;
-  --color-bg-elevated: #ffffff;
+  --color-performance-bg-surface: #f5f5f5;
+  --color-performance-bg-elevated: #ffffff;
 \u0020\u0020
   /* Foregrounds - dark text */
-  --color-fg-primary: rgba(0, 0, 0, 0.9);
-  --color-fg-secondary: rgba(0, 0, 0, 0.7);
-  --color-fg-tertiary: rgba(0, 0, 0, 0.5);
-  --color-fg-muted: rgba(0, 0, 0, 0.4);
+  --color-performance-fg-primary: rgba(0, 0, 0, 0.9);
+  --color-performance-fg-secondary: rgba(0, 0, 0, 0.7);
+  --color-performance-fg-tertiary: rgba(0, 0, 0, 0.5);
+  --color-performance-fg-muted: rgba(0, 0, 0, 0.4);
 \u0020\u0020
   /* Borders - adjusted for light bg */
-  --color-border-default: rgba(0, 0, 0, 0.1);
-  --color-border-emphasis: rgba(0, 0, 0, 0.2);
-  --color-border-strong: rgba(0, 0, 0, 0.3);
+  --color-performance-border-default: rgba(0, 0, 0, 0.1);
+  --color-performance-border-emphasis: rgba(0, 0, 0, 0.2);
+  --color-performance-border-strong: rgba(0, 0, 0, 0.3);
 \u0020\u0020
   /* Interactive - adjusted */
-  --color-hover: rgba(0, 0, 0, 0.05);
-  --color-active: rgba(0, 0, 0, 0.1);
+  --color-performance-hover: rgba(0, 0, 0, 0.05);
+  --color-performance-active: rgba(0, 0, 0, 0.1);
 }
 \`\`\``
   },
@@ -5122,8 +5122,8 @@ pnpm install\`}</code></pre>
 <style>
   .component {
     /* Use Canon tokens */
-    padding: var(--space-sm);
-    color: var(--color-fg-primary);
+    padding: var(--space-performance-sm);
+    color: var(--color-performance-fg-primary);
   }
 </style>\`}</code></pre>
 </div>
@@ -5355,10 +5355,10 @@ The long-form walkthrough for Tokens Studio and end-to-end sync is still being r
 
 <style>
   .custom-box {
-    padding: var(--space-md);
-    background: var(--color-bg-subtle);
-    border-radius: var(--radius-lg);
-    color: var(--color-fg-primary);
+    padding: var(--space-performance-md);
+    background: var(--color-performance-bg-subtle);
+    border-radius: var(--radius-performance-scale-lg);
+    color: var(--color-performance-fg-primary);
   }
 </style>\`}</code></pre>
 </div>
@@ -5374,27 +5374,27 @@ The long-form walkthrough for Tokens Studio and end-to-end sync is still being r
 <tbody>
 <tr>
 <td>Color</td>
-<td><code>--color-fg-primary</code></td>
+<td><code>--color-performance-fg-primary</code></td>
 <td>Primary text</td>
 </tr>
 <tr>
 <td>Color</td>
-<td><code>--color-bg-subtle</code></td>
+<td><code>--color-performance-bg-subtle</code></td>
 <td>Card backgrounds</td>
 </tr>
 <tr>
 <td>Spacing</td>
-<td><code>--space-md</code></td>
+<td><code>--space-performance-md</code></td>
 <td>Medium spacing (1.618rem)</td>
 </tr>
 <tr>
 <td>Radius</td>
-<td><code>--radius-lg</code></td>
+<td><code>--radius-performance-scale-lg</code></td>
 <td>Large border radius (12px)</td>
 </tr>
 <tr>
 <td>Typography</td>
-<td><code>--text-body</code></td>
+<td><code>--text-performance-body</code></td>
 <td>Body text size (1rem)</td>
 </tr>
 </tbody>

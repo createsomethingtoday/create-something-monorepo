@@ -86,12 +86,11 @@ its Identity connector or trusted hub bridge remain untouched.
 - The Worker never treats the opaque `Authorization` bearer or an unsigned
   forwarded email header as reviewer identity.
 
-The team issuer has been read back through its live JWKS endpoint. The
-application-specific audience remains intentionally absent until the Access
-application exists and its value has been read back:
+The Webflow-owned app assertion has been read back from the authenticated
+`wf.app` connector and is pinned to its exact issuer and audience:
 
-- `CF_ACCESS_TEAM_DOMAIN` — `https://createsomething.cloudflareaccess.com`.
-- `CF_ACCESS_AUD` — stable Application Audience tag for the dedicated-hostname app.
+- `CF_ACCESS_TEAM_DOMAIN` — `https://webflow.cloudflareaccess.com`.
+- `CF_ACCESS_AUD` — `3b4a38c7c99ec7127bcbb99d9c8aae7b0011a51370bff31b7085385e1a2807ba`.
 
 Promotion order: create/read back the dedicated-hostname Access application and
 AUD, deploy the tested Template Review Worker plus its fail-closed proxy, then
@@ -145,8 +144,25 @@ Optional:
 - `WEBFLOW_TEMPLATE_VALIDATION_WORKER_URL` (defaults to `https://validation-worker.createsomething.workers.dev/validate`)
 - `GSAP_VALIDATION_WORKER_URL` (defaults to `https://gsap-validation-worker.createsomething.workers.dev/validateGsap`)
 - `TEMPLATE_REVIEW_VALIDATION_TIMEOUT_MS` (defaults to `45000`)
+- `E2B_API_KEY` (coordinator-only Worker secret that enables bounded published-site evidence execution; never sent into the sandbox)
+- `E2B_BROWSER_TEMPLATE` (defaults to `webflow-template-review-browser-v1`)
 
 ## Published Site Sandbox Bundle
+
+Claude Chat and Cowork can call `template_review_run_published_site_sandbox`
+directly. The MCP Worker creates a short-lived E2B sandbox, runs only the
+repo-owned published-site collector, returns bounded evidence and screenshots,
+and kills the sandbox. Callers cannot provide code, shell commands, packages,
+secrets, or output destinations. The tool blocks credential-bearing and
+private-network targets, performs no Airtable writes, and never chooses a review
+decision.
+
+Build the pinned browser-ready E2B template with an Infisical-backed API key:
+
+```bash
+infisical run --env=prod --path=/ --include-imports=true -- \
+  pnpm --filter @create-something/webflow-template-review-mcp e2b:template:build
+```
 
 Generate a Dify/E2B-ready evidence runner for published-site rendering checks:
 
@@ -581,6 +597,7 @@ creator-facing feedback.
 - `template_review_get_comprehensive_review_contract` (read-only comprehensive evidence contract for Auto/Partial/Manual coverage, rubric dimensions, manual checks, and Agent Review Feedback format)
 - `template_review_format_agent_review_feedback` (read-only comprehensive evidence validator/formatter for Agent Review Feedback drafts; does not write Airtable)
 - `template_review_prepare_published_site_sandbox` (read-only E2B sandbox job/runner bundle for first-class published-site evidence; does not execute E2B or write Airtable)
+- `template_review_run_published_site_sandbox` (read-only bounded E2B execution for rendered-page evidence and screenshots; fixed collector only, no caller-provided code or Airtable writes)
 - `template_review_run_published_site_validation` (read-only published-site validation; no Designer/Preview data or Airtable writes)
 - `template_review_list_releases`
 - `template_review_complete_publishing`
@@ -614,6 +631,72 @@ pnpm install
 pnpm dev
 pnpm deploy
 ```
+
+### Isolated development Worker
+
+The stable development Worker is `webflow-template-review-mcp-dev`. It is a
+Wrangler named environment, not a long-lived Git branch. Check out the feature
+branch to test, run the dry run, then explicitly deploy that checkout:
+
+```bash
+cd packages/webflow-template-review-mcp/worker
+pnpm deploy:dev:dry-run
+pnpm deploy:dev
+```
+
+After deployment, run the reusable protocol verifier with the dev MCP bearer
+and E2B coordinator key present in the process environment:
+
+```bash
+cd packages/webflow-template-review-mcp
+pnpm worker:dev:verify
+```
+
+The verifier checks health and discovery, performs a real MCP initialize and
+tool listing, reads one queue item, proves a known write tool is unavailable,
+runs the bounded E2B collector against `example.com`, and confirms its sandbox
+is absent from the active inventory after cleanup. It prints only a compact
+receipt, not queue contents or secrets.
+
+The dev Worker is intentionally different from production:
+
+- only `micah@webflow.com` and `micah@createsomething.io` are admitted through
+  CREATE SOMETHING Identity
+- `TEMPLATE_REVIEW_FORCE_READ_ONLY=true` hides every Airtable write tool for
+  both OAuth and the dev operator bearer
+- protected-resource discovery advertises only `template-review:read`
+- telemetry and Durable Object state use dev-only namespaces
+- only the stable dev hostname is enabled; per-version preview URLs are disabled
+- Webflow Cloudflare Access issuer and audience are explicitly empty
+- the fixed, bounded E2B evidence tool remains available; its coordinator key
+  stays in the Worker and is never sent to the sandbox
+
+Dev secrets are separate Cloudflare bindings. Source them from Infisical
+without placing values in shell history or repo files:
+
+```bash
+infisical secrets get AIRTABLE_API_KEY --env=dev --path=/ --plain --silent \
+  | pnpm exec wrangler secret put AIRTABLE_API_KEY --env dev
+infisical secrets get MCP_API_KEY --env=dev --path=/ --plain --silent \
+  | pnpm exec wrangler secret put MCP_API_KEY --env dev
+infisical secrets get E2B_API_KEY --env=prod --path=/ --plain --silent \
+  | pnpm exec wrangler secret put E2B_API_KEY --env dev
+```
+
+The Airtable PAT reads the explicitly configured existing template-review base;
+the server-enforced policy prevents every MCP write route. Use the dev operator bearer only for protocol
+smoke tests and include `x-mcp-account-id: acct_wf_micah` for reviewer-scoped
+reads.
+
+Rollback affects only dev:
+
+```bash
+pnpm exec wrangler rollback <prior-dev-version-id> --env dev
+```
+
+If the first dev deployment must be removed entirely, delete only
+`webflow-template-review-mcp-dev`. Never run the production deploy command as a
+dev rollback.
 
 ## Token Rotation
 

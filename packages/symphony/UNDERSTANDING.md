@@ -24,8 +24,9 @@ Symphony turns Linear issues and workflow definitions into running Codex worker 
 |----------|----------------------------|
 | Code-quality lanes | How ready Linear issues become Codex worker sessions |
 | Policy lanes | How workflow definitions constrain automation |
-| Operators | Which workers are running, retrying, or cleaned up |
+| Operators | Which workers are running, retrying, awaiting independent completion, or cleaned up |
 | Agent infrastructure | How orchestration differs from a single local Codex turn |
+| Canonical harness | How acceptance evidence becomes a fail-closed, persisted done decision |
 
 ## Internal Structure
 
@@ -37,6 +38,8 @@ src/config.js         -> dispatch config validation
 src/workspace.js      -> workspace creation, metadata, and cleanup
 src/agent-worker.js   -> Codex worker process integration
 src/tracker/linear.js -> Linear tracker client
+src/canonical-harness-gate.js -> strict receipt evaluation, atomic persistence, and final done gate
+schemas/canonical-harness-receipt.v1.schema.json -> canonical evidence contract
 ```
 
 ## To Understand This Package, Read
@@ -46,6 +49,7 @@ src/tracker/linear.js -> Linear tracker client
 3. **`src/config.js`** - Required workflow dispatch configuration.
 4. **`src/workspace.js`** - Workspace creation and cleanup rules.
 5. **`src/tracker/linear.js`** - Linear issue querying, claiming, and completion behavior.
+6. **`src/canonical-harness-gate.js`** - How evidence is computed, persisted, revalidated, and allowed to reach the completion seam.
 
 ## Common Tasks
 
@@ -55,6 +59,7 @@ src/tracker/linear.js -> Linear tracker client
 | Run policy lane once | `pnpm symphony:policy:once` |
 | Validate syntax | `pnpm --filter @create-something/symphony check` |
 | Run tests | `pnpm --filter @create-something/symphony test` |
+| Evaluate canonical done evidence | `evaluate_canonical_harness_receipt(candidate)` |
 | Run with secrets | `infisical run --env=prod --path=/ --include-imports=true -- pnpm symphony:code-quality:once` |
 
 ## Escalation Notes

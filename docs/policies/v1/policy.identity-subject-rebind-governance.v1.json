@@ -1,0 +1,42 @@
+{
+  "policy_id": "policy.identity-subject-rebind-governance.v1",
+  "version": 1,
+  "status": "draft",
+  "identity_provider": "create_something_identity",
+  "incident_type": "subject_rebind_after_account_change",
+  "rebind_requirements": {
+    "normalized_email_match_required": true,
+    "unambiguous_account_mapping_required": true,
+    "fail_closed_on_email_mismatch": true,
+    "fail_closed_on_mapping_ambiguity": true
+  },
+  "preserved_artifacts": [
+    "account_id",
+    "tenant_id",
+    "workspace_account_id",
+    "composio_user_id",
+    "partner_consent_records",
+    "provider_connected_accounts"
+  ],
+  "cleanup_required": [
+    "revoke_old_managed_bearer_tokens",
+    "deactivate_or_supersede_stale_entitlement_rows",
+    "update_partner_identity_user_id",
+    "disable_stale_legacy_alias_resolution"
+  ],
+  "credential_separation": {
+    "identity_session_separate_from_managed_bearer": true,
+    "identity_session_separate_from_identity_worker_oauth_password": true,
+    "oauth_password_must_not_reuse_identity_secret": true
+  },
+  "required_evidence": [
+    "old_subject",
+    "new_subject",
+    "normalized_email_match",
+    "preserved_account_mapping",
+    "token_revoke_or_absence_proof",
+    "updated_entitlement_state",
+    "updated_partner_mapping_state",
+    "verification_only_new_subject_operational"
+  ]
+}

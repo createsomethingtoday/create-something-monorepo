@@ -34,7 +34,7 @@ Define the production policy for user-facing bearer tokens issued through `.agen
    - billing status
    - where applicable, partner client lifecycle state and active consent state
 6. Service-tier gating for free `MCP-only` versus paid `Policy OS` access MUST follow [`policy.service-tier-entitlement.v1`](./policy.service-tier-entitlement.v1.md) when bearer-backed requests reach paid or governed product surfaces.
-7. Bearer tokens MUST be issued by `.agency`; Auth0 remains the identity provider and MUST NOT be exposed as the external bearer-token artifact for host portability.
+7. Bearer tokens MUST be issued by `.agency`; CREATE SOMETHING Identity remains the portal identity provider and its session token MUST NOT be exposed as the external bearer-token artifact for host portability.
 8. Bearer tokens MUST be opaque, high-entropy secrets stored only in protected form server-side; plaintext tokens MUST be shown only at issuance or regeneration time.
 9. Every authenticated bearer-token request MUST produce auditable metadata sufficient to attribute activity to a user and organization context.
 10. `.agency` MUST provide immediate revocation and immediate regeneration paths.
@@ -51,10 +51,10 @@ Define the production policy for user-facing bearer tokens issued through `.agen
 21. `.agency` SHOULD expose that MCP OAuth password as a managed self-service control linked to the same entitled email, account, and tenant context used for bearer-token governance.
 22. The OAuth authorization code MAY be implemented as a signed self-contained token minted by `identity-worker` rather than as a database-stored opaque code, provided it remains bound to the OAuth request context required for exchange.
 23. When signed authorization codes are used, the signed claims MUST at minimum bind `client_id`, `redirect_uri`, issuer, expiry, and any PKCE challenge material required for token exchange.
-24. Existing vault-backed compat bearer tokens MAY be adopted into the managed-token system without rotating the plaintext token, but only after the user is reconciled to one canonical Auth0 subject and one canonical `.agency` entitlement row.
+24. Existing vault-backed compat bearer tokens MAY be adopted into the managed-token system without rotating the plaintext token, but only after the user is reconciled to one canonical Identity subject and one canonical `.agency` entitlement row.
 25. After adoption, `identity-worker.mcp_long_lived_tokens` becomes the authoritative registry for bearer-token status, last use, revoke, and regenerate behavior; vault storage is runtime support only and MUST NOT be treated as the governance source of truth.
 26. Duplicate entitlement rows or duplicate token rows for the same user email under different subjects MUST be removed or deactivated during migration so bearer resolution remains canonical.
-27. Auth0 delete/recreate incidents for the same normalized email MUST be governed by [`policy.auth0-subject-rebind-governance.v1`](./policy.auth0-subject-rebind-governance.v1.md); bearer access continuity should preserve MCP account context while revoking stale old-subject credentials.
+27. Identity subject-change incidents for the same normalized email MUST be governed by [`policy.identity-subject-rebind-governance.v1`](./policy.identity-subject-rebind-governance.v1.md); bearer access continuity should preserve MCP account context while revoking stale old-subject credentials.
 28. Managed bearer issuance and regeneration MUST support explicit `allowed_tool_prefixes` for non-Composio or reviewer-specific lanes whose visible tool surface cannot be derived from `toolkit_profile` alone.
 29. When explicit `allowed_tool_prefixes` are used, the issued token record MUST persist them as first-class governed scope data and the resolver MUST return the same effective prefix set transparently at request time.
 30. Managed bearer delivery UIs and APIs SHOULD surface the effective `allowed_tool_prefixes` alongside `toolkit_profile` so operators can verify the actor-visible lane without relying on inferred behavior.
@@ -124,7 +124,7 @@ The following artifacts MUST remain aligned with this policy before production l
 - OAuth authorization traces showing the authorization code is a signed `identity-worker` artifact bound to client and redirect context
 - Revoke/regenerate actions immediately invalidating OAuth-delivered host access
 - Password set or rotate actions for the OAuth login remaining auditable and distinct from bearer-token lifecycle events
-- Migration records showing canonical Auth0 subject binding for users adopted from compat vault tokens
+- Migration records showing canonical Identity subject binding for users adopted from compat vault tokens
 - Verification output confirming one active managed token row and no stale legacy token row for each migrated user
 
 ## Source Anchors
@@ -140,4 +140,4 @@ The following artifacts MUST remain aligned with this policy before production l
 - `docs/policies/v1/policy.service-tier-entitlement.v1.md`
 - `docs/guides/CHATGPT_MCP_OAUTH_MANAGED_BEARER.md`
 - `docs/policies/v1/policy.mcp-oauth-password-governance.v1.md`
-- `docs/policies/v1/policy.auth0-subject-rebind-governance.v1.md`
+- `docs/policies/v1/policy.identity-subject-rebind-governance.v1.md`

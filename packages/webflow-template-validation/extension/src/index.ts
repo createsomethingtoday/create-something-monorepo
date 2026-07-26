@@ -6,6 +6,7 @@ import {
   escapeHtml,
   decodeCommonHtmlEntities,
   ensureHttps,
+  filterRetiredAccessibilityIssues,
   getSlugPathname,
   isInternalCmsTemplateSlug,
   isHtmlTagStyleName,
@@ -1825,7 +1826,9 @@ function getSurfacedAccessibilityIssues(
   accessibilityAnalysis: { issues?: ValidationIssue[] } | undefined,
   contentAnalysisIncluded: boolean
 ) : ValidationIssue[] {
-  const issues = Array.isArray(accessibilityAnalysis?.issues) ? accessibilityAnalysis.issues : [];
+  const issues = filterRetiredAccessibilityIssues(
+    Array.isArray(accessibilityAnalysis?.issues) ? accessibilityAnalysis.issues : []
+  );
   if (!contentAnalysisIncluded) {
     return issues;
   }

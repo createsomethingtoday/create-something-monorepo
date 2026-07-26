@@ -1,5 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
-import { checkRateLimit, consumeSessionHandoff, createSessionHandoff } from './kv';
+import {
+	checkRateLimit,
+	consumeSessionHandoff,
+	createSessionHandoff,
+	refreshSession,
+	shouldRefreshSession,
+	type SessionData
+} from './kv';
 
 describe('checkRateLimit', () => {
 	it('fails closed by default when KV operations throw', async () => {
@@ -49,6 +56,58 @@ describe('checkRateLimit', () => {
 		expect(second.allowed).toBe(false);
 		expect(second.remaining).toBe(0);
 		expect(second.retryAfter).toBeGreaterThan(0);
+	});
+});
+
+describe('session refresh', () => {
+	const HOUR = 60 * 60 * 1000;
+
+	it('does not refresh a session that was just issued', () => {
+		const now = Date.UTC(2026, 6, 24, 12, 0, 0);
+		const session: SessionData = { email: 'creator@example.com', createdAt: now, issuedAt: now };
+
+		expect(shouldRefreshSession(session, now + 60_000)).toBe(false);
+	});
+
+	it('refreshes once the session passes the refresh threshold', () => {
+		const now = Date.UTC(2026, 6, 24, 12, 0, 0);
+		const session: SessionData = { email: 'creator@example.com', createdAt: now, issuedAt: now };
+
+		expect(shouldRefreshSession(session, now + 31 * 60 * 1000)).toBe(true);
+	});
+
+	it('stops refreshing past the absolute lifetime cap', () => {
+		const issuedAt = Date.UTC(2026, 6, 24, 12, 0, 0);
+		const session: SessionData = {
+			email: 'creator@example.com',
+			createdAt: issuedAt + 23 * HOUR,
+			issuedAt
+		};
+
+		expect(shouldRefreshSession(session, issuedAt + 25 * HOUR)).toBe(false);
+	});
+
+	it('preserves the original issue time when extending the TTL', async () => {
+		const issuedAt = Date.UTC(2026, 6, 24, 12, 0, 0);
+		const stored = new Map<string, string>();
+		const kv = {
+			put: vi.fn(async (key: string, value: string) => {
+				stored.set(key, value);
+			})
+		} as unknown as KVNamespace;
+
+		await refreshSession(
+			kv,
+			'session_123',
+			{ email: 'creator@example.com', createdAt: issuedAt, issuedAt },
+			issuedAt + HOUR
+		);
+
+		expect(JSON.parse(stored.get('session_123') as string)).toEqual({
+			email: 'creator@example.com',
+			createdAt: issuedAt + HOUR,
+			issuedAt
+		});
 	});
 });
 

@@ -475,15 +475,15 @@ export const CANON_OVERLAY_CANDIDATE_REVIEW_PACKETS: CanonOverlayCandidateReview
     {
       "id": "canon-overlay-candidate-review:overlay.agency-atlas-public.workflow-proof-surface",
       "candidateId": "overlay.agency-atlas-public:overlay.agency-atlas-public.workflow-proof-surface",
-      "title": "Agency public Atlas workflow proof surface review packet",
-      "summary": "A candidate Canon pattern for turning a public web route, chat-assisted canvas, and booking handoff into one reusable workflow-proof surface without forking Atlas primitives.",
+      "title": "Agency public Map workflow proof surface review packet",
+      "summary": "A candidate Canon pattern for turning a public Map route, chat-assisted canvas, and booking handoff into one reusable workflow-proof surface without forking internal Atlas primitives.",
       "overlayId": "overlay.agency-atlas-public",
-      "overlayName": "Agency Atlas Public Overlay",
+      "overlayName": "Agency Map Public Overlay",
       "manifestPath": "packages/agency/canon-overlay/manifest.ts",
       "intakeId": "overlay.agency-atlas-public.workflow-proof-surface",
       "owner": "agency-team",
       "sourcePackage": "@create-something/agency",
-      "sourcePath": "src/routes/atlas/+page.svelte",
+      "sourcePath": "src/routes/map/+page.svelte",
       "requestedKind": "template",
       "requestedModalities": [
         "web",
@@ -502,21 +502,21 @@ export const CANON_OVERLAY_CANDIDATE_REVIEW_PACKETS: CanonOverlayCandidateReview
       "surfaces": [
         {
           "surfaceId": "agency-atlas-route",
-          "name": "Public Atlas route",
+          "name": "Public Map route",
           "modality": "web",
-          "sourcePath": "src/routes/atlas/+page.svelte",
+          "sourcePath": "src/routes/map/+page.svelte",
           "proof": "Route composes PerformancePageSection, PublicAtlasStoryCanvas, and PublicAtlasCanvas so the public page shows story, editable map, readiness, and booking context from one Canon Atlas graph contract."
         },
         {
           "surfaceId": "agency-atlas-agent-canvas",
-          "name": "Public Atlas chat-assisted canvas",
+          "name": "Public Map chat-assisted canvas",
           "modality": "chat",
           "sourcePath": "src/lib/components/PublicAtlasCanvas.svelte",
-          "proof": "Canvas posts visitor prompts to /api/atlas/public-agent, enforces public Atlas intake limits, persists summary metadata, and keeps mutations bounded to the prospect map."
+          "proof": "Canvas posts visitor prompts to /api/atlas/public-agent, enforces public Map intake limits, persists summary metadata, and keeps mutations bounded to the prospect map."
         },
         {
           "surfaceId": "agency-atlas-booking-context",
-          "name": "Atlas booking handoff",
+          "name": "Map booking handoff",
           "modality": "app",
           "sourcePath": "src/lib/components/PublicAtlasCanvas.svelte",
           "proof": "buildBookingUrl carries atlas_session_id, readiness, score, lane, intent, and message count into the booking flow as structured handoff context."
@@ -526,18 +526,18 @@ export const CANON_OVERLAY_CANDIDATE_REVIEW_PACKETS: CanonOverlayCandidateReview
           "name": "Agency proof route policy",
           "modality": "web",
           "sourcePath": "src/lib/atlas/surface-policy.ts",
-          "proof": "AGENCY_ATLAS_PROOF_PATHS names /services, /atlas, /methodology, /stack, and product routes as public proof surfaces that share the overlay language."
+          "proof": "AGENCY_ATLAS_PROOF_PATHS names /services, /map, /methodology, /stack, and product routes as public proof surfaces that share the overlay language."
         },
         {
           "surfaceId": "agency-atlas-voice-routing-summary",
-          "name": "Agency Atlas voice routing summary",
+          "name": "Agency Map voice routing summary",
           "modality": "voice",
           "sourcePath": "canon-overlay/copy-rules.md",
           "proof": "Voice copy is constrained to short declarative handoffs that name the owner, next step, proof, and durable record without exposing hidden reasoning or private system access."
         },
         {
           "surfaceId": "agency-atlas-glasses-routing-hud",
-          "name": "Agency Atlas glasses routing HUD policy",
+          "name": "Agency Map glasses routing HUD policy",
           "modality": "glasses",
           "sourcePath": "canon-overlay/surface-policy.md",
           "proof": "Glasses output is limited to glanceable state, owner, and next action while policy bodies, review history, and reasoning stay on larger Canon surfaces."
@@ -1144,6 +1144,190 @@ export const CANON_OVERLAY_CANDIDATE_REVIEW_PACKETS: CanonOverlayCandidateReview
       "reviewUri": "canon://overlays/intake/overlay.clearway-conversion",
       "candidateUri": "canon://overlays/candidates/overlay.clearway-conversion.surface-brief",
       "handoffUri": "canon://overlays/candidates/overlay.clearway-conversion.surface-brief/handoff",
+      "promotionChecklist": [
+        "Confirm a human maintainer approved opening Canon promotion work from this packet.",
+        "Review the owning overlay manifest, source package, source path, surfaces, and proofs.",
+        "Verify every required evidence item has current source or test coverage.",
+        "Decide whether the candidate becomes a Canon registry item, template, adapter, token, policy, or remains project-local.",
+        "Update Canon export path, docs, tests, MCP generated content, and compatibility notes before any stable promotion."
+      ],
+      "approvalBoundary": [
+        "This packet is read-only and does not create Linear issues, mutate overlay manifests, or approve stable promotion.",
+        "Open promotion work only after explicit human approval.",
+        "Do not mark stable until every stop-before-stable item is resolved."
+      ],
+      "agentContract": {
+        "purpose": "canon-overlay-candidate-review-packet",
+        "primaryConsumers": [
+          "codex",
+          "mcp",
+          "ltd-docs",
+          "project-overlays"
+        ],
+        "useFor": [
+          "turning a queued overlay candidate into a reviewable handoff",
+          "checking candidate source evidence before implementation planning",
+          "preparing a bounded promotion slice after human approval"
+        ],
+        "stopBefore": [
+          "automatically opening Linear work from the packet",
+          "automatically editing Canon registry or stable exports",
+          "overriding stop-before-stable requirements"
+        ]
+      }
+    },
+    {
+      "id": "canon-overlay-candidate-review:overlay.client-workspace.surface-brief",
+      "candidateId": "overlay.client-workspace:overlay.client-workspace.surface-brief",
+      "title": "Surface Brief Template review packet",
+      "summary": "A reusable project-overlay brief for documenting workflow state, Canon reuse, local artifacts, evidence, and extension-intake needs.",
+      "overlayId": "overlay.client-workspace",
+      "overlayName": "Governed Client Workspace Overlay",
+      "manifestPath": "packages/client-workspace/canon-overlay/manifest.ts",
+      "intakeId": "overlay.client-workspace.surface-brief",
+      "owner": "client-workspace-operator",
+      "sourcePackage": "@create-something/client-workspace",
+      "sourcePath": "canon-overlay/templates/surface-brief.md",
+      "requestedKind": "template",
+      "requestedModalities": [
+        "web",
+        "chat",
+        "app",
+        "voice",
+        "glasses"
+      ],
+      "tags": [
+        "overlay",
+        "brief",
+        "surface",
+        "evidence"
+      ],
+      "surfaces": [
+        {
+          "surfaceId": "web-client-workspace-brief-1",
+          "name": "Web project overlay brief",
+          "modality": "web",
+          "sourcePath": "canon-overlay/templates/surface-brief.md",
+          "proof": "Copyable template names Canon reuse, local overlay artifacts, evidence, and extension intake."
+        },
+        {
+          "surfaceId": "chat-client-workspace-brief-2",
+          "name": "Chat project overlay brief",
+          "modality": "chat",
+          "sourcePath": "canon-overlay/templates/surface-brief.md",
+          "proof": "The same structure summarizes cleanly for agent/chat handoff."
+        }
+      ],
+      "dependencies": [
+        "template.canon-project-overlay-manifest",
+        "template.canon-extension-intake",
+        "policy.signal-decision-proof"
+      ],
+      "requiredEvidence": [
+        "Source-adjacent implementation path.",
+        "At least two surface proofs or client receipts.",
+        "Accessibility, evidence, motion, and extension contract notes.",
+        "Registry dependencies and modality list."
+      ],
+      "stopBeforeStable": [
+        "Do not mark stable until Canon owns export path, docs, tests, and compatibility notes."
+      ],
+      "rationale": "The proposal has evidence from at least two surfaces, so Canon should evaluate it as a shared candidate instead of leaving it project-local.",
+      "reviewUri": "canon://overlays/intake/overlay.client-workspace",
+      "candidateUri": "canon://overlays/candidates/overlay.client-workspace.surface-brief",
+      "handoffUri": "canon://overlays/candidates/overlay.client-workspace.surface-brief/handoff",
+      "promotionChecklist": [
+        "Confirm a human maintainer approved opening Canon promotion work from this packet.",
+        "Review the owning overlay manifest, source package, source path, surfaces, and proofs.",
+        "Verify every required evidence item has current source or test coverage.",
+        "Decide whether the candidate becomes a Canon registry item, template, adapter, token, policy, or remains project-local.",
+        "Update Canon export path, docs, tests, MCP generated content, and compatibility notes before any stable promotion."
+      ],
+      "approvalBoundary": [
+        "This packet is read-only and does not create Linear issues, mutate overlay manifests, or approve stable promotion.",
+        "Open promotion work only after explicit human approval.",
+        "Do not mark stable until every stop-before-stable item is resolved."
+      ],
+      "agentContract": {
+        "purpose": "canon-overlay-candidate-review-packet",
+        "primaryConsumers": [
+          "codex",
+          "mcp",
+          "ltd-docs",
+          "project-overlays"
+        ],
+        "useFor": [
+          "turning a queued overlay candidate into a reviewable handoff",
+          "checking candidate source evidence before implementation planning",
+          "preparing a bounded promotion slice after human approval"
+        ],
+        "stopBefore": [
+          "automatically opening Linear work from the packet",
+          "automatically editing Canon registry or stable exports",
+          "overriding stop-before-stable requirements"
+        ]
+      }
+    },
+    {
+      "id": "canon-overlay-candidate-review:overlay.client-workspace-demo.surface-brief",
+      "candidateId": "overlay.client-workspace-demo:overlay.client-workspace-demo.surface-brief",
+      "title": "Surface Brief Template review packet",
+      "summary": "A reusable project-overlay brief for documenting workflow state, Canon reuse, local artifacts, evidence, and extension-intake needs.",
+      "overlayId": "overlay.client-workspace-demo",
+      "overlayName": "Client Workspace Demo Overlay",
+      "manifestPath": "packages/client-workspace/clients/demo-frontend/canon-overlay/manifest.ts",
+      "intakeId": "overlay.client-workspace-demo.surface-brief",
+      "owner": "client-workspace-operator",
+      "sourcePackage": "@create-something/client-workspace-demo",
+      "sourcePath": "canon-overlay/templates/surface-brief.md",
+      "requestedKind": "template",
+      "requestedModalities": [
+        "web",
+        "chat",
+        "app",
+        "voice",
+        "glasses"
+      ],
+      "tags": [
+        "overlay",
+        "brief",
+        "surface",
+        "evidence"
+      ],
+      "surfaces": [
+        {
+          "surfaceId": "web-client-workspace-demo-brief-1",
+          "name": "Web project overlay brief",
+          "modality": "web",
+          "sourcePath": "canon-overlay/templates/surface-brief.md",
+          "proof": "Copyable template names Canon reuse, local overlay artifacts, evidence, and extension intake."
+        },
+        {
+          "surfaceId": "chat-client-workspace-demo-brief-2",
+          "name": "Chat project overlay brief",
+          "modality": "chat",
+          "sourcePath": "canon-overlay/templates/surface-brief.md",
+          "proof": "The same structure summarizes cleanly for agent/chat handoff."
+        }
+      ],
+      "dependencies": [
+        "template.canon-project-overlay-manifest",
+        "template.canon-extension-intake",
+        "policy.signal-decision-proof"
+      ],
+      "requiredEvidence": [
+        "Source-adjacent implementation path.",
+        "At least two surface proofs or client receipts.",
+        "Accessibility, evidence, motion, and extension contract notes.",
+        "Registry dependencies and modality list."
+      ],
+      "stopBeforeStable": [
+        "Do not mark stable until Canon owns export path, docs, tests, and compatibility notes."
+      ],
+      "rationale": "The proposal has evidence from at least two surfaces, so Canon should evaluate it as a shared candidate instead of leaving it project-local.",
+      "reviewUri": "canon://overlays/intake/overlay.client-workspace-demo",
+      "candidateUri": "canon://overlays/candidates/overlay.client-workspace-demo.surface-brief",
+      "handoffUri": "canon://overlays/candidates/overlay.client-workspace-demo.surface-brief/handoff",
       "promotionChecklist": [
         "Confirm a human maintainer approved opening Canon promotion work from this packet.",
         "Review the owning overlay manifest, source package, source path, surfaces, and proofs.",
@@ -2834,34 +3018,34 @@ export const CANON_OVERLAY_CANDIDATE_REVIEW_PACKETS: CanonOverlayCandidateReview
     }
   ],
   "summary": {
-    "total": 27,
-    "overlays": 27,
+    "total": 29,
+    "overlays": 29,
     "byRequestedKind": [
       {
         "kind": "template",
-        "count": 27
+        "count": 29
       }
     ],
     "byModality": [
       {
         "modality": "app",
-        "count": 27
+        "count": 29
       },
       {
         "modality": "chat",
-        "count": 27
+        "count": 29
       },
       {
         "modality": "glasses",
-        "count": 27
+        "count": 29
       },
       {
         "modality": "voice",
-        "count": 27
+        "count": 29
       },
       {
         "modality": "web",
-        "count": 27
+        "count": 29
       }
     ]
   },

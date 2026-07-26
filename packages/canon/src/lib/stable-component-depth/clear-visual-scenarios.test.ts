@@ -42,7 +42,7 @@ const PERFORMANCE_VISUAL_SCENARIOS = [
 	{
 		component: 'PerformanceCampaignOpening',
 		sourcePath: 'packages/canon/src/lib/components/performance/PerformanceCampaignOpening.svelte',
-		states: ['ink', 'paper', 'mobile-media', 'with-proof']
+		states: ['ink', 'paper', 'compact', 'mobile-media', 'with-proof']
 	},
 	{
 		component: 'PerformanceThesisConditions',
@@ -68,6 +68,11 @@ const PERFORMANCE_VISUAL_SCENARIOS = [
 		component: 'PerformanceConversionHandoff',
 		sourcePath: 'packages/canon/src/lib/components/performance/PerformanceConversionHandoff.svelte',
 		states: ['ready', 'review', 'stop', 'mobile-stack']
+	},
+	{
+		component: 'PerformanceNarrativeStage',
+		sourcePath: 'packages/canon/src/lib/components/performance/PerformanceNarrativeStage.svelte',
+		states: ['indexed', 'fragment-selected', 'mobile-stack', 'no-js-order', 'reduced-motion']
 	},
 	{
 		component: 'PerformanceFieldStudy',
@@ -178,6 +183,7 @@ const PERFORMANCE_EXPORTS = [
 	'PerformanceContrastChapter',
 	'PerformanceEvidenceIndex',
 	'PerformanceConversionHandoff',
+	'PerformanceNarrativeStage',
 	'PerformanceFieldStudy',
 	'PerformanceActionFooter',
 	'PerformanceArtifactCard',
@@ -259,7 +265,9 @@ describe('Canon Performance Lab visual regression scenarios', () => {
 	it('keeps owned property overlays on Performance tokens', () => {
 		for (const relativePath of OWNED_PERFORMANCE_OVERLAY_FILES) {
 			const source = readFileSync(join(REPO_ROOT, relativePath), 'utf8');
-			expect(source, relativePath).not.toMatch(/--(?:color|radius|shadow|content-width)-clear(?:-|\b)/);
+			expect(source, relativePath).not.toMatch(
+				/--(?:color|radius|shadow|content-width)-clear(?:-|\b)/
+			);
 			expect(source, relativePath).not.toMatch(/\{(?:color|radius)\.clear(?:\.|\})/);
 		}
 	});
@@ -297,7 +305,10 @@ describe('Canon Performance Lab visual regression scenarios', () => {
 	});
 
 	it('codifies Performance and Safety as reusable state, rail, and receipt primitives', () => {
-		const tokens = readFileSync(join(REPO_ROOT, 'packages/canon/src/lib/styles/tokens.css'), 'utf8');
+		const tokens = readFileSync(
+			join(REPO_ROOT, 'packages/canon/src/lib/styles/tokens.css'),
+			'utf8'
+		);
 		const performance = readFileSync(
 			join(REPO_ROOT, 'packages/canon/src/lib/styles/performance.css'),
 			'utf8'

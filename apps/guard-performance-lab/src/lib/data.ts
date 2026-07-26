@@ -12,6 +12,12 @@ export const sessionBlocks = [
   ['11:27–11:30', 'Receipt', 'Player names one read; coach names one strength and one next focus.', 'Explain the picture']
 ] as const;
 
+export const ballScreenPictures = {
+  drop: { term: 'Drop', meaning: 'The screen defender stays back near the lane.', phase: 'next' },
+  snake: { term: 'Snake', meaning: 'The ballhandler crosses back over the screen path to keep the trailer behind.', phase: 'next' },
+  reject: { term: 'Reject', meaning: 'Attack away from an expected screen because the defender leans toward it.', phase: 'now' }
+} as const;
+
 export const glossary = [
   ['Advantage', 'A defender is late, turned, outnumbered, or responsible for two threats.', 'now'],
   ['Downhill', 'An angle and momentum toward the rim before the defense is set—not simply speed.', 'now'],
@@ -23,14 +29,14 @@ export const glossary = [
   ['Top foot', 'The defender’s foot nearer the sideline or higher side of the floor.', 'now'],
   ['Change of pace', 'Slow-to-fast, fast-to-slow, or pause-to-go so the defender cannot time the drive.', 'now'],
   ['Hang / hesitation', 'A legal pause that makes the defender stand up or wait.', 'now'],
-  ['Freeze', 'Eyes, shoulders, or a pause hold a helper in place.', 'now'],
-  ['Reject', 'Attack away from an expected screen because the defender leans toward it.', 'now'],
+  ['Freeze', 'Dribble at a helper so they commit to the ball and cannot recover to a teammate.', 'now'],
+  [ballScreenPictures.reject.term, ballScreenPictures.reject.meaning, ballScreenPictures.reject.phase],
   ['Stunt', 'A short fake help step toward the ball, followed by recovery.', 'next'],
   ['Shrink', 'Off-ball defenders move toward the lane without fully committing.', 'next'],
   ['Second side', 'The side reached after the defense has already shifted once.', 'next'],
   ['One more', 'A quick extra pass from open to more open.', 'next'],
-  ['Drop', 'The screen defender stays back near the lane.', 'next'],
-  ['Snake', 'The ballhandler crosses back over the screen path to keep the trailer behind.', 'next'],
+  [ballScreenPictures.drop.term, ballScreenPictures.drop.meaning, ballScreenPictures.drop.phase],
+  [ballScreenPictures.snake.term, ballScreenPictures.snake.meaning, ballScreenPictures.snake.phase],
   ['Lift', 'Move from corner toward wing to improve a passing window.', 'later'],
   ['Drift', 'Move along the baseline toward the corner as a drive travels toward the paint.', 'later'],
   ['0.5 decision', 'Catch and decide quickly—shoot, drive, or pass—before the defense resets.', 'later'],

@@ -47,6 +47,23 @@ export type {
   PerformanceHandoffStep,
   PerformanceHandoffState
 } from './PerformanceConversionHandoff.svelte';
+export { default as PerformanceNarrativeStage } from './PerformanceNarrativeStage.svelte';
+export type {
+  PerformanceNarrativeAction,
+  PerformanceNarrativeScene,
+  PerformanceNarrativeTone
+} from './PerformanceNarrativeStage.svelte';
+export { performancePageArchetypeBudgets, validatePerformancePageContract } from './page-contract';
+export type {
+  PerformancePageArchetype,
+  PerformancePageChapter,
+  PerformancePageChapterRole,
+  PerformancePageContract,
+  PerformancePageContractValidation,
+  PerformancePageRegistryGroup,
+  PerformancePageRolloutStatus,
+  PerformancePageTechnicalExclusionKind
+} from './page-contract';
 
 // Preferred public names. The implementation paths and legacy Clear exports
 // remain stable for downstream compatibility.

@@ -1,0 +1,31 @@
+version: "1.0"
+contract_type: "agent_contract"
+metadata:
+  client_name: "Example Non-Production"
+  engagement_id: "example-build-001"
+  package_name: "policy-os"
+  status: "draft"
+  approved_workflows:
+    - "read example tickets"
+  approval_mode: "human-in-the-loop"
+  escalation_policy: "runbook.md#escalation"
+  review_cadence: "before every fixture run"
+  billing_and_entitlement_assumptions:
+    service_tier: "fixture_only"
+    service_entitled: false
+    policy_accepted: false
+    contract_active: false
+    billing_active: false
+agent_profile:
+  name: "Example Ticket Reader"
+  purpose: "Summarize synthetic ticket fixtures without writes."
+capability_scope:
+  allowed_tools:
+    - "list_example_tickets"
+  blocked_tools:
+    - "create_ticket"
+    - "update_ticket"
+approval_and_control:
+  mode: "human-in-the-loop"
+  write_operations: "blocked"
+  destructive_operations: "always-human"

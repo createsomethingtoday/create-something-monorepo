@@ -4,40 +4,18 @@
     PerformanceCampaignOpening,
     PerformanceConversionHandoff,
     PerformanceEvidenceIndex,
-    PerformanceThesisConditions,
     SEO,
-    type PerformanceCondition,
     type PerformanceEvidenceItem
   } from '@create-something/canon';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
-
-  const reportConditions: PerformanceCondition[] = [
-    {
-      label: 'Measured',
-      title: 'Name what the run proved.',
-      detail: 'Counts, rates, receipts, and reproducible artifacts stay attached to the claim.',
-      tone: 'growth'
-    },
-    {
-      label: 'Blocked',
-      title: 'Show what did not pass.',
-      detail: 'A failed gate narrows the authority of the system instead of disappearing from the story.',
-      tone: 'pressure'
-    },
-    {
-      label: 'Unknown',
-      title: 'Keep hypotheses labeled.',
-      detail: 'Unmeasured savings and adoption questions become the next instrumentation plan.',
-      tone: 'signal'
-    }
-  ];
 
   const reports: PerformanceEvidenceItem[] = [
     {
       id: '#FR-2026-01',
       kind: 'Review operations',
       title: 'Automation prepared the evidence. Human judgment still decided.',
-      detail: 'Evidence collection completed for 49 of 50 selected cases. Automated judgment remains blocked, and reviewer time savings are not yet measured.',
+      detail:
+        'Evidence collection completed for 49 of 50 selected cases. Automated judgment remains blocked, and reviewer time savings are not yet measured.',
       state: 'verified',
       date: 'May–June 2026',
       href: '/field-reports/template-review'
@@ -52,71 +30,57 @@
   propertyName="agency"
 />
 
-<main class="field-reports">
-  <PerformanceCampaignOpening
-    eyebrow="Performance Lab / Public evidence"
-    title="Field Reports"
-    lede="Each report answers four questions: what was tested, what happened, what did not earn authority, and what still needs to be measured."
-    media={{
-      src: '/images/performance-lab/controlled-flow-natural.webp',
-      mobileSrc: '/images/performance-lab/controlled-flow-natural-mobile.webp',
-      alt: 'Black-and-white view of water moving through an engineered channel'
-    }}
-    proof={[
-      { label: 'Claims', value: 'Sourced' },
-      { label: 'Limits', value: 'Visible' },
-      { label: 'Authority', value: 'Named' }
-    ]}
-  >
-    {#snippet actions()}
-      <Button href="#reports">Read the first report</Button>
-      <Button href={agencyCoreMessaging.selfMapHref} variant="secondary">
-        {agencyCoreMessaging.selfMapLabel}
-      </Button>
-    {/snippet}
-  </PerformanceCampaignOpening>
+<PerformanceCampaignOpening
+  eyebrow="Performance Lab / Public evidence"
+  title="Field Reports"
+  lede="Each report separates what was measured, what was blocked, and what remains unknown—then names the authority the workflow did not earn."
+  density="compact"
+  media={{
+    src: '/images/performance-lab/controlled-flow-natural.webp',
+    mobileSrc: '/images/performance-lab/controlled-flow-natural-mobile.webp',
+    alt: 'Black-and-white view of water moving through an engineered channel'
+  }}
+  proof={[
+    { label: 'Measured', value: 'Sourced' },
+    { label: 'Blocked', value: 'Visible' },
+    { label: 'Unknown', value: 'Named' }
+  ]}
+>
+  {#snippet actions()}
+    <Button href="#reports">Read the first report</Button>
+    <Button href={agencyCoreMessaging.selfMapHref} variant="secondary">
+      {agencyCoreMessaging.selfMapLabel}
+    </Button>
+  {/snippet}
+</PerformanceCampaignOpening>
 
-  <PerformanceThesisConditions
-    eyebrow="Proof standard"
-    title="A result is more persuasive when its limits remain visible."
-    description="Field Reports separate measured facts, derived calculations, and untested hypotheses so evidence can deepen trust without becoming a performance claim."
-    conditions={reportConditions}
-    ariaLabel="Field Report proof standard"
-  />
+<PerformanceEvidenceIndex
+  id="reports"
+  eyebrow="Report index"
+  title="Start with the workflow under pressure."
+  description="Each report connects an operating map to measured facts, blocked judgment, unknown impact, and the decisions it was not allowed to make."
+  items={reports}
+  ariaLabel="CREATE SOMETHING Field Reports"
+/>
 
-  <div id="reports">
-    <PerformanceEvidenceIndex
-      eyebrow="Report index"
-      title="Start with the workflow under pressure."
-      description="Each report connects an operating map to the evidence it produced and the decisions it was not allowed to make."
-      items={reports}
-      ariaLabel="CREATE SOMETHING Field Reports"
-    />
-  </div>
-
-  <PerformanceConversionHandoff
-    eyebrow="Bring the next field test"
-    title="Measure one workflow before expanding authority."
-    description="Name the repeated handoff, decision owner, objective work, and current baseline. The first map will show whether a controlled pilot is worth running."
-    handoff={{
-      owner: 'Workflow owner',
-      authority: 'Human decision',
-      proof: 'Baseline + map + test plan',
-      state: 'ready'
-    }}
-  >
-    {#snippet actions()}
-      <Button href={agencyCoreMessaging.selfMapHref}>{agencyCoreMessaging.selfMapLabel}</Button>
-      <Button href="/book?source=field-reports&intent=workflow-mapping&lane=workflow_infrastructure" variant="secondary">
-        Talk through one workflow
-      </Button>
-    {/snippet}
-  </PerformanceConversionHandoff>
-</main>
-
-<style>
-  .field-reports {
-    background: var(--color-performance-panel, #fff);
-    color: var(--color-performance-ink, #090909);
-  }
-</style>
+<PerformanceConversionHandoff
+  eyebrow="Bring the next field test"
+  title="Measure one workflow before expanding authority."
+  description="Name the repeated handoff, decision owner, objective work, and current baseline. The first map will show whether a controlled pilot is worth running."
+  handoff={{
+    owner: 'Workflow owner',
+    authority: 'Human decision',
+    proof: 'Baseline + map + test plan',
+    state: 'ready'
+  }}
+>
+  {#snippet actions()}
+    <Button href={agencyCoreMessaging.selfMapHref}>{agencyCoreMessaging.selfMapLabel}</Button>
+    <Button
+      href="/book?source=field-reports&intent=workflow-mapping&lane=workflow_infrastructure"
+      variant="secondary"
+    >
+      Talk through one workflow
+    </Button>
+  {/snippet}
+</PerformanceConversionHandoff>

@@ -1,0 +1,644 @@
+<script lang="ts">
+  import { onMount, type Snippet } from 'svelte';
+
+  export type PerformanceNarrativeTone = 'allow' | 'review' | 'block' | 'neutral';
+
+  export interface PerformanceNarrativeAction {
+    label: string;
+    href: string;
+  }
+
+  export interface PerformanceNarrativeScene {
+    id: string;
+    label: string;
+    summary: string;
+    title: string;
+    detail: string;
+    tone?: PerformanceNarrativeTone;
+    evidence?: string[];
+    receipts?: string[];
+    actions?: PerformanceNarrativeAction[];
+  }
+
+  interface Props {
+    id?: string;
+    eyebrow?: string;
+    title: string;
+    description?: string;
+    scenes: PerformanceNarrativeScene[];
+    ariaLabel?: string;
+    density?: 'standard' | 'compact';
+    artifact?: Snippet<[PerformanceNarrativeScene, number]>;
+  }
+
+  let {
+    id = 'performance-narrative-stage',
+    eyebrow,
+    title,
+    description,
+    scenes,
+    ariaLabel = 'Narrative scenes',
+    density = 'compact',
+    artifact
+  }: Props = $props();
+
+  let activeIndex = $state(0);
+  let enhanced = $state(false);
+  let tabElements = $state<HTMLButtonElement[]>([]);
+
+  function controlState(tone: PerformanceNarrativeTone | undefined) {
+    if (tone === 'allow') return 'ready';
+    if (tone === 'review') return 'review';
+    if (tone === 'block') return 'stop';
+    return 'controlled';
+  }
+
+  function fragmentFor(scene: PerformanceNarrativeScene) {
+    return `#${id}-${scene.id}`;
+  }
+
+  function indexFromFragment() {
+    if (typeof window === 'undefined') return -1;
+    return scenes.findIndex((scene) => window.location.hash === fragmentFor(scene));
+  }
+
+  function syncFromFragment() {
+    const fragmentIndex = indexFromFragment();
+    if (fragmentIndex >= 0) activeIndex = fragmentIndex;
+  }
+
+  function selectScene(index: number, pushHistory = true, moveFocus = false) {
+    if (!scenes[index]) return;
+    activeIndex = index;
+
+    if (pushHistory && typeof window !== 'undefined') {
+      const fragment = fragmentFor(scenes[index]);
+      if (window.location.hash !== fragment) window.history.pushState(null, '', fragment);
+    }
+
+    if (moveFocus) tabElements[index]?.focus();
+  }
+
+  function handleTabKeydown(event: KeyboardEvent, index: number) {
+    let nextIndex = index;
+    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+      nextIndex = (index + 1) % scenes.length;
+    } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+      nextIndex = (index - 1 + scenes.length) % scenes.length;
+    } else if (event.key === 'Home') {
+      nextIndex = 0;
+    } else if (event.key === 'End') {
+      nextIndex = scenes.length - 1;
+    } else {
+      return;
+    }
+
+    event.preventDefault();
+    selectScene(nextIndex, true, true);
+  }
+
+  onMount(() => {
+    enhanced = true;
+    syncFromFragment();
+    window.addEventListener('hashchange', syncFromFragment);
+    window.addEventListener('popstate', syncFromFragment);
+
+    return () => {
+      window.removeEventListener('hashchange', syncFromFragment);
+      window.removeEventListener('popstate', syncFromFragment);
+    };
+  });
+</script>
+
+<section
+  {id}
+  class="performance-narrative-stage"
+  data-density={density}
+  data-enhanced={enhanced}
+  aria-label={ariaLabel}
+>
+  <div class="performance-narrative-stage__inner">
+    <header class="performance-narrative-stage__header">
+      <div>
+        {#if eyebrow}<span>{eyebrow}</span>{/if}
+        <h2>{title}</h2>
+      </div>
+      {#if description}<p>{description}</p>{/if}
+    </header>
+
+    <div class="performance-narrative-stage__composition">
+      <div
+        class="performance-narrative-stage__index"
+        role="tablist"
+        aria-label={ariaLabel}
+        style:--scene-count={scenes.length}
+      >
+        {#each scenes as scene, index}
+          <button
+            bind:this={tabElements[index]}
+            type="button"
+            role="tab"
+            id={`${id}-tab-${scene.id}`}
+            aria-selected={index === activeIndex}
+            aria-controls={`${id}-panel-${scene.id}`}
+            tabindex={index === activeIndex ? 0 : -1}
+            data-control-state={controlState(scene.tone)}
+            onclick={() => selectScene(index)}
+            onkeydown={(event) => handleTabKeydown(event, index)}
+          >
+            <span class="performance-narrative-stage__index-number">
+              {String(index + 1).padStart(2, '0')}
+            </span>
+            <span class="performance-narrative-stage__index-copy">
+              <strong>{scene.label}</strong>
+              <small>{scene.summary}</small>
+              {#if scene.actions?.[0]}<em>{scene.actions[0].label}</em>{/if}
+            </span>
+          </button>
+        {/each}
+      </div>
+
+      <div class="performance-narrative-stage__panels">
+        {#each scenes as scene, index}
+          <div
+            id={`${id}-panel-${scene.id}`}
+            class="performance-narrative-stage__panel"
+            role="tabpanel"
+            aria-labelledby={`${id}-tab-${scene.id}`}
+            data-state={controlState(scene.tone)}
+            hidden={enhanced && index !== activeIndex}
+          >
+            <div class="performance-narrative-stage__scene-head">
+              <div>
+                <span
+                  >{String(index + 1).padStart(2, '0')} / {String(scenes.length).padStart(
+                    2,
+                    '0'
+                  )}</span
+                >
+                <strong>{scene.summary}</strong>
+              </div>
+              <h3>{scene.title}</h3>
+              <p>{scene.detail}</p>
+            </div>
+
+            {#if artifact}
+              <div class="performance-narrative-stage__artifact">
+                {@render artifact(scene, index)}
+              </div>
+            {/if}
+
+            {#if scene.evidence?.length || scene.receipts?.length}
+              <div class="performance-narrative-stage__proof">
+                {#if scene.evidence?.length}
+                  <div>
+                    <span>Evidence</span>
+                    <ul>
+                      {#each scene.evidence as evidence}<li>{evidence}</li>{/each}
+                    </ul>
+                  </div>
+                {/if}
+                {#if scene.receipts?.length}
+                  <div>
+                    <span>Receipts</span>
+                    <div class="performance-narrative-stage__receipts">
+                      {#each scene.receipts as receipt}<strong>{receipt}</strong>{/each}
+                    </div>
+                  </div>
+                {/if}
+              </div>
+            {/if}
+
+            {#if scene.actions?.length}
+              <div
+                class="performance-narrative-stage__actions"
+                aria-label={`${scene.label} actions`}
+              >
+                {#each scene.actions as action}<a href={action.href}>{action.label}</a>{/each}
+              </div>
+            {/if}
+
+            {#if enhanced && index === activeIndex && scenes.length > 1}
+              <div class="performance-narrative-stage__controls" aria-label="Scene controls">
+                <button
+                  type="button"
+                  disabled={index === 0}
+                  onclick={() => selectScene(index - 1, true, true)}
+                >
+                  Previous
+                </button>
+                <span aria-live="polite">{scene.label} · {index + 1} of {scenes.length}</span>
+                <button
+                  type="button"
+                  disabled={index === scenes.length - 1}
+                  onclick={() => selectScene(index + 1, true, true)}
+                >
+                  Next
+                </button>
+              </div>
+            {/if}
+          </div>
+        {/each}
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .performance-narrative-stage {
+    padding-block: var(--space-performance-stage-block, 3.5rem);
+    border-block: 1px solid var(--color-performance-line, #d7d7d2);
+    background:
+      linear-gradient(90deg, var(--color-performance-grid, rgb(9 9 9 / 0.055)) 1px, transparent 1px)
+        0 0 / 3.75rem 3.75rem,
+      var(--color-performance-paper, #f3f3f0);
+    color: var(--color-performance-ink, #090909);
+  }
+
+  .performance-narrative-stage[data-density='compact'] {
+    padding-block: var(--space-performance-stage-block-compact, 2.75rem);
+  }
+
+  .performance-narrative-stage__inner {
+    display: grid;
+    gap: clamp(1.5rem, 3vw, 2.75rem);
+    width: min(var(--content-width-performance, 85rem), calc(100% - 2.5rem));
+    margin-inline: auto;
+  }
+
+  .performance-narrative-stage__header {
+    display: grid;
+    grid-template-columns: minmax(18rem, 0.9fr) minmax(18rem, 0.7fr);
+    gap: clamp(1.5rem, 4vw, 4rem);
+    align-items: end;
+  }
+
+  .performance-narrative-stage__header > div,
+  .performance-narrative-stage__scene-head {
+    display: grid;
+    gap: 0.7rem;
+  }
+
+  .performance-narrative-stage__header span,
+  .performance-narrative-stage__scene-head span,
+  .performance-narrative-stage__proof span {
+    color: var(--color-performance-muted, #5e6268);
+    font-family: var(--font-performance-mono);
+    font-size: 0.72rem;
+    font-weight: var(--font-performance-semibold);
+    line-height: 1.2;
+    text-transform: uppercase;
+  }
+
+  .performance-narrative-stage h2,
+  .performance-narrative-stage h3,
+  .performance-narrative-stage p {
+    margin: 0;
+  }
+
+  .performance-narrative-stage h2,
+  .performance-narrative-stage h3 {
+    font-family: var(--font-performance-display);
+    font-kerning: normal;
+    font-feature-settings:
+      'kern' 1,
+      'liga' 1;
+    font-weight: var(--font-performance-display-weight);
+    letter-spacing: var(--tracking-performance-display);
+  }
+
+  .performance-narrative-stage h2 {
+    font-size: clamp(2.15rem, 4vw, 3.45rem);
+    line-height: 1.02;
+    text-wrap: balance;
+  }
+
+  .performance-narrative-stage__header > p,
+  .performance-narrative-stage__scene-head > p {
+    color: var(--color-performance-muted, #5e6268);
+    font-size: 1rem;
+    line-height: 1.52;
+    text-wrap: pretty;
+  }
+
+  .performance-narrative-stage__composition {
+    display: grid;
+    grid-template-columns: minmax(14rem, var(--width-performance-stage-index, 18rem)) minmax(0, 1fr);
+    min-height: var(--height-performance-stage, 34rem);
+    border: 1px solid var(--color-performance-line-strong, #9c9c96);
+    background: var(--color-performance-panel, #ffffff);
+  }
+
+  .performance-narrative-stage__index {
+    display: grid;
+    align-content: start;
+    border-right: 1px solid var(--color-performance-line, #d7d7d2);
+    background: var(--color-performance-court, #e6e6e0);
+  }
+
+  .performance-narrative-stage__index button {
+    display: grid;
+    grid-template-columns: 2rem minmax(0, 1fr);
+    gap: 0.75rem;
+    min-height: var(--height-performance-control-min, 2.75rem);
+    padding: 1.15rem 1rem;
+    border: 0;
+    border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
+    background: transparent;
+    color: var(--color-performance-ink, #090909);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    opacity: var(--opacity-performance-stage-inactive, 0.66);
+  }
+
+  .performance-narrative-stage__index button[aria-selected='true'] {
+    background: var(--color-performance-panel, #ffffff);
+    opacity: 1;
+  }
+
+  .performance-narrative-stage__index
+    button[aria-selected='true'][data-control-state='controlled'] {
+    box-shadow: inset 3px 0 0 var(--color-performance-controlled, #0057b8);
+  }
+
+  .performance-narrative-stage__index button[aria-selected='true'][data-control-state='ready'] {
+    box-shadow: inset 3px 0 0 var(--color-performance-ready, #007a4d);
+  }
+
+  .performance-narrative-stage__index button[aria-selected='true'][data-control-state='review'] {
+    box-shadow: inset 3px 0 0 var(--color-performance-review, #8b6b00);
+  }
+
+  .performance-narrative-stage__index button[aria-selected='true'][data-control-state='stop'] {
+    box-shadow: inset 3px 0 0 var(--color-performance-stop, #c62026);
+  }
+
+  .performance-narrative-stage__index button:focus-visible,
+  .performance-narrative-stage__controls button:focus-visible,
+  .performance-narrative-stage__actions a:focus-visible {
+    outline: 3px solid var(--color-performance-signal, #0057b8);
+    outline-offset: -3px;
+  }
+
+  .performance-narrative-stage__index-number {
+    padding-top: 0.12rem;
+    color: var(--color-performance-muted, #5e6268);
+    font-family: var(--font-performance-mono);
+    font-size: 0.7rem;
+  }
+
+  .performance-narrative-stage__index-copy {
+    display: grid;
+    gap: 0.3rem;
+    min-width: 0;
+  }
+
+  .performance-narrative-stage__index-copy strong {
+    font-size: 1rem;
+    font-weight: var(--font-performance-semibold);
+  }
+
+  .performance-narrative-stage__index-copy small,
+  .performance-narrative-stage__index-copy em {
+    color: var(--color-performance-muted, #5e6268);
+    font-size: 0.79rem;
+    font-style: normal;
+    line-height: 1.35;
+  }
+
+  .performance-narrative-stage__index-copy em {
+    font-family: var(--font-performance-mono);
+    font-size: 0.65rem;
+    text-transform: uppercase;
+  }
+
+  .performance-narrative-stage__panels {
+    min-width: 0;
+  }
+
+  .performance-narrative-stage__panel {
+    display: grid;
+    gap: 1.35rem;
+    min-height: 100%;
+    padding: clamp(1.35rem, 3vw, 2.5rem);
+  }
+
+  .performance-narrative-stage__panel[hidden] {
+    display: none;
+  }
+
+  .performance-narrative-stage__scene-head > div {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .performance-narrative-stage__scene-head > div > strong {
+    padding: 0.3rem 0.55rem;
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+    color: var(--color-performance-muted, #5e6268);
+    font-family: var(--font-performance-mono);
+    font-size: 0.68rem;
+    font-weight: var(--font-performance-semibold);
+    text-transform: uppercase;
+  }
+
+  .performance-narrative-stage__scene-head h3 {
+    max-width: 46rem;
+    font-size: clamp(1.8rem, 3vw, 2.75rem);
+    line-height: 1.04;
+    text-wrap: balance;
+  }
+
+  .performance-narrative-stage__scene-head > p {
+    max-width: 48rem;
+  }
+
+  .performance-narrative-stage__artifact {
+    min-width: 0;
+    border-block: 1px solid var(--color-performance-line, #d7d7d2);
+    padding-block: 1.1rem;
+  }
+
+  .performance-narrative-stage__proof {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+  }
+
+  .performance-narrative-stage__proof > div {
+    display: grid;
+    gap: 0.65rem;
+  }
+
+  .performance-narrative-stage__proof ul {
+    display: grid;
+    gap: 0.4rem;
+    margin: 0;
+    padding-left: 1.1rem;
+    color: var(--color-performance-muted, #5e6268);
+    font-size: 0.86rem;
+    line-height: 1.4;
+  }
+
+  .performance-narrative-stage__receipts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+  }
+
+  .performance-narrative-stage__receipts strong {
+    padding: 0.35rem 0.5rem;
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+    font-family: var(--font-performance-mono);
+    font-size: 0.68rem;
+    font-weight: var(--font-performance-medium);
+  }
+
+  .performance-narrative-stage__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+  }
+
+  .performance-narrative-stage__actions a,
+  .performance-narrative-stage__controls button {
+    display: inline-flex;
+    min-height: var(--height-performance-control-min, 2.75rem);
+    align-items: center;
+    justify-content: center;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid var(--color-performance-line-strong, #9c9c96);
+    background: var(--color-performance-panel, #ffffff);
+    color: var(--color-performance-ink, #090909);
+    font-family: var(--font-performance-mono);
+    font-size: 0.72rem;
+    font-weight: var(--font-performance-semibold);
+    text-decoration: none;
+    text-transform: uppercase;
+  }
+
+  .performance-narrative-stage__controls {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 0.75rem;
+    align-items: center;
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid var(--color-performance-line, #d7d7d2);
+  }
+
+  .performance-narrative-stage__controls span {
+    color: var(--color-performance-muted, #5e6268);
+    font-family: var(--font-performance-mono);
+    font-size: 0.68rem;
+    text-align: center;
+    text-transform: uppercase;
+  }
+
+  .performance-narrative-stage__controls button:disabled {
+    cursor: not-allowed;
+    opacity: 0.42;
+  }
+
+  @media (min-width: 64rem) {
+    .performance-narrative-stage__index {
+      position: sticky;
+      top: var(
+        --distance-performance-stage-sticky-offset,
+        calc(var(--height-performance-header, 72px) + 1rem)
+      );
+      align-self: start;
+    }
+  }
+
+  @media (max-width: 63.99rem) {
+    .performance-narrative-stage__header,
+    .performance-narrative-stage__composition {
+      grid-template-columns: 1fr;
+    }
+
+    .performance-narrative-stage__header {
+      align-items: start;
+    }
+
+    .performance-narrative-stage__header > p {
+      max-width: 42rem;
+    }
+
+    .performance-narrative-stage__composition {
+      min-height: 0;
+    }
+
+    .performance-narrative-stage__index {
+      grid-template-columns: repeat(var(--scene-count, 3), minmax(0, 1fr));
+      border-right: 0;
+      border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
+    }
+
+    .performance-narrative-stage__index button {
+      grid-template-columns: 1fr;
+      border-right: 1px solid var(--color-performance-line, #d7d7d2);
+    }
+
+    .performance-narrative-stage__index-number,
+    .performance-narrative-stage__index-copy em {
+      display: none;
+    }
+  }
+
+  @media (max-width: 47.99rem) {
+    .performance-narrative-stage {
+      padding-block: 2.35rem;
+    }
+
+    .performance-narrative-stage__inner {
+      width: min(100% - 1.25rem, var(--content-width-performance, 85rem));
+      gap: 1.35rem;
+    }
+
+    .performance-narrative-stage__index {
+      grid-template-columns: 1fr;
+    }
+
+    .performance-narrative-stage__index button {
+      grid-template-columns: 1.6rem minmax(0, 1fr);
+      min-height: var(--height-performance-control-min, 2.75rem);
+      padding: 0.8rem;
+      border-right: 0;
+    }
+
+    .performance-narrative-stage__index-number {
+      display: inline;
+    }
+
+    .performance-narrative-stage__panel {
+      padding: 1.1rem;
+    }
+
+    .performance-narrative-stage__proof {
+      grid-template-columns: 1fr;
+    }
+
+    .performance-narrative-stage__controls {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .performance-narrative-stage__controls span {
+      grid-column: 1 / -1;
+      grid-row: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .performance-narrative-stage *,
+    .performance-narrative-stage *::before,
+    .performance-narrative-stage *::after {
+      scroll-behavior: auto !important;
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+    }
+  }
+</style>
