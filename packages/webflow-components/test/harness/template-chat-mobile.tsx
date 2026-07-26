@@ -1,5 +1,6 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
+import { MadeInWebflowTemplateFinder } from '../../src/components/chat/MadeInWebflowTemplateFinder';
 import { TemplateChat } from '../../src/components/chat/TemplateChat';
 import {
   TemplateCampaignLane,
@@ -23,6 +24,7 @@ const campaignOnly = new URLSearchParams(window.location.search).has('campaign')
 const campaignError = new URLSearchParams(window.location.search).has('campaign-error');
 const campaignAnalytics = new URLSearchParams(window.location.search).has('campaign-analytics');
 const campaignLoading = new URLSearchParams(window.location.search).has('campaign-loading');
+const madeInWebflow = new URLSearchParams(window.location.search).has('made-in-webflow');
 const mount = document.createElement('div');
 const shadowBoundary = !(
   twoInstances ||
@@ -96,6 +98,15 @@ createRoot(mount).render(
         starterPrompts="Show one spotlight template"
       />
     </div>
+  ) : madeInWebflow ? (
+    <MadeInWebflowTemplateFinder
+      apiBase={window.location.origin}
+      defaultOpen
+      sessionScope="made-in-webflow-verifier"
+      enableAnalytics={false}
+      starterPrompts="A restaurant site with a menu"
+      welcomeMessage="Describe the site you want to build and I will find templates without changing this community grid."
+    />
   ) : (
     <TemplateChat
       apiBase={window.location.origin}
