@@ -137,6 +137,24 @@ export class LinearTrackerClient {
         }
         return issue;
     }
+    async fetch_issue_identity_by_identifier(identifier) {
+        const payload = await this.graphql(`
+        query SymphonyIssueIdentity($id: String!) {
+          issue(id: $id) {
+            id
+            identifier
+          }
+        }
+      `, { id: identifier });
+        const node = payload.data?.issue;
+        if (!node) {
+            return null;
+        }
+        return {
+            id: String(node.id ?? ''),
+            identifier: String(node.identifier ?? ''),
+        };
+    }
     async fetch_issues_by_states(states) {
         if (states.length === 0) {
             return [];
@@ -227,12 +245,11 @@ export class LinearTrackerClient {
         if (!state_id) {
             throw new SymphonyError('linear_missing_completed_state', 'No Linear completed workflow state matched terminal_states.');
         }
-        const completed = await this.update_issue(issue.id, { stateId: state_id });
         const message = result?.message ? String(result.message).trim() : '';
         if (message) {
             await this.comment_issue(issue.id, `Evidence:\n\n${message}`);
         }
-        return completed;
+        return this.update_issue(issue.id, { stateId: state_id });
     }
     async handoff_issue(issue) {
         const bootstrap = await this.bootstrap();

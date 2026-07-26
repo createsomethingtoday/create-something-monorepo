@@ -21,14 +21,45 @@ pnpm symphony:policy
 
 Generic workflows default to `completion.mode: evidence_only` with a non-active, non-terminal `completion.handoff_state` of `In Review`. A successful worker comments a structured handoff, leaves Linear non-terminal, preserves the workspace, and enters an observable `awaiting_completion` state that suppresses redispatch. Symphony persists that state and its handoff payload beside workspace metadata, restores it before candidate dispatch after a process restart, and resumes interrupted Linear delivery within the same three-attempt bound; each failed attempt is persisted before backoff. Workflow reloads cannot change the completion mode, tracker, or workspace owner captured for an already-dispatched worker. If marker persistence fails, Symphony moves the issue to the configured Linear handoff state and restores that project-and-label-scoped fallback into reconciliation after a restart; if both durable paths fail, daemon dispatch halts and `--once` exits nonzero. Unreadable or mismatched markers also fail closed. Long-running services reconcile terminal handoffs and clean their workspaces without requiring a restart. An exhausted handoff remains non-terminal, suppressed, and visible with its last error. The temporary `worker_exit_legacy` mode retains the old auto-completion behavior only as an explicit migration escape hatch, ignores the unused handoff-state constraint, and emits a gate-bypass warning.
 
+## Canonical Completion Gate
+
+`CanonicalHarnessGate` is the evidence-to-done boundary for canonical harness
+runs. It computes eligibility from a strict v1 receipt, verifies that the run
+directory resolves beneath the evidence root, and publishes the result through
+an atomic no-clobber hard link to
+`output/canonical-agent-harness/runs/<run_id>/receipt.v1.json`, then reads and
+revalidates that exact persisted receipt immediately before calling the
+tracker's terminal completion seam. It also re-resolves the receipt's Linear
+identifier through the tracker and requires the authoritative issue ID to match
+the completion request before that mutation.
+
+The gate requires source diff or verified no-op evidence, direct results for
+every acceptance criterion, lane-appropriate stage receipts, independent
+read-only review plus rollback proof for A2/A3, and matching promotion and live
+proof for A3.
+A4 is never eligible for autonomous completion. Unknown fields, caller-supplied
+eligibility, unresolved actionable findings in any lane, issue-identity
+mismatches, path escapes, duplicate run receipts, corrupt receipts, and tampered
+computed fields all fail closed without a tracker mutation.
+
+Stage evidence uses Symphony's existing `multi-agent-evidence-receipt.v1`
+contract directly. The gate binds each receipt to the canonical run, Linear
+issue, and expected role, and treats a nonzero verification command as a failed
+stage even if its reported status says `passed`.
+
+The gate and schema are exported as `@create-something/symphony/canonical-harness-gate`
+and `@create-something/symphony/canonical-harness-receipt-schema`. Existing
+workflow routing remains evidence-only until the canonical router adopts this
+gate in its owning migration.
+
 ## Agent Legibility Contract
 
 | Field | Value |
 |-------|-------|
-| Entry point | `packages/symphony/src/cli.js`, `packages/symphony/src/orchestrator.js`, `packages/symphony/src/tracker/linear.js` |
+| Entry point | `packages/symphony/src/cli.js`, `packages/symphony/src/orchestrator.js`, `packages/symphony/src/tracker/linear.js`, `packages/symphony/src/canonical-harness-gate.js` |
 | Boot command | `node src/cli.js ../../automation/symphony/code-quality/WORKFLOW.md --once` |
 | Smoke command | `pnpm check && pnpm test` |
-| Validation surfaces | node syntax check output, node test output, Linear tracker events, worker workspace metadata |
+| Validation surfaces | node syntax check output, node test output, canonical receipt schema and persisted receipt, Linear tracker events, worker workspace metadata |
 | UI validation path | none |
 | Escalation rule | stop if Linear issue state, workspace cleanup behavior, or Codex worker status cannot be reconciled with the workflow file and tracker evidence |
 

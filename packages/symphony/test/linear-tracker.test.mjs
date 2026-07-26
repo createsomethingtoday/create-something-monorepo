@@ -145,6 +145,33 @@ test('fetch_issue_by_identifier selects an active labeled issue without project 
   assert.deepEqual(issue.labels, ['code-quality']);
 });
 
+test('fetch_issue_identity_by_identifier reads a handoff issue without dispatch filtering', async () => {
+  const client = new LinearTrackerClient(
+    createConfig(),
+    logger,
+    async (_url, init) => {
+      const payload = JSON.parse(init.body);
+      assert.match(payload.query, /query SymphonyIssueIdentity/);
+      assert.equal(payload.variables.id, 'CRE-1304');
+      return new Response(JSON.stringify({
+        data: {
+          issue: {
+            id: 'id-CRE-1304',
+            identifier: 'CRE-1304',
+          },
+        },
+      }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    },
+  );
+
+  const identity = await client.fetch_issue_identity_by_identifier('CRE-1304');
+
+  assert.deepEqual(identity, { id: 'id-CRE-1304', identifier: 'CRE-1304' });
+});
+
 test('handoff_issue moves evidence-only work to the exact non-active handoff state', async () => {
   const issueNode = createIssue('CRE-1300', ['code-quality']);
   const client = new LinearTrackerClient(
@@ -192,4 +219,56 @@ test('handoff_issue moves evidence-only work to the exact non-active handoff sta
   });
 
   assert.equal(handedOff.state, 'In Review');
+});
+
+test('complete_issue posts evidence before the terminal state mutation', async () => {
+  const operations = [];
+  const client = new LinearTrackerClient(createConfig(), logger, createFetch([]));
+  client.bootstrap = async () => ({
+    viewer: { id: 'viewer-1' },
+    workflow_states: [{ id: 'state-done', name: 'Done', type: 'completed' }],
+  });
+  client.comment_issue = async (_issueId, body) => {
+    operations.push('comment');
+    assert.match(body, /^Evidence:\n\nCanonical harness receipt:/);
+  };
+  client.update_issue = async () => {
+    operations.push('update');
+    return { id: 'id-CRE-1304', identifier: 'CRE-1304', state: 'Done' };
+  };
+
+  const completed = await client.complete_issue(
+    { id: 'id-CRE-1304', identifier: 'CRE-1304' },
+    { message: 'Canonical harness receipt: /tmp/receipt.v1.json' },
+  );
+
+  assert.deepEqual(operations, ['comment', 'update']);
+  assert.equal(completed.state, 'Done');
+});
+
+test('complete_issue does not mutate terminal state when evidence publication fails', async () => {
+  const operations = [];
+  const client = new LinearTrackerClient(createConfig(), logger, createFetch([]));
+  client.bootstrap = async () => ({
+    viewer: { id: 'viewer-1' },
+    workflow_states: [{ id: 'state-done', name: 'Done', type: 'completed' }],
+  });
+  client.comment_issue = async () => {
+    operations.push('comment');
+    throw new Error('evidence publication failed');
+  };
+  client.update_issue = async () => {
+    operations.push('update');
+    return { id: 'id-CRE-1304', identifier: 'CRE-1304', state: 'Done' };
+  };
+
+  await assert.rejects(
+    client.complete_issue(
+      { id: 'id-CRE-1304', identifier: 'CRE-1304' },
+      { message: 'Canonical harness receipt: /tmp/receipt.v1.json' },
+    ),
+    /evidence publication failed/,
+  );
+
+  assert.deepEqual(operations, ['comment']);
 });
