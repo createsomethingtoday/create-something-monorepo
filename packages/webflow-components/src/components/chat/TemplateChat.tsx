@@ -1,190 +1,114 @@
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
-import { TemplateCard, TEMPLATE_CARD_STYLES } from '../cards/TemplateCard';
 import { UiIcon } from '../primitives/UiIcon';
-import { trackMarketplaceEvent, type MarketplaceAnalyticsData } from '../marketplace/analytics';
+import { trackMarketplaceEvent } from '../marketplace/analytics';
 import { useMarketplaceComponentErrorTracking } from '../marketplace/MarketplaceComponentErrorBoundary';
-import { resolveTemplateCategoryRouteSlug } from '../marketplace/templateRoute';
-import {
-  getSafeAnalyticsOverrides,
-  writeTemplateAttribution,
-  MARKETPLACE_SIGNAL_WINDOW,
-  type TemplateMarketplaceAttribution,
-} from '../marketplace/templateAttribution';
+import { getSafeAnalyticsOverrides, writeTemplateAttribution } from '../marketplace/templateAttribution';
 import {
   fetchAuthorizedAgentRequest,
   MAX_REQUEST_MESSAGE_CHARS,
   prepareAgentMessages,
   requestTemplateAgentSession,
 } from './templateAgentSession';
-import { completeTurnstileChallenge, type TurnstileApi } from './turnstileChallenge';
 import {
+  applyHostInert,
   createHighlightMissState,
   createTextDeltaBatcher,
-  discoverOpenRoots,
+  findFixedPositionBreaker,
+  findHostPageBranch,
   getHostOverlayBottomInset,
   isHostOverlayBlocking,
-  queryDiscoveredRoots,
+  prefersReducedMotion,
+  type PlacementAncestor,
   type TextDeltaBatcher,
 } from './templateChatRuntime';
+import type { AgentSseEvent, AgentTemplateItem, ChatMessage } from './templateChatProtocol';
+import {
+  AgentProgress,
+  createAgentProgressState,
+  getAgentOutcomeReceipt,
+  reduceAgentProgress,
+  type AgentProgressEvent,
+  type AgentProgressState,
+} from './templateChatProgress';
+import {
+  applyPageAction,
+  clearPageActionTimers,
+  normalizePageActionPayload,
+  pageActionChangesFilters,
+  pageHasTemplateGrid,
+  undoPageAction,
+  type PageActionTimers,
+} from './templateChatPageAction';
+import {
+  getPreviewReturnImmersive,
+  getRetryBaseMessages,
+  getTemplateChatStorageKey,
+  limitTemplateChatInput,
+  loadPersistedSession,
+  MAX_PERSISTED_KNOWN_TEMPLATES,
+  MAX_PERSISTED_MESSAGES,
+  serializePersistedSession,
+  SLOW_TURN_MS,
+  type PersistedSession,
+} from './templateChatPersistence';
+import { safePreviewUrl } from './templateChatSafety';
+import {
+  resolveTemplateChatStrings,
+  type TemplateChatStringsOverride,
+} from './templateChatStrings';
+import { getTurnstileToken } from './templateChatTurnstile';
+import {
+  classifyAgentResponseFailure,
+  classifyAgentStreamFailure,
+  createStreamWatchdog,
+  AGENT_REQUEST_TIMEOUT_MS,
+  MAX_SSE_BUFFER_CHARS,
+  parseSseFrames,
+  type AgentFailure,
+  type AgentFailureCode,
+  type StreamWatchdog,
+} from './templateChatStream';
+import { CHAT_STYLES } from './templateChatStyles';
+import {
+  buildChatAttribution,
+  buildMessageSentAnalytics,
+  type ChatMessageSource,
+  type ChatTrack,
+} from './templateChatAnalytics';
+import { DisplayArtifact } from './TemplateDisplayArtifact';
+import { TemplatePreviewPane } from './TemplatePreviewPane';
 
-// ── Agent protocol (mirrors webflow-template-agent) ───────────────────────────
-
-type DisplayLayout = 'gallery' | 'carousel' | 'spotlight' | 'comparison' | 'shortlist';
-
-interface AgentTemplateItem {
-  template_slug: string;
-  name: string;
-  url: string | null;
-  /** Published .webflow.io site — frameable on *.webflow.com, used for live previews. */
-  website_url?: string | null;
-  /** Direct marketplace checkout deep link — used by the preview Buy CTA. */
-  purchase_url?: string | null;
-  creator_name: string | null;
-  creator_profile_url: string | null;
-  creator_avatar_url: string | null;
-  creator_avatar_alt: string | null;
-  thumbnail_image_url: string | null;
-  price: number | null;
-  is_free: boolean;
-  features: string[];
-  cumulative_purchases: number | null;
-}
-
-interface DisplayPayload {
-  layout: DisplayLayout;
-  title?: string;
-  items: Array<{ template_slug: string; reason?: string; item: AgentTemplateItem }>;
-  followups?: string[];
-}
-
-// Filters/sort/highlights the agent wants applied to the host page's template
-// grid (via the marketplace components' URL-param + templateFiltersChanged
-// contract). Highlight slugs are already validated server-side.
-export interface PageActionPayload {
-  q?: string | null;
-  category_group_slug?: string | null;
-  styles?: string[] | null;
-  types?: string[] | null;
-  free_only?: boolean | null;
-  sort?: string | null;
-  clear_filters?: boolean | null;
-  highlight_slugs?: string[];
-}
-
-export function normalizePageActionPayload(payload: PageActionPayload): PageActionPayload {
-  const normalized = { ...payload };
-  const category = normalized.category_group_slug;
-  if (typeof category === 'string' && category.trim()) {
-    const resolved = resolveTemplateCategoryRouteSlug(category);
-    if (resolved) normalized.category_group_slug = resolved;
-    else delete normalized.category_group_slug;
-  }
-  return normalized;
-}
-
-type AgentStatus = 'thinking' | 'searching' | 'curating';
-
-export type AgentProgressPhase = 'preparing' | 'understanding' | 'searching' | 'curating' | 'presenting';
-export type AgentProgressOutcome = 'active' | 'completed' | 'stopped' | 'failed';
-
-export interface AgentProgressState {
-  phase: AgentProgressPhase;
-  outcome: AgentProgressOutcome;
-  slow: boolean;
-  pageAction: PageActionPayload | null;
-  resultCount: number;
-}
-
-export type AgentProgressEvent =
-  | { type: 'connected' }
-  | { type: 'agent_status'; status: AgentStatus }
-  | { type: 'text' }
-  | { type: 'page_action'; payload: PageActionPayload }
-  | { type: 'display'; resultCount: number }
-  | { type: 'slow' }
-  | { type: 'done' }
-  | { type: 'stop' }
-  | { type: 'fail' }
-  | { type: 'retry' };
-
-const AGENT_PROGRESS_RANK: Record<AgentProgressPhase, number> = {
-  preparing: 0,
-  understanding: 1,
-  searching: 2,
-  curating: 3,
-  presenting: 4,
-};
-
-export function createAgentProgressState(): AgentProgressState {
-  return {
-    phase: 'preparing',
-    outcome: 'active',
-    slow: false,
-    pageAction: null,
-    resultCount: 0,
-  };
-}
-
-function advanceAgentProgressPhase(
-  state: AgentProgressState,
-  nextPhase: AgentProgressPhase,
-): AgentProgressState {
-  return AGENT_PROGRESS_RANK[nextPhase] > AGENT_PROGRESS_RANK[state.phase]
-    ? { ...state, phase: nextPhase }
-    : state;
-}
-
-export function reduceAgentProgress(
-  state: AgentProgressState,
-  event: AgentProgressEvent,
-): AgentProgressState {
-  switch (event.type) {
-    case 'connected':
-      return advanceAgentProgressPhase(state, 'understanding');
-    case 'agent_status':
-      return advanceAgentProgressPhase(
-        state,
-        event.status === 'thinking' ? 'understanding' : event.status,
-      );
-    case 'page_action':
-      return { ...state, pageAction: event.payload };
-    case 'display':
-      return {
-        ...advanceAgentProgressPhase(state, 'presenting'),
-        resultCount: state.resultCount + Math.max(0, event.resultCount),
-      };
-    case 'slow':
-      return state.outcome === 'active' ? { ...state, slow: true } : state;
-    case 'done':
-      return state.outcome === 'active' ? { ...state, outcome: 'completed', slow: false } : state;
-    case 'stop':
-      return state.outcome === 'active' ? { ...state, outcome: 'stopped', slow: false } : state;
-    case 'fail':
-      return state.outcome === 'active' ? { ...state, outcome: 'failed', slow: false } : state;
-    case 'retry':
-      return createAgentProgressState();
-    case 'text':
-    default:
-      return state;
-  }
-}
-
-type AgentSseEvent =
-  | { type: 'text_delta'; text: string }
-  | { type: 'display'; payload: DisplayPayload }
-  | { type: 'status'; label: AgentStatus }
-  | { type: 'page_action'; payload: PageActionPayload }
-  // Signed continuity snapshot from the stateless agent Worker. The browser
-  // cannot forge or modify trusted template facts between turns.
-  | { type: 'context'; payload: { context_token: string } }
-  | { type: 'done' }
-  | { type: 'error'; message: string };
-
-interface ChatMessage {
-  role: 'user' | 'assistant';
-  content: string;
-  displays: DisplayPayload[];
-}
+// Re-exported so consumers and tests keep a single entry point for the chat
+// surface even though the implementation is split by concern.
+export type {
+  AgentSseEvent,
+  AgentTemplateItem,
+  ChatMessage,
+  DisplayPayload,
+  PageActionPayload,
+} from './templateChatProtocol';
+export {
+  AgentProgress,
+  createAgentProgressState,
+  getAgentOutcomeReceipt,
+  getAgentProgressView,
+  reduceAgentProgress,
+  summarizePageAction,
+} from './templateChatProgress';
+export type {
+  AgentProgressEvent,
+  AgentProgressOutcome,
+  AgentProgressPhase,
+  AgentProgressState,
+  AgentProgressView,
+} from './templateChatProgress';
+export { normalizePageActionPayload } from './templateChatPageAction';
+export {
+  getPreviewReturnImmersive,
+  getTemplateChatStorageKey,
+  limitTemplateChatInput,
+} from './templateChatPersistence';
+export { buildMessageSentAnalytics } from './templateChatAnalytics';
 
 export interface TemplateChatProps {
   /** Base URL of the template agent (no trailing slash). */
@@ -216,523 +140,50 @@ export interface TemplateChatProps {
   sessionScope?: string;
   /** CSS selector list for host-owned consent/modals that must win interaction. */
   hostOverlaySelectors?: string;
+  /**
+   * Overrides for reader-facing copy. The Webflow prop panel exposes the
+   * high-traffic strings; everything else (progress narration, receipts,
+   * preview toolbar) is localized here.
+   */
+  strings?: TemplateChatStringsOverride;
+  /** BCP 47 tag used to format prices. Defaults to the document language. */
+  locale?: string;
+  /** ISO 4217 code for template prices. */
+  currency?: string;
 }
+
+// ── Layout and interaction constants ────────────────────────────────────────
+/** Panel width at which the agent may size galleries for a wide canvas. */
+const WIDE_SURFACE_MIN_WIDTH = 720;
+/** Distance from the end still treated as "following the conversation". */
+const STICK_TO_BOTTOM_SLACK_PX = 80;
+/** Composer grows to roughly four rows, then scrolls. */
+const COMPOSER_MAX_HEIGHT_PX = 120;
+/** Gap left between a host overlay and the surface that yields to it. */
+const HOST_OVERLAY_GAP_PX = 16;
+/** Docked panel height, matched to the stylesheet. */
+const DOCKED_PANEL_MAX_HEIGHT_PX = 640;
+/** Re-check cadence while a host overlay owns the composer area. */
+const HOST_OVERLAY_POLL_MS = 500;
+/**
+ * Stop re-checking after this long. If a consent layer is still up a minute
+ * later the reader is not trying to reach the launcher, and polling forever is
+ * main-thread work with nothing to show for it.
+ */
+const HOST_OVERLAY_POLL_DEADLINE_MS = 60_000;
 
 const DEFAULT_STARTERS =
   'A portfolio with bold animations, An online store for a clothing brand, A restaurant site with a menu, A SaaS landing page with a blog';
 
-export interface AgentProgressView {
-  activeIndex: number;
-  title: string;
-  detail: string;
-  receipt: string | null;
-  announcement: string;
-}
+/** Carries a classified HTTP failure out of the request phase of a turn. */
+class AgentResponseError extends Error {
+  readonly failure: AgentFailure;
 
-function humanizeAgentValue(value: string): string {
-  return value
-    .trim()
-    .replace(/[-_]+/g, ' ')
-    .replace(/\b\w/g, (letter) => letter.toUpperCase())
-    .replace(/\bAnd\b/g, '&');
-}
-
-export function summarizePageAction(payload: PageActionPayload | null): string | null {
-  if (!payload) return null;
-  const details: string[] = [];
-
-  if (payload.category_group_slug) {
-    details.push(humanizeAgentValue(payload.category_group_slug).replace(/\s+Websites$/, ''));
+  constructor(failure: AgentFailure) {
+    super(failure.code);
+    this.name = 'AgentResponseError';
+    this.failure = failure;
   }
-  for (const style of payload.styles ?? []) details.push(humanizeAgentValue(style));
-  for (const type of payload.types ?? []) details.push(humanizeAgentValue(type));
-  if (payload.free_only === true) details.push('Free only');
-  if (payload.sort) details.push(`Sorted by ${humanizeAgentValue(payload.sort)}`);
-  const highlightCount = payload.highlight_slugs?.length ?? 0;
-  if (highlightCount > 0) {
-    details.push(highlightCount === 1 ? 'Highlight requested' : `${highlightCount} highlights requested`);
-  }
-
-  if (details.length > 0) return `Page update requested · ${details.join(' · ')}`;
-  if (payload.clear_filters) return 'Page filter reset requested';
-  if (payload.q != null) return 'Page search update requested';
-  return null;
-}
-
-export function getAgentProgressView(state: AgentProgressState): AgentProgressView {
-  const progress: Record<AgentProgressPhase, Omit<AgentProgressView, 'receipt' | 'announcement'>> = {
-    preparing: {
-      activeIndex: 0,
-      title: 'Preparing a secure search',
-      detail: 'Connecting securely to the template catalog.',
-    },
-    understanding: {
-      activeIndex: 0,
-      title: 'Understanding your request',
-      detail: 'Identifying the requirements that matter most.',
-    },
-    searching: {
-      activeIndex: 1,
-      title: 'Searching the template catalog',
-      detail: 'Checking the template catalog for strong matches.',
-    },
-    curating: {
-      activeIndex: 2,
-      title: 'Curating the strongest matches',
-      detail: 'Comparing fit, style, and useful features.',
-    },
-    presenting: {
-      activeIndex: 3,
-      title: 'Preparing your recommendations',
-      detail: 'Organizing the strongest matches for review.',
-    },
-  };
-
-  const current = progress[state.phase];
-  const detail = state.slow
-    ? 'Still working — this is taking a little longer than usual.'
-    : current.detail;
-
-  const receipt = summarizePageAction(state.pageAction);
-
-  return {
-    ...current,
-    detail,
-    receipt,
-    announcement: [
-      `${current.title}.`,
-      state.slow ? 'This is taking longer than usual.' : '',
-      receipt ? `${receipt}.` : '',
-    ].filter(Boolean).join(' '),
-  };
-}
-
-export function getAgentOutcomeReceipt(state: AgentProgressState): string | null {
-  if (state.outcome === 'active') return null;
-  if (state.outcome === 'stopped') return 'Search stopped';
-  if (state.outcome === 'failed') return 'Search interrupted';
-
-  const receipt = summarizePageAction(state.pageAction);
-  const result = state.resultCount > 0
-    ? `${state.resultCount} template ${state.resultCount === 1 ? 'recommendation' : 'recommendations'} ready`
-    : 'Response ready';
-  return [result, receipt].filter(Boolean).join(' · ');
-}
-
-export function AgentProgress({
-  progress,
-}: {
-  progress: AgentProgressState;
-}): React.ReactElement {
-  const view = getAgentProgressView(progress);
-  const steps = [
-    'Preparing search',
-    'Searching catalog',
-    'Comparing matches',
-    'Presenting results',
-  ];
-
-  return (
-    <div
-      className="tmchat-progress"
-      data-phase={progress.phase}
-      data-slow={progress.slow || undefined}
-      aria-label="Template search activity"
-    >
-      <span className="tmchat-sr-only" role="status" aria-live="polite" aria-atomic="true">
-        {view.announcement}
-      </span>
-      <div className="tmchat-progress-current">
-        <span className="tmchat-progress-mark" aria-hidden="true"><UiIcon name="sparkles" size={15} /></span>
-        <span>
-          <strong>{view.title}</strong>
-          <span className="tmchat-progress-detail">{view.detail}</span>
-        </span>
-        <span className="tmchat-dots" aria-hidden="true"><span /><span /><span /></span>
-      </div>
-      <ol className="tmchat-progress-steps" aria-hidden="true">
-        {steps.map((label, index) => {
-          const state = index < view.activeIndex ? 'complete' : index === view.activeIndex ? 'current' : 'upcoming';
-          return (
-            <li key={label} data-state={state}>
-              <span>{label}</span>
-              <span className="tmchat-progress-stepmark" aria-hidden="true">{state === 'complete' ? '✓' : ''}</span>
-            </li>
-          );
-        })}
-      </ol>
-      {view.receipt ? <div className="tmchat-progress-receipt">{view.receipt}</div> : null}
-      <div className="tmchat-progress-preview" aria-hidden="true">
-        {steps.map((label) => <span key={label} className="tmchat-progress-skeleton-card" />)}
-      </div>
-    </div>
-  );
-}
-
-const STORAGE_KEY = 'tmchat-session-v1';
-const MAX_PERSISTED_MESSAGES = 30;
-const SLOW_TURN_MS = 8_000;
-
-export function getTemplateChatStorageKey(sessionScope = 'marketplace'): string {
-  const normalized = sessionScope.trim() || 'marketplace';
-  if (normalized === 'marketplace') return STORAGE_KEY;
-
-  let hash = 2166136261;
-  for (let index = 0; index < normalized.length; index += 1) {
-    hash ^= normalized.charCodeAt(index);
-    hash = Math.imul(hash, 16777619);
-  }
-  const readable = encodeURIComponent(normalized).slice(0, 48);
-  return `${STORAGE_KEY}:${readable}:${(hash >>> 0).toString(36)}`;
-}
-
-export function limitTemplateChatInput(value: string): string {
-  return value.slice(0, MAX_REQUEST_MESSAGE_CHARS);
-}
-
-export function getPreviewReturnImmersive(
-  openedImmersive: boolean | null,
-  currentImmersive: boolean,
-): boolean {
-  return openedImmersive ?? currentImmersive;
-}
-
-const CHAT_STYLES = `
-.tmchat-launcher {
-  position: fixed; right: 24px; bottom: 24px; z-index: 9000;
-  display: inline-flex; align-items: center; gap: 8px;
-  padding: 12px 18px; border: 0; border-radius: 999px; cursor: pointer;
-  background: #146ef5; color: #fff;
-  font-family: "WF Visual Sans Variable", "Inter", system-ui, sans-serif;
-  font-size: 14px; font-weight: 600; box-shadow: 0 6px 24px rgba(0,0,0,0.18);
-  transition: background 160ms ease, transform 160ms ease;
-}
-.tmchat-launcher:hover { background: #0f5cd0; transform: translateY(-1px); }
-.tmchat-launcher:focus-visible,
-.tmchat-iconbtn:focus-visible,
-.tmchat-intro-toggle:focus-visible,
-.tmchat-chip:focus-visible,
-.tmchat-jump:focus-visible,
-.tmchat-send:focus-visible,
-.tmchat-preview-back:focus-visible,
-.tmchat-devicebtn:focus-visible,
-.tmchat-preview-open:focus-visible,
-.tmchat-preview-cta:focus-visible,
-.tmchat-input:focus-visible {
-  outline: 2px solid #146ef5; outline-offset: 2px;
-}
-.tmchat-backdrop {
-  position: fixed; inset: 0; z-index: 99999998;
-  background: rgba(8,8,8,0.44);
-  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-  animation: tmchat-fade 200ms ease both;
-}
-@keyframes tmchat-fade { from { opacity: 0; } }
-.tmchat-panel {
-  position: fixed; right: 24px; bottom: 24px; z-index: 9001;
-  display: flex; flex-direction: column;
-  width: min(440px, calc(100vw - 32px)); height: min(640px, calc(100vh - 48px));
-  border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden;
-  background: #fff; box-shadow: 0 12px 48px rgba(0,0,0,0.22);
-  font-family: "WF Visual Sans Variable", "Inter", system-ui, sans-serif;
-  color: #080808; font-size: 14px; line-height: 1.45;
-  transition: bottom 160ms ease;
-}
-.tmchat-panel.entering { animation: tmchat-in 220ms cubic-bezier(0.2, 0, 0, 1); }
-@keyframes tmchat-in { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: none; } }
-.tmchat-panel.inline {
-  position: relative; right: auto; bottom: auto; z-index: auto;
-  width: 100%; height: 100%; min-height: 560px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-}
-.tmchat-panel.immersive {
-  /* Above the webflow.com sticky navigation — the immersive state is a modal
-     and nothing on the host page should paint over it. */
-  position: fixed; top: 24px; bottom: 24px; left: 0; right: 0; margin: 0 auto; z-index: 99999999;
-  width: min(1120px, calc(100vw - 48px)); height: auto; min-height: 0;
-  border-radius: 16px; box-shadow: 0 24px 80px rgba(0,0,0,0.3);
-}
-.tmchat-header {
-  display: flex; align-items: center; justify-content: space-between; gap: 8px;
-  padding: 14px 16px; border-bottom: 1px solid #ececec; background: #fafafa;
-}
-.tmchat-header-title { font-weight: 600; font-size: 15px; }
-.tmchat-panel.immersive .tmchat-header-title { font-size: 16px; }
-.tmchat-turnstile:empty { display: none; }
-.tmchat-turnstile:not(:empty) {
-  flex: 0 0 auto; display: flex; justify-content: center;
-  padding: 8px 16px; border-top: 1px solid #ececec; background: #fafafa;
-}
-.tmchat-header-actions { display: flex; align-items: center; gap: 2px; }
-.tmchat-iconbtn {
-  border: 0; background: transparent; cursor: pointer; color: #404040;
-  width: 30px; height: 30px; border-radius: 8px; font-size: 16px; line-height: 1;
-  display: inline-flex; align-items: center; justify-content: center;
-  transition: background 120ms ease;
-}
-.tmchat-iconbtn:hover { background: #ececec; }
-.tmchat-iconbtn:active { background: #e0e0e0; }
-.tmchat-scroll {
-  flex: 1 1 auto; overflow-y: auto; padding: 16px;
-  display: flex; flex-direction: column; gap: 12px;
-}
-/* Compositor-only entrances: transform + opacity, no layout properties. */
-.tmchat-msg, .tmchat-display, .tmchat-typing {
-  animation: tmchat-rise 180ms cubic-bezier(0.2, 0, 0, 1) both;
-}
-@keyframes tmchat-rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-/* Chips arrive one by one after the reply settles — the whole row popping in
-   at once reads as a layout jump. Delay is set inline per chip. */
-.tmchat-followups .tmchat-chip { animation: tmchat-chip-in 240ms cubic-bezier(0.2, 0, 0, 1) both; }
-@keyframes tmchat-chip-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
-.tmchat-grid > div, .tmchat-strip > div {
-  animation: tmchat-card 260ms cubic-bezier(0.2, 0, 0, 1) both;
-}
-@keyframes tmchat-card { from { opacity: 0; transform: translateY(10px) scale(0.98); } to { opacity: 1; transform: none; } }
-.tmchat-msg { max-width: 92%; white-space: pre-wrap; overflow-wrap: break-word; }
-.tmchat-panel.immersive .tmchat-msg { max-width: 680px; font-size: 15px; }
-.tmchat-msg.user { align-self: flex-end; background: #146ef5; color: #fff; padding: 9px 13px; border-radius: 14px 14px 4px 14px; }
-.tmchat-msg.assistant { align-self: flex-start; background: #f5f5f5; padding: 9px 13px; border-radius: 14px 14px 14px 4px; }
-.tmchat-turn-status {
-  align-self: flex-start; padding: 6px 9px; border: 1px solid #ececec; border-radius: 7px;
-  background: #fafafa; color: #5b5b5b; font-size: 12px; font-weight: 600;
-}
-.tmchat-sr-only {
-  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
-  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
-}
-.tmchat-intro {
-  align-self: flex-start; max-width: 92%; color: #5b5b5b; font-size: 12px;
-  border: 1px solid #ececec; border-radius: 8px; background: #fafafa;
-}
-.tmchat-intro-toggle {
-  width: 100%; border: 0; background: transparent; cursor: pointer; padding: 7px 10px;
-  color: #404040; font: inherit; font-weight: 600; text-align: left;
-}
-.tmchat-intro-toggle:hover { color: #080808; }
-.tmchat-intro-copy { padding: 0 10px 9px; max-width: 560px; }
-.tmchat-intro-copy[hidden] { display: none; }
-.tmchat-caret {
-  display: inline-block; width: 2px; height: 1em; margin-left: 2px;
-  background: currentColor; vertical-align: -0.15em;
-  animation: tmchat-blink 1s steps(2, start) infinite;
-}
-@keyframes tmchat-blink { 50% { opacity: 0; } }
-.tmchat-display { align-self: stretch; }
-.tmchat-display-title { font-weight: 600; margin: 4px 0 8px; font-size: 14px; }
-.tmchat-panel.immersive .tmchat-display-title { font-size: 16px; }
-.tmchat-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.tmchat-grid.single { grid-template-columns: 1fr; }
-/* Chat displays are curated sets (2-6 items), not a browse grid: two scaled-up
-   columns by default (thumbnails are the product — bigger reads better, and 4
-   items make a clean 2x2). Sets of exactly 3 or 6+ go three-across so rows
-   stay complete. */
-.tmchat-panel.immersive .tmchat-grid { grid-template-columns: repeat(2, minmax(0, 420px)); justify-content: start; gap: 20px; }
-.tmchat-panel.immersive .tmchat-grid.wide { grid-template-columns: repeat(3, minmax(0, 380px)); gap: 16px; }
-.tmchat-panel.immersive .tmchat-grid.single { grid-template-columns: minmax(0, 420px); }
-.tmchat-strip { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 6px; -webkit-overflow-scrolling: touch; }
-.tmchat-strip > * { flex: 0 0 220px; }
-.tmchat-panel.immersive .tmchat-strip > * { flex-basis: 260px; }
-.tmchat-followups { display: flex; flex-wrap: wrap; gap: 8px; }
-.tmchat-refine { display: grid; gap: 7px; }
-.tmchat-refine-label { color: #5b5b5b; font-size: 11px; font-weight: 600; letter-spacing: 0.01em; }
-.tmchat-chip {
-  border: 1px solid #dbe6fb; border-radius: 999px; background: #f2f7ff;
-  color: #0f5cd0; padding: 7px 12px; font-size: 13px; cursor: pointer; font-family: inherit;
-  transition: background 140ms ease, transform 140ms ease;
-}
-.tmchat-chip:hover { background: #e3edfd; transform: translateY(-1px); }
-.tmchat-chip:active { transform: translateY(0); }
-.tmchat-typing { align-self: flex-start; color: #757575; font-size: 13px; display: inline-flex; align-items: baseline; gap: 6px; }
-.tmchat-progress {
-  align-self: stretch; padding: 13px; border: 1px solid #ececec; border-radius: 8px;
-  background: #fafafa; color: #404040;
-  animation: tmchat-rise 180ms cubic-bezier(0.2, 0, 0, 1) both;
-}
-.tmchat-progress-current { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 9px; align-items: start; }
-.tmchat-progress-current strong { display: block; color: #080808; font-size: 13px; line-height: 1.35; }
-.tmchat-progress-detail { display: block; margin-top: 2px; color: #5b5b5b; font-size: 12px; line-height: 1.4; }
-.tmchat-progress-mark {
-  width: 28px; height: 28px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center;
-  background: #f0f0f0; color: #146ef5;
-}
-.tmchat-progress-steps { display: grid; gap: 5px; margin: 11px 0 0 37px; padding: 0; list-style: none; }
-.tmchat-progress-steps li { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #6b6b6b; font-size: 11px; }
-.tmchat-progress-steps li[data-state="current"] { color: #146ef5; font-weight: 600; }
-.tmchat-progress-steps li[data-state="complete"] { color: #5b5b5b; }
-.tmchat-progress-steps li[data-state="upcoming"] { opacity: 0.58; }
-.tmchat-progress-stepmark { min-width: 12px; color: #146ef5; text-align: center; }
-.tmchat-progress-receipt {
-  margin: 10px 0 0 37px; padding-top: 9px; border-top: 1px solid #ececec;
-  color: #5b5b5b; font-size: 11px; font-weight: 600;
-}
-.tmchat-progress-preview { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; margin-top: 12px; }
-.tmchat-progress-skeleton-card {
-  height: 42px; border-radius: 7px;
-  background: linear-gradient(100deg, #ececec 20%, #f5f5f5 40%, #ececec 60%);
-  background-size: 200% 100%; animation: tmchat-progress-shimmer 1.4s linear infinite;
-}
-@keyframes tmchat-progress-shimmer { to { background-position-x: -200%; } }
-.tmchat-dots { display: inline-flex; gap: 3px; }
-.tmchat-dots span {
-  width: 4px; height: 4px; border-radius: 50%; background: #757575;
-  animation: tmchat-pulse 1.2s ease-in-out infinite;
-}
-.tmchat-dots span:nth-child(2) { animation-delay: 0.15s; }
-.tmchat-dots span:nth-child(3) { animation-delay: 0.3s; }
-@keyframes tmchat-pulse { 0%, 60%, 100% { opacity: 0.25; } 30% { opacity: 1; } }
-.tmchat-scrollwrap { position: relative; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
-.tmchat-jump {
-  position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); z-index: 3;
-  display: inline-flex; align-items: center; gap: 6px;
-  border: 1px solid #e0e0e0; border-radius: 999px; background: #fff; color: #080808;
-  padding: 6px 12px; font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.14);
-  animation: tmchat-chip-in 200ms cubic-bezier(0.2, 0, 0, 1) both;
-}
-.tmchat-jump:hover { background: #f5f5f5; }
-.tmchat-inputrow { display: flex; align-items: flex-end; gap: 8px; padding: 12px; border-top: 1px solid #ececec; background: #fff; }
-/* Immersive (and wide inline panels): one centered content column (max 960px).
-   Header, conversation, and input share the same left/right rails so every
-   surface aligns. */
-.tmchat-panel.inline .tmchat-header { padding: 14px max(16px, calc((100% - 960px) / 2)); }
-.tmchat-panel.inline .tmchat-inputrow { padding: 12px max(16px, calc((100% - 960px) / 2)) 14px; }
-.tmchat-panel.inline .tmchat-scroll { padding: 16px max(16px, calc((100% - 960px) / 2)) 24px; }
-.tmchat-panel.inline .tmchat-preview-bar { padding: 10px max(16px, calc((100% - 960px) / 2)); }
-.tmchat-panel.immersive .tmchat-header { padding: 14px max(clamp(16px, 5vw, 56px), calc((100% - 960px) / 2)); }
-.tmchat-panel.immersive .tmchat-inputrow { padding: 14px max(clamp(16px, 5vw, 56px), calc((100% - 960px) / 2)) 18px; }
-.tmchat-panel.immersive .tmchat-scroll { padding: 24px max(clamp(16px, 5vw, 56px), calc((100% - 960px) / 2)) 32px; gap: 14px; }
-.tmchat-panel.immersive .tmchat-preview-bar { padding: 10px max(clamp(16px, 5vw, 56px), calc((100% - 960px) / 2)); }
-.tmchat-input {
-  width: 100%; min-height: 40px; max-height: 120px; padding: 9px 12px;
-  box-sizing: border-box;
-  border: 1px solid #e0e0e0; border-radius: 8px; font: inherit; resize: none; overflow-y: auto;
-}
-.tmchat-inputfield { flex: 1 1 auto; min-width: 0; }
-.tmchat-inputmeta { margin: 4px 2px 0; color: #757575; font-size: 11px; line-height: 1.25; }
-.tmchat-send {
-  border: 0; border-radius: 8px; background: #146ef5; color: #fff;
-  padding: 0 16px; font: inherit; font-weight: 600; cursor: pointer; align-self: flex-end; min-height: 40px;
-  transition: background 140ms ease, transform 120ms ease;
-}
-.tmchat-send:active:not(:disabled) { transform: scale(0.97); }
-.tmchat-send:disabled { background: #a9c6f7; cursor: default; }
-.tmchat-send.stop { background: #fff; color: #404040; border: 1px solid #e0e0e0; }
-.tmchat-send.stop:hover { background: #f5f5f5; }
-/* ── Live template preview (published .webflow.io site in an iframe) ── */
-.tmchat-body { position: relative; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
-.tmchat-preview {
-  position: absolute; inset: 0; z-index: 4;
-  display: flex; flex-direction: column; background: #fff;
-  animation: tmchat-preview-in 220ms cubic-bezier(0.2, 0, 0, 1) both;
-}
-@keyframes tmchat-preview-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
-.tmchat-preview.closing { animation: tmchat-preview-out 160ms cubic-bezier(0.4, 0, 1, 1) both; }
-@keyframes tmchat-preview-out { to { opacity: 0; transform: translateY(10px); } }
-.tmchat-preview-bar {
-  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-  padding: 10px 14px; border-bottom: 1px solid #ececec; background: #fff;
-}
-.tmchat-preview-back {
-  display: inline-flex; align-items: center; gap: 6px;
-  border: 1px solid #e0e0e0; border-radius: 8px; background: #fff; color: #080808;
-  padding: 7px 12px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
-}
-.tmchat-preview-back { height: 36px; padding: 0 12px; transition: background 120ms ease; }
-.tmchat-preview-back:hover { background: #f5f5f5; }
-.tmchat-preview-sep { width: 1px; height: 20px; background: #e0e0e0; flex: 0 0 auto; }
-.tmchat-preview-meta { display: flex; flex-direction: column; justify-content: center; min-width: 0; margin-right: auto; min-height: 36px; }
-.tmchat-preview-name { font-size: 14px; line-height: 1.25; font-weight: 600; color: #080808; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tmchat-preview-creator { font-size: 12px; line-height: 1.25; color: #757575; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tmchat-devicetoggle { display: inline-flex; align-items: stretch; height: 36px; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; }
-.tmchat-devicebtn {
-  display: inline-flex; align-items: center; gap: 6px;
-  border: 0; background: #fff; color: #757575; padding: 0 12px;
-  font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
-}
-.tmchat-devicebtn { transition: background 140ms ease, color 140ms ease; }
-.tmchat-devicebtn + .tmchat-devicebtn { border-left: 1px solid #e0e0e0; }
-.tmchat-devicebtn.active { background: #f0f5ff; color: #146ef5; }
-.tmchat-preview-cta {
-  display: inline-flex; align-items: center; gap: 6px; text-decoration: none;
-  height: 36px; border-radius: 8px; background: #146ef5; color: #fff; padding: 0 14px;
-  font-family: inherit; font-size: 13px; font-weight: 600;
-}
-.tmchat-preview-cta { transition: background 140ms ease; }
-.tmchat-preview-cta:hover { background: #0f5cd0; }
-.tmchat-preview-open { display: inline-flex; align-items: center; gap: 5px; color: #757575; font-size: 12px; text-decoration: none; }
-.tmchat-preview-open:hover { color: #080808; }
-.tmchat-preview-stage {
-  position: relative; flex: 1 1 auto; min-height: 0; overflow: auto;
-  display: flex; justify-content: center; background: #f2f2f2; padding: 0;
-}
-.tmchat-preview-stage.mobile, .tmchat-preview-stage.tablet { padding: 20px 16px; }
-.tmchat-preview-frame { border: 0; background: #fff; width: 100%; height: 100%; display: block; }
-.tmchat-preview-stage.mobile .tmchat-preview-frame, .tmchat-preview-stage.tablet .tmchat-preview-frame {
-  max-width: 100%; height: 100%; flex: 0 0 auto;
-  border: 1px solid #d9d9d9; box-shadow: 0 12px 40px rgba(0,0,0,0.14);
-}
-.tmchat-preview-stage.mobile .tmchat-preview-frame { width: 390px; border-radius: 20px; }
-.tmchat-preview-stage.tablet .tmchat-preview-frame { width: 768px; border-radius: 14px; }
-.tmchat-preview-loading {
-  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 6px;
-  color: #757575; font-size: 13px; pointer-events: none;
-}
-@media (max-width: 560px) {
-  .tmchat-panel {
-    inset: 0; width: 100vw; height: 100vh; height: 100dvh;
-    border: 0; border-radius: 0; box-shadow: none;
-  }
-  .tmchat-panel.immersive { top: 0; bottom: 0; width: 100vw; border-radius: 0; }
-  .tmchat-inputrow, .tmchat-panel.immersive .tmchat-inputrow {
-    padding: 10px 12px;
-    padding-bottom: max(10px, env(safe-area-inset-bottom));
-  }
-  .tmchat-header, .tmchat-panel.immersive .tmchat-header { padding: 8px 10px; }
-  .tmchat-scroll, .tmchat-panel.immersive .tmchat-scroll { padding: 12px 16px 16px; gap: 12px; }
-  .tmchat-iconbtn { width: 40px; height: 40px; }
-  .tmchat-expand { display: none; }
-  .tmchat-grid:not(.single), .tmchat-panel.immersive .tmchat-grid:not(.single) {
-    grid-template-columns: none; grid-auto-flow: column;
-    grid-auto-columns: min(76vw, 280px); justify-content: start;
-    overflow-x: auto; overscroll-behavior-inline: contain;
-    scroll-snap-type: x mandatory; padding-bottom: 6px;
-    -webkit-overflow-scrolling: touch;
-  }
-  .tmchat-grid:not(.single) > *, .tmchat-panel.immersive .tmchat-grid:not(.single) > * { scroll-snap-align: start; }
-  .tmchat-grid.single, .tmchat-panel.immersive .tmchat-grid.single {
-    grid-template-columns: 1fr; overflow: visible;
-  }
-  .tmchat-followups {
-    flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-inline: contain;
-    scroll-snap-type: x proximity; padding-bottom: 4px;
-    -webkit-overflow-scrolling: touch;
-  }
-  .tmchat-followups > * { flex: 0 0 auto; scroll-snap-align: start; }
-  .tmchat-preview-bar, .tmchat-panel.immersive .tmchat-preview-bar { flex-wrap: nowrap; gap: 8px; padding: 8px 10px; }
-  .tmchat-preview-back, .tmchat-preview-cta { height: 40px; }
-  .tmchat-devicetoggle, .tmchat-preview-open, .tmchat-preview-sep { display: none; }
-  .tmchat-preview-stage.mobile, .tmchat-preview-stage.tablet { padding: 0; }
-  .tmchat-preview-stage.mobile .tmchat-preview-frame, .tmchat-preview-stage.tablet .tmchat-preview-frame { width: 100%; border: 0; border-radius: 0; box-shadow: none; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .tmchat-panel.entering, .tmchat-backdrop, .tmchat-dots span, .tmchat-caret,
-  .tmchat-msg, .tmchat-display, .tmchat-typing, .tmchat-progress, .tmchat-progress-skeleton-card, .tmchat-followups .tmchat-chip,
-  .tmchat-jump, .tmchat-grid > div, .tmchat-strip > div, .tmchat-preview,
-  .tmchat-preview.closing { animation: none; }
-  .tmchat-panel, .tmchat-chip, .tmchat-send, .tmchat-launcher, .tmchat-devicebtn,
-  .tmchat-preview-back, .tmchat-preview-cta { transition: none; }
-  .tmchat-chip:hover, .tmchat-launcher:hover, .tmchat-send:active:not(:disabled) { transform: none; }
-}
-` + TEMPLATE_CARD_STYLES;
-
-function prefersReducedMotion(): boolean {
-  return typeof window !== 'undefined' && Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
-}
-
-function formatPrice(item: AgentTemplateItem): string {
-  if (item.is_free || item.price === 0) return 'Free';
-  return typeof item.price === 'number' ? `$${item.price} USD` : '';
 }
 
 // The agent is prompted to emit plain text, but render defensively: turn any
@@ -741,631 +192,6 @@ function renderMessageText(content: string): React.ReactNode {
   const parts = content.split(/\*\*(.+?)\*\*/g);
   if (parts.length === 1) return content;
   return parts.map((part, index) => (index % 2 === 1 ? <strong key={index}>{part}</strong> : part));
-}
-
-// ── Session persistence (survive navigation/reload within the tab) ───────────
-
-interface PersistedSession {
-  messages: ChatMessage[];
-  followups: string[];
-  known: AgentTemplateItem[];
-  contextToken?: string;
-  stoppedPrompt?: string;
-  open: boolean;
-}
-
-function loadPersistedSession(storageKey: string): PersistedSession | null {
-  try {
-    const raw = window.sessionStorage.getItem(storageKey);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as Partial<PersistedSession>;
-    if (!Array.isArray(parsed.messages)) return null;
-    return {
-      messages: parsed.messages.filter(
-        (message): message is ChatMessage =>
-          typeof message === 'object' &&
-          message !== null &&
-          (message.role === 'user' || message.role === 'assistant') &&
-          typeof message.content === 'string' &&
-          Array.isArray(message.displays),
-      ),
-      followups: Array.isArray(parsed.followups) ? parsed.followups.filter((f) => typeof f === 'string') : [],
-      known: Array.isArray(parsed.known) ? parsed.known.filter((item) => item && typeof item.template_slug === 'string') : [],
-      contextToken: typeof parsed.contextToken === 'string' ? parsed.contextToken : undefined,
-      stoppedPrompt: typeof parsed.stoppedPrompt === 'string' ? parsed.stoppedPrompt : undefined,
-      open: Boolean(parsed.open),
-    };
-  } catch {
-    return null;
-  }
-}
-
-declare global {
-  interface Window {
-    turnstile?: TurnstileApi;
-  }
-}
-
-let turnstileScriptPromise: Promise<TurnstileApi> | null = null;
-
-function loadTurnstile(): Promise<TurnstileApi> {
-  if (window.turnstile) return Promise.resolve(window.turnstile);
-  if (turnstileScriptPromise) return turnstileScriptPromise;
-
-  const pending = new Promise<TurnstileApi>((resolve, reject) => {
-    const existing = document.querySelector<HTMLScriptElement>('script[data-template-agent-turnstile]');
-    const script = existing ?? document.createElement('script');
-    const finish = () => (window.turnstile ? resolve(window.turnstile) : reject(new Error('Bot check unavailable.')));
-    script.addEventListener('load', finish, { once: true });
-    script.addEventListener('error', () => reject(new Error('Bot check unavailable.')), { once: true });
-    if (!existing) {
-      script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
-      script.async = true;
-      script.defer = true;
-      script.dataset.templateAgentTurnstile = 'true';
-      document.head.appendChild(script);
-    }
-  }).catch((error) => {
-    turnstileScriptPromise = null;
-    throw error;
-  });
-  turnstileScriptPromise = pending;
-  return pending;
-}
-
-async function getTurnstileToken(container: HTMLElement, sitekey: string): Promise<string> {
-  const turnstile = await loadTurnstile();
-  return completeTurnstileChallenge(turnstile, container, sitekey);
-}
-
-// ── Page control (agent drives the host page's grid/filters) ─────────────────
-
-// Detect the marketplace grid components on the host page. Used both to tell
-// the agent whether update_page is meaningful and to target highlights.
-// Webflow mounts each code component in an isolated (open) shadow root. Build
-// one bounded root inventory, then reuse it for every selector in the action.
-
-const GRID_MARKER_SELECTOR = '[data-template-slug], .tmgrid-grid, .tmgrid-item, .tmsearch-page';
-
-function pageHasTemplateGrid(): boolean {
-  if (typeof document === 'undefined') return false;
-  const roots = discoverOpenRoots(document);
-  return queryDiscoveredRoots(roots, GRID_MARKER_SELECTOR).length > 0;
-}
-
-type PageActionTimers = Map<number, (() => void) | undefined>;
-
-function schedulePageAction(
-  timers: PageActionTimers,
-  callback: () => void,
-  delay: number,
-  onCancel?: () => void,
-): void {
-  const timer = window.setTimeout(() => {
-    timers.delete(timer);
-    callback();
-  }, delay);
-  timers.set(timer, onCancel);
-}
-
-function clearPageActionTimers(timers: PageActionTimers): void {
-  for (const [timer, onCancel] of timers) {
-    window.clearTimeout(timer);
-    onCancel?.();
-  }
-  timers.clear();
-}
-
-// Apply an agent page action through the marketplace components' shared
-// contract: write URL params, then dispatch templateFiltersChanged so
-// TemplateGrid / sidebar / heading re-read and re-fetch.
-function applyPageAction(
-  payload: PageActionPayload,
-  highlightMisses: ReturnType<typeof createHighlightMissState>,
-  timers: PageActionTimers,
-): void {
-  if (typeof window === 'undefined' || typeof document === 'undefined') return;
-  const roots = discoverOpenRoots(document);
-  const hasFilterChange =
-    Boolean(payload.clear_filters) ||
-    payload.q != null ||
-    payload.category_group_slug != null ||
-    payload.styles != null ||
-    payload.types != null ||
-    payload.free_only != null ||
-    payload.sort != null;
-
-  if (hasFilterChange) {
-    const url = new URL(window.location.href);
-    if (payload.clear_filters) {
-      for (const key of ['q', 'query', 'search', 'category', 'category_group_slug', 'subcategory', 'child_category_slug', 'styles', 'tags', 'types', 'free_only', 'sort', 'page']) {
-        url.searchParams.delete(key);
-      }
-    }
-    if (payload.q != null) {
-      url.searchParams.delete('query');
-      url.searchParams.delete('search');
-      if (payload.q) url.searchParams.set('q', payload.q);
-      else url.searchParams.delete('q');
-    }
-    if (payload.category_group_slug != null) {
-      url.searchParams.delete('subcategory');
-      url.searchParams.delete('child_category_slug');
-      url.searchParams.delete('category_group_slug');
-      if (payload.category_group_slug) url.searchParams.set('category', payload.category_group_slug);
-      else url.searchParams.delete('category');
-    }
-    if (payload.styles != null) {
-      url.searchParams.delete('styles');
-      for (const style of payload.styles) url.searchParams.append('styles', style);
-    }
-    if (payload.types != null) {
-      url.searchParams.delete('types');
-      for (const type of payload.types) url.searchParams.append('types', type);
-    }
-    if (payload.free_only != null) {
-      if (payload.free_only) url.searchParams.set('free_only', 'true');
-      else url.searchParams.delete('free_only');
-    }
-    if (payload.sort) url.searchParams.set('sort', payload.sort);
-    url.searchParams.delete('page');
-    window.history.replaceState({}, '', url.toString());
-
-    const params = url.searchParams;
-    const splitList = (key: string) =>
-      params.getAll(key).flatMap((value) => value.split(',')).map((value) => value.trim()).filter(Boolean);
-    const detail = {
-      q: (params.get('q') ?? '').trim(),
-      categoryGroupSlug: params.get('category'),
-      childCategorySlug: params.get('subcategory'),
-      styles: splitList('styles'),
-      tags: splitList('tags'),
-      types: splitList('types'),
-      freeOnly: (params.get('free_only') ?? '').toLowerCase() === 'true',
-      sort: params.get('sort') ?? 'popular',
-      href: url.toString(),
-      source: 'TemplateChat',
-      updatedAt: Date.now(),
-    };
-    (window as unknown as Record<string, unknown>).__templateMarketplaceFilters = detail;
-    window.dispatchEvent(new CustomEvent('templateFiltersChanged', { detail }));
-    document.dispatchEvent(new CustomEvent('templateFiltersChanged', { detail }));
-
-    // Show the user which controls the agent just changed. Slight delay so
-    // the filter bar has re-rendered its state before we point at it.
-    schedulePageAction(timers, () => pulsePageControls(payload, roots, timers), 250);
-  }
-
-  if (payload.highlight_slugs?.length) {
-    // The grid re-fetches after a filter change; retry until the cards exist.
-    highlightPageTemplates(payload.highlight_slugs, 0, roots, highlightMisses, timers);
-  }
-}
-
-function highlightPageTemplates(
-  slugs: string[],
-  attempt: number,
-  roots: readonly ParentNode[],
-  highlightMisses: ReturnType<typeof createHighlightMissState>,
-  timers: PageActionTimers,
-): void {
-  if (typeof document === 'undefined' || slugs.length === 0) return;
-  // Query the already-discovered roots; do not re-walk the whole host tree on
-  // every retry while the grid re-renders.
-  const bySlug = new Map<string, HTMLElement>();
-  for (const el of queryDiscoveredRoots(roots, '[data-template-slug]')) {
-    const slug = el.getAttribute('data-template-slug');
-    if (slug && el instanceof HTMLElement && !bySlug.has(slug)) bySlug.set(slug, el);
-  }
-  const found = slugs
-    .map((slug) => bySlug.get(slug))
-    .filter((el): el is HTMLElement => Boolean(el));
-
-  if (found.length === 0) {
-    if (attempt < 7) {
-      schedulePageAction(
-        timers,
-        () => highlightPageTemplates(slugs, attempt + 1, roots, highlightMisses, timers),
-        500,
-      );
-    } else highlightMisses.add(slugs);
-    return;
-  }
-  const foundSlugs = new Set(found.map((el) => el.getAttribute('data-template-slug')));
-  highlightMisses.add(slugs.filter((slug) => !foundSlugs.has(slug)));
-
-  const reduced = prefersReducedMotion();
-  for (const el of found) {
-    // Inline styles + WAAPI: chat styles can't reach the grid's isolated root.
-    const previousOutline = el.style.outline;
-    const previousOffset = el.style.outlineOffset;
-    el.style.outline = '3px solid #146ef5';
-    el.style.outlineOffset = '4px';
-    const restore = () => {
-      el.style.outline = previousOutline;
-      el.style.outlineOffset = previousOffset;
-    };
-    schedulePageAction(timers, restore, 5200, restore);
-    if (!reduced && typeof el.animate === 'function') {
-      el.animate(
-        [
-          { boxShadow: '0 0 0 3px rgba(20,110,245,0.35), 0 0 0 6px rgba(20,110,245,0.18)' },
-          { boxShadow: '0 0 0 3px rgba(20,110,245,0.35), 0 0 0 16px rgba(20,110,245,0)' },
-        ],
-        { duration: 1300, iterations: 4, easing: 'ease-out' },
-      );
-    }
-  }
-  found[0]?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'center' });
-}
-
-// ── Analytics ─────────────────────────────────────────────────────────────────
-// All chat telemetry flows through the shared marketplace tracker
-// ('Code Component Event' + scope, fanned out to wf_analytics/Segment/
-// Amplitude), matching TemplateGrid — chat sessions join the same Amplitude
-// funnels, and card clicks write the same attribution record the template
-// detail page's conversion tracker consumes.
-type ChatTrack = (scope: string, data?: MarketplaceAnalyticsData) => void;
-type ChatMessageSource = 'input' | 'starter' | 'followup' | 'retry';
-
-export function buildMessageSentAnalytics(
-  source: ChatMessageSource,
-  turn: number,
-  message: string,
-): MarketplaceAnalyticsData {
-  return {
-    source,
-    turn,
-    message_length: message.length,
-  };
-}
-
-function buildChatAttribution(
-  item: AgentTemplateItem,
-  position: number,
-  sourceSort: string,
-): TemplateMarketplaceAttribution {
-  return {
-    version: 1,
-    source_component: 'TemplateChat',
-    source_pathname: typeof window === 'undefined' ? null : window.location.pathname || null,
-    source_scope: 'chat',
-    // The display layout (or 'preview') stands in for sort context — chat
-    // results are agent-curated, not sorted by a grid lens.
-    source_sort: sourceSort,
-    source_category_group_slug: null,
-    source_child_category_slug: null,
-    source_style_slug: null,
-    source_tag_slug: null,
-    source_free_only: false,
-    // Chat results always follow a user prompt.
-    source_q_present: true,
-    source_styles_count: 0,
-    source_tags_count: 0,
-    source_types_count: 0,
-    source_page: 1,
-    source_position: position,
-    template_slug: item.template_slug,
-    signal_bucket: null,
-    signal_metric: null,
-    signal_window: MARKETPLACE_SIGNAL_WINDOW,
-    signal_density: 'none',
-    created_at: new Date().toISOString(),
-  };
-}
-
-function isAnchorClickOn(event: React.MouseEvent, href: string | null): boolean {
-  if (!href) return false;
-  const target = event.target;
-  if (!(target instanceof Element)) return false;
-  const anchor = target.closest<HTMLAnchorElement>('a[href]');
-  return Boolean(anchor && anchor.getAttribute('href') === href);
-}
-
-// ── Agent-action transparency ────────────────────────────────────────────────
-// When the agent drives the page's filters/sort, pulse the controls it
-// "touched" so the change is visible and attributable — the same trust
-// language as the template-card highlight. Inline styles + WAAPI because the
-// controls live in other components' isolated shadow roots.
-const CONTROL_SELECTORS: Array<{ keys: Array<keyof PageActionPayload>; selector: string }> = [
-  { keys: ['sort'], selector: '.tmfilter-sort-toggle, [data-template-search-sort], select[name="sort"]' },
-  { keys: ['styles'], selector: '[data-template-search-style], select[name="styles"]' },
-  { keys: ['types'], selector: '[data-template-search-type], select[name="types"]' },
-  { keys: ['free_only'], selector: '[data-template-search-free], input[name="free_only"]' },
-  { keys: ['q'], selector: '.tmfilter-search-wrap, [data-template-search-input], input[type="search"]' },
-  // Fields without a precise control (category, clear) light up the bar shell.
-  { keys: ['category_group_slug', 'clear_filters'], selector: '.tmfilter-shell' },
-];
-
-function pulseElements(elements: HTMLElement[], timers: PageActionTimers): void {
-  const reduced = prefersReducedMotion();
-  for (const el of elements) {
-    const previousOutline = el.style.outline;
-    const previousOffset = el.style.outlineOffset;
-    const previousRadius = el.style.borderRadius;
-    el.style.outline = '2px solid #146ef5';
-    el.style.outlineOffset = '3px';
-    if (!previousRadius) el.style.borderRadius = '8px';
-    const restore = () => {
-      el.style.outline = previousOutline;
-      el.style.outlineOffset = previousOffset;
-      el.style.borderRadius = previousRadius;
-    };
-    schedulePageAction(timers, restore, 2600, restore);
-    if (!reduced && typeof el.animate === 'function') {
-      el.animate(
-        [
-          { boxShadow: '0 0 0 2px rgba(20,110,245,0.3), 0 0 0 5px rgba(20,110,245,0.16)' },
-          { boxShadow: '0 0 0 2px rgba(20,110,245,0.3), 0 0 0 12px rgba(20,110,245,0)' },
-        ],
-        { duration: 1200, iterations: 2, easing: 'ease-out' },
-      );
-    }
-  }
-}
-
-function pulsePageControls(
-  payload: PageActionPayload,
-  roots: readonly ParentNode[],
-  timers: PageActionTimers,
-): void {
-  if (typeof document === 'undefined') return;
-  const targets = new Set<HTMLElement>();
-  let matchedSpecific = false;
-  for (const entry of CONTROL_SELECTORS) {
-    if (!entry.keys.some((key) => payload[key] != null)) continue;
-    const found = queryDiscoveredRoots(roots, entry.selector).filter(
-      (el): el is HTMLElement => el instanceof HTMLElement,
-    );
-    if (found.length > 0 && entry.selector !== '.tmfilter-shell') matchedSpecific = true;
-    for (const el of found.slice(0, 3)) targets.add(el);
-  }
-  // Nothing specific found (e.g. older filter bar markup): fall back to the bar.
-  if (!matchedSpecific && targets.size === 0) {
-    for (const el of queryDiscoveredRoots(roots, '.tmfilter-shell').slice(0, 1)) {
-      if (el instanceof HTMLElement) targets.add(el);
-    }
-  }
-  pulseElements(Array.from(targets), timers);
-}
-
-function DisplayArtifact({
-  payload,
-  onPreview,
-  onTemplateClick,
-}: {
-  payload: DisplayPayload;
-  onPreview?: (item: AgentTemplateItem, position: number, layout: string) => void;
-  onTemplateClick?: (item: AgentTemplateItem, position: number, layout: string) => void;
-}): React.ReactElement {
-  const isStrip = payload.layout === 'carousel';
-  const isSingle = payload.layout === 'spotlight' || payload.items.length === 1;
-
-  const cards = payload.items.map((entry, index) => (
-    <div
-      key={entry.template_slug}
-      style={{ animationDelay: `${Math.min(index, 8) * 45}ms` }}
-      onClickCapture={(event) => {
-        if (isAnchorClickOn(event, entry.item.url)) {
-          onTemplateClick?.(entry.item, index + 1, payload.layout);
-        }
-      }}
-    >
-      <TemplateCard
-        templateName={entry.item.name}
-        templateLink={{ href: entry.item.url ?? '#', target: '_blank' }}
-        price={formatPrice(entry.item)}
-        isFree={entry.item.is_free}
-        creatorName={entry.item.creator_name ?? ''}
-        creatorLink={
-          entry.item.creator_profile_url ? { href: entry.item.creator_profile_url, target: '_blank' } : undefined
-        }
-        creatorIcon={
-          entry.item.creator_avatar_url
-            ? {
-                src: entry.item.creator_avatar_url,
-                alt: entry.item.creator_avatar_alt ?? entry.item.creator_name ?? '',
-              }
-            : undefined
-        }
-        primaryImage={
-          entry.item.thumbnail_image_url ? { src: entry.item.thumbnail_image_url, alt: entry.item.name } : undefined
-        }
-        cumulativePurchases={entry.item.cumulative_purchases ?? undefined}
-        agentNote={entry.reason ? `Why it fits — ${entry.reason}` : undefined}
-        showCategoryMeta={false}
-        showPreviewLink={Boolean(onPreview && entry.item.website_url)}
-        previewLabel="Live preview"
-        previewLink={
-          onPreview && entry.item.website_url
-            ? {
-                // Plain click opens the in-chat preview; cmd/middle-click
-                // still opens the published site directly.
-                href: entry.item.website_url,
-                target: '_blank',
-                onClick: (event) => {
-                  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
-                  event.preventDefault();
-                  onPreview(entry.item, index + 1, payload.layout);
-                },
-              }
-            : undefined
-        }
-      />
-    </div>
-  ));
-
-  return (
-    <div className="tmchat-display">
-      {payload.title ? <div className="tmchat-display-title">{payload.title}</div> : null}
-      {isStrip ? (
-        <div className="tmchat-strip">{cards}</div>
-      ) : (
-        <div
-          className={`tmchat-grid${isSingle ? ' single' : ''}${
-            payload.items.length === 3 || payload.items.length >= 6 ? ' wide' : ''
-          }`}
-        >
-          {cards}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// Live preview of the template's published .webflow.io site. The published
-// sites ship `frame-ancestors … *.webflow.com`, so embedding here is
-// explicitly sanctioned. The mobile toggle narrows the iframe viewport, which
-// drives the site's own responsive breakpoints — a real mobile render, not a
-// scaled screenshot.
-function TemplatePreviewPane({
-  item,
-  onClose,
-  onEvent,
-}: {
-  item: AgentTemplateItem;
-  onClose: () => void;
-  onEvent?: ChatTrack;
-}): React.ReactElement {
-  const [device, setDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
-  const [loaded, setLoaded] = useState(false);
-  const [closing, setClosing] = useState(false);
-  const backRef = useRef<HTMLButtonElement>(null);
-  const stageRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    backRef.current?.focus();
-  }, []);
-
-  // Exit gracefully: play the out animation, then unmount via onClose.
-  const requestClose = useCallback(() => {
-    if (closing) return;
-    if (prefersReducedMotion()) {
-      onClose();
-      return;
-    }
-    setClosing(true);
-  }, [closing, onClose]);
-
-  // The desktop <-> mobile width change can't interpolate (% <-> px snaps, and
-  // live-resizing an iframe reflows the embedded site every frame). Snap the
-  // layout, then settle the new frame in with a compositor-only fade so the
-  // change reads as intentional.
-  const switchDevice = (next: 'desktop' | 'tablet' | 'mobile') => {
-    if (next === device) return;
-    setDevice(next);
-    onEvent?.('live_preview_device_changed', { template_slug: item.template_slug, device: next });
-    if (prefersReducedMotion()) return;
-    requestAnimationFrame(() => {
-      stageRef.current?.animate?.(
-        [
-          { opacity: 0.25, transform: 'scale(0.992)' },
-          { opacity: 1, transform: 'none' },
-        ],
-        { duration: 240, easing: 'cubic-bezier(0.2, 0, 0, 1)' },
-      );
-    });
-  };
-
-  return (
-    <div
-      className={`tmchat-preview${closing ? ' closing' : ''}`}
-      role="region"
-      aria-label={`Live preview of ${item.name}`}
-      onAnimationEnd={(event) => {
-        if (event.animationName === 'tmchat-preview-out') onClose();
-      }}
-    >
-      <div className="tmchat-preview-bar">
-        <button ref={backRef} type="button" className="tmchat-preview-back" onClick={requestClose}>
-          <UiIcon name="arrow-left" size={14} /> Back to chat
-        </button>
-        <span className="tmchat-preview-sep" aria-hidden="true" />
-        <div className="tmchat-preview-meta">
-          <span className="tmchat-preview-name">{item.name}</span>
-          {item.creator_name ? <span className="tmchat-preview-creator">by {item.creator_name}</span> : null}
-        </div>
-        <div className="tmchat-devicetoggle" role="group" aria-label="Preview device">
-          <button
-            type="button"
-            className={`tmchat-devicebtn${device === 'desktop' ? ' active' : ''}`}
-            aria-pressed={device === 'desktop'}
-            onClick={() => switchDevice('desktop')}
-          >
-            <UiIcon name="monitor" size={14} /> Desktop
-          </button>
-          <button
-            type="button"
-            className={`tmchat-devicebtn${device === 'tablet' ? ' active' : ''}`}
-            aria-pressed={device === 'tablet'}
-            onClick={() => switchDevice('tablet')}
-          >
-            <UiIcon name="tablet" size={14} /> Tablet
-          </button>
-          <button
-            type="button"
-            className={`tmchat-devicebtn${device === 'mobile' ? ' active' : ''}`}
-            aria-pressed={device === 'mobile'}
-            onClick={() => switchDevice('mobile')}
-          >
-            <UiIcon name="smartphone" size={14} /> Mobile
-          </button>
-        </div>
-        {item.website_url ? (
-          <a
-            className="tmchat-preview-open"
-            href={item.website_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => onEvent?.('live_preview_site_opened', { template_slug: item.template_slug })}
-          >
-            Open site <UiIcon name="external-link" size={12} />
-          </a>
-        ) : null}
-        {item.purchase_url || item.url ? (
-          <a
-            className="tmchat-preview-cta"
-            href={item.purchase_url ?? item.url ?? '#'}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() =>
-              onEvent?.('live_preview_cta_clicked', {
-                template_slug: item.template_slug,
-                is_free: item.is_free,
-                price: item.price,
-              })
-            }
-          >
-            {item.is_free || item.price === 0
-              ? 'Use for free'
-              : typeof item.price === 'number'
-                ? `Buy — $${item.price}`
-                : 'View template'}
-          </a>
-        ) : null}
-      </div>
-      <div ref={stageRef} className={`tmchat-preview-stage ${device}`}>
-        {!loaded ? (
-          <div className="tmchat-preview-loading" aria-live="polite">
-            Loading live preview
-            <span className="tmchat-dots">
-              <span />
-              <span />
-              <span />
-            </span>
-          </div>
-        ) : null}
-        <iframe
-          className="tmchat-preview-frame"
-          src={item.website_url ?? undefined}
-          title={`${item.name} — live template preview`}
-          loading="eager"
-          onLoad={() => setLoaded(true)}
-          style={{ opacity: loaded ? 1 : 0, transition: 'opacity 240ms ease' }}
-        />
-      </div>
-    </div>
-  );
 }
 
 export const TemplateChat: React.FC<TemplateChatProps> = ({
@@ -1382,11 +208,22 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   enableAnalytics = true,
   sessionScope = 'marketplace',
   hostOverlaySelectors = '#transcend-consent-manager',
+  strings: stringsOverride,
+  locale,
+  currency = 'USD',
 }) => {
   const isInline = variant === 'inline';
+  const strings = resolveTemplateChatStrings(stringsOverride);
+  // Prices follow the page's language when the caller does not pin one. An empty
+  // string arrives from the Webflow panel's default, and Intl rejects it.
+  const priceLocale =
+    locale?.trim() ||
+    (typeof document === 'undefined' ? undefined : document.documentElement.lang.trim() || undefined);
+  const priceCurrency = currency.trim() || 'USD';
   const storageKey = getTemplateChatStorageKey(sessionScope);
   const inputLimitId = `tmchat-input-limit-${useId().replace(/:/g, '')}`;
   const introId = `tmchat-intro-${useId().replace(/:/g, '')}`;
+  const titleId = `tmchat-title-${useId().replace(/:/g, '')}`;
   useMarketplaceComponentErrorTracking('TemplateChat', enableAnalytics);
   const [persisted] = useState<PersistedSession | null>(() =>
     typeof window === 'undefined' ? null : loadPersistedSession(storageKey),
@@ -1414,15 +251,21 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   const [atBottom, setAtBottom] = useState(true);
   const [retryText, setRetryText] = useState<string | null>(persisted?.stoppedPrompt ?? null);
   const [stoppedPrompt, setStoppedPrompt] = useState<string | null>(persisted?.stoppedPrompt ?? null);
+  // URL of the grid as it stood before this turn touched it, so the reader can
+  // reverse an agent-applied filter set in one action.
+  const [undoHref, setUndoHref] = useState<string | null>(null);
   // Template being live-previewed in the in-panel iframe (null = chat view).
   // Position/layout are kept for conversion attribution on the preview CTA.
   const [preview, setPreview] = useState<{ item: AgentTemplateItem; position: number; layout: string } | null>(null);
   const previewOpenedImmersiveRef = useRef<boolean | null>(null);
+  const previewTriggerRef = useRef<HTMLElement | null>(null);
+  const pendingPreviewFocusSlugRef = useRef<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const launcherRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const streamAbortRef = useRef<AbortController | null>(null);
+  const sendingRef = useRef(false);
   const streamBatcherRef = useRef<TextDeltaBatcher | null>(null);
   const slowTurnTimerRef = useRef<number | null>(null);
   const highlightMissesRef = useRef(createHighlightMissState());
@@ -1497,7 +340,16 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
 
   useEffect(() => {
     if ((!hostOverlayBlocking && hostOverlayBottomInset === 0) || typeof window === 'undefined') return;
-    const interval = window.setInterval(syncHostOverlay, 500);
+    const startedAt = Date.now();
+    const interval = window.setInterval(() => {
+      // Nothing to reposition against while the tab is hidden.
+      if (document.visibilityState === 'hidden') return;
+      if (Date.now() - startedAt > HOST_OVERLAY_POLL_DEADLINE_MS) {
+        window.clearInterval(interval);
+        return;
+      }
+      syncHostOverlay();
+    }, HOST_OVERLAY_POLL_MS);
     return () => window.clearInterval(interval);
   }, [hostOverlayBlocking, hostOverlayBottomInset, syncHostOverlay]);
 
@@ -1597,12 +449,15 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
       const state: PersistedSession = {
         messages: messages.slice(-MAX_PERSISTED_MESSAGES),
         followups,
-        known: Array.from(knownTemplatesRef.current.values()).slice(-40),
+        known: Array.from(knownTemplatesRef.current.values()).slice(-MAX_PERSISTED_KNOWN_TEMPLATES),
         contextToken: contextTokenRef.current ?? undefined,
         stoppedPrompt: stoppedPrompt ?? undefined,
         open: isInline ? false : open,
+        savedAt: Date.now(),
       };
-      window.sessionStorage.setItem(storageKey, JSON.stringify(state));
+      // Budgeted so an overflowing write cannot fail and leave an older
+      // snapshot behind to be restored as stale state.
+      window.sessionStorage.setItem(storageKey, serializePersistedSession(state));
     } catch {
       // Storage unavailable (private mode, iframe policy) — chat still works.
     }
@@ -1612,7 +467,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
-    const near = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+    const near = el.scrollHeight - el.scrollTop - el.clientHeight < STICK_TO_BOTTOM_SLACK_PX;
     atBottomRef.current = near;
     setAtBottom(near);
   }, []);
@@ -1645,14 +500,14 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
       else if (wasOpen && !isInline && !hostOverlayBlocking) launcherRef.current?.focus();
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [hostOverlayBlocking, immersive, isInline, open]);
+  }, [hostOverlayBlocking, isInline, open]);
 
   // Auto-grow the input with its content (1 -> ~4 rows).
   useEffect(() => {
     const el = inputRef.current;
     if (!el) return;
     el.style.height = 'auto';
-    el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
+    el.style.height = `${Math.min(el.scrollHeight, COMPOSER_MAX_HEIGHT_PX)}px`;
   }, [input]);
 
   // FLIP the docked panel <-> immersive transition: measure before the layout
@@ -1668,10 +523,29 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   const closePreview = useCallback(() => {
     const returnImmersive = getPreviewReturnImmersive(previewOpenedImmersiveRef.current, immersive);
     previewOpenedImmersiveRef.current = null;
+    pendingPreviewFocusSlugRef.current = preview?.item.template_slug ?? null;
     setPreview(null);
     if (returnImmersive !== immersive) setImmersiveAnimated(returnImmersive);
-    inputRef.current?.focus();
-  }, [immersive, setImmersiveAnimated]);
+  }, [immersive, preview?.item.template_slug, setImmersiveAnimated]);
+
+  useEffect(() => {
+    if (preview || !pendingPreviewFocusSlugRef.current) return;
+    const frame = window.requestAnimationFrame(() => {
+      const templateSlug = pendingPreviewFocusSlugRef.current;
+      const trigger = previewTriggerRef.current;
+      const replacement = templateSlug
+        ? Array.from(
+            panelRef.current?.querySelectorAll<HTMLElement>('[data-template-chat-slug]') ?? [],
+          )
+            .find((element) => element.dataset.templateChatSlug === templateSlug)
+            ?.querySelector<HTMLElement>('.tmcard-preview-link')
+        : null;
+      pendingPreviewFocusSlugRef.current = null;
+      previewTriggerRef.current = null;
+      (trigger?.isConnected ? trigger : replacement ?? inputRef.current)?.focus();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [immersive, preview]);
 
   useEffect(() => {
     const first = flipRectRef.current;
@@ -1702,6 +576,42 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
     return () => {
       document.body.style.overflow = previous;
     };
+  }, [isModalSurface]);
+
+  // The floating launcher and panel are position: fixed. Dropped inside a
+  // transformed or filtered ancestor they anchor to that box instead of the
+  // viewport and land in the wrong place, with no error to explain it. Detect it
+  // once so the mistake is reportable rather than mysterious.
+  const placementCheckedRef = useRef(false);
+  useEffect(() => {
+    if (isInline || placementCheckedRef.current || typeof window === 'undefined') return;
+    const host = findHostPageBranch(panelRef.current ?? launcherRef.current);
+    if (!host) return;
+    placementCheckedRef.current = true;
+    const problem = findFixedPositionBreaker(host as unknown as PlacementAncestor, (element) =>
+      element instanceof Element ? window.getComputedStyle(element) : null,
+    );
+    if (!problem) return;
+    // Surfaced both ways: the console line helps whoever placed it, the event
+    // tells us it is happening on a live page.
+    console.warn(
+      `[TemplateChat] Floating placement is captured by an ancestor: ${problem.ancestor} sets ` +
+        `${problem.property}: ${problem.value}. Move Template Chat to the page root, or use the ` +
+        'inline variant, so the launcher and panel anchor to the viewport.',
+    );
+    track('placement_warning', { property: problem.property, ancestor: problem.ancestor });
+  }, [isInline, open, track]);
+
+  // aria-modal alone does not stop a screen reader from wandering into the page
+  // behind the panel. Make the rest of the page inert for as long as the modal
+  // surface is up, restoring only what we changed.
+  useEffect(() => {
+    if (!isModalSurface || typeof document === 'undefined') return;
+    const ours = findHostPageBranch(panelRef.current);
+    const siblings = Array.from(document.body.children).filter(
+      (element): element is HTMLElement => element instanceof HTMLElement && element !== ours,
+    );
+    return applyHostInert(siblings, panelRef.current);
   }, [isModalSurface]);
 
   // Keep Tab focus inside any modal conversation surface.
@@ -1751,8 +661,10 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   // panel expands to immersive. Phones already use the full-screen surface, so
   // toggling desktop immersive state there would only reintroduce wide padding.
   const openPreview = useCallback(
-    (item: AgentTemplateItem, position: number, layout: string) => {
-      if (!item.website_url) return;
+    (item: AgentTemplateItem, position: number, layout: string, trigger?: HTMLElement | null) => {
+      // Never open the surface for a site we would refuse to frame.
+      if (!safePreviewUrl(item.website_url)) return;
+      previewTriggerRef.current = trigger ?? null;
       previewOpenedImmersiveRef.current = immersive;
       setPreview({ item, position, layout });
       track('live_preview_opened', {
@@ -1807,6 +719,13 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
     [],
   );
 
+  const undoLastPageAction = useCallback(() => {
+    if (!undoHref) return;
+    undoPageAction(undoHref);
+    setUndoHref(null);
+    track('page_action_undone');
+  }, [track, undoHref]);
+
   const stopStreaming = useCallback(() => {
     streamBatcherRef.current?.flushNow();
     streamAbortRef.current?.abort();
@@ -1830,7 +749,10 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
     setIntroExpanded(false);
     setRetryText(null);
     setStoppedPrompt(null);
+    setUndoHref(null);
     previewOpenedImmersiveRef.current = null;
+    previewTriggerRef.current = null;
+    pendingPreviewFocusSlugRef.current = null;
     setPreview(null);
     track('chat_reset');
     try {
@@ -1860,15 +782,18 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   const send = useCallback(
     async (text: string, baseOverride?: ChatMessage[], source: ChatMessageSource = 'input') => {
       const trimmed = limitTemplateChatInput(text).trim();
-      if (!trimmed || streaming || !apiBase) return;
+      // Guard on a ref, not on `streaming`: two Enter presses inside one tick
+      // both observe the pre-render state and would open two streams.
+      if (!trimmed || streaming || sendingRef.current || !apiBase) return;
+      sendingRef.current = true;
 
       setFollowups([]);
       setInput('');
       setRetryText(null);
-      const stoppedBase = stoppedPrompt
-        ? messages.slice(0, messages[messages.length - 1]?.role === 'assistant' ? -2 : -1)
-        : messages;
+      // A stopped turn resends from before its abandoned exchange.
+      const stoppedBase = stoppedPrompt ? getRetryBaseMessages(messages, true) : messages;
       setStoppedPrompt(null);
+      setUndoHref(null);
       setStreaming(true);
       setTurnProgress(createAgentProgressState());
       setWorkingState(true);
@@ -1894,10 +819,22 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
       let templatesShown = 0;
       let pageActionsApplied = 0;
       let hadError = false;
+      // Latency attribution: a slow turn is otherwise indistinguishable between
+      // minting a session, edge cold start, and model time.
+      let sessionMintMs: number | null = null;
+      let ttfbMs: number | null = null;
+      let firstTokenMs: number | null = null;
+      let responseStatus: number | null = null;
+      let failureCode: AgentFailureCode | null = null;
       track('message_sent', buildMessageSentAnalytics(source, turn, trimmed));
 
       const controller = new AbortController();
       streamAbortRef.current = controller;
+      // Set when a watchdog aborts, so the abort is reported as a stall or a
+      // timeout rather than as a reader-initiated stop.
+      let stalled = false;
+      let timedOut = false;
+      let requestWatchdog: StreamWatchdog | null = null;
 
       const appendToAssistant = (updater: (message: ChatMessage) => ChatMessage) => {
         setMessages((current) => {
@@ -1913,10 +850,38 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
       streamBatcherRef.current?.cancel();
       streamBatcherRef.current = textBatcher;
 
+      // Armed once the session token is in hand — a challenge the reader has to
+      // interact with must never be the thing that trips this.
+      const stopRequestWatchdog = () => {
+        requestWatchdog?.stop();
+        requestWatchdog = null;
+      };
+      const armRequestWatchdog = () => {
+        stopRequestWatchdog();
+        requestWatchdog = createStreamWatchdog(
+          () => {
+            timedOut = true;
+            controller.abort();
+          },
+          AGENT_REQUEST_TIMEOUT_MS,
+        );
+      };
+
       try {
         const response = await fetchAuthorizedAgentRequest({
           url: `${apiBase.replace(/\/+$/, '')}/api/templates/agent/chat`,
-          getSessionToken,
+          getSessionToken: async () => {
+            const cached = sessionTokenRef.current;
+            if (!cached) {
+              const mintStartedAt = Date.now();
+              const minted = await getSessionToken();
+              sessionMintMs = Date.now() - mintStartedAt;
+              armRequestWatchdog();
+              return minted;
+            }
+            armRequestWatchdog();
+            return cached;
+          },
           clearSessionToken: () => {
             sessionTokenRef.current = null;
           },
@@ -1936,47 +901,29 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
                 highlight_misses: highlightMisses.length > 0 ? highlightMisses : undefined,
                 // Wide canvases (immersive, or an inline panel rendered wide)
                 // fit larger galleries; the agent sizes displays accordingly.
-                surface: immersive || (panelRef.current?.clientWidth ?? 0) >= 720 ? 'immersive' : 'compact',
+                surface:
+                  immersive || (panelRef.current?.clientWidth ?? 0) >= WIDE_SURFACE_MIN_WIDTH
+                    ? 'immersive'
+                    : 'compact',
                 // Whether the agent can drive this page's grid via update_page.
                 has_page_grid: pageHasTemplateGrid(),
               },
             }),
           }),
         });
-        if (!response.ok || !response.body) throw new Error(`Agent unavailable (${response.status}).`);
+        stopRequestWatchdog();
+        responseStatus = response.status;
+        ttfbMs = Date.now() - startedAt;
+        if (!response.ok || !response.body) {
+          const failure = classifyAgentResponseFailure(response.status, response.headers.get('Retry-After'));
+          throw new AgentResponseError(failure);
+        }
         updateTurnProgress({ type: 'connected' });
         highlightMissesRef.current.clear();
 
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = '';
-
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-
-          let separator = buffer.indexOf('\n\n');
-          while (separator >= 0) {
-            const frame = buffer.slice(0, separator);
-            buffer = buffer.slice(separator + 2);
-            separator = buffer.indexOf('\n\n');
-
-            const data = frame
-              .split('\n')
-              .filter((line) => line.startsWith('data: '))
-              .map((line) => line.slice(6))
-              .join('');
-            if (!data) continue;
-
-            let event: AgentSseEvent;
-            try {
-              event = JSON.parse(data) as AgentSseEvent;
-            } catch {
-              continue;
-            }
-
+        const handleAgentEvent = (event: AgentSseEvent): void => {
             if (event.type === 'text_delta') {
+              if (firstTokenMs === null) firstTokenMs = Date.now() - startedAt;
               setWorkingState(false);
               updateTurnProgress({ type: 'text' });
               textBatcher.push(event.text);
@@ -2006,7 +953,17 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
               if (Object.keys(pageAction).length > 0) {
                 updateTurnProgress({ type: 'page_action', payload: pageAction });
                 setWorkingState(true);
-                applyPageAction(pageAction, highlightMissesRef.current, pageActionTimersRef.current);
+                // First filter change of the turn becomes its own history entry
+                // so Back reverses the agent; later ones in the same answer
+                // amend it rather than stacking entries.
+                const isFirstFilterChange =
+                  pageActionsApplied === 0 && pageActionChangesFilters(pageAction);
+                if (isFirstFilterChange && typeof window !== 'undefined') {
+                  setUndoHref(window.location.href);
+                }
+                applyPageAction(pageAction, highlightMissesRef.current, pageActionTimersRef.current, {
+                  history: isFirstFilterChange ? 'push' : 'replace',
+                });
                 pageActionsApplied += 1;
                 track('page_action_applied', {
                   turn,
@@ -2036,31 +993,96 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
                 content: message.content || `Sorry — ${event.message}`,
               }));
             }
+        };
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        // The Worker emits no keep-alive comments, so silence is the only stall
+        // signal available. Without this a hung upstream leaves the composer
+        // spinning with no exit but the Stop button.
+        const watchdog = createStreamWatchdog(() => {
+          stalled = true;
+          controller.abort();
+        });
+
+        try {
+          for (;;) {
+            const { value, done } = await reader.read();
+            // Flush the decoder on the final read so a split multi-byte
+            // character does not disappear with the last frame.
+            const chunk = done ? decoder.decode() : decoder.decode(value, { stream: true });
+            if (chunk) {
+              watchdog.touch();
+              buffer += chunk;
+            }
+            if (buffer.length > MAX_SSE_BUFFER_CHARS) {
+              throw new Error('Agent stream exceeded the frame buffer.');
+            }
+
+            // `done` dispatches a trailing frame that never received its blank
+            // line — that frame is often the continuity token.
+            const { events, rest } = parseSseFrames(buffer, done);
+            buffer = rest;
+
+            for (const data of events) {
+              let event: AgentSseEvent;
+              try {
+                event = JSON.parse(data) as AgentSseEvent;
+              } catch {
+                continue;
+              }
+              handleAgentEvent(event);
+            }
+
+            if (done) break;
           }
+        } finally {
+          watchdog.stop();
         }
       } catch (error) {
-        if (!controller.signal.aborted) {
+        const readerStopped = controller.signal.aborted && !stalled && !timedOut;
+        if (!readerStopped) {
+          const failure =
+            error instanceof AgentResponseError
+              ? error.failure
+              : classifyAgentStreamFailure(error, {
+                  stalled,
+                  timedOut,
+                  online: typeof navigator === 'undefined' ? undefined : navigator.onLine,
+                });
           hadError = true;
+          failureCode = failure.code;
           updateTurnProgress({ type: 'fail' });
+          // Codes, not upstream strings: a free-text message can echo payload
+          // fragments into Segment and Amplitude.
           track('chat_error', {
             turn,
-            error_source: 'connection',
-            message: (error instanceof Error ? error.message : String(error)).slice(0, 200),
+            error_source: failure.code === 'session' ? 'session' : 'connection',
+            error_code: failure.code,
+            status: responseStatus,
+            retry_after_seconds: failure.retryAfterSeconds,
           });
-          setRetryText(trimmed);
+          if (failure.retryable) setRetryText(trimmed);
           appendToAssistant((message) => ({
             ...message,
-            content: message.content || 'Sorry — I hit a connection problem.',
+            content: message.content || failure.message,
           }));
         }
       } finally {
+        stopRequestWatchdog();
         clearSlowTurnTimer();
         textBatcher.flushNow();
         if (streamBatcherRef.current === textBatcher) streamBatcherRef.current = null;
-        if (controller.signal.aborted) {
+        // A watchdog abort is a failure, not a reader-initiated stop; only the
+        // latter earns the "Search stopped" receipt and a resumable prompt.
+        const stoppedByReader = controller.signal.aborted && !stalled && !timedOut;
+        if (stoppedByReader) {
           updateTurnProgress({ type: 'stop' });
           setRetryText(trimmed);
           setStoppedPrompt(trimmed);
+        }
+        if (controller.signal.aborted) {
           setMessages((current) => {
             const last = current[current.length - 1];
             return last?.role === 'assistant' && !last.content && last.displays.length === 0
@@ -2071,14 +1093,22 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
         if (!controller.signal.aborted && !hadError) updateTurnProgress({ type: 'done' });
         setWorkingState(false);
         setStreaming(false);
+        sendingRef.current = false;
         track('response_completed', {
           turn,
           duration_ms: Date.now() - startedAt,
+          session_mint_ms: sessionMintMs,
+          ttfb_ms: ttfbMs,
+          first_token_ms: firstTokenMs,
+          status: responseStatus,
           displays_shown: displaysShown,
           templates_shown: templatesShown,
           page_actions_applied: pageActionsApplied,
           had_error: hadError,
-          stopped: controller.signal.aborted,
+          error_code: failureCode,
+          stalled,
+          timed_out: timedOut,
+          stopped: stoppedByReader,
         });
       }
     },
@@ -2097,7 +1127,8 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   );
 
   if (!open) {
-    const launcherStyle = hostOverlayBottomInset > 0 ? { bottom: hostOverlayBottomInset + 16 } : undefined;
+    const launcherStyle =
+      hostOverlayBottomInset > 0 ? { bottom: hostOverlayBottomInset + HOST_OVERLAY_GAP_PX } : undefined;
     return (
       <>
         <style dangerouslySetInnerHTML={{ __html: CHAT_STYLES }} />
@@ -2122,8 +1153,10 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   const panelClass = `tmchat-panel entering${immersive ? ' immersive' : isInline ? ' inline' : ''}`;
   const panelStyle = !isInline && !immersive && hostOverlayBottomInset > 0
     ? {
-        bottom: hostOverlayBottomInset + 16,
-        height: `min(640px, calc(100vh - ${hostOverlayBottomInset + 32}px))`,
+        bottom: hostOverlayBottomInset + HOST_OVERLAY_GAP_PX,
+        height: `min(${DOCKED_PANEL_MAX_HEIGHT_PX}px, calc(100vh - ${
+          hostOverlayBottomInset + HOST_OVERLAY_GAP_PX * 2
+        }px))`,
       }
     : undefined;
   const showConversationChips = !streaming && followups.length > 0;
@@ -2132,7 +1165,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   const hasDisplayedResults = messages.some((message) => message.displays.length > 0);
   const lastIndex = messages.length - 1;
   const latestAssistant = messages.slice().reverse().find((message) => message.role === 'assistant');
-  const turnReceipt = getAgentOutcomeReceipt(turnProgress);
+  const turnReceipt = getAgentOutcomeReceipt(turnProgress, strings);
   const outcomeAnnouncement = !streaming && turnReceipt
     ? [latestAssistant?.content.trim() ?? '', `${turnReceipt}.`].filter(Boolean).join(' ')
     : '';
@@ -2143,6 +1176,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
       {immersive ? (
         <div
           className="tmchat-backdrop"
+          aria-hidden="true"
           onClick={() => {
             // Layered dismissal, matching Esc: leave the preview first, then
             // the immersive state — never both in one click.
@@ -2156,22 +1190,22 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
         className={panelClass}
         style={panelStyle}
         role={isInline && !immersive ? undefined : 'dialog'}
-        aria-label={title}
+        aria-labelledby={titleId}
         aria-modal={isModalSurface || undefined}
       >
         <div className="tmchat-header">
-          <span className="tmchat-header-title">{title}</span>
+          <h2 className="tmchat-header-title" id={titleId}>{title}</h2>
           <div className="tmchat-header-actions">
             {messages.length > 0 ? (
-              <button type="button" className="tmchat-iconbtn" aria-label="New chat" title="New chat" onClick={resetChat}>
+              <button type="button" className="tmchat-iconbtn" aria-label={strings.newChat} title={strings.newChat} onClick={resetChat}>
                 <UiIcon name="refresh-cw" />
               </button>
             ) : null}
             <button
               type="button"
               className="tmchat-iconbtn tmchat-expand"
-              aria-label={immersive ? 'Exit fullscreen' : 'Expand to fullscreen'}
-              title={immersive ? 'Exit fullscreen' : 'Expand'}
+              aria-label={immersive ? strings.exitFullscreen : strings.expand}
+              title={immersive ? strings.exitFullscreen : strings.expand}
               onClick={() => setImmersiveAnimated((current) => !current)}
             >
               <UiIcon name={immersive ? 'minimize-2' : 'maximize-2'} />
@@ -2180,9 +1214,11 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
               <button
                 type="button"
                 className="tmchat-iconbtn"
-                aria-label="Close chat"
+                aria-label={strings.closeChat}
                 onClick={() => {
                   previewOpenedImmersiveRef.current = null;
+                  previewTriggerRef.current = null;
+                  pendingPreviewFocusSlugRef.current = null;
                   setPreview(null);
                   if (immersive) setImmersiveAnimated(false);
                   if (!isInline) setOpen(false);
@@ -2218,7 +1254,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
                   setIntroExpanded((current) => !current);
                 }}
               >
-                How Template finder works
+                {strings.introToggle(title)}
               </button>
               <div id={introId} className="tmchat-intro-copy" hidden={!introExpanded}>{welcomeMessage}</div>
             </div>
@@ -2249,7 +1285,15 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
                 </div>
               ) : null}
               {message.displays.map((payload, displayIndex) => (
-                <DisplayArtifact key={displayIndex} payload={payload} onPreview={openPreview} onTemplateClick={handleTemplateClick} />
+                <DisplayArtifact
+                  key={displayIndex}
+                  payload={payload}
+                  onPreview={openPreview}
+                  onTemplateClick={handleTemplateClick}
+                  strings={strings}
+                  locale={priceLocale}
+                  currency={priceCurrency}
+                />
               ))}
             </React.Fragment>
           ))}
@@ -2259,10 +1303,17 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
             </div>
           ) : null}
           {streaming ? (
-            <AgentProgress progress={turnProgress} />
+            <AgentProgress progress={turnProgress} strings={strings} />
           ) : null}
           {!streaming && turnReceipt ? (
-            <div className="tmchat-turn-status" data-outcome={turnProgress.outcome}>{turnReceipt}</div>
+            <div className="tmchat-turn-row">
+              <div className="tmchat-turn-status" data-outcome={turnProgress.outcome}>{turnReceipt}</div>
+              {undoHref ? (
+                <button type="button" className="tmchat-undo" onClick={undoLastPageAction}>
+                  <UiIcon name="refresh-cw" size={13} /> {strings.undoPageUpdate}
+                </button>
+              ) : null}
+            </div>
           ) : null}
           {showRetry ? (
             <div className="tmchat-followups">
@@ -2271,19 +1322,16 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
                 className="tmchat-chip"
                 onClick={() => {
                   if (!retryText) return;
-                  const base = stoppedPrompt
-                    ? messages.slice(0, messages[messages.length - 1]?.role === 'assistant' ? -2 : -1)
-                    : messages.slice(0, -2);
-                  void send(retryText, base, 'retry');
+                  void send(retryText, getRetryBaseMessages(messages, Boolean(stoppedPrompt)), 'retry');
                 }}
               >
-                Try again
+                {strings.tryAgain}
               </button>
             </div>
           ) : null}
           {showConversationChips ? (
             <div className="tmchat-refine">
-              {hasDisplayedResults ? <div className="tmchat-refine-label">Refine these results</div> : null}
+              {hasDisplayedResults ? <div className="tmchat-refine-label">{strings.refineResults}</div> : null}
               <div className="tmchat-followups">
                 {followups.map((suggestion, index) => (
                   <button
@@ -2303,12 +1351,12 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
 
         {!atBottom && messages.length > 0 ? (
           <button type="button" className="tmchat-jump" onClick={() => scrollToBottom('smooth')}>
-            <UiIcon name="arrow-down" size={14} /> Latest
+            <UiIcon name="arrow-down" size={14} /> {strings.jumpToLatest}
           </button>
         ) : null}
         </div>
 
-        <div ref={turnstileRef} className="tmchat-turnstile" aria-live="polite" />
+        <div ref={turnstileRef} className="tmchat-turnstile" />
         <div className="tmchat-inputrow">
           <div className="tmchat-inputfield">
             <textarea
@@ -2316,7 +1364,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
               className="tmchat-input"
               rows={1}
               maxLength={MAX_REQUEST_MESSAGE_CHARS}
-              aria-label="Describe the site you want to build"
+              aria-label={strings.composerLabel}
               aria-describedby={inputLimitId}
               placeholder={placeholder}
               value={input}
@@ -2329,7 +1377,10 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
               }}
             />
             <div id={inputLimitId} className="tmchat-inputmeta">
-              {input.length.toLocaleString()} / {MAX_REQUEST_MESSAGE_CHARS.toLocaleString()} character limit
+              {strings.characterLimit(
+                input.length.toLocaleString(priceLocale),
+                MAX_REQUEST_MESSAGE_CHARS.toLocaleString(priceLocale),
+              )}
             </div>
           </div>
           {streaming ? (
@@ -2349,6 +1400,9 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
             item={preview.item}
             onEvent={handlePreviewEvent}
             onClose={closePreview}
+            strings={strings}
+            locale={priceLocale}
+            currency={priceCurrency}
           />
         ) : null}
         </div>

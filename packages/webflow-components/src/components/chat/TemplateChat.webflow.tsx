@@ -5,7 +5,7 @@ import { TemplateChat } from './TemplateChat';
 export default declareComponent(TemplateChat, {
   name: 'Template Chat',
   description:
-    'Conversational template discovery. A floating chat assistant that searches the marketplace with capability-aware filters (features, ecommerce, memberships, CMS) and renders recommendations as template cards with follow-up suggestions. On listing pages it can also drive the page: apply filters/sort to the template grid and highlight specific cards. Requires the template agent endpoint.',
+    'Conversational template discovery. A floating chat assistant that searches the marketplace with capability-aware filters (features, ecommerce, memberships, CMS) and renders recommendations as template cards with follow-up suggestions. On listing pages it can also drive the page: apply filters/sort to the template grid and highlight specific cards. Requires the template agent endpoint. Place the floating variant at the page root — the launcher and panel are position: fixed, and a transformed or filtered ancestor becomes their containing block, which anchors them to the wrong box.',
   group: 'Marketplace',
   props: {
     apiBase: props.Text({
@@ -70,6 +70,17 @@ export default declareComponent(TemplateChat, {
       defaultValue: '#transcend-consent-manager',
       tooltip:
         'CSS selector list for host-owned consent or modal layers. On phones, Template Chat yields while one owns the composer area.',
+    }),
+    locale: props.Text({
+      name: 'Price Locale',
+      defaultValue: '',
+      tooltip:
+        'BCP 47 tag used to format prices (e.g. de-DE). Leave empty to follow the page language.',
+    }),
+    currency: props.Text({
+      name: 'Price Currency',
+      defaultValue: 'USD',
+      tooltip: 'ISO 4217 code for template prices.',
     }),
     enableAnalytics: props.Boolean({
       name: 'Enable Analytics',

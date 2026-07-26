@@ -1,3 +1,160 @@
+/** Host-environment probes and small scheduling primitives for TemplateChat. */
+export function prefersReducedMotion(): boolean {
+  return typeof window !== 'undefined' && Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
+}
+
+/**
+ * Properties that make an ancestor the containing block for `position: fixed`.
+ * Any of them turns the floating launcher and panel from viewport-anchored into
+ * ancestor-anchored, which puts them in the wrong place with no error.
+ */
+const FIXED_POSITION_BREAKERS = [
+  'transform',
+  'filter',
+  'backdropFilter',
+  'perspective',
+  'contain',
+  'willChange',
+] as const;
+
+export interface StyleProbe {
+  getPropertyValue?(property: string): string;
+  transform?: string;
+  filter?: string;
+  backdropFilter?: string;
+  perspective?: string;
+  contain?: string;
+  willChange?: string;
+}
+
+export interface PlacementAncestor {
+  tagName?: string;
+  className?: string;
+  parentElement?: PlacementAncestor | null;
+}
+
+export interface PlacementProblem {
+  property: string;
+  value: string;
+  /** Best-effort identifier for the offending element, for a log line. */
+  ancestor: string;
+}
+
+function describeAncestor(element: PlacementAncestor): string {
+  const tag = (element.tagName ?? 'element').toLowerCase();
+  const className = typeof element.className === 'string' ? element.className.trim() : '';
+  return className ? `${tag}.${className.split(/\s+/).slice(0, 2).join('.')}` : tag;
+}
+
+/**
+ * Walks up from the component's host element looking for an ancestor that
+ * captures fixed positioning. Returns the first problem found, or null.
+ *
+ * Placement is a Designer-time mistake with a silent runtime symptom, so
+ * detecting it is the difference between "the chat is in the wrong corner" and
+ * a report nobody can reproduce.
+ */
+export function findFixedPositionBreaker(
+  start: PlacementAncestor | null,
+  computeStyle: (element: PlacementAncestor) => StyleProbe | null,
+  maxDepth = 40,
+): PlacementProblem | null {
+  let current = start;
+  let depth = 0;
+
+  while (current && depth < maxDepth) {
+    const style = computeStyle(current);
+    if (style) {
+      for (const property of FIXED_POSITION_BREAKERS) {
+        const value =
+          style.getPropertyValue?.(property.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`)) ??
+          style[property] ??
+          '';
+        const normalized = value.trim();
+        if (!normalized || normalized === 'none' || normalized === 'auto' || normalized === 'normal') {
+          continue;
+        }
+        // `contain` only breaks fixed positioning for paint/layout containment.
+        if (property === 'contain' && !/paint|layout|strict|content/.test(normalized)) continue;
+        // `will-change` only matters when it names a breaking property.
+        if (property === 'willChange' && !/transform|filter|perspective/.test(normalized)) continue;
+        return { property, value: normalized, ancestor: describeAncestor(current) };
+      }
+    }
+    current = current.parentElement ?? null;
+    depth += 1;
+  }
+
+  return null;
+}
+
+export interface InertTarget {
+  inert?: boolean;
+  setAttribute(name: string, value: string): void;
+  removeAttribute(name: string): void;
+  hasAttribute(name: string): boolean;
+  contains(node: unknown): boolean;
+}
+
+/**
+ * Makes everything on the host page except `keep` unreachable while a modal
+ * conversation is open, then restores it.
+ *
+ * `aria-modal` alone does not stop a screen reader from wandering into the page
+ * behind the panel, and nothing stopped Tab from reaching host controls once
+ * focus left the trap. Only elements this call changed are restored, so a host
+ * page (or another modal) that already set inert keeps its own state.
+ */
+export function applyHostInert(
+  siblings: readonly InertTarget[],
+  keep: unknown,
+): () => void {
+  const changed: InertTarget[] = [];
+
+  for (const element of siblings) {
+    if (element.contains(keep)) continue;
+    if (element.inert === true || element.hasAttribute('aria-hidden')) continue;
+    element.inert = true;
+    element.setAttribute('aria-hidden', 'true');
+    changed.push(element);
+  }
+
+  return () => {
+    for (const element of changed) {
+      element.inert = false;
+      element.removeAttribute('aria-hidden');
+    }
+    changed.length = 0;
+  };
+}
+
+/**
+ * Resolves the top-level page element that contains this component. Webflow
+ * mounts code components inside a shadow root, so the panel's own ancestors
+ * stop at the shadow boundary and have to be crossed via the host element.
+ */
+export function findHostPageBranch(node: Node | null): Element | null {
+  const body = node?.ownerDocument?.body ?? null;
+  if (!body) return null;
+
+  let current: Node | null = node;
+  while (current) {
+    const parent: Node | null = current.parentNode;
+    if (parent === body) return current.nodeType === 1 ? (current as Element) : null;
+    if (parent) {
+      current = parent;
+      continue;
+    }
+    // No parent means a shadow root (or a detached tree): cross the boundary.
+    const root = current.getRootNode?.();
+    const host = root && (root as ShadowRoot).host ? (root as ShadowRoot).host : null;
+    if (!host) return null;
+    current = host;
+  }
+
+  return null;
+}
+
 export type FrameScheduler = (callback: () => void) => number;
 export type FrameCanceller = (handle: number) => void;
 
