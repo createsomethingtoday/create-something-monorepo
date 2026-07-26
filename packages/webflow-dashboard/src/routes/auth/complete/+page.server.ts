@@ -1,6 +1,11 @@
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import { consumeSessionHandoff, getSession } from '$lib/server/kv';
+import {
+	SESSION_COOKIE_NAME,
+	SESSION_COOKIE_OPTIONS,
+	consumeSessionHandoff,
+	getSession
+} from '$lib/server/kv';
 
 /**
  * Completes authentication in a top-level browsing context using a short-lived,
@@ -24,13 +29,7 @@ export const load: PageServerLoad = async ({ url, platform, cookies }) => {
 		throw redirect(302, '/login');
 	}
 
-	cookies.set('session_token', handoff.sessionToken, {
-		httpOnly: true,
-		secure: true,
-		path: '/',
-		maxAge: 60 * 60 * 2,
-		sameSite: 'none'
-	});
+	cookies.set(SESSION_COOKIE_NAME, handoff.sessionToken, SESSION_COOKIE_OPTIONS);
 
 	throw redirect(302, '/dashboard');
 };

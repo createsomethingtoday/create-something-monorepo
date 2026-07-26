@@ -1,4 +1,5 @@
 import { json } from '@sveltejs/kit';
+import { normalizeAnalyticsDays, normalizeAnalyticsPath } from '$lib/admin/analytics-dashboard';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ url, platform }) => {
@@ -9,7 +10,7 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 	}
 
 	try {
-		const days = parseInt(url.searchParams.get('days') || '30');
+		const days = normalizeAnalyticsDays(url.searchParams.get('days'));
 
 		// Run all queries in parallel
 		const [
@@ -115,7 +116,7 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 					`SELECT DATE(created_at) as date, COUNT(*) as count
 					FROM unified_events
 					WHERE category = 'navigation' AND action = 'page_view'
-					AND created_at >= datetime('now', '-30 days')
+					AND created_at >= datetime('now', '-${days} days')
 					GROUP BY DATE(created_at)
 					ORDER BY date ASC`
 				)
@@ -206,7 +207,10 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 			// Legacy data
 			total_views: (totalViewsResult as { count: number } | null)?.count || 0,
 			views_by_property: viewsByPropertyResult.results || [],
-			top_pages: topPagesResult.results || [],
+			top_pages: (topPagesResult.results || []).map((row) => ({
+				...row,
+				path: normalizeAnalyticsPath(row.path)
+			})),
 			top_experiments: topExperimentsResult.results || [],
 			top_countries: topCountriesResult.results || [],
 			daily_views: dailyViewsResult.results || [],

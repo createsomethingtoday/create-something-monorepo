@@ -1,0 +1,180 @@
+{
+  "schemaVersion": "workflow_map.v0.1",
+  "workflowId": "webflow.marketplace.template-lifecycle",
+  "workflowVersion": "0.1.0",
+  "nodes": [
+    {
+      "id": "action:approve_template",
+      "kind": "action",
+      "title": "Approve template"
+    },
+    {
+      "id": "action:monitor_post_launch",
+      "kind": "action",
+      "title": "Monitor post-launch signals"
+    },
+    {
+      "id": "action:publish_template",
+      "kind": "action",
+      "title": "Publish template"
+    },
+    {
+      "id": "action:request_changes",
+      "kind": "action",
+      "title": "Request changes"
+    },
+    {
+      "id": "action:send_creator_decision",
+      "kind": "action",
+      "title": "Send creator-facing decision autonomously"
+    },
+    {
+      "id": "action:validate_submission",
+      "kind": "action",
+      "title": "Validate submission"
+    },
+    {
+      "id": "actor:marketplace-operator",
+      "kind": "actor",
+      "title": "Marketplace operator"
+    },
+    {
+      "id": "actor:marketplace-reviewer",
+      "kind": "actor",
+      "title": "Marketplace reviewer"
+    },
+    {
+      "id": "actor:workflow-runtime",
+      "kind": "actor",
+      "title": "Workflow runtime"
+    },
+    {
+      "id": "state:approved",
+      "kind": "state",
+      "title": "Approved"
+    },
+    {
+      "id": "state:changes_requested",
+      "kind": "state",
+      "title": "Changes requested"
+    },
+    {
+      "id": "state:monitored",
+      "kind": "state",
+      "title": "Monitored"
+    },
+    {
+      "id": "state:published",
+      "kind": "state",
+      "title": "Published"
+    },
+    {
+      "id": "state:ready_for_review",
+      "kind": "state",
+      "title": "Ready for review"
+    },
+    {
+      "id": "state:submitted",
+      "kind": "state",
+      "title": "Submitted"
+    }
+  ],
+  "edges": [
+    {
+      "id": "authority:marketplace-operator:publish_template",
+      "kind": "authorizes",
+      "from": "actor:marketplace-operator",
+      "to": "action:publish_template"
+    },
+    {
+      "id": "authority:marketplace-reviewer:approve_template",
+      "kind": "authorizes",
+      "from": "actor:marketplace-reviewer",
+      "to": "action:approve_template"
+    },
+    {
+      "id": "authority:marketplace-reviewer:request_changes",
+      "kind": "authorizes",
+      "from": "actor:marketplace-reviewer",
+      "to": "action:request_changes"
+    },
+    {
+      "id": "authority:marketplace-reviewer:send_creator_decision",
+      "kind": "authorizes",
+      "from": "actor:marketplace-reviewer",
+      "to": "action:send_creator_decision"
+    },
+    {
+      "id": "authority:workflow-runtime:monitor_post_launch",
+      "kind": "authorizes",
+      "from": "actor:workflow-runtime",
+      "to": "action:monitor_post_launch"
+    },
+    {
+      "id": "authority:workflow-runtime:validate_submission",
+      "kind": "authorizes",
+      "from": "actor:workflow-runtime",
+      "to": "action:validate_submission"
+    },
+    {
+      "id": "transition:approved-to-published:action",
+      "kind": "transitions",
+      "from": "state:approved",
+      "to": "action:publish_template"
+    },
+    {
+      "id": "transition:approved-to-published:state",
+      "kind": "transitions",
+      "from": "action:publish_template",
+      "to": "state:published"
+    },
+    {
+      "id": "transition:published-to-monitored:action",
+      "kind": "transitions",
+      "from": "state:published",
+      "to": "action:monitor_post_launch"
+    },
+    {
+      "id": "transition:published-to-monitored:state",
+      "kind": "transitions",
+      "from": "action:monitor_post_launch",
+      "to": "state:monitored"
+    },
+    {
+      "id": "transition:ready-to-approved:action",
+      "kind": "transitions",
+      "from": "state:ready_for_review",
+      "to": "action:approve_template"
+    },
+    {
+      "id": "transition:ready-to-approved:state",
+      "kind": "transitions",
+      "from": "action:approve_template",
+      "to": "state:approved"
+    },
+    {
+      "id": "transition:ready-to-changes:action",
+      "kind": "transitions",
+      "from": "state:ready_for_review",
+      "to": "action:request_changes"
+    },
+    {
+      "id": "transition:ready-to-changes:state",
+      "kind": "transitions",
+      "from": "action:request_changes",
+      "to": "state:changes_requested"
+    },
+    {
+      "id": "transition:submitted-to-ready:action",
+      "kind": "transitions",
+      "from": "state:submitted",
+      "to": "action:validate_submission"
+    },
+    {
+      "id": "transition:submitted-to-ready:state",
+      "kind": "transitions",
+      "from": "action:validate_submission",
+      "to": "state:ready_for_review"
+    }
+  ]
+}

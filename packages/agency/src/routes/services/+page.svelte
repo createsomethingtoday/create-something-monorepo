@@ -1,37 +1,37 @@
 <script lang="ts">
-  import {
-    Button,
-    PerformanceCampaignOpening,
-    PerformanceContrastChapter,
-    SEO
-  } from '@create-something/canon';
+  import { Button, PerformanceCampaignOpening, SEO } from '@create-something/canon';
+  import AgencyPerformanceReadback from '$lib/components/AgencyPerformanceReadback.svelte';
+  import ControlledWaterwayStory from '$lib/components/ControlledWaterwayStory.svelte';
+  import ServicesMapPreview from '$lib/components/ServicesMapPreview.svelte';
+  import ServicesProductPath from '$lib/components/ServicesProductPath.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
-  import PublicAtlasCanvas from '$lib/components/PublicAtlasCanvas.svelte';
+  import { getPublicProduct } from '$lib/data/productFamily';
+
+  const mapProduct = getPublicProduct('map');
+  const buildProduct = getPublicProduct('build');
+  const controlProduct = getPublicProduct('control');
 
   const services = [
     {
-      name: 'Workflow Map',
-      description:
-        'A fixed first map of the workflow, systems, AI tasks, approval path, and first controlled pilot.',
-      type: 'First workflow map',
-      price: 'Fixed scope',
-      priceDescription: 'Map before any build decision'
+      name: mapProduct.name,
+      description: mapProduct.customerJob,
+      type: 'Standalone product',
+      price: 'Monthly / yearly',
+      priceDescription: 'Pricing configured at launch'
     },
     {
-      name: 'Workflow Pilot',
-      description:
-        'A single workflow rebuilt with clear rules, clean handoffs, and production-safe behavior.',
-      type: 'Implementation Sprint',
+      name: buildProduct.name,
+      description: buildProduct.customerJob,
+      type: 'Implementation service',
       price: 'Custom',
       priceDescription: 'Scoped build'
     },
     {
-      name: 'Ongoing Workflow Control',
-      description:
-        'Ongoing care for live AI-assisted work: approvals, release checks, blocked states, recovery notes, and review rhythm.',
-      type: 'Operating Plan',
-      price: 'Custom',
-      priceDescription: 'Monthly'
+      name: controlProduct.name,
+      description: controlProduct.customerJob,
+      type: 'Standalone product',
+      price: 'Monthly / yearly',
+      priceDescription: 'Control includes Map; pricing configured at launch'
     },
     {
       name: 'Enterprise Extension',
@@ -47,7 +47,7 @@
     {
       question: 'What is your primary service?',
       answer:
-        'The first offer is a fixed-scope Workflow Map. Workflow Pilot follows only when the first controlled path is clear enough to build.'
+        'Start with CREATE SOMETHING Map when the workflow still needs definition. Use CREATE SOMETHING Build for implementation, then CREATE SOMETHING Control when the workflow needs governed operation. Control includes Map.'
     },
     {
       question: 'Are agents part of the workforce?',
@@ -65,7 +65,6 @@
         'Yes. Clients retain ownership of code, workflows, operating documentation, and approval authority.'
     }
   ];
-
 </script>
 
 <SEO
@@ -81,13 +80,21 @@
 <div class="services-performance property-performance">
   <PerformanceCampaignOpening
     eyebrow="How It Works"
-    title="Map the workflow before deciding to build."
-    lede="Bring one handoff your team still checks manually. We map the owner, systems, safe actions, approval point, stop condition, and evidence before anything touches customers, money, production, or accounts."
-    media={{ src: '/images/performance-lab/trace-wake-natural.webp', mobileSrc: '/images/performance-lab/trace-wake-natural-mobile.webp', alt: 'Aerial black-and-white view of a survey craft leaving a directional wake' }}
-    proof={[{ label: 'Boundary', value: 'Named' }, { label: 'Pressure', value: 'Held' }, { label: 'Evidence', value: 'Attached' }]}
+    title="Nothing gets built until the map says what it should do."
+    lede="Bring one handoff your team still checks manually. We name the decision owner and the stop condition first, then build only what that map requires — before anything touches customers, money, or production."
+    media={{
+      src: '/images/performance-lab/trace-wake-natural.webp',
+      mobileSrc: '/images/performance-lab/trace-wake-natural-mobile.webp',
+      alt: 'Aerial black-and-white view of a survey craft leaving a directional wake'
+    }}
+    proof={[
+      { label: 'Owner', value: 'Named' },
+      { label: 'Protected action', value: 'Held' },
+      { label: 'Evidence', value: 'Attached' }
+    ]}
   >
     {#snippet actions()}
-      <Button href="#atlas-warmup">
+      <Button href={agencyCoreMessaging.selfMapHref}>
         {agencyCoreMessaging.selfMapLabel}
       </Button>
       <Button href={agencyCoreMessaging.servicesMappingSessionHref} variant="secondary">
@@ -96,17 +103,29 @@
     {/snippet}
   </PerformanceCampaignOpening>
 
-  <div id="atlas-warmup">
-  <PerformanceContrastChapter
-    eyebrow="Map before booking"
-    title="See the workflow before deciding to build."
-    description="The public Atlas map turns one workflow into a first plan: the systems involved, which signals matter, what AI can handle, where people approve, and what proof records the outcome. It does not touch production systems."
-    intervention={{ label: 'Read-only warmup', title: 'Public Atlas canvas', detail: 'Explore the operating path without touching production systems.' }}
-    artifactPlacement="full-width"
-  >
-    {#snippet artifact()}
-      <PublicAtlasCanvas />
-    {/snippet}
-  </PerformanceContrastChapter>
-  </div>
+  <ServicesProductPath />
+  <AgencyPerformanceReadback embedded={true} />
+
+  <section class="services-pipeline" aria-label="Controlled work pipeline">
+    <ControlledWaterwayStory />
+  </section>
+
+  <ServicesMapPreview />
 </div>
+
+<style>
+  .services-performance {
+    background: var(--color-performance-paper, #f3f3f0);
+  }
+
+  .services-pipeline {
+    padding: clamp(2rem, 5vw, 4.5rem) clamp(1.25rem, 5vw, 6rem);
+    border-block: 1px solid var(--color-performance-line, #d7d7d2);
+    background: var(--color-performance-panel, #ffffff);
+  }
+
+  .services-pipeline :global(.waterway) {
+    width: min(var(--content-width-performance, 85rem), 100%);
+    margin-inline: auto;
+  }
+</style>

@@ -102,7 +102,7 @@
     knowsAbout: [
       'Model Context Protocol (MCP)',
       'MCP Server Development',
-      'Workflow Control Layer',
+      'Governed Workflow Operation',
       'AI Workflow Systems',
       'Controlled Automation',
       'Owned Agent Runtimes',
@@ -148,7 +148,7 @@
       ? [
         { '@type': 'Thing', name: 'AI workflow systems' },
         { '@type': 'Thing', name: 'Model Context Protocol' },
-        { '@type': 'Thing', name: 'Policy OS' },
+        { '@type': 'Thing', name: 'CREATE SOMETHING Control' },
         { '@type': 'Thing', name: 'Governed automation' }
       ]
       : undefined

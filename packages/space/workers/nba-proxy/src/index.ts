@@ -13,11 +13,25 @@
  * - Endpoints: /games/today, /games/:date, /game/:id/pbp, /game/:id/boxscore, /baselines, /league-averages/:season
  */
 
+import {
+	READINESS_CACHE_KEY,
+	fetchScoreboardForDate,
+	nbaScoreboardResult,
+	type ScoreboardMetadata,
+	type ScoreboardReadiness,
+} from './scoreboard';
+import {
+	fetchRecentHistory,
+	readArchivedGamePayload,
+	type RecentHistoryResult,
+} from './archive';
+
 export interface Env {
 	CACHE: KVNamespace;
 	DB: D1Database;
 	ENVIRONMENT: string;
 	NBA_API_BASE_URL: string;
+	ESPN_API_BASE_URL: string;
 	RATE_LIMIT_REQUESTS: string;
 	RATE_LIMIT_WINDOW_MS: string;
 	CACHE_TTL_SECONDS: string;
@@ -56,7 +70,8 @@ function errorResponse(
 function successResponse<T>(
 	data: T,
 	correlationId: string,
-	cached: boolean = false
+	cached: boolean = false,
+	metadata?: ScoreboardMetadata
 ): Response {
 	return new Response(
 		JSON.stringify({
@@ -64,6 +79,7 @@ function successResponse<T>(
 			data,
 			cached,
 			timestamp: new Date().toISOString(),
+			metadata,
 		}),
 		{
 			status: 200,
@@ -75,6 +91,33 @@ function successResponse<T>(
 			},
 		}
 	);
+}
+
+function formatPacificDate(date: Date): string {
+	const parts = new Intl.DateTimeFormat('en-US', {
+		timeZone: 'America/Los_Angeles',
+		year: 'numeric',
+		month: '2-digit',
+		day: '2-digit',
+	}).formatToParts(date);
+	const value = (type: Intl.DateTimeFormatPartTypes) =>
+		parts.find((part) => part.type === type)?.value;
+	return `${value('year')}-${value('month')}-${value('day')}`;
+}
+
+async function fetchCanonicalScoreboard(
+	date: string,
+	env: Env
+): Promise<Awaited<ReturnType<typeof fetchScoreboardForDate>>> {
+	return fetchScoreboardForDate(date, {
+		today: formatPacificDate(new Date()),
+		cache: env.CACHE,
+		fetchImpl: fetch,
+		nbaApiBaseUrl: env.NBA_API_BASE_URL,
+		espnApiBaseUrl:
+			env.ESPN_API_BASE_URL ||
+			'https://site.api.espn.com/apis/site/v2/sports/basketball/nba',
+	});
 }
 
 // Rate limiter using KV
@@ -173,17 +216,79 @@ async function fetchFromNBA(
 // Route handlers
 async function handleGamesToday(env: Env, correlationId: string): Promise<Response> {
 	try {
-		// NBA.com scoreboard endpoint
-		const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-		const url = `${env.NBA_API_BASE_URL}/liveData/scoreboard/todaysScoreboard_00.json`;
-		const cacheKey = `nba:scoreboard:${today}`;
-
-		const { data, cached } = await fetchFromNBA(url, env, correlationId, cacheKey);
-		return successResponse(data, correlationId, cached);
+		const result = await fetchCanonicalScoreboard(formatPacificDate(new Date()), env);
+		return successResponse(result.data, correlationId, result.cached, result.metadata);
 	} catch (error) {
 		const message = error instanceof Error ? error.message : 'Unknown error';
 		console.error(`[${correlationId}] Games today error:`, message);
 		return errorResponse(message, correlationId, message.includes('Rate limited') ? 429 : 500);
+	}
+}
+
+function isValidIsoDate(value: string): boolean {
+	if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+	const parsed = new Date(`${value}T12:00:00Z`);
+	return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+}
+
+async function handleRecentHistory(
+	url: URL,
+	env: Env,
+	correlationId: string
+): Promise<Response> {
+	const before = url.searchParams.get('before') ?? formatPacificDate(new Date());
+	if (!isValidIsoDate(before)) {
+		return errorResponse('before must be a valid YYYY-MM-DD date', correlationId, 400);
+	}
+
+	const limitValue = url.searchParams.get('limit') ?? '5';
+	const limit = Number(limitValue);
+	if (!Number.isInteger(limit) || limit < 1 || limit > 12) {
+		return errorResponse('limit must be an integer between 1 and 12', correlationId, 400);
+	}
+	const cacheKey = `nba:history:v1:${before}:${limit}`;
+	const lastGoodKey = `nba:history:v1:last-good:${before}:${limit}`;
+	try {
+		const cached = await env.CACHE.get<RecentHistoryResult>(cacheKey, 'json');
+		if (cached) return successResponse(cached, correlationId, true);
+	} catch {
+		// Cache is an optimization; continue to archive/provider retrieval.
+	}
+
+	try {
+		const history = await fetchRecentHistory(env.DB, {
+			before,
+			limit,
+			fetchImpl: fetch,
+			espnApiBaseUrl:
+				env.ESPN_API_BASE_URL ||
+				'https://site.api.espn.com/apis/site/v2/sports/basketball/nba',
+		});
+		try {
+			await Promise.all([
+				env.CACHE.put(cacheKey, JSON.stringify(history), { expirationTtl: 3600 }),
+				env.CACHE.put(lastGoodKey, JSON.stringify(history), { expirationTtl: 604800 }),
+			]);
+		} catch {
+			// A successful archive read remains usable even if cache writes fail.
+		}
+		return successResponse(history, correlationId, false);
+	} catch (error) {
+		const message = error instanceof Error ? error.message : 'Unknown history error';
+		try {
+			const lastGood = await env.CACHE.get<RecentHistoryResult>(lastGoodKey, 'json');
+			if (lastGood) {
+				return successResponse(
+					{ ...lastGood, degraded: true, stale: true },
+					correlationId,
+					true
+				);
+			}
+		} catch {
+			// Fall through to the truthful unavailable response.
+		}
+		console.error(`[${correlationId}] Recent history error:`, message);
+		return errorResponse(`Recent history unavailable: ${message}`, correlationId, 503);
 	}
 }
 
@@ -194,34 +299,49 @@ async function handleGamesByDate(
 ): Promise<Response> {
 	try {
 		// NBA operates on Pacific Time - use PT for "today" comparison
-		const pacificDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
-		const today = pacificDate.toISOString().slice(0, 10);
+		const today = formatPacificDate(new Date());
 
 		// If requesting today's games, fetch live data
 		if (date === today) {
 			return handleGamesToday(env, correlationId);
 		}
 
-		// Check D1 for historical data
-		console.log(`[${correlationId}] Checking D1 for historical data: ${date}`);
-		const snapshot = await env.DB.prepare(
-			'SELECT scoreboard_json, captured_at FROM game_snapshots WHERE date = ?'
-		)
-			.bind(date)
-			.first();
+		// D1 is an optional historical optimization. A missing table, binding, or
+		// row must not prevent the date-addressable provider from serving a slate.
+		if (date < today) {
+			try {
+				console.log(`[${correlationId}] Checking D1 for historical data: ${date}`);
+				const snapshot = await env.DB.prepare(
+					'SELECT scoreboard_json, captured_at FROM game_snapshots WHERE date = ?'
+				)
+					.bind(date)
+					.first();
 
-		if (snapshot) {
-			console.log(`[${correlationId}] Found historical data for ${date}`);
-			const data = JSON.parse(snapshot.scoreboard_json as string);
-			return successResponse(data, correlationId, true);
+				if (snapshot) {
+					console.log(`[${correlationId}] Found historical data for ${date}`);
+					const data = JSON.parse(snapshot.scoreboard_json as string);
+					const storedMetadata = data?._createSomethingMetadata as ScoreboardMetadata | undefined;
+					const result = storedMetadata
+						? { data, cached: true, metadata: storedMetadata }
+						: nbaScoreboardResult(
+								data,
+								new Date(Number(snapshot.captured_at) || Date.now()).toISOString(),
+								{ cached: true }
+							);
+					return successResponse(result.data, correlationId, true, result.metadata);
+				}
+			} catch (error) {
+				console.warn(
+					`[${correlationId}] Historical D1 lookup unavailable for ${date}; using provider fallback`,
+					error instanceof Error ? error.message : error
+				);
+			}
 		}
 
-		// No historical data available
-		return errorResponse(
-			`No data available for ${date}. Historical data is captured nightly starting from the day this feature was deployed.`,
-			correlationId,
-			404
-		);
+		// D1 is an optimization, not the only historical source. Fall back to the
+		// date-addressable scoreboard provider for past and future slates.
+		const result = await fetchCanonicalScoreboard(date, env);
+		return successResponse(result.data, correlationId, result.cached, result.metadata);
 	} catch (error) {
 		const message = error instanceof Error ? error.message : 'Unknown error';
 		console.error(`[${correlationId}] Games by date error for ${date}:`, message);
@@ -235,6 +355,19 @@ async function handleGamePBP(
 	correlationId: string
 ): Promise<Response> {
 	try {
+		try {
+			const archived = await readArchivedGamePayload(env.DB, gameId, 'play-by-play');
+			if (archived) {
+				console.log(`[${correlationId}] Archived play-by-play hit: ${gameId}`);
+				return successResponse(archived.data, correlationId, true);
+			}
+		} catch (error) {
+			console.warn(
+				`[${correlationId}] Archived play-by-play lookup unavailable for ${gameId}; using live source`,
+				error instanceof Error ? error.message : error
+			);
+		}
+
 		// NBA.com play-by-play endpoint
 		const url = `${env.NBA_API_BASE_URL}/liveData/playbyplay/playbyplay_${gameId}.json`;
 		const cacheKey = `nba:pbp:${gameId}`;
@@ -254,6 +387,19 @@ async function handleGameBoxScore(
 	correlationId: string
 ): Promise<Response> {
 	try {
+		try {
+			const archived = await readArchivedGamePayload(env.DB, gameId, 'box-score');
+			if (archived) {
+				console.log(`[${correlationId}] Archived box score hit: ${gameId}`);
+				return successResponse(archived.data, correlationId, true);
+			}
+		} catch (error) {
+			console.warn(
+				`[${correlationId}] Archived box score lookup unavailable for ${gameId}; using live source`,
+				error instanceof Error ? error.message : error
+			);
+		}
+
 		// NBA.com boxscore endpoint
 		const url = `${env.NBA_API_BASE_URL}/liveData/boxscore/boxscore_${gameId}.json`;
 		const cacheKey = `nba:boxscore:${gameId}`;
@@ -324,22 +470,51 @@ function handleHealth(correlationId: string): Response {
 		{
 			status: 'healthy',
 			service: 'nba-proxy',
-			version: '1.0.0',
+			version: '2.0.0',
 		},
 		correlationId
 	);
 }
 
-// Daily snapshot capture (runs at 2am PT via cron)
+async function handleReadiness(env: Env, correlationId: string): Promise<Response> {
+	const stored = await env.CACHE.get(READINESS_CACHE_KEY);
+	if (!stored) {
+		return errorResponse('Scoreboard readiness has not been established', correlationId, 503);
+	}
+
+	try {
+		const readiness = JSON.parse(stored) as ScoreboardReadiness;
+		return new Response(
+			JSON.stringify({
+				success: readiness.status !== 'unavailable',
+				data: readiness,
+				correlationId,
+				timestamp: new Date().toISOString(),
+			}),
+			{
+				status: readiness.status === 'unavailable' ? 503 : 200,
+				headers: {
+					'Content-Type': 'application/json',
+					'X-Correlation-ID': correlationId,
+					'Access-Control-Allow-Origin': '*',
+				},
+			}
+		);
+	} catch {
+		return errorResponse('Scoreboard readiness record is invalid', correlationId, 503);
+	}
+}
+
+// Daily snapshot capture (runs after the late slate, at 10:00 UTC)
 async function captureSnapshot(env: Env): Promise<void> {
 	const correlationId = generateCorrelationId();
 
-	// Capture previous day's games (cron runs at 2am PT, so games from "yesterday" are complete)
+	// Capture the previous Pacific date after late games have normally completed.
 	// Use Pacific Time since NBA operates on PT
-	const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+	const now = new Date();
 	const yesterday = new Date(now);
 	yesterday.setDate(yesterday.getDate() - 1);
-	const date = yesterday.toISOString().slice(0, 10); // YYYY-MM-DD
+	const date = formatPacificDate(yesterday);
 
 	console.log(`[${correlationId}] Starting daily snapshot capture for ${date}`);
 
@@ -351,21 +526,11 @@ async function captureSnapshot(env: Env): Promise<void> {
 			.bind(date, 'pending', Date.now(), 'pending', Date.now())
 			.run();
 
-		// Fetch today's scoreboard (which has yesterday's completed games)
-		const url = `${env.NBA_API_BASE_URL}/liveData/scoreboard/todaysScoreboard_00.json`;
-		const response = await fetch(url, {
-			headers: {
-				'User-Agent': 'CREATE-SOMETHING-NBA-Proxy/1.0',
-				Accept: 'application/json',
-				Referer: 'https://www.nba.com/',
-			},
-		});
-
-		if (!response.ok) {
-			throw new Error(`NBA API error: ${response.status} ${response.statusText}`);
-		}
-
-		const data = await response.json();
+		const scoreboardResult = await fetchCanonicalScoreboard(date, env);
+		const data = {
+			...scoreboardResult.data,
+			_createSomethingMetadata: scoreboardResult.metadata,
+		};
 		const gameCount = data?.scoreboard?.games?.length || 0;
 		
 		// Use the actual game date from the NBA API response, not our calculated date
@@ -398,7 +563,9 @@ async function captureSnapshot(env: Env): Promise<void> {
 		console.log(`[${correlationId}] Successfully captured ${gameCount} games for ${actualGameDate}`);
 		
 		// Archive play-by-play and box scores for completed games
-		await archiveCompletedGames(env, data, actualGameDate, correlationId);
+		if (scoreboardResult.metadata.capabilities.advancedAnalytics) {
+			await archiveCompletedGames(env, data, actualGameDate, correlationId);
+		}
 		
 	} catch (error) {
 		const message = error instanceof Error ? error.message : 'Unknown error';
@@ -462,7 +629,9 @@ async function archiveCompletedGames(
 					});
 					
 					if (pbpResponse.ok) {
-						const pbpData = await pbpResponse.json();
+							const pbpData = (await pbpResponse.json()) as {
+								game?: { actions?: unknown[] };
+							};
 						const actionCount = pbpData?.game?.actions?.length || 0;
 						
 						await env.DB.prepare(
@@ -493,7 +662,12 @@ async function archiveCompletedGames(
 					});
 					
 					if (boxResponse.ok) {
-						const boxData = await boxResponse.json();
+							const boxData = (await boxResponse.json()) as {
+								game?: {
+									homeTeam?: { players?: unknown[] };
+									awayTeam?: { players?: unknown[] };
+								};
+							};
 						const playerCount = 
 							(boxData?.game?.homeTeam?.players?.length || 0) +
 							(boxData?.game?.awayTeam?.players?.length || 0);
@@ -583,8 +757,16 @@ export default {
 			return handleHealth(correlationId);
 		}
 
+		if (path === '/ready') {
+			return handleReadiness(env, correlationId);
+		}
+
 		if (path === '/games/today') {
 			return handleGamesToday(env, correlationId);
+		}
+
+		if (path === '/games/recent') {
+			return handleRecentHistory(url, env, correlationId);
 		}
 
 		// /games/:date (YYYY-MM-DD format)

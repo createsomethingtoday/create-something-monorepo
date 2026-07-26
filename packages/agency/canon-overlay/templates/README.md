@@ -1,4 +1,4 @@
-# Agency Atlas Public Overlay Templates
+# Agency Map Public Overlay Templates
 
 Copy these templates into project surfaces and fill in project-specific details.
 

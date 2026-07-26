@@ -729,6 +729,7 @@ export function summarizePublicAtlasCanvas(
 	canvas: PublicAtlasCanvas,
 	readiness = computePublicAtlasReadiness(canvas)
 ): string {
+	const publicReference = `map_${canvas.id.replace(/[^a-zA-Z0-9]/g, '').slice(-16) || 'anonymous'}`;
 	const nodesByKind = PUBLIC_ATLAS_LANES.map((lane) => {
 		const labels = canvas.nodes
 			.filter((node) => node.kind === lane.kind)
@@ -742,14 +743,14 @@ export function summarizePublicAtlasCanvas(
 	});
 
 	return [
-		'Atlas public canvas summary',
-		`Session: ${canvas.id}`,
+		'Map workflow summary',
+		`Map reference: ${publicReference}`,
 		`Readiness: ${readiness.level} (${readiness.score}/100)`,
 		`Recommended next step: ${readiness.nextStep}`,
 		...nodesByKind,
 		`Handoffs: ${edges.length ? edges.join('; ') : 'Not connected yet'}`,
-		`Agent messages used: ${canvas.agentMessages}`,
-		`Canvas mutations: ${canvas.mutationCount}`
+		`Mapping agent turns: ${canvas.agentMessages}`,
+		`Map edits: ${canvas.mutationCount}`
 	].join('\n');
 }
 

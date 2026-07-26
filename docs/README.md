@@ -10,14 +10,16 @@ Read in this order when you need broad repo context:
 
 1. [CREATE_SOMETHING_SYSTEMS_THESIS.md](./CREATE_SOMETHING_SYSTEMS_THESIS.md) — synthesis spine for the practice-led systems thesis
 2. [THE_DELEGATION_PRACTICE_EXPERIENCE.md](./THE_DELEGATION_PRACTICE_EXPERIENCE.md) — canonical experience contract for the thesis, lab, field practice, defense, and school
-3. [CREATE_SOMETHING_SYSTEMS_THESIS_EVIDENCE.generated.md](./CREATE_SOMETHING_SYSTEMS_THESIS_EVIDENCE.generated.md) — living claim and citation report generated from `docs/thesis/claims.yaml`
-4. [MCP_FIRST_THESIS.md](./MCP_FIRST_THESIS.md) — strategic thesis, packaging, and market framing
-5. [THREE_TIER_FRAMEWORK.md](./THREE_TIER_FRAMEWORK.md) — Database / Automation / Judgment model
-6. [AGENT_RUN_RECEIPT_CHARTER.md](./AGENT_RUN_RECEIPT_CHARTER.md) — agent-run-with-receipts operating charter
-7. [CREATE_SOMETHING_DATABASE_LAYER.md](./CREATE_SOMETHING_DATABASE_LAYER.md) — reusable database-layer product direction
-8. [packages/database-layer/docs/agent-wiki/business-recommendations.md](../packages/database-layer/docs/agent-wiki/business-recommendations.md) — generated operating lanes for CREATE SOMETHING business recommendations
-9. [POLICY_OS_PRODUCT_DEFINITION.md](./POLICY_OS_PRODUCT_DEFINITION.md) — canonical paid package definition
-10. [policies/README.md](./policies/README.md) — versioned policy artifacts
+3. [PROPERTY_INTENT_FUNNEL.md](./PROPERTY_INTENT_FUNNEL.md) — shared property roles, handoff temperature, journey context, and booking boundary
+4. [CREATE_SOMETHING_SYSTEMS_THESIS_EVIDENCE.generated.md](./CREATE_SOMETHING_SYSTEMS_THESIS_EVIDENCE.generated.md) — living claim and citation report generated from `docs/thesis/claims.yaml`
+5. [CREATE_SOMETHING_PRODUCT_FAMILY.md](./CREATE_SOMETHING_PRODUCT_FAMILY.md) — public Map -> Build -> Control packaging and internal compatibility boundary
+6. [MCP_FIRST_THESIS.md](./MCP_FIRST_THESIS.md) — strategic thesis, packaging, and market framing
+7. [THREE_TIER_FRAMEWORK.md](./THREE_TIER_FRAMEWORK.md) — Database / Automation / Judgment model
+8. [AGENT_RUN_RECEIPT_CHARTER.md](./AGENT_RUN_RECEIPT_CHARTER.md) — agent-run-with-receipts operating charter
+9. [CREATE_SOMETHING_DATABASE_LAYER.md](./CREATE_SOMETHING_DATABASE_LAYER.md) — reusable database-layer product direction
+10. [packages/database-layer/docs/agent-wiki/business-recommendations.md](../packages/database-layer/docs/agent-wiki/business-recommendations.md) — generated operating lanes for CREATE SOMETHING business recommendations
+11. [POLICY_OS_PRODUCT_DEFINITION.md](./POLICY_OS_PRODUCT_DEFINITION.md) — Control product definition and Policy OS compatibility contract
+12. [policies/README.md](./policies/README.md) — versioned policy artifacts
 
 ## Navigation by task
 
@@ -25,6 +27,8 @@ Read in this order when you need broad repo context:
 
 - [CREATE_SOMETHING_SYSTEMS_THESIS.md](./CREATE_SOMETHING_SYSTEMS_THESIS.md)
 - [THE_DELEGATION_PRACTICE_EXPERIENCE.md](./THE_DELEGATION_PRACTICE_EXPERIENCE.md)
+- [PROPERTY_INTENT_FUNNEL.md](./PROPERTY_INTENT_FUNNEL.md)
+- [CREATE_SOMETHING_PRODUCT_FAMILY.md](./CREATE_SOMETHING_PRODUCT_FAMILY.md)
 - [CREATE_SOMETHING_SYSTEMS_THESIS_EVIDENCE.generated.md](./CREATE_SOMETHING_SYSTEMS_THESIS_EVIDENCE.generated.md)
 - [thesis/README.md](./thesis/README.md)
 - [MCP_FIRST_THESIS.md](./MCP_FIRST_THESIS.md)
@@ -65,6 +69,9 @@ Read in this order when you need broad repo context:
 ### Architecture and control planes
 
 - [THREE_TIER_FRAMEWORK.md](./THREE_TIER_FRAMEWORK.md)
+- [internal/BUSINESS_DIGITAL_THREAD_LIFETIME_CONTROL_BASELINE_2026-07-23.md](./internal/BUSINESS_DIGITAL_THREAD_LIFETIME_CONTROL_BASELINE_2026-07-23.md)
+- [internal/ADR_BUSINESS_DIGITAL_THREAD_V1_BOUNDARY_2026-07-23.md](./internal/ADR_BUSINESS_DIGITAL_THREAD_V1_BOUNDARY_2026-07-23.md)
+- [Business Digital Thread v1 contract](../packages/database-layer/contracts/business-digital-thread/v1/README.md)
 - [CREATE_SOMETHING_DATABASE_LAYER.md](./CREATE_SOMETHING_DATABASE_LAYER.md)
 - [CANON_DATABASE_LAYER_DESIGN.md](./CANON_DATABASE_LAYER_DESIGN.md)
 - [guides/SUBSTRATE_TOPOLOGY_OPERATOR_CONTRACT.md](./guides/SUBSTRATE_TOPOLOGY_OPERATOR_CONTRACT.md)
@@ -86,6 +93,7 @@ Read in this order when you need broad repo context:
 - [MCP_CATALOG_EXPOSURE_POLICY.md](./MCP_CATALOG_EXPOSURE_POLICY.md)
 - [AGENCY_USER_PROVISIONING_POLICY.md](./AGENCY_USER_PROVISIONING_POLICY.md)
 - [policies/v1/policy.git-light-agent-delivery.v1.md](./policies/v1/policy.git-light-agent-delivery.v1.md)
+- [policies/v1/policy.prose-quality.v1.md](./policies/v1/policy.prose-quality.v1.md)
 - [policies/v1/policy.operator-agent-production-lab.v1.md](./policies/v1/policy.operator-agent-production-lab.v1.md)
 
 ### Agent execution, observability, and UI legibility
@@ -100,6 +108,7 @@ Read in this order when you need broad repo context:
 - [guides/GIT_LIGHT_AGENT_DELIVERY_WORKFLOW.md](./guides/GIT_LIGHT_AGENT_DELIVERY_WORKFLOW.md)
 - [guides/MONOREPO_DELIVERY_UPDATES.md](./guides/MONOREPO_DELIVERY_UPDATES.md)
 - [guides/G2_CLOUDFLARE_CODEX_ACCESS.md](./guides/G2_CLOUDFLARE_CODEX_ACCESS.md)
+- [guides/CODEX_PRESENCE_EVEN_G2.md](./guides/CODEX_PRESENCE_EVEN_G2.md)
 - [guides/RECURRING_CLEANUP_LOOPS.md](./guides/RECURRING_CLEANUP_LOOPS.md)
 - [MCP_FLEET_HEALTH_AGENT.md](./MCP_FLEET_HEALTH_AGENT.md)
 - [OPENAI_AGENT_SDK_HALFDOZEN_SMOKE.md](./OPENAI_AGENT_SDK_HALFDOZEN_SMOKE.md)
@@ -124,7 +133,7 @@ Read in this order when you need broad repo context:
 
 ### Runbooks and operational procedures
 
-- [AUTH0_SUBJECT_REBIND_RUNBOOK.md](./AUTH0_SUBJECT_REBIND_RUNBOOK.md)
+- [IDENTITY_SUBJECT_REBIND_RUNBOOK.md](./IDENTITY_SUBJECT_REBIND_RUNBOOK.md)
 - [CS_HUB_VAULT_ROTATION_WORKFLOW.md](./CS_HUB_VAULT_ROTATION_WORKFLOW.md)
 - [DM_HUB_CLIENT_ONBOARDING.md](./DM_HUB_CLIENT_ONBOARDING.md)
 - [guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md](./guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md)

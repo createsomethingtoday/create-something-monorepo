@@ -17,9 +17,9 @@
         'Signal collects source updates, exceptions, Slack posts, API changes, account context, affected systems, and the reason a reviewer or agent should care.'
     },
     {
-      question: 'How does Signal connect to Atlas?',
+      question: 'How does Signal connect back to Map?',
       answer:
-        'Atlas maps where the Signal enters the workflow, which systems it touches, and which Decision queue should review it.'
+        'Map shows where the Signal enters the workflow, which systems it touches, and which Decision queue should review it.'
     },
     {
       question: 'Does Signal replace review?',
@@ -38,12 +38,12 @@
       points: ['Source', 'Owner', 'Affected system', 'Reason to review']
     },
     {
-      eyebrow: 'Atlas connection',
+      eyebrow: 'Map connection',
       icon: 'folder',
       title: 'Every signal lands on the map',
       detail:
-        'Atlas connects the incoming Signal to the workflow, documentation path, reviewer queue, and downstream Proof record.',
-      points: [`Composition: ${composition.id}`, 'Hub: Atlas']
+        'Map connects the incoming Signal to the workflow, documentation path, reviewer queue, and downstream Proof record.',
+      points: [`Composition: ${composition.id}`, 'Hub: Map']
     }
   ];
 
@@ -60,7 +60,7 @@
     },
     {
       icon: 'objects' as const,
-      value: 'Atlas',
+      value: 'Map',
       label: 'The map shows which systems and owners are affected before action moves downstream.'
     },
     {
@@ -98,9 +98,9 @@
     {
       eyebrow: 'Map',
       icon: 'folder',
-      title: 'Atlas',
+      title: 'Map',
       detail: 'Map where the Signal enters and which systems it touches.',
-      href: '/atlas'
+      href: '/map'
     },
     {
       eyebrow: 'Queue',
@@ -140,7 +140,7 @@
   ];
 
   const relatedLinks = [
-    { label: 'Atlas map', href: '/atlas' },
+    { label: 'Map', href: '/map' },
     { label: 'Decision queue', href: '/products/decision' },
     { label: 'Proof graph', href: '/products/proof' },
     { label: 'Product overview', href: '/products' }
@@ -148,9 +148,9 @@
 </script>
 
 <SEO
-  title="Signal Inbox for App Governance | CREATE SOMETHING .agency"
-  description="Signal is the inbox for app governance: API updates, Slack posts, PRs, exceptions, and reviewer context routed into Atlas, Decision, and Proof."
-  keywords="app governance signal inbox, API update review, reviewer notifications, workflow signal, Atlas governance map"
+  title="Signal Inbox | Inside CREATE SOMETHING Control"
+  description="Signal is the Control inbox for app governance. Updates from your tools arrive as reviewable context, already attached to the workflow they affect."
+  keywords="app governance signal inbox, API update review, reviewer notifications, workflow signal, workflow control map"
   ogImage="/og-image.png"
   propertyName="agency"
   {faqItems}
@@ -159,7 +159,7 @@
 <GovernanceProductPage
   {product}
   title="The inbox for updates that should not surprise reviewers."
-  description="Signal follows the places where work changes, turns those updates into reviewable context, and attaches each source to Atlas, Decision, and Proof."
+  description="Signal watches the places where work changes and turns each update into reviewable context, with its source still attached."
   {heroCards}
   {pathItems}
   {detailCards}

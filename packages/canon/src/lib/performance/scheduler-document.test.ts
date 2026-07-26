@@ -26,5 +26,11 @@ describe('standalone Performance document contract', () => {
     expect(performanceDocumentCss).toContain('--leading-performance-display:.94');
     expect(performanceDocumentCss).toContain('font-family:var(--font-performance-display)');
     expect(performanceDocumentCss).toContain('font-family:var(--font-performance-mono)');
+    expect(performanceDocumentCss).not.toContain(
+      '--font-performance-display:var(--font-performance-display)'
+    );
+    expect(performanceDocumentCss).not.toContain(
+      '--font-performance-mono:var(--font-performance-mono)'
+    );
   });
 });

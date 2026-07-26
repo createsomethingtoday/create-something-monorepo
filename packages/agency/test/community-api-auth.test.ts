@@ -14,6 +14,11 @@ test('Signal community APIs are internal-only protected routes', () => {
 	assert.equal(isAgencyProtectedPath('/api/community/monitors'), true);
 });
 
+test('Control activation API requires the first-party authenticated account scope', () => {
+	assert.ok(AGENCY_PROTECTED_PATHS.includes('/api/control'));
+	assert.equal(isAgencyProtectedPath('/api/control/activations'), true);
+});
+
 test('public governance and marketing routes remain public', () => {
 	assert.equal(isAgencyProtectedPath('/products/signal'), false);
 	assert.equal(isAgencyProtectedPath('/api/governance/products'), false);

@@ -7,6 +7,11 @@
   "clientRegistryKey": "cato-supply",
   "audience": "client_summary",
   "targetKind": "project",
+  "buildReleasePackage": {
+    "status": "not_configured",
+    "manifestPath": null,
+    "note": "This bespoke delivery predates the versioned Build release package. Preserve its existing evidence, but do not infer accepted handoff, artifact hashes, UAT, rollback, or terminal acceptance."
+  },
   "deliveryDate": "2026-05-16",
   "headline": "Cato now has a repo-backed Insights review package, Cloudflare review URL, mock CMS content model, and staged Webflow navigation work for client review before production publishing.",
   "recentChangePaths": [

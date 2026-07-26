@@ -14,12 +14,12 @@ Define the policy for the portal-managed password used by `identity-worker` OAut
 - `.agency` self-service management of that credential
 - Email-linked MCP users entitled to managed bearer access
 - Password set, rotate, and temporary reset flows
-- Separation of Auth0 portal identity from the MCP OAuth login secret
+- Separation of CREATE SOMETHING Identity portal sessions from the MCP OAuth login secret
 
 ## Policy Statements
 
-1. Auth0 remains the `.agency` portal identity provider.
-2. The password used by `identity-worker` OAuth login is a separate credential from both the Auth0 session and the managed bearer token.
+1. CREATE SOMETHING Identity is the `.agency` portal identity provider.
+2. The password used by `identity-worker` OAuth login is a separate credential from both the Identity portal session and the managed bearer token.
 3. Each entitled MCP user MAY have exactly one active `identity-worker` password credential bound to the same email and MCP account context used for managed bearer entitlement.
 4. `.agency` MUST provide a customer-facing surface that shows:
    - the email address bound to the MCP OAuth login
@@ -30,7 +30,7 @@ Define the policy for the portal-managed password used by `identity-worker` OAut
 6. Password rotation MUST NOT require bearer-token rotation, and bearer-token rotation MUST NOT require password rotation.
 7. Password management MUST be gated by an authenticated `.agency` portal session and the same entitlement checks used for managed bearer issuance.
 8. Password reset or rotation MUST apply only to the entitled email and MCP account context associated with the logged-in portal user.
-9. Shared runtime tokens, Auth0 tokens, and managed bearer tokens MUST NOT be used as the MCP OAuth password.
+9. Shared runtime tokens, Identity session tokens, and managed bearer tokens MUST NOT be used as the MCP OAuth password.
 10. Operator seeding is permitted for initial activation, but production UX MUST converge on self-service set or rotate flows in `.agency`.
 11. Audit records MUST capture password set or rotation events without storing plaintext password material.
 12. The OAuth authorize page MAY be branded, but branding MUST NOT obscure which email and hub or MCP context the user is authorizing.
@@ -39,7 +39,7 @@ Define the policy for the portal-managed password used by `identity-worker` OAut
 
 1. The MCP OAuth password is the credential a user types into the OAuth authorize page.
 2. The managed bearer token is the credential Notion, ChatGPT, or another host ultimately sends to the MCP hub.
-3. The `.agency` portal password or Auth0 session is never forwarded to the MCP hub.
+3. The `.agency` portal password or Identity session token is never forwarded to the MCP hub.
 4. If a password is seeded manually, the client must be able to replace it from `.agency` without operator intervention.
 5. If the entitled email changes, the MCP OAuth password binding must be re-established for the new email before the old login path is considered authoritative.
 6. If entitlement is revoked, password reset and revoke actions remain available for incident response, but new bearer issuance must fail closed according to bearer-token policy.

@@ -1,0 +1,4 @@
+/.svelte-kit/
+/build/
+/cloudflare/output/
+/output/cloudflare-dry-run/

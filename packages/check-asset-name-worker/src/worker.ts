@@ -61,7 +61,11 @@ const DEFAULT_LIBRARY_PERMISSION_EMAIL_FIELDS = ['fldhvneqrRuoF5grB'] as const;
 const CREATOR_ELIGIBILITY_FIELDS = [
   'Name',
   ...CREATOR_RECORD_EMAIL_FIELDS,
-  '❌Banned Instance'
+  '❌Banned Instance',
+  '#️⃣👛Templates Published',
+  '#️⃣👛Templates Submitted',
+  '#️⃣👛Templates Delisted',
+  '#️⃣Submission cap count'
 ] as const;
 const BANNED_INSTANCE_FIELDS = [
   'Name',
@@ -184,30 +188,43 @@ async function airtableQuery(
     maxRecords?: number;
   }
 ): Promise<AirtableRecord[]> {
-  const params = new URLSearchParams();
-  params.set('filterByFormula', options.formula);
-  if (options.viewId) {
-    params.set('view', options.viewId);
-  }
-  if (options.maxRecords) {
-    params.set('maxRecords', String(options.maxRecords));
-  }
-  if (options.fields) {
-    for (const field of options.fields) params.append('fields[]', field);
-  }
+  const records: AirtableRecord[] = [];
+  let offset: string | undefined;
 
-  const url = `https://api.airtable.com/v0/${env.AIRTABLE_BASE_ID}/${options.tableId}?${params.toString()}`;
+  do {
+    const params = new URLSearchParams();
+    params.set('filterByFormula', options.formula);
+    if (options.viewId) {
+      params.set('view', options.viewId);
+    }
+    if (options.maxRecords) {
+      params.set('maxRecords', String(options.maxRecords));
+    }
+    if (options.fields) {
+      for (const field of options.fields) params.append('fields[]', field);
+    }
+    if (offset) {
+      params.set('offset', offset);
+    }
 
-  const response = await fetch(url, {
-    headers: { Authorization: `Bearer ${env.AIRTABLE_API_KEY}` }
-  });
+    const url = `https://api.airtable.com/v0/${env.AIRTABLE_BASE_ID}/${options.tableId}?${params.toString()}`;
+    const response = await fetch(url, {
+      headers: { Authorization: `Bearer ${env.AIRTABLE_API_KEY}` }
+    });
 
-  if (!response.ok) {
-    throw new Error(`Airtable returned ${response.status}: ${await response.text()}`);
-  }
+    if (!response.ok) {
+      throw new Error(`Airtable returned ${response.status}: ${await response.text()}`);
+    }
 
-  const data = (await response.json()) as { records: AirtableRecord[] };
-  return data.records;
+    const data = (await response.json()) as {
+      records: AirtableRecord[];
+      offset?: string;
+    };
+    records.push(...data.records);
+    offset = data.offset;
+  } while (offset && (!options.maxRecords || records.length < options.maxRecords));
+
+  return options.maxRecords ? records.slice(0, options.maxRecords) : records;
 }
 
 async function airtableGetRecord(
@@ -373,6 +390,21 @@ function firstString(value: unknown): string {
     }
   }
   return '';
+}
+
+function firstFiniteNumber(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && value.trim()) {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const parsed = firstFiniteNumber(item);
+      if (parsed !== undefined) return parsed;
+    }
+  }
+  return undefined;
 }
 
 function hasAllowedPermission(value: unknown, allowedValues: Set<string>): boolean {
@@ -731,32 +763,42 @@ async function handleCheckTemplateuser(
   const assetFormula = buildAssetCreatorEmailFormula(normalizedEmail);
   const records = await airtableQuery(env, {
     tableId: getAssetsTableId(env),
-    viewId: getAssetsViewId(env),
     formula: assetFormula,
     fields: ['Name', '🚀Marketplace Status', '📅Submitted Date']
   });
 
-  const {
-    assetsSubmitted30,
-    publishedTemplates,
-    delistedTemplates,
-    activeReviews,
-    submittedTemplates
-  } = summarizeTemplateSubmissionRecords(records);
+  const assetStats = summarizeTemplateSubmissionRecords(records);
+  const assetsSubmitted30 = Math.max(
+    assetStats.assetsSubmitted30,
+    firstFiniteNumber(creatorFields['#️⃣Submission cap count']) ?? 0
+  );
+  const publishedTemplates = Math.max(
+    assetStats.publishedTemplates,
+    firstFiniteNumber(creatorFields['#️⃣👛Templates Published']) ?? 0
+  );
+  const delistedTemplates = Math.max(
+    assetStats.delistedTemplates,
+    firstFiniteNumber(creatorFields['#️⃣👛Templates Delisted']) ?? 0
+  );
+  const submittedTemplates = Math.max(
+    assetStats.submittedTemplates,
+    firstFiniteNumber(creatorFields['#️⃣👛Templates Submitted']) ?? 0
+  );
+  const { activeReviews } = assetStats;
 
   const isWhitelisted = getWhitelistedCreators(env).has(normalizedEmail);
   let hasError = false;
-  let message = `${assetsSubmitted30} out of ${SUBMISSION_LIMIT} templates submitted this month. Total submitted: ${submittedTemplates}. You can have 1 template submitted for review at a time.`;
+  let message = `${assetsSubmitted30} out of ${SUBMISSION_LIMIT} templates submitted in the past 30 days. Total submitted: ${submittedTemplates}. You can have 1 template submitted for review at a time.`;
 
   if (assetsSubmitted30 >= SUBMISSION_LIMIT) {
     hasError = true;
     message = `You have reached your submission limit of ${SUBMISSION_LIMIT} templates for the past 30 days. Total submitted: ${submittedTemplates}. Please wait to submit new templates.`;
   } else if (publishedTemplates + delistedTemplates >= 5 || isWhitelisted) {
-    message = `${assetsSubmitted30} out of ${SUBMISSION_LIMIT} templates submitted this month. Total submitted: ${submittedTemplates}. You can have unlimited concurrent submissions for review.`;
+    message = `${assetsSubmitted30} out of ${SUBMISSION_LIMIT} templates submitted in the past 30 days. Total submitted: ${submittedTemplates}. You can have unlimited concurrent submissions for review.`;
   } else {
     if (activeReviews >= 1) {
       hasError = true;
-      message = `${assetsSubmitted30} out of ${SUBMISSION_LIMIT} templates submitted this month. Total submitted: ${submittedTemplates}. You already have an active review in progress. Please wait for the review to complete before submitting another template.`;
+      message = `${assetsSubmitted30} out of ${SUBMISSION_LIMIT} templates submitted in the past 30 days. Total submitted: ${submittedTemplates}. You already have an active review in progress. Please wait for the review to complete before submitting another template.`;
     }
   }
 

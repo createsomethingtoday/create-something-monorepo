@@ -3,10 +3,12 @@
     Button,
     PerformanceCardGrid,
     PerformanceConversionHandoff,
+    PerformanceNarrativeStage,
     PerformancePageSection,
     SEO,
     type PerformanceCardItem,
-    type PerformanceCtaItem
+    type PerformanceCtaItem,
+    type PerformanceNarrativeScene
   } from '@create-something/canon';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
@@ -82,6 +84,58 @@
     }
   ];
 
+  const aboutScenes: PerformanceNarrativeScene[] = [
+    {
+      id: 'origin',
+      label: 'Origin',
+      summary: 'Power needs control',
+      title: 'Pressure made the operating principle concrete.',
+      detail:
+        'Machines, emergency medicine, veterinary care, and platform systems all taught the same lesson: capability becomes useful when ownership, protocols, and recovery stay visible.',
+      tone: 'neutral',
+      evidence: [
+        'Porsche 930 Turbo',
+        'Emergency medicine',
+        'Continuity of care',
+        'Webflow systems work'
+      ]
+    },
+    {
+      id: 'method',
+      label: 'Method',
+      summary: 'Protect the operator',
+      title: 'Map, classify, control, then brief.',
+      detail:
+        'The Calm Operator Method keeps the workflow understandable before agent capacity expands.',
+      tone: 'allow',
+      receipts: ['workflow map', 'judgment states', 'control layer', 'operator brief']
+    },
+    {
+      id: 'contract',
+      label: 'Contract',
+      summary: 'Keep the work narrow',
+      title: 'One operating path should become trustworthy before the system grows.',
+      detail:
+        'The engagement removes unnecessary complexity, names the decision owner, and leaves the client with controls, evidence, and working software.',
+      tone: 'review',
+      receipts: ['cleanup loop', 'Subtractive Triad', 'client-owned path']
+    },
+    {
+      id: 'system',
+      label: 'System',
+      summary: 'Each property has one job',
+      title: 'The rest of CREATE SOMETHING sharpens the operating work.',
+      detail:
+        'Philosophy, research, experiments, and agency delivery remain distinct while passing useful evidence between one another.',
+      tone: 'neutral',
+      actions: [
+        { label: 'Read the philosophy', href: 'https://createsomething.ltd' },
+        { label: 'Inspect the research', href: 'https://createsomething.io' },
+        { label: 'Explore the tools', href: 'https://createsomething.space' }
+      ]
+    }
+  ];
+
   const operatorStateCards: PerformanceCardItem[] = operatorStates.map((state) => ({
     eyebrow: state.label,
     icon: state.label === 'Clear' ? 'check' : state.label === 'Review' ? 'search' : 'warning',
@@ -142,132 +196,125 @@
   description="The operator should not carry the chaos of automation. My work turns toolchains into clear workflow states: what agents and tools can do, what needs judgment, and what must stop with a reason."
 >
   {#snippet aside()}
-    <PerformanceCardGrid items={operatorStateCards} columns={1} ariaLabel="Operator decision states" />
+    <PerformanceCardGrid
+      items={operatorStateCards}
+      columns={1}
+      ariaLabel="Operator decision states"
+    />
   {/snippet}
 </PerformancePageSection>
 
-<PerformancePageSection
-  variant="white"
-  layout="split"
-  eyebrow="Why this work"
-  title="Power needs control. Pressure needs protocols."
+<PerformanceNarrativeStage
+  id="about-operating-story"
+  eyebrow="One operating story"
+  title="The biography only matters where it explains the work."
+  description="The biography matters only where it explains the work: why control comes before scale, how the method protects the operator, what the engagement promises, and how the wider system contributes."
+  scenes={aboutScenes}
+  ariaLabel="About operating story"
 >
-  <div class="about-prose">
-    <p>
-      I grew up between two reference points: a Porsche 930 Turbo and emergency medicine. One taught
-      me that power needs control. The other taught me that when pressure rises, clear protocols
-      matter more than improvisation.
-    </p>
-    <p>
-      Later, as an equine veterinary technician, I learned what continuity of care, logging, and
-      operating discipline actually feel like in the real world. That stays with me in systems work
-      now.
-    </p>
-    <p>
-      Today that shows up as calm, transparent, reliable workflow systems: fast where the rules are
-      clear, visible where judgment is required, and recoverable when something goes wrong.
-    </p>
-    <p>
-      I am a Senior Systems Architect on the Marketplace Team at Webflow. That work keeps the
-      problems concrete: brittle handoffs, unclear ownership, internal tools, onboarding systems,
-      integrations, and platform infrastructure that have to survive real operators.
-    </p>
-  </div>
-
-  {#snippet aside()}
-    <aside class="signal-rail" aria-label="Operating references">
-      <span class="rail-label">Reference points</span>
-      {#each originSignals as signal}
-        <article class="signal-card">
-          <span>{signal.label}</span>
-          <strong>{signal.title}</strong>
-          <p>{signal.detail}</p>
-        </article>
-      {/each}
-    </aside>
+  {#snippet artifact(scene: PerformanceNarrativeScene)}
+    {#if scene.id === 'origin'}
+      <div class="about-stage-split">
+        <div class="about-prose">
+          <p>
+            I grew up between two reference points: a Porsche 930 Turbo and emergency medicine. One
+            taught me that power needs control. The other taught me that when pressure rises, clear
+            protocols matter more than improvisation.
+          </p>
+          <p>
+            Later, as an equine veterinary technician, I learned what continuity of care, logging,
+            and operating discipline actually feel like in the real world. That stays with me in
+            systems work now.
+          </p>
+          <p>
+            Today that shows up as calm, transparent, reliable workflow systems: fast where the
+            rules are clear, visible where judgment is required, and recoverable when something goes
+            wrong.
+          </p>
+          <p>
+            I am a Senior Systems Architect on the Marketplace Team at Webflow. That work keeps the
+            problems concrete: brittle handoffs, unclear ownership, internal tools, onboarding
+            systems, integrations, and platform infrastructure that have to survive real operators.
+          </p>
+        </div>
+        <aside class="signal-rail" aria-label="Operating references">
+          <span class="rail-label">Reference points</span>
+          {#each originSignals as signal}
+            <article class="signal-card">
+              <span>{signal.label}</span><strong>{signal.title}</strong>
+              <p>{signal.detail}</p>
+            </article>
+          {/each}
+        </aside>
+      </div>
+    {:else if scene.id === 'method'}
+      <PerformanceCardGrid items={methodCards} columns={4} ariaLabel="Calm operator method steps" />
+    {:else if scene.id === 'contract'}
+      <div class="contract-grid">
+        {#each workingContracts as contract}
+          <article class="contract-card">
+            <span>{contract.label}</span><strong>{contract.title}</strong>
+            <p>{contract.detail}</p>
+          </article>
+        {/each}
+      </div>
+      <p class="stage-note">
+        Salesforce, HubSpot, Notion, Slack, Procore, Webflow, MCP, and internal systems are useful
+        only when ownership and recovery stay clear.
+      </p>
+    {:else}
+      <div class="about-prose">
+        <p>
+          CREATE SOMETHING operates as a connected system. Each property has a distinct job, and
+          each one sharpens the others:
+        </p>
+        <ul class="circle-list">
+          <li>
+            <a href="https://createsomething.ltd" target="_blank" rel="noopener noreferrer"
+              ><strong>.ltd</strong></a
+            > — Philosophy and principles
+          </li>
+          <li>
+            <a href="https://createsomething.io" target="_blank" rel="noopener noreferrer"
+              ><strong>.io</strong></a
+            > — Research and validated patterns
+          </li>
+          <li>
+            <a href="https://createsomething.space" target="_blank" rel="noopener noreferrer"
+              ><strong>.space</strong></a
+            > — Tools and experiments
+          </li>
+          <li>
+            <strong>.agency</strong> — Calm, transparent workflow systems, reliability controls, and
+            enterprise extension <span class="muted">(you are here)</span>
+          </li>
+        </ul>
+        <p>
+          Client work informs the research. Research sharpens the operating model. The operating
+          model raises the bar on client work.
+        </p>
+        <p>
+          I am also building <a href="https://workway.co" target="_blank" rel="noopener noreferrer"
+            >WORKWAY</a
+          >. When clients need fuller system development and onboarding than .agency is meant to
+          carry, I provide a direct referral path to trusted partners, including Half Dozen.
+        </p>
+      </div>
+    {/if}
   {/snippet}
-</PerformancePageSection>
-
-<PerformancePageSection
-  variant="soft"
-  eyebrow="Calm Operator Method"
-  title="Protect the operator before you scale the agents."
-  description="The method is simple enough to fit on an e-ink surface: map the workflow, classify the judgment states, ship the control layer, and brief the human only when attention changes the outcome."
->
-  {#snippet after()}
-    <PerformanceCardGrid items={methodCards} columns={4} ariaLabel="Calm operator method steps" />
-  {/snippet}
-</PerformancePageSection>
-
-<PerformancePageSection
-  variant="soft"
-  eyebrow="Working contract"
-  title="The work stays narrow enough to trust."
-  description="The goal is not more automation. The goal is one operating path that lets the operator stop watching the dashboard until judgment is actually required. Salesforce, HubSpot, Notion, Slack, Procore, Webflow, MCP, and internal systems are only useful when the ownership and recovery path are clear."
->
-  {#snippet after()}
-    <div class="contract-grid">
-      {#each workingContracts as contract}
-        <article class="contract-card">
-          <span>{contract.label}</span>
-          <strong>{contract.title}</strong>
-          <p>{contract.detail}</p>
-        </article>
-      {/each}
-    </div>
-  {/snippet}
-</PerformancePageSection>
-
-<PerformancePageSection variant="white" eyebrow="System" title="The rest of CREATE SOMETHING">
-  <div class="about-prose">
-    <p>
-      CREATE SOMETHING operates as a connected system. Each property has a distinct job, and each
-      one sharpens the others:
-    </p>
-    <ul class="circle-list">
-      <li>
-        <a href="https://createsomething.ltd" target="_blank" rel="noopener noreferrer"
-          ><strong>.ltd</strong></a
-        >
-        — Philosophy and principles
-      </li>
-      <li>
-        <a href="https://createsomething.io" target="_blank" rel="noopener noreferrer"
-          ><strong>.io</strong></a
-        >
-        — Research and validated patterns
-      </li>
-      <li>
-        <a href="https://createsomething.space" target="_blank" rel="noopener noreferrer"
-          ><strong>.space</strong></a
-        >
-        — Tools and experiments
-      </li>
-      <li>
-        <strong>.agency</strong> — Calm, transparent workflow systems, reliability controls, and
-        enterprise extension
-        <span class="muted">(you are here)</span>
-      </li>
-    </ul>
-    <p>
-      Client work informs the research. Research sharpens the operating model. The operating model
-      raises the bar on client work.
-    </p>
-    <p>
-      I am also building <a href="https://workway.co" target="_blank" rel="noopener noreferrer"
-        >WORKWAY</a
-      >. When clients need fuller system development and onboarding than .agency is meant to carry,
-      I provide a direct referral path to trusted partners, including Half Dozen.
-    </p>
-  </div>
-</PerformancePageSection>
+</PerformanceNarrativeStage>
 
 <PerformanceConversionHandoff
   eyebrow="Start with one workflow"
   title={agencyCoreMessaging.workflowCtaHeading}
   description={agencyCoreMessaging.workflowCtaDetail}
   steps={ctaItems}
-  handoff={{ owner: 'Workflow owner', authority: 'Mapped control states', proof: 'Safer first path', state: 'review' }}
+  handoff={{
+    owner: 'Workflow owner',
+    authority: 'Mapped control states',
+    proof: 'Safer first path',
+    state: 'review'
+  }}
 >
   {#snippet actions()}
     <Button href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</Button>
@@ -281,6 +328,20 @@
     gap: 1rem;
     max-width: 45rem;
     color: var(--color-performance-ink, #090909);
+  }
+
+  .about-stage-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(16rem, 0.75fr);
+    gap: clamp(1rem, 3vw, 2.5rem);
+    align-items: start;
+  }
+
+  .stage-note {
+    max-width: 52rem;
+    margin: 1rem 0 0;
+    color: var(--color-performance-muted, #5e6268);
+    line-height: 1.55;
   }
 
   .about-prose p {
@@ -384,6 +445,9 @@
   }
 
   @media (max-width: 760px) {
+    .about-stage-split {
+      grid-template-columns: 1fr;
+    }
     .signal-rail {
       gap: 0.55rem;
       padding: 0.55rem;

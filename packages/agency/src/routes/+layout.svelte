@@ -3,16 +3,20 @@
   import { Navigation, Footer, ModeIndicator } from '@create-something/canon';
   import { UnifiedSearch } from '@create-something/canon/navigation';
   import PrivacyAnalytics from '$lib/components/PrivacyAnalytics.svelte';
+  import AgencyPerformanceHandoff from '$lib/components/AgencyPerformanceHandoff.svelte';
   import { getAgencyContentAssetAnalyticsMetadata } from '$lib/analytics/content-assets';
   import { getAgencyMarketingExperimentMetadata } from '$lib/analytics/marketing-experiment';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
+  import { PUBLIC_PRODUCT_SEQUENCE, getPublicProduct } from '$lib/data/productFamily';
   import { page } from '$app/stores';
   import { onMount } from 'svelte';
   import { afterNavigate, disableScrollHandling, goto, onNavigate } from '$app/navigation';
   import {
     isAgencyDifyArticlePath,
+    usesRouteOwnedAgencyPerformanceEnding,
     usesCompactAgencyPrivacyPrompt
   } from '$lib/atlas/surface-policy';
+  import { marketingPagePortfolio } from '$lib/data/marketingPages';
 
   let { children, data } = $props();
 
@@ -45,16 +49,33 @@
     });
   });
 
+  // Primary nav intentionally uses plain meaning, not owned product names: a
+  // first-time visitor does not yet know what Map or Control are. The spine is
+  // named in the footer and on /products. See the plain-meaning assertion in
+  // test/public-marketing-copy.test.ts.
   const navLinks = [
     { label: 'How It Works', href: '/services' },
     { label: 'What You Keep', href: '/stack' },
     { label: 'Products', href: '/products' },
     { label: 'Field Reports', href: '/field-reports' }
   ];
+  // Derived from the product family so the footer cannot drift from the source of truth.
+  const spineLinks = PUBLIC_PRODUCT_SEQUENCE.map((id) => {
+    const product = getPublicProduct(id);
+    return { label: product.shortName, href: product.route };
+  });
   const primaryCtaHref = agencyCoreMessaging.startWithWorkflowHref;
   const globalAnalyticsMetadata = $derived(getAgencyGlobalAnalyticsMetadata($page.url.pathname));
   const isDifyArticleRoute = $derived(isAgencyDifyArticlePath($page.url.pathname));
+  const routeOwnsPerformanceEnding = $derived(
+    usesRouteOwnedAgencyPerformanceEnding($page.url.pathname)
+  );
   const useCompactPrivacyPrompt = $derived(usesCompactAgencyPrivacyPrompt($page.url.pathname));
+  const isPublicMarketingRoute = $derived(
+    marketingPagePortfolio.some(
+      (entry) => entry.path === $page.url.pathname && entry.decision !== 'archive'
+    )
+  );
   const footerQuickLinkGroups = [
     {
       title: 'Commercial',
@@ -68,11 +89,15 @@
       ]
     },
     {
+      title: 'Products',
+      ariaLabel: 'Product spine',
+      links: spineLinks
+    },
+    {
       title: 'Tool Stack',
       ariaLabel: 'Workflow tool stack',
       links: [
         { label: 'Workflow Tool Stack', href: '/partners' },
-        { label: 'OpenAI', href: '/stack' },
         { label: 'Cloudflare', href: '/cloudflare' }
       ]
     },
@@ -185,15 +210,16 @@
     {
       id: 'nav-products',
       label: 'Products',
-      description: 'Atlas, Signal, Decision, and Proof surfaces for controlled AI workflows',
+      description: 'Map and Control products for defining and operating delegated workflows',
       href: '/products',
       icon: '📦',
-      keywords: ['portfolio', 'tools', 'integrations', 'product surfaces', 'proof surfaces']
+      keywords: ['portfolio', 'map', 'control', 'workflow products', 'proof surfaces']
     },
     {
       id: 'nav-field-reports',
       label: 'Field Reports',
-      description: 'Measured workflow results, failed gates, evidence, and human decision boundaries',
+      description:
+        'Measured workflow results, failed gates, evidence, and human decision boundaries',
       href: '/field-reports',
       icon: 'FR',
       keywords: ['field reports', 'case studies', 'evidence', 'results', 'proof']
@@ -359,6 +385,10 @@
     {@render children()}
   </main>
 
+  {#if isPublicMarketingRoute && !routeOwnsPerformanceEnding}
+    <AgencyPerformanceHandoff />
+  {/if}
+
   <Footer
     mode="agency"
     showNewsletter={false}
@@ -374,7 +404,7 @@
     visualStyle="performance"
   />
 
-  {#if $page.url.pathname !== '/' && $page.url.pathname !== '/basketball-systems-lab' && !isDifyArticleRoute}
+  {#if !routeOwnsPerformanceEnding && $page.url.pathname !== '/basketball-systems-lab' && !isDifyArticleRoute}
     <ModeIndicator current="agency" />
   {/if}
 </div>

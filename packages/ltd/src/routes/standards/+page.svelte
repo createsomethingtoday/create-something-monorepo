@@ -1,9 +1,11 @@
 <script lang="ts">
 	import {
 		PerformancePageSection,
+		PerformanceNarrativeStage,
 		PerformanceThesisConditions,
 		SEO,
-		type PerformanceCondition
+		type PerformanceCondition,
+		type PerformanceNarrativeScene
 	} from '@create-something/canon';
 
 	const standardReadiness: PerformanceCondition[] = [
@@ -24,6 +26,45 @@
 			title: 'Reviewed',
 			detail: 'Mobile, failure, permission, and recovery states are checked before release.',
 			tone: 'pressure'
+		}
+		];
+
+	const standardsScenes: PerformanceNarrativeScene[] = [
+		{
+			id: 'foundation',
+			label: 'Foundation',
+			summary: 'Universal + platform',
+			title: 'Make the governing boundary explicit.',
+			detail: 'Universal quality criteria and platform conviction establish what must remain true before any property-specific decision.',
+			tone: 'allow',
+			evidence: ['Justification', 'Clarity', 'Honesty', 'Owned boundary', 'Tested exit']
+		},
+		{
+			id: 'interface',
+			label: 'Interface',
+			summary: 'Performance Lab UI',
+			title: 'Put claim, proof, and action in view.',
+			detail: 'The active UI standard removes decorative complexity and keeps readable hierarchy, proof artifacts, and pressured states close together.',
+			tone: 'review',
+			evidence: ['First-screen clarity', 'Proof artifacts', 'Readable hierarchy', 'Restrained visual system']
+		},
+		{
+			id: 'ecosystem',
+			label: 'Properties',
+			summary: 'Research to service',
+			title: 'Translate the canon without diluting it.',
+			detail: 'Research, practice, and service each receive a concrete version of the same standard.',
+			tone: 'neutral',
+			receipts: ['.io research', '.space practice', '.agency delivery']
+		},
+		{
+			id: 'implementation',
+			label: 'Ship',
+			summary: 'Architecture + checklist',
+			title: 'Carry the standard into the implementation.',
+			detail: 'The CSS boundary and evaluation checklist turn the canon into a release decision another operator can inspect.',
+			tone: 'neutral',
+			receipts: ['Canon tokens', 'Layout primitives', 'Pre-ship evaluation']
 		}
 	];
 </script>
@@ -47,6 +88,17 @@
 	ariaLabel="The Canon standards opening"
 />
 
+<PerformanceNarrativeStage
+	id="standards-operating-story"
+	eyebrow="Operational standards"
+	title="Set the rule. Pressure it. Ship it."
+	description="The standards now resolve through four indexed decisions instead of eight disconnected chapters, while every criterion and checklist remains available in context."
+	scenes={standardsScenes}
+	ariaLabel="CREATE SOMETHING operational standards"
+>
+	{#snippet artifact(scene: PerformanceNarrativeScene)}
+		<div class="standards-scene-artifact">
+			{#if scene.id === 'foundation'}
 <PerformanceThesisConditions
 	eyebrow="Operational standard"
 	title="Standards must survive contact."
@@ -164,6 +216,7 @@
 		</div>
 	</div>
 </section>
+			{:else if scene.id === 'interface'}
 
 <!-- Clear Communication UI Standards -->
 <section class="py-16 px-6 border-t border-canon">
@@ -236,6 +289,7 @@
 		</div>
 	</div>
 </section>
+			{:else if scene.id === 'ecosystem'}
 
 <!-- Domain-Specific Standards -->
 <section class="py-16 px-6 border-t border-canon">
@@ -326,6 +380,7 @@
 		</div>
 	</div>
 </section>
+			{:else}
 
 <!-- CSS Architecture Standard -->
 <section class="py-16 px-6 border-t border-canon">
@@ -549,8 +604,17 @@
 		</div>
 	</div>
 </section>
+			{/if}
+		</div>
+	{/snippet}
+</PerformanceNarrativeStage>
 
 <style>
+	.standards-scene-artifact {
+		min-width: 0;
+		overflow: hidden;
+	}
+
 	/* Typography */
 	.text-xs-canon {
 		font-size: var(--text-performance-caption);

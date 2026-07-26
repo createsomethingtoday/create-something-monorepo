@@ -1,0 +1,168 @@
+{
+  "policy_id": "policy.prose-quality.v1",
+  "version": 1,
+  "status": "draft",
+  "owner": "CREATE SOMETHING editorial systems",
+  "target_reader": {
+    "id": "junior-practitioner",
+    "definition": "The least-tenured credible practitioner in the document's actual field. They know basic field concepts but do not know CREATE SOMETHING vocabulary."
+  },
+  "framework_authority": {
+    "drafting": "packages/dotfiles/codex/skills/writing-for-humans/SKILL.md",
+    "review": "packages/dotfiles/codex/skills/target-reader-review/SKILL.md",
+    "revision_voice": ".claude/rules/voice-canon.md"
+  },
+  "operator_contract": [
+    "outcome",
+    "use_when",
+    "prerequisites",
+    "first_action",
+    "expected_result",
+    "recovery",
+    "completion_proof"
+  ],
+  "framework_routing": {
+    "operator_instructions": ["plain_language", "answer_first", "sentence_clarity", "revision"],
+    "reports_and_proposals": ["answer_first", "grouped_supports", "sentence_clarity", "revision"],
+    "arguments": [
+      "existing_conversation",
+      "response",
+      "reasons",
+      "counterargument",
+      "significance"
+    ],
+    "technical_explanations": ["topic_flow", "visible_characters_and_actions", "familiar_to_new"],
+    "optional_enrichment": ["and_but_therefore", "success_check"]
+  },
+  "enforcement": {
+    "changed_files": {
+      "blocking": true,
+      "scope": "introduced deterministic findings",
+      "comparison": "multiset(rule,severity,normalized_excerpt)"
+    },
+    "full_audit": {
+      "blocking": false,
+      "scope": "repository backlog reporting"
+    }
+  },
+  "deterministic_rules": [
+    {
+      "id": "marketing-jargon/cutting-edge",
+      "pattern": "\\bcutting-edge\\b",
+      "flags": "gi",
+      "severity": "error",
+      "suggestion": "Name the specific capability or evidence."
+    },
+    {
+      "id": "marketing-jargon/ai-powered",
+      "pattern": "\\bAI-powered\\b",
+      "flags": "gi",
+      "severity": "error",
+      "suggestion": "Name the model, agent, or workflow and what it does."
+    },
+    {
+      "id": "marketing-jargon/seamless",
+      "pattern": "\\bseamless\\b",
+      "flags": "gi",
+      "severity": "error",
+      "suggestion": "Describe the observed behavior or measured result."
+    }
+  ],
+  "contextual_rules": [
+    {
+      "id": "marketing-jargon/leverage",
+      "pattern": "\\bleverage\\b",
+      "flags": "gi",
+      "severity": "warning",
+      "suggestion": "Use the exact action when leverage is only a vague substitute. Keep the term when it has precise field meaning."
+    },
+    {
+      "id": "marketing-jargon/solutions",
+      "pattern": "\\bsolutions\\b",
+      "flags": "gi",
+      "severity": "warning",
+      "suggestion": "Name the product, service, or workflow when solutions is vague. Keep the term when it names the subject precisely."
+    }
+  ],
+  "configuration_rules": [
+    {
+      "id": "configuration/invalid-ignore-marker",
+      "severity": "error",
+      "suggestion": "Use a balanced prose-ignore-start: <teaching reason> and prose-ignore-end pair."
+    }
+  ],
+  "judgment_signals": {
+    "blocking": false,
+    "rules": [
+      {
+        "key": "longSentence",
+        "id": "readability/long-sentence",
+        "severity": "warning",
+        "maxWords": 25,
+        "suggestion": "Split the sentence or introduce the concrete task before the supporting detail."
+      },
+      {
+        "key": "abstractionDensity",
+        "id": "readability/abstraction-density",
+        "severity": "warning",
+        "minTerms": 4,
+        "terms": [
+          "alignment",
+          "architecture",
+          "autonomy",
+          "enablement",
+          "ecosystem",
+          "framework",
+          "governance",
+          "innovation",
+          "optimization",
+          "orchestration",
+          "strategy",
+          "transformation"
+        ],
+        "suggestion": "Introduce one concrete actor, action, artifact, or consequence before the abstract terms."
+      },
+      {
+        "key": "ownedTermCluster",
+        "id": "readability/owned-term-cluster",
+        "severity": "warning",
+        "minTerms": 3,
+        "terms": [
+          "Atlas",
+          "Signal",
+          "Decision",
+          "Proof",
+          "Policy OS",
+          "Substrate",
+          "MCP",
+          "Database",
+          "Automation",
+          "Judgment"
+        ],
+        "suggestion": "Define the local meaning or show one concrete example before stacking owned terms."
+      }
+    ]
+  },
+  "controlled_owned_terms_by_prefix": {
+    "packages/agency/": ["Atlas", "Signal", "Decision", "Proof"],
+    "packages/io/": ["Signal"],
+    "packages/space/": ["Praxis", "Playground"]
+  },
+  "overlays": {
+    "agency": {
+      "source": "packages/agency/scripts/check-public-copy.mjs#PUBLIC_COPY_RULES",
+      "severity": "error"
+    }
+  },
+  "automatic_scope": {
+    "extensions": [".md", ".mdx", ".svelte"],
+    "excluded_prefixes": [
+      ".claude/rules/",
+      "docs/archive/",
+      "docs/policies/",
+      "packages/dotfiles/codex/skills/",
+      "packages/agency/test/fixtures/",
+      "scripts/test/fixtures/"
+    ]
+  }
+}

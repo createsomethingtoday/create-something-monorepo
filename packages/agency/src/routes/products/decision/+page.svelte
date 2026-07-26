@@ -38,12 +38,12 @@
       points: ['Run', 'Wait', 'Stop', 'Escalate']
     },
     {
-      eyebrow: 'Atlas connection',
+      eyebrow: 'Map connection',
       icon: 'folder',
       title: 'Judgment stays attached to the map',
       detail:
-        'Atlas shows where the Decision sits, which systems are affected, and what Proof must be recorded after the action.',
-      points: [`Composition: ${composition.id}`, 'Hub: Atlas']
+        'Map shows where the Decision sits, which systems are affected, and what Proof must be recorded after the action.',
+      points: [`Composition: ${composition.id}`, 'Hub: Map']
     }
   ];
 
@@ -60,7 +60,7 @@
     },
     {
       icon: 'objects' as const,
-      value: 'Atlas',
+      value: 'Map',
       label: 'The map keeps the owner, system boundary, and downstream impact visible.'
     },
     {
@@ -105,9 +105,9 @@
     {
       eyebrow: 'Map',
       icon: 'folder',
-      title: 'Atlas',
+      title: 'Map',
       detail: 'Show where the judgment sits in the workflow.',
-      href: '/atlas'
+      href: '/map'
     },
     {
       eyebrow: 'Ledger',
@@ -141,16 +141,16 @@
 
   const relatedLinks = [
     { label: 'Signal inbox', href: '/products/signal' },
-    { label: 'Atlas map', href: '/atlas' },
+    { label: 'Map', href: '/map' },
     { label: 'Proof graph', href: '/products/proof' },
     { label: 'Product overview', href: '/products' }
   ];
 </script>
 
 <SEO
-  title="Decision Queue for App Governance | CREATE SOMETHING .agency"
-  description="Decision is the human-in-the-loop queue for app governance: route Signals into review, approval, policy action, stop states, and Proof."
-  keywords="human in the loop decision queue, app governance approvals, policy review queue, workflow decision, Atlas governance"
+  title="Decision Queue | Inside CREATE SOMETHING Control"
+  description="Decision is the human-in-the-loop queue. Each Signal is routed to run, wait for approval, or stop with a reason."
+  keywords="human in the loop decision queue, app governance approvals, policy review queue, workflow decision, workflow control"
   ogImage="/og-image.png"
   propertyName="agency"
   {faqItems}

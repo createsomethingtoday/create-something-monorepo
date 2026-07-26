@@ -1,0 +1,19 @@
+{
+  "schema": "create-something/build-verification-receipt@1",
+  "receiptId": "fixture-verification-uat-001",
+  "releaseId": "release_example_nonprod_001",
+  "handoffId": "handoff_example_nonprod_001",
+  "accountId": "account_example_nonprod",
+  "workspaceAccountId": "workspace_example_nonprod",
+  "environment": "staging",
+  "target": "example-non-production-fixture",
+  "sourceSha": "1111111111111111111111111111111111111111",
+  "deployId": "fixture-deploy-example-001",
+  "handoffReceiptSha256": "83d429c4e37ec2617204632234c5cfff544ad078bdfa150f1dc82cc4b159fd06",
+  "artifactSetSha256": "1465fce95a9920db5f146a6a144967b0d893c5d9c0b0ce36fa9777dbd7e2586c",
+  "kind": "uat",
+  "status": "passed",
+  "command": "fixture verify --environment uat",
+  "completedAt": "2026-07-18T12:20:00.000Z",
+  "evidence": ["fixture://build-release/example-non-production/uat"]
+}

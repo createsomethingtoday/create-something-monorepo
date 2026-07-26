@@ -26,6 +26,7 @@
 		actions?: Snippet;
 		aside?: Snippet;
 		ariaLabel?: string;
+		density?: 'standard' | 'compact';
 	}
 
 	let {
@@ -38,7 +39,8 @@
 		headingLevel = 'h2',
 		actions,
 		aside,
-		ariaLabel = eyebrow
+		ariaLabel = eyebrow,
+		density = 'standard'
 	}: Props = $props();
 </script>
 
@@ -46,6 +48,7 @@
 	class="performance-conversion-handoff"
 	data-state={handoff.state}
 	data-artifact-placement={artifactPlacement}
+	data-density={density}
 	aria-label={ariaLabel}
 >
 	<div class="performance-conversion-handoff__copy">
@@ -96,6 +99,10 @@
 	.performance-conversion-handoff[data-state='ready'] { --handoff-accent: var(--color-performance-growth, #007a4d); }
 	.performance-conversion-handoff[data-state='review'] { --handoff-accent: var(--color-performance-pressure, #e54800); }
 	.performance-conversion-handoff[data-state='stop'] { --handoff-accent: var(--color-performance-risk, #c62026); }
+	.performance-conversion-handoff[data-density='compact'] .performance-conversion-handoff__copy,
+	.performance-conversion-handoff[data-density='compact'] .performance-conversion-handoff__boundary { padding: clamp(1.75rem, 4vw, 3.75rem); }
+	.performance-conversion-handoff[data-density='compact'] .performance-conversion-handoff__copy { min-height: clamp(20rem, 34vw, 30rem); }
+	.performance-conversion-handoff[data-density='compact'] :is(h1, h2) { font-size: clamp(2.75rem, 4.6vw, 4.6rem); }
 
 	.performance-conversion-handoff__copy,
 	.performance-conversion-handoff__boundary { padding: clamp(2rem, 6vw, 6rem); }
@@ -129,6 +136,8 @@
 	.performance-conversion-handoff[data-artifact-placement='full-width'] .performance-conversion-handoff__boundary { grid-area: boundary; align-content: center; }
 	.performance-conversion-handoff[data-artifact-placement='full-width'] .performance-conversion-handoff__artifact { grid-area: artifact; }
 	.performance-conversion-handoff[data-artifact-placement='full-width'] :is(h1, h2) { max-width: 12ch; font-size: clamp(3rem, 5.4vw, 5.5rem); }
+	.performance-conversion-handoff[data-artifact-placement='full-width'][data-density='compact'] .performance-conversion-handoff__copy { padding-block: clamp(2.5rem, 5vw, 4rem); }
+	.performance-conversion-handoff[data-artifact-placement='full-width'][data-density='compact'] :is(h1, h2) { font-size: clamp(2.75rem, 4.6vw, 4.6rem); }
 
 	@media (max-width: 50rem) {
 		.performance-conversion-handoff { grid-template-columns: 1fr; }
@@ -138,5 +147,7 @@
 			grid-template-columns: 1fr;
 		}
 		.performance-conversion-handoff[data-artifact-placement='full-width'] .performance-conversion-handoff__copy { padding-block: clamp(3rem, 12vw, 5rem); }
+		.performance-conversion-handoff[data-artifact-placement='full-width'][data-density='compact'] .performance-conversion-handoff__copy { padding-block: 2.25rem; }
+		.performance-conversion-handoff[data-artifact-placement='full-width'][data-density='compact'] .performance-conversion-handoff__artifact { padding: 0.75rem 0.75rem 1.5rem; }
 	}
 </style>

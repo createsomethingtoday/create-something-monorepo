@@ -5,7 +5,7 @@
 
 <SEO
 	title="Signing In"
-	description="Completing your Auth0 sign-in"
+	description="Continue with CREATE SOMETHING Identity"
 	propertyName="agency"
 	noindex={true}
 />

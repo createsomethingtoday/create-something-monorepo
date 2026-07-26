@@ -3,10 +3,12 @@
     Button,
     PerformanceCardGrid,
     PerformanceConversionHandoff,
+    PerformanceNarrativeStage,
     PerformancePageSection,
     SEO,
     type PerformanceCardItem,
-    type PerformanceCtaItem
+    type PerformanceCtaItem,
+    type PerformanceNarrativeScene
   } from '@create-something/canon';
   import PublicAtlasStoryCanvas from '$lib/components/PublicAtlasStoryCanvas.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
@@ -38,21 +40,21 @@
     {
       eyebrow: '01 Map',
       icon: 'folder',
-      title: 'Workflow Map',
+      title: 'Map',
       detail:
         'Name the workflow, source accounts, decision owner, first action boundary, and evidence needed before delegation.'
     },
     {
-      eyebrow: '02 Pilot',
+      eyebrow: '02 Build',
       icon: 'settings',
-      title: 'Workflow Pilot',
+      title: 'Build',
       detail:
         'Turn one repeated handoff into scoped actions, durable state, receipts, and a runbook only after the safe path is clear.'
     },
     {
       eyebrow: '03 Control',
       icon: 'check',
-      title: 'Ongoing Control',
+      title: 'Control',
       detail:
         'Classify live actions as auto-allowed, approval-needed, or blocked with a reason before the workflow touches risk.'
     }
@@ -165,6 +167,52 @@
     }
   ];
 
+  const stackScenes: PerformanceNarrativeScene[] = [
+    {
+      id: 'path',
+      label: 'Path',
+      summary: 'Map → pilot → control',
+      title: 'The stack should read like a handoff, not a vendor diagram.',
+      detail:
+        'A non-technical team can follow one service path: map the boundary, pilot one safe workflow, then control risky actions only when live work needs it.',
+      tone: 'allow',
+      receipts: ['workflow map', 'controlled pilot', 'operating control']
+    },
+    {
+      id: 'boundary',
+      label: 'Boundary',
+      summary: 'Show what must stop',
+      title: 'The workflow boundary decides what tools are allowed to do.',
+      detail:
+        'Source data, assistive work, human judgment, stop conditions, and the audit trail belong on one operating map.',
+      tone: 'block',
+      evidence: ['allowed routing', 'named authority', 'stop conditions', 'audit trail']
+    },
+    {
+      id: 'ownership',
+      label: 'Ownership',
+      summary: 'Keep the durable assets',
+      title: 'You keep the receipts, not a mystery stack.',
+      detail:
+        'The technical stack can change. The durable asset is the workflow boundary: source accounts, scoped access, allowed actions, stop states, approval owners, runbooks, revocation paths, and evidence.',
+      tone: 'review',
+      receipts: ['workflow map', 'tool contract', 'policy rules', 'runbook', 'operator brief']
+    },
+    {
+      id: 'portability',
+      label: 'Portability',
+      summary: 'Conviction without dependence',
+      title: 'Model-opinionated in practice. Model-portable by design.',
+      detail:
+        'CREATE SOMETHING builds primarily with OpenAI Codex. The durable client asset is data, MCP contracts, harnesses, skills, prompts, policy, evals, receipts, routing, fallback, and recovery—not access to one model. CREATE SOMETHING owns the system. Cloudflare provides infrastructure. OpenAI provides intelligence. Substrate is the owned database and operator layer; it keeps workflow state, policy, and receipts under CREATE SOMETHING control.',
+      tone: 'neutral',
+      actions: [
+        { label: 'Inspect Substrate products', href: '/products' },
+        { label: 'See the Cloudflare runtime', href: '/cloudflare' }
+      ]
+    }
+  ];
+
   const ctaItems: PerformanceCtaItem[] = [
     {
       label: 'Workflow',
@@ -226,82 +274,66 @@
   {/snippet}
 </PerformancePageSection>
 
-<PerformancePageSection
-  variant="white"
-  eyebrow="How the stack becomes a service"
-  title="The stack should read like a handoff, not a vendor diagram."
-  description="The story stays simple for a non-technical team: map the boundary, pilot one safe workflow, then control the risky actions only when live work needs it."
+<PerformanceNarrativeStage
+  id="stack-ownership-story"
+  eyebrow="One ownership story"
+  title="You should be able to leave with everything that matters."
+  description="The stack becomes useful when you can trace the service path and see where work stops. It shows what you keep and what each external platform provides."
+  scenes={stackScenes}
+  ariaLabel="Stack ownership story"
 >
-  {#snippet after()}
-    <PerformanceCardGrid items={journey} columns={3} ariaLabel="Stack service journey" />
+  {#snippet artifact(scene: PerformanceNarrativeScene)}
+    {#if scene.id === 'path'}
+      <PerformanceCardGrid items={journey} columns={3} ariaLabel="Stack service journey" />
+    {:else if scene.id === 'boundary'}
+      <PublicAtlasStoryCanvas
+        starterId="insurance-claims-intake"
+        storyId="stack-insurance-claims-intake-story"
+        eyebrow="Stack boundary canvas"
+        title="The workflow boundary decides what tools are allowed to do."
+        description="This read-only map shows the stack promise in workflow terms. Tools can route and prepare, but anything consequential stops for named authority."
+        compact
+      />
+    {:else if scene.id === 'ownership'}
+      <PerformanceCardGrid
+        items={deliveryArtifacts}
+        columns={3}
+        ariaLabel="Stack delivery artifacts"
+      />
+    {:else}
+      <div class="stack-proof-pair">
+        <section aria-labelledby="platform-conviction-title">
+          <h4 id="platform-conviction-title">Current instrument and portable exit</h4>
+          <PerformanceCardGrid
+            items={platformConviction}
+            columns={3}
+            ariaLabel="Current platform, owned system, and portable exit path"
+          />
+        </section>
+        <section aria-labelledby="stack-roles-title">
+          <h4 id="stack-roles-title">Owned system and platform roles</h4>
+          <PerformanceCardGrid
+            items={stackRoles}
+            columns={3}
+            ariaLabel="Owned Substrate with Cloudflare infrastructure and OpenAI intelligence"
+          />
+        </section>
+      </div>
+    {/if}
   {/snippet}
-</PerformancePageSection>
-
-<PerformancePageSection
-  variant="soft"
-  eyebrow="Boundary canvas"
-  title="A stack boundary becomes useful when it shows what must stop."
-  description="The story canvas turns vendor roles into an operating map: source data, allowed routing, assistive work, human judgment, stop conditions, and the audit trail."
->
-  {#snippet after()}
-    <PublicAtlasStoryCanvas
-      starterId="insurance-claims-intake"
-      storyId="stack-insurance-claims-intake-story"
-      eyebrow="Stack boundary canvas"
-      title="The workflow boundary decides what tools are allowed to do."
-      description="This read-only map shows the stack promise in workflow terms: tools can route and prepare, but payout, denial, fraud, and sensitive decisions stop for named authority."
-      compact
-    />
-  {/snippet}
-</PerformancePageSection>
-
-<PerformancePageSection
-  variant="white"
-  eyebrow="What your team keeps"
-  title="You keep the receipts, not a mystery stack."
-  description="The technical stack can change. The durable asset is the workflow boundary: source accounts, scoped access, allowed actions, stop states, approval owners, runbooks, revocation paths, and evidence."
->
-  {#snippet after()}
-    <PerformanceCardGrid items={deliveryArtifacts} columns={3} ariaLabel="Stack delivery artifacts" />
-  {/snippet}
-</PerformancePageSection>
-
-<PerformancePageSection
-  variant="soft"
-  eyebrow="Platform conviction"
-  title="Model-opinionated in practice. Model-portable by design."
-  description="CREATE SOMETHING builds primarily with OpenAI Codex. The durable client asset is data, MCP contracts, harnesses, skills, prompts, policy, evals, receipts, routing, fallback, and recovery—not access to one model."
->
-  {#snippet after()}
-    <PerformanceCardGrid
-      items={platformConviction}
-      columns={3}
-      ariaLabel="Current platform, owned system, and portable exit path"
-    />
-  {/snippet}
-</PerformancePageSection>
-
-<PerformancePageSection
-  variant="white"
-  eyebrow="Owned system and primary runtime"
-  title="CREATE SOMETHING owns the system. Two external platforms earn one role each."
-  description="CREATE SOMETHING owns the system. Cloudflare provides infrastructure. OpenAI provides intelligence. Substrate is the owned database and operator layer; it keeps workflow state, policy, and receipts under CREATE SOMETHING control."
->
-  {#snippet after()}
-    <PerformanceCardGrid
-      items={stackRoles}
-      columns={3}
-      ariaLabel="Owned Substrate with Cloudflare infrastructure and OpenAI intelligence"
-    />
-  {/snippet}
-</PerformancePageSection>
+</PerformanceNarrativeStage>
 
 <PerformanceConversionHandoff
   eyebrow="Start with the workflow"
   title="Bring the workflow, the accounts, and the decision owner."
-  description="CREATE SOMETHING will map the stack boundary, define the first controlled path, identify what can be assigned, and show what stays visible to the operator before implementation starts."
+  description="CREATE SOMETHING maps the stack boundary and defines the first controlled path. Before implementation starts, you can see what tools may do and what stays visible."
   steps={ctaItems}
-  handoff={{ owner: 'Workflow owner', authority: 'Owned stack boundary', proof: 'Controlled path + decision states', state: 'review' }}
+  handoff={{
+    owner: 'Workflow owner',
+    authority: 'Owned stack boundary',
+    proof: 'Controlled path + decision states',
+    state: 'review'
+  }}
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.selfMapHref}>
@@ -312,3 +344,22 @@
     </Button>
   {/snippet}
 </PerformanceConversionHandoff>
+
+<style>
+  .stack-proof-pair {
+    display: grid;
+    gap: clamp(1.25rem, 3vw, 2.5rem);
+  }
+
+  .stack-proof-pair section {
+    display: grid;
+    gap: 0.8rem;
+  }
+
+  .stack-proof-pair h4 {
+    margin: 0;
+    font-family: var(--font-performance-mono);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+  }
+</style>

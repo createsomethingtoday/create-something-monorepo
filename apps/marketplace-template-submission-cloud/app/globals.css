@@ -1295,45 +1295,6 @@ select {
   font-size: 0.875rem;
 }
 
-.submission-select-field {
-  position: relative;
-}
-
-.submission-select-field::after {
-  content: '';
-  position: absolute;
-  right: 0.875rem;
-  top: calc(50% + 1.4rem);
-  margin-top: -0.25rem;
-  width: 0.5rem;
-  height: 0.5rem;
-  border-right: 2px solid var(--_apps---colors--muted-foreground, #7d797a);
-  border-bottom: 2px solid var(--_apps---colors--muted-foreground, #7d797a);
-  transform: rotate(45deg);
-  pointer-events: none;
-}
-
-.submission-select-field .w-select {
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  background-image: none;
-  padding-right: 2.5rem;
-  cursor: pointer;
-  transition:
-    border-color 0.15s ease,
-    box-shadow 0.15s ease;
-}
-
-.submission-select-field:hover .w-select {
-  border-color: var(--_apps---colors--primary, #146ef5);
-}
-
-.submission-select-field .w-select:focus {
-  border-color: var(--_apps---colors--primary, #146ef5);
-  box-shadow: 0 0 0 3px rgba(20, 110, 245, 0.15);
-}
-
 .submission-status {
   width: 100%;
   padding: 0.875rem 1rem;

@@ -282,7 +282,7 @@
       "package_path": "packages/halfdozen-blondish-sync-mcp",
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 8,
-      "setupNotes": "Worker-side bearer secret is MCP_API_KEY. Optional Langfuse tracing uses LANGFUSE_SECRET_KEY with sanitized tool counts and drift summaries; validate with pnpm langfuse:eval:mcp:halfdozen-blondish-sync:local. Use this MCP for bounded operator reconciliation: source-owned ticket data to HD and mapped HD status back to source. Prefer scoped repair tools before broad reconcile; use Notion webhooks plus a persisted sync index for future high-volume incremental sync."
+      "setupNotes": "Worker-side bearer secret is MCP_API_KEY for Hub and existing Notion clients. Claude Enterprise connects directly through CREATE SOMETHING Identity OAuth discovery with resource-bound cracked-sync:read/write scopes and an exact OAUTH_ALLOWED_EMAILS allowlist. Optional Langfuse tracing uses LANGFUSE_SECRET_KEY with sanitized tool counts and drift summaries; validate with pnpm langfuse:eval:mcp:halfdozen-blondish-sync:local. Use this MCP for bounded operator reconciliation: source-owned ticket data to HD and mapped HD status back to source. Prefer scoped repair tools before broad reconcile; use Notion webhooks plus a persisted sync index for future high-volume incremental sync."
     },
     "halfdozen-lightswitch-sync-mcp": {
       "transport": "http",

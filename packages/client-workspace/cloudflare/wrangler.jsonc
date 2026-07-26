@@ -1,0 +1,60 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "client-workspace",
+  "account_id": "9645bd52e640b8a4f40a3a55ff1dd75a",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-07-15",
+  "compatibility_flags": ["nodejs_compat"],
+  "routes": [
+    {
+      "pattern": "workspace.createsomething.io",
+      "custom_domain": true
+    }
+  ],
+  "observability": {
+    "enabled": true
+  },
+  "containers": [
+    {
+      "class_name": "Sandbox",
+      "image": "../Dockerfile",
+      "instance_type": "standard-1",
+      "max_instances": 1
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "Sandbox",
+        "class_name": "Sandbox"
+      }
+    ]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "client-workspace",
+      "database_id": "3000e7d4-99e9-4103-9a9e-536ad172f16c",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "SNAPSHOTS",
+      "bucket_name": "client-workspace-private"
+    }
+  ],
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["Sandbox"]
+    }
+  ],
+  "vars": {
+    "IDENTITY_API_URL": "https://id.createsomething.space",
+    "CS_IDENTITY_ISSUER": "https://id.createsomething.space",
+    "CS_IDENTITY_JWKS_URL": "https://id.createsomething.space/.well-known/jwks.json",
+    "CS_IDENTITY_AUDIENCE": "client-workspace",
+    "CS_AUTH_ALLOWED_EMAILS": "micah@createsomething.io"
+  }
+}

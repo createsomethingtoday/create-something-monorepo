@@ -1,6 +1,12 @@
 <script lang="ts">
-  import { SEO } from '@create-something/canon';
-  import { BlurFade, ShimmerButton } from '@create-something/canon/magicui';
+  import {
+    Button,
+    PerformanceConversionHandoff,
+    PerformanceNarrativeStage,
+    SEO,
+    type PerformanceNarrativeScene
+  } from '@create-something/canon';
+  import { BlurFade } from '@create-something/canon/magicui';
   import PublicAtlasStoryCanvas from '$lib/components/PublicAtlasStoryCanvas.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
@@ -63,6 +69,48 @@
         'Deliver the first controlled connection, runbook, operating notes, and operator brief surface.'
     }
   ];
+
+  const methodologyScenes: PerformanceNarrativeScene[] = [
+    {
+      id: 'principle',
+      label: 'Principle',
+      summary: 'Subtract before control',
+      title: 'The Core Principle',
+      detail:
+        'Most automation strategies fail because they add more tools, exceptions, and hidden handoffs than the operator can monitor. Remove what does not belong first, then control the records, actions, judgment states, and receipts that remain.',
+      tone: 'block',
+      receipts: ['less duplication', 'less excess', 'less disconnection']
+    },
+    {
+      id: 'checks',
+      label: 'Checks',
+      summary: 'Unify → remove → reconnect',
+      title: 'The Three Checks',
+      detail:
+        'One principle applies at three scales so the workflow becomes simpler before it becomes faster.',
+      tone: 'review',
+      evidence: ['DRY / Implementation', 'Rams / Evidence', 'Heidegger / System']
+    },
+    {
+      id: 'process',
+      label: 'Process',
+      summary: 'Map → subtract → classify → ship',
+      title: 'The Process Applied',
+      detail:
+        'The Triad becomes a calm operating path by naming the burden, removing noise, classifying decisions, and shipping the smallest operator surface.',
+      tone: 'allow'
+    },
+    {
+      id: 'map',
+      label: 'Map',
+      summary: 'Make the boundary visible',
+      title: 'The method as a map',
+      detail:
+        'The same canvas language shows what can run, what waits for judgment, what stops, and where proof lands before a workflow earns more authority.',
+      tone: 'neutral',
+      actions: [{ label: 'Map one workflow', href: agencyCoreMessaging.selfMapHref }]
+    }
+  ];
 </script>
 
 <SEO
@@ -98,12 +146,17 @@
     </div>
   </section>
 
-  <!-- The Core Principle -->
-  <section class="principle-section">
-    <div class="section-container">
-      <BlurFade delay={0.1}>
-        <div class="principle-card">
-          <h2 class="principle-heading">The Core Principle</h2>
+  <PerformanceNarrativeStage
+    id="methodology-argument"
+    eyebrow="One subtractive method"
+    title="Remove what obscures, then test what survives."
+    description="The method is one continuous argument: simplify the system, test each surviving part against the whole, turn the result into an operating path, and make its authority boundary visible."
+    scenes={methodologyScenes}
+    ariaLabel="Subtractive methodology argument"
+  >
+    {#snippet artifact(scene: PerformanceNarrativeScene)}
+      {#if scene.id === 'principle'}
+        <div class="principle-card methodology-artifact">
           <p class="principle-body">
             Most automation strategies fail because they add more tools, more exceptions, and more
             hidden handoffs than the operator can actually monitor. The Subtractive Triad inverts
@@ -111,25 +164,9 @@
             remains: records, actions, judgment states, and receipts.
           </p>
         </div>
-      </BlurFade>
-    </div>
-  </section>
-
-  <!-- The Three Disciplines -->
-  <section class="disciplines-section">
-    <div class="section-container">
-      <BlurFade delay={0.1}>
-        <h2 class="section-heading">The Three Checks</h2>
-      </BlurFade>
-      <BlurFade delay={0.15}>
-        <p class="section-subhead">
-          One principle applied at three scales so the workflow gets simpler before it gets faster.
-        </p>
-      </BlurFade>
-
-      <div class="disciplines-stack">
-        {#each disciplines as discipline, i}
-          <BlurFade delay={0.2 + i * 0.1}>
+      {:else if scene.id === 'checks'}
+        <div class="disciplines-stack methodology-artifact">
+          {#each disciplines as discipline}
             <div class="discipline-card">
               <div class="discipline-header">
                 <div class="discipline-level">
@@ -139,18 +176,17 @@
                 <div class="discipline-meta">
                   <h3 class="discipline-name">{discipline.name}</h3>
                   <div class="discipline-action">
-                    <span class="action-label">Action:</span>
-                    <span class="action-value">{discipline.action}</span>
+                    <span class="action-label">Action:</span><span class="action-value"
+                      >{discipline.action}</span
+                    >
                   </div>
                 </div>
               </div>
-
               <div class="discipline-question">
-                <span class="question-mark">"</span>
-                {discipline.question}
-                <span class="question-mark">"</span>
+                <span class="question-mark">"</span>{discipline.question}<span class="question-mark"
+                  >"</span
+                >
               </div>
-
               <div class="discipline-body">
                 <p class="discipline-description">{discipline.description}</p>
                 <div class="discipline-outcome">
@@ -159,103 +195,52 @@
                 </div>
               </div>
             </div>
-          </BlurFade>
-        {/each}
-      </div>
-    </div>
-  </section>
-
-  <!-- The Process Applied -->
-  <section class="process-section">
-    <div class="section-container">
-      <BlurFade delay={0.1}>
-        <h2 class="section-heading">The Process Applied</h2>
-      </BlurFade>
-      <BlurFade delay={0.15}>
-        <p class="section-subhead">
-          How the Triad becomes a calm workflow path, from workflow map to control layer.
-        </p>
-      </BlurFade>
-
-      <div class="phases-grid">
-        {#each phases as phase, i}
-          <BlurFade delay={0.2 + i * 0.08}>
+          {/each}
+        </div>
+      {:else if scene.id === 'process'}
+        <div class="phases-grid methodology-artifact">
+          {#each phases as phase, i}
             <div class="phase-card">
               <div class="phase-weeks">{phase.weeks}</div>
               <h3 class="phase-name">{phase.name}</h3>
               <p class="phase-description">{phase.description}</p>
               {#if i < phases.length - 1}
-                <div class="phase-connector">
-                  <svg
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                  >
-                    <path
-                      d="M5 12h14M12 5l7 7-7 7"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                  </svg>
-                </div>
+                <div class="phase-connector" aria-hidden="true">→</div>
               {/if}
             </div>
-          </BlurFade>
-        {/each}
-      </div>
-    </div>
-  </section>
-
-  <!-- Method Visualized -->
-  <section class="method-canvas-section">
-    <div class="section-container">
-      <BlurFade delay={0.1}>
-        <h2 class="section-heading">The method as a map</h2>
-      </BlurFade>
-      <BlurFade delay={0.15}>
-        <p class="section-subhead">
-          The same canvas language explains what can run, what waits for judgment, what stops, and
-          where proof lands before a workflow earns more authority.
-        </p>
-      </BlurFade>
-      <BlurFade delay={0.2}>
-        <PublicAtlasStoryCanvas
-          starterId="revops-lead-handoff"
-          storyId="methodology-revops-lead-handoff-story"
-          eyebrow="Method canvas"
-          title="A workflow becomes trustworthy when the boundary is visible."
-          description="This is the visual grammar behind the service: one owner, one workflow artifact, bounded automation, human judgment, a stop rule, and an inspection surface."
-          compact
-        />
-      </BlurFade>
-    </div>
-  </section>
-
-  <!-- CTA -->
-  <section class="cta-section">
-    <div class="section-container">
-      <BlurFade delay={0}>
-        <h2 class="cta-heading">Ready to make the workflow quieter?</h2>
-      </BlurFade>
-      <BlurFade delay={0.1}>
-        <p class="cta-subtext">
-          Every project starts with this operating model. We remove what does not belong, then ship
-          the smallest controlled path that lets the operator stop watching everything.
-        </p>
-      </BlurFade>
-      <BlurFade delay={0.2}>
-        <div class="cta-buttons">
-          <ShimmerButton href="/book">
-            {agencyCoreMessaging.bookMappingSessionLabel}
-          </ShimmerButton>
-          <a href="/services" class="cta-secondary"> How I work → </a>
+          {/each}
         </div>
-      </BlurFade>
-    </div>
-  </section>
+      {:else}
+        <div class="methodology-artifact methodology-map-artifact">
+          <PublicAtlasStoryCanvas
+            starterId="revops-lead-handoff"
+            storyId="methodology-revops-lead-handoff-story"
+            eyebrow="Method canvas"
+            title="A workflow becomes trustworthy when the boundary is visible."
+            description="One owner, one workflow artifact, and one stop rule. Automation stays inside that boundary, and every run leaves something you can inspect."
+            compact
+          />
+        </div>
+      {/if}
+    {/snippet}
+  </PerformanceNarrativeStage>
+
+  <PerformanceConversionHandoff
+    eyebrow="Apply the method"
+    title="Ready to make the workflow quieter?"
+    description="Every project starts with this operating model. We remove what does not belong, then ship the smallest controlled path that lets the operator stop watching everything."
+    handoff={{
+      owner: 'Workflow owner',
+      authority: 'One named handoff',
+      proof: 'Map + subtractive delivery plan',
+      state: 'ready'
+    }}
+  >
+    {#snippet actions()}
+      <Button href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</Button>
+      <Button href="/services" variant="secondary">How I work</Button>
+    {/snippet}
+  </PerformanceConversionHandoff>
 </main>
 
 <style>
@@ -271,32 +256,6 @@
     --color-performance-bg-surface: var(--color-performance-panel, #ffffff);
     --color-performance-bg-subtle: var(--color-performance-paper, #f3f3f0);
     --color-performance-border-emphasis: var(--color-performance-line, #d7d7d2);
-  }
-
-  .section-container {
-    max-width: var(--content-width-xl);
-    margin: 0 auto;
-    padding: 0 var(--container-padding, 1.5rem);
-  }
-
-  .section-heading {
-    font-size: var(--text-performance-h1);
-    font-weight: var(--font-performance-semibold);
-    color: var(--color-performance-fg-primary);
-    text-align: center;
-    margin-bottom: var(--space-3, 0.75rem);
-    letter-spacing: var(--tracking-performance-tight, -0.015em);
-  }
-
-  .section-subhead {
-    font-size: var(--text-performance-body);
-    color: var(--color-performance-fg-secondary);
-    text-align: center;
-    margin-bottom: var(--space-8, 3rem);
-    max-width: 40rem;
-    margin-left: auto;
-    margin-right: auto;
-    line-height: var(--leading-performance-relaxed);
   }
 
   /* ─── Hero ─── */
@@ -351,11 +310,6 @@
     line-height: var(--leading-performance-relaxed);
   }
 
-  /* ─── Core Principle ─── */
-  .principle-section {
-    padding: var(--section-padding, 6rem) var(--container-padding, 1.5rem);
-  }
-
   .principle-card {
     max-width: 44rem;
     margin: 0 auto;
@@ -366,23 +320,15 @@
     text-align: center;
   }
 
-  .principle-heading {
-    font-size: var(--text-performance-h2);
-    font-weight: var(--font-performance-semibold);
-    color: var(--color-performance-fg-primary);
-    margin-bottom: var(--space-5, 1.5rem);
-    letter-spacing: var(--tracking-performance-tight, -0.015em);
+  .methodology-map-artifact {
+    min-width: 0;
+    overflow: hidden;
   }
 
   .principle-body {
     font-size: var(--text-performance-body-lg);
     color: var(--color-performance-fg-secondary);
     line-height: var(--leading-performance-relaxed);
-  }
-
-  /* ─── Three Disciplines ─── */
-  .disciplines-section {
-    padding: var(--section-padding, 6rem) var(--container-padding, 1.5rem);
   }
 
   .disciplines-stack {
@@ -525,11 +471,6 @@
     font-weight: var(--font-performance-medium);
   }
 
-  /* ─── Process ─── */
-  .process-section {
-    padding: var(--section-padding, 6rem) var(--container-padding, 1.5rem);
-  }
-
   .phases-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -595,55 +536,6 @@
     }
   }
 
-  .method-canvas-section {
-    padding: var(--section-padding, 6rem) var(--container-padding, 1.5rem);
-  }
-
-  /* ─── CTA ─── */
-  .cta-section {
-    padding: var(--section-padding, 6rem) var(--container-padding, 1.5rem);
-    text-align: center;
-  }
-
-  .cta-heading {
-    font-size: var(--text-performance-h1);
-    font-weight: var(--font-performance-semibold);
-    color: var(--color-performance-fg-primary);
-    margin-bottom: var(--space-3, 0.75rem);
-    letter-spacing: var(--tracking-performance-tight, -0.015em);
-  }
-
-  .cta-subtext {
-    font-size: var(--text-performance-body-lg);
-    color: var(--color-performance-fg-secondary);
-    margin-bottom: var(--space-6, 2rem);
-    max-width: 36rem;
-    margin-left: auto;
-    margin-right: auto;
-    line-height: var(--leading-performance-relaxed);
-  }
-
-  .cta-buttons {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--space-4, 1rem);
-  }
-
-  .cta-secondary {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: var(--text-performance-body-sm);
-    font-weight: var(--font-performance-semibold);
-    color: var(--color-performance-fg-secondary);
-    transition: color var(--duration-performance-standard) var(--ease-performance-standard);
-  }
-
-  .cta-secondary:hover {
-    color: var(--color-performance-fg-primary);
-  }
-
   /* ─── Responsive ─── */
   @media (max-width: 1024px) {
     .phases-grid {
@@ -678,15 +570,6 @@
 
     .principle-card {
       padding: var(--space-6, 2rem) var(--space-5, 1.5rem);
-    }
-
-    /* Mobile section padding */
-    .principle-section,
-    .disciplines-section,
-    .process-section,
-    .method-canvas-section,
-    .cta-section {
-      padding: var(--layout-3, 4rem) var(--container-padding, 1.5rem);
     }
   }
 </style>

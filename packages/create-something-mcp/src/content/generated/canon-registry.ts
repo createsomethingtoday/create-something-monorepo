@@ -842,7 +842,7 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
       "name": "PropertyFunnel",
       "kind": "component",
       "maturity": "stable",
-      "description": "Property conversion funnel primitive for routing visitors from property context to the next owned action.",
+      "description": "Intent-aware property funnel for routing visitors through Canon, Research, School, Workbench, and Build without forcing cold traffic into booking.",
       "ownerPackage": "@create-something/canon",
       "sourcePath": "packages/canon/src/lib/components/PropertyFunnel.svelte",
       "importPath": "@create-something/canon/components",
@@ -866,9 +866,9 @@ export const CANON_REGISTRY_MANIFEST: CanonRegistryManifest = {
         "component.conversion-sticky-cta"
       ],
       "contract": {
-        "accessibility": "Funnels must expose current property, offer, qualifying context, primary action, secondary action, and dismissal state.",
-        "evidence": "Funnel data must preserve property, audience segment, offer, destination, stage, proof reference, and conversion event.",
-        "extension": "Keep stable while funnel stage policy, offer schema, analytics boundaries, and cross-property handoff stay documented."
+        "accessibility": "Funnels must expose the current property role, all five property jobs, and distinct local, next-capability, practice, or qualified booking actions.",
+        "evidence": "Funnel handoffs must preserve source property, bounded intent, stage, lane, destination, consent-gated journey identifier, and conversion event.",
+        "extension": "Keep stable while the five property roles, booking boundary, analytics consent, and cross-property journey contract stay documented."
       }
     },
     {

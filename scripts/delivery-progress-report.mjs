@@ -182,6 +182,21 @@ function validate(agent, projects) {
   }
 
   for (const project of projects) {
+    const buildRelease = project.buildReleasePackage;
+    if (!buildRelease) {
+      errors.push(`${project.slug}: missing buildReleasePackage readiness declaration`);
+    } else if (buildRelease.status === 'not_configured') {
+      if (buildRelease.manifestPath !== null) {
+        errors.push(`${project.slug}: not_configured build release must not reference a manifest`);
+      }
+    } else if (buildRelease.status === 'manifest_recorded') {
+      if (!buildRelease.manifestPath || !existsSync(join(ROOT, buildRelease.manifestPath))) {
+        errors.push(`${project.slug}: recorded build release manifest is missing`);
+      }
+    } else {
+      errors.push(`${project.slug}: unknown build release status ${buildRelease.status}`);
+    }
+
     for (const evidence of evidenceStatus(project)) {
       if (!evidence.exists) {
         errors.push(`${project.slug}: missing evidence path ${evidence.path}`);
@@ -204,7 +219,8 @@ function projectRows(projects, outputPath) {
     const client = project.deliveryPartner
       ? `${project.client} via ${project.deliveryPartner}`
       : project.client;
-    return `| ${project.title} | ${client} | ${project.audience ?? 'operator'} | ${project.components.length} | ${missingEvidence} | ${image2.state} | ${updateLink} |`;
+    const buildRelease = project.buildReleasePackage?.status ?? 'not_declared';
+    return `| ${project.title} | ${client} | ${project.audience ?? 'operator'} | ${project.components.length} | ${missingEvidence} | ${buildRelease} | ${image2.state} | ${updateLink} |`;
   });
 }
 
@@ -223,8 +239,8 @@ function renderReport({ agent, projects, outputPath, date }) {
     '',
     '## Project Status',
     '',
-    '| Project | Client | Audience | Components | Missing Evidence | Image 2 | Latest Update |',
-    '| --- | --- | --- | ---: | ---: | --- | --- |',
+    '| Project | Client | Audience | Components | Missing Evidence | Build Release | Image 2 | Latest Update |',
+    '| --- | --- | --- | ---: | ---: | --- | --- | --- |',
     ...projectRows(projects, outputPath),
     '',
     '## Automatic Actions Allowed',

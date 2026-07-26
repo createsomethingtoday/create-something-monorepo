@@ -1,7 +1,8 @@
 {
   "policy_id": "policy.auth0-subject-rebind-governance.v1",
   "version": 1,
-  "status": "draft",
+  "status": "deprecated",
+  "superseded_by": "policy.identity-subject-rebind-governance.v1",
   "identity_provider": "auth0",
   "incident_type": "subject_rebind_after_delete_or_recreate",
   "rebind_requirements": {

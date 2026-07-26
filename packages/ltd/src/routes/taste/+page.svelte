@@ -6,11 +6,13 @@
     PerformanceCardGrid,
     PerformanceConversionHandoff,
     PerformanceMetadataRail,
+    PerformanceNarrativeStage,
     PerformancePageSection,
     SEO,
     type PerformanceCardItem,
     type PerformanceCtaItem,
-    type PerformanceMetadataGroup
+    type PerformanceMetadataGroup,
+    type PerformanceNarrativeScene
   } from '@create-something/canon';
 
   let { data }: { data: PageData } = $props();
@@ -172,7 +174,7 @@
       icon: 'folder',
       title: 'Gallery informs proof',
       detail: '/taste reads synced D1 examples and resources from the arena-taste corpus.',
-      href: '#source-channels'
+      href: '#taste-operating-story-sources'
     },
     {
       eyebrow: 'Context',
@@ -261,6 +263,45 @@
       detail: 'Apply the taste system to web, product, content, and AI-assisted delivery.'
     }
   ];
+
+  const tasteScenes: PerformanceNarrativeScene[] = [
+    {
+      id: 'system',
+      label: 'System',
+      summary: 'Corpus to correction',
+      title: 'Turn curation into an operating standard.',
+      detail: 'Follow the corpus through the commercial deliverable, the current evidence boundary, and the Performance Lab correction loop.',
+      tone: 'allow',
+      evidence: ['Reference corpus', 'Agent context', 'Reviewed corrections']
+    },
+    {
+      id: 'sources',
+      label: 'Sources',
+      summary: 'Primary + external',
+      title: 'Inspect where the judgment comes from.',
+      detail: 'The source channels keep the system grounded in human-curated material rather than unexplained preference.',
+      tone: 'review',
+      receipts: ['CREATE SOMETHING channels', 'External discovery channels']
+    },
+    {
+      id: 'references',
+      label: 'References',
+      summary: 'Images + resources',
+      title: 'Study the complete corpus in context.',
+      detail: 'Visual examples and supporting resources remain directly inspectable without making every reference compete for the first page view.',
+      tone: 'neutral',
+      receipts: ['Curated images', 'Links', 'Source metadata']
+    },
+    {
+      id: 'principles',
+      label: 'Principles',
+      summary: 'Derived judgment',
+      title: 'Name what the corpus teaches.',
+      detail: 'The final scene translates references into reusable decisions about space, color, typography, and motion.',
+      tone: 'neutral',
+      evidence: ['Negative space', 'Monochrome first', 'Typography as structure', 'Purposeful motion']
+    }
+  ];
 </script>
 
 <SEO
@@ -285,7 +326,7 @@
 >
   {#snippet actions()}
     <Button href="/taste/insights">Inspect Pattern</Button>
-    <Button href="#source-channels" variant="secondary">View Sources</Button>
+    <Button href="#taste-operating-story-sources" variant="secondary">View Sources</Button>
   {/snippet}
 
   {#snippet aside()}
@@ -300,6 +341,17 @@
   {/snippet}
 </PerformancePageSection>
 
+<PerformanceNarrativeStage
+  id="taste-operating-story"
+  eyebrow="Taste system"
+  title="Collect. Inspect. Translate."
+  description="The corpus, its provenance, its references, and its derived principles now form one focused operating surface instead of eight competing page chapters."
+  scenes={tasteScenes}
+  ariaLabel="Taste system evidence path"
+>
+  {#snippet artifact(scene: PerformanceNarrativeScene)}
+    <div class="taste-scene-artifact">
+      {#if scene.id === 'system'}
 <PerformancePageSection
   id="taste-system"
   variant="white"
@@ -310,7 +362,7 @@
 >
   {#snippet actions()}
     <Button href="https://createsomething.agency">Build This For Your Product</Button>
-    <Button href="#source-channels" variant="secondary">Inspect The Corpus</Button>
+    <Button href="#taste-operating-story-sources" variant="secondary">Inspect The Corpus</Button>
   {/snippet}
 
   {#snippet aside()}
@@ -402,6 +454,8 @@
   {/snippet}
 </PerformancePageSection>
 
+      {:else if scene.id === 'sources'}
+
 <!-- Source Channels -->
 <section class="channels-section" id="source-channels">
   <div class="max-w-7xl mx-auto px-6">
@@ -430,6 +484,8 @@
     </div>
   </div>
 </section>
+
+      {:else if scene.id === 'references'}
 
 <!-- Visual Examples Gallery -->
 {#if data.examples && data.examples.length > 0}
@@ -501,6 +557,8 @@
   </section>
 {/if}
 
+      {:else}
+
 <PerformancePageSection
   variant="soft"
   eyebrow="Derived principles"
@@ -516,6 +574,11 @@
     />
   {/snippet}
 </PerformancePageSection>
+
+      {/if}
+    </div>
+  {/snippet}
+</PerformanceNarrativeStage>
 
 <PerformanceConversionHandoff
   eyebrow="Taste system sprint"
@@ -542,6 +605,11 @@
 {/if}
 
 <style>
+  .taste-scene-artifact {
+    min-width: 0;
+    overflow: hidden;
+  }
+
   /* Channels */
   .channels-section {
     padding: var(--space-performance-lg) 0;

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 import {
@@ -18,6 +19,32 @@ import {
   applyReviewerAuthEmailAliases,
   parseReviewerDirectory,
 } from '../src/reviewer-directory.js';
+
+test('production config trusts the signed Webflow-owned wf.app Access boundary', () => {
+  const wranglerConfig = readFileSync(new URL('../worker/wrangler.toml', import.meta.url), 'utf8');
+  assert.match(wranglerConfig, /CF_ACCESS_TEAM_DOMAIN = "https:\/\/webflow\.cloudflareaccess\.com"/);
+  assert.match(wranglerConfig, /CF_ACCESS_AUD = "3b4a38c7c99ec7127bcbb99d9c8aae7b0011a51370bff31b7085385e1a2807ba"/);
+});
+
+test('dev config is a separate Micah-only read-only Worker without Webflow Access', () => {
+  const wranglerConfig = readFileSync(new URL('../worker/wrangler.toml', import.meta.url), 'utf8');
+  const devConfig = wranglerConfig.split('[env.dev]')[1];
+
+  assert.ok(devConfig, 'expected a named Wrangler dev environment');
+  assert.match(devConfig, /name = "webflow-template-review-mcp-dev"/);
+  assert.match(devConfig, /preview_urls = false/);
+  assert.match(devConfig, /TEMPLATE_REVIEW_ENVIRONMENT = "development"/);
+  assert.match(devConfig, /TEMPLATE_REVIEW_FORCE_READ_ONLY = "true"/);
+  assert.match(devConfig, /OAUTH_ALLOWED_EMAILS = "micah@webflow\.com,micah@createsomething\.io"/);
+  assert.match(devConfig, /AIRTABLE_BASE_ID = "appMoIgXMTTTNIc3p"/);
+  assert.match(devConfig, /CF_ACCESS_TEAM_DOMAIN = ""/);
+  assert.match(devConfig, /CF_ACCESS_AUD = ""/);
+  assert.doesNotMatch(devConfig, /https:\/\/webflow\.cloudflareaccess\.com/);
+  assert.doesNotMatch(devConfig, /3b4a38c7c99ec7127bcbb99d9c8aae7b0011a51370bff31b7085385e1a2807ba/);
+  assert.match(devConfig, /database_name = "cs-telemetry-template-review-dev"/);
+  assert.doesNotMatch(devConfig, /database_name = "cs-telemetry"(?:\r?\n|$)/);
+  assert.match(devConfig, /class_name = "WebflowTemplateReviewMCP"/);
+});
 
 const TEAM_DOMAIN = 'https://create-something.cloudflareaccess.com';
 const POLICY_AUD = 'template-review-access-audience';

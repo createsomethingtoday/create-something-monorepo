@@ -1,14 +1,19 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import type { PageData } from './$types';
-  import { glossary, progressionPhases, sessionBlocks } from '$lib/data.js';
+  import { progressionPhases, sessionBlocks } from '$lib/data.js';
   import type { GuideOutput } from '$lib/guide.js';
   import type { WorkspaceCommand } from '$lib/workspace-api.js';
+  import FilmTrafficCourt from '$lib/FilmTrafficCourt.svelte';
+  import GuardInsightCourt from '$lib/GuardInsightCourt.svelte';
+  import SharedLanguageLibrary from '$lib/SharedLanguageLibrary.svelte';
+  import { applyFilmCorrections, resolveFilmTrafficAt, summarizeFilmTargetCoverage, type FilmMovementMode } from '$lib/film.js';
   import {
     createInitialState,
     artifactsForSelected,
     engagementsForSelected,
     emptyReceipt,
+    latestFilmAnalysisForPlayer,
     receiptsForSelected,
     validateReceipt,
     validateArtifact,
@@ -23,29 +28,20 @@
 
   let { data }: { data: PageData } = $props();
 
-  type View = 'dashboard' | 'guide' | 'plan' | 'language' | 'reads' | 'receipt' | 'progress' | 'players';
+  type View = 'dashboard' | 'film' | 'guide' | 'plan' | 'language' | 'reads' | 'receipt' | 'progress' | 'players';
   const views: { key: View; label: string }[] = [
-    { key: 'dashboard', label: 'Today' }, { key: 'guide', label: 'Agent + evidence' }, { key: 'plan', label: 'Session plan' },
+    { key: 'dashboard', label: 'Today' }, { key: 'film', label: 'Film trace' }, { key: 'guide', label: 'Agent + evidence' }, { key: 'plan', label: 'Session plan' },
     { key: 'language', label: 'Shared language' }, { key: 'reads', label: 'Court reads' },
     { key: 'receipt', label: 'Receipt' }, { key: 'progress', label: 'Progression' },
     { key: 'players', label: 'Players + data' }
   ];
   const evidenceLabels: Record<EvidenceSignal, string> = { scan: 'Scan', angle: 'Angle + pace', security: 'Ball security', finish: 'Finish / stop', explain: 'Read + explain' };
-  const readAnswers = {
-    none: ['No help', 'Finish from balance. The rim is the first answer.'],
-    nail: ['Nail help', 'Stop for touch or move the ball before the helper owns your body.'],
-    low: ['Low man commits', 'Find the corner, dunker, or space the low man left.']
-  } as const;
-
   let view = $state<View>('dashboard');
   let labState = $state<LabState>(createInitialState());
   let draft = $state<ReceiptDraft>(emptyReceipt());
   let errors = $state<string[]>([]);
   let saved = $state(false);
   let syncError = $state('');
-  let search = $state('');
-  let termPhase = $state<'all' | 'now' | 'next' | 'later'>('all');
-  let activeRead = $state<keyof typeof readAnswers>('none');
   let playerName = $state('Player 01');
   let newPlayerAge = $state<number | null>(12);
   let newPlayerGender = $state<PlayerProfile['gender'] | ''>('male');
@@ -73,18 +69,30 @@
   let engagementNote = $state('');
   let artifactErrors = $state<string[]>([]);
   let artifactDraft = $state<EvidenceDraft>({ kind: 'coach-observation', title: '', sourceLabel: 'Coach', sourceUrl: '', level: 'youth', jurisdiction: '', observation: '' });
+  let filmTimeMs = $state(0);
+  let filmWakeMs = $state(5000);
+  let filmMovementMode = $state<FilmMovementMode>('all-captured');
+  let correctionX = $state(47);
+  let correctionY = $state(25);
+  let correctionStatus = $state<'resolved' | 'unresolved' | 'out-of-frame' | 'inactive'>('resolved');
+  let correctionReason = $state('');
+  let correctionSaved = $state(false);
   let operator = $derived(data.guardAccess.scope?.role === 'operator');
 
   let player = $derived(labState.players.find((item) => item.id === labState.selectedPlayerId) ?? labState.players[0]);
   let receipts = $derived(receiptsForSelected(labState));
   let artifacts = $derived(artifactsForSelected(labState));
   let engagements = $derived(engagementsForSelected(labState));
-  let filteredTerms = $derived(glossary.filter(([term, meaning, phase]) => {
-    const matchesPhase = termPhase === 'all' || phase === termPhase;
-    const needle = search.trim().toLowerCase();
-    return matchesPhase && (!needle || `${term} ${meaning}`.toLowerCase().includes(needle));
-  }));
-
+  let activeFilm = $derived(latestFilmAnalysisForPlayer(labState, labState.selectedPlayerId));
+  let playReview = $derived(activeFilm?.playReviews?.at(-1) ?? null);
+  let correctedFilm = $derived(activeFilm ? applyFilmCorrections(activeFilm) : null);
+  let filmTraffic = $derived(correctedFilm ? resolveFilmTrafficAt(correctedFilm, filmTimeMs, filmWakeMs, { movementMode: filmMovementMode }) : null);
+  let filmCoverage = $derived(correctedFilm ? summarizeFilmTargetCoverage(correctedFilm) : null);
+  let migrationTrace = $derived(activeFilm?.analysis.migrationTraceVerification ?? null);
+  // The scrub step must match the captured sample interval, or half the steps land between frames.
+  let filmStepMs = $derived(activeFilm && activeFilm.frames.length > 1
+    ? Math.max(1, activeFilm.frames[1]!.timeMs - activeFilm.frames[0]!.timeMs)
+    : 500);
   $effect(() => {
     const profile = player?.profile;
     if (!profile) return;
@@ -197,7 +205,7 @@
 
   async function recordEngagement() {
     if (!engagementNote.trim()) { syncError = 'Add one observable interaction note before recording engagement.'; return; }
-    if (!await runCommand({ action: 'record-engagement', playerId: labState.selectedPlayerId, engagement: { stage: guideStage, status: engagementStatus, source: 'coach', note: engagementNote } })) return;
+    if (!await runCommand({ action: 'record-engagement', playerId: labState.selectedPlayerId, engagement: { stage: guideStage, status: engagementStatus, source: operator ? 'coach' : 'player', note: engagementNote } })) return;
     engagementNote = '';
   }
 
@@ -214,6 +222,50 @@
       view = 'dashboard';
     } catch (error) { syncError = error instanceof Error ? error.message : 'Reset failed.'; }
     finally { commandBusy = false; }
+  }
+
+  function formatFilmTime(value: number) {
+    const total = Math.max(0, Math.floor(value / 1000));
+    return `${Math.floor(total / 60).toString().padStart(2, '0')}:${(total % 60).toString().padStart(2, '0')}`;
+  }
+
+  function formatFilmRange(startMs: number, endMs: number) {
+    return `${formatFilmTime(startMs)}–${formatFilmTime(endMs)}`;
+  }
+
+  function seekFilm(deltaMs: number) {
+    if (!activeFilm) return;
+    filmTimeMs = Math.max(0, Math.min(activeFilm.frames.at(-1)?.timeMs ?? 0, filmTimeMs + deltaMs));
+  }
+
+  function downloadFilm(name: string, type: string, contents: string) {
+    const url = URL.createObjectURL(new Blob([contents], { type }));
+    const anchor = document.createElement('a');
+    anchor.href = url; anchor.download = name;
+    document.body.append(anchor);
+    anchor.click();
+    anchor.remove();
+    // Revoking in the same tick cancels the download in some browsers.
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function exportFilmJson() {
+    if (!activeFilm) return;
+    downloadFilm(`player-13-trace-r${activeFilm.analysis.revision}.json`, 'application/json', JSON.stringify(activeFilm, null, 2));
+  }
+
+  function exportFilmSvg() {
+    const svg = document.getElementById('film-traffic-court');
+    if (svg) downloadFilm(`player-13-trace-${filmTimeMs}ms.svg`, 'image/svg+xml', svg.outerHTML);
+  }
+
+  async function saveFilmCorrection() {
+    if (!activeFilm || !correctionReason.trim()) { syncError = 'Add direct correction evidence before saving.'; return; }
+    correctionSaved = false;
+    const court = correctionStatus === 'resolved' ? [correctionX, correctionY] as [number, number] : null;
+    if (!await runCommand({ action: 'correct-film-analysis', playerId: labState.selectedPlayerId, analysisId: activeFilm.id, correction: { timeMs: filmTimeMs, court, targetStatus: correctionStatus, reason: correctionReason } })) return;
+    correctionReason = '';
+    correctionSaved = true;
   }
 </script>
 
@@ -281,6 +333,97 @@
         <article class="receipt"><time>{receipts[0].date}</time><div><strong>{receipts[0].strength}</strong><p>Observable strength</p></div><div><strong>{receipts[0].nextFocus}</strong><p>Next focus</p></div></article>
       {:else}<div class="empty">Complete the session receipt after the workout—not before it.</div>{/if}
 
+    {:else if view === 'film'}
+      <div class="section-head"><h2>Player traffic / #13</h2><p>The video was analyzed once. This canvas replays the captured revision; scrubbing, correction, reload, and export do not run inference.</p></div>
+      {#if activeFilm && correctedFilm && filmTraffic}
+        <section class="film-status" aria-label="Captured film status">
+          <div><span class="mono">Analysis</span><strong>{activeFilm.analysis.executionCount}x / captured</strong></div>
+          <div><span class="mono">Revision</span><strong>{activeFilm.analysis.revision}</strong></div>
+          <div><span class="mono">Identity</span><strong>{activeFilm.analysis.identityExecutionCount ? `${activeFilm.analysis.identityExecutionCount}x / r${activeFilm.analysis.derivedFromRevision}` : 'legacy'}</strong></div>
+          <div><span class="mono">Time</span><strong>{formatFilmTime(filmTraffic.timeMs)}</strong></div>
+          <div><span class="mono">Traffic</span><strong>{filmTraffic.players.length} tokens</strong></div>
+          <div><span class="mono">Target</span><strong>{filmTraffic.currentTargetStatus}</strong></div>
+          <div><span class="mono">Play state</span><strong>{filmTraffic.currentPlayState}</strong></div>
+          <div><span class="mono">Coverage</span><strong>{migrationTrace ? `${migrationTrace.resolvedActiveVisibleFrames}/${migrationTrace.activeVisibleFrameCount} · ${Math.round(migrationTrace.coverage * 10_000) / 100}% verified` : `${filmCoverage?.resolvedFrames ?? 0}/${filmCoverage?.frameCount ?? 0} · ${filmCoverage?.resolvedPercent ?? 0}%`}</strong></div>
+          <div><span class="mono">Path</span><strong>{migrationTrace ? `${migrationTrace.pathSegmentCount} segments / ${migrationTrace.longestUnresolvedGapMs / 1000}s max break` : 'legacy trace'}</strong></div>
+          <div><span class="mono">Projection</span><strong>{activeFilm.analysis.courtCalibrationVerification ? `${activeFilm.analysis.courtCalibrationVerification.calibratedCoordinates} calibrated · ≤${activeFilm.analysis.courtCalibrationVerification.maximumStateP95ErrorFeet}ft p95` : activeFilm.source.sha256 === '94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0' ? 'Mansfield geometry · wake estimated' : migrationTrace?.calibratedCoordinates ? `${migrationTrace.calibratedCoordinates} calibrated` : 'estimated'}</strong></div>
+        </section>
+        <div class="film-stage">
+          <FilmTrafficCourt analysis={activeFilm} corrected={correctedFilm} timeMs={filmTimeMs} wakeMs={filmWakeMs} movementMode={filmMovementMode} />
+          <aside class="film-legend">
+            <p class="eyebrow">Traffic key</p>
+            <div><i class="traffic-dot target"></i><span>Player #13 + wake</span></div>
+            <div><i class="traffic-dot teammate"></i><span>Foreground-court teammate</span></div>
+            <div><i class="traffic-dot opponent"></i><span>Foreground-court opponent</span></div>
+            <p>Orange wake is verified live basketball. In all-captured mode, gray dashed wake preserves dead-ball, free-throw, substitution, and unknown movement without counting it as positioning or lane running.</p>
+            <p>A dashed ring on #13 means the token sits between two captured frames, so that single position is interpolated and is not itself evidence.</p>
+            {#if migrationTrace}<p class="mono">MIGRATION / {Math.round(migrationTrace.coverage * 10_000) / 100}% ACTIVE-VISIBLE / {migrationTrace.pathSegmentCount} SEGMENTS / BREAKS ≤ {migrationTrace.longestUnresolvedGapMs / 1000}s</p>{/if}
+            <p class="mono">PLAY STATE / {filmTraffic.currentPlayState} / {filmTraffic.currentPlayStateEvidence?.method ?? 'unreviewed'} / {filmTraffic.currentPlayStateEvidence?.reviewer ?? 'none'}{activeFilm.analysis.playStateVerification ? ` / ${activeFilm.analysis.playStateVerification.liveFrameCount} LIVE / ${activeFilm.analysis.playStateVerification.nonLiveFrameCount} NON-LIVE / ${activeFilm.analysis.playStateVerification.unknownFrameCount} UNKNOWN` : ''}</p>
+            <p class="mono">REVIEW / {filmCoverage?.userReviewedFrames ?? 0} USER-CONFIRMED / {filmCoverage?.agentReviewedFrames ?? 0} AGENT-REVIEWED / {filmCoverage?.unreviewedFrames ?? 0} UNREVIEWED</p>
+            {#if activeFilm.analysis.identityVerification}<p class="mono">ID PRECISION / {Math.round(activeFilm.analysis.identityVerification.positiveRecall * 100)}% #13 / {Math.round(activeFilm.analysis.identityVerification.hardNegativePrecision * 100)}% NEG / {migrationTrace ? `${Math.round(migrationTrace.coverage * 10_000) / 100}% ACTIVE-VISIBLE` : `${filmCoverage?.resolvedPercent ?? 0}% FULL-VIDEO`}{activeFilm.analysis.identityVerification.positiveDecisionCount ? ` / ${activeFilm.analysis.identityVerification.positiveDecisionCount} POSITIVE DECISIONS` : ' / DECISION COUNT NOT RECORDED'}</p>{/if}
+            {#if activeFilm.analysis.courtCalibrationVerification}<p class="mono">COURT / FIELDHOUSEUSA MANSFIELD / 84 × 50 FT / 12 FT LANE / BLACK BASKETBALL MARKINGS / ≤1 FT P95 GATE</p>{/if}
+            {#if !filmTraffic.movementClaimSupported}<p class="mono">SAMPLING / {filmTraffic.sampleIntervalMs}MS BETWEEN SAMPLES / WAKE IS CONNECT-THE-DOTS, NOT AN OBSERVED PATH</p>{/if}
+            <dl><dt>Source</dt><dd>{activeFilm.source.sha256.slice(0, 12)}…</dd><dt>Frames</dt><dd>{activeFilm.frames.length}</dd><dt>Corrections</dt><dd>{activeFilm.corrections.length}</dd></dl>
+          </aside>
+        </div>
+        <section class="film-controls" aria-label="Film traffic controls">
+          <div class="film-seek-row"><button class="button" onclick={() => seekFilm(-5000)}>− 5 sec</button><output aria-live="polite">{formatFilmTime(filmTimeMs)}</output><button class="button" onclick={() => seekFilm(5000)}>+ 5 sec</button></div>
+          <label class="field full"><span>Traffic time / scrub in either direction</span><input aria-label="Film traffic time" type="range" min="0" max={activeFilm.frames.at(-1)?.timeMs ?? 0} step={filmStepMs} bind:value={filmTimeMs} /></label>
+          <label class="field"><span>#13 wake</span><select class="input" bind:value={filmWakeMs}><option value={3000}>3 seconds</option><option value={5000}>5 seconds</option><option value={10000}>10 seconds</option><option value={20000}>20 seconds</option><option value={3600000}>All verified history</option></select></label>
+          <label class="field"><span>Movement evidence</span><select aria-label="Film movement evidence" class="input" bind:value={filmMovementMode}><option value="all-captured">All verified #13 positions</option><option value="live-only">Reviewed live basketball only</option></select></label>
+          <div class="film-export"><button class="button" onclick={exportFilmJson}>Export captured JSON</button><button class="button" onclick={exportFilmSvg}>Export canvas SVG</button></div>
+        </section>
+        {#if playReview}
+          <section class="film-review" aria-labelledby="film-review-title">
+            <div class="film-review-head">
+              <div>
+                <p class="eyebrow">Source review / {playReview.cards.length} possessions</p>
+                <h3 id="film-review-title">What the film establishes</h3>
+                <p>Each note is paired with a whole-frame pixelated source still. The orange <strong>13</strong> is synthetic; no sharp face or jersey crop is stored.</p>
+              </div>
+              <div class="film-review-receipt mono">
+                <span>PRIVATE DERIVATIVE</span>
+                <strong>{playReview.sourceSha256.slice(0, 12)}… / R{playReview.analysisRevision} / {playReview.analysisExecutionCount}X</strong>
+                <small>{playReview.cards[0]?.image.anonymization.pixelWidth}×{playReview.cards[0]?.image.anonymization.pixelHeight} PIXEL GRID → 13 MARKER</small>
+              </div>
+            </div>
+            <div class="film-review-grid">
+              {#each playReview.cards as card}
+                <article class:active={filmTimeMs >= card.startMs && filmTimeMs <= card.endMs} class="film-review-card" data-review-id={card.id}>
+                  <button class="film-review-seek" aria-pressed={filmTimeMs >= card.startMs && filmTimeMs <= card.endMs} onclick={() => filmTimeMs = card.representativeTimeMs}>
+                    <span>Seek to possession</span><strong>{formatFilmRange(card.startMs, card.endMs)}</strong>
+                  </button>
+                  <img src={card.image.dataUrl} alt={`Anonymized court still at ${formatFilmTime(card.representativeTimeMs)} with a synthetic 13 marker for the tracked player.`} width={card.image.width} height={card.image.height} />
+                  <div class="film-review-copy">
+                    <div class="film-review-tags mono"><span>{card.possession} possession</span><span>{card.phase.replaceAll('-', ' ')}</span></div>
+                    <h4>{card.position}</h4>
+                    <dl>
+                      <div><dt>Observed</dt><dd>{card.observation}</dd></div>
+                      <div><dt>Basketball meaning</dt><dd>{card.interpretation}</dd></div>
+                      <div class="film-review-limit"><dt>Not proven</dt><dd>{card.limitation}</dd></div>
+                    </dl>
+                  </div>
+                </article>
+              {/each}
+            </div>
+          </section>
+        {/if}
+        {#if operator}
+          <section class="film-correction">
+            <div><p class="eyebrow">Correction overlay</p><h3>Correct evidence, never rerun the film.</h3><p>The raw revision stays captured. This append-only note changes the rendered sample and records why.</p></div>
+            <div class="film-correction-form">
+              <label class="field"><span>Status</span><select class="input" bind:value={correctionStatus}><option value="resolved">Resolved</option><option value="unresolved">Unresolved</option><option value="out-of-frame">Out of frame</option><option value="inactive">Inactive / substituted</option></select></label>
+              <label class="field"><span>Court X / feet</span><input class="input" type="number" min="0" max={activeFilm.analysis.courtCalibrationVerification ? 84 : 94} step="0.5" bind:value={correctionX} disabled={correctionStatus !== 'resolved'} /></label>
+              <label class="field"><span>Court Y / feet</span><input class="input" type="number" min="0" max="50" step="0.5" bind:value={correctionY} disabled={correctionStatus !== 'resolved'} /></label>
+              <label class="field full"><span>Direct evidence</span><input class="input" bind:value={correctionReason} placeholder="Example: both feet verified against the near lane mark" /></label>
+              <div class="actions"><button class="button primary" disabled={commandBusy} onclick={saveFilmCorrection}>Save correction at {formatFilmTime(filmTimeMs)}</button>{#if correctionSaved}<span class="success">CORRECTION SAVED / ANALYSIS STILL 1x</span>{/if}</div>
+            </div>
+          </section>
+        {/if}
+      {:else}
+        <div class="empty"><strong>No captured trace for {player?.name}.</strong><br />An operator must attach a completed one-run analysis revision before this view can replay traffic.</div>
+      {/if}
+
     {:else if view === 'guide'}
       <div class="section-head"><h2>Agent-guided interaction</h2><p>The program owns the sequence. Add only the live context it requests; the coach is not the narrator or personality.</p></div>
       <div class="court-layout">
@@ -337,34 +480,11 @@
 
     {:else if view === 'language'}
       <div class="section-head"><h2>Shared basketball language</h2><p>Words support the read; they are not the workout. Introduce a term only when the player can see or feel its picture.</p></div>
-      <div class="toolbar">
-        <input class="input" type="search" bind:value={search} aria-label="Search basketball terms" placeholder="Search term or meaning" />
-        {#each ['all', 'now', 'next', 'later'] as phase}<button class:active={termPhase === phase} class="filter mono" onclick={() => termPhase = phase as typeof termPhase}>{phase}</button>{/each}
-      </div>
-      <div class="term-grid">
-        {#each filteredTerms as [term, meaning, phase]}<article class="term"><strong>{term}</strong><p>{meaning}</p><span class="pill">{phase}</span></article>{/each}
-      </div>
-      {#if filteredTerms.length === 0}<div class="empty">No shared term matches that search.</div>{/if}
+      <SharedLanguageLibrary />
 
     {:else if view === 'reads'}
-      <div class="section-head"><h2>Where the read lives</h2><p>Point to the picture before naming a scheme. Defender position creates the answer.</p></div>
-      <div class="court-layout">
-        <svg class="court" viewBox="0 0 760 520" role="img" aria-labelledby="court-title court-desc">
-          <title id="court-title">Half-court help read</title><desc id="court-desc">A wing drive enters the lane. The nail and low-man help positions create three possible answers.</desc>
-          <rect x="28" y="25" width="704" height="460" fill="none" stroke="#090909" stroke-width="4" />
-          <path d="M235 25v205h290V25M280 230a100 100 0 0 0 200 0" fill="none" stroke="#9c9c96" stroke-width="3" />
-          <path d="M155 355a250 250 0 0 0 450 0" fill="none" stroke="#090909" stroke-width="4" />
-          <circle cx="380" cy="62" r="10" fill="none" stroke="#e54800" stroke-width="5" />
-          <path d="M120 320L292 205" stroke="#e54800" stroke-width="8" /><path d="M292 205l-25 2 17 20z" fill="#e54800" />
-          <path d="M292 205L535 186" stroke="#0057b8" stroke-width="4" />
-          <g font-family="Satoshi" font-size="18" font-weight="600"><circle cx="120" cy="320" r="10" fill="#e54800"/><text x="138" y="326">WING</text><circle cx="380" cy="230" r="10" fill="#e54800"/><text x="398" y="236">NAIL</text><circle cx="535" cy="186" r="10" fill="#0057b8"/><text x="553" y="192">LOW MAN</text><circle cx="205" cy="405" r="10" fill="#0057b8"/><text x="223" y="411">SLOT</text><circle cx="610" cy="125" r="10" fill="#007a4d"/><text x="628" y="131">DUNKER</text><circle cx="95" cy="105" r="10" fill="#007a4d"/><text x="113" y="111">CORNER</text></g>
-          <g font-family="IBM Plex Mono" font-size="12" font-weight="700"><text x="148" y="265" fill="#e54800">PRESSURE / DOWNHILL LANE</text><text x="350" y="170" fill="#0057b8">SIGNAL / HELP READ</text></g>
-        </svg>
-        <section class="read-panel" aria-labelledby="read-title"><p class="eyebrow">One picture / three answers</p><h2 id="read-title">What did the helper choose?</h2>
-          {#each Object.entries(readAnswers) as [key, answer]}<button class:active={activeRead === key} class="read-option" onclick={() => activeRead = key as keyof typeof readAnswers}><strong>{answer[0]}</strong></button>{/each}
-          <div class="answer"><strong>{readAnswers[activeRead][0]}:</strong> {readAnswers[activeRead][1]}</div>
-        </section>
-      </div>
+      <div class="section-head"><h2>Share the court picture</h2><p>Separate what is already visible from the next possession needed to understand footwork, spacing, or scheme response.</p></div>
+      <GuardInsightCourt />
 
     {:else if view === 'receipt'}
       <div class="section-head"><h2>Session receipt</h2><p>Record behavior, player words, and the next decision. Makes and misses are not the receipt.</p></div>
@@ -429,6 +549,6 @@
       <button class="button danger" disabled={commandBusy} onclick={resetData}>{resetArmed ? 'Confirm reset' : 'Reset workspace'}</button>{/if}
     {/if}
 
-    <footer class="footer">FIELD TEST / V0.4 &nbsp; STATUS / {hydrated ? 'IDENTITY SCOPED' : 'LOADING'} &nbsp; REV / {labState.revision} &nbsp; FIRST-PARTY AUTH</footer>
+    <footer class="footer">FIELD TEST / V0.5 &nbsp; STATUS / {hydrated ? 'IDENTITY SCOPED' : 'LOADING'} &nbsp; REV / {labState.revision} &nbsp; FIRST-PARTY AUTH</footer>
   </main>
 </div>

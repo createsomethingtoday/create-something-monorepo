@@ -3,10 +3,12 @@
     Button,
     PerformanceCardGrid,
     PerformanceConversionHandoff,
+    PerformanceNarrativeStage,
     PerformancePageSection,
     SEO,
     type PerformanceCardItem,
-    type PerformanceCtaItem
+    type PerformanceCtaItem,
+    type PerformanceNarrativeScene
   } from '@create-something/canon';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
@@ -14,7 +16,7 @@
     {
       eyebrow: 'Layer',
       icon: 'settings',
-      title: 'Policy OS',
+      title: 'CREATE SOMETHING Control',
       detail:
         'A controlled execution layer for teams already running MCP servers, agents, or cross-system workflows.'
     },
@@ -84,8 +86,7 @@
       eyebrow: 'Evidence',
       icon: 'document',
       title: 'Monitoring and receipts',
-      detail:
-        'Track uptime, accuracy, cost, response time, alerts, releases, and recovery notes.'
+      detail: 'Track uptime, accuracy, cost, response time, alerts, releases, and recovery notes.'
     }
   ];
 
@@ -116,14 +117,24 @@
       icon: 'settings',
       title: 'Workflow Control Core',
       detail: 'For one or two workflows already in operation.',
-      points: ['Operating baseline', 'Weekly prompt and policy tuning', 'Monthly reporting', 'Drift correction']
+      points: [
+        'Operating baseline',
+        'Weekly prompt and policy tuning',
+        'Monthly reporting',
+        'Drift correction'
+      ]
     },
     {
       eyebrow: '$2,000-$3,000/mo',
       icon: 'refresh',
       title: 'Workflow Control Growth',
       detail: 'For three to five workflows that need shared orchestration.',
-      points: ['Cross-agent handoffs', 'Approval operations', 'Golden-task checks', 'Bi-weekly optimization']
+      points: [
+        'Cross-agent handoffs',
+        'Approval operations',
+        'Golden-task checks',
+        'Bi-weekly optimization'
+      ]
     },
     {
       eyebrow: 'Custom',
@@ -155,11 +166,52 @@
     }
   ];
 
+  const enterpriseScenes: PerformanceNarrativeScene[] = [
+    {
+      id: 'risk',
+      label: 'Risk',
+      summary: 'Failure begins after launch',
+      title: 'Automation breaks when judgment has no operating home.',
+      detail:
+        'Prompt drift, policy gaps, and orphaned connections become expensive when no owner, blocked state, evidence, or recovery path surrounds them.',
+      tone: 'block',
+      evidence: ['prompt drift', 'policy gaps', 'orphaned connections']
+    },
+    {
+      id: 'control',
+      label: 'Control',
+      summary: 'Keep work explainable',
+      title: 'The operating layer aligns capacity with authority.',
+      detail:
+        'Optimization, orchestration, decision rules, monitoring, and receipts keep live agent work legible after deployment.',
+      tone: 'review',
+      receipts: ['prompt loop', 'orchestration', 'policy rules', 'operating evidence']
+    },
+    {
+      id: 'model',
+      label: 'Model',
+      summary: 'Three layers, right cadence',
+      title: 'Control only what the operating workflow needs.',
+      detail:
+        'Database holds what exists, Automation moves work, and Judgment governs what should happen. The operating plan follows workflow count, action risk, and review rhythm.',
+      tone: 'allow'
+    },
+    {
+      id: 'fit',
+      label: 'Fit',
+      summary: 'Automation is infrastructure',
+      title: 'This is for teams whose live workflows carry real operational consequence.',
+      detail:
+        'The fit is strongest when connections already run, actions touch risk or trust, and operators need a clear next decision.',
+      tone: 'neutral'
+    }
+  ];
+
   const faqItems = [
     {
-      question: 'When does an enterprise need Policy OS?',
+      question: 'When does an enterprise need CREATE SOMETHING Control?',
       answer:
-        'Policy OS fits teams already running automation that now need controlled execution states, approval rules, monitoring, and operating receipts.'
+        'CREATE SOMETHING Control fits teams already running automation that now need controlled execution states, approval rules, monitoring, and operating receipts.'
     },
     {
       question: 'What should be added after the first workflow pilot?',
@@ -196,8 +248,8 @@
 </script>
 
 <SEO
-  title="Policy OS for Enterprise Workflow Reliability | CREATE SOMETHING .agency"
-  description="Policy OS for teams already running automation. Add controlled execution states, approval rules, monitoring, and operating receipts once the first workflow pilot is live."
+  title="CREATE SOMETHING Control for Enterprise Workflow Reliability"
+  description="CREATE SOMETHING Control helps teams add controlled execution states, approval rules, monitoring, and operating receipts once the first workflow is live."
   keywords="enterprise automation reliability, workflow controls, policy operations, ai control layer, workflow reliability"
   ogImage="/og/policy-os.png"
   propertyName="agency"
@@ -210,7 +262,7 @@
   titleLevel="h1"
   eyebrow="The Judgment Layer"
   title="Reliability is what turns automation into operations."
-  description="For teams already running MCP-backed or cross-system workflows, Policy OS adds the controlled execution layer: prompt optimization, approval logic, blocked states, monitoring, and receipts after launch."
+  description="For teams already running MCP-backed or cross-system workflows, CREATE SOMETHING Control adds the governed execution layer. Approvals, blocked states, and receipts keep working after launch."
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.selfMapHref}>
@@ -226,72 +278,72 @@
       items={reliabilitySummary}
       columns={1}
       density="compact"
-      ariaLabel="Policy OS reliability summary"
+      ariaLabel="CREATE SOMETHING Control reliability summary"
     />
   {/snippet}
 </PerformancePageSection>
 
-<PerformancePageSection
-  variant="white"
-  eyebrow="Why automation breaks"
-  title="Most AI automation fails after deployment, not during it."
-  description="The failure is rarely the connection itself. The failure is missing judgment: no policy, no owner, no blocked state, no evidence, and no recovery path."
+<PerformanceNarrativeStage
+  id="enterprise-control-story"
+  eyebrow="One reliability story"
+  title="Reliability is a decision sequence, not a feature."
+  description="Enterprise reliability becomes one decision sequence: name the post-launch risk, inspect the control layer, choose the operating model and cadence, then confirm the workflow has earned ongoing control."
+  scenes={enterpriseScenes}
+  ariaLabel="Enterprise workflow reliability story"
 >
-  {#snippet after()}
-    <PerformanceCardGrid items={failureModes} columns={3} ariaLabel="Enterprise automation failure modes" />
+  {#snippet artifact(scene: PerformanceNarrativeScene)}
+    {#if scene.id === 'risk'}
+      <PerformanceCardGrid
+        items={failureModes}
+        columns={3}
+        ariaLabel="Enterprise automation failure modes"
+      />
+    {:else if scene.id === 'control'}
+      <PerformanceCardGrid
+        items={controlLayer}
+        columns={4}
+        ariaLabel="CREATE SOMETHING Control layer"
+      />
+    {:else if scene.id === 'model'}
+      <div class="enterprise-model">
+        <section aria-labelledby="enterprise-layers-title">
+          <h4 id="enterprise-layers-title">Database, Automation, Judgment</h4>
+          <PerformanceCardGrid
+            items={tiers}
+            columns={3}
+            ariaLabel="Database automation judgment layers"
+          />
+        </section>
+        <section aria-labelledby="enterprise-plans-title">
+          <h4 id="enterprise-plans-title">Operating plans</h4>
+          <PerformanceCardGrid
+            items={plans}
+            columns={3}
+            ariaLabel="Workflow control operating plans"
+          />
+        </section>
+      </div>
+    {:else}
+      <PerformanceCardGrid
+        items={audienceCards}
+        columns={3}
+        ariaLabel="CREATE SOMETHING Control fit"
+      />
+    {/if}
   {/snippet}
-</PerformancePageSection>
-
-<PerformancePageSection
-  variant="soft"
-  eyebrow="Control layer"
-  title="Policy OS keeps the workflow explainable after launch."
-  description="The work is not another trigger. It is the operating layer that keeps agent capacity aligned with ownership, approval, recovery, and evidence."
->
-  {#snippet after()}
-    <PerformanceCardGrid items={controlLayer} columns={4} ariaLabel="Policy OS control layer" />
-  {/snippet}
-</PerformancePageSection>
-
-<PerformancePageSection
-  variant="white"
-  eyebrow="Three-tier framework"
-  title="Every operating workflow has three layers."
-  description="Database tells the system what exists. Automation moves the work. Judgment decides what should happen when risk, ambiguity, or approval enters the path."
->
-  {#snippet after()}
-    <PerformanceCardGrid items={tiers} columns={3} ariaLabel="Database automation judgment layers" />
-  {/snippet}
-</PerformancePageSection>
-
-<PerformancePageSection
-  variant="soft"
-  eyebrow="Operating plans"
-  title="Start with the amount of control the workflow actually needs."
-  description="Pricing is shaped by the number of workflows in operation, the risk of each action, and the review rhythm needed to keep the system trusted."
->
-  {#snippet after()}
-    <PerformanceCardGrid items={plans} columns={3} ariaLabel="Workflow control operating plans" />
-  {/snippet}
-</PerformancePageSection>
-
-<PerformancePageSection
-  variant="white"
-  eyebrow="Fit"
-  title="This is for teams whose automations are now operational infrastructure."
-  description="The work fits when a workflow is already valuable enough that drift, unclear approvals, or invisible failures would create real operational cost."
->
-  {#snippet after()}
-    <PerformanceCardGrid items={audienceCards} columns={3} ariaLabel="Policy OS fit" />
-  {/snippet}
-</PerformancePageSection>
+</PerformanceNarrativeStage>
 
 <PerformanceConversionHandoff
   eyebrow="Start with the workflow"
   title="Bring the workflow, owner, and first risk boundary."
   description="I will map the control states before expanding automation authority."
   steps={ctaItems}
-  handoff={{ owner: 'Decision owner', authority: 'Enterprise control boundary', proof: 'Evidence + rollback path', state: 'review' }}
+  handoff={{
+    owner: 'Decision owner',
+    authority: 'Enterprise control boundary',
+    proof: 'Evidence + rollback path',
+    state: 'review'
+  }}
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.selfMapHref}>
@@ -302,3 +354,22 @@
     </Button>
   {/snippet}
 </PerformanceConversionHandoff>
+
+<style>
+  .enterprise-model {
+    display: grid;
+    gap: clamp(1.25rem, 3vw, 2.5rem);
+  }
+
+  .enterprise-model section {
+    display: grid;
+    gap: 0.8rem;
+  }
+
+  .enterprise-model h4 {
+    margin: 0;
+    font-family: var(--font-performance-mono);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+  }
+</style>

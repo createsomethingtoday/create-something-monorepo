@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "event_schemas.v0.1",
+  "workflowId": "webflow.marketplace.template-lifecycle",
+  "workflowVersion": "0.1.0",
+  "definitionHash": "sha256:96e880807497d7a417cbf7e7a009d9331996d55e249068767b2417131a91156f",
+  "events": [
+    {
+      "id": "monitoring_signal",
+      "title": "Post-launch monitoring signal",
+      "objectId": "review_evidence",
+      "requiredEvidence": [
+        "asset_id",
+        "observed_at",
+        "signal_type"
+      ]
+    },
+    {
+      "id": "publish_requested",
+      "title": "Publish requested",
+      "objectId": "template_submission",
+      "requiredEvidence": [
+        "approval_receipt",
+        "release_metadata",
+        "version_id"
+      ]
+    },
+    {
+      "id": "review_decision_requested",
+      "title": "Review decision requested",
+      "objectId": "template_submission",
+      "requiredEvidence": [
+        "review_summary",
+        "reviewer_id",
+        "version_id"
+      ]
+    },
+    {
+      "id": "submission_received",
+      "title": "Submission received",
+      "objectId": "template_submission",
+      "requiredEvidence": [
+        "asset_id",
+        "published_url",
+        "version_id"
+      ]
+    },
+    {
+      "id": "validation_completed",
+      "title": "Validation completed",
+      "objectId": "review_evidence",
+      "requiredEvidence": [
+        "observed_at",
+        "published_url",
+        "validation_result"
+      ]
+    }
+  ]
+}

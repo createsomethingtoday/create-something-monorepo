@@ -1,0 +1,56 @@
+{
+  "artifacts": {
+    "directMetal": {
+      "contactSheet": "receipts/contact-sheet--250ms--v1.jpg",
+      "path": "exports/create-something--metal-gate-release--8s--16x9--v1.mp4",
+      "sha256": "811778c1f6451df9ae93078aa536a2a4222b80aa9fa872e9e6c05718c48296bc"
+    },
+    "sphBlender": {
+      "contactSheet": "receipts/blender-contact-sheet--250ms--v1.jpg",
+      "path": "exports/create-something--sph-blender-gate-release--8s--16x9--v1.mp4",
+      "sha256": "38b6a76da69d876949811024695ff821259d99db96710f7ebbbc821a6f81e8c2"
+    }
+  },
+  "rubric": {
+    "cameraAndScale": {
+      "directMetal": 1,
+      "sphBlender": 4
+    },
+    "causalClarity": {
+      "directMetal": 5,
+      "sphBlender": 4
+    },
+    "continuity": {
+      "directMetal": 5,
+      "sphBlender": 5
+    },
+    "finalPixelQuality": {
+      "directMetal": 2,
+      "sphBlender": 4
+    },
+    "maintainability": {
+      "directMetal": 5,
+      "sphBlender": 4
+    },
+    "materialDepth": {
+      "directMetal": 2,
+      "sphBlender": 4
+    },
+    "proofLegibility": {
+      "directMetal": 3,
+      "sphBlender": 4
+    },
+    "renderCost": {
+      "directMetal": 5,
+      "sphBlender": 3
+    }
+  },
+  "scale": "1 weak, 5 strong",
+  "schemaVersion": 1,
+  "verdict": {
+    "controlAndPunchListBackend": "direct Metal",
+    "finalPixelBackendForThisScene": "SPH-to-Blender",
+    "reason": "The decoded Blender film preserves the causal contract while adding macro scale, one physical mechanism, one continuous camera move, material depth, and a legible persistent receipt. Direct Metal remains the faster and clearest timing oracle.",
+    "remainingLimitation": "The Blender water is controlled editorial CGI, not photoreal liquid. A later realism benchmark should improve surface reconstruction, lighting, and path-traced material response without weakening the deterministic field contract."
+  }
+}

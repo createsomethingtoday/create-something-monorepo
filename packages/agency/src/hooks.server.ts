@@ -2,25 +2,15 @@ import { redirect, type Handle } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { createAuthHooks } from '@create-something/canon/auth';
 import { abundanceApiAuthHandle } from './lib/server/abundance-api-auth';
-import { AGENCY_PROTECTED_PATHS } from './lib/server/protected-routes';
+import { deprecatedRedirects } from './lib/data/deprecatedRoutes';
+import { verifyAgencyIdentitySession } from './lib/server/agency-identity-session';
+import { AGENCY_PROTECTED_PATHS, isAgencyProtectedPath } from './lib/server/protected-routes';
 import {
 	createPublicHtmlCacheKey,
 	isCacheablePublicHtmlResponse,
 	shouldAttemptPublicHtmlCache,
 	withPublicHtmlCacheHeaders
 } from './lib/server/public-html-cache';
-
-/**
- * Redirects for deprecated routes (post-MCP pivot)
- */
-const deprecatedRedirects: Record<string, string> = {
-	'/categories': '/services',
-	'/category': '/services',
-	'/work': '/',
-	'/discover': '/',
-	'/dify': '/stack',
-	'/notion': '/stack'
-};
 
 const redirectHandle: Handle = async ({ event, resolve }) => {
 	const path = event.url.pathname;
@@ -44,7 +34,27 @@ const authHandle = createAuthHooks({
 	protectedPaths: [...AGENCY_PROTECTED_PATHS],
 	loginPath: '/login',
 	includeRedirect: true,
+	authProvider: { type: 'identity-worker' },
 }) as Handle;
+
+const identityVerificationHandle: Handle = async ({ event, resolve }) => {
+	const user = await verifyAgencyIdentitySession({
+		cookies: event.cookies,
+		platform: event.platform,
+		fetch: event.fetch,
+	});
+	event.locals.user = user ?? undefined;
+
+	if (isAgencyProtectedPath(event.url.pathname) && !user) {
+		const destination = `${event.url.pathname}${event.url.search}`;
+		return new Response(null, {
+			status: 302,
+			headers: { Location: `/login?redirect=${encodeURIComponent(destination)}` },
+		});
+	}
+
+	return resolve(event);
+};
 
 const publicHtmlCacheHandle: Handle = async ({ event, resolve }) => {
 	const shouldAttemptCache = shouldAttemptPublicHtmlCache({
@@ -80,4 +90,10 @@ const publicHtmlCacheHandle: Handle = async ({ event, resolve }) => {
 	return cacheableResponse;
 };
 
-export const handle = sequence(redirectHandle, authHandle, abundanceApiAuthHandle, publicHtmlCacheHandle);
+export const handle = sequence(
+	redirectHandle,
+	authHandle,
+	identityVerificationHandle,
+	abundanceApiAuthHandle,
+	publicHtmlCacheHandle,
+);

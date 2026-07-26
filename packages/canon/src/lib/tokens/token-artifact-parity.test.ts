@@ -34,6 +34,13 @@ function readRootToken(name: string): string {
 }
 
 describe('Canon token artifact parity', () => {
+	it('emits the compatibility alias boundary exactly once', () => {
+		const marker = 'Legacy compatibility aliases. First-party consumers use Performance tokens.';
+
+		expect(tokensCss.split(marker)).toHaveLength(2);
+		expect(canonTokensCss.split(marker)).toHaveLength(2);
+	});
+
 	it('keeps the complete Performance contract aligned across generated artifacts', () => {
 		const performanceTokens = Object.fromEntries(
 			[...rootBlock.matchAll(/^\s*(--[A-Za-z0-9_-]*-performance(?:-[A-Za-z0-9_-]+)*):\s*([^;]+);/gm)].map(

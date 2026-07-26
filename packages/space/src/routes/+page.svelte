@@ -159,10 +159,10 @@
     {
       eyebrow: '.agency',
       icon: 'arrow-right',
-      title: 'Ship the workflow',
+      title: 'Map the workflow',
       detail:
-        'When the pattern matters commercially, operationally, or reputationally, it moves into governed delivery.',
-      href: 'https://createsomething.agency/book?source=space&intent=runtime-validation&lane=workflow_infrastructure'
+        'When the pattern matters commercially, operationally, or reputationally, carry its runtime evidence into the practice.',
+      href: 'https://createsomething.agency/practice?source=space&intent=runtime-to-practice&stage=qualify&lane=workflow_infrastructure'
     },
     {
       eyebrow: '.ltd',
@@ -224,8 +224,8 @@
       actions: [
         { label: 'Read Pattern', href: 'https://createsomething.io' },
         {
-          label: 'Ship Workflow',
-          href: 'https://createsomething.agency/book?source=space&intent=runtime-validation&lane=workflow_infrastructure'
+          label: 'Map Workflow',
+          href: 'https://createsomething.agency/practice?source=space&intent=runtime-to-practice&stage=qualify&lane=workflow_infrastructure'
         }
       ]
     }
@@ -321,7 +321,7 @@
 <PropertyFunnel
   current="space"
   heading="Use the workbench as the bridge into a real workflow."
-  description="Try the runtime here, read the pattern when it holds up, and move to a mapping session when the workflow needs controls, owners, and a handoff."
+  description="Try the runtime here, read the pattern when it holds up, and enter the practice when the workflow needs controls, an owner, and a governed handoff."
 />
 
 <PerformanceConversionHandoff

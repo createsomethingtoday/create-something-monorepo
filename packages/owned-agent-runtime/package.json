@@ -8,12 +8,16 @@
     "test": "tsx --test test/*.test.ts",
     "smoke": "tsx scripts/smoke.ts",
     "dev": "node ../../scripts/run-wrangler.mjs dev --config wrangler.jsonc",
-    "deploy": "node ../../scripts/run-wrangler.mjs deploy --config wrangler.jsonc",
+    "db:migrate": "node ../../scripts/run-wrangler.mjs d1 migrations apply create-something-agent-runtime --local --config wrangler.jsonc",
+    "db:migrate:remote": "node ../../scripts/run-wrangler.mjs d1 migrations apply create-something-agent-runtime --remote --config wrangler.jsonc",
+    "deploy": "node ../../scripts/run-wrangler.mjs deploy --config wrangler.jsonc --var CS_IDENTITY_ISSUER:https://id.createsomething.space --var CS_IDENTITY_JWKS_URL:https://id.createsomething.space/.well-known/jwks.json --var CS_IDENTITY_AUDIENCE:https://create-something-agent-runtime.createsomething.workers.dev/mcp",
+    "deploy:dry-run": "node ../../scripts/run-wrangler.mjs deploy --dry-run --config wrangler.jsonc --var CS_IDENTITY_ISSUER:https://id.createsomething.space --var CS_IDENTITY_JWKS_URL:https://id.createsomething.space/.well-known/jwks.json --var CS_IDENTITY_AUDIENCE:https://create-something-agent-runtime.createsomething.workers.dev/mcp",
     "tail": "node ../../scripts/run-wrangler.mjs tail --config wrangler.jsonc"
   },
   "dependencies": {
     "@openai/agents": "^0.4.10",
     "hono": "^4.11.7",
+    "jose": "^6.1.3",
     "zod": "^4.3.6"
   },
   "devDependencies": {

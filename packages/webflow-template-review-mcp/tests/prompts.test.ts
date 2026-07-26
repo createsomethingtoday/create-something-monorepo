@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { REVIEW_WORKFLOW } from '../src/prompts.js';
+import { REVIEW_WORKFLOW, SERVER_INSTRUCTIONS } from '../src/prompts.js';
 
 test('review workflow allows nested utility pages while flagging broken or misdirected links', () => {
   assert.match(REVIEW_WORKFLOW, /Required utility pages do \*\*not\*\* need root-only slugs/);
@@ -22,4 +22,16 @@ test('review workflow aligns placeholder and alt-text interpretation with valida
   assert.match(REVIEW_WORKFLOW, /may support Changes Requested after reviewer confirmation/);
   assert.match(REVIEW_WORKFLOW, /editable content images\/icons/);
   assert.match(REVIEW_WORKFLOW, /Webflow-generated video fallback\/poster assets/);
+});
+
+test('direct-Claude workflow exposes bounded E2B evidence without automating reviewer judgment', () => {
+  assert.match(SERVER_INSTRUCTIONS, /template_review_run_published_site_sandbox/);
+  assert.match(REVIEW_WORKFLOW, /fixed, bounded E2B collector/);
+  assert.match(REVIEW_WORKFLOW, /does not accept caller-provided code, commands, packages, secrets/);
+  assert.match(REVIEW_WORKFLOW, /Automated validation and sandbox evidence do not approve, reject/);
+  assert.match(REVIEW_WORKFLOW, /ask for the missing inspection instead of defaulting to a negative decision/);
+  assert.doesNotMatch(REVIEW_WORKFLOW, /grade B\+/i);
+  assert.doesNotMatch(REVIEW_WORKFLOW, /3\+ major failures/i);
+  assert.doesNotMatch(REVIEW_WORKFLOW, /When in doubt, request changes/i);
+  assert.doesNotMatch(REVIEW_WORKFLOW, /cite specific check IDs/i);
 });

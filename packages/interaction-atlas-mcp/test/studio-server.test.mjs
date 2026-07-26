@@ -121,7 +121,9 @@ test('Atlas Studio serves the shared fast canvas shell and bundled assets', asyn
     assert.equal(script.status, 200);
     assert.match(script.headers.get('cache-control') ?? '', /immutable/);
     assert.match(script.headers.get('content-type') ?? '', /text\/javascript/);
-    assert.match(await script.text(), /CanvasKernel|fast-topology-canvas/);
+    const scriptText = await script.text();
+    assert.match(scriptText, /CanvasKernel|fast-topology-canvas/);
+    assert.match(scriptText, /client-handoff\.md/);
 
     const css = await fetch(`http://127.0.0.1:${address.port}/studio/assets/app.css`);
     assert.equal(css.status, 200);
@@ -132,6 +134,45 @@ test('Atlas Studio serves the shared fast canvas shell and bundled assets', asyn
     const sourceMap = await fetch(`http://127.0.0.1:${address.port}/studio/assets/app.js.map`);
     assert.equal(sourceMap.status, 200);
     assert.match(sourceMap.headers.get('cache-control') ?? '', /immutable/);
+
+    const favicon = await fetch(`http://127.0.0.1:${address.port}/favicon.ico`);
+    assert.equal(favicon.status, 204);
+    assert.equal(await favicon.text(), '');
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test('Atlas Studio serves a distinct GET-only client Map-to-Build handoff', async () => {
+  const cwd = await mkdtemp(path.join(tmpdir(), 'atlas-studio-client-handoff-server-test-'));
+  const session = await createSession(
+    { client: 'Acme', workflow: 'Support recovery', owner: 'Ops' },
+    cwd
+  );
+  const server = await startStudioServer({
+    host: '127.0.0.1',
+    port: 0,
+    sessionId: session.id,
+    cwd
+  });
+  const address = server.address();
+  assert.equal(typeof address, 'object');
+
+  try {
+    const clientHandoff = await fetch(
+      `http://127.0.0.1:${address.port}/api/sessions/${session.id}/client-handoff.md`
+    );
+    assert.equal(clientHandoff.status, 200);
+    assert.match(clientHandoff.headers.get('content-type') ?? '', /text\/markdown/);
+    const clientMarkdown = await clientHandoff.text();
+    assert.match(clientMarkdown, /CREATE SOMETHING Map-to-Build Handoff/);
+    assert.match(clientMarkdown, /Public sequence: Map -> Build -> Control/);
+
+    const internalExport = await fetch(
+      `http://127.0.0.1:${address.port}/api/sessions/${session.id}/export.md`
+    );
+    assert.equal(internalExport.status, 200);
+    assert.match(await internalExport.text(), /Acme - Atlas Workflow Map/);
   } finally {
     await closeServer(server);
   }

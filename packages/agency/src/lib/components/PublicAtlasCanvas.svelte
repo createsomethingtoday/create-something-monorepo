@@ -22,7 +22,9 @@
 		createPublicAtlasCanvasFromStarter,
 		PUBLIC_ATLAS_INDUSTRY_STARTERS
 	} from '$lib/atlas/public';
+	import { buildPublicAtlasBookingUrl } from '$lib/atlas/public-booking';
 	import { PUBLIC_ATLAS_LIMITS, PUBLIC_ATLAS_STORAGE_KEYS } from '$lib/atlas/intake-policy';
+	import { normalizeIntegrationMapContext } from '$lib/atlas/integration-context';
 
 	type AgentMessage = {
 		role: 'assistant' | 'visitor';
@@ -50,6 +52,8 @@
 	export let compact = false;
 	export let bookingHref = '/book';
 	export let flowId = 'public-atlas-flow';
+	export let initialIntegration = '';
+	export let initialIntegrationName = '';
 
 	let canvas = createPublicAtlasCanvas();
 	let selectedNodeId = 'data_workflow';
@@ -59,7 +63,7 @@
 	let agentBusy = false;
 	let agentError = '';
 	let copyState = '';
-	let saveState = 'Draft not saved';
+	let saveState = 'Browser draft';
 	let starterState = '';
 	let hydrated = false;
 	let addMenuOpen = false;
@@ -125,24 +129,9 @@
 	$: activeFocusGroup = focusGroups.find((group) => group.id === activeFocusId) ?? focusGroups[0];
 	$: activeFocusNodeIds = activeFocusGroup?.nodeIds ?? [];
 	$: activeFocusEdgeIds = activeFocusGroup?.edgeIds ?? [];
-	$: bookingUrl = buildBookingUrl();
+	$: bookingUrl = buildPublicAtlasBookingUrl({ bookingHref, canvas, readiness });
 	$: mappedPercent = Math.round((selectedDimensionCount / PUBLIC_ATLAS_LANES.length) * 100);
 	$: leadTierLabel = usage.tier === 'warmLead' ? 'Warm lead' : 'Anonymous map';
-
-	function buildBookingUrl() {
-		const base = bookingHref.split('?')[0] || '/book';
-		const params = new URLSearchParams({
-			source: 'atlas-canvas',
-			intent: readiness.intent,
-			lane: readiness.lane,
-			warmup: 'atlas_canvas',
-			readiness: readiness.slug,
-			score: String(readiness.score),
-			atlas_session_id: canvas.id,
-			agent_messages: String(canvas.agentMessages)
-		});
-		return `${base}?${params.toString()}`;
-	}
 
 	function persistCanvas() {
 		if (!browser) return;
@@ -173,7 +162,7 @@
 				)
 			})
 		);
-		saveState = 'Saved for booking';
+		saveState = 'Saved in this browser';
 	}
 
 	function loadStarterMap(starterId: string) {
@@ -353,6 +342,59 @@
 		agentSuggestions = ['Name the owner', 'Find the approval point', 'Mark the riskiest handoff'];
 	}
 
+	function seedIntegrationContext() {
+		const integration = normalizeIntegrationMapContext(
+			initialIntegration,
+			initialIntegrationName
+		);
+		if (!integration) return;
+
+		const nodeId = `system_integration_${integration.slug.replaceAll('-', '_')}`;
+		const existingNode = canvas.nodes.find((node) => node.id === nodeId);
+		if (existingNode) {
+			selectedNodeId = existingNode.id;
+			selectedSourceId = existingNode.id;
+			return;
+		}
+
+		const integrationNode = createPublicAtlasNode('system', {
+			id: nodeId,
+			label: integration.name,
+			notes:
+				'Selected from the connector directory. Confirm account ownership, permissions, allowed actions, and approval rules before this tool can run.',
+			createdBy: 'visitor',
+			status: 'unknown'
+		});
+		const workflowNode = canvas.nodes.find((node) => node.id === 'data_workflow');
+		canvas = normalizePublicAtlasCanvas({
+			...canvas,
+			nodes: [...canvas.nodes, integrationNode],
+			edges: workflowNode
+				? [
+						...canvas.edges,
+						createPublicAtlasEdge(workflowNode.id, integrationNode.id, {
+							id: `edge_workflow_integration_${integration.slug.replaceAll('-', '_')}`,
+							label: 'uses tool',
+							createdBy: 'visitor'
+						})
+					]
+				: canvas.edges,
+			mutationCount: canvas.mutationCount + 1,
+			updatedAt: new Date().toISOString()
+		});
+		selectedNodeId = integrationNode.id;
+		selectedSourceId = integrationNode.id;
+		agentInput = `Map a workflow using ${integration.name}. Confirm account ownership, permissions, allowed actions, and approval rules.`;
+		messages = [
+			...messages,
+			{
+				role: 'assistant',
+				text: `${integration.name} is attached as the selected tool. Confirm its account, permissions, actions, approval points, and proof before it can run.`
+			}
+		];
+		saveState = 'Connector context added';
+	}
+
 	onMount(() => {
 		const raw = window.localStorage.getItem(PUBLIC_ATLAS_STORAGE_KEYS.canvas);
 		if (raw) {
@@ -365,6 +407,7 @@
 				saveState = 'Draft not saved';
 			}
 		}
+		seedIntegrationContext();
 		hydrated = true;
 	});
 
@@ -375,7 +418,7 @@
 
 </script>
 
-<section class="public-atlas" class:compact={compact} aria-label="Public Atlas workflow canvas">
+<section class="public-atlas" class:compact={compact} aria-label="Public Map workflow canvas">
 	<div class="atlas-copy">
 		<span>Mapping warmup</span>
 		<h3>Turn one workflow into a map before booking.</h3>
@@ -394,10 +437,10 @@
 							<span>Map readiness</span>
 							<strong>{readiness.level}</strong>
 						</div>
-						<div class="progress-meter" aria-label={`${mappedPercent}% of Atlas dimensions mapped`}>
+						<div class="progress-meter" aria-label={`${mappedPercent}% of Map dimensions mapped`}>
 							<span style={`width: ${mappedPercent}%`}></span>
 						</div>
-						<div class="dimension-strip" aria-label="Atlas dimension coverage">
+						<div class="dimension-strip" aria-label="Map dimension coverage">
 							{#each dimensionCoverage as lane}
 								<span class:mapped={lane.mapped} title={lane.description}>
 									{lane.label}
@@ -435,7 +478,7 @@
 					</div>
 				</div>
 
-				<div class="focus-strip" aria-label="Atlas focus mode">
+				<div class="focus-strip" aria-label="Map focus mode">
 					{#each focusGroups as group}
 						<button
 							type="button"
@@ -451,17 +494,19 @@
 					{/each}
 				</div>
 
-				<div class="atlas-flow-viewport" aria-label="Atlas flow canvas">
-					<PublicAtlasFlow
-						{canvas}
-						{flowId}
-						{selectedNodeId}
-						focusedNodeIds={activeFocusNodeIds}
-						focusedEdgeIds={activeFocusEdgeIds}
-						dimUnfocused
-						onMoveNode={moveNode}
-						onSelectNode={selectNode}
-					/>
+				<div class="atlas-flow-viewport" aria-label="Map flow canvas">
+					{#key canvas.id}
+						<PublicAtlasFlow
+							{canvas}
+							{flowId}
+							{selectedNodeId}
+							focusedNodeIds={activeFocusNodeIds}
+							focusedEdgeIds={activeFocusEdgeIds}
+							dimUnfocused
+							onMoveNode={moveNode}
+							onSelectNode={selectNode}
+						/>
+					{/key}
 				</div>
 
 				<div class="handoffs">
@@ -516,8 +561,15 @@
 					</span>
 				</div>
 				<label class="email-field">
-					<span>{leadTierLabel}</span>
-					<input bind:value={visitorEmail} type="email" placeholder="you@example.com" />
+					<span>Work email (optional)</span>
+					<input
+						bind:value={visitorEmail}
+						type="email"
+						autocomplete="email"
+						placeholder="you@example.com"
+						aria-describedby={`${flowId}-email-help`}
+					/>
+					<small id={`${flowId}-email-help`}>Extends the public mapping allowance. It does not save the map.</small>
 				</label>
 				<div class="chat-log" aria-live="polite">
 					{#each messages as message}
@@ -539,7 +591,9 @@
 						void askAgent();
 					}}
 				>
+					<label class="agent-input-label" for={`${flowId}-agent-input`}>Workflow context</label>
 					<textarea
+						id={`${flowId}-agent-input`}
 						bind:value={agentInput}
 						maxlength={visitorEmail.trim()
 							? PUBLIC_ATLAS_LIMITS.warmLead.maxMessageChars
@@ -649,6 +703,7 @@
 						<span>Booking context</span>
 						<strong>{saveState}</strong>
 					</summary>
+					<p class="summary-note">Saved only in this browser. Use the authenticated Map workspace for durable versions, review, sharing, and export.</p>
 					<pre>{summary}</pre>
 					<div class="summary-actions">
 						<button type="button" onclick={copySummary}>{copyState || 'Copy summary'}</button>
@@ -1116,6 +1171,23 @@
 		padding: 0 0.85rem;
 	}
 
+	.email-field small,
+	.summary-note {
+		margin: 0;
+		color: var(--color-performance-muted, #5e6268);
+		font-size: 0.72rem;
+		line-height: 1.35;
+	}
+
+	.agent-input-label {
+		color: var(--color-performance-muted, #5e6268);
+		font-family: var(--font-performance-mono);
+		font-size: 0.72rem;
+		font-weight: 700;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+	}
+
 	.email-field input,
 	.inspector-panel input,
 	.inspector-panel select,
@@ -1307,6 +1379,10 @@
 		padding: 0.75rem;
 		white-space: pre-wrap;
 		word-break: break-word;
+	}
+
+	.summary-note {
+		padding: 0.75rem 0.85rem 0;
 	}
 
 	.summary-actions {

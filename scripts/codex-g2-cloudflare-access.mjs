@@ -8,6 +8,7 @@ export const DEFAULTS = Object.freeze({
   hostname: 'codex-g2.createsomething.agency',
   tunnelName: 'create-something-codex-g2',
   origin: 'http://127.0.0.1:19931',
+  protocol: 'http2',
   sessionDuration: '12h',
   configPath: '.tmp/cloudflared/codex-g2.yml'
 });
@@ -89,6 +90,7 @@ export function validateConfig(options) {
 export function buildTunnelConfig(options) {
   return [
     `tunnel: ${options.tunnelName}`,
+    `protocol: ${options.protocol}`,
     '',
     'ingress:',
     `  - hostname: ${options.hostname}`,
@@ -105,6 +107,7 @@ export function accessSummary(options) {
   return [
     `Hostname: ${options.hostname}`,
     `Tunnel: ${options.tunnelName}`,
+    `Tunnel transport: ${options.protocol}`,
     `Origin: ${options.origin}`,
     `Cloudflare Access session duration: ${options.sessionDuration}`,
     'Cloudflare Access allow policy: micah@createsomething.io only',

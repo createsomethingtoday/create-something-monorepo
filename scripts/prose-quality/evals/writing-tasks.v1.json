@@ -1,0 +1,108 @@
+{
+  "version": 1,
+  "reader": "junior-practitioner",
+  "evaluationBoundary": "These cases calibrate artifact routing and observable writing behavior. They do not authorize invented evidence or automatic publication.",
+  "cases": [
+    {
+      "id": "operator-runbook-usable-path",
+      "artifactType": "operator-instructions",
+      "prompt": "Rewrite this deployment guidance so a junior operator can follow it safely.",
+      "sourceExcerpt": "The system uses a governed deployment architecture with several verification surfaces. Operators should ensure configuration readiness before initiating promotion.",
+      "reference": "operator-instructions.md",
+      "requiredSignals": ["Outcome", "Expected result", "Recovery", "Completion proof"],
+      "expectedSequence": [
+        "outcome",
+        "prerequisites",
+        "first action",
+        "expected result",
+        "recovery",
+        "completion proof"
+      ],
+      "preservationRequirements": [
+        "approval boundary",
+        "verification requirement",
+        "no invented command or result"
+      ]
+    },
+    {
+      "id": "report-answer-first",
+      "artifactType": "report",
+      "prompt": "Turn this research summary into an executive recommendation without losing the evidence.",
+      "sourceExcerpt": "The team reviewed onboarding feedback, support volume, and completion behavior. Complaints rose after three setup steps were added.",
+      "reference": "reports-and-arguments.md",
+      "requiredSignals": ["answer", "supporting reasons", "evidence"],
+      "expectedSequence": ["recommendation", "two to four grouped reasons", "evidence and limits"],
+      "preservationRequirements": [
+        "observed complaint increase",
+        "three added steps",
+        "no invented completion metric"
+      ]
+    },
+    {
+      "id": "argument-existing-conversation",
+      "artifactType": "argument",
+      "prompt": "Draft an argument that responds fairly to the existing position and explains why the response matters.",
+      "sourceExcerpt": "Some teams treat faster agent execution as the primary goal. The proposed view is that governed completion matters more than raw speed.",
+      "reference": "reports-and-arguments.md",
+      "requiredSignals": ["They say", "I say", "counterargument"],
+      "expectedSequence": [
+        "existing position",
+        "response",
+        "reasons and evidence",
+        "counterargument",
+        "significance"
+      ],
+      "preservationRequirements": [
+        "fair statement of the existing position",
+        "no invented evidence"
+      ]
+    },
+    {
+      "id": "technical-reader-expectations",
+      "artifactType": "technical-explanation",
+      "prompt": "Repair the information flow without changing the technical claim.",
+      "sourceExcerpt": "A substantial increase in processing speed was produced by the revised algorithm.",
+      "reference": "sentence-clarity.md",
+      "requiredSignals": ["character", "subject", "action", "verb", "familiar", "important"],
+      "expectedSequence": [
+        "paragraph topic",
+        "visible character and action",
+        "familiar information",
+        "important new information"
+      ],
+      "preservationRequirements": [
+        "the revised algorithm caused the increase",
+        "no invented measurement"
+      ]
+    },
+    {
+      "id": "case-study-movement",
+      "artifactType": "case-study",
+      "prompt": "Give this case-study opening enough movement to explain why the intervention followed.",
+      "sourceExcerpt": "Customers completed the original onboarding without assistance. Three verification steps were added. Complaints and support requests rose.",
+      "reference": "reports-and-arguments.md",
+      "requiredSignals": ["And", "But", "Therefore"],
+      "expectedSequence": ["accepted situation", "observed problem", "supported direction"],
+      "preservationRequirements": [
+        "three verification steps",
+        "observed complaints and support requests",
+        "no invented causal certainty"
+      ]
+    },
+    {
+      "id": "teaching-memorability-after-clarity",
+      "artifactType": "teaching",
+      "prompt": "Make this explanation memorable only after its core idea and evidence are clear.",
+      "sourceExcerpt": "A receipt records the actor, action, result, and next step so another operator can inspect what happened.",
+      "reference": "reports-and-arguments.md",
+      "requiredSignals": ["Simple", "Concrete", "Credible"],
+      "expectedSequence": [
+        "core idea",
+        "concrete example",
+        "credibility check",
+        "optional enrichment"
+      ],
+      "preservationRequirements": ["receipt fields", "inspectability purpose", "no invented story"]
+    }
+  ]
+}

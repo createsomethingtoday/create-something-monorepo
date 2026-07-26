@@ -18,6 +18,7 @@
 		artifactPlacement?: PerformanceContrastArtifactPlacement;
 		artifact?: Snippet;
 		ariaLabel?: string;
+		density?: 'standard' | 'compact';
 	}
 
 	let {
@@ -28,7 +29,8 @@
 		mode = 'ink-to-paper',
 		artifactPlacement = 'inline',
 		artifact,
-		ariaLabel = eyebrow
+		ariaLabel = eyebrow,
+		density = 'standard'
 	}: Props = $props();
 </script>
 
@@ -36,6 +38,7 @@
 	class="performance-contrast-chapter"
 	data-mode={mode}
 	data-artifact-placement={artifactPlacement}
+	data-density={density}
 	aria-label={ariaLabel}
 >
 	<header class="performance-contrast-chapter__principle">
@@ -68,6 +71,10 @@
 		grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
 		min-height: clamp(34rem, 66vw, 50rem);
 		border-block: 1px solid var(--color-performance-ink, #090909);
+	}
+
+	.performance-contrast-chapter[data-density='compact'] {
+		min-height: clamp(30rem, 56vw, 44rem);
 	}
 
 	.performance-contrast-chapter__principle,
@@ -147,6 +154,9 @@
 	@media (max-width: 48rem) {
 		.performance-contrast-chapter { grid-template-columns: 1fr; }
 		.performance-contrast-chapter__principle { min-height: 29rem; }
+		.performance-contrast-chapter[data-density='compact'] .performance-contrast-chapter__principle { min-height: 20rem; }
+		.performance-contrast-chapter[data-density='compact'] .performance-contrast-chapter__principle,
+		.performance-contrast-chapter[data-density='compact'] .performance-contrast-chapter__intervention { padding: 1.25rem; }
 		.performance-contrast-chapter[data-mode='paper-to-ink'] .performance-contrast-chapter__principle { order: initial; }
 	}
 </style>

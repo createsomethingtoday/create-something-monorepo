@@ -62,6 +62,10 @@ apps/guard-performance-lab/node_modules/
 !apps/atlas-studio-desktop/
 !apps/atlas-studio-desktop/**
 apps/atlas-studio-desktop/node_modules/
+!apps/metal-water-gate-release/
+!apps/metal-water-gate-release/**
+!apps/metal-water-simulator/
+!apps/metal-water-simulator/**
 !apps/webflow-dashboard-cloud/
 !apps/webflow-dashboard-cloud/**
 apps/webflow-dashboard-cloud/node_modules/
@@ -78,6 +82,10 @@ apps/marketplace-template-submission-cloud/.next/
 !apps/even-operator-brief/**
 apps/even-operator-brief/node_modules/
 apps/even-operator-brief/node_modules*/
+!apps/even-codex-presence/
+!apps/even-codex-presence/**
+apps/even-codex-presence/node_modules/
+apps/even-codex-presence/node_modules*/
 apps/marketplace-template-submission-cloud/.open-next/
 apps/marketplace-template-submission-cloud/tsconfig.tsbuildinfo
 !apps/webflow-marketplace-category-cloud/

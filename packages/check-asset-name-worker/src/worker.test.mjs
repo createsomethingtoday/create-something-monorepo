@@ -476,3 +476,90 @@ test('blocks non-whitelisted creators with an active review in progress', async 
   assert.equal(payload.isWhitelisted, false);
   assert.match(payload.message, /active review in progress/);
 });
+
+test('blocks a creator when recent submissions are beyond Airtable page one', async () => {
+  const recentSubmissionDate = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const firstPage = Array.from({ length: 100 }, (_, index) => ({
+    id: `recPublished${index}`,
+    fields: {
+      Name: `Published Template ${index}`,
+      '🚀Marketplace Status': 'Published',
+      '📅Submitted Date': '2024-01-01T00:00:00.000Z'
+    }
+  }));
+  const secondPage = Array.from({ length: 6 }, (_, index) => ({
+    id: `recRecent${index}`,
+    fields: {
+      Name: `Recent Template ${index}`,
+      '🚀Marketplace Status': 'Submitted for review',
+      '📅Submitted Date': recentSubmissionDate
+    }
+  }));
+
+  const calls = installAirtableMock((url) => {
+    if (url.pathname === '/v0/appTest/creators') {
+      return { records: [creatorRecord({})] };
+    }
+
+    if (url.pathname === '/v0/appTest/assets') {
+      return url.searchParams.get('offset') === 'page-2'
+        ? { records: secondPage }
+        : { records: firstPage, offset: 'page-2' };
+    }
+  });
+
+  const { response, payload } = await checkTemplateUser('creator@example.com', {
+    ...BASE_ENV,
+    AIRTABLE_ASSETS_VIEW_ID: 'viewThatExcludesDelistedTemplates'
+  });
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.assetsSubmitted30, 6);
+  assert.equal(payload.submittedTemplates, 106);
+  assert.equal(payload.hasError, true);
+  assert.match(payload.message, /past 30 days/);
+
+  const assetCalls = calls.filter((call) => call.pathname === '/v0/appTest/assets');
+  assert.equal(assetCalls.length, 2);
+  assert.equal(assetCalls[0].searchParams.has('view'), false);
+  assert.equal(assetCalls[1].searchParams.get('offset'), 'page-2');
+});
+
+test('uses creator rollups when they are stricter than the asset-derived counts', async () => {
+  const recentSubmissionDate = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+  installAirtableMock((url) => {
+    if (url.pathname === '/v0/appTest/creators') {
+      return {
+        records: [
+          creatorRecord({
+            '#️⃣👛Templates Published': 310,
+            '#️⃣👛Templates Submitted': 349,
+            '#️⃣👛Templates Delisted': 8,
+            '#️⃣Submission cap count': 8
+          })
+        ]
+      };
+    }
+
+    if (url.pathname === '/v0/appTest/assets') {
+      return {
+        records: Array.from({ length: 7 }, (_, index) => ({
+          id: `recRecent${index}`,
+          fields: {
+            Name: `Recent Template ${index}`,
+            '🚀Marketplace Status': 'Published',
+            '📅Submitted Date': recentSubmissionDate
+          }
+        }))
+      };
+    }
+  });
+
+  const { payload } = await checkTemplateUser('creator@example.com');
+
+  assert.equal(payload.assetsSubmitted30, 8);
+  assert.equal(payload.submittedTemplates, 349);
+  assert.equal(payload.publishedTemplates, 310);
+  assert.equal(payload.hasError, true);
+});

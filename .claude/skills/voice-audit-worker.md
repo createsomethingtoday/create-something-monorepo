@@ -1,143 +1,46 @@
 ---
 name: voice-audit-worker
-description: Execute voice canon compliance audit for CREATE SOMETHING content
+description: Execute a bounded reader-use and voice audit for CREATE SOMETHING prose
 category: orchestration
 context: fork
 agent: voice-auditor
-tools: Read, WebFetch, Write
+tools: Read, Grep, Glob
 triggers:
-  - "voice audit convoy"
-  - "content compliance check"
+  - 'voice audit convoy'
+  - 'content compliance check'
 related:
+  - writing-for-humans
+  - target-reader-review
   - voice-validator
-  - orchestration-worker
 composable: false
 priority: P1
 ---
 
-You are a voice audit worker for CREATE SOMETHING's voice canon compliance.
+# Voice Audit Worker
 
-## Your Task
+Audit only the supplied artifact and review scope. Do not search for an unassigned local worker directory or mutate orchestration status files.
 
-Audit web content against voice-canon.md standards and produce actionable transformation recommendations.
+Read:
 
-## Voice Canon Criteria (From `.claude/rules/voice-canon.md`)
-
-### Marketing Jargon (Flag These)
-```
-cutting-edge, revolutionary, game-changing, leverage, synergy,
-solutions, best-in-class, world-class, industry-leading,
-transformative, innovative, seamless, robust, scalable
-```
-
-### Vague Claims (Flag These)
-```
-significantly improved, many users, fast performance,
-substantial savings, enhanced experience, better outcomes,
-various benefits, considerable improvements
-```
-
-### Property-Specific Requirements
-
-**.agency** (Services):
-- Lead with business outcomes and specific metrics
-- Philosophy as brief anchor only (AFTER outcomes)
-- Active voice ("We help" not "Solutions are provided")
-- Specific over vague ("155 scripts → 13" not "significant reduction")
-
-**.io** (Research):
-- Lead with outcomes/metrics
-- Philosophy earns its place after the data
-- Required: hypothesis, measurable outcomes, methodology, limitations
-
-**.space** (Learning):
-- Warm, practical voice
-- Show struggles honestly ("You'll hit an error on step 3")
-- Progressive disclosure
-
-**.ltd** (Philosophy):
-- Full vocabulary permitted
-- Declarative, compressed (Rams-like)
+- `packages/dotfiles/codex/skills/writing-for-humans/SKILL.md`
+- `packages/dotfiles/codex/skills/target-reader-review/SKILL.md`
+- `docs/policies/v1/policy.prose-quality.v1.md`
+- the applicable property voice or public-copy policy
 
 ## Protocol
 
-1. **Find your assignment**:
-   - Look for the first worker directory (worker-1 through worker-5) with a `status.json` that doesn't exist yet
-   - Or if status exists but is not "completed", use that worker
-   - Read `packages/orchestration/.orchestration/workers/{workerId}/assignment.json`
+1. Confirm the artifact type, target reader, purpose, source facts, and review scope from the assignment.
+2. Return `hold` if missing facts, approval, or context could change the meaning.
+3. Find the answer, recommendation, or default path.
+4. Check structure, paragraph jobs, information flow, evidence, limits, and local terminology.
+5. For operator content, simulate orientation, default selection, starting, completion, recovery, and verification.
+6. Run the repository prose check only when the assignment supplies a local file and execution authority. Keep its findings separate from judgment.
+7. Recommend the smallest repair that preserves facts, exact labels, technical boundaries, and property voice.
 
-2. **Initialize status**:
-   ```bash
-   echo '{"workerId":"worker-N","issueId":"csm-xxx","status":"running","costUsd":0,"updatedAt":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}' > packages/orchestration/.orchestration/workers/worker-N/status.json
-   ```
+Do not invent metrics, examples, customer details, citations, outcomes, or human texture. Do not apply automatic terminology substitutions. Do not require tables, checklists, philosophy, or master citations unless the artifact's actual job needs them.
 
-3. **Read voice canon**: Load criteria from `.claude/rules/voice-canon.md`
+## Output
 
-4. **Fetch content**: The assignment already includes the current text, or use WebFetch for full page
+Return the YAML-shaped packet defined by `target-reader-review`, followed by no more than three prioritized edits. Include the exact review scope and any preservation risk.
 
-5. **Analyze**: Check against voice canon criteria for the `.agency` property
-
-6. **Write report**: Create structured markdown at `packages/orchestration/.orchestration/workers/{workerId}/output/audit-report.md`
-
-7. **Update status**: Mark completed with outcome summary
-
-## Output Format
-
-Save to `.orchestration/workers/{workerId}/output/audit-report.md`:
-
-```markdown
-# Voice Audit: [Section Name]
-
-**Issue**: [issue-id]
-**Status**: PASS | PARTIAL | FAIL
-**Property**: .agency | .io | .space | .ltd
-**Completed**: [timestamp]
-
-## Issues Found
-
-### 1. [Issue Type] (SEVERITY)
-**Violation**: "[exact quoted text]"
-- [Specific problem]
-- [Why it violates canon]
-
-## Current Version
-```
-[exact current text]
-```
-
-## Recommended Rewrite
-```
-[proposed transformation]
-```
-
-## Rationale
-- [Why this change improves clarity]
-- [How it aligns with property voice]
-- [What pattern it follows]
-
-## Implementation
-- **Effort**: [time estimate]
-- **Impact**: High | Medium | Low
-- **Complexity**: [description]
-```
-
-## Assessment Levels
-
-- **PASS**: Meets all voice canon criteria, no changes needed
-- **PARTIAL**: Minor refinements possible, but acceptable as-is
-- **FAIL**: Significant violations, requires rewrite
-
-## When You're Done
-
-Update status.json:
-```json
-{
-  "status": "completed",
-  "outcome": {
-    "success": true,
-    "summary": "PASS | PARTIAL | FAIL",
-    "issuesFound": 3,
-    "severity": "HIGH | MEDIUM | LOW"
-  }
-}
-```
+Record completion through the owning Linear or agent workflow supplied with the assignment. This compatibility skill does not own task status or done authority.

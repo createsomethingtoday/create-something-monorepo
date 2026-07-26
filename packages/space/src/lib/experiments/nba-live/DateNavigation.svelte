@@ -8,35 +8,39 @@
 
 	import { ChevronLeft, ChevronRight, Calendar } from 'lucide-svelte';
 	import { goto } from '$app/navigation';
+	import { formatNbaDate, shiftNbaDate } from '$lib/nba/scoreboard-state';
 
 	interface Props {
 		currentDate: string; // YYYY-MM-DD
 		baseUrl?: string;
+		todayDate?: string;
 	}
 
-	let { currentDate, baseUrl = '/data/nba' }: Props = $props();
+	let { currentDate, baseUrl = '/data/nba', todayDate = formatNbaDate(new Date()) }: Props = $props();
 
 	function formatDate(dateStr: string): string {
-		const date = new Date(dateStr + 'T00:00:00');
-		const today = new Date();
-		today.setHours(0, 0, 0, 0);
-		const dateObj = new Date(date);
-		dateObj.setHours(0, 0, 0, 0);
+		if (dateStr === todayDate) return 'Today';
+		if (dateStr === shiftNbaDate(todayDate, -1)) return 'Yesterday';
+		if (dateStr === shiftNbaDate(todayDate, 1)) return 'Tomorrow';
 
-		const diffDays = Math.floor((dateObj.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-
-		if (diffDays === 0) return 'Today';
-		if (diffDays === -1) return 'Yesterday';
-		if (diffDays === 1) return 'Tomorrow';
-
+		const date = new Date(dateStr + 'T12:00:00Z');
 		return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 	}
 
 	function changeDate(offset: number) {
-		const date = new Date(currentDate + 'T00:00:00');
-		date.setDate(date.getDate() + offset);
-		const newDate = date.toISOString().split('T')[0];
+		const newDate = shiftNbaDate(currentDate, offset);
 		goto(`${baseUrl}?date=${newDate}`);
+	}
+
+	function jumpToDate(event: Event) {
+		const value = (event.currentTarget as HTMLInputElement).value;
+		if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+			goto(`${baseUrl}?date=${value}`);
+		}
+	}
+
+	function goToToday() {
+		goto(baseUrl);
 	}
 </script>
 
@@ -45,14 +49,25 @@
 		<ChevronLeft size={16} />
 	</button>
 
-	<div class="date-display">
+	<label class="date-display">
 		<Calendar size={14} class="date-icon" />
 		<span class="date-label">{formatDate(currentDate)}</span>
-	</div>
+		<input
+			class="date-input"
+			type="date"
+			value={currentDate}
+			onchange={jumpToDate}
+			aria-label="Jump to date"
+		/>
+	</label>
 
 	<button class="nav-button" onclick={() => changeDate(1)} aria-label="Next day">
 		<ChevronRight size={16} />
 	</button>
+
+	{#if currentDate !== todayDate}
+		<button class="today-button" onclick={goToToday}>Today</button>
+	{/if}
 </div>
 
 <style>
@@ -81,6 +96,7 @@
 	}
 
 	.date-display {
+		position: relative;
 		display: flex;
 		align-items: center;
 		gap: var(--space-performance-xs);
@@ -89,6 +105,20 @@
 		border-radius: var(--radius-performance-scale-sm);
 		min-width: 140px;
 		justify-content: center;
+	}
+
+	.date-display:focus-within {
+		outline: 2px solid var(--color-performance-border-emphasis);
+		outline-offset: 2px;
+	}
+
+	.date-input {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		opacity: 0;
+		cursor: pointer;
 	}
 
 	.date-display :global(.date-icon) {
@@ -100,5 +130,21 @@
 		color: var(--color-performance-fg-primary);
 		font-weight: 500;
 		font-variant-numeric: tabular-nums;
+	}
+
+	.today-button {
+		min-height: 32px;
+		padding: 0 var(--space-performance-sm);
+		border-radius: var(--radius-performance-scale-sm);
+		background: transparent;
+		color: var(--color-performance-fg-secondary);
+		font-size: var(--text-performance-body-sm);
+		cursor: pointer;
+	}
+
+	.today-button:hover,
+	.today-button:focus-visible {
+		color: var(--color-performance-fg-primary);
+		outline: 1px solid var(--color-performance-border-emphasis);
 	}
 </style>

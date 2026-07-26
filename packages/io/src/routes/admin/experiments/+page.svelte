@@ -1,400 +1,249 @@
 <script lang="ts">
+	import type { PageData } from './$types';
 	import { SEO } from '@create-something/canon';
-	import { onMount } from 'svelte';
-	import { fetchAdminJson, type AdminRequestError } from '$lib/admin/client';
+	import { getAdminExperimentCatalogStats } from '$lib/admin/experiment-catalog';
 
-	interface ExperimentRecord {
-		id: string;
-		title?: string;
-		description?: string;
-		category?: string;
-		url?: string;
-		featured?: boolean | number;
-		created_at?: string;
-		execution_count?: number;
-	}
+	let { data }: { data: PageData } = $props();
+	let searchQuery = $state('');
+	let filterCategory = $state('all');
 
-	let experiments: ExperimentRecord[] = [];
-	let loading = true;
-	let filterCategory = 'all';
-	let searchQuery = '';
-	let bulkTagging = false;
-	let loadError: AdminRequestError | null = null;
+	const catalog = $derived(data.catalog);
+	const experiments = $derived(catalog.status === 'ready' ? catalog.experiments : []);
+	const stats = $derived(getAdminExperimentCatalogStats(catalog));
+	const categories = $derived([
+		'all',
+		...Array.from(new Set(experiments.map((experiment) => experiment.category))).sort()
+	]);
+	const filteredExperiments = $derived(
+		experiments.filter((experiment) => {
+			const matchesCategory =
+				filterCategory === 'all' || experiment.category === filterCategory;
+			const query = searchQuery.trim().toLowerCase();
+			const matchesSearch =
+				query.length === 0 ||
+				experiment.title.toLowerCase().includes(query) ||
+				experiment.description.toLowerCase().includes(query);
 
-	const categories = ['all', 'design', 'engineering', 'research', 'product'];
+			return matchesCategory && matchesSearch;
+		})
+	);
 
-	onMount(async () => {
-		await loadExperiments();
-	});
-
-	async function loadExperiments() {
-		loading = true;
-		loadError = null;
-		try {
-			const result = await fetchAdminJson<ExperimentRecord[]>('/api/admin/experiments');
-			if (result.ok) {
-				experiments = result.data;
-			} else {
-				loadError = result.error;
-				experiments = [];
-			}
-		} catch (error) {
-			console.error('Failed to load experiments:', error);
-		} finally {
-			loading = false;
-		}
-	}
-
-	async function bulkApplyTags() {
-		if (!confirm('This will automatically tag all experiments based on their content and category. Continue?')) {
-			return;
-		}
-
-		bulkTagging = true;
-		try {
-			const result = await fetchAdminJson<{ message?: string }>('/api/admin/bulk-tag', {
-				method: 'POST'
-			});
-
-			if (result.ok) {
-				alert(result.data.message);
-				await loadExperiments();
-			} else {
-				loadError = result.error;
-				alert(result.error.message);
-			}
-		} catch (error) {
-			console.error('Failed to bulk tag:', error);
-			alert('Failed to apply bulk tags');
-		} finally {
-			bulkTagging = false;
-		}
-	}
-
-	async function toggleFeature(experimentId: string, currentStatus: boolean | number | undefined) {
-		try {
-			const result = await fetchAdminJson<{ success: boolean }>('/api/admin/experiments', {
-				method: 'PATCH',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					id: experimentId,
-					featured: !Boolean(currentStatus)
-				})
-			});
-
-			if (result.ok) {
-				await loadExperiments();
-			} else {
-				loadError = result.error;
-			}
-		} catch (error) {
-			console.error('Failed to toggle feature:', error);
-		}
-	}
-
-	async function deleteExperiment(experimentId: string) {
-		if (!confirm('Are you sure you want to delete this experiment?')) return;
-
-		try {
-			const result = await fetchAdminJson<{ success: boolean }>('/api/admin/experiments', {
-				method: 'DELETE',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ id: experimentId })
-			});
-
-			if (result.ok) {
-				await loadExperiments();
-			} else {
-				loadError = result.error;
-			}
-		} catch (error) {
-			console.error('Failed to delete experiment:', error);
-		}
-	}
-
-	$: filteredExperiments = experiments.filter((exp) => {
-		const matchesCategory = filterCategory === 'all' || exp.category === filterCategory;
-		const matchesSearch =
-			searchQuery === '' ||
-			exp.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-			exp.description?.toLowerCase().includes(searchQuery.toLowerCase());
-		return matchesCategory && matchesSearch;
-	});
-
-	function errorTitle(error: AdminRequestError) {
-		if (error.kind === 'unauthorized') return 'Sign in required';
-		if (error.kind === 'forbidden') return 'Admin access required';
-		if (error.kind === 'unavailable') return 'Experiment data unavailable';
-		return 'Unable to load experiments';
+	function formatDate(value: string | null) {
+		if (!value) return null;
+		const date = new Date(value);
+		return Number.isNaN(date.getTime()) ? null : date.toLocaleDateString();
 	}
 </script>
 
 <SEO
 	title="Admin - Experiments"
-	description="Administrative dashboard"
+	description="Read-only repository experiment catalog"
 	propertyName="io"
 	noindex={true}
 />
 
 <div class="space-y-6">
-	<div class="flex items-center justify-between">
+	<header class="page-header">
 		<div>
-			<h2 class="page-title">Experiments</h2>
-			<p class="page-subtitle">Manage CREATE SOMETHING experiments</p>
+			<div class="title-row">
+				<h2 class="page-title">Experiments</h2>
+				<span class="read-only-badge">Read-only</span>
+			</div>
+			<p class="page-subtitle">
+				Repository-owned experiment catalog. Changes ship through reviewed source artifacts.
+			</p>
 		</div>
-		<div class="flex gap-3">
-			<button
-				onclick={bulkApplyTags}
-				disabled={bulkTagging}
-				class="btn btn--secondary"
-			>
-				{bulkTagging ? 'Tagging...' : 'Auto-Tag All'}
-			</button>
-			<a
-				href="/admin/experiments/new"
-				class="btn btn--primary"
-			>
-				+ New Experiment
-			</a>
-		</div>
-	</div>
+		<a href="/experiments" class="public-link">View public catalog →</a>
+	</header>
 
-	<!-- Filters -->
-	<div class="flex gap-4 items-center">
-		<input
-			type="text"
-			bind:value={searchQuery}
-			placeholder="Search experiments..."
-			class="search-input"
-		/>
-
-		<select
-			bind:value={filterCategory}
-			class="category-select"
-		>
-			{#each categories as category}
-				<option value={category}>{category.charAt(0).toUpperCase() + category.slice(1)}</option>
-			{/each}
-		</select>
-	</div>
-
-	<!-- Experiments List -->
-	{#if loading}
-		<div class="space-y-4">
-			{#each [1, 2, 3] as _}
-				<div class="skeleton-card">
-					<div class="skeleton-title"></div>
-					<div class="skeleton-text"></div>
-				</div>
-			{/each}
-		</div>
-	{:else if loadError}
-		<div class="empty-state error-state">
-			<strong>{errorTitle(loadError)}</strong>
-			<span>{loadError.message}</span>
-		</div>
-	{:else if filteredExperiments.length === 0}
-		<div class="empty-state">
-			{#if searchQuery || filterCategory !== 'all'}
-				No experiments match your filters.
-			{:else}
-				No experiments yet. Create your first one!
-			{/if}
+	{#if catalog.status === 'unavailable'}
+		<div class="empty-state error-state" role="alert">
+			<strong>Experiment catalog unavailable</strong>
+			<span>{catalog.message}</span>
+			<span>Catalog metrics are unavailable until the repository source can be read.</span>
 		</div>
 	{:else}
-		<div class="space-y-4">
-			{#each filteredExperiments as experiment}
-				<div class="experiment-card">
-					<div class="flex items-start justify-between mb-3">
-						<div class="flex-1">
-							<h3 class="experiment-title">{experiment.title || 'Untitled Experiment'}</h3>
-							<div class="flex items-center gap-2 mb-2">
+		<div class="catalog-note">
+			<strong>Source of truth: repository</strong>
+			<span>
+				Add or revise experiments through <code>fileBasedExperiments.ts</code>, reviewed content,
+				and the normal production promotion path.
+			</span>
+		</div>
+
+		<div class="filters">
+			<label class="sr-only" for="experiment-search">Search experiments</label>
+			<input
+				id="experiment-search"
+				type="search"
+				bind:value={searchQuery}
+				placeholder="Search experiments..."
+				class="search-input"
+			/>
+
+			<label class="sr-only" for="experiment-category">Filter by category</label>
+			<select id="experiment-category" bind:value={filterCategory} class="category-select">
+				{#each categories as category}
+					<option value={category}>
+						{category === 'all' ? 'All categories' : category}
+					</option>
+				{/each}
+			</select>
+		</div>
+
+		{#if filteredExperiments.length === 0}
+			<div class="empty-state">
+				{#if searchQuery || filterCategory !== 'all'}
+					No experiments match these filters.
+				{:else}
+					The repository catalog contains no experiments.
+				{/if}
+			</div>
+		{:else}
+			<div class="experiment-list">
+				{#each filteredExperiments as experiment (experiment.id)}
+					<article class="experiment-card">
+						<div class="card-copy">
+							<h3 class="experiment-title">{experiment.title}</h3>
+							<div class="badges">
 								{#if experiment.featured}
 									<span class="badge badge--featured">Featured</span>
 								{/if}
-								{#if experiment.category}
-									<span class="badge badge--category">{experiment.category}</span>
-								{/if}
+								<span class="badge badge--category">{experiment.category}</span>
 							</div>
 							{#if experiment.description}
 								<p class="experiment-description">{experiment.description}</p>
 							{/if}
+							{#if formatDate(experiment.updatedAt)}
+								<span class="experiment-meta">Updated {formatDate(experiment.updatedAt)}</span>
+							{/if}
 						</div>
+						<a href={experiment.publicPath} class="experiment-link">View published →</a>
+					</article>
+				{/each}
+			</div>
+		{/if}
 
-						<div class="flex gap-2">
-							<button
-								onclick={() => toggleFeature(experiment.id, experiment.featured)}
-								class="action-btn"
-							>
-								{experiment.featured ? 'Unfeature' : 'Feature'}
-							</button>
-							<a
-								href="/admin/experiments/{experiment.id}/edit"
-								class="action-btn"
-							>
-								Edit
-							</a>
-							<button
-								onclick={() => deleteExperiment(experiment.id)}
-								class="action-btn action-btn--danger"
-							>
-								Delete
-							</button>
-						</div>
-					</div>
-
-					<div class="flex items-center gap-4">
-						{#if experiment.url}
-							<a href={experiment.url} target="_blank" class="experiment-link">
-								View Live →
-							</a>
-						{/if}
-						{#if experiment.created_at}
-							<span class="experiment-meta">Created {new Date(experiment.created_at).toLocaleDateString()}</span>
-						{/if}
-						{#if experiment.execution_count}
-							<span class="experiment-meta">{experiment.execution_count} executions</span>
-						{/if}
-					</div>
-				</div>
-			{/each}
-		</div>
-	{/if}
-
-	<!-- Stats Summary -->
-	<div class="stats-section">
-		<div class="grid grid-cols-3 gap-4">
+		<section class="stats-section" aria-label="Catalog summary">
 			<div class="stat-item">
-				<div class="stat-value">{experiments.length}</div>
-				<div class="stat-label">Total Experiments</div>
+				<div class="stat-value">{stats.total ?? '—'}</div>
+				<div class="stat-label">Published Experiments</div>
 			</div>
 			<div class="stat-item">
-				<div class="stat-value">
-					{experiments.filter((e) => e.featured).length}
-				</div>
+				<div class="stat-value">{stats.featured ?? '—'}</div>
 				<div class="stat-label">Featured</div>
 			</div>
 			<div class="stat-item">
-				<div class="stat-value">
-					{experiments.reduce((sum, e) => sum + (e.execution_count || 0), 0)}
-				</div>
-				<div class="stat-label">Total Executions</div>
+				<div class="stat-value stat-value--text">Repository</div>
+				<div class="stat-label">Authoring Source</div>
 			</div>
-		</div>
-	</div>
+		</section>
+	{/if}
 </div>
 
 <style>
-	/* Typography */
+	.page-header,
+	.title-row,
+	.filters,
+	.experiment-card,
+	.badges {
+		display: flex;
+		align-items: center;
+	}
+
+	.page-header,
+	.experiment-card {
+		justify-content: space-between;
+		gap: var(--space-performance-lg);
+	}
+
+	.title-row,
+	.badges {
+		gap: var(--space-performance-sm);
+	}
+
 	.page-title {
 		font-size: var(--text-performance-h1);
 		font-weight: 700;
-		margin-bottom: var(--space-performance-sm);
 		color: var(--color-performance-fg-primary);
+	}
+
+	.page-subtitle,
+	.experiment-description,
+	.experiment-meta,
+	.stat-label {
+		color: var(--color-performance-fg-tertiary);
 	}
 
 	.page-subtitle {
-		color: var(--color-performance-fg-tertiary);
+		margin-top: var(--space-performance-xs);
 		font-size: var(--text-performance-body);
 	}
 
-	/* Buttons */
-	.btn {
-		padding: var(--space-performance-sm) var(--space-performance-md);
-		border-radius: var(--radius-performance-scale-lg);
-		font-weight: 600;
-		transition: all var(--duration-performance-standard) var(--ease-performance-standard);
-		border: none;
-		cursor: pointer;
-		text-decoration: none;
-		display: inline-block;
+	.read-only-badge,
+	.badge {
+		padding: var(--space-performance-xs) var(--space-performance-sm);
+		border-radius: var(--radius-performance-scale-sm);
+		font-size: var(--text-performance-caption);
 	}
 
-	.btn:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
-	}
-
-	.btn--primary {
-		background: var(--color-performance-fg-primary);
-		color: var(--color-performance-bg-pure);
-	}
-
-	.btn--primary:hover:not(:disabled) {
-		background: var(--color-performance-fg-secondary);
-	}
-
-	.btn--secondary {
+	.read-only-badge,
+	.badge--featured {
 		background: var(--color-performance-bg-surface);
+		color: var(--color-performance-fg-secondary);
+	}
+
+	.public-link,
+	.experiment-link {
+		color: var(--color-performance-fg-secondary);
+		text-decoration: none;
+		white-space: nowrap;
+	}
+
+	.public-link:hover,
+	.experiment-link:hover {
 		color: var(--color-performance-fg-primary);
 	}
 
-	.btn--secondary:hover:not(:disabled) {
-		background: var(--color-performance-hover);
-	}
-
-	/* Form Inputs */
-	.search-input {
-		flex: 1;
-		padding: var(--space-performance-sm) var(--space-performance-md);
+	.catalog-note {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-performance-xs);
+		padding: var(--space-performance-md);
 		border-radius: var(--radius-performance-scale-lg);
-		color: var(--color-performance-fg-primary);
-		font-size: var(--text-performance-body);
+		background: var(--color-performance-bg-surface);
+		color: var(--color-performance-fg-secondary);
 	}
 
-	.search-input::placeholder {
-		color: var(--color-performance-fg-muted);
+	.catalog-note span {
+		color: var(--color-performance-fg-tertiary);
 	}
 
-	.search-input:focus {
-		outline: none;
-		border-color: var(--color-performance-border-emphasis);
+	.filters {
+		gap: var(--space-performance-md);
 	}
 
+	.search-input,
 	.category-select {
 		padding: var(--space-performance-sm) var(--space-performance-md);
 		border-radius: var(--radius-performance-scale-lg);
 		color: var(--color-performance-fg-primary);
 		font-size: var(--text-performance-body);
-		cursor: pointer;
 	}
 
+	.search-input {
+		flex: 1;
+	}
+
+	.search-input:focus,
 	.category-select:focus {
 		outline: none;
 		border-color: var(--color-performance-border-emphasis);
 	}
 
-	/* Skeleton Loading */
-	.skeleton-card {
-		padding: var(--space-performance-lg);
-		border-radius: var(--radius-performance-scale-lg);
-		animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-	}
-
-	.skeleton-title {
-		height: 1.5rem;
-		background: var(--color-performance-bg-surface);
-		border-radius: var(--radius-performance-scale-sm);
-		width: 33.333333%;
-		margin-bottom: var(--space-performance-sm);
-	}
-
-	.skeleton-text {
-		height: 1rem;
-		background: var(--color-performance-bg-surface);
-		border-radius: var(--radius-performance-scale-sm);
-		width: 66.666667%;
-	}
-
-	@keyframes pulse {
-		0%, 100% { opacity: 1; }
-		50% { opacity: 0.5; }
-	}
-
-	/* Empty State */
 	.empty-state {
-		text-align: center;
 		padding: var(--space-performance-2xl);
+		text-align: center;
 		color: var(--color-performance-fg-tertiary);
 	}
 
@@ -405,91 +254,41 @@
 		color: var(--color-performance-error);
 	}
 
-	/* Experiment Cards */
+	.experiment-list {
+		display: grid;
+		gap: var(--space-performance-md);
+	}
+
 	.experiment-card {
 		padding: var(--space-performance-lg);
 		border-radius: var(--radius-performance-scale-lg);
-		transition: border-color var(--duration-performance-standard) var(--ease-performance-standard);
 	}
 
-	.experiment-card:hover {
-		border-color: var(--color-performance-border-emphasis);
+	.card-copy {
+		display: grid;
+		gap: var(--space-performance-sm);
 	}
 
 	.experiment-title {
 		font-size: var(--text-performance-h3);
 		font-weight: 600;
-		margin-bottom: var(--space-performance-sm);
 		color: var(--color-performance-fg-primary);
-	}
-
-	.experiment-description {
-		color: var(--color-performance-fg-tertiary);
-		font-size: var(--text-performance-body-sm);
-	}
-
-	/* Badges */
-	.badge {
-		padding: var(--space-performance-xs) var(--space-performance-sm);
-		border-radius: var(--radius-performance-scale-sm);
-		font-size: var(--text-performance-caption);
-	}
-
-	.badge--featured {
-		background: var(--color-performance-bg-surface);
-		color: var(--color-performance-fg-secondary);
 	}
 
 	.badge--category {
 		color: var(--color-performance-fg-tertiary);
 	}
 
-	/* Action Buttons */
-	.action-btn {
-		padding: var(--space-performance-xs) var(--space-performance-sm);
-		background: var(--color-performance-bg-surface);
-		border: none;
-		border-radius: var(--radius-performance-scale-md);
+	.experiment-description,
+	.experiment-meta,
+	.stat-label {
 		font-size: var(--text-performance-body-sm);
-		color: var(--color-performance-fg-primary);
-		transition: all var(--duration-performance-standard) var(--ease-performance-standard);
-		cursor: pointer;
-		text-decoration: none;
-		display: inline-block;
 	}
 
-	.action-btn:hover {
-		background: var(--color-performance-hover);
-	}
-
-	.action-btn--danger {
-		background: var(--color-performance-error-muted);
-		color: var(--color-performance-error);
-	}
-
-	.action-btn--danger:hover {
-		background: var(--color-performance-error-border);
-	}
-
-	/* Experiment Metadata */
-	.experiment-link {
-		font-size: var(--text-performance-body-sm);
-		color: var(--color-performance-fg-secondary);
-		text-decoration: none;
-		transition: color var(--duration-performance-standard) var(--ease-performance-standard);
-	}
-
-	.experiment-link:hover {
-		color: var(--color-performance-fg-primary);
-	}
-
-	.experiment-meta {
-		font-size: var(--text-performance-body-sm);
-		color: var(--color-performance-fg-muted);
-	}
-
-	/* Stats Section */
 	.stats-section {
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: var(--space-performance-md);
 		padding-top: var(--space-performance-lg);
 	}
 
@@ -503,9 +302,24 @@
 		color: var(--color-performance-fg-primary);
 	}
 
+	.stat-value--text {
+		font-size: var(--text-performance-h3);
+	}
+
 	.stat-label {
-		font-size: var(--text-performance-body-sm);
-		color: var(--color-performance-fg-tertiary);
 		margin-top: var(--space-performance-xs);
+	}
+
+	@media (max-width: 720px) {
+		.page-header,
+		.experiment-card,
+		.filters {
+			align-items: stretch;
+			flex-direction: column;
+		}
+
+		.stats-section {
+			grid-template-columns: 1fr;
+		}
 	}
 </style>

@@ -108,9 +108,16 @@ const snapshot = await page.evaluate(
       seen.add(match[1]);
       const card = link.closest('li, article, [class*="card"], [class*="Card"]') || link;
       const text = (card.innerText || '').toUpperCase();
+      // No `name` here on purpose. The card yields img alt text or a heading,
+      // which can be an asset filename ("roolify_icon.png"), a logo label
+      // ("theConsent logo"), or a marketing tagline — values that only ever
+      // reached the DB as a fallback when the edit page wasn't read, and then
+      // surfaced as listing drift once enrichment corrected them.
+      // The edit page's #name is the only authoritative source; when we can't
+      // read it we omit the key so the server's COALESCE keeps the stored name
+      // and the diff skips the field (it only diffs `!== undefined`).
       apps.push({
         slug: match[1],
-        name: link.querySelector('img[alt]')?.alt || link.textContent?.trim() || match[1],
         visibility: CONFIG.VISIBILITY_TOKENS.find((t) => text.includes(t)) ?? null,
         review_status: CONFIG.STATUS_TOKENS.find((t) => text.includes(t)) ?? null,
         detail_url: `${location.origin}/apps/detail/${match[1]}`,
@@ -124,7 +131,8 @@ const snapshot = await page.evaluate(
             const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
             apps[i].client_id = doc.querySelector('#clientId')?.value || null;
             apps[i].workspace_id = doc.querySelector('#workspaceId')?.value || null;
-            apps[i].name = doc.querySelector('#name')?.value || apps[i].name;
+            const editName = doc.querySelector('#name')?.value?.trim();
+            if (editName) apps[i].name = editName;
           } else {
             apps[i].enrich_error = `HTTP ${res.status}`;
           }
@@ -144,6 +152,14 @@ snapshot.admin_api_routes = [...apiRoutes.entries()]
   .sort((a, b) => b[1] - a[1])
   .map(([route, count]) => ({ route, count }));
 console.log(`✓ snapshot captured: ${snapshot.count} apps (${ENRICH ? 'enriched' : 'listing-only'})`);
+
+// Names come only from the edit page. Report the gap instead of letting it pass
+// silently: these apps keep whatever name is already stored, and a later run
+// with working enrichment fills them in.
+const unnamed = snapshot.apps.filter((a) => !a.name).length;
+if (unnamed) {
+  console.log(`  ${unnamed}/${snapshot.count} without an authoritative name (edit-page #name unread) — stored names left untouched`);
+}
 
 // Defense in depth: an admin-view capture must yield client_ids. A snapshot with
 // none means we scraped the wrong surface — never push it.

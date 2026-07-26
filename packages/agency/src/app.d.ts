@@ -10,7 +10,7 @@ declare global {
 				id: string;
 				email: string;
 				tier: 'free' | 'pro' | 'agency';
-				source: 'workway' | 'templates' | 'io' | 'space' | 'lms' | 'auth0';
+				source: 'workway' | 'templates' | 'io' | 'space' | 'lms';
 				analytics_opt_out?: boolean;
 			};
 		}
@@ -36,6 +36,9 @@ declare global {
 				STRIPE_SECRET_KEY: string;
 				STRIPE_WEBHOOK_SECRET: string;
 				STRIPE_PUBLISHABLE_KEY?: string;
+				STRIPE_PRICE_MAP_MONTHLY?: string;
+				STRIPE_PRICE_MAP_YEARLY?: string;
+				MAP_COMMERCIAL_LAUNCH_APPROVED?: string;
 				// Templates Platform
 				TEMPLATES_PLATFORM_API_URL?: string;
 				TEMPLATES_PLATFORM_API_SECRET?: string;
@@ -47,6 +50,10 @@ declare global {
 				ABUNDANCE_STAFF_ONBOARDING_TOKEN?: string;
 				// Identity Worker (LMS provisioning)
 				IDENTITY_WORKER_URL?: string;
+				IDENTITY_API_URL?: string;
+				CS_IDENTITY_ISSUER?: string;
+				CS_IDENTITY_JWKS_URL?: string;
+				CS_IDENTITY_AUDIENCE?: string;
 				IDENTITY_WORKER_SECRET?: string;
 				IDENTITY_WORKER_ADMIN_API_KEY?: string;
 				ANALYTICS_SERVICE_TOKEN?: string;
@@ -69,16 +76,6 @@ declare global {
 				// Optional: Override API URL (defaults to workway-api-gateway.half-dozen.workers.dev)
 				// Set to api.workway.co once DNS route is configured
 				WORKWAY_API_URL?: string;
-				// Auth0 identity
-				AUTH0_DOMAIN?: string;
-				AUTH0_CLIENT_ID?: string;
-				AUTH0_CLIENT_SECRET?: string;
-				AUTH0_AUDIENCE?: string;
-				AUTH0_SCOPE?: string;
-				AUTH0_ISSUER_BASE_URL?: string;
-				AUTH0_JWKS_URL?: string;
-				AUTH0_CLAIMS_NAMESPACE?: string;
-				AUTH0_REDIRECT_URI?: string;
 				AGENCY_INTERNAL_API_KEY?: string;
 				AGENCY_OPERATOR_EMAILS?: string;
 				CANON_OPERATOR_ORIGINS?: string;

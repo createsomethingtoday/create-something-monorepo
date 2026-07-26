@@ -23,6 +23,7 @@ import {
   addNode,
   addObservation,
   createSession,
+  exportClientHandoffMarkdown,
   exportSessionMarkdown,
   getSessionPath,
   listSessions,
@@ -264,6 +265,12 @@ export async function startStudioServer(options: StudioServerOptions): Promise<h
       );
       const method = request.method ?? 'GET';
 
+      if (method === 'GET' && url.pathname === '/favicon.ico') {
+        response.writeHead(204, { 'cache-control': 'public, max-age=86400' });
+        response.end();
+        return;
+      }
+
       if (method === 'GET' && (url.pathname === '/' || url.pathname === '/sessions')) {
         response.writeHead(302, { location: `/sessions/${defaultSessionId}` });
         response.end();
@@ -327,6 +334,18 @@ export async function startStudioServer(options: StudioServerOptions): Promise<h
             cwd
           )
         );
+        return;
+      }
+
+      const clientHandoffMatch = url.pathname.match(
+        /^\/api\/sessions\/([^/]+)\/client-handoff\.md$/
+      );
+      if (method === 'GET' && clientHandoffMatch) {
+        const session = await readSession(
+          decodeURIComponent(clientHandoffMatch[1] ?? ''),
+          cwd
+        );
+        sendText(response, 200, exportClientHandoffMarkdown(session), 'text/markdown');
         return;
       }
 

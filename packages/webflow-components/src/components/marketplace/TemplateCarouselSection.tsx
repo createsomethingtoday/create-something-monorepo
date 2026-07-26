@@ -1,10 +1,10 @@
 import React, { CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { TemplateCard, TEMPLATE_CARD_STYLES } from '../cards/TemplateCard';
 import { MarketplaceExperimentRole, trackMarketplaceEvent } from './analytics';
+import type { TemplateSort } from './templateRoute';
 
 type TemplateScope = 'all' | 'featured' | 'free' | 'landing_pages';
 type TemplateScopeSetting = 'auto' | TemplateScope;
-type TemplateSort = 'popular' | 'newest' | 'price_asc' | 'price_desc';
 type TemplateSortSetting = 'auto' | TemplateSort;
 
 export type TemplateCarouselPreset =

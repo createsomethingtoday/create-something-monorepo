@@ -6,7 +6,7 @@ export const AGENCY_DIFY_ARTICLE_PATHS = [
 
 export const AGENCY_ATLAS_PROOF_PATHS = [
   '/services',
-  '/atlas',
+  '/map',
   '/practice',
   '/methodology',
   '/stack',
@@ -23,6 +23,15 @@ export const AGENCY_COMPACT_PRIVACY_PATHS = [
   '/field-reports',
   '/field-reports/template-review',
   ...AGENCY_ATLAS_PROOF_PATHS
+] as const;
+
+export const AGENCY_ROUTE_OWNED_PERFORMANCE_ENDING_PATHS = [
+  '/',
+  '/services',
+  '/map',
+  '/products',
+  '/stack',
+  '/field-reports'
 ] as const;
 
 function normalizeAgencyPathname(pathname: string): string {
@@ -48,5 +57,12 @@ export function usesCompactAgencyPrivacyPrompt(pathname: string): boolean {
     AGENCY_COMPACT_PRIVACY_PATHS.includes(
       normalized as (typeof AGENCY_COMPACT_PRIVACY_PATHS)[number]
     ) || isAgencyDifyArticlePath(normalized)
+  );
+}
+
+export function usesRouteOwnedAgencyPerformanceEnding(pathname: string): boolean {
+  const normalized = normalizeAgencyPathname(pathname);
+  return AGENCY_ROUTE_OWNED_PERFORMANCE_ENDING_PATHS.includes(
+    normalized as (typeof AGENCY_ROUTE_OWNED_PERFORMANCE_ENDING_PATHS)[number]
   );
 }

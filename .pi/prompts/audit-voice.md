@@ -1,68 +1,54 @@
 ---
-description: Run Voice compliance check on content files
-argument-hint: "[path]"
+description: Review prose for reader use, evidence, clarity, and CREATE SOMETHING voice
+argument-hint: '[path]'
 ---
 
-# Voice Compliance Audit
+# Voice and Reader Audit
 
-Audit `$@` for CREATE SOMETHING Voice compliance.
+Audit `$@` against the canonical prose system:
 
-## The Five Principles
+- drafting and structure: `packages/dotfiles/codex/skills/writing-for-humans/SKILL.md`
+- independent judgment: `packages/dotfiles/codex/skills/target-reader-review/SKILL.md`
+- policy boundary: `docs/policies/v1/policy.prose-quality.v1.md`
+- final revision voice: `.claude/rules/voice-canon.md`
 
-1. **Clarity Over Cleverness** — Write for your reader, not yourself
-2. **Specificity Over Generality** — Show what you mean
-3. **Honesty Over Polish** — Document both successes and failures
-4. **Useful Over Interesting** — Help readers implement, not just understand
-5. **Grounded Over Trendy** — Connect to timeless principles
+## Audit Loop
 
-## Orwell's Rules
+1. Identify the artifact type, target reader, purpose, and complete review scope.
+2. State the answer, recommendation, or usable path the reader receives.
+3. Check structure before sentences: answer first, grouped supports, one paragraph job, evidence beside claims.
+4. For operator content, simulate orientation, default-path discovery, starting, completion, recovery, and verification.
+5. Repair sentence flow: visible character and action, familiar context first, important new information near the end.
+6. Check factual preservation, citations, uncertainty, exact labels, technical boundaries, and property voice.
+7. Treat jargon, sentence length, abstraction density, passive voice, and owned-term clusters as contextual review signals unless the owning policy declares a deterministic rule.
+8. Run `pnpm prose:check -- <path> --format json` when the repository file is available. Keep tool findings separate from judgment.
 
-1. Never use a metaphor, simile, or figure of speech you've seen in print
-2. Never use a long word where a short one will do
-3. If it's possible to cut a word, cut it
-4. Never use the passive where you can use the active
-5. Never use jargon if you can think of an everyday equivalent
-6. Break any of these rules sooner than say anything outright barbarous
+Do not require a number for every sentence. Require evidence where a material claim depends on measurement. Do not replace familiar language with owned terminology unless the artifact or property actually owns that term.
 
-## Banned Marketing Jargon
+## Output
 
-These words should NEVER appear: cutting-edge, revolutionary, game-changing, AI-powered (use "AI-native development"), leverage, synergy, solutions, best-in-class, world-class, industry-leading, transformative, innovative, seamless, robust, scalable
-
-## Vague Claims to Flag
-
-- "significantly improved/reduced" → Needs specific number
-- "many users/customers" → Needs count
-- "fast/faster performance" → Needs ms or %
-- "substantial savings" → Needs dollar amount
-- "enhanced experience" → Needs measurable outcome
-
-## Terminology Corrections
-
-| Wrong | Correct |
-|-------|---------|
-| AI-assisted / AI-powered | AI-native development |
-| projects | experiments |
-| blog posts / articles | papers |
-| best practices | canonical standards |
-| style guide | canonical standards |
-| influences / inspiration | masters |
-
-## Output Format
-
-```
-## Voice Audit: [path]
-
-### Marketing Jargon (N)
-1. **[file:line]**: `cutting-edge` — What do you actually mean?
-
-### Vague Claims (N)
-1. **[file:line]**: `Fast load times` → Replace with specific metric
-
-### Orwell Violations (N)
-1. **[file:line]**: `utilize` → Use `use` (Rule 2)
-
-### Terminology (N)
-1. **[file:line]**: `AI-powered` → Use `AI-native development`
+```yaml
+verdict: pass | revise | hold
+reader: <target reader>
+artifact_type: <type>
+review_scope: <complete visible boundary>
+answer_or_default: <what the reader receives>
+first_friction: <location and effect, or none>
+operator_path:
+  can_orient: yes | no | not-applicable
+  can_find_default: yes | no | not-applicable
+  can_start: yes | no | not-applicable
+  can_complete: yes | no | not-applicable
+  can_recover: yes | no | not-applicable
+  can_verify: yes | no | not-applicable
+frictions:
+  - location: <location>
+    reason: <reader effect>
+    smallest_edit: <bounded repair>
+preservation_risks:
+  - <risk or none>
+deterministic_findings:
+  - <finding or none>
 ```
 
-Scan `.svelte`, `.md`, `.ts` files with content. Skip `node_modules`, `dist`, `build`.
+Finish consequential publication with a human final read. A green tool report is not proof that the prose is usable.

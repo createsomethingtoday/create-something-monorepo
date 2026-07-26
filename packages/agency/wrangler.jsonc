@@ -39,6 +39,10 @@
 		"ENVIRONMENT": "production",
 		"TERMINAL_VERSION": "2.0.0",
 		"DEFAULT_THEME": "dark",
+		"IDENTITY_API_URL": "https://id.createsomething.space",
+		"CS_IDENTITY_ISSUER": "https://id.createsomething.space",
+		"CS_IDENTITY_JWKS_URL": "https://id.createsomething.space/.well-known/jwks.json",
+		"CS_IDENTITY_AUDIENCE": "client-workspace",
 		"EMAIL_FROM_SITES": "CREATE SOMETHING <sites@createsomething.agency>",
 		"EMAIL_FROM_PRODUCTS": "CREATE SOMETHING <products@createsomething.agency>",
 		"EMAIL_FROM_BILLING": "CREATE SOMETHING <billing@createsomething.agency>"

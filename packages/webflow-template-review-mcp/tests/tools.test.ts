@@ -14,25 +14,34 @@ import {
 import { METRICS_ASSET_FIELD_IDS, TABLE_IDS } from '../src/schema.js';
 import { registerTools, WRITE_TOOL_NAMES } from '../src/tools.js';
 
-type ToolResult = { content: Array<{ text: string }>; isError?: boolean };
+type ToolResult = {
+  content: Array<{ type?: string; text?: string; data?: string; mimeType?: string }>;
+  structuredContent?: Record<string, unknown>;
+  isError?: boolean;
+};
 type ToolHandler = (args: Record<string, unknown>) => Promise<ToolResult>;
 
 function createServerHarness() {
   const names: string[] = [];
   const handlers = new Map<string, ToolHandler>();
+  const annotations = new Map<string, Record<string, unknown>>();
 
   const server = {
-    tool(name: string, _description: string, _schema: unknown, handler: ToolHandler) {
+    tool(name: string, ...args: unknown[]) {
       names.push(name);
+      const handler = args.at(-1) as ToolHandler;
       handlers.set(name, handler);
+      if (args.length >= 4) {
+        annotations.set(name, args.at(-2) as Record<string, unknown>);
+      }
     },
   } as unknown as McpServer;
 
-  return { server, names, handlers };
+  return { server, names, handlers, annotations };
 }
 
 function parsePayload(result: ToolResult) {
-  return JSON.parse(result.content[0]?.text ?? '{}') as {
+  return JSON.parse(result.content.find((item) => item.type === 'text' || item.text)?.text ?? '{}') as {
     ok: boolean;
     data?: Record<string, unknown>;
     error?: Record<string, unknown>;
@@ -63,12 +72,14 @@ test('registerTools places reviewer-safe write tools before admin and broad muta
   assert.notEqual(names.indexOf('template_review_get_comprehensive_review_contract'), -1);
   assert.notEqual(names.indexOf('template_review_format_agent_review_feedback'), -1);
   assert.notEqual(names.indexOf('template_review_prepare_published_site_sandbox'), -1);
+  assert.notEqual(names.indexOf('template_review_run_published_site_sandbox'), -1);
   assert.notEqual(names.indexOf('template_review_save_agent_feedback'), -1);
   assert.notEqual(names.indexOf('template_review_save_draft_feedback'), -1);
   assert.notEqual(names.indexOf('template_review_run_published_site_validation'), -1);
   assert.ok(names.indexOf('template_review_run_published_site_validation') < names.indexOf('template_review_assign_self'));
   assert.ok(names.indexOf('template_review_get_comprehensive_review_contract') < names.indexOf('template_review_run_published_site_validation'));
   assert.ok(names.indexOf('template_review_prepare_published_site_sandbox') < names.indexOf('template_review_run_published_site_validation'));
+  assert.ok(names.indexOf('template_review_run_published_site_sandbox') < names.indexOf('template_review_run_published_site_validation'));
   assert.ok(names.indexOf('template_review_format_agent_review_feedback') < names.indexOf('template_review_save_agent_feedback'));
   assert.ok(names.indexOf('template_review_assign_self') < names.indexOf('template_review_assign_reviewer'));
   assert.ok(names.indexOf('template_review_request_changes') < names.indexOf('template_review_complete_publishing'));
@@ -182,6 +193,8 @@ test('prepare_published_site_sandbox returns bounded E2B runner evidence contrac
   assert.match(bundle.e2b_run_code, /published_site_sandbox_output\.v0\.1/);
   assert.match(bundle.e2b_run_code, /try_render_with_playwright/);
   assert.match(bundle.e2b_run_code, /horizontal_overflow/);
+  assert.match(bundle.e2b_run_code, /if not address\.is_global/);
+  assert.match(bundle.e2b_run_code, /os\.path\.isdir\('\/opt\/ms-playwright'\)/);
   assert.match(bundle.e2b_run_code, /No review decision, rating, reviewer feedback, or external write is performed/);
   assert.ok(bundle.safety_boundary.some((item) => item.includes('Evidence-only')));
 });
@@ -205,6 +218,61 @@ test('prepare_published_site_sandbox rejects non-public URLs before runner gener
   assert.equal(payload.ok, false);
   assert.equal(payload.error?.code, 'PUBLISHED_SITE_SANDBOX_INPUT_INVALID');
   assert.match(String(payload.error?.message), /https|private|local|loopback/i);
+});
+
+test('run_published_site_sandbox is annotated read-only and returns structured evidence plus bounded images', async () => {
+  const { server, handlers, annotations } = createServerHarness();
+  const client = {} as AirtableClient;
+
+  registerTools(
+    server,
+    () => client,
+    () => reviewer,
+    {
+      sandboxExecution: {
+        apiKey: 'test-key',
+        executor: async () => ({
+          ok: true,
+          schema_version: 'published_site_sandbox_execution.v0.1',
+          run_id: 'run-tool-fixture',
+          source_url: 'https://example-template.webflow.io/',
+          provider: 'direct_e2b',
+          status: 'ok',
+          fetched_urls: ['https://example-template.webflow.io/'],
+          evidence: { static_pages: [], rendered: { status: 'ok', pages: [] }, errors: [], caveats: [] },
+          controls: {},
+          sandbox: { id: 'sandbox-tool-fixture' },
+          cleanup: { killed: true },
+          screenshots: [
+            {
+              name: 'home.png',
+              mime_type: 'image/png',
+              bytes: 7,
+              included: true,
+              data: Buffer.from([137, 80, 78, 71, 1, 2, 3]).toString('base64'),
+            },
+          ],
+          caveats: ['Evidence only.'],
+        }),
+      },
+    },
+  );
+
+  const result = await handlers.get('template_review_run_published_site_sandbox')?.({
+    published_url: 'https://example-template.webflow.io/',
+    include_screenshots: true,
+  });
+
+  assert.ok(result);
+  assert.equal(result.isError, undefined);
+  assert.equal(result.structuredContent?.ok, true);
+  assert.equal(result.content.filter((item) => item.type === 'image').length, 1);
+  assert.deepEqual(annotations.get('template_review_run_published_site_sandbox'), {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: false,
+    openWorldHint: true,
+  });
 });
 
 function completeComprehensiveFeedbackInput() {

@@ -1,6 +1,14 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, lstatSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import {
+  existsSync,
+  lstatSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
@@ -76,6 +84,55 @@ const skills = [
 ];
 
 const codexOnlySkills = [
+  {
+    name: 'writing-for-humans',
+    codex: 'packages/dotfiles/codex/skills/writing-for-humans/SKILL.md',
+    expectations: [
+      /least-tenured credible practitioner/i,
+      /preserve facts/i,
+      /citations/i,
+      /uncertainty/i,
+      /must not invent/i,
+      /pattern clusters/i,
+      /property voice/i,
+      /smallest useful framework stack/i,
+      /reader and outcome/i,
+      /operator-instructions\.md/,
+      /reports-and-arguments\.md/,
+      /sentence-clarity\.md/,
+      /writing-tasks\.v1\.json/,
+      /pnpm prose:check/,
+      /human final read/i,
+      /detector/i,
+      /policy\.prose-quality\.v1/
+    ]
+  },
+  {
+    name: 'target-reader-review',
+    codex: 'packages/dotfiles/codex/skills/target-reader-review/SKILL.md',
+    expectations: [
+      /least-tenured credible practitioner/i,
+      /useful momentum/i,
+      /pass \| revise \| hold/i,
+      /deterministic/i,
+      /judgment/i,
+      /preservation_risks/,
+      /human_review_needed/,
+      /must not masquerade/i,
+      /target-reader\.v1\.json/,
+      /review_scope/,
+      /rendered component/i,
+      /artifact_type/,
+      /can_orient/,
+      /can_find_default/,
+      /can_start/,
+      /can_complete/,
+      /can_recover/,
+      /can_verify/,
+      /unrelated file-level deterministic findings/i,
+      /human final read/i
+    ]
+  },
   {
     name: 'svg-education-precision',
     codex: 'packages/dotfiles/codex/skills/svg-education-precision/SKILL.md',
@@ -297,9 +354,60 @@ test('intent-mapping has deterministic behavioral fixture coverage', () => {
   }
 });
 
+test('writing skills route realistic artifacts through bounded framework stacks', () => {
+  const corpus = JSON.parse(read('scripts/prose-quality/evals/writing-tasks.v1.json'));
+  const writer = read('packages/dotfiles/codex/skills/writing-for-humans/SKILL.md');
+  const reviewer = read('packages/dotfiles/codex/skills/target-reader-review/SKILL.md');
+  const referenceRoot = 'packages/dotfiles/codex/skills/writing-for-humans/references';
+
+  assert.equal(corpus.version, 1);
+  assert.equal(corpus.reader, 'junior-practitioner');
+  assert.equal(corpus.cases.length, 6);
+  assert.deepEqual(corpus.cases.map((entry) => entry.artifactType).sort(), [
+    'argument',
+    'case-study',
+    'operator-instructions',
+    'report',
+    'teaching',
+    'technical-explanation'
+  ]);
+
+  for (const entry of corpus.cases) {
+    assert.match(entry.prompt, /\S/);
+    assert.match(entry.sourceExcerpt, /\S/);
+    assert(entry.expectedSequence.length >= 3, `${entry.id} needs an observable sequence`);
+    assert(
+      entry.preservationRequirements.length > 0,
+      `${entry.id} needs preservation requirements`
+    );
+    assert.match(writer, new RegExp(entry.artifactType.replaceAll('-', '[ -]'), 'i'));
+
+    const referencePath = `${referenceRoot}/${entry.reference}`;
+    assert(existsSync(path.join(REPO_ROOT, referencePath)), `${referencePath} missing`);
+    const reference = read(referencePath);
+    for (const signal of entry.requiredSignals) {
+      assert.match(reference, new RegExp(signal, 'i'), `${entry.id} missing ${signal}`);
+    }
+  }
+
+  for (const field of [
+    'can_orient',
+    'can_find_default',
+    'can_start',
+    'can_complete',
+    'can_recover',
+    'can_verify'
+  ]) {
+    assert.match(reviewer, new RegExp(field));
+  }
+});
+
 test('repo-owned Codex skill installer links the adapted skills', (t) => {
   const codexHome = mkdtempSync(path.join(tmpdir(), 'codex-skills-effectiveness-'));
   t.after(() => rmSync(codexHome, { recursive: true, force: true }));
+  const unrelatedSkill = path.join(codexHome, 'skills', 'unrelated-personal-skill');
+  mkdirSync(unrelatedSkill, { recursive: true });
+  writeFileSync(path.join(unrelatedSkill, 'SKILL.md'), '# Preserve me\n');
 
   const result = spawnSync(
     'pnpm',
@@ -321,4 +429,10 @@ test('repo-owned Codex skill installer links the adapted skills', (t) => {
     assert(lstatSync(linkedPath).isSymbolicLink(), `${linkedPath} is not a symlink`);
     assert.match(result.stdout, new RegExp(`Linked ${skill.name}\\b`));
   }
+
+  assert.equal(
+    readFileSync(path.join(unrelatedSkill, 'SKILL.md'), 'utf8'),
+    '# Preserve me\n',
+    'installer modified an unrelated skill'
+  );
 });

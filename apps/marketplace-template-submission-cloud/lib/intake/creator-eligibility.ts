@@ -20,6 +20,23 @@ export interface CreatorEligibilityResult {
   remainingSubmissions?: number;
 }
 
+type EligibilityAirtable = Pick<
+  Awaited<ReturnType<typeof getServerAirtable>>,
+  'getCreatorByEmail' | 'getAssetsByEmail'
+>;
+
+export interface CreatorEligibilityDependencies {
+  getAirtable: () => Promise<EligibilityAirtable>;
+  checkRemoteCreatorEligibility: typeof checkRemoteCreatorEligibility;
+  fetchExternalSubmissionStatus: typeof fetchExternalSubmissionStatus;
+}
+
+const defaultDependencies: CreatorEligibilityDependencies = {
+  getAirtable: getServerAirtable,
+  checkRemoteCreatorEligibility,
+  fetchExternalSubmissionStatus
+};
+
 function normalizeStatus(value: unknown): string {
   if (Array.isArray(value)) {
     return value.map(normalizeStatus).filter(Boolean).join(' ');
@@ -71,15 +88,18 @@ function localEligibilityMessage(
   };
 }
 
-export async function evaluateCreatorEligibility(email: string): Promise<CreatorEligibilityResult> {
-  const airtable = await getServerAirtable();
+export async function evaluateCreatorEligibility(
+  email: string,
+  dependencies: CreatorEligibilityDependencies = defaultDependencies
+): Promise<CreatorEligibilityResult> {
+  const airtable = await dependencies.getAirtable();
 
   // All four lookups are keyed only on email, so they run concurrently. The
   // remote eligibility result is wrapped so a rejection stays handled while
   // the other lookups resolve; it is consumed in priority order below.
   const remoteEligibilityPromise: Promise<
     { ok: true; value: RemoteCreatorEligibility } | { ok: false }
-  > = checkRemoteCreatorEligibility(email).then(
+  > = dependencies.checkRemoteCreatorEligibility(email).then(
     (value) => ({ ok: true as const, value }),
     () => ({ ok: false as const })
   );
@@ -87,7 +107,7 @@ export async function evaluateCreatorEligibility(email: string): Promise<Creator
   const [creator, assets, externalSubmission] = await Promise.all([
     airtable.getCreatorByEmail(email),
     airtable.getAssetsByEmail(email).catch(() => []),
-    fetchExternalSubmissionStatus(email).catch(
+    dependencies.fetchExternalSubmissionStatus(email).catch(
       (): ExternalSubmissionStatus => ({
         hasError: true,
         assetsSubmitted30: 0,
@@ -106,21 +126,46 @@ export async function evaluateCreatorEligibility(email: string): Promise<Creator
     }))
   );
 
-  const remainingSubmissions = externalSubmission.hasError
+  const externalRemainingSubmissions = externalSubmission.hasError
     ? localSubmission.remainingSubmissions
-    : externalSubmission.isWhitelisted
-      ? Number.POSITIVE_INFINITY
-      : Math.max(0, 6 - externalSubmission.assetsSubmitted30);
+    : Math.max(0, 6 - externalSubmission.assetsSubmitted30);
+  const remainingSubmissions = Math.min(
+    localSubmission.remainingSubmissions,
+    externalRemainingSubmissions
+  );
   const finiteRemainingSubmissions = Number.isFinite(remainingSubmissions)
     ? remainingSubmissions
     : undefined;
 
   const remoteResult = await remoteEligibilityPromise;
+  const fallback = localEligibilityMessage(
+    remainingSubmissions,
+    activeReviewCount,
+    publishedCount
+  );
+  const nextWindowMessage =
+    !fallback.allowed && localSubmission.timeUntilNextSlot
+      ? ` Next slot opens ${formatTimeUntil(localSubmission.timeUntilNextSlot)}.`
+      : '';
 
   if (remoteResult.ok) {
     const remote = remoteResult.value;
 
     if (remote.userExists === true && remote.hasError === false) {
+      if (!fallback.allowed) {
+        return {
+          allowed: false,
+          userExists: true,
+          hasError: true,
+          message: `${fallback.message}${nextWindowMessage}`,
+          source: 'hybrid',
+          remote,
+          publishedCount,
+          activeReviewCount,
+          remainingSubmissions: finiteRemainingSubmissions
+        };
+      }
+
       return {
         allowed: true,
         userExists: true,
@@ -165,16 +210,6 @@ export async function evaluateCreatorEligibility(email: string): Promise<Creator
       };
     }
 
-    const fallback = localEligibilityMessage(
-      remainingSubmissions,
-      activeReviewCount,
-      publishedCount
-    );
-    const nextWindowMessage =
-      !fallback.allowed && localSubmission.timeUntilNextSlot
-        ? ` Next slot opens ${formatTimeUntil(localSubmission.timeUntilNextSlot)}.`
-        : '';
-
     return {
       allowed: fallback.allowed,
       userExists: true,
@@ -202,16 +237,6 @@ export async function evaluateCreatorEligibility(email: string): Promise<Creator
         remainingSubmissions: finiteRemainingSubmissions
       };
     }
-
-    const fallback = localEligibilityMessage(
-      remainingSubmissions,
-      activeReviewCount,
-      publishedCount
-    );
-    const nextWindowMessage =
-      !fallback.allowed && localSubmission.timeUntilNextSlot
-        ? ` Next slot opens ${formatTimeUntil(localSubmission.timeUntilNextSlot)}.`
-        : '';
 
     return {
       allowed: fallback.allowed,

@@ -38,6 +38,24 @@ interface ContentItem {
  */
 const SERVICES: ContentItem[] = [
 	{
+		slug: 'map',
+		title: 'CREATE SOMETHING Map',
+		description: 'Standalone workflow-mapping product for living definitions, review, versioning, and implementation handoff.',
+		category: 'product'
+	},
+	{
+		slug: 'build',
+		title: 'CREATE SOMETHING Build',
+		description: 'Implementation service that turns an approved workflow map into an owned, connected system.',
+		category: 'service'
+	},
+	{
+		slug: 'control',
+		title: 'CREATE SOMETHING Control',
+		description: 'Standalone governed-execution product for approvals, policy, runs, evidence, and recovery. Control includes Map.',
+		category: 'product'
+	},
+	{
 		slug: 'workflow-infrastructure',
 		title: 'Workflow System',
 		description: 'CREATE SOMETHING builds production-safe workflow systems for business-critical operations with clear operating boundaries.',
@@ -45,15 +63,15 @@ const SERVICES: ContentItem[] = [
 	},
 	{
 		slug: 'policy-os',
-		title: 'Policy OS',
-		description: 'Canonical paid governed-execution package: policy artifacts, approval boundaries, release evidence, and recurring runtime operations.',
-		category: 'service'
+		title: 'Policy OS (Compatibility Alias)',
+		description: 'Compatibility alias for the internal Control contract bundle, runtime policy layer, and existing entitlement identifiers.',
+		category: 'compatibility'
 	},
 	{
 		slug: 'reliability-and-control-layer',
 		title: 'Reliability and Control Layer (Deprecated Alias)',
-		description: 'Compatibility alias for the Policy OS package during the current transition window.',
-		category: 'service'
+		description: 'Deprecated compatibility alias for the CREATE SOMETHING Control product.',
+		category: 'compatibility'
 	},
 	{
 		slug: 'enterprise-extension',

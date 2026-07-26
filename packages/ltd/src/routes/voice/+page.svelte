@@ -1,5 +1,57 @@
 <script lang="ts">
-  import { SEO } from '@create-something/canon';
+  import {
+    PerformanceNarrativeStage,
+    SEO,
+    type PerformanceNarrativeScene
+  } from '@create-something/canon';
+
+  const voiceScenes: PerformanceNarrativeScene[] = [
+    {
+      id: 'act',
+      label: 'Act',
+      summary: 'Plain claim first',
+      title: 'Write for the next decision.',
+      detail: 'Start with language a reader can understand, verify, and act on before introducing framework or platform terminology.',
+      tone: 'allow',
+      evidence: ['Cut the excess', 'Name the workflow', 'Make proof visible']
+    },
+    {
+      id: 'principles',
+      label: 'Principles',
+      summary: 'Recognize good writing',
+      title: 'Make clarity a repeatable discipline.',
+      detail: 'The recognition loop and five principles turn subjective editing into a standard another writer can apply.',
+      tone: 'review',
+      evidence: ['Clarity', 'Specificity', 'Honesty', 'Usefulness', 'Grounding']
+    },
+    {
+      id: 'patterns',
+      label: 'Patterns',
+      summary: 'Write + transform',
+      title: 'Use structures that reveal the work.',
+      detail: 'Sentence forms, experiment requirements, transformations, and the checklist make the standard usable in production copy.',
+      tone: 'neutral',
+      receipts: ['Sentence patterns', 'Experiment contract', 'Voice checklist']
+    },
+    {
+      id: 'vocabulary',
+      label: 'Vocabulary',
+      summary: 'Preferred + constrained',
+      title: 'Choose precise words without overstating.',
+      detail: 'Preferred terminology and constrained-specificity rules keep claims useful when confidentiality or authority limits detail.',
+      tone: 'neutral',
+      receipts: ['Preferred terms', 'Safe specificity', 'Authority boundary']
+    },
+    {
+      id: 'teaching',
+      label: 'Teaching',
+      summary: 'Scaffold + lineage',
+      title: 'Teach the reader how the standard was formed.',
+      detail: 'Educational voice, the hermeneutic test, and the writing lineage reconnect today’s practice to the masters without imitating their style.',
+      tone: 'neutral',
+      receipts: ['Progressive disclosure', 'Hermeneutic test', 'Master lineage']
+    }
+  ];
 </script>
 
 <SEO
@@ -24,6 +76,17 @@
   </div>
 </section>
 
+<PerformanceNarrativeStage
+  id="voice-operating-story"
+  eyebrow="Writing standards"
+  title="Say it. Prove it. Teach it."
+  description="Seventeen chapters now resolve through five indexed writing decisions, preserving the complete standard without asking every topic to compete at once."
+  scenes={voiceScenes}
+  ariaLabel="CREATE SOMETHING voice standards"
+>
+  {#snippet artifact(scene: PerformanceNarrativeScene)}
+    <div class="voice-scene-artifact">
+      {#if scene.id === 'act'}
 <!-- What to Do This Week -->
 <section class="py-16 px-6">
   <div class="max-w-3xl mx-auto">
@@ -208,13 +271,14 @@
         lab provides an instrument; the surrounding system carries the durable claim.
       </p>
       <p>
-        Use <a href="/canon/concepts/conviction-without-dependence"
-          >Conviction Without Dependence</a
+        Use <a href="/canon/concepts/conviction-without-dependence">Conviction Without Dependence</a
         > for the full language hierarchy, ownership boundary, and anti-patterns.
       </p>
     </div>
   </div>
 </section>
+
+      {:else if scene.id === 'principles'}
 
 <!-- Recognition -->
 <section class="py-16 px-6 section-divider">
@@ -249,6 +313,7 @@
           Steven Pressfield named the internal force that fights against clear expression. Here's
           how it shows up in writing:
         </p>
+        <!-- prose-ignore-start: intentional examples of unclear language -->
         <div class="transformation-table my-4">
           <table>
             <thead>
@@ -281,6 +346,7 @@
             </tbody>
           </table>
         </div>
+        <!-- prose-ignore-end -->
         <p class="box-description mt-4">
           When you catch yourself reaching for jargon, pause. That's your signal. Ask what you
           actually mean.
@@ -299,14 +365,17 @@
       <div>
         <h3 class="mb-3">1. Clarity Over Cleverness</h3>
         <p class="principle-lead mb-4">Write for your reader, not yourself.</p>
+        <!-- prose-ignore-start: intentional explanation of a discouraged term -->
         <p class="principle-description leading-relaxed mb-3">
           You might reach for "leverage" because it sounds professional. You might add a clever
           metaphor hoping readers will be impressed.
         </p>
+        <!-- prose-ignore-end -->
         <p class="principle-description leading-relaxed mb-3">
           Here's what works better: Code is read 10x more than written. Writing is read 100x more.
           Serve the reader.
         </p>
+        <!-- prose-ignore-start: intentional negative examples -->
         <div class="transformation-table my-6">
           <table>
             <thead>
@@ -327,6 +396,7 @@
             </tbody>
           </table>
         </div>
+        <!-- prose-ignore-end -->
         <p class="principle-test">
           <strong>The test:</strong> Would your grandmother understand this sentence? If not, rewrite.
         </p>
@@ -421,6 +491,8 @@
     </div>
   </div>
 </section>
+
+      {:else if scene.id === 'patterns'}
 
 <!-- Sentence Patterns -->
 <section class="section-divider py-16 px-6">
@@ -541,6 +613,7 @@
           These words feel professional but communicate little. When you notice yourself reaching
           for them, ask: what do I actually mean?
         </p>
+        <!-- prose-ignore-start: prohibited terms shown for instruction -->
         <div class="grid grid-cols-2 gap-3 forbidden-grid">
           <div class="line-through">Cutting-edge</div>
           <div class="line-through">Revolutionary</div>
@@ -551,6 +624,7 @@
           <div class="line-through">Solutions</div>
           <div class="line-through">Best-in-class</div>
         </div>
+        <!-- prose-ignore-end -->
       </div>
 
       <div>
@@ -668,12 +742,15 @@
   </div>
 </section>
 
+      {:else if scene.id === 'vocabulary'}
+
 <!-- Terminology -->
 <section class="section-divider py-16 px-6">
   <div class="max-w-3xl mx-auto">
     <h2 class="mb-8">Preferred Terminology</h2>
 
     <div class="space-y-8">
+      <!-- prose-ignore-start: exact preferred and discouraged terminology -->
       <div>
         <h3 class="terminology-title mb-3">AI Development</h3>
         <div class="space-y-2 terminology-list">
@@ -685,6 +762,7 @@
           </p>
         </div>
       </div>
+      <!-- prose-ignore-end -->
 
       <div>
         <h3 class="terminology-title mb-3">Research</h3>
@@ -775,6 +853,8 @@
     </div>
   </div>
 </section>
+
+      {:else}
 
 <!-- Educational Voice -->
 <section class="section-divider py-16 px-6">
@@ -1061,7 +1141,17 @@
   </div>
 </section>
 
+      {/if}
+    </div>
+  {/snippet}
+</PerformanceNarrativeStage>
+
 <style>
+  .voice-scene-artifact {
+    min-width: 0;
+    overflow: hidden;
+  }
+
   .eyebrow {
     font-size: var(--text-performance-body-sm);
     text-transform: uppercase;

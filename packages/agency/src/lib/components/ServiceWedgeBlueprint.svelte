@@ -10,21 +10,21 @@
   const stages: PathStage[] = [
     {
       index: '01',
-      label: 'Workflow Map',
+      label: 'Map',
       title: 'Delegation boundary',
       detail: 'The first map names the objects, actions, approval points, and evidence.',
       width: '48%'
     },
     {
       index: '02',
-      label: 'Workflow Pilot',
+      label: 'Build',
       title: 'Operating path',
       detail: 'The first handoff gets mapped, rebuilt, tested, and documented for inheritance.',
       width: '64%'
     },
     {
       index: '03',
-      label: 'Control Layer',
+      label: 'Control',
       title: 'Controlled delegation',
       detail: 'Rules classify work into auto-allow, approval-needed, or blocked with reason.',
       width: '80%'
@@ -51,7 +51,7 @@
     </p>
   </div>
 
-  <div class="path-diagram" aria-label="Blueprint from Workflow Map to Control Layer and Operator Surface">
+  <div class="path-diagram" aria-label="Blueprint from Map to Control and Operator Surface">
     <div class="path-axis" aria-hidden="true">
       <span>Connectivity</span>
       <span>Workflow</span>

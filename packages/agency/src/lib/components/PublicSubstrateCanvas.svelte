@@ -143,19 +143,18 @@
 >
 	<div class="public-substrate-canvas__chrome">
 		<div>
-			<p class="public-substrate-canvas__eyebrow">Signal / Decision / Proof</p>
-			<h3 id="substrate-canvas-title">The canvas is the proof object.</h3>
+			<p class="public-substrate-canvas__eyebrow">What you can inspect</p>
+			<h3 id="substrate-canvas-title">Follow the workflow from request to receipt.</h3>
 			<p>
-				The public site renders the same Substrate canvas kernel used by Atlas and Topology:
-				source records, agent lanes, approval stops, delivery paths, and receipts in one
-				inspectable operating surface.
+				See where work starts, what the agent may do, where a person must approve, and what
+				evidence remains after delivery.
 			</p>
 		</div>
 		<div class="public-substrate-canvas__meta" aria-label="Canvas metadata">
 			<span>{nodeCount} nodes</span>
 			<span>{edgeCount} edges</span>
-			<span class="public-substrate-canvas__backend" aria-label={`Renderer ${renderBackend}`}>
-				shared kernel
+			<span class="public-substrate-canvas__backend" aria-label={`Public canvas ${renderBackend}`}>
+				public view
 			</span>
 		</div>
 	</div>
@@ -512,8 +511,8 @@
 		}
 
 		.public-substrate-canvas__chrome {
-			gap: 1rem;
-			padding: 1rem;
+			gap: 0.75rem;
+			padding: 0.8rem;
 		}
 
 		.public-substrate-canvas h3 {
@@ -542,16 +541,21 @@
 		}
 
 		.public-substrate-canvas__viewport {
-			min-height: clamp(21rem, 54vh, 28rem);
+			min-height: clamp(18rem, 44vh, 22rem);
 		}
 
 		.public-substrate-canvas__inspector {
-			gap: 0.75rem;
-			padding: 1rem;
+			gap: 0.6rem;
+			padding: 0.85rem;
 		}
 
 		.public-substrate-canvas__inspector dl {
-			gap: 0.55rem;
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+			gap: 0.5rem;
+		}
+
+		.public-substrate-canvas__inspector dl div {
+			padding-top: 0.45rem;
 		}
 
 		.public-substrate-canvas__actions {

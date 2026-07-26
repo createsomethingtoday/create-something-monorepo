@@ -129,11 +129,44 @@
   --color-performance-review-soft: var(--color-performance-gold-soft);
   --color-performance-stop: var(--color-performance-risk);
   --color-performance-stop-soft: var(--color-performance-risk-soft);
+
+  /* Live-work states: complete text/background/border roles.
+   * Products map their agent, tool, approval, preview, and outcome states to
+   * this lifecycle instead of inventing local status colors.
+   */
+  --color-performance-work-idle-text: var(--color-performance-muted);
+  --color-performance-work-idle-background: var(--color-performance-paper);
+  --color-performance-work-idle-border: var(--color-performance-line);
+  --color-performance-work-planning-text: var(--color-performance-signal);
+  --color-performance-work-planning-background: var(--color-performance-signal-soft);
+  --color-performance-work-planning-border: var(--color-performance-signal);
+  --color-performance-work-running-text: var(--color-performance-pressure);
+  --color-performance-work-running-background: var(--color-performance-pressure-soft);
+  --color-performance-work-running-border: var(--color-performance-pressure);
+  --color-performance-work-approval-text: var(--color-performance-review);
+  --color-performance-work-approval-background: var(--color-performance-review-soft);
+  --color-performance-work-approval-border: var(--color-performance-review);
+  --color-performance-work-success-text: var(--color-performance-ready);
+  --color-performance-work-success-background: var(--color-performance-ready-soft);
+  --color-performance-work-success-border: var(--color-performance-ready);
+  --color-performance-work-warning-text: var(--color-performance-gold);
+  --color-performance-work-warning-background: var(--color-performance-gold-soft);
+  --color-performance-work-warning-border: var(--color-performance-gold);
+  --color-performance-work-failure-text: var(--color-performance-stop);
+  --color-performance-work-failure-background: var(--color-performance-stop-soft);
+  --color-performance-work-failure-border: var(--color-performance-stop);
   --shadow-performance-panel: none;
   --shadow-performance-node: none;
   --radius-performance-sm: 0;
   --radius-performance-md: 4px;
   --content-width-performance: 85rem;
+  --height-performance-stage: 34rem;
+  --distance-performance-stage-sticky-offset: calc(var(--height-performance-header, 72px) + 1rem);
+  --width-performance-stage-index: 18rem;
+  --height-performance-control-min: 2.75rem;
+  --opacity-performance-stage-inactive: 0.66;
+  --space-performance-stage-block: 3.5rem;
+  --space-performance-stage-block-compact: 2.75rem;
 
   /* Legacy Clear aliases
    * Keep these for registry and downstream compatibility only. New surfaces
@@ -769,12 +802,6 @@
      ========================================================================== */
 
   --duration-performance-view-transition: var(--duration-performance-standard);
-
-  /* Legacy compatibility aliases. First-party consumers use Performance tokens. */
-
-  /* Legacy compatibility aliases. First-party consumers use Performance tokens. */
-
-  /* Legacy compatibility aliases. First-party consumers use Performance tokens. */
 
   /* Legacy compatibility aliases. First-party consumers use Performance tokens. */
   --liquid-glass-refraction-subtle: var(--liquid-glass-performance-refraction-subtle);

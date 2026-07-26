@@ -22,7 +22,15 @@ import {
 const ACCESS_TOKEN_TTL = 15 * 60; // 15 minutes
 const REFRESH_TOKEN_TTL = 7 * 24 * 60 * 60; // 7 days
 const ISSUER = 'https://id.createsomething.space';
-export const IDENTITY_TOKEN_AUDIENCES = ['workway', 'templates', 'io', 'space', 'ona-agents', 'guard-performance-lab'] as const;
+export const IDENTITY_TOKEN_AUDIENCES = [
+	'workway',
+	'templates',
+	'io',
+	'space',
+	'ona-agents',
+	'guard-performance-lab',
+	'client-workspace',
+] as const;
 
 /**
  * Generate access and refresh tokens for a user
@@ -155,7 +163,8 @@ export async function refreshTokens(
  */
 export async function validateJWT(
 	token: string,
-	publicKey: CryptoKey
+	publicKey: CryptoKey,
+	expectedIssuer = ISSUER
 ): Promise<JWTPayload | null> {
 	try {
 		const [headerB64, payloadB64, signatureB64] = token.split('.');
@@ -188,7 +197,7 @@ export async function validateJWT(
 		if (payload.exp < now) return null;
 
 		// Check issuer
-		if (payload.iss !== ISSUER) return null;
+		if (payload.iss !== expectedIssuer.replace(/\/+$/, '')) return null;
 
 		return payload;
 	} catch {

@@ -15,7 +15,7 @@
     {
       eyebrow: 'First template',
       icon: 'document',
-      title: 'Policy OS Client Intake And MCP Audit',
+      title: 'Control Client Intake And MCP Audit',
       detail:
         'A read-only Dify chatflow that maps systems, workflow risk, approval points, and the first MCP audit brief.'
     },
@@ -24,7 +24,7 @@
       icon: 'check',
       title: 'It proves the operating boundary.',
       detail:
-        'The template shows Dify as the visible app, MCP as the tool boundary, and Policy OS as the rule set.'
+        'The template shows Dify as the visible app, MCP as the tool boundary, and Control as the rule set.'
     },
     {
       eyebrow: 'What waits',
@@ -77,7 +77,7 @@
     {
       eyebrow: 'Name',
       icon: 'document',
-      title: 'Policy OS MCP Audit Assistant',
+      title: 'Control MCP Audit Assistant',
       detail:
         'Short enough to scan, and it says what the app does: audit a workflow before tool access expands.'
     },
@@ -183,16 +183,17 @@
 
 <SEO
   title="Dify Template Marketplace Proof | CREATE SOMETHING .agency"
-  description="How CREATE SOMETHING packages a Dify template marketplace submission around Policy OS, MCP boundaries, setup steps, smoke checks, and client-safe proof."
-  keywords="Dify Template Marketplace, Dify Creator Center, Dify template, Policy OS, MCP audit, Dify marketplace proof"
+  description="How CREATE SOMETHING packages a Dify template marketplace submission around Control, MCP boundaries, setup steps, smoke checks, and client-safe proof."
+  keywords="Dify Template Marketplace, Dify Creator Center, Dify template, Control, MCP audit, Dify marketplace proof"
   canonical="https://createsomething.agency/dify/template-marketplace-proof"
   ogType="article"
   ogImage="/og/dify-lane.png"
   publishedTime="2026-07-04"
   modifiedTime="2026-07-04"
   articleSection="Dify Implementation"
-  articleTags={['Dify', 'Template Marketplace', 'Creator Center', 'Policy OS', 'MCP']}
+  articleTags={['Dify', 'Template Marketplace', 'Creator Center', 'Control', 'MCP']}
   propertyName="agency"
+  noindex={true}
 />
 
 <PerformancePageSection
@@ -201,7 +202,7 @@
   titleLevel="h1"
   eyebrow="Dify Template Marketplace"
   title="Publish the proof, not a generic template."
-  description="The first CREATE SOMETHING marketplace asset should show a controlled workflow: Dify carries the app, MCP scopes the tools, and Policy OS explains what can run, wait, or stop."
+  description="The first CREATE SOMETHING marketplace asset should show a controlled workflow: Dify carries the app, MCP scopes the tools, and Control explains what can run, wait, or stop."
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
@@ -232,7 +233,7 @@
     <PerformanceCardGrid items={submissionPath} columns={4} ariaLabel="Dify marketplace submission path" />
     <ArticleVisualFigure
       src="/images/articles/dify-ship-mcp-tools/dify-mcp-shipping-path.png"
-      alt="Diagram showing Dify as the app surface, MCP as the tool boundary, Policy OS as the control layer, and proof as the release surface."
+      alt="Diagram showing Dify as the app surface, MCP as the tool boundary, Control as the control layer, and proof as the release surface."
       eyebrow="Submission visual"
       title="Marketplace proof still follows surface, boundary, control, proof."
       caption="The public template should teach the operating boundary before it asks users to connect more tools."

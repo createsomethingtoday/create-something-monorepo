@@ -19,11 +19,17 @@ const optionalPageIdsSchema = z.object({
   page_id: z.string().optional().describe('Single Notion page ID or source Page ID value to reconcile.'),
 });
 
-export function createBlondishSyncMcpServer(env: Env): McpServer {
-  return createTicketSyncMcpServer(env);
+export function createBlondishSyncMcpServer(
+  env: Env,
+  options: { allowWrites?: boolean } = {},
+): McpServer {
+  return createTicketSyncMcpServer(env, options);
 }
 
-export function createTicketSyncMcpServer(env: Env): McpServer {
+export function createTicketSyncMcpServer(
+  env: Env,
+  options: { allowWrites?: boolean } = {},
+): McpServer {
   const runtime = resolveRuntimeConfig(env);
   const tools = toolNames(runtime.toolPrefix);
   const server = new McpServer({
@@ -52,48 +58,50 @@ export function createTicketSyncMcpServer(env: Env): McpServer {
     async () => tracedJsonToolResponse(env, tools.planSourceToHdRepairs, () => planSourceToHalfDozenRepairs(env)),
   );
 
-  server.tool(
-    tools.repairMissingHdRows,
-    'Create only HD rows that are currently missing from the source-to-HD match. Does not update existing rows and never overwrites HD Status.',
-    {},
-    async () => tracedJsonToolResponse(env, tools.repairMissingHdRows, () => repairMissingHalfDozenRows(env)),
-  );
+  if (options.allowWrites !== false) {
+    server.tool(
+      tools.repairMissingHdRows,
+      'Create only HD rows that are currently missing from the source-to-HD match. Does not update existing rows and never overwrites HD Status.',
+      {},
+      async () => tracedJsonToolResponse(env, tools.repairMissingHdRows, () => repairMissingHalfDozenRows(env)),
+    );
 
-  server.tool(
-    tools.repairExternalUrlDrift,
-    'Repair only External URL drift on currently matched HD rows. Does not create rows, change page body, repair titles, or overwrite HD Status.',
-    {},
-    async () => tracedJsonToolResponse(env, tools.repairExternalUrlDrift, () => repairExternalUrlDrift(env)),
-  );
+    server.tool(
+      tools.repairExternalUrlDrift,
+      'Repair only External URL drift on currently matched HD rows. Does not create rows, change page body, repair titles, or overwrite HD Status.',
+      {},
+      async () => tracedJsonToolResponse(env, tools.repairExternalUrlDrift, () => repairExternalUrlDrift(env)),
+    );
 
-  server.tool(
-    tools.sourceToHd,
-    `Directly create or repair Half Dozen ticket rows from ${runtime.clientDisplayName} source rows. Never overwrites HD Status.`,
-    optionalPageIdsSchema.shape,
-    async (params) => tracedJsonToolResponse(
-      env,
+    server.tool(
       tools.sourceToHd,
-      () => syncSourceTicketsToHalfDozen(env, { sourcePageIds: normalizePageIds(params) }),
-    ),
-  );
+      `Directly create or repair Half Dozen ticket rows from ${runtime.clientDisplayName} source rows. Never overwrites HD Status.`,
+      optionalPageIdsSchema.shape,
+      async (params) => tracedJsonToolResponse(
+        env,
+        tools.sourceToHd,
+        () => syncSourceTicketsToHalfDozen(env, { sourcePageIds: normalizePageIds(params) }),
+      ),
+    );
 
-  server.tool(
-    tools.hdStatusToSource,
-    `Directly write mapped Half Dozen Status values back to ${runtime.clientDisplayName}. Only mapped statuses are written.`,
-    optionalPageIdsSchema.shape,
-    async (params) => tracedJsonToolResponse(
-      env,
+    server.tool(
       tools.hdStatusToSource,
-      () => syncHalfDozenStatusToSource(env, { targetPageIds: normalizePageIds(params) }),
-    ),
-  );
+      `Directly write mapped Half Dozen Status values back to ${runtime.clientDisplayName}. Only mapped statuses are written.`,
+      optionalPageIdsSchema.shape,
+      async (params) => tracedJsonToolResponse(
+        env,
+        tools.hdStatusToSource,
+        () => syncHalfDozenStatusToSource(env, { targetPageIds: normalizePageIds(params) }),
+      ),
+    );
 
-  server.tool(
-    tools.full,
-    `Run source-to-HD reconciliation, then HD-status-to-${runtime.clientDisplayName} status reconciliation.`,
-    {},
-    async () => tracedJsonToolResponse(env, tools.full, () => fullReconcile(env)),
-  );
+    server.tool(
+      tools.full,
+      `Run source-to-HD reconciliation, then HD-status-to-${runtime.clientDisplayName} status reconciliation.`,
+      {},
+      async () => tracedJsonToolResponse(env, tools.full, () => fullReconcile(env)),
+    );
+  }
 
   const contractUri = `sync://${runtime.clientSlug}/contract`;
   server.resource(

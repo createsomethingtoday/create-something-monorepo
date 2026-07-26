@@ -28,6 +28,10 @@
 		return value.charAt(0).toUpperCase() + value.slice(1);
 	}
 
+	function projectSurfaceLabel(value: string): string {
+		return surfaceLabel === 'Atlas' ? value : value.replaceAll('Atlas', surfaceLabel);
+	}
+
 	function ledgerCopyFor(chapter: PublicAtlasStoryArtifact['chapters'][number]): LedgerCopy {
 		switch (chapter.id) {
 			case 'claim':
@@ -78,6 +82,7 @@
 	export let canvas: PublicAtlasCanvas | undefined = undefined;
 	export let starterId = 'workflow';
 	export let storyId: string | undefined = undefined;
+	export let surfaceLabel = 'Atlas';
 	export let eyebrow = 'Atlas story canvas';
 	export let title: string | undefined = undefined;
 	export let description =
@@ -95,7 +100,7 @@
 	$: story = createPublicAtlasStoryArtifact(sourceCanvas, graph.readiness);
 	$: storyDomId = storyId ?? `atlas-story-${toDomIdToken(starterId)}`;
 	$: titleId = `${storyDomId}-title`;
-	$: rendererLabel = graph.renderer.primary === 'atlas' ? 'Atlas' : graph.renderer.primary;
+	$: rendererLabel = graph.renderer.primary === 'atlas' ? surfaceLabel : graph.renderer.primary;
 	$: selectedStoryChapter =
 		story.chapters.find((chapter) => chapter.id === selectedChapterId) ??
 		story.chapters.find((chapter) => chapter.focusNodeIds[0]) ??
@@ -111,16 +116,17 @@
 <section class="atlas-story" class:compact aria-labelledby={titleId}>
 	<div class="atlas-story__copy">
 		<span>{eyebrow}</span>
-		<h3 id={titleId}>{title ?? story.headline}</h3>
+		<h3 id={titleId}>{title ?? projectSurfaceLabel(story.headline)}</h3>
 		<p>{description}</p>
 	</div>
 
-	<p class="sr-only">{story.accessibilitySummary}</p>
+	<p class="sr-only">{projectSurfaceLabel(story.accessibilitySummary)}</p>
 
 	<div class="atlas-story__layout">
 		<div class="atlas-story__map" aria-label={story.summary}>
 			<AtlasFlow
 				canvas={sourceCanvas}
+				ariaLabel={`${surfaceLabel} workflow map`}
 				flowId={`${storyDomId}-flow`}
 				selectedNodeId={selectedStoryNodeId}
 				readOnly
@@ -135,7 +141,7 @@
 		</div>
 
 		{#if compact}
-			<aside class="atlas-story__ledger" aria-label="Atlas receipt ledger">
+			<aside class="atlas-story__ledger" aria-label={`${surfaceLabel} receipt ledger`}>
 				<div class="atlas-story__ledger-summary">
 					<span>{rendererLabel} readiness</span>
 					<strong>{graph.readiness.score}/100</strong>
@@ -163,7 +169,7 @@
 				</ol>
 			</aside>
 		{:else}
-			<aside class="atlas-story__chapters" aria-label="Atlas story chapters">
+			<aside class="atlas-story__chapters" aria-label={`${surfaceLabel} story chapters`}>
 				<div class="atlas-story__score">
 					<span>{rendererLabel}</span>
 					<strong>{graph.readiness.score}/100</strong>
@@ -177,7 +183,7 @@
 						data-state={chapter.state}
 					>
 						<button type="button" onclick={() => (selectedChapterId = chapter.id)}>
-							<span>{chapter.sequence}. {chapter.eyebrow}</span>
+							<span>{chapter.sequence}. {projectSurfaceLabel(chapter.eyebrow)}</span>
 							<h4>{chapter.title}</h4>
 							<p>{chapter.body}</p>
 							<footer>

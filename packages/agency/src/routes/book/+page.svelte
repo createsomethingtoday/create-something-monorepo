@@ -101,7 +101,7 @@
 	>
 		{#snippet actions()}
 			<Button href="#first-party-scheduler">Choose a time</Button>
-			<Button href="/atlas" variant="secondary">Map one workflow first</Button>
+			<Button href="/map" variant="secondary">Map one workflow first</Button>
 		{/snippet}
 		{#snippet aside()}
 			<section id="first-party-scheduler" class="scheduler-shell" aria-label="Choose a verified opening">

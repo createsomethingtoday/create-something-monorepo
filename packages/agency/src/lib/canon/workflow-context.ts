@@ -428,7 +428,7 @@ function buildFallbackCanonWorkflowContext(contextId: string): CanonWorkflowCont
 			}
 		],
 		agent: {
-			title: 'Ask the Control Layer',
+			title: 'Ask Control',
 			placeholder: 'Ask what is approved, private, or ready to preview...',
 			suggestedPrompts: [
 				{ label: 'Explain the workflow', prompt: 'Explain how the database, automation, and judgment layers work together.' },

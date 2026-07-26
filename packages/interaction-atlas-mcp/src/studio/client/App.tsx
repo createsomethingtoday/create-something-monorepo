@@ -2662,13 +2662,13 @@ function AtlasStudio(): React.ReactElement {
             <span>Handoff</span>
           </a>
           <a
-            aria-label="Open client summary"
+            aria-label="Open Map-to-Build handoff"
             className="toolbar-link"
-            href={`/api/sessions/${encodeURIComponent(sessionId)}/export.md`}
-            title="Open client summary"
+            href={`/api/sessions/${encodeURIComponent(sessionId)}/client-handoff.md`}
+            title="Open Map-to-Build handoff"
           >
             <FileText aria-hidden="true" />
-            <span>Client summary</span>
+            <span>Map-to-Build</span>
           </a>
           <a
             aria-label="Open session JSON"

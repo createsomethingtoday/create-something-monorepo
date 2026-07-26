@@ -1,11 +1,16 @@
-# Policy OS Product Definition
+# CREATE SOMETHING Control Product Definition
 
-> Canonicalized: March 13, 2026
-> Scope: CREATE SOMETHING paid governed package definition
+> Public name updated: July 16, 2026
+> Scope: CREATE SOMETHING paid governed product and Policy OS compatibility contract
 
 ## Definition
 
-**Policy OS** is the canonical paid CREATE SOMETHING package for governed AI execution.
+**CREATE SOMETHING Control** is the public product name for governed AI execution.
+
+`Policy OS` remains the internal and compatibility name for the contract bundle,
+runtime policy layer, historical release evidence, and existing entitlement
+identifiers. See [CREATE_SOMETHING_PRODUCT_FAMILY.md](./CREATE_SOMETHING_PRODUCT_FAMILY.md)
+for the public `Map -> Build -> Control` family and inclusion rules.
 
 **CREATE SOMETHING owns the system. Cloudflare provides infrastructure. OpenAI
 provides intelligence.**
@@ -25,20 +30,20 @@ It combines:
 
 `MCP-only` remains the free or constrained discovery wedge. It is not the default paid package.
 
-Policy OS should be explained with the same simple operating loop used across
+Control should be explained with the same simple operating loop used across
 CREATE SOMETHING:
 
 ```text
 Signal → Decision → Proof
 ```
 
-- **Signals** are the workflow events Policy OS watches: Slack updates, API
+- **Signals** are the workflow events Control watches: Slack updates, API
   changes, schema diffs, PRs, tool calls, customer requests, exceptions,
   incidents, and policy gaps.
-- **Decisions** are the routed actions Policy OS asks a human, agent, or policy
+- **Decisions** are the routed actions Control asks a human, agent, or policy
   runtime to make: approve, deny, update docs, request changes, assign, escalate,
   block, or run.
-- **Proof** is the durable record Policy OS leaves behind: source evidence,
+- **Proof** is the durable record Control leaves behind: source evidence,
   policy applied, owner, decision, downstream action, receipt, and recovery path.
 
 This is the communication layer. The implementation still uses MCP connectivity,
@@ -46,7 +51,7 @@ contracts, approval modes, policy artifacts, traces, and runbooks.
 
 ## Platform conviction and portability
 
-Policy OS operationalizes the Canon doctrine **Conviction Without Dependence**:
+Control operationalizes the Canon doctrine **Conviction Without Dependence**:
 
 > Use the best instrument. Own the system.
 
@@ -56,7 +61,7 @@ Its technical rule is:
 
 OpenAI Codex is the current primary CREATE SOMETHING agent environment, and an
 OpenAI Agents SDK runtime is an explicit graduation option. Neither choice owns
-the Policy OS contract. The portable unit remains the workflow data, MCP
+the Control contract. The portable unit remains the workflow data, MCP
 contracts, harness, skills, prompts, approval policy, evals, receipts, routing,
 fallback, and recovery path.
 
@@ -67,13 +72,13 @@ identify the real default and the evidence-backed exit.
 
 ## Product shape
 
-Policy OS is delivered as one package with three delivery layers:
+Control is delivered as one subscription with three delivery layers:
 
 1. **Workflow Infrastructure**
    - trusted MCP connectivity
    - deterministic workflow execution paths
    - implementation and integration contracts
-2. **Policy OS**
+2. **Control runtime**
    - approval, block, and escalation logic
    - policy artifacts, blocked-state UX, and release evidence
    - recurring review, tuning, and incident cadence
@@ -82,11 +87,13 @@ Policy OS is delivered as one package with three delivery layers:
    - cross-system orchestration
    - compliance-heavy or multi-team operating constraints
 
-`Workflow Infrastructure` and `Enterprise Extension` describe delivery layers. `Policy OS` is the public governed package name.
+`Workflow Infrastructure` and `Enterprise Extension` describe delivery layers.
+`Control` is the public governed product name. `Policy OS` is the compatibility
+name for the underlying policy and contract implementation.
 
 ## Execution surfaces and graduation
 
-Policy OS may run through more than one agent surface. Surface choice is part of
+Control may run through more than one agent surface. Surface choice is part of
 the governed package, not an implementation afterthought.
 
 Default surface roles:
@@ -104,11 +111,11 @@ Default surface roles:
 CREATE SOMETHING owns versioning, preview, rollback, team review, operator
 handoff, observability, and governance compatibility. A retained Dify app is a
 temporary rollback artifact only when it previously owned a live path; it is
-not a current Policy OS delivery surface.
+not a current Control delivery surface.
 
 Graduation requires:
 
-- a frozen Policy OS contract bundle for the workflow
+- a frozen Control contract bundle for the workflow
 - a documented `runtime_surface` decision in the agent contract
 - golden-task parity with any previously live provider path before that rollback
   artifact is retired
@@ -118,9 +125,13 @@ Graduation requires:
 
 ## Naming rules
 
-- Use `Policy OS` as the canonical paid package name.
+- Use `CREATE SOMETHING Control` as the public product name and `Control` after
+  the first reference.
+- Use `Policy OS` only for internal implementation, existing compatibility
+  contracts, entitlement identifiers, and historically accurate evidence.
+- State that `Control includes Map` wherever the two subscriptions are compared.
 - Keep `MCP-only` as the discovery/compliance wedge.
-- Use `Signal → Decision → Proof` as the simplest explanation of how Policy OS
+- Use `Signal → Decision → Proof` as the simplest explanation of how Control
   operates.
 - Use `Inbox`, `Map`, and `Proof` for human-facing operator surfaces.
 - Use `Proof Graph` for the connected evidence/provenance layer when the
@@ -133,7 +144,7 @@ Graduation requires:
 
 ## Canonical contract bundle
 
-Every Policy OS engagement ships the same artifact family:
+Every Control implementation ships the same governed artifact family:
 
 - `mcp_contract.yaml`
 - `agent_contract.yaml`
@@ -154,7 +165,7 @@ The bundle must define:
 
 ## Runtime and entitlement model
 
-Policy OS runtime enforcement preserves the canonical entitlement enum:
+The internal Policy OS runtime enforcement preserves the canonical entitlement enum:
 
 - `mcp_only`
 - `policy_os_trial`
@@ -170,7 +181,7 @@ Paid-scope decisions must continue to evaluate the normalized entitlement snapsh
 
 ## Operator cadence
 
-Minimum standing cadence for Policy OS:
+Minimum standing cadence for Control:
 
 - weekly review of incidents, blocked actions, and golden-task drift
 - weekly review of workflows eligible for runtime graduation or rollback
@@ -180,7 +191,7 @@ Minimum standing cadence for Policy OS:
 
 ## Proof standard
 
-The repo can claim Policy OS productization when all of the following are true:
+The repo can claim Control productization when all of the following are true:
 
 - naming is canonical across strategy and public surfaces
 - contract templates and mirrored delivery templates match the same schema
@@ -193,5 +204,8 @@ The repo can claim Policy OS productization when all of the following are true:
 
 ## Historical note
 
-Older March 2026 memos may still reference `Agent Outcome Stack` or `Reliability and Control Layer`.
-Those references remain historically accurate for the date of authorship but are superseded by this definition for current packaging and product language.
+Older March 2026 memos may still reference `Agent Outcome Stack`, `Reliability
+and Control Layer`, or `Policy OS` as the public paid package. Those references
+remain historically accurate for their date of authorship. `CREATE SOMETHING
+Control` supersedes them for current public packaging; internal compatibility
+contracts and `policy_os_*` identifiers remain unchanged.

@@ -61,6 +61,9 @@ test('public Field Report leads with the decision and keeps eval scope explicit'
   assert.match(route, /title=\{templateReviewFieldReport\.title\}/);
   assert.match(route, /49 of 50 selected cases/i);
   assert.match(route, /promotion blocked/i);
+  assert.match(route, /class="failed-boundary__metric-value">1 \/ 2<\/span>/i);
+  assert.match(route, /class="failed-boundary__metric-qualifier">missed<\/span>/i);
+  assert.match(route, /container-type:\s*inline-size/i);
   assert.match(route, /missed one of two historical exceptional examples/i);
   assert.match(route, /synthetic/i);
   assert.match(route, /32 live boundary scenarios/i);
@@ -84,22 +87,50 @@ test('public Field Report leads with the decision and keeps eval scope explicit'
   assert.doesNotMatch(route, /layoff|head[ -]?count|replace(?:d|ment)? people/i);
 });
 
-test('public Field Report places the failed judgment before one combined economics section', () => {
+test('Result metrics preserve the evidence and scale from their Performance cells', () => {
   const route = readFileSync(
     new URL('../src/routes/field-reports/template-review/+page.svelte', import.meta.url),
     'utf8'
   );
-  const syntheticRuntime = route.indexOf('Current runtime check / Synthetic');
-  const failedJudgment = route.indexOf('Automated judgment was not ready.');
-  const combinedEconomics = route.indexOf(
-    'One measured packet sets the cost. The supplied baseline models the capacity.'
-  );
-  const evidenceBasis = route.indexOf('Evidence basis');
+  const metricCellRule = route.match(/\.field-result__metrics > div \{([\s\S]*?)\n\s*\}/)?.[1];
+  const metricValueRule = route.match(/\.field-result__metrics dd \{([\s\S]*?)\n\s*\}/)?.[1];
 
-  assert.ok(syntheticRuntime >= 0, 'synthetic runtime section is present');
-  assert.ok(failedJudgment > syntheticRuntime, 'failed judgment follows the synthetic runtime');
-  assert.ok(combinedEconomics > failedJudgment, 'economics follows the failed judgment');
-  assert.ok(evidenceBasis > combinedEconomics, 'evidence index follows the combined economics');
+  assert.match(route, /<dd>49 \/ 50<\/dd>/);
+  assert.match(route, /<dd>Blocked<\/dd>/);
+  assert.match(route, /<dd>Unmeasured<\/dd>/);
+  assert.ok(metricCellRule, 'Result metric cell rule is present');
+  assert.ok(metricValueRule, 'Result metric value rule is present');
+  assert.match(metricCellRule, /container-type:\s*inline-size;/);
+  assert.match(metricValueRule, /16cqi/);
+  assert.match(route, /var\(--space-performance-md/);
+  assert.match(route, /var\(--text-performance-display-sm/);
+  assert.match(route, /data-tone="growth"/);
+  assert.match(route, /data-tone="risk"/);
+  assert.doesNotMatch(metricValueRule, /4vw/);
+});
+
+test('public Field Report orders the evidence argument before one combined economics scene', () => {
+  const route = readFileSync(
+    new URL('../src/routes/field-reports/template-review/+page.svelte', import.meta.url),
+    'utf8'
+  );
+  const resultScene = route.indexOf("id: 'result'");
+  const boundaryScene = route.indexOf("id: 'boundary'");
+  const economicsScene = route.indexOf("id: 'economics'");
+  const evidenceScene = route.indexOf("id: 'evidence'");
+
+  assert.match(route, /PerformanceNarrativeStage/);
+  assert.match(route, /Current runtime check \/ Synthetic/);
+  assert.ok(resultScene >= 0, 'result scene is present');
+  assert.ok(boundaryScene > resultScene, 'failed judgment follows the result scene');
+  assert.ok(economicsScene > boundaryScene, 'economics follows the failed judgment');
+  assert.ok(evidenceScene > economicsScene, 'evidence follows the combined economics');
+  assert.equal(
+    route.match(/One measured packet sets the cost\. The supplied baseline models the capacity\./g)
+      ?.length,
+    1,
+    'economics stays one combined scene'
+  );
   assert.doesNotMatch(route, /One live packet cost about eleven cents\./i);
   assert.doesNotMatch(route, /One observed packet models to about 36 an hour\./i);
 });
@@ -165,16 +196,20 @@ test('Field Reports are a browsable proof chapter in the agency journey', () => 
   assert.match(footer, /href="\/field-reports">Field Reports/);
 });
 
-test('Products explains one map and three operating surfaces without a four-surface ambiguity', () => {
+test('Products explains the product family and keeps operating surfaces inside Control', () => {
   const products = readFileSync(
     new URL('../src/routes/products/+page.svelte', import.meta.url),
     'utf8'
   );
 
-  assert.match(products, /One map coordinates three operating surfaces\./);
-  assert.match(products, /Atlas holds the map\./);
-  assert.match(products, /Signal watches, Decision routes, and Proof records\./);
-  assert.match(products, /One workflow map\. Three places to operate\./);
+  assert.match(products, /Choose where the workflow is now\./);
+  assert.match(products, /id: 'map'/);
+  assert.match(products, /id: 'build'/);
+  assert.match(products, /id: 'control'/);
+  assert.doesNotMatch(products, /id: 'proof'/);
+  assert.match(products, /Two products and one implementation service\./);
+  assert.match(products, /Signal, Decision, and Proof are operator surfaces\./);
+  assert.match(products, /Control includes Map/);
   assert.doesNotMatch(products, /Four inspectable surfaces/);
   assert.doesNotMatch(products, /Four visible jobs/);
 });
@@ -189,12 +224,15 @@ test('booking carries the Field Report handoff into the owned mapping scheduler'
   assert.match(book, /schedulerHandoffContext/);
 });
 
-test('the homepage hands the operating thesis into measured Field Report proof', () => {
+test('the homepage keeps measured Field Report proof inside the consolidated service chapter', () => {
   const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
 
-  assert.match(home, /PerformanceEvidenceIndex/);
+  assert.doesNotMatch(home, /PerformanceEvidenceIndex/);
+  assert.match(home, /class="service-proof-row"/);
+  assert.match(home, /See what passed—and what did not/);
   assert.match(home, /href: '\/field-reports\/template-review'/);
   assert.match(home, /49 of 50 selected cases/);
-  assert.match(home, /automated judgment remains blocked/i);
+  assert.match(home, /(?:system|automation)[^.]*(?:cannot|blocked)[^.]*(?:decision|judgment)/i);
+  assert.match(home, /reviewer time savings[^.]*(?:not|never)[^.]*(?:measured|verified)/i);
   assert.doesNotMatch(home, /<PerformanceCampaignOpening[\s\S]*?>\s*>\s*\{#snippet actions\(\)\}/);
 });

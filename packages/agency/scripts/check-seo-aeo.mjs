@@ -29,14 +29,11 @@ const requiredFaqRoutes = new Set([
   '/',
   '/stack',
   '/products',
-  '/dify',
   '/cloudflare',
   '/use-cases/business',
   '/use-cases/enterprise'
 ]);
 const requiredDedicatedOgImages = new Map([
-  ['/dify', '/og/dify-lane.png'],
-  ['/dify/mcp-control-plane', '/og/dify-mcp-control-plane.png'],
   ['/cloudflare', '/og/cloudflare-lane.png'],
   ['/use-cases/enterprise', '/og/policy-os.png']
 ]);

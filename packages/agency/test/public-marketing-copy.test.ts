@@ -147,10 +147,13 @@ test('public agency surfaces state the OpenAI conviction and owned-system bounda
     'utf8'
   );
 
-  assert.match(home, /eyebrow="How we build"/);
+  assert.match(home, /<span>How we build<\/span>/);
   assert.match(home, /Built with OpenAI Codex\. Designed to remain yours\./);
   assert.match(home, /We use Codex to map, build, and maintain the workflow\./);
-  assert.match(home, /If the model or agent environment changes, the system does not have to start over\./);
+  assert.match(
+    home,
+    /If the model\s+or agent environment changes, the system does not have to start over\./
+  );
   assert.match(home, />Why we build this way</);
   assert.doesNotMatch(home, /Current agent environment|Designed to outlast any model|MCP contracts, harnesses/);
   assert.match(home, /https:\/\/createsomething\.ltd\/canon\/concepts\/conviction-without-dependence/);
@@ -164,6 +167,10 @@ test('commercial decision routes lead with plain meaning before owned terminolog
   const layout = readFileSync(new URL('../src/routes/+layout.svelte', import.meta.url), 'utf8');
   const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
   const services = readFileSync(new URL('../src/routes/services/+page.svelte', import.meta.url), 'utf8');
+  const servicesMapPreview = readFileSync(
+    new URL('../src/lib/components/ServicesMapPreview.svelte', import.meta.url),
+    'utf8'
+  );
   const productsPage = readFileSync(new URL('../src/routes/products/+page.svelte', import.meta.url), 'utf8');
   const stack = readFileSync(new URL('../src/routes/stack/+page.svelte', import.meta.url), 'utf8');
   const proof = readFileSync(
@@ -181,18 +188,58 @@ test('commercial decision routes lead with plain meaning before owned terminolog
   assert.doesNotMatch(home, /Train the workflow/);
 
   assert.match(services, /Bring one handoff your team still checks manually/);
-  assert.match(services, /See the workflow before deciding to build/);
+  assert.match(servicesMapPreview, /See the operating path before deciding to build/);
   assert.doesNotMatch(services, /PerformanceFieldSequence|PerformanceThesisConditions/);
 
-  assert.match(productsPage, /title="One workflow map\. Three places to operate\."/);
-  assert.match(productsPage, /Atlas maps the workflow\. Signal watches changes\. Decision routes judgment\. Proof keeps the record\./);
+  assert.match(productsPage, /title="Map the system\. Control the work\."/);
+  assert.match(productsPage, /CREATE SOMETHING Map stands alone/);
+  assert.match(productsPage, /CREATE SOMETHING Control stands alone/);
+  assert.match(productsPage, /Control includes Map/);
   assert.doesNotMatch(productsPage, /Product hierarchy|Product protocol|Operating sequence/);
 
   assert.match(stack, /You keep the accounts, data, approval rights, and operating history/);
   assert.match(stack, /title="What You Keep \| CREATE SOMETHING \.agency"/);
   assert.match(proof, /title="Turn a watched review queue into a testable workflow\."/);
-  assert.match(proof, /title="Spend less time rebuilding context\."/);
+  assert.match(proof, /title(?:=|:)\s*["']Spend less time rebuilding context\.["']/);
   assert.match(proof, /prototype measurements, not customer ROI claims/);
+});
+
+test('the homepage operating story preserves the boundary in reader-facing language', () => {
+  const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
+  const description = home.match(
+    /id="agency-operating-story"[\s\S]*?description="([^"]+)"/
+  )?.[1];
+
+  assert(description, 'Agency operating-story description is missing');
+  assert.doesNotMatch(description, /\b(?:the page|this page|this section|holds one argument)\b/i);
+  assert.doesNotMatch(description, /\b(?:consequential judgment|first lane|proof attached)\b/i);
+  assert.match(description, /\b(?:team|operator|you)\b/i, 'decision owner is not visible');
+  assert.match(description, /\b(?:limit|decide|approval|stop)\w*\b/i, 'authority boundary is missing');
+  assert.match(description, /\b(?:map|handoff|workflow|test|run)\w*\b/i, 'bounded workflow is missing');
+  assert.match(description, /\b(?:record|receipt|proof|evidence)\w*\b/i, 'inspectable proof is missing');
+});
+
+test('the complete operating story translates its method into people, actions, and records', () => {
+  const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
+  const story = home.slice(home.indexOf('const serviceFlowSteps'), home.indexOf('</script>'));
+
+  assert.doesNotMatch(
+    story,
+    /Authority scoped|Signal → proof|consequential authority|first lane|inspectable wake|Governance directs flow|Proof Graph/i
+  );
+  assert.match(story, /team decides what can run, what needs approval, and what must stop/i);
+  assert.match(story, /where work starts[^.]*what the agent may do[^.]*where a person must approve/i);
+  assert.match(story, /every action leaves a record your team can review/i);
+  assert.match(story, /system cannot make the final decision/i);
+});
+
+test('the mobile operating story removes decorative mini artifacts from the reading path', () => {
+  const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
+
+  assert.match(
+    home,
+    /@media \(max-width: 640px\)[\s\S]*?\.service-flow-artifact__visual\s*\{\s*display:\s*none;/
+  );
 });
 
 test('commercial decision routes use one primary and one conversational action', () => {
@@ -280,4 +327,40 @@ test('agency README documents the public copy contract', () => {
   assert.match(source, /CREATE SOMETHING owns the system/);
   assert.match(source, /Cloudflare provides infrastructure/);
   assert.match(source, /OpenAI[\s>]+provides intelligence/);
+  assert.match(source, /### Compatibility Proof Contract/);
+  assert.match(source, /`Connector available` means a brokered tool path is present/);
+});
+
+test('integration proof keeps compatibility distinct from partnership and delivery', () => {
+  const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
+  const partners = readFileSync(
+    new URL('../src/routes/partners/+page.svelte', import.meta.url),
+    'utf8'
+  );
+  const rail = readFileSync(
+    new URL('../src/lib/components/IntegrationCompatibilityRail.svelte', import.meta.url),
+    'utf8'
+  );
+  const catalog = readFileSync(
+    new URL('../src/lib/components/IntegrationCatalog.svelte', import.meta.url),
+    'utf8'
+  );
+  const map = readFileSync(new URL('../src/routes/map/+page.svelte', import.meta.url), 'utf8');
+  const mapCanvas = readFileSync(
+    new URL('../src/lib/components/PublicAtlasCanvas.svelte', import.meta.url),
+    'utf8'
+  );
+
+  assert.match(home, /IntegrationCompatibilityRail surface="homepage"/);
+  assert.match(partners, /IntegrationCompatibilityRail surface="partners"/);
+  assert.match(partners, /<IntegrationCatalog \/>/);
+  assert.match(rail, /Brand marks identify tool paths, not partnerships or endorsements/);
+  assert.match(catalog, /Connector available ≠ connected or write-authorized/);
+  assert.match(catalog, /not a live customer connection/);
+  assert.match(catalog, /integration_name=/);
+  assert.match(map, /initialIntegration=/);
+  assert.match(map, /initialIntegrationName=/);
+  assert.match(mapCanvas, /seedIntegrationContext\(\)/);
+  assert.match(mapCanvas, /Connector context added/);
+  assert.doesNotMatch(`${rail}\n${catalog}`, /certified integration|official partner|1,041/gi);
 });

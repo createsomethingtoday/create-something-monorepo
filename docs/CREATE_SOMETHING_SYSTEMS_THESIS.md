@@ -2,7 +2,7 @@
 
 > Status: working synthesis
 > Scope: CREATE SOMETHING as the practice-led thesis for Delegated Work Control
-> Canonical inputs: `MCP_FIRST_THESIS.md`, `THREE_TIER_FRAMEWORK.md`, `POLICY_OS_PRODUCT_DEFINITION.md`, public `.io` papers, Atlas Studio, Policy OS templates, delivery records, and agent-legibility gates.
+> Canonical inputs: `CREATE_SOMETHING_PRODUCT_FAMILY.md`, `MCP_FIRST_THESIS.md`, `THREE_TIER_FRAMEWORK.md`, `POLICY_OS_PRODUCT_DEFINITION.md`, public `.io` papers, Atlas Studio, Policy OS templates, delivery records, and agent-legibility gates.
 
 ## Purpose
 
@@ -99,7 +99,10 @@ The category hierarchy is:
 | --- | --- |
 | **Delegated Work Control** | Long-term company category and durable buyer problem. |
 | **Workflow Trust Layer** | Current service language for making one workflow safe to delegate. |
-| **Policy OS** | Canonical paid package for governed execution. |
+| **CREATE SOMETHING Map** | Standalone public subscription for the living workflow definition. |
+| **CREATE SOMETHING Build** | Public implementation service for an approved Map. |
+| **CREATE SOMETHING Control** | Standalone public governed-execution subscription; includes Map. |
+| **Policy OS / Atlas** | Internal and compatibility contracts beneath Control and Map. |
 | **MCP-only** | Constrained discovery or compliance wedge, not the default paid offer. |
 
 The operator language is:
@@ -154,14 +157,17 @@ The repo supports this contribution through code, docs, and delivery surfaces:
   boundary design are not.
 - `docs/THREE_TIER_FRAMEWORK.md` maps Database / Automation / Judgment to MCP
   Resources / Tools / Prompts.
-- `docs/POLICY_OS_PRODUCT_DEFINITION.md` defines Policy OS as the canonical
-  governed delivery package.
+- `docs/CREATE_SOMETHING_PRODUCT_FAMILY.md` defines the public Map -> Build ->
+  Control family and the rule that Control includes Map.
+- `docs/POLICY_OS_PRODUCT_DEFINITION.md` defines Control's governed delivery
+  boundary while preserving Policy OS compatibility contracts.
 - `templates/` contains the five-artifact Policy OS contract bundle.
 - `packages/three-tier-framework-mcp` exposes the framework itself as an MCP
   server.
 - `packages/interaction-atlas-mcp` provides Atlas Studio mapping, proposal, and
   handoff surfaces.
-- `packages/agency` contains public Atlas story and intake surfaces.
+- `packages/agency` contains the public Map story and intake surfaces over the
+  internal Atlas implementation.
 - `packages/io/content/papers` contains research papers and case studies.
 - `docs/deliveries` contains client-safe delivery proof records.
 
@@ -176,7 +182,7 @@ Key repo-owned influences:
 | --- | --- | --- |
 | MCP-first thesis | `docs/MCP_FIRST_THESIS.md` | Connectivity precedes intelligence. |
 | Three-Tier Framework | `docs/THREE_TIER_FRAMEWORK.md` | Structural model for agent systems. |
-| Policy OS | `docs/POLICY_OS_PRODUCT_DEFINITION.md` | Governed package for AI execution. |
+| CREATE SOMETHING Control | `docs/CREATE_SOMETHING_PRODUCT_FAMILY.md` and `docs/POLICY_OS_PRODUCT_DEFINITION.md` | Public governed product over the Policy OS compatibility contract. |
 | Agent legibility | `docs/guides/AGENT_LEGIBILITY_CONTRACT.md` | Packages must be bootable, testable, observable, and escapable. |
 | Atlas vocabulary | `packages/interaction-atlas-mcp` and `packages/agency/src/lib/atlas/public.ts` | Workflow maps make ownership, constraints, and proof visible. |
 | Proof Surface | `packages/io/content/papers/proof-surface.md` | Evidence must become readable operating receipts. |
@@ -454,21 +460,22 @@ Comprehensive-experience need:
 - Add current measurements or a dated evidence ledger so the paper moves from
   conceptual case study to operating proof.
 
-### Case 4: Public Atlas mapping agent and story canvas
+### Case 4: Public Map product over the Atlas mapping agent and story canvas
 
 Primary evidence:
 
 - `packages/agency/src/lib/atlas/public.ts`
 - `packages/agency/src/lib/components/PublicAtlasCanvas.svelte`
 - `packages/agency/src/lib/components/PublicAtlasStoryCanvas.svelte`
-- `packages/agency/src/routes/atlas/+page.svelte`
+- `packages/agency/src/routes/map/+page.svelte`
+- `packages/agency/src/routes/atlas/+page.server.ts`
 - `packages/agency/src/routes/methodology/+page.svelte`
 - `packages/agency/test/public-atlas-starter-maps.test.ts`
 - `packages/agency/test/public-atlas-route.test.ts`
 
 What it proves:
 
-- Atlas can be a public method surface, not only an internal mapping tool.
+- Map can be a public product and method surface while Atlas remains the internal mapping implementation.
 - Run/wait/stop states can be visible before production authority exists.
 - Story surfaces can teach the workflow language before editable intake.
 

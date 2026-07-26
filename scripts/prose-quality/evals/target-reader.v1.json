@@ -1,0 +1,218 @@
+{
+  "version": 1,
+  "reader": "junior-practitioner",
+  "readerContract": "The least-tenured credible practitioner in the document's actual field. They know basic field concepts but do not know CREATE SOMETHING vocabulary.",
+  "enjoymentContract": "Useful momentum: concrete stakes, visible progress or discovery, coherent information flow, and respect for the reader. Do not force jokes, slang, or anecdotes.",
+  "operatorContract": "For actionable prose, simulate orientation, default-path discovery, starting, completion, recovery, and verification.",
+  "evaluationBoundary": "These cases test judgment in the complete rendered component or relevant document section. A revise verdict requests human review and is never a deterministic CI failure by itself. Unrelated file-level findings do not change the scoped verdict.",
+  "cases": [
+    {
+      "id": "agency-offer-next-action",
+      "property": "agency",
+      "artifactType": "public-copy",
+      "expected": "pass",
+      "reviewScope": "rendered-component",
+      "context": "Read the complete campaign opening with its visible actions and proof.",
+      "source": {
+        "file": "packages/agency/src/routes/+page.svelte",
+        "line": 246,
+        "anchor": "Make one workflow safe to delegate."
+      },
+      "reason": "Names one operating problem, grounds the offer in run, wait, stop, and proof behavior, then presents a specific next action."
+    },
+    {
+      "id": "agency-evidence-with-limits",
+      "property": "agency",
+      "artifactType": "public-copy",
+      "expected": "pass",
+      "reviewScope": "rendered-component",
+      "context": "Read the full evidence item, including its state and stated limits.",
+      "source": {
+        "file": "packages/agency/src/routes/+page.svelte",
+        "line": 170,
+        "anchor": "Evidence collection finished for 49 of 50 selected cases."
+      },
+      "reason": "Pairs a concrete result with explicit limits on automated judgment and unmeasured time savings."
+    },
+    {
+      "id": "agency-shadow-mode-boundary",
+      "property": "agency",
+      "artifactType": "public-copy",
+      "expected": "pass",
+      "reviewScope": "rendered-component",
+      "context": "Read the complete worked-example opening with its status, mode, fixtures, and prohibited writes.",
+      "source": {
+        "file": "packages/agency/src/routes/proof/marketplace-workflow/+page.svelte",
+        "line": 183,
+        "anchor": "It runs in shadow mode only"
+      },
+      "reason": "Explains the example, its local evidence, and the exact production actions it cannot take."
+    },
+    {
+      "id": "ltd-owned-term-translation",
+      "property": "ltd",
+      "artifactType": "public-copy",
+      "expected": "pass",
+      "reviewScope": "rendered-component",
+      "context": "Read the complete transformation-table row containing the discouraged phrase and its practical replacement.",
+      "source": {
+        "file": "packages/ltd/src/routes/voice/+page.svelte",
+        "line": 212,
+        "anchor": "MCP-enabled trust layer for enterprise automation"
+      },
+      "reason": "Shows the unclear label beside a concrete translation a practitioner can recognize."
+    },
+    {
+      "id": "docs-git-light-recommended-path",
+      "property": "docs",
+      "artifactType": "operator-guide",
+      "expected": "pass",
+      "reviewScope": "document-section",
+      "context": "Read Purpose through Inner Loop, then inspect the required evidence and production path sections.",
+      "source": {
+        "file": "docs/guides/GIT_LIGHT_AGENT_DELIVERY_WORKFLOW.md",
+        "line": 13,
+        "anchor": "deploy is the DEV checkpoint"
+      },
+      "reason": "States when the exception applies, gives one inner loop, names evidence, and distinguishes the production boundary and rollback path.",
+      "operatorChecks": {
+        "canOrient": "yes",
+        "canFindDefault": "yes",
+        "canStart": "yes",
+        "canComplete": "yes",
+        "canRecover": "yes",
+        "canVerify": "yes"
+      }
+    },
+    {
+      "id": "docs-agent-legibility-contract",
+      "property": "docs",
+      "artifactType": "operator-guide",
+      "expected": "pass",
+      "reviewScope": "document-section",
+      "context": "Read the opening question and the complete Required fields sequence.",
+      "source": {
+        "file": "docs/guides/AGENT_LEGIBILITY_CONTRACT.md",
+        "line": 11,
+        "anchor": "Can an agent boot it, validate it, inspect evidence, and know when to escalate?"
+      },
+      "reason": "Turns the purpose into a concrete operator question and organizes the required package contract as a usable sequence.",
+      "operatorChecks": {
+        "canOrient": "yes",
+        "canFindDefault": "yes",
+        "canStart": "yes",
+        "canComplete": "yes",
+        "canRecover": "yes",
+        "canVerify": "yes"
+      }
+    },
+    {
+      "id": "agency-product-proof-owned-terms",
+      "property": "agency",
+      "artifactType": "public-copy",
+      "expected": "revise",
+      "reviewScope": "rendered-component",
+      "context": "Read the supporting proof card with its Ground and Loom evidence labels.",
+      "source": {
+        "file": "packages/agency/src/routes/products/+page.svelte",
+        "line": 87,
+        "anchor": "Ground and the Loom archive show the same discipline"
+      },
+      "reason": "Introduces two owned product names and an operating discipline before one concrete result a new practitioner can recognize."
+    },
+    {
+      "id": "agency-enterprise-runtime-jargon",
+      "property": "agency",
+      "artifactType": "public-copy",
+      "expected": "revise",
+      "reviewScope": "rendered-component",
+      "context": "Read the complete enterprise-use-case opening with its actions and proof.",
+      "source": {
+        "file": "packages/agency/src/routes/use-cases/enterprise/+page.svelte",
+        "line": 265,
+        "anchor": "For teams already running MCP-backed or cross-system workflows"
+      },
+      "reason": "Stacks owned and technical terms before showing one representative workflow consequence."
+    },
+    {
+      "id": "docs-navigation-choice-overload",
+      "property": "docs",
+      "artifactType": "navigation",
+      "expected": "revise",
+      "reviewScope": "document-section",
+      "context": "Read Start here and the first Navigation by task section as the entrypoint for a new operator.",
+      "source": {
+        "file": "docs/README.md",
+        "line": 9,
+        "anchor": "Read in this order when you need broad repo context"
+      },
+      "reason": "Presents ten broad starting documents and a large inventory before routing a junior operator to one default for a concrete task.",
+      "operatorChecks": {
+        "canOrient": "yes",
+        "canFindDefault": "no",
+        "canStart": "no",
+        "canComplete": "no",
+        "canRecover": "no",
+        "canVerify": "no"
+      }
+    },
+    {
+      "id": "docs-auth-architecture-before-quick-path",
+      "property": "docs",
+      "artifactType": "operator-guide",
+      "expected": "revise",
+      "reviewScope": "document-section",
+      "context": "Read the opening architecture, Agent and API adoption, adapter, runtime configuration, and verification sections as one adoption path.",
+      "source": {
+        "file": "docs/guides/FIRST_PARTY_AUTH_PLATFORM.md",
+        "line": 3,
+        "anchor": "CREATE SOMETHING projects use an AI-native, API-first identity architecture"
+      },
+      "reason": "The guide exposes architecture and several interfaces before a bounded recommended adoption sequence with expected results and local recovery guidance.",
+      "operatorChecks": {
+        "canOrient": "yes",
+        "canFindDefault": "yes",
+        "canStart": "yes",
+        "canComplete": "no",
+        "canRecover": "no",
+        "canVerify": "yes"
+      }
+    },
+    {
+      "id": "docs-observability-setup-missing-operator-contract",
+      "property": "docs",
+      "artifactType": "operator-guide",
+      "expected": "revise",
+      "reviewScope": "document-section",
+      "context": "Read the architecture and both setup layers as the path for a new operator configuring observability.",
+      "source": {
+        "file": "docs/guides/OBSERVABILITY_SETUP.md",
+        "line": 3,
+        "anchor": "This guide covers the observability stack"
+      },
+      "reason": "Starts with a multi-layer architecture and credential commands without one recommended setup path, expected results, recovery, or completion proof.",
+      "operatorChecks": {
+        "canOrient": "yes",
+        "canFindDefault": "no",
+        "canStart": "no",
+        "canComplete": "no",
+        "canRecover": "no",
+        "canVerify": "no"
+      }
+    },
+    {
+      "id": "docs-three-tier-abstraction-before-use",
+      "property": "docs",
+      "artifactType": "technical-explanation",
+      "expected": "revise",
+      "reviewScope": "document-section",
+      "context": "Read the abstract and definitions before the MCP mapping as a first encounter with the framework.",
+      "source": {
+        "file": "docs/THREE_TIER_FRAMEWORK.md",
+        "line": 13,
+        "anchor": "This framework proposes a hierarchical ontology"
+      },
+      "reason": "Introduces the ontology, typed artifacts, four cross-cutting concerns, control models, sampling, and embodied cognition before one concrete debugging or design consequence."
+    }
+  ]
+}

@@ -135,6 +135,9 @@ async function route(request: Request, env: Env, method: string, path: string): 
 	if (path === '/oauth/userinfo' && method === 'GET') return handleOAuthUserInfo(request, env);
 	if (path === '/v1/auth/password/admin-get' && method === 'POST') return handleAdminGetPasswordUser(request, env);
 	if (path === '/v1/auth/password/admin-upsert' && method === 'POST') return handleAdminUpsertPasswordUser(request, env);
+	if (path === '/v1/control/scheduler-tokens/admin-issue' && method === 'POST') {
+		return handleAdminIssueControlSchedulerToken(request, env);
+	}
 
 	// Auth endpoints
 	if (path === '/v1/auth/signup' && method === 'POST') return handleSignup(request, env);
@@ -625,6 +628,10 @@ interface OAuthAccessTokenClaims extends JWTPayload {
 	client_id: string;
 	scope: string;
 	resource: string;
+	account_id?: string;
+	tenant_id?: string;
+	workspace_account_id?: string;
+	roles?: Array<'account_owner' | 'agency_operator' | 'account_reader'>;
 }
 
 interface CreateMcpSessionBody {
@@ -726,6 +733,8 @@ interface AgencyEntitlementDecision {
 	reason?: string;
 	account_id?: string | null;
 	tenant_id?: string | null;
+	workspace_account_id?: string | null;
+	control_role?: 'agency_operator' | 'account_owner' | 'account_reader' | null;
 	service_tier?: 'mcp_only' | 'policy_os_trial' | 'policy_os_core' | null;
 	entitlement_snapshot?: {
 		service_tier: 'mcp_only' | 'policy_os_trial' | 'policy_os_core';
@@ -744,6 +753,12 @@ interface AgencyEntitlementDecision {
 		};
 	} | null;
 	checks?: Record<string, boolean>;
+}
+
+interface AgencyControlSchedulerScopeDecision {
+	allowed: boolean;
+	reason?: string;
+	activation_id?: string;
 }
 
 type ManagedBearerIssueResult =
@@ -836,6 +851,8 @@ const OAUTH_SUPPORTED_SCOPES = [
 	'template-review:read',
 	'template-review:write',
 	'template-review:queue-read',
+	'cracked-sync:read',
+	'cracked-sync:write',
 ];
 const MIN_MCP_LEGACY_KEY_TTL_SECONDS = 3600;
 const DEFAULT_MCP_LEGACY_KEY_TTL_SECONDS = 7 * 24 * 60 * 60;
@@ -846,6 +863,7 @@ const OAUTH_APPLICATION_ACCESS_POLICIES = new Map<string, {
 	applicationId: string;
 	resource: string;
 	expiresIn: number;
+	controlAccess?: true;
 }>([
 	[
 		'https://webflow-template-review-mcp.createsomething.workers.dev/mcp',
@@ -855,22 +873,195 @@ const OAUTH_APPLICATION_ACCESS_POLICIES = new Map<string, {
 			expiresIn: OAUTH_APPLICATION_ACCESS_TOKEN_EXPIRES_IN,
 		},
 	],
+	[
+		'https://halfdozen-onboarding-mcp.half-dozen.workers.dev/mcp',
+		{
+			applicationId: 'halfdozen-onboarding-mcp',
+			resource: 'https://halfdozen-onboarding-mcp.half-dozen.workers.dev/mcp',
+			expiresIn: OAUTH_APPLICATION_ACCESS_TOKEN_EXPIRES_IN,
+		},
+	],
+	[
+		'https://halfdozen-cracked-sync-mcp.createsomething.workers.dev/mcp',
+		{
+			applicationId: 'halfdozen-cracked-sync-mcp',
+			resource: 'https://halfdozen-cracked-sync-mcp.createsomething.workers.dev/mcp',
+			expiresIn: OAUTH_APPLICATION_ACCESS_TOKEN_EXPIRES_IN,
+		},
+	],
 ]);
 
-export function resolveOAuthApplicationAccessPolicy(resource: string): {
+export const CONTROL_RUNTIME_RESOURCE =
+	'https://create-something-agent-runtime.createsomething.workers.dev/mcp';
+const CONTROL_SCHEDULER_TOKEN_TTL_SECONDS = 5 * 60;
+const MAX_CONTROL_SCHEDULER_TOKEN_TTL_SECONDS = 15 * 60;
+
+export function resolveOAuthApplicationAccessPolicy(resource: string, configuredControlResources?: string): {
 	applicationId: string;
 	resource: string;
 	expiresIn: number;
+	controlAccess?: true;
 } | null {
-	return OAUTH_APPLICATION_ACCESS_POLICIES.get(resource.trim().replace(/\/+$/, '')) ?? null;
+	const normalized = resource.trim().replace(/\/+$/, '');
+	const staticPolicy = OAUTH_APPLICATION_ACCESS_POLICIES.get(normalized);
+	if (staticPolicy) return staticPolicy;
+	const configured = new Set(
+		(configuredControlResources ?? '')
+			.split(',')
+			.map((value) => value.trim().replace(/\/+$/, ''))
+			.filter(Boolean)
+	);
+	return configured.has(normalized)
+		? {
+			applicationId: 'create-something-control-runtime',
+			resource: normalized,
+			expiresIn: OAUTH_APPLICATION_ACCESS_TOKEN_EXPIRES_IN,
+			controlAccess: true,
+		}
+		: null;
 }
 
-export function isOAuthAccessTokenClaimsForApplication(payload: OAuthAccessTokenClaims): boolean {
+export function resolveOAuthTokenAccessMode(
+	resource: string,
+	managedHubResource: string | undefined,
+	configuredControlResources?: string
+):
+	| { type: 'application'; policy: NonNullable<ReturnType<typeof resolveOAuthApplicationAccessPolicy>> }
+	| { type: 'managed_bearer' }
+	| { type: 'invalid' } {
+	const policy = resolveOAuthApplicationAccessPolicy(resource, configuredControlResources);
+	if (policy) return { type: 'application', policy };
+	const normalizedResource = resource.trim().replace(/\/+$/, '');
+	const normalizedHub = (managedHubResource?.trim() || DEFAULT_OAUTH_RESOURCE).replace(/\/+$/, '');
+	return normalizedResource === normalizedHub
+		? { type: 'managed_bearer' }
+		: { type: 'invalid' };
+}
+
+export function resolveControlSchedulerAudience(
+	configuredResources: string | undefined,
+	requestedResource: string | null | undefined
+): string | null {
+	const resources = (configuredResources ?? '')
+		.split(',')
+		.map((value) => value.trim().replace(/\/+$/, ''))
+		.filter(Boolean);
+	const requested = requestedResource?.trim().replace(/\/+$/, '');
+	if (requested) return resources.includes(requested) ? requested : null;
+	return resources.length === 1 ? resources[0] : null;
+}
+
+export function normalizeControlSchedulerTokenRequest(body: unknown): {
+	activationId: string;
+	accountId: string;
+	tenantId: string;
+	workspaceAccountId: string;
+	resource?: string;
+	ttlSeconds?: number;
+} | null {
+	if (!body || typeof body !== 'object' || Array.isArray(body)) return null;
+	const value = body as Record<string, unknown>;
+	const activationId = typeof value.activation_id === 'string'
+		? normalizeOptionalId(value.activation_id)
+		: null;
+	const accountId = typeof value.account_id === 'string'
+		? normalizeOptionalId(value.account_id)
+		: null;
+	const tenantId = typeof value.tenant_id === 'string'
+		? normalizeOptionalId(value.tenant_id)
+		: null;
+	const workspaceAccountId = typeof value.workspace_account_id === 'string'
+		? normalizeOptionalId(value.workspace_account_id)
+		: null;
+	if (!activationId || !accountId || !tenantId || !workspaceAccountId) return null;
+
+	let resource: string | undefined;
+	if (value.resource !== undefined) {
+		if (typeof value.resource !== 'string') return null;
+		resource = value.resource.trim() || undefined;
+	}
+	let ttlSeconds: number | undefined;
+	if (value.ttl_seconds !== undefined) {
+		if (typeof value.ttl_seconds !== 'number' || !Number.isFinite(value.ttl_seconds)) return null;
+		ttlSeconds = value.ttl_seconds;
+	}
+	return {
+		activationId,
+		accountId,
+		tenantId,
+		workspaceAccountId,
+		...(resource ? { resource } : {}),
+		...(ttlSeconds !== undefined ? { ttlSeconds } : {}),
+	};
+}
+
+export function resolveControlAccessClaims(entitlement: AgencyEntitlementDecision): {
+	account_id: string;
+	tenant_id: string;
+	workspace_account_id: string;
+	roles: Array<'account_owner' | 'agency_operator' | 'account_reader'>;
+} | null {
+	if (
+		!entitlement.allowed ||
+		(entitlement.service_tier !== 'policy_os_trial' &&
+			entitlement.service_tier !== 'policy_os_core') ||
+		!entitlement.account_id ||
+		!entitlement.tenant_id ||
+		!entitlement.workspace_account_id ||
+		!entitlement.control_role
+	) {
+		return null;
+	}
+	return {
+		account_id: entitlement.account_id,
+		tenant_id: entitlement.tenant_id,
+		workspace_account_id: entitlement.workspace_account_id,
+		roles: [entitlement.control_role],
+	};
+}
+
+export function buildControlSchedulerTokenClaims(input: {
+	actor: string;
+	activationId: string;
+	accountId: string;
+	tenantId: string;
+	workspaceAccountId: string;
+	issuer?: string;
+	audience?: string;
+	nowSeconds: number;
+	ttlSeconds?: number;
+}) {
+	const requestedTtl = Number.isFinite(input.ttlSeconds)
+		? input.ttlSeconds!
+		: CONTROL_SCHEDULER_TOKEN_TTL_SECONDS;
+	const ttl = Math.min(
+		MAX_CONTROL_SCHEDULER_TOKEN_TTL_SECONDS,
+		Math.max(60, Math.floor(requestedTtl))
+	);
+	return {
+		sub: input.actor,
+		iss: input.issuer ?? 'https://id.createsomething.space',
+		aud: [input.audience ?? CONTROL_RUNTIME_RESOURCE],
+		iat: input.nowSeconds,
+		exp: input.nowSeconds + ttl,
+		activation_id: input.activationId,
+		account_id: input.accountId,
+		tenant_id: input.tenantId,
+		workspace_account_id: input.workspaceAccountId,
+		roles: ['control_scheduler'] as const,
+		kind: 'control_scheduler_token',
+	};
+}
+
+export function isOAuthAccessTokenClaimsForApplication(
+	payload: OAuthAccessTokenClaims,
+	configuredControlResources?: string
+): boolean {
 	return payload.kind === 'oauth_access_token'
 		&& Boolean(payload.resource)
 		&& Array.isArray(payload.aud)
 		&& payload.aud.includes(payload.resource)
-		&& resolveOAuthApplicationAccessPolicy(payload.resource) !== null;
+		&& resolveOAuthApplicationAccessPolicy(payload.resource, configuredControlResources) !== null;
 }
 
 export function isOAuthUserInfoIdentityActive(user: User | null): user is User {
@@ -1006,12 +1197,13 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 	>;
 
 	let claims: OAuthExchangeClaims | null = null;
+	const oauthIssuer = getOauthIssuer(new URL(request.url), env);
 	if (body.grant_type === 'authorization_code') {
 		if (!body.code || !body.redirect_uri) {
 			return oauthErrorResponse('invalid_request', 400, 'code, client_id, and redirect_uri are required.');
 		}
 
-		const authorizationCodeClaims = await validateOAuthAuthorizationCode(body.code, env);
+		const authorizationCodeClaims = await validateOAuthAuthorizationCode(body.code, env, oauthIssuer);
 		if (!authorizationCodeClaims) {
 			return oauthErrorResponse('invalid_grant', 400, 'Invalid or expired authorization code.');
 		}
@@ -1030,7 +1222,7 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 			return oauthErrorResponse('invalid_request', 400, 'refresh_token and client_id are required.');
 		}
 
-		const refreshTokenClaims = await validateOAuthRefreshToken(body.refresh_token, env);
+		const refreshTokenClaims = await validateOAuthRefreshToken(body.refresh_token, env, oauthIssuer);
 		if (!refreshTokenClaims) {
 			return oauthErrorResponse('invalid_grant', 400, 'Invalid or expired refresh token.');
 		}
@@ -1048,12 +1240,41 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 	}
 
 	try {
-		const applicationPolicy = resolveOAuthApplicationAccessPolicy(claims.resource);
+		const accessMode = resolveOAuthTokenAccessMode(
+			claims.resource,
+			env.MCP_HUB_URL,
+			env.CONTROL_RUNTIME_RESOURCES
+		);
+		if (accessMode.type === 'invalid') {
+			return oauthErrorResponse(
+				'invalid_target',
+				400,
+				'OAuth resource is not configured for managed or application access.'
+			);
+		}
 		let accessToken: string;
 		let expiresIn: number;
-		if (applicationPolicy) {
+		if (accessMode.type === 'application') {
+			const applicationPolicy = accessMode.policy;
 			expiresIn = applicationPolicy.expiresIn;
 			const now = Math.floor(Date.now() / 1000);
+			let controlClaims: ReturnType<typeof resolveControlAccessClaims> | null = null;
+			if (applicationPolicy.controlAccess) {
+				const entitlement = await checkAgencyManagedBearerEntitlement(env, {
+					authSubject: user.id,
+					authEmail: user.email,
+					accountId: claims.account_id ?? null,
+					tenantId: claims.tenant_id ?? null,
+				});
+				controlClaims = resolveControlAccessClaims(entitlement);
+				if (!controlClaims) {
+					return oauthErrorResponse(
+						'access_denied',
+						403,
+						entitlement.reason ?? 'Control access requires an active scoped entitlement.'
+					);
+				}
+			}
 			accessToken = await createSignedToken(env.DB, {
 				sub: user.id,
 				email: user.email,
@@ -1067,6 +1288,7 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 				client_id: claims.client_id,
 				resource: applicationPolicy.resource,
 				scope: claims.scope,
+				...(controlClaims ?? {}),
 			} satisfies OAuthAccessTokenClaims);
 			await createMcpAuthEvent(env.DB, {
 				id: generateUUID(),
@@ -1180,7 +1402,11 @@ async function handleOAuthUserInfo(request: Request, env: Env): Promise<Response
 	}
 
 	const tokenHash = await hashToken(token);
-	const oauthToken = await validateOAuthAccessToken(token, env);
+	const oauthToken = await validateOAuthAccessToken(
+		token,
+		env,
+		getOauthIssuer(new URL(request.url), env)
+	);
 	if (oauthToken) {
 		const user = await findUserById(env.DB, oauthToken.sub);
 		if (!isOAuthUserInfoIdentityActive(user)) {
@@ -1517,6 +1743,81 @@ async function handleAdminMintMcpSession(request: Request, env: Env): Promise<Re
 	});
 }
 
+async function handleAdminIssueControlSchedulerToken(request: Request, env: Env): Promise<Response> {
+	const auth = await authenticateApiKeyForPermissions(request, env, ['control_scheduler_token_issue']);
+	if (!auth.ok) {
+		return json({ error: auth.error, message: auth.message, status: auth.status }, auth.status);
+	}
+	const body = normalizeControlSchedulerTokenRequest(await parseJSON<unknown>(request));
+	if (!body) {
+		return json({
+			error: 'invalid_request',
+			message: 'scheduler token scope, resource, and ttl values must use their declared types',
+			status: 400,
+		}, 400);
+	}
+	const { activationId, accountId, tenantId, workspaceAccountId } = body;
+	const audience = resolveControlSchedulerAudience(env.CONTROL_RUNTIME_RESOURCES, body.resource);
+	if (!audience) {
+		return json({
+			error: 'invalid_target',
+			message: 'resource must select exactly one configured Control runtime audience',
+			status: 400,
+		}, 400);
+	}
+	const scopeDecision = await checkAgencyControlSchedulerScope(env, {
+		activationId,
+		accountId,
+		tenantId,
+		workspaceAccountId,
+	});
+	if (!scopeDecision.allowed) {
+		const unavailable = scopeDecision.reason?.startsWith('agency_scheduler_scope_');
+		return json({
+			error: unavailable ? 'scheduler_scope_unavailable' : 'scheduler_scope_denied',
+			message: scopeDecision.reason ?? 'The frozen Control activation must match the requested scope',
+			status: unavailable ? 503 : 403,
+		}, unavailable ? 503 : 403);
+	}
+	const now = Math.floor(Date.now() / 1000);
+	const claims = buildControlSchedulerTokenClaims({
+		actor: auth.actor,
+		activationId,
+		accountId,
+		tenantId,
+		workspaceAccountId,
+		issuer: getOauthIssuer(new URL(request.url), env),
+		audience,
+		nowSeconds: now,
+		ttlSeconds: body.ttlSeconds,
+	});
+	const token = await createSignedToken(env.DB, claims);
+	await createMcpAuthEvent(env.DB, {
+		id: generateUUID(),
+		session_id: null,
+		user_id: null,
+		event_type: 'control_scheduler_token_issued',
+		event_data_json: JSON.stringify({
+			actor: auth.actor,
+			activation_id: activationId,
+			account_id: accountId,
+			tenant_id: tenantId,
+			workspace_account_id: workspaceAccountId,
+			expires_at: new Date(claims.exp * 1000).toISOString(),
+		}),
+	});
+	return json({
+		access_token: token,
+		token_type: 'Bearer',
+		expires_in: claims.exp - claims.iat,
+		audience: claims.aud[0],
+		account_id: accountId,
+		tenant_id: tenantId,
+		workspace_account_id: workspaceAccountId,
+		activation_id: scopeDecision.activation_id ?? null,
+	}, 200, { 'Cache-Control': 'no-store' });
+}
+
 async function handleAdminIssueMcpLongLivedToken(request: Request, env: Env): Promise<Response> {
 	const auth = await authenticateApiKeyForPermissions(request, env, ['mcp_long_lived_token_issue']);
 	if (!auth.ok) {
@@ -1639,6 +1940,7 @@ async function issueManagedBearerToken(
 	const requestedAccountId = normalizeNullableString(input.accountId);
 	const entitlement = await checkAgencyManagedBearerEntitlement(env, {
 		authSubject: input.authSubject,
+		authEmail: input.authEmail ?? null,
 		accountId: requestedAccountId ?? existing?.account_id ?? null,
 		tenantId: requestedTenantId ?? existing?.tenant_id ?? null,
 	});
@@ -2481,6 +2783,7 @@ async function checkAgencyManagedBearerEntitlement(
 	env: Env,
 	input: {
 		authSubject: string;
+		authEmail?: string | null;
 		accountId?: string | null;
 		tenantId?: string | null;
 	}
@@ -2503,6 +2806,7 @@ async function checkAgencyManagedBearerEntitlement(
 			},
 			body: JSON.stringify({
 				auth_subject: input.authSubject,
+				auth_email: input.authEmail ?? null,
 				account_id: input.accountId ?? null,
 				tenant_id: input.tenantId ?? null,
 			}),
@@ -2519,6 +2823,47 @@ async function checkAgencyManagedBearerEntitlement(
 		return {
 			allowed: false,
 			reason: error instanceof Error ? `agency_entitlement_error:${error.name}` : 'agency_entitlement_error',
+		};
+	}
+}
+
+export async function checkAgencyControlSchedulerScope(
+	env: Env,
+	input: { activationId: string; accountId: string; tenantId: string; workspaceAccountId: string }
+): Promise<AgencyControlSchedulerScopeDecision> {
+	const baseUrl = env.AGENCY_INTERNAL_API_URL?.trim()?.replace(/\/+$/, '');
+	const apiKey = env.AGENCY_INTERNAL_API_KEY?.trim();
+	if (!baseUrl || !apiKey) {
+		return { allowed: false, reason: 'agency_scheduler_scope_not_configured' };
+	}
+	try {
+		const response = await fetch(`${baseUrl}/api/internal/control/scheduler-scope/check`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
+			body: JSON.stringify({
+				activation_id: input.activationId,
+				account_id: input.accountId,
+				tenant_id: input.tenantId,
+				workspace_account_id: input.workspaceAccountId,
+			}),
+		});
+		const payload = (await response.json().catch(() => null)) as AgencyControlSchedulerScopeDecision | null;
+		if (!response.ok) {
+			return {
+				allowed: false,
+				reason: `agency_scheduler_scope_http_${response.status}`,
+			};
+		}
+		if (!payload || typeof payload.allowed !== 'boolean') {
+			return { allowed: false, reason: 'agency_scheduler_scope_invalid_response' };
+		}
+		return payload;
+	} catch (error) {
+		return {
+			allowed: false,
+			reason: error instanceof Error
+				? `agency_scheduler_scope_error:${error.name}`
+				: 'agency_scheduler_scope_error',
 		};
 	}
 }
@@ -3888,7 +4233,7 @@ function buildOpenIdConfigurationMetadata(url: URL, env: Env) {
 }
 
 function getOauthIssuer(url: URL, env: Env): string {
-	return normalizeUrlOrigin(url.origin);
+	return normalizeUrlOrigin(env.OAUTH_ISSUER?.trim() || url.origin);
 }
 
 function normalizeUrlOrigin(origin: string): string {
@@ -3913,7 +4258,10 @@ function renderOAuthAuthorizePage(params: URLSearchParams, env: Env, errorMessag
 	const requestedResource = normalizeOAuthResource(
 		params.get('resource') ?? env.MCP_HUB_URL ?? DEFAULT_OAUTH_RESOURCE,
 	);
-	const applicationPolicy = resolveOAuthApplicationAccessPolicy(requestedResource);
+	const applicationPolicy = resolveOAuthApplicationAccessPolicy(
+		requestedResource,
+		env.CONTROL_RUNTIME_RESOURCES
+	);
 	const requestedScopes = normalizeScope(params.get('scope') ?? 'openid mcp');
 	const accessEyebrow = applicationPolicy ? 'Application MCP Access' : 'Managed MCP Access';
 	const accessDescription = applicationPolicy
@@ -4139,11 +4487,15 @@ async function parseOAuthTokenBody(request: Request): Promise<OAuthTokenBody | n
 	return parseJSON<OAuthTokenBody>(request);
 }
 
-async function validateOAuthAuthorizationCode(code: string, env: Env): Promise<OAuthAuthorizationCodeClaims | null> {
+async function validateOAuthAuthorizationCode(
+	code: string,
+	env: Env,
+	expectedIssuer: string
+): Promise<OAuthAuthorizationCodeClaims | null> {
 	const jwks = await getJWKS(env.DB);
 	for (const jwk of jwks.keys) {
 		const publicKey = await importPublicKey(jwk);
-		const payload = (await validateJWT(code, publicKey)) as OAuthAuthorizationCodeClaims | null;
+		const payload = (await validateJWT(code, publicKey, expectedIssuer)) as OAuthAuthorizationCodeClaims | null;
 		if (payload?.kind === 'oauth_authorization_code') {
 			return payload;
 		}
@@ -4151,11 +4503,15 @@ async function validateOAuthAuthorizationCode(code: string, env: Env): Promise<O
 	return null;
 }
 
-async function validateOAuthRefreshToken(token: string, env: Env): Promise<OAuthRefreshTokenClaims | null> {
+async function validateOAuthRefreshToken(
+	token: string,
+	env: Env,
+	expectedIssuer: string
+): Promise<OAuthRefreshTokenClaims | null> {
 	const jwks = await getJWKS(env.DB);
 	for (const jwk of jwks.keys) {
 		const publicKey = await importPublicKey(jwk);
-		const payload = (await validateJWT(token, publicKey)) as OAuthRefreshTokenClaims | null;
+		const payload = (await validateJWT(token, publicKey, expectedIssuer)) as OAuthRefreshTokenClaims | null;
 		if (payload?.kind === 'oauth_refresh_token') {
 			return payload;
 		}
@@ -4163,12 +4519,16 @@ async function validateOAuthRefreshToken(token: string, env: Env): Promise<OAuth
 	return null;
 }
 
-async function validateOAuthAccessToken(token: string, env: Env): Promise<OAuthAccessTokenClaims | null> {
+async function validateOAuthAccessToken(
+	token: string,
+	env: Env,
+	expectedIssuer: string
+): Promise<OAuthAccessTokenClaims | null> {
 	const jwks = await getJWKS(env.DB);
 	for (const jwk of jwks.keys) {
 		const publicKey = await importPublicKey(jwk);
-		const payload = (await validateJWT(token, publicKey)) as OAuthAccessTokenClaims | null;
-		if (payload && isOAuthAccessTokenClaimsForApplication(payload)) {
+		const payload = (await validateJWT(token, publicKey, expectedIssuer)) as OAuthAccessTokenClaims | null;
+		if (payload && isOAuthAccessTokenClaimsForApplication(payload, env.CONTROL_RUNTIME_RESOURCES)) {
 			return payload;
 		}
 	}

@@ -44,7 +44,7 @@ export default declareComponent(TemplateSearchResults, {
     }),
     defaultSort: props.Variant({
       name: 'Default Sort',
-      options: ['popular', 'newest', 'price_asc', 'price_desc'],
+      options: ['popular', 'best_selling', 'newest', 'price_asc', 'price_desc'],
       defaultValue: 'popular',
     }),
     pageSize: props.Number({

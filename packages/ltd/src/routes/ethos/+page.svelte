@@ -1,6 +1,49 @@
 <script lang="ts">
 	import { SubtractiveTriadAnimation } from '@create-something/canon/domains/ltd';
-	import { SEO } from '@create-something/canon';
+	import {
+		PerformanceNarrativeStage,
+		SEO,
+		type PerformanceNarrativeScene
+	} from '@create-something/canon';
+
+	const ethosScenes: PerformanceNarrativeScene[] = [
+		{
+			id: 'practice',
+			label: 'Practice',
+			summary: 'Three questions',
+			title: 'Interrogate the addition.',
+			detail: 'Start with the reusable test: unify what already exists, remove what earns no place, and reconnect what no longer serves the whole.',
+			tone: 'allow',
+			evidence: ['Have I built this before?', 'Does this earn its existence?', 'Does this serve the whole?']
+		},
+		{
+			id: 'principle',
+			label: 'Principle',
+			summary: 'Less, but better',
+			title: 'Apply one discipline at three scales.',
+			detail: 'Rams, Mies, and the Eameses ground a subtractive triad for implementation, artifact, and system decisions.',
+			tone: 'review',
+			evidence: ['Unify the implementation', 'Remove from the artifact', 'Reconnect the system']
+		},
+		{
+			id: 'ecosystem',
+			label: 'Standards',
+			summary: 'One canon, three domains',
+			title: 'Carry the standard across the ecosystem.',
+			detail: 'Research, practice, and service each express the same commitment to usefulness, context, and proof.',
+			tone: 'neutral',
+			receipts: ['.io research', '.space practice', '.agency service']
+		},
+		{
+			id: 'system',
+			label: 'System',
+			summary: 'Intention to feedback',
+			title: 'Let the infrastructure recede.',
+			detail: 'The automation layer carries intention into governed execution, while real outcomes return through the hermeneutic circle to pressure the canon.',
+			tone: 'neutral',
+			receipts: ['Configurable constraints', 'Autonomous agents', 'Production feedback']
+		}
+	];
 </script>
 
 <SEO
@@ -24,6 +67,17 @@
 	</div>
 </section>
 
+<PerformanceNarrativeStage
+	id="ethos-operating-story"
+	eyebrow="Operating ethos"
+	title="Remove, reconnect, return."
+	description="The complete ethos is now one indexed argument: use the discipline, inspect its lineage, carry it across the properties, and return production evidence to the canon."
+	scenes={ethosScenes}
+	ariaLabel="CREATE SOMETHING operating ethos"
+>
+	{#snippet artifact(scene: PerformanceNarrativeScene)}
+		<div class="ethos-scene-artifact">
+			{#if scene.id === 'practice'}
 <!-- What This Means in Practice -->
 <section class="py-16 px-6">
 	<div class="max-w-3xl mx-auto">
@@ -58,6 +112,7 @@
 		</div>
 	</div>
 </section>
+			{:else if scene.id === 'principle'}
 
 <!-- Core Philosophy -->
 <section class="py-16 px-6 border-t border-canon">
@@ -205,6 +260,7 @@
 		</div>
 	</div>
 </section>
+			{:else if scene.id === 'ecosystem'}
 
 <!-- Standards for Each Domain -->
 <section class="py-16 px-6 border-t border-canon">
@@ -331,6 +387,7 @@
 		</div>
 	</div>
 </section>
+			{:else}
 
 <!-- The Automation Layer -->
 <section class="py-16 px-6 border-t border-canon">
@@ -411,11 +468,20 @@ Outcomes While You Sleep
 		</div>
 	</div>
 </section>
+			{/if}
+		</div>
+	{/snippet}
+</PerformanceNarrativeStage>
 
 <style>
 	.header-section {
 		padding-top: var(--space-performance-xl);
 		padding-bottom: var(--space-performance-xl);
+	}
+
+	.ethos-scene-artifact {
+		min-width: 0;
+		overflow: hidden;
 	}
 
 	.eyebrow {

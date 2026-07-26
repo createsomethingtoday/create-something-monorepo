@@ -1,14 +1,14 @@
-# Agency Atlas Public Overlay Surface Policy
+# Agency Map Public Overlay Surface Policy
 
-This policy keeps @create-something/agency Atlas overlays portable across web, chat, app without forking Canon.
+This policy keeps @create-something/agency Map overlays portable across web, chat, and app without forking internal Canon Atlas primitives.
 
 ## Web
 
 - Use Canon components and tokens first.
 - Add project-local layout, copy, and theme aliases only when the consuming route needs them.
 - Keep receipt, evidence, and owner metadata visible near decisions.
-- Treat `/atlas`, `/services`, `/methodology`, `/stack`, `/products`, `/products/signal`, `/products/decision`, and `/products/proof` as public proof routes.
-- The public route can demonstrate Canon Atlas, but it must not require credentials, private workspace data, or production MCP calls.
+- Treat `/map`, `/services`, `/methodology`, `/stack`, `/products`, `/products/signal`, `/products/decision`, and `/products/proof` as public proof routes.
+- The public route can demonstrate Map through Canon Atlas, but it must not require credentials, private workspace data, or production MCP calls.
 
 ## Chat
 

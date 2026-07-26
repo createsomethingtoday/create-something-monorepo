@@ -29,6 +29,13 @@ function parseOrigin(value: string | null): string | null {
   }
 }
 
+/**
+ * Reads the cron secret from headers only.
+ *
+ * Query-string secrets end up in request logs, analytics, and referrers, so the
+ * `?cron_secret=`/`?token=` forms are deliberately not accepted. Callers use
+ * `Authorization: Bearer <secret>` or `x-cron-secret: <secret>`.
+ */
 function getProvidedSecret(request: Request): string | null {
   const authHeader = request.headers.get('authorization');
   if (authHeader?.toLowerCase().startsWith('bearer ')) {
@@ -37,14 +44,26 @@ function getProvidedSecret(request: Request): string | null {
   }
 
   const headerSecret = request.headers.get('x-cron-secret')?.trim();
-  if (headerSecret) return headerSecret;
+  return headerSecret || null;
+}
 
-  const url = new URL(request.url);
-  const querySecret = url.searchParams.get('cron_secret')?.trim();
-  if (querySecret) return querySecret;
+/**
+ * Constant-time string comparison so secret checks do not leak length or
+ * prefix information through response timing.
+ */
+function secretsMatch(provided: string | null, expected: string): boolean {
+  if (!provided) return false;
 
-  const queryToken = url.searchParams.get('token')?.trim();
-  return queryToken || null;
+  const providedBytes = new TextEncoder().encode(provided);
+  const expectedBytes = new TextEncoder().encode(expected);
+  if (providedBytes.length !== expectedBytes.length) return false;
+
+  let diff = 0;
+  for (let index = 0; index < expectedBytes.length; index += 1) {
+    diff |= providedBytes[index] ^ expectedBytes[index];
+  }
+
+  return diff === 0;
 }
 
 /**
@@ -136,8 +155,7 @@ export function isAuthorizedCronRequest(
   environment: string | undefined
 ): boolean {
   if (cronSecret) {
-    const provided = getProvidedSecret(request);
-    return provided === cronSecret;
+    return secretsMatch(getProvidedSecret(request), cronSecret);
   }
 
   return (environment ?? 'production') !== 'production';

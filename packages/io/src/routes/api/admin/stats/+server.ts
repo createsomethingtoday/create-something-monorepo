@@ -1,14 +1,41 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { getCatalogExperimentPapers } from '$lib/config/experimentCatalog';
 
-const CACHE_KEY = 'admin:stats';
-const CACHE_TTL = 300; // 5 minutes
+const CACHE_KEY = 'admin:stats:v2';
+const CACHE_TTL = 300;
 
 interface StatsResponse {
 	experiments: number;
-	submissions: number;
-	subscribers: number;
-	executions: number;
+	submissions: number | null;
+	subscribers: number | null;
+	executions: number | null;
+}
+
+interface CountResult {
+	count: number;
+}
+
+async function readCount(
+	db: NonNullable<App.Platform['env']>['DB'],
+	query: string,
+	label: string
+): Promise<number | null> {
+	try {
+		const result = await db.prepare(query).first<CountResult>();
+		return result?.count ?? 0;
+	} catch (error) {
+		console.error(`Error counting ${label}:`, error);
+		return null;
+	}
+}
+
+function isComplete(stats: StatsResponse) {
+	return (
+		stats.submissions !== null &&
+		stats.subscribers !== null &&
+		stats.executions !== null
+	);
 }
 
 export const GET: RequestHandler = async ({ platform, url }) => {
@@ -19,10 +46,8 @@ export const GET: RequestHandler = async ({ platform, url }) => {
 		return json({ error: 'Database not available' }, { status: 500 });
 	}
 
-	// Check for cache bypass flag (for admin refresh)
 	const bypassCache = url.searchParams.get('refresh') === 'true';
 
-	// Try to get from cache first
 	if (cache && !bypassCache) {
 		try {
 			const cached = await cache.get<StatsResponse>(CACHE_KEY, { type: 'json' });
@@ -30,93 +55,52 @@ export const GET: RequestHandler = async ({ platform, url }) => {
 				return json(cached, {
 					headers: {
 						'X-Cache': 'HIT',
-						'Cache-Control': 'public, max-age=300'
+						'X-Data-Complete': 'true',
+						'Cache-Control': 'private, max-age=300'
 					}
 				});
 			}
-		} catch (e) {
-			console.error('Cache read error:', e);
-			// Continue to database query on cache error
+		} catch (error) {
+			console.error('Cache read error:', error);
 		}
 	}
 
-	try {
-		type CountResult = { count: number };
+	const [submissions, subscribers, executions] = await Promise.all([
+		readCount(db, 'SELECT COUNT(*) as count FROM contact_submissions', 'submissions'),
+		readCount(
+			db,
+			'SELECT COUNT(*) as count FROM newsletter_subscribers WHERE active = 1',
+			'subscribers'
+		),
+		readCount(
+			db,
+			`SELECT COUNT(*) as count FROM experiment_executions
+			WHERE executed_at >= datetime('now', '-30 days')`,
+			'executions'
+		)
+	]);
 
-		// Get experiments count (from papers table)
-		let experimentsCount = 0;
+	const stats: StatsResponse = {
+		experiments: getCatalogExperimentPapers().length,
+		submissions,
+		subscribers,
+		executions
+	};
+	const complete = isComplete(stats);
+
+	if (cache && complete) {
 		try {
-			const experimentsResult = await db
-				.prepare('SELECT COUNT(*) as count FROM papers WHERE published = 1')
-				.first<CountResult>();
-			experimentsCount = experimentsResult?.count || 0;
-		} catch (e) {
-			console.error('Error counting experiments:', e);
+			await cache.put(CACHE_KEY, JSON.stringify(stats), { expirationTtl: CACHE_TTL });
+		} catch (error) {
+			console.error('Cache write error:', error);
 		}
-
-		// Get submissions count
-		let submissionsCount = 0;
-		try {
-			const submissionsResult = await db
-				.prepare('SELECT COUNT(*) as count FROM contact_submissions')
-				.first<CountResult>();
-			submissionsCount = submissionsResult?.count || 0;
-		} catch (e) {
-			console.error('Error counting submissions:', e);
-		}
-
-		// Get subscribers count
-		let subscribersCount = 0;
-		try {
-			const subscribersResult = await db
-				.prepare('SELECT COUNT(*) as count FROM newsletter_subscribers WHERE active = 1')
-				.first<CountResult>();
-			subscribersCount = subscribersResult?.count || 0;
-		} catch (e) {
-			console.error('Error counting subscribers:', e);
-		}
-
-		// Get executions count (last 30 days)
-		let executionsCount = 0;
-		try {
-			const executionsResult = await db
-				.prepare(
-					`SELECT COUNT(*) as count FROM experiment_executions
-					WHERE created_at >= datetime('now', '-30 days')`
-				)
-				.first<CountResult>();
-			executionsCount = executionsResult?.count || 0;
-		} catch (e) {
-			console.error('Error counting executions:', e);
-		}
-
-		const stats: StatsResponse = {
-			experiments: experimentsCount,
-			submissions: submissionsCount,
-			subscribers: subscribersCount,
-			executions: executionsCount
-		};
-
-		// Store in cache for future requests
-		if (cache) {
-			try {
-				await cache.put(CACHE_KEY, JSON.stringify(stats), {
-					expirationTtl: CACHE_TTL
-				});
-			} catch (e) {
-				console.error('Cache write error:', e);
-				// Don't fail request on cache write error
-			}
-		}
-
-		return json(stats, {
-			headers: {
-				'X-Cache': 'MISS',
-				'Cache-Control': 'public, max-age=300'
-			}
-		});
-	} catch (error) {
-		console.error('Failed to fetch admin stats:', error);
-		return json({ error: 'Failed to fetch stats', details: String(error) }, { status: 500 });
 	}
+
+	return json(stats, {
+		headers: {
+			'X-Cache': 'MISS',
+			'X-Data-Complete': String(complete),
+			'Cache-Control': complete ? 'private, max-age=300' : 'no-store'
+		}
+	});
 };

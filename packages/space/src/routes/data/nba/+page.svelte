@@ -12,6 +12,7 @@
   import { GameSelector } from '$lib/experiments/nba-live';
   import { GameHighlightCard } from '$lib/experiments/nba-live';
   import { DateNavigation } from '$lib/experiments/nba-live';
+  import { RecentHistory } from '$lib/experiments/nba-live';
   import { selectGameOfTheNight } from '$lib/nba/calculations';
   import {
     Zap,
@@ -23,7 +24,7 @@
     AlertCircle,
     TrendingUp
   } from 'lucide-svelte';
-  import { invalidate } from '$app/navigation';
+  import { invalidateAll } from '$app/navigation';
 
   let { data }: { data: PageData } = $props();
 
@@ -69,53 +70,53 @@
   const liveCount = $derived(data.games.filter((g) => g.status === 'live').length);
   const scheduledCount = $derived(data.games.filter((g) => g.status === 'scheduled').length);
   const finalCount = $derived(data.games.filter((g) => g.status === 'final').length);
+  const nextScheduledGame = $derived(
+    [...data.games]
+      .filter((game) => game.status === 'scheduled')
+      .sort((a, b) => Date.parse(a.startTime) - Date.parse(b.startTime))[0] ?? null
+  );
 
   // Select game of the night from completed games
   const gameOfTheNight = $derived(selectGameOfTheNight(data.games));
 
   // Check if we're viewing today's games (used in labels and messaging)
-  const isToday = $derived(data.currentDate === new Date().toISOString().split('T')[0]);
+  const isToday = $derived(data.currentDate === data.nbaToday);
 
   // Format date display for section headers
   const dateLabel = $derived.by(() => {
     if (isToday) return "Today's Games";
 
-    const date = new Date(data.currentDate + 'T00:00:00');
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const dateObj = new Date(date);
-    dateObj.setHours(0, 0, 0, 0);
-
-    const diffDays = Math.floor((dateObj.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-
-    if (diffDays === -1) return "Yesterday's Games";
-
+    const date = new Date(data.currentDate + 'T12:00:00Z');
+    if (data.dateRelation === 'past' && data.currentDate < data.nbaToday) {
+      const yesterday = new Date(data.nbaToday + 'T12:00:00Z');
+      yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+      if (data.currentDate === yesterday.toISOString().slice(0, 10)) return "Yesterday's Games";
+    }
     return `Games - ${date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}`;
   });
 
-  // Auto-refresh every 30 seconds when games are live or scheduled
-  // Uses $effect to reactively start/stop polling when date changes
-  $effect(() => {
-    const hasActiveGames = data.games.some((g) => g.status === 'live' || g.status === 'scheduled');
-    const viewingToday = data.currentDate === new Date().toISOString().split('T')[0];
+  const pollIntervalMs = $derived.by(() => {
+    if (!isToday) return null;
+    if (data.scoreboardState === 'live') return 30_000;
+    if (data.scoreboardState === 'unavailable' || data.scoreboardState === 'stale') return 60_000;
+    if (data.scoreboardState === 'pregame') return 5 * 60_000;
+    return 15 * 60_000;
+  });
 
-    if (viewingToday && hasActiveGames) {
-      console.log('[NBA Live] Starting 30-second auto-refresh polling');
+  // Poll every current-day state so an empty or unavailable page can recover.
+  $effect(() => {
+    const intervalMs = pollIntervalMs;
+    if (intervalMs) {
       const interval = setInterval(
         () => {
-          console.log('[NBA Live] Refreshing game data...');
-          invalidate('/data/nba');
+          invalidateAll();
         },
-        30 * 1000 // 30 seconds
+        intervalMs
       );
 
-      // Cleanup on dependency change or component unmount
       return () => {
-        console.log('[NBA Live] Stopping auto-refresh polling');
         clearInterval(interval);
       };
-    } else {
-      console.log('[NBA Live] Polling disabled', { viewingToday, hasActiveGames });
     }
   });
 
@@ -155,12 +156,24 @@
   <div class="container">
     <div class="status-bar" role="status" aria-live="polite">
       <div class="status-indicator">
-        {#if data.error}
+        {#if data.scoreboardState === 'unavailable'}
           <AlertCircle size={16} class="status-icon status-icon--error" />
-          <span class="status-label status-label--error">Connection issue</span>
-        {:else if liveCount > 0}
+          <span class="status-label status-label--error">Feed unavailable</span>
+        {:else if data.scoreboardState === 'stale'}
+          <Clock size={16} class="status-icon status-icon--cached" />
+          <span class="status-label status-label--cached">Last known data</span>
+        {:else if data.scoreboardState === 'live'}
           <Radio size={16} class="status-icon status-icon--live" />
           <span class="status-label status-label--live">{liveCount} live</span>
+        {:else if data.scoreboardState === 'pregame'}
+          <Clock size={16} class="status-icon" />
+          <span class="status-label">No games live</span>
+        {:else if data.scoreboardState === 'complete'}
+          <Clock size={16} class="status-icon" />
+          <span class="status-label">Slate complete</span>
+        {:else if data.scoreboardState === 'off_day'}
+          <Clock size={16} class="status-icon" />
+          <span class="status-label">No games scheduled</span>
         {:else if data.cached}
           <Clock size={16} class="status-icon status-icon--cached" />
           <span class="status-label status-label--cached">Cached</span>
@@ -170,8 +183,15 @@
         {/if}
       </div>
       <span class="timestamp">
-        {new Date(data.timestamp).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+        {#if data.timestamp}
+          Data from {new Date(data.timestamp).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+        {:else}
+          Retrying automatically
+        {/if}
       </span>
+      {#if data.provider === 'espn'}
+        <span class="source-label">Scoreboard fallback</span>
+      {/if}
     </div>
   </div>
 </section>
@@ -198,7 +218,7 @@
 <!-- Date Navigation -->
 <section class="date-section">
   <div class="container">
-    <DateNavigation currentDate={data.currentDate} />
+    <DateNavigation currentDate={data.currentDate} todayDate={data.nbaToday} />
   </div>
 </section>
 
@@ -207,28 +227,62 @@
   <div class="container">
     <h2 class="section-label">{dateLabel}</h2>
 
-    {#if data.error}
+    {#if data.scoreboardState === 'unavailable'}
       <div class="error-state">
         <AlertCircle size={24} />
         <p class="error-message">We couldn't load {isToday ? "today's" : 'these'} games.</p>
         <p class="error-hint">
-          The NBA data feed may be temporarily unavailable. Check back in a few minutes.
+          {#if isToday}
+            The primary and fallback scoreboards are unavailable. This page will retry automatically.
+          {:else}
+            The primary and fallback scoreboards are unavailable for this date. Reload or try another date.
+          {/if}
         </p>
+        {#if data.correlationId}
+          <p class="diagnostic-id">Reference: {data.correlationId}</p>
+        {/if}
       </div>
-    {:else if data.noGamesScheduled}
+    {:else if data.scoreboardState === 'off_day' || (data.scoreboardState === 'stale' && data.games.length === 0)}
       <div class="empty-state">
         <Clock size={24} />
-        <p class="empty-message">No games scheduled for this date</p>
-        <p class="empty-hint">
-          {#if isToday}
-            The schedule hasn't been published yet. Games are typically added a few hours before
-            tip-off—check back later today.
+        <p class="empty-message">
+          {#if data.scoreboardState === 'stale'}
+            Last known scoreboard has no games
           {:else}
-            We only have game data starting from Jan 5, 2026.
+            {data.dateRelation === 'today' ? 'No NBA games today' : 'No games listed for this date'}
+          {/if}
+        </p>
+        <p class="empty-hint">
+          {#if data.scoreboardState === 'stale'}
+            Live sources are unavailable. Showing the last successful result while this page retries.
+          {:else if data.dateRelation === 'today'}
+            There are no games live or scheduled for the current slate.
+          {:else if data.dateRelation === 'future'}
+            The published schedule does not currently include a game on this date.
+          {:else}
+            The scoreboard has no games recorded for this date.
           {/if}
         </p>
       </div>
     {:else}
+      {#if data.scoreboardState === 'pregame'}
+        <div class="slate-note">
+          <p>No games are live right now.</p>
+          {#if nextScheduledGame}
+            <p>
+              Next tip-off:
+              {new Date(nextScheduledGame.startTime).toLocaleTimeString([], {
+                hour: 'numeric',
+                minute: '2-digit'
+              })}
+            </p>
+          {/if}
+        </div>
+      {:else if data.scoreboardState === 'complete'}
+        <div class="slate-note"><p>All games on this slate are final.</p></div>
+      {:else if data.scoreboardState === 'stale'}
+        <div class="slate-note"><p>Showing the last known scoreboard while live sources recover.</p></div>
+      {/if}
       <GameSelector
         games={data.games}
         selectedGameId={selectedGame?.id}
@@ -237,6 +291,10 @@
     {/if}
   </div>
 </section>
+
+{#if data.games.length === 0 && data.recentHistory?.slates.length}
+  <RecentHistory history={data.recentHistory} />
+{/if}
 
 <!-- Game of the Night -->
 {#if gameOfTheNight}
@@ -252,7 +310,7 @@
 {/if}
 
 <!-- Analysis Options -->
-{#if selectedGame}
+{#if selectedGame && selectedGame.analyticsAvailable !== false}
   <section id="game-details" class="analysis-section">
     <div class="container">
       <div class="selected-game">
@@ -273,7 +331,10 @@
       <h3 class="section-label">Choose an analysis</h3>
       <div class="analysis-grid">
         {#each analysisOptions as option}
-          <a href="/data/nba/{option.slug}?gameId={selectedGame.id}" class="analysis-card">
+          <a
+            href="/data/nba/{option.slug}?gameId={selectedGame.id}&date={data.currentDate}"
+            class="analysis-card"
+          >
             <div class="card-header">
               <option.icon size={20} class="card-icon" />
               <h4 class="card-title">{option.title}</h4>
@@ -290,7 +351,7 @@
 {/if}
 
 <!-- League Insights Link -->
-{#if finalCount > 0}
+{#if finalCount > 0 && data.games.some((game) => game.analyticsAvailable !== false)}
   <section class="insights-link-section">
     <div class="container">
       <a href="/data/nba/league-insights?date={data.currentDate}" class="insights-link-card">
@@ -317,9 +378,10 @@
     <div class="about-card">
       <h3 class="about-title">How this works</h3>
       <p class="about-text">
-        This dashboard pulls live data from the NBA and calculates advanced metrics in real-time.
-        It's also an experiment in AI-assisted development—we built it using structured
-        specifications to see how well agents can handle complex, data-driven features.
+        This dashboard combines live scoreboard data with detailed NBA feeds when they are
+        available. Advanced analysis appears only when the play-by-play data supports it. It's also
+        an experiment in AI-assisted development—we built it using structured specifications to see
+        how well agents can handle complex, data-driven features.
       </p>
       <a href="https://createsomething.io/papers/spec-driven-development" class="about-link">
         Read about the development process <ArrowRight size={14} />
@@ -381,6 +443,8 @@
     background: var(--color-performance-bg-surface);
     border-radius: var(--radius-performance-scale-sm);
     font-size: var(--text-performance-body-sm);
+    flex-wrap: wrap;
+    gap: var(--space-performance-xs) var(--space-performance-sm);
   }
 
   .status-indicator {
@@ -424,6 +488,11 @@
   .timestamp {
     color: var(--color-performance-fg-muted);
     font-variant-numeric: tabular-nums;
+  }
+
+  .source-label {
+    color: var(--color-performance-fg-muted);
+    font-size: var(--text-performance-caption);
   }
 
   /* Summary */
@@ -490,6 +559,13 @@
     font-size: var(--text-performance-body-sm);
   }
 
+  .diagnostic-id {
+    margin-top: var(--space-performance-sm);
+    color: var(--color-performance-fg-muted);
+    font-family: var(--font-performance-mono);
+    font-size: var(--text-performance-caption);
+  }
+
   /* Empty State (No Games Scheduled) */
   .empty-state {
     text-align: center;
@@ -510,6 +586,15 @@
   }
 
   .empty-hint {
+    font-size: var(--text-performance-body-sm);
+  }
+
+  .slate-note {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-performance-sm);
+    margin-bottom: var(--space-performance-sm);
+    color: var(--color-performance-fg-secondary);
     font-size: var(--text-performance-body-sm);
   }
 

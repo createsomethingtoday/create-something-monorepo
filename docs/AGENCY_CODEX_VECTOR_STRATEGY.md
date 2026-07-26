@@ -1,7 +1,7 @@
 # Agency Codex Vector Strategy
 
 > Date: February 16, 2026
-> Updated: July 12, 2026 (owned Cloudflare/OpenAI runtime boundary)
+> Updated: July 16, 2026 (Map -> Build -> Control public product family)
 > Scope: CREATE SOMETHING `.agency` packaging and delivery model
 > Priority: Max differentiation
 
@@ -16,8 +16,11 @@ CREATE SOMETHING itself is the proof business for this claim: it is operated as
 an agent-run-with-receipts company first, then that operating system is installed
 for client workflows. See [AGENT_RUN_RECEIPT_CHARTER.md](./AGENT_RUN_RECEIPT_CHARTER.md).
 
-The commercial default remains **Policy OS** (**Skills + MCP**), with
-**MCP-only** as a narrow entry wedge.
+The public commercial family is **CREATE SOMETHING Map -> CREATE SOMETHING
+Build -> CREATE SOMETHING Control**. Map and Control are standalone
+subscriptions, Build is an implementation service, and Control includes Map.
+Policy OS remains the internal governed-delivery contract; **MCP-only** remains
+a narrow technical entry wedge.
 
 - Delegated Work Control is the durable category: what can run, what waits, what
   stops, who owns the decision, and what evidence proves the work.
@@ -76,7 +79,7 @@ Placement rules:
 
 - Operator-facing headlines, subheads, sales pages, and outbound use `Skills + MCP`.
 - Technical proof surfaces (architecture docs, security/compliance notes, and RFP responses) use `MCP + Skills`.
-- Commercial packaging names are now canonicalized: `Policy OS` default, `MCP-only` exception.
+- Public packaging names are canonicalized as `Map`, `Build`, and `Control`; `Policy OS` remains an internal compatibility contract and `MCP-only` an exception.
 
 Technical statement (must appear in technical proof surfaces):
 
@@ -99,7 +102,7 @@ Competitive moat emphasis:
 
 ## Delivery Targets
 
-Policy OS ships to all major agent harnesses. Artifacts are portable by design:
+Control's Policy OS artifacts ship to all major agent harnesses. They remain portable by design:
 
 | Target | Delivery Format | Distribution |
 |--------|----------------|-------------|
@@ -131,17 +134,19 @@ See `packages/pi-three-tier-framework/`, `packages/pi-policy-os/`, `packages/pi-
 1. `Delegated Work Control` is the long-term category, not a route name or
    entitlement enum.
 2. `Workflow Trust Layer` is the current public service language for `.agency`.
-3. `MCP-only` is sold only for discovery/compliance use cases.
-4. `Policy OS` is the default paid package:
+3. `CREATE SOMETHING Map` is a standalone workflow-definition subscription.
+4. `CREATE SOMETHING Build` is the quoted implementation service for an approved Map.
+5. `CREATE SOMETHING Control` is the standalone governed-execution subscription and includes Map:
    - Custom MCP server(s) for client systems.
    - Codex-ready agent setup and prompt/policy artifacts.
    - Managed judgment loop (approvals, escalation, monthly tuning).
-   - `Workflow Infrastructure` is the implementation layer inside the package.
+   - Policy OS remains the internal package and entitlement contract.
    - `Enterprise Extension` is the high-stakes expansion layer inside the package.
-5. Supplier wrap pattern remains unchanged:
+6. `MCP-only` is sold only for discovery/compliance use cases.
+7. Supplier wrap pattern remains unchanged:
    - Commodity connectivity via `@create-something/composio-bridge`.
    - Deep-domain logic and intelligence layer are always custom.
-6. Runtime graduation is explicit:
+8. Runtime graduation is explicit:
    - The owned Cloudflare runtime and OpenAI Agents SDK are the production
      default for agent execution.
    - Historical Dify applications may remain only as named rollback artifacts
@@ -151,7 +156,7 @@ See `packages/pi-three-tier-framework/`, `packages/pi-policy-os/`, `packages/pi-
 
 ## Offer architecture
 
-### Workflow Trust Layer (service language)
+### CREATE SOMETHING Map (standalone subscription)
 
 Use when:
 - A buyer can name one workflow that is currently protected by human attention.
@@ -159,11 +164,23 @@ Use when:
 - The buyer needs a controlled delegation path before choosing agent tooling.
 
 Deliverables:
-- Workflow map
+- Living workflow map
 - Object and owner map
 - Run/wait/stop action boundary
 - Receipt plan
 - First safe delegation recommendation
+
+### CREATE SOMETHING Build (implementation service)
+
+Use when:
+- An approved Map needs connectors, runtime behavior, tests, and an owned handoff.
+- The buyer wants CREATE SOMETHING to implement rather than operate the system.
+
+Deliverables:
+- Scoped connectors and workflow runtime
+- Approval and stop behavior
+- Verification evidence
+- Runbook and ownership handoff
 
 ### MCP-only (entry wedge)
 
@@ -178,7 +195,7 @@ Deliverables:
 - Tool/resource/prompt inventory
 - Basic runbook and ownership handoff
 
-### Policy OS (default)
+### CREATE SOMETHING Control (standalone subscription)
 
 Use when:
 - Client asks for measurable time savings or delegated follow-through.
@@ -186,6 +203,7 @@ Use when:
 - Client expects ongoing optimization.
 
 Deliverables:
+- Map included for every governed workflow
 - Custom MCP endpoint(s)
 - Client-facing vector: `Skills + MCP`
 - Technical vector: `MCP + Skills`
@@ -226,7 +244,7 @@ Every engagement ships three artifacts:
 - Review cadence
 - Messaging orientation (`Skills + MCP` for operator-facing pages, `MCP + Skills` for technical proof)
 
-Policy OS metadata must also include:
+Control's internal Policy OS metadata must also include:
 
 - `package_name`
 - `approved_workflows`
@@ -258,7 +276,7 @@ Required in every handoff:
 
 ### Weeks 2-4
 
-- Update `.agency` copy to position "first MCP" as start, not default package.
+- Update `.agency` copy to position Map as the standalone definition and Build as the implementation bridge.
 - Add explicit Codex deliverable language in service/product copy.
 - Adopt `Skills + MCP` on operator-facing pages and maintain package naming.
 
@@ -269,7 +287,7 @@ Required in every handoff:
 
 ### Weeks 8-12
 
-- Run 2-3 engagements with Policy OS default.
+- Run 2-3 engagements with Control as the public package and Policy OS as its internal contract.
 - Measure attach/conversion/time-to-outcome.
 - Publish one case study comparing MCP-only vs bundled outcomes.
 - Run a 14-day headline A/B test: `Skills + MCP` vs `MCP + Skills`.

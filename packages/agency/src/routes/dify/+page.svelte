@@ -27,7 +27,7 @@
       eyebrow: 'Control',
       icon: 'check',
       title: 'Approval and evidence',
-      detail: 'Policy OS names what can run, what stops, and what gets recorded.'
+      detail: 'Control names what can run, what stops, and what gets recorded.'
     }
   ];
 
@@ -66,12 +66,12 @@
     {
       question: 'What is the Dify workflow path?',
       answer:
-        'It is the CREATE SOMETHING path for mapping a Dify workflow before it runs: visible app surface, MCP tool boundary, Policy OS rule, eval gates, and evidence.'
+        'It is the CREATE SOMETHING path for mapping a Dify workflow before it runs: visible app surface, MCP tool boundary, Control rule, eval gates, and evidence.'
     },
     {
       question: 'Where does MCP fit with Dify?',
       answer:
-        'Dify becomes the visible agent surface while MCP server cards carry tool access and Policy OS carries approval, blocked-state, and evidence behavior.'
+        'Dify becomes the visible agent surface while MCP server cards carry tool access and Control carries approval, blocked-state, and evidence behavior.'
     },
     {
       question: 'What proof matters for Dify work?',
@@ -93,7 +93,7 @@
       icon: 'user',
       title: 'Run agents with approval states attached.',
       detail:
-        'Policy OS defines what can run, what needs a human, what stops, and what evidence gets recorded.'
+        'Control defines what can run, what needs a human, what stops, and what evidence gets recorded.'
     },
     {
       eyebrow: 'Teams',
@@ -110,7 +110,7 @@
       icon: 'document',
       title: 'Dify plus MCP control plane',
       detail:
-        'Explain how Dify becomes the visible agent surface while MCPs carry tool access and Policy OS carries boundaries.',
+        'Explain how Dify becomes the visible agent surface while MCPs carry tool access and Control carries boundaries.',
       href: '/dify/mcp-control-plane'
     },
     {
@@ -147,7 +147,7 @@
     {
       label: 'Control',
       icon: 'check',
-      title: 'Policy OS',
+      title: 'Control',
       detail: 'Approval states, blocked states, evals, and evidence.'
     }
   ];
@@ -155,10 +155,11 @@
 
 <SEO
   title="Dify Workflow Systems | CREATE SOMETHING .agency"
-  description="CREATE SOMETHING maps Dify workflows with MCP tool boundaries, Policy OS controls, eval gates, and readable evidence."
-  keywords="Dify workflow systems, Dify MCP, Policy OS, Dify eval gates, AI workflow evidence"
+  description="CREATE SOMETHING maps Dify workflows with MCP tool boundaries, Control controls, eval gates, and readable evidence."
+  keywords="Dify workflow systems, Dify MCP, Control, Dify eval gates, AI workflow evidence"
   ogImage="/og/dify-lane.png"
   propertyName="agency"
+  noindex={true}
   {faqItems}
 />
 
@@ -168,7 +169,7 @@
   titleLevel="h1"
   eyebrow="Dify Workflow Systems"
   title="Dify workflows with the operating boundary visible."
-  description="CREATE SOMETHING packages Dify as the visible agent runtime, MCP as the tool boundary, and Policy OS as the approval, runbook, and evidence layer."
+  description="CREATE SOMETHING packages Dify as the visible agent runtime, MCP as the tool boundary, and Control as the approval, runbook, and evidence layer."
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
@@ -208,7 +209,7 @@
   variant="white"
   eyebrow="Content path"
   title="Teach the control plane before asking for trust."
-  description="The guide cluster explains the operating model, validates the workflow, routes teams to the right next action, and keeps the public language focused on the task, boundary, owner, stop point, and evidence."
+  description="The guide cluster explains the operating model and validates the workflow, then routes teams to the right next action. Every page names the boundary, the owner, and the evidence."
 >
   {#snippet after()}
     <PerformanceCardGrid items={funnelCards} columns={4} ariaLabel="Dify content path" />
@@ -220,7 +221,7 @@
   title="Bring one Dify workflow that needs control."
   description="I’ll map the app surface, MCP boundary, eval gates, approval states, and evidence path before the workflow becomes a production agent."
   steps={ctaItems}
-  handoff={{ owner: 'Agent operator', authority: 'Scoped Dify + MCP contract', proof: 'Policy OS evidence', state: 'review' }}
+  handoff={{ owner: 'Agent operator', authority: 'Scoped Dify + MCP contract', proof: 'Control evidence', state: 'review' }}
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.workflowMappingSessionHref}>

@@ -2,11 +2,78 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
   appendUniqueFeaturedPreviewItems,
+  buildTemplateGridDisplayItems,
   resolveFeaturedPreviewNavigation,
+  shouldShowTemplateGridCampaign,
   shouldOpenFeaturedTemplatePreview,
+  templateGridColumnCount,
 } from '../src/components/grid/TemplateGrid';
 
 const detailUrl = 'https://webflow.com/templates/html/leadcraft-website-template';
+
+test('inserts one MCP 2.0 campaign without changing template order or source positions', () => {
+  const templates = ['one', 'two', 'three', 'four', 'five'];
+  const displayItems = buildTemplateGridDisplayItems(templates, 4, true);
+
+  assert.deepEqual(
+    displayItems.map((item) => item.kind),
+    ['template', 'template', 'template', 'template', 'campaign', 'template'],
+  );
+  assert.deepEqual(
+    displayItems
+      .filter((item) => item.kind === 'template')
+      .map((item) => [item.item, item.sourceIndex]),
+    templates.map((item, sourceIndex) => [item, sourceIndex]),
+  );
+  assert.equal(displayItems.filter((item) => item.kind === 'campaign').length, 1);
+});
+
+test('shows the MCP 2.0 campaign across listing contexts while preserving broad-only coverage', () => {
+  const broadResults = {
+    enabled: true,
+    coverage: 'all_listings' as const,
+    query: '',
+    scope: 'all' as const,
+    categoryGroupSlug: null,
+    childCategorySlug: null,
+    creatorSlug: null,
+    styleSlug: null,
+    tagSlug: null,
+    styles: [],
+    tags: [],
+    types: [],
+    freeOnly: false,
+  };
+
+  assert.equal(shouldShowTemplateGridCampaign(broadResults), true);
+  assert.equal(shouldShowTemplateGridCampaign({ ...broadResults, scope: 'featured' }), true);
+  assert.equal(shouldShowTemplateGridCampaign({ ...broadResults, categoryGroupSlug: 'home-services-websites' }), true);
+  assert.equal(shouldShowTemplateGridCampaign({ ...broadResults, childCategorySlug: 'plumbing-websites' }), true);
+  assert.equal(shouldShowTemplateGridCampaign({ ...broadResults, creatorSlug: 'studio-north' }), true);
+  assert.equal(shouldShowTemplateGridCampaign({ ...broadResults, styleSlug: 'minimal' }), true);
+  assert.equal(shouldShowTemplateGridCampaign({ ...broadResults, tagSlug: 'automation' }), true);
+  assert.equal(shouldShowTemplateGridCampaign({ ...broadResults, styles: ['minimal'] }), true);
+  assert.equal(shouldShowTemplateGridCampaign({ ...broadResults, tags: ['automation'] }), true);
+  assert.equal(shouldShowTemplateGridCampaign({ ...broadResults, types: ['one-page'] }), true);
+  assert.equal(shouldShowTemplateGridCampaign({ ...broadResults, scope: 'free', freeOnly: true }), true);
+  assert.equal(shouldShowTemplateGridCampaign({ ...broadResults, query: 'portfolio' }), false);
+  assert.equal(shouldShowTemplateGridCampaign({ ...broadResults, enabled: false }), false);
+  assert.equal(shouldShowTemplateGridCampaign({ ...broadResults, coverage: 'off' }), false);
+
+  const broadOnly = { ...broadResults, coverage: 'broad' as const };
+  assert.equal(shouldShowTemplateGridCampaign(broadOnly), true);
+  assert.equal(shouldShowTemplateGridCampaign({ ...broadOnly, scope: 'featured' }), true);
+  assert.equal(shouldShowTemplateGridCampaign({ ...broadOnly, creatorSlug: 'studio-north' }), false);
+  assert.equal(shouldShowTemplateGridCampaign({ ...broadOnly, categoryGroupSlug: 'home-services-websites' }), false);
+  assert.equal(shouldShowTemplateGridCampaign({ ...broadOnly, scope: 'free', freeOnly: true }), false);
+});
+
+test('inserts after the first complete responsive template row', () => {
+  assert.equal(templateGridColumnCount(1440), 4);
+  assert.equal(templateGridColumnCount(991), 3);
+  assert.equal(templateGridColumnCount(767), 2);
+  assert.equal(templateGridColumnCount(479), 1);
+});
 
 test('opens only unmodified Featured-scope template-detail clicks', () => {
   assert.equal(
