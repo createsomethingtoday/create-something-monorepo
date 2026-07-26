@@ -50,3 +50,14 @@ Allow a young player to enter a private Guard workspace without an email while k
 - D1 audit rows without plaintext credentials
 - browser proof for player login, reset, revoke, and denied cross-player access
 - written privacy approval and retention decision
+
+## Source Anchors
+
+- `docs/guides/FIRST_PARTY_AUTH_PLATFORM.md`
+- `docs/policies/v1/policy.account-role-boundaries.v1.md`
+- `packages/identity-worker/migrations/0012_player_access.sql`
+- `packages/identity-worker/src/index.ts`
+- `packages/identity-worker/src/services/tokens.ts`
+- `apps/guard-performance-lab/src/lib/server/player-access-http.ts`
+- `apps/guard-performance-lab/src/lib/server/access.ts`
+- `apps/guard-performance-lab/src/routes/sign-in/+page.svelte`
