@@ -1,0 +1,360 @@
+{
+  "schemaVersion": "flow.business-digital-thread.verifier.v1",
+  "contractSchemaVersion": "flow.business-digital-thread.v1",
+  "status": "frozen",
+  "frozenAt": "2026-07-23T18:00:00Z",
+  "linearIssue": "CRE-1401",
+  "fixture": {
+    "id": "bdt-fixture-ten-year-30000-v1",
+    "seed": "create-something-business-thread-v1",
+    "start": "2016-01-01T00:00:00Z",
+    "endExclusive": "2026-01-01T00:00:00Z",
+    "months": 120,
+    "primaryTenantId": "tenant:create-something",
+    "adversarialTenantId": "tenant:neighbor",
+    "participantRelationshipCount": 30000,
+    "participantRelationshipsPerMonth": 250,
+    "participantDistribution": {
+      "person": 12000,
+      "contractor": 7560,
+      "agent": 4440,
+      "vendor": 3000,
+      "organizational_unit": 3000
+    },
+    "relationshipDurationMonths": 24,
+    "idRule": "IDs are derived only from fixture id, type, month index, and within-month ordinal; randomness, wall-clock time, locale, and filesystem order are forbidden.",
+    "requiredReplacementCases": ["person", "vendor", "agent_model", "domain_tool"],
+    "requiredLifecycleFamilies": [
+      "business",
+      "initiative",
+      "party",
+      "authority_grant",
+      "intent",
+      "requirement",
+      "interface",
+      "decision",
+      "baseline",
+      "change",
+      "risk",
+      "work_product",
+      "release",
+      "verification",
+      "operation",
+      "incident",
+      "receipt",
+      "data_product",
+      "retention_policy",
+      "legal_hold",
+      "disposition",
+      "migration",
+      "lesson",
+      "policy"
+    ]
+  },
+  "asOfOracle": [
+    {
+      "validAt": "2016-01-01T00:00:00Z",
+      "knownAt": "2016-01-01T00:00:00Z",
+      "activeParticipantRelationships": 250
+    },
+    {
+      "validAt": "2017-01-01T00:00:00Z",
+      "knownAt": "2017-01-01T00:00:00Z",
+      "activeParticipantRelationships": 3250
+    },
+    {
+      "validAt": "2018-01-01T00:00:00Z",
+      "knownAt": "2018-01-01T00:00:00Z",
+      "activeParticipantRelationships": 6000
+    },
+    {
+      "validAt": "2020-01-01T00:00:00Z",
+      "knownAt": "2020-01-01T00:00:00Z",
+      "activeParticipantRelationships": 6000
+    },
+    {
+      "validAt": "2024-01-01T00:00:00Z",
+      "knownAt": "2024-01-01T00:00:00Z",
+      "activeParticipantRelationships": 6000
+    },
+    {
+      "validAt": "2025-12-31T23:59:59Z",
+      "knownAt": "2025-12-31T23:59:59Z",
+      "activeParticipantRelationships": 6000
+    }
+  ],
+  "semanticOperations": {
+    "reconstruct": {
+      "requiredInputs": ["tenantId", "validAt", "knownAt", "scope"],
+      "requiredOutputs": [
+        "recordRevisionIds",
+        "linkRevisionIds",
+        "missingEvidence",
+        "semanticDigest"
+      ],
+      "failureCodes": ["wrong_tenant", "interval_invalid", "ambiguous_revision", "integrity_failed"]
+    },
+    "trace": {
+      "requiredInputs": ["tenantId", "fromId", "toId", "validAt", "knownAt", "direction"],
+      "requiredOutputs": ["orderedPaths", "reversePaths", "missingRequiredHops", "semanticDigest"],
+      "requiredPath": [
+        "intent",
+        "requirement",
+        "interface_or_decision",
+        "baseline",
+        "work_product_or_release",
+        "verification",
+        "operation",
+        "receipt",
+        "lesson",
+        "applied_change"
+      ]
+    },
+    "analyzeChange": {
+      "requiredInputs": ["tenantId", "changeId", "validAt", "knownAt"],
+      "requiredOutputs": [
+        "affectedRecordIds",
+        "ownerPartyIds",
+        "authorityGrantIds",
+        "requiredVerificationIds",
+        "riskIds",
+        "downstreamEvidenceIds",
+        "unresolvedApprovalIds",
+        "migration",
+        "rollback",
+        "semanticDigest"
+      ]
+    },
+    "evaluateAuthority": {
+      "requiredInputs": [
+        "tenantId",
+        "grantId",
+        "actorId",
+        "capability",
+        "objectId",
+        "actionAt",
+        "knownAt"
+      ],
+      "requiredOutputs": [
+        "decision",
+        "reasonCode",
+        "grantRevisionId",
+        "policyRevisionId",
+        "semanticDigest"
+      ],
+      "allowValue": "allow",
+      "denialCodes": [
+        "grant_missing",
+        "expired",
+        "revoked",
+        "wrong_tenant",
+        "subject_mismatch",
+        "capability_mismatch",
+        "scope_mismatch",
+        "policy_revision_missing",
+        "ambiguous_grant"
+      ]
+    },
+    "transfer": {
+      "requiredInputs": ["sourceArtifact", "semanticQuerySet"],
+      "requiredOutputs": [
+        "exportManifest",
+        "cleanImportArtifact",
+        "migrationReceipt",
+        "semanticComparison"
+      ],
+      "semanticComparisonFields": [
+        "canonicalIds",
+        "revisionIds",
+        "linkIds",
+        "validTime",
+        "recordedTime",
+        "integrityRoots",
+        "queryDigests",
+        "denialCodes"
+      ]
+    }
+  },
+  "requiredScenarios": [
+    {
+      "id": "historical-no-future-leakage",
+      "pass": "A validAt/knownAt view excludes revisions and evidence recorded after knownAt, including a later revocation and later verification result."
+    },
+    {
+      "id": "bidirectional-intent-to-lesson",
+      "pass": "The complete required path resolves in both directions with no orphan requirement or unverified approved baseline member."
+    },
+    {
+      "id": "change-impact-before-approval",
+      "pass": "An interface or baseline change remains approval_required until every required impact output is present and unresolvedApprovalIds is empty."
+    },
+    {
+      "id": "authority-negative-matrix",
+      "pass": "Expired, revoked, wrong-tenant, subject-mismatch, capability-mismatch, and scope-mismatch cases deny with stable codes and exact considered revisions."
+    },
+    {
+      "id": "replace-without-history-loss",
+      "pass": "Person, vendor, agent model, and domain tool replacements preserve predecessor identity, rationale, historical authority, current authority, and trace paths."
+    },
+    {
+      "id": "clean-import-semantic-parity",
+      "pass": "Export into an empty store, re-export, and compare every semanticComparisonField without source-store access."
+    },
+    {
+      "id": "legacy-v0-migration",
+      "pass": "A flow.business-digital-thread.v0 fixture migrates deterministically, records counts and every loss disposition, and emits a migration receipt."
+    },
+    {
+      "id": "retention-and-hold",
+      "pass": "Retain, archive, redact, delete, tombstone, and preserve-derived-proof are distinguished; an active hold blocks conflicting deletion; preserved proof contains no raw content."
+    },
+    {
+      "id": "lesson-application",
+      "pass": "One lesson progresses through collected, recorded, reviewed, disseminated, applied, and effectiveness_reviewed revisions and traces to a later governed artifact change."
+    },
+    {
+      "id": "projection-parity",
+      "pass": "API, MCP, agent, and Atlas return the same canonical IDs, as-of parameters, semantic digest, missing-proof state, and authority denial code."
+    },
+    {
+      "id": "dogfood-authoritative-inputs",
+      "pass": "The CREATE SOMETHING artifact uses authoritative or mixed inputMode and lists content-hashed repo-owned inputs; a deterministic_fixture-only artifact cannot pass."
+    }
+  ],
+  "negativeCases": [
+    {
+      "id": "present-only-topology",
+      "fixture": "examples/invalid-present-only.json",
+      "mustFail": ["schema", "bitemporal_reconstruction", "baseline_membership"]
+    },
+    {
+      "id": "untyped-audit-log",
+      "fixture": "examples/invalid-untyped-audit-log.json",
+      "mustFail": ["schema", "typed_record_family", "authority_context"]
+    },
+    {
+      "id": "hand-authored-success-graph",
+      "fixture": "examples/invalid-hand-authored-success.json",
+      "mustFail": ["schema", "authoritative_dogfood_provenance", "clean_import_oracle"]
+    },
+    {
+      "id": "future-state-leakage",
+      "mustFail": ["as_of_oracle"]
+    },
+    {
+      "id": "expired-authority",
+      "mustFail": ["authority_oracle"],
+      "expectedCode": "expired"
+    },
+    {
+      "id": "revoked-authority",
+      "mustFail": ["authority_oracle"],
+      "expectedCode": "revoked"
+    },
+    {
+      "id": "wrong-tenant-authority",
+      "mustFail": ["authority_oracle"],
+      "expectedCode": "wrong_tenant"
+    },
+    {
+      "id": "out-of-scope-authority",
+      "mustFail": ["authority_oracle"],
+      "expectedCode": "scope_mismatch"
+    },
+    {
+      "id": "export-without-clean-import",
+      "mustFail": ["transfer_oracle"]
+    },
+    {
+      "id": "silent-migration-loss",
+      "mustFail": ["migration_oracle"]
+    },
+    {
+      "id": "immutable-raw-evidence-no-disposition",
+      "mustFail": ["retention_oracle"]
+    }
+  ],
+  "performanceEnvironment": {
+    "runtime": "Node.js >=20",
+    "referenceSurface": "single local process, cold artifact load, no network, fixed fixture",
+    "reporting": "Report runtime version, platform, architecture, CPU model when available, per-run timings, p50, p95, peak RSS, counts, and semantic digest.",
+    "enforcement": "Correctness budgets are absolute. Timing and memory budgets are enforced on the local reference environment after one warm-up and three measured runs; slower CI may declare but may not silently relax a separately reviewed multiplier."
+  },
+  "performanceBaselineArtifact": "performance-baseline.json",
+  "performanceBudgets": {
+    "scaleProbe": {
+      "generateParticipantRelationshipsMs": 1500,
+      "buildIndexesMs": 750,
+      "evaluate120AsOfCountsMs": 1500,
+      "jsonEncodeDecodeMs": 3000,
+      "peakRssDeltaMiB": 512
+    },
+    "fullVerifier": {
+      "generateAndValidateFixtureMs": 15000,
+      "reconstructP95Ms": 250,
+      "traceP95Ms": 250,
+      "authorityP95Ms": 25,
+      "changeImpactP95Ms": 500,
+      "exportCleanImportCompareMs": 15000,
+      "peakRssMiB": 768
+    }
+  },
+  "determinism": {
+    "consecutiveCleanRuns": 3,
+    "mustMatchAcrossRuns": [
+      "recordRevisionCount",
+      "linkRevisionCount",
+      "participantRelationshipCount",
+      "recordKindCounts",
+      "linkTypeCounts",
+      "asOfOracleResults",
+      "tracePathIds",
+      "authorityDecisions",
+      "impactResults",
+      "retentionResults",
+      "migrationCounts",
+      "semanticDigest"
+    ],
+    "timingsMustMatch": false,
+    "timingsMustRemainWithinBudget": true
+  },
+  "requiredVerifierOutput": {
+    "schemaVersion": "flow.business-digital-thread.verification-report.v1",
+    "fields": [
+      "contractVersion",
+      "fixtureId",
+      "environment",
+      "counts",
+      "timings",
+      "integrity",
+      "asOfResults",
+      "traceResults",
+      "authorityResults",
+      "impactResults",
+      "replacementResults",
+      "transferResults",
+      "migrationResults",
+      "retentionResults",
+      "lessonResults",
+      "projectionParityResults",
+      "negativeCaseResults",
+      "semanticDigest",
+      "status"
+    ],
+    "statusValues": ["pass", "fail"],
+    "failureRule": "Any missing field, unknown result, semantic mismatch, negative case unexpectedly passing, budget breach, cross-run mismatch, or missing evidence produces status fail and a non-zero process exit."
+  },
+  "antiCheating": [
+    "Do not reduce ten years, 120 months, or 30,000 participant relationships.",
+    "Do not count record revisions, audit entries, or duplicate link revisions as distinct participant relationships.",
+    "Do not query current state to answer a historical validAt/knownAt request.",
+    "Do not infer authority from a current role, token, relationship, UI visibility, or replacement predecessor.",
+    "Do not accept untyped event payloads or an open record-kind vocabulary.",
+    "Do not approve a baseline containing mutable latest pointers.",
+    "Do not call export successful without import into an empty store and semantic comparison.",
+    "Do not suppress, drop, or summarize migration losses without per-path disposition.",
+    "Do not retain raw deleted content inside derived proof.",
+    "Do not let a synthetic-only artifact satisfy CREATE SOMETHING dogfood provenance.",
+    "Do not relax frozen budgets merely to obtain a passing run."
+  ]
+}
