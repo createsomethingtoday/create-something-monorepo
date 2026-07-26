@@ -5,6 +5,7 @@ SvelteKit + Cloudflare Pages app for the J&J Home Health assistance request form
 ## Runtime Surfaces
 
 - Public form: `/`
+- Voice-to-voice receptionist demo: `/receptionist`
 - Admin login: `/admin`
 - Admin contacts: `/admin/contacts`
 - QR code: `/admin/qr`
@@ -23,6 +24,7 @@ Secrets and runtime vars:
 - `RESEND_API_KEY`: optional, required for email reset links.
 - `RESEND_FROM_EMAIL`: optional Resend sender, defaults to `J&J Home Health <noreply@createsomething.io>`.
 - `PUBLIC_BASE_URL`: public form origin for QR/reset links.
+- `OPENAI_API_KEY`: server-only OpenAI API key used to mint short-lived Realtime client secrets for the receptionist demo.
 
 Never store live secret values in this package.
 
@@ -38,9 +40,13 @@ Never store live secret values in this package.
 
 ```bash
 pnpm --filter @create-something/jandjhomehealth check
+pnpm --filter @create-something/jandjhomehealth test
 pnpm --filter @create-something/jandjhomehealth build
 pnpm --filter @create-something/jandjhomehealth migrate
 pnpm --filter @create-something/jandjhomehealth deploy
 ```
 
 The package is configured against the Pages project's existing production `create-something-db` binding. The prior J&J contact records were copied from `contact-capture-db` during deployment so the admin portal sees the current records.
+
+See [Voice Receptionist Demo](./docs/VOICE_RECEPTIONIST_DEMO.md) for the local run path,
+test script, safety boundary, corpus replacement seam, and future telephony handoff.
