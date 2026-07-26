@@ -1,0 +1,176 @@
+{
+  "policy_id": "policy.simplified-technical-english.v1",
+  "version": 1,
+  "status": "draft",
+  "owner": "CREATE SOMETHING editorial systems",
+  "standard_reference": {
+    "name": "ASD-STE100 Simplified Technical English",
+    "issue": 9,
+    "published": "2025-01-15",
+    "official_overview": "https://asd-ste100.org/about_STE.html",
+    "official_faq": "https://asd-ste100.org/STE_faq.html",
+    "official_copy_request": "https://asd-ste100.org/STE_downloads.html",
+    "implementation_basis": "Public guidance from the ASD Simplified Technical English Maintenance Group"
+  },
+  "compliance": {
+    "claim": "STE-aligned",
+    "certified": false,
+    "full_standard_available_in_repository": false,
+    "prohibited_claims": [
+      "ASD certified",
+      "ASD endorsed",
+      "fully ASD-STE100 compliant",
+      "certified Simplified Technical English"
+    ],
+    "full_compliance_requires": [
+      "the official current ASD-STE100 standard",
+      "the complete approved dictionary and writing rules",
+      "qualified technical and language review",
+      "independent evidence for any certification claim"
+    ]
+  },
+  "content_profiles": {
+    "procedure": {
+      "purpose": "Instructions, forms, errors, recovery steps, and operator actions",
+      "max_words": 20,
+      "automatic_enforcement": true,
+      "rules": [
+        "Use the active voice.",
+        "Write one instruction in each sentence.",
+        "Put a required condition before the action.",
+        "Name the person or system that does the action."
+      ]
+    },
+    "description": {
+      "purpose": "Service explanations, technical descriptions, field reports, FAQs, and supporting marketing copy",
+      "max_words": 25,
+      "automatic_enforcement": true,
+      "rules": [
+        "Use the active voice when the actor is known.",
+        "Write one topic in each paragraph.",
+        "Use a vertical list when one sentence contains a complex series.",
+        "Use one stable term for one meaning."
+      ]
+    },
+    "brand-heading": {
+      "purpose": "Campaign titles, product names, concise display headings, and established public phrases",
+      "max_words": null,
+      "automatic_enforcement": false,
+      "rules": [
+        "Keep the heading clear in its rendered context.",
+        "Do not use the exception for explanatory body copy.",
+        "Require a final human read."
+      ]
+    },
+    "exact-content": {
+      "purpose": "Code, proof identifiers, quotations, vendor names, legal text, and externally controlled strings",
+      "max_words": null,
+      "automatic_enforcement": false,
+      "rules": [
+        "Preserve exact meaning and spelling.",
+        "Keep the exception as narrow as possible.",
+        "Do not use the exception to conceal public claims."
+      ]
+    }
+  },
+  "scope": {
+    "property": "agency",
+    "active_routes": [
+      "/",
+      "/services",
+      "/stack",
+      "/map",
+      "/control",
+      "/book"
+    ],
+    "excluded_route_prefixes": [
+      "/dify",
+      "/notion"
+    ],
+    "default_public_profile": "description"
+  },
+  "technical_terms": [
+    {
+      "term": "workflow",
+      "type": "technical_noun",
+      "definition": "A named sequence of work, decisions, and records."
+    },
+    {
+      "term": "agent",
+      "type": "technical_noun",
+      "definition": "Software that can inspect context and take an allowed action."
+    },
+    {
+      "term": "AI",
+      "type": "technical_noun",
+      "definition": "Model intelligence used inside a named workflow."
+    },
+    {
+      "term": "MCP",
+      "type": "technical_noun",
+      "definition": "The Model Context Protocol contract that exposes approved resources and tools."
+    },
+    {
+      "term": "Substrate",
+      "type": "proper_name",
+      "definition": "The CREATE SOMETHING owned database and operator layer."
+    },
+    {
+      "term": "Map",
+      "type": "product_name",
+      "definition": "The CREATE SOMETHING product that records the workflow definition."
+    },
+    {
+      "term": "Build",
+      "type": "service_name",
+      "definition": "The CREATE SOMETHING implementation service for an approved Map."
+    },
+    {
+      "term": "Control",
+      "type": "product_name",
+      "definition": "The CREATE SOMETHING product for governed workflow operation."
+    },
+    {
+      "term": "Signal",
+      "type": "operator_surface",
+      "definition": "A change or request that can start workflow work."
+    },
+    {
+      "term": "Decision",
+      "type": "operator_surface",
+      "definition": "The point where an allowed action, approval, wait, or stop is selected."
+    },
+    {
+      "term": "Proof",
+      "type": "operator_surface",
+      "definition": "The evidence and record that show what happened."
+    },
+    {
+      "term": "receipt",
+      "type": "technical_noun",
+      "definition": "A durable record of a workflow event or result."
+    },
+    {
+      "term": "audit trail",
+      "type": "technical_noun",
+      "definition": "The ordered records that let a person inspect past workflow actions."
+    }
+  ],
+  "enforcement": {
+    "changed_files": {
+      "blocking": true,
+      "scope": "introduced deterministic profile violations"
+    },
+    "active_route_audit": {
+      "blocking": false,
+      "scope": "current public backlog after redirect and archive exclusions"
+    },
+    "human_review_required": [
+      "technical meaning",
+      "claim and evidence preservation",
+      "brand voice",
+      "rendered reading order",
+      "final production surface"
+    ]
+  }
+}

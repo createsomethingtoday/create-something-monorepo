@@ -19,7 +19,8 @@
     "./security": "./src/security.ts",
     "./submission": "./src/submission.ts",
     "./sync-schedule": "./src/sync-schedule.ts",
-    "./upload-validation": "./src/upload-validation.ts"
+    "./upload-validation": "./src/upload-validation.ts",
+    "./uploads-url": "./src/uploads-url.ts"
   },
   "scripts": {
     "check": "tsc --noEmit",

@@ -295,6 +295,18 @@
     });
   }
 
+  // Prefer the rank the source assigned; fall back to position when SALES_RANK
+  // is missing so ties or gaps in the Airtable view are not silently renumbered.
+  function getDisplayRank(template: LeaderboardEntry, index: number): number {
+    return template.salesRank > 0 ? template.salesRank : index + 1;
+  }
+
+  // Template names are not unique across creators; index is the final tiebreaker
+  // so a collision degrades to positional keying instead of throwing.
+  function getLeaderboardKey(template: LeaderboardEntry, index: number): string {
+    return `${template.templateName}::${template.category}::${index}`;
+  }
+
   function getMarketplaceSalesSupport(): string {
     if (summary.totalMarketplaceSales === null) return 'source unavailable';
     if (summary.salesSource === 'leaderboard-top-50') return 'across top 50 templates';
@@ -786,17 +798,18 @@
         <span class="section-subtitle">Rolling 30-day window</span>
       </h3>
       <div class="leaderboard-grid">
-        {#each leaderboard.slice(0, 5) as template, index (template.templateName)}
+        {#each leaderboard.slice(0, 5) as template, index (getLeaderboardKey(template, index))}
           {@const hasTemplateTrend =
             Array.isArray(template.trendData) && template.trendData.length >= 2}
+          {@const displayRank = getDisplayRank(template, index)}
           <div
             class="leaderboard-card"
             class:user-template={template.isUserTemplate}
             style="--index: {index}"
           >
             <div class="leaderboard-header">
-              <div class="rank-badge rank-{index + 1}">
-                #{index + 1}
+              <div class="rank-badge">
+                #{displayRank}
               </div>
               {#if template.isUserTemplate}
                 <Badge variant="default">Your Template</Badge>
@@ -840,7 +853,7 @@
               </div>
             </div>
             <div class="leaderboard-footer">
-              <Badge variant="outline">Rank #{index + 1}</Badge>
+              <Badge variant="outline">Rank #{displayRank}</Badge>
             </div>
           </div>
         {/each}

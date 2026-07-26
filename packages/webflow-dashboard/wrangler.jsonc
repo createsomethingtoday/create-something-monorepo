@@ -35,9 +35,12 @@
 		"ENVIRONMENT": "production"
 	}
 
-	// Cron triggers: Configure in Cloudflare Dashboard > Workers & Pages > webflow-dashboard > Triggers
-	// Schedule: 0 0 * * * (midnight UTC daily) for /api/cron/snapshot
-	// Schedule: 0 1 * * * (1am UTC daily) for /api/cron/cleanup
+	// Cron triggers: NOT available here. This is a Pages project, and scheduled
+	// handlers are a Workers-only feature — a Pages project has no Triggers tab.
+	// /api/cron/* must be driven by an external scheduler:
+	//   - /api/cron/snapshot -> .github/workflows/webflow-dashboard-snapshot-cron.yml
+	//   - /api/cron/cleanup  -> currently unscheduled
+	// Callers authenticate with `Authorization: Bearer $CRON_SECRET`.
 
 	// Secrets (set via: wrangler secret put <SECRET_NAME>)
 	// - AIRTABLE_API_KEY

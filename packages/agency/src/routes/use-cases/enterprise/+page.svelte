@@ -262,7 +262,7 @@
   titleLevel="h1"
   eyebrow="The Judgment Layer"
   title="Reliability is what turns automation into operations."
-  description="For teams already running MCP-backed or cross-system workflows, CREATE SOMETHING Control adds the governed execution layer: prompt optimization, approval logic, blocked states, monitoring, and receipts after launch."
+  description="For teams already running MCP-backed or cross-system workflows, CREATE SOMETHING Control adds the governed execution layer. Approvals, blocked states, and receipts keep working after launch."
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.selfMapHref}>
@@ -286,7 +286,7 @@
 <PerformanceNarrativeStage
   id="enterprise-control-story"
   eyebrow="One reliability story"
-  title="Risk. Control. Model. Fit."
+  title="Reliability is a decision sequence, not a feature."
   description="Enterprise reliability becomes one decision sequence: name the post-launch risk, inspect the control layer, choose the operating model and cadence, then confirm the workflow has earned ongoing control."
   scenes={enterpriseScenes}
   ariaLabel="Enterprise workflow reliability story"

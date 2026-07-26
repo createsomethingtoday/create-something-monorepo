@@ -109,6 +109,42 @@ Validation:
   as its `.agency` overlay. Keep `pnpm copy:check` as the package authority; do
   not duplicate or weaken its rule list in the root adapter.
 
+### Simplified Technical English Contract
+
+Public `.agency` content uses the `STE-aligned` profile in
+`policy.simplified-technical-english.v1`. This profile uses public guidance from
+the ASD Simplified Technical English Maintenance Group. It does not claim ASD
+certification, ASD endorsement, or complete ASD-STE100 compliance.
+
+Use these content profiles:
+
+- **Procedure:** instructions, forms, errors, recovery steps, and operator
+  actions. Use one instruction per sentence and no more than 20 words.
+- **Description:** services, FAQs, field reports, technical explanations, and
+  supporting marketing copy. Use one topic per paragraph and no more than 25
+  words per sentence.
+- **Brand heading:** campaign titles, product names, and short display headings.
+  A brand heading still needs a clear rendered context and a final human read.
+- **Exact content:** code, quotations, proof identifiers, vendor names, and
+  legally controlled text. Keep this exception narrow.
+
+The `.agency` technical-term registry preserves exact terms such as `workflow`,
+`agent`, `MCP`, `Substrate`, `Map`, `Build`, `Control`, `Signal`, `Decision`,
+`Proof`, `receipt`, and `audit trail`. Define or demonstrate the local meaning
+before a visitor must rely on the term.
+
+The first route set is `/`, `/services`, `/stack`, `/map`, `/control`, and
+`/book`. Retired Dify source and redirected Notion source do not count as active
+public migration failures.
+
+Validation:
+
+- Run `pnpm prose:ste:check` to block newly introduced profile violations.
+- Run `pnpm prose:ste:audit` to report the active public backlog without making
+  existing debt block unrelated work.
+- Keep sentence length, vocabulary checks, and other automated signals
+  subordinate to technical meaning, claim preservation, and the rendered human
+  read.
 ### Platform Conviction Contract
 
 Public platform language follows

@@ -143,6 +143,65 @@ describe('enrichLeaderboardRecordsWithHistory', () => {
 
 		expect(enriched[0].trendData).toEqual([53, 34]);
 	});
+
+	it('withholds a trend when capture stopped long before the current snapshot', () => {
+		const records: MarketplaceLeaderboardRecord[] = [
+			{
+				templateName: 'Alture',
+				category: 'Design',
+				creatorEmail: 'hi@template.supply',
+				totalSales30d: 21,
+				totalRevenue30d: 2100,
+				avgRevenuePerSale: 100,
+				salesRank: 12,
+				revenueRank: 14
+			}
+		];
+
+		const enriched = enrichLeaderboardRecordsWithHistory(
+			records,
+			[
+				{
+					snapshot_at: '2026-04-20T16:00:00.000Z',
+					record_key: buildLeaderboardSnapshotKey(records[0]),
+					total_sales_30d: 34
+				}
+			],
+			{ timestamp: '2026-07-20T16:00:00.000Z', source: 'field' }
+		);
+
+		// April joined to July would render a 3-month hole as a single tick.
+		expect(enriched[0].trendData).toBeUndefined();
+	});
+
+	it('keeps only the contiguous run that ends at the current snapshot', () => {
+		const records: MarketplaceLeaderboardRecord[] = [
+			{
+				templateName: 'Bungee',
+				category: 'Design',
+				creatorEmail: 'creator@example.com',
+				totalSales30d: 39,
+				totalRevenue30d: 3900,
+				avgRevenuePerSale: 100,
+				salesRank: 1,
+				revenueRank: 2
+			}
+		];
+
+		const key = buildLeaderboardSnapshotKey(records[0]);
+		const enriched = enrichLeaderboardRecordsWithHistory(
+			records,
+			[
+				{ snapshot_at: '2026-04-20T16:00:00.000Z', record_key: key, total_sales_30d: 12 },
+				{ snapshot_at: '2026-07-06T16:00:00.000Z', record_key: key, total_sales_30d: 30 },
+				{ snapshot_at: '2026-07-13T16:00:00.000Z', record_key: key, total_sales_30d: 35 }
+			],
+			{ timestamp: '2026-07-20T16:00:00.000Z', source: 'field' }
+		);
+
+		// The stale April point is dropped; the recent weekly run survives.
+		expect(enriched[0].trendData).toEqual([30, 35, 39]);
+	});
 });
 
 describe('enrichCategoryRecordsWithHistory', () => {
@@ -202,5 +261,34 @@ describe('enrichCategoryRecordsWithHistory', () => {
 
 		expect(enriched[0].trend).toBe('neutral');
 		expect(enriched[0].changePercent).toBe(0);
+	});
+
+	it('withholds a category change when the only history point is stale', () => {
+		const records: MarketplaceCategoryRecord[] = [
+			{
+				category: 'Business',
+				subcategory: 'Consulting',
+				templatesInSubcategory: 24,
+				totalSales30d: 320,
+				totalRevenue30d: 9600,
+				avgRevenuePerTemplate: 400,
+				revenueRank: 7
+			}
+		];
+
+		const enriched = enrichCategoryRecordsWithHistory(
+			records,
+			[
+				{
+					snapshot_at: '2026-04-14T16:00:00.000Z',
+					record_key: buildCategorySnapshotKey(records[0]),
+					avg_revenue_per_template: 320
+				}
+			],
+			{ timestamp: '2026-07-20T16:00:00.000Z', source: 'field' }
+		);
+
+		expect(enriched[0].trend).toBeUndefined();
+		expect(enriched[0].changePercent).toBeUndefined();
 	});
 });

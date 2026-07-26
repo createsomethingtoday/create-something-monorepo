@@ -71,6 +71,43 @@ Water carries the material story in black and white. Semantic color remains thin
 an index rail, node edge, state mark, or intervention line. The full boundary and Evermind
 foundation audit lives in `docs/PERFORMANCE_LAB_FOUNDATION_AUDIT.md`.
 
+#### Scale rule: bench, not aerial
+
+Shoot water as an experiment, not as landscape. The apparatus must be visible in frame.
+
+Aerial and landscape water — rivers, dam structures seen from above, survey craft, open channel
+infrastructure — reads as nature spectacle. It carries the Performance half of the identity and
+none of the Lab half, and it cannot show that anyone is accountable for the flow.
+
+Bench scale fixes both problems at once. A graduated tank wall, a marked waterline, a gauge, a
+sluice handle caught mid-adjustment, or a clamped test rig implies an operator without putting a
+person in the frame. The instrument is the human, present by inference. This preserves the
+non-anthropomorphism boundary while letting the imagery depict authority.
+
+| Prefer | Reject |
+| --- | --- |
+| Wave tank, flume, test basin, laboratory vessel, refraction rig, capillary test | Aerial river, reservoir, coastline, open sea |
+| Visible measurement: scale marks, gauges, dye ports, datum lines | Unmeasured water at architectural or landscape distance |
+| Apparatus and fixture edges in frame | Water as an environmental backdrop behind type |
+| One condition per photograph | One photograph reused across unrelated surfaces |
+
+A water image may appear on at most one public surface family. Reuse across unrelated routes turns
+a specific condition into decoration and violates the acceptance standard.
+
+#### Signature device: dye trace
+
+Dye trace is the primary CREATE SOMETHING water device. In hydraulic engineering, dye is injected
+to make invisible flow observable and measurable. That is a literal statement of the product:
+inject an observable marker so delegated work leaves an inspectable trace.
+
+Dye also resolves the color doctrine. Instead of stacking semantic color on top of a black-and-white
+material layer, the injected marker becomes the only color in the frame, in the same signal value
+used for controlled state. Color becomes diegetic — it is present because the experiment put it
+there, not because the layout needed an accent.
+
+Use dye trace wherever the claim is evidence, correlation, provenance, or run history. It takes
+priority over generic wake imagery for those claims.
+
 ### Product mode
 
 Use on products, Atlas, proof, booking, and operator surfaces.

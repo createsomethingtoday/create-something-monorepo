@@ -125,7 +125,8 @@ The current package contains both Canon exports and compatibility exports. The l
 | Component | Description | Key Props |
 |-----------|-------------|-----------|
 | **Template Card** | CMS-bindable marketplace template card | `templateName`, `templateLink`, `primaryImage`, `creatorName`, `creatorIcon`, `popularityScore` |
-| **Template Grid** | Worker-backed template search grid | `apiBase`, `categorySlug`, `creatorSlug`, `creatorRecordId`, `scopeOverride`, `initialSort`, `pageSize` |
+| **Template Chat** | Turnstile-backed conversational template finder with floating, inline, and immersive surfaces | `apiBase`, `variant`, `sessionScope`, `hostOverlaySelectors`, `starterPrompts`, `enableAnalytics` |
+| **Template Grid** | Worker-backed template search grid with an optional MCP 2.0 campaign lane | `apiBase`, `categorySlug`, `creatorSlug`, `creatorRecordId`, `scopeOverride`, `initialSort`, `pageSize`, `showMcpCampaign`, `campaignCoverage` |
 | **Template Filter Bar** | Worker-backed marketplace filters and pills | `apiBase`, `categorySlug`, `creatorSlug`, `creatorRecordId`, `scopeOverride`, `defaultSort` |
 | **Template Search Box** | Shared marketplace search input that routes to the standalone search page or filters the current page | `mode`, `variant`, `searchAction`, `queryParam`, `placeholder`, `showButton` |
 | **Template Search Page** | Standalone marketplace search experiment surface with search, filter sidebar, active chips, result grid, and no-results recovery | `apiBase`, `title`, `quickSearches`, `scopeOverride`, `defaultSort`, `noindex` |
@@ -139,6 +140,14 @@ The current package contains both Canon exports and compatibility exports. The l
 | **Marketplace Landing Experiment Gate** | Optimizely-compatible test gate for control/treatment reveal and exposure tracking | `mode`, `trafficPercent`, `controlSelector`, `treatmentSelector`, `optimizelyExposureEvent` |
 | **Featured Creator Card** | CMS-bindable monthly featured creator card | `creatorName`, `creatorLink`, `creatorAvatar`, `headline`, `featuredTemplateCount`, `newTemplates90d`, `buyerDemand`, `categoryBreadth`, `topTemplateName`, `topTemplateImage` |
 
+#### Template Chat multisurface contract
+
+- Give every independent surface a stable, distinct `sessionScope`. The Marketplace default remains `marketplace` so existing same-tab continuity is preserved.
+- Keep `hostOverlaySelectors` pointed at host-owned consent/modal layers. On phone viewports, Template Chat yields the composer zone while one of those layers owns interaction and returns the launcher after dismissal.
+- User prompts are limited to 4,000 characters at both the DOM and React state boundaries. Agent requests remain capped at 20 messages and 40,000 total characters.
+- Default analytics emit prompt length and interaction metadata, never raw prompt content. Template-card slugs and conversion attribution remain enabled.
+- Library share and site publication remain separate approval-gated promotion actions; a successful local bundle does not publish the component.
+
 #### Template detail category links
 
 For **Template Detail Hero**, prefer binding `Category URLs` from Airtable/Webflow sync instead of relying on label-to-slug inference. `Category Names` and `Category URLs` should use the same newline-delimited order, sourced from the linked Category Group records. Example: `Transportation & Automotive` can display as the breadcrumb label while its paired URL is `https://webflow.com/templates/category/transportation-websites`.
@@ -146,6 +155,34 @@ For **Template Detail Hero**, prefer binding `Category URLs` from Airtable/Webfl
 #### Designer profile listings
 
 Use **Template Filter Bar** and **Template Grid** together on `/templates/designers/{slug}` pages to replace the native Webflow Collection List. Both components auto-detect the designer slug from the published URL and pass `creator_slug` to the template search API. When the Designer CMS item exposes the Airtable/Webflow sync record ID, bind it to `creatorRecordId` on both components for the narrowest possible match; otherwise the slug route is sufficient.
+
+#### Template Grid MCP 2.0 campaign
+
+`showMcpCampaign` defaults to `true`, and `campaignCoverage` defaults to
+`all_listings`. Template Grid inserts one full-width Webflow MCP 2.0 campaign
+after the first complete responsive row on All, Featured, category,
+subcategory, creator, style, tag, type, Landing Page, and Free listings. The
+campaign remains outside template API totals, sorting, source positions,
+infinite-scroll pagination, and Featured-preview navigation. It is suppressed
+during active keyword search and whenever there are not enough results to
+complete the first responsive row.
+
+Set `campaignCoverage` to `broad` to retain the earlier unfiltered All and
+Featured-only behavior, or `off` to disable the campaign independently of the
+legacy boolean control.
+
+The campaign renders a CSP-safe Webflow-hosted poster without loading video
+data. After the visitor opens the accessible modal, a native player loads the
+Cloudflare custom-domain 1080p MP4 with byte-range playback and timed English
+captions. Normal playback starts muted; reduced-motion visitors receive a
+paused, audible player. Loading, buffering, ended/replay, and retryable failure
+states remain inside the accessible dialog and native controls participate in
+its keyboard focus boundary. Campaign analytics use `TemplateCampaignLane`
+with the scopes
+`campaign_impression`, `campaign_video_opened`, `campaign_video_closed`, and
+`campaign_mcp_setup_clicked`; impressions fire once when at least half of the
+campaign enters the viewport, and events do not include raw search, template,
+or creator values.
 
 ### Forms (Group: Forms)
 

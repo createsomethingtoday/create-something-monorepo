@@ -1,0 +1,70 @@
+{
+  "schemaVersion": "tool_contracts.v0.1",
+  "workflowId": "webflow.marketplace.template-lifecycle",
+  "workflowVersion": "0.1.0",
+  "definitionHash": "sha256:96e880807497d7a417cbf7e7a009d9331996d55e249068767b2417131a91156f",
+  "tools": [
+    {
+      "actionId": "approve_template",
+      "name": "template_review_set_review_status",
+      "targetSystemId": "template-review-mcp",
+      "authority": "marketplace-reviewer",
+      "autonomy": "approval_required",
+      "requiredEvidence": [
+        "review_summary",
+        "reviewer_id",
+        "validation_result",
+        "version_id"
+      ],
+      "receiptFields": [
+        "action_id",
+        "correlation_id",
+        "evidence_refs",
+        "outcome",
+        "reviewer_id",
+        "workflow_id"
+      ]
+    },
+    {
+      "actionId": "request_changes",
+      "name": "template_review_request_changes",
+      "targetSystemId": "template-review-mcp",
+      "authority": "marketplace-reviewer",
+      "autonomy": "approval_required",
+      "requiredEvidence": [
+        "review_feedback",
+        "review_summary",
+        "reviewer_id",
+        "version_id"
+      ],
+      "receiptFields": [
+        "action_id",
+        "correlation_id",
+        "evidence_refs",
+        "outcome",
+        "reviewer_id",
+        "workflow_id"
+      ]
+    },
+    {
+      "actionId": "validate_submission",
+      "name": "template_validation_run",
+      "targetSystemId": "template-validation",
+      "authority": "workflow-runtime",
+      "autonomy": "auto_allow",
+      "requiredEvidence": [
+        "asset_id",
+        "published_url",
+        "validation_result",
+        "version_id"
+      ],
+      "receiptFields": [
+        "action_id",
+        "correlation_id",
+        "evidence_refs",
+        "outcome",
+        "workflow_id"
+      ]
+    }
+  ]
+}

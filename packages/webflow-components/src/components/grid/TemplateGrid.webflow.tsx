@@ -53,7 +53,7 @@ export default declareComponent(TemplateGrid, {
     }),
     initialSort: props.Variant({
       name: 'Default Sort',
-      options: ['popular', 'newest', 'price_asc', 'price_desc'],
+      options: ['popular', 'best_selling', 'newest', 'price_asc', 'price_desc'],
       defaultValue: 'popular',
       tooltip: 'Fallback sort when no ?sort= query param is present in the URL.',
     }),
@@ -114,6 +114,19 @@ export default declareComponent(TemplateGrid, {
       defaultValue: false,
       tooltip:
         'Show compact display-only signals from the search API, such as Popular, purchases, and views. Does not add new filters or sorting.',
+    }),
+    showMcpCampaign: props.Boolean({
+      name: 'Show MCP 2.0 Campaign',
+      defaultValue: true,
+      tooltip:
+        'Show the Webflow MCP 2.0 video campaign after the first complete row when the Campaign Coverage setting permits it. Hidden during keyword search.',
+    }),
+    campaignCoverage: props.Variant({
+      name: 'Campaign Coverage',
+      options: ['all_listings', 'broad', 'off'],
+      defaultValue: 'all_listings',
+      tooltip:
+        '"all_listings" includes All, Featured, category, subcategory, creator, style, tag, type, and Free listings. "broad" limits the campaign to unfiltered All and Featured listings. "off" disables it.',
     }),
     enableAnalytics: props.Boolean({
       name: 'Enable Analytics',

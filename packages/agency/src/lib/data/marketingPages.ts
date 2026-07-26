@@ -102,7 +102,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     intent: 'Explain the core service path: map one workflow before build work starts.',
     primaryAction: 'Map the workflow',
     requiredTerms: ['workflow', 'Map', 'Build', 'Control', 'Proof'],
-    requiredLinks: ['#map-warmup'],
+    requiredLinks: ['/map'],
     schema: 'faq',
     search: {
       changefreq: 'weekly',
@@ -371,7 +371,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     funnelStage: 'understand',
     intent: 'Explain the Dify workflow path and route readers into the cluster.',
     primaryAction: 'Map one workflow',
-    requiredTerms: ['Dify', 'MCP', 'Policy OS', 'approval', 'evidence'],
+    requiredTerms: ['Dify', 'MCP', 'Control', 'approval', 'evidence'],
     requiredLinks: [
       '/dify/mcp-control-plane',
       '/dify/agent-eval-gates',
@@ -394,9 +394,9 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     routeTarget: '/stack',
     audience: 'Builders and operators who need Dify connected to governed tools.',
     funnelStage: 'understand',
-    intent: 'Teach the operating model: Dify surface, MCP boundary, Policy OS rule.',
+    intent: 'Teach the operating model: Dify surface, MCP boundary, Control rule.',
     primaryAction: 'Request workflow teardown',
-    requiredTerms: ['Dify', 'MCP', 'Policy OS', 'approval', 'evidence'],
+    requiredTerms: ['Dify', 'MCP', 'Control', 'approval', 'evidence'],
     requiredLinks: ['/dify', '/dify/agent-eval-gates'],
     schema: 'article',
     search: {
@@ -436,7 +436,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     funnelStage: 'implement',
     intent: 'Give a practical shipping checklist for Dify plus MCP systems.',
     primaryAction: 'Book workflow mapping',
-    requiredTerms: ['Dify', 'MCP', 'Policy OS', 'runbook', 'proof'],
+    requiredTerms: ['Dify', 'MCP', 'Control', 'runbook', 'proof'],
     requiredLinks: ['/dify', '/dify/mcp-control-plane', '/dify/agent-eval-gates'],
     schema: 'article',
     search: {
@@ -455,9 +455,9 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     audience: 'Teams turning a governed Dify workflow into a reusable template.',
     funnelStage: 'implement',
     intent:
-      'Show how the first Dify marketplace submission should package Policy OS, MCP boundaries, setup steps, and proof.',
+      'Show how the first Dify marketplace submission should package Control, MCP boundaries, setup steps, and proof.',
     primaryAction: 'Book workflow mapping',
-    requiredTerms: ['Dify', 'Template Marketplace', 'Creator Center', 'Policy OS', 'MCP'],
+    requiredTerms: ['Dify', 'Template Marketplace', 'Creator Center', 'Control', 'MCP'],
     requiredLinks: ['/dify', '/dify/ship-dify-app-with-mcp-tools', '/dify/agent-eval-gates'],
     schema: 'article',
     search: {

@@ -1,0 +1,28 @@
+{
+  "audioCodec": "aac",
+  "checks": {
+    "aacAudio": true,
+    "codec": true,
+    "dimensions": true,
+    "duration": true,
+    "frameCount": true,
+    "frameRate": true,
+    "fullDecode": true,
+    "noCaptions": true,
+    "pixelFormat": true
+  },
+  "durationSeconds": 2.375,
+  "frameRate": "24/1",
+  "height": 720,
+  "passed": true,
+  "path": "/Users/micahjohnson/Code/create-something-monorepo/apps/metal-water-gate-release/exports/create-something--sph-blender-gate-release--hero-wedge--v2.mp4",
+  "pixelFormat": "yuv420p",
+  "profile": "High",
+  "schemaVersion": 1,
+  "sha256": "709285c0337608cb4b42cc43fa4ff7a89bdb1168ec9c242336bef840dbd4dc7e",
+  "sizeBytes": 652887,
+  "subtitleStreamCount": 0,
+  "videoCodec": "h264",
+  "videoFrameCount": 57,
+  "width": 1280
+}

@@ -96,7 +96,7 @@ This inverts the common assumption that you build an AI agent first, then add in
 2. **Skills provide capabilities** (reusable, portable across platforms)
 3. **Agents produce outcomes** (the monetizable layer)
 
-**Packaging rule**: `Trust Map` is the entry wedge; `Workflow Pilot` is the default paid build; `Trust Layer` (the governed control plane—internally, Policy OS) is the recurring delivery. MCP/policy artifacts stay portable across clients and agent platforms.
+**Packaging rule**: `Map` is the entry wedge; `Build` is the paid implementation; `Control` is the recurring governed control plane. MCP/policy artifacts stay portable across clients and agent platforms. See `packages/agency/src/lib/data/productFamily.ts` for the authoritative definitions.
 
 ### WORKWAY
 
@@ -132,30 +132,52 @@ This is where CREATE SOMETHING operates.
 | **.ltd** | Philosophy of creation | Philosophy of *automation infrastructure*—MCP as chassis |
 | **.io** | Research, tools, docs | MCP patterns, reference implementations, SDK research |
 | **.space** | Practice, experiments | **The Workbench**—live tools for code execution, motion analysis, data dashboards |
-| **.agency** | Client services | **The Workflow Trust Layer**—the creation moat applied to making client workflows safe to delegate |
+| **.agency** | Client services | **Map → Build → Control**—the creation moat applied to making client workflows safe to delegate |
 
 The hermeneutic circle: Philosophy informs research. Research validates practice. Practice serves clients. Client outcomes test and evolve the philosophy.
 
 **CREATE SOMETHING stays horizontal** (the MCP-first thesis applies to any vertical). **WORKWAY goes vertical** (construction via Procore).
 
-### .agency Service Offerings: The Workflow Trust Layer
+### .agency Service Offerings: Map → Build → Control
 
-Category: **Workflow Trust Layer**. Headline: *"Connecting tools is easy. Trust is the product."* The offer is making one business workflow safe to delegate—named objects, scoped actions, approval paths, evidence (receipts), and recovery. Canonical copy lives in `packages/agency/src/lib/data/marketingCopy.ts` (`agencyCoreMessaging`).
+Category label: **AI workflow systems** (`agencyCoreMessaging.categoryLabel`). The offer is making one business workflow safe to delegate—named objects, scoped actions, approval paths, evidence (receipts), and recovery.
 
-| Lane | Shape | Value |
+**The source of truth for the product spine is `packages/agency/src/lib/data/productFamily.ts`**, not this file. Canonical marketing copy lives in `packages/agency/src/lib/data/marketingCopy.ts` (`agencyCoreMessaging`).
+
+| Product | Kind | Route | Customer job |
+|------|-------|-------|-------|
+| **Map** | Standalone subscription | `/map` | Understand and design one human-agent workflow before implementation |
+| **Build** | Scoped service | `/services` | Turn an approved workflow map into an owned, connected system |
+| **Control** | Standalone subscription, includes Map | `/control` | Operate delegated work with explicit authority, approvals, evidence, and recovery |
+
+**Signal → Decision → Proof are operator surfaces inside Control**, not separate products or licenses. They are the operating loop and the page rhythm. They have explainer pages under `/products/*` for depth and SEO, titled as Control surfaces.
+
+**Altitude discipline** — every name lives at exactly one altitude, and only the top altitude is sold:
+
+| Altitude | Names | Where it may appear |
 |------|-------|-------|
-| **Trust Map** | Fixed entry wedge: scoped diagnostic of the workflow, object model, action/approval boundary, first safe delegation point | Strategic clarity before any build |
-| **Workflow Pilot** | Implementation sprint: one workflow rebuilt with clear rules, clean handoffs, runbooks (the featured "start here" offer) | Production-safe delegation |
-| **Trust Layer** | Monthly control plane: approval/block boundaries, reason-coded access, release checks, incident loops, evals | Recurring relationship + governed speed |
-| **Enterprise Extension** | Audit-ready cross-system orchestration with deterministic retries and recovery | Regulated/multi-team scale |
+| Commercial | Map · Build · Control | `.agency` public copy |
+| Operating loop | Signal → Decision → Proof | Sections inside Control |
+| Architecture | Database · Automation · Judgment, MCP-as-chassis | `.ltd` and `.io` only |
+
+Internal names must never reach public copy. `productFamily.ts` declares them under `internalCompatibilityNames`: Atlas → Map, Workflow Pilot → Build, **Policy OS → Control**. Enforced by `packages/agency/scripts/check-public-copy.mjs` (rules support an `exempt` list; `productFamily.ts` is exempt as the declared home of the internal names).
+
+**The parallel lane vocabulary is retired.** Public offers used to be named `Workflow Map → Workflow Pilot → Control Layer`, a near-miss of the product names that read as a fourth naming system. Display copy now uses **Map → Build → Control** everywhere. Two deliberate exceptions remain, and they are not lane names:
+
+- *workflow map* as the plain-English **deliverable** ("Request a workflow map", the delivery artifact card on `/stack`).
+- `serviceInterest: 'Workflow Map'` on `/contact` — a **CRM data value**, not display copy. Changing it would break lead routing.
+
+**Atlas is the engineering name for Map's implementation** (`lib/atlas/`, `api/atlas/`, Atlas canvas/node/bindings — ~700 occurrences). That stays; internal code names are not a brand problem. Only user-visible Atlas strings are policed, and there are none left. Do not confuse this with the third-party **AI Interaction Atlas** vocabulary (see below), which is unrelated.
+
+The former "Workflow Trust Layer" category is superseded.
 
 Delivery vector vocabulary: **"Skills on MCP"** (canonical) / "Skills + MCP" (client-facing).
 
-**Open-source products as lead gen** (`/products/*` on .agency): **Ground MCP** (code analysis that checks before it claims—anti-hallucination verification) and **Loom MCP** (external memory + multi-agent coordination across Claude, Cursor, Codex, Gemini). The `/dify` section is content marketing (Dify + MCP + Policy OS as a three-layer governance story), not a sold product.
+**Open-source lead gen**: **Ground MCP** (`/products/ground`) — code analysis that verifies before it claims. **Loom MCP** (`/products/loom`) is an **archive**: a retrospective on the continuity problem that led to Linear-first coordination. It is not an actively offered product. The `/dify` section is content marketing, not a sold product.
 
-**Trust boundaries stated on-site**: no vendor lock-in; the client keeps the workflow map, contracts, policy, runbooks, code, and approval ownership.
+**Boundaries stated on-site**: no vendor lock-in; the client keeps the workflow map, contracts, policy, runbooks, code, and approval ownership.
 
-**Positioning shift**: From "We build the connectivity and outcome layers between your tools and AI" to "We make one workflow safe to delegate." Policy OS remains the internal architecture term; Workflow Trust Layer is the market-facing category.
+**Nav convention**: primary navigation uses plain meaning ("How It Works", "What You Keep"), not owned product names—a first-time visitor does not yet know what Map or Control are. The spine is named in the footer and on `/products`. Enforced by `test/public-marketing-copy.test.ts`.
 
 ### Shared Vocabulary: AI Interaction Atlas
 
@@ -232,7 +254,7 @@ Zero external dependencies. Pure framework knowledge served through protocol. Se
 
 ### Integration connectivity (Composio)
 
-For **commodity app connectivity** (Gmail, Notion, Slack, etc.), prefer [Composio](https://composio.dev) via `@create-something/composio-bridge`: managed auth, tool discovery, and execution with the client seeing our MCP. Use **custom** OAuth and APIs when the integration is deep or client-specific (e.g. Half Dozen Gmail Sync). Packaging is unchanged: Composio remains internal plumbing, while client delivery follows the Workflow Trust Layer lanes (Trust Map → Workflow Pilot → Trust Layer). See `docs/COMPOSIO_PATTERNS.md` for when-to-use, wrap pattern, and SDK pointers; `docs/internal/COMPOSIO_EVALUATION.md` for the evaluation.
+For **commodity app connectivity** (Gmail, Notion, Slack, etc.), prefer [Composio](https://composio.dev) via `@create-something/composio-bridge`: managed auth, tool discovery, and execution with the client seeing our MCP. Use **custom** OAuth and APIs when the integration is deep or client-specific (e.g. Half Dozen Gmail Sync). Packaging is unchanged: Composio remains internal plumbing, while client delivery follows the product spine (Map → Build → Control). See `docs/COMPOSIO_PATTERNS.md` for when-to-use, wrap pattern, and SDK pointers; `docs/internal/COMPOSIO_EVALUATION.md` for the evaluation.
 
 ## Languages
 
@@ -295,7 +317,7 @@ pnpm linear:done -- --issue CRE-123 --evidence "Validation: ..."
 
 **Why Linear**: shared issue state, MCP access, source-of-truth registry review, and durable delivery evidence across local and remote agents.
 
-Loom *the task tracker* is historical in this repository. Do not create new Loom tasks; update legacy references to Linear or file a Linear cleanup issue. (Unrelated: **Loom MCP**, the multi-agent coordination product on .agency at `/products/loom`, is current and actively offered.)
+Loom *the task tracker* is historical in this repository. Do not create new Loom tasks; update legacy references to Linear or file a Linear cleanup issue. (Related: **Loom MCP** at `/products/loom` is an archived retrospective on that same continuity problem, not an actively offered product.)
 
 ## Agent Orchestration
 

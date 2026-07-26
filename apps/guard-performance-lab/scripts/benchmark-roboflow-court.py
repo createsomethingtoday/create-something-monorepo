@@ -26,27 +26,27 @@ from pathlib import Path
 from typing import Any
 
 
-PROFILE = "guard-roboflow-court-benchmark-v1"
+PROFILE = "guard-roboflow-mansfield-court-benchmark-v2"
 MODEL_ID = "basketball-court-detection-2/22"
 DEFAULT_TIMES_MS = (240000, 1060000, 1700000, 1925000, 2342000, 3030000, 3100000)
 MIN_KEYPOINT_CONFIDENCE = 0.5
 MIN_HYPOTHESIS_MARGIN = 0.05
-CM_PER_FOOT = 30.48
-
-# Canonical 94x50-foot court landmarks from Roboflow Sports' basketball
-# configuration. Labels intentionally follow the source dataset skeleton.
-COURT_POINTS_CM = {
-    "01": (0, 0), "02": (0, 91), "04": (0, 518), "05": (0, 1006),
-    "07": (0, 1433), "08": (0, 1524), "09": (160, 762), "10": (424, 91),
-    "11": (424, 1433), "12": (579, 518), "13": (579, 762), "14": (579, 1006),
-    "15": (835, 0), "16": (884, 762), "17": (835, 1524), "19": (1432, 0),
-    "21": (1432, 762), "23": (1432, 1524), "25": (2030, 0), "26": (1981, 762),
-    "27": (2030, 1524), "28": (2286, 518), "29": (2286, 762), "30": (2286, 1006),
-    "31": (2441, 91), "32": (2441, 1433), "33": (2705, 762), "34": (2865, 0),
-    "35": (2865, 91), "37": (2865, 518), "38": (2865, 1006), "40": (2865, 1433),
-    "41": (2865, 1524),
+# The source-bound FieldhouseUSA Mansfield floor is 84x50 feet with a
+# 12-foot high-school lane. Labels follow the model skeleton while coordinates
+# follow the physical black basketball markings in the source, not the model's
+# original 94x50/16-foot training template.
+COURT_POINTS_FT = {
+    "01": (0, 0), "02": (0, 3), "04": (0, 19), "05": (0, 31),
+    "07": (0, 47), "08": (0, 50), "09": (5.25, 25), "10": (13.91, 3),
+    "11": (13.91, 47), "12": (19, 19), "13": (19, 25), "14": (19, 31),
+    "15": (27.4, 0), "16": (29, 25), "17": (27.4, 50), "19": (42, 0),
+    "21": (42, 25), "23": (42, 50), "25": (56.6, 0), "26": (55, 25),
+    "27": (56.6, 50), "28": (65, 19), "29": (65, 25), "30": (65, 31),
+    "31": (70.09, 3), "32": (70.09, 47), "33": (78.75, 25), "34": (84, 0),
+    "35": (84, 3), "37": (84, 19), "38": (84, 31), "40": (84, 47),
+    "41": (84, 50),
 }
-LABEL_ORDER = tuple(COURT_POINTS_CM)
+LABEL_ORDER = tuple(COURT_POINTS_FT)
 
 
 def sha256_file(path: Path) -> str:
@@ -86,6 +86,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--source-sha256", required=True)
     parser.add_argument("--output", required=True)
     parser.add_argument("--raw-output", required=True)
+    parser.add_argument("--raw-input", help="Rescore an immutable prior raw response without another API call.")
     parser.add_argument("--times-ms", default=",".join(map(str, DEFAULT_TIMES_MS)))
     parser.add_argument("--generated-at")
     return parser.parse_args()
@@ -129,7 +130,7 @@ def frame_geometry(time_ms: int, response: dict[str, Any]) -> tuple[dict[str, An
     points = {
         str(item["class"]): item
         for item in chosen.get("keypoints", [])
-        if str(item.get("class")) in COURT_POINTS_CM and float(item.get("confidence", 0)) >= MIN_KEYPOINT_CONFIDENCE
+        if str(item.get("class")) in COURT_POINTS_FT and float(item.get("confidence", 0)) >= MIN_KEYPOINT_CONFIDENCE
     }
     visible_labels = [label for label in LABEL_ORDER if label in points]
     heldout_labels = [label for index, label in enumerate(visible_labels) if index % 4 == 0]
@@ -147,7 +148,7 @@ def frame_geometry(time_ms: int, response: dict[str, Any]) -> tuple[dict[str, An
         }, []
     image_fit = np.array([[points[label]["x"], points[label]["y"]] for label in fit_labels], dtype=np.float32)
     court_fit = np.array(
-        [[COURT_POINTS_CM[label][0] / CM_PER_FOOT, COURT_POINTS_CM[label][1] / CM_PER_FOOT] for label in fit_labels],
+        [COURT_POINTS_FT[label] for label in fit_labels],
         dtype=np.float32,
     )
     matrix, _ = cv2.findHomography(image_fit, court_fit, method=0)
@@ -165,7 +166,7 @@ def frame_geometry(time_ms: int, response: dict[str, Any]) -> tuple[dict[str, An
     image_heldout = np.array([[[points[label]["x"], points[label]["y"]] for label in heldout_labels]], dtype=np.float32)
     projected = cv2.perspectiveTransform(image_heldout, matrix)[0]
     expected = np.array(
-        [[COURT_POINTS_CM[label][0] / CM_PER_FOOT, COURT_POINTS_CM[label][1] / CM_PER_FOOT] for label in heldout_labels],
+        [COURT_POINTS_FT[label] for label in heldout_labels],
         dtype=np.float32,
     )
     errors = [float(value) for value in np.linalg.norm(projected - expected, axis=1)]
@@ -183,25 +184,34 @@ def frame_geometry(time_ms: int, response: dict[str, Any]) -> tuple[dict[str, An
 
 
 def main() -> None:
-    from inference_sdk import InferenceHTTPClient
-
     args = parse_args()
     source = Path(args.source)
     if not source.is_file() or sha256_file(source) != args.source_sha256:
         raise SystemExit("Source bytes do not match --source-sha256.")
-    api_key = os.environ.get("ROBOFLOW_API_KEY")
-    if not api_key:
-        raise SystemExit("ROBOFLOW_API_KEY must be injected from a secret manager.")
-    times_ms = sorted({int(value) for value in args.times_ms.split(",") if value})
-    frames = decode_frames(source, times_ms)
-    client = InferenceHTTPClient(api_url="https://serverless.roboflow.com", api_key=api_key)
-    raw = {"sourceSha256": args.source_sha256, "modelId": MODEL_ID, "frames": []}
-    started = time.perf_counter()
-    for time_ms, image in frames.items():
-        raw["frames"].append({"timeMs": time_ms, "response": client.infer(image, model_id=MODEL_ID)})
-    wall_seconds = time.perf_counter() - started
-    raw_path = Path(args.raw_output)
-    raw_hash = atomic_json(raw_path, raw)
+    if args.raw_input:
+        raw_path = Path(args.raw_input)
+        raw = json.loads(raw_path.read_text())
+        if raw.get("sourceSha256") != args.source_sha256 or raw.get("modelId") != MODEL_ID:
+            raise SystemExit("Raw prediction receipt does not match the supplied source and pinned model.")
+        times_ms = [int(frame["timeMs"]) for frame in raw.get("frames", [])]
+        raw_hash = sha256_file(raw_path)
+        wall_seconds = 0.0
+    else:
+        from inference_sdk import InferenceHTTPClient
+
+        api_key = os.environ.get("ROBOFLOW_API_KEY")
+        if not api_key:
+            raise SystemExit("ROBOFLOW_API_KEY must be injected from a secret manager.")
+        times_ms = sorted({int(value) for value in args.times_ms.split(",") if value})
+        frames = decode_frames(source, times_ms)
+        client = InferenceHTTPClient(api_url="https://serverless.roboflow.com", api_key=api_key)
+        raw = {"sourceSha256": args.source_sha256, "modelId": MODEL_ID, "frames": []}
+        started = time.perf_counter()
+        for time_ms, image in frames.items():
+            raw["frames"].append({"timeMs": time_ms, "response": client.infer(image, model_id=MODEL_ID)})
+        wall_seconds = time.perf_counter() - started
+        raw_path = Path(args.raw_output)
+        raw_hash = atomic_json(raw_path, raw)
     metrics = []
     errors: list[float] = []
     for frame in raw["frames"]:
@@ -211,7 +221,7 @@ def main() -> None:
     median = round(percentile(errors, 0.5), 3) if errors else None
     p95 = round(percentile(errors, 0.95), 3) if errors else None
     ambiguous_count = sum(bool(metric["ambiguous"]) for metric in metrics)
-    passed = bool(errors and median <= 2 and p95 <= 4 and ambiguous_count == 0)
+    passed = bool(errors and p95 <= 1 and ambiguous_count == 0)
     receipt = {
         "version": 1,
         "profile": PROFILE,
@@ -222,7 +232,8 @@ def main() -> None:
             "modelId": MODEL_ID,
             "task": "basketball-court-keypoint-detection",
             "datasetLicense": "CC BY 4.0",
-            "datasetLandmarkCount": len(COURT_POINTS_CM),
+            "datasetLandmarkCount": len(COURT_POINTS_FT),
+            "courtProfile": "fieldhouseusa-mansfield-high-school-84x50-v1",
         },
         "configuration": {
             "keypointConfidenceThreshold": MIN_KEYPOINT_CONFIDENCE,
@@ -231,7 +242,11 @@ def main() -> None:
             "selectionRule": "highest-court-object-confidence",
         },
         "coverage": {"requestedFrames": len(times_ms), "scoredFrames": sum(metric["heldOutCount"] >= 2 for metric in metrics)},
-        "processing": {"wallSeconds": round(wall_seconds, 3), "framesPerSecond": round(len(times_ms) / wall_seconds, 3)},
+        "processing": {
+            "mode": "offline-rescore" if args.raw_input else "serverless-inference",
+            "wallSeconds": round(wall_seconds, 3),
+            "framesPerSecond": round(len(times_ms) / wall_seconds, 3) if wall_seconds else None,
+        },
         "validation": {
             "heldOutCount": len(errors),
             "medianErrorFeet": median,
@@ -241,7 +256,7 @@ def main() -> None:
             "passed": passed,
             "reason": None
             if passed
-            else "Court hypotheses are ambiguous or held-out error exceeds the 2ft median / 4ft p95 gate.",
+            else "Court hypotheses are ambiguous or held-out error exceeds the one-foot p95 gate.",
         },
         "frames": metrics,
         "rawPredictionsSha256": raw_hash,

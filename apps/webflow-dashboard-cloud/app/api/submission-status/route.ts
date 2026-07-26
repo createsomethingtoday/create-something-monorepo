@@ -1,4 +1,7 @@
+import { checkRateLimit } from '@create-something/webflow-dashboard-core/kv';
 import { jsonNoStore } from '../../../lib/server/responses';
+import { getOptionalEnv } from '../../../lib/server/env';
+import { getUserFromRequest } from '../../../lib/server/session';
 
 interface ExternalApiResponse {
   assetsSubmitted30: number;
@@ -14,20 +17,47 @@ const REQUEST_TIMEOUT_MS = 10_000;
 
 export async function POST(request: Request) {
   try {
-    const body = (await request.json().catch(() => ({}))) as { email?: string };
-    if (!body.email || typeof body.email !== 'string') {
+    // The response exposes a creator's submission and publish counts, so the
+    // queried email is always the session email — never a body value.
+    const user = await getUserFromRequest(request);
+    if (!user) {
       return jsonNoStore(
-        { hasError: true, message: 'Email is required', assetsSubmitted30: 0 },
-        { status: 400 }
+        { hasError: true, message: 'Unauthorized', assetsSubmitted30: 0 },
+        { status: 401 }
       );
     }
 
+    const email = user.email;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(body.email)) {
+    if (!emailRegex.test(email)) {
       return jsonNoStore(
         { hasError: true, message: 'Invalid email format', assetsSubmitted30: 0 },
         { status: 400 }
       );
+    }
+
+    // Bound the outbound calls this endpoint can make on one creator's behalf.
+    const env = await getOptionalEnv();
+    if (env?.SESSIONS) {
+      const rateLimit = await checkRateLimit(
+        env.SESSIONS,
+        `submission-status:${email.toLowerCase()}`,
+        20,
+        300,
+        { failOpen: true }
+      );
+
+      if (!rateLimit.allowed) {
+        return jsonNoStore(
+          {
+            hasError: true,
+            message: 'Too many submission status checks. Please try again shortly.',
+            assetsSubmitted30: 0,
+            retryAfter: rateLimit.retryAfter
+          },
+          { status: 429 }
+        );
+      }
     }
 
     const controller = new AbortController();
@@ -40,7 +70,7 @@ export async function POST(request: Request) {
           'Content-Type': 'application/json',
           'User-Agent': 'Webflow-Dashboard-Cloud/1.0'
         },
-        body: JSON.stringify({ email: body.email }),
+        body: JSON.stringify({ email }),
         signal: controller.signal
       });
 

@@ -14,9 +14,10 @@
     "share:marketplace": "test -n \"$WEBFLOW_WORKSPACE_KEY\" || { echo 'ERROR: WEBFLOW_WORKSPACE_KEY not set. Run under: infisical run --path=/webflow/template-marketplace --env=prod -- ...'; exit 1; }; pnpm run share:preflight -- --manifest webflow.marketplace.json --forbid cato,control,business && WEBFLOW_WORKSPACE_API_TOKEN=\"$WEBFLOW_WORKSPACE_KEY\" WEBFLOW_SKIP_UPDATE_CHECKS=true npx webflow library share --no-input --manifest webflow.marketplace.json",
     "check": "pnpm run typecheck && pnpm run test",
     "lint": "pnpm run typecheck",
-    "test": "pnpm exec tsx --test test/*.test.tsx test/*.test.mjs",
+    "test": "pnpm exec tsx --test test/*.test.ts test/*.test.tsx test/*.test.mjs",
     "typecheck": "tsc --noEmit",
-    "verify": "pnpm run check && pnpm run bundle"
+    "verify": "pnpm run check && pnpm run bundle",
+    "test:browser": "python3 test/browser/template-chat-smoke.py"
   },
   "dependencies": {
     "@create-something/delivery-schema": "workspace:*",

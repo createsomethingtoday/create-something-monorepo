@@ -29,7 +29,7 @@
     {
       eyebrow: 'Control',
       icon: 'check',
-      title: 'Ship the Policy OS bundle with it.',
+      title: 'Ship the Control bundle with it.',
       detail:
         'The app is not done until approvals, blocked actions, eval gates, runbook, and proof are reviewable.'
     }
@@ -258,7 +258,7 @@
     {
       label: 'Prove',
       icon: 'check',
-      title: 'Policy OS',
+      title: 'Control',
       detail: 'Attach approvals, gates, runbook, and client-safe proof before launch.'
     }
   ];
@@ -266,15 +266,15 @@
 
 <SEO
   title="How To Ship A Dify App With MCP Tools | CREATE SOMETHING .agency"
-  description="A practical field guide for shipping one Dify app with scoped MCP tools, Policy OS contracts, eval gates, approval states, and client-safe proof."
-  keywords="ship Dify app with MCP tools, Dify MCP implementation, Dify app governance, Dify Policy OS, Dify agent approval gates"
+  description="A practical field guide for shipping one Dify app with scoped MCP tools, Control contracts, eval gates, approval states, and client-safe proof."
+  keywords="ship Dify app with MCP tools, Dify MCP implementation, Dify app governance, Dify Control, Dify agent approval gates"
   canonical="https://createsomething.agency/dify/ship-dify-app-with-mcp-tools"
   ogType="article"
   ogImage="/og/dify-lane.png"
   publishedTime="2026-06-23"
   modifiedTime="2026-06-23"
   articleSection="Dify Implementation"
-  articleTags={['Dify', 'MCP', 'Policy OS', 'agent governance', 'workflow implementation']}
+  articleTags={['Dify', 'MCP', 'Control', 'agent governance', 'workflow implementation']}
   propertyName="agency"
   noindex={true}
 />
@@ -285,7 +285,7 @@
   titleLevel="h1"
   eyebrow="Dify Field Guide"
   title="How to ship a Dify app with MCP tools."
-  description="The useful unit is one governed workflow: Dify as the visible app, MCP as the tool boundary, and Policy OS as the approval, eval, runbook, and proof layer."
+  description="The useful unit is one governed workflow: Dify as the visible app, MCP as the tool boundary, and Control as the approval, eval, runbook, and proof layer."
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.workflowTeardownHref}>
@@ -309,10 +309,10 @@
     <PerformanceCardGrid items={buildPath} columns={4} ariaLabel="Dify MCP shipping path" />
     <ArticleVisualFigure
       src="/images/articles/dify-ship-mcp-tools/dify-mcp-shipping-path-v2.svg"
-      alt="Diagram showing Dify as the app surface, MCP as the tool boundary, Policy OS as the control layer, and proof as the release surface."
+      alt="Diagram showing Dify as the app surface, MCP as the tool boundary, Control as the control layer, and proof as the release surface."
       eyebrow="Verified diagram"
       title="The shipping path is surface, boundary, control, proof."
-      caption="This owned diagram keeps the implementation legible: Dify carries the app, MCP scopes capability, Policy OS governs behavior, and proof explains what changed."
+      caption="This owned diagram keeps the implementation legible: Dify carries the app, MCP scopes capability, Control governs behavior, and proof explains what changed."
       sourceLabel="Verified SVG generated from a structured CREATE SOMETHING specification."
     />
   {/snippet}
@@ -378,7 +378,7 @@
   title="Bring one Dify workflow before adding more tools."
   description="I’ll map the workflow, MCP tool boundary, approval path, eval gates, and client-safe proof package before the app gets more autonomy."
   steps={ctaItems}
-  handoff={{ owner: 'Dify app operator', authority: 'Scoped MCP tool contract', proof: 'Policy OS launch receipt', state: 'review' }}
+  handoff={{ owner: 'Dify app operator', authority: 'Scoped MCP tool contract', proof: 'Control launch receipt', state: 'review' }}
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.workflowTeardownHref}>

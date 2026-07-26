@@ -28,6 +28,7 @@ First-wave policies scaffolded here:
 20. `policy.prospect-hub-onboarding.v1`
 21. `policy.git-light-agent-delivery.v1`
 22. `policy.prose-quality.v1`
+23. `policy.simplified-technical-english.v1`
 
 Each policy has:
 
