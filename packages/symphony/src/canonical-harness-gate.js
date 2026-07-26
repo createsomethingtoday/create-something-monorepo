@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
-import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
-import { dirname, join, resolve } from 'node:path';
+import { link, mkdir, readFile, realpath, rm, writeFile } from 'node:fs/promises';
+import { dirname, join, relative, resolve } from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
 import Ajv from 'ajv';
 import { SymphonyError } from './errors.js';
@@ -315,7 +315,7 @@ export class CanonicalHarnessGate {
   constructor(options = {}) {
     this.tracker = options.tracker;
     this.output_root = resolve(options.output_root ?? join(process.cwd(), 'output/canonical-agent-harness/runs'));
-    this.file_operations = options.file_operations ?? { mkdir, readFile, rename, rm, writeFile };
+    this.file_operations = options.file_operations ?? { link, mkdir, readFile, realpath, rm, writeFile };
     this.random_id = options.random_id ?? randomUUID;
     this.logger = options.logger ?? { warn() {} };
   }
@@ -330,11 +330,40 @@ export class CanonicalHarnessGate {
   async record(candidate, options = {}) {
     const receipt = evaluate_canonical_harness_receipt(candidate, options);
     const receipt_path = this.receipt_path(receipt.run_id);
+    const run_directory = dirname(receipt_path);
     const temporary_path = `${receipt_path}.${process.pid}.${this.random_id()}.tmp`;
-    await this.file_operations.mkdir(dirname(receipt_path), { recursive: true });
+    await this.file_operations.mkdir(this.output_root, { recursive: true });
+    await this.file_operations.mkdir(run_directory, { recursive: true });
+    const [resolved_output_root, resolved_run_directory] = await Promise.all([
+      this.file_operations.realpath(this.output_root),
+      this.file_operations.realpath(run_directory),
+    ]);
+    if (relative(resolved_output_root, resolved_run_directory) !== receipt.run_id) {
+      throw new SymphonyError(
+        'canonical_receipt_path_escape',
+        `Canonical harness run directory resolves outside the evidence root: ${run_directory}`,
+        { details: { output_root: resolved_output_root, run_directory: resolved_run_directory } },
+      );
+    }
     try {
-      await this.file_operations.writeFile(temporary_path, `${JSON.stringify(receipt, null, 2)}\n`, 'utf8');
-      await this.file_operations.rename(temporary_path, receipt_path);
+      await this.file_operations.writeFile(
+        temporary_path,
+        `${JSON.stringify(receipt, null, 2)}\n`,
+        { encoding: 'utf8', flag: 'wx' },
+      );
+      try {
+        await this.file_operations.link(temporary_path, receipt_path);
+      }
+      catch (error) {
+        if (error?.code === 'EEXIST') {
+          throw new SymphonyError(
+            'canonical_receipt_exists',
+            `Canonical harness receipt already exists for run ${receipt.run_id}.`,
+            { cause: error, details: { receipt_path } },
+          );
+        }
+        throw error;
+      }
     }
     finally {
       try {

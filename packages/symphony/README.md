@@ -24,8 +24,9 @@ Generic workflows default to `completion.mode: evidence_only` with a non-active,
 ## Canonical Completion Gate
 
 `CanonicalHarnessGate` is the evidence-to-done boundary for canonical harness
-runs. It computes eligibility from a strict v1 receipt, writes the result
-atomically to
+runs. It computes eligibility from a strict v1 receipt, verifies that the run
+directory resolves beneath the evidence root, and publishes the result through
+an atomic no-clobber hard link to
 `output/canonical-agent-harness/runs/<run_id>/receipt.v1.json`, then reads and
 revalidates that exact persisted receipt immediately before calling the
 tracker's terminal completion seam. It also re-resolves the receipt's Linear
@@ -38,8 +39,8 @@ read-only review plus rollback proof for A2/A3, and matching promotion and live
 proof for A3.
 A4 is never eligible for autonomous completion. Unknown fields, caller-supplied
 eligibility, unresolved actionable findings in any lane, issue-identity
-mismatches, corrupt receipts, and tampered computed fields all fail closed
-without a tracker mutation.
+mismatches, path escapes, duplicate run receipts, corrupt receipts, and tampered
+computed fields all fail closed without a tracker mutation.
 
 Stage evidence uses Symphony's existing `multi-agent-evidence-receipt.v1`
 contract directly. The gate binds each receipt to the canonical run, Linear

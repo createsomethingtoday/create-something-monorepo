@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, symlink } from 'node:fs/promises';
 import test from 'node:test';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -494,17 +494,20 @@ test('canonical gate never admits A4 work to autonomous done', () => {
   }
 });
 
-test('canonical gate publishes per-run receipts through an atomic rename', async () => {
+test('canonical gate publishes per-run receipts through an atomic no-clobber link', async () => {
   const calls = [];
   const file_operations = {
     async mkdir(path, options) {
       calls.push({ operation: 'mkdir', path, options });
     },
+    async realpath(path) {
+      return path;
+    },
     async writeFile(path, contents, encoding) {
       calls.push({ operation: 'write', path, contents, encoding });
     },
-    async rename(from, to) {
-      calls.push({ operation: 'rename', from, to });
+    async link(from, to) {
+      calls.push({ operation: 'link', from, to });
     },
     async rm(path, options) {
       calls.push({ operation: 'cleanup', path, options });
@@ -521,14 +524,56 @@ test('canonical gate publishes per-run receipts through an atomic rename', async
 
   assert.equal(result.receipt.eligible_for_done, true);
   assert.equal(result.receipt_path, '/proof/canonical-agent-harness/runs/CRE-1304-run-1/receipt.v1.json');
-  assert.deepEqual(calls.map((entry) => entry.operation), ['mkdir', 'write', 'rename', 'cleanup']);
-  assert.equal(calls[1].path, `${result.receipt_path}.${process.pid}.atomic-test.tmp`);
-  assert.deepEqual(calls[2], {
-    operation: 'rename',
-    from: calls[1].path,
+  assert.deepEqual(calls.map((entry) => entry.operation), ['mkdir', 'mkdir', 'write', 'link', 'cleanup']);
+  assert.equal(calls[2].path, `${result.receipt_path}.${process.pid}.atomic-test.tmp`);
+  assert.deepEqual(calls[3], {
+    operation: 'link',
+    from: calls[2].path,
     to: result.receipt_path,
   });
-  assert.equal(JSON.parse(calls[1].contents).eligible_for_done, true);
+  assert.deepEqual(calls[2].encoding, { encoding: 'utf8', flag: 'wx' });
+  assert.equal(JSON.parse(calls[2].contents).eligible_for_done, true);
+});
+
+test('canonical gate never replaces an existing receipt for the same run id', async (t) => {
+  const root = await mkdtemp(join(tmpdir(), 'canonical-gate-immutable-'));
+  t.after(async () => rm(root, { recursive: true, force: true }));
+  const gate = new CanonicalHarnessGate({
+    tracker: {},
+    output_root: join(root, 'runs'),
+  });
+  const original = valid_a1_candidate();
+  const replacement = valid_a1_candidate({
+    outcome: { delivered: true, summary: 'A later caller tried to replace the canonical evidence.' },
+  });
+
+  const recorded = await gate.record(original);
+  await assert.rejects(
+    gate.record(replacement),
+    (error) => error?.code === 'canonical_receipt_exists',
+  );
+
+  const persisted = JSON.parse(await readFile(recorded.receipt_path, 'utf8'));
+  assert.equal(persisted.outcome.summary, original.outcome.summary);
+});
+
+test('canonical gate refuses a run directory that resolves outside the evidence root', async (t) => {
+  const root = await mkdtemp(join(tmpdir(), 'canonical-gate-contained-'));
+  const outside = await mkdtemp(join(tmpdir(), 'canonical-gate-outside-'));
+  t.after(async () => {
+    await rm(root, { recursive: true, force: true });
+    await rm(outside, { recursive: true, force: true });
+  });
+  const output_root = join(root, 'runs');
+  await mkdir(output_root, { recursive: true });
+  await symlink(outside, join(output_root, 'CRE-1304-run-1'));
+  const gate = new CanonicalHarnessGate({ tracker: {}, output_root });
+
+  await assert.rejects(
+    gate.record(valid_a1_candidate()),
+    (error) => error?.code === 'canonical_receipt_path_escape',
+  );
+  await assert.rejects(readFile(join(outside, 'receipt.v1.json'), 'utf8'), { code: 'ENOENT' });
 });
 
 test('canonical gate preserves Linear when receipt identity does not match the completion issue', async (t) => {
@@ -690,8 +735,9 @@ test('canonical gate refuses Linear completion when the persisted receipt is cor
     random_id: () => 'corrupt-test',
     file_operations: {
       async mkdir() {},
+      async realpath(path) { return path; },
       async writeFile() {},
-      async rename() {},
+      async link() {},
       async rm() {},
       async readFile() {
         return '{"truncated":';
@@ -719,10 +765,11 @@ test('canonical gate refuses Linear completion when computed persisted fields ar
     random_id: () => 'tamper-test',
     file_operations: {
       async mkdir() {},
+      async realpath(path) { return path; },
       async writeFile(_path, contents) {
         published = contents;
       },
-      async rename() {},
+      async link() {},
       async rm() {},
       async readFile() {
         const receipt = JSON.parse(published);
