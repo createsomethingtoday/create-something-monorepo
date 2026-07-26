@@ -1,0 +1,69 @@
+{
+  "schemaVersion": "workflow_artifact_manifest.v0.1",
+  "workflowId": "webflow.marketplace.template-lifecycle",
+  "workflowVersion": "0.1.0",
+  "definitionHash": "sha256:96e880807497d7a417cbf7e7a009d9331996d55e249068767b2417131a91156f",
+  "compilerVersion": "workflow-compiler-v0.1",
+  "files": [
+    {
+      "path": "acceptance-summary.json",
+      "hash": "sha256:52b70291b8855b5c2899a20e8f25949d1790b9d9bf090f020388581b4c5e3fb5"
+    },
+    {
+      "path": "agent-contracts.json",
+      "hash": "sha256:0db732d1bff70c8dc05d25a52f560d0bf440aba3f99d7f2171420b526e54ab8c"
+    },
+    {
+      "path": "approval-surfaces.json",
+      "hash": "sha256:35eb0f749418e71ed089818acd4de99a77a40bd17693beea5d7ca1e4258a2f78"
+    },
+    {
+      "path": "compiled-workflow.json",
+      "hash": "sha256:700e5a07480ad05df641f26036f29b216acf5ebbc340b87b62975a2b39aa434b"
+    },
+    {
+      "path": "decision-inventory.json",
+      "hash": "sha256:f6b697bf163ebb456ed48e6720c83b631788fe715cdff2c7abea05bf48dcbaf0"
+    },
+    {
+      "path": "evaluation-manifest.json",
+      "hash": "sha256:a63a93e1001256f7ac58fce3dd244973d79c5e6246a6abd10d1a5fd2f286350c"
+    },
+    {
+      "path": "event-schemas.json",
+      "hash": "sha256:732cd2b50d8fc62dea9ee51d963e7904c7601a4873bf309feb6d27d8bd2f60f5"
+    },
+    {
+      "path": "evidence-ledger.json",
+      "hash": "sha256:eddedb34b12ec8d8fcdb67fbd31345a5f8586a26fce92d67ea40b9cb9b2d0265"
+    },
+    {
+      "path": "object-schemas.json",
+      "hash": "sha256:6af36be99b56278a8fbec47b223785fad09c2cc6206dc5b8c01cf6bc1b05e751"
+    },
+    {
+      "path": "operator-console/data.json",
+      "hash": "sha256:bcb9268655b194bd8a61d327fdea505ff87cac8e2eca1a64a7d17969c93b475e"
+    },
+    {
+      "path": "operator-console/index.html",
+      "hash": "sha256:f3125f887688bb8148317c74e07ee061ed6ec5607e2221de17df0e61dc32a02a"
+    },
+    {
+      "path": "replay-report.json",
+      "hash": "sha256:af30d0215d94f13fea00e0a3433173e1f0f3382b7665766ec483da7da552160b"
+    },
+    {
+      "path": "runtime-targets.json",
+      "hash": "sha256:dc409a41853a4c296b98de80326eed87b0beb5fed155806bb1f96eb5134969df"
+    },
+    {
+      "path": "tool-contracts.json",
+      "hash": "sha256:8811ba21dd1584f308d6f4c3d4a72420f033e7f6c9f44b3ac3e4594440d003da"
+    },
+    {
+      "path": "workflow-map.json",
+      "hash": "sha256:5fa9616bcce688265509a3757b7b926436be3e4d4a1f88b750b44f53e3cb61a6"
+    }
+  ]
+}

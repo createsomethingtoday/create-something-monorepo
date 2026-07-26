@@ -1,0 +1,10 @@
+{
+  "name": "@create-something/cato-supply-insights-cms",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node --test test/*.test.mjs",
+    "deploy": "node ../../../../scripts/run-wrangler.mjs --cwd ../.. deploy --config clients/cato-supply-insights-cms/wrangler.toml"
+  }
+}

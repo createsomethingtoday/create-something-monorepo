@@ -1,0 +1,133 @@
+{
+  "version": 1,
+  "profile": "guard-player-play-state-v1",
+  "sourceSha256": "94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0",
+  "intervals": [
+    {
+      "id": "unknown-0000-1714",
+      "startMs": 0,
+      "endMs": 1034999,
+      "state": "unknown",
+      "evidence": { "method": "unreviewed", "reviewer": "codex", "note": "No source-reviewed play-state claim is attached to this interval." }
+    },
+    {
+      "id": "live-defense-1715-1724",
+      "startMs": 1035000,
+      "endMs": 1044999,
+      "state": "live-defense",
+      "evidence": { "method": "source-review", "reviewer": "codex", "note": "Dark jerseys possess during live half-court action; #13 is matched in the white defensive shell." }
+    },
+    {
+      "id": "dead-ball-1725-1743",
+      "startMs": 1045000,
+      "endMs": 1063999,
+      "state": "dead-ball",
+      "evidence": { "method": "source-review", "reviewer": "codex", "note": "Play stops after contact and remains stopped through the official-controlled restart." }
+    },
+    {
+      "id": "transition-defense-1744-1745",
+      "startMs": 1064000,
+      "endMs": 1065999,
+      "state": "transition-defense",
+      "evidence": { "method": "source-review", "reviewer": "codex", "note": "The dark-jersey offense advances after the restart while #13 runs toward the defensive end." }
+    },
+    {
+      "id": "unknown-1746-3202",
+      "startMs": 1066000,
+      "endMs": 1922999,
+      "state": "unknown",
+      "evidence": { "method": "unreviewed", "reviewer": "codex", "note": "Resolved identity samples remain captured, but possession and live state are not independently established throughout this interval." }
+    },
+    {
+      "id": "substitution-3203-3209",
+      "startMs": 1923000,
+      "endMs": 1929999,
+      "state": "substitution",
+      "evidence": { "method": "source-review", "reviewer": "codex", "note": "The apparent straight path is #13 moving toward the bench during a stoppage, not a transition lane run." }
+    },
+    {
+      "id": "unknown-3210-3354",
+      "startMs": 1930000,
+      "endMs": 2034999,
+      "state": "unknown",
+      "evidence": { "method": "unreviewed", "reviewer": "codex", "note": "No source-reviewed play-state claim is attached to this interval." }
+    },
+    {
+      "id": "dead-ball-3355-3403",
+      "startMs": 2035000,
+      "endMs": 2043999,
+      "state": "dead-ball",
+      "evidence": { "method": "source-review", "reviewer": "codex", "note": "Players are set around an official-controlled restart; no live lane movement is counted." }
+    },
+    {
+      "id": "unknown-3404-3755",
+      "startMs": 2044000,
+      "endMs": 2275999,
+      "state": "unknown",
+      "evidence": { "method": "unreviewed", "reviewer": "codex", "note": "No source-reviewed play-state claim is attached to this interval." }
+    },
+    {
+      "id": "live-defense-3756-3757",
+      "startMs": 2276000,
+      "endMs": 2277999,
+      "state": "live-defense",
+      "evidence": { "method": "source-review", "reviewer": "codex", "note": "Dark jerseys possess in live half-court action and #13 is part of the white defensive shell." }
+    },
+    {
+      "id": "dead-ball-3758-3803",
+      "startMs": 2278000,
+      "endMs": 2283999,
+      "state": "dead-ball",
+      "evidence": { "method": "source-review", "reviewer": "codex", "note": "The official controls the restart and the inbound has not yet produced live movement." }
+    },
+    {
+      "id": "live-defense-3804-3810",
+      "startMs": 2284000,
+      "endMs": 2290999,
+      "state": "live-defense",
+      "evidence": { "method": "source-review", "reviewer": "codex", "note": "The dark-jersey offense attacks live; #13 shifts through the white help-and-recovery shell." }
+    },
+    {
+      "id": "unknown-3811-5027",
+      "startMs": 2291000,
+      "endMs": 3027999,
+      "state": "unknown",
+      "evidence": { "method": "unreviewed", "reviewer": "codex", "note": "No source-reviewed play-state claim is attached to this interval." }
+    },
+    {
+      "id": "substitution-5028-5036",
+      "startMs": 3028000,
+      "endMs": 3036999,
+      "state": "substitution",
+      "evidence": { "method": "source-review", "reviewer": "codex", "note": "The verified participation ledger marks #13 inactive at the reviewed substitution boundary." }
+    },
+    {
+      "id": "unknown-5037-5135",
+      "startMs": 3037000,
+      "endMs": 3095999,
+      "state": "unknown",
+      "evidence": { "method": "unreviewed", "reviewer": "codex", "note": "No source-reviewed play-state claim is attached to this interval." }
+    },
+    {
+      "id": "transition-offense-5136-5141",
+      "startMs": 3096000,
+      "endMs": 3101999,
+      "state": "transition-offense",
+      "evidence": { "method": "source-review", "reviewer": "codex", "note": "#13 advances the ball toward the right frontcourt before the stoppage and free-throw alignment." }
+    },
+    {
+      "id": "free-throw-5142-5154",
+      "startMs": 3102000,
+      "endMs": 3114999,
+      "state": "free-throw",
+      "evidence": { "method": "source-review", "reviewer": "codex", "note": "Players enter and remain in free-throw alignment; this movement is preserved but excluded from live lane analysis." }
+    },
+    {
+      "id": "unknown-5155-end",
+      "startMs": 3115000,
+      "endMs": 3395733,
+      "state": "unknown",
+      "evidence": { "method": "unreviewed", "reviewer": "codex", "note": "No source-reviewed play-state claim is attached to this interval." }
+    }
+  ]
+}

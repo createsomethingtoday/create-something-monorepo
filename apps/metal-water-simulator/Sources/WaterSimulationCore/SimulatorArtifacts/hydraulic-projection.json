@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "metal_water_hydraulic_projection.v0.1",
+  "particleCount": 8192,
+  "source": {
+    "minimum": [-0.84, 0.08],
+    "maximum": [0.82, 0.90]
+  },
+  "gate": {
+    "y": -0.08,
+    "openingCenterX": 0.0,
+    "openingHalfWidth": 0.24
+  },
+  "mappings": [
+    {
+      "reasonCode": "ACTION_ALLOWED",
+      "decision": "run",
+      "gateState": "open",
+      "visualLabel": "Controlled release"
+    },
+    {
+      "reasonCode": "APPROVAL_REQUIRED",
+      "decision": "wait",
+      "gateState": "closed",
+      "visualLabel": "Owner approval"
+    },
+    {
+      "reasonCode": "POLICY_BLOCKED",
+      "decision": "stop",
+      "gateState": "closed",
+      "visualLabel": "Policy refusal"
+    },
+    {
+      "reasonCode": "INSUFFICIENT_EVIDENCE",
+      "decision": "stop",
+      "gateState": "closed",
+      "visualLabel": "Evidence incomplete"
+    },
+    {
+      "reasonCode": "UNKNOWN_ACTION",
+      "decision": "stop",
+      "gateState": "closed",
+      "visualLabel": "Unknown action refused"
+    }
+  ]
+}

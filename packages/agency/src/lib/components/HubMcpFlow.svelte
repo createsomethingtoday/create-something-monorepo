@@ -11,7 +11,7 @@
   hubTitle="Customer Recovery"
   hubSubtitle="Case, order, shipment"
   controlKicker="Applies"
-  controlTitle="Control Layer"
+  controlTitle="Control"
   controlSubtitle="Allowed, review, blocked"
   initiators={['Support Inbox', 'Customer Thread', 'Agent Draft']}
   destinations={['Zendesk', 'Shopify', 'Stripe']}

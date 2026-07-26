@@ -1,961 +1,460 @@
 <script lang="ts">
-	import { SEO } from '@create-something/canon';
+  import {
+    Button,
+    PerformanceCampaignOpening,
+    PerformanceConversionHandoff,
+    PerformanceNarrativeStage,
+    SEO,
+    type PerformanceNarrativeScene
+  } from '@create-something/canon';
 
-	// Cursor deep link - base64 encoded config for npx @createsomething/loom-mcp
-	const cursorDeepLink = 'cursor://anysphere.cursor-deeplink/mcp/install?name=loom&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyJAY3JlYXRlc29tZXRoaW5nL2xvb20tbWNwIl19';
+  const cursorDeepLink =
+    'cursor://anysphere.cursor-deeplink/mcp/install?name=loom&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyJAY3JlYXRlc29tZXRoaW5nL2xvb20tbWNwIl19';
+  const installs = [
+    {
+      id: 'cursor',
+      label: 'Cursor',
+      command: 'Install with the retained Cursor deep link',
+      note: 'Historical one-click reference',
+      href: cursorDeepLink
+    },
+    {
+      id: 'claude',
+      label: 'Claude Desktop',
+      command: 'npx --yes @createsomething/loom-mcp',
+      note: 'Add to claude_desktop_config.json'
+    },
+    {
+      id: 'windsurf',
+      label: 'Windsurf',
+      command: '{"mcpServers":{"loom":{"command":"npx","args":["@createsomething/loom-mcp"]}}}',
+      note: 'Settings -> MCP -> View raw config'
+    },
+    {
+      id: 'codex',
+      label: 'Codex CLI',
+      command: 'codex mcp add loom --command "npx @createsomething/loom-mcp"',
+      note: 'Legacy local server command'
+    },
+    {
+      id: 'npm',
+      label: 'npm',
+      command: 'npm install -g @createsomething/loom-mcp',
+      note: 'Retained package reference'
+    }
+  ];
 
-	// Copy states
-	let copiedNpm = $state(false);
-	let copiedClaude = $state(false);
-	let copiedWindsurf = $state(false);
-	let copiedCodex = $state(false);
+  const toolGroups = [
+    {
+      title: 'Manage tasks',
+      tools: ['loom_work', 'loom_create', 'loom_spawn', 'loom_ready', 'loom_complete']
+    },
+    {
+      title: 'Route work',
+      tools: ['loom_route', 'loom_agents', 'loom_analytics', 'loom_record_execution']
+    },
+    {
+      title: 'Remember context',
+      tools: ['loom_checkpoint', 'loom_resume', 'loom_get_resume_brief', 'loom_update_context']
+    },
+    {
+      title: 'Plan ahead',
+      tools: ['loom_formulas', 'loom_discuss', 'loom_verify_plan']
+    }
+  ];
 
-	function copyToClipboard(text: string, setter: (v: boolean) => void) {
-		navigator.clipboard.writeText(text);
-		setter(true);
-		setTimeout(() => setter(false), 2000);
-	}
+  const scenes: PerformanceNarrativeScene[] = [
+    {
+      id: 'boundary',
+      label: 'Read the boundary',
+      summary: 'Current state',
+      title: 'The lesson remains. The source of truth changed.',
+      detail:
+        'Loom is historical proof of the coordination problem. Linear is the source of truth for current tracked ownership, status, and evidence.',
+      tone: 'review',
+      evidence: ['Loom: historical proof', 'Linear: current tracked work'],
+      receipts: ['Archive', 'Noindex', 'Explicit route forward']
+    },
+    {
+      id: 'lessons',
+      label: 'Inspect the lessons',
+      summary: 'Why it mattered',
+      title: 'Continuity, routing, and receipts survive the tool.',
+      detail:
+        'The archive is valuable because it makes three durable coordination requirements inspectable.',
+      tone: 'neutral',
+      evidence: ['Continuity matters', 'Routing needs evidence', 'Progress needs receipts'],
+      receipts: ['Checkpoints', 'Routing record', 'Completion evidence']
+    },
+    {
+      id: 'archive',
+      label: 'Open the archive',
+      summary: 'Legacy reference',
+      title: 'Keep the old surface available without presenting it as the current workflow.',
+      detail:
+        'Install commands, tool names, and the original comparison remain here for historical MCP users and design evidence.',
+      tone: 'block',
+      evidence: ['5 install references', '30+ historical tools', 'Original comparison matrix'],
+      receipts: ['@createsomething/loom-mcp', 'GitHub archive']
+    }
+  ];
+
+  let copied = $state<string | null>(null);
+
+  async function copyCommand(id: string, command: string) {
+    await navigator.clipboard.writeText(command);
+    copied = id;
+    setTimeout(() => {
+      if (copied === id) copied = null;
+    }, 2000);
+  }
 </script>
 
 <SEO
-	title="Loom MCP Archive | Agent Coordination Lessons"
-	description="Historical CREATE SOMETHING proof for agent continuity, checkpoints, routing, and recovery. Current tracked work in this repo now lives in Linear."
-	keywords="MCP, Model Context Protocol, multi-agent coordination archive, Linear coordination, task management, Claude, Cursor, Codex, crash recovery"
-	ogImage="/og-image.png"
-	propertyName="agency"
-	noindex={true}
+  title="Loom MCP Archive | Agent Coordination Lessons"
+  description="Historical CREATE SOMETHING proof for agent continuity, checkpoints, routing, and recovery. Current tracked work in this repo now lives in Linear."
+  keywords="MCP, multi-agent coordination archive, Linear coordination, task ownership, checkpoints, evidence, receipts"
+  ogImage="/og-image.png"
+  propertyName="agency"
+  noindex={true}
 />
 
-<main class="loom-page">
-	<!-- Hero Section -->
-	<section class="hero">
-		<div class="hero-badge">Historical proof</div>
-		<h1 class="hero-title">Loom coordination archive</h1>
-		<p class="hero-tagline">The continuity problem that led to Linear-first coordination</p>
-		<p class="hero-description">
-			Loom proved that agents need task ownership, checkpoints, routing, and recovery.
-			Current CREATE SOMETHING repo work now uses <strong>Linear as the source of truth</strong>
-			for tracked ownership, status, and evidence.
-		</p>
-		<a href="/products" class="hero-action">Proof and Receipts</a>
-	</section>
+<PerformanceCampaignOpening
+  eyebrow="Historical proof"
+  title="The continuity problem that led to Linear-first coordination."
+  lede="Loom proved that agents need task ownership, checkpoints, routing, and recovery. Current CREATE SOMETHING repo work now uses Linear as the source of truth for tracked ownership, status, and evidence."
+  density="compact"
+  media={{
+    src: '/images/performance-lab/trace-wake-natural.webp',
+    mobileSrc: '/images/performance-lab/trace-wake-natural-mobile.webp',
+    alt: 'Black-and-white wake leaving a visible trace across dark water'
+  }}
+  proof={[
+    { label: 'Loom', value: 'Archive' },
+    { label: 'Linear', value: 'Current' },
+    { label: 'Lesson', value: 'Receipts' }
+  ]}
+>
+  {#snippet actions()}
+    <Button href="#loom-archive-story">Inspect the archive boundary</Button>
+  {/snippet}
+</PerformanceCampaignOpening>
 
-	<!-- Install Section -->
-	<section class="install-section">
-		<h2 class="section-title">Legacy install references</h2>
-		<p class="section-subtitle">Kept for historical MCP users. New CREATE SOMETHING coordination should start in Linear.</p>
+<PerformanceNarrativeStage
+  id="loom-archive-story"
+  eyebrow="Coordination archive"
+  title="Keep the lesson. Name the current owner."
+  description="The archive separates current authority, durable lessons, and legacy reference in one inspectable sequence."
+  {scenes}
+  ariaLabel="Loom archive story"
+>
+  {#snippet artifact(_scene, index)}
+    {#if index === 0}
+      <div class="authority-map" aria-label="Current and historical coordination ownership">
+        <article data-state="archived">
+          <span>Historical proof</span>
+          <h3>Loom</h3>
+          <p>
+            Demonstrated persistent context, task routing, recovery checkpoints, and evidence-bound
+            completion.
+          </p>
+          <strong>Archive only</strong>
+        </article>
+        <div aria-hidden="true">-></div>
+        <article data-state="current">
+          <span>Current authority</span>
+          <h3>Linear</h3>
+          <p>
+            Owns tracked work, assignment, status, and evidence for the current CREATE SOMETHING
+            repository.
+          </p>
+          <strong>Source of truth</strong>
+        </article>
+      </div>
+    {:else if index === 1}
+      <div class="lesson-artifact">
+        <ol>
+          <li>
+            <span>01</span><strong>Continuity matters</strong>
+            <p>Context must survive when sessions end or ownership changes.</p>
+          </li>
+          <li>
+            <span>02</span><strong>Routing needs evidence</strong>
+            <p>Agent choice needs the task, cost, and proof surface.</p>
+          </li>
+          <li>
+            <span>03</span><strong>Progress needs receipts</strong>
+            <p>Done must survive outside the chat window.</p>
+          </li>
+        </ol>
+        <pre aria-label="Historical Loom workflow"><code
+            ><span># Historical MCP reference</span>
+loom work "Fix authentication bug" --agent claude-code
+loom checkpoint "JWT validation implemented"
+loom route lm-abc --strategy cheapest
+loom complete lm-abc --evidence "commit abc123"
 
-		<!-- Featured: One-click install (Tufte: primary action gets visual prominence) -->
-		<div class="install-featured">
-			<div class="install-card featured">
-				<div class="card-header">
-					<span class="card-icon">
-						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<path d="M5.5 3.21V20.8c0 .45.54.67.85.35l4.86-4.86a.5.5 0 0 1 .35-.15h6.87a.5.5 0 0 0 .35-.85L6.35 2.86a.5.5 0 0 0-.85.35Z" fill="currentColor"/>
-						</svg>
-					</span>
-					<span class="card-name">Cursor</span>
-					<span class="card-badge">One-click</span>
-				</div>
-				<a href={cursorDeepLink} class="install-button primary">
-					Install in Cursor
-				</a>
-				<p class="card-note">Opens Cursor with install prompt</p>
-			</div>
-		</div>
+<strong># Current repo coordination uses Linear.</strong></code
+          ></pre>
+      </div>
+    {:else}
+      <div class="archive-artifact">
+        <div class="install-grid" aria-label="Legacy Loom install references">
+          {#each installs as install}
+            <article class="install-card">
+              <div><span>{install.label}</span><small>{install.note}</small></div>
+              <code>{install.command}</code>
+              {#if install.href}
+                <a href={install.href}>Open legacy installer</a>
+              {:else}
+                <button type="button" onclick={() => copyCommand(install.id, install.command)}>
+                  {copied === install.id ? 'Copied' : 'Copy reference'}
+                </button>
+              {/if}
+            </article>
+          {/each}
+        </div>
 
-		<!-- Secondary options: Small multiples with consistent structure -->
-		<div class="install-grid">
-			<!-- Claude Desktop -->
-			<div class="install-card">
-				<div class="card-header">
-					<span class="card-icon">
-						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<path d="M12 3L13.5 8.5L19 7L14.5 11L19 15L13.5 13.5L12 19L10.5 13.5L5 15L9.5 11L5 7L10.5 8.5L12 3Z" fill="currentColor"/>
-						</svg>
-					</span>
-					<span class="card-name">Claude Desktop</span>
-				</div>
-				<button
-					class="install-button secondary"
-					onclick={() => copyToClipboard('npx --yes @createsomething/loom-mcp', (v) => copiedClaude = v)}
-				>
-					{copiedClaude ? 'Copied!' : 'Copy command'}
-				</button>
-				<p class="card-note">Add to claude_desktop_config.json</p>
-			</div>
+        <div class="tool-groups" aria-label="Legacy Loom tool surface">
+          {#each toolGroups as group}
+            <article>
+              <h3>{group.title}</h3>
+              <ul>
+                {#each group.tools as tool}<li><code>{tool}</code></li>{/each}
+              </ul>
+            </article>
+          {/each}
+        </div>
 
-			<!-- Windsurf -->
-			<div class="install-card">
-				<div class="card-header">
-					<span class="card-icon">
-						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<path d="M3 12C3 12 5 8 9 8C13 8 12 12 16 12C20 12 21 9 21 9" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-							<path d="M3 17C3 17 5 13 9 13C13 13 12 17 16 17C20 17 21 14 21 14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-						</svg>
-					</span>
-					<span class="card-name">Windsurf</span>
-				</div>
-				<button
-					class="install-button secondary"
-					onclick={() => copyToClipboard('{"mcpServers":{"loom":{"command":"npx","args":["@createsomething/loom-mcp"]}}}', (v) => copiedWindsurf = v)}
-				>
-					{copiedWindsurf ? 'Copied!' : 'Copy config'}
-				</button>
-				<p class="card-note">Settings → MCP → View raw config</p>
-			</div>
+        <div class="comparison-wrap">
+          <table>
+            <caption>Original Loom comparison, retained as historical context</caption>
+            <thead><tr><th>Feature</th><th>Beads</th><th>Gas Town</th><th>Loom</th></tr></thead>
+            <tbody>
+              <tr><td>Multi-agent coordination</td><td>No</td><td>No</td><td>Yes</td></tr>
+              <tr><td>Smart routing</td><td>No</td><td>Basic</td><td>Yes</td></tr>
+              <tr><td>Session memory</td><td>No</td><td>Yes</td><td>Yes</td></tr>
+              <tr><td>Crash recovery</td><td>No</td><td>Yes</td><td>Yes</td></tr>
+              <tr><td>Git sync</td><td>Yes</td><td>No</td><td>Yes</td></tr>
+              <tr><td>Ground integration</td><td>No</td><td>No</td><td>Yes</td></tr>
+              <tr><td>Cost optimization</td><td>No</td><td>No</td><td>Yes</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    {/if}
+  {/snippet}
+</PerformanceNarrativeStage>
 
-			<!-- VS Code + Copilot -->
-			<div class="install-card">
-				<div class="card-header">
-					<span class="card-icon">
-						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<path d="M17 2L7 11L17 20L19 18.5V3.5L17 2Z" fill="currentColor"/>
-							<path d="M7 11L2 8V14L7 11Z" fill="currentColor" opacity="0.7"/>
-							<path d="M17 2L7 11L2 8L17 2Z" fill="currentColor" opacity="0.85"/>
-							<path d="M17 20L7 11L2 14L17 20Z" fill="currentColor" opacity="0.85"/>
-						</svg>
-					</span>
-					<span class="card-name">VS Code</span>
-				</div>
-				<a href="vscode:extension/GitHub.copilot" class="install-button secondary">
-					Open Extensions
-				</a>
-				<p class="card-note">MCP Server → search "loom"</p>
-			</div>
-
-			<!-- Codex CLI -->
-			<div class="install-card">
-				<div class="card-header">
-					<span class="card-icon">
-						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<rect x="2" y="4" width="20" height="16" rx="2" fill="currentColor" opacity="0.15"/>
-							<rect x="2" y="4" width="20" height="16" rx="2" stroke="currentColor" stroke-width="2"/>
-							<path d="M6 9L10 12L6 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-							<path d="M12 15H18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-						</svg>
-					</span>
-					<span class="card-name">Codex CLI</span>
-				</div>
-				<button
-					class="install-button secondary"
-					onclick={() => copyToClipboard('codex mcp add loom --command "npx @createsomething/loom-mcp"', (v) => copiedCodex = v)}
-				>
-					{copiedCodex ? 'Copied!' : 'Copy command'}
-				</button>
-				<p class="card-note">codex mcp add loom</p>
-			</div>
-
-			<!-- npm (fallback) -->
-			<div class="install-card">
-				<div class="card-header">
-					<span class="card-icon">
-						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<rect x="2" y="6" width="20" height="12" rx="1" fill="currentColor"/>
-							<path d="M5 15V9H8V14H9.5V9H11V15H5Z" fill="var(--color-performance-bg-surface)"/>
-							<path d="M12.5 9V15H15.5V10.5H17V15H19V9H12.5Z" fill="var(--color-performance-bg-surface)"/>
-						</svg>
-					</span>
-					<span class="card-name">npm</span>
-				</div>
-				<button
-					class="install-button secondary"
-					onclick={() => copyToClipboard('npm install -g @createsomething/loom-mcp', (v) => copiedNpm = v)}
-				>
-					{copiedNpm ? 'Copied!' : 'Copy command'}
-				</button>
-				<p class="card-note">Works with any MCP client</p>
-			</div>
-		</div>
-	</section>
-
-	<!-- How It Works -->
-	<section class="how-section">
-		<h2 class="section-title">What Loom proved</h2>
-
-		<div class="how-grid">
-			<div class="how-step">
-				<span class="step-number">1</span>
-				<h3 class="step-title">Continuity matters</h3>
-				<p class="step-description">Agent work needs persistent context when sessions end or hands change.</p>
-			</div>
-			<div class="how-step">
-				<span class="step-number">2</span>
-				<h3 class="step-title">Routing needs evidence</h3>
-				<p class="step-description">Agent choice only matters when the task, cost, and proof surface are visible.</p>
-			</div>
-			<div class="how-step">
-				<span class="step-number">3</span>
-				<h3 class="step-title">Progress needs receipts</h3>
-				<p class="step-description">A task is not done until evidence survives outside the chat window.</p>
-			</div>
-		</div>
-
-		<div class="code-example">
-			<pre><code><span class="comment"># Legacy MCP reference. Current repo coordination uses Linear.</span>
-<span class="comment"># Start working (create + claim in one call)</span>
-<span class="command">loom work</span> <span class="string">"Fix authentication bug"</span> --agent claude-code
-
-<span class="comment"># Save progress (crash recovery point)</span>
-<span class="command">loom checkpoint</span> <span class="string">"JWT validation implemented"</span>
-
-<span class="comment"># Get routing recommendation</span>
-<span class="command">loom route</span> lm-abc --strategy cheapest
-<span class="success">→ Route to: gemini (score: 0.85, cost: $0.001/1k)</span>
-
-<span class="comment"># Complete with evidence</span>
-<span class="command">loom complete</span> lm-abc --evidence <span class="string">"commit abc123"</span></code></pre>
-		</div>
-	</section>
-
-	<!-- Comparison Table -->
-	<section class="comparison-section">
-		<h2 class="section-title">How Loom compares</h2>
-		<p class="section-subtitle">Different tools solve different problems</p>
-
-		<div class="comparison-table-wrapper">
-			<table class="comparison-table">
-				<thead>
-					<tr>
-						<th>Feature</th>
-						<th>Beads</th>
-						<th>Gas Town</th>
-						<th class="highlight">Loom</th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr>
-						<td>Multi-agent coordination</td>
-						<td class="no">No</td>
-						<td class="no">No</td>
-						<td class="yes">Yes</td>
-					</tr>
-					<tr>
-						<td>Smart routing</td>
-						<td class="no">No</td>
-						<td class="partial">Basic</td>
-						<td class="yes">Yes</td>
-					</tr>
-					<tr>
-						<td>Session memory</td>
-						<td class="no">No</td>
-						<td class="yes">Yes</td>
-						<td class="yes">Yes</td>
-					</tr>
-					<tr>
-						<td>Crash recovery</td>
-						<td class="no">No</td>
-						<td class="yes">Yes</td>
-						<td class="yes">Yes</td>
-					</tr>
-					<tr>
-						<td>Git sync</td>
-						<td class="yes">Yes</td>
-						<td class="no">No</td>
-						<td class="yes">Yes</td>
-					</tr>
-					<tr>
-						<td>Ground integration</td>
-						<td class="no">No</td>
-						<td class="no">No</td>
-						<td class="yes">Yes</td>
-					</tr>
-					<tr>
-						<td>Cost optimization</td>
-						<td class="no">No</td>
-						<td class="no">No</td>
-						<td class="yes">Yes</td>
-					</tr>
-				</tbody>
-			</table>
-		</div>
-	</section>
-
-	<!-- Tools Section -->
-	<section class="tools-section">
-		<h2 class="section-title">Legacy tool surface</h2>
-		<p class="section-subtitle">These tools remain useful as design evidence. They are not the current repo task source of truth.</p>
-
-		<div class="tools-grid">
-			<div class="tool-category">
-				<h3 class="category-title">Manage tasks</h3>
-				<ul class="tool-list">
-					<li><code>loom_work</code> — Start working on something right now</li>
-					<li><code>loom_create</code> — Create a task for later</li>
-					<li><code>loom_spawn</code> — Break a task into smaller pieces</li>
-					<li><code>loom_ready</code> — See what's available to work on</li>
-					<li><code>loom_complete</code> — Mark something done</li>
-				</ul>
-			</div>
-
-			<div class="tool-category">
-				<h3 class="category-title">Route work</h3>
-				<ul class="tool-list">
-					<li><code>loom_route</code> — Get a suggestion for which agent to use</li>
-					<li><code>loom_agents</code> — See all your configured agents</li>
-					<li><code>loom_analytics</code> — See what's worked well in the past</li>
-					<li><code>loom_record_execution</code> — Help Loom learn from results</li>
-				</ul>
-			</div>
-
-			<div class="tool-category">
-				<h3 class="category-title">Remember context</h3>
-				<ul class="tool-list">
-					<li><code>loom_checkpoint</code> — Save your progress</li>
-					<li><code>loom_resume</code> — Pick up where you left off</li>
-					<li><code>loom_get_resume_brief</code> — Get a summary of what happened</li>
-					<li><code>loom_update_context</code> — Note what files you changed, decisions you made</li>
-				</ul>
-			</div>
-
-			<div class="tool-category">
-				<h3 class="category-title">Plan ahead</h3>
-				<ul class="tool-list">
-					<li><code>loom_formulas</code> — Use workflow templates</li>
-					<li><code>loom_discuss</code> — Talk through preferences before starting</li>
-					<li><code>loom_verify_plan</code> — Check if a plan makes sense</li>
-				</ul>
-			</div>
-		</div>
-	</section>
-
-	<!-- Case Study -->
-	<section class="case-study-section">
-		<div class="case-study-card">
-			<span class="case-study-label">Key Feature</span>
-			<h3 class="case-study-title">Use the right coordination surface for the job</h3>
-			<p class="case-study-description">
-				Loom showed why agent work needs routing, recovery, and receipts. In this repository,
-				Linear now owns tracked work while product pages keep Loom as historical proof of the
-				coordination problem.
-			</p>
-			<div class="case-study-stats">
-				<div class="stat">
-					<span class="stat-value">5+</span>
-					<span class="stat-label">agent backends</span>
-				</div>
-				<div class="stat">
-					<span class="stat-value">3</span>
-					<span class="stat-label">routing strategies</span>
-				</div>
-				<div class="stat">
-					<span class="stat-value">30+</span>
-					<span class="stat-label">MCP tools</span>
-				</div>
-			</div>
-			<a href="https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/loom" class="case-study-link">
-				Read the documentation →
-			</a>
-		</div>
-	</section>
-
-	<!-- Links -->
-	<section class="links-section">
-		<div class="links-grid">
-			<a href="/products" class="link-card">
-				<span class="link-icon">
-					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-						<path d="M4 6h16M4 12h16M4 18h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-					</svg>
-				</span>
-				<span class="link-text">Proof and Receipts</span>
-			</a>
-			<a href="https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/loom" class="link-card">
-				<span class="link-icon">
-					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-						<path d="M12 2C6.477 2 2 6.477 2 12C2 16.419 4.865 20.166 8.839 21.489C9.339 21.581 9.521 21.273 9.521 21.007C9.521 20.769 9.513 20.14 9.508 19.305C6.726 19.907 6.139 17.962 6.139 17.962C5.685 16.812 5.029 16.504 5.029 16.504C4.121 15.881 5.098 15.894 5.098 15.894C6.102 15.964 6.629 16.926 6.629 16.926C7.521 18.455 8.97 18.013 9.539 17.756C9.631 17.11 9.889 16.669 10.175 16.42C7.954 16.168 5.62 15.31 5.62 11.477C5.62 10.386 6.01 9.494 6.649 8.794C6.546 8.542 6.203 7.524 6.747 6.148C6.747 6.148 7.587 5.88 9.497 7.173C10.295 6.95 11.15 6.839 12 6.835C12.85 6.839 13.705 6.95 14.505 7.173C16.413 5.88 17.251 6.148 17.251 6.148C17.797 7.524 17.453 8.542 17.351 8.794C17.991 9.494 18.379 10.386 18.379 11.477C18.379 15.32 16.042 16.165 13.813 16.412C14.172 16.72 14.492 17.329 14.492 18.263C14.492 19.6 14.48 20.679 14.48 21.007C14.48 21.275 14.66 21.586 15.168 21.488C19.138 20.163 22 16.418 22 12C22 6.477 17.523 2 12 2Z" fill="currentColor"/>
-					</svg>
-				</span>
-				<span class="link-text">GitHub</span>
-			</a>
-			<a href="https://www.npmjs.com/package/@createsomething/loom-mcp" class="link-card">
-				<span class="link-icon">
-					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-						<rect x="2" y="2" width="20" height="20" fill="currentColor"/>
-						<path d="M5 19V5H11V17H14V5H19V19H5Z" fill="var(--color-performance-bg-surface)"/>
-					</svg>
-				</span>
-				<span class="link-text">npm</span>
-			</a>
-			<a href="/products/ground" class="link-card">
-				<span class="link-icon">
-					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-						<path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" stroke-width="2"/>
-						<path d="M12 6V12L16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-					</svg>
-				</span>
-				<span class="link-text">Ground MCP</span>
-			</a>
-		</div>
-	</section>
-</main>
+<PerformanceConversionHandoff
+  eyebrow="Current coordination path"
+  title="Route active work to its current source of truth."
+  description="Use this page to understand the coordination lesson. Use Linear-backed workflows for current ownership and evidence, or inspect the archive directly when historical implementation detail matters."
+  density="compact"
+  handoff={{
+    owner: 'Current work owner',
+    authority: 'Linear issue state',
+    proof: 'Durable execution evidence',
+    state: 'review'
+  }}
+>
+  {#snippet actions()}
+    <Button href="/products">Continue to products</Button>
+    <Button href="/products/ground" variant="secondary">Inspect Ground MCP</Button>
+    <Button
+      href="https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/loom"
+      variant="secondary">Read the Loom archive</Button
+    >
+  {/snippet}
+</PerformanceConversionHandoff>
 
 <style>
-	.loom-page {
-		max-width: var(--content-width-xl);
-		margin: 0 auto;
-		padding: var(--space-performance-xl) var(--space-performance-lg);
-		background: var(--color-performance-panel, #ffffff);
-		color: var(--color-performance-ink, #090909);
-		--color-performance-fg-primary: var(--color-performance-ink, #090909);
-		--color-performance-fg-secondary: #252a34;
-		--color-performance-fg-muted: var(--color-performance-muted, #5e6268);
-		--color-performance-fg-tertiary: var(--color-performance-muted, #5e6268);
-		--color-performance-bg-pure: var(--color-performance-panel, #ffffff);
-		--color-performance-bg-surface: var(--color-performance-panel, #ffffff);
-		--color-performance-bg-subtle: var(--color-performance-paper, #f3f3f0);
-		--color-performance-border-emphasis: var(--color-performance-line, #d7d7d2);
-		--color-performance-border-strong: #c9c9c9;
-	}
-
-	/* Hero */
-	.hero {
-		text-align: center;
-		padding: 6rem 0 var(--space-performance-xl);
-		border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
-		background:
-			linear-gradient(90deg, rgba(10, 14, 25, 0.035) 1px, transparent 1px) 0 0 / 4.25rem
-				4.25rem,
-			linear-gradient(180deg, var(--color-performance-panel, #ffffff) 0%, #fbfbfb 100%);
-	}
-
-	.hero-badge {
-		display: inline-block;
-		padding: 0.25rem 1rem;
-		font-size: var(--text-performance-body-sm);
-		font-weight: var(--font-performance-semibold);
-		color: var(--color-performance-success);
-		background: var(--color-performance-success-muted);
-		border-radius: var(--radius-performance-scale-full);
-		margin-bottom: var(--space-performance-md);
-	}
-
-	.hero-title {
-		font-size: var(--text-performance-display);
-		font-weight: var(--font-performance-bold);
-		color: var(--color-performance-fg-primary);
-		margin-bottom: var(--space-performance-xs);
-	}
-
-	.hero-tagline {
-		font-size: var(--text-performance-h3);
-		color: var(--color-performance-fg-muted);
-		font-style: italic;
-		margin-bottom: var(--space-performance-lg);
-	}
-
-	.hero-description {
-		font-size: var(--text-performance-body-lg);
-		color: var(--color-performance-fg-tertiary);
-		line-height: 1.7;
-		max-width: var(--content-width-xl);
-		margin: 0 auto;
-	}
-
-	.hero-description strong {
-		color: var(--color-performance-fg-secondary);
-	}
-
-	.hero-action {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		margin-top: var(--space-performance-md);
-		padding: var(--space-performance-xs) var(--space-performance-md);
-		border: 1px solid var(--color-performance-fg-primary);
-		border-radius: var(--radius-performance-scale-sm);
-		background: var(--color-performance-fg-primary);
-		color: var(--color-performance-bg-pure);
-		font-size: var(--text-performance-body-sm);
-		font-weight: var(--font-performance-semibold);
-		text-decoration: none;
-		transition: opacity var(--duration-performance-micro) var(--ease-performance-standard);
-	}
-
-	.hero-action:hover {
-		opacity: 0.9;
-	}
-
-	/* Section Styles */
-	.section-title {
-		font-size: var(--text-performance-h2);
-		font-weight: var(--font-performance-bold);
-		color: var(--color-performance-fg-primary);
-		text-align: center;
-		margin-bottom: var(--space-performance-xs);
-	}
-
-	.section-subtitle {
-		font-size: var(--text-performance-body);
-		color: var(--color-performance-fg-muted);
-		text-align: center;
-		margin-bottom: var(--space-performance-lg);
-	}
-
-	/* Install Section - Tufte: Clear hierarchy, Golden Ratio proportions */
-	.install-section {
-		padding: var(--space-performance-xl) 0;
-	}
-
-	/* Featured card container - Golden Ratio: ~61.8% width centered */
-	.install-featured {
-		max-width: var(--content-width-xl);
-		margin: 0 auto var(--space-performance-lg);
-	}
-
-	/* Featured card - elevated prominence for one-click action */
-	.install-card.featured {
-		padding: var(--space-performance-lg);
-		background: var(--color-performance-bg-surface);
-		border: 1px solid var(--color-performance-border-emphasis);
-		border-radius: var(--radius-performance-scale-lg);
-		transition: border-color var(--duration-performance-micro) var(--ease-performance-standard);
-		text-align: center;
-	}
-
-	.install-card.featured .card-header {
-		justify-content: center;
-	}
-
-	.install-card.featured:hover {
-		border-color: var(--color-performance-border-strong);
-	}
-
-	.install-card.featured .card-badge {
-		color: var(--color-performance-success);
-		background: var(--color-performance-success-muted);
-	}
-
-	/* Secondary cards grid - 6-column grid for flexible row layouts */
-	.install-grid {
-		display: grid;
-		grid-template-columns: repeat(6, 1fr);
-		gap: var(--space-performance-sm);
-	}
-
-	/* Top row: 3 cards, each spans 2 columns */
-	.install-grid .install-card:nth-child(-n+3) {
-		grid-column: span 2;
-	}
-
-	/* Bottom row: 2 cards, each spans 3 columns (fills full width) */
-	.install-grid .install-card:nth-child(n+4) {
-		grid-column: span 3;
-	}
-
-	/* Secondary cards - uniform structure, reduced visual weight */
-	.install-card {
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-performance-xs);
-		padding: var(--space-performance-sm);
-		background: var(--color-performance-bg-surface);
-		border-radius: var(--radius-performance-scale-md);
-		transition: border-color var(--duration-performance-micro) var(--ease-performance-standard);
-	}
-
-	.install-card:hover {
-		border-color: var(--color-performance-border-emphasis);
-	}
-
-	/* Card header - tighter spacing for secondary cards */
-	.card-header {
-		display: flex;
-		align-items: center;
-		gap: var(--space-performance-xs);
-		margin-bottom: var(--space-performance-xs);
-	}
-
-	.card-icon {
-		color: var(--color-performance-fg-muted);
-		flex-shrink: 0;
-	}
-
-	.card-name {
-		font-size: var(--text-performance-body-sm);
-		font-weight: var(--font-performance-semibold);
-		color: var(--color-performance-fg-primary);
-		flex-grow: 1;
-		white-space: nowrap;
-	}
-
-	/* Featured card uses larger name */
-	.install-card.featured .card-name {
-		font-size: var(--text-performance-body);
-	}
-
-	.card-badge {
-		font-size: var(--text-performance-caption);
-		padding: 0.125rem 0.5rem;
-		border-radius: var(--radius-performance-scale-full);
-	}
-
-	/* Buttons - consistent across all cards */
-	.install-button {
-		display: block;
-		width: 100%;
-		padding: var(--space-performance-xs) var(--space-performance-sm);
-		font-size: var(--text-performance-caption);
-		font-weight: var(--font-performance-semibold);
-		text-align: center;
-		border-radius: var(--radius-performance-scale-sm);
-		border: none;
-		cursor: pointer;
-		transition: opacity var(--duration-performance-micro) var(--ease-performance-standard);
-	}
-
-	.install-card.featured .install-button {
-		padding: var(--space-performance-sm) var(--space-performance-md);
-		font-size: var(--text-performance-body-sm);
-		border-radius: var(--radius-performance-scale-md);
-	}
-
-	.install-button:hover {
-		opacity: 0.9;
-	}
-
-	.install-button.primary {
-		background: var(--color-performance-fg-primary);
-		color: var(--color-performance-bg-pure);
-	}
-
-	.install-button.secondary {
-		background: var(--color-performance-bg-subtle);
-		color: var(--color-performance-fg-secondary);
-	}
-
-	/* Card note - Tufte: minimal ink, maximum information */
-	.card-note {
-		font-size: 0.6875rem;
-		color: var(--color-performance-fg-muted);
-		line-height: 1.3;
-	}
-
-	.install-card.featured .card-note {
-		font-size: var(--text-performance-caption);
-	}
-
-	/* How Section */
-	.how-section {
-		padding: var(--space-performance-xl) 0;
-	}
-
-	.how-grid {
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: var(--space-performance-lg);
-		margin-bottom: var(--space-performance-xl);
-	}
-
-	.how-step {
-		text-align: center;
-	}
-
-	.step-number {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		width: 2.5rem;
-		height: 2.5rem;
-		font-size: var(--text-performance-body);
-		font-weight: var(--font-performance-bold);
-		color: var(--color-performance-fg-primary);
-		background: var(--color-performance-bg-subtle);
-		border-radius: var(--radius-performance-scale-full);
-		margin-bottom: var(--space-performance-sm);
-	}
-
-	.step-title {
-		font-size: var(--text-performance-body);
-		font-weight: var(--font-performance-semibold);
-		color: var(--color-performance-fg-primary);
-		margin-bottom: var(--space-performance-xs);
-	}
-
-	.step-description {
-		font-size: var(--text-performance-body-sm);
-		color: var(--color-performance-fg-tertiary);
-	}
-
-	.code-example {
-		border-radius: var(--radius-performance-scale-lg);
-		padding: var(--space-performance-lg);
-		overflow-x: auto;
-	}
-
-	.code-example pre {
-		margin: 0;
-		font-family: monospace;
-		font-size: var(--text-performance-body-sm);
-		line-height: 1.6;
-	}
-
-	.code-example .comment {
-		color: var(--color-performance-fg-muted);
-	}
-
-	.code-example .command {
-		color: var(--color-performance-success);
-		font-weight: var(--font-performance-semibold);
-	}
-
-	.code-example .string {
-		color: var(--color-performance-warning);
-	}
-
-	.code-example .success {
-		color: var(--color-performance-success);
-	}
-
-	/* Comparison Section */
-	.comparison-section {
-		padding: var(--space-performance-xl) 0;
-	}
-
-	.comparison-table-wrapper {
-		overflow-x: auto;
-	}
-
-	.comparison-table {
-		width: 100%;
-		border-collapse: collapse;
-		font-size: var(--text-performance-body-sm);
-	}
-
-	.comparison-table th,
-	.comparison-table td {
-		padding: var(--space-performance-sm) var(--space-performance-md);
-		text-align: left;
-	}
-
-	.comparison-table th {
-		font-weight: var(--font-performance-semibold);
-		color: var(--color-performance-fg-primary);
-		background: var(--color-performance-bg-subtle);
-	}
-
-	.comparison-table th.highlight {
-		color: var(--color-performance-success);
-		background: var(--color-performance-success-muted);
-	}
-
-	.comparison-table td {
-		color: var(--color-performance-fg-tertiary);
-	}
-
-	.comparison-table td.yes {
-		color: var(--color-performance-success);
-		font-weight: var(--font-performance-semibold);
-	}
-
-	.comparison-table td.no {
-		color: var(--color-performance-fg-muted);
-	}
-
-	.comparison-table td.partial {
-		color: var(--color-performance-warning);
-	}
-
-	/* Tools Section */
-	.tools-section {
-		padding: var(--space-performance-xl) 0;
-	}
-
-	.tools-grid {
-		display: grid;
-		grid-template-columns: repeat(2, 1fr);
-		gap: var(--space-performance-lg);
-	}
-
-	.tool-category {
-		padding: var(--space-performance-md);
-		background: var(--color-performance-bg-surface);
-		border-radius: var(--radius-performance-scale-lg);
-	}
-
-	.category-title {
-		font-size: var(--text-performance-body-sm);
-		font-weight: var(--font-performance-semibold);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		color: var(--color-performance-fg-muted);
-		margin-bottom: var(--space-performance-sm);
-	}
-
-	.tool-list {
-		list-style: none;
-		padding: 0;
-		margin: 0;
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-performance-xs);
-	}
-
-	.tool-list li {
-		font-size: var(--text-performance-body-sm);
-		color: var(--color-performance-fg-tertiary);
-	}
-
-	.tool-list code {
-		font-family: monospace;
-		color: var(--color-performance-fg-secondary);
-		background: var(--color-performance-bg-subtle);
-		padding: 0.125rem 0.375rem;
-		border-radius: var(--radius-performance-scale-sm);
-	}
-
-	/* Case Study */
-	.case-study-section {
-		padding: var(--space-performance-xl) 0;
-	}
-
-	.case-study-card {
-		text-align: center;
-		padding: var(--space-performance-xl);
-		border-radius: var(--radius-performance-scale-lg);
-	}
-
-	.case-study-label {
-		font-size: var(--text-performance-caption);
-		font-weight: var(--font-performance-semibold);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		color: var(--color-performance-fg-muted);
-	}
-
-	.case-study-title {
-		font-size: var(--text-performance-h2);
-		font-weight: var(--font-performance-bold);
-		color: var(--color-performance-fg-primary);
-		margin: var(--space-performance-sm) 0;
-	}
-
-	.case-study-description {
-		font-size: var(--text-performance-body);
-		color: var(--color-performance-fg-tertiary);
-		max-width: var(--content-width-xl);
-		margin: 0 auto var(--space-performance-lg);
-	}
-
-	.case-study-stats {
-		display: flex;
-		justify-content: center;
-		gap: var(--space-performance-xl);
-		margin-bottom: var(--space-performance-lg);
-	}
-
-	.stat {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-	}
-
-	.stat-value {
-		font-size: var(--text-performance-h2);
-		font-weight: var(--font-performance-bold);
-		color: var(--color-performance-fg-primary);
-	}
-
-	.stat-label {
-		font-size: var(--text-performance-caption);
-		color: var(--color-performance-fg-muted);
-	}
-
-	.case-study-link {
-		font-size: var(--text-performance-body);
-		font-weight: var(--font-performance-semibold);
-		color: var(--color-performance-fg-secondary);
-		transition: color var(--duration-performance-micro) var(--ease-performance-standard);
-	}
-
-	.case-study-link:hover {
-		color: var(--color-performance-fg-primary);
-	}
-
-	/* Links Section */
-	.links-section {
-		padding: var(--space-performance-xl) 0;
-	}
-
-	.links-grid {
-		display: flex;
-		justify-content: center;
-		gap: var(--space-performance-md);
-		flex-wrap: wrap;
-	}
-
-	.link-card {
-		display: flex;
-		align-items: center;
-		gap: var(--space-performance-xs);
-		padding: var(--space-performance-sm) var(--space-performance-md);
-		background: var(--color-performance-bg-surface);
-		border-radius: var(--radius-performance-scale-full);
-		font-size: var(--text-performance-body-sm);
-		color: var(--color-performance-fg-secondary);
-		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
-	}
-
-	.link-card:hover {
-		border-color: var(--color-performance-border-emphasis);
-		color: var(--color-performance-fg-primary);
-	}
-
-	.link-icon {
-		display: flex;
-	}
-
-	/* Responsive */
-	@media (max-width: 768px) {
-		.hero-title {
-			font-size: var(--text-performance-h1);
-		}
-
-		/* Reset to simple 2-column grid on mobile */
-		.install-grid {
-			grid-template-columns: repeat(2, 1fr);
-		}
-
-		.install-grid .install-card:nth-child(-n+3),
-		.install-grid .install-card:nth-child(n+4) {
-			grid-column: span 1;
-		}
-
-		/* Last card spans full width if odd count */
-		.install-grid .install-card:last-child:nth-child(odd) {
-			grid-column: span 2;
-		}
-
-		.how-grid {
-			grid-template-columns: 1fr;
-		}
-
-		.tools-grid {
-			grid-template-columns: 1fr;
-		}
-
-		.case-study-stats {
-			flex-direction: column;
-			gap: var(--space-performance-md);
-		}
-
-		.comparison-table {
-			font-size: var(--text-performance-caption);
-		}
-
-		.comparison-table th,
-		.comparison-table td {
-			padding: var(--space-performance-xs) var(--space-performance-sm);
-		}
-	}
-
-	@media (max-width: 480px) {
-		.install-grid {
-			grid-template-columns: 1fr;
-		}
-
-		.install-featured {
-			max-width: 100%;
-		}
-	}
+  .authority-map,
+  .lesson-artifact {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    gap: 1rem;
+    align-items: stretch;
+  }
+  .authority-map article {
+    display: grid;
+    align-content: start;
+    gap: 0.65rem;
+    padding: 1rem;
+    border: 1px solid var(--color-performance-line);
+    background: var(--color-performance-panel);
+  }
+  .authority-map > div {
+    align-self: center;
+    font-family: var(--font-performance-mono);
+  }
+  .authority-map article span,
+  .install-card span {
+    font-family: var(--font-performance-mono);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+  }
+  .authority-map article h3 {
+    margin: 0;
+    font-size: 1.6rem;
+  }
+  .authority-map article p {
+    margin: 0;
+    color: var(--color-performance-muted);
+    line-height: 1.5;
+  }
+  .authority-map article strong {
+    align-self: end;
+    padding-top: 1rem;
+    border-top: 1px solid var(--color-performance-line);
+  }
+  .authority-map article[data-state='current'] {
+    border-top: 4px solid var(--color-performance-growth, #007a4d);
+  }
+  .authority-map article[data-state='archived'] {
+    border-top: 4px solid var(--color-performance-muted, #6b7280);
+  }
+
+  .lesson-artifact {
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  }
+  .lesson-artifact ol {
+    display: grid;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--color-performance-line);
+    list-style: none;
+  }
+  .lesson-artifact li {
+    display: grid;
+    grid-template-columns: 2.5rem 1fr;
+    gap: 0.25rem 0.75rem;
+    padding: 0.85rem 0;
+    border-bottom: 1px solid var(--color-performance-line);
+  }
+  .lesson-artifact li span {
+    grid-row: 1 / span 2;
+    font-family: var(--font-performance-mono);
+    font-size: 0.7rem;
+  }
+  .lesson-artifact li p {
+    margin: 0;
+    color: var(--color-performance-muted);
+    font-size: 0.85rem;
+  }
+  .lesson-artifact pre {
+    min-width: 0;
+    margin: 0;
+    padding: 1rem;
+    overflow: auto;
+    background: var(--color-performance-ink);
+    color: #fff;
+    font-size: 0.78rem;
+    line-height: 1.65;
+  }
+  .lesson-artifact pre span {
+    color: #9ca3af;
+  }
+  .lesson-artifact pre strong {
+    color: #ff8c5a;
+  }
+
+  .archive-artifact {
+    display: grid;
+    gap: 1rem;
+  }
+  .install-grid,
+  .tool-groups {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+  .install-card,
+  .tool-groups article {
+    min-width: 0;
+    padding: 1rem;
+    border: 1px solid var(--color-performance-line);
+    background: var(--color-performance-panel);
+  }
+  .install-card {
+    display: grid;
+    gap: 0.7rem;
+  }
+  .install-card > div {
+    display: grid;
+    gap: 0.2rem;
+  }
+  .install-card small {
+    color: var(--color-performance-muted);
+  }
+  .install-card code {
+    overflow-wrap: anywhere;
+    font-size: 0.76rem;
+    line-height: 1.5;
+  }
+  .install-card :is(button, a) {
+    display: inline-flex;
+    min-height: 2.5rem;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--color-performance-ink);
+    background: var(--color-performance-ink);
+    color: #fff;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .tool-groups h3 {
+    margin: 0 0 0.75rem;
+    font-size: 1rem;
+  }
+  .tool-groups ul {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.45rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .tool-groups code {
+    overflow-wrap: anywhere;
+    font-size: 0.72rem;
+  }
+  .comparison-wrap {
+    max-width: 100%;
+    overflow-x: auto;
+    border: 1px solid var(--color-performance-line);
+  }
+  .comparison-wrap table {
+    width: 100%;
+    min-width: 38rem;
+    border-collapse: collapse;
+    background: var(--color-performance-panel);
+    font-size: 0.82rem;
+  }
+  .comparison-wrap caption {
+    padding: 0.8rem;
+    text-align: left;
+    font-family: var(--font-performance-mono);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+  }
+  .comparison-wrap :is(th, td) {
+    padding: 0.7rem;
+    border-top: 1px solid var(--color-performance-line);
+    text-align: left;
+  }
+
+  @media (max-width: 48rem) {
+    .authority-map,
+    .lesson-artifact,
+    .install-grid,
+    .tool-groups {
+      grid-template-columns: 1fr;
+    }
+    .authority-map > div {
+      justify-self: center;
+      rotate: 90deg;
+    }
+  }
 </style>

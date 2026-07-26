@@ -35,3 +35,23 @@ test('signed OAuth access tokens enforce cryptographic expiration', async () => 
 	assert.ok(await validateJWT(valid, keys.publicKey));
 	assert.equal(await validateJWT(expired, keys.publicKey), null);
 });
+
+test('signed OAuth tokens validate against the configured non-production issuer only', async () => {
+	const keys = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify']);
+	const now = Math.floor(Date.now() / 1000);
+	const previewIssuer = 'https://identity-preview.example';
+	const token = await sign({
+		sub: 'identity-subject',
+		email: 'reviewer@webflow.com',
+		tier: 'free',
+		source: 'io',
+		iss: previewIssuer,
+		aud: ['https://control-preview.example/mcp'],
+		iat: now - 1,
+		exp: now + 60,
+	}, keys.privateKey);
+
+	assert.ok(await validateJWT(token, keys.publicKey, previewIssuer));
+	assert.equal(await validateJWT(token, keys.publicKey), null);
+	assert.equal(await validateJWT(token, keys.publicKey, 'https://identity-other.example'), null);
+});

@@ -1,0 +1,1282 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://createsomething.agency/schemas/flow.business-digital-thread.v1.json",
+  "title": "CREATE SOMETHING Business Digital Thread v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "threadId",
+    "tenantId",
+    "businessId",
+    "recordedAt",
+    "records",
+    "links",
+    "provenance",
+    "exportManifest",
+    "integrity"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "flow.business-digital-thread.v1" },
+    "threadId": { "$ref": "#/$defs/canonicalId" },
+    "tenantId": { "$ref": "#/$defs/tenantId" },
+    "businessId": { "$ref": "#/$defs/canonicalId" },
+    "recordedAt": { "$ref": "#/$defs/instant" },
+    "records": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/recordRevision" }
+    },
+    "links": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/linkRevision" }
+    },
+    "provenance": { "$ref": "#/$defs/provenance" },
+    "exportManifest": { "$ref": "#/$defs/exportManifest" },
+    "integrity": { "$ref": "#/$defs/threadIntegrity" }
+  },
+  "$defs": {
+    "instant": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]{3})?Z$"
+    },
+    "canonicalId": {
+      "type": "string",
+      "pattern": "^bdt:[a-z0-9][a-z0-9._-]{1,63}:[a-z_]+:[a-z0-9][a-z0-9._-]{1,127}$"
+    },
+    "revisionId": {
+      "type": "string",
+      "pattern": "^bdtr:[a-z0-9][a-z0-9._-]{1,63}:[a-z_]+:[a-z0-9][a-z0-9._-]{1,127}:r[1-9][0-9]*$"
+    },
+    "linkId": {
+      "type": "string",
+      "pattern": "^bdtl:[a-z0-9][a-z0-9._-]{1,63}:[a-z_]+:[a-z0-9][a-z0-9._-]{1,127}$"
+    },
+    "linkRevisionId": {
+      "type": "string",
+      "pattern": "^bdtlr:[a-z0-9][a-z0-9._-]{1,63}:[a-z_]+:[a-z0-9][a-z0-9._-]{1,127}:r[1-9][0-9]*$"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^tenant:[a-z0-9][a-z0-9._-]{1,127}$"
+    },
+    "hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "nonEmptyString": { "type": "string", "minLength": 1 },
+    "stringArray": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/nonEmptyString" },
+      "uniqueItems": true
+    },
+    "idArray": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/canonicalId" },
+      "uniqueItems": true
+    },
+    "revisionIdArray": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/revisionId" },
+      "uniqueItems": true
+    },
+    "interval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "to"],
+      "properties": {
+        "from": { "$ref": "#/$defs/instant" },
+        "to": {
+          "oneOf": [{ "$ref": "#/$defs/instant" }, { "type": "null" }]
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "externalId", "observedAt", "adapterId", "evidenceRefs"],
+      "properties": {
+        "provider": { "$ref": "#/$defs/nonEmptyString" },
+        "externalId": { "$ref": "#/$defs/nonEmptyString" },
+        "observedAt": { "$ref": "#/$defs/instant" },
+        "adapterId": { "$ref": "#/$defs/nonEmptyString" },
+        "artifactRef": { "$ref": "#/$defs/nonEmptyString" },
+        "evidenceRefs": { "$ref": "#/$defs/stringArray" }
+      }
+    },
+    "revisionIntegrity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "contentHash"],
+      "properties": {
+        "algorithm": { "const": "sha256" },
+        "contentHash": { "$ref": "#/$defs/hash" },
+        "previousRevisionHash": { "$ref": "#/$defs/hash" }
+      }
+    },
+    "recordBase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "revisionId",
+        "tenantId",
+        "kind",
+        "title",
+        "validTime",
+        "recordedTime",
+        "source",
+        "payload",
+        "integrity"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/canonicalId" },
+        "revisionId": { "$ref": "#/$defs/revisionId" },
+        "tenantId": { "$ref": "#/$defs/tenantId" },
+        "kind": { "$ref": "#/$defs/nonEmptyString" },
+        "title": { "$ref": "#/$defs/nonEmptyString" },
+        "validTime": { "$ref": "#/$defs/interval" },
+        "recordedTime": { "$ref": "#/$defs/interval" },
+        "supersedesRevisionId": { "$ref": "#/$defs/revisionId" },
+        "correctsRevisionId": { "$ref": "#/$defs/revisionId" },
+        "source": { "$ref": "#/$defs/source" },
+        "payload": { "type": "object" },
+        "integrity": { "$ref": "#/$defs/revisionIntegrity" }
+      }
+    },
+    "recordRevision": {
+      "oneOf": [
+        { "$ref": "#/$defs/businessRecord" },
+        { "$ref": "#/$defs/initiativeRecord" },
+        { "$ref": "#/$defs/partyRecord" },
+        { "$ref": "#/$defs/authorityGrantRecord" },
+        { "$ref": "#/$defs/intentRecord" },
+        { "$ref": "#/$defs/requirementRecord" },
+        { "$ref": "#/$defs/interfaceRecord" },
+        { "$ref": "#/$defs/decisionRecord" },
+        { "$ref": "#/$defs/baselineRecord" },
+        { "$ref": "#/$defs/changeRecord" },
+        { "$ref": "#/$defs/riskRecord" },
+        { "$ref": "#/$defs/workProductRecord" },
+        { "$ref": "#/$defs/releaseRecord" },
+        { "$ref": "#/$defs/verificationRecord" },
+        { "$ref": "#/$defs/operationRecord" },
+        { "$ref": "#/$defs/incidentRecord" },
+        { "$ref": "#/$defs/receiptRecord" },
+        { "$ref": "#/$defs/dataProductRecord" },
+        { "$ref": "#/$defs/retentionPolicyRecord" },
+        { "$ref": "#/$defs/legalHoldRecord" },
+        { "$ref": "#/$defs/dispositionRecord" },
+        { "$ref": "#/$defs/migrationRecord" },
+        { "$ref": "#/$defs/lessonRecord" },
+        { "$ref": "#/$defs/policyRecord" }
+      ]
+    },
+    "businessPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["canonicalName", "lifecycleState", "aliases"],
+      "properties": {
+        "canonicalName": { "$ref": "#/$defs/nonEmptyString" },
+        "lifecycleState": { "enum": ["forming", "active", "dormant", "retired"] },
+        "aliases": { "$ref": "#/$defs/stringArray" }
+      }
+    },
+    "initiativePayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["initiativeType", "businessId", "ownerPartyId", "state"],
+      "properties": {
+        "initiativeType": {
+          "enum": ["portfolio", "program", "project", "product", "service", "operation"]
+        },
+        "businessId": { "$ref": "#/$defs/canonicalId" },
+        "ownerPartyId": { "$ref": "#/$defs/canonicalId" },
+        "state": { "enum": ["proposed", "active", "paused", "complete", "retired"] }
+      }
+    },
+    "partyPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["partyType", "displayName", "lifecycleState", "externalReferences"],
+      "properties": {
+        "partyType": {
+          "enum": [
+            "person",
+            "contractor",
+            "agent",
+            "vendor",
+            "organization",
+            "organizational_unit",
+            "team",
+            "tool",
+            "source_system"
+          ]
+        },
+        "displayName": { "$ref": "#/$defs/nonEmptyString" },
+        "lifecycleState": { "enum": ["planned", "active", "inactive", "replaced", "retired"] },
+        "externalReferences": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["namespace", "value", "adapterId"],
+            "properties": {
+              "namespace": { "$ref": "#/$defs/nonEmptyString" },
+              "value": { "$ref": "#/$defs/nonEmptyString" },
+              "adapterId": { "$ref": "#/$defs/nonEmptyString" }
+            }
+          }
+        }
+      }
+    },
+    "authorityGrantPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "subjectId",
+        "representedPartyId",
+        "capabilities",
+        "objectScope",
+        "issuedById",
+        "policyRevisionId",
+        "delegable",
+        "status"
+      ],
+      "properties": {
+        "subjectId": { "$ref": "#/$defs/canonicalId" },
+        "representedPartyId": { "$ref": "#/$defs/canonicalId" },
+        "capabilities": { "$ref": "#/$defs/stringArray" },
+        "objectScope": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["recordIds", "recordKinds", "selector"],
+          "properties": {
+            "recordIds": { "$ref": "#/$defs/idArray" },
+            "recordKinds": { "$ref": "#/$defs/stringArray" },
+            "selector": { "$ref": "#/$defs/nonEmptyString" }
+          }
+        },
+        "issuedById": { "$ref": "#/$defs/canonicalId" },
+        "policyRevisionId": { "$ref": "#/$defs/revisionId" },
+        "delegable": { "type": "boolean" },
+        "status": { "enum": ["active", "revoked", "expired", "superseded"] },
+        "revokedAt": { "$ref": "#/$defs/instant" },
+        "revocationReason": { "$ref": "#/$defs/nonEmptyString" }
+      }
+    },
+    "intentPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["statement", "successMeasures", "ownerPartyId", "state"],
+      "properties": {
+        "statement": { "$ref": "#/$defs/nonEmptyString" },
+        "successMeasures": { "$ref": "#/$defs/stringArray" },
+        "ownerPartyId": { "$ref": "#/$defs/canonicalId" },
+        "state": { "enum": ["proposed", "approved", "superseded", "retired"] }
+      }
+    },
+    "requirementPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "statement",
+        "requirementType",
+        "priority",
+        "ownerPartyId",
+        "verificationMethod",
+        "state"
+      ],
+      "properties": {
+        "statement": { "$ref": "#/$defs/nonEmptyString" },
+        "requirementType": {
+          "enum": [
+            "business",
+            "stakeholder",
+            "functional",
+            "performance",
+            "interface",
+            "security",
+            "operational",
+            "retention"
+          ]
+        },
+        "priority": { "enum": ["must", "should", "could"] },
+        "ownerPartyId": { "$ref": "#/$defs/canonicalId" },
+        "verificationMethod": {
+          "enum": ["test", "analysis", "inspection", "demonstration", "review"]
+        },
+        "state": { "enum": ["draft", "approved", "verified", "waived", "superseded", "retired"] }
+      }
+    },
+    "interfacePayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "providerId",
+        "consumerId",
+        "direction",
+        "protocol",
+        "schemaRef",
+        "version",
+        "compatibilityWindow",
+        "constraints",
+        "approvalMode",
+        "state"
+      ],
+      "properties": {
+        "providerId": { "$ref": "#/$defs/canonicalId" },
+        "consumerId": { "$ref": "#/$defs/canonicalId" },
+        "direction": { "enum": ["provider_to_consumer", "consumer_to_provider", "bidirectional"] },
+        "protocol": { "$ref": "#/$defs/nonEmptyString" },
+        "schemaRef": { "$ref": "#/$defs/nonEmptyString" },
+        "version": { "$ref": "#/$defs/nonEmptyString" },
+        "compatibilityWindow": { "$ref": "#/$defs/interval" },
+        "constraints": { "$ref": "#/$defs/stringArray" },
+        "approvalMode": { "enum": ["owner", "delegated", "bilateral", "unanimous"] },
+        "state": { "enum": ["draft", "approved", "deprecated", "retired"] }
+      }
+    },
+    "decisionPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "question",
+        "intendedOutcome",
+        "authorityGrantId",
+        "alternatives",
+        "criteria",
+        "assumptions",
+        "uncertainty",
+        "recommendation",
+        "disposition",
+        "rationale",
+        "state"
+      ],
+      "properties": {
+        "question": { "$ref": "#/$defs/nonEmptyString" },
+        "intendedOutcome": { "$ref": "#/$defs/nonEmptyString" },
+        "authorityGrantId": { "$ref": "#/$defs/canonicalId" },
+        "alternatives": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "summary", "assessment"],
+            "properties": {
+              "id": { "$ref": "#/$defs/nonEmptyString" },
+              "summary": { "$ref": "#/$defs/nonEmptyString" },
+              "assessment": { "$ref": "#/$defs/nonEmptyString" }
+            }
+          }
+        },
+        "criteria": { "$ref": "#/$defs/stringArray" },
+        "assumptions": { "$ref": "#/$defs/stringArray" },
+        "uncertainty": { "$ref": "#/$defs/nonEmptyString" },
+        "recommendation": { "$ref": "#/$defs/nonEmptyString" },
+        "disposition": { "$ref": "#/$defs/nonEmptyString" },
+        "rationale": { "$ref": "#/$defs/nonEmptyString" },
+        "state": { "enum": ["proposed", "approved", "rejected", "superseded"] }
+      }
+    },
+    "baselinePayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["baselineType", "memberRevisionIds", "approvalGrantIds", "approvedAt", "state"],
+      "properties": {
+        "baselineType": {
+          "enum": [
+            "requirements",
+            "interface",
+            "configuration",
+            "release",
+            "operational",
+            "business"
+          ]
+        },
+        "memberRevisionIds": { "$ref": "#/$defs/revisionIdArray" },
+        "approvalGrantIds": { "$ref": "#/$defs/idArray" },
+        "approvedAt": { "$ref": "#/$defs/instant" },
+        "state": { "enum": ["proposed", "approved", "superseded", "retired"] }
+      }
+    },
+    "impactSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "affectedRecordIds",
+        "ownerPartyIds",
+        "requiredVerificationIds",
+        "riskIds",
+        "downstreamEvidenceIds",
+        "unresolvedApprovalIds",
+        "migration",
+        "rollback"
+      ],
+      "properties": {
+        "affectedRecordIds": { "$ref": "#/$defs/idArray" },
+        "ownerPartyIds": { "$ref": "#/$defs/idArray" },
+        "requiredVerificationIds": { "$ref": "#/$defs/idArray" },
+        "riskIds": { "$ref": "#/$defs/idArray" },
+        "downstreamEvidenceIds": { "$ref": "#/$defs/idArray" },
+        "unresolvedApprovalIds": { "$ref": "#/$defs/idArray" },
+        "migration": { "$ref": "#/$defs/nonEmptyString" },
+        "rollback": { "$ref": "#/$defs/nonEmptyString" }
+      }
+    },
+    "changePayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "targetRecordIds",
+        "proposedById",
+        "authorityGrantId",
+        "rationale",
+        "impact",
+        "state"
+      ],
+      "properties": {
+        "targetRecordIds": { "$ref": "#/$defs/idArray" },
+        "proposedById": { "$ref": "#/$defs/canonicalId" },
+        "authorityGrantId": { "$ref": "#/$defs/canonicalId" },
+        "rationale": { "$ref": "#/$defs/nonEmptyString" },
+        "impact": { "$ref": "#/$defs/impactSummary" },
+        "state": {
+          "enum": [
+            "proposed",
+            "impact_review",
+            "approval_required",
+            "approved",
+            "rejected",
+            "implemented",
+            "rolled_back"
+          ]
+        }
+      }
+    },
+    "riskPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["statement", "likelihood", "consequence", "ownerPartyId", "mitigation", "state"],
+      "properties": {
+        "statement": { "$ref": "#/$defs/nonEmptyString" },
+        "likelihood": { "enum": ["low", "medium", "high"] },
+        "consequence": { "enum": ["low", "medium", "high", "critical"] },
+        "ownerPartyId": { "$ref": "#/$defs/canonicalId" },
+        "mitigation": { "$ref": "#/$defs/nonEmptyString" },
+        "state": { "enum": ["open", "accepted", "mitigated", "closed"] }
+      }
+    },
+    "workProductPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["workProductType", "artifactRef", "ownerPartyId", "state"],
+      "properties": {
+        "workProductType": {
+          "enum": [
+            "code",
+            "document",
+            "design",
+            "dataset",
+            "configuration",
+            "build",
+            "service",
+            "physical"
+          ]
+        },
+        "artifactRef": { "$ref": "#/$defs/nonEmptyString" },
+        "ownerPartyId": { "$ref": "#/$defs/canonicalId" },
+        "state": { "enum": ["draft", "review", "accepted", "superseded", "retired"] }
+      }
+    },
+    "releasePayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["baselineId", "environment", "operationIds", "receiptIds", "state"],
+      "properties": {
+        "baselineId": { "$ref": "#/$defs/canonicalId" },
+        "environment": { "$ref": "#/$defs/nonEmptyString" },
+        "releasedAt": { "$ref": "#/$defs/instant" },
+        "operationIds": { "$ref": "#/$defs/idArray" },
+        "receiptIds": { "$ref": "#/$defs/idArray" },
+        "state": { "enum": ["planned", "approved", "released", "rolled_back", "retired"] }
+      }
+    },
+    "verificationPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "verificationType",
+        "requirementIds",
+        "baselineId",
+        "method",
+        "outcome",
+        "evidenceRefs",
+        "executedAt"
+      ],
+      "properties": {
+        "verificationType": { "enum": ["verification", "validation"] },
+        "requirementIds": { "$ref": "#/$defs/idArray" },
+        "baselineId": { "$ref": "#/$defs/canonicalId" },
+        "method": { "enum": ["test", "analysis", "inspection", "demonstration", "review"] },
+        "outcome": { "enum": ["pass", "fail", "waived", "unknown"] },
+        "evidenceRefs": { "$ref": "#/$defs/stringArray" },
+        "executedAt": { "$ref": "#/$defs/instant" }
+      }
+    },
+    "operationPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["operationType", "baselineId", "authorityGrantId", "startedAt", "outcome"],
+      "properties": {
+        "operationType": {
+          "enum": ["deploy", "run", "delivery", "maintenance", "retirement", "recovery"]
+        },
+        "baselineId": { "$ref": "#/$defs/canonicalId" },
+        "authorityGrantId": { "$ref": "#/$defs/canonicalId" },
+        "startedAt": { "$ref": "#/$defs/instant" },
+        "completedAt": { "$ref": "#/$defs/instant" },
+        "outcome": {
+          "enum": ["planned", "running", "succeeded", "failed", "contained", "rolled_back"]
+        }
+      }
+    },
+    "incidentPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "severity",
+        "detectedAt",
+        "affectedRecordIds",
+        "containment",
+        "recovery",
+        "state"
+      ],
+      "properties": {
+        "severity": { "enum": ["low", "medium", "high", "critical"] },
+        "detectedAt": { "$ref": "#/$defs/instant" },
+        "affectedRecordIds": { "$ref": "#/$defs/idArray" },
+        "containment": { "$ref": "#/$defs/nonEmptyString" },
+        "recovery": { "$ref": "#/$defs/nonEmptyString" },
+        "state": { "enum": ["open", "contained", "recovered", "closed"] }
+      }
+    },
+    "receiptPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receiptType",
+        "actorId",
+        "authorityGrantId",
+        "policyRevisionId",
+        "inputHash",
+        "action",
+        "verifier",
+        "outcome",
+        "evidenceRefs",
+        "recoveryOrDisposition"
+      ],
+      "properties": {
+        "receiptType": {
+          "enum": [
+            "decision",
+            "approval",
+            "execution",
+            "verification",
+            "handoff",
+            "migration",
+            "disposition",
+            "recovery"
+          ]
+        },
+        "actorId": { "$ref": "#/$defs/canonicalId" },
+        "authorityGrantId": { "$ref": "#/$defs/canonicalId" },
+        "policyRevisionId": { "$ref": "#/$defs/revisionId" },
+        "inputHash": { "$ref": "#/$defs/hash" },
+        "action": { "$ref": "#/$defs/nonEmptyString" },
+        "verifier": { "$ref": "#/$defs/nonEmptyString" },
+        "outcome": { "enum": ["succeeded", "failed", "blocked", "unknown"] },
+        "evidenceRefs": { "$ref": "#/$defs/stringArray" },
+        "recoveryOrDisposition": { "$ref": "#/$defs/nonEmptyString" }
+      }
+    },
+    "dataProductPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ownerPartyId",
+        "classification",
+        "schemaRef",
+        "format",
+        "authoritativeCopyRef",
+        "accessPolicyRevisionId",
+        "retentionPolicyId",
+        "legacyReaderRef"
+      ],
+      "properties": {
+        "ownerPartyId": { "$ref": "#/$defs/canonicalId" },
+        "classification": { "enum": ["public", "internal", "confidential", "restricted"] },
+        "schemaRef": { "$ref": "#/$defs/nonEmptyString" },
+        "format": { "$ref": "#/$defs/nonEmptyString" },
+        "authoritativeCopyRef": { "$ref": "#/$defs/nonEmptyString" },
+        "accessPolicyRevisionId": { "$ref": "#/$defs/revisionId" },
+        "retentionPolicyId": { "$ref": "#/$defs/canonicalId" },
+        "successorId": { "$ref": "#/$defs/canonicalId" },
+        "legacyReaderRef": { "$ref": "#/$defs/nonEmptyString" }
+      }
+    },
+    "retentionPolicyPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "retentionClass",
+        "allowedOutcomes",
+        "defaultOutcome",
+        "authorityPartyId",
+        "policyBasisRef",
+        "reviewAt"
+      ],
+      "properties": {
+        "retentionClass": { "$ref": "#/$defs/nonEmptyString" },
+        "allowedOutcomes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/dispositionOutcome" },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "defaultOutcome": { "$ref": "#/$defs/dispositionOutcome" },
+        "authorityPartyId": { "$ref": "#/$defs/canonicalId" },
+        "policyBasisRef": { "$ref": "#/$defs/nonEmptyString" },
+        "reviewAt": { "$ref": "#/$defs/instant" }
+      }
+    },
+    "legalHoldPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["targetRecordIds", "issuedById", "authorityGrantId", "reason", "state"],
+      "properties": {
+        "targetRecordIds": { "$ref": "#/$defs/idArray" },
+        "issuedById": { "$ref": "#/$defs/canonicalId" },
+        "authorityGrantId": { "$ref": "#/$defs/canonicalId" },
+        "reason": { "$ref": "#/$defs/nonEmptyString" },
+        "releasedAt": { "$ref": "#/$defs/instant" },
+        "state": { "enum": ["active", "released"] }
+      }
+    },
+    "dispositionOutcome": {
+      "enum": ["retain", "archive", "redact", "delete", "tombstone", "preserve_derived_proof"]
+    },
+    "dispositionPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "targetRecordIds",
+        "outcome",
+        "policyRevisionId",
+        "authorityGrantId",
+        "legalHoldIds",
+        "executedAt",
+        "derivedProof"
+      ],
+      "properties": {
+        "targetRecordIds": { "$ref": "#/$defs/idArray" },
+        "outcome": { "$ref": "#/$defs/dispositionOutcome" },
+        "policyRevisionId": { "$ref": "#/$defs/revisionId" },
+        "authorityGrantId": { "$ref": "#/$defs/canonicalId" },
+        "legalHoldIds": { "$ref": "#/$defs/idArray" },
+        "executedAt": { "$ref": "#/$defs/instant" },
+        "derivedProof": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["preserved", "nonRevealingHash", "containsRawContent"],
+          "properties": {
+            "preserved": { "type": "boolean" },
+            "nonRevealingHash": { "$ref": "#/$defs/hash" },
+            "containsRawContent": { "const": false }
+          }
+        }
+      }
+    },
+    "migrationPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fromSchemaVersion",
+        "toSchemaVersion",
+        "transformId",
+        "inputHash",
+        "outputHash",
+        "counts",
+        "losses",
+        "receiptId"
+      ],
+      "properties": {
+        "fromSchemaVersion": { "$ref": "#/$defs/nonEmptyString" },
+        "toSchemaVersion": { "const": "flow.business-digital-thread.v1" },
+        "transformId": { "$ref": "#/$defs/nonEmptyString" },
+        "inputHash": { "$ref": "#/$defs/hash" },
+        "outputHash": { "$ref": "#/$defs/hash" },
+        "counts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["read", "written", "redacted", "deleted", "unmapped"],
+          "properties": {
+            "read": { "type": "integer", "minimum": 0 },
+            "written": { "type": "integer", "minimum": 0 },
+            "redacted": { "type": "integer", "minimum": 0 },
+            "deleted": { "type": "integer", "minimum": 0 },
+            "unmapped": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "losses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["sourcePath", "disposition", "reason"],
+            "properties": {
+              "sourcePath": { "$ref": "#/$defs/nonEmptyString" },
+              "disposition": { "enum": ["mapped", "redacted", "deleted", "unmapped"] },
+              "reason": { "$ref": "#/$defs/nonEmptyString" }
+            }
+          }
+        },
+        "receiptId": { "$ref": "#/$defs/canonicalId" }
+      }
+    },
+    "lessonPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sourceRecordIds",
+        "lifecycleState",
+        "statement",
+        "reviewAuthorityId",
+        "disseminationTargetIds",
+        "applicationTargetIds",
+        "effectivenessVerificationId"
+      ],
+      "properties": {
+        "sourceRecordIds": { "$ref": "#/$defs/idArray" },
+        "lifecycleState": {
+          "enum": [
+            "collected",
+            "recorded",
+            "reviewed",
+            "disseminated",
+            "applied",
+            "effectiveness_reviewed"
+          ]
+        },
+        "statement": { "$ref": "#/$defs/nonEmptyString" },
+        "reviewAuthorityId": { "$ref": "#/$defs/canonicalId" },
+        "disseminationTargetIds": { "$ref": "#/$defs/idArray" },
+        "applicationTargetIds": { "$ref": "#/$defs/idArray" },
+        "effectivenessVerificationId": { "$ref": "#/$defs/canonicalId" }
+      }
+    },
+    "policyPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["policyType", "statement", "ownerPartyId", "approvalAuthorityId", "state"],
+      "properties": {
+        "policyType": {
+          "enum": [
+            "authority",
+            "change_control",
+            "verification",
+            "access",
+            "retention",
+            "incident",
+            "lesson",
+            "adapter"
+          ]
+        },
+        "statement": { "$ref": "#/$defs/nonEmptyString" },
+        "ownerPartyId": { "$ref": "#/$defs/canonicalId" },
+        "approvalAuthorityId": { "$ref": "#/$defs/canonicalId" },
+        "state": { "enum": ["draft", "approved", "superseded", "retired"] }
+      }
+    },
+    "businessRecord": { "$ref": "#/$defs/record_business" },
+    "initiativeRecord": { "$ref": "#/$defs/record_initiative" },
+    "partyRecord": { "$ref": "#/$defs/record_party" },
+    "authorityGrantRecord": { "$ref": "#/$defs/record_authority_grant" },
+    "intentRecord": { "$ref": "#/$defs/record_intent" },
+    "requirementRecord": { "$ref": "#/$defs/record_requirement" },
+    "interfaceRecord": { "$ref": "#/$defs/record_interface" },
+    "decisionRecord": { "$ref": "#/$defs/record_decision" },
+    "baselineRecord": { "$ref": "#/$defs/record_baseline" },
+    "changeRecord": { "$ref": "#/$defs/record_change" },
+    "riskRecord": { "$ref": "#/$defs/record_risk" },
+    "workProductRecord": { "$ref": "#/$defs/record_work_product" },
+    "releaseRecord": { "$ref": "#/$defs/record_release" },
+    "verificationRecord": { "$ref": "#/$defs/record_verification" },
+    "operationRecord": { "$ref": "#/$defs/record_operation" },
+    "incidentRecord": { "$ref": "#/$defs/record_incident" },
+    "receiptRecord": { "$ref": "#/$defs/record_receipt" },
+    "dataProductRecord": { "$ref": "#/$defs/record_data_product" },
+    "retentionPolicyRecord": { "$ref": "#/$defs/record_retention_policy" },
+    "legalHoldRecord": { "$ref": "#/$defs/record_legal_hold" },
+    "dispositionRecord": { "$ref": "#/$defs/record_disposition" },
+    "migrationRecord": { "$ref": "#/$defs/record_migration" },
+    "lessonRecord": { "$ref": "#/$defs/record_lesson" },
+    "policyRecord": { "$ref": "#/$defs/record_policy" },
+    "record_business": {
+      "allOf": [
+        { "$ref": "#/$defs/recordBase" },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "business" },
+            "payload": { "$ref": "#/$defs/businessPayload" }
+          }
+        }
+      ]
+    },
+    "record_initiative": {
+      "allOf": [
+        { "$ref": "#/$defs/recordBase" },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "initiative" },
+            "payload": { "$ref": "#/$defs/initiativePayload" }
+          }
+        }
+      ]
+    },
+    "record_party": {
+      "allOf": [
+        { "$ref": "#/$defs/recordBase" },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "party" },
+            "payload": { "$ref": "#/$defs/partyPayload" }
+          }
+        }
+      ]
+    },
+    "record_authority_grant": {
+      "allOf": [
+        { "$ref": "#/$defs/recordBase" },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "authority_grant" },
+            "payload": { "$ref": "#/$defs/authorityGrantPayload" }
+          }
+        }
+      ]
+    },
+    "record_intent": {
+      "allOf": [
+        { "$ref": "#/$defs/recordBase" },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "intent" },
+            "payload": { "$ref": "#/$defs/intentPayload" }
+          }
+        }
+      ]
+    },
+    "record_requirement": {
+      "allOf": [
+        { "$ref": "#/$defs/recordBase" },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "requirement" },
+            "payload": { "$ref": "#/$defs/requirementPayload" }
+          }
+        }
+      ]
+    },
+    "record_interface": {
+      "allOf": [
+        { "$ref": "#/$defs/recordBase" },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "interface" },
+            "payload": { "$ref": "#/$defs/interfacePayload" }
+          }
+        }
+      ]
+    },
+    "record_decision": {
+      "allOf": [
+        { "$ref": "#/$defs/recordBase" },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "decision" },
+            "payload": { "$ref": "#/$defs/decisionPayload" }
+          }
+        }
+      ]
+    },
+    "record_baseline": {
+      "allOf": [
+        { "$ref": "#/$defs/recordBase" },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "baseline" },
+            "payload": { "$ref": "#/$defs/baselinePayload" }
+          }
+        }
+      ]
+    },
+    "record_change": {
+      "allOf": [
+        { "$ref": "#/$defs/recordBase" },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "change" },
+            "payload": { "$ref": "#/$defs/changePayload" }
+          }
+        }
+      ]
+    },
+    "record_risk": {
+      "allOf": [
+        { "$ref": "#/$defs/recordBase" },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "risk" },
+            "payload": { "$ref": "#/$defs/riskPayload" }
+          }
+        }
+      ]
+    },
+    "record_work_product": {
+      "allOf": [
+        { "$ref": "#/$defs/recordBase" },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "work_product" },
+            "payload": { "$ref": "#/$defs/workProductPayload" }
+          }
+        }
+      ]
+    },
+    "record_release": {
+      "allOf": [
+        { "$ref": "#/$defs/recordBase" },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "release" },
+            "payload": { "$ref": "#/$defs/releasePayload" }
+          }
+        }
+      ]
+    },
+    "record_verification": {
+      "allOf": [
+        { "$ref": "#/$defs/recordBase" },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "verification" },
+            "payload": { "$ref": "#/$defs/verificationPayload" }
+          }
+        }
+      ]
+    },
+    "record_operation": {
+      "allOf": [
+        { "$ref": "#/$defs/recordBase" },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "operation" },
+            "payload": { "$ref": "#/$defs/operationPayload" }
+          }
+        }
+      ]
+    },
+    "record_incident": {
+      "allOf": [
+        { "$ref": "#/$defs/recordBase" },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "incident" },
+            "payload": { "$ref": "#/$defs/incidentPayload" }
+          }
+        }
+      ]
+    },
+    "record_receipt": {
+      "allOf": [
+        { "$ref": "#/$defs/recordBase" },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "receipt" },
+            "payload": { "$ref": "#/$defs/receiptPayload" }
+          }
+        }
+      ]
+    },
+    "record_data_product": {
+      "allOf": [
+        { "$ref": "#/$defs/recordBase" },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "data_product" },
+            "payload": { "$ref": "#/$defs/dataProductPayload" }
+          }
+        }
+      ]
+    },
+    "record_retention_policy": {
+      "allOf": [
+        { "$ref": "#/$defs/recordBase" },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "retention_policy" },
+            "payload": { "$ref": "#/$defs/retentionPolicyPayload" }
+          }
+        }
+      ]
+    },
+    "record_legal_hold": {
+      "allOf": [
+        { "$ref": "#/$defs/recordBase" },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "legal_hold" },
+            "payload": { "$ref": "#/$defs/legalHoldPayload" }
+          }
+        }
+      ]
+    },
+    "record_disposition": {
+      "allOf": [
+        { "$ref": "#/$defs/recordBase" },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "disposition" },
+            "payload": { "$ref": "#/$defs/dispositionPayload" }
+          }
+        }
+      ]
+    },
+    "record_migration": {
+      "allOf": [
+        { "$ref": "#/$defs/recordBase" },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "migration" },
+            "payload": { "$ref": "#/$defs/migrationPayload" }
+          }
+        }
+      ]
+    },
+    "record_lesson": {
+      "allOf": [
+        { "$ref": "#/$defs/recordBase" },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "lesson" },
+            "payload": { "$ref": "#/$defs/lessonPayload" }
+          }
+        }
+      ]
+    },
+    "record_policy": {
+      "allOf": [
+        { "$ref": "#/$defs/recordBase" },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "policy" },
+            "payload": { "$ref": "#/$defs/policyPayload" }
+          }
+        }
+      ]
+    },
+    "linkRevision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "revisionId",
+        "tenantId",
+        "relationshipClass",
+        "type",
+        "subjectId",
+        "objectId",
+        "role",
+        "scope",
+        "validTime",
+        "recordedTime",
+        "source",
+        "integrity"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/linkId" },
+        "revisionId": { "$ref": "#/$defs/linkRevisionId" },
+        "tenantId": { "$ref": "#/$defs/tenantId" },
+        "relationshipClass": {
+          "enum": ["participant", "traceability", "governance", "provenance", "lifecycle"]
+        },
+        "type": {
+          "enum": [
+            "contains",
+            "part_of",
+            "member_of",
+            "employed_by",
+            "contracted_to",
+            "supplier_to",
+            "assigned_to",
+            "operated_by",
+            "owned_by",
+            "represented_by",
+            "delegated_to",
+            "decomposes",
+            "allocated_to",
+            "satisfies",
+            "implements",
+            "verifies",
+            "validates",
+            "governed_by",
+            "constrained_by",
+            "interfaces_with",
+            "decided_by",
+            "included_in_baseline",
+            "changes",
+            "impacts",
+            "operates",
+            "caused_by",
+            "recovered_by",
+            "evidenced_by",
+            "derived_from",
+            "held_by",
+            "disposed_by",
+            "learned_from",
+            "disseminated_to",
+            "applied_to",
+            "migrated_from",
+            "supersedes",
+            "corrects",
+            "replaces",
+            "succeeds"
+          ]
+        },
+        "subjectId": { "$ref": "#/$defs/canonicalId" },
+        "objectId": { "$ref": "#/$defs/canonicalId" },
+        "subjectRevisionId": { "$ref": "#/$defs/revisionId" },
+        "objectRevisionId": { "$ref": "#/$defs/revisionId" },
+        "role": { "$ref": "#/$defs/nonEmptyString" },
+        "scope": { "$ref": "#/$defs/nonEmptyString" },
+        "authorityGrantId": { "$ref": "#/$defs/canonicalId" },
+        "validTime": { "$ref": "#/$defs/interval" },
+        "recordedTime": { "$ref": "#/$defs/interval" },
+        "supersedesRevisionId": { "$ref": "#/$defs/linkRevisionId" },
+        "correctsRevisionId": { "$ref": "#/$defs/linkRevisionId" },
+        "source": { "$ref": "#/$defs/source" },
+        "integrity": { "$ref": "#/$defs/revisionIntegrity" }
+      }
+    },
+    "adapter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "adapterId",
+        "version",
+        "sourceNamespace",
+        "supportedSchemaRange",
+        "lossPolicy",
+        "replacementStrategy"
+      ],
+      "properties": {
+        "adapterId": { "$ref": "#/$defs/nonEmptyString" },
+        "version": { "$ref": "#/$defs/nonEmptyString" },
+        "sourceNamespace": { "$ref": "#/$defs/nonEmptyString" },
+        "supportedSchemaRange": { "$ref": "#/$defs/nonEmptyString" },
+        "lossPolicy": { "enum": ["reject", "explicit_loss_receipt", "lossless"] },
+        "replacementStrategy": { "$ref": "#/$defs/nonEmptyString" }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["inputMode", "generator", "generatorVersion", "authoritativeInputs"],
+      "properties": {
+        "inputMode": { "enum": ["authoritative", "deterministic_fixture", "mixed"] },
+        "generator": { "$ref": "#/$defs/nonEmptyString" },
+        "generatorVersion": { "$ref": "#/$defs/nonEmptyString" },
+        "authoritativeInputs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["artifactRef", "contentHash", "adapterId"],
+            "properties": {
+              "artifactRef": { "$ref": "#/$defs/nonEmptyString" },
+              "contentHash": { "$ref": "#/$defs/hash" },
+              "adapterId": { "$ref": "#/$defs/nonEmptyString" }
+            }
+          }
+        }
+      }
+    },
+    "exportManifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "manifestVersion",
+        "exportedAt",
+        "sourceThreadId",
+        "recordRevisionCount",
+        "linkRevisionCount",
+        "adapters",
+        "semanticQuerySet",
+        "canonicalDigest"
+      ],
+      "properties": {
+        "manifestVersion": { "const": "flow.business-digital-thread.export.v1" },
+        "exportedAt": { "$ref": "#/$defs/instant" },
+        "sourceThreadId": { "$ref": "#/$defs/canonicalId" },
+        "recordRevisionCount": { "type": "integer", "minimum": 1 },
+        "linkRevisionCount": { "type": "integer", "minimum": 0 },
+        "adapters": { "type": "array", "items": { "$ref": "#/$defs/adapter" } },
+        "semanticQuerySet": { "$ref": "#/$defs/nonEmptyString" },
+        "canonicalDigest": { "$ref": "#/$defs/hash" }
+      }
+    },
+    "threadIntegrity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "algorithm",
+        "canonicalization",
+        "recordsRootHash",
+        "linksRootHash",
+        "semanticDigest"
+      ],
+      "properties": {
+        "algorithm": { "const": "sha256" },
+        "canonicalization": { "const": "JCS-RFC8785" },
+        "recordsRootHash": { "$ref": "#/$defs/hash" },
+        "linksRootHash": { "$ref": "#/$defs/hash" },
+        "semanticDigest": { "$ref": "#/$defs/hash" }
+      }
+    }
+  }
+}

@@ -1,6 +1,8 @@
 import { json, error, isHttpError } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import Airtable from 'airtable';
+import { buildCreatorRecordEmailMatchFormula } from '$lib/server/airtable';
+import { isAllowedUploadUrl } from '@create-something/webflow-dashboard-core/uploads-url';
 
 // Airtable table ID for Creators (matches original Next.js dashboard)
 const CREATORS_TABLE = 'tbljt0plqxdMARZXb';
@@ -39,11 +41,65 @@ function normalizeOptionalUrl(value: string | null): string {
 }
 
 async function getRecordsByEmail(base: ReturnType<typeof getBase>, email: string) {
-	const formula = `OR(FIND("${email}", ARRAYJOIN({📧Email}, ",")) > 0, FIND("${email}", ARRAYJOIN({📧WF Account Email}, ",")) > 0, FIND("${email}", ARRAYJOIN({📧Emails}, ",")) > 0)`;
+	// Exact-match, quoted by the shared formula-literal helper. A substring match
+	// here would resolve one creator's session to another creator's profile record.
+	const formula = buildCreatorRecordEmailMatchFormula(email);
 	const records = await base(CREATORS_TABLE)
 		.select({ filterByFormula: formula })
 		.firstPage();
 	return records;
+}
+
+/** Field limits mirror the signup intake so both entry points agree. */
+const TEXT_LIMITS = {
+	name: 100,
+	legalName: 100,
+	biography: 200
+} as const;
+
+function normalizeRequiredText(
+	value: unknown,
+	label: string,
+	maxLength: number
+): string | undefined {
+	if (value === undefined) return undefined;
+	if (typeof value !== 'string') throw error(400, `${label} must be a string`);
+
+	const trimmed = value.trim();
+	if (!trimmed) throw error(400, `${label} cannot be empty`);
+	if (trimmed.length > maxLength) {
+		throw error(400, `${label} must be ${maxLength} characters or fewer`);
+	}
+
+	return trimmed;
+}
+
+function normalizeWebsiteUrlInput(value: unknown): string | undefined {
+	if (value === undefined) return undefined;
+	if (value !== null && typeof value !== 'string') {
+		throw error(400, 'Personal website URL must be a string or null');
+	}
+
+	return normalizeOptionalUrl(value);
+}
+
+function normalizeAvatarUrl(
+	value: unknown,
+	requestOrigin: string,
+	trustedOriginsCsv: string | undefined
+): string | null | undefined {
+	if (value === undefined) return undefined;
+	if (value === null) return null;
+	if (typeof value !== 'string') throw error(400, 'Avatar URL must be a string or null');
+
+	const trimmed = value.trim();
+	if (!trimmed) return null;
+
+	if (!isAllowedUploadUrl(trimmed, requestOrigin, trustedOriginsCsv)) {
+		throw error(400, 'Avatar must be an image uploaded through this dashboard');
+	}
+
+	return trimmed;
 }
 
 export const GET: RequestHandler = async ({ locals, platform }) => {
@@ -99,11 +155,11 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 };
 
 interface ProfileUpdateData {
-	name?: string;
-	biography?: string;
-	legalName?: string;
-	avatarUrl?: string | null;
-	websiteUrl?: string | null;
+	name?: unknown;
+	biography?: unknown;
+	legalName?: unknown;
+	avatarUrl?: unknown;
+	websiteUrl?: unknown;
 }
 
 /**
@@ -115,7 +171,7 @@ interface ProfileUpdateData {
  * 3. Update the record in one call
  * Errors propagate naturally — no silent swallowing.
  */
-export const PATCH: RequestHandler = async ({ request, locals, platform }) => {
+export const PATCH: RequestHandler = async ({ request, locals, platform, url }) => {
 	try {
 		if (!locals.user?.email) {
 			throw error(401, 'Unauthorized');
@@ -127,6 +183,18 @@ export const PATCH: RequestHandler = async ({ request, locals, platform }) => {
 
 		const email = locals.user.email;
 		const data = (await request.json()) as ProfileUpdateData;
+
+		// Validate before touching Airtable: these values land on a public
+		// marketplace profile, and the signup intake enforces the same limits.
+		const name = normalizeRequiredText(data.name, 'Name', TEXT_LIMITS.name);
+		const legalName = normalizeRequiredText(data.legalName, 'Legal name', TEXT_LIMITS.legalName);
+		const biography = normalizeRequiredText(data.biography, 'Biography', TEXT_LIMITS.biography);
+		const avatarUrl = normalizeAvatarUrl(
+			data.avatarUrl,
+			url.origin,
+			platform.env.CSRF_TRUSTED_ORIGINS
+		);
+		const websiteUrl = normalizeWebsiteUrlInput(data.websiteUrl);
 
 		const base = getBase(platform.env as { AIRTABLE_API_KEY: string; AIRTABLE_BASE_ID: string });
 
@@ -143,13 +211,13 @@ export const PATCH: RequestHandler = async ({ request, locals, platform }) => {
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const fields: Record<string, any> = {};
 
-		if (data.name !== undefined) fields['Name'] = data.name;
-		if (data.biography !== undefined) fields['ℹ️Biography'] = data.biography;
-		if (data.legalName !== undefined) fields['ℹ️Legal Name'] = data.legalName;
-		if (data.websiteUrl !== undefined) fields['🔗Personal Site'] = normalizeOptionalUrl(data.websiteUrl);
+		if (name !== undefined) fields['Name'] = name;
+		if (biography !== undefined) fields['ℹ️Biography'] = biography;
+		if (legalName !== undefined) fields['ℹ️Legal Name'] = legalName;
+		if (websiteUrl !== undefined) fields['🔗Personal Site'] = websiteUrl;
 		// Avatar: use field ID (fldyddTon9Lu8BR8G) to match original dashboard exactly
-		if (data.avatarUrl !== undefined) {
-			fields['fldyddTon9Lu8BR8G'] = data.avatarUrl ? [{ url: data.avatarUrl }] : [];
+		if (avatarUrl !== undefined) {
+			fields['fldyddTon9Lu8BR8G'] = avatarUrl ? [{ url: avatarUrl }] : [];
 		}
 
 		if (Object.keys(fields).length === 0) {

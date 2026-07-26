@@ -1,0 +1,44 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "create-something-operator-chat-agent",
+  "account_id": "9645bd52e640b8a4f40a3a55ff1dd75a",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-06-25",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true
+  },
+  "upload_source_maps": true,
+  "ai": {
+    "binding": "AI",
+    "remote": true
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "OperatorChatAgent",
+        "class_name": "OperatorChatAgent"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["OperatorChatAgent"]
+    }
+  ],
+  "vars": {
+    "LINEAR_TEAM_KEY": "CRE",
+    "OPERATOR_TOOL_ACCESS_MODE": "read_only",
+    "PAID_CAPABILITY_MODE": "handoff_only",
+    "PAID_CAPABILITY_MAX_USD": "25"
+  },
+  "secrets": {
+    "required": [
+      "OPERATOR_ADMIN_TOKEN",
+      "TELEGRAM_BOT_TOKEN",
+      "TELEGRAM_BOT_USERNAME",
+      "TELEGRAM_WEBHOOK_SECRET_TOKEN"
+    ]
+  }
+}

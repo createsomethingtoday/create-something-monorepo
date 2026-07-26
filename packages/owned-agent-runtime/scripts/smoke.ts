@@ -1,3 +1,5 @@
+import { evaluateAnonymousControlSmoke } from './smoke-policy.js';
+
 const baseUrl =
   process.env.AGENT_RUNTIME_URL ??
   'https://create-something-agent-runtime.createsomething.workers.dev';
@@ -41,6 +43,27 @@ function parseEvents(body: string): SseEvent[] {
 
 const health = await fetch(`${baseUrl}/health`);
 if (!health.ok) throw new Error(`Health check failed: HTTP ${health.status}`);
+
+const anonymousControl = await fetch(`${baseUrl}/v1/control/runs/not-a-real-run`);
+const anonymousControlBody = await anonymousControl.clone().json().catch(() => ({})) as {
+  error?: string;
+};
+const controlSmoke = evaluateAnonymousControlSmoke({
+  status: anonymousControl.status,
+  error: anonymousControlBody.error,
+  requireConfigured: process.env.REQUIRE_CONTROL_CONFIGURED === 'true'
+});
+console.log(JSON.stringify({
+  case: 'anonymous-control-isolation',
+  ...controlSmoke,
+  status: anonymousControl.status,
+  error: anonymousControlBody.error
+}));
+if (!controlSmoke.passed) {
+  throw new Error(
+    `Anonymous Control isolation failed: expected HTTP 401${process.env.REQUIRE_CONTROL_CONFIGURED === 'true' ? '' : ' or an explicitly unconfigured optional lane'}, received ${anonymousControl.status}`
+  );
+}
 
 let failures = 0;
 for (const smokeCase of cases) {

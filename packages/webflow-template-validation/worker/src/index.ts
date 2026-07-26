@@ -38,7 +38,7 @@ import {
 } from './types';
 
 const REVIEW_SNIPPET_VERSION = '0.3.0';
-const WORKER_VERSION = '2.3.0';
+const WORKER_VERSION = '2.3.1';
 const REVIEW_SNIPPET_MARKER = '__wf_review_snippet_v1';
 const REVIEW_SNIPPET_ASSET_PATH = '/app-validator/snippet/review.js';
 const REVIEW_JOB_RETENTION_MS = 30 * 60 * 1000;
@@ -1748,7 +1748,9 @@ function getSurfacedAccessibilityIssues(
 	accessibilityAnalysis: { issues?: Array<{ id: string; severity: string }> } | undefined,
 	contentAnalysisIncluded: boolean
 ) {
-	const issues = Array.isArray(accessibilityAnalysis?.issues) ? accessibilityAnalysis.issues : [];
+	const issues = Array.isArray(accessibilityAnalysis?.issues)
+		? accessibilityAnalysis.issues.filter((issue) => issue.id !== 'color-contrast-violations')
+		: [];
 	if (!contentAnalysisIncluded) {
 		return issues;
 	}
@@ -3268,7 +3270,6 @@ function createEmptyContentAnalysis(): ContentAnalysisResult {
 
 function createEmptyAccessibilityAudit(): AccessibilityAudit {
 	return {
-		colorContrast: [],
 		altTextCoverage: {
 			totalImages: 0,
 			imagesWithAlt: 0,
@@ -3296,7 +3297,6 @@ function createEmptyAccessibilityAnalysis(): AccessibilityAnalysisResult {
 	return {
 		issues: [],
 		stats: {
-			contrastViolations: 0,
 			missingAltText: 0,
 			headingStructureErrors: 0,
 			wcagComplianceScore: 0

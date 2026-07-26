@@ -268,13 +268,18 @@ test('target-reader corpus keeps pass and revise coverage anchored to current so
         corpus.cases.filter((entry) => entry.expected === verdict).length
       ])
     ),
-    { pass: 10, revise: 2 }
+    { pass: 6, revise: 6 }
   );
   assert.deepEqual([...new Set(corpus.cases.map((entry) => entry.property))].sort(), [
     'agency',
-    'io',
-    'ltd',
-    'space'
+    'docs',
+    'ltd'
+  ]);
+  assert.deepEqual([...new Set(corpus.cases.map((entry) => entry.artifactType))].sort(), [
+    'navigation',
+    'operator-guide',
+    'public-copy',
+    'technical-explanation'
   ]);
 
   for (const entry of corpus.cases) {
@@ -290,8 +295,25 @@ test('target-reader corpus keeps pass and revise coverage anchored to current so
       `${entry.id} anchor drifted near ${entry.source.file}:${entry.source.line}`
     );
     assert.match(entry.reason, /\S/);
-    assert.equal(entry.reviewScope, 'rendered-component');
+    assert(
+      ['document-section', 'rendered-component'].includes(entry.reviewScope),
+      `${entry.id} has an unsupported review scope`
+    );
     assert.match(entry.context, /\S/);
+
+    if (entry.artifactType === 'operator-guide' || entry.artifactType === 'navigation') {
+      assert.deepEqual(Object.keys(entry.operatorChecks).sort(), [
+        'canComplete',
+        'canFindDefault',
+        'canOrient',
+        'canRecover',
+        'canStart',
+        'canVerify'
+      ]);
+      for (const value of Object.values(entry.operatorChecks)) {
+        assert(['yes', 'no'].includes(value), `${entry.id} has an invalid operator check`);
+      }
+    }
   }
 });
 
@@ -337,6 +359,20 @@ test('runtime rule identifiers are declared by the versioned policy artifact', (
   assert.equal(policy.enforcement.changed_files.blocking, true);
   assert.equal(policy.enforcement.full_audit.blocking, false);
   assert.equal(policy.judgment_signals.blocking, false);
+  assert.deepEqual(policy.framework_authority, {
+    drafting: 'packages/dotfiles/codex/skills/writing-for-humans/SKILL.md',
+    review: 'packages/dotfiles/codex/skills/target-reader-review/SKILL.md',
+    revision_voice: '.claude/rules/voice-canon.md'
+  });
+  assert.deepEqual(policy.operator_contract, [
+    'outcome',
+    'use_when',
+    'prerequisites',
+    'first_action',
+    'expected_result',
+    'recovery',
+    'completion_proof'
+  ]);
 
   const declaredRuleIds = new Set([
     ...policy.deterministic_rules.map((rule) => rule.id),
@@ -361,6 +397,140 @@ test('runtime rule identifiers are declared by the versioned policy artifact', (
     policy.overlays.agency.source,
     'packages/agency/scripts/check-public-copy.mjs#PUBLIC_COPY_RULES'
   );
+});
+
+test('the Agency STE profile is versioned, bounded, and does not claim certification', () => {
+  const policyPath = path.join(
+    repoRoot,
+    'docs/policies/v1/policy.simplified-technical-english.v1.json'
+  );
+  assert(existsSync(policyPath), 'machine-readable Agency STE policy is missing');
+
+  const policy = JSON.parse(readFileSync(policyPath, 'utf8'));
+
+  assert.equal(policy.policy_id, 'policy.simplified-technical-english.v1');
+  assert.equal(policy.version, 1);
+  assert.equal(policy.standard_reference.name, 'ASD-STE100 Simplified Technical English');
+  assert.equal(policy.standard_reference.issue, 9);
+  assert.equal(policy.compliance.claim, 'STE-aligned');
+  assert.equal(policy.compliance.certified, false);
+  assert.deepEqual(Object.keys(policy.content_profiles).sort(), [
+    'brand-heading',
+    'description',
+    'exact-content',
+    'procedure'
+  ]);
+  assert.equal(policy.content_profiles.procedure.max_words, 20);
+  assert.equal(policy.content_profiles.description.max_words, 25);
+  assert.equal(policy.content_profiles['brand-heading'].automatic_enforcement, false);
+  assert.equal(policy.content_profiles['exact-content'].automatic_enforcement, false);
+  assert.deepEqual(policy.scope.active_routes, [
+    '/',
+    '/services',
+    '/stack',
+    '/map',
+    '/control',
+    '/book'
+  ]);
+  assert(policy.scope.excluded_route_prefixes.includes('/dify'));
+  assert(policy.technical_terms.some((entry) => entry.term === 'workflow'));
+  assert(policy.technical_terms.every((entry) => entry.definition.trim().length > 0));
+});
+
+test('Agency active public-copy discovery excludes redirected source routes', async () => {
+  const { discoverActivePublicCopyFiles } = await import(
+    '../../packages/agency/scripts/check-public-copy.mjs'
+  );
+  const files = discoverActivePublicCopyFiles().map((file) =>
+    path.relative(repoRoot, file).split(path.sep).join('/')
+  );
+
+  assert(files.includes('packages/agency/src/routes/+page.svelte'));
+  assert(files.includes('packages/agency/src/routes/services/+page.svelte'));
+  assert(files.includes('packages/agency/src/routes/stack/+page.svelte'));
+  assert(files.every((file) => !file.startsWith('packages/agency/src/routes/dify/')));
+  assert(files.every((file) => file !== 'packages/agency/src/routes/notion/+page.svelte'));
+});
+
+test('Agency STE procedure profile blocks instructions longer than 20 words', () => {
+  const fixture = path.join(fixturesDir, 'ste-procedure.md');
+  const result = spawnSync(
+    process.execPath,
+    [cliPath, 'check', fixture, '--profile', 'agency-ste', '--format', 'json'],
+    { cwd: repoRoot, encoding: 'utf8' }
+  );
+
+  assert.equal(result.status, 1, result.stderr || result.stdout);
+  const report = JSON.parse(result.stdout);
+  assert.equal(report.profile, 'agency-ste');
+  assert.deepEqual(
+    report.findings.map(({ rule, severity }) => ({ rule, severity })),
+    [{ rule: 'ste/procedure-sentence-length', severity: 'error' }]
+  );
+});
+
+test('Agency STE audit reports only active public source through the CLI', () => {
+  const result = spawnSync(
+    process.execPath,
+    [
+      cliPath,
+      'audit',
+      '--profile',
+      'agency-ste',
+      '--scope',
+      'agency-active',
+      '--format',
+      'json'
+    ],
+    { cwd: repoRoot, encoding: 'utf8' }
+  );
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const report = JSON.parse(result.stdout);
+  assert.equal(report.profile, 'agency-ste');
+  assert.deepEqual(report.selection, { kind: 'scope', scope: 'agency-active' });
+  assert(report.summary.files > 0);
+  assert(report.findings.every((finding) => !finding.file.includes('/routes/dify/')));
+  assert(report.findings.every((finding) => !finding.file.includes('/routes/notion/')));
+});
+
+test('the repository exposes Agency STE checks and the property contract', () => {
+  const packageJson = JSON.parse(readFileSync(path.join(repoRoot, 'package.json'), 'utf8'));
+  const agencyReadme = readFileSync(path.join(repoRoot, 'packages/agency/README.md'), 'utf8');
+
+  assert.equal(
+    packageJson.scripts['prose:ste:check'],
+    'node scripts/prose-quality/index.mjs check --profile agency-ste --changed-from origin/main'
+  );
+  assert.equal(
+    packageJson.scripts['prose:ste:audit'],
+    'node scripts/prose-quality/index.mjs audit --profile agency-ste --scope agency-active'
+  );
+  assert.match(agencyReadme, /### Simplified Technical English Contract/);
+  assert.match(agencyReadme, /STE-aligned/);
+  assert.match(agencyReadme, /brand heading/);
+  assert.match(agencyReadme, /retired.*Dify/i);
+});
+
+test('the six Agency conversion routes pass the STE-aligned description profile', () => {
+  const routes = [
+    'packages/agency/src/routes/+page.svelte',
+    'packages/agency/src/routes/services/+page.svelte',
+    'packages/agency/src/routes/stack/+page.svelte',
+    'packages/agency/src/routes/map/+page.svelte',
+    'packages/agency/src/routes/control/+page.svelte',
+    'packages/agency/src/routes/book/+page.svelte'
+  ];
+  const result = spawnSync(
+    process.execPath,
+    [cliPath, 'check', ...routes, '--profile', 'agency-ste', '--format', 'json'],
+    { cwd: repoRoot, encoding: 'utf8' }
+  );
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const report = JSON.parse(result.stdout);
+  assert.equal(report.summary.files, routes.length);
+  assert.equal(report.summary.blocking, 0);
 });
 
 test('invalid prose-ignore markers fail as deterministic configuration findings', () => {

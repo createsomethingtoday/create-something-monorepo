@@ -10,6 +10,10 @@ import PerformanceFieldSequence from './PerformanceFieldSequence.svelte';
 import PerformanceContrastChapter from './PerformanceContrastChapter.svelte';
 import PerformanceEvidenceIndex from './PerformanceEvidenceIndex.svelte';
 import PerformanceConversionHandoff from './PerformanceConversionHandoff.svelte';
+import PerformanceNarrativeStage from './PerformanceNarrativeStage.svelte';
+import PerformancePageSection from '../clear/ClearPageSection.svelte';
+import PerformanceDecisionPanel from '../clear/ClearDecisionPanel.svelte';
+import PropertyFunnel from '../PropertyFunnel.svelte';
 
 let target: HTMLElement;
 let instance: Record<string, unknown> | undefined;
@@ -20,6 +24,7 @@ afterEach(() => {
 		instance = undefined;
 	}
 	document.body.innerHTML = '';
+	window.history.replaceState(null, '', '/');
 	vi.unstubAllGlobals();
 });
 
@@ -73,7 +78,9 @@ describe('PerformanceCampaignOpening', () => {
 		expect(image?.getAttribute('width')).toBe('1920');
 		expect(image?.getAttribute('height')).toBe('1080');
 
-		const proofItems = [...(opening?.querySelectorAll('.performance-campaign-opening__proof li') ?? [])];
+		const proofItems = [
+			...(opening?.querySelectorAll('.performance-campaign-opening__proof li') ?? [])
+		];
 		expect(proofItems).toHaveLength(2);
 		expect(proofItems[0].textContent).toContain('Signals');
 		expect(proofItems[0].textContent).toContain('Mapped');
@@ -183,10 +190,18 @@ describe('PerformanceCampaignOpening', () => {
 			'utf8'
 		);
 
-		expect(source).toContain(".performance-campaign-opening:not([data-mode='paper']) .performance-campaign-opening__actions :global(.btn-primary)");
-		expect(source).toContain(".performance-campaign-opening:not([data-mode='paper']) .performance-campaign-opening__actions :global(.btn-secondary)");
-		expect(source).toContain(".performance-campaign-opening[data-mode='paper'] .performance-campaign-opening__actions :global(.btn-primary)");
-		expect(source).toContain(".performance-campaign-opening[data-mode='paper'] .performance-campaign-opening__actions :global(.btn-secondary)");
+		expect(source).toContain(
+			".performance-campaign-opening:not([data-mode='paper']) .performance-campaign-opening__actions :global(.btn-primary)"
+		);
+		expect(source).toContain(
+			".performance-campaign-opening:not([data-mode='paper']) .performance-campaign-opening__actions :global(.btn-secondary)"
+		);
+		expect(source).toContain(
+			".performance-campaign-opening[data-mode='paper'] .performance-campaign-opening__actions :global(.btn-primary)"
+		);
+		expect(source).toContain(
+			".performance-campaign-opening[data-mode='paper'] .performance-campaign-opening__actions :global(.btn-secondary)"
+		);
 		expect(source).toContain('.performance-campaign-opening__actions :global(.btn:focus-visible)');
 		expect(source).toContain('outline: 3px solid var(--color-performance-signal-soft, #a7b8ff)');
 	});
@@ -201,7 +216,8 @@ describe('Performance composition typography', () => {
 			'PerformanceFieldSequence.svelte',
 			'PerformanceContrastChapter.svelte',
 			'PerformanceEvidenceIndex.svelte',
-			'PerformanceConversionHandoff.svelte'
+			'PerformanceConversionHandoff.svelte',
+			'PerformanceNarrativeStage.svelte'
 		];
 
 		const tokens = readFileSync(join(process.cwd(), 'src/lib/styles/tokens.css'), 'utf8');
@@ -224,7 +240,9 @@ describe('Performance composition typography', () => {
 			expect(source, component).toContain('var(--font-performance-display-weight');
 			expect(source, component).toContain('var(--tracking-performance-display');
 			expect(source, component).toContain('font-kerning: normal');
-			expect(source, component).toContain('font-feature-settings: "kern" 1, "liga" 1');
+			expect(source, component).toMatch(
+				/font-feature-settings:[\s\S]*?['"]kern['"] 1,[\s\S]*?['"]liga['"] 1/
+			);
 		}
 	});
 
@@ -247,7 +265,7 @@ describe('Performance composition typography', () => {
 		expect(source).toContain('var(--font-performance-display-weight');
 		expect(source).toContain('var(--tracking-performance-display');
 		expect(source).toContain('font-kerning: normal');
-		expect(source).toContain('font-feature-settings: "kern" 1, "liga" 1');
+		expect(source).toMatch(/font-feature-settings:[\s\S]*?['"]kern['"] 1,[\s\S]*?['"]liga['"] 1/);
 	});
 });
 
@@ -262,8 +280,18 @@ describe('PerformanceThesisConditions', () => {
 				title: 'Governance is the channel, not the dam.',
 				description: 'Movement stays legible, accountable, and bounded.',
 				conditions: [
-					{ label: 'Pressure', title: 'Test under real conditions.', detail: 'Stress before delegation.', tone: 'pressure' },
-					{ label: 'Boundary', title: 'Design the limits.', detail: 'Stop conditions remain visible.', tone: 'signal' }
+					{
+						label: 'Pressure',
+						title: 'Test under real conditions.',
+						detail: 'Stress before delegation.',
+						tone: 'pressure'
+					},
+					{
+						label: 'Boundary',
+						title: 'Design the limits.',
+						detail: 'Stop conditions remain visible.',
+						tone: 'signal'
+					}
 				]
 			}
 		}) as Record<string, unknown>;
@@ -271,8 +299,12 @@ describe('PerformanceThesisConditions', () => {
 
 		const section = target.querySelector('section.performance-thesis-conditions');
 		expect(section?.getAttribute('aria-label')).toBe('Operating principle');
-		expect(section?.querySelector('h2')?.textContent).toBe('Governance is the channel, not the dam.');
-		const conditions = [...(section?.querySelectorAll('.performance-thesis-conditions__condition') ?? [])];
+		expect(section?.querySelector('h2')?.textContent).toBe(
+			'Governance is the channel, not the dam.'
+		);
+		const conditions = [
+			...(section?.querySelectorAll('.performance-thesis-conditions__condition') ?? [])
+		];
 		expect(conditions).toHaveLength(2);
 		expect(conditions[0].getAttribute('data-tone')).toBe('pressure');
 		expect(conditions[1].textContent).toContain('Stop conditions remain visible.');
@@ -281,7 +313,12 @@ describe('PerformanceThesisConditions', () => {
 
 describe('PerformanceFieldSequence', () => {
 	it('renders ordered field studies as one named evidence sequence', () => {
-		const sharedProof = { id: '#PR-2026-0710', owner: 'Platform Team', state: 'RUN', verified: 'Jul 10, 2026' };
+		const sharedProof = {
+			id: '#PR-2026-0710',
+			owner: 'Platform Team',
+			state: 'RUN',
+			verified: 'Jul 10, 2026'
+		};
 		target = document.createElement('div');
 		document.body.appendChild(target);
 		instance = mount(PerformanceFieldSequence, {
@@ -291,8 +328,25 @@ describe('PerformanceFieldSequence', () => {
 				title: 'Test the workflow in sequence.',
 				layout: 'sticky',
 				studies: [
-					{ image: '/one.webp', alt: 'Pressure test', title: 'Apply pressure.', description: 'Expose the failure mode.', principle: 'Pressure reveals risk.', metrics: [{ label: 'Checks', value: '7 / 7' }], proof: sharedProof },
-					{ image: '/two.webp', alt: 'Proof settles', title: 'Settle the proof.', description: 'Make the outcome public.', principle: 'Evidence creates trust.', metrics: [{ label: 'Receipts', value: '3' }], proof: sharedProof, stage: 'receipt-settled' }
+					{
+						image: '/one.webp',
+						alt: 'Pressure test',
+						title: 'Apply pressure.',
+						description: 'Expose the failure mode.',
+						principle: 'Pressure reveals risk.',
+						metrics: [{ label: 'Checks', value: '7 / 7' }],
+						proof: sharedProof
+					},
+					{
+						image: '/two.webp',
+						alt: 'Proof settles',
+						title: 'Settle the proof.',
+						description: 'Make the outcome public.',
+						principle: 'Evidence creates trust.',
+						metrics: [{ label: 'Receipts', value: '3' }],
+						proof: sharedProof,
+						stage: 'receipt-settled'
+					}
 				]
 			}
 		}) as Record<string, unknown>;
@@ -311,16 +365,23 @@ describe('PerformanceFieldSequence', () => {
 
 describe('PerformanceContrastChapter', () => {
 	it('creates an explicit principle-to-intervention contrast with an artifact seam', () => {
-		const artifact = createRawSnippet(() => ({ render: () => '<div data-testid="contrast-artifact">Live workflow graph</div>' }));
+		const artifact = createRawSnippet(() => ({
+			render: () => '<div data-testid="contrast-artifact">Live workflow graph</div>'
+		}));
 		target = document.createElement('div');
 		document.body.appendChild(target);
 		instance = mount(PerformanceContrastChapter, {
 			target,
 			props: {
+				density: 'compact',
 				eyebrow: 'Performance principle',
 				title: 'A system should expose its wake.',
 				description: 'Every consequential action leaves evidence.',
-				intervention: { label: 'Intervention 03', title: 'Public proof surface', detail: 'Receipts make delegation inspectable.' },
+				intervention: {
+					label: 'Intervention 03',
+					title: 'Public proof surface',
+					detail: 'Receipts make delegation inspectable.'
+				},
 				mode: 'ink-to-paper',
 				artifact
 			}
@@ -329,20 +390,29 @@ describe('PerformanceContrastChapter', () => {
 
 		const chapter = target.querySelector('section.performance-contrast-chapter');
 		expect(chapter?.getAttribute('data-mode')).toBe('ink-to-paper');
+		expect(chapter?.getAttribute('data-density')).toBe('compact');
 		expect(chapter?.querySelector('h2')?.textContent).toBe('A system should expose its wake.');
 		expect(chapter?.querySelector('h3')?.textContent).toBe('Public proof surface');
-		expect(chapter?.querySelector('[data-testid="contrast-artifact"]')?.textContent).toBe('Live workflow graph');
+		expect(chapter?.querySelector('[data-testid="contrast-artifact"]')?.textContent).toBe(
+			'Live workflow graph'
+		);
 	});
 
 	it('can promote a live artifact to a full-width operating surface', () => {
-		const artifact = createRawSnippet(() => ({ render: () => '<div data-testid="full-width-artifact">Live canvas</div>' }));
+		const artifact = createRawSnippet(() => ({
+			render: () => '<div data-testid="full-width-artifact">Live canvas</div>'
+		}));
 		target = document.createElement('div');
 		document.body.appendChild(target);
 		instance = mount(PerformanceContrastChapter, {
 			target,
 			props: {
 				title: 'Map the work before AI runs it.',
-				intervention: { label: 'Intervention 01', title: 'Atlas workflow map', detail: 'The canvas stays inspectable.' },
+				intervention: {
+					label: 'Intervention 01',
+					title: 'Atlas workflow map',
+					detail: 'The canvas stays inspectable.'
+				},
 				artifactPlacement: 'full-width',
 				artifact
 			}
@@ -352,7 +422,9 @@ describe('PerformanceContrastChapter', () => {
 		const chapter = target.querySelector('section.performance-contrast-chapter');
 		expect(chapter?.getAttribute('data-artifact-placement')).toBe('full-width');
 		const promoted = chapter?.querySelector('.performance-contrast-chapter__artifact--full-width');
-		expect(promoted?.querySelector('[data-testid="full-width-artifact"]')?.textContent).toBe('Live canvas');
+		expect(promoted?.querySelector('[data-testid="full-width-artifact"]')?.textContent).toBe(
+			'Live canvas'
+		);
 
 		const source = readFileSync(
 			join(process.cwd(), 'src/lib/components/performance/PerformanceContrastChapter.svelte'),
@@ -371,8 +443,23 @@ describe('PerformanceEvidenceIndex', () => {
 			props: {
 				title: 'Evidence index',
 				items: [
-					{ id: '#PR-0710-01', kind: 'Report', title: 'Workflow readiness', detail: 'Seven signals mapped.', state: 'verified', date: 'Jul 10, 2026', href: '/evidence/readiness' },
-					{ id: '#PR-0710-02', kind: 'Receipt', title: 'Delegation boundary', detail: 'Three stop conditions attached.', state: 'review', date: 'Jul 10, 2026' }
+					{
+						id: '#PR-0710-01',
+						kind: 'Report',
+						title: 'Workflow readiness',
+						detail: 'Seven signals mapped.',
+						state: 'verified',
+						date: 'Jul 10, 2026',
+						href: '/evidence/readiness'
+					},
+					{
+						id: '#PR-0710-02',
+						kind: 'Receipt',
+						title: 'Delegation boundary',
+						detail: 'Three stop conditions attached.',
+						state: 'review',
+						date: 'Jul 10, 2026'
+					}
 				]
 			}
 		}) as Record<string, unknown>;
@@ -380,19 +467,28 @@ describe('PerformanceEvidenceIndex', () => {
 
 		const index = target.querySelector('section.performance-evidence-index');
 		expect(index?.querySelectorAll('.performance-evidence-index__item')).toHaveLength(2);
-		expect(index?.querySelector('a[href="/evidence/readiness"]')?.textContent).toContain('Workflow readiness');
+		expect(index?.querySelector('a[href="/evidence/readiness"]')?.textContent).toContain(
+			'Workflow readiness'
+		);
 		expect(index?.querySelector('[data-state="review"]')?.textContent).toContain('#PR-0710-02');
 
 		unmount(instance as never);
-		instance = mount(PerformanceEvidenceIndex, { target, props: { title: 'Evidence index', items: [] } }) as Record<string, unknown>;
+		instance = mount(PerformanceEvidenceIndex, {
+			target,
+			props: { title: 'Evidence index', items: [] }
+		}) as Record<string, unknown>;
 		flushSync();
-		expect(target.querySelector('[data-empty="true"]')?.textContent).toContain('No public evidence has been attached yet.');
+		expect(target.querySelector('[data-empty="true"]')?.textContent).toContain(
+			'No public evidence has been attached yet.'
+		);
 	});
 });
 
 describe('PerformanceConversionHandoff', () => {
 	it('carries owner, authority, and proof into the conversion boundary', () => {
-		const actions = createRawSnippet(() => ({ render: () => '<a href="/book" data-testid="handoff-action">Map the workflow</a>' }));
+		const actions = createRawSnippet(() => ({
+			render: () => '<a href="/book" data-testid="handoff-action">Map the workflow</a>'
+		}));
 		target = document.createElement('div');
 		document.body.appendChild(target);
 		instance = mount(PerformanceConversionHandoff, {
@@ -401,9 +497,18 @@ describe('PerformanceConversionHandoff', () => {
 				eyebrow: 'Next protocol',
 				title: 'Make one workflow safe to delegate.',
 				description: 'Start with a bounded operating path and its proof surface.',
-				handoff: { owner: 'AI Performance Lab', authority: 'Operator approval', proof: 'Public receipt', state: 'ready' },
+				handoff: {
+					owner: 'AI Performance Lab',
+					authority: 'Operator approval',
+					proof: 'Public receipt',
+					state: 'ready'
+				},
 				steps: [
-					{ label: 'Map', title: 'Name the boundary', detail: 'Expose the workflow and its owner.' },
+					{
+						label: 'Map',
+						title: 'Name the boundary',
+						detail: 'Expose the workflow and its owner.'
+					},
 					{ label: 'Prove', title: 'Attach the receipt', detail: 'Keep evidence with the action.' }
 				],
 				actions
@@ -418,7 +523,9 @@ describe('PerformanceConversionHandoff', () => {
 		expect(values).toEqual(['AI Performance Lab', 'Operator approval', 'Public receipt', 'ready']);
 		expect(handoff?.querySelectorAll('.performance-conversion-handoff__step')).toHaveLength(2);
 		expect(handoff?.textContent).toContain('Attach the receipt');
-		expect(handoff?.querySelector('[data-testid="handoff-action"]')?.getAttribute('href')).toBe('/book');
+		expect(handoff?.querySelector('[data-testid="handoff-action"]')?.getAttribute('href')).toBe(
+			'/book'
+		);
 	});
 
 	it('gives wide operating artifacts a full-width handoff surface', () => {
@@ -432,7 +539,12 @@ describe('PerformanceConversionHandoff', () => {
 			props: {
 				title: 'Bring one workflow your team is ready to delegate.',
 				headingLevel: 'h1',
-				handoff: { owner: 'CREATE SOMETHING', authority: 'Operator approval', proof: 'Workflow map', state: 'ready' },
+				handoff: {
+					owner: 'CREATE SOMETHING',
+					authority: 'Operator approval',
+					proof: 'Workflow map',
+					state: 'ready'
+				},
 				artifactPlacement: 'full-width',
 				aside
 			}
@@ -444,7 +556,200 @@ describe('PerformanceConversionHandoff', () => {
 		expect(handoff?.querySelector('h1')?.textContent).toBe(
 			'Bring one workflow your team is ready to delegate.'
 		);
-		expect(handoff?.querySelector(':scope > .performance-conversion-handoff__artifact [data-testid="delegation-artifact"]')).not.toBeNull();
-		expect(handoff?.querySelector('.performance-conversion-handoff__boundary [data-testid="delegation-artifact"]')).toBeNull();
+		expect(
+			handoff?.querySelector(
+				':scope > .performance-conversion-handoff__artifact [data-testid="delegation-artifact"]'
+			)
+		).not.toBeNull();
+		expect(
+			handoff?.querySelector(
+				'.performance-conversion-handoff__boundary [data-testid="delegation-artifact"]'
+			)
+		).toBeNull();
+	});
+
+	it('exposes compact density without weakening the handoff ledger', () => {
+		target = document.createElement('div');
+		document.body.appendChild(target);
+		instance = mount(PerformanceConversionHandoff, {
+			target,
+			props: {
+				title: 'Make the boundary explicit.',
+				density: 'compact',
+				handoff: { owner: 'Operator', authority: 'Review', proof: 'Receipt', state: 'ready' }
+			}
+		}) as Record<string, unknown>;
+		flushSync();
+
+		const handoff = target.querySelector('section.performance-conversion-handoff');
+		expect(handoff?.getAttribute('data-density')).toBe('compact');
+		expect(handoff?.querySelectorAll('dd')).toHaveLength(4);
+	});
+});
+
+describe('Performance compact density', () => {
+	it('keeps PageSection and DecisionPanel content available in compact mode', () => {
+		target = document.createElement('div');
+		document.body.appendChild(target);
+		instance = mount(PerformancePageSection, {
+			target,
+			props: {
+				title: 'One sharp chapter.',
+				description: 'The content remains visible.',
+				density: 'compact'
+			}
+		}) as Record<string, unknown>;
+		flushSync();
+
+		const section = target.querySelector('section.clear-page-section');
+		expect(section?.getAttribute('data-density')).toBe('compact');
+		expect(section?.textContent).toContain('The content remains visible.');
+
+		unmount(instance as never);
+		target.innerHTML = '';
+		instance = mount(PerformanceDecisionPanel, {
+			target,
+			props: {
+				title: 'Build, govern, prove.',
+				density: 'compact',
+				autoRotate: false,
+				items: [
+					{
+						label: 'Build',
+						summary: 'Connect',
+						title: 'Name the connection.',
+						detail: 'Keep the judgment explicit.'
+					}
+				]
+			}
+		}) as Record<string, unknown>;
+		flushSync();
+
+		const panel = target.querySelector('section.clear-decision-panel');
+		expect(panel?.getAttribute('data-density')).toBe('compact');
+		expect(panel?.textContent).toContain('Keep the judgment explicit.');
+	});
+
+	it('renders a compact property rail with every step and an optional handoff boundary', () => {
+		target = document.createElement('div');
+		document.body.appendChild(target);
+		instance = mount(PropertyFunnel, {
+			target,
+			props: {
+				current: 'lms',
+				density: 'compact',
+				handoff: {
+					owner: 'Learner',
+					authority: 'Artifact review',
+					proof: 'Working workflow',
+					state: 'ready'
+				}
+			}
+		}) as Record<string, unknown>;
+		flushSync();
+
+		const funnel = target.querySelector('section.property-funnel');
+		expect(funnel?.getAttribute('data-density')).toBe('compact');
+		expect(funnel?.querySelectorAll('.property-funnel__step')).toHaveLength(5);
+		expect(funnel?.querySelectorAll('.property-funnel__step-summary')).toHaveLength(5);
+		expect(funnel?.querySelector('.property-funnel__handoff')?.textContent).toContain(
+			'Working workflow'
+		);
+	});
+});
+
+describe('PerformanceNarrativeStage', () => {
+	const scenes = [
+		{
+			id: 'map',
+			label: 'Map',
+			summary: 'Boundary visible',
+			title: 'See the whole workflow.',
+			detail: 'Name the systems, owner, risk, and proof before implementation.',
+			evidence: ['Systems are named'],
+			receipts: ['workflow map']
+		},
+		{
+			id: 'decide',
+			label: 'Decide',
+			summary: 'Authority routed',
+			title: 'Keep consequential judgment.',
+			detail: 'Safe work runs and exceptions reach a named operator.',
+			evidence: ['Run, wait, and stop are explicit'],
+			receipts: ['decision policy']
+		},
+		{
+			id: 'prove',
+			label: 'Prove',
+			summary: 'Receipt attached',
+			title: 'Leave an inspectable wake.',
+			detail: 'Source evidence, policy, action, and recovery remain connected.',
+			evidence: ['Outcome maps back to policy'],
+			receipts: ['proof record'],
+			actions: [{ label: 'Inspect proof', href: '/proof' }]
+		}
+	];
+
+	it('keeps every scene summary visible while one complete proof scene holds focus', () => {
+		target = document.createElement('div');
+		document.body.appendChild(target);
+		instance = mount(PerformanceNarrativeStage, {
+			target,
+			props: {
+				id: 'workflow-story',
+				eyebrow: 'Operating sequence',
+				title: 'Map. Decide. Prove.',
+				description: 'One argument, held in one stage.',
+				scenes
+			}
+		}) as Record<string, unknown>;
+		flushSync();
+
+		const stage = target.querySelector('section.performance-narrative-stage');
+		const tabs = [...(stage?.querySelectorAll('[role="tab"]') ?? [])];
+		expect(tabs.map((tab) => tab.textContent)).toEqual([
+			expect.stringContaining('Boundary visible'),
+			expect.stringContaining('Authority routed'),
+			expect.stringContaining('Receipt attached')
+		]);
+		expect(stage?.querySelector('[role="tab"][aria-selected="true"]')?.textContent).toContain(
+			'Map'
+		);
+		expect(stage?.querySelector('[role="tabpanel"]:not([hidden])')?.textContent).toContain(
+			'See the whole workflow.'
+		);
+
+		(tabs[2] as HTMLButtonElement).click();
+		flushSync();
+
+		expect(stage?.querySelector('[role="tab"][aria-selected="true"]')?.textContent).toContain(
+			'Prove'
+		);
+		const activePanel = stage?.querySelector('[role="tabpanel"]:not([hidden])');
+		expect(activePanel?.textContent).toContain('Leave an inspectable wake.');
+		expect(activePanel?.textContent).toContain('Outcome maps back to policy');
+		expect(activePanel?.textContent).toContain('proof record');
+		expect(activePanel?.querySelector('a')?.getAttribute('href')).toBe('/proof');
+	});
+
+	it('supports roving keyboard selection and fragment-addressable scenes', () => {
+		window.history.replaceState(null, '', '#workflow-story-decide');
+		target = document.createElement('div');
+		document.body.appendChild(target);
+		instance = mount(PerformanceNarrativeStage, {
+			target,
+			props: { id: 'workflow-story', title: 'Map. Decide. Prove.', scenes }
+		}) as Record<string, unknown>;
+		flushSync();
+
+		let selected = target.querySelector<HTMLButtonElement>('[role="tab"][aria-selected="true"]');
+		expect(selected?.textContent).toContain('Decide');
+		selected?.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }));
+		flushSync();
+
+		selected = target.querySelector<HTMLButtonElement>('[role="tab"][aria-selected="true"]');
+		expect(selected?.textContent).toContain('Prove');
+		expect(document.activeElement).toBe(selected);
+		expect(window.location.hash).toBe('#workflow-story-prove');
 	});
 });

@@ -148,8 +148,8 @@
 </script>
 
 <SEO
-  title="Signal Inbox for App Governance | CREATE SOMETHING .agency"
-  description="Signal is the Control inbox for app governance: API updates, Slack posts, PRs, exceptions, and reviewer context routed into Map, Decision, and Proof."
+  title="Signal Inbox | Inside CREATE SOMETHING Control"
+  description="Signal is the Control inbox for app governance. Updates from your tools arrive as reviewable context, already attached to the workflow they affect."
   keywords="app governance signal inbox, API update review, reviewer notifications, workflow signal, workflow control map"
   ogImage="/og-image.png"
   propertyName="agency"
@@ -159,7 +159,7 @@
 <GovernanceProductPage
   {product}
   title="The inbox for updates that should not surprise reviewers."
-  description="Signal follows the places where work changes, turns those updates into reviewable context, and attaches each source to Map, Decision, and Proof."
+  description="Signal watches the places where work changes and turns each update into reviewable context, with its source still attached."
   {heroCards}
   {pathItems}
   {detailCards}

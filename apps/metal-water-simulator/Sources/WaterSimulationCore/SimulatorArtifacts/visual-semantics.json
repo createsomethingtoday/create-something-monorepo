@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "metal_water_visual_semantics.v0.1",
+  "shadowOnly": true,
+  "writes": "none",
+  "waterMeaning": "Continuous operating pressure",
+  "tracerMeaning": "Representative workflow cases",
+  "boundaryMeaning": "Versioned authority policy",
+  "wakeMeaning": "Inspectable proof after a decision",
+  "rendererHealthMeaning": "GPU performance and numerical integrity only",
+  "tokens": {
+    "controlled": "--color-performance-signal",
+    "pressure": "--color-performance-pressure",
+    "run": "--color-performance-growth",
+    "wait": "--color-performance-gold",
+    "stop": "--color-performance-risk"
+  }
+}

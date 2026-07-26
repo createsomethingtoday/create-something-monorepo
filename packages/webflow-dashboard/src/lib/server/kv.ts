@@ -8,9 +8,33 @@
 const SESSION_TTL = 7200; // 2 hours in seconds
 const SESSION_HANDOFF_TTL = 300; // 5 minutes in seconds
 
+/** Slide the 2-hour TTL once a session is this old, so activity keeps it alive. */
+const SESSION_REFRESH_AFTER_SECONDS = 1800; // 30 minutes
+
+/** Hard ceiling on a session's life regardless of activity. */
+const SESSION_ABSOLUTE_MAX_SECONDS = 86400; // 24 hours
+
+export const SESSION_COOKIE_NAME = 'session_token';
+
+/**
+ * Single definition of the session cookie flags.
+ *
+ * sameSite 'none' is required for the Webflow iframe embed; CSRF is enforced by
+ * the trusted-origin check in hooks.server.ts instead.
+ */
+export const SESSION_COOKIE_OPTIONS = {
+	httpOnly: true,
+	secure: true,
+	path: '/' as const,
+	maxAge: SESSION_TTL,
+	sameSite: 'none' as const
+};
+
 export interface SessionData {
 	email: string;
 	createdAt: number;
+	/** First issue time, preserved across refreshes to enforce the absolute cap. */
+	issuedAt?: number;
 }
 
 export interface SessionHandoffData {
@@ -41,9 +65,47 @@ export async function setSession(
 	sessionToken: string,
 	email: string
 ): Promise<void> {
+	const now = Date.now();
 	const data: SessionData = {
 		email,
-		createdAt: Date.now()
+		createdAt: now,
+		issuedAt: now
+	};
+
+	await kv.put(sessionToken, JSON.stringify(data), {
+		expirationTtl: SESSION_TTL
+	});
+}
+
+/**
+ * True when an active session is old enough to warrant sliding its TTL, and
+ * still inside the absolute lifetime cap.
+ */
+export function shouldRefreshSession(session: SessionData, now: number = Date.now()): boolean {
+	const issuedAt = session.issuedAt ?? session.createdAt;
+
+	if (issuedAt && now - issuedAt >= SESSION_ABSOLUTE_MAX_SECONDS * 1000) {
+		return false;
+	}
+
+	if (!session.createdAt) return true;
+
+	return now - session.createdAt >= SESSION_REFRESH_AFTER_SECONDS * 1000;
+}
+
+/**
+ * Extend a session's TTL without changing its identity or absolute expiry.
+ */
+export async function refreshSession(
+	kv: KVNamespace,
+	sessionToken: string,
+	session: SessionData,
+	now: number = Date.now()
+): Promise<void> {
+	const data: SessionData = {
+		...session,
+		createdAt: now,
+		issuedAt: session.issuedAt ?? session.createdAt ?? now
 	};
 
 	await kv.put(sessionToken, JSON.stringify(data), {
@@ -129,14 +191,25 @@ export async function checkRateLimit(
 	} = {}
 ): Promise<{ allowed: boolean; remaining: number; retryAfter: number }> {
 	const now = Math.floor(Date.now() / 1000);
-	const windowKey = `ratelimit:${key}:${Math.floor(now / windowSeconds)}`;
+	const windowIndex = Math.floor(now / windowSeconds);
+	const windowKey = `ratelimit:${key}:${windowIndex}`;
+	const previousWindowKey = `ratelimit:${key}:${windowIndex - 1}`;
 
 	try {
-		const current = await kv.get(windowKey, 'text');
+		// Count the previous window too. A pure fixed window lets a caller spend the
+		// full limit twice across a window boundary (2x burst in seconds).
+		const [current, previous] = await Promise.all([
+			kv.get(windowKey, 'text'),
+			kv.get(previousWindowKey, 'text')
+		]);
 		const count = current ? parseInt(current, 10) : 0;
+		const previousCount = previous ? parseInt(previous, 10) : 0;
+		const windowElapsed = now - windowIndex * windowSeconds;
+		const previousWeight = Math.max(0, 1 - windowElapsed / windowSeconds);
+		const weightedCount = count + Math.floor(previousCount * previousWeight);
 
-		if (count >= limit) {
-			const resetAt = (Math.floor(now / windowSeconds) + 1) * windowSeconds;
+		if (weightedCount >= limit) {
+			const resetAt = (windowIndex + 1) * windowSeconds;
 			return {
 				allowed: false,
 				remaining: 0,
@@ -144,14 +217,15 @@ export async function checkRateLimit(
 			};
 		}
 
-		// Increment counter
+		// Increment counter. Keep the window readable for one extra window so the
+		// weighted check above can still see it after the boundary.
 		await kv.put(windowKey, String(count + 1), {
-			expirationTtl: windowSeconds
+			expirationTtl: windowSeconds * 2
 		});
 
 		return {
 			allowed: true,
-			remaining: limit - count - 1,
+			remaining: Math.max(0, limit - weightedCount - 1),
 			retryAfter: 0
 		};
 	} catch {

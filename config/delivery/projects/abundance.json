@@ -7,6 +7,11 @@
   "clientRegistryKey": "npg",
   "audience": "client_summary",
   "targetKind": "project",
+  "buildReleasePackage": {
+    "status": "not_configured",
+    "manifestPath": null,
+    "note": "This bespoke delivery predates the versioned Build release package. Preserve its existing evidence, but do not infer accepted handoff, artifact hashes, UAT, rollback, or terminal acceptance."
+  },
   "deliveryDate": "2026-05-06",
   "headline": "Abundance now has a hardened API surface, production-smoked Staff and Jobs MCPs, an NPG scoped hub, and a client-safe delivery package for final review.",
   "recentChangePaths": [

@@ -163,7 +163,8 @@ export async function refreshTokens(
  */
 export async function validateJWT(
 	token: string,
-	publicKey: CryptoKey
+	publicKey: CryptoKey,
+	expectedIssuer = ISSUER
 ): Promise<JWTPayload | null> {
 	try {
 		const [headerB64, payloadB64, signatureB64] = token.split('.');
@@ -196,7 +197,7 @@ export async function validateJWT(
 		if (payload.exp < now) return null;
 
 		// Check issuer
-		if (payload.iss !== ISSUER) return null;
+		if (payload.iss !== expectedIssuer.replace(/\/+$/, '')) return null;
 
 		return payload;
 	} catch {

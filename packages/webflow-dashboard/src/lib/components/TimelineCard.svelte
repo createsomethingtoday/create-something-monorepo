@@ -7,7 +7,7 @@
 	 */
 	import type { Asset } from '$lib/server/airtable';
 	import { formatLongDate, formatRelativeAge } from '$lib/utils/format';
-	import DOMPurify from 'isomorphic-dompurify';
+	import { sanitizeFeedbackHtml } from '$lib/utils/sanitize';
 	import { Card, CardHeader, CardTitle, CardContent } from './ui';
 	import {
 		Clock,
@@ -19,15 +19,6 @@
 		Timer,
 		FileCheck
 	} from 'lucide-svelte';
-
-	// Sanitize HTML to prevent XSS
-	function sanitizeHtml(html: string | undefined): string {
-		if (!html) return '';
-		return DOMPurify.sanitize(html, {
-			ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'ul', 'ol', 'li', 'a'],
-			ALLOWED_ATTR: ['href', 'target', 'rel']
-		});
-	}
 
 	interface Props {
 		asset: Asset;
@@ -222,7 +213,7 @@
 			<CardContent>
 				{#if asset.rejectionFeedbackHtml}
 					<div class="rejection-content">
-						{@html sanitizeHtml(asset.rejectionFeedbackHtml)}
+						{@html sanitizeFeedbackHtml(asset.rejectionFeedbackHtml)}
 					</div>
 				{:else}
 					<p class="rejection-text">{asset.rejectionFeedback}</p>

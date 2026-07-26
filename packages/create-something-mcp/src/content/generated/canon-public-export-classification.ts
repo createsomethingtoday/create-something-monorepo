@@ -233,6 +233,12 @@ export const CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES: CanonPublicExportClassifi
     "rationale": "Standalone Performance document tokens and font links are a narrow consumption artifact governed by Canon typography and token contracts."
   },
   {
+    "exportPath": "./performance/scheduler-email",
+    "classification": "style-artifact",
+    "registryPolicy": "classified-out",
+    "rationale": "Inline-safe Performance email values are a narrow consumption artifact governed by Canon typography and token contracts."
+  },
+  {
     "exportPath": "./styles/glass.css",
     "classification": "style-artifact",
     "registryPolicy": "classified-out",

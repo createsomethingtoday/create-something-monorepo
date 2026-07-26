@@ -3,11 +3,13 @@
     Button,
     PerformanceCardGrid,
     PerformanceConversionHandoff,
+    PerformanceNarrativeStage,
     PerformancePageSection,
     PerformanceProofStrip,
     PerformanceWorkflowMiniArtifact,
     type PerformanceCardItem,
     type PerformanceCtaItem,
+    type PerformanceNarrativeScene,
     type PerformanceProofItem
   } from '@create-something/canon';
   import type { GovernanceProduct } from '@create-something/canon/governance';
@@ -68,6 +70,41 @@
 
     return undefined;
   }
+
+  const productScenes: PerformanceNarrativeScene[] = [
+    {
+      id: 'surface',
+      label: 'Surface and path',
+      summary: 'See the boundary',
+      title: `${product.name} owns the ${product.surface.replace('-', ' ')}.`,
+      detail: product.description,
+      tone: 'neutral',
+      evidence: pathItems.map((item) => `${item.value}: ${item.label}`),
+      receipts: [`Surface: ${product.surface}`, `${pathItems.length} connected states`]
+    },
+    {
+      id: 'contract',
+      label: 'Production contract',
+      summary: 'Inspect ownership',
+      title: 'The boundary stays small enough for operators to inspect.',
+      detail: `In production, ${product.name} is required because it owns ${product.owns.join(', ')}.`,
+      tone: 'review',
+      evidence: detailCards.map((item) => item.title),
+      receipts: product.owns
+    },
+    {
+      id: 'connected-loop',
+      label: 'Connected loop',
+      summary: 'Continue with context',
+      title: 'Map connects this surface to the rest of the governance loop.',
+      detail:
+        'Production workflows need Map, Signal, Decision, and Proof attached to the same operating boundary.',
+      tone: 'allow',
+      evidence: relatedCards.map((item) => item.title),
+      receipts: relatedLinks.map((link) => link.label),
+      actions: relatedLinks
+    }
+  ];
 </script>
 
 <PerformancePageSection
@@ -93,58 +130,48 @@
   {/snippet}
 </PerformancePageSection>
 
-<PerformancePageSection
-  variant="white"
-  eyebrow={`${product.name} surface`}
-  title={`${product.name} owns the ${product.surface.replace('-', ' ')}.`}
-  description={product.description}
+<PerformanceNarrativeStage
+  id={`${product.id}-operating-boundary`}
+  eyebrow={`${product.name} operating boundary`}
+  title="One surface. Three questions."
+  description="See what the surface owns, inspect its production contract, then continue through the connected governance loop."
+  scenes={productScenes}
+  ariaLabel={`${product.name} operating boundary`}
 >
-  {#snippet after()}
-    {@const artifactKind = miniArtifactKind(product.id)}
-    {#if artifactKind}
-      <div class="governance-product-artifact">
-        <PerformanceWorkflowMiniArtifact
-          kind={artifactKind}
-          ariaLabel={`${product.name} workflow mini artifact`}
-        />
-      </div>
+  {#snippet artifact(_scene, index)}
+    {#if index === 0}
+      {@const artifactKind = miniArtifactKind(product.id)}
+      {#if artifactKind}
+        <div class="governance-product-artifact">
+          <PerformanceWorkflowMiniArtifact
+            kind={artifactKind}
+            ariaLabel={`${product.name} workflow mini artifact`}
+          />
+        </div>
+      {/if}
+
+      <PerformanceProofStrip items={pathItems} ariaLabel={`${product.name} composition path`}>
+        {#snippet icon(item)}
+          <WorkflowSignalIcon name={proofStateIcon(item.icon)} />
+        {/snippet}
+      </PerformanceProofStrip>
+    {:else if index === 1}
+      <PerformanceCardGrid
+        items={detailCards}
+        columns={3}
+        density="compact"
+        ariaLabel={`${product.name} production contract`}
+      />
+    {:else}
+      <PerformanceCardGrid
+        items={relatedCards}
+        columns={3}
+        density="compact"
+        ariaLabel="Related governance product surfaces"
+      />
     {/if}
-
-    <PerformanceProofStrip items={pathItems} ariaLabel={`${product.name} composition path`}>
-      {#snippet icon(item)}
-        <WorkflowSignalIcon name={proofStateIcon(item.icon)} />
-      {/snippet}
-    </PerformanceProofStrip>
   {/snippet}
-</PerformancePageSection>
-
-<PerformancePageSection
-  variant="soft"
-  eyebrow="Production contract"
-  title="The product boundary stays small enough for operators to inspect."
-  description={`In production, ${product.name} is required because it owns ${product.owns.join(', ')}.`}
->
-  {#snippet after()}
-    <PerformanceCardGrid items={detailCards} columns={3} ariaLabel={`${product.name} production contract`} />
-  {/snippet}
-</PerformancePageSection>
-
-<PerformancePageSection
-  variant="white"
-  eyebrow="Connected products"
-  title="Atlas connects this product to the rest of the governance loop."
-  description="Each page describes one product surface, but production workflows need the four surfaces attached to the same map: Atlas, Signal, Decision, and Proof."
->
-  {#snippet after()}
-    <PerformanceCardGrid items={relatedCards} columns={3} ariaLabel="Related governance product surfaces" />
-
-    <nav class="governance-product-links" aria-label="Governance product links">
-      {#each relatedLinks as link}
-        <a href={link.href}>{link.label}</a>
-      {/each}
-    </nav>
-  {/snippet}
-</PerformancePageSection>
+</PerformanceNarrativeStage>
 
 <PerformanceConversionHandoff
   eyebrow={`${product.name} implementation`}
@@ -173,31 +200,5 @@
     border: 1px solid var(--color-performance-line, #d7d7d2);
     border-radius: var(--radius-performance-sm, 4px);
     background: var(--color-performance-panel, #ffffff);
-  }
-
-  .governance-product-links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.7rem;
-    margin-top: 1rem;
-  }
-
-  .governance-product-links a {
-    display: inline-flex;
-    min-height: 2.35rem;
-    align-items: center;
-    padding: 0.4rem 0.72rem;
-    border: 1px solid var(--color-performance-line, #d7d7d2);
-    border-radius: var(--radius-performance-sm, 4px);
-    background: var(--color-performance-panel, #ffffff);
-    color: var(--color-performance-ink, #090909);
-    font-size: 0.92rem;
-    text-decoration: none;
-  }
-
-  .governance-product-links a:hover {
-    border-color: var(--color-performance-line-strong, #9c9c96);
-    background: var(--color-performance-paper, #f3f3f0);
-    opacity: 1;
   }
 </style>

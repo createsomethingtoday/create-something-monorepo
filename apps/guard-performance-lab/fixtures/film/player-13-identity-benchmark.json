@@ -1,0 +1,1940 @@
+{
+  "version": 1,
+  "profile": "guard-player-13-identity-v3",
+  "sourceSha256": "94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0",
+  "derivedFromRevision": 2,
+  "personDetectionExecuted": false,
+  "annotations": [
+    {
+      "id": "on-court-17m40-1059600",
+      "segmentId": "on-court-17m40",
+      "timeMs": 1059600,
+      "associationTimeMs": 1060000,
+      "trackId": "p-1613",
+      "cropBounds": [
+        601,
+        468,
+        757,
+        721
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "13",
+      "visibleNumber": "13",
+      "participation": "active",
+      "negativeClass": null,
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          601,
+          468,
+          757,
+          721
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=1059600&crop=601,468,757,721",
+        "reviewNote": "Blue jersey number 13 is directly readable on the foreground court."
+      }
+    },
+    {
+      "id": "on-court-17m40-1059700",
+      "segmentId": "on-court-17m40",
+      "timeMs": 1059700,
+      "associationTimeMs": 1060000,
+      "trackId": "p-1613",
+      "cropBounds": [
+        601,
+        468,
+        757,
+        721
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "13",
+      "visibleNumber": "13",
+      "participation": "active",
+      "negativeClass": null,
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          601,
+          468,
+          757,
+          721
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=1059700&crop=601,468,757,721",
+        "reviewNote": "Blue jersey number 13 is directly readable on the foreground court."
+      }
+    },
+    {
+      "id": "on-court-17m40-1059800",
+      "segmentId": "on-court-17m40",
+      "timeMs": 1059800,
+      "associationTimeMs": 1060000,
+      "trackId": "p-1613",
+      "cropBounds": [
+        601,
+        468,
+        757,
+        721
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "13",
+      "visibleNumber": "13",
+      "participation": "active",
+      "negativeClass": null,
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          601,
+          468,
+          757,
+          721
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=1059800&crop=601,468,757,721",
+        "reviewNote": "Blue jersey number 13 is directly readable on the foreground court."
+      }
+    },
+    {
+      "id": "on-court-17m40-1059900",
+      "segmentId": "on-court-17m40",
+      "timeMs": 1059900,
+      "associationTimeMs": 1060000,
+      "trackId": "p-1613",
+      "cropBounds": [
+        601,
+        468,
+        757,
+        721
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "13",
+      "visibleNumber": "13",
+      "participation": "active",
+      "negativeClass": null,
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          601,
+          468,
+          757,
+          721
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=1059900&crop=601,468,757,721",
+        "reviewNote": "Blue jersey number 13 is directly readable on the foreground court."
+      }
+    },
+    {
+      "id": "on-court-17m40-1060000",
+      "segmentId": "on-court-17m40",
+      "timeMs": 1060000,
+      "associationTimeMs": 1060000,
+      "trackId": "p-1613",
+      "cropBounds": [
+        601,
+        468,
+        757,
+        721
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "13",
+      "visibleNumber": "13",
+      "participation": "active",
+      "negativeClass": null,
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          601,
+          468,
+          757,
+          721
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=1060000&crop=601,468,757,721",
+        "reviewNote": "Blue jersey number 13 is directly readable on the foreground court."
+      }
+    },
+    {
+      "id": "on-court-17m40-1060100",
+      "segmentId": "on-court-17m40",
+      "timeMs": 1060100,
+      "associationTimeMs": 1060000,
+      "trackId": "p-1613",
+      "cropBounds": [
+        601,
+        468,
+        757,
+        721
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "13",
+      "visibleNumber": "13",
+      "participation": "active",
+      "negativeClass": null,
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          601,
+          468,
+          757,
+          721
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=1060100&crop=601,468,757,721",
+        "reviewNote": "Blue jersey number 13 is directly readable on the foreground court."
+      }
+    },
+    {
+      "id": "on-court-17m40-1060200",
+      "segmentId": "on-court-17m40",
+      "timeMs": 1060200,
+      "associationTimeMs": 1060000,
+      "trackId": "p-1613",
+      "cropBounds": [
+        601,
+        468,
+        757,
+        721
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "13",
+      "visibleNumber": "13",
+      "participation": "active",
+      "negativeClass": null,
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          601,
+          468,
+          757,
+          721
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=1060200&crop=601,468,757,721",
+        "reviewNote": "Blue jersey number 13 is directly readable on the foreground court."
+      }
+    },
+    {
+      "id": "on-court-17m40-1060300",
+      "segmentId": "on-court-17m40",
+      "timeMs": 1060300,
+      "associationTimeMs": 1060000,
+      "trackId": "p-1613",
+      "cropBounds": [
+        601,
+        468,
+        757,
+        721
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "13",
+      "visibleNumber": "13",
+      "participation": "active",
+      "negativeClass": null,
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          601,
+          468,
+          757,
+          721
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=1060300&crop=601,468,757,721",
+        "reviewNote": "Blue jersey number 13 is directly readable on the foreground court."
+      }
+    },
+    {
+      "id": "on-court-17m40-1060400",
+      "segmentId": "on-court-17m40",
+      "timeMs": 1060400,
+      "associationTimeMs": 1060000,
+      "trackId": "p-1613",
+      "cropBounds": [
+        601,
+        468,
+        757,
+        721
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "13",
+      "visibleNumber": "13",
+      "participation": "active",
+      "negativeClass": null,
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          601,
+          468,
+          757,
+          721
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=1060400&crop=601,468,757,721",
+        "reviewNote": "Blue jersey number 13 is directly readable on the foreground court."
+      }
+    },
+    {
+      "id": "on-court-19m00-1139800",
+      "segmentId": "on-court-19m00",
+      "timeMs": 1139800,
+      "associationTimeMs": 1140000,
+      "trackId": "p-1731",
+      "cropBounds": [
+        1533,
+        467,
+        1697,
+        732
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "13",
+      "visibleNumber": "13",
+      "participation": "active",
+      "negativeClass": null,
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          1533,
+          467,
+          1697,
+          732
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=1139800&crop=1533,467,1697,732",
+        "reviewNote": "Blue jersey number 13 is directly readable on the foreground court."
+      }
+    },
+    {
+      "id": "on-court-19m00-1139900",
+      "segmentId": "on-court-19m00",
+      "timeMs": 1139900,
+      "associationTimeMs": 1140000,
+      "trackId": "p-1731",
+      "cropBounds": [
+        1533,
+        467,
+        1697,
+        732
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "13",
+      "visibleNumber": "13",
+      "participation": "active",
+      "negativeClass": null,
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          1533,
+          467,
+          1697,
+          732
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=1139900&crop=1533,467,1697,732",
+        "reviewNote": "Blue jersey number 13 is directly readable on the foreground court."
+      }
+    },
+    {
+      "id": "on-court-19m00-1140000",
+      "segmentId": "on-court-19m00",
+      "timeMs": 1140000,
+      "associationTimeMs": 1140000,
+      "trackId": "p-1731",
+      "cropBounds": [
+        1533,
+        467,
+        1697,
+        732
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "13",
+      "visibleNumber": "13",
+      "participation": "active",
+      "negativeClass": null,
+      "provenance": {
+        "method": "user-confirmed",
+        "reviewer": "user",
+        "cropBounds": [
+          1533,
+          467,
+          1697,
+          732
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=1140000&crop=1533,467,1697,732",
+        "reviewNote": "Blue jersey number 13 is directly readable on the foreground court."
+      }
+    },
+    {
+      "id": "on-court-19m00-1140100",
+      "segmentId": "on-court-19m00",
+      "timeMs": 1140100,
+      "associationTimeMs": 1140000,
+      "trackId": "p-1731",
+      "cropBounds": [
+        1533,
+        467,
+        1697,
+        732
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "13",
+      "visibleNumber": "13",
+      "participation": "active",
+      "negativeClass": null,
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          1533,
+          467,
+          1697,
+          732
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=1140100&crop=1533,467,1697,732",
+        "reviewNote": "Blue jersey number 13 is directly readable on the foreground court."
+      }
+    },
+    {
+      "id": "on-court-19m00-1140200",
+      "segmentId": "on-court-19m00",
+      "timeMs": 1140200,
+      "associationTimeMs": 1140000,
+      "trackId": "p-1731",
+      "cropBounds": [
+        1533,
+        467,
+        1697,
+        732
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "13",
+      "visibleNumber": "13",
+      "participation": "active",
+      "negativeClass": null,
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          1533,
+          467,
+          1697,
+          732
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=1140200&crop=1533,467,1697,732",
+        "reviewNote": "Blue jersey number 13 is directly readable on the foreground court."
+      }
+    },
+    {
+      "id": "on-court-19m00-1140300",
+      "segmentId": "on-court-19m00",
+      "timeMs": 1140300,
+      "associationTimeMs": 1140000,
+      "trackId": "p-1731",
+      "cropBounds": [
+        1533,
+        467,
+        1697,
+        732
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "13",
+      "visibleNumber": "13",
+      "participation": "active",
+      "negativeClass": null,
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          1533,
+          467,
+          1697,
+          732
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=1140300&crop=1533,467,1697,732",
+        "reviewNote": "Blue jersey number 13 is directly readable on the foreground court."
+      }
+    },
+    {
+      "id": "on-court-32m05-1924600",
+      "segmentId": "on-court-32m05",
+      "timeMs": 1924600,
+      "associationTimeMs": 1925000,
+      "trackId": "p-2888",
+      "cropBounds": [
+        350,
+        467,
+        539,
+        773
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "13",
+      "visibleNumber": "13",
+      "participation": "active",
+      "negativeClass": null,
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          350,
+          467,
+          539,
+          773
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=1924600&crop=350,467,539,773",
+        "reviewNote": "Blue jersey number 13 is directly readable on the foreground court."
+      }
+    },
+    {
+      "id": "on-court-32m05-1924700",
+      "segmentId": "on-court-32m05",
+      "timeMs": 1924700,
+      "associationTimeMs": 1925000,
+      "trackId": "p-2888",
+      "cropBounds": [
+        350,
+        467,
+        539,
+        773
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "13",
+      "visibleNumber": "13",
+      "participation": "active",
+      "negativeClass": null,
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          350,
+          467,
+          539,
+          773
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=1924700&crop=350,467,539,773",
+        "reviewNote": "Blue jersey number 13 is directly readable on the foreground court."
+      }
+    },
+    {
+      "id": "on-court-32m05-1924800",
+      "segmentId": "on-court-32m05",
+      "timeMs": 1924800,
+      "associationTimeMs": 1925000,
+      "trackId": "p-2888",
+      "cropBounds": [
+        350,
+        467,
+        539,
+        773
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "13",
+      "visibleNumber": "13",
+      "participation": "active",
+      "negativeClass": null,
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          350,
+          467,
+          539,
+          773
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=1924800&crop=350,467,539,773",
+        "reviewNote": "Blue jersey number 13 is directly readable on the foreground court."
+      }
+    },
+    {
+      "id": "on-court-32m05-1924900",
+      "segmentId": "on-court-32m05",
+      "timeMs": 1924900,
+      "associationTimeMs": 1925000,
+      "trackId": "p-2888",
+      "cropBounds": [
+        350,
+        467,
+        539,
+        773
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "13",
+      "visibleNumber": "13",
+      "participation": "active",
+      "negativeClass": null,
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          350,
+          467,
+          539,
+          773
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=1924900&crop=350,467,539,773",
+        "reviewNote": "Blue jersey number 13 is directly readable on the foreground court."
+      }
+    },
+    {
+      "id": "on-court-32m05-1925000",
+      "segmentId": "on-court-32m05",
+      "timeMs": 1925000,
+      "associationTimeMs": 1925000,
+      "trackId": "p-2888",
+      "cropBounds": [
+        350,
+        467,
+        539,
+        773
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "13",
+      "visibleNumber": "13",
+      "participation": "active",
+      "negativeClass": null,
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          350,
+          467,
+          539,
+          773
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=1925000&crop=350,467,539,773",
+        "reviewNote": "Blue jersey number 13 is directly readable on the foreground court."
+      }
+    },
+    {
+      "id": "on-court-32m05-1925100",
+      "segmentId": "on-court-32m05",
+      "timeMs": 1925100,
+      "associationTimeMs": 1925000,
+      "trackId": "p-2888",
+      "cropBounds": [
+        350,
+        467,
+        539,
+        773
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "13",
+      "visibleNumber": "13",
+      "participation": "active",
+      "negativeClass": null,
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          350,
+          467,
+          539,
+          773
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=1925100&crop=350,467,539,773",
+        "reviewNote": "Blue jersey number 13 is directly readable on the foreground court."
+      }
+    },
+    {
+      "id": "on-court-32m05-1925200",
+      "segmentId": "on-court-32m05",
+      "timeMs": 1925200,
+      "associationTimeMs": 1925000,
+      "trackId": "p-2888",
+      "cropBounds": [
+        350,
+        467,
+        539,
+        773
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "13",
+      "visibleNumber": "13",
+      "participation": "active",
+      "negativeClass": null,
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          350,
+          467,
+          539,
+          773
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=1925200&crop=350,467,539,773",
+        "reviewNote": "Blue jersey number 13 is directly readable on the foreground court."
+      }
+    },
+    {
+      "id": "on-court-32m05-1925300",
+      "segmentId": "on-court-32m05",
+      "timeMs": 1925300,
+      "associationTimeMs": 1925000,
+      "trackId": "p-2888",
+      "cropBounds": [
+        350,
+        467,
+        539,
+        773
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "13",
+      "visibleNumber": "13",
+      "participation": "active",
+      "negativeClass": null,
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          350,
+          467,
+          539,
+          773
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=1925300&crop=350,467,539,773",
+        "reviewNote": "Blue jersey number 13 is directly readable on the foreground court."
+      }
+    },
+    {
+      "id": "on-court-32m05-1925400",
+      "segmentId": "on-court-32m05",
+      "timeMs": 1925400,
+      "associationTimeMs": 1925000,
+      "trackId": "p-2888",
+      "cropBounds": [
+        350,
+        467,
+        539,
+        773
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "13",
+      "visibleNumber": "13",
+      "participation": "active",
+      "negativeClass": null,
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          350,
+          467,
+          539,
+          773
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=1925400&crop=350,467,539,773",
+        "reviewNote": "Blue jersey number 13 is directly readable on the foreground court."
+      }
+    },
+    {
+      "id": "on-court-51m40-3099600",
+      "segmentId": "on-court-51m40",
+      "timeMs": 3099600,
+      "associationTimeMs": 3100000,
+      "trackId": "p-4596",
+      "cropBounds": [
+        1304,
+        464,
+        1594,
+        933
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "13",
+      "visibleNumber": "13",
+      "participation": "active",
+      "negativeClass": null,
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          1304,
+          464,
+          1594,
+          933
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=3099600&crop=1304,464,1594,933",
+        "reviewNote": "Blue jersey number 13 is directly readable on the foreground court."
+      }
+    },
+    {
+      "id": "on-court-51m40-3099700",
+      "segmentId": "on-court-51m40",
+      "timeMs": 3099700,
+      "associationTimeMs": 3100000,
+      "trackId": "p-4596",
+      "cropBounds": [
+        1304,
+        464,
+        1594,
+        933
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "13",
+      "visibleNumber": "13",
+      "participation": "active",
+      "negativeClass": null,
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          1304,
+          464,
+          1594,
+          933
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=3099700&crop=1304,464,1594,933",
+        "reviewNote": "Blue jersey number 13 is directly readable on the foreground court."
+      }
+    },
+    {
+      "id": "on-court-51m40-3099800",
+      "segmentId": "on-court-51m40",
+      "timeMs": 3099800,
+      "associationTimeMs": 3100000,
+      "trackId": "p-4596",
+      "cropBounds": [
+        1304,
+        464,
+        1594,
+        933
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "13",
+      "visibleNumber": "13",
+      "participation": "active",
+      "negativeClass": null,
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          1304,
+          464,
+          1594,
+          933
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=3099800&crop=1304,464,1594,933",
+        "reviewNote": "Blue jersey number 13 is directly readable on the foreground court."
+      }
+    },
+    {
+      "id": "on-court-51m40-3099900",
+      "segmentId": "on-court-51m40",
+      "timeMs": 3099900,
+      "associationTimeMs": 3100000,
+      "trackId": "p-4596",
+      "cropBounds": [
+        1304,
+        464,
+        1594,
+        933
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "13",
+      "visibleNumber": "13",
+      "participation": "active",
+      "negativeClass": null,
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          1304,
+          464,
+          1594,
+          933
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=3099900&crop=1304,464,1594,933",
+        "reviewNote": "Blue jersey number 13 is directly readable on the foreground court."
+      }
+    },
+    {
+      "id": "on-court-51m40-3100000",
+      "segmentId": "on-court-51m40",
+      "timeMs": 3100000,
+      "associationTimeMs": 3100000,
+      "trackId": "p-4596",
+      "cropBounds": [
+        1304,
+        464,
+        1594,
+        933
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "13",
+      "visibleNumber": "13",
+      "participation": "active",
+      "negativeClass": null,
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          1304,
+          464,
+          1594,
+          933
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=3100000&crop=1304,464,1594,933",
+        "reviewNote": "Blue jersey number 13 is directly readable on the foreground court."
+      }
+    },
+    {
+      "id": "on-court-51m40-3100100",
+      "segmentId": "on-court-51m40",
+      "timeMs": 3100100,
+      "associationTimeMs": 3100000,
+      "trackId": "p-4596",
+      "cropBounds": [
+        1304,
+        464,
+        1594,
+        933
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "13",
+      "visibleNumber": "13",
+      "participation": "active",
+      "negativeClass": null,
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          1304,
+          464,
+          1594,
+          933
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=3100100&crop=1304,464,1594,933",
+        "reviewNote": "Blue jersey number 13 is directly readable on the foreground court."
+      }
+    },
+    {
+      "id": "on-court-51m40-3100200",
+      "segmentId": "on-court-51m40",
+      "timeMs": 3100200,
+      "associationTimeMs": 3100000,
+      "trackId": "p-4596",
+      "cropBounds": [
+        1304,
+        464,
+        1594,
+        933
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "13",
+      "visibleNumber": "13",
+      "participation": "active",
+      "negativeClass": null,
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          1304,
+          464,
+          1594,
+          933
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=3100200&crop=1304,464,1594,933",
+        "reviewNote": "Blue jersey number 13 is directly readable on the foreground court."
+      }
+    },
+    {
+      "id": "on-court-51m40-3100300",
+      "segmentId": "on-court-51m40",
+      "timeMs": 3100300,
+      "associationTimeMs": 3100000,
+      "trackId": "p-4596",
+      "cropBounds": [
+        1304,
+        464,
+        1594,
+        933
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "13",
+      "visibleNumber": "13",
+      "participation": "active",
+      "negativeClass": null,
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          1304,
+          464,
+          1594,
+          933
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=3100300&crop=1304,464,1594,933",
+        "reviewNote": "Blue jersey number 13 is directly readable on the foreground court."
+      }
+    },
+    {
+      "id": "on-court-51m40-3100400",
+      "segmentId": "on-court-51m40",
+      "timeMs": 3100400,
+      "associationTimeMs": 3100000,
+      "trackId": "p-4596",
+      "cropBounds": [
+        1304,
+        464,
+        1594,
+        933
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "13",
+      "visibleNumber": "13",
+      "participation": "active",
+      "negativeClass": null,
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          1304,
+          464,
+          1594,
+          933
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=3100400&crop=1304,464,1594,933",
+        "reviewNote": "Blue jersey number 13 is directly readable on the foreground court."
+      }
+    },
+    {
+      "id": "hard-negative-11-239800",
+      "segmentId": "hard-negative-11",
+      "timeMs": 239800,
+      "associationTimeMs": 240000,
+      "trackId": "p-0378",
+      "cropBounds": [
+        547,
+        467,
+        741,
+        781
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "not-13",
+      "visibleNumber": "11",
+      "participation": "active",
+      "negativeClass": "11",
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          547,
+          467,
+          741,
+          781
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=239800&crop=547,467,741,781",
+        "reviewNote": "Blue jersey number 11 is directly readable and must never resolve as 13."
+      }
+    },
+    {
+      "id": "hard-negative-11-239900",
+      "segmentId": "hard-negative-11",
+      "timeMs": 239900,
+      "associationTimeMs": 240000,
+      "trackId": "p-0378",
+      "cropBounds": [
+        547,
+        467,
+        741,
+        781
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "not-13",
+      "visibleNumber": "11",
+      "participation": "active",
+      "negativeClass": "11",
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          547,
+          467,
+          741,
+          781
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=239900&crop=547,467,741,781",
+        "reviewNote": "Blue jersey number 11 is directly readable and must never resolve as 13."
+      }
+    },
+    {
+      "id": "hard-negative-11-240000",
+      "segmentId": "hard-negative-11",
+      "timeMs": 240000,
+      "associationTimeMs": 240000,
+      "trackId": "p-0378",
+      "cropBounds": [
+        547,
+        467,
+        741,
+        781
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "not-13",
+      "visibleNumber": "11",
+      "participation": "active",
+      "negativeClass": "11",
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          547,
+          467,
+          741,
+          781
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=240000&crop=547,467,741,781",
+        "reviewNote": "Blue jersey number 11 is directly readable and must never resolve as 13."
+      }
+    },
+    {
+      "id": "hard-negative-11-240100",
+      "segmentId": "hard-negative-11",
+      "timeMs": 240100,
+      "associationTimeMs": 240000,
+      "trackId": "p-0378",
+      "cropBounds": [
+        547,
+        467,
+        741,
+        781
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "not-13",
+      "visibleNumber": "11",
+      "participation": "active",
+      "negativeClass": "11",
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          547,
+          467,
+          741,
+          781
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=240100&crop=547,467,741,781",
+        "reviewNote": "Blue jersey number 11 is directly readable and must never resolve as 13."
+      }
+    },
+    {
+      "id": "hard-negative-11-240200",
+      "segmentId": "hard-negative-11",
+      "timeMs": 240200,
+      "associationTimeMs": 240000,
+      "trackId": "p-0378",
+      "cropBounds": [
+        547,
+        467,
+        741,
+        781
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "not-13",
+      "visibleNumber": "11",
+      "participation": "active",
+      "negativeClass": "11",
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          547,
+          467,
+          741,
+          781
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=240200&crop=547,467,741,781",
+        "reviewNote": "Blue jersey number 11 is directly readable and must never resolve as 13."
+      }
+    },
+    {
+      "id": "hard-negative-5-1699800",
+      "segmentId": "hard-negative-5",
+      "timeMs": 1699800,
+      "associationTimeMs": 1700000,
+      "trackId": "p-2560",
+      "cropBounds": [
+        1282,
+        467,
+        1485,
+        796
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "not-13",
+      "visibleNumber": "5",
+      "participation": "active",
+      "negativeClass": "5",
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          1282,
+          467,
+          1485,
+          796
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=1699800&crop=1282,467,1485,796",
+        "reviewNote": "Blue jersey number 5 is directly readable and must never resolve as 13."
+      }
+    },
+    {
+      "id": "hard-negative-5-1699900",
+      "segmentId": "hard-negative-5",
+      "timeMs": 1699900,
+      "associationTimeMs": 1700000,
+      "trackId": "p-2560",
+      "cropBounds": [
+        1282,
+        467,
+        1485,
+        796
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "not-13",
+      "visibleNumber": "5",
+      "participation": "active",
+      "negativeClass": "5",
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          1282,
+          467,
+          1485,
+          796
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=1699900&crop=1282,467,1485,796",
+        "reviewNote": "Blue jersey number 5 is directly readable and must never resolve as 13."
+      }
+    },
+    {
+      "id": "hard-negative-5-1700000",
+      "segmentId": "hard-negative-5",
+      "timeMs": 1700000,
+      "associationTimeMs": 1700000,
+      "trackId": "p-2560",
+      "cropBounds": [
+        1282,
+        467,
+        1485,
+        796
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "not-13",
+      "visibleNumber": "5",
+      "participation": "active",
+      "negativeClass": "5",
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          1282,
+          467,
+          1485,
+          796
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=1700000&crop=1282,467,1485,796",
+        "reviewNote": "Blue jersey number 5 is directly readable and must never resolve as 13."
+      }
+    },
+    {
+      "id": "hard-negative-5-1700100",
+      "segmentId": "hard-negative-5",
+      "timeMs": 1700100,
+      "associationTimeMs": 1700000,
+      "trackId": "p-2560",
+      "cropBounds": [
+        1282,
+        467,
+        1485,
+        796
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "not-13",
+      "visibleNumber": "5",
+      "participation": "active",
+      "negativeClass": "5",
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          1282,
+          467,
+          1485,
+          796
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=1700100&crop=1282,467,1485,796",
+        "reviewNote": "Blue jersey number 5 is directly readable and must never resolve as 13."
+      }
+    },
+    {
+      "id": "hard-negative-5-1700200",
+      "segmentId": "hard-negative-5",
+      "timeMs": 1700200,
+      "associationTimeMs": 1700000,
+      "trackId": "p-2560",
+      "cropBounds": [
+        1282,
+        467,
+        1485,
+        796
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "not-13",
+      "visibleNumber": "5",
+      "participation": "active",
+      "negativeClass": "5",
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          1282,
+          467,
+          1485,
+          796
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=1700200&crop=1282,467,1485,796",
+        "reviewNote": "Blue jersey number 5 is directly readable and must never resolve as 13."
+      }
+    },
+    {
+      "id": "hard-negative-15-2969800",
+      "segmentId": "hard-negative-15",
+      "timeMs": 2969800,
+      "associationTimeMs": 2970000,
+      "trackId": "p-4435",
+      "cropBounds": [
+        922,
+        470,
+        1003,
+        602
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "not-13",
+      "visibleNumber": "15",
+      "participation": "active",
+      "negativeClass": "15",
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          922,
+          470,
+          1003,
+          602
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=2969800&crop=922,470,1003,602",
+        "reviewNote": "Blue jersey number 15 is directly readable and must never resolve as 13."
+      }
+    },
+    {
+      "id": "hard-negative-15-2969900",
+      "segmentId": "hard-negative-15",
+      "timeMs": 2969900,
+      "associationTimeMs": 2970000,
+      "trackId": "p-4435",
+      "cropBounds": [
+        922,
+        470,
+        1003,
+        602
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "not-13",
+      "visibleNumber": "15",
+      "participation": "active",
+      "negativeClass": "15",
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          922,
+          470,
+          1003,
+          602
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=2969900&crop=922,470,1003,602",
+        "reviewNote": "Blue jersey number 15 is directly readable and must never resolve as 13."
+      }
+    },
+    {
+      "id": "hard-negative-15-2970000",
+      "segmentId": "hard-negative-15",
+      "timeMs": 2970000,
+      "associationTimeMs": 2970000,
+      "trackId": "p-4435",
+      "cropBounds": [
+        922,
+        470,
+        1003,
+        602
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "not-13",
+      "visibleNumber": "15",
+      "participation": "active",
+      "negativeClass": "15",
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          922,
+          470,
+          1003,
+          602
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=2970000&crop=922,470,1003,602",
+        "reviewNote": "Blue jersey number 15 is directly readable and must never resolve as 13."
+      }
+    },
+    {
+      "id": "hard-negative-15-2970100",
+      "segmentId": "hard-negative-15",
+      "timeMs": 2970100,
+      "associationTimeMs": 2970000,
+      "trackId": "p-4435",
+      "cropBounds": [
+        922,
+        470,
+        1003,
+        602
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "not-13",
+      "visibleNumber": "15",
+      "participation": "active",
+      "negativeClass": "15",
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          922,
+          470,
+          1003,
+          602
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=2970100&crop=922,470,1003,602",
+        "reviewNote": "Blue jersey number 15 is directly readable and must never resolve as 13."
+      }
+    },
+    {
+      "id": "hard-negative-15-2970200",
+      "segmentId": "hard-negative-15",
+      "timeMs": 2970200,
+      "associationTimeMs": 2970000,
+      "trackId": "p-4435",
+      "cropBounds": [
+        922,
+        470,
+        1003,
+        602
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "not-13",
+      "visibleNumber": "15",
+      "participation": "active",
+      "negativeClass": "15",
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          922,
+          470,
+          1003,
+          602
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=2970200&crop=922,470,1003,602",
+        "reviewNote": "Blue jersey number 15 is directly readable and must never resolve as 13."
+      }
+    },
+    {
+      "id": "hard-negative-unreadable-2339800",
+      "segmentId": "hard-negative-unreadable",
+      "timeMs": 2339800,
+      "associationTimeMs": 2340000,
+      "trackId": "p-3484",
+      "cropBounds": [
+        331,
+        466,
+        553,
+        825
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "unreadable",
+      "visibleNumber": "unreadable",
+      "participation": "active",
+      "negativeClass": "unreadable",
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          331,
+          466,
+          553,
+          825
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=2339800&crop=331,466,553,825",
+        "reviewNote": "Foreground white jersey is visible but its number is not readable; identity must remain unresolved."
+      }
+    },
+    {
+      "id": "hard-negative-unreadable-2339900",
+      "segmentId": "hard-negative-unreadable",
+      "timeMs": 2339900,
+      "associationTimeMs": 2340000,
+      "trackId": "p-3484",
+      "cropBounds": [
+        331,
+        466,
+        553,
+        825
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "unreadable",
+      "visibleNumber": "unreadable",
+      "participation": "active",
+      "negativeClass": "unreadable",
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          331,
+          466,
+          553,
+          825
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=2339900&crop=331,466,553,825",
+        "reviewNote": "Foreground white jersey is visible but its number is not readable; identity must remain unresolved."
+      }
+    },
+    {
+      "id": "hard-negative-unreadable-2340000",
+      "segmentId": "hard-negative-unreadable",
+      "timeMs": 2340000,
+      "associationTimeMs": 2340000,
+      "trackId": "p-3484",
+      "cropBounds": [
+        331,
+        466,
+        553,
+        825
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "unreadable",
+      "visibleNumber": "unreadable",
+      "participation": "active",
+      "negativeClass": "unreadable",
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          331,
+          466,
+          553,
+          825
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=2340000&crop=331,466,553,825",
+        "reviewNote": "Foreground white jersey is visible but its number is not readable; identity must remain unresolved."
+      }
+    },
+    {
+      "id": "hard-negative-unreadable-2340100",
+      "segmentId": "hard-negative-unreadable",
+      "timeMs": 2340100,
+      "associationTimeMs": 2340000,
+      "trackId": "p-3484",
+      "cropBounds": [
+        331,
+        466,
+        553,
+        825
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "unreadable",
+      "visibleNumber": "unreadable",
+      "participation": "active",
+      "negativeClass": "unreadable",
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          331,
+          466,
+          553,
+          825
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=2340100&crop=331,466,553,825",
+        "reviewNote": "Foreground white jersey is visible but its number is not readable; identity must remain unresolved."
+      }
+    },
+    {
+      "id": "hard-negative-unreadable-2340200",
+      "segmentId": "hard-negative-unreadable",
+      "timeMs": 2340200,
+      "associationTimeMs": 2340000,
+      "trackId": "p-3484",
+      "cropBounds": [
+        331,
+        466,
+        553,
+        825
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "unreadable",
+      "visibleNumber": "unreadable",
+      "participation": "active",
+      "negativeClass": "unreadable",
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          331,
+          466,
+          553,
+          825
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=2340200&crop=331,466,553,825",
+        "reviewNote": "Foreground white jersey is visible but its number is not readable; identity must remain unresolved."
+      }
+    },
+    {
+      "id": "tracker-handoff-28m19-1698900",
+      "segmentId": "tracker-handoff-28m19",
+      "timeMs": 1698900,
+      "associationTimeMs": 1699000,
+      "trackId": "p-2560",
+      "cropBounds": [
+        1143,
+        468,
+        1288,
+        703
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "not-13",
+      "visibleNumber": "15",
+      "participation": "active",
+      "negativeClass": "tracker-handoff",
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          1143,
+          468,
+          1288,
+          703
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=1698900&crop=1143,468,1288,703",
+        "reviewNote": "The same revision-2 track ID changes from visible 15 to visible 5 and cannot be treated as a player identity.",
+        "contextFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?startMs=1698900&endMs=1700100&scope=track-p-2560"
+      }
+    },
+    {
+      "id": "tracker-handoff-28m19-1699000",
+      "segmentId": "tracker-handoff-28m19",
+      "timeMs": 1699000,
+      "associationTimeMs": 1699000,
+      "trackId": "p-2560",
+      "cropBounds": [
+        1143,
+        468,
+        1288,
+        703
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "not-13",
+      "visibleNumber": "15",
+      "participation": "active",
+      "negativeClass": "tracker-handoff",
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          1143,
+          468,
+          1288,
+          703
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=1699000&crop=1143,468,1288,703",
+        "reviewNote": "The same revision-2 track ID changes from visible 15 to visible 5 and cannot be treated as a player identity.",
+        "contextFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?startMs=1698900&endMs=1700100&scope=track-p-2560"
+      }
+    },
+    {
+      "id": "tracker-handoff-28m19-1699100",
+      "segmentId": "tracker-handoff-28m19",
+      "timeMs": 1699100,
+      "associationTimeMs": 1699000,
+      "trackId": "p-2560",
+      "cropBounds": [
+        1143,
+        468,
+        1288,
+        703
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "not-13",
+      "visibleNumber": "15",
+      "participation": "active",
+      "negativeClass": "tracker-handoff",
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          1143,
+          468,
+          1288,
+          703
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=1699100&crop=1143,468,1288,703",
+        "reviewNote": "The same revision-2 track ID changes from visible 15 to visible 5 and cannot be treated as a player identity.",
+        "contextFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?startMs=1698900&endMs=1700100&scope=track-p-2560"
+      }
+    },
+    {
+      "id": "tracker-handoff-28m20-1699900",
+      "segmentId": "tracker-handoff-28m20",
+      "timeMs": 1699900,
+      "associationTimeMs": 1700000,
+      "trackId": "p-2560",
+      "cropBounds": [
+        1282,
+        467,
+        1485,
+        796
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "not-13",
+      "visibleNumber": "5",
+      "participation": "active",
+      "negativeClass": "tracker-handoff",
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          1282,
+          467,
+          1485,
+          796
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=1699900&crop=1282,467,1485,796",
+        "reviewNote": "The same revision-2 track ID changes from visible 15 to visible 5 and cannot be treated as a player identity.",
+        "contextFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?startMs=1698900&endMs=1700100&scope=track-p-2560"
+      }
+    },
+    {
+      "id": "tracker-handoff-28m20-1700000",
+      "segmentId": "tracker-handoff-28m20",
+      "timeMs": 1700000,
+      "associationTimeMs": 1700000,
+      "trackId": "p-2560",
+      "cropBounds": [
+        1282,
+        467,
+        1485,
+        796
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "not-13",
+      "visibleNumber": "5",
+      "participation": "active",
+      "negativeClass": "tracker-handoff",
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          1282,
+          467,
+          1485,
+          796
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=1700000&crop=1282,467,1485,796",
+        "reviewNote": "The same revision-2 track ID changes from visible 15 to visible 5 and cannot be treated as a player identity.",
+        "contextFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?startMs=1698900&endMs=1700100&scope=track-p-2560"
+      }
+    },
+    {
+      "id": "tracker-handoff-28m20-1700100",
+      "segmentId": "tracker-handoff-28m20",
+      "timeMs": 1700100,
+      "associationTimeMs": 1700000,
+      "trackId": "p-2560",
+      "cropBounds": [
+        1282,
+        467,
+        1485,
+        796
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "not-13",
+      "visibleNumber": "5",
+      "participation": "active",
+      "negativeClass": "tracker-handoff",
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          1282,
+          467,
+          1485,
+          796
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=1700100&crop=1282,467,1485,796",
+        "reviewNote": "The same revision-2 track ID changes from visible 15 to visible 5 and cannot be treated as a player identity.",
+        "contextFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?startMs=1698900&endMs=1700100&scope=track-p-2560"
+      }
+    },
+    {
+      "id": "substitution-boundary-50m30-3029800",
+      "segmentId": "substitution-boundary-50m30",
+      "timeMs": 3029800,
+      "associationTimeMs": 3030000,
+      "trackId": "p-4487",
+      "cropBounds": [
+        1178,
+        470,
+        1274,
+        626
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "13",
+      "visibleNumber": "13",
+      "participation": "inactive",
+      "negativeClass": "substitution",
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          1178,
+          470,
+          1274,
+          626
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=3029800&crop=1178,470,1274,626",
+        "reviewNote": "Blue jersey number 13 is readable outside the live five-player traffic during the reviewed substitution boundary.",
+        "contextFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?startMs=3028000&endMs=3036000&scope=full-frame"
+      }
+    },
+    {
+      "id": "substitution-boundary-50m30-3029900",
+      "segmentId": "substitution-boundary-50m30",
+      "timeMs": 3029900,
+      "associationTimeMs": 3030000,
+      "trackId": "p-4487",
+      "cropBounds": [
+        1178,
+        470,
+        1274,
+        626
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "13",
+      "visibleNumber": "13",
+      "participation": "inactive",
+      "negativeClass": "substitution",
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          1178,
+          470,
+          1274,
+          626
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=3029900&crop=1178,470,1274,626",
+        "reviewNote": "Blue jersey number 13 is readable outside the live five-player traffic during the reviewed substitution boundary.",
+        "contextFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?startMs=3028000&endMs=3036000&scope=full-frame"
+      }
+    },
+    {
+      "id": "substitution-boundary-50m30-3030000",
+      "segmentId": "substitution-boundary-50m30",
+      "timeMs": 3030000,
+      "associationTimeMs": 3030000,
+      "trackId": "p-4487",
+      "cropBounds": [
+        1178,
+        470,
+        1274,
+        626
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "13",
+      "visibleNumber": "13",
+      "participation": "inactive",
+      "negativeClass": "substitution",
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          1178,
+          470,
+          1274,
+          626
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=3030000&crop=1178,470,1274,626",
+        "reviewNote": "Blue jersey number 13 is readable outside the live five-player traffic during the reviewed substitution boundary.",
+        "contextFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?startMs=3028000&endMs=3036000&scope=full-frame"
+      }
+    },
+    {
+      "id": "substitution-boundary-50m30-3030100",
+      "segmentId": "substitution-boundary-50m30",
+      "timeMs": 3030100,
+      "associationTimeMs": 3030000,
+      "trackId": "p-4487",
+      "cropBounds": [
+        1178,
+        470,
+        1274,
+        626
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "13",
+      "visibleNumber": "13",
+      "participation": "inactive",
+      "negativeClass": "substitution",
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          1178,
+          470,
+          1274,
+          626
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=3030100&crop=1178,470,1274,626",
+        "reviewNote": "Blue jersey number 13 is readable outside the live five-player traffic during the reviewed substitution boundary.",
+        "contextFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?startMs=3028000&endMs=3036000&scope=full-frame"
+      }
+    },
+    {
+      "id": "substitution-boundary-50m30-3030200",
+      "segmentId": "substitution-boundary-50m30",
+      "timeMs": 3030200,
+      "associationTimeMs": 3030000,
+      "trackId": "p-4487",
+      "cropBounds": [
+        1178,
+        470,
+        1274,
+        626
+      ],
+      "courtMembership": "foreground-court",
+      "expectedIdentity": "13",
+      "visibleNumber": "13",
+      "participation": "inactive",
+      "negativeClass": "substitution",
+      "provenance": {
+        "method": "direct-number-review",
+        "reviewer": "codex",
+        "cropBounds": [
+          1178,
+          470,
+          1274,
+          626
+        ],
+        "sourceFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?timeMs=3030200&crop=1178,470,1274,626",
+        "reviewNote": "Blue jersey number 13 is readable outside the live five-player traffic during the reviewed substitution boundary.",
+        "contextFrame": "source-sha256://94cb743b7ffe129ec30f8614ea48196245402adc6bf560b96a91ba5d388e95c0?startMs=3028000&endMs=3036000&scope=full-frame"
+      }
+    }
+  ]
+}

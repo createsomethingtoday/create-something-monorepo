@@ -229,15 +229,15 @@
 
 <SEO
   title="Dify Agent Eval Gates | CREATE SOMETHING .agency"
-  description="The eval gates that make Dify safer to operate: Dify-native Langfuse traces, Langfuse MCP gates, API health, expected tool use, forbidden actions, write confirmation, secret refusal, latency, cost, and release evidence."
-  keywords="Dify agent eval gates, Dify Langfuse, Dify evals, Langfuse MCP evals, Dify MCP testing, AI agent governance, Policy OS, Dify approval gates"
+  description="The eval gates that make Dify safer to operate. Traces show what the agent did, gates confirm it used the tools it was allowed to use, and release evidence records the result."
+  keywords="Dify agent eval gates, Dify Langfuse, Dify evals, Langfuse MCP evals, Dify MCP testing, AI agent governance, Control, Dify approval gates"
   canonical="https://createsomething.agency/dify/agent-eval-gates"
   ogType="article"
   ogImage="/og/dify-lane.png"
   publishedTime="2026-06-22"
   modifiedTime="2026-06-22"
   articleSection="Dify Implementation"
-  articleTags={['Dify', 'eval gates', 'MCP', 'Policy OS', 'agent governance']}
+  articleTags={['Dify', 'eval gates', 'MCP', 'Control', 'agent governance']}
   propertyName="agency"
   noindex={true}
 />

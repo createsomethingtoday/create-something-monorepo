@@ -3,6 +3,7 @@ export const AGENCY_PROTECTED_PATHS = [
 	'/dashboard',
 	'/admin',
 	'/api/community',
+	'/api/control',
 	'/mcp-access',
 	'/map/workspace',
 	'/map/subscribe'

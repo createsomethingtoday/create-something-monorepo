@@ -7,6 +7,33 @@
     "id": "junior-practitioner",
     "definition": "The least-tenured credible practitioner in the document's actual field. They know basic field concepts but do not know CREATE SOMETHING vocabulary."
   },
+  "framework_authority": {
+    "drafting": "packages/dotfiles/codex/skills/writing-for-humans/SKILL.md",
+    "review": "packages/dotfiles/codex/skills/target-reader-review/SKILL.md",
+    "revision_voice": ".claude/rules/voice-canon.md"
+  },
+  "operator_contract": [
+    "outcome",
+    "use_when",
+    "prerequisites",
+    "first_action",
+    "expected_result",
+    "recovery",
+    "completion_proof"
+  ],
+  "framework_routing": {
+    "operator_instructions": ["plain_language", "answer_first", "sentence_clarity", "revision"],
+    "reports_and_proposals": ["answer_first", "grouped_supports", "sentence_clarity", "revision"],
+    "arguments": [
+      "existing_conversation",
+      "response",
+      "reasons",
+      "counterargument",
+      "significance"
+    ],
+    "technical_explanations": ["topic_flow", "visible_characters_and_actions", "familiar_to_new"],
+    "optional_enrichment": ["and_but_therefore", "success_check"]
+  },
   "enforcement": {
     "changed_files": {
       "blocking": true,
