@@ -1,0 +1,25 @@
+{
+  "checks": {
+    "dimensions": true,
+    "explicitGateAperture": true,
+    "fieldValueCount": true,
+    "firstDownstreamFrame": true,
+    "frameCount": true,
+    "immutableHash": true,
+    "noDownstreamAtGateFrame": true,
+    "particleCount": true,
+    "schemaVersion": true,
+    "simulationStepsPerFrame": true,
+    "zeroOverflow": true
+  },
+  "fieldPath": "/Users/micahjohnson/Code/create-something-monorepo/apps/metal-water-gate-release/output/sph-field--v1.json",
+  "fieldSHA256": "9b47b64842431da837b228df80e72874aff1cba648900fdf36b46a4f9c8fcf5f",
+  "firstDownstreamFrame": 73,
+  "frame72DownstreamParticleCount": 0,
+  "frameCount": 192,
+  "maximumOverflowCount": 0,
+  "particleCount": 8192,
+  "passed": true,
+  "schemaVersion": 1,
+  "simulationStepsPerFrame": 2
+}

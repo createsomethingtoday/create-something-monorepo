@@ -118,6 +118,7 @@
     "agent:loop-pilot:reviewed": "node scripts/reviewed-agent-loop-pilot.mjs --dispatch",
     "agent:loop-pilot:reviewed:check": "node scripts/reviewed-agent-loop-pilot.mjs",
     "agent:solo-loop": "node scripts/agent-solo-loop.mjs",
+    "agent:home-base": "node scripts/agent-solo-loop.mjs --home-base",
     "agent:solo-loop:json": "node scripts/agent-solo-loop.mjs --json",
     "agent:solo-loop:starter": "node scripts/agent-solo-loop.mjs --starter",
     "agent:solo-loop:check": "node scripts/agent-solo-loop.mjs --check",

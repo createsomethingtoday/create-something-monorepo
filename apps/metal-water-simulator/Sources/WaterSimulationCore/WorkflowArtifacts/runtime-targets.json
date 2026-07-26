@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "runtime_targets.v0.1",
+  "workflowId": "webflow.marketplace.template-lifecycle",
+  "workflowVersion": "0.1.0",
+  "definitionHash": "sha256:96e880807497d7a417cbf7e7a009d9331996d55e249068767b2417131a91156f",
+  "systems": [
+    {
+      "id": "airtable-marketplace",
+      "title": "Airtable Marketplace Assets",
+      "tier": "database",
+      "owningSurface": "Airtable Assets, Asset Versions, and Asset Releases",
+      "sourceOfTruth": true
+    },
+    {
+      "id": "atlas-studio",
+      "title": "Atlas Studio",
+      "tier": "automation",
+      "owningSurface": "apps/atlas-studio-desktop",
+      "sourceOfTruth": false
+    },
+    {
+      "id": "marketplace-submission-cloud",
+      "title": "Marketplace Template Submission Cloud",
+      "tier": "automation",
+      "owningSurface": "apps/marketplace-template-submission-cloud",
+      "sourceOfTruth": false
+    },
+    {
+      "id": "policy-os",
+      "title": "Policy OS",
+      "tier": "judgment",
+      "owningSurface": "packages/policy-os-engine",
+      "sourceOfTruth": true
+    },
+    {
+      "id": "substrate",
+      "title": "Substrate operational memory",
+      "tier": "database",
+      "owningSurface": "packages/substrate-mcp",
+      "sourceOfTruth": false
+    },
+    {
+      "id": "template-review-mcp",
+      "title": "Webflow Template Review MCP",
+      "tier": "automation",
+      "owningSurface": "packages/webflow-template-review-mcp",
+      "sourceOfTruth": false
+    },
+    {
+      "id": "template-validation",
+      "title": "Webflow Template Validation",
+      "tier": "automation",
+      "owningSurface": "packages/webflow-template-validation",
+      "sourceOfTruth": false
+    }
+  ]
+}

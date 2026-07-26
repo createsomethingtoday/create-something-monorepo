@@ -1,0 +1,70 @@
+{
+  "checkpoints" : [
+    {
+      "frameIndex" : 0,
+      "gateOpenProgress" : 0,
+      "proofProgress" : 0,
+      "timeSeconds" : 0,
+      "waterReleaseProgress" : 0
+    },
+    {
+      "frameIndex" : 47,
+      "gateOpenProgress" : 0,
+      "proofProgress" : 0,
+      "timeSeconds" : 1.9583334,
+      "waterReleaseProgress" : 0
+    },
+    {
+      "frameIndex" : 72,
+      "gateOpenProgress" : 1,
+      "proofProgress" : 0,
+      "timeSeconds" : 3,
+      "waterReleaseProgress" : 0
+    },
+    {
+      "frameIndex" : 73,
+      "gateOpenProgress" : 1,
+      "proofProgress" : 0,
+      "timeSeconds" : 3.0416667,
+      "waterReleaseProgress" : 0.0008240742
+    },
+    {
+      "frameIndex" : 132,
+      "gateOpenProgress" : 1,
+      "proofProgress" : 0.5,
+      "timeSeconds" : 5.5,
+      "waterReleaseProgress" : 1
+    },
+    {
+      "frameIndex" : 144,
+      "gateOpenProgress" : 1,
+      "proofProgress" : 1,
+      "timeSeconds" : 6,
+      "waterReleaseProgress" : 1
+    },
+    {
+      "frameIndex" : 156,
+      "gateOpenProgress" : 1,
+      "proofProgress" : 1,
+      "timeSeconds" : 6.5,
+      "waterReleaseProgress" : 1
+    },
+    {
+      "frameIndex" : 191,
+      "gateOpenProgress" : 1,
+      "proofProgress" : 1,
+      "timeSeconds" : 7.9583335,
+      "waterReleaseProgress" : 1
+    }
+  ],
+  "frameCount" : 192,
+  "framePattern" : "frame-%04d.png",
+  "renderer" : "Apple Metal deterministic compute",
+  "specification" : {
+    "deterministicSeed" : 1129521190,
+    "durationSeconds" : 8,
+    "framesPerSecond" : 24,
+    "height" : 720,
+    "width" : 1280
+  }
+}
