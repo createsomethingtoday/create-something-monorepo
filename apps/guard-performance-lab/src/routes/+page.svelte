@@ -1,10 +1,12 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import type { PageData } from './$types';
-  import { glossary, progressionPhases, sessionBlocks } from '$lib/data.js';
+  import { progressionPhases, sessionBlocks } from '$lib/data.js';
   import type { GuideOutput } from '$lib/guide.js';
   import type { WorkspaceCommand } from '$lib/workspace-api.js';
   import FilmTrafficCourt from '$lib/FilmTrafficCourt.svelte';
+  import GuardInsightCourt from '$lib/GuardInsightCourt.svelte';
+  import SharedLanguageLibrary from '$lib/SharedLanguageLibrary.svelte';
   import { applyFilmCorrections, resolveFilmTrafficAt, summarizeFilmTargetCoverage, type FilmMovementMode } from '$lib/film.js';
   import {
     createInitialState,
@@ -34,21 +36,12 @@
     { key: 'players', label: 'Players + data' }
   ];
   const evidenceLabels: Record<EvidenceSignal, string> = { scan: 'Scan', angle: 'Angle + pace', security: 'Ball security', finish: 'Finish / stop', explain: 'Read + explain' };
-  const readAnswers = {
-    none: ['No help', 'Finish from balance. The rim is the first answer.'],
-    nail: ['Nail help', 'Stop for touch or move the ball before the helper owns your body.'],
-    low: ['Low man commits', 'Find the corner, dunker, or space the low man left.']
-  } as const;
-
   let view = $state<View>('dashboard');
   let labState = $state<LabState>(createInitialState());
   let draft = $state<ReceiptDraft>(emptyReceipt());
   let errors = $state<string[]>([]);
   let saved = $state(false);
   let syncError = $state('');
-  let search = $state('');
-  let termPhase = $state<'all' | 'now' | 'next' | 'later'>('all');
-  let activeRead = $state<keyof typeof readAnswers>('none');
   let playerName = $state('Player 01');
   let newPlayerAge = $state<number | null>(12);
   let newPlayerGender = $state<PlayerProfile['gender'] | ''>('male');
@@ -100,12 +93,6 @@
   let filmStepMs = $derived(activeFilm && activeFilm.frames.length > 1
     ? Math.max(1, activeFilm.frames[1]!.timeMs - activeFilm.frames[0]!.timeMs)
     : 500);
-  let filteredTerms = $derived(glossary.filter(([term, meaning, phase]) => {
-    const matchesPhase = termPhase === 'all' || phase === termPhase;
-    const needle = search.trim().toLowerCase();
-    return matchesPhase && (!needle || `${term} ${meaning}`.toLowerCase().includes(needle));
-  }));
-
   $effect(() => {
     const profile = player?.profile;
     if (!profile) return;
@@ -493,34 +480,11 @@
 
     {:else if view === 'language'}
       <div class="section-head"><h2>Shared basketball language</h2><p>Words support the read; they are not the workout. Introduce a term only when the player can see or feel its picture.</p></div>
-      <div class="toolbar">
-        <input class="input" type="search" bind:value={search} aria-label="Search basketball terms" placeholder="Search term or meaning" />
-        {#each ['all', 'now', 'next', 'later'] as phase}<button class:active={termPhase === phase} class="filter mono" onclick={() => termPhase = phase as typeof termPhase}>{phase}</button>{/each}
-      </div>
-      <div class="term-grid">
-        {#each filteredTerms as [term, meaning, phase]}<article class="term"><strong>{term}</strong><p>{meaning}</p><span class="pill">{phase}</span></article>{/each}
-      </div>
-      {#if filteredTerms.length === 0}<div class="empty">No shared term matches that search.</div>{/if}
+      <SharedLanguageLibrary />
 
     {:else if view === 'reads'}
-      <div class="section-head"><h2>Where the read lives</h2><p>Point to the picture before naming a scheme. Defender position creates the answer.</p></div>
-      <div class="court-layout">
-        <svg class="court" viewBox="0 0 760 520" role="img" aria-labelledby="court-title court-desc">
-          <title id="court-title">Half-court help read</title><desc id="court-desc">A wing drive enters the lane. The nail and low-man help positions create three possible answers.</desc>
-          <rect x="28" y="25" width="704" height="460" fill="none" stroke="#090909" stroke-width="4" />
-          <path d="M235 25v205h290V25M280 230a100 100 0 0 0 200 0" fill="none" stroke="#9c9c96" stroke-width="3" />
-          <path d="M155 355a250 250 0 0 0 450 0" fill="none" stroke="#090909" stroke-width="4" />
-          <circle cx="380" cy="62" r="10" fill="none" stroke="#e54800" stroke-width="5" />
-          <path d="M120 320L292 205" stroke="#e54800" stroke-width="8" /><path d="M292 205l-25 2 17 20z" fill="#e54800" />
-          <path d="M292 205L535 186" stroke="#0057b8" stroke-width="4" />
-          <g font-family="Satoshi" font-size="18" font-weight="600"><circle cx="120" cy="320" r="10" fill="#e54800"/><text x="138" y="326">WING</text><circle cx="380" cy="230" r="10" fill="#e54800"/><text x="398" y="236">NAIL</text><circle cx="535" cy="186" r="10" fill="#0057b8"/><text x="553" y="192">LOW MAN</text><circle cx="205" cy="405" r="10" fill="#0057b8"/><text x="223" y="411">SLOT</text><circle cx="610" cy="125" r="10" fill="#007a4d"/><text x="628" y="131">DUNKER</text><circle cx="95" cy="105" r="10" fill="#007a4d"/><text x="113" y="111">CORNER</text></g>
-          <g font-family="IBM Plex Mono" font-size="12" font-weight="700"><text x="148" y="265" fill="#e54800">PRESSURE / DOWNHILL LANE</text><text x="350" y="170" fill="#0057b8">SIGNAL / HELP READ</text></g>
-        </svg>
-        <section class="read-panel" aria-labelledby="read-title"><p class="eyebrow">One picture / three answers</p><h2 id="read-title">What did the helper choose?</h2>
-          {#each Object.entries(readAnswers) as [key, answer]}<button class:active={activeRead === key} class="read-option" onclick={() => activeRead = key as keyof typeof readAnswers}><strong>{answer[0]}</strong></button>{/each}
-          <div class="answer"><strong>{readAnswers[activeRead][0]}:</strong> {readAnswers[activeRead][1]}</div>
-        </section>
-      </div>
+      <div class="section-head"><h2>Share the court picture</h2><p>Separate what is already visible from the next possession needed to understand footwork, spacing, or scheme response.</p></div>
+      <GuardInsightCourt />
 
     {:else if view === 'receipt'}
       <div class="section-head"><h2>Session receipt</h2><p>Record behavior, player words, and the next decision. Makes and misses are not the receipt.</p></div>
