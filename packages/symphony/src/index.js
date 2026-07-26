@@ -9,4 +9,5 @@ export * from './tracker/linear.js';
 export * from './codex-client.js';
 export * from './agent-worker.js';
 export * from './orchestrator.js';
+export * from './canonical-harness-gate.js';
 //# sourceMappingURL=index.js.map
