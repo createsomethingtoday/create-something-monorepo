@@ -1,0 +1,2043 @@
+{
+  "schemaVersion": "flow.business-digital-thread.v1",
+  "threadId": "bdt:cs:thread:create-something",
+  "tenantId": "tenant:create-something",
+  "businessId": "bdt:cs:business:create-something",
+  "recordedAt": "2020-06-01T00:00:00Z",
+  "records": [
+    {
+      "id": "bdt:cs:business:create-something",
+      "revisionId": "bdtr:cs:business:create-something:r1",
+      "tenantId": "tenant:create-something",
+      "kind": "business",
+      "title": "CREATE SOMETHING",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "business:create-something:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "payload": {
+        "canonicalName": "CREATE SOMETHING",
+        "lifecycleState": "active",
+        "aliases": ["CREATE SOMETHING LLC"]
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "8600631c77d501636f6947854c26538ca1706378afc8b7010c5d8cf3e96e1ad8"
+      }
+    },
+    {
+      "id": "bdt:cs:party:create-something-org",
+      "revisionId": "bdtr:cs:party:create-something-org:r1",
+      "tenantId": "tenant:create-something",
+      "kind": "party",
+      "title": "CREATE SOMETHING organization",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "party:create-something-org:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "payload": {
+        "partyType": "organization",
+        "displayName": "CREATE SOMETHING",
+        "lifecycleState": "active",
+        "externalReferences": []
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "5444235ac4278086ce33e06382ee75202ca333e568732b632fceb692ed9eb202"
+      }
+    },
+    {
+      "id": "bdt:cs:party:operator-old",
+      "revisionId": "bdtr:cs:party:operator-old:r1",
+      "tenantId": "tenant:create-something",
+      "kind": "party",
+      "title": "Original operator",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "party:operator-old:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "payload": {
+        "partyType": "person",
+        "displayName": "Original operator",
+        "lifecycleState": "replaced",
+        "externalReferences": []
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "4eb82fbc8bcece91f623ad6d5edb5d8ff5f0a03d19fd383cda22bd787e0ad3f8"
+      }
+    },
+    {
+      "id": "bdt:cs:party:operator-new",
+      "revisionId": "bdtr:cs:party:operator-new:r1",
+      "tenantId": "tenant:create-something",
+      "kind": "party",
+      "title": "Successor operator",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "party:operator-new:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "payload": {
+        "partyType": "person",
+        "displayName": "Successor operator",
+        "lifecycleState": "active",
+        "externalReferences": []
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "c0319be140d319e1d46992755837e64a6f26b34bb9a44d4c9e2a0b71d9064d93"
+      }
+    },
+    {
+      "id": "bdt:cs:party:vendor-old",
+      "revisionId": "bdtr:cs:party:vendor-old:r1",
+      "tenantId": "tenant:create-something",
+      "kind": "party",
+      "title": "Original vendor",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "party:vendor-old:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "payload": {
+        "partyType": "vendor",
+        "displayName": "Original vendor",
+        "lifecycleState": "replaced",
+        "externalReferences": []
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "d403aa5f58761462b4c903061d4ccf1a9f64a941510512304cffcaa12faddf29"
+      }
+    },
+    {
+      "id": "bdt:cs:party:vendor-new",
+      "revisionId": "bdtr:cs:party:vendor-new:r1",
+      "tenantId": "tenant:create-something",
+      "kind": "party",
+      "title": "Successor vendor",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "party:vendor-new:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "payload": {
+        "partyType": "vendor",
+        "displayName": "Successor vendor",
+        "lifecycleState": "active",
+        "externalReferences": []
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "84132f08fa97c2923e4850045522166e6203438ae9ff889cbe43725e3cb1ef45"
+      }
+    },
+    {
+      "id": "bdt:cs:party:agent-model-old",
+      "revisionId": "bdtr:cs:party:agent-model-old:r1",
+      "tenantId": "tenant:create-something",
+      "kind": "party",
+      "title": "Original agent model",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "party:agent-model-old:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "payload": {
+        "partyType": "agent",
+        "displayName": "Original agent model",
+        "lifecycleState": "replaced",
+        "externalReferences": []
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "9118621d17d3cf1b79f0cda9a316668e99f6a5031cda6383eef95d30ed2909a3"
+      }
+    },
+    {
+      "id": "bdt:cs:party:agent-model-new",
+      "revisionId": "bdtr:cs:party:agent-model-new:r1",
+      "tenantId": "tenant:create-something",
+      "kind": "party",
+      "title": "Successor agent model",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "party:agent-model-new:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "payload": {
+        "partyType": "agent",
+        "displayName": "Successor agent model",
+        "lifecycleState": "active",
+        "externalReferences": []
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "84d81b1ea4763f3142377e7b0be61a1b32633de853ca282202cff257b6bcf429"
+      }
+    },
+    {
+      "id": "bdt:cs:party:tool-old",
+      "revisionId": "bdtr:cs:party:tool-old:r1",
+      "tenantId": "tenant:create-something",
+      "kind": "party",
+      "title": "Original domain tool",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "party:tool-old:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "payload": {
+        "partyType": "tool",
+        "displayName": "Original domain tool",
+        "lifecycleState": "replaced",
+        "externalReferences": []
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "5b1228fa5f0e38e037b18eeec3490e0a3080b6d8447163ff79c3f935424fe10f"
+      }
+    },
+    {
+      "id": "bdt:cs:party:tool-new",
+      "revisionId": "bdtr:cs:party:tool-new:r1",
+      "tenantId": "tenant:create-something",
+      "kind": "party",
+      "title": "Successor domain tool",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "party:tool-new:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "payload": {
+        "partyType": "tool",
+        "displayName": "Successor domain tool",
+        "lifecycleState": "active",
+        "externalReferences": []
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "bb4610c038871105f12f2e242e590d10078a50fe2c09d69c5c4ad87b05ee6a53"
+      }
+    },
+    {
+      "id": "bdt:cs:initiative:business-thread",
+      "revisionId": "bdtr:cs:initiative:business-thread:r1",
+      "tenantId": "tenant:create-something",
+      "kind": "initiative",
+      "title": "Business Digital Thread program",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "initiative:business-thread:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "payload": {
+        "initiativeType": "program",
+        "businessId": "bdt:cs:business:create-something",
+        "ownerPartyId": "bdt:cs:party:operator-new",
+        "state": "active"
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "ca04233f274d5ffd3d05fd6b86160593e7fca365546bbc59f2a2e21979ba9a26"
+      }
+    },
+    {
+      "id": "bdt:cs:policy:governance",
+      "revisionId": "bdtr:cs:policy:governance:r1",
+      "tenantId": "tenant:create-something",
+      "kind": "policy",
+      "title": "Business thread governance policy",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "policy:governance:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "payload": {
+        "policyType": "authority",
+        "statement": "Explicit scoped grants govern changes.",
+        "ownerPartyId": "bdt:cs:party:create-something-org",
+        "approvalAuthorityId": "bdt:cs:party:operator-old",
+        "state": "approved"
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "5ee91ed4afb97f0db6357a10c2626f493fbe609b646f4496c3d714a9195cbbd9"
+      }
+    },
+    {
+      "id": "bdt:cs:authority_grant:operator-approval",
+      "revisionId": "bdtr:cs:authority_grant:operator-approval:r1",
+      "tenantId": "tenant:create-something",
+      "kind": "authority_grant",
+      "title": "Original approval grant",
+      "validTime": {
+        "from": "2018-01-01T00:00:00Z",
+        "to": "2020-06-01T00:00:00Z"
+      },
+      "recordedTime": {
+        "from": "2018-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "authority_grant:operator-approval:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "payload": {
+        "subjectId": "bdt:cs:party:operator-old",
+        "representedPartyId": "bdt:cs:party:create-something-org",
+        "capabilities": ["baseline.approve"],
+        "objectScope": {
+          "recordIds": ["bdt:cs:baseline:v1-approved"],
+          "recordKinds": ["baseline"],
+          "selector": "id == bdt:cs:baseline:v1-approved"
+        },
+        "issuedById": "bdt:cs:party:create-something-org",
+        "policyRevisionId": "bdtr:cs:policy:governance:r1",
+        "delegable": false,
+        "status": "active"
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "8e792bb16b202b4eb42a4566c3bcde5388208ff7175f9114d9e3ff84d6280578"
+      }
+    },
+    {
+      "id": "bdt:cs:authority_grant:operator-approval",
+      "revisionId": "bdtr:cs:authority_grant:operator-approval:r2",
+      "tenantId": "tenant:create-something",
+      "kind": "authority_grant",
+      "title": "Revoked approval grant",
+      "validTime": {
+        "from": "2020-06-01T00:00:00Z",
+        "to": "2021-01-01T00:00:00Z"
+      },
+      "recordedTime": {
+        "from": "2020-06-01T00:00:00Z",
+        "to": null
+      },
+      "supersedesRevisionId": "bdtr:cs:authority_grant:operator-approval:r1",
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "authority_grant:operator-approval:r2",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "payload": {
+        "subjectId": "bdt:cs:party:operator-old",
+        "representedPartyId": "bdt:cs:party:create-something-org",
+        "capabilities": ["baseline.approve"],
+        "objectScope": {
+          "recordIds": ["bdt:cs:baseline:v1-approved"],
+          "recordKinds": ["baseline"],
+          "selector": "id == bdt:cs:baseline:v1-approved"
+        },
+        "issuedById": "bdt:cs:party:create-something-org",
+        "policyRevisionId": "bdtr:cs:policy:governance:r1",
+        "delegable": false,
+        "status": "revoked",
+        "revokedAt": "2020-06-01T00:00:00Z",
+        "revocationReason": "Responsibility transferred."
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "ac35d2e08cc0761cb1b8271f8d9bc1e4a98eaf7a97c9cb1286ba7b8508e8dd64",
+        "previousRevisionHash": "6734fdfcbb577012509179894c5ab80882a7f54f3432a387765c35067d2462d4"
+      }
+    },
+    {
+      "id": "bdt:cs:intent:durable-business",
+      "revisionId": "bdtr:cs:intent:durable-business:r1",
+      "tenantId": "tenant:create-something",
+      "kind": "intent",
+      "title": "Preserve durable business context",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "intent:durable-business:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "payload": {
+        "statement": "Preserve business context through organizational and tool replacement.",
+        "successMeasures": ["Historical reconstruction", "Bidirectional proof"],
+        "ownerPartyId": "bdt:cs:party:create-something-org",
+        "state": "approved"
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "2d342d70092f6a0565e18782504c86eed31fc175e1897d10a012e76e13f951d2"
+      }
+    },
+    {
+      "id": "bdt:cs:requirement:historical-reconstruction",
+      "revisionId": "bdtr:cs:requirement:historical-reconstruction:r1",
+      "tenantId": "tenant:create-something",
+      "kind": "requirement",
+      "title": "Historical reconstruction requirement",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "requirement:historical-reconstruction:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "payload": {
+        "statement": "The system shall reconstruct valid and known state without future leakage.",
+        "requirementType": "functional",
+        "priority": "must",
+        "ownerPartyId": "bdt:cs:party:operator-new",
+        "verificationMethod": "test",
+        "state": "verified"
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "b2521b77af5c60b37efe486bdb1fe0b1accc78417583ba361640fe2078e282ab"
+      }
+    },
+    {
+      "id": "bdt:cs:interface:substrate-adapter",
+      "revisionId": "bdtr:cs:interface:substrate-adapter:r1",
+      "tenantId": "tenant:create-something",
+      "kind": "interface",
+      "title": "Substrate adapter interface",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "interface:substrate-adapter:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "payload": {
+        "providerId": "bdt:cs:party:tool-new",
+        "consumerId": "bdt:cs:initiative:business-thread",
+        "direction": "bidirectional",
+        "protocol": "JSON",
+        "schemaRef": "flow.business-digital-thread.v1",
+        "version": "1.0.0",
+        "compatibilityWindow": {
+          "from": "2020-01-01T00:00:00Z",
+          "to": null
+        },
+        "constraints": ["Loss must be explicit", "Tenant scope required"],
+        "approvalMode": "bilateral",
+        "state": "approved"
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "a402500c83bf23016f055df362ec1febbdcda628210200d2515f72fb69c4b0a0"
+      }
+    },
+    {
+      "id": "bdt:cs:decision:bitemporal-contract",
+      "revisionId": "bdtr:cs:decision:bitemporal-contract:r1",
+      "tenantId": "tenant:create-something",
+      "kind": "decision",
+      "title": "Adopt bitemporal contract",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "decision:bitemporal-contract:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "payload": {
+        "question": "How should history be represented?",
+        "intendedOutcome": "Prevent future-state leakage.",
+        "authorityGrantId": "bdt:cs:authority_grant:operator-approval",
+        "alternatives": [
+          {
+            "id": "present-only",
+            "summary": "Timestamp current topology",
+            "assessment": "Cannot reconstruct knowledge state."
+          },
+          {
+            "id": "bitemporal",
+            "summary": "Use valid and recorded intervals",
+            "assessment": "Preserves effective and known state."
+          }
+        ],
+        "criteria": ["Historical fidelity", "Replaceable adapters"],
+        "assumptions": ["UTC timestamps"],
+        "uncertainty": "Storage implementation is deferred.",
+        "recommendation": "Use bitemporal immutable revisions.",
+        "disposition": "Accepted for v1.",
+        "rationale": "It is the smallest model that prevents future leakage.",
+        "state": "approved"
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "48740a9fefb639f0d59872e7baa682e612e1ff2f729f68d22adbefeadbc7d909"
+      }
+    },
+    {
+      "id": "bdt:cs:risk:future-leakage",
+      "revisionId": "bdtr:cs:risk:future-leakage:r1",
+      "tenantId": "tenant:create-something",
+      "kind": "risk",
+      "title": "Future-state leakage risk",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "risk:future-leakage:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "payload": {
+        "statement": "A historical view could use knowledge recorded later.",
+        "likelihood": "medium",
+        "consequence": "high",
+        "ownerPartyId": "bdt:cs:party:operator-new",
+        "mitigation": "Require validAt and knownAt in every query.",
+        "state": "mitigated"
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "e9581b6444976966dda7bb03d2c6ac01127ce5d04677b7884630db903c0cd90e"
+      }
+    },
+    {
+      "id": "bdt:cs:work_product:canonical-module",
+      "revisionId": "bdtr:cs:work_product:canonical-module:r1",
+      "tenantId": "tenant:create-something",
+      "kind": "work_product",
+      "title": "Canonical semantic module",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "work_product:canonical-module:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "payload": {
+        "workProductType": "code",
+        "artifactRef": "packages/database-layer/src/business-digital-thread.ts",
+        "ownerPartyId": "bdt:cs:party:operator-new",
+        "state": "accepted"
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "dec3d875870cd6d6d863445a500e7d8227e8257f0ad4dea404fb926bf2c08482"
+      }
+    },
+    {
+      "id": "bdt:cs:baseline:v1-approved",
+      "revisionId": "bdtr:cs:baseline:v1-approved:r1",
+      "tenantId": "tenant:create-something",
+      "kind": "baseline",
+      "title": "Approved v1 baseline",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "baseline:v1-approved:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "payload": {
+        "baselineType": "business",
+        "memberRevisionIds": [
+          "bdtr:cs:intent:durable-business:r1",
+          "bdtr:cs:requirement:historical-reconstruction:r1",
+          "bdtr:cs:interface:substrate-adapter:r1",
+          "bdtr:cs:decision:bitemporal-contract:r1",
+          "bdtr:cs:work_product:canonical-module:r1",
+          "bdtr:cs:policy:governance:r1"
+        ],
+        "approvalGrantIds": ["bdt:cs:authority_grant:operator-approval"],
+        "approvedAt": "2020-05-01T00:00:00Z",
+        "state": "approved"
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "0237ebdcb57c1ad84863fe1e5e99d56e8ffa7ef8ef108ae9c7eb432627c40620"
+      }
+    },
+    {
+      "id": "bdt:cs:verification:contract-check",
+      "revisionId": "bdtr:cs:verification:contract-check:r1",
+      "tenantId": "tenant:create-something",
+      "kind": "verification",
+      "title": "Contract verification",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "verification:contract-check:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "payload": {
+        "verificationType": "verification",
+        "requirementIds": ["bdt:cs:requirement:historical-reconstruction"],
+        "baselineId": "bdt:cs:baseline:v1-approved",
+        "method": "test",
+        "outcome": "pass",
+        "evidenceRefs": ["pnpm business-thread:verify"],
+        "executedAt": "2020-05-02T00:00:00Z"
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "619a7d6aab2940946bfe6a46fad5e11b26a20905c52c36c0dc0b917e47aea4ef"
+      }
+    },
+    {
+      "id": "bdt:cs:operation:local-dogfood",
+      "revisionId": "bdtr:cs:operation:local-dogfood:r1",
+      "tenantId": "tenant:create-something",
+      "kind": "operation",
+      "title": "Local dogfood operation",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "operation:local-dogfood:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "payload": {
+        "operationType": "run",
+        "baselineId": "bdt:cs:baseline:v1-approved",
+        "authorityGrantId": "bdt:cs:authority_grant:operator-approval",
+        "startedAt": "2020-05-03T00:00:00Z",
+        "completedAt": "2020-05-03T01:00:00Z",
+        "outcome": "succeeded"
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "9f1f40054b146213eab70591ae5aebc4fc692fb069d691c6d451aa444a6d2777"
+      }
+    },
+    {
+      "id": "bdt:cs:receipt:local-dogfood-proof",
+      "revisionId": "bdtr:cs:receipt:local-dogfood-proof:r1",
+      "tenantId": "tenant:create-something",
+      "kind": "receipt",
+      "title": "Local dogfood proof receipt",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "receipt:local-dogfood-proof:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "payload": {
+        "receiptType": "verification",
+        "actorId": "bdt:cs:party:operator-old",
+        "authorityGrantId": "bdt:cs:authority_grant:operator-approval",
+        "policyRevisionId": "bdtr:cs:policy:governance:r1",
+        "inputHash": "0000000000000000000000000000000000000000000000000000000000000000",
+        "action": "Run local dogfood verifier.",
+        "verifier": "business-thread:verify",
+        "outcome": "succeeded",
+        "evidenceRefs": ["local://verification-report"],
+        "recoveryOrDisposition": "Re-run from clean export."
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "8ad7035d9e85d036e5508a546ab2ff329ad8a46dbdfb27f9f6164d137f418269"
+      }
+    },
+    {
+      "id": "bdt:cs:release:local-v1",
+      "revisionId": "bdtr:cs:release:local-v1:r1",
+      "tenantId": "tenant:create-something",
+      "kind": "release",
+      "title": "Local v1 release",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "release:local-v1:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "payload": {
+        "baselineId": "bdt:cs:baseline:v1-approved",
+        "environment": "local-dogfood",
+        "releasedAt": "2020-05-03T01:00:00Z",
+        "operationIds": ["bdt:cs:operation:local-dogfood"],
+        "receiptIds": ["bdt:cs:receipt:local-dogfood-proof"],
+        "state": "released"
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "cbb904b4eddc11cd65cfb67d70fa4410db5522bdb778f92d802cf20a3d642fea"
+      }
+    },
+    {
+      "id": "bdt:cs:incident:future-leak-detected",
+      "revisionId": "bdtr:cs:incident:future-leak-detected:r1",
+      "tenantId": "tenant:create-something",
+      "kind": "incident",
+      "title": "Future-state leakage detected",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "incident:future-leak-detected:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "payload": {
+        "severity": "high",
+        "detectedAt": "2020-05-04T00:00:00Z",
+        "affectedRecordIds": [
+          "bdt:cs:requirement:historical-reconstruction",
+          "bdt:cs:verification:contract-check"
+        ],
+        "containment": "Blocked historical projection.",
+        "recovery": "Required explicit knownAt.",
+        "state": "closed"
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "790afc6ef08198d34c43bae7e32b8ebca89a18c820b5da93f4bce2c00f6f6919"
+      }
+    },
+    {
+      "id": "bdt:cs:retention_policy:operator-selected",
+      "revisionId": "bdtr:cs:retention_policy:operator-selected:r1",
+      "tenantId": "tenant:create-something",
+      "kind": "retention_policy",
+      "title": "Operator-selected retention mechanism",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "retention_policy:operator-selected:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "payload": {
+        "retentionClass": "operator_selected_example",
+        "allowedOutcomes": [
+          "retain",
+          "archive",
+          "redact",
+          "delete",
+          "tombstone",
+          "preserve_derived_proof"
+        ],
+        "defaultOutcome": "archive",
+        "authorityPartyId": "bdt:cs:party:create-something-org",
+        "policyBasisRef": "operator-approval-required",
+        "reviewAt": "2021-01-01T00:00:00Z"
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "329e6830034d2ceff55e4ed6c1b90541356faf898ba8a89b2cdc07733c725034"
+      }
+    },
+    {
+      "id": "bdt:cs:data_product:thread-export",
+      "revisionId": "bdtr:cs:data_product:thread-export:r1",
+      "tenantId": "tenant:create-something",
+      "kind": "data_product",
+      "title": "Business thread export",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "data_product:thread-export:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "payload": {
+        "ownerPartyId": "bdt:cs:party:create-something-org",
+        "classification": "internal",
+        "schemaRef": "flow.business-digital-thread.v1",
+        "format": "application/json",
+        "authoritativeCopyRef": "substrate://business-thread/create-something",
+        "accessPolicyRevisionId": "bdtr:cs:policy:governance:r1",
+        "retentionPolicyId": "bdt:cs:retention_policy:operator-selected",
+        "successorId": "bdt:cs:party:tool-new",
+        "legacyReaderRef": "adapter.business-thread.v0-reader"
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "8d841beae417c40b0ce6934f4ee9a1a4c25e763fb169fbab410ea0bf3b3c15f3"
+      }
+    },
+    {
+      "id": "bdt:cs:legal_hold:example-hold",
+      "revisionId": "bdtr:cs:legal_hold:example-hold:r1",
+      "tenantId": "tenant:create-something",
+      "kind": "legal_hold",
+      "title": "Example legal hold",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "legal_hold:example-hold:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "payload": {
+        "targetRecordIds": ["bdt:cs:data_product:thread-export"],
+        "issuedById": "bdt:cs:party:create-something-org",
+        "authorityGrantId": "bdt:cs:authority_grant:operator-approval",
+        "reason": "Exercise conflict handling without choosing production policy.",
+        "state": "active"
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "ecac16bcab83746345176b408d860919340ac619d9c53db44cd7352c79471b87"
+      }
+    },
+    {
+      "id": "bdt:cs:disposition:example-derived-proof",
+      "revisionId": "bdtr:cs:disposition:example-derived-proof:r1",
+      "tenantId": "tenant:create-something",
+      "kind": "disposition",
+      "title": "Preserve non-revealing derived proof",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "disposition:example-derived-proof:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "payload": {
+        "targetRecordIds": ["bdt:cs:data_product:thread-export"],
+        "outcome": "preserve_derived_proof",
+        "policyRevisionId": "bdtr:cs:policy:governance:r1",
+        "authorityGrantId": "bdt:cs:authority_grant:operator-approval",
+        "legalHoldIds": ["bdt:cs:legal_hold:example-hold"],
+        "executedAt": "2020-05-05T00:00:00Z",
+        "derivedProof": {
+          "preserved": true,
+          "nonRevealingHash": "1111111111111111111111111111111111111111111111111111111111111111",
+          "containsRawContent": false
+        }
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "46ef1700dbf192818ef6ae321768dcb51ebdaea9d021ab5cd34abf4294794285"
+      }
+    },
+    {
+      "id": "bdt:cs:migration:v0-to-v1",
+      "revisionId": "bdtr:cs:migration:v0-to-v1:r1",
+      "tenantId": "tenant:create-something",
+      "kind": "migration",
+      "title": "Legacy v0 to v1 migration",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "migration:v0-to-v1:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "payload": {
+        "fromSchemaVersion": "flow.business-digital-thread.v0",
+        "toSchemaVersion": "flow.business-digital-thread.v1",
+        "transformId": "business-thread-v0-to-v1",
+        "inputHash": "0000000000000000000000000000000000000000000000000000000000000000",
+        "outputHash": "1111111111111111111111111111111111111111111111111111111111111111",
+        "counts": {
+          "read": 3,
+          "written": 3,
+          "redacted": 0,
+          "deleted": 0,
+          "unmapped": 0
+        },
+        "losses": [],
+        "receiptId": "bdt:cs:receipt:local-dogfood-proof"
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "c0ef96528a568b5f5c948f879ad78b2f5aed0a10c3c59cd1bee8b655f73d8980"
+      }
+    },
+    {
+      "id": "bdt:cs:lesson:require-known-at",
+      "revisionId": "bdtr:cs:lesson:require-known-at:r1",
+      "tenantId": "tenant:create-something",
+      "kind": "lesson",
+      "title": "Require explicit knowledge time",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "lesson:require-known-at:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "payload": {
+        "sourceRecordIds": [
+          "bdt:cs:incident:future-leak-detected",
+          "bdt:cs:receipt:local-dogfood-proof"
+        ],
+        "lifecycleState": "effectiveness_reviewed",
+        "statement": "Historical queries must require knownAt to prevent future evidence leakage.",
+        "reviewAuthorityId": "bdt:cs:party:operator-new",
+        "disseminationTargetIds": ["bdt:cs:initiative:business-thread", "bdt:cs:policy:governance"],
+        "applicationTargetIds": [
+          "bdt:cs:change:apply-known-at",
+          "bdt:cs:requirement:historical-reconstruction"
+        ],
+        "effectivenessVerificationId": "bdt:cs:verification:contract-check"
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "f198a55f403ecde11bde34f67d70a64e9dbdd00c1e2893b1d91c7f4c9db60695"
+      }
+    },
+    {
+      "id": "bdt:cs:change:apply-known-at",
+      "revisionId": "bdtr:cs:change:apply-known-at:r1",
+      "tenantId": "tenant:create-something",
+      "kind": "change",
+      "title": "Apply explicit knownAt requirement",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "change:apply-known-at:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "payload": {
+        "targetRecordIds": [
+          "bdt:cs:requirement:historical-reconstruction",
+          "bdt:cs:interface:substrate-adapter"
+        ],
+        "proposedById": "bdt:cs:party:operator-new",
+        "authorityGrantId": "bdt:cs:authority_grant:operator-approval",
+        "rationale": "Apply the future-leakage lesson.",
+        "impact": {
+          "affectedRecordIds": [
+            "bdt:cs:requirement:historical-reconstruction",
+            "bdt:cs:interface:substrate-adapter",
+            "bdt:cs:work_product:canonical-module"
+          ],
+          "ownerPartyIds": ["bdt:cs:party:operator-new"],
+          "requiredVerificationIds": ["bdt:cs:verification:contract-check"],
+          "riskIds": ["bdt:cs:risk:future-leakage"],
+          "downstreamEvidenceIds": ["bdt:cs:receipt:local-dogfood-proof"],
+          "unresolvedApprovalIds": [],
+          "migration": "No stored-data migration for prototype.",
+          "rollback": "Restore prior adapter contract."
+        },
+        "state": "implemented"
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "6e797367185fd6217ad7c9ce1aa50cec22c32525eb6a6698dad68b80151a8207"
+      }
+    }
+  ],
+  "links": [
+    {
+      "id": "bdtl:cs:contains:business-initiative",
+      "revisionId": "bdtlr:cs:contains:business-initiative:r1",
+      "tenantId": "tenant:create-something",
+      "relationshipClass": "governance",
+      "type": "contains",
+      "subjectId": "bdt:cs:business:create-something",
+      "objectId": "bdt:cs:initiative:business-thread",
+      "role": "contains",
+      "scope": "business-thread-v1",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "link:contains:business-initiative:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "0d6395c55a55881940478236c625bf60e11fe50dc93fceb8eaf4b30bc4767ffd"
+      }
+    },
+    {
+      "id": "bdtl:cs:owned_by:initiative-owner",
+      "revisionId": "bdtlr:cs:owned_by:initiative-owner:r1",
+      "tenantId": "tenant:create-something",
+      "relationshipClass": "governance",
+      "type": "owned_by",
+      "subjectId": "bdt:cs:initiative:business-thread",
+      "objectId": "bdt:cs:party:operator-new",
+      "role": "owned_by",
+      "scope": "business-thread-v1",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "link:owned_by:initiative-owner:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "e79762fc9fa4a4fce551c7665b106864af55fb75440f67d1b755b8b768c70502"
+      }
+    },
+    {
+      "id": "bdtl:cs:assigned_to:owner-org",
+      "revisionId": "bdtlr:cs:assigned_to:owner-org:r1",
+      "tenantId": "tenant:create-something",
+      "relationshipClass": "participant",
+      "type": "assigned_to",
+      "subjectId": "bdt:cs:party:operator-old",
+      "objectId": "bdt:cs:party:create-something-org",
+      "role": "assigned_to",
+      "scope": "business-thread-v1",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "link:assigned_to:owner-org:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "2b04806b5bfc67ea0963ca0b9d9f260c4238a76df5595b3b4c26c37af47341f8"
+      }
+    },
+    {
+      "id": "bdtl:cs:decomposes:intent-requirement",
+      "revisionId": "bdtlr:cs:decomposes:intent-requirement:r1",
+      "tenantId": "tenant:create-something",
+      "relationshipClass": "traceability",
+      "type": "decomposes",
+      "subjectId": "bdt:cs:intent:durable-business",
+      "objectId": "bdt:cs:requirement:historical-reconstruction",
+      "role": "decomposes",
+      "scope": "business-thread-v1",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "link:decomposes:intent-requirement:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "b23912fa57ba3ee82eb0b6247f009e4fafdbe4f0199cb8be91e7ecb2d3c74a65"
+      }
+    },
+    {
+      "id": "bdtl:cs:constrained_by:requirement-interface",
+      "revisionId": "bdtlr:cs:constrained_by:requirement-interface:r1",
+      "tenantId": "tenant:create-something",
+      "relationshipClass": "traceability",
+      "type": "constrained_by",
+      "subjectId": "bdt:cs:requirement:historical-reconstruction",
+      "objectId": "bdt:cs:interface:substrate-adapter",
+      "role": "constrained_by",
+      "scope": "business-thread-v1",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "link:constrained_by:requirement-interface:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "1bf95b90837cc01be86dd0464d98c48bca886afe6f58e4d859130f358325298c"
+      }
+    },
+    {
+      "id": "bdtl:cs:decided_by:interface-decision",
+      "revisionId": "bdtlr:cs:decided_by:interface-decision:r1",
+      "tenantId": "tenant:create-something",
+      "relationshipClass": "traceability",
+      "type": "decided_by",
+      "subjectId": "bdt:cs:interface:substrate-adapter",
+      "objectId": "bdt:cs:decision:bitemporal-contract",
+      "role": "decided_by",
+      "scope": "business-thread-v1",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "link:decided_by:interface-decision:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "f77aa2b8bd2273beae8bd0ea7633b2f283e757780246204a1e6851396362898b"
+      }
+    },
+    {
+      "id": "bdtl:cs:included_in_baseline:decision-baseline",
+      "revisionId": "bdtlr:cs:included_in_baseline:decision-baseline:r1",
+      "tenantId": "tenant:create-something",
+      "relationshipClass": "governance",
+      "type": "included_in_baseline",
+      "subjectId": "bdt:cs:decision:bitemporal-contract",
+      "objectId": "bdt:cs:baseline:v1-approved",
+      "role": "included_in_baseline",
+      "scope": "business-thread-v1",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "link:included_in_baseline:decision-baseline:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "d494f3060e25857f345ede68f8d53844a12b30ccbec86901a1a0cf17eb2303ec"
+      }
+    },
+    {
+      "id": "bdtl:cs:implements:work-product-baseline",
+      "revisionId": "bdtlr:cs:implements:work-product-baseline:r1",
+      "tenantId": "tenant:create-something",
+      "relationshipClass": "traceability",
+      "type": "implements",
+      "subjectId": "bdt:cs:work_product:canonical-module",
+      "objectId": "bdt:cs:baseline:v1-approved",
+      "role": "implements",
+      "scope": "business-thread-v1",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "link:implements:work-product-baseline:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "e628ec5415304bb5eb79618b68528c26c6a5e66bbe10b71b363f70f65fbe6f87"
+      }
+    },
+    {
+      "id": "bdtl:cs:evidenced_by:work-product-verification",
+      "revisionId": "bdtlr:cs:evidenced_by:work-product-verification:r1",
+      "tenantId": "tenant:create-something",
+      "relationshipClass": "provenance",
+      "type": "evidenced_by",
+      "subjectId": "bdt:cs:work_product:canonical-module",
+      "objectId": "bdt:cs:verification:contract-check",
+      "role": "evidenced_by",
+      "scope": "business-thread-v1",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "link:evidenced_by:work-product-verification:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "72692f1151fadfc79f9920253ed91a8ffcd873ec42665b8cc4be03f7d160d848"
+      }
+    },
+    {
+      "id": "bdtl:cs:verifies:verification-requirement",
+      "revisionId": "bdtlr:cs:verifies:verification-requirement:r1",
+      "tenantId": "tenant:create-something",
+      "relationshipClass": "traceability",
+      "type": "verifies",
+      "subjectId": "bdt:cs:verification:contract-check",
+      "objectId": "bdt:cs:requirement:historical-reconstruction",
+      "role": "verifies",
+      "scope": "business-thread-v1",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "link:verifies:verification-requirement:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "6e79f1b45e94b6a142c36421011a2090e381f8aadcce79e88943eb51fce1163b"
+      }
+    },
+    {
+      "id": "bdtl:cs:evidenced_by:operation-verification",
+      "revisionId": "bdtlr:cs:evidenced_by:operation-verification:r1",
+      "tenantId": "tenant:create-something",
+      "relationshipClass": "provenance",
+      "type": "evidenced_by",
+      "subjectId": "bdt:cs:operation:local-dogfood",
+      "objectId": "bdt:cs:verification:contract-check",
+      "role": "evidenced_by",
+      "scope": "business-thread-v1",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "link:evidenced_by:operation-verification:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "9f8d539aee294fcfe5d0d0e9543e3e24f8f454812bb5e28205d55cc4351f7df4"
+      }
+    },
+    {
+      "id": "bdtl:cs:evidenced_by:operation-receipt",
+      "revisionId": "bdtlr:cs:evidenced_by:operation-receipt:r1",
+      "tenantId": "tenant:create-something",
+      "relationshipClass": "provenance",
+      "type": "evidenced_by",
+      "subjectId": "bdt:cs:operation:local-dogfood",
+      "objectId": "bdt:cs:receipt:local-dogfood-proof",
+      "role": "evidenced_by",
+      "scope": "business-thread-v1",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "link:evidenced_by:operation-receipt:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "61f2ad02c16bf0863d25b069f5dca3724085a932ec466e6c415fc2100dfee712"
+      }
+    },
+    {
+      "id": "bdtl:cs:learned_from:lesson-receipt",
+      "revisionId": "bdtlr:cs:learned_from:lesson-receipt:r1",
+      "tenantId": "tenant:create-something",
+      "relationshipClass": "provenance",
+      "type": "learned_from",
+      "subjectId": "bdt:cs:lesson:require-known-at",
+      "objectId": "bdt:cs:receipt:local-dogfood-proof",
+      "role": "learned_from",
+      "scope": "business-thread-v1",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "link:learned_from:lesson-receipt:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "392f2ad827b6df9c21a490aa4b1b2d18dd049902bd4d63b9bef43443758651b0"
+      }
+    },
+    {
+      "id": "bdtl:cs:learned_from:lesson-incident",
+      "revisionId": "bdtlr:cs:learned_from:lesson-incident:r1",
+      "tenantId": "tenant:create-something",
+      "relationshipClass": "provenance",
+      "type": "learned_from",
+      "subjectId": "bdt:cs:lesson:require-known-at",
+      "objectId": "bdt:cs:incident:future-leak-detected",
+      "role": "learned_from",
+      "scope": "business-thread-v1",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "link:learned_from:lesson-incident:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "ec02c3dc98257d15849e41fb22c63f7899d3aa2e5309b450ea3e31b210794b73"
+      }
+    },
+    {
+      "id": "bdtl:cs:applied_to:lesson-change",
+      "revisionId": "bdtlr:cs:applied_to:lesson-change:r1",
+      "tenantId": "tenant:create-something",
+      "relationshipClass": "traceability",
+      "type": "applied_to",
+      "subjectId": "bdt:cs:lesson:require-known-at",
+      "objectId": "bdt:cs:change:apply-known-at",
+      "role": "applied_to",
+      "scope": "business-thread-v1",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "link:applied_to:lesson-change:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "48104cc778e8aaaa1e8ec5fb7ba38186bc04882dc9d0eb1a87bca4e22fc1aa43"
+      }
+    },
+    {
+      "id": "bdtl:cs:changes:change-requirement",
+      "revisionId": "bdtlr:cs:changes:change-requirement:r1",
+      "tenantId": "tenant:create-something",
+      "relationshipClass": "governance",
+      "type": "changes",
+      "subjectId": "bdt:cs:change:apply-known-at",
+      "objectId": "bdt:cs:requirement:historical-reconstruction",
+      "role": "changes",
+      "scope": "business-thread-v1",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "link:changes:change-requirement:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "172b7aa8e6475cdb83a0f4137b6bea7be8a2923950f13ada31a2e731f02f8fe5"
+      }
+    },
+    {
+      "id": "bdtl:cs:impacts:change-interface",
+      "revisionId": "bdtlr:cs:impacts:change-interface:r1",
+      "tenantId": "tenant:create-something",
+      "relationshipClass": "traceability",
+      "type": "impacts",
+      "subjectId": "bdt:cs:change:apply-known-at",
+      "objectId": "bdt:cs:interface:substrate-adapter",
+      "role": "impacts",
+      "scope": "business-thread-v1",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "link:impacts:change-interface:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "0b041ecbf86b9677b09383811d368b111cfbcce67ee42cd3591f7095f0fed4d3"
+      }
+    },
+    {
+      "id": "bdtl:cs:governed_by:data-retention",
+      "revisionId": "bdtlr:cs:governed_by:data-retention:r1",
+      "tenantId": "tenant:create-something",
+      "relationshipClass": "governance",
+      "type": "governed_by",
+      "subjectId": "bdt:cs:data_product:thread-export",
+      "objectId": "bdt:cs:retention_policy:operator-selected",
+      "role": "governed_by",
+      "scope": "business-thread-v1",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "link:governed_by:data-retention:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "acba19ffc70d2322ec534f1e1223a6c515a0af86c14bf5cc59a5cf13b8aee50a"
+      }
+    },
+    {
+      "id": "bdtl:cs:held_by:data-hold",
+      "revisionId": "bdtlr:cs:held_by:data-hold:r1",
+      "tenantId": "tenant:create-something",
+      "relationshipClass": "governance",
+      "type": "held_by",
+      "subjectId": "bdt:cs:data_product:thread-export",
+      "objectId": "bdt:cs:legal_hold:example-hold",
+      "role": "held_by",
+      "scope": "business-thread-v1",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "link:held_by:data-hold:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "b3d49059c3b6cdec1868981f177f74f0dc090487c5eb492092628643c7acb20f"
+      }
+    },
+    {
+      "id": "bdtl:cs:disposed_by:data-disposition",
+      "revisionId": "bdtlr:cs:disposed_by:data-disposition:r1",
+      "tenantId": "tenant:create-something",
+      "relationshipClass": "governance",
+      "type": "disposed_by",
+      "subjectId": "bdt:cs:data_product:thread-export",
+      "objectId": "bdt:cs:disposition:example-derived-proof",
+      "role": "disposed_by",
+      "scope": "business-thread-v1",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "link:disposed_by:data-disposition:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "dd14ee579185b8541ccf94ebdcf55814af60e92a721e1e3d8fe7c835716f2ef4"
+      }
+    },
+    {
+      "id": "bdtl:cs:migrated_from:migration-data",
+      "revisionId": "bdtlr:cs:migrated_from:migration-data:r1",
+      "tenantId": "tenant:create-something",
+      "relationshipClass": "provenance",
+      "type": "migrated_from",
+      "subjectId": "bdt:cs:data_product:thread-export",
+      "objectId": "bdt:cs:migration:v0-to-v1",
+      "role": "migrated_from",
+      "scope": "business-thread-v1",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "link:migrated_from:migration-data:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "349b4f99b9c39621274671d35ac224a7aa462dac2641e21e8b9658e1d08b1415"
+      }
+    },
+    {
+      "id": "bdtl:cs:replaces:person-replacement",
+      "revisionId": "bdtlr:cs:replaces:person-replacement:r1",
+      "tenantId": "tenant:create-something",
+      "relationshipClass": "lifecycle",
+      "type": "replaces",
+      "subjectId": "bdt:cs:party:operator-new",
+      "objectId": "bdt:cs:party:operator-old",
+      "role": "replaces",
+      "scope": "business-thread-v1",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "link:replaces:person-replacement:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "0cf0e7d8196267ddd7871174f6cd6346305f4c1bdb38ff91e2425edabddb20f0"
+      }
+    },
+    {
+      "id": "bdtl:cs:replaces:vendor-replacement",
+      "revisionId": "bdtlr:cs:replaces:vendor-replacement:r1",
+      "tenantId": "tenant:create-something",
+      "relationshipClass": "lifecycle",
+      "type": "replaces",
+      "subjectId": "bdt:cs:party:vendor-new",
+      "objectId": "bdt:cs:party:vendor-old",
+      "role": "replaces",
+      "scope": "business-thread-v1",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "link:replaces:vendor-replacement:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "e5a971577ef2f9ca91d8e29ffe435ba684e5aacbbe928f1ded331f9c515d1693"
+      }
+    },
+    {
+      "id": "bdtl:cs:replaces:agent-replacement",
+      "revisionId": "bdtlr:cs:replaces:agent-replacement:r1",
+      "tenantId": "tenant:create-something",
+      "relationshipClass": "lifecycle",
+      "type": "replaces",
+      "subjectId": "bdt:cs:party:agent-model-new",
+      "objectId": "bdt:cs:party:agent-model-old",
+      "role": "replaces",
+      "scope": "business-thread-v1",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "link:replaces:agent-replacement:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "3a4c0b088e235622395e189d911a2218a276768f6d57c7ed255e340e9fd4524f"
+      }
+    },
+    {
+      "id": "bdtl:cs:replaces:tool-replacement",
+      "revisionId": "bdtlr:cs:replaces:tool-replacement:r1",
+      "tenantId": "tenant:create-something",
+      "relationshipClass": "lifecycle",
+      "type": "replaces",
+      "subjectId": "bdt:cs:party:tool-new",
+      "objectId": "bdt:cs:party:tool-old",
+      "role": "replaces",
+      "scope": "business-thread-v1",
+      "validTime": {
+        "from": "2016-01-01T00:00:00Z",
+        "to": null
+      },
+      "recordedTime": {
+        "from": "2020-01-01T00:00:00Z",
+        "to": null
+      },
+      "source": {
+        "provider": "contract-prototype",
+        "externalId": "link:replaces:tool-replacement:r1",
+        "observedAt": "2020-01-01T00:00:00Z",
+        "adapterId": "adapter.contract-prototype.v1",
+        "artifactRef": "packages/database-layer/contracts/business-digital-thread/v1/examples/lifecycle-slice.json",
+        "evidenceRefs": ["CRE-1401"]
+      },
+      "integrity": {
+        "algorithm": "sha256",
+        "contentHash": "debd828a32f4b5241621c8d356f2e78107672ec31930bf7865d904c5ff2c840e"
+      }
+    }
+  ],
+  "provenance": {
+    "inputMode": "authoritative",
+    "generator": "",
+    "generatorVersion": "1.0.0",
+    "authoritativeInputs": []
+  },
+  "exportManifest": {
+    "manifestVersion": "flow.business-digital-thread.export.v1",
+    "exportedAt": "2020-06-01T00:00:00Z",
+    "sourceThreadId": "bdt:cs:thread:create-something",
+    "recordRevisionCount": 33,
+    "linkRevisionCount": 25,
+    "adapters": [
+      {
+        "adapterId": "adapter.contract-prototype.v1",
+        "version": "1.0.0",
+        "sourceNamespace": "contract-prototype",
+        "supportedSchemaRange": "flow.business-digital-thread.v1",
+        "lossPolicy": "lossless",
+        "replacementStrategy": "Replace adapter while preserving canonical IDs and emit a migration receipt."
+      }
+    ],
+    "semanticQuerySet": "",
+    "canonicalDigest": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "integrity": {
+    "algorithm": "sha256",
+    "canonicalization": "JCS-RFC8785",
+    "recordsRootHash": "9299ba20c2d5d20425439977ee7ca28a9edafe0ec7caee4df831f71f1523291c",
+    "linksRootHash": "716be257baba7b515c06dc7b192e2a44fe1cc8628f0fa1173d704c3b98d8c7bc",
+    "semanticDigest": "89970bddcc6b3e156723ca1e12127538d3d2ec3468bebdf0d3024079c18575e9"
+  }
+}
