@@ -118,9 +118,9 @@
 <main class="shell">
 	<header class="hero">
 		<div>
-			<p class="eyebrow">Operator Surface</p>
-			<h1>Governance Records</h1>
-			<p>Review Signal, Decision, and Proof records attached to Atlas canvases and nodes.</p>
+			<p class="eyebrow">Signal → Decision → Proof</p>
+			<h1>Turn signals into decisions and proof</h1>
+			<p>Start with the source record. Add a decision only when authority is clear, then attach proof and a receipt.</p>
 		</div>
 		<nav class="actions" aria-label="Governance record APIs">
 			<a href="/api/governance/products" target="_blank">Products</a>

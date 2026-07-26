@@ -7,6 +7,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getTokenStatus } from '$lib/social';
+import { requireAgencyOperator } from '$lib/server/operator-auth';
 
 interface PostRow {
 	id: string;
@@ -26,7 +27,8 @@ interface PostRow {
 	posted_at: number | null;
 }
 
-export const GET: RequestHandler = async ({ url, platform }) => {
+export const GET: RequestHandler = async ({ url, cookies, platform }) => {
+	await requireAgencyOperator({ cookies, platform });
 	const db = platform?.env?.DB;
 	const sessions = platform?.env?.SESSIONS;
 

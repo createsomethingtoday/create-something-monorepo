@@ -6,6 +6,7 @@
  */
 import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
+import { requireAgencyOperator } from '$lib/server/operator-auth';
 
 interface Signal {
 	id: string;
@@ -45,9 +46,13 @@ interface Relationship {
 	interactions_count: number;
 }
 
-export const load: PageServerLoad = async ({ platform }) => {
-	const db = platform!.env.DB;
-	
+export const load: PageServerLoad = async ({ cookies, platform }) => {
+	await requireAgencyOperator({ cookies, platform });
+	const db = platform?.env?.DB;
+	if (!db) {
+		return unavailableCommunityData();
+	}
+
 	try {
 		// Get urgent signals
 		const signalsResult = await db.prepare(`
@@ -106,6 +111,7 @@ export const load: PageServerLoad = async ({ platform }) => {
 		};
 		
 		return {
+			available: true,
 			signals: signalsResult.results,
 			queue: queueResult.results,
 			relationships: relationshipsResult.results,
@@ -114,25 +120,31 @@ export const load: PageServerLoad = async ({ platform }) => {
 		};
 	} catch (error) {
 		console.error('Failed to load community dashboard:', error);
-		return {
-			signals: [],
-			queue: [],
-			relationships: [],
-			stats: {
-				new_signals: 0,
-				pending_responses: 0,
-				hot_leads: 0,
-				responses_this_week: 0,
-				dismissed_this_week: 0
-			},
-			generatedAt: new Date().toISOString(),
-			error: 'Failed to load data'
-		};
+		return unavailableCommunityData();
 	}
 };
 
+function unavailableCommunityData() {
+	return {
+		available: false,
+		signals: [],
+		queue: [],
+		relationships: [],
+		stats: {
+			new_signals: 0,
+			pending_responses: 0,
+			hot_leads: 0,
+			responses_this_week: 0,
+			dismissed_this_week: 0
+		},
+		generatedAt: new Date().toISOString(),
+		error: 'Community data is unavailable.'
+	};
+}
+
 export const actions: Actions = {
-	approve: async ({ request, platform }) => {
+	approve: async ({ request, cookies, platform }) => {
+		await requireAgencyOperator({ cookies, platform });
 		const db = platform!.env.DB;
 		const data = await request.formData();
 		const id = data.get('id') as string;
@@ -157,7 +169,8 @@ export const actions: Actions = {
 		}
 	},
 	
-	reject: async ({ request, platform }) => {
+	reject: async ({ request, cookies, platform }) => {
+		await requireAgencyOperator({ cookies, platform });
 		const db = platform!.env.DB;
 		const data = await request.formData();
 		const id = data.get('id') as string;
@@ -183,7 +196,8 @@ export const actions: Actions = {
 		}
 	},
 	
-	dismiss: async ({ request, platform }) => {
+	dismiss: async ({ request, cookies, platform }) => {
+		await requireAgencyOperator({ cookies, platform });
 		const db = platform!.env.DB;
 		const data = await request.formData();
 		const id = data.get('id') as string;
@@ -205,7 +219,8 @@ export const actions: Actions = {
 		}
 	},
 	
-	flag: async ({ request, platform }) => {
+	flag: async ({ request, cookies, platform }) => {
+		await requireAgencyOperator({ cookies, platform });
 		const db = platform!.env.DB;
 		const data = await request.formData();
 		const id = data.get('id') as string;

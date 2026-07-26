@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { SEO } from '@create-something/canon';
 	import { invalidateAll } from '$app/navigation';
+	import SecurityAdminNav from '$lib/components/access/SecurityAdminNav.svelte';
 
 	let { data } = $props();
 
@@ -164,18 +165,10 @@ operator@exampleclient.com,acct_example_client,tenant_example_client,acct_exampl
 <section class="shell">
 	<div class="shell-inner">
 		<header class="hero">
-			<p class="eyebrow">Operator Surface</p>
-			<h1>Seeded Users</h1>
-			<p>Invite users by email first, then let first Identity login bind the seed to a durable subject. This view shows which identities are still unbound.</p>
-			<nav class="subnav">
-				<a href="/admin/security">Overview</a>
-				<a href="/admin/security/bearer-tokens">Bearer Governance</a>
-				<a href="/admin/security/contracts">Contracts</a>
-				<a href="/admin/security/commercial">Commercial</a>
-				<a href="/admin/security/partners">Partners</a>
-				<a href="/admin/security/seeds" aria-current="page">Seeds</a>
-				<a href="/admin/security/audit">Audit</a>
-			</nav>
+			<p class="eyebrow">Identity provisioning</p>
+			<h1>Prepare a user for first-party access</h1>
+			<p>Create or import the identity record that first-party provisioning will reconcile. A seed does not grant access by itself.</p>
+			<SecurityAdminNav current="seeds" />
 		</header>
 
 		<div class="grid">
@@ -316,13 +309,6 @@ operator@exampleclient.com,acct_example_client,tenant_example_client,acct_exampl
 	p, .muted {
 		color: var(--color-performance-fg-secondary);
 	}
-	.subnav {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 1rem;
-		margin-top: 1rem;
-	}
-	.subnav a,
 	.panel-header a,
 	.link-button {
 		color: var(--color-performance-fg-primary);

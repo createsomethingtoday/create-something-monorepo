@@ -35,10 +35,16 @@
 
 <main class="dashboard">
 	<header class="header">
-		<h1>Social Calendar</h1>
-		<p class="subtitle">Agent-native content scheduling with full observability</p>
+		<h1>Review the publishing schedule</h1>
+		<p class="subtitle">Read-only schedule. Check the connection and gaps, then use the named MCP tool to schedule or cancel a post.</p>
 	</header>
 
+	{#if !data.available}
+		<div class="load-error" role="alert">
+			<p>The publishing schedule is unavailable. Stop: do not schedule or cancel posts until it loads.</p>
+			<a href="/admin/social">Try again</a>
+		</div>
+	{:else}
 	<!-- Token Status Banner -->
 	{#if data.tokenStatus}
 		<Card
@@ -192,6 +198,7 @@
 			</div>
 		</div>
 	</section>
+	{/if}
 </main>
 
 <style>

@@ -6,6 +6,7 @@
  */
 
 import type { PageServerLoad } from './$types';
+import { requireAgencyOperator } from '$lib/server/operator-auth';
 import { getTokenStatus, getNextOptimalTime, DEFAULT_PREFERRED_DAYS } from '$lib/social';
 import { getStartOfWeek } from '$lib/utils/date';
 
@@ -36,22 +37,16 @@ const WEEKLY_RHYTHM = {
 	friday: { focus: 'Pipeline review', description: 'Review leads, partners, opportunities' }
 };
 
-export const load: PageServerLoad = async ({ platform }) => {
+export const load: PageServerLoad = async ({ cookies, platform }) => {
+	await requireAgencyOperator({ cookies, platform });
 	const db = platform?.env?.DB;
 	const sessions = platform?.env?.SESSIONS;
 
 	if (!db || !sessions) {
-		return {
-			error: 'Database or sessions not available',
-			tokenStatus: { connected: false },
-			stats: {},
-			posts: [],
-			rhythm: {},
-			gaps: [],
-			nextSlot: null
-		};
+		return unavailableSocialData();
 	}
 
+	try {
 	const timezone = 'America/Los_Angeles';
 	const now = new Date();
 
@@ -184,6 +179,8 @@ export const load: PageServerLoad = async ({ platform }) => {
 	const nextSlot = getNextOptimalTime(timezone, DEFAULT_PREFERRED_DAYS, 9, now);
 
 	return {
+		available: true,
+		error: null,
 		tokenStatus: {
 			connected: tokenStatus.connected,
 			daysRemaining: tokenStatus.daysRemaining,
@@ -201,9 +198,33 @@ export const load: PageServerLoad = async ({ platform }) => {
 			formatted: formatDateTime(nextSlot, timezone)
 		}
 	};
+	} catch (error) {
+		console.error('Failed to load publishing schedule:', error);
+		return unavailableSocialData();
+	}
 };
 
 // Helper functions
+
+function unavailableSocialData() {
+	return {
+		available: false,
+		error: 'The publishing schedule is unavailable.',
+		tokenStatus: {
+			connected: false,
+			daysRemaining: undefined,
+			expiresAt: undefined,
+			warning: undefined
+		},
+		stats: {},
+		posts: [],
+		rhythm: {},
+		currentDay: '',
+		todaysFocus: '',
+		gaps: [],
+		nextSlot: null
+	};
+}
 
 function formatDateTime(date: Date, timezone: string): string {
 	return new Intl.DateTimeFormat('en-US', {

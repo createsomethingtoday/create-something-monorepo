@@ -170,7 +170,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
       'admin/security/seeds',
       'admin/social'
     ],
-    'pending',
+    'migrated',
     contract(
       'tool',
       'Resolve the current administrative decision without losing source, owner, or proof.',

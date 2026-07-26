@@ -236,9 +236,9 @@
 <main class="shell">
 	<header class="hero">
 		<div>
-			<p class="eyebrow">Operator Surface</p>
-			<h1>Capture Review</h1>
-			<p>Inspect captured newsletter, contact, lead, and Atlas signals. Store operator decisions without mutating source rows.</p>
+			<p class="eyebrow">Captured records</p>
+			<h1>Review captured signals</h1>
+			<p>Decide which captured records need action. Source rows stay unchanged; only the review decision is stored.</p>
 		</div>
 		<nav class="actions" aria-label="Capture review views">
 			<a class:active={!data.includeOperational} href={viewHref(false)}>Public captures</a>

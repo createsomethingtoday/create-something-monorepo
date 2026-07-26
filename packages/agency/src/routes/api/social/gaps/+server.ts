@@ -11,6 +11,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getNextOptimalTime, DEFAULT_PREFERRED_DAYS } from '$lib/social/strategy';
 import { getStartOfWeek, getWeekNumber } from '$lib/utils/date';
+import { requireAgencyOperator } from '$lib/server/operator-auth';
 
 interface DayStatus {
 	date: string;
@@ -25,7 +26,8 @@ interface WeekData {
 	days: Record<string, DayStatus>;
 }
 
-export const GET: RequestHandler = async ({ url, platform }) => {
+export const GET: RequestHandler = async ({ url, cookies, platform }) => {
+	await requireAgencyOperator({ cookies, platform });
 	const db = platform?.env?.DB;
 
 	if (!db) {
