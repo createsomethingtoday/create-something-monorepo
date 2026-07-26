@@ -152,7 +152,7 @@
   <PerformanceNarrativeStage
     id="delegation-practice-argument"
     eyebrow="One practice argument"
-    title="Diagnose. Map. Rehearse. Evidence."
+    title="Locate the failure before rehearsing the fix."
     description="The Practice is one learning spine: locate the failure, make authority visible, rehearse the operator journey, and attach every claim to a current evidence state."
     scenes={practiceScenes}
     ariaLabel="Delegation Practice argument"
@@ -161,7 +161,7 @@
       {#if scene.id === 'diagnose'}
         <PerformanceThesisConditions
           eyebrow="Delegated Work Control"
-          title="Database. Automation. Judgment."
+          title="Check the layers in order, or motion will look like progress."
           description="Check the layers in order so motion never substitutes for operating truth or policy."
           conditions={systemConditions}
           ariaLabel="Database Automation and Judgment diagnostic order"
@@ -204,7 +204,7 @@
   <PerformanceConversionHandoff
     eyebrow="School + skeptical review"
     title="Finish with a Practice Receipt, not a certificate."
-    description="Practice produces an inspectable workflow map, authority envelope, test plan, proof bundle, and review verdict. Skeptical review may support, revise, hold, or falsify the thesis. When you can name the workflow and accountable owner, the mapping-session path is ready."
+    description="Practice produces an inspectable workflow map, a tested authority envelope, and a review verdict you can act on. Skeptical review may support, revise, hold, or falsify the thesis. When you can name the workflow and accountable owner, the mapping-session path is ready."
     handoff={{
       owner: 'Accountable practitioner',
       authority: 'One named workflow only',

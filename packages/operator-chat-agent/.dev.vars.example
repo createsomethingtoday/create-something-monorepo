@@ -1,0 +1,18 @@
+# Copy to .dev.vars for local Worker development.
+# Do not commit real values.
+
+OPERATOR_ADMIN_TOKEN=replace-with-random-token
+TELEGRAM_BOT_TOKEN=123456:ABC...
+TELEGRAM_BOT_USERNAME=create_something_operator_bot
+TELEGRAM_WEBHOOK_SECRET_TOKEN=replace-with-random-webhook-secret
+TELEGRAM_ALLOWED_USER_IDS=123456789
+TELEGRAM_ALLOWED_CHAT_IDS=123456789
+
+# Optional for live read-only Linear lookup.
+LINEAR_API_KEY=
+LINEAR_TEAM_KEY=CRE
+
+# POC default keeps paid capability requests as handoffs, not live spend.
+OPERATOR_TOOL_ACCESS_MODE=read_only
+PAID_CAPABILITY_MODE=handoff_only
+PAID_CAPABILITY_MAX_USD=25

@@ -180,7 +180,7 @@
   <PerformanceCampaignOpening
     eyebrow="Complete workflow · Active development"
     title="Turn a watched review queue into a testable workflow."
-    lede="This worked example maps the Marketplace template lifecycle from submission through monitoring, then tests it with representative local fixtures. It runs in shadow mode only: no production writes, approvals, rejections, publishing, or credential changes."
+    lede="This worked example maps the Marketplace template lifecycle from submission through monitoring, then tests it with representative local fixtures. It runs in shadow mode only. Nothing is written, published, or approved in production."
     media={{
       src: '/images/performance-lab/trace-wake-natural.webp',
       mobileSrc: '/images/performance-lab/trace-wake-natural-mobile.webp',
@@ -202,7 +202,7 @@
   <PerformanceNarrativeStage
     id="marketplace-proof-story"
     eyebrow="One proof argument"
-    title="Change. Path. Package. Receipt."
+    title="Every claim here traces back to an artifact."
     description="The worked example now answers one question: what changed for the operator, how the workflow was compiled, which artifacts remain owned, and what evidence makes the prototype claim inspectable."
     scenes={proofScenes}
     ariaLabel="Marketplace workflow proof argument"
@@ -246,7 +246,7 @@
   <PerformanceConversionHandoff
     eyebrow="Apply the method"
     title="Bring the handoff your team still watches by hand."
-    description="Map can define the systems, owners, decisions, failure points, and proof requirements first. Build follows only when the controlled lane is clear enough to test."
+    description="Map can define the systems, the owners, and the failure points first. Build follows only when the controlled lane is clear enough to test."
     handoff={{
       owner: 'Workflow owner',
       authority: 'Separate pilot approval',

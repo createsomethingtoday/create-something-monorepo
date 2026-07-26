@@ -10,6 +10,8 @@
 	export let focusedNodeIds: string[] = [];
 	export let focusedEdgeIds: string[] = [];
 	export let dimUnfocused = false;
+	export let fitView = true;
+	const fitViewOptions = { padding: 0.12, minZoom: 0.2, maxZoom: 1 };
 </script>
 
 <AtlasFlow
@@ -22,4 +24,6 @@
 	{focusedNodeIds}
 	{focusedEdgeIds}
 	{dimUnfocused}
+	{fitView}
+	{fitViewOptions}
 />

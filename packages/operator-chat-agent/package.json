@@ -1,0 +1,43 @@
+{
+  "name": "@create-something/operator-chat-agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Mobile operator chat agent POC for governed CREATE SOMETHING work.",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "deploy": "node ../../scripts/run-wrangler.mjs deploy",
+    "deploy:worker": "node ../../scripts/run-wrangler.mjs deploy",
+    "dev": "node ../../scripts/run-wrangler.mjs dev",
+    "secrets:push": "node scripts/push-worker-secrets.mjs",
+    "smoke:production": "node scripts/production-smoke.mjs",
+    "telegram:discover": "node scripts/telegram-discover.mjs",
+    "telegram:setup": "node scripts/telegram-webhook.mjs setup",
+    "telegram:status": "node scripts/telegram-webhook.mjs status",
+    "test": "tsx --test test/*.test.ts",
+    "types": "node ../../scripts/run-wrangler.mjs types"
+  },
+  "dependencies": {
+    "@chat-adapter/telegram": "^4.30.0",
+    "@cloudflare/think": "^0.8.7",
+    "agents": "^0.14.5",
+    "ai": "^6.0.197",
+    "workers-ai-provider": "^3.1.14",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260621.1",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "wrangler": "^4.103.0"
+  },
+  "keywords": [
+    "cloudflare",
+    "think",
+    "telegram",
+    "operator",
+    "policy-os"
+  ],
+  "license": "MIT"
+}

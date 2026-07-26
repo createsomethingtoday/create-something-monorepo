@@ -14,6 +14,7 @@ const DEFAULT_REQUIRED_FILES = [
 export function parseArgs(argv) {
   const options = {
     check: false,
+    homeBase: false,
     json: false,
     strict: false,
     starter: false
@@ -23,6 +24,7 @@ export function parseArgs(argv) {
     const arg = argv[index];
     if (arg === '--') continue;
     else if (arg === '--check') options.check = true;
+    else if (arg === '--home-base') options.homeBase = true;
     else if (arg === '--json') options.json = true;
     else if (arg === '--strict') options.strict = true;
     else if (arg === '--starter' || arg === '--prompt') options.starter = true;
@@ -135,6 +137,44 @@ export function decideSoloPosture({ status, divergence, strict }) {
   };
 }
 
+export function decideHomeBasePosture({
+  status,
+  divergence,
+  branch,
+  upstream,
+  head,
+  originMain
+}) {
+  const reasons = [];
+  if (!status.clean) {
+    reasons.push(`Home base has ${status.total} changed file(s).`);
+  }
+  if (branch !== 'main') {
+    reasons.push(`Home base must use branch main; found ${branch || 'detached HEAD'}.`);
+  }
+  if (upstream !== 'origin/main') {
+    reasons.push(`Home base must track origin/main; found ${upstream || 'no upstream'}.`);
+  }
+  if (divergence.ahead > 0 || divergence.behind > 0) {
+    reasons.push(
+      `Home base diverges from origin/main: ahead ${divergence.ahead}, behind ${divergence.behind}.`
+    );
+  }
+  if (!head || !originMain || head !== originMain) {
+    reasons.push(
+      `Home base HEAD ${head || 'unavailable'} does not equal origin/main ${originMain || 'unavailable'}.`
+    );
+  }
+
+  return {
+    ok: reasons.length === 0,
+    mode: 'main-home-base',
+    reasons,
+    production_boundary:
+      'Use an isolated tracked worktree and the normal review path for shared or production-bound work.'
+  };
+}
+
 export function buildStarterPrompt({
   task,
   branch = 'unknown',
@@ -199,7 +239,7 @@ function shellQuote(value) {
 
 function usage() {
   console.log(`Usage:
-  node scripts/agent-solo-loop.mjs [--json] [--check] [--strict]
+  node scripts/agent-solo-loop.mjs [--json] [--check] [--strict] [--home-base]
   node scripts/agent-solo-loop.mjs --starter [--task "..."]
 
 Peter Steinberger-inspired solo-operator loop readiness for this repo.
@@ -208,6 +248,7 @@ Default mode is read-only and never mutates git, Linear, or deployments.
 
 Options:
   --check              Run fast repo-local validation commands for the solo-loop contract.
+  --home-base          Require clean main at the exact origin/main SHA.
   --strict             Fail when checkout is dirty or behind upstream.
   --json               Print machine-readable output.
   --starter, --prompt  Include an inspectable starter prompt and launch command.
@@ -222,14 +263,39 @@ function main() {
     return;
   }
 
-  const branch = run('git', ['status', '--short', '--branch']);
+  const branchStatus = run('git', ['status', '--short', '--branch']);
+  const branchName = run('git', ['branch', '--show-current']);
+  const upstream = run('git', [
+    'rev-parse',
+    '--abbrev-ref',
+    '--symbolic-full-name',
+    '@{upstream}'
+  ]);
+  const head = run('git', ['rev-parse', 'HEAD']);
+  const originMain = run('git', ['rev-parse', 'origin/main']);
   const statusShort = run('git', ['status', '--short'], {
     summarize: (stdout) => (stdout.trim() ? stdout.trim() : 'Checkout is clean.')
   });
   const status = classifyStatus(statusShort.stdout);
-  const branchLine = branch.stdout.split(/\r?\n/)[0] ?? '';
+  const branchLine = branchStatus.stdout.split(/\r?\n/)[0] ?? '';
   const divergence = parseDivergence(branchLine);
-  const posture = decideSoloPosture({ status, divergence, strict: options.strict });
+  const homeBase = {
+    branch: branchName.ok ? branchName.stdout.trim() : '',
+    upstream: upstream.ok ? upstream.stdout.trim() : '',
+    head: head.ok ? head.stdout.trim() : '',
+    origin_main: originMain.ok ? originMain.stdout.trim() : ''
+  };
+  const posture = options.homeBase
+    ? decideHomeBasePosture({
+        status,
+        divergence,
+        branch: homeBase.branch,
+        upstream: homeBase.upstream,
+        head: homeBase.head,
+        originMain: homeBase.origin_main
+      })
+    : decideSoloPosture({ status, divergence, strict: options.strict });
+  const postureMessages = posture.warnings ?? posture.reasons ?? [];
 
   const steps = [
     step('git-status', 'Inspect current checkout state', statusShort),
@@ -289,15 +355,16 @@ function main() {
           prompt: buildStarterPrompt({
             task: options.task,
             branch: branchLine.replace(/^##\s*/, ''),
-            warnings: posture.warnings
+            warnings: postureMessages
           })
         }
       : null;
   const report = {
     generated_at: new Date().toISOString(),
-    mode: 'solo-operator',
+    mode: posture.mode,
     passed,
     strict: options.strict,
+    home_base: homeBase,
     branch: branchLine.replace(/^##\s*/, ''),
     status,
     divergence,
@@ -321,9 +388,9 @@ function main() {
     console.log(`Result: ${passed ? 'passed' : 'failed'}`);
     console.log(`Branch: ${report.branch || 'unknown'}`);
     console.log('');
-    if (posture.warnings.length > 0) {
-      console.log('## Warnings');
-      for (const warning of posture.warnings) console.log(`- ${warning}`);
+    if (postureMessages.length > 0) {
+      console.log(options.homeBase ? '## Home Base Failures' : '## Warnings');
+      for (const warning of postureMessages) console.log(`- ${warning}`);
       console.log('');
     }
     for (const entry of steps) {

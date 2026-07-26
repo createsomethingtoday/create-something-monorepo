@@ -53,6 +53,7 @@
       "packages/meetings",
       "packages/meetings-mcp/worker",
       "packages/notion-sync-mcp",
+      "packages/operator-chat-agent",
       "packages/playbook-mcp",
       "packages/playbook-mcp/worker",
       "packages/schedule-mcp",

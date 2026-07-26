@@ -167,6 +167,10 @@ test('commercial decision routes lead with plain meaning before owned terminolog
   const layout = readFileSync(new URL('../src/routes/+layout.svelte', import.meta.url), 'utf8');
   const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
   const services = readFileSync(new URL('../src/routes/services/+page.svelte', import.meta.url), 'utf8');
+  const servicesMapPreview = readFileSync(
+    new URL('../src/lib/components/ServicesMapPreview.svelte', import.meta.url),
+    'utf8'
+  );
   const productsPage = readFileSync(new URL('../src/routes/products/+page.svelte', import.meta.url), 'utf8');
   const stack = readFileSync(new URL('../src/routes/stack/+page.svelte', import.meta.url), 'utf8');
   const proof = readFileSync(
@@ -184,7 +188,7 @@ test('commercial decision routes lead with plain meaning before owned terminolog
   assert.doesNotMatch(home, /Train the workflow/);
 
   assert.match(services, /Bring one handoff your team still checks manually/);
-  assert.match(services, /See the workflow before deciding to build/);
+  assert.match(servicesMapPreview, /See the operating path before deciding to build/);
   assert.doesNotMatch(services, /PerformanceFieldSequence|PerformanceThesisConditions/);
 
   assert.match(productsPage, /title="Map the system\. Control the work\."/);

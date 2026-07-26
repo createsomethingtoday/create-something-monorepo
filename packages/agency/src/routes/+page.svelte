@@ -13,13 +13,14 @@
   } from '@create-something/canon';
   import { controlledFlowMedia } from '@create-something/canon/components/performance/media/controlled-flow';
   import HeroTrustArtifact from '$lib/components/HeroTrustArtifact.svelte';
+  import AgencyPerformanceReadback from '$lib/components/AgencyPerformanceReadback.svelte';
   import IntegrationCompatibilityRail from '$lib/components/IntegrationCompatibilityRail.svelte';
   import PublicSubstrateCanvas from '$lib/components/PublicSubstrateCanvas.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
   const services = [
     {
-      name: 'Workflow Map',
+      name: 'Map',
       description:
         'A fixed first map of the workflow, systems, AI tasks, approval path, and first controlled pilot.',
       type: 'First workflow map',
@@ -27,7 +28,7 @@
       priceDescription: 'Map before any build decision'
     },
     {
-      name: 'Workflow Pilot',
+      name: 'Build',
       description:
         'One painful workflow turned into a reliable operating path with clear rules, clean handoffs, and ownership.',
       type: 'Implementation Sprint',
@@ -213,8 +214,7 @@
       label: 'Operate',
       summary: 'Run → record',
       title: 'Notice the change. Route the decision. Record the result.',
-      detail:
-        'Start with one workflow. Add rules only when real work shows where they are needed.',
+      detail: 'Start with one workflow. Add rules only when real work shows where they are needed.',
       tone: 'neutral',
       evidence: [
         'Each request stays connected to its decision and record',
@@ -233,7 +233,7 @@
 
 <SEO
   title="AI Workflow Systems | CREATE SOMETHING .agency"
-  description="CREATE SOMETHING builds AI workflow systems for business operations. We connect tools, approvals, stop conditions, and an audit trail around one messy handoff."
+  description="CREATE SOMETHING builds AI workflow systems for business operations. One messy handoff becomes a workflow with named approvals, clear stop conditions, and an audit trail."
   keywords="AI workflow systems, workflow automation consultant, governed AI workflows, workflow control layer, workflow mapping, workflow pilot, production automation, technical operators"
   ogImage="/og-image.png"
   propertyName="agency"
@@ -244,8 +244,8 @@
 <div class="home-pilot property-performance">
   <PerformanceCampaignOpening
     eyebrow={agencyCoreMessaging.categoryLabel}
-    title="Make one workflow safe to delegate."
-    lede="Choose one handoff your team still checks manually. We map what can run automatically, what must wait for a person, what must stop, and what record proves what happened."
+    title="Make one workflow safe to delegate—and easier to run."
+    lede="Choose one handoff your team still checks manually. We map what can run automatically, what must wait for a person, what must stop, and what record proves the result—so routine work moves without constant rescue."
     media={controlledFlowMedia}
     proof={heroProofItems}
     density="compact"
@@ -256,12 +256,14 @@
     {/snippet}
   </PerformanceCampaignOpening>
 
+  <AgencyPerformanceReadback />
+
   <IntegrationCompatibilityRail surface="homepage" />
 
   <PerformanceNarrativeStage
     id="agency-operating-story"
     eyebrow="One workflow, step by step"
-    title="Boundary. Map. Operate."
+    title="Keep the judgment. Delegate the rest."
     description="Your team sets the limits before work moves. We map the handoff, test one workflow, and keep a record of every run."
     scenes={agencyScenes}
     ariaLabel="Agency operating story"
@@ -348,8 +350,8 @@
         <div class="service-flow-action">
           <Button href={agencyCoreMessaging.selfMapHref}>{agencyCoreMessaging.selfMapLabel}</Button>
           <p>
-            See the <a href="/services">service path</a>, the <a href="/partners">tools we use</a>, or
-            the <a href="/products">evidence</a>.
+            See the <a href="/services">service path</a>, the <a href="/partners">tools we use</a>,
+            or the <a href="/products">evidence</a>.
           </p>
         </div>
         <div class="service-proof-row">

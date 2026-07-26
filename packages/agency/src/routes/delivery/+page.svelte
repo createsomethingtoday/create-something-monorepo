@@ -64,7 +64,7 @@
 
 <PerformanceConversionHandoff
   eyebrow="No record yet"
-  title="Map the workflow before publishing its proof."
+  title="A delivery record is published only when it is safe to read."
   description="A new delivery record should appear only after its boundary, owner decisions, and validation evidence are safe and clear."
   handoff={{
     owner: 'Workflow owner',

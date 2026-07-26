@@ -157,6 +157,20 @@ This makes pause/resume and handoff real instead of conversational.
 
 For DEV or preview work, a direct deploy with linked Linear evidence is a valid checkpoint. Use Linear comments for non-terminal checkpoints that affect handoff, review, rollback, or promotion. Do not force a commit just to manufacture state.
 
+Tracked-work closeout also records workspace ownership explicitly. Include one
+of these lines in the final Linear evidence:
+
+```text
+Worktree disposition: removed
+Worktree disposition: preserved at <path> on <branch> because <reason>
+Worktree disposition: retained until <named checkpoint>, owner <operator>
+```
+
+Do not infer removability from clean status alone. Before removal, prove the
+branch is disposable or merged, no process owns the cwd, and ignored local
+state does not need preservation. If that proof is incomplete, preserve or
+retain the worktree and name the next decision point.
+
 For production-relevant agentic work, the checkpoint is not enough. The normal
 closeout is:
 

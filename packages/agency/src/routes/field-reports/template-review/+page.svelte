@@ -144,7 +144,7 @@
   <PerformanceNarrativeStage
     id="result"
     eyebrow="One evidence argument"
-    title="Result. Boundary. Economics. Evidence."
+    title="Four questions, kept separate on purpose."
     description="The report separates four questions: Did collection work? Did judgment earn promotion? What did one packet cost? Which claims remain measured or unresolved?"
     scenes={fieldReportScenes}
     ariaLabel="Template review Field Report argument"
@@ -160,17 +160,17 @@
             </div>
           </header>
           <dl class="field-result__metrics">
-            <div>
+            <div data-tone="growth">
               <dt>Packet completion</dt>
               <dd>49 / 50</dd>
               <small>{packetCompletion}% of selected cases</small>
             </div>
-            <div>
+            <div data-tone="risk">
               <dt>Judgment promotion</dt>
               <dd>Blocked</dd>
               <small>1 of 2 exceptional examples missed</small>
             </div>
-            <div>
+            <div data-tone="neutral">
               <dt>Reviewer time saved</dt>
               <dd>Unmeasured</dd>
               <small>Requires a matched pilot</small>
@@ -263,7 +263,7 @@
           <PerformanceEvidenceIndex
             eyebrow="Evidence basis"
             title="Open the dated source records."
-            description="The selected sample, packet result, failed judgment gate, synthetic runtime checks, and unresolved business measurement remain inspectable."
+            description="The sample, the packet result, and the failed judgment gate all remain inspectable — including the business measurement we could not close."
             items={evidenceItems}
             ariaLabel="Template review Field Report evidence records"
           />
@@ -468,10 +468,22 @@
     margin: 0;
   }
   .field-result__metrics > div {
+    --field-result-metric-accent: var(--color-performance-line-strong, #9c9c96);
     display: grid;
-    gap: 0.55rem;
-    min-height: 11rem;
-    padding: 1.25rem;
+    gap: var(--space-performance-xs, 0.5rem);
+    min-width: 0;
+    min-height: calc(
+      var(--space-performance-2xl, 6.854rem) + var(--space-performance-md, 1.618rem)
+    );
+    padding: var(--space-performance-md, 1.618rem);
+    border-top: 0.25rem solid var(--field-result-metric-accent);
+    container-type: inline-size;
+  }
+  .field-result__metrics > div[data-tone='growth'] {
+    --field-result-metric-accent: var(--color-performance-growth, #007a4d);
+  }
+  .field-result__metrics > div[data-tone='risk'] {
+    --field-result-metric-accent: var(--color-performance-risk, #c62026);
   }
   .field-result__metrics > div + div {
     border-left: 1px solid var(--color-performance-line-strong, #9c9c96);
@@ -479,8 +491,16 @@
   .field-result__metrics dd {
     margin: auto 0 0;
     font-family: var(--font-performance-mono);
-    font-size: clamp(2rem, 4vw, 3.5rem);
+    font-size: clamp(
+      var(--text-performance-h2, 1.618rem),
+      16cqi,
+      var(--text-performance-display-sm, 2.618rem)
+    );
+    font-weight: var(--font-performance-medium, 500);
     font-variant-numeric: tabular-nums;
+    letter-spacing: var(--tracking-performance-tight, -0.015em);
+    line-height: var(--leading-performance-tight, 1.25);
+    white-space: nowrap;
   }
   .field-result__metrics small {
     color: var(--color-performance-muted, #5e6268);

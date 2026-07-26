@@ -51,7 +51,7 @@ def parse_args():
     parser.add_argument("--source-sha256", required=True)
     parser.add_argument("--model", required=True)
     parser.add_argument("--output", required=True)
-    parser.add_argument("--sample-fps", type=float, default=2.0)
+    parser.add_argument("--sample-fps", type=float, default=5.0)
     parser.add_argument("--target-seed", action="append", default=[], help="timeMs:x:y at the detected player's feet")
     parser.add_argument("--analyzed-at")
     parser.add_argument("--start-ms", type=int, default=0, help=argparse.SUPPRESS)
@@ -320,12 +320,6 @@ def assign_tracks(detections: list[Detection], tracks: dict[str, Track], time_ms
     return next_id
 
 
-def relation_zone(x: float, y: float):
-    side = "left" if x < COURT_LENGTH / 2 else "right"
-    band = "near" if y < COURT_WIDTH / 3 else "far" if y > COURT_WIDTH * 2 / 3 else "middle"
-    return f"{side}-{band}"
-
-
 def main():
     args = parse_args()
     source_path, model_path = Path(args.source), Path(args.model)
@@ -446,7 +440,6 @@ def main():
                 "confidence": round(detection.score * max(frame["pan"]["confidence"], 0.35), 4),
                 "provenance": "model",
                 "projection": "estimated",
-                "zone": relation_zone(court_x, court_y),
                 "courtMembership": "foreground-court",
                 "classification": {**detection.classification, "trackRole": detection.role},
             })

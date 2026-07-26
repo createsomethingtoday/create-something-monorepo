@@ -44,7 +44,8 @@
 		"check:watch": "pnpm prepare:build-dir && pnpm prepare:local-deps && node ./scripts/run-pinned-bin.mjs @sveltejs/kit svelte-kit sync && node ./scripts/run-pinned-bin.mjs svelte-check svelte-check --tsconfig ./tsconfig.json --fail-on-warnings --watch",
 		"test:abundance": "node --import tsx --test test/abundance-*.test.ts",
 		"smoke:mobile": "pnpm --filter @create-something/canon package && pnpm --filter @create-something/tufte package && pnpm build && playwright test --config playwright.mobile-smoke.config.ts",
-		"smoke:field-report-boundary": "pnpm --filter @create-something/canon package && pnpm --filter @create-something/tufte package && pnpm build && playwright test --config playwright.field-report-boundary.config.ts",
+		"smoke:field-report-geometry": "pnpm --filter @create-something/canon package && pnpm --filter @create-something/tufte package && pnpm build && playwright test --config playwright.field-report-geometry.config.ts",
+		"smoke:field-report-boundary": "pnpm smoke:field-report-geometry",
 		"db:migrate": "node ../../scripts/run-wrangler.mjs d1 migrations apply create-something-db",
 		"db:migrate:local": "node ../../scripts/run-wrangler.mjs d1 migrations apply create-something-db --local",
 		"deploy": "pnpm build && CLOUDFLARE_ACCOUNT_ID=9645bd52e640b8a4f40a3a55ff1dd75a node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=create-something-agency --commit-dirty=true",
@@ -63,7 +64,8 @@
 		"react": "^19.2.4",
 		"react-dom": "^19.2.4",
 		"simple-icons": "15.22.0",
-		"stripe": "^18.5.0"
+		"stripe": "^18.5.0",
+		"three": "^0.170.0"
 	},
 	"devDependencies": {
 		"@cloudflare/workers-types": "4.20260621.1",
@@ -75,6 +77,7 @@
 		"@types/node": "24.10.1",
 		"@types/react": "^19.2.14",
 		"@types/react-dom": "^19.2.3",
+		"@types/three": "^0.170.0",
 		"autoprefixer": "10.4.22",
 		"highlight.js": "11.11.1",
 		"marked": "17.0.0",

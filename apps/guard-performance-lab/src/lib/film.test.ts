@@ -1,9 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { FILM_BENCHMARK_PROFILE, FILM_IDENTITY_BENCHMARK_PROFILE, FILM_MASK_TRACK_PROFILE, FILM_PLAY_STATE_PROFILE, applyFilmCorrections, applyFilmIdentityAssignments, applyFilmPlayStateLedger, bindFilmMaskTrackParticipation, captureFilmAnalysis, capturedFilmAnalysisSchema, combineFilmMaskTracks, createFilmImportGate, deriveFilmIdentityCandidate, fuseFilmMaskTrack, finalizeFilmIdentityRevision, filmFrameAt, resolveFilmTrafficAt, reviewFilmMaskTrackStint, scoreFilmBenchmark, scoreFilmIdentityBenchmark, scoreFilmTeamBenchmark, summarizeFilmTargetCoverage, validateFilmBenchmark, validateFilmIdentityBenchmark, validateFilmImportGate, validateFilmMaskTrack, validateFilmTeamBenchmark, verifyFilmIdentityCandidate } from './film.js';
+import { assessFilmIdentityIndependence, FILM_BENCHMARK_PROFILE, FILM_IDENTITY_BENCHMARK_PROFILE, FILM_MASK_TRACK_PROFILE, FILM_PLAY_STATE_PROFILE, applyFilmCorrections, applyFilmIdentityAssignments, applyFilmPlayStateLedger, bindFilmMaskTrackParticipation, captureFilmAnalysis, capturedFilmAnalysisSchema, combineFilmMaskTracks, createFilmImportGate, deriveFilmIdentityCandidate, fuseFilmMaskTrack, finalizeFilmIdentityRevision, filmFrameAt, filmZone, resolveFilmTrafficAt, reviewFilmMaskTrackStint, scoreFilmBenchmark, scoreFilmIdentityBenchmark, scoreFilmTeamBenchmark, summarizeFilmTargetCoverage, validateFilmBenchmark, validateFilmIdentityBenchmark, validateFilmImportGate, validateFilmMaskTrack, validateFilmTeamBenchmark, verifyFilmIdentityCandidate } from './film.js';
 
 const source = { sha256: 'a'.repeat(64), durationMs: 5000, width: 1920, height: 1080, fps: 30, byteSize: 1000, linkedPath: '/private/source.mp4' };
-const annotations = (startMs: number) => Array.from({ length: 20 }, (_, index) => ({ timeMs: startMs + index * 1000, target: { status: 'visible' as const, court: [index, 10] as [number, number], zone: 'frontcourt', trackId: '13', provenance: 'manual' as const } }));
+// Zone comes from the single filmZone/courtZone taxonomy, never a hand-written second opinion.
+const annotations = (startMs: number) => Array.from({ length: 20 }, (_, index) => ({ timeMs: startMs + index * 1000, target: { status: 'visible' as const, court: [index, 10] as [number, number], zone: filmZone([index, 10]), trackId: '13', provenance: 'manual' as const } }));
 const benchmark = { profile: FILM_BENCHMARK_PROFILE, clips: [
   { id: 'clear-half-court', startMs: 235000, endMs: 255000, annotations: annotations(235000) },
   { id: 'transition-wide', startMs: 1700000, endMs: 1720000, annotations: annotations(1700000) },
@@ -238,19 +239,42 @@ describe('film benchmark contract', () => {
       outOfFrameFrames: 1,
       resolvedPercent: 25,
       knownStatePercent: 75,
+      userReviewedFrames: 0,
+      agentReviewedFrames: 0,
+      unreviewedFrames: 4,
       estimatedTargetFrames: 1,
       calibratedTargetFrames: 0,
-      correctedTargetFrames: 0
+      correctedTargetFrames: 0,
+      sampleIntervalMs: 1000,
+      movementClaimSupported: false
     });
   });
 
-  it('interpolates verified #13 identity across detector track handoffs', () => {
+  it('separates user-confirmed, agent-reviewed, and unreviewed play-state frames', () => {
+    const captured = captureFilmAnalysis({ source, frames: [
+      { timeMs: 0, targetStatus: 'resolved', playState: 'live-offense', playStateEvidence: { intervalId: 'live-1', method: 'source-review', reviewer: 'user', note: 'Held-out visual review.' }, players: [{ trackId: '13', team: 'target', court: [10, 20], confidence: 0.9 }] },
+      { timeMs: 1000, targetStatus: 'resolved', playState: 'live-offense', playStateEvidence: { intervalId: 'live-2', method: 'source-review', reviewer: 'codex', note: 'Agent-reviewed live possession.' }, players: [{ trackId: '13', team: 'target', court: [12, 20], confidence: 0.9 }] },
+      { timeMs: 2000, targetStatus: 'unresolved', playState: 'unknown', playStateEvidence: { intervalId: 'unknown-1', method: 'unreviewed', reviewer: 'codex', note: 'No source-reviewed claim.' }, players: [] }
+    ] });
+    expect(summarizeFilmTargetCoverage(captured)).toMatchObject({
+      frameCount: 3,
+      userReviewedFrames: 1,
+      agentReviewedFrames: 1,
+      unreviewedFrames: 1
+    });
+  });
+
+  it('interpolates verified #13 identity across detector track handoffs and marks the synthesized position', () => {
     const captured = captureFilmAnalysis({ source, frames: [
       { timeMs: 0, targetStatus: 'resolved', players: [{ trackId: 'p-before', team: 'target', court: [10, 20], confidence: 0.8 }] },
       { timeMs: 1000, targetStatus: 'resolved', players: [{ trackId: 'p-after', team: 'target', court: [20, 30], confidence: 0.7 }] }
     ] });
     const target = resolveFilmTrafficAt(captured, 500).players.find((player) => player.team === 'target');
-    expect(target).toMatchObject({ court: [15, 25], confidence: 0.7 });
+    expect(target).toMatchObject({ court: [15, 25], confidence: 0.7, interpolated: true });
+
+    const onFrame = resolveFilmTrafficAt(captured, 0).players.find((player) => player.team === 'target');
+    expect(onFrame).toMatchObject({ court: [10, 20] });
+    expect(onFrame).not.toHaveProperty('interpolated');
   });
 
   it('retags the selected player during correction instead of duplicating a physical token', () => {
@@ -615,6 +639,40 @@ describe('foreground-court team benchmark contract', () => {
 
 describe('real-source #13 identity benchmark contract', () => {
   const realFixture = JSON.parse(readFileSync(new URL('../../fixtures/film/player-13-identity-benchmark.json', import.meta.url), 'utf8'));
+
+  it('fails the independence gate when every positive decision sits on a tracker seed frame', () => {
+    // The locked fixture's four positive decisions are exactly the frames a reviewer can read #13 on,
+    // which are also the frames the mask tracker is seeded from. Declaring those seeds is what makes
+    // the gate bite: without independent positives the benchmark can only re-read its own input.
+    const seedTimesMs = [...new Set(realFixture.annotations
+      .filter((annotation: { expectedIdentity: string; participation: string }) => annotation.expectedIdentity === '13' && annotation.participation === 'active')
+      .map((annotation: { associationTimeMs: number }) => annotation.associationTimeMs))] as number[];
+    expect(seedTimesMs.length).toBeGreaterThan(0);
+
+    const seeded = assessFilmIdentityIndependence(realFixture, seedTimesMs);
+    expect(seeded.ok).toBe(false);
+    expect(seeded.independentPositiveDecisionCount).toBe(0);
+    expect(seeded.seedDecisionCount).toBe(seedTimesMs.length);
+    expect(seeded.issues.join(' ')).toContain('were not tracker seeds');
+
+    // Same fixture, no seed overlap declared: the positives are then genuinely independent evidence.
+    const unseeded = assessFilmIdentityIndependence(realFixture, []);
+    expect(unseeded.ok).toBe(true);
+    expect(unseeded.independentPositiveDecisionCount).toBe(seedTimesMs.length);
+    expect(unseeded.confusableTeammateNegativeCount).toBeGreaterThanOrEqual(2);
+    expect(unseeded.directNumberSegmentCount).toBeGreaterThanOrEqual(1);
+  });
+
+  it('requires same-team confusable negatives, because a mask drifts onto a teammate and not an official', () => {
+    const withoutTeammates = {
+      ...realFixture,
+      annotations: realFixture.annotations.filter((annotation: { negativeClass: string | null }) => !['5', '11', '15'].includes(String(annotation.negativeClass)))
+    };
+    const assessment = assessFilmIdentityIndependence(withoutTeammates, []);
+    expect(assessment.ok).toBe(false);
+    expect(assessment.confusableTeammateNegativeCount).toBe(0);
+    expect(assessment.issues.join(' ')).toContain('confusable negative');
+  });
   const positive = Array.from({ length: 30 }, (_, index) => ({
     id: `positive-${index}`,
     segmentId: `on-court-${Math.floor(index / 10) + 1}`,

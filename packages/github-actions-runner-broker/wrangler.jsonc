@@ -1,0 +1,42 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "github-actions-runner-broker",
+  "account_id": "9645bd52e640b8a4f40a3a55ff1dd75a",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-07-23",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  "containers": [
+    {
+      "class_name": "RunnerContainer",
+      "image": "./Dockerfile",
+      "instance_type": "standard-2",
+      "max_instances": 10
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "RUNNER_CONTAINER",
+        "class_name": "RunnerContainer"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["RunnerContainer"]
+    }
+  ],
+  "d1_databases": [
+    {
+      "binding": "RECEIPTS",
+      "database_name": "github-actions-runner-broker",
+      "database_id": "694be4ff-e062-4c32-816a-bab3d50372ce",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "vars": {
+    "ALLOWED_REPOSITORIES": "createsomethingtoday/webflow-library-submission-form,createsomethingtoday/shivworks-network,createsomethingtoday/half-dozen-marketing,createsomethingtoday/webflow-template-submission-form"
+  }
+}

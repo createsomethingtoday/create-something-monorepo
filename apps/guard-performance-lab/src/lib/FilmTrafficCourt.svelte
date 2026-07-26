@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { FilmAnalysisRecord } from './model.js';
-  import { applyFilmCorrections, resolveFilmTrafficAt, type FilmMovementMode } from './film.js';
+  import { isInterpolatedPlayer, resolveFilmTrafficAt, type CapturedFilmAnalysis, type FilmMovementMode } from './film.js';
   import {
     FULL_COURT_94X50,
     MANSFIELD_FIELDHOUSE_84X50,
@@ -10,8 +10,10 @@
     normalizeCourtPoint
   } from './court.js';
 
-  let { analysis, timeMs, wakeMs, movementMode }: { analysis: FilmAnalysisRecord; timeMs: number; wakeMs: number; movementMode: FilmMovementMode } = $props();
-  let corrected = $derived(applyFilmCorrections(analysis));
+  // `analysis` carries the stored record (id, revision receipts). `corrected` is the same revision with
+  // the correction overlay already applied by the owning surface: re-applying it here would parse the
+  // whole captured revision a second time on every attach.
+  let { analysis, corrected, timeMs, wakeMs, movementMode }: { analysis: FilmAnalysisRecord; corrected: CapturedFilmAnalysis; timeMs: number; wakeMs: number; movementMode: FilmMovementMode } = $props();
   let traffic = $derived(resolveFilmTrafficAt(corrected, timeMs, wakeMs, { movementMode }));
   let teammateCount = $derived(traffic.players.filter((player) => player.team === 'teammate').length);
   let opponentCount = $derived(traffic.players.filter((player) => player.team === 'opponent').length);
@@ -30,6 +32,7 @@
     nearestMarkings: courtLineDistances(currentTargetPoint, court).slice(0, 3),
     uncertaintyFeet: null
   } : undefined));
+  let targetInterpolated = $derived(traffic.players.some((player) => player.team === 'target' && isInterpolatedPlayer(player)));
   const scale = 10;
   const x = (feet: number) => courtToSvg([feet, 0], scale, court)[0];
   const y = (feet: number) => courtToSvg([0, feet], scale, court)[1];
@@ -79,7 +82,7 @@
   data-coordinate-basis={courtCalibration ? 'source-calibrated' : isMansfieldSource ? 'dimension-normalized-estimate' : 'legacy-estimate'}
 >
   <title id="traffic-title">Player traffic at {Math.round(traffic.timeMs / 100) / 10} seconds / {traffic.currentPlayState}</title>
-  <desc id="traffic-desc">A top-down basketball court with {traffic.players.length} foreground-court players: {teammateCount} teammates, {opponentCount} opponents, target count {targetCount}. The current play state is {traffic.currentPlayState}. Orange wake includes verified live basketball only. {movementMode === 'all-captured' ? 'Gray wake preserves non-live and unknown captured movement.' : 'Non-live and unknown movement is hidden from the wake.'}</desc>
+  <desc id="traffic-desc">A top-down basketball court with {traffic.players.length} foreground-court players: {teammateCount} teammates, {opponentCount} opponents, target count {targetCount}. The current play state is {traffic.currentPlayState}. Orange wake includes verified live basketball only. {movementMode === 'all-captured' ? 'Gray wake preserves non-live and unknown captured movement.' : 'Non-live and unknown movement is hidden from the wake.'} {targetInterpolated ? 'The #13 token sits between two captured frames, so its position is interpolated and drawn with a dashed ring instead of a solid one.' : 'The #13 token sits on a captured frame.'}</desc>
   <rect width={courtWidth} height={courtHeight} fill="#f8f7f1" />
   <g class="court-lines" fill="none" stroke="#171717">
     <rect x="2" y="2" width={courtWidth - 4} height={courtHeight - 4} stroke-width="4" />
@@ -120,8 +123,8 @@
   </g>
   <g class="traffic-players">
     {#each traffic.players as player}
-      <g data-team={player.team} transform={`translate(${x(displayPoint(player.court)[0])} ${y(displayPoint(player.court)[1])})`} class:target-token={player.team === 'target'}>
-        {#if player.team === 'target'}<circle r="20" fill="none" stroke="#e54800" stroke-width="3" opacity=".35" />{/if}
+      <g data-team={player.team} data-interpolated={isInterpolatedPlayer(player) ? 'true' : undefined} transform={`translate(${x(displayPoint(player.court)[0])} ${y(displayPoint(player.court)[1])})`} class:target-token={player.team === 'target'}>
+        {#if player.team === 'target'}<circle r="20" fill="none" stroke="#e54800" stroke-width="3" stroke-dasharray={isInterpolatedPlayer(player) ? '4 5' : undefined} opacity=".35" />{/if}
         <circle r={player.team === 'target' ? 12 : 8} fill={player.team === 'target' ? '#e54800' : player.team === 'teammate' ? '#0057b8' : '#171717'} stroke="#fff" stroke-width="2" opacity={Math.max(.5, player.confidence)} />
         {#if player.team === 'target'}<text y="4" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">13</text>{/if}
       </g>

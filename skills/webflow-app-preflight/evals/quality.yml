@@ -1,0 +1,51 @@
+# Quality evals derived from a fixture app carrying 24 planted violations.
+# Baseline: 24/24 caught with this skill; 14/24 unaided, with 3 inverted recommendations.
+evals:
+  - id: 1
+    input: "Review this Webflow App submission candidate. It hardcodes WEBFLOW_CLIENT_SECRET in the Designer Extension entry point and filters form fields for type === 'password'."
+    expected_output: "Findings led by the leaked client secret and credential-field collection, each with file evidence and a fix, ending in a DO NOT SUBMIT verdict."
+    assertions:
+      - type: "contains"
+        value: "Client Secret"
+      - type: "contains"
+        value: "credential"
+      - type: "contains"
+        value: "DO NOT SUBMIT"
+  - id: 2
+    input: "My app registers a hosted script at https://cdn.example.com/latest/loader.js with no integrityHash so we can push fixes without re-review, and pushUpdate re-registers version 1.0.0 with new source."
+    expected_output: "Flags the unpinned loader as a review-bypass with removal and ban risk, and separately flags in-place version mutation, requiring a new version plus App update."
+    assertions:
+      - type: "contains"
+        value: "integrityHash"
+      - type: "contains"
+        value: "App update"
+      - type: "contains"
+        value: "immutable"
+  - id: 3
+    input: "Our sync loop calls the Data API every 60 seconds and logs '401, retrying in 60s' when the token fails. onUninstall only console.logs because Webflow removes our scripts automatically."
+    expected_output: "Identifies persistent 401 as revocation requiring an immediate stop (not backoff), and corrects the false claim that Webflow auto-removes injected scripts."
+    assertions:
+      - type: "contains"
+        value: "revocation"
+      - type: "contains"
+        value: "uninstall"
+      - type: "not_contains"
+        value: "exponential backoff and retry"
+  - id: 4
+    input: "configuredScopes omits sites:write and pages:write but the install URL requests them, and we also request ecommerce:write and users:write which nothing calls."
+    expected_output: "Flags the Install URL scope mismatch as breaking every install, and the unused scopes as over-asking."
+    assertions:
+      - type: "contains"
+        value: "Install URL"
+      - type: "contains"
+        value: "subset"
+  - id: 5
+    input: "We're launching private first as our public beta while we finish the CMS sync feature. Avatar is icon-640x480.png, two screenshots, no demo video."
+    expected_output: "Corrects that private Apps get the same review and are not a beta tier, points to the user-testing process, and flags all three listing-asset failures."
+    assertions:
+      - type: "contains"
+        value: "512"
+      - type: "contains"
+        value: "demo video"
+      - type: "contains"
+        value: "user testing"

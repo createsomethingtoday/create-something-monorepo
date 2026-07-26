@@ -156,7 +156,7 @@
 <PerformanceNarrativeStage
   id="ground-operating-path"
   eyebrow="Ground operating path"
-  title="Connect. Verify. Trust."
+  title="Verification happens before the answer, not after."
   description="One indexed surface keeps installation, enforcement, and production evidence together."
   {scenes}
   ariaLabel="Ground operating path"

@@ -149,7 +149,7 @@
   <PerformanceNarrativeStage
     id="methodology-argument"
     eyebrow="One subtractive method"
-    title="Principle. Checks. Process. Map."
+    title="Remove what obscures, then test what survives."
     description="The method is one continuous argument: simplify the system, test each surviving part against the whole, turn the result into an operating path, and make its authority boundary visible."
     scenes={methodologyScenes}
     ariaLabel="Subtractive methodology argument"
@@ -217,7 +217,7 @@
             storyId="methodology-revops-lead-handoff-story"
             eyebrow="Method canvas"
             title="A workflow becomes trustworthy when the boundary is visible."
-            description="This is the visual grammar behind the service: one owner, one workflow artifact, bounded automation, human judgment, a stop rule, and an inspection surface."
+            description="One owner, one workflow artifact, and one stop rule. Automation stays inside that boundary, and every run leaves something you can inspect."
             compact
           />
         </div>

@@ -101,7 +101,7 @@
   titleLevel="h1"
   eyebrow="Security"
   title="A token can exist and access can still stop."
-  description="Credentials are not permission by themselves. Identity, workflow lane, access scope, commercial state, approval rules, and receipts all participate before delegated work can run."
+  description="Credentials are not permission by themselves. Who you are, what you may touch, and who approves it are all resolved before delegated work runs."
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
@@ -133,8 +133,8 @@
 
 <PerformanceConversionHandoff
   eyebrow="Access boundary"
-  title="Map the workflow before you hand it credentials."
-  description="Security is strongest when the workflow map names its objects, permissions, stop points, decision owner, and audit trail before any agent acts."
+  title="Name the boundary before you hand out credentials."
+  description="An agent should arrive at a workflow that already knows its permissions, its stop points, and who decides. Access is granted against that map, not ahead of it."
   steps={ctaItems}
   handoff={{ owner: 'Security owner', authority: 'Identity + entitlement boundary', proof: 'Audit trail', state: 'review' }}
 >

@@ -68,7 +68,9 @@ When coordinating agents, pass **policy artifacts** alongside task artifacts.
 
 1. For solo exploratory work where one operator owns the checkout, start with
    `pnpm agent:solo-loop` and work in the current checkout with tight CLI
-   validation.
+   validation. Before treating the repository root as the shared home base, run
+   `pnpm agent:home-base`; it must be clean `main`, track `origin/main`, and be
+   at the exact `origin/main` SHA.
 2. Use Codex Spark as a speed-biased executor only when the loop benefits from
    rapid iteration or many bounded context reads: Slack/Drive/Meet digests,
    duplicate issue scans, PR comment triage, lightweight code review prep, and
@@ -86,7 +88,9 @@ When coordinating agents, pass **policy artifacts** alongside task artifacts.
 6. Verify symbols and import paths before using them.
 7. Run the relevant quality gates.
 8. Record evidence in Linear when the checkpoint affects handoff, review,
-   rollback, or promotion.
+   rollback, or promotion. Tracked-work closeout must include `Worktree
+   disposition:` with `removed`, `preserved at <path/branch>`, or `retained
+   until <checkpoint>` so workspace ownership does not become ambient state.
 9. For production-relevant agentic work, default to a complete closeout:
    commit, push, merge through the appropriate review gate, deploy, and verify
    the live production surface. Stop before that only when the task is
@@ -99,6 +103,7 @@ Core commands:
 pnpm bootstrap:worktree
 
 pnpm agent:solo-loop
+pnpm agent:home-base
 pnpm agent:solo-loop:check
 
 pnpm linear:ready
