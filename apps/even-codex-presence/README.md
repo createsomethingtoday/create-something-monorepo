@@ -1,4 +1,4 @@
-# Even G2 Codex Presence
+# Even G2 Codex Relay
 
 This dedicated Even G2 client presents qualified Codex task state rather than a
 terminal transcript. It consumes only the structured localhost Presence API,
