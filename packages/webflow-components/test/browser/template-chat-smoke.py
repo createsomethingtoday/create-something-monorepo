@@ -17,6 +17,7 @@ not installed, so it never becomes a broken gate on a machine without it.
 from __future__ import annotations
 
 import http.client
+import json
 import os
 import subprocess
 import sys
@@ -202,6 +203,30 @@ def test_composer_stays_usable_after_failure(page: Page) -> None:
     check("progress surface torn down", page.locator(".tmchat-progress").count() == 0)
 
 
+def test_made_in_webflow_never_drives_the_host_page(page: Page) -> None:
+    print("\n[6] Made in Webflow finder reports no grid and suppresses page actions")
+    request_contexts: list[dict[str, object]] = []
+
+    def capture_chat_request(request) -> None:
+        if request.method != "POST" or not request.url.endswith("/api/templates/agent/chat"):
+            return
+        request_contexts.append(json.loads(request.post_data or "{}").get("context", {}))
+
+    page.on("request", capture_chat_request)
+    open_chat(page, "?made-in-webflow")
+    original_url = page.url
+    send(page, "a restaurant site with a menu")
+
+    expect(page.locator(".tmchat-display .tmcard-wrapper").first).to_be_visible(timeout=45_000)
+    check(
+        "request explicitly reports no host template grid",
+        bool(request_contexts) and request_contexts[-1].get("has_page_grid") is False,
+        str(request_contexts[-1] if request_contexts else None),
+    )
+    check("agent page action did not rewrite the URL", page.url == original_url, page.url)
+    check("suppressed page action produced no Undo receipt", page.locator(".tmchat-undo").count() == 0)
+
+
 def main() -> int:
     with harness(), sync_playwright() as playwright:
         browser = playwright.chromium.launch()
@@ -212,6 +237,7 @@ def main() -> int:
                 test_tight_data_stream_is_not_lost,
                 test_rate_limit_is_explained,
                 test_composer_stays_usable_after_failure,
+                test_made_in_webflow_never_drives_the_host_page,
             ):
                 context = browser.new_context(viewport={"width": 1280, "height": 900})
                 page = context.new_page()

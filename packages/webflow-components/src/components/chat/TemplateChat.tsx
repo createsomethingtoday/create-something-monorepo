@@ -141,6 +141,15 @@ export interface TemplateChatProps {
   /** CSS selector list for host-owned consent/modals that must win interaction. */
   hostOverlaySelectors?: string;
   /**
+   * Whether the agent may drive the host page (apply filters/sort to the
+   * template grid, rewrite URL params, highlight cards). Disable on surfaces
+   * whose grid is not the template grid — e.g. Made in Webflow, where the
+   * listing shows community sites and page actions have nothing to act on.
+   * When false the agent is told there is no page grid and any page_action
+   * events it still emits are dropped without touching the page.
+   */
+  enablePageActions?: boolean;
+  /**
    * Overrides for reader-facing copy. The Webflow prop panel exposes the
    * high-traffic strings; everything else (progress narration, receipts,
    * preview toolbar) is localized here.
@@ -208,6 +217,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   enableAnalytics = true,
   sessionScope = 'marketplace',
   hostOverlaySelectors = '#transcend-consent-manager',
+  enablePageActions = true,
   strings: stringsOverride,
   locale,
   currency = 'USD',
@@ -906,7 +916,9 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
                     ? 'immersive'
                     : 'compact',
                 // Whether the agent can drive this page's grid via update_page.
-                has_page_grid: pageHasTemplateGrid(),
+                // Surfaces without a template grid (e.g. Made in Webflow)
+                // disable page actions outright.
+                has_page_grid: enablePageActions && pageHasTemplateGrid(),
               },
             }),
           }),
@@ -949,6 +961,13 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
               });
             } else if (event.type === 'page_action') {
               textBatcher.flushNow();
+              if (!enablePageActions) {
+                // Defense in depth: the request already reports no page grid,
+                // but if the agent emits a page action anyway, drop it without
+                // touching the page (no URL rewrite, no dispatch, no receipt).
+                track('page_action_suppressed', { turn });
+                return;
+              }
               const pageAction = normalizePageActionPayload(event.payload);
               if (Object.keys(pageAction).length > 0) {
                 updateTurnProgress({ type: 'page_action', payload: pageAction });

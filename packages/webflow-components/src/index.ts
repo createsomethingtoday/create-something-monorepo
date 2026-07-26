@@ -238,6 +238,9 @@ export type { FooterProps, FooterColumn, SocialLink } from './components/layout/
 export { TemplateChat } from './components/chat/TemplateChat';
 export type { TemplateChatProps } from './components/chat/TemplateChat';
 
+export { MadeInWebflowTemplateFinder } from './components/chat/MadeInWebflowTemplateFinder';
+export type { MadeInWebflowTemplateFinderProps } from './components/chat/MadeInWebflowTemplateFinder';
+
 export { TemplateSearch } from './components/search/TemplateSearch';
 export type { TemplateSearchProps, SuggestItem } from './components/search/TemplateSearch';
 
