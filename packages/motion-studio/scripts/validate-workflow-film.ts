@@ -47,7 +47,7 @@ if (existsSync(schemaPath) && existsSync(specPath)) {
         minute: number;
         summary: string;
         receipt?: unknown;
-        gate?: { onTimeout: { escalation: string } };
+        gate?: { safeWorkWhileWaiting?: string[]; onTimeout: { escalation: string } };
       }>;
       durationInFrames: number;
     };
@@ -104,6 +104,14 @@ if (existsSync(schemaPath) && existsSync(specPath)) {
         if (waiting?.gate) waiting.gate.onTimeout.escalation = '';
       },
       'deadline and escalation'
+    );
+    expectContractFailure(
+      'missing safe-work list',
+      (probe) => {
+        const waiting = probe.events.find((event) => event.gate);
+        if (waiting?.gate) delete waiting.gate.safeWorkWhileWaiting;
+      },
+      'at least two safe tasks'
     );
     expectContractFailure(
       'non-contiguous scenes',

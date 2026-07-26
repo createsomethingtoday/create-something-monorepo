@@ -224,7 +224,7 @@ export const validateWorkflowFilmSpec = (value: unknown): string[] => {
       continue;
     }
     if (gate.blocking !== true) errors.push(`Workflow-film gate must be blocking`);
-    if (gate.safeWorkWhileWaiting.length < 2) {
+    if (!Array.isArray(gate.safeWorkWhileWaiting) || gate.safeWorkWhileWaiting.length < 2) {
       errors.push(`Workflow-film gate must name at least two safe tasks during the wait`);
     }
     if (gate.onApprove.state !== 'continued') {
