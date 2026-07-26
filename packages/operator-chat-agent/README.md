@@ -11,10 +11,10 @@ boundaries.
 
 Recent Poncho / AgentCash research suggests two different operating planes:
 
-| Plane | Best fit | Governance boundary |
-| --- | --- | --- |
-| Connected SaaS | Durable authenticated operations through Linear, Notion, Composio-backed MCP tools, and repo-owned workers | actor identity, tenant/account scoping, route classification, authz, quotas, traces |
-| Paid capability | Bounded external capability purchase or artifact retrieval through Poncho / AgentCash-style systems | spend cap, approval evidence, artifact receipt, no prompt-only approval |
+| Plane           | Best fit                                                                                                   | Governance boundary                                                                 |
+| --------------- | ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Connected SaaS  | Durable authenticated operations through Linear, Notion, Composio-backed MCP tools, and repo-owned workers | actor identity, tenant/account scoping, route classification, authz, quotas, traces |
+| Paid capability | Bounded external capability purchase or artifact retrieval through Poncho / AgentCash-style systems        | spend cap, approval evidence, artifact receipt, no prompt-only approval             |
 
 This package is the mobile operator shell for testing that split. It can answer
 from a phone, inspect read-only work state, and prepare a paid-capability handoff.
@@ -26,7 +26,11 @@ It does not execute live spend.
 - Durable conversation state through the Think / Agents Durable Object runtime.
 - Public `GET /healthz`.
 - Token-gated `POST /admin/telegram/setup` for Telegram webhook registration.
+- Admin tokens are accepted only from authorization headers, never URL query
+  parameters.
 - No public `/reset` route.
+- No public Agents SDK transport; unmatched routes, including `/agents/**`,
+  return 404 so Telegram access policy cannot be bypassed.
 - Telegram webhook ingress fails closed unless `TELEGRAM_ALLOWED_USER_IDS` or
   `TELEGRAM_ALLOWED_CHAT_IDS` includes the sender.
 - Read-only Linear issue lookup when `LINEAR_API_KEY` is configured.

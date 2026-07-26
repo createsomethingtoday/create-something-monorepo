@@ -11,8 +11,7 @@ function tokenFromRequest(request: Request): string | null {
   const headerToken = request.headers.get('x-operator-token')?.trim();
   if (headerToken) return headerToken;
 
-  const url = new URL(request.url);
-  return url.searchParams.get('token')?.trim() ?? null;
+  return null;
 }
 
 async function sha256Bytes(value: string): Promise<Uint8Array> {

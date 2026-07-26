@@ -1,14 +1,17 @@
-import { getAgentByName, routeAgentRequest } from 'agents';
+import { getAgentByName } from 'agents';
 
 import { isAdminRequest } from './auth.js';
 import { OperatorChatAgent, ThinkMessengerStateAgent } from './agent.js';
 import type { Env } from './env.js';
-import { readTelegramUpdate, telegramAccessDecision, telegramSecretMatches } from './telegram-access.js';
+import { resolveOperatorRoute, TELEGRAM_WEBHOOK_PATH } from './http-routing.js';
+import {
+  readTelegramUpdate,
+  telegramAccessDecision,
+  telegramSecretMatches
+} from './telegram-access.js';
 import { handleTelegramCommand } from './telegram-command.js';
 
 export { OperatorChatAgent, ThinkMessengerStateAgent };
-
-const TELEGRAM_WEBHOOK_PATH = '/messengers/telegram/webhook';
 
 async function registerTelegramWebhook(request: Request, env: Env): Promise<Response> {
   if (!(await isAdminRequest(request, env))) {
@@ -41,24 +44,25 @@ async function registerTelegramWebhook(request: Request, env: Env): Promise<Resp
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
-    const agentResponse = await routeAgentRequest(request, env);
-    if (agentResponse) return agentResponse;
+    const route = resolveOperatorRoute(request);
 
-    const url = new URL(request.url);
-    if (url.pathname === '/healthz') {
+    if (route === 'health') {
       return Response.json({
         ok: true,
         service: 'create-something-operator-chat-agent'
       });
     }
 
-    if (url.pathname === '/admin/telegram/setup' && request.method === 'POST') {
+    if (route === 'telegram_setup') {
       return registerTelegramWebhook(request, env);
     }
 
-    if (url.pathname === TELEGRAM_WEBHOOK_PATH) {
+    if (route === 'telegram_webhook') {
       if (!telegramSecretMatches(request, env)) {
-        return Response.json({ ok: false, error: 'invalid telegram webhook secret' }, { status: 401 });
+        return Response.json(
+          { ok: false, error: 'invalid telegram webhook secret' },
+          { status: 401 }
+        );
       }
 
       const update = await readTelegramUpdate(request.clone());
@@ -84,19 +88,24 @@ export default {
         return Response.json(commandResult, { status: commandResult.ok ? 200 : 502 });
       }
 
-      const namespace = env.OperatorChatAgent as unknown as DurableObjectNamespace<OperatorChatAgent>;
+      const namespace =
+        env.OperatorChatAgent as unknown as DurableObjectNamespace<OperatorChatAgent>;
       const agent = await getAgentByName(namespace, 'default');
       return agent.fetch(request);
     }
 
-    return Response.json({
-      service: 'create-something-operator-chat-agent',
-      status: 'poc',
-      mobileIngress: 'telegram',
-      webhook: TELEGRAM_WEBHOOK_PATH,
-      setup: 'POST /admin/telegram/setup',
-      adminAuth: 'Authorization: Bearer <OPERATOR_ADMIN_TOKEN>',
-      reset: 'not exposed in this POC'
-    });
+    if (route === 'service_info') {
+      return Response.json({
+        service: 'create-something-operator-chat-agent',
+        status: 'poc',
+        mobileIngress: 'telegram',
+        webhook: TELEGRAM_WEBHOOK_PATH,
+        setup: 'POST /admin/telegram/setup',
+        adminAuth: 'Authorization: Bearer <OPERATOR_ADMIN_TOKEN>',
+        reset: 'not exposed in this POC'
+      });
+    }
+
+    return Response.json({ ok: false, error: 'not found' }, { status: 404 });
   }
 } satisfies ExportedHandler<Env>;

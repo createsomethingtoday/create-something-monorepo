@@ -30,3 +30,12 @@ test('admin auth rejects missing or mismatched token', async () => {
   assert.equal(await isAdminRequest(request, { OPERATOR_ADMIN_TOKEN: 'admin-token' }), false);
   assert.equal(await isAdminRequest(request, {}), false);
 });
+
+test('admin auth rejects tokens carried in the URL', async () => {
+  const request = new Request(
+    'https://operator.example.test/admin/telegram/setup?token=admin-token',
+    { method: 'POST' }
+  );
+
+  assert.equal(await isAdminRequest(request, { OPERATOR_ADMIN_TOKEN: 'admin-token' }), false);
+});

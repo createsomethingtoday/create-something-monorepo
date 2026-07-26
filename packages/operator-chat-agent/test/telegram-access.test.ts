@@ -17,7 +17,18 @@ test('telegram webhook secret is checked from Telegram header', () => {
   });
 
   assert.equal(telegramSecretMatches(request, { TELEGRAM_WEBHOOK_SECRET_TOKEN: 'expected' }), true);
-  assert.equal(telegramSecretMatches(request, { TELEGRAM_WEBHOOK_SECRET_TOKEN: 'different' }), false);
+  assert.equal(
+    telegramSecretMatches(request, { TELEGRAM_WEBHOOK_SECRET_TOKEN: 'different' }),
+    false
+  );
+});
+
+test('telegram webhook secret fails closed when configuration is blank', () => {
+  const request = new Request('https://operator.example.test/messengers/telegram/webhook', {
+    headers: { 'x-telegram-bot-api-secret-token': '' }
+  });
+
+  assert.equal(telegramSecretMatches(request, { TELEGRAM_WEBHOOK_SECRET_TOKEN: '' }), false);
 });
 
 test('telegram access fails closed without allow list', () => {

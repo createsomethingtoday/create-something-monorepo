@@ -45,7 +45,10 @@ export function telegramSecretMatches(
   request: Request,
   env: Pick<Env, 'TELEGRAM_WEBHOOK_SECRET_TOKEN'>
 ): boolean {
-  return request.headers.get('x-telegram-bot-api-secret-token') === env.TELEGRAM_WEBHOOK_SECRET_TOKEN;
+  const expected = env.TELEGRAM_WEBHOOK_SECRET_TOKEN?.trim();
+  if (!expected) return false;
+
+  return request.headers.get('x-telegram-bot-api-secret-token') === expected;
 }
 
 export function telegramAccessDecision(
@@ -94,7 +97,9 @@ export function telegramAccessDecision(
   };
 }
 
-export async function readTelegramUpdate(request: { json(): Promise<unknown> }): Promise<TelegramUpdate | null> {
+export async function readTelegramUpdate(request: {
+  json(): Promise<unknown>;
+}): Promise<TelegramUpdate | null> {
   try {
     return (await request.json()) as TelegramUpdate;
   } catch {
