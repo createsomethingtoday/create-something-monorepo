@@ -15,8 +15,8 @@
       "context": "Read the complete campaign opening with its visible actions and proof.",
       "source": {
         "file": "packages/agency/src/routes/+page.svelte",
-        "line": 246,
-        "anchor": "Make one workflow safe to delegate."
+        "line": 247,
+        "anchor": "Make one workflow safe to delegate—and easier to run."
       },
       "reason": "Names one operating problem, grounds the offer in run, wait, stop, and proof behavior, then presents a specific next action."
     },
@@ -115,8 +115,8 @@
       "context": "Read the supporting proof card with its Ground and Loom evidence labels.",
       "source": {
         "file": "packages/agency/src/routes/products/+page.svelte",
-        "line": 87,
-        "anchor": "Ground and the Loom archive show the same discipline"
+        "line": 214,
+        "anchor": "Ground and the Loom archive show the same operating discipline beneath the commercial path"
       },
       "reason": "Introduces two owned product names and an operating discipline before one concrete result a new practitioner can recognize."
     },
