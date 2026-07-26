@@ -1,7 +1,10 @@
+import { TEMPLATE_SORT_ALIASES } from './utils.js';
+
 export function getClientScript(defaultMode = 'shadow'): string {
   return String.raw`(() => {
   const config = window.__WEBFLOW_TEMPLATE_SEARCH__ || {};
   const mode = config.mode || ${JSON.stringify(defaultMode)};
+  const sortAliases = ${JSON.stringify(TEMPLATE_SORT_ALIASES)};
   const apiBaseUrl = (config.apiBaseUrl || '').replace(/\/$/, '') || new URL(document.currentScript.src).origin;
   const selectors = Object.assign(
     {
@@ -21,10 +24,7 @@ export function getClientScript(defaultMode = 'shadow'): string {
   );
 
   function normalizeSort(value) {
-    if (value === 'approval-date-desc') return 'newest';
-    if (value === 'price-asc') return 'price_asc';
-    if (value === 'price-desc') return 'price_desc';
-    return value || 'popular';
+    return sortAliases[value] || value || 'popular';
   }
 
   function parseRouteState() {

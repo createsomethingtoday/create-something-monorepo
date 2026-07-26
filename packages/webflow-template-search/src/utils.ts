@@ -1,5 +1,19 @@
 import type { TemplateSort } from './types.js';
 
+export const TEMPLATE_SORT_ALIASES: Readonly<Record<string, TemplateSort>> = {
+  popular: 'popular',
+  best_selling: 'best_selling',
+  'best-selling': 'best_selling',
+  best_sellers: 'best_selling',
+  'best-sellers': 'best_selling',
+  newest: 'newest',
+  'approval-date-desc': 'newest',
+  price_asc: 'price_asc',
+  'price-asc': 'price_asc',
+  price_desc: 'price_desc',
+  'price-desc': 'price_desc',
+};
+
 export function nowIso(): string {
   return new Date().toISOString();
 }
@@ -49,22 +63,7 @@ export function clamp(value: number, min: number, max: number): number {
 }
 
 export function normalizeSort(value: string | null | undefined): TemplateSort {
-  switch ((value ?? '').trim()) {
-    case 'best_selling':
-    case 'best-selling':
-      return 'best_selling';
-    case 'newest':
-    case 'approval-date-desc':
-      return 'newest';
-    case 'price_asc':
-    case 'price-asc':
-      return 'price_asc';
-    case 'price_desc':
-    case 'price-desc':
-      return 'price_desc';
-    default:
-      return 'popular';
-  }
+  return TEMPLATE_SORT_ALIASES[(value ?? '').trim()] ?? 'popular';
 }
 
 export function chunk<T>(values: T[], size: number): T[][] {

@@ -2217,6 +2217,19 @@ describe('webflow-template-search worker', () => {
         { name: 'Catalis', purchases: 9 },
       ]);
 
+      for (const sortAlias of ['best_sellers', 'best-sellers']) {
+        const aliasSearch = await callWorker(
+          new Request(`https://templates.test/api/templates/search?sort=${sortAlias}&page_size=10`),
+          env,
+        );
+        const aliasPayload = (await aliasSearch.json()) as {
+          sort: string;
+          items: Array<{ name: string }>;
+        };
+        expect(aliasPayload.sort).toBe('best_selling');
+        expect(aliasPayload.items.map((item) => item.name)).toEqual(['Agentflow', 'Setrex', 'Catalis']);
+      }
+
       const defaultQuerySearch = await callWorker(new Request('https://templates.test/api/templates/search?q=technology&page_size=10'), env);
       const defaultQueryPayload = (await defaultQuerySearch.json()) as { items: Array<{ name: string }> };
       expect(defaultQueryPayload.items.map((item) => item.name)).toEqual(['Setrex', 'Agentflow', 'Catalis']);
