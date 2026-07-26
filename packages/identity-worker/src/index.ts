@@ -89,6 +89,11 @@ import { sendVerificationEmail, sendDeletionConfirmationEmail } from './services
 import type { RolloutConfig } from '@create-something/policy-os-engine';
 import { createAuthOpenApi, createAuthPlatformContract } from '@create-something/auth-platform';
 
+// A valid, non-secret Identity-native PBKDF2 hash keeps unknown, revoked, and active
+// Player Access codes on the same password-verification path.
+const DUMMY_PLAYER_ACCESS_PASSWORD_HASH =
+	'AAAAAAAAAAAAAAAAAAAAAA==:Ddw5dpxfEH5g20nduDf3aUKBCPZ3IXVXXVI8OOc64y0=';
+
 export default {
 	async fetch(request: Request, env: Env): Promise<Response> {
 		const url = new URL(request.url);
@@ -361,13 +366,15 @@ async function handlePlayerLogin(request: Request, env: Env): Promise<Response> 
 	}
 
 	const credential = await findPlayerAccessByCode(env.DB, playerCode);
-	const valid = credential?.status === 'active'
-		? await verifyPassword(passphrase, credential.password_hash)
-		: false;
+	const passwordMatches = await verifyPassword(
+		passphrase,
+		credential?.password_hash ?? DUMMY_PLAYER_ACCESS_PASSWORD_HASH
+	);
+	const valid = credential?.status === 'active' && passwordMatches;
 	if (!credential || !valid) {
 		await Promise.all([
-			incrementRateLimit(env.DB, codeRateKey),
-			incrementRateLimit(env.DB, ipRateKey),
+			incrementRateLimit(env.DB, codeRateKey, 15 * 60),
+			incrementRateLimit(env.DB, ipRateKey, 15 * 60),
 		]);
 		if (credential) {
 			await createPlayerAccessEvent(env.DB, {
@@ -381,7 +388,10 @@ async function handlePlayerLogin(request: Request, env: Env): Promise<Response> 
 		return json({ error: 'invalid_credentials', message: 'Invalid player code or passphrase', status: 401 }, 401);
 	}
 
-	const tokens = await generatePlayerAccessTokens(env.DB, credential.subject_id);
+	const tokens = await generatePlayerAccessTokens(env.DB, credential.subject_id, credential.password_hash);
+	if (!tokens) {
+		return json({ error: 'invalid_credentials', message: 'Invalid player code or passphrase', status: 401 }, 401);
+	}
 	await markPlayerAccessUsed(env.DB, credential.subject_id);
 	await createPlayerAccessEvent(env.DB, {
 		id: generateUUID(),

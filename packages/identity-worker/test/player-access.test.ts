@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { Miniflare } from 'miniflare';
 
 import identityWorker from '../src/index.ts';
+import { incrementRateLimit } from '../src/db/queries.ts';
 import { hashToken } from '../src/services/crypto.ts';
 
 const adminToken = 'test-player-access-admin-token';
@@ -236,4 +237,128 @@ test('Player Access throttles repeated guesses by code', async () => {
 		env as any,
 	);
 	assert.equal(throttled.status, 429);
+});
+
+test('reusing a rotated Player Access refresh token revokes the entire token family', async () => {
+	const provision = await identityWorker.fetch(
+		new Request('https://id.test/v1/auth/player-access/admin-upsert', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json', 'x-api-key': adminToken },
+			body: JSON.stringify({
+				subject_id: 'guard-player-15',
+				player_code: 'READ-2715',
+				passphrase: 'willow compass elbow balance',
+				manager_subject: 'guardian-15',
+			}),
+		}),
+		env as any,
+	);
+	assert.equal(provision.status, 201);
+
+	const login = await identityWorker.fetch(
+		new Request('https://id.test/v1/auth/player-login', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json', 'cf-connecting-ip': '192.0.2.115' },
+			body: JSON.stringify({ player_code: 'READ-2715', passphrase: 'willow compass elbow balance' }),
+		}),
+		env as any,
+	);
+	assert.equal(login.status, 200);
+	const initialSession = await login.json() as any;
+
+	const rotation = await identityWorker.fetch(
+		new Request('https://id.test/v1/auth/refresh', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ refresh_token: initialSession.refresh_token }),
+		}),
+		env as any,
+	);
+	assert.equal(rotation.status, 200);
+	const rotatedSession = await rotation.json() as any;
+
+	const replay = await identityWorker.fetch(
+		new Request('https://id.test/v1/auth/refresh', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ refresh_token: initialSession.refresh_token }),
+		}),
+		env as any,
+	);
+	assert.equal(replay.status, 401);
+
+	const familyRefresh = await identityWorker.fetch(
+		new Request('https://id.test/v1/auth/refresh', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ refresh_token: rotatedSession.refresh_token }),
+		}),
+		env as any,
+	);
+	assert.equal(familyRefresh.status, 401);
+});
+
+test('Player Access attempt counters retain the configured fifteen-minute window', async () => {
+	const key = 'player-login:test:window';
+	await db
+		.prepare('INSERT INTO rate_limits (key, count, window_start) VALUES (?, ?, ?)')
+		.bind(key, 4, new Date(Date.now() - 20 * 60 * 1000).toISOString())
+		.run();
+
+	await incrementRateLimit(db, key, 15 * 60);
+
+	const record = await db.prepare('SELECT count FROM rate_limits WHERE key = ?').bind(key).first<{ count: number }>();
+	assert.equal(record?.count, 1);
+});
+
+test('concurrent Player Access refresh claims cannot mint two live successors', async () => {
+	const provision = await identityWorker.fetch(
+		new Request('https://id.test/v1/auth/player-access/admin-upsert', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json', 'x-api-key': adminToken },
+			body: JSON.stringify({
+				subject_id: 'guard-player-16',
+				player_code: 'PACE-2716',
+				passphrase: 'maple pocket footwork window',
+				manager_subject: 'guardian-16',
+			}),
+		}),
+		env as any,
+	);
+	assert.equal(provision.status, 201);
+
+	const login = await identityWorker.fetch(
+		new Request('https://id.test/v1/auth/player-login', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json', 'cf-connecting-ip': '192.0.2.116' },
+			body: JSON.stringify({ player_code: 'PACE-2716', passphrase: 'maple pocket footwork window' }),
+		}),
+		env as any,
+	);
+	assert.equal(login.status, 200);
+	const session = await login.json() as any;
+
+	const refreshRequest = () => identityWorker.fetch(
+		new Request('https://id.test/v1/auth/refresh', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ refresh_token: session.refresh_token }),
+		}),
+		env as any,
+	);
+	const responses = await Promise.all([refreshRequest(), refreshRequest()]);
+	assert.ok(responses.filter((response) => response.status === 200).length <= 1);
+
+	const successor = responses.find((response) => response.status === 200);
+	if (!successor) return;
+	const successorSession = await successor.json() as any;
+	const afterReplay = await identityWorker.fetch(
+		new Request('https://id.test/v1/auth/refresh', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ refresh_token: successorSession.refresh_token }),
+		}),
+		env as any,
+	);
+	assert.equal(afterReplay.status, 401);
 });

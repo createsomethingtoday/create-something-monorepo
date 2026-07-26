@@ -19,6 +19,15 @@ CREATE TABLE player_access_credentials (
 CREATE INDEX idx_player_access_manager ON player_access_credentials(manager_subject);
 CREATE INDEX idx_player_access_status ON player_access_credentials(status);
 
+CREATE TABLE player_access_session_families (
+  id TEXT PRIMARY KEY,
+  subject_id TEXT NOT NULL REFERENCES player_access_credentials(subject_id) ON DELETE CASCADE,
+  revoked_at TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE INDEX idx_player_access_session_families_subject ON player_access_session_families(subject_id);
+
 CREATE TABLE player_access_sessions (
   id TEXT PRIMARY KEY,
   subject_id TEXT NOT NULL REFERENCES player_access_credentials(subject_id) ON DELETE CASCADE,

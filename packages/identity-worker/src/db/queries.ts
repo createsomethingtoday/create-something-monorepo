@@ -240,14 +240,50 @@ export async function revokePlayerAccess(db: D1Database, subjectId: string): Pro
 	return result.meta.changes > 0;
 }
 
+export async function createPlayerAccessSessionFamily(
+	db: D1Database,
+	familyId: string,
+	subjectId: string,
+	credentialPasswordHash: string
+): Promise<boolean> {
+	const result = await db
+		.prepare(
+			`INSERT INTO player_access_session_families (id, subject_id)
+			 SELECT ?, ?
+			 WHERE EXISTS (
+				SELECT 1 FROM player_access_credentials
+				WHERE subject_id = ? AND status = 'active' AND password_hash = ?
+			 )`
+		)
+		.bind(familyId, subjectId, subjectId, credentialPasswordHash)
+		.run();
+	return result.meta.changes > 0;
+}
+
 export async function createPlayerAccessSession(
 	db: D1Database,
 	session: Pick<PlayerAccessSession, 'id' | 'subject_id' | 'token_hash' | 'family_id' | 'expires_at'>
-): Promise<void> {
-	await db
-		.prepare('INSERT INTO player_access_sessions (id, subject_id, token_hash, family_id, expires_at) VALUES (?, ?, ?, ?, ?)')
-		.bind(session.id, session.subject_id, session.token_hash, session.family_id, session.expires_at)
+): Promise<boolean> {
+	const result = await db
+		.prepare(
+			`INSERT INTO player_access_sessions (id, subject_id, token_hash, family_id, expires_at)
+			 SELECT ?, ?, ?, ?, ?
+			 WHERE EXISTS (
+				SELECT 1 FROM player_access_session_families
+				WHERE id = ? AND subject_id = ? AND revoked_at IS NULL
+			 )`
+		)
+		.bind(
+			session.id,
+			session.subject_id,
+			session.token_hash,
+			session.family_id,
+			session.expires_at,
+			session.family_id,
+			session.subject_id
+		)
 		.run();
+	return result.meta.changes > 0;
 }
 
 export async function findPlayerAccessSessionByHash(
@@ -255,30 +291,31 @@ export async function findPlayerAccessSessionByHash(
 	tokenHash: string
 ): Promise<PlayerAccessSession | null> {
 	return db
-		.prepare('SELECT * FROM player_access_sessions WHERE token_hash = ? AND revoked_at IS NULL')
+		.prepare('SELECT * FROM player_access_sessions WHERE token_hash = ?')
 		.bind(tokenHash)
 		.first<PlayerAccessSession>();
 }
 
-export async function revokePlayerAccessSession(db: D1Database, id: string): Promise<void> {
-	await db
-		.prepare("UPDATE player_access_sessions SET revoked_at = datetime('now'), updated_at = datetime('now') WHERE id = ?")
+export async function revokePlayerAccessSession(db: D1Database, id: string): Promise<boolean> {
+	const result = await db
+		.prepare("UPDATE player_access_sessions SET revoked_at = datetime('now'), updated_at = datetime('now') WHERE id = ? AND revoked_at IS NULL")
 		.bind(id)
 		.run();
+	return result.meta.changes > 0;
 }
 
 export async function revokePlayerAccessSessionFamily(db: D1Database, familyId: string): Promise<void> {
-	await db
-		.prepare("UPDATE player_access_sessions SET revoked_at = datetime('now'), updated_at = datetime('now') WHERE family_id = ?")
-		.bind(familyId)
-		.run();
+	await db.batch([
+		db.prepare("UPDATE player_access_session_families SET revoked_at = datetime('now') WHERE id = ? AND revoked_at IS NULL").bind(familyId),
+		db.prepare("UPDATE player_access_sessions SET revoked_at = datetime('now'), updated_at = datetime('now') WHERE family_id = ? AND revoked_at IS NULL").bind(familyId),
+	]);
 }
 
 export async function revokeAllPlayerAccessSessions(db: D1Database, subjectId: string): Promise<void> {
-	await db
-		.prepare("UPDATE player_access_sessions SET revoked_at = datetime('now'), updated_at = datetime('now') WHERE subject_id = ? AND revoked_at IS NULL")
-		.bind(subjectId)
-		.run();
+	await db.batch([
+		db.prepare("UPDATE player_access_session_families SET revoked_at = datetime('now') WHERE subject_id = ? AND revoked_at IS NULL").bind(subjectId),
+		db.prepare("UPDATE player_access_sessions SET revoked_at = datetime('now'), updated_at = datetime('now') WHERE subject_id = ? AND revoked_at IS NULL").bind(subjectId),
+	]);
 }
 
 export async function createPlayerAccessEvent(
@@ -386,8 +423,13 @@ export async function checkRateLimit(
 	};
 }
 
-export async function incrementRateLimit(db: D1Database, key: string): Promise<void> {
+export async function incrementRateLimit(
+	db: D1Database,
+	key: string,
+	windowSeconds = 60
+): Promise<void> {
 	const now = new Date().toISOString();
+	const windowStart = new Date(Date.now() - windowSeconds * 1000).toISOString();
 
 	await db
 		.prepare(
@@ -395,16 +437,16 @@ export async function incrementRateLimit(db: D1Database, key: string): Promise<v
        VALUES (?, 1, ?)
        ON CONFLICT(key) DO UPDATE SET
          count = CASE
-           WHEN window_start < datetime('now', '-60 seconds') THEN 1
+           WHEN datetime(window_start) < datetime(?) THEN 1
            ELSE count + 1
          END,
          window_start = CASE
-           WHEN window_start < datetime('now', '-60 seconds') THEN ?
+           WHEN datetime(window_start) < datetime(?) THEN ?
            ELSE window_start
          END,
          blocked_until = NULL`
 		)
-		.bind(key, now, now)
+		.bind(key, now, windowStart, windowStart, now)
 		.run();
 }
 

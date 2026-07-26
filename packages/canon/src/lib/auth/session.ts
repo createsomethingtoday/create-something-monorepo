@@ -173,7 +173,7 @@ function extractSource(payload: JWTPayload): User['source'] {
 export async function refreshTokens(
 	refreshToken: string,
 	authProvider?: SessionManagerOptions['authProvider'],
-	identityEndpoint = SESSION_CONFIG.IDENTITY_ENDPOINT
+	identityEndpoint: string = SESSION_CONFIG.IDENTITY_ENDPOINT
 ): Promise<RefreshResult> {
 	if (authProvider?.type === 'auth0') {
 		try {
@@ -242,7 +242,7 @@ export async function refreshTokens(
 export async function revokeSession(
 	refreshToken: string,
 	authProvider?: SessionManagerOptions['authProvider'],
-	identityEndpoint = SESSION_CONFIG.IDENTITY_ENDPOINT
+	identityEndpoint: string = SESSION_CONFIG.IDENTITY_ENDPOINT
 ): Promise<boolean> {
 	if (authProvider?.type === 'auth0') {
 		return revokeAuth0RefreshToken({
