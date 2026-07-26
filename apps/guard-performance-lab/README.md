@@ -307,10 +307,14 @@ Guard Lab accepts only exact server-side subject bindings:
 
 - `GUARD_LAB_OPERATOR_SUBJECTS`: comma-separated operator subjects.
 - `GUARD_LAB_PLAYER_BINDINGS`: JSON object mapping identity subject to assigned player ID.
+- `GUARD_LAB_IDENTITY_ADMIN_TOKEN`: secret service API key with only `player_access_manage`; required for operator/guardian create, reset, and revoke controls.
+- `IDENTITY_API_URL`: server-only Identity Worker origin used by Player Access management. `CS_IDENTITY_ISSUER` remains the verification authority.
 - `CS_IDENTITY_AUDIENCE=guard-performance-lab` with the standard CREATE SOMETHING issuer/JWKS variables.
 - `ALLOW_CS_AUTH_PREVIEW=true` requires an explicit non-production `GUARD_LAB_DEV_SCOPE=operator` or `player:<id>` and is rejected in production.
 
 Every layout and `/api/*` data route resolves Canon access. Player HTTP and MCP calls are scoped from the binding; a caller-supplied different player ID is denied, and a player-scoped engagement write is attributed to `player` on both the HTTP and MCP surfaces even when the caller supplies another source. Stdio MCP requires `GUARD_LAB_MCP_LAUNCHER=trusted` and an explicit `GUARD_LAB_MCP_SCOPE`. There is no remote MCP transport; adding one is a separately approval-gated network-boundary change.
+
+Player Access does not create an email-backed user. Identity stores a separate player code and passphrase hash, issues a `guard-performance-lab`-only JWT, rotates a 12-hour refresh family, and records issue, reset, login, refresh, and revoke events. The Guard operator surface can manage only a player that already has an exact `GUARD_LAB_PLAYER_BINDINGS` subject assignment. A reset or revoke invalidates every Player Access refresh session for that subject.
 
 Production hosting is Cloudflare Pages plus D1. Apply migrations before deploying. Keep a D1 export and the previous Pages deployment ID before promotion; rollback the Pages deployment first, then restore the corresponding D1 export only if the schema/data change requires it. Private player records are retained until an operator explicitly deletes or resets them; exports and rollback artifacts must remain private and follow the same deletion decision.
 

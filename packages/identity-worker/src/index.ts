@@ -7,9 +7,18 @@
  * Canon: One identity, many manifestations.
  */
 
-import type { Env, ErrorResponse, TokenResponse, UserResponse, JWTPayload, CrossDomainToken, User } from './types';
+import type { Env, ErrorResponse, TokenResponse, UserResponse, JWTPayload, CrossDomainToken, User, PlayerAccessCredential } from './types';
 import { hashPassword, verifyPassword, generateUUID, hashToken, generateSecureToken } from './services/crypto';
-import { createSignedToken, generateTokens, refreshTokens, getJWKS, validateJWT, importPublicKey } from './services/tokens';
+import {
+	createSignedToken,
+	generateTokens,
+	refreshTokens,
+	generatePlayerAccessTokens,
+	refreshPlayerAccessTokens,
+	getJWKS,
+	validateJWT,
+	importPublicKey,
+} from './services/tokens';
 import {
 	type AuthorizationDecisionType,
 	type AuthorizationRequest,
@@ -66,6 +75,15 @@ import {
 	findMcpPolicyRollout,
 	createMcpPolicyEvent,
 	listRecentMcpPolicyEvents,
+	findPlayerAccessByCode,
+	findPlayerAccessBySubject,
+	upsertPlayerAccess,
+	markPlayerAccessUsed,
+	revokePlayerAccess,
+	findPlayerAccessSessionByHash,
+	revokePlayerAccessSessionFamily,
+	revokeAllPlayerAccessSessions,
+	createPlayerAccessEvent,
 } from './db/queries';
 import { sendVerificationEmail, sendDeletionConfirmationEmail } from './services/email';
 import type { RolloutConfig } from '@create-something/policy-os-engine';
@@ -135,6 +153,9 @@ async function route(request: Request, env: Env, method: string, path: string): 
 	if (path === '/oauth/userinfo' && method === 'GET') return handleOAuthUserInfo(request, env);
 	if (path === '/v1/auth/password/admin-get' && method === 'POST') return handleAdminGetPasswordUser(request, env);
 	if (path === '/v1/auth/password/admin-upsert' && method === 'POST') return handleAdminUpsertPasswordUser(request, env);
+	if (path === '/v1/auth/player-access/admin-get' && method === 'POST') return handleAdminGetPlayerAccess(request, env);
+	if (path === '/v1/auth/player-access/admin-upsert' && method === 'POST') return handleAdminUpsertPlayerAccess(request, env);
+	if (path === '/v1/auth/player-access/admin-revoke' && method === 'POST') return handleAdminRevokePlayerAccess(request, env);
 	if (path === '/v1/control/scheduler-tokens/admin-issue' && method === 'POST') {
 		return handleAdminIssueControlSchedulerToken(request, env);
 	}
@@ -142,6 +163,7 @@ async function route(request: Request, env: Env, method: string, path: string): 
 	// Auth endpoints
 	if (path === '/v1/auth/signup' && method === 'POST') return handleSignup(request, env);
 	if (path === '/v1/auth/login' && method === 'POST') return handleLogin(request, env);
+	if (path === '/v1/auth/player-login' && method === 'POST') return handlePlayerLogin(request, env);
 	if (path === '/v1/auth/magic-login' && method === 'POST') return handleMagicLogin(request, env);
 	if (path === '/v1/auth/magic-signup' && method === 'POST') return handleMagicSignup(request, env);
 	if (path === '/v1/auth/refresh' && method === 'POST') return handleRefresh(request, env);
@@ -318,6 +340,70 @@ async function handleLogin(request: Request, env: Env): Promise<Response> {
 	});
 }
 
+async function handlePlayerLogin(request: Request, env: Env): Promise<Response> {
+	const body = await parseJSON<{ player_code?: string; passphrase?: string }>(request);
+	if (!body) return json({ error: 'invalid_request', message: 'Invalid JSON', status: 400 }, 400);
+	const playerCode = normalizePlayerCode(body.player_code);
+	const passphrase = body.passphrase ?? '';
+	if (!playerCode || !passphrase) {
+		return json({ error: 'invalid_request', message: 'Player code and passphrase required', status: 400 }, 400);
+	}
+
+	const ip = request.headers.get('CF-Connecting-IP')?.trim() || 'unknown';
+	const codeRateKey = `player-login:code:${await hashToken(playerCode)}`;
+	const ipRateKey = `player-login:ip:${ip}`;
+	const [codeLimit, ipLimit] = await Promise.all([
+		checkRateLimit(env.DB, codeRateKey, 5, 15 * 60),
+		checkRateLimit(env.DB, ipRateKey, 20, 15 * 60),
+	]);
+	if (!codeLimit.allowed || !ipLimit.allowed) {
+		return json({ error: 'rate_limited', message: 'Too many sign-in attempts', status: 429 }, 429);
+	}
+
+	const credential = await findPlayerAccessByCode(env.DB, playerCode);
+	const valid = credential?.status === 'active'
+		? await verifyPassword(passphrase, credential.password_hash)
+		: false;
+	if (!credential || !valid) {
+		await Promise.all([
+			incrementRateLimit(env.DB, codeRateKey),
+			incrementRateLimit(env.DB, ipRateKey),
+		]);
+		if (credential) {
+			await createPlayerAccessEvent(env.DB, {
+				id: generateUUID(),
+				subject_id: credential.subject_id,
+				event_type: 'login_failed',
+				actor: 'player',
+				event_data_json: JSON.stringify({ reason: 'invalid_credentials' }),
+			});
+		}
+		return json({ error: 'invalid_credentials', message: 'Invalid player code or passphrase', status: 401 }, 401);
+	}
+
+	const tokens = await generatePlayerAccessTokens(env.DB, credential.subject_id);
+	await markPlayerAccessUsed(env.DB, credential.subject_id);
+	await createPlayerAccessEvent(env.DB, {
+		id: generateUUID(),
+		subject_id: credential.subject_id,
+		event_type: 'login_succeeded',
+		actor: 'player',
+		event_data_json: '{}',
+	});
+	return json({
+		access_token: tokens.accessToken,
+		refresh_token: tokens.refreshToken,
+		token_type: 'Bearer',
+		expires_in: tokens.expiresIn,
+		refresh_expires_in: tokens.refreshExpiresIn,
+		user: {
+			id: credential.subject_id,
+			access_type: 'player',
+			display_name: credential.display_name,
+		},
+	});
+}
+
 async function handleRefresh(request: Request, env: Env): Promise<Response> {
 	const db = env.DB;
 
@@ -329,7 +415,24 @@ async function handleRefresh(request: Request, env: Env): Promise<Response> {
 	const tokenHash = await hashToken(body.refresh_token);
 	const storedToken = await findRefreshTokenByHash(db, tokenHash);
 	if (!storedToken) {
-		return json({ error: 'invalid_token', message: 'Invalid refresh token', status: 401 }, 401);
+		const playerTokens = await refreshPlayerAccessTokens(db, body.refresh_token);
+		if (!playerTokens) {
+			return json({ error: 'invalid_token', message: 'Invalid refresh token', status: 401 }, 401);
+		}
+		await createPlayerAccessEvent(db, {
+			id: generateUUID(),
+			subject_id: playerTokens.subjectId,
+			event_type: 'session_refreshed',
+			actor: 'player',
+			event_data_json: '{}',
+		});
+		return json({
+			access_token: playerTokens.accessToken,
+			refresh_token: playerTokens.refreshToken,
+			token_type: 'Bearer',
+			expires_in: playerTokens.expiresIn,
+			refresh_expires_in: playerTokens.refreshExpiresIn,
+		});
 	}
 
 	const user = await findUserById(db, storedToken.user_id);
@@ -359,6 +462,9 @@ async function handleLogout(request: Request, env: Env): Promise<Response> {
 		const storedToken = await findRefreshTokenByHash(db, tokenHash);
 		if (storedToken) {
 			await revokeAllUserTokens(db, storedToken.user_id);
+		} else {
+			const playerSession = await findPlayerAccessSessionByHash(db, tokenHash);
+			if (playerSession) await revokePlayerAccessSessionFamily(db, playerSession.family_id);
 		}
 	}
 
@@ -483,6 +589,83 @@ async function handleAdminUpsertPasswordUser(request: Request, env: Env): Promis
 		},
 		has_password: true,
 	});
+}
+
+async function handleAdminGetPlayerAccess(request: Request, env: Env): Promise<Response> {
+	const auth = await authenticateApiKeyForPermissions(request, env, ['player_access_manage']);
+	if (!auth.ok) return json({ error: auth.error, message: auth.message, status: auth.status }, auth.status);
+	const body = await parseJSON<{ subject_id?: string }>(request);
+	const subjectId = normalizeOptionalId(body?.subject_id);
+	if (!subjectId) return json({ error: 'invalid_request', message: 'Subject ID is required', status: 400 }, 400);
+	const credential = await findPlayerAccessBySubject(env.DB, subjectId);
+	return json({ player_access: credential ? publicPlayerAccess(credential) : null });
+}
+
+async function handleAdminUpsertPlayerAccess(request: Request, env: Env): Promise<Response> {
+	const auth = await authenticateApiKeyForPermissions(request, env, ['player_access_manage']);
+	if (!auth.ok) return json({ error: auth.error, message: auth.message, status: auth.status }, auth.status);
+	const body = await parseJSON<{
+		subject_id?: string;
+		player_code?: string;
+		passphrase?: string;
+		manager_subject?: string;
+		display_name?: string;
+	}>(request);
+	const subjectId = normalizeOptionalId(body?.subject_id);
+	const playerCode = normalizePlayerCode(body?.player_code);
+	const managerSubject = normalizeOptionalId(body?.manager_subject);
+	const passphrase = body?.passphrase ?? '';
+	if (!subjectId || !playerCode || !managerSubject) {
+		return json({ error: 'invalid_request', message: 'Subject ID, player code, and manager subject are required', status: 400 }, 400);
+	}
+	if (!isValidPlayerCode(playerCode)) {
+		return json({ error: 'invalid_player_code', message: 'Player code must be 8-32 letters, numbers, or hyphens', status: 400 }, 400);
+	}
+	const passphraseError = validatePlayerPassphrase(passphrase, playerCode);
+	if (passphraseError) return json({ error: 'weak_passphrase', message: passphraseError, status: 400 }, 400);
+
+	const codeOwner = await findPlayerAccessByCode(env.DB, playerCode);
+	if (codeOwner && codeOwner.subject_id !== subjectId) {
+		return json({ error: 'player_code_exists', message: 'Player code is already assigned', status: 409 }, 409);
+	}
+	const existing = await findPlayerAccessBySubject(env.DB, subjectId);
+	const credential = await upsertPlayerAccess(env.DB, {
+		subject_id: subjectId,
+		player_code: playerCode,
+		password_hash: await hashPassword(passphrase),
+		manager_subject: managerSubject,
+		display_name: normalizeNullableString(body?.display_name),
+		created_by_actor: auth.actor,
+	});
+	await revokeAllPlayerAccessSessions(env.DB, subjectId);
+	await createPlayerAccessEvent(env.DB, {
+		id: generateUUID(),
+		subject_id: subjectId,
+		event_type: existing ? 'rotated' : 'issued',
+		actor: auth.actor,
+		event_data_json: JSON.stringify({ manager_subject: managerSubject }),
+	});
+	return json({ success: true, player_access: publicPlayerAccess(credential) }, existing ? 200 : 201);
+}
+
+async function handleAdminRevokePlayerAccess(request: Request, env: Env): Promise<Response> {
+	const auth = await authenticateApiKeyForPermissions(request, env, ['player_access_manage']);
+	if (!auth.ok) return json({ error: auth.error, message: auth.message, status: auth.status }, auth.status);
+	const body = await parseJSON<{ subject_id?: string }>(request);
+	const subjectId = normalizeOptionalId(body?.subject_id);
+	if (!subjectId) return json({ error: 'invalid_request', message: 'Subject ID is required', status: 400 }, 400);
+	const credential = await findPlayerAccessBySubject(env.DB, subjectId);
+	if (!credential) return json({ error: 'not_found', message: 'Player Access was not found', status: 404 }, 404);
+	await revokePlayerAccess(env.DB, subjectId);
+	await revokeAllPlayerAccessSessions(env.DB, subjectId);
+	await createPlayerAccessEvent(env.DB, {
+		id: generateUUID(),
+		subject_id: subjectId,
+		event_type: 'revoked',
+		actor: auth.actor,
+		event_data_json: '{}',
+	});
+	return json({ success: true, player_access: { ...publicPlayerAccess(credential), status: 'revoked' } });
 }
 
 // Cross-Domain SSO Handlers
@@ -4695,4 +4878,38 @@ function isValidEmail(email: string): boolean {
 		return false;
 	}
 	return /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/.test(trimmed);
+}
+
+function normalizePlayerCode(value: string | undefined): string | null {
+	const normalized = value?.trim().toUpperCase() ?? '';
+	return normalized || null;
+}
+
+function isValidPlayerCode(value: string): boolean {
+	return value.length >= 8 && value.length <= 32 && /^[A-Z0-9]+(?:-[A-Z0-9]+)*$/.test(value);
+}
+
+function validatePlayerPassphrase(passphrase: string, playerCode: string): string | null {
+	if (passphrase.length < 15) return 'Passphrase must be at least 15 characters';
+	if (passphrase.length > 128) return 'Passphrase must be 128 characters or fewer';
+	const normalized = passphrase.trim().toLowerCase();
+	if (!normalized || normalized.includes(playerCode.toLowerCase())) {
+		return 'Passphrase cannot contain the player code';
+	}
+	const blocked = new Set([
+		'passwordpassword',
+		'letmeinletmein',
+		'basketballbasketball',
+		'guardperformancelab',
+	]);
+	return blocked.has(normalized.replace(/\s+/g, '')) ? 'Choose a less common passphrase' : null;
+}
+
+function publicPlayerAccess(credential: PlayerAccessCredential) {
+	return {
+		subject: credential.subject_id,
+		player_code: credential.player_code,
+		manager_subject: credential.manager_subject,
+		status: credential.status,
+	};
 }

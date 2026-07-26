@@ -16,12 +16,18 @@ import {
 	findRefreshTokenByHash,
 	revokeRefreshToken,
 	revokeTokenFamily,
+	createPlayerAccessSession,
+	findPlayerAccessBySubject,
+	findPlayerAccessSessionByHash,
+	revokePlayerAccessSession,
 } from '../db/queries';
 
 // Token configuration
 const ACCESS_TOKEN_TTL = 15 * 60; // 15 minutes
 const REFRESH_TOKEN_TTL = 7 * 24 * 60 * 60; // 7 days
 const ISSUER = 'https://id.createsomething.space';
+export const PLAYER_ACCESS_TOKEN_TTL_SECONDS = 15 * 60;
+export const PLAYER_ACCESS_SESSION_TTL_SECONDS = 12 * 60 * 60;
 export const IDENTITY_TOKEN_AUDIENCES = [
 	'workway',
 	'templates',
@@ -83,6 +89,54 @@ export async function createSignedToken(
 ): Promise<string> {
 	const signingKey = await getOrCreateSigningKey(db);
 	return signJWT(payload, signingKey);
+}
+
+async function issuePlayerAccessTokens(
+	db: D1Database,
+	subjectId: string,
+	familyId: string
+): Promise<{ accessToken: string; refreshToken: string; expiresIn: number; refreshExpiresIn: number }> {
+	const now = Math.floor(Date.now() / 1000);
+	const accessToken = await createSignedToken(db, {
+		sub: subjectId,
+		tier: 'free',
+		source: 'guard-player',
+		kind: 'player_access',
+		iss: ISSUER,
+		aud: ['guard-performance-lab'],
+		iat: now,
+		exp: now + PLAYER_ACCESS_TOKEN_TTL_SECONDS,
+	});
+	const refreshToken = generateSecureToken(48);
+	await createPlayerAccessSession(db, {
+		id: generateUUID(),
+		subject_id: subjectId,
+		token_hash: await hashToken(refreshToken),
+		family_id: familyId,
+		expires_at: new Date(Date.now() + PLAYER_ACCESS_SESSION_TTL_SECONDS * 1000).toISOString(),
+	});
+	return {
+		accessToken,
+		refreshToken,
+		expiresIn: PLAYER_ACCESS_TOKEN_TTL_SECONDS,
+		refreshExpiresIn: PLAYER_ACCESS_SESSION_TTL_SECONDS,
+	};
+}
+
+export async function generatePlayerAccessTokens(db: D1Database, subjectId: string) {
+	return issuePlayerAccessTokens(db, subjectId, generateUUID());
+}
+
+export async function refreshPlayerAccessTokens(db: D1Database, refreshToken: string) {
+	const stored = await findPlayerAccessSessionByHash(db, await hashToken(refreshToken));
+	if (!stored || new Date(stored.expires_at).getTime() <= Date.now()) return null;
+	const credential = await findPlayerAccessBySubject(db, stored.subject_id);
+	if (!credential || credential.status !== 'active') return null;
+	await revokePlayerAccessSession(db, stored.id);
+	return {
+		...(await issuePlayerAccessTokens(db, stored.subject_id, stored.family_id)),
+		subjectId: stored.subject_id,
+	};
 }
 
 /**

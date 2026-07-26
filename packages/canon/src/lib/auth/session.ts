@@ -172,7 +172,8 @@ function extractSource(payload: JWTPayload): User['source'] {
  */
 export async function refreshTokens(
 	refreshToken: string,
-	authProvider?: SessionManagerOptions['authProvider']
+	authProvider?: SessionManagerOptions['authProvider'],
+	identityEndpoint = SESSION_CONFIG.IDENTITY_ENDPOINT
 ): Promise<RefreshResult> {
 	if (authProvider?.type === 'auth0') {
 		try {
@@ -206,7 +207,7 @@ export async function refreshTokens(
 	}
 
 	try {
-		const response = await fetch(`${SESSION_CONFIG.IDENTITY_ENDPOINT}/v1/auth/refresh`, {
+		const response = await fetch(`${identityEndpoint.replace(/\/+$/, '')}/v1/auth/refresh`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
@@ -240,7 +241,8 @@ export async function refreshTokens(
  */
 export async function revokeSession(
 	refreshToken: string,
-	authProvider?: SessionManagerOptions['authProvider']
+	authProvider?: SessionManagerOptions['authProvider'],
+	identityEndpoint = SESSION_CONFIG.IDENTITY_ENDPOINT
 ): Promise<boolean> {
 	if (authProvider?.type === 'auth0') {
 		return revokeAuth0RefreshToken({
@@ -250,7 +252,7 @@ export async function revokeSession(
 	}
 
 	try {
-		const response = await fetch(`${SESSION_CONFIG.IDENTITY_ENDPOINT}/v1/auth/logout`, {
+		const response = await fetch(`${identityEndpoint.replace(/\/+$/, '')}/v1/auth/logout`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
@@ -301,7 +303,7 @@ export type CookiesAPI = {
  * ```
  */
 export function createSessionManager(cookies: CookiesAPI, options: SessionManagerOptions = {}) {
-	const { isProduction = true, domain, onAnalyticsEvent, authProvider } = options;
+	const { isProduction = true, domain, onAnalyticsEvent, authProvider, identityEndpoint } = options;
 
 	return {
 		/**
@@ -380,7 +382,7 @@ export function createSessionManager(cookies: CookiesAPI, options: SessionManage
 			const session = getSessionCookies(cookies);
 			if (!session.refreshToken) return false;
 
-			const result = await refreshTokens(session.refreshToken, authProvider);
+			const result = await refreshTokens(session.refreshToken, authProvider, identityEndpoint);
 
 			if (result.success && result.tokens) {
 				setSessionCookies(
@@ -388,6 +390,7 @@ export function createSessionManager(cookies: CookiesAPI, options: SessionManage
 					{
 						accessToken: result.tokens.access_token,
 						refreshToken: result.tokens.refresh_token,
+						refreshMaxAge: result.tokens.refresh_expires_in,
 						domain,
 					},
 					isProduction
@@ -449,7 +452,7 @@ export function createSessionManager(cookies: CookiesAPI, options: SessionManage
 
 			// Revoke at identity worker
 			if (session.refreshToken) {
-				await revokeSession(session.refreshToken, authProvider);
+				await revokeSession(session.refreshToken, authProvider, identityEndpoint);
 			}
 
 			// Clear cookies
@@ -578,6 +581,7 @@ export function createAuthHooks(config: AuthHooksConfig = {}): Handle {
 		domain,
 		onAnalyticsEvent,
 		authProvider: configuredAuthProvider,
+		identityEndpoint: configuredIdentityEndpoint,
 	} = config;
 
 	return async ({ event, resolve }) => {
@@ -592,6 +596,7 @@ export function createAuthHooks(config: AuthHooksConfig = {}): Handle {
 			domain,
 			onAnalyticsEvent,
 			authProvider: authProvider ?? undefined,
+			identityEndpoint: configuredIdentityEndpoint ?? platformEnv?.IDENTITY_API_URL,
 		});
 
 		const user = await sessionManager.getUser();
@@ -665,7 +670,7 @@ export async function handleLogout(
 	request: Request,
 	cookies: CookiesAPI,
 	platform?: { env?: Record<string, unknown> & { ENVIRONMENT?: string } },
-	options?: Pick<SessionManagerOptions, 'authProvider'>
+	options?: Pick<SessionManagerOptions, 'authProvider' | 'identityEndpoint'>
 ): Promise<Response> {
 	try {
 		const isProduction = platform?.env?.ENVIRONMENT === 'production';
@@ -679,7 +684,7 @@ export async function handleLogout(
 		// Get refresh token to revoke at Identity Worker
 		const refreshToken = getRefreshTokenFromRequest(request);
 		if (refreshToken) {
-			await revokeSession(refreshToken, authProvider);
+			await revokeSession(refreshToken, authProvider, options?.identityEndpoint);
 		}
 
 		// Clear JWT cookies

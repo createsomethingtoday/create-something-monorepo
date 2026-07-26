@@ -46,6 +46,7 @@ export interface TokenResponse {
 	refresh_token: string;
 	token_type: 'Bearer';
 	expires_in: number;
+	refresh_expires_in?: number;
 }
 
 export interface ExchangeResponse extends TokenResponse {
@@ -137,6 +138,8 @@ export interface AuthHooksConfig {
 	onAnalyticsEvent?: (event: SessionAnalyticsEvent) => void;
 	/** Explicit session provider. Set Identity to prevent retired provider env from taking precedence. */
 	authProvider?: AuthProviderConfig | Auth0ProviderConfig;
+	/** Server-side Identity origin override for previews and integration tests. */
+	identityEndpoint?: string;
 }
 
 export interface SessionManagerOptions {
@@ -148,6 +151,8 @@ export interface SessionManagerOptions {
 	onAnalyticsEvent?: (event: SessionAnalyticsEvent) => void;
 	/** Auth provider override */
 	authProvider?: AuthProviderConfig | Auth0ProviderConfig;
+	/** Server-side Identity origin override for previews and integration tests. */
+	identityEndpoint?: string;
 }
 
 /**

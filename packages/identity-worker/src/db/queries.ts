@@ -18,6 +18,8 @@ import type {
 	McpLongLivedToken,
 	McpPolicyRollout,
 	McpPolicyEvent,
+	PlayerAccessCredential,
+	PlayerAccessSession,
 } from '../types';
 
 // User queries
@@ -161,6 +163,138 @@ export async function revokeAllUserTokens(db: D1Database, userId: string): Promi
 
 export async function cleanExpiredTokens(db: D1Database): Promise<void> {
 	await db.prepare("DELETE FROM refresh_tokens WHERE expires_at < datetime('now')").run();
+}
+
+// Player Access queries
+export async function findPlayerAccessByCode(
+	db: D1Database,
+	playerCode: string
+): Promise<PlayerAccessCredential | null> {
+	return db
+		.prepare('SELECT * FROM player_access_credentials WHERE player_code = ? COLLATE NOCASE')
+		.bind(playerCode)
+		.first<PlayerAccessCredential>();
+}
+
+export async function findPlayerAccessBySubject(
+	db: D1Database,
+	subjectId: string
+): Promise<PlayerAccessCredential | null> {
+	return db
+		.prepare('SELECT * FROM player_access_credentials WHERE subject_id = ?')
+		.bind(subjectId)
+		.first<PlayerAccessCredential>();
+}
+
+export async function upsertPlayerAccess(
+	db: D1Database,
+	credential: {
+		subject_id: string;
+		player_code: string;
+		password_hash: string;
+		manager_subject: string;
+		display_name: string | null;
+		created_by_actor: string;
+	}
+): Promise<PlayerAccessCredential> {
+	await db
+		.prepare(
+			`INSERT INTO player_access_credentials (
+				subject_id, player_code, password_hash, manager_subject, display_name,
+				status, created_by_actor, rotated_at, revoked_at
+			) VALUES (?, ?, ?, ?, ?, 'active', ?, datetime('now'), NULL)
+			ON CONFLICT(subject_id) DO UPDATE SET
+				player_code = excluded.player_code,
+				password_hash = excluded.password_hash,
+				manager_subject = excluded.manager_subject,
+				display_name = excluded.display_name,
+				status = 'active',
+				rotated_at = datetime('now'),
+				revoked_at = NULL,
+				updated_at = datetime('now')`
+		)
+		.bind(
+			credential.subject_id,
+			credential.player_code,
+			credential.password_hash,
+			credential.manager_subject,
+			credential.display_name,
+			credential.created_by_actor
+		)
+		.run();
+	return (await findPlayerAccessBySubject(db, credential.subject_id))!;
+}
+
+export async function markPlayerAccessUsed(db: D1Database, subjectId: string): Promise<void> {
+	await db
+		.prepare("UPDATE player_access_credentials SET last_used_at = datetime('now'), updated_at = datetime('now') WHERE subject_id = ?")
+		.bind(subjectId)
+		.run();
+}
+
+export async function revokePlayerAccess(db: D1Database, subjectId: string): Promise<boolean> {
+	const result = await db
+		.prepare("UPDATE player_access_credentials SET status = 'revoked', revoked_at = datetime('now'), updated_at = datetime('now') WHERE subject_id = ? AND status = 'active'")
+		.bind(subjectId)
+		.run();
+	return result.meta.changes > 0;
+}
+
+export async function createPlayerAccessSession(
+	db: D1Database,
+	session: Pick<PlayerAccessSession, 'id' | 'subject_id' | 'token_hash' | 'family_id' | 'expires_at'>
+): Promise<void> {
+	await db
+		.prepare('INSERT INTO player_access_sessions (id, subject_id, token_hash, family_id, expires_at) VALUES (?, ?, ?, ?, ?)')
+		.bind(session.id, session.subject_id, session.token_hash, session.family_id, session.expires_at)
+		.run();
+}
+
+export async function findPlayerAccessSessionByHash(
+	db: D1Database,
+	tokenHash: string
+): Promise<PlayerAccessSession | null> {
+	return db
+		.prepare('SELECT * FROM player_access_sessions WHERE token_hash = ? AND revoked_at IS NULL')
+		.bind(tokenHash)
+		.first<PlayerAccessSession>();
+}
+
+export async function revokePlayerAccessSession(db: D1Database, id: string): Promise<void> {
+	await db
+		.prepare("UPDATE player_access_sessions SET revoked_at = datetime('now'), updated_at = datetime('now') WHERE id = ?")
+		.bind(id)
+		.run();
+}
+
+export async function revokePlayerAccessSessionFamily(db: D1Database, familyId: string): Promise<void> {
+	await db
+		.prepare("UPDATE player_access_sessions SET revoked_at = datetime('now'), updated_at = datetime('now') WHERE family_id = ?")
+		.bind(familyId)
+		.run();
+}
+
+export async function revokeAllPlayerAccessSessions(db: D1Database, subjectId: string): Promise<void> {
+	await db
+		.prepare("UPDATE player_access_sessions SET revoked_at = datetime('now'), updated_at = datetime('now') WHERE subject_id = ? AND revoked_at IS NULL")
+		.bind(subjectId)
+		.run();
+}
+
+export async function createPlayerAccessEvent(
+	db: D1Database,
+	event: {
+		id: string;
+		subject_id: string;
+		event_type: 'issued' | 'rotated' | 'login_succeeded' | 'login_failed' | 'session_refreshed' | 'revoked';
+		actor: string;
+		event_data_json: string;
+	}
+): Promise<void> {
+	await db
+		.prepare('INSERT INTO player_access_events (id, subject_id, event_type, actor, event_data_json) VALUES (?, ?, ?, ?, ?)')
+		.bind(event.id, event.subject_id, event.event_type, event.actor, event.event_data_json)
+		.run();
 }
 
 // Signing key queries

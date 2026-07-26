@@ -50,6 +50,7 @@ export function createAuthPlatformContract(origin = PRODUCTION_IDENTITY_ORIGIN) 
     openapi_uri: `${issuer}/v1/auth/openapi.json`,
     endpoints: {
       signup: `${issuer}/v1/auth/signup`, login: `${issuer}/v1/auth/login`,
+      player_login: `${issuer}/v1/auth/player-login`,
       refresh: `${issuer}/v1/auth/refresh`, logout: `${issuer}/v1/auth/logout`,
       me: `${issuer}/v1/users/me`,
     },
@@ -81,6 +82,7 @@ export function createAuthOpenApi(origin = PRODUCTION_IDENTITY_ORIGIN) {
     paths: {
       '/v1/auth/signup': { post: operation('signup', 'Create a password identity') },
       '/v1/auth/login': { post: operation('login', 'Exchange credentials for a session') },
+      '/v1/auth/player-login': { post: operation('playerLogin', 'Exchange a player code and passphrase for a Guard-scoped session') },
       '/v1/auth/refresh': { post: operation('refreshSession', 'Rotate a refresh token and session') },
       '/v1/auth/logout': { post: operation('logout', 'Revoke a refresh token') },
       '/v1/users/me': { get: operation('getCurrentUser', 'Read the current identity', true) },
