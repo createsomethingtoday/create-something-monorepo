@@ -1,6 +1,13 @@
 import type { PageServerLoad } from './$types';
 import { getAirtableClient, validateToken } from '$lib/server/airtable';
-import { createSessionHandoff, setSession, generateSessionToken, checkRateLimit } from '$lib/server/kv';
+import {
+	SESSION_COOKIE_NAME,
+	SESSION_COOKIE_OPTIONS,
+	checkRateLimit,
+	createSessionHandoff,
+	generateSessionToken,
+	setSession
+} from '$lib/server/kv';
 
 /**
  * Server-side token verification.
@@ -99,15 +106,7 @@ export const load: PageServerLoad = async ({ url, platform, cookies, getClientAd
 		await setSession(sessions, sessionToken, result.email);
 		const handoffToken = await createSessionHandoff(sessions, sessionToken, result.email);
 
-		// Set HTTP-only cookie
-		// Note: sameSite 'none' required for cross-origin Webflow integration
-		cookies.set('session_token', sessionToken, {
-			httpOnly: true,
-			secure: true,
-			path: '/',
-			maxAge: 60 * 60 * 2, // 2 hours
-			sameSite: 'none'
-		});
+		cookies.set(SESSION_COOKIE_NAME, sessionToken, SESSION_COOKIE_OPTIONS);
 
 		// Clear the verification token in Airtable (one-time use)
 		const user = await airtable.findUserByEmail(result.email);

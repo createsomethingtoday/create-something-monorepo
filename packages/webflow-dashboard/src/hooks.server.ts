@@ -1,7 +1,13 @@
 import { dev } from '$app/environment';
 import { env } from '$env/dynamic/private';
 import type { Handle } from '@sveltejs/kit';
-import { getSession } from '$lib/server/kv';
+import {
+  SESSION_COOKIE_NAME,
+  SESSION_COOKIE_OPTIONS,
+  getSession,
+  refreshSession,
+  shouldRefreshSession
+} from '$lib/server/kv';
 import { isTrustedRequestOrigin } from '$lib/server/security';
 
 // No-cache headers for API responses to prevent browser caching issues
@@ -19,13 +25,31 @@ const noCacheHeaders = {
  * for protected routes.
  */
 export const handle: Handle = async ({ event, resolve }) => {
-  const sessionToken = event.cookies.get('session_token');
+  const sessionToken = event.cookies.get(SESSION_COOKIE_NAME);
 
   if (sessionToken && event.platform?.env.SESSIONS) {
+    const sessions = event.platform.env.SESSIONS;
     try {
-      const sessionData = await getSession(event.platform.env.SESSIONS, sessionToken);
+      const sessionData = await getSession(sessions, sessionToken);
       if (sessionData) {
         event.locals.user = { email: sessionData.email };
+
+        // Slide the expiry on activity. Without this a creator mid-upload gets
+        // logged out at the 2-hour mark and loses unsaved edits.
+        if (shouldRefreshSession(sessionData)) {
+          const refresh = refreshSession(sessions, sessionToken, sessionData).catch((error) => {
+            console.error('Session refresh error in hooks:', error);
+          });
+
+          const waitUntil = event.platform.context?.waitUntil;
+          if (waitUntil) {
+            waitUntil.call(event.platform.context, refresh);
+          } else {
+            await refresh;
+          }
+        }
+
+        event.cookies.set(SESSION_COOKIE_NAME, sessionToken, SESSION_COOKIE_OPTIONS);
       }
     } catch (error) {
       console.error('Session validation error in hooks:', error);
@@ -72,9 +96,16 @@ export const handle: Handle = async ({ event, resolve }) => {
     '/api/keys',
     '/api/assets',
     '/api/analytics',
-    '/api/feedback'
+    '/api/feedback',
+    '/api/upload',
+    '/api/submission-status',
+    '/api/validation'
   ];
-  const isProtectedRoute = protectedPaths.some((path) => event.url.pathname.startsWith(path));
+  // Segment-boundary match: a bare prefix check would also protect the public
+  // /api/uploads/* file route, which Airtable must fetch unauthenticated.
+  const isProtectedRoute = protectedPaths.some(
+    (path) => event.url.pathname === path || event.url.pathname.startsWith(`${path}/`)
+  );
 
   if (isProtectedRoute && !event.locals.user) {
     // Redirect to login for protected pages
@@ -105,8 +136,17 @@ export const handle: Handle = async ({ event, resolve }) => {
   // Set our own frame-ancestors CSP to allow embedding
   newHeaders.set(
     'Content-Security-Policy',
-    "frame-ancestors 'self' https://webflow.com https://*.webflow.com https://*.webflow.io https://*.createsomething.io"
+    [
+      "frame-ancestors 'self' https://webflow.com https://*.webflow.com https://*.webflow.io https://*.createsomething.io",
+      // Narrow the blast radius of any HTML that slips past sanitization on the
+      // pages that render creator/reviewer rich text.
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'"
+    ].join('; ')
   );
+  newHeaders.set('X-Content-Type-Options', 'nosniff');
+  newHeaders.set('Referrer-Policy', 'strict-origin-when-cross-origin');
 
   return new Response(response.body, {
     status: response.status,

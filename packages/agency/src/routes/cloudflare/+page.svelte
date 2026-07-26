@@ -206,7 +206,7 @@
 
 <SEO
   title="Cloudflare Workflow Runtime | CREATE SOMETHING .agency"
-  description="CREATE SOMETHING builds Cloudflare-native workflow systems with Workers, Pages, D1, scoped tool surfaces, and runtime control paths."
+  description="CREATE SOMETHING builds Cloudflare-native workflow systems on Workers, Pages, and D1, with scoped tool surfaces and runtime control."
   keywords="Cloudflare workflow runtime, Cloudflare Workers, scoped tools, D1, workflow control, AI workflow infrastructure"
   ogImage="/og/cloudflare-lane.png"
   propertyName="agency"
@@ -219,7 +219,7 @@
   titleLevel="h1"
   eyebrow="Cloudflare Workflow Runtime"
   title="Cloudflare runtime with controlled workflows."
-  description="Cloudflare is the deployable runtime for controlled workflow surfaces: routes, state, queues, approvals, scoped tool endpoints, and rollback-ready handoffs."
+  description="Cloudflare is the deployable runtime for controlled workflow surfaces. It carries the routes, the state, and the queues, and every handoff stays rollback-ready."
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
@@ -241,7 +241,7 @@
 <PerformanceNarrativeStage
   id="cloudflare-runtime-story"
   eyebrow="One runtime story"
-  title="Proof. Flow. Boundary."
+  title="The runtime already carries more than most teams use."
   description="Cloudflare becomes legible as one controlled path: show what the runtime already carries, trace how work moves through it, and keep the surrounding ownership boundary explicit."
   scenes={cloudflareScenes}
   ariaLabel="Cloudflare runtime story"
@@ -268,7 +268,7 @@
 <PerformanceConversionHandoff
   eyebrow="Map the runtime"
   title="Bring the workflow that needs a controlled route."
-  description="I’ll map the route, state, permissions, tool boundary, and evidence your team needs before a Cloudflare build becomes production work."
+  description="I’ll map the route, the permissions, and the evidence your team needs before a Cloudflare build becomes production work."
   steps={ctaItems}
   handoff={{
     owner: 'Runtime owner',

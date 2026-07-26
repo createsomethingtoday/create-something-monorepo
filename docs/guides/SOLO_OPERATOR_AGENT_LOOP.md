@@ -48,6 +48,21 @@ divergence, Codex command availability, and the recommended operating
 loop. It does not mutate git, Linear, deployments, secrets, or production
 state.
 
+## Root Home-Base Contract
+
+The repository root is useful as a boring control surface only while it is
+clean `main` at the exact `origin/main` SHA. Verify that stronger invariant
+before starting a root-home-base loop:
+
+```bash
+pnpm agent:home-base
+```
+
+The command is read-only and fails when the checkout is dirty, not on `main`,
+does not track `origin/main`, is ahead or behind, or resolves to a different
+SHA. A failure means use or claim an isolated worktree; it is not permission to
+reset, stash, delete, or overwrite existing work.
+
 Generate an inspectable starter prompt for the next loop without launching or
 mutating anything:
 
@@ -116,6 +131,10 @@ Production promotion still needs provenance:
 Use `pnpm agent:claim-worktree -- --issue CRE-123` instead of the solo loop when
 work needs shared ownership, parallel isolation, long-running background
 execution, or cleanup guarantees.
+
+At tracked-work closeout, record one explicit `Worktree disposition:` value in
+Linear: `removed`, `preserved at <path/branch>`, or `retained until
+<checkpoint>`. Clean status alone does not prove a worktree is safe to remove.
 
 Use Linear when the work should be tracked across sessions, delegated to
 another agent, reported externally, or marked complete with durable evidence.

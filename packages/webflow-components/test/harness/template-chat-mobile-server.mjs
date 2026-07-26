@@ -9,6 +9,7 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const OUTPUT_DIR = path.join(tmpdir(), 'template-chat-mobile-harness');
 const OUTPUT_FILE = path.join(OUTPUT_DIR, 'app.js');
 const PORT = Number(process.env.PORT || 4179);
+const attempts = new Map();
 
 await mkdir(OUTPUT_DIR, { recursive: true });
 await build({
@@ -102,6 +103,7 @@ const server = createServer(async (request, response) => {
     return;
   }
   if (url.pathname === '/api/templates/agent/session' && request.method === 'POST') {
+    await new Promise((resolve) => setTimeout(resolve, 700));
     response.writeHead(200, { 'content-type': 'application/json' });
     response.end(JSON.stringify({ session_token: 's'.repeat(64) }));
     return;
@@ -113,7 +115,68 @@ const server = createServer(async (request, response) => {
     const lastMessage = parsed.messages?.at(-1)?.content ?? '';
     const spotlight = /spotlight|one template/i.test(lastMessage);
     const stress = /stress|performance/i.test(lastMessage);
+    const slow = /slow|delayed/i.test(lastMessage);
+    const failOnce = /fail once|failure once/i.test(lastMessage);
+    // Transport fixtures for the hardened stream path. Each reproduces a shape
+    // that used to lose events or hang the composer silently.
+    const crlfFraming = /crlf/i.test(lastMessage);
+    const tightData = /tight data|no space/i.test(lastMessage);
+    const unterminated = /unterminated|no trailing/i.test(lastMessage);
+    const stall = /stall|hang/i.test(lastMessage);
+    const throttled = /throttle|rate limit/i.test(lastMessage);
     const restaurant = /restaurant|menu/i.test(lastMessage);
+    const attempt = (attempts.get(lastMessage) ?? 0) + 1;
+    attempts.set(lastMessage, attempt);
+    if (failOnce && attempt === 1) {
+      response.writeHead(503, { 'content-type': 'application/json' });
+      response.end('{"error":"Deterministic first-attempt failure"}');
+      return;
+    }
+    if (throttled) {
+      // Exercises the rate-limit class and Retry-After parsing.
+      response.writeHead(429, { 'content-type': 'application/json', 'retry-after': '12' });
+      response.end('{"error":"Deterministic throttle"}');
+      return;
+    }
+    if (crlfFraming || tightData || unterminated) {
+      response.writeHead(200, {
+        'content-type': 'text/event-stream; charset=utf-8',
+        'cache-control': 'no-cache',
+        connection: 'keep-alive',
+      });
+      const events = [
+        { type: 'status', label: 'searching' },
+        { type: 'text_delta', text: 'Transport fixture reply.' },
+        displayEvent(false),
+        // Continuity arrives last, which is exactly the frame a strict parser
+        // used to drop when the stream ended without a blank line.
+        { type: 'context', payload: { context_token: 'harness-context-token' } },
+      ];
+      for (const event of events) {
+        const field = tightData ? 'data:' : 'data: ';
+        const boundary = crlfFraming ? '\r\n\r\n' : '\n\n';
+        response.write(`${field}${JSON.stringify(event)}${boundary}`);
+        await new Promise((resolve) => setTimeout(resolve, 150));
+      }
+      // Deliberately no terminating boundary on the final frame.
+      if (unterminated) response.write(`data: ${JSON.stringify({ type: 'done' })}`);
+      else response.write(`data: ${JSON.stringify({ type: 'done' })}${crlfFraming ? '\r\n\r\n' : '\n\n'}`);
+      response.end();
+      return;
+    }
+    if (stall) {
+      // Headers, one frame, then silence: the composer must give up rather than
+      // spin forever. Held open past the client's stream watchdog.
+      response.writeHead(200, {
+        'content-type': 'text/event-stream; charset=utf-8',
+        'cache-control': 'no-cache',
+        connection: 'keep-alive',
+      });
+      response.write(`data: ${JSON.stringify({ type: 'status', label: 'searching' })}\n\n`);
+      await new Promise((resolve) => setTimeout(resolve, 45_000));
+      response.end();
+      return;
+    }
     const sequence = stress
       ? [
           { event: { type: 'status', label: 'searching' }, delay: 0 },
@@ -130,7 +193,11 @@ const server = createServer(async (request, response) => {
         ]
       : [
           { event: { type: 'status', label: 'thinking' }, delay: 800 },
-          { event: { type: 'status', label: 'searching' }, delay: 1500 },
+          { event: { type: 'status', label: 'searching' }, delay: slow ? 9500 : 1200 },
+          // The production Worker begins every model/tool loop with thinking.
+          // Keep the backtracking event in the fixture so the client must make
+          // progress monotonic rather than relying on an idealized sequence.
+          { event: { type: 'status', label: 'thinking' }, delay: 400 },
           {
             event: {
               type: 'page_action',
@@ -138,15 +205,16 @@ const server = createServer(async (request, response) => {
                 ? { category_group_slug: 'food-and-drink', highlight_slugs: ['flowguide', 'notate', 'knowledgehub-x'] }
                 : { highlight_slugs: ['flowguide', 'notate', 'knowledgehub-x'] },
             },
-            delay: 1500,
+            delay: 900,
           },
-          { event: { type: 'status', label: 'curating' }, delay: 1500 },
+          { event: { type: 'status', label: 'curating' }, delay: 900 },
+          { event: { type: 'status', label: 'thinking' }, delay: 300 },
           {
             event: {
               type: 'text_delta',
               text: spotlight ? 'Here is one strong starting point.' : 'Here are three popular starting points.',
             },
-            delay: 1000,
+            delay: 700,
           },
           { event: displayEvent(spotlight, restaurant), delay: 300 },
           { event: { type: 'done' }, delay: 0 },

@@ -118,7 +118,7 @@
   titleLevel="h1"
   eyebrow="Workflow Tool Stack"
   title="Choose the right tool path for one controlled workflow."
-  description="Start with the workflow your team wants to delegate. CREATE SOMETHING maps the owned operating state in Substrate, then the agent environment, runtime, approval path, and evidence before any external tool gets more authority."
+  description="Start with the workflow your team wants to delegate. CREATE SOMETHING maps the operating state you own first. Only then does an external tool get more authority."
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.selfMapHref}>
@@ -157,7 +157,7 @@
 <PerformanceConversionHandoff
   eyebrow="Map the workflow"
   title="Bring the workflow before choosing the stack."
-  description="I’ll map the handoff, owner, connected systems, allowed actions, approval pauses, stop points, and evidence path before implementation starts."
+  description="I’ll map the handoff and name its owner, then agree what the system may do on its own and where it has to stop — before implementation starts."
   steps={ctaItems}
   handoff={{ owner: 'Partner operator', authority: 'Named delivery boundary', proof: 'Shared workflow receipt', state: 'review' }}
 >

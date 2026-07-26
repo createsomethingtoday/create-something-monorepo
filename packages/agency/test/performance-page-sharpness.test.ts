@@ -70,7 +70,12 @@ test('preserves the primary destinations carried by the commercial cohort', () =
     control: ['mapProduct.route', '/products/signal', '/products/decision', '/products/proof'],
     partners: ['/products', '/cloudflare', '/stack'],
     security: ['/bearer-token-policy', 'mailto:legal@createsomething.io'],
-    services: ['#map-warmup', 'controlProduct.route'],
+    // The opening CTA moved from an in-page '#map-warmup' jump to the canonical Map
+    // destination in 10e3f02b5; Map and Control routes now travel in ServicesProductPath.
+    services: [
+      'agencyCoreMessaging.selfMapHref',
+      'agencyCoreMessaging.servicesMappingSessionHref'
+    ],
     stack: ['/products', '/cloudflare'],
     'use-cases/business': [
       'agencyCoreMessaging.selfMapHref',
@@ -87,6 +92,19 @@ test('preserves the primary destinations carried by the commercial cohort', () =
     for (const destination of expected) {
       assert.ok(source.includes(destination), `${route} lost destination ${destination}`);
     }
+  }
+
+  // Services reaches the paid spine through the product path rather than inline links,
+  // so the Map and Control routes must stay on that component.
+  const productPath = readFileSync(
+    resolve(workspaceRoot, 'packages/agency/src/lib/components/ServicesProductPath.svelte'),
+    'utf8'
+  );
+  for (const destination of ['mapProduct.route', 'controlProduct.route']) {
+    assert.ok(
+      productPath.includes(destination),
+      `the services product path lost destination ${destination}`
+    );
   }
 });
 
@@ -125,13 +143,17 @@ test('preserves the complete proof inventory inside each consolidated stage', ()
       'Preserve the result',
       'Operate and review month to month',
       'Keep one governed operating year',
-      'Substrate keeps the records',
-      'Topology supplies derived system context'
+      // 2c79c1e03 replaced the internal Substrate/Topology foundation scene with the
+      // client-safe system-context scene.
+      'System context',
+      'See the operating boundary before work runs.'
     ],
     stack: [
+      // Workflow Map stays as the plain-English deliverable; the retired parallel lane
+      // names are now the Map -> Build -> Control spine.
       'Workflow Map',
-      'Workflow Pilot',
-      'Ongoing Control',
+      '02 Build',
+      '03 Control',
       'Stack boundary',
       'Tool/API contract',
       'Policy rules',

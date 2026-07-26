@@ -13,6 +13,7 @@
     type GovernanceProduct
   } from '@create-something/canon/governance';
   import { products, type Product } from '$lib/data/services';
+  import AgencyPerformanceReadback from '$lib/components/AgencyPerformanceReadback.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
   import { PUBLIC_PRODUCT_SEQUENCE, getPublicProduct } from '$lib/data/productFamily';
 
@@ -77,18 +78,6 @@
       evidence: ['Signal watches change', 'Decision routes judgment', 'Proof preserves the result'],
       receipts: ['Map included', 'Monthly / yearly'],
       actions: [{ label: 'Explore Control', href: getPublicProduct('control').route }]
-    },
-    {
-      id: 'proof',
-      label: 'Inspect public proof',
-      summary: 'Verify',
-      title: 'See the operating rule working in public.',
-      detail:
-        'Ground and the Loom archive show the same discipline beneath the commercial system: verify before claiming, preserve ownership, and keep evidence with the work.',
-      tone: 'neutral',
-      evidence: ['Ground checks before it claims', 'Loom preserves historical coordination proof'],
-      receipts: ['Open source', 'Inspectable'],
-      actions: [{ label: 'Read field reports', href: '/field-reports' }]
     }
   ];
 
@@ -174,57 +163,69 @@
 <PerformanceNarrativeStage
   id="choose-product"
   eyebrow="Product chooser"
-  title="Map -> Build -> Control"
+  title="Choose where the workflow is now."
   description="Two products and one implementation service. Signal, Decision, and Proof are operator surfaces. They sit inside Control—not as additive licenses."
   scenes={productScenes}
-  ariaLabel="Choose a CREATE SOMETHING product or proof path"
+  ariaLabel="Choose a CREATE SOMETHING product path"
 >
   {#snippet artifact(_scene, index)}
-    {#if index < familyProducts.length}
-      {@const product = familyProducts[index]}
-      <article class="product-choice" data-product={product.id}>
-        <div class="product-choice__identity">
-          <span
-            >{product.kind === 'subscription'
-              ? 'Standalone subscription'
-              : 'Implementation service'}</span
-          >
-          <strong>{product.name}</strong>
-          <p>{product.customerJob}</p>
-        </div>
-        <ul>
-          {#each familyPoints(index) as point}<li>{point}</li>{/each}
-        </ul>
-      </article>
+    {@const product = familyProducts[index]}
+    <article class="product-choice" data-product={product.id}>
+      <div class="product-choice__identity">
+        <span
+          >{product.kind === 'subscription'
+            ? 'Standalone subscription'
+            : 'Implementation service'}</span
+        >
+        <strong>{product.name}</strong>
+        <p>{product.customerJob}</p>
+      </div>
+      <ul>
+        {#each familyPoints(index) as point}<li>{point}</li>{/each}
+      </ul>
+    </article>
 
-      {#if product.id === 'control'}
-        <div class="control-surfaces" aria-label="Operator surfaces included in Control">
-          {#each productSurfaceItems as item}
-            <a href={item.href}>
-              <span>{item.label}</span>
-              {#if item.kind}
-                <PerformanceWorkflowMiniArtifact kind={item.kind} />
-              {/if}
-              <strong>{item.title}</strong>
-              <p>{item.detail}</p>
-            </a>
-          {/each}
-        </div>
-      {/if}
-    {:else}
-      <div class="proof-chooser" aria-label="Public product proof">
-        {#each featured.map(productCard) as item}
+    {#if product.id === 'control'}
+      <div class="control-surfaces" aria-label="Operator surfaces included in Control">
+        {#each productSurfaceItems as item}
           <a href={item.href}>
             <span>{item.label}</span>
+            {#if item.kind}
+              <PerformanceWorkflowMiniArtifact kind={item.kind} />
+            {/if}
             <strong>{item.title}</strong>
             <p>{item.detail}</p>
-            <small>{item.receipt}</small>
           </a>
         {/each}
       </div>
     {/if}
   {/snippet}
 </PerformanceNarrativeStage>
+
+<AgencyPerformanceReadback embedded={true} />
+
+<section class="product-proof-shelf" aria-labelledby="product-proof-title">
+  <div class="product-proof-shelf__heading">
+    <div>
+      <span>Open product proof</span>
+      <h2 id="product-proof-title">Inspect the discipline beneath the system.</h2>
+    </div>
+    <p>
+      Ground and the Loom archive show the same operating discipline beneath the commercial path:
+      verify before claiming, preserve ownership, and keep evidence with the work.
+    </p>
+  </div>
+  <div class="proof-chooser" aria-label="Public product proof">
+    {#each featured.map(productCard) as item}
+      <a href={item.href}>
+        <span>{item.label}</span>
+        <strong>{item.title}</strong>
+        <p>{item.detail}</p>
+        <small>{item.receipt}</small>
+      </a>
+    {/each}
+  </div>
+</section>
 
 <PerformanceConversionHandoff
   eyebrow="Apply the system"
@@ -308,6 +309,52 @@
     border-top: 0;
   }
 
+  .product-proof-shelf {
+    padding: clamp(3.5rem, 7vw, 6rem) clamp(1.25rem, 5vw, 6rem);
+    border-block: 1px solid var(--color-performance-line, #d7d7d2);
+    background: var(--color-performance-panel, #fff);
+  }
+
+  .product-proof-shelf__heading,
+  .product-proof-shelf > .proof-chooser {
+    width: min(var(--content-width-performance, 85rem), 100%);
+    margin-inline: auto;
+  }
+
+  .product-proof-shelf__heading {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(20rem, 0.9fr);
+    align-items: end;
+    gap: clamp(2rem, 6vw, 7rem);
+    margin-bottom: clamp(2rem, 4vw, 3.5rem);
+  }
+
+  .product-proof-shelf__heading span {
+    color: var(--color-performance-signal, #0f62fe);
+    font-family: var(--font-performance-mono);
+    font-size: 0.72rem;
+    font-weight: var(--font-performance-semibold, 650);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .product-proof-shelf__heading h2 {
+    max-width: 15ch;
+    margin: 0.65rem 0 0;
+    font-size: clamp(2.5rem, 5vw, 5rem);
+    font-weight: var(--font-performance-regular, 400);
+    letter-spacing: -0.05em;
+    line-height: 0.96;
+  }
+
+  .product-proof-shelf__heading p {
+    max-width: 40rem;
+    margin: 0;
+    color: var(--color-performance-muted, #5e6268);
+    font-size: clamp(1rem, 1.35vw, 1.2rem);
+    line-height: 1.55;
+  }
+
   .proof-chooser {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     border-top: 1px solid var(--color-performance-line, #d7d7d2);
@@ -351,6 +398,11 @@
   }
 
   @media (max-width: 48rem) {
+    .product-proof-shelf__heading {
+      grid-template-columns: 1fr;
+      gap: 1.25rem;
+    }
+
     .product-choice {
       grid-template-columns: 1fr;
     }
@@ -374,6 +426,19 @@
     .control-surfaces a + a,
     .proof-chooser a + a {
       border-left: 1px solid var(--color-performance-line, #d7d7d2);
+    }
+
+    .proof-chooser {
+      grid-template-columns: 1fr;
+      grid-auto-flow: row;
+      grid-auto-columns: auto;
+      overflow-x: visible;
+      scroll-snap-type: none;
+    }
+
+    .proof-chooser a + a {
+      border-top: 1px solid var(--color-performance-line, #d7d7d2);
+      border-left: 0;
     }
   }
 </style>

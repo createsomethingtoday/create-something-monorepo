@@ -32,6 +32,34 @@ The package models:
 - Atlas/Substrate agent wiki projection
 - read-only demo state
 
+## Business Digital Thread v1
+
+The frozen Business Digital Thread v1 prototype lives at
+`contracts/business-digital-thread/v1/`. It defines the vendor-neutral lifetime
+contract for canonical business identity, immutable bitemporal revisions, typed
+relationships, explicit authority, requirements and interfaces, exact
+baselines, change impact, proof, retention/legal hold, migration, and applied
+lessons.
+
+The contract deliberately does not implement a storage engine or make Atlas a
+source of truth. Its stable semantic surface is reconstruction, trace, change
+impact, authority evaluation, and export/import/migration; storage and domain
+tools remain adapters.
+
+Validate the schema, lifecycle example, red-team cases, and deterministic
+ten-year/30,000-participant scale probe with:
+
+```bash
+pnpm --filter @create-something/database-layer business-thread:contract:check
+```
+
+The schema and frozen verifier specification are package exports:
+
+```text
+@create-something/database-layer/business-digital-thread/v1/schema.json
+@create-something/database-layer/business-digital-thread/v1/verifier-spec.json
+```
+
 The shared canvas projection uses `flow.shared-canvas-state.v1` from
 `@create-something/canvas-kernel/shared-canvas-state`, while Database Layer keeps
 the canonical records, joins, receipts, and API/MCP/agent read surfaces.

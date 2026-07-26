@@ -23,8 +23,19 @@ const campaignOnly = new URLSearchParams(window.location.search).has('campaign')
 const campaignError = new URLSearchParams(window.location.search).has('campaign-error');
 const campaignAnalytics = new URLSearchParams(window.location.search).has('campaign-analytics');
 const campaignLoading = new URLSearchParams(window.location.search).has('campaign-loading');
+const mount = document.createElement('div');
+const shadowBoundary = !(
+  twoInstances ||
+  combinedLibrary ||
+  campaignOnly ||
+  campaignError ||
+  campaignAnalytics ||
+  campaignLoading
+);
+if (shadowBoundary) root.attachShadow({ mode: 'open' }).append(mount);
+else root.append(mount);
 
-createRoot(root).render(
+createRoot(mount).render(
   campaignLoading ? (
     <TemplateCampaignVideoModal
       onClose={() => undefined}

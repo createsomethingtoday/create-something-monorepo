@@ -164,7 +164,11 @@ async function matchSubscriptions(
   const clauses: string[] = [];
   const params: unknown[] = [];
   if (scope.docPath) {
-    clauses.push("(scope_kind = 'doc_path' AND ? LIKE scope_key || '%')");
+    // Prefix match via instr, not `? LIKE scope_key || '%'`: D1 rejects a
+    // column-derived LIKE pattern in a WHERE clause with "LIKE or GLOB pattern
+    // too complex", which silently broke every doc_path notification. instr is
+    // also literal, so `%`/`_` in a doc path can't act as wildcards.
+    clauses.push("(scope_kind = 'doc_path' AND instr(?, scope_key) = 1)");
     params.push(scope.docPath);
   }
   if (scope.categoryId) {
