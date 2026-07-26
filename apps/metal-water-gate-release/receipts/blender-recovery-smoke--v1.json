@@ -1,0 +1,29 @@
+{
+  "blenderVersion": "5.2.0 LTS",
+  "camera": {
+    "continuousMove": true,
+    "cutCount": 0,
+    "lensMillimeters": 100.0
+  },
+  "engine": "BLENDER_EEVEE",
+  "fieldPath": "/Users/micahjohnson/Code/create-something-monorepo/apps/metal-water-gate-release/output/sph-field--v1.json",
+  "fieldSHA256": "9b47b64842431da837b228df80e72874aff1cba648900fdf36b46a4f9c8fcf5f",
+  "framesPerSecond": 24,
+  "geometry": {
+    "channelContinuous": true,
+    "gateOpeningCenterX": 0,
+    "gateOpeningHalfWidth": 0.24,
+    "waterSource": "Metal SPH field values"
+  },
+  "renderedPaths": [
+    "/Users/micahjohnson/Code/create-something-monorepo/.codex/metal-water-blender-gate-release/evidence/recovery-smoke/frame-0073.png"
+  ],
+  "requestedFrames": [
+    73
+  ],
+  "resolution": [
+    320,
+    180
+  ],
+  "schemaVersion": 1
+}
