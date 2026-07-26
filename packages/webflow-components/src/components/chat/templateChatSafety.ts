@@ -26,7 +26,11 @@ function currentOrigin(): string | null {
   return typeof window === 'undefined' ? null : window.location?.origin ?? null;
 }
 
-function parseHttpsUrl(value: string | null | undefined, base = 'https://webflow.com'): URL | null {
+function parseHttpsUrl(
+  value: string | null | undefined,
+  base = 'https://webflow.com',
+  allowLoopbackHttp = false,
+): URL | null {
   if (typeof value !== 'string' || !value.trim()) return null;
   let url: URL;
   try {
@@ -38,7 +42,9 @@ function parseHttpsUrl(value: string | null | undefined, base = 'https://webflow
   // data: and blob: before they can reach a src or href. http is allowed only
   // for loopback, and only when the page itself is on loopback (see below).
   if (url.protocol === 'https:') return url;
-  return url.protocol === 'http:' && LOOPBACK_HOSTS.has(url.hostname) ? url : null;
+  return allowLoopbackHttp && url.protocol === 'http:' && LOOPBACK_HOSTS.has(url.hostname)
+    ? url
+    : null;
 }
 
 function hostMatches(host: string, suffixes: readonly string[]): boolean {
@@ -62,7 +68,11 @@ export function safePreviewUrl(
   // loopback. Production data therefore can never point the frame anywhere but
   // a published template site.
   const devOrigin = isLoopbackOrigin(pageOrigin);
-  const url = parseHttpsUrl(value, devOrigin && pageOrigin ? pageOrigin : undefined);
+  const url = parseHttpsUrl(
+    value,
+    devOrigin && pageOrigin ? pageOrigin : undefined,
+    devOrigin,
+  );
   if (!url) return null;
   if (hostMatches(url.hostname, PREVIEW_HOST_SUFFIXES)) return url.toString();
   if (devOrigin && LOOPBACK_HOSTS.has(url.hostname)) return url.toString();

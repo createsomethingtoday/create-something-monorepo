@@ -74,6 +74,8 @@ test('a relative template path resolves against the marketplace origin', () => {
 test('images may come from any https host but never another scheme', () => {
   assert.equal(safeImageUrl('https://cdn.prod.website-files.com/a.jpg'), 'https://cdn.prod.website-files.com/a.jpg');
   assert.equal(safeImageUrl('https://assets.example.com/a.png'), 'https://assets.example.com/a.png');
+  assert.equal(safeImageUrl('http://127.0.0.1:8787/private.png'), null);
+  assert.equal(safeImageUrl('http://localhost:8787/private.png'), null);
   assert.equal(safeImageUrl(undefined), null);
 });
 

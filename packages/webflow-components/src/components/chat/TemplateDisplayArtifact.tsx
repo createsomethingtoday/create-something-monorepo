@@ -52,6 +52,7 @@ export function DisplayArtifact({
     return (
     <div
       key={entry.template_slug}
+      data-template-chat-slug={entry.template_slug}
       style={{ animationDelay: `${Math.min(index, 8) * 45}ms` }}
       onClickCapture={(event) => {
         if (isAnchorClickOn(event, templateUrl)) {

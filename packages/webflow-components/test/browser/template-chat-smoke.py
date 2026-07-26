@@ -103,6 +103,10 @@ def open_chat(page: Page, query: str = "") -> None:
 def test_turn_renders_results_and_preview(page: Page) -> None:
     print("\n[1] a normal turn streams text, renders cards, and previews a site")
     open_chat(page)
+    check(
+        "chat runs inside the Webflow-style shadow boundary",
+        page.locator("#root").evaluate("element => Boolean(element.shadowRoot)"),
+    )
     send(page, "a restaurant site with a menu")
 
     cards = page.locator(".tmchat-display .tmcard-wrapper")
@@ -138,7 +142,20 @@ def test_turn_renders_results_and_preview(page: Page) -> None:
             sandbox,
         )
         page.locator(".tmchat-preview-back").first.click()
+        expect(page.locator(".tmchat-preview").first).to_be_hidden(timeout=5_000)
         check("returning from preview restores the conversation", chat(page).first.is_visible())
+        focus_state = preview_link.evaluate(
+            """element => ({
+                matches: element.getRootNode().activeElement === element,
+                activeClass: element.getRootNode().activeElement?.className || '',
+                connected: element.isConnected,
+            })"""
+        )
+        check(
+            "returning from preview restores focus to its card",
+            focus_state["matches"],
+            str(focus_state),
+        )
 
 
 def test_crlf_stream_is_not_lost(page: Page) -> None:

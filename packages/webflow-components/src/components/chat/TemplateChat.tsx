@@ -259,6 +259,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   const [preview, setPreview] = useState<{ item: AgentTemplateItem; position: number; layout: string } | null>(null);
   const previewOpenedImmersiveRef = useRef<boolean | null>(null);
   const previewTriggerRef = useRef<HTMLElement | null>(null);
+  const pendingPreviewFocusSlugRef = useRef<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const launcherRef = useRef<HTMLButtonElement>(null);
@@ -499,7 +500,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
       else if (wasOpen && !isInline && !hostOverlayBlocking) launcherRef.current?.focus();
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [hostOverlayBlocking, immersive, isInline, open]);
+  }, [hostOverlayBlocking, isInline, open]);
 
   // Auto-grow the input with its content (1 -> ~4 rows).
   useEffect(() => {
@@ -522,16 +523,29 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   const closePreview = useCallback(() => {
     const returnImmersive = getPreviewReturnImmersive(previewOpenedImmersiveRef.current, immersive);
     previewOpenedImmersiveRef.current = null;
+    pendingPreviewFocusSlugRef.current = preview?.item.template_slug ?? null;
     setPreview(null);
     if (returnImmersive !== immersive) setImmersiveAnimated(returnImmersive);
-    // Return focus to the card that opened the preview so a keyboard reader
-    // keeps their place in the result set; fall back to the composer only when
-    // that control is gone.
-    const trigger = previewTriggerRef.current;
-    previewTriggerRef.current = null;
-    if (trigger?.isConnected) trigger.focus();
-    else inputRef.current?.focus();
-  }, [immersive, setImmersiveAnimated]);
+  }, [immersive, preview?.item.template_slug, setImmersiveAnimated]);
+
+  useEffect(() => {
+    if (preview || !pendingPreviewFocusSlugRef.current) return;
+    const frame = window.requestAnimationFrame(() => {
+      const templateSlug = pendingPreviewFocusSlugRef.current;
+      const trigger = previewTriggerRef.current;
+      const replacement = templateSlug
+        ? Array.from(
+            panelRef.current?.querySelectorAll<HTMLElement>('[data-template-chat-slug]') ?? [],
+          )
+            .find((element) => element.dataset.templateChatSlug === templateSlug)
+            ?.querySelector<HTMLElement>('.tmcard-preview-link')
+        : null;
+      pendingPreviewFocusSlugRef.current = null;
+      previewTriggerRef.current = null;
+      (trigger?.isConnected ? trigger : replacement ?? inputRef.current)?.focus();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [immersive, preview]);
 
   useEffect(() => {
     const first = flipRectRef.current;
@@ -738,6 +752,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
     setUndoHref(null);
     previewOpenedImmersiveRef.current = null;
     previewTriggerRef.current = null;
+    pendingPreviewFocusSlugRef.current = null;
     setPreview(null);
     track('chat_reset');
     try {
@@ -1203,6 +1218,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
                 onClick={() => {
                   previewOpenedImmersiveRef.current = null;
                   previewTriggerRef.current = null;
+                  pendingPreviewFocusSlugRef.current = null;
                   setPreview(null);
                   if (immersive) setImmersiveAnimated(false);
                   if (!isInline) setOpen(false);
