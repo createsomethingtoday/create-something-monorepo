@@ -27,6 +27,7 @@
   let reducedMotionQuery: MediaQueryList | null = null;
   let compactQuery: MediaQueryList | null = null;
   let contextRecoveries = 0;
+  let contextRecoveryInFlight = false;
   const MAX_CONTEXT_RECOVERIES = 2;
 
   function setRendererState(state: 'fallback' | 'loading' | 'ready'): void {
@@ -45,8 +46,8 @@
     rendererMetrics = rendererHandle.getMetrics();
   }
 
-  function disposeRenderer(): void {
-    rendererHandle?.dispose();
+  function disposeRenderer(forceContextLoss = true): void {
+    rendererHandle?.dispose(forceContextLoss);
     rendererHandle = null;
     rendererMetrics = null;
   }
@@ -85,15 +86,25 @@
 
   async function handleContextLost(event: Event): Promise<void> {
     event.preventDefault();
-    disposeRenderer();
+    if (contextRecoveryInFlight) return;
+    contextRecoveryInFlight = true;
+    // The browser has already lost this context. Forcing loss again can re-enter this handler.
+    disposeRenderer(false);
     setRendererState('fallback');
-    if (destroyed || contextRecoveries >= MAX_CONTEXT_RECOVERIES) return;
+    if (destroyed || contextRecoveries >= MAX_CONTEXT_RECOVERIES) {
+      contextRecoveryInFlight = false;
+      return;
+    }
     contextRecoveries += 1;
     // Rebuild on a fresh canvas: a renderer cannot reclaim a torn-down context.
     canvasGeneration += 1;
     await tick();
-    if (destroyed || !visible) return;
-    void initializeRenderer();
+    if (destroyed || !visible) {
+      contextRecoveryInFlight = false;
+      return;
+    }
+    await initializeRenderer();
+    contextRecoveryInFlight = false;
   }
 
   function canvasListeners(node: HTMLCanvasElement) {
@@ -155,6 +166,13 @@
   data-geometries={rendererMetrics?.geometries ?? 0}
   data-textures={rendererMetrics?.textures ?? 0}
   data-pixel-ratio={rendererMetrics?.pixelRatio ?? 0}
+  data-render-profile={rendererMetrics?.profileId ?? 'unavailable'}
+  data-packet-count={rendererMetrics?.packetCount ?? 0}
+  data-render-budget={rendererMetrics
+    ? rendererMetrics.withinBudget
+      ? 'pass'
+      : 'fail'
+    : 'pending'}
   aria-hidden="true"
 >
   {#key canvasGeneration}

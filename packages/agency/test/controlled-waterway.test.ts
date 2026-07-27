@@ -20,9 +20,13 @@ const pipelineCanvasUrl = new URL(
 	'../src/lib/components/PipelineCanvas.svelte',
 	import.meta.url
 );
+const pipelineRendererUrl = new URL('../src/lib/visual/pipelineRenderer.ts', import.meta.url);
 const modelUrl = new URL('../src/lib/data/controlledWaterway.ts', import.meta.url);
 const component = existsSync(componentUrl) ? readFileSync(componentUrl, 'utf8') : '';
 const pipelineCanvas = existsSync(pipelineCanvasUrl) ? readFileSync(pipelineCanvasUrl, 'utf8') : '';
+const pipelineRenderer = existsSync(pipelineRendererUrl)
+	? readFileSync(pipelineRendererUrl, 'utf8')
+	: '';
 const model = existsSync(modelUrl) ? readFileSync(modelUrl, 'utf8') : '';
 
 test('How It Works moves from product path to proof, pipeline, and editable Map preview', () => {
@@ -124,6 +128,30 @@ test('the controlled waterway progressively enhances its complete static instrum
 	]) {
 		assert.ok(component.includes(token), `the waterway should use ${token}`);
 	}
+});
+
+test('the Three.js scene inherits Performance semantics and publishes its quality receipt', () => {
+	for (const token of [
+		'--waterway-ink',
+		'--waterway-court',
+		'--waterway-signal',
+		'--waterway-signal-soft',
+		'--waterway-pressure',
+		'--waterway-ready',
+		'--waterway-review'
+	]) {
+		assert.ok(pipelineRenderer.includes(token), `the renderer should inherit ${token}`);
+	}
+
+	for (const receipt of ['data-render-profile', 'data-packet-count', 'data-render-budget']) {
+		assert.ok(pipelineCanvas.includes(receipt), `the canvas should publish ${receipt}`);
+	}
+
+	assert.ok(pipelineCanvas.includes('--duration-performance-standard'));
+	assert.ok(pipelineCanvas.includes('--ease-performance-standard'));
+	assert.ok(pipelineCanvas.includes('prefers-reduced-motion: reduce'));
+	assert.ok(pipelineCanvas.includes('contextRecoveryInFlight'));
+	assert.ok(pipelineCanvas.includes('disposeRenderer(false)'));
 });
 
 test('Control exposes the governed handoff from typed trigger to business outcome', async () => {
