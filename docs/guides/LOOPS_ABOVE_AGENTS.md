@@ -38,6 +38,7 @@ task can be split across agents. A Zellij lane is justified only after the same
 non-Codex workflow has repeated enough that startup, monitoring, and readback are
 the bottleneck. Until then, prefer one Codex-supervised loop with explicit
 receipts over more visible panes.
+
 ## Definition
 
 A CREATE SOMETHING loop is a repeatable operating circuit with seven parts:
@@ -110,16 +111,17 @@ Third question: did the loop apply the right policy to the observed evidence?
 These loops already exist in the repo and should be promoted before new
 automation is invented.
 
-| Loop                | Purpose                                                                 | Primary command                                               | Evidence target                                      | Promotion state |
-| ------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------- | ---------------------------------------------------- | --------------- |
-| Solo operator loop  | Fast current-checkout iteration when one operator owns the workspace    | `pnpm agent:solo-loop:check`                                  | local summary or PR evidence                         | active          |
-| Intent mapping loop | Convert fuzzy or long-running work into a durable execution packet      | skill: `intent-mapping`                                       | issue description, Linear comment, or starter prompt | active          |
-| Code-quality loop   | Run a bounded Symphony pass on reviewed Linear `code-quality` work      | `pnpm agent:loop-pilot` then `pnpm agent:loop-pilot:dispatch` | Linear issue and workspace path                      | pilot           |
-| Fast context loop   | Use Spark-style fast sub-agents for recurring digests, triage, and prep | Codex automation, operator schedule, or reviewed dispatch     | local receipt, Linear comment, or handoff packet     | design-ready    |
-| Atlas/Topology loop | Navigate generated Substrate topology, Atlas story context, and handoffs | `pnpm substrate:agent-wiki:check` plus topology handoff packet | Linear issue, topology export, or local goal packet   | active          |
-| Policy loop         | Repair or align policy artifacts and governance docs                    | `pnpm symphony:policy:once`                                   | Linear issue, policy check output                    | pilot           |
-| Skill feedback loop | Keep repo-owned skills tested and behaviorally legible                  | `pnpm agent:skills:test`                                      | package README, PR, Linear closeout                  | active          |
-| Cleanup loop        | Keep docs, architecture, quality grades, and policy integrity fresh     | see `RECURRING_CLEANUP_LOOPS.md`                              | targeted fix or Linear follow-up                     | design-ready    |
+| Loop                  | Purpose                                                                                                      | Primary command                                                | Evidence target                                        | Promotion state |
+| --------------------- | ------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------- | ------------------------------------------------------ | --------------- |
+| Solo operator loop    | Fast current-checkout iteration when one operator owns the workspace                                         | `pnpm agent:solo-loop:check`                                   | local summary or PR evidence                           | active          |
+| Intent mapping loop   | Convert fuzzy or long-running work into a durable execution packet                                           | skill: `intent-mapping`                                        | issue description, Linear comment, or starter prompt   | active          |
+| Code-quality loop     | Run a bounded Symphony pass on reviewed Linear `code-quality` work                                           | `pnpm agent:loop-pilot` then `pnpm agent:loop-pilot:dispatch`  | Linear issue and workspace path                        | pilot           |
+| Fast context loop     | Use Spark-style fast sub-agents for recurring digests, triage, and prep                                      | Codex automation, operator schedule, or reviewed dispatch      | local receipt, Linear comment, or handoff packet       | design-ready    |
+| Harness ablation loop | Measure the marginal value of instructions, hooks, skills, MCP surfaces, policies, memory, and review layers | `pnpm agent:harness-ablation:verify`                           | versioned manifest, run matrix, and comparison receipt | pilot           |
+| Atlas/Topology loop   | Navigate generated Substrate topology, Atlas story context, and handoffs                                     | `pnpm substrate:agent-wiki:check` plus topology handoff packet | Linear issue, topology export, or local goal packet    | active          |
+| Policy loop           | Repair or align policy artifacts and governance docs                                                         | `pnpm symphony:policy:once`                                    | Linear issue, policy check output                      | pilot           |
+| Skill feedback loop   | Keep repo-owned skills tested and behaviorally legible                                                       | `pnpm agent:skills:test`                                       | package README, PR, Linear closeout                    | active          |
+| Cleanup loop          | Keep docs, architecture, quality grades, and policy integrity fresh                                          | see `RECURRING_CLEANUP_LOOPS.md`                               | targeted fix or Linear follow-up                       | design-ready    |
 
 ## Zellij cockpit threshold
 
@@ -142,6 +144,7 @@ Do not build a Zellij team launcher when one of these is true:
 - Linear/work-unit receipts already provide enough durable coordination
 - the proposed team would add a second done authority
 - the workflow is still exploratory and has not repeated across real work
+
 ## Fast executor profile
 
 Spark-style executors are useful when low latency lets the operator keep the

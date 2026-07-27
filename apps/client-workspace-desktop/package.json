@@ -1,0 +1,21 @@
+{
+  "name": "@create-something/client-workspace-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Self-contained macOS delivery for client-owned Codex workspaces",
+  "scripts": {
+    "prepare:runtime": "node scripts/prepare-runtime.mjs",
+    "fixture": "node scripts/create-synthetic-delivery.mjs",
+    "dev": "tauri dev",
+    "check": "tauri build --debug --no-bundle",
+    "build": "tauri build",
+    "build:app": "tauri build --bundles app",
+    "build:dmg": "tauri build --bundles app,dmg",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@create-something/delivery-schema": "workspace:*",
+    "@tauri-apps/cli": "2.11.2"
+  }
+}

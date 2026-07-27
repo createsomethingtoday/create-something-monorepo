@@ -1,4 +1,6 @@
 import { spawn, type ChildProcess } from 'node:child_process';
+import { readFile, realpath, stat } from 'node:fs/promises';
+import { isAbsolute, relative, resolve, sep } from 'node:path';
 
 import type { ResolvedWorkspaceDefinition } from '../workspaces/registry.js';
 
@@ -68,6 +70,44 @@ function delay(milliseconds: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
+function isWithin(root: string, candidate: string): boolean {
+  const fromRoot = relative(root, candidate);
+  return (
+    fromRoot === '' ||
+    (!fromRoot.startsWith(`..${sep}`) && fromRoot !== '..' && !isAbsolute(fromRoot))
+  );
+}
+
+function contentType(path: string): string {
+  const extension = path.toLowerCase().split('.').pop();
+  return (
+    (
+      {
+        html: 'text/html; charset=utf-8',
+        css: 'text/css; charset=utf-8',
+        js: 'text/javascript; charset=utf-8',
+        json: 'application/json; charset=utf-8',
+        svg: 'image/svg+xml',
+        png: 'image/png',
+        jpg: 'image/jpeg',
+        jpeg: 'image/jpeg',
+        gif: 'image/gif',
+        webp: 'image/webp',
+        ico: 'image/x-icon',
+        woff: 'font/woff',
+        woff2: 'font/woff2'
+      } as Record<string, string>
+    )[extension ?? ''] ?? 'application/octet-stream'
+  );
+}
+
+function rewriteStaticHtml(rawHtml: string, previewPath: string): string {
+  const prefix = `${previewPath.replace(/\/$/, '')}/`;
+  return rawHtml
+    .replace(/(\s(?:href|src|poster)=["'])\/(?!\/)/gi, `$1${prefix}`)
+    .replace(/url\(\s*(["']?)\/(?!\/)/gi, `url($1${prefix}`);
+}
+
 function previewEnvironment(previewPath: string): NodeJS.ProcessEnv {
   const allowed: NodeJS.ProcessEnv = {
     PATH: process.env.PATH,
@@ -115,6 +155,10 @@ export class PreviewSession {
     this.#exited = false;
 
     const preview = this.#workspace.preview;
+    if (preview.kind === 'static') {
+      this.#state = 'ready';
+      return this.status();
+    }
     const child = spawn(preview.command, preview.args, {
       cwd: this.#workspace.sourceRoot,
       env: previewEnvironment(this.#previewPath),
@@ -173,7 +217,14 @@ export class PreviewSession {
       incoming.pathname !== this.#previewPath &&
       !incoming.pathname.startsWith(`${this.#previewPath}/`)
     ) {
-      throw new PreviewSessionError('preview_path_escape', 'Preview path is outside this workspace.');
+      throw new PreviewSessionError(
+        'preview_path_escape',
+        'Preview path is outside this workspace.'
+      );
+    }
+
+    if (this.#workspace.preview.kind === 'static') {
+      return await this.#staticResponse(incoming, request.method);
     }
 
     const targetPath = this.#resolveProxyPath(incoming.pathname);
@@ -205,6 +256,59 @@ export class PreviewSession {
     });
   }
 
+  async #staticResponse(incoming: URL, method: string): Promise<Response> {
+    const preview = this.#workspace.preview;
+    if (preview.kind !== 'static') {
+      throw new PreviewSessionError('preview_not_ready', 'Static preview is unavailable.');
+    }
+    const root = resolve(this.#workspace.sourceRoot, preview.root);
+    let suffix = incoming.pathname.slice(this.#previewPath.length).replace(/^\/+/, '');
+    try {
+      suffix = decodeURIComponent(suffix);
+    } catch {
+      throw new PreviewSessionError('preview_path_escape', 'Preview path is invalid.');
+    }
+    const relativePath = suffix === '' ? preview.entry : suffix;
+    const target = resolve(root, relativePath);
+    if (!isWithin(root, target)) {
+      throw new PreviewSessionError(
+        'preview_path_escape',
+        'Preview path is outside this workspace.'
+      );
+    }
+    try {
+      const realRoot = await realpath(root);
+      const realTarget = await realpath(target);
+      if (!isWithin(realRoot, realTarget)) {
+        throw new PreviewSessionError(
+          'preview_path_escape',
+          'Preview file resolves outside this workspace.'
+        );
+      }
+      if (!(await stat(realTarget)).isFile()) return new Response('Not found', { status: 404 });
+      let body: BodyInit | null = method === 'HEAD' ? null : await readFile(realTarget);
+      const type = contentType(target);
+      if (method === 'GET' && type.startsWith('text/html')) {
+        const html = rewriteStaticHtml((body as Buffer).toString('utf8'), this.#previewPath);
+        const base = `<base href="${this.#previewPath}/">`;
+        body = html.includes('<head>') ? html.replace('<head>', `<head>${base}`) : `${base}${html}`;
+      }
+      return new Response(body, {
+        headers: {
+          'cache-control': 'no-store',
+          'content-type': type,
+          'content-security-policy':
+            "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'",
+          'x-content-type-options': 'nosniff'
+        }
+      });
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT')
+        return new Response('Not found', { status: 404 });
+      throw error;
+    }
+  }
+
   #resolveProxyPath(pathname: string): string {
     const tokenPrefix = `${this.#previewPath}${PRIVATE_MODULE_PREFIX}`;
     if (pathname.startsWith(tokenPrefix)) {
@@ -219,7 +323,10 @@ export class PreviewSession {
       return `${this.#previewPath}${privatePath}`;
     }
     if (pathname.startsWith(`${this.#previewPath}/@fs/`)) {
-      throw new PreviewSessionError('preview_path_escape', 'Direct preview module paths are unavailable.');
+      throw new PreviewSessionError(
+        'preview_path_escape',
+        'Direct preview module paths are unavailable.'
+      );
     }
     return pathname;
   }
@@ -248,8 +355,14 @@ export class PreviewSession {
     return tokenized
       .replaceAll(this.#workspace.sourceRoot, '[workspace]')
       .replaceAll(`/app/seed/${this.#workspace.id}`, '[workspace-dependency]')
-      .replaceAll(`127.0.0.1:${this.#workspace.preview.port}`, 'preview.internal')
-      .replaceAll(`localhost:${this.#workspace.preview.port}`, 'preview.internal');
+      .replaceAll(
+        `127.0.0.1:${this.#workspace.preview.kind === 'static' ? 0 : this.#workspace.preview.port}`,
+        'preview.internal'
+      )
+      .replaceAll(
+        `localhost:${this.#workspace.preview.kind === 'static' ? 0 : this.#workspace.preview.port}`,
+        'preview.internal'
+      );
   }
 
   close(): void {

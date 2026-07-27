@@ -1,29 +1,41 @@
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import { readFile } from 'node:fs/promises';
 
+import { ClientWorkspaceService, ClientWorkspaceServiceError } from './client-workspace-service.js';
 import {
-  ClientWorkspaceService,
-  ClientWorkspaceServiceError
-} from './client-workspace-service.js';
-import { connectCodexAppServer } from './codex/app-server.js';
+  connectCodexAppServer,
+  probeCodexInstallation,
+  type CodexInstallationStatus
+} from './codex/app-server.js';
+import {
+  ClientWorkspaceDeliveryError,
+  importClientWorkspaceDelivery,
+  loadImportedWorkspaceDefinitions
+} from './deliveries/importer.js';
 import { PreviewSession } from './preview/preview-session.js';
-import { workspaceRegistry } from './workspaces/default-registry.js';
+import { createDefaultWorkspaceRegistry } from './workspaces/default-registry.js';
+import type { PublicWorkspace } from './workspaces/registry.js';
 
 export class ClientWorkspaceRuntime {
-  readonly registry = workspaceRegistry;
   readonly stateRoot =
     process.env.CLIENT_WORKSPACE_STATE_ROOT ??
-    join(
-      homedir(),
-      'Library',
-      'Application Support',
-      'CREATE SOMETHING',
-      'Client Workspace'
-    );
+    join(homedir(), 'Library', 'Application Support', 'CREATE SOMETHING', 'Client Workspace');
+  readonly managedRoot =
+    process.env.CLIENT_WORKSPACE_MANAGED_ROOT ?? join(this.stateRoot, 'workspaces');
+  readonly codexCommand = process.env.CLIENT_WORKSPACE_CODEX_COMMAND ?? 'codex';
+  readonly registry = createDefaultWorkspaceRegistry({
+    managedRoot: this.managedRoot,
+    includeDemo: process.env.CLIENT_WORKSPACE_DESKTOP !== '1',
+    additionalDefinitions: loadImportedWorkspaceDefinitions({
+      managedRoot: this.managedRoot,
+      stateRoot: this.stateRoot
+    })
+  });
   readonly service = new ClientWorkspaceService({
     registry: this.registry,
     stateRoot: this.stateRoot,
-    connectCodex: connectCodexAppServer
+    connectCodex: () => connectCodexAppServer({ command: this.codexCommand })
   });
   readonly #previews = new Map<string, PreviewSession>();
 
@@ -33,6 +45,28 @@ export class ClientWorkspaceRuntime {
     const preview = new PreviewSession({ workspace: this.registry.resolve(workspaceId) });
     this.#previews.set(workspaceId, preview);
     return preview;
+  }
+
+  async codexStatus(): Promise<CodexInstallationStatus> {
+    return await probeCodexInstallation({ command: this.codexCommand });
+  }
+
+  async importDelivery(packageJson: string | Buffer): Promise<PublicWorkspace> {
+    const trustRootPath = process.env.CLIENT_WORKSPACE_TRUST_PUBLIC_KEY_FILE;
+    if (!trustRootPath) {
+      throw new ClientWorkspaceDeliveryError(
+        'delivery_import_unavailable',
+        'The delivery trust root is unavailable.'
+      );
+    }
+    const definition = await importClientWorkspaceDelivery({
+      packageJson,
+      trustedPublicKey: await readFile(trustRootPath),
+      managedRoot: this.managedRoot,
+      stateRoot: this.stateRoot
+    });
+    this.registry.register(definition);
+    return this.registry.get(definition.id);
   }
 
   async reset(workspaceId: string): Promise<void> {

@@ -24,12 +24,18 @@
   };
   type SessionResponse = {
     workspace: Workspace;
+    active: boolean;
     receipt: SessionReceipt;
     preview: PreviewStatus;
   };
+  type CodexStatus = PageData['codex'];
 
   let { data }: { data: PageData } = $props();
+  let importedWorkspaces = $state<Workspace[]>([]);
+  let availableWorkspaces = $derived([...data.workspaces, ...importedWorkspaces]);
+  let codexStatus = $derived<CodexStatus>(data.codex);
   let workspace = $state<Workspace | null>(null);
+  let sessionActive = $state(false);
   let receipt = $state<SessionReceipt | null>(null);
   let events = $state<BrowserWorkspaceEvent[]>([]);
   let preview = $state<PreviewStatus | null>(null);
@@ -37,15 +43,19 @@
   let diff = $state('');
   let promptText = $state('');
   let attachment = $state<File | null>(null);
+  let deliveryPackage = $state<File | null>(null);
   let userMessages = $state<Array<{ text: string; imageName?: string }>>([]);
   let restoring = $state(true);
   let opening = $state(false);
   let resetting = $state(false);
   let closing = $state(false);
+  let importing = $state(false);
+  let checkingCodex = $state(false);
   let sending = $state(false);
   let notice = $state('Choose an allowlisted workspace to begin.');
   let errorMessage = $state('');
   let fileInput = $state<HTMLInputElement>();
+  let deliveryInput = $state<HTMLInputElement>();
   let eventSource: EventSource | null = null;
 
   const sessionStorageKey = 'create-something.client-workspace.session';
@@ -61,7 +71,14 @@
     workspace_not_found: 'That workspace is not available.',
     preview_timeout: 'The preview did not become ready in time.',
     preview_crashed: 'The preview process stopped unexpectedly.',
-    workspace_request_failed: 'The workspace could not complete that request.'
+    workspace_request_failed: 'The workspace could not complete that request.',
+    package_untrusted:
+      'This delivery did not match the trusted CREATE SOMETHING signature or file hashes.',
+    release_not_ready: 'This delivery is signed, but its Build release evidence is not ready.',
+    workspace_exists: 'That delivered workspace is already installed.',
+    workspace_invalid: 'The delivered workspace is missing required source or preview files.',
+    delivery_import_unavailable: 'The app delivery trust root is unavailable.',
+    invalid_package: 'Choose a valid .csworkspace file no larger than 25 MB.'
   };
 
   onMount(() => {
@@ -92,6 +109,11 @@
   }
 
   async function openWorkspace(selected: Workspace) {
+    if (codexStatus.state !== 'ready') {
+      errorMessage = 'Install and sign in to Codex before opening an agent workspace.';
+      notice = 'Codex needs attention.';
+      return;
+    }
     opening = true;
     errorMessage = '';
     notice = 'Starting the governed workspace and preview…';
@@ -111,6 +133,56 @@
     }
   }
 
+  async function importDelivery() {
+    const delivery = deliveryPackage;
+    if (!delivery || importing) return;
+    importing = true;
+    errorMessage = '';
+    notice = 'Verifying the signed delivery and Build release evidence…';
+    try {
+      const form = new FormData();
+      form.set('delivery', delivery);
+      const result = await readJson<{ workspace: Workspace }>(
+        await fetch('/api/deliveries', { method: 'POST', body: form })
+      );
+      importedWorkspaces = [...importedWorkspaces, result.workspace].sort((a, b) =>
+        a.label.localeCompare(b.label)
+      );
+      deliveryPackage = null;
+      if (deliveryInput) deliveryInput.value = '';
+      notice = `${result.workspace.label} verified and installed locally.`;
+    } catch (error) {
+      showError(error);
+    } finally {
+      importing = false;
+    }
+  }
+
+  function codexSummary(status: CodexStatus): string {
+    if (status.state === 'ready') return `Codex ${status.version} · ${status.authMode}`;
+    if (status.state === 'outdated') return `Codex ${status.version} · Update required`;
+    if (status.state === 'unauthenticated') return `Codex ${status.version} · Sign in required`;
+    if (status.state === 'missing') return 'Codex not found';
+    return 'Codex unavailable';
+  }
+
+  async function refreshCodexStatus() {
+    if (checkingCodex) return;
+    checkingCodex = true;
+    errorMessage = '';
+    try {
+      codexStatus = await readJson<CodexStatus>(await fetch('/api/runtime/codex'));
+      notice =
+        codexStatus.state === 'ready'
+          ? 'Codex is ready. Choose a verified workspace.'
+          : 'Codex still needs attention.';
+    } catch (error) {
+      showError(error);
+    } finally {
+      checkingCodex = false;
+    }
+  }
+
   async function restoreSession(sessionId: string) {
     opening = true;
     errorMessage = '';
@@ -121,7 +193,9 @@
       );
       applySession(result);
       await refreshDiff();
-      notice = `Restored ${result.receipt.status} session.`;
+      notice = result.active
+        ? `Restored ${result.receipt.status} session.`
+        : `Restored ${result.receipt.status} receipt in read-only mode. Close it to start a new session.`;
     } catch (error) {
       localStorage.removeItem(sessionStorageKey);
       showError(error);
@@ -132,10 +206,15 @@
 
   function applySession(result: SessionResponse) {
     workspace = result.workspace;
+    sessionActive = result.active;
     receipt = result.receipt;
     events = mergeWorkspaceEvents([], result.receipt.events);
     preview = result.preview;
-    connectEvents(result.receipt.sessionId);
+    if (result.active) connectEvents(result.receipt.sessionId);
+    else {
+      eventSource?.close();
+      eventSource = null;
+    }
   }
 
   function connectEvents(sessionId: string) {
@@ -151,12 +230,12 @@
             event.type === 'session.closed'
               ? 'closed'
               : event.type === 'turn.completed'
-              ? 'completed'
-              : event.type === 'turn.failed' || event.type === 'runtime.error'
-                ? 'failed'
-                : event.type === 'turn.started'
-                  ? 'running'
-                  : receipt.status,
+                ? 'completed'
+                : event.type === 'turn.failed' || event.type === 'runtime.error'
+                  ? 'failed'
+                  : event.type === 'turn.started'
+                    ? 'running'
+                    : receipt.status,
           updatedAt: event.at,
           events
         };
@@ -184,7 +263,7 @@
   }
 
   async function submitTurn() {
-    if (!receipt || !promptText.trim() || sending) return;
+    if (!receipt || !sessionActive || !promptText.trim() || sending) return;
     const submittedText = promptText.trim();
     const submittedImage = attachment?.name;
     sending = true;
@@ -217,8 +296,14 @@
     errorMessage = '';
   }
 
+  function chooseDelivery(event: Event) {
+    const input = event.currentTarget as HTMLInputElement;
+    deliveryPackage = input.files?.[0] ?? null;
+    errorMessage = '';
+  }
+
   async function respondToApproval(approvalId: string, decision: 'accept' | 'decline') {
-    if (!receipt) return;
+    if (!receipt || !sessionActive) return;
     errorMessage = '';
     try {
       await readJson<{ ok: boolean }>(
@@ -276,6 +361,11 @@
 
   async function closeWorkspace() {
     if (!receipt || closing) return;
+    if (!sessionActive) {
+      clearSession();
+      notice = 'Saved receipt closed. Open the workspace to start a new governed session.';
+      return;
+    }
     const closingSessionId = receipt.sessionId;
     closing = true;
     errorMessage = '';
@@ -303,6 +393,7 @@
     eventSource = null;
     localStorage.removeItem(sessionStorageKey);
     workspace = null;
+    sessionActive = false;
     receipt = null;
     events = [];
     preview = null;
@@ -319,7 +410,10 @@
 
 <svelte:head>
   <title>Client Workspace — CREATE SOMETHING</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='11' fill='%23d86f4d'/%3E%3C/svg%3E" />
+  <link
+    rel="icon"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='11' fill='%23d86f4d'/%3E%3C/svg%3E"
+  />
   <meta
     name="description"
     content="Governed, real-time frontend editing for CREATE SOMETHING client workspaces."
@@ -343,14 +437,16 @@
         pendingWorkspaceApprovals(events).length > 0
       )}
     >
-      {restoring ? 'restoring' : (receipt?.status ?? 'local MVP')}
+      {restoring ? 'restoring' : receipt && !sessionActive ? 'receipt' : (receipt?.status ?? codexStatus.state)}
     </span>
     {#if workspace}
-      <button class="quiet-button" type="button" disabled={resetting} onclick={resetWorkspace}>
-        {resetting ? 'Resetting…' : 'Reset demo'}
-      </button>
+      {#if !data.desktop}
+        <button class="quiet-button" type="button" disabled={resetting} onclick={resetWorkspace}>
+          {resetting ? 'Resetting…' : 'Reset demo'}
+        </button>
+      {/if}
       <button class="quiet-button" type="button" disabled={closing} onclick={closeWorkspace}>
-        {closing ? 'Closing…' : 'Close'}
+        {closing ? 'Closing…' : sessionActive ? 'Close' : 'Close receipt'}
       </button>
     {/if}
   </div>
@@ -366,12 +462,49 @@
 {:else if !workspace}
   <main class="workspace-picker">
     <div class="intro">
-      <p class="eyebrow">Governed frontend editing</p>
-      <h1>Describe the change.<br />Watch it become real.</h1>
+      <p class="eyebrow">Client-owned Codex workspace</p>
+      <h1>Your delivery.<br />Your Codex. Local control.</h1>
       <p class="lede">
-        Chat with a multimodal coding agent inside one allowlisted project. Every action stays
-        visible, bounded, and reviewable.
+        Import a verified CREATE SOMETHING delivery, then manage it with your authenticated Codex.
+        Every action stays visible, bounded, local, and reviewable.
       </p>
+      <div
+        class="runtime-card"
+        data-work-state={codexStatus.state === 'ready' ? 'success' : 'warning'}
+      >
+        <span class="status-dot"></span>
+        <div>
+          <p class="eyebrow">Your Codex</p>
+          <strong>{codexSummary(codexStatus)}</strong>
+          <small>The app never reads or copies Codex credentials.</small>
+        </div>
+        <button
+          class="quiet-button runtime-recheck"
+          type="button"
+          disabled={checkingCodex}
+          aria-busy={checkingCodex}
+          onclick={refreshCodexStatus}>Recheck Codex</button
+        >
+      </div>
+      <form
+        class="delivery-import"
+        onsubmit={(event) => {
+          event.preventDefault();
+          void importDelivery();
+        }}
+      >
+        <label for="delivery-package">Verified delivery</label>
+        <input
+          bind:this={deliveryInput}
+          id="delivery-package"
+          type="file"
+          accept=".csworkspace,application/json"
+          onchange={chooseDelivery}
+        />
+        <button class="primary-button" type="submit" disabled={importing || !deliveryPackage}>
+          {importing ? 'Verifying…' : 'Import .csworkspace'}
+        </button>
+      </form>
     </div>
     <section class="picker-panel" aria-labelledby="workspace-heading">
       <div class="panel-heading">
@@ -379,19 +512,24 @@
           <p class="eyebrow" id="workspace-heading">Available workspaces</p>
           <h2>Choose a project</h2>
         </div>
-        <span>{data.workspaces.length} allowlisted</span>
+        <span>{availableWorkspaces.length} verified</span>
       </div>
-      {#each data.workspaces as availableWorkspace}
+      {#if availableWorkspaces.length === 0}
+        <p class="empty-copy">Import the signed delivery supplied by CREATE SOMETHING to begin.</p>
+      {/if}
+      {#each availableWorkspaces as availableWorkspace}
         <article class="workspace-card">
-          <div class="workspace-monogram" aria-hidden="true">{availableWorkspace.label.slice(0, 1)}</div>
+          <div class="workspace-monogram" aria-hidden="true">
+            {availableWorkspace.label.slice(0, 1)}
+          </div>
           <div class="workspace-copy">
             <h3>{availableWorkspace.label}</h3>
-            <p>Git-backed · Workspace-write · Network off</p>
+            <p>Signed delivery · Workspace-write · Network off</p>
           </div>
           <button
             class="primary-button"
             type="button"
-            disabled={opening}
+            disabled={opening || codexStatus.state !== 'ready'}
             onclick={() => openWorkspace(availableWorkspace)}
           >
             {opening ? 'Opening…' : 'Open workspace'}
@@ -399,7 +537,9 @@
         </article>
       {/each}
       {#if errorMessage}<p class="error-note" role="alert">{errorMessage}</p>{/if}
-      <p class="trust-note">Operator pilot only. No deploy, publish, or credential authority.</p>
+      <p class="trust-note">
+        Local authority only. No deploy, publish, credential, or third-party mutation access.
+      </p>
     </section>
   </main>
 {:else}
@@ -417,15 +557,16 @@
         <div class="message agent-message">
           <p class="message-author">Workspace agent</p>
           <p>
-            I can inspect and edit this frontend, run focused checks, and explain each action. Add
-            a reference image when visual context matters.
+            I can inspect and edit this frontend, run focused checks, and explain each action. Add a
+            reference image when visual context matters.
           </p>
         </div>
         {#each userMessages as message}
           <div class="message user-message">
             <p class="message-author">You</p>
             <p>{message.text}</p>
-            {#if message.imageName}<span class="attachment-chip">Image · {message.imageName}</span>{/if}
+            {#if message.imageName}<span class="attachment-chip">Image · {message.imageName}</span
+              >{/if}
           </div>
         {/each}
         {#each events.filter((event) => event.type === 'agent.message') as message (message.sequence)}
@@ -435,16 +576,31 @@
           </div>
         {/each}
         {#if sending}
-          <div class="thinking" data-work-state="running" aria-label="Agent is working"><i></i><i></i><i></i></div>
+          <div class="thinking" data-work-state="running" aria-label="Agent is working">
+            <i></i><i></i><i></i>
+          </div>
         {/if}
       </div>
 
-      <form class="composer" onsubmit={(event) => { event.preventDefault(); void submitTurn(); }}>
+      <form
+        class="composer"
+        onsubmit={(event) => {
+          event.preventDefault();
+          void submitTurn();
+        }}
+      >
         {#if attachment}
           <div class="selected-attachment">
             <span>Reference image</span>
             <strong>{attachment.name}</strong>
-            <button type="button" aria-label="Remove reference image" onclick={() => { attachment = null; if (fileInput) fileInput.value = ''; }}>×</button>
+            <button
+              type="button"
+              aria-label="Remove reference image"
+              onclick={() => {
+                attachment = null;
+                if (fileInput) fileInput.value = '';
+              }}>×</button
+            >
           </div>
         {/if}
         <label class="sr-only" for="edit-request">Describe the frontend edit</label>
@@ -454,7 +610,7 @@
           rows="5"
           maxlength="12000"
           placeholder="Describe the frontend change you want to see…"
-          disabled={sending}
+          disabled={sending || !sessionActive}
         ></textarea>
         <div class="composer-actions">
           <label class="image-button" title="Attach a reference image">
@@ -462,6 +618,7 @@
               bind:this={fileInput}
               type="file"
               accept="image/png,image/jpeg,image/webp"
+              disabled={!sessionActive}
               onchange={chooseAttachment}
             />
             <span aria-hidden="true">＋</span> Reference
@@ -470,7 +627,7 @@
           <button
             class="send-button"
             type="submit"
-            disabled={sending || !promptText.trim()}
+            disabled={sending || !sessionActive || !promptText.trim()}
             aria-label="Send edit request"
           >
             {sending ? 'Working' : 'Send'} <span aria-hidden="true">↗</span>
@@ -501,21 +658,35 @@
         <p>{notice}</p>
       </div>
 
-      {#each pendingWorkspaceApprovals(events) as approval (approval.sequence)}
+      {#each sessionActive ? pendingWorkspaceApprovals(events) : [] as approval (approval.sequence)}
         <article class="approval-card" data-work-state="approval">
           <p class="eyebrow">Approval required</p>
-          <h3>{approval.approvalKind === 'command' ? 'Run bounded command?' : 'Apply bounded file change?'}</h3>
+          <h3>
+            {approval.approvalKind === 'command'
+              ? 'Run bounded command?'
+              : 'Apply bounded file change?'}
+          </h3>
           <p>{approval.message}</p>
           <div>
-            <button type="button" class="approve-button" onclick={() => respondToApproval(approval.approvalId!, 'accept')}>Approve</button>
-            <button type="button" class="decline-button" onclick={() => respondToApproval(approval.approvalId!, 'decline')}>Decline</button>
+            <button
+              type="button"
+              class="approve-button"
+              onclick={() => respondToApproval(approval.approvalId!, 'accept')}>Approve</button
+            >
+            <button
+              type="button"
+              class="decline-button"
+              onclick={() => respondToApproval(approval.approvalId!, 'decline')}>Decline</button
+            >
           </div>
         </article>
       {/each}
 
       <div class="activity-list">
         {#if events.length === 0}
-          <p class="empty-copy">Agent actions, checks, and file changes will appear here in real time.</p>
+          <p class="empty-copy">
+            Agent actions, checks, and file changes will appear here in real time.
+          </p>
         {/if}
         {#each [...events].reverse() as event (event.sequence)}
           <article class="activity-item">
@@ -523,7 +694,12 @@
             <div>
               <div class="event-meta">
                 <span>{eventLabel(event.type)}</span>
-                <time datetime={event.at}>{new Date(event.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</time>
+                <time datetime={event.at}
+                  >{new Date(event.at).toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}</time
+                >
               </div>
               <p>{event.message}</p>
             </div>
@@ -547,8 +723,15 @@
           <h2 id="preview-heading">Live preview</h2>
         </div>
         <div class="preview-actions">
-          <span class="preview-state" data-work-state={previewWorkState(preview?.state ?? null)}>{preview?.state ?? 'idle'}</span>
-          <button class="icon-button" type="button" onclick={refreshArtifacts} aria-label="Refresh preview">↻</button>
+          <span class="preview-state" data-work-state={previewWorkState(preview?.state ?? null)}
+            >{preview?.state ?? 'idle'}</span
+          >
+          <button
+            class="icon-button"
+            type="button"
+            onclick={refreshArtifacts}
+            aria-label="Refresh preview">↻</button
+          >
           <span class="rail-number">03</span>
         </div>
       </div>
@@ -561,12 +744,25 @@
           <iframe
             title={`${workspace.label} live preview`}
             src={`${preview.previewPath}?revision=${previewRevision}`}
+            sandbox={data.desktop ? 'allow-scripts' : 'allow-scripts allow-same-origin'}
           ></iframe>
         {:else}
-          <div class="preview-placeholder" data-work-state={previewWorkState(preview?.state ?? null)} role="status">
+          <div
+            class="preview-placeholder"
+            data-work-state={previewWorkState(preview?.state ?? null)}
+            role="status"
+          >
             <span class="preview-glyph">◫</span>
-            <h3>{preview?.state === 'blocked' || preview?.state === 'crashed' ? 'Preview unavailable' : 'Starting preview'}</h3>
-            <p>{preview?.state === 'blocked' || preview?.state === 'crashed' ? 'Review the activity rail for the safe failure state.' : 'The allowlisted project is booting in its isolated process.'}</p>
+            <h3>
+              {preview?.state === 'blocked' || preview?.state === 'crashed'
+                ? 'Preview unavailable'
+                : 'Starting preview'}
+            </h3>
+            <p>
+              {preview?.state === 'blocked' || preview?.state === 'crashed'
+                ? 'Review the activity rail for the safe failure state.'
+                : 'The allowlisted project is booting in its isolated process.'}
+            </p>
           </div>
         {/if}
       </div>
@@ -608,6 +804,14 @@
   .workspace-picker { width: min(1180px, calc(100% - 2rem)); min-height: calc(100vh - 64px); display: grid; grid-template-columns: 1.25fr .75fr; align-items: center; gap: clamp(3rem, 7vw, 8rem); margin: 0 auto; padding: 4rem 0 7rem; }
   .intro h1 { max-width: 800px; margin: 1rem 0 1.5rem; font-family: var(--font-performance-display); font-size: var(--text-performance-display-xl); font-weight: var(--font-performance-medium); letter-spacing: var(--tracking-performance-display); line-height: var(--leading-performance-display); }
   .lede { max-width: 590px; margin: 0; color: var(--color-performance-muted); font-size: var(--text-performance-body-lg); line-height: var(--leading-performance-relaxed); }
+  .runtime-card { display: flex; align-items: center; gap: .8rem; max-width: 590px; margin-top: 1.5rem; padding: 1rem; color: var(--workspace-state-text); background: var(--workspace-state-background); border: 1px solid var(--workspace-state-border); border-radius: var(--radius-performance-md); }
+  .runtime-card > div { display: grid; gap: .2rem; }
+  .runtime-card strong { color: var(--color-performance-ink); font-size: .92rem; }
+  .runtime-card small { color: var(--color-performance-muted); }
+  .runtime-recheck { margin-left: auto; white-space: nowrap; }
+  .delivery-import { display: grid; grid-template-columns: 1fr auto; gap: .65rem; align-items: end; max-width: 590px; margin-top: 1rem; padding: 1rem; background: var(--color-performance-bg-elevated); border: 1px solid var(--color-performance-border-emphasis); border-radius: var(--radius-performance-md); }
+  .delivery-import label { grid-column: 1 / -1; color: var(--color-performance-fg-secondary); font-family: var(--font-performance-mono); font-size: .65rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+  .delivery-import input { min-width: 0; color: var(--color-performance-fg-secondary); font-size: .78rem; }
   .picker-panel { padding: 1.1rem; background: var(--color-performance-panel); border: 1px solid var(--color-performance-line); box-shadow: var(--shadow-performance-panel); }
   .panel-heading { display: flex; align-items: flex-start; justify-content: space-between; padding: .5rem .4rem 1.2rem; border-bottom: 1px solid var(--color-performance-line); }
   .panel-heading h2 { margin: .35rem 0 0; font-size: var(--text-performance-h2); font-weight: var(--font-performance-medium); }

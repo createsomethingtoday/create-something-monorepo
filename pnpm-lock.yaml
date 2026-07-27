@@ -92,6 +92,15 @@ importers:
         specifier: ^4.103.0
         version: 4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
+  apps/client-workspace-desktop:
+    devDependencies:
+      '@create-something/delivery-schema':
+        specifier: workspace:*
+        version: link:../../packages/delivery-schema
+      '@tauri-apps/cli':
+        specifier: 2.11.2
+        version: 2.11.2
+
   apps/create-something-scheduler:
     dependencies:
       '@cloudflare/realtimekit':
@@ -1248,6 +1257,9 @@ importers:
 
   packages/client-workspace:
     dependencies:
+      '@create-something/delivery-schema':
+        specifier: workspace:*
+        version: link:../delivery-schema
       svelte:
         specifier: 5.48.5
         version: 5.48.5
