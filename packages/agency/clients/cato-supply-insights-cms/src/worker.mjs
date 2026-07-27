@@ -389,6 +389,14 @@ function normalizeTeamMember(item) {
     name,
     slug: field(record, ['slug']),
     role: field(record, ['job-position', 'jobPosition', 'role', 'position']),
+    boardRole: field(record, [
+      'board-role',
+      'boardRole',
+      'board-title',
+      'boardTitle',
+      'board-position',
+      'boardPosition'
+    ]),
     bio: htmlToPlainText(field(record, ['bio', 'biography', 'summary'])),
     imageUrl,
     linkedinUrl: field(record, ['linkedin-link', 'linkedinLink', 'linkedin']),
