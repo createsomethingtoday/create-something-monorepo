@@ -131,6 +131,11 @@ The default question is not "did the model produce code?"
 
 It is "did the system produce a validated change that survives review?"
 
+When instructions, hooks, skills, MCP surfaces, policy, memory, or review layers
+change materially, use [HARNESS_ABLATION_LOOP.md](./HARNESS_ABLATION_LOOP.md) to
+measure their marginal contribution. A passing full harness proves the system
+works; it does not prove every layer helped.
+
 ## 6. Escalate uncertainty explicitly
 
 When the agent hits ambiguity, missing authority, or conflicting evidence:

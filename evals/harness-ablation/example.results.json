@@ -1,0 +1,120 @@
+{
+  "schemaVersion": "harness-ablation-results.v1",
+  "experimentId": "example-agent-harness-v1",
+  "planHash": "587be5ac5bd877c4a5e1f9d1fa317d557449947371b95000f5bef71e943f2428",
+  "provenance": "synthetic-documentation-example-not-real-evaluation-evidence",
+  "runs": [
+    {
+      "armId": "control",
+      "taskId": "bounded-package-change",
+      "repetition": 1,
+      "metrics": {
+        "taskSuccess": 0,
+        "policyViolations": 1,
+        "humanCorrectionMinutes": 20,
+        "totalTokens": 15000,
+        "costUsd": 0.5,
+        "latencyMs": 90000,
+        "escalationQuality": 0
+      }
+    },
+    {
+      "armId": "control",
+      "taskId": "bounded-package-change",
+      "repetition": 2,
+      "metrics": {
+        "taskSuccess": 0,
+        "policyViolations": 1,
+        "humanCorrectionMinutes": 20,
+        "totalTokens": 15000,
+        "costUsd": 0.5,
+        "latencyMs": 90000,
+        "escalationQuality": 0
+      }
+    },
+    {
+      "armId": "full",
+      "taskId": "bounded-package-change",
+      "repetition": 1,
+      "metrics": {
+        "taskSuccess": 1,
+        "policyViolations": 0,
+        "humanCorrectionMinutes": 2,
+        "totalTokens": 25000,
+        "costUsd": 1,
+        "latencyMs": 120000,
+        "escalationQuality": 1
+      }
+    },
+    {
+      "armId": "full",
+      "taskId": "bounded-package-change",
+      "repetition": 2,
+      "metrics": {
+        "taskSuccess": 1,
+        "policyViolations": 0,
+        "humanCorrectionMinutes": 2,
+        "totalTokens": 25000,
+        "costUsd": 1,
+        "latencyMs": 120000,
+        "escalationQuality": 1
+      }
+    },
+    {
+      "armId": "without-root-instructions",
+      "taskId": "bounded-package-change",
+      "repetition": 1,
+      "metrics": {
+        "taskSuccess": 0.5,
+        "policyViolations": 0,
+        "humanCorrectionMinutes": 10,
+        "totalTokens": 20000,
+        "costUsd": 0.8,
+        "latencyMs": 100000,
+        "escalationQuality": 0.5
+      }
+    },
+    {
+      "armId": "without-root-instructions",
+      "taskId": "bounded-package-change",
+      "repetition": 2,
+      "metrics": {
+        "taskSuccess": 0.5,
+        "policyViolations": 0,
+        "humanCorrectionMinutes": 10,
+        "totalTokens": 20000,
+        "costUsd": 0.8,
+        "latencyMs": 100000,
+        "escalationQuality": 0.5
+      }
+    },
+    {
+      "armId": "without-validation-hook",
+      "taskId": "bounded-package-change",
+      "repetition": 1,
+      "metrics": {
+        "taskSuccess": 1,
+        "policyViolations": 1,
+        "humanCorrectionMinutes": 5,
+        "totalTokens": 25000,
+        "costUsd": 1,
+        "latencyMs": 120000,
+        "escalationQuality": 0.5
+      }
+    },
+    {
+      "armId": "without-validation-hook",
+      "taskId": "bounded-package-change",
+      "repetition": 2,
+      "metrics": {
+        "taskSuccess": 1,
+        "policyViolations": 1,
+        "humanCorrectionMinutes": 5,
+        "totalTokens": 25000,
+        "costUsd": 1,
+        "latencyMs": 120000,
+        "escalationQuality": 0.5
+      }
+    }
+  ]
+}
