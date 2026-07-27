@@ -7,6 +7,7 @@
     "dev": "vite dev",
     "build": "vite build",
     "preview": "vite preview",
+    "test": "tsx --test test/*.test.ts",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "deploy": "pnpm build && node ../../../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=jandjhomehealth --branch=main",
@@ -16,7 +17,9 @@
     "types": "node ../../../../scripts/run-wrangler.mjs types"
   },
   "dependencies": {
-    "lucide-svelte": "^0.562.0"
+    "@openai/agents": "^0.13.5",
+    "lucide-svelte": "^0.562.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260621.1",
@@ -25,6 +28,7 @@
     "@sveltejs/vite-plugin-svelte": "^5.0.3",
     "svelte": "^5.16.0",
     "svelte-check": "^4.1.1",
+    "tsx": "^4.21.0",
     "typescript": "^5.7.2",
     "vite": "^6.0.6",
     "wrangler": "^4.103.0"

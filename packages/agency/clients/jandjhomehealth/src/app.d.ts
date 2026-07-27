@@ -12,6 +12,7 @@ declare global {
 		interface Platform {
 			env?: {
 				DB?: import('@cloudflare/workers-types').D1Database;
+				OPENAI_API_KEY?: string;
 				ADMIN_EMAILS?: string;
 				ADMIN_INITIAL_PASSWORD?: string;
 				ADMIN_PASSWORD?: string;

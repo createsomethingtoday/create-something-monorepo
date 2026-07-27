@@ -535,9 +535,15 @@ importers:
 
   packages/agency/clients/jandjhomehealth:
     dependencies:
+      '@openai/agents':
+        specifier: ^0.13.5
+        version: 0.13.5(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
       lucide-svelte:
         specifier: ^0.562.0
         version: 0.562.0(svelte@5.41.0)
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
     devDependencies:
       '@cloudflare/workers-types':
         specifier: ^4.20260621.1
@@ -557,6 +563,9 @@ importers:
       svelte-check:
         specifier: ^4.1.1
         version: 4.3.3(picomatch@4.0.3)(svelte@5.41.0)(typescript@5.9.3)
+      tsx:
+        specifier: ^4.21.0
+        version: 4.21.0
       typescript:
         specifier: ^5.7.2
         version: 5.9.3
@@ -8756,6 +8765,14 @@ packages:
     peerDependencies:
       '@notionhq/client': ^2.2.15
 
+  '@openai/agents-core@0.13.5':
+    resolution: {integrity: sha512-RI9OwHG94c6ZTLNeEB7mfIpHbncgVxu4YElAmCAhq04EqLPzsLyouWhDgli8wZL/IhN/cYTaBwHvxktFzEbeyQ==}
+    peerDependencies:
+      zod: ^4.0.0
+    peerDependenciesMeta:
+      zod:
+        optional: true
+
   '@openai/agents-core@0.4.10':
     resolution: {integrity: sha512-U2uu22OZGFZ53Ogm5Qtzymg1Oc1FFNdkh+fg0QWDJ7mERQU5G4LzhbTiwS/jylVgKPj74e2uBb8oj/X5rHwxDQ==}
     peerDependencies:
@@ -8764,13 +8781,28 @@ packages:
       zod:
         optional: true
 
+  '@openai/agents-openai@0.13.5':
+    resolution: {integrity: sha512-DfItyOZxE7znrJMj8V8zV7qg9Ig1Q3u6/GfpkG0aTyj3NCAY8BbaxzLz0Qynlon9K4XBvo7LL8Nvxb5/FMeQcA==}
+    peerDependencies:
+      zod: ^4.0.0
+
   '@openai/agents-openai@0.4.10':
     resolution: {integrity: sha512-z0HxNpchPRhAugDeO7mwzj7i8QcEEfWppXYTVbyYYbbN6zni5uIFm2N9t7fxbGXtaKCT7s7Io6aKrOsifRXncw==}
     peerDependencies:
       zod: ^4.0.0
 
+  '@openai/agents-realtime@0.13.5':
+    resolution: {integrity: sha512-8rCApGStttqZpPigEWQ1RaiqoKgoisqzQhp0pAnJvzCcZnYgTf/13AWa0wMcP9OQl/hfLcH4YQ+uipRYiVgMzg==}
+    peerDependencies:
+      zod: ^4.0.0
+
   '@openai/agents-realtime@0.4.10':
     resolution: {integrity: sha512-cUU7tUgWJEZpewHfK+O4Gi36TMst7AStC1RKBm7uwm2t7WYQRIxY042Ykl6sou1wsLg/dXlY2UM07lZPN7TT5A==}
+    peerDependencies:
+      zod: ^4.0.0
+
+  '@openai/agents@0.13.5':
+    resolution: {integrity: sha512-zmVEQrl2gIvD0Xq9ZcxPMXRkfafgaitESHU/CHA+ill10A8OQu4/pKgKW4oWb99KnJD/lP4Tnn9vX0LgCx9ouw==}
     peerDependencies:
       zod: ^4.0.0
 
@@ -16351,6 +16383,26 @@ packages:
       ws: ^8.18.0
       zod: ^3.25 || ^4.0
     peerDependenciesMeta:
+      ws:
+        optional: true
+      zod:
+        optional: true
+
+  openai@6.49.0:
+    resolution: {integrity: sha512-aYCc0C6L864eR6WSYIwQGyXriw/nIyZx0ObvhzOEVuk0zoBDpynjSbrionWI7q65B5H8jJX0DXR9snEzM6bfPg==}
+    peerDependencies:
+      '@aws-sdk/credential-provider-node': '>=3.972.0 <4'
+      '@smithy/hash-node': '>=4.3.0 <5'
+      '@smithy/signature-v4': '>=5.4.0 <6'
+      ws: ^8.18.0
+      zod: ^3.25 || ^4.0
+    peerDependenciesMeta:
+      '@aws-sdk/credential-provider-node':
+        optional: true
+      '@smithy/hash-node':
+        optional: true
+      '@smithy/signature-v4':
+        optional: true
       ws:
         optional: true
       zod:
@@ -24420,6 +24472,22 @@ snapshots:
       ajv: 8.17.1
       ajv-formats: 3.0.1(ajv@8.17.1)
 
+  '@openai/agents-core@0.13.5(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
+    dependencies:
+      debug: 4.4.3
+      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.21)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+    optionalDependencies:
+      '@modelcontextprotocol/sdk': 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.11.7)(zod@4.3.6)
+      zod: 4.3.6
+    transitivePeerDependencies:
+      - '@aws-sdk/credential-provider-node'
+      - '@cfworker/json-schema'
+      - '@smithy/hash-node'
+      - '@smithy/signature-v4'
+      - hono
+      - supports-color
+      - ws
+
   '@openai/agents-core@0.4.10(@cfworker/json-schema@4.1.1)(hono@4.11.7)(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
     dependencies:
       debug: 4.4.3
@@ -24498,6 +24566,21 @@ snapshots:
       - supports-color
       - ws
 
+  '@openai/agents-openai@0.13.5(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
+    dependencies:
+      '@openai/agents-core': 0.13.5(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      debug: 4.4.3
+      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.21)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      zod: 4.3.6
+    transitivePeerDependencies:
+      - '@aws-sdk/credential-provider-node'
+      - '@cfworker/json-schema'
+      - '@smithy/hash-node'
+      - '@smithy/signature-v4'
+      - hono
+      - supports-color
+      - ws
+
   '@openai/agents-openai@0.4.10(@cfworker/json-schema@4.1.1)(hono@4.11.7)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
     dependencies:
       '@openai/agents-core': 0.4.10(@cfworker/json-schema@4.1.1)(hono@4.11.7)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
@@ -24545,6 +24628,23 @@ snapshots:
       - hono
       - supports-color
       - ws
+
+  '@openai/agents-realtime@0.13.5(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(zod@4.3.6)':
+    dependencies:
+      '@openai/agents-core': 0.13.5(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      '@types/ws': 8.18.1
+      debug: 4.4.3
+      ws: 8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+      zod: 4.3.6
+    transitivePeerDependencies:
+      - '@aws-sdk/credential-provider-node'
+      - '@cfworker/json-schema'
+      - '@smithy/hash-node'
+      - '@smithy/signature-v4'
+      - bufferutil
+      - hono
+      - supports-color
+      - utf-8-validate
 
   '@openai/agents-realtime@0.4.10(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(hono@4.11.7)(utf-8-validate@6.0.6)(zod@4.3.6)':
     dependencies:
@@ -24601,6 +24701,25 @@ snapshots:
       - hono
       - supports-color
       - utf-8-validate
+
+  '@openai/agents@0.13.5(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
+    dependencies:
+      '@openai/agents-core': 0.13.5(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      '@openai/agents-openai': 0.13.5(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      '@openai/agents-realtime': 0.13.5(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(zod@4.3.6)
+      debug: 4.4.3
+      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.21)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      zod: 4.3.6
+    transitivePeerDependencies:
+      - '@aws-sdk/credential-provider-node'
+      - '@cfworker/json-schema'
+      - '@smithy/hash-node'
+      - '@smithy/signature-v4'
+      - bufferutil
+      - hono
+      - supports-color
+      - utf-8-validate
+      - ws
 
   '@openai/agents@0.4.10(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(hono@4.11.7)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
     dependencies:
@@ -35100,6 +35219,12 @@ snapshots:
 
   openai@6.22.0(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6):
     optionalDependencies:
+      ws: 8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+      zod: 4.3.6
+
+  openai@6.49.0(@aws-sdk/credential-provider-node@3.972.21)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6):
+    optionalDependencies:
+      '@aws-sdk/credential-provider-node': 3.972.21
       ws: 8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       zod: 4.3.6
 
