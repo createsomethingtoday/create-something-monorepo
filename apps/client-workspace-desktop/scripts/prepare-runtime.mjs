@@ -20,6 +20,14 @@ const outputRoot = join(repoRoot, 'output', 'client-workspace-desktop');
 const trustRoot = join(outputRoot, 'trust');
 const privateKeyPath = join(trustRoot, 'local-signing-private.pem');
 const generatedPublicKeyPath = join(trustRoot, 'local-signing-public.pem');
+const revokedPrivateKeyPath = join(trustRoot, 'local-revoked-private.pem');
+const revokedPublicKeyPath = join(trustRoot, 'local-revoked-public.pem');
+const releaseMode = process.env.CLIENT_WORKSPACE_RELEASE_MODE === 'production';
+const managedKeyringPath = process.env.CLIENT_WORKSPACE_TRUST_KEYRING_FILE;
+
+if (releaseMode && !managedKeyringPath) {
+  throw new Error('Production runtime preparation requires CLIENT_WORKSPACE_TRUST_KEYRING_FILE.');
+}
 
 execFileSync('pnpm', ['--filter', '@create-something/client-workspace', 'build'], {
   cwd: repoRoot,
@@ -52,7 +60,7 @@ cpSync(bunPath, bundledBun);
 chmodSync(bundledBun, 0o755);
 
 mkdirSync(trustRoot, { recursive: true });
-if (!existsSync(privateKeyPath)) {
+if (!releaseMode && !existsSync(privateKeyPath)) {
   const { privateKey, publicKey } = generateKeyPairSync('ed25519');
   writeFileSync(privateKeyPath, privateKey.export({ type: 'pkcs8', format: 'pem' }), {
     mode: 0o600
@@ -60,16 +68,55 @@ if (!existsSync(privateKeyPath)) {
   writeFileSync(generatedPublicKeyPath, publicKey.export({ type: 'spki', format: 'pem' }), {
     mode: 0o644
   });
-} else if (!existsSync(generatedPublicKeyPath)) {
+} else if (!releaseMode && !existsSync(generatedPublicKeyPath)) {
   const publicKey = createPublicKey(createPrivateKey(readFileSync(privateKeyPath)));
   writeFileSync(generatedPublicKeyPath, publicKey.export({ type: 'spki', format: 'pem' }), {
     mode: 0o644
   });
 }
-const publicKeyPath = process.env.CLIENT_WORKSPACE_TRUST_PUBLIC_KEY_FILE ?? generatedPublicKeyPath;
-if (!existsSync(publicKeyPath))
-  throw new Error('Configured workspace trust public key does not exist.');
-cpSync(publicKeyPath, join(resourcesRoot, 'trust', 'client-workspace-signing-public.pem'));
+if (!releaseMode && !existsSync(revokedPrivateKeyPath)) {
+  const { privateKey, publicKey } = generateKeyPairSync('ed25519');
+  writeFileSync(revokedPrivateKeyPath, privateKey.export({ type: 'pkcs8', format: 'pem' }), {
+    mode: 0o600
+  });
+  writeFileSync(revokedPublicKeyPath, publicKey.export({ type: 'spki', format: 'pem' }), {
+    mode: 0o644
+  });
+} else if (!releaseMode && !existsSync(revokedPublicKeyPath)) {
+  const publicKey = createPublicKey(createPrivateKey(readFileSync(revokedPrivateKeyPath)));
+  writeFileSync(revokedPublicKeyPath, publicKey.export({ type: 'spki', format: 'pem' }), {
+    mode: 0o644
+  });
+}
+const bundledKeyring = join(resourcesRoot, 'trust', 'client-workspace-trust-keyring.json');
+if (managedKeyringPath) {
+  if (!existsSync(managedKeyringPath)) {
+    throw new Error('Configured workspace trust keyring does not exist.');
+  }
+  cpSync(managedKeyringPath, bundledKeyring);
+} else {
+  const publicKeyPem = readFileSync(generatedPublicKeyPath, 'utf8');
+  const revokedPublicKeyPem = readFileSync(revokedPublicKeyPath, 'utf8');
+  writeFileSync(
+    bundledKeyring,
+    `${JSON.stringify(
+      {
+        schema: 'create-something/client-workspace-keyring@1',
+        issuer: 'CREATE SOMETHING',
+        appVersion: '0.2.0',
+        allowLegacyV1: true,
+        revokedKeyIds: ['local-revoked'],
+        keys: [
+          { keyId: 'local-verifier', publicKeyPem },
+          { keyId: 'local-revoked', publicKeyPem: revokedPublicKeyPem }
+        ]
+      },
+      null,
+      2
+    )}\n`,
+    { mode: 0o644 }
+  );
+}
 
 const digest = (path) => createHash('sha256').update(readFileSync(path)).digest('hex');
 writeFileSync(
@@ -78,9 +125,8 @@ writeFileSync(
     {
       schema: 'create-something/client-workspace-runtime@1',
       bunSha256: digest(bundledBun),
-      trustPublicKeySha256: digest(
-        join(resourcesRoot, 'trust', 'client-workspace-signing-public.pem')
-      )
+      trustKeyringSha256: digest(bundledKeyring),
+      releaseMode
     },
     null,
     2

@@ -45,10 +45,7 @@ test('snapshot store captures only the governed workspace and receipt roots', as
     }
   };
 
-  const receipt = await store.capture(
-    'client-workspace-0123456789abcdef0123456789abcdef',
-    sandbox
-  );
+  const receipt = await store.capture('client-workspace-0123456789abcdef0123456789abcdef', sandbox);
 
   const key =
     'snapshots/client-workspace-0123456789abcdef0123456789abcdef/2026-07-15T14-00-00-000Z-11111111-1111-4111-8111-111111111111.tgz';
@@ -56,7 +53,7 @@ test('snapshot store captures only the governed workspace and receipt roots', as
   assert.deepEqual(calls, [
     [
       'exec',
-      "tar -C /workspace -czf /tmp/client-workspace-snapshot-11111111-1111-4111-8111-111111111111.tgz -- projects state"
+      'tar -C /workspace -czf /tmp/client-workspace-snapshot-11111111-1111-4111-8111-111111111111.tgz -- projects state'
     ],
     [
       'readFile',
@@ -73,10 +70,7 @@ test('snapshot store captures only the governed workspace and receipt roots', as
         capturedAt: '2026-07-15T14:00:00.000Z'
       }
     ],
-    [
-      'exec',
-      'rm -f /tmp/client-workspace-snapshot-11111111-1111-4111-8111-111111111111.tgz'
-    ]
+    ['exec', 'rm -f /tmp/client-workspace-snapshot-11111111-1111-4111-8111-111111111111.tgz']
   ]);
 });
 
@@ -128,10 +122,7 @@ test('snapshot store restores the latest private object before app startup', asy
   };
 
   assert.equal(
-    await store.restoreLatest(
-      'client-workspace-0123456789abcdef0123456789abcdef',
-      sandbox
-    ),
+    await store.restoreLatest('client-workspace-0123456789abcdef0123456789abcdef', sandbox),
     true
   );
   assert.deepEqual(calls, [
@@ -147,18 +138,12 @@ test('snapshot store restores the latest private object before app startup', asy
       'exec',
       'rm -rf /workspace/projects /workspace/state && mkdir -p /workspace && tar -C /workspace -xzf /tmp/client-workspace-restore-22222222-2222-4222-8222-222222222222.tgz'
     ],
-    [
-      'exec',
-      'rm -f /tmp/client-workspace-restore-22222222-2222-4222-8222-222222222222.tgz'
-    ]
+    ['exec', 'rm -f /tmp/client-workspace-restore-22222222-2222-4222-8222-222222222222.tgz']
   ]);
 });
 
 test('snapshot store gives concurrent captures isolated temporary archives', async () => {
-  const ids = [
-    '33333333-3333-4333-8333-333333333333',
-    '44444444-4444-4444-8444-444444444444'
-  ];
+  const ids = ['33333333-3333-4333-8333-333333333333', '44444444-4444-4444-8444-444444444444'];
   const archivePaths: string[] = [];
   const store = new WorkspaceSnapshotStore({
     randomUUID: () => ids.shift()!,
@@ -255,10 +240,7 @@ test('snapshot store refuses to record or restore empty archives', async () => {
   );
   assert.equal(recorded, false);
   assert.equal(
-    await store.restoreLatest(
-      'client-workspace-0123456789abcdef0123456789abcdef',
-      sandbox
-    ),
+    await store.restoreLatest('client-workspace-0123456789abcdef0123456789abcdef', sandbox),
     false
   );
   assert.equal(objectRead, false);
@@ -292,10 +274,7 @@ test('snapshot store no-ops when no durable snapshot exists and rejects arbitrar
   };
 
   assert.equal(
-    await store.restoreLatest(
-      'client-workspace-0123456789abcdef0123456789abcdef',
-      sandbox
-    ),
+    await store.restoreLatest('client-workspace-0123456789abcdef0123456789abcdef', sandbox),
     false
   );
   await assert.rejects(store.capture('operator-email', sandbox), /sandbox_id_invalid/);

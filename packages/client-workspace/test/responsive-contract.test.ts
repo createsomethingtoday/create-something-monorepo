@@ -18,3 +18,15 @@ test('desktop runtime can recheck Codex and restores inactive receipts read-only
   assert.match(routeSource, /sessionActive = result\.active/);
   assert.match(routeSource, /disabled=\{sending \|\| !sessionActive\}/);
 });
+
+test('approval cards expose sanitized affected paths, reason, and scope', () => {
+  assert.match(routeSource, /class="approval-context"/);
+  assert.match(routeSource, /<dt>Affects<\/dt>/);
+  assert.match(routeSource, /<dt>Reason<\/dt>/);
+  assert.match(routeSource, /<dt>Scope<\/dt>/);
+});
+
+test('desktop preview renders same-origin assets without granting delivered scripts', () => {
+  assert.match(routeSource, /data\.desktop \? 'allow-same-origin'/);
+  assert.doesNotMatch(routeSource, /data\.desktop \? 'allow-scripts allow-same-origin'/);
+});

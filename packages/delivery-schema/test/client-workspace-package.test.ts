@@ -5,7 +5,9 @@ import { test } from 'node:test';
 import {
   ClientWorkspacePackageError,
   createClientWorkspacePackage,
-  verifyClientWorkspacePackage
+  createClientWorkspacePackageV2,
+  verifyClientWorkspacePackage,
+  verifyClientWorkspacePackageWithPolicy
 } from '../src/client-workspace-package.js';
 
 test('a pinned trust root verifies signed workspace content and rejects modification', () => {
@@ -50,6 +52,109 @@ test('a pinned trust root verifies signed workspace content and rejects modifica
         publicKey.export({ type: 'spki', format: 'pem' }).toString()
       ),
     (error) => error instanceof ClientWorkspacePackageError && error.code === 'file_hash_mismatch'
+  );
+});
+
+test('versioned trust policy enforces issuer, key status, expiry, and minimum app version', () => {
+  const trusted = generateKeyPairSync('ed25519');
+  const packageJson = createClientWorkspacePackageV2({
+    manifest: {
+      packageId: 'delivery-acme-homepage-v2',
+      createdAt: '2026-07-27T18:20:00.000Z',
+      expiresAt: '2026-08-27T18:20:00.000Z',
+      issuer: 'CREATE SOMETHING',
+      keyId: 'release-2026-07',
+      releaseVersion: '2.0.0',
+      minimumAppVersion: '0.2.0',
+      releaseManifestPath: 'release/build-release.json',
+      workspace: {
+        id: 'acme-homepage',
+        label: 'Acme homepage',
+        sourcePrefix: 'workspace',
+        editableRoots: ['.'],
+        preview: { kind: 'static', root: '.', entry: 'index.html' }
+      }
+    },
+    files: { 'workspace/index.html': '<h1>Version two</h1>' },
+    privateKey: trusted.privateKey
+  });
+  const basePolicy = {
+    issuer: 'CREATE SOMETHING',
+    appVersion: '0.2.0',
+    keys: { 'release-2026-07': trusted.publicKey },
+    now: () => new Date('2026-07-28T00:00:00.000Z')
+  };
+
+  const verified = verifyClientWorkspacePackageWithPolicy(packageJson, basePolicy);
+  assert.equal(verified.manifest.schema, 'create-something/client-workspace-package@2');
+  assert.equal(verified.manifest.packageId, 'delivery-acme-homepage-v2');
+
+  const cases = [
+    {
+      policy: { ...basePolicy, issuer: 'Someone else' },
+      code: 'issuer_mismatch'
+    },
+    {
+      policy: { ...basePolicy, keys: {} },
+      code: 'key_unknown'
+    },
+    {
+      policy: { ...basePolicy, revokedKeyIds: ['release-2026-07'] },
+      code: 'key_revoked'
+    },
+    {
+      policy: { ...basePolicy, now: () => new Date('2026-09-01T00:00:00.000Z') },
+      code: 'package_expired'
+    },
+    {
+      policy: { ...basePolicy, appVersion: '0.1.9' },
+      code: 'minimum_app_version_unmet'
+    }
+  ];
+  for (const { policy, code } of cases) {
+    assert.throws(
+      () => verifyClientWorkspacePackageWithPolicy(packageJson, policy),
+      (error: unknown) => error instanceof ClientWorkspacePackageError && error.code === code
+    );
+  }
+});
+
+test('trust policy accepts legacy packages only behind the explicit migration gate', () => {
+  const trusted = generateKeyPairSync('ed25519');
+  const packageJson = createClientWorkspacePackage({
+    manifest: {
+      packageId: 'delivery-acme-homepage-v1',
+      createdAt: '2026-07-27T18:20:00.000Z',
+      issuer: 'CREATE SOMETHING',
+      keyId: 'legacy-local',
+      releaseManifestPath: 'release/build-release.json',
+      workspace: {
+        id: 'acme-homepage',
+        label: 'Acme homepage',
+        sourcePrefix: 'workspace',
+        editableRoots: ['.'],
+        preview: { kind: 'static', root: '.', entry: 'index.html' }
+      }
+    },
+    files: { 'workspace/index.html': '<h1>Legacy</h1>' },
+    privateKey: trusted.privateKey
+  });
+  const policy = {
+    issuer: 'CREATE SOMETHING',
+    appVersion: '0.2.0',
+    keys: { 'legacy-local': trusted.publicKey }
+  };
+  assert.throws(
+    () => verifyClientWorkspacePackageWithPolicy(packageJson, policy),
+    (error: unknown) =>
+      error instanceof ClientWorkspacePackageError && error.code === 'legacy_package_unavailable'
+  );
+  assert.equal(
+    verifyClientWorkspacePackageWithPolicy(packageJson, {
+      ...policy,
+      allowLegacyV1: true
+    }).manifest.packageId,
+    'delivery-acme-homepage-v1'
   );
 });
 

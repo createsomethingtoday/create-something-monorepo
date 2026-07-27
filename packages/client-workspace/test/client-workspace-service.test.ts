@@ -11,6 +11,7 @@ import {
 import type {
   CodexConnection,
   CodexServerMessage,
+  ResumeThreadOptions,
   StartThreadOptions,
   StartTurnOptions
 } from '../src/lib/server/sessions/workspace-session.js';
@@ -20,6 +21,8 @@ class FakeConnection implements CodexConnection {
   turnOptions: StartTurnOptions | undefined;
   responses: unknown[] = [];
   closed = false;
+  resumeOptions: ResumeThreadOptions | undefined;
+  resumeFails = false;
   #listener: ((message: CodexServerMessage) => void) | undefined;
 
   onMessage(listener: (message: CodexServerMessage) => void): void {
@@ -28,6 +31,12 @@ class FakeConnection implements CodexConnection {
 
   async startThread(_options: StartThreadOptions): Promise<{ threadId: string }> {
     return { threadId: 'thread-service' };
+  }
+
+  async resumeThread(options: ResumeThreadOptions): Promise<{ threadId: string }> {
+    this.resumeOptions = options;
+    if (this.resumeFails) throw new Error('thread_missing');
+    return { threadId: options.threadId };
   }
 
   async startTurn(options: StartTurnOptions): Promise<{ turnId: string }> {
@@ -93,12 +102,15 @@ async function withService(
 }
 
 test('service captures a baseline when the verified delivery makes its root editable', async () => {
-  await withService(async ({ service }) => {
-    const created = await service.createSession('demo');
+  await withService(
+    async ({ service }) => {
+      const created = await service.createSession('demo');
 
-    assert.equal(created.receipt.status, 'ready');
-    assert.equal(await service.workspaceDiff(created.receipt.sessionId), '');
-  }, ['.']);
+      assert.equal(created.receipt.status, 'ready');
+      assert.equal(await service.workspaceDiff(created.receipt.sessionId), '');
+    },
+    ['.']
+  );
 });
 
 test('service creates a sanitized workspace session and starts a private image turn', async () => {
@@ -121,6 +133,11 @@ test('service creates a sanitized workspace session and starts a private image t
     assert.equal(publicReceipt.includes(stateRoot), false);
     assert.equal(publicReceipt.includes('thread-service'), false);
     assert.equal(publicReceipt.includes('turn-service'), false);
+    const exported = await service.exportReceipt(created.receipt.sessionId);
+    assert.equal(exported.schema, 'create-something/client-workspace-receipt@1');
+    assert.equal(JSON.stringify(exported).includes('thread-service'), false);
+    assert.equal(JSON.stringify(exported).includes('turn-service'), false);
+    assert.equal(JSON.stringify(exported).includes(stateRoot), false);
   });
 });
 
@@ -198,7 +215,27 @@ test('service reports a session-baseline diff for an edited untracked fixture', 
   });
 });
 
-test('service restores a persisted receipt and baseline after the runtime restarts', async () => {
+test('service surfaces and blocks changes outside declared editable roots', async () => {
+  await withService(async ({ service, stateRoot }) => {
+    const protectedFile = join(stateRoot, '..', 'managed', 'demo', 'package.json');
+    await writeFile(protectedFile, '{"scripts":{"check":"safe"}}\n', 'utf8');
+    const created = await service.createSession('demo');
+    await writeFile(protectedFile, '{"scripts":{"check":"unsafe"}}\n', 'utf8');
+
+    const diff = await service.workspaceDiff(created.receipt.sessionId);
+    assert.match(diff, /WORKSPACE POLICY VIOLATION/);
+    assert.match(diff, /CHANGED package\.json/);
+    assert.equal(diff.includes(stateRoot), false);
+
+    await assert.rejects(
+      service.startTurn(created.receipt.sessionId, { text: 'Continue editing.' }),
+      (error: unknown) =>
+        error instanceof ClientWorkspaceServiceError && error.code === 'workspace_integrity_failed'
+    );
+  });
+});
+
+test('service resumes a persisted idle Codex thread and baseline after the runtime restarts', async () => {
   await withService(async ({ service, connection, registry, stateRoot }) => {
     const sourceFile = join(stateRoot, '..', 'managed', 'demo', 'src', 'page.svelte');
     await writeFile(sourceFile, '<h1>Before</h1>\n', 'utf8');
@@ -212,11 +249,69 @@ test('service restores a persisted receipt and baseline after the runtime restar
     });
     try {
       const restored = await restarted.sessionState(created.receipt.sessionId);
-      assert.equal(restored.active, false);
+      assert.equal(restored.active, true);
       assert.equal(restored.workspaceId, 'demo');
       assert.equal(restored.receipt.sessionId, created.receipt.sessionId);
       assert.equal(restored.receipt.status, 'ready');
-      assert.match(await restarted.workspaceDiff(created.receipt.sessionId), /\+<h1>After restart<\/h1>/);
+      assert.equal(connection.resumeOptions?.threadId, 'thread-service');
+      assert.deepEqual(connection.resumeOptions?.writableRoots, [
+        join(stateRoot, '..', 'managed', 'demo', 'src')
+      ]);
+      assert.equal(JSON.stringify(restored).includes('thread-service'), false);
+      assert.match(
+        await restarted.workspaceDiff(created.receipt.sessionId),
+        /\+<h1>After restart<\/h1>/
+      );
+    } finally {
+      await restarted.close();
+    }
+  });
+});
+
+test('service leaves an interrupted turn inactive after restart', async () => {
+  await withService(async ({ service, connection, registry, stateRoot }) => {
+    const created = await service.createSession('demo');
+    await service.startTurn(created.receipt.sessionId, { text: 'Begin the edit.' });
+    const restartedConnection = new FakeConnection();
+    const restarted = new ClientWorkspaceService({
+      registry,
+      stateRoot,
+      connectCodex: async () => restartedConnection
+    });
+    try {
+      const restored = await restarted.sessionState(created.receipt.sessionId);
+      assert.equal(restored.active, false);
+      assert.equal(restored.receipt.status, 'running');
+      assert.equal(restartedConnection.resumeOptions, undefined);
+      assert.equal(connection.turnOptions?.threadId, 'thread-service');
+    } finally {
+      await restarted.close();
+    }
+  });
+});
+
+test('service fails closed without erasing an idle receipt when Codex resume fails', async () => {
+  await withService(async ({ service, registry, stateRoot }) => {
+    const created = await service.createSession('demo');
+    const restartedConnection = new FakeConnection();
+    restartedConnection.resumeFails = true;
+    const restarted = new ClientWorkspaceService({
+      registry,
+      stateRoot,
+      connectCodex: async () => restartedConnection
+    });
+    try {
+      await assert.rejects(
+        restarted.sessionState(created.receipt.sessionId),
+        (error: unknown) =>
+          error instanceof ClientWorkspaceServiceError && error.code === 'session_resume_failed'
+      );
+      const receipt = JSON.parse(
+        await readFile(join(stateRoot, 'receipts', `${created.receipt.sessionId}.json`), 'utf8')
+      ) as { status: string; threadId?: string };
+      assert.equal(receipt.status, 'ready');
+      assert.equal(receipt.threadId, 'thread-service');
+      assert.equal(restartedConnection.closed, true);
     } finally {
       await restarted.close();
     }

@@ -6,7 +6,9 @@ import { dirname, join, resolve } from 'node:path';
 import { inspectBuildReleasePackage } from '@create-something/delivery-schema/build-release';
 import {
   ClientWorkspacePackageError,
-  verifyClientWorkspacePackage
+  verifyClientWorkspacePackage,
+  verifyClientWorkspacePackageWithPolicy,
+  type ClientWorkspaceTrustPolicy
 } from '@create-something/delivery-schema/client-workspace-package';
 
 import type { WorkspaceDefinition } from '../workspaces/registry.js';
@@ -28,7 +30,8 @@ type ImportedWorkspaceCatalog = {
 
 export type ImportClientWorkspaceDeliveryOptions = {
   packageJson: string | Buffer;
-  trustedPublicKey: KeyObject | string | Buffer;
+  trustedPublicKey?: KeyObject | string | Buffer;
+  trustPolicy?: ClientWorkspaceTrustPolicy;
   managedRoot: string;
   stateRoot: string;
   now?: () => Date;
@@ -117,7 +120,16 @@ export async function importClientWorkspaceDelivery(
 ): Promise<WorkspaceDefinition> {
   let verified;
   try {
-    verified = verifyClientWorkspacePackage(options.packageJson, options.trustedPublicKey);
+    if (options.trustPolicy) {
+      verified = verifyClientWorkspacePackageWithPolicy(options.packageJson, options.trustPolicy);
+    } else if (options.trustedPublicKey) {
+      verified = verifyClientWorkspacePackage(options.packageJson, options.trustedPublicKey);
+    } else {
+      throw new ClientWorkspacePackageError(
+        'key_unknown',
+        'No workspace package trust policy is configured.'
+      );
+    }
   } catch (error) {
     if (error instanceof ClientWorkspacePackageError) {
       throw new ClientWorkspaceDeliveryError(

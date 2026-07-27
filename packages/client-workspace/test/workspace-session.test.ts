@@ -11,6 +11,7 @@ import {
   WorkspaceSessionError,
   type CodexConnection,
   type CodexServerMessage,
+  type ResumeThreadOptions,
   type StartThreadOptions,
   type StartTurnOptions
 } from '../src/lib/server/sessions/workspace-session.js';
@@ -21,6 +22,7 @@ class FakeCodexConnection implements CodexConnection {
   turnOptions: StartTurnOptions | undefined;
   responses: Array<{ id: number | string; result: unknown }> = [];
   closed = false;
+  resumeOptions: ResumeThreadOptions | undefined;
   #listener: ((message: CodexServerMessage) => void) | undefined;
 
   onMessage(listener: (message: CodexServerMessage) => void): void {
@@ -30,6 +32,11 @@ class FakeCodexConnection implements CodexConnection {
   async startThread(options: StartThreadOptions): Promise<{ threadId: string }> {
     this.threadOptions = options;
     return { threadId: 'thread-demo' };
+  }
+
+  async resumeThread(options: ResumeThreadOptions): Promise<{ threadId: string }> {
+    this.resumeOptions = options;
+    return { threadId: options.threadId };
   }
 
   async startTurn(options: StartTurnOptions): Promise<{ turnId: string }> {
@@ -116,7 +123,7 @@ test('session maps text and a bounded local image into a workspace-confined Code
     ]);
     assert.deepEqual(codex.turnOptions?.sandboxPolicy, {
       type: 'workspaceWrite',
-      writableRoots: [sourceRoot],
+      writableRoots: [join(sourceRoot, 'src')],
       networkAccess: false
     });
   });
@@ -242,8 +249,15 @@ test('session distinguishes exhausted provider quota from authentication and rat
 });
 
 test('session exposes opaque approval ids and returns only allowed decisions', async () => {
-  await withSession(async ({ session, codex }) => {
-    const events: Array<{ type?: string; approvalId?: string }> = [];
+  await withSession(async ({ session, codex, sourceRoot }) => {
+    const events: Array<{
+      type?: string;
+      approvalId?: string;
+      command?: string;
+      paths?: string[];
+      reason?: string;
+      scope?: string;
+    }> = [];
     session.subscribe((event) => events.push(event));
     await session.open();
     await session.startTurn({ text: 'Run the focused check.' });
@@ -251,10 +265,18 @@ test('session exposes opaque approval ids and returns only allowed decisions', a
     codex.emit({
       id: 91,
       method: 'item/commandExecution/requestApproval',
-      params: { command: 'pnpm check' }
+      params: {
+        command: 'pnpm check',
+        cwd: sourceRoot,
+        reason: 'Run the focused validation.'
+      }
     });
     const approval = events.find((event) => event.type === 'approval.requested');
     assert.ok(approval?.approvalId);
+    assert.equal(approval.command, 'pnpm check');
+    assert.deepEqual(approval.paths, ['workspace root']);
+    assert.equal(approval.scope, 'workspace root');
+    assert.equal(approval.reason, 'Run the focused validation.');
 
     await session.respondToApproval(approval.approvalId, 'decline');
     assert.deepEqual(codex.responses, [{ id: 91, result: { decision: 'decline' } }]);
@@ -264,6 +286,28 @@ test('session exposes opaque approval ids and returns only allowed decisions', a
       (error: unknown) =>
         error instanceof WorkspaceSessionError && error.code === 'approval_not_found'
     );
+  });
+});
+
+test('session declines approval requests outside the verified policy boundary', async () => {
+  await withSession(async ({ session, codex, sourceRoot }) => {
+    const events: Array<{ type?: string; message?: string; approvalId?: string }> = [];
+    session.subscribe((event) => events.push(event));
+    await session.open();
+    await session.startTurn({ text: 'Update the page.' });
+
+    codex.emit({
+      id: 92,
+      method: 'item/fileChange/requestApproval',
+      params: { grantRoot: join(sourceRoot, 'config'), reason: 'Need wider writes.' }
+    });
+
+    assert.deepEqual(codex.responses, [{ id: 92, result: { decision: 'decline' } }]);
+    assert.equal(
+      events.some((event) => event.approvalId),
+      false
+    );
+    assert.equal(events.at(-1)?.message, 'approval_scope_rejected');
   });
 });
 

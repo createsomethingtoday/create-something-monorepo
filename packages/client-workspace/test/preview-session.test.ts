@@ -170,12 +170,9 @@ test('static delivery preview serves only declared workspace files without a chi
   assert.equal(await asset.text(), 'h1 { color: tomato; }');
   await assert.rejects(
     preview.proxy(
-      new Request(
-        'http://workspace.test/api/workspaces/acme/preview/assets/outside-preview.txt'
-      )
+      new Request('http://workspace.test/api/workspaces/acme/preview/assets/outside-preview.txt')
     ),
-    (error: unknown) =>
-      error instanceof PreviewSessionError && error.code === 'preview_path_escape'
+    (error: unknown) => error instanceof PreviewSessionError && error.code === 'preview_path_escape'
   );
   await assert.rejects(
     preview.proxy(new Request('http://workspace.test/api/workspaces/acme/preview/%2e%2e/secret')),

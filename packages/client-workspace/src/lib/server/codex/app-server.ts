@@ -7,6 +7,7 @@ import { promisify } from 'node:util';
 import type {
   CodexConnection,
   CodexServerMessage,
+  ResumeThreadOptions,
   StartThreadOptions,
   StartTurnOptions
 } from '../sessions/workspace-session.js';
@@ -164,6 +165,27 @@ class CodexAppServerConnection implements CodexConnection {
     const thread = asRecord(result.thread);
     if (typeof thread.id !== 'string' || thread.id === '') {
       throw new CodexAppServerError('invalid_response', 'Codex did not return a thread id.');
+    }
+    return { threadId: thread.id };
+  }
+
+  async resumeThread(options: ResumeThreadOptions): Promise<{ threadId: string }> {
+    const result = asRecord(
+      await this.#request('thread/resume', {
+        threadId: options.threadId,
+        cwd: options.cwd,
+        runtimeWorkspaceRoots: options.writableRoots,
+        approvalPolicy: options.approvalPolicy,
+        developerInstructions: options.developerInstructions,
+        excludeTurns: true
+      })
+    );
+    const thread = asRecord(result.thread);
+    if (typeof thread.id !== 'string' || thread.id !== options.threadId) {
+      throw new CodexAppServerError(
+        'invalid_response',
+        'Codex did not resume the requested thread.'
+      );
     }
     return { threadId: thread.id };
   }

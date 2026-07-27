@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdir, rm } from 'node:fs/promises';
+import { mkdir, rm, symlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
@@ -82,6 +82,38 @@ test('registry confines requested files to declared editable roots', async () =>
         (error: unknown) =>
           error instanceof WorkspaceRegistryError && error.code === 'workspace_path_escape'
       );
+    }
+  });
+});
+
+test('registry rejects a symlink escape nested under an editable root', async () => {
+  await withManagedRoot(async (managedRoot) => {
+    const sourceRoot = join(managedRoot, 'demo');
+    const outsideRoot = join(managedRoot, '..', `outside-${crypto.randomUUID()}`);
+    await mkdir(join(sourceRoot, 'src'), { recursive: true });
+    await mkdir(outsideRoot, { recursive: true });
+    await symlink(outsideRoot, join(sourceRoot, 'src', 'escape'));
+    const registry = new WorkspaceRegistry({
+      managedRoot,
+      definitions: [
+        {
+          id: 'demo',
+          label: 'Demo storefront',
+          sourceRoot,
+          editableRoots: ['src'],
+          preview: { command: 'pnpm', args: ['dev'], port: 4310 }
+        }
+      ]
+    });
+
+    try {
+      assert.throws(
+        () => registry.resolveEditablePath('demo', 'src/escape/private.txt'),
+        (error: unknown) =>
+          error instanceof WorkspaceRegistryError && error.code === 'workspace_path_escape'
+      );
+    } finally {
+      await rm(outsideRoot, { recursive: true, force: true });
     }
   });
 });

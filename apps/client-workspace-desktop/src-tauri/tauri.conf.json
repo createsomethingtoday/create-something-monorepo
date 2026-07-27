@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "CREATE SOMETHING Client Workspace",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "identifier": "agency.createsomething.client-workspace",
   "build": {
     "beforeDevCommand": "pnpm prepare:runtime",
@@ -21,7 +21,9 @@
         "fullscreen": false
       }
     ],
-    "security": { "csp": null }
+    "security": {
+      "csp": "default-src 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src http://127.0.0.1:*; navigate-to http://127.0.0.1:*"
+    }
   },
   "bundle": {
     "active": true,

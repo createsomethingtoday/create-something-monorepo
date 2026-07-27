@@ -1,4 +1,4 @@
-import { cp, mkdir, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { execFile } from 'node:child_process';
 import { join, resolve } from 'node:path';
 import { promisify } from 'node:util';
@@ -13,13 +13,15 @@ import {
   type WorkspaceTurnRequest
 } from './sessions/workspace-session.js';
 import type { PublicWorkspace, WorkspaceRegistry } from './workspaces/registry.js';
+import {
+  captureWorkspaceIntegrity,
+  inspectWorkspaceIntegrity,
+  type WorkspaceIntegrityManifest
+} from './workspaces/integrity.js';
 
 export type ConnectCodex = () => Promise<CodexConnection>;
 
-export type PublicWorkspaceSessionReceipt = Omit<
-  WorkspaceSessionReceipt,
-  'threadId' | 'turnId'
->;
+export type PublicWorkspaceSessionReceipt = Omit<WorkspaceSessionReceipt, 'threadId' | 'turnId'>;
 
 export type ClientWorkspaceServiceOptions = {
   registry: WorkspaceRegistry;
@@ -38,10 +40,18 @@ export type WorkspaceSessionState = {
   receipt: PublicWorkspaceSessionReceipt;
 };
 
+export type ExportedWorkspaceReceipt = {
+  schema: 'create-something/client-workspace-receipt@1';
+  exportedAt: string;
+  receipt: PublicWorkspaceSessionReceipt;
+};
+
 export type ClientWorkspaceServiceErrorCode =
   | 'invalid_upload'
   | 'reset_unavailable'
-  | 'session_not_found';
+  | 'session_not_found'
+  | 'session_resume_failed'
+  | 'workspace_integrity_failed';
 
 export class ClientWorkspaceServiceError extends Error {
   readonly code: ClientWorkspaceServiceErrorCode;
@@ -71,6 +81,15 @@ const UPLOAD_EXTENSIONS = new Map([
 function publicReceipt(receipt: WorkspaceSessionReceipt): PublicWorkspaceSessionReceipt {
   const { threadId: _threadId, turnId: _turnId, ...safe } = receipt;
   return safe;
+}
+
+function baselineEditableRoot(
+  baselineRoot: string,
+  workspaceRoot: string,
+  editableRoot: string
+): string {
+  const relativeRoot = editableRoot.slice(workspaceRoot.length + 1);
+  return join(baselineRoot, 'editable', relativeRoot || '__root__');
 }
 
 export class ClientWorkspaceService {
@@ -139,21 +158,53 @@ export class ClientWorkspaceService {
       throw new ClientWorkspaceServiceError('session_not_found', 'Workspace session not found.');
     }
     this.#registry.resolve(receipt.workspaceId);
-    return { active: false, workspaceId: receipt.workspaceId, receipt: publicReceipt(receipt) };
+    if (receipt.status !== 'ready' && receipt.status !== 'completed') {
+      return { active: false, workspaceId: receipt.workspaceId, receipt: publicReceipt(receipt) };
+    }
+
+    const workspace = this.#registry.resolve(receipt.workspaceId);
+    const baselineRoot = join(this.#stateRoot, 'baselines', sessionId);
+    await this.#assertWorkspaceIntegrity(receipt.workspaceId, baselineRoot);
+    const codex = await this.#connectCodex();
+    const uploadRoot = join(this.#stateRoot, 'uploads', sessionId);
+    const session = new WorkspaceSession({
+      id: sessionId,
+      workspace,
+      codex,
+      uploadRoot,
+      receiptStore: this.#receiptStore,
+      initialReceipt: receipt
+    });
+    try {
+      const resumed = await session.open();
+      this.#sessions.set(sessionId, {
+        workspaceId: receipt.workspaceId,
+        uploadRoot,
+        baselineRoot,
+        session
+      });
+      return {
+        active: true,
+        workspaceId: receipt.workspaceId,
+        receipt: publicReceipt(resumed)
+      };
+    } catch (error) {
+      session.disconnect();
+      throw new ClientWorkspaceServiceError(
+        'session_resume_failed',
+        'The prior Codex conversation could not be resumed safely.'
+      );
+    }
   }
 
-  subscribe(
-    sessionId: string,
-    listener: (event: WorkspaceActivityEvent) => void
-  ): () => void {
+  subscribe(sessionId: string, listener: (event: WorkspaceActivityEvent) => void): () => void {
     return this.#get(sessionId).session.subscribe(listener);
   }
 
-  async startTurn(
-    sessionId: string,
-    request: WorkspaceTurnRequest
-  ): Promise<{ turnId: string }> {
-    return await this.#get(sessionId).session.startTurn(request);
+  async startTurn(sessionId: string, request: WorkspaceTurnRequest): Promise<{ turnId: string }> {
+    const active = this.#get(sessionId);
+    await this.#assertWorkspaceIntegrity(active.workspaceId, active.baselineRoot);
+    return await active.session.startTurn(request);
   }
 
   async respondToApproval(
@@ -168,6 +219,27 @@ export class ClientWorkspaceService {
     const active = this.#get(sessionId);
     await active.session.close();
     this.#sessions.delete(sessionId);
+  }
+
+  async closeWorkspaceSessions(workspaceId: string): Promise<void> {
+    const matching = [...this.#sessions.entries()].filter(
+      ([, active]) => active.workspaceId === workspaceId
+    );
+    await Promise.all(matching.map(([, active]) => active.session.close()));
+    for (const [sessionId] of matching) this.#sessions.delete(sessionId);
+  }
+
+  async exportReceipt(sessionId: string): Promise<ExportedWorkspaceReceipt> {
+    const active = this.#sessions.get(sessionId);
+    const receipt = active?.session.receipt() ?? (await this.#receiptStore.get(sessionId));
+    if (!receipt) {
+      throw new ClientWorkspaceServiceError('session_not_found', 'Workspace session not found.');
+    }
+    return {
+      schema: 'create-something/client-workspace-receipt@1',
+      exportedAt: new Date().toISOString(),
+      receipt: publicReceipt(receipt)
+    };
   }
 
   async storeAttachment(sessionId: string, file: File): Promise<WorkspaceAttachment> {
@@ -187,19 +259,38 @@ export class ClientWorkspaceService {
 
   async workspaceDiff(sessionId: string): Promise<string> {
     const active = this.#sessions.get(sessionId);
-    const state = active
-      ? { workspaceId: active.workspaceId }
-      : await this.sessionState(sessionId);
+    const state = active ? { workspaceId: active.workspaceId } : await this.sessionState(sessionId);
     const baselineRoot = active?.baselineRoot ?? join(this.#stateRoot, 'baselines', sessionId);
     const workspace = this.#registry.resolve(state.workspaceId);
     const chunks: string[] = [];
+    const integrityChanges = await this.#workspaceIntegrityChanges(state.workspaceId, baselineRoot);
+    if (integrityChanges.length > 0) {
+      chunks.push(
+        [
+          'WORKSPACE POLICY VIOLATION: changes outside declared editable roots',
+          ...integrityChanges.map((change) => `${change.kind.toUpperCase()} ${change.path}`)
+        ].join('\n')
+      );
+    }
     for (const editableRoot of workspace.editableRoots) {
-      const relativeRoot = editableRoot.slice(workspace.sourceRoot.length + 1);
-      const baselineEditableRoot = join(baselineRoot, relativeRoot);
+      const baselineRootForEdit = baselineEditableRoot(
+        baselineRoot,
+        workspace.sourceRoot,
+        editableRoot
+      );
       try {
         await execFileAsync(
           'git',
-          ['diff', '--no-index', '--no-ext-diff', '--no-color', '--unified=3', '--', baselineEditableRoot, editableRoot],
+          [
+            'diff',
+            '--no-index',
+            '--no-ext-diff',
+            '--no-color',
+            '--unified=3',
+            '--',
+            baselineRootForEdit,
+            editableRoot
+          ],
           { maxBuffer: 512 * 1024 }
         );
       } catch (error) {
@@ -209,8 +300,10 @@ export class ClientWorkspaceService {
     }
     return chunks
       .join('\n')
-      .split(baselineRoot).join('')
-      .split(workspace.sourceRoot).join('')
+      .split(baselineRoot)
+      .join('')
+      .split(workspace.sourceRoot)
+      .join('')
       .slice(0, 120_000);
   }
 
@@ -233,9 +326,7 @@ export class ClientWorkspaceService {
   }
 
   async close(): Promise<void> {
-    await Promise.all(
-      [...this.#sessions.values()].map((active) => active.session.close())
-    );
+    await Promise.all([...this.#sessions.values()].map((active) => active.session.close()));
     this.#sessions.clear();
   }
 
@@ -250,13 +341,52 @@ export class ClientWorkspaceService {
   async #captureBaseline(workspaceId: string, baselineRoot: string): Promise<void> {
     const workspace = this.#registry.resolve(workspaceId);
     await mkdir(baselineRoot, { recursive: true });
+    await writeFile(
+      join(baselineRoot, 'integrity.json'),
+      `${JSON.stringify(await captureWorkspaceIntegrity(workspace), null, 2)}\n`,
+      { encoding: 'utf8', mode: 0o600 }
+    );
     for (const editableRoot of workspace.editableRoots) {
-      const relativeRoot = editableRoot.slice(workspace.sourceRoot.length + 1);
-      await cp(editableRoot, join(baselineRoot, relativeRoot), {
-        recursive: true,
-        force: false,
-        errorOnExist: true
-      });
+      await cp(
+        editableRoot,
+        baselineEditableRoot(baselineRoot, workspace.sourceRoot, editableRoot),
+        {
+          recursive: true,
+          force: false,
+          errorOnExist: true
+        }
+      );
     }
+  }
+
+  async #workspaceIntegrityChanges(workspaceId: string, baselineRoot: string) {
+    const workspace = this.#registry.resolve(workspaceId);
+    let baseline: WorkspaceIntegrityManifest;
+    try {
+      baseline = JSON.parse(
+        await readFile(join(baselineRoot, 'integrity.json'), 'utf8')
+      ) as WorkspaceIntegrityManifest;
+    } catch {
+      throw new ClientWorkspaceServiceError(
+        'workspace_integrity_failed',
+        'The workspace integrity baseline is unavailable.'
+      );
+    }
+    if (baseline.schema !== 'create-something/workspace-integrity@1') {
+      throw new ClientWorkspaceServiceError(
+        'workspace_integrity_failed',
+        'The workspace integrity baseline is invalid.'
+      );
+    }
+    return await inspectWorkspaceIntegrity(workspace, baseline);
+  }
+
+  async #assertWorkspaceIntegrity(workspaceId: string, baselineRoot: string): Promise<void> {
+    const changes = await this.#workspaceIntegrityChanges(workspaceId, baselineRoot);
+    if (changes.length === 0) return;
+    throw new ClientWorkspaceServiceError(
+      'workspace_integrity_failed',
+      `Workspace policy boundary changed: ${changes.map((change) => change.path).join(', ')}`
+    );
   }
 }
