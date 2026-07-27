@@ -525,8 +525,11 @@ test('blocks a creator when recent submissions are beyond Airtable page one', as
   assert.equal(assetCalls[1].searchParams.get('offset'), 'page-2');
 });
 
-test('uses creator rollups when they are stricter than the asset-derived counts', async () => {
+test('uses exact asset timestamps when the creator rollup retains expired submissions', async () => {
   const recentSubmissionDate = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const expiredSubmissionDate = new Date(
+    Date.now() - (30 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000)
+  ).toISOString();
 
   installAirtableMock((url) => {
     if (url.pathname === '/v0/appTest/creators') {
@@ -534,9 +537,9 @@ test('uses creator rollups when they are stricter than the asset-derived counts'
         records: [
           creatorRecord({
             '#️⃣👛Templates Published': 310,
-            '#️⃣👛Templates Submitted': 349,
+            '#️⃣👛Templates Submitted': 348,
             '#️⃣👛Templates Delisted': 8,
-            '#️⃣Submission cap count': 8
+            '#️⃣Submission cap count': 7
           })
         ]
       };
@@ -544,22 +547,57 @@ test('uses creator rollups when they are stricter than the asset-derived counts'
 
     if (url.pathname === '/v0/appTest/assets') {
       return {
-        records: Array.from({ length: 7 }, (_, index) => ({
-          id: `recRecent${index}`,
-          fields: {
-            Name: `Recent Template ${index}`,
-            '🚀Marketplace Status': 'Published',
-            '📅Submitted Date': recentSubmissionDate
-          }
-        }))
+        records: [
+          {
+            id: 'recRecentPublished',
+            fields: {
+              Name: 'Recent Published Template',
+              '🚀Marketplace Status': 'Published',
+              '📅Submitted Date': recentSubmissionDate
+            }
+          },
+          {
+            id: 'recRecentRejected',
+            fields: {
+              Name: 'Recent Rejected Template',
+              '🚀Marketplace Status': 'Rejected',
+              '📅Submitted Date': recentSubmissionDate
+            }
+          },
+          {
+            id: 'recRecentDelisted',
+            fields: {
+              Name: 'Recent Delisted Template',
+              '🚀Marketplace Status': 'Delisted',
+              '📅Submitted Date': recentSubmissionDate
+            }
+          },
+          ...Array.from({ length: 2 }, (_, index) => ({
+            id: `recRecent${index}`,
+            fields: {
+              Name: `Recent Template ${index}`,
+              '🚀Marketplace Status': 'Published',
+              '📅Submitted Date': recentSubmissionDate
+            }
+          })),
+          ...Array.from({ length: 2 }, (_, index) => ({
+            id: `recExpired${index}`,
+            fields: {
+              Name: `Expired Template ${index}`,
+              '🚀Marketplace Status': index === 0 ? 'Published' : 'Rejected',
+              '📅Submitted Date': expiredSubmissionDate
+            }
+          }))
+        ]
       };
     }
   });
 
   const { payload } = await checkTemplateUser('creator@example.com');
 
-  assert.equal(payload.assetsSubmitted30, 8);
-  assert.equal(payload.submittedTemplates, 349);
+  assert.equal(payload.assetsSubmitted30, 5);
+  assert.equal(payload.submittedTemplates, 348);
   assert.equal(payload.publishedTemplates, 310);
-  assert.equal(payload.hasError, true);
+  assert.equal(payload.hasError, false);
+  assert.match(payload.message, /5 out of 6 templates/);
 });

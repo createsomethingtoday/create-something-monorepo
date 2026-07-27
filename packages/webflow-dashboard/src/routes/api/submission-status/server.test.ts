@@ -86,7 +86,8 @@ describe('POST /api/submission-status', () => {
     } as Parameters<typeof POST>[0]);
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('https://check-asset-name.mcp.createsomething.agency/api/checkTemplateuser');
     expect(init.body).toBe(JSON.stringify({ email: 'creator@example.com' }));
   });
 });

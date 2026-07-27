@@ -166,15 +166,11 @@ function calculateLocalSubmissions(assets: Asset[]): {
 	showWarning: boolean;
 } {
 	const now = new Date();
-	const thirtyDaysAgo = new Date(
-		Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 30, 0, 0, 0, 0)
-	);
+	const thirtyDaysAgo = new Date(now.getTime() - ROLLING_WINDOW_MS);
 
 	const submissions: Submission[] = [];
 
 	for (const asset of assets) {
-		// Skip delisted assets
-		if (asset.status === 'Delisted') continue;
 		if (!asset.submittedDate) continue;
 
 		const submissionDate = new Date(asset.submittedDate);
@@ -189,7 +185,8 @@ function calculateLocalSubmissions(assets: Asset[]): {
 			)
 		);
 
-		// Count all non-delisted submissions within 30 days
+		// Status does not waive a submission from the anti-gaming window. Only the
+		// exact 30-day timestamp expiry releases a slot.
 		if (submissionDateUTC >= thirtyDaysAgo) {
 			const expiryDate = new Date(submissionDateUTC.getTime() + ROLLING_WINDOW_MS);
 			submissions.push({

@@ -8,8 +8,10 @@ test('formatTimeUntil handles null and positive durations', () => {
   assert.equal(formatTimeUntil(3_600_000), '1h 0m');
 });
 
-test('calculateLocalSubmissionData ignores delisted and expired submissions', () => {
-  const now = Date.now();
+test('calculateLocalSubmissionData counts recent delisted submissions but ignores exact-window expiry', () => {
+  const originalNow = Date.now;
+  const now = new Date('2026-07-27T14:00:00.000Z').getTime();
+  Date.now = () => now;
   const assets = [
     {
       id: 'asset-1',
@@ -33,14 +35,22 @@ test('calculateLocalSubmissionData ignores delisted and expired submissions', ()
       id: 'asset-4',
       name: 'Outside window',
       status: 'Draft',
-      submittedDate: new Date(now - 40 * 24 * 60 * 60 * 1000).toISOString()
+      submittedDate: new Date(now - (30 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000)).toISOString()
     }
   ];
 
-  const result = calculateLocalSubmissionData(assets);
+  try {
+    const result = calculateLocalSubmissionData(assets);
 
-  assert.equal(result.submissions.length, 2);
-  assert.equal(result.remainingSubmissions, 4);
-  assert.equal(result.isAtLimit, false);
-  assert.equal(result.publishedCount, 1);
+    assert.deepEqual(result.submissions.map((submission) => submission.id), [
+      'asset-2',
+      'asset-1',
+      'asset-3'
+    ]);
+    assert.equal(result.remainingSubmissions, 3);
+    assert.equal(result.isAtLimit, false);
+    assert.equal(result.publishedCount, 1);
+  } finally {
+    Date.now = originalNow;
+  }
 });

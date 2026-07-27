@@ -12,7 +12,8 @@ interface ExternalApiResponse {
   isWhitelisted?: boolean;
 }
 
-const EXTERNAL_API_URL = 'https://check-asset-name.vercel.app/api/checkTemplateuser';
+const EXTERNAL_API_URL =
+  'https://check-asset-name.mcp.createsomething.agency/api/checkTemplateuser';
 const REQUEST_TIMEOUT_MS = 10_000;
 
 export async function POST(request: Request) {
