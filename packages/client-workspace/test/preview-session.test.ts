@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, symlinkSync, writeFileSync } from 'node:fs';
 import net from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -138,6 +138,9 @@ test('static delivery preview serves only declared workspace files without a chi
     '<!doctype html><link rel="stylesheet" href="assets/site.css"><h1>Delivered</h1>'
   );
   writeFileSync(join(sourceRoot, 'assets', 'site.css'), 'h1 { color: tomato; }');
+  const outsidePreview = join(managedRoot, 'outside-preview.txt');
+  writeFileSync(outsidePreview, 'private local content');
+  symlinkSync(outsidePreview, join(sourceRoot, 'assets', 'outside-preview.txt'));
   const registry = new WorkspaceRegistry({
     managedRoot,
     definitions: [
@@ -161,6 +164,15 @@ test('static delivery preview serves only declared workspace files without a chi
     new Request('http://workspace.test/api/workspaces/acme/preview/assets/site.css')
   );
   assert.equal(await asset.text(), 'h1 { color: tomato; }');
+  await assert.rejects(
+    preview.proxy(
+      new Request(
+        'http://workspace.test/api/workspaces/acme/preview/assets/outside-preview.txt'
+      )
+    ),
+    (error: unknown) =>
+      error instanceof PreviewSessionError && error.code === 'preview_path_escape'
+  );
   await assert.rejects(
     preview.proxy(new Request('http://workspace.test/api/workspaces/acme/preview/%2e%2e/secret')),
     (error: unknown) => error instanceof PreviewSessionError && error.code === 'preview_path_escape'

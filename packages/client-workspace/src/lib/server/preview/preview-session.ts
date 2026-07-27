@@ -1,5 +1,5 @@
 import { spawn, type ChildProcess } from 'node:child_process';
-import { readFile, stat } from 'node:fs/promises';
+import { readFile, realpath, stat } from 'node:fs/promises';
 import { isAbsolute, relative, resolve, sep } from 'node:path';
 
 import type { ResolvedWorkspaceDefinition } from '../workspaces/registry.js';
@@ -270,8 +270,16 @@ export class PreviewSession {
       );
     }
     try {
-      if (!(await stat(target)).isFile()) return new Response('Not found', { status: 404 });
-      let body: BodyInit | null = method === 'HEAD' ? null : await readFile(target);
+      const realRoot = await realpath(root);
+      const realTarget = await realpath(target);
+      if (!isWithin(realRoot, realTarget)) {
+        throw new PreviewSessionError(
+          'preview_path_escape',
+          'Preview file resolves outside this workspace.'
+        );
+      }
+      if (!(await stat(realTarget)).isFile()) return new Response('Not found', { status: 404 });
+      let body: BodyInit | null = method === 'HEAD' ? null : await readFile(realTarget);
       const type = contentType(target);
       if (method === 'GET' && type.startsWith('text/html')) {
         const html = (body as Buffer).toString('utf8');

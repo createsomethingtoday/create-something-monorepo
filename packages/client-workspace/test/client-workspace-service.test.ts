@@ -202,6 +202,7 @@ test('service restores a persisted receipt and baseline after the runtime restar
     });
     try {
       const restored = await restarted.sessionState(created.receipt.sessionId);
+      assert.equal(restored.active, false);
       assert.equal(restored.workspaceId, 'demo');
       assert.equal(restored.receipt.sessionId, created.receipt.sessionId);
       assert.equal(restored.receipt.status, 'ready');

@@ -24,6 +24,7 @@
   };
   type SessionResponse = {
     workspace: Workspace;
+    active: boolean;
     receipt: SessionReceipt;
     preview: PreviewStatus;
   };
@@ -34,6 +35,7 @@
   let availableWorkspaces = $derived([...data.workspaces, ...importedWorkspaces]);
   let codexStatus = $derived<CodexStatus>(data.codex);
   let workspace = $state<Workspace | null>(null);
+  let sessionActive = $state(false);
   let receipt = $state<SessionReceipt | null>(null);
   let events = $state<BrowserWorkspaceEvent[]>([]);
   let preview = $state<PreviewStatus | null>(null);
@@ -48,6 +50,7 @@
   let resetting = $state(false);
   let closing = $state(false);
   let importing = $state(false);
+  let checkingCodex = $state(false);
   let sending = $state(false);
   let notice = $state('Choose an allowlisted workspace to begin.');
   let errorMessage = $state('');
@@ -163,6 +166,23 @@
     return 'Codex unavailable';
   }
 
+  async function refreshCodexStatus() {
+    if (checkingCodex) return;
+    checkingCodex = true;
+    errorMessage = '';
+    try {
+      codexStatus = await readJson<CodexStatus>(await fetch('/api/runtime/codex'));
+      notice =
+        codexStatus.state === 'ready'
+          ? 'Codex is ready. Choose a verified workspace.'
+          : 'Codex still needs attention.';
+    } catch (error) {
+      showError(error);
+    } finally {
+      checkingCodex = false;
+    }
+  }
+
   async function restoreSession(sessionId: string) {
     opening = true;
     errorMessage = '';
@@ -173,7 +193,9 @@
       );
       applySession(result);
       await refreshDiff();
-      notice = `Restored ${result.receipt.status} session.`;
+      notice = result.active
+        ? `Restored ${result.receipt.status} session.`
+        : `Restored ${result.receipt.status} receipt in read-only mode. Close it to start a new session.`;
     } catch (error) {
       localStorage.removeItem(sessionStorageKey);
       showError(error);
@@ -184,10 +206,15 @@
 
   function applySession(result: SessionResponse) {
     workspace = result.workspace;
+    sessionActive = result.active;
     receipt = result.receipt;
     events = mergeWorkspaceEvents([], result.receipt.events);
     preview = result.preview;
-    connectEvents(result.receipt.sessionId);
+    if (result.active) connectEvents(result.receipt.sessionId);
+    else {
+      eventSource?.close();
+      eventSource = null;
+    }
   }
 
   function connectEvents(sessionId: string) {
@@ -236,7 +263,7 @@
   }
 
   async function submitTurn() {
-    if (!receipt || !promptText.trim() || sending) return;
+    if (!receipt || !sessionActive || !promptText.trim() || sending) return;
     const submittedText = promptText.trim();
     const submittedImage = attachment?.name;
     sending = true;
@@ -276,7 +303,7 @@
   }
 
   async function respondToApproval(approvalId: string, decision: 'accept' | 'decline') {
-    if (!receipt) return;
+    if (!receipt || !sessionActive) return;
     errorMessage = '';
     try {
       await readJson<{ ok: boolean }>(
@@ -334,6 +361,11 @@
 
   async function closeWorkspace() {
     if (!receipt || closing) return;
+    if (!sessionActive) {
+      clearSession();
+      notice = 'Saved receipt closed. Open the workspace to start a new governed session.';
+      return;
+    }
     const closingSessionId = receipt.sessionId;
     closing = true;
     errorMessage = '';
@@ -361,6 +393,7 @@
     eventSource = null;
     localStorage.removeItem(sessionStorageKey);
     workspace = null;
+    sessionActive = false;
     receipt = null;
     events = [];
     preview = null;
@@ -404,7 +437,7 @@
         pendingWorkspaceApprovals(events).length > 0
       )}
     >
-      {restoring ? 'restoring' : (receipt?.status ?? codexStatus.state)}
+      {restoring ? 'restoring' : receipt && !sessionActive ? 'receipt' : (receipt?.status ?? codexStatus.state)}
     </span>
     {#if workspace}
       {#if !data.desktop}
@@ -413,7 +446,7 @@
         </button>
       {/if}
       <button class="quiet-button" type="button" disabled={closing} onclick={closeWorkspace}>
-        {closing ? 'Closing…' : 'Close'}
+        {closing ? 'Closing…' : sessionActive ? 'Close' : 'Close receipt'}
       </button>
     {/if}
   </div>
@@ -445,6 +478,13 @@
           <strong>{codexSummary(codexStatus)}</strong>
           <small>The app never reads or copies Codex credentials.</small>
         </div>
+        <button
+          class="quiet-button runtime-recheck"
+          type="button"
+          disabled={checkingCodex}
+          aria-busy={checkingCodex}
+          onclick={refreshCodexStatus}>Recheck Codex</button
+        >
       </div>
       <form
         class="delivery-import"
@@ -570,7 +610,7 @@
           rows="5"
           maxlength="12000"
           placeholder="Describe the frontend change you want to see…"
-          disabled={sending}
+          disabled={sending || !sessionActive}
         ></textarea>
         <div class="composer-actions">
           <label class="image-button" title="Attach a reference image">
@@ -578,6 +618,7 @@
               bind:this={fileInput}
               type="file"
               accept="image/png,image/jpeg,image/webp"
+              disabled={!sessionActive}
               onchange={chooseAttachment}
             />
             <span aria-hidden="true">＋</span> Reference
@@ -586,7 +627,7 @@
           <button
             class="send-button"
             type="submit"
-            disabled={sending || !promptText.trim()}
+            disabled={sending || !sessionActive || !promptText.trim()}
             aria-label="Send edit request"
           >
             {sending ? 'Working' : 'Send'} <span aria-hidden="true">↗</span>
@@ -617,7 +658,7 @@
         <p>{notice}</p>
       </div>
 
-      {#each pendingWorkspaceApprovals(events) as approval (approval.sequence)}
+      {#each sessionActive ? pendingWorkspaceApprovals(events) : [] as approval (approval.sequence)}
         <article class="approval-card" data-work-state="approval">
           <p class="eyebrow">Approval required</p>
           <h3>
@@ -767,6 +808,7 @@
   .runtime-card > div { display: grid; gap: .2rem; }
   .runtime-card strong { color: var(--color-performance-ink); font-size: .92rem; }
   .runtime-card small { color: var(--color-performance-muted); }
+  .runtime-recheck { margin-left: auto; white-space: nowrap; }
   .delivery-import { display: grid; grid-template-columns: 1fr auto; gap: .65rem; align-items: end; max-width: 590px; margin-top: 1rem; padding: 1rem; background: var(--color-performance-bg-elevated); border: 1px solid var(--color-performance-border-emphasis); border-radius: var(--radius-performance-md); }
   .delivery-import label { grid-column: 1 / -1; color: var(--color-performance-fg-secondary); font-family: var(--font-performance-mono); font-size: .65rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
   .delivery-import input { min-width: 0; color: var(--color-performance-fg-secondary); font-size: .78rem; }

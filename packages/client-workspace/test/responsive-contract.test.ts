@@ -11,3 +11,10 @@ test('mobile workspace contains long agent and evidence strings inside the viewp
   assert.match(routeSource, /\.activity-item p \{[^}]*overflow-wrap: anywhere;/s);
   assert.match(routeSource, /@media \(max-width: 720px\) \{[\s\S]*\.topbar \{[^}]*min-width: 0;/s);
 });
+
+test('desktop runtime can recheck Codex and restores inactive receipts read-only', () => {
+  assert.match(routeSource, /fetch\('\/api\/runtime\/codex'\)/);
+  assert.match(routeSource, />Recheck Codex</);
+  assert.match(routeSource, /sessionActive = result\.active/);
+  assert.match(routeSource, /disabled=\{sending \|\| !sessionActive\}/);
+});

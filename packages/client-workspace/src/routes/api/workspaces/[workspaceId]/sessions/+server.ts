@@ -8,7 +8,7 @@ export const POST: RequestHandler = async ({ params }) => {
     const preview = clientWorkspaceRuntime.preview(params.workspaceId);
     const previewStatus = await preview.start();
     const created = await clientWorkspaceRuntime.service.createSession(params.workspaceId);
-    return Response.json({ ...created, preview: previewStatus }, { status: 201 });
+    return Response.json({ ...created, active: true, preview: previewStatus }, { status: 201 });
   } catch (error) {
     return workspaceErrorResponse(error);
   }

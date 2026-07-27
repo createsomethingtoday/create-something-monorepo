@@ -5,13 +5,14 @@ import { clientWorkspaceRuntime } from '$lib/server/runtime.js';
 
 export const GET: RequestHandler = async ({ params }) => {
   try {
-    const { receipt, workspaceId } = await clientWorkspaceRuntime.service.sessionState(
+    const { active, receipt, workspaceId } = await clientWorkspaceRuntime.service.sessionState(
       params.sessionId
     );
     const preview = clientWorkspaceRuntime.preview(workspaceId);
     const previewStatus = await preview.start();
     return Response.json({
       workspace: clientWorkspaceRuntime.registry.get(workspaceId),
+      active,
       receipt,
       preview: previewStatus
     });
