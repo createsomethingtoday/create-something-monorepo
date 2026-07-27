@@ -46,13 +46,15 @@ import {
 import { tidyNodeUpdates } from './client/layout.js';
 import { readSharedCanvasState, updateSharedCanvasState } from './canvas-state.js';
 import { buildAtlasDatabaseHealth } from './database-health.js';
+import { inspectAtlasGovernedInteraction } from './governed-interaction.js';
 import type { AtlasWritebackActionStatus } from './types.js';
 
-type StudioServerOptions = {
+export type StudioServerOptions = {
   host: string;
   port: number;
   sessionId?: string;
   cwd?: string;
+  governedInteractionPath?: string;
 };
 
 type SessionEventStream = {
@@ -69,6 +71,13 @@ type CachedAsset = {
 };
 
 const gzipAsync = promisify(gzip);
+const SECURITY_HEADERS = {
+  'content-security-policy':
+    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'",
+  'referrer-policy': 'no-referrer',
+  'x-content-type-options': 'nosniff',
+  'x-frame-options': 'DENY',
+} as const;
 
 async function readJson<T = Record<string, unknown>>(request: http.IncomingMessage): Promise<T> {
   const chunks: Buffer[] = [];
@@ -81,6 +90,7 @@ async function readJson<T = Record<string, unknown>>(request: http.IncomingMessa
 
 function sendJson(response: http.ServerResponse, status: number, payload: unknown): void {
   response.writeHead(status, {
+    ...SECURITY_HEADERS,
     'content-type': 'application/json; charset=utf-8',
     'cache-control': 'no-store'
   });
@@ -98,6 +108,7 @@ function sendText(
   contentType = 'text/plain'
 ): void {
   response.writeHead(status, {
+    ...SECURITY_HEADERS,
     'content-type': `${contentType}; charset=utf-8`,
     'cache-control': 'no-store'
   });
@@ -140,6 +151,7 @@ async function sendAsset(
   const acceptsGzip = /\bgzip\b/.test(request.headers['accept-encoding'] ?? '');
   const body = acceptsGzip ? asset.gzipBody : asset.body;
   const headers: http.OutgoingHttpHeaders = {
+    ...SECURITY_HEADERS,
     'cache-control': 'public, max-age=31536000, immutable',
     'content-length': body.byteLength,
     'content-type': asset.contentType,
@@ -151,7 +163,15 @@ async function sendAsset(
 }
 
 function badRequest(response: http.ServerResponse, error: unknown): void {
-  sendJson(response, 400, { error: error instanceof Error ? error.message : String(error) });
+  const diagnostic =
+    error && typeof error === 'object'
+      ? (error as { code?: unknown; path?: unknown })
+      : undefined;
+  sendJson(response, 400, {
+    error: error instanceof Error ? error.message : String(error),
+    ...(typeof diagnostic?.code === 'string' ? { code: diagnostic.code } : {}),
+    ...(typeof diagnostic?.path === 'string' ? { path: diagnostic.path } : {}),
+  });
 }
 
 function sendEvent(response: http.ServerResponse, event: string, payload: unknown): void {
@@ -266,13 +286,19 @@ export async function startStudioServer(options: StudioServerOptions): Promise<h
       const method = request.method ?? 'GET';
 
       if (method === 'GET' && url.pathname === '/favicon.ico') {
-        response.writeHead(204, { 'cache-control': 'public, max-age=86400' });
+        response.writeHead(204, {
+          ...SECURITY_HEADERS,
+          'cache-control': 'public, max-age=86400',
+        });
         response.end();
         return;
       }
 
       if (method === 'GET' && (url.pathname === '/' || url.pathname === '/sessions')) {
-        response.writeHead(302, { location: `/sessions/${defaultSessionId}` });
+        response.writeHead(302, {
+          ...SECURITY_HEADERS,
+          location: `/sessions/${defaultSessionId}`,
+        });
         response.end();
         return;
       }
@@ -310,6 +336,20 @@ export async function startStudioServer(options: StudioServerOptions): Promise<h
 
       if (method === 'GET' && url.pathname === '/api/palette') {
         sendJson(response, 200, getAtlasStudioPalette());
+        return;
+      }
+
+      if (method === 'GET' && url.pathname === '/api/governed-interaction') {
+        if (!options.governedInteractionPath) {
+          sendJson(response, 404, {
+            error: 'No governed interaction bundle is configured for this runtime.',
+          });
+          return;
+        }
+        const interaction = JSON.parse(
+          await readFile(options.governedInteractionPath, 'utf8'),
+        ) as unknown;
+        sendJson(response, 200, inspectAtlasGovernedInteraction(interaction));
         return;
       }
 
@@ -478,6 +518,7 @@ export async function startStudioServer(options: StudioServerOptions): Promise<h
       if (method === 'GET' && eventsMatch) {
         const sessionId = decodeURIComponent(eventsMatch[1] ?? '');
         response.writeHead(200, {
+          ...SECURITY_HEADERS,
           'content-type': 'text/event-stream; charset=utf-8',
           'cache-control': 'no-cache, no-transform',
           connection: 'keep-alive',

@@ -19,6 +19,30 @@ test('compiles one marketplace definition into a complete governed runtime bundl
   assert.equal(compiled.agentContracts.agents.length, 1);
   assert.equal(compiled.approvalSurfaces.actions.length, 4);
   assert.equal(compiled.evaluationManifest.evaluations.length, 3);
+  assert.deepEqual(compiled.governedInteraction, {
+    schemaVersion: 'governed_interaction_bundle.v0.1',
+    language: 'create-something/control',
+    runtimeVersion: '0.1.0',
+    workflowId: definition.workflowId,
+    workflowVersion: definition.version,
+    definitionHash: compiled.definitionHash,
+    entrySurfaceId: 'operator-console',
+    capabilities: [
+      'interaction.select',
+      'receipt.inspect',
+      'replay.inspect',
+      'workflow.inspect',
+    ],
+    surfaces: [
+      {
+        id: 'operator-console',
+        title: definition.title,
+        kind: 'workflow_overview',
+        operations: [{ kind: 'select_replay_case' }],
+      },
+    ],
+    actions: compiled.decisionInventory.decisions,
+  });
 
   const headers = [
     compiled.runtimeTargets,

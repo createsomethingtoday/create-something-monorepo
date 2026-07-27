@@ -5,13 +5,34 @@ export {
 } from './compile.js';
 export { writeCompiledWorkflowArtifacts } from './artifacts.js';
 export { createAcceptanceSummary, replayWorkflow } from './replay.js';
-export { createOperatorConsoleData, OPERATOR_CONSOLE_HTML } from './operator-console.js';
+export {
+  createOperatorConsoleData,
+  OPERATOR_CONSOLE_CSS,
+  OPERATOR_CONSOLE_HTML,
+  OPERATOR_CONSOLE_JAVASCRIPT,
+} from './operator-console.js';
+export {
+  evaluateGovernedInteractionCompatibility,
+  GovernedInteractionValidationError,
+  parseGovernedInteractionBundle,
+} from './interaction.js';
 export { serveOperatorConsole } from './server.js';
+export {
+  CLIENT_WORKSPACE_INTERACTION_HOST,
+  inspectClientWorkspaceGovernedInteraction,
+} from './client-workspace-host.js';
 
 export type { OperatorConsoleServer } from './server.js';
+export type { ClientWorkspaceGovernedInteractionInspection } from './client-workspace-host.js';
 
 export type { WorkflowArtifactManifest } from './artifacts.js';
 export type { WorkflowReplayArtifacts } from './replay.js';
+export type {
+  GovernedInteractionCompatibilityDecision,
+  GovernedInteractionCompatibilityErrorCode,
+  GovernedInteractionHostContract,
+  GovernedInteractionValidationCode,
+} from './interaction.js';
 
 export type {
   ActionKind,
@@ -28,6 +49,10 @@ export type {
   EvaluationManifestArtifact,
   EventSchemasArtifact,
   EvidenceLedgerArtifact,
+  GovernedInteractionBundle,
+  GovernedInteractionCapability,
+  GovernedInteractionOperation,
+  GovernedInteractionSurface,
   ObjectSchemasArtifact,
   RuntimeTargetsArtifact,
   SystemTier,

@@ -2,6 +2,8 @@
 
 Tauri desktop app for the local CREATE SOMETHING Atlas Studio canvas.
 
+Release builds are self-contained. The app packages Bun, a bundled Atlas Studio server, renderer assets, and a versioned `create-something/control` governed-interaction bundle. At launch the native shell validates every resource against `runtime-build.json`, starts only the packaged runtime, and stores mutable sessions under Application Support. An installed app does not require the monorepo checkout, Node, or pnpm.
+
 The desktop app starts the local Atlas Studio server internally, opens the canvas in the Tauri window, and stores sessions in a stable app-data directory:
 
 ```text
@@ -76,6 +78,10 @@ pnpm atlas:desktop:session
 
 This opens the Tauri desktop app. No separate Atlas Studio server terminal is required.
 
+### Governed interaction compatibility
+
+The installed runtime exposes the packaged `governed_interaction_bundle.v0.1` through the read-only `/api/governed-interaction` endpoint. Atlas validates the compiler-owned schema, `create-something/control` language, runtime `0.1.0`, finite capabilities, finite operations, action governance, and entry references. It does not execute delivery-provided JavaScript or reinterpret workflow authority.
+
 ### Story API invoke bridge
 
 The desktop app exposes native Tauri commands over the same local Atlas Story API v1 endpoints used by HTTP, MCP, and CLI callers. The commands do not create a desktop-only story schema; they forward JSON to the local server and return the normalized Story API response:
@@ -111,7 +117,7 @@ After installation, launch from Applications or run this from any folder:
 atlas-studio
 ```
 
-The installed app is built from this monorepo checkout. If the checkout moves, reinstall the launcher.
+The launcher workflow remains a developer convenience. Release DMGs carry their complete runtime and remain independent of the checkout after installation.
 
 ## Validation
 
@@ -120,6 +126,17 @@ Run the native compile check without opening a window or creating a signed bundl
 ```bash
 pnpm atlas:desktop:check
 ```
+
+Build a local app/DMG and run the real installed acceptance workflow:
+
+```bash
+pnpm --filter @create-something/atlas-studio-desktop build:dmg
+pnpm --filter @create-something/atlas-studio-desktop test:installed
+```
+
+`test:installed` verifies the disk image, mounts it read-only, copies the app to an isolated install directory, launches it through LaunchServices with an isolated Atlas home, reads the governed interaction through the packaged API, creates a session, quits/relaunches, verifies restoration, and proves a tampered packaged server is rejected. It writes a machine-readable receipt under `output/atlas-studio-desktop/`.
+
+Developer ID signing, Apple notarization, public hosting, and client distribution are distinct promotion gates. A successful unsigned local acceptance run does not imply any of them.
 
 ## Operator Model
 

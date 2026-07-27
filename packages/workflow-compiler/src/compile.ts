@@ -7,6 +7,7 @@ import type {
   DecisionInventoryArtifact,
   EvaluationManifestArtifact,
   EventSchemasArtifact,
+  GovernedInteractionBundle,
   ObjectSchemasArtifact,
   RuntimeTargetsArtifact,
   ToolContractsArtifact,
@@ -373,6 +374,28 @@ export function compileWorkflowDefinition(definition: WorkflowDefinition): Compi
       }))
       .sort(byId),
   };
+  const governedInteraction: GovernedInteractionBundle = {
+    schemaVersion: 'governed_interaction_bundle.v0.1',
+    language: 'create-something/control',
+    runtimeVersion: '0.1.0',
+    ...header,
+    entrySurfaceId: 'operator-console',
+    capabilities: [
+      'interaction.select',
+      'receipt.inspect',
+      'replay.inspect',
+      'workflow.inspect',
+    ],
+    surfaces: [
+      {
+        id: 'operator-console',
+        title: definition.title,
+        kind: 'workflow_overview',
+        operations: [{ kind: 'select_replay_case' }],
+      },
+    ],
+    actions: decisionInventory.decisions,
+  };
 
   return {
     schemaVersion: 'compiled_workflow_bundle.v0.1',
@@ -398,5 +421,6 @@ export function compileWorkflowDefinition(definition: WorkflowDefinition): Compi
     agentContracts,
     approvalSurfaces,
     evaluationManifest,
+    governedInteraction,
   };
 }

@@ -1,0 +1,85 @@
+{
+  "schema": "create-something/atlas-studio-installed-acceptance@1",
+  "ok": true,
+  "runId": "2026-07-27T22-09-50-648Z",
+  "artifacts": {
+    "dmg": {
+      "name": "Atlas Studio_0.1.0_aarch64.dmg",
+      "sha256": "c63e0e0bd2aa662544fd3c8f441690e3a989954a1acd75d178c2eebd9a87ddbc"
+    },
+    "app": {
+      "sha256": "5adff78e59e55608c5f0bff4e0d1e53dbbe8c075a8e64ee3a023e7eb7a304d0d"
+    },
+    "runtimeManifest": {
+      "sha256": "210e04fa774ed319f197d915f9a6a27a1b27239d32d687d6bcc0734df6643989"
+    },
+    "interaction": {
+      "sha256": "87b608c8aa530e7eb46021f2269ff07e25051a124e2c46a53ba9af3b44605d28",
+      "definitionHash": "sha256:96e880807497d7a417cbf7e7a009d9331996d55e249068767b2417131a91156f"
+    }
+  },
+  "runtime": {
+    "language": "create-something/control",
+    "runtimeVersion": "0.1.0",
+    "workflowId": "webflow.marketplace.template-lifecycle",
+    "capabilities": [
+      "interaction.select",
+      "receipt.inspect",
+      "replay.inspect",
+      "workflow.inspect"
+    ],
+    "authority": "read_only",
+    "hostCompatibility": {
+      "schemaVersion": "governed_interaction_compatibility.v0.1",
+      "compatible": true,
+      "hostId": "atlas-studio",
+      "language": "create-something/control",
+      "runtimeVersion": "0.1.0",
+      "requiredCapabilities": [
+        "interaction.select",
+        "receipt.inspect",
+        "replay.inspect",
+        "workflow.inspect"
+      ],
+      "requiredOperations": [
+        "select_replay_case"
+      ],
+      "errors": []
+    },
+    "processCommand": "/private/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/atlas-installed-acceptance-3pj4WE/installed/Atlas Studio.app/Contents/Resources/runtime/bun /private/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/atlas-installed-acceptance-3pj4WE/installed/Atlas Studio.app/Contents/Resources/server/cli.js serve --host 127.0.0.1 --port 5198 --governed-interaction /private/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/atlas-installed-acceptance-3pj4WE/installed/Atlas Studio.app/Contents/Resources/interactions/marketplace/governed-interaction.json",
+    "resourcesInsideCopiedApp": true,
+    "localNodeRequired": false,
+    "localPnpmRequired": false,
+    "packagedFileCount": 23
+  },
+  "evidence": {
+    "hdiutilVerify": true,
+    "readonlyMount": true,
+    "launchServices": true,
+    "apiReadback": true,
+    "relaunchRestoredSessionId": "installed-acceptance-governed-interaction-restoration-ms3s5dxn",
+    "tamperRejected": {
+      "code": "PACKAGED_RUNTIME_INVALID",
+      "error": "Packaged Atlas runtime integrity failed for server/cli.js."
+    }
+  },
+  "gates": {
+    "compilerAcceptance": "performed",
+    "hostCompatibility": "performed",
+    "appBuild": "performed",
+    "dmgVerification": "performed",
+    "installedLaunch": "performed",
+    "signing": {
+      "status": "unperformed",
+      "reason": "APPLE_SIGNING_IDENTITY is unavailable; the local bundle is not distribution proof."
+    },
+    "notarization": {
+      "status": "unperformed",
+      "reason": "Notarization credentials and an explicit distribution promotion are unavailable."
+    },
+    "publicHosting": "unperformed",
+    "clientInvitation": "unperformed",
+    "liveProductionMutation": "unperformed",
+    "humanProductAcceptance": "unperformed"
+  }
+}

@@ -8,12 +8,19 @@
     "session": "node scripts/session.mjs",
     "studio-data": "node scripts/studio-data.mjs",
     "install-launchers": "node scripts/install-launchers.mjs",
+    "prepare:runtime": "node scripts/prepare-runtime.mjs",
+    "test:runtime": "node --test test/runtime-contract.test.mjs",
+    "test:native": "pnpm prepare:runtime && cargo test --manifest-path src-tauri/Cargo.toml",
+    "test:installed": "node scripts/installed-acceptance.mjs",
     "dev": "tauri dev",
     "build": "tauri build",
+    "build:app": "tauri build --bundles app",
+    "build:dmg": "tauri build --bundles dmg",
     "check": "tauri build --debug --no-bundle",
     "tauri": "tauri"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "2.11.2"
+    "@tauri-apps/cli": "2.11.2",
+    "esbuild": "^0.24.2"
   }
 }

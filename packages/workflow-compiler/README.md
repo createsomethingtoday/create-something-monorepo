@@ -19,6 +19,8 @@ The first vertical is the Webflow Marketplace template lifecycle: submission, va
 ```ts
 import {
   compileWorkflowDefinition,
+  evaluateGovernedInteractionCompatibility,
+  parseGovernedInteractionBundle,
   replayWorkflow,
   writeCompiledWorkflowArtifacts,
 } from '@create-something/workflow-compiler';
@@ -27,6 +29,14 @@ import {
 **Depth:** the interface hides governance validation, reference validation, canonical hashing, artifact linkage, transition replay, fail-closed defaults, evidence receipts, acceptance coverage, console generation, and deterministic file output.
 
 **Runtime ownership:** generated target contracts point to existing owning surfaces. The compiler does not replace Marketplace Submission Cloud, template validation, template-review MCP, Policy OS, Substrate, or Atlas Studio.
+
+## Governed interaction IR
+
+`governed_interaction_bundle.v0.1` is a versioned JSON intermediate representation for portable, policy-bounded desktop interactions. It is deliberately not a general-purpose programming language. A bundle declares its exact language and runtime version, one or more semantic surfaces, a finite capability inventory, finite local operations, and the compiled authority/evidence/approval/receipt/recovery contract for each workflow action.
+
+The `create-something/control` runtime currently permits only four read-only capabilities (`workflow.inspect`, `replay.inspect`, `receipt.inspect`, and `interaction.select`) and one local operation (`select_replay_case`). Parsing rejects unknown fields, versions, capabilities, references, duplicate identifiers, executable operations, and incomplete approval ownership. Hosts publish their supported runtime/capability/operation contract and receive one normalized compatibility decision; they do not reinterpret workflow authority.
+
+The compiler emits the same content-hashed `governed-interaction.json` for Atlas Studio and Client Workspace. The trusted desktop application contains the interpreter and renderer. A delivery may contain data governed by the IR, but it cannot introduce JavaScript, native plugins, commands, filesystem roots, origins, or ambient environment access.
 
 ## Agent Legibility Contract
 
@@ -63,6 +73,7 @@ The output includes:
 - evidence ledger
 - acceptance summary
 - generated operator console
+- governed-interaction bundle
 - content-hashed artifact manifest
 
 Serve the generated read-only console:
@@ -86,7 +97,7 @@ The verifier runs the public CLI twice from clean directories and rejects byte d
 - explicit unknown-action coverage
 - complete consequential governance
 - matching expected and observed historical outcomes
-- 15 content-hashed generated artifacts
+- 18 content-hashed generated artifacts, including a strict-CSP-compatible console split into semantic HTML, CSS, trusted module code, and data
 
 The stable local acceptance output defaults to the operating system temporary directory at `cre-1191-workflow-compiler-acceptance`. Override it with `WORKFLOW_COMPILER_ACCEPTANCE_OUT` when needed.
 

@@ -68,7 +68,8 @@ try {
   assert.ok(Object.values(summary.requiredCoverage).every(Boolean));
 
   const manifest = JSON.parse(await readFile(join(first, 'manifest.json'), 'utf8'));
-  assert.equal(manifest.files.length, 15);
+  assert.equal(manifest.files.length, 18);
+  assert.ok(manifest.files.some((entry) => entry.path === 'governed-interaction.json'));
   assert.ok(
     manifest.files.every(
       (entry) => typeof entry.path === 'string' && /^sha256:[a-f0-9]{64}$/.test(entry.hash),

@@ -79,6 +79,9 @@ importers:
       '@tauri-apps/cli':
         specifier: 2.11.2
         version: 2.11.2
+      esbuild:
+        specifier: ^0.24.2
+        version: 0.24.2
 
   apps/bettermode-marketplace-creator-agent:
     devDependencies:
@@ -2380,6 +2383,9 @@ importers:
       '@create-something/policy-os-engine':
         specifier: workspace:*
         version: link:../policy-os-engine
+      '@create-something/workflow-compiler':
+        specifier: workspace:*
+        version: link:../workflow-compiler
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
         version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)

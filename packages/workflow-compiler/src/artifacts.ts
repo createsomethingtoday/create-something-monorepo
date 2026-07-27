@@ -5,7 +5,12 @@ import { dirname } from 'node:path';
 
 import type { CompiledWorkflowBundle } from './types.js';
 import { createAcceptanceSummary, type WorkflowReplayArtifacts } from './replay.js';
-import { createOperatorConsoleData, OPERATOR_CONSOLE_HTML } from './operator-console.js';
+import {
+  createOperatorConsoleData,
+  OPERATOR_CONSOLE_CSS,
+  OPERATOR_CONSOLE_HTML,
+  OPERATOR_CONSOLE_JAVASCRIPT,
+} from './operator-console.js';
 
 export interface WorkflowArtifactManifest {
   schemaVersion: 'workflow_artifact_manifest.v0.1';
@@ -29,6 +34,7 @@ const ARTIFACTS: Array<{
   { path: 'decision-inventory.json', select: (bundle) => bundle.decisionInventory },
   { path: 'evaluation-manifest.json', select: (bundle) => bundle.evaluationManifest },
   { path: 'event-schemas.json', select: (bundle) => bundle.eventSchemas },
+  { path: 'governed-interaction.json', select: (bundle) => bundle.governedInteraction },
   { path: 'object-schemas.json', select: (bundle) => bundle.objectSchemas },
   { path: 'runtime-targets.json', select: (bundle) => bundle.runtimeTargets },
   { path: 'tool-contracts.json', select: (bundle) => bundle.toolContracts },
@@ -69,6 +75,8 @@ export async function writeCompiledWorkflowArtifacts(
         path: 'operator-console/data.json',
         content: json(createOperatorConsoleData(bundle, replay)),
       },
+      { path: 'operator-console/app.css', content: OPERATOR_CONSOLE_CSS },
+      { path: 'operator-console/app.js', content: OPERATOR_CONSOLE_JAVASCRIPT },
       { path: 'operator-console/index.html', content: OPERATOR_CONSOLE_HTML },
     ];
     for (const artifact of replayArtifacts) {

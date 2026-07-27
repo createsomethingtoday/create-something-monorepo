@@ -36,6 +36,7 @@ test('the public CLI writes a deterministic linked artifact inventory', async ()
       'decision-inventory.json',
       'evaluation-manifest.json',
       'event-schemas.json',
+      'governed-interaction.json',
       'manifest.json',
       'object-schemas.json',
       'runtime-targets.json',
@@ -51,7 +52,7 @@ test('the public CLI writes a deterministic linked artifact inventory', async ()
 
     const manifest = JSON.parse(await readFile(join(first, 'manifest.json'), 'utf8'));
     assert.equal(manifest.schemaVersion, 'workflow_artifact_manifest.v0.1');
-    assert.equal(manifest.files.length, 10);
+    assert.equal(manifest.files.length, 11);
     assert.ok(manifest.files.every((entry) => /^sha256:[a-f0-9]{64}$/.test(entry.hash)));
   } finally {
     await rm(first, { recursive: true, force: true });

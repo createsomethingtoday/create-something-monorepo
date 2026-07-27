@@ -53,7 +53,8 @@ test('the public CLI writes replay, ledger, and acceptance artifacts when cases 
     );
 
     const manifest = JSON.parse(await readFile(join(outDir, 'manifest.json'), 'utf8'));
-    assert.equal(manifest.files.length, 15);
+    assert.equal(manifest.files.length, 18);
+    assert.ok(manifest.files.some((entry) => entry.path === 'governed-interaction.json'));
     assert.ok(manifest.files.some((entry) => entry.path === 'evidence-ledger.json'));
   } finally {
     await rm(outDir, { recursive: true, force: true });
