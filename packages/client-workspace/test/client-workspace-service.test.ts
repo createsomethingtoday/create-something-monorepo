@@ -55,7 +55,8 @@ async function withService(
     registry: WorkspaceRegistry;
     seedRoot: string;
     stateRoot: string;
-  }) => Promise<void>
+  }) => Promise<void>,
+  editableRoots = ['src']
 ) {
   const root = join(tmpdir(), `client-workspace-service-${crypto.randomUUID()}`);
   const sourceRoot = join(root, 'managed', 'demo');
@@ -71,7 +72,7 @@ async function withService(
         id: 'demo',
         label: 'Demo',
         sourceRoot,
-        editableRoots: ['src'],
+        editableRoots,
         preview: { command: 'pnpm', args: ['dev'], port: 4310 }
       }
     ]
@@ -90,6 +91,15 @@ async function withService(
     await rm(root, { recursive: true, force: true });
   }
 }
+
+test('service captures a baseline when the verified delivery makes its root editable', async () => {
+  await withService(async ({ service }) => {
+    const created = await service.createSession('demo');
+
+    assert.equal(created.receipt.status, 'ready');
+    assert.equal(await service.workspaceDiff(created.receipt.sessionId), '');
+  }, ['.']);
+});
 
 test('service creates a sanitized workspace session and starts a private image turn', async () => {
   await withService(async ({ service, connection, stateRoot }) => {

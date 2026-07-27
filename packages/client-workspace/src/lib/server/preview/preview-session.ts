@@ -101,6 +101,13 @@ function contentType(path: string): string {
   );
 }
 
+function rewriteStaticHtml(rawHtml: string, previewPath: string): string {
+  const prefix = `${previewPath.replace(/\/$/, '')}/`;
+  return rawHtml
+    .replace(/(\s(?:href|src|poster)=["'])\/(?!\/)/gi, `$1${prefix}`)
+    .replace(/url\(\s*(["']?)\/(?!\/)/gi, `url($1${prefix}`);
+}
+
 function previewEnvironment(previewPath: string): NodeJS.ProcessEnv {
   const allowed: NodeJS.ProcessEnv = {
     PATH: process.env.PATH,
@@ -282,7 +289,7 @@ export class PreviewSession {
       let body: BodyInit | null = method === 'HEAD' ? null : await readFile(realTarget);
       const type = contentType(target);
       if (method === 'GET' && type.startsWith('text/html')) {
-        const html = (body as Buffer).toString('utf8');
+        const html = rewriteStaticHtml((body as Buffer).toString('utf8'), this.#previewPath);
         const base = `<base href="${this.#previewPath}/">`;
         body = html.includes('<head>') ? html.replace('<head>', `<head>${base}`) : `${base}${html}`;
       }

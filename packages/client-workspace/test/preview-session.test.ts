@@ -135,9 +135,10 @@ test('static delivery preview serves only declared workspace files without a chi
   mkdirSync(join(sourceRoot, 'assets'), { recursive: true });
   writeFileSync(
     join(sourceRoot, 'index.html'),
-    '<!doctype html><link rel="stylesheet" href="assets/site.css"><h1>Delivered</h1>'
+    '<!doctype html><link rel="stylesheet" href="/assets/site.css"><script src="/assets/app.js"></script><h1>Delivered</h1>'
   );
   writeFileSync(join(sourceRoot, 'assets', 'site.css'), 'h1 { color: tomato; }');
+  writeFileSync(join(sourceRoot, 'assets', 'app.js'), 'document.body.dataset.ready = "true";');
   const outsidePreview = join(managedRoot, 'outside-preview.txt');
   writeFileSync(outsidePreview, 'private local content');
   symlinkSync(outsidePreview, join(sourceRoot, 'assets', 'outside-preview.txt'));
@@ -158,7 +159,10 @@ test('static delivery preview serves only declared workspace files without a chi
   const entry = await preview.proxy(
     new Request('http://workspace.test/api/workspaces/acme/preview')
   );
-  assert.match(await entry.text(), /Delivered/);
+  const entryHtml = await entry.text();
+  assert.match(entryHtml, /Delivered/);
+  assert.match(entryHtml, /href="\/api\/workspaces\/acme\/preview\/assets\/site\.css"/);
+  assert.match(entryHtml, /src="\/api\/workspaces\/acme\/preview\/assets\/app\.js"/);
   assert.equal(entry.headers.get('content-type'), 'text/html; charset=utf-8');
   const asset = await preview.proxy(
     new Request('http://workspace.test/api/workspaces/acme/preview/assets/site.css')
