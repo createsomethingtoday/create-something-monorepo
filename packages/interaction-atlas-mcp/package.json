@@ -9,7 +9,7 @@
     "cs-atlas-studio": "dist/studio/cli.js"
   },
   "scripts": {
-    "prebuild": "pnpm --filter @create-something/canvas-kernel build && pnpm --filter @create-something/playbook-mcp build && pnpm --filter @create-something/observability build",
+    "prebuild": "pnpm --filter @create-something/canvas-kernel build && pnpm --filter @create-something/playbook-mcp build && pnpm --filter @create-something/observability build && pnpm --filter @create-something/workflow-compiler build",
     "build": "tsc && node dist/studio/build-client.js",
     "dev": "tsc --watch",
     "start": "node dist/index.js",
@@ -26,6 +26,7 @@
     "@create-something/observability": "workspace:*",
     "@create-something/playbook-mcp": "workspace:*",
     "@create-something/policy-os-engine": "workspace:*",
+    "@create-something/workflow-compiler": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.25.3",
     "@quietloudlab/ai-interaction-atlas": "^1.0.7",
     "lucide-react": "^0.563.0",

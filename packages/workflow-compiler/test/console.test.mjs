@@ -30,11 +30,18 @@ test('generates an operator console from compiled bundle and replay artifacts', 
     assert.equal(result.status, 0, result.stderr || result.stdout);
 
     const html = await readFile(join(outDir, 'operator-console', 'index.html'), 'utf8');
+    const javascript = await readFile(join(outDir, 'operator-console', 'app.js'), 'utf8');
+    const css = await readFile(join(outDir, 'operator-console', 'app.css'), 'utf8');
     const data = JSON.parse(
       await readFile(join(outDir, 'operator-console', 'data.json'), 'utf8'),
     );
 
-    assert.match(html, /fetch\('\.\/data\.json'\)/);
+    assert.match(html, /<link rel="stylesheet" href="\.\/app\.css" \/>/);
+    assert.match(html, /<script type="module" src="\.\/app\.js"><\/script>/);
+    assert.doesNotMatch(html, /<style>|<script type="module">/);
+    assert.match(javascript, /fetch\('\.\/data\.json'\)/);
+    assert.doesNotMatch(`${html}\n${javascript}`, /\beval\s*\(|new Function\b/);
+    assert.match(css, /color-scheme: dark/);
     assert.doesNotMatch(html, /complete-validation-passes/);
     assert.equal(data.definitionHash, data.acceptanceSummary.definitionHash);
     assert.deepEqual(data.acceptanceSummary.counts, {

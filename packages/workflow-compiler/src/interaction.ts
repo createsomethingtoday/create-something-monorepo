@@ -1,0 +1,372 @@
+import type {
+  ActionKind,
+  AutonomyClass,
+  CompiledDecision,
+  GovernedInteractionBundle,
+  GovernedInteractionCapability,
+  GovernedInteractionOperation,
+  GovernedInteractionSurface,
+} from './types.js';
+
+export type GovernedInteractionValidationCode =
+  | 'DUPLICATE_IDENTIFIER'
+  | 'INVALID_ACTION_GOVERNANCE'
+  | 'INVALID_BUNDLE'
+  | 'INVALID_REFERENCE'
+  | 'UNKNOWN_CAPABILITY'
+  | 'UNKNOWN_LANGUAGE'
+  | 'UNKNOWN_OPERATION'
+  | 'UNKNOWN_RUNTIME_VERSION'
+  | 'UNKNOWN_SCHEMA_VERSION';
+
+export class GovernedInteractionValidationError extends Error {
+  readonly code: GovernedInteractionValidationCode;
+  readonly path: string;
+
+  constructor(code: GovernedInteractionValidationCode, path: string, message: string) {
+    super(message);
+    this.name = 'GovernedInteractionValidationError';
+    this.code = code;
+    this.path = path;
+  }
+}
+
+type JsonObject = Record<string, unknown>;
+
+export type GovernedInteractionCompatibilityErrorCode =
+  | 'DEFINITION_HASH_MISMATCH'
+  | 'UNSUPPORTED_CAPABILITY'
+  | 'UNSUPPORTED_LANGUAGE'
+  | 'UNSUPPORTED_OPERATION'
+  | 'UNSUPPORTED_RUNTIME_VERSION';
+
+export interface GovernedInteractionHostContract {
+  hostId: string;
+  language: GovernedInteractionBundle['language'];
+  runtimeVersions: Array<GovernedInteractionBundle['runtimeVersion']>;
+  capabilities: GovernedInteractionCapability[];
+  operations: Array<GovernedInteractionOperation['kind']>;
+  definitionHashes?: Record<string, string>;
+}
+
+export interface GovernedInteractionCompatibilityDecision {
+  schemaVersion: 'governed_interaction_compatibility.v0.1';
+  compatible: boolean;
+  hostId: string;
+  language: GovernedInteractionBundle['language'];
+  runtimeVersion: GovernedInteractionBundle['runtimeVersion'];
+  requiredCapabilities: GovernedInteractionCapability[];
+  requiredOperations: Array<GovernedInteractionOperation['kind']>;
+  errors: Array<{
+    code: GovernedInteractionCompatibilityErrorCode;
+    value: string;
+  }>;
+}
+
+const CAPABILITIES: readonly GovernedInteractionCapability[] = [
+  'interaction.select',
+  'receipt.inspect',
+  'replay.inspect',
+  'workflow.inspect',
+];
+
+const ACTION_KINDS: readonly ActionKind[] = ['read', 'write', 'decision', 'publish'];
+const AUTONOMY_CLASSES: readonly AutonomyClass[] = [
+  'auto_allow',
+  'approval_required',
+  'manual_only',
+  'blocked',
+];
+
+function invalid(path: string, message: string): never {
+  throw new GovernedInteractionValidationError('INVALID_BUNDLE', path, message);
+}
+
+function object(value: unknown, path: string): JsonObject {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return invalid(path, `${path} must be an object.`);
+  }
+  return value as JsonObject;
+}
+
+function exactFields(
+  value: JsonObject,
+  required: readonly string[],
+  optional: readonly string[],
+  path: string,
+): void {
+  const allowed = new Set([...required, ...optional]);
+  const unknown = Object.keys(value).filter((key) => !allowed.has(key));
+  const missing = required.filter((key) => !(key in value));
+  if (unknown.length || missing.length) {
+    invalid(
+      path,
+      `${path} fields do not match the contract (missing: ${missing.join(', ') || 'none'}; unknown: ${unknown.join(', ') || 'none'}).`,
+    );
+  }
+}
+
+function string(value: unknown, path: string): string {
+  if (typeof value !== 'string' || value.trim() === '') return invalid(path, `${path} must be a string.`);
+  return value;
+}
+
+function stringArray(value: unknown, path: string): string[] {
+  if (!Array.isArray(value)) return invalid(path, `${path} must be an array.`);
+  return value.map((entry, index) => string(entry, `${path}[${index}]`));
+}
+
+function unique(values: string[], path: string): void {
+  const seen = new Set<string>();
+  for (const value of values) {
+    if (seen.has(value)) {
+      throw new GovernedInteractionValidationError(
+        'DUPLICATE_IDENTIFIER',
+        path,
+        `${path} contains duplicate identifier ${value}.`,
+      );
+    }
+    seen.add(value);
+  }
+}
+
+function enumValue<T extends string>(
+  value: unknown,
+  allowed: readonly T[],
+  path: string,
+): T {
+  if (typeof value !== 'string' || !allowed.includes(value as T)) {
+    return invalid(path, `${path} is not supported.`);
+  }
+  return value as T;
+}
+
+function parseOperation(value: unknown, path: string): GovernedInteractionOperation {
+  const operation = object(value, path);
+  exactFields(operation, ['kind'], [], path);
+  if (operation.kind !== 'select_replay_case') {
+    throw new GovernedInteractionValidationError(
+      'UNKNOWN_OPERATION',
+      `${path}.kind`,
+      `Unknown governed interaction operation ${String(operation.kind)}.`,
+    );
+  }
+  return { kind: 'select_replay_case' };
+}
+
+function parseSurface(value: unknown, path: string): GovernedInteractionSurface {
+  const surface = object(value, path);
+  exactFields(surface, ['id', 'title', 'kind', 'operations'], [], path);
+  if (surface.kind !== 'workflow_overview') {
+    return invalid(`${path}.kind`, `${path}.kind is not supported.`);
+  }
+  if (!Array.isArray(surface.operations)) {
+    return invalid(`${path}.operations`, `${path}.operations must be an array.`);
+  }
+  return {
+    id: string(surface.id, `${path}.id`),
+    title: string(surface.title, `${path}.title`),
+    kind: 'workflow_overview',
+    operations: surface.operations.map((operation, index) =>
+      parseOperation(operation, `${path}.operations[${index}]`),
+    ),
+  };
+}
+
+function parseDecision(value: unknown, path: string): CompiledDecision {
+  const decision = object(value, path);
+  exactFields(
+    decision,
+    [
+      'actionId',
+      'title',
+      'kind',
+      'authority',
+      'autonomy',
+      'systemsTouched',
+      'requiredEvidence',
+      'receiptFields',
+      'recovery',
+    ],
+    ['approvalOwner'],
+    path,
+  );
+  const recovery = object(decision.recovery, `${path}.recovery`);
+  exactFields(recovery, ['mode', 'owner', 'path'], [], `${path}.recovery`);
+  const autonomy = enumValue(decision.autonomy, AUTONOMY_CLASSES, `${path}.autonomy`);
+  const approvalOwner =
+    decision.approvalOwner === undefined
+      ? undefined
+      : string(decision.approvalOwner, `${path}.approvalOwner`);
+  if (autonomy === 'approval_required' && !approvalOwner) {
+    throw new GovernedInteractionValidationError(
+      'INVALID_ACTION_GOVERNANCE',
+      `${path}.approvalOwner`,
+      `Approval-required action ${String(decision.actionId)} must name an approval owner.`,
+    );
+  }
+  const systemsTouched = stringArray(decision.systemsTouched, `${path}.systemsTouched`);
+  const requiredEvidence = stringArray(decision.requiredEvidence, `${path}.requiredEvidence`);
+  const receiptFields = stringArray(decision.receiptFields, `${path}.receiptFields`);
+  unique(systemsTouched, `${path}.systemsTouched`);
+  unique(requiredEvidence, `${path}.requiredEvidence`);
+  unique(receiptFields, `${path}.receiptFields`);
+  return {
+    actionId: string(decision.actionId, `${path}.actionId`),
+    title: string(decision.title, `${path}.title`),
+    kind: enumValue(decision.kind, ACTION_KINDS, `${path}.kind`),
+    authority: string(decision.authority, `${path}.authority`),
+    autonomy,
+    systemsTouched,
+    requiredEvidence,
+    ...(approvalOwner ? { approvalOwner } : {}),
+    receiptFields,
+    recovery: {
+      mode: enumValue(
+        recovery.mode,
+        ['rollback', 'escalate', 'manual_fallback'] as const,
+        `${path}.recovery.mode`,
+      ),
+      owner: string(recovery.owner, `${path}.recovery.owner`),
+      path: string(recovery.path, `${path}.recovery.path`),
+    },
+  };
+}
+
+export function parseGovernedInteractionBundle(input: unknown): GovernedInteractionBundle {
+  const bundle = object(input, 'bundle');
+  exactFields(
+    bundle,
+    [
+      'schemaVersion',
+      'language',
+      'runtimeVersion',
+      'workflowId',
+      'workflowVersion',
+      'definitionHash',
+      'entrySurfaceId',
+      'capabilities',
+      'surfaces',
+      'actions',
+    ],
+    [],
+    'bundle',
+  );
+  if (bundle.schemaVersion !== 'governed_interaction_bundle.v0.1') {
+    throw new GovernedInteractionValidationError(
+      'UNKNOWN_SCHEMA_VERSION',
+      'bundle.schemaVersion',
+      `Unsupported governed interaction schema ${String(bundle.schemaVersion)}.`,
+    );
+  }
+  if (bundle.language !== 'create-something/control') {
+    throw new GovernedInteractionValidationError(
+      'UNKNOWN_LANGUAGE',
+      'bundle.language',
+      `Unsupported governed interaction language ${String(bundle.language)}.`,
+    );
+  }
+  if (bundle.runtimeVersion !== '0.1.0') {
+    throw new GovernedInteractionValidationError(
+      'UNKNOWN_RUNTIME_VERSION',
+      'bundle.runtimeVersion',
+      `Unsupported governed interaction runtime ${String(bundle.runtimeVersion)}.`,
+    );
+  }
+  if (!Array.isArray(bundle.capabilities)) {
+    return invalid('bundle.capabilities', 'bundle.capabilities must be an array.');
+  }
+  const capabilities = bundle.capabilities.map((capability, index) => {
+    if (typeof capability !== 'string' || !CAPABILITIES.includes(capability as GovernedInteractionCapability)) {
+      throw new GovernedInteractionValidationError(
+        'UNKNOWN_CAPABILITY',
+        `bundle.capabilities[${index}]`,
+        `Unknown governed interaction capability ${String(capability)}.`,
+      );
+    }
+    return capability as GovernedInteractionCapability;
+  });
+  unique(capabilities, 'bundle.capabilities');
+  if (!Array.isArray(bundle.surfaces) || bundle.surfaces.length === 0) {
+    return invalid('bundle.surfaces', 'bundle.surfaces must contain at least one surface.');
+  }
+  if (!Array.isArray(bundle.actions)) {
+    return invalid('bundle.actions', 'bundle.actions must be an array.');
+  }
+  const surfaces = bundle.surfaces.map((surface, index) =>
+    parseSurface(surface, `bundle.surfaces[${index}]`),
+  );
+  const actions = bundle.actions.map((action, index) =>
+    parseDecision(action, `bundle.actions[${index}]`),
+  );
+  unique(surfaces.map((surface) => surface.id), 'bundle.surfaces');
+  unique(actions.map((action) => action.actionId), 'bundle.actions');
+  const entrySurfaceId = string(bundle.entrySurfaceId, 'bundle.entrySurfaceId');
+  if (!surfaces.some((surface) => surface.id === entrySurfaceId)) {
+    throw new GovernedInteractionValidationError(
+      'INVALID_REFERENCE',
+      'bundle.entrySurfaceId',
+      `Entry surface ${entrySurfaceId} does not exist.`,
+    );
+  }
+  return {
+    schemaVersion: 'governed_interaction_bundle.v0.1',
+    language: 'create-something/control',
+    runtimeVersion: '0.1.0',
+    workflowId: string(bundle.workflowId, 'bundle.workflowId'),
+    workflowVersion: string(bundle.workflowVersion, 'bundle.workflowVersion'),
+    definitionHash: string(bundle.definitionHash, 'bundle.definitionHash'),
+    entrySurfaceId,
+    capabilities,
+    surfaces,
+    actions,
+  };
+}
+
+export function evaluateGovernedInteractionCompatibility(
+  input: unknown,
+  host: GovernedInteractionHostContract,
+): GovernedInteractionCompatibilityDecision {
+  const bundle = parseGovernedInteractionBundle(input);
+  const requiredCapabilities = [...bundle.capabilities].sort();
+  const requiredOperations = [
+    ...new Set(
+      bundle.surfaces.flatMap((surface) =>
+        surface.operations.map((operation) => operation.kind),
+      ),
+    ),
+  ].sort();
+  const errors: GovernedInteractionCompatibilityDecision['errors'] = [];
+
+  if (host.language !== bundle.language) {
+    errors.push({ code: 'UNSUPPORTED_LANGUAGE', value: bundle.language });
+  }
+  if (!host.runtimeVersions.includes(bundle.runtimeVersion)) {
+    errors.push({ code: 'UNSUPPORTED_RUNTIME_VERSION', value: bundle.runtimeVersion });
+  }
+  const expectedDefinitionHash = host.definitionHashes?.[bundle.workflowId];
+  if (expectedDefinitionHash && expectedDefinitionHash !== bundle.definitionHash) {
+    errors.push({ code: 'DEFINITION_HASH_MISMATCH', value: bundle.definitionHash });
+  }
+  for (const capability of requiredCapabilities) {
+    if (!host.capabilities.includes(capability)) {
+      errors.push({ code: 'UNSUPPORTED_CAPABILITY', value: capability });
+    }
+  }
+  for (const operation of requiredOperations) {
+    if (!host.operations.includes(operation)) {
+      errors.push({ code: 'UNSUPPORTED_OPERATION', value: operation });
+    }
+  }
+
+  return {
+    schemaVersion: 'governed_interaction_compatibility.v0.1',
+    compatible: errors.length === 0,
+    hostId: host.hostId,
+    language: bundle.language,
+    runtimeVersion: bundle.runtimeVersion,
+    requiredCapabilities,
+    requiredOperations,
+    errors,
+  };
+}

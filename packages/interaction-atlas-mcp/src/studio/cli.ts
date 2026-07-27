@@ -70,7 +70,7 @@ function printHelp(): void {
 
 Usage:
   pnpm atlas:studio create --client "Client" --workflow "Workflow" [--owner "Name"]
-  pnpm atlas:studio serve --session SESSION_ID [--port 5198]
+  pnpm atlas:studio serve --session SESSION_ID [--port 5198] [--governed-interaction PATH]
   pnpm atlas:studio observe --session SESSION_ID --suggest --text "Client says approval is needed"
   pnpm atlas:studio node --session SESSION_ID --kind ai --label "Draft response" [--status wait]
   pnpm atlas:studio edge --session SESSION_ID --source NODE_ID --target NODE_ID [--label "passes"]
@@ -115,7 +115,13 @@ async function main(): Promise<void> {
       const port = Number(str(parsed.flags, 'port') ?? '5198');
       const host = str(parsed.flags, 'host') ?? '127.0.0.1';
       const sessionId = str(parsed.flags, 'session');
-      await startStudioServer({ host, port, sessionId });
+      const governedInteractionPath = str(parsed.flags, 'governed-interaction');
+      await startStudioServer({
+        host,
+        port,
+        sessionId,
+        governedInteractionPath,
+      });
       const sessions = sessionId ? [{ id: sessionId }] : await listSessions();
       const activeId = sessionId ?? sessions[0]?.id;
       console.log(`Atlas Studio running at http://${host}:${port}/sessions/${activeId}`);

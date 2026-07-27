@@ -215,6 +215,33 @@ export interface EvaluationManifestArtifact extends CompiledArtifactHeader {
   evaluations: WorkflowEvaluation[];
 }
 
+export type GovernedInteractionCapability =
+  | 'interaction.select'
+  | 'receipt.inspect'
+  | 'replay.inspect'
+  | 'workflow.inspect';
+
+export type GovernedInteractionOperation = {
+  kind: 'select_replay_case';
+};
+
+export interface GovernedInteractionSurface {
+  id: string;
+  title: string;
+  kind: 'workflow_overview';
+  operations: GovernedInteractionOperation[];
+}
+
+export interface GovernedInteractionBundle extends CompiledArtifactHeader {
+  schemaVersion: 'governed_interaction_bundle.v0.1';
+  language: 'create-something/control';
+  runtimeVersion: '0.1.0';
+  entrySurfaceId: string;
+  capabilities: GovernedInteractionCapability[];
+  surfaces: GovernedInteractionSurface[];
+  actions: CompiledDecision[];
+}
+
 export interface CompiledWorkflowBundle {
   schemaVersion: 'compiled_workflow_bundle.v0.1';
   compilerVersion: string;
@@ -233,6 +260,7 @@ export interface CompiledWorkflowBundle {
   agentContracts: AgentContractsArtifact;
   approvalSurfaces: ApprovalSurfacesArtifact;
   evaluationManifest: EvaluationManifestArtifact;
+  governedInteraction: GovernedInteractionBundle;
 }
 
 export interface WorkflowCompilationDiagnostic {

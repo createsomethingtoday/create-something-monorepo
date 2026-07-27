@@ -4,6 +4,8 @@
   "version": "0.1.0",
   "identifier": "agency.createsomething.atlas-studio",
   "build": {
+    "beforeDevCommand": "pnpm prepare:runtime",
+    "beforeBuildCommand": "pnpm prepare:runtime",
     "frontendDist": "../web"
   },
   "app": {
@@ -20,12 +22,14 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src http://127.0.0.1:*; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"
     }
   },
   "bundle": {
     "active": true,
-    "targets": "all",
-    "icon": ["icons/icon.png"]
+    "targets": ["app", "dmg"],
+    "resources": { "resources/": "" },
+    "icon": ["icons/icon.png"],
+    "macOS": { "minimumSystemVersion": "12.0" }
   }
 }

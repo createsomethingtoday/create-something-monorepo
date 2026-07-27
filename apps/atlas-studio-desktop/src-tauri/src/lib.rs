@@ -3,14 +3,16 @@ use std::{
     fs::OpenOptions,
     io::{Read, Write},
     net::{TcpListener, TcpStream, ToSocketAddrs},
-    path::PathBuf,
+    path::{Component, Path, PathBuf},
     process::{Child, Command, Stdio},
     sync::{Arc, Mutex},
     thread,
     time::{Duration, Instant},
 };
 
+use serde::Deserialize;
 use serde_json::Value;
+use sha2::{Digest, Sha256};
 use tauri::{Manager, WebviewWindow};
 
 const HOST: &str = "127.0.0.1";
@@ -23,106 +25,11 @@ struct RuntimeState {
     port: u16,
 }
 
-fn workspace_root() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .parent()
-        .and_then(|path| path.parent())
-        .and_then(|path| path.parent())
-        .map(PathBuf::from)
-        .unwrap_or_else(|| PathBuf::from("."))
-}
-
-fn atlas_home() -> PathBuf {
+fn atlas_home(app: &tauri::AppHandle) -> Result<PathBuf, tauri::Error> {
     if let Some(value) = env::var_os("CREATE_SOMETHING_ATLAS_HOME") {
-        return PathBuf::from(value);
+        return Ok(PathBuf::from(value));
     }
-
-    env::var_os("HOME")
-        .map(PathBuf::from)
-        .map(|home| {
-            home.join("Library")
-                .join("Application Support")
-                .join("CREATE SOMETHING")
-                .join("Atlas Studio")
-        })
-        .unwrap_or_else(|| workspace_root().join(".atlas-studio"))
-}
-
-fn nvm_bin_dirs() -> Vec<PathBuf> {
-    let Some(home) = env::var_os("HOME").map(PathBuf::from) else {
-        return Vec::new();
-    };
-    let versions_dir = home.join(".nvm").join("versions").join("node");
-    let Ok(entries) = std::fs::read_dir(versions_dir) else {
-        return Vec::new();
-    };
-
-    let mut versions = entries
-        .filter_map(Result::ok)
-        .map(|entry| entry.path().join("bin"))
-        .filter(|path| path.join("node").exists())
-        .collect::<Vec<_>>();
-    versions.sort();
-    versions.reverse();
-    versions
-}
-
-fn pnpm_path() -> PathBuf {
-    nvm_bin_dirs()
-        .into_iter()
-        .map(|bin| bin.join("pnpm"))
-        .find(|candidate| candidate.exists())
-        .or_else(|| {
-            [
-                "/opt/homebrew/bin/pnpm",
-                "/usr/local/bin/pnpm",
-                "/usr/bin/pnpm",
-            ]
-            .iter()
-            .map(PathBuf::from)
-            .find(|candidate| candidate.exists())
-        })
-        .unwrap_or_else(|| PathBuf::from("pnpm"))
-}
-
-fn node_path() -> PathBuf {
-    nvm_bin_dirs()
-        .into_iter()
-        .map(|bin| bin.join("node"))
-        .find(|candidate| candidate.exists())
-        .or_else(|| {
-            [
-                "/opt/homebrew/bin/node",
-                "/usr/local/bin/node",
-                "/usr/bin/node",
-            ]
-            .iter()
-            .map(PathBuf::from)
-            .find(|candidate| candidate.exists())
-        })
-        .unwrap_or_else(|| PathBuf::from("node"))
-}
-
-fn gui_path() -> String {
-    let mut paths = pnpm_path()
-        .parent()
-        .map(|path| vec![path.to_string_lossy().to_string()])
-        .unwrap_or_default();
-
-    paths.extend(
-        [
-            "/opt/homebrew/bin",
-            "/usr/local/bin",
-            "/usr/bin",
-            "/bin",
-            "/usr/sbin",
-            "/sbin",
-        ]
-        .iter()
-        .map(|path| path.to_string()),
-    );
-
-    paths.join(":")
+    app.path().app_data_dir()
 }
 
 fn choose_port() -> u16 {
@@ -131,54 +38,170 @@ fn choose_port() -> u16 {
         .unwrap_or(DEFAULT_PORT)
 }
 
-fn write_runtime_file(home: &std::path::Path, port: u16, process_id: u32) {
-    let payload = format!(
-        "{{\n  \"host\": \"{HOST}\",\n  \"port\": {port},\n  \"url\": \"http://{HOST}:{port}/\",\n  \"pid\": {process_id}\n}}\n"
-    );
-    let _ = std::fs::write(home.join("runtime.json"), payload);
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct RuntimeManifest {
+    schema: String,
+    language: String,
+    runtime_version: String,
+    server_entry: String,
+    interaction_entry: String,
+    files: Vec<RuntimeManifestFile>,
 }
 
-fn start_studio_server(port: u16) -> std::io::Result<Child> {
-    let root = workspace_root();
-    let home = atlas_home();
-    let _ = std::fs::create_dir_all(&home);
+#[derive(Debug, Deserialize)]
+struct RuntimeManifestFile {
+    path: String,
+    sha256: String,
+}
+
+fn sha256_file(path: &Path) -> std::io::Result<String> {
+    let bytes = std::fs::read(path)?;
+    let digest = Sha256::digest(bytes);
+    Ok(digest.iter().map(|byte| format!("{byte:02x}")).collect())
+}
+
+fn validated_runtime(resource_dir: &Path) -> std::io::Result<(RuntimeManifest, String)> {
+    let manifest_path = resource_dir.join("runtime-build.json");
+    let manifest_bytes = std::fs::read(&manifest_path)?;
+    let manifest: RuntimeManifest = serde_json::from_slice(&manifest_bytes)
+        .map_err(|error| std::io::Error::new(std::io::ErrorKind::InvalidData, error.to_string()))?;
+    if manifest.schema != "create-something/atlas-studio-runtime@1"
+        || manifest.language != "create-something/control"
+        || manifest.runtime_version != "0.1.0"
+    {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            "The packaged Atlas runtime is incompatible.",
+        ));
+    }
+    for file in &manifest.files {
+        let relative = Path::new(&file.path);
+        if relative.is_absolute()
+            || relative
+                .components()
+                .any(|component| !matches!(component, Component::Normal(_)))
+        {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "The packaged Atlas runtime manifest contains an invalid path.",
+            ));
+        }
+        let actual = sha256_file(&resource_dir.join(relative))?;
+        if actual != file.sha256 {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                format!("Packaged Atlas runtime integrity failed for {}.", file.path),
+            ));
+        }
+    }
+    for required in [
+        "runtime/bun",
+        manifest.server_entry.as_str(),
+        manifest.interaction_entry.as_str(),
+        "server/client/app.js",
+        "server/client/app.css",
+    ] {
+        if !manifest.files.iter().any(|file| file.path == required) {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                format!("The packaged Atlas runtime is missing {required}."),
+            ));
+        }
+    }
+    let manifest_hash = Sha256::digest(manifest_bytes)
+        .iter()
+        .map(|byte| format!("{byte:02x}"))
+        .collect();
+    Ok((manifest, manifest_hash))
+}
+
+fn write_runtime_file(
+    home: &Path,
+    resource_dir: &Path,
+    manifest: &RuntimeManifest,
+    manifest_hash: &str,
+    port: u16,
+    process_id: u32,
+) {
+    let payload = serde_json::json!({
+        "host": HOST,
+        "port": port,
+        "url": format!("http://{HOST}:{port}/"),
+        "pid": process_id,
+        "runtimeRoot": resource_dir,
+        "serverEntry": resource_dir.join(&manifest.server_entry),
+        "interactionPath": resource_dir.join(&manifest.interaction_entry),
+        "runtimeManifestSha256": manifest_hash,
+        "language": manifest.language,
+        "runtimeVersion": manifest.runtime_version,
+    });
+    if let Ok(serialized) = serde_json::to_string_pretty(&payload) {
+        let _ = std::fs::write(home.join("runtime.json"), format!("{serialized}\n"));
+    }
+}
+
+fn write_runtime_error(home: &Path, error: &std::io::Error) {
+    let payload = serde_json::json!({
+        "code": "PACKAGED_RUNTIME_INVALID",
+        "error": error.to_string(),
+    });
+    let _ = std::fs::create_dir_all(home);
+    if let Ok(serialized) = serde_json::to_string_pretty(&payload) {
+        let _ = std::fs::write(
+            home.join("runtime-error.json"),
+            format!("{serialized}\n"),
+        );
+    }
+}
+
+fn start_studio_server(resource_dir: &Path, home: &Path, port: u16) -> std::io::Result<Child> {
+    let (manifest, manifest_hash) = validated_runtime(resource_dir)?;
+    let bun = resource_dir.join("runtime").join("bun");
+    let server_entry = resource_dir.join(&manifest.server_entry);
+    let server_root = server_entry.parent().ok_or_else(|| {
+        std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            "Atlas server entry has no parent.",
+        )
+    })?;
+    let interaction_path = resource_dir.join(&manifest.interaction_entry);
+    std::fs::create_dir_all(home)?;
     let log = OpenOptions::new()
         .create(true)
         .append(true)
         .open(home.join("server.log"))?;
     let log_for_stderr = log.try_clone()?;
 
-    let cli_path = root
-        .join("packages")
-        .join("interaction-atlas-mcp")
-        .join("dist")
-        .join("studio")
-        .join("cli.js");
-    let mut command = if cli_path.exists() {
-        let mut command = Command::new(node_path());
-        command.arg(cli_path);
-        command
-    } else {
-        let mut command = Command::new(pnpm_path());
-        command.args([
-            "--filter",
-            "@create-something/interaction-atlas-mcp",
-            "studio",
-        ]);
-        command
-    };
-
-    let child = command
-        .current_dir(root)
-        .env("CREATE_SOMETHING_ATLAS_HOME", &home)
-        .env("PATH", gui_path())
-        .args(["serve", "--host", HOST, "--port", &port.to_string()])
+    let child = Command::new(bun)
+        .arg(&server_entry)
+        .current_dir(server_root)
+        .env("CREATE_SOMETHING_ATLAS_HOME", home)
+        .env("PATH", "/usr/bin:/bin")
+        .env_remove("OPENAI_API_KEY")
+        .args([
+            "serve",
+            "--host",
+            HOST,
+            "--port",
+            &port.to_string(),
+            "--governed-interaction",
+            &interaction_path.to_string_lossy(),
+        ])
         .stdin(Stdio::null())
         .stdout(Stdio::from(log))
         .stderr(Stdio::from(log_for_stderr))
         .spawn()?;
 
-    write_runtime_file(&home, port, child.id());
+    write_runtime_file(
+        home,
+        resource_dir,
+        &manifest,
+        &manifest_hash,
+        port,
+        child.id(),
+    );
+    let _ = std::fs::remove_file(home.join("runtime-error.json"));
     Ok(child)
 }
 
@@ -204,9 +227,9 @@ fn wait_for_server(port: u16) -> bool {
 fn redirect_when_ready(window: WebviewWindow, port: u16) {
     thread::spawn(move || {
         if wait_for_server(port) {
-            let _ = window.eval(&format!("window.location.replace('http://{HOST}:{port}/')"));
-        } else {
-            let _ = window.eval("document.dispatchEvent(new CustomEvent('atlas-studio-timeout'))");
+            if let Ok(url) = tauri::Url::parse(&format!("http://{HOST}:{port}/")) {
+                let _ = window.navigate(url);
+            }
         }
     });
 }
@@ -393,9 +416,16 @@ pub fn run() {
             atlas_story_step_previous
         ])
         .setup(move |app| {
-            if let Ok(child) = start_studio_server(port) {
-                if let Ok(mut slot) = setup_child.lock() {
-                    *slot = Some(child);
+            let resource_dir = app.path().resource_dir()?;
+            let home = atlas_home(app.handle())?;
+            match start_studio_server(&resource_dir, &home, port) {
+                Ok(child) => {
+                    if let Ok(mut slot) = setup_child.lock() {
+                        *slot = Some(child);
+                    }
+                }
+                Err(error) => {
+                    write_runtime_error(&home, &error);
                 }
             }
 
@@ -421,4 +451,64 @@ pub fn run() {
             stop_studio_server(&exit_child);
         }
     });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    #[test]
+    fn packaged_runtime_integrity_fails_closed_after_tampering() {
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("system clock")
+            .as_nanos();
+        let root = env::temp_dir().join(format!(
+            "atlas-runtime-integrity-{}-{nonce}",
+            std::process::id()
+        ));
+        let required = [
+            "runtime/bun",
+            "server/cli.js",
+            "interactions/marketplace/governed-interaction.json",
+            "server/client/app.js",
+            "server/client/app.css",
+        ];
+        let mut files = Vec::new();
+        for relative in required {
+            let path = root.join(relative);
+            std::fs::create_dir_all(path.parent().expect("fixture parent"))
+                .expect("fixture directory");
+            std::fs::write(&path, format!("fixture:{relative}")).expect("fixture file");
+            files.push(serde_json::json!({
+                "path": relative,
+                "sha256": sha256_file(&path).expect("fixture digest"),
+                "bytes": std::fs::metadata(&path).expect("fixture metadata").len(),
+            }));
+        }
+        let manifest = serde_json::json!({
+            "schema": "create-something/atlas-studio-runtime@1",
+            "platform": "test",
+            "architecture": "test",
+            "language": "create-something/control",
+            "runtimeVersion": "0.1.0",
+            "serverEntry": "server/cli.js",
+            "interactionEntry": "interactions/marketplace/governed-interaction.json",
+            "files": files,
+        });
+        std::fs::write(
+            root.join("runtime-build.json"),
+            serde_json::to_vec_pretty(&manifest).expect("fixture manifest"),
+        )
+        .expect("manifest file");
+
+        assert!(validated_runtime(&root).is_ok());
+        std::fs::write(root.join("server/cli.js"), "tampered").expect("tampered fixture");
+        let error = validated_runtime(&root).expect_err("tampered runtime must fail");
+        assert_eq!(error.kind(), std::io::ErrorKind::InvalidData);
+        assert!(error.to_string().contains("integrity failed"));
+
+        std::fs::remove_dir_all(root).expect("fixture cleanup");
+    }
 }
