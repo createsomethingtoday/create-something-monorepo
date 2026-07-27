@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PaperReadingGuide from '$lib/components/papers/PaperReadingGuide.svelte';
 	/**
 	 * The Cumulative State Anti-Pattern
 	 *
@@ -53,6 +54,7 @@
 		<div class="pb-8 paper-header">
 			<div class="font-mono mb-4 paper-id">PAPER-2025-012</div>
 			<h1 class="mb-3 paper-title">The Cumulative State Anti-Pattern</h1>
+		<PaperReadingGuide />
 			<p class="max-w-3xl paper-subtitle">
 				When "Current" Masquerades as "Ever"—how ambiguous field semantics create
 				invisible bugs that punish users for legitimate actions.
@@ -65,6 +67,9 @@
 				<span>Intermediate</span>
 			</div>
 		</div>
+		<details class="paper-record-disclosure" data-paper-record id="full-paper" open>
+			<summary>Read the full paper</summary>
+			<div class="paper-record-body">
 
 		<!-- Abstract -->
 		<section class="pl-6 space-y-4 abstract-section">
@@ -577,7 +582,10 @@ if (publishedTemplates + delistedTemplates >= 5 || isWhitelisted) {
 				<a href="/experiments" class="footer-link">View Experiments &rarr;</a>
 			</div>
 		</div>
-	</div>
+
+			</div>
+		</details>
+</div>
 </div>
 
 <style>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PaperReadingGuide from '$lib/components/papers/PaperReadingGuide.svelte';
 	import { SEO } from '@create-something/canon';
 	// Types defined inline per Canon requirements
 	interface Section {
@@ -87,11 +88,15 @@
 	<header class="paper-header flex flex-col gap-4">
 		<span class="paper-id">PAPER-2026-001</span>
 		<h1 class="paper-title">Agent SDK Model Routing Optimization</h1>
+		<PaperReadingGuide />
 		<p class="paper-subtitle">Cost-effective model selection through complexity-aware routing</p>
 		<div class="paper-meta">
 			Research Paper • 12 min read • Advanced
 		</div>
 	</header>
+	<details class="paper-record-disclosure" data-paper-record id="full-paper" open>
+		<summary>Read the full paper</summary>
+		<div class="paper-record-body">
 
 	<!-- Abstract -->
 	<section class="abstract">
@@ -492,6 +497,9 @@ class ProviderResult:
 			</ul>
 		</nav>
 	</footer>
+
+		</div>
+	</details>
 </article>
 
 <style>

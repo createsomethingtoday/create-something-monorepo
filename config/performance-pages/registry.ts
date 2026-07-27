@@ -433,7 +433,6 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
       'papers/subtractive-studio',
       'papers/teaching-modalities-experiment',
       'papers/three-tier-framework',
-      'papers/threshold-dwelling',
       'papers/tufte-mobile-optimization',
       'papers/understanding-graphs',
       'papers/webflow-dashboard-refactor',
@@ -441,12 +440,24 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
       'papers/workers-vs-python-sdk-plagiarism-detection',
       'papers/wrap-pattern'
     ],
-    'pending',
+    'migrated',
     contract(
       'editorial',
       'Understand the paper thesis and decide whether its evidence changes the practice.',
       'The paper body, sources, experiment, or implementation evidence supports the thesis.',
       'Continue to related research or apply the finding'
+    )
+  ),
+  group(
+    'io-paper-tool',
+    'io',
+    ['papers/threshold-dwelling'],
+    'migrated',
+    contract(
+      'tool',
+      'Explore how the house balances privacy, shared life, light, movement, materials, and cost.',
+      'Coordinated plans, sections, studies, schedules, and estimates make each design choice inspectable.',
+      'Compare the views, inspect optional detail, or continue to the research collection'
     )
   ),
   group(

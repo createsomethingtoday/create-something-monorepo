@@ -13,9 +13,10 @@
 	interface Props {
 		study: LightStudyData;
 		showCaption?: boolean;
+		interactive?: boolean;
 	}
 
-	let { study, showCaption = true }: Props = $props();
+	let { study, showCaption = true, interactive = true }: Props = $props();
 
 	// Interactive state - which season/time to highlight
 	let activeSeason: Season = $state('equinox');
@@ -274,6 +275,7 @@
 	</svg>
 
 	<!-- Season/Time controls (Rams: information on demand) -->
+	{#if interactive}
 	<div class="controls" role="group" aria-label="Light study controls">
 		<div class="control-group">
 			<span class="control-label">Season</span>
@@ -315,6 +317,7 @@
 			</div>
 		</div>
 	</div>
+	{/if}
 
 	{#if showCaption}
 		<p class="caption">

@@ -23,6 +23,11 @@
 	let zoom = tweened(1, { duration: 2000, easing: cubicInOut });
 	let isPlaying = $state(false);
 	let hasPlayed = $state(false);
+	let enhanced = $state(false);
+
+	onMount(() => {
+		enhanced = true;
+	});
 
 	// Derived interpolations
 	const width = $derived(320 + ($progress * 40));
@@ -164,6 +169,7 @@
 	</div>
 
 	<!-- Controls -->
+	{#if enhanced}
 	<div class="controls">
 		<button class="play-btn" onclick={play} disabled={isPlaying}>
 			{isPlaying ? 'Playing...' : hasPlayed ? 'Replay' : 'Play Animation'}
@@ -172,6 +178,7 @@
 			<button class="reset-btn" onclick={reset}>Reset</button>
 		{/if}
 	</div>
+	{/if}
 </div>
 
 <style>

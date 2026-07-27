@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PaperReadingGuide from '$lib/components/papers/PaperReadingGuide.svelte';
 	/**
 	 * Teaching Modalities Experiment
 	 *
@@ -16,7 +17,7 @@
 	 * - Data stored only in sessionStorage (cleared on tab close)
 	 * - No server-side tracking without consent
 	 */
-	import { onMount } from 'svelte';
+	import { onMount, tick } from 'svelte';
 	import { Spritz } from '@create-something/spritz';
 	import { CanonReveal } from '@create-something/canon/motion';
 	import { BookOpen, Play, RotateCcw, ChevronRight, Layers, Timer, Shield, Eye, EyeOff } from 'lucide-svelte';
@@ -33,11 +34,14 @@
 	let hasConsent = $state(false);
 	let consentChecked = $state(false);
 	let showConsentBanner = $state(false);
+	let enhanced = $state(false);
+	let paperHeading: HTMLHeadingElement;
 	
 	/** Check if DNT is enabled - always respected */
 	let dntEnabled = $state(false);
 	
 	onMount(() => {
+		enhanced = true;
 		// Check DNT first - if enabled, no tracking regardless of consent
 		dntEnabled = isDNTEnabled();
 		
@@ -67,7 +71,7 @@
 		}
 	});
 	
-	function acceptTracking() {
+	async function acceptTracking() {
 		hasConsent = true;
 		showConsentBanner = false;
 		try {
@@ -78,9 +82,11 @@
 		} catch {
 			// sessionStorage not available, consent only for this session
 		}
+		await tick();
+		paperHeading?.focus();
 	}
 	
-	function declineTracking() {
+	async function declineTracking() {
 		hasConsent = false;
 		showConsentBanner = false;
 		try {
@@ -91,6 +97,8 @@
 		} catch {
 			// sessionStorage not available
 		}
+		await tick();
+		paperHeading?.focus();
 	}
 	
 	function toggleTracking() {
@@ -259,7 +267,7 @@
 			subtitle: 'AI as collaborator',
 			lessons: 8,
 			color: 'blue',
-			description: 'Build AI-powered development workflows.'
+			description: 'Build development workflows that agents can execute and operators can verify.'
 		}
 	];
 
@@ -317,7 +325,8 @@
 		<!-- Header -->
 		<div class="pb-8 paper-header">
 			<div class="font-mono mb-4 paper-id">PAPER-2026-002 • INTERACTIVE</div>
-			<h1 class="mb-3 paper-title">Teaching Modalities</h1>
+			<h1 bind:this={paperHeading} class="mb-3 paper-title" tabindex="-1">Teaching Modalities</h1>
+			<PaperReadingGuide />
 			<p class="max-w-3xl paper-subtitle">
 				Finding the Right Medium for CREATE SOMETHING: Compare the modalities yourself below.
 			</p>
@@ -338,6 +347,9 @@
 				</span>
 			</div>
 		</div>
+		<details class="paper-record-disclosure" data-paper-record id="full-paper" open>
+			<summary>Read the full paper</summary>
+			<div class="paper-record-body">
 
 		<!-- Abstract -->
 		<section class="pl-6 space-y-4 abstract-section">
@@ -404,16 +416,20 @@
 			<div class="demo-container spritz-demo">
 				<div class="demo-label">
 					<Timer size={14} />
-					<span>LIVE DEMO — Click play to start</span>
+					<span>{enhanced ? 'Live demo — press play to start' : 'Focused reading example'}</span>
 				</div>
-				<Spritz 
-					content={spritzContent}
-					wpm={300}
-					showControls
-					showProgress
-					showWpmControl
-					class="spritz-embed"
-				/>
+				{#if enhanced}
+					<Spritz
+						content={spritzContent}
+						wpm={300}
+						showControls
+						showProgress
+						showWpmControl
+						class="spritz-embed"
+					/>
+				{:else}
+					<p class="detail-text">{spritzContent}</p>
+				{/if}
 			</div>
 
 			<div class="modality-details-grid">
@@ -455,43 +471,50 @@
 				
 				<div class="motion-canvas">
 					<div class="reveal-label">{currentReveal.label}</div>
-					
-					{#key revealKey}
-						<CanonReveal
-							text={currentReveal.text}
-							reveal={currentReveal.id}
-							duration={currentReveal.id === 'threshold' ? 1000 : currentReveal.id === 'mask' ? 1200 : 2500}
-							autoplay={true}
-							onComplete={onMotionComplete}
-							class="reveal-display"
-						/>
-					{/key}
+
+					{#if enhanced}
+						{#key revealKey}
+							<CanonReveal
+								text={currentReveal.text}
+								reveal={currentReveal.id}
+								duration={currentReveal.id === 'threshold' ? 1000 : currentReveal.id === 'mask' ? 1200 : 2500}
+								autoplay={true}
+								onComplete={onMotionComplete}
+								class="reveal-display"
+							/>
+						{/key}
+					{:else}
+						<p>{currentReveal.text}</p>
+					{/if}
 					
 					<div class="reveal-philosophy">{currentReveal.philosophy}</div>
 				</div>
 
-				<div class="motion-controls">
-					<button class="motion-btn" onclick={playMotion}>
-						<RotateCcw size={18} />
-						<span>Replay</span>
-					</button>
-					<button class="motion-btn play" onclick={nextReveal}>
-						<Play size={18} />
-						<span>Next Style ({canonRevealStyles[(currentRevealIndex + 1) % canonRevealStyles.length].label})</span>
-					</button>
-				</div>
+				{#if enhanced}
+					<div class="motion-controls">
+						<button class="motion-btn" onclick={playMotion}>
+							<RotateCcw size={18} />
+							<span>Replay</span>
+						</button>
+						<button class="motion-btn play" onclick={nextReveal}>
+							<Play size={18} />
+							<span>Next Style ({canonRevealStyles[(currentRevealIndex + 1) % canonRevealStyles.length].label})</span>
+						</button>
+					</div>
 
-				<!-- Style indicator dots -->
-				<div class="style-dots">
-					{#each canonRevealStyles as style, i}
-						<button 
-							class="style-dot" 
-							class:active={i === currentRevealIndex}
-							onclick={() => { currentRevealIndex = i; revealKey++; motionStartTime = Date.now(); motionInitialized = true; trackModality('motion', 'play'); }}
-							title={style.label}
-						></button>
-					{/each}
-				</div>
+					<!-- Style indicator dots -->
+					<div class="style-dots">
+						{#each canonRevealStyles as style, i}
+							<button
+								class="style-dot"
+								class:active={i === currentRevealIndex}
+								onclick={() => { currentRevealIndex = i; revealKey++; motionStartTime = Date.now(); motionInitialized = true; trackModality('motion', 'play'); }}
+								aria-label={`Show ${style.label} reveal`}
+								title={style.label}
+							></button>
+						{/each}
+					</div>
+				{/if}
 			</div>
 
 			<div class="modality-details-grid">
@@ -720,7 +743,10 @@
 				</span>
 			</div>
 		</section>
-	</div>
+
+			</div>
+		</details>
+</div>
 </div>
 
 <style>

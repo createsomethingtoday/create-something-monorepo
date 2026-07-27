@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PaperReadingGuide from '$lib/components/papers/PaperReadingGuide.svelte';
 	/**
 	 * Observability Infrastructure Paper
 	 *
@@ -32,6 +33,7 @@
 		<div class="pb-8 paper-header">
 			<div class="font-mono mb-4 paper-id">PAPER-2026-002</div>
 			<h1 class="mb-3 paper-title">Observability Infrastructure: Making AI Operations Visible</h1>
+		<PaperReadingGuide />
 			<p class="max-w-3xl paper-subtitle">
 				A three-layer observability architecture for AI-native systems: infrastructure tracing,
 				LLM generation tracking, and agent coordination—unified through the AI Interaction Atlas vocabulary.
@@ -44,6 +46,9 @@
 				<span>Intermediate</span>
 			</div>
 		</div>
+		<details class="paper-record-disclosure" data-paper-record id="full-paper" open>
+			<summary>Read the full paper</summary>
+			<div class="paper-record-body">
 
 		<!-- Abstract -->
 		<section class="abstract-section space-y-4">
@@ -573,7 +578,10 @@ gen.end(response, { input: 150, output: 500 });`}</code></pre>
 				</p>
 			</div>
 		</section>
-	</div>
+
+			</div>
+		</details>
+</div>
 </div>
 
 <style>

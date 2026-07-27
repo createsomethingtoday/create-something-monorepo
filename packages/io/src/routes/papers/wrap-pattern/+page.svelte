@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PaperReadingGuide from '$lib/components/papers/PaperReadingGuide.svelte';
 	/**
 	 * The Wrap Pattern Paper
 	 *
@@ -34,6 +35,7 @@
 		<div class="pb-8 paper-header">
 			<div class="font-mono mb-4 paper-id">PAPER-2026-008</div>
 			<h1 class="mb-3 paper-title">The Wrap Pattern: Commodity Integration as Invisible Infrastructure</h1>
+		<PaperReadingGuide />
 			<p class="max-w-3xl paper-subtitle">
 				MCP consumption is commoditized. The strategic response is not to avoid commodity platforms
 				but to wrap them &mdash; preserving the client-facing MCP surface, the Intelligence Layer margin,
@@ -47,6 +49,9 @@
 				<span>Intermediate</span>
 			</div>
 		</div>
+		<details class="paper-record-disclosure" data-paper-record id="full-paper" open>
+			<summary>Read the full paper</summary>
+			<div class="paper-record-body">
 
 		<!-- Abstract -->
 		<section class="abstract-section space-y-4">
@@ -854,7 +859,10 @@
 				</p>
 			</div>
 		</section>
-	</div>
+
+			</div>
+		</details>
+</div>
 </div>
 
 <style>

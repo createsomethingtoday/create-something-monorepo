@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+	import PaperReadingGuide from '$lib/components/papers/PaperReadingGuide.svelte';
 	/**
 	 * Animation Spec Architecture: One Source, Two Renderers
 	 *
@@ -15,6 +17,11 @@
 	// Interactive demo state
 	let currentRevealIndex = $state(0);
 	let revealKey = $state(0);
+	let enhanced = $state(false);
+
+	onMount(() => {
+		enhanced = true;
+	});
 
 	const currentReveal = $derived(canonRevealStyles[currentRevealIndex]);
 
@@ -49,6 +56,7 @@
 		<div class="pb-8 paper-header">
 			<div class="font-mono mb-4 paper-id">PAPER-2026-003</div>
 			<h1 class="mb-3 paper-title">Animation Spec Architecture</h1>
+			<PaperReadingGuide />
 			<p class="max-w-3xl paper-subtitle">
 				One Source, Two Renderers: Shared Specifications for Svelte and Remotion
 			</p>
@@ -60,6 +68,9 @@
 				<span>Intermediate</span>
 			</div>
 		</div>
+		<details class="paper-record-disclosure" data-paper-record id="full-paper" open>
+			<summary>Read the full paper</summary>
+			<div class="paper-record-body">
 
 		<!-- Abstract -->
 		<section class="pl-6 space-y-4 abstract-section">
@@ -273,33 +284,34 @@ const hammerOpacity = interpolate(progress, [0, 0.2, 0.6, 1], [1, 1, 0.3, 0]);</
 				<div class="mt-6 p-6 demo-container">
 					<div class="demo-label">
 						<span class="label-icon">▶</span>
-						<span>LIVE DEMO — {currentReveal.label}</span>
+						<span>{enhanced ? `Live demo — ${currentReveal.label}` : 'Animation example'}</span>
 					</div>
 
-					<div class="demo-canvas">
-						{#key revealKey}
-							<CanonReveal
-								text={currentReveal.text}
-								reveal={currentReveal.id}
-								duration={currentReveal.duration}
-								autoplay={true}
-							/>
-						{/key}
-						<p class="demo-philosophy">{currentReveal.philosophy}</p>
-					</div>
+					{#if enhanced}
+						<div class="demo-canvas">
+							{#key revealKey}
+								<CanonReveal
+									text={currentReveal.text}
+									reveal={currentReveal.id}
+									duration={currentReveal.duration}
+									autoplay={true}
+								/>
+							{/key}
+							<p class="demo-philosophy">{currentReveal.philosophy}</p>
+						</div>
 
-					<div class="demo-controls">
-						<button class="control-btn" onclick={resetReveal}>
-							<RotateCcw size={18} />
-							<span>Replay</span>
-						</button>
-						<button class="control-btn" onclick={nextReveal}>
-							<span>Next</span>
-							<ChevronRight size={18} />
-						</button>
-					</div>
+						<div class="demo-controls">
+							<button class="control-btn" onclick={resetReveal}>
+								<RotateCcw size={18} />
+								<span>Replay</span>
+							</button>
+							<button class="control-btn" onclick={nextReveal}>
+								<span>Next</span>
+								<ChevronRight size={18} />
+							</button>
+						</div>
 
-					<div class="demo-dots">
+						<div class="demo-dots">
 							{#each canonRevealStyles as _, i}
 								<button
 									class="demo-dot"
@@ -310,8 +322,14 @@ const hammerOpacity = interpolate(progress, [0, 0.2, 0.6, 1], [1, 1, 0.3, 0]);</
 										revealKey++;
 								}}
 							></button>
-						{/each}
-					</div>
+							{/each}
+						</div>
+					{:else}
+						<div class="demo-canvas">
+							<p>{currentReveal.text}</p>
+							<p class="demo-philosophy">{currentReveal.philosophy}</p>
+						</div>
+					{/if}
 				</div>
 			</div>
 		</section>
@@ -582,7 +600,10 @@ const currentPhase = spec.phases.find(p =&gt;
 				where these animations are used.
 			</p>
 		</div>
-	</div>
+
+			</div>
+		</details>
+</div>
 </div>
 
 <style>

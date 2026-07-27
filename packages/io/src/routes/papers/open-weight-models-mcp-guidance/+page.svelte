@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PaperReadingGuide from '$lib/components/papers/PaperReadingGuide.svelte';
 	/**
 	 * Open-Weight Models in Client MCP Work
 	 *
@@ -30,6 +31,7 @@
 		<div class="pb-8 paper-header">
 			<div class="font-mono mb-4 paper-id">PAPER-2026-009</div>
 			<h1 class="mb-3 paper-title">Open-Weight Models in Client MCP Work</h1>
+		<PaperReadingGuide />
 			<p class="max-w-3xl paper-subtitle">
 				A decision framework for when to use OpenAI <code>gpt-oss</code> (and <code>gpt-oss-safeguard</code>)
 				versus hosted frontier models in client education and implementation.
@@ -42,6 +44,9 @@
 				<span>Intermediate</span>
 			</div>
 		</div>
+		<details class="paper-record-disclosure" data-paper-record id="full-paper" open>
+			<summary>Read the full paper</summary>
+			<div class="paper-record-body">
 
 		<!-- Abstract -->
 		<section class="abstract-section space-y-4">
@@ -538,7 +543,10 @@ const result = await env.AI.run("@cf/openai/gpt-oss-20b", {
 				</li>
 			</ol>
 		</section>
-	</div>
+
+			</div>
+		</details>
+</div>
 </div>
 
 <style>

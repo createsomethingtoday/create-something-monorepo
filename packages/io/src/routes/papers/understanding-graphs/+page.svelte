@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PaperReadingGuide from '$lib/components/papers/PaperReadingGuide.svelte';
 	/**
 	 * Understanding Graphs Paper
 	 *
@@ -32,6 +33,7 @@
 		<div class="pb-8 paper-header">
 			<div class="font-mono mb-4 paper-id">PAPER-2024-003</div>
 			<h1 class="mb-3 paper-title">Understanding Graphs: "Less, But Better" Codebase Navigation</h1>
+		<PaperReadingGuide />
 			<p class="max-w-3xl paper-subtitle">
 				Applying Heidegger's hermeneutic circle to develop minimal dependency documentation
 				that captures only understanding-critical relationships—replacing exhaustive tooling
@@ -45,6 +47,9 @@
 				<span>Advanced</span>
 			</div>
 		</div>
+		<details class="paper-record-disclosure" data-paper-record id="full-paper" open>
+			<summary>Read the full paper</summary>
+			<div class="paper-record-body">
 
 		<!-- Abstract -->
 		<section class="abstract-section space-y-4">
@@ -622,7 +627,10 @@ for identity verification, but it remains independent of business logic.
 				<a href="/methodology" class="footer-link">methodology</a>.
 			</p>
 		</div>
-	</div>
+
+			</div>
+		</details>
+</div>
 </div>
 
 <style>

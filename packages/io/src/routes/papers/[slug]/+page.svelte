@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { ResearchArtifactPage } from '@create-something/canon/domains/io';
 	import type { Paper } from '@create-something/canon/types';
 	import { getNextPaper } from '@create-something/canon/utils';
+	import PaperArtifactPage from '$lib/components/papers/PaperArtifactPage.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -12,10 +12,9 @@
 	const nextPaper = $derived(getNextPaper([paper, ...relatedPapers], paper.slug));
 </script>
 
-<ResearchArtifactPage
+<PaperArtifactPage
 	{paper}
 	{relatedPapers}
 	{fullUrl}
 	{nextPaper}
-	kind="paper"
 />

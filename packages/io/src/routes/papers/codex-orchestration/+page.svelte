@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PaperReadingGuide from '$lib/components/papers/PaperReadingGuide.svelte';
 	import { SEO } from '@create-something/canon';
 	const metadata = {
 		title: 'Codex Orchestration: Claude Code Planning + Autonomous Execution',
@@ -87,6 +88,7 @@
 		<header class="pb-8 paper-header">
 			<div class="font-mono mb-4 paper-id">PAPER-2026-005</div>
 			<h1 class="mb-3 paper-title">{metadata.title}</h1>
+		<PaperReadingGuide />
 
 			<div class="paper-meta">
 			<time class="meta-item">{metadata.date}</time>
@@ -99,6 +101,9 @@
 			{/each}
 		</div>
 	</header>
+		<details class="paper-record-disclosure" data-paper-record id="full-paper" open>
+			<summary>Read the full paper</summary>
+			<div class="paper-record-body">
 
 	<section class="paper-section">
 		<h2 class="section-heading">Abstract</h2>
@@ -656,7 +661,10 @@ codex exec --full-auto --model gpt-4o "Apply voice audit..."
 			{/each}
 		</ul>
 	</footer>
-	</div>
+
+			</div>
+		</details>
+</div>
 </div>
 
 <style>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PaperReadingGuide from '$lib/components/papers/PaperReadingGuide.svelte';
 	/**
 	 * Recursive Language Models: Context as Environment Variable
 	 *
@@ -30,6 +31,7 @@
 		<div class="pb-8 paper-header">
 			<div class="font-mono mb-4 paper-id">PAPER-2026-004</div>
 			<h1 class="mb-3 paper-title">Recursive Language Models</h1>
+		<PaperReadingGuide />
 			<p class="max-w-3xl paper-subtitle">
 				Context as Environment Variable: Implementing MIT CSAIL's RLM pattern for processing
 				arbitrarily large codebases through programmatic context navigation.
@@ -42,6 +44,9 @@
 				<span>Advanced</span>
 			</div>
 		</div>
+		<details class="paper-record-disclosure" data-paper-record id="full-paper" open>
+			<summary>Read the full paper</summary>
+			<div class="paper-record-body">
 
 		<!-- Abstract -->
 		<section class="pl-6 space-y-4 abstract-section">
@@ -678,7 +683,10 @@ logger.info('Processing', { id, correlationId });`}</pre>
 				<a href="/papers/haiku-optimization" class="footer-link">Haiku Optimization &rarr;</a>
 			</div>
 		</div>
-	</div>
+
+			</div>
+		</details>
+</div>
 </div>
 
 <style>

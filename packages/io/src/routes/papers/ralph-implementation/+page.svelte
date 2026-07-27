@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PaperReadingGuide from '$lib/components/papers/PaperReadingGuide.svelte';
 	/**
 	 * Ralph Implementation: Overnight Autonomous Development
 	 *
@@ -33,6 +34,7 @@
 		<div class="pb-8 paper-header">
 			<div class="font-mono mb-4 paper-id">PAPER-2026-002</div>
 			<h1 class="mb-3 paper-title">Ralph Implementation: Overnight Autonomous Development</h1>
+		<PaperReadingGuide />
 			<p class="max-w-3xl paper-subtitle">
 				Fresh Claude Code instances working through user stories while you sleep—achieving
 				production-ready features at $6 instead of $800+ in developer time.
@@ -45,6 +47,9 @@
 				<span>Intermediate</span>
 			</div>
 		</div>
+		<details class="paper-record-disclosure" data-paper-record id="full-paper" open>
+			<summary>Read the full paper</summary>
+			<div class="paper-record-body">
 
 		<!-- Abstract -->
 		<section class="abstract-section space-y-4">
@@ -818,7 +823,10 @@
 				</p>
 			</div>
 		</section>
-	</div>
+
+			</div>
+		</details>
+</div>
 </div>
 
 <style>

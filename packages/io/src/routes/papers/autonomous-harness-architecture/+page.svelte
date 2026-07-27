@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PaperReadingGuide from '$lib/components/papers/PaperReadingGuide.svelte';
 	/**
 	 * The Autonomous Harness: Agent Orchestration with Human Agency
 	 *
@@ -30,6 +31,7 @@
 		<div class="pb-8 paper-header">
 			<div class="font-mono mb-4 paper-id">PAPER-2025-008</div>
 			<h1 class="mb-3 paper-title">The Autonomous Harness</h1>
+		<PaperReadingGuide />
 			<p class="max-w-3xl paper-subtitle">
 				Agent Orchestration with Human Agency—how progress reports enable reactive steering
 				without proactive management.
@@ -42,6 +44,9 @@
 				<span>Advanced</span>
 			</div>
 		</div>
+		<details class="paper-record-disclosure" data-paper-record id="full-paper" open>
+			<summary>Read the full paper</summary>
+			<div class="paper-record-body">
 
 		<!-- Abstract -->
 		<section class="pl-6 space-y-4 abstract-section">
@@ -772,7 +777,10 @@ cs-003: Session management
 				<a href="/experiments" class="footer-link">View Experiments &rarr;</a>
 			</div>
 		</div>
-	</div>
+
+			</div>
+		</details>
+</div>
 </div>
 
 <style>

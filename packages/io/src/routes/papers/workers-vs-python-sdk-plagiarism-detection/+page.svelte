@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PaperReadingGuide from '$lib/components/papers/PaperReadingGuide.svelte';
   import { SEO } from '@create-something/canon';
   
   interface ComparisonData {
@@ -57,6 +58,7 @@
 <article class="paper">
   <header class="paper-header">
     <h1 class="paper-title">Workers vs Python SDK for Webflow Plagiarism Detection</h1>
+		<PaperReadingGuide />
     <div class="paper-meta">
       <div class="meta-item">
         <span class="meta-label">Research:</span>
@@ -72,6 +74,9 @@
       </div>
     </div>
   </header>
+  <details class="paper-record-disclosure" data-paper-record id="full-paper" open>
+    <summary>Read the full paper</summary>
+    <div class="paper-record-body">
 
   <div class="callout callout-insight">
     <h3>Core Discovery</h3>
@@ -353,6 +358,9 @@ page.screenshot(path=output_path, full_page=True)`}
       <li><code>../webflow-site-analyzer-mcp/integration-test.ts</code></li>
     </ul>
   </footer>
+
+    </div>
+  </details>
 </article>
 
 <style>

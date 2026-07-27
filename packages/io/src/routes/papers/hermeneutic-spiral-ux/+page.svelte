@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PaperReadingGuide from '$lib/components/papers/PaperReadingGuide.svelte';
 	/**
 	 * The Hermeneutic Spiral in UX Design
 	 *
@@ -45,6 +46,7 @@
 		<div class="pb-8 paper-header">
 			<div class="font-mono mb-4 paper-id">PAPER-2025-002</div>
 			<h1 class="mb-3 paper-title">The Hermeneutic Spiral in UX Design</h1>
+		<PaperReadingGuide />
 			<p class="max-w-3xl paper-subtitle">
 				Applying Heidegger's hermeneutic circle to user experience design—demonstrating
 				that understanding accumulates, it doesn't reset.
@@ -57,6 +59,9 @@
 				<span>Intermediate</span>
 			</div>
 		</div>
+		<details class="paper-record-disclosure" data-paper-record id="full-paper" open>
+			<summary>Read the full paper</summary>
+			<div class="paper-record-body">
 
 		<!-- Abstract -->
 		<section class="pl-6 space-y-4 abstract-section">
@@ -824,7 +829,10 @@ Bot: Great! Anything else I can help with?`}</pre>
 				<a href="/experiments" class="footer-link">View Experiments →</a>
 			</div>
 		</div>
-	</div>
+
+			</div>
+		</details>
+</div>
 </div>
 
 <style>

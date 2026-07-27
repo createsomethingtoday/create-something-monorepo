@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PaperReadingGuide from '$lib/components/papers/PaperReadingGuide.svelte';
 	/**
 	 * Subtractive Triad Audit: Kickstand
 	 *
@@ -43,6 +44,7 @@
 		<div class="pb-8 paper-header">
 			<div class="font-mono mb-4 paper-id">PAPER-2025-001</div>
 			<h1 class="mb-3 paper-title">Subtractive Triad Audit: Kickstand</h1>
+		<PaperReadingGuide />
 			<p class="max-w-3xl paper-subtitle">
 				Applying the Subtractive Triad framework (DRY → Rams → Heidegger) to audit a production
 				venue intelligence system—demonstrating that creation is the discipline of removing what obscures.
@@ -55,6 +57,9 @@
 				<span>Intermediate</span>
 			</div>
 		</div>
+		<details class="paper-record-disclosure" data-paper-record id="full-paper" open>
+			<summary>Read the full paper</summary>
+			<div class="paper-record-body">
 
 		<!-- Abstract -->
 		<section class="pl-6 space-y-4 abstract-section">
@@ -471,7 +476,10 @@
 				<a href="/methodology" class="footer-link">methodology</a>.
 			</p>
 		</div>
-	</div>
+
+			</div>
+		</details>
+</div>
 </div>
 
 <style>

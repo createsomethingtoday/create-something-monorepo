@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+	import PaperReadingGuide from '$lib/components/papers/PaperReadingGuide.svelte';
 	/**
 	 * Threshold Dwelling Experiment
 	 *
@@ -81,6 +83,11 @@
 	let expandedView: ExpandedView = $state(null);
 	let showBudget = $state(false);
 	let showMaterials = $state(false);
+	let enhanced = $state(false);
+
+	onMount(() => {
+		enhanced = true;
+	});
 
 	function toggleExpand(view: ExpandedView) {
 		expandedView = expandedView === view ? null : view;
@@ -1058,6 +1065,42 @@
 
 <svelte:window onkeydown={handleGlobalKeydown} />
 
+{#snippet floorPlanView()}
+	<FloorPlan plan={pavilion} showCaption={false} interactive={enhanced} />
+{/snippet}
+
+{#snippet sectionView()}
+	<Section section={sectionAA} expanded={expandedView === 'section'} />
+{/snippet}
+
+{#snippet elevationView()}
+	<Elevation elevation={southElevation} expanded={expandedView === 'elevation'} />
+{/snippet}
+
+{#snippet siteView()}
+	<SitePlan site={sitePlan} />
+{/snippet}
+
+{#snippet roofView()}
+	<RoofPlan roof={roofPlan} />
+{/snippet}
+
+{#snippet systemsView()}
+	<Systems systems={systemsData} />
+{/snippet}
+
+{#snippet lightView()}
+	<LightStudy study={lightStudyData} showCaption={false} interactive={enhanced} />
+{/snippet}
+
+{#snippet circulationView()}
+	<Circulation circulation={circulationData} showCaption={false} />
+{/snippet}
+
+{#snippet rhythmView()}
+	<DailyRhythm rhythm={dailyRhythmData} showCaption={false} />
+{/snippet}
+
 <!--
 	Unified Small-Multiples Layout
 
@@ -1072,6 +1115,7 @@
 	<!-- Header: Minimal, informational -->
 	<header class="dwelling-header">
 		<h1 class="dwelling-title">{pavilion.name}</h1>
+		<PaperReadingGuide />
 		<p class="dwelling-meta">{pavilion.location}</p>
 	</header>
 
@@ -1081,9 +1125,13 @@
 		class:expanded={expandedView === 'plan'}
 		class:hidden={expandedView !== null && expandedView !== 'plan'}
 	>
-		<button class="expand-trigger" onclick={() => toggleExpand('plan')} aria-label="Toggle fullscreen floor plan">
-			<FloorPlan plan={pavilion} showCaption={false} />
-		</button>
+		{#if enhanced}
+			<button class="expand-trigger" onclick={() => toggleExpand('plan')} aria-label="Toggle fullscreen floor plan">
+				{@render floorPlanView()}
+			</button>
+		{:else}
+			{@render floorPlanView()}
+		{/if}
 	</section>
 
 	<!-- Secondary: Section + Elevation (1:φ ratio between them) -->
@@ -1093,18 +1141,26 @@
 			class:expanded={expandedView === 'section'}
 			class:hidden={expandedView !== null && expandedView !== 'section'}
 		>
-			<button class="expand-trigger" onclick={() => toggleExpand('section')} aria-label="Toggle fullscreen section">
-				<Section section={sectionAA} expanded={expandedView === 'section'} />
-			</button>
+			{#if enhanced}
+				<button class="expand-trigger" onclick={() => toggleExpand('section')} aria-label="Toggle fullscreen section">
+					{@render sectionView()}
+				</button>
+			{:else}
+				{@render sectionView()}
+			{/if}
 		</div>
 		<div
 			class="view-panel secondary-right"
 			class:expanded={expandedView === 'elevation'}
 			class:hidden={expandedView !== null && expandedView !== 'elevation'}
 		>
-			<button class="expand-trigger" onclick={() => toggleExpand('elevation')} aria-label="Toggle fullscreen elevation">
-				<Elevation elevation={southElevation} expanded={expandedView === 'elevation'} />
-			</button>
+			{#if enhanced}
+				<button class="expand-trigger" onclick={() => toggleExpand('elevation')} aria-label="Toggle fullscreen elevation">
+					{@render elevationView()}
+				</button>
+			{:else}
+				{@render elevationView()}
+			{/if}
 		</div>
 	</section>
 
@@ -1115,54 +1171,78 @@
 			class:expanded={expandedView === 'site'}
 			class:hidden={expandedView !== null && expandedView !== 'site'}
 		>
-			<button class="expand-trigger" onclick={() => toggleExpand('site')} aria-label="Toggle fullscreen site plan">
-				<SitePlan site={sitePlan} />
-			</button>
+			{#if enhanced}
+				<button class="expand-trigger" onclick={() => toggleExpand('site')} aria-label="Toggle fullscreen site plan">
+					{@render siteView()}
+				</button>
+			{:else}
+				{@render siteView()}
+			{/if}
 		</div>
 		<div
 			class="view-panel tertiary-item"
 			class:expanded={expandedView === 'roof'}
 			class:hidden={expandedView !== null && expandedView !== 'roof'}
 		>
-			<button class="expand-trigger" onclick={() => toggleExpand('roof')} aria-label="Toggle fullscreen roof plan">
-				<RoofPlan roof={roofPlan} />
-			</button>
+			{#if enhanced}
+				<button class="expand-trigger" onclick={() => toggleExpand('roof')} aria-label="Toggle fullscreen roof plan">
+					{@render roofView()}
+				</button>
+			{:else}
+				{@render roofView()}
+			{/if}
 		</div>
 		<div
 			class="view-panel tertiary-item"
 			class:expanded={expandedView === 'systems'}
 			class:hidden={expandedView !== null && expandedView !== 'systems'}
 		>
-			<button class="expand-trigger" onclick={() => toggleExpand('systems')} aria-label="Toggle fullscreen systems">
-				<Systems systems={systemsData} />
-			</button>
+			{#if enhanced}
+				<button class="expand-trigger" onclick={() => toggleExpand('systems')} aria-label="Toggle fullscreen systems">
+					{@render systemsView()}
+				</button>
+			{:else}
+				{@render systemsView()}
+			{/if}
 		</div>
 		<div
 			class="view-panel tertiary-item"
 			class:expanded={expandedView === 'light'}
 			class:hidden={expandedView !== null && expandedView !== 'light'}
 		>
-			<button class="expand-trigger" onclick={() => toggleExpand('light')} aria-label="Toggle fullscreen light study">
-				<LightStudy study={lightStudyData} showCaption={false} />
-			</button>
+			{#if enhanced}
+				<button class="expand-trigger" onclick={() => toggleExpand('light')} aria-label="Toggle fullscreen light study">
+					{@render lightView()}
+				</button>
+			{:else}
+				{@render lightView()}
+			{/if}
 		</div>
 		<div
 			class="view-panel tertiary-item"
 			class:expanded={expandedView === 'circulation'}
 			class:hidden={expandedView !== null && expandedView !== 'circulation'}
 		>
-			<button class="expand-trigger" onclick={() => toggleExpand('circulation')} aria-label="Toggle fullscreen circulation">
-				<Circulation circulation={circulationData} showCaption={false} />
-			</button>
+			{#if enhanced}
+				<button class="expand-trigger" onclick={() => toggleExpand('circulation')} aria-label="Toggle fullscreen circulation">
+					{@render circulationView()}
+				</button>
+			{:else}
+				{@render circulationView()}
+			{/if}
 		</div>
 		<div
 			class="view-panel tertiary-item"
 			class:expanded={expandedView === 'rhythm'}
 			class:hidden={expandedView !== null && expandedView !== 'rhythm'}
 		>
-			<button class="expand-trigger" onclick={() => toggleExpand('rhythm')} aria-label="Toggle fullscreen daily rhythm">
-				<DailyRhythm rhythm={dailyRhythmData} showCaption={false} />
-			</button>
+			{#if enhanced}
+				<button class="expand-trigger" onclick={() => toggleExpand('rhythm')} aria-label="Toggle fullscreen daily rhythm">
+					{@render rhythmView()}
+				</button>
+			{:else}
+				{@render rhythmView()}
+			{/if}
 		</div>
 	</section>
 
@@ -1180,18 +1260,29 @@
 			<span class="metric-value">{pavilion.bedrooms} / {pavilion.bathrooms}</span>
 			<span class="metric-label">Bed / Bath</span>
 		</div>
-		<div class="metric clickable" role="button" tabindex="0" onclick={() => showBudget = !showBudget} onkeydown={(e) => e.key === 'Enter' && (showBudget = !showBudget)}>
-			<span class="metric-value">{formatCurrency(totalBudget)}</span>
-			<span class="metric-label">Budget {showBudget ? '−' : '+'}</span>
-		</div>
-		<div class="metric clickable" role="button" tabindex="0" onclick={() => showMaterials = !showMaterials} onkeydown={(e) => e.key === 'Enter' && (showMaterials = !showMaterials)}>
-			<span class="metric-value">{materialPalette.length}</span>
-			<span class="metric-label">Materials {showMaterials ? '−' : '+'}</span>
-		</div>
-		<button type="button" class="metric clickable download-link" onclick={downloadPNG} disabled={isDownloading}>
-			<span class="metric-value">{isDownloading ? '...' : 'PNG'}</span>
-			<span class="metric-label">Download</span>
-		</button>
+		{#if enhanced}
+			<button type="button" class="metric clickable" aria-expanded={showBudget} onclick={() => showBudget = !showBudget}>
+				<span class="metric-value">{formatCurrency(totalBudget)}</span>
+				<span class="metric-label">Budget {showBudget ? '−' : '+'}</span>
+			</button>
+			<button type="button" class="metric clickable" aria-expanded={showMaterials} onclick={() => showMaterials = !showMaterials}>
+				<span class="metric-value">{materialPalette.length}</span>
+				<span class="metric-label">Materials {showMaterials ? '−' : '+'}</span>
+			</button>
+			<button type="button" class="metric clickable download-link" onclick={downloadPNG} disabled={isDownloading}>
+				<span class="metric-value">{isDownloading ? '...' : 'PNG'}</span>
+				<span class="metric-label">Download</span>
+			</button>
+		{:else}
+			<div class="metric">
+				<span class="metric-value">{formatCurrency(totalBudget)}</span>
+				<span class="metric-label">Estimated budget</span>
+			</div>
+			<div class="metric">
+				<span class="metric-value">{materialPalette.length}</span>
+				<span class="metric-label">Materials</span>
+			</div>
+		{/if}
 	</footer>
 
 	<!-- Budget Details: Collapsible price sheet (Rams: information on demand) -->

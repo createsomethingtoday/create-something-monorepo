@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PaperReadingGuide from '$lib/components/papers/PaperReadingGuide.svelte';
 	/**
 	 * Ralph vs Gastown: Comparing Agent Orchestration Patterns
 	 *
@@ -31,6 +32,7 @@
 		<div class="pb-8 paper-header">
 			<div class="font-mono mb-4 paper-id">PAPER-2026-002</div>
 			<h1 class="mb-3 paper-title">Ralph vs Gastown: Comparing Agent Orchestration Patterns</h1>
+		<PaperReadingGuide />
 			<p class="max-w-3xl paper-subtitle">
 				Two approaches to autonomous agent orchestration: Ralph spawns fresh contexts per iteration
 				for sequential overnight work; Gastown coordinates persistent parallel sessions via tmux.
@@ -44,6 +46,9 @@
 				<span>Intermediate</span>
 			</div>
 		</div>
+		<details class="paper-record-disclosure" data-paper-record id="full-paper" open>
+			<summary>Read the full paper</summary>
+			<div class="paper-record-body">
 
 		<!-- Abstract -->
 		<section class="abstract-section space-y-4">
@@ -797,7 +802,10 @@ gt sling worker-3 "cd /project && ./ralph.sh --prd api-prd.json"
 				<a href="/experiments" class="footer-link">View Experiments</a>
 			</div>
 		</div>
-	</div>
+
+			</div>
+		</details>
+</div>
 </div>
 
 <style>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PaperReadingGuide from '$lib/components/papers/PaperReadingGuide.svelte';
 	/**
 	 * From Learning About to Dwelling Within
 	 *
@@ -30,6 +31,7 @@
 		<div class="pb-8 paper-header">
 			<div class="font-mono mb-4 paper-id">PAPER-2025-007</div>
 			<h1 class="mb-3 paper-title">From Learning About to Dwelling Within</h1>
+		<PaperReadingGuide />
 			<p class="max-w-3xl paper-subtitle">
 				Agentic Engineering as Methodology Transfer—how Claude Code in the terminal enables
 				ethos adoption through use, not instruction.
@@ -42,6 +44,9 @@
 				<span>Advanced</span>
 			</div>
 		</div>
+		<details class="paper-record-disclosure" data-paper-record id="full-paper" open>
+			<summary>Read the full paper</summary>
+			<div class="paper-record-body">
 
 		<!-- Abstract -->
 		<section class="pl-6 space-y-4 abstract-section">
@@ -795,7 +800,10 @@ recede into transparent use. The methodology disappears when creating.</pre>
 				<a href="/experiments" class="footer-link">View Experiments →</a>
 			</div>
 		</div>
-	</div>
+
+			</div>
+		</details>
+</div>
 </div>
 
 <style>
