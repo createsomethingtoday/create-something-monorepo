@@ -26,7 +26,8 @@ export interface ExternalSubmissionStatus {
 export const SUBMISSION_LIMIT = 6;
 export const ROLLING_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
 export const WARNING_THRESHOLD = 2;
-export const SUBMISSION_STATUS_URL = 'https://check-asset-name.vercel.app/api/checkTemplateuser';
+export const SUBMISSION_STATUS_URL =
+  'https://check-asset-name.mcp.createsomething.agency/api/checkTemplateuser';
 
 export function formatTimeUntil(ms: number | null): string {
   if (ms === null || ms <= 0) return 'now';
@@ -60,14 +61,12 @@ export function calculateWarningLevel(
 
 export function calculateLocalSubmissionData(assets: AssetSubmissionLike[]) {
   const now = new Date();
-  const thirtyDaysAgo = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 30, 0, 0, 0, 0)
-  );
+  const thirtyDaysAgo = new Date(now.getTime() - ROLLING_WINDOW_MS);
 
   const submissions: Submission[] = [];
 
   for (const asset of assets) {
-    if (asset.status === 'Delisted' || !asset.submittedDate) continue;
+    if (!asset.submittedDate) continue;
 
     const submissionDate = new Date(asset.submittedDate);
     const submissionDateUTC = new Date(
@@ -81,6 +80,8 @@ export function calculateLocalSubmissionData(assets: AssetSubmissionLike[]) {
       )
     );
 
+    // Status does not waive a submission from the anti-gaming window. Only the
+    // exact 30-day timestamp expiry releases a slot.
     if (submissionDateUTC >= thirtyDaysAgo) {
       const expiryDate = new Date(submissionDateUTC.getTime() + ROLLING_WINDOW_MS);
       submissions.push({

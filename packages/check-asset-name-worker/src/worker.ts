@@ -768,10 +768,12 @@ async function handleCheckTemplateuser(
   });
 
   const assetStats = summarizeTemplateSubmissionRecords(records);
-  const assetsSubmitted30 = Math.max(
-    assetStats.assetsSubmitted30,
-    firstFiniteNumber(creatorFields['#️⃣Submission cap count']) ?? 0
-  );
+  // The direct asset query is unfiltered and timestamp-precise. Airtable's
+  // creator rollup uses calendar-day conditions, so it can retain submissions
+  // after their exact 30-day expiry. Count every recent status here (including
+  // rejected and delisted) to preserve the anti-gaming policy without letting
+  // an expired rollup value extend the rolling window.
+  const assetsSubmitted30 = assetStats.assetsSubmitted30;
   const publishedTemplates = Math.max(
     assetStats.publishedTemplates,
     firstFiniteNumber(creatorFields['#️⃣👛Templates Published']) ?? 0
