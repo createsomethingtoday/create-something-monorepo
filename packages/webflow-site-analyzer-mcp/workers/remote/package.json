@@ -4,20 +4,19 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "check": "pnpm run typecheck && pnpm run test",
     "prepare:runtime": "node ../../scripts/prepare-remote-runtime.mjs",
     "preflight": "node ../../scripts/remote-deploy-preflight.mjs",
+    "test": "vitest run",
     "typecheck": "tsc --project tsconfig.json",
-    "dev": "pnpm run prepare:runtime && node ../../../../scripts/run-wrangler.mjs dev",
-    "deploy": "pnpm run preflight && pnpm run prepare:runtime && node ../../../../scripts/run-wrangler.mjs deploy",
+    "dev": "node ../../../../scripts/run-wrangler.mjs dev",
+    "deploy": "node ../../../../scripts/run-wrangler.mjs deploy",
     "tail": "node ../../../../scripts/run-wrangler.mjs tail"
-  },
-  "dependencies": {
-    "@cloudflare/containers": "0.2.0",
-    "@cloudflare/sandbox": "*"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260621.1",
     "typescript": "^5.3.0",
+    "vitest": "4.0.18",
     "wrangler": "^4.103.0"
   }
 }
