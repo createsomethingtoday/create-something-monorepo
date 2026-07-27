@@ -1,7 +1,9 @@
-import { workspaceRegistry } from '$lib/server/workspaces/default-registry.js';
+import { clientWorkspaceRuntime } from '$lib/server/runtime.js';
 
-export function load() {
+export async function load() {
   return {
-    workspaces: workspaceRegistry.list()
+    workspaces: clientWorkspaceRuntime.registry.list(),
+    codex: await clientWorkspaceRuntime.codexStatus(),
+    desktop: process.env.CLIENT_WORKSPACE_DESKTOP === '1'
   };
 }

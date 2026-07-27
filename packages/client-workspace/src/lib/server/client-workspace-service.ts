@@ -33,6 +33,7 @@ export type CreatedWorkspaceSession = {
 };
 
 export type WorkspaceSessionState = {
+  active: boolean;
   workspaceId: string;
   receipt: PublicWorkspaceSessionReceipt;
 };
@@ -122,7 +123,11 @@ export class ClientWorkspaceService {
   async sessionState(sessionId: string): Promise<WorkspaceSessionState> {
     const active = this.#sessions.get(sessionId);
     if (active) {
-      return { workspaceId: active.workspaceId, receipt: publicReceipt(active.session.receipt()) };
+      return {
+        active: true,
+        workspaceId: active.workspaceId,
+        receipt: publicReceipt(active.session.receipt())
+      };
     }
     let receipt: WorkspaceSessionReceipt | null = null;
     try {
@@ -134,7 +139,7 @@ export class ClientWorkspaceService {
       throw new ClientWorkspaceServiceError('session_not_found', 'Workspace session not found.');
     }
     this.#registry.resolve(receipt.workspaceId);
-    return { workspaceId: receipt.workspaceId, receipt: publicReceipt(receipt) };
+    return { active: false, workspaceId: receipt.workspaceId, receipt: publicReceipt(receipt) };
   }
 
   subscribe(

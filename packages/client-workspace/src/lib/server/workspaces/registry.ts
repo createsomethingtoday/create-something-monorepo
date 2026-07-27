@@ -1,11 +1,22 @@
 import { isAbsolute, relative, resolve, sep } from 'node:path';
 
-export type WorkspacePreviewDefinition = {
+export type WorkspaceProcessPreviewDefinition = {
+  kind?: 'process';
   command: string;
   args: string[];
   port: number;
   healthPath?: string;
 };
+
+export type WorkspaceStaticPreviewDefinition = {
+  kind: 'static';
+  root: string;
+  entry: string;
+};
+
+export type WorkspacePreviewDefinition =
+  | WorkspaceProcessPreviewDefinition
+  | WorkspaceStaticPreviewDefinition;
 
 export type WorkspaceDefinition = {
   id: string;
@@ -76,62 +87,84 @@ export class WorkspaceRegistry {
     this.#definitions = new Map();
 
     for (const definition of options.definitions) {
-      assertWorkspaceId(definition.id);
-      if (this.#definitions.has(definition.id)) {
+      this.register(definition);
+    }
+  }
+
+  register(definition: WorkspaceDefinition): void {
+    assertWorkspaceId(definition.id);
+    if (this.#definitions.has(definition.id)) {
+      throw new WorkspaceRegistryError(
+        'invalid_workspace_definition',
+        `Duplicate workspace id: ${definition.id}`
+      );
+    }
+
+    const sourceRoot = resolve(definition.sourceRoot);
+    if (!isWithin(this.#managedRoot, sourceRoot)) {
+      throw new WorkspaceRegistryError(
+        'workspace_root_escape',
+        `Workspace ${definition.id} is outside the managed root.`
+      );
+    }
+
+    const editableRoots = definition.editableRoots.map((editableRoot) => {
+      if (editableRoot.trim() === '' || isAbsolute(editableRoot)) {
         throw new WorkspaceRegistryError(
           'invalid_workspace_definition',
-          `Duplicate workspace id: ${definition.id}`
+          `Workspace ${definition.id} has an invalid editable root.`
         );
       }
-
-      const sourceRoot = resolve(definition.sourceRoot);
-      if (!isWithin(this.#managedRoot, sourceRoot)) {
+      const normalized = resolve(sourceRoot, editableRoot);
+      if (!isWithin(sourceRoot, normalized)) {
         throw new WorkspaceRegistryError(
           'workspace_root_escape',
-          `Workspace ${definition.id} is outside the managed root.`
+          `Workspace ${definition.id} has an editable root outside its source root.`
         );
       }
+      return normalized;
+    });
 
-      const editableRoots = definition.editableRoots.map((editableRoot) => {
-        if (editableRoot.trim() === '' || isAbsolute(editableRoot)) {
-          throw new WorkspaceRegistryError(
-            'invalid_workspace_definition',
-            `Workspace ${definition.id} has an invalid editable root.`
-          );
-        }
-        const normalized = resolve(sourceRoot, editableRoot);
-        if (!isWithin(sourceRoot, normalized)) {
-          throw new WorkspaceRegistryError(
-            'workspace_root_escape',
-            `Workspace ${definition.id} has an editable root outside its source root.`
-          );
-        }
-        return normalized;
-      });
-
-      if (editableRoots.length === 0) {
-        throw new WorkspaceRegistryError(
-          'invalid_workspace_definition',
-          `Workspace ${definition.id} must declare an editable root.`
-        );
-      }
-      if (!Number.isInteger(definition.preview.port) || definition.preview.port < 1024) {
-        throw new WorkspaceRegistryError(
-          'invalid_workspace_definition',
-          `Workspace ${definition.id} has an invalid preview port.`
-        );
-      }
-
-      this.#definitions.set(definition.id, {
-        ...definition,
-        sourceRoot,
-        editableRoots,
-        preview: {
-          ...definition.preview,
-          args: [...definition.preview.args]
-        }
-      });
+    if (editableRoots.length === 0) {
+      throw new WorkspaceRegistryError(
+        'invalid_workspace_definition',
+        `Workspace ${definition.id} must declare an editable root.`
+      );
     }
+    if (
+      definition.preview.kind !== 'static' &&
+      (!Number.isInteger(definition.preview.port) || definition.preview.port < 1024)
+    ) {
+      throw new WorkspaceRegistryError(
+        'invalid_workspace_definition',
+        `Workspace ${definition.id} has an invalid preview port.`
+      );
+    }
+    if (
+      definition.preview.kind === 'static' &&
+      ((definition.preview.root !== '.' &&
+        (definition.preview.root.trim() === '' ||
+          isAbsolute(definition.preview.root) ||
+          definition.preview.root.split(/[\\/]/).includes('..'))) ||
+        definition.preview.entry.trim() === '' ||
+        isAbsolute(definition.preview.entry) ||
+        definition.preview.entry.split(/[\\/]/).includes('..'))
+    ) {
+      throw new WorkspaceRegistryError(
+        'invalid_workspace_definition',
+        `Workspace ${definition.id} has an invalid static preview boundary.`
+      );
+    }
+
+    this.#definitions.set(definition.id, {
+      ...definition,
+      sourceRoot,
+      editableRoots,
+      preview:
+        definition.preview.kind === 'static'
+          ? { ...definition.preview }
+          : { ...definition.preview, args: [...definition.preview.args] }
+    });
   }
 
   list(): PublicWorkspace[] {

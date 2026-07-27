@@ -1,4 +1,5 @@
 import { ClientWorkspaceServiceError } from './client-workspace-service.js';
+import { ClientWorkspaceDeliveryError } from './deliveries/importer.js';
 import { PreviewSessionError } from './preview/preview-session.js';
 import { WorkspaceSessionError } from './sessions/workspace-session.js';
 import { WorkspaceRegistryError } from './workspaces/registry.js';
@@ -12,6 +13,15 @@ export function workspaceErrorResponse(error: unknown): Response {
       { error: error.code },
       { status: error.code === 'session_not_found' ? 404 : 400 }
     );
+  }
+  if (error instanceof ClientWorkspaceDeliveryError) {
+    const status =
+      error.code === 'workspace_exists'
+        ? 409
+        : error.code === 'delivery_import_unavailable'
+          ? 503
+          : 400;
+    return Response.json({ error: error.code }, { status });
   }
   if (error instanceof WorkspaceSessionError) {
     const status =

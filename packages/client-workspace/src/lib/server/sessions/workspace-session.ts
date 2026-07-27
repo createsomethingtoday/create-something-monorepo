@@ -15,7 +15,7 @@ export type WorkspaceSandboxPolicy = {
 
 export type StartThreadOptions = {
   cwd: string;
-  model: 'gpt-5.5';
+  model?: string;
   approvalPolicy: 'untrusted';
   developerInstructions: string;
 };
@@ -67,7 +67,13 @@ export type WorkspaceActivityEvent = {
   approvalKind?: 'command' | 'file';
 };
 
-export type WorkspaceSessionStatus = 'opening' | 'ready' | 'running' | 'completed' | 'failed' | 'closed';
+export type WorkspaceSessionStatus =
+  | 'opening'
+  | 'ready'
+  | 'running'
+  | 'completed'
+  | 'failed'
+  | 'closed';
 
 export type WorkspaceSessionReceipt = {
   sessionId: string;
@@ -197,7 +203,10 @@ stop for approval when a command or file change is outside the active policy.`;
 
 function isWithin(root: string, candidate: string): boolean {
   const fromRoot = relative(root, candidate);
-  return fromRoot === '' || (!fromRoot.startsWith(`..${sep}`) && fromRoot !== '..' && !isAbsolute(fromRoot));
+  return (
+    fromRoot === '' ||
+    (!fromRoot.startsWith(`..${sep}`) && fromRoot !== '..' && !isAbsolute(fromRoot))
+  );
 }
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -306,13 +315,16 @@ export class WorkspaceSession {
 
     const { threadId } = await this.#codex.startThread({
       cwd: this.#workspace.sourceRoot,
-      model: 'gpt-5.5',
       approvalPolicy: 'untrusted',
       developerInstructions: WORKSPACE_DEVELOPER_INSTRUCTIONS
     });
     this.#receipt.threadId = threadId;
     this.#receipt.status = 'ready';
-    this.#emit({ type: 'session.ready', message: 'Workspace agent is ready.', status: 'completed' });
+    this.#emit({
+      type: 'session.ready',
+      message: 'Workspace agent is ready.',
+      status: 'completed'
+    });
     await this.#persist();
     return this.receipt();
   }
@@ -369,7 +381,10 @@ export class WorkspaceSession {
     this.#assertOpen();
     const pending = this.#pendingApprovals.get(approvalId);
     if (!pending) {
-      throw new WorkspaceSessionError('approval_not_found', 'Approval request is no longer pending.');
+      throw new WorkspaceSessionError(
+        'approval_not_found',
+        'Approval request is no longer pending.'
+      );
     }
     this.#pendingApprovals.delete(approvalId);
     this.#codex.respond(pending.requestId, { decision });
@@ -392,7 +407,11 @@ export class WorkspaceSession {
     this.#closed = true;
     this.#activeTurn = false;
     this.#receipt.status = 'closed';
-    this.#emit({ type: 'session.closed', message: 'Workspace session closed.', status: 'completed' });
+    this.#emit({
+      type: 'session.closed',
+      message: 'Workspace session closed.',
+      status: 'completed'
+    });
     await this.#persist();
     this.#codex.close();
     this.#subscribers.clear();
@@ -415,7 +434,10 @@ export class WorkspaceSession {
       attachment.sizeBytes > MAX_ATTACHMENT_BYTES ||
       !isWithin(this.#uploadRoot, attachmentPath)
     ) {
-      throw new WorkspaceSessionError('invalid_attachment', 'Attachment is outside the allowed image boundary.');
+      throw new WorkspaceSessionError(
+        'invalid_attachment',
+        'Attachment is outside the allowed image boundary.'
+      );
     }
     return { type: 'localImage', path: attachmentPath, detail: 'high' };
   }
@@ -458,7 +480,11 @@ export class WorkspaceSession {
             status: 'running'
           });
         } else if (item.type === 'fileChange') {
-          this.#emit({ type: 'file.changed', message: 'Preparing file changes.', status: 'running' });
+          this.#emit({
+            type: 'file.changed',
+            message: 'Preparing file changes.',
+            status: 'running'
+          });
         }
         break;
       }
@@ -466,7 +492,8 @@ export class WorkspaceSession {
         const item = asRecord(params.item);
         if (item.type === 'agentMessage') {
           const itemId = typeof item.id === 'string' ? item.id : 'active-message';
-          const text = typeof item.text === 'string' ? item.text : this.#agentMessageBuffers.get(itemId);
+          const text =
+            typeof item.text === 'string' ? item.text : this.#agentMessageBuffers.get(itemId);
           this.#emitAgentMessage(text);
           this.#agentMessageBuffers.delete(itemId);
         }
