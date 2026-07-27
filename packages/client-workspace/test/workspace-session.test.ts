@@ -108,7 +108,7 @@ test('session maps text and a bounded local image into a workspace-confined Code
 
     assert.equal(turn.turnId, 'turn-demo');
     assert.equal(codex.threadOptions?.cwd, sourceRoot);
-    assert.equal(codex.threadOptions?.model, 'gpt-5.5');
+    assert.equal(codex.threadOptions?.model, undefined);
     assert.equal(codex.threadOptions?.approvalPolicy, 'untrusted');
     assert.deepEqual(codex.turnOptions?.input, [
       { type: 'text', text: 'Match the reference accent and update the headline.' },
@@ -129,8 +129,7 @@ test('session rejects concurrent turns without calling Codex twice', async () =>
 
     await assert.rejects(
       session.startTurn({ text: 'Second edit.' }),
-      (error: unknown) =>
-        error instanceof WorkspaceSessionError && error.code === 'turn_conflict'
+      (error: unknown) => error instanceof WorkspaceSessionError && error.code === 'turn_conflict'
     );
     assert.equal(codex.turnOptions?.input[0]?.type, 'text');
   });
@@ -273,7 +272,11 @@ test('session rejects unsupported, oversize, and out-of-root attachments', async
     await session.open();
     const cases = [
       { path: join(uploadRoot, 'reference.svg'), mimeType: 'image/svg+xml', sizeBytes: 10 },
-      { path: join(uploadRoot, 'reference.png'), mimeType: 'image/png', sizeBytes: 6 * 1024 * 1024 },
+      {
+        path: join(uploadRoot, 'reference.png'),
+        mimeType: 'image/png',
+        sizeBytes: 6 * 1024 * 1024
+      },
       { path: join(uploadRoot, '..', 'outside.png'), mimeType: 'image/png', sizeBytes: 10 }
     ];
 

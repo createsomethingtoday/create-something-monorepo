@@ -1,12 +1,12 @@
 import assert from 'node:assert/strict';
+import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import net from 'node:net';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 
-import {
-  PreviewSession,
-  PreviewSessionError
-} from '../src/lib/server/preview/preview-session.js';
+import { PreviewSession, PreviewSessionError } from '../src/lib/server/preview/preview-session.js';
 import { WorkspaceRegistry } from '../src/lib/server/workspaces/registry.js';
 
 const demoRoot = fileURLToPath(new URL('../clients/demo-frontend', import.meta.url));
@@ -85,9 +85,7 @@ test('preview starts one declared process, becomes ready, proxies only its owned
 
     await assert.rejects(
       preview.proxy(
-        new Request(
-          'http://workspace.test/api/workspaces/demo/preview/__preview_module__/unknown'
-        )
+        new Request('http://workspace.test/api/workspaces/demo/preview/__preview_module__/unknown')
       ),
       (error: unknown) =>
         error instanceof PreviewSessionError && error.code === 'preview_path_escape'
@@ -115,8 +113,7 @@ test('preview reports a declared process that crashes before readiness', async (
   const preview = await previewFor('crash');
   await assert.rejects(
     preview.start(),
-    (error: unknown) =>
-      error instanceof PreviewSessionError && error.code === 'preview_crashed'
+    (error: unknown) => error instanceof PreviewSessionError && error.code === 'preview_crashed'
   );
   assert.equal(preview.status().state, 'crashed');
   preview.close();
@@ -126,9 +123,47 @@ test('preview times out and cleans up a process that never becomes ready', async
   const preview = await previewFor('hang', 80);
   await assert.rejects(
     preview.start(),
-    (error: unknown) =>
-      error instanceof PreviewSessionError && error.code === 'preview_timeout'
+    (error: unknown) => error instanceof PreviewSessionError && error.code === 'preview_timeout'
   );
   assert.equal(preview.status().state, 'blocked');
+  preview.close();
+});
+
+test('static delivery preview serves only declared workspace files without a child process', async () => {
+  const managedRoot = mkdtempSync(join(tmpdir(), 'client-workspace-static-preview-'));
+  const sourceRoot = join(managedRoot, 'acme');
+  mkdirSync(join(sourceRoot, 'assets'), { recursive: true });
+  writeFileSync(
+    join(sourceRoot, 'index.html'),
+    '<!doctype html><link rel="stylesheet" href="assets/site.css"><h1>Delivered</h1>'
+  );
+  writeFileSync(join(sourceRoot, 'assets', 'site.css'), 'h1 { color: tomato; }');
+  const registry = new WorkspaceRegistry({
+    managedRoot,
+    definitions: [
+      {
+        id: 'acme',
+        label: 'Acme',
+        sourceRoot,
+        editableRoots: ['.'],
+        preview: { kind: 'static', root: '.', entry: 'index.html' }
+      }
+    ]
+  });
+  const preview = new PreviewSession({ workspace: registry.resolve('acme') });
+  assert.equal((await preview.start()).state, 'ready');
+  const entry = await preview.proxy(
+    new Request('http://workspace.test/api/workspaces/acme/preview')
+  );
+  assert.match(await entry.text(), /Delivered/);
+  assert.equal(entry.headers.get('content-type'), 'text/html; charset=utf-8');
+  const asset = await preview.proxy(
+    new Request('http://workspace.test/api/workspaces/acme/preview/assets/site.css')
+  );
+  assert.equal(await asset.text(), 'h1 { color: tomato; }');
+  await assert.rejects(
+    preview.proxy(new Request('http://workspace.test/api/workspaces/acme/preview/%2e%2e/secret')),
+    (error: unknown) => error instanceof PreviewSessionError && error.code === 'preview_path_escape'
+  );
   preview.close();
 });

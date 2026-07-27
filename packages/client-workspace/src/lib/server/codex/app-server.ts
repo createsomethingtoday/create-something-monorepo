@@ -1,7 +1,8 @@
-import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
+import { execFile, spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import { rm } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import readline from 'node:readline';
+import { promisify } from 'node:util';
 
 import type {
   CodexConnection,
@@ -29,6 +30,75 @@ export type ConnectCodexAppServerOptions = {
   environment?: NodeJS.ProcessEnv;
   ephemeralAuthFile?: string;
 };
+
+export type CodexInstallationStatus =
+  | { state: 'ready'; version: string; authMode: 'ChatGPT' | 'API key' | 'Other' }
+  | { state: 'outdated'; version: string }
+  | { state: 'unauthenticated'; version: string }
+  | { state: 'missing' | 'unavailable' };
+
+export type ProbeCodexInstallationOptions = {
+  command?: string;
+  argsPrefix?: string[];
+  environment?: NodeJS.ProcessEnv;
+  timeoutMs?: number;
+  minimumVersion?: string;
+};
+
+const execFileAsync = promisify(execFile);
+
+function compareVersions(left: string, right: string): number {
+  const a = left.split('.').map(Number);
+  const b = right.split('.').map(Number);
+  for (let index = 0; index < Math.max(a.length, b.length); index += 1) {
+    const difference = (a[index] ?? 0) - (b[index] ?? 0);
+    if (difference !== 0) return difference;
+  }
+  return 0;
+}
+
+export async function probeCodexInstallation(
+  options: ProbeCodexInstallationOptions = {}
+): Promise<CodexInstallationStatus> {
+  const command = options.command ?? 'codex';
+  const argsPrefix = options.argsPrefix ?? [];
+  const executionOptions = {
+    env: options.environment ?? process.env,
+    timeout: options.timeoutMs ?? 5_000,
+    maxBuffer: 32 * 1024,
+    encoding: 'utf8' as const
+  };
+  let version: string;
+  try {
+    const result = await execFileAsync(command, [...argsPrefix, '--version'], executionOptions);
+    const match = `${result.stdout}\n${result.stderr}`.match(/\b(\d+\.\d+\.\d+)\b/);
+    if (!match) return { state: 'unavailable' };
+    version = match[1];
+  } catch (error) {
+    return (error as NodeJS.ErrnoException).code === 'ENOENT'
+      ? { state: 'missing' }
+      : { state: 'unavailable' };
+  }
+  if (compareVersions(version, options.minimumVersion ?? '0.142.0') < 0) {
+    return { state: 'outdated', version };
+  }
+  try {
+    const result = await execFileAsync(
+      command,
+      [...argsPrefix, 'login', 'status'],
+      executionOptions
+    );
+    const publicStatus = `${result.stdout}\n${result.stderr}`;
+    const authMode = /chatgpt/i.test(publicStatus)
+      ? 'ChatGPT'
+      : /api.?key/i.test(publicStatus)
+        ? 'API key'
+        : 'Other';
+    return { state: 'ready', version, authMode };
+  } catch {
+    return { state: 'unauthenticated', version };
+  }
+}
 
 export class CodexAppServerError extends Error {
   readonly code: 'connection_closed' | 'invalid_response' | 'request_failed' | 'request_timeout';
@@ -212,10 +282,7 @@ export async function connectCodexAppServer(
     stdio: ['pipe', 'pipe', 'pipe'],
     env: processEnvWithoutBrowserLeak(sourceEnvironment, Boolean(ephemeralAuthFile))
   });
-  const connection = new CodexAppServerConnection(
-    childProcess,
-    options.requestTimeoutMs ?? 30_000
-  );
+  const connection = new CodexAppServerConnection(childProcess, options.requestTimeoutMs ?? 30_000);
   try {
     await connection.initialize();
     await removeEphemeralAuthFile(ephemeralAuthFile);

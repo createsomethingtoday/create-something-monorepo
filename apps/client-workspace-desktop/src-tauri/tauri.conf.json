@@ -1,0 +1,33 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "CREATE SOMETHING Client Workspace",
+  "version": "0.1.0",
+  "identifier": "agency.createsomething.client-workspace",
+  "build": {
+    "beforeDevCommand": "pnpm prepare:runtime",
+    "beforeBuildCommand": "pnpm prepare:runtime",
+    "frontendDist": "../web"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "CREATE SOMETHING Client Workspace",
+        "width": 1440,
+        "height": 920,
+        "minWidth": 960,
+        "minHeight": 680,
+        "resizable": true,
+        "fullscreen": false
+      }
+    ],
+    "security": { "csp": null }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["app", "dmg"],
+    "resources": { "resources/": "" },
+    "icon": ["icons/icon.png", "icons/icon.icns"],
+    "macOS": { "minimumSystemVersion": "12.0" }
+  }
+}
