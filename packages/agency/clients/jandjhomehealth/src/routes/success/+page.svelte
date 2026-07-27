@@ -9,8 +9,8 @@
 <main class="public-shell">
 	<section class="public-card centered">
 		<CircleCheck size={32} aria-hidden="true" />
-		<h1>Thanks</h1>
-		<p class="lede">Your information has been sent. We will be in touch soon.</p>
-		<a class="secondary-link" href="/">Add another request</a>
+		<h1>Thank you</h1>
+		<p class="lede">Your request has been sent. A member of our care team will follow up soon.</p>
+		<a class="secondary-link" href="/">Return to the website</a>
 	</section>
 </main>
