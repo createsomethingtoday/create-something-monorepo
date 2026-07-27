@@ -13,7 +13,8 @@ function parseArgs(argv) {
     live: false,
     out: DEFAULT_JSON,
     markdown: DEFAULT_MD,
-    issue: process.env.LINEAR_ISSUE_ID || 'CRE-860'
+    issue: process.env.LINEAR_ISSUE_ID || 'CRE-860',
+    liveCorpusApproval: undefined
   };
 
   for (let index = 2; index < argv.length; index += 1) {
@@ -27,6 +28,10 @@ function parseArgs(argv) {
         break;
       case '--live':
         args.live = true;
+        break;
+      case '--live-corpus-approval':
+        args.liveCorpusApproval = readFlag(arg, next);
+        index += 1;
         break;
       case '--out':
         args.out = readFlag(arg, next);
@@ -49,6 +54,12 @@ function parseArgs(argv) {
     }
   }
 
+  if (args.live && !args.liveCorpusApproval) {
+    throw new Error(
+      '--live requires --live-corpus-approval <reference> so corpus inclusion has an explicit approval record.'
+    );
+  }
+
   return args;
 }
 
@@ -67,7 +78,7 @@ writes an evidence packet to:
 
 The default gate is local and request-free. For separately approved live evidence,
 run through Infisical so Dify, OpenAI, and Langfuse credentials are available:
-  infisical run --env=prod --path=/ --recursive -- pnpm specialist:template-review:production-gate -- --live
+  infisical run --env=prod --path=/ --recursive -- pnpm specialist:template-review:production-gate -- --live --live-corpus-approval CRE-123
 `);
 }
 
@@ -173,7 +184,9 @@ function main() {
         'specialist:template-review:dataset',
         '--',
         '--include-tool-cases',
-        '--live'
+        '--live',
+        '--live-corpus-approval',
+        args.liveCorpusApproval
       ])
     );
   } else {
@@ -220,6 +233,7 @@ function main() {
     generated_at: new Date().toISOString(),
     issue: args.issue,
     live: args.live,
+    live_corpus_approval: args.liveCorpusApproval ?? null,
     ok: steps.every((step) => step.ok) && !secretPattern,
     secret_pattern_detected: secretPattern,
     telemetry,

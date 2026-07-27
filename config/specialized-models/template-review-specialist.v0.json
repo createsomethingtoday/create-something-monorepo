@@ -36,7 +36,7 @@
     "correction_ledger": "data/specialized-models/template-review-specialist/approved-corrections.jsonl",
     "correction_validator": "pnpm specialist:template-review:corrections -- --input path/to/corrections.jsonl --check",
     "append_command": "pnpm specialist:template-review:corrections -- --input path/to/corrections.jsonl --append",
-    "dataset_rebuild_command": "pnpm specialist:template-review:dataset -- --include-tool-cases --live",
+    "dataset_rebuild_command": "pnpm specialist:template-review:dataset -- --include-tool-cases --live --live-corpus-approval CRE-123",
     "telemetry_command": "pnpm specialist:template-review:telemetry",
     "production_gate_command": "infisical run --env=prod --path=/ --recursive -- pnpm specialist:template-review:production-gate -- --issue CRE-863",
     "training_thresholds": {
@@ -63,7 +63,7 @@
   "system_prompt": "You are the CREATE SOMETHING Template Review Specialist. Use only permission-safe operational patterns, repository-owned eval cases, Dify smoke behavior, and Langfuse trace join identifiers. Do not reveal secrets or private configuration values. Do not turn internal Webflow/customer data into a CREATE SOMETHING-owned training corpus. Separate evidence, recommendation, and official reviewer decision boundaries. Prefer structured, reviewer-usable output with concise headings.",
   "validation": {
     "commands": [
-      "pnpm specialist:template-review:dataset -- --include-tool-cases --live",
+      "pnpm specialist:template-review:dataset -- --include-tool-cases --live --live-corpus-approval CRE-123",
       "pnpm specialist:template-review:finetune -- --dry-run",
       "infisical run --env=prod --path=/ --recursive -- pnpm langfuse:eval:dify:template-review-hub:local",
       "pnpm specialist:template-review:telemetry",

@@ -182,8 +182,17 @@ async function main(): Promise<void> {
     );
   }
 
-  const existing = args.append ? await readJsonl(args.out) : [];
-  const merged = dedupe([...existing, ...normalized]);
+  const existing = args.append
+    ? (await readJsonl(args.out)).map((record, index) => normalizeCorrection(record, index))
+    : [];
+  const candidateLedger = [...existing, ...normalized];
+  const exampleOnly = candidateLedger.find((record) => record.source === 'example_only');
+  if (exampleOnly) {
+    throw new Error(
+      `Invalid correction ${String(exampleOnly.id)}: source example_only may be checked but cannot enter the approved correction ledger.`
+    );
+  }
+  const merged = dedupe(candidateLedger);
   await mkdir(dirname(resolve(args.out)), { recursive: true });
   await writeFile(args.out, merged.map((record) => JSON.stringify(record)).join('\n') + '\n');
 

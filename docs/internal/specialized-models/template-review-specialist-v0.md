@@ -60,14 +60,23 @@ Append reviewed records to a ledger:
 pnpm specialist:template-review:corrections -- --input path/to/corrections.jsonl --append
 ```
 
+The committed `approved-corrections.example.jsonl` fixture can be checked, but
+the importer rejects its `source: example_only` marker. Replace the example
+identity and provenance with a real reviewer-approved record before import.
+
 ## Live checkpoints
 
 Live dataset collection, runtime evaluation, Template Review Hub evaluation, and Langfuse emission are separate checkpoints. Run them only with the owning credentials and approval path:
 
 ```bash
 infisical run --env=prod --path=/ --recursive -- \
-  pnpm specialist:template-review:production-gate -- --live --issue CRE-1457
+  pnpm specialist:template-review:production-gate -- --live \
+  --issue CRE-1457 --live-corpus-approval CRE-123
 ```
+
+`--live-corpus-approval` must identify the issue or approval artifact that
+authorizes fresh Dify outputs to enter the training corpus. Live credentials or
+a passing smoke response do not constitute corpus approval.
 
 The prompt-specialized runtime can be invoked separately with an approved provider credential:
 

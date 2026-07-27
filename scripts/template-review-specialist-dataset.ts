@@ -51,6 +51,7 @@ type Args = {
   metadataOut: string;
   correctionsPath: string;
   live: boolean;
+  liveCorpusApproval?: string;
   includeToolCases: boolean;
   limit: number;
 };
@@ -170,6 +171,10 @@ function parseArgs(argv = process.argv.slice(2)): Args {
       case '--live':
         args.live = true;
         break;
+      case '--live-corpus-approval':
+        args.liveCorpusApproval = readFlag(arg, next);
+        index += 1;
+        break;
       case '--include-tool-cases':
         args.includeToolCases = true;
         break;
@@ -186,6 +191,11 @@ function parseArgs(argv = process.argv.slice(2)): Args {
     }
   }
 
+  if (args.live && !args.liveCorpusApproval) {
+    throw new Error(
+      '--live requires --live-corpus-approval <reference> so approval to include fresh Dify outputs is recorded.'
+    );
+  }
   if (!Number.isFinite(args.limit) || args.limit <= 0) args.limit = Number.POSITIVE_INFINITY;
   return args;
 }
@@ -203,6 +213,9 @@ Template Review Hub repository/Dify eval surface and optional live Dify answers.
 
 Options:
   --live                 Call the Dify Service API and use passing live answers.
+  --live-corpus-approval <reference>
+                         Required with --live; records the approval authorizing
+                         fresh Dify outputs to enter the training corpus.
   --include-tool-cases    Include cases that ask the Dify agent to call tools.
   --limit <n>             Max inventory smoke cases to include.
   --out <path>            Training JSONL path.
@@ -288,6 +301,12 @@ async function approvedCorrectionRecords(path: string): Promise<DatasetRecord[]>
     if (!optionalString(parsed.approved_by) || !optionalString(parsed.approved_at)) {
       throw new Error(
         `Invalid approved correction ${id}: approved_by and approved_at are required.`
+      );
+    }
+
+    if (optionalString(parsed.source) === 'example_only') {
+      throw new Error(
+        `Invalid approved correction ${id}: source example_only cannot enter the training corpus.`
       );
     }
 
@@ -473,6 +492,11 @@ async function writeManifest(
       path: args.correctionsPath,
       count: records.filter((record) => record.source === 'approved_correction').length,
       required_policy_flags: ['permission_safe', 'excludes_private_data', 'reviewer_approved']
+    },
+    live_corpus: {
+      enabled: args.live,
+      approval_reference: args.liveCorpusApproval ?? null,
+      included_answer_count: records.filter((record) => record.source === 'dify_live_answer').length
     },
     policy_boundary: {
       permitted:
