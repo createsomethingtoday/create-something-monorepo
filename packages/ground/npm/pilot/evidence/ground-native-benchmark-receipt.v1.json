@@ -1,10 +1,10 @@
 {
   "documentType": "create-something.ground-native-benchmark-receipt",
   "schemaVersion": "1.0.0",
-  "generatedAt": "2026-07-27T19:53:17.261Z",
+  "generatedAt": "2026-07-27T19:57:44.063Z",
   "source": {
-    "gitSha": "70b279cf5ca1edb0f4c5daa8894727496049f5e0",
-    "gitDirty": true,
+    "gitSha": "79fc123dd3d81c3dad353549ca13ab370fdb918f",
+    "gitDirty": false,
     "platform": "darwin",
     "arch": "arm64",
     "nodeVersion": "v22.21.1"
@@ -36,55 +36,55 @@
       {
         "index": 1,
         "status": "passed",
-        "connectMs": 9.341,
-        "discoveryMs": 0.541,
-        "analysisMs": 11.385,
-        "totalMs": 28.005,
-        "peakRssBytes": 12124160,
+        "connectMs": 10.15,
+        "discoveryMs": 0.695,
+        "analysisMs": 11.828,
+        "totalMs": 29.521,
+        "peakRssBytes": 12255232,
         "semanticFingerprint": "d0066f56dfc062232df6ab5df70cdeb9458d17934aa380e2d2dbae3b48b087b9",
         "error": null
       },
       {
         "index": 2,
         "status": "passed",
-        "connectMs": 9.35,
-        "discoveryMs": 0.658,
-        "analysisMs": 12.114,
-        "totalMs": 26.415,
-        "peakRssBytes": 12091392,
+        "connectMs": 8.78,
+        "discoveryMs": 0.452,
+        "analysisMs": 11.564,
+        "totalMs": 25.905,
+        "peakRssBytes": 12156928,
         "semanticFingerprint": "d0066f56dfc062232df6ab5df70cdeb9458d17934aa380e2d2dbae3b48b087b9",
         "error": null
       },
       {
         "index": 3,
         "status": "passed",
-        "connectMs": 8.626,
-        "discoveryMs": 0.531,
-        "analysisMs": 11.264,
-        "totalMs": 27.058,
-        "peakRssBytes": 12173312,
+        "connectMs": 9.004,
+        "discoveryMs": 0.559,
+        "analysisMs": 11.539,
+        "totalMs": 25.23,
+        "peakRssBytes": 12075008,
         "semanticFingerprint": "d0066f56dfc062232df6ab5df70cdeb9458d17934aa380e2d2dbae3b48b087b9",
         "error": null
       },
       {
         "index": 4,
         "status": "passed",
-        "connectMs": 9.049,
-        "discoveryMs": 0.507,
-        "analysisMs": 12.258,
-        "totalMs": 28.368,
-        "peakRssBytes": 12156928,
+        "connectMs": 8.624,
+        "discoveryMs": 0.484,
+        "analysisMs": 11.471,
+        "totalMs": 26.93,
+        "peakRssBytes": 12107776,
         "semanticFingerprint": "d0066f56dfc062232df6ab5df70cdeb9458d17934aa380e2d2dbae3b48b087b9",
         "error": null
       },
       {
         "index": 5,
         "status": "passed",
-        "connectMs": 8.702,
-        "discoveryMs": 0.598,
-        "analysisMs": 12.088,
-        "totalMs": 27.114,
-        "peakRssBytes": 12140544,
+        "connectMs": 9.4,
+        "discoveryMs": 0.514,
+        "analysisMs": 11.714,
+        "totalMs": 25.763,
+        "peakRssBytes": 12107776,
         "semanticFingerprint": "d0066f56dfc062232df6ab5df70cdeb9458d17934aa380e2d2dbae3b48b087b9",
         "error": null
       }
@@ -98,12 +98,12 @@
         "d0066f56dfc062232df6ab5df70cdeb9458d17934aa380e2d2dbae3b48b087b9"
       ],
       "latencyMs": {
-        "min": 26.415,
-        "median": 27.114,
-        "p95": 28.368,
-        "max": 28.368
+        "min": 25.23,
+        "median": 25.905,
+        "p95": 29.521,
+        "max": 29.521
       },
-      "peakRssBytes": 12173312
+      "peakRssBytes": 12255232
     }
   },
   "typescriptBaseline": {
@@ -119,8 +119,8 @@
         "index": 1,
         "status": "passed",
         "exitCode": 1,
-        "totalMs": 509.074,
-        "peakRssBytes": 61407232,
+        "totalMs": 504.384,
+        "peakRssBytes": 61587456,
         "semanticFingerprint": "e9d603fb5a50e2044e6586019ce5d07ff50caae7c9cddc0bc9c0b061ca14fc73",
         "error": null
       },
@@ -128,8 +128,8 @@
         "index": 2,
         "status": "passed",
         "exitCode": 1,
-        "totalMs": 504.179,
-        "peakRssBytes": 61210624,
+        "totalMs": 516.353,
+        "peakRssBytes": 61440000,
         "semanticFingerprint": "e9d603fb5a50e2044e6586019ce5d07ff50caae7c9cddc0bc9c0b061ca14fc73",
         "error": null
       },
@@ -137,8 +137,8 @@
         "index": 3,
         "status": "passed",
         "exitCode": 1,
-        "totalMs": 507.447,
-        "peakRssBytes": 61538304,
+        "totalMs": 496.467,
+        "peakRssBytes": 61390848,
         "semanticFingerprint": "e9d603fb5a50e2044e6586019ce5d07ff50caae7c9cddc0bc9c0b061ca14fc73",
         "error": null
       },
@@ -146,8 +146,8 @@
         "index": 4,
         "status": "passed",
         "exitCode": 1,
-        "totalMs": 511.225,
-        "peakRssBytes": 61374464,
+        "totalMs": 502.008,
+        "peakRssBytes": 61276160,
         "semanticFingerprint": "e9d603fb5a50e2044e6586019ce5d07ff50caae7c9cddc0bc9c0b061ca14fc73",
         "error": null
       },
@@ -155,8 +155,8 @@
         "index": 5,
         "status": "passed",
         "exitCode": 1,
-        "totalMs": 504.238,
-        "peakRssBytes": 61456384,
+        "totalMs": 495.636,
+        "peakRssBytes": 61521920,
         "semanticFingerprint": "e9d603fb5a50e2044e6586019ce5d07ff50caae7c9cddc0bc9c0b061ca14fc73",
         "error": null
       }
@@ -170,20 +170,20 @@
         "e9d603fb5a50e2044e6586019ce5d07ff50caae7c9cddc0bc9c0b061ca14fc73"
       ],
       "latencyMs": {
-        "min": 504.179,
-        "median": 507.447,
-        "p95": 511.225,
-        "max": 511.225
+        "min": 495.636,
+        "median": 502.008,
+        "p95": 516.353,
+        "max": 516.353
       },
-      "peakRssBytes": 61538304
+      "peakRssBytes": 61587456
     }
   },
   "comparison": {
     "scope": "directional-only",
     "claims": [
       "Native Ground MCP retained 5/5 passing samples with semantic consistency=true.",
-      "Native median total latency was 27.114 ms and observed peak RSS was 12173312 bytes on this target.",
-      "The existing TypeScript script retained 5/5 passing samples with median total latency 507.447 ms and observed peak RSS 61538304 bytes.",
+      "Native median total latency was 25.905 ms and observed peak RSS was 12255232 bytes on this target.",
+      "The existing TypeScript script retained 5/5 passing samples with median total latency 502.008 ms and observed peak RSS 61587456 bytes.",
       "Cross-implementation metrics are directional only: both paths scan the same directory for duplicate-analysis intent, but their parsers and algorithms differ."
     ],
     "adoptionDecision": "adopt-native-kernel-behind-mcp",
