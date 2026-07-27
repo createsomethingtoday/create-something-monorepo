@@ -1,0 +1,76 @@
+{
+  "schemaVersion": "harness-ablation-manifest.v1",
+  "experimentId": "example-agent-harness-v1",
+  "environment": "isolated",
+  "hypothesis": "Repository instructions and deterministic validation hooks improve reliable task completion enough to justify their overhead.",
+  "repetitions": 2,
+  "randomizationSeed": "example-agent-harness-v1-seed",
+  "components": [
+    {
+      "id": "root-instructions",
+      "kind": "instruction",
+      "artifact": "AGENTS.md",
+      "expectedContribution": "Route the agent to the correct workflow, sources of truth, and validation commands.",
+      "safetyCritical": false,
+      "deterministicAlternativeAvailable": false
+    },
+    {
+      "id": "validation-hook",
+      "kind": "hook",
+      "artifact": ".claude/hooks/typecheck-stop.sh",
+      "expectedContribution": "Prevent a worker from presenting a failed validation state as complete.",
+      "safetyCritical": true,
+      "deterministicAlternativeAvailable": false
+    }
+  ],
+  "tasks": [
+    {
+      "id": "bounded-package-change",
+      "description": "Make one bounded package change and return direct validation evidence plus an explicit completion boundary."
+    }
+  ],
+  "metrics": {
+    "taskSuccess": {
+      "direction": "maximize",
+      "weight": 0.5,
+      "scale": 1
+    },
+    "policyViolations": {
+      "direction": "minimize",
+      "weight": 0.2,
+      "scale": 2
+    },
+    "humanCorrectionMinutes": {
+      "direction": "minimize",
+      "weight": 0.1,
+      "scale": 30
+    },
+    "totalTokens": {
+      "direction": "minimize",
+      "weight": 0.05,
+      "scale": 100000
+    },
+    "costUsd": {
+      "direction": "minimize",
+      "weight": 0.05,
+      "scale": 10
+    },
+    "latencyMs": {
+      "direction": "minimize",
+      "weight": 0.05,
+      "scale": 600000
+    },
+    "escalationQuality": {
+      "direction": "maximize",
+      "weight": 0.05,
+      "scale": 1
+    }
+  },
+  "decisionPolicy": {
+    "materialContribution": 0.03,
+    "materialRegression": -0.03,
+    "overheadTolerance": 0.03,
+    "movePolicyViolationDelta": 0.25,
+    "moveTaskSuccessDeltaCeiling": 0.02
+  }
+}
