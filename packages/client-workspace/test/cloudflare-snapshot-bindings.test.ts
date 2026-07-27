@@ -35,15 +35,12 @@ test('D1 snapshot ledger reads and upserts one sanitized pointer per sandbox', a
   };
   const ledger = new D1WorkspaceSnapshotLedger(database);
 
-  assert.deepEqual(
-    await ledger.latest('client-workspace-0123456789abcdef0123456789abcdef'),
-    {
-      sandboxId: 'client-workspace-0123456789abcdef0123456789abcdef',
-      objectKey: 'snapshots/private.tgz',
-      size: 42,
-      capturedAt: '2026-07-15T14:00:00.000Z'
-    }
-  );
+  assert.deepEqual(await ledger.latest('client-workspace-0123456789abcdef0123456789abcdef'), {
+    sandboxId: 'client-workspace-0123456789abcdef0123456789abcdef',
+    objectKey: 'snapshots/private.tgz',
+    size: 42,
+    capturedAt: '2026-07-15T14:00:00.000Z'
+  });
   await ledger.record({
     sandboxId: 'client-workspace-0123456789abcdef0123456789abcdef',
     objectKey: 'snapshots/new.tgz',
@@ -51,17 +48,23 @@ test('D1 snapshot ledger reads and upserts one sanitized pointer per sandbox', a
     capturedAt: '2026-07-15T15:00:00.000Z'
   });
 
-  assert.equal(calls.some((call) => JSON.stringify(call).includes('access_token')), false);
-  assert.deepEqual(calls.filter((call) => Array.isArray(call) && call[0] === 'bind'), [
-    ['bind', 'client-workspace-0123456789abcdef0123456789abcdef'],
+  assert.equal(
+    calls.some((call) => JSON.stringify(call).includes('access_token')),
+    false
+  );
+  assert.deepEqual(
+    calls.filter((call) => Array.isArray(call) && call[0] === 'bind'),
     [
-      'bind',
-      'client-workspace-0123456789abcdef0123456789abcdef',
-      'snapshots/new.tgz',
-      84,
-      '2026-07-15T15:00:00.000Z'
+      ['bind', 'client-workspace-0123456789abcdef0123456789abcdef'],
+      [
+        'bind',
+        'client-workspace-0123456789abcdef0123456789abcdef',
+        'snapshots/new.tgz',
+        84,
+        '2026-07-15T15:00:00.000Z'
+      ]
     ]
-  ]);
+  );
 });
 
 test('R2 snapshot objects keep archive streams private behind the binding', async () => {

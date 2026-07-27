@@ -34,6 +34,10 @@ input.on('line', (line) => {
     send({ id: message.id, result: { thread: { id: 'thread-from-process' } } });
     return;
   }
+  if (message.method === 'thread/resume') {
+    send({ id: message.id, result: { thread: { id: message.params.threadId } } });
+    return;
+  }
   if (message.method === 'turn/start') {
     send({ id: message.id, result: { turn: { id: 'turn-from-process' } } });
     send({

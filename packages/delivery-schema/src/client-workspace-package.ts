@@ -9,6 +9,8 @@ import {
 
 export const CLIENT_WORKSPACE_PACKAGE_SCHEMA =
   'create-something/client-workspace-package@1' as const;
+export const CLIENT_WORKSPACE_PACKAGE_SCHEMA_V2 =
+  'create-something/client-workspace-package@2' as const;
 
 export type ClientWorkspaceStaticPreview = {
   kind: 'static';
@@ -51,11 +53,44 @@ export type VerifiedClientWorkspacePackage = {
   files: Map<string, Buffer>;
 };
 
+export type ClientWorkspacePackageManifestV2 = Omit<ClientWorkspacePackageManifest, 'schema'> & {
+  schema: typeof CLIENT_WORKSPACE_PACKAGE_SCHEMA_V2;
+  releaseVersion: string;
+  expiresAt: string;
+  minimumAppVersion: string;
+};
+
+export type CreateClientWorkspacePackageV2Options = {
+  manifest: Omit<ClientWorkspacePackageManifestV2, 'schema' | 'files'>;
+  files: Record<string, string | Uint8Array>;
+  privateKey: KeyObject | string | Buffer;
+};
+
+export type VerifiedClientWorkspacePackageV2 = {
+  manifest: ClientWorkspacePackageManifestV2;
+  files: Map<string, Buffer>;
+};
+
+export type ClientWorkspaceTrustPolicy = {
+  issuer: string;
+  appVersion: string;
+  keys: Record<string, KeyObject | string | Buffer>;
+  revokedKeyIds?: string[];
+  allowLegacyV1?: boolean;
+  now?: () => Date;
+};
+
 export type ClientWorkspacePackageErrorCode =
   | 'file_hash_mismatch'
   | 'invalid_package'
   | 'invalid_path'
   | 'invalid_signature'
+  | 'issuer_mismatch'
+  | 'key_revoked'
+  | 'key_unknown'
+  | 'legacy_package_unavailable'
+  | 'minimum_app_version_unmet'
+  | 'package_expired'
   | 'package_limit_exceeded';
 
 export class ClientWorkspacePackageError extends Error {
@@ -233,7 +268,9 @@ function parseManifest(value: unknown): ClientWorkspacePackageManifest {
   };
 }
 
-function canonicalManifest(manifest: ClientWorkspacePackageManifest): Buffer {
+function canonicalManifest(
+  manifest: ClientWorkspacePackageManifest | ClientWorkspacePackageManifestV2
+): Buffer {
   return Buffer.from(JSON.stringify(manifest));
 }
 
@@ -362,4 +399,231 @@ export function verifyClientWorkspacePackage(
     decoded.set(path, content);
   }
   return { manifest, files: decoded };
+}
+
+function semanticVersion(value: unknown): string {
+  return requiredString(value, /^\d+\.\d+\.\d+(?:-[A-Za-z0-9.-]+)?$/);
+}
+
+function parseManifestV2(value: unknown): ClientWorkspacePackageManifestV2 {
+  const manifest = asObject(value);
+  exactFields(manifest, [
+    'schema',
+    'packageId',
+    'createdAt',
+    'expiresAt',
+    'issuer',
+    'keyId',
+    'releaseVersion',
+    'minimumAppVersion',
+    'releaseManifestPath',
+    'workspace',
+    'files'
+  ]);
+  if (manifest.schema !== CLIENT_WORKSPACE_PACKAGE_SCHEMA_V2) {
+    throw new ClientWorkspacePackageError(
+      'invalid_package',
+      'Unsupported workspace package schema.'
+    );
+  }
+  const {
+    expiresAt: _expiresAt,
+    releaseVersion: _releaseVersion,
+    minimumAppVersion: _minimumAppVersion,
+    ...legacyFields
+  } = manifest;
+  const legacy = parseManifest({
+    ...legacyFields,
+    schema: CLIENT_WORKSPACE_PACKAGE_SCHEMA
+  });
+  const expiresAt = requiredString(manifest.expiresAt);
+  if (Number.isNaN(Date.parse(expiresAt))) {
+    throw new ClientWorkspacePackageError('invalid_package', 'Package expiry is invalid.');
+  }
+  return {
+    ...legacy,
+    schema: CLIENT_WORKSPACE_PACKAGE_SCHEMA_V2,
+    expiresAt,
+    releaseVersion: semanticVersion(manifest.releaseVersion),
+    minimumAppVersion: semanticVersion(manifest.minimumAppVersion)
+  };
+}
+
+export function createClientWorkspacePackageV2(
+  options: CreateClientWorkspacePackageV2Options
+): string {
+  const files = Object.entries(options.files)
+    .map(([path, content]) => {
+      const normalizedPath = assertRelativePath(path);
+      const bytes = Buffer.from(content);
+      return {
+        path: normalizedPath,
+        bytes,
+        reference: { path: normalizedPath, sha256: sha256(bytes), sizeBytes: bytes.byteLength }
+      };
+    })
+    .sort((left, right) => left.path.localeCompare(right.path));
+  const manifest = parseManifestV2({
+    ...options.manifest,
+    schema: CLIENT_WORKSPACE_PACKAGE_SCHEMA_V2,
+    files: files.map((file) => file.reference)
+  });
+  const signature = sign(
+    null,
+    canonicalManifest(manifest),
+    keyObject(options.privateKey, 'private')
+  );
+  return `${JSON.stringify({
+    schema: CLIENT_WORKSPACE_PACKAGE_SCHEMA_V2,
+    manifest,
+    files: files.map(({ path, bytes }) => ({ path, contentBase64: bytes.toString('base64') })),
+    signature: { algorithm: 'Ed25519', value: signature.toString('base64') }
+  })}\n`;
+}
+
+function verifyClientWorkspacePackageV2(
+  packageJson: string | Buffer,
+  trustedPublicKey: KeyObject | string | Buffer
+): VerifiedClientWorkspacePackageV2 {
+  const bytes = Buffer.from(packageJson);
+  if (bytes.byteLength === 0 || bytes.byteLength > MAX_PACKAGE_BYTES) {
+    throw new ClientWorkspacePackageError(
+      'package_limit_exceeded',
+      'Workspace package exceeds the allowed size.'
+    );
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(bytes.toString('utf8'));
+  } catch {
+    throw new ClientWorkspacePackageError(
+      'invalid_package',
+      'Workspace package is not valid JSON.'
+    );
+  }
+  const envelope = asObject(parsed);
+  exactFields(envelope, ['schema', 'manifest', 'files', 'signature']);
+  if (envelope.schema !== CLIENT_WORKSPACE_PACKAGE_SCHEMA_V2) {
+    throw new ClientWorkspacePackageError(
+      'invalid_package',
+      'Unsupported workspace package schema.'
+    );
+  }
+  const manifest = parseManifestV2(envelope.manifest);
+  const signature = asObject(envelope.signature);
+  exactFields(signature, ['algorithm', 'value']);
+  if (signature.algorithm !== 'Ed25519') {
+    throw new ClientWorkspacePackageError(
+      'invalid_package',
+      'Unsupported workspace package signature algorithm.'
+    );
+  }
+  const signatureBytes = Buffer.from(requiredString(signature.value), 'base64');
+  if (
+    !verify(
+      null,
+      canonicalManifest(manifest),
+      keyObject(trustedPublicKey, 'public'),
+      signatureBytes
+    )
+  ) {
+    throw new ClientWorkspacePackageError(
+      'invalid_signature',
+      'Workspace package signature is not trusted.'
+    );
+  }
+  if (!Array.isArray(envelope.files) || envelope.files.length !== manifest.files.length) {
+    throw new ClientWorkspacePackageError(
+      'invalid_package',
+      'Workspace package content does not match its manifest.'
+    );
+  }
+  const references = new Map(manifest.files.map((file) => [file.path, file]));
+  const decoded = new Map<string, Buffer>();
+  for (const candidate of envelope.files) {
+    const file = asObject(candidate);
+    exactFields(file, ['path', 'contentBase64']);
+    const path = assertRelativePath(file.path);
+    const reference = references.get(path);
+    if (!reference || decoded.has(path)) {
+      throw new ClientWorkspacePackageError(
+        'invalid_package',
+        'Workspace package contains undeclared or duplicate content.'
+      );
+    }
+    const content = Buffer.from(requiredString(file.contentBase64), 'base64');
+    if (content.byteLength !== reference.sizeBytes || sha256(content) !== reference.sha256) {
+      throw new ClientWorkspacePackageError(
+        'file_hash_mismatch',
+        `Workspace package content failed verification: ${path}`
+      );
+    }
+    decoded.set(path, content);
+  }
+  return { manifest, files: decoded };
+}
+
+function compareSemanticVersions(left: string, right: string): number {
+  const a = left.split('-', 1)[0].split('.').map(Number);
+  const b = right.split('-', 1)[0].split('.').map(Number);
+  for (let index = 0; index < 3; index += 1) {
+    const difference = a[index] - b[index];
+    if (difference !== 0) return difference;
+  }
+  return 0;
+}
+
+export function verifyClientWorkspacePackageWithPolicy(
+  packageJson: string | Buffer,
+  policy: ClientWorkspaceTrustPolicy
+): VerifiedClientWorkspacePackage | VerifiedClientWorkspacePackageV2 {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(Buffer.from(packageJson).toString('utf8'));
+  } catch {
+    throw new ClientWorkspacePackageError(
+      'invalid_package',
+      'Workspace package is not valid JSON.'
+    );
+  }
+  const envelope = asObject(parsed);
+  const manifestObject = asObject(envelope.manifest);
+  const keyId = requiredString(manifestObject.keyId, /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/);
+  if (policy.revokedKeyIds?.includes(keyId)) {
+    throw new ClientWorkspacePackageError('key_revoked', 'Workspace package key is revoked.');
+  }
+  const key = policy.keys[keyId];
+  if (!key) {
+    throw new ClientWorkspacePackageError('key_unknown', 'Workspace package key is unknown.');
+  }
+  const verified =
+    envelope.schema === CLIENT_WORKSPACE_PACKAGE_SCHEMA_V2
+      ? verifyClientWorkspacePackageV2(packageJson, key)
+      : policy.allowLegacyV1
+        ? verifyClientWorkspacePackage(packageJson, key)
+        : (() => {
+            throw new ClientWorkspacePackageError(
+              'legacy_package_unavailable',
+              'Legacy workspace packages are not accepted.'
+            );
+          })();
+  if (verified.manifest.issuer !== policy.issuer) {
+    throw new ClientWorkspacePackageError(
+      'issuer_mismatch',
+      'Workspace package issuer is not trusted.'
+    );
+  }
+  if (verified.manifest.schema === CLIENT_WORKSPACE_PACKAGE_SCHEMA_V2) {
+    const now = (policy.now ?? (() => new Date()))();
+    if (Date.parse(verified.manifest.expiresAt) <= now.getTime()) {
+      throw new ClientWorkspacePackageError('package_expired', 'Workspace package has expired.');
+    }
+    if (compareSemanticVersions(policy.appVersion, verified.manifest.minimumAppVersion) < 0) {
+      throw new ClientWorkspacePackageError(
+        'minimum_app_version_unmet',
+        'Workspace package requires a newer app version.'
+      );
+    }
+  }
+  return verified;
 }

@@ -1,6 +1,6 @@
 {
   "name": "@create-something/client-workspace-desktop",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "description": "Self-contained macOS delivery for client-owned Codex workspaces",
@@ -12,6 +12,7 @@
     "build": "tauri build",
     "build:app": "tauri build --bundles app",
     "build:dmg": "tauri build --bundles app,dmg",
+    "build:dmg:release": "CLIENT_WORKSPACE_RELEASE_MODE=production tauri build --bundles app,dmg",
     "tauri": "tauri"
   },
   "devDependencies": {

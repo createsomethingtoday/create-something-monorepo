@@ -347,10 +347,9 @@ test('sandbox gateway checkpoints and destroys after an explicit successful clos
 
   const response = await gateway.fetch(
     'client-workspace-0123456789abcdef0123456789abcdef',
-    new Request(
-      'https://workspace.createsomething.space/api/sessions/session-1/close',
-      { method: 'POST' }
-    )
+    new Request('https://workspace.createsomething.space/api/sessions/session-1/close', {
+      method: 'POST'
+    })
   );
 
   assert.equal(response.status, 200);
@@ -395,7 +394,5 @@ test('sandbox gateway schedules sanitized D1 activity capture for an app respons
   await Promise.all(tasks);
 
   assert.equal(response.status, 201);
-  assert.deepEqual(records, [
-    [sandboxId, 'POST', '/api/workspaces/demo-frontend/sessions', 201]
-  ]);
+  assert.deepEqual(records, [[sandboxId, 'POST', '/api/workspaces/demo-frontend/sessions', 201]]);
 });

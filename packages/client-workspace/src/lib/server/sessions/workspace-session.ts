@@ -27,6 +27,11 @@ export type StartTurnOptions = {
   sandboxPolicy: WorkspaceSandboxPolicy;
 };
 
+export type ResumeThreadOptions = StartThreadOptions & {
+  threadId: string;
+  writableRoots: string[];
+};
+
 export type CodexServerMessage = {
   id?: number | string;
   method?: string;
@@ -37,6 +42,7 @@ export type CodexServerMessage = {
 export interface CodexConnection {
   onMessage(listener: (message: CodexServerMessage) => void): void;
   startThread(options: StartThreadOptions): Promise<{ threadId: string }>;
+  resumeThread(options: ResumeThreadOptions): Promise<{ threadId: string }>;
   startTurn(options: StartTurnOptions): Promise<{ turnId: string }>;
   respond(id: number | string, result: unknown): void;
   close(): void;
@@ -44,6 +50,7 @@ export interface CodexConnection {
 
 export type WorkspaceActivityEventType =
   | 'session.ready'
+  | 'session.resumed'
   | 'session.closed'
   | 'turn.started'
   | 'agent.message'
@@ -65,6 +72,10 @@ export type WorkspaceActivityEvent = {
   status?: 'running' | 'completed' | 'failed' | 'pending' | 'declined' | 'accepted';
   approvalId?: string;
   approvalKind?: 'command' | 'file';
+  command?: string;
+  paths?: string[];
+  reason?: string;
+  scope?: string;
 };
 
 export type WorkspaceSessionStatus =
@@ -178,6 +189,7 @@ export type WorkspaceSessionOptions = {
   codex: CodexConnection;
   uploadRoot: string;
   receiptStore: WorkspaceReceiptStore;
+  initialReceipt?: WorkspaceSessionReceipt;
   now?: () => Date;
 };
 
@@ -267,7 +279,13 @@ function safeRelativePath(workspaceRoot: string, rawPath: unknown): string {
   if (typeof rawPath !== 'string') return 'workspace file';
   const candidate = resolve(rawPath);
   if (!isWithin(workspaceRoot, candidate)) return 'workspace file';
-  return relative(workspaceRoot, candidate) || 'workspace file';
+  return relative(workspaceRoot, candidate) || 'workspace root';
+}
+
+function pathWithinRoots(roots: string[], rawPath: unknown): boolean {
+  if (typeof rawPath !== 'string' || rawPath.trim() === '') return false;
+  const candidate = resolve(rawPath);
+  return roots.some((root) => isWithin(root, candidate));
 }
 
 export class WorkspaceSession {
@@ -285,6 +303,7 @@ export class WorkspaceSession {
   #sequence = 0;
   #activeTurn = false;
   #closed = false;
+  #threadConnected = false;
 
   constructor(options: WorkspaceSessionOptions) {
     this.#id = options.id;
@@ -293,13 +312,25 @@ export class WorkspaceSession {
     this.#uploadRoot = resolve(options.uploadRoot);
     this.#receiptStore = options.receiptStore;
     this.#now = options.now ?? (() => new Date());
-    this.#receipt = {
-      sessionId: options.id,
-      workspaceId: options.workspace.id,
-      status: 'opening',
-      updatedAt: this.#now().toISOString(),
-      events: []
-    };
+    this.#receipt = options.initialReceipt
+      ? structuredClone(options.initialReceipt)
+      : {
+          sessionId: options.id,
+          workspaceId: options.workspace.id,
+          status: 'opening',
+          updatedAt: this.#now().toISOString(),
+          events: []
+        };
+    if (
+      this.#receipt.sessionId !== options.id ||
+      this.#receipt.workspaceId !== options.workspace.id
+    ) {
+      throw new Error('workspace_receipt_identity_mismatch');
+    }
+    this.#sequence = this.#receipt.events.reduce(
+      (maximum, event) => Math.max(maximum, event.sequence),
+      0
+    );
 
     this.#codex.onMessage((message) => this.#handleCodexMessage(message));
   }
@@ -311,7 +342,28 @@ export class WorkspaceSession {
 
   async open(): Promise<WorkspaceSessionReceipt> {
     this.#assertOpen();
-    if (this.#receipt.threadId) return this.receipt();
+    if (this.#threadConnected) return this.receipt();
+
+    if (this.#receipt.threadId) {
+      const expectedThreadId = this.#receipt.threadId;
+      const { threadId } = await this.#codex.resumeThread({
+        threadId: expectedThreadId,
+        cwd: this.#workspace.sourceRoot,
+        writableRoots: [...this.#workspace.editableRoots],
+        approvalPolicy: 'untrusted',
+        developerInstructions: WORKSPACE_DEVELOPER_INSTRUCTIONS
+      });
+      if (threadId !== expectedThreadId) throw new Error('codex_thread_identity_mismatch');
+      this.#threadConnected = true;
+      this.#receipt.status = 'ready';
+      this.#emit({
+        type: 'session.resumed',
+        message: 'Workspace agent conversation resumed.',
+        status: 'completed'
+      });
+      await this.#persist();
+      return this.receipt();
+    }
 
     const { threadId } = await this.#codex.startThread({
       cwd: this.#workspace.sourceRoot,
@@ -319,6 +371,7 @@ export class WorkspaceSession {
       developerInstructions: WORKSPACE_DEVELOPER_INSTRUCTIONS
     });
     this.#receipt.threadId = threadId;
+    this.#threadConnected = true;
     this.#receipt.status = 'ready';
     this.#emit({
       type: 'session.ready',
@@ -360,7 +413,7 @@ export class WorkspaceSession {
         approvalPolicy: 'untrusted',
         sandboxPolicy: {
           type: 'workspaceWrite',
-          writableRoots: [this.#workspace.sourceRoot],
+          writableRoots: [...this.#workspace.editableRoots],
           networkAccess: false
         }
       });
@@ -400,6 +453,16 @@ export class WorkspaceSession {
 
   receipt(): WorkspaceSessionReceipt {
     return structuredClone(this.#receipt);
+  }
+
+  disconnect(): void {
+    if (this.#closed) return;
+    this.#closed = true;
+    this.#activeTurn = false;
+    this.#codex.close();
+    this.#subscribers.clear();
+    this.#pendingApprovals.clear();
+    this.#agentMessageBuffers.clear();
   }
 
   async close(): Promise<void> {
@@ -446,15 +509,44 @@ export class WorkspaceSession {
     const params = asRecord(message.params);
     if (message.id !== undefined && message.method?.endsWith('/requestApproval')) {
       const kind = message.method.includes('fileChange') ? 'file' : 'command';
+      const requestedPath = kind === 'file' ? params.grantRoot : params.cwd;
+      const invalidScope =
+        requestedPath !== undefined &&
+        requestedPath !== null &&
+        (kind === 'file'
+          ? !pathWithinRoots(this.#workspace.editableRoots, requestedPath)
+          : !pathWithinRoots([this.#workspace.sourceRoot], requestedPath));
+      if (invalidScope) {
+        this.#codex.respond(message.id, { decision: 'decline' });
+        this.#emit({
+          type: 'runtime.error',
+          message: 'approval_scope_rejected',
+          status: 'failed'
+        });
+        void this.#persist();
+        return;
+      }
       const approvalId = crypto.randomUUID();
       this.#pendingApprovals.set(approvalId, { requestId: message.id, kind });
       const command = sanitizedText(params.command, this.#workspace.sourceRoot);
+      const reason = sanitizedText(params.reason, this.#workspace.sourceRoot);
+      const relativePath =
+        requestedPath === undefined || requestedPath === null
+          ? undefined
+          : safeRelativePath(this.#workspace.sourceRoot, requestedPath);
       this.#emit({
         type: 'approval.requested',
-        message: command ? `Approve command: ${command}` : `Approve ${kind} change.`,
+        message: command
+          ? `Approve command: ${command}`
+          : relativePath
+            ? `Approve file access: ${relativePath}`
+            : `Approve ${kind} change.`,
         status: 'pending',
         approvalId,
-        approvalKind: kind
+        approvalKind: kind,
+        ...(command ? { command } : {}),
+        ...(relativePath ? { paths: [relativePath], scope: relativePath } : {}),
+        ...(reason ? { reason } : {})
       });
       void this.#persist();
       return;

@@ -19,7 +19,9 @@ const allowedAccess = {
 };
 
 test('router maps an allowed identity and opaque browser instance to one private sandbox id', async () => {
-  const router = new CloudflareWorkspaceRouter({ cookieSecret: 'test-secret-with-32-bytes-minimum' });
+  const router = new CloudflareWorkspaceRouter({
+    cookieSecret: 'test-secret-with-32-bytes-minimum'
+  });
   const first = await router.resolve({
     access: allowedAccess,
     request: new Request('https://workspace.createsomething.space/')
@@ -44,7 +46,9 @@ test('router maps an allowed identity and opaque browser instance to one private
 });
 
 test('router rejects denied identity and forged workspace instance cookies', async () => {
-  const router = new CloudflareWorkspaceRouter({ cookieSecret: 'test-secret-with-32-bytes-minimum' });
+  const router = new CloudflareWorkspaceRouter({
+    cookieSecret: 'test-secret-with-32-bytes-minimum'
+  });
 
   await assert.rejects(
     router.resolve({

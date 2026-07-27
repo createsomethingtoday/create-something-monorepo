@@ -15,10 +15,7 @@ const allowedAccess = {
   detail: 'allowed'
 };
 
-for (const path of [
-  '/api/workspaces/demo/sessions',
-  '/api/workspaces/demo/preview/'
-]) {
+for (const path of ['/api/workspaces/demo/sessions', '/api/workspaces/demo/preview/']) {
   test(`edge worker denies anonymous access to ${path} before a sandbox is addressed`, async () => {
     let sandboxRequests = 0;
     const worker = createClientWorkspaceWorker({

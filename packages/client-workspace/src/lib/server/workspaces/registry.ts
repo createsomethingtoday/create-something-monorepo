@@ -1,4 +1,5 @@
-import { isAbsolute, relative, resolve, sep } from 'node:path';
+import { existsSync, realpathSync } from 'node:fs';
+import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 
 export type WorkspaceProcessPreviewDefinition = {
   kind?: 'process';
@@ -69,6 +70,18 @@ function isWithin(root: string, candidate: string): boolean {
   );
 }
 
+function canonicalPath(path: string): string {
+  let existing = path;
+  const missing: string[] = [];
+  while (!existsSync(existing)) {
+    const parent = dirname(existing);
+    if (parent === existing) return path;
+    missing.unshift(relative(parent, existing));
+    existing = parent;
+  }
+  return join(realpathSync(existing), ...missing);
+}
+
 function assertWorkspaceId(id: string): void {
   if (!/^[a-z0-9][a-z0-9-]{0,63}$/.test(id)) {
     throw new WorkspaceRegistryError(
@@ -101,7 +114,7 @@ export class WorkspaceRegistry {
     }
 
     const sourceRoot = resolve(definition.sourceRoot);
-    if (!isWithin(this.#managedRoot, sourceRoot)) {
+    if (!isWithin(canonicalPath(this.#managedRoot), canonicalPath(sourceRoot))) {
       throw new WorkspaceRegistryError(
         'workspace_root_escape',
         `Workspace ${definition.id} is outside the managed root.`
@@ -116,7 +129,7 @@ export class WorkspaceRegistry {
         );
       }
       const normalized = resolve(sourceRoot, editableRoot);
-      if (!isWithin(sourceRoot, normalized)) {
+      if (!isWithin(canonicalPath(sourceRoot), canonicalPath(normalized))) {
         throw new WorkspaceRegistryError(
           'workspace_root_escape',
           `Workspace ${definition.id} has an editable root outside its source root.`
@@ -198,7 +211,12 @@ export class WorkspaceRegistry {
     }
 
     const candidate = resolve(definition.sourceRoot, requestedPath);
-    if (!definition.editableRoots.some((editableRoot) => isWithin(editableRoot, candidate))) {
+    const canonicalCandidate = canonicalPath(candidate);
+    if (
+      !definition.editableRoots.some((editableRoot) =>
+        isWithin(canonicalPath(editableRoot), canonicalCandidate)
+      )
+    ) {
       throw new WorkspaceRegistryError(
         'workspace_path_escape',
         'Requested path is outside the workspace edit boundary.'

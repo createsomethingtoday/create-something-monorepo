@@ -28,6 +28,13 @@ test('Codex process adapter initializes, starts a thread and turn, and forwards 
       approvalPolicy: 'untrusted',
       developerInstructions: 'Stay inside the workspace.'
     });
+    const resumed = await connection.resumeThread({
+      threadId: thread.threadId,
+      cwd: process.cwd(),
+      writableRoots: [process.cwd()],
+      approvalPolicy: 'untrusted',
+      developerInstructions: 'Stay inside the workspace.'
+    });
     const turn = await connection.startTurn({
       threadId: thread.threadId,
       input: [{ type: 'text', text: 'Make one edit.' }],
@@ -40,6 +47,7 @@ test('Codex process adapter initializes, starts a thread and turn, and forwards 
     });
 
     assert.equal(thread.threadId, 'thread-from-process');
+    assert.equal(resumed.threadId, thread.threadId);
     assert.equal(turn.turnId, 'turn-from-process');
     await new Promise((resolve) => setTimeout(resolve, 20));
     assert.deepEqual(

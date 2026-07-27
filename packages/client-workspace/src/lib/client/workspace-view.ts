@@ -1,5 +1,6 @@
 export type BrowserWorkspaceEventType =
   | 'session.ready'
+  | 'session.resumed'
   | 'session.closed'
   | 'turn.started'
   | 'agent.message'
@@ -21,6 +22,10 @@ export type BrowserWorkspaceEvent = {
   status?: 'running' | 'completed' | 'failed' | 'pending' | 'declined' | 'accepted';
   approvalId?: string;
   approvalKind?: 'command' | 'file';
+  command?: string;
+  paths?: string[];
+  reason?: string;
+  scope?: string;
 };
 
 export type WorkspaceWorkState =
@@ -86,6 +91,7 @@ export function eventWorkState(event: BrowserWorkspaceEvent): WorkspaceWorkState
   }
   if (
     event.type === 'session.ready' ||
+    event.type === 'session.resumed' ||
     event.type === 'file.changed' ||
     event.type === 'diff.updated' ||
     event.type === 'turn.completed' ||
