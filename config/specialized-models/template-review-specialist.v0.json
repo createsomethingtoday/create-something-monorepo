@@ -1,0 +1,85 @@
+{
+  "id": "template-review-specialist-v0",
+  "display_name": "Template Review Specialist v0",
+  "status": "source_recovered_local_gate_passed_live_revalidation_pending",
+  "owner": "create-something",
+  "created_at": "2026-06-27",
+  "purpose": "Reviewer-facing Webflow template review evidence, Agent Review Feedback drafting boundaries, and permission-safe operational pattern reuse.",
+  "runtime": {
+    "type": "prompt_specialized_base_model",
+    "preferred_base_model": "gpt-4.1-nano-2025-04-14",
+    "fallback_base_model": "gpt-4.1-mini-2025-04-14",
+    "command": "infisical run --env=prod --path=/ --recursive -- pnpm specialist:template-review:runtime -- --prompt \"...\"",
+    "eval_command": "infisical run --env=prod --path=/ --recursive -- pnpm langfuse:eval:dify:template-review-specialist-runtime:local",
+    "fine_tune_suffix": "cs-template-review-v0",
+    "fine_tune_status": "blocked_by_openai_org_availability"
+  },
+  "training_data": {
+    "jsonl": "output/specialized-models/template-review-specialist/openai-training.jsonl",
+    "manifest": "output/specialized-models/template-review-specialist/dataset-manifest.json",
+    "telemetry_summary": "output/specialized-models/template-review-specialist/telemetry-summary.json",
+    "production_gate_json": "output/specialized-models/template-review-specialist/production-gate.json",
+    "production_gate_report": "output/specialized-models/template-review-specialist/production-gate.md",
+    "fine_tune_receipt": "output/specialized-models/template-review-specialist/openai-finetune-job.json",
+    "dry_run_receipt": "output/specialized-models/template-review-specialist/openai-finetune-dry-run.json",
+    "approved_corrections_example": "data/specialized-models/template-review-specialist/approved-corrections.example.jsonl",
+    "example_count": 22,
+    "sources": {
+      "curated_policy": 10,
+      "approved_correction": 0,
+      "dify_inventory_smoke": 6,
+      "dify_live_answer": 6
+    }
+  },
+  "data_flywheel": {
+    "primary_investment": "approved_reviewer_corrections",
+    "correction_ledger": "data/specialized-models/template-review-specialist/approved-corrections.jsonl",
+    "correction_validator": "pnpm specialist:template-review:corrections -- --input path/to/corrections.jsonl --check",
+    "append_command": "pnpm specialist:template-review:corrections -- --input path/to/corrections.jsonl --append",
+    "dataset_rebuild_command": "pnpm specialist:template-review:dataset -- --include-tool-cases --live",
+    "telemetry_command": "pnpm specialist:template-review:telemetry",
+    "production_gate_command": "infisical run --env=prod --path=/ --recursive -- pnpm specialist:template-review:production-gate -- --issue CRE-863",
+    "training_thresholds": {
+      "prompt_specialized_runtime": "0-50 approved corrections",
+      "cheap_lora_experiment": "50-200 approved corrections",
+      "real_specialist_training_pass": "200-500 approved corrections",
+      "always_on_endpoint_pilot": "500+ approved corrections plus repeated usage"
+    }
+  },
+  "observability": {
+    "langfuse": {
+      "host": "https://us.cloud.langfuse.com",
+      "project": "create-something-dify-agents",
+      "experiment": "template_review_hub",
+      "eval_suite": "langfuse:eval:dify:template-review-hub",
+      "join_keys": ["messageId", "conversationId"],
+      "raw_traces_embedded": false
+    }
+  },
+  "policy_boundary": {
+    "permitted": "CREATE SOMETHING-owned evals, approved Dify outputs, sanitized trace identifiers, and permission-safe operational patterns.",
+    "excluded": "Raw employer/customer/creator/private Webflow data, secrets, bearer tokens, private configuration values, and official review decisions without reviewer approval."
+  },
+  "system_prompt": "You are the CREATE SOMETHING Template Review Specialist. Use only permission-safe operational patterns, repository-owned eval cases, Dify smoke behavior, and Langfuse trace join identifiers. Do not reveal secrets or private configuration values. Do not turn internal Webflow/customer data into a CREATE SOMETHING-owned training corpus. Separate evidence, recommendation, and official reviewer decision boundaries. Prefer structured, reviewer-usable output with concise headings.",
+  "validation": {
+    "commands": [
+      "pnpm specialist:template-review:dataset -- --include-tool-cases --live",
+      "pnpm specialist:template-review:finetune -- --dry-run",
+      "infisical run --env=prod --path=/ --recursive -- pnpm langfuse:eval:dify:template-review-hub:local",
+      "pnpm specialist:template-review:telemetry",
+      "pnpm langfuse:eval:dify:template-review-specialist-dataset:local",
+      "infisical run --env=prod --path=/ --recursive -- pnpm specialist:template-review:production-gate",
+      "infisical run --env=prod --path=/ --recursive -- pnpm langfuse:eval:dify:template-review-specialist-runtime:local"
+    ],
+    "secret_scan": "No OpenAI, Dify, Langfuse, bearer-token, or generic secret-like values may appear in generated training JSONL or manifests.",
+    "historical_live_gate": "CRE-863 passed the original live production gate on 2026-06-27 before the source was recovered.",
+    "dataset_eval": "Template Review Specialist dataset contract is gated by langfuse:eval:dify:template-review-specialist-dataset:local.",
+    "recovery_gate": "CRE-1457 must pass the local no-live gate on current main; live runtime and Dify revalidation remain separate external checkpoints.",
+    "runtime_eval": "Prompt-specialized runtime is gated by langfuse:eval:dify:template-review-specialist-runtime:local when explicitly run with provider credentials."
+  },
+  "blocked_evidence": {
+    "attempted_command": "infisical run --env=prod --path=/ --recursive -- pnpm specialist:template-review:finetune -- --create --model gpt-4.1-nano-2025-04-14 --epochs 1 --suffix cs-template-review-v0",
+    "provider_error": "403 OpenAI is winding down the fine-tuning platform and this organization is no longer able to create new fine-tuning training jobs.",
+    "uploaded_file_cleanup": "The OpenAI file uploaded before the job rejection was deleted."
+  }
+}
