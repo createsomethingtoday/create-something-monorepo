@@ -1,4 +1,4 @@
-# CREATE SOMETHING Agent SDK - Local Development
+# CREATE SOMETHING Legacy Anthropic Agent Harness - Local Development
 # Run `make help` to see available commands
 
 .PHONY: help install serve test run health clean
