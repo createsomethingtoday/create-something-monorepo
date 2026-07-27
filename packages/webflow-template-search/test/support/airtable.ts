@@ -115,6 +115,13 @@ export function installAirtableFetchMock(dataset: MockDataset) {
           });
         }
 
+        if (formula.includes('🚀Marketplace Status') && formula.includes('⚙️🆎Type (Text)') && formula.includes('📅LMT')) {
+          const matchingRecords = dataset.publishedAssets.filter((record) => dateMatchesModifiedWindow(record, formula));
+          return Response.json({
+            records: maxRecords ? matchingRecords.slice(0, maxRecords) : matchingRecords,
+          });
+        }
+
         const records = dataset.incrementalAssets ?? [];
         const matchingRecords = records.some((record) => typeof record.fields['📅LMT'] === 'string')
           ? records.filter((record) => dateMatchesModifiedWindow(record, formula))

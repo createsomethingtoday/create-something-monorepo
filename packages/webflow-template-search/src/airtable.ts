@@ -87,6 +87,10 @@ function buildPublishedSinceFormula(date: string): string {
   return `AND(${buildPublishedTemplateFormula()}, IS_AFTER({🚀📅Published Date}, DATETIME_PARSE("${date}")))`;
 }
 
+function buildPublishedModifiedSinceFormula(date: string): string {
+  return `AND(${buildPublishedTemplateFormula()}, IS_AFTER({📅LMT}, DATETIME_PARSE("${date}")))`;
+}
+
 function buildRecordIdFormula(recordIds: string[]): string {
   for (const id of recordIds) {
     if (!/^rec[A-Za-z0-9]+$/.test(id)) {
@@ -240,6 +244,22 @@ export async function fetchRecentlyPublishedTemplateAssets(
     fields: ASSET_FIELDS,
     optionalFields: parseConfiguredSearchVisibilityFields(env),
     formula: buildPublishedSinceFormula(publishedSinceDate),
+    sortField: '📅LMT',
+    sortDirection: 'desc',
+    maxRecords,
+  });
+}
+
+export async function fetchRecentlyModifiedPublishedTemplateAssets(
+  env: Env,
+  modifiedSinceDate: string,
+  maxRecords: number,
+): Promise<Array<AirtableRecord<AirtableAssetFields>>> {
+  return fetchAirtableRecords<AirtableAssetFields>(env, {
+    tableId: env.AIRTABLE_ASSETS_TABLE_ID ?? DEFAULT_ASSETS_TABLE_ID,
+    fields: ASSET_FIELDS,
+    optionalFields: parseConfiguredSearchVisibilityFields(env),
+    formula: buildPublishedModifiedSinceFormula(modifiedSinceDate),
     sortField: '📅LMT',
     sortDirection: 'desc',
     maxRecords,

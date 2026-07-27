@@ -38,6 +38,7 @@ const TEMP_ATTACHMENT_IMAGE_WHERE = `thumbnail_image_url LIKE '%airtableusercont
           OR thumbnail_image_url LIKE '%dl.airtable.com%'
           OR thumbnail_image_secondary_url LIKE '%airtableusercontent.com%'
           OR thumbnail_image_secondary_url LIKE '%dl.airtable.com%'`;
+const TEMPLATE_LOOKUP_QUERY_BATCH_SIZE = 40;
 
 async function runStatementBatches(
   db: D1Database,
@@ -1615,30 +1616,34 @@ export async function filterMissingOrStaleTemplateLookupTargets(
   );
   if (uniqueTargets.length === 0) return [];
 
-  const ids = uniqueTargets.map((target) => target.id).filter(Boolean);
-  const slugs = uniqueTargets.map((target) => target.templateSlug).filter((slug): slug is string => Boolean(slug));
-  const clauses: string[] = [];
-  const binds: string[] = [];
-  if (ids.length > 0) {
-    clauses.push(`id IN (${placeholderList(ids.length)})`);
-    binds.push(...ids);
-  }
-  if (slugs.length > 0) {
-    clauses.push(`template_slug IN (${placeholderList(slugs.length)})`);
-    binds.push(...slugs);
-  }
-  if (clauses.length === 0) return uniqueTargets;
+  const rows: Array<{ id: string; templateSlug: string | null; sourceLastModifiedTime: string | null }> = [];
+  for (const targetBatch of chunk(uniqueTargets, TEMPLATE_LOOKUP_QUERY_BATCH_SIZE)) {
+    const ids = targetBatch.map((target) => target.id).filter(Boolean);
+    const slugs = targetBatch.map((target) => target.templateSlug).filter((slug): slug is string => Boolean(slug));
+    const clauses: string[] = [];
+    const binds: string[] = [];
+    if (ids.length > 0) {
+      clauses.push(`id IN (${placeholderList(ids.length)})`);
+      binds.push(...ids);
+    }
+    if (slugs.length > 0) {
+      clauses.push(`template_slug IN (${placeholderList(slugs.length)})`);
+      binds.push(...slugs);
+    }
+    if (clauses.length === 0) continue;
 
-  const result = await db
-    .prepare(
-      `SELECT id, template_slug AS templateSlug, source_last_modified_time AS sourceLastModifiedTime
-       FROM template_documents
-       WHERE ${clauses.join(' OR ')}`,
-    )
-    .bind(...binds)
-    .all<{ id: string; templateSlug: string | null; sourceLastModifiedTime: string | null }>();
-  const existingById = new Map((result.results ?? []).map((row) => [row.id, row]));
-  const existingBySlug = new Map((result.results ?? []).filter((row) => row.templateSlug).map((row) => [row.templateSlug, row]));
+    const result = await db
+      .prepare(
+        `SELECT id, template_slug AS templateSlug, source_last_modified_time AS sourceLastModifiedTime
+         FROM template_documents
+         WHERE ${clauses.join(' OR ')}`,
+      )
+      .bind(...binds)
+      .all<{ id: string; templateSlug: string | null; sourceLastModifiedTime: string | null }>();
+    rows.push(...(result.results ?? []));
+  }
+  const existingById = new Map(rows.map((row) => [row.id, row]));
+  const existingBySlug = new Map(rows.filter((row) => row.templateSlug).map((row) => [row.templateSlug, row]));
 
   return uniqueTargets.filter((target) => {
     const existing = existingById.get(target.id) ?? (target.templateSlug ? existingBySlug.get(target.templateSlug) : undefined);
