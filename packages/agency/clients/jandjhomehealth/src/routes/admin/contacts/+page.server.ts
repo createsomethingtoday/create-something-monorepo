@@ -6,6 +6,7 @@ import { requireAdmin } from '$lib/server/guards';
 export interface ContactRow {
 	id: string;
 	name: string;
+	email: string;
 	dob: string;
 	phone: string;
 	insurance_group: string | null;
@@ -21,6 +22,7 @@ export const load: PageServerLoad = async ({ locals, url, platform }) => {
 			`SELECT
 			   CAST(id AS TEXT) AS id,
 			   name,
+			   COALESCE(email, '') AS email,
 			   COALESCE(dob, '') AS dob,
 			   COALESCE(phone, '') AS phone,
 			   insurance_group,

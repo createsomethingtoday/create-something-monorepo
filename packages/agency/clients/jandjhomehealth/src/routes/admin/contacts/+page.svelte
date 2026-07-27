@@ -6,6 +6,7 @@
 		ExternalLink,
 		KeyRound,
 		LogOut,
+		Mail,
 		Phone,
 		QrCode,
 		Search,
@@ -28,6 +29,7 @@
 					const search = query.trim().toLowerCase();
 					return (
 						contact.name.toLowerCase().includes(search) ||
+						contact.email.toLowerCase().includes(search) ||
 						contact.dob.includes(search) ||
 						contact.phone.includes(search) ||
 						(contact.insurance_group ?? '').toLowerCase().includes(search)
@@ -145,21 +147,44 @@
 						<time datetime={contact.created_at}>{formatDate(contact.created_at)}</time>
 					</div>
 
-					<div class="field-row">
-						<div>
-							<span>Date of Birth</span>
-							<strong>{contact.dob}</strong>
+					{#if contact.email}
+						<div class="field-row">
+							<a href={`mailto:${contact.email}`} class="field-link">
+								<Mail size={16} aria-hidden="true" />
+								<div>
+									<span>Email</span>
+									<strong>{contact.email}</strong>
+								</div>
+							</a>
+							<button
+								type="button"
+								aria-label="Copy email"
+								title="Copy email"
+								onclick={() => copy(contact.email, `email-${contact.id}`)}
+							>
+								<Clipboard size={16} aria-hidden="true" />
+								{copiedKey === `email-${contact.id}` ? 'Copied' : 'Copy'}
+							</button>
 						</div>
-						<button
-							type="button"
-							aria-label="Copy date of birth"
-							title="Copy date of birth"
-							onclick={() => copy(contact.dob, `dob-${contact.id}`)}
-						>
-							<Clipboard size={16} aria-hidden="true" />
-							{copiedKey === `dob-${contact.id}` ? 'Copied' : 'Copy'}
-						</button>
-					</div>
+					{/if}
+
+					{#if contact.dob}
+						<div class="field-row">
+							<div>
+								<span>Date of Birth</span>
+								<strong>{contact.dob}</strong>
+							</div>
+							<button
+								type="button"
+								aria-label="Copy date of birth"
+								title="Copy date of birth"
+								onclick={() => copy(contact.dob, `dob-${contact.id}`)}
+							>
+								<Clipboard size={16} aria-hidden="true" />
+								{copiedKey === `dob-${contact.id}` ? 'Copied' : 'Copy'}
+							</button>
+						</div>
+					{/if}
 
 					<div class="field-row">
 						<a href={`tel:${contact.phone}`} class="field-link">

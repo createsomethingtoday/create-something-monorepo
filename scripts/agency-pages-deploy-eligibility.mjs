@@ -4,6 +4,12 @@ import { execFileSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 
 const RUNTIME_SOURCE_PREFIXES = ['packages/agency/', 'packages/canon/', 'packages/tufte/'];
+const INDEPENDENT_APP_PREFIXES = ['packages/agency/clients/'];
+
+function isAgencyRuntimeSource(changedPath) {
+  if (INDEPENDENT_APP_PREFIXES.some((prefix) => changedPath.startsWith(prefix))) return false;
+  return RUNTIME_SOURCE_PREFIXES.some((prefix) => changedPath.startsWith(prefix));
+}
 
 export function comparisonForAgencyPush({ refName, before, after }) {
   if (refName === 'main') return [before, after];
@@ -19,9 +25,7 @@ export function evaluateAgencyDeployEligibility({ eventName, changedPaths }) {
     return { eligible: false, reason: `unsupported event: ${eventName}` };
   }
 
-  const runtimeChange = changedPaths.find((changedPath) =>
-    RUNTIME_SOURCE_PREFIXES.some((prefix) => changedPath.startsWith(prefix))
-  );
+  const runtimeChange = changedPaths.find((changedPath) => isAgencyRuntimeSource(changedPath));
   if (runtimeChange) {
     return { eligible: true, reason: `Agency runtime source changed: ${runtimeChange}` };
   }

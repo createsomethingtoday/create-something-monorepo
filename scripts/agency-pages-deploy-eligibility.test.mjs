@@ -56,6 +56,16 @@ test('Agency, Canon, and Tufte source changes are deploy-eligible', () => {
   }
 });
 
+test('independent Agency client apps stay build-only for the Agency site', () => {
+  assert.deepEqual(
+    evaluateAgencyDeployEligibility({
+      eventName: 'push',
+      changedPaths: ['packages/agency/clients/jandjhomehealth/src/routes/+page.svelte']
+    }),
+    { eligible: false, reason: 'no Agency runtime source change; build-only guard' }
+  );
+});
+
 test('manual dispatch remains explicit and unsupported events fail closed', () => {
   assert.deepEqual(
     evaluateAgencyDeployEligibility({ eventName: 'workflow_dispatch', changedPaths: [] }),

@@ -1,10 +1,11 @@
-# J&J Home Health Contact Capture
+# J&J Home Health Website
 
-SvelteKit + Cloudflare Pages app for the J&J Home Health assistance request form and admin portal.
+SvelteKit + Cloudflare Pages app for the J&J Home Health public website, contact capture,
+and admin portal. The public design reuses the original J&J logo and care photography.
 
 ## Runtime Surfaces
 
-- Public form: `/`
+- Public website and call-request form: `/`
 - Voice-to-voice receptionist demo: `/receptionist`
 - Admin login: `/admin`
 - Admin contacts: `/admin/contacts`
