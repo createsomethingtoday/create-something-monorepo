@@ -1,0 +1,192 @@
+{
+  "documentType": "create-something.ground-native-benchmark-receipt",
+  "schemaVersion": "1.0.0",
+  "generatedAt": "2026-07-27T19:53:17.261Z",
+  "source": {
+    "gitSha": "70b279cf5ca1edb0f4c5daa8894727496049f5e0",
+    "gitDirty": true,
+    "platform": "darwin",
+    "arch": "arm64",
+    "nodeVersion": "v22.21.1"
+  },
+  "configuration": {
+    "workspace": "/private/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/cre-1473-agent-worktree",
+    "targetDirectory": "packages/mcp-core/src",
+    "checks": [
+      "duplicates"
+    ],
+    "samples": 5,
+    "warmupSamples": 1,
+    "timeoutMs": 60000
+  },
+  "nativeMcp": {
+    "server": {
+      "name": "ground",
+      "version": "0.2.1"
+    },
+    "tool": "ground_analyze",
+    "protocolPassed": true,
+    "binary": {
+      "path": "packages/ground/target/release/ground-mcp",
+      "bytes": 8810128,
+      "sha256": "68610d4ed4b5d4d3cc6c11ed171b56fa94895d48ee1adcc72f4d50f01cc6a18d",
+      "standalone": true
+    },
+    "samples": [
+      {
+        "index": 1,
+        "status": "passed",
+        "connectMs": 9.341,
+        "discoveryMs": 0.541,
+        "analysisMs": 11.385,
+        "totalMs": 28.005,
+        "peakRssBytes": 12124160,
+        "semanticFingerprint": "d0066f56dfc062232df6ab5df70cdeb9458d17934aa380e2d2dbae3b48b087b9",
+        "error": null
+      },
+      {
+        "index": 2,
+        "status": "passed",
+        "connectMs": 9.35,
+        "discoveryMs": 0.658,
+        "analysisMs": 12.114,
+        "totalMs": 26.415,
+        "peakRssBytes": 12091392,
+        "semanticFingerprint": "d0066f56dfc062232df6ab5df70cdeb9458d17934aa380e2d2dbae3b48b087b9",
+        "error": null
+      },
+      {
+        "index": 3,
+        "status": "passed",
+        "connectMs": 8.626,
+        "discoveryMs": 0.531,
+        "analysisMs": 11.264,
+        "totalMs": 27.058,
+        "peakRssBytes": 12173312,
+        "semanticFingerprint": "d0066f56dfc062232df6ab5df70cdeb9458d17934aa380e2d2dbae3b48b087b9",
+        "error": null
+      },
+      {
+        "index": 4,
+        "status": "passed",
+        "connectMs": 9.049,
+        "discoveryMs": 0.507,
+        "analysisMs": 12.258,
+        "totalMs": 28.368,
+        "peakRssBytes": 12156928,
+        "semanticFingerprint": "d0066f56dfc062232df6ab5df70cdeb9458d17934aa380e2d2dbae3b48b087b9",
+        "error": null
+      },
+      {
+        "index": 5,
+        "status": "passed",
+        "connectMs": 8.702,
+        "discoveryMs": 0.598,
+        "analysisMs": 12.088,
+        "totalMs": 27.114,
+        "peakRssBytes": 12140544,
+        "semanticFingerprint": "d0066f56dfc062232df6ab5df70cdeb9458d17934aa380e2d2dbae3b48b087b9",
+        "error": null
+      }
+    ],
+    "summary": {
+      "attempted": 5,
+      "passed": 5,
+      "failed": 0,
+      "resultConsistent": true,
+      "fingerprints": [
+        "d0066f56dfc062232df6ab5df70cdeb9458d17934aa380e2d2dbae3b48b087b9"
+      ],
+      "latencyMs": {
+        "min": 26.415,
+        "median": 27.114,
+        "p95": 28.368,
+        "max": 28.368
+      },
+      "peakRssBytes": 12173312
+    }
+  },
+  "typescriptBaseline": {
+    "mode": "existing-ground-duplicates-script",
+    "artifact": {
+      "path": "scripts/ground-duplicates.ts",
+      "bytes": 14369,
+      "standalone": false,
+      "runtime": "node+tsx+workspace-dependencies"
+    },
+    "samples": [
+      {
+        "index": 1,
+        "status": "passed",
+        "exitCode": 1,
+        "totalMs": 509.074,
+        "peakRssBytes": 61407232,
+        "semanticFingerprint": "e9d603fb5a50e2044e6586019ce5d07ff50caae7c9cddc0bc9c0b061ca14fc73",
+        "error": null
+      },
+      {
+        "index": 2,
+        "status": "passed",
+        "exitCode": 1,
+        "totalMs": 504.179,
+        "peakRssBytes": 61210624,
+        "semanticFingerprint": "e9d603fb5a50e2044e6586019ce5d07ff50caae7c9cddc0bc9c0b061ca14fc73",
+        "error": null
+      },
+      {
+        "index": 3,
+        "status": "passed",
+        "exitCode": 1,
+        "totalMs": 507.447,
+        "peakRssBytes": 61538304,
+        "semanticFingerprint": "e9d603fb5a50e2044e6586019ce5d07ff50caae7c9cddc0bc9c0b061ca14fc73",
+        "error": null
+      },
+      {
+        "index": 4,
+        "status": "passed",
+        "exitCode": 1,
+        "totalMs": 511.225,
+        "peakRssBytes": 61374464,
+        "semanticFingerprint": "e9d603fb5a50e2044e6586019ce5d07ff50caae7c9cddc0bc9c0b061ca14fc73",
+        "error": null
+      },
+      {
+        "index": 5,
+        "status": "passed",
+        "exitCode": 1,
+        "totalMs": 504.238,
+        "peakRssBytes": 61456384,
+        "semanticFingerprint": "e9d603fb5a50e2044e6586019ce5d07ff50caae7c9cddc0bc9c0b061ca14fc73",
+        "error": null
+      }
+    ],
+    "summary": {
+      "attempted": 5,
+      "passed": 5,
+      "failed": 0,
+      "resultConsistent": true,
+      "fingerprints": [
+        "e9d603fb5a50e2044e6586019ce5d07ff50caae7c9cddc0bc9c0b061ca14fc73"
+      ],
+      "latencyMs": {
+        "min": 504.179,
+        "median": 507.447,
+        "p95": 511.225,
+        "max": 511.225
+      },
+      "peakRssBytes": 61538304
+    }
+  },
+  "comparison": {
+    "scope": "directional-only",
+    "claims": [
+      "Native Ground MCP retained 5/5 passing samples with semantic consistency=true.",
+      "Native median total latency was 27.114 ms and observed peak RSS was 12173312 bytes on this target.",
+      "The existing TypeScript script retained 5/5 passing samples with median total latency 507.447 ms and observed peak RSS 61538304 bytes.",
+      "Cross-implementation metrics are directional only: both paths scan the same directory for duplicate-analysis intent, but their parsers and algorithms differ."
+    ],
+    "adoptionDecision": "adopt-native-kernel-behind-mcp",
+    "rationale": "Adopt the native Ground kernel behind the stable MCP adapter for bounded analysis workloads; retain TypeScript as the control plane and keep rollout decisions separate."
+  }
+}

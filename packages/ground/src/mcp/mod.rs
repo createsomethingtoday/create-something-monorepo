@@ -3559,7 +3559,7 @@ mod tests {
     #[test]
     fn test_tool_definitions() {
         let tools = list_tools();
-        assert_eq!(tools.len(), 20); // Focused AI-native tool set + pattern analysis + graph tools + explain
+        assert_eq!(tools.len(), 21); // Focused AI-native tool set + pattern analysis + graph tools + explain
         
         let names: Vec<_> = tools.iter().map(|t| t.name.as_str()).collect();
         // Check tools
@@ -3585,6 +3585,7 @@ mod tests {
         assert!(names.contains(&"ground_analyze"));
         assert!(names.contains(&"ground_diff"));
         assert!(names.contains(&"ground_verify_fix"));
+        assert!(names.contains(&"ground_desire_paths"));
     }
     
     #[test]

@@ -317,6 +317,27 @@ Ground loads `.ground.yml` from your project root for:
 
 See [Full Documentation](https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/ground) for configuration reference.
 
+## Native service pilot
+
+The CRE-1473 pilot keeps TypeScript as the control plane and invokes the existing Rust `ground-mcp` binary through a small, typed MCP adapter. It is a bounded proof for analysis workloads, not a production routing change or a broad language migration.
+
+The pilot owns four things:
+
+- `pilot/ground-native-client.ts` — discovers and calls `ground_analyze` over stdio MCP with explicit timeout and error behavior
+- `pilot/benchmark.ts` — captures repeated native samples plus a directional comparison with the existing TypeScript duplicate-analysis script
+- `pilot/ground-benchmark-receipt.schema.json` — makes the retained evidence machine-checkable
+- `pilot/validate-receipt.ts` — independently rejects incomplete, failed, or inconsistent receipts
+
+From the repository root, run:
+
+```bash
+pnpm --filter @createsomething/ground-mcp run pilot:verify
+```
+
+The benchmark defaults to `packages/mcp-core/src`, five retained samples, one warmup, and the release binary at `packages/ground/target/release/ground-mcp`. Metrics between the Rust MCP path and TypeScript script are directional only because the implementations do not use identical parsers or algorithms.
+
+Rollback is removal of the pilot adapter, benchmark, and package-local development scripts. No existing Ground command, npm installer path, Cloudflare surface, or production consumer is redirected by this pilot.
+
 ## Links
 
 - [Full Documentation](https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/ground)
