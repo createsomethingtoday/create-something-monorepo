@@ -16,8 +16,8 @@ describe('Canon property overlay coverage', () => {
 
 		assertCanonPropertyOverlayCoverage(report);
 		expect(report.summary).toMatchObject({
-			required: 29,
-			covered: 29,
+			required: 30,
+			covered: 30,
 			missingOverlay: 0,
 			mismatchedSourcePackage: 0,
 			missingModalities: 0,
@@ -26,6 +26,7 @@ describe('Canon property overlay coverage', () => {
 		});
 		expect(report.requiredPackages.map((entry) => entry.packageName)).toEqual([
 			'@create-something/atlas-studio-desktop',
+			'@create-something/client-workspace-desktop',
 			'@create-something/guard-performance-lab',
 			'@create-something/marketplace-template-submission-cloud',
 			'@create-something/webflow-dashboard-cloud',
