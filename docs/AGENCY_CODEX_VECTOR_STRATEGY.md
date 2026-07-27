@@ -143,8 +143,13 @@ See `packages/pi-three-tier-framework/`, `packages/pi-policy-os/`, `packages/pi-
    - Policy OS remains the internal package and entitlement contract.
    - `Enterprise Extension` is the high-stakes expansion layer inside the package.
 6. `MCP-only` is sold only for discovery/compliance use cases.
-7. Supplier wrap pattern remains unchanged:
-   - Commodity connectivity via `@create-something/composio-bridge`.
+7. Composio supplier wrapping is legacy and frozen for new connector work:
+   - Existing Composio-backed production paths remain until audited and
+     replaced or intentionally retired.
+   - New integrations start behind an owned CREATE SOMETHING MCP contract and
+     use the product's selected operator surface.
+   - Any new Composio exception requires explicit operator approval recorded
+     in Linear.
    - Deep-domain logic and intelligence layer are always custom.
 8. Runtime graduation is explicit:
    - The owned Cloudflare runtime and OpenAI Agents SDK are the production
@@ -296,7 +301,7 @@ Required in every handoff:
 
 1. Commodity integration
 - Prompt: "Connect Slack + HubSpot and summarize daily changes."
-- Expected package: Composio-wrapped MCP + lightweight agent layer + approval policy.
+- Expected package: owned MCP contract + selected operator surface + approval policy.
 
 2. Deep workflow
 - Prompt: "Detect schedule conflicts and auto-draft escalation."

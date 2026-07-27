@@ -254,7 +254,15 @@ Zero external dependencies. Pure framework knowledge served through protocol. Se
 
 ### Integration connectivity (Composio)
 
-For **commodity app connectivity** (Gmail, Notion, Slack, etc.), prefer [Composio](https://composio.dev) via `@create-something/composio-bridge`: managed auth, tool discovery, and execution with the client seeing our MCP. Use **custom** OAuth and APIs when the integration is deep or client-specific (e.g. Half Dozen Gmail Sync). Packaging is unchanged: Composio remains internal plumbing, while client delivery follows the product spine (Map → Build → Control). See `docs/COMPOSIO_PATTERNS.md` for when-to-use, wrap pattern, and SDK pointers; `docs/internal/COMPOSIO_EVALUATION.md` for the evaluation.
+Composio is legacy and frozen for new connector work. Preserve an existing
+Composio-backed production path until it has a verified owned replacement or an
+approved retirement plan. New integrations start behind a CREATE SOMETHING MCP
+contract, with custom OAuth and APIs when required; any new Composio exception
+requires explicit operator approval recorded in Linear. Packaging is unchanged:
+Composio remains internal plumbing on approved legacy paths, while client
+delivery follows the product spine (Map → Build → Control). See
+`docs/COMPOSIO_PATTERNS.md` for the compatibility boundary and SDK pointers;
+`docs/internal/COMPOSIO_EVALUATION.md` remains the historical evaluation.
 
 ## Languages
 

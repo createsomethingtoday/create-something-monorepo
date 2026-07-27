@@ -2,11 +2,14 @@
   "policy_id": "policy.integration-selection.v1",
   "version": 1,
   "status": "draft",
-  "default_strategy": "composio_first",
-  "use_composio_when": [
-    "commodity_connectivity",
-    "managed_oauth_and_connect_links_needed",
-    "multi_tenant_generic_actions"
+  "default_strategy": "owned_mcp_first",
+  "preserve_composio_when": [
+    "existing_production_path",
+    "replacement_not_yet_verified",
+    "retirement_not_yet_approved"
+  ],
+  "new_composio_exception_when": [
+    "operator_approved_in_linear"
   ],
   "use_custom_when": [
     "deep_client_specific_workflows",
@@ -26,6 +29,7 @@
     "decision",
     "rationale",
     "approved_by",
-    "approved_at"
+    "approved_at",
+    "linear_issue"
   ]
 }
