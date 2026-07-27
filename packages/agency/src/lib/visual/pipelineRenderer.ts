@@ -1,5 +1,10 @@
 import * as THREE from 'three';
 import type { PublicProductId } from '$lib/data/productFamily';
+import {
+  createPipelineEnvironmentPixels,
+  createPipelineSurfacePixels,
+  derivePipelineRenderProfile
+} from './pipelineRenderProfile';
 import { derivePipelineSceneState, type PipelineValveState } from './pipelineSceneState';
 
 export type PipelineMotionMode = 'full' | 'reduced';
@@ -9,6 +14,9 @@ export interface PipelineRendererMetrics {
   geometries: number;
   textures: number;
   pixelRatio: number;
+  profileId: string;
+  packetCount: number;
+  withinBudget: boolean;
 }
 
 /**
@@ -29,7 +37,7 @@ export interface PipelineRendererHandle {
   resize(width: number, height: number, pixelRatio: number): void;
   renderStatic(): void;
   getMetrics(): PipelineRendererMetrics;
-  dispose(): void;
+  dispose(forceContextLoss?: boolean): void;
 }
 
 export interface PipelineRendererOptions {
@@ -86,6 +94,14 @@ function cssColor(host: HTMLElement, property: string, fallback: string): THREE.
   }
 }
 
+function colourBytes(colour: THREE.Color): readonly [number, number, number] {
+  return [
+    Math.round(THREE.MathUtils.clamp(colour.r, 0, 1) * 255),
+    Math.round(THREE.MathUtils.clamp(colour.g, 0, 1) * 255),
+    Math.round(THREE.MathUtils.clamp(colour.b, 0, 1) * 255)
+  ];
+}
+
 function ease(current: number, target: number, delta: number, speed = 5): number {
   return THREE.MathUtils.lerp(current, target, 1 - Math.exp(-delta * speed));
 }
@@ -95,6 +111,7 @@ export function createPipelineRenderer(
   host: HTMLElement,
   options: PipelineRendererOptions
 ): PipelineRendererHandle {
+  const profile = derivePipelineRenderProfile(options.compact);
   const signal = cssColor(host, '--waterway-signal', '#0057b8');
   const signalSoft = cssColor(host, '--waterway-signal-soft', '#dce8f5');
   const pressure = cssColor(host, '--waterway-pressure', '#e54800');
@@ -120,7 +137,7 @@ export function createPipelineRenderer(
   const renderer = new THREE.WebGLRenderer({
     canvas,
     alpha: true,
-    antialias: !options.compact,
+    antialias: profile.antialias,
     powerPreference: 'high-performance',
     premultipliedAlpha: true,
     failIfMajorPerformanceCaveat: true
@@ -135,39 +152,15 @@ export function createPipelineRenderer(
 
   const camera = new THREE.PerspectiveCamera(options.compact ? 39 : 34, 1, 0.1, 60);
 
-  /**
-   * Machined metal with no environment to reflect resolves to flat grey. A small procedural
-   * gradient probe (bright softbox band above, court horizon, ink floor) gives the shell and
-   * valves something to reflect for the cost of one 4x64 texture.
-   */
+  /** Repository-authored Performance reflection probe: two softboxes, court horizon, ink floor. */
   const environmentTexture = (() => {
-    const width = 4;
-    const height = 64;
-    const data = new Uint8Array(width * height * 4);
-    const colour = new THREE.Color();
-    const floorColour = ink.clone().lerp(court, 0.08);
-    const horizonColour = ink.clone().lerp(court, 0.34);
-    const skyColour = court.clone().lerp(signalSoft, 0.42);
-
-    for (let row = 0; row < height; row += 1) {
-      const v = row / (height - 1);
-      if (v < 0.5) colour.copy(floorColour).lerp(horizonColour, v / 0.5);
-      else colour.copy(horizonColour).lerp(skyColour, (v - 0.5) / 0.5);
-
-      const softbox = Math.exp(-((v - 0.84) ** 2) / 0.0022) * 0.9;
-      const r = Math.min(1, colour.r + softbox);
-      const g = Math.min(1, colour.g + softbox);
-      const b = Math.min(1, colour.b + softbox);
-
-      for (let column = 0; column < width; column += 1) {
-        const offset = (row * width + column) * 4;
-        data[offset] = Math.round(r * 255);
-        data[offset + 1] = Math.round(g * 255);
-        data[offset + 2] = Math.round(b * 255);
-        data[offset + 3] = 255;
-      }
-    }
-
+    const { width, height } = profile.environment;
+    const data = createPipelineEnvironmentPixels(profile.environment, {
+      ink: colourBytes(ink),
+      court: colourBytes(court),
+      signal: colourBytes(signal),
+      signalSoft: colourBytes(signalSoft)
+    });
     const gradient = new THREE.DataTexture(data, width, height, THREE.RGBAFormat);
     gradient.mapping = THREE.EquirectangularReflectionMapping;
     gradient.colorSpace = THREE.SRGBColorSpace;
@@ -182,7 +175,7 @@ export function createPipelineRenderer(
   })();
 
   scene.environment = environmentTexture;
-  scene.environmentIntensity = 0.62;
+  scene.environmentIntensity = 0.76;
 
   const world = new THREE.Group();
   world.rotation.y = options.compact ? -0.04 : -0.09;
@@ -223,11 +216,38 @@ export function createPipelineRenderer(
     return mesh;
   }
 
+  function createSurfaceTexture(semantic: 'roughness' | 'normal', seed: number): THREE.DataTexture {
+    const size = profile.surfaceTextureSize;
+    const texture = new THREE.DataTexture(
+      createPipelineSurfacePixels(semantic, size, seed),
+      size,
+      size,
+      THREE.RGBAFormat
+    );
+    texture.colorSpace = THREE.NoColorSpace;
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(6, 2);
+    texture.minFilter = THREE.LinearMipmapLinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    texture.generateMipmaps = true;
+    texture.anisotropy = Math.min(renderer.capabilities.getMaxAnisotropy(), 4);
+    texture.needsUpdate = true;
+    textureRegistry.add(texture);
+    return texture;
+  }
+
+  const roughnessTexture = createSurfaceTexture('roughness', 1426);
+  const normalTexture = createSurfaceTexture('normal', 1426);
+
   const shellMaterial = trackMaterial(
     new THREE.MeshPhysicalMaterial({
       color: 0xb8bdc2,
       metalness: 0.82,
       roughness: 0.26,
+      roughnessMap: roughnessTexture,
+      normalMap: normalTexture,
+      normalScale: new THREE.Vector2(0.12, 0.12),
       clearcoat: 0.48,
       clearcoatRoughness: 0.24,
       side: THREE.DoubleSide
@@ -237,14 +257,20 @@ export function createPipelineRenderer(
     new THREE.MeshPhysicalMaterial({
       color: 0x33383d,
       metalness: 0.94,
-      roughness: 0.22
+      roughness: 0.22,
+      roughnessMap: roughnessTexture,
+      normalMap: normalTexture,
+      normalScale: new THREE.Vector2(0.09, 0.09)
     })
   );
   const inletMaterial = trackMaterial(
     new THREE.MeshStandardMaterial({
       color: 0x7c858d,
       metalness: 0.78,
-      roughness: 0.34
+      roughness: 0.34,
+      roughnessMap: roughnessTexture,
+      normalMap: normalTexture,
+      normalScale: new THREE.Vector2(0.08, 0.08)
     })
   );
   const flowMaterial = trackMaterial(
@@ -334,6 +360,9 @@ export function createPipelineRenderer(
         color: 0x787f86,
         metalness: 0.86,
         roughness: 0.22,
+        roughnessMap: roughnessTexture,
+        normalMap: normalTexture,
+        normalScale: new THREE.Vector2(0.08, 0.08),
         emissive: 0x000000,
         emissiveIntensity: 0
       })
@@ -355,17 +384,15 @@ export function createPipelineRenderer(
    * One InstancedMesh instead of one mesh per packet: a single draw call, and per-instance
    * colour carries the "safe work continues" state that used to require swapping materials.
    */
-  const packetCount = options.compact ? 18 : 30;
+  const packetCount = profile.packetCount;
   const packetGeometry = trackGeometry(
-    new THREE.SphereGeometry(options.compact ? 0.085 : 0.105, 12, 8)
+    new THREE.BoxGeometry(options.compact ? 0.17 : 0.21, 0.085, 0.12)
   );
   const packetMaterial = trackMaterial(
     new THREE.MeshBasicMaterial({
       color: 0xffffff,
       transparent: true,
-      opacity: 0.92,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
+      opacity: 0.94,
       toneMapped: false,
       fog: false
     })
@@ -378,7 +405,7 @@ export function createPipelineRenderer(
   world.add(packets);
   const packetMatrix = new THREE.Matrix4();
   const packetPosition = new THREE.Vector3();
-  const packetScale = new THREE.Vector3(2.8, 1, 1);
+  const packetScale = new THREE.Vector3(1, 1, 1);
   const packetQuaternion = new THREE.Quaternion();
   const packetColour = new THREE.Color();
 
@@ -586,7 +613,8 @@ export function createPipelineRenderer(
     valveAssemblies.forEach((assembly, index) => {
       const next = state.valves[index].state;
       assembly.state = next;
-      const color = next === 'verified' ? ready : next === 'active' ? pressure : PENDING_VALVE_COLOR;
+      const color =
+        next === 'verified' ? ready : next === 'active' ? pressure : PENDING_VALVE_COLOR;
       assembly.ringMaterial.color.lerp(
         color,
         motionMode === 'reduced' ? 1 : Math.min(1, delta * 8)
@@ -616,12 +644,10 @@ export function createPipelineRenderer(
       const phase = (elapsed * 0.16 + index / packetCount) % 1;
       const x = PIPE_START + phase * PIPE_LENGTH;
       const withinFlow = x <= PIPE_START + PIPE_LENGTH * displayedProgress + 0.05;
-      packetPosition.set(x, Math.sin(index * 1.7) * 0.04, Math.cos(index * 1.3) * 0.08);
-      packetMatrix.compose(
-        packetPosition,
-        packetQuaternion,
-        withinFlow ? packetScale : ZERO_SCALE
-      );
+      const lane = index % 3;
+      const depthLane = Math.floor(index / 3) % 2;
+      packetPosition.set(x, (lane - 1) * 0.075, (depthLane - 0.5) * 0.13);
+      packetMatrix.compose(packetPosition, packetQuaternion, withinFlow ? packetScale : ZERO_SCALE);
       packets.setMatrixAt(index, packetMatrix);
 
       const target = state.safeWorkContinues && x > 3.55 ? ready : signalSoft;
@@ -702,7 +728,7 @@ export function createPipelineRenderer(
     },
     resize(width, height, pixelRatio) {
       if (!width || !height) return;
-      const cappedPixelRatio = Math.min(pixelRatio || 1, options.compact ? 1.2 : 1.6);
+      const cappedPixelRatio = Math.min(pixelRatio || 1, profile.maximumPixelRatio);
       renderer.setPixelRatio(cappedPixelRatio);
       renderer.setSize(width, height, false);
       fitCamera(width / height);
@@ -714,14 +740,23 @@ export function createPipelineRenderer(
       render(performance.now());
     },
     getMetrics() {
+      const drawCalls = renderer.info.render.calls;
+      const geometries = renderer.info.memory.geometries;
+      const textures = renderer.info.memory.textures;
       return {
-        drawCalls: renderer.info.render.calls,
-        geometries: renderer.info.memory.geometries,
-        textures: renderer.info.memory.textures,
-        pixelRatio: renderer.getPixelRatio()
+        drawCalls,
+        geometries,
+        textures,
+        pixelRatio: renderer.getPixelRatio(),
+        profileId: profile.id,
+        packetCount,
+        withinBudget:
+          drawCalls <= profile.budgets.drawCalls &&
+          geometries <= profile.budgets.geometries &&
+          textures <= profile.budgets.textures
       };
     },
-    dispose() {
+    dispose(forceContextLoss = true) {
       if (disposed) return;
       disposed = true;
       renderer.setAnimationLoop(null);
@@ -734,11 +769,11 @@ export function createPipelineRenderer(
       textureRegistry.clear();
       scene.environment = null;
       renderer.dispose();
-      renderer.forceContextLoss();
+      if (forceContextLoss) renderer.forceContextLoss();
     }
   };
 
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, options.compact ? 1.2 : 1.6));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, profile.maximumPixelRatio));
   fitCamera(1);
   syncLoop();
   return handle;
