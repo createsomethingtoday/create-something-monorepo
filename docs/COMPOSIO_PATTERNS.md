@@ -2,27 +2,38 @@
 
 When to use Composio for app connectivity, how we wrap it, and where the SDK surfaces fit. For package-level API details see `packages/composio-bridge/` and [DOCS_REFERENCE.md](packages/composio-bridge/DOCS_REFERENCE.md). For evaluation see [internal/COMPOSIO_EVALUATION.md](internal/COMPOSIO_EVALUATION.md).
 
+> Status: legacy and frozen for new connector work.
+>
+> Preserve existing Composio-backed production paths until each workflow is
+> audited and has a verified replacement or an approved retirement plan. New
+> connector work starts from an owned CREATE SOMETHING MCP contract and the
+> product's selected operator surface. Any new Composio exception requires
+> explicit operator approval recorded in Linear.
+
 ## When to use Composio vs custom
 
-| Use Composio                                                         | Use custom CREATE SOMETHING MCPs                                                                            |
-| -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| Commodity app connectivity (Gmail, Notion, Slack, HubSpot, etc.)     | Deep or client-specific integrations (e.g. Half Dozen Gmail Sync: custom OAuth, Notion schema, automations) |
-| You want managed auth (OAuth, connect links) and standard CRUD tools | You need full control over tokens, lifecycle, or an app not on Composio                                     |
-| New MCP for "most users" or multi-tenant with generic app actions    | Single-client MCP with fixed schema and custom workflows                                                    |
+| Preserve Composio temporarily                                    | Use custom CREATE SOMETHING MCPs                                                                            |
+| ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Existing production path with no verified replacement            | Deep or client-specific integrations (e.g. Half Dozen Gmail Sync: custom OAuth, Notion schema, automations) |
+| Bounded bridge while its owned replacement is being proved       | You need full control over tokens, lifecycle, governance, or client-specific behavior                       |
+| Operator-approved exception whose decision is recorded in Linear | New connector work and all strategic integration surfaces                                                   |
 
-**Default**: For new MCPs that need "connect to Gmail/Notion/Slack/…", consider Composio first via `@create-something/composio-bridge`. Use custom when the integration is strategic or client-specific.
+**Default**: Do not start new Composio integrations. For new MCPs that need
+"connect to Gmail/Notion/Slack/…", define an owned CREATE SOMETHING MCP
+contract and choose the operator surface appropriate to that product. Keep an
+existing Composio path only until replacement or retirement is verified.
 
 ## Notion-specific decision matrix
 
 Notion now has first-party Worker and hosted MCP surfaces. Treat them as delivery channels, not replacements for the house MCP pattern.
 
-| Surface                         | Use when                                                                                                                            | Avoid when                                                                                                         |
-| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| **Composio wrapped by our MCP** | The workflow needs generic Notion plus other SaaS CRUD tools with managed OAuth.                                                    | The workflow needs fixed client schema semantics, our custom Notion policies, or deep workspace-specific behavior. |
-| **CREATE SOMETHING MCP**        | The workflow needs cross-client governed execution, telemetry, bearer-token routing, headless agents, or dual-workspace operations. | The workflow only needs a small capability inside a Notion Custom Agent.                                           |
-| **Notion hosted MCP**           | A human user wants to connect their Notion workspace to ChatGPT, Claude, Cursor, or another supported AI client.                    | The agent is headless, bearer-token based, or needs CREATE SOMETHING resources/prompts/telemetry.                  |
-| **Notion Workers Agent Tools**  | A capability should run inside a Notion Custom Agent with `context.notion` and Notion-scoped permissions.                           | The tool needs our fleet gateway, non-Notion runtime controls, or broad external orchestration.                    |
-| **Notion Workers Syncs**        | The target is a greenfield Notion-managed mirror database.                                                                          | The client already owns the target database/schema; current Syncs do not yet sync into existing databases.         |
+| Surface                         | Use when                                                                                                                            | Avoid when                                                                                                                   |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| **Composio wrapped by our MCP** | An existing production workflow still depends on generic Notion plus other SaaS CRUD tools while its replacement is verified.       | New work, or work that needs fixed client schema semantics, our custom Notion policies, or deep workspace-specific behavior. |
+| **CREATE SOMETHING MCP**        | The workflow needs cross-client governed execution, telemetry, bearer-token routing, headless agents, or dual-workspace operations. | The workflow only needs a small capability inside a Notion Custom Agent.                                                     |
+| **Notion hosted MCP**           | A human user wants to connect their Notion workspace to ChatGPT, Claude, Cursor, or another supported AI client.                    | The agent is headless, bearer-token based, or needs CREATE SOMETHING resources/prompts/telemetry.                            |
+| **Notion Workers Agent Tools**  | A capability should run inside a Notion Custom Agent with `context.notion` and Notion-scoped permissions.                           | The tool needs our fleet gateway, non-Notion runtime controls, or broad external orchestration.                              |
+| **Notion Workers Syncs**        | The target is a greenfield Notion-managed mirror database.                                                                          | The client already owns the target database/schema; current Syncs do not yet sync into existing databases.                   |
 
 See [guides/NOTION_WORKERS_AND_CLI_2026.md](./guides/NOTION_WORKERS_AND_CLI_2026.md) and [packages/notion-worker-experiments](../packages/notion-worker-experiments) for the repo-local spike path.
 
@@ -52,9 +63,13 @@ Clients see a CREATE SOMETHING MCP server; Composio is plumbing. We do not expos
 
 Official reference: [Composio TypeScript SDK](https://docs.composio.dev/reference/sdk-reference/typescript).
 
-## Single-toolkit hosted MCPs
+## Existing single-toolkit hosted MCPs
 
-Use this when the goal is a narrow Composio-hosted MCP for one commodity toolkit and we do not need CREATE SOMETHING resources, prompts, telemetry, or custom workflow tools.
+These helpers are compatibility paths for existing approved integrations. Do
+not use them to start a new connector without explicit operator approval in
+Linear. An approved exception must remain narrow to one commodity toolkit and
+must not require CREATE SOMETHING resources, prompts, telemetry, or custom
+workflow tools.
 
 QuickBooks helper:
 
