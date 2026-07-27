@@ -116,6 +116,7 @@ Read in this order when you need broad repo context:
 - [guides/OBSERVABILITY_SETUP.md](./guides/OBSERVABILITY_SETUP.md)
 - [guides/UI_PREVIEW_SYSTEM.md](./guides/UI_PREVIEW_SYSTEM.md)
 - [LANGFUSE_TRACING_QUICKSTART.md](./LANGFUSE_TRACING_QUICKSTART.md)
+- [internal/specialized-models/template-review-specialist-v0.md](./internal/specialized-models/template-review-specialist-v0.md)
 
 ### MCP creation and integration patterns
 
@@ -169,6 +170,7 @@ Read in this order when you need broad repo context:
 - [internal/MONOREPO_MIGRATION_RETROSPECTIVE.md](./internal/MONOREPO_MIGRATION_RETROSPECTIVE.md)
 - [internal/RECONCILIATION_PLAN.md](./internal/RECONCILIATION_PLAN.md)
 - [internal/IMPLEMENTATION_AUDIT.md](./internal/IMPLEMENTATION_AUDIT.md)
+- [internal/specialized-models/template-review-specialist-v0.md](./internal/specialized-models/template-review-specialist-v0.md)
 
 ## Directory guide
 
