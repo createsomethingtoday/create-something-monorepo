@@ -3,6 +3,7 @@ import {
   fetchModifiedAssetsSince,
   fetchPublishedTemplateAssets,
   fetchPublishedTemplateImageFields,
+  fetchRecentlyModifiedPublishedTemplateAssets,
   fetchRecentlyPublishedTemplateAssets,
   loadLookupMaps,
   DEFAULT_SEARCH_VISIBILITY_FIELDS,
@@ -776,6 +777,7 @@ const MAX_STALE_INCREMENTAL_FETCH_RECORDS_PER_RUN = 100;
 const MAX_STALE_INCREMENTAL_RECORDS_PER_RUN = 80;
 const INCREMENTAL_WRITE_BATCH_SIZE = 12;
 const RECENT_PUBLISHED_SWEEP_LOOKBACK_DAYS = 21;
+const RECENT_MODIFIED_PUBLISHED_SWEEP_LOOKBACK_HOURS = 24;
 const RECENT_PUBLISHED_SWEEP_LIMIT = 50;
 
 function resolveSyncWindow(cursor: string, now: Date): { end: Date; until: string | undefined; isCaughtUp: boolean } {
@@ -798,6 +800,11 @@ function recentPublishedSweepSinceDate(now: Date): string {
   return since.toISOString().slice(0, 10);
 }
 
+function recentModifiedPublishedSweepSinceDate(now: Date): string {
+  const since = new Date(now.getTime() - RECENT_MODIFIED_PUBLISHED_SWEEP_LOOKBACK_HOURS * 60 * 60 * 1000);
+  return since.toISOString();
+}
+
 function templateLookupTargets(records: Array<AirtableRecord<AirtableAssetFields>>) {
   return records.map((record) => ({
     id: record.id,
@@ -813,12 +820,15 @@ async function fetchChangedRecentPublishedAssets(
 ): Promise<Array<AirtableRecord<AirtableAssetFields>>> {
   const queuedIds = new Set(alreadyQueuedRecords.map((record) => record.id));
   const queuedSlugs = new Set(templateLookupTargets(alreadyQueuedRecords).map((target) => target.templateSlug).filter(Boolean));
-  const recentAssets = await fetchRecentlyPublishedTemplateAssets(
-    env,
-    recentPublishedSweepSinceDate(now),
-    RECENT_PUBLISHED_SWEEP_LIMIT,
-  );
-  const candidates = recentAssets.filter((record) => {
+  const [recentPublishedAssets, recentlyModifiedPublishedAssets] = await Promise.all([
+    fetchRecentlyPublishedTemplateAssets(env, recentPublishedSweepSinceDate(now), RECENT_PUBLISHED_SWEEP_LIMIT),
+    fetchRecentlyModifiedPublishedTemplateAssets(env, recentModifiedPublishedSweepSinceDate(now), RECENT_PUBLISHED_SWEEP_LIMIT),
+  ]);
+  const recentAssetsById = new Map<string, AirtableRecord<AirtableAssetFields>>();
+  for (const record of [...recentPublishedAssets, ...recentlyModifiedPublishedAssets]) {
+    recentAssetsById.set(record.id, record);
+  }
+  const candidates = [...recentAssetsById.values()].filter((record) => {
     const target = templateLookupTargets([record])[0];
     return !queuedIds.has(record.id) && (!target.templateSlug || !queuedSlugs.has(target.templateSlug));
   });

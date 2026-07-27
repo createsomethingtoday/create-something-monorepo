@@ -4342,6 +4342,63 @@ describe('webflow-template-search worker', () => {
     }
   });
 
+  it('sweeps missing recently modified published templates even when published date is old', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-29T12:30:00.000Z'));
+    const recentlyModifiedPublishedAsset = {
+      ...PUBLISHED_ASSETS[0],
+      id: 'recSafeHaven',
+      fields: {
+        ...PUBLISHED_ASSETS[0].fields,
+        Name: 'SafeHaven',
+        '🚀📅Published Date': '2026-06-01',
+        '🥞CMS Slug': 'safehaven-website-template',
+        '🥞CMS Slug (formula)': 'safehaven-website-template',
+        '🔗Listing URL': 'https://webflow.com/templates/html/safehaven-website-template',
+        '🔗Website URL': 'https://safehaven-template.webflow.io/',
+        '📅LMT': '2026-06-29T12:22:54.000Z',
+      },
+    };
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [recentlyModifiedPublishedAsset],
+      incrementalAssets: [],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      creators: LOOKUPS.creators,
+    });
+    const { env, close } = createTestEnv();
+
+    try {
+      await setSyncCursor(env.DB, '2026-06-29T05:14:45.000Z');
+
+      const sync = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(sync.status).toBe(200);
+      expect((await sync.json()) as { indexed_records: number; recent_published_records?: number }).toMatchObject({
+        indexed_records: 1,
+        recent_published_records: 1,
+      });
+
+      const search = await callWorker(new Request('https://templates.test/api/templates/search?q=SafeHaven'), env);
+      const payload = (await search.json()) as { items: Array<{ id: string; template_slug: string }> };
+      expect(payload.items).toEqual([
+        expect.objectContaining({
+          id: 'recSafeHaven',
+          template_slug: 'safehaven-website-template',
+        }),
+      ]);
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
   it('sweeps stale recent publishes even while the LMT cursor is still catching up', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-06-23T14:30:00.000Z'));
