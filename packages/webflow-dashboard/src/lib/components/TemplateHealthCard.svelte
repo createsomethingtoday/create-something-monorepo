@@ -618,7 +618,7 @@
 		align-items: center;
 		gap: 0.35rem;
 		margin-top: var(--space-sm);
-		color: var(--color-info);
+		color: var(--color-info-ink);
 		font-size: var(--text-body-sm);
 		font-weight: var(--font-medium);
 		text-decoration: none;

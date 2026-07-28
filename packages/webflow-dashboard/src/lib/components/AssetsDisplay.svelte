@@ -862,13 +862,13 @@
 
   .status-icon.status-scheduled {
     background: var(--color-info-muted);
-    color: var(--color-info);
+    color: var(--color-info-ink);
     border-color: var(--color-info-border);
   }
 
   .status-icon.status-published {
     background: var(--color-success-muted);
-    color: var(--color-success);
+    color: var(--color-success-ink);
     border-color: var(--color-success-border);
   }
 
@@ -880,13 +880,13 @@
 
   .status-icon.status-delisted {
     background: var(--color-warning-muted);
-    color: var(--color-warning);
+    color: var(--color-warning-ink);
     border-color: var(--color-warning-border);
   }
 
   .status-icon.status-rejected {
     background: var(--color-error-muted);
-    color: var(--color-error);
+    color: var(--color-error-ink);
     border-color: var(--color-error-border);
   }
 
@@ -1066,7 +1066,7 @@
   }
 
   .sort-btn.active {
-    color: var(--color-info);
+    color: var(--color-info-ink);
     text-decoration: underline;
     text-underline-offset: 0.18rem;
     text-decoration-thickness: 1px;

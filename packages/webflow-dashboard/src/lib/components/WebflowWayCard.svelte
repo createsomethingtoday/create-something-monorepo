@@ -458,7 +458,7 @@
 	}
 
 	.tool-features :global(svg) {
-		color: var(--color-success);
+		color: var(--color-success-ink);
 		flex-shrink: 0;
 	}
 
@@ -556,13 +556,13 @@
 	.guide-callout.warning {
 		background: var(--color-warning-muted);
 		border: 1px solid var(--color-warning-border);
-		color: var(--color-warning);
+		color: var(--color-warning-ink);
 	}
 
 	.guide-callout.success {
 		background: var(--color-success-muted);
 		border: 1px solid var(--color-success-border);
-		color: var(--color-success);
+		color: var(--color-success-ink);
 	}
 
 	.code-preview {

@@ -4,6 +4,7 @@
 	import { onDestroy, onMount } from 'svelte';
 	import { CheckCircle2, Lock, XCircle } from 'lucide-svelte';
 	import WebflowLogo from '$lib/components/WebflowLogo.svelte';
+	import AuthThemeToggle from '$lib/components/AuthThemeToggle.svelte';
 
 	type VerifyStatus =
 		| 'no-token'
@@ -415,6 +416,7 @@
 </svelte:head>
 
 <main class="container">
+	<AuthThemeToggle />
 	<div class="verify-card">
 		<div class="logo">
 			<WebflowLogo />
@@ -569,11 +571,11 @@
 	}
 
 	.status-message.success :global(svg) {
-		color: var(--color-success);
+		color: var(--color-success-ink);
 	}
 
 	.status-message.error :global(svg) {
-		color: var(--color-error);
+		color: var(--color-error-ink);
 	}
 
 	h1 {
@@ -601,7 +603,7 @@
 		width: 48px;
 		height: 48px;
 		border: 3px solid var(--color-border-default);
-		border-top-color: var(--color-info);
+		border-top-color: var(--color-info-ink);
 		border-radius: 50%;
 		animation: spin 0.8s linear infinite;
 		margin-bottom: var(--space-sm);
@@ -615,7 +617,7 @@
 
 	.retry-link {
 		margin-top: var(--space-md);
-		color: var(--color-info);
+		color: var(--color-info-ink);
 		text-decoration: none;
 		font-size: var(--text-body-sm);
 		font-weight: var(--font-medium);
@@ -623,7 +625,7 @@
 	}
 
 	.retry-link:hover {
-		color: #0055d4;
+		color: var(--color-info-ink);
 	}
 
 	.token-form {
@@ -664,7 +666,7 @@
 
 	.token-input:focus {
 		outline: none;
-		border-color: var(--color-info);
+		border-color: var(--color-info-ink);
 		box-shadow: 0 0 0 4px var(--color-info-muted);
 	}
 
@@ -681,10 +683,10 @@
 		background: var(--color-info);
 		border: 1px solid var(--color-info);
 		border-radius: 999px;
-		color: #ffffff;
+		color: var(--color-on-accent);
 		font-size: var(--text-body-sm);
 		font-weight: var(--font-medium);
-		box-shadow: 0 8px 18px rgba(20, 110, 245, 0.16);
+		box-shadow: 0 8px 18px var(--color-info-shadow);
 		cursor: pointer;
 		transition:
 			transform var(--duration-micro) var(--ease-standard),
@@ -692,7 +694,7 @@
 	}
 
 	.verify-button:hover:not(:disabled) {
-		background: #0055d4;
+		background: color-mix(in srgb, var(--color-info) 82%, var(--color-fg-primary));
 		transform: translateY(-1px);
 	}
 
@@ -703,13 +705,13 @@
 
 	.verify-button--secondary {
 		background: var(--color-bg-surface);
-		color: var(--color-info);
+		color: var(--color-info-ink);
 		text-decoration: none;
 	}
 
 	.verify-button--secondary:hover {
 		background: var(--color-info-muted);
-		color: #0055d4;
+		color: var(--color-info-ink);
 	}
 
 	.resend-button {
@@ -753,11 +755,11 @@
 	}
 
 	.resend-message {
-		color: var(--color-success);
+		color: var(--color-success-ink);
 	}
 
 	.resend-error {
-		color: var(--color-error);
+		color: var(--color-error-ink);
 	}
 
 	@media (max-width: 640px) {

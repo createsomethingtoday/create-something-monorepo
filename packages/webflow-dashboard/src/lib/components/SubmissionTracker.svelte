@@ -619,18 +619,18 @@
 
   .dev-mode-banner {
     background: var(--color-info-muted);
-    color: var(--color-info);
+    color: var(--color-info-ink);
   }
 
   .error-banner {
     background: var(--color-error-muted);
-    color: var(--color-error);
+    color: var(--color-error-ink);
     flex-wrap: wrap;
   }
 
   .whitelist-banner {
     background: var(--color-success-muted);
-    color: var(--color-success);
+    color: var(--color-success-ink);
   }
 
   .retry-button {
@@ -665,11 +665,11 @@
   }
 
   .stat-value.warning {
-    color: var(--color-warning);
+    color: var(--color-warning-ink);
   }
 
   .stat-value.critical {
-    color: var(--color-error);
+    color: var(--color-error-ink);
   }
 
   .submissions-list {
@@ -726,7 +726,7 @@
   }
 
   .submission-expiry.soon {
-    color: var(--color-warning);
+    color: var(--color-warning-ink);
     font-weight: var(--font-medium);
   }
 
@@ -858,13 +858,13 @@
     display: flex;
     align-items: center;
     gap: var(--space-xs);
-    color: var(--color-error);
+    color: var(--color-error-ink);
     font-size: var(--text-body-sm);
   }
 
   .whitelist-banner-full {
     background: var(--color-success-muted);
-    color: var(--color-success);
+    color: var(--color-success-ink);
     font-size: var(--text-body-sm);
   }
 
@@ -874,7 +874,7 @@
 
   .warning-banner {
     background: var(--color-warning-muted);
-    color: var(--color-warning);
+    color: var(--color-warning-ink);
     font-size: var(--text-body-sm);
   }
 
@@ -911,11 +911,11 @@
   }
 
   .status-value.warning {
-    color: var(--color-warning);
+    color: var(--color-warning-ink);
   }
 
   .status-value.critical {
-    color: var(--color-error);
+    color: var(--color-error-ink);
   }
 
   .active-submissions {
@@ -966,7 +966,7 @@
   }
 
   .submission-expiry-full.soon {
-    color: var(--color-warning);
+    color: var(--color-warning-ink);
     font-weight: var(--font-medium);
   }
 

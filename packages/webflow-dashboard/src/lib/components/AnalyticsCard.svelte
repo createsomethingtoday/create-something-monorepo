@@ -295,15 +295,15 @@
 	}
 
 	:global(.metric-icon.viewers) {
-		color: var(--color-info);
+		color: var(--color-info-ink);
 	}
 
 	:global(.metric-icon.purchases) {
-		color: var(--color-warning);
+		color: var(--color-warning-ink);
 	}
 
 	:global(.metric-icon.revenue) {
-		color: var(--color-success);
+		color: var(--color-success-ink);
 	}
 
 	.metric-label {
@@ -377,11 +377,11 @@
 	}
 
 	.insight-good {
-		color: var(--color-success);
+		color: var(--color-success-ink);
 	}
 
 	.insight-ok {
-		color: var(--color-warning);
+		color: var(--color-warning-ink);
 	}
 
 	.insight-low {

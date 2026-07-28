@@ -11,9 +11,9 @@
   let error = $state<string | null>(null);
 
   const feedbackTypes = [
-    { value: 'bug' as const, label: 'Bug', icon: Bug, color: 'var(--color-error)' },
-    { value: 'feature' as const, label: 'Feature', icon: Lightbulb, color: 'var(--color-warning)' },
-    { value: 'general' as const, label: 'General', icon: MessageCircle, color: 'var(--color-info)' }
+    { value: 'bug' as const, label: 'Bug', icon: Bug, color: 'var(--color-error-ink)' },
+    { value: 'feature' as const, label: 'Feature', icon: Lightbulb, color: 'var(--color-warning-ink)' },
+    { value: 'general' as const, label: 'General', icon: MessageCircle, color: 'var(--color-info-ink)' }
   ];
 
   async function handleSubmit(e: Event) {
@@ -177,7 +177,7 @@
     letter-spacing: 0.05em;
     padding: 0.125rem 0.375rem;
     background: var(--color-info-muted);
-    color: var(--color-info);
+    color: var(--color-info-ink);
     border-radius: var(--radius-sm);
   }
 
@@ -256,7 +256,7 @@
   .error-text {
     margin: 0;
     font-size: var(--text-caption);
-    color: var(--color-error);
+    color: var(--color-error-ink);
   }
 
   .submit-btn {
@@ -310,7 +310,7 @@
     align-items: center;
     gap: 0.75rem;
     padding: 2rem 1.25rem;
-    color: var(--color-success);
+    color: var(--color-success-ink);
     text-align: center;
   }
 

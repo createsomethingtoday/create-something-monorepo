@@ -1,37 +1,36 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
 	import { Sun, Moon } from 'lucide-svelte';
+	import {
+		applyTheme,
+		getStoredTheme,
+		onSystemThemeChange,
+		persistTheme,
+		resolveTheme
+	} from '$lib/utils/theme';
 
 	let isDark = $state(false);
 
-	// Initialize from localStorage or system preference
 	$effect(() => {
-		if (browser) {
-			const stored = localStorage.getItem('theme');
-			if (stored) {
-				isDark = stored === 'dark';
-			} else {
-				// Default to system preference, but default to dark if no preference
-				isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-			}
-			updateTheme();
-		}
-	});
+		// The app.html bootstrap script has already applied the theme to <html>;
+		// sync component state with the DOM rather than re-deriving it.
+		isDark =
+			document.documentElement.getAttribute('data-theme') === 'dark' ||
+			resolveTheme() === 'dark';
+		applyTheme(isDark ? 'dark' : 'light');
 
-	function updateTheme() {
-		if (browser) {
-			if (isDark) {
-				document.documentElement.setAttribute('data-theme', 'dark');
-			} else {
-				document.documentElement.removeAttribute('data-theme');
-			}
-			localStorage.setItem('theme', isDark ? 'dark' : 'light');
-		}
-	}
+		// Follow OS changes only while no explicit preference is stored.
+		return onSystemThemeChange((theme) => {
+			if (getStoredTheme() !== null) return;
+			isDark = theme === 'dark';
+			applyTheme(theme);
+		});
+	});
 
 	function toggle() {
 		isDark = !isDark;
-		updateTheme();
+		const theme = isDark ? 'dark' : 'light';
+		applyTheme(theme);
+		persistTheme(theme);
 	}
 </script>
 

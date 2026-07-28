@@ -88,7 +88,7 @@ export const CANON_PROJECT_OVERLAY_MANIFEST = {
       ],
       "owner": "webflow-dashboard-team",
       "sourcePackage": "@create-something/webflow-dashboard",
-      "sourcePath": "src/routes/dashboard/+page.svelte",
+      "sourcePath": "src/routes/(authed)/dashboard/+page.svelte",
       "tags": [
         "overlay",
         "webflow",
@@ -116,14 +116,14 @@ export const CANON_PROJECT_OVERLAY_MANIFEST = {
           "surfaceId": "webflow-dashboard-app",
           "name": "Operator dashboard",
           "modality": "app",
-          "sourcePath": "src/routes/dashboard/+page.svelte",
+          "sourcePath": "src/routes/(authed)/dashboard/+page.svelte",
           "proof": "The dashboard route is the main app surface for status, proof, and next operational action."
         },
         {
           "surfaceId": "webflow-dashboard-validation-voice",
           "name": "Validation voice handoff",
           "modality": "voice",
-          "sourcePath": "src/routes/validation/+page.svelte",
+          "sourcePath": "src/routes/(authed)/validation/+page.svelte",
           "proof": "The validation route supports concise spoken summaries of issue, status, proof, and next action."
         },
         {

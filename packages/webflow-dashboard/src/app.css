@@ -80,6 +80,8 @@
   --color-info-soft-border: #bfd3f6;
   --color-info-soft-text: #18448c;
   --color-info-soft-wash: rgba(20, 110, 245, 0.08);
+  --color-on-accent: #ffffff;
+  --color-info-shadow: rgba(20, 110, 245, 0.16);
 
   --color-hover: #f5f5f5;
   --color-active: #eef4ff;
@@ -163,6 +165,7 @@
   --color-info-soft-border: rgba(157, 196, 255, 0.4);
   --color-info-soft-text: #dbe8ff;
   --color-info-soft-wash: rgba(157, 196, 255, 0.08);
+  --color-info-shadow: rgba(20, 110, 245, 0.3);
 
   --glass-bg-subtle: rgba(23, 23, 23, 0.92);
   --glass-bg-light: rgba(23, 23, 23, 0.95);
@@ -217,18 +220,18 @@ h6 {
 }
 
 a {
-  color: var(--color-info);
+  color: var(--color-info-ink);
   text-decoration: none;
   transition: color var(--duration-micro) var(--ease-standard);
 }
 
 a:hover {
-  color: color-mix(in srgb, var(--color-info) 82%, var(--color-fg-primary));
+  color: color-mix(in srgb, var(--color-info-ink) 82%, var(--color-fg-primary));
 }
 
 ::selection {
   background: var(--color-info);
-  color: #ffffff;
+  color: var(--color-on-accent);
 }
 
 .page-intro {
@@ -329,7 +332,7 @@ a:hover {
 }
 
 .form-control:focus {
-  border-color: var(--color-info);
+  border-color: var(--color-info-ink);
   box-shadow: 0 0 0 4px var(--color-info-muted);
 }
 
@@ -343,10 +346,10 @@ a:hover {
 }
 
 .form-control-error {
-  border-color: var(--color-error);
+  border-color: var(--color-error-ink);
 }
 
 .form-control-error:focus {
-  border-color: var(--color-error);
+  border-color: var(--color-error-ink);
   box-shadow: 0 0 0 4px var(--color-error-muted);
 }

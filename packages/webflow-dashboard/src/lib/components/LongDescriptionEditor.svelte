@@ -319,7 +319,7 @@
   }
 
   .long-description-surface :global(a) {
-    color: var(--color-info);
+    color: var(--color-info-ink);
   }
 
   .long-description-surface :global(img) {

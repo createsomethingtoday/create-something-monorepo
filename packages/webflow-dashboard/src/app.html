@@ -4,8 +4,21 @@
 		<meta charset="utf-8" />
 		<link rel="icon" href="%sveltekit.assets%/favicon.svg" type="image/svg+xml" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<meta name="theme-color" content="#146EF5" />
-		%sveltekit.head%
+	<meta name="theme-color" content="#146EF5" />
+	<script>
+		// Theme bootstrap: apply the stored or OS-preferred theme before first paint.
+		// Mirrors src/lib/utils/theme.ts — keep storage key and attribute in sync.
+		(function () {
+			try {
+				var stored = localStorage.getItem('theme');
+				var dark = stored
+					? stored === 'dark'
+					: window.matchMedia('(prefers-color-scheme: dark)').matches;
+				if (dark) document.documentElement.setAttribute('data-theme', 'dark');
+			} catch (e) {}
+		})();
+	</script>
+	%sveltekit.head%
 		<script>
 			// Detect iframe embedding early to prevent layout flash
 			if (window.self !== window.top) {

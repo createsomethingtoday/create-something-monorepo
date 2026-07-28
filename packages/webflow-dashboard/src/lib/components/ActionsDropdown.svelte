@@ -339,7 +339,7 @@
 
 	.dropdown-item-danger:hover {
 		background: var(--color-error-muted);
-		color: var(--color-error);
+		color: var(--color-error-ink);
 	}
 
 	.dropdown-item:focus-visible {

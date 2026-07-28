@@ -1,11 +1,5 @@
 <script lang="ts">
 	import WebflowLogo from '$lib/components/WebflowLogo.svelte';
-
-	const loadingPhrases = [
-		'Preparing your dashboard...',
-		'Syncing session details...',
-		'Redirecting you now...'
-	];
 </script>
 
 <svelte:head>
@@ -17,12 +11,7 @@
 		<WebflowLogo width={72} height={44} />
 	</div>
 	<h1>Webflow Asset Dashboard</h1>
-	<p class="subtitle" aria-live="polite">Connecting your workspace</p>
-	<ul class="loading-steps" aria-hidden="true">
-		{#each loadingPhrases as phrase}
-			<li>{phrase}</li>
-		{/each}
-	</ul>
+	<p class="subtitle" role="status">Connecting your workspace…</p>
 </main>
 
 <style>
@@ -57,39 +46,5 @@
 		font-size: var(--text-body);
 		color: var(--color-fg-secondary);
 		margin: 0;
-	}
-
-	.loading-steps {
-		list-style: none;
-		padding: 0;
-		margin: var(--space-sm) 0 0;
-		display: flex;
-		flex-direction: column;
-		gap: 0.25rem;
-	}
-
-	.loading-steps li {
-		color: var(--color-fg-muted);
-		font-size: var(--text-caption);
-		text-align: center;
-		animation: pulse 1.4s ease-in-out infinite;
-	}
-
-	.loading-steps li:nth-child(2) {
-		animation-delay: 0.2s;
-	}
-
-	.loading-steps li:nth-child(3) {
-		animation-delay: 0.4s;
-	}
-
-	@keyframes pulse {
-		0%,
-		100% {
-			opacity: 0.5;
-		}
-		50% {
-			opacity: 1;
-		}
 	}
 </style>

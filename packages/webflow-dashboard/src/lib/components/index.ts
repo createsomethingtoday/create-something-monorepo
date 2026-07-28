@@ -2,6 +2,7 @@
 export { default as Header } from './Header.svelte';
 export { default as Search } from './Search.svelte';
 export { default as DarkModeToggle } from './DarkModeToggle.svelte';
+export { default as AuthThemeToggle } from './AuthThemeToggle.svelte';
 export { default as BackNavigation } from './BackNavigation.svelte';
 
 // Asset components
@@ -33,7 +34,6 @@ export { default as TemplateOfferRequestCard } from './TemplateOfferRequestCard.
 
 // Tufte-inspired data visualization
 export { default as Sparkline } from './Sparkline.svelte';
-export { default as StatsBar } from './StatsBar.svelte';
 export { default as KineticNumber } from './KineticNumber.svelte';
 
 // Data freshness indicators

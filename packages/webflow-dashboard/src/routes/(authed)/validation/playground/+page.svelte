@@ -9,7 +9,6 @@
     SortOption
   } from '$lib/types/validation';
   import {
-    Header,
     BackNavigation,
     Tabs,
     TabsList,
@@ -110,12 +109,6 @@
     }
   }
 
-  function handleLogout() {
-    fetch('/api/auth/logout', { method: 'POST' }).then(() => {
-      window.location.href = '/login';
-    });
-  }
-
   function togglePageExpand(pageUrl: string) {
     const newSet = new Set(expandedPages);
     if (newSet.has(pageUrl)) {
@@ -147,8 +140,6 @@
 </svelte:head>
 
 <div class="playground">
-  <Header onLogout={handleLogout} showMarketplace={data.hasTemplateAsset} />
-
   <main class="main-content">
     <div class="content-wrapper">
       <!-- Header Section -->
@@ -202,6 +193,24 @@
           </form>
         </div>
       </section>
+
+      <!-- Pre-run expectations: first-time users should know what a run produces -->
+      {#if !result && !isValidating}
+        <section class="expectations-section" aria-label="What to expect">
+          <div class="expectation-card">
+            <h2 class="expectation-title">What you'll get</h2>
+            <ul class="expectation-list">
+              <li>Per-page pass/fail with flagged custom code and security risks</li>
+              <li>An issue list with code previews and fix recommendations</li>
+              <li>An overview of valid GSAP usage found across the crawl</li>
+            </ul>
+            <p class="expectation-example">
+              Works on any published Webflow site — your template's live demo URL is a good first
+              run.
+            </p>
+          </div>
+        </section>
+      {/if}
 
       <!-- Results Section -->
       {#if result}
@@ -344,7 +353,11 @@
                 <div class="pages-list">
                   {#each sortedPages() as page}
                     <div class="page-item" class:failed={!page.passed}>
-                      <button class="page-header" onclick={() => togglePageExpand(page.url)}>
+                      <button
+                        class="page-header"
+                        onclick={() => togglePageExpand(page.url)}
+                        aria-expanded={expandedPages.has(page.url)}
+                      >
                         <div class="page-info">
                           <span class="page-status" class:passed={page.passed}>
                             {page.passed ? '✓' : '✗'}
@@ -483,10 +496,11 @@
   }
 
   .page-subtitle {
-    font-size: var(--text-body);
-    color: var(--color-fg-secondary);
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-tertiary);
+    line-height: 1.6;
     margin: 0;
-    max-width: 48rem;
+    max-width: 60ch;
   }
 
   .scope-note {
@@ -504,8 +518,40 @@
   }
 
   .scope-note strong {
-    color: var(--color-info);
+    color: var(--color-info-ink);
     white-space: nowrap;
+  }
+
+  .expectations-section {
+    margin-bottom: var(--space-md);
+  }
+
+  .expectation-card {
+    background: var(--color-bg-surface);
+    border: 1px solid color-mix(in srgb, var(--color-border-default) 74%, transparent);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+  }
+
+  .expectation-title {
+    margin: 0 0 var(--space-xs);
+    font-size: var(--text-body-sm);
+    font-weight: var(--font-semibold);
+    color: var(--color-fg-primary);
+  }
+
+  .expectation-list {
+    margin: 0;
+    padding-left: 1.1rem;
+    color: var(--color-fg-secondary);
+    font-size: var(--text-body-sm);
+    line-height: 1.6;
+  }
+
+  .expectation-example {
+    margin: var(--space-sm) 0 0;
+    font-size: var(--text-caption);
+    color: var(--color-fg-muted);
   }
 
   /* Input Section */
@@ -601,7 +647,7 @@
   }
 
   .error-message {
-    color: var(--color-error);
+    color: var(--color-error-ink);
     font-size: var(--text-body-sm);
     margin: 0;
   }
@@ -731,11 +777,11 @@
   }
 
   .stat-card.passed .stat-value {
-    color: var(--color-success);
+    color: var(--color-success-ink);
   }
 
   .stat-card.failed .stat-value {
-    color: var(--color-error);
+    color: var(--color-error-ink);
   }
 
   .stat-label {
@@ -838,7 +884,7 @@
 
   .issue-count {
     background: var(--color-error-muted);
-    color: var(--color-error);
+    color: var(--color-error-ink);
     padding: 0.125rem 0.5rem;
     border-radius: var(--radius-sm);
     font-size: var(--text-caption);
@@ -972,17 +1018,17 @@
 
   .metric.flagged {
     background: var(--color-error-muted);
-    color: var(--color-error);
+    color: var(--color-error-ink);
   }
 
   .metric.security {
     background: var(--color-warning-muted);
-    color: var(--color-warning);
+    color: var(--color-warning-ink);
   }
 
   .metric.valid {
     background: var(--color-success-muted);
-    color: var(--color-success);
+    color: var(--color-success-ink);
   }
 
   .expand-icon {
@@ -1018,7 +1064,7 @@
   }
 
   .flagged-message {
-    color: var(--color-error);
+    color: var(--color-error-ink);
     font-size: var(--text-body-sm);
     margin: 0;
   }
@@ -1107,7 +1153,7 @@
   }
 
   .issue-message {
-    color: var(--color-error);
+    color: var(--color-error-ink);
     font-size: var(--text-body-sm);
     margin: 0;
   }

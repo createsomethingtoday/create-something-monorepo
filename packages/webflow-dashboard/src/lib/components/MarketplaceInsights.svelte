@@ -948,7 +948,7 @@
 
   .summary-warning {
     margin: 0.2rem 0 0;
-    color: var(--color-warning);
+    color: var(--color-warning-ink);
     font-size: var(--text-caption);
     line-height: 1.3;
   }
@@ -1085,7 +1085,7 @@
 
   .portfolio-shortcut:hover,
   .portfolio-shortcut.active {
-    border-color: var(--color-info);
+    border-color: var(--color-info-ink);
     background: color-mix(in srgb, var(--color-info-soft-bg) 35%, var(--color-bg-surface));
     color: var(--color-fg-primary);
   }
@@ -1329,7 +1329,7 @@
   }
 
   .metric-row .metric-value.revenue {
-    color: var(--color-success);
+    color: var(--color-success-ink);
   }
 
   /* Sparkline container in leaderboard */
@@ -1977,11 +1977,11 @@
   }
 
   .trend-indicator.trend-up {
-    color: var(--color-success);
+    color: var(--color-success-ink);
   }
 
   .trend-indicator.trend-down {
-    color: var(--color-error);
+    color: var(--color-error-ink);
   }
 
   .trend-indicator.trend-neutral {

@@ -6,11 +6,11 @@ const marketplaceInsightsSource = readFileSync(
 	'utf8'
 );
 const marketplaceServerLoadSource = readFileSync(
-	new URL('../routes/marketplace/+page.server.ts', import.meta.url),
+	new URL('../routes/(authed)/marketplace/+page.server.ts', import.meta.url),
 	'utf8'
 );
 const marketplacePageSource = readFileSync(
-	new URL('../routes/marketplace/+page.svelte', import.meta.url),
+	new URL('../routes/(authed)/marketplace/+page.svelte', import.meta.url),
 	'utf8'
 );
 

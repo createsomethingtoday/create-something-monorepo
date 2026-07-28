@@ -444,7 +444,7 @@
     background: var(--color-error-muted);
     border: 1px solid var(--color-error-border);
     border-radius: var(--radius-md);
-    color: var(--color-error);
+    color: var(--color-error-ink);
     font-size: var(--text-body-sm);
   }
 
@@ -457,12 +457,12 @@
     display: flex;
     align-items: center;
     gap: var(--space-sm);
-    color: var(--color-success);
+    color: var(--color-success-ink);
   }
 
   .success-warning {
     font-size: var(--text-body-sm);
-    color: var(--color-success);
+    color: var(--color-success-ink);
     margin: var(--space-xs) 0 0;
   }
 
@@ -554,7 +554,7 @@
   .scope-item input {
     width: 1rem;
     height: 1rem;
-    accent-color: var(--color-info);
+    accent-color: var(--color-info-ink);
   }
 
   .form-actions {
@@ -585,7 +585,7 @@
     width: 2rem;
     height: 2rem;
     border: 3px solid var(--color-border-default);
-    border-top-color: var(--color-info);
+    border-top-color: var(--color-info-ink);
     border-radius: 50%;
     animation: spin 1s linear infinite;
   }
@@ -653,7 +653,7 @@
     justify-content: center;
     background: var(--color-info-muted);
     border-radius: var(--radius-lg);
-    color: var(--color-info);
+    color: var(--color-info-ink);
   }
 
   .key-name h4 {
@@ -702,7 +702,7 @@
   }
 
   :global(.revoke-btn) {
-    color: var(--color-error);
+    color: var(--color-error-ink);
   }
 
   :global(.revoke-btn:hover) {
@@ -718,7 +718,7 @@
     display: flex;
     align-items: center;
     gap: var(--space-sm);
-    color: var(--color-info);
+    color: var(--color-info-ink);
   }
 
   .docs-content {

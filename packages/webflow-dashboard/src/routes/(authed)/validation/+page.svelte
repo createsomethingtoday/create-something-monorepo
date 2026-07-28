@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { Header, Card, WebflowWayCard, BackNavigation } from '$lib/components';
+  import { Card, WebflowWayCard, BackNavigation } from '$lib/components';
   import { trackEvent } from '$lib/utils/analytics';
   import { ArrowRight, CheckCircle2, FlaskConical, Route } from 'lucide-svelte';
   import type { PageData } from './$types';
@@ -12,11 +12,6 @@
   // Lazy-loaded modal component
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let GsapValidationModal = $state<any>(null);
-
-  async function handleLogout() {
-    await fetch('/api/auth/logout', { method: 'POST' });
-    window.location.href = '/login';
-  }
 
   async function handleOpenGsapValidator() {
     // Lazy load the GsapValidationModal component
@@ -46,8 +41,6 @@
 </svelte:head>
 
 <div class="validation-page">
-  <Header onLogout={handleLogout} showMarketplace={data.hasTemplateAsset} />
-
   <main class="main-content">
     <div class="content-wrapper">
       <BackNavigation />
@@ -217,18 +210,18 @@
     margin: 0;
     color: var(--color-fg-primary);
     font-family: var(--font-heading);
-    font-size: 4rem;
+    font-size: clamp(1.9rem, 2vw + 1rem, 2.5rem);
     font-weight: var(--font-semibold);
-    letter-spacing: 0;
-    line-height: 0.98;
+    letter-spacing: 0.01em;
+    line-height: 1.08;
   }
 
   .page-subtitle {
-    max-width: 48rem;
+    max-width: 60ch;
     margin: var(--space-xs) 0 0;
-    color: var(--color-fg-secondary);
-    font-size: var(--text-body-lg);
-    line-height: 1.45;
+    color: var(--color-fg-tertiary);
+    font-size: var(--text-body-sm);
+    line-height: 1.6;
   }
 
   .hero-status {
@@ -484,7 +477,7 @@
 
   :global(.submission-gate-card > svg) {
     margin-top: 0.1rem;
-    color: var(--color-success);
+    color: var(--color-success-ink);
   }
 
   .required-tool-heading {

@@ -237,7 +237,7 @@
 	}
 
 	.error-message {
-		color: var(--color-error);
+		color: var(--color-error-ink);
 		font-size: var(--text-body-sm);
 	}
 
@@ -253,7 +253,7 @@
 
 	.progress-title {
 		font-weight: var(--font-medium);
-		color: var(--color-info);
+		color: var(--color-info-ink);
 		margin: 0;
 		font-size: var(--text-body-sm);
 	}
@@ -273,7 +273,7 @@
 	:global(.spinner.large) {
 		width: 24px;
 		height: 24px;
-		color: var(--color-info);
+		color: var(--color-info-ink);
 	}
 
 	@keyframes spin {
@@ -369,7 +369,7 @@
 	}
 
 	.stat.passed .stat-value {
-		color: var(--color-success);
+		color: var(--color-success-ink);
 	}
 
 	.stat.failed {
@@ -377,7 +377,7 @@
 	}
 
 	.stat.failed .stat-value {
-		color: var(--color-error);
+		color: var(--color-error-ink);
 	}
 
 	.stat-value {
@@ -429,11 +429,11 @@
 		font-size: clamp(1.24rem, 1vw + 0.95rem, 1.68rem);
 		font-weight: var(--font-semibold);
 		letter-spacing: 0;
-		color: var(--color-error);
+		color: var(--color-error-ink);
 	}
 
 	.issue-stat.success .issue-value {
-		color: var(--color-success);
+		color: var(--color-success-ink);
 	}
 
 	.issue-label {
@@ -458,7 +458,7 @@
 
 	.recommendation.critical {
 		background: var(--color-error-muted);
-		border-color: var(--color-error);
+		border-color: var(--color-error-ink);
 	}
 
 	.recommendation.warning {
@@ -468,7 +468,7 @@
 
 	.recommendation.success {
 		background: var(--color-success-muted);
-		border-color: var(--color-success);
+		border-color: var(--color-success-ink);
 	}
 
 	.rec-title {
@@ -494,7 +494,7 @@
 	}
 
 	.playground-link {
-		color: var(--color-info);
+		color: var(--color-info-ink);
 		font-size: var(--text-body-sm);
 		text-decoration: none;
 		transition: color var(--duration-micro) var(--ease-standard);
