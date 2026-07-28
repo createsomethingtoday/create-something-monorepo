@@ -183,7 +183,7 @@ For the parent hero CTA, use a normal anchor to the iframe mount:
 </a>
 ```
 
-The embedded app still manages creator-vs-template navigation internally. The “Apply with your first template submission here” link, and the “I already have a creator profile” action, both call back up to the parent page through `ts-submission:scroll-to` so the outer page performs the scroll.
+The embedded app manages creator-vs-template navigation internally as a two-step flow: a stepper at the top switches between "Become a Creator" and "Submit a template", only one step renders at a time, and `?section=submit-today` / `#submit-today` (or a parent `ts-submission:navigate` message) deep-links straight to the template step. Step switches also notify the parent through `ts-submission:scroll-to` (offsetTop 0) so the outer page scrolls back to the top of the frame.
 
 ## Downstream ingestion
 

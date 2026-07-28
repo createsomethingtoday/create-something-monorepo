@@ -12,7 +12,7 @@ test('bulleted list formatting retains the long description after the controlled
   const description = 'First line of the template description';
   const pageErrors = trackPageErrors(page);
 
-  await page.goto('/submit', { waitUntil: 'domcontentloaded' });
+  await page.goto('/submit?section=submit-today', { waitUntil: 'domcontentloaded' });
 
   const editor = page.locator('.ql-editor');
   await editor.click();
@@ -35,7 +35,7 @@ test('numbered list and bold formatting retain the long description', async ({ p
   const description = 'Numbered template detail';
   const pageErrors = trackPageErrors(page);
 
-  await page.goto('/submit', { waitUntil: 'domcontentloaded' });
+  await page.goto('/submit?section=submit-today', { waitUntil: 'domcontentloaded' });
 
   const editor = page.locator('.ql-editor');
   await editor.click();
@@ -75,9 +75,9 @@ test('published-site autofill synchronizes sanitized list HTML through Quill', a
     });
   });
 
-  await page.goto('/submit', { waitUntil: 'domcontentloaded' });
+  await page.goto('/submit?section=submit-today', { waitUntil: 'domcontentloaded' });
   await page.getByRole('textbox', { name: 'Published URL *' }).fill(publishedUrl);
-  await page.getByRole('button', { name: 'Validate template' }).click();
+  await page.getByRole('button', { name: 'Validate published URL' }).click();
 
   const editor = page.locator('.ql-editor');
   await expect(editor).toContainText(autofilledDescription);
