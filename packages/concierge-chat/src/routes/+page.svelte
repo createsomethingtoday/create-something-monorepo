@@ -4,8 +4,8 @@
     staffingCareCards,
     staffingFaqs,
     staffingProcess,
-    staffingRoles,
-    staffingServiceHighlights
+    staffingServiceHighlights,
+    staffingStats
   } from '$lib/site/abundance';
   import {
     absoluteUrl,
@@ -38,32 +38,17 @@
     faqJsonLd(staffingFaqs)
   ]);
 
-  const processOwners = ['Nurse or facility', 'Abundance agents', 'Recruiter'];
-  const serviceChips = [
-    'Travel and per diem roles',
-    'Facility coverage requests',
-    'Recruiter-led review',
-    'Credential readiness'
-  ];
+  const processOwners = ['Nurse or facility', 'Abundance Concierge', 'Recruiter'];
 
-  $: verificationLabel = data.intakeAccess.granted
-    ? 'Verified browser'
-    : 'No account needed';
+  $: verificationLabel = data.intakeAccess.granted ? 'Browser verified' : 'No account required';
   $: verificationDetail = data.intakeAccess.granted
-    ? 'Protected steps can continue here.'
-    : 'Start now. Verify only when documents or recruiter review need it.';
+    ? 'Protected steps are ready when you are.'
+    : 'Verification waits until a protected step needs it.';
 </script>
 
 <svelte:head>
-  <link
-    rel="stylesheet"
-    href="https://cdn.prod.website-files.com/6975f7e617285604fcb645f7/css/healen.webflow.shared.7df6645cf.css"
-  />
   <title>{pageTitle}</title>
-  <meta
-    name="description"
-    content={pageDescription}
-  />
+  <meta name="description" content={pageDescription} />
   <link rel="canonical" href={absoluteUrl(pagePath)} />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Abundance Staffing" />
@@ -78,849 +63,1413 @@
   {@html structuredData}
 </svelte:head>
 
-<section class="hero-03 container-full abundance-hero">
-  <div class="container-fluid for-hero01">
-    <div class="hero-content-03">
-      <h1 class="hero-content-title display">Nurse staffing with a clearer handoff.</h1>
-      <div class="hero-content-right">
-        <p class="hero-content-info-text p1-regular">
-          Nurses start in plain language. Facilities request coverage clearly. Recruiters keep the
-          final staffing decision.
+<div class="abundance-home">
+  <section class="home-hero">
+    <div class="hero-glow hero-glow-one" aria-hidden="true"></div>
+    <div class="hero-glow hero-glow-two" aria-hidden="true"></div>
+
+    <div class="home-shell hero-grid">
+      <div class="hero-copy">
+        <div class="hero-kicker">
+          <span class="status-signal" aria-hidden="true"></span>
+          Guided nurse applications
+        </div>
+        <h1>A clearer path from <em>“I’m interested”</em> to recruiter-ready.</h1>
+        <p class="hero-intro">
+          Tell Concierge what kind of work fits. It organizes the details, keeps the next step
+          visible, and brings in a recruiter before any staffing decision is made.
         </p>
-        <div class="hero-content-btns-03">
-          <a href="/apply" class="button-01 w-inline-block">
-            <div class="button-outside-01">
-              <div class="button-inside">
-                <div class="button-text-01">Start application</div>
-                <div class="button-text-01">Start application</div>
-              </div>
-            </div>
+
+        <div class="hero-actions">
+          <a class="action-primary" href="/apply">
+            <span>Start an application</span>
+            <span class="action-arrow" aria-hidden="true">↗</span>
           </a>
-          <a href="/facilities" class="button-03 w-inline-block">
-            <div class="button-outside-wrap">
-              <div class="btn-text-outside-03">
-                <div class="btn-text-inside-03">
-                  <div class="button-text-03">Request staffing</div>
-                  <div class="button-text-03">Request staffing</div>
-                </div>
-              </div>
+          <a class="action-secondary" href="/jobs">Explore open roles</a>
+        </div>
+
+        <div class="hero-trust" aria-label="Application trust boundaries">
+          <span>{verificationLabel}</span>
+          <span>Private by default</span>
+          <span>Recruiter-reviewed</span>
+        </div>
+      </div>
+
+      <div class="hero-product" aria-label="Guided Abundance application preview">
+        <div class="hero-photo">
+          <img src={heroVisual.src} alt={heroVisual.alt} />
+          <div class="photo-label">
+            <span>Abundance Concierge</span>
+            <strong>One guided thread</strong>
+          </div>
+        </div>
+
+        <div class="concierge-card">
+          <div class="concierge-card-head">
+            <div>
+              <span class="mini-label">Application preview</span>
+              <strong>ICU travel nurse</strong>
             </div>
-          </a>
+            <span class="progress-orbit" aria-label="Profile 72 percent ready">72</span>
+          </div>
+
+          <div class="conversation-preview">
+            <p class="candidate-message">Austin · nights · 13 weeks · compact license</p>
+            <div class="concierge-response">
+              <span class="response-mark" aria-hidden="true">A</span>
+              <p>I have the role. Next, let’s confirm your start window and pay range.</p>
+            </div>
+          </div>
+
+          <div class="handoff-state">
+            <span class="handoff-icon" aria-hidden="true">✓</span>
+            <div>
+              <strong>Recruiter review stays human</strong>
+              <span>{verificationDetail}</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="hero-thumb abundance-hero-thumb">
-      <img src={heroVisual.src} alt={heroVisual.alt} class="hero-thumb-img" />
-      <div class="abundance-hero-note">
-        <span>{verificationLabel}</span>
-        <strong>{verificationDetail}</strong>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="support-02 container-full abundance-care">
-  <div class="container-fluid">
-    <div class="support-head-02">
-      <h2 class="support-title-02 heading-01">Care built around the staffing handoff</h2>
-      <p class="support-text-02 p1-regular">
-        One public site for nurses, facilities, and recruiter review.
-      </p>
-    </div>
-
-    <div class="support-list-wrap abundance-care-list">
-      {#each staffingCareCards as card}
-        <a class="support-thumb-item abundance-care-card" href={card.href}>
-          <img src={card.image} alt="" class="support-thumb-img" loading="lazy" />
-          <span class="abundance-card-shade"></span>
-          <span class="support-thumb-text heading-03">{card.title}</span>
-          <span class="abundance-care-text">{card.body}</span>
-        </a>
+    <div class="home-shell hero-stat-grid">
+      {#each staffingStats as stat, index}
+        <article>
+          <span class="stat-number">0{index + 1}</span>
+          <div>
+            <strong>{stat.label} · {stat.value}</strong>
+            <p>{stat.detail}</p>
+          </div>
+        </article>
       {/each}
     </div>
-  </div>
-</section>
+  </section>
 
-<section class="feature-doctors container-full abundance-roles">
-  <div class="feature-doctor-content">
-    <div class="feature-dr-head">
-      <h2 class="heading-01">Staffing roles, clearly separated</h2>
-      <p class="feature-dr-text p1-regular">
-        The site explains who starts, who prepares, and who approves.
-      </p>
-    </div>
+  <section class="path-section">
+    <div class="home-shell">
+      <div class="section-heading path-heading">
+        <div>
+          <span class="section-kicker">Choose your path</span>
+          <h2>One front door.<br />Three clear lanes.</h2>
+        </div>
+        <p>
+          The system adapts to the person entering it. Nurses describe fit, facilities describe
+          need, and recruiters see a prepared handoff instead of a loose thread.
+        </p>
+      </div>
 
-    <div class="feature-dr-list-wrap">
-      <div class="feature-dr-list">
-        {#each staffingRoles as role}
-          <article class="doctor-item abundance-role-card">
-            <div class="doctor-thumb-wrap">
-              <img src={role.image} alt="" class="doctor-thumb-img" loading="lazy" />
-            </div>
-            <div class="doctor-destination">
-              <h3 class="heading-05">{role.name}</h3>
-              <div class="doctor-type-wrap">
-                <span class="abundance-dot"></span>
-                <span class="p2-regular">{role.lane}</span>
-              </div>
-            </div>
-          </article>
+      <div class="path-grid">
+        {#each staffingCareCards as card, index}
+          <a class:path-featured={index === 0} class="path-card" href={card.href}>
+            <img src={card.image} alt="" loading="lazy" />
+            <span class="path-shade" aria-hidden="true"></span>
+            <span class="path-index">0{index + 1}</span>
+            <span class="path-content">
+              <strong>{card.title}</strong>
+              <span>{card.body}</span>
+            </span>
+            <span class="path-arrow" aria-hidden="true">↗</span>
+          </a>
         {/each}
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<section class="works-02 container-full abundance-process">
-  <div class="container-fluid for-works">
-    <div class="works-content">
-      <div class="abundance-process-head">
-        <span>Staffing workflow</span>
-        <h2 class="works-title-02 heading-01">How the handoff works</h2>
-        <p class="p1-regular">
-          Three steps. One owner at each step. No loose intake thread.
+  <section class="handoff-section">
+    <div class="handoff-grid home-shell">
+      <div class="handoff-heading">
+        <span class="section-kicker section-kicker-light">The staffing handoff</span>
+        <h2>Fast where it’s clear.<br /><em>Human where it matters.</em></h2>
+        <p>
+          Concierge prepares the work. It does not make the staffing call. Every consequential step
+          keeps its owner and boundary visible.
         </p>
+        <a href="/agents">Meet the Abundance agents <span aria-hidden="true">↗</span></a>
       </div>
-      <div class="works-items abundance-process-grid">
+
+      <div class="handoff-steps">
         {#each staffingProcess as step, index}
-          <article class="works-item abundance-work-card">
-            <div class="abundance-work-top">
-              <div class="abundance-step-number">
-                <span>{index + 1}</span>
-              </div>
-              <span class="abundance-step-owner">{processOwners[index]}</span>
+          <article>
+            <div class="step-rail" aria-hidden="true">
+              <span>0{index + 1}</span>
+              <i></i>
             </div>
-            <div class="works-item-info">
-              <h3 class="works-item-info-title heading-05">{step.title}</h3>
-              <p class="works-itm-info-text p2-regular">{step.body}</p>
+            <div class="step-copy">
+              <span>{processOwners[index]}</span>
+              <h3>{step.title}</h3>
+              <p>{step.body}</p>
             </div>
-            <span class="abundance-work-rule"></span>
           </article>
         {/each}
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<section class="feature-blog-04 container-full abundance-proof">
-  <div class="container-fluid">
-    <div class="feature-blog-content-04">
-      <div class="abundance-section-head">
-        <h2 class="heading-01">Staffing support for both sides of the shift.</h2>
-        <p class="p1-regular">
-          Abundance helps nurses find better-fit work and facilities request coverage clearly.
+  <section class="system-section">
+    <div class="home-shell system-grid">
+      <div class="system-intro">
+        <span class="section-kicker">Built around the shift</span>
+        <h2>Support that moves with the work.</h2>
+        <p>
+          Start with the immediate staffing need. Add identity, documents, and workflow controls
+          only when the next real step calls for them.
         </p>
-      </div>
-      <div class="abundance-proof-grid">
-        {#each staffingServiceHighlights as item}
-          <article class="abundance-proof-card">
-            <h3 class="heading-05">{item.title}</h3>
-            <p class="p2-regular">{item.body}</p>
-            <a href={item.href} class="abundance-text-link">Explore service</a>
-          </article>
-        {/each}
-      </div>
-      <div class="abundance-rule-strip" aria-label="Service areas">
-        {#each serviceChips as item}
-          <span>{item}</span>
-        {/each}
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="faqs-02 container-full w-variant-1100b3f9-b079-9267-4964-4e585b3a1c23 abundance-faq">
-  <div class="container-fluid">
-    <div class="faqs-content">
-      <h2 class="support-title heading-01">Frequently asked questions</h2>
-      <div class="faqs-list-wrapper">
-        <div class="faqs-list _02">
-          {#each staffingFaqs as faq}
-            <details class="faq-body abundance-faq-item">
-              <summary class="faqs-button">
-                <span class="faq-question-text heading-05">{faq.question}</span>
-                <span class="abundance-plus">+</span>
-              </summary>
-              <div class="faq-anwer-thumb-wrap p1-regular">{faq.answer}</div>
-            </details>
-          {/each}
+        <div class="system-proof">
+          <span>No service keys in browser</span>
+          <span>Secure verification</span>
+          <span>Public jobs stay read-only</span>
         </div>
       </div>
-    </div>
-  </div>
-</section>
 
-<section class="cta container-full abundance-cta">
-  <div class="container-fluid">
-    <div class="cta-content">
-      <span class="abundance-cta-kicker">Ready when the staffing need is real</span>
-      <h2 class="cta-title heading-01">Start with the staffing need. Keep the review human.</h2>
-      <p class="abundance-cta-copy p1-regular">
-        Nurses can begin without an account. Protected steps wait for verification and recruiter
-        review.
-      </p>
-      <div class="cta-button-wrap">
-        <a href="/apply" class="abundance-cta-primary">Start application</a>
-        <a href="/facilities" class="abundance-cta-secondary">Request staffing</a>
-      </div>
-      <div class="abundance-cta-proof" aria-label="Staffing guardrails">
-        <span>No service keys in browser</span>
-        <span>Recruiter approval</span>
-        <span>Secure verification</span>
+      <div class="service-list">
+        {#each staffingServiceHighlights as item, index}
+          <a href={item.href}>
+            <span class="service-index">0{index + 1}</span>
+            <span class="service-copy">
+              <strong>{item.title}</strong>
+              <span>{item.body}</span>
+            </span>
+            <span class="service-arrow" aria-hidden="true">↗</span>
+          </a>
+        {/each}
       </div>
     </div>
-  </div>
-  <img
-    src={heroVisual.src}
-    alt=""
-    class="cta-bg"
-    loading="lazy"
-  />
-</section>
+  </section>
+
+  <section class="faq-section">
+    <div class="home-shell faq-grid">
+      <div class="faq-heading">
+        <span class="section-kicker">Good questions</span>
+        <h2>Clear before you start.</h2>
+        <p>Short answers about access, decisions, and what happens next.</p>
+      </div>
+
+      <div class="faq-list">
+        {#each staffingFaqs as faq, index}
+          <details>
+            <summary>
+              <span class="faq-number">0{index + 1}</span>
+              <strong>{faq.question}</strong>
+              <span class="faq-plus" aria-hidden="true">+</span>
+            </summary>
+            <p>{faq.answer}</p>
+          </details>
+        {/each}
+      </div>
+    </div>
+  </section>
+
+  <section class="closing-section">
+    <div class="closing-orbit closing-orbit-one" aria-hidden="true"></div>
+    <div class="closing-orbit closing-orbit-two" aria-hidden="true"></div>
+    <div class="home-shell closing-content">
+      <span class="section-kicker section-kicker-light">Ready when you are</span>
+      <h2>Start with the work you want.<br /><em>Keep the decision human.</em></h2>
+      <p>
+        No account wall. No long intake form. Begin in plain language and verify only when the
+        application reaches a protected step.
+      </p>
+      <div class="closing-actions">
+        <a class="action-primary action-primary-light" href="/apply">
+          <span>Start an application</span>
+          <span class="action-arrow" aria-hidden="true">↗</span>
+        </a>
+        <a class="closing-link" href="/facilities">Request facility coverage</a>
+      </div>
+    </div>
+  </section>
+</div>
 
 <style>
-  .abundance-hero {
-    padding-top: 86px;
-    padding-bottom: 72px;
+  :global(body) {
+    background: #f3f2ed;
   }
 
-  .abundance-hero .hero-content-03 {
-    margin-bottom: clamp(44px, 5.5vw, 82px);
-    align-items: flex-start;
+  .abundance-home {
+    --home-ink: #10282b;
+    --home-ink-deep: #071719;
+    --home-paper: #f3f2ed;
+    --home-paper-bright: #fbfaf6;
+    --home-blue: #2d7782;
+    --home-blue-bright: #73c7ca;
+    --home-copper: #b87850;
+    color: var(--home-ink);
+    background: var(--home-paper);
+    overflow: clip;
   }
 
-  .abundance-hero .hero-content-btns-03 {
-    padding-top: 4px;
+  .home-shell {
+    width: min(calc(100% - 64px), 1380px);
+    margin-inline: auto;
   }
 
-  .abundance-hero .button-01 {
-    background: var(--secondary);
-    color: var(--white);
-    box-shadow: 0 16px 36px rgba(175, 124, 84, 0.22);
-  }
-
-  .abundance-hero .button-03 {
-    color: var(--black);
-  }
-
-  .abundance-hero .button-03 .button-outside-wrap {
-    border-color: rgba(175, 124, 84, 0.22);
-    background: rgba(255, 255, 255, 0.5);
-  }
-
-  .abundance-hero-thumb {
+  .home-hero {
     position: relative;
-    border-radius: 16px;
-    border: 1px solid rgba(175, 124, 84, 0.16);
-    box-shadow: 0 28px 80px rgba(67, 48, 33, 0.1);
-  }
-
-  .abundance-hero-thumb::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    background: linear-gradient(180deg, rgba(250, 245, 239, 0.12), transparent 45%);
-    pointer-events: none;
-  }
-
-  .abundance-hero-note {
-    position: absolute;
-    right: 24px;
-    bottom: 24px;
-    left: 24px;
-    z-index: 2;
-    display: grid;
-    gap: 8px;
-    padding: 18px;
-    border: 1px solid rgba(255, 255, 255, 0.42);
-    border-radius: 14px;
-    background: rgba(250, 245, 239, 0.9);
-    backdrop-filter: blur(12px);
-  }
-
-  .abundance-hero-note span,
-  .abundance-rule-strip span {
-    color: var(--secondary);
-    font-size: 12px;
-    line-height: 1;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-  }
-
-  .abundance-hero-note strong {
-    color: var(--black);
-    font-size: 18px;
-    line-height: 1.2;
-  }
-
-  .abundance-care-list {
-    margin-top: 40px;
-  }
-
-  .abundance-care-card {
-    text-decoration: none;
-    transition:
-      transform 180ms ease,
-      box-shadow 180ms ease;
-  }
-
-  .abundance-care-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 24px 64px rgba(67, 48, 33, 0.14);
-  }
-
-  .abundance-card-shade {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(180deg, transparent 25%, rgba(2, 2, 2, 0.62));
-  }
-
-  .abundance-care-text {
-    z-index: 1;
-    max-width: 26rem;
-    color: rgba(255, 255, 255, 0.78);
-    line-height: 1.4;
-    position: relative;
-  }
-
-  .abundance-roles {
-    padding-top: 104px;
-    padding-bottom: 112px;
+    padding: clamp(86px, 10vw, 154px) 0 0;
     background:
-      linear-gradient(180deg, var(--background) 0%, #fbf7f1 100%);
-  }
-
-  .abundance-roles .feature-doctor-content {
-    width: min(100% - 60px, 1320px);
-    margin: 0 auto;
-  }
-
-  .abundance-roles .feature-dr-head {
-    display: grid;
-    grid-template-columns: minmax(0, 0.85fr) minmax(280px, 0.45fr);
-    gap: clamp(24px, 5vw, 72px);
-    align-items: end;
-    margin-bottom: 42px;
-  }
-
-  .abundance-roles .feature-dr-head h2 {
-    max-width: 760px;
-    margin: 0;
-  }
-
-  .abundance-roles .feature-dr-text {
-    max-width: 360px;
-    margin: 0;
-    color: rgba(2, 2, 2, 0.58);
-  }
-
-  .abundance-role-card {
-    position: relative;
-    width: 100%;
-    max-width: none;
-    min-width: 0;
-    border: 1px solid rgba(175, 124, 84, 0.16);
-    border-radius: 24px;
-    background: rgba(255, 255, 255, 0.68);
-    box-shadow: 0 20px 58px rgba(67, 48, 33, 0.08);
-    overflow: hidden;
-    transition:
-      transform 180ms ease,
-      box-shadow 180ms ease;
-  }
-
-  .abundance-role-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 18px 50px rgba(67, 48, 33, 0.12);
-  }
-
-  .abundance-roles .feature-dr-list-wrap {
-    position: relative;
-    overflow: visible;
-  }
-
-  .abundance-roles .feature-dr-list {
-    width: 100%;
-    max-width: none;
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 18px;
-    overflow: visible;
-    padding-bottom: 0;
-  }
-
-  .abundance-roles .doctor-thumb-wrap {
-    height: 280px;
-    border-radius: 0;
-  }
-
-  .abundance-roles .doctor-thumb-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  .abundance-roles .doctor-destination {
-    display: grid;
-    gap: 12px;
-    min-height: 132px;
-    padding: 22px;
-    background: rgba(255, 255, 255, 0.92);
-  }
-
-  .abundance-roles .doctor-destination h3 {
-    margin: 0;
-    color: var(--black);
-  }
-
-  .abundance-roles .doctor-type-wrap {
-    justify-content: flex-start;
-    gap: 10px;
-    color: rgba(2, 2, 2, 0.62);
-  }
-
-  .abundance-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 999px;
-    background: var(--secondary);
-  }
-
-  .abundance-process {
-    position: relative;
-    padding-top: 110px;
-    padding-bottom: 110px;
-    background:
-      radial-gradient(circle at 16% 18%, rgba(175, 124, 84, 0.16), transparent 32%),
-      linear-gradient(180deg, #fbf7f1 0%, #f4e7dc 100%);
-    overflow: hidden;
-  }
-
-  .abundance-process-head {
-    display: grid;
-    gap: 14px;
-    max-width: 760px;
-    margin: 0 auto 48px;
-    text-align: center;
-  }
-
-  .abundance-process-head span,
-  .abundance-step-owner {
-    color: var(--secondary);
-    font-size: 12px;
-    line-height: 1;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-  }
-
-  .abundance-process-head .works-title-02 {
-    margin-bottom: 0;
-  }
-
-  .abundance-process-head p {
-    max-width: 520px;
-    margin: 0 auto;
-    color: rgba(2, 2, 2, 0.62);
-  }
-
-  .abundance-process-grid {
-    position: relative;
-  }
-
-  .abundance-process-grid::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 12%;
-    right: 12%;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(175, 124, 84, 0.42), transparent);
-  }
-
-  .abundance-work-card {
-    position: relative;
-    min-height: 292px;
-    padding: 24px;
-    border: 1px solid rgba(175, 124, 84, 0.22);
-    border-radius: 24px;
-    background:
-      linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(250, 245, 239, 0.72)),
-      var(--sub-bg);
-    box-shadow: 0 22px 60px rgba(67, 48, 33, 0.08);
-    flex-direction: column;
-    color: var(--black);
-    overflow: hidden;
+      linear-gradient(180deg, rgba(251, 250, 246, 0.9), rgba(243, 242, 237, 0.98)),
+      var(--home-paper);
     isolation: isolate;
   }
 
-  .abundance-work-card:nth-child(2) {
-    transform: translateY(22px);
+  .hero-glow {
+    position: absolute;
+    z-index: -1;
+    border-radius: 999px;
+    filter: blur(1px);
+    opacity: 0.8;
+    pointer-events: none;
   }
 
-  .abundance-work-card:nth-child(3) {
-    background:
-      linear-gradient(145deg, rgba(2, 2, 2, 0.86), rgba(67, 48, 33, 0.82)),
-      var(--black);
-    color: var(--white);
+  .hero-glow-one {
+    top: -240px;
+    right: -120px;
+    width: 650px;
+    height: 650px;
+    background: radial-gradient(circle, rgba(103, 197, 199, 0.24), transparent 68%);
   }
 
-  .abundance-work-card:nth-child(3) .works-item-info,
-  .abundance-work-card:nth-child(3) .works-itm-info-text,
-  .abundance-work-card:nth-child(3) .works-item-info-title {
-    color: var(--white);
+  .hero-glow-two {
+    bottom: 40px;
+    left: -220px;
+    width: 560px;
+    height: 560px;
+    background: radial-gradient(circle, rgba(184, 120, 80, 0.13), transparent 68%);
   }
 
-  .abundance-work-card:nth-child(3) .abundance-step-owner {
-    color: rgba(255, 255, 255, 0.7);
+  .hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.06fr) minmax(440px, 0.74fr);
+    gap: clamp(48px, 7vw, 112px);
+    align-items: center;
   }
 
-  .abundance-work-card .works-item-info {
-    max-width: none;
-    padding: 0;
-    color: var(--black);
-    gap: 14px;
-    justify-content: flex-end;
-    min-height: 130px;
-  }
-
-  .abundance-work-card .works-item-info-title {
-    color: var(--black);
-  }
-
-  .abundance-work-card .works-itm-info-text {
-    max-width: 260px;
-    color: rgba(2, 2, 2, 0.64);
-  }
-
-  .abundance-work-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 18px;
+  .hero-copy {
     position: relative;
-    z-index: 1;
+    z-index: 2;
+    max-width: 830px;
   }
 
-  .abundance-step-number {
+  .hero-kicker,
+  .section-kicker,
+  .mini-label,
+  .stat-number,
+  .path-index,
+  .service-index,
+  .faq-number {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.72rem;
+    line-height: 1;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .hero-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 30px;
+    color: #315d61;
+  }
+
+  .status-signal {
+    position: relative;
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+    background: var(--home-blue);
+    box-shadow: 0 0 0 5px rgba(45, 119, 130, 0.1);
+  }
+
+  .status-signal::after {
+    content: '';
+    position: absolute;
+    inset: -5px;
+    border: 1px solid rgba(45, 119, 130, 0.32);
+    border-radius: inherit;
+    animation: signal-pulse 2.8s ease-out infinite;
+  }
+
+  .hero-copy h1 {
+    max-width: 850px;
+    margin: 0;
+    font-size: clamp(3.7rem, 7vw, 7.25rem);
+    font-weight: 540;
+    letter-spacing: -0.065em;
+    line-height: 0.92;
+    text-wrap: balance;
+  }
+
+  .hero-copy h1 em,
+  .handoff-heading h2 em,
+  .closing-content h2 em {
+    color: var(--home-blue);
+    font-family: Georgia, 'Times New Roman', serif;
+    font-weight: 400;
+    letter-spacing: -0.045em;
+  }
+
+  .hero-intro {
+    max-width: 650px;
+    margin: 34px 0 0;
+    color: rgba(16, 40, 43, 0.68);
+    font-size: clamp(1.08rem, 1.3vw, 1.28rem);
+    line-height: 1.58;
+  }
+
+  .hero-actions,
+  .closing-actions {
     display: flex;
     align-items: center;
-    justify-content: center;
-    width: 72px;
-    height: 72px;
-    min-height: 72px;
-    padding: 0;
-    border-radius: 999px;
-    background: var(--secondary);
-    color: var(--white);
-    font-size: 28px;
-    box-shadow: 0 14px 28px rgba(175, 124, 84, 0.24);
-  }
-
-  .abundance-step-number span {
-    color: inherit;
-  }
-
-  .abundance-work-rule {
-    position: absolute;
-    right: -42px;
-    bottom: -42px;
-    width: 154px;
-    height: 154px;
-    border: 1px solid rgba(175, 124, 84, 0.18);
-    border-radius: 999px;
-    z-index: -1;
-  }
-
-  .abundance-proof-grid {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 16px;
+    flex-wrap: wrap;
+    margin-top: 38px;
   }
 
-  .abundance-proof-card {
-    position: relative;
-    display: grid;
-    gap: 14px;
-    min-height: 230px;
-    padding: 24px;
-    border: 1px solid rgba(175, 124, 84, 0.18);
-    border-radius: 20px;
-    background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(250, 245, 239, 0.84)),
-      var(--background);
-    box-shadow: 0 18px 46px rgba(67, 48, 33, 0.06);
-    overflow: hidden;
-  }
-
-  .abundance-proof-card::before {
-    content: '';
-    width: 42px;
-    height: 3px;
-    border-radius: 999px;
-    background: var(--secondary);
-  }
-
-  .abundance-proof-card h3 {
-    margin: 0;
-  }
-
-  .abundance-text-link {
-    align-self: end;
-    color: var(--secondary);
+  .action-primary,
+  .action-secondary,
+  .closing-link {
     text-decoration: none;
   }
 
-  .abundance-rule-strip {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-
-  .abundance-rule-strip span {
-    padding: 9px 12px;
-    border: 1px solid var(--secondary-20);
+  .action-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 34px;
+    min-height: 62px;
+    min-width: 250px;
+    padding: 10px 11px 10px 24px;
+    border: 1px solid var(--home-ink);
     border-radius: 999px;
-    background: var(--secondary-12);
+    background: var(--home-ink);
+    color: white;
+    font-weight: 520;
+    transition:
+      transform 180ms ease,
+      box-shadow 180ms ease,
+      background 180ms ease;
   }
 
-  .abundance-faq-item {
-    border-bottom: 1px solid var(--black-10);
+  .action-primary:hover {
+    transform: translateY(-2px);
+    background: var(--home-ink-deep);
+    box-shadow: 0 18px 42px rgba(7, 23, 25, 0.18);
   }
 
-  .abundance-faq-item summary {
+  .action-arrow {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    background: white;
+    color: var(--home-ink);
+    font-size: 1.1rem;
+  }
+
+  .action-secondary,
+  .closing-link {
+    padding: 14px 4px;
+    border-bottom: 1px solid rgba(16, 40, 43, 0.34);
+    color: var(--home-ink);
+    font-weight: 520;
+  }
+
+  .hero-trust {
     display: flex;
+    gap: 8px 18px;
+    flex-wrap: wrap;
+    margin-top: 40px;
+  }
+
+  .hero-trust span {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: rgba(16, 40, 43, 0.62);
+    font-size: 0.84rem;
+  }
+
+  .hero-trust span::before {
+    content: '✓';
+    color: var(--home-blue);
+    font-weight: 700;
+  }
+
+  .hero-product {
+    position: relative;
+    min-height: 690px;
+  }
+
+  .hero-photo {
+    position: absolute;
+    inset: 0 0 96px 54px;
+    overflow: hidden;
+    border-radius: 220px 220px 30px 30px;
+    box-shadow: 0 36px 90px rgba(16, 40, 43, 0.15);
+  }
+
+  .hero-photo::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 52%, rgba(7, 23, 25, 0.5));
+  }
+
+  .hero-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 58% center;
+    transform: scale(1.02);
+  }
+
+  .photo-label {
+    position: absolute;
+    top: 26px;
+    left: 26px;
+    z-index: 1;
+    display: grid;
+    gap: 4px;
+    padding: 14px 17px;
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    border-radius: 16px;
+    background: rgba(251, 250, 246, 0.82);
+    backdrop-filter: blur(16px);
+  }
+
+  .photo-label span {
+    color: rgba(16, 40, 43, 0.56);
+    font-size: 0.72rem;
+  }
+
+  .photo-label strong {
+    font-size: 0.92rem;
+  }
+
+  .concierge-card {
+    position: absolute;
+    right: 28px;
+    bottom: 0;
+    left: 0;
+    z-index: 2;
+    padding: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 26px;
+    background: rgba(7, 23, 25, 0.96);
+    color: white;
+    box-shadow: 0 30px 80px rgba(7, 23, 25, 0.28);
+  }
+
+  .concierge-card-head {
+    display: flex;
+    align-items: center;
     justify-content: space-between;
     gap: 20px;
+  }
+
+  .concierge-card-head > div:first-child {
+    display: grid;
+    gap: 8px;
+  }
+
+  .mini-label {
+    color: rgba(255, 255, 255, 0.46);
+  }
+
+  .concierge-card-head strong {
+    font-size: 1.2rem;
+  }
+
+  .progress-orbit {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border: 2px solid rgba(115, 199, 202, 0.3);
+    border-top-color: var(--home-blue-bright);
+    border-radius: 999px;
+    color: var(--home-blue-bright);
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.78rem;
+  }
+
+  .conversation-preview {
+    display: grid;
+    gap: 12px;
+    margin-top: 24px;
+  }
+
+  .candidate-message,
+  .concierge-response {
+    margin: 0;
+    border-radius: 16px;
+    font-size: 0.88rem;
+    line-height: 1.45;
+  }
+
+  .candidate-message {
+    justify-self: end;
+    max-width: 86%;
+    padding: 12px 15px;
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  .concierge-response {
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+    max-width: 92%;
+    padding: 14px;
+    background: rgba(115, 199, 202, 0.11);
+    color: rgba(255, 255, 255, 0.92);
+  }
+
+  .concierge-response p {
+    margin: 0;
+    line-height: 1.45;
+  }
+
+  .response-mark,
+  .handoff-icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 26px;
+    height: 26px;
+    border-radius: 999px;
+    background: var(--home-blue-bright);
+    color: var(--home-ink-deep);
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+
+  .handoff-state {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .handoff-state > div {
+    display: grid;
+    gap: 3px;
+  }
+
+  .handoff-state strong {
+    font-size: 0.82rem;
+  }
+
+  .handoff-state span:last-child {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.75rem;
+  }
+
+  .hero-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    margin-top: clamp(78px, 9vw, 136px);
+    border-top: 1px solid rgba(16, 40, 43, 0.14);
+    border-bottom: 1px solid rgba(16, 40, 43, 0.14);
+  }
+
+  .hero-stat-grid article {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 18px;
+    min-height: 152px;
+    padding: 28px;
+    border-right: 1px solid rgba(16, 40, 43, 0.14);
+  }
+
+  .hero-stat-grid article:last-child {
+    border-right: 0;
+  }
+
+  .stat-number {
+    color: var(--home-blue);
+  }
+
+  .hero-stat-grid article > div {
+    display: grid;
+    align-content: start;
+    gap: 8px;
+  }
+
+  .hero-stat-grid strong {
+    font-size: 1rem;
+  }
+
+  .hero-stat-grid p {
+    max-width: 280px;
+    margin: 0;
+    color: rgba(16, 40, 43, 0.6);
+    font-size: 0.86rem;
+    line-height: 1.5;
+  }
+
+  .path-section,
+  .system-section,
+  .faq-section {
+    padding: clamp(96px, 11vw, 170px) 0;
+  }
+
+  .path-section {
+    background: var(--home-paper-bright);
+  }
+
+  .section-heading {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 0.45fr);
+    gap: 48px;
+    align-items: end;
+  }
+
+  .section-kicker {
+    display: block;
+    margin-bottom: 24px;
+    color: var(--home-blue);
+  }
+
+  .section-heading h2,
+  .system-intro h2,
+  .faq-heading h2 {
+    margin: 0;
+    font-size: clamp(3rem, 5.7vw, 6.2rem);
+    font-weight: 520;
+    letter-spacing: -0.06em;
+    line-height: 0.96;
+  }
+
+  .section-heading > p,
+  .system-intro > p,
+  .faq-heading > p {
+    margin: 0;
+    color: rgba(16, 40, 43, 0.62);
+    font-size: 1rem;
+    line-height: 1.64;
+  }
+
+  .path-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    grid-auto-rows: 510px;
+    gap: 18px;
+    margin-top: 66px;
+  }
+
+  .path-card {
+    position: relative;
+    grid-column: span 4;
+    overflow: hidden;
+    border-radius: 28px;
+    color: white;
+    text-decoration: none;
+    isolation: isolate;
+  }
+
+  .path-card.path-featured {
+    grid-column: span 6;
+  }
+
+  .path-card.path-featured + .path-card {
+    grid-column: span 3;
+  }
+
+  .path-card.path-featured + .path-card + .path-card {
+    grid-column: span 3;
+  }
+
+  .path-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 700ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+
+  .path-card:hover img {
+    transform: scale(1.045);
+  }
+
+  .path-shade {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background:
+      linear-gradient(180deg, rgba(7, 23, 25, 0.08) 20%, rgba(7, 23, 25, 0.88) 100%),
+      linear-gradient(90deg, rgba(7, 23, 25, 0.26), transparent 72%);
+  }
+
+  .path-index,
+  .path-content,
+  .path-arrow {
+    position: absolute;
+    z-index: 2;
+  }
+
+  .path-index {
+    top: 24px;
+    left: 24px;
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    border-radius: 999px;
+    background: rgba(7, 23, 25, 0.16);
+    backdrop-filter: blur(12px);
+  }
+
+  .path-content {
+    right: 24px;
+    bottom: 26px;
+    left: 24px;
+    display: grid;
+    gap: 10px;
+  }
+
+  .path-content strong {
+    max-width: 380px;
+    font-size: clamp(1.45rem, 2.2vw, 2.3rem);
+    font-weight: 520;
+    letter-spacing: -0.035em;
+    line-height: 1;
+  }
+
+  .path-content > span {
+    max-width: 350px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+    line-height: 1.45;
+  }
+
+  .path-arrow {
+    top: 24px;
+    right: 24px;
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    background: white;
+    color: var(--home-ink);
+    transition: transform 180ms ease;
+  }
+
+  .path-card:hover .path-arrow {
+    transform: rotate(10deg) scale(1.04);
+  }
+
+  .handoff-section {
+    padding: clamp(100px, 12vw, 190px) 0;
+    background:
+      radial-gradient(circle at 88% 18%, rgba(115, 199, 202, 0.13), transparent 28%),
+      var(--home-ink-deep);
+    color: white;
+  }
+
+  .handoff-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 0.84fr) minmax(460px, 0.76fr);
+    gap: clamp(64px, 9vw, 150px);
+  }
+
+  .section-kicker-light {
+    color: var(--home-blue-bright);
+  }
+
+  .handoff-heading h2,
+  .closing-content h2 {
+    margin: 0;
+    font-size: clamp(3.2rem, 5.6vw, 6.4rem);
+    font-weight: 500;
+    letter-spacing: -0.06em;
+    line-height: 0.96;
+  }
+
+  .handoff-heading h2 em,
+  .closing-content h2 em {
+    color: var(--home-blue-bright);
+  }
+
+  .handoff-heading p {
+    max-width: 580px;
+    margin: 34px 0 0;
+    color: rgba(255, 255, 255, 0.58);
+    line-height: 1.65;
+  }
+
+  .handoff-heading > a {
+    display: inline-flex;
+    gap: 12px;
+    margin-top: 34px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(115, 199, 202, 0.45);
+    color: white;
+    text-decoration: none;
+  }
+
+  .handoff-steps {
+    display: grid;
+  }
+
+  .handoff-steps article {
+    display: grid;
+    grid-template-columns: 64px 1fr;
+    min-height: 220px;
+  }
+
+  .step-rail {
+    display: grid;
+    grid-template-rows: 52px 1fr;
+    justify-items: center;
+  }
+
+  .step-rail > span {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border: 1px solid rgba(115, 199, 202, 0.42);
+    border-radius: 999px;
+    color: var(--home-blue-bright);
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.72rem;
+  }
+
+  .step-rail i {
+    width: 1px;
+    height: 100%;
+    background: linear-gradient(rgba(115, 199, 202, 0.4), rgba(115, 199, 202, 0.06));
+  }
+
+  .handoff-steps article:last-child .step-rail i {
+    display: none;
+  }
+
+  .step-copy {
+    padding: 2px 0 48px 26px;
+  }
+
+  .step-copy > span {
+    color: var(--home-blue-bright);
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .step-copy h3 {
+    margin: 15px 0 0;
+    font-size: clamp(1.8rem, 2.7vw, 3rem);
+    font-weight: 500;
+    letter-spacing: -0.045em;
+  }
+
+  .step-copy p {
+    max-width: 460px;
+    margin: 14px 0 0;
+    color: rgba(255, 255, 255, 0.52);
+    line-height: 1.6;
+  }
+
+  .system-section {
+    background: var(--home-paper);
+  }
+
+  .system-grid,
+  .faq-grid {
+    display: grid;
+    grid-template-columns: minmax(300px, 0.66fr) minmax(0, 1fr);
+    gap: clamp(60px, 9vw, 150px);
+  }
+
+  .system-intro {
+    align-self: start;
+    position: sticky;
+    top: 132px;
+  }
+
+  .system-intro h2,
+  .faq-heading h2 {
+    font-size: clamp(2.9rem, 4.4vw, 5rem);
+  }
+
+  .system-intro > p,
+  .faq-heading > p {
+    max-width: 480px;
+    margin-top: 28px;
+  }
+
+  .system-proof {
+    display: grid;
+    gap: 0;
+    margin-top: 34px;
+    border-top: 1px solid rgba(16, 40, 43, 0.16);
+  }
+
+  .system-proof span {
+    padding: 15px 0;
+    border-bottom: 1px solid rgba(16, 40, 43, 0.16);
+    color: rgba(16, 40, 43, 0.68);
+    font-size: 0.86rem;
+  }
+
+  .system-proof span::before {
+    content: '✓';
+    margin-right: 10px;
+    color: var(--home-blue);
+  }
+
+  .service-list {
+    border-top: 1px solid rgba(16, 40, 43, 0.18);
+  }
+
+  .service-list > a {
+    display: grid;
+    grid-template-columns: 52px 1fr auto;
+    gap: 22px;
+    align-items: start;
+    min-height: 172px;
+    padding: 28px 4px;
+    border-bottom: 1px solid rgba(16, 40, 43, 0.18);
+    color: var(--home-ink);
+    text-decoration: none;
+    transition:
+      padding 180ms ease,
+      background 180ms ease;
+  }
+
+  .service-list > a:hover {
+    padding-inline: 16px;
+    background: rgba(255, 255, 255, 0.48);
+  }
+
+  .service-index {
+    padding-top: 5px;
+    color: var(--home-blue);
+  }
+
+  .service-copy {
+    display: grid;
+    gap: 14px;
+  }
+
+  .service-copy strong {
+    font-size: clamp(1.5rem, 2vw, 2.25rem);
+    font-weight: 520;
+    letter-spacing: -0.035em;
+  }
+
+  .service-copy > span {
+    max-width: 580px;
+    color: rgba(16, 40, 43, 0.6);
+    line-height: 1.55;
+  }
+
+  .service-arrow {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border: 1px solid rgba(16, 40, 43, 0.2);
+    border-radius: 999px;
+  }
+
+  .faq-section {
+    background: var(--home-paper-bright);
+  }
+
+  .faq-heading {
+    align-self: start;
+  }
+
+  .faq-list {
+    border-top: 1px solid rgba(16, 40, 43, 0.18);
+  }
+
+  .faq-list details {
+    border-bottom: 1px solid rgba(16, 40, 43, 0.18);
+  }
+
+  .faq-list summary {
+    display: grid;
+    grid-template-columns: 48px 1fr auto;
+    gap: 20px;
+    align-items: center;
+    min-height: 96px;
     cursor: pointer;
     list-style: none;
   }
 
-  .abundance-faq-item summary::-webkit-details-marker {
+  .faq-list summary::-webkit-details-marker {
     display: none;
   }
 
-  .abundance-plus {
-    color: var(--secondary);
-    font-size: 30px;
-    line-height: 1;
+  .faq-number {
+    color: var(--home-blue);
   }
 
-  .abundance-faq-item[open] .abundance-plus {
+  .faq-list summary strong {
+    font-size: clamp(1.05rem, 1.4vw, 1.3rem);
+    font-weight: 520;
+  }
+
+  .faq-plus {
+    font-size: 1.65rem;
+    font-weight: 300;
+    transition: transform 180ms ease;
+  }
+
+  .faq-list details[open] .faq-plus {
     transform: rotate(45deg);
   }
 
-  .abundance-cta {
+  .faq-list details > p {
+    max-width: 640px;
+    margin: 0 0 28px 68px;
+    color: rgba(16, 40, 43, 0.62);
+    line-height: 1.65;
+  }
+
+  .closing-section {
     position: relative;
-    min-height: 720px;
-    height: min(86vh, 820px);
-    margin-top: 0;
-    background: var(--black);
+    min-height: 760px;
+    display: grid;
+    place-items: center;
     overflow: hidden;
+    background:
+      radial-gradient(circle at 50% 0%, rgba(115, 199, 202, 0.16), transparent 42%),
+      var(--home-ink-deep);
+    color: white;
     isolation: isolate;
   }
 
-  .abundance-cta::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    background:
-      linear-gradient(90deg, rgba(2, 2, 2, 0.86) 0%, rgba(31, 23, 18, 0.72) 38%, rgba(2, 2, 2, 0.1) 74%),
-      linear-gradient(180deg, rgba(2, 2, 2, 0.06), rgba(2, 2, 2, 0.5));
+  .closing-content {
+    position: relative;
+    z-index: 2;
+    max-width: 1120px;
+    padding-block: 110px;
+    text-align: center;
   }
 
-  .abundance-cta::after {
-    content: '';
+  .closing-content h2 {
+    font-size: clamp(3.5rem, 6.5vw, 7.2rem);
+  }
+
+  .closing-content > p {
+    max-width: 650px;
+    margin: 34px auto 0;
+    color: rgba(255, 255, 255, 0.58);
+    font-size: 1.04rem;
+    line-height: 1.62;
+  }
+
+  .closing-actions {
+    justify-content: center;
+  }
+
+  .action-primary-light {
+    border-color: white;
+    background: white;
+    color: var(--home-ink-deep);
+  }
+
+  .action-primary-light:hover {
+    background: #f3f2ed;
+  }
+
+  .action-primary-light .action-arrow {
+    background: var(--home-ink-deep);
+    color: white;
+  }
+
+  .closing-link {
+    border-color: rgba(255, 255, 255, 0.32);
+    color: white;
+  }
+
+  .closing-orbit {
     position: absolute;
-    inset: 22px;
-    z-index: 2;
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    border-radius: 28px;
+    z-index: 1;
+    border: 1px solid rgba(115, 199, 202, 0.15);
+    border-radius: 999px;
     pointer-events: none;
   }
 
-  .abundance-cta .cta-content {
-    position: relative;
-    z-index: 3;
-    align-items: flex-start;
-    max-width: 650px;
-    margin-right: auto;
-    margin-left: 0;
-    padding-left: clamp(0px, 3vw, 44px);
-    text-align: left;
-    color: var(--white);
+  .closing-orbit-one {
+    width: min(74vw, 1040px);
+    aspect-ratio: 1;
   }
 
-  .abundance-cta .cta-title {
-    max-width: 680px;
-    margin: 0;
-    color: var(--white);
-    text-wrap: balance;
+  .closing-orbit-two {
+    width: min(48vw, 680px);
+    aspect-ratio: 1;
   }
 
-  .abundance-cta-kicker,
-  .abundance-cta-proof span {
-    color: rgba(255, 255, 255, 0.72);
-    font-size: 12px;
-    line-height: 1;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+  @keyframes signal-pulse {
+    0% {
+      transform: scale(0.72);
+      opacity: 0.8;
+    }
+    70%,
+    100% {
+      transform: scale(1.9);
+      opacity: 0;
+    }
   }
 
-  .abundance-cta-copy {
-    max-width: 510px;
-    margin: 0;
-    color: rgba(255, 255, 255, 0.78);
-  }
-
-  .abundance-cta .cta-button-wrap {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    margin-top: 8px;
-  }
-
-  .abundance-cta-primary,
-  .abundance-cta-secondary {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 56px;
-    padding: 0 24px;
-    border-radius: 999px;
-    font-size: 16px;
-    line-height: 1;
-    text-decoration: none;
-  }
-
-  .abundance-cta-primary {
-    background: var(--secondary);
-    color: var(--white);
-  }
-
-  .abundance-cta-secondary {
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    color: var(--white);
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(10px);
-  }
-
-  .abundance-cta-proof {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    max-width: 560px;
-    margin-top: 12px;
-  }
-
-  .abundance-cta-proof span {
-    padding: 9px 12px;
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.08);
-  }
-
-  .abundance-cta .cta-bg {
-    width: 100%;
-    height: 100%;
-    opacity: 0.94;
-    filter: saturate(0.88) contrast(1.02);
-    object-position: 72% 50%;
-  }
-
-  @media (max-width: 991px) {
-    .hero-content-03,
-    .support-head-02 {
-      display: grid;
+  @media (max-width: 1120px) {
+    .hero-grid {
+      grid-template-columns: minmax(0, 1fr) minmax(390px, 0.76fr);
+      gap: 44px;
     }
 
-    .abundance-hero {
-      padding-top: 64px;
-      padding-bottom: 54px;
+    .hero-copy h1 {
+      font-size: clamp(3.6rem, 7.1vw, 6.1rem);
     }
 
-    .abundance-hero .hero-content-03 {
-      margin-bottom: 34px;
+    .hero-product {
+      min-height: 610px;
     }
 
-    .works-items {
+    .path-grid {
+      grid-auto-rows: 460px;
+    }
+
+    .path-card.path-featured {
+      grid-column: span 6;
+    }
+
+    .path-card.path-featured + .path-card,
+    .path-card.path-featured + .path-card + .path-card {
+      grid-column: span 3;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .home-shell {
+      width: min(calc(100% - 36px), 760px);
+    }
+
+    .home-hero {
+      padding-top: 78px;
+    }
+
+    .hero-grid,
+    .handoff-grid,
+    .system-grid,
+    .faq-grid,
+    .section-heading {
       grid-template-columns: 1fr;
     }
 
-    .abundance-roles .feature-dr-head,
-    .abundance-roles .feature-dr-list,
-    .abundance-proof-grid {
+    .hero-copy h1 {
+      max-width: 720px;
+      font-size: clamp(3.7rem, 11vw, 6.5rem);
+    }
+
+    .hero-product {
+      width: min(100%, 640px);
+      min-height: 650px;
+      margin: 24px auto 0;
+    }
+
+    .hero-stat-grid {
+      grid-template-columns: 1fr;
+      margin-top: 90px;
+    }
+
+    .hero-stat-grid article {
+      min-height: auto;
+      border-right: 0;
+      border-bottom: 1px solid rgba(16, 40, 43, 0.14);
+    }
+
+    .hero-stat-grid article:last-child {
+      border-bottom: 0;
+    }
+
+    .section-heading > p {
+      max-width: 560px;
+    }
+
+    .path-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-auto-rows: 430px;
     }
 
-    .abundance-roles .feature-dr-head {
-      align-items: start;
+    .path-card.path-featured,
+    .path-card.path-featured + .path-card,
+    .path-card.path-featured + .path-card + .path-card {
+      grid-column: span 1;
     }
 
-    .abundance-roles .doctor-thumb-wrap {
-      height: 240px;
+    .path-card.path-featured {
+      grid-column: 1 / -1;
     }
 
-    .abundance-proof-card {
-      min-height: 210px;
+    .handoff-grid {
+      gap: 84px;
     }
 
-    .abundance-process-grid::before {
-      display: none;
+    .system-intro {
+      position: static;
     }
 
-    .abundance-work-card:nth-child(2) {
-      transform: none;
-    }
-
-    .abundance-cta {
+    .closing-section {
       min-height: 680px;
-      height: auto;
     }
 
-    .abundance-cta::after {
-      inset: 14px;
-      border-radius: 22px;
+    .closing-orbit-one {
+      width: 120vw;
     }
 
-    .abundance-cta::before {
-      background:
-        linear-gradient(180deg, rgba(2, 2, 2, 0.74), rgba(2, 2, 2, 0.64)),
-        linear-gradient(90deg, rgba(2, 2, 2, 0.72), rgba(2, 2, 2, 0.2));
+    .closing-orbit-two {
+      width: 76vw;
+    }
+  }
+
+  @media (max-width: 620px) {
+    .home-shell {
+      width: min(calc(100% - 28px), 540px);
     }
 
-    .abundance-cta .cta-content {
-      padding: 120px 0;
+    .home-hero {
+      padding-top: 58px;
     }
 
-    .support-list-wrap {
+    .hero-kicker {
+      margin-bottom: 24px;
+    }
+
+    .hero-copy h1 {
+      font-size: clamp(3.25rem, 16.2vw, 4.8rem);
+      line-height: 0.94;
+    }
+
+    .hero-intro {
+      margin-top: 26px;
+      font-size: 1rem;
+    }
+
+    .hero-actions,
+    .closing-actions {
+      align-items: stretch;
       flex-direction: column;
     }
 
-    .support-thumb-item {
-      max-width: none;
+    .action-primary {
+      width: 100%;
+    }
+
+    .action-secondary,
+    .closing-link {
+      align-self: flex-start;
+    }
+
+    .hero-trust {
+      display: grid;
+    }
+
+    .hero-product {
+      min-height: 580px;
+    }
+
+    .hero-photo {
+      inset: 0 0 120px 22px;
+      border-radius: 170px 170px 24px 24px;
+    }
+
+    .concierge-card {
+      right: 10px;
+      padding: 20px;
+    }
+
+    .candidate-message {
+      max-width: 96%;
+    }
+
+    .hero-stat-grid article {
+      padding-inline: 4px;
+    }
+
+    .path-section,
+    .system-section,
+    .faq-section {
+      padding: 92px 0;
+    }
+
+    .section-heading h2,
+    .system-intro h2,
+    .faq-heading h2,
+    .handoff-heading h2,
+    .closing-content h2 {
+      font-size: clamp(2.9rem, 14vw, 4.4rem);
+    }
+
+    .path-grid {
+      grid-template-columns: 1fr;
+      grid-auto-rows: 410px;
+      margin-top: 46px;
+    }
+
+    .path-card.path-featured,
+    .path-card.path-featured + .path-card,
+    .path-card.path-featured + .path-card + .path-card {
+      grid-column: auto;
+    }
+
+    .handoff-section {
+      padding: 96px 0;
+    }
+
+    .handoff-steps article {
+      grid-template-columns: 50px 1fr;
+      min-height: 205px;
+    }
+
+    .step-copy {
+      padding-left: 18px;
+    }
+
+    .service-list > a {
+      grid-template-columns: 42px 1fr;
+    }
+
+    .service-arrow {
+      display: none;
+    }
+
+    .faq-list summary {
+      grid-template-columns: 34px 1fr auto;
+      gap: 10px;
+    }
+
+    .faq-list details > p {
+      margin-left: 44px;
+    }
+
+    .closing-section {
+      min-height: 700px;
     }
   }
 
-  @media (max-width: 680px) {
-    .abundance-roles .feature-doctor-content {
-      width: min(100% - 30px, 1320px);
+  @media (prefers-reduced-motion: reduce) {
+    .status-signal::after {
+      animation: none;
     }
 
-    .abundance-roles .feature-dr-head,
-    .abundance-roles .feature-dr-list,
-    .abundance-proof-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .abundance-roles .doctor-thumb-wrap {
-      height: 250px;
-    }
-
-    .abundance-proof-card {
-      min-height: 0;
+    .path-card img,
+    .path-arrow,
+    .action-primary,
+    .service-list > a,
+    .faq-plus {
+      transition: none;
     }
   }
 </style>

@@ -1,366 +1,721 @@
 <script lang="ts">
-	import { createConciergeThreadClient } from '$chat/client-actions';
-	import { absoluteUrl } from '$lib/site/seo';
-	import type { PageData } from './$types';
+  import { createConciergeThreadClient } from '$chat/client-actions';
+  import { absoluteUrl } from '$lib/site/seo';
+  import type { PageData } from './$types';
 
-	export let data: PageData;
+  export let data: PageData;
 
-	const pageTitle = 'Start a Nurse Application | Abundance Staffing';
-	const pageDescription =
-		'Start or continue a guided Abundance nurse staffing application with role, shift, location, timing, and verification handled in one thread.';
-	const pagePath = '/apply';
-	const pageImage = absoluteUrl('/abundance/hero-handoff.png');
+  const pageTitle = 'Start a Nurse Application | Abundance Staffing';
+  const pageDescription =
+    'Start or continue a guided Abundance nurse staffing application with role, shift, location, timing, and verification handled in one thread.';
+  const pagePath = '/apply';
+  const pageImage = absoluteUrl('/abundance/hero-handoff.png');
 
-	let creatingThread = false;
-	let actionError = '';
+  let creatingThread = false;
+  let actionError = '';
 
-	async function startNewThread() {
-		creatingThread = true;
-		actionError = '';
+  async function startNewThread() {
+    creatingThread = true;
+    actionError = '';
 
-		try {
-			await createConciergeThreadClient();
-		} catch (error) {
-			actionError =
-				error instanceof Error ? error.message : 'Unable to start a new intake thread.';
-		} finally {
-			creatingThread = false;
-		}
-	}
+    try {
+      await createConciergeThreadClient();
+    } catch (error) {
+      actionError = error instanceof Error ? error.message : 'Unable to start a new intake thread.';
+    } finally {
+      creatingThread = false;
+    }
+  }
 
-	$: latestThread = data.latestThreadId
-		? data.threadSummaries.find((thread) => thread.id === data.latestThreadId) ?? data.threadSummaries[0] ?? null
-		: data.threadSummaries[0] ?? null;
-	$: savedThreadCount = data.threadSummaries.length;
-	$: trustTone = data.intakeAccess.granted ? 'good' : 'warn';
-	$: trustLabel = data.intakeAccess.granted ? 'Verified in this browser' : 'Start now, verify later';
-	$: trustDetail = data.intakeAccess.granted
-		? 'If a document or recruiter review step appears, this browser can continue without another code.'
-		: 'Begin with the role you want. If we need documents or recruiter review later, Concierge will ask for a one-time email code then.';
+  $: latestThread = data.latestThreadId
+    ? (data.threadSummaries.find((thread) => thread.id === data.latestThreadId) ??
+      data.threadSummaries[0] ??
+      null)
+    : (data.threadSummaries[0] ?? null);
+  $: savedThreadCount = data.threadSummaries.length;
+  $: trustTone = data.intakeAccess.granted ? 'good' : 'ready';
+  $: trustLabel = data.intakeAccess.granted
+    ? 'Verified in this browser'
+    : 'Start now, verify later';
+  $: trustDetail = data.intakeAccess.granted
+    ? 'If a document or recruiter review step appears, this browser can continue without another code.'
+    : 'Begin with the role you want. If documents or recruiter review come later, Concierge will ask for a one-time email code then.';
+
+  const applicationSteps = [
+    {
+      label: 'Describe',
+      title: 'The work you want',
+      body: 'Specialty, shift, location, timing, pay range, and anything that would make a role a poor fit.'
+    },
+    {
+      label: 'Confirm',
+      title: 'Your working profile',
+      body: 'Review what Concierge captured before it becomes recruiter or matching context.'
+    },
+    {
+      label: 'Protect',
+      title: 'Sensitive next steps',
+      body: 'Email verification appears only for uploads, consent, or recruiter review.'
+    }
+  ];
 </script>
 
 <svelte:head>
-	<link
-		rel="stylesheet"
-		href="https://cdn.prod.website-files.com/6975f7e617285604fcb645f7/css/healen.webflow.shared.7df6645cf.css"
-	/>
-	<title>{pageTitle}</title>
-	<meta name="description" content={pageDescription} />
-	<link rel="canonical" href={absoluteUrl(pagePath)} />
-	<meta property="og:type" content="website" />
-	<meta property="og:site_name" content="Abundance Staffing" />
-	<meta property="og:title" content={pageTitle} />
-	<meta property="og:description" content={pageDescription} />
-	<meta property="og:url" content={absoluteUrl(pagePath)} />
-	<meta property="og:image" content={pageImage} />
-	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content={pageTitle} />
-	<meta name="twitter:description" content={pageDescription} />
-	<meta name="twitter:image" content={pageImage} />
+  <title>{pageTitle}</title>
+  <meta name="description" content={pageDescription} />
+  <link rel="canonical" href={absoluteUrl(pagePath)} />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Abundance Staffing" />
+  <meta property="og:title" content={pageTitle} />
+  <meta property="og:description" content={pageDescription} />
+  <meta property="og:url" content={absoluteUrl(pagePath)} />
+  <meta property="og:image" content={pageImage} />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content={pageTitle} />
+  <meta name="twitter:description" content={pageDescription} />
+  <meta name="twitter:image" content={pageImage} />
 </svelte:head>
 
-<section class="hero-03 container-full abundance-start-hero abundance-subpage-hero">
-	<div class="container-fluid">
-		<div class="hero-content-03">
-			<h1 class="hero-content-title display">Start with the contract you want.</h1>
-			<div class="hero-content-right">
-				<p class="hero-content-info-text p1-regular">
-					Tell Abundance your specialty, shift, location, timing, and constraints. The application begins as a simple staffing conversation.
-				</p>
-				<div class="abundance-start-actions">
-					{#if latestThread}
-						<a class="abundance-start-primary" href={`/chat/${latestThread.id}`}>Continue application</a>
-					{/if}
-					<button
-						class={latestThread ? 'abundance-start-secondary' : 'abundance-start-primary'}
-						type="button"
-						on:click={startNewThread}
-						disabled={creatingThread}
-					>
-						{creatingThread
-							? 'Starting...'
-							: latestThread
-								? 'Start new'
-								: 'Start application'}
-					</button>
-				</div>
-			</div>
-		</div>
+<div class="apply-page">
+  <section class="apply-hero">
+    <div class="apply-glow" aria-hidden="true"></div>
+    <div class="apply-shell apply-hero-grid">
+      <div class="apply-copy">
+        <span class="apply-kicker">Guided nurse application</span>
+        <h1>Start with the contract <em>you actually want.</em></h1>
+        <p>
+          No long intake form. Tell Concierge what fits in plain language, check the profile it
+          builds, and bring in a recruiter when the next step is real.
+        </p>
 
-		<div class="abundance-start-note">
-			<span class={`abundance-start-pill ${trustTone}`}>{trustLabel}</span>
-			<p>{trustDetail}</p>
-		</div>
+        <div class="apply-actions">
+          {#if latestThread}
+            <a class="apply-primary" href={`/chat/${latestThread.id}`}>
+              <span>Continue application</span>
+              <span aria-hidden="true">↗</span>
+            </a>
+          {/if}
+          <button
+            class:apply-secondary={latestThread}
+            class:apply-primary={!latestThread}
+            type="button"
+            on:click={startNewThread}
+            disabled={creatingThread}
+          >
+            <span
+              >{creatingThread
+                ? 'Starting…'
+                : latestThread
+                  ? 'Start another'
+                  : 'Start application'}</span
+            >
+            {#if !creatingThread}<span aria-hidden="true">↗</span>{/if}
+          </button>
+        </div>
 
-		{#if actionError}
-			<p class="abundance-start-error">{actionError}</p>
-		{/if}
-	</div>
-</section>
+        {#if actionError}
+          <p class="apply-error" role="alert">{actionError}</p>
+        {/if}
 
-<section class="works-02 container-full abundance-start-panel">
-	<div class="container-fluid for-works">
-		<div class="abundance-start-grid">
-			{#if latestThread}
-				<article class="abundance-start-card abundance-start-card-large">
-					<div class="abundance-start-card-head">
-						<span>Saved application</span>
-						<span class={`abundance-start-pill ${latestThread.status === 'handoff_ready' ? 'danger' : 'warn'}`}>
-							{latestThread.status.replace('_', ' ')}
-						</span>
-					</div>
-					<h2 class="heading-03">{latestThread.title}</h2>
-					<p class="p1-regular">
-						{latestThread.subtitle}. Open the same conversation and Concierge will guide the next step.
-					</p>
-					<div class="abundance-start-meter" aria-hidden="true">
-						<div style={`width: ${latestThread.profileCompletion}%`}></div>
-					</div>
-					<div class="abundance-start-meta">
-						<span>{latestThread.profileCompletion}% complete</span>
-						<span>{latestThread.pendingAction}</span>
-					</div>
-					{#if latestThread.badges.length > 0}
-						<div class="abundance-start-badges">
-							{#each latestThread.badges as badge}
-								<span>{badge}</span>
-							{/each}
-						</div>
-					{/if}
-				</article>
-			{:else}
-				<article class="abundance-start-card abundance-start-card-large">
-					<span>What happens next</span>
-					<h2 class="heading-03">A guided start, without a long intake form.</h2>
-					<p class="p1-regular">
-						Share the role you want in plain language. Concierge organizes the details and asks for corrections as needed.
-					</p>
-				</article>
-			{/if}
+        <div class="apply-proof" aria-label="Application safeguards">
+          <span>No account required</span>
+          <span>Private by default</span>
+          <span>Recruiter-reviewed</span>
+        </div>
+      </div>
 
-			<article class="abundance-start-card">
-				<span>1</span>
-				<h3 class="heading-05">Describe the role</h3>
-				<p class="p2-regular">Specialty, shift, location, pay constraints, start date, and anything that would make a contract a poor fit.</p>
-			</article>
-			<article class="abundance-start-card">
-				<span>2</span>
-				<h3 class="heading-05">Confirm the profile</h3>
-				<p class="p2-regular">Review the details Concierge captures before recruiter matching or staffing review.</p>
-			</article>
-			<article class="abundance-start-card dark">
-				<span>3</span>
-				<h3 class="heading-05">Verify only when needed</h3>
-				<p class="p2-regular">Email verification appears only for protected uploads, consent, or recruiter review steps.</p>
-			</article>
-		</div>
+      <aside class="first-message">
+        <div class="first-message-head">
+          <span class="concierge-mark">A</span>
+          <div>
+            <span>Abundance Concierge</span>
+            <strong>Your first message can be simple.</strong>
+          </div>
+        </div>
+        <blockquote>
+          “I’m an ICU nurse in Austin looking for a 13-week travel contract. Nights are best.”
+        </blockquote>
+        <div class={`trust-state ${trustTone}`}>
+          <span class="trust-dot" aria-hidden="true"></span>
+          <div>
+            <strong>{trustLabel}</strong>
+            <p>{trustDetail}</p>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </section>
 
-		{#if latestThread && savedThreadCount > 1}
-			<p class="abundance-start-helper">
-				This browser has {savedThreadCount} saved application threads. Start a new chat only when you are applying for a different role.
-			</p>
-		{/if}
-	</div>
-</section>
+  <section class="application-section">
+    <div class="apply-shell">
+      <div class="application-heading">
+        <span class="apply-kicker">One thread, one next step</span>
+        <h2>Useful first.<br /><em>Structured as you go.</em></h2>
+      </div>
+
+      <div class="application-grid">
+        <article class="application-state-card">
+          {#if latestThread}
+            <div class="state-card-head">
+              <span>Saved application</span>
+              <span class:handoff={latestThread.status === 'handoff_ready'} class="state-pill">
+                {latestThread.status.replace('_', ' ')}
+              </span>
+            </div>
+            <h3>{latestThread.title}</h3>
+            <p>
+              {latestThread.subtitle}. Open the same conversation and Concierge will guide the next
+              step.
+            </p>
+            <div class="completion-row">
+              <span>{latestThread.profileCompletion}% ready</span>
+              <span>{latestThread.pendingAction}</span>
+            </div>
+            <div
+              class="completion-meter"
+              aria-label={`Application ${latestThread.profileCompletion}% ready`}
+            >
+              <span style={`width: ${latestThread.profileCompletion}%`}></span>
+            </div>
+            {#if latestThread.badges.length > 0}
+              <div class="application-badges">
+                {#each latestThread.badges as badge}<span>{badge}</span>{/each}
+              </div>
+            {/if}
+          {:else}
+            <div class="state-card-head">
+              <span>Before you begin</span>
+              <span class="state-pill">2 minutes</span>
+            </div>
+            <h3>A guided start, without the intake wall.</h3>
+            <p>
+              Have a specialty, preferred shift, location, and rough start window in mind. That is
+              enough for the first useful turn.
+            </p>
+            <div class="sample-profile">
+              <span>ICU</span><span>Nights</span><span>Austin</span><span>13 weeks</span>
+            </div>
+          {/if}
+        </article>
+
+        <div class="application-steps">
+          {#each applicationSteps as step, index}
+            <article>
+              <span class="step-index">0{index + 1}</span>
+              <div>
+                <span>{step.label}</span>
+                <h3>{step.title}</h3>
+                <p>{step.body}</p>
+              </div>
+            </article>
+          {/each}
+        </div>
+      </div>
+
+      {#if latestThread && savedThreadCount > 1}
+        <p class="saved-helper">
+          This browser has {savedThreadCount} saved application threads. Start another only for a different
+          role.
+        </p>
+      {/if}
+    </div>
+  </section>
+</div>
 
 <style>
-	.abundance-start-hero {
-		padding-bottom: clamp(60px, 7vw, 96px);
-	}
+  :global(body) {
+    background: #f3f2ed;
+  }
 
-	.abundance-start-actions {
-		display: flex;
-		align-items: center;
-		gap: 14px;
-		flex-wrap: wrap;
-	}
+  .apply-page {
+    --apply-ink: #10282b;
+    --apply-deep: #071719;
+    --apply-blue: #2d7782;
+    --apply-aqua: #73c7ca;
+    color: var(--apply-ink);
+    background: #f3f2ed;
+    overflow: clip;
+  }
 
-	.abundance-start-primary,
-	.abundance-start-secondary {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		min-height: 56px;
-		padding: 0 28px;
-		border-radius: 999px;
-		text-decoration: none;
-		font: inherit;
-		font-size: 16px;
-		line-height: 1;
-		cursor: pointer;
-	}
+  .apply-shell {
+    width: min(calc(100% - 64px), 1380px);
+    margin-inline: auto;
+  }
 
-	.abundance-start-primary {
-		background: var(--secondary, #af7c54);
-		border: 1px solid var(--secondary, #af7c54);
-		color: var(--white, #fff);
-		box-shadow: 0 16px 36px rgba(175, 124, 84, 0.2);
-	}
+  .apply-hero {
+    position: relative;
+    padding: clamp(92px, 11vw, 165px) 0 clamp(94px, 10vw, 150px);
+    isolation: isolate;
+  }
 
-	.abundance-start-secondary {
-		background: rgba(255, 255, 255, 0.62);
-		border: 1px solid rgba(175, 124, 84, 0.22);
-		color: var(--black, #020202);
-	}
+  .apply-glow {
+    position: absolute;
+    top: -260px;
+    right: -160px;
+    z-index: -1;
+    width: 700px;
+    height: 700px;
+    border-radius: 999px;
+    background: radial-gradient(circle, rgba(115, 199, 202, 0.22), transparent 68%);
+  }
 
-	.abundance-start-secondary:disabled {
-		cursor: wait;
-		opacity: 0.72;
-	}
+  .apply-hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.04fr) minmax(400px, 0.68fr);
+    gap: clamp(64px, 9vw, 150px);
+    align-items: center;
+  }
 
-	.abundance-start-note {
-		display: grid;
-		gap: 16px;
-		max-width: 820px;
-		padding: 22px;
-		border: 1px solid rgba(175, 124, 84, 0.2);
-		border-radius: 24px;
-		background: rgba(255, 255, 255, 0.54);
-		box-shadow: 0 22px 60px rgba(67, 48, 33, 0.06);
-	}
+  .apply-kicker,
+  .state-card-head > span:first-child,
+  .step-index,
+  .application-steps article > div > span {
+    color: var(--apply-blue);
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.7rem;
+    line-height: 1;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
 
-	.abundance-start-note p,
-	.abundance-start-helper {
-		margin: 0;
-		color: rgba(2, 2, 2, 0.64);
-	}
+  .apply-copy h1 {
+    max-width: 840px;
+    margin: 26px 0 0;
+    font-size: clamp(3.8rem, 7vw, 7.2rem);
+    font-weight: 530;
+    letter-spacing: -0.065em;
+    line-height: 0.93;
+    text-wrap: balance;
+  }
 
-	.abundance-start-pill,
-	.abundance-start-card > span,
-	.abundance-start-card-head > span:first-child,
-	.abundance-start-badges span {
-		display: inline-flex;
-		width: fit-content;
-		padding: 9px 12px;
-		border: 1px solid rgba(175, 124, 84, 0.18);
-		border-radius: 999px;
-		background: rgba(175, 124, 84, 0.1);
-		color: var(--secondary, #af7c54);
-		font-size: 12px;
-		line-height: 1;
-		letter-spacing: 0.09em;
-		text-transform: uppercase;
-	}
+  .apply-copy h1 em,
+  .application-heading h2 em {
+    color: var(--apply-blue);
+    font-family: Georgia, 'Times New Roman', serif;
+    font-weight: 400;
+    letter-spacing: -0.045em;
+  }
 
-	.abundance-start-pill.good {
-		color: #2f6948;
-		border-color: rgba(47, 105, 72, 0.18);
-		background: rgba(47, 105, 72, 0.1);
-	}
+  .apply-copy > p {
+    max-width: 640px;
+    margin: 32px 0 0;
+    color: rgba(16, 40, 43, 0.64);
+    font-size: clamp(1rem, 1.25vw, 1.18rem);
+    line-height: 1.65;
+  }
 
-	.abundance-start-pill.danger {
-		color: #8a3b28;
-		border-color: rgba(138, 59, 40, 0.18);
-		background: rgba(138, 59, 40, 0.1);
-	}
+  .apply-actions {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-top: 36px;
+  }
 
-	.abundance-start-error {
-		max-width: 820px;
-		margin: 18px 0 0;
-		color: #8a3b28;
-	}
+  .apply-primary,
+  .apply-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 26px;
+    min-height: 60px;
+    padding: 9px 10px 9px 22px;
+    border-radius: 999px;
+    font: inherit;
+    font-weight: 520;
+    text-decoration: none;
+    cursor: pointer;
+  }
 
-	.abundance-start-panel {
-		padding-top: clamp(78px, 8vw, 116px);
-		padding-bottom: clamp(78px, 8vw, 116px);
-		background:
-			radial-gradient(circle at 82% 18%, rgba(175, 124, 84, 0.12), transparent 28%),
-			linear-gradient(180deg, #fbf7f1 0%, #f4e7dc 100%);
-	}
+  .apply-primary {
+    min-width: 230px;
+    border: 1px solid var(--apply-ink);
+    background: var(--apply-ink);
+    color: white;
+  }
 
-	.abundance-start-grid {
-		display: grid;
-		grid-template-columns: 1.1fr repeat(3, minmax(0, 0.7fr));
-		gap: 18px;
-		align-items: stretch;
-	}
+  .apply-primary > span:last-child,
+  .apply-secondary > span:last-child {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    background: white;
+    color: var(--apply-ink);
+  }
 
-	.abundance-start-card {
-		display: grid;
-		align-content: space-between;
-		gap: 26px;
-		min-height: 300px;
-		padding: 28px;
-		border: 1px solid rgba(175, 124, 84, 0.18);
-		border-radius: 24px;
-		background:
-			linear-gradient(145deg, rgba(255, 255, 255, 0.92), rgba(250, 245, 239, 0.74)),
-			var(--sub-bg, #f6eee6);
-		box-shadow: 0 22px 60px rgba(67, 48, 33, 0.08);
-		color: var(--black, #020202);
-	}
+  .apply-secondary {
+    border: 1px solid rgba(16, 40, 43, 0.18);
+    background: rgba(255, 255, 255, 0.48);
+    color: var(--apply-ink);
+  }
 
-	.abundance-start-card.dark {
-		background:
-			linear-gradient(145deg, rgba(2, 2, 2, 0.9), rgba(67, 48, 33, 0.84)),
-			var(--black, #020202);
-		color: var(--white, #fff);
-	}
+  .apply-primary:disabled,
+  .apply-secondary:disabled {
+    opacity: 0.58;
+    cursor: wait;
+  }
 
-	.abundance-start-card h2,
-	.abundance-start-card h3,
-	.abundance-start-card p {
-		margin: 0;
-		color: inherit;
-	}
+  .apply-error {
+    max-width: 600px;
+    margin: 18px 0 0;
+    color: #a44335;
+  }
 
-	.abundance-start-card p {
-		color: rgba(2, 2, 2, 0.64);
-	}
+  .apply-proof {
+    display: flex;
+    gap: 8px 18px;
+    flex-wrap: wrap;
+    margin-top: 34px;
+  }
 
-	.abundance-start-card.dark p {
-		color: rgba(255, 255, 255, 0.72);
-	}
+  .apply-proof span {
+    color: rgba(16, 40, 43, 0.58);
+    font-size: 0.82rem;
+  }
 
-	.abundance-start-card-large {
-		min-height: 360px;
-	}
+  .apply-proof span::before {
+    content: '✓';
+    margin-right: 8px;
+    color: var(--apply-blue);
+    font-weight: 700;
+  }
 
-	.abundance-start-card-head,
-	.abundance-start-meta {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 14px;
-		flex-wrap: wrap;
-	}
+  .first-message {
+    padding: clamp(26px, 3vw, 40px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 32px;
+    background:
+      radial-gradient(circle at 88% 12%, rgba(115, 199, 202, 0.14), transparent 32%),
+      var(--apply-deep);
+    color: white;
+    box-shadow: 0 38px 90px rgba(7, 23, 25, 0.18);
+  }
 
-	.abundance-start-meter {
-		height: 10px;
-		border-radius: 999px;
-		background: rgba(175, 124, 84, 0.12);
-		overflow: hidden;
-	}
+  .first-message-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
 
-	.abundance-start-meter div {
-		height: 100%;
-		border-radius: inherit;
-		background: var(--secondary, #af7c54);
-	}
+  .concierge-mark {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 999px;
+    background: var(--apply-aqua);
+    color: var(--apply-deep);
+    font-weight: 700;
+  }
 
-	.abundance-start-meta {
-		color: rgba(2, 2, 2, 0.62);
-		font-size: 14px;
-	}
+  .first-message-head > div {
+    display: grid;
+    gap: 5px;
+  }
 
-	.abundance-start-badges {
-		display: flex;
-		gap: 8px;
-		flex-wrap: wrap;
-	}
+  .first-message-head > div > span {
+    color: var(--apply-aqua);
+    font-size: 0.7rem;
+  }
 
-	.abundance-start-helper {
-		margin-top: 24px;
-	}
+  .first-message-head strong {
+    font-size: 0.92rem;
+  }
 
-	@media (max-width: 991px) {
-		.abundance-start-grid {
-			grid-template-columns: 1fr;
-		}
+  blockquote {
+    margin: 48px 0;
+    color: rgba(255, 255, 255, 0.94);
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: clamp(2rem, 3.1vw, 3.4rem);
+    font-style: italic;
+    letter-spacing: -0.035em;
+    line-height: 1.12;
+  }
 
-		.abundance-start-card,
-		.abundance-start-card-large {
-			min-height: auto;
-		}
-	}
+  .trust-state {
+    display: flex;
+    gap: 13px;
+    align-items: flex-start;
+    padding-top: 22px;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .trust-dot {
+    flex: 0 0 auto;
+    width: 10px;
+    height: 10px;
+    margin-top: 4px;
+    border-radius: 999px;
+    background: #d9a465;
+    box-shadow: 0 0 0 5px rgba(217, 164, 101, 0.1);
+  }
+
+  .trust-state.good .trust-dot {
+    background: var(--apply-aqua);
+    box-shadow: 0 0 0 5px rgba(115, 199, 202, 0.1);
+  }
+
+  .trust-state > div {
+    display: grid;
+    gap: 6px;
+  }
+
+  .trust-state strong {
+    font-size: 0.84rem;
+  }
+
+  .trust-state p {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.76rem;
+    line-height: 1.5;
+  }
+
+  .application-section {
+    padding: clamp(100px, 12vw, 180px) 0;
+    background: #fbfaf6;
+  }
+
+  .application-heading {
+    display: grid;
+    grid-template-columns: minmax(180px, 0.35fr) 1fr;
+    gap: 40px;
+    align-items: start;
+  }
+
+  .application-heading h2 {
+    margin: 0;
+    font-size: clamp(3rem, 5.5vw, 6.3rem);
+    font-weight: 520;
+    letter-spacing: -0.06em;
+    line-height: 0.96;
+  }
+
+  .application-grid {
+    display: grid;
+    grid-template-columns: minmax(360px, 0.74fr) minmax(0, 1fr);
+    gap: clamp(48px, 8vw, 120px);
+    margin-top: 74px;
+  }
+
+  .application-state-card {
+    align-self: start;
+    position: sticky;
+    top: 128px;
+    padding: 34px;
+    border-radius: 30px;
+    background: var(--apply-ink);
+    color: white;
+    box-shadow: 0 30px 80px rgba(7, 23, 25, 0.16);
+  }
+
+  .state-card-head,
+  .completion-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    align-items: center;
+  }
+
+  .state-card-head > span:first-child {
+    color: var(--apply-aqua);
+  }
+
+  .state-pill {
+    padding: 8px 10px;
+    border: 1px solid rgba(115, 199, 202, 0.22);
+    border-radius: 999px;
+    background: rgba(115, 199, 202, 0.08);
+    color: var(--apply-aqua);
+    font-size: 0.68rem;
+    text-transform: capitalize;
+  }
+
+  .state-pill.handoff {
+    border-color: rgba(217, 164, 101, 0.24);
+    background: rgba(217, 164, 101, 0.09);
+    color: #d9a465;
+  }
+
+  .application-state-card h3 {
+    margin: 54px 0 0;
+    font-size: clamp(2.2rem, 3vw, 3.5rem);
+    font-weight: 500;
+    letter-spacing: -0.05em;
+    line-height: 1;
+  }
+
+  .application-state-card > p {
+    margin: 22px 0 0;
+    color: rgba(255, 255, 255, 0.56);
+    line-height: 1.62;
+  }
+
+  .completion-row {
+    margin-top: 34px;
+    color: rgba(255, 255, 255, 0.58);
+    font-size: 0.72rem;
+  }
+
+  .completion-meter {
+    height: 5px;
+    margin-top: 12px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .completion-meter span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--apply-aqua);
+  }
+
+  .application-badges,
+  .sample-profile {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 26px;
+  }
+
+  .application-badges span,
+  .sample-profile span {
+    padding: 8px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+    color: rgba(255, 255, 255, 0.68);
+    font-size: 0.68rem;
+  }
+
+  .application-steps {
+    border-top: 1px solid rgba(16, 40, 43, 0.18);
+  }
+
+  .application-steps article {
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    gap: 24px;
+    min-height: 210px;
+    padding: 32px 0;
+    border-bottom: 1px solid rgba(16, 40, 43, 0.18);
+  }
+
+  .step-index {
+    padding-top: 5px;
+  }
+
+  .application-steps article > div {
+    display: grid;
+    align-content: start;
+    gap: 14px;
+  }
+
+  .application-steps h3 {
+    margin: 2px 0 0;
+    font-size: clamp(1.7rem, 2.4vw, 2.7rem);
+    font-weight: 520;
+    letter-spacing: -0.04em;
+  }
+
+  .application-steps p {
+    max-width: 620px;
+    margin: 0;
+    color: rgba(16, 40, 43, 0.6);
+    line-height: 1.6;
+  }
+
+  .saved-helper {
+    max-width: 760px;
+    margin: 32px 0 0 auto;
+    color: rgba(16, 40, 43, 0.58);
+    font-size: 0.84rem;
+  }
+
+  @media (max-width: 900px) {
+    .apply-shell {
+      width: min(calc(100% - 36px), 760px);
+    }
+
+    .apply-hero-grid,
+    .application-heading,
+    .application-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .apply-copy h1 {
+      font-size: clamp(3.7rem, 11vw, 6.4rem);
+    }
+
+    .first-message {
+      width: min(100%, 620px);
+    }
+
+    .application-grid {
+      gap: 70px;
+    }
+
+    .application-state-card {
+      position: static;
+    }
+  }
+
+  @media (max-width: 620px) {
+    .apply-shell {
+      width: min(calc(100% - 28px), 540px);
+    }
+
+    .apply-hero {
+      padding: 68px 0 92px;
+    }
+
+    .apply-copy h1 {
+      font-size: clamp(3.2rem, 15.6vw, 4.6rem);
+    }
+
+    .apply-copy > p {
+      font-size: 1rem;
+    }
+
+    .apply-actions {
+      align-items: stretch;
+      flex-direction: column;
+    }
+
+    .apply-primary,
+    .apply-secondary {
+      width: 100%;
+    }
+
+    .apply-proof {
+      display: grid;
+    }
+
+    blockquote {
+      margin: 38px 0;
+    }
+
+    .application-section {
+      padding: 92px 0;
+    }
+
+    .application-heading h2 {
+      font-size: clamp(3rem, 14vw, 4.3rem);
+    }
+
+    .application-grid {
+      margin-top: 54px;
+    }
+
+    .application-state-card {
+      padding: 26px;
+    }
+
+    .application-steps article {
+      grid-template-columns: 40px 1fr;
+      gap: 14px;
+    }
+  }
 </style>
