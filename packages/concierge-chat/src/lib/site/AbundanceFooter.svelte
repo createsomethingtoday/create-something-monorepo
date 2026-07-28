@@ -1,270 +1,283 @@
-<footer class="footer-wrapper abundance-footer">
-  <section class="footer container-full">
-    <div class="container-fluid">
-      <div class="footer-content">
-        <div class="footer-wrap">
-          <div class="footer-left">
-            <div class="footer-left-head">
-              <div class="abundance-footer-brand">
-                <span>A</span>
-                <strong>Abundance Staffing</strong>
-              </div>
-              <h2 class="footer-left-title heading-03">Abundance Staffing</h2>
-              <p class="footer-left-text p2-regular">
-                Nurse staffing support for applications, facility coverage, public jobs, and
-                recruiter-reviewed placements.
-              </p>
-              <div class="footer-left-btns">
-                <a href="/apply" class="abundance-footer-action">Start application</a>
-              </div>
-            </div>
-          </div>
-          <div class="footer-right-wrap">
-            <div class="footer-right">
-              <div class="footer-body">
-                <div class="title-small">Paths</div>
-                <div class="footer-body-links">
-                  <div class="footer-link-wrap"><a href="/nurses" class="footer-link">Nurses</a></div>
-                  <div class="footer-link-wrap"><a href="/jobs" class="footer-link">Jobs</a></div>
-                  <div class="footer-link-wrap"><a href="/facilities" class="footer-link">Facilities</a></div>
-                  <div class="footer-link-wrap"><a href="/agents" class="footer-link">Agents</a></div>
-                </div>
-              </div>
-              <div class="footer-body">
-                <div class="title-small">Start</div>
-                <div class="footer-body-links">
-                  <div class="footer-link-wrap"><a href="/apply" class="footer-link">Apply now</a></div>
-                  <div class="footer-link-wrap"><a href="/facilities" class="footer-link">Request coverage</a></div>
-                  <div class="footer-link-wrap"><a href="/jobs" class="footer-link">Browse jobs</a></div>
-                </div>
-              </div>
-              <div class="footer-body abundance-footer-trust">
-                <div class="title-small">Trust</div>
-                <div class="footer-body-links">
-                  <span>Recruiters review staffing moves.</span>
-                  <span>Verification protects private steps.</span>
-                  <span>Public jobs stay read-only.</span>
-                </div>
-              </div>
-            </div>
-          </div>
+<footer class="abundance-footer">
+  <div class="footer-shell">
+    <div class="footer-topline">
+      <a class="footer-brand" href="/" aria-label="Abundance Staffing home">
+        <span class="footer-mark">A</span>
+        <span>
+          <strong>Abundance</strong>
+          <small>Staffing</small>
+        </span>
+      </a>
+      <span class="footer-status"><i aria-hidden="true"></i> Guided applications are open</span>
+    </div>
+
+    <div class="footer-main">
+      <div class="footer-statement">
+        <span>Staffing, with the handoff clear.</span>
+        <h2>Better-fit work.<br />Recruiter-led decisions.</h2>
+        <a href="/apply">Start an application <span aria-hidden="true">↗</span></a>
+      </div>
+
+      <div class="footer-links" aria-label="Footer navigation">
+        <div>
+          <strong>For people</strong>
+          <a href="/nurses">Nurses</a>
+          <a href="/jobs">Open roles</a>
+          <a href="/apply">Start an application</a>
         </div>
-        <div class="footer-bottom">
-          <div class="footer-copyright-wrap">
-            <div class="footer-copyright-text">(c) 2026 Abundance Staffing.</div>
-            <div class="abundance-footer-bottom-links">
-              <a href="/agents">Agent system</a>
-              <a href="/apply">Start</a>
-            </div>
-          </div>
+        <div>
+          <strong>For teams</strong>
+          <a href="/facilities">Request coverage</a>
+          <a href="/agents">Agent system</a>
+          <a href="/facilities">Facility support</a>
+        </div>
+        <div>
+          <strong>Trust</strong>
+          <span>Recruiter review</span>
+          <span>Secure verification</span>
+          <span>Read-only public jobs</span>
         </div>
       </div>
     </div>
-  </section>
+
+    <div class="footer-wordmark" aria-hidden="true">ABUNDANCE</div>
+
+    <div class="footer-bottom">
+      <span>© 2026 Abundance Staffing</span>
+      <span>Nurse applications · Facility coverage · Recruiter review</span>
+    </div>
+  </div>
 </footer>
 
 <style>
   .abundance-footer {
+    --footer-ink: #071719;
+    --footer-aqua: #73c7ca;
     display: block;
-    background: #0b0b0a;
-  }
-
-  .abundance-footer .footer.container-full {
-    padding-top: 46px;
-    padding-bottom: 46px;
+    overflow: hidden;
     background:
-      radial-gradient(circle at 18% 10%, rgba(175, 124, 84, 0.18), transparent 28%),
-      #0b0b0a;
+      radial-gradient(circle at 85% 12%, rgba(115, 199, 202, 0.12), transparent 24%),
+      var(--footer-ink);
+    color: white;
   }
 
-  .abundance-footer .footer-wrap {
-    display: grid;
-    grid-template-columns: minmax(280px, 0.85fr) minmax(0, 1.45fr);
-    gap: clamp(32px, 6vw, 86px);
-    align-items: stretch;
-    max-width: 1320px;
-    padding-bottom: 54px;
+  .footer-shell {
+    width: min(calc(100% - 64px), 1380px);
+    margin-inline: auto;
+    padding: 36px 0 28px;
   }
 
-  .abundance-footer .footer-left {
-    max-width: none;
-    min-height: 320px;
-    padding: 34px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 24px;
-    background:
-      linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)),
-      rgba(255, 255, 255, 0.04);
+  .footer-topline,
+  .footer-main,
+  .footer-bottom {
+    display: flex;
+    justify-content: space-between;
+    gap: 28px;
   }
 
-  .abundance-footer .footer-left-head {
-    display: grid;
-    gap: 22px;
+  .footer-topline {
+    align-items: center;
+    padding-bottom: 32px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
   }
 
-  .abundance-footer-brand {
+  .footer-brand {
     display: inline-flex;
     align-items: center;
     gap: 12px;
-    color: var(--white);
+    color: white;
+    text-decoration: none;
   }
 
-  .abundance-footer-brand span {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+  .footer-mark {
+    display: grid;
+    place-items: center;
     width: 42px;
     height: 42px;
     border-radius: 999px;
-    background: var(--white);
-    color: var(--black);
-    font-size: 18px;
+    background: white;
+    color: var(--footer-ink);
+    font-size: 1rem;
   }
 
-  .abundance-footer-brand strong {
-    font-size: 17px;
-    font-weight: 500;
+  .footer-brand > span:last-child {
+    display: grid;
+    gap: 2px;
   }
 
-  .abundance-footer .footer-left-title {
-    max-width: 280px;
-    margin: 0;
-    color: var(--white);
+  .footer-brand strong {
+    font-size: 0.94rem;
+    font-weight: 620;
+    line-height: 1;
   }
 
-  .abundance-footer .footer-left-text {
-    max-width: 310px;
-    margin: 0;
-    color: rgba(255, 255, 255, 0.62);
+  .footer-brand small {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.58rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
   }
 
-  .abundance-footer-action {
+  .footer-status {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    min-height: 54px;
-    width: 100%;
-    max-width: 280px;
-    padding: 0 22px;
+    gap: 9px;
+    color: rgba(255, 255, 255, 0.58);
+    font-size: 0.78rem;
+  }
+
+  .footer-status i {
+    width: 8px;
+    height: 8px;
     border-radius: 999px;
-    background: var(--secondary);
-    color: var(--white);
-    font-size: 16px;
-    line-height: 1;
-    text-decoration: none;
+    background: var(--footer-aqua);
+    box-shadow: 0 0 0 5px rgba(115, 199, 202, 0.1);
   }
 
-  .abundance-footer .footer-right-wrap {
-    max-width: none;
-    justify-content: stretch;
+  .footer-main {
+    align-items: flex-start;
+    padding: clamp(72px, 8vw, 118px) 0;
   }
 
-  .abundance-footer .footer-right {
+  .footer-statement {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 18px;
-    max-width: none;
-    height: 100%;
+    gap: 22px;
+    max-width: 650px;
   }
 
-  .abundance-footer .footer-body {
+  .footer-statement > span,
+  .footer-links strong {
+    color: var(--footer-aqua);
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .footer-statement h2 {
+    margin: 0;
+    font-size: clamp(2.7rem, 4.5vw, 5rem);
+    font-weight: 500;
+    letter-spacing: -0.055em;
+    line-height: 0.98;
+  }
+
+  .footer-statement a {
+    display: inline-flex;
+    justify-content: space-between;
+    gap: 24px;
+    width: fit-content;
+    min-width: 240px;
+    padding: 17px 20px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+    color: white;
+    text-decoration: none;
+    transition:
+      background 160ms ease,
+      transform 160ms ease;
+  }
+
+  .footer-statement a:hover {
+    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .footer-links {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(130px, 1fr));
+    gap: clamp(30px, 5vw, 72px);
+    min-width: min(100%, 550px);
+  }
+
+  .footer-links > div {
     display: grid;
     align-content: start;
-    gap: 22px;
-    min-height: 260px;
-    padding: 30px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 22px;
-    background: rgba(255, 255, 255, 0.025);
+    gap: 14px;
   }
 
-  .abundance-footer .title-small {
-    color: rgba(255, 255, 255, 0.92);
-    font-size: 18px;
+  .footer-links strong {
+    margin-bottom: 8px;
   }
 
-  .abundance-footer .footer-body-links {
-    display: grid;
-    grid-template-columns: 1fr;
-    grid-auto-flow: row;
-    gap: 16px;
-    max-width: none;
-  }
-
-  .abundance-footer .footer-link-wrap {
-    display: block;
-    min-width: 0;
-  }
-
-  .abundance-footer .footer-link,
-  .abundance-footer-trust span,
-  .abundance-footer-bottom-links a {
-    display: block;
-    color: rgba(255, 255, 255, 0.62);
-    font-size: 15px;
-    line-height: 1.35;
-    text-decoration: none;
-    overflow-wrap: anywhere;
-  }
-
-  .abundance-footer .footer-link:hover,
-  .abundance-footer-bottom-links a:hover {
-    color: var(--white);
-  }
-
-  .abundance-footer-trust span {
-    display: block;
-    padding-left: 14px;
-    border-left: 2px solid rgba(175, 124, 84, 0.55);
-  }
-
-  .abundance-footer .footer-bottom {
-    padding-top: 28px;
-    padding-bottom: 0;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-  }
-
-  .abundance-footer .footer-copyright-wrap {
-    display: flex;
-    justify-content: space-between;
-    gap: 18px;
-  }
-
-  .abundance-footer .footer-copyright-text {
+  .footer-links a,
+  .footer-links span {
     color: rgba(255, 255, 255, 0.58);
-    font-size: 14px;
+    font-size: 0.88rem;
+    line-height: 1.4;
+    text-decoration: none;
   }
 
-  .abundance-footer-bottom-links {
-    display: flex;
-    gap: 16px;
-    flex-wrap: wrap;
+  .footer-links a:hover {
+    color: white;
   }
 
-  @media (max-width: 991px) {
-    .abundance-footer .footer-wrap {
-      grid-template-columns: minmax(0, 1fr);
+  .footer-wordmark {
+    margin: 0 -0.055em -0.18em;
+    color: rgba(255, 255, 255, 0.92);
+    font-size: clamp(4.8rem, 14.7vw, 13.8rem);
+    font-weight: 620;
+    letter-spacing: -0.075em;
+    line-height: 0.76;
+    white-space: nowrap;
+  }
+
+  .footer-bottom {
+    align-items: center;
+    padding-top: 26px;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.42);
+    font-size: 0.72rem;
+  }
+
+  @media (max-width: 900px) {
+    .footer-shell {
+      width: min(calc(100% - 36px), 760px);
     }
 
-    .abundance-footer .footer-right {
+    .footer-main {
       display: grid;
-      grid-template-columns: minmax(0, 1fr);
+      gap: 72px;
+    }
+
+    .footer-links {
       width: 100%;
+      min-width: 0;
+    }
+  }
+
+  @media (max-width: 620px) {
+    .footer-shell {
+      width: min(calc(100% - 28px), 540px);
     }
 
-    .abundance-footer .footer-right .footer-body {
-      width: auto;
-      max-width: none;
-    }
-
-    .abundance-footer .footer-left,
-    .abundance-footer .footer-body {
-      min-height: auto;
-    }
-
-    .abundance-footer .footer-copyright-wrap {
-      flex-direction: column;
+    .footer-topline,
+    .footer-bottom {
       align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .footer-main {
+      padding: 72px 0;
+    }
+
+    .footer-links {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .footer-links > div:last-child {
+      grid-column: 1 / -1;
+    }
+
+    .footer-wordmark {
+      font-size: 15.8vw;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .footer-statement a {
+      transition: none;
     }
   }
 </style>
