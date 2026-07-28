@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { heroVisual, nurseSteps, trustProof } from '$lib/site/abundance';
+  import { nurseSteps, publicHeroVisuals, trustProof } from '$lib/site/abundance';
   import '$lib/site/public-page.css';
   import { absoluteUrl, breadcrumbJsonLd, jsonLdScript, serviceJsonLd } from '$lib/site/seo';
 
@@ -7,7 +7,8 @@
   const pageDescription =
     'Start a nurse staffing application with Abundance, share role and shift preferences, and move into recruiter-reviewed matching when ready.';
   const pagePath = '/nurses';
-  const pageImage = absoluteUrl(heroVisual.src);
+  const pageVisual = publicHeroVisuals.nurses;
+  const pageImage = absoluteUrl(pageVisual.src);
   const structuredData = jsonLdScript([
     serviceJsonLd({
       name: 'Guided nurse staffing application',
@@ -65,7 +66,7 @@
 
       <div class="public-visual" aria-label="Guided nurse application preview">
         <div class="public-visual-frame">
-          <img src={heroVisual.src} alt={heroVisual.alt} />
+          <img src={pageVisual.src} alt={pageVisual.alt} />
         </div>
         <div class="public-visual-note">
           <div class="public-visual-note-head">

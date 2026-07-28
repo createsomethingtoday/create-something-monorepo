@@ -1,5 +1,10 @@
 <script lang="ts">
-  import { abundanceAgents, heroVisual, staffingCareCards, trustProof } from '$lib/site/abundance';
+  import {
+    abundanceAgents,
+    publicHeroVisuals,
+    staffingCareCards,
+    trustProof
+  } from '$lib/site/abundance';
   import '$lib/site/public-page.css';
   import { absoluteUrl, breadcrumbJsonLd, jsonLdScript, serviceJsonLd } from '$lib/site/seo';
   import type { PageData } from './$types';
@@ -10,7 +15,8 @@
   const pageDescription =
     'Abundance-branded staffing agents help nurses start clearly, facilities request coverage, and recruiters review prepared handoffs.';
   const pagePath = '/agents';
-  const pageImage = absoluteUrl(heroVisual.src);
+  const pageVisual = publicHeroVisuals.agents;
+  const pageImage = absoluteUrl(pageVisual.src);
   const structuredData = jsonLdScript([
     serviceJsonLd({
       name: 'Abundance staffing agent support',
@@ -73,7 +79,7 @@
 
       <div class="public-visual" aria-label="Abundance recruiter handoff preview">
         <div class="public-visual-frame">
-          <img src={heroVisual.src} alt={heroVisual.alt} />
+          <img src={pageVisual.src} alt={pageVisual.alt} />
         </div>
         <div class="public-visual-note">
           <div class="public-visual-note-head">

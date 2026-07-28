@@ -17,10 +17,29 @@ export const staffingStats = [
 ];
 
 export const heroVisual = {
-  src: '/abundance/hero-handoff.png',
+  src: '/abundance/hero-home-2026.webp',
   alt: 'Nurse and staffing recruiter reviewing a tablet together in a bright clinical office',
   caption: 'Guided intake. Recruiter review. Clear handoff.',
   note: 'Designed for nurses, recruiters, and coordinators.'
+};
+
+export const publicHeroVisuals = {
+  nurses: {
+    src: '/abundance/hero-nurses-2026.webp',
+    alt: 'Travel nurse reviewing role preferences on her phone with a notebook nearby'
+  },
+  jobs: {
+    src: '/abundance/hero-jobs-2026.webp',
+    alt: 'Registered nurse comparing nursing opportunities on a tablet at a hospital desk'
+  },
+  facilities: {
+    src: '/abundance/hero-facilities-2026.webp',
+    alt: 'Nurse and staffing coordinator reviewing a facility coverage request together'
+  },
+  agents: {
+    src: '/abundance/hero-agents-2026.webp',
+    alt: 'Staffing recruiter reviewing nurse application context during a video conversation'
+  }
 };
 
 export const staffingPages = [

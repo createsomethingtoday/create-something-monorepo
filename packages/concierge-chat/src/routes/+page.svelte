@@ -106,10 +106,6 @@
         </div>
         <div class="hero-photo">
           <img src={heroVisual.src} alt={heroVisual.alt} />
-          <div class="photo-label">
-            <span>Abundance Concierge</span>
-            <strong>One conversation, kept in context.</strong>
-          </div>
         </div>
 
         <div class="concierge-card">
@@ -125,10 +121,6 @@
           </div>
 
           <div class="conversation-preview">
-            <div class="candidate-message">
-              <span>Role brief</span>
-              <strong>Austin · nights · 13 weeks · compact license</strong>
-            </div>
             <div class="concierge-response">
               <span class="response-mark" aria-hidden="true">A</span>
               <p><strong>Next:</strong> confirm your start window and pay range.</p>
@@ -551,7 +543,7 @@
 
   .hero-photo {
     position: absolute;
-    inset: 42px 0 82px 0;
+    inset: 42px 0 36px 0;
     overflow: hidden;
     border: 1px solid rgba(23, 21, 18, 0.14);
     border-radius: 30px;
@@ -562,51 +554,31 @@
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg, transparent 52%, rgba(2, 2, 2, 0.5));
+    background: linear-gradient(180deg, transparent 70%, rgba(2, 2, 2, 0.38));
   }
 
   .hero-photo img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: 58% center;
+    object-position: 74% center;
     transform: scale(1.02);
-  }
-
-  .photo-label {
-    position: absolute;
-    top: 24px;
-    left: 24px;
-    z-index: 1;
-    display: grid;
-    gap: 4px;
-    max-width: 290px;
-    padding: 15px 17px;
-    border: 1px solid rgba(23, 21, 18, 0.12);
-    border-radius: 14px;
-    background: rgba(255, 250, 244, 0.9);
-    backdrop-filter: blur(16px);
-  }
-
-  .photo-label span {
-    color: rgba(23, 21, 18, 0.56);
-    font-size: 0.72rem;
-  }
-
-  .photo-label strong {
-    font-size: 0.92rem;
   }
 
   .concierge-card {
     position: absolute;
     right: -18px;
     bottom: 0;
-    left: 64px;
+    left: 92px;
     z-index: 2;
-    padding: 24px;
+    display: grid;
+    grid-template-columns: minmax(150px, 0.72fr) minmax(210px, 1fr);
+    gap: 16px 20px;
+    padding: 18px 20px;
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 22px;
-    background: rgba(2, 2, 2, 0.96);
+    background: rgba(2, 2, 2, 0.9);
+    backdrop-filter: blur(18px);
     color: white;
     box-shadow: 0 30px 80px rgba(2, 2, 2, 0.28);
   }
@@ -616,6 +588,10 @@
     align-items: center;
     justify-content: space-between;
     gap: 20px;
+  }
+
+  .concierge-response {
+    min-height: 100%;
   }
 
   .concierge-card-head > div:first-child {
@@ -657,38 +633,14 @@
   .conversation-preview {
     display: grid;
     gap: 12px;
-    margin-top: 24px;
+    margin-top: 0;
   }
 
-  .candidate-message,
   .concierge-response {
     margin: 0;
     border-radius: 16px;
     font-size: 0.88rem;
     line-height: 1.45;
-  }
-
-  .candidate-message {
-    display: grid;
-    gap: 5px;
-    width: 100%;
-    padding: 13px 15px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(255, 255, 255, 0.06);
-    color: rgba(255, 255, 255, 0.86);
-  }
-
-  .candidate-message span {
-    color: var(--home-blue-bright);
-    font-family: var(--font-mono, ui-monospace, monospace);
-    font-size: 0.6rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-  }
-
-  .candidate-message strong {
-    font-size: 0.82rem;
-    font-weight: 520;
   }
 
   .concierge-response {
@@ -722,10 +674,11 @@
 
   .handoff-state {
     display: flex;
+    grid-column: 1 / -1;
     gap: 12px;
     align-items: center;
-    margin-top: 18px;
-    padding-top: 18px;
+    margin-top: 0;
+    padding-top: 14px;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
   }
 
@@ -1464,25 +1417,23 @@
     }
 
     .hero-photo {
-      inset: 42px 0 112px 0;
+      inset: 42px 0 88px 0;
       border-radius: 24px;
-    }
-
-    .photo-label {
-      top: 16px;
-      right: 16px;
-      left: 16px;
-      max-width: none;
     }
 
     .concierge-card {
       right: 0;
       left: 10px;
+      display: block;
       padding: 20px;
     }
 
-    .candidate-message {
-      max-width: 96%;
+    .conversation-preview {
+      margin-top: 18px;
+    }
+
+    .handoff-state {
+      margin-top: 18px;
     }
 
     .hero-stat-grid article {
