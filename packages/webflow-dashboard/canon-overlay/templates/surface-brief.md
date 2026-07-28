@@ -7,7 +7,7 @@ Overlay: Webflow Dashboard Marketplace Overlay (overlay.webflow-dashboard-market
 - Name: Webflow marketplace dashboard surface
 - Modality: web | chat | app | voice | glasses
 - Owner: webflow-dashboard-team
-- Source path: src/routes/dashboard/+page.svelte
+- Source path: src/routes/(authed)/dashboard/+page.svelte
 
 ## Workflow Need
 
@@ -30,8 +30,8 @@ Expose marketplace health, validation state, assets, profile data, and operation
 
 - web proof: `src/routes/+page.svelte` (webflow-dashboard-home) - The home route introduces the dashboard and routes operators toward marketplace and validation work.
 - chat proof: `src/lib/marketplace-insights.ts` (webflow-dashboard-insights) - The marketplace insights module gives agents a structured source for summarizing dashboard state.
-- app proof: `src/routes/dashboard/+page.svelte` (webflow-dashboard-app) - The dashboard route is the main app surface for status, proof, and next operational action.
-- voice proof: `src/routes/validation/+page.svelte` (webflow-dashboard-validation-voice) - The validation route supports concise spoken summaries of issue, status, proof, and next action.
+- app proof: `src/routes/(authed)/dashboard/+page.svelte` (webflow-dashboard-app) - The dashboard route is the main app surface for status, proof, and next operational action.
+- voice proof: `src/routes/(authed)/validation/+page.svelte` (webflow-dashboard-validation-voice) - The validation route supports concise spoken summaries of issue, status, proof, and next action.
 - glasses proof: `canon-overlay/surface-policy.md` (webflow-dashboard-glasses) - The surface policy keeps thin displays to template/app status, owner, proof, and next action.
 
 ## Extension Intake
