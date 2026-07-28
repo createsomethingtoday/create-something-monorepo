@@ -40,8 +40,6 @@
       </div>
     </div>
 
-    <div class="footer-wordmark" aria-hidden="true">ABUNDANCE</div>
-
     <div class="footer-bottom">
       <span>© 2026 Abundance Staffing</span>
       <span>Nurse applications · Facility coverage · Recruiter review</span>
@@ -213,16 +211,6 @@
     color: white;
   }
 
-  .footer-wordmark {
-    margin: 0 -0.055em -0.18em;
-    color: rgba(255, 255, 255, 0.92);
-    font-size: clamp(4.8rem, 14.7vw, 13.8rem);
-    font-weight: 620;
-    letter-spacing: -0.075em;
-    line-height: 0.76;
-    white-space: nowrap;
-  }
-
   .footer-bottom {
     align-items: center;
     padding-top: 26px;
@@ -268,10 +256,6 @@
 
     .footer-links > div:last-child {
       grid-column: 1 / -1;
-    }
-
-    .footer-wordmark {
-      font-size: 15.8vw;
     }
   }
 

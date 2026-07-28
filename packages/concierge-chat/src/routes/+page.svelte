@@ -527,8 +527,8 @@
 
   .photo-label {
     position: absolute;
-    top: 26px;
-    left: 26px;
+    top: 40px;
+    left: 50%;
     z-index: 1;
     display: grid;
     gap: 4px;
@@ -537,6 +537,7 @@
     border-radius: 16px;
     background: rgba(251, 250, 246, 0.82);
     backdrop-filter: blur(16px);
+    transform: translateX(-50%);
   }
 
   .photo-label span {
