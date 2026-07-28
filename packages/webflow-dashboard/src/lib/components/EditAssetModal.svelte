@@ -1329,7 +1329,7 @@
   }
 
   .field-hint.error {
-    color: var(--color-error);
+    color: var(--color-error-ink);
   }
 
   .field-hint.warning {
@@ -1337,7 +1337,7 @@
   }
 
   .field-hint.success {
-    color: var(--color-success);
+    color: var(--color-success-ink);
   }
 
   .error-message {
@@ -1345,7 +1345,7 @@
     background: color-mix(in srgb, var(--color-error) 12%, transparent);
     border: 1px solid color-mix(in srgb, var(--color-error) 35%, transparent);
     border-radius: var(--radius-md);
-    color: var(--color-error);
+    color: var(--color-error-ink);
     font-size: var(--text-body-sm);
   }
 

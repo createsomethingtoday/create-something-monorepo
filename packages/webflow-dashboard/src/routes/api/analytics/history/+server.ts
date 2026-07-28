@@ -2,7 +2,7 @@
  * Aggregate Analytics History API
  * 
  * Returns aggregated historical snapshots across all user's assets.
- * Used to generate sparkline trends in the StatsBar.
+ * Powers portfolio-level sparkline trends.
  * 
  * GET /api/analytics/history?days=14
  */

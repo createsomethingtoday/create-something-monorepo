@@ -193,7 +193,7 @@
   }
 
   .nav-link.active {
-    color: var(--color-info);
+    color: var(--color-info-ink);
     background: transparent;
     border-color: transparent;
     box-shadow: none;

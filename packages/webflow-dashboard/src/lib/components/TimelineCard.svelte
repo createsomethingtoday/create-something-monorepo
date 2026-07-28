@@ -286,21 +286,21 @@
 
 	.milestone.completed .milestone-icon {
 		background: var(--color-success-muted);
-		border-color: var(--color-success);
-		color: var(--color-success);
+		border-color: var(--color-success-ink);
+		color: var(--color-success-ink);
 	}
 
 	.milestone.current .milestone-icon {
 		background: var(--color-info-muted);
-		border-color: var(--color-info);
-		color: var(--color-info);
+		border-color: var(--color-info-ink);
+		color: var(--color-info-ink);
 		animation: pulse 2s infinite;
 	}
 
 	.milestone.rejected .milestone-icon {
 		background: var(--color-error-muted);
-		border-color: var(--color-error);
-		color: var(--color-error);
+		border-color: var(--color-error-ink);
+		color: var(--color-error-ink);
 	}
 
 	@keyframes pulse {
@@ -392,7 +392,7 @@
 		display: flex;
 		align-items: center;
 		gap: var(--space-sm);
-		color: var(--color-error);
+		color: var(--color-error-ink);
 	}
 
 	.rejection-content,

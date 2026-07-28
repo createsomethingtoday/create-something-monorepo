@@ -452,7 +452,7 @@
 
 	.terms-row input {
 		margin-top: 0.15rem;
-		accent-color: var(--color-info);
+		accent-color: var(--color-info-ink);
 	}
 
 	.form-message {
@@ -463,11 +463,11 @@
 	}
 
 	.form-message--error {
-		color: var(--color-error);
+		color: var(--color-error-ink);
 	}
 
 	.form-message--success {
-		color: var(--color-success);
+		color: var(--color-success-ink);
 	}
 
 	.form-actions {

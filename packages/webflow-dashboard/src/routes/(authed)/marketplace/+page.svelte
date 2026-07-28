@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { Header, Button, BackNavigation } from '$lib/components';
+  import { Button, BackNavigation } from '$lib/components';
   import { trackEvent } from '$lib/utils/analytics';
   import {
     formatLongDate,
@@ -91,11 +91,6 @@
     }
   }
 
-  async function handleLogout() {
-    await fetch('/api/auth/logout', { method: 'POST' });
-    window.location.href = '/login';
-  }
-
   onMount(() => {
     trackEvent('marketplace_opened', {
       has_user: Boolean(data.user?.email)
@@ -112,8 +107,6 @@
 </svelte:head>
 
 <div class="marketplace-page">
-  <Header onLogout={handleLogout} showMarketplace={data.hasTemplateAsset} />
-
   <main class="main-content">
     <div class="content-wrapper">
       <BackNavigation />
@@ -168,16 +161,14 @@
         </div>
       </div>
 
-      <aside class="data-scope-notice" aria-label="Data scope">
-        <div class="notice-content">
-          <p class="notice-title">About this data</p>
-          <p class="notice-text">
-            This view tracks <strong>categories and templates with recent sales activity</strong>, not
-            the full marketplace inventory, so the fastest path is to filter down to your portfolio
-            categories first.
-          </p>
-        </div>
-      </aside>
+      <details class="data-scope-notice">
+        <summary class="notice-title">About this data</summary>
+        <p class="notice-text">
+          This view tracks <strong>categories and templates with recent sales activity</strong>, not
+          the full marketplace inventory, so the fastest path is to filter down to your portfolio
+          categories first.
+        </p>
+      </details>
 
       <!-- Content -->
       {#if shouldShowLoading}
@@ -274,7 +265,7 @@
 
   .sync-info :global(svg) {
     flex-shrink: 0;
-    color: var(--color-info);
+    color: var(--color-info-ink);
   }
 
   .sync-text {
@@ -306,7 +297,7 @@
     align-items: center;
     gap: var(--space-xs);
     font-size: var(--text-caption);
-    color: var(--color-warning);
+    color: var(--color-warning-ink);
     margin: 0;
     max-width: 84ch;
   }
@@ -424,14 +415,14 @@
   }
 
   .error-container :global(svg) {
-    color: var(--color-error);
+    color: var(--color-error-ink);
     flex-shrink: 0;
     margin-top: 2px;
   }
 
   .error-title {
     font-weight: var(--font-medium);
-    color: var(--color-error);
+    color: var(--color-error-ink);
     margin: 0 0 var(--space-xs);
   }
 
@@ -449,26 +440,25 @@
     margin-bottom: var(--space-md);
   }
 
-  .notice-content {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xs);
-    max-width: 84ch;
-  }
-
   .notice-title {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
     font-size: var(--text-body-sm);
     font-weight: var(--font-semibold);
     letter-spacing: 0;
     color: var(--color-fg-primary);
     margin: 0;
+    cursor: pointer;
+    width: fit-content;
   }
 
   .notice-text {
     font-size: var(--text-body-sm);
     color: var(--color-fg-secondary);
-    margin: 0;
+    margin: var(--space-xs) 0 0;
     line-height: 1.5;
+    max-width: 84ch;
   }
 
   .notice-text strong {

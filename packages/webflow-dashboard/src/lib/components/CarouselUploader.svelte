@@ -462,12 +462,12 @@
 
 	.upload-error {
 		font-size: var(--text-caption);
-		color: var(--color-error);
+		color: var(--color-error-ink);
 	}
 
 	.upload-success {
 		font-size: var(--text-caption);
-		color: var(--color-success);
+		color: var(--color-success-ink);
 	}
 
 	.upload-error-actions {
@@ -517,7 +517,7 @@
 	.image-remove:hover:not(:disabled) {
 		background: var(--color-error-muted);
 		border-color: var(--color-error-border);
-		color: var(--color-error);
+		color: var(--color-error-ink);
 	}
 
 	.image-remove:disabled {
@@ -592,7 +592,7 @@
 
 	.requirement-hint {
 		font-size: var(--text-body-sm);
-		color: var(--color-warning);
+		color: var(--color-warning-ink);
 		margin: 0;
 		text-align: center;
 	}

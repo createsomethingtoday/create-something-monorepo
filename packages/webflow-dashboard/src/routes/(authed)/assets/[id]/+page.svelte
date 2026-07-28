@@ -5,7 +5,6 @@
   import { onMount } from 'svelte';
   import { sanitizeFeedbackHtml, sanitizeLongDescription } from '$lib/utils/sanitize';
   import {
-    Header,
     Card,
     CardHeader,
     CardTitle,
@@ -82,14 +81,10 @@
   let activeTab = $state<TabValue>(getDefaultTab(getInitialAsset().status) as TabValue);
   let showPerformance = $state(false);
   let imageError = $state(false);
+  let secondaryImageError = $state(false);
   let showEditModal = $state(false);
   let isArchiving = $state(false);
   let showArchiveConfirm = $state(false);
-
-  async function handleLogout() {
-    await fetch('/api/auth/logout', { method: 'POST' });
-    window.location.href = '/login';
-  }
 
   // Can show metrics for non-Upcoming and non-Rejected statuses
   const canShowMetrics = $derived(!['Upcoming', 'Rejected'].includes(asset.status));
@@ -165,6 +160,7 @@
 
     // Reset image error state in case thumbnail changed
     imageError = false;
+    secondaryImageError = false;
   }
 
   async function handleArchive(): Promise<void> {
@@ -252,31 +248,6 @@
     });
   }
 
-  function handleTabListKeydown(event: KeyboardEvent) {
-    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
-
-    event.preventDefault();
-
-    const enabledTabs = tabOrder.filter(
-      (tab) => (tab !== 'analytics' || canShowMetrics) && (tab !== 'health' || canShowHealth)
-    );
-    const currentIndex = enabledTabs.indexOf(activeTab as TabValue);
-
-    if (event.key === 'Home') {
-      setActiveTab(enabledTabs[0]);
-      return;
-    }
-
-    if (event.key === 'End') {
-      setActiveTab(enabledTabs[enabledTabs.length - 1]);
-      return;
-    }
-
-    const delta = event.key === 'ArrowRight' ? 1 : -1;
-    const nextIndex = (currentIndex + delta + enabledTabs.length) % enabledTabs.length;
-    setActiveTab(enabledTabs[nextIndex]);
-  }
-
   function extractHost(url: string): string | null {
     try {
       return new URL(url).hostname;
@@ -314,8 +285,6 @@
 </svelte:head>
 
 <div class="detail-page">
-  <Header onLogout={handleLogout} showMarketplace={data.hasTemplateAsset} />
-
   <main class="main-content">
     <div class="content-wrapper">
       <BackNavigation />
@@ -435,7 +404,7 @@
       </div>
 
       <Tabs value={activeTab} class="tabs-container">
-        <TabsList class="asset-tabs-list" onkeydown={handleTabListKeydown}>
+        <TabsList class="asset-tabs-list">
           <TabsTrigger
             value="overview"
             active={activeTab === 'overview'}
@@ -691,13 +660,20 @@
                   {#if asset.secondaryThumbnailUrl}
                     <div class="secondary-thumbnail">
                       <p class="thumbnail-label">Secondary Thumbnail</p>
-                      <img
-                        src={asset.secondaryThumbnailUrl}
-                        alt="{asset.name} secondary"
-                        class="secondary-image"
-                        loading="lazy"
-                        decoding="async"
-                      />
+                      {#if !secondaryImageError}
+                        <img
+                          src={asset.secondaryThumbnailUrl}
+                          alt="{asset.name} secondary"
+                          class="secondary-image"
+                          loading="lazy"
+                          decoding="async"
+                          onerror={() => (secondaryImageError = true)}
+                        />
+                      {:else}
+                        <div class="thumbnail-placeholder secondary-placeholder">
+                          <span>{asset.name.charAt(0).toUpperCase()}</span>
+                        </div>
+                      {/if}
                     </div>
                   {/if}
                 </CardContent>
@@ -1062,7 +1038,7 @@
   }
 
   .description-long :global(a) {
-    color: var(--color-info);
+    color: var(--color-info-ink);
   }
 
   .marketplace-long-description :global(h3),
@@ -1125,7 +1101,7 @@
     display: flex;
     align-items: center;
     gap: var(--space-sm);
-    color: var(--color-error);
+    color: var(--color-error-ink);
   }
 
   .rejection-content,
@@ -1172,6 +1148,11 @@
     border-radius: var(--radius-sm);
   }
 
+  .secondary-placeholder {
+    aspect-ratio: 16/10;
+    font-size: var(--text-h2);
+  }
+
   .quick-stats {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1206,15 +1187,15 @@
   }
 
   .stat-item.viewers :global(.stat-icon) {
-    color: var(--color-info);
+    color: var(--color-info-ink);
   }
 
   .stat-item.purchases :global(.stat-icon) {
-    color: var(--color-warning);
+    color: var(--color-warning-ink);
   }
 
   .stat-item.revenue :global(.stat-icon) {
-    color: var(--color-success);
+    color: var(--color-success-ink);
   }
 
   .stat-number {

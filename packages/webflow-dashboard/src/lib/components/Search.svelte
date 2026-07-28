@@ -101,7 +101,7 @@
   }
 
   .search-wrapper:focus-within :global(.search-icon) {
-    color: var(--color-info);
+    color: var(--color-info-ink);
   }
 
   .search-input {

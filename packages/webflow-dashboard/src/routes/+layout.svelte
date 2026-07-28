@@ -4,7 +4,7 @@
 	import '../app.css';
 	import type { Snippet } from 'svelte';
 	import { onMount } from 'svelte';
-	import { Toast } from '$lib/components';
+	import { FeedbackButton, Toast } from '$lib/components';
 	import { getPageName, getRouteGroup, trackPageView } from '$lib/utils/analytics';
 
 	let { data, children }: { data: LayoutData; children: Snippet } = $props();
@@ -40,4 +40,5 @@
 </svelte:head>
 
 {@render children()}
+<FeedbackButton />
 <Toast />

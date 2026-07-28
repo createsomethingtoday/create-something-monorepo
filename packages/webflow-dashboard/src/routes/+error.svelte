@@ -95,7 +95,7 @@
 	}
 
 	.error-icon {
-		color: var(--color-error);
+		color: var(--color-error-ink);
 		opacity: 0.8;
 	}
 

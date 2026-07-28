@@ -149,11 +149,11 @@
 	}
 
 	.trend-up {
-		color: var(--color-success);
+		color: var(--color-success-ink);
 	}
 
 	.trend-down {
-		color: var(--color-error);
+		color: var(--color-error-ink);
 	}
 
 	.trend-flat {

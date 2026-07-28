@@ -432,7 +432,7 @@
 
 	.error-message {
 		font-size: var(--text-body-sm);
-		color: var(--color-error);
+		color: var(--color-error-ink);
 		margin: 0;
 	}
 </style>

@@ -4,7 +4,6 @@
   import { goto, invalidate, preloadData } from '$app/navigation';
   import { onMount } from 'svelte';
   import {
-    Header,
     Button,
     Dialog,
     AssetsDisplay,
@@ -20,7 +19,6 @@
   let { data }: { data: PageData } = $props();
 
   let searchTerm = $state('');
-  let isProfileOpen = $state(false);
   let isEditModalOpen = $state(false);
   let openingEditAssetId = $state<string | null>(null);
   let currentEditingAsset = $state<Asset | null>(null);
@@ -30,8 +28,6 @@
 
   // Lazy-loaded modal components
   // NOTE: Svelte 5 dynamic component typing is a bit different; keep this permissive for lazy-loading.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let EditProfileModal = $state<any>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let EditAssetModal = $state<any>(null);
 
@@ -73,26 +69,8 @@
     (data.assets || []).find((asset) => asset.id === archiveConfirmAssetId)?.name ?? 'this asset'
   );
 
-  async function handleLogout() {
-    await fetch('/api/auth/logout', { method: 'POST' });
-    window.location.href = '/login';
-  }
-
   function handleSearch(term: string) {
     searchTerm = term;
-  }
-
-  async function handleProfileClick() {
-    // Lazy load the EditProfileModal component
-    if (!EditProfileModal) {
-      const module = await import('$lib/components/EditProfileModal.svelte');
-      EditProfileModal = module.default;
-    }
-    isProfileOpen = true;
-  }
-
-  function handleProfileClose() {
-    isProfileOpen = false;
   }
 
   function getAssetDetailHref(id: string) {
@@ -261,12 +239,6 @@
 </svelte:head>
 
 <div class="dashboard">
-  <Header
-    onLogout={handleLogout}
-    onProfileClick={handleProfileClick}
-    showMarketplace={data.hasTemplateAsset}
-  />
-
   <main class="main-content">
     <div class="content-wrapper">
       <section class="overview-section">
@@ -333,11 +305,6 @@
       </section>
     </div>
   </main>
-
-  {#if isProfileOpen && EditProfileModal}
-    {@const ProfileModal = EditProfileModal}
-    <ProfileModal onClose={handleProfileClose} />
-  {/if}
 
   {#if openingEditAssetId && !isEditModalOpen}
     <Dialog
@@ -448,7 +415,7 @@
   }
 
   :global(.loading-spinner) {
-    color: var(--color-info);
+    color: var(--color-info-ink);
     animation: spin 0.8s linear infinite;
   }
 
@@ -574,7 +541,7 @@
     margin-bottom: var(--space-xl);
   }
 
-  @media (max-width: 900px) {
+  @media (max-width: 1100px) {
     .overview-top {
       grid-template-columns: 1fr;
     }

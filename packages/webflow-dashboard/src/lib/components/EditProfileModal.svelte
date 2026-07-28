@@ -323,7 +323,7 @@
     width: 2rem;
     height: 2rem;
     border: 3px solid var(--color-border-default);
-    border-top-color: var(--color-info);
+    border-top-color: var(--color-info-ink);
     border-radius: 50%;
     animation: spin 1s linear infinite;
   }
@@ -359,7 +359,7 @@
     background: var(--color-error-muted);
     border: 1px solid var(--color-error-border);
     border-radius: var(--radius-md);
-    color: var(--color-error);
+    color: var(--color-error-ink);
     font-size: var(--text-body-sm);
   }
 
@@ -368,7 +368,7 @@
     background: var(--color-success-muted);
     border: 1px solid var(--color-success-border);
     border-radius: var(--radius-md);
-    color: var(--color-success);
+    color: var(--color-success-ink);
     font-size: var(--text-body-sm);
     display: flex;
     align-items: center;

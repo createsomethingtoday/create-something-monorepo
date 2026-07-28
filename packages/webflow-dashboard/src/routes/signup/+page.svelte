@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import WebflowLogo from '$lib/components/WebflowLogo.svelte';
+	import AuthThemeToggle from '$lib/components/AuthThemeToggle.svelte';
 	import {
 		SUPPORTED_COUNTRIES,
 		isSupportedCountry,
@@ -217,6 +218,7 @@
 </svelte:head>
 
 <main class="container">
+	<AuthThemeToggle />
 	<div class="signup-card">
 		<div class="hero">
 			<div class="logo">
@@ -554,7 +556,7 @@
 
 	input:focus,
 	textarea:focus {
-		border-color: var(--color-info);
+		border-color: var(--color-info-ink);
 		box-shadow: 0 0 0 4px var(--color-info-muted);
 	}
 
@@ -579,23 +581,23 @@
 	}
 
 	.warning {
-		color: var(--color-warning);
+		color: var(--color-warning-ink);
 	}
 
 	.required-mark {
-		color: var(--color-error);
+		color: var(--color-error-ink);
 	}
 
 	.field-error {
 		font-size: var(--text-caption);
-		color: var(--color-error);
+		color: var(--color-error-ink);
 		margin: var(--space-xs) 0 0;
 		line-height: 1.4;
 	}
 
 	input[aria-invalid='true'],
 	textarea[aria-invalid='true'] {
-		border-color: var(--color-error);
+		border-color: var(--color-error-ink);
 	}
 
 	.field-row {
@@ -627,7 +629,7 @@
 
 	.checkbox a,
 	.secondary-link {
-		color: var(--color-info);
+		color: var(--color-info-ink);
 		text-decoration: none;
 	}
 
@@ -639,7 +641,7 @@
 	.error-message {
 		padding: 0.75rem 1rem;
 		font-size: var(--text-body-sm);
-		color: var(--color-error);
+		color: var(--color-error-ink);
 		background: var(--color-error-muted);
 		border: 1px solid var(--color-error-border);
 		border-radius: var(--radius-md);
@@ -658,11 +660,11 @@
 		padding: 0.85rem 1rem;
 		font-size: var(--text-body);
 		font-weight: var(--font-medium);
-		color: #ffffff;
+		color: var(--color-on-accent);
 		background: var(--color-info);
 		border: 1px solid var(--color-info);
 		border-radius: 999px;
-		box-shadow: 0 8px 18px rgba(20, 110, 245, 0.16);
+		box-shadow: 0 8px 18px var(--color-info-shadow);
 		cursor: pointer;
 		transition:
 			transform var(--duration-micro) var(--ease-standard),
@@ -670,7 +672,7 @@
 	}
 
 	.submit-button:hover:not(:disabled) {
-		background: #0055d4;
+		background: color-mix(in srgb, var(--color-info) 82%, var(--color-fg-primary));
 		transform: translateY(-1px);
 	}
 
@@ -687,8 +689,8 @@
 	.spinner {
 		width: 16px;
 		height: 16px;
-		border: 2px solid rgba(255, 255, 255, 0.35);
-		border-top-color: #ffffff;
+		border: 2px solid color-mix(in srgb, currentColor 35%, transparent);
+		border-top-color: currentColor;
 		border-radius: 50%;
 		animation: spin 0.8s linear infinite;
 	}

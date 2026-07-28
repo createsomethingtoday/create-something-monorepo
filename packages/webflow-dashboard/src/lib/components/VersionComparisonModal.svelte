@@ -193,7 +193,7 @@
 
   .error-state p {
     margin: 0;
-    color: var(--color-error);
+    color: var(--color-error-ink);
     font-size: var(--text-body-sm);
   }
 

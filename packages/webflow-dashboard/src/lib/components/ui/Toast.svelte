@@ -66,25 +66,25 @@
   .toast.success {
     background: var(--glass-bg-strong);
     border: 1px solid var(--color-success-border);
-    color: var(--color-success);
+    color: var(--color-success-ink);
   }
 
   .toast.error {
     background: var(--glass-bg-strong);
     border: 1px solid var(--color-error-border);
-    color: var(--color-error);
+    color: var(--color-error-ink);
   }
 
   .toast.warning {
     background: var(--glass-bg-strong);
     border: 1px solid var(--color-warning-border);
-    color: var(--color-warning);
+    color: var(--color-warning-ink);
   }
 
   .toast.info {
     background: var(--glass-bg-strong);
     border: 1px solid var(--color-info-border);
-    color: var(--color-info);
+    color: var(--color-info-ink);
   }
 
   .toast :global(svg) {
