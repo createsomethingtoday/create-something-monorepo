@@ -9,6 +9,7 @@ export type UiIconName =
   | 'external-link'
   | 'info'
   | 'maximize-2'
+  | 'message-square-plus'
   | 'minimize-2'
   | 'monitor'
   | 'refresh-cw'
@@ -16,7 +17,6 @@ export type UiIconName =
   | 'smartphone'
   | 'sparkles'
   | 'square'
-  | 'square-pen'
   | 'star'
   | 'tablet'
   | 'x';
@@ -71,6 +71,15 @@ const ICON_PATHS: Record<UiIconName, React.ReactNode> = {
       <path d="m3 21 7-7" />
     </>
   ),
+  // Ink stays inside the 3–21 grid the rest of the set uses, so it reads level
+  // beside maximize-2 and x rather than breaking the corner like a pen glyph.
+  'message-square-plus': (
+    <>
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+      <path d="M12 7v6" />
+      <path d="M9 10h6" />
+    </>
+  ),
   'minimize-2': (
     <>
       <path d="M8 3v5H3" />
@@ -118,12 +127,6 @@ const ICON_PATHS: Record<UiIconName, React.ReactNode> = {
   star: <path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z" />,
   // Filled stop glyph: sits inside the stroke set, so it overrides fill/stroke locally.
   square: <rect x="7" y="7" width="10" height="10" rx="1.5" fill="currentColor" stroke="none" />,
-  'square-pen': (
-    <>
-      <path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-      <path d="M18.375 2.625a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4Z" />
-    </>
-  ),
   tablet: (
     <>
       <rect x="4" y="2" width="16" height="20" rx="2" />

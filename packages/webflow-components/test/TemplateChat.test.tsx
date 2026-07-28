@@ -534,7 +534,7 @@ test('a stopped turn is acknowledged and can be retried without an empty assista
   }
 });
 
-test('new chat uses the compose glyph and offers undo, not a pre-confirm step', () => {
+test('new chat uses the new-message glyph and offers undo, not a pre-confirm step', () => {
   const originalWindow = globalThis.window;
   Object.defineProperty(globalThis, 'window', {
     configurable: true,
@@ -558,7 +558,9 @@ test('new chat uses the compose glyph and offers undo, not a pre-confirm step', 
     // Restored conversation: the reset control is present and plainly labeled.
     assert.match(html, /tmchat-iconbtn tmchat-newchat/);
     assert.match(html, /aria-label="New chat"/);
-    assert.match(html, /data-ui-icon="square-pen"/);
+    // Not a pen: the glyph names the outcome (a new message) rather than "edit".
+    assert.match(html, /data-ui-icon="message-square-plus"/);
+    assert.equal(html.includes('square-pen'), false);
     // No armed-confirm idiom anywhere: reset is immediate with an undo toast.
     assert.equal(html.includes('armed'), false);
     assert.equal(html.includes('Start over'), false);

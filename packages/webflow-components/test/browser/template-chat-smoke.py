@@ -220,7 +220,10 @@ def test_new_chat_reset_is_undoable(page: Page) -> None:
 
     new_chat = page.locator(".tmchat-newchat").first
     expect(new_chat).to_be_visible()
-    check("reset uses the compose glyph", new_chat.locator("[data-ui-icon='square-pen']").count() == 1)
+    check(
+        "reset uses the new-message glyph, not a pen",
+        new_chat.locator("[data-ui-icon='message-square-plus']").count() == 1,
+    )
 
     new_chat.click()
     check(
@@ -253,6 +256,55 @@ def test_undo_uses_distinct_glyph(page: Page) -> None:
     expect(undo).to_be_visible(timeout=45_000)
     check("undo glyph is rotate-ccw", undo.locator("[data-ui-icon='rotate-ccw']").count() == 1)
     check("no refresh-cw left in the chat", page.locator("[data-ui-icon='refresh-cw']").count() == 0)
+
+
+HEADER_GLYPH_INK = """
+() => {
+  const root = document.querySelector('#root')?.shadowRoot ?? document;
+  const buttons = [...root.querySelectorAll('.tmchat-header-actions .tmchat-iconbtn')];
+  return buttons.map((button) => {
+    const svg = button.querySelector('svg');
+    const box = svg.getBBox();
+    const stroke = parseFloat(svg.getAttribute('stroke-width') || '2');
+    return {
+      icon: svg.getAttribute('data-ui-icon'),
+      left: box.x - stroke / 2,
+      top: box.y - stroke / 2,
+      right: box.x + box.width + stroke / 2,
+      bottom: box.y + box.height + stroke / 2,
+    };
+  });
+}
+"""
+
+
+def test_header_glyphs_share_one_optical_grid(page: Page) -> None:
+    print("\n[9] header glyphs are drawn on one grid, so the row reads level")
+    open_chat(page)
+    send(page, "a restaurant site with a menu")
+    expect(page.locator(".tmchat-newchat").first).to_be_visible(timeout=45_000)
+
+    glyphs = page.evaluate(HEADER_GLYPH_INK)
+    check("all three header controls carry a glyph", len(glyphs) == 3, str(len(glyphs)))
+    for glyph in glyphs:
+        name = glyph["icon"]
+        centre_x = (glyph["left"] + glyph["right"]) / 2
+        centre_y = (glyph["top"] + glyph["bottom"]) / 2
+        # Ink centred in the 24-unit viewBox: a glyph whose weight sits off-centre
+        # tilts the whole row even though the buttons themselves are flex-centred.
+        check(
+            f"{name} ink is centred in its box",
+            abs(centre_x - 12) <= 0.25 and abs(centre_y - 12) <= 0.25,
+            f"centre=({centre_x:.3f}, {centre_y:.3f})",
+        )
+        # The set is drawn 3–21 with a 2px stroke; anything past 2–22 pokes out
+        # of the shared grid the way a pen glyph breaks its own container.
+        check(
+            f"{name} ink stays inside the shared grid",
+            glyph["left"] >= 1.9 and glyph["top"] >= 1.9
+            and glyph["right"] <= 22.1 and glyph["bottom"] <= 22.1,
+            f"box=({glyph['left']:.3f}, {glyph['top']:.3f}, {glyph['right']:.3f}, {glyph['bottom']:.3f})",
+        )
 
 
 def test_made_in_webflow_never_drives_the_host_page(page: Page) -> None:
@@ -291,6 +343,7 @@ def main() -> int:
                 test_composer_stays_usable_after_failure,
                 test_new_chat_reset_is_undoable,
                 test_undo_uses_distinct_glyph,
+                test_header_glyphs_share_one_optical_grid,
                 test_made_in_webflow_never_drives_the_host_page,
             ):
                 context = browser.new_context(viewport={"width": 1280, "height": 900})

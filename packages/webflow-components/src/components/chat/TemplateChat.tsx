@@ -1305,7 +1305,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
                 title={strings.newChat}
                 onClick={resetChat}
               >
-                <UiIcon name="square-pen" />
+                <UiIcon name="message-square-plus" />
               </button>
             ) : null}
             <button
