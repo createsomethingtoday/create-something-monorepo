@@ -1,5 +1,6 @@
 <script lang="ts">
   import { heroVisual } from '$lib/site/abundance';
+  import '$lib/site/public-page.css';
   import {
     absoluteUrl,
     breadcrumbJsonLd,
@@ -30,6 +31,7 @@
     ]),
     ...(publicJobs.length > 0 ? [jobItemListJsonLd(publicJobs)] : [])
   ]);
+
   function summarizeJob(job: (typeof publicJobs)[number]) {
     return [job.employment_type, job.shift, job.specialty ?? job.discipline]
       .filter(Boolean)
@@ -39,15 +41,8 @@
 </script>
 
 <svelte:head>
-  <link
-    rel="stylesheet"
-    href="https://cdn.prod.website-files.com/6975f7e617285604fcb645f7/css/healen.webflow.shared.7df6645cf.css"
-  />
   <title>{pageTitle}</title>
-  <meta
-    name="description"
-    content={pageDescription}
-  />
+  <meta name="description" content={pageDescription} />
   <link rel="canonical" href={absoluteUrl(pagePath)} />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Abundance Staffing" />
@@ -62,149 +57,111 @@
   {@html structuredData}
 </svelte:head>
 
-<section class="hero-03 container-full abundance-subpage-hero">
-  <div class="container-fluid">
-    <div class="hero-content-03">
-      <h1 class="hero-content-title display">Browse roles. Start with context.</h1>
-      <div class="hero-content-right">
-        <p class="hero-content-info-text p1-regular">
-          A database preview of the roles nurses can start from with Abundance.
+<div class="public-page">
+  <section class="public-hero">
+    <div class="public-shell public-hero-grid">
+      <div class="public-hero-copy">
+        <span class="public-kicker">Open nurse roles</span>
+        <h1 class="public-title">Browse roles. Start with <em>context.</em></h1>
+        <p class="public-lede">
+          See the current Abundance job inventory before you apply. Choose a useful starting point,
+          then tell Concierge what would make the role fit—or not fit—your life.
         </p>
-        <div class="hero-content-btns-03">
-          <a href="/apply" class="button-01 w-inline-block">
-            <div class="button-outside-01"><div class="button-inside"><div class="button-text-01">Start application</div><div class="button-text-01">Start application</div></div></div>
+        <div class="public-actions">
+          <a class="public-button primary" href="/apply">
+            <span>Start an application</span>
+            <span class="public-button-arrow" aria-hidden="true">↗</span>
           </a>
-          <a href="/nurses" class="button-03 w-inline-block">
-            <div class="button-outside-wrap"><div class="btn-text-outside-03"><div class="btn-text-inside-03"><div class="button-text-03">Nurse path</div><div class="button-text-03">Nurse path</div></div></div></div>
-          </a>
+          <a class="public-button secondary" href="/nurses">See the nurse path</a>
+        </div>
+        <div class="public-trust-inline" aria-label="Public jobs safeguards">
+          <span>Fresh server-side pull</span>
+          <span>Read-only results</span>
+          <span>Recruiter review before matching</span>
+        </div>
+      </div>
+
+      <div class="public-visual" aria-label="Abundance jobs database preview">
+        <div class="public-visual-frame">
+          <img src={heroVisual.src} alt={heroVisual.alt} />
+        </div>
+        <div class="public-database-panel">
+          <span class="public-mini-label">Database preview</span>
+          <div class="public-database-stat">
+            <strong>{publicJobs.length}</strong>
+            <span>open roles available in this public view</span>
+          </div>
+          <div class="public-database-rules">
+            <span>Live inventory, loaded on the server</span>
+            <span>Application context stays separate until you choose a role</span>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<section class="feature-doctors container-full abundance-roles">
-  <div class="feature-doctor-content">
-    <div class="feature-dr-head">
-      <div>
-        <div class="abundance-section-label">Database preview</div>
-        <h2 class="heading-01">20 nursing jobs from Abundance</h2>
-      </div>
-      <p class="feature-dr-text p1-regular">
-        Pulled on page load from the Abundance jobs database. Start with a role, then Abundance
-        collects the context recruiters need.
-      </p>
-    </div>
-    {#if publicJobs.length > 0}
-      <div class="abundance-job-meta">
-        <span>{publicJobs.length} open roles</span>
-        <span>Fresh server-side pull</span>
-        <span>Read-only public results</span>
-        <span>Recruiter review before any match</span>
-      </div>
-      <div class="abundance-job-list">
-        {#each publicJobs as job}
-          <article class="abundance-job-card">
-            <div class="abundance-job-card-top">
-              <span class="abundance-job-eyebrow">Open role</span>
-            </div>
-            <div>
-              <h3 class="heading-05">{job.title}</h3>
-              <p class="p2-regular abundance-job-location">
-                {[job.employer, job.display_location].filter(Boolean).join(' / ')}
-              </p>
-            </div>
-            {#if summarizeJob(job)}
-              <p class="p2-regular abundance-job-detail">{summarizeJob(job)}</p>
-            {/if}
-            <div class="abundance-job-actions">
-              <a href={`/apply?job_id=${encodeURIComponent(job.id)}`} class="abundance-text-link">Start with this role</a>
-            </div>
-          </article>
-        {/each}
-      </div>
-    {:else}
-      <div class="abundance-job-empty">
-        <h3 class="heading-05">Job inventory is temporarily unavailable.</h3>
-        <p class="p2-regular">
-          The production site reads open nurse roles from the server-side Abundance jobs database.
-          Start the application and Abundance can still capture role, location, shift, and timing.
+  <section class="public-section bright">
+    <div class="public-shell">
+      <div class="public-section-head">
+        <div>
+          <span class="public-section-kicker">Available now</span>
+          <h2 class="public-section-title">Nursing jobs from Abundance.</h2>
+        </div>
+        <p class="public-section-copy">
+          Start from a specific opening or begin with your preferences. Concierge keeps role context
+          together before a recruiter reviews the fit.
         </p>
-        <a href="/apply" class="abundance-text-link">Start application</a>
       </div>
-    {/if}
-  </div>
-</section>
 
-<style>
-  .abundance-section-label {
-    margin-bottom: 0.65rem;
-    color: var(--brand);
-    font-size: 0.78rem;
-    font-weight: 500;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
+      {#if publicJobs.length > 0}
+        <div class="public-data-list">
+          {#each publicJobs as job, index}
+            <article class="public-data-row">
+              <span class="public-data-index">{String(index + 1).padStart(2, '0')}</span>
+              <div class="public-data-copy">
+                <h3>{job.title}</h3>
+                <p>{[job.employer, job.display_location].filter(Boolean).join(' / ')}</p>
+              </div>
+              <span class="public-data-meta"
+                >{summarizeJob(job) || 'Details available in application'}</span
+              >
+              <a class="public-data-link" href={`/apply?job_id=${encodeURIComponent(job.id)}`}
+                >Start with this role ↗</a
+              >
+            </article>
+          {/each}
+        </div>
+      {:else}
+        <div class="public-empty">
+          <span class="public-mini-label">Inventory unavailable</span>
+          <h3>Job inventory is temporarily unavailable.</h3>
+          <p>
+            The production site reads open nurse roles from the server-side Abundance jobs database.
+            Concierge can still capture role, location, shift, and timing while inventory recovers.
+          </p>
+          <a class="public-data-link" href="/apply">Start an application ↗</a>
+        </div>
+      {/if}
+    </div>
+  </section>
 
-  .abundance-job-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.55rem;
-    margin: 2rem 0 1.25rem;
-  }
-
-  .abundance-job-meta span {
-    border: 1px solid rgba(176, 122, 80, 0.22);
-    border-radius: 999px;
-    padding: 0.5rem 0.8rem;
-    color: var(--muted);
-    font-size: 0.86rem;
-  }
-
-  .abundance-job-list {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1rem;
-  }
-
-  .abundance-job-card {
-    min-height: 17rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-  }
-
-  .abundance-job-card-top {
-    display: block;
-  }
-
-  .abundance-job-actions {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-  }
-
-  .abundance-job-eyebrow {
-    color: var(--brand);
-    font-size: 0.82rem;
-  }
-
-  .abundance-job-detail {
-    color: var(--muted);
-  }
-
-  .abundance-job-empty {
-    margin-top: 2rem;
-    border: 1px solid rgba(176, 122, 80, 0.18);
-    border-radius: 1.25rem;
-    padding: 2rem;
-    background: rgba(255, 250, 244, 0.72);
-  }
-
-  @media (max-width: 900px) {
-    .abundance-job-list {
-      grid-template-columns: 1fr;
-    }
-  }
-</style>
+  <section class="public-section deep">
+    <div class="public-shell">
+      <div class="public-section-head">
+        <div>
+          <span class="public-section-kicker">From listing to conversation</span>
+          <h2 class="public-section-title">A role is a starting point, not a staffing decision.</h2>
+        </div>
+        <p class="public-section-copy">
+          Public results help nurses orient. Recruiters still review experience, credentials,
+          availability, and fit before any staffing move.
+        </p>
+      </div>
+      <div class="public-pill-row">
+        <span>Public inventory stays read-only</span>
+        <span>Fit context comes from the nurse</span>
+        <span>Recruiters make the call</span>
+      </div>
+    </div>
+  </section>
+</div>
