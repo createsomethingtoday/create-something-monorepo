@@ -208,8 +208,8 @@ def test_composer_stays_usable_after_failure(page: Page) -> None:
     check("progress surface torn down", page.locator(".tmchat-progress").count() == 0)
 
 
-def test_new_chat_requires_confirmation(page: Page) -> None:
-    print("\n[7] new chat arms a confirm instead of wiping on the first click")
+def test_new_chat_reset_is_undoable(page: Page) -> None:
+    print("\n[7] new chat resets immediately and the toast undoes it")
     open_chat(page)
     send(page, "a restaurant site with a menu")
     expect(page.locator(".tmchat-display .tmcard-wrapper").first).to_be_visible(timeout=45_000)
@@ -223,21 +223,26 @@ def test_new_chat_requires_confirmation(page: Page) -> None:
     check("reset uses the compose glyph", new_chat.locator("[data-ui-icon='square-pen']").count() == 1)
 
     new_chat.click()
-    check("first click arms the confirm", "armed" in (new_chat.get_attribute("class") or ""))
-    check("armed confirm labels itself", "start over" in (new_chat.inner_text() or "").lower())
     check(
-        "first click leaves the conversation intact",
-        messages.count() == before,
-        f"count={messages.count()}",
-    )
-
-    new_chat.click()
-    check(
-        "second click resets to just the welcome",
+        "one click resets to just the welcome — no armed second step",
         messages.count() == 1,
         f"count={messages.count()}",
     )
-    check("reset returns the starter chips", page.locator(".tmchat-chip").count() >= 1)
+    toast = page.locator(".tmchat-reset-toast").first
+    expect(toast).to_be_visible()
+    check("toast explains what happened", "conversation cleared" in (toast.inner_text() or "").lower())
+
+    toast.locator(".tmchat-reset-undo").click()
+    check(
+        "undo restores the whole conversation",
+        messages.count() == before,
+        f"count={messages.count()}",
+    )
+    check(
+        "undo restores the result cards",
+        page.locator(".tmchat-display .tmcard-wrapper").count() >= 1,
+    )
+    check("toast retires after undo", page.locator(".tmchat-reset-toast").count() == 0)
 
 
 def test_undo_uses_distinct_glyph(page: Page) -> None:
@@ -284,7 +289,7 @@ def main() -> int:
                 test_tight_data_stream_is_not_lost,
                 test_rate_limit_is_explained,
                 test_composer_stays_usable_after_failure,
-                test_new_chat_requires_confirmation,
+                test_new_chat_reset_is_undoable,
                 test_undo_uses_distinct_glyph,
                 test_made_in_webflow_never_drives_the_host_page,
             ):

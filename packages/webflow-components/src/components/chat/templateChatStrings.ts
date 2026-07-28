@@ -7,7 +7,6 @@
 export interface TemplateChatStrings {
   /** Header controls. */
   newChat: string;
-  newChatConfirm: string;
   expand: string;
   exitFullscreen: string;
   closeChat: string;
@@ -19,6 +18,8 @@ export interface TemplateChatStrings {
   refineResults: string;
   composerLabel: string;
   composerHint: string;
+  conversationCleared: string;
+  undoReset: string;
   characterLimit: (used: string, limit: string) => string;
 
   /** Result sets. */
@@ -66,7 +67,6 @@ export interface TemplateChatStrings {
 
 export const DEFAULT_TEMPLATE_CHAT_STRINGS: TemplateChatStrings = {
   newChat: 'New chat',
-  newChatConfirm: 'Start over?',
   expand: 'Expand to fullscreen',
   exitFullscreen: 'Exit fullscreen',
   closeChat: 'Close chat',
@@ -77,6 +77,8 @@ export const DEFAULT_TEMPLATE_CHAT_STRINGS: TemplateChatStrings = {
   refineResults: 'Refine these results',
   composerLabel: 'Describe the site you want to build',
   composerHint: 'Enter to send · Shift+Enter for a new line',
+  conversationCleared: 'Conversation cleared',
+  undoReset: 'Undo',
   characterLimit: (used, limit) => `${used} / ${limit} character limit`,
 
   priceFree: 'Free',

@@ -46,6 +46,7 @@ export const CHAT_STYLES = `
 .tmchat-intro-toggle:focus-visible,
 .tmchat-chip:focus-visible,
 .tmchat-jump:focus-visible,
+.tmchat-reset-undo:focus-visible,
 .tmchat-send:focus-visible,
 .tmchat-preview-back:focus-visible,
 .tmchat-devicebtn:focus-visible,
@@ -107,13 +108,6 @@ export const CHAT_STYLES = `
 }
 .tmchat-iconbtn:hover { background: #ececec; }
 .tmchat-iconbtn:active { background: #e0e0e0; }
-/* Armed two-step confirm: swaps the icon for the label, so it needs real width. */
-.tmchat-newchat.armed {
-  width: auto; padding: 0 10px;
-  background: #f2f7ff; color: #0f5cd0;
-  font-size: 12px; font-weight: 600; white-space: nowrap;
-}
-.tmchat-newchat.armed:hover { background: #e3edfd; }
 .tmchat-scroll {
   flex: 1 1 auto; overflow-y: auto; padding: 16px;
   display: flex; flex-direction: column; gap: 12px;
@@ -258,6 +252,23 @@ export const CHAT_STYLES = `
   animation: tmchat-chip-in 200ms cubic-bezier(0.2, 0, 0, 1) both;
 }
 .tmchat-jump:hover { background: #f5f5f5; }
+/* Reset undo toast: same bottom-centered slot as the jump pill (they never
+   coexist — the jump pill needs a scrolled conversation, the toast needs a
+   just-cleared one). */
+.tmchat-reset-toast {
+  position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); z-index: 3;
+  display: inline-flex; align-items: center; gap: 10px;
+  border: 1px solid #e0e0e0; border-radius: 999px; background: #fff; color: #404040;
+  padding: 5px 6px 5px 14px; font-size: 12px; font-weight: 600; white-space: nowrap;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.14);
+  animation: tmchat-chip-in 200ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+.tmchat-reset-undo {
+  border: 0; border-radius: 999px; background: var(--tmchat-accent, #146ef5); color: #fff;
+  padding: 4px 12px; font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer;
+  transition: background 140ms ease;
+}
+.tmchat-reset-undo:hover { background: var(--tmchat-accent-hover, #0f5cd0); }
 .tmchat-inputrow { display: flex; align-items: flex-end; gap: 8px; padding: 12px; border-top: 1px solid #ececec; background: #fff; }
 /* Immersive (and wide inline panels): one centered content column (max 960px).
    Header, conversation, and input share the same left/right rails so every
@@ -408,7 +419,7 @@ export const CHAT_STYLES = `
 @media (prefers-reduced-motion: reduce) {
   .tmchat-panel.entering, .tmchat-backdrop, .tmchat-dots span, .tmchat-caret,
   .tmchat-msg, .tmchat-display, .tmchat-typing, .tmchat-progress, .tmchat-progress-skeleton-card, .tmchat-followups .tmchat-chip,
-  .tmchat-jump, .tmchat-grid > div, .tmchat-strip > div, .tmchat-preview,
+  .tmchat-jump, .tmchat-reset-toast, .tmchat-grid > div, .tmchat-strip > div, .tmchat-preview,
   .tmchat-preview.closing { animation: none; }
   .tmchat-panel, .tmchat-chip, .tmchat-send, .tmchat-launcher, .tmchat-devicebtn, .tmchat-undo,
   .tmchat-preview-back, .tmchat-preview-cta { transition: none; }

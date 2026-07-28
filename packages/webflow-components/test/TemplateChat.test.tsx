@@ -18,6 +18,7 @@ import {
   summarizePageAction,
 } from '../src/components/chat/TemplateChat';
 import { MAX_REQUEST_MESSAGE_CHARS } from '../src/components/chat/templateAgentSession';
+import { DEFAULT_TEMPLATE_CHAT_STRINGS } from '../src/components/chat/templateChatStrings';
 import {
   createHighlightMissState,
   createTextDeltaBatcher,
@@ -533,7 +534,7 @@ test('a stopped turn is acknowledged and can be retried without an empty assista
   }
 });
 
-test('new chat is guarded by an armed confirm and uses the compose glyph', () => {
+test('new chat uses the compose glyph and offers undo, not a pre-confirm step', () => {
   const originalWindow = globalThis.window;
   Object.defineProperty(globalThis, 'window', {
     configurable: true,
@@ -554,12 +555,16 @@ test('new chat is guarded by an armed confirm and uses the compose glyph', () =>
   try {
     const html = renderToStaticMarkup(<TemplateChat defaultOpen enableAnalytics={false} />);
 
-    // Restored conversation: the destructive control is present, disarmed, and
-    // labeled for what it does — no refresh-cw "reload" semantics.
-    assert.match(html, /tmchat-iconbtn tmchat-newchat(?! armed)/);
+    // Restored conversation: the reset control is present and plainly labeled.
+    assert.match(html, /tmchat-iconbtn tmchat-newchat/);
     assert.match(html, /aria-label="New chat"/);
     assert.match(html, /data-ui-icon="square-pen"/);
-    assert.equal(html.includes('data-ui-icon="refresh-cw"'), false);
+    // No armed-confirm idiom anywhere: reset is immediate with an undo toast.
+    assert.equal(html.includes('armed'), false);
+    assert.equal(html.includes('Start over'), false);
+    // The toast's copy exists in the localized string table.
+    assert.match(DEFAULT_TEMPLATE_CHAT_STRINGS.conversationCleared, /Conversation cleared/);
+    assert.match(DEFAULT_TEMPLATE_CHAT_STRINGS.undoReset, /Undo/);
   } finally {
     if (originalWindow === undefined) delete (globalThis as { window?: Window }).window;
     else globalThis.window = originalWindow;

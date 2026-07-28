@@ -248,9 +248,9 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   const [messages, setMessages] = useState<ChatMessage[]>(persisted?.messages ?? []);
   const [input, setInput] = useState('');
   const [introExpanded, setIntroExpanded] = useState(false);
-  // Two-step destructive guard: the first New-chat click arms "Start over?",
-  // only a second click inside the window actually wipes the conversation.
-  const [resetArmed, setResetArmed] = useState(false);
+  // Reset happens immediately; a toast offers Undo for a few seconds instead of
+  // a pre-confirm step (Gmail-style recoverable destructive action).
+  const [undoResetVisible, setUndoResetVisible] = useState(false);
   const [streaming, setStreaming] = useState(false);
   const [followups, setFollowups] = useState<string[]>(persisted?.followups ?? []);
   const [turnProgress, setTurnProgress] = useState<AgentProgressState>(() => {
@@ -283,7 +283,14 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   const sendingRef = useRef(false);
   const streamBatcherRef = useRef<TextDeltaBatcher | null>(null);
   const slowTurnTimerRef = useRef<number | null>(null);
-  const resetArmTimerRef = useRef<number | null>(null);
+  const undoResetTimerRef = useRef<number | null>(null);
+  // Pre-reset conversation snapshot, held only while the undo toast is up.
+  const resetSnapshotRef = useRef<{
+    messages: ChatMessage[];
+    followups: string[];
+    known: AgentTemplateItem[];
+    contextToken: string | null;
+  } | null>(null);
   const highlightMissesRef = useRef(createHighlightMissState());
   const pageActionTimersRef = useRef<PageActionTimers>(new Map());
   const turnstileRef = useRef<HTMLDivElement>(null);
@@ -730,8 +737,8 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
       if (slowTurnTimerRef.current !== null && typeof window !== 'undefined') {
         window.clearTimeout(slowTurnTimerRef.current);
       }
-      if (resetArmTimerRef.current !== null && typeof window !== 'undefined') {
-        window.clearTimeout(resetArmTimerRef.current);
+      if (undoResetTimerRef.current !== null && typeof window !== 'undefined') {
+        window.clearTimeout(undoResetTimerRef.current);
       }
       clearPageActionTimers(pageActionTimersRef.current);
     },
@@ -751,7 +758,37 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
     inputRef.current?.focus();
   }, []);
 
+  const clearUndoResetTimer = useCallback(() => {
+    if (undoResetTimerRef.current === null || typeof window === 'undefined') return;
+    window.clearTimeout(undoResetTimerRef.current);
+    undoResetTimerRef.current = null;
+  }, []);
+
+  const dismissUndoReset = useCallback(() => {
+    clearUndoResetTimer();
+    resetSnapshotRef.current = null;
+    setUndoResetVisible(false);
+  }, [clearUndoResetTimer]);
+
   const resetChat = useCallback(() => {
+    // Snapshot before clearing: the toast's Undo restores exactly this state.
+    if (messages.length > 0) {
+      resetSnapshotRef.current = {
+        messages,
+        followups,
+        known: Array.from(knownTemplatesRef.current.values()),
+        contextToken: contextTokenRef.current,
+      };
+      setUndoResetVisible(true);
+      if (typeof window !== 'undefined') {
+        clearUndoResetTimer();
+        undoResetTimerRef.current = window.setTimeout(() => {
+          undoResetTimerRef.current = null;
+          resetSnapshotRef.current = null;
+          setUndoResetVisible(false);
+        }, 6000);
+      }
+    }
     streamAbortRef.current?.abort();
     streamBatcherRef.current?.cancel();
     clearSlowTurnTimer();
@@ -780,32 +817,31 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
       // Ignore storage errors.
     }
     inputRef.current?.focus();
-  }, [clearSlowTurnTimer, storageKey, track]);
+  }, [clearSlowTurnTimer, clearUndoResetTimer, followups, messages, storageKey, track]);
 
-  const clearResetArmTimer = useCallback(() => {
-    if (resetArmTimerRef.current === null || typeof window === 'undefined') return;
-    window.clearTimeout(resetArmTimerRef.current);
-    resetArmTimerRef.current = null;
-  }, []);
-
-  // First click only arms the confirm; the conversation survives a stray tap.
-  // The second click inside the window is the deliberate reset.
-  const handleNewChatClick = useCallback(() => {
-    if (!resetArmed) {
-      setResetArmed(true);
-      if (typeof window !== 'undefined') {
-        clearResetArmTimer();
-        resetArmTimerRef.current = window.setTimeout(() => {
-          resetArmTimerRef.current = null;
-          setResetArmed(false);
-        }, 4000);
-      }
+  // Undo the reset wholesale: conversation, follow-ups, agent template memory,
+  // the worker continuity token, and the settled turn receipt.
+  const undoResetChat = useCallback(() => {
+    const snapshot = resetSnapshotRef.current;
+    if (!snapshot) {
+      dismissUndoReset();
       return;
     }
-    clearResetArmTimer();
-    setResetArmed(false);
-    resetChat();
-  }, [clearResetArmTimer, resetArmed, resetChat]);
+    dismissUndoReset();
+    setMessages(snapshot.messages);
+    setFollowups(snapshot.followups);
+    knownTemplatesRef.current = new Map(snapshot.known.map((item) => [item.template_slug, item]));
+    contextTokenRef.current = snapshot.contextToken;
+    let restored = createAgentProgressState();
+    const latestAssistant = snapshot.messages.slice().reverse().find((message) => message.role === 'assistant');
+    if (latestAssistant) {
+      const resultCount = latestAssistant.displays.reduce((count, display) => count + display.items.length, 0);
+      if (resultCount > 0) restored = reduceAgentProgress(restored, { type: 'display', resultCount });
+      restored = reduceAgentProgress(restored, { type: 'done' });
+    }
+    setTurnProgress(restored);
+    track('chat_reset_undone');
+  }, [dismissUndoReset, track]);
 
   const getSessionToken = useCallback(async (): Promise<string> => {
     if (sessionTokenRef.current) return sessionTokenRef.current;
@@ -834,6 +870,8 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
       setFollowups([]);
       setInput('');
       setRetryText(null);
+      // A new turn means the reset undo window has passed.
+      dismissUndoReset();
       // A stopped turn resends from before its abandoned exchange.
       const stoppedBase = stoppedPrompt ? getRetryBaseMessages(messages, true) : messages;
       setStoppedPrompt(null);
@@ -1168,6 +1206,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
     [
       apiBase,
       clearSlowTurnTimer,
+      dismissUndoReset,
       getSessionToken,
       immersive,
       messages,
@@ -1261,12 +1300,12 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
             {messages.length > 0 ? (
               <button
                 type="button"
-                className={`tmchat-iconbtn tmchat-newchat${resetArmed ? ' armed' : ''}`}
-                aria-label={resetArmed ? strings.newChatConfirm : strings.newChat}
-                title={resetArmed ? strings.newChatConfirm : strings.newChat}
-                onClick={handleNewChatClick}
+                className="tmchat-iconbtn tmchat-newchat"
+                aria-label={strings.newChat}
+                title={strings.newChat}
+                onClick={resetChat}
               >
-                {resetArmed ? strings.newChatConfirm : <UiIcon name="square-pen" />}
+                <UiIcon name="square-pen" />
               </button>
             ) : null}
             <button
@@ -1431,6 +1470,15 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
           <button type="button" className="tmchat-jump" onClick={() => scrollToBottom('smooth')}>
             <UiIcon name="arrow-down" size={14} /> {strings.jumpToLatest}
           </button>
+        ) : null}
+
+        {undoResetVisible ? (
+          <div className="tmchat-reset-toast" role="status">
+            <span>{strings.conversationCleared}</span>
+            <button type="button" className="tmchat-reset-undo" onClick={undoResetChat}>
+              {strings.undoReset}
+            </button>
+          </div>
         ) : null}
         </div>
 
