@@ -1,4 +1,4 @@
-# Workflow Infrastructure Discovery Call Script (Ops/RevOps)
+# Map, Build, and Control Discovery Call Script (Ops/RevOps)
 
 **Audience:** Ops/RevOps leaders  
 **Duration:** 20–30 minutes  
@@ -90,25 +90,29 @@ If confirmed, position:
 
 ---
 
-## 4) Minute 15–22: solution mapping to offer ladder
+## 4) Minute 15–22: solution mapping to the operating path
 
-Map problem to delivery tier:
+Map the problem to the correct stage:
 
-1. **Workflow Infrastructure**
-- build trusted workflow substrate
-- normalize tool contracts and execution paths
+1. **Map**
+- define the workflow, economics, trust boundary, and success measures
 
-2. **Policy OS**
-- policy controls, release gates, approval rules, incident loops
-- default path for production-risk workflows
+2. **Build**
+- implement the approved workflow, integrations, policy controls, and release gates
+- price each new workflow or integration as separately scoped work
 
-3. **Enterprise Extension**
-- high-stakes cross-system orchestration
-- strict governance and trust-boundary customization
+3. **Control — Managed AI Operations**
+- manage the launched production environment from $900 per month
+- include monitoring, incident response, policy tuning, and monthly operating review
+- custom-scope higher-risk, regulated, multi-environment, or priority-response operation
 
 Live mapping line:
 
-> "Based on your current risk and coupling, you likely start at [tier] with an assurance posture of [approval mode]."
+> "Based on your current risk and coupling, you likely start with [Map or Build]. After launch, Managed AI Operations starts at $900 per month for a standard-risk managed production environment."
+
+Commercial boundary check:
+
+> "We do not charge per agent. AI usage stays in your account when practical or is separately metered. If forecasted usage reaches 75% of the agreed monthly coverage, we schedule a capacity review; there is no automatic charge. New workflows and integrations are scoped through Build."
 
 Atlas handoff line:
 
@@ -161,11 +165,29 @@ Pivot:
 ### Objection: price resistance
 Response:
 
-> "The right comparison isn’t to generic automation cost. It’s to failure cost: incident cleanup, approval delays, and trust erosion."
+> "Managed AI Operations starts at $900 per month after launch. That covers operating the agreed production environment, not a number of agents. AI usage remains transparent and separate, and new workflows are scoped through Build."
 
 Pivot:
 
-> "What does one bad workflow incident actually cost your team?"
+> "What operating risk and response time does this workflow require?"
+
+### Objection: "How many agents do we get?"
+Response:
+
+> "Agent count is not the billing unit. We price the managed production environment and its operating boundary, because several agents may support one outcome and one agent may support several steps."
+
+Pivot:
+
+> "Which production outcome needs an accountable operating owner?"
+
+### Objection: "What if token usage grows?"
+Response:
+
+> "AI usage stays in your account when practical or is separately metered and reported. At 75% of the agreed monthly coverage, we open a capacity review before service is affected. That does not create an automatic charge."
+
+Pivot:
+
+> "What volume or seasonality should we include in the initial forecast?"
 
 ---
 
@@ -188,7 +210,7 @@ Commit:
 
 Use when value is likely but authority, budget, or urgency is partial.
 
-> "We can start with a scoped MCP-only wedge and define explicit triggers for moving into Policy OS."
+> "We can start with a narrow Map or Build scope and define the launch criteria for moving into Control."
 
 Commit:
 
@@ -213,7 +235,7 @@ Commit:
 
 ### 30-second positioning statement
 
-> "CREATE SOMETHING builds production-safe workflow infrastructure. We usually start with a scoped MCP wedge, then layer governance so safe actions stay fast, risky actions are approval-gated, and every decision is auditable."
+> "CREATE SOMETHING maps and builds production-safe AI workflows, then operates them through Control. Managed AI Operations starts at $900 per month after launch, with no per-agent fee and transparent AI usage."
 
 ### 2-minute "how it works in practice"
 
@@ -255,7 +277,10 @@ Commit:
 - required approvals
 - integration systems
 - policy boundary (`auto-allow|approval-required|block`)
-- recommended package tier
+- recommended stage (`Map|Build|Control|custom`)
+- managed production environment
+- AI usage billing owner
+- forecasted monthly usage and 75% capacity-review trigger
 - buyer authority level
 - next step owner and date
 

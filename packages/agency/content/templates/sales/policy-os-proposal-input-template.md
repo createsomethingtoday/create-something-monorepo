@@ -1,4 +1,4 @@
-# Workflow Infrastructure Proposal Input Template
+# Map, Build, and Control Proposal Input Template
 
 **Purpose:** Convert discovery outputs into proposal-ready scope in one pass.  
 **Use after:** `content/templates/sales/discovery-note-template.md`
@@ -10,7 +10,7 @@
 - discovery note path:
 - call date:
 - fit level (`high|medium|low`):
-- recommended tier:
+- recommended stage (`Map|Build|Control|custom`):
 
 ---
 
@@ -24,20 +24,33 @@
 
 ---
 
-## Scope by offer ladder
+## Scope by operating path
 
-### Workflow Infrastructure (required baseline)
+### Map (required baseline)
 - systems in scope:
 - workflow boundaries:
-- implementation deliverables:
+- business objective and success measures:
 
-### Policy OS (if included)
+### Build (if included)
+- implementation deliverables:
+- new workflows and integrations:
 - approval boundaries:
 - release gates:
-- incident loop expectations:
 
-### Enterprise Extension (if included)
+### Control — Managed AI Operations (if included)
+- managed production environment:
+- standard-risk starting price: $900 per month after launch
+- operating boundary:
+- runtime monitoring and incident response:
+- policy-tuning cadence:
+- AI usage billing owner (`client account|separately metered`):
+- monthly usage coverage:
+- 75% forecast capacity-review owner:
+
+### Custom operation (if required)
 - high-stakes constraints:
+- regulatory requirements:
+- priority-response requirements:
 - trust-boundary requirements:
 - orchestration/governance requirements:
 
@@ -84,9 +97,16 @@
 
 ## Commercial terms input
 
-- pricing lane:
+- pricing lane (`project|managed operations|custom`):
+- managed production environment:
+- Managed AI Operations starting price: $900 per month
+- agent count metered: `false`
+- AI usage billing owner:
+- forecasted usage threshold: `75%`
+- capacity-review path:
+- automatic overage charge: `false`
+- separately scoped Build additions:
 - timeline range:
-- support/retainer expectation:
 - assumptions:
 - exclusions:
 

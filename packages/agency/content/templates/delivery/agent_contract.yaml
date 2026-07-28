@@ -21,6 +21,17 @@ metadata:
     canonical_phrase: "Skills on MCP"
     client_facing_label: "Skills + MCP"
     technical_label: "MCP + Skills"
+  managed_operations:
+    commercial_descriptor: "Managed AI Operations"
+    starting_monthly_usd: 900
+    billing_unit: "managed_production_environment"
+    agent_count_metered: false
+    ai_usage_billing: "client_owned_or_separately_metered"
+    usage_control:
+      forecast_threshold: 0.75
+      trigger: "capacity_review"
+      automatic_charge: false
+    expansion_path: "separately_scoped_build"
 
 agent_profile:
   name: "<agent-name>"

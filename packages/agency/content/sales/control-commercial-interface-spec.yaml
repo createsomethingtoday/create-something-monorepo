@@ -1,0 +1,156 @@
+version: "2.0"
+name: "CREATE SOMETHING Control Commercial Interface"
+owner: "CREATE SOMETHING .agency"
+updated_at: "2026-07-28"
+
+message_taxonomy:
+  public_category: "AI workflow systems"
+  campaign_hook: "Your AI workforce, managed."
+  commercial_descriptor: "Managed AI Operations"
+  product_name: "CREATE SOMETHING Control"
+  category_contrast: "OpenAI makes agents easy to create. CREATE SOMETHING makes them reliable enough to operate."
+  client_facing_delivery_vector: "Skills + MCP"
+  technical_proof_vector: "MCP + Skills"
+
+product_path:
+  - name: "CREATE SOMETHING Map"
+    purpose: "Define the workflow, owner, systems, approvals, stops, and proof requirements."
+  - name: "CREATE SOMETHING Build"
+    purpose: "Turn an approved Map into an owned, connected implementation."
+  - name: "CREATE SOMETHING Control"
+    purpose: "Operate the approved workflow with monitoring, approvals, evidence, recovery, and recurring improvement."
+
+managed_operations:
+  starting_monthly_usd: 900
+  public_price_qualifier: "from"
+  starts: "after_launch"
+  intended_scope: "standard_risk_operation"
+  billing_unit: "managed_production_environment"
+  agent_count_metered: false
+  ai_usage_billing: "client_owned_or_separately_metered"
+  includes_map: true
+  includes:
+    - "approved_workflow_inventory"
+    - "standard_monitoring_and_incident_response"
+    - "evaluations_and_regression_checks"
+    - "prompt_model_and_policy_tuning"
+    - "cost_oversight"
+    - "monthly_performance_review"
+    - "standard_support_window"
+
+usage_control:
+  public_term: "AI usage"
+  internal_cost_basis: "landed_ai_and_runtime_cost"
+  forecast_threshold: 0.75
+  trigger: "capacity_review"
+  automatic_charge: false
+  review_sequence:
+    - "inspect_for_retries_loops_and_waste"
+    - "optimize_inefficient_execution"
+    - "expand_capacity_when_usage_represents_productive_work"
+  overage_behavior: "explicit_client_approval_required"
+
+scope_control:
+  approved_workflows: "included"
+  new_workflows: "separately_scoped_build"
+  new_integrations: "separately_scoped_build"
+  higher_risk_operation: "custom"
+  custom_triggers:
+    - "regulated_or_sensitive_records"
+    - "revenue_payment_or_high_impact_decisions"
+    - "priority_or_twenty_four_seven_response"
+    - "multiple_production_environments"
+    - "strict_compliance_or_audit_requirements"
+
+trust_boundaries:
+  client_owns:
+    - "business_decisions"
+    - "approval_authority"
+    - "vendor_accounts_and_usage_billing"
+    - "code_workflows_data_and_operating_history"
+  create_something_owns:
+    - "integration_architecture"
+    - "quality_gates"
+    - "runbook_maintenance"
+    - "managed_review_and_recovery"
+  prohibited_claims:
+    - "unlimited_work"
+    - "autonomous_judgment"
+    - "employee_replacement"
+    - "guaranteed_savings"
+    - "twenty_four_seven_support_without_custom_terms"
+
+checkout_boundary:
+  public_quote_allowed: true
+  self_service_checkout: "inactive_until_approved_stripe_prices_exist"
+  stripe_product_or_price_creation: "separate_approval_required"
+
+one_pager_interface:
+  input:
+    - "buyer_context"
+    - "business_objective"
+    - "workflow_pain"
+    - "current_failure_cost"
+    - "risk_profile"
+  output:
+    - "concise_narrative"
+    - "product_path_mapping"
+    - "managed_operations_boundary"
+    - "trust_artifacts"
+    - "cta"
+  trust_artifacts:
+    - "mcp_contract.yaml"
+    - "agent_contract.yaml"
+    - "outcome_contract.md"
+    - "golden_tasks.yaml + runbook"
+  cta:
+    name: "Workflow Mapping Session"
+    expected_output:
+      - "pilot_scope"
+      - "policy_boundary"
+      - "thirty_day_plan"
+
+call_script_interface:
+  input:
+    - "call_stage"
+    - "buyer_responses"
+    - "objection_type"
+  output:
+    - "next_question"
+    - "pitch_block"
+    - "close_path"
+  required_capture:
+    - "workflow_candidate"
+    - "business_objective"
+    - "current_failure_cost"
+    - "workflow_owner"
+    - "systems_in_scope"
+    - "policy_boundary"
+    - "risk_profile"
+    - "usage_ownership"
+    - "support_expectation"
+    - "next_step_owner"
+    - "next_step_date"
+  close_paths:
+    high_fit: "Schedule paid Workflow Mapping Session"
+    standard_operation: "Quote Control from 900 USD per month after launch"
+    custom_operation: "Scope higher-risk Control terms"
+    low_fit: "Park or refer with re-entry condition"
+
+operating_model:
+  - "Auto-allow safe actions"
+  - "Route risky actions to approval inbox"
+  - "Block disallowed actions with reason and audit trail"
+  - "Review productive capacity before expanding spend"
+
+reliability_kpis:
+  - "golden_task_pass_rate"
+  - "tool_success_rate"
+  - "approval_turnaround"
+  - "incident_rate_trend"
+  - "cost_per_successful_outcome"
+  - "governed_workflow_coverage"
+
+langfuse_positioning:
+  role: "observability_and_evals"
+  not_role: "policy_control_plane"

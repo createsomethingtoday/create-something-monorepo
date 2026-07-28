@@ -30,7 +30,7 @@
       number: '03',
       product: controlProduct,
       role: 'Operate with approvals and proof',
-      model: 'Standalone subscription · includes Map',
+      model: 'Managed AI Operations · from $900/month · includes Map',
       href: controlProduct.route,
       linkLabel: 'Explore Control'
     }
@@ -44,9 +44,9 @@
       <h2 id="services-product-path-title">From mapped workflow to governed operation.</h2>
     </div>
     <p class="product-path__description">
-      Map and Control stand on their own. Build is the implementation service between them when a
-      team wants CREATE SOMETHING to turn an approved definition into an owned system. Control
-      includes Map.
+      Map defines the work. Build turns the approved definition into an owned system. After launch,
+      Control provides Managed AI Operations from $900/month for a standard-risk environment.
+      Control includes Map; new workflows and integrations return to Build.
     </p>
   </div>
 

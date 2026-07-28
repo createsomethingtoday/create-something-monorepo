@@ -29,9 +29,9 @@
     {
       name: controlProduct.name,
       description: controlProduct.customerJob,
-      type: 'Standalone product',
-      price: 'Monthly / yearly',
-      priceDescription: 'Control includes Map; pricing configured at launch'
+      type: 'Managed AI Operations',
+      price: 'From $900/month',
+      priceDescription: 'After launch; Control includes Map'
     },
     {
       name: 'Enterprise Extension',
@@ -52,7 +52,12 @@
     {
       question: 'Are agents part of the workforce?',
       answer:
-        'They can be, when the workflow gives them a clear job, scoped tools, approval boundaries, named ownership, and evidence.'
+        'Agents can add operating capacity, but Control is not sold as a human-equivalent employee. There are no per-agent fees; the managed production environment and its accountable operating boundary are what you buy.'
+    },
+    {
+      question: 'How are AI usage and new workflows billed?',
+      answer:
+        'AI usage stays in your account when practical or is separately metered and reported. At 75% of forecasted monthly coverage, we schedule a capacity review rather than an automatic charge. New workflows and integrations are separately scoped through CREATE SOMETHING Build.'
     },
     {
       question: 'Do we need to understand MCP first?',

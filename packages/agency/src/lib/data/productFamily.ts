@@ -60,8 +60,10 @@ export const PUBLIC_PRODUCT_FAMILY: Record<PublicProductId, PublicProductDefinit
     shortName: 'Control',
     kind: 'subscription',
     route: '/control',
-    customerJob: 'Operate delegated work with explicit authority, approvals, evidence, and recovery.',
-    outcome: 'A governed execution surface with Inbox, Map, Proof, runbooks, and recurring review.',
+    customerJob:
+      'Run Managed AI Operations with explicit authority, approvals, evidence, and recovery.',
+    outcome:
+      'An accountable managed production environment with Map, Proof, runbooks, and recurring review.',
     purchasableStandalone: true,
     includes: ['map'],
     subscriptionCadences: [...SUBSCRIPTION_CADENCES],

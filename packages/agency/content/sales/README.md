@@ -1,4 +1,4 @@
-# Workflow Infrastructure Sales Assets v1
+# Map, Build, and Control Sales Assets
 
 **Primary buyer:** Ops/RevOps  
 **Primary channel:** Live discovery and mapping calls  
@@ -8,9 +8,9 @@
 
 ## Asset map
 
-1. **Buyer brief (send before or after first call)**
-   - `policy-os-buyer-brief-ops-revops.md`
-   - Purpose: frame problem, outcomes, offer ladder, and CTA in under 3 minutes.
+1. **Control buyer brief (send before or after first call)**
+   - `control-buyer-brief-ops-revops.md`
+   - Purpose: explain Managed AI Operations from $900 per month, its operating boundary, and the Map → Build → Control path in under 3 minutes.
 
 2. **Public Atlas canvas (send as a low-friction warmup)**
    - `/atlas` or `/services#atlas-warmup`
@@ -33,9 +33,18 @@
    - `operator-checklist.md`
    - Purpose: single internal checklist covering the full path from first contact to release readiness.
 
-7. **Commercial interface spec (machine-readable source of truth)**
-   - `policy-os-interface-spec.yaml`
-   - Purpose: standardize one-pager inputs/outputs, call script branch logic, and taxonomy.
+7. **Control commercial interface spec (machine-readable source of truth)**
+   - `control-commercial-interface-spec.yaml`
+   - Purpose: standardize the Map, Build, and Managed AI Operations offer, including pricing, usage, scope, one-pager inputs, and call-script branches.
+
+### Commercial boundary
+
+- Managed AI Operations starts at $900 per month after launch for one standard-risk managed production environment.
+- Agent count is not metered.
+- AI usage is client-owned when practical or separately metered and reported.
+- Forecasted usage at 75% of monthly coverage triggers a capacity review, not an automatic charge.
+- New workflows and integrations are separately scoped Build work.
+- Higher-risk, regulated, multi-environment, and priority-response operations require custom scope.
 
 8. **Discovery note (required after every call)**
    - `../templates/sales/discovery-note-template.md`
