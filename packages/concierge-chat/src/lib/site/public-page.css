@@ -1,12 +1,13 @@
 .public-page {
-  --public-ink: #10282b;
-  --public-deep: #071719;
-  --public-teal: #2f7f8b;
-  --public-aqua: #73c7ca;
-  --public-paper: #f6f4ef;
-  --public-paper-bright: #fbfaf6;
-  --public-line: rgba(16, 40, 43, 0.16);
-  --public-muted: rgba(16, 40, 43, 0.62);
+  --public-ink: #171512;
+  --public-deep: #020202;
+  --public-teal: #af7c54;
+  --public-aqua: #d7b79e;
+  --public-status: #1d6f8a;
+  --public-paper: #faf5ef;
+  --public-paper-bright: #fffaf4;
+  --public-line: rgba(23, 21, 18, 0.16);
+  --public-muted: rgba(23, 21, 18, 0.62);
   overflow: hidden;
   background: var(--public-paper);
   color: var(--public-ink);
@@ -21,7 +22,7 @@
   position: relative;
   padding: clamp(92px, 10vw, 150px) 0 clamp(88px, 9vw, 138px);
   background:
-    radial-gradient(circle at 87% 10%, rgba(115, 199, 202, 0.2), transparent 25%),
+    radial-gradient(circle at 87% 10%, rgba(215, 183, 158, 0.2), transparent 25%),
     linear-gradient(180deg, #f7f6f1, var(--public-paper));
 }
 
@@ -32,7 +33,7 @@
   right: 5vw;
   width: min(32vw, 450px);
   aspect-ratio: 1;
-  border: 1px solid rgba(47, 127, 139, 0.12);
+  border: 1px solid rgba(175, 124, 84, 0.12);
   border-radius: 999px;
   pointer-events: none;
 }
@@ -73,8 +74,8 @@
   width: 8px;
   height: 8px;
   border-radius: 999px;
-  background: var(--public-teal);
-  box-shadow: 0 0 0 6px rgba(47, 127, 139, 0.1);
+  background: var(--public-status);
+  box-shadow: 0 0 0 6px rgba(29, 111, 138, 0.1);
 }
 
 .public-title {
@@ -198,14 +199,14 @@
   overflow: hidden;
   border-radius: 210px 210px 28px 28px;
   background: var(--public-deep);
-  box-shadow: 0 34px 90px rgba(7, 23, 25, 0.16);
+  box-shadow: 0 34px 90px rgba(2, 2, 2, 0.16);
 }
 
 .public-visual-frame::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, transparent 42%, rgba(7, 23, 25, 0.62));
+  background: linear-gradient(180deg, transparent 42%, rgba(2, 2, 2, 0.62));
 }
 
 .public-visual-frame img {
@@ -224,9 +225,9 @@
   padding: 26px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 26px;
-  background: rgba(7, 23, 25, 0.96);
+  background: rgba(2, 2, 2, 0.96);
   color: white;
-  box-shadow: 0 28px 72px rgba(7, 23, 25, 0.28);
+  box-shadow: 0 28px 72px rgba(2, 2, 2, 0.28);
 }
 
 .public-visual-note {
@@ -276,7 +277,7 @@
 
 .public-section.deep {
   background:
-    radial-gradient(circle at 84% 18%, rgba(115, 199, 202, 0.1), transparent 24%),
+    radial-gradient(circle at 84% 18%, rgba(215, 183, 158, 0.1), transparent 24%),
     var(--public-deep);
   color: white;
 }
@@ -650,7 +651,7 @@
 .public-lane-shade {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, transparent 26%, rgba(7, 23, 25, 0.82));
+  background: linear-gradient(180deg, transparent 26%, rgba(2, 2, 2, 0.82));
 }
 
 .public-lane-copy {

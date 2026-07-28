@@ -304,10 +304,10 @@
     width: min(calc(100% - 48px), 1380px);
     margin: 24px auto 0;
     padding: 8px 9px 8px 12px;
-    border: 1px solid rgba(16, 40, 43, 0.1);
+    border: 1px solid rgba(23, 21, 18, 0.1);
     border-radius: 999px;
-    background: rgba(251, 250, 246, 0.82);
-    box-shadow: 0 14px 38px rgba(7, 23, 25, 0.08);
+    background: rgba(255, 250, 244, 0.84);
+    box-shadow: 0 14px 38px rgba(2, 2, 2, 0.08);
     backdrop-filter: blur(24px) saturate(1.2);
   }
 
@@ -322,7 +322,7 @@
     display: inline-flex;
     align-items: center;
     gap: 11px;
-    color: #10282b;
+    color: #171512;
     line-height: 1;
     text-decoration: none;
   }
@@ -335,7 +335,7 @@
     height: 38px;
     border-radius: 999px;
     background: #ffffff;
-    border: 1px solid rgba(16, 40, 43, 0.1);
+    border: 1px solid rgba(23, 21, 18, 0.1);
     overflow: hidden;
   }
 
@@ -358,7 +358,7 @@
   }
 
   .webflow-logo-copy small {
-    color: rgba(16, 40, 43, 0.52);
+    color: rgba(23, 21, 18, 0.52);
     font-size: 9px;
     letter-spacing: 0.14em;
     text-transform: uppercase;
@@ -374,7 +374,7 @@
   .webflow-nav-links a {
     padding: 12px 14px;
     border-radius: 999px;
-    color: rgba(16, 40, 43, 0.7);
+    color: rgba(23, 21, 18, 0.7);
     font-size: 13px;
     line-height: 1;
     font-weight: 510;
@@ -387,8 +387,8 @@
 
   .webflow-nav-links a:hover,
   .webflow-nav-links a[aria-current='page'] {
-    background: rgba(45, 119, 130, 0.09);
-    color: #10282b;
+    background: rgba(175, 124, 84, 0.12);
+    color: #171512;
   }
 
   .webflow-staff-link {
@@ -400,7 +400,7 @@
     min-height: 46px;
     padding: 6px 8px 6px 18px;
     border-radius: 999px;
-    background: #10282b;
+    background: #171512;
     color: white;
     font-size: 13px;
     font-weight: 520;
@@ -414,7 +414,7 @@
     height: 32px;
     border-radius: 999px;
     background: #ffffff;
-    color: #10282b;
+    color: #171512;
   }
 
   .webflow-nav-toggle {
@@ -438,10 +438,10 @@
       display: none;
       gap: 4px;
       padding: 10px;
-      border: 1px solid rgba(16, 40, 43, 0.1);
+      border: 1px solid rgba(23, 21, 18, 0.1);
       border-radius: 24px;
-      background: rgba(251, 250, 246, 0.97);
-      box-shadow: 0 22px 60px rgba(7, 23, 25, 0.16);
+      background: rgba(255, 250, 244, 0.98);
+      box-shadow: 0 22px 60px rgba(2, 2, 2, 0.16);
       backdrop-filter: blur(24px);
     }
 
@@ -461,7 +461,7 @@
       width: 44px;
       height: 44px;
       padding: 0;
-      border: 1px solid rgba(16, 40, 43, 0.12);
+      border: 1px solid rgba(23, 21, 18, 0.12);
       border-radius: 999px;
       background: transparent;
       box-shadow: none;
@@ -471,7 +471,7 @@
       display: block;
       width: 17px;
       height: 1px;
-      background: #10282b;
+      background: #171512;
     }
 
     .webflow-staff-link {

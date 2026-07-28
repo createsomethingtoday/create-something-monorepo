@@ -74,7 +74,11 @@
           <span class="status-signal" aria-hidden="true"></span>
           Guided nurse applications
         </div>
-        <h1>A clearer path from <em>“I’m interested”</em> to recruiter-ready.</h1>
+        <h1 aria-label="A clearer path from interested to recruiter-ready.">
+          <span>A clearer path</span>
+          <span>from <em>interested</em></span>
+          <span>to recruiter-ready.</span>
+        </h1>
         <p class="hero-intro">
           Tell Concierge what kind of work fits. It organizes the details, keeps the next step
           visible, and brings in a recruiter before any staffing decision is made.
@@ -96,11 +100,15 @@
       </div>
 
       <div class="hero-product" aria-label="Guided Abundance application preview">
+        <div class="hero-product-meta" aria-hidden="true">
+          <span>Application 01</span>
+          <span>Recruiter handoff</span>
+        </div>
         <div class="hero-photo">
           <img src={heroVisual.src} alt={heroVisual.alt} />
           <div class="photo-label">
             <span>Abundance Concierge</span>
-            <strong>One guided thread</strong>
+            <strong>One conversation, kept in context.</strong>
           </div>
         </div>
 
@@ -110,14 +118,20 @@
               <span class="mini-label">Application preview</span>
               <strong>ICU travel nurse</strong>
             </div>
-            <span class="progress-orbit" aria-label="Profile 72 percent ready">72</span>
+            <span class="progress-orbit" aria-label="Profile 72 percent ready">
+              <strong>72%</strong>
+              <small>ready</small>
+            </span>
           </div>
 
           <div class="conversation-preview">
-            <p class="candidate-message">Austin · nights · 13 weeks · compact license</p>
+            <div class="candidate-message">
+              <span>Role brief</span>
+              <strong>Austin · nights · 13 weeks · compact license</strong>
+            </div>
             <div class="concierge-response">
               <span class="response-mark" aria-hidden="true">A</span>
-              <p>I have the role. Next, let’s confirm your start window and pay range.</p>
+              <p><strong>Next:</strong> confirm your start window and pay range.</p>
             </div>
           </div>
 
@@ -282,17 +296,17 @@
 
 <style>
   :global(body) {
-    background: #f3f2ed;
+    background: #faf5ef;
   }
 
   .abundance-home {
-    --home-ink: #10282b;
-    --home-ink-deep: #071719;
-    --home-paper: #f3f2ed;
-    --home-paper-bright: #fbfaf6;
-    --home-blue: #2d7782;
-    --home-blue-bright: #73c7ca;
-    --home-copper: #b87850;
+    --home-ink: #171512;
+    --home-ink-deep: #020202;
+    --home-paper: #faf5ef;
+    --home-paper-bright: #fffaf4;
+    --home-blue: #af7c54;
+    --home-blue-bright: #d7b79e;
+    --home-copper: #1d6f8a;
     color: var(--home-ink);
     background: var(--home-paper);
     overflow: clip;
@@ -307,7 +321,7 @@
     position: relative;
     padding: clamp(86px, 10vw, 154px) 0 0;
     background:
-      linear-gradient(180deg, rgba(251, 250, 246, 0.9), rgba(243, 242, 237, 0.98)),
+      linear-gradient(180deg, rgba(255, 250, 244, 0.92), rgba(250, 245, 239, 0.98)),
       var(--home-paper);
     isolation: isolate;
   }
@@ -326,7 +340,7 @@
     right: -120px;
     width: 650px;
     height: 650px;
-    background: radial-gradient(circle, rgba(103, 197, 199, 0.24), transparent 68%);
+    background: radial-gradient(circle, rgba(175, 124, 84, 0.2), transparent 68%);
   }
 
   .hero-glow-two {
@@ -334,13 +348,13 @@
     left: -220px;
     width: 560px;
     height: 560px;
-    background: radial-gradient(circle, rgba(184, 120, 80, 0.13), transparent 68%);
+    background: radial-gradient(circle, rgba(29, 111, 138, 0.1), transparent 68%);
   }
 
   .hero-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1.06fr) minmax(440px, 0.74fr);
-    gap: clamp(48px, 7vw, 112px);
+    grid-template-columns: minmax(0, 1fr) minmax(470px, 0.78fr);
+    gap: clamp(56px, 7vw, 118px);
     align-items: center;
   }
 
@@ -369,7 +383,7 @@
     align-items: center;
     gap: 10px;
     margin-bottom: 30px;
-    color: #315d61;
+    color: var(--home-copper);
   }
 
   .status-signal {
@@ -377,15 +391,15 @@
     width: 9px;
     height: 9px;
     border-radius: 999px;
-    background: var(--home-blue);
-    box-shadow: 0 0 0 5px rgba(45, 119, 130, 0.1);
+    background: var(--home-copper);
+    box-shadow: 0 0 0 5px rgba(29, 111, 138, 0.1);
   }
 
   .status-signal::after {
     content: '';
     position: absolute;
     inset: -5px;
-    border: 1px solid rgba(45, 119, 130, 0.32);
+    border: 1px solid rgba(29, 111, 138, 0.32);
     border-radius: inherit;
     animation: signal-pulse 2.8s ease-out infinite;
   }
@@ -393,11 +407,19 @@
   .hero-copy h1 {
     max-width: 850px;
     margin: 0;
-    font-size: clamp(3.7rem, 7vw, 7.25rem);
+    font-size: clamp(3.7rem, 6.1vw, 6.75rem);
     font-weight: 540;
     letter-spacing: -0.065em;
     line-height: 0.92;
     text-wrap: balance;
+  }
+
+  .hero-copy h1 > span {
+    display: block;
+  }
+
+  .hero-copy h1 > span:nth-child(2) {
+    padding-left: clamp(0px, 3vw, 46px);
   }
 
   .hero-copy h1 em,
@@ -412,7 +434,7 @@
   .hero-intro {
     max-width: 650px;
     margin: 34px 0 0;
-    color: rgba(16, 40, 43, 0.68);
+    color: rgba(23, 21, 18, 0.68);
     font-size: clamp(1.08rem, 1.3vw, 1.28rem);
     line-height: 1.58;
   }
@@ -454,7 +476,7 @@
   .action-primary:hover {
     transform: translateY(-2px);
     background: var(--home-ink-deep);
-    box-shadow: 0 18px 42px rgba(7, 23, 25, 0.18);
+    box-shadow: 0 18px 42px rgba(2, 2, 2, 0.18);
   }
 
   .action-arrow {
@@ -471,7 +493,7 @@
   .action-secondary,
   .closing-link {
     padding: 14px 4px;
-    border-bottom: 1px solid rgba(16, 40, 43, 0.34);
+    border-bottom: 1px solid rgba(23, 21, 18, 0.34);
     color: var(--home-ink);
     font-weight: 520;
   }
@@ -487,7 +509,7 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    color: rgba(16, 40, 43, 0.62);
+    color: rgba(23, 21, 18, 0.62);
     font-size: 0.84rem;
   }
 
@@ -499,22 +521,48 @@
 
   .hero-product {
     position: relative;
-    min-height: 690px;
+    min-height: 650px;
+    padding-top: 42px;
+  }
+
+  .hero-product::before {
+    content: '';
+    position: absolute;
+    inset: 72px -22px 72px 36px;
+    border-radius: 30px;
+    background: var(--home-blue);
+    opacity: 0.9;
+    transform: rotate(2.2deg);
+  }
+
+  .hero-product-meta {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    display: flex;
+    justify-content: space-between;
+    color: rgba(23, 21, 18, 0.5);
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.66rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
   }
 
   .hero-photo {
     position: absolute;
-    inset: 0 0 96px 54px;
+    inset: 42px 0 82px 0;
     overflow: hidden;
-    border-radius: 220px 220px 30px 30px;
-    box-shadow: 0 36px 90px rgba(16, 40, 43, 0.15);
+    border: 1px solid rgba(23, 21, 18, 0.14);
+    border-radius: 30px;
+    box-shadow: 0 36px 90px rgba(23, 21, 18, 0.14);
   }
 
   .hero-photo::after {
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg, transparent 52%, rgba(7, 23, 25, 0.5));
+    background: linear-gradient(180deg, transparent 52%, rgba(2, 2, 2, 0.5));
   }
 
   .hero-photo img {
@@ -527,21 +575,21 @@
 
   .photo-label {
     position: absolute;
-    top: 40px;
-    left: 50%;
+    top: 24px;
+    left: 24px;
     z-index: 1;
     display: grid;
     gap: 4px;
-    padding: 14px 17px;
-    border: 1px solid rgba(255, 255, 255, 0.45);
-    border-radius: 16px;
-    background: rgba(251, 250, 246, 0.82);
+    max-width: 290px;
+    padding: 15px 17px;
+    border: 1px solid rgba(23, 21, 18, 0.12);
+    border-radius: 14px;
+    background: rgba(255, 250, 244, 0.9);
     backdrop-filter: blur(16px);
-    transform: translateX(-50%);
   }
 
   .photo-label span {
-    color: rgba(16, 40, 43, 0.56);
+    color: rgba(23, 21, 18, 0.56);
     font-size: 0.72rem;
   }
 
@@ -551,16 +599,16 @@
 
   .concierge-card {
     position: absolute;
-    right: 28px;
+    right: -18px;
     bottom: 0;
-    left: 0;
+    left: 64px;
     z-index: 2;
     padding: 24px;
     border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 26px;
-    background: rgba(7, 23, 25, 0.96);
+    border-radius: 22px;
+    background: rgba(2, 2, 2, 0.96);
     color: white;
-    box-shadow: 0 30px 80px rgba(7, 23, 25, 0.28);
+    box-shadow: 0 30px 80px rgba(2, 2, 2, 0.28);
   }
 
   .concierge-card-head {
@@ -585,15 +633,25 @@
 
   .progress-orbit {
     display: grid;
-    place-items: center;
-    width: 48px;
-    height: 48px;
-    border: 2px solid rgba(115, 199, 202, 0.3);
-    border-top-color: var(--home-blue-bright);
-    border-radius: 999px;
+    gap: 1px;
+    justify-items: end;
+    min-width: 66px;
+    padding: 8px 10px;
+    border: 1px solid rgba(215, 183, 158, 0.42);
+    border-radius: 12px;
     color: var(--home-blue-bright);
     font-family: var(--font-mono, ui-monospace, monospace);
-    font-size: 0.78rem;
+  }
+
+  .progress-orbit strong {
+    font-size: 0.84rem;
+  }
+
+  .progress-orbit small {
+    color: rgba(255, 255, 255, 0.46);
+    font-size: 0.58rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
   }
 
   .conversation-preview {
@@ -611,20 +669,35 @@
   }
 
   .candidate-message {
-    justify-self: end;
-    max-width: 86%;
-    padding: 12px 15px;
-    background: rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.8);
+    display: grid;
+    gap: 5px;
+    width: 100%;
+    padding: 13px 15px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.86);
+  }
+
+  .candidate-message span {
+    color: var(--home-blue-bright);
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .candidate-message strong {
+    font-size: 0.82rem;
+    font-weight: 520;
   }
 
   .concierge-response {
     display: flex;
     align-items: flex-start;
     gap: 11px;
-    max-width: 92%;
+    max-width: 100%;
     padding: 14px;
-    background: rgba(115, 199, 202, 0.11);
+    background: rgba(175, 124, 84, 0.16);
     color: rgba(255, 255, 255, 0.92);
   }
 
@@ -674,8 +747,8 @@
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     margin-top: clamp(78px, 9vw, 136px);
-    border-top: 1px solid rgba(16, 40, 43, 0.14);
-    border-bottom: 1px solid rgba(16, 40, 43, 0.14);
+    border-top: 1px solid rgba(23, 21, 18, 0.14);
+    border-bottom: 1px solid rgba(23, 21, 18, 0.14);
   }
 
   .hero-stat-grid article {
@@ -684,7 +757,7 @@
     gap: 18px;
     min-height: 152px;
     padding: 28px;
-    border-right: 1px solid rgba(16, 40, 43, 0.14);
+    border-right: 1px solid rgba(23, 21, 18, 0.14);
   }
 
   .hero-stat-grid article:last-child {
@@ -708,7 +781,7 @@
   .hero-stat-grid p {
     max-width: 280px;
     margin: 0;
-    color: rgba(16, 40, 43, 0.6);
+    color: rgba(23, 21, 18, 0.6);
     font-size: 0.86rem;
     line-height: 1.5;
   }
@@ -750,7 +823,7 @@
   .system-intro > p,
   .faq-heading > p {
     margin: 0;
-    color: rgba(16, 40, 43, 0.62);
+    color: rgba(23, 21, 18, 0.62);
     font-size: 1rem;
     line-height: 1.64;
   }
@@ -801,8 +874,8 @@
     inset: 0;
     z-index: 1;
     background:
-      linear-gradient(180deg, rgba(7, 23, 25, 0.08) 20%, rgba(7, 23, 25, 0.88) 100%),
-      linear-gradient(90deg, rgba(7, 23, 25, 0.26), transparent 72%);
+      linear-gradient(180deg, rgba(2, 2, 2, 0.08) 20%, rgba(2, 2, 2, 0.88) 100%),
+      linear-gradient(90deg, rgba(2, 2, 2, 0.26), transparent 72%);
   }
 
   .path-index,
@@ -821,7 +894,7 @@
     height: 42px;
     border: 1px solid rgba(255, 255, 255, 0.45);
     border-radius: 999px;
-    background: rgba(7, 23, 25, 0.16);
+    background: rgba(2, 2, 2, 0.16);
     backdrop-filter: blur(12px);
   }
 
@@ -868,7 +941,7 @@
   .handoff-section {
     padding: clamp(100px, 12vw, 190px) 0;
     background:
-      radial-gradient(circle at 88% 18%, rgba(115, 199, 202, 0.13), transparent 28%),
+      radial-gradient(circle at 88% 18%, rgba(215, 183, 158, 0.13), transparent 28%),
       var(--home-ink-deep);
     color: white;
   }
@@ -909,7 +982,7 @@
     gap: 12px;
     margin-top: 34px;
     padding-bottom: 8px;
-    border-bottom: 1px solid rgba(115, 199, 202, 0.45);
+    border-bottom: 1px solid rgba(215, 183, 158, 0.45);
     color: white;
     text-decoration: none;
   }
@@ -935,7 +1008,7 @@
     place-items: center;
     width: 48px;
     height: 48px;
-    border: 1px solid rgba(115, 199, 202, 0.42);
+    border: 1px solid rgba(215, 183, 158, 0.42);
     border-radius: 999px;
     color: var(--home-blue-bright);
     font-family: var(--font-mono, ui-monospace, monospace);
@@ -945,7 +1018,7 @@
   .step-rail i {
     width: 1px;
     height: 100%;
-    background: linear-gradient(rgba(115, 199, 202, 0.4), rgba(115, 199, 202, 0.06));
+    background: linear-gradient(rgba(215, 183, 158, 0.4), rgba(215, 183, 158, 0.06));
   }
 
   .handoff-steps article:last-child .step-rail i {
@@ -1010,13 +1083,13 @@
     display: grid;
     gap: 0;
     margin-top: 34px;
-    border-top: 1px solid rgba(16, 40, 43, 0.16);
+    border-top: 1px solid rgba(23, 21, 18, 0.16);
   }
 
   .system-proof span {
     padding: 15px 0;
-    border-bottom: 1px solid rgba(16, 40, 43, 0.16);
-    color: rgba(16, 40, 43, 0.68);
+    border-bottom: 1px solid rgba(23, 21, 18, 0.16);
+    color: rgba(23, 21, 18, 0.68);
     font-size: 0.86rem;
   }
 
@@ -1027,7 +1100,7 @@
   }
 
   .service-list {
-    border-top: 1px solid rgba(16, 40, 43, 0.18);
+    border-top: 1px solid rgba(23, 21, 18, 0.18);
   }
 
   .service-list > a {
@@ -1037,7 +1110,7 @@
     align-items: start;
     min-height: 172px;
     padding: 28px 4px;
-    border-bottom: 1px solid rgba(16, 40, 43, 0.18);
+    border-bottom: 1px solid rgba(23, 21, 18, 0.18);
     color: var(--home-ink);
     text-decoration: none;
     transition:
@@ -1068,7 +1141,7 @@
 
   .service-copy > span {
     max-width: 580px;
-    color: rgba(16, 40, 43, 0.6);
+    color: rgba(23, 21, 18, 0.6);
     line-height: 1.55;
   }
 
@@ -1077,7 +1150,7 @@
     place-items: center;
     width: 42px;
     height: 42px;
-    border: 1px solid rgba(16, 40, 43, 0.2);
+    border: 1px solid rgba(23, 21, 18, 0.2);
     border-radius: 999px;
   }
 
@@ -1090,11 +1163,11 @@
   }
 
   .faq-list {
-    border-top: 1px solid rgba(16, 40, 43, 0.18);
+    border-top: 1px solid rgba(23, 21, 18, 0.18);
   }
 
   .faq-list details {
-    border-bottom: 1px solid rgba(16, 40, 43, 0.18);
+    border-bottom: 1px solid rgba(23, 21, 18, 0.18);
   }
 
   .faq-list summary {
@@ -1133,7 +1206,7 @@
   .faq-list details > p {
     max-width: 640px;
     margin: 0 0 28px 68px;
-    color: rgba(16, 40, 43, 0.62);
+    color: rgba(23, 21, 18, 0.62);
     line-height: 1.65;
   }
 
@@ -1144,7 +1217,7 @@
     place-items: center;
     overflow: hidden;
     background:
-      radial-gradient(circle at 50% 0%, rgba(115, 199, 202, 0.16), transparent 42%),
+      radial-gradient(circle at 50% 0%, rgba(215, 183, 158, 0.16), transparent 42%),
       var(--home-ink-deep);
     color: white;
     isolation: isolate;
@@ -1181,7 +1254,7 @@
   }
 
   .action-primary-light:hover {
-    background: #f3f2ed;
+    background: #faf5ef;
   }
 
   .action-primary-light .action-arrow {
@@ -1197,7 +1270,7 @@
   .closing-orbit {
     position: absolute;
     z-index: 1;
-    border: 1px solid rgba(115, 199, 202, 0.15);
+    border: 1px solid rgba(215, 183, 158, 0.15);
     border-radius: 999px;
     pointer-events: none;
   }
@@ -1231,7 +1304,7 @@
     }
 
     .hero-copy h1 {
-      font-size: clamp(3.6rem, 7.1vw, 6.1rem);
+      font-size: clamp(3.5rem, 6.2vw, 5.6rem);
     }
 
     .hero-product {
@@ -1288,7 +1361,7 @@
     .hero-stat-grid article {
       min-height: auto;
       border-right: 0;
-      border-bottom: 1px solid rgba(16, 40, 43, 0.14);
+      border-bottom: 1px solid rgba(23, 21, 18, 0.14);
     }
 
     .hero-stat-grid article:last-child {
@@ -1353,6 +1426,10 @@
       line-height: 0.94;
     }
 
+    .hero-copy h1 > span:nth-child(2) {
+      padding-left: 0;
+    }
+
     .hero-intro {
       margin-top: 26px;
       font-size: 1rem;
@@ -1381,13 +1458,26 @@
       min-height: 580px;
     }
 
+    .hero-product::before {
+      inset: 66px -5px 106px 20px;
+      border-radius: 24px;
+    }
+
     .hero-photo {
-      inset: 0 0 120px 22px;
-      border-radius: 170px 170px 24px 24px;
+      inset: 42px 0 112px 0;
+      border-radius: 24px;
+    }
+
+    .photo-label {
+      top: 16px;
+      right: 16px;
+      left: 16px;
+      max-width: none;
     }
 
     .concierge-card {
-      right: 10px;
+      right: 0;
+      left: 10px;
       padding: 20px;
     }
 
