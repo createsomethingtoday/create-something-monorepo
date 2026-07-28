@@ -72,19 +72,19 @@
   const cadenceCards: PerformanceCardItem[] = [
     {
       eyebrow: 'Monthly',
-      title: 'Operate and review month to month',
+      title: 'Managed AI Operations from $900 per month after launch',
       detail:
-        'A standalone Control subscription with Map included. Exact pricing activates only after the approved Stripe price exists.',
+        'For one standard-risk managed production environment. No per-agent fees. Control includes Map.',
       href: agencyCoreMessaging.workflowMappingSessionHref,
-      points: ['Control includes Map', 'Recurring review', 'Launch pricing pending']
+      points: ['Runtime oversight', 'Incident response', 'Monthly operating review']
     },
     {
       eyebrow: 'Yearly',
-      title: 'Keep one governed operating year',
+      title: 'Review the operating boundary each year',
       detail:
-        'The same product boundary on a yearly cadence. Exact pricing activates only after the approved Stripe price exists.',
+        'Keep the same governed product while risk, volume, and service expectations are reviewed explicitly.',
       href: agencyCoreMessaging.workflowMappingSessionHref,
-      points: ['Control includes Map', 'Annual commitment', 'Launch pricing pending']
+      points: ['Control includes Map', 'Annual boundary review', 'Higher-risk operation is custom']
     }
   ];
 
@@ -112,10 +112,10 @@
     {
       id: 'cadence',
       label: 'Cadence',
-      summary: 'Monthly or yearly',
-      title: 'Choose the review rhythm, not a different product.',
+      summary: 'One fee for the operating boundary',
+      title: 'Pay for accountable operation, not an agent roster.',
       detail:
-        'The product boundary is fixed. Exact pricing activates only after the approved Stripe products and price IDs exist and are verified.',
+        'AI usage stays in your account when practical or is separately metered and reported. At 75% of forecasted monthly coverage, we schedule a capacity review—not an automatic charge. New workflows and integrations are separately scoped through Build.',
       tone: 'neutral'
     },
     {
@@ -132,8 +132,8 @@
 </script>
 
 <SEO
-  title="CREATE SOMETHING Control | Governed Workflow Operation"
-  description="CREATE SOMETHING Control is a standalone subscription for running delegated work with approvals, evidence, and recovery. Control includes Map."
+  title="CREATE SOMETHING Control | Managed AI Operations"
+  description="Managed AI Operations from $900 per month after launch, with no per-agent fees, transparent AI usage, approvals, evidence, and recovery. Control includes Map."
   keywords="AI workflow control, governed execution, human approval workflow, agent audit trail, workflow recovery"
   propertyName="agency"
 />
@@ -141,8 +141,8 @@
 <main class="control-page">
   <PerformanceCampaignOpening
     eyebrow="CREATE SOMETHING Control"
-    title="Run delegated work with a boundary."
-    lede="Control is the standalone operating product for live human-agent workflows. It watches changes, routes judgment, records proof, and preserves recovery context. Control includes Map, so every governed workflow stays legible."
+    title="Managed AI Operations, after launch."
+    lede="Control operates one standard-risk production environment from $900 per month after launch. No per-agent fees. You keep a legible workflow boundary, transparent AI usage, named approvals, and recovery context. Control includes Map."
     media={{
       src: '/images/performance-lab/product-system-natural.webp',
       mobileSrc: '/images/performance-lab/product-system-natural-mobile.webp',
@@ -216,7 +216,7 @@
   <PerformanceConversionHandoff
     eyebrow="Choose the next boundary"
     title="Define the workflow or bring the one already running."
-    description="Use Map when the system still needs a shared definition. Bring an existing workflow directly to Control when approvals, evidence, or recovery are the missing layer."
+    description="Use Map when the system still needs a shared definition. Use Build for new workflows and integrations. Bring a launched workflow to Control when it needs accountable operation, approvals, evidence, and recovery."
     handoff={{
       owner: 'Workflow operator',
       authority: 'Named approval boundary',

@@ -78,6 +78,84 @@ test('canonical product documentation preserves the public and internal naming b
   assert.match(controlDoc, /policy_os_core/);
 });
 
+test('canonical commercial interface sells managed Control operation instead of agent creation', () => {
+  const commercialInterface = readFileSync(
+    new URL('../content/sales/control-commercial-interface-spec.yaml', import.meta.url),
+    'utf8'
+  );
+
+  assert.match(commercialInterface, /name: "CREATE SOMETHING Control Commercial Interface"/);
+  assert.match(commercialInterface, /commercial_descriptor: "Managed AI Operations"/);
+  assert.match(commercialInterface, /starting_monthly_usd: 900/);
+  assert.match(commercialInterface, /billing_unit: "managed_production_environment"/);
+  assert.match(commercialInterface, /agent_count_metered: false/);
+  assert.match(commercialInterface, /ai_usage_billing: "client_owned_or_separately_metered"/);
+  assert.match(commercialInterface, /forecast_threshold: 0\.75/);
+  assert.match(commercialInterface, /automatic_charge: false/);
+  assert.match(commercialInterface, /new_workflows: "separately_scoped_build"/);
+  assert.match(commercialInterface, /higher_risk_operation: "custom"/);
+  assert.doesNotMatch(commercialInterface, /name: "Policy OS Commercial Interface"/);
+});
+
+test('sales and delivery enablement preserve the managed operations commercial boundary', () => {
+  const salesReadme = readFileSync(
+    new URL('../content/sales/README.md', import.meta.url),
+    'utf8'
+  );
+  const buyerBrief = readFileSync(
+    new URL('../content/sales/control-buyer-brief-ops-revops.md', import.meta.url),
+    'utf8'
+  );
+  const discoveryScript = readFileSync(
+    new URL('../content/sales/discovery-call-script.md', import.meta.url),
+    'utf8'
+  );
+  const proposalInput = readFileSync(
+    new URL('../content/templates/sales/policy-os-proposal-input-template.md', import.meta.url),
+    'utf8'
+  );
+  const pricingFramework = readFileSync(
+    new URL('../content/templates/sales/pricing-framework.md', import.meta.url),
+    'utf8'
+  );
+  const agentContract = readFileSync(
+    new URL('../content/templates/delivery/agent_contract.yaml', import.meta.url),
+    'utf8'
+  );
+  const outcomeContract = readFileSync(
+    new URL('../content/templates/delivery/outcome_contract.md', import.meta.url),
+    'utf8'
+  );
+  const sow = readFileSync(
+    new URL('../content/templates/contracts/sow.md', import.meta.url),
+    'utf8'
+  );
+
+  for (const source of [salesReadme, buyerBrief, discoveryScript, proposalInput, pricingFramework]) {
+    assert.match(source, /Managed AI Operations/);
+    assert.match(source, /\$900(?: per month|\/month)/);
+  }
+
+  assert.match(buyerBrief, /No per-agent fees/);
+  assert.match(buyerBrief, /AI usage.*client.*account/is);
+  assert.match(buyerBrief, /New workflows.*CREATE SOMETHING Build/is);
+  assert.match(discoveryScript, /75%.*capacity review/is);
+  assert.match(proposalInput, /AI usage billing owner/i);
+  assert.match(proposalInput, /managed production environment/i);
+  assert.match(pricingFramework, /Agent count is not a billing unit/);
+  assert.match(pricingFramework, /Higher-risk.*custom/is);
+
+  assert.match(agentContract, /billing_unit: "managed_production_environment"/);
+  assert.match(agentContract, /agent_count_metered: false/);
+  assert.match(agentContract, /forecast_threshold: 0\.75/);
+  assert.match(agentContract, /automatic_charge: false/);
+  assert.match(outcomeContract, /AI usage remains client-funded or separately metered/);
+  assert.match(outcomeContract, /75%.*capacity review/is);
+  assert.match(sow, /Managed AI Operations/);
+  assert.match(sow, /AI usage remains client-funded or separately metered/);
+  assert.match(sow, /No per-agent fee/);
+});
+
 test('Canon overlay projects Map publicly while keeping stable Atlas contracts', () => {
   const manifest = readFileSync(
     new URL('../canon-overlay/manifest.ts', import.meta.url),
@@ -178,6 +256,37 @@ test('Control is a standalone public product that includes Map and its operator 
 
   assert.match(enterpriseRoute, /CREATE SOMETHING Control/);
   assert.doesNotMatch(enterpriseRoute, /\bPolicy OS\b/);
+});
+
+test('Control and Services present the approved Managed AI Operations offer', () => {
+  const controlRoute = readFileSync(
+    new URL('../src/routes/control/+page.svelte', import.meta.url),
+    'utf8'
+  );
+  const servicesRoute = readFileSync(
+    new URL('../src/routes/services/+page.svelte', import.meta.url),
+    'utf8'
+  );
+  const servicesPath = readFileSync(
+    new URL('../src/lib/components/ServicesProductPath.svelte', import.meta.url),
+    'utf8'
+  );
+
+  assert.match(controlRoute, /Managed AI Operations/);
+  assert.match(controlRoute, /from \$900 per month after launch/i);
+  assert.match(controlRoute, /No per-agent fees/);
+  assert.match(controlRoute, /AI usage.*(?:client|your) account/is);
+  assert.match(controlRoute, /New workflows and integrations.*Build/is);
+  assert.match(controlRoute, /75%.*capacity review/is);
+  assert.doesNotMatch(controlRoute, /Launch pricing pending/);
+
+  assert.match(servicesRoute, /Managed AI Operations/);
+  assert.match(servicesRoute, /From \$900\/month/);
+  assert.match(servicesRoute, /AI usage.*separately metered/is);
+  assert.doesNotMatch(servicesRoute, /Control includes Map; pricing configured at launch/);
+
+  assert.match(servicesPath, /Managed AI Operations/);
+  assert.match(servicesPath, /from \$900\/month/);
 });
 
 test('Map and Control checkout shapes stay inactive until approved Stripe prices exist', () => {

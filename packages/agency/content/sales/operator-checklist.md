@@ -1,4 +1,4 @@
-# Workflow Infrastructure Operator Checklist
+# Map, Build, and Control Operator Checklist
 
 **Purpose:** one internal checklist for running the full CREATE SOMETHING `.agency` workflow from discovery to release readiness
 
@@ -7,16 +7,16 @@
 ## 1. Before first contact
 
 - Review the client context and likely workflow category
-- Review [discovery-policy.md](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/sales/discovery-policy.md)
-- Review [discovery-runbook.md](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/sales/discovery-runbook.md)
-- Send or prepare [policy-os-buyer-brief-ops-revops.md](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/sales/policy-os-buyer-brief-ops-revops.md)
+- Review [discovery-policy.md](./discovery-policy.md)
+- Review [discovery-runbook.md](./discovery-runbook.md)
+- Send or prepare [control-buyer-brief-ops-revops.md](./control-buyer-brief-ops-revops.md)
 - Enter the call with a workflow hypothesis, not an integration prescription
 
 ---
 
 ## 2. Discovery call
 
-- Run [discovery-call-script.md](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/sales/discovery-call-script.md) as the branching guide
+- Run [discovery-call-script.md](./discovery-call-script.md) as the branching guide
 - Identify the business objective for the next 30 days
 - Identify the workflow candidate
 - Quantify current failure cost
@@ -29,7 +29,9 @@
   - `block`
 - Determine whether the correct route is:
   - `Workflow Mapping Session`
-  - `MCP-only wedge`
+  - `Build`
+  - `Control`
+  - `Custom operation`
   - `Park`
   - `Refer`
 
@@ -41,23 +43,25 @@ Exit rule:
 
 ## 3. Post-call capture
 
-- Complete [discovery-note-template.md](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/templates/sales/discovery-note-template.md)
-- Use [discovery-note-example.md](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/templates/sales/discovery-note-example.md) if specificity is weak
+- Complete [discovery-note-template.md](../templates/sales/discovery-note-template.md)
+- Use [discovery-note-example.md](../templates/sales/discovery-note-example.md) if specificity is weak
 - Confirm fit level: `high`, `medium`, or `low`
-- Confirm recommended package tier
+- Confirm recommended stage and managed operating boundary
 - Confirm whether Langfuse is relevant only as observability/evals
 
 ---
 
 ## 4. Commercial handoff
 
-- Complete [policy-os-proposal-input-template.md](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/templates/sales/policy-os-proposal-input-template.md)
-- Use [pricing-framework.md](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/templates/sales/pricing-framework.md) for pricing posture
-- Send [policy-os-follow-up-sequence.md](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/templates/sales/policy-os-follow-up-sequence.md) based on fit level
+- Complete [policy-os-proposal-input-template.md](../templates/sales/policy-os-proposal-input-template.md)
+- Use [pricing-framework.md](../templates/sales/pricing-framework.md) for the Managed AI Operations pricing posture
+- Confirm $900 per month is the standard-risk starting price, not a per-agent fee
+- Confirm AI usage owner, the 75% capacity-review trigger, and separately scoped Builds
+- Send [policy-os-follow-up-sequence.md](../templates/sales/policy-os-follow-up-sequence.md) based on fit level
 
 For high-fit work:
 
-- Send [workflow-mapping-session-agenda.md](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/templates/sales/workflow-mapping-session-agenda.md)
+- Send [workflow-mapping-session-agenda.md](../templates/sales/workflow-mapping-session-agenda.md)
 - Lock stakeholders, owner, and date
 
 ---

@@ -245,6 +245,24 @@ Changes to scope require a written Change Order specifying:
 - Impact on fees
 - Approval signatures
 
+### 5.5 Managed AI Operations (when included)
+
+After launch, Provider will operate the production environment identified in this SOW under the **Managed AI Operations** service boundary.
+
+| Commercial term | Agreement |
+|-----------------|-----------|
+| Managed production environment | {{MANAGED_PRODUCTION_ENVIRONMENT}} |
+| Monthly service fee | ${{MANAGED_OPERATIONS_MONTHLY_FEE}} (standard-risk service starts at $900 per month) |
+| AI usage billing owner | {{AI_USAGE_BILLING_OWNER}} |
+| Forecasted usage review threshold | 75% of agreed monthly coverage |
+| Response and review cadence | {{MANAGED_OPERATIONS_CADENCE}} |
+
+- No per-agent fee applies. Agent count is an implementation detail inside the agreed operating boundary.
+- AI usage remains client-funded or separately metered and reported.
+- Reaching the 75% forecast threshold triggers a capacity review, not an automatic charge.
+- New workflows, integrations, or material scope expansions require a written Build scope or Change Order.
+- Higher-risk, regulated, multi-environment, or priority-response operation requires custom commercial terms.
+
 ---
 
 ## 6. PROJECT TEAM

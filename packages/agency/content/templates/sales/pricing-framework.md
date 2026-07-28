@@ -1,512 +1,137 @@
-# Pricing Framework
+# Map, Build, and Control Pricing Framework
 
-**Purpose**: Consistent, confident pricing that reflects our value
-**Philosophy**: Price on value delivered, not hours spent
-
----
-
-## Recognition Patterns
-
-Pricing conversations can feel uncomfortable. Here's how to recognize common patterns and what serves both parties better.
-
-| You might feel | What's happening | What serves the conversation |
-|----------------|------------------|------------------------------|
-| Urge to discount | Wanting to close the deal | Exploring scope alternatives instead |
-| Defensive about rates | Feeling judged | Confidence in value delivered |
-| Rush to quote | Pressure to provide numbers | "Let me understand your situation first" |
-| Need to justify | Explaining every line item | Focusing on outcomes, not inputs |
+**Purpose:** Price outcomes and operating responsibility consistently.
+**Commercial descriptor:** Managed AI Operations
+**Principle:** Sell the managed operating boundary, not an agent count or a bundle of hours.
 
 ---
 
-## Philosophical Foundation
+## The buying path
 
-Pricing is a design decision. It follows the same [Subtractive Triad](/canon) that governs all CREATE SOMETHING work:
+### Map
 
-| Level | Pricing Application |
-|-------|---------------------|
-| **DRY** (Implementation) | Don't rebuild pricing logic each time—use this framework |
-| **Rams** (Artifact) | Every line item must earn its existence. No padding, no filler |
-| **Heidegger** (System) | Pricing must serve the client relationship, not just extract value |
+A fixed-scope Workflow Mapping Session defines the business objective, workflow boundary, systems, risks, approvals, and implementation recommendation.
 
-**The [Zuhandenheit](/canon/concepts/zuhandenheit) test**: When pricing is right, it recedes. The client sees investment and outcome, not a spreadsheet of hours and rates. The price becomes transparent—part of the decision, not the obstacle.
+- Price as a fixed project.
+- Set the price from complexity, stakeholder count, and uncertainty.
+- Do not promise Build or Control scope before the Map supports it.
 
-**Anti-pattern ([Gestell](/canon/concepts/gestell))**: Treating clients as "revenue to be optimized" rather than partners to serve. When pricing strategies optimize extraction over value, we've lost the plot.
+### Build
 
----
+A fixed-scope implementation delivers an approved workflow, its integrations, policy controls, acceptance criteria, and launch handoff.
 
-## Pricing Principles
+- Price each Build from scope and value, not hours.
+- New workflows and integrations are new Build scope.
+- Include a defined stabilization window before Managed AI Operations begins.
 
-### 1. Value-Based, Not Time-Based
+### Control
 
-We price based on the outcome we deliver, not the time it takes. A solution that saves $500K/year is worth more than the hours we spent building it.
+**Managed AI Operations starts at $900 per month after launch** for one standard-risk managed production environment.
 
-**Implication**: Never lead with hourly rates. Lead with deliverables and outcomes.
+The starting service includes:
 
-### 2. Premium Positioning
+- runtime health and outcome monitoring
+- incident triage and recovery guidance
+- policy and prompt tuning within the launched boundary
+- monthly operating and usage review
+- maintenance of approvals, escalation rules, and rollback guidance
+- the current Map of the operating environment
 
-We are not the cheapest option. We're the option that works. Our pricing reflects:
-- Deep expertise in AI integration
-- [Subtractive approach](/canon) (less code, better outcomes)
-- Partnership mindset (we care about your success)
-- Speed to value (we've solved this before)
+Control is an operating service, not prepaid development capacity. Agent count is not a billing unit. Hours are not the public value metric.
 
-**Implication**: If price is the primary objection, they may not be our client.
+## Standard-risk eligibility
 
-### 3. Transparency Over Negotiation
+Use the $900/month starting price when all of the following are true:
 
-We don't play pricing games. Our rates are what they are. We'd rather scope differently than discount our value.
+- one managed production environment
+- one launched workflow boundary or a tightly coupled workflow family
+- normal business-hours response expectations
+- no unusual regulatory or safety obligations
+- client provides timely access, approvals, and incident contacts
+- AI usage is client-funded or separately metered
 
-**Implication**: No hidden fees. No surprise invoices. No arbitrary discounting.
+Higher-risk, regulated, multi-environment, high-volume, or priority-response operations require custom scope and pricing.
 
----
+## AI usage and capacity
 
-## Service Tiers
+AI usage is not hidden inside an “unlimited agent” promise.
 
-### Workflow Mapping Session
+- Prefer the client's model-provider account when practical.
+- Otherwise meter AI usage separately and report it transparently.
+- Define monthly coverage and expected workload at launch.
+- When forecasted usage reaches 75% of that coverage, open a capacity review.
+- A capacity review is not an automatic charge or forced upgrade.
+- Any price or scope change requires explicit agreement.
 
-**Purpose**: Map one workflow, define its trust boundary, and de-risk implementation
-**Duration**: 1-2 weeks
-**Deliverable**: Pilot scope, policy boundary, implementation roadmap, and fixed-price recommendation
+The review should examine demand, model selection, caching, workflow efficiency, latency, and risk before recommending a change.
 
-| Complexity | Price | When to Use |
-|------------|-------|-------------|
-| Focused | $5,000 | Single workflow, clear problem |
-| Standard | $10,000 | Multiple workflows, needs investigation |
-| Complex | $15,000 | Enterprise, multiple stakeholders, ambiguity |
+## What changes the Control price
 
-**Includes**:
-- Stakeholder interviews (up to 5)
-- Technical assessment
-- Workflow mapping
-- Policy-boundary definition (`auto-allow`, `approval-required`, `block`)
-- Solution architecture
-- 30-day implementation roadmap
-- Fixed-price estimate for next phase
+Price the operating responsibility and service level. Relevant factors include:
 
-**Value Proposition**: "Spend $10K to define one workflow clearly enough to implement it with the right trust boundary and no ambiguity about next steps."
+- number and criticality of managed environments
+- workflow risk and reversibility
+- required response window and on-call coverage
+- regulatory, privacy, and audit obligations
+- integration volatility and external dependencies
+- expected volume and model-cost exposure
+- reporting and stakeholder cadence
 
----
+Do not price from:
 
-### Pilot Project
+- number of named agents
+- prompt count
+- internal tool count by itself
+- a monthly bucket of engineering hours
 
-**Purpose**: Prove value with a focused implementation
-**Duration**: 4-8 weeks
-**Deliverable**: Working solution for a defined scope
+## Scope changes
 
-| Scope | Price Range | Typical Use Case |
-|-------|-------------|------------------|
-| Single workflow | $25,000 - $40,000 | One AI-powered process |
-| Multi-workflow | $40,000 - $75,000 | Connected processes |
-| Platform feature | $50,000 - $100,000 | User-facing AI capability |
+Included maintenance keeps the launched workflow dependable inside its accepted boundary. A separate Build is required for:
 
-**Includes**:
-- Design and architecture
-- Implementation
-- Testing and QA
-- Documentation
-- 30-day post-launch support
-- Knowledge transfer session
+- a new workflow or business outcome
+- a new system integration
+- a material permissions or data-boundary change
+- new user-facing product behavior
+- a new production environment
 
-**Value Proposition**: "Prove ROI before committing to a larger engagement."
+Small repairs, policy tuning, prompt tuning, and incident response inside the accepted boundary remain Control work.
 
----
+## Proposal language
 
-### Full Implementation
+Use:
 
-**Purpose**: Complete solution build-out
-**Duration**: 2-4 months
-**Deliverable**: Production-ready system
+> After launch, Managed AI Operations starts at $900 per month for one standard-risk managed production environment. There are no per-agent fees. AI usage stays in your account when practical or is separately metered and reported. At 75% of forecasted monthly coverage, we schedule a capacity review—not an automatic charge. New workflows and integrations are scoped separately through Build.
 
-| Scale | Price Range | Typical Use Case |
-|-------|-------------|------------------|
-| Department | $75,000 - $125,000 | Single team/function |
-| Cross-functional | $125,000 - $200,000 | Multiple teams |
-| Enterprise | $200,000 - $350,000 | Organization-wide |
-
-**Includes**:
-- Everything in Pilot, plus:
-- Full production deployment
-- Integration with existing systems
-- User training
-- 90-day post-launch support
-- Performance optimization
+Avoid:
 
-**Value Proposition**: "A complete solution that your team can own and extend."
-
----
+- “AI employee for $900”
+- “unlimited agents”
+- “unlimited tokens”
+- “dedicated team member” unless staffing is contractually true
+- presenting the 75% threshold as an overage or billing trigger
 
-### Ongoing Partnership
-
-**Purpose**: Continuous improvement and support
-**Duration**: 6+ months
-**Deliverable**: Retained capacity + defined outcomes
-
-| Level | Monthly Retainer | Hours/Month | Best For |
-|-------|------------------|-------------|----------|
-| Advisory | $5,000 | 10-15 | Strategic guidance, architecture reviews |
-| Active | $15,000 | 40-50 | Ongoing development, optimization |
-| Embedded | $25,000 | 80+ | Dedicated team member, major initiatives |
-
-**Includes**:
-- Priority response (24-48 hours)
-- Monthly strategy session
-- Quarterly roadmap review
-- Rollover unused hours (up to 1 month)
-
-**Value Proposition**: "AI capability without full-time headcount."
+## Objection handling
 
----
+### “How many agents do we get?”
 
-## Pricing Models
+> Agent count is not a billing unit. We manage the agreed production outcome and environment; the implementation may use one agent or several.
 
-### Fixed Price (Preferred)
-
-**When to Use**:
-- Scope is well-defined
-- After discovery phase
-- Clear deliverables and success criteria
+### “Are tokens included?”
 
-**Structure**:
-```
-Total: $X
-- 30% on contract signing
-- 30% at midpoint milestone
-- 40% on delivery/acceptance
-```
-
-**Advantages**:
-- Client knows total cost upfront
-- Incentivizes efficiency
-- Aligns interests (deliver value, not hours)
+> AI usage remains visible in your provider account when practical or is separately metered. The service fee covers operation, governance, and response—not unlimited model consumption.
 
----
+### “Why $900 per month?”
 
-### Time & Materials (T&M)
+> It is the starting price for accountable operation of a standard-risk production environment after launch: monitoring, incident triage, tuning, review, and maintained controls. More demanding risk or response requirements are scoped separately.
 
-**When to Use**:
-- Scope is unclear or evolving
-- Research/exploration phase
-- Ongoing support work
+### “Can you add another workflow?”
 
-**Structure**:
-```
-Rate: $X/hour
-- Weekly time reports
-- Not-to-exceed cap (optional)
-- Monthly invoicing
-```
+> Yes. We scope it through Build so its outcome, permissions, risk, and acceptance criteria are explicit. After launch, we can bring it under Control.
 
-**Rates**:
-| Role | Rate |
-|------|------|
-| Senior Engineer | $200/hour |
-| Architect | $250/hour |
-| Principal/Lead | $300/hour |
+## Approval rules
 
-**When NOT to Use**: New client relationships. Always start with fixed price to build trust.
-
----
-
-### Retainer
-
-**When to Use**:
-- Ongoing relationship
-- Predictable capacity needs
-- Support + development mix
-
-**Structure**:
-```
-Monthly: $X
-- Includes Y hours
-- Additional hours at Z rate
-- 30-day notice to cancel
-```
-
-**Discount**: Retainer rates are 10-15% below T&M rates (volume commitment).
-
----
-
-### Value-Based / Gain Share
-
-**When to Use**:
-- Clear, measurable outcome
-- High-value opportunity
-- Strong trust relationship
-
-**Structure**:
-```
-Base: $X (reduced fixed fee)
-+ Y% of measured value created
-- Measured over Z months
-- Cap at $W total
-```
-
-**Example**:
-- Base: $50,000 (vs. $100,000 fixed)
-- Plus: 10% of documented cost savings
-- Measured over: 12 months
-- Cap: $200,000 total
-
-**Caution**: Only use when measurement is clear and client will share data.
-
----
-
-## Scoping Guidelines
-
-### Discovery Inputs → Pilot Scope
-
-| Discovery Finding | Scope Implication |
-|-------------------|-------------------|
-| Single clear workflow | Smaller pilot ($25-40K) |
-| Multiple interconnected processes | Larger pilot ($50-75K) |
-| Data quality issues | Add data cleanup phase |
-| Integration complexity | Add integration buffer |
-| Change management needs | Add training component |
-
-### Estimation Formula
-
-```
-Base estimate
-+ 20% for unknowns (first engagement)
-+ 10% for integration complexity
-+ 10% for enterprise environment
-= Quoted price
-```
-
-**Never**: Estimate without discovery. "Ballpark" becomes the ceiling.
-
----
-
-## Quoting Process
-
-### Step 1: Discovery Conversation
-
-- Understand the problem (not the solution they want)
-- Identify stakeholders and decision process
-- Assess technical complexity
-- Gauge budget expectations
-
-### Step 2: Internal Scoping
-
-- Break down into work streams
-- Estimate each stream
-- Identify risks and dependencies
-- Apply estimation formula
-
-### Step 3: Proposal Development
-
-- Executive summary (problem → solution → outcome)
-- Scope definition (what's included, what's not)
-- Timeline with milestones
-- Investment (not "cost") and payment terms
-- Team and approach
-- Why us (differentiators)
-
-### Step 4: Proposal Presentation
-
-- Walk through in person/video (never just email)
-- Focus on value and outcomes
-- Address questions and concerns
-- Discuss next steps
-
----
-
-## Discounting Guidelines
-
-### When Discounting is Acceptable
-
-| Reason | Max Discount | Condition |
-|--------|--------------|-----------|
-| Multi-phase commitment | 10% | Signed contract for all phases |
-| Case study rights | 5-10% | Named reference, logo, detailed story |
-| Strategic account | 10% | Opens new market/vertical |
-| Referral partner | 10% | Ongoing referral relationship |
-| Non-profit | 15-20% | Verified 501(c)(3) |
-
-### When NOT to Discount
-
-- "Can you match competitor's price?" → We're different, not cheaper
-- "We only have $X budget" → Scope down, don't discount
-- "Give us a deal and we'll give you more work" → Show me the contract
-- Pressure tactics / end-of-quarter urgency → Our price is our price
-
-### Alternative to Discounting
-
-| Instead of... | Offer... |
-|---------------|----------|
-| 20% off | Remove a feature/phase |
-| Lower rate | Longer timeline (less intensity) |
-| Free work | Paid pilot at reduced scope |
-| Matching competitor | Different scope comparison |
-
-**Script**:
-```
-"I can't discount our rates—they reflect our expertise and what it takes to deliver quality work.
-
-What I can do is look at the scope. If we need to fit a budget, let's find the highest-value subset we can deliver well."
-```
-
----
-
-## Payment Terms
-
-### Standard Terms
-
-| Engagement Type | Payment Structure |
-|-----------------|-------------------|
-| Discovery | 100% upfront |
-| Pilot (<$50K) | 50% upfront, 50% on delivery |
-| Implementation | 30/30/40 (signing/milestone/delivery) |
-| Retainer | Monthly in advance |
-| T&M | Net 15 from invoice |
-
-### Late Payment
-
-- Net 30 standard
-- 1.5%/month on overdue amounts
-- Work pauses after 45 days overdue
-- Collections at 90 days
-
-### Expenses
-
-- Travel: Billed at cost, pre-approved over $500
-- Software/tools: Included in project price
-- Third-party services: Pass-through at cost
-
----
-
-## Rate Card Reference
-
-Internal reference only. Never share directly with clients.
-
-### Hourly Rates (T&M)
-
-| Role | Standard | Discounted (Retainer) |
-|------|----------|----------------------|
-| Junior Engineer | $150/hr | $130/hr |
-| Senior Engineer | $200/hr | $175/hr |
-| Staff/Architect | $250/hr | $220/hr |
-| Principal/Lead | $300/hr | $265/hr |
-
-### Day Rates
-
-| Role | Standard | Discounted |
-|------|----------|------------|
-| Senior Engineer | $1,500/day | $1,300/day |
-| Architect | $2,000/day | $1,750/day |
-| Principal | $2,400/day | $2,100/day |
-
-### Blended Rate
-
-For fixed-price estimation:
-- Standard projects: $225/hour blended
-- Complex projects: $250/hour blended
-
----
-
-## Pricing Scenarios
-
-### Scenario 1: "What's your hourly rate?"
-
-**Response**:
-```
-"We price based on deliverables, not hours. It keeps us focused on outcomes.
-
-For context, our work typically ranges from $25K for a focused pilot to $150K+ for full implementations. What's the scope you're thinking about?"
-```
-
-### Scenario 2: "That's more than we budgeted"
-
-**Response**:
-```
-"What was the budget you had in mind?"
-
-[If reasonable gap]: "Let's look at what we can deliver within that. What's the most important outcome?"
-
-[If large gap]: "We may not be the right fit. Our approach requires a certain investment level to do well. I can recommend some alternatives if helpful."
-```
-
-### Scenario 3: "Can you do it for $X?"
-
-**Response**:
-```
-"That budget could work for a different scope. Let me show you what we could deliver for $X versus what the full solution would look like at $Y.
-
-Which outcome is more valuable to you?"
-```
-
-### Scenario 4: "We're comparing you to [cheaper competitor]"
-
-**Response**:
-```
-"That's fair—you should understand your options.
-
-The question is: what's the cost of getting this wrong? Our clients typically come to us after a cheaper attempt didn't work. We'd rather do it right the first time.
-
-What matters more to you: the initial price or the final outcome?"
-```
-
----
-
-## When to Walk Away
-
-### Price-Based Walk-Aways
-
-- Budget is <50% of minimum viable scope
-- They want to negotiate on principle, not need
-- Payment terms are unacceptable (net 90, contingent on their funding, etc.)
-- They're comparing you to offshore/body-shop pricing
-
-### Warning Signs
-
-| Signal | What It Means |
-|--------|---------------|
-| "We just need a few hours" | Don't understand scope |
-| "Our last agency charged $X" | Anchored to wrong comparisons |
-| "Can you break down hours?" | Will nickel-and-dime every invoice |
-| "Price is the main factor" | Commodity buyer |
-
-### Walk-Away Script
-
-```
-"Based on what we've discussed, I don't think we're the right fit for this project.
-
-Our approach requires a certain investment level to deliver the quality we're known for. At the budget you've described, I wouldn't be able to do our best work.
-
-I'd be happy to recommend some alternatives that might be better suited."
-```
-
-**Remember**: A bad-fit client at a low price costs more than no client.
-
----
-
-## Pricing Review Cadence
-
-- **Quarterly**: Review rate card against market
-- **Annually**: Adjust rates (typically 5-10% increase)
-- **Per-project**: Post-mortem on margin and estimate accuracy
-
----
-
-## Quick Reference
-
-**Default Responses**:
-
-| Question | Answer |
-|----------|--------|
-| "Hourly rate?" | "We price on deliverables. Typically $25K-$150K depending on scope." |
-| "Ballpark?" | "After a discovery conversation, I can give you a range." |
-| "Discount?" | "Our rates are firm, but we can adjust scope." |
-| "Cheaper option?" | "We can scope down. What's the core outcome you need?" |
-
-**Minimum Engagements**:
-- Discovery: $5,000
-- Pilot: $25,000
-- Implementation: $75,000
-- Retainer: $5,000/month
-
-**Walk-Away Thresholds**:
-- Below minimums with no path to grow
-- >30% discount requested
-- Payment terms beyond Net 30
-- Scope-to-budget ratio impossible
+- Do not discount the Control fee by silently reducing the operating standard.
+- Adjust scope or service level explicitly.
+- Do not activate checkout or publish an exact custom price before commercial approval.
+- Document the managed production environment, usage billing owner, response expectation, exclusions, and expansion path in every SOW.
+- Review pricing quarterly against delivery evidence, margin, workload, and customer outcomes.

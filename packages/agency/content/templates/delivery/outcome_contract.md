@@ -20,6 +20,16 @@
 - Delivery Vector (Technical): `MCP + Skills`
 - Primary Interface: `Codex` (portable artifacts required)
 
+### Managed AI Operations boundary
+
+- Managed production environment: `<environment-name>`
+- Managed AI Operations starts at `$900 per month` for standard-risk operation after launch.
+- Agent count is not metered.
+- AI usage remains client-funded or separately metered.
+- At 75% of forecasted monthly coverage, open a capacity review; do not apply an automatic charge.
+- New workflows and integrations require a separately scoped Build.
+- Higher-risk, regulated, multi-environment, and priority-response operation requires custom scope.
+
 ## 2) Target Workflows
 List the workflows that must improve.
 
