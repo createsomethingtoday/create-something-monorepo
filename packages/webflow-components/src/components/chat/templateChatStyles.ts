@@ -101,12 +101,19 @@ export const CHAT_STYLES = `
 .tmchat-header-actions { display: flex; align-items: center; gap: 2px; }
 .tmchat-iconbtn {
   border: 0; background: transparent; cursor: pointer; color: #404040;
-  width: 30px; height: 30px; border-radius: 8px; font-size: 16px; line-height: 1;
+  width: 34px; height: 34px; border-radius: 8px; font-size: 16px; line-height: 1;
   display: inline-flex; align-items: center; justify-content: center;
   transition: background 120ms ease;
 }
 .tmchat-iconbtn:hover { background: #ececec; }
 .tmchat-iconbtn:active { background: #e0e0e0; }
+/* Armed two-step confirm: swaps the icon for the label, so it needs real width. */
+.tmchat-newchat.armed {
+  width: auto; padding: 0 10px;
+  background: #f2f7ff; color: #0f5cd0;
+  font-size: 12px; font-weight: 600; white-space: nowrap;
+}
+.tmchat-newchat.armed:hover { background: #e3edfd; }
 .tmchat-scroll {
   flex: 1 1 auto; overflow-y: auto; padding: 16px;
   display: flex; flex-direction: column; gap: 12px;
@@ -125,6 +132,14 @@ export const CHAT_STYLES = `
 }
 @keyframes tmchat-card { from { opacity: 0; transform: translateY(10px) scale(0.98); } to { opacity: 1; transform: none; } }
 .tmchat-msg { max-width: 92%; white-space: pre-wrap; overflow-wrap: break-word; }
+/* Agent identity inside assistant bubbles: glyph + surface title, quiet enough
+   to repeat per turn without reading as chrome spam. */
+.tmchat-eyebrow {
+  display: flex; align-items: center; gap: 5px;
+  margin-bottom: 3px;
+  color: #757575; font-size: 11px; font-weight: 600; letter-spacing: 0.01em;
+  white-space: normal;
+}
 .tmchat-panel.immersive .tmchat-msg { max-width: 680px; font-size: 15px; }
 .tmchat-msg.user { align-self: flex-end; background: var(--tmchat-accent, #146ef5); color: #fff; padding: 9px 13px; border-radius: 14px 14px 4px 14px; }
 .tmchat-msg.assistant { align-self: flex-start; background: #f5f5f5; padding: 9px 13px; border-radius: 14px 14px 14px 4px; }
@@ -212,12 +227,18 @@ export const CHAT_STYLES = `
   margin: 10px 0 0 37px; padding-top: 9px; border-top: 1px solid #ececec;
   color: #5b5b5b; font-size: 11px; font-weight: 600;
 }
-.tmchat-progress-preview { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; margin-top: 12px; }
+/* Skeletons mirror the result grid they stand in for: two portrait cards
+   docked, three across on wide surfaces — the geometry stays put when the
+   real cards land instead of jumping from landscape boxes to tall cards. */
+.tmchat-progress-preview { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
 .tmchat-progress-skeleton-card {
-  height: 42px; border-radius: 7px;
+  aspect-ratio: 150 / 199; border-radius: 7px;
   background: linear-gradient(100deg, #ececec 20%, #f5f5f5 40%, #ececec 60%);
   background-size: 200% 100%; animation: tmchat-progress-shimmer 1.4s linear infinite;
 }
+.tmchat-progress-skeleton-card:nth-child(3) { display: none; }
+.tmchat-panel.immersive .tmchat-progress-preview { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.tmchat-panel.immersive .tmchat-progress-skeleton-card:nth-child(3) { display: block; }
 @keyframes tmchat-progress-shimmer { to { background-position-x: -200%; } }
 .tmchat-dots { display: inline-flex; gap: 3px; }
 .tmchat-dots span {
@@ -255,7 +276,11 @@ export const CHAT_STYLES = `
   border: 1px solid #e0e0e0; border-radius: 8px; font: inherit; resize: none; overflow-y: auto;
 }
 .tmchat-inputfield { flex: 1 1 auto; min-width: 0; }
-.tmchat-inputmeta { margin: 4px 2px 0; color: #757575; font-size: 11px; line-height: 1.25; }
+.tmchat-inputmeta {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  margin: 4px 2px 0; color: #757575; font-size: 11px; line-height: 1.25;
+}
+.tmchat-inputcount { flex: 0 0 auto; margin-left: auto; }
 .tmchat-send {
   border: 0; border-radius: 8px; background: var(--tmchat-accent, #146ef5); color: #fff;
   padding: 0 16px; font: inherit; font-weight: 600; cursor: pointer; align-self: flex-end; min-height: 40px;
@@ -263,10 +288,19 @@ export const CHAT_STYLES = `
 }
 .tmchat-send:active:not(:disabled) { transform: scale(0.97); }
 .tmchat-send:disabled { background: #ececec; color: #5b5b5b; cursor: default; }
-.tmchat-send.stop { background: #fff; color: #404040; border: 1px solid #e0e0e0; }
-.tmchat-send.stop:hover { background: #f5f5f5; }
+.tmchat-send.stop {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: #fff; color: #404040; border: 1px solid #c5c5c5;
+}
+.tmchat-send.stop:hover { background: #f5f5f5; border-color: #ababab; }
 /* ── Live template preview (published .webflow.io site in an iframe) ── */
-.tmchat-body { position: relative; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+/* container-type: lets the preview toolbar shed device labels when the panel
+   (not the viewport) is narrow — docked 440px panels get icon-only toggles. */
+.tmchat-body { position: relative; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; container-type: inline-size; }
+@container (max-width: 700px) {
+  .tmchat-devicebtn-label { display: none; }
+  .tmchat-devicebtn { padding: 0 9px; }
+}
 .tmchat-preview {
   position: absolute; inset: 0; z-index: 4;
   display: flex; flex-direction: column; background: #fff;
@@ -353,8 +387,18 @@ export const CHAT_STYLES = `
     flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-inline: contain;
     scroll-snap-type: x proximity; padding-bottom: 4px;
     -webkit-overflow-scrolling: touch;
+    /* Right-edge fade: the clipped row reads as scrollable instead of cut off. */
+    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent);
+    mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent);
   }
   .tmchat-followups > * { flex: 0 0 auto; scroll-snap-align: start; }
+  .tmchat-grid:not(.single) {
+    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent);
+    mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent);
+  }
+  /* Touch keyboards have no Enter key to discover — spend the row on the limit. */
+  .tmchat-inputhint { display: none; }
+  .tmchat-inputmeta { justify-content: flex-end; }
   .tmchat-preview-bar, .tmchat-panel.immersive .tmchat-preview-bar { flex-wrap: nowrap; gap: 8px; padding: 8px 10px; }
   .tmchat-preview-back, .tmchat-preview-cta { height: 40px; }
   .tmchat-devicetoggle, .tmchat-preview-open, .tmchat-preview-sep { display: none; }

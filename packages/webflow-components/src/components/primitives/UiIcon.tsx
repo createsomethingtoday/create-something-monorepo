@@ -12,8 +12,11 @@ export type UiIconName =
   | 'minimize-2'
   | 'monitor'
   | 'refresh-cw'
+  | 'rotate-ccw'
   | 'smartphone'
   | 'sparkles'
+  | 'square'
+  | 'square-pen'
   | 'star'
   | 'tablet'
   | 'x';
@@ -91,6 +94,12 @@ const ICON_PATHS: Record<UiIconName, React.ReactNode> = {
       <path d="M21 21v-5h-5" />
     </>
   ),
+  'rotate-ccw': (
+    <>
+      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+      <path d="M3 3v5h5" />
+    </>
+  ),
   smartphone: (
     <>
       <rect x="7" y="2" width="10" height="20" rx="2" />
@@ -107,6 +116,14 @@ const ICON_PATHS: Record<UiIconName, React.ReactNode> = {
     </>
   ),
   star: <path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z" />,
+  // Filled stop glyph: sits inside the stroke set, so it overrides fill/stroke locally.
+  square: <rect x="7" y="7" width="10" height="10" rx="1.5" fill="currentColor" stroke="none" />,
+  'square-pen': (
+    <>
+      <path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+      <path d="M18.375 2.625a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4Z" />
+    </>
+  ),
   tablet: (
     <>
       <rect x="4" y="2" width="16" height="20" rx="2" />

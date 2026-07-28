@@ -222,7 +222,9 @@ export function AgentProgress({
       </ol>
       {view.receipt ? <div className="tmchat-progress-receipt">{view.receipt}</div> : null}
       <div className="tmchat-progress-preview" aria-hidden="true">
-        {steps.map((label) => <span key={label} className="tmchat-progress-skeleton-card" />)}
+        {/* Three spans; CSS shows two docked and all three on wide surfaces,
+            matching the result grid's card geometry. */}
+        {[0, 1, 2].map((index) => <span key={index} className="tmchat-progress-skeleton-card" />)}
       </div>
     </div>
   );

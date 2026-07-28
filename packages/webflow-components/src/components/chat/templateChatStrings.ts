@@ -7,6 +7,7 @@
 export interface TemplateChatStrings {
   /** Header controls. */
   newChat: string;
+  newChatConfirm: string;
   expand: string;
   exitFullscreen: string;
   closeChat: string;
@@ -17,6 +18,7 @@ export interface TemplateChatStrings {
   tryAgain: string;
   refineResults: string;
   composerLabel: string;
+  composerHint: string;
   characterLimit: (used: string, limit: string) => string;
 
   /** Result sets. */
@@ -64,6 +66,7 @@ export interface TemplateChatStrings {
 
 export const DEFAULT_TEMPLATE_CHAT_STRINGS: TemplateChatStrings = {
   newChat: 'New chat',
+  newChatConfirm: 'Start over?',
   expand: 'Expand to fullscreen',
   exitFullscreen: 'Exit fullscreen',
   closeChat: 'Close chat',
@@ -73,6 +76,7 @@ export const DEFAULT_TEMPLATE_CHAT_STRINGS: TemplateChatStrings = {
   tryAgain: 'Try again',
   refineResults: 'Refine these results',
   composerLabel: 'Describe the site you want to build',
+  composerHint: 'Enter to send · Shift+Enter for a new line',
   characterLimit: (used, limit) => `${used} / ${limit} character limit`,
 
   priceFree: 'Free',
@@ -115,10 +119,10 @@ export const DEFAULT_TEMPLATE_CHAT_STRINGS: TemplateChatStrings = {
   receiptFreeOnly: 'Free only',
   receiptSortedBy: (sort) => `Sorted by ${sort}`,
   receiptHighlights: (count) =>
-    count === 1 ? 'Highlight requested' : `${count} highlights requested`,
-  receiptPageUpdate: (details) => `Page update requested · ${details}`,
-  receiptFilterReset: 'Page filter reset requested',
-  receiptSearchUpdate: 'Page search update requested',
+    count === 1 ? '1 template highlighted on the page' : `${count} templates highlighted on the page`,
+  receiptPageUpdate: (details) => `Page updated · ${details}`,
+  receiptFilterReset: 'Page filters reset',
+  receiptSearchUpdate: 'Page search updated',
   undoPageUpdate: 'Undo page update',
 
   backToChat: 'Back to chat',
