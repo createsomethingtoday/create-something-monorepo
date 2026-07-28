@@ -9,7 +9,7 @@
   const pageDescription =
     'Start or continue a guided Abundance nurse staffing application with role, shift, location, timing, and verification handled in one thread.';
   const pagePath = '/apply';
-  const pageImage = absoluteUrl('/abundance/hero-handoff.png');
+  const pageImage = absoluteUrl('/abundance/hero-home-2026.webp');
 
   let creatingThread = false;
   let actionError = '';

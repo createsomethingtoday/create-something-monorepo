@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { staffingCareCards } from '$lib/site/abundance';
+  import { publicHeroVisuals } from '$lib/site/abundance';
   import '$lib/site/public-page.css';
   import { absoluteUrl, breadcrumbJsonLd, jsonLdScript, serviceJsonLd } from '$lib/site/seo';
 
@@ -7,8 +7,8 @@
   const pageDescription =
     'Nurse staffing support for facilities that need reliable coverage, clearer fit, and recruiter-reviewed placement support.';
   const pagePath = '/facilities';
-  const facilityVisual = staffingCareCards[1];
-  const pageImage = absoluteUrl(facilityVisual.image);
+  const pageVisual = publicHeroVisuals.facilities;
+  const pageImage = absoluteUrl(pageVisual.src);
   const facilityBenefits = [
     {
       label: '1',
@@ -93,10 +93,7 @@
 
       <div class="public-visual" aria-label="Facility staffing request preview">
         <div class="public-visual-frame">
-          <img
-            src={facilityVisual.image}
-            alt="Healthcare staffing coordinator reviewing a coverage request"
-          />
+          <img src={pageVisual.src} alt={pageVisual.alt} />
         </div>
         <div class="public-visual-note">
           <div class="public-visual-note-head">

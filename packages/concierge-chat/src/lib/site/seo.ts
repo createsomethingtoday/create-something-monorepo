@@ -3,7 +3,7 @@ export const abundanceSite = {
 	url: 'https://abundance-concierge-chat.pages.dev',
 	description:
 		'Guided nurse applications, facility coverage requests, public nursing jobs, and recruiter-reviewed staffing handoffs.',
-	image: '/abundance/hero-handoff.png'
+	image: '/abundance/hero-home-2026.webp'
 };
 
 interface FaqEntry {

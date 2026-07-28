@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { heroVisual } from '$lib/site/abundance';
+  import { publicHeroVisuals } from '$lib/site/abundance';
   import '$lib/site/public-page.css';
   import {
     absoluteUrl,
@@ -17,7 +17,8 @@
   const pageDescription =
     'Preview 20 open nursing jobs from the Abundance public jobs database, then start a guided nurse staffing application for recruiter review.';
   const pagePath = '/jobs';
-  const pageImage = absoluteUrl(heroVisual.src);
+  const pageVisual = publicHeroVisuals.jobs;
+  const pageImage = absoluteUrl(pageVisual.src);
   const structuredData = jsonLdScript([
     serviceJsonLd({
       name: 'Public nursing job discovery',
@@ -83,7 +84,7 @@
 
       <div class="public-visual" aria-label="Abundance jobs database preview">
         <div class="public-visual-frame">
-          <img src={heroVisual.src} alt={heroVisual.alt} />
+          <img src={pageVisual.src} alt={pageVisual.alt} />
         </div>
         <div class="public-database-panel">
           <span class="public-mini-label">Database preview</span>
