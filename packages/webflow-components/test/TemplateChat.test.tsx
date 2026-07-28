@@ -9,6 +9,7 @@ import {
   buildMessageSentAnalytics,
   getAgentOutcomeReceipt,
   getAgentProgressView,
+  getAgentProgressVisibility,
   getPreviewReturnImmersive,
   getTemplateChatStorageKey,
   limitTemplateChatInput,
@@ -219,6 +220,35 @@ test('agent progress renders an accessible four-stage work surface with loading 
   // Three skeleton spans ship; CSS shows two docked and three on wide surfaces,
   // in the portrait card geometry of the result grid they stand in for.
   assert.equal((html.match(/tmchat-progress-skeleton-card/g) ?? []).length, 3);
+});
+
+test('loading surface yields to streamed content instead of coexisting with it', () => {
+  // Idle: nothing to show regardless of content.
+  assert.deepEqual(
+    getAgentProgressVisibility({ streaming: false, turnHasContent: false, turnHasDisplays: false }),
+    { showProgress: false, hideSkeletons: false },
+  );
+  // Working, no content yet: full progress card with skeleton preview.
+  assert.deepEqual(
+    getAgentProgressVisibility({ streaming: true, turnHasContent: false, turnHasDisplays: false }),
+    { showProgress: true, hideSkeletons: false },
+  );
+  // Response text is streaming: narration stays, placeholder cards retire.
+  assert.deepEqual(
+    getAgentProgressVisibility({ streaming: true, turnHasContent: true, turnHasDisplays: false }),
+    { showProgress: true, hideSkeletons: true },
+  );
+  // Real cards are on screen: the whole loading surface retires.
+  assert.deepEqual(
+    getAgentProgressVisibility({ streaming: true, turnHasContent: true, turnHasDisplays: true }),
+    { showProgress: false, hideSkeletons: true },
+  );
+
+  const progress = reduceAgentProgress(createAgentProgressState(), { type: 'connected' });
+  const withSkeletons = renderToStaticMarkup(<AgentProgress progress={progress} />);
+  assert.match(withSkeletons, /tmchat-progress-preview/);
+  const hidden = renderToStaticMarkup(<AgentProgress progress={progress} hideSkeletons />);
+  assert.equal(hidden.includes('tmchat-progress-preview'), false);
 });
 
 test('agent progress uses Webflow-neutral surfaces with blue reserved for current state', () => {

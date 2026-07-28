@@ -181,12 +181,31 @@ export function getAgentOutcomeReceipt(
   return [result, receipt].filter(Boolean).join(' · ');
 }
 
+/**
+ * The loading surface yields to the content it stands in for: once the turn has
+ * displays on screen the whole progress card retires (real cards are the
+ * presentation), and once any text or display has landed the skeleton preview
+ * retires — placeholders must never coexist with the response they preview.
+ */
+export function getAgentProgressVisibility(options: {
+  streaming: boolean;
+  turnHasContent: boolean;
+  turnHasDisplays: boolean;
+}): { showProgress: boolean; hideSkeletons: boolean } {
+  return {
+    showProgress: options.streaming && !options.turnHasDisplays,
+    hideSkeletons: options.turnHasContent,
+  };
+}
+
 export function AgentProgress({
   progress,
   strings = DEFAULT_TEMPLATE_CHAT_STRINGS,
+  hideSkeletons = false,
 }: {
   progress: AgentProgressState;
   strings?: TemplateChatStrings;
+  hideSkeletons?: boolean;
 }): React.ReactElement {
   const view = getAgentProgressView(progress, strings);
   const steps = strings.progressSteps;
@@ -221,11 +240,13 @@ export function AgentProgress({
         })}
       </ol>
       {view.receipt ? <div className="tmchat-progress-receipt">{view.receipt}</div> : null}
-      <div className="tmchat-progress-preview" aria-hidden="true">
-        {/* Three spans; CSS shows two docked and all three on wide surfaces,
-            matching the result grid's card geometry. */}
-        {[0, 1, 2].map((index) => <span key={index} className="tmchat-progress-skeleton-card" />)}
-      </div>
+      {!hideSkeletons ? (
+        <div className="tmchat-progress-preview" aria-hidden="true">
+          {/* Three spans; CSS shows two docked and all three on wide surfaces,
+              matching the result grid's card geometry. */}
+          {[0, 1, 2].map((index) => <span key={index} className="tmchat-progress-skeleton-card" />)}
+        </div>
+      ) : null}
     </div>
   );
 }

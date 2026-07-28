@@ -26,6 +26,7 @@ import {
   AgentProgress,
   createAgentProgressState,
   getAgentOutcomeReceipt,
+  getAgentProgressVisibility,
   reduceAgentProgress,
   type AgentProgressEvent,
   type AgentProgressState,
@@ -92,6 +93,7 @@ export {
   createAgentProgressState,
   getAgentOutcomeReceipt,
   getAgentProgressView,
+  getAgentProgressVisibility,
   reduceAgentProgress,
   summarizePageAction,
 } from './templateChatProgress';
@@ -1215,6 +1217,15 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   const showRetry = !streaming && retryText !== null;
   const hasDisplayedResults = messages.some((message) => message.displays.length > 0);
   const lastIndex = messages.length - 1;
+  // The in-flight turn is always the appended last assistant message; the
+  // loading surface keys off what that turn has already put on screen.
+  const lastMessage = messages[lastIndex];
+  const inFlightAssistant = lastMessage?.role === 'assistant' ? lastMessage : null;
+  const turnHasDisplays = Boolean(inFlightAssistant && inFlightAssistant.displays.length > 0);
+  const turnHasContent = Boolean(
+    inFlightAssistant && (inFlightAssistant.content.trim() || turnHasDisplays),
+  );
+  const progressVisibility = getAgentProgressVisibility({ streaming, turnHasContent, turnHasDisplays });
   const latestAssistant = messages.slice().reverse().find((message) => message.role === 'assistant');
   const turnReceipt = getAgentOutcomeReceipt(turnProgress, strings);
   const outcomeAnnouncement = !streaming && turnReceipt
@@ -1365,8 +1376,12 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
               {outcomeAnnouncement}
             </div>
           ) : null}
-          {streaming ? (
-            <AgentProgress progress={turnProgress} strings={strings} />
+          {progressVisibility.showProgress ? (
+            <AgentProgress
+              progress={turnProgress}
+              strings={strings}
+              hideSkeletons={progressVisibility.hideSkeletons}
+            />
           ) : null}
           {!streaming && turnReceipt ? (
             <div className="tmchat-turn-row">

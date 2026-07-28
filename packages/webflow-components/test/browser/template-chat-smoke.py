@@ -113,6 +113,11 @@ def test_turn_renders_results_and_preview(page: Page) -> None:
     cards = page.locator(".tmchat-display .tmcard-wrapper")
     expect(cards.first).to_be_visible(timeout=45_000)
     check("recommendation cards rendered", cards.count() >= 1, f"count={cards.count()}")
+    check(
+        "loading skeletons retired once real cards are visible",
+        page.locator(".tmchat-progress-skeleton-card").count() == 0,
+        f"count={page.locator('.tmchat-progress-skeleton-card').count()}",
+    )
 
     receipt = page.locator(".tmchat-turn-status").first
     expect(receipt).to_be_visible(timeout=20_000)
