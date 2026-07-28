@@ -203,6 +203,48 @@ def test_composer_stays_usable_after_failure(page: Page) -> None:
     check("progress surface torn down", page.locator(".tmchat-progress").count() == 0)
 
 
+def test_new_chat_requires_confirmation(page: Page) -> None:
+    print("\n[7] new chat arms a confirm instead of wiping on the first click")
+    open_chat(page)
+    send(page, "a restaurant site with a menu")
+    expect(page.locator(".tmchat-display .tmcard-wrapper").first).to_be_visible(timeout=45_000)
+
+    messages = page.locator(".tmchat-msg")
+    before = messages.count()
+    check("conversation has turns to protect", before >= 2, f"count={before}")
+
+    new_chat = page.locator(".tmchat-newchat").first
+    expect(new_chat).to_be_visible()
+    check("reset uses the compose glyph", new_chat.locator("[data-ui-icon='square-pen']").count() == 1)
+
+    new_chat.click()
+    check("first click arms the confirm", "armed" in (new_chat.get_attribute("class") or ""))
+    check("armed confirm labels itself", "start over" in (new_chat.inner_text() or "").lower())
+    check(
+        "first click leaves the conversation intact",
+        messages.count() == before,
+        f"count={messages.count()}",
+    )
+
+    new_chat.click()
+    check(
+        "second click resets to just the welcome",
+        messages.count() == 1,
+        f"count={messages.count()}",
+    )
+    check("reset returns the starter chips", page.locator(".tmchat-chip").count() >= 1)
+
+
+def test_undo_uses_distinct_glyph(page: Page) -> None:
+    print("\n[8] undo page update carries the rotate-ccw glyph, not refresh-cw")
+    open_chat(page)
+    send(page, "a restaurant site with a menu")
+    undo = page.locator(".tmchat-undo").first
+    expect(undo).to_be_visible(timeout=45_000)
+    check("undo glyph is rotate-ccw", undo.locator("[data-ui-icon='rotate-ccw']").count() == 1)
+    check("no refresh-cw left in the chat", page.locator("[data-ui-icon='refresh-cw']").count() == 0)
+
+
 def test_made_in_webflow_never_drives_the_host_page(page: Page) -> None:
     print("\n[6] Made in Webflow finder reports no grid and suppresses page actions")
     request_contexts: list[dict[str, object]] = []
@@ -237,6 +279,8 @@ def main() -> int:
                 test_tight_data_stream_is_not_lost,
                 test_rate_limit_is_explained,
                 test_composer_stays_usable_after_failure,
+                test_new_chat_requires_confirmation,
+                test_undo_uses_distinct_glyph,
                 test_made_in_webflow_never_drives_the_host_page,
             ):
                 context = browser.new_context(viewport={"width": 1280, "height": 900})

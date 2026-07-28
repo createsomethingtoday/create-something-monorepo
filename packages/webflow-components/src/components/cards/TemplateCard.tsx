@@ -191,7 +191,10 @@ const S: Record<string, CSSProperties> = {
   card: {
     display: 'block',
     position: 'relative',
-    fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    // Inherit the host typeface: inside TemplateChat the panel sets WF Visual
+    // Sans, on marketplace pages the page does — a hardcoded system-ui stack
+    // made cards visibly fall out of the surrounding font.
+    fontFamily: 'inherit',
     fontSize: '14px',
     fontWeight: 400,
     lineHeight: '20px',
@@ -383,7 +386,8 @@ const S: Record<string, CSSProperties> = {
     padding: '0',
     fontSize: '11px',
     lineHeight: '1.4',
-    color: 'rgba(0, 0, 0, 0.45)',
+    // 0.55 ≈ 4.8:1 on white — WCAG AA at 11px. Was 0.45 (~3.5:1, fails).
+    color: 'rgba(0, 0, 0, 0.55)',
   },
   signalsWrap: {
     display: 'flex',

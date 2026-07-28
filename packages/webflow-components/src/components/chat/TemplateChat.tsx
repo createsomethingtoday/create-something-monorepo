@@ -246,6 +246,9 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   const [messages, setMessages] = useState<ChatMessage[]>(persisted?.messages ?? []);
   const [input, setInput] = useState('');
   const [introExpanded, setIntroExpanded] = useState(false);
+  // Two-step destructive guard: the first New-chat click arms "Start over?",
+  // only a second click inside the window actually wipes the conversation.
+  const [resetArmed, setResetArmed] = useState(false);
   const [streaming, setStreaming] = useState(false);
   const [followups, setFollowups] = useState<string[]>(persisted?.followups ?? []);
   const [turnProgress, setTurnProgress] = useState<AgentProgressState>(() => {
@@ -278,6 +281,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   const sendingRef = useRef(false);
   const streamBatcherRef = useRef<TextDeltaBatcher | null>(null);
   const slowTurnTimerRef = useRef<number | null>(null);
+  const resetArmTimerRef = useRef<number | null>(null);
   const highlightMissesRef = useRef(createHighlightMissState());
   const pageActionTimersRef = useRef<PageActionTimers>(new Map());
   const turnstileRef = useRef<HTMLDivElement>(null);
@@ -724,6 +728,9 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
       if (slowTurnTimerRef.current !== null && typeof window !== 'undefined') {
         window.clearTimeout(slowTurnTimerRef.current);
       }
+      if (resetArmTimerRef.current !== null && typeof window !== 'undefined') {
+        window.clearTimeout(resetArmTimerRef.current);
+      }
       clearPageActionTimers(pageActionTimersRef.current);
     },
     [],
@@ -772,6 +779,31 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
     }
     inputRef.current?.focus();
   }, [clearSlowTurnTimer, storageKey, track]);
+
+  const clearResetArmTimer = useCallback(() => {
+    if (resetArmTimerRef.current === null || typeof window === 'undefined') return;
+    window.clearTimeout(resetArmTimerRef.current);
+    resetArmTimerRef.current = null;
+  }, []);
+
+  // First click only arms the confirm; the conversation survives a stray tap.
+  // The second click inside the window is the deliberate reset.
+  const handleNewChatClick = useCallback(() => {
+    if (!resetArmed) {
+      setResetArmed(true);
+      if (typeof window !== 'undefined') {
+        clearResetArmTimer();
+        resetArmTimerRef.current = window.setTimeout(() => {
+          resetArmTimerRef.current = null;
+          setResetArmed(false);
+        }, 4000);
+      }
+      return;
+    }
+    clearResetArmTimer();
+    setResetArmed(false);
+    resetChat();
+  }, [clearResetArmTimer, resetArmed, resetChat]);
 
   const getSessionToken = useCallback(async (): Promise<string> => {
     if (sessionTokenRef.current) return sessionTokenRef.current;
@@ -1216,8 +1248,14 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
           <h2 className="tmchat-header-title" id={titleId}>{title}</h2>
           <div className="tmchat-header-actions">
             {messages.length > 0 ? (
-              <button type="button" className="tmchat-iconbtn" aria-label={strings.newChat} title={strings.newChat} onClick={resetChat}>
-                <UiIcon name="refresh-cw" />
+              <button
+                type="button"
+                className={`tmchat-iconbtn tmchat-newchat${resetArmed ? ' armed' : ''}`}
+                aria-label={resetArmed ? strings.newChatConfirm : strings.newChat}
+                title={resetArmed ? strings.newChatConfirm : strings.newChat}
+                onClick={handleNewChatClick}
+              >
+                {resetArmed ? strings.newChatConfirm : <UiIcon name="square-pen" />}
               </button>
             ) : null}
             <button
@@ -1258,7 +1296,10 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
           onScroll={handleScroll}
         >
           {messages.length === 0 ? (
-            <div className="tmchat-msg assistant">{welcomeMessage}</div>
+            <div className="tmchat-msg assistant">
+              <span className="tmchat-eyebrow"><UiIcon name="sparkles" size={11} /> {title}</span>
+              {welcomeMessage}
+            </div>
           ) : (
             <div className="tmchat-intro">
               <button
@@ -1297,6 +1338,9 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
             <React.Fragment key={index}>
               {message.content ? (
                 <div className={`tmchat-msg ${message.role}`}>
+                  {message.role === 'assistant' ? (
+                    <span className="tmchat-eyebrow"><UiIcon name="sparkles" size={11} /> {title}</span>
+                  ) : null}
                   {renderMessageText(message.content)}
                   {streaming && index === lastIndex && message.role === 'assistant' && !working ? (
                     <span className="tmchat-caret" aria-hidden="true" />
@@ -1329,7 +1373,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
               <div className="tmchat-turn-status" data-outcome={turnProgress.outcome}>{turnReceipt}</div>
               {undoHref ? (
                 <button type="button" className="tmchat-undo" onClick={undoLastPageAction}>
-                  <UiIcon name="refresh-cw" size={13} /> {strings.undoPageUpdate}
+                  <UiIcon name="rotate-ccw" size={13} /> {strings.undoPageUpdate}
                 </button>
               ) : null}
             </div>
@@ -1396,15 +1440,24 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
               }}
             />
             <div id={inputLimitId} className="tmchat-inputmeta">
-              {strings.characterLimit(
-                input.length.toLocaleString(priceLocale),
-                MAX_REQUEST_MESSAGE_CHARS.toLocaleString(priceLocale),
-              )}
+              <span className="tmchat-inputhint">{strings.composerHint}</span>
+              <span
+                className={
+                  input.length >= MAX_REQUEST_MESSAGE_CHARS * 0.8
+                    ? 'tmchat-inputcount'
+                    : 'tmchat-inputcount tmchat-sr-only'
+                }
+              >
+                {strings.characterLimit(
+                  input.length.toLocaleString(priceLocale),
+                  MAX_REQUEST_MESSAGE_CHARS.toLocaleString(priceLocale),
+                )}
+              </span>
             </div>
           </div>
           {streaming ? (
             <button type="button" className="tmchat-send stop" onClick={stopStreaming}>
-              Stop
+              <UiIcon name="square" size={11} /> Stop
             </button>
           ) : (
             <button type="button" className="tmchat-send" disabled={!input.trim()} onClick={() => void send(input)}>

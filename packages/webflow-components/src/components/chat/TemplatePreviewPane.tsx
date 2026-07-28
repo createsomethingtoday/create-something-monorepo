@@ -110,7 +110,7 @@ export function TemplatePreviewPane({
             aria-pressed={device === 'desktop'}
             onClick={() => switchDevice('desktop')}
           >
-            <UiIcon name="monitor" size={14} /> {strings.deviceDesktop}
+            <UiIcon name="monitor" size={14} /> <span className="tmchat-devicebtn-label">{strings.deviceDesktop}</span>
           </button>
           <button
             type="button"
@@ -118,7 +118,7 @@ export function TemplatePreviewPane({
             aria-pressed={device === 'tablet'}
             onClick={() => switchDevice('tablet')}
           >
-            <UiIcon name="tablet" size={14} /> {strings.deviceTablet}
+            <UiIcon name="tablet" size={14} /> <span className="tmchat-devicebtn-label">{strings.deviceTablet}</span>
           </button>
           <button
             type="button"
@@ -126,7 +126,7 @@ export function TemplatePreviewPane({
             aria-pressed={device === 'mobile'}
             onClick={() => switchDevice('mobile')}
           >
-            <UiIcon name="smartphone" size={14} /> {strings.deviceMobile}
+            <UiIcon name="smartphone" size={14} /> <span className="tmchat-devicebtn-label">{strings.deviceMobile}</span>
           </button>
         </div>
         {previewUrl ? (

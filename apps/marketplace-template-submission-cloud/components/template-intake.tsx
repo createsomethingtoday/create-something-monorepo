@@ -397,6 +397,13 @@ type FeedbackAction = {
 
 type TurnstileStep = 'creator' | 'template';
 
+type IntakeStep = 'creator' | 'template';
+
+const INTAKE_STEP_SECTION: Record<IntakeStep, 'join-today' | 'submit-today'> = {
+  creator: 'join-today',
+  template: 'submit-today'
+};
+
 type TurnstileRenderOptions = {
   sitekey: string;
   action: string;
@@ -917,6 +924,7 @@ function InlineActionField({
   fieldClassName: fieldClassNameProp,
   feedback,
   feedbackAction,
+  id,
   onAction
 }: {
   actionLabel: string;
@@ -924,10 +932,11 @@ function InlineActionField({
   fieldClassName?: string;
   feedback?: StatusMessage | null;
   feedbackAction?: FeedbackAction;
+  id?: string;
   onAction: () => void;
 }) {
   return (
-    <>
+    <div className="submission-field-group" id={id}>
       <div className="submission-field-inline">
         <div className={classNames('submission-field', fieldClassNameProp)}>{children}</div>
         <div className="submission-field-inline-action-rail">
@@ -941,7 +950,7 @@ function InlineActionField({
         </div>
       </div>
       <FieldFeedback feedback={feedback} action={feedbackAction} />
-    </>
+    </div>
   );
 }
 
@@ -1075,66 +1084,23 @@ type ReviewChecklistItem = {
   label: string;
   detail: string;
   complete: boolean;
+  targetId: string;
 };
-
-function ReviewChecklistCard({
-  title,
-  copy,
-  items
-}: {
-  title: string;
-  copy: string;
-  items: readonly ReviewChecklistItem[];
-}) {
-  const completeCount = items.filter((item) => item.complete).length;
-  const remainingCount = items.length - completeCount;
-
-  return (
-    <div className="submission-review-card">
-      <div className="submission-review-header">
-        <div>
-          <div className="submission-step-label submission-step-label-secondary">Final review</div>
-          <h3 className="submission-review-title">{title}</h3>
-        </div>
-        <div className="submission-review-progress">
-          {remainingCount === 0
-            ? 'Ready to submit'
-            : `${remainingCount} item${remainingCount === 1 ? '' : 's'} left`}
-        </div>
-      </div>
-      <p className="field-help submission-review-copy">{copy}</p>
-      <div className="submission-review-grid">
-        {items.map((item) => (
-          <div
-            className={`submission-review-item ${item.complete ? 'is-complete' : 'is-pending'}`}
-            key={item.label}
-          >
-            <div className="submission-review-indicator" aria-hidden="true">
-              {item.complete ? '✓' : '•'}
-            </div>
-            <div className="submission-review-item-copy">
-              <div className="submission-review-item-title">{item.label}</div>
-              <div className="submission-review-item-detail">{item.detail}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 function TemplateReadinessBanner({
   items,
-  status
+  status,
+  onJumpToItem
 }: {
   items: readonly ReviewChecklistItem[];
   status?: StatusMessage | null;
+  onJumpToItem?: (item: ReviewChecklistItem) => void;
 }) {
   const pendingItems = items.filter((item) => !item.complete);
   const isBlocked = status?.tone === 'error';
   const isReady = !isBlocked && pendingItems.length === 0;
   const tone = isBlocked ? 'blocked' : isReady ? 'ready' : 'review';
-  const title = isBlocked ? 'Blocked' : isReady ? 'Ready for handoff' : 'Needs review';
+  const title = isBlocked ? 'Blocked' : isReady ? 'Ready to submit' : 'Needs review';
   const copy = isBlocked
     ? status?.message || 'Resolve the blocking validation issue before submitting.'
     : isReady
@@ -1144,22 +1110,129 @@ function TemplateReadinessBanner({
   return (
     <div className={`submission-readiness-banner is-${tone}`} aria-live="polite">
       <div className="submission-readiness-copy">
-        <div className="submission-readiness-kicker">Submission outcome</div>
+        <div className="submission-readiness-kicker">Submission status</div>
         <div className="submission-readiness-title">{title}</div>
         <p className="field-help submission-readiness-message">{copy}</p>
       </div>
       {!isReady && pendingItems.length > 0 ? (
         <div className="submission-readiness-list" aria-label="Remaining submission checks">
-          {pendingItems.slice(0, 3).map((item) => (
-            <span className="submission-readiness-chip" key={item.label}>
+          {pendingItems.map((item) => (
+            <button
+              className="submission-readiness-chip submission-readiness-chip-button"
+              key={item.label}
+              type="button"
+              onClick={() => onJumpToItem?.(item)}
+            >
               {item.label}
-            </span>
+              <span aria-hidden="true" className="submission-readiness-chip-arrow">
+                ↓
+              </span>
+            </button>
           ))}
-          {pendingItems.length > 3 ? (
-            <span className="submission-readiness-chip">+{pendingItems.length - 3} more</span>
-          ) : null}
         </div>
       ) : null}
+    </div>
+  );
+}
+
+function SubmissionStepper({
+  activeStep,
+  onSelectStep
+}: {
+  activeStep: IntakeStep;
+  onSelectStep: (step: IntakeStep) => void;
+}) {
+  const steps: Array<{ id: IntakeStep; index: string; title: string; subtitle: string }> = [
+    {
+      id: 'creator',
+      index: '1',
+      title: 'Become a Creator',
+      subtitle: 'One-time creator profile'
+    },
+    {
+      id: 'template',
+      index: '2',
+      title: 'Submit a template',
+      subtitle: 'For registered creators'
+    }
+  ];
+
+  return (
+    <nav className="submission-stepper" aria-label="Submission steps">
+      <div className="submission-stepper-inner">
+        {steps.map((step) => {
+          const isActive = step.id === activeStep;
+          return (
+            <button
+              aria-current={isActive ? 'step' : undefined}
+              className={classNames('submission-stepper-button', isActive && 'is-active')}
+              key={step.id}
+              onClick={() => onSelectStep(step.id)}
+              type="button"
+            >
+              <span aria-hidden="true" className="submission-stepper-index">
+                {step.index}
+              </span>
+              <span className="submission-stepper-copy">
+                <span className="submission-stepper-title">{step.title}</span>
+                <span className="submission-stepper-subtitle">{step.subtitle}</span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </nav>
+  );
+}
+
+function SectionHeader({
+  index,
+  title,
+  copy
+}: {
+  index: string;
+  title: string;
+  copy?: string;
+}) {
+  return (
+    <header className="submission-section-header">
+      <div className="submission-section-kicker">{index}</div>
+      <h3 className="submission-section-title">{title}</h3>
+      {copy ? <p className="field-help submission-section-copy">{copy}</p> : null}
+    </header>
+  );
+}
+
+function UploadPreviewImage({ file, kind }: { file: File; kind: ImageKind }) {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const objectUrl = URL.createObjectURL(file);
+    setPreviewUrl(objectUrl);
+    return () => {
+      URL.revokeObjectURL(objectUrl);
+    };
+  }, [file]);
+
+  if (!previewUrl) return null;
+
+  return (
+    <img
+      alt={`Preview of ${file.name}`}
+      className={`submission-upload-preview submission-upload-preview-${kind}`}
+      src={previewUrl}
+    />
+  );
+}
+
+function UploadPreviewList({ files, kind }: { files: readonly File[]; kind: ImageKind }) {
+  if (files.length === 0) return null;
+
+  return (
+    <div className="submission-upload-previews">
+      {files.map((file) => (
+        <UploadPreviewImage file={file} key={fileSignature(file)} kind={kind} />
+      ))}
     </div>
   );
 }
@@ -1546,6 +1619,7 @@ export function TemplateIntake() {
   const [analyzerSummary, setAnalyzerSummary] = useState<TemplateAnalyzerSummary | null>(null);
   const [validatorAppActionUrl, setValidatorAppActionUrl] = useState<string | null>(null);
   const [isEmbedded, setIsEmbedded] = useState(false);
+  const [activeStep, setActiveStep] = useState<IntakeStep>('creator');
   const [optionSearch, setOptionSearch] = useState({
     categories: '',
     styles: '',
@@ -1685,7 +1759,7 @@ export function TemplateIntake() {
 
     return {
       label: creatorProfileExistsActionLabel,
-      onClick: () => scrollToSubmissionSection('submit-today')
+      onClick: () => goToStep('template')
     };
   }
 
@@ -1702,22 +1776,29 @@ export function TemplateIntake() {
 
   const validatorAppAction = getValidatorAppAction(fieldFeedback.publishedUrl);
 
-  function scrollToSubmissionSection(section: 'join-today' | 'submit-today') {
-    const target =
-      section === 'submit-today' ? templateSectionRef.current : creatorSectionRef.current;
-    if (!target) return;
+  function goToStep(step: IntakeStep) {
+    setActiveStep(step);
 
-    if (window.parent !== window) {
-      const message: SubmissionChildMessage = {
-        type: 'ts-submission:scroll-to',
-        section,
-        offsetTop: target.offsetTop
-      };
-      window.parent.postMessage(message, '*');
-      return;
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set('section', INTAKE_STEP_SECTION[step]);
+      url.hash = '';
+      window.history.replaceState(null, '', url.toString());
+    } catch {
+      // URL sync is best-effort; the step state has already changed.
     }
 
-    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (window.parent !== window) {
+        const message: SubmissionChildMessage = {
+          type: 'ts-submission:scroll-to',
+          section: INTAKE_STEP_SECTION[step],
+          offsetTop: 0
+        };
+        window.parent.postMessage(message, '*');
+      }
+    });
   }
 
   useEffect(() => {
@@ -1750,13 +1831,9 @@ export function TemplateIntake() {
     const initialHash = window.location.hash;
 
     if (initialSection === 'submit-today' || initialHash === '#submit-today') {
-      requestAnimationFrame(() => {
-        scrollToSubmissionSection('submit-today');
-      });
+      setActiveStep('template');
     } else if (initialSection === 'join-today' || initialHash === '#join-today') {
-      requestAnimationFrame(() => {
-        scrollToSubmissionSection('join-today');
-      });
+      setActiveStep('creator');
     }
 
     const onParentMessage = (event: MessageEvent) => {
@@ -1772,10 +1849,7 @@ export function TemplateIntake() {
         data.type === 'ts-submission:navigate' &&
         (data.section === 'join-today' || data.section === 'submit-today')
       ) {
-        const targetSection = data.section;
-        requestAnimationFrame(() => {
-          scrollToSubmissionSection(targetSection);
-        });
+        goToStep(data.section === 'submit-today' ? 'template' : 'creator');
       }
     };
     window.addEventListener('message', onParentMessage);
@@ -1862,8 +1936,16 @@ export function TemplateIntake() {
     }
 
     const container = getTurnstileContainer(stepName);
-    if (!container || getTurnstileWidgetId(stepName)) {
+    if (!container) {
       return;
+    }
+
+    if (getTurnstileWidgetId(stepName)) {
+      if (container.hasChildNodes()) {
+        return;
+      }
+      // The widget DOM was unmounted when its step was hidden; the stored id is stale.
+      setTurnstileWidgetId(stepName, null);
     }
 
     const action = stepName === 'creator' ? 'creator-submit' : 'template-submit';
@@ -1884,9 +1966,9 @@ export function TemplateIntake() {
       return;
     }
 
-    ensureTurnstile('creator');
-    ensureTurnstile('template');
-  }, [turnstileEnabled, turnstileReady]);
+    ensureTurnstile(activeStep);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [turnstileEnabled, turnstileReady, activeStep]);
 
   useEffect(() => {
     return () => {
@@ -1934,28 +2016,32 @@ export function TemplateIntake() {
       detail: creatorEligibilityResolved
         ? 'The creator identity is resolved and eligible to submit.'
         : 'Use Check creator to confirm the creator account first.',
-      complete: creatorEligibilityResolved
+      complete: creatorEligibilityResolved,
+      targetId: 'field-creator-email'
     },
     {
       label: 'Template checks passed',
       detail: templateChecksPassed
         ? 'Template name and published site both passed validation.'
-        : 'Run Check name and Validate template before submitting.',
-      complete: templateChecksPassed
+        : 'Run Check name and Validate published URL before submitting.',
+      complete: templateChecksPassed,
+      targetId: 'field-template-name'
     },
     {
       label: 'Preview and metadata ready',
       detail: previewAndMetadataReady
         ? 'Preview URL, category, styles, and page count are all set.'
         : 'Add a valid preview URL plus the required taxonomy and page info.',
-      complete: previewAndMetadataReady
+      complete: previewAndMetadataReady,
+      targetId: 'field-preview-url'
     },
     {
       label: 'Pricing is resolved',
       detail: pricingResolved
         ? 'The template pricing setup is complete.'
         : 'Choose whether the template is free or paid, then pick a paid tier if needed.',
-      complete: pricingResolved
+      complete: pricingResolved,
+      targetId: 'field-price-model'
     },
     {
       label: 'Assets are attached',
@@ -1970,14 +2056,16 @@ export function TemplateIntake() {
         Boolean(template.thumbnailFile) &&
         !imageErrors.thumbnailFile &&
         template.galleryFiles.length > 0 &&
-        galleryErrorMessages.length === 0
+        galleryErrorMessages.length === 0,
+      targetId: 'field-primary-thumbnail'
     },
     {
       label: 'Quality benchmark reviewed',
       detail: template.qualityBenchmarkConfirmed
         ? 'Featured examples and the quality rubric have been reviewed.'
         : 'Review the Featured quality examples before confirming handoff.',
-      complete: template.qualityBenchmarkConfirmed
+      complete: template.qualityBenchmarkConfirmed,
+      targetId: 'field-confirm-submit'
     },
     {
       label: 'Agreements confirmed',
@@ -1985,9 +2073,20 @@ export function TemplateIntake() {
         template.checklistConfirmed && template.agreementConfirmed
           ? 'Checklist and submission agreement are both confirmed.'
           : 'Confirm the checklist and submission agreement below.',
-      complete: template.checklistConfirmed && template.agreementConfirmed
+      complete: template.checklistConfirmed && template.agreementConfirmed,
+      targetId: 'field-confirm-submit'
     }
   ];
+
+  function jumpToReviewItem(item: ReviewChecklistItem) {
+    const target = document.getElementById(item.targetId);
+    if (!target) return;
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const focusable = target.querySelector<HTMLElement>(
+      'input:not([type="file"]), textarea, select, button, [tabindex]'
+    );
+    focusable?.focus({ preventScroll: true });
+  }
 
   function updateCreator<K extends keyof CreatorFormState>(key: K, value: CreatorFormState[K]) {
     setCreator((current) => ({ ...current, [key]: value }));
@@ -2640,7 +2739,7 @@ export function TemplateIntake() {
         message: 'Creator profile created. Continue to the template submission step.'
       });
       requestAnimationFrame(() => {
-        scrollToSubmissionSection('submit-today');
+        goToStep('template');
       });
     } catch (error) {
       setCreatorStatus({
@@ -2868,6 +2967,8 @@ export function TemplateIntake() {
           onLoad={() => setTurnstileReady(true)}
         />
       ) : null}
+      <SubmissionStepper activeStep={activeStep} onSelectStep={goToStep} />
+      {activeStep === 'creator' ? (
       <section
         className="section cc-submission-wrapper cc-creator-wrap"
         id="join-today"
@@ -2879,32 +2980,25 @@ export function TemplateIntake() {
               <p className="submission-step-label">Step 1</p>
               <h2 className="submission-panel-title">Become a Creator</h2>
               <div className="rte w-richtext submission-panel-copy">
-                <h3 className="h4">Step 1</h3>
                 <p>
-                  Start by filling out our Marketplace Creator form. These details will be used by
-                  our review team to learn about you as a designer, and evaluate your experience
-                  with Webflow. Remember that you only need to fill this out once!
+                  Fill out the Marketplace Creator form once. Our review team uses these details
+                  to learn about you as a designer and evaluate your experience with Webflow. Once
+                  your first template is approved, we onboard you to the Template Marketplace as a
+                  new designer.
                 </p>
-                <h3 className="h4">
-                  <strong>Step 2</strong>
-                </h3>
                 <p>
-                  Apply with your first template submission{' '}
+                  Already registered?{' '}
                   <a
                     className="ts_link"
                     href="#submit-today"
                     onClick={(event) => {
                       event.preventDefault();
-                      requestAnimationFrame(() => {
-                        scrollToSubmissionSection('submit-today');
-                      });
+                      goToStep('template');
                     }}
                   >
-                    here
+                    Skip to template submission
                   </a>
-                  ! We will evaluate the quality of your template, and publish those that meet our
-                  standards. Once you have your first template approved, we will onboard you to the
-                  Template Marketplace as a new designer.
+                  .
                 </p>
               </div>
             </div>
@@ -3105,6 +3199,10 @@ export function TemplateIntake() {
                           updateCreator('avatarFile', err ? null : file);
                         }}
                       />
+                      <UploadPreviewList
+                        files={creator.avatarFile ? [creator.avatarFile] : []}
+                        kind="avatar"
+                      />
                       <SelectedFilesSummary
                         files={creator.avatarFile ? [creator.avatarFile] : []}
                         emptyLabel="No profile image selected yet."
@@ -3163,11 +3261,7 @@ export function TemplateIntake() {
                     <button
                       className="button-sp cc-white"
                       type="button"
-                      onClick={() =>
-                        requestAnimationFrame(() => {
-                          scrollToSubmissionSection('submit-today');
-                        })
-                      }
+                      onClick={() => goToStep('template')}
                     >
                       I already have a creator profile
                     </button>
@@ -3178,7 +3272,9 @@ export function TemplateIntake() {
           </div>
         </div>
       </section>
+      ) : null}
 
+      {activeStep === 'template' ? (
       <section
         className="section cc-submission-wrapper cc-submit-wrap"
         id="submit-today"
@@ -3191,11 +3287,8 @@ export function TemplateIntake() {
               <h2 className="submission-panel-title">Submit a template</h2>
               <div className="rte w-richtext submission-panel-copy">
                 <p>
-                  Once you've registered as a Marketplace Creator, you can submit templates for
-                  review and publication in Webflow's Template Marketplace.
-                </p>
-                <p>
-                  Remember to always reference our{' '}
+                  Submit templates for review and publication in Webflow's Template Marketplace.
+                  Every submission is checked against our{' '}
                   <a
                     className="ts_link"
                     href="https://webflow.com/templates/grading-rubric"
@@ -3204,7 +3297,7 @@ export function TemplateIntake() {
                   >
                     quality rubric
                   </a>{' '}
-                  &amp;{' '}
+                  and{' '}
                   <a
                     className="ts_link"
                     href="https://webflow.com/templates/submission-guidelines"
@@ -3213,18 +3306,13 @@ export function TemplateIntake() {
                   >
                     submission guidelines
                   </a>
-                  . Templates will only be published if all submission guidelines are met and a
-                  score of "Good" is achieved on the quality rubric.
+                  . Templates are published when every guideline passes with a "Good" rubric score
+                  or better.
                 </p>
                 <p>
-                  Published designers will be allowed concurrent submissions once they have had 5
-                  templates published. Designers who have submitted 6 templates in 30 days will need
-                  to wait before submitting new templates. All other designers will be limited to 1
-                  active review at a time.
-                </p>
-                <p>
-                  Our design reviewers will check your submission for quality, and get back to you
-                  with any changes required.
+                  One active review at a time until 5 templates are published, which unlocks
+                  concurrent submissions. Submitting 6 templates within 30 days pauses new
+                  submissions.
                 </p>
               </div>
               <FeaturedQualityShowcase />
@@ -3244,6 +3332,12 @@ export function TemplateIntake() {
                     name="wf-form-Marketplace-Template-Submission"
                     onSubmit={submitTemplate}
                   >
+                    <section className="submission-section" aria-label="Creator identity">
+                      <SectionHeader
+                        index="Section 1"
+                        title="Creator identity"
+                        copy="Confirm the registered creator account behind this template."
+                      />
                     <div className="submission-field">
                       <label
                         className="field-label template-application-form_field-label"
@@ -3262,7 +3356,7 @@ export function TemplateIntake() {
                     </div>
 
                     {creatorEligibilityResolved ? (
-                      <div className="submission-creator-resolved">
+                      <div className="submission-creator-resolved" id="field-creator-email">
                         <div className="submission-creator-resolved-copy">
                           <div className="submission-creator-resolved-label">Creator verified</div>
                           <div className="submission-creator-resolved-email">
@@ -3286,6 +3380,7 @@ export function TemplateIntake() {
                         <InlineActionField
                           actionLabel="Check creator"
                           feedback={fieldFeedback.creatorEmail}
+                          id="field-creator-email"
                           onAction={verifyCreatorEligibility}
                         >
                           <label
@@ -3310,10 +3405,19 @@ export function TemplateIntake() {
                       </>
                     )}
 
+                    </section>
+
+                    <section className="submission-section" aria-label="Site validation">
+                      <SectionHeader
+                        index="Section 2"
+                        title="Site validation"
+                        copy="Check the template name and published site before anything else."
+                      />
                     <InlineActionField
                       actionLabel="Check name"
                       fieldClassName={hasAutofilledTemplateName ? 'is-ai-updated' : undefined}
                       feedback={fieldFeedback.templateName}
+                      id="field-template-name"
                       onAction={verifyTemplateName}
                     >
                       <label
@@ -3339,8 +3443,9 @@ export function TemplateIntake() {
                     </InlineActionField>
 
                     <InlineActionField
-                      actionLabel="Validate template"
+                      actionLabel="Validate published URL"
                       feedback={fieldFeedback.publishedUrl}
+                      id="field-published-url"
                       onAction={verifyPublishedUrl}
                     >
                       <label
@@ -3512,7 +3617,7 @@ export function TemplateIntake() {
                       </div>
                     ) : null}
 
-                    <div className="submission-field">
+                    <div className="submission-field" id="field-preview-url">
                       <label
                         className="field-label template-application-form_field-label cc-with-desc"
                         htmlFor="previewUrl"
@@ -3542,7 +3647,15 @@ export function TemplateIntake() {
                       ) : null}
                     </div>
 
-                    <div className={fieldClassName(hasAutofilledPriceModel)}>
+                    </section>
+
+                    <section className="submission-section" aria-label="Listing details">
+                      <SectionHeader
+                        index="Section 3"
+                        title="Listing details"
+                        copy="How the template appears in the Marketplace."
+                      />
+                    <div className={fieldClassName(hasAutofilledPriceModel)} id="field-price-model">
                       <span
                         className="field-label template-application-form_field-label cc-with-desc"
                         id="price-model-label"
@@ -3583,8 +3696,15 @@ export function TemplateIntake() {
                       </div>
                     </div>
 
-                    <div className={fieldClassName(hasAutofilledCategories)}>
-                      <span className="field-label template-application-form_field-label cc-with-desc">
+                    <div
+                      aria-labelledby="categories-label"
+                      className={fieldClassName(hasAutofilledCategories)}
+                      role="group"
+                    >
+                      <span
+                        className="field-label template-application-form_field-label cc-with-desc"
+                        id="categories-label"
+                      >
                         Category
                         <span className="submission-required"> *</span>
                         {hasAutofilledCategories ? <AiUpdatedBadge /> : null}
@@ -3628,8 +3748,15 @@ export function TemplateIntake() {
                       </div>
                     </div>
 
-                    <div className={fieldClassName(hasAutofilledPageCount)}>
-                      <span className="field-label template-application-form_field-label cc-with-desc">
+                    <div
+                      aria-labelledby="page-count-label"
+                      className={fieldClassName(hasAutofilledPageCount)}
+                      role="group"
+                    >
+                      <span
+                        className="field-label template-application-form_field-label cc-with-desc"
+                        id="page-count-label"
+                      >
                         Page count
                         <span className="submission-required"> *</span>
                         {hasAutofilledPageCount ? <AiUpdatedBadge /> : null}
@@ -3664,8 +3791,15 @@ export function TemplateIntake() {
                       </div>
                     </div>
 
-                    <div className={fieldClassName(hasAutofilledTemplateType)}>
-                      <span className="field-label template-application-form_field-label cc-with-desc">
+                    <div
+                      aria-labelledby="template-type-label"
+                      className={fieldClassName(hasAutofilledTemplateType)}
+                      role="group"
+                    >
+                      <span
+                        className="field-label template-application-form_field-label cc-with-desc"
+                        id="template-type-label"
+                      >
                         Template type
                         {hasAutofilledTemplateType ? <AiUpdatedBadge /> : null}
                       </span>
@@ -3738,8 +3872,15 @@ export function TemplateIntake() {
                       </div>
                     ) : null}
 
-                    <div className={fieldClassName(hasAutofilledStyles)}>
-                      <span className="field-label template-application-form_field-label cc-with-desc">
+                    <div
+                      aria-labelledby="styles-label"
+                      className={fieldClassName(hasAutofilledStyles)}
+                      role="group"
+                    >
+                      <span
+                        className="field-label template-application-form_field-label cc-with-desc"
+                        id="styles-label"
+                      >
                         Styles
                         <span className="submission-required"> *</span>
                         {hasAutofilledStyles ? <AiUpdatedBadge /> : null}
@@ -3783,8 +3924,15 @@ export function TemplateIntake() {
                       </div>
                     </div>
 
-                    <div className={fieldClassName(hasAutofilledFeatures)}>
-                      <span className="field-label template-application-form_field-label cc-with-desc">
+                    <div
+                      aria-labelledby="features-label"
+                      className={fieldClassName(hasAutofilledFeatures)}
+                      role="group"
+                    >
+                      <span
+                        className="field-label template-application-form_field-label cc-with-desc"
+                        id="features-label"
+                      >
                         Features
                         <span className="submission-required"> *</span>
                         {hasAutofilledFeatures ? <AiUpdatedBadge /> : null}
@@ -3898,7 +4046,15 @@ export function TemplateIntake() {
                       <div className="field-help">{template.notes.length}/400 characters</div>
                     </div>
 
-                    <div className="submission-field">
+                    </section>
+
+                    <section className="submission-section" aria-label="Assets">
+                      <SectionHeader
+                        index="Section 4"
+                        title="Assets"
+                        copy="The images reviewers and buyers see."
+                      />
+                    <div className="submission-field" id="field-primary-thumbnail">
                       <label
                         className="field-label template-application-form_field-label cc-with-desc"
                         htmlFor="thumbnailFile"
@@ -3927,6 +4083,10 @@ export function TemplateIntake() {
                             setImageErrors((c) => ({ ...c, thumbnailFile: err }));
                             updateTemplate('thumbnailFile', err ? null : file);
                           }}
+                        />
+                        <UploadPreviewList
+                          files={template.thumbnailFile ? [template.thumbnailFile] : []}
+                          kind="thumbnail"
                         />
                         <SelectedFilesSummary
                           files={template.thumbnailFile ? [template.thumbnailFile] : []}
@@ -3973,6 +4133,12 @@ export function TemplateIntake() {
                             updateTemplate('secondaryThumbnailFile', err ? null : file);
                           }}
                         />
+                        <UploadPreviewList
+                          files={
+                            template.secondaryThumbnailFile ? [template.secondaryThumbnailFile] : []
+                          }
+                          kind="secondary-thumbnail"
+                        />
                         <SelectedFilesSummary
                           files={
                             template.secondaryThumbnailFile ? [template.secondaryThumbnailFile] : []
@@ -3994,7 +4160,7 @@ export function TemplateIntake() {
                       ) : null}
                     </div>
 
-                    <div className="submission-field">
+                    <div className="submission-field" id="field-gallery">
                       <label
                         className="field-label template-application-form_field-label cc-with-desc"
                         htmlFor="galleryFiles"
@@ -4042,6 +4208,7 @@ export function TemplateIntake() {
                             event.target.value = '';
                           }}
                         />
+                        <UploadPreviewList files={template.galleryFiles} kind="gallery" />
                         <SelectedFilesSummary
                           files={template.galleryFiles}
                           emptyLabel="No gallery images selected yet."
@@ -4058,20 +4225,25 @@ export function TemplateIntake() {
                       ))}
                     </div>
 
-                    <TemplateReadinessBanner items={reviewItems} status={templateStatus} />
+                    </section>
 
-                    <ReviewChecklistCard
-                      title="Review the final handoff"
-                      copy="This mirrors the final readiness checks the marketplace team will expect when your template hits the queue."
+                    <section className="submission-section" aria-label="Confirm and submit">
+                      <SectionHeader
+                        index="Section 5"
+                        title="Confirm & submit"
+                        copy="Final checks before the template enters the review queue."
+                      />
+                    <TemplateReadinessBanner
                       items={reviewItems}
+                      onJumpToItem={jumpToReviewItem}
+                      status={templateStatus}
                     />
 
-                    <div className="submission-confirmation-card">
+                    <div className="submission-confirmation-card" id="field-confirm-submit">
                       <div className="submission-confirmation-header">
-                        <h3 className="submission-confirmation-title">Confirm and hand off</h3>
+                        <h3 className="submission-confirmation-title">Confirm and submit</h3>
                         <p className="field-help submission-confirmation-copy">
-                          These last checks mirror the reviewer handoff. Confirm them here before
-                          you submit.
+                          Confirm these last items, then send your template to the review queue.
                         </p>
                       </div>
                       <div className="submission-confirmation-stack">
@@ -4147,6 +4319,7 @@ export function TemplateIntake() {
                         {templateSubmitting ? 'Submitting...' : 'Submit template'}
                       </button>
                     </div>
+                    </section>
                   </form>
                 )}
               </div>
@@ -4154,6 +4327,7 @@ export function TemplateIntake() {
           </div>
         </div>
       </section>
+      ) : null}
     </main>
   );
 }

@@ -110,10 +110,10 @@ test('agent progress maps protocol status and page actions to factual user-facin
     activeIndex: 1,
     title: 'Searching the template catalog',
     detail: 'Checking the template catalog for strong matches.',
-    receipt: 'Page update requested · Portfolio & Agency · One Page · Free only · 2 highlights requested',
-    announcement: 'Searching the template catalog. Page update requested · Portfolio & Agency · One Page · Free only · 2 highlights requested.',
+    receipt: 'Page updated · Portfolio & Agency · One Page · Free only · 2 templates highlighted on the page',
+    announcement: 'Searching the template catalog. Page updated · Portfolio & Agency · One Page · Free only · 2 templates highlighted on the page.',
   });
-  assert.equal(summarizePageAction({ q: 'private restaurant launch' }), 'Page search update requested');
+  assert.equal(summarizePageAction({ q: 'private restaurant launch' }), 'Page search updated');
   assert.equal(summarizePageAction({ q: 'private restaurant launch' })?.includes('private'), false);
   assert.deepEqual(normalizePageActionPayload({ category_group_slug: 'made-up-category', types: ['One Page'] }), {
     types: ['One Page'],
@@ -183,7 +183,7 @@ test('completed, stopped, and failed turns have distinct durable receipts', () =
 
   assert.equal(
     getAgentOutcomeReceipt(completed),
-    '3 template recommendations ready · Page update requested · Food & Drink',
+    '3 template recommendations ready · Page updated · Food & Drink',
   );
   assert.equal(
     getAgentOutcomeReceipt(reduceAgentProgress(createAgentProgressState(), { type: 'stop' })),
@@ -215,8 +215,10 @@ test('agent progress renders an accessible four-stage work surface with loading 
   assert.match(html, /data-state="current"[^>]*>[^<]*<[^>]*>Searching catalog/s);
   assert.match(html, /Comparing matches/);
   assert.match(html, /Presenting results/);
-  assert.match(html, /Page update requested · Food &amp; Drink · Highlight requested/);
-  assert.equal((html.match(/tmchat-progress-skeleton-card/g) ?? []).length, 4);
+  assert.match(html, /Page updated · Food &amp; Drink · 1 template highlighted on the page/);
+  // Three skeleton spans ship; CSS shows two docked and three on wide surfaces,
+  // in the portrait card geometry of the result grid they stand in for.
+  assert.equal((html.match(/tmchat-progress-skeleton-card/g) ?? []).length, 3);
 });
 
 test('agent progress uses Webflow-neutral surfaces with blue reserved for current state', () => {
@@ -225,6 +227,13 @@ test('agent progress uses Webflow-neutral surfaces with blue reserved for curren
   assert.match(
     html,
     /\.tmchat-progress\s*\{[^}]*border: 1px solid #ececec; border-radius: 8px;[^}]*background: #fafafa;/s,
+  );
+  // Skeleton cards keep the result grid's portrait geometry (150:199), shown
+  // two-up docked and three-up in immersive.
+  assert.match(html, /\.tmchat-progress-skeleton-card\s*\{[^}]*aspect-ratio: 150 \/ 199;/s);
+  assert.match(
+    html,
+    /\.tmchat-panel\.immersive \.tmchat-progress-preview\s*\{[^}]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\);/s,
   );
   assert.match(
     html,
@@ -445,6 +454,21 @@ test('TemplateChat exposes the worker prompt limit before submission', () => {
   assert.match(html, /maxLength="4000"/);
   assert.match(html, /aria-describedby="tmchat-input-limit-/);
   assert.match(html, /4,000 character limit/);
+  // Far below the limit the counter stays screen-reader-only; the visible
+  // composer meta carries the keyboard hint instead.
+  assert.match(html, /tmchat-inputcount tmchat-sr-only/);
+  assert.match(html, /tmchat-inputhint/);
+  assert.match(html, /Enter to send · Shift\+Enter for a new line/);
+});
+
+test('assistant turns carry the agent identity eyebrow', () => {
+  const html = renderToStaticMarkup(<TemplateChat defaultOpen enableAnalytics={false} />);
+
+  // The empty-state welcome is an assistant turn and introduces the agent.
+  assert.match(html, /tmchat-eyebrow/);
+  assert.match(html, /data-ui-icon="sparkles"/);
+  const eyebrow = html.match(/<span class="tmchat-eyebrow">(.*?)<\/span>/s)?.[1] ?? '';
+  assert.match(eyebrow, /Template finder/);
 });
 
 test('a stopped turn is acknowledged and can be retried without an empty assistant artifact', () => {
@@ -473,6 +497,39 @@ test('a stopped turn is acknowledged and can be retried without an empty assista
     assert.match(html, /class="tmchat-outcome-announcement tmchat-sr-only"[^>]*>Search stopped\.</);
     assert.match(html, />Try again</);
     assert.equal((html.match(/class="tmchat-msg assistant"/g) ?? []).length, 0);
+  } finally {
+    if (originalWindow === undefined) delete (globalThis as { window?: Window }).window;
+    else globalThis.window = originalWindow;
+  }
+});
+
+test('new chat is guarded by an armed confirm and uses the compose glyph', () => {
+  const originalWindow = globalThis.window;
+  Object.defineProperty(globalThis, 'window', {
+    configurable: true,
+    writable: true,
+    value: {
+      sessionStorage: {
+        getItem: () =>
+          JSON.stringify({
+            messages: [{ role: 'user', content: 'A restaurant site with a menu', displays: [] }],
+            followups: [],
+            known: [],
+            open: true,
+          }),
+      },
+    },
+  });
+
+  try {
+    const html = renderToStaticMarkup(<TemplateChat defaultOpen enableAnalytics={false} />);
+
+    // Restored conversation: the destructive control is present, disarmed, and
+    // labeled for what it does — no refresh-cw "reload" semantics.
+    assert.match(html, /tmchat-iconbtn tmchat-newchat(?! armed)/);
+    assert.match(html, /aria-label="New chat"/);
+    assert.match(html, /data-ui-icon="square-pen"/);
+    assert.equal(html.includes('data-ui-icon="refresh-cw"'), false);
   } finally {
     if (originalWindow === undefined) delete (globalThis as { window?: Window }).window;
     else globalThis.window = originalWindow;
