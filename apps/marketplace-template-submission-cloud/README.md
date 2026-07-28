@@ -113,7 +113,10 @@ App-specific overrides (layout, spacing, per-field feedback colors, country pick
 
 The parent Webflow page owns the hero. Mount the iframe directly below that hero on `/templates/submit-a-template`, and let the embedded app own only the creator/template form flow.
 
-- `ts-submission:resize` from the iframe to keep the frame height correct
+- `ts-submission:resize` from the iframe to keep the frame height correct. The app posts its
+  content height (measured at the app root, so the frame can shrink as well as grow). The
+  placeholder `height:1800px` is overridden by the first resize message — do not use
+  `min-height`, which would floor the frame and leave blank space below short steps.
 - `ts-submission:utm` from the parent to pass through query params
 - `ts-submission:scroll-to` from the iframe to make the parent page scroll to the relevant internal section when an in-app link or CTA jumps between creator and template sections
 
@@ -123,7 +126,7 @@ The parent Webflow page owns the hero. Mount the iframe directly below that hero
     <iframe
       id="ts-submission-frame"
       src="https://<cloud-app-host>/submit"
-      style="width:100%; min-height:1800px; border:0; display:block;"
+      style="width:100%; height:1800px; border:0; display:block;"
       loading="lazy"
       allow="clipboard-read; clipboard-write"
       title="Template submission"

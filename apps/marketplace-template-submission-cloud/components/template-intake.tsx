@@ -1641,6 +1641,7 @@ export function TemplateIntake() {
   const creatorSectionRef = useRef<HTMLElement | null>(null);
   const templateSectionRef = useRef<HTMLElement | null>(null);
   const analyzerSummaryRef = useRef<HTMLDivElement | null>(null);
+  const appRootRef = useRef<HTMLElement | null>(null);
   const analyzerRequestId = useRef(0);
 
   const hasAutofilledTemplateName = isAutofilledText(
@@ -1861,10 +1862,15 @@ export function TemplateIntake() {
 
   useEffect(() => {
     if (window.parent === window) return;
+    const root = appRootRef.current;
+    if (!root) return;
 
     let lastHeight = 0;
     const postHeight = () => {
-      const height = Math.max(document.documentElement.scrollHeight, document.body.scrollHeight);
+      // Measure the app root's content height, not scrollHeight: body has
+      // min-height:100vh, which pins scrollHeight to the frame's current
+      // viewport and would prevent the frame from ever shrinking.
+      const height = Math.ceil(root.getBoundingClientRect().height);
       if (height === lastHeight) return;
       lastHeight = height;
       const message: SubmissionChildMessage = { type: 'ts-submission:resize', height };
@@ -1873,7 +1879,7 @@ export function TemplateIntake() {
 
     postHeight();
     const observer = new ResizeObserver(() => postHeight());
-    observer.observe(document.body);
+    observer.observe(root);
     window.addEventListener('load', postHeight);
 
     return () => {
@@ -2959,7 +2965,7 @@ export function TemplateIntake() {
   }
 
   return (
-    <main className={`submission-app${isEmbedded ? ' is-embedded' : ''}`}>
+    <main className={`submission-app${isEmbedded ? ' is-embedded' : ''}`} ref={appRootRef}>
       {turnstileEnabled ? (
         <Script
           src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"

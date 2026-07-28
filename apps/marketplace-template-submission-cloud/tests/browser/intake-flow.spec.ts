@@ -136,3 +136,52 @@ test('valid WebP uploads render previews and invalid ones do not', async ({ page
   ).toBeVisible();
   expect(pageErrors).toEqual([]);
 });
+
+test('embedded frame shrinks back when returning to the creator step', async ({ page }) => {
+  const pageErrors = trackPageErrors(page);
+
+  // Serve the harness from the app origin: the app's frame-ancestors CSP is
+  // 'self' + webflow hosts, so an about:blank parent would be blocked.
+  await page.route('**/embed-harness', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'text/html',
+      body: `<!doctype html>
+        <html><body>
+          <iframe id="ts-submission-frame" src="/submit"
+            style="width:100%; height:1800px; border:0; display:block;"
+            title="Template submission"></iframe>
+          <script>
+            window.addEventListener('message', function (event) {
+              if (event.data && event.data.type === 'ts-submission:resize' && typeof event.data.height === 'number') {
+                document.getElementById('ts-submission-frame').style.height = event.data.height + 'px';
+              }
+            });
+          </script>
+        </body></html>`
+    });
+  });
+
+  await page.goto('/embed-harness');
+
+  const frameElement = page.locator('#ts-submission-frame');
+  const frame = page.frameLocator('#ts-submission-frame');
+  const frameHeight = () => frameElement.evaluate((el) => el.getBoundingClientRect().height);
+
+  await frame.getByRole('textbox', { name: 'Primary email' }).waitFor();
+  await expect
+    .poll(frameHeight, { timeout: 15_000 })
+    .toBeLessThan(1800);
+  const creatorHeight = await frameHeight();
+
+  await frame.getByRole('button', { name: /Submit a template/ }).click();
+  await frame.getByRole('textbox', { name: 'Template name *' }).waitFor();
+  await expect.poll(frameHeight, { timeout: 15_000 }).toBeGreaterThan(creatorHeight);
+  const templateHeight = await frameHeight();
+
+  await frame.getByRole('button', { name: /Become a Creator/ }).click();
+  await frame.getByRole('textbox', { name: 'Primary email' }).waitFor();
+  await expect.poll(frameHeight, { timeout: 15_000 }).toBeLessThan(templateHeight);
+  expect(await frameHeight()).toBe(creatorHeight);
+  expect(pageErrors).toEqual([]);
+});
