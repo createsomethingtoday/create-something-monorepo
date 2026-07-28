@@ -49,12 +49,13 @@
 
 <style>
   .abundance-footer {
-    --footer-ink: #071719;
-    --footer-aqua: #73c7ca;
+    --footer-ink: #020202;
+    --footer-aqua: #af7c54;
+    --footer-status: #1d6f8a;
     display: block;
     overflow: hidden;
     background:
-      radial-gradient(circle at 85% 12%, rgba(115, 199, 202, 0.12), transparent 24%),
+      radial-gradient(circle at 85% 12%, rgba(175, 124, 84, 0.12), transparent 24%),
       var(--footer-ink);
     color: white;
   }
@@ -128,8 +129,8 @@
     width: 8px;
     height: 8px;
     border-radius: 999px;
-    background: var(--footer-aqua);
-    box-shadow: 0 0 0 5px rgba(115, 199, 202, 0.1);
+    background: var(--footer-status);
+    box-shadow: 0 0 0 5px rgba(29, 111, 138, 0.12);
   }
 
   .footer-main {
