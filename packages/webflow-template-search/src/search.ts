@@ -111,6 +111,11 @@ const GRID_ITEM_SELECT_COLUMNS = [
   'd.price',
   'd.published_date',
 ];
+const FEATURED_GRID_DETAIL_SELECT_COLUMNS = [
+  'd.description_short',
+  'd.styles_json',
+  'd.style_slugs_json',
+];
 
 function creatorProfileUrlForSlug(slug: string): string {
   return `https://webflow.com/templates/designers/${slug}`;
@@ -560,7 +565,13 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
   const includeItems = params.include.items;
   const includeFacets = params.include.facets;
   const includePills = params.include.pills;
-  const selectColumns = params.view === 'grid' ? GRID_ITEM_SELECT_COLUMNS.join(',\n          ') : 'd.*';
+  const includeFeaturedGridDetails = params.view === 'grid' && params.scope === 'featured';
+  const selectColumns = params.view === 'grid'
+    ? [
+        ...GRID_ITEM_SELECT_COLUMNS,
+        ...(includeFeaturedGridDetails ? FEATURED_GRID_DETAIL_SELECT_COLUMNS : []),
+      ].join(',\n          ')
+    : 'd.*';
 
   let totalItems = 0;
   let rows: D1Result<DocumentRow> = { results: [] };
@@ -624,10 +635,12 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
     const categoryGroupSlugs = parseJsonArray(row.category_group_slugs_json);
     const childCategories = parseJsonArray(row.child_categories_json);
     const childCategorySlugs = parseJsonArray(row.child_category_slugs_json);
-    const styles = params.view === 'grid' ? [] : parseJsonArray(row.styles_json);
-    const styleSlugs = params.view === 'grid' ? [] : parseJsonArray(row.style_slugs_json);
-    const tags = params.view === 'grid' ? [] : parseJsonArray(row.tags_json);
-    const tagSlugs = params.view === 'grid' ? [] : parseJsonArray(row.tag_slugs_json);
+    const includeExtendedDetails = params.view !== 'grid';
+    const includeStyles = includeExtendedDetails || includeFeaturedGridDetails;
+    const styles = includeStyles ? parseJsonArray(row.styles_json) : [];
+    const styleSlugs = includeStyles ? parseJsonArray(row.style_slugs_json) : [];
+    const tags = includeExtendedDetails ? parseJsonArray(row.tags_json) : [];
+    const tagSlugs = includeExtendedDetails ? parseJsonArray(row.tag_slugs_json) : [];
 
     const item: SearchItem = {
       id: row.id,
@@ -659,8 +672,11 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
       child_categories: buildChildCategories(childCategories, childCategorySlugs, childSlugMap),
     };
 
-    if (params.view !== 'grid') {
-      item.styles = buildStyles(styles, styleSlugs);
+    if (includeFeaturedGridDetails) item.description_short = row.description_short;
+
+    if (includeStyles) item.styles = buildStyles(styles, styleSlugs);
+
+    if (includeExtendedDetails) {
       item.tags = buildTags(tags, tagSlugs);
     }
 

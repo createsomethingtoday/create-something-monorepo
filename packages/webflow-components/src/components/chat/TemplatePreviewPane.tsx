@@ -1,7 +1,11 @@
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { UiIcon } from '../primitives/UiIcon';
 import { prefersReducedMotion } from './templateChatRuntime';
-import { safeMarketplaceUrl, safePreviewUrl } from './templateChatSafety';
+import {
+  PREVIEW_IFRAME_SANDBOX,
+  safeMarketplaceUrl,
+  safePreviewUrl,
+} from './templateChatSafety';
 import type { ChatTrack } from './templateChatAnalytics';
 import type { AgentTemplateItem } from './templateChatProtocol';
 import {
@@ -17,8 +21,6 @@ import {
  * the marketplace away from itself, and `allow-same-origin` is absent so it
  * gets an opaque origin with no access to marketplace storage.
  */
-const PREVIEW_SANDBOX = 'allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox';
-
 // Live preview of the template's published .webflow.io site. The published
 // sites ship `frame-ancestors … *.webflow.com`, so embedding here is
 // explicitly sanctioned. The mobile toggle narrows the iframe viewport, which
@@ -176,7 +178,7 @@ export function TemplatePreviewPane({
         <iframe
           className="tmchat-preview-frame"
           src={previewUrl ?? undefined}
-          sandbox={PREVIEW_SANDBOX}
+          sandbox={PREVIEW_IFRAME_SANDBOX}
           referrerPolicy="no-referrer"
           title={strings.previewOf(item.name)}
           loading="eager"

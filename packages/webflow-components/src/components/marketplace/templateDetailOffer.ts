@@ -195,7 +195,7 @@ function offerBadge(mode: TemplateDetailOfferMode, label: string, hasOffer: bool
   return hasOffer ? 'Limited-time price' : '';
 }
 
-function marketplacePrimaryLabel(priceLabel: string): string {
+export function marketplacePrimaryLabel(priceLabel: string): string {
   const label = compact(priceLabel);
   if (!label || label === DEFAULT_PRICE) return 'Buy template';
   if (/^buy\b/i.test(label)) return label;

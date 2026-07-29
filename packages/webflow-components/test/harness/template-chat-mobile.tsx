@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { MadeInWebflowTemplateFinder } from '../../src/components/chat/MadeInWebflowTemplateFinder';
 import { TemplateChat } from '../../src/components/chat/TemplateChat';
@@ -6,6 +6,10 @@ import {
   TemplateCampaignLane,
   TemplateCampaignVideoModal,
 } from '../../src/components/marketplace/TemplateCampaignLane';
+import {
+  FeaturedTemplatePreview,
+  type FeaturedTemplatePreviewItem,
+} from '../../src/components/marketplace/FeaturedTemplatePreview';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('Missing #root');
@@ -25,6 +29,8 @@ const campaignError = new URLSearchParams(window.location.search).has('campaign-
 const campaignAnalytics = new URLSearchParams(window.location.search).has('campaign-analytics');
 const campaignLoading = new URLSearchParams(window.location.search).has('campaign-loading');
 const madeInWebflow = new URLSearchParams(window.location.search).has('made-in-webflow');
+const featuredPreview = new URLSearchParams(window.location.search).has('featured');
+const featuredPreviewError = new URLSearchParams(window.location.search).has('featured-error');
 const mount = document.createElement('div');
 const shadowBoundary = !(
   twoInstances ||
@@ -32,13 +38,83 @@ const shadowBoundary = !(
   campaignOnly ||
   campaignError ||
   campaignAnalytics ||
-  campaignLoading
+  campaignLoading ||
+  featuredPreview ||
+  featuredPreviewError
 );
 if (shadowBoundary) root.attachShadow({ mode: 'open' }).append(mount);
 else root.append(mount);
 
+const featuredItems: FeaturedTemplatePreviewItem[] = [
+  {
+    id: 'featured-one',
+    template_slug: 'featured-one',
+    name: 'Featured One',
+    url: '/templates/html/featured-one',
+    website_url: '/preview/featured-one',
+    purchase_url: '/dashboard/marketplace-checkout/redirect?rid=featured-one',
+    creator_name: 'Marketplace Reviewer Fixture',
+    price: 79,
+    is_free: false,
+    reviewer_pick_reason: 'A focused hierarchy and unusually clear path from first impression to action.',
+    description_short: 'A conversion-focused launch template for growing software teams.',
+    template_type: 'Multi Page',
+    category_groups: [{ name: 'Business', slug: 'business' }],
+    child_categories: [{ name: 'SaaS', slug: 'saas' }],
+    styles: [{ name: 'Modern', slug: 'modern' }],
+  },
+  {
+    id: 'featured-two',
+    template_slug: 'featured-two',
+    name: 'Featured Two',
+    url: '/templates/html/featured-two',
+    website_url: '/preview/featured-two',
+    purchase_url: '/dashboard/marketplace-checkout/redirect?rid=featured-two',
+    creator_name: 'Marketplace Reviewer Fixture',
+    price: 129,
+    is_free: false,
+    reviewer_pick_reason: 'Distinctive art direction with a polished responsive composition.',
+    description_short: 'A portfolio-forward studio template with room for large-format project storytelling.',
+    template_type: 'Multi Layout',
+    category_groups: [{ name: 'Creative', slug: 'creative' }],
+    child_categories: [{ name: 'Agency', slug: 'agency' }],
+    styles: [{ name: 'Dark', slug: 'dark' }],
+  },
+];
+
+function FeaturedPreviewHarness({ showError }: { showError: boolean }) {
+  const [open, setOpen] = useState(false);
+  const [index, setIndex] = useState(0);
+
+  return (
+    <main className="harness-combined">
+      <header className="harness-heading">
+        <p>Featured preview verification</p>
+        <h1>Featured website templates</h1>
+      </header>
+      <button type="button" data-featured-launch onClick={() => setOpen(true)}>
+        Open Featured preview
+      </button>
+      {open ? (
+        <FeaturedTemplatePreview
+          item={featuredItems[index]}
+          index={index}
+          total={featuredItems.length}
+          hasPrevious={index > 0}
+          hasNext={index < featuredItems.length - 1}
+          navigationError={showError ? 'Unable to load more Featured templates.' : null}
+          onClose={() => setOpen(false)}
+          onNavigate={(direction) => setIndex((current) => Math.max(0, Math.min(featuredItems.length - 1, current + direction)))}
+        />
+      ) : null}
+    </main>
+  );
+}
+
 createRoot(mount).render(
-  campaignLoading ? (
+  featuredPreview || featuredPreviewError ? (
+    <FeaturedPreviewHarness showError={featuredPreviewError} />
+  ) : campaignLoading ? (
     <TemplateCampaignVideoModal
       onClose={() => undefined}
       videoSrc="/delayed-campaign-video.mp4"

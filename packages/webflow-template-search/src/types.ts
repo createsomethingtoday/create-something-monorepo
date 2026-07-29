@@ -210,6 +210,7 @@ export interface SearchItem {
   is_free: boolean;
   is_featured: boolean;
   reviewer_pick_reason: string | null;
+  description_short?: string;
   template_type: string | null;
   popularity_score: number | null;
   unique_viewers: number | null;
