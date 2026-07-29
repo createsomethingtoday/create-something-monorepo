@@ -90,6 +90,7 @@
             <span class="action-arrow" aria-hidden="true">↗</span>
           </a>
           <a class="action-secondary" href="/jobs">Explore open roles</a>
+          <a class="action-secondary" href="/voice">Talk it through</a>
         </div>
 
         <div class="hero-trust" aria-label="Application trust boundaries">

@@ -112,7 +112,10 @@ class AcceptanceClient {
 }
 
 function assertOk(result, message) {
-	assert.ok(result.status >= 200 && result.status < 300, `${message} (${result.status}): ${result.bodyText}`);
+	assert.ok(
+		result.status >= 200 && result.status < 300,
+		`${message} (${result.status}): ${result.bodyText}`
+	);
 }
 
 function getConfirmableFieldKeys(threadView) {
@@ -202,6 +205,11 @@ async function prepareBookedCandidateThread(client) {
 
 	const applyPage = await client.get('/apply');
 	assert.equal(applyPage.status, 200, 'Expected /apply to render');
+	assert.match(applyPage.bodyText, /Voice Concierge/i, 'Expected /apply voice entry point');
+
+	const voicePage = await client.get('/voice');
+	assert.equal(voicePage.status, 200, 'Expected /voice to render');
+	assert.match(voicePage.bodyText, /Say what fits/i, 'Expected branded voice experience');
 
 	const created = await client.postJson('/api/threads', {});
 	assertOk(created, 'Failed to create thread');

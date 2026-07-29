@@ -122,6 +122,15 @@
           <span>Private by default</span>
           <span>Recruiter-reviewed</span>
         </div>
+
+        <a class="voice-entry" href="/voice">
+          <span class="voice-entry-signal" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span>
+            <small>Prefer to talk it through?</small>
+            <strong>Prepare a brief with Voice Concierge</strong>
+          </span>
+          <span class="voice-entry-arrow" aria-hidden="true">↗</span>
+        </a>
       </div>
 
       <aside class="application-preview" aria-label="Example application preview">
@@ -398,6 +407,73 @@
     margin-right: 8px;
     color: var(--apply-status);
     font-weight: 700;
+  }
+
+  .voice-entry {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 14px;
+    align-items: center;
+    max-width: 520px;
+    margin-top: 24px;
+    padding: 15px 16px;
+    border: 1px solid rgba(23, 21, 18, 0.14);
+    border-radius: 18px;
+    background: rgba(255, 250, 244, 0.7);
+    color: var(--apply-ink);
+    text-decoration: none;
+    transition:
+      transform 160ms ease,
+      border-color 160ms ease,
+      background 160ms ease;
+  }
+
+  .voice-entry:hover {
+    transform: translateY(-2px);
+    border-color: rgba(175, 124, 84, 0.42);
+    background: var(--apply-paper-bright);
+  }
+
+  .voice-entry-signal {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    background: var(--apply-deep);
+  }
+
+  .voice-entry-signal i {
+    width: 3px;
+    height: 10px;
+    border-radius: 999px;
+    background: var(--apply-tan-soft);
+  }
+
+  .voice-entry-signal i:nth-child(2) {
+    height: 18px;
+  }
+
+  .voice-entry > span:nth-child(2) {
+    display: grid;
+    gap: 3px;
+  }
+
+  .voice-entry small {
+    color: rgba(23, 21, 18, 0.56);
+    font-size: 0.7rem;
+  }
+
+  .voice-entry strong {
+    font-size: 0.86rem;
+    font-weight: 600;
+  }
+
+  .voice-entry-arrow {
+    color: var(--apply-tan);
+    font-size: 1.05rem;
   }
 
   .application-preview {

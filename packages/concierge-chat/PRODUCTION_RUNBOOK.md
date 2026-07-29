@@ -9,6 +9,7 @@
 - `ABUNDANCE_INTAKE_EMAIL_FROM` if the sender should differ from the default
 - `AGENCY_BASE_URL` for control-plane bridge targets
 - `ABUNDANCE_GEO_MAPBOX_ACCESS_TOKEN` for external preferred-location recovery when the internal catalog cannot normalize confidently
+- `OPENAI_API_KEY` for server-minted short-lived Realtime client secrets on the public voice route; use a funded project key and never expose the value in browser or deployment evidence
 
 ## Production Validation Checklist
 
@@ -17,15 +18,22 @@
 3. Apply the latest remote migration with `pnpm --filter @create-something/concierge-chat db:migrate`.
 4. Confirm the stable domain returns:
    - `/` -> `200`
+   - `/voice` -> `200`
+   - `POST /api/voice/session` -> `200`, `Cache-Control: no-store, private`, short-lived client secret present, standard key absent from the response and evidence
    - `/apply` -> `200`
    - anonymous `/chat` -> `303 /apply` unless a candidate thread is already active
    - anonymous `/settings` -> `303 /apply`
-5. Complete one real nurse flow on the stable domain:
+5. Complete one real voice start on the stable domain:
+   - grant microphone access
+   - confirm the WebRTC session reaches `Connected`
+   - confirm the opening Concierge turn appears in the session transcript
+   - end the session and confirm no transcript or brief returns after reload
+6. Complete one real nurse flow on the stable domain:
    - start from `/apply`
    - request and enter the email verification code
    - upload the required documents
    - book recruiter review
-6. Complete one real internal staff flow on the stable domain:
+7. Complete one real internal staff flow on the stable domain:
    - recruiter review completion
    - staffing outreach
    - facility submission / response
@@ -60,6 +68,7 @@
   - R2 binding is present
   - signing secret exists
   - Resend key exists
+  - funded OpenAI key exists when the failure is isolated to `/api/voice/session`
   - latest migration has been applied
 
 ## Logging / Events

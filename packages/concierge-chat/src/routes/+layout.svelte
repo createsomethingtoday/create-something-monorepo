@@ -32,6 +32,7 @@
     data.currentPath === '/jobs' ||
     data.currentPath === '/facilities' ||
     data.currentPath === '/agents' ||
+    data.currentPath === '/voice' ||
     data.currentPath === '/apply' ||
     data.currentPath.startsWith('/apply/') ||
     data.currentPath === '/style-guide' ||
@@ -42,6 +43,7 @@
     data.currentPath === '/jobs' ||
     data.currentPath === '/facilities' ||
     data.currentPath === '/agents' ||
+    data.currentPath === '/voice' ||
     data.currentPath === '/apply' ||
     data.currentPath.startsWith('/apply/');
   $: showCompactStaffAccess = isPublicIntakeRoute || !showInternalNavigation;
@@ -54,6 +56,7 @@
       ? [
           { href: '/', label: 'Home' },
           { href: '/nurses', label: 'Nurses' },
+          { href: '/voice', label: 'Voice' },
           { href: '/jobs', label: 'Jobs' },
           { href: '/facilities', label: 'Facilities' },
           { href: '/agents', label: 'Agents' },
@@ -62,6 +65,7 @@
       : [
           { href: '/', label: 'Home' },
           { href: '/nurses', label: 'Nurses' },
+          { href: '/voice', label: 'Voice' },
           { href: '/jobs', label: 'Jobs' },
           { href: '/facilities', label: 'Facilities' },
           { href: '/apply', label: 'Apply' },

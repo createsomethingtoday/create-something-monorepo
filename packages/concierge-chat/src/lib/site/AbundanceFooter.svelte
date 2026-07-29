@@ -22,6 +22,7 @@
         <div>
           <strong>For people</strong>
           <a href="/nurses">Nurses</a>
+          <a href="/voice">Voice Concierge</a>
           <a href="/jobs">Open roles</a>
           <a href="/apply">Start an application</a>
         </div>
