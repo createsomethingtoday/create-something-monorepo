@@ -705,7 +705,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     'space-experiment-tools',
     'space',
     ['motion', 'playground'],
-    'pending',
+    'migrated',
     contract(
       'tool',
       'Exercise the experiment and decide what its resulting state proves.',

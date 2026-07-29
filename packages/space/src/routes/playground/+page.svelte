@@ -6,7 +6,6 @@
 	 * Which mode lets the tool recede? Which forces tool-attention?
 	 */
 
-	import { onMount } from 'svelte';
 	import { SEO } from '@create-something/canon';
 
 	// Experiment state
@@ -43,6 +42,7 @@
 	];
 
 	const currentTaskData = $derived(tasks[currentTask]);
+	const experimentStep = $derived(!toolCallEndTime ? 1 : !codeEndTime ? 2 : 3);
 
 	// Timing calculations
 	const toolCallDuration = $derived(
@@ -58,7 +58,7 @@
 	}
 
 	function completeToolCall() {
-		if (toolCallStartTime) {
+		if (toolCallStartTime && toolCallAnswer.trim() && toolCallAttention) {
 			toolCallEndTime = Date.now();
 		}
 	}
@@ -69,7 +69,7 @@
 	}
 
 	function completeCodeMode() {
-		if (codeStartTime) {
+		if (codeStartTime && codeAnswer.trim() && codeModeAttention) {
 			codeEndTime = Date.now();
 			completed = true;
 		}
@@ -136,397 +136,496 @@ console.log(\`Found \${functions.length} functions\`);`;
 	]}
 />
 
-<!-- ASCII Art Hero -->
-<section class="relative pt-24 pb-8 px-6">
-	<div class="max-w-6xl mx-auto">
-		<div class="ascii-container overflow-hidden">
-			<div class="aspect-[21/9] flex items-center justify-center p-8">
-				<pre class="ascii-art select-none">{`
-    +-------------------------------------------------+
-    |   CODE MODE: THE ZUHANDENHEIT EXPERIMENT        |
-    |                                                 |
-    |   Tool Calling          Code Mode               |
-    |   (Vorhandenheit)       (Zuhandenheit)          |
-    |                                                 |
-    |   <invoke...>           const x = await ...     |
-    |     Attention           Attention               |
-    |     ↓                   ↓                       |
-    |   [THE TOOL]            [THE TASK]              |
-    |                                                 |
-    |   Where does your attention go?                 |
-    +-------------------------------------------------+
-`}</pre>
-			</div>
-		</div>
-	</div>
-</section>
-
-<!-- Hero -->
-<section class="relative pb-12 px-6">
-	<div class="max-w-6xl mx-auto text-center space-y-4">
-		<h1 class="hero-title">Code Mode</h1>
-		<p class="hero-subtitle italic">Try this: The Zuhandenheit Experiment</p>
-		<p class="hero-description max-w-3xl mx-auto">
-			Complete the same task twice—once with tool calling, once with familiar code. Notice where your attention goes. That's the point of this experiment.
-		</p>
-	</div>
-</section>
-
-<!-- The Experiment -->
-<section class="px-6 pb-16">
-	<div class="max-w-6xl mx-auto space-y-8">
-		<!-- Context -->
-		<div class="content-card p-6 space-y-4">
-			<h2 class="section-title">What to watch for</h2>
-			<p class="body-text leading-relaxed">
-				There are two modes of using tools. You'll feel both in this experiment:
+<main class="experiment-page">
+	<section data-page-chapter="orientation" class="tool-opening">
+		<div class="max-w-6xl mx-auto opening-inner">
+			<p class="eyebrow">Code Mode experiment · three short steps</p>
+			<h1>Compare where your attention goes.</h1>
+			<p class="opening-copy">
+				Complete the same small task with tool calls—structured requests to named tools—and then
+				with familiar code. Record whether you were thinking about the task or the tool; the
+				comparison is the evidence.
 			</p>
-			<div class="grid md:grid-cols-2 gap-4 mt-4">
-				<div class="mode-card mode-ready-to-hand">
-					<h3 class="mode-title">Ready-to-hand (Zuhandenheit)</h3>
-					<p class="mode-description">
-						The hammer disappears when hammering. You think about the nail, not the tool. This is what you're aiming for.
-					</p>
-				</div>
-				<div class="mode-card mode-present-at-hand">
-					<h3 class="mode-title">Present-at-hand (Vorhandenheit)</h3>
-					<p class="mode-description">
-						You stop to think about the tool itself—how to hold it, how it works. The tool demands attention instead of receding.
-					</p>
-				</div>
-			</div>
+			<ol class="opening-steps" aria-label="Experiment sequence">
+				<li><span>1</span>Try tool calling</li>
+				<li><span>2</span>Try familiar code</li>
+				<li><span>3</span>Compare your attention</li>
+			</ol>
 		</div>
+	</section>
 
-		<!-- Task Description -->
-		<div class="task-card p-6">
-			<div class="flex items-center justify-between mb-4">
-				<h2 class="section-title">Your Task (#{currentTask + 1} of {tasks.length})</h2>
-				<span class="task-badge">EXPERIMENT</span>
-			</div>
-			<p class="task-description">{currentTaskData.description}</p>
-			<p class="task-hint">{currentTaskData.hint}</p>
-		</div>
+	<section data-page-chapter="workspace" class="workspace-section">
+		<div class="max-w-6xl mx-auto workspace-inner space-y-8">
+			<noscript>
+				<p class="noscript-note">
+					This experiment needs JavaScript to record and compare your two attempts.
+				</p>
+			</noscript>
+			<header class="workspace-heading">
+				<p class="eyebrow">Step {experimentStep} of 3</p>
+				<h2>
+					{experimentStep === 1
+						? 'Try the task with tool calls'
+						: experimentStep === 2
+							? 'Try the same task with code'
+							: 'Review what changed'}
+				</h2>
+				<p>Draft an answer and choose where your attention was before completing each mode.</p>
+			</header>
 
-		<!-- Side-by-Side Comparison -->
-		<div class="grid lg:grid-cols-2 gap-6">
-			<!-- Tool Calling Mode -->
-			<div class="editor-card">
-				<div class="editor-header">
-					<h3 class="editor-title">Tool Calling Mode</h3>
-					<span class="mode-label mode-label-vorhanden">Vorhandenheit</span>
+			<!-- Context -->
+			<details class="content-card p-6">
+				<summary>Terms used in this experiment</summary>
+				<div class="context-content grid md:grid-cols-2 gap-4 mt-4">
+					<div class="mode-card mode-ready-to-hand">
+						<h3 class="mode-title">Ready-to-hand (Zuhandenheit)</h3>
+						<p class="mode-description">
+							The tool recedes. Your attention stays on the task you are completing.
+						</p>
+					</div>
+					<div class="mode-card mode-present-at-hand">
+						<h3 class="mode-title">Present-at-hand (Vorhandenheit)</h3>
+						<p class="mode-description">
+							The tool demands attention. You stop to think about how it works.
+						</p>
+					</div>
 				</div>
+			</details>
 
-				<div class="editor-description">
-					<p class="body-copy-sm">
-						Write the tool invocations needed to complete the task. Use XML-like syntax:
-					</p>
-					<pre class="example-code">{`<invoke name="Read">
+			<!-- Task Description -->
+			<div class="task-card p-6">
+				<div class="flex items-center justify-between mb-4">
+					<h2 class="section-title">Task {currentTask + 1} of {tasks.length}</h2>
+					<span class="task-badge">EXPERIMENT</span>
+				</div>
+				<p class="task-description">{currentTaskData.description}</p>
+				<p class="task-hint">{currentTaskData.hint}</p>
+			</div>
+
+			<!-- Side-by-Side Comparison -->
+			<div class="comparison-workspace grid lg:grid-cols-2 gap-6">
+				<!-- Tool Calling Mode -->
+				<div class="editor-card">
+					<div class="editor-header">
+						<h3 class="editor-title">Step 1 · Tool calling</h3>
+						<span class="mode-label mode-label-vorhanden">Tool may stay visible</span>
+					</div>
+
+					<div class="editor-description">
+						<p class="body-copy-sm">
+							Write the tool invocations needed to complete the task. Use XML-like syntax:
+						</p>
+						<pre class="example-code">{`<invoke name="Read">
   <parameter name="file_path">...</parameter>
 </invoke>`}</pre>
-				</div>
+					</div>
 
-				<div class="editor-controls">
-					{#if !toolCallStartTime}
-						<button onclick={startToolCall} class="start-button"> Start Tool Calling </button>
-					{:else if toolCallStartTime && !toolCallEndTime}
-						<div class="space-y-4">
-							<textarea
-								bind:value={toolCallAnswer}
-								placeholder="Write your tool invocations here..."
-								class="code-textarea"
-								rows="12"
-							></textarea>
+					<div class="editor-controls">
+						{#if !toolCallStartTime}
+							<button onclick={startToolCall} class="start-button"> Start Tool Calling </button>
+						{:else if toolCallStartTime && !toolCallEndTime}
+							<div class="space-y-4">
+								<textarea
+									bind:value={toolCallAnswer}
+									placeholder="Write your tool invocations here..."
+									class="code-textarea"
+									rows="12"
+								></textarea>
 
-							<!-- Attention Tracker -->
-							<div class="attention-tracker">
-								<p class="caption-text mb-2">Where is your attention right now?</p>
-								<div class="flex gap-2">
-									<button
-										onclick={() => recordAttention('tool', 'task')}
-										class="attention-button"
-										class:active={toolCallAttention === 'task'}
+								<!-- Attention Tracker -->
+								<div class="attention-tracker">
+									<p class="caption-text mb-2">Where is your attention right now?</p>
+									<div class="flex gap-2">
+										<button
+											onclick={() => recordAttention('tool', 'task')}
+											class="attention-button"
+											class:active={toolCallAttention === 'task'}
+											aria-pressed={toolCallAttention === 'task'}
+										>
+											On the task
+										</button>
+										<button
+											onclick={() => recordAttention('tool', 'tool')}
+											class="attention-button"
+											class:active={toolCallAttention === 'tool'}
+											aria-pressed={toolCallAttention === 'tool'}
+										>
+											On the tools
+										</button>
+									</div>
+								</div>
+
+								<button
+									onclick={completeToolCall}
+									disabled={!toolCallAnswer.trim() || !toolCallAttention}
+									class="complete-button"
+								>
+									Save step 1
+								</button>
+							</div>
+						{:else}
+							<div class="completed-state">
+								<div class="completion-time">
+									Completed in <span class="time-value">{toolCallDuration}ms</span>
+								</div>
+								<div class="attention-result">
+									Attention was on: <span class="attention-value"
+										>{toolCallAttention === 'task' ? 'the task' : 'the tools'}</span
 									>
-										On the task
-									</button>
-									<button
-										onclick={() => recordAttention('tool', 'tool')}
-										class="attention-button"
-										class:active={toolCallAttention === 'tool'}
-									>
-										On the tools
-									</button>
 								</div>
 							</div>
-
-							<button onclick={completeToolCall} class="complete-button">
-								Complete Tool Calling
-							</button>
-						</div>
-					{:else}
-						<div class="completed-state">
-							<div class="completion-time">
-								Completed in <span class="time-value">{toolCallDuration}ms</span>
-							</div>
-							<div class="attention-result">
-								Attention was on: <span class="attention-value"
-									>{toolCallAttention === 'task' ? 'the task' : 'the tools'}</span
-								>
-							</div>
-						</div>
-					{/if}
-				</div>
-			</div>
-
-			<!-- Code Mode -->
-			<div class="editor-card">
-				<div class="editor-header">
-					<h3 class="editor-title">Code Mode</h3>
-					<span class="mode-label mode-label-zuhanden">Zuhandenheit</span>
+						{/if}
+					</div>
 				</div>
 
-				<div class="editor-description">
-					<p class="body-copy-sm">
-						Write familiar code using standard library patterns:
-					</p>
-					<pre class="example-code">{`const content = await fs.readFile(...);
+				<!-- Code Mode -->
+				<div class="editor-card">
+					<div class="editor-header">
+						<h3 class="editor-title">Step 2 · Familiar code</h3>
+						<span class="mode-label mode-label-zuhanden">Tool may recede</span>
+					</div>
+
+					<div class="editor-description">
+						<p class="body-copy-sm">Write familiar code using standard library patterns:</p>
+						<pre class="example-code">{`const content = await fs.readFile(...);
 const result = content.filter(...);`}</pre>
-				</div>
+					</div>
 
-				<div class="editor-controls">
-					{#if !codeStartTime}
-						<button
-							onclick={startCodeMode}
-							disabled={!toolCallEndTime}
-							class="start-button"
-							class:disabled={!toolCallEndTime}
-						>
-							{toolCallEndTime ? 'Start Code Mode' : 'Complete Tool Calling First'}
-						</button>
-					{:else if codeStartTime && !codeEndTime}
-						<div class="space-y-4">
-							<textarea
-								bind:value={codeAnswer}
-								placeholder="Write your code here..."
-								class="code-textarea"
-								rows="12"
-							></textarea>
+					<div class="editor-controls">
+						{#if !codeStartTime}
+							<button
+								onclick={startCodeMode}
+								disabled={!toolCallEndTime}
+								class="start-button"
+								class:disabled={!toolCallEndTime}
+							>
+								{toolCallEndTime ? 'Start Code Mode' : 'Complete Tool Calling First'}
+							</button>
+						{:else if codeStartTime && !codeEndTime}
+							<div class="space-y-4">
+								<textarea
+									bind:value={codeAnswer}
+									placeholder="Write your code here..."
+									class="code-textarea"
+									rows="12"
+								></textarea>
 
-							<!-- Attention Tracker -->
-							<div class="attention-tracker">
-								<p class="caption-text mb-2">Where is your attention right now?</p>
-								<div class="flex gap-2">
-									<button
-										onclick={() => recordAttention('code', 'task')}
-										class="attention-button"
-										class:active={codeModeAttention === 'task'}
+								<!-- Attention Tracker -->
+								<div class="attention-tracker">
+									<p class="caption-text mb-2">Where is your attention right now?</p>
+									<div class="flex gap-2">
+										<button
+											onclick={() => recordAttention('code', 'task')}
+											class="attention-button"
+											class:active={codeModeAttention === 'task'}
+											aria-pressed={codeModeAttention === 'task'}
+										>
+											On the task
+										</button>
+										<button
+											onclick={() => recordAttention('code', 'tool')}
+											class="attention-button"
+											class:active={codeModeAttention === 'tool'}
+											aria-pressed={codeModeAttention === 'tool'}
+										>
+											On the tools
+										</button>
+									</div>
+								</div>
+
+								<button
+									onclick={completeCodeMode}
+									disabled={!codeAnswer.trim() || !codeModeAttention}
+									class="complete-button"
+								>
+									Save step 2 and compare
+								</button>
+							</div>
+						{:else}
+							<div class="completed-state">
+								<div class="completion-time">
+									Completed in <span class="time-value">{codeDuration}ms</span>
+								</div>
+								<div class="attention-result">
+									Attention was on: <span class="attention-value"
+										>{codeModeAttention === 'task' ? 'the task' : 'the tools'}</span
 									>
-										On the task
-									</button>
-									<button
-										onclick={() => recordAttention('code', 'tool')}
-										class="attention-button"
-										class:active={codeModeAttention === 'tool'}
-									>
-										On the tools
-									</button>
 								</div>
 							</div>
-
-							<button onclick={completeCodeMode} class="complete-button"> Complete Code Mode </button>
-						</div>
-					{:else}
-						<div class="completed-state">
-							<div class="completion-time">
-								Completed in <span class="time-value">{codeDuration}ms</span>
-							</div>
-							<div class="attention-result">
-								Attention was on: <span class="attention-value"
-									>{codeModeAttention === 'task' ? 'the task' : 'the tools'}</span
-								>
-							</div>
-						</div>
-					{/if}
+						{/if}
+					</div>
 				</div>
 			</div>
-		</div>
 
-		<!-- Results -->
-		{#if completed}
-			<div class="results-card p-6 space-y-6">
-				<h2 class="section-title">Results: What Did You Notice?</h2>
+			<!-- Results -->
+			{#if completed}
+				<div class="results-card p-6 space-y-6" aria-live="polite">
+					<div class="result-heading">
+						<p class="eyebrow">Step 3 of 3</p>
+						<h2 class="section-title">Compare your result</h2>
+						<p>Attention is the main evidence. Timing is context, not a quality score.</p>
+					</div>
 
-				<!-- Timing Comparison -->
-				<div class="comparison-grid">
-					<div class="metric-card">
-						<div class="metric-label">Tool Calling Time</div>
-						<div class="metric-value metric-value-warning">{toolCallDuration}ms</div>
-					</div>
-					<div class="metric-card">
-						<div class="metric-label">Code Mode Time</div>
-						<div class="metric-value metric-value-success">{codeDuration}ms</div>
-					</div>
-					<div class="metric-card">
-						<div class="metric-label">Difference</div>
-						<div
-							class="metric-value"
-							class:metric-value-success={toolCallDuration && codeDuration && codeDuration < toolCallDuration}
-						>
-							{toolCallDuration && codeDuration
-								? `${Math.abs(codeDuration - toolCallDuration)}ms ${codeDuration < toolCallDuration ? 'faster' : 'slower'}`
-								: '—'}
+					<!-- Timing Comparison -->
+					<div class="comparison-grid">
+						<div class="metric-card">
+							<div class="metric-label">Tool Calling Time</div>
+							<div class="metric-value metric-value-warning">{toolCallDuration}ms</div>
 						</div>
-					</div>
-				</div>
-
-				<!-- Attention Analysis -->
-				<div class="attention-analysis">
-					<h3 class="subsection-title">Attention Flow</h3>
-					<div class="grid md:grid-cols-2 gap-4">
-						<div class="attention-summary">
-							<div class="attention-mode">Tool Calling:</div>
-							<div class="attention-focus attention-focus-warning">
-								{toolCallAttention === 'task'
-									? 'Task-focused (rare!)'
-									: 'Tool-focused (typical Vorhandenheit)'}
-							</div>
+						<div class="metric-card">
+							<div class="metric-label">Code Mode Time</div>
+							<div class="metric-value metric-value-success">{codeDuration}ms</div>
 						</div>
-						<div class="attention-summary">
-							<div class="attention-mode">Code Mode:</div>
-							<div class="attention-focus attention-focus-success">
-								{codeModeAttention === 'task'
-									? 'Task-focused (Zuhandenheit achieved!)'
-									: 'Tool-focused (still learning the pattern)'}
+						<div class="metric-card">
+							<div class="metric-label">Difference</div>
+							<div
+								class="metric-value"
+								class:metric-value-success={toolCallDuration &&
+									codeDuration &&
+									codeDuration < toolCallDuration}
+							>
+								{toolCallDuration && codeDuration
+									? `${Math.abs(codeDuration - toolCallDuration)}ms ${codeDuration < toolCallDuration ? 'faster' : 'slower'}`
+									: '—'}
 							</div>
 						</div>
 					</div>
-				</div>
 
-				<!-- Reflection Prompts -->
-				<div class="reflection-section">
-					<button
-						onclick={() => (showReflection = !showReflection)}
-						class="reflection-toggle"
-					>
-						{showReflection ? 'Hide' : 'Show'} Reflection Prompts
-					</button>
-
-					{#if showReflection}
-						<div class="reflection-content">
-							<h3 class="subsection-title">Questions to Consider</h3>
-							<ul class="reflection-list">
-								<li>
-									Did you have to stop and think about <em>how to invoke the tool</em> in Tool Calling
-									mode?
-								</li>
-								<li>
-									In Code Mode, did the file reading mechanism <em>disappear</em> into familiar
-									patterns?
-								</li>
-								<li>
-									Which mode made you think more about <em>what you're doing</em> vs.
-									<em>how to do it</em>?
-								</li>
-								<li>Where did the tool become <em>transparent</em>? Where was it <em>conspicuous</em>?</li>
-								<li>
-									If you had to compose multiple operations (read, filter, transform), which mode would
-									feel more natural?
-								</li>
-							</ul>
-
-							<div class="heidegger-quote">
-								<p class="quote-text">
-									"The less we just stare at the hammer-Thing, and the more we seize hold of it and
-									use it, the more primordial does our relationship to it become."
-								</p>
-								<p class="quote-attribution">— Heidegger, Being and Time</p>
+					<!-- Attention Analysis -->
+					<div class="attention-analysis">
+						<h3 class="subsection-title">Attention Flow</h3>
+						<div class="grid md:grid-cols-2 gap-4">
+							<div class="attention-summary">
+								<div class="attention-mode">Tool Calling:</div>
+								<div class="attention-focus attention-focus-warning">
+									{toolCallAttention === 'task' ? 'Task-focused' : 'Tool-focused'}
+								</div>
+							</div>
+							<div class="attention-summary">
+								<div class="attention-mode">Code Mode:</div>
+								<div class="attention-focus attention-focus-success">
+									{codeModeAttention === 'task' ? 'Task-focused' : 'Tool-focused'}
+								</div>
 							</div>
 						</div>
-					{/if}
-				</div>
-
-				<!-- Example Solutions -->
-				<div class="examples-section">
-					<h3 class="subsection-title">Example Solutions</h3>
-					<div class="grid md:grid-cols-2 gap-4">
-						<div class="example-box">
-							<div class="example-label">Tool Calling Approach</div>
-							<pre class="example-code-block">{toolCallExample}</pre>
-						</div>
-						<div class="example-box">
-							<div class="example-label">Code Mode Approach</div>
-							<pre class="example-code-block">{codeExample}</pre>
-						</div>
 					</div>
-				</div>
 
-				<!-- Actions -->
-				<div class="actions-row">
-					<button onclick={reset} class="action-button action-button-secondary"> Try Again </button>
-					{#if currentTask < tasks.length - 1}
-						<button onclick={nextTask} class="action-button action-button-primary">
-							Next Task →
+					<!-- Reflection Prompts -->
+					<div class="reflection-section">
+						<button onclick={() => (showReflection = !showReflection)} class="reflection-toggle">
+							{showReflection ? 'Hide' : 'Show'} Reflection Prompts
 						</button>
-					{/if}
-				</div>
-			</div>
-		{/if}
 
-		<!-- Paper Link -->
-		<div class="paper-link-card p-6">
-			<div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-				<div class="space-y-2">
-					<h3 class="paper-link-title">Want the deeper explanation?</h3>
-					<p class="paper-link-description">
-						The philosophical framework behind this experiment is documented in the full paper—including why this matters for AI tool design.
-					</p>
+						{#if showReflection}
+							<div class="reflection-content">
+								<h3 class="subsection-title">Questions to Consider</h3>
+								<ul class="reflection-list">
+									<li>
+										Did you have to stop and think about <em>how to invoke the tool</em> in Tool Calling
+										mode?
+									</li>
+									<li>
+										In Code Mode, did the file reading mechanism <em>disappear</em> into familiar patterns?
+									</li>
+									<li>
+										Which mode made you think more about <em>what you're doing</em> vs.
+										<em>how to do it</em>?
+									</li>
+									<li>
+										Where did the tool become <em>transparent</em>? Where was it
+										<em>conspicuous</em>?
+									</li>
+									<li>
+										If you had to compose multiple operations (read, filter, transform), which mode
+										would feel more natural?
+									</li>
+								</ul>
+
+								<div class="heidegger-quote">
+									<p class="quote-text">
+										"The less we just stare at the hammer-Thing, and the more we seize hold of it
+										and use it, the more primordial does our relationship to it become."
+									</p>
+									<p class="quote-attribution">— Heidegger, Being and Time</p>
+								</div>
+							</div>
+						{/if}
+					</div>
+
+					<!-- Example Solutions -->
+					<div class="examples-section">
+						<h3 class="subsection-title">Example Solutions</h3>
+						<div class="grid md:grid-cols-2 gap-4">
+							<div class="example-box">
+								<div class="example-label">Tool Calling Approach</div>
+								<pre class="example-code-block">{toolCallExample}</pre>
+							</div>
+							<div class="example-box">
+								<div class="example-label">Code Mode Approach</div>
+								<pre class="example-code-block">{codeExample}</pre>
+							</div>
+						</div>
+					</div>
+
+					<!-- Actions -->
+					<div class="actions-row">
+						<button onclick={reset} class="action-button action-button-secondary">
+							Try Again
+						</button>
+						{#if currentTask < tasks.length - 1}
+							<button onclick={nextTask} class="action-button action-button-primary">
+								Next Task →
+							</button>
+						{/if}
+					</div>
+
+					<div class="paper-link-card p-6">
+						<div
+							class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
+						>
+							<div class="space-y-2">
+								<h3 class="paper-link-title">Continue with the explanation</h3>
+								<p class="paper-link-description">
+									The full paper explains why tool transparency matters for AI tool design.
+								</p>
+							</div>
+							<a
+								href="https://createsomething.io/papers/code-mode-hermeneutic-analysis"
+								target="_blank"
+								rel="noopener noreferrer"
+								class="paper-cta"
+							>
+								Read the full paper →
+							</a>
+						</div>
+					</div>
 				</div>
-				<a
-					href="https://createsomething.io/papers/code-mode-hermeneutic-analysis"
-					target="_blank"
-					rel="noopener noreferrer"
-					class="paper-cta"
-				>
-					Read the full paper →
-				</a>
-			</div>
+			{/if}
 		</div>
-	</div>
-</section>
+	</section>
+</main>
 
 <style>
-	/* ASCII Container */
-	.ascii-container {
-		background: var(--color-performance-bg-pure);
-		border-radius: var(--radius-performance-scale-lg);
+	.experiment-page,
+	.opening-inner,
+	.workspace-inner,
+	.comparison-workspace,
+	.editor-card,
+	.results-card,
+	.example-box {
+		min-width: 0;
+		max-width: 100%;
 	}
 
-	.ascii-art {
-		color: var(--color-performance-fg-secondary);
-		font-size: clamp(0.6rem, 1.5vw, 0.9rem);
-		font-family: 'IBM Plex Mono', 'Courier New', monospace;
-		line-height: 1.3;
+	.tool-opening {
+		padding: clamp(6rem, 12vw, 9rem) var(--space-performance-md) clamp(2.5rem, 6vw, 4.5rem);
 	}
 
-	/* Hero */
-	.hero-title {
-		font-size: var(--text-performance-h1);
-		font-weight: 700;
-		color: var(--color-performance-fg-primary);
+	.opening-inner {
+		display: grid;
+		gap: var(--space-performance-md);
 	}
 
-	.hero-subtitle {
-		font-size: var(--text-performance-body-lg);
-		color: var(--color-performance-fg-secondary);
-	}
-
-	.hero-description {
+	.eyebrow {
+		margin: 0;
 		color: var(--color-performance-fg-muted);
+		font-family: var(--font-performance-mono);
+		font-size: var(--text-performance-caption);
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+	}
+
+	.tool-opening h1 {
+		max-width: 15ch;
+		margin: 0;
+		color: var(--color-performance-fg-primary);
+		font-size: clamp(2.5rem, 7vw, var(--text-performance-h1));
+		font-weight: 700;
+		line-height: 1;
+	}
+
+	.opening-copy {
+		max-width: 44rem;
+		margin: 0;
+		color: var(--color-performance-fg-secondary);
+		font-size: var(--text-performance-body-lg);
+		line-height: 1.6;
+	}
+
+	.opening-steps {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-performance-sm) var(--space-performance-lg);
+		margin: 0;
+		padding: 0;
+		color: var(--color-performance-fg-tertiary);
+		font-size: var(--text-performance-body-sm);
+		list-style: none;
+	}
+
+	.opening-steps li {
+		display: flex;
+		align-items: center;
+		gap: var(--space-performance-xs);
+	}
+
+	.opening-steps span {
+		display: grid;
+		width: 1.75rem;
+		height: 1.75rem;
+		place-items: center;
+		border: 1px solid var(--color-performance-border-emphasis);
+		border-radius: var(--radius-performance-scale-full);
+		font-family: var(--font-performance-mono);
+	}
+
+	.workspace-section {
+		padding: clamp(2rem, 5vw, 4rem) var(--space-performance-md) clamp(4rem, 8vw, 7rem);
+		border-top: 1px solid var(--color-performance-border-default);
+	}
+
+	.noscript-note {
+		margin: 0;
+		padding: var(--space-performance-sm) var(--space-performance-md);
+		background: var(--color-performance-warning-muted);
+		border-radius: var(--radius-performance-scale-md);
+		color: var(--color-performance-fg-secondary);
+	}
+
+	.workspace-heading,
+	.result-heading {
+		display: grid;
+		gap: var(--space-performance-xs);
+	}
+
+	.workspace-heading h2,
+	.workspace-heading p,
+	.result-heading h2,
+	.result-heading p {
+		margin: 0;
+	}
+
+	.workspace-heading h2 {
+		max-width: 24ch;
+		color: var(--color-performance-fg-primary);
+		font-size: var(--text-performance-h2);
+	}
+
+	.workspace-heading > p:last-child,
+	.result-heading > p:last-child {
+		color: var(--color-performance-fg-secondary);
 	}
 
 	/* Cards */
 	.content-card {
 		background: var(--color-performance-hover);
 		border-radius: var(--radius-performance-scale-xl);
+	}
+
+	.content-card summary {
+		cursor: pointer;
+		color: var(--color-performance-fg-primary);
+		font-weight: 600;
 	}
 
 	.task-card {
@@ -564,10 +663,6 @@ const result = content.filter(...);`}</pre>
 		font-size: var(--text-performance-h3);
 		font-weight: 600;
 		color: var(--color-performance-fg-primary);
-	}
-
-	.body-text {
-		color: var(--color-performance-fg-secondary);
 	}
 
 	.body-copy-sm {
@@ -675,6 +770,8 @@ const result = content.filter(...);`}</pre>
 	}
 
 	.example-code {
+		width: 100%;
+		max-width: 100%;
 		background: var(--color-performance-bg-pure);
 		color: var(--color-performance-fg-tertiary);
 		padding: var(--space-performance-sm);
@@ -702,11 +799,12 @@ const result = content.filter(...);`}</pre>
 		transition: opacity var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
-	.start-button:hover:not(.disabled) {
+	.start-button:hover:not(:disabled) {
 		opacity: 0.9;
 	}
 
-	.start-button.disabled {
+	.start-button:disabled,
+	.complete-button:disabled {
 		opacity: 0.4;
 		cursor: not-allowed;
 	}
@@ -723,7 +821,7 @@ const result = content.filter(...);`}</pre>
 		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
 	}
 
-	.complete-button:hover {
+	.complete-button:hover:not(:disabled) {
 		background: var(--color-performance-success-border);
 	}
 
@@ -945,6 +1043,8 @@ const result = content.filter(...);`}</pre>
 	}
 
 	.example-code-block {
+		width: 100%;
+		max-width: 100%;
 		background: var(--color-performance-bg-pure);
 		color: var(--color-performance-fg-secondary);
 		padding: var(--space-performance-sm);
@@ -1014,5 +1114,27 @@ const result = content.filter(...);`}</pre>
 
 	.paper-cta:hover {
 		background: var(--color-performance-info-border);
+	}
+
+	@media (max-width: 640px) {
+		.opening-steps {
+			display: grid;
+		}
+
+		.editor-header,
+		.actions-row {
+			align-items: stretch;
+			flex-direction: column;
+		}
+
+		.mode-label {
+			align-self: flex-start;
+		}
+
+		.action-button,
+		.paper-cta {
+			width: 100%;
+			text-align: center;
+		}
 	}
 </style>
