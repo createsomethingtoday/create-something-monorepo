@@ -181,18 +181,6 @@ export const REGISTRY_CATALOG_ENTRIES = [
     "authType": "bearer"
   },
   {
-    "name": "Gmail Sync",
-    "slug": "gmail-sync",
-    "url": "https://gmail.mcp.workway.co",
-    "description": "Half Dozen Gmail sync MCP (Danny)",
-    "category": "workway",
-    "transports": [
-      "http",
-      "sse"
-    ],
-    "requiresAuth": true
-  },
-  {
     "name": "QuickBooks Notion Sync",
     "slug": "quickbooks-notion",
     "url": "https://quickbooks.mcp.workway.co",

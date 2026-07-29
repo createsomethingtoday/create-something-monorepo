@@ -12835,7 +12835,7 @@
       "transport": "http",
       "url": "https://dm.mcp.workway.co/mcp",
       "bearer_token_env_var": "HALFDOZEN_DM_MCP_API_KEY",
-      "description": "Half Dozen DM MCP (Notion CRUD + DM-scoped Google Drive sync)",
+      "description": "Dormant Half Dozen DM MCP retained for controlled reactivation and historical telemetry",
       "tags": [
         "halfdozen",
         "dm",
@@ -12844,20 +12844,22 @@
         "composio",
         "workway"
       ],
-      "catalog_exposure_mode": "brokered",
-      "estimated_tool_count": 100
+      "lifecycle": "dormant",
+      "catalog_exposure_mode": "dormant",
+      "estimated_tool_count": 100,
+      "setupNotes": "Dormant since 2026-07-29 after no recorded tool activity since 2026-04-21. Keep deployed only for controlled reactivation; exclude from active fleet monitoring and bundles."
     },
     "halfdozen-gmail-sync-danny": {
       "transport": "http",
       "url": "https://gmail.mcp.workway.co/mcp",
-      "description": "Half Dozen Gmail sync MCP (Danny)",
+      "description": "Retired Half Dozen Gmail sync MCP (Danny)",
       "tags": [
         "halfdozen",
         "gmail",
         "workway"
       ],
       "catalog": {
-        "include": true,
+        "include": false,
         "name": "Gmail Sync",
         "slug": "gmail-sync",
         "category": "workway",
@@ -12867,32 +12869,38 @@
           "sse"
         ]
       },
-      "catalog_exposure_mode": "direct",
-      "estimated_tool_count": 0
+      "lifecycle": "dormant",
+      "catalog_exposure_mode": "dormant",
+      "estimated_tool_count": 0,
+      "setupNotes": "Retired 2026-07-29 after the shared OAuth token and automation store was confirmed empty. Historical telemetry is retained."
     },
     "halfdozen-gmail-sync-fillip": {
       "transport": "http",
       "url": "https://fillip-gmail.mcp.workway.co/mcp",
-      "description": "Half Dozen Gmail sync MCP (Fillip)",
+      "description": "Retired Half Dozen Gmail sync MCP (Fillip)",
       "tags": [
         "halfdozen",
         "gmail",
         "workway"
       ],
-      "catalog_exposure_mode": "direct",
-      "estimated_tool_count": 0
+      "lifecycle": "dormant",
+      "catalog_exposure_mode": "dormant",
+      "estimated_tool_count": 0,
+      "setupNotes": "Retired 2026-07-29 after the shared OAuth token and automation store was confirmed empty. No tool telemetry was ever recorded for this instance."
     },
     "halfdozen-gmail-sync-leah": {
       "transport": "http",
       "url": "https://leah-gmail.mcp.workway.co/mcp",
-      "description": "Half Dozen Gmail sync MCP (Leah)",
+      "description": "Retired Half Dozen Gmail sync MCP (Leah)",
       "tags": [
         "halfdozen",
         "gmail",
         "workway"
       ],
-      "catalog_exposure_mode": "direct",
-      "estimated_tool_count": 0
+      "lifecycle": "dormant",
+      "catalog_exposure_mode": "dormant",
+      "estimated_tool_count": 0,
+      "setupNotes": "Retired 2026-07-29 after the shared OAuth token and automation store was confirmed empty. No tool telemetry was ever recorded for this instance."
     },
     "halfdozen-lightswitch-sync-mcp": {
       "transport": "http",
@@ -16594,7 +16602,11 @@
     "dormant": [
       "gmail-notion-mcp",
       "notion-sync-mcp",
-      "loom-mcp"
+      "loom-mcp",
+      "halfdozen-dm-mcp",
+      "halfdozen-gmail-sync-danny",
+      "halfdozen-gmail-sync-fillip",
+      "halfdozen-gmail-sync-leah"
     ],
     "finance": [
       "quickbooks-notion-mcp-server"
@@ -16611,7 +16623,6 @@
       "notion-halfdozen-lightswitch",
       "notion-halfdozen-phase-3",
       "notion-halfdozen-three-six-zero",
-      "halfdozen-dm-mcp",
       "halfdozen-operator-notion-mcp",
       "halfdozen-blondish-sync-mcp",
       "halfdozen-c3-management-sync-mcp",
@@ -16624,9 +16635,6 @@
       "halfdozen-telemetry"
     ],
     "halfdozen-sync": [
-      "halfdozen-gmail-sync-danny",
-      "halfdozen-gmail-sync-fillip",
-      "halfdozen-gmail-sync-leah",
       "halfdozen-zoom-sync",
       "halfdozen-blondish-sync-mcp",
       "halfdozen-c3-management-sync-mcp",

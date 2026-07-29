@@ -44,12 +44,10 @@ test('scheduled fleet watchdog gathers all required telemetry without a model cr
     calls.map((call) => call.name),
     ['query_health', 'query_errors', 'query_activity', 'query_trends']
   );
-  assert.deepEqual(calls.map((call) => call.args), [
-    { hours: 24 },
-    { hours: 24, limit: 50 },
-    { limit: 100 },
-    { periods: 3 }
-  ]);
+  assert.deepEqual(
+    calls.map((call) => call.args),
+    [{ hours: 24 }, { hours: 24, limit: 50 }, { limit: 100 }, { periods: 3 }]
+  );
   assert.equal(result.degraded, false);
   assert.equal(result.required_tool_coverage?.all_required_tools_successful, true);
   assert.match(String(result.final_output), /Fleet Watchdog: HEALTHY/);
@@ -101,8 +99,42 @@ test('scheduled fleet watchdog names degraded services, recurring errors, usage 
       periodsCompared: 3,
       trends: {
         'halfdozen-gmail-sync': [
-          { period: '2026-07', runs: 5 },
-          { period: '2026-06', runs: 10 }
+          { period: '2026-06', runs: 5 },
+          { period: '2026-05', runs: 10 }
+        ]
+      }
+    })
+  };
+
+  const result = await runDeterministicFleetWatchdog({
+    callTool: async (name) => fixtures[name],
+    now: new Date('2026-07-29T18:00:00Z')
+  });
+
+  assert.equal(result.degraded, true);
+  assert.match(result.degraded_reason ?? '', /halfdozen-gmail-sync \(degraded\)/);
+  assert.match(result.degraded_reason ?? '', /halfdozen-notion-mcp \(no-data\)/);
+  assert.match(result.final_output, /upstream timeout \(2 occurrences\)/);
+  assert.match(result.final_output, /halfdozen-gmail-sync usage down 50%/);
+  assert.match(
+    result.final_output,
+    /First remediation: inspect sync_inbox on halfdozen-gmail-sync/
+  );
+});
+
+test('scheduled fleet watchdog does not call non-consecutive stored months a regression', async () => {
+  const fixtures: Record<string, unknown> = {
+    query_health: mcpText([
+      { server: 'halfdozen-gmail-sync', status: 'healthy', invocations: 1, errors: 0 }
+    ]),
+    query_errors: mcpText({ window: '24h', totalErrors: 0, uniquePatterns: 0, errors: [] }),
+    query_activity: mcpText({ count: 1, invocations: [] }),
+    query_trends: mcpText({
+      periodsCompared: 3,
+      trends: {
+        'halfdozen-gmail-sync': [
+          { period: '2026-04', runs: 1 },
+          { period: '2026-02', runs: 13 }
         ]
       }
     })
@@ -112,19 +144,71 @@ test('scheduled fleet watchdog names degraded services, recurring errors, usage 
     callTool: async (name) => fixtures[name]
   });
 
-  assert.equal(result.degraded, true);
-  assert.match(result.degraded_reason ?? '', /halfdozen-gmail-sync \(degraded\)/);
-  assert.match(result.degraded_reason ?? '', /halfdozen-notion-mcp \(no-data\)/);
-  assert.match(result.final_output, /upstream timeout \(2 occurrences\)/);
-  assert.match(result.final_output, /halfdozen-gmail-sync usage down 50%/);
-  assert.match(result.final_output, /First remediation: inspect sync_inbox on halfdozen-gmail-sync/);
+  assert.match(result.final_output, /Period-over-period regressions: none/);
+  assert.doesNotMatch(result.final_output, /usage down/);
+});
+
+test('scheduled fleet watchdog does not compare an incomplete current month with a closed month', async () => {
+  const fixtures: Record<string, unknown> = {
+    query_health: mcpText([
+      { server: 'halfdozen-telemetry', status: 'healthy', invocations: 16, errors: 0 }
+    ]),
+    query_errors: mcpText({ window: '24h', totalErrors: 0, uniquePatterns: 0, errors: [] }),
+    query_activity: mcpText({ count: 16, invocations: [] }),
+    query_trends: mcpText({
+      periodsCompared: 3,
+      trends: {
+        'halfdozen-telemetry': [
+          { period: '2026-07', runs: 449 },
+          { period: '2026-06', runs: 480 }
+        ]
+      }
+    })
+  };
+
+  const result = await runDeterministicFleetWatchdog({
+    callTool: async (name) => fixtures[name],
+    now: new Date('2026-07-29T18:00:00Z')
+  });
+
+  assert.match(result.final_output, /Period-over-period regressions: none/);
+  assert.doesNotMatch(result.final_output, /halfdozen-telemetry usage down/);
+});
+
+test('scheduled fleet watchdog ignores historical trends for servers outside active health coverage', async () => {
+  const fixtures: Record<string, unknown> = {
+    query_health: mcpText([
+      { server: 'halfdozen-telemetry', status: 'healthy', invocations: 16, errors: 0 }
+    ]),
+    query_errors: mcpText({ window: '24h', totalErrors: 0, uniquePatterns: 0, errors: [] }),
+    query_activity: mcpText({ count: 16, invocations: [] }),
+    query_trends: mcpText({
+      periodsCompared: 3,
+      trends: {
+        'halfdozen-dm-mcp': [
+          { period: '2026-06', runs: 32 },
+          { period: '2026-05', runs: 312 }
+        ]
+      }
+    })
+  };
+
+  const result = await runDeterministicFleetWatchdog({
+    callTool: async (name) => fixtures[name],
+    now: new Date('2026-07-29T18:00:00Z')
+  });
+
+  assert.match(result.final_output, /Period-over-period regressions: none/);
+  assert.doesNotMatch(result.final_output, /halfdozen-dm-mcp usage down/);
 });
 
 test('cron route succeeds without OPENAI_API_KEY by using the deterministic runner', async () => {
   const result = await runDeterministicFleetWatchdog({
     callTool: async (name) => {
       if (name === 'query_health') {
-        return mcpText([{ server: 'halfdozen-gmail-sync', status: 'healthy', invocations: 1, errors: 0 }]);
+        return mcpText([
+          { server: 'halfdozen-gmail-sync', status: 'healthy', invocations: 1, errors: 0 }
+        ]);
       }
       if (name === 'query_errors') {
         return mcpText({ window: '24h', totalErrors: 0, uniquePatterns: 0, errors: [] });
@@ -184,7 +268,9 @@ test('scheduled fleet watchdog treats MCP isError results as failed required too
   const result = await runDeterministicFleetWatchdog({
     callTool: async (name) => {
       if (name === 'query_health') {
-        return mcpText([{ server: 'halfdozen-gmail-sync', status: 'healthy', invocations: 1, errors: 0 }]);
+        return mcpText([
+          { server: 'halfdozen-gmail-sync', status: 'healthy', invocations: 1, errors: 0 }
+        ]);
       }
       if (name === 'query_errors') {
         return { isError: true, content: [{ type: 'text', text: 'D1 query unavailable' }] };
