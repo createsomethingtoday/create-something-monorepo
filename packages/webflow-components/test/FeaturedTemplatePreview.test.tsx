@@ -18,7 +18,8 @@ const featuredItem: FeaturedTemplatePreviewItem = {
   creator_name: 'Studio North',
   price: 79,
   is_free: false,
-  reviewer_pick_reason: 'Clear hierarchy and unusually strong conversion detail.',
+  reviewer_pick_reason:
+    'Clear sections, product examples, and a prominent call to action help software teams explain what they sell and lead visitors to a trial or demo.',
 };
 
 test('renders the selected Featured item as an immersive published-site preview', () => {
@@ -96,8 +97,11 @@ test('shows the literal human reviewer rationale only when the CMS field has tex
       onNavigate={() => undefined}
     />,
   );
-  assert.match(withFeedback, /Why our Marketplace team featured it/);
-  assert.match(withFeedback, /Clear hierarchy and unusually strong conversion detail\./);
+  assert.match(withFeedback, /Why this template stands out/);
+  assert.match(
+    withFeedback,
+    /Clear sections, product examples, and a prominent call to action help software teams explain what they sell and lead visitors to a trial or demo\./
+  );
   assert.doesNotMatch(withFeedback, /Featured template feedback/);
 
   const withoutFeedback = renderToStaticMarkup(
@@ -111,7 +115,7 @@ test('shows the literal human reviewer rationale only when the CMS field has tex
       onNavigate={() => undefined}
     />,
   );
-  assert.doesNotMatch(withoutFeedback, /Why our Marketplace team featured it/);
+  assert.doesNotMatch(withoutFeedback, /Why this template stands out/);
   assert.doesNotMatch(withoutFeedback, /Selected by Marketplace review/);
 });
 
@@ -129,10 +133,14 @@ test('identifies the human Marketplace review and the Featured collection withou
   );
 
   assert.match(html, /Human Marketplace review/);
-  assert.match(html, /Why our Marketplace team featured it/);
+  assert.match(html, /Why this template stands out/);
+  assert.doesNotMatch(html, /Why our Marketplace team featured it/);
   assert.match(html, /4 of 582 featured templates/);
   assert.match(html, />Open live preview/);
-  assert.match(html, /Clear hierarchy and unusually strong conversion detail\./);
+  assert.match(
+    html,
+    /Clear sections, product examples, and a prominent call to action help software teams explain what they sell and lead visitors to a trial or demo\./
+  );
 });
 
 test('offers low-travel ordered navigation on the preview and explains the keyboard shortcut', () => {
@@ -223,7 +231,7 @@ test('surfaces concise decision details and preserves the full template detail p
   assert.match(html, /href="https:\/\/webflow\.com\/templates\/html\/leadcraft-website-template"/);
   assert.match(html, /aria-label="View LeadCraft template details \(opens in a new tab\)"/);
   assert.match(html, /<h1[^>]*>LeadCraft<\/h1>/);
-  assert.match(html, /<h2[^>]*>Why our Marketplace team featured it<\/h2>/);
+  assert.match(html, /<h2[^>]*>Why this template stands out<\/h2>/);
 });
 
 test('keeps View details available when a live preview cannot be framed', () => {

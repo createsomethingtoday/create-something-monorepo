@@ -485,7 +485,7 @@ export const FeaturedTemplatePreview: React.FC<FeaturedTemplatePreviewProps> = (
                   <span className="tmfeatured-feedback-mark" aria-hidden="true">✓</span>
                   Human Marketplace review
                 </p>
-                <h2 id={feedbackTitleId} className="tmfeatured-feedback-label">Why our Marketplace team featured it</h2>
+                <h2 id={feedbackTitleId} className="tmfeatured-feedback-label">Why this template stands out</h2>
                 <p className="tmfeatured-feedback-text">{reviewerFeedback}</p>
               </section>
             ) : null}

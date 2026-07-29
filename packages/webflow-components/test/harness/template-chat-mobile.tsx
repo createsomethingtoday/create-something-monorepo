@@ -56,7 +56,8 @@ const featuredItems: FeaturedTemplatePreviewItem[] = [
     creator_name: 'Marketplace Reviewer Fixture',
     price: 79,
     is_free: false,
-    reviewer_pick_reason: 'A focused hierarchy and unusually clear path from first impression to action.',
+    reviewer_pick_reason:
+      'Clear sections, product examples, and a prominent call to action help software teams explain what they sell and lead visitors to a trial or demo.',
     description_short: 'A conversion-focused launch template for growing software teams.',
     template_type: 'Multi Page',
     category_groups: [{ name: 'Business', slug: 'business' }],
