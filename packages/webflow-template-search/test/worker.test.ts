@@ -751,6 +751,8 @@ describe('webflow-template-search worker', () => {
             ...PUBLISHED_ASSETS[0].fields,
             '🎨Creator': ['recDesignerBrix'],
             '🎨Creator Name': 'BRIX Templates',
+            '⭐Reviewer Pick Reason (featured templates)':
+              'A clear AI-product story and polished interaction system make this a strong fit for agent startups.',
           },
         },
         ...PUBLISHED_ASSETS.slice(1),
@@ -816,6 +818,7 @@ describe('webflow-template-search worker', () => {
           creator_profile_url: string | null;
           creator_avatar_url: string | null;
           creator_avatar_alt: string | null;
+          reviewer_pick_reason: string | null;
         }>;
       };
       expect(
@@ -826,6 +829,7 @@ describe('webflow-template-search worker', () => {
           creator_profile_url: item.creator_profile_url,
           creator_avatar_url: item.creator_avatar_url,
           creator_avatar_alt: item.creator_avatar_alt,
+          reviewer_pick_reason: item.reviewer_pick_reason,
         })),
       ).toEqual([
         {
@@ -835,6 +839,8 @@ describe('webflow-template-search worker', () => {
           creator_profile_url: 'https://webflow.com/templates/designers/brix-templates',
           creator_avatar_url: 'https://cdn.prod.website-files.com/site/brix-avatar.webp',
           creator_avatar_alt: 'BRIX Templates',
+          reviewer_pick_reason:
+            'A clear AI-product story and polished interaction system make this a strong fit for agent startups.',
         },
       ]);
       expect(fetchMock.mock.calls.some(([input]) => new URL(typeof input === 'string' ? input : input.url).hostname === 'api.webflow.com')).toBe(

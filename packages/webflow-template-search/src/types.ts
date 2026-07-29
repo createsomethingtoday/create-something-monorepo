@@ -60,6 +60,7 @@ export interface AirtableAssetFields extends Record<string, unknown> {
   'Is free?'?: number | boolean;
   '🥞Is Currently Featured? (🏗️ only)'?: number | boolean;
   'ℹ️Is Featured? (🖥️, 🏗️only)'?: number | boolean;
+  '⭐Reviewer Pick Reason (featured templates)'?: string;
   '🖌️Popularity Score'?: number;
   '📋 Unique Viewers'?: number;
   '📋 Cumulative Purchases'?: number;
@@ -157,6 +158,7 @@ export interface TemplateDocumentInput {
   isFree: boolean;
   isFeatured: boolean;
   isLandingPage: boolean;
+  reviewerPickReason: string | null;
   popularityScore: number | null;
   uniqueViewers: number | null;
   cumulativePurchases: number | null;

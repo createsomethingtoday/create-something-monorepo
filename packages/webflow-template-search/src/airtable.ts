@@ -46,6 +46,7 @@ export const ASSET_FIELDS = [
   'Is free?',
   '🥞Is Currently Featured? (🏗️ only)',
   'ℹ️Is Featured? (🖥️, 🏗️only)',
+  '⭐Reviewer Pick Reason (featured templates)',
   '🖌️Popularity Score',
   '📋 Unique Viewers',
   '📋 Cumulative Purchases',

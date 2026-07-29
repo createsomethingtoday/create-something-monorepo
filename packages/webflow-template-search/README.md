@@ -64,6 +64,36 @@ API URLs. The generator labels Airtable attachment values as `creatorAvatarSourc
 `topTemplateImageSourceUrl`; upload those sources into Webflow assets or CMS image fields
 before binding them to the public Code Component.
 
+## Featured template feedback
+
+Featured-template rationale is owned by Airtable field
+`⭐Reviewer Pick Reason (featured templates)` and is indexed directly into the public search
+payload. Generate review proposals without writing Airtable:
+
+```bash
+infisical run --env=prod --path=/ -- \
+  infisical run --env=prod --path=/webflow/template-marketplace -- \
+  pnpm --filter @create-something/webflow-template-search featured-feedback -- \
+  --provider anthropic --mode missing --out output/featured-template-feedback/proposals.jsonl
+```
+
+Every proposal requires current Marketplace imagery, a `200` published preview, structured
+evidence, and buyer-facing copy validation. Existing human notes are preserved and clarified;
+missing notes are generated only from those review sources. Inspect the JSONL artifact before
+the separately gated write pass:
+
+```bash
+AIRTABLE_FEATURED_FEEDBACK_WRITE_APPROVED=1 \
+  infisical run --env=prod --path=/ -- \
+  pnpm --filter @create-something/webflow-template-search featured-feedback -- \
+  --apply output/featured-template-feedback/proposals.jsonl
+```
+
+Apply rechecks that every record is still published and Featured, verifies that its current
+rationale still matches the proposal's original value, writes at most 10 records per request,
+then independently reads each batch back into a local receipt artifact. Proposal and receipt
+artifacts are intentionally ignored by Git because they contain temporary evidence URLs.
+
 ## Template thumbnails
 
 The sync pipeline indexes Marketplace template metadata from Airtable, but Webflow is the

@@ -13,7 +13,8 @@
     "typecheck": "tsc --noEmit",
     "sync": "node scripts/sync.mjs",
     "rebuild": "node scripts/rebuild.mjs",
-    "featured-creators": "node scripts/featured-creators.mjs"
+    "featured-creators": "node scripts/featured-creators.mjs",
+    "featured-feedback": "pnpm exec tsx scripts/enrich-featured-feedback.ts"
   },
   "dependencies": {
     "zod": "^3.23.0"
