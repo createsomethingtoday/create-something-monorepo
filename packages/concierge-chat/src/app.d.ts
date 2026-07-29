@@ -10,9 +10,9 @@ declare global {
 
 	interface D1Database {
 		prepare(query: string): D1PreparedStatement;
-		batch?(statements: D1PreparedStatement[]): Promise<
-			Array<{ success: boolean; meta?: Record<string, unknown> }>
-		>;
+		batch?(
+			statements: D1PreparedStatement[]
+		): Promise<Array<{ success: boolean; meta?: Record<string, unknown> }>>;
 	}
 
 	interface R2HttpMetadata {
@@ -58,6 +58,7 @@ declare global {
 				AGENCY_INTERNAL_API_KEY?: string;
 				ABUNDANCE_STAFF_ONBOARDING_TOKEN?: string;
 				ABUNDANCE_JOBS_MCP_URL?: string;
+				OPENAI_API_KEY?: string;
 			};
 			context?: unknown;
 			caches?: unknown;

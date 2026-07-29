@@ -67,8 +67,14 @@ async function postFormData<TResponse>(url: string, body: FormData) {
 	return (await response.json()) as TResponse;
 }
 
-export async function createConciergeThreadClient() {
+export async function createConciergeThreadClient(initialMessage?: string) {
 	const response = await postJson<ThreadCreateResponse>('/api/threads');
+	const message = initialMessage?.trim();
+	if (message) {
+		await postJson<ThreadMutationResponse>(`/api/threads/${response.threadId}/message`, {
+			body: message
+		});
+	}
 	await invalidate(CONCIERGE_SESSION_DEPENDENCY);
 	await goto(`/chat/${response.threadId}`);
 	return response.threadId;
@@ -88,7 +94,10 @@ export async function sendThreadMessage(threadId: string, body: string) {
 }
 
 export async function runThreadAction(threadId: string, action: ThreadActionRequest) {
-	const response = await postJson<ThreadMutationResponse>(`/api/threads/${threadId}/action`, action);
+	const response = await postJson<ThreadMutationResponse>(
+		`/api/threads/${threadId}/action`,
+		action
+	);
 	dispatchThreadMutation(response);
 	return response;
 }

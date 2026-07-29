@@ -20,12 +20,13 @@ The app should render three stable rails for staff/operator views:
 2. **Chat rail**: owned conversation state, inline widgets, and composer state.
 3. **Proof and actions rail**: artifacts, tool calls, approvals, handoff packets, eval evidence, and Linear references.
 
-CREATE SOMETHING owns the runtime contract, conversation state, policy, and receipts. Cloudflare provides infrastructure and OpenAI provides intelligence. The browser never receives a provider key or calls a model provider directly; server orchestration returns only bounded widget and workflow state.
+CREATE SOMETHING owns the runtime contract, conversation state, policy, and receipts. Cloudflare provides infrastructure and OpenAI provides intelligence. The standard provider key always remains server-side. Written Concierge orchestration returns bounded widget and workflow state; the public voice route is the narrow exception that receives a short-lived Realtime client secret for a browser WebRTC session.
 
 ## Current Scope
 
 - hosted nurse-intake chat surface for the public landing, candidate conversation threads, candidate-safe application details, and staff-only handoff/settings routes
-- public marketing landing at `/` and public nurse-start entry at `/apply`
+- public marketing landing at `/`, browser voice companion at `/voice`, and public nurse-start entry at `/apply`
+- candidate-controlled voice brief flow that collects non-sensitive work preferences in a session-only transcript and writes only the confirmed brief after the candidate deliberately continues into a governed application thread
 - approved widget registry and renderer with server-routed actions
 - cookie-scoped, server-owned session updates with a secure-verification boundary for protected nurse actions
 - self-serve one-time email verification for protected nurse actions, backed by D1 challenge storage when `DB` is bound and a local preview fallback when it is not
@@ -56,6 +57,7 @@ CREATE SOMETHING owns the runtime contract, conversation state, policy, and rece
 - set `AGENCY_BASE_URL` if the control-plane bridge should target a non-default `.agency` origin
 - when `.agency` is reachable, concierge-chat reads `/api/me/entitlement` with the shared browser session to gate governed staffing actions; when it is not reachable, those actions degrade to control-plane recovery links
 - production mode keeps `/` and `/apply` public, but protected upload and staffing transitions require secure verification. Self-serve email verification is enabled when both `ABUNDANCE_INTAKE_SIGNING_SECRET` and `RESEND_API_KEY` are configured. Recruiter-issued grants remain available through `pnpm --filter @create-something/concierge-chat mint:intake-grant -- --candidate <id> --base-url <secure-intake-url>`
+- set `OPENAI_API_KEY` to a funded server-only project key for `/api/voice/session`; the endpoint exchanges it for a short-lived client secret with no-store headers, and the browser never receives the standard key
 - set `ABUNDANCE_INTAKE_BRIDGE_SECRET` to allow trusted external systems to create candidate continuation links through `POST /api/intake-claims`
 - set both `INDEED_MCP_BASE_URL` and `INDEED_MCP_API_KEY` to enable terminal `indeed_apply_record_disposition` writeback from the staffing flow
 - set `ABUNDANCE_GEO_MAPBOX_ACCESS_TOKEN` to enable server-side external preferred-location recovery when the internal market catalog cannot normalize a nurse's location message confidently; this path stores normalized results in-thread, so it is intended for a Mapbox token allowed for permanent geocoding
@@ -71,10 +73,10 @@ CREATE SOMETHING owns the runtime contract, conversation state, policy, and rece
 
 | Field | Value |
 |-------|-------|
-| Entry point | `README.md`, `src/routes/+page.svelte`, `src/lib/chat/prototype-session.ts`, `src/lib/chat/matching-model.ts`, `src/lib/handoff/create-packet.ts`, `src/lib/server/intake-verification.ts`, `src/lib/server/intake-claims.ts`, `src/lib/server/threads/persistence.ts`, `src/lib/server/attachments/storage.ts`, `src/routes/api/threads/+server.ts`, `src/routes/api/intake-verification/request/+server.ts`, `src/routes/api/intake-claims/+server.ts` |
+| Entry point | `README.md`, `src/routes/+page.svelte`, `src/routes/voice/+page.svelte`, `src/routes/api/voice/session/+server.ts`, `src/lib/chat/prototype-session.ts`, `src/lib/chat/matching-model.ts`, `src/lib/handoff/create-packet.ts`, `src/lib/server/intake-verification.ts`, `src/lib/server/intake-claims.ts`, `src/lib/server/threads/persistence.ts`, `src/lib/server/attachments/storage.ts`, `src/routes/api/threads/+server.ts`, `src/routes/api/intake-verification/request/+server.ts`, `src/routes/api/intake-claims/+server.ts` |
 | Boot command | `pnpm --filter @create-something/concierge-chat dev` |
 | Smoke command | `pnpm --filter @create-something/concierge-chat smoke` |
 | Acceptance command | `pnpm --filter @create-something/concierge-chat acceptance` |
-| Validation surfaces | Svelte typecheck output, production build, route rendering, widget registry compilation, public-apply routing, anonymous redirects from `/chat` and `/settings`, candidate acceptance flow, internal staffing acceptance flow, inbound claim creation, `/apply/claim` continuation routing, self-serve verification request/verify flows, secure-intake gating, terminal Indeed disposition writeback |
-| UI validation path | `/`, `/apply`, `/apply/claim?token=...`, `/agents`, `/agents/[agentId]`, `/chat` (redirect), `/chat/[threadId]`, `/chat/[threadId]/profile`, `/chat/[threadId]/handoff` (staff only when available) |
+| Validation surfaces | Svelte typecheck output, unit tests, production build, route rendering, voice session boundary, widget registry compilation, public-apply routing, anonymous redirects from `/chat` and `/settings`, candidate acceptance flow, internal staffing acceptance flow, inbound claim creation, `/apply/claim` continuation routing, self-serve verification request/verify flows, secure-intake gating, terminal Indeed disposition writeback |
+| UI validation path | `/`, `/voice`, `/apply`, `/apply/claim?token=...`, `/agents`, `/agents/[agentId]`, `/chat` (redirect), `/chat/[threadId]`, `/chat/[threadId]/profile`, `/chat/[threadId]/handoff` (staff only when available) |
 | Escalation rule | stop if a new widget requires arbitrary executable UI or if a workflow needs real persistence/auth without an agreed data contract |

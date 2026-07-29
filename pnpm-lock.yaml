@@ -1142,7 +1142,7 @@ importers:
         version: 5.48.5
       svelte-check:
         specifier: ^4.3.3
-        version: 4.3.5(picomatch@4.0.5)(svelte@5.48.5)(typescript@5.9.3)
+        version: 4.3.5(picomatch@4.0.3)(svelte@5.48.5)(typescript@5.9.3)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -1441,9 +1441,15 @@ importers:
       '@create-something/canon':
         specifier: workspace:*
         version: link:../canon
+      '@openai/agents':
+        specifier: ^0.13.5
+        version: 0.13.5(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
       svelte:
         specifier: ^5.41.0
         version: 5.41.0
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
     devDependencies:
       '@sveltejs/adapter-cloudflare':
         specifier: ^7.2.4
@@ -1456,7 +1462,10 @@ importers:
         version: 6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       svelte-check:
         specifier: ^4.3.3
-        version: 4.3.3(picomatch@4.0.5)(svelte@5.41.0)(typescript@5.9.3)
+        version: 4.3.3(picomatch@4.0.3)(svelte@5.41.0)(typescript@5.9.3)
+      tsx:
+        specifier: ^4.21.0
+        version: 4.21.0
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -4006,7 +4015,7 @@ importers:
         version: 5.48.5
       svelte-check:
         specifier: ^4.3.3
-        version: 4.3.5(picomatch@4.0.3)(svelte@5.48.5)(typescript@5.9.3)
+        version: 4.3.5(picomatch@4.0.5)(svelte@5.48.5)(typescript@5.9.3)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
