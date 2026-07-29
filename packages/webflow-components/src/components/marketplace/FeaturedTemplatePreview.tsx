@@ -113,23 +113,39 @@ const FEATURED_TEMPLATE_PREVIEW_STYLES = `
 .tmfeatured-action[data-primary="true"] { border-color: #146ef5; color: #fff; background: #146ef5; }
 .tmfeatured-action[data-primary="true"]:hover { background: #0f55d9; }
 .tmfeatured-action-new-tab { font-size: 14px; line-height: 1; }
-.tmfeatured-body { display: grid; flex: 1; min-width: 0; min-height: 0; grid-template-columns: minmax(0, 1fr) minmax(0, 360px); }
-.tmfeatured-stage { display: flex; min-width: 0; min-height: 0; align-items: flex-start; justify-content: center; overflow: auto; padding: 24px; background: #e9e9e9; }
+.tmfeatured-body { display: grid; flex: 1; min-width: 0; min-height: 0; grid-template-columns: minmax(0, 1fr) minmax(0, 400px); }
+.tmfeatured-stage { position: relative; display: flex; min-width: 0; min-height: 0; align-items: flex-start; justify-content: center; overflow: auto; padding: 24px; background: #e9e9e9; }
 .tmfeatured-frame-wrap { position: relative; width: 100%; height: 100%; min-height: 360px; overflow: hidden; border: 1px solid #d3d3d3; border-radius: 8px; background: #fff; box-shadow: 0 14px 36px rgba(0,0,0,.12); transition: width 180ms ease, height 180ms ease, border-radius 180ms ease; }
 .tmfeatured-stage[data-device="desktop"] .tmfeatured-frame-wrap { width: 100%; height: 100%; }
 .tmfeatured-stage[data-device="tablet"] .tmfeatured-frame-wrap { width: min(768px, 100%); height: min(1024px, 100%); }
 .tmfeatured-stage[data-device="mobile"] .tmfeatured-frame-wrap { width: min(390px, 100%); height: min(844px, 100%); border-radius: 18px; }
 .tmfeatured-frame { display: block; width: 100%; height: 100%; min-height: 360px; border: 0; background: #fff; }
+.tmfeatured-frame-access { position: absolute; bottom: 12px; left: 12px; z-index: 3; display: flex; max-width: calc(100% - 24px); align-items: center; gap: 8px; }
+.tmfeatured-frame-access-button { display: inline-flex; min-height: 34px; align-items: center; justify-content: center; padding: 0 11px; border: 1px solid rgba(8,8,8,.18); border-radius: 4px; color: #080808; background: rgba(255,255,255,.94); box-shadow: 0 4px 14px rgba(0,0,0,.14); font: inherit; font-size: 12px; font-weight: 600; line-height: 1; cursor: pointer; }
+.tmfeatured-frame-access-button:hover { background: #fff; }
+.tmfeatured-frame-access-button:focus-visible { outline: 2px solid #146ef5; outline-offset: 2px; }
+.tmfeatured-frame-access-button[aria-pressed="true"] { border-color: #146ef5; color: #fff; background: #146ef5; }
+.tmfeatured-frame-access-hint { margin: 0; padding: 7px 9px; border-radius: 4px; color: #fff; background: rgba(8,8,8,.82); font-size: 11px; line-height: 1.3; }
 .tmfeatured-loading,
 .tmfeatured-unavailable { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #5f5f5f; background: #fff; font-size: 14px; }
 .tmfeatured-loading { pointer-events: none; transition: opacity 160ms ease; }
 .tmfeatured-unavailable { flex-direction: column; gap: 12px; }
 .tmfeatured-unavailable p { margin: 0; }
+.tmfeatured-edge-nav { position: absolute; top: 50%; z-index: 2; display: inline-flex; width: 44px; height: 44px; align-items: center; justify-content: center; padding: 0; transform: translateY(-50%); border: 1px solid rgba(8,8,8,.14); border-radius: 50%; color: #080808; background: rgba(255,255,255,.94); box-shadow: 0 6px 18px rgba(0,0,0,.18); font: inherit; font-size: 20px; line-height: 1; cursor: pointer; opacity: 0; transition: opacity 140ms ease, background 140ms ease, transform 140ms ease; }
+.tmfeatured-edge-previous { left: 34px; }
+.tmfeatured-edge-next { right: 34px; }
+.tmfeatured-stage:hover .tmfeatured-edge-nav:not(:disabled),
+.tmfeatured-edge-nav:focus-visible { opacity: 1; }
+.tmfeatured-edge-nav:hover { background: #fff; transform: translateY(-50%) scale(1.04); }
+.tmfeatured-edge-nav:focus-visible { outline: 2px solid #146ef5; outline-offset: 2px; }
+.tmfeatured-edge-nav:disabled { pointer-events: none; opacity: 0; }
 .tmfeatured-side { display: flex; min-height: 0; flex-direction: column; overflow: auto; padding: 24px 24px 0; border-left: 1px solid #dedede; background: #fff; }
 .tmfeatured-kicker { margin: 0 0 8px; color: #757575; font-size: 12px; font-weight: 600; letter-spacing: 0; line-height: 1.25; text-transform: uppercase; }
 .tmfeatured-title { margin: 0; font-size: 24px; font-weight: 600; line-height: 1.3; }
 .tmfeatured-position { margin: 8px 0 0; color: #5f5f5f; font-size: 13px; }
-.tmfeatured-feedback { margin-top: 24px; padding: 18px; border: 1px solid #dedede; border-radius: 8px; background: #f8f8f8; }
+.tmfeatured-feedback { margin-top: 24px; padding: 18px; border: 1px solid #c9dbff; border-radius: 8px; background: #f7faff; box-shadow: inset 3px 0 0 #146ef5; }
+.tmfeatured-feedback-kicker { display: flex; align-items: center; gap: 6px; margin: 0 0 8px; color: #146ef5; font-size: 11px; font-weight: 650; letter-spacing: .04em; line-height: 1.25; text-transform: uppercase; }
+.tmfeatured-feedback-mark { display: inline-flex; width: 16px; height: 16px; align-items: center; justify-content: center; border-radius: 50%; color: #fff; background: #146ef5; font-size: 10px; line-height: 1; }
 .tmfeatured-feedback-label { margin: 0 0 8px; color: #080808; font-size: 18px; font-weight: 600; letter-spacing: 0; line-height: 1.25; }
 .tmfeatured-feedback-text { margin: 0; font-size: 14px; line-height: 1.5; }
 .tmfeatured-details { margin-top: 24px; }
@@ -141,6 +157,7 @@ const FEATURED_TEMPLATE_PREVIEW_STYLES = `
 .tmfeatured-detail-row dd { display: flex; flex-wrap: wrap; gap: 5px; margin: 0; color: #080808; font-size: 13px; line-height: 1.4; }
 .tmfeatured-detail-pill { min-height: 24px; padding: 2px 8px; border: 1px solid #e6e6e6; border-radius: 4px; background: #f7f7f7; font-size: 12px; font-weight: 600; line-height: 18px; }
 .tmfeatured-nav-wrap { position: sticky; bottom: 0; margin-top: auto; padding: 16px 0 24px; background: #fff; box-shadow: 0 -8px 16px -8px rgba(8,8,8,.08); }
+.tmfeatured-nav-hint { margin: 0 0 10px; color: #757575; font-size: 12px; line-height: 1.3; text-align: center; }
 .tmfeatured-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .tmfeatured-nav .tmfeatured-button { width: 100%; }
 .tmfeatured-nav-error { margin: 0 0 10px; color: #b42318; font-size: 13px; line-height: 1.4; }
@@ -149,6 +166,8 @@ const FEATURED_TEMPLATE_PREVIEW_STYLES = `
   .tmfeatured-body { grid-template-columns: 1fr; overflow: auto; }
   .tmfeatured-stage { min-height: 62vh; }
   .tmfeatured-side { min-height: auto; overflow: visible; border-top: 1px solid #dedede; border-left: 0; }
+  .tmfeatured-edge-nav:not(:disabled) { opacity: .94; }
+  .tmfeatured-nav-wrap { position: static; margin-top: 24px; box-shadow: none; }
 }
 @media (max-width: 767px) {
   .tmfeatured-toolbar { gap: 8px; padding: 9px; }
@@ -169,7 +188,8 @@ const FEATURED_TEMPLATE_PREVIEW_STYLES = `
   .tmfeatured-nav-wrap { padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .tmfeatured-frame-wrap { transition: none; }
+  .tmfeatured-frame-wrap,
+  .tmfeatured-edge-nav { transition: none; }
 }
 `;
 
@@ -201,11 +221,14 @@ export const FeaturedTemplatePreview: React.FC<FeaturedTemplatePreviewProps> = (
 }) => {
   const [device, setDevice] = useState<FeaturedTemplatePreviewDevice>('desktop');
   const [loaded, setLoaded] = useState(false);
+  const [keyboardPreviewItemId, setKeyboardPreviewItemId] = useState<string | null>(null);
   const titleId = useId();
   const feedbackTitleId = useId();
   const detailsTitleId = useId();
+  const keyboardPreviewHintId = useId();
   const dialogRef = useRef<HTMLElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
+  const previewFrameRef = useRef<HTMLIFrameElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
   const loadedItemIdRef = useRef(item.id);
   const interactionRef = useRef({ hasPrevious, hasNext, onClose, onNavigate });
@@ -224,6 +247,7 @@ export const FeaturedTemplatePreview: React.FC<FeaturedTemplatePreviewProps> = (
   const subcategories = uniqueTermNames([item.child_categories]);
   const styles = uniqueTermNames([item.styles]);
   const hasDetails = Boolean(description || templateType || subcategories.length || styles.length);
+  const keyboardPreviewEnabled = keyboardPreviewItemId === item.id;
 
   useEffect(() => {
     const previousItemId = loadedItemIdRef.current;
@@ -232,6 +256,10 @@ export const FeaturedTemplatePreview: React.FC<FeaturedTemplatePreviewProps> = (
   }, [item.id]);
 
   const previewLoaded = loaded && loadedItemIdRef.current === item.id;
+
+  useEffect(() => {
+    if (keyboardPreviewEnabled) previewFrameRef.current?.focus();
+  }, [keyboardPreviewEnabled]);
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
@@ -339,7 +367,7 @@ export const FeaturedTemplatePreview: React.FC<FeaturedTemplatePreviewProps> = (
               rel="noopener noreferrer"
               onClick={onOpenSite}
             >
-              Open site
+              Open live preview <span className="tmfeatured-action-new-tab" aria-hidden="true">↗</span>
             </a>
           ) : null}
           {actionUrl ? (
@@ -361,16 +389,33 @@ export const FeaturedTemplatePreview: React.FC<FeaturedTemplatePreviewProps> = (
             <div className="tmfeatured-frame-wrap" aria-busy={previewUrl ? !previewLoaded : undefined}>
               {previewUrl ? (
                 <>
+                  <div className="tmfeatured-frame-access">
+                    <button
+                      type="button"
+                      className="tmfeatured-frame-access-button"
+                      aria-pressed={keyboardPreviewEnabled}
+                      onClick={() => setKeyboardPreviewItemId(keyboardPreviewEnabled ? null : item.id)}
+                    >
+                      {keyboardPreviewEnabled ? 'Keyboard preview enabled' : 'Enable keyboard preview'}
+                    </button>
+                    {keyboardPreviewEnabled ? (
+                      <p id={keyboardPreviewHintId} className="tmfeatured-frame-access-hint" role="status">
+                        Press Shift+Tab to return to controls
+                      </p>
+                    ) : null}
+                  </div>
                   {!previewLoaded ? (
                     <div className="tmfeatured-loading" aria-live="polite">Loading live preview</div>
                   ) : null}
                   <iframe
+                    ref={previewFrameRef}
                     className="tmfeatured-frame"
                     data-preview-device={device}
                     src={previewUrl}
                     sandbox={PREVIEW_IFRAME_SANDBOX}
                     referrerPolicy="no-referrer"
-                    tabIndex={-1}
+                    tabIndex={keyboardPreviewEnabled ? 0 : -1}
+                    aria-describedby={keyboardPreviewEnabled ? keyboardPreviewHintId : undefined}
                     title={`${item.name} live template preview`}
                     loading="eager"
                     onLoad={() => setLoaded(true)}
@@ -394,15 +439,37 @@ export const FeaturedTemplatePreview: React.FC<FeaturedTemplatePreviewProps> = (
                 </div>
               )}
             </div>
+            <button
+              type="button"
+              className="tmfeatured-edge-nav tmfeatured-edge-previous"
+              aria-label="Previous featured template"
+              disabled={!hasPrevious}
+              onClick={() => onNavigate(-1)}
+            >
+              <span aria-hidden="true">←</span>
+            </button>
+            <button
+              type="button"
+              className="tmfeatured-edge-nav tmfeatured-edge-next"
+              aria-label={navigationError ? 'Try loading the next featured template again' : 'Next featured template'}
+              disabled={!hasNext || loadingNext}
+              onClick={() => onNavigate(1)}
+            >
+              <span aria-hidden="true">{loadingNext ? '…' : '→'}</span>
+            </button>
           </div>
 
           <aside className="tmfeatured-side">
             <p className="tmfeatured-kicker">Featured template</p>
             <h1 id={titleId} className="tmfeatured-title">{item.name}</h1>
-            <p className="tmfeatured-position">{index + 1} of {total}</p>
+            <p className="tmfeatured-position">{index + 1} of {total} featured templates</p>
             {reviewerFeedback ? (
               <section className="tmfeatured-feedback" aria-labelledby={feedbackTitleId}>
-                <h2 id={feedbackTitleId} className="tmfeatured-feedback-label">Why our team featured it</h2>
+                <p className="tmfeatured-feedback-kicker">
+                  <span className="tmfeatured-feedback-mark" aria-hidden="true">✓</span>
+                  Human Marketplace review
+                </p>
+                <h2 id={feedbackTitleId} className="tmfeatured-feedback-label">Why our Marketplace team featured it</h2>
                 <p className="tmfeatured-feedback-text">{reviewerFeedback}</p>
               </section>
             ) : null}
@@ -436,6 +503,7 @@ export const FeaturedTemplatePreview: React.FC<FeaturedTemplatePreviewProps> = (
               {navigationError ? (
                 <p className="tmfeatured-nav-error" role="alert">{navigationError}</p>
               ) : null}
+              <p className="tmfeatured-nav-hint">Use ← → keys to browse</p>
               <nav className="tmfeatured-nav" aria-label="Featured template navigation">
                 <button
                   type="button"
@@ -443,7 +511,7 @@ export const FeaturedTemplatePreview: React.FC<FeaturedTemplatePreviewProps> = (
                   disabled={!hasPrevious}
                   onClick={() => onNavigate(-1)}
                 >
-                  Previous
+                  ← Previous
                 </button>
                 <button
                   type="button"
@@ -451,7 +519,9 @@ export const FeaturedTemplatePreview: React.FC<FeaturedTemplatePreviewProps> = (
                   disabled={!hasNext || loadingNext}
                   onClick={() => onNavigate(1)}
                 >
-                  {loadingNext ? 'Loading…' : navigationError ? 'Try again' : 'Next'}
+                  {loadingNext ? 'Loading…' : navigationError ? (
+                    <>Try again<span aria-hidden="true">→</span></>
+                  ) : 'Next →'}
                 </button>
               </nav>
             </div>

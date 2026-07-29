@@ -39,6 +39,7 @@ BASE_URL = f"http://127.0.0.1:{PORT}"
 BOOT_TIMEOUT_S = 90
 
 failures: list[str] = []
+ARTIFACTS = PACKAGE_ROOT / "output" / "playwright"
 
 
 def check(label: str, condition: bool, detail: str = "") -> None:
@@ -227,6 +228,103 @@ def test_made_in_webflow_never_drives_the_host_page(page: Page) -> None:
     check("suppressed page action produced no Undo receipt", page.locator(".tmchat-undo").count() == 0)
 
 
+def test_featured_preview_supports_fast_decisions_and_ordered_browsing(page: Page) -> None:
+    print("\n[7] Featured preview explains the human pick and preserves low-travel browsing")
+    ARTIFACTS.mkdir(parents=True, exist_ok=True)
+    page.goto(f"{BASE_URL}/?featured", wait_until="domcontentloaded")
+    page.get_by_role("button", name="Open Featured preview").click()
+
+    dialog = page.get_by_role("dialog")
+    expect(dialog).to_be_visible()
+    reviewer_kicker = page.locator(".tmfeatured-feedback-kicker")
+    expect(reviewer_kicker).to_be_visible()
+    reviewer_copy = " ".join((reviewer_kicker.text_content() or "").split())
+    check("review provenance is explicitly human", "Human Marketplace review" in reviewer_copy, reviewer_copy)
+    expect(page.get_by_role("heading", name="Why our Marketplace team featured it")).to_be_visible()
+    expect(page.get_by_text("1 of 2 featured templates", exact=True)).to_be_visible()
+    expect(page.get_by_role("link", name="Open live preview")).to_be_visible()
+
+    sidebar = page.locator(".tmfeatured-side")
+    sidebar_box = sidebar.bounding_box()
+    check(
+        "desktop decision rail has a readable width",
+        bool(sidebar_box) and sidebar_box["width"] >= 390,
+        str(sidebar_box),
+    )
+
+    next_edge = page.get_by_role("button", name="Next featured template")
+    page.locator(".tmfeatured-stage").hover()
+    expect(next_edge).to_be_visible()
+    next_edge.click()
+    expect(page.get_by_role("heading", name="Featured Two", level=1)).to_be_visible()
+    check("edge navigation preserves collection position", page.get_by_text("2 of 2 featured templates").count() == 1)
+
+    page.keyboard.press("ArrowLeft")
+    expect(page.get_by_role("heading", name="Featured One", level=1)).to_be_visible()
+    check("ArrowLeft returns through the same ordered sequence", page.get_by_text("1 of 2 featured templates").count() == 1)
+
+    frame = page.locator("iframe.tmfeatured-frame")
+    check("preview starts outside the Tab order", frame.get_attribute("tabindex") == "-1")
+    sandbox = frame.get_attribute("sandbox") or ""
+    check("keyboard opt-in does not add same-origin authority", "allow-same-origin" not in sandbox, sandbox)
+
+    access = page.get_by_role("button", name="Enable keyboard preview")
+    access.click()
+    check(
+        "keyboard opt-in focuses the live preview",
+        frame.evaluate("element => document.activeElement === element"),
+    )
+    expect(page.get_by_text("Press Shift+Tab to return to controls", exact=True)).to_be_visible()
+    page.keyboard.press("Shift+Tab")
+    check(
+        "Shift+Tab returns to the explicit preview control",
+        page.get_by_role("button", name="Keyboard preview enabled").evaluate(
+            "element => document.activeElement === element"
+        ),
+    )
+
+    page.screenshot(path=str(ARTIFACTS / "featured-template-preview-desktop.png"), full_page=False)
+
+    page.set_viewport_size({"width": 390, "height": 844})
+    page.goto(f"{BASE_URL}/?featured", wait_until="domcontentloaded")
+    page.get_by_role("button", name="Open Featured preview").click()
+    expect(page.get_by_role("dialog")).to_be_visible()
+    expect(page.get_by_role("group", name="Preview device")).to_be_visible()
+    expect(page.get_by_role("link", name="View Featured One template details (opens in a new tab)")).to_be_visible()
+    expect(page.get_by_role("link", name="Buy $79 USD")).to_be_visible()
+    check(
+        "mobile modal has no horizontal overflow",
+        page.evaluate("document.documentElement.scrollWidth <= window.innerWidth"),
+        str(page.evaluate("({ scrollWidth: document.documentElement.scrollWidth, width: window.innerWidth })")),
+    )
+    page.locator(".tmfeatured-feedback").scroll_into_view_if_needed()
+    expect(page.get_by_role("heading", name="Why our Marketplace team featured it")).to_be_visible()
+    check(
+        "mobile navigation follows decision content instead of covering it",
+        page.locator(".tmfeatured-nav-wrap").evaluate("element => getComputedStyle(element).position === 'static'"),
+        page.locator(".tmfeatured-nav-wrap").evaluate("element => getComputedStyle(element).position"),
+    )
+    reviewer_box = page.locator(".tmfeatured-feedback").bounding_box()
+    details_box = page.locator(".tmfeatured-details").bounding_box()
+    nav_box = page.locator(".tmfeatured-nav-wrap").bounding_box()
+    check(
+        "mobile reviewer rationale remains in the content flow above navigation",
+        bool(reviewer_box) and bool(nav_box) and reviewer_box["height"] > 80 and reviewer_box["y"] < nav_box["y"],
+        str({"reviewer": reviewer_box, "navigation": nav_box}),
+    )
+    page.screenshot(path=str(ARTIFACTS / "featured-template-preview-mobile-review.png"), full_page=False)
+    check(
+        "mobile template details precede navigation in document order",
+        page.locator(".tmfeatured-details").evaluate(
+            "element => Boolean(element.compareDocumentPosition(document.querySelector('.tmfeatured-nav-wrap')) & Node.DOCUMENT_POSITION_FOLLOWING)"
+        ),
+        str({"details": details_box, "navigation": nav_box}),
+    )
+    page.locator(".tmfeatured-details").scroll_into_view_if_needed()
+    expect(page.get_by_role("heading", name="Template details")).to_be_visible()
+    page.screenshot(path=str(ARTIFACTS / "featured-template-preview-mobile.png"), full_page=False)
+
+
 def main() -> int:
     with harness(), sync_playwright() as playwright:
         browser = playwright.chromium.launch()
@@ -238,6 +336,7 @@ def main() -> int:
                 test_rate_limit_is_explained,
                 test_composer_stays_usable_after_failure,
                 test_made_in_webflow_never_drives_the_host_page,
+                test_featured_preview_supports_fast_decisions_and_ordered_browsing,
             ):
                 context = browser.new_context(viewport={"width": 1280, "height": 900})
                 page = context.new_page()
