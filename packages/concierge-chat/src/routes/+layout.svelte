@@ -20,6 +20,12 @@
   $: controlPlaneLabel = getAgencyAccessStatusLabel(data.agencyAccess);
   $: controlPlaneMeta = getAgencyAccessMeta(data.agencyAccess, data.user);
   $: showInternalNavigation = data.agencyAccess.status === 'allowed';
+  $: candidateThreadMatch = data.currentPath.match(/^\/chat\/([^/]+)(?:\/(profile))?$/);
+  $: isCandidateApplicationRoute = Boolean(candidateThreadMatch) && !showInternalNavigation;
+  $: candidateThreadHref = candidateThreadMatch ? `/chat/${candidateThreadMatch[1]}` : '/apply';
+  $: candidateProfileHref = candidateThreadMatch
+    ? `/chat/${candidateThreadMatch[1]}/profile`
+    : '/apply';
   $: usesWebflowShell =
     data.currentPath === '/' ||
     data.currentPath === '/nurses' ||
@@ -28,7 +34,8 @@
     data.currentPath === '/agents' ||
     data.currentPath === '/apply' ||
     data.currentPath.startsWith('/apply/') ||
-    data.currentPath === '/style-guide';
+    data.currentPath === '/style-guide' ||
+    isCandidateApplicationRoute;
   $: isPublicIntakeRoute =
     data.currentPath === '/' ||
     data.currentPath === '/nurses' ||
@@ -38,8 +45,12 @@
     data.currentPath === '/apply' ||
     data.currentPath.startsWith('/apply/');
   $: showCompactStaffAccess = isPublicIntakeRoute || !showInternalNavigation;
-  $: navItems =
-    isPublicIntakeRoute || !showInternalNavigation
+  $: navItems = isCandidateApplicationRoute
+    ? [
+        { href: candidateThreadHref, label: 'Conversation' },
+        { href: candidateProfileHref, label: 'Details' }
+      ]
+    : isPublicIntakeRoute || !showInternalNavigation
       ? [
           { href: '/', label: 'Home' },
           { href: '/nurses', label: 'Nurses' },
@@ -62,8 +73,8 @@
 </script>
 
 {#if usesWebflowShell}
-  <div class="abundance-webflow-page">
-    <header class="webflow-nav">
+  <div class:application-workspace={isCandidateApplicationRoute} class="abundance-webflow-page">
+    <header class:application-nav={isCandidateApplicationRoute} class="webflow-nav">
       <a class="webflow-logo" href="/" aria-label="Abundance Staffing home">
         <span class="webflow-logo-mark">
           <img
@@ -88,7 +99,11 @@
         <span></span>
         <span></span>
       </button>
-      <nav class:open={publicNavOpen} class="webflow-nav-links" aria-label="Public navigation">
+      <nav
+        class:open={publicNavOpen}
+        class="webflow-nav-links"
+        aria-label={isCandidateApplicationRoute ? 'Application navigation' : 'Public navigation'}
+      >
         {#each navItems as item}
           <a
             href={item.href}
@@ -97,13 +112,41 @@
           >
         {/each}
       </nav>
-      <a class="webflow-staff-link" href={controlPlaneHref} target="_blank" rel="noreferrer">
-        <span>Staff access</span>
-        <span aria-hidden="true">↗</span>
-      </a>
+      {#if isCandidateApplicationRoute}
+        <a class="webflow-staff-link application-exit" href="/" aria-label="Exit application">
+          <span>Exit application</span>
+          <span aria-hidden="true">↗</span>
+        </a>
+      {:else}
+        <a class="webflow-staff-link" href={controlPlaneHref} target="_blank" rel="noreferrer">
+          <span>Staff access</span>
+          <span aria-hidden="true">↗</span>
+        </a>
+      {/if}
     </header>
 
-    <main class:public-main={isPublicIntakeRoute}>
+    {#if isCandidateApplicationRoute}
+      <div class="application-route-rail" aria-label="Application progress">
+        <div>
+          <span class="application-route-kicker">Guided nurse application</span>
+          <strong>One conversation, kept in context.</strong>
+        </div>
+        <ol>
+          <li class:active={data.currentPath === candidateThreadHref}>
+            <span>01</span> Conversation
+          </li>
+          <li class:active={data.currentPath === candidateProfileHref}>
+            <span>02</span> Details
+          </li>
+          <li><span>03</span> Recruiter review</li>
+        </ol>
+      </div>
+    {/if}
+
+    <main
+      class:public-main={isPublicIntakeRoute}
+      class:application-main={isCandidateApplicationRoute}
+    >
       <slot />
     </main>
   </div>
@@ -417,6 +460,99 @@
     color: #171512;
   }
 
+  .application-workspace {
+    min-height: 100vh;
+    background:
+      radial-gradient(circle at 88% 8%, rgba(29, 111, 138, 0.1), transparent 24rem),
+      radial-gradient(circle at 8% 34%, rgba(175, 124, 84, 0.12), transparent 28rem), #faf5ef;
+  }
+
+  .webflow-nav.application-nav {
+    grid-template-columns: minmax(170px, 1fr) auto minmax(170px, 1fr);
+  }
+
+  .application-nav .webflow-nav-links {
+    padding: 3px;
+    border: 1px solid rgba(23, 21, 18, 0.1);
+    border-radius: 999px;
+    background: rgba(23, 21, 18, 0.035);
+  }
+
+  .application-nav .webflow-nav-links a {
+    min-width: 112px;
+    text-align: center;
+  }
+
+  .application-exit {
+    background: transparent;
+    color: #171512;
+    box-shadow: inset 0 0 0 1px rgba(23, 21, 18, 0.14);
+  }
+
+  .application-exit span:last-child {
+    background: #171512;
+    color: #ffffff;
+  }
+
+  .application-route-rail {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 28px;
+    width: min(calc(100% - 48px), 1380px);
+    margin: clamp(56px, 7vw, 92px) auto 0;
+    padding-bottom: 18px;
+    border-bottom: 1px solid rgba(23, 21, 18, 0.12);
+  }
+
+  .application-route-rail > div {
+    display: grid;
+    gap: 8px;
+  }
+
+  .application-route-kicker,
+  .application-route-rail li span {
+    color: #af7c54;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    line-height: 1;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+  }
+
+  .application-route-rail strong {
+    font-size: clamp(19px, 2vw, 26px);
+    font-weight: 540;
+    letter-spacing: -0.035em;
+  }
+
+  .application-route-rail ol {
+    display: flex;
+    gap: 22px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .application-route-rail li {
+    display: grid;
+    gap: 7px;
+    min-width: 92px;
+    color: rgba(23, 21, 18, 0.42);
+    font-size: 12px;
+    font-weight: 560;
+  }
+
+  .application-route-rail li.active {
+    color: #171512;
+  }
+
+  .application-main {
+    width: min(calc(100% - 48px), 1380px);
+    margin: 0 auto;
+    padding: clamp(26px, 4vw, 52px) 0 96px;
+  }
+
   .webflow-nav-toggle {
     display: none;
   }
@@ -447,6 +583,34 @@
 
     .webflow-nav-links.open {
       display: grid;
+    }
+
+    .application-nav .webflow-nav-links {
+      border-radius: 22px;
+    }
+
+    .application-nav .webflow-nav-links a {
+      min-width: 0;
+      text-align: left;
+    }
+
+    .application-route-rail {
+      align-items: start;
+      width: calc(100% - 28px);
+      margin-top: 42px;
+    }
+
+    .application-route-rail ol {
+      gap: 12px;
+    }
+
+    .application-route-rail li {
+      min-width: 0;
+    }
+
+    .application-main {
+      width: calc(100% - 28px);
+      padding-top: 24px;
     }
 
     .webflow-nav-links a {
@@ -500,6 +664,26 @@
 
     .session-link.public {
       justify-content: flex-start;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .application-route-rail {
+      display: grid;
+      gap: 20px;
+    }
+
+    .application-route-rail ol {
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    .application-route-rail li {
+      font-size: 11px;
+    }
+
+    .application-route-rail li:last-child {
+      text-align: right;
     }
   }
 

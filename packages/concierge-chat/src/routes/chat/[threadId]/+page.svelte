@@ -28,7 +28,9 @@
 	let assistantTyping = false;
 	let creatingThread = false;
 	let liveThreadView: ThreadViewState = structuredClone(data.threadView);
-	let renderedMessages: UiMessage[] = liveThreadView.thread.messages.map((message) => ({ ...message }));
+	let renderedMessages: UiMessage[] = liveThreadView.thread.messages.map((message) => ({
+		...message
+	}));
 	let renderedInlineWidgets = liveThreadView.inlineWidgets;
 	let composerEl: HTMLTextAreaElement | null = null;
 	let messageListEl: HTMLElement | null = null;
@@ -169,7 +171,9 @@
 		persistentInlineWidgets: ThreadViewState['inlineWidgets']
 	) {
 		const runId = ++streamRun;
-		const baseMessages = threadView.thread.messages.filter((message) => message.id !== assistantMessage.id);
+		const baseMessages = threadView.thread.messages.filter(
+			(message) => message.id !== assistantMessage.id
+		);
 
 		liveThreadView = structuredClone(threadView);
 		renderedMessages = toUiMessages(baseMessages);
@@ -238,10 +242,11 @@
 		const latestAssistantMessage =
 			[...nextThreadView.thread.messages]
 				.reverse()
-				.find(
-					(message) => message.role === 'assistant' && !previousAssistantIds.has(message.id)
-				) ?? null;
-		const previousInlineWidgetIds = new Set(previousThreadView.inlineWidgets.map((widget) => widget.id));
+				.find((message) => message.role === 'assistant' && !previousAssistantIds.has(message.id)) ??
+			null;
+		const previousInlineWidgetIds = new Set(
+			previousThreadView.inlineWidgets.map((widget) => widget.id)
+		);
 		const persistentInlineWidgets = nextThreadView.inlineWidgets.filter((widget) =>
 			previousInlineWidgetIds.has(widget.id)
 		);
@@ -389,24 +394,28 @@
 		intakeVerified: data.intakeAccess.granted
 	});
 	$: showNurseVerificationPrompt =
-		!showInternalOperatorUi && !data.intakeAccess.granted && liveThreadView.thread.profile.completion >= 25;
+		!showInternalOperatorUi &&
+		!data.intakeAccess.granted &&
+		liveThreadView.thread.profile.completion >= 25;
 	$: showExpandedVerificationBanner = showInternalOperatorUi || showNurseVerificationPrompt;
 	$: showStarterPrompt = !showInternalOperatorUi && liveThreadView.thread.profile.completion === 0;
 	$: threadEyebrow = showInternalOperatorUi ? 'Primary Conversation Surface' : 'Application Chat';
-	$: operatorPlaneSummary = data.operatorShellPlanes
-		.map((plane) => plane.label)
-		.join(' / ');
+	$: operatorPlaneSummary = data.operatorShellPlanes.map((plane) => plane.label).join(' / ');
 	$: commandCenter = data.operatorCommandCenter;
 	$: snapshotEyebrow = showInternalOperatorUi ? 'Application Snapshot' : 'Application Notes';
 	$: snapshotTitle = showInternalOperatorUi ? 'What I have so far' : 'What Concierge has so far';
-	$: snapshotSummary = showInternalOperatorUi ? liveThreadView.thread.turn.summary : nurseGuidance.body;
+	$: snapshotSummary = showInternalOperatorUi
+		? liveThreadView.thread.turn.summary
+		: nurseGuidance.body;
 	$: snapshotHelper = showInternalOperatorUi
 		? ''
-			: nurseGuidance.helper ??
-				'I will ask for documents, confirmation, or booking here as soon as they are needed.';
+		: (nurseGuidance.helper ??
+			'I will ask for documents, confirmation, or booking here as soon as they are needed.');
 	$: visibleArtifacts = showInternalOperatorUi
 		? liveThreadView.thread.artifacts
-		: liveThreadView.thread.artifacts.filter((artifact) => nurseVisibleArtifactKinds.has(artifact.kind));
+		: liveThreadView.thread.artifacts.filter((artifact) =>
+				nurseVisibleArtifactKinds.has(artifact.kind)
+			);
 	$: if (composerEl) {
 		composerText;
 		syncComposerHeight();
@@ -476,8 +485,8 @@
 			<section class="glass panel history-panel">
 				<div class="history-header">
 					<div>
-						<div class="eyebrow">Saved Chats</div>
-						<h2 class="rail-title">Applications</h2>
+						<div class="eyebrow">Your workspace</div>
+						<h2 class="rail-title">Saved applications</h2>
 					</div>
 					<button
 						class="rail-icon-button"
@@ -511,7 +520,10 @@
 							</div>
 							<p>{thread.subtitle}</p>
 							<div class="history-progress" aria-hidden="true">
-								<div class="history-progress-fill" style={`width: ${thread.profileCompletion}%`}></div>
+								<div
+									class="history-progress-fill"
+									style={`width: ${thread.profileCompletion}%`}
+								></div>
 							</div>
 							<div class="history-thread-meta">
 								<span>{thread.profileCompletion}% complete</span>
@@ -541,7 +553,9 @@
 				</div>
 				<span
 					class={`status-pill ${
-						showInternalOperatorUi ? data.operatorState.tone : statusClass[liveThreadView.thread.status]
+						showInternalOperatorUi
+							? data.operatorState.tone
+							: statusClass[liveThreadView.thread.status]
 					}`}
 				>
 					{showInternalOperatorUi
@@ -549,6 +563,19 @@
 						: formatThreadStatus(liveThreadView.thread.status)}
 				</span>
 			</div>
+
+			{#if !showInternalOperatorUi}
+				<div class="application-completion" aria-label="Application completion">
+					<div class="application-completion-copy">
+						<span>Working profile</span>
+						<strong>{liveThreadView.thread.profile.completion}% complete</strong>
+					</div>
+					<div class="application-completion-track" aria-hidden="true">
+						<span style={`width: ${liveThreadView.thread.profile.completion}%`}></span>
+					</div>
+					<span class="application-completion-note">Built with you, one answer at a time.</span>
+				</div>
+			{/if}
 
 			{#if showInternalOperatorUi}
 				<div class="summary-banner">
@@ -678,8 +705,8 @@
 					widgets={renderedInlineWidgets}
 					placement="inline"
 					threadId={liveThreadView.thread.id}
-					governedActionGate={governedActionGate}
-					intakeProtectedActionsBlocked={intakeProtectedActionsBlocked}
+					{governedActionGate}
+					{intakeProtectedActionsBlocked}
 					intakeProtectionMessage={intakeVerificationDetail}
 					showInternalWidgets={showInternalOperatorUi}
 					showWidgetTypeBadge={showInternalOperatorUi}
@@ -692,8 +719,8 @@
 			<div>
 				<strong>{showInternalOperatorUi ? 'Chat with Concierge' : 'Message Concierge'}</strong>
 				<p class="muted">
-					Reply naturally and I will guide the next step. When I need documents or a booking,
-					I will place that action directly into this thread.
+					Reply naturally and I will guide the next step. When I need documents or a booking, I will
+					place that action directly into this thread.
 				</p>
 			</div>
 			<form class="composer-form" on:submit|preventDefault={submitComposer}>
@@ -757,7 +784,9 @@
 					</div>
 				</div>
 			{/if}
-			<a class="inline-link" href={`/chat/${liveThreadView.thread.id}/profile`}>Review the details I captured</a>
+			<a class="inline-link" href={`/chat/${liveThreadView.thread.id}/profile`}
+				>Review the details I captured</a
+			>
 		</section>
 
 		{#if liveThreadView.railWidgets.length > 0}
@@ -765,8 +794,8 @@
 				widgets={liveThreadView.railWidgets}
 				placement="rail"
 				threadId={liveThreadView.thread.id}
-				governedActionGate={governedActionGate}
-				intakeProtectedActionsBlocked={intakeProtectedActionsBlocked}
+				{governedActionGate}
+				{intakeProtectedActionsBlocked}
 				intakeProtectionMessage={intakeVerificationDetail}
 				showInternalWidgets={showInternalOperatorUi}
 				showWidgetTypeBadge={showInternalOperatorUi}
@@ -816,34 +845,36 @@
 
 		{#if visibleArtifacts.length > 0}
 			<section class="glass panel">
-				<div class="eyebrow">{showInternalOperatorUi ? 'Artifacts' : 'Files and confirmations'}</div>
+				<div class="eyebrow">
+					{showInternalOperatorUi ? 'Artifacts' : 'Files and confirmations'}
+				</div>
 				<div class="artifact-list">
 					{#each visibleArtifacts as artifact}
-					<div class="artifact-row">
-						<div>
-							<strong>{artifact.title}</strong>
-							<div class="muted">{artifact.summary}</div>
-							{#if artifact.fileName || artifact.contentType || artifact.byteSize}
-								<div class="muted artifact-meta">
-									{#if artifact.fileName}
-										<span>{artifact.fileName}</span>
-									{/if}
-									{#if artifact.byteSize}
-										<span>{formatFileSize(artifact.byteSize)}</span>
-									{/if}
-									{#if artifact.contentType}
-										<span>{artifact.contentType}</span>
-									{/if}
-								</div>
-							{/if}
-							{#if artifact.href}
-								<a class="inline-link artifact-link" href={artifact.href}>Download artifact</a>
-							{/if}
+						<div class="artifact-row">
+							<div>
+								<strong>{artifact.title}</strong>
+								<div class="muted">{artifact.summary}</div>
+								{#if artifact.fileName || artifact.contentType || artifact.byteSize}
+									<div class="muted artifact-meta">
+										{#if artifact.fileName}
+											<span>{artifact.fileName}</span>
+										{/if}
+										{#if artifact.byteSize}
+											<span>{formatFileSize(artifact.byteSize)}</span>
+										{/if}
+										{#if artifact.contentType}
+											<span>{artifact.contentType}</span>
+										{/if}
+									</div>
+								{/if}
+								{#if artifact.href}
+									<a class="inline-link artifact-link" href={artifact.href}>Download artifact</a>
+								{/if}
+							</div>
+							<span class={`status-pill ${artifact.status === 'ready' ? 'good' : 'warn'}`}>
+								{artifact.status}
+							</span>
 						</div>
-						<span class={`status-pill ${artifact.status === 'ready' ? 'good' : 'warn'}`}>
-							{artifact.status}
-						</span>
-					</div>
 					{/each}
 				</div>
 
@@ -877,7 +908,8 @@
 	}
 
 	.split-layout.nurse {
-		grid-template-columns: minmax(230px, 0.64fr) minmax(0, 1.42fr) minmax(300px, 0.82fr);
+		grid-template-columns: minmax(0, 1.48fr) minmax(300px, 0.62fr);
+		gap: clamp(1.15rem, 2vw, 1.75rem);
 	}
 
 	.split-layout.operator {
@@ -914,12 +946,29 @@
 		top: 7rem;
 	}
 
+	.split-layout.nurse .history-column {
+		position: static;
+		grid-column: 1 / -1;
+	}
+
 	.history-panel {
 		display: grid;
 		gap: 1rem;
 		max-height: calc(100vh - 8rem);
 		overflow: auto;
 		background: var(--surface-strong);
+	}
+
+	.split-layout.nurse .history-panel {
+		grid-template-columns: minmax(190px, 0.3fr) minmax(0, 1fr);
+		align-items: center;
+		max-height: none;
+		padding: 0 0 1.15rem;
+		border: 0;
+		border-bottom: 1px solid rgba(23, 21, 18, 0.12);
+		border-radius: 0;
+		background: transparent;
+		box-shadow: none;
 	}
 
 	.history-header,
@@ -980,6 +1029,15 @@
 	.history-list {
 		display: grid;
 		gap: 0.7rem;
+	}
+
+	.split-layout.nurse .history-list {
+		grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+	}
+
+	.split-layout.nurse .history-thread {
+		padding: 0.9rem 1rem;
+		background: rgba(255, 250, 244, 0.72);
 	}
 
 	.history-thread {
@@ -1055,13 +1113,100 @@
 	}
 
 	.thread-hero.nurse {
-		padding-block: 1rem 1.05rem;
+		position: relative;
+		padding: clamp(1.5rem, 3vw, 2.35rem);
+		border-color: rgba(23, 21, 18, 0.96);
+		background:
+			radial-gradient(circle at 84% 18%, rgba(29, 111, 138, 0.3), transparent 14rem),
+			linear-gradient(135deg, #171512 0%, #211d19 100%);
+		color: #ffffff;
+		box-shadow: 0 28px 70px rgba(44, 34, 24, 0.16);
+		overflow: hidden;
+	}
+
+	.thread-hero.nurse::after {
+		content: '';
+		position: absolute;
+		right: -5rem;
+		top: -8rem;
+		width: 18rem;
+		height: 18rem;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		border-radius: 999px;
+		pointer-events: none;
+	}
+
+	.thread-hero.nurse .eyebrow {
+		border-color: rgba(255, 255, 255, 0.14);
+		background: rgba(255, 255, 255, 0.07);
+		color: #d7a77d;
+	}
+
+	.thread-hero.nurse .muted {
+		color: rgba(255, 255, 255, 0.64);
+	}
+
+	.thread-hero.nurse .status-pill {
+		border-color: rgba(255, 255, 255, 0.16);
+		background: rgba(255, 255, 255, 0.08);
+		color: #ffffff;
 	}
 
 	.thread-hero .section-title {
 		font-size: var(--text-h2, clamp(1.2rem, 2vw + 0.5rem, 1.618rem));
 		font-weight: var(--font-medium, 500);
 		line-height: var(--leading-tight, 1.25);
+	}
+
+	.thread-hero.nurse .section-title {
+		margin-top: 0.3rem;
+		font-size: clamp(2rem, 4vw, 3.45rem);
+		font-weight: 560;
+		line-height: 0.98;
+		letter-spacing: -0.055em;
+	}
+
+	.application-completion {
+		position: relative;
+		z-index: 1;
+		display: grid;
+		grid-template-columns: auto minmax(100px, 1fr) auto;
+		align-items: center;
+		gap: 18px;
+		margin-top: clamp(1.5rem, 3vw, 2.6rem);
+		padding-top: 1rem;
+		border-top: 1px solid rgba(255, 255, 255, 0.14);
+	}
+
+	.application-completion-copy {
+		display: grid;
+		gap: 4px;
+	}
+
+	.application-completion-copy span,
+	.application-completion-note {
+		color: rgba(255, 255, 255, 0.5);
+		font-size: 0.74rem;
+	}
+
+	.application-completion-copy strong {
+		font-size: 0.9rem;
+		font-weight: 580;
+	}
+
+	.application-completion-track {
+		height: 4px;
+		border-radius: 999px;
+		background: rgba(255, 255, 255, 0.14);
+		overflow: hidden;
+	}
+
+	.application-completion-track span {
+		display: block;
+		height: 100%;
+		min-width: 4px;
+		border-radius: inherit;
+		background: linear-gradient(90deg, #af7c54, #1d6f8a);
 	}
 
 	.guidance-panel .section-title,
@@ -1099,7 +1244,8 @@
 		padding: 1rem 1.05rem;
 		border: 1px solid var(--line);
 		border-radius: var(--radius);
-		background: var(--surface);
+		background:
+			linear-gradient(110deg, rgba(175, 124, 84, 0.11), rgba(255, 250, 244, 0.86)), var(--surface);
 	}
 
 	.starter-card p {
@@ -1242,12 +1388,23 @@
 		padding: 0.1rem 0.1rem 0.5rem;
 	}
 
+	.split-layout.nurse .message-list {
+		gap: 1.15rem;
+		padding: 0.45rem 0 0.25rem;
+	}
+
 	.message {
 		padding: 1rem 1.1rem;
 		max-width: min(100%, 92%);
 		overflow: hidden;
 		border-radius: var(--radius);
 		scroll-margin-bottom: 16rem;
+	}
+
+	.split-layout.nurse .message.assistant {
+		border-color: rgba(175, 124, 84, 0.22);
+		background: rgba(255, 250, 244, 0.94);
+		box-shadow: 0 18px 48px rgba(44, 34, 24, 0.07);
 	}
 
 	.message.user {
@@ -1258,6 +1415,17 @@
 		border-color: var(--line-strong);
 		box-shadow: var(--shadow);
 		border-radius: var(--radius);
+	}
+
+	.split-layout.nurse .message.user {
+		border-color: #171512;
+		background: #171512;
+		color: #ffffff;
+		box-shadow: 0 18px 48px rgba(23, 21, 18, 0.15);
+	}
+
+	.split-layout.nurse .message.user .message-meta span {
+		color: rgba(255, 255, 255, 0.56);
 	}
 
 	.message.assistant {
@@ -1297,11 +1465,7 @@
 		top: 0.2rem;
 		bottom: 0.7rem;
 		width: 1px;
-		background: linear-gradient(
-			180deg,
-			rgba(10, 14, 25, 0.18),
-			rgba(10, 14, 25, 0.04)
-		);
+		background: linear-gradient(180deg, rgba(10, 14, 25, 0.18), rgba(10, 14, 25, 0.04));
 	}
 
 	.inline-widget-note {
@@ -1336,8 +1500,8 @@
 	.command-summary span,
 	.metric-row span,
 	.proof-row span {
-			color: var(--muted);
-			font-size: 0.78rem;
+		color: var(--muted);
+		font-size: 0.78rem;
 	}
 
 	.context-list strong,
@@ -1506,8 +1670,33 @@
 	}
 
 	.snapshot-panel.nurse {
-		background: var(--surface);
-		border-color: var(--line);
+		position: relative;
+		border-color: #171512;
+		background:
+			radial-gradient(circle at 90% 12%, rgba(29, 111, 138, 0.26), transparent 11rem), #171512;
+		color: #ffffff;
+		box-shadow: 0 24px 64px rgba(44, 34, 24, 0.14);
+		overflow: hidden;
+	}
+
+	.snapshot-panel.nurse .eyebrow {
+		border-color: rgba(255, 255, 255, 0.14);
+		background: rgba(255, 255, 255, 0.07);
+		color: #d7a77d;
+	}
+
+	.snapshot-panel.nurse .muted,
+	.snapshot-panel.nurse .snapshot-helper,
+	.snapshot-panel.nurse .compact {
+		color: rgba(255, 255, 255, 0.62);
+	}
+
+	.snapshot-panel.nurse .inline-link {
+		display: inline-flex;
+		margin-top: 1.15rem;
+		padding-bottom: 0.3rem;
+		border-bottom: 1px solid rgba(255, 255, 255, 0.28);
+		color: #ffffff;
 	}
 
 	.snapshot-panel > .eyebrow {
@@ -1536,7 +1725,10 @@
 		line-height: 1.55;
 		min-height: 4rem;
 		max-height: 13.75rem;
-		transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+		transition:
+			border-color 140ms ease,
+			box-shadow 140ms ease,
+			background 140ms ease;
 	}
 
 	textarea:focus-visible {
@@ -1556,6 +1748,10 @@
 
 	.composer.nurse {
 		position: static;
+		border-color: rgba(175, 124, 84, 0.28);
+		background: rgba(255, 250, 244, 0.94);
+		box-shadow: 0 24px 64px rgba(44, 34, 24, 0.13);
+		backdrop-filter: blur(18px) saturate(1.1);
 	}
 
 	.composer-form {
@@ -1604,6 +1800,10 @@
 			max-height: none;
 		}
 
+		.split-layout.nurse .history-panel {
+			grid-template-columns: 1fr;
+		}
+
 		.composer {
 			position: static;
 		}
@@ -1634,6 +1834,19 @@
 
 		.thread-top .status-pill {
 			order: -1;
+		}
+
+		.application-completion {
+			grid-template-columns: 1fr;
+			gap: 10px;
+		}
+
+		.application-completion-note {
+			display: none;
+		}
+
+		.thread-hero.nurse .section-title {
+			font-size: clamp(2rem, 12vw, 2.85rem);
 		}
 	}
 
