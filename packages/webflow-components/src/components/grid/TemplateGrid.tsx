@@ -53,6 +53,7 @@ interface ApiItem {
   is_free: boolean;
   is_featured: boolean;
   reviewer_pick_reason: string | null;
+  description_short?: string;
   template_type: string | null;
   popularity_score: number | null;
   unique_viewers: number | null;
@@ -60,6 +61,7 @@ interface ApiItem {
   published_date: string | null;
   category_groups?: ApiTerm[];
   child_categories?: ApiTerm[];
+  styles?: ApiTerm[];
 }
 
 interface ApiResponse {
@@ -107,6 +109,7 @@ interface FeaturedPreviewSession {
   total: number;
   filters: FilterState;
   loadingNext: boolean;
+  navigationError: string | null;
 }
 
 export type TemplateGridDisplayItem<T> =
@@ -1866,7 +1869,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
       );
       if (intent.kind === 'move') {
         const nextIndex = intent.index;
-        const next = { ...current, index: nextIndex };
+        const next = { ...current, index: nextIndex, navigationError: null };
         featuredPreviewRef.current = next;
         setFeaturedPreview(next);
         const item = next.items[nextIndex];
@@ -1887,15 +1890,29 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
 
       if (intent.kind !== 'load-next') return;
 
-      const loadingSession = { ...current, loadingNext: true };
+      const loadingSession = { ...current, loadingNext: true, navigationError: null };
       featuredPreviewRef.current = loadingSession;
       setFeaturedPreview(loadingSession);
       const data = await fetchFeaturedPreviewPage(current.page + 1, current.filters);
       if (featuredPreviewRef.current !== loadingSession) return;
       if (!data) {
-        const failedSession = { ...loadingSession, loadingNext: false };
+        const failedSession = {
+          ...loadingSession,
+          loadingNext: false,
+          navigationError: 'Unable to load more Featured templates.',
+        };
         featuredPreviewRef.current = failedSession;
         setFeaturedPreview(failedSession);
+        trackMarketplaceEvent(
+          'Code Component Event',
+          {
+            ...getSafeAnalyticsOverrides(),
+            component: 'TemplateGrid',
+            scope: 'featured_preview_next_page_failed',
+            failed_page: current.page + 1,
+          },
+          enableAnalytics,
+        );
         return;
       }
 
@@ -1909,6 +1926,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
         hasNextPage: data.pagination.has_next_page,
         total: data.pagination.total_items,
         loadingNext: false,
+        navigationError: null,
       };
       featuredPreviewRef.current = nextSession;
       setFeaturedPreview(nextSession);
@@ -1995,6 +2013,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
           types: [...filters.types],
         },
         loadingNext: false,
+        navigationError: null,
       };
       featuredPreviewRef.current = nextPreviewSession;
       setFeaturedPreview(nextPreviewSession);
@@ -2040,6 +2059,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
       hasPrevious={featuredPreview.index > 0}
       hasNext={featuredPreview.index < featuredPreview.items.length - 1 || featuredPreview.hasNextPage}
       loadingNext={featuredPreview.loadingNext}
+      navigationError={featuredPreview.navigationError}
       onClose={closeFeaturedPreview}
       onNavigate={navigateFeaturedPreview}
       onPrimaryAction={() => {

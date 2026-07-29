@@ -2131,6 +2131,26 @@ describe('webflow-template-search worker', () => {
       expect(gridItemsOnlyPayload.items[0]).not.toHaveProperty('styles');
       expect(gridItemsOnlyPayload.items[0]).not.toHaveProperty('tags');
 
+      const featuredGridSearch = await callWorker(
+        new Request('https://templates.test/api/templates/search?include=items&view=grid&scope=featured'),
+        env,
+      );
+      const featuredGridPayload = (await featuredGridSearch.json()) as {
+        items: Array<{
+          name: string;
+          description_short?: string;
+          styles?: Array<{ name: string; slug: string }>;
+          tags?: Array<{ name: string; slug: string }>;
+        }>;
+      };
+      const featuredAgentflow = featuredGridPayload.items.find((item) => item.name === 'Agentflow');
+
+      expect(featuredAgentflow).toMatchObject({
+        description_short: 'Build AI products faster',
+        styles: [{ name: 'Modern', slug: 'modern' }],
+      });
+      expect(featuredAgentflow).not.toHaveProperty('tags');
+
       const freeSearch = await callWorker(new Request('https://templates.test/api/templates/search?scope=free&page_size=10'), env);
       const freePayload = (await freeSearch.json()) as {
         items: Array<{ name: string; price: number | null; is_free: boolean }>;
