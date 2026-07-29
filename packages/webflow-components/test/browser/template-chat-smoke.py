@@ -274,11 +274,19 @@ def test_featured_preview_supports_fast_decisions_and_ordered_browsing(page: Pag
         "keyboard opt-in focuses the live preview",
         frame.evaluate("element => document.activeElement === element"),
     )
-    expect(page.get_by_text("Press Shift+Tab to return to controls", exact=True)).to_be_visible()
+    expect(page.get_by_text("Press Shift+Tab to return; Escape and ← → resume in modal controls.", exact=True)).to_be_visible()
+    expect(page.get_by_role("button", name="Return to modal controls")).to_be_visible()
     page.keyboard.press("Shift+Tab")
     check(
         "Shift+Tab returns to the explicit preview control",
         page.get_by_role("button", name="Keyboard preview enabled").evaluate(
+            "element => document.activeElement === element"
+        ),
+    )
+    page.get_by_role("button", name="Return to modal controls").click()
+    check(
+        "explicit return action restores modal keyboard controls",
+        page.get_by_role("button", name="Enable keyboard preview").evaluate(
             "element => document.activeElement === element"
         ),
     )
@@ -303,6 +311,16 @@ def test_featured_preview_supports_fast_decisions_and_ordered_browsing(page: Pag
         "mobile navigation follows decision content instead of covering it",
         page.locator(".tmfeatured-nav-wrap").evaluate("element => getComputedStyle(element).position === 'static'"),
         page.locator(".tmfeatured-nav-wrap").evaluate("element => getComputedStyle(element).position"),
+    )
+    check(
+        "mobile edge navigation does not obscure the template preview",
+        page.locator(".tmfeatured-edge-nav").first.evaluate("element => getComputedStyle(element).display === 'none'"),
+        page.locator(".tmfeatured-edge-nav").first.evaluate("element => getComputedStyle(element).display"),
+    )
+    check(
+        "touch layouts omit the keyboard-only browsing hint",
+        page.locator(".tmfeatured-nav-hint").evaluate("element => getComputedStyle(element).display === 'none'"),
+        page.locator(".tmfeatured-nav-hint").evaluate("element => getComputedStyle(element).display"),
     )
     reviewer_box = page.locator(".tmfeatured-feedback").bounding_box()
     details_box = page.locator(".tmfeatured-details").bounding_box()

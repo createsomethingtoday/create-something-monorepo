@@ -110,6 +110,8 @@ const FEATURED_TEMPLATE_PREVIEW_STYLES = `
 .tmfeatured-devices { display: flex; gap: 4px; padding: 3px; border-radius: 7px; background: #f2f2f2; }
 .tmfeatured-device { min-width: 78px; min-height: 34px; border-color: transparent; background: transparent; }
 .tmfeatured-device[aria-pressed="true"] { border-color: #d8d8d8; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+.tmfeatured-action[data-secondary="true"] { border-color: transparent; color: #3b3b3b; background: transparent; }
+.tmfeatured-action[data-secondary="true"]:hover { border-color: #d8d8d8; background: #f7f7f7; }
 .tmfeatured-action[data-primary="true"] { border-color: #146ef5; color: #fff; background: #146ef5; }
 .tmfeatured-action[data-primary="true"]:hover { background: #0f55d9; }
 .tmfeatured-action-new-tab { font-size: 14px; line-height: 1; }
@@ -120,12 +122,13 @@ const FEATURED_TEMPLATE_PREVIEW_STYLES = `
 .tmfeatured-stage[data-device="tablet"] .tmfeatured-frame-wrap { width: min(768px, 100%); height: min(1024px, 100%); }
 .tmfeatured-stage[data-device="mobile"] .tmfeatured-frame-wrap { width: min(390px, 100%); height: min(844px, 100%); border-radius: 18px; }
 .tmfeatured-frame { display: block; width: 100%; height: 100%; min-height: 360px; border: 0; background: #fff; }
-.tmfeatured-frame-access { position: absolute; bottom: 12px; left: 12px; z-index: 3; display: flex; max-width: calc(100% - 24px); align-items: center; gap: 8px; }
+.tmfeatured-frame-access { position: absolute; bottom: 12px; left: 12px; z-index: 3; display: flex; max-width: calc(100% - 24px); flex-wrap: wrap; align-items: center; gap: 8px; }
 .tmfeatured-frame-access-button { display: inline-flex; min-height: 34px; align-items: center; justify-content: center; padding: 0 11px; border: 1px solid rgba(8,8,8,.18); border-radius: 4px; color: #080808; background: rgba(255,255,255,.94); box-shadow: 0 4px 14px rgba(0,0,0,.14); font: inherit; font-size: 12px; font-weight: 600; line-height: 1; cursor: pointer; }
 .tmfeatured-frame-access-button:hover { background: #fff; }
 .tmfeatured-frame-access-button:focus-visible { outline: 2px solid #146ef5; outline-offset: 2px; }
 .tmfeatured-frame-access-button[aria-pressed="true"] { border-color: #146ef5; color: #fff; background: #146ef5; }
-.tmfeatured-frame-access-hint { margin: 0; padding: 7px 9px; border-radius: 4px; color: #fff; background: rgba(8,8,8,.82); font-size: 11px; line-height: 1.3; }
+.tmfeatured-frame-access-hint { max-width: 280px; margin: 0; padding: 7px 9px; border-radius: 4px; color: #fff; background: rgba(8,8,8,.82); font-size: 11px; line-height: 1.3; }
+.tmfeatured-frame-return { position: absolute; top: 12px; right: 12px; z-index: 3; }
 .tmfeatured-loading,
 .tmfeatured-unavailable { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #5f5f5f; background: #fff; font-size: 14px; }
 .tmfeatured-loading { pointer-events: none; transition: opacity 160ms ease; }
@@ -166,7 +169,7 @@ const FEATURED_TEMPLATE_PREVIEW_STYLES = `
   .tmfeatured-body { grid-template-columns: 1fr; overflow: auto; }
   .tmfeatured-stage { min-height: 62vh; }
   .tmfeatured-side { min-height: auto; overflow: visible; border-top: 1px solid #dedede; border-left: 0; }
-  .tmfeatured-edge-nav:not(:disabled) { opacity: .94; }
+  .tmfeatured-edge-nav { display: none; }
   .tmfeatured-nav-wrap { position: static; margin-top: 24px; box-shadow: none; }
 }
 @media (max-width: 767px) {
@@ -174,6 +177,9 @@ const FEATURED_TEMPLATE_PREVIEW_STYLES = `
   .tmfeatured-devices { width: 100%; }
   .tmfeatured-device { flex: 1; padding: 0 8px; }
   .tmfeatured-action-open-site { display: none; }
+  .tmfeatured-frame-access,
+  .tmfeatured-frame-return,
+  .tmfeatured-nav-hint { display: none; }
   .tmfeatured-stage { min-height: 56vh; padding: 10px; }
   .tmfeatured-stage[data-device="tablet"] .tmfeatured-frame-wrap,
   .tmfeatured-stage[data-device="mobile"] .tmfeatured-frame-wrap { height: 56vh; }
@@ -228,6 +234,7 @@ export const FeaturedTemplatePreview: React.FC<FeaturedTemplatePreviewProps> = (
   const keyboardPreviewHintId = useId();
   const dialogRef = useRef<HTMLElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
+  const keyboardPreviewButtonRef = useRef<HTMLButtonElement>(null);
   const previewFrameRef = useRef<HTMLIFrameElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
   const loadedItemIdRef = useRef(item.id);
@@ -248,6 +255,11 @@ export const FeaturedTemplatePreview: React.FC<FeaturedTemplatePreviewProps> = (
   const styles = uniqueTermNames([item.styles]);
   const hasDetails = Boolean(description || templateType || subcategories.length || styles.length);
   const keyboardPreviewEnabled = keyboardPreviewItemId === item.id;
+
+  const returnToModalControls = () => {
+    setKeyboardPreviewItemId(null);
+    queueMicrotask(() => keyboardPreviewButtonRef.current?.focus());
+  };
 
   useEffect(() => {
     const previousItemId = loadedItemIdRef.current;
@@ -311,13 +323,7 @@ export const FeaturedTemplatePreview: React.FC<FeaturedTemplatePreviewProps> = (
   }, []);
 
   const content = (
-    <div
-      className="tmfeatured-preview"
-      role="presentation"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
-    >
+    <div className="tmfeatured-preview">
       <style dangerouslySetInnerHTML={{ __html: FEATURED_TEMPLATE_PREVIEW_STYLES }} />
       <section
         ref={dialogRef}
@@ -391,6 +397,7 @@ export const FeaturedTemplatePreview: React.FC<FeaturedTemplatePreviewProps> = (
                 <>
                   <div className="tmfeatured-frame-access">
                     <button
+                      ref={keyboardPreviewButtonRef}
                       type="button"
                       className="tmfeatured-frame-access-button"
                       aria-pressed={keyboardPreviewEnabled}
@@ -400,7 +407,7 @@ export const FeaturedTemplatePreview: React.FC<FeaturedTemplatePreviewProps> = (
                     </button>
                     {keyboardPreviewEnabled ? (
                       <p id={keyboardPreviewHintId} className="tmfeatured-frame-access-hint" role="status">
-                        Press Shift+Tab to return to controls
+                        Press Shift+Tab to return; Escape and ← → resume in modal controls.
                       </p>
                     ) : null}
                   </div>
@@ -421,6 +428,15 @@ export const FeaturedTemplatePreview: React.FC<FeaturedTemplatePreviewProps> = (
                     onLoad={() => setLoaded(true)}
                     style={{ opacity: previewLoaded ? 1 : 0 }}
                   />
+                  {keyboardPreviewEnabled ? (
+                    <button
+                      type="button"
+                      className="tmfeatured-frame-access-button tmfeatured-frame-return"
+                      onClick={returnToModalControls}
+                    >
+                      Return to modal controls
+                    </button>
+                  ) : null}
                 </>
               ) : (
                 <div className="tmfeatured-unavailable">

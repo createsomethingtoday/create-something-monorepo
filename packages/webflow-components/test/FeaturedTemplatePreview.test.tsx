@@ -157,6 +157,40 @@ test('offers low-travel ordered navigation on the preview and explains the keybo
   assert.match(html, />Next →</);
 });
 
+test('keeps mobile browsing controls out of the live-preview canvas', () => {
+  const html = renderToStaticMarkup(
+    <FeaturedTemplatePreview
+      item={featuredItem}
+      index={1}
+      total={3}
+      hasPrevious
+      hasNext
+      onClose={() => undefined}
+      onNavigate={() => undefined}
+    />,
+  );
+
+  assert.match(html, /@media \(max-width: 991px\)[\s\S]*\.tmfeatured-edge-nav \{ display: none; \}/);
+  assert.match(html, /@media \(max-width: 767px\)[\s\S]*\.tmfeatured-nav-hint \{ display: none; \}/);
+});
+
+test('gives the live preview a tertiary toolbar treatment', () => {
+  const html = renderToStaticMarkup(
+    <FeaturedTemplatePreview
+      item={featuredItem}
+      index={0}
+      total={1}
+      hasPrevious={false}
+      hasNext={false}
+      onClose={() => undefined}
+      onNavigate={() => undefined}
+    />,
+  );
+
+  assert.match(html, /\.tmfeatured-action\[data-secondary="true"\] \{[^}]*border-color: transparent;[^}]*background: transparent;/);
+  assert.match(html, /data-secondary="true"[^>]*>Open live preview/);
+});
+
 test('surfaces concise decision details and preserves the full template detail path', () => {
   const detailedItem = Object.assign({}, featuredItem, {
     description_short: 'A conversion-focused launch template for growing software teams.',
