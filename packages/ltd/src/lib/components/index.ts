@@ -1,6 +1,6 @@
 /**
  * Ltd-specific components
- * 
+ *
  * These components depend on ltd-specific types and modules,
  * so they live here rather than in Canon.
  */
@@ -10,6 +10,9 @@ export { default as MasterCard } from './MasterCard.svelte';
 export { default as PrincipleCard } from './PrincipleCard.svelte';
 export { default as TasteProfileCard } from './TasteProfileCard.svelte';
 export { default as TrackedPattern } from './TrackedPattern.svelte';
+export { default as CanonIndexOpening } from './canon/CanonIndexOpening.svelte';
+export { default as CanonCollectionRail } from './canon/CanonCollectionRail.svelte';
+export type { CanonCollectionItem } from './canon/CanonCollectionRail.svelte';
 
 // Taste components
 export { default as ImageLightbox } from './taste/ImageLightbox.svelte';

@@ -239,13 +239,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
   group(
     'ltd-editorial',
     'ltd',
-    [
-      'ethos',
-      'experiments/the-circle-closes',
-      'standards',
-      'taste',
-      'voice'
-    ],
+    ['ethos', 'experiments/the-circle-closes', 'standards', 'taste', 'voice'],
     'migrated',
     contract(
       'editorial',
@@ -258,7 +252,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     'ltd-canon-indexes',
     'ltd',
     ['canon', 'masters', 'patterns', 'presentations', 'principles'],
-    'pending',
+    'migrated',
     contract(
       'index',
       'Choose the canon, master, pattern, or presentation most relevant to the current decision.',

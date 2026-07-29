@@ -1,42 +1,36 @@
 ---
-title: "Universal Utility"
-subtitle: ""The best for the most for the least." Charles and Ray Eames' democratic
-			design philosophy. Tools that serve everyone without compromise."
-category: "Pattern"
+title: 'Universal Utility'
+subtitle: >-
+  "The best for the most for the least." Charles and Ray Eames' democratic design philosophy. Tools that serve everyone without compromise.
+category: 'Pattern'
 published: true
-publishedAt: "2025-01-08"
+publishedAt: '2025-01-08'
 ---
 
-
-
-> "The role of the designer is that of a very good, thoughtful host
-				anticipating the needs of his guests."
-
-
+> "The role of the designer is that of a very good, thoughtful host anticipating the needs of his guests."
 
 ## Definition
-Universal Utilityis the Eames commitment to democratic design:
-				create the best possible solution, make it available to the most people, at the
-				lowest possible cost. No compromises on quality. No exclusive pricing.
+
+Universal Utility is the Eames commitment to democratic design:
+create the best possible solution, make it available to the most people, at the
+lowest possible cost. No compromises on quality. No exclusive pricing.
 
 The Eames molded plywood chair wasn't a luxury item—it was designed for mass
-				production. The quality matched or exceeded handcrafted furniture, but the
-				manufacturing process made it accessible to ordinary households.
+production. The quality matched or exceeded handcrafted furniture, but the
+manufacturing process made it accessible to ordinary households.
 
 In software, this means accessibility by default, not as an afterthought.
-				Progressive enhancement so the tool works everywhere. Zero-config options
-				so beginners aren't excluded. The best experience for the broadest audience.
+Progressive enhancement so the tool works everywhere. Zero-config options
+so beginners aren't excluded. The best experience for the broadest audience.
 
 "Universal doesn't mean average. It means excellent for everyone."
 
-
 > "Universal doesn't mean average. It means excellent for everyone."
 
-
-
 ## Principles
+
 Accessibility isn't a feature—it's a baseline. Screen readers, keyboard
-					navigation, color contrast: these aren't enhancements, they're requirements.
+navigation, color contrast: these aren't enhancements, they're requirements.
 
 ✓ Semantic HTML before ARIA
 
@@ -45,7 +39,7 @@ Accessibility isn't a feature—it's a baseline. Screen readers, keyboard
 ✓ Test with actual assistive technologies
 
 Start with core functionality that works everywhere. Layer enhancements
-					for capable environments. Never require the latest technology.
+for capable environments. Never require the latest technology.
 
 ✓ Works without JavaScript where possible
 
@@ -54,7 +48,7 @@ Start with core functionality that works everywhere. Layer enhancements
 ✓ Core paths work on slow connections
 
 Beginners shouldn't need to configure. The default experience should be
-					excellent. Power users can customize, but the out-of-box experience works.
+excellent. Power users can customize, but the out-of-box experience works.
 
 ✓ Sensible defaults for all options
 
@@ -63,7 +57,7 @@ Beginners shouldn't need to configure. The default experience should be
 ✓ Progressive disclosure of advanced features
 
 The best features shouldn't be paywalled. Core functionality should be
-					affordable or free. Premium tiers add convenience, not capability.
+affordable or free. Premium tiers add convenience, not capability.
 
 ✓ Free tier that actually works
 
@@ -71,9 +65,8 @@ The best features shouldn't be paywalled. Core functionality should be
 
 ✓ Premium = more, not premium = usable
 
-
-
 ## When to Apply
+
 - • Building public-facing tools
 - • Audience includes diverse abilities
 - • Global reach is a goal
@@ -85,15 +78,10 @@ The best features shouldn't be paywalled. Core functionality should be
 - • Performance for power users
 - • Specialized needs that require depth
 
-
-
 ## The Eames Example
 
-
 ## Related Patterns
+
 Manufacturing constraints drove Eames innovation. Limitation enabled universality.
 
 Universal tools age well. Build on standards that everyone can access.
-
-
-
