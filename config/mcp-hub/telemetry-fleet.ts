@@ -5,6 +5,7 @@ type TelemetrySourceKey = 'cs' | 'workway';
 type RegistryServerConfig = {
   transport: 'http' | 'stdio';
   tags?: string[];
+  lifecycle?: 'active' | 'dormant' | 'local';
 };
 
 type RegistryShape = {
@@ -12,8 +13,6 @@ type RegistryShape = {
   servers: Record<string, RegistryServerConfig>;
 };
 
-const WORKWAY_GMAIL_AGGREGATE_ALIAS = 'halfdozen-gmail-sync';
-const WORKWAY_QUICKBOOKS_LEGACY_ALIAS = 'quickbooks-notion-mcp';
 const CS_MANAGED_TELEMETRY_IDENTITIES = ['webflow-app-review-mcp'] as const;
 
 const registry = registryData as RegistryShape;
@@ -36,25 +35,29 @@ function uniquePreservingOrder(values: readonly string[]): string[] {
   return out;
 }
 
-function serversForSource(source: TelemetrySourceKey): string[] {
-  return Object.entries(registry.servers)
-    .filter(([, config]) => config.transport === 'http' && hasTag(config.tags, source))
+export function selectTelemetryServers(
+  servers: Record<string, RegistryServerConfig>,
+  source: TelemetrySourceKey
+): string[] {
+  return Object.entries(servers)
+    .filter(
+      ([, config]) =>
+        config.transport === 'http' &&
+        (config.lifecycle ?? 'active') === 'active' &&
+        hasTag(config.tags, source)
+    )
     .map(([name]) => name);
 }
 
-const registryCsServers = serversForSource('cs');
-const registryWorkwayServers = serversForSource('workway');
+const registryCsServers = selectTelemetryServers(registry.servers, 'cs');
+const registryWorkwayServers = selectTelemetryServers(registry.servers, 'workway');
 
 export const CS_FLEET_SERVERS = uniquePreservingOrder([
   ...registryCsServers,
   ...CS_MANAGED_TELEMETRY_IDENTITIES
 ]);
 
-export const WORKWAY_FLEET_SERVERS = uniquePreservingOrder([
-  WORKWAY_GMAIL_AGGREGATE_ALIAS,
-  ...registryWorkwayServers,
-  WORKWAY_QUICKBOOKS_LEGACY_ALIAS
-]);
+export const WORKWAY_FLEET_SERVERS = uniquePreservingOrder(registryWorkwayServers);
 
 export const FLEET_SERVERS = [...CS_FLEET_SERVERS, ...WORKWAY_FLEET_SERVERS];
 
