@@ -96,7 +96,7 @@ test('shows the literal human reviewer rationale only when the CMS field has tex
       onNavigate={() => undefined}
     />,
   );
-  assert.match(withFeedback, /Why our team featured it/);
+  assert.match(withFeedback, /Why our Marketplace team featured it/);
   assert.match(withFeedback, /Clear hierarchy and unusually strong conversion detail\./);
   assert.doesNotMatch(withFeedback, /Featured template feedback/);
 
@@ -111,8 +111,84 @@ test('shows the literal human reviewer rationale only when the CMS field has tex
       onNavigate={() => undefined}
     />,
   );
-  assert.doesNotMatch(withoutFeedback, /Why our team featured it/);
+  assert.doesNotMatch(withoutFeedback, /Why our Marketplace team featured it/);
   assert.doesNotMatch(withoutFeedback, /Selected by Marketplace review/);
+});
+
+test('identifies the human Marketplace review and the Featured collection without obscuring the literal rationale', () => {
+  const html = renderToStaticMarkup(
+    <FeaturedTemplatePreview
+      item={featuredItem}
+      index={3}
+      total={582}
+      hasPrevious
+      hasNext
+      onClose={() => undefined}
+      onNavigate={() => undefined}
+    />,
+  );
+
+  assert.match(html, /Human Marketplace review/);
+  assert.match(html, /Why our Marketplace team featured it/);
+  assert.match(html, /4 of 582 featured templates/);
+  assert.match(html, />Open live preview/);
+  assert.match(html, /Clear hierarchy and unusually strong conversion detail\./);
+});
+
+test('offers low-travel ordered navigation on the preview and explains the keyboard shortcut', () => {
+  const html = renderToStaticMarkup(
+    <FeaturedTemplatePreview
+      item={featuredItem}
+      index={1}
+      total={3}
+      hasPrevious
+      hasNext
+      onClose={() => undefined}
+      onNavigate={() => undefined}
+    />,
+  );
+
+  assert.match(html, /aria-label="Previous featured template"/);
+  assert.match(html, /aria-label="Next featured template"/);
+  assert.match(html, /tmfeatured-edge-nav tmfeatured-edge-previous/);
+  assert.match(html, /tmfeatured-edge-nav tmfeatured-edge-next/);
+  assert.match(html, /Use ← → keys to browse/);
+  assert.match(html, />← Previous</);
+  assert.match(html, />Next →</);
+});
+
+test('keeps mobile browsing controls out of the live-preview canvas', () => {
+  const html = renderToStaticMarkup(
+    <FeaturedTemplatePreview
+      item={featuredItem}
+      index={1}
+      total={3}
+      hasPrevious
+      hasNext
+      onClose={() => undefined}
+      onNavigate={() => undefined}
+    />,
+  );
+
+  assert.match(html, /@media \(max-width: 991px\)[\s\S]*\.tmfeatured-edge-nav \{ display: none; \}/);
+  assert.match(html, /@media \(max-width: 767px\)[\s\S]*\.tmfeatured-nav-hint \{ display: none; \}/);
+});
+
+test('gives the live preview a tertiary toolbar treatment', () => {
+  const html = renderToStaticMarkup(
+    <FeaturedTemplatePreview
+      item={featuredItem}
+      index={0}
+      total={1}
+      hasPrevious={false}
+      hasNext={false}
+      onClose={() => undefined}
+      onNavigate={() => undefined}
+    />,
+  );
+
+  assert.match(html, /\.tmfeatured-action\[data-secondary="true"\] \{[^}]*border-color: transparent;[^}]*background: transparent;/);
+  assert.match(html, /data-secondary="true"[^>]*>Open live preview/);
 });
 
 test('surfaces concise decision details and preserves the full template detail path', () => {
@@ -147,7 +223,7 @@ test('surfaces concise decision details and preserves the full template detail p
   assert.match(html, /href="https:\/\/webflow\.com\/templates\/html\/leadcraft-website-template"/);
   assert.match(html, /aria-label="View LeadCraft template details \(opens in a new tab\)"/);
   assert.match(html, /<h1[^>]*>LeadCraft<\/h1>/);
-  assert.match(html, /<h2[^>]*>Why our team featured it<\/h2>/);
+  assert.match(html, /<h2[^>]*>Why our Marketplace team featured it<\/h2>/);
 });
 
 test('keeps View details available when a live preview cannot be framed', () => {
@@ -208,6 +284,25 @@ test('keeps the cross-origin preview outside the modal keyboard order', () => {
   assert.match(html, /<iframe[^>]*tabindex="-1"/);
   assert.match(html, /<iframe[^>]*sandbox="allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox"/);
   assert.match(html, /<iframe[^>]*referrerPolicy="no-referrer"/);
+});
+
+test('offers an explicit keyboard-preview opt-in without weakening the initial iframe boundary', () => {
+  const html = renderToStaticMarkup(
+    <FeaturedTemplatePreview
+      item={featuredItem}
+      index={0}
+      total={1}
+      hasPrevious={false}
+      hasNext={false}
+      onClose={() => undefined}
+      onNavigate={() => undefined}
+    />,
+  );
+
+  assert.match(html, /aria-pressed="false"[^>]*>Enable keyboard preview</);
+  assert.match(html, /<iframe[^>]*tabindex="-1"/);
+  assert.match(html, /sandbox="allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox"/);
+  assert.doesNotMatch(html, /allow-same-origin/);
 });
 
 test('turns a next-page failure into an announced retry action', () => {
