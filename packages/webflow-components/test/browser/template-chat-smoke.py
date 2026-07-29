@@ -240,7 +240,21 @@ def test_featured_preview_supports_fast_decisions_and_ordered_browsing(page: Pag
     expect(reviewer_kicker).to_be_visible()
     reviewer_copy = " ".join((reviewer_kicker.text_content() or "").split())
     check("review provenance is explicitly human", "Human Marketplace review" in reviewer_copy, reviewer_copy)
-    expect(page.get_by_role("heading", name="Why our Marketplace team featured it")).to_be_visible()
+    reviewer_heading = page.get_by_role("heading", name="Why this template stands out")
+    expect(reviewer_heading).to_be_visible()
+    expect(
+        page.get_by_text(
+            "Clear sections, product examples, and a prominent call to action help software teams explain what they sell and lead visitors to a trial or demo.",
+            exact=True,
+        )
+    ).to_be_visible()
+    check(
+        "review heading has no orphaned final line",
+        reviewer_heading.evaluate(
+            "element => { const range = document.createRange(); range.selectNodeContents(element); return range.getClientRects().length === 1; }"
+        ),
+        str(reviewer_heading.bounding_box()),
+    )
     expect(page.get_by_text("1 of 2 featured templates", exact=True)).to_be_visible()
     expect(page.get_by_role("link", name="Open live preview")).to_be_visible()
 
@@ -306,7 +320,7 @@ def test_featured_preview_supports_fast_decisions_and_ordered_browsing(page: Pag
         str(page.evaluate("({ scrollWidth: document.documentElement.scrollWidth, width: window.innerWidth })")),
     )
     page.locator(".tmfeatured-feedback").scroll_into_view_if_needed()
-    expect(page.get_by_role("heading", name="Why our Marketplace team featured it")).to_be_visible()
+    expect(page.get_by_role("heading", name="Why this template stands out")).to_be_visible()
     check(
         "mobile navigation follows decision content instead of covering it",
         page.locator(".tmfeatured-nav-wrap").evaluate("element => getComputedStyle(element).position === 'static'"),
