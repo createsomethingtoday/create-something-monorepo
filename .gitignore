@@ -159,3 +159,6 @@ tmp/loom-remote-secrets-*.txt
 config/mcp-hub/fleet-secrets.local.*
 .claude/settings.local.json
 .pi/extensions/emdash-hook.ts
+
+# Local evidence and write receipts from Featured-template review runs
+packages/webflow-template-search/output/featured-template-feedback/

@@ -662,6 +662,10 @@ function normalizeTemplateRecord(
       ensureBoolean(record.fields['🥞Is Currently Featured? (🏗️ only)']) ||
       ensureBoolean(record.fields['ℹ️Is Featured? (🖥️, 🏗️only)']),
     isLandingPage: templateType === 'One Page',
+    reviewerPickReason:
+      typeof record.fields['⭐Reviewer Pick Reason (featured templates)'] === 'string'
+        ? record.fields['⭐Reviewer Pick Reason (featured templates)'].trim() || null
+        : null,
     popularityScore: ensureNumber(record.fields['🖌️Popularity Score']),
     uniqueViewers: ensureNumber(record.fields['📋 Unique Viewers']),
     cumulativePurchases: ensureNumber(record.fields['📋 Cumulative Purchases']),
