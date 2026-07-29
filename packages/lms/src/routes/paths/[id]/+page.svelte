@@ -12,24 +12,26 @@
 </svelte:head>
 
 <div class="path-shell">
-  <header class="path-hero">
-    <div class="path-kicker">
-      <div class="path-dot {path.color}"></div>
-      <span class="lesson-count">{path.lessons.length} lessons</span>
-    </div>
+  <section class="path-opening" aria-labelledby="path-title">
+    <header class="path-hero">
+      <div class="path-kicker">
+        <div class="path-dot {path.color}"></div>
+        <span class="lesson-count">{path.lessons.length} lessons</span>
+      </div>
 
-    <h1 class="path-title">{path.title}</h1>
-    <p class="path-subtitle">{path.subtitle}</p>
-    <p class="path-description">{path.description}</p>
+      <h1 id="path-title" class="path-title">{path.title}</h1>
+      <p class="path-subtitle">{path.subtitle}</p>
+      <p class="path-description">{path.description}</p>
 
-    <div class="path-actions">
-      <a href="/paths/{path.id}/{path.lessons[0].id}" class="btn-primary">Start Lesson 1</a>
-      <a href="/paths" class="btn-secondary">Back to Course</a>
-    </div>
-  </header>
+      <div class="path-actions">
+        <a href="/paths/{path.id}/{path.lessons[0].id}" class="btn-primary">Start Lesson 1</a>
+        <a href="/paths" class="btn-secondary">Back to Course</a>
+      </div>
+    </header>
+  </section>
 
-  <section>
-    <h2 class="section-title">Lessons</h2>
+  <section class="path-sequence" aria-labelledby="lessons-title">
+    <h2 id="lessons-title" class="section-title">Lessons</h2>
 
     <div class="flex flex-col gap-4">
       {#each path.lessons as lesson, index}
@@ -58,6 +60,11 @@
     margin-inline: auto;
     padding: clamp(3rem, 8vw, 5.25rem) 0 clamp(4rem, 8vw, 6rem);
     color: var(--color-performance-ink, #090909);
+  }
+
+  .path-opening,
+  .path-sequence {
+    padding: 0;
   }
 
   .path-hero {

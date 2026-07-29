@@ -21,7 +21,7 @@ export async function loadLesson(pathId: string, lessonId: string): Promise<stri
   } catch (error) {
     throw new Error(
       `Failed to load lesson: ${pathId}/${lessonId}. ` +
-      `Ensure the file exists at src/lib/content/lessons/${pathId}/${lessonId}.md`
+        `Ensure the file exists at src/lib/content/lessons/${pathId}/${lessonId}.md`
     );
   }
 }
@@ -102,6 +102,25 @@ export function extractFrontmatter(markdown: string): {
   });
 
   return { frontmatter, content };
+}
+
+/**
+ * Removes a Markdown-generated H1 only when it duplicates the route-owned lesson title.
+ * The route keeps the single page heading while the lesson body remains otherwise unchanged.
+ */
+export function stripDuplicateLessonHeading(html: string, lessonTitle: string): string {
+  const leadingHeading = html.match(/^\s*<h1(?:\s[^>]*)?>([\s\S]*?)<\/h1>\s*/i);
+  if (!leadingHeading) return html;
+
+  const headingText = leadingHeading[1]
+    .replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .trim();
+
+  if (headingText !== lessonTitle.trim()) return html;
+  return html.slice(leadingHeading[0].length);
 }
 
 /**
