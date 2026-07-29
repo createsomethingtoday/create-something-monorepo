@@ -25,8 +25,7 @@
 		try {
 			await runThreadAction(data.threadView.thread.id, action);
 		} catch (error) {
-			actionError =
-				error instanceof Error ? error.message : 'Unable to update the profile field.';
+			actionError = error instanceof Error ? error.message : 'Unable to update the profile field.';
 		} finally {
 			activeAction = '';
 		}
@@ -61,6 +60,21 @@
 		}
 	}
 
+	function getCandidateSectionLabel(label: string) {
+		switch (label.toLowerCase()) {
+			case 'confirmed':
+				return 'Saved details';
+			case 'inferred':
+				return 'Suggested from chat';
+			case 'candidate':
+				return 'Ready for your review';
+			case 'rejected':
+				return 'Needs correction';
+			default:
+				return label;
+		}
+	}
+
 	$: showInternalOperatorUi = data.agencyAccess.status !== 'anonymous';
 	$: profileFields = data.threadView.profileAudit.sections.flatMap((section) => section.items);
 	$: confirmedFieldCount = profileFields.filter((field) => field.status === 'confirmed').length;
@@ -90,138 +104,165 @@
 			];
 </script>
 
-<section class="glass panel">
-	<div class="section-header">
-		<div>
-			<div class="eyebrow">{showInternalOperatorUi ? 'Profile Audit' : 'Application details'}</div>
-			<h1 class="section-title">{data.threadView.thread.title}</h1>
-		</div>
-		<a class="link-button" href={`/chat/${data.threadView.thread.id}`}>
-			{showInternalOperatorUi ? 'Back to thread' : 'Back to conversation'}
-		</a>
-	</div>
-
-	<p class="muted">
-		{#if showInternalOperatorUi}
-			Inferred and confirmed values remain visibly distinct. Sensitive fields must be explicitly
-			confirmed before they are used for external writes.
-		{:else}
-			Review what Concierge has captured so far. If anything looks off, mark it for correction or
-			send the update in chat and I will adjust it.
-		{/if}
-	</p>
-
-	{#if actionError}
-		<p class="error-text">{actionError}</p>
-	{/if}
-</section>
-
-<section class="grid-3 section-gap">
-	{#each summaryCards as card}
-		<div class="glass panel stat-card">
-			<strong>{card.value}</strong>
-			<div class="muted">{card.label}</div>
-		</div>
-	{/each}
-</section>
-
-<section class="section-gap audit-grid">
-	{#each data.threadView.profileAudit.sections as section}
-		<div class="glass panel">
-			<div class="section-header">
-				<h2 class="section-title">{section.label}</h2>
-				<span class="status-pill">{section.items.length} items</span>
+<div
+	class:internal={showInternalOperatorUi}
+	class:candidate={!showInternalOperatorUi}
+	class="profile-workspace"
+>
+	<section class="glass panel profile-intro">
+		<div class="section-header">
+			<div>
+				<div class="eyebrow">
+					{showInternalOperatorUi ? 'Profile Audit' : 'Your working profile'}
+				</div>
+				<h1 class="section-title">
+					{showInternalOperatorUi
+						? data.threadView.thread.title
+						: 'The details behind your application.'}
+				</h1>
 			</div>
+			<a class="link-button" href={`/chat/${data.threadView.thread.id}`}>
+				{showInternalOperatorUi ? 'Back to thread' : 'Back to conversation'}
+			</a>
+		</div>
 
-			{#if section.items.length === 0}
-				<p class="muted">
-					{showInternalOperatorUi ? 'No fields in this state.' : 'Nothing to review here yet.'}
-				</p>
+		<p class="muted">
+			{#if showInternalOperatorUi}
+				Inferred and confirmed values remain visibly distinct. Sensitive fields must be explicitly
+				confirmed before they are used for external writes.
 			{:else}
-				<div class="field-table">
-					{#each section.items as field}
-						<div class="field-row">
-							<div class="field-body">
-								<div>
-									<strong>{field.label}</strong>
-									<div>{field.value}</div>
-									<div class="note">{field.note ?? 'No additional note.'}</div>
+				Review what Concierge captured from your conversation. Nothing becomes recruiter context
+				until you have had the chance to confirm or correct it.
+			{/if}
+		</p>
+
+		{#if actionError}
+			<p class="error-text">{actionError}</p>
+		{/if}
+	</section>
+
+	<section class="grid-3 section-gap">
+		{#each summaryCards as card}
+			<div class="glass panel stat-card profile-stat-card">
+				<strong>{card.value}</strong>
+				<div class="muted">{card.label}</div>
+			</div>
+		{/each}
+	</section>
+
+	<section class="section-gap audit-grid">
+		{#each data.threadView.profileAudit.sections as section}
+			<div class="glass panel profile-section-card">
+				<div class="section-header">
+					<h2 class="section-title">
+						{showInternalOperatorUi ? section.label : getCandidateSectionLabel(section.label)}
+					</h2>
+					<span class="status-pill">{section.items.length} items</span>
+				</div>
+
+				{#if section.items.length === 0}
+					<p class="muted">
+						{showInternalOperatorUi ? 'No fields in this state.' : 'Nothing to review here yet.'}
+					</p>
+				{:else}
+					<div class="field-table">
+						{#each section.items as field}
+							<div class="field-row">
+								<div class="field-body">
+									<div>
+										<strong>{field.label}</strong>
+										<div>{field.value}</div>
+										<div class="note">{field.note ?? 'No additional note.'}</div>
+									</div>
+
+									{#if field.key === 'background_check_consent' && field.status !== 'confirmed'}
+										<div class="field-actions">
+											<button
+												type="button"
+												on:click={captureConsent}
+												disabled={activeAction !== ''}
+											>
+												{#if showInternalOperatorUi}
+													{isActionPending('capture_consent') ? 'Capturing...' : 'Capture consent'}
+												{:else}
+													{isActionPending('capture_consent') ? 'Saving...' : 'I agree'}
+												{/if}
+											</button>
+										</div>
+									{:else if field.status !== 'confirmed' && field.status !== 'rejected'}
+										<div class="field-actions">
+											<button
+												type="button"
+												on:click={() => confirmField(field.key)}
+												disabled={activeAction !== ''}
+											>
+												{#if showInternalOperatorUi}
+													{isActionPending(`confirm:${field.key}`) ? 'Confirming...' : 'Confirm'}
+												{:else}
+													{isActionPending(`confirm:${field.key}`) ? 'Saving...' : 'Looks right'}
+												{/if}
+											</button>
+											<button
+												class="ghost"
+												type="button"
+												on:click={() => rejectField(field.key)}
+												disabled={activeAction !== ''}
+											>
+												{#if showInternalOperatorUi}
+													{isActionPending(`reject:${field.key}`)
+														? 'Updating...'
+														: 'Mark for correction'}
+												{:else}
+													{isActionPending(`reject:${field.key}`)
+														? 'Saving...'
+														: 'Needs correction'}
+												{/if}
+											</button>
+										</div>
+									{:else if field.status === 'rejected'}
+										<div class="action-note">
+											{showInternalOperatorUi
+												? 'Send corrected details in chat to reopen this field.'
+												: 'Reply in chat with the corrected detail and Concierge will update it.'}
+										</div>
+									{/if}
 								</div>
 
-								{#if field.key === 'background_check_consent' && field.status !== 'confirmed'}
-									<div class="field-actions">
-										<button
-											type="button"
-											on:click={captureConsent}
-											disabled={activeAction !== ''}
-										>
-											{#if showInternalOperatorUi}
-												{isActionPending('capture_consent') ? 'Capturing...' : 'Capture consent'}
-											{:else}
-												{isActionPending('capture_consent') ? 'Saving...' : 'I agree'}
-											{/if}
-										</button>
-									</div>
-								{:else if field.status !== 'confirmed' && field.status !== 'rejected'}
-									<div class="field-actions">
-										<button
-											type="button"
-											on:click={() => confirmField(field.key)}
-											disabled={activeAction !== ''}
-										>
-											{#if showInternalOperatorUi}
-												{isActionPending(`confirm:${field.key}`) ? 'Confirming...' : 'Confirm'}
-											{:else}
-												{isActionPending(`confirm:${field.key}`) ? 'Saving...' : 'Looks right'}
-											{/if}
-										</button>
-										<button
-											class="ghost"
-											type="button"
-											on:click={() => rejectField(field.key)}
-											disabled={activeAction !== ''}
-										>
-											{#if showInternalOperatorUi}
-												{isActionPending(`reject:${field.key}`) ? 'Updating...' : 'Mark for correction'}
-											{:else}
-												{isActionPending(`reject:${field.key}`) ? 'Saving...' : 'Needs correction'}
-											{/if}
-										</button>
-									</div>
-								{:else if field.status === 'rejected'}
-									<div class="action-note">
+								<div class="field-meta">
+									<span class={`status-pill ${field.status === 'confirmed' ? 'good' : 'warn'}`}>
 										{showInternalOperatorUi
-											? 'Send corrected details in chat to reopen this field.'
-											: 'Reply in chat with the corrected detail and Concierge will update it.'}
-									</div>
-								{/if}
-							</div>
-
-							<div class="field-meta">
-								<span class={`status-pill ${field.status === 'confirmed' ? 'good' : 'warn'}`}>
-									{showInternalOperatorUi ? field.status : getCandidateFieldStatusLabel(field.status)}
-								</span>
-								{#if showInternalOperatorUi}
-									<span>
-										{Math.round(field.confidence * 100)}% / {getFieldConfidenceBand(field.confidence)}
+											? field.status
+											: getCandidateFieldStatusLabel(field.status)}
 									</span>
-									<span>{field.fieldClass}</span>
-									{#if requiresExplicitConfirmation(field)}
-										<span class="status-pill danger">explicit confirmation</span>
+									{#if showInternalOperatorUi}
+										<span>
+											{Math.round(field.confidence * 100)}% / {getFieldConfidenceBand(
+												field.confidence
+											)}
+										</span>
+										<span>{field.fieldClass}</span>
+										{#if requiresExplicitConfirmation(field)}
+											<span class="status-pill danger">explicit confirmation</span>
+										{/if}
+									{:else if requiresExplicitConfirmation(field) && field.status !== 'confirmed'}
+										<span class="muted">Needs your okay before it can move forward.</span>
 									{/if}
-								{:else if requiresExplicitConfirmation(field) && field.status !== 'confirmed'}
-									<span class="muted">Needs your okay before it can move forward.</span>
-								{/if}
+								</div>
 							</div>
-						</div>
-					{/each}
-				</div>
-			{/if}
-		</div>
-	{/each}
-</section>
+						{/each}
+					</div>
+				{/if}
+			</div>
+		{/each}
+	</section>
+</div>
 
 <style>
+	.profile-workspace {
+		display: grid;
+		gap: 1rem;
+	}
+
 	.panel {
 		padding: 1.2rem;
 	}
@@ -254,6 +295,110 @@
 	.stat-card {
 		display: grid;
 		gap: 0.35rem;
+	}
+
+	.profile-workspace.candidate .profile-intro {
+		position: relative;
+		padding: clamp(1.55rem, 3vw, 2.7rem);
+		border-color: #171512;
+		background:
+			radial-gradient(circle at 88% 10%, rgba(29, 111, 138, 0.3), transparent 15rem),
+			linear-gradient(135deg, #171512, #211d19);
+		color: #ffffff;
+		box-shadow: 0 28px 70px rgba(44, 34, 24, 0.16);
+		overflow: hidden;
+	}
+
+	.profile-workspace.candidate .profile-intro::after {
+		content: '';
+		position: absolute;
+		right: -5rem;
+		top: -8rem;
+		width: 19rem;
+		height: 19rem;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		border-radius: 999px;
+		pointer-events: none;
+	}
+
+	.profile-workspace.candidate .profile-intro .section-header,
+	.profile-workspace.candidate .profile-intro > p,
+	.profile-workspace.candidate .profile-intro .error-text {
+		position: relative;
+		z-index: 1;
+	}
+
+	.profile-workspace.candidate .profile-intro .eyebrow {
+		border-color: rgba(255, 255, 255, 0.14);
+		background: rgba(255, 255, 255, 0.07);
+		color: #d7a77d;
+	}
+
+	.profile-workspace.candidate .profile-intro .section-title {
+		max-width: 760px;
+		margin-top: 0.65rem;
+		font-size: clamp(2.25rem, 5vw, 4.8rem);
+		font-weight: 560;
+		line-height: 0.96;
+		letter-spacing: -0.06em;
+	}
+
+	.profile-workspace.candidate .profile-intro .muted {
+		max-width: 680px;
+		color: rgba(255, 255, 255, 0.65);
+	}
+
+	.profile-workspace.candidate .link-button {
+		border-color: rgba(255, 255, 255, 0.22);
+		background: #ffffff;
+		color: #171512;
+	}
+
+	.profile-workspace.candidate .grid-3 {
+		gap: 0;
+		border: 1px solid rgba(175, 124, 84, 0.2);
+		border-radius: 20px;
+		background: rgba(255, 250, 244, 0.76);
+		overflow: hidden;
+	}
+
+	.profile-workspace.candidate .profile-stat-card {
+		min-height: 130px;
+		align-content: space-between;
+		padding: 1.25rem 1.4rem;
+		border: 0;
+		border-right: 1px solid rgba(175, 124, 84, 0.2);
+		border-radius: 0;
+		background: transparent;
+		box-shadow: none;
+	}
+
+	.profile-workspace.candidate .profile-stat-card:last-child {
+		border-right: 0;
+	}
+
+	.profile-workspace.candidate .profile-stat-card strong {
+		font-size: clamp(2.25rem, 4vw, 4rem);
+		font-weight: 540;
+		line-height: 1;
+		letter-spacing: -0.06em;
+	}
+
+	.profile-workspace.candidate .profile-section-card {
+		padding: clamp(1.15rem, 2.5vw, 1.75rem);
+		border-color: rgba(175, 124, 84, 0.2);
+		background: rgba(255, 250, 244, 0.82);
+		box-shadow: 0 18px 52px rgba(44, 34, 24, 0.06);
+	}
+
+	.profile-workspace.candidate .profile-section-card .section-title {
+		font-size: clamp(1.35rem, 2.5vw, 2rem);
+		font-weight: 560;
+		letter-spacing: -0.035em;
+	}
+
+	.profile-workspace.candidate .field-row {
+		padding: 1.2rem 0;
 	}
 
 	.audit-grid,
@@ -313,6 +458,24 @@
 	@media (max-width: 760px) {
 		.field-meta {
 			justify-items: start;
+		}
+
+		.profile-workspace.candidate .profile-intro .section-header {
+			display: grid;
+		}
+
+		.profile-workspace.candidate .link-button {
+			width: max-content;
+		}
+
+		.profile-workspace.candidate .profile-stat-card {
+			min-height: 100px;
+			border-right: 0;
+			border-bottom: 1px solid rgba(175, 124, 84, 0.2);
+		}
+
+		.profile-workspace.candidate .profile-stat-card:last-child {
+			border-bottom: 0;
 		}
 	}
 </style>
