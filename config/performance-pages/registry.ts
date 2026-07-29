@@ -660,7 +660,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     'space-indexes',
     'space',
     ['data', 'discover'],
-    'pending',
+    'migrated',
     contract(
       'index',
       'Choose the dataset or concept most useful to explore.',
