@@ -61,7 +61,8 @@ test("server-renders the Princess Pet Palace game", async () => {
   assert.match(html, /For grown-ups/);
   assert.match(html, /What does Princess Pet Palace teach\?/);
   assert.match(html, /What age is Princess Pet Palace for\?/);
-  assert.match(html, /How does camera magic protect privacy\?/);
+  assert.match(html, /How does camera magic work\?/);
+  assert.doesNotMatch(html, /starts only after a grown-up tap|Learning goals, privacy/i);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton|Your site is taking shape/i);
   assert.match(html, /data-testid="start-game"/);
 });

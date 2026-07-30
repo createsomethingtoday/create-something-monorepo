@@ -309,7 +309,7 @@ export default function Home() {
               <span className="guide-icon" aria-hidden="true">♡</span>
               <span className="guide-summary-copy">
                 <strong>For grown-ups</strong>
-                <small>Learning goals, privacy, and adding to the home screen</small>
+                <small>Learning goals and adding to the home screen</small>
               </span>
               <span className="guide-plus" aria-hidden="true">+</span>
             </summary>

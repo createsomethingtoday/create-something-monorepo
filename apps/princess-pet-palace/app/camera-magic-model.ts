@@ -1,3 +1,11 @@
+export const CAMERA_MAGIC_COPY = {
+  startLabel: "Make camera magic",
+  requestingLabel: "Opening camera…",
+  idlePrompt: "Tap the camera, then wave to make sparkles!",
+  activePrompt: "Wave to wake the sparkles.",
+  movingPrompt: "Your movement makes sparkles!",
+} as const;
+
 export function measureMotion(
   previous: Uint8ClampedArray,
   current: Uint8ClampedArray,
