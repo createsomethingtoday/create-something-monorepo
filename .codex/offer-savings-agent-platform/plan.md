@@ -189,25 +189,31 @@ Evidence
 
 ## Phase 7: Publish, merge, and close evidence
 
-Status: in progress
+Status: complete
 
 Implementation
 
 - [x] Review diff scope and secret safety, commit intentionally, push the CRE-1505 branch, and open draft PR #1148.
 - [x] Run and repair required CI without weakening the primary verifier.
 - [x] Reconcile the branch with `origin/main` through `21cc92fbb`, preserve the npm-managed `princess-pet-palace` app outside the pnpm workspace, and add its required app-owned Canon overlay intake rather than weakening property governance.
-- [ ] Move through the repository review gate and merge when green.
-- [ ] Record Linear evidence including commands, screenshots/artifacts, live-smoke result, PR, merge SHA, deployment boundary, rollback note, and worktree disposition.
+- [x] Move through the repository review gate and merge when green.
+- [x] Record Linear evidence including commands, screenshots/artifacts, live-smoke result, PR, merge SHA, deployment boundary, rollback note, and worktree disposition.
 
 Verification
 
-- [ ] Required GitHub checks are green and the PR is merged to `main`.
-- [ ] CRE-1505 is complete with independent evidence and no false production-deployment claim.
+- [x] Required GitHub checks are green and the PR is merged to `main`.
+- [x] CRE-1505 is complete with independent evidence and no false production-deployment claim.
+
+Evidence
+
+- 2026-07-30: final PR #1148 head `3f66fac83` passed 9 GitHub checks with 2 expected skips and 0 failures after reconciling `origin/main` through `21cc92fbb`.
+- 2026-07-30: PR #1148 squash-merged to `main` as `eeafaa65bad73dd8497c1776149280cb320e8b17`.
+- 2026-07-30: CRE-1505 moved to `Done` with the merge SHA, package and primary-verifier evidence, live-smoke result, approval-gated deployment boundary, rollback note, and preserved worktree disposition.
 
 Exit criteria
 
-- [ ] No required work remains inside the approved non-public scope; public deployment or ChatGPT submission remains a separately approved promotion action.
+- [x] No required work remains inside the approved non-public scope; public deployment or ChatGPT submission remains a separately approved promotion action.
 
 ## Current next action
 
-Run the Canon quality gate and focused offer verifiers against the reconciled branch, push the integration repair, wait for required GitHub checks, merge PR #1148, then record the merge SHA, rollback boundary, promotion boundary, and preserved worktree disposition in CRE-1505.
+No in-scope action remains. Public deployment, hosted persistence, external notifications, ChatGPT registration/submission, and any LTK partnership or private-data access remain separately approved promotion work.
