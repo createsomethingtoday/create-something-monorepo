@@ -18,63 +18,119 @@
 	user={accountUser}
 	pageTitle="Account | CREATE SOMETHING AGENCY"
 	currentProperty="agency"
+	visualStyle="performance"
 />
 
 <section class="access-section">
 	<div class="access-card">
-		<div>
+		<div class="access-copy">
+			<p class="access-eyebrow">Managed credential</p>
 			<h2>MCP Access</h2>
 			<p>
-				Your personal bearer token, host setup snippets, and managed access scope now live on a dedicated
-				page designed for safe reveal-and-copy workflows.
+				Review your personal bearer token, host setup snippets, and managed access scope in a safe
+				reveal-and-copy workspace.
 			</p>
 		</div>
-		<a href="/mcp-access" class="access-link">Open MCP Access</a>
+		<div class="access-action">
+			<span>Scope / Personal</span>
+			<a href="/mcp-access" class="access-link">Open MCP Access</a>
+		</div>
 	</div>
 </section>
 
 <style>
 	.access-section {
-		max-width: 960px;
-		margin: 0 auto 4rem;
-		padding: 0 1.5rem;
+		width: min(var(--content-width-performance), calc(100% - 2rem));
+		margin: var(--space-performance-md) auto clamp(3rem, 7vw, 6rem);
 	}
 
 	.access-card {
-		border: 1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.12));
-		border-radius: 20px;
-		padding: 1.5rem;
-		background: var(--color-surface-raised, rgba(255, 255, 255, 0.03));
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		gap: 1rem;
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		align-items: end;
+		gap: clamp(2rem, 5vw, 5rem);
+		padding: clamp(1.25rem, 3vw, 2rem);
+		border: 1px solid var(--color-performance-line);
+		border-inline-start: 4px solid var(--color-performance-controlled);
+		border-radius: var(--radius-performance-md);
+		background: var(--color-performance-panel);
+		box-shadow: var(--shadow-performance-panel);
+	}
+
+	.access-eyebrow,
+	.access-action span {
+		font-family: var(--font-performance-mono);
+		font-size: var(--text-performance-caption);
+		font-weight: 600;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+	}
+
+	.access-eyebrow {
+		margin: 0 0 var(--space-performance-sm);
+		color: var(--color-performance-controlled);
 	}
 
 	.access-card h2 {
-		margin: 0 0 0.5rem;
+		margin: 0 0 var(--space-performance-sm);
+		color: var(--color-performance-ink);
+		font-family: var(--font-performance-display);
+		font-size: var(--text-performance-h3);
+		font-weight: 700;
 	}
 
-	.access-card p {
+	.access-copy > p:last-child {
+		max-width: 52rem;
 		margin: 0;
-		color: var(--color-performance-fg-tertiary, rgba(255, 255, 255, 0.72));
-		line-height: 1.7;
+		color: var(--color-performance-muted);
+		font-size: var(--text-performance-body-sm);
+		line-height: 1.6;
+	}
+
+	.access-action {
+		display: grid;
+		justify-items: end;
+		gap: var(--space-performance-sm);
+	}
+
+	.access-action span {
+		color: var(--color-performance-muted);
 	}
 
 	.access-link {
-		border-radius: 999px;
-		padding: 0.85rem 1.25rem;
-		background: var(--color-performance-fg-primary, #fff);
-		color: var(--color-performance-bg-pure, #000);
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0 1.25rem;
+		border: 1px solid var(--color-performance-ink);
+		border-radius: var(--radius-performance-sm);
+		background: var(--color-performance-ink);
+		color: var(--color-performance-panel);
 		text-decoration: none;
-		font-weight: 600;
+		font-size: var(--text-performance-body-sm);
+		font-weight: 700;
 		white-space: nowrap;
 	}
 
-	@media (max-width: 720px) {
+	.access-link:hover {
+		opacity: 1;
+		border-color: var(--color-performance-ink-soft);
+		background: var(--color-performance-ink-soft);
+	}
+
+	@media (max-width: 760px) {
+		.access-section {
+			width: min(100% - 1.375rem, var(--content-width-performance));
+		}
+
 		.access-card {
-			flex-direction: column;
+			grid-template-columns: 1fr;
 			align-items: flex-start;
+		}
+
+		.access-action {
+			justify-items: start;
 		}
 	}
 </style>
