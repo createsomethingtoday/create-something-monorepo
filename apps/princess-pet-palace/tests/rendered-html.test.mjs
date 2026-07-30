@@ -29,10 +29,14 @@ test("server-renders the Princess Pet Palace game", async () => {
 
   const html = await response.text();
   assert.match(html, /<title>Princess Pet Palace<\/title>/i);
-  assert.match(html, /A magical learning adventure/);
-  assert.match(html, /Letters, counting, animals, and wiggles!/);
-  assert.match(html, /Let&#x27;s play!/);
-  assert.match(html, /Turn sound on so the palace can read each activity aloud/);
+  assert.match(html, /A new adventure every time/);
+  assert.match(html, /Open the palace doors/);
+  assert.match(html, /six magical rooms/);
+  assert.match(html, /Start adventure/);
+  assert.match(html, /Letter Garden/);
+  assert.match(html, /Pet Parade/);
+  assert.match(html, /Royal Gym/);
+  assert.match(html, /No ads, accounts, or tracking/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton|Your site is taking shape/i);
-  assert.match(html, /role="status"/);
+  assert.match(html, /data-testid="start-game"/);
 });
