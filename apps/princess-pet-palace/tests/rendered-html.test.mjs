@@ -57,6 +57,7 @@ test("server-renders the Princess Pet Palace game", async () => {
   assert.match(html, /Pet Parade/);
   assert.match(html, /Royal Gym/);
   assert.match(html, /No ads, accounts, or tracking/);
+  assert.match(html, /AI-generated voice, not a human voice/i);
   assert.match(html, /data-testid="grownup-guide"/);
   assert.match(html, /For grown-ups/);
   assert.match(html, /What does Princess Pet Palace teach\?/);

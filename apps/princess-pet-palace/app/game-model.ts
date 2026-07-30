@@ -1,3 +1,5 @@
+import { getNarrationCue, type NarrationCue } from "./speech-guide.ts";
+
 export type ActivityKind = "letter" | "count" | "move";
 
 export const SUCCESS_ADVANCE_DELAY_MS = 2200;
@@ -48,6 +50,11 @@ export type JourneyRoom = {
   spokenPrompt: string;
   successMessage: string;
   tryAgainMessage: string;
+  narration: {
+    prompt: NarrationCue;
+    success: NarrationCue;
+    tryAgain: NarrationCue;
+  };
   challenge: Challenge;
 };
 
@@ -99,7 +106,12 @@ function shuffled<T>(items: readonly T[], random: () => number): T[] {
 
 function describeRoom(challenge: Challenge): Omit<JourneyRoom, "id"> {
   if (challenge.type === "letter") {
-    const answer = challenge.choices.find((choice) => choice.letter === challenge.answer);
+    const cuePrefix = `letter-${challenge.answer.toLowerCase()}`;
+    const narration = {
+      prompt: getNarrationCue(`${cuePrefix}-prompt`),
+      success: getNarrationCue(`${cuePrefix}-success`),
+      tryAgain: getNarrationCue(`${cuePrefix}-try`),
+    };
     return {
       kind: "letter",
       label: "Letter Garden",
@@ -108,14 +120,20 @@ function describeRoom(challenge: Challenge): Omit<JourneyRoom, "id"> {
       skillLabel: "Letter sounds",
       learningGoal: `Listen for ${challenge.answer} at the start`,
       prompt: `Who starts with ${challenge.answer}?`,
-      spokenPrompt: `Listen for ${challenge.answer} at the start. Which pet starts with ${challenge.answer}?`,
-      successMessage: `${challenge.answer} is for ${answer?.name ?? "this pet"}!`,
-      tryAgainMessage: `Listen for ${challenge.answer}. Which pet starts the same way?`,
+      spokenPrompt: narration.prompt.text,
+      successMessage: narration.success.text,
+      tryAgainMessage: narration.tryAgain.text,
+      narration,
       challenge,
     };
   }
 
   if (challenge.type === "count") {
+    const narration = {
+      prompt: getNarrationCue(`${challenge.id}-prompt`),
+      success: getNarrationCue(`${challenge.id}-success`),
+      tryAgain: getNarrationCue("count-try"),
+    };
     return {
       kind: "count",
       label: "Pet Parade",
@@ -124,13 +142,19 @@ function describeRoom(challenge: Challenge): Omit<JourneyRoom, "id"> {
       skillLabel: "Counting one by one",
       learningGoal: `Count ${challenge.total} ${challenge.animalName}`,
       prompt: `Tap each ${challenge.animalSingular}!`,
-      spokenPrompt: `Let’s count one by one. Tap each ${challenge.animalSingular} to count them.`,
-      successMessage: `You counted ${challenge.total} ${challenge.animalName}!`,
-      tryAgainMessage: "Tap one pet at a time and say each number.",
+      spokenPrompt: narration.prompt.text,
+      successMessage: narration.success.text,
+      tryAgainMessage: narration.tryAgain.text,
+      narration,
       challenge,
     };
   }
 
+  const narration = {
+    prompt: getNarrationCue(`${challenge.id}-prompt`),
+    success: getNarrationCue("move-success"),
+    tryAgain: getNarrationCue("move-try"),
+  };
   return {
     kind: "move",
     label: "Royal Gym",
@@ -139,9 +163,10 @@ function describeRoom(challenge: Challenge): Omit<JourneyRoom, "id"> {
     skillLabel: "Balance and movement",
     learningGoal: `Move for ${challenge.seconds} seconds`,
     prompt: challenge.title,
-    spokenPrompt: `Make a little space. ${challenge.action}`,
-    successMessage: `You moved for ${challenge.seconds} seconds!`,
-    tryAgainMessage: "Make a little space, then copy the royal move.",
+    spokenPrompt: narration.prompt.text,
+    successMessage: narration.success.text,
+    tryAgainMessage: narration.tryAgain.text,
+    narration,
     challenge,
   };
 }

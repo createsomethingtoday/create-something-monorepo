@@ -12,13 +12,23 @@ import {
   type LetterChallenge,
   type MoveChallenge,
 } from "./game-model";
-import { faqItems } from "./seo-content";
-import { FRIENDLY_SPEECH_SETTINGS, pickFriendlyVoice } from "./speech-guide";
+import { AI_VOICE_DISCLOSURE, faqItems } from "./seo-content";
+import {
+  FRIENDLY_SPEECH_SETTINGS,
+  getNarrationCue,
+  pickFriendlyVoice,
+  type NarrationCue,
+} from "./speech-guide";
 
 type Screen = "home" | "journey" | "celebrate";
 type FeedbackKind = "success" | "try" | null;
 
-const cheers = ["Palace magic!", "You found it!", "Wonderful!", "Sparkle power!"];
+const cheers = [
+  { title: "Palace magic!", cueId: "cheer-palace-magic" },
+  { title: "You found it!", cueId: "cheer-you-found-it" },
+  { title: "Wonderful!", cueId: "cheer-wonderful" },
+  { title: "Sparkle power!", cueId: "cheer-sparkle-power" },
+];
 
 export default function Home() {
   const [screen, setScreen] = useState<Screen>("home");
@@ -36,27 +46,72 @@ export default function Home() {
   const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const movementTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const audioContext = useRef<AudioContext | null>(null);
+  const narrationAudio = useRef<HTMLAudioElement | null>(null);
+  const narrationRun = useRef(0);
 
   const room = journey[roomIndex];
   const completedRooms = roomIndex;
   const journeyProgress = journey.length > 1 ? Math.round((roomIndex / (journey.length - 1)) * 100) : 0;
 
-  const speak = useCallback(
-    (message: string, force = false) => {
-      if ((!soundOn && !force) || typeof window === "undefined" || !("speechSynthesis" in window)) return;
+  const stopNarration = useCallback(() => {
+    narrationRun.current += 1;
+    const audio = narrationAudio.current;
+    if (audio) {
+      audio.pause();
+      audio.removeAttribute("src");
+      audio.load();
+    }
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
       window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(message);
-      const friendlyVoice = pickFriendlyVoice(window.speechSynthesis.getVoices());
-      if (friendlyVoice) {
-        utterance.voice = friendlyVoice;
-        utterance.lang = friendlyVoice.lang;
-      } else {
-        utterance.lang = "en-US";
-      }
-      utterance.rate = FRIENDLY_SPEECH_SETTINGS.rate;
-      utterance.pitch = FRIENDLY_SPEECH_SETTINGS.pitch;
-      utterance.volume = FRIENDLY_SPEECH_SETTINGS.volume;
-      window.speechSynthesis.speak(utterance);
+    }
+  }, []);
+
+  const speak = useCallback(
+    (input: NarrationCue | readonly NarrationCue[], force = false) => {
+      if ((!soundOn && !force) || typeof window === "undefined") return;
+      const cues = Array.isArray(input) ? [...input] : [input];
+      if (cues.length === 0) return;
+
+      narrationRun.current += 1;
+      const runId = narrationRun.current;
+      if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+
+      const audio = narrationAudio.current ?? new Audio();
+      narrationAudio.current = audio;
+      audio.pause();
+
+      const speakWithDeviceVoice = (startIndex: number) => {
+        if (runId !== narrationRun.current || !("speechSynthesis" in window)) return;
+        const utterance = new SpeechSynthesisUtterance(cues.slice(startIndex).map((cue) => cue.text).join(" "));
+        const friendlyVoice = pickFriendlyVoice(window.speechSynthesis.getVoices());
+        if (friendlyVoice) {
+          utterance.voice = friendlyVoice;
+          utterance.lang = friendlyVoice.lang;
+        } else {
+          utterance.lang = "en-US";
+        }
+        utterance.rate = FRIENDLY_SPEECH_SETTINGS.rate;
+        utterance.pitch = FRIENDLY_SPEECH_SETTINGS.pitch;
+        utterance.volume = FRIENDLY_SPEECH_SETTINGS.volume;
+        window.speechSynthesis.speak(utterance);
+      };
+
+      const playCue = (index: number) => {
+        if (runId !== narrationRun.current || index >= cues.length) return;
+        let fellBack = false;
+        const fallBackOnce = () => {
+          if (fellBack) return;
+          fellBack = true;
+          speakWithDeviceVoice(index);
+        };
+        audio.onended = () => playCue(index + 1);
+        audio.onerror = fallBackOnce;
+        audio.src = cues[index].src;
+        audio.load();
+        void audio.play().catch(fallBackOnce);
+      };
+
+      playCue(0);
     },
     [soundOn],
   );
@@ -102,9 +157,9 @@ export default function Home() {
   useEffect(() => {
     return () => {
       clearTimers();
-      if (typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel();
+      stopNarration();
     };
-  }, [clearTimers]);
+  }, [clearTimers, stopNarration]);
 
   const resetRoomState = () => {
     setSelectedPets([]);
@@ -124,12 +179,12 @@ export default function Home() {
     setSparkleStreak(0);
     resetRoomState();
     setScreen("journey");
-    window.setTimeout(() => speak(`The palace doors are open! ${nextJourney[0].spokenPrompt}`), 240);
+    speak([getNarrationCue("palace-open"), nextJourney[0].narration.prompt]);
   };
 
   const goHome = () => {
     clearTimers();
-    if (typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel();
+    stopNarration();
     setScreen("home");
     setJourney([]);
     setRoomIndex(0);
@@ -140,14 +195,15 @@ export default function Home() {
     (pet?: string) => {
       clearTimers();
       const cheer = cheers[(roomIndex + sparkleStreak) % cheers.length];
-      const learningRecap = journey[roomIndex]?.successMessage ?? cheer;
-      setFeedbackTitle(cheer);
+      const completedRoom = journey[roomIndex];
+      const learningRecap = completedRoom?.successMessage ?? cheer.title;
+      setFeedbackTitle(cheer.title);
       setFeedback(learningRecap);
       setFeedbackKind("success");
       setSparkleStreak((value) => value + 1);
       if (pet) setJoinedPets((current) => [...current, pet]);
       playTone("sparkle");
-      speak(`${learningRecap} ${cheer}`);
+      speak(completedRoom ? [completedRoom.narration.success, getNarrationCue(cheer.cueId)] : getNarrationCue(cheer.cueId));
 
       advanceTimer.current = setTimeout(() => {
         const nextIndex = roomIndex + 1;
@@ -156,13 +212,13 @@ export default function Home() {
           setFeedbackTitle("");
           setFeedback("");
           setFeedbackKind(null);
-          speak("The grand ballroom is open! You finished the whole palace adventure!");
+          speak(getNarrationCue("grand-ballroom"));
           return;
         }
 
         setRoomIndex(nextIndex);
         resetRoomState();
-        window.setTimeout(() => speak(journey[nextIndex].spokenPrompt), 220);
+        window.setTimeout(() => speak(journey[nextIndex].narration.prompt), 220);
       }, SUCCESS_ADVANCE_DELAY_MS);
     },
     [clearTimers, journey, playTone, roomIndex, speak, sparkleStreak],
@@ -175,7 +231,7 @@ export default function Home() {
     setFeedback(room?.tryAgainMessage ?? "Try another pet!");
     setFeedbackKind("try");
     playTone("soft");
-    speak(room?.tryAgainMessage ?? "Try another pet!");
+    if (room) speak(room.narration.tryAgain);
     advanceTimer.current = setTimeout(() => {
       setLastChoice(null);
       setFeedbackTitle("");
@@ -197,7 +253,7 @@ export default function Home() {
     if (result.selected === selectedPets) return;
     setSelectedPets(result.selected);
     playTone("tap");
-    speak(String(result.spokenNumber));
+    speak(getNarrationCue(`number-${result.spokenNumber}`));
     if (result.complete) {
       advanceTimer.current = setTimeout(() => finishRoom(challenge.animal), 420);
     }
@@ -207,13 +263,13 @@ export default function Home() {
     if (moveSeconds !== null) return;
     setMoveSeconds(challenge.seconds);
     playTone("tap");
-    speak(`${challenge.action} Ready, go!`);
+    speak(getNarrationCue(`${challenge.id}-start`));
 
     let remaining = challenge.seconds;
     movementTimer.current = setInterval(() => {
       remaining -= 1;
       setMoveSeconds(remaining);
-      if (remaining > 0 && remaining <= 3) speak(String(remaining));
+      if (remaining > 0 && remaining <= 3) speak(getNarrationCue(`number-${remaining}`));
       if (remaining <= 0) {
         clearTimers();
         advanceTimer.current = setTimeout(() => finishRoom(challenge.emoji), 320);
@@ -224,10 +280,8 @@ export default function Home() {
   const toggleSound = () => {
     const next = !soundOn;
     setSoundOn(next);
-    if (!next && typeof window !== "undefined" && "speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
-    }
-    if (next) window.setTimeout(() => speak("Sound on!", true), 100);
+    if (!next) stopNarration();
+    if (next) window.setTimeout(() => speak(getNarrationCue("sound-on"), true), 100);
   };
 
   const uniquePartyPets = useMemo(() => [...new Set(joinedPets)], [joinedPets]);
@@ -303,7 +357,7 @@ export default function Home() {
               <span className="floating-star star-c">★</span>
             </div>
           </div>
-          <p className="grownup-note"><span aria-hidden="true">🔊</span> Spoken instructions begin after the first tap. No ads, accounts, or tracking.</p>
+          <p className="grownup-note"><span aria-hidden="true">🔊</span> {AI_VOICE_DISCLOSURE} They begin after the first tap. No ads, accounts, or tracking.</p>
           <details className="grownup-guide" data-testid="grownup-guide">
             <summary>
               <span className="guide-icon" aria-hidden="true">♡</span>
@@ -352,7 +406,7 @@ export default function Home() {
                   <span aria-hidden="true">{room.skillIcon}</span>
                   <span><small>Practicing</small><strong>{room.skillLabel}</strong></span>
                 </div>
-                <button className="hear-button" type="button" onClick={() => speak(room.spokenPrompt, true)} aria-label="Hear the instruction again">
+                <button className="hear-button" type="button" onClick={() => speak(room.narration.prompt, true)} aria-label="Hear the instruction again">
                   <span className="hear-rings" aria-hidden="true">🔊</span><span>Hear it</span>
                 </button>
               </div>
