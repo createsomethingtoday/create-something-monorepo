@@ -195,7 +195,7 @@ Implementation
 
 - [x] Review diff scope and secret safety, commit intentionally, push the CRE-1505 branch, and open draft PR #1148.
 - [x] Run and repair required CI without weakening the primary verifier.
-- [x] Reconcile the branch with `origin/main` at `d43589848`, preserve the new npm-managed `princess-pet-palace` app outside the pnpm workspace, and add its required app-owned Canon overlay intake rather than weakening property governance.
+- [x] Reconcile the branch with `origin/main` through `21cc92fbb`, preserve the npm-managed `princess-pet-palace` app outside the pnpm workspace, and add its required app-owned Canon overlay intake rather than weakening property governance.
 - [ ] Move through the repository review gate and merge when green.
 - [ ] Record Linear evidence including commands, screenshots/artifacts, live-smoke result, PR, merge SHA, deployment boundary, rollback note, and worktree disposition.
 
