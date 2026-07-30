@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { CameraMagic } from "./camera-magic";
 import {
   countPetTap,
   createJourney,
@@ -14,12 +15,6 @@ type Screen = "home" | "journey" | "celebrate";
 type FeedbackKind = "success" | "try" | null;
 
 const cheers = ["Palace magic!", "You found it!", "Wonderful!", "Sparkle power!"];
-
-function singularize(word: string): string {
-  if (word.endsWith("ies")) return `${word.slice(0, -3)}y`;
-  if (word.endsWith("s")) return word.slice(0, -1);
-  return word;
-}
 
 export default function Home() {
   const [screen, setScreen] = useState<Screen>("home");
@@ -39,7 +34,7 @@ export default function Home() {
 
   const room = journey[roomIndex];
   const completedRooms = roomIndex;
-  const journeyProgress = journey.length ? Math.round((completedRooms / journey.length) * 100) : 0;
+  const journeyProgress = journey.length > 1 ? Math.round((roomIndex / (journey.length - 1)) * 100) : 0;
 
   const speak = useCallback(
     (message: string, force = false) => {
@@ -314,7 +309,7 @@ export default function Home() {
 
             {room.kind === "letter" && <LetterRoom room={room} lastChoice={lastChoice} disabled={feedbackKind === "success"} onChoose={handleLetterChoice} />}
             {room.kind === "count" && <CountRoom room={room} selectedPets={selectedPets} disabled={feedbackKind === "success"} onTap={handlePetTap} />}
-            {room.kind === "move" && <MoveRoom room={room} seconds={moveSeconds} disabled={feedbackKind === "success"} onStart={startMovement} />}
+            {room.kind === "move" && <MoveRoom key={room.id} room={room} seconds={moveSeconds} disabled={feedbackKind === "success"} onStart={startMovement} />}
 
             <div className="party-rail" aria-label={`${uniquePartyPets.length} royal pets have joined your party`}>
               <span className="party-princess" aria-hidden="true">👸</span>
@@ -390,7 +385,7 @@ function CountRoom({ room, selectedPets, disabled, onTap }: { room: JourneyRoom;
           const selectedPosition = selectedPets.indexOf(index);
           const counted = selectedPosition >= 0;
           return (
-            <button className={`count-pet pet-position-${index + 1} ${counted ? "counted" : ""}`} type="button" key={index} onClick={() => onTap(challenge, index)} disabled={disabled} aria-label={`${singularize(challenge.animalName)} ${index + 1}${counted ? `, counted as ${selectedPosition + 1}` : ", not counted yet"}`}>
+            <button className={`count-pet pet-position-${index + 1} ${counted ? "counted" : ""}`} type="button" key={index} onClick={() => onTap(challenge, index)} disabled={disabled} aria-label={`${challenge.animalSingular} ${index + 1}${counted ? `, counted as ${selectedPosition + 1}` : ", not counted yet"}`}>
               <span className="pet-emoji" aria-hidden="true">{challenge.animal}</span>
               {counted && <span className="count-crown" aria-hidden="true">♛</span>}
               {counted && <span className="count-number" aria-hidden="true">{selectedPosition + 1}</span>}
@@ -408,18 +403,21 @@ function MoveRoom({ room, seconds, disabled, onStart }: { room: JourneyRoom; sec
   const progress = seconds === null ? 0 : ((challenge.seconds - seconds) / challenge.seconds) * 100;
   return (
     <div className="activity-body move-room">
-      <div className={`move-visual ${seconds !== null && seconds > 0 ? "moving" : ""}`} style={{ "--move-progress": `${progress}%` } as React.CSSProperties}>
-        <span className="move-ring" aria-hidden="true" />
-        <span className="move-emoji" aria-hidden="true">{challenge.emoji}</span>
-        {seconds !== null && <span className="move-count" aria-live="polite">{seconds > 0 ? seconds : "★"}</span>}
+      <CameraMagic />
+      <div className="move-coach">
+        <div className={`move-visual ${seconds !== null && seconds > 0 ? "moving" : ""}`} style={{ "--move-progress": `${progress}%` } as React.CSSProperties}>
+          <span className="move-ring" aria-hidden="true" />
+          <span className="move-emoji" aria-hidden="true">{challenge.emoji}</span>
+          {seconds !== null && <span className="move-count" aria-live="polite">{seconds > 0 ? seconds : "★"}</span>}
+        </div>
+        <h1 id="game-title">{challenge.title}</h1>
+        <p className="move-action">{challenge.action}</p>
+        {seconds === null ? (
+          <button className="move-button" type="button" onClick={() => onStart(challenge)} disabled={disabled}><span aria-hidden="true">✨</span><span>Let&apos;s move!</span></button>
+        ) : (
+          <div className="movement-message" aria-live="polite">{seconds > 0 ? "Keep going!" : "Beautiful!"}</div>
+        )}
       </div>
-      <h1 id="game-title">{challenge.title}</h1>
-      <p className="move-action">{challenge.action}</p>
-      {seconds === null ? (
-        <button className="move-button" type="button" onClick={() => onStart(challenge)} disabled={disabled}><span aria-hidden="true">✨</span><span>Let&apos;s move!</span></button>
-      ) : (
-        <div className="movement-message" aria-live="polite">{seconds > 0 ? "Keep going!" : "Beautiful!"}</div>
-      )}
     </div>
   );
 }
