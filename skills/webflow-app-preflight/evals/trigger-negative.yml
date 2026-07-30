@@ -1,25 +1,33 @@
 evals:
   - id: 1
-    prompt: "Build me a Webflow site with a CMS blog"
+    prompt: 'Build me a Webflow site with a CMS blog'
     expected_skill: null
-    notes: "Site building, not Marketplace App development — out of scope"
+    notes: 'Site building, not Marketplace App development — out of scope'
   - id: 2
-    prompt: "Deploy my Next.js project to Webflow Cloud"
+    prompt: 'Deploy my Next.js project to Webflow Cloud'
     expected_skill: null
-    notes: "Webflow Cloud hosting is a separate product from Marketplace Apps"
+    notes: 'Webflow Cloud hosting is a separate product from Marketplace Apps'
   - id: 3
-    prompt: "Review this PR in the webflow monorepo for security issues"
+    prompt: 'Review this PR in the webflow monorepo for security issues'
     expected_skill: null
-    notes: "Internal monorepo code review is handled by agentflow rules and other skills"
+    notes: 'Internal monorepo code review is handled by agentflow rules and other skills'
   - id: 4
-    prompt: "Write copy for our Webflow marketing landing page"
+    prompt: 'Write copy for our Webflow marketing landing page'
     expected_skill: null
-    notes: "Brand and content work — webflow-brand or webflow-content-design"
+    notes: 'Brand and content work — webflow-brand or webflow-content-design'
   - id: 5
-    prompt: "Add an internal admin tool to our workspace dashboard"
+    prompt: 'Add an internal admin tool to our workspace dashboard'
     expected_skill: null
-    notes: "Internal tooling, not a Marketplace submission"
+    notes: 'Internal tooling, not a Marketplace submission'
   - id: 6
-    prompt: "How do I set up the Webflow MCP server in Claude Code?"
+    prompt: 'How do I set up the Webflow MCP server in Claude Code?'
     expected_skill: null
-    notes: "MCP client setup, not App build or submission review"
+    notes: 'MCP client setup, not App build or submission review'
+  - id: 7
+    prompt: 'Review my Express API for authorization bugs'
+    expected_skill: null
+    notes: 'Generic backend security review with no Webflow App context — the backend section must not make this skill fire on every API question'
+  - id: 8
+    prompt: 'Webflow issued three findings for our App. Turn them into fixes, tests, and a resubmission packet.'
+    expected_skill: null
+    notes: 'Issued findings belong to webflow-app-review-remediation.'

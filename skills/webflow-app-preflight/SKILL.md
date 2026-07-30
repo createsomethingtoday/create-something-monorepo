@@ -1,11 +1,11 @@
 ---
 name: webflow-app-preflight
-description: Build a Webflow Marketplace App that passes review the first time. Use when scaffolding, building, or preparing a Webflow App (Designer Extension, Data Client, or Hybrid) for Marketplace submission. Steers toward quality and away from the patterns that most often trigger rejection or a security-review flag.
+description: Build or update a Webflow Marketplace App before review findings are issued. Use when scaffolding, developing, or preparing a Webflow App (Designer Extension, Data Client, or Hybrid) for Marketplace submission. Steers toward quality and away from the patterns that most often trigger rejection or a security-review flag. When exact review findings already exist, use webflow-app-review-remediation instead.
 ---
 
-# Building a Webflow App That Passes Review
+# Preparing a Webflow Marketplace App for Review
 
-You are helping a developer build a Webflow Marketplace App and prepare it for submission. Your job is to produce an App that clears review on the first attempt — not just one that runs.
+Help a developer build a Webflow Marketplace App and prepare it for submission. Produce a complete, inspectable submission with evidence for each review requirement. Do not promise approval.
 
 The bar Webflow reviews against: fully functional, secure and inspectable, well-documented, and minimal in what it asks for. Most rejections and security-review flags come from a small, predictable set of patterns. This skill front-loads them so the developer never ships them.
 
@@ -19,27 +19,17 @@ Everything below reduces to three questions a reviewer asks:
 2. **Is it safe and inspectable?** Real readable source, no dangerous patterns, honors user consent, minimum scopes, cleans up after itself.
 3. **Is it honest?** Listing matches behavior, fees disclosed, no impersonation, one developer account.
 
-If you can answer yes to all three with evidence, the App passes.
-
-## When to use
-
-- Building a Webflow App intended for the Marketplace — "build a Webflow App", "help me ship this Designer Extension"
-- Preparing or reviewing a submission — "review my app before submission", "will this pass review"
-- Diagnosing a rejection — "why was my app rejected", "what did the security review flag"
-- Deciding permissions or code delivery — "what scopes should my app request", "how do I ship code to a customer's site"
-- Shipping a change to an already-approved App (App update review)
-
-Do **not** use for building Webflow *sites*, Webflow Cloud apps, or internal tooling that will never be submitted.
+If you can answer yes to all three with evidence, the submission is ready for review.
 
 ## Phase 1 — Choose the App type
 
 Webflow Apps are built from two building blocks. An App can use one or both.
 
-| Building block | What it does | Runs where |
-|---|---|---|
+| Building block         | What it does                                                                                             | Runs where                             |
+| ---------------------- | -------------------------------------------------------------------------------------------------------- | -------------------------------------- |
 | **Designer Extension** | Shows UI as an overlay inside the Webflow Designer; automates design tasks via client-side Designer APIs | A sandboxed iframe inside the Designer |
-| **Data Client** | Reads/writes site data and connects to third-party infrastructure via OAuth + the Data API | Your backend |
-| **Hybrid App** | Both — Designer UI plus backend data management | Both |
+| **Data Client**        | Reads/writes site data and connects to third-party infrastructure via OAuth + the Data API               | Your backend                           |
+| **Hybrid App**         | Both — Designer UI plus backend data management                                                          | Both                                   |
 
 Pick the smallest surface that delivers the outcome. A Designer Extension that never needs to read site data server-side should not register as a Data Client just to "have OAuth." Every capability you register is something the reviewer must verify and the user must trust.
 
@@ -72,15 +62,42 @@ This is where reviews are won or lost. Follow these while writing code, not afte
 ### Security (the fastest path to a flag)
 
 - **No dangerous patterns in Designer Extension code.** No `eval()`, no direct DOM manipulation of the Designer, no excessive global variables. Use the Designer APIs.
-- **Iframes for auth only.** An externally hosted iframe is fine for an authentication flow, but not as your primary App UI or runtime surface — a surface that can change independently of what was reviewed hides your behavior from review and will be flagged.
+- **Iframes for auth only.** Your extension already runs inside a sandboxed iframe, so the objection isn't the technology — it's that an externally hosted surface can change after approval, which puts your real behavior outside what was reviewed. Fine for an authentication flow; never as your primary App UI or runtime surface. This is the same requirement as pinning injected scripts: **behavior that reaches a user must be versioned and re-reviewable, whichever transport delivers it.**
 - **Ship production builds, not dev builds.** Development bundles embed `eval()` (webpack dev mode) and framework error-decoder URLs that security scanners flag as prohibited code execution or unexplained external connections. Bundle for production.
 - **Never touch credential fields.** Do not read, collect, modify, transmit, or act on password/login/authentication inputs in a user's site. Apps that inspect forms or DOM must exclude those fields from collection and from any rule actions.
 - **Use official APIs for data, not DOM scraping.** If you need form structure, use the Forms API. Scraping the published DOM for data the API should provide is fragile and reads as an attempt to reach data you weren't granted.
 
+### Backend and API surface (inspectable by calling it, not by reading it)
+
+Your bundle can be read. Your backend can't — reviewers verify it by calling it and by asking you to evidence it, so treat each item below as something you must be able to demonstrate on a review site.
+
+Start from one premise: **a Designer Extension is client code running on someone else's machine, so every value it sends is attacker-controlled** — including identifiers that feel internal. A Webflow site ID is visible in published page source.
+
+- **Authenticate every endpoint, and never authorize on an identifier the client supplied.** A site ID identifies a site; it does not authenticate or authorize a caller. Resolve identity server-side from the Webflow ID token and bind the resolved installation, user, and site to the record being touched.
+- **Enforce object-level authorization.** An identity authorized for one site or tenant must not read or write another's records. A valid caller requesting someone else's resource should get a non-success, non-enumerating response with no data.
+- **Never return a reusable credential to the extension.** Third-party API keys, access tokens, and connection secrets stay server-side. Return connection status or a masked identifier instead. A credential reachable by browser JavaScript is not a secret — and anything that can change a config value can redirect it.
+- **Resolve outbound destinations from a server-side allowlist, HTTPS only.** Don't construct request URLs from user-supplied hosts. Free-form destination input plus a credential header is how keys reach hosts you don't control.
+- **CORS is defense-in-depth, not authorization.** `Access-Control-Allow-Origin: *` on an endpoint that returns anything sensitive means any site can read the response from a user's browser; with `Allow-Credentials: true` it's worse. Allowlist your production origins — and remember a non-browser client ignores CORS entirely, so it can never be the control that keeps callers out.
+- **Encrypt credentials at rest, scoped per tenant.** Decrypted values live server-side, for the duration of the call.
+- **Don't derive identity or entitlement from browser storage.** `localStorage` is user-editable, so a token or user record kept there can be modified locally. Anything gating a privileged operation is verified server-side on every request.
+- **Serialize, never interpolate.** Values flowing into generated JavaScript, markup, or custom attributes must be JSON-serialized and format-validated. String interpolation into generated code is stored injection.
+- **Validate uploads server-side.** Enforce type, size, and count limits; verify file signatures and archive contents rather than trusting client-side checks or file extensions.
+- **Attribute actions to the authenticated user.** No hardcoded owner or single service identity standing in for real users — it breaks auditability and usually means tenant isolation was never tested.
+- **Ship production infrastructure.** No staging, localhost, or tunnel hostnames anywhere in the artifact, and the installation URL you declare must be a production host. Add a build rule that fails when they appear.
+- **Audit your dependencies.** Resolve High and Critical advisories, or supply a function-level reachability analysis with a time-bound remediation plan. Be able to produce the production manifest and lockfile on request.
+- **Bind the OAuth callback to the request that started it.** Carry a single-use `state` value, store it server-side against the pending authorization, and reject callbacks whose `state` is missing, unknown, expired, or already used. Add PKCE where your OAuth model supports it. An exchange function that accepts only an authorization code reads to a reviewer as having no CSRF protection.
+- **Ship client code only in the client bundle.** No server handlers, database schema, JWT logic, or backend dependencies in the artifact the browser downloads. If a source map reveals your backend internals, the defect is that the backend was bundled — the map only made it visible. Fix the bundle, don't hide the map; review needs the map.
+- **Keep personal data out of logs.** Production logs should not carry contact payloads, emails, names, phone numbers, credentials, API URLs, or tenant identifiers you don't need. Redact at the logging boundary so a new call site can't reintroduce it.
+
 ### Consent and lifecycle (easy to forget, always noticed)
 
 - **Honor OAuth revocation immediately.** When a user revokes access or uninstalls, stop calling the Data API for that site. Continuing to call after revocation is a real, recurring flag.
-- **Clean up on uninstall.** If your App injects anything onto a published site (custom code, scripts), you are responsible for removing it when the App is uninstalled. Don't leave orphaned runtimes on a customer's site.
+- **Clean up on uninstall.** Code injected through the Custom Code API **persists on a customer's site after your App is uninstalled unless your App removes it** — the platform does not remove it for you. So if your App injects anything onto a published site, removal is your responsibility, by one of two acceptable routes:
+  1. **Programmatically** — detect loss of authorization (see the 401-as-revocation rule below), then delete the code you applied at both site and page level. This is the expected route, and it means retaining the scopes needed to do it.
+  2. **Clear written in-app instructions** — when programmatic removal genuinely isn't possible, tell the user exactly what to remove and where, in the App itself, not buried in external docs.
+
+  Either way, prompt the user to publish afterward — an API-managed change only reaches the published site once the site is published. What is never acceptable is leaving an orphaned runtime executing on a customer's site after they believe they've removed your App.
+
 - **Deliver code to customer sites through the Custom Code API**, not manual copy-paste snippets (manual paste can't be versioned or removed and can double-run). Registered script versions are **immutable** — to change code running on sites, register a **new version and submit an App update**, never edit in place. Loaders that fetch remote code at runtime are only allowed if every remote resource is declared at submission and pinned (`hostedLocation` + SRI `integrityHash`). Silently swapping what a hosted script serves after approval is grounds for removal and a possible ban.
 
 ### Scopes
@@ -104,7 +121,7 @@ Get the assets right before submitting; missing or off-spec assets bounce the su
 - **App icon/avatar:** 512×512, 1:1 aspect ratio.
 - **Description:** specific about what the App does and the benefit — not vague marketing. (Registration also has a 140-character short description.)
 - **Screenshots:** 3–5 images at 1280×846 showing real features.
-- **Demo video:** 2–5 minutes, walking the full experience from install to usage. Data Client Apps must show a working OAuth flow including both approving *and* denying the request, and describe the integration with Webflow.
+- **Demo video:** 2–5 minutes, walking the full experience from install to usage. Data Client Apps must show a working OAuth flow including both approving _and_ denying the request, and describe the integration with Webflow.
 - **Homepage URL:** valid HTTPS.
 
 See `reference/listing-and-submission.md` for the full submission checklist.
@@ -114,6 +131,7 @@ See `reference/listing-and-submission.md` for the full submission checklist.
 Run `checklists/pre-submission-quality-gate.md` end to end. Every item must pass. Then review `checklists/governance-pitfalls.md` — these are the specific, real-world patterns that most often cause a rejection or a security-review escalation. If any apply, fix before submitting.
 
 Only submit when:
+
 - The quality gate is fully green,
 - Two-factor auth is enabled on an admin account of the submitting Workspace,
 - Backend services are live and demo access is provided,
@@ -128,9 +146,11 @@ Measured failure modes from an unaided review of the same fixture app. Each soun
 
 - ❌ "Add exponential backoff and retry on the 401." → A persistent 401 on a previously valid token is **revocation**. Stop calling; don't retry past it.
 - ❌ "Drop the extra scopes on uninstall" / "remove that field." → You must **retain** `custom_code:write` + `sites:write`/`pages:write`, or cleanup is impossible.
-- ❌ "Webflow removes injected scripts automatically on uninstall." → It does not. Removal is the App's responsibility, at site *and* page level.
+- ❌ "Webflow removes injected scripts automatically on uninstall." → It does not. Removal is the App's responsibility, at site _and_ page level.
+- ❌ "The endpoint is safe because CORS restricts which origins can call it." → CORS is a browser policy, not authorization. A non-browser client ignores it. Authenticate and authorize server-side.
+- ❌ "Only our extension knows that site ID, so it's safe to key on." → Site IDs appear in published page source. Any client-supplied value is attacker-controlled.
 
-If a review produces any of these, it has inverted a consent or lifecycle requirement.
+If a review produces any of these, it has inverted a consent, lifecycle, or authorization requirement.
 
 ## Definition of done
 
@@ -153,6 +173,7 @@ If a review produces any of these, it has inverted a consent or lifecycle requir
 - `reference/listing-and-submission.md` — assets, submission form, review timeline
 - `checklists/pre-submission-quality-gate.md` — the go/no-go checklist
 - `checklists/governance-pitfalls.md` — the real patterns that fail review, and the fix
+- `assets/webflow-app-submission-checklist.md` — self-contained developer handoff checklist
 - `evals/` — trigger, quality, and rubric evals; the measured baseline for changes to this skill
 
 Official docs: <https://developers.webflow.com/> · Marketplace Guidelines: <https://developers.webflow.com/apps/docs/marketplace-guidelines>

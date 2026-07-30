@@ -1,0 +1,23 @@
+criteria:
+  - id: issued_finding_fidelity
+    description: 'Preserves issued finding IDs, priorities, and acceptance criteria without inventing policy or severity.'
+    weight: 18
+  - id: sensitive_handling
+    description: 'Separates containment and excludes secrets, customer data, exploit payloads, other partners, and internal deliberation.'
+    weight: 18
+  - id: evidence_states
+    description: 'Keeps source, artifact, installed revision, runtime observation, submission, and reviewer acceptance distinct.'
+    weight: 18
+  - id: remediation_quality
+    description: 'Produces bounded fixes with positive, negative, artifact, runtime, and rollback evidence.'
+    weight: 16
+  - id: authorization_safety
+    description: 'Requires authorized test identities and never recommends enumeration, unauthorized writes, or unnecessary body retrieval.'
+    weight: 14
+  - id: provenance
+    description: 'Labels published requirements, issued findings, security controls, and open decisions accurately.'
+    weight: 8
+  - id: verdict
+    description: 'Ends with READY TO RESUBMIT or NOT READY TO RESUBMIT without claiming Webflow approval.'
+    weight: 8
+passing_score: 85

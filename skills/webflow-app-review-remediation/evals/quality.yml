@@ -1,0 +1,47 @@
+evals:
+  - id: 1
+    input: 'Finding WF-01 says GET /config accepts siteId without authentication and may return a reusable vendor key. It is live. Build a remediation plan.'
+    expected_output: 'Opens a containment lane, avoids retrieving the response body, requires server-side identity plus object-level authorization, preserves the issued finding ID, and does not promise approval.'
+    assertions:
+      - type: contains
+        value: 'containment'
+      - type: contains
+        value: 'object-level authorization'
+      - type: contains
+        value: 'WF-01'
+      - type: not_contains
+        value: 'approved'
+  - id: 2
+    input: 'We removed test-token from source and built bundle.js. Are we ready to resubmit?'
+    expected_output: 'Requires inspection of the final bundle.zip and every submitted file including source maps, then separates artifact proof, installed revision, runtime observation, submission, and reviewer acceptance.'
+    assertions:
+      - type: contains
+        value: 'bundle.zip'
+      - type: contains
+        value: 'source maps'
+      - type: contains
+        value: 'reviewer'
+      - type: contains
+        value: 'NOT READY TO RESUBMIT'
+  - id: 3
+    input: 'The reviewer says our consent runtime needs an exception to the immutable-script rule, but three unrelated OAuth and disconnect bugs are also listed.'
+    expected_output: 'Routes the exception to Judgment with an owner, keeps it open, and continues remediation of independent Automation findings without claiming code can decide policy.'
+    assertions:
+      - type: contains
+        value: 'Judgment'
+      - type: contains
+        value: 'open decision'
+      - type: contains
+        value: 'independent'
+  - id: 4
+    input: 'Write a partner-facing response using our issued finding, a public Marketplace guideline, and an internal reviewer note about another app.'
+    expected_output: 'Uses the issued finding and cited public requirement, excludes the other app and internal reviewer note, and labels general security guidance as a security control rather than published Webflow policy.'
+    assertions:
+      - type: contains
+        value: 'issued finding'
+      - type: contains
+        value: 'published requirement'
+      - type: contains
+        value: 'security control'
+      - type: not_contains
+        value: 'other app'

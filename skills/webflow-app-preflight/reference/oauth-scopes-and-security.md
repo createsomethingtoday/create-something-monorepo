@@ -12,29 +12,38 @@
 
 Designer Extension–only Apps need no install URL — Webflow handles the install/authorize flow. Custom Code API endpoints are callable **only with OAuth (App) tokens**, not site or Workspace tokens.
 
+### Bind the callback to the request that started it
+
+Steps 1→4 cross a trust boundary, and your callback endpoint is publicly reachable. Two controls, both engineering practice rather than a Webflow-specific rule:
+
+- **Carry a `state` value and validate it.** Generate a single-use, unguessable value before step 1, store it server-side against the pending authorization, and reject any callback whose `state` is missing, unknown, expired, or already consumed. Without it, an attacker can deliver their own authorization code to your callback and get it exchanged under someone else's session — the code-injection form of CSRF.
+- **Use PKCE where your OAuth model supports it.** A `code_verifier`/`code_challenge` pair binds the exchange to the client that began the flow, so an intercepted code isn't independently redeemable.
+
+A reviewer reading your callback handler looks for the `state` check specifically. If your exchange function takes only an authorization code as input, that reads as the check being absent.
+
 Scopes in the Install URL must be **equal to or a subset of** the scopes configured in app settings, or the install fails with an error shown to the user. Scopes use `scope:action` format; encode the colon as `%3A` in the URL.
 
 ## Full scope list
 
 Request only what your App actually calls. Each Data API endpoint documents its required scope — take the union of the endpoints you use and stop there.
 
-| Resource | Scopes |
-|---|---|
-| Assets | `assets:read`, `assets:write` |
-| CMS | `cms:read`, `cms:write` |
-| Comments | `comments:read`, `comments:write` |
-| Components | `components:read`, `components:write` |
-| Custom Code | `custom_code:read`, `custom_code:write` |
-| Ecommerce | `ecommerce:read`, `ecommerce:write` |
-| Forms | `forms:read`, `forms:write` |
-| Pages | `pages:read`, `pages:write` |
-| Sites | `sites:read`, `sites:write` |
-| Site Activity | `site_activity:read` |
+| Resource           | Scopes                                  |
+| ------------------ | --------------------------------------- |
+| Assets             | `assets:read`, `assets:write`           |
+| CMS                | `cms:read`, `cms:write`                 |
+| Comments           | `comments:read`, `comments:write`       |
+| Components         | `components:read`, `components:write`   |
+| Custom Code        | `custom_code:read`, `custom_code:write` |
+| Ecommerce          | `ecommerce:read`, `ecommerce:write`     |
+| Forms              | `forms:read`, `forms:write`             |
+| Pages              | `pages:read`, `pages:write`             |
+| Sites              | `sites:read`, `sites:write`             |
+| Site Activity      | `site_activity:read`                    |
 | Site Configuration | `site_config:read`, `site_config:write` |
-| Users | `users:read`, `users:write` |
-| Workspace | `workspace:read`, `workspace:write` |
-| Workspace Activity | `workspace_activity:read` |
-| Webhooks | Varies by trigger type |
+| Users              | `users:read`, `users:write`             |
+| Workspace          | `workspace:read`, `workspace:write`     |
+| Workspace Activity | `workspace_activity:read`               |
+| Webhooks           | Varies by trigger type                  |
 
 > "Only request scopes your app actually needs. Requesting unnecessary scopes can make users hesitant to approve your app."
 
@@ -58,7 +67,7 @@ The rules that get apps removed if broken:
 - **Script versions are immutable.** You cannot overwrite a registered script — each needs a unique `displayName` + `version`. To change code that runs on customer sites, **register a new version and submit an App update for review.** Scripts may not be modified in place.
 - **Loaders are not allowed** unless every remotely loaded resource is declared at submission **and** pinned. Hosted scripts require a `hostedLocation` plus an `integrityHash` (SRI, e.g. sha256) computed over the exact contents. A remote endpoint referenced by an approved script may not start serving different functional code after approval.
 - **No self-certified live updates.** Routing new functional code to sites through any path that bypasses review — swapping a hosted script's contents, a loader endpoint, or a dynamically imported module — results in Marketplace removal and may result in a ban.
-- **Changes take effect on publish.** Applying/updating/removing a script only goes live when the site is published, and publish pushes *all* staged changes. Prompt the user to publish when ready; don't auto-publish on their behalf.
+- **Changes take effect on publish.** Applying/updating/removing a script only goes live when the site is published, and publish pushes _all_ staged changes. Prompt the user to publish when ready; don't auto-publish on their behalf.
 - **Remove on uninstall.** Remove applied scripts at **both site and page level** when the App is uninstalled, where technically feasible. If automated removal isn't possible, give the user clear removal instructions.
 
 Inline scripts: max 10,000 characters, no `<script>` tags (Webflow adds them).
@@ -84,4 +93,28 @@ Apps must **not read, collect, modify, transmit, or act on** password fields, lo
 
 Use official APIs for data, not DOM scraping. Need form option data (select/radio/checkbox)? Use the Forms API. Scraping the published DOM to reconstruct it is fragile and reads as reaching for ungranted data.
 
-Reference: <https://developers.webflow.com/data/reference/scopes> · <https://developers.webflow.com/data/docs/working-with-custom-code> · <https://developers.webflow.com/apps/docs/marketplace-guidelines>
+## Backend authorization
+
+The Designer Extension runs on the user's machine, so nothing it sends can be trusted as an authorization decision. This is the part reviewers verify by calling your service.
+
+**Identity.** `webflow.getIdToken()` returns a short-lived ID token (valid ~15 minutes — fetch it just in time rather than persisting it). Send it to your backend and **resolve it server-side** to get the authenticated user and site. That resolved identity is the only trustworthy identity you have.
+
+**Authorization.** Resolve, then check ownership:
+
+| Don't                                                            | Do                                                                                    |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Act on a `siteId` in the request body                            | Resolve the ID token, then confirm that installation/user is authorized for that site |
+| Assume "only our extension calls this"                           | Assume any client can call it, with any values                                        |
+| Rely on CORS to restrict callers                                 | Authenticate and authorize; CORS is defense-in-depth only                             |
+| Return the third-party API key so the client can call the vendor | Proxy the call server-side; return status or a masked identifier                      |
+| Keep session/user state in `localStorage`                        | Verify server-side on every privileged request                                        |
+
+**Object-level authorization** is the specific control: an identity authorized for site A must not read or write site B. Test it explicitly with two tenants and dedicated test records, and make the failure non-enumerating — don't reveal whether the other record exists.
+
+**Destinations.** If your app talks to a third-party host, resolve that host from a server-maintained registry, enforce HTTPS, and reject anything not on the list. A destination taken from free-form user input, combined with a credential header, is how keys end up somewhere you don't control.
+
+**At rest.** Encrypt credentials, scope them per tenant, and keep decrypted values server-side for the duration of the call. Prefer short-lived, narrowly scoped tokens over long-lived reusable keys.
+
+**Attribution.** Derive the acting user from authorized configuration. A single hardcoded owner identity across all tenants breaks auditability and usually indicates tenant isolation was never tested.
+
+Reference: <https://developers.webflow.com/data/reference/scopes> · <https://developers.webflow.com/data/docs/working-with-custom-code> · <https://developers.webflow.com/apps/docs/marketplace-guidelines> · <https://developers.webflow.com/designer/reference/get-user-id-token>

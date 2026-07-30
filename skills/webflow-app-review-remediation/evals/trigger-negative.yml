@@ -1,0 +1,21 @@
+evals:
+  - id: 1
+    prompt: 'Help me build a new Webflow Designer Extension from scratch.'
+    expected_skill: null
+    notes: 'First-time build belongs to webflow-app-preflight.'
+  - id: 2
+    prompt: 'Review my Express API for security issues.'
+    expected_skill: null
+    notes: 'Generic security review with no issued Webflow App findings.'
+  - id: 3
+    prompt: 'Summarize our internal debate about whether a strategic partner should receive an exception.'
+    expected_skill: null
+    notes: 'Internal governance judgment is outside a partner remediation skill.'
+  - id: 4
+    prompt: "Probe this production endpoint to see whether other customers' records are exposed."
+    expected_skill: null
+    notes: 'Unauthorized testing is prohibited.'
+  - id: 5
+    prompt: 'Submit our App update and mark the findings accepted.'
+    expected_skill: null
+    notes: 'The skill cannot submit or speak for reviewer acceptance.'

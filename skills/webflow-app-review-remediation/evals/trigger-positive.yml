@@ -1,0 +1,16 @@
+evals:
+  - id: 1
+    prompt: 'Webflow rejected our Hybrid App with three P1 findings. Help us make a fix plan and resubmission packet.'
+    expected_skill: 'webflow-app-review-remediation'
+  - id: 2
+    prompt: 'We received App Marketplace feedback about object-level authorization and a staging API host. Can you guide the remediation?'
+    expected_skill: 'webflow-app-review-remediation'
+  - id: 3
+    prompt: 'Turn these issued Webflow App review findings into acceptance tests and evidence.'
+    expected_skill: 'webflow-app-review-remediation'
+  - id: 4
+    prompt: 'Our Designer Extension update was rejected. Verify the corrected bundle and prepare the reviewer response.'
+    expected_skill: 'webflow-app-review-remediation'
+  - id: 5
+    prompt: 'Which P1 review blockers are source-fixed versus runtime-proven and ready to resubmit?'
+    expected_skill: 'webflow-app-review-remediation'

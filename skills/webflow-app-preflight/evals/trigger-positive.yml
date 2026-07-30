@@ -1,25 +1,31 @@
 evals:
   - id: 1
     prompt: "I'm building a Webflow App for the Marketplace — help me get it right before I submit"
-    expected_skill: "webflow-app-preflight"
+    expected_skill: 'webflow-app-preflight'
   - id: 2
-    prompt: "Review my app bundle before submission, will it pass Marketplace review?"
-    expected_skill: "webflow-app-preflight"
+    prompt: 'Review my app bundle before submission, will it pass Marketplace review?'
+    expected_skill: 'webflow-app-preflight'
   - id: 3
-    prompt: "My app got rejected by Webflow App review — why, and how do I fix it?"
-    expected_skill: "webflow-app-preflight"
+    prompt: 'Help me design a Hybrid App architecture that will be inspectable before I submit it.'
+    expected_skill: 'webflow-app-preflight'
   - id: 4
-    prompt: "What OAuth scopes should my Webflow Data Client request?"
-    expected_skill: "webflow-app-preflight"
+    prompt: 'What OAuth scopes should my Webflow Data Client request?'
+    expected_skill: 'webflow-app-preflight'
   - id: 5
     prompt: "How do I ship a script to a customer's Webflow site without breaking review rules?"
-    expected_skill: "webflow-app-preflight"
+    expected_skill: 'webflow-app-preflight'
   - id: 6
     prompt: "I need to update code in my already-approved Webflow App — what's the process?"
-    expected_skill: "webflow-app-preflight"
+    expected_skill: 'webflow-app-preflight'
   - id: 7
-    prompt: "Scaffold a Webflow Designer Extension and tell me what reviewers will check"
-    expected_skill: "webflow-app-preflight"
+    prompt: 'Scaffold a Webflow Designer Extension and tell me what reviewers will check'
+    expected_skill: 'webflow-app-preflight'
   - id: 8
     prompt: "Can I launch my Webflow App as private first while it's still in beta?"
-    expected_skill: "webflow-app-preflight"
+    expected_skill: 'webflow-app-preflight'
+  - id: 9
+    prompt: "How should my Webflow App's backend authenticate requests coming from the Designer Extension?"
+    expected_skill: 'webflow-app-preflight'
+  - id: 10
+    prompt: 'Is it safe to authorize a backend call in my Webflow App using the site ID the extension sends?'
+    expected_skill: 'webflow-app-preflight'

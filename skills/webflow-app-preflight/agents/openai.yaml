@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Webflow App Preflight'
+  short_description: 'Prepare Webflow Apps for Marketplace review'
+  default_prompt: 'Use $webflow-app-preflight to review this Webflow App before Marketplace submission.'
