@@ -17,6 +17,7 @@ export type CountChallenge = {
   type: "count";
   id: string;
   animal: string;
+  animalSingular: string;
   animalName: string;
   total: number;
 };
@@ -65,11 +66,11 @@ const letterChallenges: LetterChallenge[] = animals.map((animal, index) => ({
 }));
 
 const countChallenges: CountChallenge[] = [
-  { type: "count", id: "count-bunnies", animal: "🐰", animalName: "bunnies", total: 3 },
-  { type: "count", id: "count-kittens", animal: "🐱", animalName: "kittens", total: 4 },
-  { type: "count", id: "count-unicorns", animal: "🦄", animalName: "unicorns", total: 5 },
-  { type: "count", id: "count-puppies", animal: "🐶", animalName: "puppies", total: 6 },
-  { type: "count", id: "count-butterflies", animal: "🦋", animalName: "butterflies", total: 4 },
+  { type: "count", id: "count-bunnies", animal: "🐰", animalSingular: "bunny", animalName: "bunnies", total: 3 },
+  { type: "count", id: "count-kittens", animal: "🐱", animalSingular: "kitten", animalName: "kittens", total: 4 },
+  { type: "count", id: "count-unicorns", animal: "🦄", animalSingular: "unicorn", animalName: "unicorns", total: 5 },
+  { type: "count", id: "count-puppies", animal: "🐶", animalSingular: "puppy", animalName: "puppies", total: 6 },
+  { type: "count", id: "count-butterflies", animal: "🦋", animalSingular: "butterfly", animalName: "butterflies", total: 4 },
 ];
 
 const moveChallenges: MoveChallenge[] = [
@@ -105,8 +106,8 @@ function describeRoom(challenge: Challenge): Omit<JourneyRoom, "id"> {
       kind: "count",
       label: "Pet Parade",
       icon: "🐾",
-      prompt: `Tap every ${challenge.animalName}!`,
-      spokenPrompt: `Tap each ${challenge.animalName.slice(0, -1)} to count them.`,
+      prompt: `Tap each ${challenge.animalSingular}!`,
+      spokenPrompt: `Tap each ${challenge.animalSingular} to count them.`,
       challenge,
     };
   }
