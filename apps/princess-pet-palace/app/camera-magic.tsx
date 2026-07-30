@@ -126,9 +126,9 @@ export function CameraMagic() {
 
       <div className="camera-details">
         <div>
-          <p className="camera-title">See your royal moves</p>
+          <p className="camera-title">Magic mirror <span>(optional)</span></p>
           <p className="camera-copy">
-            {status === "active" ? (motionLevel > 14 ? "Your movement makes sparkles!" : "Wave to wake the sparkles.") : "Optional magic mirror for movement rooms."}
+            {status === "active" ? (motionLevel > 14 ? "Your movement makes sparkles!" : "Wave to wake the sparkles.") : "A grown-up can turn on movement sparkles."}
           </p>
         </div>
         {status === "active" ? (
@@ -136,7 +136,7 @@ export function CameraMagic() {
         ) : (
           <button className="camera-button" type="button" onClick={startCamera} disabled={status === "requesting"}>
             <span aria-hidden="true">📷</span>
-            <span>{status === "requesting" ? "Waiting for permission…" : "Grown-up: turn on"}</span>
+            <span>{status === "requesting" ? "Waiting for permission…" : "Grown-up: camera on"}</span>
           </button>
         )}
       </div>
