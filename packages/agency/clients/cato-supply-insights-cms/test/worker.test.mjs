@@ -314,6 +314,7 @@ test('normalizes team members for endpoint-driven leadership and board component
         slug: 'ryan-zackon',
         type: '6319b950e246fe2e75f029a26f942eb0',
         'job-position': 'President & Chief Executive Officer',
+        'board-role': 'Board Member',
         bio: '<p>CEO profile.</p>',
         'profile-image': {
           url: 'https://cdn.example.com/ryan-zackon-rz-placeholder.svg'
@@ -344,6 +345,7 @@ test('normalizes team members for endpoint-driven leadership and board component
       ['Ryan Zackon', 'both', '']
     ]
   );
+  assert.equal(people[1].boardRole, 'Board Member');
 });
 
 test('includes one canonical both-group profile in filtered team responses', () => {
