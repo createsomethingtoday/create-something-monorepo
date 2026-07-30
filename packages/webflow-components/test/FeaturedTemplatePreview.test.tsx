@@ -294,7 +294,7 @@ test('keeps the cross-origin preview outside the modal keyboard order', () => {
   assert.match(html, /<iframe[^>]*referrerPolicy="no-referrer"/);
 });
 
-test('offers an explicit keyboard-preview opt-in without weakening the initial iframe boundary', () => {
+test('keeps keyboard users in the modal and offers the full preview in a new tab', () => {
   const html = renderToStaticMarkup(
     <FeaturedTemplatePreview
       item={featuredItem}
@@ -307,10 +307,15 @@ test('offers an explicit keyboard-preview opt-in without weakening the initial i
     />,
   );
 
-  assert.match(html, /aria-pressed="false"[^>]*>Enable keyboard preview</);
   assert.match(html, /<iframe[^>]*tabindex="-1"/);
   assert.match(html, /sandbox="allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox"/);
   assert.doesNotMatch(html, /allow-same-origin/);
+  assert.doesNotMatch(html, /Enable keyboard preview/);
+  assert.doesNotMatch(html, /Return to modal controls/);
+  assert.match(
+    html,
+    /<a[^>]*target="_blank"[^>]*aria-label="Open LeadCraft live preview \(opens in a new tab\)"/,
+  );
 });
 
 test('turns a next-page failure into an announced retry action', () => {

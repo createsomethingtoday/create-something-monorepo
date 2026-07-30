@@ -256,7 +256,11 @@ def test_featured_preview_supports_fast_decisions_and_ordered_browsing(page: Pag
         str(reviewer_heading.bounding_box()),
     )
     expect(page.get_by_text("1 of 2 featured templates", exact=True)).to_be_visible()
-    expect(page.get_by_role("link", name="Open live preview")).to_be_visible()
+    expect(
+        page.get_by_role(
+            "link", name="Open Featured One live preview (opens in a new tab)"
+        )
+    ).to_be_visible()
 
     sidebar = page.locator(".tmfeatured-side")
     sidebar_box = sidebar.bounding_box()
@@ -280,29 +284,22 @@ def test_featured_preview_supports_fast_decisions_and_ordered_browsing(page: Pag
     frame = page.locator("iframe.tmfeatured-frame")
     check("preview starts outside the Tab order", frame.get_attribute("tabindex") == "-1")
     sandbox = frame.get_attribute("sandbox") or ""
-    check("keyboard opt-in does not add same-origin authority", "allow-same-origin" not in sandbox, sandbox)
-
-    access = page.get_by_role("button", name="Enable keyboard preview")
-    access.click()
+    check("preview keeps its opaque sandbox boundary", "allow-same-origin" not in sandbox, sandbox)
     check(
-        "keyboard opt-in focuses the live preview",
-        frame.evaluate("element => document.activeElement === element"),
+        "iframe keyboard handoff is absent",
+        page.get_by_role("button", name="Enable keyboard preview").count() == 0,
     )
-    expect(page.get_by_text("Press Shift+Tab to return; Escape and ← → resume in modal controls.", exact=True)).to_be_visible()
-    expect(page.get_by_role("button", name="Return to modal controls")).to_be_visible()
-    page.keyboard.press("Shift+Tab")
     check(
-        "Shift+Tab returns to the explicit preview control",
-        page.get_by_role("button", name="Keyboard preview enabled").evaluate(
-            "element => document.activeElement === element"
-        ),
+        "iframe return control is absent",
+        page.get_by_role("button", name="Return to modal controls").count() == 0,
     )
-    page.get_by_role("button", name="Return to modal controls").click()
+    live_preview_link = page.get_by_role(
+        "link", name="Open Featured One live preview (opens in a new tab)"
+    )
+    expect(live_preview_link).to_be_visible()
     check(
-        "explicit return action restores modal keyboard controls",
-        page.get_by_role("button", name="Enable keyboard preview").evaluate(
-            "element => document.activeElement === element"
-        ),
+        "keyboard-safe full preview opens separately",
+        live_preview_link.get_attribute("target") == "_blank",
     )
 
     page.screenshot(path=str(ARTIFACTS / "featured-template-preview-desktop.png"), full_page=False)
