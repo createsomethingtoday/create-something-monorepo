@@ -44,10 +44,15 @@ test("server-renders the Princess Pet Palace game", async () => {
   assert.equal(application?.isAccessibleForFree, true);
   assert.equal(application?.isFamilyFriendly, true);
   assert.equal(faqPage?.mainEntity.length, 4);
-  assert.match(html, /A new adventure every time/);
+  assert.match(html, /Play, learn, and move/);
   assert.match(html, /Open the palace doors/);
   assert.match(html, /six magical rooms/);
   assert.match(html, /Start adventure/);
+  assert.match(html, /data-testid="adventure-guide"/);
+  assert.match(html, /Six short rooms in about four playful minutes/);
+  assert.match(html, /Listen for first sounds/);
+  assert.match(html, /Count one by one/);
+  assert.match(html, /Balance and big movement/);
   assert.match(html, /Letter Garden/);
   assert.match(html, /Pet Parade/);
   assert.match(html, /Royal Gym/);
