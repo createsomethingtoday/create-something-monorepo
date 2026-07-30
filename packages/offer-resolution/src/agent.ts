@@ -1,6 +1,7 @@
 import { Agent, run, tool, webSearchTool } from '@openai/agents';
 import { z } from 'zod';
 
+import { normalizeOfferRequest, planOfferDiscovery } from './discovery.js';
 import { findOffers } from './resolve.js';
 import type { OfferRequest, OfferResolutionResult } from './types.js';
 
@@ -9,6 +10,8 @@ const evidenceStateSchema = z.enum(['confirmed', 'conflict', 'unknown']);
 const requestSchema = z
   .object({
     merchant: z.string().min(1),
+    searchCategory: z.enum(['health_and_beauty']).optional(),
+    candidateMerchants: z.array(z.string().min(1)).min(1).optional(),
     need: z.string().min(1),
     budget: z.number().positive(),
     currency: z.string().min(3).max(3),
@@ -38,6 +41,7 @@ const observationSchema = z
         ]),
         url: z.string().url(),
         publisher: z.string().min(1),
+        publishedAt: z.string().datetime().optional(),
         observedAt: z.string().datetime(),
         access: z.enum(['public', 'authenticated', 'app_only', 'blocked']),
         direct: z.boolean()
@@ -95,10 +99,11 @@ export const OFFER_FIND_AGENT_INSTRUCTIONS = `
 You are the read-only Offer Find Agent. Resolve a shopping request against current public evidence.
 
 Workflow:
-1. Parse merchant, need, budget, US ZIP code, deadline, current observation time, and acceptable channels. Ask for clarification if a year or essential constraint is ambiguous.
-2. Your first tool call must be web_search. Search current sources in this order: official retailer promotion and shipping pages; retailer checkout evidence that can be inspected without transacting; public LTK posts; creator-owned pages and social posts; affiliate or partner feeds exposed to the user; then search indexes and deal sites as discovery leads.
-3. Build only factual observations supported by the searched URLs. A search snippet is not a direct source. Public LTK content does not imply private API access, partnership rights, or permission for bulk scraping.
-4. You must call resolve_offer_evidence with the normalized request and every candidate observation, including expired, conflicting, inaccessible, or uncertain candidates. If no candidate exists, call it with an empty observations array.
+1. Parse the merchant or category, candidate merchants, need, budget, US ZIP code, deadline, current observation time, and acceptable channels. Ask for clarification only if a year or essential constraint is ambiguous.
+2. Search public LTK first. Inspect relevant public posts, creator profiles, captions, product links, and LTK-exclusive indicators. Detect app-gated Copy Promo Code offers without bypassing the app gate.
+3. Search supplemental sources only after the LTK stage. Corroborate LTK candidates through creator-owned or official retailer evidence, then fill merchant gaps through official retailer, authorized feed, search-index, and deal sources.
+4. Build only factual observations supported by searched URLs. Record the page observation time separately from an LTK or creator post's publication time; never call an old post fresh merely because it was found today. A search snippet is not a direct source. LTK search priority does not grant reliability authority. Public LTK content does not imply private API access, partnership rights, or permission for bulk scraping.
+5. You must call resolve_offer_evidence with the normalized request and every candidate observation from both stages, including expired, conflicting, inaccessible, or uncertain candidates. If no candidate exists, call it with an empty observations array.
 
 The run is incomplete until resolve_offer_evidence is called. Never answer the user with prose, a summary, or raw findings before that terminal tool call.
 
@@ -139,6 +144,15 @@ export function createOfferFindAgent(options: CreateOfferFindAgentOptions = {}):
   });
 }
 
+export function createLtkWebSearchTool() {
+  return webSearchTool({
+    name: 'web_search',
+    searchContextSize: 'high',
+    externalWebAccess: true,
+    filters: { allowedDomains: ['shopltk.com'] }
+  });
+}
+
 export interface RunOfferFindAgentOptions extends CreateOfferFindAgentOptions {
   maxTurns?: number;
 }
@@ -147,7 +161,7 @@ function assertResolutionResult(value: unknown): OfferResolutionResult {
   if (
     value === null ||
     typeof value !== 'object' ||
-    (value as { schemaVersion?: unknown }).schemaVersion !== 'offer_resolution.v0.1'
+    (value as { schemaVersion?: unknown }).schemaVersion !== 'offer_resolution.v0.2'
   ) {
     throw new Error('The agent did not complete deterministic offer resolution.');
   }
@@ -167,33 +181,65 @@ export async function runOfferFindAgent(
   request: OfferRequest,
   options: RunOfferFindAgentOptions = {}
 ): Promise<OfferResolutionResult> {
-  const normalizedRequest = requestSchema.parse(request);
+  const normalizedRequest = requestSchema.parse(normalizeOfferRequest(request));
+  const discoveryPlan = planOfferDiscovery(normalizedRequest);
   const agent = createOfferFindAgent(options);
-  const prompt = [
-    'Find currently usable public offers for this request.',
-    'Pass the request object through unchanged except for evidence-backed normalization.',
-    JSON.stringify(normalizedRequest)
-  ].join('\n\n');
-  const discovery = await run(agent, prompt, { maxTurns: options.maxTurns ?? 10 });
-  const directResolution = parseResolutionOutput(discovery.finalOutput);
-  if (directResolution) return directResolution;
+  const [webSearch] = agent.tools;
+  const ltkWebSearch = createLtkWebSearchTool();
+  const stageMaxTurns = Math.max(2, options.maxTurns ?? 6);
 
-  // Hosted web search is always processed by the model. If the discovery turn emits prose
-  // instead of the mandatory resolver call, continue the same agent history with an exact
-  // terminal tool choice. This preserves the searched evidence while preventing prose from
-  // becoming an unscored product response.
+  const ltkAgent = agent.clone({
+    instructions: `${OFFER_FIND_AGENT_INSTRUCTIONS}\n\nCurrent stage: LTK primary discovery. ${discoveryPlan.stages[0].instructions}`,
+    modelSettings: { toolChoice: 'web_search', parallelToolCalls: false },
+    tools: [ltkWebSearch],
+    toolUseBehavior: 'run_llm_again',
+    resetToolChoice: true
+  });
+  const ltkDiscovery = await run(
+    ltkAgent,
+    [
+      'Complete stage 1 only. Use web_search for the LTK queries below and preserve factual findings with direct URLs for the next stage.',
+      JSON.stringify({ request: normalizedRequest, stage: discoveryPlan.stages[0] })
+    ].join('\n\n'),
+    { maxTurns: stageMaxTurns }
+  );
+
+  const supplementalAgent = agent.clone({
+    instructions: `${OFFER_FIND_AGENT_INSTRUCTIONS}\n\nCurrent stage: supplemental corroboration and gap fill. ${discoveryPlan.stages[1].instructions}`,
+    modelSettings: { toolChoice: 'web_search', parallelToolCalls: false },
+    tools: [webSearch],
+    toolUseBehavior: 'run_llm_again',
+    resetToolChoice: true
+  });
+  const supplementalDiscovery = await run(
+    supplementalAgent,
+    [
+      ...ltkDiscovery.history,
+      {
+        role: 'user' as const,
+        content: [
+          'Complete stage 2 now. Use web_search to corroborate the LTK findings and fill remaining merchant gaps. Preserve the distinction between LTK and supplemental evidence.',
+          JSON.stringify({ request: normalizedRequest, stage: discoveryPlan.stages[1] })
+        ].join('\n\n')
+      }
+    ],
+    { maxTurns: stageMaxTurns }
+  );
+
   const finalizer = agent.clone({
+    instructions: OFFER_FIND_AGENT_INSTRUCTIONS,
     modelSettings: { toolChoice: 'resolve_offer_evidence', parallelToolCalls: false },
+    tools: [resolveOfferEvidenceTool],
     resetToolChoice: false
   });
   const finalization = await run(
     finalizer,
     [
-      ...discovery.history,
+      ...supplementalDiscovery.history,
       {
         role: 'user' as const,
         content:
-          'Finalize now. Call resolve_offer_evidence with the request and all factual candidates from the completed public search. Do not answer with prose.'
+          'Finalize now. Call resolve_offer_evidence with the normalized request and all factual candidates from both completed stages. Keep public LTK observations as source kind ltk_public. Do not answer with prose.'
       }
     ],
     { maxTurns: 2 }
@@ -204,3 +250,9 @@ export async function runOfferFindAgent(
   }
   return resolution;
 }
+
+export const OFFER_FIND_DISCOVERY_STAGES = [
+  'ltk',
+  'supplemental',
+  'resolve_offer_evidence'
+] as const;

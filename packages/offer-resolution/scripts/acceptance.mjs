@@ -4,7 +4,12 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { createOfferFindAgent } from '../dist/agent.js';
-import { canonicalStringify, findOffers, SOURCE_POLICIES } from '../dist/index.js';
+import {
+  canonicalStringify,
+  findOffers,
+  planOfferDiscovery,
+  SOURCE_POLICIES
+} from '../dist/index.js';
 
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const fixturePath = resolve(packageRoot, 'fixtures/abercrombie-august-9.json');
@@ -21,6 +26,11 @@ assert.equal(JSON.stringify(firstInput), JSON.stringify(fixture));
 assert.equal(JSON.stringify(secondInput), JSON.stringify(fixture));
 assert.equal(await readFile(fixturePath, 'utf8'), fixtureText);
 assert.deepEqual(first.summary, { recommend: 1, verify: 1, lead: 2, rejected: 1 });
+assert.equal(first.schemaVersion, 'offer_resolution.v0.2');
+assert.deepEqual(first.lanes, {
+  ltk: ['fixture-ltk-15'],
+  supplemental: ['fixture-official-20', 'fixture-app-only', 'fixture-deal-lead', 'fixture-expired']
+});
 
 const expected = new Map([
   ['fixture-official-20', ['recommend', 100]],
@@ -55,13 +65,21 @@ const agentTools = agent.tools.map((candidate) =>
 );
 assert.deepEqual(agentTools, ['web_search', 'resolve_offer_evidence']);
 assert.deepEqual(agent.toolUseBehavior, { stopAtToolNames: ['resolve_offer_evidence'] });
+const discoveryPlan = planOfferDiscovery(fixture.request);
+assert.deepEqual(
+  discoveryPlan.stages.map((stage) => stage.lane),
+  ['ltk', 'supplemental']
+);
 
 const summary = {
-  schemaVersion: 'offer_resolution_acceptance.v0.1',
+  schemaVersion: 'offer_resolution_acceptance.v0.2',
   ok: true,
   scenario: fixture.fixtureMetadata.scenario,
   fixtureNotice: fixture.fixtureMetadata.purpose,
   deterministic: true,
+  discoveryPolicyVersion: first.discoveryPolicyVersion,
+  discoveryStages: discoveryPlan.stages.map((stage) => stage.lane),
+  lanes: first.lanes,
   inputUnchanged: true,
   sourceFamilyCount: Object.keys(SOURCE_POLICIES).length,
   agentTools,

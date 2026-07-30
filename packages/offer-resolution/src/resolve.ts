@@ -1,4 +1,5 @@
 import { hashReceipt } from './canonical.js';
+import { DISCOVERY_POLICY_VERSION, normalizeOfferRequest } from './discovery.js';
 import {
   POLICY_VERSION,
   collectCaps,
@@ -52,8 +53,13 @@ function normalizeRequest(input: OfferRequest): OfferRequest {
   if (!/^\d{5}$/.test(input.postalCode)) {
     throw new Error('postalCode must be a 5-digit US ZIP code');
   }
+  const expanded = normalizeOfferRequest(input);
   return {
     merchant: requireText('merchant', input.merchant),
+    searchCategory: input.searchCategory,
+    candidateMerchants: expanded.candidateMerchants.map((merchant) =>
+      requireText('candidateMerchant', merchant)
+    ),
     need: requireText('need', input.need),
     budget: input.budget,
     currency: requireText('currency', input.currency).toUpperCase(),
@@ -73,6 +79,11 @@ function normalizeObservation(input: OfferObservation): OfferObservation {
       ...input.source,
       url: requireUrl('observation.source.url', input.source.url),
       publisher: requireText('observation.source.publisher', input.source.publisher),
+      publishedAt: input.source.publishedAt
+        ? new Date(
+            requireDate('observation.source.publishedAt', input.source.publishedAt)
+          ).toISOString()
+        : undefined,
       observedAt: new Date(
         requireDate('observation.source.observedAt', input.source.observedAt)
       ).toISOString()
@@ -106,6 +117,19 @@ function normalizeObservation(input: OfferObservation): OfferObservation {
   return normalized;
 }
 
+function observationFingerprint(observation: OfferObservation): string {
+  return JSON.stringify([
+    observation.merchant.toLowerCase(),
+    observation.source.url,
+    observation.offer.code ?? '',
+    observation.offer.discount.kind,
+    observation.offer.discount.value ?? null,
+    observation.offer.startsAt ?? null,
+    observation.offer.endsAt ?? null,
+    observation.offer.minimumSubtotal ?? null
+  ]);
+}
+
 function rejectionReasons(request: OfferRequest, observation: OfferObservation): string[] {
   const reasons: string[] = [];
   const asOf = new Date(request.asOf).getTime();
@@ -130,6 +154,15 @@ function rejectionReasons(request: OfferRequest, observation: OfferObservation):
   if (observation.fulfillment.deadline === 'misses') {
     reasons.push('The offer cannot be fulfilled by the requested deadline.');
   }
+  if (
+    request.searchCategory &&
+    request.merchant.toLowerCase() !== observation.merchant.toLowerCase() &&
+    !request.candidateMerchants?.some(
+      (merchant) => merchant.toLowerCase() === observation.merchant.toLowerCase()
+    )
+  ) {
+    reasons.push('The merchant is outside the bounded category fan-out.');
+  }
   return [...new Set(reasons)].sort();
 }
 
@@ -150,7 +183,10 @@ function decide(request: OfferRequest, observation: OfferObservation): OfferDeci
     applicability: scoreApplicability(observation),
     fulfillment: scoreFulfillment(request, observation),
     sourceAuthority: sourceAuthorityFor(request, observation),
-    freshness: scoreFreshness(request.asOf, observation.source.observedAt)
+    freshness: scoreFreshness(
+      request.asOf,
+      observation.source.publishedAt ?? observation.source.observedAt
+    )
   };
   const uncappedScore = Math.round(
     components.validity * 0.3 +
@@ -185,6 +221,7 @@ function decide(request: OfferRequest, observation: OfferObservation): OfferDeci
     title: observation.title,
     sourceUrl: observation.source.url,
     sourceKind: observation.source.kind,
+    discoveryLane: observation.source.kind === 'ltk_public' ? 'ltk' : 'supplemental',
     offerCode: observation.offer.code,
     projectedSavingsAtBudget: projectedSavings(request, observation),
     status,
@@ -198,12 +235,21 @@ export function findOffers(
   observationInputs: OfferObservation[]
 ): OfferResolutionResult {
   const request = normalizeRequest(requestInput);
-  const observations = observationInputs.map(normalizeObservation);
+  const normalizedObservations = observationInputs
+    .map(normalizeObservation)
+    .sort((left, right) => left.id.localeCompare(right.id));
   const ids = new Set<string>();
-  for (const observation of observations) {
+  for (const observation of normalizedObservations) {
     if (ids.has(observation.id)) throw new Error(`duplicate observation id: ${observation.id}`);
     ids.add(observation.id);
   }
+  const fingerprints = new Set<string>();
+  const observations = normalizedObservations.filter((observation) => {
+    const fingerprint = observationFingerprint(observation);
+    if (fingerprints.has(fingerprint)) return false;
+    fingerprints.add(fingerprint);
+    return true;
+  });
   const decisions = observations
     .map((observation) => decide(request, observation))
     .sort((left, right) => {
@@ -220,12 +266,16 @@ export function findOffers(
     rejected: 0
   };
   for (const decision of decisions) summary[decision.status] += 1;
+  const lanes: OfferResolutionResult['lanes'] = { ltk: [], supplemental: [] };
+  for (const decision of decisions) lanes[decision.discoveryLane].push(decision.observationId);
 
   return {
-    schemaVersion: 'offer_resolution.v0.1',
+    schemaVersion: 'offer_resolution.v0.2',
     policyVersion: POLICY_VERSION,
+    discoveryPolicyVersion: DISCOVERY_POLICY_VERSION,
     request,
     decisions,
-    summary
+    summary,
+    lanes
   };
 }

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { SOURCE_POLICIES, sourcePolicyFor } from '../src/index.js';
+import { isVerifiedOfficialDomain, SOURCE_POLICIES, sourcePolicyFor } from '../src/index.js';
 
 test('registers every initial source family under one resolver', () => {
   assert.deepEqual(Object.keys(SOURCE_POLICIES).sort(), [
@@ -21,4 +21,10 @@ test('keeps discovery sources below recommendation confidence', () => {
   assert.equal(sourcePolicyFor('deal_aggregator').maximumScore, 45);
   assert.equal(sourcePolicyFor('official_retailer').maximumScore, 100);
   assert.equal(sourcePolicyFor('ltk_public').authority, 70);
+});
+
+test('does not trust retailer QA, staging, or preview subdomains as production evidence', () => {
+  assert.equal(isVerifiedOfficialDomain('CVS Pharmacy', 'https://www.cvs.com/coupons'), true);
+  assert.equal(isVerifiedOfficialDomain('CVS Pharmacy', 'https://www-qa2.cvs.com/coupons'), false);
+  assert.equal(isVerifiedOfficialDomain('Target', 'https://preview.target.com/deals'), false);
 });

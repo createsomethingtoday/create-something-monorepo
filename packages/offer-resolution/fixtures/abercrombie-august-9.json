@@ -61,6 +61,7 @@
         "kind": "ltk_public",
         "url": "https://www.shopltk.com/explore/example/posts/fixture",
         "publisher": "Fixture Creator",
+        "publishedAt": "2026-07-29T16:30:00.000Z",
         "observedAt": "2026-07-29T17:30:00.000Z",
         "access": "public",
         "direct": true
@@ -154,6 +155,7 @@
         "kind": "creator_owned",
         "url": "https://creator.example/expired-code",
         "publisher": "Fixture Creator",
+        "publishedAt": "2026-07-19T16:00:00.000Z",
         "observedAt": "2026-07-19T17:00:00.000Z",
         "access": "public",
         "direct": true

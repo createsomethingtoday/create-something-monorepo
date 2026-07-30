@@ -7,10 +7,16 @@ import type {
   OfferSourceKind
 } from './types.js';
 
-export const POLICY_VERSION = 'offer_reliability.v0.1' as const;
+export const POLICY_VERSION = 'offer_reliability.v0.2' as const;
 
 export const MERCHANT_OFFICIAL_DOMAINS: Readonly<Record<string, readonly string[]>> = {
-  'abercrombie-fitch': ['abercrombie.com']
+  'abercrombie-fitch': ['abercrombie.com'],
+  'ulta-beauty': ['ulta.com'],
+  sephora: ['sephora.com'],
+  'cvs-pharmacy': ['cvs.com'],
+  walgreens: ['walgreens.com'],
+  target: ['target.com'],
+  osea: ['oseamalibu.com']
 };
 
 export const SOURCE_POLICIES: Readonly<Record<OfferSourceKind, SourcePolicy>> = {
@@ -41,15 +47,20 @@ function hostnameMatches(hostname: string, domain: string): boolean {
   return hostname === domain || hostname.endsWith(`.${domain}`);
 }
 
+function isNonProductionHostname(hostname: string): boolean {
+  return /(^|[.-])(qa\d*|stage|staging|dev|test|preview|sandbox)([.-]|$)/i.test(hostname);
+}
+
 export function isVerifiedOfficialDomain(merchant: string, sourceUrl: string): boolean {
   const domains = MERCHANT_OFFICIAL_DOMAINS[merchantKey(merchant)] ?? [];
   const hostname = new URL(sourceUrl).hostname.toLowerCase();
+  if (isNonProductionHostname(hostname)) return false;
   return domains.some((domain) => hostnameMatches(hostname, domain));
 }
 
 function hasOfficialCorroboration(request: OfferRequest, observation: OfferObservation): boolean {
   return observation.evidence.corroboratingUrls.some((url) =>
-    isVerifiedOfficialDomain(request.merchant, url)
+    isVerifiedOfficialDomain(observation.merchant || request.merchant, url)
   );
 }
 
@@ -57,7 +68,7 @@ export function sourceAuthorityFor(request: OfferRequest, observation: OfferObse
   if (
     (observation.source.kind === 'official_retailer' ||
       observation.source.kind === 'retailer_checkout') &&
-    !isVerifiedOfficialDomain(request.merchant, observation.source.url)
+    !isVerifiedOfficialDomain(observation.merchant || request.merchant, observation.source.url)
   ) {
     return 50;
   }
@@ -139,7 +150,7 @@ export function collectCaps(
   if (
     (observation.source.kind === 'official_retailer' ||
       observation.source.kind === 'retailer_checkout') &&
-    !isVerifiedOfficialDomain(request.merchant, observation.source.url)
+    !isVerifiedOfficialDomain(observation.merchant || request.merchant, observation.source.url)
   ) {
     caps.push({
       code: 'OFFICIAL_DOMAIN_UNVERIFIED',
@@ -164,8 +175,33 @@ export function collectCaps(
   if (observation.evidence.terms === 'none') {
     caps.push({ code: 'TERMS_MISSING', maximum: 50, reason: 'Offer terms were not observed.' });
   }
+  const discount = observation.offer.discount;
+  const hasNumericDiscount =
+    (discount.kind === 'percent' || discount.kind === 'amount') &&
+    discount.value !== undefined &&
+    discount.value > 0;
+  const hasShippingBenefit =
+    discount.kind === 'shipping' &&
+    (observation.offer.minimumSubtotal !== undefined || Boolean(observation.offer.code));
+  if (!observation.offer.code && !hasNumericDiscount && !hasShippingBenefit) {
+    caps.push({
+      code: 'OFFER_VALUE_UNKNOWN',
+      maximum: 45,
+      reason: 'No concrete discount, shipping benefit, or offer code was observed.'
+    });
+  }
   if (observation.offer.status === 'unknown') {
     caps.push({ code: 'STATUS_UNKNOWN', maximum: 55, reason: 'Current offer status is unknown.' });
+  }
+  if (
+    (observation.source.kind === 'ltk_public' || observation.source.kind === 'creator_owned') &&
+    !observation.source.publishedAt
+  ) {
+    caps.push({
+      code: 'PUBLICATION_DATE_UNKNOWN',
+      maximum: 55,
+      reason: 'The creator post publication time is unknown, so freshness cannot be verified.'
+    });
   }
   if (observation.offer.code && observation.evidence.code === 'unknown') {
     caps.push({

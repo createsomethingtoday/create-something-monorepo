@@ -1,6 +1,6 @@
 {
   "name": "@create-something/offer-resolution",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Resolve public offer evidence into deterministic, provenance-backed recommendations.",
   "type": "module",

@@ -81,6 +81,7 @@ test('caps an uncorroborated public LTK code at verify', () => {
       kind: 'ltk_public',
       url: 'https://www.shopltk.com/explore/example/posts/example',
       publisher: 'Example Creator',
+      publishedAt: '2026-07-29T16:30:00.000Z',
       observedAt: '2026-07-29T17:30:00.000Z',
       access: 'public',
       direct: true
@@ -104,6 +105,183 @@ test('caps an uncorroborated public LTK code at verify', () => {
   assert.ok(
     decision.reliability.reasons.includes('Verify the code at the retailer before relying on it.')
   );
+  assert.equal(decision.discoveryLane, 'ltk');
+});
+
+test('scores LTK freshness from publication time rather than observation time', () => {
+  const oldLtkPost: OfferObservation = {
+    ...officialOffer,
+    id: 'old-ltk-post',
+    source: {
+      kind: 'ltk_public',
+      url: 'https://www.shopltk.com/explore/example/posts/old',
+      publisher: 'Example Creator',
+      publishedAt: '2026-05-01T12:00:00.000Z',
+      observedAt: '2026-07-29T17:30:00.000Z',
+      access: 'public',
+      direct: true
+    },
+    evidence: { terms: 'partial', code: 'reported', corroboratingUrls: [] }
+  };
+
+  const [decision] = findOffers(request, [oldLtkPost]).decisions;
+  assert.equal(decision.reliability.components.freshness, 15);
+});
+
+test('caps LTK evidence when the post publication time is unknown', () => {
+  const undatedLtkPost: OfferObservation = {
+    ...officialOffer,
+    id: 'undated-ltk-post',
+    source: {
+      kind: 'ltk_public',
+      url: 'https://www.shopltk.com/explore/example/posts/undated',
+      publisher: 'Example Creator',
+      observedAt: '2026-07-29T17:30:00.000Z',
+      access: 'public',
+      direct: true
+    },
+    evidence: { terms: 'partial', code: 'reported', corroboratingUrls: [] }
+  };
+
+  const [decision] = findOffers(request, [undatedLtkPost]).decisions;
+  assert.ok(decision.reliability.caps.some((cap) => cap.code === 'PUBLICATION_DATE_UNKNOWN'));
+});
+
+test('separates LTK finds from supplemental results without changing reliability order', () => {
+  const ltkObservation: OfferObservation = {
+    ...officialOffer,
+    id: 'ltk-primary-lane',
+    source: {
+      kind: 'ltk_public',
+      url: 'https://www.shopltk.com/explore/example/posts/primary',
+      publisher: 'Example Creator',
+      publishedAt: '2026-07-29T16:30:00.000Z',
+      observedAt: '2026-07-29T17:30:00.000Z',
+      access: 'public',
+      direct: true
+    },
+    evidence: { terms: 'partial', code: 'reported', corroboratingUrls: [] }
+  };
+
+  const result = findOffers(request, [officialOffer, ltkObservation]);
+
+  assert.deepEqual(result.lanes, {
+    ltk: ['ltk-primary-lane'],
+    supplemental: ['official-summer-20']
+  });
+  assert.deepEqual(
+    result.decisions.map((decision) => [
+      decision.observationId,
+      decision.status,
+      decision.discoveryLane
+    ]),
+    [
+      ['official-summer-20', 'recommend', 'supplemental'],
+      ['ltk-primary-lane', 'verify', 'ltk']
+    ]
+  );
+});
+
+test('trusts registered health and beauty merchant domains during category resolution', () => {
+  const categoryRequest: OfferRequest = {
+    ...request,
+    merchant: 'Health & Beauty',
+    searchCategory: 'health_and_beauty'
+  };
+  const ultaOffer: OfferObservation = {
+    ...officialOffer,
+    id: 'ulta-official',
+    merchant: 'Ulta Beauty',
+    source: {
+      ...officialOffer.source,
+      url: 'https://www.ulta.com/promotion/coupon',
+      publisher: 'Ulta Beauty'
+    },
+    fulfillment: {
+      deadline: 'confirmed',
+      evidenceUrl: 'https://www.ulta.com/guestservices/ways-to-shop/pickup'
+    },
+    evidence: {
+      ...officialOffer.evidence,
+      corroboratingUrls: ['https://www.ulta.com/promotion/coupon']
+    }
+  };
+
+  const [decision] = findOffers(categoryRequest, [ultaOffer]).decisions;
+  assert.equal(decision.status, 'recommend');
+  assert.equal(decision.reliability.components.sourceAuthority, 100);
+  assert.ok(!decision.reliability.caps.some((cap) => cap.code === 'OFFICIAL_DOMAIN_UNVERIFIED'));
+});
+
+test('keeps category-level LTK pages as leads when no concrete offer value exists', () => {
+  const categoryRequest: OfferRequest = {
+    ...request,
+    merchant: 'Health & Beauty',
+    searchCategory: 'health_and_beauty'
+  };
+  const categoryPage: OfferObservation = {
+    ...officialOffer,
+    id: 'ltk-category-page',
+    merchant: 'Health & Beauty',
+    source: {
+      kind: 'ltk_public',
+      url: 'https://www.shopltk.com/explore/example',
+      publisher: 'Example Creator',
+      observedAt: '2026-07-29T17:30:00.000Z',
+      access: 'public',
+      direct: true
+    },
+    offer: {
+      discount: { kind: 'unknown' },
+      status: 'unknown'
+    },
+    fulfillment: { deadline: 'unknown' },
+    evidence: { terms: 'none', code: 'unknown', corroboratingUrls: [] }
+  };
+
+  const [decision] = findOffers(categoryRequest, [categoryPage]).decisions;
+  assert.equal(decision.status, 'lead');
+  assert.equal(decision.reliability.score, 45);
+  assert.ok(decision.reliability.caps.some((cap) => cap.code === 'OFFER_VALUE_UNKNOWN'));
+  assert.ok(
+    !decision.reliability.reasons.includes('The merchant is outside the bounded category fan-out.')
+  );
+});
+
+test('does not treat a generic shipping-information page as a shipping offer', () => {
+  const shippingPage: OfferObservation = {
+    ...officialOffer,
+    id: 'shipping-information-only',
+    offer: {
+      discount: { kind: 'shipping' },
+      status: 'active'
+    },
+    evidence: { terms: 'explicit', code: 'not_applicable', corroboratingUrls: [] }
+  };
+
+  const [decision] = findOffers(request, [shippingPage]).decisions;
+  assert.equal(decision.status, 'lead');
+  assert.equal(decision.reliability.score, 45);
+  assert.ok(decision.reliability.caps.some((cap) => cap.code === 'OFFER_VALUE_UNKNOWN'));
+});
+
+test('rejects merchants outside the bounded category fan-out', () => {
+  const categoryRequest: OfferRequest = {
+    ...request,
+    merchant: 'Health & Beauty',
+    searchCategory: 'health_and_beauty'
+  };
+  const outsideMerchant: OfferObservation = {
+    ...officialOffer,
+    id: 'outside-category',
+    merchant: 'Unbounded Merchant'
+  };
+
+  const [decision] = findOffers(categoryRequest, [outsideMerchant]).decisions;
+  assert.equal(decision.status, 'rejected');
+  assert.ok(
+    decision.reliability.reasons.includes('The merchant is outside the bounded category fan-out.')
+  );
 });
 
 test('requires official corroboration for creator evidence to become recommendable', () => {
@@ -114,6 +292,7 @@ test('requires official corroboration for creator evidence to become recommendab
       kind: 'creator_owned',
       url: 'https://creator.example/current-code',
       publisher: 'Example Creator',
+      publishedAt: '2026-07-29T16:30:00.000Z',
       observedAt: '2026-07-29T17:30:00.000Z',
       access: 'public',
       direct: true
@@ -234,6 +413,22 @@ test('is byte-for-byte deterministic and does not mutate inputs', () => {
   assert.equal(JSON.stringify(first), JSON.stringify(second));
   assert.deepEqual(request, originalRequest);
   assert.deepEqual(observations, originalObservations);
+});
+
+test('deduplicates repeated merchant, URL, and code observations deterministically', () => {
+  const duplicate = {
+    ...officialOffer,
+    id: 'duplicate-official-summer-20',
+    title: 'Duplicate title for the same source and code'
+  };
+  const inputs = [duplicate, officialOffer];
+  const originalInputs = structuredClone(inputs);
+
+  const result = findOffers(request, inputs);
+
+  assert.equal(result.decisions.length, 1);
+  assert.equal(result.decisions[0].observationId, 'duplicate-official-summer-20');
+  assert.deepEqual(inputs, originalInputs);
 });
 
 test('validates the request before evaluating evidence', () => {

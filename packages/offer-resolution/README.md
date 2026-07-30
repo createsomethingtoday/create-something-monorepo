@@ -10,7 +10,7 @@ import { findOffers } from '@create-something/offer-resolution';
 const result = findOffers(request, observations);
 ```
 
-The resolver owns all scores, caps, rankings, statuses, and receipt hashes. Agent or UI callers supply facts only. Search and deal sources are leads, public LTK and creator sources are corroboration, and official source claims are checked against a trusted merchant-domain registry.
+The resolver owns all scores, caps, rankings, statuses, and receipt hashes. Agent or UI callers supply facts only. Discovery runs in two stages: public LTK first, then supplemental corroboration and merchant-gap filling. LTK priority controls search order, not confidence. Search and deal sources remain leads, public LTK and creator sources remain corroboration, and official source claims are checked against a trusted merchant-domain registry.
 
 ## Commands
 
@@ -25,14 +25,14 @@ Run current public discovery through the one-agent Agents SDK path:
 
 ```bash
 node dist/cli.js live \
-  --merchant "Abercrombie & Fitch" \
-  --need "clothing order" \
-  --budget 200 \
+  --category health_and_beauty \
+  --need "health and beauty products" \
+  --budget 100 \
   --zip 76060 \
   --deadline 2026-08-09
 ```
 
-The live command requires an approved `OPENAI_API_KEY`, uses hosted public web search, and stops when `resolve_offer_evidence` returns its JSON receipt. It performs no purchases, cart mutation, messaging, subscriptions, continuous monitoring, access-control bypass, or private LTK access.
+The live command accepts either `--merchant` or the supported `--category health_and_beauty`. Category search fans out deterministically to Ulta Beauty, Sephora, CVS Pharmacy, Walgreens, Target, and OSEA. It requires an approved `OPENAI_API_KEY`, uses hosted public web search, and stops when `resolve_offer_evidence` returns its JSON receipt. It performs no purchases, cart mutation, messaging, subscriptions, continuous monitoring, access-control bypass, or private LTK access.
 
 ## Verification
 
@@ -50,6 +50,6 @@ The verifier type-checks, runs unit and boundary tests, builds the package, exec
 | Entry point | `src/index.ts`, `src/agent.ts`, `src/cli.ts` |
 | Boot command | `pnpm build` |
 | Smoke command | `pnpm verify` |
-| Validation surfaces | component scores, policy caps, source registry, decision status, receipt hash, deterministic acceptance summary, agent tool boundary |
+| Validation surfaces | LTK-first stage plan, bounded category fan-out, lane grouping, component scores, policy caps, source registry, decision status, receipt hash, deterministic acceptance summary, agent tool boundary |
 | UI validation path | none; the package emits machine-readable decisions |
 | Escalation rule | stop on private access, unverifiable official domains, missing eligibility or fulfillment evidence, purchase or monitoring requests, and redistribution or partnership assumptions |
