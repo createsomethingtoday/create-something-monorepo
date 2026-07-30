@@ -221,9 +221,7 @@ describe('Performance composition typography', () => {
 		];
 
 		const tokens = readFileSync(join(process.cwd(), 'src/lib/styles/tokens.css'), 'utf8');
-		expect(tokens).toContain(
-			'--font-performance-display: "Satoshi", "Helvetica Neue", Helvetica, Arial, system-ui'
-		);
+		expect(tokens).toContain('--font-performance-display: var(--font-performance-sans)');
 		expect(tokens).toContain(
 			'--font-performance-mono: "IBM Plex Mono", "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas, monospace'
 		);
@@ -246,13 +244,15 @@ describe('Performance composition typography', () => {
 		}
 	});
 
-	it('loads the approved Performance font sources without importing a client font asset', () => {
+	it('loads the approved local mono source without a remote display-font request', () => {
 		const source = readFileSync(join(process.cwd(), 'src/lib/styles/performance.css'), 'utf8');
 
-		expect(source).toContain('api.fontshare.com/v2/css');
+		expect(source).not.toContain('fontshare');
 		expect(source).toContain('@ibm/plex-mono/css/ibm-plex-mono-all.css');
 		expect(source).toContain('font-family: var(--font-performance-display');
-		expect(source).toContain('--font-performance-mono: var(--font-performance-mono)');
+		expect(source).not.toMatch(
+			/--font-performance-(sans|display|mono):\s*var\(--font-performance-\1\)/
+		);
 	});
 
 	it('keeps the shared PerformancePageSection foundation on the same display contract', () => {

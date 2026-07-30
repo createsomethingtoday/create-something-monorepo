@@ -11,7 +11,8 @@
 	export let focusedEdgeIds: string[] = [];
 	export let dimUnfocused = false;
 	export let fitView = true;
-	const fitViewOptions = { padding: 0.12, minZoom: 0.2, maxZoom: 1 };
+	const minimumTouchableZoom = 0.38;
+	const fitViewOptions = { padding: 0.12, minZoom: minimumTouchableZoom, maxZoom: 1 };
 </script>
 
 <AtlasFlow
@@ -26,4 +27,5 @@
 	{dimUnfocused}
 	{fitView}
 	{fitViewOptions}
+	minZoom={minimumTouchableZoom}
 />

@@ -4,9 +4,19 @@ export interface PerformanceMediaVideo {
   poster?: string;
 }
 
+export type PerformanceWaterCondition =
+  | 'flow'
+  | 'pressure'
+  | 'trace'
+  | 'provenance'
+  | 'exception'
+  | 'inspection'
+  | 'resolved';
+
 export interface PerformanceMediaStudy {
   src: string;
   mobileSrc: string;
   alt: string;
+  condition: PerformanceWaterCondition;
   video?: PerformanceMediaVideo;
 }

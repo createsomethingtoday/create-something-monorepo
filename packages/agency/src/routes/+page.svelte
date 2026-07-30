@@ -185,12 +185,6 @@
       detail:
         'Your team decides what can run, what needs approval, and what must stop before the workflow starts.',
       tone: 'review',
-      evidence: [
-        'Safe work moves without an operator watching every handoff',
-        'Exceptions reach a named owner with enough context',
-        'Every action leaves a record and recovery path'
-      ],
-      receipts: [flowStudyProof.id, flowStudyProof.state],
       actions: [{ label: agencyCoreMessaging.selfMapLabel, href: agencyCoreMessaging.selfMapHref }]
     },
     {
@@ -221,12 +215,7 @@
         'The field report names what passed and what remains blocked',
         'Your team keeps the data, rules, tests, history, and recovery path'
       ],
-      receipts: ['workflow map', fieldReportProof[0].id, 'recovery path'],
-      actions: [
-        { label: 'See the service path', href: '/services' },
-        { label: 'Inspect the field report', href: fieldReportProof[0].href },
-        { label: 'See what you keep', href: '/stack' }
-      ]
+      receipts: ['workflow map', fieldReportProof[0].id, 'recovery path']
     }
   ];
 </script>

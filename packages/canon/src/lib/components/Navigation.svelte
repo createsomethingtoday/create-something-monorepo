@@ -31,6 +31,8 @@
     accountHref?: string;
     /** Visual treatment. Defaults preserve the existing floating dark shell. */
     visualStyle?: NavigationVisualStyle;
+    /** Reports mobile-menu state so sibling fixed UI can yield while navigation owns the viewport. */
+    onMobileMenuChange?: (open: boolean) => void;
   }
 
   let {
@@ -47,10 +49,12 @@
     loginHref = '/login',
     showLogin = false,
     accountHref = '/account',
-    visualStyle = 'classic'
+    visualStyle = 'classic',
+    onMobileMenuChange
   }: Props = $props();
 
   let mobileMenuOpen = $state(false);
+  let mobileMenuButton = $state<HTMLButtonElement>();
   const usesPerformanceStyle = $derived(visualStyle === 'performance' || visualStyle === 'clear');
 
   function isActive(link: NavLink): boolean {
@@ -60,14 +64,28 @@
     return currentPath.startsWith(link.href);
   }
 
-  function toggleMobileMenu() {
-    mobileMenuOpen = !mobileMenuOpen;
+  function setMobileMenuOpen(open: boolean) {
+    mobileMenuOpen = open;
+    onMobileMenuChange?.(mobileMenuOpen);
   }
 
-  function closeMobileMenu() {
-    mobileMenuOpen = false;
+  function toggleMobileMenu() {
+    setMobileMenuOpen(!mobileMenuOpen);
+  }
+
+  function closeMobileMenu(restoreFocus = false) {
+    setMobileMenuOpen(false);
+    if (restoreFocus) queueMicrotask(() => mobileMenuButton?.focus());
+  }
+
+  function handleWindowKeydown(event: KeyboardEvent) {
+    if (event.key !== 'Escape' || !mobileMenuOpen) return;
+    event.preventDefault();
+    closeMobileMenu(true);
   }
 </script>
+
+<svelte:window onkeydown={handleWindowKeydown} />
 
 <nav
   class="nav-container"
@@ -134,6 +152,7 @@
 
       <!-- Mobile Menu Button (44px minimum touch target) -->
       <button
+        bind:this={mobileMenuButton}
         onclick={toggleMobileMenu}
         class="nav-menu-button xl:hidden w-11 h-11 flex items-center justify-center"
         aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
@@ -172,7 +191,7 @@
         {#each links as link}
           <a
             href={link.href}
-            onclick={closeMobileMenu}
+            onclick={() => closeMobileMenu()}
             class="nav-link py-2"
             class:active={isActive(link)}
           >
@@ -180,14 +199,14 @@
           </a>
         {/each}
         {#if ctaLabel && ctaHref}
-          <a href={ctaHref} onclick={closeMobileMenu} class="nav-cta text-center">
+          <a href={ctaHref} onclick={() => closeMobileMenu()} class="nav-cta text-center">
             {ctaLabel}
           </a>
         {/if}
         {#if user}
           <div class="nav-mobile-user">
             <span class="nav-mobile-user-email">{user.email}</span>
-            <a href={accountHref} onclick={closeMobileMenu} class="nav-link py-2"> Account </a>
+            <a href={accountHref} onclick={() => closeMobileMenu()} class="nav-link py-2"> Account </a>
             <button
               type="button"
               class="nav-mobile-logout"
@@ -200,7 +219,7 @@
             </button>
           </div>
         {:else if showLogin}
-          <a href={loginHref} onclick={closeMobileMenu} class="nav-link py-2"> Sign in </a>
+          <a href={loginHref} onclick={() => closeMobileMenu()} class="nav-link py-2"> Sign in </a>
         {/if}
       </div>
     {/if}
@@ -235,7 +254,10 @@
   /* Logo */
   .nav-logo {
     display: inline-flex;
+    min-width: var(--height-performance-control-min, 2.75rem);
+    min-height: var(--height-performance-control-min, 2.75rem);
     align-items: baseline;
+    justify-content: center;
     gap: 0.12rem;
     font-size: 1.08rem;
     font-weight: var(--font-performance-semibold);
@@ -288,6 +310,10 @@
 
   /* CTA Button */
   .nav-cta {
+    display: inline-flex;
+    min-height: 2.75rem;
+    align-items: center;
+    justify-content: center;
     padding: 0.68rem 1rem;
     background: linear-gradient(180deg, #ffffff, #eceef7);
     color: #090909;
@@ -459,11 +485,12 @@
   }
 
   .nav-clear .nav-logo {
+    align-items: center;
     color: var(--color-performance-ink, #090909);
     font-family: var(--font-performance-sans);
     font-weight: var(--font-performance-bold);
     letter-spacing: 0;
-    min-width: 0;
+    min-width: var(--height-performance-control-min, 2.75rem);
     gap: 0;
   }
 

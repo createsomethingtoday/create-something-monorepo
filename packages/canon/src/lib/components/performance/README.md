@@ -49,9 +49,9 @@ when it is the primary product or operator opening for the page.
 
 ## Typography contract
 
-Performance uses Satoshi for commands, conclusions, interface prose, and display copy. Canon sets display weight `500`, tracking `-0.03em`, line-height `0.94`, normal kerning, and standard kerning and ligature features. IBM Plex Mono owns labels, evidence, numbers, metadata, states, timestamps, identifiers, topology labels, and code. Tabular values should continue to use tabular numerals.
+Performance uses the Canon system sans stack for commands, conclusions, interface prose, and display copy. Canon sets display weight `500`, tracking `-0.03em`, line-height `0.94`, normal kerning, and standard kerning and ligature features. IBM Plex Mono owns labels, evidence, numbers, metadata, states, timestamps, identifiers, topology labels, and code in bundled applications. Tabular values should continue to use tabular numerals.
 
-Satoshi is loaded from Fontshare's official hosted service under the ITF Free Font License; do not copy the client-owned Satoshi files elsewhere in this repository. IBM Plex Mono is bundled from the official `@ibm/plex-mono` package under the SIL Open Font License. The fallback stacks remain explicit so the system stays readable if a hosted font is unavailable. A property may supply original media and content, but typography remains a Canon-owned contract. `PerformanceThesisConditions` defaults to an `h2`; set `headingLevel="h1"` when it is the primary product or operator opening.
+IBM Plex Mono is bundled from the official `@ibm/plex-mono` package under the SIL Open Font License. Standalone documents and email use system sans and monospace stacks, so the Performance contract does not depend on a remote font host. A property may supply original media and content, but typography remains a Canon-owned contract. `PerformanceThesisConditions` defaults to an `h2`; set `headingLevel="h1"` when it is the primary product or operator opening.
 
 ## Composition example
 

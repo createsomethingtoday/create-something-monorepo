@@ -1,0 +1,138 @@
+{
+  "capturedAt": "2026-07-30T22:04:57Z",
+  "issue": "CRE-1514",
+  "branch": "codex/CRE-1514-agent-worktree",
+  "baseSha": "51c1fde36305fe433ddc2adfcb0d58bc9750cac6",
+  "agency": {
+    "surface": "Wrangler Pages dev over the built .svelte-kit/cloudflare artifact",
+    "baseUrl": "http://127.0.0.1:4175",
+    "viewports": [
+      { "name": "desktop", "width": 1440, "height": 1000 },
+      { "name": "mobile", "width": 390, "height": 844 }
+    ],
+    "routes": [
+      "/",
+      "/services",
+      "/products",
+      "/control",
+      "/map",
+      "/delivery",
+      "/proof/marketplace-workflow",
+      "/products/loom"
+    ],
+    "routeMatrix": {
+      "httpStatus": 200,
+      "horizontalOverflowPx": 0,
+      "clippedPrimaryHeadings": 0,
+      "consoleErrors": 0,
+      "consoleWarnings": 0,
+      "fontshareResources": 0,
+      "undersizedDeclaredTargets": 0,
+      "targetAudit": "Buttons, role=button elements, and explicitly styled standalone controls; compact inline text links retain the documented 24px-or-spacing exception."
+    },
+    "typography": {
+      "body": "Arial, Helvetica Neue, Helvetica, system-ui, -apple-system, system-ui, Segoe UI, sans-serif",
+      "display": "Arial, Helvetica Neue, Helvetica, system-ui, -apple-system, system-ui, Segoe UI, sans-serif"
+    },
+    "mobileHomepage": {
+      "operatingStoryPx": {
+        "boundary": 2083,
+        "map": 2139,
+        "operate": 2177
+      },
+      "operatingStoryMaximumPx": 2200,
+      "finalHandoffPx": 1419,
+      "finalHandoffMaximumPx": 1550
+    },
+    "privacyAndNavigation": {
+      "compactPromptReachable": true,
+      "firstChoicePanelReachable": true,
+      "storedConsent": { "analytics": false },
+      "storedChoiceVisibleAfterReload": true,
+      "storedChoiceTarget": { "width": 56, "height": 44 },
+      "openMenu": {
+        "navigationZIndex": 50,
+        "privacyZIndex": 20,
+        "privacyAriaHidden": true,
+        "privacyInert": true,
+        "privacyVisibility": "hidden",
+        "privacyPointerEvents": "none"
+      },
+      "escapeReturnsFocusTo": "Open menu",
+      "enterOpensMenu": true,
+      "tabMovesTo": "How It Works",
+      "shiftTabReturnsTo": "Close menu",
+      "consoleErrors": 0
+    },
+    "reducedMotion": {
+      "animationDuration": "0.01ms",
+      "transitionDuration": "0.01ms"
+    },
+    "publicMapTouchTargets": {
+      "viewport": { "width": 390, "height": 844 },
+      "flowZoom": 0.38,
+      "stylesheet": "public.DB2ombUi.css",
+      "minimumVisibleControlPx": 44,
+      "minimumTransformedNodeHeightPx": 60.8,
+      "undersizedControls": 0,
+      "horizontalOverflowPx": 0,
+      "consoleErrors": 0
+    },
+    "conditionMedia": {
+      "/map": { "desktop": "clarity-inspection.webp", "mobile": "clarity-inspection-mobile.webp" },
+      "/services": { "desktop": "turbulence-exception.webp", "mobile": "turbulence-exception-mobile.webp" },
+      "/control": { "desktop": "turbulence-exception.webp", "mobile": "turbulence-exception-mobile.webp" },
+      "/delivery": { "desktop": "settlement-resolved.webp", "mobile": "settlement-resolved-mobile.webp" },
+      "/proof/marketplace-workflow": { "desktop": "trace-dye-injection.webp", "mobile": "trace-dye-injection-mobile.webp" },
+      "/products/loom": { "desktop": "trace-dye-injection.webp", "mobile": "trace-dye-injection-mobile.webp" }
+    }
+  },
+  "canon": {
+    "surface": "Canon Vite dev",
+    "baseUrl": "http://127.0.0.1:4176",
+    "viewports": [
+      { "name": "desktop", "width": 1440, "height": 1000 },
+      { "name": "mobile", "width": 390, "height": 844 }
+    ],
+    "httpStatus": 200,
+    "horizontalOverflowPx": 0,
+    "clippedPrimaryHeadings": 0,
+    "consoleErrors": 0,
+    "consoleWarnings": 0,
+    "fontshareResources": 0,
+    "undersizedDeclaredTargets": 0,
+    "modes": {
+      "campaign": "rgb(9, 9, 9)",
+      "proof": "rgb(243, 243, 240)",
+      "operator": "rgb(255, 255, 255)"
+    },
+    "typography": {
+      "bodyAndDisplay": "system sans",
+      "record": "IBM Plex Mono, SFMono-Regular, SF Mono, Menlo, Monaco, Consolas, monospace"
+    },
+    "narrativeTabs": {
+      "count": 3,
+      "initial": "01 Claim Plain language",
+      "afterArrowRight": "02 Measure Proof attached"
+    },
+    "reducedMotion": {
+      "animationDuration": "0.01ms",
+      "transitionDuration": "0.01ms"
+    }
+  },
+  "screenshots": [
+    "agency-preview-desktop.png",
+    "agency-preview-mobile.png",
+    "agency-production-desktop.png",
+    "agency-production-mobile.png",
+    "canon-showroom-desktop.png",
+    "canon-showroom-mobile.png",
+    "mobile-menu-clean-consent.png",
+    "mobile-operating-story.png",
+    "mobile-final-handoff.png",
+    "map-condition-mobile.png",
+    "services-condition-mobile.png",
+    "delivery-condition-mobile.png",
+    "proof-marketplace-workflow-condition-mobile.png"
+  ]
+}

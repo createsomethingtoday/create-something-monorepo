@@ -704,6 +704,8 @@
   }
 
   .social-link {
+    min-width: var(--height-performance-control-min, 2.75rem);
+    min-height: var(--height-performance-control-min, 2.75rem);
     background: transparent;
     border: 1px solid var(--color-performance-border-default);
     border-radius: var(--radius-performance-scale-md);
@@ -769,6 +771,9 @@
   }
 
   .legal-link {
+    display: inline-flex;
+    min-height: 1.5rem;
+    align-items: center;
     color: var(--color-performance-fg-muted);
     text-decoration: none;
     transition: color var(--duration-performance-micro) var(--ease-performance-standard);

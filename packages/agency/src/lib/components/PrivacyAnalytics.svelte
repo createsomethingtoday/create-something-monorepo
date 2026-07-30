@@ -14,6 +14,7 @@
     userOptedOut?: boolean;
     globalMetadata?: Record<string, unknown>;
     compactPrompt?: boolean;
+    obscured?: boolean;
   }
 
   let {
@@ -21,7 +22,8 @@
     userId = undefined,
     userOptedOut = false,
     globalMetadata = undefined,
-    compactPrompt = false
+    compactPrompt = false,
+    obscured = false
   }: Props = $props();
 
   let mounted = $state(false);
@@ -64,7 +66,10 @@
   <aside
     class="privacy-choice"
     class:privacy-choice--compact={compactPromptActive}
+    class:privacy-choice--obscured={obscured}
     aria-label="Privacy choices"
+    aria-hidden={obscured}
+    inert={obscured}
   >
     {#if showPanel}
       <div class="privacy-panel" role="dialog" aria-modal="false" aria-labelledby="privacy-title">
@@ -122,7 +127,7 @@
     position: fixed;
     right: max(1rem, env(safe-area-inset-right));
     bottom: max(1rem, env(safe-area-inset-bottom));
-    z-index: 80;
+    z-index: var(--z-performance-sticky, 20);
     max-width: min(24rem, calc(100vw - 2rem));
     color: var(--color-performance-ink, #090909);
     font-family: var(--font-performance-sans);
@@ -204,7 +209,7 @@
   }
 
   .privacy-button {
-    min-height: 2.25rem;
+    min-height: 2.75rem;
     padding: 0.55rem 0.85rem;
     background: var(--color-performance-ink, #090909);
     color: #ffffff;
@@ -221,7 +226,7 @@
     display: inline-flex;
     align-items: center;
     gap: 0.45rem;
-    min-height: 2rem;
+    min-height: 2.75rem;
     padding: 0.35rem 0.65rem;
     background: var(--color-performance-panel, #ffffff);
     color: var(--color-performance-muted, #5e6268);
@@ -233,8 +238,14 @@
     max-width: max-content;
   }
 
+  .privacy-choice--obscured {
+    visibility: hidden;
+    pointer-events: none;
+    opacity: 0;
+  }
+
   .privacy-pill--compact {
-    min-height: 1.7rem;
+    min-height: 2.75rem;
     padding: 0.28rem 0.5rem;
     box-shadow: 0 6px 18px rgba(10, 14, 25, 0.1);
     font-size: 0.68rem;
@@ -319,7 +330,7 @@
     }
 
     .privacy-button {
-      min-height: 1.86rem;
+      min-height: 2.75rem;
       padding: 0.36rem 0.46rem;
       font-size: 0.72rem;
     }

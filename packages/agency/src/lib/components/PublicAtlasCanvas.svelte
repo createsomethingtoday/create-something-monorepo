@@ -965,7 +965,7 @@
 	}
 
 	.add-node-trigger {
-		min-height: 2rem;
+		min-height: 2.75rem;
 		padding: 0.35rem 0.6rem;
 		white-space: nowrap;
 	}
@@ -1009,7 +1009,7 @@
 	.focus-strip button {
 		display: flex;
 		min-width: 0;
-		min-height: 2.35rem;
+		min-height: 2.75rem;
 		align-items: center;
 		justify-content: space-between;
 		gap: 0.45rem;
@@ -1258,7 +1258,7 @@
 	}
 
 	.agent-suggestions button {
-		min-height: 2.25rem;
+		min-height: 2.75rem;
 		padding: 0.52rem 0.62rem;
 		text-align: left;
 		color: var(--color-performance-ink, #090909);
@@ -1291,7 +1291,7 @@
 	}
 
 	.prompt-row button {
-		min-height: 2rem;
+		min-height: 2.75rem;
 		background: var(--color-performance-paper, #f3f3f0);
 		color: var(--color-performance-muted, #5e6268);
 		font-size: 0.78rem;
@@ -1310,7 +1310,7 @@
 	.summary-actions a,
 	.danger {
 		display: inline-flex;
-		min-height: 2.55rem;
+		min-height: 2.75rem;
 		align-items: center;
 		justify-content: center;
 		cursor: pointer;

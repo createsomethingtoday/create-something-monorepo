@@ -24,6 +24,11 @@ export type {
   PerformanceCampaignProof,
   PerformanceCampaignVideo
 } from './PerformanceCampaignOpening.svelte';
+export type {
+  PerformanceMediaStudy,
+  PerformanceMediaVideo,
+  PerformanceWaterCondition
+} from './media/types';
 export { default as PerformanceThesisConditions } from './PerformanceThesisConditions.svelte';
 export type {
   PerformanceCondition,

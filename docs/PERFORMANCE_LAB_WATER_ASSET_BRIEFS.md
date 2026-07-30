@@ -1,6 +1,6 @@
 # Performance Lab Water Asset Briefs
 
-> Status: active brief; assets not yet generated
+> Status: four studies generated, inspected, and accepted for local integration; not published
 > Written: 2026-07-25
 > Owner: CREATE SOMETHING
 > Asset package: `packages/agency/content/assets/brand/agency-performance-lab-bench-water.v20260725/`
@@ -49,8 +49,8 @@ Full scale rule and the dye-trace signature device are now contracted in
 Visual family: `material-prototype-study`. Structured prompts, palette constraints, negatives, and
 sizes are in `source/generation-prompts--v20260725.jsonl`, validated against the v20260710 schema.
 
-Build `trace-dye-injection` first. It is the signature device, it absorbs the most misused existing
-asset, and it is the only one with a post-production step to prove out.
+`trace-dye-injection` was built first. It is the signature device, absorbs the most misused existing
+asset, and is the only study with a controlled color pass after monochrome acceptance.
 
 ## Dye and the color doctrine
 
@@ -71,8 +71,8 @@ export is rejected.
 
 ## Reuse retirement plan
 
-Apply only after each asset is generated, inspected, and approved. Shared Canon overlays must be
-updated atomically with their `.agency` callers.
+The local route assignment below was applied only after original-resolution and mobile-crop
+inspection. Canon's shared `.io` / `.learn` trace overlay remains unchanged.
 
 | Route | Current | Target | Reason |
 | --- | --- | --- | --- |
@@ -89,7 +89,8 @@ updated atomically with their `.agency` callers.
 `trace-wake-natural` until those properties are reviewed separately; changing it silently changes
 two other properties.
 
-After this plan lands, no water asset should appear in more than two public surface families.
+The accepted route policy is encoded in `packages/agency/src/lib/data/performanceMedia.ts` and its
+focused regression test. No new study appears in more than two public surface families.
 
 ## Acceptance
 
@@ -97,5 +98,6 @@ An asset enters production only when the inspection record in the package metada
 checked, including: apparatus legible at both crops, no people or hands, no readable numerals, no
 blue outside the dye filament, and the named condition legible without a caption.
 
-Nothing ships because it looks technical or fluid. Every element must signal a condition, support a
-decision, direct flow, or leave proof.
+All four studies pass the package inspection record. This is local acceptance, not publication or
+evidence of a real workflow run. Nothing ships because it looks technical or fluid: every element
+must signal a condition, support a decision, direct flow, or leave proof.

@@ -7,6 +7,7 @@
     SEO,
     type PerformanceEvidenceItem
   } from '@create-something/canon';
+  import { settlementResolvedMedia } from '$lib/data/performanceMedia';
 
   const deliveryRecords: PerformanceEvidenceItem[] = [
     {
@@ -37,11 +38,7 @@
   title="Published work lives here."
   lede="Each record says what changed, what remains private, what is blocked, and who decides next. Open the work directly; private evidence stays outside the public page."
   density="compact"
-  media={{
-    src: '/images/performance-lab/trace-wake-natural.webp',
-    mobileSrc: '/images/performance-lab/trace-wake-natural-mobile.webp',
-    alt: 'Black-and-white aerial trace of a wake continuing behind a moving vessel'
-  }}
+  media={settlementResolvedMedia}
   proof={[
     { label: 'Records', value: String(deliveryRecords.length).padStart(2, '0') },
     { label: 'Boundary', value: 'Client-safe only' },

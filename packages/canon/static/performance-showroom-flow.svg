@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Measured flow apparatus</title>
+  <desc id="desc">A monochrome flow channel crosses a measured pressure boundary.</desc>
+  <rect width="1600" height="1000" fill="#090909"/>
+  <g fill="none" stroke="#f3f3f0" stroke-width="3" opacity=".34">
+    <path d="M0 160H1600M0 320H1600M0 480H1600M0 640H1600M0 800H1600"/>
+    <path d="M160 0V1000M320 0V1000M480 0V1000M640 0V1000M800 0V1000M960 0V1000M1120 0V1000M1280 0V1000M1440 0V1000"/>
+  </g>
+  <path d="M-80 620C210 380 410 770 690 515S1130 300 1680 470" fill="none" stroke="#f3f3f0" stroke-width="118"/>
+  <path d="M-80 620C210 380 410 770 690 515S1130 300 1680 470" fill="none" stroke="#090909" stroke-width="72"/>
+  <path d="M-80 620C210 380 410 770 690 515S1130 300 1680 470" fill="none" stroke="#f3f3f0" stroke-width="3" stroke-dasharray="18 18"/>
+  <g stroke="#f3f3f0" fill="#090909" stroke-width="4">
+    <circle cx="440" cy="596" r="52"/>
+    <circle cx="1020" cy="389" r="52"/>
+    <rect x="740" y="250" width="28" height="520"/>
+    <path d="M690 250H818M690 770H818"/>
+  </g>
+  <path d="M754 214V806" stroke="#e54800" stroke-width="12"/>
+  <g fill="#f3f3f0">
+    <circle cx="440" cy="596" r="10"/>
+    <circle cx="1020" cy="389" r="10"/>
+    <rect x="1170" y="680" width="260" height="8"/>
+    <rect x="1170" y="710" width="170" height="8" opacity=".56"/>
+  </g>
+</svg>
