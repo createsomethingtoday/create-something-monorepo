@@ -156,7 +156,7 @@ Evidence
 
 ## Phase 6: Run the primary verifier and harden
 
-Status: in progress
+Status: complete
 
 Implementation
 
@@ -169,12 +169,12 @@ Verification
 
 - [x] Primary verifier passes end to end with protocol transcript, API output, persisted readback, browser screenshots, and console/network evidence.
 - [x] Negative paths prove expired/uncorroborated offers remain fail-closed and no purchase surface exists.
-- [ ] Package verification, exports, legibility, formatting, and repository-scope checks pass.
+- [x] Package verification, exports, legibility, formatting, and repository-scope checks pass.
 - [x] ChatGPT Developer Mode host loop is either exercised on an approved HTTPS endpoint or recorded as the exact approval-gated promotion handoff.
 
 Exit criteria
 
-- [ ] Completion proof in `goal.md` is satisfied except for explicitly approval-gated public promotion steps.
+- [x] Completion proof in `goal.md` is satisfied except for merge and Linear closeout in Phase 7 and explicitly approval-gated public promotion steps.
 
 Evidence
 
@@ -185,6 +185,7 @@ Evidence
 - 2026-07-30: offline frozen-lockfile installation, both package export checks, agent legibility, `git diff --check`, scoped secret-pattern scan, and `pnpm policy:artifacts:check` passed.
 - 2026-07-30: repository `pnpm check` passed platform and product, then failed only in the untouched `packages/webflow-template-search` suite with 18 timeout-only failures after 658 seconds. An isolated rerun reproduced five timeout-only failures in the same untouched suite while 81/86 tests passed. Publication CI remains the authoritative repository gate; this unrelated baseline was not widened into CRE-1505.
 - 2026-07-30: authenticated ChatGPT Developer Mode connection remains an explicit approval-gated promotion handoff requiring a public HTTPS MCP endpoint; local MCP Apps bridge and standalone browser compatibility are verified without representing host registration as complete.
+- 2026-07-30: PR #1148 CI passed strict repository checks, MCP quality and evals, authz policy, package legibility, MCP registry, Socket project security, preview, and deployment-integrity workflows. The PR reported `MERGEABLE` / `CLEAN`; the Socket alert-only check was neutral and the optional Langfuse emit job was skipped.
 
 ## Phase 7: Publish, merge, and close evidence
 
@@ -192,8 +193,8 @@ Status: in progress
 
 Implementation
 
-- [ ] Review diff scope and secret safety, commit intentionally, push the CRE-1505 branch, and open a draft PR.
-- [ ] Run and repair required CI without weakening the primary verifier.
+- [x] Review diff scope and secret safety, commit intentionally, push the CRE-1505 branch, and open draft PR #1148.
+- [x] Run and repair required CI without weakening the primary verifier.
 - [ ] Move through the repository review gate and merge when green.
 - [ ] Record Linear evidence including commands, screenshots/artifacts, live-smoke result, PR, merge SHA, deployment boundary, rollback note, and worktree disposition.
 
@@ -208,4 +209,4 @@ Exit criteria
 
 ## Current next action
 
-Finish the intentional diff review, commit and push the CRE-1505 branch, open the draft PR, and use repository CI to resolve the remaining repository-gate evidence before merge and Linear closeout.
+Revalidate the final evidence-only commit, move PR #1148 out of draft, merge through the repository gate, then record the merge SHA, rollback boundary, promotion boundary, and preserved worktree disposition in CRE-1505.
