@@ -1,0 +1,27 @@
+/*
+ * Princess Pet Palace project-local aliases.
+ * Keep shared primitives in Canon; the application owns its playful palette.
+ */
+
+:root {
+  --overlay-accent: var(--purple, var(--color-performance-signal, #8b4daf));
+  --overlay-accent-contrast: var(--white, var(--color-performance-panel, #ffffff));
+  --overlay-surface: var(--cream, var(--color-performance-panel, #fffaf3));
+  --overlay-surface-muted: var(--pale-lavender, var(--color-performance-paper, #f7effc));
+  --overlay-border: var(--lavender, var(--color-performance-line, #e8d4f5));
+  --overlay-proof: var(--color-performance-growth, #007a4d);
+  --overlay-review: var(--gold, var(--color-performance-gold, #f3bd4f));
+  --overlay-block: var(--color-performance-risk, #c62026);
+  --overlay-radius: var(--radius-performance-md, 4px);
+  --overlay-focus-ring: 0 0 0 4px color-mix(in srgb, var(--overlay-accent) 30%, transparent);
+}
+
+[data-canon-overlay='overlay.princess-pet-palace'] {
+  color: var(--plum, var(--color-performance-ink, #4f255f));
+  background: var(--overlay-surface);
+}
+
+[data-canon-overlay='overlay.princess-pet-palace'] :focus-visible {
+  outline: none;
+  box-shadow: var(--overlay-focus-ring);
+}

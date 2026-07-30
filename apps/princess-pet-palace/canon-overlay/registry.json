@@ -1,0 +1,16 @@
+{
+  "id": "overlay.princess-pet-palace",
+  "name": "Princess Pet Palace Overlay",
+  "owner": "princess-pet-palace",
+  "sourcePackage": "princess-pet-palace",
+  "targetModalities": ["web", "chat", "app", "voice", "glasses"],
+  "registryItemIds": [
+    "token.performance-core",
+    "component.clear-decision-panel",
+    "component.clear-proof-strip",
+    "template.canon-project-overlay-manifest",
+    "template.canon-extension-intake",
+    "policy.signal-decision-proof"
+  ],
+  "overlayRule": "Keep child-facing story, safety, accessibility, and activity presentation project-local. Route only repeated shared primitive needs through Canon extension intake."
+}
