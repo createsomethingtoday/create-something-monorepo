@@ -20,9 +20,9 @@ export const faqItems = [
       "Yes. The game is free to play and has no ads, accounts, purchases, or third-party tracking.",
   },
   {
-    question: "How does camera magic protect privacy?",
+    question: "How does camera magic work?",
     answer:
-      "Camera magic is optional, starts only after a grown-up tap, never requests the microphone, and processes movement on the device without recording, uploading, or saving video.",
+      "Tap Make camera magic in a movement room. Your browser may ask once for camera access; movement effects stay on the device and video is not saved.",
   },
 ] as const;
 

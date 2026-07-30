@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { cameraErrorMessage, measureMotion } from "./camera-magic-model";
+import { CAMERA_MAGIC_COPY, cameraErrorMessage, measureMotion } from "./camera-magic-model";
 
 type CameraStatus = "idle" | "requesting" | "active" | "error";
 
@@ -128,15 +128,17 @@ export function CameraMagic() {
         <div>
           <p className="camera-title">Magic mirror <span>(optional)</span></p>
           <p className="camera-copy">
-            {status === "active" ? (motionLevel > 14 ? "Your movement makes sparkles!" : "Wave to wake the sparkles.") : "A grown-up can turn on movement sparkles."}
+            {status === "active"
+              ? (motionLevel > 14 ? CAMERA_MAGIC_COPY.movingPrompt : CAMERA_MAGIC_COPY.activePrompt)
+              : CAMERA_MAGIC_COPY.idlePrompt}
           </p>
         </div>
         {status === "active" ? (
           <button className="camera-button camera-stop" type="button" onClick={stopCamera}>Turn camera off</button>
         ) : (
           <button className="camera-button" type="button" onClick={startCamera} disabled={status === "requesting"}>
-            <span aria-hidden="true">📷</span>
-            <span>{status === "requesting" ? "Waiting for permission…" : "Grown-up: camera on"}</span>
+            <span className="camera-button-icon" aria-hidden="true">📷✨</span>
+            <span>{status === "requesting" ? CAMERA_MAGIC_COPY.requestingLabel : CAMERA_MAGIC_COPY.startLabel}</span>
           </button>
         )}
       </div>
@@ -146,9 +148,7 @@ export function CameraMagic() {
           <span style={{ width: `${motionLevel}%` }} />
         </div>
       )}
-      <p className={`camera-privacy ${message ? "camera-message" : ""}`} role="status" aria-live="polite">
-        {message || "Video only • nothing is recorded or sent"}
-      </p>
+      {message && <p className="camera-message" role="status" aria-live="polite">{message}</p>}
     </section>
   );
 }

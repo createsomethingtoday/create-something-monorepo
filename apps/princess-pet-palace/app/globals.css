@@ -779,13 +779,13 @@ h1 {
 .camera-title { margin: 0; color: var(--ink); font-family: var(--font-display), sans-serif; font-size: 0.92rem; font-weight: 700; }
 .camera-copy { margin: 3px 0 0; color: var(--ink-soft); font-size: 0.7rem; font-weight: 700; line-height: 1.25; }
 .camera-button { display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center; gap: 6px; min-height: 40px; padding: 0 12px; border: 0; border-radius: 14px; color: #fff; background: linear-gradient(135deg, #8f50ad, #db5d98); box-shadow: 0 5px 0 #713784; font-size: 0.72rem; font-weight: 850; cursor: pointer; }
+.camera-button-icon { font-size: 1rem; }
 .camera-button:active { translate: 0 3px; box-shadow: 0 2px 0 #713784; }
 .camera-button:disabled { opacity: 0.68; }
 .camera-stop { color: #68426f; background: #fff; box-shadow: 0 4px 0 #d5bedb; }
 .motion-meter { height: 7px; margin: 3px 6px 7px; overflow: hidden; border-radius: 999px; background: rgba(105, 58, 121, 0.12); }
 .motion-meter span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--pink), var(--gold)); transition: width 180ms ease; }
-.camera-privacy { margin: 2px 6px 4px; color: #8b6b90; font-size: 0.61rem; font-weight: 750; text-align: center; }
-.camera-message { color: #754783; }
+.camera-message { margin: 2px 6px 4px; color: #754783; font-size: 0.61rem; font-weight: 750; text-align: center; }
 
 .party-rail {
   position: absolute;
