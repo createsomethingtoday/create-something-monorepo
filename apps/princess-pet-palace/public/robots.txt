@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://princess-pet-palace.createsomethingtoday.chatgpt.site/sitemap.xml

@@ -365,6 +365,33 @@ h1 {
   text-align: center;
 }
 
+.grownup-guide {
+  width: min(100%, 860px);
+  margin-top: 12px;
+  overflow: hidden;
+  border: 2px solid rgba(91, 48, 108, 0.1);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.62);
+  box-shadow: 0 10px 28px rgba(82, 42, 96, 0.08);
+  backdrop-filter: blur(14px);
+}
+.grownup-guide summary { display: flex; align-items: center; gap: 11px; min-height: 58px; padding: 7px 12px; list-style: none; cursor: pointer; }
+.grownup-guide summary::-webkit-details-marker { display: none; }
+.guide-icon { display: grid; flex: 0 0 auto; place-items: center; width: 38px; height: 38px; border-radius: 13px; color: #fff; background: linear-gradient(145deg, #9a57b7, #e5659f); box-shadow: 0 4px 0 #743987; font-size: 1.15rem; }
+.guide-summary-copy { display: flex; flex: 1; flex-direction: column; min-width: 0; }
+.guide-summary-copy strong { font-family: var(--font-display), sans-serif; font-size: 0.88rem; font-weight: 700; }
+.guide-summary-copy small { margin-top: 2px; overflow: hidden; color: #866989; font-size: 0.66rem; font-weight: 750; text-overflow: ellipsis; white-space: nowrap; }
+.guide-plus { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; color: #855092; background: rgba(235, 218, 243, 0.85); font-family: var(--font-display), sans-serif; font-size: 1.2rem; font-weight: 650; transition: rotate 180ms ease; }
+.grownup-guide[open] .guide-plus { rotate: 45deg; }
+.guide-content { padding: 18px 20px 20px; border-top: 1px solid rgba(91, 48, 108, 0.09); background: rgba(255, 252, 253, 0.72); }
+.guide-intro { max-width: 680px; margin: 0 auto 15px; color: var(--ink-soft); font-size: 0.82rem; font-weight: 750; line-height: 1.45; text-align: center; }
+.guide-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+.guide-grid article { padding: 13px 14px; border: 1px solid rgba(97, 52, 114, 0.08); border-radius: 16px; background: rgba(248, 239, 251, 0.72); }
+.guide-grid h2 { margin: 0; color: var(--ink); font-family: var(--font-display), sans-serif; font-size: 0.82rem; font-weight: 700; line-height: 1.25; }
+.guide-grid p { margin: 6px 0 0; color: #795d7d; font-size: 0.72rem; font-weight: 650; line-height: 1.45; }
+.install-tip { margin: 14px 0 0; color: #7d5784; font-size: 0.72rem; font-weight: 700; text-align: center; }
+.install-tip span { margin-right: 4px; color: var(--gold-deep); }
+
 .journey-stage { justify-content: flex-start; padding-top: 14px; }
 
 .journey-map {
@@ -832,6 +859,10 @@ button:disabled { cursor: default; }
   .bunny { left: 15%; bottom: 16%; font-size: 3.8rem; }
   .kitten { right: 13%; bottom: 17%; font-size: 3.8rem; }
   .unicorn { right: 29%; bottom: 1%; font-size: 4.2rem; }
+  .grownup-guide { border-radius: 19px; }
+  .guide-summary-copy small { max-width: 210px; }
+  .guide-content { padding: 15px 12px 16px; }
+  .guide-grid { grid-template-columns: 1fr; }
   .journey-map { padding: 0 4px; }
   .journey-track { top: 19px; left: calc(8.333% + 4px); right: calc(8.333% + 4px); }
   .map-icon { width: 42px; height: 42px; border-radius: 14px; font-size: 1.05rem; }
