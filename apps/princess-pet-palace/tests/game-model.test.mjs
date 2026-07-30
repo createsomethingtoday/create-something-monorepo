@@ -18,6 +18,15 @@ test("creates a varied six-room palace journey with every activity", () => {
   assert.ok(journey.every((room) => room.spokenPrompt.length > 0));
 });
 
+test("gives counting rooms simple, natural instructions", () => {
+  const journey = createJourney(() => 0.42);
+  const countRooms = journey.filter((room) => room.kind === "count");
+
+  assert.ok(countRooms.length > 0);
+  assert.ok(countRooms.every((room) => /^Tap each [a-z]+!$/.test(room.prompt)));
+  assert.ok(countRooms.every((room) => /^Tap each [a-z]+ to count them\.$/.test(room.spokenPrompt)));
+});
+
 test("counts each pet once and completes only after every pet is tapped", () => {
   const first = countPetTap([], 2, 3);
   assert.deepEqual(first, { selected: [2], spokenNumber: 1, complete: false });
