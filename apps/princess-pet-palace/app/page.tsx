@@ -13,6 +13,7 @@ import {
   type MoveChallenge,
 } from "./game-model";
 import { faqItems } from "./seo-content";
+import { FRIENDLY_SPEECH_SETTINGS, pickFriendlyVoice } from "./speech-guide";
 
 type Screen = "home" | "journey" | "celebrate";
 type FeedbackKind = "success" | "try" | null;
@@ -45,9 +46,16 @@ export default function Home() {
       if ((!soundOn && !force) || typeof window === "undefined" || !("speechSynthesis" in window)) return;
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(message);
-      utterance.rate = 0.86;
-      utterance.pitch = 1.1;
-      utterance.volume = 0.92;
+      const friendlyVoice = pickFriendlyVoice(window.speechSynthesis.getVoices());
+      if (friendlyVoice) {
+        utterance.voice = friendlyVoice;
+        utterance.lang = friendlyVoice.lang;
+      } else {
+        utterance.lang = "en-US";
+      }
+      utterance.rate = FRIENDLY_SPEECH_SETTINGS.rate;
+      utterance.pitch = FRIENDLY_SPEECH_SETTINGS.pitch;
+      utterance.volume = FRIENDLY_SPEECH_SETTINGS.volume;
       window.speechSynthesis.speak(utterance);
     },
     [soundOn],
