@@ -6,5 +6,6 @@ import type { PerformanceMediaStudy } from './types';
 export const pressureBoundaryMedia = {
   src: pressureBoundary,
   mobileSrc: pressureBoundaryMobile,
-  alt: 'Water striking a concrete boundary during a high-pressure wave impact'
+  alt: 'Water striking a concrete boundary during a high-pressure wave impact',
+  condition: 'pressure'
 } as const satisfies PerformanceMediaStudy;

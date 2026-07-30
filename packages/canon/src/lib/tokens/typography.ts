@@ -14,8 +14,7 @@ export const typography = {
 	family: {
 		sans:
 			'Arial, "Helvetica Neue", Helvetica, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-		display:
-			'"Satoshi", "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+		display: 'var(--font-performance-sans)',
 		mono:
 			'"IBM Plex Mono", "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas, monospace',
 		serif: 'Georgia, "Times New Roman", serif',

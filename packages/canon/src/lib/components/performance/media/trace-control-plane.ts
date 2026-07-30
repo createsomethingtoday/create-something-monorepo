@@ -6,5 +6,6 @@ import type { PerformanceMediaStudy } from './types';
 export const traceControlPlaneMedia = {
   src: traceControlPlane,
   mobileSrc: traceControlPlaneMobile,
-  alt: 'A survey craft leaving a directional wake across dark water'
+  alt: 'A survey craft leaving a directional wake across dark water',
+  condition: 'trace'
 } as const satisfies PerformanceMediaStudy;

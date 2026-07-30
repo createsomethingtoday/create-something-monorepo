@@ -91,6 +91,7 @@
 		--handoff-accent: var(--color-performance-muted, #6b7280);
 		display: grid;
 		grid-template-columns: minmax(0, 1.18fr) minmax(20rem, 0.82fr);
+		padding: 0;
 		border-block: 1px solid var(--color-performance-ink, #090909);
 		background: var(--color-performance-ink, #090909);
 		color: #fff;
@@ -147,7 +148,10 @@
 			grid-template-columns: 1fr;
 		}
 		.performance-conversion-handoff[data-artifact-placement='full-width'] .performance-conversion-handoff__copy { padding-block: clamp(3rem, 12vw, 5rem); }
-		.performance-conversion-handoff[data-artifact-placement='full-width'][data-density='compact'] .performance-conversion-handoff__copy { padding-block: 2.25rem; }
-		.performance-conversion-handoff[data-artifact-placement='full-width'][data-density='compact'] .performance-conversion-handoff__artifact { padding: 0.75rem 0.75rem 1.5rem; }
+		.performance-conversion-handoff[data-artifact-placement='full-width'][data-density='compact'] .performance-conversion-handoff__copy { padding-block: 1.5rem; }
+		.performance-conversion-handoff[data-artifact-placement='full-width'][data-density='compact'] .performance-conversion-handoff__boundary { padding: 1.5rem; }
+		.performance-conversion-handoff[data-artifact-placement='full-width'][data-density='compact'] .performance-conversion-handoff__boundary dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+		.performance-conversion-handoff[data-artifact-placement='full-width'][data-density='compact'] .performance-conversion-handoff__boundary dl > div { grid-template-columns: 1fr; gap: .25rem; padding: .65rem; }
+		.performance-conversion-handoff[data-artifact-placement='full-width'][data-density='compact'] .performance-conversion-handoff__artifact { padding: 0.5rem 0.5rem 1rem; }
 	}
 </style>

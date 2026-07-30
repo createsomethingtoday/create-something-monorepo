@@ -1,0 +1,99 @@
+{
+  "capturedAt": "2026-07-30T22:04:57Z",
+  "issue": "CRE-1514",
+  "result": "pass",
+  "scope": "local-only; no commit, push, PR, deploy, or publication",
+  "worktree": "/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/cre-1514-agent-worktree",
+  "branch": "codex/CRE-1514-agent-worktree",
+  "baseSha": "51c1fde36305fe433ddc2adfcb0d58bc9750cac6",
+  "agency": {
+    "surface": "Wrangler Pages dev over the final Cloudflare build",
+    "postBuildMatrix": {
+      "viewports": ["1440x1000", "390x844"],
+      "routes": [
+        "/",
+        "/services",
+        "/products",
+        "/control",
+        "/map",
+        "/delivery",
+        "/proof/marketplace-workflow",
+        "/products/loom"
+      ],
+      "cases": 16,
+      "http200": 16,
+      "horizontalOverflow": 0,
+      "clippedPrimaryHeadings": 0,
+      "fontshareOrSatoshiResources": 0,
+      "undersizedButtonLikeControls": 0,
+      "consoleErrors": 0,
+      "consoleWarnings": 0,
+      "mapStylesheet": "public.DB2ombUi.css"
+    },
+    "mobileDensityPx": {
+      "operatingStory": {
+        "boundary": 2083,
+        "map": 2139,
+        "operate": 2177,
+        "maximum": 2200
+      },
+      "finalHandoff": 1419,
+      "finalHandoffMaximum": 1550
+    },
+    "privacyAndNavigation": {
+      "necessaryChoiceStored": true,
+      "storedPillAfterReload": "Analytics off Change",
+      "storedPillSizePx": [56, 44],
+      "privacyHiddenAndInertWhileMenuOpen": true,
+      "tabTarget": "How It Works",
+      "shiftTabTarget": "Close menu",
+      "escapeReturnsFocusTo": "Open menu",
+      "enterAndSpaceOpenMenu": true
+    },
+    "reducedMotion": "0.01ms animation and transition durations",
+    "responsiveMedia": {
+      "desktop": "1536x1024",
+      "mobile": "819x1024",
+      "map": "clarity-inspection",
+      "services": "turbulence-exception",
+      "delivery": "settlement-resolved",
+      "proofAndLoom": "trace-dye-injection"
+    }
+  },
+  "canon": {
+    "surface": "Canon Vite dev",
+    "viewports": ["1440x1000", "390x844"],
+    "http200": 2,
+    "horizontalOverflow": 0,
+    "clippedPrimaryHeadings": 0,
+    "consoleErrors": 0,
+    "consoleWarnings": 0,
+    "fontshareOrSatoshiResources": 0,
+    "undersizedButtonLikeControls": 0,
+    "modes": {
+      "campaign": "rgb(9, 9, 9)",
+      "proof": "rgb(243, 243, 240)",
+      "operator": "rgb(255, 255, 255)"
+    },
+    "fonts": {
+      "displayAndBody": "system sans",
+      "record": "IBM Plex Mono"
+    },
+    "keyboard": {
+      "arrowRightSelection": "02 Measure Proof attached",
+      "focusRing": "3px solid rgb(0, 87, 184)"
+    },
+    "reducedMotion": "0.01ms within the narrative stage"
+  },
+  "checks": {
+    "performanceTokenAliases": "242/242",
+    "canonFocusedTests": "34/34",
+    "agencyFocusedTests": "10/10",
+    "performancePageAuditTests": "3/3",
+    "performancePageRegistry": "229/229",
+    "canonCheck": "pass; 0 errors, 0 warnings, 854/854 depth checks",
+    "agencyCheck": "pass; 0 errors, 0 warnings",
+    "agencyBuild": "pass; Cloudflare adapter",
+    "gitDiffCheck": "pass"
+  }
+}

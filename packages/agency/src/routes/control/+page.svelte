@@ -13,6 +13,7 @@
   } from '@create-something/canon';
   import SystemContextArtifact from '$lib/components/SystemContextArtifact.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
+  import { turbulenceExceptionMedia } from '$lib/data/performanceMedia';
   import { getPublicProduct } from '$lib/data/productFamily';
 
   const mapProduct = getPublicProduct('map');
@@ -143,11 +144,7 @@
     eyebrow="CREATE SOMETHING Control"
     title="Managed AI Operations, after launch."
     lede="Control operates one standard-risk production environment from $900 per month after launch. No per-agent fees. You keep a legible workflow boundary, transparent AI usage, named approvals, and recovery context. Control includes Map."
-    media={{
-      src: '/images/performance-lab/product-system-natural.webp',
-      mobileSrc: '/images/performance-lab/product-system-natural-mobile.webp',
-      alt: 'Aerial black-and-white view of a water-control structure routing flow through bounded channels'
-    }}
+    media={turbulenceExceptionMedia}
     proof={[
       { label: 'Signal', value: 'Watch' },
       { label: 'Decision', value: 'Route' },

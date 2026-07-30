@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { pushState } from '$app/navigation';
   import { onMount, type Snippet } from 'svelte';
 
   export type PerformanceNarrativeTone = 'allow' | 'review' | 'block' | 'neutral';
@@ -73,7 +74,14 @@
 
     if (pushHistory && typeof window !== 'undefined') {
       const fragment = fragmentFor(scenes[index]);
-      if (window.location.hash !== fragment) window.history.pushState(null, '', fragment);
+      if (window.location.hash !== fragment) {
+        try {
+          pushState(fragment, {});
+        } catch {
+          // Component tests and non-router mounts still retain fragment addressing.
+          window.location.hash = fragment;
+        }
+      }
     }
 
     if (moveFocus) tabElements[index]?.focus();
@@ -594,28 +602,47 @@
       padding-block: 2.35rem;
     }
 
+    .performance-narrative-stage[data-density='compact'] {
+      padding-block: 1.5rem;
+    }
+
     .performance-narrative-stage__inner {
       width: min(100% - 1.25rem, var(--content-width-performance, 85rem));
-      gap: 1.35rem;
+      gap: 1rem;
     }
 
     .performance-narrative-stage__index {
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(var(--scene-count, 3), minmax(0, 1fr));
     }
 
     .performance-narrative-stage__index button {
-      grid-template-columns: 1.6rem minmax(0, 1fr);
+      grid-template-columns: 1fr;
       min-height: var(--height-performance-control-min, 2.75rem);
-      padding: 0.8rem;
-      border-right: 0;
+      padding: 0.65rem;
+      border-right: 1px solid var(--color-performance-line, #d7d7d2);
     }
 
     .performance-narrative-stage__index-number {
-      display: inline;
+      display: none;
     }
 
     .performance-narrative-stage__panel {
-      padding: 1.1rem;
+      gap: 0.9rem;
+      padding: 0.85rem;
+    }
+
+    .performance-narrative-stage__header > div,
+    .performance-narrative-stage__scene-head {
+      gap: 0.55rem;
+    }
+
+    .performance-narrative-stage__artifact {
+      padding-block: 0.7rem;
+    }
+
+    .performance-narrative-stage__controls {
+      gap: 0.5rem;
+      padding-top: 0.7rem;
     }
 
     .performance-narrative-stage__proof {

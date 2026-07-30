@@ -5,6 +5,7 @@
   import ServicesMapPreview from '$lib/components/ServicesMapPreview.svelte';
   import ServicesProductPath from '$lib/components/ServicesProductPath.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
+  import { turbulenceExceptionMedia } from '$lib/data/performanceMedia';
   import { getPublicProduct } from '$lib/data/productFamily';
 
   const mapProduct = getPublicProduct('map');
@@ -87,11 +88,7 @@
     eyebrow="How It Works"
     title="Nothing gets built until the map says what it should do."
     lede="Bring one handoff your team still checks manually. We name the decision owner and the stop condition first, then build only what that map requires — before anything touches customers, money, or production."
-    media={{
-      src: '/images/performance-lab/trace-wake-natural.webp',
-      mobileSrc: '/images/performance-lab/trace-wake-natural-mobile.webp',
-      alt: 'Aerial black-and-white view of a survey craft leaving a directional wake'
-    }}
+    media={turbulenceExceptionMedia}
     proof={[
       { label: 'Owner', value: 'Named' },
       { label: 'Protected action', value: 'Held' },

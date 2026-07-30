@@ -143,7 +143,10 @@
   }
 
   .compatibility-rail__catalog-link {
+    display: inline-flex;
     flex: 0 0 auto;
+    min-height: var(--height-performance-control-min, 2.75rem);
+    align-items: center;
     color: inherit;
     font-size: var(--text-performance-body-sm, 0.875rem);
     font-weight: var(--font-performance-semibold, 600);

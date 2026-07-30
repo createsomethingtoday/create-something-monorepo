@@ -38,6 +38,7 @@
 }
 
 .public-atlas-flow .svelte-flow__node {
+	min-height: 7.25rem;
 	border: 0;
 	background: transparent;
 	box-shadow: none;
@@ -76,6 +77,8 @@
 }
 
 .public-atlas-flow .svelte-flow__controls-button {
+	width: 2.75rem;
+	height: 2.75rem;
 	border-bottom-color: rgba(10, 14, 25, 0.08);
 	background: rgba(255, 255, 255, 0.92);
 	color: #0a0e19;
@@ -158,7 +161,7 @@
 	display: grid;
 	gap: 0.35rem;
 	width: 100%;
-	min-height: 7.5rem;
+	min-height: 10rem;
 	border: 1px solid rgba(10, 14, 25, 0.1);
 	border-radius: 7px;
 	background: #ffffff;

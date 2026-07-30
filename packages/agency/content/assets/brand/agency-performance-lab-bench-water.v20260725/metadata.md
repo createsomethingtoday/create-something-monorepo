@@ -3,8 +3,10 @@
 > Asset ID: `brand.agency-performance-lab-bench-water.v20260725`
 > Owner: CREATE SOMETHING
 > Brief written: 2026-07-25
-> Status: **brief only — not yet generated, not yet reviewed, not yet in production**
+> Status: **accepted for local integration — not published**
 > Supersedes scale direction in: `brand.agency-performance-lab-natural-water.v20260710`
+> Generated and inspected: 2026-07-30
+> Tracking: `CRE-1514`
 
 ## Direction
 
@@ -86,7 +88,7 @@ the experiment put it there, not because the layout wanted an accent.
 Hard limit: a filament, not a wash. If the cobalt reads as a gradient, tint, glow, or background,
 the export is rejected.
 
-## Planned exports
+## Accepted exports
 
 Dimensions match the v20260710 responsive contract.
 
@@ -101,8 +103,39 @@ Dimensions match the v20260710 responsive contract.
 | `static/images/performance-lab/settlement-resolved.webp` | Full 3:2 | 1536 x 1024 | Desktop |
 | `static/images/performance-lab/settlement-resolved-mobile.webp` | 4:5 hard crop on level line | 819 x 1024 | Mobile |
 
-Hashes, final dimensions, and file paths are recorded after generation and inspection. They are
-deliberately absent from this record because no asset exists yet.
+The PNG files under `exports/` are the accepted full-resolution generation masters. Responsive
+WebP files under `packages/agency/static/images/performance-lab/` are the public-surface exports.
+
+| Accepted master | Dimensions | SHA-256 |
+| --- | --- | --- |
+| `exports/trace-dye-injection.png` | 1536 x 1024 | `d5d6a773c6ad4b0292f6ffcb750c8fe86f1d3f72fd05fef7f41c2e86be840e78` |
+| `exports/turbulence-exception.png` | 1536 x 1024 | `70e8303fa79e53bdf2da80e22996dfa5b93b24de4c2a00a5ee9b6d19835d38db` |
+| `exports/clarity-inspection.png` | 1536 x 1024 | `b33812d935f44d52582676d979e30062a1fc097890ef0125d0f81f1e7cf8b8d0` |
+| `exports/settlement-resolved.png` | 1536 x 1024 | `04674ef4ac4f736ea52f1fcc3a8ef2e3010102b4b16907a9ea3bbbe8d3f66672` |
+
+| Responsive export | Dimensions | SHA-256 |
+| --- | --- | --- |
+| `static/images/performance-lab/trace-dye-injection.webp` | 1536 x 1024 | `eae7dd924d7e46edb6466bd6b284b71a726d191af26fcfb9199cb6c98e5708f9` |
+| `static/images/performance-lab/trace-dye-injection-mobile.webp` | 819 x 1024 | `d1ca76bd5058e40ec09cc557930ab1fa6e315c6cc6a86f52230401a47f583a73` |
+| `static/images/performance-lab/turbulence-exception.webp` | 1536 x 1024 | `34769875070521ab611425476ef2375a0d3dff8def34de2bfdbd684197f76447` |
+| `static/images/performance-lab/turbulence-exception-mobile.webp` | 819 x 1024 | `64bf95b617c0eb3de912ef55364d921dd609fdcc13aaf312d58bd37c865130b1` |
+| `static/images/performance-lab/clarity-inspection.webp` | 1536 x 1024 | `cc4cb69ac5e1e40850d50a9c2a493cff9dfa73065a209895f1042b2fe8272f93` |
+| `static/images/performance-lab/clarity-inspection-mobile.webp` | 819 x 1024 | `2f411e97cc5076969cbb0b215d509f49cdb69d11c804eb6860281387d8003fad` |
+| `static/images/performance-lab/settlement-resolved.webp` | 1536 x 1024 | `ba45de2aceaca54e14c5486c2ffe11db60a8c23fab726a6e16b70dc01b3990cf` |
+| `static/images/performance-lab/settlement-resolved-mobile.webp` | 819 x 1024 | `ff248ca0c95a2b4af34543778016f5dee8fe24e3ebe58ae861e7a9d4a101e0ca` |
+
+## Assignment and accessible descriptions
+
+| Study | Condition | Public surface families | Alt text |
+| --- | --- | --- | --- |
+| `trace-dye-injection` | Provenance / correlation | `/proof/marketplace-workflow`, `/products/loom` | A cobalt tracer filament persisting downstream from an injection port in a measured glass water channel |
+| `turbulence-exception` | Exception / ambiguity | `/services`, `/control` | A bounded laboratory vortex held beside a gauge rod and steel baffle for exception inspection |
+| `clarity-inspection` | Inspectable conditions | `/map` | A calibration scale and datum line remaining legible through still water in a glass inspection rig |
+| `settlement-resolved` | Resolved state | `/delivery` | Still water settled at a datum line with a residue mark recording the basin's earlier level |
+
+`/field-reports/template-review` and `/dify/mcp-control-plane` retain `trace-wake-natural` because
+their claims are genuinely about a trace left after movement. Canon's shared control-plane study
+also stays unchanged for the separately governed `.io` and `.learn` consumers.
 
 ## Reference packet
 
@@ -121,19 +154,36 @@ private Nike reference packet is not an input to any brief in this package.
 
 ## Inspection record
 
-Pending generation. Before any asset here enters production it must satisfy:
+- [x] Original 1536 x 1024 output inspected at original resolution.
+- [x] Mobile 819 x 1024 hard crop inspected individually.
+- [x] Measuring apparatus legible in both crops.
+- [x] No typography, logo, watermark, interface overlay, or third-party mark.
+- [x] No people, hands, or likeness in frame.
+- [x] No blue or cyan anywhere except the applied dye filament on `trace-dye-injection`.
+- [x] Dye reads as a contained filament, not a wash, tint, glow, or background.
+- [x] Physical water behavior reads naturally at both crops.
+- [x] The named condition is the subject and is legible without a caption.
+- [x] Assigned to at most two public surface families.
+- [x] Desktop crop preserves negative space for campaign copy.
 
-- [ ] Original 1536 x 1024 output inspected at original resolution.
-- [ ] Mobile 819 x 1024 hard crop inspected individually.
-- [ ] Measuring apparatus legible in both crops.
-- [ ] No typography, logo, watermark, interface overlay, or third-party mark.
-- [ ] No people, hands, or likeness in frame.
-- [ ] No blue or cyan anywhere except the applied dye filament on `trace-dye-injection`.
-- [ ] Dye reads as a contained filament, not a wash, tint, glow, or background.
-- [ ] Physical water behavior reads naturally at both crops.
-- [ ] The named condition is the subject and is legible without a caption.
-- [ ] Assigned to at most one public surface family.
-- [ ] Desktop crop preserves negative space for campaign copy.
+Original and crop decisions:
+
+- `trace-dye-injection`: injection port, machined scale, origin, and persistent downstream filament
+  remain legible in both crops. The final cobalt pass confines `#0048ff` to the filament.
+- `turbulence-exception`: the bounded vortex, baffle, and gauge remain together in both crops; the
+  disturbance reads as measured rather than catastrophic.
+- `clarity-inspection`: the datum, scale marks, refraction, and droplets remain legible without
+  resolving into fake numerals or words.
+- `settlement-resolved`: the full frame holds the closed gate; the mobile hard crop prioritizes the
+  current datum and prior residue line, which are the named resolved-state proof.
+
+Rejected and intermediate variants:
+
+- The first dye-trace generation was rejected because warm brass remained visible outside the
+  monochrome doctrine.
+- A fully monochrome dye-trace edit was accepted as the color-safe master condition, then used only
+  as an intermediate for the controlled cobalt filament pass.
+- No rejected or intermediate variant was copied into `exports/` or `static/`.
 
 ## Rights and use
 
