@@ -16,7 +16,9 @@
 		LightStudy,
 		Circulation,
 		MaterialPalette,
-		DailyRhythm
+    DailyRhythm,
+    THRESHOLD_DWELLING_DESIGN,
+    type ThresholdDwellingCostLineItem
 	} from '@create-something/canon/experiments/threshold-dwelling';
 	import type {
 		FloorPlanData,
@@ -53,14 +55,6 @@
 	} from '$lib/types/architecture';
 	import { SEO } from '@create-something/canon';
 
-	interface Material {
-		name: string;
-		category: 'structure' | 'envelope' | 'interior' | 'exterior';
-		color: string;
-		location: string;
-		notes: string;
-	}
-
 	interface Activity {
 		name: string;
 		space: string;
@@ -77,7 +71,18 @@
 	}
 
 	// Fullscreen state - Heidegger: tool appears only when summoned
-	type ExpandedView = 'plan' | 'section' | 'elevation' | 'site' | 'roof' | 'systems' | 'light' | 'circulation' | 'materials' | 'rhythm' | null;
+  type ExpandedView =
+    | 'plan'
+    | 'section'
+    | 'elevation'
+    | 'site'
+    | 'roof'
+    | 'systems'
+    | 'light'
+    | 'circulation'
+    | 'materials'
+    | 'rhythm'
+    | null;
 	let expandedView: ExpandedView = $state(null);
 	let showBudget = $state(false);
 	let showMaterials = $state(false);
@@ -101,6 +106,11 @@
 			maximumFractionDigits: 0
 		}).format(amount);
 	}
+
+  function formatCostBasis(item: ThresholdDwellingCostLineItem): string {
+    if (item.unit === 'ALLOW') return 'Planning allowance';
+    return `${item.quantity.toLocaleString()} ${item.unit} × ${formatCurrency(item.unitRate)}/${item.unit}`;
+  }
 
 	// Client-side PNG download - converts SVG to canvas then PNG
 	let isDownloading = $state(false);
@@ -137,7 +147,7 @@
 
 			const computed = getComputedStyle(original);
 
-			styleProps.forEach(prop => {
+      styleProps.forEach((prop) => {
 				const value = computed.getPropertyValue(prop);
 				if (value && value !== 'none' && value !== '') {
 					// Set as inline style on the cloned element
@@ -148,7 +158,7 @@
 
 		// Also inline styles on the SVG root itself
 		const rootComputed = getComputedStyle(svgElement);
-		styleProps.forEach(prop => {
+    styleProps.forEach((prop) => {
 			const value = rootComputed.getPropertyValue(prop);
 			if (value && value !== 'none' && value !== '') {
 				clonedSvg.style.setProperty(prop, value);
@@ -202,8 +212,11 @@
 				return;
 			}
 
-			// Fill black background (Canon pure black)
-			ctx.fillStyle = '#000000';
+      // Match the active Performance surface in the exported artifact.
+      const exportBackground = getComputedStyle(svgElement)
+        .getPropertyValue('--color-performance-panel')
+        .trim();
+      ctx.fillStyle = exportBackground || '#ffffff';
 			ctx.fillRect(0, 0, targetWidth, targetHeight);
 
 			// Convert SVG to data URL
@@ -399,93 +412,7 @@
 			overhang(65, 13, 8, 14, 'Covered\nEntry')
 		],
 
-		entry: { x: 73, y: 16 },
-
-		materials: {
-			totalSF: 2730,
-			costPerSF: 298,
-			lineItems: [
-				{
-					category: 'Site',
-					description: 'Site preparation',
-					estimate: 15000,
-					notes: 'Clearing, grading, utilities'
-				},
-				{
-					category: 'Site',
-					description: 'Foundation (slab-on-grade)',
-					estimate: 45000,
-					notes: 'Post-tensioned slab'
-				},
-				{ category: 'Site', description: 'Driveway & parking', estimate: 12000 },
-				{
-					category: 'Structure',
-					description: 'Steel frame & columns',
-					estimate: 85000,
-					notes: 'Miesian exposed structure'
-				},
-				{ category: 'Structure', description: 'Roof structure', estimate: 35000 },
-				{ category: 'Structure', description: 'Exterior walls', estimate: 48000, notes: 'Cedar board & batten' },
-				{
-					category: 'Envelope',
-					description: 'Windows & glazing',
-					estimate: 95000,
-					notes: '10 windows: 4 south (private), 3 north (public), 1 east, 1 west'
-				},
-				{
-					category: 'Envelope',
-					description: 'Roofing',
-					estimate: 28000,
-					notes: 'Standing seam metal'
-				},
-				{ category: 'Envelope', description: 'Insulation', estimate: 18000 },
-				{ category: 'Interior', description: 'Interior walls & doors', estimate: 32000 },
-				{
-					category: 'Interior',
-					description: 'Flooring',
-					estimate: 38000,
-					notes: 'Polished concrete throughout'
-				},
-				{ category: 'Interior', description: 'Cedar millwork & cabinets', estimate: 62000, notes: 'Native Ashe Juniper throughout' },
-				{ category: 'Interior', description: 'Cedar ceilings', estimate: 28000, notes: 'T&G planks, living & bedrooms' },
-				{ category: 'Interior', description: 'Paint & finishes', estimate: 22000 },
-				{
-					category: 'Systems',
-					description: 'HVAC',
-					estimate: 42000,
-					notes: 'Mini-split system, zoned'
-				},
-				{ category: 'Systems', description: 'Electrical', estimate: 35000 },
-				{ category: 'Systems', description: 'Plumbing', estimate: 38000, notes: '4 full baths' },
-				{
-					category: 'Systems',
-					description: 'Solar prep',
-					estimate: 8000,
-					notes: 'Conduit & panel space'
-				},
-				{ category: 'Fixtures', description: 'Kitchen appliances', estimate: 18000 },
-				{ category: 'Fixtures', description: 'Bathroom fixtures', estimate: 24000 },
-				{ category: 'Fixtures', description: 'Lighting', estimate: 15000 },
-				{ category: 'Exterior', description: 'Carport structure', estimate: 18000 },
-				{ category: 'Exterior', description: 'Cedar soffits', estimate: 12000, notes: 'T&G under all overhangs' },
-				{ category: 'Exterior', description: 'Cedar decking', estimate: 18000, notes: 'Covered entry & patios' },
-				{
-					category: 'Exterior',
-					description: 'Dog kennel',
-					estimate: 8000,
-					notes: 'Covered, concrete floor'
-				},
-				{ category: 'Exterior', description: 'Landscaping allowance', estimate: 15000 }
-			],
-			assumptions: [
-				'Texas Gulf Coast region pricing (2025)',
-				'Owner-managed general contracting',
-				'Standard permits & inspections included',
-				'Does not include land acquisition',
-				'10% contingency recommended'
-			],
-			lastUpdated: 'December 2025'
-		}
+    entry: { x: 73, y: 16 }
 	};
 
 	// ============================================================================
@@ -539,9 +466,9 @@
 		],
 
 		dimensions: [
-			sectionDimension(-2, 3, 12, "9'-0\""),
-			sectionDimension(33, 3, 14, "11'-0\""),
-			sectionDimension(70, 3, 11, "8'-0\"")
+      sectionDimension(-2, 3, 12, '9\'-0"'),
+      sectionDimension(33, 3, 14, '11\'-0"'),
+      sectionDimension(70, 3, 11, '8\'-0"')
 		]
 	};
 
@@ -588,7 +515,7 @@
 			sectionLabel(70, 7, 'Carport', true)
 		],
 
-		dimensions: [sectionDimension(-2, 3, 15, "12'-0\""), sectionDimension(70, 3, 11, "8'-0\"")]
+    dimensions: [sectionDimension(-2, 3, 15, '12\'-0"'), sectionDimension(70, 3, 11, '8\'-0"')]
 	};
 
 	// ============================================================================
@@ -670,12 +597,7 @@
 			roofSlope(65, 13, 75, 13, 'e')
 		],
 
-		drains: [
-			roofDrain(5, 21),
-			roofDrain(60, 21),
-			roofDrain(70, 5),
-			roofDrain(70, 22)
-		],
+    drains: [roofDrain(5, 21), roofDrain(60, 21), roofDrain(70, 5), roofDrain(70, 22)],
 
 		overhangs: [overhang(65, 0, 10, 6, 'Kennel'), overhang(65, 6, 10, 7, 'Carport')],
 
@@ -775,9 +697,7 @@
 			{ x: 39, y: 20, width: 26, height: 22, circuit: 'In-Law 15A' }
 		],
 
-		labels: [
-			sectionLabel(32.5, 21, 'Main Corridor')
-		]
+    labels: [sectionLabel(32.5, 21, 'Main Corridor')]
 	};
 
 	// ============================================================================
@@ -808,28 +728,40 @@
 		// Sun paths for Texas latitude (~32.7°N)
 		sunPaths: [
 			// Summer Solstice (June 21) - sun is high and north
-			seasonalPath('summer', [
+      seasonalPath(
+        'summer',
+        [
 				sunPosition('morning', 65, 25),   // 8am: ENE, low
 				sunPosition('noon', 170, 82),      // 12pm: Nearly overhead, slightly south
 				sunPosition('afternoon', 255, 45), // 4pm: WSW, medium
 				sunPosition('evening', 285, 15)    // 6pm: WNW, low
-			], 0.5),
+        ],
+        0.5
+      ),
 
 			// Equinox (March/September) - balanced
-			seasonalPath('equinox', [
+      seasonalPath(
+        'equinox',
+        [
 				sunPosition('morning', 85, 20),    // 8am: E, low
 				sunPosition('noon', 180, 57),       // 12pm: S, medium-high
 				sunPosition('afternoon', 255, 35), // 4pm: WSW, medium
 				sunPosition('evening', 270, 10)    // 6pm: W, very low
-			], 1.0),
+        ],
+        1.0
+      ),
 
 			// Winter Solstice (December 21) - sun is low and south
-			seasonalPath('winter', [
+      seasonalPath(
+        'winter',
+        [
 				sunPosition('morning', 115, 10),   // 8am: ESE, very low
 				sunPosition('noon', 180, 34),       // 12pm: S, low
 				sunPosition('afternoon', 225, 20), // 4pm: SW, very low
 				sunPosition('evening', 245, 5)     // 6pm: WSW, horizon
-			], 2.0)
+        ],
+        2.0
+      )
 		],
 
 		// Light zones - where sun penetrates at different times
@@ -888,63 +820,128 @@
 		// Key threshold moments - Heidegger's zones of becoming
 		thresholds: [
 			// Entry sequence
-			thresholdMoment(73, 16, 'entry', 'Arrival',
-				'The threshold where outside meets inside. A moment of transition from the world to dwelling.'),
-			thresholdMoment(65, 16, 'transition', 'Vestibule',
-				'Covered entry—neither fully outside nor inside. The pause before entering.'),
-			thresholdMoment(55, 10, 'passage', 'Hall',
-				'The corridor that distributes: public left, private right, service beyond.'),
+      thresholdMoment(
+        73,
+        16,
+        'entry',
+        'Arrival',
+        'The threshold where outside meets inside. A moment of transition from the world to dwelling.'
+      ),
+      thresholdMoment(
+        65,
+        16,
+        'transition',
+        'Vestibule',
+        'Covered entry—neither fully outside nor inside. The pause before entering.'
+      ),
+      thresholdMoment(
+        55,
+        10,
+        'passage',
+        'Hall',
+        'The corridor that distributes: public left, private right, service beyond.'
+      ),
 
 			// Zone transitions
-			thresholdMoment(32, 13, 'transition', 'Open/Private',
-				'Where the open living zone meets the private corridor. Light gives way to intimacy.'),
-			thresholdMoment(5, 20, 'passage', "Daughter's",
-				'Threshold to the daughter\'s realm. Privacy within dwelling.'),
-			thresholdMoment(22, 20, 'passage', 'Primary',
-				'Entry to the primary suite. The deepest level of dwelling.'),
-			thresholdMoment(47, 20, 'passage', 'In-Law',
-				'The in-law suite threshold. Autonomy within togetherness.'),
+      thresholdMoment(
+        32,
+        13,
+        'transition',
+        'Open/Private',
+        'Where the open living zone meets the private corridor. Light gives way to intimacy.'
+      ),
+      thresholdMoment(
+        5,
+        20,
+        'passage',
+        "Daughter's",
+        "Threshold to the daughter's realm. Privacy within dwelling."
+      ),
+      thresholdMoment(
+        22,
+        20,
+        'passage',
+        'Primary',
+        'Entry to the primary suite. The deepest level of dwelling.'
+      ),
+      thresholdMoment(
+        47,
+        20,
+        'passage',
+        'In-Law',
+        'The in-law suite threshold. Autonomy within togetherness.'
+      ),
 
 			// Destinations
-			thresholdMoment(32, 6, 'arrival', 'Living',
-				'The heart of dwelling. Where the family gathers, where light fills the space.'),
-			thresholdMoment(6, 8, 'arrival', 'Pantry',
-				'The service threshold. Sustenance and preparation.')
+      thresholdMoment(
+        32,
+        6,
+        'arrival',
+        'Living',
+        'The heart of dwelling. Where the family gathers, where light fills the space.'
+      ),
+      thresholdMoment(
+        6,
+        8,
+        'arrival',
+        'Pantry',
+        'The service threshold. Sustenance and preparation.'
+      )
 		],
 
 		// Circulation paths
 		paths: [
 			// Primary path: Entry → Living
-			circulationPath([
+      circulationPath(
+        [
 				{ x: 73, y: 16 },
 				{ x: 65, y: 16 },
 				{ x: 55, y: 13 },
 				{ x: 32, y: 13 },
 				{ x: 32, y: 6 }
-			], 'primary', 'Entry to Living'),
+        ],
+        'primary',
+        'Entry to Living'
+      ),
 
 			// Secondary: Hall to private zones
-			circulationPath([
+      circulationPath(
+        [
 				{ x: 32, y: 16 },
 				{ x: 9, y: 16 },
 				{ x: 5, y: 20 }
-			], 'secondary', 'To Daughter'),
-			circulationPath([
+        ],
+        'secondary',
+        'To Daughter'
+      ),
+      circulationPath(
+        [
 				{ x: 32, y: 16 },
 				{ x: 22, y: 16 },
 				{ x: 22, y: 20 }
-			], 'secondary', 'To Primary'),
-			circulationPath([
+        ],
+        'secondary',
+        'To Primary'
+      ),
+      circulationPath(
+        [
 				{ x: 32, y: 16 },
 				{ x: 47, y: 16 },
 				{ x: 47, y: 20 }
-			], 'secondary', 'To In-Law'),
+        ],
+        'secondary',
+        'To In-Law'
+      ),
 
 			// Service path
-			circulationPath([
+      circulationPath(
+        [
 				{ x: 6, y: 13 },
 				{ x: 6, y: 8 }
-			], 'service', 'Service')
+        ],
+        'service',
+        'Service'
+      )
 		],
 
 		// Zone transitions
@@ -954,33 +951,6 @@
 			zoneTransition('open', 'public', 12, 13, 43, 'horizontal')
 		]
 	};
-
-	// ============================================================================
-	// MATERIAL PALETTE - Heidegger: how earth appears in dwelling
-	// ============================================================================
-
-	const materialPalette: Material[] = [
-		// Structure - Miesian honesty
-		{ name: 'Exposed Steel', category: 'structure', color: '#2a2a2a', location: 'Columns & beams', notes: 'Hot-rolled, clear-coated' },
-		{ name: 'Concrete', category: 'structure', color: '#8a8a8a', location: 'Foundation slab', notes: 'Polished, sealed' },
-
-		// Envelope - threshold between inside/outside
-		{ name: 'Standing Seam', category: 'envelope', color: '#3d3d3d', location: 'Roof', notes: 'Galvalume, 24ga' },
-		{ name: 'Clear Glass', category: 'envelope', color: '#a8d4e6', location: 'Windows', notes: 'Low-E, insulated' },
-		{ name: 'Cedar Siding', category: 'envelope', color: '#8b6914', location: 'Exterior walls', notes: 'Board & batten, natural weather' },
-		{ name: 'Cedar Soffit', category: 'envelope', color: '#a67c52', location: 'Overhangs', notes: 'T&G, connects inside/out' },
-
-		// Interior - dwelling surfaces (cedar as unifying thread)
-		{ name: 'Polished Concrete', category: 'interior', color: '#9a9590', location: 'All floors', notes: 'Radiant heat ready' },
-		{ name: 'Cedar Millwork', category: 'interior', color: '#a67c52', location: 'Cabinets & built-ins', notes: 'Native Ashe Juniper' },
-		{ name: 'Cedar Ceiling', category: 'interior', color: '#b8956c', location: 'Living & bedrooms', notes: 'T&G planks, aromatic' },
-		{ name: 'Gypsum Board', category: 'interior', color: '#f5f5f5', location: 'Walls', notes: 'Level 5 finish, white' },
-
-		// Exterior - earth connection
-		{ name: 'Native Stone', category: 'exterior', color: '#b8a88a', location: 'Entry threshold', notes: 'Texas limestone' },
-		{ name: 'Cedar Deck', category: 'exterior', color: '#9a7b4f', location: 'Covered patios', notes: 'Extends interior floor plane' },
-		{ name: 'Gravel', category: 'exterior', color: '#c9c0b0', location: 'Driveway & paths', notes: 'Decomposed granite' }
-	];
 
 	// ============================================================================
 	// DAILY RHYTHM DATA - Temporal dwelling
@@ -1000,48 +970,235 @@
 		],
 		activities: [
 			// Morning rhythm (6-9am)
-			{ name: 'Wake', space: 'Primary Suite', startHour: 6, endHour: 7, person: 'Parents', intensity: 'low' },
-			{ name: 'Wake', space: "Daughter's Room", startHour: 6.5, endHour: 7.5, person: 'Daughter', intensity: 'low' },
-			{ name: 'Wake', space: 'In-Law Suite', startHour: 7, endHour: 8, person: 'In-Law', intensity: 'low' },
-			{ name: 'Breakfast prep', space: 'Kitchen', startHour: 6.5, endHour: 8, person: 'Parents', intensity: 'high' },
-			{ name: 'Family breakfast', space: 'Dining', startHour: 7.5, endHour: 8.5, person: 'Family', intensity: 'high' },
+      {
+        name: 'Wake',
+        space: 'Primary Suite',
+        startHour: 6,
+        endHour: 7,
+        person: 'Parents',
+        intensity: 'low'
+      },
+      {
+        name: 'Wake',
+        space: "Daughter's Room",
+        startHour: 6.5,
+        endHour: 7.5,
+        person: 'Daughter',
+        intensity: 'low'
+      },
+      {
+        name: 'Wake',
+        space: 'In-Law Suite',
+        startHour: 7,
+        endHour: 8,
+        person: 'In-Law',
+        intensity: 'low'
+      },
+      {
+        name: 'Breakfast prep',
+        space: 'Kitchen',
+        startHour: 6.5,
+        endHour: 8,
+        person: 'Parents',
+        intensity: 'high'
+      },
+      {
+        name: 'Family breakfast',
+        space: 'Dining',
+        startHour: 7.5,
+        endHour: 8.5,
+        person: 'Family',
+        intensity: 'high'
+      },
 
 			// Daytime (9am-5pm) - parents at work, in-law at home
-			{ name: 'Reading', space: 'Living', startHour: 9, endHour: 11, person: 'In-Law', intensity: 'medium' },
-			{ name: 'Quiet time', space: 'Pantry/Sit-in', startHour: 11, endHour: 12, person: 'In-Law', intensity: 'low' },
-			{ name: 'Lunch', space: 'Kitchen', startHour: 12, endHour: 13, person: 'In-Law', intensity: 'medium' },
-			{ name: 'Rest', space: 'In-Law Suite', startHour: 13, endHour: 15, person: 'In-Law', intensity: 'low' },
-			{ name: 'Garden', space: 'Covered Entry', startHour: 15, endHour: 17, person: 'In-Law', intensity: 'medium' },
+      {
+        name: 'Reading',
+        space: 'Living',
+        startHour: 9,
+        endHour: 11,
+        person: 'In-Law',
+        intensity: 'medium'
+      },
+      {
+        name: 'Quiet time',
+        space: 'Pantry/Sit-in',
+        startHour: 11,
+        endHour: 12,
+        person: 'In-Law',
+        intensity: 'low'
+      },
+      {
+        name: 'Lunch',
+        space: 'Kitchen',
+        startHour: 12,
+        endHour: 13,
+        person: 'In-Law',
+        intensity: 'medium'
+      },
+      {
+        name: 'Rest',
+        space: 'In-Law Suite',
+        startHour: 13,
+        endHour: 15,
+        person: 'In-Law',
+        intensity: 'low'
+      },
+      {
+        name: 'Garden',
+        space: 'Covered Entry',
+        startHour: 15,
+        endHour: 17,
+        person: 'In-Law',
+        intensity: 'medium'
+      },
 
 			// After school (3-6pm)
-			{ name: 'Homework', space: "Daughter's Room", startHour: 15.5, endHour: 17.5, person: 'Daughter', intensity: 'medium' },
+      {
+        name: 'Homework',
+        space: "Daughter's Room",
+        startHour: 15.5,
+        endHour: 17.5,
+        person: 'Daughter',
+        intensity: 'medium'
+      },
 
 			// Evening rhythm (5-10pm)
-			{ name: 'Cooking', space: 'Kitchen', startHour: 17, endHour: 19, person: 'Parents', intensity: 'high' },
-			{ name: 'Family dinner', space: 'Dining', startHour: 19, endHour: 20, person: 'Family', intensity: 'high' },
-			{ name: 'Evening together', space: 'Living', startHour: 20, endHour: 22, person: 'Family', intensity: 'medium' },
-			{ name: 'TV/Quiet', space: 'In-Law Suite', startHour: 20.5, endHour: 22, person: 'In-Law', intensity: 'low' },
-			{ name: 'Wind down', space: "Daughter's Room", startHour: 21, endHour: 22, person: 'Daughter', intensity: 'low' },
-			{ name: 'Evening', space: 'Primary Suite', startHour: 22, endHour: 23, person: 'Parents', intensity: 'low' },
+      {
+        name: 'Cooking',
+        space: 'Kitchen',
+        startHour: 17,
+        endHour: 19,
+        person: 'Parents',
+        intensity: 'high'
+      },
+      {
+        name: 'Family dinner',
+        space: 'Dining',
+        startHour: 19,
+        endHour: 20,
+        person: 'Family',
+        intensity: 'high'
+      },
+      {
+        name: 'Evening together',
+        space: 'Living',
+        startHour: 20,
+        endHour: 22,
+        person: 'Family',
+        intensity: 'medium'
+      },
+      {
+        name: 'TV/Quiet',
+        space: 'In-Law Suite',
+        startHour: 20.5,
+        endHour: 22,
+        person: 'In-Law',
+        intensity: 'low'
+      },
+      {
+        name: 'Wind down',
+        space: "Daughter's Room",
+        startHour: 21,
+        endHour: 22,
+        person: 'Daughter',
+        intensity: 'low'
+      },
+      {
+        name: 'Evening',
+        space: 'Primary Suite',
+        startHour: 22,
+        endHour: 23,
+        person: 'Parents',
+        intensity: 'low'
+      },
 
 			// Weekend guest rhythm (occasional)
-			{ name: 'Guests arrive', space: 'Covered Entry', startHour: 18, endHour: 18.5, person: 'Guests', intensity: 'medium' }
+      {
+        name: 'Guests arrive',
+        space: 'Covered Entry',
+        startHour: 18,
+        endHour: 18.5,
+        person: 'Guests',
+        intensity: 'medium'
+      }
 		]
 	};
 
-	// Group line items by category - DRY
-	const groupedCosts = pavilion.materials?.lineItems.reduce(
+  const { buildMetrics, constructionAllowance, materialPalette } = THRESHOLD_DWELLING_DESIGN;
+  const baseConstructionCost = constructionAllowance.lineItems.reduce(
+    (total, item) => total + item.estimate,
+    0
+  );
+  const contingencyAmount =
+    constructionAllowance.workingConstructionAuthorization - baseConstructionCost;
+  const baseCostPerSF = baseConstructionCost / constructionAllowance.totalSF;
+  const workingCostPerSF =
+    constructionAllowance.workingConstructionAuthorization / constructionAllowance.totalSF;
+
+  const groupedCosts = constructionAllowance.lineItems.reduce(
 		(acc, item) => {
 			if (!acc[item.category]) acc[item.category] = [];
 			acc[item.category].push(item);
 			return acc;
 		},
-		{} as Record<string, typeof pavilion.materials.lineItems>
+    {} as Record<string, typeof constructionAllowance.lineItems>
 	);
-
-	const totalBudget = pavilion.materials
-		? pavilion.materials.totalSF * pavilion.materials.costPerSF
-		: 0;
+  const categoryTotals = Object.fromEntries(
+    Object.entries(groupedCosts).map(([category, items]) => [
+      category,
+      items.reduce((total, item) => total + item.estimate, 0)
+    ])
+  );
+  const materialDistributionLabels = {
+    concreteAssemblies: 'Concrete assemblies',
+    steelRoofCarportAssemblies: 'Steel, roof & carport assemblies',
+    glazing: 'Glazing',
+    opaqueEnvelope: 'Primary opaque envelope',
+    insulationAirWaterControl: 'Insulation & air/water control',
+    cedar: 'Cedar — protected and tactile roles',
+    other: 'Systems, fixtures, site & other work'
+  } as const;
+  const materialDistribution = Object.entries(materialDistributionLabels).map(([key, label]) => ({
+    label,
+    amount:
+      constructionAllowance.materialDistribution[
+        key as keyof typeof constructionAllowance.materialDistribution
+      ]
+  }));
+  const costDrivers = [
+    {
+      label: 'Conditioned floor',
+      value: `${buildMetrics.conditionedFloorAreaSF.toLocaleString()} SF`
+    },
+    {
+      label: 'Exterior perimeter',
+      value: `${buildMetrics.buildingPerimeterLF.toLocaleString()} LF`
+    },
+    {
+      label: 'Gross wall field',
+      value: `${buildMetrics.grossExteriorWallAreaSF.toLocaleString()} SF`
+    },
+    {
+      label: 'Glazing',
+      value: `${buildMetrics.glazingAreaSF.toLocaleString()} SF · ${(
+        (buildMetrics.glazingAreaSF / buildMetrics.grossExteriorWallAreaSF) *
+        100
+      ).toFixed(1)}%`
+    },
+    { label: 'Opaque wall', value: `${buildMetrics.opaqueWallAreaSF.toLocaleString()} SF` },
+    { label: 'Roof', value: `${buildMetrics.roofAreaSF.toLocaleString()} SF` },
+    { label: 'Carport', value: `${buildMetrics.carportAreaSF.toLocaleString()} SF` },
+    { label: 'Concrete terraces', value: `${buildMetrics.terraceAreaSF.toLocaleString()} SF` },
+    {
+      label: 'Protected cedar',
+      value: `${buildMetrics.protectedCedarAreaSF.toLocaleString()} SF exterior · ${buildMetrics.publicRoomCedarCeilingAreaSF.toLocaleString()} SF ceiling`
+    },
+    {
+      label: 'Systems',
+      value: `${buildMetrics.hvacZoneCount} HVAC zones · ${buildMetrics.bathroomCount} baths`
+    }
+  ];
 </script>
 
 <SEO
@@ -1081,19 +1238,32 @@
 		class:expanded={expandedView === 'plan'}
 		class:hidden={expandedView !== null && expandedView !== 'plan'}
 	>
-		<button class="expand-trigger" onclick={() => toggleExpand('plan')} aria-label="Toggle fullscreen floor plan">
+    <button
+      class="expand-trigger"
+      onclick={() => toggleExpand('plan')}
+      aria-label="Toggle fullscreen floor plan"
+    >
 			<FloorPlan plan={pavilion} showCaption={false} />
 		</button>
 	</section>
 
 	<!-- Secondary: Section + Elevation (1:φ ratio between them) -->
-	<section class="secondary-views" class:hidden={expandedView !== null && expandedView !== 'section' && expandedView !== 'elevation'}>
+  <section
+    class="secondary-views"
+    class:hidden={expandedView !== null &&
+      expandedView !== 'section' &&
+      expandedView !== 'elevation'}
+  >
 		<div
 			class="view-panel secondary-left"
 			class:expanded={expandedView === 'section'}
 			class:hidden={expandedView !== null && expandedView !== 'section'}
 		>
-			<button class="expand-trigger" onclick={() => toggleExpand('section')} aria-label="Toggle fullscreen section">
+      <button
+        class="expand-trigger"
+        onclick={() => toggleExpand('section')}
+        aria-label="Toggle fullscreen section"
+      >
 				<Section section={sectionAA} expanded={expandedView === 'section'} />
 			</button>
 		</div>
@@ -1102,20 +1272,32 @@
 			class:expanded={expandedView === 'elevation'}
 			class:hidden={expandedView !== null && expandedView !== 'elevation'}
 		>
-			<button class="expand-trigger" onclick={() => toggleExpand('elevation')} aria-label="Toggle fullscreen elevation">
+      <button
+        class="expand-trigger"
+        onclick={() => toggleExpand('elevation')}
+        aria-label="Toggle fullscreen elevation"
+      >
 				<Elevation elevation={southElevation} expanded={expandedView === 'elevation'} />
 			</button>
 		</div>
 	</section>
 
 	<!-- Tertiary: Site + Roof + Systems + Light + Circulation + Rhythm (3×2 grid) -->
-	<section class="tertiary-views" class:hidden={expandedView !== null && !['site', 'roof', 'systems', 'light', 'circulation', 'rhythm'].includes(expandedView)}>
+  <section
+    class="tertiary-views"
+    class:hidden={expandedView !== null &&
+      !['site', 'roof', 'systems', 'light', 'circulation', 'rhythm'].includes(expandedView)}
+  >
 		<div
 			class="view-panel tertiary-item"
 			class:expanded={expandedView === 'site'}
 			class:hidden={expandedView !== null && expandedView !== 'site'}
 		>
-			<button class="expand-trigger" onclick={() => toggleExpand('site')} aria-label="Toggle fullscreen site plan">
+      <button
+        class="expand-trigger"
+        onclick={() => toggleExpand('site')}
+        aria-label="Toggle fullscreen site plan"
+      >
 				<SitePlan site={sitePlan} />
 			</button>
 		</div>
@@ -1124,7 +1306,11 @@
 			class:expanded={expandedView === 'roof'}
 			class:hidden={expandedView !== null && expandedView !== 'roof'}
 		>
-			<button class="expand-trigger" onclick={() => toggleExpand('roof')} aria-label="Toggle fullscreen roof plan">
+      <button
+        class="expand-trigger"
+        onclick={() => toggleExpand('roof')}
+        aria-label="Toggle fullscreen roof plan"
+      >
 				<RoofPlan roof={roofPlan} />
 			</button>
 		</div>
@@ -1133,7 +1319,11 @@
 			class:expanded={expandedView === 'systems'}
 			class:hidden={expandedView !== null && expandedView !== 'systems'}
 		>
-			<button class="expand-trigger" onclick={() => toggleExpand('systems')} aria-label="Toggle fullscreen systems">
+      <button
+        class="expand-trigger"
+        onclick={() => toggleExpand('systems')}
+        aria-label="Toggle fullscreen systems"
+      >
 				<Systems systems={systemsData} />
 			</button>
 		</div>
@@ -1142,28 +1332,52 @@
 			class:expanded={expandedView === 'light'}
 			class:hidden={expandedView !== null && expandedView !== 'light'}
 		>
-			<button class="expand-trigger" onclick={() => toggleExpand('light')} aria-label="Toggle fullscreen light study">
+      <div class="interactive-view">
 				<LightStudy study={lightStudyData} showCaption={false} />
+        <button
+          type="button"
+          class="interactive-expand-control"
+          onclick={() => toggleExpand('light')}
+          aria-label="Toggle fullscreen light study"
+        >
+          {expandedView === 'light' ? 'Close' : 'Expand'}
 			</button>
 		</div>
+    </div>
 		<div
 			class="view-panel tertiary-item"
 			class:expanded={expandedView === 'circulation'}
 			class:hidden={expandedView !== null && expandedView !== 'circulation'}
 		>
-			<button class="expand-trigger" onclick={() => toggleExpand('circulation')} aria-label="Toggle fullscreen circulation">
+      <div class="interactive-view">
 				<Circulation circulation={circulationData} showCaption={false} />
+        <button
+          type="button"
+          class="interactive-expand-control"
+          onclick={() => toggleExpand('circulation')}
+          aria-label="Toggle fullscreen circulation"
+        >
+          {expandedView === 'circulation' ? 'Close' : 'Expand'}
 			</button>
 		</div>
+    </div>
 		<div
 			class="view-panel tertiary-item"
 			class:expanded={expandedView === 'rhythm'}
 			class:hidden={expandedView !== null && expandedView !== 'rhythm'}
 		>
-			<button class="expand-trigger" onclick={() => toggleExpand('rhythm')} aria-label="Toggle fullscreen daily rhythm">
+      <div class="interactive-view">
 				<DailyRhythm rhythm={dailyRhythmData} showCaption={false} />
+        <button
+          type="button"
+          class="interactive-expand-control"
+          onclick={() => toggleExpand('rhythm')}
+          aria-label="Toggle fullscreen daily rhythm"
+        >
+          {expandedView === 'rhythm' ? 'Close' : 'Expand'}
 			</button>
 		</div>
+    </div>
 	</section>
 
 	<!-- Footer: Integrated data summary (Tufte: data, not chrome) -->
@@ -1180,37 +1394,106 @@
 			<span class="metric-value">{pavilion.bedrooms} / {pavilion.bathrooms}</span>
 			<span class="metric-label">Bed / Bath</span>
 		</div>
-		<div class="metric clickable" role="button" tabindex="0" onclick={() => showBudget = !showBudget} onkeydown={(e) => e.key === 'Enter' && (showBudget = !showBudget)}>
-			<span class="metric-value">{formatCurrency(totalBudget)}</span>
-			<span class="metric-label">Budget {showBudget ? '−' : '+'}</span>
+    <div
+      class="metric clickable"
+      role="button"
+      tabindex="0"
+      onclick={() => (showBudget = !showBudget)}
+      onkeydown={(e) => e.key === 'Enter' && (showBudget = !showBudget)}
+    >
+      <span class="metric-value"
+        >{formatCurrency(constructionAllowance.workingConstructionAuthorization)}</span
+      >
+      <span class="metric-label">Working allowance {showBudget ? '−' : '+'}</span>
 		</div>
-		<div class="metric clickable" role="button" tabindex="0" onclick={() => showMaterials = !showMaterials} onkeydown={(e) => e.key === 'Enter' && (showMaterials = !showMaterials)}>
+    <div
+      class="metric clickable"
+      role="button"
+      tabindex="0"
+      onclick={() => (showMaterials = !showMaterials)}
+      onkeydown={(e) => e.key === 'Enter' && (showMaterials = !showMaterials)}
+    >
 			<span class="metric-value">{materialPalette.length}</span>
 			<span class="metric-label">Materials {showMaterials ? '−' : '+'}</span>
 		</div>
-		<button type="button" class="metric clickable download-link" onclick={downloadPNG} disabled={isDownloading}>
+    <button
+      type="button"
+      class="metric clickable download-link"
+      onclick={downloadPNG}
+      disabled={isDownloading}
+    >
 			<span class="metric-value">{isDownloading ? '...' : 'PNG'}</span>
 			<span class="metric-label">Download</span>
 		</button>
 	</footer>
 
 	<!-- Budget Details: Collapsible price sheet (Rams: information on demand) -->
-	{#if showBudget && pavilion.materials && !expandedView}
+  {#if showBudget && !expandedView}
 		<section class="budget-details">
 			<header class="budget-header">
-				<h2 class="budget-title">Construction Budget</h2>
-				<span class="budget-meta">{formatCurrency(pavilion.materials.costPerSF)}/SF · {pavilion.materials.lastUpdated}</span>
+        <div>
+          <h2 class="budget-title">Construction Allowance</h2>
+          <p class="budget-status">
+            Design Development {THRESHOLD_DWELLING_DESIGN.revision} · Not a bid or permit set
+          </p>
+        </div>
+        <span class="budget-meta">
+          Base {formatCurrency(baseCostPerSF)}/SF · With contingency {formatCurrency(
+            workingCostPerSF
+          )}/SF · {constructionAllowance.lastUpdated}
+        </span>
 			</header>
 
+      <div class="budget-summary" aria-label="Construction allowance summary">
+        <div class="summary-item">
+          <span class="summary-label">Base construction</span>
+          <strong>{formatCurrency(baseConstructionCost)}</strong>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">Design contingency</span>
+          <strong>{formatCurrency(contingencyAmount)}</strong>
+          <small>{constructionAllowance.contingencyRate * 100}% carried separately</small>
+        </div>
+        <div class="summary-item summary-item-primary">
+          <span class="summary-label">Working construction allowance</span>
+          <strong>{formatCurrency(constructionAllowance.workingConstructionAuthorization)}</strong>
+          <small>Base + design contingency · before excluded owner costs</small>
+        </div>
+      </div>
+
+      <section class="build-basis" aria-labelledby="build-basis-title">
+        <div class="build-basis-heading">
+          <h3 id="build-basis-title">Build & layout basis</h3>
+          <span>Design-development quantities · field and trade validation required</span>
+        </div>
+        <div class="cost-driver-grid">
+          {#each costDrivers as driver}
+            <div class="cost-driver">
+              <span>{driver.label}</span>
+              <strong>{driver.value}</strong>
+            </div>
+          {/each}
+        </div>
+      </section>
+
 			<div class="budget-categories">
-				{#each Object.entries(groupedCosts || {}) as [category, items]}
+        {#each Object.entries(groupedCosts) as [category, items]}
 					<div class="budget-category">
+            <div class="category-heading">
 						<h3 class="category-name">{category}</h3>
+              <span class="category-total">
+                {formatCurrency(categoryTotals[category])} · {(
+                  (categoryTotals[category] / baseConstructionCost) *
+                  100
+                ).toFixed(1)}%
+              </span>
+            </div>
 						{#each items as item}
 							<div class="budget-item">
 								<span class="item-desc">{item.description}</span>
 								<span class="item-amount">{formatCurrency(item.estimate)}</span>
 							</div>
+              <p class="item-basis">{formatCostBasis(item)}</p>
 							{#if item.notes}
 								<p class="item-notes">{item.notes}</p>
 							{/if}
@@ -1219,23 +1502,57 @@
 				{/each}
 			</div>
 
-			{#if pavilion.materials.assumptions?.length}
+      <div class="budget-supporting-grid">
+        <div class="budget-assumptions">
+          <h3>Material distribution</h3>
+          <div class="distribution-list">
+            {#each materialDistribution as item}
+              <div class="distribution-item">
+                <span>{item.label}</span>
+                <span>
+                  {formatCurrency(item.amount)} · {(
+                    (item.amount / baseConstructionCost) *
+                    100
+                  ).toFixed(1)}%
+                </span>
+              </div>
+            {/each}
+          </div>
+          <p class="distribution-note">
+            Installed assemblies combine material, fabrication, labor, and subcontractor margin.
+            Cedar is separately visible rather than embedded across general finish allowances.
+          </p>
+        </div>
+
+        <div class="budget-assumptions">
+          <h3>Excluded owner costs</h3>
+          <ul>
+            {#each constructionAllowance.excludedOwnerCosts as cost}
+              <li>{cost}</li>
+            {/each}
+          </ul>
+        </div>
+
 				<div class="budget-assumptions">
 					<h3>Assumptions</h3>
 					<ul>
-						{#each pavilion.materials.assumptions as assumption}
+            {#each constructionAllowance.assumptions as assumption}
 							<li>{assumption}</li>
 						{/each}
 					</ul>
 				</div>
-			{/if}
+      </div>
 		</section>
 	{/if}
 
 	<!-- Material Palette: Collapsible (Rams: information on demand) -->
 	{#if showMaterials && !expandedView}
 		<section class="materials-details">
-			<MaterialPalette materials={materialPalette} projectName={pavilion.name} showCaption={false} />
+      <MaterialPalette
+        materials={materialPalette}
+        projectName={pavilion.name}
+        showCaption={false}
+      />
 		</section>
 	{/if}
 
@@ -1260,13 +1577,100 @@
 	 */
 
 	.dwelling {
+    /*
+		 * Experiment-local architectural semantics.
+		 * These stay local to Threshold Dwelling while every color resolves through
+		 * the current Performance palette owned by Canon.
+		 */
+    --arch-zone-outer: var(--color-performance-panel);
+    --arch-zone-service: color-mix(
+      in srgb,
+      var(--color-performance-court) 24%,
+      var(--color-performance-panel)
+    );
+    --arch-zone-public: color-mix(
+      in srgb,
+      var(--color-performance-court) 40%,
+      var(--color-performance-panel)
+    );
+    --arch-zone-private: color-mix(
+      in srgb,
+      var(--color-performance-court) 58%,
+      var(--color-performance-panel)
+    );
+    --arch-zone-open: var(--color-performance-paper);
+
+    --arch-wall-exterior: var(--color-performance-ink);
+    --arch-wall-interior: var(--color-performance-ink-soft);
+    --arch-label-primary: var(--color-performance-ink-soft);
+    --arch-label-secondary: var(--color-performance-muted);
+    --arch-label-subtle: color-mix(in srgb, var(--color-performance-muted) 45%, transparent);
+    --arch-door-tick: var(--color-performance-muted);
+    --arch-window: var(--color-performance-signal);
+    --arch-column: var(--color-performance-ink-soft);
+    --arch-overhang: var(--color-performance-line-strong);
+    --arch-entry-arrow: var(--color-performance-pressure);
+
+    --arch-hvac-supply: var(--color-performance-signal);
+    --arch-hvac-return: color-mix(in srgb, var(--color-performance-signal) 58%, transparent);
+    --arch-hvac-equipment: var(--color-performance-signal);
+    --arch-hvac-zone: var(--color-performance-signal-soft);
+    --arch-hvac-label: var(--color-performance-signal);
+    --arch-plumbing-supply: var(--color-performance-growth);
+    --arch-plumbing-drain: color-mix(in srgb, var(--color-performance-growth) 72%, transparent);
+    --arch-plumbing-vent: color-mix(in srgb, var(--color-performance-growth) 48%, transparent);
+    --arch-plumbing-fixture: var(--color-performance-growth);
+    --arch-plumbing-label: var(--color-performance-growth);
+    --arch-electrical-circuit: transparent;
+    --arch-electrical-equipment: var(--color-performance-gold);
+    --arch-electrical-wire: color-mix(in srgb, var(--color-performance-gold) 68%, transparent);
+    --arch-electrical-label: var(--color-performance-gold);
+
+    --arch-site-building: var(--color-performance-panel);
+    --arch-site-driveway: var(--color-performance-court);
+    --arch-site-landscape: var(--color-performance-growth-soft);
+    --arch-site-water: var(--color-performance-signal-soft);
+    --arch-site-setback: var(--color-performance-line-strong);
+    --arch-threshold-entry: var(--color-performance-growth);
+    --arch-threshold-transition: var(--color-performance-signal);
+    --arch-threshold-passage: var(--color-performance-pressure);
+    --arch-threshold-arrival: var(--color-performance-risk);
+
+    --arch-sun-summer: var(--color-performance-pressure);
+    --arch-sun-equinox: var(--color-performance-signal);
+    --arch-sun-winter: var(--color-performance-risk);
+    --arch-light-direct: var(--color-performance-gold);
+    --arch-light-diffuse: var(--color-performance-signal-soft);
+    --arch-light-shade: var(--color-performance-court);
+    --arch-rhythm-family: var(--color-performance-signal);
+    --arch-rhythm-parents: var(--color-performance-ink-soft);
+    --arch-rhythm-daughter: var(--color-performance-risk);
+    --arch-rhythm-inlaw: var(--color-performance-gold);
+    --arch-rhythm-guests: var(--color-performance-growth);
+    --arch-rhythm-service: var(--color-performance-muted);
+
+    --arch-stroke-cut: 2;
+    --arch-stroke-object: 1;
+    --arch-stroke-medium: 0.5;
+    --arch-stroke-fine: 0.25;
+    --arch-stroke-hairline: 0.15;
+    --arch-dimension-color: var(--color-performance-line-strong);
+    --arch-scale-color: var(--color-performance-muted);
+    --arch-scale-text: var(--color-performance-muted);
+    --arch-hatch-color: var(--color-performance-line-strong);
+    --arch-hatch-opacity: 0.3;
+    --arch-title-primary: var(--color-performance-ink);
+    --arch-title-secondary: var(--color-performance-muted);
+
 		min-height: 100vh;
-		background: var(--color-performance-bg-pure);
+    background: var(--color-performance-paper);
+    color: var(--color-performance-ink);
+    font-family: var(--font-performance-display);
 		display: grid;
 		grid-template-rows: auto 1fr auto auto auto;
 		gap: var(--space-performance-md);
 		padding: var(--space-performance-lg);
-		max-width: 1400px;
+    max-width: var(--content-width-performance);
 		margin: 0 auto;
 	}
 
@@ -1277,20 +1681,21 @@
 	}
 
 	.dwelling-title {
-		font-family: var(--font-performance-sans, system-ui, sans-serif);
+    font-family: var(--font-performance-display);
 		font-size: var(--text-performance-h3);
-		font-weight: 300;
-		color: var(--color-performance-fg-secondary);
+    font-weight: var(--font-performance-display-weight);
+    color: var(--color-performance-ink);
 		margin: 0;
-		letter-spacing: 0.02em;
+    letter-spacing: var(--tracking-performance-display);
+    line-height: var(--leading-performance-display);
 	}
 
 	.dwelling-meta {
-		font-family: var(--font-performance-sans, system-ui, sans-serif);
+    font-family: var(--font-performance-mono);
 		font-size: var(--text-performance-caption);
-		color: var(--color-performance-fg-muted);
+    color: var(--color-performance-muted);
 		margin: var(--space-performance-xs) 0 0 0;
-		letter-spacing: 0.05em;
+    letter-spacing: 0;
 		text-transform: uppercase;
 	}
 
@@ -1346,19 +1751,19 @@
 	}
 
 	.metric-value {
-		font-family: var(--font-performance-sans, system-ui, sans-serif);
+    font-family: var(--font-performance-display);
 		font-size: var(--text-performance-body-lg);
-		font-weight: 300;
-		color: var(--color-performance-fg-secondary);
+    font-weight: var(--font-performance-display-weight);
+    color: var(--color-performance-ink);
 		font-variant-numeric: tabular-nums;
 	}
 
 	.metric-label {
-		font-family: var(--font-performance-sans, system-ui, sans-serif);
+    font-family: var(--font-performance-mono);
 		font-size: var(--text-performance-caption);
-		color: var(--color-performance-fg-muted);
+    color: var(--color-performance-muted);
 		text-transform: uppercase;
-		letter-spacing: 0.1em;
+    letter-spacing: 0;
 	}
 
 	.metric.clickable {
@@ -1378,7 +1783,7 @@
 	.budget-details,
 	.materials-details {
 		padding: var(--space-performance-lg) 0;
-		font-family: var(--font-performance-sans, system-ui, sans-serif);
+    font-family: var(--font-performance-display);
 	}
 
 	.materials-details {
@@ -1395,14 +1800,111 @@
 
 	.budget-title {
 		font-size: var(--text-performance-h3);
-		font-weight: 300;
-		color: var(--color-performance-fg-secondary);
+    font-weight: var(--font-performance-display-weight);
+    color: var(--color-performance-ink);
 		margin: 0;
 	}
 
 	.budget-meta {
 		font-size: var(--text-performance-caption);
-		color: var(--color-performance-fg-muted);
+    color: var(--color-performance-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .budget-status {
+    margin: var(--space-performance-xs) 0 0;
+    font-family: var(--font-performance-mono);
+    font-size: var(--text-performance-caption);
+    color: var(--color-performance-muted);
+    text-transform: uppercase;
+  }
+
+  .budget-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border-block: 1px solid var(--color-performance-line-strong);
+    margin-bottom: var(--space-performance-lg);
+  }
+
+  .summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-performance-xs);
+    padding: var(--space-performance-md);
+    border-right: 1px solid var(--color-performance-line-strong);
+  }
+
+  .summary-item:last-child {
+    border-right: 0;
+  }
+
+  .summary-item strong {
+    font-size: var(--text-performance-h3);
+    font-weight: var(--font-performance-display-weight);
+    color: var(--color-performance-ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .summary-item small,
+  .summary-label {
+    font-family: var(--font-performance-mono);
+    font-size: var(--text-performance-caption);
+    color: var(--color-performance-muted);
+  }
+
+  .summary-item-primary {
+    background: var(--color-performance-panel);
+  }
+
+  .build-basis {
+    margin-bottom: var(--space-performance-lg);
+  }
+
+  .build-basis-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--space-performance-sm);
+    margin-bottom: var(--space-performance-sm);
+  }
+
+  .build-basis-heading h3,
+  .build-basis-heading span {
+    margin: 0;
+    font-family: var(--font-performance-mono);
+    font-size: var(--text-performance-caption);
+    color: var(--color-performance-muted);
+    text-transform: uppercase;
+  }
+
+  .cost-driver-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    border-top: 1px solid var(--color-performance-line-strong);
+    border-left: 1px solid var(--color-performance-line-strong);
+  }
+
+  .cost-driver {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-performance-xs);
+    min-width: 0;
+    padding: var(--space-performance-sm);
+    border-right: 1px solid var(--color-performance-line-strong);
+    border-bottom: 1px solid var(--color-performance-line-strong);
+  }
+
+  .cost-driver span {
+    font-family: var(--font-performance-mono);
+    font-size: var(--text-performance-caption);
+    color: var(--color-performance-muted);
+  }
+
+  .cost-driver strong {
+    font-size: var(--text-performance-body-sm);
+    font-weight: var(--font-performance-display-weight);
+    color: var(--color-performance-ink);
+    font-variant-numeric: tabular-nums;
 	}
 
 	.budget-categories {
@@ -1415,14 +1917,30 @@
 		padding: var(--space-performance-sm) 0;
 	}
 
+  .category-heading {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-performance-sm);
+    align-items: baseline;
+    border-bottom: 1px solid var(--color-performance-line-strong);
+    margin-bottom: var(--space-performance-sm);
+    padding-bottom: var(--space-performance-xs);
+  }
+
 	.category-name {
 		font-size: var(--text-performance-caption);
 		font-weight: 500;
-		color: var(--color-performance-fg-muted);
+    color: var(--color-performance-muted);
 		text-transform: uppercase;
 		letter-spacing: 0.1em;
-		margin: 0 0 var(--space-performance-sm) 0;
-		padding-bottom: var(--space-performance-xs);
+    margin: 0;
+  }
+
+  .category-total {
+    font-family: var(--font-performance-mono);
+    font-size: var(--text-performance-caption);
+    color: var(--color-performance-muted);
+    font-variant-numeric: tabular-nums;
 	}
 
 	.budget-item {
@@ -1434,31 +1952,46 @@
 
 	.item-desc {
 		font-size: var(--text-performance-body-sm);
-		color: var(--color-performance-fg-tertiary);
+    color: var(--color-performance-ink-soft);
 	}
 
 	.item-amount {
 		font-size: var(--text-performance-body-sm);
-		color: var(--color-performance-fg-secondary);
+    color: var(--color-performance-ink);
 		font-variant-numeric: tabular-nums;
 	}
 
 	.item-notes {
 		font-size: var(--text-performance-caption);
-		color: var(--color-performance-fg-muted);
+    color: var(--color-performance-muted);
 		margin: 0.125rem 0 0.5rem 0;
 		font-style: italic;
 	}
 
+  .item-basis {
+    margin: 0.125rem 0 0;
+    font-family: var(--font-performance-mono);
+    font-size: var(--text-performance-caption);
+    color: var(--color-performance-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
 	.budget-assumptions {
-		margin-top: var(--space-performance-lg);
 		padding-top: var(--space-performance-md);
 	}
+
+  .budget-supporting-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-performance-lg);
+    margin-top: var(--space-performance-lg);
+    border-top: 1px solid var(--color-performance-line-strong);
+  }
 
 	.budget-assumptions h3 {
 		font-size: var(--text-performance-caption);
 		font-weight: 500;
-		color: var(--color-performance-fg-muted);
+    color: var(--color-performance-muted);
 		text-transform: uppercase;
 		letter-spacing: 0.1em;
 		margin: 0 0 var(--space-performance-sm) 0;
@@ -1471,9 +2004,37 @@
 
 	.budget-assumptions li {
 		font-size: var(--text-performance-body-sm);
-		color: var(--color-performance-fg-tertiary);
+    color: var(--color-performance-ink-soft);
 		margin: 0.25rem 0;
 	}
+
+  .distribution-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-performance-xs);
+  }
+
+  .distribution-item {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-performance-sm);
+    font-size: var(--text-performance-body-sm);
+    color: var(--color-performance-ink-soft);
+  }
+
+  .distribution-item span:last-child {
+    font-family: var(--font-performance-mono);
+    color: var(--color-performance-ink);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .distribution-note {
+    margin: var(--space-performance-sm) 0 0;
+    font-size: var(--text-performance-caption);
+    color: var(--color-performance-muted);
+    line-height: var(--leading-performance-body);
+  }
 
 	/* Expand trigger - invisible button wrapper (Heidegger: tool recedes) */
 	.expand-trigger {
@@ -1491,7 +2052,40 @@
 	}
 
 	.expand-trigger:focus-visible {
-		outline: 1px solid var(--color-performance-border-emphasis);
+    outline: 1px solid var(--color-performance-line-strong);
+    outline-offset: var(--space-performance-xs);
+  }
+
+  .interactive-view {
+    position: relative;
+    width: 100%;
+  }
+
+  .interactive-expand-control {
+    position: absolute;
+    top: var(--space-performance-xs);
+    right: var(--space-performance-xs);
+    padding: var(--space-performance-xs) var(--space-performance-sm);
+    border: 1px solid var(--color-performance-line);
+    background: var(--color-performance-paper);
+    color: var(--color-performance-muted);
+    font-family: var(--font-performance-mono);
+    font-size: var(--text-performance-caption);
+    text-transform: uppercase;
+    cursor: zoom-in;
+    transition:
+      color var(--duration-performance-micro) var(--ease-performance-standard),
+      border-color var(--duration-performance-micro) var(--ease-performance-standard);
+  }
+
+  .interactive-expand-control:hover,
+  .interactive-expand-control:focus-visible {
+    color: var(--color-performance-ink);
+    border-color: var(--color-performance-line-strong);
+  }
+
+  .interactive-expand-control:focus-visible {
+    outline: 1px solid var(--color-performance-line-strong);
 		outline-offset: var(--space-performance-xs);
 	}
 
@@ -1508,7 +2102,7 @@
 		position: fixed;
 		inset: 0;
 		z-index: 100;
-		background: var(--color-performance-bg-pure);
+    background: var(--color-performance-paper);
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -1520,6 +2114,15 @@
 		max-width: 100%;
 		max-height: 100%;
 	}
+
+  .view-panel.expanded .interactive-view {
+    max-width: 90vw;
+    max-height: 80vh;
+  }
+
+  .view-panel.expanded .interactive-expand-control {
+    cursor: zoom-out;
+  }
 
 	/* Override component max-widths when expanded */
 	.view-panel.expanded :global(.light-study),
@@ -1542,11 +2145,11 @@
 		left: 50%;
 		transform: translateX(-50%);
 		z-index: 101;
-		font-family: var(--font-performance-sans, system-ui, sans-serif);
+    font-family: var(--font-performance-mono);
 		font-size: var(--text-performance-caption);
-		color: var(--color-performance-fg-muted);
+    color: var(--color-performance-muted);
 		padding: var(--space-performance-xs) var(--space-performance-sm);
-		border-radius: var(--radius-performance-scale-sm);
+    border-radius: var(--radius-performance-sm);
 		opacity: 0.7;
 		pointer-events: none;
 	}
@@ -1578,5 +2181,34 @@
 			flex-wrap: wrap;
 			gap: var(--space-performance-md);
 		}
+
+    .budget-header {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: var(--space-performance-sm);
+    }
+
+    .budget-summary,
+    .budget-supporting-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .build-basis-heading {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .cost-driver-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .summary-item {
+      border-right: 0;
+      border-bottom: 1px solid var(--color-performance-line-strong);
+    }
+
+    .summary-item:last-child {
+      border-bottom: 0;
+    }
 	}
 </style>

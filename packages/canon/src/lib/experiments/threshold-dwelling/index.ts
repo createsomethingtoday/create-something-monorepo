@@ -19,3 +19,14 @@ export { default as RoofPlan } from './RoofPlan.svelte';
 export { default as Section } from './Section.svelte';
 export { default as SitePlan } from './SitePlan.svelte';
 export { default as Systems } from './Systems.svelte';
+export {
+  THRESHOLD_DWELLING_DESIGN,
+  type ThresholdDwellingBuildMetrics,
+  type ThresholdDwellingConstructionAllowance,
+  type ThresholdDwellingCostCategory,
+  type ThresholdDwellingCostLineItem,
+  type ThresholdDwellingCostUnit,
+  type ThresholdDwellingMaterial,
+  type ThresholdDwellingMaterialGroup,
+  type ThresholdDwellingMaterialStrategy
+} from './model.js';
