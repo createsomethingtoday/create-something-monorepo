@@ -1,16 +1,28 @@
 # Offer Resolution
 
-`@create-something/offer-resolution` turns current offer observations into deterministic, provenance-backed decisions. It is the Automation layer for the repo-owned `offer-resolution` skill and the read-only Offer Find Agent.
+`@create-something/offer-resolution` turns current public offer observations into deterministic, provenance-backed decisions. It owns the domain service for finding, evidence-verifying, and deadline-bounded offer watches. The repo-owned Skill, CLI, Agents SDK path, HTTP adapter, MCP server, and widget all consume this one policy surface.
 
 ## Public interface
 
 ```ts
-import { findOffers } from '@create-something/offer-resolution';
+import {
+  createFileOfferWatchRepository,
+  createOfferService
+} from '@create-something/offer-resolution';
 
-const result = findOffers(request, observations);
+const service = createOfferService({
+  discovery: { discover: async () => observations },
+  watches: createFileOfferWatchRepository({ filePath: '/explicit/state/watches.json' })
+});
+
+const found = await service.findOffers(request);
+const verified = await service.verifyOffer({ request, observation });
+const watched = await service.watchOffers({ request, until, idempotencyKey });
 ```
 
-The resolver owns all scores, caps, rankings, statuses, and receipt hashes. Agent or UI callers supply facts only. Discovery runs in two stages: public LTK first, then supplemental corroboration and merchant-gap filling. LTK priority controls search order, not confidence. Search and deal sources remain leads, public LTK and creator sources remain corroboration, and official source claims are checked against a trusted merchant-domain registry.
+The resolver owns every score, cap, ranking, status, and receipt hash. Agent or UI callers supply facts only. Discovery runs in two stages: public LTK first, then supplemental corroboration and merchant-gap filling. LTK priority controls search order, not confidence. Search and deal sources remain leads, public LTK and creator sources remain corroboration, and official source claims are checked against a trusted merchant-domain registry.
+
+`watchOffers` creates one durable watch for a stable idempotency key. `runDueWatches` is a bounded scheduler entrypoint: a stable run key creates at most one history record per watch, failures preserve the prior successful receipt, and no notification or purchase action is performed.
 
 ## Commands
 
@@ -32,7 +44,7 @@ node dist/cli.js live \
   --deadline 2026-08-09
 ```
 
-The live command accepts either `--merchant` or the supported `--category health_and_beauty`. Category search fans out deterministically to Ulta Beauty, Sephora, CVS Pharmacy, Walgreens, Target, and OSEA. It requires an approved `OPENAI_API_KEY`, uses hosted public web search, and stops when `resolve_offer_evidence` returns its JSON receipt. It performs no purchases, cart mutation, messaging, subscriptions, continuous monitoring, access-control bypass, or private LTK access.
+The live command accepts either `--merchant` or the supported `--category health_and_beauty`. Category search fans out deterministically to Ulta Beauty, Sephora, CVS Pharmacy, Walgreens, Target, and OSEA. It requires an approved `OPENAI_API_KEY`, uses hosted public web search, captures the factual terminal-tool input, and returns the same domain-service result used by other adapters. It performs no purchases, cart mutation, messaging, subscriptions, unbounded monitoring, access-control bypass, or private LTK access.
 
 ## Verification
 
@@ -47,9 +59,9 @@ The verifier type-checks, runs unit and boundary tests, builds the package, exec
 <!-- prettier-ignore -->
 | Field | Value |
 | --- | --- |
-| Entry point | `src/index.ts`, `src/agent.ts`, `src/cli.ts` |
+| Entry point | `src/index.ts`, `src/agent.ts`, `src/cli.ts`, `src/http.ts` |
 | Boot command | `pnpm build` |
 | Smoke command | `pnpm verify` |
-| Validation surfaces | LTK-first stage plan, bounded category fan-out, lane grouping, component scores, policy caps, source registry, decision status, receipt hash, deterministic acceptance summary, agent tool boundary |
-| UI validation path | none; the package emits machine-readable decisions |
-| Escalation rule | stop on private access, unverifiable official domains, missing eligibility or fulfillment evidence, purchase or monitoring requests, and redistribution or partnership assumptions |
+| Validation surfaces | LTK-first stage plan, bounded category fan-out, lane grouping, component scores, policy caps, source registry, decision status, receipt hash, domain service, HTTP contract, persistent watch identity/history, agent-service parity, deterministic acceptance |
+| UI validation path | `packages/offer-savings-app` renders this package's `UserOffer` contract; verify there with protocol and browser acceptance |
+| Escalation rule | stop on private access, unverifiable official domains, missing eligibility or fulfillment evidence, purchase requests, unbounded monitoring, external notifications, and redistribution or partnership assumptions |

@@ -1,99 +1,14 @@
 import { Agent, run, tool, webSearchTool } from '@openai/agents';
-import { z } from 'zod';
 
 import { normalizeOfferRequest, planOfferDiscovery } from './discovery.js';
 import { findOffers } from './resolve.js';
-import type { OfferRequest, OfferResolutionResult } from './types.js';
+import { offerEvidenceInputSchema, offerRequestSchema } from './schemas.js';
+import { canonicalStringify } from './canonical.js';
+import { createOfferService } from './service.js';
+import type { FindOffersServiceResult, OfferDiscoveryProvider } from './service.js';
+import type { OfferObservation, OfferRequest, OfferResolutionResult } from './types.js';
 
-const evidenceStateSchema = z.enum(['confirmed', 'conflict', 'unknown']);
-
-const requestSchema = z
-  .object({
-    merchant: z.string().min(1),
-    searchCategory: z.enum(['health_and_beauty']).optional(),
-    candidateMerchants: z.array(z.string().min(1)).min(1).optional(),
-    need: z.string().min(1),
-    budget: z.number().positive(),
-    currency: z.string().min(3).max(3),
-    postalCode: z.string().regex(/^\d{5}$/),
-    deadline: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-    asOf: z.string().datetime(),
-    channels: z.array(z.enum(['online', 'pickup', 'in_store'])).min(1)
-  })
-  .strict();
-
-const observationSchema = z
-  .object({
-    id: z.string().min(1),
-    merchant: z.string().min(1),
-    title: z.string().min(1),
-    source: z
-      .object({
-        kind: z.enum([
-          'official_retailer',
-          'retailer_checkout',
-          'ltk_public',
-          'creator_owned',
-          'affiliate_feed',
-          'user_authorized',
-          'search_index',
-          'deal_aggregator'
-        ]),
-        url: z.string().url(),
-        publisher: z.string().min(1),
-        publishedAt: z.string().datetime().optional(),
-        observedAt: z.string().datetime(),
-        access: z.enum(['public', 'authenticated', 'app_only', 'blocked']),
-        direct: z.boolean()
-      })
-      .strict(),
-    offer: z
-      .object({
-        code: z.string().min(1).optional(),
-        discount: z
-          .object({
-            kind: z.enum(['percent', 'amount', 'shipping', 'unknown']),
-            value: z.number().nonnegative().optional()
-          })
-          .strict(),
-        status: z.enum(['active', 'expired', 'revoked', 'unknown']),
-        startsAt: z.string().datetime().optional(),
-        endsAt: z.string().datetime().optional(),
-        minimumSubtotal: z.number().nonnegative().optional(),
-        checkoutOnly: z.boolean().optional()
-      })
-      .strict(),
-    applicability: z
-      .object({
-        merchant: evidenceStateSchema,
-        budget: evidenceStateSchema,
-        location: evidenceStateSchema,
-        channel: evidenceStateSchema,
-        membership: evidenceStateSchema
-      })
-      .strict(),
-    fulfillment: z
-      .object({
-        deadline: z.enum(['confirmed', 'misses', 'unknown']),
-        evidenceUrl: z.string().url().optional()
-      })
-      .strict(),
-    evidence: z
-      .object({
-        terms: z.enum(['explicit', 'partial', 'none']),
-        code: z.enum(['verified', 'reported', 'not_applicable', 'unknown']),
-        corroboratingUrls: z.array(z.string().url())
-      })
-      .strict()
-  })
-  .strict();
-
-export const offerEvidenceInputSchema = z
-  .object({
-    request: requestSchema,
-    observations: z.array(observationSchema)
-  })
-  .strict();
+export { offerEvidenceInputSchema } from './schemas.js';
 
 export const OFFER_FIND_AGENT_INSTRUCTIONS = `
 You are the read-only Offer Find Agent. Resolve a shopping request against current public evidence.
@@ -110,14 +25,30 @@ The run is incomplete until resolve_offer_evidence is called. Never answer the u
 Never calculate or invent a reliability score. Never change a resolver status, score, cap, reason, or receipt. Do not recommend an offer outside the resolver result. Do not purchase, add to cart, submit checkout, message a creator, subscribe, create monitoring, bypass access controls, or use private LTK endpoints.
 `.trim();
 
-export const resolveOfferEvidenceTool = tool({
-  name: 'resolve_offer_evidence',
-  description:
-    'Finalize discovered offer observations with deterministic reliability policy. This is the only tool allowed to score, rank, recommend, or reject offers.',
-  parameters: offerEvidenceInputSchema,
-  strict: true,
-  execute: async ({ request, observations }) => JSON.stringify(findOffers(request, observations))
-});
+export interface CreateResolveOfferEvidenceToolOptions {
+  onEvidence?: (input: {
+    request: OfferRequest;
+    observations: OfferObservation[];
+  }) => void | Promise<void>;
+}
+
+export function createResolveOfferEvidenceTool(
+  options: CreateResolveOfferEvidenceToolOptions = {}
+) {
+  return tool({
+    name: 'resolve_offer_evidence',
+    description:
+      'Finalize discovered offer observations with deterministic reliability policy. This is the only tool allowed to score, rank, recommend, or reject offers.',
+    parameters: offerEvidenceInputSchema,
+    strict: true,
+    execute: async ({ request, observations }) => {
+      await options.onEvidence?.({ request, observations });
+      return JSON.stringify(findOffers(request, observations));
+    }
+  });
+}
+
+export const resolveOfferEvidenceTool = createResolveOfferEvidenceTool();
 
 export interface CreateOfferFindAgentOptions {
   model?: string;
@@ -155,6 +86,7 @@ export function createLtkWebSearchTool() {
 
 export interface RunOfferFindAgentOptions extends CreateOfferFindAgentOptions {
   maxTurns?: number;
+  discovery?: OfferDiscoveryProvider;
 }
 
 function assertResolutionResult(value: unknown): OfferResolutionResult {
@@ -177,11 +109,11 @@ function parseResolutionOutput(finalOutput: unknown): OfferResolutionResult | un
   }
 }
 
-export async function runOfferFindAgent(
+async function discoverAgentEvidence(
   request: OfferRequest,
   options: RunOfferFindAgentOptions = {}
-): Promise<OfferResolutionResult> {
-  const normalizedRequest = requestSchema.parse(normalizeOfferRequest(request));
+): Promise<OfferObservation[]> {
+  const normalizedRequest = offerRequestSchema.parse(normalizeOfferRequest(request));
   const discoveryPlan = planOfferDiscovery(normalizedRequest);
   const agent = createOfferFindAgent(options);
   const [webSearch] = agent.tools;
@@ -226,10 +158,16 @@ export async function runOfferFindAgent(
     { maxTurns: stageMaxTurns }
   );
 
+  let capturedEvidence: { request: OfferRequest; observations: OfferObservation[] } | undefined;
+  const captureTool = createResolveOfferEvidenceTool({
+    onEvidence: (input) => {
+      capturedEvidence = input;
+    }
+  });
   const finalizer = agent.clone({
     instructions: OFFER_FIND_AGENT_INSTRUCTIONS,
     modelSettings: { toolChoice: 'resolve_offer_evidence', parallelToolCalls: false },
-    tools: [resolveOfferEvidenceTool],
+    tools: [captureTool],
     resetToolChoice: false
   });
   const finalization = await run(
@@ -248,7 +186,41 @@ export async function runOfferFindAgent(
   if (!resolution) {
     throw new Error('The agent did not return a deterministic resolver receipt.');
   }
-  return resolution;
+  if (!capturedEvidence) {
+    throw new Error('The agent did not expose factual evidence to the service contract.');
+  }
+  const observations = capturedEvidence.observations;
+  if (
+    canonicalStringify(findOffers(normalizedRequest, observations)) !==
+    canonicalStringify(resolution)
+  ) {
+    throw new Error('The agent receipt does not match the authoritative service receipt.');
+  }
+  return observations;
+}
+
+export function createAgentOfferDiscoveryProvider(
+  options: RunOfferFindAgentOptions = {}
+): OfferDiscoveryProvider {
+  return {
+    discover: async (request) => discoverAgentEvidence(request, options)
+  };
+}
+
+export async function runOfferFindAgentService(
+  request: OfferRequest,
+  options: RunOfferFindAgentOptions = {}
+): Promise<FindOffersServiceResult> {
+  const normalizedRequest = offerRequestSchema.parse(normalizeOfferRequest(request));
+  const discovery = options.discovery ?? createAgentOfferDiscoveryProvider(options);
+  return createOfferService({ discovery }).findOffers(normalizedRequest);
+}
+
+export async function runOfferFindAgent(
+  request: OfferRequest,
+  options: RunOfferFindAgentOptions = {}
+): Promise<OfferResolutionResult> {
+  return (await runOfferFindAgentService(request, options)).resolution;
 }
 
 export const OFFER_FIND_DISCOVERY_STAGES = [

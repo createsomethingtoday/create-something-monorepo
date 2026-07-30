@@ -1,0 +1,264 @@
+import assert from 'node:assert/strict';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import type { AddressInfo } from 'node:net';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import test from 'node:test';
+
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
+import {
+  createFileOfferWatchRepository,
+  createOfferService,
+  type OfferObservation,
+  type OfferRequest
+} from '@create-something/offer-resolution';
+
+import {
+  OFFER_WIDGET_URI,
+  createOfferSavingsHttpServer,
+  createOfferSavingsMcpServer,
+  readOfferSavingsRuntimeConfig
+} from '../src/index.js';
+
+interface Fixture {
+  request: OfferRequest;
+  observations: OfferObservation[];
+}
+
+const fixture = JSON.parse(
+  readFileSync(
+    new URL('../../offer-resolution/fixtures/abercrombie-august-9.json', import.meta.url),
+    'utf8'
+  )
+) as Fixture;
+
+async function connectClient(stateFile: string) {
+  const service = createOfferService({
+    discovery: { discover: async () => fixture.observations },
+    watches: createFileOfferWatchRepository({ filePath: stateFile }),
+    clock: () => new Date('2026-07-30T15:00:00.000Z')
+  });
+  const server = createOfferSavingsMcpServer({ service });
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+  await server.connect(serverTransport);
+  const client = new Client({ name: 'offer-savings-test', version: '0.1.0' });
+  await client.connect(clientTransport);
+  return { client, server };
+}
+
+test('MCP protocol exposes only the bounded offer workflow and widget resource', async (t) => {
+  const stateDirectory = mkdtempSync(join(tmpdir(), 'offer-savings-mcp-'));
+  t.after(() => rmSync(stateDirectory, { recursive: true, force: true }));
+  const { client, server } = await connectClient(join(stateDirectory, 'watches.json'));
+  t.after(async () => {
+    await client.close();
+    await server.close();
+  });
+
+  const listed = await client.listTools();
+  assert.deepEqual(
+    listed.tools.map((tool) => tool.name),
+    ['find_offers', 'verify_offer', 'watch_offers', 'get_watch']
+  );
+  assert.equal(
+    listed.tools.find((tool) => tool.name === 'find_offers')?.annotations?.readOnlyHint,
+    true
+  );
+  assert.equal(
+    listed.tools.find((tool) => tool.name === 'watch_offers')?.annotations?.readOnlyHint,
+    false
+  );
+  assert.equal(
+    listed.tools.find((tool) => tool.name === 'watch_offers')?.annotations?.idempotentHint,
+    true
+  );
+  assert.equal(
+    (
+      listed.tools.find((tool) => tool.name === 'find_offers')?._meta?.ui as {
+        resourceUri?: string;
+      }
+    )?.resourceUri,
+    OFFER_WIDGET_URI
+  );
+  assert.equal(
+    listed.tools.some((tool) => /purchase|checkout|cart|private|scrap/i.test(tool.name)),
+    false
+  );
+
+  const resources = await client.listResources();
+  assert.equal(resources.resources.length, 1);
+  assert.equal(resources.resources[0]?.uri, OFFER_WIDGET_URI);
+  assert.equal(resources.resources[0]?.mimeType, 'text/html;profile=mcp-app');
+  const widget = await client.readResource({ uri: OFFER_WIDGET_URI });
+  const widgetContent = widget.contents[0];
+  const widgetHtml = widgetContent && 'text' in widgetContent ? widgetContent.text : '';
+  assert.match(widgetHtml, /Offer Savings/i);
+  assert.match(widgetHtml, /ui\/notifications\/tool-result/);
+  assert.match(widgetHtml, /tools\/call/);
+  assert.match(widgetHtml, /window\.openai/);
+  assert.match(widgetHtml, /Try this code/);
+  assert.match(widgetHtml, /Watch for a better offer/);
+  assert.match(widgetHtml, /Freshness/);
+  assert.deepEqual(widgetContent?._meta?.ui, {
+    prefersBorder: true,
+    csp: { connectDomains: [], resourceDomains: [] }
+  });
+});
+
+test('MCP calls find, verify, and idempotent watch through the authoritative service', async (t) => {
+  const stateDirectory = mkdtempSync(join(tmpdir(), 'offer-savings-mcp-'));
+  t.after(() => rmSync(stateDirectory, { recursive: true, force: true }));
+  const { client, server } = await connectClient(join(stateDirectory, 'watches.json'));
+  t.after(async () => {
+    await client.close();
+    await server.close();
+  });
+
+  const found = await client.callTool({ name: 'find_offers', arguments: fixture.request });
+  assert.equal(found.isError, undefined);
+  assert.equal(found.structuredContent?.operation, 'find_offers');
+  assert.equal(
+    (found.structuredContent?.offers as Array<{ confidence: { label: string } }>)[0]?.confidence
+      .label,
+    'Verified'
+  );
+
+  const creator = fixture.observations.find((observation) => observation.id === 'fixture-ltk-15');
+  assert.ok(creator);
+  const verified = await client.callTool({
+    name: 'verify_offer',
+    arguments: { request: fixture.request, observation: creator }
+  });
+  assert.equal(verified.structuredContent?.verification, 'needs_checkout');
+
+  const watchInput = {
+    request: fixture.request,
+    until: '2026-08-09T23:59:59.000Z',
+    idempotencyKey: 'protocol-retry-key'
+  };
+  const first = await client.callTool({ name: 'watch_offers', arguments: watchInput });
+  const retried = await client.callTool({ name: 'watch_offers', arguments: watchInput });
+  assert.equal(first.structuredContent?.created, true);
+  assert.equal(retried.structuredContent?.created, false);
+  assert.equal(
+    (first.structuredContent?.watch as { id: string }).id,
+    (retried.structuredContent?.watch as { id: string }).id
+  );
+
+  const read = await client.callTool({
+    name: 'get_watch',
+    arguments: { id: (first.structuredContent?.watch as { id: string }).id }
+  });
+  assert.equal(
+    (read.structuredContent?.watch as { id: string }).id,
+    (first.structuredContent?.watch as { id: string }).id
+  );
+});
+
+test('MCP input validation rejects malformed requests before service execution', async (t) => {
+  const stateDirectory = mkdtempSync(join(tmpdir(), 'offer-savings-mcp-'));
+  t.after(() => rmSync(stateDirectory, { recursive: true, force: true }));
+  const { client, server } = await connectClient(join(stateDirectory, 'watches.json'));
+  t.after(async () => {
+    await client.close();
+    await server.close();
+  });
+
+  const malformed = await client.callTool({
+    name: 'find_offers',
+    arguments: { ...fixture.request, budget: -1 }
+  });
+  assert.equal(malformed.isError, true);
+  assert.match(
+    malformed.content[0] && malformed.content[0].type === 'text' ? malformed.content[0].text : '',
+    /invalid|greater than zero/i
+  );
+});
+
+test('Streamable HTTP serves MCP and the versioned API from one process', async (t) => {
+  const stateDirectory = mkdtempSync(join(tmpdir(), 'offer-savings-http-'));
+  t.after(() => rmSync(stateDirectory, { recursive: true, force: true }));
+  const service = createOfferService({
+    discovery: { discover: async () => fixture.observations },
+    watches: createFileOfferWatchRepository({ filePath: join(stateDirectory, 'watches.json') }),
+    clock: () => new Date('2026-07-30T15:00:00.000Z')
+  });
+  const initialResult = await service.findOffers(fixture.request);
+  const httpServer = createOfferSavingsHttpServer({
+    service,
+    standalone: {
+      initialResult,
+      watchInput: {
+        request: fixture.request,
+        until: '2026-08-09T23:59:59.000Z',
+        idempotencyKey: 'standalone-widget-watch'
+      }
+    }
+  });
+  await new Promise<void>((resolve) => httpServer.listen(0, '127.0.0.1', resolve));
+  let client: Client | undefined;
+  t.after(async () => {
+    await client?.close();
+    await new Promise<void>((resolve, reject) =>
+      httpServer.close((error) => (error ? reject(error) : resolve()))
+    );
+  });
+  const port = (httpServer.address() as AddressInfo).port;
+  const health = await fetch(`http://127.0.0.1:${port}/health`);
+  assert.equal(health.status, 200);
+  assert.deepEqual(await health.json(), {
+    ok: true,
+    service: 'offer-savings-agent',
+    schemaVersion: 'offer_service.v0.1',
+    mcpEndpoint: '/mcp'
+  });
+
+  const api = await fetch(`http://127.0.0.1:${port}/v1/offers/find`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(fixture.request)
+  });
+  assert.equal(api.status, 200);
+  assert.equal(((await api.json()) as { operation: string }).operation, 'find_offers');
+
+  const standaloneWidget = await fetch(`http://127.0.0.1:${port}/widget`);
+  assert.equal(standaloneWidget.status, 200);
+  const standaloneHtml = await standaloneWidget.text();
+  assert.match(standaloneHtml, /fixture-official-20/);
+  assert.match(standaloneHtml, /standalone-widget-watch/);
+
+  client = new Client({ name: 'offer-savings-http-test', version: '0.1.0' });
+  await client.connect(new StreamableHTTPClientTransport(new URL(`http://127.0.0.1:${port}/mcp`)));
+  assert.deepEqual(
+    (await client.listTools()).tools.map((tool) => tool.name),
+    ['find_offers', 'verify_offer', 'watch_offers', 'get_watch']
+  );
+  assert.equal(
+    (await client.callTool({ name: 'find_offers', arguments: fixture.request })).structuredContent
+      ?.operation,
+    'find_offers'
+  );
+});
+
+test('live runtime requires injected API credentials and an explicit state location', () => {
+  assert.throws(() => readOfferSavingsRuntimeConfig({}), /OPENAI_API_KEY/);
+  assert.throws(
+    () => readOfferSavingsRuntimeConfig({ OPENAI_API_KEY: 'present-for-test' }),
+    /OFFER_STATE_FILE/
+  );
+  const config = readOfferSavingsRuntimeConfig({
+    OPENAI_API_KEY: 'present-for-test',
+    OFFER_STATE_FILE: '/tmp/offer-savings-runtime-test.json',
+    PORT: '9001',
+    OFFER_AGENT_MODEL: 'gpt-5.4-mini',
+    OFFER_AGENT_MAX_TURNS: '8'
+  });
+  assert.deepEqual(config, {
+    port: 9001,
+    stateFile: '/tmp/offer-savings-runtime-test.json',
+    model: 'gpt-5.4-mini',
+    maxTurns: 8
+  });
+});

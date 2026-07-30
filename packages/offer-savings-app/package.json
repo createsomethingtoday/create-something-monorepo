@@ -1,0 +1,52 @@
+{
+  "name": "@create-something/offer-savings-app",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MCP and ChatGPT-compatible app adapter for the Offer Savings Agent.",
+  "type": "module",
+  "createSomething": {
+    "agentLegibilityContract": true,
+    "tier": "automation",
+    "surface": "mcp",
+    "entrypoints": [
+      "src/index.ts"
+    ],
+    "boot": "pnpm build",
+    "smoke": "pnpm verify"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "offer-savings-app": "dist/start.js",
+    "offer-savings-run-watches": "dist/run-watches.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "check": "tsc --noEmit",
+    "dev:fixture": "tsx scripts/fixture-server.ts",
+    "start": "node dist/start.js",
+    "run:watches": "node dist/run-watches.js",
+    "test": "tsx --test test/*.test.ts",
+    "test:acceptance": "tsx scripts/acceptance.ts",
+    "verify": "pnpm check && pnpm test && pnpm test:acceptance"
+  },
+  "dependencies": {
+    "@create-something/offer-resolution": "workspace:*",
+    "@modelcontextprotocol/sdk": "1.25.3",
+    "hono": "^4.11.7",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.9",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  },
+  "author": "CREATE SOMETHING <hello@createsomething.agency>",
+  "license": "MIT"
+}

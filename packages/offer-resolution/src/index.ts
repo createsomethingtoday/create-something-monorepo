@@ -16,4 +16,34 @@ export {
   sourcePolicyFor
 } from './policy.js';
 export { findOffers } from './resolve.js';
+export { createOfferService } from './service.js';
+export { createOfferHttpHandler } from './http.js';
+export {
+  offerEvidenceInputSchema,
+  offerObservationSchema,
+  offerRequestSchema,
+  verifyOfferInputSchema,
+  watchOffersInputSchema
+} from './schemas.js';
+export { createFileOfferWatchRepository } from './watch-repository.js';
+export type {
+  CreateOfferServiceOptions,
+  FindOffersServiceResult,
+  OfferConfidenceLabel,
+  OfferDiscoveryProvider,
+  OfferService,
+  OfferVerificationStatus,
+  OfferWatch,
+  OfferWatchRun,
+  OfferWatchRepository,
+  OfferWatchStatus,
+  RunDueWatchesInput,
+  RunDueWatchesResult,
+  VerifyOfferInput,
+  VerifyOfferServiceResult,
+  WatchOffersInput,
+  WatchOffersServiceResult,
+  UserOffer
+} from './service.js';
+export type { CreateFileOfferWatchRepositoryOptions } from './watch-repository.js';
 export type * from './types.js';

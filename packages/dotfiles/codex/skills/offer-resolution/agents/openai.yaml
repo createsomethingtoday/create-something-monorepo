@@ -1,4 +1,4 @@
 interface:
   display_name: 'Offer Resolution'
-  short_description: 'Find public offers with auditable reliability'
-  default_prompt: 'Use $offer-resolution to search LTK first and find reliable public offers for my merchant or category, budget, location, and deadline.'
+  short_description: 'Find and watch public offers with auditable reliability'
+  default_prompt: 'Use $offer-resolution to search LTK first, find reliable public offers for my merchant or category, budget, location, and deadline, and create a bounded watch if I ask to keep checking.'
