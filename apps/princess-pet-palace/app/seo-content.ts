@@ -3,6 +3,9 @@ export const SITE_URL = "https://princess-pet-palace.createsomethingtoday.chatgp
 export const SITE_DESCRIPTION =
   "A free, ad-free preschool game for ages 3–5 with letters, counting, animals, movement activities, spoken directions, and optional camera magic.";
 
+export const AI_VOICE_DISCLOSURE =
+  "Spoken instructions use an AI-generated voice, not a human voice.";
+
 export const faqItems = [
   {
     question: "What does Princess Pet Palace teach?",
