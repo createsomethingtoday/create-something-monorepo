@@ -4,6 +4,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 import { runOfferFindAgent } from './agent.js';
+import { CATEGORY_LABELS, parseOfferSearchCategory } from './discovery.js';
 import { findOffers } from './resolve.js';
 import type { OfferChannel, OfferObservation, OfferRequest } from './types.js';
 
@@ -12,9 +13,10 @@ type Arguments = Record<string, string | boolean>;
 function usage(): string {
   return `Usage:
   offer-resolution resolve --input <evidence.json> [--out <result.json>]
-  offer-resolution live --merchant <name> --need <text> --budget <amount> --zip <postal> --deadline <YYYY-MM-DD> [options]
+  offer-resolution live (--merchant <name> | --category <name>) --need <text> --budget <amount> --zip <postal> --deadline <YYYY-MM-DD> [options]
 
 Live options:
+  --category <name>      Supported: health_and_beauty
   --currency <code>       Default: USD
   --channels <list>       Comma-separated online,pickup,in_store
   --as-of <ISO datetime>  Default: current time
@@ -77,7 +79,12 @@ async function resolveCommand(values: Arguments): Promise<void> {
 }
 
 async function liveCommand(values: Arguments): Promise<void> {
-  const input = required(values, ['merchant', 'need', 'budget', 'zip', 'deadline']);
+  const input = required(values, ['need', 'budget', 'zip', 'deadline']);
+  const merchant = stringValue(values, 'merchant');
+  const categoryValue = stringValue(values, 'category');
+  if (Boolean(merchant) === Boolean(categoryValue)) {
+    throw new Error('Provide exactly one of --merchant or --category.');
+  }
   if (!process.env.OPENAI_API_KEY) {
     throw new Error('OPENAI_API_KEY is required for the live agent command.');
   }
@@ -88,8 +95,10 @@ async function liveCommand(values: Arguments): Promise<void> {
   if (!Number.isInteger(maxTurns) || maxTurns <= 0)
     throw new Error('--max-turns must be a positive integer');
 
+  const searchCategory = categoryValue ? parseOfferSearchCategory(categoryValue) : undefined;
   const request: OfferRequest = {
-    merchant: input.merchant,
+    merchant: merchant ?? CATEGORY_LABELS[searchCategory!],
+    searchCategory,
     need: input.need,
     budget,
     currency: stringValue(values, 'currency') ?? 'USD',

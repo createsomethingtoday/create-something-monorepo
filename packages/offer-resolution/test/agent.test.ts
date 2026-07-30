@@ -4,8 +4,10 @@ import test from 'node:test';
 import { invokeFunctionTool } from '@openai/agents';
 
 import {
+  OFFER_FIND_DISCOVERY_STAGES,
   OFFER_FIND_AGENT_INSTRUCTIONS,
   createOfferFindAgent,
+  createLtkWebSearchTool,
   offerEvidenceInputSchema,
   resolveOfferEvidenceTool
 } from '../src/agent.js';
@@ -32,14 +34,23 @@ test('exposes only public web search and deterministic resolution', () => {
   assert.equal(agent.modelSettings.toolChoice, 'web_search');
   assert.equal(agent.resetToolChoice, true);
   assert.equal(agent.handoffs.length, 0);
+  assert.deepEqual(OFFER_FIND_DISCOVERY_STAGES, ['ltk', 'supplemental', 'resolve_offer_evidence']);
 });
 
 test('instructions reserve scoring and recommendation for the resolver', () => {
   assert.match(OFFER_FIND_AGENT_INSTRUCTIONS, /Never calculate or invent a reliability score/i);
-  assert.match(OFFER_FIND_AGENT_INSTRUCTIONS, /first tool call must be web_search/i);
+  assert.match(OFFER_FIND_AGENT_INSTRUCTIONS, /LTK.*first/i);
+  assert.match(OFFER_FIND_AGENT_INSTRUCTIONS, /supplemental.*after/i);
   assert.match(OFFER_FIND_AGENT_INSTRUCTIONS, /must call resolve_offer_evidence/i);
   assert.match(OFFER_FIND_AGENT_INSTRUCTIONS, /Do not purchase/i);
   assert.match(OFFER_FIND_AGENT_INSTRUCTIONS, /public LTK/i);
+});
+
+test('hard-limits the primary search stage to public LTK pages', () => {
+  const ltkSearch = createLtkWebSearchTool();
+  assert.equal(ltkSearch.providerData?.type, 'web_search');
+  assert.deepEqual(ltkSearch.providerData?.filters, { allowed_domains: ['shopltk.com'] });
+  assert.equal(ltkSearch.providerData?.external_web_access, true);
 });
 
 test('tool input rejects model-authored reliability fields', () => {
@@ -59,6 +70,7 @@ test('resolver tool returns the deterministic result as final JSON', async () =>
   });
   const parsed = typeof output === 'string' ? JSON.parse(output) : output;
 
-  assert.equal(parsed.schemaVersion, 'offer_resolution.v0.1');
+  assert.equal(parsed.schemaVersion, 'offer_resolution.v0.2');
   assert.deepEqual(parsed.summary, { recommend: 0, verify: 0, lead: 0, rejected: 0 });
+  assert.deepEqual(parsed.lanes, { ltk: [], supplemental: [] });
 });

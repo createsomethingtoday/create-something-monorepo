@@ -42,3 +42,28 @@ test('CLI fails closed when required request data is invalid', () => {
   assert.equal(result.status, 2);
   assert.match(result.stderr, /--need.*--zip.*--deadline/i);
 });
+
+test('CLI accepts a category target in place of a merchant target', () => {
+  const result = spawnSync(
+    resolve(packageRoot, 'node_modules/.bin/tsx'),
+    [
+      'src/cli.ts',
+      'live',
+      '--category',
+      'health_and_beauty',
+      '--need',
+      'health and beauty products',
+      '--budget',
+      '100',
+      '--zip',
+      '76060',
+      '--deadline',
+      '2026-08-09'
+    ],
+    { cwd: packageRoot, encoding: 'utf8', env: { ...process.env, OPENAI_API_KEY: '' } }
+  );
+
+  assert.equal(result.status, 2);
+  assert.match(result.stderr, /OPENAI_API_KEY is required/i);
+  assert.doesNotMatch(result.stderr, /Missing required options:.*--merchant/i);
+});

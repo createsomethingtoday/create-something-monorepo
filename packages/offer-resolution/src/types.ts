@@ -1,5 +1,9 @@
 export type OfferChannel = 'online' | 'pickup' | 'in_store';
 
+export type OfferSearchCategory = 'health_and_beauty';
+
+export type OfferDiscoveryLane = 'ltk' | 'supplemental';
+
 export type OfferSourceKind =
   | 'official_retailer'
   | 'retailer_checkout'
@@ -14,6 +18,8 @@ export type EvidenceState = 'confirmed' | 'conflict' | 'unknown';
 
 export interface OfferRequest {
   merchant: string;
+  searchCategory?: OfferSearchCategory;
+  candidateMerchants?: string[];
   need: string;
   budget: number;
   currency: string;
@@ -31,6 +37,7 @@ export interface OfferObservation {
     kind: OfferSourceKind;
     url: string;
     publisher: string;
+    publishedAt?: string;
     observedAt: string;
     access: 'public' | 'authenticated' | 'app_only' | 'blocked';
     direct: boolean;
@@ -80,6 +87,8 @@ export interface ReliabilityCap {
     | 'NO_DIRECT_SOURCE'
     | 'APP_ONLY_OR_BLOCKED'
     | 'TERMS_MISSING'
+    | 'OFFER_VALUE_UNKNOWN'
+    | 'PUBLICATION_DATE_UNKNOWN'
     | 'STATUS_UNKNOWN'
     | 'CODE_UNVERIFIED'
     | 'CREATOR_CODE_UNCORROBORATED'
@@ -113,6 +122,7 @@ export interface OfferDecision {
   title: string;
   sourceUrl: string;
   sourceKind: OfferSourceKind;
+  discoveryLane: OfferDiscoveryLane;
   offerCode?: string;
   projectedSavingsAtBudget?: number;
   status: OfferDecisionStatus;
@@ -121,9 +131,11 @@ export interface OfferDecision {
 }
 
 export interface OfferResolutionResult {
-  schemaVersion: 'offer_resolution.v0.1';
-  policyVersion: 'offer_reliability.v0.1';
+  schemaVersion: 'offer_resolution.v0.2';
+  policyVersion: 'offer_reliability.v0.2';
+  discoveryPolicyVersion: 'offer_discovery_ltk_first.v0.1';
   request: OfferRequest;
   decisions: OfferDecision[];
   summary: Record<OfferDecisionStatus, number>;
+  lanes: Record<OfferDiscoveryLane, string[]>;
 }

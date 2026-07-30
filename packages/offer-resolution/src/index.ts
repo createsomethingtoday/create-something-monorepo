@@ -1,5 +1,13 @@
 export { canonicalStringify, hashReceipt } from './canonical.js';
 export {
+  CATEGORY_LABELS,
+  CATEGORY_MERCHANTS,
+  DISCOVERY_POLICY_VERSION,
+  normalizeOfferRequest,
+  parseOfferSearchCategory,
+  planOfferDiscovery
+} from './discovery.js';
+export {
   MERCHANT_OFFICIAL_DOMAINS,
   POLICY_VERSION,
   SOURCE_POLICIES,

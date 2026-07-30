@@ -29,7 +29,7 @@ test('skill metadata routes offer-finding requests and names the exclusions', as
   const skill = await read('SKILL.md');
   assert.doesNotMatch(skill, /TODO/);
   assert.match(skill, /description: .*coupon.*promo.*public LTK/i);
-  assert.match(skill, /merchant.*budget.*ZIP.*deadline/i);
+  assert.match(skill, /merchant.*category.*budget.*ZIP.*deadline/i);
   assert.match(skill, /Do not.*purchase/i);
   assert.match(skill, /historical lift/i);
 });
@@ -58,6 +58,8 @@ test('source registry covers all initial locations and their evidence role', asy
   }
   assert.match(registry, /No private LTK API/i);
   assert.match(registry, /search.*lead/i);
+  assert.match(registry, /LTK.*primary/i);
+  assert.match(registry, /supplemental/i);
 });
 
 test('UI metadata invokes the skill by its exact name', async () => {
