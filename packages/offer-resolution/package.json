@@ -1,0 +1,57 @@
+{
+  "name": "@create-something/offer-resolution",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Resolve public offer evidence into deterministic, provenance-backed recommendations.",
+  "type": "module",
+  "createSomething": {
+    "agentLegibilityContract": true,
+    "tier": "automation",
+    "surface": "library",
+    "entrypoints": [
+      "src/index.ts",
+      "src/agent.ts",
+      "src/cli.ts"
+    ],
+    "boot": "pnpm build",
+    "smoke": "pnpm verify"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "offer-resolution": "dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./agent": {
+      "types": "./dist/agent.d.ts",
+      "default": "./dist/agent.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "check": "tsc --noEmit",
+    "test": "tsx --test test/*.test.ts",
+    "test:acceptance": "pnpm build && node scripts/acceptance.mjs",
+    "validate:skill": "node scripts/validate-skill.mjs",
+    "verify": "pnpm check && pnpm test && pnpm test:acceptance && pnpm validate:skill"
+  },
+  "dependencies": {
+    "@openai/agents": "^0.13.5",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  },
+  "author": "CREATE SOMETHING <hello@createsomething.agency>",
+  "license": "MIT"
+}
