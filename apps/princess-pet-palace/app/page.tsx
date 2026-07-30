@@ -1,308 +1,425 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  countPetTap,
+  createJourney,
+  type CountChallenge,
+  type JourneyRoom,
+  type LetterChallenge,
+  type MoveChallenge,
+} from "./game-model";
 
-type GameStep = "home" | "letter" | "count" | "move" | "celebrate";
+type Screen = "home" | "journey" | "celebrate";
+type FeedbackKind = "success" | "try" | null;
 
-type LetterChallenge = {
-  answer: string;
-  animal: string;
-  animalName: string;
-  choices: string[];
-};
+const cheers = ["Palace magic!", "You found it!", "Wonderful!", "Sparkle power!"];
 
-type CountChallenge = {
-  animal: string;
-  animalName: string;
-  answer: number;
-  choices: number[];
-};
-
-const letterChallenges: LetterChallenge[] = [
-  { answer: "P", animal: "🐶", animalName: "puppy", choices: ["P", "B", "T"] },
-  { answer: "C", animal: "🐱", animalName: "cat", choices: ["O", "C", "G"] },
-  { answer: "B", animal: "🐰", animalName: "bunny", choices: ["D", "R", "B"] },
-  { answer: "F", animal: "🦊", animalName: "fox", choices: ["F", "E", "L"] },
-];
-
-const countChallenges: CountChallenge[] = [
-  { animal: "🐰", animalName: "bunnies", answer: 2, choices: [1, 2, 3] },
-  { animal: "🐱", animalName: "kittens", answer: 3, choices: [2, 3, 4] },
-  { animal: "🦄", animalName: "unicorns", answer: 4, choices: [3, 4, 5] },
-  { animal: "🐶", animalName: "puppies", answer: 5, choices: [4, 5, 6] },
-];
-
-const movementChallenges = [
-  { emoji: "⭐", title: "Star stretch", prompt: "Reach your arms up and out like a big sparkly star!" },
-  { emoji: "🦩", title: "Flamingo balance", prompt: "Stand tall and lift one foot like a graceful flamingo!" },
-  { emoji: "🦋", title: "Butterfly arms", prompt: "Flap your arms slowly like a beautiful butterfly!" },
-];
-
-const roundOrder: GameStep[] = ["letter", "count", "move", "letter", "count"];
-const cheers = ["You did it!", "Wonderful!", "Hooray!", "Brilliant!"];
-
-function getRandomItem<T>(items: T[], index: number): T {
-  return items[index % items.length];
+function singularize(word: string): string {
+  if (word.endsWith("ies")) return `${word.slice(0, -3)}y`;
+  if (word.endsWith("s")) return word.slice(0, -1);
+  return word;
 }
 
 export default function Home() {
-  const [step, setStep] = useState<GameStep>("home");
-  const [round, setRound] = useState(0);
+  const [screen, setScreen] = useState<Screen>("home");
+  const [journey, setJourney] = useState<JourneyRoom[]>([]);
+  const [roomIndex, setRoomIndex] = useState(0);
   const [soundOn, setSoundOn] = useState(true);
   const [feedback, setFeedback] = useState("");
-  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const [feedbackKind, setFeedbackKind] = useState<FeedbackKind>(null);
+  const [selectedPets, setSelectedPets] = useState<number[]>([]);
+  const [lastChoice, setLastChoice] = useState<string | null>(null);
+  const [moveSeconds, setMoveSeconds] = useState<number | null>(null);
+  const [joinedPets, setJoinedPets] = useState<string[]>([]);
+  const [sparkleStreak, setSparkleStreak] = useState(0);
   const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const movementTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const audioContext = useRef<AudioContext | null>(null);
 
-  const letter = getRandomItem(letterChallenges, round);
-  const count = getRandomItem(countChallenges, round);
-  const movement = getRandomItem(movementChallenges, round);
+  const room = journey[roomIndex];
+  const completedRooms = roomIndex;
+  const journeyProgress = journey.length ? Math.round((completedRooms / journey.length) * 100) : 0;
 
   const speak = useCallback(
-    (message: string) => {
-      if (!soundOn || typeof window === "undefined" || !("speechSynthesis" in window)) return;
+    (message: string, force = false) => {
+      if ((!soundOn && !force) || typeof window === "undefined" || !("speechSynthesis" in window)) return;
       window.speechSynthesis.cancel();
-      const voice = new SpeechSynthesisUtterance(message);
-      voice.rate = 0.88;
-      voice.pitch = 1.12;
-      window.speechSynthesis.speak(voice);
+      const utterance = new SpeechSynthesisUtterance(message);
+      utterance.rate = 0.86;
+      utterance.pitch = 1.1;
+      utterance.volume = 0.92;
+      window.speechSynthesis.speak(utterance);
     },
     [soundOn],
   );
 
-  const chime = useCallback(
-    (happy: boolean) => {
+  const playTone = useCallback(
+    (kind: "sparkle" | "tap" | "soft") => {
       if (!soundOn || typeof window === "undefined") return;
-      const AudioContextClass = window.AudioContext ??
+      const AudioContextClass =
+        window.AudioContext ??
         (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
       if (!AudioContextClass) return;
+
       const context = audioContext.current ?? new AudioContextClass();
       audioContext.current = context;
       const oscillator = context.createOscillator();
       const gain = context.createGain();
-      oscillator.type = "sine";
-      oscillator.frequency.setValueAtTime(happy ? 523 : 220, context.currentTime);
-      if (happy) oscillator.frequency.exponentialRampToValueAtTime(784, context.currentTime + 0.18);
-      gain.gain.setValueAtTime(0.0001, context.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.16, context.currentTime + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.3);
+      const start = context.currentTime;
+      const frequencies = kind === "sparkle" ? [523, 659, 784] : kind === "tap" ? [330, 392] : [247, 220];
+
+      oscillator.type = kind === "soft" ? "sine" : "triangle";
+      oscillator.frequency.setValueAtTime(frequencies[0], start);
+      frequencies.slice(1).forEach((frequency, index) => {
+        oscillator.frequency.setValueAtTime(frequency, start + (index + 1) * 0.09);
+      });
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(kind === "tap" ? 0.09 : 0.14, start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.34);
       oscillator.connect(gain);
       gain.connect(context.destination);
-      oscillator.start();
-      oscillator.stop(context.currentTime + 0.32);
+      oscillator.start(start);
+      oscillator.stop(start + 0.36);
     },
     [soundOn],
   );
 
-  const promptForStep = useCallback(
-    (nextStep: GameStep) => {
-      if (nextStep === "letter") speak(`Can you find the letter ${letter.answer}? ${letter.answer} is for ${letter.animalName}.`);
-      if (nextStep === "count") speak(`Count the ${count.animalName}. How many do you see?`);
-      if (nextStep === "move") speak(movement.prompt);
-      if (nextStep === "celebrate") speak("You filled the whole star path! You are a learning princess!");
-    },
-    [count.animalName, letter.animalName, letter.answer, movement.prompt, speak],
-  );
+  const clearTimers = useCallback(() => {
+    if (advanceTimer.current) clearTimeout(advanceTimer.current);
+    if (movementTimer.current) clearInterval(movementTimer.current);
+    advanceTimer.current = null;
+    movementTimer.current = null;
+  }, []);
 
   useEffect(() => {
     return () => {
-      if (advanceTimer.current) clearTimeout(advanceTimer.current);
+      clearTimers();
       if (typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel();
     };
-  }, []);
+  }, [clearTimers]);
+
+  const resetRoomState = () => {
+    setSelectedPets([]);
+    setLastChoice(null);
+    setMoveSeconds(null);
+    setFeedback("");
+    setFeedbackKind(null);
+  };
 
   const startGame = () => {
-    setRound(0);
-    setFeedback("");
-    setIsCorrect(null);
-    setStep("letter");
-    window.setTimeout(() => speak("Welcome to the Princess Pet Palace! Can you find the letter P? P is for puppy."), 200);
+    clearTimers();
+    const nextJourney = createJourney();
+    setJourney(nextJourney);
+    setRoomIndex(0);
+    setJoinedPets([]);
+    setSparkleStreak(0);
+    resetRoomState();
+    setScreen("journey");
+    window.setTimeout(() => speak(`The palace doors are open! ${nextJourney[0].spokenPrompt}`), 240);
   };
 
-  const moveToNextRound = () => {
-    const nextRound = round + 1;
-    if (nextRound >= roundOrder.length) {
-      setRound(roundOrder.length);
-      setStep("celebrate");
-      setFeedback("");
-      setIsCorrect(null);
-      window.setTimeout(() => promptForStep("celebrate"), 200);
-      return;
-    }
-
-    const nextStep = roundOrder[nextRound];
-    setRound(nextRound);
-    setFeedback("");
-    setIsCorrect(null);
-    setStep(nextStep);
-    window.setTimeout(() => {
-      const nextLetter = getRandomItem(letterChallenges, nextRound);
-      const nextCount = getRandomItem(countChallenges, nextRound);
-      const nextMovement = getRandomItem(movementChallenges, nextRound);
-      if (nextStep === "letter") speak(`Can you find the letter ${nextLetter.answer}? ${nextLetter.answer} is for ${nextLetter.animalName}.`);
-      if (nextStep === "count") speak(`Count the ${nextCount.animalName}. How many do you see?`);
-      if (nextStep === "move") speak(nextMovement.prompt);
-    }, 250);
+  const goHome = () => {
+    clearTimers();
+    if (typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel();
+    setScreen("home");
+    setJourney([]);
+    setRoomIndex(0);
+    resetRoomState();
   };
 
-  const celebrateAnswer = () => {
-    const cheer = getRandomItem(cheers, round);
-    setIsCorrect(true);
-    setFeedback(cheer);
-    chime(true);
-    speak(cheer);
-    advanceTimer.current = setTimeout(moveToNextRound, 1350);
-  };
+  const finishRoom = useCallback(
+    (pet?: string) => {
+      clearTimers();
+      const cheer = cheers[(roomIndex + sparkleStreak) % cheers.length];
+      setFeedback(cheer);
+      setFeedbackKind("success");
+      setSparkleStreak((value) => value + 1);
+      if (pet) setJoinedPets((current) => [...current, pet]);
+      playTone("sparkle");
+      speak(cheer);
 
-  const tryAgain = () => {
-    setIsCorrect(false);
-    setFeedback("Almost! Try again!");
-    chime(false);
-    speak("Almost! Try again!");
+      advanceTimer.current = setTimeout(() => {
+        const nextIndex = roomIndex + 1;
+        if (nextIndex >= journey.length) {
+          setScreen("celebrate");
+          setFeedback("");
+          setFeedbackKind(null);
+          speak("The grand ballroom is open! You finished the whole palace adventure!");
+          return;
+        }
+
+        setRoomIndex(nextIndex);
+        resetRoomState();
+        window.setTimeout(() => speak(journey[nextIndex].spokenPrompt), 220);
+      }, 1150);
+    },
+    [clearTimers, journey, playTone, roomIndex, speak, sparkleStreak],
+  );
+
+  const tryAnother = (choiceId: string) => {
+    if (advanceTimer.current) clearTimeout(advanceTimer.current);
+    setLastChoice(choiceId);
+    setFeedback("Try another pet!");
+    setFeedbackKind("try");
+    playTone("soft");
+    speak("Try another pet!");
     advanceTimer.current = setTimeout(() => {
-      setIsCorrect(null);
+      setLastChoice(null);
       setFeedback("");
-      promptForStep(step);
-    }, 1100);
+      setFeedbackKind(null);
+    }, 850);
   };
 
-  const handleLetter = (choice: string) => {
-    if (isCorrect !== null) return;
-    if (choice === letter.answer) celebrateAnswer();
-    else tryAgain();
+  const handleLetterChoice = (challenge: LetterChallenge, choiceIndex: number) => {
+    if (feedbackKind === "success") return;
+    const choice = challenge.choices[choiceIndex];
+    if (choice.letter === challenge.answer) finishRoom(choice.emoji);
+    else tryAnother(`${challenge.id}-${choiceIndex}`);
   };
 
-  const handleCount = (choice: number) => {
-    if (isCorrect !== null) return;
-    if (choice === count.answer) celebrateAnswer();
-    else tryAgain();
+  const handlePetTap = (challenge: CountChallenge, petIndex: number) => {
+    if (feedbackKind === "success") return;
+    const result = countPetTap(selectedPets, petIndex, challenge.total);
+    if (result.selected === selectedPets) return;
+    setSelectedPets(result.selected);
+    playTone("tap");
+    speak(String(result.spokenNumber));
+    if (result.complete) {
+      advanceTimer.current = setTimeout(() => finishRoom(challenge.animal), 420);
+    }
+  };
+
+  const startMovement = (challenge: MoveChallenge) => {
+    if (moveSeconds !== null) return;
+    setMoveSeconds(challenge.seconds);
+    playTone("tap");
+    speak(`${challenge.action} Ready, go!`);
+
+    let remaining = challenge.seconds;
+    movementTimer.current = setInterval(() => {
+      remaining -= 1;
+      setMoveSeconds(remaining);
+      if (remaining > 0 && remaining <= 3) speak(String(remaining));
+      if (remaining <= 0) {
+        clearTimers();
+        advanceTimer.current = setTimeout(() => finishRoom(challenge.emoji), 320);
+      }
+    }, 1000);
   };
 
   const toggleSound = () => {
     const next = !soundOn;
     setSoundOn(next);
-    if (!next && typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel();
-    if (next) window.setTimeout(() => speak("Sound on!"), 100);
+    if (!next && typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+    if (next) window.setTimeout(() => speak("Sound on!", true), 100);
   };
 
+  const uniquePartyPets = useMemo(() => [...new Set(joinedPets)], [joinedPets]);
+
   return (
-    <main className="game-shell">
-      <div className="sky-sparkles" aria-hidden="true">
-        <span>✦</span><span>✧</span><span>✦</span><span>✧</span><span>✦</span>
+    <main className={`game-shell screen-${screen}`}>
+      <div className="ambient-world" aria-hidden="true">
+        <span className="ambient-sparkle sparkle-one">✦</span>
+        <span className="ambient-sparkle sparkle-two">✧</span>
+        <span className="ambient-sparkle sparkle-three">✦</span>
+        <span className="ambient-cloud cloud-a">☁</span>
+        <span className="ambient-cloud cloud-b">☁</span>
       </div>
 
       <header className="topbar">
-        <a className="brand" href="#game" aria-label="Princess Pet Palace home" onClick={(event) => { event.preventDefault(); setStep("home"); setRound(0); }}>
-          <span className="brand-crown" aria-hidden="true">♛</span>
-          <span>Princess Pet Palace</span>
-        </a>
-        <button className="sound-button" type="button" onClick={toggleSound} aria-label={soundOn ? "Turn sound off" : "Turn sound on"}>
-          <span aria-hidden="true">{soundOn ? "🔊" : "🔇"}</span>
+        <button className="brand" type="button" onClick={goHome} aria-label="Go to Princess Pet Palace home">
+          <span className="brand-mark" aria-hidden="true">♛</span>
+          <span className="brand-name">Princess Pet Palace</span>
         </button>
+
+        <div className="topbar-actions">
+          {screen === "journey" && (
+            <div className="magic-counter" aria-label={`${completedRooms} stars collected`}>
+              <span aria-hidden="true">★</span>
+              <strong>{completedRooms}</strong>
+            </div>
+          )}
+          <button className="icon-button" type="button" onClick={toggleSound} aria-label={soundOn ? "Turn sound off" : "Turn sound on"}>
+            <span aria-hidden="true">{soundOn ? "🔊" : "🔇"}</span>
+          </button>
+        </div>
       </header>
 
-      <section className="game-stage" id="game" aria-labelledby="game-title">
-        {step !== "home" && step !== "celebrate" && (
-          <div className="star-path" aria-label={`${round} of ${roundOrder.length} stars earned`}>
-            {roundOrder.map((_, index) => (
-              <span className={index < round ? "star earned" : index === round ? "star current" : "star"} key={index} aria-hidden="true">★</span>
-            ))}
-          </div>
-        )}
-
-        {step === "home" && (
-          <div className="welcome-card">
-            <div className="palace-scene" aria-hidden="true">
-              <span className="cloud cloud-one">☁</span>
-              <span className="cloud cloud-two">☁</span>
-              <div className="castle">
-                <span className="castle-crown">♛</span>
-                <span className="castle-tower left">▥</span>
-                <span className="castle-center">▥</span>
-                <span className="castle-tower right">▥</span>
+      {screen === "home" && (
+        <section className="home-stage" aria-labelledby="game-title">
+          <div className="hero-card">
+            <div className="hero-copy">
+              <p className="eyebrow"><span aria-hidden="true">✨</span> A new adventure every time</p>
+              <h1 id="game-title">Open the palace doors</h1>
+              <p className="hero-lede">Help the royal pets through six magical rooms filled with letters, counting, and movement.</p>
+              <button className="primary-button" type="button" onClick={startGame} data-testid="start-game">
+                <span className="button-sparkle" aria-hidden="true">✦</span>
+                <span>Start adventure</span>
+                <span className="button-arrow" aria-hidden="true">→</span>
+              </button>
+              <div className="quest-preview" aria-label="Adventure activities">
+                <span><b aria-hidden="true">🌸</b> Letter Garden</span>
+                <span><b aria-hidden="true">🐾</b> Pet Parade</span>
+                <span><b aria-hidden="true">🎀</b> Royal Gym</span>
               </div>
-              <span className="welcome-princess">👸</span>
-              <span className="welcome-pet pet-one">🐰</span>
-              <span className="welcome-pet pet-two">🐱</span>
             </div>
-            <p className="eyebrow">A magical learning adventure</p>
-            <h1 id="game-title">Princess Pet Palace</h1>
-            <p className="welcome-copy">Letters, counting, animals, and wiggles!</p>
-            <button className="start-button" type="button" onClick={startGame} data-testid="start-game">
-              <span aria-hidden="true">✨</span>
-              <span>Let&apos;s play!</span>
-              <span aria-hidden="true">→</span>
-            </button>
-            <p className="grownup-note"><span aria-hidden="true">🔊</span> Turn sound on so the palace can read each activity aloud.</p>
-          </div>
-        )}
 
-        {step === "letter" && (
-          <div className="activity-card letter-card">
-            <button className="repeat-button" type="button" onClick={() => promptForStep("letter")} aria-label="Hear the letter question again"><span aria-hidden="true">🔊</span> Hear it</button>
-            <p className="activity-kicker">Letter garden</p>
-            <div className="animal-hero" aria-hidden="true">{letter.animal}</div>
-            <h1 id="game-title">Find the letter <span className="target-letter">{letter.answer}</span></h1>
-            <p className="activity-prompt"><strong>{letter.answer}</strong> is for {letter.animalName}</p>
-            <div className="choice-grid letter-choices">
-              {letter.choices.map((choice) => (
-                <button className="choice-button letter-choice" type="button" key={choice} onClick={() => handleLetter(choice)} disabled={isCorrect !== null} aria-label={`Letter ${choice}`}>
-                  {choice}
-                </button>
-              ))}
+            <div className="hero-world" aria-hidden="true">
+              <div className="moon-glow" />
+              <div className="palace">
+                <span className="palace-flag">♥</span>
+                <span className="palace-wing wing-left" />
+                <span className="palace-main"><i /><i /><i /></span>
+                <span className="palace-wing wing-right" />
+              </div>
+              <div className="hero-path" />
+              <span className="hero-character princess">👸</span>
+              <span className="hero-character bunny">🐰</span>
+              <span className="hero-character kitten">🐱</span>
+              <span className="hero-character unicorn">🦄</span>
+              <span className="floating-star star-a">★</span>
+              <span className="floating-star star-b">★</span>
+              <span className="floating-star star-c">★</span>
             </div>
           </div>
-        )}
+          <p className="grownup-note"><span aria-hidden="true">🔊</span> Spoken instructions begin after the first tap. No ads, accounts, or tracking.</p>
+        </section>
+      )}
 
-        {step === "count" && (
-          <div className="activity-card count-card">
-            <button className="repeat-button" type="button" onClick={() => promptForStep("count")} aria-label="Hear the counting question again"><span aria-hidden="true">🔊</span> Hear it</button>
-            <p className="activity-kicker">Royal pet parade</p>
-            <h1 id="game-title">How many?</h1>
-            <div className="animal-group" aria-label={`${count.answer} ${count.animalName}`}>
-              {Array.from({ length: count.answer }, (_, index) => <span key={index} aria-hidden="true">{count.animal}</span>)}
+      {screen === "journey" && room && (
+        <section className="journey-stage" aria-labelledby="game-title">
+          <nav className="journey-map" aria-label={`Palace journey, room ${roomIndex + 1} of ${journey.length}`}>
+            <div className="journey-track" aria-hidden="true"><span style={{ width: `${journeyProgress}%` }} /></div>
+            {journey.map((journeyRoom, index) => (
+              <div className={`map-stop ${index < roomIndex ? "complete" : index === roomIndex ? "current" : "upcoming"}`} key={journeyRoom.id}>
+                <span className="map-icon" aria-hidden="true">{index < roomIndex ? "★" : journeyRoom.icon}</span>
+                <span className="map-label">{index === roomIndex ? journeyRoom.label : index + 1}</span>
+              </div>
+            ))}
+          </nav>
+
+          <div className={`activity-card activity-${room.kind}`}>
+            <div className="room-heading">
+              <div>
+                <p className="room-number">Room {roomIndex + 1} of {journey.length}</p>
+                <p className="activity-kicker">{room.label}</p>
+              </div>
+              <button className="hear-button" type="button" onClick={() => speak(room.spokenPrompt)} aria-label="Hear the instruction again">
+                <span aria-hidden="true">🔊</span><span>Hear it</span>
+              </button>
             </div>
-            <div className="choice-grid number-choices">
-              {count.choices.map((choice) => (
-                <button className="choice-button number-choice" type="button" key={choice} onClick={() => handleCount(choice)} disabled={isCorrect !== null} aria-label={`${choice}`}>
-                  {choice}
-                </button>
-              ))}
+
+            {room.kind === "letter" && <LetterRoom room={room} lastChoice={lastChoice} disabled={feedbackKind === "success"} onChoose={handleLetterChoice} />}
+            {room.kind === "count" && <CountRoom room={room} selectedPets={selectedPets} disabled={feedbackKind === "success"} onTap={handlePetTap} />}
+            {room.kind === "move" && <MoveRoom room={room} seconds={moveSeconds} disabled={feedbackKind === "success"} onStart={startMovement} />}
+
+            <div className="party-rail" aria-label={`${uniquePartyPets.length} royal pets have joined your party`}>
+              <span className="party-princess" aria-hidden="true">👸</span>
+              <div className="party-pets" aria-hidden="true">
+                {uniquePartyPets.length === 0 ? <span className="empty-party">Who will join?</span> : uniquePartyPets.map((pet, index) => <span key={`${pet}-${index}`}>{pet}</span>)}
+              </div>
+              <span className="party-label">Your royal party</span>
             </div>
           </div>
-        )}
 
-        {step === "move" && (
-          <div className="activity-card movement-card">
-            <button className="repeat-button" type="button" onClick={() => promptForStep("move")} aria-label="Hear the movement again"><span aria-hidden="true">🔊</span> Hear it</button>
-            <p className="activity-kicker">Princess gymnastics</p>
-            <div className="movement-emoji" aria-hidden="true">{movement.emoji}</div>
-            <h1 id="game-title">{movement.title}</h1>
-            <p className="movement-prompt">{movement.prompt}</p>
-            <button className="done-button" type="button" onClick={celebrateAnswer} disabled={isCorrect !== null} aria-label="I did the movement">
-              <span className="done-check" aria-hidden="true">✓</span>
-              <span>I did it!</span>
-            </button>
+          <div className={`feedback-toast ${feedbackKind ?? ""}`} role="status" aria-live="polite" aria-atomic="true">
+            {feedback && <><span className="feedback-icon" aria-hidden="true">{feedbackKind === "success" ? "✨" : "💜"}</span><strong>{feedback}</strong></>}
           </div>
-        )}
+        </section>
+      )}
 
-        {step === "celebrate" && (
+      {screen === "celebrate" && (
+        <section className="celebration-stage" aria-labelledby="game-title">
           <div className="celebration-card">
-            <div className="celebration-stars" aria-hidden="true">★ ★ ★ ★ ★</div>
-            <div className="celebration-cast" aria-hidden="true"><span>🐰</span><span>👸</span><span>🦄</span></div>
-            <p className="eyebrow">The palace is sparkling!</p>
-            <h1 id="game-title">You&apos;re a star!</h1>
-            <p className="celebration-copy">Letters found. Pets counted. Gymnastics complete!</p>
-            <button className="start-button" type="button" onClick={startGame} data-testid="play-again"><span aria-hidden="true">↻</span><span>Play again</span></button>
+            <div className="confetti" aria-hidden="true"><span>★</span><span>✦</span><span>●</span><span>★</span><span>✦</span><span>●</span></div>
+            <p className="eyebrow"><span aria-hidden="true">👑</span> Grand ballroom unlocked</p>
+            <div className="finale-party" aria-hidden="true">
+              <span>👸</span>
+              {(uniquePartyPets.length ? uniquePartyPets : ["🐰", "🐱", "🦄"]).map((pet, index) => <span key={`${pet}-${index}`}>{pet}</span>)}
+            </div>
+            <div className="finale-stars" aria-label={`${journey.length} stars collected`}>{journey.map((_, index) => <span key={index} aria-hidden="true">★</span>)}</div>
+            <h1 id="game-title">The palace is sparkling!</h1>
+            <p className="celebration-copy">You found letters, counted every pet, and completed the royal moves.</p>
+            <div className="finale-actions">
+              <button className="primary-button" type="button" onClick={startGame} data-testid="play-again"><span aria-hidden="true">↻</span><span>New adventure</span></button>
+              <button className="secondary-button" type="button" onClick={goHome}>Palace home</button>
+            </div>
           </div>
-        )}
-
-        <div className={`feedback ${isCorrect === true ? "success" : isCorrect === false ? "try-again" : ""}`} role="status" aria-live="polite" aria-atomic="true">
-          {feedback && <><span aria-hidden="true">{isCorrect ? "✨" : "💜"}</span> {feedback}</>}
-        </div>
-      </section>
+        </section>
+      )}
 
       <footer><span aria-hidden="true">♡</span> Made for little learners and big imaginations <span aria-hidden="true">♡</span></footer>
     </main>
+  );
+}
+
+function LetterRoom({ room, lastChoice, disabled, onChoose }: { room: JourneyRoom; lastChoice: string | null; disabled: boolean; onChoose: (challenge: LetterChallenge, index: number) => void }) {
+  const challenge = room.challenge as LetterChallenge;
+  return (
+    <div className="activity-body letter-room">
+      <div className="prompt-lockup">
+        <span className="letter-orb" aria-hidden="true">{challenge.answer}</span>
+        <div><h1 id="game-title">{room.prompt}</h1><p>Tap the animal whose name begins with <strong>{challenge.answer}</strong>.</p></div>
+      </div>
+      <div className="animal-choices">
+        {challenge.choices.map((choice, index) => {
+          const choiceId = `${challenge.id}-${index}`;
+          return (
+            <button className={`animal-choice ${lastChoice === choiceId ? "not-this-one" : ""}`} type="button" key={choiceId} onClick={() => onChoose(challenge, index)} disabled={disabled} aria-label={`${choice.name}, starts with ${choice.letter}`}>
+              <span className="choice-emoji" aria-hidden="true">{choice.emoji}</span>
+              <span className="choice-name">{choice.name}</span>
+              <span className="choice-letter" aria-hidden="true">{choice.letter}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function CountRoom({ room, selectedPets, disabled, onTap }: { room: JourneyRoom; selectedPets: number[]; disabled: boolean; onTap: (challenge: CountChallenge, index: number) => void }) {
+  const challenge = room.challenge as CountChallenge;
+  return (
+    <div className="activity-body count-room">
+      <div className="count-heading"><div><h1 id="game-title">{room.prompt}</h1><p>They&apos;ll wear a tiny crown when counted.</p></div><div className="count-badge" aria-live="polite"><strong>{selectedPets.length}</strong><span>of {challenge.total}</span></div></div>
+      <div className={`pet-meadow pets-${challenge.total}`} aria-label={`${challenge.total} ${challenge.animalName} to count`}>
+        {Array.from({ length: challenge.total }, (_, index) => {
+          const selectedPosition = selectedPets.indexOf(index);
+          const counted = selectedPosition >= 0;
+          return (
+            <button className={`count-pet pet-position-${index + 1} ${counted ? "counted" : ""}`} type="button" key={index} onClick={() => onTap(challenge, index)} disabled={disabled} aria-label={`${singularize(challenge.animalName)} ${index + 1}${counted ? `, counted as ${selectedPosition + 1}` : ", not counted yet"}`}>
+              <span className="pet-emoji" aria-hidden="true">{challenge.animal}</span>
+              {counted && <span className="count-crown" aria-hidden="true">♛</span>}
+              {counted && <span className="count-number" aria-hidden="true">{selectedPosition + 1}</span>}
+            </button>
+          );
+        })}
+      </div>
+      <div className="count-dots" aria-hidden="true">{Array.from({ length: challenge.total }, (_, index) => <span className={index < selectedPets.length ? "filled" : ""} key={index} />)}</div>
+    </div>
+  );
+}
+
+function MoveRoom({ room, seconds, disabled, onStart }: { room: JourneyRoom; seconds: number | null; disabled: boolean; onStart: (challenge: MoveChallenge) => void }) {
+  const challenge = room.challenge as MoveChallenge;
+  const progress = seconds === null ? 0 : ((challenge.seconds - seconds) / challenge.seconds) * 100;
+  return (
+    <div className="activity-body move-room">
+      <div className={`move-visual ${seconds !== null && seconds > 0 ? "moving" : ""}`} style={{ "--move-progress": `${progress}%` } as React.CSSProperties}>
+        <span className="move-ring" aria-hidden="true" />
+        <span className="move-emoji" aria-hidden="true">{challenge.emoji}</span>
+        {seconds !== null && <span className="move-count" aria-live="polite">{seconds > 0 ? seconds : "★"}</span>}
+      </div>
+      <h1 id="game-title">{challenge.title}</h1>
+      <p className="move-action">{challenge.action}</p>
+      {seconds === null ? (
+        <button className="move-button" type="button" onClick={() => onStart(challenge)} disabled={disabled}><span aria-hidden="true">✨</span><span>Let&apos;s move!</span></button>
+      ) : (
+        <div className="movement-message" aria-live="polite">{seconds > 0 ? "Keep going!" : "Beautiful!"}</div>
+      )}
+    </div>
   );
 }
