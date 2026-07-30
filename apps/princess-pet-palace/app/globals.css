@@ -554,16 +554,74 @@ h1 {
 }
 .hear-rings { font-size: 1.08rem; animation: hear-pulse 1.8s ease-in-out infinite; }
 
-.learning-banner {
+.guidance-row {
   position: relative;
   z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  max-width: calc(100% - 40px);
+  margin: 0 auto 2px;
+}
+
+.princess-coach {
+  position: relative;
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  min-height: 54px;
+  padding: 3px 9px 3px 3px;
+  border: 2px solid rgba(140, 76, 175, 0.1);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 8px 20px rgba(84, 42, 98, 0.09);
+}
+.coach-princess {
+  position: relative;
+  z-index: 2;
+  font-size: 2.7rem;
+  line-height: 1;
+  filter: drop-shadow(0 5px 5px rgba(79, 39, 90, 0.13));
+  animation: princess-guide-bob 2.4s ease-in-out infinite;
+}
+.coach-bubble {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: 72px;
+  min-height: 39px;
+  margin-left: 2px;
+  padding: 4px 8px;
+  border-radius: 14px;
+  color: #754481;
+  background: linear-gradient(135deg, #fbf4ff, #fff0f6);
+  font-size: 0.93rem;
+  white-space: nowrap;
+}
+.coach-bubble::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: -7px;
+  border-width: 6px 8px 6px 0;
+  border-style: solid;
+  border-color: transparent #fbf4ff transparent transparent;
+  transform: translateY(-50%);
+}
+.coach-success { background: rgba(255, 243, 199, 0.94); }
+.coach-success .coach-princess { animation: counted-pop 420ms ease, princess-guide-bob 2.4s 420ms ease-in-out infinite; }
+.coach-try .coach-bubble { background: #f2eafa; }
+
+.learning-banner {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 10px;
   width: fit-content;
   max-width: calc(100% - 40px);
   min-height: 52px;
-  margin: 0 auto 2px;
+  margin: 0;
   padding: 7px 12px 7px 8px;
   border: 2px solid rgba(140, 76, 175, 0.09);
   border-radius: 18px;
@@ -762,8 +820,8 @@ h1 {
 .camera-video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
 .camera-canvas { display: none; }
 .camera-placeholder { position: absolute; inset: 0; display: grid; place-items: center; }
-.camera-face { font-size: clamp(5rem, 10vw, 7rem); filter: drop-shadow(0 10px 12px rgba(77, 38, 90, 0.16)); }
-.camera-crown { position: absolute; top: 20%; left: 50%; z-index: 1; color: var(--gold); font-size: clamp(2.2rem, 5vw, 3.5rem); text-shadow: 0 3px 0 var(--gold-deep); transform: translateX(-50%) rotate(-5deg); }
+.camera-princess { font-size: clamp(5.4rem, 11vw, 7.4rem); filter: drop-shadow(0 10px 12px rgba(77, 38, 90, 0.16)); animation: princess-guide-bob 2.4s ease-in-out infinite; }
+.camera-wand { position: absolute; top: 20%; right: 22%; font-size: clamp(1.5rem, 4vw, 2.4rem); animation: twinkle 1.4s ease-in-out infinite; }
 .camera-status-pill { position: absolute; top: 11px; left: 11px; display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 0 10px; border: 1px solid rgba(255, 255, 255, 0.75); border-radius: 999px; color: #65406d; background: rgba(255, 255, 255, 0.86); box-shadow: 0 5px 12px rgba(71, 33, 83, 0.12); font-size: 0.65rem; font-weight: 850; }
 .camera-status-pill i { width: 7px; height: 7px; border-radius: 50%; background: #b79aba; }
 .camera-active .camera-status-pill i { background: #52a873; box-shadow: 0 0 0 3px rgba(82, 168, 115, 0.17); }
@@ -786,6 +844,7 @@ h1 {
 .motion-meter { height: 7px; margin: 3px 6px 7px; overflow: hidden; border-radius: 999px; background: rgba(105, 58, 121, 0.12); }
 .motion-meter span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--pink), var(--gold)); transition: width 180ms ease; }
 .camera-message { margin: 2px 6px 4px; color: #754783; font-size: 0.61rem; font-weight: 750; text-align: center; }
+.camera-opening { padding: 0 10px; color: #9a61a8; font-weight: 900; letter-spacing: 0.18em; animation: twinkle 1.2s ease-in-out infinite; }
 
 .party-rail {
   position: absolute;
@@ -910,6 +969,7 @@ button:disabled { cursor: default; }
 @keyframes royal-move { 0%, 100% { transform: translateY(0) rotate(-4deg); } 50% { transform: translateY(-13px) rotate(5deg); } }
 @keyframes party-arrive { 0% { opacity: 0; transform: translateX(-12px) scale(0.7); } 70% { transform: translateX(2px) scale(1.1); } 100% { opacity: 1; transform: none; } }
 @keyframes camera-sparkle { 0%, 100% { opacity: 0.25; scale: 0.7; rotate: 0deg; } 50% { opacity: 1; scale: 1.2; rotate: 25deg; } }
+@keyframes princess-guide-bob { 0%, 100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-4px) rotate(2deg); } }
 @keyframes confetti-float { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-13px) rotate(30deg); } }
 @keyframes hear-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
 
@@ -973,7 +1033,11 @@ button:disabled { cursor: default; }
   .skill-chip > span:last-child { display: none; }
   .hear-button { min-height: 42px; padding: 0 11px; }
   .hear-button span:last-child { display: none; }
-  .learning-banner { max-width: calc(100% - 24px); min-height: 48px; }
+  .guidance-row { width: calc(100% - 24px); max-width: none; gap: 6px; }
+  .princess-coach { min-height: 48px; padding-right: 5px; border-radius: 17px; }
+  .coach-princess { font-size: 2.25rem; }
+  .coach-bubble { min-width: 58px; min-height: 35px; padding: 3px 6px; font-size: 0.75rem; }
+  .learning-banner { min-width: 0; max-width: none; min-height: 48px; }
   .learning-banner strong { font-size: 0.7rem; }
   .activity-body { min-height: 430px; padding: 10px 15px 95px; }
   .prompt-lockup { flex-direction: column; gap: 20px; text-align: center; }
@@ -1003,7 +1067,8 @@ button:disabled { cursor: default; }
   .count-number { width: 29px; height: 29px; font-size: 0.78rem; }
   .activity-move { min-height: 875px; }
   .move-room { grid-template-columns: 1fr; gap: 17px; padding: 10px 15px 88px; }
-  .camera-magic { width: min(100%, 390px); padding: 8px; border-radius: 25px; }
+  .move-coach { order: 1; }
+  .camera-magic { order: 2; width: min(100%, 390px); padding: 8px; border-radius: 25px; }
   .camera-stage { border-radius: 19px; }
   .camera-details { flex-direction: row; align-items: center; padding-top: 10px; }
   .camera-button { width: auto; }

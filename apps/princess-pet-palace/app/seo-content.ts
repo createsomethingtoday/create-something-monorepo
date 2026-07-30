@@ -25,7 +25,7 @@ export const faqItems = [
   {
     question: "How does camera magic work?",
     answer:
-      "Tap Make camera magic in a movement room. Your browser may ask once for camera access; movement effects stay on the device and video is not saved.",
+      "Camera magic starts automatically in a movement room unless it was turned off. Your browser may ask once for camera access; movement effects stay on the device and video is not saved.",
   },
 ] as const;
 

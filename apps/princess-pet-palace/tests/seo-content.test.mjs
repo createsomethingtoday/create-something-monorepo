@@ -3,11 +3,12 @@ import test from "node:test";
 
 import { AI_VOICE_DISCLOSURE, faqItems } from "../app/seo-content.ts";
 
-test("describes direct camera play without an adult unlock", () => {
+test("describes automatic camera play and the one browser permission", () => {
   const cameraGuide = faqItems.find((item) => item.question === "How does camera magic work?");
 
   assert.ok(cameraGuide);
-  assert.match(cameraGuide.answer, /Tap Make camera magic/i);
+  assert.match(cameraGuide.answer, /starts automatically/i);
+  assert.match(cameraGuide.answer, /browser may ask once/i);
   assert.doesNotMatch(cameraGuide.answer, /grown-up|adult|unlock|privacy/i);
 });
 

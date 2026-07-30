@@ -64,6 +64,11 @@ export type CountTapResult = {
   complete: boolean;
 };
 
+export type PrincessCoachCue = {
+  visual: string;
+  ariaLabel: string;
+};
+
 const animals: AnimalChoice[] = [
   { emoji: "🐰", name: "bunny", letter: "B" },
   { emoji: "🐱", name: "cat", letter: "C" },
@@ -181,6 +186,40 @@ export function countPetTap(selected: number[], petIndex: number, total: number)
     selected: nextSelected,
     spokenNumber: nextSelected.length,
     complete: nextSelected.length === total,
+  };
+}
+
+export function getPrincessCoachCue(
+  room: JourneyRoom | undefined,
+  feedback: "success" | "try" | null,
+): PrincessCoachCue {
+  if (feedback === "success") {
+    return { visual: "👑 ✨", ariaLabel: "The princess celebrates with you" };
+  }
+
+  if (feedback === "try") {
+    return { visual: "💜 ↻", ariaLabel: "The princess encourages you to try again" };
+  }
+
+  if (!room) return { visual: "✨", ariaLabel: "The princess is ready to help" };
+
+  if (room.challenge.type === "letter") {
+    return {
+      visual: `👂 → ${room.challenge.answer}`,
+      ariaLabel: `The princess says to listen for the ${room.challenge.answer} sound`,
+    };
+  }
+
+  if (room.challenge.type === "count") {
+    return {
+      visual: `☝️ → ${room.challenge.animal}`,
+      ariaLabel: `The princess says to tap and count each ${room.challenge.animalSingular}`,
+    };
+  }
+
+  return {
+    visual: `${room.challenge.emoji} ✨`,
+    ariaLabel: `The princess shows the ${room.challenge.title} move`,
   };
 }
 

@@ -1,10 +1,19 @@
 export const CAMERA_MAGIC_COPY = {
-  startLabel: "Make camera magic",
+  startLabel: "Try camera magic",
   requestingLabel: "Opening camera…",
-  idlePrompt: "Tap the camera, then wave to make sparkles!",
+  requestingPrompt: "Princess is opening the magic mirror…",
+  idlePrompt: "Camera stays optional. Royal moves still work!",
   activePrompt: "Wave to wake the sparkles.",
   movingPrompt: "Your movement makes sparkles!",
 } as const;
+
+export const CAMERA_MAGIC_PREFERENCE_KEY = "princess-pet-palace-camera-v1";
+
+export type CameraPreference = "unknown" | "enabled" | "disabled";
+
+export function shouldAutoStartCamera(preference: CameraPreference): boolean {
+  return preference !== "disabled";
+}
 
 export function measureMotion(
   previous: Uint8ClampedArray,

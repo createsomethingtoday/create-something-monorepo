@@ -7,6 +7,7 @@ import {
   TRY_AGAIN_DELAY_MS,
   countPetTap,
   createJourney,
+  getPrincessCoachCue,
   type CountChallenge,
   type JourneyRoom,
   type LetterChallenge,
@@ -412,10 +413,13 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="learning-banner" aria-label={`Royal mission: ${room.learningGoal}`}>
-              <span className="mission-icon" aria-hidden="true">{room.icon}</span>
-              <span><small>Royal mission</small><strong>{room.learningGoal}</strong></span>
-              <span className="mission-listen" aria-hidden="true">♫</span>
+            <div className="guidance-row">
+              <PrincessCoach room={room} feedbackKind={feedbackKind} />
+              <div className="learning-banner" aria-label={`Royal mission: ${room.learningGoal}`}>
+                <span className="mission-icon" aria-hidden="true">{room.icon}</span>
+                <span><small>Royal mission</small><strong>{room.learningGoal}</strong></span>
+                <span className="mission-listen" aria-hidden="true">♫</span>
+              </div>
             </div>
 
             <div className="room-content">
@@ -434,7 +438,7 @@ export default function Home() {
           </div>
 
           <div className={`feedback-toast ${feedbackKind ?? ""}`} role="status" aria-live="assertive" aria-atomic="true" data-testid="room-feedback">
-            {feedback && <><span className="feedback-icon" aria-hidden="true">{feedbackKind === "success" ? "✨" : "💜"}</span><span className="feedback-copy"><strong>{feedbackTitle}</strong><small>{feedback}</small></span></>}
+            {feedback && <><span className="feedback-icon feedback-princess" aria-hidden="true">👸</span><span className="feedback-copy"><strong>{feedbackTitle}</strong><small>{feedback}</small></span></>}
           </div>
         </section>
       )}
@@ -467,6 +471,16 @@ export default function Home() {
 
       <footer><span aria-hidden="true">♡</span> Made for little learners and big imaginations <span aria-hidden="true">♡</span></footer>
     </main>
+  );
+}
+
+function PrincessCoach({ room, feedbackKind }: { room: JourneyRoom; feedbackKind: FeedbackKind }) {
+  const cue = getPrincessCoachCue(room, feedbackKind);
+  return (
+    <div className={`princess-coach coach-${feedbackKind ?? "playing"}`} data-testid="princess-coach" aria-label={cue.ariaLabel}>
+      <span className="coach-princess" aria-hidden="true">👸</span>
+      <span className="coach-bubble" aria-hidden="true"><strong>{cue.visual}</strong></span>
+    </div>
   );
 }
 

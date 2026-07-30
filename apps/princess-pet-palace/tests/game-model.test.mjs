@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { SUCCESS_ADVANCE_DELAY_MS, TRY_AGAIN_DELAY_MS, countPetTap, createJourney } from "../app/game-model.ts";
+import { SUCCESS_ADVANCE_DELAY_MS, TRY_AGAIN_DELAY_MS, countPetTap, createJourney, getPrincessCoachCue } from "../app/game-model.ts";
 
 test("creates a varied six-room palace journey with every activity", () => {
   const randomValues = [0.12, 0.76, 0.34, 0.91, 0.48, 0.63];
@@ -61,4 +61,18 @@ test("counts each pet once and completes only after every pet is tapped", () => 
   const second = countPetTap(first.selected, 0, 3);
   const third = countPetTap(second.selected, 1, 3);
   assert.deepEqual(third, { selected: [2, 0, 1], spokenNumber: 3, complete: true });
+});
+
+test("gives the princess a visual, no-reading-needed coaching cue in every state", () => {
+  const journey = createJourney(() => 0.42);
+  const letterRoom = journey.find((room) => room.kind === "letter");
+  const countRoom = journey.find((room) => room.kind === "count");
+  const moveRoom = journey.find((room) => room.kind === "move");
+
+  assert.match(getPrincessCoachCue(letterRoom, null).visual, /👂/);
+  assert.match(getPrincessCoachCue(countRoom, null).visual, /☝️/);
+  assert.match(getPrincessCoachCue(moveRoom, null).visual, /✨/);
+  assert.equal(getPrincessCoachCue(letterRoom, "success").visual, "👑 ✨");
+  assert.equal(getPrincessCoachCue(letterRoom, "try").visual, "💜 ↻");
+  assert.ok(journey.every((room) => getPrincessCoachCue(room, null).ariaLabel.length > 0));
 });
