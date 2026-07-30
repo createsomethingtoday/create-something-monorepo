@@ -44,11 +44,12 @@ The verifier type-checks, runs unit and boundary tests, builds the package, exec
 
 ## Agent Legibility Contract
 
-| Field               | Value                                                                                                                                                                           |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Entry point         | `src/index.ts`, `src/agent.ts`, `src/cli.ts`                                                                                                                                    |
-| Boot command        | `pnpm build`                                                                                                                                                                    |
-| Smoke command       | `pnpm verify`                                                                                                                                                                   |
-| Validation surfaces | component scores, policy caps, source registry, decision status, receipt hash, deterministic acceptance summary, agent tool boundary                                            |
-| UI validation path  | none; the package emits machine-readable decisions                                                                                                                              |
-| Escalation rule     | stop on private access, unverifiable official domains, missing eligibility/fulfillment evidence, purchase or monitoring requests, and redistribution or partnership assumptions |
+<!-- prettier-ignore -->
+| Field | Value |
+| --- | --- |
+| Entry point | `src/index.ts`, `src/agent.ts`, `src/cli.ts` |
+| Boot command | `pnpm build` |
+| Smoke command | `pnpm verify` |
+| Validation surfaces | component scores, policy caps, source registry, decision status, receipt hash, deterministic acceptance summary, agent tool boundary |
+| UI validation path | none; the package emits machine-readable decisions |
+| Escalation rule | stop on private access, unverifiable official domains, missing eligibility or fulfillment evidence, purchase or monitoring requests, and redistribution or partnership assumptions |
