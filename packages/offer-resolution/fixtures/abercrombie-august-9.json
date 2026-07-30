@@ -1,0 +1,182 @@
+{
+  "fixtureMetadata": {
+    "purpose": "Deterministic acceptance only; these are synthetic offers, not current coupon claims.",
+    "scenario": "Abercrombie, $200, ZIP 76060, needed by August 9, 2026"
+  },
+  "request": {
+    "merchant": "Abercrombie & Fitch",
+    "need": "clothing order",
+    "budget": 200,
+    "currency": "USD",
+    "postalCode": "76060",
+    "deadline": "2026-08-09",
+    "asOf": "2026-07-29T18:00:00.000Z",
+    "channels": ["online", "pickup"]
+  },
+  "observations": [
+    {
+      "id": "fixture-official-20",
+      "merchant": "Abercrombie & Fitch",
+      "title": "[Fixture] 20% off orders over $150",
+      "source": {
+        "kind": "official_retailer",
+        "url": "https://www.abercrombie.com/shop/us/br/promo-details",
+        "publisher": "Abercrombie & Fitch",
+        "observedAt": "2026-07-29T17:00:00.000Z",
+        "access": "public",
+        "direct": true
+      },
+      "offer": {
+        "code": "FIXTURE20",
+        "discount": { "kind": "percent", "value": 20 },
+        "status": "active",
+        "endsAt": "2026-08-10T05:00:00.000Z",
+        "minimumSubtotal": 150
+      },
+      "applicability": {
+        "merchant": "confirmed",
+        "budget": "confirmed",
+        "location": "confirmed",
+        "channel": "confirmed",
+        "membership": "confirmed"
+      },
+      "fulfillment": {
+        "deadline": "confirmed",
+        "evidenceUrl": "https://www.abercrombie.com/shop/us/help/shipping-handling"
+      },
+      "evidence": {
+        "terms": "explicit",
+        "code": "verified",
+        "corroboratingUrls": [
+          "https://www.abercrombie.com/shop/us/br/promo-details",
+          "https://www.abercrombie.com/shop/us/help/shipping-handling"
+        ]
+      }
+    },
+    {
+      "id": "fixture-ltk-15",
+      "merchant": "Abercrombie & Fitch",
+      "title": "[Fixture] Public LTK creator reports 15% off",
+      "source": {
+        "kind": "ltk_public",
+        "url": "https://www.shopltk.com/explore/example/posts/fixture",
+        "publisher": "Fixture Creator",
+        "observedAt": "2026-07-29T17:30:00.000Z",
+        "access": "public",
+        "direct": true
+      },
+      "offer": {
+        "code": "FIXTURE15",
+        "discount": { "kind": "percent", "value": 15 },
+        "status": "active",
+        "endsAt": "2026-08-09T23:59:59.000Z"
+      },
+      "applicability": {
+        "merchant": "confirmed",
+        "budget": "confirmed",
+        "location": "confirmed",
+        "channel": "confirmed",
+        "membership": "confirmed"
+      },
+      "fulfillment": { "deadline": "confirmed" },
+      "evidence": {
+        "terms": "partial",
+        "code": "reported",
+        "corroboratingUrls": []
+      }
+    },
+    {
+      "id": "fixture-deal-lead",
+      "merchant": "Abercrombie & Fitch",
+      "title": "[Fixture] Deal site reports a code",
+      "source": {
+        "kind": "deal_aggregator",
+        "url": "https://deals.example/abercrombie-fixture",
+        "publisher": "Fixture Deals",
+        "observedAt": "2026-07-29T17:45:00.000Z",
+        "access": "public",
+        "direct": false
+      },
+      "offer": {
+        "code": "FIXTUREDEAL",
+        "discount": { "kind": "percent", "value": 25 },
+        "status": "active"
+      },
+      "applicability": {
+        "merchant": "confirmed",
+        "budget": "unknown",
+        "location": "unknown",
+        "channel": "unknown",
+        "membership": "unknown"
+      },
+      "fulfillment": { "deadline": "unknown" },
+      "evidence": {
+        "terms": "partial",
+        "code": "reported",
+        "corroboratingUrls": []
+      }
+    },
+    {
+      "id": "fixture-app-only",
+      "merchant": "Abercrombie & Fitch",
+      "title": "[Fixture] App-only offer",
+      "source": {
+        "kind": "official_retailer",
+        "url": "https://www.abercrombie.com/shop/us/app",
+        "publisher": "Abercrombie & Fitch",
+        "observedAt": "2026-07-29T17:50:00.000Z",
+        "access": "app_only",
+        "direct": true
+      },
+      "offer": {
+        "discount": { "kind": "percent", "value": 10 },
+        "status": "active"
+      },
+      "applicability": {
+        "merchant": "confirmed",
+        "budget": "confirmed",
+        "location": "confirmed",
+        "channel": "confirmed",
+        "membership": "confirmed"
+      },
+      "fulfillment": { "deadline": "unknown" },
+      "evidence": {
+        "terms": "explicit",
+        "code": "not_applicable",
+        "corroboratingUrls": []
+      }
+    },
+    {
+      "id": "fixture-expired",
+      "merchant": "Abercrombie & Fitch",
+      "title": "[Fixture] Expired creator code",
+      "source": {
+        "kind": "creator_owned",
+        "url": "https://creator.example/expired-code",
+        "publisher": "Fixture Creator",
+        "observedAt": "2026-07-19T17:00:00.000Z",
+        "access": "public",
+        "direct": true
+      },
+      "offer": {
+        "code": "EXPIRED",
+        "discount": { "kind": "percent", "value": 30 },
+        "status": "expired",
+        "endsAt": "2026-07-20T00:00:00.000Z"
+      },
+      "applicability": {
+        "merchant": "confirmed",
+        "budget": "confirmed",
+        "location": "confirmed",
+        "channel": "confirmed",
+        "membership": "confirmed"
+      },
+      "fulfillment": { "deadline": "confirmed" },
+      "evidence": {
+        "terms": "explicit",
+        "code": "reported",
+        "corroboratingUrls": []
+      }
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Offer Resolution'
+  short_description: 'Find public offers with auditable reliability'
+  default_prompt: 'Use $offer-resolution to find reliable public offers for my merchant, budget, location, and deadline.'
