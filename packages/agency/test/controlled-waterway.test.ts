@@ -238,6 +238,11 @@ test('stage selection controls the visible current and valve state', () => {
 });
 
 test('stage selection reveals one relevant operating chapter at a time', () => {
+	const mobileStyles = component.slice(
+		component.indexOf('@media (max-width: 760px)'),
+		component.indexOf('@media (min-width: 761px) and (max-width: 1080px)')
+	);
+
 	assert.match(component, /\$:\s*activeStage\s*=/);
 	assert.ok(component.includes('data-active-chapter={activeStageId}'));
 	assert.ok(component.includes('id="waterway-active-chapter"'));
@@ -257,6 +262,11 @@ test('stage selection reveals one relevant operating chapter at a time', () => {
 	assert.match(
 		component,
 		/@media \(max-width: 760px\)[\s\S]*\.waterway__milestones > li:not\(\.waterway__milestone--active\)[\s\S]*display:\s*none/
+	);
+	assert.match(
+		mobileStyles,
+		/\.waterway__milestones > li:nth-child\(3\)\s*\{[^}]*max-width:\s*none/,
+		'the mobile current-stage card must reset the desktop 20% width cap'
 	);
 });
 

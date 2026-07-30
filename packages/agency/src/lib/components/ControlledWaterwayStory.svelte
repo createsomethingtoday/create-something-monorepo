@@ -1455,6 +1455,7 @@
 			right: auto;
 			top: auto;
 			width: auto;
+			max-width: none;
 			min-width: 0;
 			transform: none;
 		}
