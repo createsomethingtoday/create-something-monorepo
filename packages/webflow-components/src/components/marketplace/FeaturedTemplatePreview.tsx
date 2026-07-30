@@ -122,13 +122,6 @@ const FEATURED_TEMPLATE_PREVIEW_STYLES = `
 .tmfeatured-stage[data-device="tablet"] .tmfeatured-frame-wrap { width: min(768px, 100%); height: min(1024px, 100%); }
 .tmfeatured-stage[data-device="mobile"] .tmfeatured-frame-wrap { width: min(390px, 100%); height: min(844px, 100%); border-radius: 18px; }
 .tmfeatured-frame { display: block; width: 100%; height: 100%; min-height: 360px; border: 0; background: #fff; }
-.tmfeatured-frame-access { position: absolute; bottom: 12px; left: 12px; z-index: 3; display: flex; max-width: calc(100% - 24px); flex-wrap: wrap; align-items: center; gap: 8px; }
-.tmfeatured-frame-access-button { display: inline-flex; min-height: 34px; align-items: center; justify-content: center; padding: 0 11px; border: 1px solid rgba(8,8,8,.18); border-radius: 4px; color: #080808; background: rgba(255,255,255,.94); box-shadow: 0 4px 14px rgba(0,0,0,.14); font: inherit; font-size: 12px; font-weight: 600; line-height: 1; cursor: pointer; }
-.tmfeatured-frame-access-button:hover { background: #fff; }
-.tmfeatured-frame-access-button:focus-visible { outline: 2px solid #146ef5; outline-offset: 2px; }
-.tmfeatured-frame-access-button[aria-pressed="true"] { border-color: #146ef5; color: #fff; background: #146ef5; }
-.tmfeatured-frame-access-hint { max-width: 280px; margin: 0; padding: 7px 9px; border-radius: 4px; color: #fff; background: rgba(8,8,8,.82); font-size: 11px; line-height: 1.3; }
-.tmfeatured-frame-return { position: absolute; top: 12px; right: 12px; z-index: 3; }
 .tmfeatured-loading,
 .tmfeatured-unavailable { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #5f5f5f; background: #fff; font-size: 14px; }
 .tmfeatured-loading { pointer-events: none; transition: opacity 160ms ease; }
@@ -177,8 +170,6 @@ const FEATURED_TEMPLATE_PREVIEW_STYLES = `
   .tmfeatured-devices { width: 100%; }
   .tmfeatured-device { flex: 1; padding: 0 8px; }
   .tmfeatured-action-open-site { display: none; }
-  .tmfeatured-frame-access,
-  .tmfeatured-frame-return,
   .tmfeatured-nav-hint { display: none; }
   .tmfeatured-stage { min-height: 56vh; padding: 10px; }
   .tmfeatured-stage[data-device="tablet"] .tmfeatured-frame-wrap,
@@ -227,15 +218,11 @@ export const FeaturedTemplatePreview: React.FC<FeaturedTemplatePreviewProps> = (
 }) => {
   const [device, setDevice] = useState<FeaturedTemplatePreviewDevice>('desktop');
   const [loaded, setLoaded] = useState(false);
-  const [keyboardPreviewItemId, setKeyboardPreviewItemId] = useState<string | null>(null);
   const titleId = useId();
   const feedbackTitleId = useId();
   const detailsTitleId = useId();
-  const keyboardPreviewHintId = useId();
   const dialogRef = useRef<HTMLElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
-  const keyboardPreviewButtonRef = useRef<HTMLButtonElement>(null);
-  const previewFrameRef = useRef<HTMLIFrameElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
   const loadedItemIdRef = useRef(item.id);
   const interactionRef = useRef({ hasPrevious, hasNext, onClose, onNavigate });
@@ -254,12 +241,6 @@ export const FeaturedTemplatePreview: React.FC<FeaturedTemplatePreviewProps> = (
   const subcategories = uniqueTermNames([item.child_categories]);
   const styles = uniqueTermNames([item.styles]);
   const hasDetails = Boolean(description || templateType || subcategories.length || styles.length);
-  const keyboardPreviewEnabled = keyboardPreviewItemId === item.id;
-
-  const returnToModalControls = () => {
-    setKeyboardPreviewItemId(null);
-    queueMicrotask(() => keyboardPreviewButtonRef.current?.focus());
-  };
 
   useEffect(() => {
     const previousItemId = loadedItemIdRef.current;
@@ -268,10 +249,6 @@ export const FeaturedTemplatePreview: React.FC<FeaturedTemplatePreviewProps> = (
   }, [item.id]);
 
   const previewLoaded = loaded && loadedItemIdRef.current === item.id;
-
-  useEffect(() => {
-    if (keyboardPreviewEnabled) previewFrameRef.current?.focus();
-  }, [keyboardPreviewEnabled]);
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
@@ -371,6 +348,7 @@ export const FeaturedTemplatePreview: React.FC<FeaturedTemplatePreviewProps> = (
               href={previewUrl}
               target="_blank"
               rel="noopener noreferrer"
+              aria-label={`Open ${item.name} live preview (opens in a new tab)`}
               onClick={onOpenSite}
             >
               Open live preview <span className="tmfeatured-action-new-tab" aria-hidden="true">↗</span>
@@ -395,48 +373,21 @@ export const FeaturedTemplatePreview: React.FC<FeaturedTemplatePreviewProps> = (
             <div className="tmfeatured-frame-wrap" aria-busy={previewUrl ? !previewLoaded : undefined}>
               {previewUrl ? (
                 <>
-                  <div className="tmfeatured-frame-access">
-                    <button
-                      ref={keyboardPreviewButtonRef}
-                      type="button"
-                      className="tmfeatured-frame-access-button"
-                      aria-pressed={keyboardPreviewEnabled}
-                      onClick={() => setKeyboardPreviewItemId(keyboardPreviewEnabled ? null : item.id)}
-                    >
-                      {keyboardPreviewEnabled ? 'Keyboard preview enabled' : 'Enable keyboard preview'}
-                    </button>
-                    {keyboardPreviewEnabled ? (
-                      <p id={keyboardPreviewHintId} className="tmfeatured-frame-access-hint" role="status">
-                        Press Shift+Tab to return; Escape and ← → resume in modal controls.
-                      </p>
-                    ) : null}
-                  </div>
                   {!previewLoaded ? (
                     <div className="tmfeatured-loading" aria-live="polite">Loading live preview</div>
                   ) : null}
                   <iframe
-                    ref={previewFrameRef}
                     className="tmfeatured-frame"
                     data-preview-device={device}
                     src={previewUrl}
                     sandbox={PREVIEW_IFRAME_SANDBOX}
                     referrerPolicy="no-referrer"
-                    tabIndex={keyboardPreviewEnabled ? 0 : -1}
-                    aria-describedby={keyboardPreviewEnabled ? keyboardPreviewHintId : undefined}
+                    tabIndex={-1}
                     title={`${item.name} live template preview`}
                     loading="eager"
                     onLoad={() => setLoaded(true)}
                     style={{ opacity: previewLoaded ? 1 : 0 }}
                   />
-                  {keyboardPreviewEnabled ? (
-                    <button
-                      type="button"
-                      className="tmfeatured-frame-access-button tmfeatured-frame-return"
-                      onClick={returnToModalControls}
-                    >
-                      Return to modal controls
-                    </button>
-                  ) : null}
                 </>
               ) : (
                 <div className="tmfeatured-unavailable">
