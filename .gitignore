@@ -60,6 +60,12 @@ apps/*
 !apps/create-something-scheduler/**
 !apps/guard-performance-lab/
 !apps/guard-performance-lab/**
+!apps/princess-pet-palace/
+!apps/princess-pet-palace/**
+apps/princess-pet-palace/node_modules/
+apps/princess-pet-palace/dist/
+apps/princess-pet-palace/.vinext/
+apps/princess-pet-palace/.wrangler/
 apps/guard-performance-lab/.data/
 apps/guard-performance-lab/.svelte-kit/
 apps/guard-performance-lab/build/
