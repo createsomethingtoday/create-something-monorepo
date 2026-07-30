@@ -33,14 +33,8 @@
 	const margin = 20;
 
 	// Calculate extent including overhangs
-	$: maxX = Math.max(
-		plan.width,
-		...(plan.overhangs || []).map((o) => o.x + o.width)
-	);
-	$: maxY = Math.max(
-		plan.depth,
-		...(plan.overhangs || []).map((o) => o.y + o.height)
-	);
+  $: maxX = Math.max(plan.width, ...(plan.overhangs || []).map((o) => o.x + o.width));
+  $: maxY = Math.max(plan.depth, ...(plan.overhangs || []).map((o) => o.y + o.height));
 
 	$: svgWidth = maxX * scale + margin * 2 + 80;
 	$: svgHeight = maxY * scale + margin * 2 + 20;
@@ -96,7 +90,7 @@
 
 	// Scale bar configuration
 	const scaleBarIntervals = [0, 5, 10, 15, 20]; // feet
-	const scaleBarY = svgHeight - 10; // Position near bottom
+  $: scaleBarY = svgHeight - 10; // Position near bottom after the reactive extent resolves
 	const scaleBarStartX = margin;
 </script>
 
@@ -127,11 +121,7 @@
 				class="overhang"
 			/>
 			{#if oh.label}
-				<text
-					x={tx(oh.x + oh.width / 2)}
-					y={ty(oh.y + oh.height / 2)}
-					class="overhang-label"
-				>
+        <text x={tx(oh.x + oh.width / 2)} y={ty(oh.y + oh.height / 2)} class="overhang-label">
 					{#each oh.label.split('\n') as line, i}
 						<tspan x={tx(oh.x + oh.width / 2)} dy={i === 0 ? 0 : '1.1em'}>{line}</tspan>
 					{/each}
@@ -153,13 +143,7 @@
 
 		<!-- Columns - Mies: structure expressed honestly -->
 		{#each plan.columns || [] as col}
-			<rect
-				x={tx(col.x) - 2.5}
-				y={ty(col.y) - 2.5}
-				width="5"
-				height="5"
-				class="column"
-			/>
+      <rect x={tx(col.x) - 2.5} y={ty(col.y) - 2.5} width="5" height="5" class="column" />
 		{/each}
 
 		<!-- Doors - minimal openings (two small perpendicular marks) -->
@@ -245,7 +229,9 @@
 					class="entry-line"
 				/>
 				<polygon
-					points="{tx(plan.entry.x - 1)},{ty(plan.entry.y)} {tx(plan.entry.x + 0.5)},{ty(plan.entry.y) - 3} {tx(plan.entry.x + 0.5)},{ty(plan.entry.y) + 3}"
+          points="{tx(plan.entry.x - 1)},{ty(plan.entry.y)} {tx(plan.entry.x + 0.5)},{ty(
+            plan.entry.y
+          ) - 3} {tx(plan.entry.x + 0.5)},{ty(plan.entry.y) + 3}"
 					class="entry-arrow"
 				/>
 			</g>
@@ -269,7 +255,7 @@
 			<line
 				x1={scaleBarStartX}
 				y1={scaleBarY}
-				x2={scaleBarStartX + (20 * scale)}
+        x2={scaleBarStartX + 20 * scale}
 				y2={scaleBarY}
 				class="scale-bar-line"
 			/>
@@ -277,17 +263,13 @@
 			<!-- Interval marks and labels -->
 			{#each scaleBarIntervals as interval}
 				<line
-					x1={scaleBarStartX + (interval * scale)}
+          x1={scaleBarStartX + interval * scale}
 					y1={scaleBarY - 3}
-					x2={scaleBarStartX + (interval * scale)}
+          x2={scaleBarStartX + interval * scale}
 					y2={scaleBarY + 3}
 					class="scale-bar-tick"
 				/>
-				<text
-					x={scaleBarStartX + (interval * scale)}
-					y={scaleBarY + 10}
-					class="scale-bar-label"
-				>
+        <text x={scaleBarStartX + interval * scale} y={scaleBarY + 10} class="scale-bar-label">
 					{interval}′
 				</text>
 			{/each}
@@ -298,9 +280,7 @@
 			<text x={margin} y={margin - 5} class="title-block-name">
 				{plan.name}
 			</text>
-			<text x={margin} y={margin - 15} class="title-block-scale">
-				SCALE: 1/4″ = 1′-0″
-			</text>
+      <text x={margin} y={margin - 15} class="title-block-scale"> SCALE: 1/4″ = 1′-0″ </text>
 		</g>
 	</svg>
 
@@ -328,7 +308,9 @@
 	{#if plan.materials && showCosts}
 		<div class="cost-summary">
 			<div class="cost-header">
-				<span class="cost-total">{formatCurrency(plan.materials.totalSF * plan.materials.costPerSF)}</span>
+        <span class="cost-total"
+          >{formatCurrency(plan.materials.totalSF * plan.materials.costPerSF)}</span
+        >
 				<span class="cost-per-sf">{formatCurrency(plan.materials.costPerSF)}/SF</span>
 			</div>
 
@@ -382,7 +364,8 @@
 
 	/* Zones - barely perceptible, Tufte-style */
 	.zone {
-		transition: opacity var(--duration-performance-standard, 0.3s) var(--ease-performance-standard, ease);
+    transition: opacity var(--duration-performance-standard, 0.3s)
+      var(--ease-performance-standard, ease);
 	}
 
 	.interactive .zone:hover {
