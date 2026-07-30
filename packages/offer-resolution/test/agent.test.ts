@@ -9,8 +9,11 @@ import {
   createOfferFindAgent,
   createLtkWebSearchTool,
   offerEvidenceInputSchema,
+  runOfferFindAgentService,
   resolveOfferEvidenceTool
 } from '../src/agent.js';
+import { createOfferService } from '../src/service.js';
+import type { OfferObservation } from '../src/types.js';
 
 const request = {
   merchant: 'Abercrombie & Fitch',
@@ -73,4 +76,15 @@ test('resolver tool returns the deterministic result as final JSON', async () =>
   assert.equal(parsed.schemaVersion, 'offer_resolution.v0.2');
   assert.deepEqual(parsed.summary, { recommend: 0, verify: 0, lead: 0, rejected: 0 });
   assert.deepEqual(parsed.lanes, { ltk: [], supplemental: [] });
+});
+
+test('agent service facade returns the same authoritative service contract', async () => {
+  const observations: OfferObservation[] = [];
+  const discovery = { discover: async () => observations };
+  const expected = await createOfferService({ discovery }).findOffers(request);
+
+  const actual = await runOfferFindAgentService(request, { discovery });
+
+  assert.deepEqual(actual, expected);
+  assert.equal(actual.operation, 'find_offers');
 });

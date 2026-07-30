@@ -1,6 +1,6 @@
 ---
 name: offer-resolution
-description: Find, compare, and verify public coupon and promo offers, beginning with public LTK and creator codes, for a merchant or supported shopping category, need, budget, ZIP code, channel, and deadline. Use when a user wants current savings or asks whether an influencer, retailer, affiliate, search, or deal-site offer is reliable. Do not use for continuous monitoring, automated purchasing, bulk scraping, coupon creation, or historical lift analysis.
+description: Find, compare, verify, and create a bounded deadline-based watch for public coupon and promo offers, beginning with public LTK and creator codes, for a merchant or supported shopping category, need, budget, ZIP code, channel, and deadline. Use when a user wants current savings, asks whether an influencer or retailer offer is reliable, or wants the same bounded request checked again. Do not use for unbounded monitoring, external notifications, automated purchasing, bulk scraping, coupon creation, or historical lift analysis.
 ---
 
 # Offer Resolution
@@ -15,6 +15,7 @@ Resolve a user-triggered shopping request through public discovery and determini
 4. Record each candidate as an observation. Preserve its direct URL, publisher, observation time, creator-post publication time when available, access state, offer terms, code evidence, eligibility facts, fulfillment evidence, and corroborating URLs. Never substitute observation time for post publication time. Include conflicting, expired, inaccessible, and uncertain candidates instead of silently dropping them.
 5. Run the candidate set through `@create-something/offer-resolution` or call `resolve_offer_evidence` when the Offer Find Agent is available. Never calculate, invent, or edit a reliability score yourself.
 6. Present the `ltk` lane before the `supplemental` lane. Within each lane, separate `recommend`, `verify`, `lead`, and `rejected`. Include projected savings, direct links, score components, caps, reasons, and receipt hashes. Say plainly when LTK returned no current public offer or no candidate is reliable enough to recommend.
+7. If the user asks to keep checking, call `watch_offers` with the normalized request, an explicit end time, and a stable idempotency key. Treat this as one bounded watch: retries must return the existing identity. It persists status and receipts but does not itself promise a schedule or send external notifications.
 
 For deterministic evidence files inside this repository, run:
 
@@ -46,7 +47,7 @@ node packages/offer-resolution/dist/cli.js live \
 
 ## Safety and access
 
-- Do not purchase, add to cart, submit checkout, message a creator, subscribe, or create monitoring.
+- Do not purchase, add to cart, submit checkout, message a creator, subscribe, create unbounded monitoring, or send external notifications. A user-approved bounded watch through `watch_offers` is permitted.
 - Do not bypass login, robots controls, rate limits, app-only access, or other technical restrictions.
 - Do not use private LTK APIs, assume an LTK partnership, or bulk scrape creator content.
 - Do not infer redistribution, storage, or commercial reuse rights from public availability. Return links and short evidence summaries.
@@ -54,4 +55,4 @@ node packages/offer-resolution/dist/cli.js live \
 
 ## Output
 
-Lead with the LTK lane, followed by supplemental findings. For every candidate, report the status, expected savings, reliability score, material constraints, source URL, observation time, caps or rejection reasons, and receipt hash. Distinguish current verification from stale fixture or search evidence.
+Lead with the LTK lane, followed by supplemental findings. For every candidate, report the status, expected savings, plain-language confidence, material constraints, source URL, observation time, caps or rejection reasons, and receipt hash. Distinguish current verification from stale fixture or search evidence. For a bounded watch, report its identity, end time, current status, last result, and whether the call created or reused it.

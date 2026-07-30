@@ -1,5 +1,6 @@
 packages:
   - 'apps/*'
+  - '!apps/princess-pet-palace'
   - 'packages/*'
   - '!packages/loom'
   - '!packages/loom/npm'

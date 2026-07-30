@@ -3108,6 +3108,31 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
+  packages/offer-savings-app:
+    dependencies:
+      '@create-something/offer-resolution':
+        specifier: workspace:*
+        version: link:../offer-resolution
+      '@modelcontextprotocol/sdk':
+        specifier: 1.25.3
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6)
+      hono:
+        specifier: ^4.11.7
+        version: 4.12.30
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
+    devDependencies:
+      '@types/node':
+        specifier: 24.10.9
+        version: 24.10.9
+      tsx:
+        specifier: ^4.21.0
+        version: 4.21.0
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
   packages/ona-agents:
     dependencies:
       '@create-something/canon':

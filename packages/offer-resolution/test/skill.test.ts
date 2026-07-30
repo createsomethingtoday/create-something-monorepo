@@ -40,6 +40,9 @@ test('skill uses the package CLI and deterministic result as the authority', asy
   assert.match(skill, /resolve_offer_evidence/);
   assert.match(skill, /Never.*score/i);
   assert.match(skill, /references\/source-registry\.md/);
+  assert.match(skill, /watch_offers/);
+  assert.match(skill, /bounded watch/i);
+  assert.match(skill, /external notifications/i);
 });
 
 test('source registry covers all initial locations and their evidence role', async () => {

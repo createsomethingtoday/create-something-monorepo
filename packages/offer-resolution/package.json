@@ -1,6 +1,6 @@
 {
   "name": "@create-something/offer-resolution",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "Resolve public offer evidence into deterministic, provenance-backed recommendations.",
   "type": "module",
@@ -11,7 +11,8 @@
     "entrypoints": [
       "src/index.ts",
       "src/agent.ts",
-      "src/cli.ts"
+      "src/cli.ts",
+      "src/http.ts"
     ],
     "boot": "pnpm build",
     "smoke": "pnpm verify"
