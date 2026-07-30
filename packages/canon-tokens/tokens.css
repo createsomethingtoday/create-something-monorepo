@@ -130,6 +130,17 @@
   --color-performance-stop: var(--color-performance-risk);
   --color-performance-stop-soft: var(--color-performance-risk-soft);
 
+  /* Surface modes share the same raw palette while changing information priority. */
+  --color-performance-mode-campaign-surface: var(--color-performance-ink);
+  --color-performance-mode-campaign-ink: var(--color-performance-panel);
+  --color-performance-mode-campaign-accent: var(--color-performance-pressure);
+  --color-performance-mode-proof-surface: var(--color-performance-paper);
+  --color-performance-mode-proof-ink: var(--color-performance-ink);
+  --color-performance-mode-proof-accent: var(--color-performance-signal);
+  --color-performance-mode-operator-surface: var(--color-performance-panel);
+  --color-performance-mode-operator-ink: var(--color-performance-ink);
+  --color-performance-mode-operator-accent: var(--color-performance-growth);
+
   /* Live-work states: complete text/background/border roles.
    * Products map their agent, tool, approval, preview, and outcome states to
    * this lifecycle instead of inventing local status colors.
@@ -419,7 +430,7 @@
   /* Font families */
   --font-performance-sans: Arial, "Helvetica Neue", Helvetica, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-performance-heading: var(--font-performance-sans);
-  --font-performance-display: "Satoshi", "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-performance-display: var(--font-performance-sans);
   --font-performance-mono: "IBM Plex Mono", "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas, monospace;
   --font-performance-display-weight: 500;
   --tracking-performance-display: -0.03em;

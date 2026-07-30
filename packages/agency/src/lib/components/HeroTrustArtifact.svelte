@@ -417,11 +417,12 @@
     .hero-trust-artifact__header,
     .hero-trust-artifact__decision,
     .hero-trust-artifact__footer {
-      padding: 0.86rem;
+      padding: 0.7rem;
     }
 
     .hero-trust-artifact__header {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: start;
     }
 
     .hero-trust-artifact__header small {
@@ -430,14 +431,14 @@
 
     .hero-trust-artifact__path {
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 0.54rem;
-      padding: 0.6rem;
+      gap: 0.4rem;
+      padding: 0.45rem;
     }
 
     .hero-trust-artifact__signal {
       grid-template-columns: 1fr;
       min-height: auto;
-      padding: 0.72rem;
+      padding: 0.55rem;
     }
 
     .hero-trust-artifact__icon {
@@ -456,7 +457,7 @@
 
     .hero-trust-artifact__state {
       min-height: auto;
-      padding: 0.58rem;
+      padding: 0.5rem;
     }
   }
 </style>

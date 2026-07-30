@@ -5,7 +5,7 @@
  * document-level styles. These literal values are intended for inline styles;
  * product copy and email composition remain owned by the consuming surface.
  */
-export const PERFORMANCE_EMAIL_STYLE_VERSION = '1.0.0' as const;
+export const PERFORMANCE_EMAIL_STYLE_VERSION = '1.1.0' as const;
 
 export const performanceEmailTokens = {
   color: {
@@ -21,7 +21,7 @@ export const performanceEmailTokens = {
   },
   font: {
     display:
-      'Satoshi, "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+      'Arial, "Helvetica Neue", Helvetica, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
     mono:
       '"IBM Plex Mono", "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas, monospace'
   },

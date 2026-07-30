@@ -92,7 +92,10 @@
   }
 
   a {
+    display: inline-flex;
     width: fit-content;
+    min-height: var(--height-performance-control-min, 2.75rem);
+    align-items: center;
     color: inherit;
     font-size: 0.82rem;
     font-weight: var(--font-performance-semibold, 650);

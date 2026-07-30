@@ -1,0 +1,139 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { test } from 'node:test';
+
+const navigationSource = readFileSync(
+  new URL('../../canon/src/lib/components/Navigation.svelte', import.meta.url),
+  'utf8'
+);
+const agencyLayoutSource = readFileSync(
+  new URL('../src/routes/+layout.svelte', import.meta.url),
+  'utf8'
+);
+const privacySource = readFileSync(
+  new URL('../src/lib/components/PrivacyAnalytics.svelte', import.meta.url),
+  'utf8'
+);
+const homeSource = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
+const narrativeSource = readFileSync(
+  new URL('../../canon/src/lib/components/performance/PerformanceNarrativeStage.svelte', import.meta.url),
+  'utf8'
+);
+const handoffSource = readFileSync(
+  new URL('../../canon/src/lib/components/performance/PerformanceConversionHandoff.svelte', import.meta.url),
+  'utf8'
+);
+const trustArtifactSource = readFileSync(
+  new URL('../src/lib/components/HeroTrustArtifact.svelte', import.meta.url),
+  'utf8'
+);
+const readbackSource = readFileSync(
+  new URL('../src/lib/components/AgencyPerformanceReadback.svelte', import.meta.url),
+  'utf8'
+);
+const compatibilityRailSource = readFileSync(
+  new URL('../src/lib/components/IntegrationCompatibilityRail.svelte', import.meta.url),
+  'utf8'
+);
+const footerSource = readFileSync(
+  new URL('../../canon/src/lib/components/Footer.svelte', import.meta.url),
+  'utf8'
+);
+const publicMapSource = readFileSync(
+  new URL('../src/lib/components/PublicAtlasCanvas.svelte', import.meta.url),
+  'utf8'
+);
+const atlasFlowStyles = readFileSync(
+  new URL('../../canon/src/lib/atlas/AtlasFlow.css', import.meta.url),
+  'utf8'
+);
+const publicAtlasFlowSource = readFileSync(
+  new URL('../src/lib/components/PublicAtlasFlow.svelte', import.meta.url),
+  'utf8'
+);
+
+test('mobile navigation exposes state so fixed privacy UI cannot compete with it', () => {
+  assert.match(navigationSource, /onMobileMenuChange\?: \(open: boolean\) => void/);
+  assert.match(navigationSource, /onMobileMenuChange\?\.\(mobileMenuOpen\)/);
+  assert.match(agencyLayoutSource, /let mobileNavigationOpen = \$state\(false\)/);
+  assert.match(agencyLayoutSource, /obscured=\{mobileNavigationOpen\}/);
+  assert.match(agencyLayoutSource, /onMobileMenuChange=\{\(open\) => \(mobileNavigationOpen = open\)\}/);
+  assert.match(privacySource, /obscured\?: boolean/);
+  assert.match(privacySource, /class:privacy-choice--obscured=\{obscured\}/);
+  assert.doesNotMatch(privacySource, /z-index:\s*80/);
+  assert.match(privacySource, /z-index:\s*var\(--z-performance-sticky/);
+});
+
+test('Escape closes mobile navigation and returns focus to its trigger', () => {
+  assert.match(navigationSource, /bind:this=\{mobileMenuButton\}/);
+  assert.match(navigationSource, /event\.key !== 'Escape'/);
+  assert.match(navigationSource, /mobileMenuButton\?\.focus\(\)/);
+  assert.match(navigationSource, /<svelte:window onkeydown=\{handleWindowKeydown\}/);
+});
+
+test('the mobile operating story does not repeat proof already carried by its boundary artifact', () => {
+  const boundaryScene = homeSource.slice(
+    homeSource.indexOf("id: 'boundary'"),
+    homeSource.indexOf("id: 'map'")
+  );
+
+  assert.doesNotMatch(boundaryScene, /\bevidence:/);
+  assert.doesNotMatch(boundaryScene, /\breceipts:/);
+  assert.match(homeSource, /Every action leaves a record your team can review/);
+  assert.match(homeSource, /aria-label="Boundary study receipt"/);
+
+  const operateScene = homeSource.slice(
+    homeSource.indexOf("id: 'operate'"),
+    homeSource.indexOf('];', homeSource.indexOf("id: 'operate'"))
+  );
+  assert.doesNotMatch(operateScene, /\bactions:/, 'operate destinations already live in its artifact');
+  assert.match(homeSource, /href=\{report\.href\}/);
+  assert.match(homeSource, /href="\/stack"/);
+});
+
+test('compact mobile composition reduces spacing while retaining readable control targets', () => {
+  assert.match(
+    narrativeSource,
+    /@media \(max-width: 47\.99rem\)[\s\S]*?\.performance-narrative-stage\[data-density='compact'\]\s*\{[\s\S]*?padding-block:\s*1\.5rem;/
+  );
+  assert.match(
+    narrativeSource,
+    /\.performance-narrative-stage__panel\s*\{[\s\S]*?gap:\s*0\.9rem;[\s\S]*?padding:\s*0\.85rem;/
+  );
+  assert.match(
+    handoffSource,
+    /data-artifact-placement='full-width'\]\[data-density='compact'\][\s\S]*?padding-block:\s*1\.5rem;/
+  );
+  const handoffRootRule = handoffSource.match(/\.performance-conversion-handoff\s*\{([^}]*)\}/)?.[1];
+  assert.match(handoffRootRule ?? '', /\bpadding:\s*0;/, 'handoff must reset inherited section padding');
+  assert.match(
+    trustArtifactSource,
+    /@media \(max-width: 640px\)[\s\S]*?\.hero-trust-artifact__path[\s\S]*?gap:\s*0\.4rem;[\s\S]*?padding:\s*0\.45rem;/
+  );
+  assert.match(narrativeSource, /min-height:\s*var\(--height-performance-control-min, 2\.75rem\)/);
+});
+
+test('standalone calls to action and legal links expose explicit touch height', () => {
+  assert.match(readbackSource, /a\s*\{[\s\S]*?min-height:\s*var\(--height-performance-control-min, 2\.75rem\)/);
+  assert.match(
+    compatibilityRailSource,
+    /\.compatibility-rail__catalog-link\s*\{[\s\S]*?min-height:\s*var\(--height-performance-control-min, 2\.75rem\)/
+  );
+  assert.match(footerSource, /\.legal-link\s*\{[\s\S]*?min-height:\s*1\.5rem;/);
+  assert.match(navigationSource, /\.nav-logo\s*\{[\s\S]*?min-height:\s*var\(--height-performance-control-min/);
+  assert.doesNotMatch(navigationSource, /\.nav-clear \.nav-logo\s*\{[^}]*min-width:\s*0;/);
+  assert.match(footerSource, /\.social-link\s*\{[\s\S]*?min-width:\s*var\(--height-performance-control-min/);
+});
+
+test('privacy, navigation, and public Map controls keep a 44px interaction target', () => {
+  assert.match(navigationSource, /\.nav-cta\s*\{[\s\S]*?min-height:\s*2\.75rem/);
+  assert.match(privacySource, /\.privacy-button\s*\{[\s\S]*?min-height:\s*2\.75rem/);
+  assert.match(privacySource, /\.privacy-pill\s*\{[\s\S]*?min-height:\s*2\.75rem/);
+  assert.match(publicMapSource, /\.focus-strip button\s*\{[\s\S]*?min-height:\s*2\.75rem/);
+  assert.match(publicMapSource, /\.agent-suggestions button\s*\{[\s\S]*?min-height:\s*2\.75rem/);
+  assert.match(atlasFlowStyles, /\.svelte-flow__controls-button\s*\{[\s\S]*?width:\s*2\.75rem/);
+  assert.match(publicAtlasFlowSource, /minimumTouchableZoom\s*=\s*0\.38/);
+  assert.match(publicAtlasFlowSource, /minZoom=\{minimumTouchableZoom\}/);
+  assert.match(atlasFlowStyles, /\.svelte-flow__node\s*\{[\s\S]*?min-height:\s*7\.25rem/);
+  assert.match(atlasFlowStyles, /\.public-atlas-flow-node\s*\{[\s\S]*?min-height:\s*10rem/);
+});

@@ -6,7 +6,7 @@ import {
 
 describe('Performance email token contract', () => {
   it('exposes versioned, inline-safe values with readable system fallbacks', () => {
-    expect(PERFORMANCE_EMAIL_STYLE_VERSION).toBe('1.0.0');
+    expect(PERFORMANCE_EMAIL_STYLE_VERSION).toBe('1.1.0');
     expect(performanceEmailTokens.color).toEqual(
       expect.objectContaining({
         paper: '#f3f3f0',
@@ -17,7 +17,6 @@ describe('Performance email token contract', () => {
         signal: '#0057b8'
       })
     );
-    expect(performanceEmailTokens.font.display).toContain('Satoshi');
     expect(performanceEmailTokens.font.display).toContain('Arial');
     expect(performanceEmailTokens.font.mono).toContain('IBM Plex Mono');
     expect(performanceEmailTokens.font.mono).toContain('monospace');

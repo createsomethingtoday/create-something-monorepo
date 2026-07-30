@@ -12,6 +12,7 @@
 	import PublicAtlasCanvas from '$lib/components/PublicAtlasCanvas.svelte';
 	import SystemContextRail from '$lib/components/SystemContextRail.svelte';
 	import { agencyCoreMessaging } from '$lib/data/marketingCopy';
+	import { clarityInspectionMedia } from '$lib/data/performanceMedia';
 
 	const mapProtocol: PerformanceCondition[] = [
 		{
@@ -47,7 +48,7 @@
 		eyebrow="CREATE SOMETHING Map"
 		title="Make the workflow visible before you change it."
 		lede="Use the constrained public canvas to name the owner, data, approvals, systems, risks, and inspection points. This browser-local draft stays on this device until you carry it into booking or an authenticated Map workspace."
-		media={{ src: '/images/performance-lab/trace-wake-natural.webp', mobileSrc: '/images/performance-lab/trace-wake-natural-mobile.webp', alt: 'Aerial black-and-white view of a survey craft leaving a directional wake' }}
+		media={clarityInspectionMedia}
 		proof={[{ label: 'Input', value: 'Prospect map' }, { label: 'Boundary', value: 'No production tools' }, { label: 'Handoff', value: 'Build or Control' }]}
 	>
 		{#snippet actions()}

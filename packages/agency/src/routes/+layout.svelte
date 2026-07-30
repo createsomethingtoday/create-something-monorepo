@@ -19,6 +19,7 @@
   import { marketingPagePortfolio } from '$lib/data/marketingPages';
 
   let { children, data } = $props();
+  let mobileNavigationOpen = $state(false);
 
   function scrollToTop() {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
@@ -361,6 +362,7 @@
   userOptedOut={data.user?.analytics_opt_out ?? false}
   globalMetadata={globalAnalyticsMetadata}
   compactPrompt={useCompactPrivacyPrompt}
+  obscured={mobileNavigationOpen}
 />
 
 <!-- Unified Search - Cmd/Ctrl+K to open -->
@@ -379,6 +381,7 @@
     onLogout={handleLogout}
     accountHref="/account"
     visualStyle="performance"
+    onMobileMenuChange={(open) => (mobileNavigationOpen = open)}
   />
 
   <main id="main-content" class="pt-[72px]">

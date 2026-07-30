@@ -27,6 +27,9 @@ describe('Performance media canon', () => {
     expect(controlledFlowMedia.alt).toContain('concrete performance boundary');
     expect(pressureBoundaryMedia.alt).toContain('concrete boundary');
     expect(traceControlPlaneMedia.alt).toContain('directional wake');
+    expect(controlledFlowMedia.condition).toBe('flow');
+    expect(pressureBoundaryMedia.condition).toBe('pressure');
+    expect(traceControlPlaneMedia.condition).toBe('trace');
   });
 
   it('publishes the controlled-flow hero as static-first progressive video media', () => {

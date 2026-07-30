@@ -49,6 +49,12 @@
 
 <style>
 	.btn {
+		display: inline-flex;
+		min-height: var(--height-performance-control-min, 2.75rem);
+		align-items: center;
+		justify-content: center;
+		gap: var(--space-performance-xs, 0.5rem);
+		padding: var(--space-performance-sm, 0.75rem) var(--space-performance-md, 1.25rem);
 		border-radius: var(--radius-performance-sm);
 		border: 1px solid transparent;
 		font-weight: var(--font-performance-semibold);

@@ -186,27 +186,31 @@ evidence, pressure, or the next action. `.agency` is the first verified rollout
 surface; the shared primitives are the path for the rest of CREATE SOMETHING as
 surfaces are migrated.
 
-Performance Lab has two coordinated surface modes:
+Performance Lab has three coordinated surface modes:
 
 - **Campaign mode** uses original human/system motion, material studies,
   asymmetric editorial composition, decisive type, technical annotation, and
   integrated measurement on homepage, services, editorial, case-study, and
   social surfaces.
-- **Product mode** keeps workflow-native maps, traces, policy, owners, state,
-  receipts, and recovery primary on Atlas, product, proof, booking, and operator
-  surfaces.
+- **Proof mode** keeps claims, measurements, receipts, limitations, and provenance
+  primary on case studies, field reports, and evidence indexes.
+- **Operator mode** keeps workflow-native maps, traces, policy, owners, state,
+  and recovery primary on Atlas, product, booking, and control surfaces.
+
+Apply `data-performance-mode="campaign"`, `"proof"`, or `"operator"` at the
+owning surface boundary. The selectors resolve only shared `--color-performance-mode-*`
+aliases; consumers must not recreate the mode palette with route-local values.
 
 Standalone HTML products such as Workers consume the narrow
 `@create-something/canon/performance/scheduler-document` export. It supplies the
-versioned Performance font links, design tokens, and typography roles without
-coupling application markup or behavior to Svelte. Satoshi remains hosted by
-Fontshare; IBM Plex Mono is loaded from the pinned official package through
-jsDelivr for standalone documents.
+versioned Performance design tokens and typography roles without coupling
+application markup or behavior to Svelte. Standalone documents use system sans
+and monospace stacks and require no remote font request.
 
 Transactional email uses the narrower
 `@create-something/canon/performance/scheduler-email` export. It provides
-literal colors, spacing, widths, and Satoshi/IBM Plex Mono system-fallback
-stacks for inline styles. Email copy and document composition remain owned by
+literal colors, spacing, widths, and system font stacks for inline styles.
+Email copy and document composition remain owned by
 the product sending the message.
 
 Readable Control is the proof/readability substrate inside both modes. It is not
