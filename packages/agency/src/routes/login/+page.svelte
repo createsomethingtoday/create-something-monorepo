@@ -4,8 +4,25 @@
 	import { LoginForm, SignupForm } from '@create-something/canon/auth/components';
 
 	let { data } = $props();
-	let error = $state<string | null>(data.error || null);
+
+	function friendlyLoginError(code: string | null): string | null {
+		if (!code) return null;
+		if (code === 'unsupported_provider') {
+			return 'This sign-in link is no longer supported. Use your email and password below.';
+		}
+		return 'Sign-in could not continue. Use your email and password below.';
+	}
+
+	function labelReturnDestination(path: string): string {
+		if (path === '/account') return 'your account';
+		if (path === '/mcp-access') return 'MCP Access';
+		if (path === '/dashboard') return 'the Agency dashboard';
+		return 'your requested Agency page';
+	}
+
+	let error = $state<string | null>(friendlyLoginError(data.error));
 	let mode = $state<'login' | 'signup'>('login');
+	const returnDestinationLabel = $derived(labelReturnDestination(data.redirectTo));
 
 	function switchMode(nextMode: 'login' | 'signup') {
 		error = null;
@@ -58,27 +75,33 @@
 />
 
 <div class="auth-shell property-performance">
-	<section class="auth-context" aria-labelledby="auth-heading">
+	<section
+		class="auth-context"
+		aria-labelledby="auth-heading"
+		data-performance-chapter="task-state"
+	>
 		<div class="auth-status">
-			<span class="status-label">Identity</span>
-			<span class="status-value">Controlled</span>
+			<span class="status-label">Agency access</span>
+			<span class="status-value">{mode === 'login' ? 'Sign in' : 'Create account'}</span>
 		</div>
-		<p class="auth-eyebrow">First-party customer access</p>
-		<h1 id="auth-heading">Sign in to your .agency workspace.</h1>
+		<p class="auth-eyebrow">Your next step</p>
+		<h1 id="auth-heading">
+			{mode === 'login' ? 'Sign in to Agency.' : 'Create your Agency account.'}
+		</h1>
 		<p class="auth-summary">
-			Credentials are verified by CREATE SOMETHING Identity. Your workspace applies its own account,
-			tenant, and entitlement boundaries after authentication.
+			Use your CREATE SOMETHING email and password. We will return you to
+			{returnDestinationLabel} when this step is complete.
 		</p>
-		<div class="auth-proof" aria-label="Authentication controls">
-			<span>Surface / Customer workspace</span>
-			<span>Session / HttpOnly</span>
-			<span>Policy / Fail closed</span>
+		<div class="auth-proof" aria-label="Sign-in boundaries">
+			<span>Checked by CREATE SOMETHING Identity</span>
+			<span>Access stays with this account</span>
 		</div>
 	</section>
 
 	<section
 		class="auth-form-panel theme-light"
 		aria-label={mode === 'login' ? 'Sign-in form' : 'Account creation form'}
+		data-performance-chapter="workspace"
 	>
 		{#if mode === 'login'}
 			<LoginForm
@@ -95,9 +118,15 @@
 				{error}
 				showMagicLinkOption={false}
 				showLoginLink={true}
-				source="space"
+				source="agency"
 			/>
 		{/if}
+	</section>
+
+	<section class="auth-handoff" data-performance-chapter="decision-receipt">
+		<span>{mode === 'login' ? 'After sign-in' : 'After account creation'}</span>
+		<strong>{returnDestinationLabel}</strong>
+		<p>If an old link fails, stay here and use the form above. Your return path remains inside Agency.</p>
 	</section>
 </div>
 
@@ -182,8 +211,41 @@
 		box-shadow: var(--shadow-performance-panel);
 	}
 
+	.auth-handoff {
+		grid-column: 1 / -1;
+		display: grid;
+		grid-template-columns: minmax(8rem, 0.35fr) minmax(12rem, 0.65fr) minmax(0, 1fr);
+		gap: var(--space-performance-md);
+		align-items: baseline;
+		border-top: 1px solid var(--color-performance-line);
+		padding-top: var(--space-performance-md);
+	}
+
+	.auth-handoff span {
+		color: var(--color-performance-muted);
+		font-family: var(--font-performance-mono);
+		font-size: var(--text-performance-caption);
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+	}
+
+	.auth-handoff strong,
+	.auth-handoff p {
+		margin: 0;
+		color: var(--color-performance-ink);
+	}
+
+	.auth-handoff p {
+		color: var(--color-performance-ink-soft);
+		line-height: 1.5;
+	}
+
 	@media (max-width: 760px) {
 		.auth-shell {
+			grid-template-columns: 1fr;
+		}
+
+		.auth-handoff {
 			grid-template-columns: 1fr;
 		}
 

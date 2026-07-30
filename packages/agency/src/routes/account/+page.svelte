@@ -14,22 +14,31 @@
 	noindex={true}
 />
 
-<AccountPage
-	user={accountUser}
-	pageTitle="Account | CREATE SOMETHING AGENCY"
-	currentProperty="agency"
-/>
+<section class="account-state" data-performance-chapter="task-state">
+	<AccountPage
+		user={accountUser}
+		pageTitle="Account | CREATE SOMETHING AGENCY"
+		currentProperty="agency"
+	/>
+</section>
 
-<section class="access-section">
+<section class="access-section" data-performance-chapter="workspace">
 	<div class="access-card">
 		<div>
 			<h2>MCP Access</h2>
-			<p>
-				Your personal bearer token, host setup snippets, and managed access scope now live on a dedicated
-				page designed for safe reveal-and-copy workflows.
-			</p>
+			<p>Reveal or copy your personal token and setup steps on the protected MCP Access page.</p>
 		</div>
 		<a href="/mcp-access" class="access-link">Open MCP Access</a>
+	</div>
+</section>
+
+<section class="access-section" data-performance-chapter="decision-receipt">
+	<div class="access-card access-card--handoff">
+		<div>
+			<h2>Return to your work</h2>
+			<p>Your account is ready. Continue to the Agency dashboard when you are done here.</p>
+		</div>
+		<a href="/dashboard" class="access-link">Open Agency dashboard</a>
 	</div>
 </section>
 
@@ -38,6 +47,10 @@
 		max-width: 960px;
 		margin: 0 auto 4rem;
 		padding: 0 1.5rem;
+	}
+
+	.account-state {
+		display: contents;
 	}
 
 	.access-card {
@@ -49,6 +62,10 @@
 		justify-content: space-between;
 		align-items: center;
 		gap: 1rem;
+	}
+
+	.access-card--handoff {
+		background: var(--color-performance-bg-surface, rgba(255, 255, 255, 0.06));
 	}
 
 	.access-card h2 {
