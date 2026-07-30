@@ -10,6 +10,7 @@ import {
   type LetterChallenge,
   type MoveChallenge,
 } from "./game-model";
+import { faqItems } from "./seo-content";
 
 type Screen = "home" | "journey" | "celebrate";
 type FeedbackKind = "success" | "try" | null;
@@ -281,6 +282,28 @@ export default function Home() {
             </div>
           </div>
           <p className="grownup-note"><span aria-hidden="true">🔊</span> Spoken instructions begin after the first tap. No ads, accounts, or tracking.</p>
+          <details className="grownup-guide" data-testid="grownup-guide">
+            <summary>
+              <span className="guide-icon" aria-hidden="true">♡</span>
+              <span className="guide-summary-copy">
+                <strong>For grown-ups</strong>
+                <small>Learning goals, privacy, and adding to the home screen</small>
+              </span>
+              <span className="guide-plus" aria-hidden="true">+</span>
+            </summary>
+            <div className="guide-content">
+              <p className="guide-intro">Six playful rooms build early skills in short, repeatable turns—without ads, accounts, purchases, or third-party tracking.</p>
+              <div className="guide-grid">
+                {faqItems.map((item) => (
+                  <article key={item.question}>
+                    <h2>{item.question}</h2>
+                    <p>{item.answer}</p>
+                  </article>
+                ))}
+              </div>
+              <p className="install-tip"><span aria-hidden="true">♛</span> Tip: use your browser&apos;s <strong>Add to Home Screen</strong> option for a one-tap Princess Pet Palace icon.</p>
+            </div>
+          </details>
         </section>
       )}
 

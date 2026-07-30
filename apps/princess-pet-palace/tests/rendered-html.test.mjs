@@ -28,7 +28,22 @@ test("server-renders the Princess Pet Palace game", async () => {
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  assert.match(html, /<title>Princess Pet Palace<\/title>/i);
+  assert.match(html, /<title>Princess Pet Palace \| Free Preschool Learning Game<\/title>/i);
+  assert.match(html, /rel="canonical" href="https:\/\/princess-pet-palace\.createsomethingtoday\.chatgpt\.site\/?"/i);
+  assert.match(html, /rel="manifest" href="https:\/\/princess-pet-palace\.createsomethingtoday\.chatgpt\.site\/site\.webmanifest"/i);
+  assert.match(html, /rel="apple-touch-icon"[^>]+href="https:\/\/princess-pet-palace\.createsomethingtoday\.chatgpt\.site\/apple-touch-icon\.png"/i);
+  assert.match(html, /name="robots" content="index, follow/i);
+  const structuredDataMatch = html.match(
+    /<script id="princess-pet-palace-structured-data" type="application\/ld\+json">([\s\S]*?)<\/script>/i,
+  );
+  assert.ok(structuredDataMatch, "renders JSON-LD discovery data");
+  const structuredData = JSON.parse(structuredDataMatch[1]);
+  const application = structuredData.find((item) => item["@type"] === "SoftwareApplication");
+  const faqPage = structuredData.find((item) => item["@type"] === "FAQPage");
+  assert.equal(application?.applicationCategory, "EducationalApplication");
+  assert.equal(application?.isAccessibleForFree, true);
+  assert.equal(application?.isFamilyFriendly, true);
+  assert.equal(faqPage?.mainEntity.length, 4);
   assert.match(html, /A new adventure every time/);
   assert.match(html, /Open the palace doors/);
   assert.match(html, /six magical rooms/);
@@ -37,6 +52,11 @@ test("server-renders the Princess Pet Palace game", async () => {
   assert.match(html, /Pet Parade/);
   assert.match(html, /Royal Gym/);
   assert.match(html, /No ads, accounts, or tracking/);
+  assert.match(html, /data-testid="grownup-guide"/);
+  assert.match(html, /For grown-ups/);
+  assert.match(html, /What does Princess Pet Palace teach\?/);
+  assert.match(html, /What age is Princess Pet Palace for\?/);
+  assert.match(html, /How does camera magic protect privacy\?/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton|Your site is taking shape/i);
   assert.match(html, /data-testid="start-game"/);
 });
