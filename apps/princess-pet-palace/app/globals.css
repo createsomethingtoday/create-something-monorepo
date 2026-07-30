@@ -553,6 +553,8 @@ h1 {
   cursor: pointer;
 }
 .hear-rings { font-size: 1.08rem; animation: hear-pulse 1.8s ease-in-out infinite; }
+.hear-button:disabled { opacity: 0.52; box-shadow: none; }
+.hear-button:disabled .hear-rings { animation: none; }
 
 .guidance-row {
   position: relative;
@@ -806,6 +808,7 @@ h1 {
 .move-cues small { font-size: 0.58rem; font-weight: 850; white-space: nowrap; }
 .move-button { min-width: 205px; min-height: 62px; margin-top: 20px; padding: 0 22px; font-size: 1.12rem; }
 .movement-message { min-height: 48px; margin-top: 25px; color: #8a4d9d; font-family: var(--font-display), sans-serif; font-size: 1.35rem; font-weight: 700; }
+.movement-listen { display: grid; place-items: center; min-width: 150px; border-radius: 18px; background: rgba(255, 255, 255, 0.72); font-size: 1.55rem; animation: hear-pulse 1.5s ease-in-out infinite; }
 
 .camera-magic {
   min-width: 0;

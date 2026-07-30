@@ -4,6 +4,11 @@ export type ActivityKind = "letter" | "count" | "move";
 
 export const SUCCESS_ADVANCE_DELAY_MS = 2200;
 export const TRY_AGAIN_DELAY_MS = 1800;
+export const POST_NARRATION_PAUSE_MS = 400;
+
+export function remainingNarrationHoldMs(minimumMs: number, elapsedMs: number): number {
+  return Math.max(POST_NARRATION_PAUSE_MS, minimumMs - elapsedMs);
+}
 
 export type AnimalChoice = {
   emoji: string;

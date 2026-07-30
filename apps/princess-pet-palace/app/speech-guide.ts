@@ -6,10 +6,12 @@ export type VoiceCandidate = {
 };
 
 export const FRIENDLY_SPEECH_SETTINGS = {
-  rate: 0.92,
+  rate: 1,
   pitch: 1.01,
   volume: 0.95,
 } as const;
+
+export const STATIC_NARRATION_PLAYBACK_RATE = 1.04;
 
 export type NarrationCue = {
   id: string;

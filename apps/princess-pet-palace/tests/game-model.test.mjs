@@ -1,7 +1,15 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { SUCCESS_ADVANCE_DELAY_MS, TRY_AGAIN_DELAY_MS, countPetTap, createJourney, getPrincessCoachCue } from "../app/game-model.ts";
+import {
+  POST_NARRATION_PAUSE_MS,
+  SUCCESS_ADVANCE_DELAY_MS,
+  TRY_AGAIN_DELAY_MS,
+  countPetTap,
+  createJourney,
+  getPrincessCoachCue,
+  remainingNarrationHoldMs,
+} from "../app/game-model.ts";
 
 test("creates a varied six-room palace journey with every activity", () => {
   const randomValues = [0.12, 0.76, 0.34, 0.91, 0.48, 0.63];
@@ -75,4 +83,10 @@ test("gives the princess a visual, no-reading-needed coaching cue in every state
   assert.equal(getPrincessCoachCue(letterRoom, "success").visual, "👑 ✨");
   assert.equal(getPrincessCoachCue(letterRoom, "try").visual, "💜 ↻");
   assert.ok(journey.every((room) => getPrincessCoachCue(room, null).ariaLabel.length > 0));
+});
+
+test("keeps feedback visible through narration plus a short breathing pause", () => {
+  assert.ok(POST_NARRATION_PAUSE_MS >= 350);
+  assert.equal(remainingNarrationHoldMs(2200, 400), 1800);
+  assert.equal(remainingNarrationHoldMs(2200, 3000), POST_NARRATION_PAUSE_MS);
 });
