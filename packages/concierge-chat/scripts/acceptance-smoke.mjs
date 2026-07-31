@@ -211,6 +211,14 @@ async function prepareBookedCandidateThread(client) {
 	assert.equal(voicePage.status, 200, 'Expected /voice to render');
 	assert.match(voicePage.bodyText, /Say what fits/i, 'Expected branded voice experience');
 
+	const clientServicePage = await client.get('/client-service');
+	assert.equal(clientServicePage.status, 200, 'Expected /client-service to render');
+	assert.match(
+		clientServicePage.bodyText,
+		/Find the office/i,
+		'Expected the NPG client-service experience'
+	);
+
 	const created = await client.postJson('/api/threads', {});
 	assertOk(created, 'Failed to create thread');
 	const threadId = created.body.threadId;
