@@ -19,6 +19,8 @@ const CATO_PREVIEW_ORIGINS = new Set([
   'https://cato-supply.webflow.io'
 ]);
 
+const CATO_COMMENTS_ORIGINS = new Set(['https://comments.webflow.com']);
+
 const INSIGHT_CATEGORY_IDS = {
   resiliency: '69fd0f88dd6c789f8c5720a5',
   'resiliency-reports': '69fd0f88dd6c789f8c5720a5',
@@ -152,6 +154,10 @@ function isPublished(item) {
   return !item.isArchived && Boolean(item.lastPublished);
 }
 
+function isProductionVisible(item) {
+  return isPublished(item) && item.fieldData?.['production-visible'] === true;
+}
+
 function isPreviewVisible(item) {
   return !item.isArchived;
 }
@@ -159,6 +165,11 @@ function isPreviewVisible(item) {
 function previewOriginFor(request) {
   const origin = request.headers.get('origin') || '';
   return CATO_PREVIEW_ORIGINS.has(origin) ? origin : '';
+}
+
+function commentsOriginFor(request) {
+  const origin = request.headers.get('origin') || '';
+  return CATO_COMMENTS_ORIGINS.has(origin) ? origin : '';
 }
 
 function previewCorsHeaders(origin) {
@@ -249,7 +260,7 @@ function normalizeInsight(item) {
 export function normalizeInsights(items, { category, includeDrafts = false } = {}) {
   const categoryId = INSIGHT_CATEGORY_IDS[text(category).toLowerCase()];
   return items
-    .filter(includeDrafts ? isPreviewVisible : isPublished)
+    .filter(includeDrafts ? isPreviewVisible : isProductionVisible)
     .map(normalizeInsight)
     .filter((item) => Boolean(item.title))
     .filter((item) => {
@@ -450,6 +461,9 @@ export default {
     const url = new URL(request.url);
     const isPreviewRequest = url.pathname === '/api/cato/preview/insights';
     const previewOrigin = isPreviewRequest ? previewOriginFor(request) : '';
+    const commentsOrigin =
+      url.pathname === '/api/cato/insights' ? commentsOriginFor(request) : '';
+    const reviewOrigin = previewOrigin || commentsOrigin;
 
     if (request.method === 'OPTIONS') {
       if (isPreviewRequest && !previewOrigin) {
@@ -457,7 +471,7 @@ export default {
       }
       return new Response(null, {
         status: 204,
-        headers: previewOrigin ? previewCorsHeaders(previewOrigin) : CORS_HEADERS
+        headers: reviewOrigin ? previewCorsHeaders(reviewOrigin) : CORS_HEADERS
       });
     }
 
@@ -470,6 +484,12 @@ export default {
         return json({ ok: true, service: 'cato-supply-insights-cms' });
       }
       if (url.pathname === '/api/cato/insights') {
+        if (commentsOrigin) {
+          return await handleInsights(url, env, {
+            includeDrafts: true,
+            responseHeaders: previewCorsHeaders(commentsOrigin)
+          });
+        }
         return await handleInsights(url, env);
       }
       if (isPreviewRequest) {
