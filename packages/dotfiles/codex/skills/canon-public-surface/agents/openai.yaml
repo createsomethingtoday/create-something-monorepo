@@ -1,7 +1,7 @@
 interface:
-  display_name: "Canon Public Surface"
-  short_description: "Polish public pages without SaaS drift"
-  default_prompt: "Use $canon-public-surface to polish this CREATE SOMETHING landing page without drifting into generic AI SaaS aesthetics."
+  display_name: 'Canon Public Surface'
+  short_description: 'Research and sharpen public surfaces'
+  default_prompt: 'Use $canon-public-surface to sharpen this CREATE SOMETHING page through Performance Lab, focused proof, and an earned handoff.'
 
 policy:
-  allow_implicit_invocation: false
+  allow_implicit_invocation: true

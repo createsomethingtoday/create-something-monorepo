@@ -1,7 +1,15 @@
 interface:
-  display_name: "Canon Design Review"
-  short_description: "Audit UI work against Canon house rules"
-  default_prompt: "Use $canon-design-review to critique this UI change against Canon tokens, house typography, and informative-over-decorative design constraints."
+  display_name: 'Canon Design Review'
+  short_description: 'Research and review UX through Canon'
+  default_prompt: 'Use $canon-design-review to research relevant product patterns, then review this UI through Canon and Performance Lab.'
+
+dependencies:
+  tools:
+    - type: 'mcp'
+      value: 'mobbin'
+      description: 'Mobbin product design research'
+      transport: 'streamable_http'
+      url: 'https://api.mobbin.com/mcp'
 
 policy:
-  allow_implicit_invocation: false
+  allow_implicit_invocation: true

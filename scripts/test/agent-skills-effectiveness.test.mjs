@@ -85,6 +85,36 @@ const skills = [
 
 const codexOnlySkills = [
   {
+    name: 'canon-design-review',
+    codex: 'packages/dotfiles/codex/skills/canon-design-review/SKILL.md',
+    expectations: [
+      /Mobbin interaction evidence/i,
+      /Performance Lab is the house identity/i,
+      /mobbin-research\.md/,
+      /search_flows/,
+      /search_screens/,
+      /search_sections/,
+      /Compare three distinct products/i,
+      /Pattern.*Why.*Adopt.*Avoid.*Source/,
+      /Never copy a Mobbin layout/i,
+      /desktop, mobile, keyboard, reduced-motion/i
+    ]
+  },
+  {
+    name: 'canon-public-surface',
+    codex: 'packages/dotfiles/codex/skills/canon-public-surface/SKILL.md',
+    expectations: [
+      /Performance Lab/,
+      /PERFORMANCE_LAB_VISUAL_GRAMMAR\.md/,
+      /PERFORMANCE_PAGE_SHARPNESS\.md/,
+      /registered archetype and chapter budget/i,
+      /Mobbin research protocol/i,
+      /campaign mode/,
+      /product mode/,
+      /reproducing a section or page found in Mobbin/i
+    ]
+  },
+  {
     name: 'writing-for-humans',
     codex: 'packages/dotfiles/codex/skills/writing-for-humans/SKILL.md',
     expectations: [
@@ -284,6 +314,32 @@ test('Codex-only skills retain their local runtime handoff contracts', () => {
     for (const expectation of skill.expectations) {
       assert.match(body, expectation, `${skill.codex} missing ${expectation}`);
     }
+  }
+});
+
+test('Canon design skills keep governed Mobbin discovery and retention boundaries', () => {
+  const designAgent = read('packages/dotfiles/codex/skills/canon-design-review/agents/openai.yaml');
+  const publicAgent = read(
+    'packages/dotfiles/codex/skills/canon-public-surface/agents/openai.yaml'
+  );
+  const research = read(
+    'packages/dotfiles/codex/skills/canon-design-review/references/mobbin-research.md'
+  );
+
+  assert.match(designAgent, /value: ['"]mobbin['"]/);
+  assert.match(designAgent, /url: ['"]https:\/\/api\.mobbin\.com\/mcp['"]/);
+  assert.match(designAgent, /allow_implicit_invocation: true/);
+  assert.match(publicAgent, /allow_implicit_invocation: true/);
+
+  for (const expectation of [
+    /adopt.*adapt.*test.*reject/is,
+    /Do not commit screenshots/i,
+    /Do not build a competing reference library/i,
+    /Store conclusions, source URLs, and CREATE SOMETHING translations/i,
+    /current \[Mobbin Terms of Use\]/,
+    /useful decisions and avoided rework/i
+  ]) {
+    assert.match(research, expectation);
   }
 });
 
