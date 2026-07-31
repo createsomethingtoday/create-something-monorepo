@@ -1,5 +1,6 @@
 import { error } from '@sveltejs/kit';
 import { ensureAgencyMcpEntitlement, type AgencySessionUser } from '$lib/server/mcp-token';
+import { buildCustomerMapScopeFromIdentity } from '$lib/server/customer-map-identity';
 import type { CustomerMapScope } from '$lib/server/customer-map-workspace';
 
 export async function resolveCustomerMapScope(input: {
@@ -7,18 +8,18 @@ export async function resolveCustomerMapScope(input: {
 	user: AgencySessionUser;
 	requireCommercialEntitlement?: boolean;
 }): Promise<CustomerMapScope> {
-	const { row, decision } = await ensureAgencyMcpEntitlement(input);
-	if (!decision.allowed) throw error(403, `Map workspace access denied: ${decision.reason}`);
-	if (!row.account_id || !row.tenant_id || !row.workspace_account_id) {
-		throw error(403, 'Map workspace identity is not fully provisioned');
-	}
-
-	const scope = {
+	// Reconcile the canonical first-party identity, but leave MCP authorization to MCP routes.
+	// Map applies its independent commercial entitlement below once launch is approved.
+	const { row } = await ensureAgencyMcpEntitlement(input);
+	const scope = buildCustomerMapScopeFromIdentity({
 		authSubject: input.user.id,
 		accountId: row.account_id,
 		tenantId: row.tenant_id,
 		workspaceAccountId: row.workspace_account_id
-	};
+	});
+	if (!scope) {
+		throw error(403, 'Map workspace identity is not fully provisioned');
+	}
 
 	const commercialLaunchApproved =
 		input.platform?.env?.MAP_COMMERCIAL_LAUNCH_APPROVED?.trim().toLowerCase() === 'true';

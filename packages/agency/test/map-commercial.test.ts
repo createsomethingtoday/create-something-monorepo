@@ -7,6 +7,26 @@ import {
 	buildMapEntitlementFromMetadata,
 	resolveMapCommercialConfig
 } from '../src/lib/server/map-commercial.ts';
+import { buildCustomerMapScopeFromIdentity } from '../src/lib/server/customer-map-identity.ts';
+
+test('Map identity scope does not inherit unrelated MCP service authorization', () => {
+	const contextSource = readFileSync(new URL('../src/lib/server/customer-map-context.ts', import.meta.url), 'utf8');
+	assert.doesNotMatch(contextSource, /decision\.allowed/);
+	assert.deepEqual(
+		buildCustomerMapScopeFromIdentity({
+			authSubject: 'identity|alice',
+			accountId: 'acct_a',
+			tenantId: 'tenant_a',
+			workspaceAccountId: 'workspace_a'
+		}),
+		{
+			authSubject: 'identity|alice',
+			accountId: 'acct_a',
+			tenantId: 'tenant_a',
+			workspaceAccountId: 'workspace_a'
+		}
+	);
+});
 
 test('Map checkout stays fail-closed until configuration and explicit approval are both present', () => {
 	const configured = {
