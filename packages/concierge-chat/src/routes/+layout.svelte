@@ -27,6 +27,17 @@
     ? `/chat/${candidateThreadMatch[1]}/profile`
     : '/apply';
   $: isNpgClientServiceRoute = data.currentPath === '/client-service';
+  $: browserIdentity = isNpgClientServiceRoute
+    ? {
+        favicon: '/npg-client-service/favicon-32.png',
+        webclip: '/npg-client-service/apple-touch-icon.png',
+        manifest: '/npg-client-service/site.webmanifest'
+      }
+    : {
+        favicon: '/abundance/favicon-32.png',
+        webclip: '/abundance/apple-touch-icon.png',
+        manifest: '/abundance/site.webmanifest'
+      };
   $: usesWebflowShell =
     data.currentPath === '/' ||
     data.currentPath === '/nurses' ||
@@ -81,6 +92,13 @@
         ];
 </script>
 
+<svelte:head>
+  <meta name="theme-color" content="#171512" />
+  <link rel="icon" href={browserIdentity.favicon} sizes="32x32" type="image/png" />
+  <link rel="apple-touch-icon" href={browserIdentity.webclip} sizes="180x180" />
+  <link rel="manifest" href={browserIdentity.manifest} />
+</svelte:head>
+
 {#if usesWebflowShell}
   <div class:application-workspace={isCandidateApplicationRoute} class="abundance-webflow-page">
     <header class:application-nav={isCandidateApplicationRoute} class="webflow-nav">
@@ -94,7 +112,7 @@
           <img
             src={isNpgClientServiceRoute
               ? '/npg-client-service/logo-mark.png'
-              : '/abundance/logo-mark.svg'}
+              : '/abundance/logo-mark.png'}
             alt=""
             class="webflow-logo-image"
             aria-hidden="true"
@@ -171,7 +189,7 @@
     <header class="app-nav glass">
       <a class="brand-lockup" href="/">
         <span class="brand-mark" aria-hidden="true">
-          <img src="/abundance/logo-mark.svg" alt="" class="brand-mark-image" aria-hidden="true" />
+          <img src="/abundance/logo-mark.png" alt="" class="brand-mark-image" aria-hidden="true" />
         </span>
         <span>
           <span class="brand">Abundance Staffing</span>

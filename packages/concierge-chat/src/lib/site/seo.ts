@@ -55,7 +55,7 @@ export function organizationJsonLd() {
 		'@type': 'Organization',
 		name: abundanceSite.name,
 		url: abundanceSite.url,
-		logo: absoluteUrl('/abundance/logo-mark.svg'),
+		logo: absoluteUrl('/abundance/logo-mark.png'),
 		description: abundanceSite.description,
 		sameAs: []
 	};
