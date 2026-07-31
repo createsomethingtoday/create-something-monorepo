@@ -140,7 +140,8 @@ test('serves global categories and article items from the public Insights endpoi
               name: 'Supply update',
               slug: 'supply-update',
               categories: ['69fd0f88dd6c789f8c5720a5'],
-              'content-label': 'Global Risk Briefs'
+              'content-label': 'Global Risk Briefs',
+              'production-visible': true
             }
           }
         ]
@@ -171,7 +172,7 @@ test('serves global categories and article items from the public Insights endpoi
   }
 });
 
-test('keeps drafts off the public feed and exposes them only to the Cato preview origin', async () => {
+test('keeps production-hidden items off the public feed and exposes staged items to review origins', async () => {
   const originalFetch = globalThis.fetch;
   const requestedUrls = [];
   globalThis.fetch = async (input) => {
@@ -191,7 +192,8 @@ test('keeps drafts off the public feed and exposes them only to the Cato preview
             fieldData: {
               name: 'Draft Ryan announcement',
               slug: 'draft-ryan-announcement',
-              categories: ['69fd0f88dd6c789f8c5720ab']
+              categories: ['69fd0f88dd6c789f8c5720ab'],
+              'production-visible': false
             }
           },
           {
@@ -201,7 +203,19 @@ test('keeps drafts off the public feed and exposes them only to the Cato preview
             fieldData: {
               name: 'Published announcement',
               slug: 'published-announcement',
-              categories: ['69fd0f88dd6c789f8c5720ab']
+              categories: ['69fd0f88dd6c789f8c5720ab'],
+              'production-visible': true
+            }
+          },
+          {
+            id: 'hidden-published-insight',
+            isDraft: false,
+            lastPublished: '2026-07-24T12:00:00.000Z',
+            fieldData: {
+              name: 'Published review-only announcement',
+              slug: 'published-review-only-announcement',
+              categories: ['69fd0f88dd6c789f8c5720ab'],
+              'production-visible': false
             }
           }
         ]
@@ -247,7 +261,41 @@ test('keeps drafts off the public feed and exposes them only to the Cato preview
     assert.equal(previewResponse.headers.get('access-control-allow-origin'), previewOrigin);
     assert.deepEqual(
       previewPayload.items.map((item) => item.slug),
-      ['draft-ryan-announcement', 'published-announcement']
+      [
+        'draft-ryan-announcement',
+        'published-announcement',
+        'published-review-only-announcement'
+      ]
+    );
+
+    const commentsOrigin = 'https://comments.webflow.com';
+    const commentsPreflight = await worker.fetch(
+      new Request('https://example.com/api/cato/insights', {
+        method: 'OPTIONS',
+        headers: { Origin: commentsOrigin }
+      }),
+      env
+    );
+    assert.equal(commentsPreflight.status, 204);
+    assert.equal(commentsPreflight.headers.get('access-control-allow-origin'), commentsOrigin);
+
+    const commentsResponse = await worker.fetch(
+      new Request('https://example.com/api/cato/insights', {
+        headers: { Origin: commentsOrigin }
+      }),
+      env
+    );
+    const commentsPayload = await commentsResponse.json();
+
+    assert.equal(commentsResponse.status, 200);
+    assert.equal(commentsResponse.headers.get('access-control-allow-origin'), commentsOrigin);
+    assert.deepEqual(
+      commentsPayload.items.map((item) => item.slug),
+      [
+        'draft-ryan-announcement',
+        'published-announcement',
+        'published-review-only-announcement'
+      ]
     );
   } finally {
     globalThis.fetch = originalFetch;
@@ -278,7 +326,8 @@ test('normalizes published resiliency insights with the existing endpoint shape'
           'resource-type': '0e5ef31b9a043353f4c9fc760c3c669b',
           'content-label': 'Resiliency Report',
           'short-summary': 'Allocation pressure is concentrated in pediatric sizes.',
-          'publish-date': '2026-05-07T00:00:00.000Z'
+          'publish-date': '2026-05-07T00:00:00.000Z',
+          'production-visible': true
         }
       }
     ],
