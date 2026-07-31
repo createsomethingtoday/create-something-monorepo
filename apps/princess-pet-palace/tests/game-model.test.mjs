@@ -6,10 +6,18 @@ import {
   SUCCESS_ADVANCE_DELAY_MS,
   TRY_AGAIN_DELAY_MS,
   countPetTap,
+  canUsePalaceHomeButton,
   createJourney,
   getPrincessCoachCue,
+  getLetterChoiceFeedback,
   remainingNarrationHoldMs,
 } from "../app/game-model.ts";
+
+test("prevents an accidental palace exit in the middle of a room", () => {
+  assert.equal(canUsePalaceHomeButton("home"), true);
+  assert.equal(canUsePalaceHomeButton("celebrate"), true);
+  assert.equal(canUsePalaceHomeButton("journey"), false);
+});
 
 test("creates a varied six-room palace journey with every activity", () => {
   const randomValues = [0.12, 0.76, 0.34, 0.91, 0.48, 0.63];
@@ -24,6 +32,10 @@ test("creates a varied six-room palace journey with every activity", () => {
   assert.equal(new Set(journey.map((room) => room.id)).size, journey.length);
   assert.ok(journey.every((room) => room.prompt.length > 0));
   assert.ok(journey.every((room) => room.spokenPrompt.length > 0));
+  assert.ok(
+    journey.every((room, index) => index === 0 || room.kind !== journey[index - 1].kind),
+    "a preschool journey should not repeat the same activity twice in a row",
+  );
 });
 
 test("gives counting rooms simple, natural instructions", () => {
@@ -53,6 +65,9 @@ test("gives every room a visible learning goal and skill-specific feedback", () 
   assert.equal(countRoom.skillLabel, "Counting one by one");
   assert.match(countRoom.successMessage, /^You counted [3-6] [a-z]+!$/);
   assert.equal(moveRoom.skillLabel, "Balance and movement");
+  assert.ok(moveRoom.challenge.poseEmoji.length > 0);
+  assert.ok(moveRoom.challenge.poseLabel.length > 0);
+  assert.match(getPrincessCoachCue(moveRoom, null).visual, new RegExp(moveRoom.challenge.poseEmoji));
   assert.match(moveRoom.spokenPrompt, /^Make a little space\./);
   assert.match(moveRoom.successMessage, /^You moved for 5 seconds!$/);
   assert.ok(SUCCESS_ADVANCE_DELAY_MS >= 2000, "success feedback should remain long enough to hear");
@@ -61,14 +76,14 @@ test("gives every room a visible learning goal and skill-specific feedback", () 
 
 test("counts each pet once and completes only after every pet is tapped", () => {
   const first = countPetTap([], 2, 3);
-  assert.deepEqual(first, { selected: [2], spokenNumber: 1, complete: false });
+  assert.deepEqual(first, { selected: [2], spokenNumber: 1, narrationCueId: "number-1", complete: false });
 
   const duplicate = countPetTap(first.selected, 2, 3);
   assert.deepEqual(duplicate, first);
 
   const second = countPetTap(first.selected, 0, 3);
   const third = countPetTap(second.selected, 1, 3);
-  assert.deepEqual(third, { selected: [2, 0, 1], spokenNumber: 3, complete: true });
+  assert.deepEqual(third, { selected: [2, 0, 1], spokenNumber: 3, narrationCueId: "number-3", complete: true });
 });
 
 test("gives the princess a visual, no-reading-needed coaching cue in every state", () => {
@@ -89,4 +104,17 @@ test("keeps feedback visible through narration plus a short breathing pause", ()
   assert.ok(POST_NARRATION_PAUSE_MS >= 350);
   assert.equal(remainingNarrationHoldMs(2200, 400), 1800);
   assert.equal(remainingNarrationHoldMs(2200, 3000), POST_NARRATION_PAUSE_MS);
+});
+
+test("turns a wrong letter choice into a concrete sound contrast", () => {
+  const room = createJourney(() => 0.42).find((candidate) => candidate.kind === "letter");
+  const challenge = room.challenge;
+  const wrongIndex = challenge.choices.findIndex((choice) => choice.letter !== challenge.answer);
+  const wrongChoice = challenge.choices[wrongIndex];
+  const answerChoice = challenge.choices.find((choice) => choice.letter === challenge.answer);
+  const feedback = getLetterChoiceFeedback(challenge, wrongIndex);
+
+  assert.equal(feedback.title, `${wrongChoice.name[0].toUpperCase()}${wrongChoice.name.slice(1)} starts with ${wrongChoice.letter}`);
+  assert.equal(feedback.message, `Listen for ${challenge.answer}: ${answerChoice.name}!`);
+  assert.match(feedback.visual, new RegExp(`${wrongChoice.emoji}.*${wrongChoice.letter}`));
 });

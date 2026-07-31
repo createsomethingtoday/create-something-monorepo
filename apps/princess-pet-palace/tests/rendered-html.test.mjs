@@ -48,6 +48,7 @@ test("server-renders the Princess Pet Palace game", async () => {
   assert.match(html, /Open the palace doors/);
   assert.match(html, /six magical rooms/);
   assert.match(html, /Start adventure/);
+  assert.match(html, /data-testid="mobile-royal-invite"/);
   assert.match(html, /data-testid="adventure-guide"/);
   assert.match(html, /Six short rooms in about four playful minutes/);
   assert.match(html, /Listen for first sounds/);
