@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   POST_NARRATION_PAUSE_MS,
+  MOVEMENT_CAMERA_GRACE_MS,
   ROYAL_PLAYER_NAME,
   SUCCESS_ADVANCE_DELAY_MS,
   TRY_AGAIN_DELAY_MS,
@@ -12,8 +13,10 @@ import {
   getPrincessCoachCue,
   getRoyalPlayerLabels,
   getLetterChoiceFeedback,
+  getRoomInstructionCues,
   remainingNarrationHoldMs,
   shouldAcceptPoseCompletion,
+  canInteractWithRoom,
 } from "../app/game-model.ts";
 
 test("makes Stella the princess's named play companion", () => {
@@ -38,6 +41,18 @@ test("accepts a matched movement only after the princess finishes the instructio
   assert.equal(shouldAcceptPoseCompletion({ instructionFinished: true, poseMatched: true, fallbackRunning: true, alreadyComplete: false }), false);
   assert.equal(shouldAcceptPoseCompletion({ instructionFinished: true, poseMatched: true, fallbackRunning: false, alreadyComplete: true }), false);
   assert.equal(shouldAcceptPoseCompletion({ instructionFinished: true, poseMatched: true, fallbackRunning: false, alreadyComplete: false }), true);
+});
+
+test("locks every room interaction while the princess is speaking", () => {
+  assert.equal(canInteractWithRoom({ instructionPlaying: true, feedbackActive: false, turnNarrating: false }), false);
+  assert.equal(canInteractWithRoom({ instructionPlaying: false, feedbackActive: true, turnNarrating: false }), false);
+  assert.equal(canInteractWithRoom({ instructionPlaying: false, feedbackActive: false, turnNarrating: true }), false);
+  assert.equal(canInteractWithRoom({ instructionPlaying: false, feedbackActive: false, turnNarrating: false }), true);
+});
+
+test("gives camera recognition a calm head start before the timer fallback appears", () => {
+  assert.ok(MOVEMENT_CAMERA_GRACE_MS >= 4_000);
+  assert.ok(MOVEMENT_CAMERA_GRACE_MS <= 6_000);
 });
 
 test("creates a varied six-room palace journey with every activity", () => {
@@ -68,6 +83,24 @@ test("gives counting rooms simple, natural instructions", () => {
   assert.ok(countRooms.every((room) => /^Let’s count one by one\. Tap each [a-z]+ to count them\.$/.test(room.spokenPrompt)));
 });
 
+test("speaks letter choices from left to right before asking Stella to choose", () => {
+  const journey = createJourney(() => 0.42);
+  const letterRoom = journey.find((room) => room.kind === "letter");
+  const cues = getRoomInstructionCues(letterRoom);
+
+  assert.equal(cues[0], letterRoom.narration.prompt);
+  assert.deepEqual(
+    cues.slice(1, -1).map((cue) => cue.id),
+    letterRoom.challenge.choices.map((choice) => `animal-${choice.name}`),
+  );
+  assert.equal(cues.at(-1).id, `letter-${letterRoom.challenge.answer.toLowerCase()}-question`);
+
+  const countRoom = journey.find((room) => room.kind === "count");
+  const moveRoom = journey.find((room) => room.kind === "move");
+  assert.deepEqual(getRoomInstructionCues(countRoom), [countRoom.narration.prompt]);
+  assert.deepEqual(getRoomInstructionCues(moveRoom), [moveRoom.narration.prompt]);
+});
+
 test("gives every room a visible learning goal and skill-specific feedback", () => {
   const journey = createJourney(() => 0.42);
 
@@ -91,8 +124,21 @@ test("gives every room a visible learning goal and skill-specific feedback", () 
   assert.match(getPrincessCoachCue(moveRoom, null).visual, new RegExp(moveRoom.challenge.poseEmoji));
   assert.match(moveRoom.spokenPrompt, /^Make a little space\./);
   assert.match(moveRoom.successMessage, /^You moved for 5 seconds!$/);
+  assert.ok(moveRoom.challenge.rewardAnimal.length > 0);
   assert.ok(SUCCESS_ADVANCE_DELAY_MS >= 2000, "success feedback should remain long enough to hear");
   assert.ok(TRY_AGAIN_DELAY_MS >= 1500, "try-again guidance should not disappear too quickly");
+});
+
+test("every royal move adds an animal friend instead of a prop", () => {
+  const seen = new Map();
+  for (let seed = 1; seed <= 100; seed += 1) {
+    for (const room of createJourney(() => (seed % 97) / 97)) {
+      if (room.kind === "move") seen.set(room.challenge.id, room.challenge.rewardAnimal);
+    }
+  }
+
+  assert.equal(seen.size, 4);
+  assert.ok([...seen.values()].every((reward) => !["👑", "⭐", "🎀"].includes(reward)));
 });
 
 test("counts each pet once and completes only after every pet is tapped", () => {

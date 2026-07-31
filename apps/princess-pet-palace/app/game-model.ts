@@ -6,6 +6,7 @@ export type GameScreen = "home" | "journey" | "celebrate";
 export const SUCCESS_ADVANCE_DELAY_MS = 2200;
 export const TRY_AGAIN_DELAY_MS = 1800;
 export const POST_NARRATION_PAUSE_MS = 400;
+export const MOVEMENT_CAMERA_GRACE_MS = 4500;
 export const ROYAL_PLAYER_NAME = "Stella";
 
 export function getRoyalPlayerLabels(playerName: string = ROYAL_PLAYER_NAME) {
@@ -34,6 +35,14 @@ export function shouldAcceptPoseCompletion(input: {
   return input.instructionFinished && input.poseMatched && !input.fallbackRunning && !input.alreadyComplete;
 }
 
+export function canInteractWithRoom(input: {
+  instructionPlaying: boolean;
+  feedbackActive: boolean;
+  turnNarrating: boolean;
+}): boolean {
+  return !input.instructionPlaying && !input.feedbackActive && !input.turnNarrating;
+}
+
 export type AnimalChoice = {
   emoji: string;
   name: string;
@@ -60,6 +69,7 @@ export type MoveChallenge = {
   type: "move";
   id: string;
   emoji: string;
+  rewardAnimal: string;
   poseEmoji: string;
   poseLabel: string;
   title: string;
@@ -133,10 +143,10 @@ const countChallenges: CountChallenge[] = [
 ];
 
 const moveChallenges: MoveChallenge[] = [
-  { type: "move", id: "move-star", emoji: "⭐", poseEmoji: "🙆‍♀️", poseLabel: "reach up and out", title: "Star stretch", action: "Reach up and out like a sparkly star!", seconds: 5 },
-  { type: "move", id: "move-flamingo", emoji: "🦩", poseEmoji: "🧘‍♀️", poseLabel: "balance on one foot", title: "Flamingo balance", action: "Stand tall and lift one foot like a flamingo!", seconds: 5 },
-  { type: "move", id: "move-butterfly", emoji: "🦋", poseEmoji: "🧚‍♀️", poseLabel: "flap both arms", title: "Butterfly wings", action: "Flap your arms slowly like a butterfly!", seconds: 5 },
-  { type: "move", id: "move-crown", emoji: "👑", poseEmoji: "🚶‍♀️", poseLabel: "take tiny steps", title: "Crown walk", action: "Take five tiny royal steps with a tall back!", seconds: 5 },
+  { type: "move", id: "move-star", emoji: "⭐", rewardAnimal: "🦄", poseEmoji: "🙆‍♀️", poseLabel: "reach up and out", title: "Star stretch", action: "Reach up and out like a sparkly star!", seconds: 5 },
+  { type: "move", id: "move-flamingo", emoji: "🦩", rewardAnimal: "🦩", poseEmoji: "🧘‍♀️", poseLabel: "balance on one foot", title: "Flamingo balance", action: "Stand tall and lift one foot like a flamingo!", seconds: 5 },
+  { type: "move", id: "move-butterfly", emoji: "🦋", rewardAnimal: "🦋", poseEmoji: "🧚‍♀️", poseLabel: "flap both arms", title: "Butterfly wings", action: "Flap your arms slowly like a butterfly!", seconds: 5 },
+  { type: "move", id: "move-crown", emoji: "👑", rewardAnimal: "🐴", poseEmoji: "🚶‍♀️", poseLabel: "take tiny steps", title: "Crown walk", action: "Take five tiny royal steps with a tall back!", seconds: 5 },
 ];
 
 function shuffled<T>(items: readonly T[], random: () => number): T[] {
@@ -248,7 +258,11 @@ export function getLetterChoiceFeedback(
 export function getPrincessCoachCue(
   room: JourneyRoom | undefined,
   feedback: "success" | "try" | null,
+  listening = false,
 ): PrincessCoachCue {
+  if (listening) {
+    return { visual: "🔊 ✨", ariaLabel: "Listen to the princess" };
+  }
   if (feedback === "success") {
     return { visual: "👑 ✨", ariaLabel: "The princess celebrates with you" };
   }
@@ -277,6 +291,16 @@ export function getPrincessCoachCue(
     visual: `👸 → ${room.challenge.poseEmoji} ✨`,
     ariaLabel: `The princess shows you how to ${room.challenge.poseLabel}`,
   };
+}
+
+export function getRoomInstructionCues(room: JourneyRoom): NarrationCue[] {
+  if (room.challenge.type !== "letter") return [room.narration.prompt];
+
+  return [
+    room.narration.prompt,
+    ...room.challenge.choices.map((choice) => getNarrationCue(`animal-${choice.name}`)),
+    getNarrationCue(`letter-${room.challenge.answer.toLowerCase()}-question`),
+  ];
 }
 
 export function createJourney(random: () => number = Math.random): JourneyRoom[] {

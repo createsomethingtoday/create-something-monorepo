@@ -45,6 +45,18 @@ test("shared game moments and spoken numbers have static narration", () => {
     "number-4",
     "number-5",
     "number-6",
+    "animal-bunny",
+    "animal-cat",
+    "animal-puppy",
+    "animal-fox",
+    "animal-lion",
+    "animal-tiger",
+    "letter-b-question",
+    "letter-c-question",
+    "letter-p-question",
+    "letter-f-question",
+    "letter-l-question",
+    "letter-t-question",
   ];
 
   for (const id of requiredIds) {

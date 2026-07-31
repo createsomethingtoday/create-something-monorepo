@@ -22,10 +22,14 @@ export function CameraMagic({
   challengeId,
   detectionEnabled,
   onPoseMatched,
+  onFallbackNeeded,
+  onPoseProgress,
 }: {
   challengeId: string;
   detectionEnabled: boolean;
   onPoseMatched: () => void;
+  onFallbackNeeded: () => void;
+  onPoseProgress: (progress: number) => void;
 }) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -41,6 +45,8 @@ export function CameraMagic({
   const challengeIdRef = useRef(challengeId);
   const detectionEnabledRef = useRef(detectionEnabled);
   const onPoseMatchedRef = useRef(onPoseMatched);
+  const onFallbackNeededRef = useRef(onFallbackNeeded);
+  const onPoseProgressRef = useRef(onPoseProgress);
   const startingRef = useRef(false);
   const mountedRef = useRef(true);
   const [status, setStatus] = useState<CameraStatus>("idle");
@@ -55,7 +61,13 @@ export function CameraMagic({
     challengeIdRef.current = challengeId;
     detectionEnabledRef.current = detectionEnabled;
     onPoseMatchedRef.current = onPoseMatched;
-  }, [challengeId, detectionEnabled, onPoseMatched]);
+    onFallbackNeededRef.current = onFallbackNeeded;
+    onPoseProgressRef.current = onPoseProgress;
+  }, [challengeId, detectionEnabled, onFallbackNeeded, onPoseMatched, onPoseProgress]);
+
+  useEffect(() => {
+    onPoseProgressRef.current(poseProgress);
+  }, [poseProgress]);
 
   const releaseCamera = useCallback(() => {
     if (motionTimer.current) clearInterval(motionTimer.current);
@@ -270,7 +282,14 @@ export function CameraMagic({
               ? "Step back so the magic mirror can see you."
               : poseStatus === "unavailable"
                 ? "Keep playing with the royal timer."
-                : CAMERA_MAGIC_COPY.activePrompt;
+              : CAMERA_MAGIC_COPY.activePrompt;
+
+  useEffect(() => {
+    const cameraUnavailable = status === "error" || (status === "requesting" && requestCollapsed) || (status === "idle" && preference === "disabled");
+    if (detectionEnabled && (cameraUnavailable || poseStatus === "unavailable")) {
+      onFallbackNeededRef.current();
+    }
+  }, [detectionEnabled, poseStatus, preference, requestCollapsed, status]);
 
   return (
     <section className={`camera-magic camera-${status} ${cameraCompact ? "camera-compact" : ""}`} aria-label="Optional camera magic">
