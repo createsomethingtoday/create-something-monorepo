@@ -203,6 +203,24 @@ async function prepareBookedCandidateThread(client) {
 	const reset = await client.postJson('/api/threads/reset', {});
 	assertOk(reset, 'Failed to reset session');
 
+	const homePage = await client.get('/');
+	assert.equal(homePage.status, 200, 'Expected / to render');
+	assert.match(
+		homePage.bodyText,
+		/\/abundance\/logo-mark\.png/,
+		'Expected the shared navigation to use the Abundance raster mark'
+	);
+	assert.match(
+		homePage.bodyText,
+		/rel="apple-touch-icon"[^>]+\/abundance\/apple-touch-icon\.png/,
+		'Expected the Abundance webclip metadata'
+	);
+	assert.match(
+		homePage.bodyText,
+		/rel="manifest"[^>]+\/abundance\/site\.webmanifest/,
+		'Expected the Abundance manifest metadata'
+	);
+
 	const applyPage = await client.get('/apply');
 	assert.equal(applyPage.status, 200, 'Expected /apply to render');
 	assert.match(applyPage.bodyText, /Voice Concierge/i, 'Expected /apply voice entry point');

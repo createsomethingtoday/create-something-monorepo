@@ -296,11 +296,6 @@
   <meta property="og:image" content={absoluteUrl('/npg-client-service/icon-512.png')} />
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:image" content={absoluteUrl('/npg-client-service/icon-512.png')} />
-  <meta name="theme-color" content="#171512" />
-  <link rel="icon" href="/npg-client-service/logo-mark.png" sizes="1024x1024" type="image/png" />
-  <link rel="icon" href="/npg-client-service/favicon-32.png" sizes="32x32" type="image/png" />
-  <link rel="apple-touch-icon" href="/npg-client-service/apple-touch-icon.png" sizes="180x180" />
-  <link rel="manifest" href="/npg-client-service/site.webmanifest" />
 </svelte:head>
 
 <div class="service-page">

@@ -1,0 +1,24 @@
+{
+  "name": "Abundance Staffing",
+  "short_name": "Abundance",
+  "description": "Guided nurse applications and recruiter-reviewed staffing handoffs.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#FAF5EF",
+  "theme_color": "#171512",
+  "icons": [
+    {
+      "src": "/abundance/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/abundance/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
