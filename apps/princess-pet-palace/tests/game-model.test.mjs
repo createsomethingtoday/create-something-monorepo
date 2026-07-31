@@ -3,16 +3,28 @@ import test from "node:test";
 
 import {
   POST_NARRATION_PAUSE_MS,
+  ROYAL_PLAYER_NAME,
   SUCCESS_ADVANCE_DELAY_MS,
   TRY_AGAIN_DELAY_MS,
   countPetTap,
   canUsePalaceHomeButton,
   createJourney,
   getPrincessCoachCue,
+  getRoyalPlayerLabels,
   getLetterChoiceFeedback,
   remainingNarrationHoldMs,
   shouldAcceptPoseCompletion,
 } from "../app/game-model.ts";
+
+test("makes Stella the princess's named play companion", () => {
+  assert.equal(ROYAL_PLAYER_NAME, "Stella");
+  assert.deepEqual(getRoyalPlayerLabels(), {
+    greeting: "Hi, Stella!",
+    party: "Stella's royal party",
+    title: "Princess Stella",
+    celebration: "Stella is a Palace Learning Star!",
+  });
+});
 
 test("prevents an accidental palace exit in the middle of a room", () => {
   assert.equal(canUsePalaceHomeButton("home"), true);

@@ -25,8 +25,10 @@ function narrationCue(id: string, text: string): NarrationCue {
 
 const narrationLines = [
   ["palace-open", "The palace doors are open!"],
+  ["stella-welcome", "Hi, Stella! The palace doors are open. Let’s play together!"],
   ["sound-on", "Sound on!"],
   ["grand-ballroom", "The grand ballroom is open! You finished the whole palace adventure!"],
+  ["stella-grand-ballroom", "Stella, the grand ballroom is open! You finished the whole palace adventure. I’m so proud of you!"],
   ["cheer-palace-magic", "Palace magic!"],
   ["cheer-you-found-it", "You found it!"],
   ["cheer-wonderful", "Wonderful!"],

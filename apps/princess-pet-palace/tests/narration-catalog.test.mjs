@@ -32,9 +32,9 @@ test("every randomized room points to static narration with matching fallback co
 
 test("shared game moments and spoken numbers have static narration", () => {
   const requiredIds = [
-    "palace-open",
+    "stella-welcome",
     "sound-on",
-    "grand-ballroom",
+    "stella-grand-ballroom",
     "cheer-palace-magic",
     "cheer-you-found-it",
     "cheer-wonderful",
@@ -50,6 +50,9 @@ test("shared game moments and spoken numbers have static narration", () => {
   for (const id of requiredIds) {
     assert.ok(NARRATION_CATALOG[id], `missing narration cue ${id}`);
   }
+
+  assert.match(getNarrationCue("stella-welcome").text, /Stella/);
+  assert.match(getNarrationCue("stella-grand-ballroom").text, /Stella/);
 });
 
 test("every narration cue ships as a non-empty MP3 asset", async () => {

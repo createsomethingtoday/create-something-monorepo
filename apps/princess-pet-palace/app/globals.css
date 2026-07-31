@@ -385,6 +385,25 @@ h1 {
 .floating-star { position: absolute; z-index: 4; filter: drop-shadow(0 10px 10px rgba(76, 38, 88, 0.18)); }
 .hero-character { animation: character-bob 3.2s ease-in-out infinite; }
 .princess { left: 45%; bottom: 10%; font-size: 7.5rem; transform: translateX(-50%); }
+.hero-hello {
+  position: absolute;
+  z-index: 5;
+  left: 53%;
+  bottom: 34%;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 16px;
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  border-radius: 22px 22px 22px 5px;
+  color: #74398b;
+  background: rgba(255, 255, 255, 0.91);
+  box-shadow: 0 10px 24px rgba(80, 40, 94, 0.16);
+  font-family: var(--font-display), sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+.hero-hello small { font-size: 0.82rem; letter-spacing: 0.18em; }
 .bunny { left: 22%; bottom: 14%; font-size: 4.7rem; animation-delay: -0.5s; }
 .kitten { right: 18%; bottom: 17%; font-size: 4.4rem; animation-delay: -1.4s; }
 .unicorn { right: 35%; bottom: 4%; font-size: 5rem; animation-delay: -2.1s; }
@@ -970,6 +989,7 @@ h1 {
 .skill-summary b { font-size: 1.45rem; }
 .skill-summary strong { margin-top: 5px; color: #76517d; font-family: var(--font-display), sans-serif; font-size: 0.67rem; }
 .finale-actions { position: relative; z-index: 1; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: center; gap: 18px; }
+.finale-actions .primary-button { min-width: min(330px, 80vw); }
 .secondary-button { min-height: 54px; padding: 0 20px; border: 2px solid rgba(80, 40, 94, 0.14); border-radius: 18px; color: var(--ink); background: rgba(255, 255, 255, 0.72); font-weight: 850; cursor: pointer; }
 
 footer {
@@ -1029,11 +1049,12 @@ button:disabled { cursor: default; }
   .hero-copy { padding: 34px 20px 16px; }
   .hero-copy h1 { margin-top: 10px; font-size: clamp(2.55rem, 12vw, 3.6rem); }
   .hero-lede { max-width: 330px; margin-top: 13px; font-size: 0.92rem; line-height: 1.35; }
-  .mobile-royal-invite { position: relative; display: flex; align-items: flex-end; justify-content: center; min-height: 118px; margin: 10px 0 -2px; }
+  .mobile-royal-invite { position: relative; display: flex; align-items: center; justify-content: center; gap: 2px; min-height: 118px; margin: 10px 0 -2px; }
   .mobile-royal-invite::before { content: "✨"; position: absolute; top: 1px; right: 15%; font-size: 1.25rem; animation: twinkle 1.8s ease-in-out infinite; }
-  .mobile-royal-invite span { margin: 0 -3px; font-size: 3.6rem; filter: drop-shadow(0 7px 7px rgba(79, 39, 90, 0.13)); animation: character-bob 2.5s ease-in-out infinite; }
-  .mobile-royal-invite span:first-child { z-index: 1; font-size: 5.8rem; }
-  .mobile-royal-invite span:nth-child(even) { animation-delay: -0.8s; }
+  .mobile-invite-princess { z-index: 1; margin-right: -7px; font-size: 5.8rem; filter: drop-shadow(0 7px 7px rgba(79, 39, 90, 0.13)); animation: character-bob 2.5s ease-in-out infinite; }
+  .mobile-invite-bubble { display: flex; flex-direction: column; gap: 4px; padding: 12px 15px; border: 3px solid #fff; border-radius: 22px 22px 22px 5px; color: #74398b; background: rgba(255, 255, 255, 0.86); box-shadow: 0 8px 20px rgba(79, 39, 90, 0.13); text-align: left; }
+  .mobile-invite-bubble strong { font-family: var(--font-display), sans-serif; font-size: 1.05rem; }
+  .mobile-invite-bubble small { font-size: 0.82rem; letter-spacing: 0.15em; }
   .primary-button { min-height: 65px; margin-top: 12px; }
   .adventure-facts { display: none; }
   .adventure-facts small { font-size: 0.53rem; }
@@ -1043,6 +1064,7 @@ button:disabled { cursor: default; }
   .quest-preview strong { font-size: 0.58rem; }
   .quest-preview small { font-size: 0.46rem; }
   .hero-world { display: none; }
+  .hero-hello { display: none; }
   .palace { top: -2%; transform: translateX(-50%) scale(0.7); }
   .princess { left: 44%; bottom: 7%; font-size: 5.6rem; }
   .bunny { left: 15%; bottom: 16%; font-size: 3.8rem; }

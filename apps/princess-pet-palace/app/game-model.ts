@@ -6,6 +6,16 @@ export type GameScreen = "home" | "journey" | "celebrate";
 export const SUCCESS_ADVANCE_DELAY_MS = 2200;
 export const TRY_AGAIN_DELAY_MS = 1800;
 export const POST_NARRATION_PAUSE_MS = 400;
+export const ROYAL_PLAYER_NAME = "Stella";
+
+export function getRoyalPlayerLabels(playerName: string = ROYAL_PLAYER_NAME) {
+  return {
+    greeting: `Hi, ${playerName}!`,
+    party: `${playerName}'s royal party`,
+    title: `Princess ${playerName}`,
+    celebration: `${playerName} is a Palace Learning Star!`,
+  } as const;
+}
 
 export function remainingNarrationHoldMs(minimumMs: number, elapsedMs: number): number {
   return Math.max(POST_NARRATION_PAUSE_MS, minimumMs - elapsedMs);

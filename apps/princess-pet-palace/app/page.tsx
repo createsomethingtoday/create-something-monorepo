@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CameraMagic } from "./camera-magic";
 import {
   POST_NARRATION_PAUSE_MS,
+  ROYAL_PLAYER_NAME,
   SUCCESS_ADVANCE_DELAY_MS,
   TRY_AGAIN_DELAY_MS,
   canUsePalaceHomeButton,
@@ -11,6 +12,7 @@ import {
   createJourney,
   getLetterChoiceFeedback,
   getPrincessCoachCue,
+  getRoyalPlayerLabels,
   remainingNarrationHoldMs,
   shouldAcceptPoseCompletion,
   type CountChallenge,
@@ -37,6 +39,8 @@ const cheers = [
   { title: "Wonderful!", cueId: "cheer-wonderful" },
   { title: "Sparkle power!", cueId: "cheer-sparkle-power" },
 ];
+
+const royalPlayer = getRoyalPlayerLabels();
 
 export default function Home() {
   const [screen, setScreen] = useState<GameScreen>("home");
@@ -224,7 +228,7 @@ export default function Home() {
     setSparkleStreak(0);
     resetRoomState();
     setScreen("journey");
-    speak([getNarrationCue("palace-open"), nextJourney[0].narration.prompt], false, () => {
+    speak([getNarrationCue("stella-welcome"), nextJourney[0].narration.prompt], false, () => {
       if (nextJourney[0].kind === "move") setMovementListening(true);
     });
   };
@@ -262,7 +266,7 @@ export default function Home() {
             setFeedbackTitle("");
             setFeedback("");
             setFeedbackKind(null);
-            speak(getNarrationCue("grand-ballroom"));
+            speak(getNarrationCue("stella-grand-ballroom"));
             return;
           }
 
@@ -433,15 +437,16 @@ export default function Home() {
         <section className="home-stage" aria-labelledby="game-title">
           <div className="hero-card">
             <div className="hero-copy">
-              <p className="eyebrow"><span aria-hidden="true">✨</span> Play, learn, and move</p>
-              <h1 id="game-title">Open the palace doors</h1>
-              <p className="hero-lede">Tap the pictures and follow the friendly voice through six magical rooms—no reading needed.</p>
-              <div className="mobile-royal-invite" data-testid="mobile-royal-invite" aria-label="The princess and her pets are ready to play">
-                <span aria-hidden="true">👸</span><span aria-hidden="true">🐰</span><span aria-hidden="true">🦄</span><span aria-hidden="true">🐱</span>
+              <p className="eyebrow"><span aria-hidden="true">✨</span> Stella&apos;s princess adventure</p>
+              <h1 id="game-title">Stella, open the palace doors</h1>
+              <p className="hero-lede">Tap the pictures and follow your princess friend through six magical rooms—no reading needed.</p>
+              <div className="mobile-royal-invite" data-testid="mobile-royal-invite" aria-label="The princess says hi to Stella and is ready to play">
+                <span className="mobile-invite-princess" aria-hidden="true">👸</span>
+                <span className="mobile-invite-bubble"><strong>{royalPlayer.greeting}</strong><small aria-hidden="true">👋 ✨ 🐾</small></span>
               </div>
-              <button className="primary-button" type="button" onClick={startGame} data-testid="start-game" aria-label="Play the Princess Pet Palace adventure">
+              <button className="primary-button" type="button" onClick={startGame} data-testid="start-game" aria-label={`${ROYAL_PLAYER_NAME}, play with the princess`}>
                 <span className="button-sparkle" aria-hidden="true">▶</span>
-                <span>Start adventure</span>
+                <span>Play with the princess</span>
                 <span className="button-arrow" aria-hidden="true">→</span>
               </button>
               <div className="adventure-facts" aria-label="Six short rooms in about four playful minutes">
@@ -466,6 +471,7 @@ export default function Home() {
               </div>
               <div className="hero-path" />
               <span className="hero-character princess">👸</span>
+              <span className="hero-hello">{royalPlayer.greeting}<small aria-hidden="true">👋 ✨</small></span>
               <span className="hero-character bunny">🐰</span>
               <span className="hero-character kitten">🐱</span>
               <span className="hero-character unicorn">🦄</span>
@@ -549,7 +555,7 @@ export default function Home() {
               <div className="party-pets" aria-hidden="true">
                 {uniquePartyPets.length === 0 ? <span className="empty-party">Who will join?</span> : uniquePartyPets.map((pet, index) => <span key={`${pet}-${index}`}>{pet}</span>)}
               </div>
-              <span className="party-label">Your royal party</span>
+              <span className="party-label">{royalPlayer.party}</span>
             </div>
           </div>
 
@@ -563,14 +569,14 @@ export default function Home() {
         <section className="celebration-stage" aria-labelledby="game-title">
           <div className="celebration-card">
             <div className="confetti" aria-hidden="true"><span>★</span><span>✦</span><span>●</span><span>★</span><span>✦</span><span>●</span></div>
-            <p className="eyebrow"><span aria-hidden="true">👑</span> Grand ballroom unlocked</p>
+            <p className="eyebrow"><span aria-hidden="true">👑</span> Stella&apos;s grand ballroom</p>
             <div className="finale-party" aria-hidden="true">
               <span>👸</span>
               {(uniquePartyPets.length ? uniquePartyPets : ["🐰", "🐱", "🦄"]).map((pet, index) => <span key={`${pet}-${index}`}>{pet}</span>)}
             </div>
             <div className="finale-stars" aria-label={`${journey.length} stars collected`}>{journey.map((_, index) => <span key={index} aria-hidden="true">★</span>)}</div>
-            <div className="royal-title"><span aria-hidden="true">♛</span><span><small>Your royal title</small><strong>Palace Learning Star</strong></span></div>
-            <h1 id="game-title">The palace is sparkling!</h1>
+            <div className="royal-title" aria-label={royalPlayer.celebration}><span aria-hidden="true">♛</span><span><small>Palace Learning Star</small><strong>{royalPlayer.title}</strong></span></div>
+            <h1 id="game-title">Stella, the palace is sparkling!</h1>
             <p className="celebration-copy">You found letters, counted every pet, and completed the royal moves.</p>
             <div className="skill-summary" aria-label="Skills practiced in this adventure">
               <span><b aria-hidden="true">🔤</b><strong>Letter sounds</strong></span>
@@ -578,8 +584,7 @@ export default function Home() {
               <span><b aria-hidden="true">🤸‍♀️</b><strong>Big movement</strong></span>
             </div>
             <div className="finale-actions">
-              <button className="primary-button" type="button" onClick={startGame} data-testid="play-again"><span aria-hidden="true">↻</span><span>New adventure</span></button>
-              <button className="secondary-button" type="button" onClick={goHome}>Palace home</button>
+              <button className="primary-button" type="button" onClick={startGame} data-testid="play-again" aria-label="Stella, play another palace adventure"><span aria-hidden="true">↻</span><span>Play again</span></button>
             </div>
           </div>
         </section>
