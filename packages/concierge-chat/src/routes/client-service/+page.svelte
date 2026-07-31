@@ -297,7 +297,7 @@
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:image" content={absoluteUrl('/npg-client-service/icon-512.png')} />
   <meta name="theme-color" content="#171512" />
-  <link rel="icon" href="/npg-client-service/logo-mark.svg" type="image/svg+xml" />
+  <link rel="icon" href="/npg-client-service/logo-mark.png" sizes="1024x1024" type="image/png" />
   <link rel="icon" href="/npg-client-service/favicon-32.png" sizes="32x32" type="image/png" />
   <link rel="apple-touch-icon" href="/npg-client-service/apple-touch-icon.png" sizes="180x180" />
   <link rel="manifest" href="/npg-client-service/site.webmanifest" />
@@ -322,7 +322,7 @@
         </div>
         <div class="disclosure" role="note">
           <span aria-hidden="true">
-            <img src="/npg-client-service/logo-mark.svg" alt="" />
+            <img src="/npg-client-service/logo-mark.png" alt="" />
           </span>
           <p>
             <strong>Automated assistance, named up front.</strong>
@@ -353,7 +353,7 @@
         >
           <div class="stage-rings" aria-hidden="true"><i></i><i></i><i></i></div>
           <span class="service-avatar" aria-hidden="true">
-            <img src="/npg-client-service/logo-mark.svg" alt="" />
+            <img src="/npg-client-service/logo-mark.png" alt="" />
           </span>
           <div class="voice-bars" aria-hidden="true">
             {#each [1, 2, 3, 4, 5, 6, 7] as bar}
@@ -478,7 +478,7 @@
               <article class:representative={entry.speaker === 'Concierge'}>
                 <span>
                   {#if entry.speaker === 'Concierge'}
-                    <img src="/npg-client-service/logo-mark.svg" alt="" aria-hidden="true" />
+                    <img src="/npg-client-service/logo-mark.png" alt="" aria-hidden="true" />
                   {:else}
                     You
                   {/if}
@@ -690,8 +690,10 @@
     border: 1px solid rgba(23, 21, 18, 0.1);
   }
   .disclosure > span img {
-    width: 25px;
-    height: 25px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    object-fit: cover;
   }
   .disclosure p {
     margin: 0;
@@ -772,8 +774,10 @@
     z-index: 2;
   }
   .service-avatar img {
-    width: 64px;
-    height: 64px;
+    width: 86px;
+    height: 86px;
+    border-radius: 50%;
+    object-fit: cover;
   }
   .stage-rings {
     position: absolute;
@@ -1061,8 +1065,10 @@
     background: var(--bright);
   }
   .transcript article.representative > span img {
-    width: 25px;
-    height: 25px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    object-fit: cover;
   }
   .transcript article strong {
     font-size: 0.78rem;

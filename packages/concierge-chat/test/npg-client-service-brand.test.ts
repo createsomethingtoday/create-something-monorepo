@@ -6,14 +6,16 @@ const routeSource = readFileSync('src/routes/client-service/+page.svelte', 'utf8
 const layoutSource = readFileSync('src/routes/+layout.svelte', 'utf8');
 
 test('the NPG client-service instance owns its mark, browser icon, and webclip', () => {
-  assert.match(routeSource, /\/npg-client-service\/logo-mark\.svg/);
+  assert.match(routeSource, /\/npg-client-service\/logo-mark\.png/);
+  assert.doesNotMatch(routeSource, /\/npg-client-service\/[^'"\s]+\.svg/);
+  assert.doesNotMatch(layoutSource, /\/npg-client-service\/[^'"\s]+\.svg/);
   assert.match(routeSource, /rel="apple-touch-icon"/);
   assert.match(routeSource, /\/npg-client-service\/site\.webmanifest/);
   assert.match(layoutSource, /data\.currentPath === '\/client-service'/);
   assert.match(layoutSource, /NPG Client Service/);
 
   for (const asset of [
-    'static/npg-client-service/logo-mark.svg',
+    'static/npg-client-service/logo-mark.png',
     'static/npg-client-service/favicon-32.png',
     'static/npg-client-service/icon-192.png',
     'static/npg-client-service/icon-512.png',
