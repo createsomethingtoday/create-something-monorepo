@@ -99,6 +99,7 @@
       <button
         type="button"
         class="privacy-pill privacy-pill--compact"
+        aria-label="Privacy choices"
         aria-expanded={showPanel}
         onclick={openPrivacyPanel}
       >
@@ -338,18 +339,18 @@
     .privacy-pill {
       min-height: 2.75rem;
       padding: 0 0.4rem;
-      border-color: transparent;
-      background: transparent;
-      box-shadow: none;
+      border-color: var(--color-performance-line, #d7d7d2);
+      background: var(--color-performance-panel, #ffffff);
+      box-shadow: 0 4px 14px rgba(10, 14, 25, 0.08);
       color: var(--color-performance-muted, #5e6268);
       font-family: var(--font-performance-mono);
       font-size: 0.68rem;
     }
 
     .privacy-pill:hover {
-      border-color: transparent;
-      background: rgba(255, 255, 255, 0.72);
-      box-shadow: none;
+      border-color: var(--color-performance-line-strong, #9c9c96);
+      background: var(--color-performance-panel, #ffffff);
+      box-shadow: 0 4px 14px rgba(10, 14, 25, 0.08);
       transform: none;
     }
 

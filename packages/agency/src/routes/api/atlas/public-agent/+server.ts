@@ -9,6 +9,7 @@ import {
 import { PUBLIC_ATLAS_LIMITS, type PublicAtlasTier } from '$lib/atlas/intake-policy';
 import { runPublicAtlasMappingAgent } from '$lib/atlas/public';
 import { runOpenAiPublicAtlasMappingAgent } from '$lib/atlas/model-agent';
+import { buildPublicMapInteractionPair } from '$lib/analytics/workflow-interactions';
 import { createLogger } from '@create-something/canon/utils';
 
 const logger = createLogger('PublicAtlasAgentAPI');
@@ -177,7 +178,8 @@ async function persistAtlasEvent(
 	emailHash: string | undefined,
 	rateKey: string,
 	messageLength: number,
-	mutationCount: number
+	mutationCount: number,
+	tier: PublicAtlasTier
 ): Promise<boolean> {
 	if (!db) return false;
 
@@ -232,6 +234,54 @@ async function persistAtlasEvent(
 			)
 			.bind(randomId('atlas_event'), canvas.id, rateKey, emailHash ?? null, messageLength, mutationCount)
 			.run();
+
+		const interactionEvents = buildPublicMapInteractionPair({
+			correlationId: randomId('workflow_interaction'),
+			humanEventId: randomId('workflow_event'),
+			agentEventId: randomId('workflow_event'),
+			sessionId: canvas.id,
+			actorIdHash: await sha256(rateKey),
+			messageChars: messageLength,
+			mutationCount,
+			tier
+		});
+
+		try {
+			await db.batch(
+				interactionEvents.map((event) =>
+					db
+						.prepare(
+							`INSERT INTO workflow_interaction_events (
+								id, property, workflow_id, session_id, correlation_id, parent_event_id,
+								actor_kind, actor_id_hash, event_type, authority_state, tool_id, outcome,
+								approval_required, proof_ref, duration_ms, metadata_json, created_at
+							)
+							VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+						)
+						.bind(
+							event.id,
+							event.property,
+							event.workflowId,
+							event.sessionId,
+							event.correlationId,
+							event.parentEventId,
+							event.actorKind,
+							event.actorIdHash,
+							event.eventType,
+							event.authorityState,
+							event.toolId,
+							event.outcome,
+							event.approvalRequired ? 1 : 0,
+							event.proofRef,
+							event.durationMs,
+							JSON.stringify(event.metadata),
+							event.createdAt
+						)
+				)
+			);
+		} catch (err) {
+			logger.warn('Workflow interaction analytics skipped', { error: err });
+		}
 
 		return true;
 	} catch (err) {
@@ -318,7 +368,8 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		emailHash,
 		rateKey,
 		message.length,
-		result.mutationCount
+		result.mutationCount,
+		tier
 	);
 	if (!persisted) {
 		incrementMemoryCount(rateKey);

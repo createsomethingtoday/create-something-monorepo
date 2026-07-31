@@ -34,6 +34,7 @@ export const settlementResolvedMedia = {
  */
 export const performanceWaterRouteAssignments = {
   '/map': 'clarityInspectionMedia',
+  '/products': 'clarityInspectionMedia',
   '/services': 'turbulenceExceptionMedia',
   '/control': 'turbulenceExceptionMedia',
   '/delivery': 'settlementResolvedMedia',

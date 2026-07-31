@@ -16,6 +16,7 @@
   import AgencyPerformanceReadback from '$lib/components/AgencyPerformanceReadback.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
   import { PUBLIC_PRODUCT_SEQUENCE, getPublicProduct } from '$lib/data/productFamily';
+  import { clarityInspectionMedia } from '$lib/data/performanceMedia';
 
   type ProductSurfaceKind = 'signal' | 'decision' | 'proof';
 
@@ -52,7 +53,7 @@
         'Useful before or after implementation',
         'Included with Control'
       ],
-      receipts: ['Standalone', 'Monthly / yearly'],
+      receipts: ['Standalone', getPublicProduct('map').accessLabel],
       actions: [{ label: 'Explore Map', href: getPublicProduct('map').route }]
     },
     {
@@ -64,7 +65,7 @@
         'Build is the scoped service for connecting the approved workflow, its policy boundaries, verification, and handoff.',
       tone: 'review',
       evidence: ['Approved definition', 'Connected implementation', 'Operating handoff'],
-      receipts: ['Scoped service', 'Quoted separately'],
+      receipts: ['Scoped service', getPublicProduct('build').accessLabel],
       actions: [{ label: 'Explore Build', href: getPublicProduct('build').route }]
     },
     {
@@ -76,7 +77,7 @@
         'Control is the governed operating product. It includes Map and keeps delegated work inside explicit authority, approval, evidence, and recovery boundaries.',
       tone: 'allow',
       evidence: ['Signal watches change', 'Decision routes judgment', 'Proof preserves the result'],
-      receipts: ['Map included', 'Monthly / yearly'],
+      receipts: ['Map included', getPublicProduct('control').accessLabel],
       actions: [{ label: 'Explore Control', href: getPublicProduct('control').route }]
     }
   ];
@@ -144,11 +145,7 @@
   title="Map the system. Control the work."
   lede="CREATE SOMETHING Map stands alone as the living definition. CREATE SOMETHING Control stands alone as the governed operating product and includes Map. Build connects the approved system."
   density="compact"
-  media={{
-    src: '/images/performance-lab/product-system-natural.webp',
-    mobileSrc: '/images/performance-lab/product-system-natural-mobile.webp',
-    alt: 'Aerial black-and-white view of one water-control structure dividing flow across three channels'
-  }}
+  media={clarityInspectionMedia}
   proof={[
     { label: 'Map', value: 'Define' },
     { label: 'Build', value: 'Connect' },
@@ -179,6 +176,7 @@
         >
         <strong>{product.name}</strong>
         <p>{product.customerJob}</p>
+        <small>{product.accessLabel}</small>
       </div>
       <ul>
         {#each familyPoints(index) as point}<li>{point}</li>{/each}
@@ -207,12 +205,12 @@
 <section class="product-proof-shelf" aria-labelledby="product-proof-title">
   <div class="product-proof-shelf__heading">
     <div>
-      <span>Open product proof</span>
+      <span>Technical proof</span>
       <h2 id="product-proof-title">Inspect the discipline beneath the system.</h2>
     </div>
     <p>
-      Ground and the Loom archive show the same operating discipline beneath the commercial path:
-      verify before claiming, preserve ownership, and keep evidence with the work.
+      Historical and open tools are evidence, not additional commercial products. Ground and the
+      Loom archive show the discipline beneath Map, Build, and Control.
     </p>
   </div>
   <div class="proof-chooser" aria-label="Public product proof">
@@ -268,6 +266,7 @@
   }
 
   .product-choice span,
+  .product-choice small,
   .control-surfaces span,
   .proof-chooser span,
   .proof-chooser small {
@@ -281,6 +280,13 @@
     font-size: clamp(1.45rem, 2vw, 2rem);
     font-weight: var(--font-performance-display-weight);
     letter-spacing: var(--tracking-performance-display);
+  }
+
+  .product-choice small {
+    width: fit-content;
+    padding-top: 0.55rem;
+    border-top: 1px solid var(--color-performance-line, #d7d7d2);
+    color: var(--color-performance-muted, #5e6268);
   }
 
   .product-choice p,

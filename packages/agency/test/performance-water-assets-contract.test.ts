@@ -43,6 +43,7 @@ test('publishes a responsive, condition-specific descriptor for every bench-wate
 test('assigns each study to matching routes without exceeding two public surface families', () => {
   const expectedAssignments = {
     '/map': 'clarityInspectionMedia',
+    '/products': 'clarityInspectionMedia',
     '/services': 'turbulenceExceptionMedia',
     '/control': 'turbulenceExceptionMedia',
     '/delivery': 'settlementResolvedMedia',
@@ -75,7 +76,7 @@ test('keeps genuine wake claims on the existing trace-wake study', () => {
 
 test('records a completed original and mobile-crop inspection contract', () => {
   const metadata = readFileSync(packageMetadata, 'utf8');
-  assert.match(metadata, /Status: \*\*accepted for local integration — not published\*\*/);
+  assert.match(metadata, /Status: \*\*published on assigned public surfaces\*\*/);
   assert.doesNotMatch(metadata, /- \[ \]/);
 
   for (const name of [

@@ -56,6 +56,7 @@
   // test/public-marketing-copy.test.ts.
   const navLinks = [
     { label: 'How It Works', href: '/services' },
+    { label: 'Practice', href: '/practice' },
     { label: 'What You Keep', href: '/stack' },
     { label: 'Products', href: '/products' },
     { label: 'Field Reports', href: '/field-reports' }
@@ -86,6 +87,7 @@
         { label: 'What You Keep', href: '/stack' },
         { label: 'Products', href: '/products' },
         { label: 'Field Reports', href: '/field-reports' },
+        { label: 'Use With Clients', href: '/for-service-providers' },
         { label: 'About', href: '/about' }
       ]
     },
@@ -224,6 +226,14 @@
       href: '/field-reports',
       icon: 'FR',
       keywords: ['field reports', 'case studies', 'evidence', 'results', 'proof']
+    },
+    {
+      id: 'nav-service-providers',
+      label: 'Use With Clients',
+      description: 'Map, build, and hand over one governed client workflow',
+      href: '/for-service-providers',
+      icon: 'SP',
+      keywords: ['service provider', 'consultant', 'clients', 'delivery', 'workflow handoff']
     },
     {
       id: 'nav-self-map',
@@ -381,6 +391,7 @@
     onLogout={handleLogout}
     accountHref="/account"
     visualStyle="performance"
+    showMobileLogoText={true}
     onMobileMenuChange={(open) => (mobileNavigationOpen = open)}
   />
 

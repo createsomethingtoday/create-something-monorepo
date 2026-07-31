@@ -166,19 +166,9 @@ test('public Performance routes use the natural water image series', () => {
 
 	assert.ok(homeRoute.includes('/images/performance-lab/pressure-boundary-natural.webp'));
 	assert.ok(servicesRoute.includes('/images/performance-lab/trace-wake-natural.webp'));
-	assert.ok(productsRoute.includes('/images/performance-lab/product-system-natural.webp'));
-	assert.ok(productsRoute.includes('/images/performance-lab/product-system-natural-mobile.webp'));
+	assert.ok(productsRoute.includes("import { clarityInspectionMedia }"));
+	assert.ok(productsRoute.includes('media={clarityInspectionMedia}'));
 	assert.equal(productsRoute.includes('/images/performance-lab/controlled-flow-natural.webp'), false);
-	assert.equal(
-		existsSync(new URL('../static/images/performance-lab/product-system-natural.webp', import.meta.url)),
-		true
-	);
-	assert.equal(
-		existsSync(
-			new URL('../static/images/performance-lab/product-system-natural-mobile.webp', import.meta.url)
-		),
-		true
-	);
 });
 
 test('home route uses the shared canvas kernel as a transparent proof object', () => {
@@ -436,7 +426,7 @@ test('compact mobile privacy prompt stays below navigation and away from campaig
 	assert.ok(agencyPrivacyAnalytics.includes("content: 'Privacy'"));
 	assert.match(
 		agencyPrivacyAnalytics,
-		/@media \(max-width: 640px\)[\s\S]*?\.privacy-pill \{[\s\S]*?min-height: 2\.75rem;[\s\S]*?border-color: transparent;[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;/
+		/@media \(max-width: 640px\)[\s\S]*?\.privacy-pill \{[\s\S]*?min-height: 2\.75rem;[\s\S]*?border-color: var\(--color-performance-line,[\s\S]*?background: var\(--color-performance-panel,[\s\S]*?box-shadow: 0 4px 14px/
 	);
 	assert.match(
 		agencyPrivacyAnalytics,
