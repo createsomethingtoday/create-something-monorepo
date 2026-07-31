@@ -206,7 +206,8 @@ test('scheduler and parent wire a bounded resize bridge across the exact owned o
 	assert.ok(schedulerPage.includes("type:'create-something:scheduler-resize'"));
 	assert.ok(schedulerPage.includes('new ResizeObserver'));
 	assert.ok(schedulerPage.includes('new MutationObserver'));
-	assert.ok(schedulerPage.includes('requestAnimationFrame(()=>notifyParentHeight(true))'));
+	assert.ok(schedulerPage.includes('function queueParentHeight()'));
+	assert.ok((schedulerPage.match(/queueParentHeight\(\)/g) ?? []).length >= 5);
 });
 
 test('the parent strips emailed access before handing it to the exact scheduler frame', () => {
