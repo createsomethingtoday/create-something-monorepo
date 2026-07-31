@@ -1,0 +1,582 @@
+{
+  "schemaVersion": "workflow_definition.v0.1",
+  "workflowId": "create-something.internal-delivery.reference-mission",
+  "version": "1.0.0",
+  "title": "CREATE SOMETHING internal delivery reference mission",
+  "businessObjective": "Prove the Performance Lab operating model on CREATE SOMETHING delivery before translating it to client workflows.",
+  "owners": {
+    "workflow": "create-something-operator",
+    "policy": "create-something-operator",
+    "technical": "create-something-engineering"
+  },
+  "systems": [
+    {
+      "id": "linear",
+      "title": "Linear coordination",
+      "tier": "database",
+      "owningSurface": "Linear issue and evidence history",
+      "sourceOfTruth": true
+    },
+    {
+      "id": "git-repository",
+      "title": "CREATE SOMETHING repository",
+      "tier": "database",
+      "owningSurface": "Git branch, commit, and pull request history",
+      "sourceOfTruth": true
+    },
+    {
+      "id": "governance-runtime",
+      "title": "Agency governance runtime",
+      "tier": "database",
+      "owningSurface": "packages/agency governance signals, decisions, proofs, and delivery receipts",
+      "sourceOfTruth": true
+    },
+    {
+      "id": "agent-harness",
+      "title": "Canonical agent harness",
+      "tier": "automation",
+      "owningSurface": "packages/harness and repo agent workflow commands",
+      "sourceOfTruth": false
+    },
+    {
+      "id": "quality-gates",
+      "title": "Repository quality gates",
+      "tier": "automation",
+      "owningSurface": "package checks, tests, builds, and browser verification",
+      "sourceOfTruth": true
+    },
+    {
+      "id": "delivery-runtime",
+      "title": "Delivery and live runtime",
+      "tier": "automation",
+      "owningSurface": "GitHub review gate, immutable deployment artifact, and live surface",
+      "sourceOfTruth": true
+    },
+    {
+      "id": "policy-os",
+      "title": "Policy OS",
+      "tier": "judgment",
+      "owningSurface": "docs/policies and package-owned approval rules",
+      "sourceOfTruth": true
+    },
+    {
+      "id": "canon",
+      "title": "Canon extension lifecycle",
+      "tier": "judgment",
+      "owningSurface": "packages/canon registry, overlays, candidates, and promotion plans",
+      "sourceOfTruth": true
+    }
+  ],
+  "objects": [
+    {
+      "id": "delivery_signal",
+      "title": "Delivery signal",
+      "sourceSystemId": "governance-runtime",
+      "requiredFields": ["signal_id", "source", "objective", "observed_at"]
+    },
+    {
+      "id": "linear_scope",
+      "title": "Governed Linear scope",
+      "sourceSystemId": "linear",
+      "requiredFields": ["issue_id", "owner", "scope", "authority", "done_boundary"]
+    },
+    {
+      "id": "change_set",
+      "title": "Bounded change set",
+      "sourceSystemId": "git-repository",
+      "requiredFields": ["issue_id", "base_sha", "branch", "changed_paths"]
+    },
+    {
+      "id": "verification_evidence",
+      "title": "Verification evidence",
+      "sourceSystemId": "quality-gates",
+      "requiredFields": ["commands", "results", "observed_at", "source_revision"]
+    },
+    {
+      "id": "promotion_record",
+      "title": "Promotion record",
+      "sourceSystemId": "delivery-runtime",
+      "requiredFields": ["approval", "artifact", "target", "rollback"]
+    },
+    {
+      "id": "mission_proof",
+      "title": "Live mission proof",
+      "sourceSystemId": "governance-runtime",
+      "requiredFields": ["claim", "verifier", "receipt", "observed_at", "recovery"]
+    },
+    {
+      "id": "canon_lesson",
+      "title": "Canon lesson",
+      "sourceSystemId": "canon",
+      "requiredFields": ["finding", "evidence", "scope", "promotion_state"]
+    }
+  ],
+  "events": [
+    {
+      "id": "signal_observed",
+      "title": "Signal observed",
+      "objectId": "delivery_signal",
+      "requiredEvidence": ["signal_id", "source", "objective", "observed_at"]
+    },
+    {
+      "id": "scope_accepted",
+      "title": "Scope accepted",
+      "objectId": "linear_scope",
+      "requiredEvidence": ["issue_id", "authority", "done_boundary"]
+    },
+    {
+      "id": "change_ready",
+      "title": "Change ready for verification",
+      "objectId": "change_set",
+      "requiredEvidence": ["issue_id", "base_sha", "branch", "changed_paths"]
+    },
+    {
+      "id": "verification_completed",
+      "title": "Verification completed",
+      "objectId": "verification_evidence",
+      "requiredEvidence": ["commands", "results", "observed_at", "source_revision"]
+    },
+    {
+      "id": "promotion_requested",
+      "title": "Promotion requested",
+      "objectId": "promotion_record",
+      "requiredEvidence": ["approval", "artifact", "target", "rollback"]
+    },
+    {
+      "id": "live_proof_observed",
+      "title": "Live proof observed",
+      "objectId": "mission_proof",
+      "requiredEvidence": ["claim", "verifier", "receipt", "observed_at"]
+    },
+    {
+      "id": "lesson_proposed",
+      "title": "Lesson proposed for Canon",
+      "objectId": "canon_lesson",
+      "requiredEvidence": ["finding", "evidence", "scope", "promotion_state"]
+    }
+  ],
+  "actors": [
+    { "id": "create-something-operator", "title": "CREATE SOMETHING operator" },
+    { "id": "delivery-agent", "title": "Bounded delivery agent" },
+    { "id": "verification-runtime", "title": "Verification runtime" },
+    { "id": "release-authority", "title": "Release authority" }
+  ],
+  "states": [
+    { "id": "signal_received", "title": "Signal received" },
+    { "id": "scope_governed", "title": "Scope governed" },
+    { "id": "implementation_bounded", "title": "Implementation bounded" },
+    { "id": "verified", "title": "Verified" },
+    { "id": "promoted", "title": "Promoted" },
+    { "id": "live_proven", "title": "Live proven" },
+    { "id": "recovered", "title": "Recovered", "terminal": true },
+    { "id": "lesson_canonized", "title": "Lesson canonized", "terminal": true }
+  ],
+  "actions": [
+    {
+      "id": "govern_scope",
+      "title": "Govern the mission scope",
+      "kind": "decision",
+      "authority": "create-something-operator",
+      "autonomy": "approval_required",
+      "systemsTouched": ["linear", "policy-os", "governance-runtime"],
+      "requiredEvidence": [
+        "intent",
+        "authority",
+        "source_of_truth",
+        "action",
+        "verification",
+        "recovery",
+        "client_proof",
+        "issue_id",
+        "done_boundary"
+      ],
+      "approval": { "required": true, "owner": "create-something-operator" },
+      "receipt": {
+        "requiredFields": [
+          "workflow_id",
+          "action_id",
+          "correlation_id",
+          "outcome",
+          "intent",
+          "authority",
+          "source_of_truth",
+          "action",
+          "verification",
+          "recovery",
+          "client_proof"
+        ]
+      },
+      "recovery": {
+        "mode": "manual_fallback",
+        "owner": "create-something-operator",
+        "path": "Keep the signal unclaimed and refine the Linear scope, authority, or done boundary."
+      },
+      "tool": { "name": "linear_claim", "targetSystemId": "linear" }
+    },
+    {
+      "id": "run_bounded_change",
+      "title": "Run the bounded implementation",
+      "kind": "write",
+      "authority": "delivery-agent",
+      "autonomy": "auto_allow",
+      "systemsTouched": ["linear", "git-repository", "agent-harness"],
+      "requiredEvidence": [
+        "intent",
+        "authority",
+        "source_of_truth",
+        "action",
+        "verification",
+        "recovery",
+        "client_proof",
+        "issue_id",
+        "base_sha",
+        "change_scope"
+      ],
+      "approval": { "required": false },
+      "receipt": {
+        "requiredFields": [
+          "workflow_id",
+          "action_id",
+          "correlation_id",
+          "outcome",
+          "intent",
+          "authority",
+          "source_of_truth",
+          "action",
+          "verification",
+          "recovery",
+          "client_proof"
+        ]
+      },
+      "recovery": {
+        "mode": "rollback",
+        "owner": "create-something-operator",
+        "path": "Stop the agent, preserve unrelated work, and revert only the issue-scoped change set in its isolated worktree."
+      },
+      "agentId": "internal-delivery-agent"
+    },
+    {
+      "id": "verify_change",
+      "title": "Verify the bounded change",
+      "kind": "read",
+      "authority": "verification-runtime",
+      "autonomy": "auto_allow",
+      "systemsTouched": ["git-repository", "quality-gates"],
+      "requiredEvidence": [
+        "intent",
+        "authority",
+        "source_of_truth",
+        "action",
+        "verification",
+        "recovery",
+        "client_proof",
+        "commands",
+        "results",
+        "source_revision"
+      ],
+      "approval": { "required": false },
+      "receipt": {
+        "requiredFields": [
+          "workflow_id",
+          "action_id",
+          "correlation_id",
+          "outcome",
+          "intent",
+          "authority",
+          "source_of_truth",
+          "action",
+          "verification",
+          "recovery",
+          "client_proof"
+        ]
+      },
+      "recovery": {
+        "mode": "escalate",
+        "owner": "create-something-operator",
+        "path": "Keep the issue open, attach failing evidence, and route back to the bounded implementation state."
+      },
+      "agentId": "internal-delivery-agent"
+    },
+    {
+      "id": "promote_release",
+      "title": "Promote the verified release",
+      "kind": "publish",
+      "authority": "release-authority",
+      "autonomy": "approval_required",
+      "systemsTouched": ["linear", "git-repository", "delivery-runtime", "policy-os"],
+      "requiredEvidence": [
+        "intent",
+        "authority",
+        "source_of_truth",
+        "action",
+        "verification",
+        "recovery",
+        "client_proof",
+        "approval",
+        "artifact",
+        "target",
+        "rollback"
+      ],
+      "approval": { "required": true, "owner": "release-authority" },
+      "receipt": {
+        "requiredFields": [
+          "workflow_id",
+          "action_id",
+          "correlation_id",
+          "outcome",
+          "intent",
+          "authority",
+          "source_of_truth",
+          "action",
+          "verification",
+          "recovery",
+          "client_proof"
+        ]
+      },
+      "recovery": {
+        "mode": "rollback",
+        "owner": "release-authority",
+        "path": "Stop promotion or restore the named immutable rollback artifact, then retain the issue for renewed verification."
+      }
+    },
+    {
+      "id": "verify_live_surface",
+      "title": "Verify the live surface",
+      "kind": "read",
+      "authority": "verification-runtime",
+      "autonomy": "auto_allow",
+      "systemsTouched": ["delivery-runtime", "governance-runtime", "linear"],
+      "requiredEvidence": [
+        "intent",
+        "authority",
+        "source_of_truth",
+        "action",
+        "verification",
+        "recovery",
+        "client_proof",
+        "live_url",
+        "deployed_artifact",
+        "observed_at"
+      ],
+      "approval": { "required": false },
+      "receipt": {
+        "requiredFields": [
+          "workflow_id",
+          "action_id",
+          "correlation_id",
+          "outcome",
+          "intent",
+          "authority",
+          "source_of_truth",
+          "action",
+          "verification",
+          "recovery",
+          "client_proof"
+        ]
+      },
+      "recovery": {
+        "mode": "escalate",
+        "owner": "release-authority",
+        "path": "Keep delivery incomplete, preserve the deployed artifact identifier, and choose retry, rollback, or incident escalation."
+      },
+      "agentId": "internal-delivery-agent"
+    },
+    {
+      "id": "canonize_lesson",
+      "title": "Propose the proven lesson to Canon",
+      "kind": "write",
+      "authority": "create-something-operator",
+      "autonomy": "approval_required",
+      "systemsTouched": ["canon", "linear", "governance-runtime"],
+      "requiredEvidence": [
+        "intent",
+        "authority",
+        "source_of_truth",
+        "action",
+        "verification",
+        "recovery",
+        "client_proof",
+        "finding",
+        "evidence",
+        "scope",
+        "promotion_state"
+      ],
+      "approval": { "required": true, "owner": "create-something-operator" },
+      "receipt": {
+        "requiredFields": [
+          "workflow_id",
+          "action_id",
+          "correlation_id",
+          "outcome",
+          "intent",
+          "authority",
+          "source_of_truth",
+          "action",
+          "verification",
+          "recovery",
+          "client_proof"
+        ]
+      },
+      "recovery": {
+        "mode": "manual_fallback",
+        "owner": "create-something-operator",
+        "path": "Keep the lesson project-local until it has repeated evidence and an approved Canon promotion plan."
+      }
+    },
+    {
+      "id": "record_recovery",
+      "title": "Record promotion recovery",
+      "kind": "write",
+      "authority": "release-authority",
+      "autonomy": "approval_required",
+      "systemsTouched": ["delivery-runtime", "governance-runtime", "linear"],
+      "requiredEvidence": [
+        "intent",
+        "authority",
+        "source_of_truth",
+        "action",
+        "verification",
+        "recovery",
+        "client_proof",
+        "failed_artifact",
+        "recovery_action",
+        "recovery_verification"
+      ],
+      "approval": { "required": true, "owner": "release-authority" },
+      "receipt": {
+        "requiredFields": [
+          "workflow_id",
+          "action_id",
+          "correlation_id",
+          "outcome",
+          "intent",
+          "authority",
+          "source_of_truth",
+          "action",
+          "verification",
+          "recovery",
+          "client_proof"
+        ]
+      },
+      "recovery": {
+        "mode": "manual_fallback",
+        "owner": "release-authority",
+        "path": "Freeze further promotion and open an incident record when recovery cannot be independently verified."
+      }
+    },
+    {
+      "id": "forbidden_unscoped_promotion",
+      "title": "Promote an unscoped or unverified change",
+      "kind": "publish",
+      "authority": "delivery-agent",
+      "autonomy": "blocked",
+      "systemsTouched": ["git-repository", "delivery-runtime", "policy-os"],
+      "requiredEvidence": [
+        "intent",
+        "authority",
+        "source_of_truth",
+        "action",
+        "verification",
+        "recovery",
+        "client_proof"
+      ],
+      "approval": { "required": false },
+      "receipt": {
+        "requiredFields": [
+          "workflow_id",
+          "action_id",
+          "correlation_id",
+          "outcome",
+          "intent",
+          "authority",
+          "source_of_truth",
+          "action",
+          "verification",
+          "recovery",
+          "client_proof"
+        ]
+      },
+      "recovery": {
+        "mode": "escalate",
+        "owner": "create-something-operator",
+        "path": "Stop before mutation and return to governed scope and verification."
+      }
+    }
+  ],
+  "transitions": [
+    {
+      "id": "01-signal-to-scope",
+      "from": "signal_received",
+      "to": "scope_governed",
+      "actionId": "govern_scope"
+    },
+    {
+      "id": "02-scope-to-implementation",
+      "from": "scope_governed",
+      "to": "implementation_bounded",
+      "actionId": "run_bounded_change"
+    },
+    {
+      "id": "03-implementation-to-verification",
+      "from": "implementation_bounded",
+      "to": "verified",
+      "actionId": "verify_change"
+    },
+    {
+      "id": "04-verification-to-promotion",
+      "from": "verified",
+      "to": "promoted",
+      "actionId": "promote_release"
+    },
+    {
+      "id": "05-promotion-to-proof",
+      "from": "promoted",
+      "to": "live_proven",
+      "actionId": "verify_live_surface"
+    },
+    {
+      "id": "06-proof-to-lesson",
+      "from": "live_proven",
+      "to": "lesson_canonized",
+      "actionId": "canonize_lesson"
+    },
+    {
+      "id": "07-promotion-to-recovery",
+      "from": "promoted",
+      "to": "recovered",
+      "actionId": "record_recovery"
+    }
+  ],
+  "agents": [
+    {
+      "id": "internal-delivery-agent",
+      "title": "Internal delivery agent",
+      "purpose": "Implement bounded changes, run verification, and collect live proof without widening authority or owning release approval.",
+      "allowedActionIds": ["run_bounded_change", "verify_change", "verify_live_surface"],
+      "escalationOwner": "create-something-operator"
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "bounded-change-can-run",
+      "title": "A scoped local change with complete evidence can run",
+      "actionId": "run_bounded_change",
+      "expectedOutcome": "pass",
+      "requiredEvidence": ["issue_id", "base_sha", "change_scope", "authority", "recovery"]
+    },
+    {
+      "id": "release-stays-authorized",
+      "title": "Production promotion waits for release authority",
+      "actionId": "promote_release",
+      "expectedOutcome": "approval_required",
+      "requiredEvidence": ["approval", "artifact", "target", "rollback"]
+    },
+    {
+      "id": "unscoped-promotion-is-blocked",
+      "title": "An unscoped or unverified promotion fails closed",
+      "actionId": "forbidden_unscoped_promotion",
+      "expectedOutcome": "blocked",
+      "requiredEvidence": ["authority", "verification", "recovery"]
+    }
+  ]
+}

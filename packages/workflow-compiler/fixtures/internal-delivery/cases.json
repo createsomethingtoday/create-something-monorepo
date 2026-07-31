@@ -1,0 +1,167 @@
+{
+  "schemaVersion": "workflow_replay_manifest.v0.1",
+  "workflowId": "create-something.internal-delivery.reference-mission",
+  "cases": [
+    {
+      "caseId": "bounded-local-run-passes",
+      "title": "A governed local change can run inside its worktree boundary",
+      "initialState": "scope_governed",
+      "actionId": "run_bounded_change",
+      "actorId": "delivery-agent",
+      "evidence": {
+        "intent": "Implement the accepted CRE-1403 reference mission contract.",
+        "authority": "Claimed Linear issue CRE-1403 with A2 local-change authority.",
+        "source_of_truth": "Linear CRE-1403 and the CREATE SOMETHING repository.",
+        "action": "Edit only the workflow-compiler fixture, tests, and canonical documentation in the isolated worktree.",
+        "verification": "Run workflow-compiler check, test, acceptance, exports, and git diff checks.",
+        "recovery": "Stop the agent and revert only the CRE-1403 worktree change set.",
+        "client_proof": "Compiled reference mission and passing replay summary.",
+        "issue_id": "CRE-1403",
+        "base_sha": "fixture-base-sha",
+        "change_scope": "Reference mission identity, workflow, cases, tests, and docs."
+      },
+      "approvals": [],
+      "expectedOutcome": "pass",
+      "expectedState": "implementation_bounded"
+    },
+    {
+      "caseId": "verification-passes",
+      "title": "Complete source-backed checks move the mission to verified",
+      "initialState": "implementation_bounded",
+      "actionId": "verify_change",
+      "actorId": "verification-runtime",
+      "evidence": {
+        "intent": "Verify the bounded CRE-1403 change set.",
+        "authority": "Read-only verification runtime.",
+        "source_of_truth": "Package scripts and repository state at the recorded revision.",
+        "action": "Run the package-owned validation commands.",
+        "verification": "All required package checks and deterministic acceptance runs pass.",
+        "recovery": "Keep the issue open and return failures to bounded implementation.",
+        "client_proof": "Command list, results, and source revision.",
+        "commands": ["pnpm check", "pnpm test", "pnpm test:acceptance"],
+        "results": "pass",
+        "source_revision": "fixture-source-revision"
+      },
+      "approvals": [],
+      "expectedOutcome": "pass",
+      "expectedState": "verified"
+    },
+    {
+      "caseId": "live-readback-passes",
+      "title": "A source-backed live readback produces proof",
+      "initialState": "promoted",
+      "actionId": "verify_live_surface",
+      "actorId": "verification-runtime",
+      "evidence": {
+        "intent": "Verify the promoted artifact on its live surface.",
+        "authority": "Read-only live verification authority.",
+        "source_of_truth": "Immutable deployment artifact and rendered live surface.",
+        "action": "Read the deployed artifact and verify the public contract.",
+        "verification": "Artifact identity, response, rendered behavior, and evidence contract match.",
+        "recovery": "Keep delivery incomplete and route to retry, rollback, or incident escalation.",
+        "client_proof": "Sanitized live URL, deployed artifact, observation time, and verifier summary.",
+        "live_url": "https://example.invalid/reference-mission",
+        "deployed_artifact": "fixture-deployment-artifact",
+        "observed_at": "2026-07-23T00:00:00.000Z"
+      },
+      "approvals": [],
+      "expectedOutcome": "pass",
+      "expectedState": "live_proven"
+    },
+    {
+      "caseId": "scope-waits-for-operator",
+      "title": "A complete proposal still waits for the operator to accept scope",
+      "initialState": "signal_received",
+      "actionId": "govern_scope",
+      "actorId": "delivery-agent",
+      "evidence": {
+        "intent": "Convert an accepted signal into a governed delivery issue.",
+        "authority": "Proposal-only authority until the operator accepts scope.",
+        "source_of_truth": "Linear issue and policy artifacts.",
+        "action": "Propose owner, scope, authority, done boundary, and recovery.",
+        "verification": "Operator review confirms the issue is bounded and non-duplicative.",
+        "recovery": "Leave the signal unclaimed and refine the contract.",
+        "client_proof": "Accepted scope and authority receipt.",
+        "issue_id": "CRE-fixture-scope",
+        "done_boundary": "One machine-readable reference mission fixture and its evidence."
+      },
+      "approvals": [],
+      "expectedOutcome": "approval_required",
+      "expectedState": "signal_received"
+    },
+    {
+      "caseId": "promotion-waits-for-release-authority",
+      "title": "Verified work still waits for release authority",
+      "initialState": "verified",
+      "actionId": "promote_release",
+      "actorId": "delivery-agent",
+      "evidence": {
+        "intent": "Promote a verified CREATE SOMETHING change.",
+        "authority": "Preparation authority only; release approval remains separate.",
+        "source_of_truth": "Approved Git artifact, deployment receipt, and Linear issue.",
+        "action": "Prepare the immutable release candidate and rollback note.",
+        "verification": "Required checks are attached to the exact candidate artifact.",
+        "recovery": "Stop promotion or restore the named rollback artifact.",
+        "client_proof": "Release artifact, approval, target, and rollback receipt.",
+        "approval": "requested",
+        "artifact": "fixture-release-artifact",
+        "target": "production",
+        "rollback": "fixture-rollback-artifact"
+      },
+      "approvals": [],
+      "expectedOutcome": "approval_required",
+      "expectedState": "verified"
+    },
+    {
+      "caseId": "missing-authority-evidence-blocks",
+      "title": "A local change without authority evidence cannot run",
+      "initialState": "scope_governed",
+      "actionId": "run_bounded_change",
+      "actorId": "delivery-agent",
+      "evidence": {
+        "intent": "Change the internal delivery system.",
+        "source_of_truth": "Repository state.",
+        "action": "Edit an unspecified set of files.",
+        "verification": "Run unspecified checks.",
+        "recovery": "Stop and ask the operator.",
+        "client_proof": "None until authority is resolved.",
+        "issue_id": "CRE-fixture-missing-authority",
+        "base_sha": "fixture-base-sha",
+        "change_scope": "Unresolved."
+      },
+      "approvals": [],
+      "expectedOutcome": "blocked",
+      "expectedState": "scope_governed"
+    },
+    {
+      "caseId": "direct-unscoped-promotion-blocks",
+      "title": "The agent cannot bypass scope and verification to promote",
+      "initialState": "verified",
+      "actionId": "forbidden_unscoped_promotion",
+      "actorId": "delivery-agent",
+      "evidence": {
+        "intent": "Publish without the governed delivery path.",
+        "authority": "No promotion authority.",
+        "source_of_truth": "Unresolved.",
+        "action": "Attempt a direct deployment.",
+        "verification": "No valid verifier is attached.",
+        "recovery": "Stop before mutation and return to governed scope.",
+        "client_proof": "Policy-block receipt."
+      },
+      "approvals": [],
+      "expectedOutcome": "blocked",
+      "expectedState": "verified"
+    },
+    {
+      "caseId": "unknown-action-blocks",
+      "title": "An invented workflow shortcut fails closed",
+      "initialState": "signal_received",
+      "actionId": "invented_mission_shortcut",
+      "actorId": "delivery-agent",
+      "evidence": {},
+      "approvals": [],
+      "expectedOutcome": "blocked",
+      "expectedState": "signal_received"
+    }
+  ]
+}

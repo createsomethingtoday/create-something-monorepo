@@ -21,6 +21,8 @@ import type {
 } from '$lib/server/governance-runtime';
 import { buildGovernanceSlackMonitorReadiness } from '$lib/server/governance-slack-monitor';
 import { requireAgencyOperator } from '$lib/server/operator-auth';
+import { buildReferenceMissionReadModel } from '$lib/governance/reference-mission';
+import { loadReferenceMissionReadModel } from '$lib/server/reference-mission';
 
 export const load: PageServerLoad = async ({ cookies, platform, url }) => {
 	const filters = normalizeGovernanceOperatorFilters(url.searchParams);
@@ -32,18 +34,25 @@ export const load: PageServerLoad = async ({ cookies, platform, url }) => {
 			return {
 				review: emptyGovernanceOperatorReview(filters, 'Database is unavailable.'),
 				monitor_readiness: null,
+				reference_mission: unavailableReferenceMission(),
 				action_result: normalizeActionResult(url.searchParams.get('action_result')),
 				error: 'Database is unavailable.'
 			};
 		}
 
-		return {
-			review: await buildGovernanceOperatorReview(db, filters),
-			monitor_readiness: await buildGovernanceSlackMonitorReadiness(db, {
+		const [review, monitorReadiness, referenceMission] = await Promise.all([
+			buildGovernanceOperatorReview(db, filters),
+			buildGovernanceSlackMonitorReadiness(db, {
 				channelsRaw: platform.env.GOVERNANCE_SLACK_CHANNELS,
 				slackBotToken: platform.env.SLACK_BOT_TOKEN,
 				workspaceUrl: platform.env.GOVERNANCE_SLACK_WORKSPACE_URL
 			}),
+			loadReferenceMissionReadModel(db)
+		]);
+		return {
+			review,
+			monitor_readiness: monitorReadiness,
+			reference_mission: referenceMission,
 			action_result: normalizeActionResult(url.searchParams.get('action_result')),
 			error: null
 		};
@@ -52,11 +61,21 @@ export const load: PageServerLoad = async ({ cookies, platform, url }) => {
 		return {
 			review: emptyGovernanceOperatorReview(filters, message),
 			monitor_readiness: null,
+			reference_mission: unavailableReferenceMission(),
 			action_result: normalizeActionResult(url.searchParams.get('action_result')),
 			error: message
 		};
 	}
 };
+
+function unavailableReferenceMission() {
+	return buildReferenceMissionReadModel({
+		signals: [],
+		decisions: [],
+		proofs: [],
+		receipts: []
+	});
+}
 
 export const actions: Actions = {
 	recordSignal: async ({ cookies, platform, request }) => {

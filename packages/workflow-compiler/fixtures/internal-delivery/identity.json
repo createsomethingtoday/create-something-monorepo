@@ -1,0 +1,162 @@
+{
+  "schemaVersion": "create_something_reference_mission.v1",
+  "workflowId": "create-something.internal-delivery.reference-mission",
+  "version": "1.0.0",
+  "positioning": {
+    "public": "The Performance Lab for workflows.",
+    "category": "Delegated Work Control",
+    "promise": "Workflows trained under pressure, governed in operation, and proven through receipts.",
+    "privateHeuristic": {
+      "label": "Nike x NASA for workflows",
+      "internalOnly": true,
+      "use": "Combine human-centered performance experimentation with mission-grade systems assurance.",
+      "prohibitedPublicUse": [
+        "third-party names or marks",
+        "endorsement language",
+        "borrowed trade dress",
+        "generic space or sneaker styling"
+      ]
+    }
+  },
+  "invariants": [
+    {
+      "id": "operator-intent-first",
+      "rule": "Begin with the operator objective and real source of truth, not an autonomous feature claim."
+    },
+    {
+      "id": "performance-under-pressure",
+      "rule": "Show bounded tests, thresholds, and consequential states instead of decorative speed language."
+    },
+    {
+      "id": "authority-visible",
+      "rule": "Every consequential action exposes its authority, approval boundary, and escalation owner."
+    },
+    {
+      "id": "proof-bearing-interface",
+      "rule": "Every completion claim resolves to verification evidence and a durable receipt."
+    },
+    {
+      "id": "recovery-before-action",
+      "rule": "A meaningful mutation names rollback, compensation, retry, or escalation before execution."
+    },
+    {
+      "id": "controlled-water-material",
+      "rule": "Use channel, pressure, wake, trace, turbulence, and settlement as the owned material grammar."
+    },
+    {
+      "id": "semantic-color-only",
+      "rule": "Use signal blue, proof green, and hazard red only to communicate operating state."
+    }
+  ],
+  "operatingLoop": ["signal", "decision", "action", "verification", "proof", "recovery", "lesson"],
+  "surfaceModes": {
+    "campaign": "Lead with pressure, human stakes, and one decisive proof object.",
+    "product": "Make scope, state, ownership, and next action legible.",
+    "operator": "Prioritize telemetry, authority, anomaly, recovery, and evidence density.",
+    "proof": "Reduce the surface to claim, verifier, receipt, timestamp, and recovery boundary."
+  },
+  "stateTranslations": {
+    "signal": {
+      "canonicalState": "signal_received",
+      "sourceMappings": {
+        "agency_governance": ["new", "reviewing"],
+        "linear": ["backlog", "unstarted"]
+      }
+    },
+    "decision": {
+      "canonicalState": "scope_governed",
+      "sourceMappings": {
+        "agency_governance": ["run", "wait", "stop"],
+        "workflow_compiler": ["auto_allow", "approval_required", "manual_only", "blocked"]
+      }
+    },
+    "action": {
+      "canonicalState": "implementation_bounded",
+      "sourceMappings": {
+        "agent_harness": ["claimed", "running", "redirected"],
+        "git": ["worktree_created", "change_recorded"]
+      }
+    },
+    "verification": {
+      "canonicalState": "verified",
+      "sourceMappings": {
+        "checks": ["pass", "review", "fail"],
+        "workflow_replay": ["pass", "approval_required", "blocked"]
+      }
+    },
+    "proof": {
+      "canonicalState": "live_proven",
+      "sourceMappings": {
+        "agency_governance": ["documented", "passed", "failed", "rolled_back"],
+        "linear": ["evidence_recorded", "done"]
+      }
+    },
+    "recovery": {
+      "canonicalState": "recovered",
+      "sourceMappings": {
+        "workflow_compiler": ["rollback", "escalate", "manual_fallback"],
+        "delivery": ["retry", "rollback", "compensate", "escalate"]
+      }
+    },
+    "lesson": {
+      "canonicalState": "lesson_canonized",
+      "sourceMappings": {
+        "canon": ["project_local", "candidate", "stable", "deprecated"],
+        "linear": ["follow_up_created", "decision_recorded"]
+      }
+    }
+  },
+  "receiptEnvelope": {
+    "requiredFields": [
+      "workflow_id",
+      "action_id",
+      "correlation_id",
+      "outcome",
+      "intent",
+      "authority",
+      "source_of_truth",
+      "action",
+      "verification",
+      "recovery",
+      "client_proof"
+    ],
+    "compatibility": [
+      "docs/AGENT_RUN_RECEIPT_CHARTER.md",
+      "packages/workflow-compiler/src/types.ts",
+      "packages/agency/migrations/0030_governance_runtime_products.sql",
+      "packages/agency/migrations/0033_governance_connections.sql",
+      "CRE-1304"
+    ]
+  },
+  "publicProjection": {
+    "allowedFields": [
+      "objective",
+      "scope",
+      "state",
+      "authority_class",
+      "verification_summary",
+      "proof_summary",
+      "recovery_summary",
+      "observed_at"
+    ],
+    "redactedFields": ["credentials", "private_context", "private_urls", "subject_identifiers"],
+    "rule": "Publish only source-backed fields whose sanitization and freshness can be verified."
+  },
+  "extensionDeclaration": {
+    "requiredFields": [
+      "mode",
+      "invariants_preserved",
+      "source_truth",
+      "proof",
+      "exception",
+      "recovery"
+    ],
+    "modes": ["campaign", "product", "operator", "proof"],
+    "promotionPath": ["project_local", "candidate", "stable", "deprecated"]
+  },
+  "ownership": {
+    "database": ["Linear", "Git", "agency governance runtime", "live deployment records"],
+    "automation": ["canonical agent harness", "workflow compiler", "checks", "delivery adapters"],
+    "judgment": ["Policy OS", "approval rules", "public projection rules", "Canon promotion"]
+  }
+}

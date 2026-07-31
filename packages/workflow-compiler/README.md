@@ -8,6 +8,11 @@ It answers the CRE-1191 experiment:
 
 The first vertical is the Webflow Marketplace template lifecycle: submission, validation, review, approval, publishing, and post-launch monitoring.
 
+The CREATE SOMETHING internal-delivery fixture is the canonical reference
+mission behind the Performance Lab identity. It composes Linear, the agent
+harness, repository checks, promotion authority, live verification, recovery,
+and Canon lessons without claiming ownership of those runtimes.
+
 ## Module design
 
 **Concept:** workflow-to-runtime compilation.
@@ -22,7 +27,7 @@ import {
   evaluateGovernedInteractionCompatibility,
   parseGovernedInteractionBundle,
   replayWorkflow,
-  writeCompiledWorkflowArtifacts,
+  writeCompiledWorkflowArtifacts
 } from '@create-something/workflow-compiler';
 ```
 
@@ -40,6 +45,7 @@ The compiler emits the same content-hashed `governed-interaction.json` for Atlas
 
 ## Agent Legibility Contract
 
+<!-- prettier-ignore -->
 | Field | Value |
 | --- | --- |
 | Entry point | `src/index.ts`, `src/compile.ts`, `src/replay.ts`, `src/artifacts.ts`, `src/cli.ts` |
@@ -83,6 +89,20 @@ node packages/workflow-compiler/dist/cli.js serve \
   --dir /tmp/marketplace-workflow-compiler \
   --port 4173
 ```
+
+Compile the internal-delivery reference mission:
+
+```bash
+node packages/workflow-compiler/dist/cli.js compile \
+  --workflow packages/workflow-compiler/fixtures/internal-delivery/workflow.json \
+  --cases packages/workflow-compiler/fixtures/internal-delivery/cases.json \
+  --out /tmp/create-something-reference-mission
+```
+
+Its identity invariants, state translations, receipt envelope, public
+projection, and agent extension declaration live beside the fixture in
+`fixtures/internal-delivery/identity.json` and are documented in
+`docs/CREATE_SOMETHING_REFERENCE_MISSION.md`.
 
 ## Acceptance verifier
 

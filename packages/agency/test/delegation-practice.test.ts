@@ -3,8 +3,15 @@ import { existsSync, readFileSync } from 'node:fs';
 import test from 'node:test';
 
 const routeUrl = new URL('../src/routes/practice/+page.svelte', import.meta.url);
+const routeServerUrl = new URL('../src/routes/practice/+page.server.ts', import.meta.url);
 const modelUrl = new URL('../src/lib/practice/delegation-practice.ts', import.meta.url);
 const workbenchUrl = new URL('../src/lib/components/DelegationPracticeWorkbench.svelte', import.meta.url);
+const referenceMissionProofUrl = new URL(
+	'../src/lib/components/ReferenceMissionProof.svelte',
+	import.meta.url
+);
+const governanceRouteUrl = new URL('../src/routes/admin/governance/+page.svelte', import.meta.url);
+const governanceServerUrl = new URL('../src/routes/admin/governance/+page.server.ts', import.meta.url);
 
 test('The Delegation Practice gives accountable operators a concrete first action', () => {
 	assert.equal(existsSync(routeUrl), true, 'the /practice route should exist');
@@ -78,7 +85,7 @@ test('the experience connects diagnosis, workflow map, proof, defense, and pract
 	const route = readFileSync(routeUrl, 'utf8');
 
 	assert.ok(route.includes('<PerformanceThesisConditions'));
-	assert.ok(route.includes("title=\"Diagnose the system before changing the policy.\""));
+	assert.ok(route.includes('Diagnose the system before changing the policy.'));
 	assert.ok(route.includes("label: 'Database'"));
 	assert.ok(route.includes("label: 'Automation'"));
 	assert.ok(route.includes("label: 'Judgment'"));
@@ -257,6 +264,27 @@ test('declared preview controls preserve explicit keyboard activation on the bro
 	assert.ok(workbench.includes("onkeydown={(event) => activateOnKeyboard(event, () => loadScenario('boundary-breach'))}"));
 	assert.ok(workbench.includes('onkeydown={(event) => activateOnKeyboard(event, generatePracticeReceipt)}'));
 	assert.ok(workbench.includes('onkeydown={(event) => activateOnKeyboard(event, resetPracticeSession)}'));
+});
+
+test('practice and authenticated governance render one correlated reference-mission projection', () => {
+	assert.equal(existsSync(routeServerUrl), true, 'the public route should load its mission from D1');
+	assert.equal(existsSync(referenceMissionProofUrl), true, 'the shared mission proof should exist');
+
+	const practiceRoute = readFileSync(routeUrl, 'utf8');
+	const practiceServer = readFileSync(routeServerUrl, 'utf8');
+	const proof = readFileSync(referenceMissionProofUrl, 'utf8');
+	const governanceRoute = readFileSync(governanceRouteUrl, 'utf8');
+	const governanceServer = readFileSync(governanceServerUrl, 'utf8');
+
+	assert.ok(practiceServer.includes('loadReferenceMissionReadModel'));
+	assert.ok(practiceRoute.includes('<ReferenceMissionProof mission={data.reference_mission}'));
+	assert.ok(governanceServer.includes('reference_mission'));
+	assert.ok(governanceRoute.includes('<ReferenceMissionProof mission={data.reference_mission.public}'));
+	assert.ok(governanceRoute.includes('data.reference_mission.operator.source.signal_id'));
+	assert.ok(proof.includes('Correlation'));
+	assert.ok(proof.includes('Verification'));
+	assert.ok(proof.includes('Recovery'));
+	assert.ok(proof.includes('Not yet publicly defended'));
 });
 
 test('the mobile receipt stacks identity metadata before long values can overlap its labels', () => {

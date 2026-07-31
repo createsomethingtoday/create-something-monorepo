@@ -29,6 +29,7 @@ import { GET as getGraph } from '../src/routes/api/governance/graph/+server.ts';
 import { POST as postSourceUpdate } from '../src/routes/api/governance/intake/source-update/+server.ts';
 import { GET as getProofs, POST as postProof } from '../src/routes/api/governance/proofs/+server.ts';
 import { GET as getReceipts, POST as postReceipt } from '../src/routes/api/governance/receipts/+server.ts';
+import { GET as getReferenceMission } from '../src/routes/api/reference-mission/+server.ts';
 import { GET as getSignals, POST as postSignal } from '../src/routes/api/governance/signals/+server.ts';
 
 type TableRow = Record<string, unknown>;
@@ -1086,4 +1087,89 @@ test('governance APIs report D1 as required runtime infrastructure', async () =>
 
 	assert.equal(response.status, 503);
 	assert.match(payload.error, /D1 binding/);
+});
+
+test('the public reference-mission API projects one real D1 chain through a cache-aware allowlist', async () => {
+	const db = new FakeD1();
+	const signal = await createGovernanceSignal(db, {
+		atlasCanvasId: 'reference-mission-canvas',
+		source: 'linear',
+		sourceUrl: 'https://linear.example/private/CRE-1403',
+		title: 'Private operator title',
+		summary: 'Private operator summary',
+		status: 'resolved',
+		payload: {
+			reference_mission: {
+				contract_version: 1,
+				id: 'performance-mission-v1',
+				correlation_id: 'CRE-1403:run-api',
+				public: {
+					title: 'Governed agent delivery',
+					objective: 'Move one bounded change from signal to production proof.',
+					scope: 'One internal reference mission.',
+					authority_class: 'Bounded production delivery',
+					source_class: 'Internal delivery record',
+					verification_summary: 'Required checks and production readback passed.',
+					proof_summary: 'The public and operator surfaces share one receipt chain.',
+					recovery_summary: 'The prior deployment remains available for rollback.',
+					private_url: 'https://linear.example/private/CRE-1403'
+				}
+			}
+		}
+	});
+	const decision = await createGovernanceDecision(db, {
+		signalId: signal.id,
+		atlasCanvasId: signal.atlas_canvas_id,
+		decisionState: 'run',
+		decisionOwner: 'private-operator@example.com',
+		reason: 'Approved within the bounded mission.'
+	});
+	const proof = await createGovernanceProof(db, {
+		signalId: signal.id,
+		decisionId: decision.id,
+		atlasCanvasId: signal.atlas_canvas_id,
+		evidence: 'Private production readback.',
+		outcome: 'passed',
+		receiptUrl: 'https://github.example/private/actions/1'
+	});
+	await createGovernanceDeliveryReceipt(db, {
+		connectionId: 'gov_connection_reference',
+		eventType: 'reference_mission.verified',
+		recordProductId: 'proof',
+		recordId: proof.id,
+		status: 'delivered',
+		statusCode: 200,
+		deliveredAt: new Date().toISOString(),
+		metadata: { subject_id: 'private-subject' }
+	});
+
+	const response = await getReferenceMission(
+		event(db, 'https://createsomething.agency/api/reference-mission')
+	);
+	const payload = await response.json();
+	const publicJson = JSON.stringify(payload);
+
+	assert.equal(response.status, 200);
+	assert.match(response.headers.get('cache-control') ?? '', /stale-while-revalidate/);
+	assert.equal(payload.mission.state, 'proven');
+	assert.equal(payload.mission.correlation_id, 'CRE-1403:run-api');
+	assert.equal(publicJson.includes('linear.example/private'), false);
+	assert.equal(publicJson.includes('private-operator@example.com'), false);
+	assert.equal(publicJson.includes('private-subject'), false);
+});
+
+test('the public reference-mission API fails closed when its D1 source is unavailable', async () => {
+	const missingBinding = await getReferenceMission({ platform: undefined } as never);
+	const missingTables = await getReferenceMission(
+		event(new FakeD1({}), 'https://createsomething.agency/api/reference-mission')
+	);
+
+	for (const response of [missingBinding, missingTables]) {
+		const payload = await response.json();
+		assert.equal(response.status, 503);
+		assert.match(response.headers.get('content-type') ?? '', /application\/json/);
+		assert.equal(response.headers.get('cache-control'), 'no-store');
+		assert.equal(payload.mission.state, 'unavailable');
+		assert.equal(payload.mission.correlation_id, null);
+	}
 });
