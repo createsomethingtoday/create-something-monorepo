@@ -37,7 +37,7 @@ export type NpgLocationLookupResult =
   | { status: 'ambiguous'; matches: string[]; message: string }
   | { status: 'not_found'; message: string };
 
-const SOURCE_VERSION = 'client-directory-2026-07-29';
+const SOURCE_VERSION = 'client-directory-2026-07-31';
 
 /**
  * Caller-safe projection of the client-provided directory. Protected provider
@@ -137,11 +137,10 @@ export const npgLocationDirectory: readonly NpgLocationRecord[] = [
     state: 'ME',
     postalCode: '04102',
     building: 'Building 3',
-    floor: '1st and 2nd',
+    floor: '1st',
     office: 'MR-G03',
     facilityLabel: 'Regus or HQ',
-    status: 'review_required',
-    reviewReason: 'The client directory lists two floors and needs one approved arrival path.',
+    status: 'approved',
     sourceVersion: SOURCE_VERSION
   },
   {
@@ -151,11 +150,32 @@ export const npgLocationDirectory: readonly NpgLocationRecord[] = [
     street: '1661 International Drive',
     city: 'Memphis',
     state: 'TN',
+    postalCode: '38120',
     suite: '400',
     office: '474',
     facilityLabel: 'Regus or HQ',
-    status: 'review_required',
-    reviewReason: 'The client directory entry does not include a ZIP code.',
+    status: 'approved',
+    sourceVersion: SOURCE_VERSION
+  },
+  {
+    id: 'des-moines-ia',
+    name: 'NPG Des Moine, IA',
+    aliases: [
+      'Des Moines Iowa',
+      'Des Moines IA',
+      'Des Moine Iowa',
+      'Des Moine IA',
+      'West Des Moines Iowa',
+      'West Des Moines IA'
+    ],
+    street: '1501 42nd Street',
+    city: 'West Des Moines',
+    state: 'IA',
+    postalCode: '50266',
+    floor: '4th',
+    suite: '450',
+    facilityLabel: 'Regus or HQ',
+    status: 'approved',
     sourceVersion: SOURCE_VERSION
   }
 ];
