@@ -28,7 +28,7 @@
 
 	let exercise = $derived(exercises[currentExerciseIndex]);
 	let showPattern = $derived(isValid && hasReflected);
-	let progress = $derived(`${currentExerciseIndex + 1}/${exercises.length}`);
+	let progress = $derived(`Exercise ${currentExerciseIndex + 1} of ${exercises.length}`);
 	let canNext = $derived(currentExerciseIndex < exercises.length - 1);
 	let canPrev = $derived(currentExerciseIndex > 0);
 	let isLastExercise = $derived(currentExerciseIndex === exercises.length - 1);
@@ -105,11 +105,11 @@
 	function getTriadLabel(level: 'dry' | 'rams' | 'heidegger'): string {
 		switch (level) {
 			case 'dry':
-				return 'DRY (Unify)';
+				return 'DRY — unify repeated code';
 			case 'rams':
-				return 'Rams (Remove)';
+				return 'Rams — remove what does not help';
 			case 'heidegger':
-				return 'Heidegger (Reconnect)';
+				return 'Heidegger — reconnect the code to the whole task';
 		}
 	}
 </script>
@@ -130,8 +130,9 @@
 <div class="praxis">
 	<header class="header">
 		<div>
-			<h1>Integration Praxis</h1>
-			<p>Learn by doing. Each exercise reveals a pattern you'll use in real projects.</p>
+			<span class="eyebrow">Integration Praxis</span>
+			<h1>Practice one integration failure at a time.</h1>
+			<p>Each exercise starts with broken code. Fix it, run it, and use the feedback before moving on.</p>
 		</div>
 		<span class="progress">{progress}</span>
 	</header>
@@ -156,8 +157,8 @@
 				</button>
 				<button class="btn-secondary" onclick={reset}>Reset</button>
 				<div class="nav">
-					<button class="btn-nav" onclick={() => navigate('prev')} disabled={!canPrev}>←</button>
-					<button class="btn-nav" onclick={() => navigate('next')} disabled={!canNext}>→</button>
+					<button class="btn-nav" onclick={() => navigate('prev')} disabled={!canPrev}>Previous exercise</button>
+					<button class="btn-nav" onclick={() => navigate('next')} disabled={!canNext}>Next exercise</button>
 				</div>
 			</div>
 		</section>
@@ -203,9 +204,9 @@
 						{:else}
 							<p class="triad-intro">Take a moment to look at what you wrote:</p>
 							<div class="triad-questions">
-								<p><strong>DRY:</strong> Any repeated code that could be unified?</p>
-								<p><strong>Rams:</strong> Anything to remove?</p>
-								<p><strong>Heidegger:</strong> Does this serve the whole?</p>
+								<p><strong>DRY — unify:</strong> Is any code repeated?</p>
+								<p><strong>Rams — remove:</strong> Does anything fail to help?</p>
+								<p><strong>Heidegger — reconnect:</strong> Does the code serve the whole task?</p>
 							</div>
 							<p class="triad-note">If you used AI, apply these questions to its output too.</p>
 						{/if}
@@ -276,6 +277,16 @@
 		letter-spacing: var(--tracking-performance-tight);
 	}
 
+	.eyebrow {
+		display: block;
+		margin-bottom: var(--space-performance-xs);
+		font-size: var(--text-performance-caption);
+		font-weight: var(--font-performance-semibold);
+		letter-spacing: var(--tracking-performance-wider);
+		text-transform: uppercase;
+		color: var(--color-performance-fg-muted);
+	}
+
 	.header p {
 		font-size: var(--text-performance-body-sm);
 		color: var(--color-performance-fg-muted);
@@ -298,6 +309,7 @@
 	.panel {
 		display: flex;
 		flex-direction: column;
+		padding: 0;
 		border-radius: var(--radius-performance-scale-md);
 		overflow: hidden;
 	}
@@ -595,10 +607,30 @@
 	@media (max-width: 1024px) {
 		.content {
 			grid-template-columns: 1fr;
+			min-height: 0;
 		}
 
 		.editor {
 			min-height: 300px;
+		}
+	}
+
+	@media (max-width: 640px) {
+		.header {
+			gap: var(--space-performance-sm);
+		}
+
+		.controls {
+			flex-wrap: wrap;
+		}
+
+		.nav {
+			width: 100%;
+			margin-left: 0;
+		}
+
+		.btn-nav {
+			flex: 1;
 		}
 	}
 </style>

@@ -176,6 +176,12 @@ export {
 	MenuButton,
 	MegaMenu
 } from './navigation/index.js';
+export type {
+	ConceptJourneyContentType,
+	ConceptJourneyProperty,
+	ConceptJourneySearchResult,
+	ConceptStory
+} from './navigation/index.js';
 
 // Filtering (AI-native product filtering components)
 export * from './filtering/index.js';

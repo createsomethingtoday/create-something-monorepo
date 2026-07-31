@@ -671,13 +671,25 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
   group(
     'space-editorial',
     'space',
-    ['discover/[concept]', 'praxis'],
-    'pending',
+    ['discover/[concept]'],
+    'migrated',
     contract(
       'editorial',
-      'Understand the experiment concept and decide how it changes practice.',
-      'The concept, example, and observed behavior support the interpretation.',
-      'Continue to a related experiment'
+      'Understand how the selected concept moves from principle to practice.',
+      'The property journey and linked content show where the concept is defined, explored, learned, and applied.',
+      'Choose another concept or return to the workbench'
+    )
+  ),
+  group(
+    'space-praxis-learning',
+    'space',
+    ['praxis'],
+    'migrated',
+    contract(
+      'learning',
+      'Practice one integration failure and decide whether the fix is ready.',
+      'Executable feedback, a validation grade, reflection, and the canonical pattern show what changed.',
+      'Continue to the next exercise or apply the earned pattern'
     )
   ),
   group(
