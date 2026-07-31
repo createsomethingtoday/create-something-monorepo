@@ -29,7 +29,7 @@ This package is the end-user conversation surface, not the control plane and not
 
 ```text
 src/
-├── routes/                   → public landing, voice companion, apply entry, claim continuation, candidate chat/details, retired legacy agent redirects, internal handoff/settings, control-plane bridge shells, and optional shared session/entitlement-aware layout
+├── routes/                   → public landing, nurse voice companion, NPG client-service representative, apply entry, claim continuation, candidate chat/details, retired legacy agent redirects, internal handoff/settings, control-plane bridge shells, and optional shared session/entitlement-aware layout
 ├── routes/api/voice/session/ → server-only standard-key exchange for a short-lived browser Realtime client secret
 ├── lib/voice/                → Abundance voice instructions, session-only brief shaping, transcript projection, and safe browser errors
 ├── routes/api/intake-verification/ → self-serve verification request/verify endpoints

@@ -10,6 +10,7 @@
 - `AGENCY_BASE_URL` for control-plane bridge targets
 - `ABUNDANCE_GEO_MAPBOX_ACCESS_TOKEN` for external preferred-location recovery when the internal catalog cannot normalize confidently
 - `OPENAI_API_KEY` for server-minted short-lived Realtime client secrets on the public voice route; use a funded project key and never expose the value in browser or deployment evidence
+- `NPG_CALLER_SAFE_LOCATIONS_JSON` for the updateable NPG location directory; include caller-safe fields only and never provider contacts, personal phone numbers, or shared-office account identifiers
 
 ## Production Validation Checklist
 
@@ -20,6 +21,9 @@
    - `/` -> `200`
    - `/voice` -> `200`
    - `POST /api/voice/session` -> `200`, `Cache-Control: no-store, private`, short-lived client secret present, standard key absent from the response and evidence
+   - `/client-service` -> `200`
+   - `POST /api/npg/client-service/session` -> `200`, `Cache-Control: no-store, private`, short-lived client secret present, standard key absent from the response and evidence
+   - `POST /api/npg/locations/lookup` with an approved city/state -> caller-safe `matched` result; ambiguous, incomplete, or unknown input -> non-matched human-confirmation result
    - `/apply` -> `200`
    - anonymous `/chat` -> `303 /apply` unless a candidate thread is already active
    - anonymous `/settings` -> `303 /apply`
@@ -28,6 +32,7 @@
    - confirm the WebRTC session reaches `Connected`
    - confirm the opening Concierge turn appears in the session transcript
    - end the session and confirm no transcript or brief returns after reload
+   - repeat on `/client-service`; confirm the automated-assistant disclosure is spoken before appointment identifiers are collected and a prepared handoff is described as not sent
 6. Complete one real nurse flow on the stable domain:
    - start from `/apply`
    - request and enter the email verification code
@@ -68,7 +73,8 @@
   - R2 binding is present
   - signing secret exists
   - Resend key exists
-  - funded OpenAI key exists when the failure is isolated to `/api/voice/session`
+  - funded OpenAI key exists when the failure is isolated to `/api/voice/session` or `/api/npg/client-service/session`
+  - caller-safe location JSON is valid when the failure is isolated to NPG lookup
   - latest migration has been applied
 
 ## Logging / Events

@@ -97,6 +97,18 @@
 
   <section class="public-section bright">
     <div class="public-shell">
+      <a class="npg-delivery-card" href="/client-service">
+        <span class="npg-delivery-index">Client delivery 01</span>
+        <div>
+          <h2>NPG Client Service Representative</h2>
+          <p>
+            A dedicated voice agent for Loyal Source location assistance, shared-office access, and
+            controlled attendance handoffs.
+          </p>
+        </div>
+        <span class="npg-delivery-action">Open live experience ↗</span>
+      </a>
+
       <div class="public-section-head">
         <div>
           <span class="public-section-kicker">The roster</span>
@@ -187,3 +199,58 @@
     </div>
   </section>
 </div>
+
+<style>
+  .npg-delivery-card {
+    display: grid;
+    grid-template-columns: 150px 1fr auto;
+    gap: 32px;
+    align-items: center;
+    margin-bottom: clamp(72px, 8vw, 110px);
+    padding: clamp(28px, 4vw, 46px);
+    border-radius: 30px;
+    background:
+      radial-gradient(circle at 90% 10%, rgba(29, 111, 138, 0.2), transparent 28%), #020202;
+    color: white;
+    text-decoration: none;
+    transition: transform 160ms ease;
+  }
+
+  .npg-delivery-card:hover {
+    transform: translateY(-3px);
+  }
+
+  .npg-delivery-index,
+  .npg-delivery-action {
+    color: #d7b79e;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .npg-delivery-card h2 {
+    margin: 0 0 10px;
+    font-size: clamp(1.8rem, 3vw, 3.2rem);
+    font-weight: 560;
+    letter-spacing: -0.055em;
+  }
+
+  .npg-delivery-card p {
+    max-width: 760px;
+    margin: 0;
+    color: rgba(255, 255, 255, 0.58);
+    line-height: 1.55;
+  }
+
+  .npg-delivery-action {
+    white-space: nowrap;
+  }
+
+  @media (max-width: 800px) {
+    .npg-delivery-card {
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+  }
+</style>
