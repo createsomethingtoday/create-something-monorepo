@@ -15,6 +15,7 @@ export interface PublicProductDefinition {
   includes: PublicProductId[];
   subscriptionCadences: SubscriptionCadence[];
   pricingState: ProductPricingState;
+  accessLabel: string;
   internalCompatibilityNames: string[];
   checkoutPlanIds: string[];
 }
@@ -36,6 +37,7 @@ export const PUBLIC_PRODUCT_FAMILY: Record<PublicProductId, PublicProductDefinit
     includes: [],
     subscriptionCadences: [...SUBSCRIPTION_CADENCES],
     pricingState: 'configuration-required',
+    accessLabel: 'Request access after workflow scope',
     internalCompatibilityNames: ['Atlas'],
     checkoutPlanIds: ['map-monthly', 'map-yearly']
   },
@@ -51,6 +53,7 @@ export const PUBLIC_PRODUCT_FAMILY: Record<PublicProductId, PublicProductDefinit
     includes: [],
     subscriptionCadences: [],
     pricingState: 'not-applicable',
+    accessLabel: 'Scoped and quoted separately',
     internalCompatibilityNames: ['Workflow Pilot'],
     checkoutPlanIds: []
   },
@@ -68,6 +71,7 @@ export const PUBLIC_PRODUCT_FAMILY: Record<PublicProductId, PublicProductDefinit
     includes: ['map'],
     subscriptionCadences: [...SUBSCRIPTION_CADENCES],
     pricingState: 'configuration-required',
+    accessLabel: 'From $900 per month after launch',
     internalCompatibilityNames: ['Policy OS', 'policy_os_trial', 'policy_os_core'],
     checkoutPlanIds: ['control-monthly', 'control-yearly']
   }

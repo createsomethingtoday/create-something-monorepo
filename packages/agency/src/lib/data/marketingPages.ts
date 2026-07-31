@@ -7,6 +7,7 @@ export type MarketingPageCluster =
   | 'control'
   | 'stack-boundary'
   | 'workflow-tool-stack'
+  | 'service-providers'
   | 'dify'
   | 'methodology'
   | 'delegation-practice'
@@ -263,6 +264,25 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
       changefreq: 'monthly',
       priority: '0.85',
       lastmod: '2026-07-09'
+    },
+    selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
+  },
+  {
+    path: '/for-service-providers',
+    cluster: 'service-providers',
+    role: 'pillar',
+    decision: 'index',
+    audience: 'Consultants and service providers delivering governed workflows for clients.',
+    funnelStage: 'evaluate',
+    intent: 'Explain how to use CREATE SOMETHING in a bounded client-delivery engagement.',
+    primaryAction: 'Start a client map',
+    requiredTerms: ['workflow', 'client', 'Map', 'Build', 'Control'],
+    requiredLinks: ['/map', '/partners'],
+    schema: 'faq',
+    search: {
+      changefreq: 'monthly',
+      priority: '0.82',
+      lastmod: '2026-07-31'
     },
     selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
   },

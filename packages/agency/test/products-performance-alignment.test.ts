@@ -21,9 +21,9 @@ test('products keeps Map, Build, and Control as the only commercial path', () =>
 
 test('products separates open proof from the product chooser', () => {
   assert.match(products, /class="product-proof-shelf"/);
-  assert.match(products, /Open product proof/);
+  assert.match(products, /Technical proof/);
   assert.match(products, /featured\.map\(productCard\)/);
-  assert.match(products, /Ground and the Loom archive/);
+  assert.match(products, /Ground and the\s+Loom archive/);
 });
 
 test('products places truthful buyer proof beside the choice without a duplicate route handoff', () => {

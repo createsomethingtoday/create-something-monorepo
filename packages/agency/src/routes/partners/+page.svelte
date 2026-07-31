@@ -150,16 +150,25 @@
   description="The first artifact should tell an operator what happens, who owns the decision, where the system stops, and what proof remains."
 >
   {#snippet after()}
-    <PerformanceCardGrid items={deliverables} columns={4} ariaLabel="Workflow tool stack deliverables" />
+    <PerformanceCardGrid
+      items={deliverables}
+      columns={4}
+      ariaLabel="Workflow tool stack deliverables"
+    />
   {/snippet}
 </PerformancePageSection>
 
 <PerformanceConversionHandoff
   eyebrow="Map the workflow"
   title="Bring the workflow before choosing the stack."
-  description="I’ll map the handoff and name its owner, then agree what the system may do on its own and where it has to stop — before implementation starts."
+  description="Map the handoff and name its owner, then agree what the system may do on its own and where it has to stop. Deliver workflows for clients? Use the service-provider path to keep the client boundary attached."
   steps={ctaItems}
-  handoff={{ owner: 'Partner operator', authority: 'Named delivery boundary', proof: 'Shared workflow receipt', state: 'review' }}
+  handoff={{
+    owner: 'Workflow owner',
+    authority: 'Named tool boundary',
+    proof: 'Shared workflow receipt',
+    state: 'review'
+  }}
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.selfMapHref}>
@@ -168,5 +177,6 @@
     <Button href={agencyCoreMessaging.workflowMappingSessionHref} variant="secondary">
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
+    <Button href="/for-service-providers" variant="secondary">Use it with clients</Button>
   {/snippet}
 </PerformanceConversionHandoff>

@@ -233,6 +233,7 @@ The managed portfolio covers the high-intent public funnel:
 | Core services | `/services` | - |
 | Stack boundary | `/stack` | - |
 | Workflow tool stack | `/partners` | `/cloudflare` |
+| Service providers | `/for-service-providers` | `/map`, `/partners` |
 | Archived Dify education | `/dify` → `/stack` | Nested Dify routes also redirect to `/stack` and remain source-only rollback history. |
 | Delegation Practice | `/practice` | Interactive field school linked to `/methodology`, `/map`, and `/proof/marketplace-workflow`. |
 | Products | `/products` | - |

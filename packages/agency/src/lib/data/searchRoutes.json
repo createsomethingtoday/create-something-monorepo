@@ -60,6 +60,12 @@
 		"lastmod": "2026-07-09"
 	},
 	{
+		"path": "/for-service-providers",
+		"changefreq": "monthly",
+		"priority": "0.82",
+		"lastmod": "2026-07-31"
+	},
+	{
 		"path": "/methodology",
 		"changefreq": "monthly",
 		"priority": "0.75",

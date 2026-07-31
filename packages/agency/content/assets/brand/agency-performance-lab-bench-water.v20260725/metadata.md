@@ -3,10 +3,10 @@
 > Asset ID: `brand.agency-performance-lab-bench-water.v20260725`
 > Owner: CREATE SOMETHING
 > Brief written: 2026-07-25
-> Status: **accepted for local integration — not published**
+> Status: **published on assigned public surfaces**
 > Supersedes scale direction in: `brand.agency-performance-lab-natural-water.v20260710`
 > Generated and inspected: 2026-07-30
-> Tracking: `CRE-1514`
+> Tracking: `CRE-1514`, `CRE-1526`
 
 ## Direction
 
@@ -130,7 +130,7 @@ WebP files under `packages/agency/static/images/performance-lab/` are the public
 | --- | --- | --- | --- |
 | `trace-dye-injection` | Provenance / correlation | `/proof/marketplace-workflow`, `/products/loom` | A cobalt tracer filament persisting downstream from an injection port in a measured glass water channel |
 | `turbulence-exception` | Exception / ambiguity | `/services`, `/control` | A bounded laboratory vortex held beside a gauge rod and steel baffle for exception inspection |
-| `clarity-inspection` | Inspectable conditions | `/map` | A calibration scale and datum line remaining legible through still water in a glass inspection rig |
+| `clarity-inspection` | Inspectable conditions | `/map`, `/products` | A calibration scale and datum line remaining legible through still water in a glass inspection rig |
 | `settlement-resolved` | Resolved state | `/delivery` | Still water settled at a datum line with a residue mark recording the basin's earlier level |
 
 `/field-reports/template-review` and `/dify/mcp-control-plane` retain `trace-wake-natural` because

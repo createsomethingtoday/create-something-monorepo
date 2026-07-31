@@ -13,6 +13,8 @@
   interface Props {
     logo: string;
     logoSuffix?: string;
+    /** Keep the company name visible beside the mark on narrow performance shells. */
+    showMobileLogoText?: boolean;
     logoHref?: string;
     links: NavLink[];
     currentPath?: string;
@@ -38,6 +40,7 @@
   let {
     logo,
     logoSuffix,
+    showMobileLogoText = false,
     logoHref = '/',
     links,
     currentPath = $bindable('/'),
@@ -92,6 +95,7 @@
   class:nav-fixed={fixed}
   class:nav-clear={usesPerformanceStyle}
   class:nav-performance={usesPerformanceStyle}
+  class:nav-show-mobile-logo-text={showMobileLogoText}
   aria-label="Primary"
 >
   <div class="nav-inner shell-inner">
@@ -661,6 +665,23 @@
   @media (max-width: 640px) {
     .nav-clear .nav-inner {
       width: min(100% - 1.5rem, var(--content-width-performance, 85rem));
+    }
+
+    .nav-clear.nav-show-mobile-logo-text .nav-logo {
+      gap: 0.4rem;
+    }
+
+    .nav-clear.nav-show-mobile-logo-text .nav-logo-text {
+      position: static;
+      width: auto;
+      height: auto;
+      margin: 0;
+      overflow: visible;
+      clip: auto;
+      white-space: nowrap;
+      font-size: 0.72rem;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
     }
   }
 </style>

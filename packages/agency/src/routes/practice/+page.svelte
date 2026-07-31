@@ -221,6 +221,9 @@
         href="/book?source=practice&intent=named-workflow&stage=convert&lane=not_sure"
         variant="secondary">Request a mapping session</Button
       >
+      <Button href="/for-service-providers" variant="secondary"
+        >Use the Practice with clients</Button
+      >
     {/snippet}
   </PerformanceConversionHandoff>
 </main>

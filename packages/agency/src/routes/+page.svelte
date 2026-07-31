@@ -14,6 +14,7 @@
   import { controlledFlowMedia } from '@create-something/canon/components/performance/media/controlled-flow';
   import HeroTrustArtifact from '$lib/components/HeroTrustArtifact.svelte';
   import AgencyPerformanceReadback from '$lib/components/AgencyPerformanceReadback.svelte';
+  import AdoptionPathChooser from '$lib/components/AdoptionPathChooser.svelte';
   import IntegrationCompatibilityRail from '$lib/components/IntegrationCompatibilityRail.svelte';
   import PublicSubstrateCanvas from '$lib/components/PublicSubstrateCanvas.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
@@ -246,6 +247,8 @@
   </PerformanceCampaignOpening>
 
   <AgencyPerformanceReadback />
+
+  <AdoptionPathChooser />
 
   <IntegrationCompatibilityRail surface="homepage" />
 
