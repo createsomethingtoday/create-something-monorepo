@@ -31,6 +31,10 @@ const readbackSource = readFileSync(
   new URL('../src/lib/components/AgencyPerformanceReadback.svelte', import.meta.url),
   'utf8'
 );
+const sharedHandoffSource = readFileSync(
+  new URL('../src/lib/components/AgencyPerformanceHandoff.svelte', import.meta.url),
+  'utf8'
+);
 const compatibilityRailSource = readFileSync(
   new URL('../src/lib/components/IntegrationCompatibilityRail.svelte', import.meta.url),
   'utf8'
@@ -160,6 +164,13 @@ test('homepage section components reset inherited shell padding before applying 
 
 test('standalone calls to action and legal links expose explicit touch height', () => {
   assert.match(readbackSource, /a\s*\{[\s\S]*?min-height:\s*var\(--height-performance-control-min, 2\.75rem\)/);
+  const sharedHandoffActionRule = sharedHandoffSource.match(
+    /\.performance-handoff__actions a\s*\{([^}]*)\}/
+  )?.[1];
+  assert.match(
+    sharedHandoffActionRule ?? '',
+    /min-height:\s*var\(--height-performance-control-min, 2\.75rem\)/
+  );
   assert.match(
     compatibilityRailSource,
     /\.compatibility-rail__catalog-link\s*\{[\s\S]*?min-height:\s*var\(--height-performance-control-min, 2\.75rem\)/

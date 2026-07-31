@@ -113,6 +113,21 @@ test('the shared readback concentrates one auditable result and its limits', () 
   );
 });
 
+test('the shared fallback keeps its action beside the claim and its proof in the same composition', () => {
+  assert.match(handoff, /data-performance-handoff/);
+  assert.match(handoff, /AI workflow system/);
+  assert.match(handoff, /Inspect the 49\/50 field report/);
+  assert.doesNotMatch(handoff, /See the complete workflow/);
+  assert.match(
+    handoff,
+    /performance-handoff__intro[\s\S]*?performance-handoff__actions[\s\S]*?<AgencyPerformanceReadback compact=\{true\}/
+  );
+  assert.match(
+    readback,
+    /selected cases produced usable evidence packets for human decision/i
+  );
+});
+
 test('homepage Performance surfaces share one responsive page gutter token', () => {
   assert.match(
     performanceTokens,
