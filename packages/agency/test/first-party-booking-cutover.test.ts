@@ -205,6 +205,7 @@ test('scheduler and parent wire a bounded resize bridge across the exact owned o
 	assert.ok(bookRoute.includes('schedulerFrame.offsetHeight - schedulerFrame.clientHeight'));
 	assert.ok(schedulerPage.includes("type:'create-something:scheduler-resize'"));
 	assert.ok(schedulerPage.includes('new ResizeObserver'));
+	assert.ok(schedulerPage.includes('requestAnimationFrame(()=>notifyParentHeight(true))'));
 });
 
 test('the parent strips emailed access before handing it to the exact scheduler frame', () => {

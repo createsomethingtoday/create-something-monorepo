@@ -181,6 +181,7 @@ export function schedulerPage(input: { nonce: string; turnstileSiteKey?: string 
     if (event.source !== parent || event.origin !== 'https://createsomething.agency') return;
     if (event.data?.type === 'create-something:scheduler-context') {
       state.context=schedulerContext(event.data.context);
+      requestAnimationFrame(()=>notifyParentHeight(true));
       return;
     }
     if (event.data?.type === 'create-something:scheduler-access') {
@@ -214,12 +215,12 @@ export function schedulerPage(input: { nonce: string; turnstileSiteKey?: string 
   }
 
   let reportedDocumentHeight=0;
-  function notifyParentHeight() {
+  function notifyParentHeight(force=false) {
     if (parent === window) return;
     const schedulerDocument=document.querySelector('body > main');
     if (!schedulerDocument) return;
     const height=Math.ceil(schedulerDocument.getBoundingClientRect().height);
-    if (!Number.isFinite(height) || height === reportedDocumentHeight) return;
+    if (!Number.isFinite(height) || (!force && height === reportedDocumentHeight)) return;
     reportedDocumentHeight=height;
     parent.postMessage({type:'create-something:scheduler-resize',height},'https://createsomething.agency');
   }
