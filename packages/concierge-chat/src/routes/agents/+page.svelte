@@ -98,8 +98,11 @@
   <section class="public-section bright">
     <div class="public-shell">
       <a class="npg-delivery-card" href="/client-service">
-        <span class="npg-delivery-index">Client delivery 01</span>
+        <span class="npg-delivery-mark" aria-hidden="true">
+          <img src="/npg-client-service/logo-mark.svg" alt="" />
+        </span>
         <div>
+          <span class="npg-delivery-index">Client delivery 01</span>
           <h2>NPG Client Service Representative</h2>
           <p>
             A dedicated voice agent for Loyal Source location assistance, shared-office access, and
@@ -203,7 +206,7 @@
 <style>
   .npg-delivery-card {
     display: grid;
-    grid-template-columns: 150px 1fr auto;
+    grid-template-columns: 84px 1fr auto;
     gap: 32px;
     align-items: center;
     margin-bottom: clamp(72px, 8vw, 110px);
@@ -220,6 +223,21 @@
     transform: translateY(-3px);
   }
 
+  .npg-delivery-mark {
+    display: grid;
+    place-items: center;
+    width: 76px;
+    height: 76px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    background: #fffaf4;
+  }
+
+  .npg-delivery-mark img {
+    width: 58px;
+    height: 58px;
+  }
+
   .npg-delivery-index,
   .npg-delivery-action {
     color: #d7b79e;
@@ -230,7 +248,7 @@
   }
 
   .npg-delivery-card h2 {
-    margin: 0 0 10px;
+    margin: 9px 0 10px;
     font-size: clamp(1.8rem, 3vw, 3.2rem);
     font-weight: 560;
     letter-spacing: -0.055em;

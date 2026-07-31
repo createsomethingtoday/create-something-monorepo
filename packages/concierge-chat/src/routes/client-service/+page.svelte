@@ -293,6 +293,14 @@
   <meta property="og:title" content={pageTitle} />
   <meta property="og:description" content={pageDescription} />
   <meta property="og:url" content={absoluteUrl(pagePath)} />
+  <meta property="og:image" content={absoluteUrl('/npg-client-service/icon-512.png')} />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:image" content={absoluteUrl('/npg-client-service/icon-512.png')} />
+  <meta name="theme-color" content="#171512" />
+  <link rel="icon" href="/npg-client-service/logo-mark.svg" type="image/svg+xml" />
+  <link rel="icon" href="/npg-client-service/favicon-32.png" sizes="32x32" type="image/png" />
+  <link rel="apple-touch-icon" href="/npg-client-service/apple-touch-icon.png" sizes="180x180" />
+  <link rel="manifest" href="/npg-client-service/site.webmanifest" />
 </svelte:head>
 
 <div class="service-page">
@@ -313,7 +321,9 @@
           <span>No scheduling changes</span>
         </div>
         <div class="disclosure" role="note">
-          <span aria-hidden="true">N</span>
+          <span aria-hidden="true">
+            <img src="/npg-client-service/logo-mark.svg" alt="" />
+          </span>
           <p>
             <strong>Automated assistance, named up front.</strong>
             The representative explains its role and offers a human path before collecting appointment
@@ -342,7 +352,9 @@
           class="voice-stage"
         >
           <div class="stage-rings" aria-hidden="true"><i></i><i></i><i></i></div>
-          <span class="service-avatar">N</span>
+          <span class="service-avatar" aria-hidden="true">
+            <img src="/npg-client-service/logo-mark.svg" alt="" />
+          </span>
           <div class="voice-bars" aria-hidden="true">
             {#each [1, 2, 3, 4, 5, 6, 7] as bar}
               <i style={`--delay:${bar * -80}ms;--height:${10 + (bar % 4) * 7}px`}></i>
@@ -464,7 +476,13 @@
           {:else}
             {#each transcript as entry (entry.id)}
               <article class:representative={entry.speaker === 'Concierge'}>
-                <span>{entry.speaker === 'Concierge' ? 'N' : 'You'}</span>
+                <span>
+                  {#if entry.speaker === 'Concierge'}
+                    <img src="/npg-client-service/logo-mark.svg" alt="" aria-hidden="true" />
+                  {:else}
+                    You
+                  {/if}
+                </span>
                 <div>
                   <strong>{entry.speaker === 'Concierge' ? 'NPG Representative' : 'Caller'}</strong>
                   <p>{entry.text}</p>
@@ -668,8 +686,12 @@
     flex: 0 0 34px;
     height: 34px;
     border-radius: 50%;
-    background: var(--deep);
-    color: var(--tan-soft);
+    background: white;
+    border: 1px solid rgba(23, 21, 18, 0.1);
+  }
+  .disclosure > span img {
+    width: 25px;
+    height: 25px;
   }
   .disclosure p {
     margin: 0;
@@ -744,11 +766,14 @@
     width: 86px;
     height: 86px;
     border-radius: 50%;
-    background: linear-gradient(145deg, var(--tan-soft), var(--tan));
-    color: var(--deep);
-    font-size: 1.7rem;
-    font-weight: 650;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: var(--bright);
+    box-shadow: 0 14px 42px rgba(0, 0, 0, 0.24);
     z-index: 2;
+  }
+  .service-avatar img {
+    width: 64px;
+    height: 64px;
   }
   .stage-rings {
     position: absolute;
@@ -1032,8 +1057,12 @@
     font-size: 0.68rem;
   }
   .transcript article.representative > span {
-    background: var(--deep);
-    color: var(--tan-soft);
+    border: 1px solid rgba(23, 21, 18, 0.1);
+    background: var(--bright);
+  }
+  .transcript article.representative > span img {
+    width: 25px;
+    height: 25px;
   }
   .transcript article strong {
     font-size: 0.78rem;

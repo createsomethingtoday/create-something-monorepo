@@ -26,6 +26,7 @@
   $: candidateProfileHref = candidateThreadMatch
     ? `/chat/${candidateThreadMatch[1]}/profile`
     : '/apply';
+  $: isNpgClientServiceRoute = data.currentPath === '/client-service';
   $: usesWebflowShell =
     data.currentPath === '/' ||
     data.currentPath === '/nurses' ||
@@ -83,18 +84,25 @@
 {#if usesWebflowShell}
   <div class:application-workspace={isCandidateApplicationRoute} class="abundance-webflow-page">
     <header class:application-nav={isCandidateApplicationRoute} class="webflow-nav">
-      <a class="webflow-logo" href="/" aria-label="Abundance Staffing home">
+      <a
+        class:npg-service-logo={isNpgClientServiceRoute}
+        class="webflow-logo"
+        href={isNpgClientServiceRoute ? '/client-service' : '/'}
+        aria-label={isNpgClientServiceRoute ? 'NPG Client Service home' : 'Abundance Staffing home'}
+      >
         <span class="webflow-logo-mark">
           <img
-            src="/abundance/logo-mark.svg"
+            src={isNpgClientServiceRoute
+              ? '/npg-client-service/logo-mark.svg'
+              : '/abundance/logo-mark.svg'}
             alt=""
             class="webflow-logo-image"
             aria-hidden="true"
           />
         </span>
         <span class="webflow-logo-copy">
-          <strong>Abundance</strong>
-          <small>Staffing</small>
+          <strong>{isNpgClientServiceRoute ? 'NPG' : 'Abundance'}</strong>
+          <small>{isNpgClientServiceRoute ? 'Client Service' : 'Staffing'}</small>
         </span>
       </a>
       <button
@@ -395,6 +403,11 @@
     width: 28px;
     height: 28px;
     object-fit: contain;
+  }
+
+  .webflow-logo.npg-service-logo .webflow-logo-image {
+    width: 30px;
+    height: 30px;
   }
 
   .webflow-logo-copy {

@@ -1,0 +1,24 @@
+{
+  "name": "NPG Client Service Representative",
+  "short_name": "NPG Service",
+  "description": "Governed voice assistance for NPG locations, access, and attendance handoffs.",
+  "start_url": "/client-service",
+  "scope": "/client-service",
+  "display": "standalone",
+  "background_color": "#FAF5EF",
+  "theme_color": "#171512",
+  "icons": [
+    {
+      "src": "/npg-client-service/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/npg-client-service/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

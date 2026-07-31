@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title description">
+  <title id="title">NPG Client Service app icon</title>
+  <desc id="description">The NPG Client Service mark on a warm dark tile.</desc>
+  <rect width="512" height="512" rx="112" fill="#171512" />
+  <path
+    d="M151 378v-70c0-31 12-60 34-82l86-86"
+    fill="none"
+    stroke="#67B3CB"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="58"
+  />
+  <path
+    d="M361 134v70c0 31-12 60-34 82l-86 86"
+    fill="none"
+    stroke="#D7B79E"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="58"
+  />
+  <circle cx="256" cy="256" r="27" fill="#FFFAF4" />
+</svg>
