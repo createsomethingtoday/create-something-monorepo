@@ -27,10 +27,13 @@
 
       <div
         class="performance-readback__result"
-        aria-label={`${evidence.usableCases} of ${evidence.selectedCases} evidence packets prepared`}
+        aria-label={`${evidence.usableCases} of ${evidence.selectedCases} selected cases produced usable evidence packets for human decision`}
       >
         <div><strong>{evidence.usableCases}</strong><span>/ {evidence.selectedCases}</span></div>
-        <small>Evidence packets prepared</small>
+        <small
+          >{evidence.usableCases} of {evidence.selectedCases} selected cases produced usable evidence
+          packets for human decision.</small
+        >
       </div>
     </article>
 

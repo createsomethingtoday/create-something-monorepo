@@ -28,10 +28,30 @@ export const AGENCY_COMPACT_PRIVACY_PATHS = [
 export const AGENCY_ROUTE_OWNED_PERFORMANCE_ENDING_PATHS = [
   '/',
   '/services',
+  '/book',
+  '/contact',
   '/map',
+  '/control',
+  '/proof/marketplace-workflow',
   '/products',
+  '/products/ground',
+  '/products/signal',
+  '/products/decision',
+  '/products/proof',
+  '/products/loom',
   '/stack',
-  '/field-reports'
+  '/partners',
+  '/for-service-providers',
+  '/methodology',
+  '/practice',
+  '/security',
+  '/bearer-token-policy',
+  '/cloudflare',
+  '/field-reports',
+  '/field-reports/template-review',
+  '/use-cases/business',
+  '/use-cases/enterprise',
+  '/about'
 ] as const;
 
 function normalizeAgencyPathname(pathname: string): string {
