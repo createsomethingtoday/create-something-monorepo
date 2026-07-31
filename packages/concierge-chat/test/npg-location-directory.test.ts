@@ -24,12 +24,39 @@ test('a specific city and state resolves to one caller-safe location', () => {
   assert.equal(result.location.facilityLabel, 'Regus or HQ');
 });
 
-test('records with incomplete client data are held for human confirmation', () => {
-  const result = findNpgLocation('Memphis, Tennessee');
+test('client-confirmed Portland, Memphis, and Des Moines addresses resolve for callers', () => {
+  const portland = findNpgLocation('Portland, Maine');
+  assert.equal(portland.status, 'matched');
+  if (portland.status === 'matched') {
+    assert.deepEqual(portland.location.addressLines, [
+      '41 Hutchins Drive',
+      'Portland, ME 04102'
+    ]);
+    assert.equal(portland.location.building, 'Building 3');
+    assert.equal(portland.location.floor, '1st');
+  }
 
-  assert.equal(result.status, 'review_required');
-  if (result.status !== 'review_required') return;
-  assert.match(result.message, /NPG representative/i);
+  const memphis = findNpgLocation('Memphis, Tennessee');
+  assert.equal(memphis.status, 'matched');
+  if (memphis.status === 'matched') {
+    assert.deepEqual(memphis.location.addressLines, [
+      '1661 International Drive',
+      'Memphis, TN 38120'
+    ]);
+    assert.equal(memphis.location.suite, '400');
+  }
+
+  const desMoines = findNpgLocation('West Des Moines, Iowa');
+  assert.equal(desMoines.status, 'matched');
+  if (desMoines.status === 'matched') {
+    assert.equal(desMoines.location.name, 'NPG Des Moine, IA');
+    assert.deepEqual(desMoines.location.addressLines, [
+      '1501 42nd Street',
+      'West Des Moines, IA 50266'
+    ]);
+    assert.equal(desMoines.location.suite, '450');
+    assert.equal(desMoines.location.floor, '4th');
+  }
 });
 
 test('broad and unknown searches never guess', () => {
