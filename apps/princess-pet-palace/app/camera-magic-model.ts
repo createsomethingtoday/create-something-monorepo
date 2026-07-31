@@ -8,7 +8,7 @@ export const CAMERA_MAGIC_COPY = {
   movingPrompt: "Your movement makes sparkles!",
 } as const;
 
-export const CAMERA_MAGIC_PREFERENCE_KEY = "princess-pet-palace-camera-v1";
+export const CAMERA_MAGIC_PREFERENCE_KEY = "princess-pet-palace-camera-v2";
 export const CAMERA_PENDING_COLLAPSE_MS = 6500;
 
 export type CameraPreference = "unknown" | "enabled" | "disabled";

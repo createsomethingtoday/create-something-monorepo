@@ -846,6 +846,9 @@ h1 {
 .camera-sparkles span:nth-child(4) { top: 12%; left: 30%; animation-delay: -0.8s; }
 .camera-sparkles span:nth-child(5) { right: 42%; bottom: 10%; animation-delay: -0.45s; }
 .camera-sparkles span:nth-child(6) { top: 43%; right: 8%; animation-delay: -0.15s; }
+.pose-guide-badge { position: absolute; right: 11px; bottom: 11px; display: grid; place-items: center; min-width: 76px; min-height: 38px; padding: 4px 9px; border: 2px solid rgba(255, 255, 255, 0.78); border-radius: 15px; background: rgba(255, 255, 255, 0.86); box-shadow: 0 5px 14px rgba(71, 33, 83, 0.13); font-size: 1.05rem; }
+.pose-loading { animation: hear-pulse 1.4s ease-in-out infinite; }
+.pose-matched { color: #8b5b19; background: rgba(255, 241, 181, 0.94); animation: counted-pop 340ms ease; }
 .camera-details { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 6px 5px; }
 .camera-title { margin: 0; color: var(--ink); font-family: var(--font-display), sans-serif; font-size: 0.92rem; font-weight: 700; }
 .camera-copy { margin: 3px 0 0; color: var(--ink-soft); font-size: 0.7rem; font-weight: 700; line-height: 1.25; }
@@ -856,6 +859,7 @@ h1 {
 .camera-stop { color: #68426f; background: #fff; box-shadow: 0 4px 0 #d5bedb; }
 .motion-meter { height: 7px; margin: 3px 6px 7px; overflow: hidden; border-radius: 999px; background: rgba(105, 58, 121, 0.12); }
 .motion-meter span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--pink), var(--gold)); transition: width 180ms ease; }
+.camera-active .motion-meter span { box-shadow: 0 0 9px rgba(237, 104, 164, 0.4); }
 .camera-message { margin: 2px 6px 4px; color: #754783; font-size: 0.61rem; font-weight: 750; text-align: center; }
 .camera-opening { padding: 0 10px; color: #9a61a8; font-weight: 900; letter-spacing: 0.18em; animation: twinkle 1.2s ease-in-out infinite; }
 .camera-compact { position: relative; display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 999px; box-shadow: none; }

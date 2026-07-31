@@ -15,6 +15,15 @@ export function canUsePalaceHomeButton(screen: GameScreen): boolean {
   return screen !== "journey";
 }
 
+export function shouldAcceptPoseCompletion(input: {
+  instructionFinished: boolean;
+  poseMatched: boolean;
+  fallbackRunning: boolean;
+  alreadyComplete: boolean;
+}): boolean {
+  return input.instructionFinished && input.poseMatched && !input.fallbackRunning && !input.alreadyComplete;
+}
+
 export type AnimalChoice = {
   emoji: string;
   name: string;

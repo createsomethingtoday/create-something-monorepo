@@ -12,6 +12,7 @@ import {
   getLetterChoiceFeedback,
   getPrincessCoachCue,
   remainingNarrationHoldMs,
+  shouldAcceptPoseCompletion,
   type CountChallenge,
   type GameScreen,
   type JourneyRoom,
@@ -51,6 +52,7 @@ export default function Home() {
   const [lastChoice, setLastChoice] = useState<string | null>(null);
   const [moveSeconds, setMoveSeconds] = useState<number | null>(null);
   const [movementStarting, setMovementStarting] = useState(false);
+  const [movementListening, setMovementListening] = useState(false);
   const [joinedPets, setJoinedPets] = useState<string[]>([]);
   const [sparkleStreak, setSparkleStreak] = useState(0);
   const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -206,6 +208,7 @@ export default function Home() {
     setLastChoice(null);
     setMoveSeconds(null);
     setMovementStarting(false);
+    setMovementListening(false);
     setFeedbackTitle("");
     setFeedback("");
     setFeedbackKind(null);
@@ -221,7 +224,9 @@ export default function Home() {
     setSparkleStreak(0);
     resetRoomState();
     setScreen("journey");
-    speak([getNarrationCue("palace-open"), nextJourney[0].narration.prompt]);
+    speak([getNarrationCue("palace-open"), nextJourney[0].narration.prompt], false, () => {
+      if (nextJourney[0].kind === "move") setMovementListening(true);
+    });
   };
 
   const goHome = () => {
@@ -243,6 +248,7 @@ export default function Home() {
       setFeedbackTitle(cheer.title);
       setFeedback(learningRecap);
       setFeedbackKind("success");
+      setMovementListening(false);
       setCoachOverride(null);
       setSparkleStreak((value) => value + 1);
       if (pet) setJoinedPets((current) => [...current, pet]);
@@ -262,7 +268,11 @@ export default function Home() {
 
           setRoomIndex(nextIndex);
           resetRoomState();
-          window.setTimeout(() => speak(journey[nextIndex].narration.prompt), 220);
+          window.setTimeout(() => {
+            speak(journey[nextIndex].narration.prompt, false, () => {
+              if (journey[nextIndex].kind === "move") setMovementListening(true);
+            });
+          }, 220);
         }, remainingHold);
       };
       speak(
@@ -335,6 +345,7 @@ export default function Home() {
 
   const startMovement = (challenge: MoveChallenge) => {
     if (moveSeconds !== null || movementStarting) return;
+    setMovementListening(false);
     setMovementStarting(true);
     playTone("tap");
     speak(getNarrationCue(`${challenge.id}-start`), false, () => {
@@ -350,6 +361,26 @@ export default function Home() {
           advanceTimer.current = setTimeout(() => finishRoom(challenge.emoji), POST_NARRATION_PAUSE_MS);
         }
       }, 1000);
+    });
+  };
+
+  const completePoseMovement = (challenge: MoveChallenge) => {
+    if (!shouldAcceptPoseCompletion({
+      instructionFinished: movementListening,
+      poseMatched: true,
+      fallbackRunning: moveSeconds !== null || movementStarting,
+      alreadyComplete: feedbackKind === "success",
+    })) return;
+
+    setMovementListening(false);
+    finishRoom(challenge.emoji);
+  };
+
+  const replayInstruction = () => {
+    if (!room) return;
+    if (room.kind === "move") setMovementListening(false);
+    speak(room.narration.prompt, true, () => {
+      if (room.kind === "move") setMovementListening(true);
     });
   };
 
@@ -492,7 +523,7 @@ export default function Home() {
                   <span aria-hidden="true">{room.skillIcon}</span>
                   <span><small>Practicing</small><strong>{room.skillLabel}</strong></span>
                 </div>
-                <button className="hear-button" type="button" onClick={() => speak(room.narration.prompt, true)} disabled={feedbackKind !== null || movementStarting} aria-label="Hear the instruction again">
+                <button className="hear-button" type="button" onClick={replayInstruction} disabled={feedbackKind !== null || movementStarting} aria-label="Hear the instruction again">
                   <span className="hear-rings" aria-hidden="true">🔊</span><span>Hear it</span>
                 </button>
               </div>
@@ -510,7 +541,7 @@ export default function Home() {
             <div className="room-content">
               {room.kind === "letter" && <LetterRoom room={room} lastChoice={lastChoice} disabled={feedbackKind === "success"} onChoose={handleLetterChoice} />}
               {room.kind === "count" && <CountRoom room={room} selectedPets={selectedPets} disabled={feedbackKind === "success" || countNarrating} onTap={handlePetTap} />}
-              {room.kind === "move" && <MoveRoom key={room.id} room={room} seconds={moveSeconds} starting={movementStarting} disabled={feedbackKind === "success"} onStart={startMovement} />}
+              {room.kind === "move" && <MoveRoom key={room.id} room={room} seconds={moveSeconds} starting={movementStarting} listening={movementListening} disabled={feedbackKind === "success"} onStart={startMovement} onPoseMatched={completePoseMovement} />}
             </div>
 
             <div className="party-rail" aria-label={`${uniquePartyPets.length} royal pets have joined your party`}>
@@ -618,12 +649,12 @@ function CountRoom({ room, selectedPets, disabled, onTap }: { room: JourneyRoom;
   );
 }
 
-function MoveRoom({ room, seconds, starting, disabled, onStart }: { room: JourneyRoom; seconds: number | null; starting: boolean; disabled: boolean; onStart: (challenge: MoveChallenge) => void }) {
+function MoveRoom({ room, seconds, starting, listening, disabled, onStart, onPoseMatched }: { room: JourneyRoom; seconds: number | null; starting: boolean; listening: boolean; disabled: boolean; onStart: (challenge: MoveChallenge) => void; onPoseMatched: (challenge: MoveChallenge) => void }) {
   const challenge = room.challenge as MoveChallenge;
   const progress = seconds === null ? 0 : ((challenge.seconds - seconds) / challenge.seconds) * 100;
   return (
     <div className="activity-body move-room">
-      <CameraMagic />
+      <CameraMagic challengeId={challenge.id} detectionEnabled={listening && seconds === null && !starting && !disabled} onPoseMatched={() => onPoseMatched(challenge)} />
       <div className="move-coach">
         <div className={`move-visual ${seconds !== null && seconds > 0 ? "moving" : ""}`} style={{ "--move-progress": `${progress}%` } as React.CSSProperties}>
           <span className="move-ring" aria-hidden="true" />
@@ -639,9 +670,9 @@ function MoveRoom({ room, seconds, starting, disabled, onStart }: { room: Journe
           <span><b aria-hidden="true">👸</b><small>Copy the move</small></span>
           <span><b aria-hidden="true">★</b><small>Reach the star</small></span>
         </div>
-        {seconds === null && !starting ? (
+        {seconds === null && !starting && listening ? (
           <button className="move-button" type="button" onClick={() => onStart(challenge)} disabled={disabled}><span aria-hidden="true">✨</span><span>Let&apos;s move!</span></button>
-        ) : starting ? (
+        ) : seconds === null || starting ? (
           <div className="movement-message movement-listen" aria-label="Listen to the princess, then begin"><span aria-hidden="true">👸 🔊 ✨</span></div>
         ) : (
           <div className="movement-message" aria-live="polite">{seconds > 0 ? "Keep going!" : "Beautiful!"}</div>

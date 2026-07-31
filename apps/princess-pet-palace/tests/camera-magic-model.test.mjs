@@ -29,7 +29,7 @@ test("keeps camera errors friendly and preserves camera-free play", () => {
 });
 
 test("starts camera magic automatically unless it was turned off", () => {
-  assert.equal(CAMERA_MAGIC_PREFERENCE_KEY, "princess-pet-palace-camera-v1");
+  assert.equal(CAMERA_MAGIC_PREFERENCE_KEY, "princess-pet-palace-camera-v2");
   assert.equal(shouldAutoStartCamera("unknown"), true);
   assert.equal(shouldAutoStartCamera("enabled"), true);
   assert.equal(shouldAutoStartCamera("disabled"), false);

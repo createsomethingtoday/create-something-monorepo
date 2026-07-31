@@ -11,12 +11,21 @@ import {
   getPrincessCoachCue,
   getLetterChoiceFeedback,
   remainingNarrationHoldMs,
+  shouldAcceptPoseCompletion,
 } from "../app/game-model.ts";
 
 test("prevents an accidental palace exit in the middle of a room", () => {
   assert.equal(canUsePalaceHomeButton("home"), true);
   assert.equal(canUsePalaceHomeButton("celebrate"), true);
   assert.equal(canUsePalaceHomeButton("journey"), false);
+});
+
+test("accepts a matched movement only after the princess finishes the instruction", () => {
+  assert.equal(shouldAcceptPoseCompletion({ instructionFinished: false, poseMatched: true, fallbackRunning: false, alreadyComplete: false }), false);
+  assert.equal(shouldAcceptPoseCompletion({ instructionFinished: true, poseMatched: false, fallbackRunning: false, alreadyComplete: false }), false);
+  assert.equal(shouldAcceptPoseCompletion({ instructionFinished: true, poseMatched: true, fallbackRunning: true, alreadyComplete: false }), false);
+  assert.equal(shouldAcceptPoseCompletion({ instructionFinished: true, poseMatched: true, fallbackRunning: false, alreadyComplete: true }), false);
+  assert.equal(shouldAcceptPoseCompletion({ instructionFinished: true, poseMatched: true, fallbackRunning: false, alreadyComplete: false }), true);
 });
 
 test("creates a varied six-room palace journey with every activity", () => {
