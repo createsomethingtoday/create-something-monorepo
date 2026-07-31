@@ -270,6 +270,18 @@ describe('Performance composition typography', () => {
 });
 
 describe('PerformanceThesisConditions', () => {
+	it('scales nested thesis typography from its own inline size', () => {
+		const source = readFileSync(
+			join(process.cwd(), 'src/lib/components/performance/PerformanceThesisConditions.svelte'),
+			'utf8'
+		);
+
+		expect(source).toContain('container-type: inline-size');
+		expect(source).toContain('@container (max-width: 64rem)');
+		expect(source).toContain('font-size: clamp(2.5rem, 5cqi, 3.5rem)');
+		expect(source).toContain('gap: clamp(1.5rem, 3.5cqi, 2.5rem)');
+	});
+
 	it('pairs one governing thesis with explicit operating conditions', () => {
 		target = document.createElement('div');
 		document.body.appendChild(target);

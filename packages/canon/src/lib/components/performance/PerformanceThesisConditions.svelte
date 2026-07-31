@@ -50,6 +50,7 @@
 <style>
 	.performance-thesis-conditions {
 		--condition-accent: var(--color-performance-ink, #090909);
+		container-type: inline-size;
 		display: grid;
 		grid-template-columns: minmax(19rem, 0.9fr) minmax(0, 1.4fr);
 		width: min(var(--content-width-performance, 85rem), calc(100% - 2.5rem));
@@ -143,6 +144,16 @@
 	}
 
 	.performance-thesis-conditions__condition p { max-width: 28ch; font-size: 0.88rem; }
+
+	@container (max-width: 64rem) {
+		.performance-thesis-conditions__thesis {
+			gap: clamp(1.5rem, 3.5cqi, 2.5rem);
+		}
+
+		.performance-thesis-conditions__title {
+			font-size: clamp(2.5rem, 5cqi, 3.5rem);
+		}
+	}
 
 	@media (max-width: 50rem) {
 		.performance-thesis-conditions { grid-template-columns: 1fr; }
