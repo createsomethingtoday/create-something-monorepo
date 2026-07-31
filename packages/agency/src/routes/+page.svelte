@@ -236,10 +236,6 @@
 
   <AgencyPerformanceReadback />
 
-  <AdoptionPathChooser />
-
-  <IntegrationCompatibilityRail surface="homepage" />
-
   <PerformanceNarrativeStage
     id="agency-operating-story"
     eyebrow="One workflow, step by step"
@@ -247,18 +243,10 @@
     description="Your team sets the limits before work moves. We map the handoff, test one workflow, and keep a record of every run."
     scenes={agencyScenes}
     ariaLabel="Agency operating story"
+    density="compact"
   >
     {#snippet artifact(scene: PerformanceNarrativeScene)}
       {#if scene.id === 'boundary'}
-        <div class="operator-outcomes" aria-label="Workflow before and after controlled delegation">
-          {#each operatorOutcomes as outcome}
-            <article class="operator-outcome operator-outcome--{outcome.state.toLowerCase()}">
-              <span>{outcome.state}</span>
-              <h3>{outcome.title}</h3>
-              <p>{outcome.detail}</p>
-            </article>
-          {/each}
-        </div>
         <article class="boundary-study" aria-labelledby="boundary-study-title">
           <picture class="boundary-study__media">
             <source
@@ -271,41 +259,55 @@
               loading="lazy"
             />
           </picture>
-          <div class="boundary-study__copy">
-            <span>Performance principle</span>
-            <h3 id="boundary-study-title">Test the boundary before work moves.</h3>
-            <p>
-              <strong>Decide what can run before it starts.</strong> Map the handoff, name who approves
-              it, define when it stops, and keep a record before the workflow can do more.
-            </p>
-            <p class="boundary-study__principle">The rules decide what runs, waits, or stops.</p>
-          </div>
-          <dl class="boundary-study__metrics">
-            {#each flowStudyMetrics as metric}
+          <div class="boundary-study__body">
+            <div class="boundary-study__copy">
+              <span>Performance principle</span>
+              <h3 id="boundary-study-title">Test the boundary before work moves.</h3>
+              <p>
+                <strong>Decide what can run before it starts.</strong> Map the handoff, name who approves
+                it, define when it stops, and keep a record before the workflow can do more.
+              </p>
+              <p class="boundary-study__principle">The rules decide what runs, waits, or stops.</p>
+            </div>
+            <div
+              class="boundary-study__outcomes"
+              aria-label="Workflow before and after controlled delegation"
+            >
+              {#each operatorOutcomes as outcome}
+                <article class="operator-outcome operator-outcome--{outcome.state.toLowerCase()}">
+                  <span>{outcome.state}</span>
+                  <h3>{outcome.title}</h3>
+                  <p>{outcome.detail}</p>
+                </article>
+              {/each}
+            </div>
+            <dl class="boundary-study__metrics">
+              {#each flowStudyMetrics as metric}
+                <div>
+                  <dt>{metric.label}</dt>
+                  <dd><strong>{metric.value}</strong><span>{metric.detail}</span></dd>
+                </div>
+              {/each}
+            </dl>
+            <dl class="boundary-study__receipt" aria-label="Boundary study receipt">
               <div>
-                <dt>{metric.label}</dt>
-                <dd><strong>{metric.value}</strong><span>{metric.detail}</span></dd>
+                <dt>Receipt</dt>
+                <dd>{flowStudyProof.id}</dd>
               </div>
-            {/each}
-          </dl>
-          <dl class="boundary-study__receipt" aria-label="Boundary study receipt">
-            <div>
-              <dt>Receipt</dt>
-              <dd>{flowStudyProof.id}</dd>
-            </div>
-            <div>
-              <dt>Owner</dt>
-              <dd>{flowStudyProof.owner}</dd>
-            </div>
-            <div>
-              <dt>State</dt>
-              <dd>{flowStudyProof.state}</dd>
-            </div>
-            <div>
-              <dt>Verified</dt>
-              <dd>{flowStudyProof.verified}</dd>
-            </div>
-          </dl>
+              <div>
+                <dt>Owner</dt>
+                <dd>{flowStudyProof.owner}</dd>
+              </div>
+              <div>
+                <dt>State</dt>
+                <dd>{flowStudyProof.state}</dd>
+              </div>
+              <div>
+                <dt>Verified</dt>
+                <dd>{flowStudyProof.verified}</dd>
+              </div>
+            </dl>
+          </div>
         </article>
       {:else if scene.id === 'map'}
         <div class="agency-stage-map" aria-label="Map workflow definition">
@@ -353,6 +355,10 @@
     {/snippet}
   </PerformanceNarrativeStage>
 
+  <AdoptionPathChooser />
+
+  <IntegrationCompatibilityRail surface="homepage" />
+
   <PerformanceConversionHandoff
     eyebrow="Fixed-scope first step"
     title={agencyCoreMessaging.workflowCtaHeading}
@@ -363,8 +369,8 @@
       proof: 'Workflow map + proof plan',
       state: 'ready'
     }}
-    artifactPlacement="full-width"
-    density="compact"
+    artifactPlacement="sidecar"
+    density="concise"
   >
     {#snippet actions()}
       <Button href={agencyCoreMessaging.selfMapHref}>
@@ -384,45 +390,16 @@
     color: var(--color-performance-ink, #090909);
   }
 
-  .operator-outcomes {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    border-block: 1px solid var(--color-performance-line, #d7d7d2);
-  }
-
-  .operator-outcome {
-    display: grid;
-    gap: 0.7rem;
-    min-height: 13rem;
-    padding: clamp(1.25rem, 3vw, 2.2rem);
-  }
-
-  .operator-outcome + .operator-outcome {
-    border-left: 1px solid var(--color-performance-line, #d7d7d2);
-  }
-
-  .operator-outcome span {
-    color: var(--color-performance-muted, #5e6268);
-    font-family: var(--font-performance-mono);
-    font-size: 0.72rem;
-    font-weight: var(--font-performance-semibold);
-    text-transform: uppercase;
-  }
-
-  .operator-outcome h3,
-  .operator-outcome p {
-    margin: 0;
-  }
-
   .boundary-study {
     display: grid;
-    grid-template-columns: minmax(15rem, 0.72fr) minmax(18rem, 0.9fr) minmax(18rem, 1fr);
+    grid-template-columns: minmax(13rem, 0.55fr) minmax(0, 1.45fr);
     border: 1px solid var(--color-performance-line, #d7d7d2);
     background: var(--color-performance-paper, #f3f3f0);
   }
 
   .boundary-study__media {
-    min-height: 23rem;
+    min-height: 31rem;
+    border-right: 1px solid var(--color-performance-line, #d7d7d2);
   }
 
   .boundary-study__media img {
@@ -432,18 +409,22 @@
     filter: grayscale(1);
   }
 
+  .boundary-study__body {
+    min-width: 0;
+  }
+
   .boundary-study__copy,
+  .boundary-study__outcomes,
   .boundary-study__metrics,
   .boundary-study__receipt {
     margin: 0;
-    padding: 1.25rem;
   }
 
   .boundary-study__copy {
     display: grid;
     align-content: start;
     gap: 0.75rem;
-    border-right: 1px solid var(--color-performance-line, #d7d7d2);
+    padding: 1.15rem;
   }
 
   .boundary-study__copy > span,
@@ -481,15 +462,18 @@
 
   .boundary-study__metrics {
     display: grid;
-    align-content: start;
-    gap: 0;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border-top: 1px solid var(--color-performance-line, #d7d7d2);
   }
 
   .boundary-study__metrics > div {
     display: grid;
     gap: 0.4rem;
-    padding: 0.85rem 0;
-    border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
+    padding: 0.85rem;
+  }
+
+  .boundary-study__metrics > div + div {
+    border-left: 1px solid var(--color-performance-line, #d7d7d2);
   }
 
   .boundary-study__metrics dd {
@@ -499,17 +483,19 @@
   }
 
   .boundary-study__receipt {
-    grid-column: 2 / -1;
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.75rem;
     border-top: 1px solid var(--color-performance-line, #d7d7d2);
-    border-left: 1px solid var(--color-performance-line, #d7d7d2);
   }
 
   .boundary-study__receipt div {
     display: grid;
     gap: 0.3rem;
+    padding: 0.7rem 0.85rem;
+  }
+
+  .boundary-study__receipt div + div {
+    border-left: 1px solid var(--color-performance-line, #d7d7d2);
   }
 
   .boundary-study__receipt dd {
@@ -518,17 +504,48 @@
     overflow-wrap: anywhere;
   }
 
+  .boundary-study__outcomes {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border-top: 1px solid var(--color-performance-line, #d7d7d2);
+  }
+
+  .operator-outcome {
+    display: grid;
+    align-content: start;
+    gap: 0.45rem;
+    padding: 0.9rem;
+  }
+
+  .operator-outcome + .operator-outcome {
+    border-left: 1px solid var(--color-performance-line, #d7d7d2);
+  }
+
+  .operator-outcome span {
+    color: var(--color-performance-muted, #5e6268);
+    font-family: var(--font-performance-mono);
+    font-size: 0.68rem;
+    font-weight: var(--font-performance-semibold);
+    text-transform: uppercase;
+  }
+
+  .operator-outcome h3,
+  .operator-outcome p {
+    margin: 0;
+  }
+
   .operator-outcome h3 {
     max-width: 22ch;
-    font-size: clamp(1.45rem, 2.5vw, 2.15rem);
+    font-size: clamp(1.05rem, 1.8vw, 1.35rem);
     font-weight: var(--font-performance-medium);
-    line-height: 1.05;
+    line-height: 1.1;
   }
 
   .operator-outcome p {
     max-width: 34rem;
     color: var(--color-performance-muted, #5e6268);
-    line-height: 1.55;
+    font-size: 0.82rem;
+    line-height: 1.42;
   }
 
   .service-flow-artifacts {
@@ -541,10 +558,10 @@
 
   .service-flow-artifact {
     display: grid;
-    grid-template-rows: 7.25rem minmax(0, 1fr);
-    gap: 1.18rem;
-    min-height: 22rem;
-    padding: 1.18rem 1.22rem 1.28rem;
+    grid-template-rows: 5.5rem minmax(0, 1fr);
+    gap: 0.9rem;
+    min-height: 17rem;
+    padding: 1rem;
   }
 
   .service-flow-artifact + .service-flow-artifact {
@@ -665,26 +682,16 @@
 
   @media (max-width: 980px) {
     .boundary-study {
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: minmax(11rem, 0.5fr) minmax(0, 1.5fr);
     }
 
     .boundary-study__media {
-      grid-row: span 2;
-    }
-
-    .boundary-study__copy {
-      border-right: 0;
-      border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
-    }
-
-    .boundary-study__receipt {
-      grid-column: 1 / -1;
-      border-left: 0;
+      min-height: 34rem;
     }
   }
 
   @media (max-width: 640px) {
-    .operator-outcomes {
+    .boundary-study__outcomes {
       grid-template-columns: 1fr;
     }
 
@@ -706,23 +713,37 @@
       grid-row: auto;
       height: 9.5rem;
       min-height: 9.5rem;
+      border-right: 0;
+      border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
       overflow: hidden;
     }
 
-    .boundary-study__copy {
-      border-right: 0;
-      border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
+    .boundary-study__metrics {
+      grid-template-columns: 1fr;
     }
 
-    .boundary-study__receipt {
-      grid-template-columns: 1fr 1fr;
-      padding: 0.9rem;
+    .boundary-study__metrics > div + div {
+      border-top: 1px solid var(--color-performance-line, #d7d7d2);
+      border-left: 0;
     }
 
     .boundary-study__metrics > div {
       grid-template-columns: 6.5rem minmax(0, 1fr);
       gap: 0.75rem;
-      padding: 0.65rem 0;
+      padding: 0.7rem 0.9rem;
+    }
+
+    .boundary-study__receipt {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .boundary-study__receipt div:nth-child(3) {
+      border-top: 1px solid var(--color-performance-line, #d7d7d2);
+      border-left: 0;
+    }
+
+    .boundary-study__receipt div:nth-child(4) {
+      border-top: 1px solid var(--color-performance-line, #d7d7d2);
     }
 
     .service-flow-artifacts {

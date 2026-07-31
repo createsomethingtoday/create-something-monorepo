@@ -270,7 +270,13 @@
   .performance-narrative-stage__inner {
     display: grid;
     gap: clamp(1.5rem, 3vw, 2.75rem);
-    width: min(var(--content-width-performance, 85rem), calc(100% - 2.5rem));
+    width: min(
+      var(--content-width-performance, 85rem),
+      calc(
+        100% - var(--space-performance-page-gutter, 1.25rem) -
+          var(--space-performance-page-gutter, 1.25rem)
+      )
+    );
     margin-inline: auto;
   }
 
@@ -607,7 +613,13 @@
     }
 
     .performance-narrative-stage__inner {
-      width: min(100% - 1.25rem, var(--content-width-performance, 85rem));
+      width: min(
+        calc(
+          100% - var(--space-performance-page-gutter, 0.75rem) -
+            var(--space-performance-page-gutter, 0.75rem)
+        ),
+        var(--content-width-performance, 85rem)
+      );
       gap: 1rem;
     }
 

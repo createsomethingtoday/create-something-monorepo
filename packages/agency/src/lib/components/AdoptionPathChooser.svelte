@@ -6,19 +6,19 @@
     {
       id: 'team',
       eyebrow: 'For your team',
-      title: 'Use it for my team',
+      title: 'Improve one internal workflow',
       detail:
-        'Practice with one workflow, name the owner, and decide what may run, wait, or stop before automation expands.',
+        'Use one real handoff to name the owner and decide what may run, wait, or stop before automation expands.',
       href: '/practice',
-      action: 'Practice with one workflow',
+      action: 'Practice an internal workflow',
       points: ['Browser-local practice', 'Visible approval boundary', 'Map, Build, or Control next']
     },
     {
       id: 'clients',
       eyebrow: 'For client services',
-      title: 'Use it with clients',
+      title: 'Deliver one client workflow',
       detail:
-        'Map a client workflow, scope the tool and approval boundary, and hand over evidence the client can inspect.',
+        'Map a client workflow, define account and approval boundaries, then hand over evidence the client can inspect.',
       href: '/for-service-providers',
       action: 'See the client delivery path',
       points: ['Reusable workflow structure', 'Client-owned accounts', 'Proof and handoff included']
@@ -40,9 +40,9 @@
 
 <section class="adoption-paths" aria-labelledby="adoption-paths-title">
   <header>
-    <span>Choose how you will use it</span>
-    <h2 id="adoption-paths-title">Start with your team or bring one client workflow.</h2>
-    <p>The method stays the same. The owner, account boundary, and handoff change.</p>
+    <span>Choose a starting path</span>
+    <h2 id="adoption-paths-title">Which workflow are you bringing?</h2>
+    <p>The method stays the same. Ownership, accounts, and the handoff change.</p>
   </header>
 
   <div class="adoption-paths__grid">
@@ -65,8 +65,15 @@
 
 <style>
   .adoption-paths {
-    width: min(var(--content-width-performance, 85rem), calc(100% - 2.5rem));
-    margin: clamp(2rem, 5vw, 4.5rem) auto;
+    width: min(
+      var(--content-width-performance, 85rem),
+      calc(
+        100% - var(--space-performance-page-gutter, 1.25rem) -
+          var(--space-performance-page-gutter, 1.25rem)
+      )
+    );
+    margin: clamp(1.5rem, 4vw, 3rem) auto;
+    padding: 0;
     border: 1px solid var(--color-performance-line, #d7d7d2);
     background: var(--color-performance-panel, #fff);
     color: var(--color-performance-ink, #090909);
@@ -75,7 +82,7 @@
   header {
     display: grid;
     gap: 0.65rem;
-    padding: clamp(1.25rem, 3vw, 2.25rem);
+    padding: clamp(1.15rem, 2.5vw, 1.75rem);
     border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
   }
 
@@ -97,7 +104,7 @@
 
   h2 {
     max-width: 20ch;
-    font-size: clamp(1.8rem, 4vw, 3.4rem);
+    font-size: clamp(1.8rem, 3.5vw, 3rem);
     line-height: 1;
   }
 
@@ -118,8 +125,8 @@
     grid-template-columns: auto minmax(0, 1fr);
     gap: 1rem;
     min-width: 0;
-    min-height: 22rem;
-    padding: clamp(1.25rem, 3vw, 2rem);
+    min-height: 17.5rem;
+    padding: clamp(1.15rem, 2.5vw, 1.5rem);
     color: inherit;
     text-decoration: none;
   }
@@ -147,7 +154,7 @@
 
   h3 {
     max-width: 14ch;
-    font-size: clamp(1.65rem, 3vw, 2.7rem);
+    font-size: clamp(1.55rem, 2.5vw, 2.25rem);
     line-height: 1;
   }
 
@@ -176,7 +183,13 @@
 
   @media (max-width: 47.99rem) {
     .adoption-paths {
-      width: min(100% - 1.5rem, var(--content-width-performance, 85rem));
+      width: min(
+        calc(
+          100% - var(--space-performance-page-gutter, 0.75rem) -
+            var(--space-performance-page-gutter, 0.75rem)
+        ),
+        var(--content-width-performance, 85rem)
+      );
     }
 
     .adoption-paths__grid {

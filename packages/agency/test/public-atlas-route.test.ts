@@ -175,15 +175,15 @@ test('home route uses the shared canvas kernel as a transparent proof object', (
 	assert.ok(homeRoute.includes('<PublicSubstrateCanvas'));
 	assert.ok(homeRoute.includes("from '$lib/components/PublicSubstrateCanvas.svelte'"));
 	assert.ok(homeRoute.includes('Map the work before AI runs it.'));
-	assert.ok(homeRoute.includes('artifactPlacement="full-width"'));
+	assert.ok(homeRoute.includes('artifactPlacement="sidecar"'));
 	assert.equal(homeRoute.includes('<PublicAtlasStoryCanvas'), false);
 	assert.equal(homeRoute.includes('<PublicAtlasCanvas'), false);
 });
 
-test('home route promotes the delegation object to a wide conversion proof surface', () => {
+test('home route keeps the delegation object beside a concise conversion handoff', () => {
 	assert.match(
 		homeRoute,
-		/<PerformanceConversionHandoff[\s\S]*?artifactPlacement="full-width"[\s\S]*?\{#snippet aside\(\)\}<HeroTrustArtifact \/>\{\/snippet\}/
+		/<PerformanceConversionHandoff[\s\S]*?artifactPlacement="sidecar"[\s\S]*?density="concise"[\s\S]*?\{#snippet aside\(\)\}<HeroTrustArtifact \/>\{\/snippet\}/
 	);
 	assert.ok(agencyDelegationArtifact.includes('container-type: inline-size'));
 	assert.ok(agencyDelegationArtifact.includes('grid-template-columns: repeat(4, minmax(0, 1fr))'));
