@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { SEO } from '@create-something/canon';
+	import SecurityAdminNav from '$lib/components/access/SecurityAdminNav.svelte';
 
 	type PartnerClient = {
 		slug: string;
@@ -23,16 +24,10 @@
 <section class="shell">
 	<div class="shell-inner">
 		<header class="hero">
-			<p class="eyebrow">Operator Surface</p>
-			<h1>Partner Mappings</h1>
-			<p>Read-only partner client map used to reconcile consent, identity, workspace, and entitlement state for managed bearer issuance.</p>
-			<nav class="subnav">
-				<a href="/admin/security">Overview</a>
-				<a href="/admin/security/bearer-tokens">Bearer Governance</a>
-				<a href="/admin/security/contracts">Contracts</a>
-				<a href="/admin/security/commercial">Commercial</a>
-				<a href="/admin/security/partners" aria-current="page">Partners</a>
-			</nav>
+			<p class="eyebrow">Workspace bindings</p>
+			<h1>Check partner workspace bindings</h1>
+			<p>Verify that each partner is bound to the expected workspace and first-party identity. Bindings are read-only.</p>
+			<SecurityAdminNav current="partners" />
 		</header>
 
 		<div class="panel">
@@ -81,9 +76,6 @@
 	.hero { margin-bottom: 2rem; }
 	.eyebrow { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.75rem; color: var(--color-performance-fg-tertiary); }
 	.hero p { max-width: 72ch; color: var(--color-performance-fg-secondary); }
-	.subnav { display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap; }
-	.subnav a { color: inherit; text-decoration: none; padding-bottom: 0.25rem; border-bottom: 1px solid transparent; }
-	.subnav a[aria-current='page'] { border-color: var(--color-performance-focus); }
 	.panel { border: 1px solid var(--color-performance-border-default); border-radius: 20px; background: var(--color-performance-hover); padding: 1.2rem; }
 	.table-wrap { overflow-x: auto; }
 	table { width: 100%; border-collapse: collapse; }

@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>CRE-1371 authenticated-state review fixture</title>
+		<style>
+			:root {
+				font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+				color: #171714;
+				background: #f2f2ed;
+			}
+			* { box-sizing: border-box; }
+			body { margin: 0; }
+			.fixture-label {
+				padding: 0.8rem 1.25rem;
+				background: #fff0bd;
+				border-bottom: 1px solid #c7a954;
+				font-size: 0.82rem;
+			}
+			main { max-width: 74rem; margin: auto; padding: 2.5rem 1.25rem 4rem; }
+			h1 { margin: 0; font-size: clamp(2rem, 5vw, 3.6rem); line-height: 1; }
+			.lede { max-width: 48rem; color: #5b5b55; line-height: 1.55; }
+			.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-top: 2rem; }
+			.card { padding: 1.25rem; background: white; border: 1px solid #d2d2ca; border-radius: 0.5rem; }
+			.card h2 { margin: 0 0 0.5rem; font-size: 1.25rem; }
+			.card p { color: #565650; line-height: 1.5; }
+			.eyebrow { margin: 0 0 0.45rem; text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.72rem; color: #6a6a63; }
+			.alert { border-left: 4px solid #ae2820; }
+			.receipt { border-left: 4px solid #167248; }
+			.readonly { border-left: 4px solid #4269a7; }
+			.actions { display: flex; flex-wrap: wrap; gap: 0.55rem; margin-top: 1rem; }
+			button, a.control {
+				min-height: 2.75rem;
+				display: inline-flex;
+				align-items: center;
+				padding: 0.65rem 0.9rem;
+				border: 1px solid #99998f;
+				background: white;
+				color: #171714;
+				border-radius: 0.25rem;
+				font: inherit;
+				text-decoration: none;
+			}
+			nav { display: flex; flex-wrap: wrap; gap: 0.45rem 1rem; margin-top: 1rem; }
+			nav a { color: #4e4e49; text-decoration: none; padding-bottom: 0.2rem; border-bottom: 1px solid transparent; }
+			nav a[aria-current="page"] { color: #171714; border-color: #a27a00; font-weight: 700; }
+			.meta { font-size: 0.82rem; color: #6b6b64; }
+			@media (max-width: 44rem) {
+				.grid { grid-template-columns: 1fr; }
+				main { padding-top: 1.75rem; }
+			}
+		</style>
+	</head>
+	<body>
+		<div class="fixture-label">
+			Representative fixture only. It uses fake records, performs no requests, and is not an application route.
+		</div>
+		<main>
+			<p class="eyebrow">Agency admin operator family</p>
+			<h1>Review the task, consequence, and receipt</h1>
+			<p class="lede">
+				These representative states show the language an authorized operator receives when data is unavailable, a mutation succeeds, or access evidence needs review.
+			</p>
+
+			<div class="grid">
+				<section class="card alert" role="alert">
+					<p class="eyebrow">Community · unavailable</p>
+					<h2>Review community signals</h2>
+					<p>Community data is unavailable. Stop: do not review or approve responses until it loads.</p>
+					<div class="actions"><a class="control" href="#community">Try again</a></div>
+				</section>
+
+				<section class="card receipt" role="status">
+					<p class="eyebrow">Community · recorded decision</p>
+					<h2>Draft approved for the response queue</h2>
+					<p>Nothing was published. Record queue_fake_01 remains available for verification.</p>
+					<p class="meta">A failed request would keep the record in the queue and offer retry.</p>
+				</section>
+
+				<section class="card receipt" role="status">
+					<p class="eyebrow">Funnel · created record</p>
+					<h2>Add one lead</h2>
+					<p>Lead record lead_fake_01 was created in awareness. No contact was sent.</p>
+					<div class="actions"><a class="control" href="#funnel">Open the funnel dashboard to verify it</a></div>
+				</section>
+
+				<section class="card readonly">
+					<p class="eyebrow">Security · read-only evidence</p>
+					<h2>Trace an access decision</h2>
+					<p>Use delivery, identity, and policy records to explain who acted, what was decided, and why.</p>
+					<nav aria-label="Security operations">
+						<a href="#overview">Overview</a>
+						<a href="#bearer">Bearer access</a>
+						<a href="#contracts">Contracts</a>
+						<a href="#commercial">Commercial</a>
+						<a href="#partners">Partner bindings</a>
+						<a href="#seeds">User seeds</a>
+						<a href="#audit" aria-current="page">Audit</a>
+					</nav>
+				</section>
+			</div>
+		</main>
+	</body>
+</html>

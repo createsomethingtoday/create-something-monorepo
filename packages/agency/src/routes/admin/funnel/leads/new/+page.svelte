@@ -1,9 +1,12 @@
 <script lang="ts">
 	import { SEO } from '@create-something/canon';
-	import type { LeadInput, LeadSource, FunnelStage } from '$lib/funnel';
+	import { enhance } from '$app/forms';
+	import type { LeadSource, FunnelStage } from '$lib/funnel';
+	import type { ActionData } from './$types';
+
+	let { form }: { form: ActionData } = $props();
 
 	let submitting = $state(false);
-	let message = $state<{ type: 'success' | 'error'; text: string } | null>(null);
 
 	// Required fields
 	let name = $state('');
@@ -44,59 +47,6 @@
 		{ value: 'lost', label: 'Lost' }
 	];
 
-	async function handleSubmit(e: Event) {
-		e.preventDefault();
-		submitting = true;
-		message = null;
-
-		const input: LeadInput = {
-			name,
-			source,
-			email: email || undefined,
-			company: company || undefined,
-			role: role || undefined,
-			linkedin_url: linkedin_url || undefined,
-			source_detail: source_detail || undefined,
-			campaign: campaign || undefined,
-			stage,
-			estimated_value,
-			service_interest: service_interest || undefined,
-			notes: notes || undefined
-		};
-
-		try {
-			const res = await fetch('/api/funnel/leads', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(input)
-			});
-
-			if (res.ok) {
-				const data = await res.json();
-				message = { type: 'success', text: `Lead "${name}" created successfully` };
-				// Reset form
-				name = '';
-				email = '';
-				company = '';
-				role = '';
-				linkedin_url = '';
-				source = 'linkedin';
-				source_detail = '';
-				campaign = '';
-				stage = 'awareness';
-				estimated_value = undefined;
-				service_interest = '';
-				notes = '';
-			} else {
-				const err = (await res.json()) as { message?: string };
-				message = { type: 'error', text: err.message || 'Failed to create lead' };
-			}
-		} catch (err) {
-			message = { type: 'error', text: 'Network error' };
-		} finally {
-			submitting = false;
-		}
-	}
 </script>
 
 <SEO
@@ -109,39 +59,50 @@
 <main class="page">
 	<header class="header">
 		<a href="/admin/funnel" class="back-link">← Back to Dashboard</a>
-		<h1>Add Lead</h1>
-		<p class="subtitle">Add a new lead to the pipeline.</p>
+		<h1>Add one lead</h1>
+		<p class="subtitle">This creates a pipeline record. It does not contact the person.</p>
 	</header>
 
-	{#if message}
-		<div class="message" class:success={message.type === 'success'} class:error={message.type === 'error'}>
-			{message.text}
+	{#if form?.success}
+		<div class="message success" role="status">
+			Lead record {form.id} was created in {form.stage}. No contact was sent.
+			<a href="/admin/funnel">Open the funnel dashboard to verify it.</a>
+		</div>
+	{:else if form?.error}
+		<div class="message error" role="alert">
+			{form.error} No lead was created. Review the fields and try again.
 		</div>
 	{/if}
 
-	<form onsubmit={handleSubmit}>
+	<form method="POST" use:enhance={() => {
+		submitting = true;
+		return async ({ update }) => {
+			await update();
+			submitting = false;
+		};
+	}}>
 		<section class="section">
 			<h2 class="section-title">Contact Information</h2>
 			<div class="fields-grid">
 				<div class="field full-width">
 					<label for="name">Name <span class="required">*</span></label>
-					<input type="text" id="name" bind:value={name} required placeholder="John Smith" />
+					<input type="text" id="name" name="name" bind:value={name} required placeholder="John Smith" />
 				</div>
 				<div class="field">
 					<label for="email">Email</label>
-					<input type="email" id="email" bind:value={email} placeholder="john@company.com" />
+					<input type="email" id="email" name="email" bind:value={email} placeholder="john@company.com" />
 				</div>
 				<div class="field">
 					<label for="company">Company</label>
-					<input type="text" id="company" bind:value={company} placeholder="Acme Inc" />
+					<input type="text" id="company" name="company" bind:value={company} placeholder="Acme Inc" />
 				</div>
 				<div class="field">
 					<label for="role">Role / Title</label>
-					<input type="text" id="role" bind:value={role} placeholder="CTO" />
+					<input type="text" id="role" name="role" bind:value={role} placeholder="CTO" />
 				</div>
 				<div class="field">
 					<label for="linkedin">LinkedIn URL</label>
-					<input type="url" id="linkedin" bind:value={linkedin_url} placeholder="https://linkedin.com/in/..." />
+					<input type="url" id="linkedin" name="linkedin_url" bind:value={linkedin_url} placeholder="https://linkedin.com/in/..." />
 				</div>
 			</div>
 		</section>
@@ -151,7 +112,7 @@
 			<div class="fields-grid">
 				<div class="field">
 					<label for="source">Lead Source <span class="required">*</span></label>
-					<select id="source" bind:value={source} required>
+					<select id="source" name="source" bind:value={source} required>
 						{#each sources as s}
 							<option value={s.value}>{s.label}</option>
 						{/each}
@@ -159,11 +120,11 @@
 				</div>
 				<div class="field">
 					<label for="source_detail">Source Detail</label>
-					<input type="text" id="source_detail" bind:value={source_detail} placeholder="e.g., Subtractive Triad post" />
+					<input type="text" id="source_detail" name="source_detail" bind:value={source_detail} placeholder="e.g., Subtractive Triad post" />
 				</div>
 				<div class="field">
 					<label for="campaign">Campaign</label>
-					<input type="text" id="campaign" bind:value={campaign} placeholder="e.g., GTM Sprint 2" />
+					<input type="text" id="campaign" name="campaign" bind:value={campaign} placeholder="e.g., GTM Sprint 2" />
 				</div>
 			</div>
 		</section>
@@ -173,7 +134,7 @@
 			<div class="fields-grid">
 				<div class="field">
 					<label for="stage">Stage</label>
-					<select id="stage" bind:value={stage}>
+					<select id="stage" name="stage" bind:value={stage}>
 						{#each stages as s}
 							<option value={s.value}>{s.label}</option>
 						{/each}
@@ -181,11 +142,11 @@
 				</div>
 				<div class="field">
 					<label for="value">Estimated Value ($)</label>
-					<input type="number" id="value" bind:value={estimated_value} min="0" step="100" placeholder="10000" />
+					<input type="number" id="value" name="estimated_value" bind:value={estimated_value} min="0" step="100" placeholder="10000" />
 				</div>
 				<div class="field full-width">
 					<label for="interest">Service Interest</label>
-					<input type="text" id="interest" bind:value={service_interest} placeholder="e.g., Agent Integration, Web Development" />
+					<input type="text" id="interest" name="service_interest" bind:value={service_interest} placeholder="e.g., Agent Integration, Web Development" />
 				</div>
 			</div>
 		</section>
@@ -194,7 +155,7 @@
 			<h2 class="section-title">Notes</h2>
 			<div class="field">
 				<label for="notes">Initial Notes</label>
-				<textarea id="notes" bind:value={notes} rows="4" placeholder="How did they find us? What are their pain points? Any context..."></textarea>
+				<textarea id="notes" name="notes" bind:value={notes} rows="4" placeholder="How did they find us? What are their pain points? Any context..."></textarea>
 			</div>
 		</section>
 

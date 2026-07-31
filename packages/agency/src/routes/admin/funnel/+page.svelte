@@ -27,12 +27,19 @@
 
 <main class="dashboard">
 	<header class="header">
-		<h1>GTM Funnel</h1>
+		<h1>Find the funnel step that needs attention</h1>
+		<p>Compare this period with the previous one, then update the pipeline where the work is stale.</p>
 		<p class="period">
 			{summary.period.start} — {summary.period.end}
 		</p>
 	</header>
 
+	{#if !data.available}
+		<div class="load-error" role="alert">
+			<p>Funnel data is unavailable. Do not use these numbers to make a pipeline decision yet.</p>
+			<a href="/admin/funnel">Try again</a>
+		</div>
+	{:else}
 	<!-- Awareness Metrics -->
 	<section class="section">
 		<h2 class="section-title">Awareness</h2>
@@ -185,6 +192,7 @@
 			<a href="/admin/community" class="action-button">Community</a>
 		</Card>
 	</section>
+	{/if}
 </main>
 
 <style>

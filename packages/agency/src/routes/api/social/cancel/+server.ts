@@ -6,8 +6,10 @@
 
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { requireAgencyOperator } from '$lib/server/operator-auth';
 
-export const DELETE: RequestHandler = async ({ url, platform }) => {
+export const DELETE: RequestHandler = async ({ url, cookies, platform }) => {
+	await requireAgencyOperator({ cookies, platform });
 	const db = platform?.env?.DB;
 
 	if (!db) {

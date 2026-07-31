@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { SEO } from '@create-something/canon';
+	import SecurityAdminNav from '$lib/components/access/SecurityAdminNav.svelte';
 
 	type Contract = {
 		id: string;
@@ -126,14 +127,10 @@
 <section class="shell">
 	<div class="shell-inner">
 		<header class="hero">
-			<p class="eyebrow">Operator Surface</p>
-			<h1>Contract Ledger</h1>
-			<p>Explicit contract authority for managed bearer access. Use this to override Stripe timing and define legal/commercial posture per user, account, or tenant.</p>
-			<nav class="subnav">
-				<a href="/admin/security">Overview</a>
-				<a href="/admin/security/bearer-tokens">Bearer Governance</a>
-				<a href="/admin/security/contracts" aria-current="page">Contracts</a>
-			</nav>
+			<p class="eyebrow">Contract evidence</p>
+			<h1>Record the contract state used for access</h1>
+			<p>Save the contract evidence used by entitlement checks. This does not activate billing or issue access.</p>
+			<SecurityAdminNav current="contracts" />
 		</header>
 
 		<div class="layout">
@@ -246,9 +243,6 @@
 	.hero { margin-bottom: 2rem; }
 	.eyebrow { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.75rem; color: var(--color-performance-fg-tertiary); }
 	.hero p { max-width: 72ch; color: var(--color-performance-fg-secondary); }
-	.subnav { display: flex; gap: 1rem; margin-top: 1rem; }
-	.subnav a { color: inherit; text-decoration: none; padding-bottom: 0.25rem; border-bottom: 1px solid transparent; }
-	.subnav a[aria-current='page'] { border-color: var(--color-performance-focus); }
 	.layout { display: grid; grid-template-columns: minmax(320px, 420px) 1fr; gap: 1.5rem; align-items: start; }
 	.editor, .records { border: 1px solid var(--color-performance-line); border-radius: var(--radius-performance-md); background: var(--color-performance-panel); padding: 1.25rem; }
 	.form-grid { display: grid; grid-template-columns: 1fr; gap: 0.85rem; }

@@ -9,6 +9,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import type { Lead, FunnelStage } from '$lib/funnel';
+import { requireAgencyOperator } from '$lib/server/operator-auth';
 
 interface LeadUpdateInput {
 	stage?: FunnelStage;
@@ -28,7 +29,8 @@ interface LeadUpdateInput {
 	closed_at?: string;
 }
 
-export const GET: RequestHandler = async ({ params, platform }) => {
+export const GET: RequestHandler = async ({ params, cookies, platform }) => {
+	await requireAgencyOperator({ cookies, platform });
 	const db = platform?.env?.DB;
 	if (!db) {
 		throw error(500, 'Database not available');
@@ -53,7 +55,8 @@ export const GET: RequestHandler = async ({ params, platform }) => {
 	}
 };
 
-export const PATCH: RequestHandler = async ({ params, request, platform }) => {
+export const PATCH: RequestHandler = async ({ params, request, cookies, platform }) => {
+	await requireAgencyOperator({ cookies, platform });
 	const db = platform?.env?.DB;
 	if (!db) {
 		throw error(500, 'Database not available');
@@ -162,7 +165,8 @@ export const PATCH: RequestHandler = async ({ params, request, platform }) => {
 	}
 };
 
-export const DELETE: RequestHandler = async ({ params, platform }) => {
+export const DELETE: RequestHandler = async ({ params, cookies, platform }) => {
+	await requireAgencyOperator({ cookies, platform });
 	const db = platform?.env?.DB;
 	if (!db) {
 		throw error(500, 'Database not available');

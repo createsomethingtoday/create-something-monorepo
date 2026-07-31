@@ -15,6 +15,7 @@
 
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { requireAgencyOperator } from '$lib/server/operator-auth';
 
 // Content categories based on CREATE SOMETHING methodology
 const CONTENT_CATEGORIES = {
@@ -71,7 +72,8 @@ interface Suggestion {
 	priority: 'high' | 'medium' | 'low';
 }
 
-export const GET: RequestHandler = async ({ url, platform }) => {
+export const GET: RequestHandler = async ({ url, cookies, platform }) => {
+	await requireAgencyOperator({ cookies, platform });
 	const db = platform?.env?.DB;
 
 	if (!db) {

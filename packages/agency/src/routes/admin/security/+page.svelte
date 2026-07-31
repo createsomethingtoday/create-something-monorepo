@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { SEO } from '@create-something/canon';
+	import SecurityAdminNav from '$lib/components/access/SecurityAdminNav.svelte';
 
 	type Summary = {
 		totalEntitlements: number;
@@ -64,18 +65,10 @@
 <section class="shell">
 	<div class="shell-inner">
 		<header class="hero">
-			<p class="eyebrow">Operator Surface</p>
-			<h1>Security Operations</h1>
-			<p>Control plane for managed bearer access. CREATE SOMETHING Identity establishes identity; this dashboard shows whether contract, billing, partner, and operator controls currently allow that identity to use MCP.</p>
-			<nav class="subnav">
-				<a href="/admin/security" aria-current="page">Overview</a>
-				<a href="/admin/security/bearer-tokens">Bearer Governance</a>
-				<a href="/admin/security/contracts">Contracts</a>
-				<a href="/admin/security/commercial">Commercial</a>
-				<a href="/admin/security/partners">Partners</a>
-				<a href="/admin/security/seeds">Seeds</a>
-				<a href="/admin/security/audit">Audit</a>
-			</nav>
+			<p class="eyebrow">Access evidence</p>
+			<h1>Find the access state that needs review</h1>
+			<p>Start with denials and missing bindings. Open the matching record before changing access state.</p>
+			<SecurityAdminNav current="overview" />
 		</header>
 
 		<section class="summary-grid">
@@ -277,9 +270,6 @@
 	.hero { margin-bottom: 2rem; }
 	.eyebrow { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.75rem; color: var(--color-performance-fg-tertiary); }
 	.hero p { max-width: 75ch; color: var(--color-performance-fg-secondary); }
-	.subnav { display: flex; gap: 1rem; margin-top: 1rem; }
-	.subnav a { color: inherit; text-decoration: none; padding-bottom: 0.25rem; border-bottom: 1px solid transparent; }
-	.subnav a[aria-current='page'] { border-color: var(--color-performance-focus); }
 	.summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
 	.stat-card, .action-card, .panel { border: 1px solid var(--color-performance-border-default); border-radius: 20px; background: var(--color-performance-hover); padding: 1.2rem; }
 	.stat-card .label { display: block; text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.78rem; color: var(--color-performance-fg-tertiary); margin-bottom: 0.5rem; }

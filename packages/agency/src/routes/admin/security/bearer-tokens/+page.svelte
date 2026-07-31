@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { SEO } from '@create-something/canon';
+	import SecurityAdminNav from '$lib/components/access/SecurityAdminNav.svelte';
 
 	type Entitlement = {
 		auth_subject: string;
@@ -119,14 +120,10 @@
 <section class="shell">
 	<div class="shell-inner">
 		<header class="hero">
-			<p class="eyebrow">Operator Surface</p>
-			<h1>Managed Bearer Governance</h1>
-			<p>Live entitlement state for `.agency` bearer tokens. CREATE SOMETHING Identity proves identity. This table controls whether that identity remains entitled to use MCP access.</p>
-			<nav class="subnav">
-				<a href="/admin/security">Overview</a>
-				<a href="/admin/security/bearer-tokens" aria-current="page">Bearer Governance</a>
-				<a href="/admin/security/contracts">Contracts</a>
-			</nav>
+			<p class="eyebrow">Entitlement controls</p>
+			<h1>Review managed bearer access</h1>
+			<p>Confirm contract, billing, policy, and organization state before changing access. Saving records the entitlement decision; it does not issue a token.</p>
+			<SecurityAdminNav current="bearer-tokens" />
 		</header>
 
 		<div class="toolbar">
@@ -202,9 +199,6 @@
 	.hero { margin-bottom: 2rem; }
 	.eyebrow { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.75rem; color: var(--color-performance-fg-tertiary); }
 	.hero p { max-width: 70ch; color: var(--color-performance-fg-secondary); }
-	.subnav { display: flex; gap: 1rem; margin-top: 1rem; }
-	.subnav a { color: inherit; text-decoration: none; padding-bottom: 0.25rem; border-bottom: 1px solid transparent; }
-	.subnav a[aria-current='page'] { border-color: var(--color-performance-focus); }
 	.toolbar { display: flex; gap: 0.75rem; margin-bottom: 1rem; }
 	.toolbar input, td input { width: 100%; border-radius: var(--radius-performance-sm); border: 1px solid var(--color-performance-line); background: var(--color-performance-panel); color: inherit; padding: 0.75rem 0.9rem; }
 	.toolbar button, td button { border: 1px solid var(--color-performance-ink); border-radius: var(--radius-performance-sm); padding: 0.75rem 1rem; font: inherit; font-weight: 700; background: var(--color-performance-ink); color: var(--color-performance-panel); box-shadow: none; }

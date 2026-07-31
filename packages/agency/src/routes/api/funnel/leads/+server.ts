@@ -8,8 +8,10 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { generateId, type Lead, type LeadInput, type FunnelStage } from '$lib/funnel';
+import { requireAgencyOperator } from '$lib/server/operator-auth';
 
-export const GET: RequestHandler = async ({ url, platform }) => {
+export const GET: RequestHandler = async ({ url, cookies, platform }) => {
+	await requireAgencyOperator({ cookies, platform });
 	const db = platform?.env?.DB;
 	if (!db) {
 		throw error(500, 'Database not available');
@@ -48,7 +50,8 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 	}
 };
 
-export const POST: RequestHandler = async ({ request, platform }) => {
+export const POST: RequestHandler = async ({ request, cookies, platform }) => {
+	await requireAgencyOperator({ cookies, platform });
 	const db = platform?.env?.DB;
 	if (!db) {
 		throw error(500, 'Database not available');

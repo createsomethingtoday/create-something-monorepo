@@ -46,10 +46,13 @@
 		if (text.length <= length) return text;
 		return text.slice(0, length) + '...';
 	}
-	
-	// Track dismissed items for optimistic UI
-	let dismissedSignals = $state<Set<string>>(new Set());
-	let processedQueue = $state<Set<string>>(new Set());
+
+	const actionReceipts: Record<string, string> = {
+		approved: 'Draft approved for the response queue. Nothing was published.',
+		rejected: 'Draft rejected and its source signal dismissed.',
+		dismissed: 'Signal dismissed from the review queue.',
+		flagged: 'Signal marked reviewed for manual follow-up.'
+	};
 </script>
 
 <SEO
@@ -62,9 +65,10 @@
 <main class="dashboard">
 	<header class="dashboard-header">
 		<div class="header-content">
-			<h1>Community</h1>
-			<p class="subtitle">Your 5-minute review. Then deep work.</p>
+			<h1>Review community signals</h1>
+			<p class="subtitle">Review new signals and draft responses. These decisions do not publish anything.</p>
 		</div>
+		{#if data.available}
 		<div class="header-stats">
 			<div class="stat">
 				<span class="stat-value">{data.stats.new_signals}</span>
@@ -83,11 +87,22 @@
 				<span class="stat-label">This Week</span>
 			</div>
 		</div>
+		{/if}
 	</header>
 
+	{#if !data.available}
+		<div class="toast" role="alert">
+			<p>Community data is unavailable. Stop: do not review or approve responses until it loads.</p>
+			<a href="/admin/community">Try again</a>
+		</div>
+	{:else}
 	{#if form?.success}
-		<div class="toast success">
-			Action completed: {form.action}
+		<div class="toast success" role="status">
+			{actionReceipts[form.action] ?? 'Decision recorded.'} Record {form.id}.
+		</div>
+	{:else if form?.error}
+		<div class="toast" role="alert">
+			{form.error} The record remains in the queue. Try again.
 		</div>
 	{/if}
 
@@ -104,7 +119,6 @@
 			{:else}
 				<div class="queue-list">
 					{#each data.queue as item}
-						{#if !processedQueue.has(item.id)}
 							<div class="queue-item">
 								<div class="queue-header">
 									<span class="platform-badge" style="background: {platformColors[item.platform] || '#666'}">
@@ -123,7 +137,8 @@
 								
 								<div class="draft-content">
 									<textarea 
-										name="draft" 
+										name="edited_content"
+										form={`approve-${item.id}`}
 										class="draft-textarea"
 										value={item.draft_content}
 									></textarea>
@@ -134,24 +149,12 @@
 								{/if}
 								
 								<div class="queue-actions">
-									<form method="POST" action="?/approve" use:enhance={() => {
-										processedQueue.add(item.id);
-										processedQueue = processedQueue;
-										return async ({ update }) => {
-											await update();
-										};
-									}}>
+									<form id={`approve-${item.id}`} method="POST" action="?/approve" use:enhance>
 										<input type="hidden" name="id" value={item.id} />
 										<button type="submit" class="btn btn-approve">Approve</button>
 									</form>
 									
-									<form method="POST" action="?/reject" use:enhance={() => {
-										processedQueue.add(item.id);
-										processedQueue = processedQueue;
-										return async ({ update }) => {
-											await update();
-										};
-									}}>
+									<form method="POST" action="?/reject" use:enhance>
 										<input type="hidden" name="id" value={item.id} />
 										<button type="submit" class="btn btn-reject">Reject</button>
 									</form>
@@ -161,7 +164,6 @@
 									{/if}
 								</div>
 							</div>
-						{/if}
 					{/each}
 				</div>
 			{/if}
@@ -179,7 +181,6 @@
 			{:else}
 				<div class="signals-list">
 					{#each data.signals as signal}
-						{#if !dismissedSignals.has(signal.id)}
 							<div class="signal-item" style="--urgency-color: {urgencyColors[signal.urgency]}">
 								<div class="signal-header">
 									<span class="platform-badge" style="background: {platformColors[signal.platform] || '#666'}">
@@ -200,24 +201,12 @@
 								<p class="signal-content">{truncate(signal.content, 200)}</p>
 								
 								<div class="signal-actions">
-									<form method="POST" action="?/flag" use:enhance={() => {
-										dismissedSignals.add(signal.id);
-										dismissedSignals = dismissedSignals;
-										return async ({ update }) => {
-											await update();
-										};
-									}}>
+									<form method="POST" action="?/flag" use:enhance>
 										<input type="hidden" name="id" value={signal.id} />
-										<button type="submit" class="btn btn-flag">Flag for Response</button>
+										<button type="submit" class="btn btn-flag">Mark for follow-up</button>
 									</form>
 									
-									<form method="POST" action="?/dismiss" use:enhance={() => {
-										dismissedSignals.add(signal.id);
-										dismissedSignals = dismissedSignals;
-										return async ({ update }) => {
-											await update();
-										};
-									}}>
+									<form method="POST" action="?/dismiss" use:enhance>
 										<input type="hidden" name="id" value={signal.id} />
 										<button type="submit" class="btn btn-dismiss">Dismiss</button>
 									</form>
@@ -227,7 +216,6 @@
 									{/if}
 								</div>
 							</div>
-						{/if}
 					{/each}
 				</div>
 			{/if}
@@ -280,6 +268,7 @@
 		<p>Generated {new Date(data.generatedAt).toLocaleTimeString()}</p>
 		<a href="/admin/funnel" class="nav-link">Back to Funnel</a>
 	</footer>
+	{/if}
 </main>
 
 <style>

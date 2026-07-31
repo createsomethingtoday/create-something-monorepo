@@ -1,10 +1,12 @@
 <script lang="ts">
 	import { SEO } from '@create-something/canon';
-	import type { FunnelMetricsInput } from '$lib/funnel';
+	import { enhance } from '$app/forms';
+	import type { ActionData } from './$types';
+
+	let { form }: { form: ActionData } = $props();
 
 	let date = $state(new Date().toISOString().split('T')[0]);
 	let submitting = $state(false);
-	let message = $state<{ type: 'success' | 'error'; text: string } | null>(null);
 
 	// LinkedIn metrics
 	let linkedin_impressions = $state<number | undefined>();
@@ -29,49 +31,6 @@
 	// Notes
 	let notes = $state('');
 
-	async function handleSubmit(e: Event) {
-		e.preventDefault();
-		submitting = true;
-		message = null;
-
-		const input: FunnelMetricsInput = {
-			date,
-			linkedin_impressions,
-			linkedin_reach,
-			linkedin_followers,
-			linkedin_follower_delta,
-			linkedin_engagements,
-			linkedin_profile_views,
-			website_visits,
-			website_unique_visitors,
-			content_downloads,
-			discovery_calls_scheduled,
-			discovery_calls_completed,
-			proposals_sent,
-			deals_closed,
-			revenue_closed,
-			notes: notes || undefined
-		};
-
-		try {
-			const res = await fetch('/api/funnel', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(input)
-			});
-
-			if (res.ok) {
-				message = { type: 'success', text: `Metrics recorded for ${date}` };
-			} else {
-				const err = (await res.json()) as { message?: string };
-				message = { type: 'error', text: err.message || 'Failed to record metrics' };
-			}
-		} catch (err) {
-			message = { type: 'error', text: 'Network error' };
-		} finally {
-			submitting = false;
-		}
-	}
 </script>
 
 <SEO
@@ -84,22 +43,33 @@
 <main class="page">
 	<header class="header">
 		<a href="/admin/funnel" class="back-link">← Back to Dashboard</a>
-		<h1>Record Daily Metrics</h1>
-		<p class="subtitle">Enter metrics for a specific date. Existing data for the date will be updated.</p>
+		<h1>Record funnel metrics</h1>
+		<p class="subtitle">Choose a date and save its manual counts. Website fields may later be refreshed from analytics.</p>
 	</header>
 
-	{#if message}
-		<div class="message" class:success={message.type === 'success'} class:error={message.type === 'error'}>
-			{message.text}
+	{#if form?.success}
+		<div class="message success" role="status">
+			Metrics for {form.date} were saved. Open the funnel dashboard to verify the updated period.
+			<a href="/admin/funnel">Open funnel dashboard</a>
+		</div>
+	{:else if form?.error}
+		<div class="message error" role="alert">
+			{form.error} No metrics were saved. Review the fields and try again.
 		</div>
 	{/if}
 
-	<form onsubmit={handleSubmit}>
+	<form method="POST" use:enhance={() => {
+		submitting = true;
+		return async ({ update }) => {
+			await update();
+			submitting = false;
+		};
+	}}>
 		<section class="section">
 			<h2 class="section-title">Date</h2>
 			<div class="field">
 				<label for="date">Metrics Date</label>
-				<input type="date" id="date" bind:value={date} required />
+				<input type="date" id="date" name="date" bind:value={date} required />
 			</div>
 		</section>
 
@@ -109,27 +79,27 @@
 			<div class="fields-grid">
 				<div class="field">
 					<label for="impressions">Impressions</label>
-					<input type="number" id="impressions" bind:value={linkedin_impressions} min="0" placeholder="0" />
+					<input type="number" id="impressions" name="linkedin_impressions" bind:value={linkedin_impressions} min="0" placeholder="0" />
 				</div>
 				<div class="field">
 					<label for="reach">Reach (Members)</label>
-					<input type="number" id="reach" bind:value={linkedin_reach} min="0" placeholder="0" />
+					<input type="number" id="reach" name="linkedin_reach" bind:value={linkedin_reach} min="0" placeholder="0" />
 				</div>
 				<div class="field">
 					<label for="engagements">Engagements</label>
-					<input type="number" id="engagements" bind:value={linkedin_engagements} min="0" placeholder="0" />
+					<input type="number" id="engagements" name="linkedin_engagements" bind:value={linkedin_engagements} min="0" placeholder="0" />
 				</div>
 				<div class="field">
 					<label for="profile_views">Profile Views</label>
-					<input type="number" id="profile_views" bind:value={linkedin_profile_views} min="0" placeholder="0" />
+					<input type="number" id="profile_views" name="linkedin_profile_views" bind:value={linkedin_profile_views} min="0" placeholder="0" />
 				</div>
 				<div class="field">
 					<label for="followers">Total Followers</label>
-					<input type="number" id="followers" bind:value={linkedin_followers} min="0" placeholder="0" />
+					<input type="number" id="followers" name="linkedin_followers" bind:value={linkedin_followers} min="0" placeholder="0" />
 				</div>
 				<div class="field">
 					<label for="follower_delta">New Followers</label>
-					<input type="number" id="follower_delta" bind:value={linkedin_follower_delta} placeholder="0" />
+					<input type="number" id="follower_delta" name="linkedin_follower_delta" bind:value={linkedin_follower_delta} placeholder="0" />
 				</div>
 			</div>
 		</section>
@@ -140,15 +110,15 @@
 			<div class="fields-grid">
 				<div class="field">
 					<label for="visits">Total Visits</label>
-					<input type="number" id="visits" bind:value={website_visits} min="0" placeholder="0" />
+					<input type="number" id="visits" name="website_visits" bind:value={website_visits} min="0" placeholder="0" />
 				</div>
 				<div class="field">
 					<label for="unique">Unique Visitors</label>
-					<input type="number" id="unique" bind:value={website_unique_visitors} min="0" placeholder="0" />
+					<input type="number" id="unique" name="website_unique_visitors" bind:value={website_unique_visitors} min="0" placeholder="0" />
 				</div>
 				<div class="field">
 					<label for="downloads">Content Downloads</label>
-					<input type="number" id="downloads" bind:value={content_downloads} min="0" placeholder="0" />
+					<input type="number" id="downloads" name="content_downloads" bind:value={content_downloads} min="0" placeholder="0" />
 				</div>
 			</div>
 		</section>
@@ -159,23 +129,23 @@
 			<div class="fields-grid">
 				<div class="field">
 					<label for="calls_scheduled">Calls Scheduled</label>
-					<input type="number" id="calls_scheduled" bind:value={discovery_calls_scheduled} min="0" placeholder="0" />
+					<input type="number" id="calls_scheduled" name="discovery_calls_scheduled" bind:value={discovery_calls_scheduled} min="0" placeholder="0" />
 				</div>
 				<div class="field">
 					<label for="calls_completed">Calls Completed</label>
-					<input type="number" id="calls_completed" bind:value={discovery_calls_completed} min="0" placeholder="0" />
+					<input type="number" id="calls_completed" name="discovery_calls_completed" bind:value={discovery_calls_completed} min="0" placeholder="0" />
 				</div>
 				<div class="field">
 					<label for="proposals">Proposals Sent</label>
-					<input type="number" id="proposals" bind:value={proposals_sent} min="0" placeholder="0" />
+					<input type="number" id="proposals" name="proposals_sent" bind:value={proposals_sent} min="0" placeholder="0" />
 				</div>
 				<div class="field">
 					<label for="deals">Deals Closed</label>
-					<input type="number" id="deals" bind:value={deals_closed} min="0" placeholder="0" />
+					<input type="number" id="deals" name="deals_closed" bind:value={deals_closed} min="0" placeholder="0" />
 				</div>
 				<div class="field">
 					<label for="revenue">Revenue Closed ($)</label>
-					<input type="number" id="revenue" bind:value={revenue_closed} min="0" step="0.01" placeholder="0.00" />
+					<input type="number" id="revenue" name="revenue_closed" bind:value={revenue_closed} min="0" step="0.01" placeholder="0.00" />
 				</div>
 			</div>
 		</section>
@@ -184,7 +154,7 @@
 			<h2 class="section-title">Notes</h2>
 			<div class="field">
 				<label for="notes">Daily Notes (optional)</label>
-				<textarea id="notes" bind:value={notes} rows="3" placeholder="Top performing posts, observations, etc."></textarea>
+				<textarea id="notes" name="notes" bind:value={notes} rows="3" placeholder="Top performing posts, observations, etc."></textarea>
 			</div>
 		</section>
 
