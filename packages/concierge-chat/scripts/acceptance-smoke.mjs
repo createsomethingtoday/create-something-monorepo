@@ -218,6 +218,24 @@ async function prepareBookedCandidateThread(client) {
 		/Find the office/i,
 		'Expected the NPG client-service experience'
 	);
+	assert.match(
+		clientServicePage.bodyText,
+		/\/npg-client-service\/logo-mark\.svg/,
+		'Expected the NPG client-service identity mark'
+	);
+	assert.match(
+		clientServicePage.bodyText,
+		/rel="apple-touch-icon"[^>]+\/npg-client-service\/apple-touch-icon\.png/,
+		'Expected the NPG client-service webclip metadata'
+	);
+	assert.match(
+		clientServicePage.bodyText,
+		/rel="manifest"[^>]+\/npg-client-service\/site\.webmanifest/,
+		'Expected the NPG client-service manifest metadata'
+	);
+
+	const clientServiceWebclip = await client.get('/npg-client-service/apple-touch-icon.png');
+	assert.equal(clientServiceWebclip.status, 200, 'Expected the NPG client-service webclip asset');
 
 	const created = await client.postJson('/api/threads', {});
 	assertOk(created, 'Failed to create thread');
