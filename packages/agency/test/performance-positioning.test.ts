@@ -77,6 +77,15 @@ test('the homepage moves from claim to proof to method before asking visitors to
   }
 });
 
+test('the homepage boundary artifact shows evidence without restating the scene introduction', () => {
+  assert.match(home, /<figure class="boundary-study__media">/);
+  assert.match(home, /<figcaption>Boundary study · Run \/ Wait \/ Stop<\/figcaption>/);
+  assert.doesNotMatch(home, /class="boundary-study__copy"/);
+  assert.match(home, /class="boundary-study__outcomes"/);
+  assert.match(home, /class="boundary-study__metrics"/);
+  assert.match(home, /class="boundary-study__receipt"/);
+});
+
 test('the shared readback derives a measured example and its limits from field-report truth', () => {
   assert.equal(templateReviewFieldReport.evidence.usableCases, 49);
   assert.equal(templateReviewFieldReport.evidence.selectedCases, 50);

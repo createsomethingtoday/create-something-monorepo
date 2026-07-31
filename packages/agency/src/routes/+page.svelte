@@ -247,28 +247,22 @@
   >
     {#snippet artifact(scene: PerformanceNarrativeScene)}
       {#if scene.id === 'boundary'}
-        <article class="boundary-study" aria-labelledby="boundary-study-title">
-          <picture class="boundary-study__media">
-            <source
-              media="(max-width: 47.99rem)"
-              srcset="/images/performance-lab/pressure-boundary-natural-mobile.webp"
-            />
-            <img
-              src="/images/performance-lab/pressure-boundary-natural.webp"
-              alt="Black-and-white field study of water meeting a designed boundary."
-              loading="lazy"
-            />
-          </picture>
+        <article class="boundary-study" aria-label="Boundary study: run, wait, stop">
+          <figure class="boundary-study__media">
+            <picture>
+              <source
+                media="(max-width: 47.99rem)"
+                srcset="/images/performance-lab/pressure-boundary-natural-mobile.webp"
+              />
+              <img
+                src="/images/performance-lab/pressure-boundary-natural.webp"
+                alt="Black-and-white field study of water meeting a designed boundary."
+                loading="lazy"
+              />
+            </picture>
+            <figcaption>Boundary study · Run / Wait / Stop</figcaption>
+          </figure>
           <div class="boundary-study__body">
-            <div class="boundary-study__copy">
-              <span>Performance principle</span>
-              <h3 id="boundary-study-title">Test the boundary before work moves.</h3>
-              <p>
-                <strong>Decide what can run before it starts.</strong> Map the handoff, name who approves
-                it, define when it stops, and keep a record before the workflow can do more.
-              </p>
-              <p class="boundary-study__principle">The rules decide what runs, waits, or stops.</p>
-            </div>
             <div
               class="boundary-study__outcomes"
               aria-label="Workflow before and after controlled delegation"
@@ -398,8 +392,17 @@
   }
 
   .boundary-study__media {
+    position: relative;
+    margin: 0;
     min-height: 31rem;
     border-right: 1px solid var(--color-performance-line, #d7d7d2);
+    overflow: hidden;
+  }
+
+  .boundary-study__media picture {
+    display: block;
+    width: 100%;
+    height: 100%;
   }
 
   .boundary-study__media img {
@@ -409,25 +412,32 @@
     filter: grayscale(1);
   }
 
+  .boundary-study__media figcaption {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    padding: 0.65rem 0.8rem;
+    border-top: 1px solid var(--color-performance-line-strong, #a9aaa5);
+    background: color-mix(in srgb, var(--color-performance-ink, #090909) 88%, transparent);
+    color: var(--color-performance-panel, #ffffff);
+    font-family: var(--font-performance-mono);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+  }
+
   .boundary-study__body {
+    display: grid;
+    align-content: start;
     min-width: 0;
   }
 
-  .boundary-study__copy,
   .boundary-study__outcomes,
   .boundary-study__metrics,
   .boundary-study__receipt {
     margin: 0;
   }
 
-  .boundary-study__copy {
-    display: grid;
-    align-content: start;
-    gap: 0.75rem;
-    padding: 1.15rem;
-  }
-
-  .boundary-study__copy > span,
   .boundary-study :is(dt, small) {
     color: var(--color-performance-muted, #5e6268);
     font-family: var(--font-performance-mono);
@@ -435,29 +445,13 @@
     text-transform: uppercase;
   }
 
-  .boundary-study__copy h3,
-  .boundary-study__copy p,
   .ownership-callout :is(h3, p) {
     margin: 0;
   }
 
-  .boundary-study__copy h3 {
-    font-size: clamp(1.65rem, 3vw, 2.35rem);
-    font-weight: var(--font-performance-medium);
-    line-height: 1.02;
-  }
-
-  .boundary-study__copy p,
   .boundary-study__metrics span {
     color: var(--color-performance-muted, #5e6268);
     line-height: 1.45;
-  }
-
-  .boundary-study__principle {
-    padding-top: 0.75rem;
-    border-top: 1px solid var(--color-performance-line, #d7d7d2);
-    color: var(--color-performance-ink, #090909) !important;
-    font-weight: var(--font-performance-medium);
   }
 
   .boundary-study__metrics {
@@ -507,7 +501,6 @@
   .boundary-study__outcomes {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    border-top: 1px solid var(--color-performance-line, #d7d7d2);
   }
 
   .operator-outcome {
