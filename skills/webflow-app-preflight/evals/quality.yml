@@ -1,51 +1,101 @@
 # Quality evals derived from a fixture app carrying 24 planted violations.
-# Baseline: 24/24 caught with this skill; 14/24 unaided, with 3 inverted recommendations.
+# Baseline (cases 1-5): 24/24 caught with this skill; 14/24 unaided, with 3 inverted recommendations.
+# Cases 6-9 cover the "Backend and API surface" section, added after that baseline was measured.
+# They are not represented in the 24-violation fixture, so they have no unaided control figure yet.
+# Case 9 specifically covers gaps found by auditing issued rejections against the skill:
+# OAuth state/CSRF validation, backend code bundled into the client artifact, and PII in logs.
 evals:
   - id: 1
     input: "Review this Webflow App submission candidate. It hardcodes WEBFLOW_CLIENT_SECRET in the Designer Extension entry point and filters form fields for type === 'password'."
-    expected_output: "Findings led by the leaked client secret and credential-field collection, each with file evidence and a fix, ending in a DO NOT SUBMIT verdict."
+    expected_output: 'Findings led by the leaked client secret and credential-field collection, each with file evidence and a fix, ending in a DO NOT SUBMIT verdict.'
     assertions:
-      - type: "contains"
-        value: "Client Secret"
-      - type: "contains"
-        value: "credential"
-      - type: "contains"
-        value: "DO NOT SUBMIT"
+      - type: 'contains'
+        value: 'Client Secret'
+      - type: 'contains'
+        value: 'credential'
+      - type: 'contains'
+        value: 'DO NOT SUBMIT'
   - id: 2
-    input: "My app registers a hosted script at https://cdn.example.com/latest/loader.js with no integrityHash so we can push fixes without re-review, and pushUpdate re-registers version 1.0.0 with new source."
-    expected_output: "Flags the unpinned loader as a review-bypass with removal and ban risk, and separately flags in-place version mutation, requiring a new version plus App update."
+    input: 'My app registers a hosted script at https://cdn.example.com/latest/loader.js with no integrityHash so we can push fixes without re-review, and pushUpdate re-registers version 1.0.0 with new source.'
+    expected_output: 'Flags the unpinned loader as a review-bypass with removal and ban risk, and separately flags in-place version mutation, requiring a new version plus App update.'
     assertions:
-      - type: "contains"
-        value: "integrityHash"
-      - type: "contains"
-        value: "App update"
-      - type: "contains"
-        value: "immutable"
+      - type: 'contains'
+        value: 'integrityHash'
+      - type: 'contains'
+        value: 'App update'
+      - type: 'contains'
+        value: 'immutable'
   - id: 3
     input: "Our sync loop calls the Data API every 60 seconds and logs '401, retrying in 60s' when the token fails. onUninstall only console.logs because Webflow removes our scripts automatically."
-    expected_output: "Identifies persistent 401 as revocation requiring an immediate stop (not backoff), and corrects the false claim that Webflow auto-removes injected scripts."
+    expected_output: 'Identifies persistent 401 as revocation requiring an immediate stop (not backoff), and corrects the false claim that Webflow auto-removes injected scripts.'
     assertions:
-      - type: "contains"
-        value: "revocation"
-      - type: "contains"
-        value: "uninstall"
-      - type: "not_contains"
-        value: "exponential backoff and retry"
+      - type: 'contains'
+        value: 'revocation'
+      - type: 'contains'
+        value: 'uninstall'
+      - type: 'not_contains'
+        value: 'exponential backoff and retry'
   - id: 4
-    input: "configuredScopes omits sites:write and pages:write but the install URL requests them, and we also request ecommerce:write and users:write which nothing calls."
-    expected_output: "Flags the Install URL scope mismatch as breaking every install, and the unused scopes as over-asking."
+    input: 'configuredScopes omits sites:write and pages:write but the install URL requests them, and we also request ecommerce:write and users:write which nothing calls.'
+    expected_output: 'Flags the Install URL scope mismatch as breaking every install, and the unused scopes as over-asking.'
     assertions:
-      - type: "contains"
-        value: "Install URL"
-      - type: "contains"
-        value: "subset"
+      - type: 'contains'
+        value: 'Install URL'
+      - type: 'contains'
+        value: 'subset'
   - id: 5
     input: "We're launching private first as our public beta while we finish the CMS sync feature. Avatar is icon-640x480.png, two screenshots, no demo video."
-    expected_output: "Corrects that private Apps get the same review and are not a beta tier, points to the user-testing process, and flags all three listing-asset failures."
+    expected_output: 'Corrects that private Apps get the same review and are not a beta tier, points to the user-testing process, and flags all three listing-asset failures.'
     assertions:
-      - type: "contains"
-        value: "512"
-      - type: "contains"
-        value: "demo video"
-      - type: "contains"
-        value: "user testing"
+      - type: 'contains'
+        value: '512'
+      - type: 'contains'
+        value: 'demo video'
+      - type: 'contains'
+        value: 'user testing'
+  - id: 6
+    input: "Our config endpoint is GET /app-config?siteId=<id> and it returns the customer's third-party API key so the extension can call the vendor directly. It answers Access-Control-Allow-Origin: * so any origin works, and we don't send an Authorization header because only our extension knows the site ID."
+    expected_output: 'Flags the unauthenticated endpoint and the use of a client-supplied siteId as authorization, the credential returned to the browser, and wildcard CORS — requiring server-side ID token resolution plus object-level authorization, and ending in DO NOT SUBMIT.'
+    assertions:
+      - type: 'contains'
+        value: 'ID token'
+      - type: 'contains'
+        value: 'object-level'
+      - type: 'contains'
+        value: 'CORS'
+      - type: 'contains'
+        value: 'DO NOT SUBMIT'
+      - type: 'not_contains'
+        value: 'CORS restricts which origins'
+  - id: 7
+    input: "The user types their vendor host into a settings field and we send the API key to it in an api-key header; our check only rejects localhost. We store the decoded session token in localStorage under our own key and read the user's name from it. The tracking snippet is built by string-interpolating the account ID into the generated JavaScript."
+    expected_output: 'Flags the user-controlled outbound destination as requiring a server-side allowlist and HTTPS, the localStorage identity as forgeable and not a security control, and the interpolation as stored script injection.'
+    assertions:
+      - type: 'contains'
+        value: 'allowlist'
+      - type: 'contains'
+        value: 'localStorage'
+      - type: 'contains'
+        value: 'serialize'
+  - id: 8
+    input: "The bundle points at https://stg-api.example.com for everything and there's no production host in it. A dependency audit shows two High advisories we plan to fix later. Every submission is created with our engineer's email as the owner. index.html is still titled 'My React App' and webflow.json appears twice in the archive."
+    expected_output: 'Flags non-production infrastructure in the artifact, unresolved High advisories requiring upgrades or a reachability analysis, the hardcoded owner identity as an auditability and tenant-isolation problem, and the manifest/title hygiene items.'
+    assertions:
+      - type: 'contains'
+        value: 'production'
+      - type: 'contains'
+        value: 'reachability'
+      - type: 'contains'
+        value: 'owner'
+  - id: 9
+    input: 'Our callback function takes only the authorization code and exchanges it. We read siteId with jwtDecode before resolving the token. The client bundle includes our server handlers and DB schema, and the shipped source map exposes them. We log the full contact payload including email and phone on every sync.'
+    expected_output: 'Flags the missing single-use state validation (and PKCE where supported), identity derived from an unverified decoded token instead of a server-resolved one, backend code bundled into the client artifact as the defect the source map revealed, and personal data in production logs requiring redaction at the logging boundary.'
+    assertions:
+      - type: 'contains'
+        value: 'single-use'
+      - type: 'contains'
+        value: 'PKCE'
+      - type: 'contains'
+        value: 'redact'
+      - type: 'not_contains'
+        value: 'disable the source map'

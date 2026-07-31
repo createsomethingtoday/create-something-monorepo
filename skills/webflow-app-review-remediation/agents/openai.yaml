@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Webflow App Review Remediation'
+  short_description: 'Turn issued findings into verified fixes'
+  default_prompt: 'Use $webflow-app-review-remediation to turn these issued Webflow findings into a verified remediation plan.'

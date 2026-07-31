@@ -79,6 +79,8 @@
     "dify:templates:check": "tsx scripts/dify-template-pack.ts check",
     "promptfoo:hub:validate": "pnpm dlx promptfoo@latest validate -c evals/promptfoo/hub/promptfooconfig.yaml",
     "promptfoo:hub:eval": "pnpm dlx promptfoo@latest eval -c evals/promptfoo/hub/promptfooconfig.yaml",
+    "skill:app-preflight:eval": "node skills/webflow-app-preflight/evals/run-static-evals.mjs",
+    "skill:app-review-remediation:eval": "node skills/webflow-app-review-remediation/evals/run-static-evals.mjs",
     "open-weight:eval": "node scripts/open-weight-agent-local-eval.mjs",
     "open-weight:eval:dry-run": "node scripts/open-weight-agent-local-eval.mjs --mode dry-run",
     "open-weight:eval:endpoint": "node scripts/open-weight-agent-local-eval.mjs --mode endpoint",

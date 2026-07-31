@@ -17,13 +17,13 @@ An App that uses both is a **Hybrid App**: Designer UI in front, Data Client man
 
 Fields:
 
-| Field | Requirement |
-|---|---|
-| **Name** | The App's name |
-| **Description** | Short summary of purpose — 140 characters max |
-| **Icon** | Represents your App (see listing spec: 512×512, 1:1 for the Marketplace avatar) |
-| **Homepage URL** | Valid **HTTPS** link to your App's website |
-| **Restrict app installation to a specific site** | Optional toggle — single site vs. multiple sites / workspace-wide |
+| Field                                            | Requirement                                                                     |
+| ------------------------------------------------ | ------------------------------------------------------------------------------- |
+| **Name**                                         | The App's name                                                                  |
+| **Description**                                  | Short summary of purpose — 140 characters max                                   |
+| **Icon**                                         | Represents your App (see listing spec: 512×512, 1:1 for the Marketplace avatar) |
+| **Homepage URL**                                 | Valid **HTTPS** link to your App's website                                      |
+| **Restrict app installation to a specific site** | Optional toggle — single site vs. multiple sites / workspace-wide               |
 
 Then select **building blocks**:
 

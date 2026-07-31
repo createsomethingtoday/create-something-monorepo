@@ -2,14 +2,14 @@
 
 ## Listing assets
 
-| Asset | Spec |
-|---|---|
-| **App avatar / icon** | 512×512, 1:1 aspect ratio |
-| **Detailed description** | Specific about what the App does and the benefit to users. Avoid vagueness and marketing filler. |
-| **Screenshots** | 3–5 images at **1280×846**, showing real features with clear visuals |
-| **Demo video** | A 2–5 minute walkthrough from install to usage. **Data Client Apps must** show a working OAuth flow with the user **approving and denying** the request, and describe your integration with Webflow. Private link to Loom, YouTube (unlisted), or Google Drive. |
-| **Homepage URL** | Valid HTTPS |
-| **Designer Extension source** | Upload the `bundle.zip` (built via `webflow extension bundle`) through the App version manager. Webflow may request source maps or equivalent review artifacts; these need not ship in the public production bundle unless Webflow requires it. |
+| Asset                         | Spec                                                                                                                                                                                                                                                            |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **App avatar / icon**         | 512×512, 1:1 aspect ratio                                                                                                                                                                                                                                       |
+| **Detailed description**      | Specific about what the App does and the benefit to users. Avoid vagueness and marketing filler.                                                                                                                                                                |
+| **Screenshots**               | 3–5 images at **1280×846**, showing real features with clear visuals                                                                                                                                                                                            |
+| **Demo video**                | A 2–5 minute walkthrough from install to usage. **Data Client Apps must** show a working OAuth flow with the user **approving and denying** the request, and describe your integration with Webflow. Private link to Loom, YouTube (unlisted), or Google Drive. |
+| **Homepage URL**              | Valid HTTPS                                                                                                                                                                                                                                                     |
+| **Designer Extension source** | Upload the `bundle.zip` (built via `webflow extension bundle`) through the App version manager. Webflow may request source maps or equivalent review artifacts; these need not ship in the public production bundle unless Webflow requires it.                 |
 
 ## Privacy & data protection
 
@@ -46,7 +46,7 @@ Practical consequence most Apps miss: if your backend stores customer data, **un
 
 Marketplace Apps should be complete, functional, and ready for their intended audience at submission. **Beta, incomplete, or pre-release Apps should not be published.**
 
-To validate an App with external users before publishing, use Webflow's **user testing process** — this is *separate from* creating a private App. A private App is a workspace-specific/custom App that still goes through the **same rigorous review as public Apps**; it is not a testing tier or a way to skip the quality bar.
+To validate an App with external users before publishing, use Webflow's **user testing process** — this is _separate from_ creating a private App. A private App is a workspace-specific/custom App that still goes through the **same rigorous review as public Apps**; it is not a testing tier or a way to skip the quality bar.
 
 ## Process & timeline
 
