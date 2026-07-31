@@ -8,6 +8,7 @@
 		FIRST_PARTY_SCHEDULER_ORIGIN,
 		normalizeSchedulerAccessUrl,
 		normalizeSchedulerLifecycleMessage,
+		normalizeSchedulerResizeMessage,
 		schedulerHandoffContext,
 		type SchedulerAccess
 	} from '$lib/scheduling/first-party';
@@ -34,9 +35,15 @@
 		}
 	}
 
-	function receiveSchedulerLifecycle(event: MessageEvent) {
+	function receiveSchedulerMessage(event: MessageEvent) {
 		if (event.origin !== FIRST_PARTY_SCHEDULER_ORIGIN) return;
 		if (event.source !== schedulerFrame?.contentWindow) return;
+		const documentHeight = normalizeSchedulerResizeMessage(event.data);
+		if (documentHeight) {
+			const frameBorder = schedulerFrame.offsetHeight - schedulerFrame.clientHeight;
+			schedulerFrame.style.height = `${documentHeight + frameBorder}px`;
+			return;
+		}
 		const lifecycle = normalizeSchedulerLifecycleMessage(event.data);
 		if (!lifecycle) return;
 
@@ -49,7 +56,7 @@
 	}
 
 	onMount(() => {
-		window.addEventListener('message', receiveSchedulerLifecycle);
+		window.addEventListener('message', receiveSchedulerMessage);
 		schedulerAccess = normalizeSchedulerAccessUrl(window.location.href);
 		if (schedulerAccess) {
 			window.history.replaceState(window.history.state, '', schedulerAccess.cleanPath);
@@ -58,7 +65,7 @@
 		const warmupNotes = window.localStorage.getItem(PUBLIC_ATLAS_STORAGE_KEYS.warmupSummary) ?? undefined;
 		handoffContext = schedulerHandoffContext(window.location.search, warmupNotes);
 		sendSchedulerContext();
-		return () => window.removeEventListener('message', receiveSchedulerLifecycle);
+		return () => window.removeEventListener('message', receiveSchedulerMessage);
 	});
 </script>
 

@@ -4,6 +4,7 @@ import test from 'node:test';
 import {
 	buildFirstPartySchedulerUrl,
 	normalizeSchedulerLifecycleMessage,
+	normalizeSchedulerResizeMessage,
 	normalizeSchedulerAccessUrl,
 	schedulerHandoffContext
 } from '../src/lib/scheduling/first-party.ts';
@@ -174,6 +175,36 @@ test('scheduler and parent wire the allowlisted lifecycle bridge across the exac
 	assert.ok(schedulerPage.includes("notifyParent('booking_initiated'"));
 	assert.ok(schedulerPage.includes("notifyParent('booking_completed'"));
 	assert.ok(schedulerPage.includes("'create-something:scheduler-lifecycle'"));
+});
+
+test('scheduler and parent wire a bounded resize bridge across the exact owned origin', () => {
+	assert.equal(
+		normalizeSchedulerResizeMessage({
+			type: 'create-something:scheduler-resize',
+			height: 1383.2
+		}),
+		1384
+	);
+	assert.equal(
+		normalizeSchedulerResizeMessage({
+			type: 'create-something:scheduler-resize',
+			height: 12_000
+		}),
+		null
+	);
+	assert.equal(
+		normalizeSchedulerResizeMessage({
+			type: 'create-something:scheduler-resize',
+			height: '1384'
+		}),
+		null
+	);
+	assert.equal(normalizeSchedulerResizeMessage({ type: 'unexpected', height: 1384 }), null);
+	assert.ok(bookRoute.includes('normalizeSchedulerResizeMessage'));
+	assert.ok(bookRoute.includes('schedulerFrame.style.height'));
+	assert.ok(bookRoute.includes('schedulerFrame.offsetHeight - schedulerFrame.clientHeight'));
+	assert.ok(schedulerPage.includes("type:'create-something:scheduler-resize'"));
+	assert.ok(schedulerPage.includes('new ResizeObserver'));
 });
 
 test('the parent strips emailed access before handing it to the exact scheduler frame', () => {
