@@ -70,7 +70,8 @@
 
 <style>
   .performance-readback {
-    padding: clamp(1.5rem, 4vw, 3.25rem) clamp(1.25rem, 5vw, 6rem);
+    padding: clamp(1.5rem, 4vw, 3.25rem)
+      clamp(var(--space-performance-page-gutter, 1.25rem), 5vw, 6rem);
     border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
     background: var(--color-performance-panel, #ffffff);
     color: var(--color-performance-ink, #090909);

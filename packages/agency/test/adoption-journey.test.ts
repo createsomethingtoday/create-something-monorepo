@@ -13,8 +13,9 @@ test('the public shell exposes Practice and keeps client-service adoption one cl
   assert.match(layout, /label: 'Field Reports', href: '\/field-reports'/);
   assert.match(layout, /label: 'Use With Clients', href: '\/for-service-providers'/);
   assert.match(home, /<AdoptionPathChooser \/>/);
-  assert.match(chooser, /Use it for my team/);
-  assert.match(chooser, /Use it with clients/);
+  assert.match(chooser, /Improve one internal workflow/);
+  assert.match(chooser, /Deliver one client workflow/);
+  assert.match(chooser, /Which workflow are you bringing\?/);
   assert.match(chooser, /href: '\/practice'/);
   assert.match(chooser, /href: '\/for-service-providers'/);
   assert.match(chooser, /adoption_path_click/);

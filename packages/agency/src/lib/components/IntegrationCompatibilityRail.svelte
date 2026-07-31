@@ -104,8 +104,15 @@
 
 <style>
   .compatibility-rail {
-    width: min(var(--content-width-performance, 85rem), calc(100% - 2.5rem));
+    width: min(
+      var(--content-width-performance, 85rem),
+      calc(
+        100% - var(--space-performance-page-gutter, 1.25rem) -
+          var(--space-performance-page-gutter, 1.25rem)
+      )
+    );
     margin: clamp(1.5rem, 4vw, 3.5rem) auto;
+    padding: 0;
     border: 1px solid var(--color-performance-line, #d7d7d2);
     border-radius: var(--radius-performance-sm, 4px);
     background: var(--color-performance-panel, #ffffff);
@@ -235,7 +242,13 @@
 
   @media (max-width: 640px) {
     .compatibility-rail {
-      width: min(100% - 1.5rem, var(--content-width-performance, 85rem));
+      width: min(
+        calc(
+          100% - var(--space-performance-page-gutter, 0.75rem) -
+            var(--space-performance-page-gutter, 0.75rem)
+        ),
+        var(--content-width-performance, 85rem)
+      );
     }
 
     .compatibility-rail__items,

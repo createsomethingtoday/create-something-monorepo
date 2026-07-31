@@ -35,6 +35,17 @@ const compatibilityRailSource = readFileSync(
   new URL('../src/lib/components/IntegrationCompatibilityRail.svelte', import.meta.url),
   'utf8'
 );
+const adoptionPathSource = readFileSync(
+  new URL('../src/lib/components/AdoptionPathChooser.svelte', import.meta.url),
+  'utf8'
+);
+const campaignOpeningSource = readFileSync(
+  new URL(
+    '../../canon/src/lib/components/performance/PerformanceCampaignOpening.svelte',
+    import.meta.url
+  ),
+  'utf8'
+);
 const footerSource = readFileSync(
   new URL('../../canon/src/lib/components/Footer.svelte', import.meta.url),
   'utf8'
@@ -111,6 +122,40 @@ test('compact mobile composition reduces spacing while retaining readable contro
     /@media \(max-width: 640px\)[\s\S]*?\.hero-trust-artifact__path[\s\S]*?gap:\s*0\.4rem;[\s\S]*?padding:\s*0\.45rem;/
   );
   assert.match(narrativeSource, /min-height:\s*var\(--height-performance-control-min, 2\.75rem\)/);
+});
+
+test('the concise conversion handoff keeps its proof beside the action without a full-width repeat', () => {
+  assert.match(handoffSource, /density\?: 'standard' \| 'compact' \| 'concise'/);
+  assert.match(
+    handoffSource,
+    /data-density='concise'\] \.performance-conversion-handoff__copy\s*\{[^}]*min-height:\s*clamp\(18rem,\s*26vw,\s*23rem\)/
+  );
+  assert.match(homeSource, /artifactPlacement="sidecar"/);
+  assert.match(homeSource, /density="concise"/);
+  assert.doesNotMatch(homeSource, /artifactPlacement="full-width"/);
+});
+
+test('the homepage boundary comparison is one compact proof object on desktop and mobile', () => {
+  assert.match(homeSource, /<PerformanceNarrativeStage[\s\S]*?density="compact"/);
+  assert.match(homeSource, /class="boundary-study__outcomes"/);
+  assert.doesNotMatch(homeSource, /class="operator-outcomes"/);
+  assert.match(homeSource, /\.service-flow-artifact\s*\{[\s\S]*?min-height:\s*17rem/);
+  assert.match(
+    homeSource,
+    /@media \(max-width: 640px\)[\s\S]*?\.boundary-study__outcomes\s*\{[\s\S]*?grid-template-columns:\s*1fr/
+  );
+});
+
+test('homepage section components reset inherited shell padding before applying their own rhythm', () => {
+  for (const [name, source, selector] of [
+    ['campaign opening', campaignOpeningSource, '.performance-campaign-opening'],
+    ['adoption paths', adoptionPathSource, '.adoption-paths'],
+    ['compatibility rail', compatibilityRailSource, '.compatibility-rail']
+  ] as const) {
+    const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const rootRule = source.match(new RegExp(`${escaped}\\s*\\{([^}]*)\\}`))?.[1] ?? '';
+    assert.match(rootRule, /\bpadding:\s*0;/, `${name} must reset inherited section padding`);
+  }
 });
 
 test('standalone calls to action and legal links expose explicit touch height', () => {

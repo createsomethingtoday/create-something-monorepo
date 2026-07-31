@@ -26,7 +26,7 @@
 		actions?: Snippet;
 		aside?: Snippet;
 		ariaLabel?: string;
-		density?: 'standard' | 'compact';
+		density?: 'standard' | 'compact' | 'concise';
 	}
 
 	let {
@@ -104,6 +104,12 @@
 	.performance-conversion-handoff[data-density='compact'] .performance-conversion-handoff__boundary { padding: clamp(1.75rem, 4vw, 3.75rem); }
 	.performance-conversion-handoff[data-density='compact'] .performance-conversion-handoff__copy { min-height: clamp(20rem, 34vw, 30rem); }
 	.performance-conversion-handoff[data-density='compact'] :is(h1, h2) { font-size: clamp(2.75rem, 4.6vw, 4.6rem); }
+	.performance-conversion-handoff[data-density='concise'] .performance-conversion-handoff__copy,
+	.performance-conversion-handoff[data-density='concise'] .performance-conversion-handoff__boundary { padding: clamp(1.5rem, 3vw, 2.5rem); }
+	.performance-conversion-handoff[data-density='concise'] .performance-conversion-handoff__copy { min-height: clamp(18rem, 26vw, 23rem); }
+	.performance-conversion-handoff[data-density='concise'] :is(h1, h2) { font-size: clamp(2.35rem, 4vw, 3.8rem); }
+	.performance-conversion-handoff[data-density='concise'] .performance-conversion-handoff__boundary { gap: 1.25rem; }
+	.performance-conversion-handoff[data-density='concise'] .performance-conversion-handoff__boundary dl > div { padding-block: .65rem; }
 
 	.performance-conversion-handoff__copy,
 	.performance-conversion-handoff__boundary { padding: clamp(2rem, 6vw, 6rem); }
@@ -153,5 +159,7 @@
 		.performance-conversion-handoff[data-artifact-placement='full-width'][data-density='compact'] .performance-conversion-handoff__boundary dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 		.performance-conversion-handoff[data-artifact-placement='full-width'][data-density='compact'] .performance-conversion-handoff__boundary dl > div { grid-template-columns: 1fr; gap: .25rem; padding: .65rem; }
 		.performance-conversion-handoff[data-artifact-placement='full-width'][data-density='compact'] .performance-conversion-handoff__artifact { padding: 0.5rem 0.5rem 1rem; }
+		.performance-conversion-handoff[data-density='concise'] .performance-conversion-handoff__copy { min-height: auto; padding: 2rem 1.5rem; }
+		.performance-conversion-handoff[data-density='concise'] .performance-conversion-handoff__boundary { padding: 1.5rem; }
 	}
 </style>

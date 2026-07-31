@@ -139,6 +139,7 @@
 		position: relative;
 		display: grid;
 		min-height: clamp(38rem, 82svh, 58rem);
+		padding: 0;
 		overflow: hidden;
 		background: var(--color-performance-ink, #090909);
 		color: var(--color-performance-panel, #fff);
@@ -213,7 +214,10 @@
 		display: grid;
 		grid-template-rows: 1fr auto;
 		gap: clamp(3rem, 8vw, 8rem);
-		width: min(var(--content-width-performance, 85rem), calc(100% - 2.5rem));
+		width: min(
+			var(--content-width-performance, 85rem),
+			calc(100% - var(--space-performance-page-gutter, 1.25rem) - var(--space-performance-page-gutter, 1.25rem))
+		);
 		margin-inline: auto;
 		padding-block: clamp(8rem, 17vh, 12rem) 1.25rem;
 	}
@@ -368,7 +372,10 @@
 		}
 
 		.performance-campaign-opening__content {
-			width: min(100% - 1.5rem, var(--content-width-performance, 85rem));
+			width: min(
+				calc(100% - var(--space-performance-page-gutter, 0.75rem) - var(--space-performance-page-gutter, 0.75rem)),
+				var(--content-width-performance, 85rem)
+			);
 			padding-block: 7rem 0.75rem;
 		}
 
