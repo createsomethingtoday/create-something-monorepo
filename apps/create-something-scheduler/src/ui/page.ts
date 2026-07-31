@@ -225,8 +225,12 @@ export function schedulerPage(input: { nonce: string; turnstileSiteKey?: string 
     parent.postMessage({type:'create-something:scheduler-resize',height},'https://createsomething.agency');
   }
   const schedulerResizeObserver=new ResizeObserver(()=>requestAnimationFrame(notifyParentHeight));
+  const schedulerMutationObserver=new MutationObserver(()=>requestAnimationFrame(notifyParentHeight));
   const schedulerDocument=document.querySelector('body > main');
-  if (schedulerDocument) schedulerResizeObserver.observe(schedulerDocument);
+  if (schedulerDocument) {
+    schedulerResizeObserver.observe(schedulerDocument);
+    schedulerMutationObserver.observe(schedulerDocument,{attributes:true,childList:true,characterData:true,subtree:true});
+  }
   addEventListener('load',notifyParentHeight,{once:true});
   requestAnimationFrame(notifyParentHeight);
 
