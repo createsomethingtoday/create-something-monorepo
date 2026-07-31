@@ -13,8 +13,8 @@ This symlinks repo-owned skills into `~/.codex/skills` without deleting unrelate
 ## Current Skills
 
 - `bootstrap-gitpod-ona` - prepare Gitpod/Ona or other fresh workspaces so repo-owned Codex skills are installed and verified
-- `canon-design-review` - Canon-aligned critique and polish for UI work
-- `canon-public-surface` - public-page and landing-page polish without generic SaaS drift
+- `canon-design-review` - Mobbin-backed UX research translated through Canon and Performance Lab
+- `canon-public-surface` - Performance public-page research and sharpness without generic SaaS drift
 - `claude-agent-cli-handoff` - route bounded work to the local Claude CLI when Claude owns the needed tools or connectors
 - `debug-feedback-loop` - repro-first debugging for bugs, failing checks, flaky behavior, and performance regressions
 - `deep-module-design` - interface and module design using leverage, locality, tests, and tier ownership
@@ -45,6 +45,8 @@ Use $tdd-vertical-slice to add this behavior through a public interface test.
 Use $target-reader-review to judge whether a junior practitioner can understand and use this prose.
 Use $writing-for-humans to draft or edit this prose with the smallest framework stack that fits its job.
 ```
+
+The two Canon design skills also allow implicit invocation. When Codex recognizes relevant UI, UX, or public-surface work, it should load the matching skill without requiring the user to name it. Mobbin research remains conditional: use it for greenfield, unfamiliar, consequential, or genuinely unresolved design decisions, not literal edits or routine token cleanup.
 
 ## Testing
 
