@@ -1,0 +1,28 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "marketplace-featured-notifier",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-04-30",
+  "account_id": "9645bd52e640b8a4f40a3a55ff1dd75a",
+  "compatibility_flags": ["nodejs_compat"],
+  "triggers": {
+    "crons": [
+      // Hourly. Featured batches are picked by hand, so there is no tight
+      // latency requirement; hourly keeps the notification same-day without
+      // hammering Airtable's 5 req/sec budget.
+      "17 * * * *"
+    ]
+  },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+  "vars": {
+    "AIRTABLE_BASE_ID": "appMoIgXMTTTNIc3p",
+    "AIRTABLE_ASSETS_TABLE_ID": "tblRwzpWoLgE9MrUm",
+    "AIRTABLE_REQUEST_DELAY_MS": "250",
+    // ARMED 2026-07-31. Sends for real on every cron run.
+    // To stop sending: set back to "true" and redeploy (takes effect immediately).
+    "DRY_RUN": "false"
+  }
+}
