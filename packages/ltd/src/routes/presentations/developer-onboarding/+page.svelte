@@ -40,7 +40,7 @@
 	]}
 />
 
-<Presentation title="Developer Onboarding" subtitle="Build & Earn on WORKWAY" scriptUrl="/presentations/developer-onboarding/script">
+<Presentation title="Developer Onboarding" subtitle="Join WORKWAY and publish your first workflow." scriptUrl="/presentations/developer-onboarding/script">
 	<!-- ═══════════════════════════════════════════════════════════════════
 	     PART 1: What You're Joining
 	     ═══════════════════════════════════════════════════════════════════ -->
@@ -48,8 +48,8 @@
 	<!-- Slide 1: Title -->
 	<Slide type="title">
 		<span class="number">01</span>
-		<h1>Developer</h1>
-		<p class="subtitle">The onboarding process.</p>
+		<h1>Developer Onboarding</h1>
+		<p class="subtitle">Join WORKWAY and publish your first workflow.</p>
 		<p class="subtitle">5 minutes. 3 commands.</p>
 	</Slide>
 

@@ -30,7 +30,7 @@
 	]}
 />
 
-<Presentation title="CLOUDFLARE: EDGE" subtitle="Global infrastructure that disappears." scriptUrl="/presentations/cloudflare-edge/script">
+<Presentation title="CLOUDFLARE: EDGE" subtitle="Run applications globally without managing servers." scriptUrl="/presentations/cloudflare-edge/script">
 	<!-- ═══════════════════════════════════════════════════════════════════
 	     PART 1: Part → Whole (Why Edge Computing?)
 	     ═══════════════════════════════════════════════════════════════════ -->
@@ -39,7 +39,7 @@
 	<Slide type="title">
 		<span class="number">01</span>
 		<h1>CLOUDFLARE: EDGE</h1>
-		<p class="subtitle">Infrastructure that disappears.</p>
+		<p class="subtitle">Run applications globally without managing servers.</p>
 		<p class="subtitle">&lt;50ms cold starts. Global by default.</p>
 	</Slide>
 

@@ -30,7 +30,7 @@
 	]}
 />
 
-<Presentation title="DEPLOYMENT: DWELLING" subtitle="Ship. Verify. Dwell." scriptUrl="/presentations/deployment-dwelling/script">
+<Presentation title="DEPLOYMENT: DWELLING" subtitle="Deploy, verify the live result, and keep watching." scriptUrl="/presentations/deployment-dwelling/script">
 	<!-- ═══════════════════════════════════════════════════════════════════
 	     PART 1: Part → Whole (What is dwelling?)
 	     ═══════════════════════════════════════════════════════════════════ -->
@@ -39,8 +39,8 @@
 	<Slide type="title">
 		<span class="number">01</span>
 		<h1>DEPLOYMENT: DWELLING</h1>
-		<p class="subtitle">The final step is not deployment.</p>
-		<p class="subtitle">It is beginning to dwell.</p>
+		<p class="subtitle">Deployment is not the final step.</p>
+		<p class="subtitle">Verify the live result, then keep watching.</p>
 	</Slide>
 
 	<!-- Slide 2: The Concept of Dwelling -->

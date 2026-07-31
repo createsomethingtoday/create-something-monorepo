@@ -30,7 +30,7 @@
 	]}
 />
 
-<Presentation title="HEIDEGGER: CANON" subtitle="Install the CREATE SOMETHING Methodology" scriptUrl="/presentations/heidegger-canon/script">
+<Presentation title="HEIDEGGER: CANON" subtitle="Use three checks to remove unnecessary parts from a system." scriptUrl="/presentations/heidegger-canon/script">
 	<!-- ═══════════════════════════════════════════════════════════════════
 	     PART 1: Part → Whole (What is this?)
 	     ═══════════════════════════════════════════════════════════════════ -->
@@ -39,9 +39,8 @@
 	<Slide type="title">
 		<span class="number">01</span>
 		<h1>HEIDEGGER: CANON</h1>
-		<p class="subtitle">Install the methodology.</p>
-		<p class="subtitle">Apply the Subtractive Triad.</p>
-		<p class="subtitle">Build systems that disappear.</p>
+		<p class="subtitle">Use three checks to remove what obscures the system.</p>
+		<p class="subtitle">Build something simpler to operate.</p>
 	</Slide>
 
 	<!-- Slide 2: The Meta-Principle -->

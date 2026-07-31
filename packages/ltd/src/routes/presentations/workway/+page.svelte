@@ -30,7 +30,7 @@
 	]}
 />
 
-<Presentation title="WORKWAY" subtitle="The Automation Layer">
+<Presentation title="WORKWAY" subtitle="Connect tools so routine work can run without manual handoffs.">
 	<!-- ═══════════════════════════════════════════════════════════════════
 	     PART 1: Part → Whole (What is this?)
 	     ═══════════════════════════════════════════════════════════════════ -->
@@ -39,9 +39,9 @@
 	<Slide type="title">
 		<span class="number">01</span>
 		<h1>WORKWAY</h1>
-		<p class="subtitle">The Automation Layer.</p>
-		<p class="subtitle">Infrastructure that recedes.</p>
-		<p class="subtitle">Outcomes while you sleep.</p>
+		<p class="subtitle">Connect tools so routine work can run without manual handoffs.</p>
+		<p class="subtitle">Keep the infrastructure out of the way.</p>
+		<p class="subtitle">Let the workflow run when you are away.</p>
 	</Slide>
 
 	<!-- Slide 2: The Problem -->

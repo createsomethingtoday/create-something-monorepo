@@ -12,27 +12,27 @@ const scripts = import.meta.glob('/src/routes/presentations/*/SCRIPT.md', {
 const presentations: Record<string, { title: string; subtitle: string }> = {
 	'heidegger-canon': {
 		title: 'HEIDEGGER: CANON',
-		subtitle: 'Install the CREATE SOMETHING Methodology'
+		subtitle: 'Use three checks to remove unnecessary parts from a system.'
 	},
 	'claude-code-partner': {
 		title: 'CLAUDE CODE: PARTNER',
-		subtitle: 'AI-Native Development Environment'
+		subtitle: 'Share software work with an AI development partner.'
 	},
 	'beads-continuity': {
 		title: 'BEADS: CONTINUITY',
-		subtitle: 'Agent-Native Task Tracking'
+		subtitle: 'Keep task context when an AI session ends.'
 	},
 	'cloudflare-edge': {
 		title: 'CLOUDFLARE: EDGE',
-		subtitle: 'Infrastructure That Disappears'
+		subtitle: 'Run applications globally without managing servers.'
 	},
 	'canon-design': {
 		title: 'CANON: DESIGN',
-		subtitle: 'Tailwind for Structure, Canon for Aesthetics'
+		subtitle: 'Turn design principles into reusable interface rules.'
 	},
 	'deployment-dwelling': {
 		title: 'DEPLOYMENT: DWELLING',
-		subtitle: 'Ship to Production'
+		subtitle: 'Deploy, verify the live result, and keep watching.'
 	},
 	workway: {
 		title: 'WORKWAY',
@@ -40,7 +40,7 @@ const presentations: Record<string, { title: string; subtitle: string }> = {
 	},
 	hub: {
 		title: 'HUB',
-		subtitle: 'The governed MCP surface'
+		subtitle: 'Control which tools Codex can see and what they are allowed to do.'
 	},
 	'abundance-system': {
 		title: 'ABUNDANCE',
@@ -48,11 +48,11 @@ const presentations: Record<string, { title: string; subtitle: string }> = {
 	},
 	'developer-onboarding': {
 		title: 'Developer Onboarding',
-		subtitle: 'WORKWAY Platform'
+		subtitle: 'Join WORKWAY and publish your first workflow.'
 	},
 	'user-onboarding': {
 		title: 'User Onboarding',
-		subtitle: 'Enable a Workflow'
+		subtitle: 'Connect one workflow and verify that it runs.'
 	}
 };
 

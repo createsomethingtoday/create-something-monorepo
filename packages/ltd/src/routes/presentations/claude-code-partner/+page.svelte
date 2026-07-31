@@ -30,7 +30,7 @@
 	]}
 />
 
-<Presentation title="CLAUDE CODE: PARTNER" subtitle="AI-Native Development Environment" scriptUrl="/presentations/claude-code-partner/script">
+<Presentation title="CLAUDE CODE: PARTNER" subtitle="Share software work with an AI development partner." scriptUrl="/presentations/claude-code-partner/script">
 	<!-- ═══════════════════════════════════════════════════════════════════
 	     PART 1: Part → Whole (What is this?)
 	     ═══════════════════════════════════════════════════════════════════ -->
@@ -39,9 +39,8 @@
 	<Slide type="title">
 		<span class="number">01</span>
 		<h1>CLAUDE CODE: PARTNER</h1>
-		<p class="subtitle">AI-native development.</p>
-		<p class="subtitle">Not AI-assisted.</p>
-		<p class="subtitle">Partnership, not delegation.</p>
+		<p class="subtitle">Share the work with an AI development partner.</p>
+		<p class="subtitle">Keep context, rules, tools, and review in one environment.</p>
 	</Slide>
 
 	<!-- Slide 2: The Partnership Model -->

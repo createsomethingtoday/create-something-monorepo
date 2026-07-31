@@ -1,0 +1,58 @@
+issue: CRE-1361
+date: 2026-07-20
+scope: ltd-presentation-details-and-scripts
+reader:
+  description: A junior operator who knows what Codex is but does not know CREATE SOMETHING vocabulary.
+  required_path:
+    - Open a deck on mobile.
+    - State its point from the first slide.
+    - Move through controls and dense slides.
+    - Find and open the narration script.
+    - Scan the script, copy it, and find the continuation.
+verdict: pass
+material_friction: []
+restatements:
+  hub: The Hub limits which tools Codex can see and controls what those tools are allowed to do.
+  developer_onboarding: Join WORKWAY, install the CLI, create a profile, submit it, then build and publish a workflow.
+  cloudflare_edge: Run applications close to users without managing servers; the script explains the services and access patterns.
+  workway: Connect tools so repeatable work can run without manual handoffs.
+checks:
+  local_first_encounter:
+    result: pass
+    evidence: All eleven first slides state a recognizable actor, action, system, or outcome before relying on owned terminology.
+  default_path:
+    result: pass
+    evidence: The first slide, visible previous/next controls, progress, and script handoff establish one obvious reading sequence.
+  proof:
+    result: pass
+    evidence: All 176 slides, quotations, diagrams, code samples, and ten exact narration scripts remain available.
+  mobile:
+    result: pass
+    evidence: Controls stay above content, script links remain visible, dense slides scroll, and no deck has document-level overflow.
+  keyboard:
+    result: pass
+    evidence: Arrow, Home, End, and fullscreen behavior is scoped to real controls; Enter on Read script follows the link.
+  no_javascript:
+    result: pass
+    evidence: Decks expose the complete ordered argument without false controls; scripts expose semantic sections without dead copy actions.
+  script_scan_path:
+    result: pass
+    evidence: A plain-language subtitle, horizontal section outline, numbered H2 sections, and final handoff replace the former raw monospaced wall.
+  recovery_and_boundary:
+    result: pass
+    evidence: Missing scripts return 404; workway does not advertise a script; raw markdown remains available for exact production use.
+  terminal_handoff:
+    result: pass
+    evidence: Each script ends with View slides and All presentations.
+review_notes:
+  - The first pass remained revise because phrases such as governed MCP surface and automation layer appeared before actors and actions. Those first encounters were rewritten and re-rendered before this pass.
+  - Long scripts remain long because all production narration is preserved. The outline and semantic sections make them skimmable without hiding content.
+  - The inherited duplicate LTD root canonical is an SEO ownership defect, not hidden reader friction in this local comprehension verdict.
+approval:
+  human_final_prose_review: pending
+  merge: held
+  deployment: held
+evidence:
+  baseline: evidence/cre-1361/source-and-rendered-baseline.md
+  final_verification: evidence/cre-1361/final-verification.md
+  screenshots: evidence/cre-1361/final-screenshots

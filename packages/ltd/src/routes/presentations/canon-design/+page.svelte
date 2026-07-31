@@ -32,7 +32,7 @@
 	]}
 />
 
-<Presentation title="CANON: DESIGN" subtitle="Philosophy → Tokens → Coherence" scriptUrl="/presentations/canon-design/script">
+<Presentation title="CANON: DESIGN" subtitle="Turn design principles into reusable interface rules." scriptUrl="/presentations/canon-design/script">
 	<!-- ═══════════════════════════════════════════════════════════════════
 	     PART 1: The Principle
 	     ═══════════════════════════════════════════════════════════════════ -->
@@ -41,8 +41,8 @@
 	<Slide type="title">
 		<span class="number">01</span>
 		<h1>CANON: DESIGN</h1>
-		<p class="subtitle">Design tokens from philosophy</p>
-		<p class="subtitle">Aesthetic coherence across the monorepo</p>
+		<p class="subtitle">Turn design principles into reusable interface rules.</p>
+		<p class="subtitle">Keep every product visually coherent.</p>
 	</Slide>
 
 	<!-- Slide 2: The Principle -->
