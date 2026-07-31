@@ -17,6 +17,7 @@
   import AdoptionPathChooser from '$lib/components/AdoptionPathChooser.svelte';
   import IntegrationCompatibilityRail from '$lib/components/IntegrationCompatibilityRail.svelte';
   import PublicSubstrateCanvas from '$lib/components/PublicSubstrateCanvas.svelte';
+  import { templateReviewFieldReport } from '$lib/data/fieldReports';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
   const services = [
@@ -164,19 +165,6 @@
     }
   ] as const;
 
-  const fieldReportProof = [
-    {
-      id: '#FR-2026-01',
-      kind: 'Review operations',
-      title: 'Automation gathered the evidence. A person made the final decision.',
-      detail:
-        'Evidence collection finished for 49 of 50 selected cases. The system cannot make the final decision, and reviewer time savings have not been measured.',
-      state: 'verified',
-      date: 'May–June 2026',
-      href: '/field-reports/template-review'
-    }
-  ];
-
   const agencyScenes: PerformanceNarrativeScene[] = [
     {
       id: 'boundary',
@@ -213,10 +201,10 @@
       tone: 'neutral',
       evidence: [
         'Each request stays connected to its decision and record',
-        'The field report names what passed and what remains blocked',
+        'The system cannot make the final decision; the field report names what passed and remains blocked',
         'Your team keeps the data, rules, tests, history, and recovery path'
       ],
-      receipts: ['workflow map', fieldReportProof[0].id, 'recovery path']
+      receipts: ['workflow map', templateReviewFieldReport.id, 'recovery path']
     }
   ];
 </script>
@@ -346,31 +334,21 @@
             or the <a href="/products">evidence</a>.
           </p>
         </div>
-        <div class="service-proof-row">
-          {#each fieldReportProof as report}
-            <a class="field-report" href={report.href}>
-              <span>Field result · See what passed—and what did not.</span>
-              <h3>{report.title}</h3>
-              <p>{report.detail}</p>
-              <small>{report.kind} · {report.state} · {report.id} · {report.date}</small>
-            </a>
-          {/each}
-          <aside class="ownership-callout">
-            <span>How we build</span>
-            <h3>Built with OpenAI Codex. Designed to remain yours.</h3>
-            <p>
-              We use Codex to map, build, and maintain the workflow. Your team keeps the data,
-              connections, approval rules, tests, operating history, and recovery path. If the model
-              or agent environment changes, the system does not have to start over.
-            </p>
-            <div>
-              <a href="/stack">See what you keep</a>
-              <a href="https://createsomething.ltd/canon/concepts/conviction-without-dependence"
-                >Why we build this way</a
-              >
-            </div>
-          </aside>
-        </div>
+        <aside class="ownership-callout">
+          <span>How we build</span>
+          <h3>Built with OpenAI Codex. Designed to remain yours.</h3>
+          <p>
+            We use Codex to map, build, and maintain the workflow. Your team keeps the data,
+            connections, approval rules, tests, operating history, and recovery path. If the model
+            or agent environment changes, the system does not have to start over.
+          </p>
+          <div>
+            <a href="/stack">See what you keep</a>
+            <a href="https://createsomething.ltd/canon/concepts/conviction-without-dependence"
+              >Why we build this way</a
+            >
+          </div>
+        </aside>
       {/if}
     {/snippet}
   </PerformanceNarrativeStage>
@@ -478,7 +456,7 @@
 
   .boundary-study__copy h3,
   .boundary-study__copy p,
-  .service-proof-row :is(h3, p) {
+  .ownership-callout :is(h3, p) {
     margin: 0;
   }
 
@@ -643,46 +621,30 @@
     text-underline-offset: 0.18em;
   }
 
-  .service-proof-row {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    margin-top: 1.25rem;
-    border: 1px solid var(--color-performance-line, #d7d7d2);
-  }
-
-  .field-report,
   .ownership-callout {
     display: grid;
     align-content: start;
     gap: 0.65rem;
+    margin-top: 1.25rem;
     padding: 1.25rem;
+    border: 1px solid var(--color-performance-line, #d7d7d2);
     color: var(--color-performance-ink, #090909);
-    text-decoration: none;
   }
 
-  .field-report {
-    border-right: 1px solid var(--color-performance-line, #d7d7d2);
-  }
-
-  .field-report:hover {
-    background: var(--color-performance-paper, #f3f3f0);
-  }
-
-  .service-proof-row span,
-  .service-proof-row small {
+  .ownership-callout > span {
     color: var(--color-performance-muted, #5e6268);
     font-family: var(--font-performance-mono);
     font-size: 0.68rem;
     text-transform: uppercase;
   }
 
-  .service-proof-row h3 {
+  .ownership-callout h3 {
     font-size: 1.2rem;
     font-weight: var(--font-performance-medium);
     line-height: 1.15;
   }
 
-  .service-proof-row p {
+  .ownership-callout p {
     color: var(--color-performance-muted, #5e6268);
     font-size: 0.92rem;
     line-height: 1.45;
@@ -735,8 +697,7 @@
       min-height: 0;
     }
 
-    .boundary-study,
-    .service-proof-row {
+    .boundary-study {
       grid-template-columns: 1fr;
     }
 
@@ -748,8 +709,7 @@
       overflow: hidden;
     }
 
-    .boundary-study__copy,
-    .field-report {
+    .boundary-study__copy {
       border-right: 0;
       border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
     }

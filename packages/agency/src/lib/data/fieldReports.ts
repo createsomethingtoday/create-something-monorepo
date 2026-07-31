@@ -6,7 +6,10 @@ const TEMPLATE_REVIEW_MODELED_AGENT_TEMPLATES_PER_HOUR =
   3_600_000 / TEMPLATE_REVIEW_AGENT_ELAPSED_MS;
 
 export type TemplateReviewFieldReport = {
+  id: '#FR-2026-01';
   slug: 'template-review';
+  workflow: 'Marketplace template review';
+  verifiedPeriod: 'May–June 2026';
   title: string;
   dek: string;
   hypothesis: string;
@@ -93,7 +96,10 @@ export type TemplateReviewFieldReport = {
 };
 
 export const templateReviewFieldReport: TemplateReviewFieldReport = {
+  id: '#FR-2026-01',
   slug: 'template-review',
+  workflow: 'Marketplace template review',
+  verifiedPeriod: 'May–June 2026',
   title: 'Automation prepared the evidence. Human judgment still decided.',
   dek: 'We tested whether automation could prepare objective evidence before a human reviewed a Webflow template. It completed 49 of 50 selected evidence packets, but automated judgment did not earn promotion and reviewer time savings remain unmeasured.',
   hypothesis:

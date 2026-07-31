@@ -21,7 +21,7 @@ const readback = read('../src/lib/components/AgencyPerformanceReadback.svelte');
 test('every indexed public marketing route receives a route-owned or shared Performance ending', () => {
   const indexedRoutes = marketingPagePortfolio.filter((entry) => entry.decision === 'index');
 
-  assert.equal(indexedRoutes.length, 25);
+  assert.equal(indexedRoutes.length, 26);
   assert.ok(indexedRoutes.some((entry) => entry.path === '/'));
   assert.match(layout, /marketingPagePortfolio/);
   assert.match(layout, /entry\.decision !== 'archive'/);
@@ -54,9 +54,30 @@ test('the shared readback derives a measured example and its limits from field-r
 
   assert.match(readback, /templateReviewFieldReport/);
   assert.match(readback, /data-performance-readback/);
-  assert.match(readback, /Marketplace template review/);
-  assert.match(readback, /Routine work moves/);
+  assert.match(readback, /templateReviewFieldReport\.workflow/);
+  assert.match(readback, /Routine evidence moved/);
   assert.match(readback, /Automated judgment remains blocked/);
   assert.match(readback, /Reviewer time savings remain unmeasured/);
-  assert.match(readback, /href="\/field-reports\/template-review"/);
+  assert.match(readback, /href=\{`\/field-reports\/\$\{templateReviewFieldReport\.slug\}`\}/);
+});
+
+test('the shared readback concentrates one auditable result and its limits', () => {
+  assert.match(readback, /data-readback-kind="primary-proof"/);
+  assert.match(readback, /class="performance-readback__result"/);
+  assert.match(readback, /<strong>\{evidence\.usableCases\}<\/strong>/);
+  assert.match(readback, /<span>\/ \{evidence\.selectedCases\}<\/span>/);
+  assert.match(readback, /templateReviewFieldReport\.workflow/);
+  assert.match(readback, /templateReviewFieldReport\.id/);
+  assert.match(readback, /templateReviewFieldReport\.verifiedPeriod/);
+  assert.match(readback, /data-control-state="stop"/);
+  assert.match(readback, /Inspect the full field report/);
+  assert.doesNotMatch(readback, /grid-template-columns:\s*repeat\(3/);
+  assert.doesNotMatch(
+    readback,
+    /@media \(max-width: 30rem\)[\s\S]*?\.performance-readback__receipt\s*\{\s*grid-template-columns:\s*1fr/
+  );
+  assert.match(
+    readback,
+    /\.performance-readback--compact \.performance-readback__inner\s*\{[\s\S]*?background:\s*transparent/
+  );
 });
