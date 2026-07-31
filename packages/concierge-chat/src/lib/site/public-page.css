@@ -533,6 +533,99 @@
   white-space: nowrap;
 }
 
+.public-filter-panel {
+  position: sticky;
+  top: 108px;
+  z-index: 4;
+  display: grid;
+  gap: 18px;
+  margin-top: 54px;
+  padding: 18px;
+  border: 1px solid var(--public-line);
+  border-radius: 24px;
+  background: rgba(255, 250, 244, 0.92);
+  box-shadow: 0 20px 58px rgba(44, 34, 24, 0.1);
+  backdrop-filter: blur(20px) saturate(1.08);
+}
+
+.public-filter-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 1.5fr) repeat(2, minmax(170px, 0.75fr));
+  gap: 12px;
+}
+
+.public-filter-field {
+  display: grid;
+  gap: 8px;
+  color: var(--public-muted);
+  font-size: 0.72rem;
+  font-weight: 620;
+}
+
+.public-filter-field > span {
+  padding-left: 4px;
+}
+
+.public-filter-field input,
+.public-filter-field select {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid var(--public-line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.76);
+  color: var(--public-ink);
+  font: inherit;
+  font-size: 0.92rem;
+}
+
+.public-filter-field input:focus-visible,
+.public-filter-field select:focus-visible {
+  outline: 2px solid var(--public-status);
+  outline-offset: 2px;
+}
+
+.public-filter-status,
+.public-filter-empty-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.public-filter-status {
+  padding-top: 14px;
+  border-top: 1px solid var(--public-line);
+  color: var(--public-muted);
+  font-size: 0.82rem;
+}
+
+.public-filter-status strong {
+  color: var(--public-ink);
+  font-size: 1rem;
+}
+
+.public-filter-status button,
+.public-filter-empty-actions button {
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid var(--public-line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--public-ink);
+  font-weight: 620;
+  cursor: pointer;
+}
+
+.public-data-list.filtered {
+  margin-top: 22px;
+}
+
+.public-empty.filtered-empty {
+  margin-top: 22px;
+}
+
 .public-empty {
   display: grid;
   gap: 18px;
@@ -708,6 +801,14 @@
   .public-data-meta {
     grid-column: 2 / -1;
   }
+
+  .public-filter-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .public-filter-field.search-field {
+    grid-column: 1 / -1;
+  }
 }
 
 @media (max-width: 620px) {
@@ -820,6 +921,32 @@
 
   .public-data-link {
     justify-self: start;
+  }
+
+  .public-filter-panel {
+    position: static;
+    margin-top: 42px;
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .public-filter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .public-filter-field.search-field {
+    grid-column: auto;
+  }
+
+  .public-filter-status,
+  .public-filter-empty-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .public-filter-status button,
+  .public-filter-empty-actions button {
+    width: 100%;
   }
 
   .public-lane-card {

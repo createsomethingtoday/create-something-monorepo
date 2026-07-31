@@ -220,6 +220,25 @@ async function prepareBookedCandidateThread(client) {
 		/rel="manifest"[^>]+\/abundance\/site\.webmanifest/,
 		'Expected the Abundance manifest metadata'
 	);
+	assert.match(homePage.bodyText, /Skip to main content/, 'Expected the shared skip link');
+	assert.match(
+		homePage.bodyText,
+		/aria-controls="primary-navigation"/,
+		'Expected the mobile navigation control relationship'
+	);
+
+	const jobsPage = await client.get('/jobs');
+	assert.equal(jobsPage.status, 200, 'Expected /jobs to render');
+	assert.match(
+		jobsPage.bodyText,
+		/Filter open nursing roles/,
+		'Expected role discovery filters'
+	);
+	assert.match(
+		jobsPage.bodyText,
+		/Try ICU, Austin, or nights/,
+		'Expected a concrete role-search prompt'
+	);
 
 	const applyPage = await client.get('/apply');
 	assert.equal(applyPage.status, 200, 'Expected /apply to render');
@@ -269,6 +288,27 @@ async function prepareBookedCandidateThread(client) {
 		body: "I'm an ICU travel nurse looking for night shifts within 50 miles of Dallas, and I have an active compact license."
 	});
 	assertOk(sent, 'Failed to send intake message');
+
+	const threadPage = await client.get(`/chat/${threadId}`);
+	assert.equal(threadPage.status, 200, 'Expected candidate thread to render');
+	assert.match(
+		threadPage.bodyText,
+		/<title>[^<]+ \| Abundance Concierge<\/title>/,
+		'Expected a route-specific candidate thread title'
+	);
+	assert.match(
+		threadPage.bodyText,
+		/id="application-next-step"/,
+		'Expected the candidate next-step anchor'
+	);
+
+	const profilePage = await client.get(`/chat/${threadId}/profile`);
+	assert.equal(profilePage.status, 200, 'Expected candidate profile to render');
+	assert.match(
+		profilePage.bodyText,
+		/<title>[^<]+ details \| Abundance Concierge<\/title>/,
+		'Expected a route-specific candidate profile title'
+	);
 
 	let threadView = sent.body.threadView;
 	threadView = await confirmIfNeeded(client, threadId, threadView);

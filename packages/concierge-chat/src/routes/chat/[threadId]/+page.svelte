@@ -422,6 +422,14 @@
 	}
 </script>
 
+<svelte:head>
+	<title>{liveThreadView.thread.title} | Abundance Concierge</title>
+	<meta
+		name="description"
+		content="Continue a guided Abundance nurse application, review captured details, and prepare the next recruiter-owned step."
+	/>
+</svelte:head>
+
 <section class={`split-layout ${showInternalOperatorUi ? 'operator' : 'nurse'}`}>
 	{#if showInternalOperatorUi}
 		<aside class="context-column">
@@ -574,6 +582,9 @@
 						<span style={`width: ${liveThreadView.thread.profile.completion}%`}></span>
 					</div>
 					<span class="application-completion-note">Built with you, one answer at a time.</span>
+					{#if renderedInlineWidgets.length > 0}
+						<a class="application-next-link" href="#application-next-step">Next step ↓</a>
+					{/if}
 				</div>
 			{/if}
 
@@ -694,7 +705,10 @@
 		</section>
 
 		{#if renderedInlineWidgets.length > 0}
-			<section class={`inline-widget-lane ${showInternalOperatorUi ? 'internal' : 'nurse'}`}>
+			<section
+				id="application-next-step"
+				class={`inline-widget-lane ${showInternalOperatorUi ? 'internal' : 'nurse'}`}
+			>
 				{#if !showInternalOperatorUi}
 					<div class="inline-widget-note">
 						<span class="assistant-chip subtle">Concierge</span>
@@ -1170,7 +1184,7 @@
 		position: relative;
 		z-index: 1;
 		display: grid;
-		grid-template-columns: auto minmax(100px, 1fr) auto;
+		grid-template-columns: auto minmax(100px, 1fr) auto auto;
 		align-items: center;
 		gap: 18px;
 		margin-top: clamp(1.5rem, 3vw, 2.6rem);
@@ -1207,6 +1221,19 @@
 		min-width: 4px;
 		border-radius: inherit;
 		background: linear-gradient(90deg, #af7c54, #1d6f8a);
+	}
+
+	.application-next-link {
+		color: #ffffff;
+		font-size: 0.78rem;
+		font-weight: 620;
+		text-decoration: none;
+		white-space: nowrap;
+	}
+
+	.application-next-link:hover {
+		text-decoration: underline;
+		text-underline-offset: 0.28rem;
 	}
 
 	.guidance-panel .section-title,
@@ -1824,6 +1851,19 @@
 	}
 
 	@media (max-width: 720px) {
+		.split-layout.nurse .history-list {
+			display: flex;
+			overflow-x: auto;
+			padding: 0.1rem 0 0.45rem;
+			scroll-snap-type: x proximity;
+			scrollbar-width: thin;
+		}
+
+		.split-layout.nurse .history-thread {
+			flex: 0 0 min(82vw, 20rem);
+			scroll-snap-align: start;
+		}
+
 		.starter-card {
 			grid-template-columns: 1fr;
 		}
@@ -1843,6 +1883,10 @@
 
 		.application-completion-note {
 			display: none;
+		}
+
+		.application-next-link {
+			justify-self: start;
 		}
 
 		.thread-hero.nurse .section-title {

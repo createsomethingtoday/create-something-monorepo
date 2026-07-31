@@ -93,6 +93,14 @@
 	$: activePreviewMode = data.agencyAccess.source === 'preview' ? data.agencyAccess.previewMode : null;
 </script>
 
+<svelte:head>
+	<title>Staffing workspace settings | Abundance Concierge</title>
+	<meta
+		name="description"
+		content="Review Abundance Concierge session, control-plane access, security, and hosted product preferences."
+	/>
+</svelte:head>
+
 <section class="glass panel">
 		<div class="section-header">
 			<div>
