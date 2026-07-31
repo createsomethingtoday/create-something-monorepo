@@ -432,6 +432,10 @@
     padding: clamp(1.35rem, 3vw, 2.5rem);
   }
 
+  .performance-narrative-stage[data-enhanced='false'] .performance-narrative-stage__panel {
+    min-height: 0;
+  }
+
   .performance-narrative-stage__panel[hidden] {
     display: none;
   }
