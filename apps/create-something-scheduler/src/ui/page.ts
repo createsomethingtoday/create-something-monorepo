@@ -213,6 +213,22 @@ export function schedulerPage(input: { nonce: string; turnstileSiteKey?: string 
     },'https://createsomething.agency');
   }
 
+  let reportedDocumentHeight=0;
+  function notifyParentHeight() {
+    if (parent === window) return;
+    const schedulerDocument=document.querySelector('body > main');
+    if (!schedulerDocument) return;
+    const height=Math.ceil(schedulerDocument.getBoundingClientRect().height);
+    if (!Number.isFinite(height) || height === reportedDocumentHeight) return;
+    reportedDocumentHeight=height;
+    parent.postMessage({type:'create-something:scheduler-resize',height},'https://createsomething.agency');
+  }
+  const schedulerResizeObserver=new ResizeObserver(()=>requestAnimationFrame(notifyParentHeight));
+  const schedulerDocument=document.querySelector('body > main');
+  if (schedulerDocument) schedulerResizeObserver.observe(schedulerDocument);
+  addEventListener('load',notifyParentHeight,{once:true});
+  requestAnimationFrame(notifyParentHeight);
+
   function setStatus(message, kind = 'controlled') { const labels={controlled:'Controlled',ready:'Ready',review:'Review',stop:'Stop'}; statusState.textContent=labels[kind] || 'Controlled'; statusMessage.textContent=message; status.dataset.kind=kind; }
   function updateSteps(current) { for (const step of stepNodes) { if (Number(step.dataset.step) === current) step.setAttribute('aria-current','step'); else step.removeAttribute('aria-current'); } }
   function idempotency(prefix) { return prefix + ':' + crypto.randomUUID(); }

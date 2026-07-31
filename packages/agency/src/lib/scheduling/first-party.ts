@@ -49,6 +49,8 @@ const SCHEDULER_LIFECYCLE_ACTIONS = new Set<SchedulerLifecycleAction>([
 ]);
 const BOOKING_ID = /^[A-Za-z0-9_-]{1,200}$/;
 const ACTION_TOKEN = /^[A-Za-z0-9._~-]{16,4096}$/;
+const SCHEDULER_DOCUMENT_HEIGHT_MIN = 320;
+const SCHEDULER_DOCUMENT_HEIGHT_MAX = 6000;
 
 function token(value: unknown, max: number): string {
 	return String(value ?? '')
@@ -171,4 +173,18 @@ export function normalizeSchedulerLifecycleMessage(
 			...(durationMinutes ? { durationMinutes } : {})
 		}
 	};
+}
+
+export function normalizeSchedulerResizeMessage(input: unknown): number | null {
+	if (!input || typeof input !== 'object') return null;
+	const candidate = input as Record<string, unknown>;
+	if (candidate.type !== 'create-something:scheduler-resize') return null;
+	if (typeof candidate.height !== 'number') return null;
+	const height = candidate.height;
+	if (
+		!Number.isFinite(height) ||
+		height < SCHEDULER_DOCUMENT_HEIGHT_MIN ||
+		height > SCHEDULER_DOCUMENT_HEIGHT_MAX
+	) return null;
+	return Math.ceil(height);
 }
