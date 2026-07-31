@@ -6,7 +6,6 @@
    * Pass the property prop to customize SEO and footer link.
    */
 
-  import SEO from '../components/SEO.svelte';
   import type { Property } from '../analytics/types';
 
   type PropertyDomain = Exclude<Property, 'lms'>;
@@ -32,27 +31,23 @@
   const domain = $derived(propertyDomains[property]);
 </script>
 
-<SEO
-  title="Unsubscribe | CREATE SOMETHING"
-  description="Unsubscribe from CREATE SOMETHING newsletter"
-  propertyName={property}
-/>
-
 <div class="page-container min-h-screen flex items-center justify-center">
   <div class="max-w-md mx-auto px-6 py-16 text-center">
     <div class="logo mb-8">CREATE SOMETHING</div>
 
     {#if data.success}
       <div class="success-section">
-        <h1 class="page-title mb-4">Unsubscribed</h1>
+        <h1 class="page-title mb-4">You are unsubscribed.</h1>
         <p class="body-text mb-6">
-          {data.email ? `${data.email} has been` : 'You have been'} removed from our mailing list.
+          {data.email
+            ? `If ${data.email} was subscribed, it has now been removed.`
+            : 'If you were subscribed, you have now been removed.'}
         </p>
-        <p class="caption-text">We respect your inbox. No hard feelings.</p>
+        <p class="caption-text">This address will not receive more research notes.</p>
       </div>
     {:else}
       <div class="error-section">
-        <h1 class="page-title mb-4">Unable to Unsubscribe</h1>
+        <h1 class="page-title mb-4">We could not unsubscribe this address.</h1>
         <p class="body-text mb-6">
           {data.error || 'Something went wrong processing your request.'}
         </p>

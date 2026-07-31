@@ -1,5 +1,24 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { getAnalytics } from '../analytics/client.js';
+
+  interface TurnstileApi {
+    render(
+      container: HTMLElement,
+      options: {
+        sitekey: string;
+        callback: (token: string) => void;
+        'expired-callback': () => void;
+        'error-callback': () => void;
+        theme: 'dark';
+        size: 'flexible';
+      }
+    ): string;
+    reset(widgetId: string): void;
+    remove(widgetId: string): void;
+  }
+
+  type TurnstileWindow = Window & { turnstile?: TurnstileApi };
 
   /**
    * NewsletterSignup Component
@@ -27,6 +46,10 @@
     endpoint?: string;
     /** Optional source tracking (defaults to property) */
     source?: string;
+    /** Cloudflare Turnstile site key for production verification */
+    turnstileSiteKey?: string;
+    /** Contact path shown when JavaScript cannot run verification */
+    noScriptContactHref?: string;
   }
 
   let {
@@ -37,13 +60,75 @@
     submitLabel = 'Join the list',
     note = 'Occasional notes. Unsubscribe whenever it stops being useful.',
     endpoint = '/api/newsletter',
-    source
+    source,
+    turnstileSiteKey = '',
+    noScriptContactHref = ''
   }: Props = $props();
 
   let email = $state('');
   let honeypot = $state(''); // Hidden field to catch bots
   let status: 'idle' | 'loading' | 'success' | 'error' = $state('idle');
   let message = $state('');
+  let turnstileToken = $state('');
+  let clientReady = $state(false);
+  let turnstileWidgetId: string | null = null;
+  let turnstileContainer = $state<HTMLDivElement>();
+
+  function renderTurnstile() {
+    const turnstile = (window as TurnstileWindow).turnstile;
+    if (!turnstileSiteKey || !turnstileContainer || !turnstile || turnstileWidgetId) return;
+
+    turnstileWidgetId = turnstile.render(turnstileContainer, {
+      sitekey: turnstileSiteKey,
+      callback: (token: string) => {
+        turnstileToken = token;
+        if (status === 'error') {
+          status = 'idle';
+          message = '';
+        }
+      },
+      'expired-callback': () => {
+        turnstileToken = '';
+      },
+      'error-callback': () => {
+        turnstileToken = '';
+        status = 'error';
+        message = 'Verification did not load. Please try again.';
+      },
+      theme: 'dark',
+      size: 'flexible'
+    });
+  }
+
+  onMount(() => {
+    clientReady = true;
+    if (!turnstileSiteKey) return;
+
+    const turnstileWindow = window as TurnstileWindow;
+    const existingScript = document.querySelector<HTMLScriptElement>(
+      'script[data-create-something-turnstile]'
+    );
+    const script = existingScript ?? document.createElement('script');
+
+    if (!existingScript) {
+      script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+      script.async = true;
+      script.defer = true;
+      script.dataset.createSomethingTurnstile = 'true';
+      document.head.appendChild(script);
+    }
+
+    if (turnstileWindow.turnstile) renderTurnstile();
+    else script.addEventListener('load', renderTurnstile);
+
+    return () => {
+      script.removeEventListener('load', renderTurnstile);
+      if (turnstileWidgetId && turnstileWindow.turnstile) {
+        turnstileWindow.turnstile.remove(turnstileWidgetId);
+        turnstileWidgetId = null;
+      }
+    };
+  });
 
   async function handleSubmit(event: Event) {
     event.preventDefault();
@@ -65,6 +150,12 @@
       return;
     }
 
+    if (turnstileSiteKey && !turnstileToken) {
+      status = 'error';
+      message = 'Complete the verification before requesting the note.';
+      return;
+    }
+
     status = 'loading';
     message = '';
 
@@ -76,6 +167,7 @@
         body: JSON.stringify({
           email: email.trim(),
           website: honeypot, // Honeypot field
+          turnstileToken: turnstileToken || undefined,
           source,
           sessionId: analytics?.getSessionId(),
           sourceProperty: analytics?.getSourceProperty() ?? undefined,
@@ -94,6 +186,11 @@
           surface: 'newsletter_signup'
         });
         email = '';
+        const turnstile = (window as TurnstileWindow).turnstile;
+        if (turnstile && turnstileWidgetId) {
+          turnstile.reset(turnstileWidgetId);
+          turnstileToken = '';
+        }
       } else {
         status = 'error';
         message = data.message || 'Something went wrong. Please try again.';
@@ -151,38 +248,53 @@
             />
           </div>
 
-          <div class="form-intro">
-            <span>By email</span>
-            <strong>{actionLabel}</strong>
-          </div>
-
-          <div class="form-row">
-            <div class="input-wrapper">
-              <label for="newsletter-email" class="visually-hidden">Email address</label>
-              <input
-                type="email"
-                id="newsletter-email"
-                name="email"
-                placeholder="your@email.com"
-                bind:value={email}
-                oninput={handleInput}
-                disabled={status === 'loading'}
-                class:has-error={status === 'error'}
-                required
-                autocomplete="email"
-              />
+          <div class="js-only-signup" hidden={!clientReady}>
+            <div class="form-intro">
+              <span>By email</span>
+              <strong>{actionLabel}</strong>
             </div>
-            <button type="submit" class="submit-button" disabled={status === 'loading'}>
-              {#if status === 'loading'}
-                <span class="loading-spinner" aria-hidden="true"></span>
-                <span class="visually-hidden">Sending request...</span>
-              {:else}
-                {submitLabel}
-              {/if}
-            </button>
+
+            <div class="form-row">
+              <div class="input-wrapper">
+                <label for="newsletter-email" class="visually-hidden">Email address</label>
+                <input
+                  type="email"
+                  id="newsletter-email"
+                  name="email"
+                  placeholder="your@email.com"
+                  bind:value={email}
+                  oninput={handleInput}
+                  disabled={status === 'loading'}
+                  class:has-error={status === 'error'}
+                  required
+                  autocomplete="email"
+                />
+              </div>
+              <button type="submit" class="submit-button" disabled={status === 'loading'}>
+                {#if status === 'loading'}
+                  <span class="loading-spinner" aria-hidden="true"></span>
+                  <span class="visually-hidden">Sending request...</span>
+                {:else}
+                  {submitLabel}
+                {/if}
+              </button>
+            </div>
+
+            <p class="newsletter-note">{note}</p>
+
+            {#if turnstileSiteKey}
+              <div bind:this={turnstileContainer} class="turnstile-container"></div>
+            {/if}
           </div>
 
-          <p class="newsletter-note">{note}</p>
+          <noscript>
+            <p class="no-script-message">
+              JavaScript is required for email verification.
+              {#if noScriptContactHref}
+                <a href={noScriptContactHref}>Email us to request the research note.</a>
+              {/if}
+            </p>
+          </noscript>
 
           {#if status === 'error' && message}
             <p class="error-message" role="alert">{message}</p>
@@ -276,6 +388,15 @@
     min-width: 0;
   }
 
+  .js-only-signup {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .js-only-signup[hidden] {
+    display: none;
+  }
+
   .form-intro {
     display: grid;
     gap: 0.24rem;
@@ -341,7 +462,8 @@
   input[type='email']:focus {
     outline: none;
     border-color: var(--color-performance-signal, #315cff);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-performance-signal, #315cff) 16%, transparent);
+    box-shadow: 0 0 0 3px
+      color-mix(in srgb, var(--color-performance-signal, #315cff) 16%, transparent);
   }
 
   input[type='email']:disabled {
@@ -414,6 +536,25 @@
     font-size: 0.92rem;
     line-height: 1.45;
     text-wrap: pretty;
+  }
+
+  .turnstile-container {
+    display: flex;
+    justify-content: flex-start;
+    min-height: 4.1rem;
+    margin-top: 1rem;
+  }
+
+  .no-script-message {
+    margin: 1rem 0 0;
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  .no-script-message a {
+    color: #ffffff;
+    text-underline-offset: 0.2em;
   }
 
   .error-message {

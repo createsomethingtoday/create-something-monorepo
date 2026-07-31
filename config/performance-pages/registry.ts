@@ -509,7 +509,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     'io-subscription',
     'io',
     ['confirm', 'subscribe', 'unsubscribe'],
-    'pending',
+    'migrated',
     contract(
       'commercial',
       'Complete the publication subscription decision with clear state.',
