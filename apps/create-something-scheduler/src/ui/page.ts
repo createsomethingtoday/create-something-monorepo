@@ -181,7 +181,7 @@ export function schedulerPage(input: { nonce: string; turnstileSiteKey?: string 
     if (event.source !== parent || event.origin !== 'https://createsomething.agency') return;
     if (event.data?.type === 'create-something:scheduler-context') {
       state.context=schedulerContext(event.data.context);
-      requestAnimationFrame(()=>notifyParentHeight(true));
+      queueParentHeight();
       return;
     }
     if (event.data?.type === 'create-something:scheduler-access') {
@@ -224,6 +224,7 @@ export function schedulerPage(input: { nonce: string; turnstileSiteKey?: string 
     reportedDocumentHeight=height;
     parent.postMessage({type:'create-something:scheduler-resize',height},'https://createsomething.agency');
   }
+  function queueParentHeight() { requestAnimationFrame(()=>notifyParentHeight(true)); }
   const schedulerResizeObserver=new ResizeObserver(()=>requestAnimationFrame(notifyParentHeight));
   const schedulerMutationObserver=new MutationObserver(()=>requestAnimationFrame(notifyParentHeight));
   const schedulerDocument=document.querySelector('body > main');
@@ -266,8 +267,10 @@ export function schedulerPage(input: { nonce: string; turnstileSiteKey?: string 
       state.slots = result.slots;
       renderSlots();
       setStatus(result.slots.length ? result.slots.length + ' verified '+state.durationMinutes+'-minute openings · ' + timezone.replaceAll('_',' ') + '.' : 'No open times in the next four weeks.',result.slots.length ? 'ready' : 'review');
+      queueParentHeight();
     } catch (error) {
       setStatus(error.message + ' No time can be booked until Calendar is confirmed.', 'stop');
+      queueParentHeight();
     }
   }
 
@@ -310,6 +313,7 @@ export function schedulerPage(input: { nonce: string; turnstileSiteKey?: string 
     selectedSummary.textContent=formatDay(slot.start)+' · '+formatTime(slot.start)+' · '+state.durationMinutes+' min'; updateSteps(2);
     setStatus('Selected ' + formatDay(slot.start) + ' at ' + formatTime(slot.start) + ' for '+state.durationMinutes+' minutes.','review');
     if (!state.formStarted) { state.formStarted=true; notifyParent('booking_form_started',{durationMinutes:state.durationMinutes}); }
+    queueParentHeight();
   }
 
   form.addEventListener('submit',async event => {
@@ -339,6 +343,7 @@ export function schedulerPage(input: { nonce: string; turnstileSiteKey?: string 
       confirmation.querySelector('#confirm-action').innerHTML='<p>Cancel this meeting for everyone?</p><button id="confirm-cancel" class="danger" type="button">Confirm cancellation</button>';
       confirmation.querySelector('#confirm-cancel').addEventListener('click',cancelBooking);
     });
+    queueParentHeight();
   }
 
   function renderRescheduleConfirmation() {
@@ -346,6 +351,7 @@ export function schedulerPage(input: { nonce: string; turnstileSiteKey?: string 
     setStatus('Move to '+formatDay(state.selected.start)+' at '+formatTime(state.selected.start)+'?','review');
     let button=document.querySelector('#move-meeting');
     if (!button) { button=document.createElement('button'); button.id='move-meeting'; button.type='button'; button.className='primary'; button.textContent='Move this meeting'; button.addEventListener('click',rescheduleBooking); days.after(button); }
+    queueParentHeight();
   }
 
   async function rescheduleBooking() {
