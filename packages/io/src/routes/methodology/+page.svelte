@@ -1,39 +1,164 @@
 <script lang="ts">
-  import { SEO } from '@create-something/canon';
+  import { PerformanceNarrativeStage, SEO } from '@create-something/canon';
+  import OrientationOpening from '$lib/components/orientation/OrientationOpening.svelte';
 
   const faqItems = [
     {
       question: 'How do you track AI development experiments?',
       answer:
-        'Every experiment uses automated logging to capture real-time data: API costs, time measurements, errors, and human interventions. This transforms subjective blog posts into reproducible experiments with precise metrics.'
+        'Automated logging captures API costs, time, errors, prompts, and human interventions so each published result carries inspectable evidence.'
     },
     {
       question: 'What makes this different from AI development blogs?',
       answer:
-        'We document the process, not just results. Every experiment includes tracked metrics (time, costs, errors), methodology details, and intervention documentation. This provides reproducible, credible knowledge instead of anecdotes.'
+        'The process, metrics, limitations, and interventions remain visible. The result is reproducible knowledge rather than an outcome-only anecdote.'
     },
     {
       question: 'Why focus on AI-native development?',
       answer:
-        "Traditional development practices don't account for AI agents that generate code, make architectural decisions, and require human oversight. AI-native development requires new methodologies for evaluation and reproducibility."
+        'AI agents generate code and influence architecture, so the practice needs explicit evaluation, supervision, and reproducibility standards.'
     },
     {
       question: 'How do you measure experiment success?',
       answer:
-        'Success is measured across multiple dimensions: completion time, API costs, error rates, human intervention frequency, and quality of final output. We track both objective metrics and qualitative learnings.'
+        'Completion time, API costs, error rates, human intervention, output quality, and the confidence of the underlying data all matter.'
     },
     {
       question: 'Can I reproduce your experiments?',
       answer:
-        'Yes. Each experiment documents the exact process, tools used, prompts given, and interventions made. We provide enough detail for others to reproduce our work and validate our findings.'
+        'Published experiments document the process, tools, prompts, interventions, and evidence needed to inspect or repeat the work.'
+    }
+  ];
+
+  const process = [
+    { step: '01', title: 'Build', detail: 'Work with AI agents as development partners.' },
+    {
+      step: '02',
+      title: 'Track',
+      detail: 'Hooks capture prompts, errors, costs, and interventions.'
+    },
+    { step: '03', title: 'Analyze', detail: 'Compare time, quality, and technical evidence.' },
+    { step: '04', title: 'Publish', detail: 'Report what worked, what failed, and why.' }
+  ];
+
+  const metrics = [
+    {
+      name: 'Prompts',
+      detail: 'Real-time logging through Claude Code hooks',
+      example: '47 iterations logged'
+    },
+    {
+      name: 'Errors',
+      detail: 'Counts and resolution time',
+      example: '23 errors; 8-minute average fix'
+    },
+    {
+      name: 'Costs',
+      detail: 'Token and infrastructure use from APIs',
+      example: '$18.50 Claude + $8.30 Cloudflare'
+    },
+    {
+      name: 'Interventions',
+      detail: 'Where the agent needed human help',
+      example: '12 manual fixes documented'
+    },
+    {
+      name: 'Time',
+      detail: 'Measured session duration',
+      example: '26 hours actual vs 120 estimated'
+    },
+    {
+      name: 'Architecture',
+      detail: 'Decisions and rejected alternatives',
+      example: 'Workflows over Workers, with rationale'
+    }
+  ];
+
+  const visualizationPrinciples = [
+    { name: 'Maximize Data-Ink Ratio', use: 'Remove decoration that obscures evidence.' },
+    { name: 'Show Data Variation', use: 'Display change and patterns, not only a static total.' },
+    { name: 'High Data Density', use: 'Fit more meaningful comparison into the same space.' },
+    { name: 'Integrate Text & Data', use: 'Keep labels, values, and context together.' },
+    { name: 'Small Multiples', use: 'Compare repeated states side by side.' },
+    { name: 'Remove Chartjunk', use: 'Let the evidence, not decoration, carry emphasis.' }
+  ];
+
+  const modes = [
+    {
+      name: 'Real-Time Tracking',
+      label: 'Ideal',
+      detail: 'Track from day one for complete prompts, errors, and decisions.',
+      quality: 'High confidence, precise metrics',
+      use: 'New experiments'
+    },
+    {
+      name: 'Mid-Flight Tracking',
+      label: 'Practical',
+      detail: 'Combine current logging with reconstructed git history.',
+      quality: 'Estimated past, precise future',
+      use: 'Active projects'
+    },
+    {
+      name: 'Retroactive Documentation',
+      label: 'Still valuable',
+      detail: 'Reconstruct a completed project from git, APIs, and operator memory.',
+      quality: 'Lower confidence with explicit limits',
+      use: 'Deployed projects'
+    }
+  ];
+
+  const scenes = [
+    {
+      id: 'method',
+      label: 'Method',
+      summary: 'Build, track, analyze, publish',
+      title: 'The method starts before the result exists.',
+      detail:
+        'Choose the strongest tracking mode the work allows, then preserve the uncertainty of any reconstructed evidence instead of presenting it as precise.',
+      tone: 'neutral' as const,
+      evidence: ['Four-step operating loop', 'Three confidence-aware tracking modes']
+    },
+    {
+      id: 'evidence',
+      label: 'Evidence',
+      summary: 'Measure and display the claim',
+      title: 'A tracked result still fails if the evidence is hard to inspect.',
+      detail:
+        'Six recurring measurements establish the record; Tufte-informed presentation keeps the data, context, and uncertainty close together.',
+      tone: 'review' as const,
+      evidence: [
+        'Six tracked dimensions',
+        'Six visualization principles',
+        'Credibility, reproducibility, efficiency'
+      ]
+    },
+    {
+      id: 'apply',
+      label: 'Apply',
+      summary: 'Use the method on real work',
+      title: 'Adoption is a three-step practice, not a new reporting layer.',
+      detail:
+        'Install the tracking seam, build while it records, then publish a paper whose conclusion can be checked against the captured work.',
+      tone: 'allow' as const,
+      actions: [{ label: 'Browse current experiments', href: '/experiments' }]
+    },
+    {
+      id: 'canon',
+      label: 'Canon',
+      summary: 'Name the governing influence',
+      title: 'Edward R. Tufte defines the information-design standard behind the evidence.',
+      detail:
+        'Canon status is earned through practical, evidence-based use. The influence remains visible beside the concrete ways it shapes this publication.',
+      tone: 'neutral' as const,
+      actions: [{ label: 'Explore all masters', href: 'https://createsomething.ltd/masters' }]
     }
   ];
 </script>
 
 <SEO
   title="Research Methodology"
-  description="How CREATE SOMETHING produces credible knowledge about AI-native development through rigorous experiment tracking, real-time logging, and reproducible results."
-  keywords="research methodology, experiment tracking, AI-native development, reproducible research, scientific method, Claude Code, systems thinking"
+  description="How CREATE SOMETHING produces credible knowledge about AI-native development through tracked work, explicit limitations, and reproducible evidence."
+  keywords="research methodology, experiment tracking, AI-native development, reproducible research, Claude Code, systems thinking"
   canonical="https://createsomething.io/methodology"
   propertyName="io"
   {faqItems}
@@ -43,890 +168,569 @@
   ]}
 />
 
-<!-- Hero Section -->
-<section class="relative pt-32 pb-16 px-6">
-  <div class="max-w-4xl mx-auto">
-    <div class="space-y-8 animate-reveal">
-      <h1 class="mb-8">Research Methodology</h1>
+<OrientationOpening
+  active="methodology"
+  eyebrow="Research operating method"
+  title="Document the process, not only the result"
+  description="CREATE SOMETHING turns AI-native development from an anecdote into an inspectable experiment. The record tracks the work, its costs, its failures, and the interventions that changed it."
+  summary={[
+    { label: 'Loop', value: '4 steps' },
+    { label: 'Evidence', value: '6 dimensions' },
+    { label: 'Modes', value: '3 confidence levels' }
+  ]}
+/>
 
-      <p class="hero-lead">
-        What makes CREATE SOMETHING different from AI blogs: we don't just document results—we
-        document the <strong>process</strong> of building with AI agents.
-      </p>
+<div class="orientation-stage">
+  <PerformanceNarrativeStage
+    id="research-method"
+    eyebrow="From work to knowledge"
+    title="One operating loop connects collection, interpretation, and publication."
+    description="Move from the method to its evidence, then inspect how to apply it and which information-design standard governs the result."
+    {scenes}
+    ariaLabel="Research methodology"
+  >
+    {#snippet artifact(_scene, index)}
+      {#if index === 0}
+        <div class="method-artifact">
+          <ol class="process-grid">
+            {#each process as item}
+              <li>
+                <span>{item.step}</span><strong>{item.title}</strong>
+                <p>{item.detail}</p>
+              </li>
+            {/each}
+          </ol>
 
-      <p class="hero-subtext">
-        Every experiment is tracked with automated logging, real costs from APIs, precise time
-        measurements, and intervention documentation. This transforms anecdotes into reproducible
-        experiments.
-      </p>
-    </div>
-  </div>
-</section>
-
-<!-- The Process Visual -->
-<section class="py-16 px-6">
-  <div class="max-w-6xl mx-auto">
-    <div>
-      <h2 class="mb-12 text-center">How We Work</h2>
-
-      <!-- Pipeline Visual -->
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-        {#each [{ step: '1. Build', title: 'Claude Code', description: 'Work with AI agents as development partners', icon: 'M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5' }, { step: '2. Track', title: 'Auto-Log', description: 'Hooks capture every prompt, error, intervention', icon: 'M22 12h-4l-3 9L9 3l-3 9H2' }, { step: '3. Analyze', title: 'Real Data', description: 'Actual costs, time, errors from APIs', icon: 'M22 7l-8.5 8.5-5-5L1 18' }, { step: '4. Publish', title: 'Honest Results', description: "What worked, what didn't, and why", icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM4 2v20M20 8h-6V2' }] as item, index}
-          <div class="relative p-6 card animate-reveal" style="--delay: {index + 1}">
-            <div class="mb-4 icon">
-              <svg
-                class="w-10 h-10 icon"
-                stroke-width="1.5"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-              >
-                <path d={item.icon} stroke-linecap="round" stroke-linejoin="round" />
-              </svg>
-            </div>
-            <div class="card-step mb-2">{item.step}</div>
-            <h3 class="metric-label mb-2">
-              {item.title}
-            </h3>
-            <p class="card-description">
-              {item.description}
-            </p>
-
-            <!-- Arrow -->
-            {#if index < 3}
-              <div
-                class="hidden md:block absolute -right-3 top-1/2 transform -translate-y-1/2 arrow"
-              >
-                <svg
-                  class="w-6 h-6 arrow"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                >
-                  <path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-              </div>
-            {/if}
+          <div class="mode-grid">
+            {#each modes as mode}
+              <article>
+                <div>
+                  <h3>{mode.name}</h3>
+                  <span>{mode.label}</span>
+                </div>
+                <p>{mode.detail}</p>
+                <dl>
+                  <div>
+                    <dt>Data quality</dt>
+                    <dd>{mode.quality}</dd>
+                  </div>
+                  <div>
+                    <dt>Use when</dt>
+                    <dd>{mode.use}</dd>
+                  </div>
+                </dl>
+              </article>
+            {/each}
           </div>
-        {/each}
-      </div>
-
-      <div class="text-center">
-        <p class="emphasis-text">This is research, not blogging.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- What We Track -->
-<section class="py-16 px-6">
-  <div class="max-w-4xl mx-auto">
-    <div class="space-y-8">
-      <h2 class="mb-8">Every Experiment Tracked With</h2>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {#each [{ metric: 'Prompts', description: 'Real-time logging via Claude Code hooks', example: '47 iterations logged' }, { metric: 'Errors', description: 'Precise counts & resolution times', example: '23 errors, avg fix: 8 min' }, { metric: 'Costs', description: 'Token usage + infrastructure from APIs', example: '$18.50 Claude + $8.30 Cloudflare' }, { metric: 'Interventions', description: 'When AI needed human help, and why', example: '12 manual fixes documented' }, { metric: 'Time', description: 'Session duration, not guesswork', example: '26 hours actual vs 120 estimated' }, { metric: 'Architecture', description: 'Decisions made, alternatives considered', example: 'Workflows over Workers (why)' }] as item, index}
-          <div class="p-6 card animate-reveal" style="--delay: {index + 1}">
-            <h3 class="metric-label mb-2">
-              {item.metric}
-            </h3>
-            <p class="principle-description mb-3">
-              {item.description}
-            </p>
-            <code class="metric-example">
-              {item.example}
-            </code>
+        </div>
+      {:else if index === 1}
+        <div class="evidence-artifact">
+          <div class="metric-grid">
+            {#each metrics as metric}
+              <article>
+                <h3>{metric.name}</h3>
+                <p>{metric.detail}</p>
+                <code>{metric.example}</code>
+              </article>
+            {/each}
           </div>
-        {/each}
-      </div>
-    </div>
-  </div>
-</section>
 
-<!-- Displaying Evidence (Tufte Section) -->
-<section class="py-16 px-6">
-  <div class="max-w-4xl mx-auto">
-    <div class="space-y-8">
-      <h2 class="mb-8">Displaying Evidence</h2>
+          <blockquote>
+            Excellence in quantitative communication requires clarity, precision, and efficiency.
+            <cite>Edward Tufte, The Visual Display of Quantitative Information</cite>
+          </blockquote>
 
-      <p class="canon-intro">
-        Tracking data isn't enough—how you <strong>display</strong> that data determines whether your
-        research is credible or dismissed. We follow Edward Tufte's principles for quantitative information
-        design.
-      </p>
+          <div class="principle-grid">
+            {#each visualizationPrinciples as principle}
+              <article>
+                <h3>{principle.name}</h3>
+                <p>{principle.use}</p>
+              </article>
+            {/each}
+          </div>
 
-      <div class="p-6 quote-box">
-        <p class="quote-text">
-          "Excellence in statistical graphics consists of complex ideas communicated with clarity,
-          precision, and efficiency."
-          <span class="quote-author block mt-2"
-            >— Edward Tufte, The Visual Display of Quantitative Information</span
-          >
-        </p>
-      </div>
+          <div class="tracking-contrast">
+            <article>
+              <h3>Without tracking</h3>
+              <ul>
+                <li>“I built X with AI” remains an anecdote</li>
+                <li>The work cannot be reproduced</li>
+                <li>The claim cannot be checked</li>
+              </ul>
+            </article>
+            <article>
+              <h3>With tracking</h3>
+              <ul>
+                <li>Time, costs, errors, and savings are explicit</li>
+                <li>Other practitioners can repeat the experiment</li>
+                <li>The methodology and limits remain visible</li>
+              </ul>
+            </article>
+          </div>
 
-      <!-- Tufte's Principles Applied -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-        {#each [{ principle: 'Maximize Data-Ink Ratio', description: 'Every pixel should convey information. Remove decoration that obscures data.', application: 'Sparklines show trends in 12 pixels instead of full charts with axes and labels.' }, { principle: 'Show Data Variation', description: 'Display change and patterns, not just static numbers.', application: 'Inline trends on metrics show movement over time, not just current values.' }, { principle: 'High Data Density', description: 'Maximize meaningful information per unit area.', application: 'Tables show 10 experiments with counts + percentages instead of 3 with decoration.' }, { principle: 'Integrate Text & Data', description: 'Labels, numbers, and context should appear together.', application: 'Property stats show count, percentage, and trend inline—no separate legend needed.' }, { principle: 'Small Multiples', description: 'Show multiple dimensions side-by-side for comparison.', application: '7-day grid lets you spot patterns across the week at a glance.' }, { principle: 'Remove Chartjunk', description: 'Eliminate visual noise that distracts from data.', application: 'Subtle borders and minimal backgrounds—data stands out, not design.' }] as item, index}
-          <div class="p-5 card animate-reveal" style="--delay: {index + 1}">
-            <h3 class="principle-title mb-2">
-              {item.principle}
-            </h3>
-            <p class="principle-description mb-3">
-              {item.description}
-            </p>
-            <div class="pt-3 divider-top">
-              <p class="stat-label">
-                <strong class="list-text">In our analytics:</strong>
-                {item.application}
+          <p class="why-evidence">
+            Clear evidence protects credibility, makes reproduction possible, and lets a researcher
+            extract the relevant signal without scrolling through decorative explanation.
+          </p>
+        </div>
+      {:else if index === 2}
+        <div class="apply-artifact">
+          <ol class="adoption-grid">
+            <li>
+              <span>01</span><strong>Install the skill</strong>
+              <p>Add tracking to the AI development setup.</p>
+            </li>
+            <li>
+              <span>02</span><strong>Build and track</strong>
+              <p>Let automatic logging capture the working process.</p>
+            </li>
+            <li>
+              <span>03</span><strong>Generate papers</strong>
+              <p>Turn the record into reproducible research.</p>
+            </li>
+          </ol>
+
+          <article class="historical-example">
+            <div>
+              <span>Historical experiment example</span>
+              <h3>Zoom Transcript Automation</h3>
+              <p>
+                The original detail route is no longer a live publication destination. Its retained
+                measurements still demonstrate how the method joins outcome, cost, intervention, and
+                source evidence.
               </p>
             </div>
-          </div>
-        {/each}
-      </div>
-
-      <!-- Why This Matters for Research -->
-      <div class="mt-8 p-6 card">
-        <h3 class="author-name mb-4">Why Visualization Standards Matter</h3>
-        <div class="space-y-4 list-text">
-          <p>
-            <strong class="work-title">Credibility:</strong> Poor visualization makes readers question
-            your data. If metrics are buried under decoration, they assume you're hiding something.
-          </p>
-          <p>
-            <strong class="work-title">Reproducibility:</strong> Clear presentation lets others verify
-            your work. Sparklines and small multiples make patterns obvious without interpretation.
-          </p>
-          <p>
-            <strong class="work-title">Efficiency:</strong> Researchers need to extract insights quickly.
-            High data density means less scrolling, more understanding.
-          </p>
-        </div>
-      </div>
-
-      <!-- See It In Action -->
-      <div class="text-center mt-8">
-        <p class="mode-value mb-4">
-          These principles are applied throughout our analytics dashboard and experiment results.
-        </p>
-        <a href="/admin/analytics" class="inline-flex items-center gap-2 px-6 py-3 cta-button">
-          <span>View Analytics Dashboard</span>
-          <svg
-            class="w-4 h-4"
-            stroke-width="2"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-          >
-            <path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-        </a>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- Three Tracking Modes -->
-<section class="py-16 px-6">
-  <div class="max-w-4xl mx-auto">
-    <div class="space-y-8">
-      <h2 class="mb-8">Three Tracking Modes</h2>
-
-      <div class="space-y-6">
-        {#each [{ mode: 'Real-Time Tracking', tag: 'Ideal', description: 'Start tracking from day one. Get complete data on every iteration, error, and decision.', dataQuality: 'High confidence, precise metrics', useCase: 'New experiments starting from scratch' }, { mode: 'Mid-Flight Tracking', tag: 'Practical', description: 'Start tracking on an in-progress project. Combine real-time data with git history reconstruction.', dataQuality: 'Mixed: estimates for past work, precise for future', useCase: 'Active projects you realize are experiment-worthy' }, { mode: 'Retroactive Documentation', tag: 'Still Valuable', description: 'Document already-deployed projects. Reconstruct from git, APIs, and memory.', dataQuality: 'Lower confidence, acknowledged limitations', useCase: 'Completed projects with production data' }] as item, index}
-          <div class="p-6 card animate-reveal" style="--delay: {index + 1}">
-            <div class="flex items-start justify-between mb-3">
-              <h3 class="metric-label">
-                {item.mode}
-              </h3>
-              <span class="tag px-2 py-1">
-                {item.tag}
-              </span>
-            </div>
-            <p class="mode-description mb-4">
-              {item.description}
-            </p>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mode-value">
+            <dl>
               <div>
-                <span class="mode-label">Data Quality:</span>
-                <p class="list-text">{item.dataQuality}</p>
+                <dt>Hours</dt>
+                <dd>26</dd>
               </div>
               <div>
-                <span class="mode-label">Use Case:</span>
-                <p class="list-text">{item.useCase}</p>
+                <dt>Errors</dt>
+                <dd>47</dd>
               </div>
-            </div>
-          </div>
-        {/each}
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- Why This Matters -->
-<section class="py-16 px-6">
-  <div class="max-w-4xl mx-auto">
-    <div class="space-y-8">
-      <h2 class="mb-8">Why This Matters</h2>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div class="space-y-4">
-          <h3 class="metric-label">Without Tracking</h3>
-          <ul class="space-y-3 list-text">
-            {#each ['"I built X with AI" (anecdote)', 'No reproducibility', "Can't verify claims", 'Just another AI blog'] as item}
-              <li class="flex items-start gap-3">
-                <svg
-                  class="w-5 h-5 checklist-icon flex-shrink-0 mt-0.5"
-                  stroke-width="1.5"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                >
-                  <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-                <span>{item}</span>
-              </li>
-            {/each}
-          </ul>
-        </div>
-
-        <div class="space-y-4">
-          <h3 class="metric-label">With Tracking</h3>
-          <ul class="space-y-3 list-text">
-            {#each ['"I built X: 26 hrs, $27, 78% savings" (data)', 'Others can replicate experiments', 'Transparent methodology', 'Scientific research platform'] as item}
-              <li class="flex items-start gap-3">
-                <svg
-                  class="w-5 h-5 checklist-icon flex-shrink-0 mt-0.5"
-                  stroke-width="1.5"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                >
-                  <path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-                <span>{item}</span>
-              </li>
-            {/each}
-          </ul>
-        </div>
-      </div>
-
-      <div class="p-6 card mt-8">
-        <p class="canon-intro">
-          The tracking methodology transforms "prompting and hoping" into <strong
-            >systematic evaluation with reproducible results</strong
-          >. This is what separates research from blogging.
-        </p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- For Researchers -->
-<section class="py-16 px-6">
-  <div class="max-w-4xl mx-auto">
-    <div class="space-y-8">
-      <h2 class="mb-8">For Researchers: Use This Methodology</h2>
-
-      <p class="hero-subtext">
-        Want to adopt this approach for your own AI-native development research? The experiment
-        tracking system is available as a Claude Code Skill.
-      </p>
-
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {#each [{ step: '1', title: 'Install the Skill', description: 'Add experiment tracking to your Claude Code setup' }, { step: '2', title: 'Build & Track', description: 'Work with Claude Code while automatic logging captures everything' }, { step: '3', title: 'Generate Papers', description: 'Transform tracked data into reproducible research' }] as item, index}
-          <div class="p-6 card text-center animate-reveal" style="--delay: {index + 1}">
-            <div class="step-number mb-3">{item.step}</div>
-            <h3 class="principle-title mb-2">
-              {item.title}
-            </h3>
-            <p class="card-description">
-              {item.description}
+              <div>
+                <dt>Interventions</dt>
+                <dd>12</dd>
+              </div>
+              <div>
+                <dt>Time savings</dt>
+                <dd>78%</dd>
+              </div>
+            </dl>
+            <p>
+              <strong>Data sources:</strong> real-time prompt logging, Claude Code Analytics API, Cloudflare
+              billing API, and git history.
             </p>
-          </div>
-        {/each}
-      </div>
-
-      <div class="flex flex-col sm:flex-row gap-4 justify-center mt-8">
-        <a
-          href="https://github.com/createsomethingtoday/create-something-experiments"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="inline-flex items-center justify-center gap-2 px-6 py-3 cta-button-primary"
-        >
-          <span>View on GitHub</span>
-          <svg
-            class="w-4 h-4"
-            stroke-width="2"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-          >
-            <path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-        </a>
-
-        <a
-          href="/experiments/zoom-transcript-automation-experiment"
-          class="inline-flex items-center justify-center gap-2 px-6 py-3 cta-button"
-        >
-          <span>See Example Experiment</span>
-        </a>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- Example from Experiment #1 -->
-<section class="py-16 px-6 section-border">
-  <div class="max-w-4xl mx-auto">
-    <div class="space-y-8">
-      <h2 class="mb-8">Methodology in Action</h2>
-
-      <p class="hero-subtext">
-        Example from <a href="/experiments/zoom-transcript-automation-experiment" class="link-text"
-          >Experiment #1: Zoom Transcript Automation</a
-        >
-      </p>
-
-      <div class="p-6 card">
-        <div class="space-y-4">
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-            <div class="p-4 stat-card">
-              <div class="stat-value">26</div>
-              <div class="stat-label">Hours</div>
-            </div>
-            <div class="p-4 stat-card">
-              <div class="stat-value">47</div>
-              <div class="stat-label">Errors</div>
-            </div>
-            <div class="p-4 stat-card">
-              <div class="stat-value">12</div>
-              <div class="stat-label">Interventions</div>
-            </div>
-            <div class="p-4 stat-card">
-              <div class="stat-value">78%</div>
-              <div class="stat-label">Time Savings</div>
-            </div>
-          </div>
-
-          <div class="pt-4 divider-top">
-            <p class="mode-value">
-              <strong class="work-title">Data sources:</strong> Real-time prompt logging via hooks, Claude
-              Code Analytics API, Cloudflare billing API, git commit history
+            <p>
+              <strong>Reproducibility:</strong> starting prompt, tracking logs, and architecture decisions
+              were documented.
             </p>
-          </div>
-
-          <div class="pt-2">
-            <p class="mode-value">
-              <strong class="work-title">Reproducibility:</strong> Starting prompt, tracking logs, and
-              architecture decisions documented
-            </p>
-          </div>
+            <div class="example-actions">
+              <a href="/experiments">Browse current experiments</a>
+              <a
+                href="https://github.com/createsomethingtoday/create-something-experiments"
+                target="_blank"
+                rel="noopener noreferrer">Inspect the historical research repository</a
+              >
+            </div>
+          </article>
         </div>
-      </div>
-
-      <div class="text-center">
-        <a
-          href="/experiments/zoom-transcript-automation-experiment"
-          class="inline-flex items-center gap-2 link-text"
-        >
-          Read the full experiment
-          <svg
-            class="w-4 h-4"
-            stroke-width="2"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-          >
-            <path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-        </a>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- Canon & Influences -->
-<section class="py-16 px-6 section-border">
-  <div class="max-w-4xl mx-auto">
-    <div class="space-y-8">
-      <h2 class="mb-8">Canon & Influences</h2>
-
-      <p class="hero-subtext">
-        CREATE SOMETHING's methodology doesn't exist in isolation. We build on foundational work
-        from researchers, practitioners, and thinkers who established standards for rigorous
-        knowledge production.
-      </p>
-
-      <!-- Masters -->
-      <div class="mt-8">
-        <h3 class="mb-6">Masters</h3>
-
-        <!-- Edward Tufte -->
-        <div class="p-6 card">
-          <div class="flex items-start justify-between mb-4">
+      {:else}
+        <div class="canon-artifact">
+          <article class="master-card">
             <div>
-              <h4 class="metric-label">Edward R. Tufte</h4>
-              <p class="author-title mt-1">Professor Emeritus, Yale University</p>
+              <span>Data visualization</span>
+              <h3>Edward R. Tufte</h3>
+              <p>Professor Emeritus, Yale University</p>
             </div>
-            <div class="badge px-3 py-1">Data Visualization</div>
-          </div>
-
-          <div class="space-y-4 list-text">
             <p>
-              <strong class="work-title">Work:</strong>
-              <em>The Visual Display of Quantitative Information</em> (1983)
+              <em>The Visual Display of Quantitative Information</em> established principles for showing
+              complex evidence with less decoration and more inspectable variation.
             </p>
-
-            <p>
-              <strong class="work-title">Influence on CREATE SOMETHING:</strong>
-              Tufte's principles for displaying quantitative data define how we present experiment results,
-              analytics dashboards, and research findings. His concept of the data-ink ratio—maximizing
-              information while minimizing decoration—is fundamental to our visualization standards.
-            </p>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <div class="master-columns">
               <div>
-                <p class="mode-value mb-2"><strong>Core Principles We Apply:</strong></p>
-                <ul class="principle-item space-y-1 list-disc list-inside">
+                <strong>Principles applied</strong>
+                <ul>
                   <li>Maximize data-ink ratio</li>
-                  <li>Show data variation, not design variation</li>
+                  <li>Show data variation</li>
                   <li>Remove chartjunk</li>
                 </ul>
               </div>
               <div>
-                <p class="mode-value mb-2"><strong>Implemented In:</strong></p>
-                <ul class="principle-item space-y-1 list-disc list-inside">
-                  <li>Analytics dashboard design</li>
-                  <li>Experiment metrics visualization</li>
-                  <li>Research paper data presentation</li>
+                <strong>Implemented in</strong>
+                <ul>
+                  <li>Analytics dashboards</li>
+                  <li>Experiment metrics</li>
+                  <li>Research-paper evidence</li>
                 </ul>
               </div>
             </div>
-
-            <div class="pt-4 divider-top flex gap-4 flex-wrap footer-links">
-              <a
-                href="https://createsomething.ltd/masters/edward-tufte"
-                class="footer-link inline-flex items-center gap-1 font-medium"
+            <div class="master-links">
+              <a href="https://createsomething.ltd/masters/edward-tufte">Full Canon entry</a>
+              <a href="https://www.edwardtufte.com/tufte/" target="_blank" rel="noopener noreferrer"
+                >Official site</a
               >
-                <span>Full Canon Entry</span>
-                <svg
-                  class="w-3 h-3"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-              </a>
-              <a
-                href="https://www.edwardtufte.com/tufte/"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="footer-link inline-flex items-center gap-1"
-              >
-                <span>Official Site</span>
-                <svg
-                  class="w-3 h-3"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <path
-                    d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                </svg>
-              </a>
             </div>
-          </div>
-        </div>
-      </div>
+          </article>
 
-      <!-- How We Build Canon -->
-      <div class="mt-8 p-6 quote-box">
-        <h4 class="principle-title mb-3">How Work Enters the Canon</h4>
-        <div class="list-text space-y-3">
-          <p>A "Master" in the CREATE SOMETHING canon represents someone whose work has:</p>
-          <ul class="space-y-2 list-disc list-inside ml-2">
-            <li>
-              <strong class="work-title">Foundational impact</strong> — Established principles we build
-              upon
-            </li>
-            <li>
-              <strong class="work-title">Practical application</strong> — Not just theory; implemented
-              in our work
-            </li>
-            <li>
-              <strong class="work-title">Evidence-based approach</strong> — Research-backed, not opinion
-            </li>
-            <li>
-              <strong class="work-title">Timeless relevance</strong> — Principles that withstand technological
-              change
-            </li>
-          </ul>
-          <p class="pt-3 divider-top mt-4">
-            The canon grows through practice, not planning. We don't add influences
-            speculatively—only after we've applied their work and proven its value in our
-            methodology.
-          </p>
+          <article class="canon-criteria">
+            <h3>How work enters the Canon</h3>
+            <ul>
+              <li>
+                <strong>Foundational impact</strong><span>Established a principle used here.</span>
+              </li>
+              <li>
+                <strong>Practical application</strong><span
+                  >The work changed an implementation.</span
+                >
+              </li>
+              <li>
+                <strong>Evidence-based approach</strong><span>The influence can be inspected.</span>
+              </li>
+              <li>
+                <strong>Timeless relevance</strong><span>The principle survives a tool change.</span
+                >
+              </li>
+            </ul>
+            <p>The Canon grows through proven practice, not speculative affiliation.</p>
+          </article>
         </div>
-      </div>
+      {/if}
+    {/snippet}
+  </PerformanceNarrativeStage>
+</div>
 
-      <!-- Full Canon Reference -->
-      <div class="mt-8 text-center">
-        <p class="mode-value mb-4">
-          The complete canon—with full biographies, principles, quotes, and resources—lives on
-          CREATE SOMETHING.ltd
-        </p>
-        <a
-          href="https://createsomething.ltd/masters"
-          class="inline-flex items-center gap-2 px-6 py-3 cta-button"
-        >
-          <span>Explore All Masters</span>
-          <svg
-            class="w-4 h-4"
-            stroke-width="2"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-          >
-            <path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-        </a>
-        <p class="stat-label mt-4">Dieter Rams • Mies van der Rohe • Edward Tufte • Jony Ive</p>
-      </div>
+<section class="orientation-handoff" aria-labelledby="method-handoff-title">
+  <div>
+    <p>Continue with the artifact</p>
+    <h2 id="method-handoff-title">
+      Inspect the experiments, then test whether the evidence changes practice.
+    </h2>
+    <div>
+      <a class="primary" href="/experiments">Browse experiments</a>
+      <a href="/papers">Read research papers</a>
+      <a href="https://createsomething.ltd/masters">Explore the Canon</a>
     </div>
   </div>
 </section>
 
 <style>
-  /* ==========================================================================
-     Methodology Page - Canon Design Tokens
-     All styles derive from shared Canon tokens
-     ========================================================================== */
-
-  /* Hero Section */
-  .hero-lead {
-    font-size: var(--text-performance-body-lg);
-    color: var(--color-performance-fg-secondary);
-    line-height: var(--leading-performance-relaxed);
+  .method-artifact,
+  .evidence-artifact,
+  .apply-artifact,
+  .canon-artifact {
+    display: grid;
+    gap: var(--space-performance-lg);
   }
 
-  .hero-subtext {
-    font-size: var(--text-performance-body);
-    color: var(--color-performance-fg-tertiary);
-    line-height: var(--leading-performance-relaxed);
+  .process-grid,
+  .adoption-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin: 0;
+    padding: 0;
+    gap: var(--space-performance-sm);
+    list-style: none;
   }
 
-  /* Section Headers - h2 uses base styles from Canon */
-  :global(.section-subtitle) {
-    font-size: var(--text-performance-body-lg);
-    color: var(--color-performance-fg-secondary);
+  .adoption-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  /* Cards */
-  .card {
+  .process-grid li,
+  .adoption-grid li,
+  .mode-grid article,
+  .metric-grid article,
+  .principle-grid article,
+  .tracking-contrast article,
+  .historical-example,
+  .master-card,
+  .canon-criteria {
+    display: grid;
+    gap: var(--space-performance-xs);
+    padding: var(--space-performance-md);
+    border: 1px solid var(--color-performance-border-default);
     background: var(--color-performance-bg-surface);
-    border-radius: var(--radius-performance-scale-lg);
   }
 
-  .card-step {
-    font-size: var(--text-performance-body-sm);
-    color: var(--color-performance-fg-muted);
-  }
-
-  :global(.card-title) {
-    font-size: var(--text-performance-body-lg);
-    font-weight: var(--font-performance-semibold);
-    color: var(--color-performance-fg-primary);
-  }
-
-  .card-description {
-    font-size: var(--text-performance-body-sm);
+  .process-grid span,
+  .adoption-grid span,
+  .historical-example span,
+  .master-card span {
     color: var(--color-performance-fg-tertiary);
-  }
-
-  /* Icons */
-  .icon {
-    color: var(--color-performance-fg-secondary);
-  }
-
-  .arrow {
-    color: var(--color-performance-fg-subtle);
-  }
-
-  /* Typography Variants */
-  .emphasis-text {
-    font-size: var(--text-performance-body-lg);
-    color: var(--color-performance-fg-secondary);
-    font-weight: var(--font-performance-medium);
-  }
-
-  .metric-label {
-    font-size: var(--text-performance-body-lg);
-    font-weight: var(--font-performance-semibold);
-    color: var(--color-performance-fg-primary);
-  }
-
-  :global(.metric-description) {
-    font-size: var(--text-performance-body-sm);
-    color: var(--color-performance-fg-tertiary);
-  }
-
-  .metric-example {
+    font-family: var(--font-performance-mono);
     font-size: var(--text-performance-caption);
-    color: var(--color-performance-fg-muted);
-    background: var(--color-performance-hover);
-    padding: 0.25rem 0.5rem;
-    border-radius: var(--radius-performance-scale-sm);
+    text-transform: uppercase;
   }
 
-  /* Quote Box */
-  .quote-box {
-    background: var(--color-performance-hover);
-    border: 1px solid var(--color-performance-border-emphasis);
-    border-radius: var(--radius-performance-scale-lg);
-  }
-
-  .quote-text {
+  .process-grid p,
+  .adoption-grid p,
+  .mode-grid p,
+  .metric-grid p,
+  .principle-grid p,
+  .historical-example p,
+  .master-card p,
+  .canon-criteria p {
+    margin: 0;
     color: var(--color-performance-fg-secondary);
-    font-style: italic;
+    line-height: var(--leading-performance-relaxed);
   }
 
-  .quote-author {
-    color: var(--color-performance-fg-muted);
-    font-size: var(--text-performance-body-sm);
+  .mode-grid,
+  .metric-grid,
+  .principle-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-performance-sm);
   }
 
-  /* Principles */
-  .principle-title {
-    font-size: var(--text-performance-body);
-    font-weight: var(--font-performance-semibold);
-    color: var(--color-performance-fg-primary);
+  .mode-grid article > div {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: var(--space-performance-sm);
   }
 
-  .principle-description {
-    font-size: var(--text-performance-body-sm);
+  .mode-grid h3,
+  .metric-grid h3,
+  .principle-grid h3,
+  .tracking-contrast h3,
+  .historical-example h3,
+  .master-card h3,
+  .canon-criteria h3 {
+    margin: 0;
+    font-size: var(--text-performance-body-lg);
+  }
+
+  .mode-grid article > div > span {
     color: var(--color-performance-fg-tertiary);
-  }
-
-  :global(.principle-application) {
+    font-family: var(--font-performance-mono);
     font-size: var(--text-performance-caption);
-    color: var(--color-performance-fg-muted);
+    text-transform: uppercase;
   }
 
-  :global(.principle-label) {
+  .mode-grid dl,
+  .historical-example dl {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin: var(--space-performance-sm) 0 0;
+    gap: var(--space-performance-sm);
+  }
+
+  .mode-grid dt,
+  .historical-example dt {
     color: var(--color-performance-fg-tertiary);
+    font-size: var(--text-performance-caption);
+    text-transform: uppercase;
   }
 
-  /* Borders */
-
-
-  /* Lists */
-  .checklist-icon {
-    color: var(--color-performance-fg-muted);
+  .mode-grid dd,
+  .historical-example dd {
+    margin: 0;
+    color: var(--color-performance-fg-primary);
+    font-weight: var(--font-performance-semibold);
   }
 
-  .list-text {
+  .metric-grid code {
+    width: fit-content;
+    max-width: 100%;
+    padding: 0.3rem 0.45rem;
+    background: var(--color-performance-bg-subtle);
+    overflow-wrap: anywhere;
+  }
+
+  blockquote {
+    display: grid;
+    margin: 0;
+    padding: var(--space-performance-lg);
+    gap: var(--space-performance-sm);
+    border-left: 0.25rem solid var(--color-performance-fg-primary);
+    background: var(--color-performance-bg-subtle);
+    font-size: var(--text-performance-body-lg);
+  }
+
+  blockquote cite {
     color: var(--color-performance-fg-tertiary);
+    font-size: var(--text-performance-body-sm);
   }
 
-  /* Buttons */
-  .cta-button {
-    background: var(--color-performance-hover);
-    color: var(--color-performance-fg-primary);
-    border: 1px solid var(--color-performance-border-emphasis);
+  .tracking-contrast {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-performance-sm);
+  }
+
+  .tracking-contrast ul,
+  .master-columns ul,
+  .canon-criteria ul {
+    display: grid;
+    margin: 0;
+    padding: 0;
+    gap: var(--space-performance-xs);
+    list-style: none;
+  }
+
+  .tracking-contrast li,
+  .master-columns li,
+  .canon-criteria li {
+    color: var(--color-performance-fg-secondary);
+  }
+
+  .why-evidence {
+    margin: 0;
+    padding-left: var(--space-performance-md);
+    border-left: 0.25rem solid var(--color-performance-fg-primary);
+    color: var(--color-performance-fg-secondary);
     font-weight: var(--font-performance-semibold);
-    border-radius: var(--radius-performance-scale-full);
-    transition: all var(--duration-performance-standard) var(--ease-performance-standard);
   }
 
-  .cta-button:hover {
-    background: var(--color-performance-active);
-    border-color: var(--color-performance-border-strong);
+  .historical-example {
+    gap: var(--space-performance-md);
   }
 
-  .cta-button-primary {
-    background: var(--color-performance-fg-primary);
-    color: var(--color-performance-bg-pure);
-    font-weight: var(--font-performance-semibold);
-    border-radius: var(--radius-performance-scale-full);
-    transition: all var(--duration-performance-standard) var(--ease-performance-standard);
+  .historical-example > div:first-child {
+    display: grid;
+    gap: var(--space-performance-xs);
   }
 
-  .cta-button-primary:hover {
-    background: var(--color-performance-fg-secondary);
+  .historical-example dl {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
-  /* Links */
-  .link-text {
+  .historical-example dl div {
+    padding: var(--space-performance-sm);
+    background: var(--color-performance-bg-subtle);
+  }
+
+  .historical-example dd {
+    font-size: var(--text-performance-h2);
+  }
+
+  .example-actions,
+  .master-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-performance-sm);
+  }
+
+  .example-actions a,
+  .master-links a {
     color: var(--color-performance-fg-primary);
-  }
-
-  .link-text:hover {
+    font-weight: var(--font-performance-semibold);
     text-decoration: underline;
   }
 
-  /* Tags & Badges */
-  .tag {
+  .canon-artifact {
+    grid-template-columns: 1.25fr 0.75fr;
+  }
+
+  .master-card,
+  .canon-criteria {
+    gap: var(--space-performance-md);
+  }
+
+  .master-card > div:first-child {
+    display: grid;
+    gap: 0.25rem;
+  }
+
+  .master-columns {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-performance-md);
+  }
+
+  .master-columns > div {
+    display: grid;
+    gap: var(--space-performance-sm);
+  }
+
+  .canon-criteria li {
+    display: grid;
+    gap: 0.2rem;
+    padding-block: var(--space-performance-xs);
+    border-top: 1px solid var(--color-performance-border-default);
+  }
+
+  .canon-criteria li span {
+    color: var(--color-performance-fg-tertiary);
+    font-size: var(--text-performance-body-sm);
+  }
+
+  .orientation-handoff {
+    padding: clamp(3rem, 7vw, 5rem) 1.5rem;
+  }
+
+  .orientation-handoff > div {
+    display: grid;
+    width: min(72rem, 100%);
+    margin-inline: auto;
+    gap: var(--space-performance-md);
+  }
+
+  .orientation-handoff p,
+  .orientation-handoff h2 {
+    margin: 0;
+  }
+
+  .orientation-handoff p {
+    color: var(--color-performance-fg-tertiary);
+    font-family: var(--font-performance-mono);
     font-size: var(--text-performance-caption);
-    background: var(--color-performance-hover);
-    color: var(--color-performance-fg-tertiary);
-    border-radius: var(--radius-performance-scale-sm);
+    text-transform: uppercase;
   }
 
-  .badge {
-    font-size: var(--text-performance-caption);
-    background: var(--color-performance-hover);
-    color: var(--color-performance-fg-tertiary);
-    border-radius: var(--radius-performance-scale-full);
-  }
-
-  /* Mode Cards */
-  :global(.mode-title) {
-    font-size: var(--text-performance-body-lg);
-    font-weight: var(--font-performance-semibold);
-    color: var(--color-performance-fg-primary);
-  }
-
-  .mode-description {
-    color: var(--color-performance-fg-secondary);
-  }
-
-  .mode-label {
-    color: var(--color-performance-fg-muted);
-  }
-
-  .mode-value {
-    color: var(--color-performance-fg-tertiary);
-  }
-
-  /* Stats */
-  .stat-value {
+  .orientation-handoff h2 {
+    max-width: 28ch;
     font-size: var(--text-performance-h2);
-    font-weight: var(--font-performance-bold);
+  }
+
+  .orientation-handoff > div > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-performance-sm);
+  }
+
+  .orientation-handoff a {
+    padding: 0.65rem 0.85rem;
+    border: 1px solid var(--color-performance-border-default);
     color: var(--color-performance-fg-primary);
-  }
-
-  .stat-label {
-    font-size: var(--text-performance-caption);
-    color: var(--color-performance-fg-muted);
-  }
-
-  .stat-card {
-    background: var(--color-performance-hover);
-    border-radius: var(--radius-performance-scale-sm);
-  }
-
-  /* Info */
-  :global(.info-label) {
-    font-size: var(--text-performance-body-sm);
-    color: var(--color-performance-fg-tertiary);
-  }
-
-  :global(.info-value) {
-    color: var(--color-performance-fg-primary);
-  }
-
-  /* Steps */
-  .step-number {
-    font-weight: var(--font-performance-bold);
-    color: var(--color-performance-fg-subtle);
-  }
-
-  :global(.step-title) {
-    font-size: var(--text-performance-body);
     font-weight: var(--font-performance-semibold);
-    color: var(--color-performance-fg-primary);
   }
 
-  :global(.step-description) {
-    font-size: var(--text-performance-body-sm);
-    color: var(--color-performance-fg-tertiary);
+  .orientation-handoff a.primary {
+    border-color: var(--color-performance-fg-primary);
+    background: var(--color-performance-fg-primary);
+    color: var(--color-performance-bg-pure, #ffffff);
   }
 
-  /* Authors */
-  .author-name {
-    font-size: var(--text-performance-body-lg);
-    font-weight: var(--font-performance-semibold);
-    color: var(--color-performance-fg-primary);
-  }
+  @media (max-width: 900px) {
+    .process-grid,
+    .mode-grid,
+    .metric-grid,
+    .principle-grid,
+    .tracking-contrast,
+    .canon-artifact {
+      grid-template-columns: 1fr;
+    }
 
-  .author-title {
-    font-size: var(--text-performance-body-sm);
-    color: var(--color-performance-fg-muted);
-  }
-
-  /* Work Titles */
-  .work-title {
-    color: var(--color-performance-fg-primary);
-  }
-
-  :global(.work-description) {
-    color: var(--color-performance-fg-secondary);
-  }
-
-  .principle-item {
-    font-size: var(--text-performance-body-sm);
-    color: var(--color-performance-fg-tertiary);
-  }
-
-  /* Footer Links */
-  .footer-link {
-    color: var(--color-performance-fg-secondary);
-    transition: color var(--duration-performance-standard) var(--ease-performance-standard);
-  }
-
-  .footer-link:hover {
-    color: var(--color-performance-fg-primary);
-  }
-
-  :global(.footer-text) {
-    font-size: var(--text-performance-body-sm);
-    color: var(--color-performance-fg-tertiary);
-  }
-
-  .footer-links {
-    font-size: var(--text-performance-body-sm);
-  }
-
-  /* Canon Intro */
-  .canon-intro {
-    font-size: var(--text-performance-body);
-    color: var(--color-performance-fg-secondary);
-  }
-
-  :global(.canon-note) {
-    font-size: var(--text-performance-body-sm);
-    color: var(--color-performance-fg-secondary);
-  }
-
-  /* Animations - Canon duration */
-  .animate-reveal {
-    opacity: 0;
-    transform: translateY(20px);
-    animation: reveal var(--duration-performance-complex) var(--ease-performance-standard) forwards;
-    animation-delay: calc(var(--delay, 0) * 100ms);
-  }
-
-  @keyframes reveal {
-    to {
-      opacity: 1;
-      transform: translateY(0);
+    .process-grid,
+    .adoption-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    .animate-reveal {
-      animation: none;
-      opacity: 1;
-      transform: none;
+  @media (max-width: 640px) {
+    .process-grid,
+    .adoption-grid,
+    .master-columns,
+    .historical-example dl {
+      grid-template-columns: 1fr;
+    }
+
+    .orientation-handoff {
+      padding-inline: 1.25rem;
     }
   }
 </style>

@@ -1,232 +1,286 @@
 <script lang="ts">
-	const quickLinks = [
-		{ label: 'Home', href: '/' },
-		{ label: 'All Experiments', href: '/experiments' },
-		{ label: 'Methodology', href: '/methodology' },
-		{ label: 'About', href: '/about' }
-	];
+  import { PerformanceNarrativeStage } from '@create-something/canon';
+  import OrientationOpening from '$lib/components/orientation/OrientationOpening.svelte';
+
+  const scenes = [
+    {
+      id: 'work',
+      label: 'Work',
+      summary: 'Systems in production',
+      title: 'The work moves from support problems to operating systems.',
+      detail:
+        'Webflow, WORKWAY, and Half Dozen are different contexts for the same practice: make complex work legible, durable, and easier to operate.',
+      tone: 'neutral' as const,
+      evidence: [
+        '10 years building systems',
+        'Webflow Marketplace systems',
+        'WORKWAY automation',
+        'Half Dozen operations'
+      ]
+    },
+    {
+      id: 'research',
+      label: 'Research',
+      summary: 'Claims need receipts',
+      title: 'AI-native development is treated as a measurable practice.',
+      detail:
+        'CREATE SOMETHING tracks time, costs, errors, interventions, and architecture so an implementation can be inspected instead of merely celebrated.',
+      tone: 'review' as const,
+      evidence: [
+        '47 tracked experiments',
+        '155 scripts reduced to 13',
+        '6-hour builds vs 20-hour estimates',
+        '$18.50 API feature costs'
+      ]
+    },
+    {
+      id: 'areas',
+      label: 'Areas',
+      summary: 'Four connected questions',
+      title: 'Choose the research area closest to the current problem.',
+      detail:
+        'Automation, AI-native development, architecture, and methodology form one research loop rather than four disconnected topics.',
+      tone: 'allow' as const,
+      actions: [{ label: 'Browse tracked experiments', href: '/experiments' }]
+    }
+  ];
+
+  const topics = [
+    {
+      title: 'Automation Infrastructure',
+      description:
+        'Building the layer between intention and execution, including what makes automation recede into transparent use.'
+    },
+    {
+      title: 'AI-Native Development',
+      description:
+        'Building with Claude Code, Cursor, and agentic workflows while measuring what changes development speed and quality.'
+    },
+    {
+      title: 'System Architecture',
+      description:
+        'Cloudflare Workers, edge computing, and multi-tenant platforms behind WORKWAY and .agency.'
+    },
+    {
+      title: 'Methodology',
+      description:
+        'How experiments are tracked, papers are written, and claims are tested before publication.'
+    }
+  ];
 </script>
 
 <svelte:head>
-	<title>About | CREATE SOMETHING</title>
-	<meta name="description" content="CREATE SOMETHING is a space for systems thinking — exploring how complex systems work, evolve, and scale through real-world technology implementations." />
-	<meta name="keywords" content="systems thinking, system architecture, mental models, complexity, design patterns, automation, resilient systems, Micah Johnson" />
-	<!-- Open Graph -->
-	<meta property="og:title" content="About CREATE SOMETHING | Systems Thinking" />
-	<meta property="og:description" content="A space for exploring how complex systems work, evolve, and scale through architecture, automation, and design patterns." />
-	<meta property="og:url" content="https://createsomething.io/about" />
-	<!-- Twitter -->
-	<meta name="twitter:title" content="About CREATE SOMETHING" />
-	<meta name="twitter:description" content="Exploring systems thinking through real-world technology — architecture, automation, and mental models for complexity." />
-	<link rel="canonical" href="https://createsomething.io/about" />
+  <title>About | CREATE SOMETHING</title>
+  <meta
+    name="description"
+    content="CREATE SOMETHING documents systems thinking and AI-native development through tracked production experiments."
+  />
+  <meta
+    name="keywords"
+    content="systems thinking, system architecture, mental models, automation, AI-native development, Micah Johnson"
+  />
+  <meta property="og:title" content="About CREATE SOMETHING | Systems Thinking" />
+  <meta
+    property="og:description"
+    content="Production systems, tracked AI-native experiments, and the methodology behind their claims."
+  />
+  <meta property="og:url" content="https://createsomething.io/about" />
+  <meta name="twitter:title" content="About CREATE SOMETHING" />
+  <meta
+    name="twitter:description"
+    content="Production systems and tracked AI-native development research."
+  />
+  <link rel="canonical" href="https://createsomething.io/about" />
 </svelte:head>
 
-<!-- Hero Section -->
-	<section class="hero-section">
-		<div class="max-w-4xl mx-auto">
-			<div class="space-y-8 animate-reveal">
-				<h1>
-					Hi, I'm Micah Johnson
-				</h1>
+<OrientationOpening
+  active="about"
+  eyebrow="Operator and research practice"
+  title="Hi, I'm Micah Johnson"
+  description="I build operating systems for complex work, then document the evidence required to know whether the system actually works."
+  summary={[
+    { label: 'Practice', value: '10 years' },
+    { label: 'Experiments', value: '47 tracked' },
+    { label: 'Base', value: 'Kennedale, Texas' }
+  ]}
+/>
 
-				<div class="space-y-8">
-					<!-- Lead with outcomes -->
-					<div class="space-y-6 leading-relaxed intro-text">
-						<p class="intro-highlight">
-							10 years building systems. 47 tracked experiments. 155 scripts reduced to 13.
-							I document what works in AI-native development—with real data.
-						</p>
+<div class="orientation-stage">
+  <PerformanceNarrativeStage
+    id="about-practice"
+    eyebrow="One practice"
+    title="Production work, research, and method reinforce each other."
+    description="Move through the operating work, the research standard, and the four questions the publication follows."
+    {scenes}
+    ariaLabel="About CREATE SOMETHING"
+  >
+    {#snippet artifact(_scene, index)}
+      {#if index === 0}
+        <div class="story-copy">
+          <p>
+            By day, I architect systems on the <a href="https://webflow.com">Webflow</a>
+            Marketplace team, building developer experiences that serve thousands of creators. By night,
+            I build <a href="https://workway.co">WORKWAY</a>, an automation marketplace for
+            TypeScript workflows on Cloudflare's edge.
+          </p>
+          <p>
+            I am also co-founder of <a href="https://halfdozen.co">Half Dozen</a>, where we build
+            operating systems for venues, promoters, and agencies in the live events industry.
+          </p>
+          <p>
+            The path started at Texas A&amp;M and Boulder Digital Arts, then moved through Webflow
+            support, an internal LMS, team management, Marketplace tooling, Webflow University 2.0,
+            contracting, and system architecture. The repeated move is simple: build the system that
+            makes the work easier to understand and run.
+          </p>
+        </div>
+      {:else if index === 1}
+        <div class="research-proof">
+          <strong>What I am testing</strong>
+          <p>
+            Can production automation infrastructure be built with AI as a development partner? The
+            research feeds directly into WORKWAY and
+            <a href="https://createsomething.agency">.agency</a>, where the theory becomes an
+            operating layer.
+          </p>
+          <p>
+            Experiments remain replicable; papers retain methodology and data; every material claim
+            should expose what was built, how long it took, what it cost, and whether it worked.
+          </p>
+        </div>
+      {:else}
+        <div class="topic-grid">
+          {#each topics as topic}
+            <article>
+              <h3>{topic.title}</h3>
+              <p>{topic.description}</p>
+            </article>
+          {/each}
+        </div>
+      {/if}
+    {/snippet}
+  </PerformanceNarrativeStage>
+</div>
 
-					<p>
-						By day, I architect systems on the <a href="https://webflow.com" class="text-link">Webflow</a> Marketplace team, building developer experiences that serve thousands of creators. By night, I'm building <a href="https://workway.co" class="text-link" target="_blank" rel="noopener noreferrer">WORKWAY</a>—the automation layer. An open marketplace for TypeScript workflows, running on Cloudflare's edge. Automation infrastructure is my life's work.
-					</p>
-
-						<p>
-							I'm also co-founder of <a href="https://halfdozen.co" class="text-link" target="_blank" rel="noopener noreferrer">Half Dozen</a>, where we build operating systems for the live events industry—venues, promoters, and agencies running on clean system design.
-						</p>
-					</div>
-
-					<!-- What I'm testing -->
-					<div class="philosophy-card">
-						<h3 class="card-title">What I'm testing</h3>
-						<p class="card-text">
-							Can you build production automation infrastructure with AI as a development partner? CREATE SOMETHING tracks the experiments: 6-hour builds vs 20-hour estimates, $18.50 API costs for full features, 92% script reduction through systematic methodology. The research feeds directly into <a href="https://workway.co" class="text-link">WORKWAY</a> and <a href="https://createsomething.agency" class="text-link">.agency</a>—where theory becomes the automation layer.
-						</p>
-					</div>
-
-					<!-- Background -->
-					<div class="space-y-4 background-text">
-						<p>
-							Texas A&M. UI/UX Certification from Boulder Digital Arts. Webflow career: started in support, built an LMS to onboard teammates, got promoted to team manager, scaled it for APAC. Marketplace team noticed, asked me to build their template submission system. Left, got brought back as contractor for that work, then rejoined full-time. Helped launch Webflow University 2.0. Now system architecture. The pattern: building systems that solve problems.
-						</p>
-						<p>
-							Based in Kennedale, Texas. Available on <a href="https://www.linkedin.com/in/micahryanjohnson/" class="text-link" target="_blank" rel="noopener noreferrer">LinkedIn</a> for collaboration.
-						</p>
-					</div>
-				</div>
-			</div>
-		</div>
-	</section>
-
-	<!-- Mission Section -->
-	<section class="section-border">
-		<div class="max-w-4xl mx-auto">
-			<div class="space-y-6 animate-reveal" style="--delay: 2">
-				<h2>
-					What You'll Find Here
-				</h2>
-
-				<p class="section-text">
-					Experiments you can replicate. Papers with methodology and data. Each piece shows what was built, how long it took, what it cost, and whether it worked. No theory without testing. No claims without evidence.
-				</p>
-			</div>
-		</div>
-	</section>
-
-	<!-- Topics Section -->
-	<section class="section-border">
-		<div class="max-w-4xl mx-auto">
-			<div class="space-y-8">
-				<h2>
-					Research Areas
-				</h2>
-
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-					{#each [
-						{
-							title: 'Automation Infrastructure',
-							description: 'Building the layer between intention and execution. What makes automation recede into transparent use—and what makes it intrusive.'
-						},
-						{
-							title: 'AI-Native Development',
-							description: 'Building with Claude Code, Cursor, and agentic workflows. Tracking what actually speeds up development—and what doesn\'t.'
-						},
-						{
-							title: 'System Architecture',
-							description: 'Cloudflare Workers, edge computing, multi-tenant platforms. The infrastructure that powers WORKWAY and .agency.'
-						},
-						{
-							title: 'Methodology',
-							description: 'How we track experiments. How we write papers. How we know when something actually works.'
-						}
-					] as topic, index}
-						<div
-							class="topic-card animate-reveal"
-							style="--delay: {index + 3}"
-						>
-							<h3 class="topic-title">
-								{topic.title}
-							</h3>
-							<p class="topic-description">
-								{topic.description}
-							</p>
-						</div>
-					{/each}
-				</div>
-			</div>
-		</div>
-	</section>
+<section class="orientation-handoff" aria-labelledby="about-handoff-title">
+  <div>
+    <p>Continue with evidence</p>
+    <h2 id="about-handoff-title">Start with the experiment, or start a conversation.</h2>
+    <div class="handoff-actions">
+      <a class="primary" href="/experiments">Browse experiments</a>
+      <a
+        href="https://www.linkedin.com/in/micahryanjohnson/"
+        target="_blank"
+        rel="noopener noreferrer">Connect on LinkedIn</a
+      >
+    </div>
+  </div>
+</section>
 
 <style>
-	.hero-section {
-		position: relative;
-		padding: 6rem var(--space-performance-md) var(--space-performance-xl);
-	}
+  .story-copy,
+  .research-proof {
+    display: grid;
+    gap: var(--space-performance-md);
+  }
 
-	.intro-text {
-		font-size: var(--text-performance-body-lg);
-		color: var(--color-performance-fg-secondary);
-	}
+  .story-copy p,
+  .research-proof p {
+    margin: 0;
+    color: var(--color-performance-fg-secondary);
+    line-height: var(--leading-performance-relaxed);
+  }
 
-	.intro-highlight {
-		font-size: var(--text-performance-h3);
-		color: var(--color-performance-fg-primary);
-		font-weight: var(--font-performance-medium);
-	}
+  .story-copy a,
+  .research-proof a {
+    color: var(--color-performance-fg-primary);
+    text-decoration: underline;
+  }
 
-	.text-link {
-		color: var(--color-performance-fg-primary);
-		transition: opacity var(--duration-performance-standard) var(--ease-performance-standard);
-	}
+  .research-proof strong {
+    font-size: var(--text-performance-h3);
+  }
 
-	.text-link:hover {
-		text-decoration: underline;
-	}
+  .topic-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-performance-md);
+  }
 
-	.philosophy-card {
-		padding: var(--space-performance-md);
-		background: var(--color-performance-bg-surface);
-		border-radius: var(--radius-performance-scale-md);
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-performance-sm);
-	}
+  .topic-grid article {
+    padding: var(--space-performance-md);
+    border: 1px solid var(--color-performance-border-default);
+    background: var(--color-performance-bg-surface);
+  }
 
-	.card-title {
-		font-size: var(--text-performance-h3);
-		font-weight: var(--font-performance-semibold);
-		color: var(--color-performance-fg-primary);
-	}
+  .topic-grid h3,
+  .topic-grid p {
+    margin: 0;
+  }
 
-	.card-text {
-		color: var(--color-performance-fg-secondary);
-		line-height: var(--leading-performance-relaxed);
-	}
+  .topic-grid h3 {
+    margin-bottom: var(--space-performance-xs);
+    font-size: var(--text-performance-body-lg);
+  }
 
-	.background-text {
-		color: var(--color-performance-fg-tertiary);
-		font-size: var(--text-performance-body);
-	}
+  .topic-grid p {
+    color: var(--color-performance-fg-secondary);
+  }
 
-	.section-border {
-		padding: var(--space-performance-xl) var(--space-performance-md);
-	}
+  .orientation-handoff {
+    padding: clamp(3rem, 7vw, 5rem) 1.5rem;
+  }
 
+  .orientation-handoff > div {
+    display: grid;
+    width: min(72rem, 100%);
+    margin-inline: auto;
+    gap: var(--space-performance-md);
+  }
 
-	.section-text {
-		font-size: var(--text-performance-body-lg);
-		color: var(--color-performance-fg-secondary);
-		line-height: var(--leading-performance-relaxed);
-	}
+  .orientation-handoff p,
+  .orientation-handoff h2 {
+    margin: 0;
+  }
 
-	.topic-card {
-		padding: var(--space-performance-md);
-		border-radius: var(--radius-performance-scale-md);
-	}
+  .orientation-handoff p {
+    color: var(--color-performance-fg-tertiary);
+    font-family: var(--font-performance-mono);
+    font-size: var(--text-performance-caption);
+    text-transform: uppercase;
+  }
 
-	.topic-title {
-		font-size: var(--text-performance-h3);
-		font-weight: var(--font-performance-semibold);
-		color: var(--color-performance-fg-primary);
-		margin-bottom: var(--space-performance-xs);
-	}
+  .orientation-handoff h2 {
+    max-width: 24ch;
+    font-size: var(--text-performance-h2);
+  }
 
-	.topic-description {
-		color: var(--color-performance-fg-tertiary);
-	}
+  .handoff-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-performance-sm);
+  }
 
-	.animate-reveal {
-		opacity: 0;
-		transform: translate3d(0, 20px, 0); /* GPU-accelerated */
-		animation: reveal var(--duration-performance-complex) var(--ease-performance-standard) forwards;
-		animation-delay: calc(var(--delay, 0) * var(--cascade-performance-step));
-		will-change: transform, opacity;
-	}
+  .handoff-actions a {
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--color-performance-border-strong);
+    border-radius: var(--radius-performance-scale-sm);
+    color: var(--color-performance-fg-primary);
+    font-weight: var(--font-performance-semibold);
+  }
 
-	@keyframes reveal {
-		to {
-			opacity: 1;
-			transform: translate3d(0, 0, 0);
-		}
-	}
+  .handoff-actions a.primary {
+    background: var(--color-performance-fg-primary);
+    color: var(--color-performance-bg-pure, #ffffff);
+  }
 
-	@media (prefers-reduced-motion: reduce) {
-		.animate-reveal {
-			animation: none;
-			opacity: 1;
-			transform: none;
-		}
-	}
+  @media (max-width: 640px) {
+    .topic-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .orientation-handoff {
+      padding-inline: 1.25rem;
+    }
+  }
 </style>
-
-<!-- Footer -->

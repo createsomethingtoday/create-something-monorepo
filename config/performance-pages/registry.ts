@@ -239,13 +239,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
   group(
     'ltd-editorial',
     'ltd',
-    [
-      'ethos',
-      'experiments/the-circle-closes',
-      'standards',
-      'taste',
-      'voice'
-    ],
+    ['ethos', 'experiments/the-circle-closes', 'standards', 'taste', 'voice'],
     'migrated',
     contract(
       'editorial',
@@ -363,7 +357,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     'io-orientation',
     'io',
     ['about', 'contact', 'docs', 'docs/ground', 'docs/loom', 'methodology'],
-    'pending',
+    'migrated',
     contract(
       'editorial',
       'Understand the research or tool boundary and decide where to continue.',
