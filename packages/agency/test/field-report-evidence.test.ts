@@ -8,6 +8,9 @@ import {
 } from '../src/lib/data/fieldReports.ts';
 
 test('template review Field Report separates packet completion, synthetic boundary checks, and business impact', () => {
+  assert.equal(templateReviewFieldReport.id, '#FR-2026-01');
+  assert.equal(templateReviewFieldReport.workflow, 'Marketplace template review');
+  assert.equal(templateReviewFieldReport.verifiedPeriod, 'May–June 2026');
   assert.equal(templateReviewFieldReport.evidence.selectedCases, 50);
   assert.equal(templateReviewFieldReport.evidence.usableCases, 49);
   assert.equal(getTemplateReviewPacketCompletion(templateReviewFieldReport), 98);
@@ -224,15 +227,26 @@ test('booking carries the Field Report handoff into the owned mapping scheduler'
   assert.match(book, /schedulerHandoffContext/);
 });
 
-test('the homepage keeps measured Field Report proof inside the consolidated service chapter', () => {
+test('the homepage concentrates measured Field Report proof in one primary readback', () => {
   const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
+  const readback = readFileSync(
+    new URL('../src/lib/components/AgencyPerformanceReadback.svelte', import.meta.url),
+    'utf8'
+  );
 
   assert.doesNotMatch(home, /PerformanceEvidenceIndex/);
-  assert.match(home, /class="service-proof-row"/);
-  assert.match(home, /See what passed—and what did not/);
-  assert.match(home, /href: '\/field-reports\/template-review'/);
-  assert.match(home, /49 of 50 selected cases/);
-  assert.match(home, /(?:system|automation)[^.]*(?:cannot|blocked)[^.]*(?:decision|judgment)/i);
-  assert.match(home, /reviewer time savings[^.]*(?:not|never)[^.]*(?:measured|verified)/i);
+  assert.match(home, /<AgencyPerformanceReadback \/>/);
+  assert.doesNotMatch(home, /class="service-proof-row"/);
+  assert.doesNotMatch(home, /class="field-report"/);
+  assert.match(home, /class="ownership-callout"/);
+  assert.match(home, /import \{ templateReviewFieldReport \} from '\$lib\/data\/fieldReports'/);
+  assert.match(home, /templateReviewFieldReport\.id/);
+  assert.match(readback, /evidence\.usableCases/);
+  assert.match(readback, /evidence\.selectedCases/);
+  assert.match(readback, /automated judgment[^.]*(?:cannot|blocked|remains)/i);
+  assert.match(
+    readback,
+    /reviewer time savings[^.]*(?:not|never|remain)[^.]*(?:measured|verified)/i
+  );
   assert.doesNotMatch(home, /<PerformanceCampaignOpening[\s\S]*?>\s*>\s*\{#snippet actions\(\)\}/);
 });
