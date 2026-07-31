@@ -104,6 +104,14 @@
 			];
 </script>
 
+<svelte:head>
+	<title>{data.threadView.thread.title} details | Abundance Concierge</title>
+	<meta
+		name="description"
+		content="Review, confirm, or correct the details Abundance Concierge captured for this nurse application."
+	/>
+</svelte:head>
+
 <div
 	class:internal={showInternalOperatorUi}
 	class:candidate={!showInternalOperatorUi}

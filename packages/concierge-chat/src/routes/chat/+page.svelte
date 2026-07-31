@@ -39,6 +39,14 @@
 			: 'Conversation and profile capture are open. A one-time email verification step is still required before document upload and recruiter review.';
 </script>
 
+<svelte:head>
+	<title>Staffing workspace | Abundance Concierge</title>
+	<meta
+		name="description"
+		content="Review Abundance Concierge application threads, current state, blockers, and recruiter-owned next actions."
+	/>
+</svelte:head>
+
 <section class="glass panel">
 	<div class="section-header">
 		<div>

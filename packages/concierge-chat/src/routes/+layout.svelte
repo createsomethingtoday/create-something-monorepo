@@ -99,6 +99,8 @@
   <link rel="manifest" href={browserIdentity.manifest} />
 </svelte:head>
 
+<a class="skip-link" href="#main-content">Skip to main content</a>
+
 {#if usesWebflowShell}
   <div class:application-workspace={isCandidateApplicationRoute} class="abundance-webflow-page">
     <header class:application-nav={isCandidateApplicationRoute} class="webflow-nav">
@@ -128,6 +130,7 @@
         type="button"
         aria-label="Toggle navigation"
         aria-expanded={publicNavOpen}
+        aria-controls="primary-navigation"
         on:click={() => (publicNavOpen = !publicNavOpen)}
       >
         <span></span>
@@ -136,6 +139,7 @@
       <nav
         class:open={publicNavOpen}
         class="webflow-nav-links"
+        id="primary-navigation"
         aria-label={isCandidateApplicationRoute ? 'Application navigation' : 'Public navigation'}
       >
         {#each navItems as item}
@@ -145,6 +149,21 @@
             on:click={() => (publicNavOpen = false)}>{item.label}</a
           >
         {/each}
+        {#if !isCandidateApplicationRoute}
+          <a
+            class="webflow-mobile-menu-action"
+            href={controlPlaneHref}
+            target="_blank"
+            rel="noreferrer"
+            on:click={() => (publicNavOpen = false)}
+          >Staff access <span aria-hidden="true">↗</span></a>
+        {:else}
+          <a
+            class="webflow-mobile-menu-action"
+            href="/"
+            on:click={() => (publicNavOpen = false)}
+          >Exit application <span aria-hidden="true">↗</span></a>
+        {/if}
       </nav>
       {#if isCandidateApplicationRoute}
         <a class="webflow-staff-link application-exit" href="/" aria-label="Exit application">
@@ -152,7 +171,13 @@
           <span aria-hidden="true">↗</span>
         </a>
       {:else}
-        <a class="webflow-staff-link" href={controlPlaneHref} target="_blank" rel="noreferrer">
+        <a
+          class="webflow-staff-link"
+          href={controlPlaneHref}
+          target="_blank"
+          rel="noreferrer"
+          aria-label="Open staff access"
+        >
           <span>Staff access</span>
           <span aria-hidden="true">↗</span>
         </a>
@@ -178,6 +203,7 @@
     {/if}
 
     <main
+      id="main-content"
       class:public-main={isPublicIntakeRoute}
       class:application-main={isCandidateApplicationRoute}
     >
@@ -200,7 +226,9 @@
       <div class="nav-cluster">
         <nav>
           {#each navItems as item}
-            <a href={item.href}>{item.label}</a>
+            <a href={item.href} aria-current={data.currentPath === item.href ? 'page' : undefined}
+              >{item.label}</a
+            >
           {/each}
         </nav>
 
@@ -220,7 +248,7 @@
       </div>
     </header>
 
-    <main class:public-main={isPublicIntakeRoute}>
+    <main id="main-content" class:public-main={isPublicIntakeRoute}>
       <slot />
     </main>
   </div>
@@ -231,6 +259,25 @@
 {/if}
 
 <style>
+  .skip-link {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 100;
+    padding: 10px 14px;
+    border-radius: 999px;
+    background: #171512;
+    color: #ffffff;
+    font-weight: 650;
+    text-decoration: none;
+    transform: translateY(-160%);
+    transition: transform 140ms ease;
+  }
+
+  .skip-link:focus {
+    transform: translateY(0);
+  }
+
   .app-nav {
     display: flex;
     align-items: center;
@@ -598,6 +645,10 @@
     display: none;
   }
 
+  .webflow-mobile-menu-action {
+    display: none;
+  }
+
   @media (max-width: 860px) {
     .webflow-nav {
       top: 10px;
@@ -633,6 +684,31 @@
     .application-nav .webflow-nav-links a {
       min-width: 0;
       text-align: left;
+    }
+
+    .webflow-mobile-menu-action {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-color: rgba(23, 21, 18, 0.72) !important;
+      background: #171512;
+      color: #ffffff !important;
+    }
+
+    .webflow-nav:not(.application-nav) > .webflow-staff-link {
+      display: none;
+    }
+
+    .application-nav > .application-exit {
+      display: none;
+    }
+
+    .application-nav .webflow-logo-copy {
+      display: none;
+    }
+
+    .application-nav .webflow-logo {
+      min-width: 44px;
     }
 
     .application-route-rail {

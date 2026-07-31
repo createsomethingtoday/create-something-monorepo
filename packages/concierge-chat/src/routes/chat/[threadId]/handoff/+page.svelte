@@ -8,6 +8,14 @@
 		data.staffOnboarding.ready && data.staffOnboarding.runtimeConfigured;
 </script>
 
+<svelte:head>
+	<title>{data.threadView.handoffPacket.queueName} | Abundance Staffing</title>
+	<meta
+		name="description"
+		content="Review the governed Abundance staffing handoff, owner, blockers, artifacts, and approval boundary."
+	/>
+</svelte:head>
+
 <section class="glass panel">
 	<div class="section-header">
 		<div>
@@ -180,6 +188,10 @@
 		gap: 0.35rem;
 		margin: 1rem 0;
 		color: var(--muted);
+	}
+
+	.blockers li {
+		overflow-wrap: anywhere;
 	}
 
 	.writeback-form {
