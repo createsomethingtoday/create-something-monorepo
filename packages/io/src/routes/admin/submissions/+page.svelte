@@ -29,6 +29,8 @@
 	let filterStatus = 'all';
 	let selectedSubmission: SubmissionRecord | null = null;
 	let loadError: AdminRequestError | null = null;
+	let pendingDeleteId: string | null = null;
+	let actionNotice = '';
 
 	const statusFilters = ['all', 'unread', 'in_progress', 'escalated', 'responded', 'read', 'archived'];
 
@@ -72,6 +74,7 @@
 			if (result.ok) {
 				await loadSubmissions();
 				selectedSubmission = null;
+				actionNotice = `Submission marked ${statusLabel(newStatus).toLowerCase()}.`;
 			} else {
 				loadError = result.error;
 			}
@@ -81,8 +84,7 @@
 	}
 
 	async function deleteSubmission(submissionId: string) {
-		if (!confirm('Are you sure you want to delete this submission?')) return;
-
+		actionNotice = '';
 		try {
 			const result = await fetchAdminJson<{ success: boolean }>('/api/admin/submissions', {
 				method: 'DELETE',
@@ -93,6 +95,8 @@
 			if (result.ok) {
 				await loadSubmissions();
 				selectedSubmission = null;
+				pendingDeleteId = null;
+				actionNotice = 'Submission deleted permanently.';
 			} else {
 				loadError = result.error;
 			}
@@ -108,7 +112,20 @@
 
 	function deleteSelectedSubmission() {
 		if (!selectedSubmission) return;
-		deleteSubmission(selectedSubmission.id);
+		if (pendingDeleteId === selectedSubmission.id) {
+			void deleteSubmission(selectedSubmission.id);
+			return;
+		}
+		pendingDeleteId = selectedSubmission.id;
+	}
+
+	function keepSelectedSubmission() {
+		pendingDeleteId = null;
+	}
+
+	function selectSubmission(submission: SubmissionRecord | null) {
+		selectedSubmission = submission;
+		pendingDeleteId = null;
 	}
 
 	$: filteredSubmissions = submissions.filter((sub) => {
@@ -159,8 +176,10 @@
 <div class="space-y-6">
 	<div class="flex items-center justify-between">
 		<div>
-			<h2 class="page-title">Contact Submissions</h2>
-			<p class="page-subtitle">Review and manage service inquiries</p>
+			<h1 class="page-title">Contact Submissions</h1>
+			<p class="page-subtitle">
+				Read an inquiry, set its status, and reply by email. Data: IO contact form submissions.
+			</p>
 		</div>
 		{#if unreadCount > 0}
 			<div class="unread-badge">
@@ -169,6 +188,10 @@
 			</div>
 		{/if}
 	</div>
+
+	{#if actionNotice}
+		<p role="status" class="meta-text">{actionNotice}</p>
+	{/if}
 
 	<!-- Filter Tabs -->
 	<div class="tabs">
@@ -212,7 +235,7 @@
 			{:else}
 				{#each filteredSubmissions as submission}
 					<button
-						onclick={() => (selectedSubmission = submission)}
+						onclick={() => selectSubmission(submission)}
 						class="submission-card {selectedSubmission?.id === submission.id ? 'submission-card--active' : ''}"
 					>
 						<div class="flex items-start justify-between mb-2">
@@ -248,7 +271,7 @@
 							</a>
 						</div>
 						<button
-							onclick={() => (selectedSubmission = null)}
+							onclick={() => selectSubmission(null)}
 							class="close-btn"
 							aria-label="Close detail view"
 						>
@@ -309,9 +332,19 @@
 								onclick={deleteSelectedSubmission}
 								class="action-btn action-btn--danger ml-auto"
 							>
-								Delete
+								{pendingDeleteId === selectedSubmission.id ? 'Delete permanently' : 'Delete…'}
 							</button>
+							{#if pendingDeleteId === selectedSubmission.id}
+								<button onclick={keepSelectedSubmission} class="action-btn">
+									Keep submission
+								</button>
+							{/if}
 						</div>
+						{#if pendingDeleteId === selectedSubmission.id}
+							<p class="meta-text" role="alert">
+								This removes the inquiry and cannot be undone.
+							</p>
+						{/if}
 					</div>
 				</div>
 			{:else}
@@ -322,9 +355,10 @@
 		</div>
 	</div>
 
-	<!-- Stats -->
-	<div class="stats-section">
-		<div class="grid grid-cols-4 gap-4">
+	{#if !loading && !loadError}
+		<!-- Stats -->
+		<div class="stats-section">
+			<div class="grid grid-cols-4 gap-4">
 			<div class="stat-item">
 				<div class="stat-value">{submissions.length}</div>
 				<div class="stat-label">Total Submissions</div>
@@ -345,8 +379,9 @@
 				</div>
 				<div class="stat-label">Archived</div>
 			</div>
+			</div>
 		</div>
-	</div>
+	{/if}
 </div>
 
 <style>

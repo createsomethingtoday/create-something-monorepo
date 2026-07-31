@@ -1,9 +1,21 @@
 <script lang="ts">
 	import { SEO } from '@create-something/canon';
 	import { onMount } from 'svelte';
+	import { fetchAdminJson, type AdminRequestError } from '$lib/admin/client';
 
-	let subscribers: any[] = [];
+	interface SubscriberRecord {
+		id: string;
+		email: string;
+		status?: string;
+		source?: string;
+		created_at: string;
+	}
+
+	let subscribers: SubscriberRecord[] = [];
 	let loading = true;
+	let requestError: AdminRequestError | null = null;
+	let pendingDeleteId: string | null = null;
+	let actionNotice = '';
 	let searchQuery = '';
 	let filterStatus = 'all';
 	let filterSource = 'all';
@@ -15,21 +27,20 @@
 
 	async function loadSubscribers() {
 		loading = true;
-		try {
-			const response = await fetch('/api/admin/subscribers');
-			if (response.ok) {
-				subscribers = await response.json();
-			}
-		} catch (error) {
-			console.error('Failed to load subscribers:', error);
-		} finally {
-			loading = false;
+		requestError = null;
+		const result = await fetchAdminJson<SubscriberRecord[]>('/api/admin/subscribers');
+		if (result.ok) {
+			subscribers = result.data;
+		} else {
+			subscribers = [];
+			requestError = result.error;
 		}
+		loading = false;
 	}
 
 	async function updateSubscriberStatus(subscriberId: string, newStatus: string) {
-		try {
-			const response = await fetch('/api/admin/subscribers', {
+		requestError = null;
+		const result = await fetchAdminJson<{ success: boolean }>('/api/admin/subscribers', {
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
@@ -38,30 +49,42 @@
 				})
 			});
 
-			if (response.ok) {
-				await loadSubscribers();
-			}
-		} catch (error) {
-			console.error('Failed to update subscriber:', error);
+		if (result.ok) {
+			await loadSubscribers();
+			actionNotice = `Subscriber marked ${newStatus}.`;
+		} else {
+			requestError = result.error;
 		}
 	}
 
 	async function deleteSubscriber(subscriberId: string) {
-		if (!confirm('Are you sure you want to delete this subscriber?')) return;
-
-		try {
-			const response = await fetch('/api/admin/subscribers', {
+		actionNotice = '';
+		requestError = null;
+		const result = await fetchAdminJson<{ success: boolean }>('/api/admin/subscribers', {
 				method: 'DELETE',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ id: subscriberId })
 			});
 
-			if (response.ok) {
-				await loadSubscribers();
-			}
-		} catch (error) {
-			console.error('Failed to delete subscriber:', error);
+		if (result.ok) {
+			await loadSubscribers();
+			pendingDeleteId = null;
+			actionNotice = 'Subscriber deleted permanently.';
+		} else {
+			requestError = result.error;
 		}
+	}
+
+	function requestOrDeleteSubscriber(subscriberId: string) {
+		if (pendingDeleteId === subscriberId) {
+			void deleteSubscriber(subscriberId);
+			return;
+		}
+		pendingDeleteId = subscriberId;
+	}
+
+	function keepSubscriber() {
+		pendingDeleteId = null;
 	}
 
 	async function exportSubscribers() {
@@ -117,8 +140,10 @@
 <div class="space-y-6">
 	<div class="page-header">
 		<div>
-			<h2 class="page-title mb-2">Newsletter Subscribers</h2>
-			<p class="page-description">Manage your email list</p>
+			<h1 class="page-title mb-2">Newsletter Subscribers</h1>
+			<p class="page-description">
+				Find, export, unsubscribe, or reactivate an address. Data: IO newsletter subscriptions.
+			</p>
 		</div>
 		<button
 			onclick={exportSubscribers}
@@ -127,6 +152,10 @@
 			Export CSV
 		</button>
 	</div>
+
+	{#if actionNotice}
+		<p role="status" class="pagination-info">{actionNotice}</p>
+	{/if}
 
 	<!-- Filters & Search -->
 	<div class="filters-container">
@@ -175,6 +204,14 @@
 					<div class="skeleton-line"></div>
 				</div>
 			{/each}
+		</div>
+	{:else if requestError}
+		<div class="empty-state-container" role="alert">
+			<strong>Subscriber data unavailable</strong>
+			<span>{requestError.message}</span>
+			{#if requestError.kind !== 'forbidden'}
+				<button type="button" class="btn-secondary px-4 py-2" onclick={loadSubscribers}>Retry</button>
+			{/if}
 		</div>
 	{:else if filteredSubscribers.length === 0}
 		<div class="empty-state-container">
@@ -228,12 +265,18 @@
 							</button>
 						{/if}
 						<button
-							onclick={() => deleteSubscriber(subscriber.id)}
+							onclick={() => requestOrDeleteSubscriber(subscriber.id)}
 							class="btn-danger-mobile"
 						>
-							Delete
+							{pendingDeleteId === subscriber.id ? 'Delete permanently' : 'Delete…'}
 						</button>
+						{#if pendingDeleteId === subscriber.id}
+							<button onclick={keepSubscriber} class="btn-small-mobile">Keep subscriber</button>
+						{/if}
 					</div>
+					{#if pendingDeleteId === subscriber.id}
+						<p class="pagination-info" role="alert">This cannot be undone.</p>
+					{/if}
 				</div>
 			{/each}
 		</div>
@@ -300,11 +343,14 @@
 											</button>
 										{/if}
 										<button
-											onclick={() => deleteSubscriber(subscriber.id)}
+											onclick={() => requestOrDeleteSubscriber(subscriber.id)}
 											class="btn-danger"
 										>
-											Delete
+											{pendingDeleteId === subscriber.id ? 'Delete permanently' : 'Delete…'}
 										</button>
+										{#if pendingDeleteId === subscriber.id}
+											<button onclick={keepSubscriber} class="btn-small">Keep subscriber</button>
+										{/if}
 									</div>
 								</td>
 							</tr>
@@ -320,9 +366,10 @@
 		</div>
 	{/if}
 
-	<!-- Stats -->
-	<div class="stats-section pt-6">
-		<div class="stats-grid">
+	{#if !loading && !requestError}
+		<!-- Stats -->
+		<div class="stats-section pt-6">
+			<div class="stats-grid">
 			<div class="stat-item">
 				<div class="stat-value">{subscribers.length}</div>
 				<div class="stat-label">Total Subscribers</div>
@@ -337,8 +384,9 @@
 				</div>
 				<div class="stat-label">Unsubscribed</div>
 			</div>
+			</div>
 		</div>
-	</div>
+	{/if}
 </div>
 
 <style>

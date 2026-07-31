@@ -59,15 +59,22 @@
 	noindex={true}
 />
 
-<div class="min-h-screen flex items-start justify-center px-6 pt-24">
+<main class="min-h-screen flex items-start justify-center px-6 pt-24">
 	<div class="w-full max-w-md">
 		<div class="text-center mb-8">
-			<h1 class="login-title mb-2">CREATE SOMETHING</h1>
-			<p class="login-subtitle">Admin Access</p>
+			<p class="login-subtitle">CREATE SOMETHING IO</p>
+			<h1 class="login-title mb-2">Admin sign in</h1>
+			<p class="login-subtitle">Use your first-party IO account.</p>
 		</div>
 
 		<div class="login-card p-8">
-			<form
+			<noscript>
+				<style>.login-form { display: none; }</style>
+				<p class="error-alert p-4 mb-6">
+					This sign-in form needs JavaScript. Turn it on, then reload this page.
+				</p>
+			</noscript>
+			<form class="login-form"
 				onsubmit={(e) => {
 					e.preventDefault();
 					handleLogin();
@@ -75,7 +82,7 @@
 			>
 				<div class="space-y-6">
 					{#if error}
-						<div class="error-alert p-4">
+						<div class="error-alert p-4" role="alert">
 							{error}
 						</div>
 					{/if}
@@ -123,7 +130,7 @@
 			</a>
 		</div>
 	</div>
-</div>
+</main>
 
 <style>
 	.login-title {

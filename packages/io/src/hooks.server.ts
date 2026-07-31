@@ -17,13 +17,21 @@ function getSafeAdminNextPath(url: URL) {
 	return next;
 }
 
+export function isAdminApiPath(pathname: string) {
+	return (
+		pathname.startsWith('/api/admin') ||
+		pathname === '/api/agent' ||
+		pathname === '/api/tufte/dashboard'
+	);
+}
+
 export const handle: Handle = async ({ event, resolve }) => {
 	const isProduction = event.platform?.env?.ENVIRONMENT === 'production';
 	const domain = isProduction ? '.createsomething.io' : undefined;
 
 	// Check if accessing admin routes (except login page)
 	const isAdminRoute = event.url.pathname.startsWith('/admin');
-	const isAdminApiRoute = event.url.pathname.startsWith('/api/admin');
+	const isAdminApiRoute = isAdminApiPath(event.url.pathname);
 	const isUserApiRoute = event.url.pathname.startsWith('/api/user');
 	const isLoginPage = event.url.pathname === '/admin/login';
 	const isAuthApi = event.url.pathname.startsWith('/api/auth');

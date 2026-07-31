@@ -3,12 +3,14 @@
 	import { goto } from '$app/navigation';
 
 	const navItems = [
-		{ href: '/admin', label: 'Dashboard', icon: 'chart' },
-		{ href: '/admin/observability', label: 'Observability', icon: 'pulse' },
-		{ href: '/admin/experiments', label: 'Experiments', icon: 'beaker' },
-		{ href: '/admin/submissions', label: 'Submissions', icon: 'inbox' },
-		{ href: '/admin/subscribers', label: 'Subscribers', icon: 'users' },
-		{ href: '/admin/analytics', label: 'Analytics', icon: 'graph' }
+		{ href: '/admin', label: 'Dashboard' },
+		{ href: '/admin/agent-drafts', label: 'Drafts' },
+		{ href: '/admin/submissions', label: 'Submissions' },
+		{ href: '/admin/subscribers', label: 'Subscribers' },
+		{ href: '/admin/experiments', label: 'Experiments' },
+		{ href: '/admin/analytics', label: 'Analytics' },
+		{ href: '/admin/tufte-dashboard', label: 'Analysis' },
+		{ href: '/admin/observability', label: 'Observability' }
 	];
 
 	async function logout() {
@@ -26,10 +28,9 @@
 {:else}
 	<div class="admin-layout">
 		<!-- Admin Navigation -->
-		<nav class="admin-nav">
-			<div class="max-w-7xl mx-auto px-6">
-				<div class="flex items-center justify-between">
-					<div class="flex gap-6">
+		<nav class="admin-nav" aria-label="Admin tools">
+			<div class="nav-shell">
+				<div class="nav-scroll">
 						{#each navItems as item}
 							<a
 								href={item.href}
@@ -38,8 +39,8 @@
 								{item.label}
 							</a>
 						{/each}
-					</div>
-					<div class="flex items-center gap-4">
+				</div>
+				<div class="nav-utilities">
 						<a href="/" class="utility-link">← Back to Site</a>
 						<button
 							onclick={logout}
@@ -47,10 +48,15 @@
 						>
 							Logout
 						</button>
-					</div>
 				</div>
 			</div>
 		</nav>
+
+		<noscript>
+			<p class="no-script-notice">
+				Published repository records remain readable; live data and record actions need JavaScript.
+			</p>
+		</noscript>
 
 		<!-- Admin Content -->
 		<main id="main-content" class="admin-content" tabindex="-1">
@@ -74,8 +80,34 @@
 		background: var(--color-performance-bg-surface);
 	}
 
+	.nav-shell {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--space-performance-md);
+		max-width: 80rem;
+		margin: 0 auto;
+		padding: 0 var(--space-performance-md);
+	}
+
+	.nav-scroll {
+		display: flex;
+		gap: var(--space-performance-lg);
+		overflow-x: auto;
+		overscroll-behavior-inline: contain;
+		scrollbar-width: thin;
+	}
+
+	.nav-utilities {
+		display: flex;
+		align-items: center;
+		gap: var(--space-performance-md);
+		flex: 0 0 auto;
+	}
+
 	.nav-link {
 		padding: var(--space-performance-sm) 0;
+		white-space: nowrap;
 		border-bottom: 2px solid transparent;
 		transition: all var(--duration-performance-standard) var(--ease-performance-standard);
 		color: var(--color-performance-fg-tertiary);
@@ -107,5 +139,26 @@
 		max-width: 80rem;
 		margin: 0 auto;
 		padding: var(--space-performance-lg) var(--space-performance-md);
+	}
+
+	.no-script-notice {
+		max-width: 80rem;
+		margin: var(--space-performance-md) auto 0;
+		padding: 0 var(--space-performance-md);
+		color: var(--color-performance-warning);
+		font-size: var(--text-performance-body-sm);
+	}
+
+	@media (max-width: 48rem) {
+		.nav-shell {
+			align-items: stretch;
+			flex-direction: column-reverse;
+			gap: 0;
+		}
+
+		.nav-utilities {
+			justify-content: space-between;
+			padding-top: var(--space-performance-sm);
+		}
 	}
 </style>

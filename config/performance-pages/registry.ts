@@ -543,7 +543,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
       'admin/subscribers',
       'admin/tufte-dashboard'
     ],
-    'pending',
+    'migrated',
     contract(
       'tool',
       'Resolve the current research administration decision with visible source and state.',

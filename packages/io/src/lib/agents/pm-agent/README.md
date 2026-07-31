@@ -44,6 +44,10 @@ You can:
 
 ### 4. Get Contact Status
 
+`/api/agent` is an admin-only application endpoint. It requires a valid first-party IO admin
+session; an unsigned request returns `401 Unauthorized`. Use the signed-in admin page for normal
+review work. The curl examples below are diagnostic references, not a public operator workflow.
+
 ```bash
 curl "https://createsomething.io/api/agent?contact_id=123"
 ```
