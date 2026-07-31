@@ -99,7 +99,7 @@
     <div class="public-shell">
       <a class="npg-delivery-card" href="/client-service">
         <span class="npg-delivery-mark" aria-hidden="true">
-          <img src="/npg-client-service/logo-mark.svg" alt="" />
+          <img src="/npg-client-service/logo-mark.png" alt="" />
         </span>
         <div>
           <span class="npg-delivery-index">Client delivery 01</span>

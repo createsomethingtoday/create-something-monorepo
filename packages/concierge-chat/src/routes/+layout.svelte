@@ -93,7 +93,7 @@
         <span class="webflow-logo-mark">
           <img
             src={isNpgClientServiceRoute
-              ? '/npg-client-service/logo-mark.svg'
+              ? '/npg-client-service/logo-mark.png'
               : '/abundance/logo-mark.svg'}
             alt=""
             class="webflow-logo-image"
@@ -406,8 +406,10 @@
   }
 
   .webflow-logo.npg-service-logo .webflow-logo-image {
-    width: 30px;
-    height: 30px;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    object-fit: cover;
   }
 
   .webflow-logo-copy {

@@ -220,7 +220,7 @@ async function prepareBookedCandidateThread(client) {
 	);
 	assert.match(
 		clientServicePage.bodyText,
-		/\/npg-client-service\/logo-mark\.svg/,
+		/\/npg-client-service\/logo-mark\.png/,
 		'Expected the NPG client-service identity mark'
 	);
 	assert.match(
@@ -236,6 +236,11 @@ async function prepareBookedCandidateThread(client) {
 
 	const clientServiceWebclip = await client.get('/npg-client-service/apple-touch-icon.png');
 	assert.equal(clientServiceWebclip.status, 200, 'Expected the NPG client-service webclip asset');
+	assert.doesNotMatch(
+		clientServicePage.bodyText,
+		/\/npg-client-service\/[^"']+\.svg/,
+		'Expected the NPG client-service identity to remain raster-only'
+	);
 
 	const created = await client.postJson('/api/threads', {});
 	assertOk(created, 'Failed to create thread');
