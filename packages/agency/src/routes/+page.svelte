@@ -28,8 +28,8 @@
     height: 864,
     objectPosition: 'center',
     video: {
-      mp4: '/images/performance-lab/agency-handoff-boundary-motion-loop.mp4',
-      webm: '/images/performance-lab/agency-handoff-boundary-motion-loop.webm',
+      mp4: '/images/performance-lab/agency-handoff-boundary-motion-loop-v2.mp4',
+      webm: '/images/performance-lab/agency-handoff-boundary-motion-loop-v2.webm',
       poster: '/images/performance-lab/agency-handoff-boundary.webp'
     }
   };

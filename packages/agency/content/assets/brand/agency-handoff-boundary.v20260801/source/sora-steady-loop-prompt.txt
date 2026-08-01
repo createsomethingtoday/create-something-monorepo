@@ -1,0 +1,11 @@
+Use case: CREATE SOMETHING .agency homepage hero background
+Primary request: animate the supplied black-and-white bench-scale hydraulic flume as one continuous steady-state Performance Lab loop source
+Scene/background: preserve the supplied dark laboratory, near-black negative space across the left half, and the complete apparatus on the right
+Subject: the exact same clear glass channel, machined steel gate, gauge rod, datum marks, fixture, and contained water boundary
+Action: water flows continuously downstream from left to right through the fixed gate at a constant average waterline. Clearly visible small ripples, rolling surface texture, and bright reflections travel downstream for the entire shot. Keep the overall water level and apparatus state steady so every moment belongs to the same ongoing operating condition.
+Camera: completely locked at bench height; preserve the exact supplied framing, scale, and perspective; no zoom, pan, orbit, crop, or reframe
+Lighting/mood: high-contrast monochrome documentary laboratory light identical to the supplied image
+Timing/beats: 0-12 seconds uninterrupted steady downstream flow; vary only the natural ripple pattern and moving reflections, not the water level, apparatus, composition, or flow direction
+Audio: none
+Constraints: preserve the supplied composition pixel-faithfully outside the water surface; gate, gauge, glass, datum, fixture, lighting, camera, and waterline remain fixed; make water motion obvious at homepage scale; no text, logos, people, hands, color, new objects, moving metal, morphing, flicker, jitter, cut, or scene change
+Avoid: reverse water motion; ping-pong motion; rising or falling waterline; surge buildup; draining; abrupt reset; static-looking water; camera movement; crop; geometry change; splash

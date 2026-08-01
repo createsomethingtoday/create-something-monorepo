@@ -1,0 +1,11 @@
+Use case: CREATE SOMETHING .agency homepage hero background
+Primary request: animate the supplied black-and-white bench-scale hydraulic flume as one continuous, naturally cyclic Performance Lab operating study
+Scene/background: dark working laboratory; preserve near-black negative space across the left half and the apparatus on the right
+Subject: the same clear glass channel, machined steel gate, gauge rod, datum marks, and contained water boundary
+Action: water travels continuously downstream in one direction. A controlled pulse gradually raises the upstream waterline, carries a rolling wave beneath the fixed gate, accelerates bright surface reflections downstream, then settles naturally toward the same calm flow seen at the opening. The water must never reverse direction.
+Camera: completely locked at bench height; identical framing, no zoom, pan, orbit, or reframe
+Lighting/mood: high-contrast monochrome documentary laboratory light
+Timing/beats: 0-3 seconds calm visible downstream flow; 3-7 seconds waterline rises and a rolling wave passes beneath the gate; 7-10 seconds the current carries moving reflections downstream; 10-12 seconds the pulse settles toward the opening flow state. Keep visible downstream motion throughout.
+Audio: none
+Constraints: preserve the supplied composition and apparatus; gate, gauge, glass, datum, and camera remain fixed; opening and closing flow states must be visually compatible for a seamless endpoint blend; no text, logos, people, hands, color, new objects, moving metal, morphing, flicker, jitter, or cut
+Avoid: reverse water motion; ping-pong motion; abrupt reset; static-looking water; camera movement; geometry changes; obscuring splash
