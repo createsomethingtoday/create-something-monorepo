@@ -82,3 +82,48 @@ test('the Worker resolves an exact-resource Identity token before serving MCP', 
     scopes: ['offer-savings:read', 'offer-savings:write']
   });
 });
+
+test('the Worker prefers the Identity service binding for token verification', async () => {
+  const originalFetch = globalThis.fetch;
+  let bindingCalled = false;
+
+  globalThis.fetch = async () => {
+    throw new Error('public Identity fetch should not be used when the service binding is present');
+  };
+
+  try {
+    const worker = createOfferSavingsWorkerHandler({
+      mcpFetch: async () => new Response('mcp-ok')
+    });
+    const env = {
+      CS_IDENTITY_ISSUER: 'https://id.createsomething.space',
+      OAUTH_ALLOWED_EMAILS: 'micah@createsomething.io',
+      IDENTITY_WORKER: {
+        fetch: async () => {
+          bindingCalled = true;
+          return Response.json({
+            sub: 'user-micah',
+            email: 'micah@createsomething.io',
+            email_verified: true,
+            resource: `${origin}/mcp`,
+            scope: 'offer-savings:read offer-savings:write'
+          });
+        }
+      }
+    } as never;
+
+    const response = await worker.fetch(
+      new Request(`${origin}/mcp`, {
+        method: 'POST',
+        headers: { Authorization: 'Bearer opaque-token' }
+      }),
+      env,
+      {} as ExecutionContext
+    );
+
+    assert.equal(response.status, 200);
+    assert.equal(bindingCalled, true);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
