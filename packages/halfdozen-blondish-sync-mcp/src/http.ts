@@ -114,6 +114,7 @@ export function createTicketSyncWorker(serveMcp: ServeMcp) {
             client_source_data_source_configured: Boolean(runtime.sourceDataSourceId || runtime.sourceDataSourceTitle),
             halfdozen_target_data_source_configured: Boolean(env.HALFDOZEN_TICKETS_DATA_SOURCE_ID?.trim() || env.HALFDOZEN_TICKETS_DATABASE_ID?.trim() || env.HALFDOZEN_TICKETS_DATA_SOURCE_TITLE?.trim()),
             client_status_property: runtime.sourceStatusProperty || 'Status',
+            client_status_map: runtime.sourceStatusMap,
             langfuse: langfuseHealth(env),
           },
           secrets: {

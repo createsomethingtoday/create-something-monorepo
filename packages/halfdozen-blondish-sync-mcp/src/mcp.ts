@@ -3,6 +3,7 @@ import { z } from 'zod';
 import {
   auditSync,
   fullReconcile,
+  mapHdStatusToOsStatus,
   planSourceToHalfDozenRepairs,
   preflight,
   repairExternalUrlDrift,
@@ -120,7 +121,7 @@ export function createTicketSyncMcpServer(
       contents: [{
         uri: contractUri,
         mimeType: 'application/json',
-        text: JSON.stringify(buildContract(runtime.clientDisplayName), null, 2),
+        text: JSON.stringify(buildContract(runtime.clientDisplayName, runtime.sourceStatusMap), null, 2),
       }],
     }),
   );
@@ -172,21 +173,17 @@ function toolNames(prefix: string) {
   };
 }
 
-function buildContract(clientDisplayName: string) {
+function buildContract(clientDisplayName: string, sourceStatusMap: Record<string, string>) {
   return {
     source: `${clientDisplayName} Support Tickets [OS]`,
     target: 'Half Dozen Tickets [HD]',
     match_key: 'source Page ID -> target External Page ID or Ext Page ID',
     source_owned_fields: ['Ticket', 'Source', 'Owner', 'Client', 'External Page ID / Ext Page ID', 'External URL', 'External Files & Media', 'page body'],
     hd_owned_fields: ['Status'],
-    status_map: {
-      Assigned: 'Under Review',
-      'In Progress': 'In Progress',
-      'Client Action': 'Action Required',
-      Complete: 'Complete',
-      Archive: 'Archive',
-      Roadblock: 'Roadblock',
-    },
+    status_map: Object.fromEntries(
+      ['Assigned', 'In Progress', 'Client Action', 'Complete', 'Archive', 'Roadblock']
+        .map((hdStatus) => [hdStatus, mapHdStatusToOsStatus(hdStatus, sourceStatusMap)]),
+    ),
     unsupported: ['generic arbitrary property sync', 'delete propagation', 'field-level conflict resolution', 'reverse syncing HD edits to title/body/external references'],
     scale_notes: [
       'Use audit and plan tools for operator sessions.',

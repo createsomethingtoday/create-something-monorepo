@@ -15,6 +15,7 @@ export interface Env {
   HALFDOZEN_TICKETS_DATA_SOURCE_ID?: string;
   HALFDOZEN_TICKETS_DATA_SOURCE_TITLE?: string;
   CLIENT_OS_STATUS_PROPERTY?: string;
+  CLIENT_OS_STATUS_MAP?: string;
   BLONDISH_OS_STATUS_PROPERTY?: string;
   SYNC_SERVER_NAME?: string;
   SYNC_CLIENT_SLUG?: string;
@@ -52,7 +53,7 @@ export interface NotionPage {
 }
 
 export type NotionProperty = Record<string, unknown> & { type?: string };
-export type DataSourceSchema = Record<string, { id?: string; type?: string; name?: string }>;
+export type DataSourceSchema = Record<string, Record<string, unknown> & { id?: string; type?: string; name?: string }>;
 
 export interface NotionBlock {
   id: string;
@@ -68,6 +69,7 @@ export interface SyncConfig {
   sourceSchema: DataSourceSchema;
   targetSchema: DataSourceSchema;
   sourceStatusProperty: string;
+  sourceStatusMap: Record<string, string>;
   targetExtPageIdProperty: string;
   clientDisplayName: string;
   sourceDataSourceTitle: string;
