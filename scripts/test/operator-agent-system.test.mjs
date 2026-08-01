@@ -152,24 +152,31 @@ test('operator-agent model-probe passes when local endpoint returns the required
   const workspace = makeWorkspace();
   const server = createServer((request, response) => {
     assert.equal(request.url, '/v1/chat/completions');
-    request.resume();
-    response.writeHead(200, { 'content-type': 'application/json' });
-    response.end(
-      JSON.stringify({
-        choices: [
-          {
-            message: {
-              content: JSON.stringify({
-                ready: true,
-                loop: 'operator-agent-system',
-                task: 'model-probe',
-                canReturnJson: true,
-              }),
+    let body = '';
+    request.setEncoding('utf8');
+    request.on('data', (chunk) => {
+      body += chunk;
+    });
+    request.on('end', () => {
+      assert.equal(JSON.parse(body).think, false);
+      response.writeHead(200, { 'content-type': 'application/json' });
+      response.end(
+        JSON.stringify({
+          choices: [
+            {
+              message: {
+                content: JSON.stringify({
+                  ready: true,
+                  loop: 'operator-agent-system',
+                  task: 'model-probe',
+                  canReturnJson: true,
+                }),
+              },
             },
-          },
-        ],
-      })
-    );
+          ],
+        })
+      );
+    });
   });
 
   try {

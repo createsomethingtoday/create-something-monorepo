@@ -663,6 +663,10 @@ function extractJsonObject(text) {
   }
 }
 
+function localChatRequestBody(payload) {
+  return JSON.stringify({ think: false, ...payload });
+}
+
 function isPatternReviewCandidate(file) {
   const normalized = file.replaceAll('\\', '/');
   if (!normalized || normalized.includes('/node_modules/') || normalized.includes('/.svelte-kit/')) return false;
@@ -906,7 +910,7 @@ async function modelProbe(options) {
         'content-type': 'application/json',
         authorization: 'Bearer local-model',
       },
-      body: JSON.stringify({
+      body: localChatRequestBody({
         model: options.model,
         temperature: 0,
         max_tokens: 120,
@@ -1117,7 +1121,7 @@ async function modelPatternReview(options, files, coverage) {
         'content-type': 'application/json',
         authorization: 'Bearer local-model',
       },
-      body: JSON.stringify({
+      body: localChatRequestBody({
         model: options.model,
         temperature: 0,
         max_tokens: 1200,
@@ -1194,7 +1198,7 @@ async function modelPatternReviewRepair(options, attemptedPatternReview, gate, c
         'content-type': 'application/json',
         authorization: 'Bearer local-model',
       },
-      body: JSON.stringify({
+      body: localChatRequestBody({
         model: options.model,
         temperature: 0,
         max_tokens: 1800,
@@ -1268,7 +1272,7 @@ async function modelCandidates(options, files) {
         'content-type': 'application/json',
         authorization: 'Bearer local-model',
       },
-      body: JSON.stringify({
+      body: localChatRequestBody({
         model: options.model,
         temperature: 0,
         max_tokens: 900,
@@ -1361,7 +1365,7 @@ async function modelRevision(options, candidate, contentGate, sourceGate) {
         'content-type': 'application/json',
         authorization: 'Bearer local-model',
       },
-      body: JSON.stringify({
+      body: localChatRequestBody({
         model: options.model,
         temperature: 0,
         max_tokens: 700,
