@@ -173,6 +173,7 @@ export function buildRoutingPayload(
 ): Record<string, unknown> {
   const aliasPlans = proxies.aliasPlans.map((plan) => ({
     aliasToolName: plan.aliasToolName,
+    proxyToolName: plan.proxyToolName,
     description: plan.description,
     candidateCount: plan.candidates.length,
     candidates: plan.candidates.map((candidate) => ({

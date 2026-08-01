@@ -55,9 +55,10 @@ export function resolveTenantRoutingContext(
     'default'
   ).trim();
   const configuredTenants = routing.tenants ?? {};
-  const policy = configuredTenants[tenantId];
+  const hasConfiguredTenant = Object.hasOwn(configuredTenants, tenantId);
+  const policy = hasConfiguredTenant ? configuredTenants[tenantId] : undefined;
 
-  if (Object.keys(configuredTenants).length > 0 && !policy) {
+  if (Object.keys(configuredTenants).length > 0 && !hasConfiguredTenant) {
     throw new Error(`Unknown tenant "${tenantId}" in routing config`);
   }
 

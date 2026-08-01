@@ -210,6 +210,7 @@ test('buildProxyCatalog keeps aliases callable when their names collide with man
   assert.equal(new Set(listedToolNames).size, listedToolNames.length);
   assert.equal(catalog.routes.has('hub_status'), false);
   assert.equal(catalog.routes.get('hub_status_2')?.source, 'alias');
+  assert.equal(catalog.aliasPlans[0]?.proxyToolName, 'hub_status_2');
   assert.ok(catalog.warnings.some((warning) => warning.includes('collision for "hub_status"')));
   assert.deepEqual(await catalog.routes.get('hub_status_2').call({}), { ok: true, name: 'status' });
 });

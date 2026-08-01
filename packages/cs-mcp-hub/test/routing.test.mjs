@@ -60,6 +60,12 @@ test('explicit unknown tenant fails closed instead of inheriting the default pol
     () => resolveTenantRoutingContext(routing, 'blondis'),
     /Unknown tenant "blondis"/,
   );
+  for (const inheritedName of ['constructor', 'toString', '__proto__']) {
+    assert.throws(
+      () => resolveTenantRoutingContext(routing, inheritedName),
+      new RegExp(`Unknown tenant "${inheritedName}"`),
+    );
+  }
 });
 
 test('alias planner prefers approved routes and skips pending/blocked approvals', () => {

@@ -113,6 +113,7 @@ test('buildRoutingPayload echoes tenant policy and summarizes alias plans', () =
     aliasPlans: [
       {
         aliasToolName: 'gmail_send',
+        proxyToolName: 'gmail_send_2',
         description: 'failover',
         inputSchema: { type: 'object', properties: {} },
         candidates: [
@@ -141,6 +142,8 @@ test('buildRoutingPayload echoes tenant policy and summarizes alias plans', () =
   assert.deepEqual(out.tenant.policy.allowTags, ['email']);
   assert.deepEqual(out.configuredAliases, ['gmail_send']);
   assert.equal(out.activeAliases.length, 1);
+  assert.equal(out.activeAliases[0].aliasToolName, 'gmail_send');
+  assert.equal(out.activeAliases[0].proxyToolName, 'gmail_send_2');
   assert.equal(out.activeAliases[0].candidateCount, 1);
   assert.equal(out.activeAliases[0].candidates[0].directProxyToolName, 'arcade-gmail__send');
 });
