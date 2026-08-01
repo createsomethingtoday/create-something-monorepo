@@ -6,7 +6,7 @@
     {
       id: 'team',
       eyebrow: 'For your team',
-      title: 'Improve one internal workflow',
+      title: ['Improve one', 'internal workflow'],
       detail:
         'Use one real handoff to name the owner and decide what may run, wait, or stop before automation expands.',
       href: '/practice',
@@ -16,7 +16,7 @@
     {
       id: 'clients',
       eyebrow: 'For a client',
-      title: 'Deliver one client workflow',
+      title: ['Deliver one', 'client workflow'],
       detail:
         'Map a client workflow, define account and approval boundaries, then hand over evidence the client can inspect.',
       href: '/for-service-providers',
@@ -63,7 +63,9 @@
         <div class="adoption-paths__index" aria-hidden="true">0{index + 1}</div>
         <div class="adoption-paths__copy">
           <span>{path.eyebrow}</span>
-          <h3>{path.title}</h3>
+          <h3 aria-label={path.title.join(' ')}>
+            {#each path.title as line}<span>{line}</span>{/each}
+          </h3>
           <p>{path.detail}</p>
           <small>This path includes</small>
           <ul>
@@ -208,9 +210,13 @@
   }
 
   h3 {
-    max-width: 14ch;
+    max-width: 17ch;
     font-size: clamp(1.55rem, 2.5vw, 2.25rem);
     line-height: 1;
+  }
+
+  h3 > span {
+    display: block;
   }
 
   ul {
