@@ -67,6 +67,11 @@ export interface FindOffersServiceResult {
   };
 }
 
+export interface ResolveOffersInput {
+  request: OfferRequestInput;
+  observations: OfferObservation[];
+}
+
 export type OfferVerificationStatus = 'verified' | 'needs_checkout' | 'unverified' | 'rejected';
 
 export interface VerifyOfferInput {
@@ -140,6 +145,7 @@ export interface RunDueWatchesResult {
 }
 
 export interface OfferService {
+  resolveOffers(input: ResolveOffersInput): Promise<FindOffersServiceResult>;
   findOffers(request: OfferRequestInput): Promise<FindOffersServiceResult>;
   verifyOffer(input: VerifyOfferInput): Promise<VerifyOfferServiceResult>;
   watchOffers(input: WatchOffersInput): Promise<WatchOffersServiceResult>;
@@ -221,6 +227,38 @@ function verificationStatus(decision: OfferDecision): OfferVerificationStatus {
   if (decision.status === 'recommend') return 'verified';
   if (decision.offerCode) return 'needs_checkout';
   return 'unverified';
+}
+
+function presentResolution(resolution: OfferResolutionResult): FindOffersServiceResult {
+  const visibleDecisions = resolution.decisions.filter(
+    (decision) => decision.status !== 'rejected'
+  );
+  const offerDecisions = visibleDecisions.filter((decision) => !isEvidenceOnly(decision));
+  const evidence = resolution.decisions
+    .filter((decision) => decision.status !== 'rejected' && isEvidenceOnly(decision))
+    .map((decision) => presentOffer(decision, resolution.request, true));
+  const ltkOffers = offerDecisions
+    .filter((decision) => decision.discoveryLane === 'ltk')
+    .map((decision) => presentOffer(decision, resolution.request));
+  const supplementalOffers = offerDecisions
+    .filter((decision) => decision.discoveryLane === 'supplemental')
+    .map((decision) => presentOffer(decision, resolution.request));
+  return {
+    schemaVersion: 'offer_service.v0.1',
+    operation: 'find_offers',
+    observedAt: resolution.request.asOf,
+    receiptHash: hashReceipt({ operation: 'find_offers', resolution }),
+    resolution,
+    offers: [...ltkOffers, ...supplementalOffers],
+    ltkOffers,
+    supplementalOffers,
+    evidence,
+    counts: {
+      ltk: ltkOffers.length,
+      supplemental: supplementalOffers.length,
+      evidence: evidence.length
+    }
+  };
 }
 
 export function createOfferService(options: CreateOfferServiceOptions): OfferService {
@@ -317,39 +355,13 @@ export function createOfferService(options: CreateOfferServiceOptions): OfferSer
   }
 
   const service: OfferService = {
+    async resolveOffers({ request, observations }) {
+      return presentResolution(resolveOffers(materializeRequest(request), observations));
+    },
     async findOffers(request) {
       const observedRequest = materializeRequest(request);
       const observations = await options.discovery.discover(observedRequest);
-      const resolution = resolveOffers(observedRequest, observations);
-      const visibleDecisions = resolution.decisions.filter(
-        (decision) => decision.status !== 'rejected'
-      );
-      const offerDecisions = visibleDecisions.filter((decision) => !isEvidenceOnly(decision));
-      const evidence = resolution.decisions
-        .filter((decision) => decision.status !== 'rejected' && isEvidenceOnly(decision))
-        .map((decision) => presentOffer(decision, resolution.request, true));
-      const ltkOffers = offerDecisions
-        .filter((decision) => decision.discoveryLane === 'ltk')
-        .map((decision) => presentOffer(decision, resolution.request));
-      const supplementalOffers = offerDecisions
-        .filter((decision) => decision.discoveryLane === 'supplemental')
-        .map((decision) => presentOffer(decision, resolution.request));
-      return {
-        schemaVersion: 'offer_service.v0.1',
-        operation: 'find_offers',
-        observedAt: resolution.request.asOf,
-        receiptHash: hashReceipt({ operation: 'find_offers', resolution }),
-        resolution,
-        offers: [...ltkOffers, ...supplementalOffers],
-        ltkOffers,
-        supplementalOffers,
-        evidence,
-        counts: {
-          ltk: ltkOffers.length,
-          supplemental: supplementalOffers.length,
-          evidence: evidence.length
-        }
-      };
+      return presentResolution(resolveOffers(observedRequest, observations));
     },
     async verifyOffer({ request, observation }) {
       const resolution = resolveOffers(materializeRequest(request), [observation]);

@@ -115,11 +115,15 @@ test('MCP protocol exposes only the bounded offer workflow and widget resource',
   });
 
   const listed = await client.listTools();
-  assert.equal(client.getServerVersion()?.version, '0.2.2');
+  assert.equal(client.getServerVersion()?.version, '0.2.3');
   assert.equal(OFFER_WIDGET_URI, 'ui://offer-savings/results-v3.html');
   assert.deepEqual(
     listed.tools.map((tool) => tool.name),
-    ['find_offers', 'verify_offer', 'watch_offers', 'get_watch']
+    ['resolve_offers', 'find_offers', 'verify_offer', 'watch_offers', 'get_watch']
+  );
+  assert.equal(
+    listed.tools.find((tool) => tool.name === 'resolve_offers')?.annotations?.openWorldHint,
+    false
   );
   assert.equal(
     listed.tools.find((tool) => tool.name === 'find_offers')?.annotations?.readOnlyHint,
@@ -162,16 +166,10 @@ test('MCP protocol exposes only the bounded offer workflow and widget resource',
   const resources = await client.listResources();
   assert.deepEqual(
     resources.resources.map((resource) => resource.uri),
-    [
-      OFFER_WIDGET_URI,
-      'ui://offer-savings/results-v2.html',
-      'ui://offer-savings/results-v1.html'
-    ]
+    [OFFER_WIDGET_URI, 'ui://offer-savings/results-v2.html', 'ui://offer-savings/results-v1.html']
   );
   assert.equal(
-    resources.resources.every(
-      (resource) => resource.mimeType === 'text/html;profile=mcp-app'
-    ),
+    resources.resources.every((resource) => resource.mimeType === 'text/html;profile=mcp-app'),
     true
   );
   const widget = await client.readResource({ uri: OFFER_WIDGET_URI });
@@ -237,6 +235,18 @@ test('MCP calls find, verify, and idempotent watch through the authoritative ser
       ?.confidence.label,
     'Verified'
   );
+
+  const hostResolved = await client.callTool({
+    name: 'resolve_offers',
+    arguments: { request: publicRequest, observations: fixture.observations }
+  });
+  assert.equal(hostResolved.isError, undefined);
+  assert.equal(hostResolved.structuredContent?.operation, 'find_offers');
+  assert.deepEqual(hostResolved.structuredContent?.counts, {
+    ltk: 1,
+    supplemental: 3,
+    evidence: 0
+  });
 
   const creator = fixture.observations.find((observation) => observation.id === 'fixture-ltk-15');
   assert.ok(creator);
@@ -346,7 +356,7 @@ test('Streamable HTTP serves MCP and the versioned API from one process', async 
   await client.connect(new StreamableHTTPClientTransport(new URL(`http://127.0.0.1:${port}/mcp`)));
   assert.deepEqual(
     (await client.listTools()).tools.map((tool) => tool.name),
-    ['find_offers', 'verify_offer', 'watch_offers', 'get_watch']
+    ['resolve_offers', 'find_offers', 'verify_offer', 'watch_offers', 'get_watch']
   );
   assert.equal(
     (await client.callTool({ name: 'find_offers', arguments: publicRequest })).structuredContent

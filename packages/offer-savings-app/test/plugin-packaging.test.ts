@@ -37,3 +37,16 @@ test('personal plugin packages the production HTTPS MCP without a local launcher
   assert.equal(server?.args, undefined);
   assert.equal(server?.cwd, undefined);
 });
+
+test('plugin skill delegates discovery to the host and scoring to resolve_offers', () => {
+  const skill = readFileSync(
+    new URL('../plugin/skills/offer-savings/SKILL.md', import.meta.url),
+    'utf8'
+  );
+
+  assert.match(skill, /host agent's public-web capability/i);
+  assert.match(skill, /LTK.*first/i);
+  assert.match(skill, /Call `resolve_offers` once/i);
+  assert.match(skill, /Never calculate or edit a score/i);
+  assert.match(skill, /find_offers.*compatibility fallback/i);
+});

@@ -22,7 +22,9 @@ const watched = await service.watchOffers({ request, until, idempotencyKey });
 
 The resolver owns every score, cap, ranking, status, and receipt hash. Public callers supply the shopping constraints but not `asOf`; the service records the observation time when each run begins. Discovery runs in two stages: public LTK first, then supplemental corroboration and merchant-gap filling. Exact merchant requests stay exact. LTK priority controls search order, not confidence. Search and deal sources remain leads, public LTK and creator sources remain corroboration, and official source claims are checked against a trusted merchant-domain registry.
 
-`findOffers` returns `ltkOffers` first, followed by `supplementalOffers`. Pages that contain no concrete coupon, numeric discount, or explicit shipping offer are isolated in `evidence` without copy/watch actions. Rejected observations remain in the deterministic resolution receipt but are not rendered as usable offers. `observedAt` and the top-level `receiptHash` make each search-run boundary explicit.
+Interactive ChatGPT and Codex hosts should perform bounded LTK-first public discovery, then call `resolveOffers` with the factual observations. The service records observation time and applies the same deterministic policy without invoking a nested agent. `findOffers` remains the server-side discovery path for scheduled watches and hosts without public-web capability.
+
+Both paths return `ltkOffers` first, followed by `supplementalOffers`. Pages that contain no concrete coupon, numeric discount, or explicit shipping offer are isolated in `evidence` without copy/watch actions. Rejected observations remain in the deterministic resolution receipt but are not rendered as usable offers. `observedAt` and the top-level `receiptHash` make each search-run boundary explicit.
 
 `watchOffers` creates one durable watch for a stable idempotency key. `runDueWatches` is a bounded scheduler entrypoint: a stable run key creates at most one history record per watch, failures preserve the prior successful receipt, and no notification or purchase action is performed.
 
@@ -46,7 +48,7 @@ node dist/cli.js live \
   --deadline 2026-08-09
 ```
 
-The live command accepts either `--merchant` or the supported `--category health_and_beauty`. Category search fans out deterministically to Ulta Beauty, Sephora, CVS Pharmacy, Walgreens, Target, and OSEA. It requires an approved `OPENAI_API_KEY`, uses hosted public web search, captures the factual terminal-tool input, and returns the same domain-service result used by other adapters. It performs no purchases, cart mutation, messaging, subscriptions, unbounded monitoring, access-control bypass, or private LTK access.
+The live command accepts either `--merchant` or the supported `--category health_and_beauty`. Category search fans out deterministically to Ulta Beauty, Sephora, CVS Pharmacy, Walgreens, Target, and OSEA. It requires an approved `OPENAI_API_KEY`, uses hosted public web search, converts the completed search history into schema-constrained factual evidence, and returns the same domain-service result used by other adapters. Imprecise optional dates and malformed candidates fail closed rather than changing the whole receipt. It performs no purchases, cart mutation, messaging, subscriptions, unbounded monitoring, access-control bypass, or private LTK access.
 
 ## Verification
 

@@ -72,6 +72,30 @@ test('find_offers returns authoritative receipts as user-ready offer cards', asy
   );
 });
 
+test('resolve_offers scores host-discovered evidence without invoking nested discovery', async () => {
+  let discoveryCalls = 0;
+  const service = createOfferService({
+    discovery: {
+      discover: async () => {
+        discoveryCalls += 1;
+        return [];
+      }
+    },
+    clock: () => new Date(fixture.request.asOf)
+  });
+
+  const result = await service.resolveOffers({
+    request: fixture.request,
+    observations: fixture.observations
+  });
+
+  assert.equal(discoveryCalls, 0);
+  assert.equal(result.operation, 'find_offers');
+  assert.equal(result.counts.ltk, 1);
+  assert.equal(result.counts.supplemental, 3);
+  assert.equal(result.resolution.request.asOf, fixture.request.asOf);
+});
+
 test('keeps generic fulfillment pages out of LTK coupon and fallback offer results', async () => {
   const official = fixture.observations.find(
     (observation) => observation.id === 'fixture-official-20'

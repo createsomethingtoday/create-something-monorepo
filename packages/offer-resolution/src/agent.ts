@@ -2,7 +2,7 @@ import { Agent, run, tool, webSearchTool } from '@openai/agents';
 
 import { normalizeOfferRequest, planOfferDiscovery } from './discovery.js';
 import { findOffers } from './resolve.js';
-import { offerEvidenceInputSchema, offerRequestSchema } from './schemas.js';
+import { offerEvidenceInputSchema, offerObservationSchema, offerRequestSchema } from './schemas.js';
 import { canonicalStringify } from './canonical.js';
 import { createOfferService } from './service.js';
 import type { FindOffersServiceResult, OfferDiscoveryProvider } from './service.js';
@@ -84,6 +84,30 @@ export function createLtkWebSearchTool() {
   });
 }
 
+export const OFFER_EVIDENCE_FINALIZER_INSTRUCTIONS = `
+You are the read-only Offer Evidence Finalizer. Convert the completed LTK-primary and supplemental public-search history into the required structured evidence object.
+
+Copy the normalized shopping request supplied in the final user message exactly. Include only factual observations supported by direct URLs in the completed search history. Preserve public LTK observations as source kind ltk_public and keep supplemental sources distinct. An observation must contain a concrete coupon code, numeric discount, or explicit shipping offer; generic policy, pickup, delivery, store-location, or shipping-information pages are corroborating evidence only and must not become standalone offers.
+
+Use the normalized request asOf value for every observedAt. Omit publishedAt unless the source exposes a complete RFC 3339 timestamp ending in Z; omit imprecise startsAt and endsAt values for the same reason.
+
+Never calculate or invent a reliability score. Never purchase, mutate a cart, message a creator, subscribe, create monitoring, bypass access controls, or use private LTK endpoints.
+`.trim();
+
+export function createOfferEvidenceFinalizer(options: CreateOfferFindAgentOptions = {}) {
+  return new Agent({
+    name: 'Offer Evidence Finalizer',
+    handoffDescription: 'Extract factual public-offer evidence without scoring it.',
+    model: options.model ?? 'gpt-5.4-mini',
+    instructions: OFFER_EVIDENCE_FINALIZER_INSTRUCTIONS,
+    modelSettings: { toolChoice: 'none', parallelToolCalls: false },
+    tools: [],
+    handoffs: [],
+    outputType: offerEvidenceInputSchema,
+    resetToolChoice: false
+  });
+}
+
 export interface RunOfferFindAgentOptions extends CreateOfferFindAgentOptions {
   maxTurns?: number;
   discovery?: OfferDiscoveryProvider;
@@ -126,6 +150,55 @@ export function finalizeCapturedResolution(
     canonicalStringify(authoritativeResolution) !== canonicalStringify(modelResolution)
   ) {
     throw new Error('The agent receipt does not match the authoritative service receipt.');
+  }
+  return capturedEvidence.observations;
+}
+
+export function finalizeStructuredEvidence(
+  normalizedRequest: OfferRequest,
+  structuredEvidence: unknown
+): OfferObservation[] {
+  if (!structuredEvidence || typeof structuredEvidence !== 'object') {
+    throw new Error('The agent did not return a structured evidence envelope.');
+  }
+  const normalizedEvidence = JSON.parse(JSON.stringify(structuredEvidence)) as {
+    request?: unknown;
+    observations?: Array<{
+      source?: Record<string, unknown>;
+      offer?: Record<string, unknown>;
+    }>;
+  };
+  if (!Array.isArray(normalizedEvidence.observations)) {
+    throw new Error('The agent evidence envelope is missing observations.');
+  }
+  for (const observation of normalizedEvidence.observations ?? []) {
+    if (observation.source) {
+      observation.source.observedAt = normalizedRequest.asOf;
+      if (
+        observation.source.publishedAt !== undefined &&
+        !offerRequestSchema.shape.asOf.safeParse(observation.source.publishedAt).success
+      ) {
+        delete observation.source.publishedAt;
+      }
+    }
+    for (const key of ['startsAt', 'endsAt'] as const) {
+      if (
+        observation.offer?.[key] !== undefined &&
+        !offerRequestSchema.shape.asOf.safeParse(observation.offer[key]).success
+      ) {
+        delete observation.offer[key];
+      }
+    }
+  }
+  const capturedEvidence = offerEvidenceInputSchema.parse({
+    request: offerRequestSchema.parse(normalizedEvidence.request),
+    observations: normalizedEvidence.observations.flatMap((observation) => {
+      const parsed = offerObservationSchema.safeParse(observation);
+      return parsed.success ? [parsed.data] : [];
+    })
+  });
+  if (canonicalStringify(capturedEvidence.request) !== canonicalStringify(normalizedRequest)) {
+    throw new Error('The agent evidence request does not match the normalized shopping request.');
   }
   return capturedEvidence.observations;
 }
@@ -179,31 +252,22 @@ async function discoverAgentEvidence(
     { maxTurns: stageMaxTurns }
   );
 
-  let capturedEvidence: { request: OfferRequest; observations: OfferObservation[] } | undefined;
-  const captureTool = createResolveOfferEvidenceTool({
-    onEvidence: (input) => {
-      capturedEvidence = input;
-    }
-  });
-  const finalizer = agent.clone({
-    instructions: OFFER_FIND_AGENT_INSTRUCTIONS,
-    modelSettings: { toolChoice: 'resolve_offer_evidence', parallelToolCalls: false },
-    tools: [captureTool],
-    resetToolChoice: false
-  });
+  const finalizer = createOfferEvidenceFinalizer(options);
   const finalization = await run(
     finalizer,
     [
       ...supplementalDiscovery.history,
       {
         role: 'user' as const,
-        content:
-          'Finalize now. Call resolve_offer_evidence with the normalized request and all factual candidates from both completed stages. Keep public LTK observations as source kind ltk_public. Do not answer with prose.'
+        content: [
+          'Finalize the completed search history into the required structured evidence object. Copy this normalized request exactly and include every factual candidate supported by a direct searched URL. Return an empty observations array when no candidate exists.',
+          JSON.stringify({ request: normalizedRequest })
+        ].join('\n\n')
       }
     ],
-    { maxTurns: 2 }
+    { maxTurns: 1 }
   );
-  return finalizeCapturedResolution(capturedEvidence, finalization.finalOutput);
+  return finalizeStructuredEvidence(normalizedRequest, finalization.finalOutput);
 }
 
 export function createAgentOfferDiscoveryProvider(

@@ -10,12 +10,16 @@ Resolve a user-triggered shopping request through public discovery and determini
 ## Workflow
 
 1. Normalize the request into an exact merchant or supported category, need, budget, currency, five-digit US ZIP code, deadline with year, and acceptable channels. Ask only for an essential missing fact. Do not invent or send an observation timestamp; the service owns it.
-2. Call `find_offers`. The service must complete the public LTK lane first, then use supplemental public sources. Do not perform a separate free-form search and invent a score.
-3. Present `ltkOffers` as the primary answer, followed by `supplementalOffers` as clearly labeled fallback options. Do not blend the lanes.
-4. Treat `evidence` as supporting material, not coupons. Never present a shipping, pickup, delivery, store-location, or policy page as an offer, and never attach copy-code or watch actions to it. Rejected observations remain in the resolver receipt instead of the usable offer list.
-5. Include expected savings, constraints, direct evidence links, observation time, score components, caps or rejection reasons, and the search-run receipt hash. Say plainly when no current public LTK offer was found or no candidate is reliable enough to recommend.
-6. Call `verify_offer` when the user supplies an offer or asks for re-evaluation. Treat `needs_checkout` as unresolved; verification does not authorize checkout.
-7. Call `watch_offers` only after the user asks to keep checking and supplies an explicit deadline. Use a stable idempotency key so retries reuse the same watch. Use `get_watch` to read its current status.
+2. Use the host agent's public-web capability for bounded discovery. Search public LTK posts, creator profiles, captions, product links, and visible exclusive-code indicators first. Preserve direct URLs and do not bypass app gates or login.
+3. Only after the LTK pass, search official retailer pages and inspectable checkout evidence for corroboration, then bounded creator-owned, authorized-feed, search-index, and deal-source gaps. Keep LTK and supplemental observations distinct.
+4. Call `resolve_offers` once with the normalized request and up to 50 factual observations from both passes. The MCP owns observation time, deterministic reliability scores, caps, ranking, evidence separation, and the receipt. Never calculate or edit a score in the host agent.
+5. Present `ltkOffers` as the primary answer, followed by `supplementalOffers` as clearly labeled fallback options. Do not blend the lanes.
+6. Treat `evidence` as supporting material, not coupons. Never present a shipping, pickup, delivery, store-location, or policy page as an offer, and never attach copy-code or watch actions to it. Rejected observations remain in the resolver receipt instead of the usable offer list.
+7. Include expected savings, constraints, direct evidence links, observation time, score components, caps or rejection reasons, and the search-run receipt hash. Say plainly when no current public LTK offer was found or no candidate is reliable enough to recommend.
+8. Call `verify_offer` when the user supplies an offer or asks for re-evaluation. Treat `needs_checkout` as unresolved; verification does not authorize checkout.
+9. Call `watch_offers` only after the user asks to keep checking and supplies an explicit deadline. Use a stable idempotency key so retries reuse the same watch. Use `get_watch` to read its current status. Scheduled watch refreshes may use the service-side discovery fallback because the host agent is not continuously online.
+
+Use `find_offers` only as a compatibility fallback when the host truly has no public-web capability. Interactive ChatGPT and Codex sessions should use host discovery plus `resolve_offers`.
 
 Read [references/source-policy.md](references/source-policy.md) when explaining evidence priority, public-access limits, redistribution, or ChatGPT deployment.
 

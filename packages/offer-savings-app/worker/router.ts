@@ -84,9 +84,11 @@ async function authenticateIdentityRequest(input: {
 
   let response: Response;
   try {
-    response = await input.identityFetch(new Request(`${issuer}/oauth/userinfo`, {
-      headers: { Accept: 'application/json', Authorization: `Bearer ${token}` }
-    }));
+    response = await input.identityFetch(
+      new Request(`${issuer}/oauth/userinfo`, {
+        headers: { Accept: 'application/json', Authorization: `Bearer ${token}` }
+      })
+    );
   } catch {
     return jsonResponse(
       {
@@ -179,7 +181,7 @@ export function createOfferSavingsWorkerHandler(options: {
       if (url.pathname === '/' || url.pathname === '/health') {
         return jsonResponse({
           name: 'offer-savings-agent',
-          version: '0.2.2',
+          version: '0.2.3',
           status: 'healthy',
           endpoint: '/mcp',
           authentication: 'OAuth 2.1 + PKCE through CREATE SOMETHING Identity'
