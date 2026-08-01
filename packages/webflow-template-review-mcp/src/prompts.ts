@@ -74,7 +74,8 @@ Every review follows these phases:
 |------|-------------|------|
 | \`template_review_get_asset\` | Full asset details (name, price, creator, counts) | First look |
 | \`template_review_list_versions\` | All versions for an asset | Check re-submission history |
-| \`template_review_get_review_context\` | Reviewer-facing summary with capability flags | Before any decisions |
+| \`template_review_get_review_context\` | Reviewer-facing summary with capability flags + \`checklistProgress\` | Before any decisions |
+| \`template_review_get_checklists\` | Structured 📝Review and 🚀Publishing checklist items with 1-based indexes | Before checking anything off |
 
 **Always check \`get_review_context\` before writing.** It tells you exactly what you can do: \`canAssign\`, \`canReview\`, \`canPublish\`.
 
@@ -121,9 +122,22 @@ Report \`rubricCoverage\` as \`partial_published_site_validation\` unless a sepa
 | \`template_review_assign_self\` | Claim the version (required first) |
 | \`template_review_set_review_status\` | Update status (e.g. In Review) |
 | \`template_review_save_draft_feedback\` | Save notes without changing status |
+| \`template_review_set_checklist_items\` | Check off 📝Review Checklist items as you complete them |
 | \`template_review_request_changes\` | Send back with feedback |
 | \`template_review_approve_version\` | Approve |
 | \`template_review_reject_version\` | Reject with reasons |
+
+### Working the Checklists
+
+Call \`template_review_get_checklists\` for 1-based item indexes, then
+\`template_review_set_checklist_items\` with \`expected_total\` and each item's
+\`expected_text\` from the same read.
+Only the \`[ ]\`/\`[x]\` token changes; the rest of the field is preserved.
+
+Record what you actually completed. If the submission qualifies for the express
+review path described at the top of the checklist, check only the express items and
+leave the rest unchecked — approval is not gated on a fully checked list, and
+\`approve_version\` returns unchecked counts as an advisory warning only.
 
 ### Human Decision Boundary
 
@@ -141,7 +155,12 @@ Automated validation and sandbox evidence do not approve, reject, request change
 | \`template_review_list_releases\` | Available releases to attach |
 | \`template_review_update_asset_metadata\` | Update name, description, thumbnails |
 | \`template_review_update_asset_publishing\` | Update MRP ID override |
-| \`template_review_complete_publishing\` | Mark checklist complete + attach release |
+| \`template_review_set_checklist_items\` | Check off 🚀Publishing Checklist items as you complete them |
+| \`template_review_complete_publishing\` | Attach the release (does not mark the checklist unless \`mark_all_publishing_items\` is set) |
+
+Work the publishing checklist per item with \`set_checklist_items\`. Only pass
+\`mark_all_publishing_items: true\` to \`complete_publishing\` when every publishing
+step genuinely was completed — the checklist is audit evidence, not a formality.
 
 ## Quick Reference Checklist
 

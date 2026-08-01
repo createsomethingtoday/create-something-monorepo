@@ -989,3 +989,305 @@ test('updateVersionReview writes agent review feedback to the confirmed field id
 
   assert.equal(version.agentReviewFeedback, 'AI supplemental draft');
 });
+
+// Trailing newline is deliberate: real Airtable checklist values end with one,
+// and read-modify-write must not silently drop it.
+const REVIEW_CHECKLIST_RAW = '### Panel\n[ ] first item\n- 🔵 sub criterion\n[x] second item\n';
+const PUBLISHING_CHECKLIST_RAW = '[ ] publish step one\n    - nested note\n[ ] publish step two';
+
+function versionRecord(id: string, overrides: Record<string, unknown> = {}) {
+  return {
+    id,
+    createdTime: '2026-07-28T00:00:00.000Z',
+    fields: {
+      [CONFIRMED_VERSION_FIELDS.assetRecordId]: 'rec_asset_checklist',
+      [CONFIRMED_VERSION_FIELDS.reviewOwner]: ericReviewer,
+      [CONFIRMED_VERSION_FIELDS.reviewChecklist]: REVIEW_CHECKLIST_RAW,
+      [CONFIRMED_VERSION_FIELDS.publishingChecklist]: PUBLISHING_CHECKLIST_RAW,
+      ...overrides,
+    },
+  };
+}
+
+const checklistAssetRecord = {
+  id: 'rec_asset_checklist',
+  createdTime: '2026-07-28T00:00:00.000Z',
+  fields: {
+    [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
+    [CONFIRMED_ASSET_FIELDS.name]: 'Checklist Template',
+  },
+};
+
+function checklistClient(onPatch?: (body: unknown) => unknown) {
+  const patches: unknown[] = [];
+  const client = new AirtableClient({
+    apiKey: 'test',
+    reviewOwnerReassertionDelayMs: 0,
+    fetchFn: async (input, init) => {
+      const url = new URL(String(input));
+      if (init?.method === 'PATCH') {
+        const body = JSON.parse(String(init.body));
+        patches.push(body);
+        const override = onPatch?.(body);
+        return jsonResponse(override ?? versionRecord('rec_version_checklist'));
+      }
+      if (url.pathname.includes(`/${TABLE_IDS.assets}/`)) return jsonResponse(checklistAssetRecord);
+      return jsonResponse(versionRecord('rec_version_checklist'));
+    },
+  });
+  return { client, patches };
+}
+
+test('getVersionChecklists returns structured items and progress for both checklist fields', async () => {
+  const { client } = checklistClient();
+
+  const result = await client.getVersionChecklists('rec_version_checklist');
+
+  assert.equal(result.templateName, 'Checklist Template');
+  assert.equal(result.checklists.review.present, true);
+  assert.equal(result.checklists.review.fieldName, CONFIRMED_VERSION_FIELDS.reviewChecklist);
+  assert.deepEqual(result.checklists.review.summary, { total: 2, checked: 1, unchecked: 1, complete: false });
+  assert.deepEqual(
+    result.checklists.review.items.map((item) => [item.index, item.text, item.checked, item.section]),
+    [
+      [1, 'first item', false, 'Panel'],
+      [2, 'second item', true, 'Panel'],
+    ],
+  );
+  assert.deepEqual(result.checklists.publishing.summary, { total: 2, checked: 0, unchecked: 2, complete: false });
+});
+
+test('getVersionChecklists reports an absent checklist field as not present', async () => {
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input) => {
+      const url = new URL(String(input));
+      if (url.pathname.includes(`/${TABLE_IDS.assets}/`)) return jsonResponse(checklistAssetRecord);
+      return jsonResponse(
+        versionRecord('rec_version_no_checklist', {
+          [CONFIRMED_VERSION_FIELDS.reviewChecklist]: undefined,
+        }),
+      );
+    },
+  });
+
+  const result = await client.getVersionChecklists('rec_version_no_checklist');
+
+  assert.equal(result.checklists.review.present, false);
+  assert.deepEqual(result.checklists.review.items, []);
+  assert.equal(result.checklists.publishing.present, true);
+});
+
+test('setVersionChecklistItems writes a byte-preserving edit that keeps the trailing newline', async () => {
+  const { client, patches } = checklistClient();
+
+  const result = await client.setVersionChecklistItems('rec_version_checklist', {
+    checklist: 'review',
+    items: [{ index: 1, checked: true, expectedText: 'first item' }],
+    expected_total: 2,
+    review_owner: { id: ericReviewer.id },
+  });
+
+  assert.equal(result.written, true);
+  // Two writes: the checklist edit, then the existing review-owner reassertion.
+  assert.equal(patches.length, 2);
+  assert.deepEqual((patches[1] as { fields: Record<string, unknown> }).fields, {
+    [CONFIRMED_VERSION_FIELDS.reviewOwner]: { id: ericReviewer.id },
+  });
+  const written = (patches[0] as { fields: Record<string, string> }).fields[CONFIRMED_VERSION_FIELDS.reviewChecklist];
+
+  assert.equal(written, '### Panel\n[x] first item\n- 🔵 sub criterion\n[x] second item\n');
+  assert.equal(written.length, REVIEW_CHECKLIST_RAW.length, 'edit must not change field length');
+  assert.equal(written.endsWith('\n'), true, 'trailing newline must survive read-modify-write');
+  assert.deepEqual(result.after, { total: 2, checked: 2, unchecked: 0, complete: true });
+  assert.deepEqual(result.changed, [{ index: 1, text: 'first item', section: 'Panel', from: false, to: true }]);
+});
+
+test('setVersionChecklistItems targets the publishing field when asked', async () => {
+  const { client, patches } = checklistClient();
+
+  await client.setVersionChecklistItems('rec_version_checklist', {
+    checklist: 'publishing',
+    items: [{ index: 2, checked: true, expectedText: 'publish step two' }],
+    expected_total: 2,
+  });
+
+  const fields = (patches[0] as { fields: Record<string, string> }).fields;
+  assert.equal(fields[CONFIRMED_VERSION_FIELDS.publishingChecklist], '[ ] publish step one\n    - nested note\n[x] publish step two');
+  assert.equal(CONFIRMED_VERSION_FIELDS.reviewChecklist in fields, false);
+});
+
+test('setVersionChecklistItems skips the Airtable write when nothing changed', async () => {
+  const { client, patches } = checklistClient();
+
+  const result = await client.setVersionChecklistItems('rec_version_checklist', {
+    checklist: 'review',
+    items: [{ index: 2, checked: true, expectedText: 'second item' }],
+    expected_total: 2,
+  });
+
+  assert.equal(result.written, false);
+  assert.deepEqual(result.changed, []);
+  assert.equal(patches.length, 0, 'no-op edits must not issue an Airtable write');
+});
+
+test('setVersionChecklistItems rejects a stale expected_total', async () => {
+  const { client, patches } = checklistClient();
+
+  await assert.rejects(
+    client.setVersionChecklistItems('rec_version_checklist', {
+      checklist: 'review',
+      items: [{ index: 1, checked: true, expectedText: 'first item' }],
+      expected_total: 10,
+    }),
+    (error: unknown) => {
+      assert.equal((error as { code?: string }).code, 'CHECKLIST_TOTAL_MISMATCH');
+      assert.equal((error as { status?: number }).status, 409);
+      assert.deepEqual((error as { details?: Record<string, unknown> }).details, {
+        version_id: 'rec_version_checklist',
+        checklist: 'review',
+        field: CONFIRMED_VERSION_FIELDS.reviewChecklist,
+        expected_total: 10,
+        actual_total: 2,
+      });
+      return true;
+    },
+  );
+
+  assert.equal(patches.length, 0);
+});
+
+test('setVersionChecklistItems rejects stale item text when the count is unchanged', async () => {
+  const { client, patches } = checklistClient();
+
+  await assert.rejects(
+    client.setVersionChecklistItems('rec_version_checklist', {
+      checklist: 'review',
+      items: [{ index: 1, checked: true, expectedText: 'a previously selected item' }],
+      expected_total: 2,
+    }),
+    (error: unknown) => {
+      assert.equal((error as { code?: string }).code, 'CHECKLIST_ITEM_TEXT_MISMATCH');
+      assert.equal((error as { status?: number }).status, 400);
+      assert.deepEqual((error as { details?: Record<string, unknown> }).details, {
+        version_id: 'rec_version_checklist',
+        checklist: 'review',
+        field: CONFIRMED_VERSION_FIELDS.reviewChecklist,
+        mismatches: [
+          {
+            index: 1,
+            expected_text: 'a previously selected item',
+            actual_text: 'first item',
+          },
+        ],
+      });
+      return true;
+    },
+  );
+
+  assert.equal(patches.length, 0);
+});
+
+test('setVersionChecklistItems surfaces parser failures and missing checklist content', async () => {
+  const { client } = checklistClient();
+
+  await assert.rejects(
+    client.setVersionChecklistItems('rec_version_checklist', {
+      checklist: 'review',
+      items: [{ index: 99, checked: true, expectedText: 'missing item' }],
+      expected_total: 2,
+    }),
+    (error: unknown) => {
+      assert.equal((error as { code?: string }).code, 'CHECKLIST_ITEM_OUT_OF_RANGE');
+      assert.equal((error as { status?: number }).status, 400);
+      return true;
+    },
+  );
+
+  const emptyClient = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input) => {
+      const url = new URL(String(input));
+      if (url.pathname.includes(`/${TABLE_IDS.assets}/`)) return jsonResponse(checklistAssetRecord);
+      return jsonResponse(versionRecord('rec_version_empty', { [CONFIRMED_VERSION_FIELDS.reviewChecklist]: '' }));
+    },
+  });
+
+  await assert.rejects(
+    emptyClient.setVersionChecklistItems('rec_version_empty', {
+      checklist: 'review',
+      items: [{ index: 1, checked: true, expectedText: 'missing item' }],
+      expected_total: 0,
+    }),
+    (error: unknown) => {
+      assert.equal((error as { code?: string }).code, 'CHECKLIST_MISSING');
+      assert.equal((error as { status?: number }).status, 409);
+      return true;
+    },
+  );
+});
+
+test('completePublishing leaves the publishing checklist untouched by default', async () => {
+  const { client, patches } = checklistClient();
+
+  const result = await client.completePublishing('rec_version_checklist', {
+    release_record_id: 'rec_release_1',
+    review_owner: { id: ericReviewer.id },
+  });
+
+  const fields = (patches[0] as { fields: Record<string, unknown> }).fields;
+  assert.equal(CONFIRMED_VERSION_FIELDS.publishingChecklist in fields, false, 'release attachment must not assert checklist completion');
+  assert.equal(result.publishingChecklist.markedAllComplete, false);
+  assert.deepEqual(result.publishingChecklist.unchecked, 2);
+});
+
+test('completePublishing marks every publishing item only when explicitly opted in', async () => {
+  const { client, patches } = checklistClient();
+
+  const result = await client.completePublishing('rec_version_checklist', {
+    release_record_id: 'rec_release_1',
+    mark_all_publishing_items: true,
+    review_owner: { id: ericReviewer.id },
+  });
+
+  const fields = (patches[0] as { fields: Record<string, string> }).fields;
+  assert.equal(fields[CONFIRMED_VERSION_FIELDS.publishingChecklist], '[x] publish step one\n    - nested note\n[x] publish step two');
+  assert.equal(result.publishingChecklist.markedAllComplete, true);
+});
+
+test('completePublishing still fails closed when opting in with no checklist content', async () => {
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input, init) => {
+      const url = new URL(String(input));
+      if (init?.method === 'PATCH') throw new Error('should not write');
+      if (url.pathname.includes(`/${TABLE_IDS.assetReleases}/`)) {
+        return jsonResponse({ id: 'rec_release_1', createdTime: '2026-07-28T00:00:00.000Z', fields: {} });
+      }
+      if (url.pathname.includes(`/${TABLE_IDS.assets}/`)) return jsonResponse(checklistAssetRecord);
+      return jsonResponse(versionRecord('rec_version_empty_publish', { [CONFIRMED_VERSION_FIELDS.publishingChecklist]: undefined }));
+    },
+  });
+
+  await assert.rejects(
+    client.completePublishing('rec_version_empty_publish', {
+      release_record_id: 'rec_release_1',
+      mark_all_publishing_items: true,
+    }),
+    (error: unknown) => {
+      assert.equal((error as { code?: string }).code, 'PUBLISHING_CHECKLIST_MISSING');
+      return true;
+    },
+  );
+});
+
+test('getReviewContext exposes checklist progress for gating', async () => {
+  const { client } = checklistClient();
+
+  const context = await client.getReviewContext('rec_version_checklist', ericReviewer);
+
+  assert.deepEqual(context.checklistProgress, {
+    review: { total: 2, checked: 1, unchecked: 1, complete: false },
+    publishing: { total: 2, checked: 0, unchecked: 2, complete: false },
+  });
+});

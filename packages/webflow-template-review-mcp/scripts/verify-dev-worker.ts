@@ -15,6 +15,7 @@ const WRITE_TOOL_NAMES = new Set([
   'template_review_set_review_status',
   'template_review_save_agent_feedback',
   'template_review_save_draft_feedback',
+  'template_review_set_checklist_items',
   'template_review_complete_publishing',
   'template_review_update_asset_metadata',
   'template_review_update_asset_publishing',

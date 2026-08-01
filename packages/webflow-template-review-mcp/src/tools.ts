@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import type { AirtableClient, TemplateReviewQueueItem } from './airtable.js';
 import { AirtableClientError } from './airtable.js';
+import { CHECKLIST_KIND_VALUES, parseChecklist } from './checklist.js';
 import { COMPREHENSIVE_REVIEW_LANE_IDS, EVIDENCE_LABELS, formatComprehensiveAgentReviewFeedback } from './comprehensive-review-feedback.js';
 import { COMPREHENSIVE_REVIEW_CONTRACT } from './comprehensive-review-contract.js';
 import { RUBRIC_DIMENSIONS } from './comprehensive-review-contract.js';
@@ -32,6 +33,20 @@ const sandboxViewportSchema = z.object({
   width: z.number().int().min(240).max(3840),
   height: z.number().int().min(240).max(3840),
 });
+
+/**
+ * Advisory warning when a version is approved with 📝Review Checklist items
+ * still unchecked. Never blocks: the checklist's own express-review branch says
+ * reviewers may intentionally skip items.
+ */
+function reviewChecklistWarnings(version: { rawFields?: Record<string, unknown> } | null | undefined): string[] {
+  const raw = version?.rawFields?.[TEMPLATE_REVIEW_FIELD_MAP.confirmed.versions.reviewChecklist];
+  const { summary } = parseChecklist(typeof raw === 'string' ? raw : undefined);
+  if (summary.total === 0 || summary.unchecked === 0) return [];
+  return [
+    `Review checklist has ${summary.unchecked} of ${summary.total} items unchecked. This is advisory: express reviews intentionally skip items. Use template_review_set_checklist_items to record what was actually completed.`,
+  ];
+}
 
 function jsonContent(value: unknown, isError = false) {
   return {
@@ -170,6 +185,7 @@ export const WRITE_TOOL_NAMES: ReadonlySet<string> = new Set([
   'template_review_set_review_status',
   'template_review_save_agent_feedback',
   'template_review_save_draft_feedback',
+  'template_review_set_checklist_items',
   'template_review_complete_publishing',
   'template_review_update_asset_metadata',
   'template_review_update_asset_publishing',
@@ -465,6 +481,21 @@ export function registerTools(
   );
 
   server.tool(
+    'template_review_get_checklists',
+    'Read-only: return the 📝Review Checklist and 🚀Publishing Checklist for a version as structured items with 1-based indexes, section headings, checked state, and progress counts. Use the returned indexes with template_review_set_checklist_items.',
+    {
+      version_id: z.string().min(1),
+    },
+    async ({ version_id }) => {
+      try {
+        return asSuccess(await getClient().getVersionChecklists(version_id));
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
     'template_review_run_published_site_validation',
     'Read-only: run published-site validators for content, assets, accessibility signals, interactions/IX2, GSAP, and custom-code policy evidence. Uses published_url only; does not use Designer/Preview data or write to Airtable.',
     {
@@ -645,6 +676,49 @@ export function registerTools(
             review_owner: { id: reviewer.airtableCollaboratorId },
             review_feedback,
             improvement_areas,
+          }),
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_set_checklist_items',
+    'Reviewer-safe write: check or uncheck individual 📝Review Checklist or 🚀Publishing Checklist items by 1-based index. Only the targeted "[ ]"/"[x]" tokens change; all other checklist text is preserved. Call template_review_get_checklists first, then pass expected_total and each item expected_text from that same read as stale-read guards.',
+    {
+      version_id: z.string().min(1),
+      checklist: z.enum(CHECKLIST_KIND_VALUES),
+      items: z
+        .array(
+          z.object({
+            index: z.number().int().min(1),
+            checked: z.boolean(),
+            expected_text: z.string(),
+          }),
+        )
+        .min(1)
+        .max(200),
+      expected_total: z.number().int().min(0),
+    },
+    async ({ version_id, checklist, items, expected_total }) => {
+      try {
+        const reviewer = requireResolvedReviewer(getReviewer);
+        const actingReviewer = currentReviewerAsCollaborator(getReviewer);
+        await getClient().requireAssignedVersion(version_id, actingReviewer);
+        return asSuccess({
+          reviewer: reviewerPayload(reviewer),
+          acting_reviewer: actingReviewer,
+          result: await getClient().setVersionChecklistItems(version_id, {
+            checklist,
+            items: items.map(({ index, checked, expected_text }) => ({
+              index,
+              checked,
+              expectedText: expected_text,
+            })),
+            expected_total,
+            review_owner: { id: reviewer.airtableCollaboratorId },
           }),
         });
       } catch (error) {
@@ -853,7 +927,7 @@ export function registerTools(
 
   server.tool(
     'template_review_complete_publishing',
-    'Complete the publishing checklist for a template version and attach a release using either a record id or a local-date lookup.',
+    'Attach a release to a template version and optionally approve it. By default the 🚀Publishing Checklist is left untouched — set mark_all_publishing_items only when every publishing step really was completed, or use template_review_set_checklist_items for per-item accuracy.',
     {
       version_id: z.string().min(1),
       release_record_id: z.string().optional(),
@@ -864,8 +938,9 @@ export function registerTools(
       time_zone: z.string().optional(),
       approve_version: z.boolean().optional(),
       mrp_id_overwrite: z.string().optional(),
+      mark_all_publishing_items: z.boolean().optional(),
     },
-    async ({ version_id, release_record_id, release_date_local, time_zone, approve_version, mrp_id_overwrite }) => {
+    async ({ version_id, release_record_id, release_date_local, time_zone, approve_version, mrp_id_overwrite, mark_all_publishing_items }) => {
       try {
         if (!release_record_id && !release_date_local && !time_zone) {
           throw new AirtableClientError('MISSING_RELEASE_SELECTOR', 'Provide release_record_id, release_date_local, or time_zone so the publishing workflow can resolve a release.', 400);
@@ -882,6 +957,7 @@ export function registerTools(
           time_zone,
           approve_version,
           mrp_id_overwrite,
+          mark_all_publishing_items,
           review_owner: { id: reviewer.airtableCollaboratorId },
         });
 
@@ -960,14 +1036,12 @@ export function registerTools(
       quality_rating: z.string().optional(),
       improvement_areas: z.array(z.string()).optional(),
       review_feedback: z.string().optional(),
-      review_checklist: z.unknown().optional(),
-      publishing_checklist: z.unknown().optional(),
       release_record_id: z.string().optional(),
       reject_reason: z.string().optional(),
       rejection_feedback: z.string().optional(),
       agent_review_feedback: z.string().optional(),
     },
-    async ({ version_id, review_owner, review_status, quality_rating, improvement_areas, review_feedback, review_checklist, publishing_checklist, release_record_id, reject_reason, rejection_feedback, agent_review_feedback }) => {
+    async ({ version_id, review_owner, review_status, quality_rating, improvement_areas, review_feedback, release_record_id, reject_reason, rejection_feedback, agent_review_feedback }) => {
       try {
         const reviewer = getReviewer();
         const actingReviewer = currentReviewerAsCollaborator(getReviewer);
@@ -975,7 +1049,7 @@ export function registerTools(
           assertReviewerScopedReviewOwner(review_owner, reviewer);
           await getClient().requireAssignedVersion(version_id, actingReviewer);
         }
-        const hasReviewerScopedMutation = [review_status, quality_rating, improvement_areas, review_feedback, review_checklist, publishing_checklist, release_record_id, reject_reason, rejection_feedback, agent_review_feedback].some(
+        const hasReviewerScopedMutation = [review_status, quality_rating, improvement_areas, review_feedback, release_record_id, reject_reason, rejection_feedback, agent_review_feedback].some(
           (value) => value !== undefined,
         );
 
@@ -992,8 +1066,6 @@ export function registerTools(
             quality_rating,
             improvement_areas,
             review_feedback,
-            review_checklist,
-            publishing_checklist,
             release_record_id,
             reject_reason,
             rejection_feedback,
@@ -1008,25 +1080,26 @@ export function registerTools(
 
   server.tool(
     'template_review_approve_version',
-    'Approve a template version and optionally update confirmed publishing checklist metadata.',
+    'Approve a template version. Reports unchecked 📝Review Checklist items as a non-blocking warning; use template_review_set_checklist_items to record checklist progress.',
     {
       version_id: z.string().min(1),
       release_record_id: z.string().optional(),
-      publishing_checklist: z.unknown().optional(),
     },
-    async ({ version_id, release_record_id, publishing_checklist }) => {
+    async ({ version_id, release_record_id }) => {
       try {
         const reviewer = requireResolvedReviewer(getReviewer);
         const actingReviewer = currentReviewerAsCollaborator(getReviewer);
-        await getClient().requireAssignedVersion(version_id, actingReviewer);
+        const assignedVersion = await getClient().requireAssignedVersion(version_id, actingReviewer);
         return asSuccess({
           reviewer: reviewerPayload(reviewer),
           acting_reviewer: actingReviewer,
+          // Advisory only. Express reviews intentionally skip items, so "all checked"
+          // is not the correct gate and approval must not be blocked on it.
+          warnings: reviewChecklistWarnings(assignedVersion),
           updated_version: await getClient().updateVersionReview(version_id, {
             review_owner: { id: reviewer.airtableCollaboratorId },
             review_status: '✅Approved',
             release_record_id,
-            publishing_checklist,
           }),
         });
       } catch (error) {

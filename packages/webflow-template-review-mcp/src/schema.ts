@@ -231,6 +231,15 @@ export const TEMPLATE_REVIEW_FIELD_MAP = {
       'time_zone',
       'approve_version',
       'mrp_id_overwrite',
+      'mark_all_publishing_items',
+    ],
+    // Per-item checklist edits are the only supported write path for
+    // '📝Review Checklist' and '🚀Publishing Checklist'. Whole-field overwrite
+    // was removed from versionReview: it destroyed structured reviewer state.
+    checklistItems: [
+      'checklist',
+      'items',
+      'expected_total',
     ],
     reviewerAssignment: [
       'review_owner',
@@ -241,8 +250,6 @@ export const TEMPLATE_REVIEW_FIELD_MAP = {
       'quality_rating',
       'improvement_areas',
       'review_feedback',
-      'review_checklist',
-      'publishing_checklist',
       'release_record_id',
       'reject_reason',
       'rejection_feedback',

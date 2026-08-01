@@ -11,7 +11,7 @@ import {
   parseReviewerDirectory,
   type ReviewerProfile,
 } from '../src/reviewer-directory.js';
-import { METRICS_ASSET_FIELD_IDS, TABLE_IDS } from '../src/schema.js';
+import { METRICS_ASSET_FIELD_IDS, TABLE_IDS, TEMPLATE_REVIEW_FIELD_MAP } from '../src/schema.js';
 import { registerTools, WRITE_TOOL_NAMES } from '../src/tools.js';
 
 type ToolResult = {
@@ -757,7 +757,6 @@ test('approve_version requires reviewer ownership before mutation', async () => 
         review_owner: { id: 'usr_eric' },
         review_status: '✅Approved',
         release_record_id: 'rec_release_1',
-        publishing_checklist: undefined,
       },
     ],
   });
@@ -817,6 +816,7 @@ test('complete_publishing requires reviewer ownership before workflow mutation',
         time_zone: undefined,
         approve_version: true,
         mrp_id_overwrite: undefined,
+        mark_all_publishing_items: undefined,
         review_owner: { id: 'usr_eric' },
       },
     ],
@@ -903,8 +903,6 @@ test('update_version_review writes supplemental agent review feedback through re
         quality_rating: undefined,
         improvement_areas: undefined,
         review_feedback: undefined,
-        review_checklist: undefined,
-        publishing_checklist: undefined,
         release_record_id: undefined,
         reject_reason: undefined,
         rejection_feedback: undefined,
@@ -1212,4 +1210,176 @@ test('default access keeps the full write surface', () => {
   for (const writeTool of WRITE_TOOL_NAMES) {
     assert.notEqual(names.indexOf(writeTool), -1, `expected ${writeTool} to be registered by default`);
   }
+});
+
+test('get_checklists is registered read-only and exposes structured checklist state', async () => {
+  const { server, handlers } = createServerHarness();
+  const client = {
+    getVersionChecklists: async (versionId: string) => ({
+      versionId,
+      checklists: {
+        review: { kind: 'review', present: true, items: [{ index: 1, text: 'first', checked: false, section: null, lineNumber: 1 }], summary: { total: 1, checked: 0, unchecked: 1, complete: false } },
+        publishing: { kind: 'publishing', present: false, items: [], summary: { total: 0, checked: 0, unchecked: 0, complete: false } },
+      },
+    }),
+  } as unknown as AirtableClient;
+
+  // Read-only sessions must still see it.
+  assert.equal(WRITE_TOOL_NAMES.has('template_review_get_checklists'), false);
+
+  registerTools(
+    server,
+    () => client,
+    () => reviewer,
+  );
+
+  const result = await handlers.get('template_review_get_checklists')?.({ version_id: 'rec_version_1' });
+  assert.ok(result);
+  const payload = parsePayload(result);
+  assert.equal(payload.ok, true);
+  assert.equal((payload.data as { checklists: { review: { summary: { unchecked: number } } } }).checklists.review.summary.unchecked, 1);
+});
+
+test('set_checklist_items requires reviewer ownership and forwards the concurrency guard', async () => {
+  const { server, handlers } = createServerHarness();
+  const calls: Array<{ method: string; args: unknown[] }> = [];
+  const client = {
+    requireAssignedVersion: async (...args: unknown[]) => {
+      calls.push({ method: 'requireAssignedVersion', args });
+      return { versionId: 'rec_version_1' };
+    },
+    setVersionChecklistItems: async (...args: unknown[]) => {
+      calls.push({ method: 'setVersionChecklistItems', args });
+      return { versionId: 'rec_version_1', checklist: 'review', changed: [], written: false };
+    },
+  } as unknown as AirtableClient;
+
+  assert.equal(WRITE_TOOL_NAMES.has('template_review_set_checklist_items'), true);
+
+  registerTools(
+    server,
+    () => client,
+    () => reviewer,
+  );
+
+  const result = await handlers.get('template_review_set_checklist_items')?.({
+    version_id: 'rec_version_1',
+    checklist: 'review',
+    items: [{ index: 3, checked: true, expected_text: 'Third item' }],
+    expected_total: 10,
+  });
+
+  assert.ok(result);
+  assert.equal(calls[0].method, 'requireAssignedVersion');
+  assert.deepEqual(calls[1], {
+    method: 'setVersionChecklistItems',
+    args: [
+      'rec_version_1',
+      {
+        checklist: 'review',
+        items: [{ index: 3, checked: true, expectedText: 'Third item' }],
+        expected_total: 10,
+        review_owner: { id: 'usr_eric' },
+      },
+    ],
+  });
+  assert.equal(parsePayload(result).ok, true);
+});
+
+test('set_checklist_items is hidden from read-only sessions', () => {
+  const { server, names } = createServerHarness();
+
+  registerTools(
+    server,
+    () => ({}) as AirtableClient,
+    () => reviewer,
+    {},
+    { allowWrites: false },
+  );
+
+  assert.equal(names.includes('template_review_set_checklist_items'), false);
+  assert.equal(names.includes('template_review_get_checklists'), true);
+});
+
+test('approve_version warns about unchecked review checklist items without blocking', async () => {
+  const { server, handlers } = createServerHarness();
+  const client = {
+    requireAssignedVersion: async () => ({
+      versionId: 'rec_version_1',
+      rawFields: {
+        [TEMPLATE_REVIEW_FIELD_MAP.confirmed.versions.reviewChecklist]: '[ ] one\n[x] two\n[ ] three',
+      },
+    }),
+    updateVersionReview: async () => ({ versionId: 'rec_version_1', reviewStatus: '✅Approved' }),
+  } as unknown as AirtableClient;
+
+  registerTools(
+    server,
+    () => client,
+    () => reviewer,
+  );
+
+  const result = await handlers.get('template_review_approve_version')?.({ version_id: 'rec_version_1' });
+  assert.ok(result);
+  const payload = parsePayload(result);
+
+  assert.equal(payload.ok, true, 'unchecked items must not block approval');
+  const warnings = (payload.data as { warnings: string[] }).warnings;
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /2 of 3 items unchecked/);
+});
+
+test('approve_version emits no checklist warning when the checklist is complete or absent', async () => {
+  for (const raw of ['[x] one\n[x] two', undefined]) {
+    const { server, handlers } = createServerHarness();
+    const client = {
+      requireAssignedVersion: async () => ({
+        versionId: 'rec_version_1',
+        rawFields: { [TEMPLATE_REVIEW_FIELD_MAP.confirmed.versions.reviewChecklist]: raw },
+      }),
+      updateVersionReview: async () => ({ versionId: 'rec_version_1' }),
+    } as unknown as AirtableClient;
+
+    registerTools(
+      server,
+      () => client,
+      () => reviewer,
+    );
+
+    const result = await handlers.get('template_review_approve_version')?.({ version_id: 'rec_version_1' });
+    assert.ok(result);
+    assert.deepEqual((parsePayload(result).data as { warnings: string[] }).warnings, []);
+  }
+});
+
+test('whole-field checklist overwrite is no longer reachable through update_version_review', async () => {
+  const { server, handlers } = createServerHarness();
+  const calls: Array<Record<string, unknown>> = [];
+  const client = {
+    requireAssignedVersion: async () => ({ versionId: 'rec_version_1' }),
+    updateVersionReview: async (_versionId: string, input: Record<string, unknown>) => {
+      calls.push(input);
+      return { versionId: 'rec_version_1' };
+    },
+  } as unknown as AirtableClient;
+
+  registerTools(
+    server,
+    () => client,
+    () => reviewer,
+  );
+
+  await handlers.get('template_review_update_version_review')?.({
+    version_id: 'rec_version_1',
+    review_feedback: 'note',
+    // Rejected by the schema rather than silently stringified into the field.
+    review_checklist: { destroy: true },
+    publishing_checklist: ['destroy'],
+  });
+
+  assert.equal(calls.length, 1);
+  assert.equal('review_checklist' in calls[0], false);
+  assert.equal('publishing_checklist' in calls[0], false);
+  assert.equal(TEMPLATE_REVIEW_FIELD_MAP.writeSupport.versionReview.includes('review_checklist' as never), false);
+  assert.equal(TEMPLATE_REVIEW_FIELD_MAP.writeSupport.versionReview.includes('publishing_checklist' as never), false);
 });

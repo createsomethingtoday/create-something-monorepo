@@ -104,7 +104,8 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
           'Pick a queue row and use assignableVersionId as the assignment target.',
           'Call template_review_assign_self with that version_id.',
           'Call template_review_get_review_context with the same version_id.',
-          'Use template_review_set_review_status, template_review_save_draft_feedback, and template_review_request_changes for narrow reviewer-safe writes while the version remains assigned to the current reviewer.',
+          'Use template_review_set_review_status, template_review_save_draft_feedback, template_review_set_checklist_items, and template_review_request_changes for narrow reviewer-safe writes while the version remains assigned to the current reviewer.',
+          'Call template_review_get_checklists before template_review_set_checklist_items to read 1-based item indexes, then pass expected_total and each item expected_text from that same read as stale-read guards.',
           'Use template_review_approve_version, template_review_reject_version, or template_review_complete_publishing only after the version is assigned to the current reviewer.',
           'Call template_review_my_queue to resume work already assigned to the current reviewer.',
           'Call template_review_unassign_self if the reviewer intentionally wants to release the version back to the shared queue.',
@@ -115,6 +116,7 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
           reviewerSafeWrites: [
             'template_review_set_review_status',
             'template_review_save_draft_feedback',
+            'template_review_set_checklist_items',
             'template_review_request_changes',
             'template_review_approve_version',
             'template_review_reject_version',
