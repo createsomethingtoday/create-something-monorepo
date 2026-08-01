@@ -26,6 +26,9 @@ const narrative = read(
   '../../canon/src/lib/components/performance/PerformanceNarrativeStage.svelte'
 );
 const performanceTokens = read('../../canon/src/lib/styles/tokens.css');
+const handoffBoundaryMetadata = read(
+  '../content/assets/brand/agency-handoff-boundary.v20260801/metadata.md'
+);
 
 test('every indexed public marketing route receives a route-owned or shared Performance ending', () => {
   const indexedRoutes = marketingPagePortfolio.filter((entry) => entry.decision === 'index');
@@ -131,6 +134,19 @@ test('the homepage opening uses a property-owned bench-scale boundary study', ()
     ),
     true
   );
+});
+
+test('the homepage boundary motion is a visibly animated closed loop with a still fallback', () => {
+  assert.match(
+    campaign,
+    /<video[\s\S]*?autoplay[\s\S]*?muted[\s\S]*?loop[\s\S]*?playsinline/
+  );
+  assert.match(campaign, /\{#if media\.video && motionAllowed\}/);
+  assert.match(campaign, /poster=\{media\.video\.poster \?\? media\.src\}/);
+  assert.match(handoffBoundaryMetadata, /visibly animated closed loop/);
+  assert.match(handoffBoundaryMetadata, /240-frame closed cycle/);
+  assert.match(handoffBoundaryMetadata, /1280 x 720, 8\.0 s/);
+  assert.match(handoffBoundaryMetadata, /SSIM falls from `0\.919592`[\s\S]*?to `0\.836093`/);
 });
 
 test('the homepage boundary artifact shows evidence without restating the scene introduction', () => {
