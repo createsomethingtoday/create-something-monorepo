@@ -9,7 +9,7 @@
 | MCP                    | `/mcp` with `find_offers`, `verify_offer`, `watch_offers`, and `get_watch`   |
 | REST                   | `/v1/offers/find`, `/v1/offers/verify`, `/v1/watches`, and `/v1/watches/:id` |
 | Readiness              | `/health`                                                                    |
-| Widget resource        | `ui://offer-savings/results-v2.html` with `text/html;profile=mcp-app`        |
+| Widget resource        | `ui://offer-savings/results-v3.html` with `text/html;profile=mcp-app`        |
 | Standalone development | `/widget` when the fixture harness supplies bounded initial data             |
 
 The widget uses the standard MCP Apps JSON-RPC bridge (`ui/initialize`, `ui/notifications/tool-result`, and `tools/call`) first. `window.openai` is an optional ChatGPT enhancement. The main result lane contains LTK-specific coupons, followed by clearly labeled supplemental fallback offers. Generic fulfillment or policy pages appear only as evidence, with no coupon actions. Each result includes a short search-run receipt. Its only write action is the retry-safe creation of a deadline-bounded watch; it cannot purchase, mutate a cart, access private LTK data, or send a notification.

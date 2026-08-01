@@ -21,6 +21,7 @@ import {
   createOfferSavingsMcpServer,
   readOfferSavingsRuntimeConfig
 } from '../src/index.js';
+import { extractOfferSavingsWidgetResult } from '../src/widget.js';
 
 interface Fixture {
   request: OfferRequest;
@@ -35,6 +36,31 @@ const fixture = JSON.parse(
 ) as Fixture;
 
 const { asOf: _fixtureAsOf, ...publicRequest } = fixture.request;
+
+test('widget waits for an authoritative result and unwraps supported host envelopes', () => {
+  const result = {
+    schemaVersion: 'offer_service.v0.1',
+    operation: 'find_offers',
+    counts: { ltk: 8, supplemental: 0, evidence: 0 }
+  };
+
+  assert.equal(extractOfferSavingsWidgetResult(null), null);
+  assert.equal(extractOfferSavingsWidgetResult({ status: 'invoking' }), null);
+  assert.deepEqual(extractOfferSavingsWidgetResult(result), result);
+  assert.deepEqual(extractOfferSavingsWidgetResult({ structuredContent: result }), result);
+  assert.deepEqual(
+    extractOfferSavingsWidgetResult({ result: { structuredContent: result } }),
+    result
+  );
+  assert.deepEqual(
+    extractOfferSavingsWidgetResult({ mcp_tool_result: { structuredContent: result } }),
+    result
+  );
+  assert.deepEqual(
+    extractOfferSavingsWidgetResult({ call_tool_result: { structuredContent: result } }),
+    result
+  );
+});
 
 async function connectClient(
   stateFile: string,
@@ -89,8 +115,8 @@ test('MCP protocol exposes only the bounded offer workflow and widget resource',
   });
 
   const listed = await client.listTools();
-  assert.equal(client.getServerVersion()?.version, '0.2.0');
-  assert.equal(OFFER_WIDGET_URI, 'ui://offer-savings/results-v2.html');
+  assert.equal(client.getServerVersion()?.version, '0.2.1');
+  assert.equal(OFFER_WIDGET_URI, 'ui://offer-savings/results-v3.html');
   assert.deepEqual(
     listed.tools.map((tool) => tool.name),
     ['find_offers', 'verify_offer', 'watch_offers', 'get_watch']
@@ -150,6 +176,7 @@ test('MCP protocol exposes only the bounded offer workflow and widget resource',
   assert.match(widgetHtml, /LTK coupons first/i);
   assert.match(widgetHtml, /Evidence-only sources/i);
   assert.match(widgetHtml, /Search run/i);
+  assert.match(widgetHtml, /Search in progress\. Waiting for a completed offer result\./i);
   assert.deepEqual(widgetContent?._meta?.ui, {
     prefersBorder: true,
     csp: { connectDomains: [], resourceDomains: [] }
