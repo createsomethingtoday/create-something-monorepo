@@ -40,9 +40,21 @@
 
 <section class="adoption-paths" aria-labelledby="adoption-paths-title">
   <header>
-    <span>Choose a starting path</span>
-    <h2 id="adoption-paths-title">Which workflow are you bringing?</h2>
-    <p>The method stays the same. Ownership, accounts, and the handoff change.</p>
+    <div class="adoption-paths__heading">
+      <span>Choose an operating path</span>
+      <h2 id="adoption-paths-title">Start with your team or a client.</h2>
+      <p>Choose who owns the workflow. The method stays consistent.</p>
+    </div>
+    <dl aria-label="What stays consistent and what changes between paths">
+      <div>
+        <dt>Same method</dt>
+        <dd>Map, Build, and Control</dd>
+      </div>
+      <div>
+        <dt>What changes</dt>
+        <dd>Owner, accounts, and handoff</dd>
+      </div>
+    </dl>
   </header>
 
   <div class="adoption-paths__grid">
@@ -53,10 +65,11 @@
           <span>{path.eyebrow}</span>
           <h3>{path.title}</h3>
           <p>{path.detail}</p>
+          <small>This path includes</small>
           <ul>
             {#each path.points as point}<li>{point}</li>{/each}
           </ul>
-          <strong>{path.action} <span aria-hidden="true">→</span></strong>
+          <strong><span>{path.action}</span><span aria-hidden="true">→</span></strong>
         </div>
       </a>
     {/each}
@@ -72,7 +85,7 @@
           var(--space-performance-page-gutter, 1.25rem)
       )
     );
-    margin: clamp(1.5rem, 4vw, 3rem) auto;
+    margin: clamp(1.5rem, 4vw, 3rem) auto var(--space-performance-page-gutter, 1.25rem);
     padding: 0;
     border: 1px solid var(--color-performance-line, #d7d7d2);
     background: var(--color-performance-panel, #fff);
@@ -81,14 +94,23 @@
 
   header {
     display: grid;
-    gap: 0.65rem;
+    grid-template-columns: minmax(0, 1.35fr) minmax(20rem, 0.65fr);
+    align-items: end;
+    gap: clamp(1.5rem, 4vw, 4rem);
     padding: clamp(1.15rem, 2.5vw, 1.75rem);
     border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
   }
 
-  header > span,
+  .adoption-paths__heading {
+    display: grid;
+    gap: 0.65rem;
+  }
+
+  .adoption-paths__heading > span,
   .adoption-paths__copy > span,
-  .adoption-paths__index {
+  .adoption-paths__index,
+  dt,
+  small {
     color: var(--color-performance-muted, #5e6268);
     font-family: var(--font-performance-mono);
     font-size: 0.7rem;
@@ -98,7 +120,9 @@
 
   h2,
   h3,
-  p {
+  p,
+  dl,
+  dd {
     margin: 0;
   }
 
@@ -108,11 +132,33 @@
     line-height: 1;
   }
 
-  header p,
+  .adoption-paths__heading p,
   .adoption-paths__copy p {
     max-width: 46rem;
     color: var(--color-performance-muted, #5e6268);
     line-height: 1.5;
+  }
+
+  dl {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+  }
+
+  dl > div {
+    display: grid;
+    gap: 0.45rem;
+    padding: 0.9rem;
+  }
+
+  dl > div + div {
+    border-left: 1px solid var(--color-performance-line, #d7d7d2);
+  }
+
+  dd {
+    font-size: 0.92rem;
+    font-weight: var(--font-performance-medium, 500);
+    line-height: 1.3;
   }
 
   .adoption-paths__grid {
@@ -125,7 +171,7 @@
     grid-template-columns: auto minmax(0, 1fr);
     gap: 1rem;
     min-width: 0;
-    min-height: 17.5rem;
+    min-height: 20rem;
     padding: clamp(1.15rem, 2.5vw, 1.5rem);
     color: inherit;
     text-decoration: none;
@@ -133,6 +179,10 @@
 
   .adoption-paths__grid > a + a {
     border-left: 1px solid var(--color-performance-line, #d7d7d2);
+  }
+
+  .adoption-paths__grid > a[data-path='team'] {
+    background: var(--color-performance-paper, #f3f3f0);
   }
 
   .adoption-paths__grid > a:hover,
@@ -150,6 +200,11 @@
     align-content: start;
     gap: 0.85rem;
     min-width: 0;
+  }
+
+  small {
+    display: block;
+    margin-top: 0.15rem;
   }
 
   h3 {
@@ -173,12 +228,28 @@
   }
 
   strong {
-    align-self: end;
-    min-height: var(--height-performance-control-min, 2.75rem);
     display: inline-flex;
+    align-self: end;
+    justify-content: space-between;
+    gap: 1rem;
+    width: fit-content;
+    min-height: var(--height-performance-control-min, 2.75rem);
     align-items: center;
     margin-top: auto;
+    padding: 0.7rem 0.85rem;
+    background: var(--color-performance-ink, #090909);
+    color: var(--color-performance-paper, #f3f3f0);
     font-size: 0.9rem;
+  }
+
+  @media (max-width: 64rem) {
+    header {
+      grid-template-columns: 1fr;
+    }
+
+    dl {
+      max-width: 36rem;
+    }
   }
 
   @media (max-width: 47.99rem) {
@@ -198,6 +269,10 @@
 
     .adoption-paths__grid > a {
       min-height: 0;
+    }
+
+    strong {
+      width: 100%;
     }
 
     .adoption-paths__grid > a + a {
