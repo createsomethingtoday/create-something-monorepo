@@ -14,6 +14,7 @@
 		width?: number;
 		height?: number;
 		objectPosition?: string;
+		colorMode?: 'monochrome' | 'natural';
 		video?: PerformanceCampaignVideo;
 	}
 
@@ -67,7 +68,10 @@
 </script>
 
 <section class="performance-campaign-opening" data-mode={mode} data-density={density} aria-label={eyebrow}>
-	<figure class="performance-campaign-opening__media">
+	<figure
+		class="performance-campaign-opening__media"
+		data-color-mode={media.colorMode ?? 'monochrome'}
+	>
 		<picture>
 			{#if media.mobileSrc}
 				<source media="(max-width: 47.99rem)" srcset={media.mobileSrc} />
@@ -170,7 +174,16 @@
 	.performance-campaign-opening__media img,
 	.performance-campaign-opening__media video {
 		object-fit: cover;
+	}
+
+	.performance-campaign-opening__media[data-color-mode='monochrome'] img,
+	.performance-campaign-opening__media[data-color-mode='monochrome'] video {
 		filter: grayscale(1) contrast(1.08);
+	}
+
+	.performance-campaign-opening__media[data-color-mode='natural'] img,
+	.performance-campaign-opening__media[data-color-mode='natural'] video {
+		filter: contrast(1.08);
 	}
 
 	.performance-campaign-opening__media::after {
