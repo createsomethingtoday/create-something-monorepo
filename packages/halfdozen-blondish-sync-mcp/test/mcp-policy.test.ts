@@ -15,6 +15,12 @@ function registeredToolNames(server: ReturnType<typeof createTicketSyncMcpServer
   return Object.keys((server as unknown as { _registeredTools: Record<string, unknown> })._registeredTools);
 }
 
+function registeredToolDescription(server: ReturnType<typeof createTicketSyncMcpServer>, toolName: string): string {
+  return (server as unknown as {
+    _registeredTools: Record<string, { description?: string }>;
+  })._registeredTools[toolName]?.description ?? '';
+}
+
 test('read-only OAuth sessions expose audit and planning tools but no writes', () => {
   const tools = registeredToolNames(createTicketSyncMcpServer(env, { allowWrites: false }));
 
@@ -38,4 +44,11 @@ test('legacy and write-scoped sessions preserve the complete eight-tool contract
     'cracked_sync_hd_status_to_source',
     'cracked_sync_full',
   ]);
+});
+
+test('reverse-status tool tells agents to reuse identifiers from audit rows', () => {
+  const description = registeredToolDescription(createTicketSyncMcpServer(env), 'cracked_sync_hd_status_to_source');
+
+  assert.match(description, /target_page_id, source_page_id, or ext_page_id/);
+  assert.match(description, /reverse_status_drifts/);
 });

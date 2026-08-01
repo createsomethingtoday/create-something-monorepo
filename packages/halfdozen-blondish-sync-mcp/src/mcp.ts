@@ -19,6 +19,11 @@ const optionalPageIdsSchema = z.object({
   page_id: z.string().optional().describe('Single Notion page ID or source Page ID value to reconcile.'),
 });
 
+const optionalReverseStatusIdsSchema = z.object({
+  page_ids: z.array(z.string()).min(1).max(100).optional().describe('Optional target_page_id, source_page_id, or ext_page_id values from the audit reverse_status_drifts rows.'),
+  page_id: z.string().optional().describe('One target_page_id, source_page_id, or ext_page_id value from an audit reverse_status_drifts row.'),
+});
+
 export function createBlondishSyncMcpServer(
   env: Env,
   options: { allowWrites?: boolean } = {},
@@ -86,12 +91,12 @@ export function createTicketSyncMcpServer(
 
     server.tool(
       tools.hdStatusToSource,
-      `Directly write mapped Half Dozen Status values back to ${runtime.clientDisplayName}. Only mapped statuses are written.`,
-      optionalPageIdsSchema.shape,
+      `Directly write mapped Half Dozen Status values back to ${runtime.clientDisplayName}. Only mapped statuses are written. For a scoped repair, pass target_page_id, source_page_id, or ext_page_id from an audit reverse_status_drifts row as page_id.`,
+      optionalReverseStatusIdsSchema.shape,
       async (params) => tracedJsonToolResponse(
         env,
         tools.hdStatusToSource,
-        () => syncHalfDozenStatusToSource(env, { targetPageIds: normalizePageIds(params) }),
+        () => syncHalfDozenStatusToSource(env, { targetPageIds: normalizePageIds(params, optionalReverseStatusIdsSchema) }),
       ),
     );
 
@@ -191,8 +196,11 @@ function buildContract(clientDisplayName: string) {
   };
 }
 
-function normalizePageIds(params: unknown): string[] | undefined {
-  const parsed = optionalPageIdsSchema.parse(params);
+function normalizePageIds(
+  params: unknown,
+  schema: typeof optionalPageIdsSchema | typeof optionalReverseStatusIdsSchema = optionalPageIdsSchema,
+): string[] | undefined {
+  const parsed = schema.parse(params);
   if (parsed.page_ids?.length) return parsed.page_ids;
   if (parsed.page_id?.trim()) return [parsed.page_id.trim()];
   return undefined;
