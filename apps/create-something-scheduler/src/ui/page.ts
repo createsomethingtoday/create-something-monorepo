@@ -4,6 +4,12 @@ import {
   performanceDocumentFontLinks
 } from '@create-something/canon/performance/scheduler-document';
 
+export function renderBookingManagementActions(status: string): string {
+  return status === 'cancelled'
+    ? ''
+    : '<div class="actions"><button id="reschedule" type="button">Choose another time</button><button id="cancel" class="danger" type="button">Cancel meeting</button></div><div id="confirm-action"></div>';
+}
+
 export function schedulerPage(input: { nonce: string; turnstileSiteKey?: string }): string {
   const configuration = JSON.stringify({
     turnstileSiteKey: input.turnstileSiteKey ?? null
@@ -146,6 +152,7 @@ export function schedulerPage(input: { nonce: string; turnstileSiteKey?: string 
 </main>
 <script nonce="${input.nonce}">
 (() => {
+  const renderBookingManagementActions=${renderBookingManagementActions.toString()};
   const config = ${configuration};
   const state = { slots: [], selected: null, selectedDay: null, durationMinutes: 30, browserProof: null, booking: null, actionToken: null, mode: 'book', context: null, schedulerSessionId: crypto.randomUUID(), formStarted: false };
   const status = document.querySelector('#status');
@@ -337,12 +344,16 @@ export function schedulerPage(input: { nonce: string; turnstileSiteKey?: string 
   function showBooking(result) {
     state.durationMinutes=slotDuration(result.booking.slot); renderDuration();
     updateSteps(3); schedulerView.hidden=true; confirmation.hidden=false;
-    confirmation.innerHTML='<div class="eyebrow">'+escapeHtml(result.status)+'</div><h2>Your meeting is '+escapeHtml(result.status)+'.</h2><p>'+escapeHtml(formatDay(result.booking.slot.start))+' at '+escapeHtml(formatTime(result.booking.slot.start))+' · '+escapeHtml(state.durationMinutes)+' minutes · '+timezone.replaceAll('_',' ')+'</p><p><a class="button" href="'+escapeAttribute(result.booking.provider.meetUrl)+'">Open Google Meet</a></p><div class="receipt">Booking '+escapeHtml(result.booking.bookingId)+'<br>Receipt '+escapeHtml(result.receiptId)+'</div><div class="actions"><button id="reschedule" type="button">Choose another time</button><button id="cancel" class="danger" type="button">Cancel meeting</button></div><div id="confirm-action"></div>';
-    confirmation.querySelector('#reschedule').addEventListener('click',()=>{ state.mode='reschedule'; renderDuration(); confirmation.hidden=true; schedulerView.hidden=false; form.hidden=true; state.selected=null; loadAvailability(); });
-    confirmation.querySelector('#cancel').addEventListener('click',()=>{
-      confirmation.querySelector('#confirm-action').innerHTML='<p>Cancel this meeting for everyone?</p><button id="confirm-cancel" class="danger" type="button">Confirm cancellation</button>';
-      confirmation.querySelector('#confirm-cancel').addEventListener('click',cancelBooking);
-    });
+    const managementActions=renderBookingManagementActions(result.booking.status);
+    const canManageBooking=Boolean(managementActions);
+    confirmation.innerHTML='<div class="eyebrow">'+escapeHtml(result.status)+'</div><h2>Your meeting is '+escapeHtml(result.status)+'.</h2><p>'+escapeHtml(formatDay(result.booking.slot.start))+' at '+escapeHtml(formatTime(result.booking.slot.start))+' · '+escapeHtml(state.durationMinutes)+' minutes · '+timezone.replaceAll('_',' ')+'</p><p><a class="button" href="'+escapeAttribute(result.booking.provider.meetUrl)+'">Open Google Meet</a></p><div class="receipt">Booking '+escapeHtml(result.booking.bookingId)+'<br>Receipt '+escapeHtml(result.receiptId)+'</div>'+managementActions;
+    if (canManageBooking) {
+      confirmation.querySelector('#reschedule').addEventListener('click',()=>{ state.mode='reschedule'; renderDuration(); confirmation.hidden=true; schedulerView.hidden=false; form.hidden=true; state.selected=null; loadAvailability(); });
+      confirmation.querySelector('#cancel').addEventListener('click',()=>{
+        confirmation.querySelector('#confirm-action').innerHTML='<p>Cancel this meeting for everyone?</p><button id="confirm-cancel" class="danger" type="button">Confirm cancellation</button>';
+        confirmation.querySelector('#confirm-cancel').addEventListener('click',cancelBooking);
+      });
+    }
     queueParentHeight();
   }
 

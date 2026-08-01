@@ -3,7 +3,7 @@ import {
   performanceDocumentCss
 } from '@create-something/canon/performance/scheduler-document';
 import { describe, expect, it } from 'vitest';
-import { schedulerPage } from './page.js';
+import { renderBookingManagementActions, schedulerPage } from './page.js';
 
 describe('scheduler public page', () => {
   it('is an API-only client with booking, reschedule, cancel, error, and accessibility states', () => {
@@ -81,5 +81,19 @@ describe('scheduler public page', () => {
     expect(html).not.toContain('"turnstileSiteKey":"site-key"><script>');
     expect(html).toContain('&quot;&gt;&lt;script&gt;unsafe()&lt;/script&gt;');
     expect(html).toContain('\\u003cscript>unsafe()\\u003c/script>');
+  });
+
+  it('does not offer booking management actions after cancellation', () => {
+    const cancelledActions = renderBookingManagementActions('cancelled');
+    const committedActions = renderBookingManagementActions('committed');
+    const html = schedulerPage({ nonce: 'controlled-nonce' });
+
+    expect(cancelledActions).not.toContain('id="reschedule"');
+    expect(cancelledActions).not.toContain('id="cancel"');
+    expect(committedActions).toContain('id="reschedule"');
+    expect(committedActions).toContain('id="cancel"');
+    expect(html).toContain(
+      `const renderBookingManagementActions=${renderBookingManagementActions.toString()}`
+    );
   });
 });
