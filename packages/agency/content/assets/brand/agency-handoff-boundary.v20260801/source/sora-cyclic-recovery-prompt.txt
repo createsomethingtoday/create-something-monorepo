@@ -1,0 +1,11 @@
+Use case: second half of the CREATE SOMETHING .agency homepage hero loop
+Primary request: continue the supplied final frame as the natural recovery phase of the same black-and-white hydraulic-flume study
+Scene/background: the identical dark working laboratory with near-black copy space on the left and the apparatus on the right
+Subject: the same clear glass channel, fixed machined steel gate, gauge rod, datum marks, elevated waterline, and downstream current
+Action: water keeps traveling downstream in one direction. The elevated pulse passes completely beneath the fixed gate, the upstream waterline steadily lowers because the water drains downstream, and the channel returns to a calm low-flow state. The water must never reverse direction.
+Camera: completely locked at bench height; identical framing, no zoom, pan, orbit, or reframe
+Lighting/mood: identical high-contrast monochrome documentary laboratory light
+Timing/beats: 0-2 seconds continue the elevated downstream flow; 2-6 seconds the remaining pulse drains through the gate and the upstream waterline lowers; 6-8 seconds calm low downstream flow compatible with the beginning of the companion shot
+Audio: none
+Constraints: begin from the supplied frame; preserve the apparatus and composition exactly; gate, gauge, glass, datum, fixture, lighting, and camera remain fixed; end on calm low flow; no text, logos, people, hands, color, new objects, moving metal, morphing, flicker, jitter, or cut
+Avoid: reverse water motion; ping-pong motion; water flowing upstream; abrupt reset; camera movement; geometry changes; obscuring splash

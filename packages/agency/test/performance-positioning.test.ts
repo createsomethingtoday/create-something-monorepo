@@ -93,11 +93,11 @@ test('the homepage opening uses a property-owned bench-scale boundary study', ()
   assert.match(home, /alt: 'A bench-scale hydraulic gate and gauge/);
   assert.match(
     home,
-    /mp4: '\/images\/performance-lab\/agency-handoff-boundary-motion-loop\.mp4'/
+    /mp4: '\/images\/performance-lab\/agency-handoff-boundary-motion-loop-v2\.mp4'/
   );
   assert.match(
     home,
-    /webm: '\/images\/performance-lab\/agency-handoff-boundary-motion-loop\.webm'/
+    /webm: '\/images\/performance-lab\/agency-handoff-boundary-motion-loop-v2\.webm'/
   );
   assert.match(home, /media=\{homepageHandoffBoundaryMedia\}/);
   assert.doesNotMatch(home, /controlledFlowMedia/);
@@ -119,7 +119,7 @@ test('the homepage opening uses a property-owned bench-scale boundary study', ()
   assert.equal(
     existsSync(
       new URL(
-        '../static/images/performance-lab/agency-handoff-boundary-motion-loop.mp4',
+        '../static/images/performance-lab/agency-handoff-boundary-motion-loop-v2.mp4',
         import.meta.url
       )
     ),
@@ -128,7 +128,7 @@ test('the homepage opening uses a property-owned bench-scale boundary study', ()
   assert.equal(
     existsSync(
       new URL(
-        '../static/images/performance-lab/agency-handoff-boundary-motion-loop.webm',
+        '../static/images/performance-lab/agency-handoff-boundary-motion-loop-v2.webm',
         import.meta.url
       )
     ),
@@ -136,17 +136,27 @@ test('the homepage opening uses a property-owned bench-scale boundary study', ()
   );
 });
 
-test('the homepage boundary motion is a visibly animated closed loop with a still fallback', () => {
+test('the homepage boundary motion is a natural cyclic loop with a still fallback', () => {
   assert.match(
     campaign,
     /<video[\s\S]*?autoplay[\s\S]*?muted[\s\S]*?loop[\s\S]*?playsinline/
   );
   assert.match(campaign, /\{#if media\.video && motionAllowed\}/);
   assert.match(campaign, /poster=\{media\.video\.poster \?\? media\.src\}/);
-  assert.match(handoffBoundaryMetadata, /visibly animated closed loop/);
-  assert.match(handoffBoundaryMetadata, /240-frame closed cycle/);
-  assert.match(handoffBoundaryMetadata, /1280 x 720, 8\.0 s/);
-  assert.match(handoffBoundaryMetadata, /SSIM falls from `0\.919592`[\s\S]*?to `0\.836093`/);
+  assert.match(handoffBoundaryMetadata, /mathematically periodic ripple field/);
+  assert.match(handoffBoundaryMetadata, /one-directional water motion/);
+  assert.match(handoffBoundaryMetadata, /deterministic 300-frame closed cycle/);
+  assert.match(handoffBoundaryMetadata, /1280 x 720, 10\.0 s/);
+  assert.match(handoffBoundaryMetadata, /Water-region SSIM[\s\S]*?`0\.585141`/);
+  assert.equal(
+    existsSync(
+      new URL(
+        '../content/assets/brand/agency-handoff-boundary.v20260801/source/sora-steady-loop-prompt.txt',
+        import.meta.url
+      )
+    ),
+    true
+  );
 });
 
 test('the homepage boundary artifact shows evidence without restating the scene introduction', () => {
