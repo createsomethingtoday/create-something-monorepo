@@ -1,8 +1,9 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import {
-  offerRequestSchema,
+  findOffersInputSchema,
   verifyOfferInputSchema,
   watchOffersInputSchema,
+  type FindOffersServiceResult,
   type OfferService
 } from '@create-something/offer-resolution';
 import { z } from 'zod';
@@ -46,11 +47,13 @@ function asStructuredContent(value: unknown): Record<string, unknown> {
   return JSON.parse(JSON.stringify(value)) as Record<string, unknown>;
 }
 
-function resultText(operation: string, count?: number): string {
+function resultText(operation: string, result?: FindOffersServiceResult): string {
   if (operation === 'find_offers') {
-    return count === 1
-      ? 'Found 1 public offer candidate.'
-      : `Found ${count ?? 0} public offer candidates.`;
+    const ltk = result?.counts.ltk ?? 0;
+    const supplemental = result?.counts.supplemental ?? 0;
+    const evidence = result?.counts.evidence ?? 0;
+    const run = result?.receiptHash.slice('sha256:'.length, 'sha256:'.length + 10) ?? 'unknown';
+    return `${ltk} LTK coupon candidate${ltk === 1 ? '' : 's'}; ${supplemental} supplemental fallback offer${supplemental === 1 ? '' : 's'}; ${evidence} evidence-only source${evidence === 1 ? '' : 's'}. Search run ${run}.`;
   }
   if (operation === 'verify_offer') return 'Re-evaluated the supplied public offer evidence.';
   if (operation === 'watch_offers') return 'The offer watch is active.';
@@ -131,7 +134,7 @@ export function createOfferSavingsMcpServer(
       title: 'Find public offers',
       description:
         'Search the configured public discovery lanes with LTK first, then apply the authoritative deterministic reliability policy. Use for a bounded merchant or health-and-beauty request; this does not purchase or mutate a cart.',
-      inputSchema: offerRequestSchema,
+      inputSchema: findOffersInputSchema,
       outputSchema: serviceResultOutputSchema,
       annotations: {
         readOnlyHint: true,
@@ -144,7 +147,7 @@ export function createOfferSavingsMcpServer(
     async (request) => {
       const result = await options.service.findOffers(request);
       return {
-        content: [{ type: 'text', text: resultText(result.operation, result.offers.length) }],
+        content: [{ type: 'text', text: resultText(result.operation, result) }],
         structuredContent: asStructuredContent(result),
         _meta: { operation: result.operation, schemaVersion: result.schemaVersion }
       };

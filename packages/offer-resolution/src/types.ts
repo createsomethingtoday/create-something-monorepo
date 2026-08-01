@@ -29,6 +29,8 @@ export interface OfferRequest {
   channels: OfferChannel[];
 }
 
+export type OfferRequestInput = Omit<OfferRequest, 'asOf'>;
+
 export interface OfferObservation {
   id: string;
   merchant: string;

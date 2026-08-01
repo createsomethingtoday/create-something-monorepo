@@ -180,9 +180,14 @@ export function collectCaps(
     (discount.kind === 'percent' || discount.kind === 'amount') &&
     discount.value !== undefined &&
     discount.value > 0;
+  const hasExplicitShippingLanguage =
+    /\b(?:free|complimentary|discounted)\s+(?:standard\s+|expedited\s+)?(?:shipping|delivery)\b|\b(?:shipping|delivery)\s+(?:discount|offer)\b/i.test(
+      observation.title
+    );
   const hasShippingBenefit =
     discount.kind === 'shipping' &&
-    (observation.offer.minimumSubtotal !== undefined || Boolean(observation.offer.code));
+    (Boolean(observation.offer.code) ||
+      (observation.offer.minimumSubtotal !== undefined && hasExplicitShippingLanguage));
   if (!observation.offer.code && !hasNumericDiscount && !hasShippingBenefit) {
     caps.push({
       code: 'OFFER_VALUE_UNKNOWN',

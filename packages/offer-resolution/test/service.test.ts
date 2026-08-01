@@ -25,7 +25,8 @@ test('find_offers returns authoritative receipts as user-ready offer cards', asy
   const service = createOfferService({
     discovery: {
       discover: async () => fixture.observations
-    }
+    },
+    clock: () => new Date(fixture.request.asOf)
   });
 
   const result = await service.findOffers(fixture.request);
@@ -33,23 +34,74 @@ test('find_offers returns authoritative receipts as user-ready offer cards', asy
 
   assert.equal(result.schemaVersion, 'offer_service.v0.1');
   assert.equal(result.operation, 'find_offers');
+  assert.equal(result.observedAt, fixture.request.asOf);
+  assert.match(result.receiptHash, /^sha256:[a-f0-9]{64}$/);
   assert.deepEqual(result.resolution, authoritative);
-  assert.equal(result.offers[0]?.observationId, 'fixture-official-20');
-  assert.equal(result.offers[0]?.confidence.label, 'Verified');
-  assert.equal(result.offers[0]?.confidence.score, 100);
-  assert.equal(result.offers[0]?.freshness.score, 100);
-  assert.equal(result.offers[0]?.projectedSavings?.amount, 40);
-  assert.equal(result.offers[0]?.projectedSavings?.currency, 'USD');
-  assert.equal(result.offers[0]?.actions.canCopyCode, true);
-  assert.equal(result.offers[0]?.actions.canWatch, true);
+  assert.equal(result.offers[0]?.observationId, 'fixture-ltk-15');
+  assert.equal(result.ltkOffers[0]?.observationId, 'fixture-ltk-15');
+  assert.equal(result.supplementalOffers[0]?.observationId, 'fixture-official-20');
+  assert.equal(result.evidence.length, 0);
+
+  const official = result.supplementalOffers[0];
+  assert.equal(official?.confidence.label, 'Verified');
+  assert.equal(official?.confidence.score, 100);
+  assert.equal(official?.freshness.score, 100);
+  assert.equal(official?.projectedSavings?.amount, 40);
+  assert.equal(official?.projectedSavings?.currency, 'USD');
+  assert.equal(official?.actions.canCopyCode, true);
+  assert.equal(official?.actions.canWatch, true);
 
   const creatorOffer = result.offers.find((offer) => offer.observationId === 'fixture-ltk-15');
   assert.equal(creatorOffer?.confidence.label, 'Worth trying');
   assert.match(creatorOffer?.disclosure ?? '', /retailer before relying/i);
 
-  const expiredOffer = result.offers.find((offer) => offer.observationId === 'fixture-expired');
-  assert.equal(expiredOffer?.confidence.label, 'Do not use');
-  assert.equal(expiredOffer?.actions.canCopyCode, false);
+  assert.equal(
+    result.offers.some((offer) => offer.observationId === 'fixture-expired'),
+    false
+  );
+  assert.equal(
+    result.resolution.decisions.find((decision) => decision.observationId === 'fixture-expired')
+      ?.status,
+    'rejected'
+  );
+});
+
+test('keeps generic fulfillment pages out of LTK coupon and fallback offer results', async () => {
+  const official = fixture.observations.find(
+    (observation) => observation.id === 'fixture-official-20'
+  );
+  const ltk = fixture.observations.find((observation) => observation.id === 'fixture-ltk-15');
+  assert.ok(official);
+  assert.ok(ltk);
+  const fulfillmentPage: OfferObservation = {
+    ...official,
+    id: 'abercrombie-pickup-information',
+    title: 'Pickup & Delivery: how pickup works',
+    source: {
+      ...official.source,
+      url: 'https://www.abercrombie.com/shop/us/help/shipping-handling'
+    },
+    offer: {
+      discount: { kind: 'shipping' },
+      status: 'active',
+      minimumSubtotal: 35
+    },
+    evidence: { terms: 'explicit', code: 'not_applicable', corroboratingUrls: [] }
+  };
+  const service = createOfferService({
+    discovery: { discover: async () => [official, ltk, fulfillmentPage] },
+    clock: () => new Date(fixture.request.asOf)
+  });
+
+  const result = await service.findOffers(fixture.request);
+
+  assert.deepEqual(
+    result.offers.map((offer) => offer.observationId),
+    ['fixture-ltk-15', 'fixture-official-20']
+  );
+  assert.equal(result.evidence[0]?.observationId, 'abercrombie-pickup-information');
+  assert.equal(result.evidence[0]?.confidence.label, 'Evidence only');
+  assert.deepEqual(result.evidence[0]?.actions, { canCopyCode: false, canWatch: false });
 });
 
 test('verify_offer never promotes uncorroborated creator evidence to verified', async () => {

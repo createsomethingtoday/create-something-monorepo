@@ -12,7 +12,9 @@
 | Widget resource        | `ui://offer-savings/results-v1.html` with `text/html;profile=mcp-app`        |
 | Standalone development | `/widget` when the fixture harness supplies bounded initial data             |
 
-The widget uses the standard MCP Apps JSON-RPC bridge (`ui/initialize`, `ui/notifications/tool-result`, and `tools/call`) first. `window.openai` is an optional ChatGPT enhancement. Its only write action is the retry-safe creation of a deadline-bounded watch; it cannot purchase, mutate a cart, access private LTK data, or send a notification.
+The widget uses the standard MCP Apps JSON-RPC bridge (`ui/initialize`, `ui/notifications/tool-result`, and `tools/call`) first. `window.openai` is an optional ChatGPT enhancement. The main result lane contains LTK-specific coupons, followed by clearly labeled supplemental fallback offers. Generic fulfillment or policy pages appear only as evidence, with no coupon actions. Each result includes a short search-run receipt. Its only write action is the retry-safe creation of a deadline-bounded watch; it cannot purchase, mutate a cart, access private LTK data, or send a notification.
+
+ChatGPT does not supply observation timestamps. The MCP input schemas omit `asOf`; the service records it at the start of each find, verify, or watch run. This prevents model-formatted timestamp retries from creating duplicate searches.
 
 ## Deterministic local loop
 

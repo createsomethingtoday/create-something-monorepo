@@ -81,7 +81,10 @@ test('resolver tool returns the deterministic result as final JSON', async () =>
 test('agent service facade returns the same authoritative service contract', async () => {
   const observations: OfferObservation[] = [];
   const discovery = { discover: async () => observations };
-  const expected = await createOfferService({ discovery }).findOffers(request);
+  const expected = await createOfferService({
+    discovery,
+    clock: () => new Date(request.asOf)
+  }).findOffers(request);
 
   const actual = await runOfferFindAgentService(request, { discovery });
 

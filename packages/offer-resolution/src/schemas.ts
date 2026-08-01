@@ -17,6 +17,8 @@ export const offerRequestSchema = z
   })
   .strict();
 
+export const findOffersInputSchema = offerRequestSchema.omit({ asOf: true });
+
 export const offerObservationSchema = z
   .object({
     id: z.string().min(1),
@@ -92,14 +94,14 @@ export const offerEvidenceInputSchema = z
 
 export const verifyOfferInputSchema = z
   .object({
-    request: offerRequestSchema,
+    request: findOffersInputSchema,
     observation: offerObservationSchema
   })
   .strict();
 
 export const watchOffersInputSchema = z
   .object({
-    request: offerRequestSchema,
+    request: findOffersInputSchema,
     until: z.string().datetime(),
     idempotencyKey: z.string().min(1).max(256)
   })

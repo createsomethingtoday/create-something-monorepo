@@ -4,6 +4,7 @@ import type {
   OfferDecision,
   OfferObservation,
   OfferRequest,
+  OfferRequestInput,
   OfferResolutionResult
 } from './types.js';
 
@@ -11,6 +12,7 @@ export type OfferConfidenceLabel =
   | 'Verified'
   | 'High confidence'
   | 'Worth trying'
+  | 'Evidence only'
   | 'Uncertain'
   | 'Do not use';
 
@@ -51,14 +53,24 @@ export interface UserOffer {
 export interface FindOffersServiceResult {
   schemaVersion: 'offer_service.v0.1';
   operation: 'find_offers';
+  observedAt: string;
+  receiptHash: string;
   resolution: OfferResolutionResult;
   offers: UserOffer[];
+  ltkOffers: UserOffer[];
+  supplementalOffers: UserOffer[];
+  evidence: UserOffer[];
+  counts: {
+    ltk: number;
+    supplemental: number;
+    evidence: number;
+  };
 }
 
 export type OfferVerificationStatus = 'verified' | 'needs_checkout' | 'unverified' | 'rejected';
 
 export interface VerifyOfferInput {
-  request: OfferRequest;
+  request: OfferRequestInput;
   observation: OfferObservation;
 }
 
@@ -95,7 +107,7 @@ export interface OfferWatch {
 }
 
 export interface WatchOffersInput {
-  request: OfferRequest;
+  request: OfferRequestInput;
   until: string;
   idempotencyKey: string;
 }
@@ -128,7 +140,7 @@ export interface RunDueWatchesResult {
 }
 
 export interface OfferService {
-  findOffers(request: OfferRequest): Promise<FindOffersServiceResult>;
+  findOffers(request: OfferRequestInput): Promise<FindOffersServiceResult>;
   verifyOffer(input: VerifyOfferInput): Promise<VerifyOfferServiceResult>;
   watchOffers(input: WatchOffersInput): Promise<WatchOffersServiceResult>;
   getWatch(id: string): Promise<OfferWatch | undefined>;
@@ -141,7 +153,12 @@ export interface CreateOfferServiceOptions {
   clock?: () => Date;
 }
 
-function confidenceLabel(decision: OfferDecision): OfferConfidenceLabel {
+function isEvidenceOnly(decision: OfferDecision): boolean {
+  return decision.reliability.caps.some((cap) => cap.code === 'OFFER_VALUE_UNKNOWN');
+}
+
+function confidenceLabel(decision: OfferDecision, evidenceOnly = false): OfferConfidenceLabel {
+  if (evidenceOnly) return 'Evidence only';
   if (decision.status === 'rejected') return 'Do not use';
   if (decision.status === 'recommend') return 'Verified';
   if (decision.reliability.score >= 70) return 'High confidence';
@@ -159,8 +176,12 @@ function disclosure(decision: OfferDecision): string {
   return 'Review the source and retailer terms before relying on this offer.';
 }
 
-function presentOffer(decision: OfferDecision, request: OfferRequest): UserOffer {
-  const usable = decision.status !== 'rejected';
+function presentOffer(
+  decision: OfferDecision,
+  request: OfferRequest,
+  evidenceOnly = false
+): UserOffer {
+  const usable = decision.status !== 'rejected' && !evidenceOnly;
   return {
     observationId: decision.observationId,
     merchant: decision.merchant,
@@ -168,7 +189,7 @@ function presentOffer(decision: OfferDecision, request: OfferRequest): UserOffer
     code: decision.offerCode,
     status: decision.status,
     confidence: {
-      label: confidenceLabel(decision),
+      label: confidenceLabel(decision, evidenceOnly),
       score: decision.reliability.score
     },
     freshness: {
@@ -206,6 +227,16 @@ export function createOfferService(options: CreateOfferServiceOptions): OfferSer
   const clock = options.clock ?? (() => new Date());
   let watchRunQueue = Promise.resolve();
 
+  function materializeRequest(request: OfferRequestInput): OfferRequest {
+    const { asOf: _callerObservationTime, ...publicRequest } = request as OfferRequestInput & {
+      asOf?: string;
+    };
+    return {
+      ...publicRequest,
+      asOf: clock().toISOString()
+    };
+  }
+
   async function executeDueWatches(
     service: OfferService,
     input: RunDueWatchesInput
@@ -237,7 +268,8 @@ export function createOfferService(options: CreateOfferServiceOptions): OfferSer
       summary.attempted += 1;
       const requestedAt = clock().toISOString();
       try {
-        const latestResult = await service.findOffers(watch.request);
+        const { asOf: _previousObservationTime, ...nextRequest } = watch.request;
+        const latestResult = await service.findOffers(nextRequest);
         const completedAt = clock().toISOString();
         const updated: OfferWatch = {
           ...watch,
@@ -286,24 +318,48 @@ export function createOfferService(options: CreateOfferServiceOptions): OfferSer
 
   const service: OfferService = {
     async findOffers(request) {
-      const observations = await options.discovery.discover(request);
-      const resolution = resolveOffers(request, observations);
+      const observedRequest = materializeRequest(request);
+      const observations = await options.discovery.discover(observedRequest);
+      const resolution = resolveOffers(observedRequest, observations);
+      const visibleDecisions = resolution.decisions.filter(
+        (decision) => decision.status !== 'rejected'
+      );
+      const offerDecisions = visibleDecisions.filter((decision) => !isEvidenceOnly(decision));
+      const evidence = resolution.decisions
+        .filter((decision) => decision.status !== 'rejected' && isEvidenceOnly(decision))
+        .map((decision) => presentOffer(decision, resolution.request, true));
+      const ltkOffers = offerDecisions
+        .filter((decision) => decision.discoveryLane === 'ltk')
+        .map((decision) => presentOffer(decision, resolution.request));
+      const supplementalOffers = offerDecisions
+        .filter((decision) => decision.discoveryLane === 'supplemental')
+        .map((decision) => presentOffer(decision, resolution.request));
       return {
         schemaVersion: 'offer_service.v0.1',
         operation: 'find_offers',
+        observedAt: resolution.request.asOf,
+        receiptHash: hashReceipt({ operation: 'find_offers', resolution }),
         resolution,
-        offers: resolution.decisions.map((decision) => presentOffer(decision, resolution.request))
+        offers: [...ltkOffers, ...supplementalOffers],
+        ltkOffers,
+        supplementalOffers,
+        evidence,
+        counts: {
+          ltk: ltkOffers.length,
+          supplemental: supplementalOffers.length,
+          evidence: evidence.length
+        }
       };
     },
     async verifyOffer({ request, observation }) {
-      const resolution = resolveOffers(request, [observation]);
+      const resolution = resolveOffers(materializeRequest(request), [observation]);
       const [decision] = resolution.decisions;
       if (!decision) throw new Error('The supplied offer did not produce a decision.');
       return {
         schemaVersion: 'offer_service.v0.1',
         operation: 'verify_offer',
         verification: verificationStatus(decision),
-        offer: presentOffer(decision, resolution.request),
+        offer: presentOffer(decision, resolution.request, isEvidenceOnly(decision)),
         resolution
       };
     },
@@ -315,10 +371,15 @@ export function createOfferService(options: CreateOfferServiceOptions): OfferSer
       if (!Number.isFinite(until.getTime())) throw new Error('until must be a valid date');
       const existing = await options.watches.findByIdempotencyKey(idempotencyKey);
       if (existing) {
-        const normalizedRequest = resolveOffers(input.request, []).request;
-        const expected = canonicalStringify({ request: existing.request, until: existing.until });
+        const normalizedRequest = resolveOffers(
+          { ...input.request, asOf: existing.request.asOf },
+          []
+        ).request;
+        const { asOf: _existingObservationTime, ...expectedRequest } = existing.request;
+        const { asOf: _receivedObservationTime, ...receivedRequest } = normalizedRequest;
+        const expected = canonicalStringify({ request: expectedRequest, until: existing.until });
         const received = canonicalStringify({
-          request: normalizedRequest,
+          request: receivedRequest,
           until: until.toISOString()
         });
         if (expected !== received) {
