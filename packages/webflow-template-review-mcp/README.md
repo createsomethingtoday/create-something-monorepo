@@ -593,14 +593,16 @@ creator-facing feedback.
 - `template_review_get_asset`
 - `template_review_list_versions`
 - `template_review_get_version`
-- `template_review_get_review_context`
+- `template_review_get_review_context` (includes `checklistProgress` counts for both checklist fields)
+- `template_review_get_checklists` (read-only structured items, sections, and progress for `📝Review Checklist` and `🚀Publishing Checklist`)
 - `template_review_get_comprehensive_review_contract` (read-only comprehensive evidence contract for Auto/Partial/Manual coverage, rubric dimensions, manual checks, and Agent Review Feedback format)
 - `template_review_format_agent_review_feedback` (read-only comprehensive evidence validator/formatter for Agent Review Feedback drafts; does not write Airtable)
 - `template_review_prepare_published_site_sandbox` (read-only E2B sandbox job/runner bundle for first-class published-site evidence; does not execute E2B or write Airtable)
 - `template_review_run_published_site_sandbox` (read-only bounded E2B execution for rendered-page evidence and screenshots; fixed collector only, no caller-provided code or Airtable writes)
 - `template_review_run_published_site_validation` (read-only published-site validation; no Designer/Preview data or Airtable writes)
 - `template_review_list_releases`
-- `template_review_complete_publishing`
+- `template_review_set_checklist_items` (check/uncheck individual checklist items by index; byte-preserving)
+- `template_review_complete_publishing` (attaches a release; bulk checklist marking is opt-in via `mark_all_publishing_items`)
 - `template_review_assign_reviewer`
 - `template_review_assign_self`
 - `template_review_unassign_self`
@@ -613,6 +615,48 @@ creator-facing feedback.
 - `template_review_save_agent_feedback`
 - `template_review_approve_version`
 - `template_review_reject_version`
+
+## Reviewer checklists
+
+`📝Review Checklist` and `🚀Publishing Checklist` are rich-text fields whose
+checkable units are lines anchored at the start with `[ ]` / `[x]`. Nested
+`- 🔵 …` and `    1. …` lines are sub-criteria and are never treated as items.
+
+Read indexes first, then write them back:
+
+```
+template_review_get_checklists      { version_id }
+  -> checklists.review.items[]      { index, text, checked, section, lineNumber }
+     checklists.review.summary      { total, checked, unchecked, complete }
+
+template_review_set_checklist_items { version_id, checklist: "review",
+                                      items: [{ index: 3, checked: true,
+                                                expected_text: "Current item text" }],
+                                      expected_total: 10 }
+```
+
+Rules that matter:
+
+- **Indexes are 1-based and derived from the current field value.** Always read
+  before writing, then pass `expected_total` and each item's `expected_text`
+  from the same read. The write is rejected if the count or selected item text
+  changed before the update.
+- **Only the three-character `[ ]`/`[x]` token is rewritten.** Indentation, item
+  text, sub-bullets, headings, and trailing whitespace are preserved byte-for-byte.
+- **No-op edits do not write.** If every requested state already matches, the
+  tool returns `written: false` and issues no Airtable request.
+- **Whole-field overwrite is not available.** `review_checklist` and
+  `publishing_checklist` were removed from `template_review_update_version_review`
+  and `template_review_approve_version`; they accepted arbitrary values and could
+  destroy a multi-thousand-character checklist in one call.
+- **Publishing no longer bulk-marks by default.** `template_review_complete_publishing`
+  attaches the release and leaves the checklist alone unless you pass
+  `mark_all_publishing_items: true`. Use per-item writes so the checklist reflects
+  work actually performed.
+- **Approval is not gated on checklist completion.** `template_review_approve_version`
+  returns an advisory `warnings` entry when review items are unchecked. The
+  checklist's own express-review branch permits skipping items, so blocking would
+  be wrong.
 
 ## Resources
 

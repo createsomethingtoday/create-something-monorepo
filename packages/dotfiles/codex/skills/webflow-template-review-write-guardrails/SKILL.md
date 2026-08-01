@@ -14,6 +14,7 @@ If write posture is read-only, or if enablement is ambiguous, stop and use manua
 Only these narrow verbs belong in the reviewer lane:
 
 - `template_review_request_changes`
+- `template_review_set_checklist_items`
 - `template_review_approve_version`
 - `template_review_reject_version`
 - `template_review_complete_publishing`
@@ -39,6 +40,13 @@ If any precondition fails, fail closed.
 - require non-empty `review_feedback`
 - include `improvement_areas` only when the reviewer intends them
 
+`set_checklist_items`
+
+- read the current checklist with `template_review_get_checklists` first
+- require `expected_total` and each selected item's `expected_text` from that read
+- mark only work the reviewer actually completed
+- re-read instead of retrying when either stale-read guard fails
+
 `approve_version`
 
 - require reviewer ownership
@@ -55,6 +63,8 @@ If any precondition fails, fail closed.
 
 - require reviewer ownership
 - require clean release resolution
+- leave checklist state unchanged by default
+- set `mark_all_publishing_items` only when the reviewer explicitly confirms every publishing step is complete
 - treat ambiguous release selection as a stop condition
 
 ## Trace Requirements

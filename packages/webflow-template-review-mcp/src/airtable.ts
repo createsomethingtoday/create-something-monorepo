@@ -1,4 +1,15 @@
 import {
+  CHECKLIST_KINDS,
+  parseChecklist,
+  setAllChecklistItems,
+  setChecklistItemStates,
+  type ChecklistItemChange,
+  type ChecklistItemUpdate,
+  type ChecklistKind,
+  type ChecklistSummary,
+  type ParsedChecklist,
+} from './checklist.js';
+import {
   ASSET_COMPATIBILITY_ALIASES,
   CONFIRMED_ASSET_FIELDS,
   CONFIRMED_RELEASE_FIELDS,
@@ -126,6 +137,8 @@ export interface TemplateReviewContext {
   reviewFeedback?: string;
   reviewChecklist?: string;
   publishingChecklist?: string;
+  /** Progress counts for both checklist fields, for gating and reporting. */
+  checklistProgress: Record<ChecklistKind, ChecklistSummary>;
   canAssign: boolean;
   canReview: boolean;
   canPublish: boolean;
@@ -187,6 +200,49 @@ export interface CompletePublishingInput {
   approve_version?: boolean;
   mrp_id_overwrite?: string;
   review_owner?: unknown;
+  /**
+   * Opt in to flipping every `🚀Publishing Checklist` item to `[x]`.
+   *
+   * Defaults to false: publishing must not assert that steps a reviewer never
+   * performed were completed, or the checklist loses its audit value.
+   */
+  mark_all_publishing_items?: boolean;
+}
+
+export interface ChecklistFieldSnapshot extends ParsedChecklist {
+  kind: ChecklistKind;
+  fieldName: string;
+  present: boolean;
+}
+
+export type TemplateReviewChecklists = Record<ChecklistKind, ChecklistFieldSnapshot>;
+
+export interface VersionChecklistsResult {
+  versionId: string;
+  assetId?: string;
+  templateName?: string;
+  checklists: TemplateReviewChecklists;
+}
+
+export interface SetChecklistItemsInput {
+  checklist: ChecklistKind;
+  items: readonly (ChecklistItemUpdate & { expectedText: string })[];
+  /** Stale-read guard: reject if the item count changed since the caller read it. */
+  expected_total: number;
+  review_owner?: unknown;
+}
+
+export interface SetChecklistItemsResult {
+  versionId: string;
+  checklist: ChecklistKind;
+  fieldName: string;
+  changed: ChecklistItemChange[];
+  before: ChecklistSummary;
+  after: ChecklistSummary;
+  items: ParsedChecklist['items'];
+  /** False when every requested state already matched, so no write was issued. */
+  written: boolean;
+  updatedVersion: TemplateReviewVersion;
 }
 
 export interface VersionReviewUpdateInput {
@@ -196,8 +252,14 @@ export interface VersionReviewUpdateInput {
   improvement_areas?: string[];
   review_feedback?: string;
   agent_review_feedback?: string;
-  review_checklist?: unknown;
-  publishing_checklist?: unknown;
+  /**
+   * Full replacement text for a checklist field. Internal-only: reachable via
+   * setVersionChecklistItems / completePublishing, which always supply a
+   * parser-produced edit of the current value. Not exposed as a tool parameter —
+   * an arbitrary caller-supplied value can destroy structured reviewer state.
+   */
+  review_checklist?: string;
+  publishing_checklist?: string;
   release_date?: string;
   release_record_id?: string;
   mrp_id_overwrite?: string;
@@ -404,11 +466,16 @@ function collaboratorLabel(value: unknown): string | undefined {
   return collaborator?.name ?? collaborator?.email ?? collaborator?.id;
 }
 
-function coerceLongText(value: unknown): string {
-  if (typeof value === 'string') return value;
-  if (Array.isArray(value)) return value.map((item) => (typeof item === 'string' ? item : JSON.stringify(item))).join('\n');
-  if (value && typeof value === 'object') return JSON.stringify(value, null, 2);
-  return String(value ?? '');
+/**
+ * Read a long-text field without normalizing it.
+ *
+ * `firstString` trims, which makes read-modify-write lossy (a 3,924-char
+ * checklist ending in `\n` comes back as 3,923 chars). Checklist edits must
+ * round-trip byte-for-byte, so they read through this instead.
+ */
+function rawLongText(value: unknown): string | undefined {
+  if (Array.isArray(value)) return rawLongText(value[0]);
+  return typeof value === 'string' ? value : undefined;
 }
 
 function currentLocalDate(timeZone: string): string {
@@ -421,8 +488,33 @@ function currentLocalDate(timeZone: string): string {
   return formatter.format(new Date());
 }
 
-function markChecklistComplete(value: string): string {
-  return value.replace(/(^|\n)(\s*)\[ \]/g, '$1$2[x]');
+const CHECKLIST_FIELD_BY_KIND: Record<ChecklistKind, string> = {
+  review: CONFIRMED_VERSION_FIELDS.reviewChecklist,
+  publishing: CONFIRMED_VERSION_FIELDS.publishingChecklist,
+};
+
+const CHECKLIST_INPUT_KEY_BY_KIND: Record<ChecklistKind, 'review_checklist' | 'publishing_checklist'> = {
+  review: 'review_checklist',
+  publishing: 'publishing_checklist',
+};
+
+function checklistSnapshot(version: TemplateReviewVersion, kind: ChecklistKind): ChecklistFieldSnapshot {
+  const fieldName = CHECKLIST_FIELD_BY_KIND[kind];
+  const raw = rawLongText(version.rawFields[fieldName]);
+  return { kind, fieldName, present: raw !== undefined && raw.length > 0, ...parseChecklist(raw) };
+}
+
+function summarizeVersionChecklists(version: TemplateReviewVersion): Record<ChecklistKind, ChecklistSummary> {
+  return {
+    review: checklistSnapshot(version, 'review').summary,
+    publishing: checklistSnapshot(version, 'publishing').summary,
+  };
+}
+
+/** Translate a pure-parser failure into the client's error contract. */
+function checklistEditError(failure: { code: string; message: string; details?: Record<string, unknown> }, context: Record<string, unknown>): AirtableClientError {
+  const status = failure.code === 'CHECKLIST_EMPTY' || failure.code === 'CHECKLIST_NO_ITEMS' ? 409 : 400;
+  return new AirtableClientError(failure.code, failure.message, status, { ...context, ...(failure.details ?? {}) });
 }
 
 function mapAsset(record: AirtableRecord): TemplateReviewAsset {
@@ -1392,9 +1484,9 @@ export class AirtableClient {
     if (input.agent_review_feedback !== undefined) {
       fields[CONFIRMED_WRITE_FIELD_IDS.versions.agentReviewFeedback] = input.agent_review_feedback;
     }
-    if (input.review_checklist !== undefined) fields[CONFIRMED_VERSION_FIELDS.reviewChecklist] = coerceLongText(input.review_checklist);
+    if (input.review_checklist !== undefined) fields[CONFIRMED_VERSION_FIELDS.reviewChecklist] = input.review_checklist;
     if (input.publishing_checklist !== undefined) {
-      fields[CONFIRMED_VERSION_FIELDS.publishingChecklist] = coerceLongText(input.publishing_checklist);
+      fields[CONFIRMED_VERSION_FIELDS.publishingChecklist] = input.publishing_checklist;
     }
     if (input.release_record_id !== undefined) {
       fields[CONFIRMED_WRITE_FIELD_IDS.versions.release] = input.release_record_id ? [input.release_record_id] : [];
@@ -1519,6 +1611,7 @@ export class AirtableClient {
       reviewFeedback: version.reviewFeedback,
       reviewChecklist: version.reviewChecklist,
       publishingChecklist: version.publishingChecklist,
+      checklistProgress: summarizeVersionChecklists(version),
       canAssign: Boolean(currentReviewer?.id && !version.reviewOwner),
       canReview: !version.reviewOwner || isAssignedToCurrentReviewer,
       canPublish: version.reviewStatus === '✅Approved',
@@ -1526,6 +1619,93 @@ export class AirtableClient {
       currentReviewer: currentReviewer ?? null,
       asset,
       version,
+    };
+  }
+
+  /**
+   * Structured read of both reviewer checklist fields for a version.
+   *
+   * Read-only, scope-enforced, and safe before assignment — reviewers need to
+   * see remaining steps while triaging.
+   */
+  async getVersionChecklists(versionId: string): Promise<VersionChecklistsResult> {
+    const { version, asset } = await this.getScopedVersion(versionId);
+    return {
+      versionId: version.versionId,
+      assetId: version.assetId,
+      templateName: asset.templateName,
+      checklists: {
+        review: checklistSnapshot(version, 'review'),
+        publishing: checklistSnapshot(version, 'publishing'),
+      },
+    };
+  }
+
+  /**
+   * Check or uncheck individual checklist items, preserving the rest of the field.
+   *
+   * Reads the untrimmed raw value, rewrites only the targeted `[ ]`/`[x]`
+   * tokens, and skips the Airtable write entirely when nothing changed.
+   */
+  async setVersionChecklistItems(versionId: string, input: SetChecklistItemsInput): Promise<SetChecklistItemsResult> {
+    if (!CHECKLIST_KINDS.includes(input.checklist)) {
+      throw new AirtableClientError('INVALID_CHECKLIST_KIND', 'checklist must be "review" or "publishing".', 400, {
+        value: input.checklist,
+        allowed: CHECKLIST_KINDS,
+      });
+    }
+
+    const { version } = await this.getScopedVersion(versionId);
+    const fieldName = CHECKLIST_FIELD_BY_KIND[input.checklist];
+    const raw = rawLongText(version.rawFields[fieldName]);
+    const errorContext = { version_id: versionId, checklist: input.checklist, field: fieldName };
+
+    if (raw === undefined || raw.length === 0) {
+      throw new AirtableClientError('CHECKLIST_MISSING', `Template version has no ${fieldName} content to update.`, 409, errorContext);
+    }
+
+    const current = parseChecklist(raw);
+    if (input.expected_total !== current.summary.total) {
+      throw new AirtableClientError(
+        'CHECKLIST_TOTAL_MISMATCH',
+        'Checklist item count changed since it was read; re-read the checklist before applying item updates.',
+        409,
+        { ...errorContext, expected_total: input.expected_total, actual_total: current.summary.total },
+      );
+    }
+
+    const edit = setChecklistItemStates(raw, input.items);
+    if (!edit.ok) throw checklistEditError(edit, errorContext);
+
+    if (edit.changed.length === 0) {
+      return {
+        versionId,
+        checklist: input.checklist,
+        fieldName,
+        changed: [],
+        before: edit.before.summary,
+        after: edit.after.summary,
+        items: edit.after.items,
+        written: false,
+        updatedVersion: version,
+      };
+    }
+
+    const updatedVersion = await this.updateVersionReview(versionId, {
+      review_owner: input.review_owner,
+      [CHECKLIST_INPUT_KEY_BY_KIND[input.checklist]]: edit.raw,
+    });
+
+    return {
+      versionId,
+      checklist: input.checklist,
+      fieldName,
+      changed: edit.changed,
+      before: edit.before.summary,
+      after: edit.after.summary,
+      items: edit.after.items,
+      written: true,
+      updatedVersion,
     };
   }
 
@@ -1586,6 +1766,7 @@ export class AirtableClient {
     updatedAsset: TemplateReviewAsset | null;
     resolvedRelease: TemplateReviewRelease;
     resolvedLocalDate: string;
+    publishingChecklist: ChecklistSummary & { markedAllComplete: boolean };
   }> {
     const currentVersion = await this.getVersionById(versionId);
     if (!currentVersion) {
@@ -1618,16 +1799,30 @@ export class AirtableClient {
 
     const release = releaseRecord !== null ? mapRelease(releaseRecord) : await this.findReleaseByLocalDate(releaseLocalDate);
 
-    const checklist = currentVersion.publishingChecklist;
-    if (!checklist) {
-      throw new AirtableClientError('PUBLISHING_CHECKLIST_MISSING', 'Template version has no publishing checklist to complete.', 409, {
-        version_id: versionId,
-      });
+    // Bulk-marking is opt-in. Attaching a release must not silently claim that
+    // every publishing step was performed; use set_checklist_items for per-item truth.
+    let markedPublishingChecklist: string | undefined;
+    if (input.mark_all_publishing_items) {
+      const rawChecklist = rawLongText(currentVersion.rawFields[CONFIRMED_VERSION_FIELDS.publishingChecklist]);
+      if (rawChecklist === undefined || rawChecklist.length === 0) {
+        throw new AirtableClientError('PUBLISHING_CHECKLIST_MISSING', 'Template version has no publishing checklist to complete.', 409, {
+          version_id: versionId,
+        });
+      }
+      const edit = setAllChecklistItems(rawChecklist, true);
+      if (!edit.ok) {
+        throw checklistEditError(edit, {
+          version_id: versionId,
+          checklist: 'publishing',
+          field: CONFIRMED_VERSION_FIELDS.publishingChecklist,
+        });
+      }
+      markedPublishingChecklist = edit.raw;
     }
 
     const updatedVersion = await this.updateVersionReview(versionId, {
       review_owner: input.review_owner,
-      publishing_checklist: markChecklistComplete(checklist),
+      ...(markedPublishingChecklist !== undefined ? { publishing_checklist: markedPublishingChecklist } : {}),
       release_record_id: release.releaseId,
       ...(input.approve_version ? { review_status: '✅Approved' } : {}),
     });
@@ -1644,6 +1839,10 @@ export class AirtableClient {
       updatedAsset,
       resolvedRelease: release,
       resolvedLocalDate: releaseLocalDate,
+      publishingChecklist: {
+        ...checklistSnapshot(updatedVersion, 'publishing').summary,
+        markedAllComplete: markedPublishingChecklist !== undefined,
+      },
     };
   }
 }
