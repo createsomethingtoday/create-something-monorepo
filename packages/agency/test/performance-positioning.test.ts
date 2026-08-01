@@ -77,6 +77,62 @@ test('the homepage moves from claim to proof to method before asking visitors to
   }
 });
 
+test('the homepage opening uses a property-owned bench-scale boundary study', () => {
+  assert.match(home, /const homepageHandoffBoundaryMedia: PerformanceCampaignMedia/);
+  assert.match(
+    home,
+    /src: '\/images\/performance-lab\/agency-handoff-boundary\.webp'/
+  );
+  assert.match(
+    home,
+    /mobileSrc: '\/images\/performance-lab\/agency-handoff-boundary-mobile\.webp'/
+  );
+  assert.match(home, /alt: 'A bench-scale hydraulic gate and gauge/);
+  assert.match(
+    home,
+    /mp4: '\/images\/performance-lab\/agency-handoff-boundary-motion\.mp4'/
+  );
+  assert.match(
+    home,
+    /webm: '\/images\/performance-lab\/agency-handoff-boundary-motion\.webm'/
+  );
+  assert.match(home, /media=\{homepageHandoffBoundaryMedia\}/);
+  assert.doesNotMatch(home, /controlledFlowMedia/);
+  assert.equal(
+    existsSync(
+      new URL('../static/images/performance-lab/agency-handoff-boundary.webp', import.meta.url)
+    ),
+    true
+  );
+  assert.equal(
+    existsSync(
+      new URL(
+        '../static/images/performance-lab/agency-handoff-boundary-mobile.webp',
+        import.meta.url
+      )
+    ),
+    true
+  );
+  assert.equal(
+    existsSync(
+      new URL(
+        '../static/images/performance-lab/agency-handoff-boundary-motion.mp4',
+        import.meta.url
+      )
+    ),
+    true
+  );
+  assert.equal(
+    existsSync(
+      new URL(
+        '../static/images/performance-lab/agency-handoff-boundary-motion.webm',
+        import.meta.url
+      )
+    ),
+    true
+  );
+});
+
 test('the homepage boundary artifact shows evidence without restating the scene introduction', () => {
   assert.match(home, /<figure class="boundary-study__media">/);
   assert.match(home, /<figcaption>Boundary study · Run \/ Wait \/ Stop<\/figcaption>/);

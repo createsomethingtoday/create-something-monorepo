@@ -6,12 +6,12 @@
     PerformanceNarrativeStage,
     PerformanceWorkflowMiniArtifact,
     SEO,
+    type PerformanceCampaignMedia,
     type PerformanceCampaignProof,
     type PerformanceFieldStudyMetric,
     type PerformanceFieldStudyProof,
     type PerformanceNarrativeScene
   } from '@create-something/canon';
-  import { controlledFlowMedia } from '@create-something/canon/components/performance/media/controlled-flow';
   import HeroTrustArtifact from '$lib/components/HeroTrustArtifact.svelte';
   import AgencyPerformanceReadback from '$lib/components/AgencyPerformanceReadback.svelte';
   import AdoptionPathChooser from '$lib/components/AdoptionPathChooser.svelte';
@@ -19,6 +19,20 @@
   import PublicSubstrateCanvas from '$lib/components/PublicSubstrateCanvas.svelte';
   import { templateReviewFieldReport } from '$lib/data/fieldReports';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
+
+  const homepageHandoffBoundaryMedia: PerformanceCampaignMedia = {
+    src: '/images/performance-lab/agency-handoff-boundary.webp',
+    mobileSrc: '/images/performance-lab/agency-handoff-boundary-mobile.webp',
+    alt: 'A bench-scale hydraulic gate and gauge holding a visible water boundary',
+    width: 1536,
+    height: 864,
+    objectPosition: 'center',
+    video: {
+      mp4: '/images/performance-lab/agency-handoff-boundary-motion.mp4',
+      webm: '/images/performance-lab/agency-handoff-boundary-motion.webm',
+      poster: '/images/performance-lab/agency-handoff-boundary.webp'
+    }
+  };
 
   const services = [
     {
@@ -88,8 +102,8 @@
       value: 'Named owner'
     },
     {
-      label: 'Map',
-      value: 'Visible boundary'
+      label: 'Control',
+      value: 'Run / Wait / Stop'
     },
     {
       label: 'Proof',
@@ -222,15 +236,17 @@
 <div class="home-pilot property-performance">
   <PerformanceCampaignOpening
     eyebrow={agencyCoreMessaging.categoryLabel}
-    title="Make one workflow safe to delegate—and easier to run."
-    lede="Choose one handoff your team still checks manually. We map what can run automatically, what must wait for a person, what must stop, and what record proves the result—so routine work moves without constant rescue."
-    media={controlledFlowMedia}
+    title="Make one workflow ready to delegate."
+    lede="Choose a handoff your team still checks by hand. We map what can run, when a person steps in, what must stop, and what record proves the result."
+    media={homepageHandoffBoundaryMedia}
     proof={heroProofItems}
     density="compact"
   >
     {#snippet actions()}
       <Button href={agencyCoreMessaging.selfMapHref}>Map one workflow</Button>
-      <Button href="/proof/marketplace-workflow" variant="secondary">See a worked example</Button>
+      <Button href="/proof/marketplace-workflow" variant="secondary"
+        >See the Marketplace workflow</Button
+      >
     {/snippet}
   </PerformanceCampaignOpening>
 

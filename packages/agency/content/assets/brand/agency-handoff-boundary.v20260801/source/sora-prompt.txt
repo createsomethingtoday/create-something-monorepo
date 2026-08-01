@@ -1,0 +1,12 @@
+Use case: CREATE SOMETHING .agency homepage hero background
+Primary request: animate the supplied black-and-white bench-scale hydraulic flume as a restrained Performance Lab study of a governed workflow handoff
+Scene/background: dark working laboratory; preserve the existing near-black negative space across the left half and the measured apparatus on the right
+Subject: the same clear glass channel, weathered machined steel gate, gauge rod, datum marks, injection port, and contained water boundary shown in the reference
+Action: continuous clean water passes through the narrow gate opening; a subtle downstream trace and small surface ripples make origin, boundary, and flow visible; the apparatus itself remains fixed
+Camera: locked off at bench height, same framing as the reference, no zoom, pan, orbit, or reframing
+Lighting/mood: high-contrast monochrome documentary laboratory light, graphite and silver highlights, subtle natural grain
+Style/format: photorealistic restrained campaign background, physically plausible water, seamless and calm enough to loop behind large white copy
+Timing/beats: one continuous four-second flow condition with no cut and no dramatic state change
+Audio: none; silent
+Constraints: preserve the supplied composition and negative space; keep the gate, gauge, glass channel, and boundary legible; no text, numbers, letters, logos, watermark, people, hands, faces, color tint, aerial view, landscape, river, ocean, miniature model, glossy product-shot styling, or generic AI effects
+Avoid: camera movement; gate movement; large splash; smoke; steam; bubbles obscuring the apparatus; flicker; jitter; morphing metal; changing gauge geometry; fast motion; dramatic lighting changes
