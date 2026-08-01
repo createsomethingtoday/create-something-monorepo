@@ -1,3 +1,29 @@
+export function extractOfferSavingsWidgetResult(
+  payload: unknown
+): Record<string, unknown> | null {
+  const queue: unknown[] = [payload];
+  const seen = new Set<unknown>();
+  while (queue.length > 0) {
+    const candidate = queue.shift();
+    if (!candidate || typeof candidate !== 'object' || seen.has(candidate)) continue;
+    seen.add(candidate);
+    const record = candidate as Record<string, unknown>;
+    if (typeof record.operation === 'string') return record;
+    for (const key of [
+      'structuredContent',
+      'result',
+      'mcp_tool_result',
+      'call_tool_result',
+      'toolOutput'
+    ]) {
+      if (record[key] !== undefined) queue.push(record[key]);
+    }
+  }
+  return null;
+}
+
+const WIDGET_RESULT_EXTRACTOR = extractOfferSavingsWidgetResult.toString();
+
 export const OFFER_SAVINGS_WIDGET_HTML = String.raw`<!doctype html>
 <html lang="en">
   <head>
@@ -79,7 +105,10 @@ export const OFFER_SAVINGS_WIDGET_HTML = String.raw`<!doctype html>
     </main>
     <script type="module">
       const standalone = window.__OFFER_SAVINGS_STANDALONE__ ?? null;
-      let toolOutput = window.openai?.toolOutput ?? standalone?.initialResult ?? null;
+      const extractOfferSavingsWidgetResult = ${WIDGET_RESULT_EXTRACTOR};
+      let toolOutput = extractOfferSavingsWidgetResult(window.openai?.toolOutput)
+        ?? extractOfferSavingsWidgetResult(window.openai?.toolResponseMetadata)
+        ?? extractOfferSavingsWidgetResult(standalone?.initialResult);
       let rpcId = 0;
       const pending = new Map();
       const offersEl = document.querySelector('#offers');
@@ -102,8 +131,8 @@ export const OFFER_SAVINGS_WIDGET_HTML = String.raw`<!doctype html>
       }
 
       function applyToolResult(result) {
-        if (result?.structuredContent) toolOutput = result.structuredContent;
-        else if (result?.operation) toolOutput = result;
+        const nextResult = extractOfferSavingsWidgetResult(result);
+        if (nextResult) toolOutput = nextResult;
         if (toolOutput?.operation === 'watch_offers') {
           statusEl.textContent = toolOutput.created ? 'Watch active. We will keep the same watch if this action is retried.' : 'This watch was already active; no duplicate was created.';
           document.body.dataset.watchId = toolOutput.watch?.id ?? '';
@@ -111,15 +140,28 @@ export const OFFER_SAVINGS_WIDGET_HTML = String.raw`<!doctype html>
         render();
       }
 
+      function applyHostGlobals(globals) {
+        applyToolResult(
+          extractOfferSavingsWidgetResult(globals?.toolOutput)
+            ?? extractOfferSavingsWidgetResult(globals?.toolResponseMetadata)
+        );
+      }
+
       function render() {
         const result = toolOutput?.operation === 'find_offers' ? toolOutput : toolOutput?.watch?.latestResult;
         const offers = Array.isArray(result?.offers) ? result.offers : [];
         const evidence = Array.isArray(result?.evidence) ? result.evidence : [];
+        offersEl.replaceChildren();
+        evidenceEl.replaceChildren();
+        if (!result) {
+          emptyEl.hidden = true;
+          evidenceSectionEl.hidden = true;
+          summaryEl.textContent = 'Search in progress. Waiting for a completed offer result.';
+          return;
+        }
         const ltkCount = result?.counts?.ltk ?? offers.filter((offer) => offer.source?.lane === 'ltk').length;
         const supplementalCount = result?.counts?.supplemental ?? offers.filter((offer) => offer.source?.lane !== 'ltk').length;
         const run = String(result?.receiptHash ?? '').replace(/^sha256:/, '').slice(0, 10) || 'pending';
-        offersEl.replaceChildren();
-        evidenceEl.replaceChildren();
         emptyEl.hidden = offers.length > 0;
         evidenceSectionEl.hidden = evidence.length === 0;
         summaryEl.textContent = String(ltkCount) + ' LTK coupon candidate' + (ltkCount === 1 ? '' : 's') + '; ' + String(supplementalCount) + ' supplemental fallback offer' + (supplementalCount === 1 ? '' : 's') + '; ' + String(evidence.length) + ' evidence-only source' + (evidence.length === 1 ? '' : 's') + '. Search run ' + run + '.';
@@ -249,17 +291,19 @@ export const OFFER_SAVINGS_WIDGET_HTML = String.raw`<!doctype html>
       }, { passive: true });
 
       window.addEventListener('openai:set_globals', (event) => {
-        const next = event.detail?.globals?.toolOutput;
-        if (next) { toolOutput = next; render(); }
+        applyHostGlobals(event.detail?.globals);
       }, { passive: true });
 
       const bridgeReady = window.parent === window
         ? Promise.resolve()
         : request('ui/initialize', {
-            appInfo: { name: 'offer-savings-widget', version: '0.2.0' },
+            appInfo: { name: 'offer-savings-widget', version: '0.2.1' },
             appCapabilities: {},
             protocolVersion: '2026-01-26'
-          }).then(() => notify('ui/notifications/initialized', {}));
+          }).then(() => {
+            notify('ui/notifications/initialized', {});
+            applyHostGlobals(window.openai);
+          });
 
       async function callTool(name, argumentsValue) {
         if (window.parent !== window) {
