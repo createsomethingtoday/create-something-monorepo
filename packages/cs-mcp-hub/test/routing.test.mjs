@@ -42,6 +42,26 @@ test('tenant policy filters direct tools by server/tag/prefix', () => {
   assert.equal(filtered[0].proxyToolName, 'arcade_gmail__send');
 });
 
+test('explicit unknown tenant fails closed instead of inheriting the default policy', () => {
+  const routing = {
+    version: 1,
+    defaults: {
+      tenant: 'default',
+    },
+    tenants: {
+      default: {},
+      blondish: {
+        allowServers: ['notion-halfdozen-blondish'],
+      },
+    },
+  };
+
+  assert.throws(
+    () => resolveTenantRoutingContext(routing, 'blondis'),
+    /Unknown tenant "blondis"/,
+  );
+});
+
 test('alias planner prefers approved routes and skips pending/blocked approvals', () => {
   const routing = {
     version: 1,

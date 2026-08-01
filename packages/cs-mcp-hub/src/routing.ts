@@ -54,12 +54,17 @@ export function resolveTenantRoutingContext(
     routing.defaults?.tenant ??
     'default'
   ).trim();
-  const policy = routing.tenants?.[tenantId] ?? routing.tenants?.default ?? EMPTY_POLICY;
+  const configuredTenants = routing.tenants ?? {};
+  const policy = configuredTenants[tenantId];
+
+  if (Object.keys(configuredTenants).length > 0 && !policy) {
+    throw new Error(`Unknown tenant "${tenantId}" in routing config`);
+  }
 
   return {
     tenantId,
     allowPendingOauthApprovals: allowPendingFromEnv || routing.defaults?.allowPendingOauthApprovals === true,
-    policy,
+    policy: policy ?? EMPTY_POLICY,
   };
 }
 
