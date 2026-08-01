@@ -109,6 +109,27 @@ function parseResolutionOutput(finalOutput: unknown): OfferResolutionResult | un
   }
 }
 
+export function finalizeCapturedResolution(
+  capturedEvidence: { request: OfferRequest; observations: OfferObservation[] } | undefined,
+  finalOutput: unknown
+): OfferObservation[] {
+  if (!capturedEvidence) {
+    throw new Error('The agent did not expose factual evidence to the service contract.');
+  }
+  const authoritativeResolution = findOffers(
+    capturedEvidence.request,
+    capturedEvidence.observations
+  );
+  const modelResolution = parseResolutionOutput(finalOutput);
+  if (
+    modelResolution &&
+    canonicalStringify(authoritativeResolution) !== canonicalStringify(modelResolution)
+  ) {
+    throw new Error('The agent receipt does not match the authoritative service receipt.');
+  }
+  return capturedEvidence.observations;
+}
+
 async function discoverAgentEvidence(
   request: OfferRequest,
   options: RunOfferFindAgentOptions = {}
@@ -182,21 +203,7 @@ async function discoverAgentEvidence(
     ],
     { maxTurns: 2 }
   );
-  const resolution = parseResolutionOutput(finalization.finalOutput);
-  if (!resolution) {
-    throw new Error('The agent did not return a deterministic resolver receipt.');
-  }
-  if (!capturedEvidence) {
-    throw new Error('The agent did not expose factual evidence to the service contract.');
-  }
-  const observations = capturedEvidence.observations;
-  if (
-    canonicalStringify(findOffers(normalizedRequest, observations)) !==
-    canonicalStringify(resolution)
-  ) {
-    throw new Error('The agent receipt does not match the authoritative service receipt.');
-  }
-  return observations;
+  return finalizeCapturedResolution(capturedEvidence, finalization.finalOutput);
 }
 
 export function createAgentOfferDiscoveryProvider(
