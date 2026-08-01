@@ -56,6 +56,10 @@ try {
   await client.connect(new StreamableHTTPClientTransport(new URL(`${firstRuntime.baseUrl}/mcp`)));
   const listed = await client.listTools();
   const resources = await client.listResources();
+  const hostResolved = await client.callTool({
+    name: 'resolve_offers',
+    arguments: { request: publicRequest, observations: fixture.observations }
+  });
   const found = await client.callTool({ name: 'find_offers', arguments: publicRequest });
   const creator = fixture.observations.find((item) => item.id === 'fixture-ltk-15');
   if (!creator) throw new Error('Acceptance fixture is missing the LTK creator observation.');
@@ -97,12 +101,18 @@ try {
     resolution: { decisions: Array<{ receiptHash: string }> };
     offers: Array<{ observationId: string; confidence: { label: string } }>;
   };
+  const hostResolvedResult = hostResolved.structuredContent as {
+    resolution: { decisions: Array<{ receiptHash: string }> };
+    offers: Array<{ observationId: string; confidence: { label: string } }>;
+  };
   const transcript = {
     schemaVersion: 'offer_savings_acceptance.v0.1',
     ok:
       serverInfo?.name === 'offer-savings-agent' &&
-      toolNames.join(',') === 'find_offers,verify_offer,watch_offers,get_watch' &&
+      toolNames.join(',') === 'resolve_offers,find_offers,verify_offer,watch_offers,get_watch' &&
       resources.resources[0]?.mimeType === 'text/html;profile=mcp-app' &&
+      hostResolvedResult.offers[0]?.observationId === foundResult.offers[0]?.observationId &&
+      hostResolvedResult.resolution.decisions.length === foundResult.resolution.decisions.length &&
       verified.structuredContent?.verification === 'needs_checkout' &&
       firstWatch.structuredContent?.created === true &&
       retryWatch.structuredContent?.created === false &&
@@ -116,6 +126,11 @@ try {
       resourceUri: (tool._meta?.ui as { resourceUri?: string } | undefined)?.resourceUri
     })),
     resources: resources.resources,
+    hostResolve: {
+      offerCount: hostResolvedResult.offers.length,
+      bestObservationId: hostResolvedResult.offers[0]?.observationId,
+      receiptHashes: hostResolvedResult.resolution.decisions.map((decision) => decision.receiptHash)
+    },
     find: {
       offerCount: foundResult.offers.length,
       bestObservationId: foundResult.offers[0]?.observationId,

@@ -7,8 +7,10 @@ import {
   OFFER_FIND_DISCOVERY_STAGES,
   OFFER_FIND_AGENT_INSTRUCTIONS,
   createOfferFindAgent,
+  createOfferEvidenceFinalizer,
   createLtkWebSearchTool,
   finalizeCapturedResolution,
+  finalizeStructuredEvidence,
   offerEvidenceInputSchema,
   runOfferFindAgentService,
   resolveOfferEvidenceTool
@@ -115,4 +117,113 @@ test('finalization rejects a model receipt that conflicts with captured resolver
     () => finalizeCapturedResolution(captured, conflicting),
     /does not match the authoritative service receipt/
   );
+});
+
+test('evidence finalizer uses schema-constrained output instead of a side-effect tool capture', () => {
+  const finalizer = createOfferEvidenceFinalizer({ model: 'gpt-5.4-mini' });
+
+  assert.equal(finalizer.outputType, offerEvidenceInputSchema);
+  assert.deepEqual(finalizer.tools, []);
+  assert.equal(finalizer.modelSettings.toolChoice, 'none');
+  assert.match(String(finalizer.instructions), /omit publishedAt unless/i);
+});
+
+test('structured evidence accepts the exact normalized request and rejects request drift', () => {
+  const captured = { request, observations: [] };
+
+  assert.deepEqual(finalizeStructuredEvidence(request, captured), []);
+  assert.throws(
+    () =>
+      finalizeStructuredEvidence(request, {
+        request: { ...request, budget: 999 },
+        observations: []
+      }),
+    /does not match the normalized shopping request/
+  );
+});
+
+test('structured evidence fails closed on imprecise optional dates and owns observation time', () => {
+  const observation = {
+    id: 'sephora-ltk-lead',
+    merchant: 'Sephora',
+    title: 'Public LTK coupon lead',
+    source: {
+      kind: 'ltk_public' as const,
+      url: 'https://www.shopltk.com/explore/example',
+      publisher: 'Example creator',
+      publishedAt: '2026-08-01',
+      observedAt: '2026-08-01',
+      access: 'public' as const,
+      direct: true
+    },
+    offer: {
+      code: 'EXAMPLE',
+      discount: { kind: 'percent' as const, value: 10 },
+      status: 'unknown' as const,
+      startsAt: '2026-08-01',
+      endsAt: '2026-08-09'
+    },
+    applicability: {
+      merchant: 'confirmed' as const,
+      budget: 'unknown' as const,
+      location: 'unknown' as const,
+      channel: 'unknown' as const,
+      membership: 'unknown' as const
+    },
+    fulfillment: { deadline: 'unknown' as const },
+    evidence: { terms: 'partial' as const, code: 'reported' as const, corroboratingUrls: [] }
+  };
+
+  const [actual] = finalizeStructuredEvidence(request, {
+    request,
+    observations: [observation]
+  });
+
+  assert.equal(actual.source.observedAt, request.asOf);
+  assert.equal(actual.source.publishedAt, undefined);
+  assert.equal(actual.offer.startsAt, undefined);
+  assert.equal(actual.offer.endsAt, undefined);
+});
+
+test('structured evidence drops a malformed candidate without failing the entire search run', () => {
+  const validObservation: OfferObservation = {
+    id: 'sephora-search-lead',
+    merchant: 'Sephora',
+    title: 'Public search lead',
+    source: {
+      kind: 'search_index',
+      url: 'https://www.sephora.com/beauty/savings-event',
+      publisher: 'Sephora',
+      observedAt: request.asOf,
+      access: 'public',
+      direct: false
+    },
+    offer: {
+      discount: { kind: 'percent', value: 20 },
+      status: 'unknown'
+    },
+    applicability: {
+      merchant: 'confirmed',
+      budget: 'unknown',
+      location: 'unknown',
+      channel: 'unknown',
+      membership: 'unknown'
+    },
+    fulfillment: { deadline: 'unknown' },
+    evidence: { terms: 'partial', code: 'unknown', corroboratingUrls: [] }
+  };
+
+  const actual = finalizeStructuredEvidence(request, {
+    request,
+    observations: [
+      validObservation,
+      {
+        ...validObservation,
+        id: 'malformed-channel',
+        applicability: { ...validObservation.applicability, channel: 'not_applicable' }
+      }
+    ]
+  });
+
+  assert.deepEqual(actual, [validObservation]);
 });

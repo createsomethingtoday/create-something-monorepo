@@ -92,6 +92,13 @@ export const offerEvidenceInputSchema = z
   })
   .strict();
 
+export const resolveOffersInputSchema = z
+  .object({
+    request: findOffersInputSchema,
+    observations: z.array(offerObservationSchema).max(50)
+  })
+  .strict();
+
 export const verifyOfferInputSchema = z
   .object({
     request: findOffersInputSchema,

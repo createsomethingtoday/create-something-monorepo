@@ -23,6 +23,7 @@ export {
   offerEvidenceInputSchema,
   offerObservationSchema,
   offerRequestSchema,
+  resolveOffersInputSchema,
   verifyOfferInputSchema,
   watchOffersInputSchema
 } from './schemas.js';
@@ -40,6 +41,7 @@ export type {
   OfferWatchStatus,
   RunDueWatchesInput,
   RunDueWatchesResult,
+  ResolveOffersInput,
   VerifyOfferInput,
   VerifyOfferServiceResult,
   WatchOffersInput,

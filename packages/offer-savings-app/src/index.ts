@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import {
   findOffersInputSchema,
+  resolveOffersInputSchema,
   verifyOfferInputSchema,
   watchOffersInputSchema,
   type FindOffersServiceResult,
@@ -92,7 +93,7 @@ export function createOfferSavingsMcpServer(
   const server = new McpServer(
     {
       name: 'offer-savings-agent',
-      version: '0.2.2'
+      version: '0.2.3'
     },
     {
       capabilities: {
@@ -126,11 +127,37 @@ export function createOfferSavingsMcpServer(
   }
 
   server.registerTool(
+    'resolve_offers',
+    {
+      title: 'Score host-discovered public offers',
+      description:
+        'After the ChatGPT or Codex agent completes bounded public discovery with LTK first, submit the normalized request and factual observations here for authoritative deterministic scoring, ranking, evidence separation, and a receipt. This tool does not search, purchase, mutate a cart, or create a watch.',
+      inputSchema: resolveOffersInputSchema,
+      outputSchema: serviceResultOutputSchema,
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false
+      },
+      _meta: toolMetaWithSecurity(widgetToolMeta, options.readSecuritySchemes)
+    },
+    async (input) => {
+      const result = await options.service.resolveOffers(input);
+      return {
+        content: [{ type: 'text', text: resultText(result.operation, result) }],
+        structuredContent: asStructuredContent(result),
+        _meta: { operation: result.operation, schemaVersion: result.schemaVersion }
+      };
+    }
+  );
+
+  server.registerTool(
     'find_offers',
     {
       title: 'Find public offers',
       description:
-        'Search the configured public discovery lanes with LTK first, then apply the authoritative deterministic reliability policy. Use for a bounded merchant or health-and-beauty request; this does not purchase or mutate a cart.',
+        'Legacy server-side discovery for scheduled watches or hosts without public-search capability. Interactive ChatGPT and Codex agents should search LTK first and call resolve_offers instead. This does not purchase or mutate a cart.',
       inputSchema: findOffersInputSchema,
       outputSchema: serviceResultOutputSchema,
       annotations: {

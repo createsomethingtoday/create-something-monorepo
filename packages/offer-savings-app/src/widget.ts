@@ -1,6 +1,4 @@
-export function extractOfferSavingsWidgetResult(
-  payload: unknown
-): Record<string, unknown> | null {
+export function extractOfferSavingsWidgetResult(payload: unknown): Record<string, unknown> | null {
   const queue: unknown[] = [payload];
   const seen = new Set<unknown>();
   while (queue.length > 0) {
@@ -297,7 +295,7 @@ export const OFFER_SAVINGS_WIDGET_HTML = String.raw`<!doctype html>
       const bridgeReady = window.parent === window
         ? Promise.resolve()
         : request('ui/initialize', {
-            appInfo: { name: 'offer-savings-widget', version: '0.2.2' },
+            appInfo: { name: 'offer-savings-widget', version: '0.2.3' },
             appCapabilities: {},
             protocolVersion: '2026-01-26'
           }).then(() => {

@@ -17,4 +17,6 @@ Public visibility permits bounded discovery and citation; it does not automatica
 
 ## ChatGPT boundary
 
-The plugin connects to the production Offer Savings service through the stable public HTTPS `/mcp` endpoint declared in the plugin bundle. The endpoint uses CREATE SOMETHING Identity OAuth and an explicit access policy. Installing the plugin does not authorize broader user access or publish it to the public ChatGPT directory.
+The ChatGPT or Codex host agent performs the bounded LTK-first public discovery pass with its own web capability, then submits factual observations to `resolve_offers`. The production MCP is the authority for observation time, reliability scores, caps, ranking, evidence separation, receipts, and watches; it does not trust a host-authored score. `find_offers` remains a service-side compatibility path and scheduled-watch fallback.
+
+The plugin connects to that service through the stable public HTTPS `/mcp` endpoint declared in the plugin bundle. The endpoint uses CREATE SOMETHING Identity OAuth and an explicit access policy. Installing the plugin does not authorize broader user access or publish it to the public ChatGPT directory.
