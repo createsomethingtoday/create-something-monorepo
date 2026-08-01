@@ -25,6 +25,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
       'cloudflare',
       'contact',
       'control',
+      'for-service-providers',
       'partners',
       'security',
       'services',
