@@ -16,6 +16,25 @@ import { OFFER_SAVINGS_WIDGET_HTML } from './widget.js';
 export const OFFER_WIDGET_URI = 'ui://offer-savings/results-v3.html';
 export const OFFER_WIDGET_MIME_TYPE = 'text/html;profile=mcp-app';
 
+const widgetResources = [
+  { name: 'offer-savings-results', uri: OFFER_WIDGET_URI },
+  { name: 'offer-savings-results-v2-compatibility', uri: 'ui://offer-savings/results-v2.html' },
+  { name: 'offer-savings-results-v1-compatibility', uri: 'ui://offer-savings/results-v1.html' }
+] as const;
+
+const widgetResourceMeta = {
+  ui: {
+    prefersBorder: true,
+    csp: { connectDomains: [], resourceDomains: [] }
+  },
+  'openai/widgetDescription': 'Ranked public offers with reliability and evidence disclosures.',
+  'openai/widgetPrefersBorder': true,
+  'openai/widgetCSP': {
+    connect_domains: [],
+    resource_domains: []
+  }
+} as const;
+
 const widgetToolMeta = {
   ui: { resourceUri: OFFER_WIDGET_URI },
   'openai/outputTemplate': OFFER_WIDGET_URI,
@@ -73,7 +92,7 @@ export function createOfferSavingsMcpServer(
   const server = new McpServer(
     {
       name: 'offer-savings-agent',
-      version: '0.2.1'
+      version: '0.2.2'
     },
     {
       capabilities: {
@@ -83,50 +102,28 @@ export function createOfferSavingsMcpServer(
     }
   );
 
-  server.registerResource(
-    'offer-savings-results',
-    OFFER_WIDGET_URI,
-    {
-      title: 'Offer Savings results',
-      description: 'Interactive public-offer results and watch controls.',
-      mimeType: OFFER_WIDGET_MIME_TYPE,
-      _meta: {
-        ui: {
-          prefersBorder: true,
-          csp: { connectDomains: [], resourceDomains: [] }
-        },
-        'openai/widgetDescription':
-          'Ranked public offers with reliability and evidence disclosures.',
-        'openai/widgetPrefersBorder': true,
-        'openai/widgetCSP': {
-          connect_domains: [],
-          resource_domains: []
-        }
-      }
-    },
-    async () => ({
-      contents: [
-        {
-          uri: OFFER_WIDGET_URI,
-          mimeType: OFFER_WIDGET_MIME_TYPE,
-          text: options.widgetHtml ?? OFFER_SAVINGS_WIDGET_HTML,
-          _meta: {
-            ui: {
-              prefersBorder: true,
-              csp: { connectDomains: [], resourceDomains: [] }
-            },
-            'openai/widgetDescription':
-              'Ranked public offers with reliability and evidence disclosures.',
-            'openai/widgetPrefersBorder': true,
-            'openai/widgetCSP': {
-              connect_domains: [],
-              resource_domains: []
-            }
+  for (const resource of widgetResources) {
+    server.registerResource(
+      resource.name,
+      resource.uri,
+      {
+        title: 'Offer Savings results',
+        description: 'Interactive public-offer results and watch controls.',
+        mimeType: OFFER_WIDGET_MIME_TYPE,
+        _meta: widgetResourceMeta
+      },
+      async () => ({
+        contents: [
+          {
+            uri: resource.uri,
+            mimeType: OFFER_WIDGET_MIME_TYPE,
+            text: options.widgetHtml ?? OFFER_SAVINGS_WIDGET_HTML,
+            _meta: widgetResourceMeta
           }
-        }
-      ]
-    })
-  );
+        ]
+      })
+    );
+  }
 
   server.registerTool(
     'find_offers',
