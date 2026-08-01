@@ -43,6 +43,7 @@ export interface ValidationResponse {
 		content: ContentAnalysisResult;
 		accessibility: AccessibilityAnalysisResult;
 		interactions: InteractionsAnalysisResult;
+		customCode: CustomCodeAnalysisResult;
 		// performance removed: too estimative without real browser metrics
 	};
 	summary: {
@@ -385,6 +386,14 @@ export interface AnalyzedAsset {
 	usageCount: number;
 	hasLicensingIssues: boolean;
 	recommendedAction?: string;
+}
+
+export interface CustomCodeAnalysisResult {
+	issues: ValidationIssue[];
+	stats: {
+		fontCustomCodeFindings: number;
+		analysisComplete: boolean;
+	};
 }
 
 export interface AnalyzedPage {

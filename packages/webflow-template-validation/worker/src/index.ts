@@ -14,6 +14,7 @@ import { validateContent } from './validators/content-validator';
 import { validateAccessibility } from './validators/accessibility-validator';
 import { validateDesignerData } from './validators/designer-validator';
 import { validateInteractions, type CmsTemplateHint } from './validators/interactions-validator';
+import { validateCustomCode } from './validators/custom-code-validator';
 import { fetchHTML } from './utils/fetch-utils';
 import { Langfuse } from 'langfuse';
 import {
@@ -1562,12 +1563,14 @@ async function performEnhancedValidation(body: ValidationRequest): Promise<Valid
 		maxPages: options.maxPages,
 		cmsTemplateHints
 	});
+	const customCodePromise = validateCustomCode(body.siteUrl);
 
-	const [assetAnalysis, contentAnalysis, accessibilityAnalysis, interactionsAnalysis] = await Promise.all([
+	const [assetAnalysis, contentAnalysis, accessibilityAnalysis, interactionsAnalysis, customCodeAnalysis] = await Promise.all([
 		assetPromise,
 		contentPromise,
 		accessibilityPromise,
-		interactionsPromise
+		interactionsPromise,
+		customCodePromise
 	]);
 
 	return {
@@ -1578,19 +1581,22 @@ async function performEnhancedValidation(body: ValidationRequest): Promise<Valid
 			assets: assetAnalysis,
 			content: contentAnalysis,
 			accessibility: accessibilityAnalysis,
-			interactions: interactionsAnalysis
+			interactions: interactionsAnalysis,
+			customCode: customCodeAnalysis
 		},
 		summary: {
 			totalIssues:
 				assetAnalysis.issues.length +
 				contentAnalysis.issues.length +
 				accessibilityAnalysis.issues.length +
-				interactionsAnalysis.issues.length,
+				interactionsAnalysis.issues.length +
+				customCodeAnalysis.issues.length,
 			criticalErrors: countCriticalErrors([
 				assetAnalysis,
 				contentAnalysis,
 				accessibilityAnalysis,
-				interactionsAnalysis
+				interactionsAnalysis,
+				customCodeAnalysis
 			]),
 			coverageImprovement: '+27 percentage points'
 		}
@@ -1660,6 +1666,14 @@ function mergeReviewResults(
 				stats: enhancedResult.analysis.interactions.stats
 			});
 		}
+		if (enhancedResult.analysis?.customCode) {
+			categories.push({
+				category: 'Custom Code & Site Settings',
+				passed: enhancedResult.analysis.customCode.issues.filter((i: any) => i.severity === 'error').length === 0,
+				issues: enhancedResult.analysis.customCode.issues,
+				stats: enhancedResult.analysis.customCode.stats
+			});
+		}
 		const summary = summarizeSummaryFromCategories(categories);
 		return {
 			url: siteUrl,
@@ -1715,6 +1729,15 @@ function mergeReviewResults(
 			passed: enhancedResult.analysis.interactions.issues.filter((i: any) => i.severity === 'error').length === 0,
 			issues: enhancedResult.analysis.interactions.issues,
 			stats: enhancedResult.analysis.interactions.stats
+		});
+	}
+
+	if (enhancedResult?.analysis?.customCode) {
+		merged.categories.push({
+			category: 'Custom Code & Site Settings',
+			passed: enhancedResult.analysis.customCode.issues.filter((i: any) => i.severity === 'error').length === 0,
+			issues: enhancedResult.analysis.customCode.issues,
+			stats: enhancedResult.analysis.customCode.stats
 		});
 	}
 

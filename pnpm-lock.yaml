@@ -254,6 +254,9 @@ importers:
 
   apps/marketplace-template-submission-cloud:
     dependencies:
+      '@create-something/gsap-validation-worker':
+        specifier: workspace:*
+        version: link:../../packages/gsap-validation-worker
       '@create-something/webflow-dashboard-core':
         specifier: file:../../packages/webflow-dashboard-core
         version: link:../../packages/webflow-dashboard-core
@@ -4700,6 +4703,10 @@ importers:
         version: 4.1.8(@opentelemetry/api@1.9.0)(@types/node@24.10.9)(jsdom@27.4.0(@noble/hashes@1.8.0)(bufferutil@4.1.0)(utf-8-validate@6.0.6))(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
 
   packages/webflow-template-validation/worker:
+    dependencies:
+      '@create-something/gsap-validation-worker':
+        specifier: workspace:*
+        version: link:../../gsap-validation-worker
     devDependencies:
       '@cloudflare/vitest-pool-workers':
         specifier: ^0.8.19

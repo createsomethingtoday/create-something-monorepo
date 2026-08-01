@@ -7,6 +7,8 @@ var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require
   throw Error('Dynamic require of "' + x + '" is not supported');
 });
 
+import { findProhibitedFontCustomCode } from "./font-custom-code-policy.js";
+
 // cloudflare-worker/lib/shared-validator.js
 var IX2_REJECTION_MESSAGE = "Legacy Webflow IX2 interactions detected. As of May 1, 2026, Marketplace templates submitted with IX2 interactions are rejected. Rebuild interactions with Webflow Interactions powered by GSAP (IX3), publish again, and rerun validation.";
 var UNICORN_STUDIO_REJECTION_MESSAGE = "Unicorn Studio embed detected. Marketplace templates may only use custom code for approved exceptions such as GSAP, font smoothing, no-index tags on licensing/changelog pages, or documented SVG snippets. Replace the Unicorn Studio effect with Webflow-native or approved GSAP implementation, publish again, and rerun validation.";
@@ -582,6 +584,16 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
     securityRisks: []
     // Scripts that pose security risks
   };
+  const fontCustomCodeFindings = findProhibitedFontCustomCode(html);
+  fontCustomCodeFindings.forEach((finding, index) => {
+    results.flaggedCode.push({
+      scriptIndex: `font-${index}`,
+      message: finding.message,
+      reason: 'Template fonts must be configured through Webflow Fonts instead of custom code.',
+      policy: finding.policy,
+      flaggedCode: [`${finding.kind}: ${finding.source}`]
+    });
+  });
   const ix2Detection = detectIx2Interactions(html);
   if (ix2Detection.detected) {
     results.legacyIx2Detected = true;
@@ -1021,8 +1033,6 @@ function isCommonStylingCSS(css) {
     // General data-color attribute patterns
     /fill\s*:\s*currentColor/i,
     // SVG fill inheritance
-    // Google Fonts imports (standard Webflow practice)
-    /@import\s+url\s*\(\s*['"]https:\/\/fonts\.googleapis\.com\/css/i,
     // Color inheritance CSS (ensures all elements inherit color from parent)
     /\/\*\s*Ensure all elements inherit the color from its parent\s*\*\//i,
     /color\s*:\s*inherit\s*[;!]/i

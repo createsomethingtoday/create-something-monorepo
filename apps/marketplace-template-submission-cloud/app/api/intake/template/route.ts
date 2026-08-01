@@ -23,6 +23,7 @@ import {
 } from '../../../../lib/intake/published-url';
 import { getCachedPublishedValidation } from '../../../../lib/server/published-validation-cache';
 import { runValidatorAppSubmissionPreflight } from '../../../../lib/intake/validator-app';
+import { runFreshFontCustomCodePreflight } from '../../../../lib/intake/font-custom-code';
 import { validateTemplateNameSyntax } from '../../../../lib/intake/template-name';
 import { waitForTemplateSubmissionReceipt } from '../../../../lib/intake/submission-receipt';
 import {
@@ -274,12 +275,21 @@ export async function POST(request: Request) {
           (error) => ({ ok: false as const, error })
         );
 
-    const [eligibility, templateNameAvailabilityResult] = await Promise.all([
+    // Always inspect the current published head at the final write boundary.
+    // The full crawl may be cached briefly, but project-level custom code can
+    // change after that crawl and must not inherit the earlier pass.
+    const freshFontCustomCodePromise = runFreshFontCustomCodePreflight(normalizedPublishedUrl).then(
+      (value) => ({ ok: true as const, value }),
+      (error) => ({ ok: false as const, error })
+    );
+
+    const [eligibility, templateNameAvailabilityResult, freshFontCustomCodeResult] = await Promise.all([
       evaluateCreatorEligibility(creatorEmail),
       checkTemplateNameAvailability(templateName, { airtable }).then(
         (value) => ({ ok: true as const, value }),
         (error) => ({ ok: false as const, error })
-      )
+      ),
+      freshFontCustomCodePromise
     ]);
 
     if (!templateNameAvailabilityResult.ok) {
@@ -303,6 +313,27 @@ export async function POST(request: Request) {
 
     if (!templateNameAvailabilityResult.value.available) {
       return jsonNoStore({ error: 'Template name is already in use.' }, { status: 409 });
+    }
+
+    if (!freshFontCustomCodeResult.ok) {
+      return jsonNoStore(
+        {
+          error: 'Could not verify the current published custom-code font policy. Try again after confirming the site is public.'
+        },
+        { status: 503 }
+      );
+    }
+
+    if (!freshFontCustomCodeResult.value.passed) {
+      return jsonNoStore(
+        {
+          error: freshFontCustomCodeResult.value.findings[0].message,
+          validationIssues: freshFontCustomCodeResult.value.findings.map(
+            (finding) => `${finding.message} Found: ${finding.source}`
+          )
+        },
+        { status: 400 }
+      );
     }
 
     let publishedUrlResult: {
