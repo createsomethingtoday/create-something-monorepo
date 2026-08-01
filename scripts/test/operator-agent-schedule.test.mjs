@@ -76,6 +76,13 @@ test('operator-agent schedule parses a deterministic once run', () => {
   assert.ok(plan[1].args.includes('--no-revise'));
 });
 
+test('operator-agent schedule rejects an empty launchd job selection', () => {
+  assert.throws(
+    () => parseArgs(['launchd-status', '--jobs', ',']),
+    /--jobs must include at least one of: fast, model/
+  );
+});
+
 test('operator-agent schedule defaults pattern review to deterministic even when batch eval is model-backed', () => {
   const options = parseArgs(['once', '--json', '--eval-limit', '1']);
   const plan = buildRunPlan(options);

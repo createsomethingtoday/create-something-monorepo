@@ -113,6 +113,9 @@ export function parseArgs(argv) {
   if (!Number.isInteger(options.evalLimit) || options.evalLimit < 1) {
     throw new Error('--eval-limit must be a positive integer');
   }
+  if (options.jobs.length === 0) {
+    throw new Error('--jobs must include at least one of: fast, model');
+  }
   for (const job of options.jobs) {
     if (!['fast', 'model'].includes(job)) throw new Error(`Unknown launchd job: ${job}`);
   }
