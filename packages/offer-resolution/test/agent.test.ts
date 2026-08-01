@@ -8,6 +8,7 @@ import {
   OFFER_FIND_AGENT_INSTRUCTIONS,
   createOfferFindAgent,
   createLtkWebSearchTool,
+  finalizeCapturedResolution,
   offerEvidenceInputSchema,
   runOfferFindAgentService,
   resolveOfferEvidenceTool
@@ -90,4 +91,28 @@ test('agent service facade returns the same authoritative service contract', asy
 
   assert.deepEqual(actual, expected);
   assert.equal(actual.operation, 'find_offers');
+});
+
+test('finalization trusts the captured resolver tool payload when model output is prose', () => {
+  const captured = { request, observations: [] };
+
+  const actual = finalizeCapturedResolution(captured, 'Resolved the offers successfully.');
+
+  assert.deepEqual(actual, []);
+});
+
+test('finalization rejects a model receipt that conflicts with captured resolver evidence', () => {
+  const captured = { request, observations: [] };
+  const conflicting = JSON.stringify({
+    schemaVersion: 'offer_resolution.v0.2',
+    request,
+    summary: { recommend: 1, verify: 0, lead: 0, rejected: 0 },
+    lanes: { ltk: [], supplemental: [] },
+    rejected: []
+  });
+
+  assert.throws(
+    () => finalizeCapturedResolution(captured, conflicting),
+    /does not match the authoritative service receipt/
+  );
 });
