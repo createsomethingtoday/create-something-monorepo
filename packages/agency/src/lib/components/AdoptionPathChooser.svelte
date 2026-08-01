@@ -15,7 +15,7 @@
     },
     {
       id: 'clients',
-      eyebrow: 'For client services',
+      eyebrow: 'For a client',
       title: 'Deliver one client workflow',
       detail:
         'Map a client workflow, define account and approval boundaries, then hand over evidence the client can inspect.',
