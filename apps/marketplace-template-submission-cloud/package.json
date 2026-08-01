@@ -14,6 +14,7 @@
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
   },
   "dependencies": {
+    "@create-something/gsap-validation-worker": "workspace:*",
     "@create-something/webflow-dashboard-core": "file:../../packages/webflow-dashboard-core",
     "airtable": "^0.12.2",
     "next": "^15.5.13",

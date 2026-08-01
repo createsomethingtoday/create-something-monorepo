@@ -20,6 +20,9 @@
 		"test:dev": "WORKER_URL=http://localhost:8787 node run-tests.js --mode sample",
 		"analyze": "node test-analyzer.js"
 	},
+	"dependencies": {
+		"@create-something/gsap-validation-worker": "workspace:*"
+	},
 	"devDependencies": {
 		"@cloudflare/vitest-pool-workers": "^0.8.19",
 		"@cloudflare/workers-types": "^4.20260621.1",

@@ -3470,6 +3470,12 @@ export function TemplateIntake() {
                       <ul className="submission-published-url-requirements">
                         <li>The full site crawl can take a few minutes.</li>
                         <li>
+                          Add eligible Google or OFL fonts through Webflow Site settings → Fonts.
+                          Do not paste font <code className="submission-inline-code">&lt;link&gt;</code>,{' '}
+                          <code className="submission-inline-code">@import</code>, or{' '}
+                          <code className="submission-inline-code">@font-face</code> code into project or page settings.
+                        </li>
+                        <li>
                           Legacy IX2 interactions are rejected; rebuild interactions with Webflow
                           Interactions powered by GSAP (IX3).
                         </li>
@@ -4276,7 +4282,8 @@ export function TemplateIntake() {
                             }
                           />
                           <span className="submission-choice-copy">
-                            I completed the submission checklist.
+                            I completed the submission checklist, including adding eligible fonts
+                            through Webflow Fonts instead of custom code.
                           </span>
                         </label>
 

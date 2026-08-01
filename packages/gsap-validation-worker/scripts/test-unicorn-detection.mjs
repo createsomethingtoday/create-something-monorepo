@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import { findProhibitedFontCustomCode } from '../src/font-custom-code-policy.js';
 
 const source = fs.readFileSync(new URL('../src/worker.js', import.meta.url), 'utf8');
 const start = source.indexOf('var IX2_REJECTION_MESSAGE');
@@ -14,6 +15,7 @@ const sandbox = {
   console,
   Set,
   URL,
+  findProhibitedFontCustomCode,
   __name: (target) => target
 };
 
@@ -255,6 +257,54 @@ assert.ok(
     (issue) => issue.message === 'Custom script detected without approved GSAP patterns'
   ),
   'expected custom code appended to Google tag bootstrap to remain blocked'
+);
+
+const manualGoogleFontLinkResult = sandbox.validateGsapUsage(
+  `
+<!doctype html>
+<html>
+  <head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,100..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Geist:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fragment+Mono:ital@0;1&display=swap" rel="stylesheet">
+  </head>
+  <body></body>
+</html>`,
+  'https://manual-font-links.webflow.io/'
+);
+
+assert.equal(manualGoogleFontLinkResult.passed, false);
+assert.equal(manualGoogleFontLinkResult.summary.flaggedCodeCount, 3);
+assert.equal(
+  manualGoogleFontLinkResult.details.flaggedCode.filter(
+    (issue) => issue.policy === 'custom-code-font-loading'
+  ).length,
+  3,
+  'expected every manually inserted Google Fonts stylesheet to be blocked'
+);
+
+const manualGoogleFontImportResult = sandbox.validateGsapUsage(
+  `
+<!doctype html>
+<html>
+  <head>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Fraunces&display=swap");
+    </style>
+  </head>
+  <body></body>
+</html>`,
+  'https://manual-font-import.webflow.io/'
+);
+
+assert.equal(manualGoogleFontImportResult.passed, false);
+assert.ok(
+  manualGoogleFontImportResult.details.flaggedCode.some(
+    (issue) => issue.policy === 'custom-code-font-loading'
+  ),
+  'expected Google Fonts @import custom code to be blocked'
 );
 
 console.log('GSAP validation regression passed.');

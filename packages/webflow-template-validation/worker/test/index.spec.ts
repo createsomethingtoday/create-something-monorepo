@@ -117,6 +117,48 @@ async function sha256ForTest(value: string) {
 		.join('');
 }
 
+describe('Custom code font policy', () => {
+	it('returns a blocking validation issue for fonts loaded through published head code', async () => {
+		vi.mocked(fetchHTML).mockResolvedValue({
+			html: `<!doctype html><html><head>
+				<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces&display=swap">
+			</head><body></body></html>`,
+			status: 200,
+			headers: { 'content-type': 'text/html' },
+			size: 0,
+			loadTime: 0
+		});
+
+		const response = await worker.fetch(
+			new Request('https://validation-worker.createsomething.workers.dev/validate', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					siteUrl: 'https://manual-font-links.webflow.io',
+					designerData: { components: [], styles: [], pages: [], assets: [] },
+					options: {
+						skipAssets: true,
+						skipContent: true,
+						skipAccessibility: true
+					}
+				})
+			}),
+			{},
+			createExecutionContext()
+		);
+
+		expect(response.status).toBe(200);
+		const payload = await response.json() as any;
+		expect(payload.analysis.customCode.issues).toEqual([
+			expect.objectContaining({
+				id: 'custom-code-font-loading',
+				category: 'Custom Code & Site Settings',
+				severity: 'error'
+			})
+		]);
+	});
+});
+
 describe('Designer Validator', () => {
 	it('reports missing core designer primitives instead of skipping the categories', async () => {
 		const result = await validateDesignerData({
@@ -1435,6 +1477,7 @@ describe('Interactions Validator', () => {
 			})
 		]);
 		expect(fetchHtmlMock.mock.calls.map(([url]) => url)).toEqual([
+			'https://example.webflow.io',
 			'https://example.webflow.io/',
 			'https://example.webflow.io/blog-posts/from-homepage',
 			'https://example.webflow.io/project/from-homepage'
@@ -1517,6 +1560,7 @@ describe('Interactions Validator', () => {
 			validatedUrls: ['https://example.webflow.io/blog-posts/from-sitemap']
 		}));
 		expect(fetchHtmlMock.mock.calls.map(([url]) => url)).toEqual([
+			'https://example.webflow.io',
 			'https://example.webflow.io/',
 			'https://example.webflow.io/blog-posts/from-sitemap'
 		]);
