@@ -17,6 +17,9 @@ test('the public shell exposes Practice and keeps client-service adoption one cl
   assert.match(chooser, /Deliver one client workflow/);
   assert.match(chooser, /Start with your team or a client\./);
   assert.match(chooser, /Choose who owns the workflow\. The method stays consistent\./);
+  assert.match(chooser, /eyebrow: 'For your team'/);
+  assert.match(chooser, /eyebrow: 'For a client'/);
+  assert.doesNotMatch(chooser, /eyebrow: 'For client services'/);
   assert.doesNotMatch(chooser, /Which workflow are you bringing\?/);
   assert.match(chooser, /Same method/);
   assert.match(chooser, /Map, Build, and Control/);
