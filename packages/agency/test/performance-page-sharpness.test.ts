@@ -11,6 +11,7 @@ const commercialRoutes = [
   'cloudflare',
   'contact',
   'control',
+  'for-service-providers',
   'partners',
   'security',
   'services',
@@ -68,6 +69,11 @@ test('preserves the primary destinations carried by the commercial cohort', () =
     cloudflare: ['/partners'],
     contact: ['/book'],
     control: ['mapProduct.route', '/products/signal', '/products/decision', '/products/proof'],
+    'for-service-providers': [
+      '/map?source=service-provider&intent=client-workflow',
+      '/book?source=service-provider&intent=client-workflow',
+      '/partners'
+    ],
     partners: ['/products', '/cloudflare', '/stack'],
     security: ['/bearer-token-policy', 'mailto:legal@createsomething.io'],
     // The opening CTA moved from an in-page '#map-warmup' jump to the canonical Map
