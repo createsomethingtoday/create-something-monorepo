@@ -213,17 +213,20 @@
     }}
   >
     {#snippet actions()}
-      <Button href="#practice-workbench">Rehearse the operator journey</Button>
-      <Button href="/proof/marketplace-workflow" variant="secondary"
-        >Inspect a bounded proof route</Button
-      >
-      <Button
-        href="/book?source=practice&intent=named-workflow&stage=convert&lane=not_sure"
-        variant="secondary">Request a mapping session</Button
-      >
-      <Button href="/for-service-providers" variant="secondary"
-        >Use the Practice with clients</Button
-      >
+      <div class="practice-handoff-actions" aria-label="Practice handoff actions">
+        <Button
+          href="/book?source=practice&intent=named-workflow&stage=convert&lane=not_sure"
+          variant="secondary"
+          fullWidth>Request a mapping session</Button
+        >
+        <a class="practice-handoff-proof" href="/proof/marketplace-workflow">
+          Inspect the bounded proof <span aria-hidden="true">→</span>
+        </a>
+        <a class="practice-handoff-audience" href="/for-service-providers">
+          <span>For service providers</span>
+          <strong>Use the Practice with clients <span aria-hidden="true">→</span></strong>
+        </a>
+      </div>
     {/snippet}
   </PerformanceConversionHandoff>
 </main>
@@ -269,5 +272,61 @@
     max-width: 52rem;
     color: rgb(255 255 255 / 0.72);
     line-height: 1.55;
+  }
+
+  .practice-handoff-actions {
+    display: grid;
+    width: min(100%, 32rem);
+    gap: var(--space-performance-sm, 0.75rem);
+  }
+
+  .practice-handoff-proof,
+  .practice-handoff-audience {
+    min-height: var(--height-performance-control-min, 2.75rem);
+    color: var(--color-performance-panel, #fff);
+    text-decoration: none;
+  }
+
+  .practice-handoff-proof {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-performance-sm, 0.75rem);
+    padding: var(--space-performance-sm, 0.75rem) var(--space-performance-md, 1.25rem);
+    border: 1px solid color-mix(in srgb, var(--color-performance-panel, #fff) 44%, transparent);
+    border-radius: var(--radius-performance-sm, 0);
+    font-weight: var(--font-performance-semibold, 600);
+  }
+
+  .practice-handoff-audience {
+    display: grid;
+    align-content: center;
+    gap: var(--space-performance-2xs, 0.25rem);
+    padding-block: var(--space-performance-sm, 0.75rem);
+    border-top: 1px solid color-mix(in srgb, var(--color-performance-panel, #fff) 28%, transparent);
+  }
+
+  .practice-handoff-audience > span {
+    color: color-mix(in srgb, var(--color-performance-panel, #fff) 58%, transparent);
+    font-family: var(--font-performance-mono);
+    font-size: var(--text-performance-label, 0.72rem);
+    font-weight: var(--font-performance-semibold, 600);
+    text-transform: uppercase;
+  }
+
+  .practice-handoff-audience strong {
+    font-size: var(--text-performance-body, 1rem);
+  }
+
+  .practice-handoff-proof:hover,
+  .practice-handoff-audience:hover strong {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+
+  .practice-handoff-proof:focus-visible,
+  .practice-handoff-audience:focus-visible {
+    outline: 2px solid var(--color-performance-signal, #1769ff);
+    outline-offset: 2px;
   }
 </style>
