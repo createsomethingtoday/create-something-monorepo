@@ -13,8 +13,13 @@ test('the public shell exposes Practice and keeps client-service adoption one cl
   assert.match(layout, /label: 'Field Reports', href: '\/field-reports'/);
   assert.match(layout, /label: 'Use With Clients', href: '\/for-service-providers'/);
   assert.match(home, /<AdoptionPathChooser \/>/);
-  assert.match(chooser, /Improve one internal workflow/);
-  assert.match(chooser, /Deliver one client workflow/);
+  assert.match(chooser, /title: \['Improve one', 'internal workflow'\]/);
+  assert.match(chooser, /title: \['Deliver one', 'client workflow'\]/);
+  assert.match(
+    chooser,
+    /<h3 aria-label=\{path\.title\.join\(' '\)\}>[\s\S]*?\{#each path\.title as line\}<span>\{line\}<\/span>\{\/each\}[\s\S]*?<\/h3>/
+  );
+  assert.match(chooser, /h3 > span\s*\{[\s\S]*?display:\s*block;/);
   assert.match(chooser, /Start with your team or a client\./);
   assert.match(chooser, /Choose who owns the workflow\. The method stays consistent\./);
   assert.match(chooser, /eyebrow: 'For your team'/);
