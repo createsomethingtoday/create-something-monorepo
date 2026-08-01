@@ -51,18 +51,29 @@ node packages/offer-savings-app/dist/run-watches.js \
 
 The scheduler records success or failure and preserves the previous successful receipt. It does not send external notifications. In normal operation, inject secrets with the repository-approved secret manager; never commit them or place them in command history.
 
-## ChatGPT promotion boundary
+## Hosted MCP for private ChatGPT testing
 
-Local MCP protocol and standalone-browser verification prove the app contract, not an authenticated ChatGPT Developer Mode connection. A public HTTPS endpoint, ChatGPT app registration, hosted persistence, DNS, external notifications, and submission require separate approval and promotion evidence.
+The Cloudflare Worker in `worker/` exposes the production MCP endpoint at `https://offer-savings-agent.createsomething.workers.dev/mcp`. It uses CREATE SOMETHING Identity OAuth, restricts access to the configured email allowlist, persists watches in the dedicated `offer-savings` D1 database, and keeps the OpenAI API key in Worker secrets.
+
+Deploy and validate from the Worker package:
+
+```bash
+pnpm --filter @create-something/offer-savings-worker test
+pnpm --filter @create-something/offer-savings-worker check
+pnpm --filter @create-something/offer-savings-worker deploy:dry-run
+pnpm --filter @create-something/offer-savings-worker deploy
+```
+
+This hosted endpoint is approved for private ChatGPT Developer Mode testing. Public directory submission, external notifications, purchase/cart behavior, private LTK access, and broader user access remain separate promotion gates.
 
 ## Agent Legibility Contract
 
 <!-- prettier-ignore -->
 | Field | Value |
 | --- | --- |
-| Entry point | `src/index.ts`, `src/http.ts`, `src/runtime.ts`, `src/start.ts` |
+| Entry point | `src/index.ts`, `src/http.ts`, `src/runtime.ts`, `src/start.ts`, `worker/index.ts` |
 | Boot command | `pnpm build` |
 | Smoke command | `pnpm verify` |
 | Validation surfaces | tool schemas and annotations, MCP initialization/list/call, widget resource metadata/CSP, REST composition, malformed input, idempotent watch, restart persistence, bridge actions, browser console/network, live runtime config |
 | UI validation path | run `pnpm dev:fixture`, open `/widget` with Playwright, create/retry a watch, restart with the same state file, and capture screenshot/console/requests |
-| Escalation rule | stop before public deployment, ChatGPT registration, hosted state, notifications, purchase/cart behavior, private access, or policy changes |
+| Escalation rule | stop before public directory submission, broader user access, notifications, purchase/cart behavior, private LTK access, or offer-policy changes |

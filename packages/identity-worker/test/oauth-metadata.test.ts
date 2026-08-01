@@ -30,6 +30,8 @@ test('identity worker serves oauth authorization server metadata', async () => {
     'template-review:read',
     'template-review:write',
     'template-review:queue-read',
+    'offer-savings:read',
+    'offer-savings:write',
     'cracked-sync:read',
     'cracked-sync:write',
   ]);

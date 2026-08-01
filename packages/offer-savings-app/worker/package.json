@@ -1,0 +1,27 @@
+{
+  "name": "@create-something/offer-savings-worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "test": "node --import tsx --test tests/*.test.ts",
+    "deploy:dry-run": "node ../../../scripts/run-wrangler.mjs deploy --dry-run --outdir .wrangler/dry-run",
+    "deploy": "node ../../../scripts/run-wrangler.mjs deploy"
+  },
+  "dependencies": {
+    "@create-something/offer-resolution": "workspace:*",
+    "@create-something/offer-savings-app": "workspace:*",
+    "@modelcontextprotocol/sdk": "1.25.3",
+    "@openai/agents": "^0.13.5",
+    "agents": "^0.3.10",
+    "hono": "^4.11.7"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260621.1",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "wrangler": "^4.103.0"
+  }
+}

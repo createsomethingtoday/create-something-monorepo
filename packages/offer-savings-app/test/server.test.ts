@@ -34,19 +34,48 @@ const fixture = JSON.parse(
   )
 ) as Fixture;
 
-async function connectClient(stateFile: string) {
+async function connectClient(
+  stateFile: string,
+  security?: {
+    readSecuritySchemes: Array<{ type: 'oauth2'; scopes: string[] }>;
+    writeSecuritySchemes: Array<{ type: 'oauth2'; scopes: string[] }>;
+  }
+) {
   const service = createOfferService({
     discovery: { discover: async () => fixture.observations },
     watches: createFileOfferWatchRepository({ filePath: stateFile }),
     clock: () => new Date('2026-07-30T15:00:00.000Z')
   });
-  const server = createOfferSavingsMcpServer({ service });
+  const server = createOfferSavingsMcpServer({ service, ...security });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await server.connect(serverTransport);
   const client = new Client({ name: 'offer-savings-test', version: '0.1.0' });
   await client.connect(clientTransport);
   return { client, server };
 }
+
+test('MCP advertises resource-specific OAuth scopes when the host requires authentication', async (t) => {
+  const stateDirectory = mkdtempSync(join(tmpdir(), 'offer-savings-mcp-auth-'));
+  t.after(() => rmSync(stateDirectory, { recursive: true, force: true }));
+  const { client, server } = await connectClient(join(stateDirectory, 'watches.json'), {
+    readSecuritySchemes: [{ type: 'oauth2', scopes: ['offer-savings:read'] }],
+    writeSecuritySchemes: [
+      { type: 'oauth2', scopes: ['offer-savings:read', 'offer-savings:write'] }
+    ]
+  });
+  t.after(async () => {
+    await client.close();
+    await server.close();
+  });
+
+  const tools = (await client.listTools()).tools;
+  assert.deepEqual(tools.find((tool) => tool.name === 'find_offers')?._meta?.securitySchemes, [
+    { type: 'oauth2', scopes: ['offer-savings:read'] }
+  ]);
+  assert.deepEqual(tools.find((tool) => tool.name === 'watch_offers')?._meta?.securitySchemes, [
+    { type: 'oauth2', scopes: ['offer-savings:read', 'offer-savings:write'] }
+  ]);
+});
 
 test('MCP protocol exposes only the bounded offer workflow and widget resource', async (t) => {
   const stateDirectory = mkdtempSync(join(tmpdir(), 'offer-savings-mcp-'));

@@ -235,7 +235,7 @@ importers:
         version: 5.41.0
       svelte-check:
         specifier: ^4.3.3
-        version: 4.3.3(picomatch@4.0.5)(svelte@5.41.0)(typescript@5.9.3)
+        version: 4.3.3(picomatch@4.0.3)(svelte@5.41.0)(typescript@5.9.3)
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
@@ -478,16 +478,16 @@ importers:
         version: 1.58.2
       '@sveltejs/adapter-auto':
         specifier: 7.0.0
-        version: 7.0.0(@sveltejs/kit@2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))
+        version: 7.0.0(@sveltejs/kit@2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))
       '@sveltejs/adapter-cloudflare':
         specifier: 7.2.4
-        version: 7.2.4(@sveltejs/kit@2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
+        version: 7.2.4(@sveltejs/kit@2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
       '@sveltejs/kit':
         specifier: 2.47.1
-        version: 2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+        version: 2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       '@sveltejs/vite-plugin-svelte':
         specifier: 6.2.1
-        version: 6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+        version: 6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       '@types/node':
         specifier: 24.10.9
         version: 24.10.9
@@ -532,7 +532,7 @@ importers:
         version: 5.9.3
       vite:
         specifier: 7.1.10
-        version: 7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)
+        version: 7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)
       wrangler:
         specifier: 4.103.0
         version: 4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
@@ -804,13 +804,13 @@ importers:
         version: 4.20260621.1
       '@sveltejs/adapter-cloudflare':
         specifier: ^7.2.4
-        version: 7.2.4(@sveltejs/kit@2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
+        version: 7.2.4(@sveltejs/kit@2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
       '@sveltejs/kit':
         specifier: ^2.47.1
-        version: 2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+        version: 2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       '@sveltejs/vite-plugin-svelte':
         specifier: ^6.2.1
-        version: 6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+        version: 6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       autoprefixer:
         specifier: ^10.4.22
         version: 10.4.22(postcss@8.5.6)
@@ -831,7 +831,7 @@ importers:
         version: 5.9.3
       vite:
         specifier: ^7.1.10
-        version: 7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)
+        version: 7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)
       wrangler:
         specifier: ^4.103.0
         version: 4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
@@ -1142,7 +1142,7 @@ importers:
         version: 5.48.5
       svelte-check:
         specifier: ^4.3.3
-        version: 4.3.5(picomatch@4.0.3)(svelte@5.48.5)(typescript@5.9.3)
+        version: 4.3.5(picomatch@4.0.5)(svelte@5.48.5)(typescript@5.9.3)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -1462,7 +1462,7 @@ importers:
         version: 6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       svelte-check:
         specifier: ^4.3.3
-        version: 4.3.3(picomatch@4.0.3)(svelte@5.41.0)(typescript@5.9.3)
+        version: 4.3.3(picomatch@4.0.5)(svelte@5.41.0)(typescript@5.9.3)
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
@@ -3132,6 +3132,43 @@ importers:
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
+
+  packages/offer-savings-app/worker:
+    dependencies:
+      '@create-something/offer-resolution':
+        specifier: workspace:*
+        version: link:../../offer-resolution
+      '@create-something/offer-savings-app':
+        specifier: workspace:*
+        version: link:..
+      '@modelcontextprotocol/sdk':
+        specifier: 1.25.3
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6)
+      '@openai/agents':
+        specifier: ^0.13.5
+        version: 0.13.5(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(hono@4.12.30)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      agents:
+        specifier: ^0.3.10
+        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6))(ai@6.0.235(zod@4.3.6))(zod@4.3.6))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@4.3.6))(hono@4.12.30)(react@19.2.4)(viem@2.47.5(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@4.3.6))(zod@4.3.6)
+      hono:
+        specifier: ^4.11.7
+        version: 4.12.30
+    devDependencies:
+      '@cloudflare/workers-types':
+        specifier: ^4.20260621.1
+        version: 4.20260621.1
+      '@types/node':
+        specifier: 24.10.9
+        version: 24.10.9
+      tsx:
+        specifier: ^4.21.0
+        version: 4.21.0
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      wrangler:
+        specifier: ^4.103.0
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/ona-agents:
     dependencies:
@@ -24550,6 +24587,22 @@ snapshots:
       ajv: 8.17.1
       ajv-formats: 3.0.1(ajv@8.17.1)
 
+  '@openai/agents-core@0.13.5(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
+    dependencies:
+      debug: 4.4.3
+      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.21)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+    optionalDependencies:
+      '@modelcontextprotocol/sdk': 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6)
+      zod: 4.3.6
+    transitivePeerDependencies:
+      - '@aws-sdk/credential-provider-node'
+      - '@cfworker/json-schema'
+      - '@smithy/hash-node'
+      - '@smithy/signature-v4'
+      - hono
+      - supports-color
+      - ws
+
   '@openai/agents-core@0.13.5(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
     dependencies:
       debug: 4.4.3
@@ -24644,6 +24697,21 @@ snapshots:
       - supports-color
       - ws
 
+  '@openai/agents-openai@0.13.5(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
+    dependencies:
+      '@openai/agents-core': 0.13.5(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      debug: 4.4.3
+      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.21)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      zod: 4.3.6
+    transitivePeerDependencies:
+      - '@aws-sdk/credential-provider-node'
+      - '@cfworker/json-schema'
+      - '@smithy/hash-node'
+      - '@smithy/signature-v4'
+      - hono
+      - supports-color
+      - ws
+
   '@openai/agents-openai@0.13.5(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
     dependencies:
       '@openai/agents-core': 0.13.5(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
@@ -24706,6 +24774,23 @@ snapshots:
       - hono
       - supports-color
       - ws
+
+  '@openai/agents-realtime@0.13.5(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(hono@4.12.30)(utf-8-validate@6.0.6)(zod@4.3.6)':
+    dependencies:
+      '@openai/agents-core': 0.13.5(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      '@types/ws': 8.18.1
+      debug: 4.4.3
+      ws: 8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+      zod: 4.3.6
+    transitivePeerDependencies:
+      - '@aws-sdk/credential-provider-node'
+      - '@cfworker/json-schema'
+      - '@smithy/hash-node'
+      - '@smithy/signature-v4'
+      - bufferutil
+      - hono
+      - supports-color
+      - utf-8-validate
 
   '@openai/agents-realtime@0.13.5(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(zod@4.3.6)':
     dependencies:
@@ -24779,6 +24864,25 @@ snapshots:
       - hono
       - supports-color
       - utf-8-validate
+
+  '@openai/agents@0.13.5(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(hono@4.12.30)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
+    dependencies:
+      '@openai/agents-core': 0.13.5(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      '@openai/agents-openai': 0.13.5(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      '@openai/agents-realtime': 0.13.5(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(hono@4.12.30)(utf-8-validate@6.0.6)(zod@4.3.6)
+      debug: 4.4.3
+      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.21)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      zod: 4.3.6
+    transitivePeerDependencies:
+      - '@aws-sdk/credential-provider-node'
+      - '@cfworker/json-schema'
+      - '@smithy/hash-node'
+      - '@smithy/signature-v4'
+      - bufferutil
+      - hono
+      - supports-color
+      - utf-8-validate
+      - ws
 
   '@openai/agents@0.13.5(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
     dependencies:
@@ -25045,14 +25149,14 @@ snapshots:
       '@remotion/media-parser': 4.0.410
       '@remotion/studio': 4.0.410(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@6.0.6)
       '@remotion/studio-shared': 4.0.410(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      css-loader: 5.2.7(webpack@5.96.1(esbuild@0.24.2))
+      css-loader: 5.2.7(webpack@5.96.1(esbuild@0.25.0))
       esbuild: 0.25.0
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)
       react-refresh: 0.9.0
       remotion: 4.0.410(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       source-map: 0.7.3
-      style-loader: 4.0.0(webpack@5.96.1(esbuild@0.24.2))
+      style-loader: 4.0.0(webpack@5.96.1(esbuild@0.25.0))
       webpack: 5.96.1(esbuild@0.25.0)
     transitivePeerDependencies:
       - '@swc/core'
@@ -27347,9 +27451,9 @@ snapshots:
     dependencies:
       acorn: 8.15.0
 
-  '@sveltejs/adapter-auto@7.0.0(@sveltejs/kit@2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))':
+  '@sveltejs/adapter-auto@7.0.0(@sveltejs/kit@2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))':
     dependencies:
-      '@sveltejs/kit': 2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+      '@sveltejs/kit': 2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
 
   '@sveltejs/adapter-auto@7.0.0(@sveltejs/kit@2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))':
     dependencies:
@@ -31199,7 +31303,7 @@ snapshots:
     dependencies:
       utrie: 1.0.2
 
-  css-loader@5.2.7(webpack@5.96.1(esbuild@0.24.2)):
+  css-loader@5.2.7(webpack@5.96.1(esbuild@0.25.0)):
     dependencies:
       icss-utils: 5.1.0(postcss@8.5.6)
       loader-utils: 2.0.4
@@ -31211,7 +31315,7 @@ snapshots:
       postcss-value-parser: 4.2.0
       schema-utils: 3.3.0
       semver: 7.7.3
-      webpack: 5.96.1(esbuild@0.24.2)
+      webpack: 5.96.1(esbuild@0.25.0)
 
   css-loader@7.1.3(@rspack/core@1.7.4(@swc/helpers@0.5.18))(webpack@5.104.1(esbuild@0.24.2)):
     dependencies:
@@ -35766,7 +35870,7 @@ snapshots:
   porto@0.2.35(@tanstack/react-query@5.91.0(react@19.2.4))(@types/react@19.2.14)(@wagmi/core@2.22.1(@tanstack/query-core@5.101.2)(@types/react@19.2.14)(react@19.2.4)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.4))(viem@2.47.5(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76)))(react@19.2.4)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.4))(viem@2.47.5(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(wagmi@2.19.5(@tanstack/query-core@5.101.2)(@tanstack/react-query@5.91.0(react@19.2.4))(@types/react@19.2.14)(aws4fetch@1.0.20)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)(viem@2.47.5(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)):
     dependencies:
       '@wagmi/core': 2.22.1(@tanstack/query-core@5.101.2)(@types/react@19.2.14)(react@19.2.4)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.4))(viem@2.47.5(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))
-      hono: 4.11.7
+      hono: 4.12.30
       idb-keyval: 6.2.2
       mipd: 0.0.7(typescript@5.9.3)
       ox: 0.9.17(typescript@5.9.3)(zod@4.3.6)
@@ -37344,9 +37448,9 @@ snapshots:
     dependencies:
       '@tokenizer/token': 0.3.0
 
-  style-loader@4.0.0(webpack@5.96.1(esbuild@0.24.2)):
+  style-loader@4.0.0(webpack@5.96.1(esbuild@0.25.0)):
     dependencies:
-      webpack: 5.96.1(esbuild@0.24.2)
+      webpack: 5.96.1(esbuild@0.25.0)
 
   style-mod@4.1.3: {}
 
@@ -37405,18 +37509,6 @@ snapshots:
       picocolors: 1.1.1
       sade: 1.8.1
       svelte: 5.41.0
-      typescript: 5.9.3
-    transitivePeerDependencies:
-      - picomatch
-
-  svelte-check@4.3.5(picomatch@4.0.3)(svelte@5.48.5)(typescript@5.9.3):
-    dependencies:
-      '@jridgewell/trace-mapping': 0.3.31
-      chokidar: 4.0.3
-      fdir: 6.5.0(picomatch@4.0.3)
-      picocolors: 1.1.1
-      sade: 1.8.1
-      svelte: 5.48.5
       typescript: 5.9.3
     transitivePeerDependencies:
       - picomatch
@@ -37677,17 +37769,6 @@ snapshots:
     optionalDependencies:
       esbuild: 0.24.2
 
-  terser-webpack-plugin@5.3.16(esbuild@0.24.2)(webpack@5.96.1(esbuild@0.24.2)):
-    dependencies:
-      '@jridgewell/trace-mapping': 0.3.31
-      jest-worker: 27.5.1
-      schema-utils: 4.3.3
-      serialize-javascript: 6.0.2
-      terser: 5.46.0
-      webpack: 5.96.1(esbuild@0.24.2)
-    optionalDependencies:
-      esbuild: 0.24.2
-
   terser-webpack-plugin@5.3.16(esbuild@0.25.0)(webpack@5.96.1(esbuild@0.24.2)):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
@@ -37695,7 +37776,7 @@ snapshots:
       schema-utils: 4.3.3
       serialize-javascript: 6.0.2
       terser: 5.46.0
-      webpack: 5.96.1(esbuild@0.24.2)
+      webpack: 5.96.1(esbuild@0.25.0)
     optionalDependencies:
       esbuild: 0.25.0
 
@@ -39026,36 +39107,6 @@ snapshots:
       schema-utils: 4.3.3
       tapable: 2.3.0
       terser-webpack-plugin: 5.3.16(esbuild@0.24.2)(webpack@5.104.1(esbuild@0.24.2))
-      watchpack: 2.5.1
-      webpack-sources: 3.3.3
-    transitivePeerDependencies:
-      - '@swc/core'
-      - esbuild
-      - uglify-js
-
-  webpack@5.96.1(esbuild@0.24.2):
-    dependencies:
-      '@types/eslint-scope': 3.7.7
-      '@types/estree': 1.0.9
-      '@webassemblyjs/ast': 1.14.1
-      '@webassemblyjs/wasm-edit': 1.14.1
-      '@webassemblyjs/wasm-parser': 1.14.1
-      acorn: 8.15.0
-      browserslist: 4.28.1
-      chrome-trace-event: 1.0.4
-      enhanced-resolve: 5.18.4
-      es-module-lexer: 1.7.0
-      eslint-scope: 5.1.1
-      events: 3.3.0
-      glob-to-regexp: 0.4.1
-      graceful-fs: 4.2.11
-      json-parse-even-better-errors: 2.3.1
-      loader-runner: 4.3.1
-      mime-types: 2.1.35
-      neo-async: 2.6.2
-      schema-utils: 3.3.0
-      tapable: 2.3.0
-      terser-webpack-plugin: 5.3.16(esbuild@0.24.2)(webpack@5.96.1(esbuild@0.24.2))
       watchpack: 2.5.1
       webpack-sources: 3.3.3
     transitivePeerDependencies:
