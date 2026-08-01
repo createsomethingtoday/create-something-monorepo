@@ -197,7 +197,13 @@ async function runServerMode(): Promise<void> {
   const initialState = loadState(paths);
   const resolution = resolveState(registry, initialState);
   const downstream = await connectDownstreamServers(registry, resolution.enabledServerNames);
-  const proxies = buildProxyCatalog(downstream.connected, registry, routing, tenantRouting);
+  const proxies = buildProxyCatalog(
+    downstream.connected,
+    registry,
+    routing,
+    tenantRouting,
+    MANAGEMENT_TOOLS.map((tool) => tool.name),
+  );
   const rateLimitPolicy = resolveRateLimitPolicy(process.env);
 
   const server = new Server(

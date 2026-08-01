@@ -42,10 +42,12 @@ export function buildProxyCatalog(
   registry: McpBundleRegistry,
   routing: HubRoutingConfig,
   tenantRouting: TenantRoutingContext,
+  reservedToolNames: Iterable<string> = [],
 ): ProxyCatalog {
   const toolDefinitions: Tool[] = [];
   const routes = new Map<string, ProxyRoute>();
   const directRouteMap = new Map<string, ProxyRoute>();
+  const reservedProxyNames = new Set(reservedToolNames);
   const warnings: string[] = [];
   const directRoutesWithTags: DirectRouteWithTags[] = [];
 
@@ -107,7 +109,7 @@ export function buildProxyCatalog(
       warnings.push(`Alias "${aliasPlan.aliasToolName}" normalized to "${normalizedAliasName}"`);
     }
 
-    const aliasProxyName = reserveProxyName(normalizedAliasName, routes, warnings);
+    const aliasProxyName = reserveProxyName(normalizedAliasName, routes, warnings, reservedProxyNames);
     toolDefinitions.push({
       name: aliasProxyName,
       description: `[alias] ${aliasPlan.description}`,
@@ -172,14 +174,15 @@ export function reserveProxyName(
   baseName: string,
   routes: Map<string, ProxyRoute>,
   warnings: string[],
+  reservedNames: ReadonlySet<string> = new Set(),
 ): string {
-  if (!routes.has(baseName)) {
+  if (!routes.has(baseName) && !reservedNames.has(baseName)) {
     return baseName;
   }
 
   let suffix = 2;
   let candidate = `${baseName}_${suffix}`;
-  while (routes.has(candidate)) {
+  while (routes.has(candidate) || reservedNames.has(candidate)) {
     suffix += 1;
     candidate = `${baseName}_${suffix}`;
   }

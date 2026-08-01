@@ -182,6 +182,38 @@ test('buildProxyCatalog emits an alias route that fails over across candidates',
   assert.equal(fallback.server.client.calls.length, 1);
 });
 
+test('buildProxyCatalog keeps aliases callable when their names collide with management tools', async () => {
+  const provider = makeConnected('provider', [
+    { name: 'status', description: 'provider status', inputSchema: { type: 'object' } },
+  ]);
+  const registry = makeRegistry([provider]);
+  const routing = {
+    version: 1,
+    aliases: {
+      hub_status: {
+        candidates: [
+          { server: 'provider', tool: 'status', oauthApproval: 'approved' },
+        ],
+      },
+    },
+  };
+
+  const catalog = buildProxyCatalog(
+    [provider.server],
+    registry,
+    routing,
+    makeTenantContext(),
+    ['hub_status'],
+  );
+  const listedToolNames = ['hub_status', ...catalog.toolDefinitions.map((tool) => tool.name)];
+
+  assert.equal(new Set(listedToolNames).size, listedToolNames.length);
+  assert.equal(catalog.routes.has('hub_status'), false);
+  assert.equal(catalog.routes.get('hub_status_2')?.source, 'alias');
+  assert.ok(catalog.warnings.some((warning) => warning.includes('collision for "hub_status"')));
+  assert.deepEqual(await catalog.routes.get('hub_status_2').call({}), { ok: true, name: 'status' });
+});
+
 test('buildProxyCatalog throws a descriptive error when all alias candidates fail', async () => {
   const a = makeConnected('arcade', [
     { name: 'send', description: '', inputSchema: { type: 'object' } },
