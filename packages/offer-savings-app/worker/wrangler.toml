@@ -24,6 +24,10 @@ database_name = "offer-savings"
 database_id = "be77b59a-4718-49bd-bca1-a99460d15d11"
 migrations_dir = "migrations"
 
+[[services]]
+binding = "IDENTITY_WORKER"
+service = "identity-worker"
+
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["OfferSavingsMCP"]

@@ -60,7 +60,7 @@ async function authenticateIdentityRequest(input: {
   request: Request;
   env: OfferSavingsWorkerEnv;
   origin: string;
-  identityFetch: typeof fetch;
+  identityFetch: (request: Request) => Promise<Response>;
 }): Promise<OfferSavingsRequestProps | Response> {
   const issuer = identityIssuer(input.env);
   if (!issuer) {
@@ -84,9 +84,9 @@ async function authenticateIdentityRequest(input: {
 
   let response: Response;
   try {
-    response = await input.identityFetch(`${issuer}/oauth/userinfo`, {
+    response = await input.identityFetch(new Request(`${issuer}/oauth/userinfo`, {
       headers: { Accept: 'application/json', Authorization: `Bearer ${token}` }
-    });
+    }));
   } catch {
     return jsonResponse(
       {
@@ -187,11 +187,15 @@ export function createOfferSavingsWorkerHandler(options: {
       }
 
       if (url.pathname === '/mcp' || url.pathname.startsWith('/mcp/')) {
+        const identityWorker = env.IDENTITY_WORKER;
+        const identityFetch = identityWorker
+          ? (identityRequest: Request) => identityWorker.fetch(identityRequest)
+          : (identityRequest: Request) => (options.identityFetch ?? fetch)(identityRequest);
         const identity = await authenticateIdentityRequest({
           request,
           env,
           origin: url.origin,
-          identityFetch: options.identityFetch ?? fetch
+          identityFetch
         });
         if (identity instanceof Response) return identity;
         return options.mcpFetch(request, env, { ...ctx, props: identity });
