@@ -21,12 +21,32 @@ const fixture = JSON.parse(
     'utf8'
   )
 ) as Fixture;
+const fixtureOfficial = fixture.observations.find(
+  (observation) => observation.id === 'fixture-official-20'
+);
+if (!fixtureOfficial) throw new Error('Fixture is missing its official offer observation.');
+const fixtureEvidenceOnly: OfferObservation = {
+  ...fixtureOfficial,
+  id: 'fixture-pickup-information',
+  title: '[Fixture] Pickup & Delivery information',
+  source: {
+    ...fixtureOfficial.source,
+    url: 'https://www.abercrombie.com/shop/us/help/shipping-handling'
+  },
+  offer: {
+    discount: { kind: 'shipping' },
+    status: 'active',
+    minimumSubtotal: 35
+  },
+  evidence: { terms: 'explicit', code: 'not_applicable', corroboratingUrls: [] }
+};
+const { asOf: _fixtureAsOf, ...publicRequest } = fixture.request;
 const port = Number.parseInt(process.env.PORT ?? '8791', 10);
 const stateFile = resolve(process.env.OFFER_STATE_FILE ?? '.state/fixture-watches.json');
 mkdirSync(dirname(stateFile), { recursive: true });
 
 const service = createOfferService({
-  discovery: { discover: async () => fixture.observations },
+  discovery: { discover: async () => [...fixture.observations, fixtureEvidenceOnly] },
   watches: createFileOfferWatchRepository({ filePath: stateFile }),
   clock: () => new Date('2026-07-30T15:00:00.000Z')
 });
@@ -36,7 +56,7 @@ const server = createOfferSavingsHttpServer({
   standalone: {
     initialResult,
     watchInput: {
-      request: fixture.request,
+      request: publicRequest,
       until: '2026-08-09T23:59:59.000Z',
       idempotencyKey: 'standalone-widget-watch'
     }

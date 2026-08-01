@@ -25,7 +25,8 @@ const { asOf: _fixtureAsOf, ...publicRequest } = fixture.request;
 
 test('HTTP adapter exposes health and find_offers through real network requests', async (t) => {
   const service = createOfferService({
-    discovery: { discover: async () => fixture.observations }
+    discovery: { discover: async () => fixture.observations },
+    clock: () => new Date(fixture.request.asOf)
   });
   const server = createServer(createOfferHttpHandler(service));
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
@@ -133,7 +134,7 @@ test('HTTP adapter exposes verify and persistent watch operations with actionabl
   const invalidResponse = await fetch(`${origin}/v1/offers/find`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ ...fixture.request, budget: 0 })
+    body: JSON.stringify({ ...publicRequest, budget: 0 })
   });
   assert.equal(invalidResponse.status, 400);
   assert.match(
@@ -144,7 +145,7 @@ test('HTTP adapter exposes verify and persistent watch operations with actionabl
   const unknownFieldResponse = await fetch(`${origin}/v1/offers/find`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ ...fixture.request, modelAuthoredScore: 100 })
+    body: JSON.stringify({ ...publicRequest, modelAuthoredScore: 100 })
   });
   assert.equal(unknownFieldResponse.status, 400);
   assert.match(

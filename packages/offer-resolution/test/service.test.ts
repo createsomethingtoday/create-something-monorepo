@@ -29,13 +29,19 @@ test('find_offers returns authoritative receipts as user-ready offer cards', asy
     clock: () => new Date(fixture.request.asOf)
   });
 
-  const result = await service.findOffers(fixture.request);
+  const callerTimestampIsIgnored = {
+    ...fixture.request,
+    asOf: '1999-01-01T00:00:00.000Z'
+  };
+  const result = await service.findOffers(callerTimestampIsIgnored);
+  const repeated = await service.findOffers(callerTimestampIsIgnored);
   const authoritative = findOffers(fixture.request, fixture.observations);
 
   assert.equal(result.schemaVersion, 'offer_service.v0.1');
   assert.equal(result.operation, 'find_offers');
   assert.equal(result.observedAt, fixture.request.asOf);
   assert.match(result.receiptHash, /^sha256:[a-f0-9]{64}$/);
+  assert.equal(repeated.receiptHash, result.receiptHash);
   assert.deepEqual(result.resolution, authoritative);
   assert.equal(result.offers[0]?.observationId, 'fixture-ltk-15');
   assert.equal(result.ltkOffers[0]?.observationId, 'fixture-ltk-15');
@@ -108,7 +114,8 @@ test('verify_offer never promotes uncorroborated creator evidence to verified', 
   const service = createOfferService({
     discovery: {
       discover: async () => fixture.observations
-    }
+    },
+    clock: () => new Date(fixture.request.asOf)
   });
   const creatorObservation = fixture.observations.find(
     (observation) => observation.id === 'fixture-ltk-15'

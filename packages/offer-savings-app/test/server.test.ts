@@ -103,6 +103,13 @@ test('MCP protocol exposes only the bounded offer workflow and widget resource',
   };
   assert.equal(findInputSchema.properties?.asOf, undefined);
   assert.equal(findInputSchema.required?.includes('asOf'), false);
+  for (const toolName of ['verify_offer', 'watch_offers']) {
+    const schema = listed.tools.find((tool) => tool.name === toolName)?.inputSchema as {
+      properties?: { request?: { properties?: Record<string, unknown>; required?: string[] } };
+    };
+    assert.equal(schema.properties?.request?.properties?.asOf, undefined);
+    assert.equal(schema.properties?.request?.required?.includes('asOf'), false);
+  }
   assert.equal(
     listed.tools.find((tool) => tool.name === 'watch_offers')?.annotations?.readOnlyHint,
     false
@@ -245,7 +252,7 @@ test('Streamable HTTP serves MCP and the versioned API from one process', async 
     standalone: {
       initialResult,
       watchInput: {
-        request: fixture.request,
+        request: publicRequest,
         until: '2026-08-09T23:59:59.000Z',
         idempotencyKey: 'standalone-widget-watch'
       }
