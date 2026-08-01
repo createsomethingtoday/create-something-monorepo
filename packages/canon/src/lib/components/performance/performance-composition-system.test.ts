@@ -744,6 +744,34 @@ describe('PerformanceNarrativeStage', () => {
 		expect(activePanel?.querySelector('a')?.getAttribute('href')).toBe('/proof');
 	});
 
+	it('renders an optional evidence preview before scene navigation', () => {
+		const preview = createRawSnippet(() => ({
+			render: () =>
+				'<div data-testid="narrative-evidence-preview">15 artifacts · 5 cases · 2 matching compilations</div>'
+		}));
+
+		target = document.createElement('div');
+		document.body.appendChild(target);
+		instance = mount(PerformanceNarrativeStage, {
+			target,
+			props: {
+				id: 'workflow-story',
+				title: 'Map. Decide. Prove.',
+				scenes,
+				preview
+			}
+		}) as Record<string, unknown>;
+		flushSync();
+
+		const previewElement = target.querySelector('[data-testid="narrative-evidence-preview"]');
+		const tablist = target.querySelector('[role="tablist"]');
+
+		expect(previewElement).not.toBeNull();
+		expect(previewElement?.compareDocumentPosition(tablist as Node)).toBe(
+			Node.DOCUMENT_POSITION_FOLLOWING
+		);
+	});
+
 	it('supports roving keyboard selection and fragment-addressable scenes', () => {
 		window.history.replaceState(null, '', '#workflow-story-decide');
 		target = document.createElement('div');
