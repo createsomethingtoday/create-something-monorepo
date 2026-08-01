@@ -34,6 +34,17 @@ test('expands health and beauty into a bounded merchant fan-out', () => {
   ]);
 });
 
+test('keeps an exact merchant request exact when the model also supplies a category', () => {
+  const normalized = normalizeOfferRequest({
+    ...categoryRequest,
+    merchant: 'Sephora',
+    need: 'beauty supplies near Kennedale'
+  });
+
+  assert.equal(normalized.searchCategory, undefined);
+  assert.deepEqual(normalized.candidateMerchants, ['Sephora']);
+});
+
 test('creates an LTK-first plan and keeps supplemental discovery second', () => {
   const plan = planOfferDiscovery(categoryRequest);
 
@@ -57,4 +68,27 @@ test('does not turn LTK search priority into automatic reliability authority', (
 
   assert.match(plan.stages[0].instructions, /does not make.*recommend/i);
   assert.match(plan.stages[1].instructions, /official retailer/i);
+});
+
+test('keeps exact-merchant discovery centered on broad LTK coupon queries', () => {
+  const request = {
+    ...categoryRequest,
+    merchant: 'Sephora',
+    need: 'beauty supplies near Kennedale'
+  };
+  const plan = planOfferDiscovery(request);
+
+  assert.deepEqual(plan.candidateMerchants, ['Sephora']);
+  assert.equal(
+    plan.stages[0].queries.every(
+      (query) => query.includes('site:shopltk.com') && query.includes('"Sephora"')
+    ),
+    true
+  );
+  assert.equal(
+    plan.stages[0].queries.some((query) => query.includes('"beauty supplies near Kennedale"')),
+    false
+  );
+  assert.match(plan.stages[0].instructions, /LTK-specific coupon/i);
+  assert.match(plan.stages[1].instructions, /never emit.*shipping.*pickup.*standalone/i);
 });

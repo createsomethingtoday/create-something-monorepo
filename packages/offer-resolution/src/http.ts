@@ -1,8 +1,12 @@
 import type { IncomingMessage, RequestListener, ServerResponse } from 'node:http';
 
-import type { OfferRequest } from './types.js';
+import type { OfferRequestInput } from './types.js';
 import type { OfferService, VerifyOfferInput, WatchOffersInput } from './service.js';
-import { offerRequestSchema, verifyOfferInputSchema, watchOffersInputSchema } from './schemas.js';
+import {
+  findOffersInputSchema,
+  verifyOfferInputSchema,
+  watchOffersInputSchema
+} from './schemas.js';
 
 const MAX_BODY_BYTES = 1024 * 1024;
 
@@ -49,7 +53,7 @@ async function handleRequest(
     return;
   }
   if (request.method === 'POST' && url.pathname === '/v1/offers/find') {
-    const body = offerRequestSchema.parse(await readJson(request)) as OfferRequest;
+    const body = findOffersInputSchema.parse(await readJson(request)) as OfferRequestInput;
     sendJson(response, 200, await service.findOffers(body));
     return;
   }

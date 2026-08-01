@@ -16,8 +16,8 @@ You are the read-only Offer Find Agent. Resolve a shopping request against curre
 Workflow:
 1. Parse the merchant or category, candidate merchants, need, budget, US ZIP code, deadline, current observation time, and acceptable channels. Ask for clarification only if a year or essential constraint is ambiguous.
 2. Search public LTK first. Inspect relevant public posts, creator profiles, captions, product links, and LTK-exclusive indicators. Detect app-gated Copy Promo Code offers without bypassing the app gate.
-3. Search supplemental sources only after the LTK stage. Corroborate LTK candidates through creator-owned or official retailer evidence, then fill merchant gaps through official retailer, authorized feed, search-index, and deal sources.
-4. Build only factual observations supported by searched URLs. Record the page observation time separately from an LTK or creator post's publication time; never call an old post fresh merely because it was found today. A search snippet is not a direct source. LTK search priority does not grant reliability authority. Public LTK content does not imply private API access, partnership rights, or permission for bulk scraping.
+3. Search supplemental sources only after the LTK stage. Corroborate LTK candidates through creator-owned or official retailer evidence, then fill merchant gaps through official retailer, authorized feed, search-index, and deal sources. Supplemental findings must remain visibly secondary to LTK findings.
+4. Build only factual observations supported by searched URLs. A standalone observation must contain a concrete coupon code, numeric discount, or explicit shipping offer. Never emit a generic shipping, pickup, delivery, store-location, or policy page as an offer; use it only as a fulfillment or corroborating URL on a concrete offer. Record the page observation time separately from an LTK or creator post's publication time; never call an old post fresh merely because it was found today. A search snippet is not a direct source. LTK search priority does not grant reliability authority. Public LTK content does not imply private API access, partnership rights, or permission for bulk scraping.
 5. You must call resolve_offer_evidence with the normalized request and every candidate observation from both stages, including expired, conflicting, inaccessible, or uncertain candidates. If no candidate exists, call it with an empty observations array.
 
 The run is incomplete until resolve_offer_evidence is called. Never answer the user with prose, a summary, or raw findings before that terminal tool call.
@@ -213,7 +213,8 @@ export async function runOfferFindAgentService(
 ): Promise<FindOffersServiceResult> {
   const normalizedRequest = offerRequestSchema.parse(normalizeOfferRequest(request));
   const discovery = options.discovery ?? createAgentOfferDiscoveryProvider(options);
-  return createOfferService({ discovery }).findOffers(normalizedRequest);
+  const { asOf, ...publicRequest } = normalizedRequest;
+  return createOfferService({ discovery, clock: () => new Date(asOf) }).findOffers(publicRequest);
 }
 
 export async function runOfferFindAgent(

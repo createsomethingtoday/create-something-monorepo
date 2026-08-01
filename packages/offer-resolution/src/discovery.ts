@@ -37,32 +37,46 @@ export function parseOfferSearchCategory(value: string): OfferSearchCategory {
   throw new Error(`Unsupported offer category: ${value}`);
 }
 
+function normalizedTarget(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_|_$/g, '');
+}
+
 export function normalizeOfferRequest(input: OfferRequest): NormalizedOfferRequest {
   if (input.searchCategory && !(input.searchCategory in CATEGORY_MERCHANTS)) {
     throw new Error(`Unsupported offer category: ${String(input.searchCategory)}`);
   }
-  const candidateMerchants = input.searchCategory
-    ? [...CATEGORY_MERCHANTS[input.searchCategory]]
+  const categoryTarget =
+    input.searchCategory !== undefined &&
+    normalizedTarget(input.merchant) === normalizedTarget(CATEGORY_LABELS[input.searchCategory]);
+  const searchCategory = categoryTarget ? input.searchCategory : undefined;
+  const candidateMerchants = searchCategory
+    ? [...CATEGORY_MERCHANTS[searchCategory]]
     : [input.merchant];
   return {
     ...input,
+    searchCategory,
     candidateMerchants
   };
 }
 
 export function planOfferDiscovery(input: OfferRequest): OfferDiscoveryPlan {
   const request = normalizeOfferRequest(input);
-  const merchantQueries = request.candidateMerchants.map(
-    (merchant) =>
-      `site:shopltk.com/explore "${merchant}" "${request.need}" coupon promo code LTK exclusive`
-  );
+  const merchantQueries = request.candidateMerchants.flatMap((merchant) => [
+    `site:shopltk.com/explore "${merchant}" coupon promo code LTK exclusive`,
+    `site:shopltk.com "${merchant}" "promo code" creator discount`
+  ]);
   const categoryQuery = request.searchCategory
     ? [
         `site:shopltk.com/explore "${CATEGORY_LABELS[request.searchCategory]}" coupon promo code under ${request.budget} ${request.currency}`
       ]
     : [];
   const supplementalQueries = request.candidateMerchants.flatMap((merchant) => [
-    `"${merchant}" official coupon promotion "${request.need}" ${request.deadline}`,
+    `"${merchant}" official coupon promotion ${request.deadline}`,
     `"${merchant}" shipping pickup ${request.postalCode} by ${request.deadline}`
   ]);
 
@@ -76,7 +90,7 @@ export function planOfferDiscovery(input: OfferRequest): OfferDiscoveryPlan {
         domains: ['shopltk.com'],
         queries: [...categoryQuery, ...merchantQueries],
         instructions:
-          'Search public LTK posts, creator profiles, captions, product links, and search-indexed LTK pages first. Detect creator-specific, stackable, time-limited, LTK-exclusive, and app-gated Copy Promo Code offers. Record app-only access without extracting gated codes. LTK being the primary discovery lane does not make a result recommendable; preserve every factual candidate for deterministic scoring.'
+          'The primary objective is to locate LTK-specific coupon offers. Search public LTK posts, creator profiles, captions, product links, and search-indexed LTK pages first. Detect creator-specific, stackable, time-limited, LTK-exclusive, and app-gated Copy Promo Code offers. Record app-only access without extracting gated codes. LTK being the primary discovery lane does not make a result recommendable; preserve every factual coupon candidate for deterministic scoring.'
       },
       {
         lane: 'supplemental',
@@ -84,7 +98,7 @@ export function planOfferDiscovery(input: OfferRequest): OfferDiscoveryPlan {
         domains: [],
         queries: supplementalQueries,
         instructions:
-          'Only after the LTK stage, search supplemental sources. Corroborate LTK candidates through creator-owned pages and official retailer terms, eligibility, shipping, or pickup evidence. Then fill gaps for candidate merchants through official retailer pages, authorized feeds, search indexes, and deal aggregators. Do not replace or relabel LTK findings.'
+          'Only after the LTK stage, search supplemental sources. Corroborate LTK candidates through creator-owned pages and official retailer terms, eligibility, shipping, or pickup evidence. Then fill gaps for candidate merchants through official retailer pages, authorized feeds, search indexes, and deal aggregators. Never emit a generic shipping, pickup, delivery, store-location, or policy page as a standalone offer; attach it only as corroborating or fulfillment evidence for a concrete coupon or discount. Do not replace or relabel LTK findings.'
       }
     ]
   };

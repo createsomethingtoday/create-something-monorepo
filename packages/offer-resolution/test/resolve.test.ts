@@ -252,9 +252,11 @@ test('does not treat a generic shipping-information page as a shipping offer', (
   const shippingPage: OfferObservation = {
     ...officialOffer,
     id: 'shipping-information-only',
+    title: 'Pickup & Delivery: how pickup works',
     offer: {
       discount: { kind: 'shipping' },
-      status: 'active'
+      status: 'active',
+      minimumSubtotal: 35
     },
     evidence: { terms: 'explicit', code: 'not_applicable', corroboratingUrls: [] }
   };
@@ -282,6 +284,28 @@ test('rejects merchants outside the bounded category fan-out', () => {
   assert.ok(
     decision.reliability.reasons.includes('The merchant is outside the bounded category fan-out.')
   );
+});
+
+test('rejects non-LTK fallback merchants outside an exact merchant request', () => {
+  const sephoraRequest: OfferRequest = {
+    ...request,
+    merchant: 'Sephora',
+    need: 'beauty supplies'
+  };
+  const unrelatedTargetOffer: OfferObservation = {
+    ...officialOffer,
+    id: 'unrelated-target-offer',
+    merchant: 'Target',
+    source: {
+      ...officialOffer.source,
+      url: 'https://www.target.com/circle/o/target-circle/-/123',
+      publisher: 'Target'
+    }
+  };
+
+  const [decision] = findOffers(sephoraRequest, [unrelatedTargetOffer]).decisions;
+  assert.equal(decision.status, 'rejected');
+  assert.ok(decision.reliability.reasons.includes('The merchant does not match the request.'));
 });
 
 test('requires official corroboration for creator evidence to become recommendable', () => {

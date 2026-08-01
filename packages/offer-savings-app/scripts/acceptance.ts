@@ -25,6 +25,7 @@ const fixture = JSON.parse(
     'utf8'
   )
 ) as Fixture;
+const { asOf: _fixtureAsOf, ...publicRequest } = fixture.request;
 const stateDirectory = mkdtempSync(join(tmpdir(), 'offer-savings-acceptance-'));
 const stateFile = join(stateDirectory, 'watches.json');
 const idempotencyKey = 'acceptance-watch-retry';
@@ -55,15 +56,15 @@ try {
   await client.connect(new StreamableHTTPClientTransport(new URL(`${firstRuntime.baseUrl}/mcp`)));
   const listed = await client.listTools();
   const resources = await client.listResources();
-  const found = await client.callTool({ name: 'find_offers', arguments: fixture.request });
+  const found = await client.callTool({ name: 'find_offers', arguments: publicRequest });
   const creator = fixture.observations.find((item) => item.id === 'fixture-ltk-15');
   if (!creator) throw new Error('Acceptance fixture is missing the LTK creator observation.');
   const verified = await client.callTool({
     name: 'verify_offer',
-    arguments: { request: fixture.request, observation: creator }
+    arguments: { request: publicRequest, observation: creator }
   });
   const watchInput = {
-    request: fixture.request,
+    request: publicRequest,
     until: '2026-08-09T23:59:59.000Z',
     idempotencyKey
   };
@@ -73,7 +74,7 @@ try {
   const readWatch = await client.callTool({ name: 'get_watch', arguments: { id: watchId } });
   const malformed = await client.callTool({
     name: 'find_offers',
-    arguments: { ...fixture.request, budget: -1 }
+    arguments: { ...publicRequest, budget: -1 }
   });
   const serverInfo = client.getServerVersion();
   const serverCapabilities = client.getServerCapabilities();

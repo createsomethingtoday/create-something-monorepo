@@ -56,7 +56,7 @@ function normalizeRequest(input: OfferRequest): OfferRequest {
   const expanded = normalizeOfferRequest(input);
   return {
     merchant: requireText('merchant', input.merchant),
-    searchCategory: input.searchCategory,
+    searchCategory: expanded.searchCategory,
     candidateMerchants: expanded.candidateMerchants.map((merchant) =>
       requireText('candidateMerchant', merchant)
     ),
@@ -155,13 +155,16 @@ function rejectionReasons(request: OfferRequest, observation: OfferObservation):
     reasons.push('The offer cannot be fulfilled by the requested deadline.');
   }
   if (
-    request.searchCategory &&
     request.merchant.toLowerCase() !== observation.merchant.toLowerCase() &&
     !request.candidateMerchants?.some(
       (merchant) => merchant.toLowerCase() === observation.merchant.toLowerCase()
     )
   ) {
-    reasons.push('The merchant is outside the bounded category fan-out.');
+    reasons.push(
+      request.searchCategory
+        ? 'The merchant is outside the bounded category fan-out.'
+        : 'The merchant does not match the request.'
+    );
   }
   return [...new Set(reasons)].sort();
 }

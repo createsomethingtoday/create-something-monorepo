@@ -20,7 +20,9 @@ const verified = await service.verifyOffer({ request, observation });
 const watched = await service.watchOffers({ request, until, idempotencyKey });
 ```
 
-The resolver owns every score, cap, ranking, status, and receipt hash. Agent or UI callers supply facts only. Discovery runs in two stages: public LTK first, then supplemental corroboration and merchant-gap filling. LTK priority controls search order, not confidence. Search and deal sources remain leads, public LTK and creator sources remain corroboration, and official source claims are checked against a trusted merchant-domain registry.
+The resolver owns every score, cap, ranking, status, and receipt hash. Public callers supply the shopping constraints but not `asOf`; the service records the observation time when each run begins. Discovery runs in two stages: public LTK first, then supplemental corroboration and merchant-gap filling. Exact merchant requests stay exact. LTK priority controls search order, not confidence. Search and deal sources remain leads, public LTK and creator sources remain corroboration, and official source claims are checked against a trusted merchant-domain registry.
+
+`findOffers` returns `ltkOffers` first, followed by `supplementalOffers`. Pages that contain no concrete coupon, numeric discount, or explicit shipping offer are isolated in `evidence` without copy/watch actions. Rejected observations remain in the deterministic resolution receipt but are not rendered as usable offers. `observedAt` and the top-level `receiptHash` make each search-run boundary explicit.
 
 `watchOffers` creates one durable watch for a stable idempotency key. `runDueWatches` is a bounded scheduler entrypoint: a stable run key creates at most one history record per watch, failures preserve the prior successful receipt, and no notification or purchase action is performed.
 

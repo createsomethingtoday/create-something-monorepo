@@ -21,6 +21,7 @@ interface Fixture {
 const fixture = JSON.parse(
   readFileSync(new URL('../fixtures/abercrombie-august-9.json', import.meta.url), 'utf8')
 ) as Fixture;
+const { asOf: _fixtureAsOf, ...publicRequest } = fixture.request;
 
 test('HTTP adapter exposes health and find_offers through real network requests', async (t) => {
   const service = createOfferService({
@@ -49,15 +50,15 @@ test('HTTP adapter exposes health and find_offers through real network requests'
   const findResponse = await fetch(`${origin}/v1/offers/find`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(fixture.request)
+    body: JSON.stringify(publicRequest)
   });
   assert.equal(findResponse.status, 200);
   const result = (await findResponse.json()) as {
     operation: string;
-    offers: Array<{ confidence: { label: string } }>;
+    ltkOffers: Array<{ confidence: { label: string } }>;
   };
   assert.equal(result.operation, 'find_offers');
-  assert.equal(result.offers[0]?.confidence.label, 'Verified');
+  assert.equal(result.ltkOffers[0]?.confidence.label, 'Worth trying');
 });
 
 test('HTTP adapter exposes verify and persistent watch operations with actionable errors', async (t) => {
@@ -89,7 +90,7 @@ test('HTTP adapter exposes verify and persistent watch operations with actionabl
   const verifyResponse = await fetch(`${origin}/v1/offers/verify`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ request: fixture.request, observation: creatorObservation })
+    body: JSON.stringify({ request: publicRequest, observation: creatorObservation })
   });
   assert.equal(verifyResponse.status, 200);
   assert.equal(
@@ -98,7 +99,7 @@ test('HTTP adapter exposes verify and persistent watch operations with actionabl
   );
 
   const watchInput = {
-    request: fixture.request,
+    request: publicRequest,
     until: '2026-08-09T23:59:59.000Z',
     idempotencyKey: 'http-watch-abercrombie'
   };

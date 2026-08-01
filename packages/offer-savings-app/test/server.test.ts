@@ -34,6 +34,8 @@ const fixture = JSON.parse(
   )
 ) as Fixture;
 
+const { asOf: _fixtureAsOf, ...publicRequest } = fixture.request;
+
 async function connectClient(
   stateFile: string,
   security?: {
@@ -95,6 +97,12 @@ test('MCP protocol exposes only the bounded offer workflow and widget resource',
     listed.tools.find((tool) => tool.name === 'find_offers')?.annotations?.readOnlyHint,
     true
   );
+  const findInputSchema = listed.tools.find((tool) => tool.name === 'find_offers')?.inputSchema as {
+    properties?: Record<string, unknown>;
+    required?: string[];
+  };
+  assert.equal(findInputSchema.properties?.asOf, undefined);
+  assert.equal(findInputSchema.required?.includes('asOf'), false);
   assert.equal(
     listed.tools.find((tool) => tool.name === 'watch_offers')?.annotations?.readOnlyHint,
     false
@@ -130,6 +138,9 @@ test('MCP protocol exposes only the bounded offer workflow and widget resource',
   assert.match(widgetHtml, /Try this code/);
   assert.match(widgetHtml, /Watch for a better offer/);
   assert.match(widgetHtml, /Freshness/);
+  assert.match(widgetHtml, /LTK coupons first/i);
+  assert.match(widgetHtml, /Evidence-only sources/i);
+  assert.match(widgetHtml, /Search run/i);
   assert.deepEqual(widgetContent?._meta?.ui, {
     prefersBorder: true,
     csp: { connectDomains: [], resourceDomains: [] }
@@ -145,12 +156,26 @@ test('MCP calls find, verify, and idempotent watch through the authoritative ser
     await server.close();
   });
 
-  const found = await client.callTool({ name: 'find_offers', arguments: fixture.request });
+  const found = await client.callTool({ name: 'find_offers', arguments: publicRequest });
   assert.equal(found.isError, undefined);
   assert.equal(found.structuredContent?.operation, 'find_offers');
+  assert.deepEqual(found.structuredContent?.counts, { ltk: 1, supplemental: 3, evidence: 0 });
+  assert.match(
+    found.content[0] && found.content[0].type === 'text' ? found.content[0].text : '',
+    /1 LTK coupon candidate.*3 supplemental fallback offers/i
+  );
   assert.equal(
-    (found.structuredContent?.offers as Array<{ confidence: { label: string } }>)[0]?.confidence
+    (found.structuredContent?.resolution as { request: { asOf: string } }).request.asOf,
+    '2026-07-30T15:00:00.000Z'
+  );
+  assert.equal(
+    (found.structuredContent?.ltkOffers as Array<{ confidence: { label: string } }>)[0]?.confidence
       .label,
+    'Worth trying'
+  );
+  assert.equal(
+    (found.structuredContent?.supplementalOffers as Array<{ confidence: { label: string } }>)[0]
+      ?.confidence.label,
     'Verified'
   );
 
@@ -158,12 +183,12 @@ test('MCP calls find, verify, and idempotent watch through the authoritative ser
   assert.ok(creator);
   const verified = await client.callTool({
     name: 'verify_offer',
-    arguments: { request: fixture.request, observation: creator }
+    arguments: { request: publicRequest, observation: creator }
   });
   assert.equal(verified.structuredContent?.verification, 'needs_checkout');
 
   const watchInput = {
-    request: fixture.request,
+    request: publicRequest,
     until: '2026-08-09T23:59:59.000Z',
     idempotencyKey: 'protocol-retry-key'
   };
@@ -247,7 +272,7 @@ test('Streamable HTTP serves MCP and the versioned API from one process', async 
   const api = await fetch(`http://127.0.0.1:${port}/v1/offers/find`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(fixture.request)
+    body: JSON.stringify(publicRequest)
   });
   assert.equal(api.status, 200);
   assert.equal(((await api.json()) as { operation: string }).operation, 'find_offers');
@@ -265,7 +290,7 @@ test('Streamable HTTP serves MCP and the versioned API from one process', async 
     ['find_offers', 'verify_offer', 'watch_offers', 'get_watch']
   );
   assert.equal(
-    (await client.callTool({ name: 'find_offers', arguments: fixture.request })).structuredContent
+    (await client.callTool({ name: 'find_offers', arguments: publicRequest })).structuredContent
       ?.operation,
     'find_offers'
   );
