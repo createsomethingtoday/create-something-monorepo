@@ -1,0 +1,21 @@
+Use case: CREATE SOMETHING .agency homepage hero background
+
+Primary request: Create a brand-new native twelve-second text-to-video as one perfect seamless loop. Frame 0 and frame 360 must be identical so native HTML video loop playback has no jump, dissolve, fade, or reset.
+
+Brand role: Performance Lab material-prototype study. Show one engineered object tested under load inside a visible operating boundary. The image should feel exact, controlled, rigorous, industrial, and credible—not decorative or cinematic.
+
+Scene and composition: A locked-off monochrome laboratory shot. The left 50 percent of the 16:9 frame is uninterrupted near-black negative space for live headline copy. Entirely within the right 50 percent sits one minimal rotary calibration rig on a scratched black steel workbench: a rigid brushed-steel rectangular stand, one large solid flywheel with exactly four broad spokes, one small white index mark on the rim, one fixed axle, four mounting bolts, and one stationary mechanical gauge. All geometry is simple, heavy, and mechanically plausible. No tubing, belts, cables, liquid, glass chamber, piston, secondary wheel, loose part, or text.
+
+Only action: The flywheel rotates clockwise at perfectly constant speed through exactly one complete 360-degree revolution over twelve seconds. The white index mark starts at exactly twelve o'clock on frame 0 and returns to exactly twelve o'clock on frame 360. The four spokes and every highlight return to their exact opening positions. The stand, axle, bolts, gauge, workbench, camera, light, shadow, and background remain absolutely motionless for the entire shot. Nothing else moves or changes.
+
+Camera: One continuous locked tripod shot, 70 mm lens, fixed focus, fixed crop, fixed exposure, fixed perspective, and no depth shift. The complete rig stays inside the right half. No pan, tilt, dolly, zoom, rack focus, handheld movement, cut, close-up, insert, or second angle.
+
+Lighting and palette: Near-black and silver monochrome. One stable hard overhead laboratory light reveals brushed metal and the rotating spokes. No flicker, pulse, exposure drift, reflection drift on stationary parts, color, glow, gradient, haze, fog, or light movement.
+
+Timing checkpoints: 0.0 seconds index at twelve o'clock; 3.0 seconds index at three o'clock; 6.0 seconds index at six o'clock; 9.0 seconds index at nine o'clock; 12.0 seconds index at twelve o'clock with the complete image identical to 0.0 seconds. The motion never accelerates, decelerates, reverses, stops, or resets.
+
+Audio: None.
+
+Native-video constraints: Generate all 360 frames as coherent video from text only. No input image, source still, frozen-image base, animated region, spatial mask, bottom-half effect, regional displacement, composited motion layer, warped band, post-production seam, transition, dissolve, fade, or duplicate endpoint hold.
+
+Avoid: endpoint mismatch, extra revolution, partial revolution, reverse motion, ping-pong, morphing spokes, changing spoke count, changing index mark, wobbling axle, breathing frame, camera drift, crop change, changing gauge, moving stand, lighting change, person, hand, face, text, logo, watermark, fake UI, color, or spectacle.

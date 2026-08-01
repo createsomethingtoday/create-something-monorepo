@@ -21,16 +21,17 @@
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
   const homepageHandoffBoundaryMedia: PerformanceCampaignMedia = {
-    src: '/images/performance-lab/agency-handoff-boundary.webp',
-    mobileSrc: '/images/performance-lab/agency-handoff-boundary-mobile.webp',
-    alt: 'A bench-scale hydraulic gate and gauge holding a visible water boundary',
-    width: 1536,
-    height: 864,
+    src: '/images/performance-lab/agency-performance-calibration-loop-v3-poster.webp',
+    mobileSrc:
+      '/images/performance-lab/agency-performance-calibration-loop-v3-poster-mobile.webp',
+    alt: 'A rigid steel calibration rotor operating on a laboratory test stand',
+    width: 1280,
+    height: 720,
     objectPosition: 'center',
     video: {
-      mp4: '/images/performance-lab/agency-handoff-boundary-motion-loop-v2.mp4',
-      webm: '/images/performance-lab/agency-handoff-boundary-motion-loop-v2.webm',
-      poster: '/images/performance-lab/agency-handoff-boundary.webp'
+      mp4: '/images/performance-lab/agency-performance-calibration-loop-v3.mp4',
+      webm: '/images/performance-lab/agency-performance-calibration-loop-v3.webm',
+      poster: '/images/performance-lab/agency-performance-calibration-loop-v3-poster.webp'
     }
   };
 

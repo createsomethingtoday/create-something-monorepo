@@ -1,0 +1,21 @@
+Use case: CREATE SOMETHING .agency homepage hero background
+
+Primary request: Create a brand-new native twelve-second video as one perfect seamless loop. This is text-to-video, not an animation of a still image. Frame 0 and frame 360 must show the identical camera, composition, apparatus geometry, mechanical phase, lighting, shadows, and material state so normal video loop playback has no visible seam.
+
+Brand role: Performance Lab material-prototype study. Show an intelligent system engineered in the lab, tested under pressure, and operating inside a visible boundary. The feeling is precise, controlled, rigorous, and credible. Motion communicates reliable operation, not spectacle.
+
+Scene: A dark monochrome industrial test laboratory. On the right half of the 16:9 frame, a complete bench-scale pressure calibration rig sits on a scratched black steel workbench. The rig has a brushed stainless frame, a large rotary cam wheel with one clear white index mark, a linked vertical piston, a transparent pressure cylinder, a mechanical gauge, braided tubing, mounting feet, and precise measurement hardware. The left 48 percent of the frame is uninterrupted near-black negative space for live headline copy. No text is baked into the scene.
+
+Action and exact cycle: The rig is already operating at frame 0. The marked cam wheel begins with its index at exactly twelve o'clock, rotates clockwise at constant speed through exactly two complete revolutions over twelve seconds, and returns the index to exactly twelve o'clock at frame 360. The linked piston completes exactly two smooth compression-and-release cycles and returns to its identical starting height and pressure state. Small coherent vibrations and material reflections follow the mechanism. Every moving part is periodic and returns to the same physical phase at twelve seconds. Nothing starts up, shuts down, fills, drains, appears, disappears, or resets.
+
+Camera: One continuous locked tripod shot for all twelve seconds. Exact fixed camera, 50 mm lens, fixed focus, fixed crop, fixed scale, fixed perspective, fixed horizon. The full rig remains inside the right 52 percent and never moves into the left copy field. No pan, tilt, dolly, zoom, rack focus, handheld movement, cut, insert, close-up, or second angle.
+
+Lighting and palette: Near-black and silver monochrome. One hard overhead laboratory light and a restrained rim light reveal steel grain, scratched glass, pressure, and movement. Lighting is completely stable and has no flicker, pulse, fade, or color shift. No glow, gradient, fog, haze, or decorative effect.
+
+Loop timing checkpoints: 0.0 seconds index at twelve o'clock and piston at starting height; 3.0 seconds index at six o'clock; 6.0 seconds index back at twelve o'clock after one revolution; 9.0 seconds index at six o'clock; 12.0 seconds index at twelve o'clock after two revolutions with every object, shadow, reflection, and linked mechanism returned to its exact 0.0-second state. The 12.0-to-0.0 boundary is a direct continuous cut with no dissolve needed.
+
+Audio: None.
+
+Native-video constraints: Generate every frame as coherent video from the text scene. Do not use or imply a source still. No frozen background, animated image region, spatial mask, bottom-half effect, regional displacement, composited motion layer, warped band, post-production dissolve, fade, or transition.
+
+Avoid: non-looping action, endpoint mismatch, acceleration, deceleration, reverse motion, ping-pong, visible reset, cut, camera motion, crop change, reframe, morphing metal, changing gauge face, bending tubing, extra spokes, changing index mark, lighting change, flicker, person, hand, face, text, logo, watermark, fake UI, color, or cinematic spectacle.
