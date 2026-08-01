@@ -1,3 +1,4 @@
+import { performanceEmailTokens } from '@create-something/canon/performance/scheduler-email';
 import { describe, expect, it } from 'vitest';
 import { renderBookingEmail } from './booking-email.js';
 
@@ -13,6 +14,9 @@ const input = {
   timezone: 'America/Chicago'
 } as const;
 
+const htmlDisplayFont = performanceEmailTokens.font.display.replaceAll('"', '&quot;');
+const htmlMonoFont = performanceEmailTokens.font.mono.replaceAll('"', '&quot;');
+
 describe('booking email renderer', () => {
   it.each([
     ['confirmation', 'Your CREATE SOMETHING meeting is booked'],
@@ -22,11 +26,11 @@ describe('booking email renderer', () => {
     const rendered = renderBookingEmail({ ...input, kind });
 
     expect(rendered.subject).toBe(subject);
-    expect(rendered.html).toContain('background-color:#f3f3f0');
-    expect(rendered.html).toContain('color:#090909');
-    expect(rendered.html).toContain('font-family:Satoshi');
-    expect(rendered.html).toContain('font-family:&quot;IBM Plex Mono&quot;');
-    expect(rendered.html).toContain('max-width:640px');
+    expect(rendered.html).toContain(`background-color:${performanceEmailTokens.color.paper}`);
+    expect(rendered.html).toContain(`color:${performanceEmailTokens.color.ink}`);
+    expect(rendered.html).toContain(`font-family:${htmlDisplayFont}`);
+    expect(rendered.html).toContain(`font-family:${htmlMonoFont}`);
+    expect(rendered.html).toContain(`max-width:${performanceEmailTokens.layout.maxWidth}`);
     expect(rendered.html).toContain('Controlled &amp; Verified');
     expect(rendered.html).toContain('Manage this meeting');
     expect(rendered.html).toContain('Join with Google Meet');

@@ -1,3 +1,7 @@
+import {
+  PERFORMANCE_DOCUMENT_STYLE_VERSION,
+  performanceDocumentCss
+} from '@create-something/canon/performance/scheduler-document';
 import { describe, expect, it } from 'vitest';
 import { schedulerPage } from './page.js';
 
@@ -19,13 +23,12 @@ describe('scheduler public page', () => {
     expect(html).toContain('prefers-reduced-motion');
     expect(html).toContain('nonce="controlled-nonce"');
     expect(html).toContain('data-performance-surface="booking"');
-    expect(html).toContain('data-performance-contract="1.0.0"');
-    expect(html).toContain('api.fontshare.com/v2/css?f[]=satoshi@400,500,700&amp;display=swap');
-    expect(html).toContain('cdn.jsdelivr.net/npm/@ibm/plex-mono@2.5.0/css/ibm-plex-mono-all.css');
+    expect(html).toContain(
+      `data-performance-contract="${PERFORMANCE_DOCUMENT_STYLE_VERSION}"`
+    );
+    expect(html).toContain(performanceDocumentCss);
     expect(html).toContain('--color-performance-grid:rgb(9 9 9 / .055)');
     expect(html).toContain('--font-performance-display-weight:500');
-    expect(html).not.toContain('--font-display:Arial');
-    expect(html).not.toContain('--font-mono:ui-monospace');
     expect(html).toContain('class="system-bar"');
     expect(html).toContain('class="hero-spec"');
     expect(html).toContain('class="proof-footer"');
