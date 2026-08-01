@@ -5,9 +5,19 @@ import {
   mapHdStatusToOsStatus,
   normalizeFileUrl,
   readText,
+  resolveTargetPages,
   targetExtPageIdProperty,
 } from '../src/sync.js';
-import type { NotionPage } from '../src/types.js';
+import type { Env, NotionPage } from '../src/types.js';
+
+const targetDataSourceId = '2a101918-7ac5-8074-bf06-000b97592481';
+
+function jsonResponse(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'content-type': 'application/json' },
+  });
+}
 
 test('buildTicketTitle mirrors source title exactly', () => {
   assert.equal(
@@ -60,4 +70,72 @@ test('readText handles Notion unique id, title, status, people, and files', () =
   assert.equal(readText(page, 'Page ID'), 'ST-ISH-25');
   assert.equal(readText(page, 'Owner'), 'FG (fillip@halfdozen.co)');
   assert.equal(readText(page, 'Files'), 'brief.pdf');
+});
+
+test('resolveTargetPages accepts the source Page ID surfaced by an audit', async (t) => {
+  const targetPage: NotionPage = {
+    id: '2a101384-aaaa-bbbb-cccc-000b97592481',
+    parent: { data_source_id: targetDataSourceId },
+    properties: {
+      'External Page ID': {
+        type: 'rich_text',
+        rich_text: [{ plain_text: 'ST-ISH-9' }],
+      },
+    },
+  };
+  const requests: string[] = [];
+  t.mock.method(globalThis, 'fetch', async (input: string | URL | Request) => {
+    const url = String(input);
+    requests.push(url);
+    if (url.endsWith(`/data_sources/${targetDataSourceId}/query`)) {
+      return jsonResponse({ results: [targetPage], has_more: false });
+    }
+    return jsonResponse({ message: 'path failed validation: path.page_id should be a valid uuid' }, 400);
+  });
+
+  const pages = await resolveTargetPages(
+    { HALFDOZEN_NOTION_API_KEY: 'hd-token' } as Env,
+    targetDataSourceId,
+    'External Page ID',
+    ['ST-ISH-9'],
+  );
+
+  assert.deepEqual(pages.map((page) => page.id), [targetPage.id]);
+  assert.deepEqual(requests, [`https://api.notion.com/v1/data_sources/${targetDataSourceId}/query`]);
+});
+
+test('resolveTargetPages accepts the source_page_id UUID surfaced by an audit', async (t) => {
+  const sourcePage: NotionPage = {
+    id: '34101384-1111-2222-3333-444444444444',
+    properties: {
+      'Page ID': { type: 'unique_id', unique_id: { prefix: 'ST-ISH', number: 9 } },
+    },
+  };
+  const targetPage: NotionPage = {
+    id: '2a101384-aaaa-bbbb-cccc-000b97592481',
+    parent: { data_source_id: targetDataSourceId },
+    properties: {
+      'External Page ID': { type: 'rich_text', rich_text: [{ plain_text: 'ST-ISH-9' }] },
+    },
+  };
+  const requests: string[] = [];
+  t.mock.method(globalThis, 'fetch', async (input: string | URL | Request) => {
+    const url = String(input);
+    requests.push(url);
+    if (url.endsWith(`/data_sources/${targetDataSourceId}/query`)) {
+      return jsonResponse({ results: [targetPage], has_more: false });
+    }
+    return jsonResponse({ message: 'unexpected direct page lookup' }, 500);
+  });
+
+  const pages = await resolveTargetPages(
+    { HALFDOZEN_NOTION_API_KEY: 'hd-token' } as Env,
+    targetDataSourceId,
+    'External Page ID',
+    [sourcePage.id],
+    [sourcePage],
+  );
+
+  assert.deepEqual(pages.map((page) => page.id), [targetPage.id]);
+  assert.deepEqual(requests, [`https://api.notion.com/v1/data_sources/${targetDataSourceId}/query`]);
 });

@@ -425,10 +425,14 @@ export async function syncHalfDozenStatusToSource(
     result.source_data_source_id = config.sourceDataSourceId;
     result.target_data_source_id = config.targetDataSourceId;
 
-    const [sourcePages, targetPages] = await Promise.all([
-      queryAllPages(env, 'client', config.sourceDataSourceId),
-      resolveTargetPages(env, config.targetDataSourceId, options.targetPageIds),
-    ]);
+    const sourcePages = await queryAllPages(env, 'client', config.sourceDataSourceId);
+    const targetPages = await resolveTargetPages(
+      env,
+      config.targetDataSourceId,
+      config.targetExtPageIdProperty,
+      options.targetPageIds,
+      sourcePages,
+    );
     const sourceByExtPageId = new Map<string, NotionPage>();
     for (const page of sourcePages) {
       const pageId = readText(page, 'Page ID');
@@ -655,11 +659,44 @@ async function resolveSourcePages(env: Env, dataSourceId: string, sourcePageIds?
   return [...directPages, ...extIds.flatMap((id) => allPagesByExtId.get(id) ?? [])];
 }
 
-async function resolveTargetPages(env: Env, dataSourceId: string, targetPageIds?: string[]): Promise<NotionPage[]> {
+export async function resolveTargetPages(
+  env: Env,
+  dataSourceId: string,
+  targetExtPageIdProperty: string,
+  targetPageIds?: string[],
+  sourcePages: NotionPage[] = [],
+): Promise<NotionPage[]> {
   const ids = targetPageIds?.map((id) => id.trim()).filter(Boolean);
   if (!ids || ids.length === 0) return queryAllPages(env, 'halfdozen', dataSourceId);
-  const pages = await Promise.all(ids.map((id) => retrievePage(env, 'halfdozen', id)));
-  return pages.filter((page) => !isTrashed(page));
+
+  const sourceExtIdByPageId = new Map(
+    sourcePages.flatMap((page) => {
+      const extPageId = readText(page, 'Page ID');
+      return extPageId ? [[page.id, extPageId] as const] : [];
+    }),
+  );
+  const directTargetIds: string[] = [];
+  const extPageIds = new Set<string>();
+  for (const id of ids) {
+    const sourceExtPageId = sourceExtIdByPageId.get(id);
+    if (sourceExtPageId) {
+      extPageIds.add(sourceExtPageId);
+    } else if (looksLikeNotionPageId(id)) {
+      directTargetIds.push(id);
+    } else {
+      extPageIds.add(id);
+    }
+  }
+
+  const directPages = await Promise.all(directTargetIds.map((id) => retrievePage(env, 'halfdozen', id)));
+  const matchedPages = extPageIds.size > 0
+    ? (await queryAllPages(env, 'halfdozen', dataSourceId)).filter((page) => extPageIds.has(readText(page, targetExtPageIdProperty)))
+    : [];
+  const pagesById = new Map<string, NotionPage>();
+  for (const page of [...directPages, ...matchedPages]) {
+    if (!isTrashed(page) && isPageInDataSource(page, dataSourceId)) pagesById.set(page.id, page);
+  }
+  return [...pagesById.values()];
 }
 
 async function buildTargetCreateProperties(

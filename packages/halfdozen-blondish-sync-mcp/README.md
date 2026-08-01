@@ -59,7 +59,10 @@ bearer as part of Claude connector rollout.
 - `<prefix>_source_to_hd` creates or repairs HD rows from client source
   rows. It never overwrites HD `Status`.
 - `<prefix>_hd_status_to_source` writes mapped HD statuses back to the client.
-  Unmapped statuses are skipped.
+  Unmapped statuses are skipped. Scoped calls accept the `target_page_id`,
+  `source_page_id`, or `ext_page_id` emitted in an audit
+  `reverse_status_drifts` row via `page_id` (or multiple values via
+  `page_ids`).
 - `<prefix>_full` runs source-to-HD, then HD-status-to-source.
 
 ## Contract
