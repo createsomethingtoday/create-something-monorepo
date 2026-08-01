@@ -13,7 +13,7 @@ export { createLiveOfferService, readOfferSavingsRuntimeConfig } from './runtime
 export { OFFER_SAVINGS_WIDGET_HTML } from './widget.js';
 import { OFFER_SAVINGS_WIDGET_HTML } from './widget.js';
 
-export const OFFER_WIDGET_URI = 'ui://offer-savings/results-v1.html';
+export const OFFER_WIDGET_URI = 'ui://offer-savings/results-v2.html';
 export const OFFER_WIDGET_MIME_TYPE = 'text/html;profile=mcp-app';
 
 const widgetToolMeta = {
@@ -73,7 +73,7 @@ export function createOfferSavingsMcpServer(
   const server = new McpServer(
     {
       name: 'offer-savings-agent',
-      version: '0.1.0'
+      version: '0.2.0'
     },
     {
       capabilities: {

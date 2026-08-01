@@ -89,6 +89,8 @@ test('MCP protocol exposes only the bounded offer workflow and widget resource',
   });
 
   const listed = await client.listTools();
+  assert.equal(client.getServerVersion()?.version, '0.2.0');
+  assert.equal(OFFER_WIDGET_URI, 'ui://offer-savings/results-v2.html');
   assert.deepEqual(
     listed.tools.map((tool) => tool.name),
     ['find_offers', 'verify_offer', 'watch_offers', 'get_watch']
