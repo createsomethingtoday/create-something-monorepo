@@ -851,6 +851,8 @@ const OAUTH_SUPPORTED_SCOPES = [
 	'template-review:read',
 	'template-review:write',
 	'template-review:queue-read',
+	'offer-savings:read',
+	'offer-savings:write',
 	'cracked-sync:read',
 	'cracked-sync:write',
 ];
@@ -865,6 +867,14 @@ const OAUTH_APPLICATION_ACCESS_POLICIES = new Map<string, {
 	expiresIn: number;
 	controlAccess?: true;
 }>([
+	[
+		'https://offer-savings-agent.createsomething.workers.dev/mcp',
+		{
+			applicationId: 'offer-savings-agent',
+			resource: 'https://offer-savings-agent.createsomething.workers.dev/mcp',
+			expiresIn: OAUTH_APPLICATION_ACCESS_TOKEN_EXPIRES_IN,
+		},
+	],
 	[
 		'https://webflow-template-review-mcp.createsomething.workers.dev/mcp',
 		{

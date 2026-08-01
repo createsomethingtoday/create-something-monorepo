@@ -26,6 +26,19 @@ test('Template Review OAuth uses an explicit resource-bound application policy',
 	});
 });
 
+test('Offer Savings OAuth uses an exact resource-bound application policy', () => {
+	const resource = 'https://offer-savings-agent.createsomething.workers.dev/mcp';
+	assert.deepEqual(resolveOAuthApplicationAccessPolicy(resource), {
+		applicationId: 'offer-savings-agent',
+		resource,
+		expiresIn: 3600,
+	});
+	assert.equal(
+		resolveOAuthApplicationAccessPolicy('https://offer-savings-agent.createsomething.workers.dev'),
+		null
+	);
+});
+
 test('Cracked Live Ticket Sync OAuth uses an exact resource-bound application policy', () => {
 	const resource = 'https://halfdozen-cracked-sync-mcp.createsomething.workers.dev/mcp';
 	const policy = resolveOAuthApplicationAccessPolicy(resource);

@@ -1,0 +1,29 @@
+name = "offer-savings-agent"
+main = "index.ts"
+compatibility_date = "2026-08-01"
+compatibility_flags = ["nodejs_compat"]
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+workers_dev = true
+
+[observability]
+enabled = true
+
+[vars]
+CS_IDENTITY_ISSUER = "https://id.createsomething.space"
+OAUTH_ALLOWED_EMAILS = "micah@createsomething.io"
+OFFER_AGENT_MODEL = "gpt-5.4-mini"
+OFFER_AGENT_MAX_TURNS = "6"
+
+[[durable_objects.bindings]]
+name = "MCP_OBJECT"
+class_name = "OfferSavingsMCP"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "offer-savings"
+database_id = "be77b59a-4718-49bd-bca1-a99460d15d11"
+migrations_dir = "migrations"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["OfferSavingsMCP"]
