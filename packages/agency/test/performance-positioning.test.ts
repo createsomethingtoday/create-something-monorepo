@@ -93,11 +93,11 @@ test('the homepage opening uses a property-owned bench-scale boundary study', ()
   assert.match(home, /alt: 'A bench-scale hydraulic gate and gauge/);
   assert.match(
     home,
-    /mp4: '\/images\/performance-lab\/agency-handoff-boundary-motion\.mp4'/
+    /mp4: '\/images\/performance-lab\/agency-handoff-boundary-motion-loop\.mp4'/
   );
   assert.match(
     home,
-    /webm: '\/images\/performance-lab\/agency-handoff-boundary-motion\.webm'/
+    /webm: '\/images\/performance-lab\/agency-handoff-boundary-motion-loop\.webm'/
   );
   assert.match(home, /media=\{homepageHandoffBoundaryMedia\}/);
   assert.doesNotMatch(home, /controlledFlowMedia/);
@@ -119,7 +119,7 @@ test('the homepage opening uses a property-owned bench-scale boundary study', ()
   assert.equal(
     existsSync(
       new URL(
-        '../static/images/performance-lab/agency-handoff-boundary-motion.mp4',
+        '../static/images/performance-lab/agency-handoff-boundary-motion-loop.mp4',
         import.meta.url
       )
     ),
@@ -128,7 +128,7 @@ test('the homepage opening uses a property-owned bench-scale boundary study', ()
   assert.equal(
     existsSync(
       new URL(
-        '../static/images/performance-lab/agency-handoff-boundary-motion.webm',
+        '../static/images/performance-lab/agency-handoff-boundary-motion-loop.webm',
         import.meta.url
       )
     ),
