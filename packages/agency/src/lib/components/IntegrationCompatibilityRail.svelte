@@ -254,7 +254,13 @@
 
   @media (max-width: 800px) {
     .compatibility-rail__header {
-      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      align-items: start;
+      gap: 1rem;
+    }
+
+    .compatibility-rail__catalog-link {
+      justify-self: start;
     }
 
     .compatibility-rail__groups {
@@ -285,6 +291,11 @@
 
     .compatibility-rail__item {
       padding: 0.65rem;
+    }
+
+    .compatibility-rail__catalog-link {
+      justify-self: stretch;
+      justify-content: space-between;
     }
   }
 </style>
