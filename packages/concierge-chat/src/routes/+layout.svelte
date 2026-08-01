@@ -12,6 +12,18 @@
 
   export let data: LayoutData;
   let publicNavOpen = false;
+  let publicNavToggle: HTMLButtonElement | null = null;
+
+  function closePublicNavigation() {
+    publicNavOpen = false;
+  }
+
+  function handlePublicNavKeydown(event: KeyboardEvent) {
+    if (event.key === 'Escape' && publicNavOpen) {
+      closePublicNavigation();
+      publicNavToggle?.focus();
+    }
+  }
 
   $: controlPlaneTone = getAgencyAccessTone(data.agencyAccess);
   $: controlPlaneHref = buildControlPlaneBridgeHref(
@@ -60,6 +72,7 @@
     data.currentPath === '/client-service' ||
     data.currentPath === '/apply' ||
     data.currentPath.startsWith('/apply/');
+  $: isApplyRoute = data.currentPath === '/apply' || data.currentPath.startsWith('/apply/');
   $: showCompactStaffAccess = isPublicIntakeRoute || !showInternalNavigation;
   $: navItems = isCandidateApplicationRoute
     ? [
@@ -74,8 +87,7 @@
           { href: '/client-service', label: 'NPG service' },
           { href: '/jobs', label: 'Jobs' },
           { href: '/facilities', label: 'Facilities' },
-          { href: '/agents', label: 'Agents' },
-          { href: '/apply', label: 'Start' }
+          { href: '/agents', label: 'Agents' }
         ]
       : [
           { href: '/', label: 'Home' },
@@ -98,6 +110,8 @@
   <link rel="apple-touch-icon" href={browserIdentity.webclip} sizes="180x180" />
   <link rel="manifest" href={browserIdentity.manifest} />
 </svelte:head>
+
+<svelte:window on:keydown={handlePublicNavKeydown} />
 
 <a class="skip-link" href="#main-content">Skip to main content</a>
 
@@ -127,10 +141,12 @@
       </a>
       <button
         class="webflow-nav-toggle"
+        class:open={publicNavOpen}
         type="button"
-        aria-label="Toggle navigation"
+        aria-label={publicNavOpen ? 'Close navigation' : 'Open navigation'}
         aria-expanded={publicNavOpen}
         aria-controls="primary-navigation"
+        bind:this={publicNavToggle}
         on:click={() => (publicNavOpen = !publicNavOpen)}
       >
         <span></span>
@@ -146,22 +162,30 @@
           <a
             href={item.href}
             aria-current={data.currentPath === item.href ? 'page' : undefined}
-            on:click={() => (publicNavOpen = false)}>{item.label}</a
+            on:click={closePublicNavigation}>{item.label}</a
           >
         {/each}
         {#if !isCandidateApplicationRoute}
-          <a
-            class="webflow-mobile-menu-action"
-            href={controlPlaneHref}
-            target="_blank"
-            rel="noreferrer"
-            on:click={() => (publicNavOpen = false)}
-          >Staff access <span aria-hidden="true">↗</span></a>
+          <div class="webflow-mobile-menu-actions">
+            <a
+              class="webflow-mobile-primary-action"
+              href="/apply"
+              aria-current={isApplyRoute ? 'page' : undefined}
+              on:click={closePublicNavigation}
+            >Start application <span aria-hidden="true">↗</span></a>
+            <a
+              class="webflow-mobile-menu-action"
+              href={controlPlaneHref}
+              target="_blank"
+              rel="noreferrer"
+              on:click={closePublicNavigation}
+            >Staff access <span aria-hidden="true">↗</span></a>
+          </div>
         {:else}
           <a
             class="webflow-mobile-menu-action"
             href="/"
-            on:click={() => (publicNavOpen = false)}
+            on:click={closePublicNavigation}
           >Exit application <span aria-hidden="true">↗</span></a>
         {/if}
       </nav>
@@ -171,16 +195,23 @@
           <span aria-hidden="true">↗</span>
         </a>
       {:else}
-        <a
-          class="webflow-staff-link"
-          href={controlPlaneHref}
-          target="_blank"
-          rel="noreferrer"
-          aria-label="Open staff access"
-        >
-          <span>Staff access</span>
-          <span aria-hidden="true">↗</span>
-        </a>
+        <div class="webflow-nav-actions">
+          <a
+            class="webflow-staff-link"
+            href={controlPlaneHref}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Open staff access"
+          >
+            <span>Staff access</span>
+            <span aria-hidden="true">↗</span>
+          </a>
+          <a
+            class="webflow-primary-action"
+            href="/apply"
+            aria-current={isApplyRoute ? 'page' : undefined}
+          >Start application <span aria-hidden="true">↗</span></a>
+        </div>
       {/if}
     </header>
 
@@ -335,7 +366,7 @@
     line-height: 1.2;
   }
 
-  nav {
+  .app-nav nav {
     display: flex;
     gap: 0.45rem;
     flex-wrap: wrap;
@@ -350,7 +381,7 @@
     flex-wrap: wrap;
   }
 
-  nav a {
+  .app-nav nav a {
     padding: 0.52rem 0.78rem;
     border-radius: 999px;
     text-decoration: none;
@@ -368,7 +399,7 @@
       transform 140ms ease;
   }
 
-  nav a:hover {
+  .app-nav nav a:hover {
     background: var(--surface-overlay-strong);
     border-color: var(--line-strong);
     transform: translateY(-1px);
@@ -428,16 +459,18 @@
     width: min(calc(100% - 48px), 1380px);
     margin: 24px auto 0;
     padding: 8px 9px 8px 12px;
-    border: 1px solid rgba(23, 21, 18, 0.1);
+    border: 1px solid var(--line);
     border-radius: 999px;
-    background: rgba(255, 250, 244, 0.84);
-    box-shadow: 0 14px 38px rgba(2, 2, 2, 0.08);
+    background: color-mix(in srgb, var(--surface) 84%, transparent);
+    box-shadow: var(--shadow-soft);
     backdrop-filter: blur(24px) saturate(1.2);
   }
 
   .webflow-logo,
   .webflow-nav-links,
-  .webflow-staff-link {
+  .webflow-nav-actions,
+  .webflow-staff-link,
+  .webflow-primary-action {
     position: relative;
     z-index: 1;
   }
@@ -504,8 +537,9 @@
 
   .webflow-nav-links a {
     padding: 12px 14px;
-    border-radius: 999px;
-    color: rgba(23, 21, 18, 0.7);
+    border: 0;
+    border-radius: 10px;
+    color: var(--muted-strong);
     font-size: 13px;
     line-height: 1;
     font-weight: 510;
@@ -518,34 +552,58 @@
 
   .webflow-nav-links a:hover,
   .webflow-nav-links a[aria-current='page'] {
-    background: rgba(175, 124, 84, 0.12);
-    color: #171512;
+    background: var(--accent-secondary-soft);
+    color: var(--button-bg);
+  }
+
+  .webflow-nav-actions {
+    display: flex;
+    align-items: center;
+    justify-self: end;
+    gap: 6px;
   }
 
   .webflow-staff-link {
     display: inline-flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 18px;
-    justify-self: end;
-    min-height: 46px;
-    padding: 6px 8px 6px 18px;
-    border-radius: 999px;
-    background: #171512;
-    color: white;
-    font-size: 13px;
+    justify-content: center;
+    gap: 7px;
+    min-height: 44px;
+    padding: 0 10px;
+    border-radius: var(--radius-tight);
+    background: transparent;
+    color: var(--muted-strong);
+    font-size: 12px;
     font-weight: 520;
     text-decoration: none;
   }
 
   .webflow-staff-link span:last-child {
-    display: grid;
-    place-items: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 999px;
-    background: #ffffff;
-    color: #171512;
+    color: var(--button-bg);
+  }
+
+  .webflow-staff-link:hover {
+    color: var(--button-bg);
+  }
+
+  .webflow-primary-action {
+    display: inline-flex;
+    min-height: 46px;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 0 14px 0 17px;
+    border-radius: var(--radius-tight);
+    background: var(--button-bg);
+    color: var(--button-ink);
+    font-size: 13px;
+    font-weight: 620;
+    text-decoration: none;
+  }
+
+  .webflow-primary-action span:last-child {
+    font-size: 16px;
+    line-height: 1;
   }
 
   .application-workspace {
@@ -573,13 +631,12 @@
 
   .application-exit {
     background: transparent;
-    color: #171512;
-    box-shadow: inset 0 0 0 1px rgba(23, 21, 18, 0.14);
+    color: var(--button-bg);
+    box-shadow: inset 0 0 0 1px var(--line-strong);
   }
 
   .application-exit span:last-child {
-    background: #171512;
-    color: #ffffff;
+    color: var(--button-bg);
   }
 
   .application-route-rail {
@@ -649,10 +706,15 @@
     display: none;
   }
 
-  @media (max-width: 860px) {
+  .webflow-mobile-menu-actions,
+  .webflow-mobile-primary-action {
+    display: none;
+  }
+
+  @media (max-width: 1080px) {
     .webflow-nav {
       top: 10px;
-      grid-template-columns: 1fr auto auto;
+      grid-template-columns: 1fr auto;
       width: calc(100% - 24px);
       margin-top: 12px;
       padding-left: 10px;
@@ -664,12 +726,14 @@
       right: 0;
       left: 0;
       display: none;
-      gap: 4px;
-      padding: 10px;
-      border: 1px solid rgba(23, 21, 18, 0.1);
-      border-radius: 24px;
-      background: rgba(255, 250, 244, 0.98);
-      box-shadow: 0 22px 60px rgba(2, 2, 2, 0.16);
+      align-items: stretch;
+      justify-content: stretch;
+      gap: 2px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: color-mix(in srgb, var(--surface) 98%, transparent);
+      box-shadow: var(--shadow);
       backdrop-filter: blur(24px);
     }
 
@@ -678,7 +742,7 @@
     }
 
     .application-nav .webflow-nav-links {
-      border-radius: 22px;
+      border-radius: var(--radius);
     }
 
     .application-nav .webflow-nav-links a {
@@ -686,16 +750,31 @@
       text-align: left;
     }
 
+    .webflow-mobile-menu-actions {
+      display: grid;
+      gap: 6px;
+      margin-top: 6px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+    }
+
+    .webflow-mobile-primary-action,
     .webflow-mobile-menu-action {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      border-color: rgba(23, 21, 18, 0.72) !important;
-      background: #171512;
-      color: #ffffff !important;
     }
 
-    .webflow-nav:not(.application-nav) > .webflow-staff-link {
+    .webflow-mobile-primary-action {
+      background: var(--button-bg) !important;
+      color: var(--button-ink) !important;
+    }
+
+    .webflow-mobile-menu-action {
+      color: var(--muted-strong) !important;
+    }
+
+    .webflow-nav-actions {
       display: none;
     }
 
@@ -731,8 +810,16 @@
     }
 
     .webflow-nav-links a {
-      padding: 15px 16px;
+      min-height: 48px;
+      align-items: center;
+      padding: 0 14px;
+      border-radius: var(--radius-tight);
       font-size: 15px;
+      text-align: left;
+    }
+
+    .webflow-nav-links > a[aria-current='page'] {
+      box-shadow: inset 3px 0 0 var(--accent-secondary);
     }
 
     .webflow-nav-toggle {
@@ -752,7 +839,16 @@
       display: block;
       width: 17px;
       height: 1px;
-      background: #171512;
+      background: var(--button-bg);
+      transition: transform 140ms ease;
+    }
+
+    .webflow-nav-toggle.open span:first-child {
+      transform: translateY(3px) rotate(45deg);
+    }
+
+    .webflow-nav-toggle.open span:last-child {
+      transform: translateY(-3px) rotate(-45deg);
     }
 
     .webflow-staff-link {
@@ -770,7 +866,7 @@
     }
 
     .nav-cluster,
-    nav {
+    .app-nav nav {
       justify-content: space-between;
       justify-items: stretch;
     }
@@ -805,7 +901,8 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .webflow-nav-links a {
+    .webflow-nav-links a,
+    .webflow-nav-toggle span {
       transition: none;
     }
   }

@@ -226,6 +226,16 @@ async function prepareBookedCandidateThread(client) {
 		/aria-controls="primary-navigation"/,
 		'Expected the mobile navigation control relationship'
 	);
+	assert.match(
+		homePage.bodyText,
+		/aria-label="Open navigation"/,
+		'Expected an explicit closed navigation label'
+	);
+	assert.match(
+		homePage.bodyText,
+		/Start application/,
+		'Expected the applicant action to remain explicit in shared navigation'
+	);
 
 	const jobsPage = await client.get('/jobs');
 	assert.equal(jobsPage.status, 200, 'Expected /jobs to render');
