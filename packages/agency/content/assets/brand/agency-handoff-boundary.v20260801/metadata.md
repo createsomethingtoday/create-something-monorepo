@@ -3,15 +3,16 @@
 > Asset ID: `brand.agency-handoff-boundary.v20260801`
 > Owner: CREATE SOMETHING
 > Generated and inspected: 2026-08-01
-> Tracking: `CRE-1551`, motion correction `CRE-1554`, natural loop correction `CRE-1555`
+> Tracking: `CRE-1551`, motion correction `CRE-1554`, natural loop correction `CRE-1555`, full-frame correction `CRE-1559`
 > Status: approved for the `.agency` homepage only
 
 ## Role
 
-This homepage-owned Performance Lab study replaces the shared natural-water opening. It shows a
-real bench-scale hydraulic boundary: a glass channel, fixed steel gate, gauge, datum, and contained
-flow. The apparatus makes ownership and control visible without depicting a person. The left half
-remains quiet enough for the headline; the right half carries the operating condition.
+This homepage-owned Performance Lab media family replaces the shared natural-water opening. The
+current v3 video shows a rigid steel calibration rotor operating inside a fixed test stand. Its
+periodic motion makes controlled work visible without depicting a person. The left half remains
+quiet enough for the headline; the right half carries the operating condition. Earlier hydraulic
+studies remain in this record as rejection history only.
 
 Visual family: `material-prototype-study`.
 
@@ -45,11 +46,23 @@ Visual family: `material-prototype-study`.
   - `video_6a6e02c8b0948191a520fe04b91fefd007bc595880363312` used
     `source/sora-steady-loop-prompt.txt`. It produced strong steady water motion but also reframed
     into a close crop, so it was rejected. No rejected Sora pixels appear in the accepted export.
-- Accepted loop finishing: the approved full-frame still remains fixed while a soft mask confines a
+- Rejected v2 finishing: the approved full-frame still remained fixed while a soft mask confined a
   mathematically periodic ripple field to the contained-water region. Its eased phase advances
   monotonically, producing one-directional water motion without a reverse segment and reaching zero
   velocity at the cycle boundary. The result is a deterministic 300-frame closed cycle at 30 fps;
-  it contains no cut or audio and relies on the native muted `loop` playback attribute.
+  it contains no cut or audio and relies on the native muted `loop` playback attribute. This export
+  was rejected after user screenshot review because the masked lower region read as a warped
+  bottom-half treatment rather than a coherent video shot.
+- Native-video correction: `CRE-1559` started fresh with `sora-2-pro` native text-to-video. No input image,
+  source still, remix parent, or image animation was used. The accepted generation job is
+  `video_6a6e3f855dd08193bd9e0e0af70afb0c0c7e67327025f8bc`, created from the exact prompt in
+  `source/sora-native-brand-loop-simple-prompt.txt`. It produced one continuous locked shot of a
+  rigid calibration rotor. Matching source phases at frames `77` and `257` are exactly six seconds
+  apart and measure `0.968897` full-resolution SSIM. That native physical cycle was uniformly timed
+  to twelve seconds, with every source frame kept whole. No dissolve, interpolation, time reverse,
+  frozen background, composited image, or regional treatment is present, and no spatial mask is
+  used. The final 360-frame export uses a direct phase boundary: its last frame flows to the
+  matching first phase as the next ordinary rotor frame.
 
 Mobbin supplied hierarchy evidence only. No Mobbin screen, asset, copy, layout, or trade dress was
 used as a generation input or reproduced.
@@ -63,10 +76,23 @@ used as a generation input or reproduced.
 | `static/images/performance-lab/agency-handoff-boundary-mobile.webp` | 819 x 1024 | `e9621d46bde43210aa6f63ee5293e5f82efec847350ad3da501dcefdf3bed9f3` | Mobile hard crop on gate and gauge |
 | `static/images/performance-lab/agency-handoff-boundary-motion-loop.mp4` | 1280 x 720, 8.0 s | `8969fd066b2a33a12e380074a728c0e923acb8ef3c12b2f4b076a5be58e1a2b1` | H.264 visibly animated closed loop |
 | `static/images/performance-lab/agency-handoff-boundary-motion-loop.webm` | 1280 x 720, 8.0 s | `2c3529020dc5cb6c7a5e279007bbfaadbeeb486a04c7c59f4d470f427b39c3c0` | VP9 visibly animated closed loop |
-| `static/images/performance-lab/agency-handoff-boundary-motion-loop-v2.mp4` | 1280 x 720, 10.0 s | `99da595f79322c58c5b50c1de0a2cd429548a153b07f987fc55888053a824d38` | H.264 natural cyclic loop |
-| `static/images/performance-lab/agency-handoff-boundary-motion-loop-v2.webm` | 1280 x 720, 10.0 s | `14b6f8c0042b00578f1d6d4e52cbb705e5002614c3e756b7f1f943cdece6c3cb` | VP9 natural cyclic loop |
+| `static/images/performance-lab/agency-handoff-boundary-motion-loop-v2.mp4` | 1280 x 720, 10.0 s | `99da595f79322c58c5b50c1de0a2cd429548a153b07f987fc55888053a824d38` | Rejected masked H.264 treatment |
+| `static/images/performance-lab/agency-handoff-boundary-motion-loop-v2.webm` | 1280 x 720, 10.0 s | `14b6f8c0042b00578f1d6d4e52cbb705e5002614c3e756b7f1f943cdece6c3cb` | Rejected masked VP9 treatment |
+| `static/images/performance-lab/agency-performance-calibration-loop-v3.mp4` | 1280 x 720, 12.0 s | `ad49a2f85b9a8f5ca6519099279dec2b15b49bf0c481b0256d2cf4ad63f00491` | Accepted H.264 native-video loop |
+| `static/images/performance-lab/agency-performance-calibration-loop-v3.webm` | 1280 x 720, 12.0 s | `fea9e85a69d09a7dcaaaddd753944f715ea9ba397ca90cd7224033a8b5c469d9` | Accepted VP9 native-video loop |
+| `static/images/performance-lab/agency-performance-calibration-loop-v3-poster.webp` | 1280 x 720 | `bb6169987350556a4fa7bf43d116076c1ce1e1ae427a0bbef7ff51e9865369eb` | Video-derived desktop poster and reduced-motion still |
+| `static/images/performance-lab/agency-performance-calibration-loop-v3-poster-mobile.webp` | 819 x 1024 | `9625a64a96fcb900d07b66223c1f26fb5f864121214b48b90140061b8362ab40` | Video-derived mobile poster and reduced-motion still |
 
 ## Inspection record
+
+- [x] v3 is native text-to-video from one locked Sora shot; no reference image or remix parent was supplied.
+- [x] The accepted source cycle is frames `77` through `256`; frame `257` matches frame `77` at `0.968897` SSIM.
+- [x] The last included source frame to the matching first phase is an ordinary forward-motion step, not a reset or reverse.
+- [x] No dissolve, interpolation, mask, bottom-half effect, regional displacement, still-image layer, or time reverse is present.
+- [x] The v3 MP4 contains 360 frames at 30 fps, a 12.0-second duration, and no audio stream.
+- [x] Twelve motion checkpoints preserve the locked camera, fixed stand, near-black copy field, and continuously rotating wheel.
+
+### Rejected hydraulic-study inspection history
 
 - [x] Original and responsive exports inspected individually.
 - [x] Ten motion checkpoints inspected across the accepted cycle; apparatus geometry and copy space remain fixed.

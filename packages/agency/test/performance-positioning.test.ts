@@ -80,37 +80,35 @@ test('the homepage moves from claim to proof to method before asking visitors to
   }
 });
 
-test('the homepage opening uses a property-owned bench-scale boundary study', () => {
+test('the homepage opening uses a property-owned native calibration study', () => {
   assert.match(home, /const homepageHandoffBoundaryMedia: PerformanceCampaignMedia/);
   assert.match(
     home,
-    /src: '\/images\/performance-lab\/agency-handoff-boundary\.webp'/
+    /src: '\/images\/performance-lab\/agency-performance-calibration-loop-v3-poster\.webp'/
   );
   assert.match(
     home,
-    /mobileSrc: '\/images\/performance-lab\/agency-handoff-boundary-mobile\.webp'/
+    /mobileSrc:[\s\S]*?'\/images\/performance-lab\/agency-performance-calibration-loop-v3-poster-mobile\.webp'/
   );
-  assert.match(home, /alt: 'A bench-scale hydraulic gate and gauge/);
+  assert.match(home, /alt: 'A rigid steel calibration rotor/);
   assert.match(
     home,
-    /mp4: '\/images\/performance-lab\/agency-handoff-boundary-motion-loop-v2\.mp4'/
+    /mp4: '\/images\/performance-lab\/agency-performance-calibration-loop-v3\.mp4'/
   );
   assert.match(
     home,
-    /webm: '\/images\/performance-lab\/agency-handoff-boundary-motion-loop-v2\.webm'/
+    /webm: '\/images\/performance-lab\/agency-performance-calibration-loop-v3\.webm'/
+  );
+  assert.match(
+    home,
+    /poster: '\/images\/performance-lab\/agency-performance-calibration-loop-v3-poster\.webp'/
   );
   assert.match(home, /media=\{homepageHandoffBoundaryMedia\}/);
   assert.doesNotMatch(home, /controlledFlowMedia/);
   assert.equal(
     existsSync(
-      new URL('../static/images/performance-lab/agency-handoff-boundary.webp', import.meta.url)
-    ),
-    true
-  );
-  assert.equal(
-    existsSync(
       new URL(
-        '../static/images/performance-lab/agency-handoff-boundary-mobile.webp',
+        '../static/images/performance-lab/agency-performance-calibration-loop-v3-poster.webp',
         import.meta.url
       )
     ),
@@ -119,7 +117,7 @@ test('the homepage opening uses a property-owned bench-scale boundary study', ()
   assert.equal(
     existsSync(
       new URL(
-        '../static/images/performance-lab/agency-handoff-boundary-motion-loop-v2.mp4',
+        '../static/images/performance-lab/agency-performance-calibration-loop-v3-poster-mobile.webp',
         import.meta.url
       )
     ),
@@ -128,7 +126,25 @@ test('the homepage opening uses a property-owned bench-scale boundary study', ()
   assert.equal(
     existsSync(
       new URL(
-        '../static/images/performance-lab/agency-handoff-boundary-motion-loop-v2.webm',
+        '../static/images/performance-lab/agency-performance-calibration-loop-v3.mp4',
+        import.meta.url
+      )
+    ),
+    true
+  );
+  assert.equal(
+    existsSync(
+      new URL(
+        '../static/images/performance-lab/agency-performance-calibration-loop-v3.webm',
+        import.meta.url
+      )
+    ),
+    true
+  );
+  assert.equal(
+    existsSync(
+      new URL(
+        '../static/images/performance-lab/agency-performance-calibration-loop-v3-poster.webp',
         import.meta.url
       )
     ),
@@ -136,22 +152,27 @@ test('the homepage opening uses a property-owned bench-scale boundary study', ()
   );
 });
 
-test('the homepage boundary motion is a natural cyclic loop with a still fallback', () => {
+test('the homepage boundary motion is a native text-to-video loop with a still fallback', () => {
   assert.match(
     campaign,
     /<video[\s\S]*?autoplay[\s\S]*?muted[\s\S]*?loop[\s\S]*?playsinline/
   );
   assert.match(campaign, /\{#if media\.video && motionAllowed\}/);
   assert.match(campaign, /poster=\{media\.video\.poster \?\? media\.src\}/);
-  assert.match(handoffBoundaryMetadata, /mathematically periodic ripple field/);
-  assert.match(handoffBoundaryMetadata, /one-directional water motion/);
-  assert.match(handoffBoundaryMetadata, /deterministic 300-frame closed cycle/);
-  assert.match(handoffBoundaryMetadata, /1280 x 720, 10\.0 s/);
-  assert.match(handoffBoundaryMetadata, /Water-region SSIM[\s\S]*?`0\.585141`/);
+  assert.match(handoffBoundaryMetadata, /CRE-1559/);
+  assert.match(handoffBoundaryMetadata, /native text-to-video/);
+  assert.match(handoffBoundaryMetadata, /No input image/);
+  assert.match(handoffBoundaryMetadata, /no spatial mask/);
+  assert.match(handoffBoundaryMetadata, /direct phase boundary/);
+  assert.match(handoffBoundaryMetadata, /360 frames at 30 fps/);
+  assert.match(handoffBoundaryMetadata, /12\.0-second/);
+  assert.match(handoffBoundaryMetadata, /frames `77` and `257`/);
+  assert.match(handoffBoundaryMetadata, /No dissolve/);
+  assert.match(handoffBoundaryMetadata, /rejected after user screenshot review/);
   assert.equal(
     existsSync(
       new URL(
-        '../content/assets/brand/agency-handoff-boundary.v20260801/source/sora-steady-loop-prompt.txt',
+        '../content/assets/brand/agency-handoff-boundary.v20260801/source/sora-native-brand-loop-simple-prompt.txt',
         import.meta.url
       )
     ),
