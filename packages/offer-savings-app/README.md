@@ -14,6 +14,8 @@
 
 The widget uses the standard MCP Apps JSON-RPC bridge (`ui/initialize`, `ui/notifications/tool-result`, and `tools/call`) first. `window.openai` is an optional ChatGPT enhancement. The main result lane contains LTK-specific coupons, followed by clearly labeled supplemental fallback offers. Generic fulfillment or policy pages appear only as evidence, with no coupon actions. Each result includes a short search-run receipt. Its only write action is the retry-safe creation of a deadline-bounded watch; it cannot purchase, mutate a cart, access private LTK data, or send a notification.
 
+The current tool descriptor points to `results-v3.html`. Read-only `results-v2.html` and `results-v1.html` resource aliases serve the same current widget so existing private ChatGPT installations can refresh safely after a template URI change.
+
 ChatGPT does not supply observation timestamps. The MCP input schemas omit `asOf`; the service records it at the start of each find, verify, or watch run. This prevents model-formatted timestamp retries from creating duplicate searches.
 
 ## Deterministic local loop

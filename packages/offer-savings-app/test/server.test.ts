@@ -115,7 +115,7 @@ test('MCP protocol exposes only the bounded offer workflow and widget resource',
   });
 
   const listed = await client.listTools();
-  assert.equal(client.getServerVersion()?.version, '0.2.1');
+  assert.equal(client.getServerVersion()?.version, '0.2.2');
   assert.equal(OFFER_WIDGET_URI, 'ui://offer-savings/results-v3.html');
   assert.deepEqual(
     listed.tools.map((tool) => tool.name),
@@ -160,9 +160,20 @@ test('MCP protocol exposes only the bounded offer workflow and widget resource',
   );
 
   const resources = await client.listResources();
-  assert.equal(resources.resources.length, 1);
-  assert.equal(resources.resources[0]?.uri, OFFER_WIDGET_URI);
-  assert.equal(resources.resources[0]?.mimeType, 'text/html;profile=mcp-app');
+  assert.deepEqual(
+    resources.resources.map((resource) => resource.uri),
+    [
+      OFFER_WIDGET_URI,
+      'ui://offer-savings/results-v2.html',
+      'ui://offer-savings/results-v1.html'
+    ]
+  );
+  assert.equal(
+    resources.resources.every(
+      (resource) => resource.mimeType === 'text/html;profile=mcp-app'
+    ),
+    true
+  );
   const widget = await client.readResource({ uri: OFFER_WIDGET_URI });
   const widgetContent = widget.contents[0];
   const widgetHtml = widgetContent && 'text' in widgetContent ? widgetContent.text : '';
@@ -181,6 +192,18 @@ test('MCP protocol exposes only the bounded offer workflow and widget resource',
     prefersBorder: true,
     csp: { connectDomains: [], resourceDomains: [] }
   });
+  for (const legacyUri of [
+    'ui://offer-savings/results-v2.html',
+    'ui://offer-savings/results-v1.html'
+  ]) {
+    const legacyWidget = await client.readResource({ uri: legacyUri });
+    const legacyContent = legacyWidget.contents[0];
+    assert.equal(legacyContent?.uri, legacyUri);
+    assert.match(
+      legacyContent && 'text' in legacyContent ? legacyContent.text : '',
+      /Search in progress\. Waiting for a completed offer result\./i
+    );
+  }
 });
 
 test('MCP calls find, verify, and idempotent watch through the authoritative service', async (t) => {
