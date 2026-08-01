@@ -16,7 +16,7 @@ The Performance design system is one Canon-owned namespace for presenting and op
 
 These seven patterns are a grammar, not seven required page sections. Every Performance surface must compose from this system before inventing another route-level shell, but adjacent ideas should share one chapter when they support the same decision. The narrative protocol remains claim, conditions, tests, intervention, evidence, handoff; a homepage should normally land that protocol in three to five top-level sections.
 
-Use `PerformanceNarrativeStage` when two or more adjacent chapters are parts of one operating decision and each has a meaningful property-owned artifact. The ordered index keeps every scene label, summary, state, and primary destination visible; the active panel concentrates the complete detail, evidence, receipts, and artifact. Selection is always explicit—never autoplayed—and supports pointer, touch, roving arrow/Home/End keys, previous/next controls, and stable URL fragments. Canon renders every panel in document order during SSR, then hides inactive panels only after hydration. This is progressive disclosure, not content removal.
+Use `PerformanceNarrativeStage` when two or more adjacent chapters are parts of one operating decision and each has a meaningful property-owned artifact. The ordered index keeps every scene label, summary, state, and primary destination visible; the active panel concentrates the complete detail, evidence, receipts, and artifact. Use the optional `preview` snippet when decisive property-owned proof must remain visible before scene selection; keep it compact and do not repeat the same proof object inside an active scene. Selection is always explicit—never autoplayed—and supports pointer, touch, roving arrow/Home/End keys, previous/next controls, and stable URL fragments. Canon renders every panel in document order during SSR, then hides inactive panels only after hydration. This is progressive disclosure, not content removal.
 
 Judge the stage in the complete page. The opening must create the question, the stage must resolve it with proof, and the final handoff must be the earned next action. Do not use the stage to combine unrelated ideas, preserve duplicated introductions, or add motion that competes with the page argument. Property artifacts stay behind the scene-aware `artifact` snippet; Canon owns only selection, responsive composition, focus, state, and fallback behavior.
 
@@ -78,6 +78,7 @@ IBM Plex Mono is bundled from the official `@ibm/plex-mono` package under the SI
 <PerformanceEvidenceIndex title="Evidence index" items={evidence} />
 
 <PerformanceNarrativeStage id="operating-story" title="Map. Decide. Prove." {scenes}>
+  {#snippet preview()}<!-- compact route-owned proof visible before selection -->{/snippet}
   {#snippet artifact(scene)}<!-- route-owned artifact for this scene -->{/snippet}
 </PerformanceNarrativeStage>
 

@@ -29,6 +29,7 @@
     scenes: PerformanceNarrativeScene[];
     ariaLabel?: string;
     density?: 'standard' | 'compact';
+    preview?: Snippet;
     artifact?: Snippet<[PerformanceNarrativeScene, number]>;
   }
 
@@ -40,6 +41,7 @@
     scenes,
     ariaLabel = 'Narrative scenes',
     density = 'compact',
+    preview,
     artifact
   }: Props = $props();
 
@@ -133,6 +135,12 @@
       </div>
       {#if description}<p>{description}</p>{/if}
     </header>
+
+    {#if preview}
+      <div class="performance-narrative-stage__preview">
+        {@render preview()}
+      </div>
+    {/if}
 
     <div class="performance-narrative-stage__composition">
       <div
@@ -254,6 +262,10 @@
 
 <style>
   .performance-narrative-stage {
+    scroll-margin-top: var(
+      --distance-performance-stage-anchor-offset,
+      calc(var(--height-performance-header, 72px) + 1rem)
+    );
     padding-block: var(--space-performance-stage-block, 3.5rem);
     border-block: 1px solid var(--color-performance-line, #d7d7d2);
     background:
@@ -341,6 +353,10 @@
     min-height: var(--height-performance-stage, 34rem);
     border: 1px solid var(--color-performance-line-strong, #9c9c96);
     background: var(--color-performance-panel, #ffffff);
+  }
+
+  .performance-narrative-stage__preview {
+    min-width: 0;
   }
 
   .performance-narrative-stage__index {
@@ -586,6 +602,11 @@
       min-height: 0;
     }
 
+    .performance-narrative-stage__panel {
+      align-content: start;
+      min-height: auto;
+    }
+
     .performance-narrative-stage__index {
       grid-template-columns: repeat(var(--scene-count, 3), minmax(0, 1fr));
       border-right: 0;
@@ -668,6 +689,20 @@
     .performance-narrative-stage__controls span {
       grid-column: 1 / -1;
       grid-row: 1;
+    }
+  }
+
+  @media (max-width: 22.5rem) {
+    .performance-narrative-stage__index {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .performance-narrative-stage__index button:nth-child(2n) {
+      border-right: 0;
+    }
+
+    .performance-narrative-stage__index button:nth-last-child(-n + 2) {
+      border-bottom: 0;
     }
   }
 

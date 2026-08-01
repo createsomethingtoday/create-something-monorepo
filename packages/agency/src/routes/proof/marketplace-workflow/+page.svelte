@@ -204,6 +204,13 @@
     scenes={proofScenes}
     ariaLabel="Marketplace workflow proof argument"
   >
+    {#snippet preview()}
+      <PerformanceProofStrip
+        items={acceptanceProof}
+        ariaLabel="Workflow compiler acceptance evidence"
+      />
+    {/snippet}
+
     {#snippet artifact(scene: PerformanceNarrativeScene)}
       {#if scene.id === 'change'}
         <PerformanceCardGrid
@@ -223,11 +230,7 @@
           columns={3}
           ariaLabel="Compiled workflow artifacts"
         />
-      {:else}
-        <PerformanceProofStrip
-          items={acceptanceProof}
-          ariaLabel="Workflow compiler acceptance evidence"
-        />
+      {:else if scene.id === 'receipt'}
         <div class="acceptance-receipt" aria-label="Workflow compiler receipt">
           <span>CRE-1191 · workflow compiler</span>
           <strong>ok: true · deterministic: true</strong>
