@@ -55,6 +55,8 @@ The scheduler records success or failure and preserves the previous successful r
 
 The Cloudflare Worker in `worker/` exposes the production MCP endpoint at `https://offer-savings-agent.createsomething.workers.dev/mcp`. It uses CREATE SOMETHING Identity OAuth, restricts access to the configured email allowlist, persists watches in the dedicated `offer-savings` D1 database, and keeps the OpenAI API key in Worker secrets.
 
+The canonical personal-plugin bundle is in `plugin/`. Its MCP configuration points directly to the production HTTPS endpoint, so a fresh Codex or ChatGPT session can expose the callable tools on desktop or mobile without a local `bash` or stdio process. Keep the personal marketplace copy synchronized from this reviewed bundle; do not restore a local launcher as a fallback.
+
 Deploy and validate from the Worker package:
 
 ```bash
@@ -71,9 +73,9 @@ This hosted endpoint is approved for private ChatGPT Developer Mode testing. Pub
 <!-- prettier-ignore -->
 | Field | Value |
 | --- | --- |
-| Entry point | `src/index.ts`, `src/http.ts`, `src/runtime.ts`, `src/start.ts`, `worker/index.ts` |
+| Entry point | `src/index.ts`, `src/http.ts`, `src/runtime.ts`, `src/start.ts`, `worker/index.ts`, `plugin/.mcp.json` |
 | Boot command | `pnpm build` |
 | Smoke command | `pnpm verify` |
-| Validation surfaces | tool schemas and annotations, MCP initialization/list/call, widget resource metadata/CSP, REST composition, malformed input, idempotent watch, restart persistence, bridge actions, browser console/network, live runtime config |
+| Validation surfaces | tool schemas and annotations, MCP initialization/list/call, remote-only plugin packaging, widget resource metadata/CSP, REST composition, malformed input, idempotent watch, restart persistence, bridge actions, browser console/network, live runtime config |
 | UI validation path | run `pnpm dev:fixture`, open `/widget` with Playwright, create/retry a watch, restart with the same state file, and capture screenshot/console/requests |
 | Escalation rule | stop before public directory submission, broader user access, notifications, purchase/cart behavior, private LTK access, or offer-policy changes |

@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Offer Savings'
+  short_description: 'Find reliable public offers with LTK first'
+  default_prompt: 'Use $offer-savings to find a reliable public coupon for my purchase.'
