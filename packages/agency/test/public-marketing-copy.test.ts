@@ -183,8 +183,17 @@ test('commercial decision routes lead with plain meaning before owned terminolog
   assert.doesNotMatch(layout, /label: 'How I Work'/);
   assert.doesNotMatch(layout, /label: 'Stack Boundary'/);
 
-  assert.match(home, /Choose one handoff your team still checks manually/);
-  assert.match(home, />See a worked example</);
+  assert.match(home, /title="Make one workflow ready to delegate\."/);
+  assert.match(home, /Choose a handoff your team still checks by hand/);
+  assert.match(home, />See the Marketplace workflow</);
+  assert.match(home, /label: 'Control',[\s\S]*?value: 'Run \/ Wait \/ Stop'/);
+  const heroProof = home.slice(home.indexOf('const heroProofItems'), home.indexOf('const serviceFlowSteps'));
+  const heroOpening = home.slice(
+    home.indexOf('<PerformanceCampaignOpening'),
+    home.indexOf('</PerformanceCampaignOpening>')
+  );
+  assert.doesNotMatch(heroOpening, /and easier to run|See a worked example/);
+  assert.doesNotMatch(heroProof, /label: 'Map'/);
   assert.doesNotMatch(home, /Train the workflow/);
 
   assert.match(services, /Bring one handoff your team still checks manually/);

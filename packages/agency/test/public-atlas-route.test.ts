@@ -418,15 +418,16 @@ test('layout keeps privacy prompt compact on Atlas proof-heavy routes', () => {
 	assert.equal(layoutRoute.includes('services|atlas|methodology|stack|products'), false);
 });
 
-test('compact mobile privacy prompt stays below navigation and away from campaign proof', () => {
+test('compact mobile privacy prompt becomes a flush edge control below navigation', () => {
 	assert.ok(agencyPrivacyAnalytics.includes('.privacy-choice--compact'));
 	assert.ok(agencyPrivacyAnalytics.includes('top: max(4.5rem, calc(4rem + env(safe-area-inset-top)))'));
 	assert.ok(agencyPrivacyAnalytics.includes('bottom: auto'));
+	assert.ok(agencyPrivacyAnalytics.includes('right: env(safe-area-inset-right)'));
 	assert.ok(agencyPrivacyAnalytics.includes('.privacy-choice:has(.privacy-panel)'));
 	assert.ok(agencyPrivacyAnalytics.includes("content: 'Privacy'"));
 	assert.match(
 		agencyPrivacyAnalytics,
-		/@media \(max-width: 640px\)[\s\S]*?\.privacy-pill \{[\s\S]*?min-height: 2\.75rem;[\s\S]*?border-color: var\(--color-performance-line,[\s\S]*?background: var\(--color-performance-panel,[\s\S]*?box-shadow: 0 4px 14px/
+		/@media \(max-width: 640px\)[\s\S]*?\.privacy-pill \{[\s\S]*?min-height: 2\.75rem;[\s\S]*?border-right: 0;[\s\S]*?border-radius: var\(--radius-performance-sm, 4px\) 0 0 var\(--radius-performance-sm, 4px\);[\s\S]*?background: var\(--color-performance-panel,[\s\S]*?box-shadow: none/
 	);
 	assert.match(
 		agencyPrivacyAnalytics,

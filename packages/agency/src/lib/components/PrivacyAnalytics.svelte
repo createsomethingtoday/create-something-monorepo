@@ -272,7 +272,7 @@
 
   @media (max-width: 640px) {
     .privacy-choice {
-      right: max(0.5rem, env(safe-area-inset-right));
+      right: env(safe-area-inset-right);
       top: max(4.5rem, calc(4rem + env(safe-area-inset-top)));
       bottom: auto;
       left: auto;
@@ -340,8 +340,10 @@
       min-height: 2.75rem;
       padding: 0 0.4rem;
       border-color: var(--color-performance-line, #d7d7d2);
+      border-right: 0;
+      border-radius: var(--radius-performance-sm, 4px) 0 0 var(--radius-performance-sm, 4px);
       background: var(--color-performance-panel, #ffffff);
-      box-shadow: 0 4px 14px rgba(10, 14, 25, 0.08);
+      box-shadow: none;
       color: var(--color-performance-muted, #5e6268);
       font-family: var(--font-performance-mono);
       font-size: 0.68rem;
