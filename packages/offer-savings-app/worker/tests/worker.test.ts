@@ -21,6 +21,19 @@ test('the public Worker advertises OAuth and rejects anonymous MCP calls', async
     }
   });
 
+  const healthResponse = await worker.fetch(
+    new Request(`${origin}/health`),
+    environment(),
+    {} as ExecutionContext
+  );
+  assert.deepEqual(await healthResponse.json(), {
+    name: 'offer-savings-agent',
+    version: '0.2.0',
+    status: 'healthy',
+    endpoint: '/mcp',
+    authentication: 'OAuth 2.1 + PKCE through CREATE SOMETHING Identity'
+  });
+
   const metadataResponse = await worker.fetch(
     new Request(`${origin}/.well-known/oauth-protected-resource`),
     environment(),

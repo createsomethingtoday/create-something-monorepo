@@ -256,7 +256,7 @@ export const OFFER_SAVINGS_WIDGET_HTML = String.raw`<!doctype html>
       const bridgeReady = window.parent === window
         ? Promise.resolve()
         : request('ui/initialize', {
-            appInfo: { name: 'offer-savings-widget', version: '0.1.0' },
+            appInfo: { name: 'offer-savings-widget', version: '0.2.0' },
             appCapabilities: {},
             protocolVersion: '2026-01-26'
           }).then(() => notify('ui/notifications/initialized', {}));
