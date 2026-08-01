@@ -15,10 +15,41 @@ test('the public shell exposes Practice and keeps client-service adoption one cl
   assert.match(home, /<AdoptionPathChooser \/>/);
   assert.match(chooser, /Improve one internal workflow/);
   assert.match(chooser, /Deliver one client workflow/);
-  assert.match(chooser, /Which workflow are you bringing\?/);
+  assert.match(chooser, /Start with your team or a client\./);
+  assert.match(chooser, /Choose who owns the workflow\. The method stays consistent\./);
+  assert.doesNotMatch(chooser, /Which workflow are you bringing\?/);
+  assert.match(chooser, /Same method/);
+  assert.match(chooser, /Map, Build, and Control/);
+  assert.match(chooser, /What changes/);
+  assert.match(chooser, /Owner, accounts, and handoff/);
+  assert.match(chooser, /This path includes/);
   assert.match(chooser, /href: '\/practice'/);
   assert.match(chooser, /href: '\/for-service-providers'/);
   assert.match(chooser, /adoption_path_click/);
+});
+
+test('tool compatibility follows the workflow choice as a bounded next step', () => {
+  const home = read('../src/routes/+page.svelte');
+  const chooser = read('../src/lib/components/AdoptionPathChooser.svelte');
+  const compatibility = read('../src/lib/components/IntegrationCompatibilityRail.svelte');
+
+  assert.ok(
+    home.indexOf('<AdoptionPathChooser />') <
+      home.indexOf('<IntegrationCompatibilityRail surface="homepage" />')
+  );
+  assert.match(compatibility, /data-surface=\{surface\}/);
+  assert.match(compatibility, /Connect the workflow after the boundary is clear\./);
+  assert.match(compatibility, /Map the owner, approvals, and proof first\./);
+  assert.match(compatibility, /Search the connector directory/);
+  assert.match(compatibility, /surface === 'homepage'/);
+  assert.match(
+    chooser,
+    /margin:\s*clamp\(1\.5rem,\s*4vw,\s*3rem\) auto var\(--space-performance-page-gutter/
+  );
+  assert.match(
+    compatibility,
+    /data-surface='homepage'\]\s*\{[\s\S]*?margin-top:\s*0;/
+  );
 });
 
 test('the service-provider route explains a bounded client delivery lifecycle', () => {

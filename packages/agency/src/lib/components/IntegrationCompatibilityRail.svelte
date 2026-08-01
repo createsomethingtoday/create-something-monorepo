@@ -8,6 +8,8 @@
   const platformItems = integrationProofItems.filter((item) => item.role === 'platform');
   const connectorItems = integrationProofItems.filter((item) => item.role === 'connector');
 
+  $: homepageSurface = surface === 'homepage';
+
   function trackClick(item: IntegrationProofItem) {
     getAnalytics()?.track('interaction', 'integration_rail_click', {
       metadata: {
@@ -39,20 +41,29 @@
   });
 </script>
 
-<section class="compatibility-rail" aria-labelledby="compatibility-{surface}-title">
+<section
+  class="compatibility-rail"
+  data-surface={surface}
+  aria-labelledby="compatibility-{surface}-title"
+>
   <div class="compatibility-rail__header">
     <div>
       <span class="compatibility-rail__eyebrow">Tool compatibility</span>
       <h2 id="compatibility-{surface}-title">
-        Built on a controlled core. Connected to the tools your team already uses.
+        {homepageSurface
+          ? 'Connect the workflow after the boundary is clear.'
+          : 'Built on a controlled core. Connected to the tools your team already uses.'}
       </h2>
+      {#if homepageSurface}
+        <p>Map the owner, approvals, and proof first. Then choose the tool paths the workflow needs.</p>
+      {/if}
     </div>
     <a
       href="/partners#integration-catalog"
       class="compatibility-rail__catalog-link"
       onclick={trackCatalogLink}
     >
-      Search every connector →
+      Search the connector directory <span aria-hidden="true">→</span>
     </a>
   </div>
 
@@ -119,8 +130,13 @@
     color: var(--color-performance-ink, #090909);
   }
 
+  .compatibility-rail[data-surface='homepage'] {
+    margin-top: 0;
+  }
+
   .compatibility-rail__header {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: end;
     justify-content: space-between;
     gap: 2rem;
@@ -149,15 +165,26 @@
     line-height: 1.05;
   }
 
+  .compatibility-rail__header p {
+    max-width: 42rem;
+    margin: 0.75rem 0 0;
+    color: var(--color-performance-muted, #5e6268);
+    font-size: var(--text-performance-body-sm, 0.875rem);
+    line-height: 1.5;
+  }
+
   .compatibility-rail__catalog-link {
     display: inline-flex;
     flex: 0 0 auto;
     min-height: var(--height-performance-control-min, 2.75rem);
     align-items: center;
-    color: inherit;
+    gap: 0.9rem;
+    padding: 0.7rem 0.85rem;
+    background: var(--color-performance-ink, #090909);
+    color: var(--color-performance-paper, #f3f3f0);
     font-size: var(--text-performance-body-sm, 0.875rem);
     font-weight: var(--font-performance-semibold, 600);
-    text-underline-offset: 0.25rem;
+    text-decoration: none;
   }
 
   .compatibility-rail__groups {
