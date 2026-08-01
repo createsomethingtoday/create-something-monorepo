@@ -1,0 +1,31 @@
+{
+  "name": "offer-savings",
+  "version": "0.1.1",
+  "description": "Find, verify, and watch public coupon offers with LTK-first discovery and deterministic reliability.",
+  "author": {
+    "name": "CREATE SOMETHING",
+    "email": "hello@createsomething.agency",
+    "url": "https://createsomething.agency"
+  },
+  "homepage": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/offer-savings-app",
+  "repository": "https://github.com/createsomethingtoday/create-something-monorepo",
+  "license": "MIT",
+  "keywords": ["coupons", "offers", "ltk", "shopping", "mcp"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Offer Savings",
+    "shortDescription": "Find reliable public offers with LTK first.",
+    "longDescription": "Search public LTK and supplemental sources, rank evidence with a deterministic reliability policy, verify candidates, and create deadline-bounded watches without purchasing.",
+    "developerName": "CREATE SOMETHING",
+    "category": "Productivity",
+    "capabilities": ["Interactive", "Read", "Write"],
+    "websiteURL": "https://createsomething.agency",
+    "defaultPrompt": [
+      "Find the best public coupon for my purchase.",
+      "Check LTK first, then verify this offer.",
+      "Watch for a better offer before my deadline."
+    ],
+    "brandColor": "#3D5638"
+  },
+  "mcpServers": "./.mcp.json"
+}

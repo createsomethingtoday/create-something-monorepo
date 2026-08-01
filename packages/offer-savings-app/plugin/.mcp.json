@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "offer-savings": {
+      "type": "http",
+      "url": "https://offer-savings-agent.createsomething.workers.dev/mcp"
+    }
+  }
+}
