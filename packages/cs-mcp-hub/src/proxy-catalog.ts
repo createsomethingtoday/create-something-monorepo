@@ -29,10 +29,14 @@ export type ProxyRoute = {
   call: (args: Record<string, unknown>) => Promise<any>;
 };
 
+export type ActiveAliasRoutePlan = AliasRoutePlan & {
+  proxyToolName: string;
+};
+
 export type ProxyCatalog = {
   toolDefinitions: Tool[];
   directRouteMetas: DirectToolRouteMeta[];
-  aliasPlans: AliasRoutePlan[];
+  aliasPlans: ActiveAliasRoutePlan[];
   routes: Map<string, ProxyRoute>;
   warnings: string[];
 };
@@ -42,12 +46,15 @@ export function buildProxyCatalog(
   registry: McpBundleRegistry,
   routing: HubRoutingConfig,
   tenantRouting: TenantRoutingContext,
+  reservedToolNames: Iterable<string> = [],
 ): ProxyCatalog {
   const toolDefinitions: Tool[] = [];
   const routes = new Map<string, ProxyRoute>();
   const directRouteMap = new Map<string, ProxyRoute>();
+  const reservedProxyNames = new Set(reservedToolNames);
   const warnings: string[] = [];
   const directRoutesWithTags: DirectRouteWithTags[] = [];
+  const activeAliasPlans: ActiveAliasRoutePlan[] = [];
 
   for (const server of connectedServers) {
     const serverTags = registry.servers[server.name]?.tags ?? [];
@@ -107,7 +114,8 @@ export function buildProxyCatalog(
       warnings.push(`Alias "${aliasPlan.aliasToolName}" normalized to "${normalizedAliasName}"`);
     }
 
-    const aliasProxyName = reserveProxyName(normalizedAliasName, routes, warnings);
+    const aliasProxyName = reserveProxyName(normalizedAliasName, routes, warnings, reservedProxyNames);
+    activeAliasPlans.push({ ...aliasPlan, proxyToolName: aliasProxyName });
     toolDefinitions.push({
       name: aliasProxyName,
       description: `[alias] ${aliasPlan.description}`,
@@ -150,7 +158,7 @@ export function buildProxyCatalog(
     });
   }
 
-  return { toolDefinitions, directRouteMetas, aliasPlans: aliasPlanResult.plans, routes, warnings };
+  return { toolDefinitions, directRouteMetas, aliasPlans: activeAliasPlans, routes, warnings };
 }
 
 export function buildProxyToolName(serverName: string, downstreamToolName: string): string {
@@ -172,14 +180,15 @@ export function reserveProxyName(
   baseName: string,
   routes: Map<string, ProxyRoute>,
   warnings: string[],
+  reservedNames: ReadonlySet<string> = new Set(),
 ): string {
-  if (!routes.has(baseName)) {
+  if (!routes.has(baseName) && !reservedNames.has(baseName)) {
     return baseName;
   }
 
   let suffix = 2;
   let candidate = `${baseName}_${suffix}`;
-  while (routes.has(candidate)) {
+  while (routes.has(candidate) || reservedNames.has(candidate)) {
     suffix += 1;
     candidate = `${baseName}_${suffix}`;
   }

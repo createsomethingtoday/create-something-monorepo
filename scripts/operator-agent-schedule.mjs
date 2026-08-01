@@ -113,6 +113,17 @@ export function parseArgs(argv) {
   if (!Number.isInteger(options.evalLimit) || options.evalLimit < 1) {
     throw new Error('--eval-limit must be a positive integer');
   }
+  if (options.jobs.length === 0) {
+    throw new Error('--jobs must include at least one of: fast, model');
+  }
+  for (const [flag, interval] of [
+    ['--fast-interval-seconds', options.fastIntervalSeconds],
+    ['--model-interval-seconds', options.modelIntervalSeconds],
+  ]) {
+    if (!Number.isInteger(interval) || interval < 1) {
+      throw new Error(`${flag} must be a positive integer`);
+    }
+  }
   for (const job of options.jobs) {
     if (!['fast', 'model'].includes(job)) throw new Error(`Unknown launchd job: ${job}`);
   }
@@ -260,7 +271,12 @@ export function validateLaunchdPlist(plistText, job) {
   if (!plistText.includes(job.label)) issues.push(`plist is missing label ${job.label}`);
   if (!plistText.includes(job.script)) issues.push('plist is missing operator-agent schedule script');
   if (plistText.includes('operator-agent-system.mjs')) issues.push('plist must not call operator-agent-system.mjs directly');
-  if (!plistText.includes(String(job.intervalSeconds))) issues.push(`plist is missing interval ${job.intervalSeconds}`);
+  if (!Number.isInteger(job.intervalSeconds) || job.intervalSeconds < 1) {
+    issues.push('plist StartInterval must be a positive integer');
+  } else {
+    const startInterval = new RegExp(`<key>StartInterval</key>\\s*<integer>${job.intervalSeconds}</integer>`);
+    if (!startInterval.test(plistText)) issues.push('plist StartInterval must be a positive integer');
+  }
   if (plistText.includes('.codex/tmp') || plistText.includes('.cache/codex-runtimes')) {
     issues.push('plist PATH includes transient Codex runtime paths');
   }

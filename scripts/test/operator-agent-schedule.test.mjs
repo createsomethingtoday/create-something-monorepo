@@ -76,6 +76,24 @@ test('operator-agent schedule parses a deterministic once run', () => {
   assert.ok(plan[1].args.includes('--no-revise'));
 });
 
+test('operator-agent schedule rejects an empty launchd job selection', () => {
+  assert.throws(
+    () => parseArgs(['launchd-status', '--jobs', ',']),
+    /--jobs must include at least one of: fast, model/
+  );
+});
+
+test('operator-agent schedule rejects invalid launchd intervals', () => {
+  for (const option of ['--fast-interval-seconds', '--model-interval-seconds']) {
+    for (const value of ['not-a-number', '0', '-1']) {
+      assert.throws(
+        () => parseArgs(['install-launchd', option, value]),
+        new RegExp(`${option} must be a positive integer`)
+      );
+    }
+  }
+});
+
 test('operator-agent schedule defaults pattern review to deterministic even when batch eval is model-backed', () => {
   const options = parseArgs(['once', '--json', '--eval-limit', '1']);
   const plan = buildRunPlan(options);
@@ -261,6 +279,26 @@ test('operator-agent schedule renders launchd jobs for fast and model heartbeats
   const validation = validateLaunchdPlist(plist, jobs[0]);
   assert.equal(validation.ok, true);
   assert.deepEqual(validation.issues, []);
+});
+
+test('operator-agent schedule validates StartInterval as a positive plist integer', () => {
+  const workspace = makeWorkspace();
+  const options = parseArgs(['install-launchd', '--repo-root', workspace, '--jobs', 'model']);
+  const [job] = launchdDefinitions(options);
+  const plist = plistForJob(job, options);
+  const wrongType = plist.replace(
+    `<integer>${job.intervalSeconds}</integer>`,
+    `<string>${job.intervalSeconds}</string>`
+  );
+
+  const wrongTypeValidation = validateLaunchdPlist(wrongType, job);
+  assert.equal(wrongTypeValidation.ok, false);
+  assert.match(wrongTypeValidation.issues.join('\n'), /StartInterval must be a positive integer/);
+
+  const nonPositiveJob = { ...job, intervalSeconds: 0 };
+  const nonPositiveValidation = validateLaunchdPlist(plistForJob(nonPositiveJob, options), nonPositiveJob);
+  assert.equal(nonPositiveValidation.ok, false);
+  assert.match(nonPositiveValidation.issues.join('\n'), /StartInterval must be a positive integer/);
 });
 
 test('operator-agent schedule rejects stale launchd plists that call the system script directly', () => {
