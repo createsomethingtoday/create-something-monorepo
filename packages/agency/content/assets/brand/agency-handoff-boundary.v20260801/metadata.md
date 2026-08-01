@@ -3,16 +3,17 @@
 > Asset ID: `brand.agency-handoff-boundary.v20260801`
 > Owner: CREATE SOMETHING
 > Generated and inspected: 2026-08-01
-> Tracking: `CRE-1551`, motion correction `CRE-1554`, natural loop correction `CRE-1555`, full-frame correction `CRE-1559`
+> Tracking: `CRE-1551`, motion correction `CRE-1554`, natural loop correction `CRE-1555`, full-frame correction `CRE-1559`, fluid-intelligence direction `CRE-1562`
 > Status: approved for the `.agency` homepage only
 
 ## Role
 
 This homepage-owned Performance Lab media family replaces the shared natural-water opening. The
-current v3 video shows a rigid steel calibration rotor operating inside a fixed test stand. Its
-periodic motion makes controlled work visible without depicting a person. The left half remains
-quiet enough for the headline; the right half carries the operating condition. Earlier hydraulic
-studies remain in this record as rejection history only.
+current v4 video shows a water-driven liquid-glass calibration instrument operating inside a fixed
+test stand. A restrained blue-green dye tracer makes pressure and continuous circulation visible;
+the rotor translates that pressure into controlled work. The left half remains quiet enough for the
+headline, while the right half carries the operating condition. Earlier hydraulic and rigid-rotor
+studies remain in this record as iteration history only.
 
 Visual family: `material-prototype-study`.
 
@@ -63,6 +64,25 @@ Visual family: `material-prototype-study`.
   frozen background, composited image, or regional treatment is present, and no spatial mask is
   used. The final 360-frame export uses a direct phase boundary: its last frame flows to the
   matching first phase as the next ordinary rotor frame.
+- Fluid-intelligence direction: `CRE-1562` used the original text-only moodboard brief in
+  `source/fluid-intelligence-motion-system.md` to define the idea, materials, camera, light, and
+  motion system. The generated moodboard is retained in `source/fluid-intelligence-motion-moodboard.jpg`
+  as review evidence only. It was not supplied to Sora as an input image or reference frame.
+- Accepted v4 generation: Sora job
+  `video_6a6e5fe931d481918d9b27c50492831e0e6ad0eb8ba83e51` used `sora-2-pro`,
+  1280 x 720, and the exact native text-to-video prompt in
+  `source/sora-fluid-intelligence-loop-prompt.txt`. No input image, edit source, or remix parent was
+  supplied. The one locked shot produced a stable liquid-glass annular instrument, a continuously
+  rotating metal rotor, a large near-black copy field, and a circulating water pulse marked by a
+  restrained blue-green dye trace: fluid intelligence under pressure.
+- Accepted v4 loop finishing: the native matching phases at frames `187` and `340` measure
+  `0.949592` full-frame SSIM and `0.939489` on the apparatus crop. Frames `187` through `339` form
+  the accepted 153-frame forward physical cycle. They were uniformly timed from 5.1 seconds to
+  twelve seconds and encoded at 30 fps using whole native frames only; repeated display frames fill
+  the common playback cadence, with no synthesized in-between frames. Frame `340` is the next
+  native phase after the last included frame and matches frame `187`, so the final export uses a
+  direct phase boundary. No dissolve, interpolation, time reverse, frozen background, composited
+  image, spatial mask, regional treatment, cut, or hidden reset is present.
 
 Mobbin supplied hierarchy evidence only. No Mobbin screen, asset, copy, layout, or trade dress was
 used as a generation input or reproduced.
@@ -82,8 +102,23 @@ used as a generation input or reproduced.
 | `static/images/performance-lab/agency-performance-calibration-loop-v3.webm` | 1280 x 720, 12.0 s | `fea9e85a69d09a7dcaaaddd753944f715ea9ba397ca90cd7224033a8b5c469d9` | Accepted VP9 native-video loop |
 | `static/images/performance-lab/agency-performance-calibration-loop-v3-poster.webp` | 1280 x 720 | `bb6169987350556a4fa7bf43d116076c1ce1e1ae427a0bbef7ff51e9865369eb` | Video-derived desktop poster and reduced-motion still |
 | `static/images/performance-lab/agency-performance-calibration-loop-v3-poster-mobile.webp` | 819 x 1024 | `9625a64a96fcb900d07b66223c1f26fb5f864121214b48b90140061b8362ab40` | Video-derived mobile poster and reduced-motion still |
+| `static/images/performance-lab/agency-fluid-intelligence-loop-v4.mp4` | 1280 x 720, 12.0 s | `9232f5352f3830a15fbecaa5fba80edbdba8e0a42323b198ed094ac139d2eac0` | Accepted H.264 native-video fluid-instrument loop |
+| `static/images/performance-lab/agency-fluid-intelligence-loop-v4.webm` | 1280 x 720, 12.0 s | `9418a1e6fa27cd0a12699a94b0bf8329b67d2090ca0710b94a349b271203a545` | Accepted VP9 native-video fluid-instrument loop |
+| `static/images/performance-lab/agency-fluid-intelligence-loop-v4-poster.webp` | 1280 x 720 | `347b1eed30c17a43810cc6c29c83fa6876e2d1d7e1ebb9bb8048ee120ca03e65` | Video-derived desktop poster and reduced-motion still |
+| `static/images/performance-lab/agency-fluid-intelligence-loop-v4-poster-mobile.webp` | 819 x 1024 | `b12b93c6e1cdb23a5e2ce8265fff596509e1c0ffe8ef7c4377ce408bc1541a7a` | Video-derived mobile poster centered on the instrument |
 
 ## Inspection record
+
+- [x] v4 is native text-to-video from one locked Sora shot; no reference image, edit source, or remix parent was supplied.
+- [x] The accepted source cycle is frames `187` through `339`; frame `340` matches frame `187` at `0.949592` full-frame SSIM and `0.939489` apparatus-crop SSIM.
+- [x] The last included source frame to the matching first phase is one ordinary forward-motion step.
+- [x] A blue-green dye trace stays inside the transparent annular water channel and remains visible throughout the cycle.
+- [x] The metal rotor, axle, glass ring, inlet, outlet, base, camera, lighting, and left copy field remain stable through twelve checkpoints.
+- [x] No dissolve, interpolation, mask, bottom-half effect, regional displacement, still-image layer, time reverse, or hidden reset is present.
+- [x] The v4 MP4 and WebM contain 360 frames at 30 fps, a 12.0-second duration, and no audio stream.
+- [x] Decoded v4 MP4 first-to-last SSIM is `0.915364`; the final frame advances into the matching source phase rather than duplicating it.
+
+### Accepted v3 rigid-rotor inspection history
 
 - [x] v3 is native text-to-video from one locked Sora shot; no reference image or remix parent was supplied.
 - [x] The accepted source cycle is frames `77` through `256`; frame `257` matches frame `77` at `0.968897` SSIM.

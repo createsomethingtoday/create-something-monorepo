@@ -21,17 +21,17 @@
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
   const homepageHandoffBoundaryMedia: PerformanceCampaignMedia = {
-    src: '/images/performance-lab/agency-performance-calibration-loop-v3-poster.webp',
-    mobileSrc:
-      '/images/performance-lab/agency-performance-calibration-loop-v3-poster-mobile.webp',
-    alt: 'A rigid steel calibration rotor operating on a laboratory test stand',
+    src: '/images/performance-lab/agency-fluid-intelligence-loop-v4-poster.webp',
+    mobileSrc: '/images/performance-lab/agency-fluid-intelligence-loop-v4-poster-mobile.webp',
+    alt: 'A water-driven liquid-glass calibration instrument circulating under pressure',
     width: 1280,
     height: 720,
-    objectPosition: 'center',
+    objectPosition: '65% center',
+    colorMode: 'natural',
     video: {
-      mp4: '/images/performance-lab/agency-performance-calibration-loop-v3.mp4',
-      webm: '/images/performance-lab/agency-performance-calibration-loop-v3.webm',
-      poster: '/images/performance-lab/agency-performance-calibration-loop-v3-poster.webp'
+      mp4: '/images/performance-lab/agency-fluid-intelligence-loop-v4.mp4',
+      webm: '/images/performance-lab/agency-fluid-intelligence-loop-v4.webm',
+      poster: '/images/performance-lab/agency-fluid-intelligence-loop-v4-poster.webp'
     }
   };
 

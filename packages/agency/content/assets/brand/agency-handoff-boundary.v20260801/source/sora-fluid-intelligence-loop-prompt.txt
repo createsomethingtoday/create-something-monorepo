@@ -1,0 +1,49 @@
+Use case: silent looping homepage hero film for CREATE SOMETHING .agency.
+
+Primary request: one continuous native video shot of a buildable precision instrument that converts
+water pressure into controlled circular motion. The instrument is unfamiliar but physically
+credible: a brushed-aluminum rotor integrated with a transparent liquid-glass annular pressure
+channel on a minimal laboratory test stand. Clear water completely fills the sealed annular channel.
+A compact restrained blue-green dye tracer makes the circulating pressure pulse visible.
+
+Scene/background: dark architectural test void, near-black background, barely visible wet black-
+enamel floor, only a few precise fixture edges. Keep the left 45 percent of the frame quiet and
+near-black for white homepage copy. Place the complete apparatus in the right half without cropping
+its circular channel, axle, base, inlet, or outlet.
+
+Action: the apparatus is already operating at steady state in the opening frame. The rotor turns
+clockwise at one constant speed for exactly two complete rotations during the twelve-second shot.
+At the same time, the compact dye tracer circulates clockwise through the water-filled annular
+channel for exactly one complete circuit. It begins centered at the six-o'clock lower inlet phase,
+travels continuously through the left arc, top arc, right arc, and returns to the identical lower
+inlet phase at twelve seconds. Water never leaves the sealed channel. The tracer never disappears;
+a thin residual trail remains visible behind it. Pressure becomes motion, and motion becomes a
+system. Nothing starts, stops, resets, reverses, jumps, or changes direction.
+
+Camera: one locked-off 75mm product lens, straight-on three-quarter profile, tripod-stable, deep
+enough focus to keep the entire apparatus legible. No camera move, zoom, reframing, focus pull,
+parallax, crop change, or cut. Identical geometry from first frame through last frame.
+
+Lighting/mood: narrow optic-white rim highlights on aluminum and glass, deep controlled shadows,
+restrained blue-green refraction only inside the water and dye trace, sparse condensation on the
+glass, calm high-performance scientific product cinematography. Near-monochrome everywhere except
+the diegetic tracer. The fixture implies human judgment without showing a person.
+
+Timing: 0-3 seconds tracer rises through the left arc; 3-6 seconds crosses the top; 6-9 seconds
+descends through the right arc; 9-12 seconds returns through the bottom to the opening phase while
+rotation continues at constant speed. The frame after 12 seconds must be the ordinary forward-
+motion successor to frame zero, creating a seamless native loop.
+
+Audio: silent; no music, voice, ambience, or sound effects.
+
+Constraints: original non-branded text-to-video generation; no input image and no remix parent; one
+shot only; 1280 by 720; exactly 12 seconds; complete apparatus on the right; generous left copy
+field; forward physical motion only; stable apparatus geometry; real water behavior inside a sealed
+transparent channel; no on-screen text, numbers, logos, watermark, people, hands, faces, or brand
+marks.
+
+Avoid: still-image animation; frozen background; spatial mask; regional ripple treatment; morphing
+metal or glass; changing pipe topology; liquid crossing solid walls; disappearing tracer; splash;
+uncontained water; antique flywheel; steampunk; generic factory; exposed vintage gears; stone;
+floating orb; neon cyberpunk; decorative AI glow; camera drift; flicker; jitter; cut; dissolve;
+crossfade; interpolation; speed ramp; reverse motion; ping-pong motion; pause; reset; hidden seam.
