@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 import identityWorker from '../src/index.ts';
@@ -10,6 +11,13 @@ function makeEnv() {
     MCP_HUB_URL: 'https://mj.mcp.createsomething.agency/mcp',
   } as any;
 }
+
+test('production configuration permits ChatGPT OAuth browser requests', async () => {
+  const wranglerConfig = await readFile(new URL('../wrangler.toml', import.meta.url), 'utf8');
+  const allowedOrigins = wranglerConfig.match(/^ALLOWED_ORIGINS\s*=\s*"([^"]+)"$/m)?.[1]?.split(',') ?? [];
+
+  assert.ok(allowedOrigins.includes('https://chatgpt.com'));
+});
 
 test('identity worker serves oauth authorization server metadata', async () => {
   const response = await identityWorker.fetch(
