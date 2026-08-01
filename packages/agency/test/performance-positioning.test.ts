@@ -80,35 +80,35 @@ test('the homepage moves from claim to proof to method before asking visitors to
   }
 });
 
-test('the homepage opening uses a property-owned native calibration study', () => {
+test('the homepage opening uses a property-owned fluid-intelligence study', () => {
   assert.match(home, /const homepageHandoffBoundaryMedia: PerformanceCampaignMedia/);
   assert.match(
     home,
-    /src: '\/images\/performance-lab\/agency-performance-calibration-loop-v3-poster\.webp'/
+    /src: '\/images\/performance-lab\/agency-fluid-intelligence-loop-v4-poster\.webp'/
   );
   assert.match(
     home,
-    /mobileSrc:[\s\S]*?'\/images\/performance-lab\/agency-performance-calibration-loop-v3-poster-mobile\.webp'/
+    /mobileSrc:[\s\S]*?'\/images\/performance-lab\/agency-fluid-intelligence-loop-v4-poster-mobile\.webp'/
   );
-  assert.match(home, /alt: 'A rigid steel calibration rotor/);
+  assert.match(home, /alt: 'A water-driven liquid-glass calibration instrument/);
   assert.match(
     home,
-    /mp4: '\/images\/performance-lab\/agency-performance-calibration-loop-v3\.mp4'/
-  );
-  assert.match(
-    home,
-    /webm: '\/images\/performance-lab\/agency-performance-calibration-loop-v3\.webm'/
+    /mp4: '\/images\/performance-lab\/agency-fluid-intelligence-loop-v4\.mp4'/
   );
   assert.match(
     home,
-    /poster: '\/images\/performance-lab\/agency-performance-calibration-loop-v3-poster\.webp'/
+    /webm: '\/images\/performance-lab\/agency-fluid-intelligence-loop-v4\.webm'/
+  );
+  assert.match(
+    home,
+    /poster: '\/images\/performance-lab\/agency-fluid-intelligence-loop-v4-poster\.webp'/
   );
   assert.match(home, /media=\{homepageHandoffBoundaryMedia\}/);
   assert.doesNotMatch(home, /controlledFlowMedia/);
   assert.equal(
     existsSync(
       new URL(
-        '../static/images/performance-lab/agency-performance-calibration-loop-v3-poster.webp',
+        '../static/images/performance-lab/agency-fluid-intelligence-loop-v4-poster.webp',
         import.meta.url
       )
     ),
@@ -117,7 +117,7 @@ test('the homepage opening uses a property-owned native calibration study', () =
   assert.equal(
     existsSync(
       new URL(
-        '../static/images/performance-lab/agency-performance-calibration-loop-v3-poster-mobile.webp',
+        '../static/images/performance-lab/agency-fluid-intelligence-loop-v4-poster-mobile.webp',
         import.meta.url
       )
     ),
@@ -126,7 +126,7 @@ test('the homepage opening uses a property-owned native calibration study', () =
   assert.equal(
     existsSync(
       new URL(
-        '../static/images/performance-lab/agency-performance-calibration-loop-v3.mp4',
+        '../static/images/performance-lab/agency-fluid-intelligence-loop-v4.mp4',
         import.meta.url
       )
     ),
@@ -135,7 +135,7 @@ test('the homepage opening uses a property-owned native calibration study', () =
   assert.equal(
     existsSync(
       new URL(
-        '../static/images/performance-lab/agency-performance-calibration-loop-v3.webm',
+        '../static/images/performance-lab/agency-fluid-intelligence-loop-v4.webm',
         import.meta.url
       )
     ),
@@ -144,7 +144,7 @@ test('the homepage opening uses a property-owned native calibration study', () =
   assert.equal(
     existsSync(
       new URL(
-        '../static/images/performance-lab/agency-performance-calibration-loop-v3-poster.webp',
+        '../static/images/performance-lab/agency-fluid-intelligence-loop-v4-poster.webp',
         import.meta.url
       )
     ),
@@ -152,32 +152,41 @@ test('the homepage opening uses a property-owned native calibration study', () =
   );
 });
 
-test('the homepage boundary motion is a native text-to-video loop with a still fallback', () => {
+test('the homepage boundary motion is a native fluid-intelligence loop with a still fallback', () => {
   assert.match(
     campaign,
     /<video[\s\S]*?autoplay[\s\S]*?muted[\s\S]*?loop[\s\S]*?playsinline/
   );
   assert.match(campaign, /\{#if media\.video && motionAllowed\}/);
   assert.match(campaign, /poster=\{media\.video\.poster \?\? media\.src\}/);
-  assert.match(handoffBoundaryMetadata, /CRE-1559/);
+  assert.match(handoffBoundaryMetadata, /CRE-1562/);
   assert.match(handoffBoundaryMetadata, /native text-to-video/);
   assert.match(handoffBoundaryMetadata, /No input image/);
   assert.match(handoffBoundaryMetadata, /no spatial mask/);
   assert.match(handoffBoundaryMetadata, /direct phase boundary/);
   assert.match(handoffBoundaryMetadata, /360 frames at 30 fps/);
   assert.match(handoffBoundaryMetadata, /12\.0-second/);
-  assert.match(handoffBoundaryMetadata, /frames `77` and `257`/);
+  assert.match(handoffBoundaryMetadata, /fluid intelligence under pressure/i);
+  assert.match(handoffBoundaryMetadata, /circulating water pulse/i);
   assert.match(handoffBoundaryMetadata, /No dissolve/);
   assert.match(handoffBoundaryMetadata, /rejected after user screenshot review/);
   assert.equal(
     existsSync(
       new URL(
-        '../content/assets/brand/agency-handoff-boundary.v20260801/source/sora-native-brand-loop-simple-prompt.txt',
+        '../content/assets/brand/agency-handoff-boundary.v20260801/source/sora-fluid-intelligence-loop-prompt.txt',
         import.meta.url
       )
     ),
     true
   );
+});
+
+test('the fluid tracer preserves diegetic color without changing the campaign default', () => {
+  assert.match(home, /colorMode: 'natural'/);
+  assert.match(campaign, /colorMode\?: 'monochrome' \| 'natural'/);
+  assert.match(campaign, /data-color-mode=\{media\.colorMode \?\? 'monochrome'\}/);
+  assert.match(campaign, /\[data-color-mode='monochrome'\][\s\S]*?grayscale\(1\)/);
+  assert.match(campaign, /\[data-color-mode='natural'\][\s\S]*?filter: contrast\(1\.08\)/);
 });
 
 test('the homepage boundary artifact shows evidence without restating the scene introduction', () => {
