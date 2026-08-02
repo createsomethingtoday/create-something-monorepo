@@ -1,20 +1,20 @@
 import { describe, expect, it } from 'vitest';
 
-import { getLtdSitemapPaths } from './sitemap';
+import { buildLtdSitemapPaths } from './sitemap';
 
 describe('ltd sitemap catalog', () => {
-  it(
-    'derives indexable detail routes from their owning content sources',
-    async () => {
-      const paths = await getLtdSitemapPaths(undefined);
+  it('derives indexable detail routes from their owning content sources', () => {
+    const paths = buildLtdSitemapPaths({
+      canonPaths: [[], ['concepts', 'conviction-without-dependence']],
+      patternSlugs: ['crystallization', 'universal-utility'],
+      masterSlugs: ['dieter-rams']
+    });
 
-      expect(paths).toContain('/patterns/crystallization');
-      expect(paths).toContain('/patterns/universal-utility');
-      expect(paths).toContain('/masters/dieter-rams');
-      expect(paths).toContain('/canon/concepts/conviction-without-dependence');
-      expect(paths).not.toContain('/privacy');
-      expect(paths).not.toContain('/terms');
-    },
-    15_000
-  );
+    expect(paths).toContain('/patterns/crystallization');
+    expect(paths).toContain('/patterns/universal-utility');
+    expect(paths).toContain('/masters/dieter-rams');
+    expect(paths).toContain('/canon/concepts/conviction-without-dependence');
+    expect(paths).not.toContain('/privacy');
+    expect(paths).not.toContain('/terms');
+  });
 });
