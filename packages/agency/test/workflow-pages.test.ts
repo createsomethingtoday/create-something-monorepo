@@ -120,10 +120,37 @@ test('workflow route implementation is prerendered, indexable, and Paper-native'
   assert.match(routeServer, /error\(404/);
   assert.match(routePage, /<SEO/);
   assert.match(routePage, /faqItems=/);
-  assert.match(routePage, /breadcrumbs=/);
+  assert.match(routePage, /breadcrumbs/);
   assert.match(routePage, /href="\/workflows"/);
   assert.match(hubPage, /<SEO/);
   assert.match(layoutServer, /if \(building\)/);
   assert.match(layoutServer, /user: undefined/);
   assert.doesNotMatch(`${routeServer}\n${routePage}\n${hubPage}`, waterEraTerms);
+});
+
+test('workflow surfaces use the Performance token contract instead of local styling literals', () => {
+  const routeFiles = [
+    readFileSync(path.join(packageRoot, 'src/routes/workflows/+page.svelte'), 'utf8'),
+    readFileSync(path.join(packageRoot, 'src/routes/workflows/[slug]/+page.svelte'), 'utf8')
+  ];
+  const tokenFamilies = [
+    '--color-performance-',
+    '--font-performance-',
+    '--text-performance-',
+    '--leading-performance-',
+    '--tracking-performance-',
+    '--space-performance-',
+    '--duration-performance-',
+    '--ease-performance-'
+  ];
+
+  for (const route of routeFiles) {
+    for (const family of tokenFamilies) {
+      assert.match(route, new RegExp(family.replaceAll('-', '\\-')), `${family} is missing`);
+    }
+
+    assert.match(route, /--content-width-performance/);
+    assert.doesNotMatch(route, /color-mix\(/);
+    assert.doesNotMatch(route, /#[0-9a-f]{3,8}\b/i);
+  }
 });
