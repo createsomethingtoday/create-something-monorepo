@@ -104,7 +104,16 @@ test('the homepage opening uses the property-owned paper-under-pressure artifact
   assert.equal(
     existsSync(
       new URL(
-        '../static/images/performance-lab/paper-boundary-study.svg',
+        '../static/images/performance-lab/paper-boundary-authority.webp',
+        import.meta.url
+      )
+    ),
+    true
+  );
+  assert.equal(
+    existsSync(
+      new URL(
+        '../static/images/performance-lab/paper-boundary-authority-mobile.webp',
         import.meta.url
       )
     ),

@@ -253,10 +253,16 @@
         <article class="boundary-study" aria-label="Boundary study: run, wait, stop">
           <figure class="boundary-study__media">
             <picture>
+              <source
+                media="(max-width: 640px)"
+                srcset="/images/performance-lab/paper-boundary-authority-mobile.webp"
+              />
               <img
-                src="/images/performance-lab/paper-boundary-study.svg"
-                alt="Paper held against a controlled edge with a perforated stop line and attached receipt."
+                src="/images/performance-lab/paper-boundary-authority.webp"
+                alt="A porcelain paper decision path held at a black authority spine, where open, clamped, and stopped edges remain attached to a blank receipt."
                 loading="lazy"
+                width="1024"
+                height="1536"
               />
             </picture>
             <figcaption>Paper pressure study · Run / Wait / Stop</figcaption>
@@ -385,7 +391,7 @@
 
   .boundary-study {
     display: grid;
-    grid-template-columns: minmax(13rem, 0.55fr) minmax(0, 1.45fr);
+    grid-template-columns: minmax(15rem, 0.68fr) minmax(0, 1.32fr);
     border: 1px solid var(--color-performance-line, #d7d7d2);
     background: var(--color-performance-paper, #f3f3f0);
   }
@@ -395,6 +401,7 @@
     margin: 0;
     min-height: 31rem;
     border-right: 1px solid var(--color-performance-line, #d7d7d2);
+    background: var(--color-performance-ink, #090909);
     overflow: hidden;
   }
 
@@ -408,7 +415,7 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    filter: grayscale(1);
+    object-position: center;
   }
 
   .boundary-study__media figcaption {
@@ -674,7 +681,7 @@
 
   @media (max-width: 980px) {
     .boundary-study {
-      grid-template-columns: minmax(11rem, 0.5fr) minmax(0, 1.5fr);
+      grid-template-columns: minmax(12rem, 0.58fr) minmax(0, 1.42fr);
     }
 
     .boundary-study__media {
@@ -708,6 +715,10 @@
       border-right: 0;
       border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
       overflow: hidden;
+    }
+
+    .boundary-study__media img {
+      object-position: center 54%;
     }
 
     .boundary-study__metrics {
