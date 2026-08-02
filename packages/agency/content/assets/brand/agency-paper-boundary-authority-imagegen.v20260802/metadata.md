@@ -57,6 +57,10 @@ concise before/after outcome, and one factual metric/receipt rail.
 ## Public exports
 
 Public WebP exports use `cwebp -q 88 -m 6` without resizing.
+The authored page requests both files with the stable `?v=cre-1592` release
+query. This avoids reusing a regional negative-cache entry if a custom-domain
+request reaches a new asset path before the Pages production alias has switched;
+the query does not change either file's identity or hash.
 
 | File | Dimensions | SHA-256 |
 | --- | ---: | --- |
