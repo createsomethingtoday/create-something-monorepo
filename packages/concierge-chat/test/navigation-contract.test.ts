@@ -35,3 +35,17 @@ test('public navigation links no longer inherit the internal app pill treatment'
   assert.doesNotMatch(layoutSource, /\n  nav a \{/);
   assert.match(layoutSource, /\.webflow-nav-links a \{[\s\S]*?border: 0;/);
 });
+
+test('public navigation prioritizes the two audiences and keeps specialised routes contextual', () => {
+  const publicNavBlock = layoutSource.match(
+    /: isPublicIntakeRoute \|\| !showInternalNavigation\s+\? \[([\s\S]*?)\]\s+: \[/
+  )?.[1];
+
+  assert.ok(publicNavBlock, 'expected a dedicated public navigation block');
+  assert.match(publicNavBlock, /\{ href: '\/nurses', label: 'For nurses' \}/);
+  assert.match(publicNavBlock, /\{ href: '\/facilities', label: 'For facilities' \}/);
+  assert.match(publicNavBlock, /\{ href: '\/jobs', label: 'Open roles' \}/);
+  assert.match(publicNavBlock, /\{ href: '\/agents', label: 'How it works' \}/);
+  assert.doesNotMatch(publicNavBlock, /\{ href: '\/voice', label: 'Voice' \}/);
+  assert.doesNotMatch(publicNavBlock, /\{ href: '\/client-service', label: 'NPG service' \}/);
+});
