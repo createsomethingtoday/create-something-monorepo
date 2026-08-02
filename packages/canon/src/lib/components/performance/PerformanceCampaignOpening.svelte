@@ -11,6 +11,7 @@
 		src: string;
 		mobileSrc?: string;
 		alt: string;
+		material?: 'paper' | 'water';
 		width?: number;
 		height?: number;
 		objectPosition?: string;
@@ -79,6 +80,7 @@
 	<figure
 		class="performance-campaign-opening__media"
 		data-color-mode={media.colorMode ?? 'monochrome'}
+		data-material={media.material ?? 'unspecified'}
 	>
 		<picture>
 			{#if media.mobileSrc}
@@ -218,11 +220,26 @@
 	}
 
 	.performance-campaign-opening[data-mode='paper'] .performance-campaign-opening__media {
-		opacity: 0.24;
+		opacity: 1;
 	}
 
 	.performance-campaign-opening[data-mode='paper'] .performance-campaign-opening__media::after {
-		background: linear-gradient(90deg, #f3f3f0 0%, rgba(243, 243, 240, 0.7) 48%, rgba(243, 243, 240, 0.15));
+		background:
+			linear-gradient(90deg,
+				var(--color-performance-paper, #f3f3f0) 0%,
+				rgba(243, 243, 240, 0.98) 38%,
+				rgba(243, 243, 240, 0.72) 53%,
+				rgba(243, 243, 240, 0.14) 72%,
+				rgba(243, 243, 240, 0) 100%),
+			linear-gradient(0deg,
+				rgba(243, 243, 240, 0.82) 0%,
+				rgba(243, 243, 240, 0) 32%);
+	}
+
+	.performance-campaign-opening[data-mode='paper'] .performance-campaign-opening__grid {
+		background:
+			linear-gradient(90deg, var(--color-performance-grid, rgba(9, 9, 9, 0.045)) 1px, transparent 1px) 0 0 / 25% 100%,
+			linear-gradient(var(--color-performance-grid, rgba(9, 9, 9, 0.045)) 1px, transparent 1px) 0 0 / 100% 25%;
 	}
 
 	.performance-campaign-opening__grid {
@@ -409,6 +426,18 @@
 					var(--performance-campaign-scrim-edge) 86%,
 					rgba(9, 9, 9, 0.14) 100%),
 				linear-gradient(90deg, rgba(9, 9, 9, 0.72), rgba(9, 9, 9, 0.28));
+		}
+
+		.performance-campaign-opening[data-mode='paper'] .performance-campaign-opening__media::after {
+			background:
+				linear-gradient(180deg,
+					var(--color-performance-paper, #f3f3f0) 0%,
+					rgba(243, 243, 240, 0.98) 48%,
+					rgba(243, 243, 240, 0.56) 68%,
+					rgba(243, 243, 240, 0.76) 100%),
+				linear-gradient(90deg,
+					rgba(243, 243, 240, 0.9),
+					rgba(243, 243, 240, 0.28));
 		}
 
 		.performance-campaign-opening__content {

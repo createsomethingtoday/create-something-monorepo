@@ -8,13 +8,13 @@
     PerformanceDecisionPanel,
     PerformancePageSection,
     PerformanceThesisConditions,
+    paperPrototypeScoreMedia,
     PropertyFunnel,
     SEO,
     type PerformanceCardItem,
     type PerformanceCondition,
     type PerformanceDecisionItem
   } from '@create-something/canon';
-  import { controlledFlowMedia } from '@create-something/canon/components/performance/media/controlled-flow';
 
   const proofMetrics = [
     { value: '5', label: 'live tools and surfaces' },
@@ -244,8 +244,9 @@
   eyebrow="CREATE SOMETHING .space"
   title="A public workbench for testing runtime ideas."
   lede="CREATE SOMETHING .space is where tools, routes, and interaction patterns get tested against real execution surfaces before they become research, policy, or production workflows."
-  media={controlledFlowMedia}
+  media={paperPrototypeScoreMedia}
   proof={proofMetrics.map((item) => ({ label: item.label, value: item.value }))}
+  mode="paper"
 >
   {#snippet actions()}
     <Button href="/playground">Open The Playground</Button>

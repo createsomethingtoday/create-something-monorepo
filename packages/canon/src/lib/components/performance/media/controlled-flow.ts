@@ -11,6 +11,7 @@ export const controlledFlowMedia = {
   mobileSrc: controlledFlowMobile,
   alt: 'Aerated water moving over a sculptural concrete performance boundary',
   condition: 'flow',
+  material: 'water',
   video: {
     mp4: controlledFlowMotionMp4,
     webm: controlledFlowMotionWebm,

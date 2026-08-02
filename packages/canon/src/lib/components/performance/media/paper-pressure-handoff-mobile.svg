@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 1200" role="img" aria-labelledby="title desc">
+  <title id="title">Paper pressure handoff field</title>
+  <desc id="desc">A tactile paper field with a controlled fold, separated measurement rail, and stamped handoff zone.</desc>
+  <defs><filter id="fiber"><feTurbulence type="fractalNoise" baseFrequency=".78" numOctaves="3" seed="41"/><feComponentTransfer><feFuncA type="table" tableValues="0 .08"/></feComponentTransfer></filter><linearGradient id="fold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#d0d0c8"/></linearGradient></defs>
+  <rect width="720" height="1200" fill="#f3f3f0"/><rect width="720" height="1200" filter="url(#fiber)" opacity=".5"/>
+  <path d="M510 650h210v210z" fill="url(#fold)"/><path d="M510 650 720 860M546 650v174h174" fill="none" stroke="#9c9c96" stroke-opacity=".42" stroke-width="2"/>
+  <path d="M72 680v396M52 680h40M52 1076h40" stroke="#0057b8" stroke-width="3"/><circle cx="72" cy="878" r="7" fill="#0057b8"/>
+  <g transform="translate(520 1020) rotate(-6)" fill="none" stroke="#0057b8"><rect x="-92" y="-42" width="184" height="84" stroke-width="5"/><path d="M-62 0h124" stroke-width="5"/></g>
+</svg>

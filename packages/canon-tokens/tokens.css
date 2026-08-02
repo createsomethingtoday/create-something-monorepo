@@ -101,6 +101,10 @@
    * third-party brand identifiers.
    */
   --color-performance-paper: #f3f3f0;
+  --color-performance-paper-fiber: rgb(9 9 9 / 0.035);
+  --color-performance-paper-edge: #b6b6ae;
+  --color-performance-paper-fold: #deded7;
+  --color-performance-paper-shadow: rgb(9 9 9 / 0.16);
   --color-performance-panel: #ffffff;
   --color-performance-ink: #090909;
   --color-performance-ink-soft: #262626;

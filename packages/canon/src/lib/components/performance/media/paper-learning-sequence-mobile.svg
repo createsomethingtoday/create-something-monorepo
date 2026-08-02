@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 1200" role="img" aria-labelledby="title desc">
+  <title id="title">Learning workbook sequence</title>
+  <desc id="desc">An accordion-fold paper workbook progressing through measured lessons toward an attached proof mark.</desc>
+  <defs><filter id="shadow"><feDropShadow dx="0" dy="18" stdDeviation="18" flood-opacity=".16"/></filter><filter id="fiber"><feTurbulence type="fractalNoise" baseFrequency=".74" numOctaves="3" seed="53"/><feComponentTransfer><feFuncA type="table" tableValues="0 .07"/></feComponentTransfer></filter></defs>
+  <rect width="720" height="1200" fill="#f3f3f0"/>
+  <path d="M0 300h720M0 600h720M0 900h720M180 0v1200M360 0v1200M540 0v1200" stroke="#090909" stroke-opacity=".045"/>
+  <g filter="url(#shadow)">
+    <path d="M64 724 212 658l148 66 148-66 148 66v380l-148 66-148-66-148 66-148-66z" fill="#fff" stroke="#9c9c96" stroke-width="2"/>
+    <path d="M212 658v446M360 724v380M508 658v446" stroke="#090909" stroke-opacity=".3" stroke-width="3"/>
+    <path d="M64 724 212 658v446l-148 66zM360 724l148-66v446l-148 66z" fill="#e7e7e0" fill-opacity=".72"/>
+    <path d="M106 838h64M254 812h62M402 838h64" stroke="#0057b8" stroke-width="7"/><path d="M550 812h62" stroke="#007a4d" stroke-width="7"/>
+    <circle cx="582" cy="1002" r="38" fill="#fff" stroke="#007a4d" stroke-width="6"/><path d="m562 1002 14 14 28-34" fill="none" stroke="#007a4d" stroke-width="7"/>
+    <path d="M64 724 212 658l148 66 148-66 148 66v380l-148 66-148-66-148 66-148-66z" filter="url(#fiber)" opacity=".44"/>
+  </g>
+  <path d="M28 684v468M12 684h32M12 1152h32" stroke="#0057b8" stroke-width="3"/>
+</svg>

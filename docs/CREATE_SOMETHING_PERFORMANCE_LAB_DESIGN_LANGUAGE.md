@@ -52,6 +52,11 @@ The name carries two different jobs that must remain visible together:
 - **The hybrid** pairs visceral campaign energy with rigorous operating proof.
   A surface fails when it becomes only a calm dashboard or only a sports image.
 
+The primary material is working paper: source sheets, folds, scored boundaries,
+evidence stacks, and attached receipts. Paper is useful because it makes
+provenance, transformation, control, and proof physical. It must never collapse
+into decorative stationery, random crumpling, or texture behind type.
+
 Translate the private performance reference into owned workflow meaning:
 
 | Performance reference | CREATE SOMETHING translation |
@@ -168,7 +173,7 @@ Every signature surface should express both qualities:
    intensity and decisive emphasis, not approval.
 4. **Redundancy:** never communicate safety with color alone. Include a state
    word, icon, decision reason, or receipt.
-5. **Material signature:** use near-black, white, paper, court, precise lines,
+5. **Material signature:** use near-black, white, working paper, precise lines,
    mono record labels, and semantic rails. Avoid pill controls, soft candy
    palettes, floating shadows, and ornamental gradients.
 
@@ -177,7 +182,7 @@ Canon exposes this through the Performance state tokens,
 
 | Surface | Direction |
 | --- | --- |
-| Homepage | Combine the plain offer with original human motion or material imagery, decisive scale, technical annotation, and integrated proof. |
+| Homepage | Combine the plain offer with one property-specific working-paper state, decisive scale, technical annotation, and integrated proof. |
 | Services | Show the workflow as a training and pressure sequence, not only a list of steps. |
 | Products | Present Atlas, Signal, Decision, and Proof as a performance system for delegated work. |
 | Articles | Combine high-fidelity operating artifacts with an original editorial field or material study when it clarifies pressure, testing, or proof. |

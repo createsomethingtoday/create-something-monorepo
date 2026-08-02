@@ -5,12 +5,12 @@
     PerformanceCampaignOpening,
     PerformanceNarrativeStage,
     PerformanceProofStrip,
+    paperLearningSequenceMedia,
     type PerformanceCampaignProof,
     type PerformanceCondition,
     type PerformanceNarrativeScene,
     type PerformanceProofItem
   } from '$canon/components/performance';
-  import { traceControlPlaneMedia } from '$canon/components/performance/media/trace-control-plane';
   import PropertyFunnel from '$canon/components/PropertyFunnel.svelte';
 
   const featuredCourse = PATHS[0] ?? null;
@@ -112,8 +112,9 @@
     eyebrow="CREATE SOMETHING Learn"
     title="Build workflows operators can run and explain"
     lede="Practical paths for business owners becoming operators. Start in the OpenAI ecosystem with the Codex app, create a RapidAPI-backed MCP, then use Canon image rules to make boundaries, policy, proof, and handoff visible."
-    media={traceControlPlaneMedia}
+    media={paperLearningSequenceMedia}
     proof={proofItems}
+    mode="paper"
     density="compact"
   >
     {#snippet actions()}

@@ -85,9 +85,16 @@
   border-top-color: var(--color-performance-risk);
 }
 
+.performance-paper-field,
 .performance-court-grid {
   background:
-    linear-gradient(90deg, rgba(9, 9, 9, 0.055) 1px, transparent 1px) 0 0 / 42px 42px,
+    repeating-linear-gradient(
+      7deg,
+      transparent 0 18px,
+      var(--color-performance-paper-fiber) 18px 19px,
+      transparent 19px 41px
+    ),
+    linear-gradient(90deg, var(--color-performance-grid) 1px, transparent 1px) 0 0 / 42px 42px,
     var(--color-performance-paper);
 }
 
@@ -140,7 +147,14 @@
 
 .property-performance {
   --property-performance-panel-shadow: var(--shadow-performance-panel);
-  background: var(--color-performance-paper);
+  background:
+    repeating-linear-gradient(
+      7deg,
+      transparent 0 22px,
+      var(--color-performance-paper-fiber) 22px 23px,
+      transparent 23px 49px
+    ),
+    var(--color-performance-paper);
   color: var(--color-performance-ink);
   font-family: var(--font-performance-display, var(--font-performance-sans));
 }

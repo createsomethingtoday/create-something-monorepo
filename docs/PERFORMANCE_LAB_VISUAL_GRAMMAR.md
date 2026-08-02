@@ -57,56 +57,57 @@ Must include:
 Campaign mode does not remove proof. It integrates proof into the field image,
 sequence, caption, trace, or receipt.
 
-### Material identity: controlled water
+### Material identity: working paper
 
-CREATE SOMETHING uses water under designed conditions as its primary natural-material subject.
-Flow, channel, pressure, boundary, wake, trace, clarity, turbulence, and settlement map directly to
-governed delegation. Prefer flumes, spillways, wave tanks, test basins, refraction rigs, droplets,
-and measured surface studies over generic oceans or static wave motifs. On campaign surfaces, the
-water photography is intentionally decorative and kinetic: it plays the role that the runner plays
-in a performance campaign by making motion, force, and recovery felt before the operating artifact
-explains them. The photograph is never presented as evidence of a real workflow run.
+CREATE SOMETHING uses paper under designed conditions as its primary material subject. Paper is
+where a signal becomes a record, a rule becomes portable, a handoff becomes explicit, and proof can
+be attached. It makes the operating model physical without anthropomorphizing the agent or hiding
+the workflow behind atmosphere.
 
-Water carries the material story in black and white. Semantic color remains thin and functional:
-an index rail, node edge, state mark, or intervention line. The full boundary and Evermind
-foundation audit lives in `docs/PERFORMANCE_LAB_FOUNDATION_AUDIT.md`.
+Paper is not a stationery theme. Use it as an operational vocabulary:
 
-#### Scale rule: bench, not aerial
+| Paper state | Workflow meaning | Required visual evidence |
+| --- | --- | --- |
+| Source sheet | provenance and declared authority | margin, source mark, or registered origin |
+| Fold | routing or transformation | an explicit before/after plane or directional spine |
+| Score / perforation | run, wait, stop boundary | a cut line, stop edge, or controlled tear path |
+| Stack | accumulated evidence | distinct ordered layers whose sequence remains legible |
+| Stamp / attachment | receipt and verification | a mark connected to the record it verifies |
 
-Shoot water as an experiment, not as landscape. The apparatus must be visible in frame.
+The visual must show why the paper changed. A generic blank sheet, a random crumpled ball, scattered
+scraps, or a texture pasted behind type does not pass. Creases, layers, edges, registration marks,
+and semantic color must explain source, transformation, boundary, evidence, or proof.
 
-Aerial and landscape water — rivers, dam structures seen from above, survey craft, open channel
-infrastructure — reads as nature spectacle. It carries the Performance half of the identity and
-none of the Lab half, and it cannot show that anyone is accountable for the flow.
+#### Scale rule: workbench, not scrapbook
 
-Bench scale fixes both problems at once. A graduated tank wall, a marked waterline, a gauge, a
-sluice handle caught mid-adjustment, or a clamped test rig implies an operator without putting a
-person in the frame. The instrument is the human, present by inference. This preserves the
-non-anthropomorphism boundary while letting the imagery depict authority.
+Show one engineered paper object at a useful inspection scale. The paper may be flat, folded,
+scored, stacked, or under pressure, but it must retain a readable edge and a clear relation to its
+measurement rail. Reserve a separate live-DOM lane for the proposition and action; no fold, rule,
+annotation line, or 3D object may pass through essential copy.
 
 | Prefer | Reject |
 | --- | --- |
-| Wave tank, flume, test basin, laboratory vessel, refraction rig, capillary test | Aerial river, reservoir, coastline, open sea |
-| Visible measurement: scale marks, gauges, dye ports, datum lines | Unmeasured water at architectural or landscape distance |
-| Apparatus and fixture edges in frame | Water as an environmental backdrop behind type |
-| One condition per photograph | One photograph reused across unrelated surfaces |
+| One source sheet, workbook, folded prototype, evidence stack, or stamped handoff | Collage of unrelated scraps or repeated paper balls |
+| Visible margin, fold, score, registration point, attachment, or receipt | Texture with no operational meaning |
+| Quiet paper field plus one semantic signal color | Brown craft-paper nostalgia or decorative rainbow stationery |
+| Property-specific state mapped to its role | One identical hero cloned across every property |
 
-A water image may appear on at most one public surface family. Reuse across unrelated routes turns
-a specific condition into decoration and violates the acceptance standard.
+#### Signature device: registered change
 
-#### Signature device: dye trace
+The primary device is a change that leaves registration evidence: a fold aligned to a datum, a
+scored stop line, a trace joining sources, a progress mark across an accordion sequence, or a stamp
+attached to the final sheet. Semantic color is diegetic: signal blue registers source and control,
+pressure orange marks a test boundary, growth green marks completed progression, and risk red marks
+a stop. Color never substitutes for the state word or artifact.
 
-Dye trace is the primary CREATE SOMETHING water device. In hydraulic engineering, dye is injected
-to make invisible flow observable and measurable. That is a literal statement of the product:
-inject an observable marker so delegated work leaves an inspectable trace.
+Agency owns the interactive reference implementation, Paper Under Pressure. It progressively
+enhances a complete static paper field with a Three.js object and keeps renderer lifecycle,
+interaction, fallback, and context recovery local to the property. LTD, IO, Space, and Learn use
+responsive vector studies so the material contract remains complete without WebGL.
 
-Dye also resolves the color doctrine. Instead of stacking semantic color on top of a black-and-white
-material layer, the injected marker becomes the only color in the frame, in the same signal value
-used for controlled state. Color becomes diegetic — it is present because the experiment put it
-there, not because the layout needed an accent.
-
-Use dye trace wherever the claim is evidence, correlation, provenance, or run history. It takes
-priority over generic wake imagery for those claims.
+The prior controlled-water family remains a valid historical and secondary campaign library for
+routes whose content genuinely concerns flow, pressure, trace, or settlement. It is no longer the
+primary homepage identity and must not be reused as a generic brand background.
 
 ### Product mode
 
