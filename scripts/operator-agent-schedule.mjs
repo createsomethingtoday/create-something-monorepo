@@ -197,6 +197,7 @@ export function launchdDefinitions(options) {
     node: process.execPath,
     script: path.resolve(options.scheduleScript),
     pathEnv: stableLaunchdPath(process.env.PATH, process.execPath),
+    home: process.env.HOME ?? '',
   };
   return [
     {
@@ -252,6 +253,7 @@ export function plistForJob(job, options) {
     LowPriorityIO: true,
     EnvironmentVariables: {
       PATH: job.pathEnv,
+      HOME: job.home,
       NO_COLOR: '1',
     },
   }).replace(
@@ -261,6 +263,8 @@ export function plistForJob(job, options) {
       '    <dict>',
       '      <key>PATH</key>',
       `      <string>${xmlEscape(job.pathEnv)}</string>`,
+      '      <key>HOME</key>',
+      `      <string>${xmlEscape(job.home)}</string>`,
       '      <key>NO_COLOR</key>',
       '      <string>1</string>',
       '    </dict>',

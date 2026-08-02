@@ -301,6 +301,7 @@ test('operator-agent schedule renders launchd jobs for fast and model heartbeats
   assert.match(plist, /<key>StartInterval<\/key>\n    <integer>3600<\/integer>/);
   assert.match(plist, /<key>WorkingDirectory<\/key>/);
   assert.match(plist, /<key>EnvironmentVariables<\/key>/);
+  assert.match(plist, /<key>HOME<\/key>/);
   assert.match(plist, /<key>NO_COLOR<\/key>/);
   const validation = validateLaunchdPlist(plist, jobs[0]);
   assert.equal(validation.ok, true);
