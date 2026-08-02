@@ -189,7 +189,7 @@
     "search:check": "pnpm --filter @create-something/canon package && pnpm --filter @create-something/canon exec vitest run src/lib/components/layout-seo.test.ts src/lib/domains/io/article-header-ssr.test.ts src/lib/search/sitemap.test.ts && pnpm --filter @create-something/io test:search && pnpm --filter @create-something/ltd test:search && pnpm --filter @create-something/space test:search && pnpm --filter @create-something/agency seo:check",
     "performance:pages:check": "tsx scripts/performance-page-audit.ts",
     "performance:pages:report": "tsx scripts/performance-page-audit.ts --json",
-    "performance:pages:test": "node --import tsx --test scripts/test/performance-page-audit.test.ts",
+    "performance:pages:test": "node --import tsx --test scripts/test/performance-page-audit.test.ts scripts/test/performance-paper-adoption.test.ts",
     "agent:svg-education": "node packages/dotfiles/codex/skills/svg-education-precision/scripts/svg-education.mjs",
     "thesis:evidence:generate": "node scripts/thesis-evidence.mjs generate",
     "thesis:evidence:check": "node scripts/thesis-evidence.mjs check",

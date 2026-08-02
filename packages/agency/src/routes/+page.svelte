@@ -5,8 +5,8 @@
     PerformanceConversionHandoff,
     PerformanceNarrativeStage,
     PerformanceWorkflowMiniArtifact,
+    paperPressureHandoffMedia,
     SEO,
-    type PerformanceCampaignMedia,
     type PerformanceCampaignProof,
     type PerformanceFieldStudyMetric,
     type PerformanceFieldStudyProof,
@@ -20,15 +20,6 @@
   import PublicSubstrateCanvas from '$lib/components/PublicSubstrateCanvas.svelte';
   import { templateReviewFieldReport } from '$lib/data/fieldReports';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
-
-  const homepageHandoffBoundaryMedia: PerformanceCampaignMedia = {
-    src: '/images/performance-lab/paper-under-pressure-field.svg',
-    alt: 'A warm tactile paper field with one folded edge',
-    width: 1280,
-    height: 720,
-    objectPosition: 'center',
-    colorMode: 'natural'
-  };
 
   const services = [
     {
@@ -234,7 +225,7 @@
     eyebrow={agencyCoreMessaging.categoryLabel}
     title="Make one workflow ready to delegate."
     lede="Choose a handoff your team still checks by hand. We map what can run, when a person steps in, what must stop, and what record proves the result."
-    media={homepageHandoffBoundaryMedia}
+    media={paperPressureHandoffMedia}
     proof={heroProofItems}
     mode="paper"
     density="compact"

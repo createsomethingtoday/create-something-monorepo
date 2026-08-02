@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Research trace sheets</title>
+  <desc id="desc">Layered paper records connected by a blue provenance trace and precise citation marks.</desc>
+  <defs>
+    <filter id="shadow" x="-30%" y="-30%" width="170%" height="180%">
+      <feDropShadow dx="0" dy="22" stdDeviation="22" flood-color="#090909" flood-opacity=".18"/>
+    </filter>
+    <filter id="fiber"><feTurbulence type="fractalNoise" baseFrequency=".82" numOctaves="2" seed="23"/><feComponentTransfer><feFuncA type="table" tableValues="0 .06"/></feComponentTransfer></filter>
+  </defs>
+  <rect width="1600" height="1000" fill="#f3f3f0"/>
+  <path d="M0 250h1600M0 500h1600M0 750h1600M400 0v1000M800 0v1000M1200 0v1000" stroke="#090909" stroke-opacity=".045"/>
+  <g filter="url(#shadow)">
+    <path d="M930 98h474l82 82v610H930z" fill="#deded7" stroke="#9c9c96" stroke-width="2" transform="rotate(5 1208 444)"/>
+    <path d="M780 180h520l104 104v598H780z" fill="#fff" stroke="#9c9c96" stroke-width="2"/>
+    <path d="M1300 180v104h104" fill="#deded7" stroke="#9c9c96" stroke-width="2"/>
+    <path d="M846 338h240M846 390h412M846 442h352M846 602h394M846 654h312M846 706h368" stroke="#090909" stroke-opacity=".28" stroke-width="3"/>
+    <path d="M846 518C970 434 1064 600 1188 510S1328 470 1386 538" fill="none" stroke="#0057b8" stroke-width="8"/>
+    <circle cx="846" cy="518" r="10" fill="#0057b8"/><circle cx="1188" cy="510" r="10" fill="#0057b8"/><circle cx="1386" cy="538" r="10" fill="#0057b8"/>
+    <rect x="780" y="180" width="624" height="702" filter="url(#fiber)" opacity=".5"/>
+  </g>
+  <path d="M716 236v590M694 236h44M694 826h44" stroke="#0057b8" stroke-width="3"/>
+  <path d="M744 280h-88M744 780h-88" stroke="#090909" stroke-opacity=".34" stroke-width="2"/>
+  <circle cx="716" cy="530" r="8" fill="#0057b8"/>
+</svg>

@@ -7,5 +7,6 @@ export const traceControlPlaneMedia = {
   src: traceControlPlane,
   mobileSrc: traceControlPlaneMobile,
   alt: 'A survey craft leaving a directional wake across dark water',
-  condition: 'trace'
+  condition: 'trace',
+  material: 'water'
 } as const satisfies PerformanceMediaStudy;

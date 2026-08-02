@@ -4,13 +4,13 @@
     Button,
     PerformanceCampaignOpening,
     PerformanceNarrativeStage,
+    paperResearchTraceMedia,
     PapersGrid,
     PropertyFunnel,
     SEO,
     type PerformanceDecisionItem,
     type PerformanceNarrativeScene
   } from '@create-something/canon';
-  import { traceControlPlaneMedia } from '@create-something/canon/components/performance/media/trace-control-plane';
   import type { Paper } from '@create-something/canon/types';
 
   let { data }: { data: PageData } = $props();
@@ -120,8 +120,9 @@
   eyebrow="CREATE SOMETHING .io"
   title="Research for automation you can defend."
   lede="CREATE SOMETHING .io turns experiments, papers, and field notes into a usable research layer for operators. The goal is evidence you can carry into the next build, review, or production decision."
-  media={traceControlPlaneMedia}
+  media={paperResearchTraceMedia}
   proof={proofMetrics.map((item) => ({ label: item.label, value: item.value }))}
+  mode="paper"
   density="compact"
 >
   {#snippet actions()}

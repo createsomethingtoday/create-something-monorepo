@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 1200" role="img" aria-labelledby="title desc">
+  <title id="title">Scored paper prototype</title>
+  <desc id="desc">A folded paper prototype held open by scored test lines, registration points, and a pressure mark.</desc>
+  <defs><filter id="shadow"><feDropShadow dx="0" dy="20" stdDeviation="20" flood-opacity=".19"/></filter><filter id="fiber"><feTurbulence type="fractalNoise" baseFrequency=".68" numOctaves="3" seed="31"/><feComponentTransfer><feFuncA type="table" tableValues="0 .07"/></feComponentTransfer></filter></defs>
+  <rect width="720" height="1200" fill="#f3f3f0"/>
+  <path d="M0 300h720M0 600h720M0 900h720M180 0v1200M360 0v1200M540 0v1200" stroke="#090909" stroke-opacity=".045"/>
+  <g filter="url(#shadow)">
+    <path d="M90 700 360 610l270 90-72 412-198-70-198 70z" fill="#fff" stroke="#9c9c96" stroke-width="2"/>
+    <path d="M90 700 360 610v432l-198 70z" fill="#e0e0d9"/><path d="M630 700 360 610v432l198 70z" fill="#f8f8f3"/>
+    <path d="M360 610v432" stroke="#090909" stroke-opacity=".44" stroke-width="3"/>
+    <path d="m146 776 214-60 214 60M132 896l228-42 228 42" fill="none" stroke="#090909" stroke-opacity=".24" stroke-width="3" stroke-dasharray="9 11"/>
+    <path d="m118 1010 242-32 242 32" fill="none" stroke="#e54800" stroke-width="8" stroke-dasharray="12 11"/>
+    <circle cx="360" cy="978" r="32" fill="#f3f3f0" stroke="#e54800" stroke-width="6"/>
+    <path d="M90 700 360 610l270 90-72 412-198-70-198 70z" filter="url(#fiber)" opacity=".44"/>
+  </g>
+  <path d="M52 668v466M34 668h36M34 1134h36" stroke="#0057b8" stroke-width="3"/><circle cx="52" cy="901" r="7" fill="#0057b8"/>
+</svg>

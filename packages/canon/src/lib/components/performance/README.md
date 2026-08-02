@@ -38,7 +38,15 @@ Properties own words, route data, original media, domain-specific artifacts, app
 
 Campaign actions inherit a mode-aware surface from `PerformanceCampaignOpening`: ink openings provide a light primary action and a translucent, light-bordered secondary action; paper openings reverse that relationship. Properties may supply the action destination and label, but they must not reintroduce page-surface button colors over image-backed media.
 
-Campaign video is a progressive enhancement, never the only media surface. Supply the canonical responsive `src`, `mobileSrc`, and `alt` first, then optionally add `video.mp4`, `video.webm`, and a matching `video.poster`. Canon renders the still during SSR and first paint, adds silent autoplaying loop media only after hydration when motion is allowed, and keeps the video element absent when `prefers-reduced-motion: reduce` applies. Text, actions, proof, scrims, and grid overlays remain live DOM; never bake them into video. The static image is also the rollback when video delivery or motion quality fails.
+Campaign motion is a progressive enhancement, never the only media surface. Supply the canonical responsive `src`, `mobileSrc`, and `alt` first, then optionally add `video.mp4`, `video.webm`, and a matching `video.poster`. Canon renders the still during SSR and first paint, adds silent autoplaying loop media only after hydration when motion is allowed, and keeps the video element absent when `prefers-reduced-motion: reduce` applies. Text, actions, proof, scrims, and grid overlays remain live DOM; never bake them into video. The static image is also the rollback when video delivery or motion quality fails.
+
+The primary campaign material is Paper. Canon exports five responsive studies:
+`paperCanonSheetMedia`, `paperResearchTraceMedia`,
+`paperPrototypeScoreMedia`, `paperPressureHandoffMedia`, and
+`paperLearningSequenceMedia`. Each carries an operational condition and
+property role; they are a shared vocabulary, not interchangeable decorative
+backgrounds. Legacy controlled-water media remains exported for secondary and
+historical routes.
 
 Use the optional campaign `artifact` snippet when the property owns an interactive object that must share the opening with the claim. The required static `media`, live text, actions, and proof remain authoritative. The property owns artifact semantics, controls, renderer lifecycle, fallback, and pointer behavior; Canon supplies a non-interactive placement layer and reserves enough mobile height to keep the artifact out of the claim and action path.
 
@@ -63,7 +71,7 @@ IBM Plex Mono is bundled from the official `@ibm/plex-mono` package under the SI
 </PerformanceCampaignOpening>
 
 <PerformanceThesisConditions
-  title="Governance is the channel, not the dam."
+  title="Governance is the fold that keeps the source attached."
   conditions={operatingConditions}
 />
 
@@ -71,7 +79,7 @@ IBM Plex Mono is bundled from the official `@ibm/plex-mono` package under the SI
 
 <PerformanceContrastChapter
   {intervention}
-  title="Every action leaves a wake."
+  title="Every decision changes the record."
   artifactPlacement="full-width"
 >
   {#snippet artifact()}<!-- route-owned proof object -->{/snippet}

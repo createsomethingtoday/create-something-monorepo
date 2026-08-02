@@ -17,6 +17,10 @@
 
 const performanceColors = {
 	paper: '#f3f3f0',
+	paperFiber: 'rgb(9 9 9 / 0.035)',
+	paperEdge: '#b6b6ae',
+	paperFold: '#deded7',
+	paperShadow: 'rgb(9 9 9 / 0.16)',
 	court: '#e6e6e0',
 	panel: '#ffffff',
 	ink: '#090909',
@@ -122,6 +126,10 @@ export const colorVars = {
 
 	// Performance Lab
 	'--color-performance-paper': colors.performance.paper,
+	'--color-performance-paper-fiber': colors.performance.paperFiber,
+	'--color-performance-paper-edge': colors.performance.paperEdge,
+	'--color-performance-paper-fold': colors.performance.paperFold,
+	'--color-performance-paper-shadow': colors.performance.paperShadow,
 	'--color-performance-court': colors.performance.court,
 	'--color-performance-panel': colors.performance.panel,
 	'--color-performance-ink': colors.performance.ink,

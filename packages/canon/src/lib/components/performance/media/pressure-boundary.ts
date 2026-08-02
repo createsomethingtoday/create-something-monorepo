@@ -7,5 +7,6 @@ export const pressureBoundaryMedia = {
   src: pressureBoundary,
   mobileSrc: pressureBoundaryMobile,
   alt: 'Water striking a concrete boundary during a high-pressure wave impact',
-  condition: 'pressure'
+  condition: 'pressure',
+  material: 'water'
 } as const satisfies PerformanceMediaStudy;

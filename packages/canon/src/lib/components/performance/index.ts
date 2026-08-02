@@ -25,10 +25,22 @@ export type {
   PerformanceCampaignVideo
 } from './PerformanceCampaignOpening.svelte';
 export type {
+  PerformanceLegacyWaterCondition,
+  PerformanceMaterialCondition,
   PerformanceMediaStudy,
   PerformanceMediaVideo,
+  PerformancePaperCondition,
   PerformanceWaterCondition
 } from './media/types';
+export {
+  paperCanonSheetMedia,
+  paperLearningSequenceMedia,
+  paperPressureHandoffMedia,
+  paperPrototypeScoreMedia,
+  paperResearchTraceMedia,
+  performancePaperStudies
+} from './media/paper-studies';
+export type { PerformancePaperProperty } from './media/paper-studies';
 export { default as PerformanceThesisConditions } from './PerformanceThesisConditions.svelte';
 export type {
   PerformanceCondition,

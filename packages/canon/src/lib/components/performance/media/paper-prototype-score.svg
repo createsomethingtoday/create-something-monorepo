@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Scored paper prototype</title>
+  <desc id="desc">A folded paper prototype held open by scored test lines, registration points, and a pressure mark.</desc>
+  <defs>
+    <filter id="shadow" x="-30%" y="-30%" width="170%" height="180%"><feDropShadow dx="0" dy="26" stdDeviation="26" flood-color="#090909" flood-opacity=".2"/></filter>
+    <filter id="fiber"><feTurbulence type="fractalNoise" baseFrequency=".66 .2" numOctaves="3" seed="31"/><feComponentTransfer><feFuncA type="table" tableValues="0 .07"/></feComponentTransfer></filter>
+    <linearGradient id="left" x1="0" y1="0" x2="1" y2=".3"><stop stop-color="#fff"/><stop offset="1" stop-color="#deded7"/></linearGradient>
+    <linearGradient id="right" x1="1" y1="0" x2="0" y2=".3"><stop stop-color="#fff"/><stop offset="1" stop-color="#d2d2cb"/></linearGradient>
+  </defs>
+  <rect width="1600" height="1000" fill="#f3f3f0"/>
+  <path d="M0 200h1600M0 500h1600M0 800h1600M400 0v1000M800 0v1000M1200 0v1000" stroke="#090909" stroke-opacity=".045"/>
+  <g filter="url(#shadow)">
+    <path d="M782 214 1116 108l334 106-100 650-234-92-234 92z" fill="#fff" stroke="#9c9c96" stroke-width="2"/>
+    <path d="M782 214 1116 108v664l-234 92z" fill="url(#left)"/>
+    <path d="M1450 214 1116 108v664l234 92z" fill="url(#right)"/>
+    <path d="M1116 108v664" stroke="#090909" stroke-opacity=".45" stroke-width="3"/>
+    <path d="M882 284 1116 218l234 66M866 420l250-58 250 58M850 568l266-38 266 38" fill="none" stroke="#090909" stroke-opacity=".24" stroke-width="3" stroke-dasharray="10 12"/>
+    <path d="M838 704 1116 650l278 54" fill="none" stroke="#e54800" stroke-width="9" stroke-dasharray="14 12"/>
+    <circle cx="1116" cy="650" r="38" fill="#f3f3f0" stroke="#e54800" stroke-width="7"/>
+    <path d="M1098 650h36M1116 632v36" stroke="#e54800" stroke-width="5"/>
+    <path d="M782 214 1116 108l334 106-100 650-234-92-234 92z" filter="url(#fiber)" opacity=".45"/>
+  </g>
+  <path d="M746 190v698M724 190h44M724 888h44" stroke="#0057b8" stroke-width="3"/>
+  <circle cx="746" cy="539" r="8" fill="#0057b8"/>
+</svg>

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 1200" role="img" aria-labelledby="title desc">
+  <title id="title">Canon source sheet</title>
+  <desc id="desc">A folded paper standard with a measured spine, margin rules, and a registered source mark.</desc>
+  <defs><filter id="shadow"><feDropShadow dx="0" dy="20" stdDeviation="20" flood-opacity=".16"/></filter><filter id="fiber"><feTurbulence type="fractalNoise" baseFrequency=".72" numOctaves="3" seed="17"/><feComponentTransfer><feFuncA type="table" tableValues="0 .08"/></feComponentTransfer></filter></defs>
+  <rect width="720" height="1200" fill="#f3f3f0"/>
+  <path d="M0 300h720M0 600h720M0 900h720M180 0v1200M360 0v1200M540 0v1200" stroke="#090909" stroke-opacity=".045"/>
+  <g filter="url(#shadow)">
+    <path d="M176 620h382l74 74v408H176z" fill="#fff" stroke="#9c9c96" stroke-width="2"/>
+    <path d="M558 620v74h74" fill="#d7d7d2" stroke="#9c9c96" stroke-width="2"/>
+    <path d="M258 620v482" stroke="#090909" stroke-opacity=".3" stroke-width="2"/>
+    <path d="M306 760h206M306 812h246M306 864h214M306 956h190" stroke="#090909" stroke-opacity=".27" stroke-width="3"/>
+    <path d="M306 1020h142" stroke="#0057b8" stroke-width="8"/>
+    <rect x="176" y="620" width="456" height="482" filter="url(#fiber)" opacity=".5"/>
+  </g>
+  <path d="M138 620v482M118 620h40M118 1102h40" stroke="#0057b8" stroke-width="3"/><circle cx="138" cy="861" r="7" fill="#0057b8"/>
+</svg>

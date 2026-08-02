@@ -6,6 +6,11 @@
 > Tracking issue: CRE-1183
 > Products extension: CRE-1185
 
+> 2026-08-02 status: retained as a historical and secondary campaign library.
+> CRE-1582 replaces the five primary public homepage assignments below with
+> Canon Performance Paper studies. The original assignment table remains as
+> provenance for the prior rollout, not as the current homepage contract.
+
 ## Direction
 
 This library replaces the staged acrylic-apparatus photography with natural, full-scale water
