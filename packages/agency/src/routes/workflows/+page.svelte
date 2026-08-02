@@ -170,6 +170,7 @@
   .library-intro > p {
     max-width: 680px;
     margin: 0;
+    font-family: var(--font-performance-prose);
     font-size: var(--text-performance-body-lg);
     line-height: var(--leading-performance-relaxed);
   }
@@ -199,11 +200,11 @@
   h2 {
     max-width: 24ch;
     margin: 0;
-    font-family: var(--font-performance-serif);
+    font-family: var(--font-performance-display);
     font-size: var(--text-performance-display-sm);
-    font-weight: var(--font-performance-regular);
+    font-weight: var(--font-performance-display-weight);
     line-height: var(--leading-performance-display);
-    letter-spacing: var(--tracking-performance-tighter);
+    letter-spacing: var(--tracking-performance-display);
   }
 
   .guide-index ol {
@@ -243,9 +244,9 @@
 
   .guide-index h3 {
     margin: var(--space-performance-xs) 0 0;
-    font-family: var(--font-performance-serif);
+    font-family: var(--font-performance-display);
     font-size: var(--text-performance-h2);
-    font-weight: var(--font-performance-regular);
+    font-weight: var(--font-performance-display-weight);
     line-height: var(--leading-performance-tight);
     letter-spacing: var(--tracking-performance-tight);
   }
@@ -253,6 +254,7 @@
   .guide-index a p {
     max-width: 700px;
     margin: var(--space-performance-xs) 0 0;
+    font-family: var(--font-performance-prose);
     line-height: var(--leading-performance-relaxed);
   }
 
@@ -270,6 +272,16 @@
     padding: var(--space-performance-sm) 0;
     border-bottom: 1px solid var(--library-line);
     line-height: var(--leading-performance-normal);
+  }
+
+  .library-method strong,
+  summary {
+    font-family: var(--font-performance-display);
+  }
+
+  .library-method li > span,
+  details p {
+    font-family: var(--font-performance-prose);
   }
 
   .library-faq > div > h2 {
