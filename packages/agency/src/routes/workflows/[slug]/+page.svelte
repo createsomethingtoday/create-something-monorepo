@@ -197,6 +197,7 @@
   .guide-answer {
     max-width: 760px;
     margin: 0;
+    font-family: var(--font-performance-prose);
     font-size: var(--text-performance-body-lg);
     line-height: var(--leading-performance-relaxed);
   }
@@ -248,6 +249,7 @@
 
   dd {
     margin: var(--space-performance-xs) 0 0;
+    font-family: var(--font-performance-prose);
     line-height: var(--leading-performance-relaxed);
   }
 
@@ -267,17 +269,18 @@
   h2 {
     max-width: 24ch;
     margin: 0 0 var(--space-performance-md);
-    font-family: var(--font-performance-serif);
+    font-family: var(--font-performance-display);
     font-size: var(--text-performance-display-sm);
-    font-weight: var(--font-performance-regular);
+    font-weight: var(--font-performance-display-weight);
     line-height: var(--leading-performance-display);
-    letter-spacing: var(--tracking-performance-tighter);
+    letter-spacing: var(--tracking-performance-display);
   }
 
   h3 {
     margin: 0;
+    font-family: var(--font-performance-display);
     font-size: var(--text-performance-h3);
-    font-weight: var(--font-performance-semibold);
+    font-weight: var(--font-performance-display-weight);
     line-height: var(--leading-performance-tight);
   }
 
@@ -291,6 +294,7 @@
     position: relative;
     padding: var(--space-performance-sm) 0 var(--space-performance-sm) var(--space-performance-md);
     border-top: 1px solid var(--guide-line);
+    font-family: var(--font-performance-prose);
     line-height: var(--leading-performance-relaxed);
   }
 
@@ -328,6 +332,7 @@
   .proof-list p,
   .faq-list p {
     margin: var(--space-performance-xs) 0 0;
+    font-family: var(--font-performance-prose);
     line-height: var(--leading-performance-relaxed);
   }
 
@@ -383,6 +388,7 @@
   summary {
     padding: var(--space-performance-md) var(--space-performance-xl) var(--space-performance-md) 0;
     cursor: pointer;
+    font-family: var(--font-performance-display);
     font-size: var(--text-performance-body-md);
     font-weight: var(--font-performance-semibold);
   }
@@ -426,9 +432,9 @@
   }
 
   .guide-related strong {
-    font-family: var(--font-performance-serif);
+    font-family: var(--font-performance-display);
     font-size: var(--text-performance-h2);
-    font-weight: var(--font-performance-regular);
+    font-weight: var(--font-performance-display-weight);
     line-height: var(--leading-performance-tight);
   }
 

@@ -154,3 +154,30 @@ test('workflow surfaces use the Performance token contract instead of local styl
     assert.doesNotMatch(route, /#[0-9a-f]{3,8}\b/i);
   }
 });
+
+test('workflow typography reserves the serif voice for the thesis and uses display roles for operation', () => {
+  const hubPage = readFileSync(path.join(packageRoot, 'src/routes/workflows/+page.svelte'), 'utf8');
+  const guidePage = readFileSync(
+    path.join(packageRoot, 'src/routes/workflows/[slug]/+page.svelte'),
+    'utf8'
+  );
+
+  for (const route of [hubPage, guidePage]) {
+    assert.match(route, /h1\s*\{[\s\S]*?font-family:\s*var\(--font-performance-serif\)/);
+    assert.match(route, /h2\s*\{[\s\S]*?font-family:\s*var\(--font-performance-display\)/);
+  }
+
+  assert.match(
+    hubPage,
+    /\.guide-index h3\s*\{[\s\S]*?font-family:\s*var\(--font-performance-display\)/
+  );
+  assert.match(guidePage, /h3\s*\{[\s\S]*?font-family:\s*var\(--font-performance-display\)/);
+  assert.match(
+    guidePage,
+    /\.guide-related strong\s*\{[\s\S]*?font-family:\s*var\(--font-performance-display\)/
+  );
+  assert.match(
+    guidePage,
+    /\.guide-answer\s*\{[\s\S]*?font-family:\s*var\(--font-performance-prose\)/
+  );
+});
