@@ -8,6 +8,7 @@ import process from 'node:process';
 const MAX_CITATIONS = 3;
 const MAX_HIGHLIGHT_LENGTH = 280;
 const MAX_MODEL_CONTEXT_LENGTH = 1200;
+const CTX_SEARCH_TIMEOUT_MS = 90_000;
 
 function sanitizeText(value, limit = MAX_HIGHLIGHT_LENGTH) {
   return String(value ?? '')
@@ -130,7 +131,7 @@ export function buildContextPacket({
 function defaultRun(command, args) {
   const result = spawnSync(command, args, {
     encoding: 'utf8',
-    timeout: 30_000,
+    timeout: CTX_SEARCH_TIMEOUT_MS,
     maxBuffer: 1024 * 1024,
     env: { ...process.env, NO_COLOR: '1' },
   });
