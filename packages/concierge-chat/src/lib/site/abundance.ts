@@ -16,6 +16,26 @@ export const staffingStats = [
   }
 ];
 
+/**
+ * The candidate-facing application sequence appears both before and during an
+ * intake. Keeping the language in one place prevents the marketing preview
+ * from quietly drifting away from the live application rail.
+ */
+export const applicationProgress = [
+  {
+    label: 'Start',
+    detail: 'Tell us what work fits.'
+  },
+  {
+    label: 'Details',
+    detail: 'Confirm the profile together.'
+  },
+  {
+    label: 'Recruiter review',
+    detail: 'A person decides the next move.'
+  }
+] as const;
+
 export const heroVisual = {
   src: '/abundance/hero-home-overlay-2026.webp',
   alt: 'Nurse and staffing recruiter discussing a role together in a bright clinical office',

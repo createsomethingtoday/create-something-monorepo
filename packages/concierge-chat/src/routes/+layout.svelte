@@ -7,6 +7,7 @@
   } from '$lib/agency-access';
   import { buildControlPlaneBridgeHref } from '$lib/control-plane';
   import AbundanceFooter from '$lib/site/AbundanceFooter.svelte';
+  import { applicationProgress } from '$lib/site/abundance';
   import type { LayoutData } from './$types';
   import '../app.css';
 
@@ -23,6 +24,13 @@
       closePublicNavigation();
       publicNavToggle?.focus();
     }
+  }
+
+  function isCurrentApplicationStage(index: number) {
+    return (
+      (index === 0 && data.currentPath === candidateThreadHref) ||
+      (index === 1 && data.currentPath === candidateProfileHref)
+    );
   }
 
   $: controlPlaneTone = getAgencyAccessTone(data.agencyAccess);
@@ -222,13 +230,11 @@
           <strong>One conversation, kept in context.</strong>
         </div>
         <ol>
-          <li class:active={data.currentPath === candidateThreadHref}>
-            <span>01</span> Conversation
-          </li>
-          <li class:active={data.currentPath === candidateProfileHref}>
-            <span>02</span> Details
-          </li>
-          <li><span>03</span> Recruiter review</li>
+          {#each applicationProgress as step, index}
+            <li class:active={isCurrentApplicationStage(index)}>
+              <span>0{index + 1}</span> {step.label}
+            </li>
+          {/each}
         </ol>
       </div>
     {/if}

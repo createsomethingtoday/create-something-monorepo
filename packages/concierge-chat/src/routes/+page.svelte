@@ -1,5 +1,6 @@
 <script lang="ts">
   import {
+    applicationProgress,
     heroVisual,
     staffingCareCards,
     staffingFaqs,
@@ -90,7 +91,6 @@
             <span class="action-arrow" aria-hidden="true">↗</span>
           </a>
           <a class="action-secondary" href="/jobs">Explore open roles</a>
-          <a class="action-secondary" href="/voice">Talk it through</a>
         </div>
 
         <div class="hero-trust" aria-label="Application trust boundaries">
@@ -112,7 +112,7 @@
         <div class="concierge-card">
           <div class="concierge-card-head">
             <div>
-              <span class="mini-label">Application preview</span>
+              <span class="mini-label">Application progress</span>
               <strong>ICU travel nurse</strong>
             </div>
             <span class="progress-orbit" aria-label="Profile 72 percent ready">
@@ -120,6 +120,18 @@
               <small>ready</small>
             </span>
           </div>
+
+          <ol class="application-progress" aria-label="Application preview progress">
+            {#each applicationProgress as step, index}
+              <li class:complete={index === 0} class:current={index === 1}>
+                <span>0{index + 1}</span>
+                <div>
+                  <strong>{step.label}</strong>
+                  <small>{step.detail}</small>
+                </div>
+              </li>
+            {/each}
+          </ol>
 
           <div class="conversation-preview">
             <div class="concierge-response">
@@ -573,8 +585,7 @@
     left: 92px;
     z-index: 2;
     display: grid;
-    grid-template-columns: minmax(150px, 0.72fr) minmax(210px, 1fr);
-    gap: 16px 20px;
+    gap: 16px;
     padding: 18px 20px;
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 22px;
@@ -593,6 +604,78 @@
 
   .concierge-response {
     min-height: 100%;
+  }
+
+  .application-progress {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    list-style: none;
+  }
+
+  .application-progress li {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 8px;
+    align-items: start;
+    min-width: 0;
+    padding: 12px 10px;
+    color: rgba(255, 255, 255, 0.46);
+  }
+
+  .application-progress li + li {
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .application-progress li > span {
+    color: inherit;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+  }
+
+  .application-progress li > div {
+    display: grid;
+    gap: 3px;
+  }
+
+  .application-progress li strong {
+    color: inherit;
+    font-size: 0.72rem;
+    line-height: 1.2;
+  }
+
+  .application-progress li small {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.64rem;
+    line-height: 1.3;
+  }
+
+  .application-progress li.complete,
+  .application-progress li.current {
+    color: white;
+  }
+
+  .application-progress li.complete > span {
+    color: var(--home-blue-bright);
+  }
+
+  .application-progress li.current > span {
+    color: var(--home-blue-bright);
+  }
+
+  .application-progress li.current strong::after {
+    content: ' · next';
+    color: var(--home-blue-bright);
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.58rem;
+    font-weight: 400;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
   }
 
   .concierge-card-head > div:first-child {
@@ -675,7 +758,6 @@
 
   .handoff-state {
     display: flex;
-    grid-column: 1 / -1;
     gap: 12px;
     align-items: center;
     margin-top: 0;
@@ -1427,6 +1509,15 @@
       left: 10px;
       display: block;
       padding: 20px;
+    }
+
+    .application-progress li {
+      gap: 6px;
+      padding-inline: 7px;
+    }
+
+    .application-progress li small {
+      display: none;
     }
 
     .conversation-preview {
