@@ -45,6 +45,38 @@ test('identity worker serves oauth authorization server metadata', async () => {
   ]);
 });
 
+test('identity worker creates dynamically registered ChatGPT OAuth clients', async () => {
+  const redirectUri = 'https://chatgpt.com/connector_platform_oauth_redirect';
+  const response = await identityWorker.fetch(
+    new Request('https://id.createsomething.space/oauth/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Origin: 'https://chatgpt.com',
+      },
+      body: JSON.stringify({
+        client_name: 'ChatGPT',
+        redirect_uris: [redirectUri],
+        token_endpoint_auth_method: 'none',
+        grant_types: ['authorization_code', 'refresh_token'],
+        response_types: ['code'],
+        scope: 'offer-savings:read offer-savings:write',
+      }),
+    }),
+    makeEnv(),
+  );
+
+  assert.equal(response.status, 201);
+  assert.equal(response.headers.get('access-control-allow-origin'), 'https://chatgpt.com');
+  const body = await response.json() as Record<string, unknown>;
+  assert.match(String(body.client_id), /^oauth_chatgpt_/);
+  assert.deepEqual(body.redirect_uris, [redirectUri]);
+  assert.equal(body.token_endpoint_auth_method, 'none');
+  assert.deepEqual(body.grant_types, ['authorization_code', 'refresh_token']);
+  assert.deepEqual(body.response_types, ['code']);
+  assert.equal(body.scope, 'offer-savings:read offer-savings:write');
+});
+
 test('identity worker uses an explicit issuer for preview metadata', async () => {
   const response = await identityWorker.fetch(
     new Request('https://identity-worker-preview.example/.well-known/oauth-authorization-server'),

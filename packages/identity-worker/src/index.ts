@@ -1093,7 +1093,7 @@ async function handleOAuthRegister(request: Request, _env: Env): Promise<Respons
 		grant_types: body?.grant_types ?? ['authorization_code', 'refresh_token'],
 		response_types: body?.response_types ?? ['code'],
 		scope: body?.scope ?? 'openid profile email mcp offline_access',
-	});
+	}, 201);
 }
 
 async function handleOAuthAuthorizePage(request: Request, env: Env): Promise<Response> {
