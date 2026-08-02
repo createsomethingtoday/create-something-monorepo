@@ -108,6 +108,7 @@
       title: 'Guide',
       ariaLabel: 'Guides and articles',
       links: [
+        { label: 'Workflow Guides', href: '/workflows' },
         {
           label: agencyCoreMessaging.governanceChecklistLabel,
           href: agencyCoreMessaging.governanceChecklistHref
@@ -217,6 +218,14 @@
       href: '/products',
       icon: '📦',
       keywords: ['portfolio', 'map', 'control', 'workflow products', 'proof surfaces']
+    },
+    {
+      id: 'nav-workflow-guides',
+      label: 'Workflow Guides',
+      description: 'Practical answers for mapping, building, securing, and operating AI workflows',
+      href: '/workflows',
+      icon: 'WG',
+      keywords: ['workflow guides', 'MCP', 'AI automation', 'governance', 'evaluation']
     },
     {
       id: 'nav-field-reports',

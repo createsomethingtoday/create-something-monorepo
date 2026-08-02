@@ -186,6 +186,9 @@ function routeFromPageFile(file) {
 }
 
 function pageFileForRoute(route) {
+  if (route.startsWith('/workflows/')) {
+    return path.join(routesRoot, 'workflows', '[slug]', '+page.svelte');
+  }
   const routeDir = route === '/' ? routesRoot : path.join(routesRoot, route.slice(1));
   return path.join(routeDir, '+page.svelte');
 }
