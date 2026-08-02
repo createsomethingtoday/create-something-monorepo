@@ -15,6 +15,7 @@ export type MarketingPageCluster =
   | 'field-reports'
   | 'proof-lab'
   | 'workflow-proof'
+  | 'workflow-library'
   | 'trust'
   | 'business-use-case'
   | 'enterprise-use-case'
@@ -34,6 +35,7 @@ export type MarketingSelfHealingLever =
 
 export type MarketingPageEntry = {
   path: string;
+  sourceRoute?: string;
   cluster: MarketingPageCluster;
   role: MarketingPageRole;
   decision: MarketingPageDecision;
@@ -72,6 +74,99 @@ export const marketingPageMinimums: Record<MarketingPageDecision, number> = {
   route: 60,
   archive: 0
 };
+
+const workflowMarketingDefinitions: Array<{
+  slug: string;
+  term: string;
+  proof: string;
+  role: Exclude<MarketingPageRole, 'pillar' | 'operations'>;
+  priority: string;
+}> = [
+  {
+    slug: 'mcp-server-development',
+    term: 'MCP server development',
+    proof: '/stack',
+    role: 'implementation',
+    priority: '0.78'
+  },
+  {
+    slug: 'ai-workflow-automation',
+    term: 'AI workflow automation',
+    proof: '/services',
+    role: 'implementation',
+    priority: '0.78'
+  },
+  {
+    slug: 'ai-workflow-governance',
+    term: 'AI workflow governance',
+    proof: '/control',
+    role: 'implementation',
+    priority: '0.78'
+  },
+  {
+    slug: 'human-in-the-loop-ai',
+    term: 'human in the loop AI',
+    proof: '/field-reports/template-review',
+    role: 'support',
+    priority: '0.76'
+  },
+  {
+    slug: 'ai-agent-evaluation',
+    term: 'AI agent evaluation',
+    proof: '/proof/marketplace-workflow',
+    role: 'support',
+    priority: '0.76'
+  },
+  {
+    slug: 'mcp-security-oauth',
+    term: 'MCP security',
+    proof: '/security',
+    role: 'support',
+    priority: '0.76'
+  },
+  {
+    slug: 'mcp-vs-api',
+    term: 'MCP vs API',
+    proof: '/partners',
+    role: 'comparison',
+    priority: '0.74'
+  },
+  {
+    slug: 'webflow-marketplace-operations',
+    term: 'Webflow Marketplace operations',
+    proof: '/proof/marketplace-workflow',
+    role: 'support',
+    priority: '0.76'
+  },
+  {
+    slug: 'webflow-app-review',
+    term: 'Webflow app review',
+    proof: '/partners',
+    role: 'support',
+    priority: '0.74'
+  },
+  {
+    slug: 'webflow-template-review',
+    term: 'Webflow template review',
+    proof: '/field-reports/template-review',
+    role: 'support',
+    priority: '0.76'
+  },
+  {
+    slug: 'workflow-mapping',
+    term: 'AI workflow mapping',
+    proof: '/map',
+    role: 'support',
+    priority: '0.78'
+  },
+  {
+    slug: 'ai-workflow-observability',
+    term: 'AI workflow observability',
+    proof: '/products/proof',
+    role: 'support',
+    priority: '0.76'
+  }
+];
 
 export const marketingPagePortfolio: MarketingPageEntry[] = [
   {
@@ -174,7 +269,8 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     cluster: 'control',
     role: 'pillar',
     decision: 'index',
-    audience: 'Teams that need approvals, evidence, and recovery around a live human-agent workflow.',
+    audience:
+      'Teams that need approvals, evidence, and recovery around a live human-agent workflow.',
     funnelStage: 'evaluate',
     intent: 'Explain Control as a standalone governed-execution subscription that includes Map.',
     primaryAction: 'Talk through one workflow',
@@ -312,7 +408,8 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     decision: 'index',
     audience: 'Accountable operators learning to transfer authority over one workflow.',
     funnelStage: 'evaluate',
-    intent: 'Let practitioners map, bound, test, and review delegated work against visible evidence.',
+    intent:
+      'Let practitioners map, bound, test, and review delegated work against visible evidence.',
     primaryAction: 'Map one workflow',
     requiredTerms: ['workflow', 'authority', 'operator', 'evidence', 'proof'],
     requiredLinks: ['/methodology', '/map', '/proof/marketplace-workflow'],
@@ -531,9 +628,11 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     cluster: 'products',
     role: 'support',
     decision: 'index',
-    audience: 'Teams that need proactive notification when product, API, or process updates affect reviewers.',
+    audience:
+      'Teams that need proactive notification when product, API, or process updates affect reviewers.',
     funnelStage: 'evaluate',
-    intent: 'Explain Signal as the Control inbox that routes updates into Map, Decision, and Proof.',
+    intent:
+      'Explain Signal as the Control inbox that routes updates into Map, Decision, and Proof.',
     primaryAction: 'Map one workflow',
     requiredTerms: ['Signal', 'inbox', 'API updates', 'Map', 'Proof'],
     requiredLinks: ['/map', '/products/decision', '/products/proof', '/products'],
@@ -550,9 +649,11 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     cluster: 'products',
     role: 'support',
     decision: 'index',
-    audience: 'Teams designing human-in-the-loop review queues for agents and governed workflow actions.',
+    audience:
+      'Teams designing human-in-the-loop review queues for agents and governed workflow actions.',
     funnelStage: 'evaluate',
-    intent: 'Explain Decision as the queue that turns Signals into approval, policy action, stop states, and Proof.',
+    intent:
+      'Explain Decision as the queue that turns Signals into approval, policy action, stop states, and Proof.',
     primaryAction: 'Map one workflow',
     requiredTerms: ['Decision', 'queue', 'human-in-the-loop', 'Signal', 'Proof'],
     requiredLinks: ['/products/signal', '/map', '/products/proof', '/products'],
@@ -569,9 +670,11 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     cluster: 'products',
     role: 'support',
     decision: 'index',
-    audience: 'Teams that need an inspectable ledger for app governance decisions and workflow outcomes.',
+    audience:
+      'Teams that need an inspectable ledger for app governance decisions and workflow outcomes.',
     funnelStage: 'evaluate',
-    intent: 'Explain Proof as the ledger surface that records evidence, outcomes, receipts, and rollback notes.',
+    intent:
+      'Explain Proof as the ledger surface that records evidence, outcomes, receipts, and rollback notes.',
     primaryAction: 'Map one workflow',
     requiredTerms: ['Proof', 'ledger', 'audit trail', 'Map', 'Decision'],
     requiredLinks: ['/products/signal', '/products/decision', '/map', '/products'],
@@ -610,7 +713,8 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     decision: 'index',
     audience: 'Teams evaluating whether CREATE SOMETHING workflow claims survive inspection.',
     funnelStage: 'evaluate',
-    intent: 'Index measured workflow results, failed gates, evidence sources, and remaining questions.',
+    intent:
+      'Index measured workflow results, failed gates, evidence sources, and remaining questions.',
     primaryAction: 'Read the first report',
     requiredTerms: ['Field Reports', 'measured', 'evidence', 'human', 'result'],
     requiredLinks: ['/field-reports/template-review'],
@@ -629,7 +733,8 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     decision: 'index',
     audience: 'Operations and review teams evaluating evidence-assisted human judgment.',
     funnelStage: 'evaluate',
-    intent: 'Show what the governed template-review workflow proved, failed, and still needs measured.',
+    intent:
+      'Show what the governed template-review workflow proved, failed, and still needs measured.',
     primaryAction: 'Inspect the result',
     requiredTerms: ['evidence', 'reviewer', 'synthetic', 'promotion blocked', 'time savings'],
     requiredLinks: ['/field-reports'],
@@ -697,7 +802,48 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
       lastmod: '2026-06-19'
     },
     selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
-  }
+  },
+  {
+    path: '/workflows',
+    cluster: 'workflow-library',
+    role: 'pillar',
+    decision: 'index',
+    audience: 'Operators looking for a practical answer about AI workflow systems or MCP.',
+    funnelStage: 'discover',
+    intent: 'Route one operating question to a substantive guide and an owned proof surface.',
+    primaryAction: 'Browse the guides',
+    requiredTerms: ['workflow', 'guides', 'MCP', 'proof'],
+    requiredLinks: ['/map'],
+    schema: 'page',
+    search: {
+      changefreq: 'weekly',
+      priority: '0.88',
+      lastmod: '2026-08-02'
+    },
+    selfHealing: ['copy:heal', 'search-route:sync']
+  },
+  ...workflowMarketingDefinitions.map(
+    (guide): MarketingPageEntry => ({
+      path: `/workflows/${guide.slug}`,
+      sourceRoute: '/workflows/[slug]',
+      cluster: 'workflow-library',
+      role: guide.role,
+      decision: 'index',
+      audience: 'Operators evaluating a specific AI workflow, MCP, or review-system boundary.',
+      funnelStage: 'understand',
+      intent: `Answer the ${guide.term} question with a bounded operating path and owned proof.`,
+      primaryAction: 'Map one workflow',
+      requiredTerms: ['workflow', guide.term],
+      requiredLinks: ['/workflows', guide.proof],
+      schema: 'article',
+      search: {
+        changefreq: 'monthly',
+        priority: guide.priority,
+        lastmod: '2026-08-02'
+      },
+      selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
+    })
+  )
 ];
 
 export function scoreMarketingPage(
@@ -726,17 +872,17 @@ export function scoreMarketingPage(
       label: `Page uses ${entry.schema} schema`,
       points:
         entry.schema === 'article'
-            ? /ogType="article"/.test(source) && /publishedTime=/.test(source)
-              ? 12
-              : 0
-            : /<SEO[\s\S]*?>/.test(source)
-              ? 12
-              : 0,
+          ? /ogType="article"/.test(source) && /publishedTime=/.test(source)
+            ? 12
+            : 0
+          : /<SEO[\s\S]*?>/.test(source)
+            ? 12
+            : 0,
       max: 12,
       passed:
         entry.schema === 'article'
-            ? /ogType="article"/.test(source) && /publishedTime=/.test(source)
-            : /<SEO[\s\S]*?>/.test(source)
+          ? /ogType="article"/.test(source) && /publishedTime=/.test(source)
+          : /<SEO[\s\S]*?>/.test(source)
     },
     {
       id: 'primary-action',

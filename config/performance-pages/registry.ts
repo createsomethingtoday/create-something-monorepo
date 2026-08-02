@@ -86,7 +86,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
   group(
     'agency-public-index',
     'agency',
-    ['experiments', 'field-reports', 'products'],
+    ['experiments', 'field-reports', 'products', 'workflows'],
     'migrated',
     contract(
       'index',
@@ -104,7 +104,8 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
       'products/ground',
       'products/loom',
       'products/proof',
-      'products/signal'
+      'products/signal',
+      'workflows/[slug]'
     ],
     'migrated',
     contract(
@@ -240,13 +241,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
   group(
     'ltd-editorial',
     'ltd',
-    [
-      'ethos',
-      'experiments/the-circle-closes',
-      'standards',
-      'taste',
-      'voice'
-    ],
+    ['ethos', 'experiments/the-circle-closes', 'standards', 'taste', 'voice'],
     'migrated',
     contract(
       'editorial',

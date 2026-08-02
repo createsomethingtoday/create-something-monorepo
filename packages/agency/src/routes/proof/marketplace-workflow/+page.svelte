@@ -261,9 +261,54 @@
       </Button>
     {/snippet}
   </PerformanceConversionHandoff>
+
+  <aside class="workflow-library-link" aria-labelledby="workflow-library-link-title">
+    <span>Continue with the operating method</span>
+    <div>
+      <h2 id="workflow-library-link-title">Use the proof as a starting point, not a claim.</h2>
+      <p>
+        The workflow library turns this example into practical guidance for mapping, evaluation,
+        human review, governance, security, and operating evidence.
+      </p>
+      <Button href="/workflows" variant="secondary">Browse workflow guides</Button>
+    </div>
+  </aside>
 </div>
 
 <style>
+  .workflow-library-link {
+    display: grid;
+    grid-template-columns: minmax(150px, 0.35fr) minmax(0, 1fr);
+    gap: clamp(1.5rem, 5vw, 5rem);
+    width: min(calc(100% - 2rem), 1120px);
+    margin: 0 auto;
+    padding: clamp(3rem, 7vw, 6rem) 0;
+    border-top: 1px solid var(--color-performance-line, #d7d7d2);
+  }
+
+  .workflow-library-link > span {
+    font-family: var(--font-performance-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+  }
+
+  .workflow-library-link h2 {
+    max-width: 22ch;
+    margin: 0;
+    font-family: var(--font-performance-serif, Georgia, serif);
+    font-size: clamp(2rem, 4vw, 3.8rem);
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: -0.035em;
+  }
+
+  .workflow-library-link p {
+    max-width: 720px;
+    margin: 1.25rem 0 1.5rem;
+    line-height: 1.6;
+  }
+
   .acceptance-receipt {
     display: grid;
     gap: 0.62rem;
@@ -295,5 +340,11 @@
   .acceptance-receipt p {
     margin: 0;
     line-height: 1.5;
+  }
+
+  @media (max-width: 720px) {
+    .workflow-library-link {
+      grid-template-columns: 1fr;
+    }
   }
 </style>

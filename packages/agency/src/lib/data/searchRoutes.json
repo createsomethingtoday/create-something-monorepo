@@ -1,158 +1,236 @@
 [
-	{
-		"path": "/",
-		"changefreq": "weekly",
-		"priority": "1.0",
-		"lastmod": "2026-06-19"
-	},
-	{
-		"path": "/services",
-		"changefreq": "weekly",
-		"priority": "0.95",
-		"lastmod": "2026-06-19"
-	},
-	{
-		"path": "/book",
-		"changefreq": "weekly",
-		"priority": "0.9",
-		"lastmod": "2026-06-28"
-	},
-	{
-		"path": "/contact",
-		"changefreq": "monthly",
-		"priority": "0.8",
-		"lastmod": "2026-06-28"
-	},
-	{
-		"path": "/map",
-		"changefreq": "weekly",
-		"priority": "0.85",
-		"lastmod": "2026-06-19"
-	},
-	{
-		"path": "/control",
-		"changefreq": "monthly",
-		"priority": "0.85",
-		"lastmod": "2026-07-16"
-	},
-	{
-		"path": "/basketball-systems-lab",
-		"changefreq": "monthly",
-		"priority": "0.6",
-		"lastmod": "2026-06-21"
-	},
-	{
-		"path": "/proof/marketplace-workflow",
-		"changefreq": "monthly",
-		"priority": "0.82",
-		"lastmod": "2026-07-11"
-	},
-	{
-		"path": "/stack",
-		"changefreq": "monthly",
-		"priority": "0.85",
-		"lastmod": "2026-07-09"
-	},
-	{
-		"path": "/partners",
-		"changefreq": "monthly",
-		"priority": "0.85",
-		"lastmod": "2026-07-09"
-	},
-	{
-		"path": "/for-service-providers",
-		"changefreq": "monthly",
-		"priority": "0.82",
-		"lastmod": "2026-07-31"
-	},
-	{
-		"path": "/methodology",
-		"changefreq": "monthly",
-		"priority": "0.75",
-		"lastmod": "2026-06-19"
-	},
-	{
-		"path": "/security",
-		"changefreq": "monthly",
-		"priority": "0.7",
-		"lastmod": "2026-06-19"
-	},
-	{
-		"path": "/bearer-token-policy",
-		"changefreq": "monthly",
-		"priority": "0.65",
-		"lastmod": "2026-06-28"
-	},
-	{
-		"path": "/cloudflare",
-		"changefreq": "monthly",
-		"priority": "0.8",
-		"lastmod": "2026-06-28"
-	},
-	{
-		"path": "/products",
-		"changefreq": "monthly",
-		"priority": "0.75",
-		"lastmod": "2026-06-28"
-	},
-	{
-		"path": "/products/ground",
-		"changefreq": "monthly",
-		"priority": "0.65",
-		"lastmod": "2026-06-28"
-	},
-	{
-		"path": "/products/signal",
-		"changefreq": "monthly",
-		"priority": "0.68",
-		"lastmod": "2026-06-30"
-	},
-	{
-		"path": "/products/decision",
-		"changefreq": "monthly",
-		"priority": "0.68",
-		"lastmod": "2026-06-30"
-	},
-	{
-		"path": "/products/proof",
-		"changefreq": "monthly",
-		"priority": "0.68",
-		"lastmod": "2026-06-30"
-	},
-	{
-		"path": "/field-reports",
-		"changefreq": "monthly",
-		"priority": "0.82",
-		"lastmod": "2026-07-10"
-	},
-	{
-		"path": "/field-reports/template-review",
-		"changefreq": "monthly",
-		"priority": "0.86",
-		"lastmod": "2026-07-12"
-	},
-	{
-		"path": "/use-cases/business",
-		"changefreq": "monthly",
-		"priority": "0.8",
-		"lastmod": "2026-06-19"
-	},
-	{
-		"path": "/use-cases/enterprise",
-		"changefreq": "monthly",
-		"priority": "0.8",
-		"lastmod": "2026-06-19"
-	},
-	{
-		"path": "/about",
-		"changefreq": "monthly",
-		"priority": "0.7",
-		"lastmod": "2026-06-19"
-	},
-	{
-		"path": "/practice",
-		"changefreq": "weekly",
-		"priority": "0.82",
-		"lastmod": "2026-07-15"
-	}
+  {
+    "path": "/",
+    "changefreq": "weekly",
+    "priority": "1.0",
+    "lastmod": "2026-06-19"
+  },
+  {
+    "path": "/services",
+    "changefreq": "weekly",
+    "priority": "0.95",
+    "lastmod": "2026-06-19"
+  },
+  {
+    "path": "/book",
+    "changefreq": "weekly",
+    "priority": "0.9",
+    "lastmod": "2026-06-28"
+  },
+  {
+    "path": "/contact",
+    "changefreq": "monthly",
+    "priority": "0.8",
+    "lastmod": "2026-06-28"
+  },
+  {
+    "path": "/map",
+    "changefreq": "weekly",
+    "priority": "0.85",
+    "lastmod": "2026-06-19"
+  },
+  {
+    "path": "/control",
+    "changefreq": "monthly",
+    "priority": "0.85",
+    "lastmod": "2026-07-16"
+  },
+  {
+    "path": "/basketball-systems-lab",
+    "changefreq": "monthly",
+    "priority": "0.6",
+    "lastmod": "2026-06-21"
+  },
+  {
+    "path": "/proof/marketplace-workflow",
+    "changefreq": "monthly",
+    "priority": "0.82",
+    "lastmod": "2026-07-11"
+  },
+  {
+    "path": "/stack",
+    "changefreq": "monthly",
+    "priority": "0.85",
+    "lastmod": "2026-07-09"
+  },
+  {
+    "path": "/partners",
+    "changefreq": "monthly",
+    "priority": "0.85",
+    "lastmod": "2026-07-09"
+  },
+  {
+    "path": "/for-service-providers",
+    "changefreq": "monthly",
+    "priority": "0.82",
+    "lastmod": "2026-07-31"
+  },
+  {
+    "path": "/methodology",
+    "changefreq": "monthly",
+    "priority": "0.75",
+    "lastmod": "2026-06-19"
+  },
+  {
+    "path": "/security",
+    "changefreq": "monthly",
+    "priority": "0.7",
+    "lastmod": "2026-06-19"
+  },
+  {
+    "path": "/bearer-token-policy",
+    "changefreq": "monthly",
+    "priority": "0.65",
+    "lastmod": "2026-06-28"
+  },
+  {
+    "path": "/cloudflare",
+    "changefreq": "monthly",
+    "priority": "0.8",
+    "lastmod": "2026-06-28"
+  },
+  {
+    "path": "/products",
+    "changefreq": "monthly",
+    "priority": "0.75",
+    "lastmod": "2026-06-28"
+  },
+  {
+    "path": "/products/ground",
+    "changefreq": "monthly",
+    "priority": "0.65",
+    "lastmod": "2026-06-28"
+  },
+  {
+    "path": "/products/signal",
+    "changefreq": "monthly",
+    "priority": "0.68",
+    "lastmod": "2026-06-30"
+  },
+  {
+    "path": "/products/decision",
+    "changefreq": "monthly",
+    "priority": "0.68",
+    "lastmod": "2026-06-30"
+  },
+  {
+    "path": "/products/proof",
+    "changefreq": "monthly",
+    "priority": "0.68",
+    "lastmod": "2026-06-30"
+  },
+  {
+    "path": "/field-reports",
+    "changefreq": "monthly",
+    "priority": "0.82",
+    "lastmod": "2026-07-10"
+  },
+  {
+    "path": "/field-reports/template-review",
+    "changefreq": "monthly",
+    "priority": "0.86",
+    "lastmod": "2026-07-12"
+  },
+  {
+    "path": "/use-cases/business",
+    "changefreq": "monthly",
+    "priority": "0.8",
+    "lastmod": "2026-06-19"
+  },
+  {
+    "path": "/use-cases/enterprise",
+    "changefreq": "monthly",
+    "priority": "0.8",
+    "lastmod": "2026-06-19"
+  },
+  {
+    "path": "/about",
+    "changefreq": "monthly",
+    "priority": "0.7",
+    "lastmod": "2026-06-19"
+  },
+  {
+    "path": "/practice",
+    "changefreq": "weekly",
+    "priority": "0.82",
+    "lastmod": "2026-07-15"
+  },
+  {
+    "path": "/workflows",
+    "changefreq": "weekly",
+    "priority": "0.88",
+    "lastmod": "2026-08-02"
+  },
+  {
+    "path": "/workflows/mcp-server-development",
+    "changefreq": "monthly",
+    "priority": "0.78",
+    "lastmod": "2026-08-02"
+  },
+  {
+    "path": "/workflows/ai-workflow-automation",
+    "changefreq": "monthly",
+    "priority": "0.78",
+    "lastmod": "2026-08-02"
+  },
+  {
+    "path": "/workflows/ai-workflow-governance",
+    "changefreq": "monthly",
+    "priority": "0.78",
+    "lastmod": "2026-08-02"
+  },
+  {
+    "path": "/workflows/human-in-the-loop-ai",
+    "changefreq": "monthly",
+    "priority": "0.76",
+    "lastmod": "2026-08-02"
+  },
+  {
+    "path": "/workflows/ai-agent-evaluation",
+    "changefreq": "monthly",
+    "priority": "0.76",
+    "lastmod": "2026-08-02"
+  },
+  {
+    "path": "/workflows/mcp-security-oauth",
+    "changefreq": "monthly",
+    "priority": "0.76",
+    "lastmod": "2026-08-02"
+  },
+  {
+    "path": "/workflows/mcp-vs-api",
+    "changefreq": "monthly",
+    "priority": "0.74",
+    "lastmod": "2026-08-02"
+  },
+  {
+    "path": "/workflows/webflow-marketplace-operations",
+    "changefreq": "monthly",
+    "priority": "0.76",
+    "lastmod": "2026-08-02"
+  },
+  {
+    "path": "/workflows/webflow-app-review",
+    "changefreq": "monthly",
+    "priority": "0.74",
+    "lastmod": "2026-08-02"
+  },
+  {
+    "path": "/workflows/webflow-template-review",
+    "changefreq": "monthly",
+    "priority": "0.76",
+    "lastmod": "2026-08-02"
+  },
+  {
+    "path": "/workflows/workflow-mapping",
+    "changefreq": "monthly",
+    "priority": "0.78",
+    "lastmod": "2026-08-02"
+  },
+  {
+    "path": "/workflows/ai-workflow-observability",
+    "changefreq": "monthly",
+    "priority": "0.76",
+    "lastmod": "2026-08-02"
+  }
 ]

@@ -17,6 +17,16 @@ function pageFileForRoute(route: string): string {
   return path.join(packageRoot, 'src/routes', routePath, '+page.svelte');
 }
 
+function sourceForEntry(entry: (typeof marketingPagePortfolio)[number]): string {
+  const routeSource = readFileSync(pageFileForRoute(entry.sourceRoute ?? entry.path), 'utf8');
+  if (entry.sourceRoute !== '/workflows/[slug]') return routeSource;
+  const contentSource = readFileSync(
+    path.join(packageRoot, 'src/lib/data/workflowPages.ts'),
+    'utf8'
+  );
+  return `${routeSource}\n${contentSource}`;
+}
+
 test('marketing portfolio covers the high-intent public funnel', () => {
   assert.ok(marketingPagePortfolio.length >= 24);
 
@@ -91,7 +101,7 @@ test('visible FAQs are content, not a search-schema quality gate', () => {
 
 test('current marketing portfolio pages clear their route-decision strength threshold', () => {
   for (const entry of marketingPagePortfolio) {
-    const source = readFileSync(pageFileForRoute(entry.path), 'utf8');
+    const source = sourceForEntry(entry);
     const score = scoreMarketingPage(entry, source);
 
     assert.ok(
@@ -103,7 +113,7 @@ test('current marketing portfolio pages clear their route-decision strength thre
 
 test('internal-language drift lowers marketing page strength', () => {
   const entry = marketingPagePortfolio[0];
-  const source = readFileSync(pageFileForRoute(entry.path), 'utf8');
+  const source = sourceForEntry(entry);
   const cleanScore = scoreMarketingPage(entry, source, { plainLanguagePassed: true });
   const driftScore = scoreMarketingPage(entry, source, { plainLanguagePassed: false });
 
