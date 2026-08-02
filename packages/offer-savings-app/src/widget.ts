@@ -125,9 +125,16 @@ export const OFFER_SAVINGS_WIDGET_HTML = String.raw`<!doctype html>
       const standalone = window.__OFFER_SAVINGS_STANDALONE__ ?? null;
       const extractOfferSavingsWidgetResult = ${WIDGET_RESULT_EXTRACTOR};
       const shouldReplaceOfferSavingsWidgetResult = ${WIDGET_RESULT_REPLACER};
-      let toolOutput = extractOfferSavingsWidgetResult(window.openai?.toolOutput)
-        ?? extractOfferSavingsWidgetResult(window.openai?.toolResponseMetadata)
-        ?? extractOfferSavingsWidgetResult(standalone?.initialResult);
+      let toolOutput = extractOfferSavingsWidgetResult(window.openai?.widgetState?.offerSavingsLatestCompletedResult);
+      for (const initialPayload of [
+        window.openai?.toolOutput,
+        window.openai?.toolResponseMetadata,
+        standalone?.initialResult
+      ]) {
+        if (shouldReplaceOfferSavingsWidgetResult(toolOutput, initialPayload)) {
+          toolOutput = extractOfferSavingsWidgetResult(initialPayload);
+        }
+      }
       let rpcId = 0;
       const pending = new Map();
       const offersEl = document.querySelector('#offers');
@@ -155,7 +162,15 @@ export const OFFER_SAVINGS_WIDGET_HTML = String.raw`<!doctype html>
           statusEl.textContent = nextResult.created ? 'Watch active. We will keep the same watch if this action is retried.' : 'This watch was already active; no duplicate was created.';
           document.body.dataset.watchId = nextResult.watch?.id ?? '';
         }
-        if (shouldReplaceOfferSavingsWidgetResult(toolOutput, nextResult)) toolOutput = nextResult;
+        if (shouldReplaceOfferSavingsWidgetResult(toolOutput, nextResult)) {
+          toolOutput = nextResult;
+          if (typeof nextResult?.receiptHash === 'string' && nextResult.receiptHash.length > 0) {
+            void window.openai?.setWidgetState?.({
+              ...(window.openai.widgetState ?? {}),
+              offerSavingsLatestCompletedResult: nextResult
+            });
+          }
+        }
         render();
       }
 
@@ -316,7 +331,7 @@ export const OFFER_SAVINGS_WIDGET_HTML = String.raw`<!doctype html>
       const bridgeReady = window.parent === window
         ? Promise.resolve()
         : request('ui/initialize', {
-            appInfo: { name: 'offer-savings-widget', version: '0.2.6' },
+            appInfo: { name: 'offer-savings-widget', version: '0.2.7' },
             appCapabilities: {},
             protocolVersion: '2026-01-26'
           }).then(() => {

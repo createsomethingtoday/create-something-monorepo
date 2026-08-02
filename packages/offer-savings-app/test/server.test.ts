@@ -136,8 +136,8 @@ test('MCP protocol exposes only the bounded offer workflow and widget resource',
   });
 
   const listed = await client.listTools();
-  assert.equal(client.getServerVersion()?.version, '0.2.6');
-  assert.equal(OFFER_WIDGET_URI, 'ui://offer-savings/results-v5.html');
+  assert.equal(client.getServerVersion()?.version, '0.2.7');
+  assert.equal(OFFER_WIDGET_URI, 'ui://offer-savings/results-v6.html');
   assert.deepEqual(
     listed.tools.map((tool) => tool.name),
     ['resolve_offers', 'find_offers', 'verify_offer', 'watch_offers', 'get_watch']
@@ -230,6 +230,7 @@ test('MCP protocol exposes only the bounded offer workflow and widget resource',
     resources.resources.map((resource) => resource.uri),
     [
       OFFER_WIDGET_URI,
+      'ui://offer-savings/results-v5.html',
       'ui://offer-savings/results-v4.html',
       'ui://offer-savings/results-v3.html',
       'ui://offer-savings/results-v2.html',
@@ -254,11 +255,15 @@ test('MCP protocol exposes only the bounded offer workflow and widget resource',
   assert.match(widgetHtml, /Evidence-only sources/i);
   assert.match(widgetHtml, /Search run/i);
   assert.match(widgetHtml, /Search in progress\. Waiting for a completed offer result\./i);
+  assert.match(widgetHtml, /offerSavingsLatestCompletedResult/);
+  assert.match(widgetHtml, /setWidgetState/);
   assert.deepEqual(widgetContent?._meta?.ui, {
     prefersBorder: true,
     csp: { connectDomains: [], resourceDomains: [] }
   });
   for (const legacyUri of [
+    'ui://offer-savings/results-v5.html',
+    'ui://offer-savings/results-v4.html',
     'ui://offer-savings/results-v3.html',
     'ui://offer-savings/results-v2.html',
     'ui://offer-savings/results-v1.html'
@@ -313,6 +318,13 @@ test('MCP calls find, verify, and idempotent watch through the authoritative ser
   assert.equal(hostResolved.isError, undefined);
   assert.equal(hostResolved.structuredContent?.operation, 'find_offers');
   assert.deepEqual(hostResolved.structuredContent?.counts, {
+    ltk: 1,
+    supplemental: 3,
+    evidence: 0
+  });
+  assert.equal(hostResolved._meta?.operation, 'find_offers');
+  assert.match(String(hostResolved._meta?.receiptHash), /^sha256:[a-f0-9]{64}$/);
+  assert.deepEqual(hostResolved._meta?.counts, {
     ltk: 1,
     supplemental: 3,
     evidence: 0

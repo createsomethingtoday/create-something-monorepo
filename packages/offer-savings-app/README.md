@@ -9,14 +9,14 @@
 | MCP                    | `/mcp` with host resolution, fallback discovery, verification, and watches   |
 | REST                   | `/v1/offers/find`, `/v1/offers/verify`, `/v1/watches`, and `/v1/watches/:id` |
 | Readiness              | `/health`                                                                    |
-| Widget resource        | `ui://offer-savings/results-v5.html` with `text/html;profile=mcp-app`        |
+| Widget resource        | `ui://offer-savings/results-v6.html` with `text/html;profile=mcp-app`        |
 | Standalone development | `/widget` when the fixture harness supplies bounded initial data             |
 
 The interactive ChatGPT/Codex path uses the host agent for bounded LTK-first public discovery and calls `resolve_offers` once with factual observations. The MCP—not the host—owns observation time, deterministic scores, caps, ranking, evidence separation, receipts, and watches. `find_offers` remains a server-side compatibility and scheduled-watch fallback.
 
 The widget uses the standard MCP Apps JSON-RPC bridge (`ui/initialize`, `ui/notifications/tool-result`, and `tools/call`) first. `window.openai` is an optional ChatGPT enhancement. The main result lane contains LTK-specific coupons, followed by clearly labeled supplemental fallback offers. Generic fulfillment or policy pages appear only as evidence, with no coupon actions. Each result includes a short search-run receipt. Its only write action is the retry-safe creation of a deadline-bounded watch; it cannot purchase, mutate a cart, access private LTK data, or send a notification.
 
-The current tool descriptor points to `results-v5.html`. Read-only `results-v4.html`, `results-v3.html`, `results-v2.html`, and `results-v1.html` resource aliases serve the same current widget so existing private ChatGPT installations can refresh safely after a template URI change.
+The current tool descriptor points to `results-v6.html`. Read-only `results-v5.html`, `results-v4.html`, `results-v3.html`, `results-v2.html`, and `results-v1.html` resource aliases serve the same current widget so existing private ChatGPT installations can refresh safely after a template URI change. Completed receipted results are mirrored into widget-only response metadata and persisted in widget state so a host invocation envelope or remount cannot replace them with a pending state.
 
 ChatGPT does not supply observation timestamps. The MCP input schemas omit `asOf`; the service records it at the start of each find, verify, or watch run. This prevents model-formatted timestamp retries from creating duplicate searches.
 

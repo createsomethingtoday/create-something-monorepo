@@ -15,11 +15,12 @@ export { createLiveOfferService, readOfferSavingsRuntimeConfig } from './runtime
 export { OFFER_SAVINGS_WIDGET_HTML } from './widget.js';
 import { OFFER_SAVINGS_WIDGET_HTML } from './widget.js';
 
-export const OFFER_WIDGET_URI = 'ui://offer-savings/results-v5.html';
+export const OFFER_WIDGET_URI = 'ui://offer-savings/results-v6.html';
 export const OFFER_WIDGET_MIME_TYPE = 'text/html;profile=mcp-app';
 
 const widgetResources = [
   { name: 'offer-savings-results', uri: OFFER_WIDGET_URI },
+  { name: 'offer-savings-results-v5-compatibility', uri: 'ui://offer-savings/results-v5.html' },
   { name: 'offer-savings-results-v4-compatibility', uri: 'ui://offer-savings/results-v4.html' },
   { name: 'offer-savings-results-v3-compatibility', uri: 'ui://offer-savings/results-v3.html' },
   { name: 'offer-savings-results-v2-compatibility', uri: 'ui://offer-savings/results-v2.html' },
@@ -134,6 +135,10 @@ function asFindOffersStructuredContent(result: FindOffersServiceResult): Record<
   });
 }
 
+function asFindOffersWidgetMeta(result: FindOffersServiceResult): Record<string, unknown> {
+  return asFindOffersStructuredContent(result);
+}
+
 function resultText(operation: string, result?: FindOffersServiceResult): string {
   if (operation === 'find_offers') {
     const ltk = result?.counts.ltk ?? 0;
@@ -160,7 +165,7 @@ export function createOfferSavingsMcpServer(
   const server = new McpServer(
     {
       name: 'offer-savings-agent',
-      version: '0.2.6'
+      version: '0.2.7'
     },
     {
       capabilities: {
@@ -214,7 +219,7 @@ export function createOfferSavingsMcpServer(
       return {
         content: [{ type: 'text', text: resultText(result.operation, result) }],
         structuredContent: asFindOffersStructuredContent(result),
-        _meta: { operation: result.operation, schemaVersion: result.schemaVersion }
+        _meta: asFindOffersWidgetMeta(result)
       };
     }
   );
@@ -240,7 +245,7 @@ export function createOfferSavingsMcpServer(
       return {
         content: [{ type: 'text', text: resultText(result.operation, result) }],
         structuredContent: asFindOffersStructuredContent(result),
-        _meta: { operation: result.operation, schemaVersion: result.schemaVersion }
+        _meta: asFindOffersWidgetMeta(result)
       };
     }
   );
