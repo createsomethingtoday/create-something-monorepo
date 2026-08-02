@@ -35,7 +35,7 @@ test('resolve CLI emits the representative deterministic decision set', () => {
 test('CLI fails closed when required request data is invalid', () => {
   const result = spawnSync(
     resolve(packageRoot, 'node_modules/.bin/tsx'),
-    ['src/cli.ts', 'live', '--merchant', 'Abercrombie', '--budget', '200'],
+    ['src/cli.ts', 'plan', '--merchant', 'Abercrombie', '--budget', '200'],
     { cwd: packageRoot, encoding: 'utf8' }
   );
 
@@ -43,12 +43,12 @@ test('CLI fails closed when required request data is invalid', () => {
   assert.match(result.stderr, /--need.*--zip.*--deadline/i);
 });
 
-test('CLI accepts a category target in place of a merchant target', () => {
+test('CLI emits a host-search plan for a category target without an OpenAI key', () => {
   const result = spawnSync(
     resolve(packageRoot, 'node_modules/.bin/tsx'),
     [
       'src/cli.ts',
-      'live',
+      'plan',
       '--category',
       'health_and_beauty',
       '--need',
@@ -63,7 +63,15 @@ test('CLI accepts a category target in place of a merchant target', () => {
     { cwd: packageRoot, encoding: 'utf8', env: { ...process.env, OPENAI_API_KEY: '' } }
   );
 
-  assert.equal(result.status, 2);
-  assert.match(result.stderr, /OPENAI_API_KEY is required/i);
-  assert.doesNotMatch(result.stderr, /Missing required options:.*--merchant/i);
+  assert.equal(result.status, 0, result.stderr);
+  const output = JSON.parse(result.stdout);
+  assert.equal(output.operation, 'plan_offer_search');
+  assert.deepEqual(output.plan.candidateMerchants, [
+    'Ulta Beauty',
+    'Sephora',
+    'CVS Pharmacy',
+    'Walgreens',
+    'Target',
+    'OSEA'
+  ]);
 });

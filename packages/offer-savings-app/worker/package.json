@@ -1,6 +1,6 @@
 {
   "name": "@create-something/offer-savings-worker",
-  "version": "0.2.9",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -13,7 +13,6 @@
     "@create-something/offer-resolution": "workspace:*",
     "@create-something/offer-savings-app": "workspace:*",
     "@modelcontextprotocol/sdk": "1.25.3",
-    "@openai/agents": "^0.13.5",
     "agents": "^0.3.10",
     "hono": "^4.11.7"
   },

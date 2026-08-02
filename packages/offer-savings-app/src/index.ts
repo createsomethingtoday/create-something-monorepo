@@ -1,11 +1,12 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import {
-  findOffersInputSchema,
   offerRequestSchema,
+  planOfferSearchInputSchema,
   resolveOffersInputSchema,
   verifyOfferInputSchema,
   watchOffersInputSchema,
   type FindOffersServiceResult,
+  type OfferSearchPlanServiceResult,
   type OfferService
 } from '@create-something/offer-resolution';
 import { z } from 'zod';
@@ -109,6 +110,32 @@ const findOffersToolOutputSchema = z
   })
   .strict();
 
+const offerDiscoveryStageOutputSchema = z
+  .object({
+    lane: z.enum(['ltk', 'supplemental']),
+    ordinal: z.union([z.literal(1), z.literal(2)]),
+    domains: z.array(z.string()),
+    queries: z.array(z.string()),
+    instructions: z.string()
+  })
+  .strict();
+
+const offerSearchPlanToolOutputSchema = z
+  .object({
+    schemaVersion: z.literal('offer_service.v0.1'),
+    operation: z.literal('plan_offer_search'),
+    observedAt: z.string().datetime(),
+    request: offerRequestSchema,
+    plan: z
+      .object({
+        policyVersion: z.literal('offer_discovery_ltk_first.v0.1'),
+        candidateMerchants: z.array(z.string().min(1)),
+        stages: z.tuple([offerDiscoveryStageOutputSchema, offerDiscoveryStageOutputSchema])
+      })
+      .strict()
+  })
+  .strict();
+
 const getWatchInputSchema = z
   .object({
     id: z.string().min(1).max(128)
@@ -138,7 +165,16 @@ function asFindOffersWidgetMeta(result: FindOffersServiceResult): Record<string,
   return asFindOffersStructuredContent(result);
 }
 
+function asOfferSearchPlanStructuredContent(
+  result: OfferSearchPlanServiceResult
+): Record<string, unknown> {
+  return asStructuredContent(result);
+}
+
 function resultText(operation: string, result?: FindOffersServiceResult): string {
+  if (operation === 'plan_offer_search') {
+    return 'LTK-first host search plan prepared. The ChatGPT or Codex host must retrieve public pages before resolving evidence.';
+  }
   if (operation === 'find_offers') {
     const ltk = result?.counts.ltk ?? 0;
     const supplemental = result?.counts.supplemental ?? 0;
@@ -147,7 +183,7 @@ function resultText(operation: string, result?: FindOffersServiceResult): string
     return `${ltk} verified LTK offer${ltk === 1 ? '' : 's'}; ${supplemental} verified supplemental offer${supplemental === 1 ? '' : 's'}; ${evidence} unverified finding${evidence === 1 ? '' : 's'}. Search run ${run}.`;
   }
   if (operation === 'verify_offer') return 'Re-evaluated the supplied public offer evidence.';
-  if (operation === 'watch_offers') return 'The offer watch is active.';
+  if (operation === 'watch_offers') return 'The host-managed offer watch baseline is saved.';
   return 'Offer watch retrieved.';
 }
 
@@ -164,7 +200,7 @@ export function createOfferSavingsMcpServer(
   const server = new McpServer(
     {
       name: 'offer-savings-agent',
-      version: '0.2.9'
+      version: '0.3.0'
     },
     {
       capabilities: {
@@ -198,11 +234,44 @@ export function createOfferSavingsMcpServer(
   }
 
   server.registerTool(
+    'plan_offer_search',
+    {
+      title: 'Plan an LTK-first host search',
+      description:
+        'Use this when a user asks to find current savings and the ChatGPT or Codex host needs bounded LTK-first query and evidence guidance before using its own web-search and page-retrieval capability. This tool never searches, retrieves external pages, purchases, mutates a cart, or creates a watch. After the host gathers factual public observations, call resolve_offers.',
+      inputSchema: planOfferSearchInputSchema,
+      outputSchema: offerSearchPlanToolOutputSchema,
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false
+      },
+      _meta: toolMetaWithSecurity(
+        {
+          ...toolInvocationMeta,
+          'openai/toolInvocation/invoking': 'Preparing the LTK-first search plan…',
+          'openai/toolInvocation/invoked': 'Search plan prepared'
+        },
+        options.readSecuritySchemes
+      )
+    },
+    async (request) => {
+      const result = await options.service.planOfferSearch(request);
+      return {
+        content: [{ type: 'text', text: resultText(result.operation) }],
+        structuredContent: asOfferSearchPlanStructuredContent(result),
+        _meta: { operation: result.operation, schemaVersion: result.schemaVersion }
+      };
+    }
+  );
+
+  server.registerTool(
     'resolve_offers',
     {
       title: 'Score host-discovered public offers',
       description:
-        'After the ChatGPT or Codex agent completes bounded public discovery with LTK first, submit the normalized request and factual observations here for authoritative deterministic scoring, ranking, evidence separation, and a receipt. Only recommend-status decisions are returned as usable offers; verify and lead decisions remain non-actionable evidence. This tool does not search, purchase, mutate a cart, or create a watch.',
+        'Use this after the ChatGPT or Codex host completes bounded public retrieval with the plan_offer_search guidance and has factual direct-URL observations. Submit the normalized request and factual observations for authoritative deterministic scoring, ranking, evidence separation, and a receipt. Only recommend-status decisions are returned as usable offers; verify and lead decisions remain non-actionable evidence. This tool does not search, purchase, mutate a cart, or create a watch.',
       inputSchema: resolveOffersInputSchema,
       outputSchema: findOffersToolOutputSchema,
       annotations: {
@@ -224,37 +293,11 @@ export function createOfferSavingsMcpServer(
   );
 
   server.registerTool(
-    'find_offers',
-    {
-      title: 'Find public offers',
-      description:
-        'Legacy server-side discovery for scheduled watches or hosts without public-search capability. Interactive ChatGPT and Codex agents should search LTK first and call resolve_offers instead. Only recommend-status decisions are returned as usable offers; verify and lead decisions remain non-actionable evidence. This does not purchase or mutate a cart.',
-      inputSchema: findOffersInputSchema,
-      outputSchema: findOffersToolOutputSchema,
-      annotations: {
-        readOnlyHint: true,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: true
-      },
-      _meta: toolMetaWithSecurity(toolInvocationMeta, options.readSecuritySchemes)
-    },
-    async (request) => {
-      const result = await options.service.findOffers(request);
-      return {
-        content: [{ type: 'text', text: resultText(result.operation, result) }],
-        structuredContent: asFindOffersStructuredContent(result),
-        _meta: asFindOffersWidgetMeta(result)
-      };
-    }
-  );
-
-  server.registerTool(
     'verify_offer',
     {
       title: 'Verify public offer evidence',
       description:
-        'Re-evaluate one supplied public offer observation against the deterministic policy. This is evidence verification only; when checkout would be required, the result remains needs_checkout.',
+        'Use this when the ChatGPT or Codex host retrieves stronger public evidence for one candidate and needs a deterministic re-evaluation. This is evidence verification only; when checkout would be required, the result remains needs_checkout.',
       inputSchema: verifyOfferInputSchema,
       annotations: {
         readOnlyHint: true,
@@ -279,13 +322,13 @@ export function createOfferSavingsMcpServer(
     {
       title: 'Watch for a better public offer',
       description:
-        'Persist one bounded offer request until a deadline. Reusing an idempotency key with the same request returns the existing watch; this does not notify, purchase, or mutate a cart.',
+        'Use this only to persist a host-resolved baseline for a bounded offer request until a deadline. The ChatGPT or Codex host must perform every future search and retrieval itself; this MCP never runs scheduled public-web discovery or sends notifications. Reusing an idempotency key with the same request returns the existing watch; this does not purchase or mutate a cart.',
       inputSchema: watchOffersInputSchema,
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
         idempotentHint: true,
-        openWorldHint: true
+        openWorldHint: false
       },
       _meta: toolMetaWithSecurity(
         {

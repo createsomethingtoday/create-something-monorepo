@@ -1,6 +1,6 @@
 {
   "name": "@create-something/offer-resolution",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "private": true,
   "description": "Resolve public offer evidence into deterministic, provenance-backed recommendations.",
   "type": "module",
@@ -10,7 +10,6 @@
     "surface": "library",
     "entrypoints": [
       "src/index.ts",
-      "src/agent.ts",
       "src/cli.ts",
       "src/http.ts"
     ],
@@ -26,10 +25,6 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    },
-    "./agent": {
-      "types": "./dist/agent.d.ts",
-      "default": "./dist/agent.js"
     }
   },
   "files": [
@@ -45,7 +40,6 @@
     "verify": "pnpm check && pnpm test && pnpm test:acceptance && pnpm validate:skill"
   },
   "dependencies": {
-    "@openai/agents": "^0.13.5",
     "zod": "^4.3.6"
   },
   "devDependencies": {

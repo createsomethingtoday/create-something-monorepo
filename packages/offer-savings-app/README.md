@@ -6,13 +6,13 @@
 
 | Surface                | Contract                                                                     |
 | ---------------------- | ---------------------------------------------------------------------------- |
-| MCP                    | `/mcp` with host resolution, fallback discovery, verification, and watches   |
-| REST                   | `/v1/offers/find`, `/v1/offers/verify`, `/v1/watches`, and `/v1/watches/:id` |
+| MCP                    | `/mcp` with host-search planning, host resolution, verification, and watches |
+| REST                   | `/v1/offers/search-plan`, `/v1/offers/resolve`, `/v1/offers/verify`, `/v1/watches`, and `/v1/watches/:id` |
 | Readiness              | `/health`                                                                    |
 | Widget resource        | `ui://offer-savings/results-v6.html` with `text/html;profile=mcp-app`        |
 | Standalone development | `/widget` when the fixture harness supplies bounded initial data             |
 
-The interactive ChatGPT/Codex path uses the host agent for bounded LTK-first public discovery and calls `resolve_offers` once with factual observations. The MCP—not the host—owns observation time, deterministic scores, caps, ranking, evidence separation, receipts, and watches. `find_offers` remains a server-side compatibility and scheduled-watch fallback.
+The interactive ChatGPT/Codex path calls `plan_offer_search`, uses the host agent for bounded LTK-first public discovery, then calls `resolve_offers` once with factual observations. The MCP—not the host—owns observation time, deterministic scores, caps, ranking, evidence separation, receipts, and watch baselines. It has no server-side discovery or retrieval fallback.
 
 The standalone widget uses the standard MCP Apps JSON-RPC bridge (`ui/initialize`, `ui/notifications/tool-result`, and `tools/call`) first. `window.openai` is an optional ChatGPT enhancement. The main result lane contains only currently corroborated LTK or supplemental offers. Historical mentions, uncorroborated creator codes, generic fulfillment pages, and other incomplete findings appear only as non-actionable research evidence, without projected savings or coupon actions. Each result includes a short search-run receipt. Its only write action is the retry-safe creation of a deadline-bounded watch; it cannot purchase, mutate a cart, access private LTK data, or send a notification.
 
@@ -36,12 +36,11 @@ pnpm --filter @create-something/offer-savings-app verify
 
 ## Live runtime
 
-The live server requires an approved key injected as `OPENAI_API_KEY` and an explicit state file:
+The live server requires only an explicit state file:
 
 ```bash
 pnpm --filter @create-something/offer-resolution build
 pnpm --filter @create-something/offer-savings-app build
-# Inject OPENAI_API_KEY with the approved secret manager.
 OFFER_STATE_FILE=/absolute/path/to/watches.json \
 node packages/offer-savings-app/dist/start.js
 ```
@@ -49,17 +48,16 @@ node packages/offer-savings-app/dist/start.js
 Run one scheduler attempt with a stable key:
 
 ```bash
-# Inject OPENAI_API_KEY with the approved secret manager.
 OFFER_STATE_FILE=/absolute/path/to/watches.json \
 node packages/offer-savings-app/dist/run-watches.js \
   --run-key scheduler-2026-07-30T16:00Z
 ```
 
-The scheduler records success or failure and preserves the previous successful receipt. It does not send external notifications. In normal operation, inject secrets with the repository-approved secret manager; never commit them or place them in command history.
+The scheduler intentionally reports active watches as skipped; it cannot search or notify. A ChatGPT or Codex scheduled workflow must retrieve fresh evidence itself, then resolve it through the MCP. Never commit user evidence or place it in command history.
 
 ## Hosted MCP for private ChatGPT testing
 
-The Cloudflare Worker in `worker/` exposes the production MCP endpoint at `https://offer-savings-agent.createsomething.workers.dev/mcp`. It uses CREATE SOMETHING Identity OAuth, restricts access to the configured email allowlist, persists watches in the dedicated `offer-savings` D1 database, and keeps the OpenAI API key in Worker secrets.
+The Cloudflare Worker in `worker/` exposes the production MCP endpoint at `https://offer-savings-agent.createsomething.workers.dev/mcp`. It uses CREATE SOMETHING Identity OAuth, restricts access to the configured email allowlist, and persists watches in the dedicated `offer-savings` D1 database. It has no OpenAI API key or server-side search provider.
 
 The canonical personal-plugin bundle is in `plugin/`. Its MCP configuration points directly to the production HTTPS endpoint, so a fresh Codex or ChatGPT session can expose the callable tools on desktop or mobile without a local `bash` or stdio process. Keep the personal marketplace copy synchronized from this reviewed bundle; do not restore a local launcher as a fallback.
 

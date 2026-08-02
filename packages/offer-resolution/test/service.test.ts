@@ -25,11 +25,22 @@ const hostObservations = fixture.observations.map(({ source, ...observation }) =
   return { ...observation, source: hostSource };
 });
 
-test('find_offers returns authoritative receipts as user-ready offer cards', async () => {
+test('plan_offer_search gives the host an LTK-first plan without performing retrieval', async () => {
   const service = createOfferService({
-    discovery: {
-      discover: async () => fixture.observations
-    },
+    clock: () => new Date(fixture.request.asOf)
+  });
+
+  const plan = await service.planOfferSearch(fixture.request);
+
+  assert.equal(plan.operation, 'plan_offer_search');
+  assert.equal(plan.request.asOf, fixture.request.asOf);
+  assert.deepEqual(plan.plan.stages.map((stage) => stage.lane), ['ltk', 'supplemental']);
+  assert.deepEqual(plan.plan.stages[0].domains, ['shopltk.com']);
+  assert.match(plan.plan.stages[0].instructions, /LTK-specific coupon offers/i);
+});
+
+test('resolve_offers returns host-retrieved evidence as user-ready offer cards', async () => {
+  const service = createOfferService({
     clock: () => new Date(fixture.request.asOf)
   });
 
@@ -37,8 +48,14 @@ test('find_offers returns authoritative receipts as user-ready offer cards', asy
     ...fixture.request,
     asOf: '1999-01-01T00:00:00.000Z'
   };
-  const result = await service.findOffers(callerTimestampIsIgnored);
-  const repeated = await service.findOffers(callerTimestampIsIgnored);
+  const result = await service.resolveOffers({
+    request: callerTimestampIsIgnored,
+    observations: hostObservations
+  });
+  const repeated = await service.resolveOffers({
+    request: callerTimestampIsIgnored,
+    observations: hostObservations
+  });
   const authoritative = findOffers(fixture.request, fixture.observations);
 
   assert.equal(result.schemaVersion, 'offer_service.v0.1');
@@ -46,7 +63,11 @@ test('find_offers returns authoritative receipts as user-ready offer cards', asy
   assert.equal(result.observedAt, fixture.request.asOf);
   assert.match(result.receiptHash, /^sha256:[a-f0-9]{64}$/);
   assert.equal(repeated.receiptHash, result.receiptHash);
-  assert.deepEqual(result.resolution, authoritative);
+  assert.deepEqual(result.resolution.summary, authoritative.summary);
+  assert.deepEqual(
+    result.resolution.decisions.map((decision) => [decision.observationId, decision.status]),
+    authoritative.decisions.map((decision) => [decision.observationId, decision.status])
+  );
   assert.equal(result.offers[0]?.observationId, 'fixture-official-20');
   assert.equal(result.ltkOffers.length, 0);
   assert.equal(result.supplementalOffers[0]?.observationId, 'fixture-official-20');
@@ -88,11 +109,15 @@ test('keeps unverified creator codes as non-actionable evidence', async () => {
   );
   assert.ok(creatorObservation);
   const service = createOfferService({
-    discovery: { discover: async () => [creatorObservation] },
     clock: () => new Date(fixture.request.asOf)
   });
 
-  const result = await service.findOffers(fixture.request);
+  const result = await service.resolveOffers({
+    request: fixture.request,
+    observations: hostObservations.filter(
+      (observation) => observation.id === creatorObservation.id
+    )
+  });
 
   assert.deepEqual(result.offers, []);
   assert.deepEqual(result.ltkOffers, []);
@@ -103,15 +128,8 @@ test('keeps unverified creator codes as non-actionable evidence', async () => {
   assert.deepEqual(result.evidence[0]?.actions, { canCopyCode: false, canWatch: false });
 });
 
-test('resolve_offers scores host-discovered evidence without invoking nested discovery', async () => {
-  let discoveryCalls = 0;
+test('resolve_offers scores host-retrieved evidence without nested discovery', async () => {
   const service = createOfferService({
-    discovery: {
-      discover: async () => {
-        discoveryCalls += 1;
-        return [];
-      }
-    },
     clock: () => new Date(fixture.request.asOf)
   });
 
@@ -120,7 +138,6 @@ test('resolve_offers scores host-discovered evidence without invoking nested dis
     observations: hostObservations
   });
 
-  assert.equal(discoveryCalls, 0);
   assert.equal(result.operation, 'find_offers');
   assert.deepEqual(result.counts, { ltk: 0, supplemental: 1, evidence: 3 });
   assert.equal(result.resolution.request.asOf, fixture.request.asOf);
@@ -129,7 +146,6 @@ test('resolve_offers scores host-discovered evidence without invoking nested dis
 
 test('resolve_offers preserves date-only offer windows and rejects a stale host-discovered code', async () => {
   const service = createOfferService({
-    discovery: { discover: async () => [] },
     clock: () => new Date(fixture.request.asOf)
   });
   const [hostObservation] = hostObservations;
@@ -185,11 +201,16 @@ test('keeps generic fulfillment pages out of LTK coupon and fallback offer resul
     evidence: { terms: 'explicit', code: 'not_applicable', corroboratingUrls: [] }
   };
   const service = createOfferService({
-    discovery: { discover: async () => [official, ltk, fulfillmentPage] },
     clock: () => new Date(fixture.request.asOf)
   });
 
-  const result = await service.findOffers(fixture.request);
+  const result = await service.resolveOffers({
+    request: fixture.request,
+    observations: [official, ltk, fulfillmentPage].map(({ source, ...observation }) => {
+      const { observedAt: _observedAt, ...hostSource } = source;
+      return { ...observation, source: hostSource };
+    })
+  });
 
   assert.deepEqual(
     result.offers.map((offer) => offer.observationId),
@@ -204,9 +225,6 @@ test('keeps generic fulfillment pages out of LTK coupon and fallback offer resul
 
 test('verify_offer never promotes uncorroborated creator evidence to verified', async () => {
   const service = createOfferService({
-    discovery: {
-      discover: async () => fixture.observations
-    },
     clock: () => new Date(fixture.request.asOf)
   });
   const creatorObservation = fixture.observations.find(
@@ -233,16 +251,13 @@ test('watch_offers is idempotent and survives a service restart', async (t) => {
   t.after(() => rmSync(stateDirectory, { recursive: true, force: true }));
   const filePath = join(stateDirectory, 'watches.json');
   const clock = () => new Date('2026-07-30T15:00:00.000Z');
-  const discovery = {
-    discover: async () => fixture.observations
-  };
   const service = createOfferService({
-    discovery,
     watches: createFileOfferWatchRepository({ filePath }),
     clock
   });
   const input = {
     request: fixture.request,
+    observations: hostObservations,
     until: '2026-08-09T23:59:59.000Z',
     idempotencyKey: 'user-123-abercrombie-august-9'
   };
@@ -257,7 +272,6 @@ test('watch_offers is idempotent and survives a service restart', async (t) => {
   assert.equal(first.watch.latestResult?.operation, 'find_offers');
 
   const restarted = createOfferService({
-    discovery,
     watches: createFileOfferWatchRepository({ filePath }),
     clock
   });
@@ -265,49 +279,26 @@ test('watch_offers is idempotent and survives a service restart', async (t) => {
   assert.doesNotMatch(readFileSync(filePath, 'utf8'), /user-123-abercrombie-august-9/);
 });
 
-test('due-watch execution records retry-safe failure history without losing the last receipt', async (t) => {
+test('due-watch execution never performs retrieval without a host agent', async (t) => {
   const stateDirectory = mkdtempSync(join(tmpdir(), 'offer-watch-runner-'));
   t.after(() => rmSync(stateDirectory, { recursive: true, force: true }));
   const filePath = join(stateDirectory, 'watches.json');
-  let refreshShouldFail = false;
   const service = createOfferService({
-    discovery: {
-      discover: async () => {
-        if (refreshShouldFail) throw new Error('public discovery unavailable');
-        return fixture.observations;
-      }
-    },
     watches: createFileOfferWatchRepository({ filePath }),
     clock: () => new Date('2026-07-30T15:00:00.000Z')
   });
   const created = await service.watchOffers({
     request: fixture.request,
+    observations: hostObservations,
     until: '2026-08-09T23:59:59.000Z',
     idempotencyKey: 'runner-watch'
   });
-  const initialReceipt = created.watch.latestResult;
-
-  refreshShouldFail = true;
-  const failed = await service.runDueWatches({ runKey: 'scheduled-2026-07-30T16:00Z' });
-  const retried = await service.runDueWatches({ runKey: 'scheduled-2026-07-30T16:00Z' });
-  const afterFailure = await service.getWatch(created.watch.id);
-
-  assert.deepEqual(failed, { attempted: 1, succeeded: 0, failed: 1, skipped: 0 });
-  assert.deepEqual(retried, { attempted: 0, succeeded: 0, failed: 0, skipped: 1 });
-  assert.equal(afterFailure?.runCount, 2);
-  assert.equal(afterFailure?.runs.at(-1)?.status, 'failed');
-  assert.match(afterFailure?.runs.at(-1)?.error ?? '', /public discovery unavailable/);
-  assert.deepEqual(afterFailure?.latestResult, initialReceipt);
-
-  refreshShouldFail = false;
-  assert.deepEqual(await service.runDueWatches({ runKey: 'scheduled-2026-07-30T17:00Z' }), {
-    attempted: 1,
-    succeeded: 1,
+  assert.deepEqual(await service.runDueWatches({ runKey: 'scheduled-2026-07-30T16:00Z' }), {
+    attempted: 0,
+    succeeded: 0,
     failed: 0,
-    skipped: 0
+    skipped: 1
   });
-  const afterSuccess = await service.getWatch(created.watch.id);
-  assert.equal(afterSuccess?.runCount, 3);
-  assert.equal(afterSuccess?.runs.at(-1)?.status, 'succeeded');
-  assert.equal(afterSuccess?.latestResult?.operation, 'find_offers');
+  const afterSkip = await service.getWatch(created.watch.id);
+  assert.deepEqual(afterSkip, created.watch);
 });

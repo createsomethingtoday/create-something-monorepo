@@ -1,6 +1,5 @@
 import { resolve } from 'node:path';
 
-import { createAgentOfferDiscoveryProvider } from '@create-something/offer-resolution/agent';
 import {
   createFileOfferWatchRepository,
   createOfferService,
@@ -17,16 +16,11 @@ function positiveInteger(value: string | undefined, fallback: number, name: stri
 export interface OfferSavingsRuntimeConfig {
   port: number;
   stateFile: string;
-  model: string;
-  maxTurns: number;
 }
 
 export function readOfferSavingsRuntimeConfig(
   environment: NodeJS.ProcessEnv = process.env
 ): OfferSavingsRuntimeConfig {
-  if (!environment.OPENAI_API_KEY?.trim()) {
-    throw new Error('OPENAI_API_KEY is required for live public-offer discovery.');
-  }
   if (!environment.OFFER_STATE_FILE?.trim()) {
     throw new Error(
       'OFFER_STATE_FILE is required so offer watches have an explicit durable location.'
@@ -34,18 +28,10 @@ export function readOfferSavingsRuntimeConfig(
   }
   return {
     port: positiveInteger(environment.PORT, 8791, 'PORT'),
-    stateFile: resolve(environment.OFFER_STATE_FILE),
-    model: environment.OFFER_AGENT_MODEL?.trim() || 'gpt-5.4-mini',
-    maxTurns: positiveInteger(environment.OFFER_AGENT_MAX_TURNS, 6, 'OFFER_AGENT_MAX_TURNS')
+    stateFile: resolve(environment.OFFER_STATE_FILE)
   };
 }
 
 export function createLiveOfferService(config: OfferSavingsRuntimeConfig): OfferService {
-  return createOfferService({
-    discovery: createAgentOfferDiscoveryProvider({
-      model: config.model,
-      maxTurns: config.maxTurns
-    }),
-    watches: createFileOfferWatchRepository({ filePath: config.stateFile })
-  });
+  return createOfferService({ watches: createFileOfferWatchRepository({ filePath: config.stateFile }) });
 }

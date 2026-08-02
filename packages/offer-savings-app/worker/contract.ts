@@ -5,9 +5,6 @@ export interface OfferSavingsWorkerEnv {
   MCP_OBJECT: DurableObjectNamespace;
   DB: D1Database;
   IDENTITY_WORKER?: Fetcher;
-  OPENAI_API_KEY?: string;
-  OFFER_AGENT_MODEL?: string;
-  OFFER_AGENT_MAX_TURNS?: string;
   CS_IDENTITY_ISSUER?: string;
   OAUTH_ALLOWED_EMAILS?: string;
 }

@@ -41,22 +41,28 @@ const fixtureEvidenceOnly: OfferObservation = {
   evidence: { terms: 'explicit', code: 'not_applicable', corroboratingUrls: [] }
 };
 const { asOf: _fixtureAsOf, ...publicRequest } = fixture.request;
+const hostObservations = [...fixture.observations, fixtureEvidenceOnly].map(
+  ({ source, ...observation }) => {
+    const { observedAt: _observedAt, ...hostSource } = source;
+    return { ...observation, source: hostSource };
+  }
+);
 const port = Number.parseInt(process.env.PORT ?? '8791', 10);
 const stateFile = resolve(process.env.OFFER_STATE_FILE ?? '.state/fixture-watches.json');
 mkdirSync(dirname(stateFile), { recursive: true });
 
 const service = createOfferService({
-  discovery: { discover: async () => [...fixture.observations, fixtureEvidenceOnly] },
   watches: createFileOfferWatchRepository({ filePath: stateFile }),
   clock: () => new Date('2026-07-30T15:00:00.000Z')
 });
-const initialResult = await service.findOffers(fixture.request);
+const initialResult = await service.resolveOffers({ request: publicRequest, observations: hostObservations });
 const server = createOfferSavingsHttpServer({
   service,
   standalone: {
     initialResult,
     watchInput: {
       request: publicRequest,
+      observations: hostObservations,
       until: '2026-08-09T23:59:59.000Z',
       idempotencyKey: 'standalone-widget-watch'
     }

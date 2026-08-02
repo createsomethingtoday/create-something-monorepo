@@ -1,5 +1,6 @@
 import { findOffers as resolveOffers } from './resolve.js';
 import { canonicalStringify, hashReceipt } from './canonical.js';
+import { planOfferDiscovery, type OfferDiscoveryPlan } from './discovery.js';
 import { normalizeDiscoveredOfferObservations } from './normalize.js';
 import type {
   HostOfferObservation,
@@ -17,10 +18,6 @@ export type OfferConfidenceLabel =
   | 'Evidence only'
   | 'Uncertain'
   | 'Do not use';
-
-export interface OfferDiscoveryProvider {
-  discover(request: OfferRequest): Promise<OfferObservation[]>;
-}
 
 export interface UserOffer {
   observationId: string;
@@ -69,6 +66,14 @@ export interface FindOffersServiceResult {
   };
 }
 
+export interface OfferSearchPlanServiceResult {
+  schemaVersion: 'offer_service.v0.1';
+  operation: 'plan_offer_search';
+  observedAt: string;
+  request: OfferRequest;
+  plan: OfferDiscoveryPlan;
+}
+
 export interface ResolveOffersInput {
   request: OfferRequestInput;
   observations: HostOfferObservation[];
@@ -115,6 +120,7 @@ export interface OfferWatch {
 
 export interface WatchOffersInput {
   request: OfferRequestInput;
+  observations: HostOfferObservation[];
   until: string;
   idempotencyKey: string;
 }
@@ -147,8 +153,8 @@ export interface RunDueWatchesResult {
 }
 
 export interface OfferService {
+  planOfferSearch(request: OfferRequestInput): Promise<OfferSearchPlanServiceResult>;
   resolveOffers(input: ResolveOffersInput): Promise<FindOffersServiceResult>;
-  findOffers(request: OfferRequestInput): Promise<FindOffersServiceResult>;
   verifyOffer(input: VerifyOfferInput): Promise<VerifyOfferServiceResult>;
   watchOffers(input: WatchOffersInput): Promise<WatchOffersServiceResult>;
   getWatch(id: string): Promise<OfferWatch | undefined>;
@@ -156,7 +162,6 @@ export interface OfferService {
 }
 
 export interface CreateOfferServiceOptions {
-  discovery: OfferDiscoveryProvider;
   watches?: OfferWatchRepository;
   clock?: () => Date;
 }
@@ -286,10 +291,7 @@ export function createOfferService(options: CreateOfferServiceOptions): OfferSer
     };
   }
 
-  async function executeDueWatches(
-    service: OfferService,
-    input: RunDueWatchesInput
-  ): Promise<RunDueWatchesResult> {
+  async function executeDueWatches(input: RunDueWatchesInput): Promise<RunDueWatchesResult> {
     if (!options.watches) throw new Error('Offer watch persistence is not configured.');
     const runKey = input.runKey.trim();
     if (!runKey) throw new Error('runKey must not be empty');
@@ -304,68 +306,23 @@ export function createOfferService(options: CreateOfferServiceOptions): OfferSer
       .slice(0, limit);
     const summary: RunDueWatchesResult = { attempted: 0, succeeded: 0, failed: 0, skipped: 0 };
 
-    for (const watch of watches) {
-      const runId = `run_${hashReceipt({
-        scope: 'offer_watch_run',
-        watchId: watch.id,
-        runKey
-      }).slice('sha256:'.length, 'sha256:'.length + 24)}`;
-      if (watch.runs.some((run) => run.id === runId)) {
-        summary.skipped += 1;
-        continue;
-      }
-      summary.attempted += 1;
-      const requestedAt = clock().toISOString();
-      try {
-        const { asOf: _previousObservationTime, ...nextRequest } = watch.request;
-        const latestResult = await service.findOffers(nextRequest);
-        const completedAt = clock().toISOString();
-        const updated: OfferWatch = {
-          ...watch,
-          updatedAt: completedAt,
-          runCount: watch.runCount + 1,
-          runs: [
-            ...watch.runs,
-            {
-              id: runId,
-              status: 'succeeded',
-              requestedAt,
-              completedAt,
-              receiptHash: hashReceipt(latestResult.resolution)
-            }
-          ],
-          latestResult
-        };
-        await options.watches.update(JSON.parse(canonicalStringify(updated)) as OfferWatch);
-        summary.succeeded += 1;
-      } catch (error: unknown) {
-        const completedAt = clock().toISOString();
-        const updated: OfferWatch = {
-          ...watch,
-          updatedAt: completedAt,
-          runCount: watch.runCount + 1,
-          runs: [
-            ...watch.runs,
-            {
-              id: runId,
-              status: 'failed',
-              requestedAt,
-              completedAt,
-              error: (error instanceof Error ? error.message : 'Offer discovery failed.').slice(
-                0,
-                500
-              )
-            }
-          ]
-        };
-        await options.watches.update(JSON.parse(canonicalStringify(updated)) as OfferWatch);
-        summary.failed += 1;
-      }
-    }
+    // Offer Savings never retrieves public web pages. A host agent must plan, search,
+    // and resolve a fresh result explicitly; the stored watch is only a durable baseline.
+    summary.skipped = watches.length;
     return summary;
   }
 
   const service: OfferService = {
+    async planOfferSearch(request) {
+      const observedRequest = materializeRequest(request);
+      return {
+        schemaVersion: 'offer_service.v0.1',
+        operation: 'plan_offer_search',
+        observedAt: observedRequest.asOf,
+        request: observedRequest,
+        plan: planOfferDiscovery(observedRequest)
+      };
+    },
     async resolveOffers({ request, observations }) {
       const observedRequest = materializeRequest(request);
       const normalizedObservations = normalizeDiscoveredOfferObservations(
@@ -373,11 +330,6 @@ export function createOfferService(options: CreateOfferServiceOptions): OfferSer
         observations
       );
       return presentResolution(resolveOffers(observedRequest, normalizedObservations));
-    },
-    async findOffers(request) {
-      const observedRequest = materializeRequest(request);
-      const observations = await options.discovery.discover(observedRequest);
-      return presentResolution(resolveOffers(observedRequest, observations));
     },
     async verifyOffer({ request, observation }) {
       const resolution = resolveOffers(materializeRequest(request), [observation]);
@@ -425,7 +377,10 @@ export function createOfferService(options: CreateOfferServiceOptions): OfferSer
         };
       }
 
-      const baseline = await this.findOffers(input.request);
+      const baseline = await this.resolveOffers({
+        request: input.request,
+        observations: input.observations
+      });
       const timestamp = clock().toISOString();
       const watchId = `watch_${hashReceipt({
         scope: 'offer_watch',
@@ -470,7 +425,7 @@ export function createOfferService(options: CreateOfferServiceOptions): OfferSer
       return options.watches.get(id);
     },
     async runDueWatches(input) {
-      const run = watchRunQueue.then(() => executeDueWatches(service, input));
+      const run = watchRunQueue.then(() => executeDueWatches(input));
       watchRunQueue = run.then(
         () => undefined,
         () => undefined

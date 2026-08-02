@@ -22,6 +22,7 @@ export const offerRequestSchema = z
   .strict();
 
 export const findOffersInputSchema = offerRequestSchema.omit({ asOf: true });
+export const planOfferSearchInputSchema = findOffersInputSchema;
 
 export const offerObservationSchema = z
   .object({
@@ -143,6 +144,7 @@ export const verifyOfferInputSchema = z
 export const watchOffersInputSchema = z
   .object({
     request: findOffersInputSchema,
+    observations: z.array(hostOfferObservationSchema).max(50),
     until: z.string().datetime(),
     idempotencyKey: z.string().min(1).max(256)
   })

@@ -11,8 +11,6 @@ enabled = true
 [vars]
 CS_IDENTITY_ISSUER = "https://id.createsomething.space"
 OAUTH_ALLOWED_EMAILS = "micah@createsomething.io"
-OFFER_AGENT_MODEL = "gpt-5.4-mini"
-OFFER_AGENT_MAX_TURNS = "6"
 
 [[durable_objects.bindings]]
 name = "MCP_OBJECT"

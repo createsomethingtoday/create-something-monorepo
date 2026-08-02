@@ -34,7 +34,6 @@ const stateDirectory = mkdtempSync(join(tmpdir(), 'offer-savings-acceptance-'));
 const stateFile = join(stateDirectory, 'watches.json');
 const idempotencyKey = 'acceptance-watch-retry';
 const clock = () => new Date('2026-07-30T15:00:00.000Z');
-const discovery = { discover: async () => fixture.observations };
 
 async function closeServer(server: ReturnType<typeof createOfferSavingsHttpServer>): Promise<void> {
   await new Promise<void>((resolve, reject) =>
@@ -44,7 +43,6 @@ async function closeServer(server: ReturnType<typeof createOfferSavingsHttpServe
 
 async function start() {
   const service = createOfferService({
-    discovery,
     watches: createFileOfferWatchRepository({ filePath: stateFile }),
     clock
   });
@@ -64,7 +62,7 @@ try {
     name: 'resolve_offers',
     arguments: { request: publicRequest, observations: hostObservations }
   });
-  const found = await client.callTool({ name: 'find_offers', arguments: publicRequest });
+  const searchPlan = await client.callTool({ name: 'plan_offer_search', arguments: publicRequest });
   const creator = fixture.observations.find((item) => item.id === 'fixture-ltk-15');
   if (!creator) throw new Error('Acceptance fixture is missing the LTK creator observation.');
   const verified = await client.callTool({
@@ -73,6 +71,7 @@ try {
   });
   const watchInput = {
     request: publicRequest,
+    observations: hostObservations,
     until: '2026-08-09T23:59:59.000Z',
     idempotencyKey
   };
@@ -81,7 +80,7 @@ try {
   const watchId = (firstWatch.structuredContent?.watch as { id: string }).id;
   const readWatch = await client.callTool({ name: 'get_watch', arguments: { id: watchId } });
   const malformed = await client.callTool({
-    name: 'find_offers',
+    name: 'plan_offer_search',
     arguments: { ...publicRequest, budget: -1 }
   });
   const serverInfo = client.getServerVersion();
@@ -101,11 +100,6 @@ try {
   await closeServer(restarted.server);
 
   const toolNames = listed.tools.map((tool) => tool.name);
-  const foundResult = found.structuredContent as {
-    receiptHash: string;
-    request: { asOf: string };
-    offers: Array<{ observationId: string; confidence: { label: string } }>;
-  };
   const hostResolvedResult = hostResolved.structuredContent as {
     receiptHash: string;
     request: { asOf: string };
@@ -115,13 +109,10 @@ try {
     schemaVersion: 'offer_savings_acceptance.v0.1',
     ok:
       serverInfo?.name === 'offer-savings-agent' &&
-      toolNames.join(',') === 'resolve_offers,find_offers,verify_offer,watch_offers,get_watch' &&
+      toolNames.join(',') === 'plan_offer_search,resolve_offers,verify_offer,watch_offers,get_watch' &&
       resources.resources[0]?.mimeType === 'text/html;profile=mcp-app' &&
-      hostResolvedResult.offers[0]?.observationId === foundResult.offers[0]?.observationId &&
-      hostResolvedResult.offers.length === foundResult.offers.length &&
       /^sha256:[a-f0-9]{64}$/.test(hostResolvedResult.receiptHash) &&
-      /^sha256:[a-f0-9]{64}$/.test(foundResult.receiptHash) &&
-      hostResolvedResult.request.asOf === foundResult.request.asOf &&
+      searchPlan.structuredContent?.operation === 'plan_offer_search' &&
       verified.structuredContent?.verification === 'needs_checkout' &&
       firstWatch.structuredContent?.created === true &&
       retryWatch.structuredContent?.created === false &&
@@ -140,11 +131,10 @@ try {
       bestObservationId: hostResolvedResult.offers[0]?.observationId,
       receiptHash: hostResolvedResult.receiptHash
     },
-    find: {
-      offerCount: foundResult.offers.length,
-      bestObservationId: foundResult.offers[0]?.observationId,
-      bestConfidence: foundResult.offers[0]?.confidence.label,
-      receiptHash: foundResult.receiptHash
+    plan: {
+      operation: searchPlan.structuredContent?.operation,
+      stages: (searchPlan.structuredContent?.plan as { stages?: Array<{ lane: string }> } | undefined)
+        ?.stages?.map((stage) => stage.lane)
     },
     verify: { status: verified.structuredContent?.verification },
     watch: {

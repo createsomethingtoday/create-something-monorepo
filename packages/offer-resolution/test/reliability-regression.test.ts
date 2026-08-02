@@ -12,14 +12,17 @@ interface ReliabilityRegressionFixture {
 const fixture = JSON.parse(
   readFileSync(new URL('../fixtures/verified-offer-regression.json', import.meta.url), 'utf8')
 ) as ReliabilityRegressionFixture;
+const hostObservations = fixture.observations.map(({ source, ...observation }) => {
+  const { observedAt: _observedAt, ...hostSource } = source;
+  return { ...observation, source: hostSource };
+});
 
 test('current official evidence remains usable while stale LTK evidence is quarantined', async () => {
   const service = createOfferService({
-    discovery: { discover: async () => fixture.observations },
     clock: () => new Date(fixture.request.asOf)
   });
 
-  const result = await service.findOffers(fixture.request);
+  const result = await service.resolveOffers({ request: fixture.request, observations: hostObservations });
   const currentOfficial = result.supplementalOffers.find(
     (offer) => offer.observationId === 'fixture-current-official'
   );

@@ -91,7 +91,6 @@ async function connectClient(
   }
 ) {
   const service = createOfferService({
-    discovery: { discover: async () => fixture.observations },
     watches: createFileOfferWatchRepository({ filePath: stateFile }),
     clock: () => new Date('2026-07-30T15:00:00.000Z')
   });
@@ -118,7 +117,7 @@ test('MCP advertises resource-specific OAuth scopes when the host requires authe
   });
 
   const tools = (await client.listTools()).tools;
-  assert.deepEqual(tools.find((tool) => tool.name === 'find_offers')?._meta?.securitySchemes, [
+  assert.deepEqual(tools.find((tool) => tool.name === 'plan_offer_search')?._meta?.securitySchemes, [
     { type: 'oauth2', scopes: ['offer-savings:read'] }
   ]);
   assert.deepEqual(tools.find((tool) => tool.name === 'watch_offers')?._meta?.securitySchemes, [
@@ -136,11 +135,11 @@ test('MCP protocol exposes only the bounded offer workflow and widget resource',
   });
 
   const listed = await client.listTools();
-  assert.equal(client.getServerVersion()?.version, '0.2.9');
+  assert.equal(client.getServerVersion()?.version, '0.3.0');
   assert.equal(OFFER_WIDGET_URI, 'ui://offer-savings/results-v6.html');
   assert.deepEqual(
     listed.tools.map((tool) => tool.name),
-    ['resolve_offers', 'find_offers', 'verify_offer', 'watch_offers', 'get_watch']
+    ['plan_offer_search', 'resolve_offers', 'verify_offer', 'watch_offers', 'get_watch']
   );
   assert.equal(
     listed.tools.find((tool) => tool.name === 'resolve_offers')?.annotations?.openWorldHint,
@@ -169,10 +168,10 @@ test('MCP protocol exposes only the bounded offer workflow and widget resource',
     false
   );
   assert.equal(
-    listed.tools.find((tool) => tool.name === 'find_offers')?.annotations?.readOnlyHint,
+    listed.tools.find((tool) => tool.name === 'plan_offer_search')?.annotations?.readOnlyHint,
     true
   );
-  const findOutputSchema = listed.tools.find((tool) => tool.name === 'find_offers')
+  const findOutputSchema = listed.tools.find((tool) => tool.name === 'resolve_offers')
     ?.outputSchema as {
     properties?: Record<string, unknown>;
     required?: string[];
@@ -187,11 +186,11 @@ test('MCP protocol exposes only the bounded offer workflow and widget resource',
   ]) {
     assert.ok(
       findOutputSchema.properties?.[field],
-      `find_offers outputSchema must describe ${field}`
+      `resolve_offers outputSchema must describe ${field}`
     );
     assert.equal(findOutputSchema.required?.includes(field), true);
   }
-  const findInputSchema = listed.tools.find((tool) => tool.name === 'find_offers')?.inputSchema as {
+  const findInputSchema = listed.tools.find((tool) => tool.name === 'plan_offer_search')?.inputSchema as {
     properties?: Record<string, unknown>;
     required?: string[];
   };
@@ -211,6 +210,10 @@ test('MCP protocol exposes only the bounded offer workflow and widget resource',
   assert.equal(
     listed.tools.find((tool) => tool.name === 'watch_offers')?.annotations?.idempotentHint,
     true
+  );
+  assert.equal(
+    listed.tools.find((tool) => tool.name === 'watch_offers')?.annotations?.openWorldHint,
+    false
   );
   for (const tool of listed.tools) {
     assert.equal(tool._meta?.['openai/outputTemplate'], undefined);
@@ -275,7 +278,7 @@ test('MCP protocol exposes only the bounded offer workflow and widget resource',
   }
 });
 
-test('MCP calls find, verify, and idempotent watch through the authoritative service', async (t) => {
+test('MCP plans host retrieval, resolves evidence, verifies, and persists an idempotent baseline', async (t) => {
   const stateDirectory = mkdtempSync(join(tmpdir(), 'offer-savings-mcp-'));
   t.after(() => rmSync(stateDirectory, { recursive: true, force: true }));
   const { client, server } = await connectClient(join(stateDirectory, 'watches.json'));
@@ -284,24 +287,14 @@ test('MCP calls find, verify, and idempotent watch through the authoritative ser
     await server.close();
   });
 
-  const found = await client.callTool({ name: 'find_offers', arguments: publicRequest });
-  assert.equal(found.isError, undefined);
-  assert.equal(found.structuredContent?.operation, 'find_offers');
-  assert.deepEqual(found.structuredContent?.counts, { ltk: 0, supplemental: 1, evidence: 3 });
-  assert.match(
-    found.content[0] && found.content[0].type === 'text' ? found.content[0].text : '',
-    /0 verified LTK offers.*1 verified supplemental offer.*3 unverified findings/i
-  );
-  assert.equal(
-    (found.structuredContent?.request as { asOf: string }).asOf,
-    '2026-07-30T15:00:00.000Z'
-  );
-  assert.match(String(found.structuredContent?.receiptHash), /^sha256:[a-f0-9]{64}$/);
-  assert.deepEqual(found.structuredContent?.ltkOffers, []);
-  assert.equal(
-    (found.structuredContent?.supplementalOffers as Array<{ confidence: { label: string } }>)[0]
-      ?.confidence.label,
-    'Verified'
+  const plan = await client.callTool({ name: 'plan_offer_search', arguments: publicRequest });
+  assert.equal(plan.isError, undefined);
+  assert.equal(plan.structuredContent?.operation, 'plan_offer_search');
+  assert.deepEqual(
+    ((plan.structuredContent?.plan as { stages: Array<{ lane: string }> }).stages).map(
+      (stage) => stage.lane
+    ),
+    ['ltk', 'supplemental']
   );
 
   const hostResolved = await client.callTool({
@@ -333,6 +326,7 @@ test('MCP calls find, verify, and idempotent watch through the authoritative ser
 
   const watchInput = {
     request: publicRequest,
+    observations: hostObservations,
     until: '2026-08-09T23:59:59.000Z',
     idempotencyKey: 'protocol-retry-key'
   };
@@ -365,7 +359,7 @@ test('MCP input validation rejects malformed requests before service execution',
   });
 
   const malformed = await client.callTool({
-    name: 'find_offers',
+    name: 'plan_offer_search',
     arguments: { ...fixture.request, budget: -1 }
   });
   assert.equal(malformed.isError, true);
@@ -379,17 +373,20 @@ test('Streamable HTTP serves MCP and the versioned API from one process', async 
   const stateDirectory = mkdtempSync(join(tmpdir(), 'offer-savings-http-'));
   t.after(() => rmSync(stateDirectory, { recursive: true, force: true }));
   const service = createOfferService({
-    discovery: { discover: async () => fixture.observations },
     watches: createFileOfferWatchRepository({ filePath: join(stateDirectory, 'watches.json') }),
     clock: () => new Date('2026-07-30T15:00:00.000Z')
   });
-  const initialResult = await service.findOffers(fixture.request);
+  const initialResult = await service.resolveOffers({
+    request: publicRequest,
+    observations: hostObservations
+  });
   const httpServer = createOfferSavingsHttpServer({
     service,
     standalone: {
       initialResult,
       watchInput: {
         request: publicRequest,
+        observations: hostObservations,
         until: '2026-08-09T23:59:59.000Z',
         idempotencyKey: 'standalone-widget-watch'
       }
@@ -413,13 +410,13 @@ test('Streamable HTTP serves MCP and the versioned API from one process', async 
     mcpEndpoint: '/mcp'
   });
 
-  const api = await fetch(`http://127.0.0.1:${port}/v1/offers/find`, {
+  const api = await fetch(`http://127.0.0.1:${port}/v1/offers/search-plan`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(publicRequest)
   });
   assert.equal(api.status, 200);
-  assert.equal(((await api.json()) as { operation: string }).operation, 'find_offers');
+  assert.equal(((await api.json()) as { operation: string }).operation, 'plan_offer_search');
 
   const standaloneWidget = await fetch(`http://127.0.0.1:${port}/widget`);
   assert.equal(standaloneWidget.status, 200);
@@ -431,32 +428,23 @@ test('Streamable HTTP serves MCP and the versioned API from one process', async 
   await client.connect(new StreamableHTTPClientTransport(new URL(`http://127.0.0.1:${port}/mcp`)));
   assert.deepEqual(
     (await client.listTools()).tools.map((tool) => tool.name),
-    ['resolve_offers', 'find_offers', 'verify_offer', 'watch_offers', 'get_watch']
+    ['plan_offer_search', 'resolve_offers', 'verify_offer', 'watch_offers', 'get_watch']
   );
   assert.equal(
-    (await client.callTool({ name: 'find_offers', arguments: publicRequest })).structuredContent
+    (await client.callTool({ name: 'plan_offer_search', arguments: publicRequest })).structuredContent
       ?.operation,
-    'find_offers'
+    'plan_offer_search'
   );
 });
 
-test('live runtime requires injected API credentials and an explicit state location', () => {
-  assert.throws(() => readOfferSavingsRuntimeConfig({}), /OPENAI_API_KEY/);
-  assert.throws(
-    () => readOfferSavingsRuntimeConfig({ OPENAI_API_KEY: 'present-for-test' }),
-    /OFFER_STATE_FILE/
-  );
+test('live runtime requires only an explicit state location', () => {
+  assert.throws(() => readOfferSavingsRuntimeConfig({}), /OFFER_STATE_FILE/);
   const config = readOfferSavingsRuntimeConfig({
-    OPENAI_API_KEY: 'present-for-test',
     OFFER_STATE_FILE: '/tmp/offer-savings-runtime-test.json',
-    PORT: '9001',
-    OFFER_AGENT_MODEL: 'gpt-5.4-mini',
-    OFFER_AGENT_MAX_TURNS: '8'
+    PORT: '9001'
   });
   assert.deepEqual(config, {
     port: 9001,
-    stateFile: '/tmp/offer-savings-runtime-test.json',
-    model: 'gpt-5.4-mini',
-    maxTurns: 8
+    stateFile: '/tmp/offer-savings-runtime-test.json'
   });
 });
