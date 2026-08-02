@@ -9,5 +9,5 @@
     "noEmit": true,
     "allowSyntheticDefaultImports": true
   },
-  "include": ["index.ts"]
+  "include": ["index.ts", "gsc-analysis.ts", "tool-policy.ts", "tool-routing.ts", "test/**/*.ts"]
 }

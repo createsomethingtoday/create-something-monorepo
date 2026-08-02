@@ -7,6 +7,15 @@ import {
   type ComposioToolDef,
   type ComposioToolkitSummary,
 } from '@create-something/composio-bridge';
+import { projectToolkitTools, type ToolkitToolPolicy } from './tool-policy.js';
+import { buildToolRoutes, dispatchToolRoute, type ToolRoute } from './tool-routing.js';
+import {
+  analyzeSearchConsolePeriods,
+  buildGscCompareToolDefinition,
+  GSC_COMPARE_PERIODS_TOOL,
+  GSC_SEARCH_ANALYTICS_SOURCE_SLUG,
+  parseSearchComparisonArgs,
+} from './gsc-analysis.js';
 
 interface Env {
   COMPOSIO_API_KEY?: string;
@@ -26,15 +35,9 @@ interface Env {
 type ToolkitRuntime = {
   toolkitSlug: string;
   toolDefs: ComposioToolDef[];
+  toolPolicy: ToolkitToolPolicy;
   toolkitInfo: ComposioToolkitSummary | null;
   builtAt: number;
-};
-
-type ToolRoute = {
-  toolName: string;
-  composioToolSlug: string;
-  description: string;
-  inputSchema: Record<string, unknown>;
 };
 
 type EntityResolutionMode = 'header_required' | 'compat';
@@ -146,6 +149,7 @@ function buildToolkitServer(runtime: ToolkitRuntime, env: Env, request: Request)
   const authConfigMap = buildAuthConfigMap(env);
   const logger = getLangfuseLogger(env);
   const isZoomToolkit = runtime.toolkitSlug === 'zoom';
+  const isGscToolkit = runtime.toolkitSlug === 'google_search_console';
 
   const managementTools: Tool[] = [
     {
@@ -184,6 +188,9 @@ function buildToolkitServer(runtime: ToolkitRuntime, env: Env, request: Request)
     },
   ];
   const isGmailToolkit = runtime.toolkitSlug === 'gmail';
+  if (isGscToolkit) {
+    managementTools.push(buildGscCompareToolDefinition());
+  }
   if (isZoomToolkit) {
     managementTools.push({
       name: ZOOM_TRANSCRIPT_STATUS_TOOL,
@@ -522,6 +529,7 @@ function buildToolkitServer(runtime: ToolkitRuntime, env: Env, request: Request)
           entityId,
           builtAt: new Date(runtime.builtAt).toISOString(),
           toolCount: runtime.toolDefs.length,
+          toolPolicy: runtime.toolPolicy,
           toolkit: runtime.toolkitInfo,
         }));
       }
@@ -559,37 +567,69 @@ function buildToolkitServer(runtime: ToolkitRuntime, env: Env, request: Request)
         return emitAndReturn(toJsonResult(result));
       }
 
-      const route = toolRoutes.find((candidate) => candidate.toolName === toolName);
-      if (!route) {
-        const message = `Unknown tool "${toolName}".`;
-        return emitAndReturn(toErrorResult(message), undefined, message);
-      }
-
-      const connectedAccountId = stringOrNull(args.connectedAccountId);
-      if (connectedAccountId) {
-        await assertConnectedAccountOwnership({
-          client,
-          entityId,
-          connectedAccountId,
-          toolkitSlug: runtime.toolkitSlug,
-        });
-      } else {
-        const activeConnections = await client.getConnectedAccountsForToolkit(entityId, runtime.toolkitSlug);
-        const activeCount = activeConnections.filter((account) => account.status === 'active').length;
-        if (activeCount > 1) {
-          throw new Error(
-            `Toolkit "${runtime.toolkitSlug}" has ${activeCount} active connections for entity "${entityId}". Pass connectedAccountId to disambiguate execution.`,
-          );
+      if (toolName === GSC_COMPARE_PERIODS_TOOL && isGscToolkit) {
+        const sourceRoute = toolRoutes.find(
+          (candidate) => candidate.composioToolSlug === GSC_SEARCH_ANALYTICS_SOURCE_SLUG,
+        );
+        if (!sourceRoute) {
+          throw new Error(`Required read source "${GSC_SEARCH_ANALYTICS_SOURCE_SLUG}" is unavailable.`);
         }
+
+        const connectedAccountId = stringOrNull(args.connectedAccountId);
+        if (connectedAccountId) {
+          await assertConnectedAccountOwnership({
+            client,
+            entityId,
+            connectedAccountId,
+            toolkitSlug: runtime.toolkitSlug,
+          });
+        } else {
+          const activeConnections = await client.getConnectedAccountsForToolkit(entityId, runtime.toolkitSlug);
+          const activeCount = activeConnections.filter((account) => account.status === 'active').length;
+          if (activeCount > 1) {
+            throw new Error(
+              `Toolkit "${runtime.toolkitSlug}" has ${activeCount} active connections for entity "${entityId}". Pass connectedAccountId to disambiguate execution.`,
+            );
+          }
+        }
+
+        const comparisonInput = parseSearchComparisonArgs(args);
+        const receipt = await analyzeSearchConsolePeriods(comparisonInput, (queryArgs) =>
+          client.executeTool(sourceRoute.composioToolSlug, queryArgs, entityId, connectedAccountId ?? undefined),
+        );
+        return emitAndReturn(toJsonResult(receipt), sourceRoute.composioToolSlug);
       }
 
-      const result = await client.executeTool(
-        route.composioToolSlug,
-        stripConnectedAccountArg(args),
-        entityId,
-        connectedAccountId ?? undefined,
-      );
-      return emitAndReturn(toJsonResult(result), route.composioToolSlug);
+      const dispatch = await dispatchToolRoute(toolRoutes, toolName, async (route) => {
+        const connectedAccountId = stringOrNull(args.connectedAccountId);
+        if (connectedAccountId) {
+          await assertConnectedAccountOwnership({
+            client,
+            entityId,
+            connectedAccountId,
+            toolkitSlug: runtime.toolkitSlug,
+          });
+        } else {
+          const activeConnections = await client.getConnectedAccountsForToolkit(entityId, runtime.toolkitSlug);
+          const activeCount = activeConnections.filter((account) => account.status === 'active').length;
+          if (activeCount > 1) {
+            throw new Error(
+              `Toolkit "${runtime.toolkitSlug}" has ${activeCount} active connections for entity "${entityId}". Pass connectedAccountId to disambiguate execution.`,
+            );
+          }
+        }
+
+        return client.executeTool(
+          route.composioToolSlug,
+          stripConnectedAccountArg(args),
+          entityId,
+          connectedAccountId ?? undefined,
+        );
+      });
+      if (!dispatch.matched) {
+        return emitAndReturn(toErrorResult(dispatch.message), undefined, dispatch.message);
+      }
+      return emitAndReturn(toJsonResult(dispatch.result), dispatch.route.composioToolSlug);
     } catch (error) {
       const message = error instanceof Error ? error.message : `Tool "${toolName}" failed: ${String(error)}`;
       return emitAndReturn(toErrorResult(message), undefined, message);
@@ -1709,58 +1749,6 @@ function toErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-function buildToolRoutes(toolDefs: ComposioToolDef[], reservedNames: Set<string>): ToolRoute[] {
-  const routes: ToolRoute[] = [];
-  const usedNames = new Set<string>(reservedNames);
-
-  for (const tool of toolDefs) {
-    const baseName = normalizeToolName(tool.slug);
-    const toolName = reserveToolName(baseName, usedNames);
-
-    routes.push({
-      toolName,
-      composioToolSlug: tool.slug,
-      description: tool.description || `${tool.name} via Composio`,
-      inputSchema: {
-        type: 'object',
-        properties: {
-          ...(tool.parameters.properties ?? {}),
-          connectedAccountId: {
-            type: 'string',
-            description:
-              'Optional Composio connected account ID. Use this when multiple active connections exist for the same toolkit/entity.',
-          },
-        },
-        required: tool.parameters.required ?? [],
-        additionalProperties: true,
-      },
-    });
-  }
-
-  return routes;
-}
-
-function normalizeToolName(slug: string): string {
-  return slug.toLowerCase().replace(/[^a-z0-9_]/g, '_');
-}
-
-function reserveToolName(baseName: string, usedNames: Set<string>): string {
-  if (!usedNames.has(baseName)) {
-    usedNames.add(baseName);
-    return baseName;
-  }
-
-  let suffix = 2;
-  let candidate = `${baseName}_${suffix}`;
-  while (usedNames.has(candidate)) {
-    suffix += 1;
-    candidate = `${baseName}_${suffix}`;
-  }
-
-  usedNames.add(candidate);
-  return candidate;
-}
-
 async function getToolkitRuntime(toolkitSlug: string, env: Env): Promise<ToolkitRuntime> {
   const normalized = toolkitSlug.trim().toLowerCase();
   const ttlMs = parsePositiveInt(env.COMPOSIO_TOOL_CACHE_SECONDS, DEFAULT_CACHE_SECONDS) * 1000;
@@ -1805,10 +1793,12 @@ async function buildToolkitRuntime(toolkitSlug: string, env: Env): Promise<Toolk
 
   const toolkitInfo =
     toolkitInventory.find((entry) => entry.slug.toLowerCase() === toolkitSlug) ?? null;
+  const projection = projectToolkitTools(toolkitSlug, toolDefs);
 
   return {
     toolkitSlug,
-    toolDefs,
+    toolDefs: projection.toolDefs,
+    toolPolicy: projection.policy,
     toolkitInfo,
     builtAt: Date.now(),
   };
