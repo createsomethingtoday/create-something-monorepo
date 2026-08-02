@@ -11,6 +11,7 @@
 	import { createConciergeThreadClient, sendThreadMessage } from '$chat/client-actions';
 	import { CONCIERGE_THREAD_MUTATION_EVENT, type ThreadMutationResponse } from '$chat/api-contract';
 	import { getNurseGuidance } from '$chat/nurse-guidance';
+	import { nurseStarterPrompts, type NurseStarterPrompt } from '$chat/starter-prompts';
 	import { buildControlPlaneBridgeHref } from '$lib/control-plane';
 	import IntakeVerificationPanel from '$lib/intake/IntakeVerificationPanel.svelte';
 	import WidgetRenderer from '$widgets/WidgetRenderer.svelte';
@@ -274,6 +275,14 @@
 		}
 
 		return `${(byteSize / (1024 * 1024)).toFixed(1)} MB`;
+	}
+
+	async function useStarterPrompt(prompt: NurseStarterPrompt) {
+		composerText = prompt.message;
+		composerError = '';
+		await tick();
+		syncComposerHeight();
+		composerEl?.focus();
 	}
 
 	async function submitComposer() {
@@ -646,12 +655,14 @@
 			<section class="starter-card">
 				<div>
 					<div class="eyebrow">Good First Message</div>
-					<p>Share specialty, shift, and location. A sentence is enough.</p>
+					<p>Choose an example, edit it if needed, then send when it fits.</p>
 				</div>
 				<div class="starter-examples" aria-label="Example first messages">
-					<span>ICU nights in Dallas</span>
-					<span>ER days near Phoenix</span>
-					<span>Compact license, open to Texas</span>
+					{#each nurseStarterPrompts as prompt}
+						<button type="button" on:click={() => useStarterPrompt(prompt)}>
+							{prompt.label}
+						</button>
+					{/each}
 				</div>
 			</section>
 		{/if}
@@ -1288,17 +1299,25 @@
 		justify-content: flex-end;
 	}
 
-	.starter-examples span {
+	.starter-examples button {
 		min-height: 1.55rem;
 		padding: 0.27rem 0.58rem;
 		border: 1px solid var(--line);
 		border-radius: 999px;
 		background: var(--surface-soft);
 		color: var(--ink-soft);
+		cursor: pointer;
+		font: inherit;
 		font-size: 0.78rem;
 		line-height: 1;
 		display: inline-flex;
 		align-items: center;
+	}
+
+	.starter-examples button:hover {
+		border-color: var(--ink-soft);
+		background: var(--surface);
+		color: var(--ink);
 	}
 
 	.thread-top,
