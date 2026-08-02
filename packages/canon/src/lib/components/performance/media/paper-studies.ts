@@ -10,8 +10,7 @@ import researchTrace from './paper-research-trace.svg';
 import researchTraceMobile from './paper-research-trace-mobile.svg';
 
 import type { PerformanceMediaStudy } from './types';
-
-export type PerformancePaperProperty = 'ltd' | 'io' | 'space' | 'agency' | 'learn';
+import type { PerformancePaperProperty } from './paper-studio';
 
 export const paperCanonSheetMedia = {
   src: canonSheet,
@@ -22,7 +21,8 @@ export const paperCanonSheetMedia = {
   width: 1600,
   height: 1000,
   objectPosition: 'center',
-  colorMode: 'natural'
+  colorMode: 'natural',
+  studioShot: 'ltd'
 } as const satisfies PerformanceMediaStudy;
 
 export const paperResearchTraceMedia = {
@@ -34,7 +34,8 @@ export const paperResearchTraceMedia = {
   width: 1600,
   height: 1000,
   objectPosition: 'center',
-  colorMode: 'natural'
+  colorMode: 'natural',
+  studioShot: 'io'
 } as const satisfies PerformanceMediaStudy;
 
 export const paperPrototypeScoreMedia = {
@@ -46,7 +47,8 @@ export const paperPrototypeScoreMedia = {
   width: 1600,
   height: 1000,
   objectPosition: 'center',
-  colorMode: 'natural'
+  colorMode: 'natural',
+  studioShot: 'space'
 } as const satisfies PerformanceMediaStudy;
 
 export const paperPressureHandoffMedia = {
@@ -58,7 +60,8 @@ export const paperPressureHandoffMedia = {
   width: 1600,
   height: 1000,
   objectPosition: 'center',
-  colorMode: 'natural'
+  colorMode: 'natural',
+  studioShot: 'agency'
 } as const satisfies PerformanceMediaStudy;
 
 export const paperLearningSequenceMedia = {
@@ -70,7 +73,8 @@ export const paperLearningSequenceMedia = {
   width: 1600,
   height: 1000,
   objectPosition: 'center',
-  colorMode: 'natural'
+  colorMode: 'natural',
+  studioShot: 'learn'
 } as const satisfies PerformanceMediaStudy;
 
 export const performancePaperStudies = {

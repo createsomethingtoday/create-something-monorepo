@@ -14,7 +14,17 @@ export {
   paperResearchTraceMedia,
   performancePaperStudies
 } from './paper-studies';
-export type { PerformancePaperProperty } from './paper-studies';
+export {
+  getPerformancePaperShot,
+  performancePaperShots,
+  performancePaperStudioTokens
+} from './paper-studio';
+export type {
+  PerformancePaperCameraFrame,
+  PerformancePaperProperty,
+  PerformancePaperShot,
+  PerformancePaperStage
+} from './paper-studio';
 export { controlledFlowMedia } from './controlled-flow';
 export { pressureBoundaryMedia } from './pressure-boundary';
 export { traceControlPlaneMedia } from './trace-control-plane';

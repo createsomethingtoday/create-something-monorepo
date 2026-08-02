@@ -10,8 +10,14 @@ const read = (relativePath: string) => {
 const home = read('../src/routes/+page.svelte');
 const component = read('../src/lib/components/PaperUnderPressureStage.svelte');
 const model = read('../src/lib/data/paperWorkflow.ts');
-const canvas = read('../src/lib/components/PaperPressureCanvas.svelte');
-const renderer = read('../src/lib/visual/paperPressureRenderer.ts');
+const canvas = read(
+  '../../canon/src/lib/components/performance/PerformancePaperStudioCanvas.svelte'
+);
+const renderer = read('../../canon/src/lib/components/performance/media/paper-studio-renderer.ts');
+const opening = read(
+  '../../canon/src/lib/components/performance/PerformanceCampaignOpening.svelte'
+);
+const studies = read('../../canon/src/lib/components/performance/media/paper-studies.ts');
 
 test('the homepage opening makes one paper workflow legible before WebGL is available', () => {
   assert.match(home, /import PaperUnderPressureStage/);
@@ -23,14 +29,17 @@ test('the homepage opening makes one paper workflow legible before WebGL is avai
   assert.match(component, /aria-label="Choose a paper workflow stage"/);
   assert.match(component, /aria-pressed=\{activeStageId === stage\.id\}/);
   assert.match(component, /aria-live="polite"/);
-  assert.match(component, /<svg[\s\S]*?role="img"/);
-  assert.match(component, /<title id="paper-workflow-title">/);
-  assert.match(component, /<desc id="paper-workflow-description">/);
+  assert.match(home, /media=\{paperPressureHandoffMedia\}/);
+  assert.match(studies, /alt: 'A tactile paper field/);
+  assert.match(opening, /<picture class:performance-campaign-opening__fallback-suppressed/);
+  assert.match(opening, /<img[\s\S]*?alt=\{artifactOwnsMedia \? '' : media\.alt\}/);
+  assert.match(component, /<picture class:paper-pressure__fallback--hidden=\{studioReady\}>/);
+  assert.match(component, /alt=\{paperPressureHandoffMedia\.alt\}/);
   assert.match(component, /prefers-reduced-motion: reduce/);
 
   for (const stage of ['map', 'build', 'control']) {
     assert.match(model, new RegExp(`id: '${stage}'`));
-    assert.match(component, new RegExp(`data-paper-stage="${stage}"`));
+    assert.match(model, new RegExp(`id: '${stage}'`));
   }
 
   for (const term of ['Signal', 'Decision', 'Proof', 'Owner', 'Authority', 'Receipt']) {
@@ -52,37 +61,48 @@ test('the paper composition is one dominant material object rather than a floati
 });
 
 test('Three.js progressively enhances the same paper semantics within an inspectable budget', () => {
-  assert.match(component, /import PaperPressureCanvas/);
-  assert.match(component, /<PaperPressureCanvas stage=\{activeStageId\}/);
-  assert.match(component, /<svg[\s\S]*?role="img"/);
+  assert.match(component, /PerformancePaperStudioCanvas/);
+  assert.match(
+    component,
+    /<PerformancePaperStudioCanvas[\s\S]*?shot="agency"[\s\S]*?stage=\{activeStageId\}[\s\S]*?embedded[\s\S]*?onStateChange=/
+  );
+  assert.match(opening, /media\.studioShot/);
+  assert.match(opening, /studioReady = state === 'ready'/);
+  assert.match(opening, /performance-campaign-opening__media--studio-ready picture/);
 
-  assert.match(canvas, /<canvas[\s\S]*?aria-hidden="true"/);
-  assert.match(canvas, /await import\('\$lib\/visual\/paperPressureRenderer'\)/);
+  assert.match(canvas, /<canvas bind:this=\{canvasEl\}><\/canvas>/);
+  assert.match(canvas, /aria-hidden="true"/);
+  assert.match(canvas, /await import\([\s\S]*?'\.\/media\/paper-studio-renderer'/);
   assert.match(canvas, /IntersectionObserver/);
   assert.match(canvas, /ResizeObserver/);
   assert.match(canvas, /prefers-reduced-motion: reduce/);
-  assert.match(canvas, /contextRecoveryInFlight/);
-  assert.match(canvas, /disposeRenderer\(false\)/);
+  assert.match(canvas, /recoveryInFlight/);
+  assert.match(canvas, /webglcontextrestored/);
+  assert.match(canvas, /requestAnimationFrame/);
 
-  for (const receipt of ['data-render-profile', 'data-render-budget', 'data-draw-calls']) {
+  for (const receipt of [
+    'data-renderer-profile',
+    'data-renderer-budget',
+    'data-renderer-draw-calls'
+  ]) {
     assert.ok(canvas.includes(receipt), `paper canvas should publish ${receipt}`);
   }
 
   for (const semantic of [
-    '--paper-pressure-ink',
-    '--paper-pressure-sheet',
-    '--paper-pressure-signal',
-    '--paper-pressure-review',
-    '--paper-pressure-stop'
+    '--color-performance-ink',
+    '--color-performance-panel',
+    '--color-performance-paper-edge',
+    '--color-performance-paper-fold',
+    '--color-performance-signal'
   ]) {
     assert.ok(renderer.includes(semantic), `renderer should inherit ${semantic}`);
   }
 
   for (const contract of [
-    'PlaneGeometry',
-    'BufferGeometry',
-    'createPipelineEnvironmentPixels',
-    'createPipelineSurfacePixels',
+    'BoxGeometry',
+    'TubeGeometry',
+    'RectAreaLight',
+    'RoomEnvironment',
     'PMREMGenerator',
     'roughnessMap',
     'normalMap',
@@ -92,7 +112,9 @@ test('Three.js progressively enhances the same paper semantics within an inspect
     'renderStatic',
     'forceContextLoss',
     'maximumPixelRatio',
-    'withinBudget'
+    'withinBudget',
+    'ACESFilmicToneMapping',
+    'LinearMipmapLinearFilter'
   ]) {
     assert.ok(renderer.includes(contract), `renderer should expose ${contract}`);
   }
@@ -114,6 +136,10 @@ test('the paper workflow remains an original operating artifact rather than a ga
     'integration constellation',
     'confetti'
   ]) {
-    assert.equal(source.includes(prohibited), false, `${prohibited} must not enter the implementation`);
+    assert.equal(
+      source.includes(prohibited),
+      false,
+      `${prohibited} must not enter the implementation`
+    );
   }
 });

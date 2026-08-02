@@ -1,8 +1,5 @@
 export { default as PerformanceLabBand } from './PerformanceLabBand.svelte';
-export type {
-  PerformanceLabMetric,
-  PerformanceLabTone
-} from './PerformanceLabBand.svelte';
+export type { PerformanceLabMetric, PerformanceLabTone } from './PerformanceLabBand.svelte';
 export { default as PerformanceFieldStudy } from './PerformanceFieldStudy.svelte';
 export type {
   PerformanceFieldStudyMetric,
@@ -18,6 +15,7 @@ export type {
   PerformanceFieldSequenceLayout
 } from './PerformanceFieldSequence.svelte';
 export { default as PerformanceCampaignOpening } from './PerformanceCampaignOpening.svelte';
+export { default as PerformancePaperStudioCanvas } from './PerformancePaperStudioCanvas.svelte';
 export type {
   PerformanceCampaignMedia,
   PerformanceCampaignOpeningMode,
@@ -40,7 +38,17 @@ export {
   paperResearchTraceMedia,
   performancePaperStudies
 } from './media/paper-studies';
-export type { PerformancePaperProperty } from './media/paper-studies';
+export type {
+  PerformancePaperCameraFrame,
+  PerformancePaperProperty,
+  PerformancePaperShot,
+  PerformancePaperStage
+} from './media/paper-studio';
+export {
+  getPerformancePaperShot,
+  performancePaperShots,
+  performancePaperStudioTokens
+} from './media/paper-studio';
 export { default as PerformanceThesisConditions } from './PerformanceThesisConditions.svelte';
 export type {
   PerformanceCondition,
@@ -96,9 +104,7 @@ export type { ClearLogoStripItem as PerformanceLogoStripItem } from '../clear/Cl
 export { default as PerformanceProofStrip } from '../clear/ClearProofStrip.svelte';
 export type { ClearProofItem as PerformanceProofItem } from '../clear/ClearProofStrip.svelte';
 export { default as PerformanceWorkflowMiniArtifact } from '../clear/ClearWorkflowMiniArtifact.svelte';
-export type {
-  ClearWorkflowMiniArtifactProps as PerformanceWorkflowMiniArtifactProps
-} from '../clear/ClearWorkflowMiniArtifact.svelte';
+export type { ClearWorkflowMiniArtifactProps as PerformanceWorkflowMiniArtifactProps } from '../clear/ClearWorkflowMiniArtifact.svelte';
 export { default as PerformanceStateRows } from '../clear/ClearStateRows.svelte';
 export type { ClearWorkflowState as PerformanceWorkflowState } from '../clear/ClearStateRows.svelte';
 export { default as PerformanceArtifactCard } from '../clear/ClearArtifactCard.svelte';
@@ -124,9 +130,7 @@ export type {
   ClearSecurityLog as PerformanceSecurityLog
 } from '../clear/ClearSecurityPanel.svelte';
 export { default as PerformanceContentHighlights } from '../clear/ClearContentHighlights.svelte';
-export type {
-  ClearContentHighlight as PerformanceContentHighlight
-} from '../clear/ClearContentHighlights.svelte';
+export type { ClearContentHighlight as PerformanceContentHighlight } from '../clear/ClearContentHighlights.svelte';
 export { default as PerformanceReceiptGrid } from '../clear/ClearReceiptGrid.svelte';
 export type { ClearReceipt as PerformanceReceipt } from '../clear/ClearReceiptGrid.svelte';
 export { default as PerformanceCtaBand } from '../clear/ClearCtaBand.svelte';
@@ -135,9 +139,7 @@ export type {
   ClearCtaItem as PerformanceCtaItem
 } from '../clear/ClearCtaBand.svelte';
 export { default as PerformanceActionFooter } from '../clear/ClearActionFooter.svelte';
-export type {
-  ClearActionFooterItem as PerformanceActionFooterItem
-} from '../clear/ClearActionFooter.svelte';
+export type { ClearActionFooterItem as PerformanceActionFooterItem } from '../clear/ClearActionFooter.svelte';
 export { default as PerformanceDecisionPanel } from '../clear/ClearDecisionPanel.svelte';
 export type {
   ClearDecisionAction as PerformanceDecisionAction,
