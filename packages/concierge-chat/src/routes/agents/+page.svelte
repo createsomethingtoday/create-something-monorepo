@@ -97,21 +97,6 @@
 
   <section class="public-section bright">
     <div class="public-shell">
-      <a class="npg-delivery-card" href="/client-service">
-        <span class="npg-delivery-mark" aria-hidden="true">
-          <img src="/npg-client-service/logo-mark.png" alt="" />
-        </span>
-        <div>
-          <span class="npg-delivery-index">Client delivery 01</span>
-          <h2>NPG Client Service Representative</h2>
-          <p>
-            A dedicated voice agent for Loyal Source location assistance, shared-office access, and
-            controlled attendance handoffs.
-          </p>
-        </div>
-        <span class="npg-delivery-action">Open live experience ↗</span>
-      </a>
-
       <div class="public-section-head">
         <div>
           <span class="public-section-kicker">The roster</span>
@@ -138,6 +123,21 @@
           </article>
         {/each}
       </div>
+
+      <a class="npg-delivery-card" href="/client-service">
+        <span class="npg-delivery-mark" aria-hidden="true">
+          <img src="/npg-client-service/logo-mark.png" alt="" />
+        </span>
+        <div>
+          <span class="npg-delivery-index">Client delivery 01</span>
+          <h2>NPG Client Service Representative</h2>
+          <p>
+            A dedicated voice agent for Loyal Source location assistance, shared-office access, and
+            controlled attendance handoffs.
+          </p>
+        </div>
+        <span class="npg-delivery-action">Open live experience ↗</span>
+      </a>
     </div>
   </section>
 

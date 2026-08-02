@@ -28,7 +28,7 @@
         </div>
         <div>
           <strong>For teams</strong>
-          <a href="/facilities">Request coverage</a>
+          <a href="/facility-request">Prepare coverage brief</a>
           <a href="/agents">Agent system</a>
           <a href="/client-service">NPG client service</a>
           <a href="/facilities">Facility support</a>

@@ -38,7 +38,7 @@ CREATE SOMETHING owns the runtime contract, conversation state, policy, and rece
 - shortlist generation, recruiter review booking, recruiter review completion, staffing coordinator outreach, governed facility-submission handoff progression, facility-response capture, onboarding handoff progression, and terminal start-ready or closed-request outcomes once intake blockers clear
 - route loads and `/api/threads/*` mutations for thread creation, messaging, confirmation, consent, attachment uploads, recruiter review transitions, staffing queue transitions, facility-response transitions, onboarding transitions, reconnect recovery, and reset
 - local `/control-plane/*` bridge routes that redirect Abundance control-plane actions into real `.agency` dashboard, MCP access, and security surfaces
-- Abundance public staffing website routes for nurses, jobs, facilities, branded agents, and the style guide
+- Abundance public staffing website routes for nurses, jobs, facilities, a browser-local facility coverage brief, branded agents, and the style guide
 - Abundance operator shell contract in `src/lib/operator/clear-shell.ts`, grounded in Ona's internal clarity pattern but presented with Abundance client-facing language
 - public `/agents` route for Abundance-branded agent roles; legacy `/agents/[agentId]` operator-chat URLs redirect to the public agent system while the owned runtime cutover is promoted separately
 - root layout now reads the optional shared `.agency` browser session and live `.agency` entitlement snapshot so the Abundance shell can show whether governed staffing access is active, blocked, or unavailable
@@ -80,5 +80,5 @@ CREATE SOMETHING owns the runtime contract, conversation state, policy, and rece
 | Smoke command | `pnpm --filter @create-something/concierge-chat smoke` |
 | Acceptance command | `pnpm --filter @create-something/concierge-chat acceptance` |
 | Validation surfaces | Svelte typecheck output, unit tests, production build, route rendering, nurse and NPG voice session boundaries, caller-safe location projection, deterministic lookup stops, widget registry compilation, public-apply routing, anonymous redirects from `/chat` and `/settings`, candidate acceptance flow, internal staffing acceptance flow, inbound claim creation, `/apply/claim` continuation routing, self-serve verification request/verify flows, secure-intake gating, terminal Indeed disposition writeback |
-| UI validation path | `/`, `/voice`, `/client-service`, `/apply`, `/apply/claim?token=...`, `/agents`, `/agents/[agentId]`, `/chat` (redirect), `/chat/[threadId]`, `/chat/[threadId]/profile`, `/chat/[threadId]/handoff` (staff only when available) |
+| UI validation path | `/`, `/voice`, `/client-service`, `/apply`, `/facility-request`, `/apply/claim?token=...`, `/agents`, `/agents/[agentId]`, `/chat` (redirect), `/chat/[threadId]`, `/chat/[threadId]/profile`, `/chat/[threadId]/handoff` (staff only when available) |
 | Escalation rule | stop if a new widget requires arbitrary executable UI or if a workflow needs real persistence/auth without an agreed data contract |

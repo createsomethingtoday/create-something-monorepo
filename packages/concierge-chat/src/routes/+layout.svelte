@@ -63,6 +63,7 @@
     data.currentPath === '/nurses' ||
     data.currentPath === '/jobs' ||
     data.currentPath === '/facilities' ||
+    data.currentPath === '/facility-request' ||
     data.currentPath === '/agents' ||
     data.currentPath === '/voice' ||
     data.currentPath === '/client-service' ||
@@ -75,6 +76,7 @@
     data.currentPath === '/nurses' ||
     data.currentPath === '/jobs' ||
     data.currentPath === '/facilities' ||
+    data.currentPath === '/facility-request' ||
     data.currentPath === '/agents' ||
     data.currentPath === '/voice' ||
     data.currentPath === '/client-service' ||
@@ -127,8 +129,10 @@
       <a
         class:npg-service-logo={isNpgClientServiceRoute}
         class="webflow-logo"
-        href={isNpgClientServiceRoute ? '/client-service' : '/'}
-        aria-label={isNpgClientServiceRoute ? 'NPG Client Service home' : 'Abundance Staffing home'}
+        href="/"
+        aria-label={isNpgClientServiceRoute
+          ? 'NPG Client Service: back to Abundance Staffing'
+          : 'Abundance Staffing home'}
       >
         <span class="webflow-logo-mark">
           <img
@@ -144,6 +148,9 @@
           <strong>{isNpgClientServiceRoute ? 'NPG' : 'Abundance'}</strong>
           <small>{isNpgClientServiceRoute ? 'Client Service' : 'Staffing'}</small>
         </span>
+        {#if isNpgClientServiceRoute}
+          <span class="webflow-logo-context">Back to Abundance</span>
+        {/if}
       </a>
       <button
         class="webflow-nav-toggle"
@@ -178,21 +185,20 @@
               href="/apply"
               aria-current={isApplyRoute ? 'page' : undefined}
               on:click={closePublicNavigation}
-            >Start application <span aria-hidden="true">↗</span></a>
+              >Start application <span aria-hidden="true">↗</span></a
+            >
             <a
               class="webflow-mobile-menu-action"
               href={controlPlaneHref}
               target="_blank"
               rel="noreferrer"
-              on:click={closePublicNavigation}
-            >Staff access <span aria-hidden="true">↗</span></a>
+              on:click={closePublicNavigation}>Staff access <span aria-hidden="true">↗</span></a
+            >
           </div>
         {:else}
-          <a
-            class="webflow-mobile-menu-action"
-            href="/"
-            on:click={closePublicNavigation}
-          >Exit application <span aria-hidden="true">↗</span></a>
+          <a class="webflow-mobile-menu-action" href="/" on:click={closePublicNavigation}
+            >Exit application <span aria-hidden="true">↗</span></a
+          >
         {/if}
       </nav>
       {#if isCandidateApplicationRoute}
@@ -216,7 +222,8 @@
             class="webflow-primary-action"
             href="/apply"
             aria-current={isApplyRoute ? 'page' : undefined}
-          >Start application <span aria-hidden="true">↗</span></a>
+            >Start application <span aria-hidden="true">↗</span></a
+          >
         </div>
       {/if}
     </header>
@@ -230,7 +237,8 @@
         <ol>
           {#each applicationProgress as step, index}
             <li class:active={isCurrentApplicationStage(index)}>
-              <span>0{index + 1}</span> {step.label}
+              <span>0{index + 1}</span>
+              {step.label}
             </li>
           {/each}
         </ol>
@@ -529,6 +537,14 @@
     color: rgba(23, 21, 18, 0.52);
     font-size: 9px;
     letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .webflow-logo-context {
+    color: rgba(23, 21, 18, 0.52);
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
   }
 

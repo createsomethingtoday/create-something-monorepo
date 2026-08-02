@@ -15,6 +15,8 @@ test('the NPG client-service instance owns its mark, browser icon, and webclip',
   assert.match(layoutSource, /\/npg-client-service\/site\.webmanifest/);
   assert.match(layoutSource, /data\.currentPath === '\/client-service'/);
   assert.match(layoutSource, /NPG Client Service/);
+  assert.match(layoutSource, /NPG Client Service: back to Abundance Staffing/);
+  assert.match(layoutSource, /webflow-logo-context">Back to Abundance/);
 
   for (const asset of [
     'static/npg-client-service/logo-mark.png',

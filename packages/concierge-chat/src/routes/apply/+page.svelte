@@ -1,5 +1,6 @@
 <script lang="ts">
   import { createConciergeThreadClient } from '$chat/client-actions';
+  import { buildSelectedRoleIntakeMessage } from '$lib/site/public-intake-context';
   import { absoluteUrl } from '$lib/site/seo';
   import type { PageData } from './$types';
 
@@ -19,7 +20,9 @@
     actionError = '';
 
     try {
-      await createConciergeThreadClient();
+      await createConciergeThreadClient(
+        data.selectedJob ? buildSelectedRoleIntakeMessage(data.selectedJob) : undefined
+      );
     } catch (error) {
       actionError = error instanceof Error ? error.message : 'Unable to start a new intake thread.';
     } finally {
@@ -88,6 +91,16 @@
           builds, and bring in a recruiter when the next step is real.
         </p>
 
+        {#if data.selectedJob}
+          <div class="selected-role" aria-label="Selected role">
+            <span>Selected role</span>
+            <strong>{data.selectedJob.title}</strong>
+            {#if data.selectedJob.display_location}
+              <small>{data.selectedJob.display_location}</small>
+            {/if}
+          </div>
+        {/if}
+
         <div class="apply-actions">
           {#if latestThread}
             <a class="apply-primary" href={`/chat/${latestThread.id}`}>
@@ -142,13 +155,17 @@
           <span class="concierge-mark">A</span>
           <div>
             <span>Abundance Concierge</span>
-            <strong>Your first turn becomes a working brief.</strong>
+            <strong
+              >{data.selectedJob
+                ? 'Your selected role stays in context.'
+                : 'Your first turn becomes a working brief.'}</strong
+            >
           </div>
         </div>
         <div class="role-brief">
           <div class="role-brief-heading">
             <span>Role brief</span>
-            <strong>ICU travel nurse</strong>
+            <strong>{data.selectedJob?.title ?? 'ICU travel nurse'}</strong>
           </div>
           <div class="brief-tags" aria-label="Example role preferences">
             <span>Austin</span>
@@ -330,6 +347,32 @@
     color: rgba(23, 21, 18, 0.64);
     font-size: clamp(1rem, 1.25vw, 1.18rem);
     line-height: 1.65;
+  }
+
+  .selected-role {
+    display: grid;
+    gap: 5px;
+    max-width: 560px;
+    margin-top: 24px;
+    padding: 14px 16px;
+    border-left: 3px solid var(--apply-status);
+    background: rgba(255, 250, 244, 0.72);
+  }
+
+  .selected-role span,
+  .selected-role small {
+    color: rgba(23, 21, 18, 0.62);
+    font-size: 0.75rem;
+  }
+
+  .selected-role span {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .selected-role strong {
+    font-size: 1rem;
   }
 
   .apply-actions {

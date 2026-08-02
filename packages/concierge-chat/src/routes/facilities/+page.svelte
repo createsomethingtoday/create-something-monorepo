@@ -78,8 +78,8 @@
           Abundance prepares the request so a recruiter can move with the full context.
         </p>
         <div class="public-actions">
-          <a class="public-button primary" href="/apply">
-            <span>Request coverage</span>
+          <a class="public-button primary" href="/facility-request">
+            <span>Prepare coverage brief</span>
             <span class="public-button-arrow" aria-hidden="true">↗</span>
           </a>
           <a class="public-button secondary" href="/agents">See the staffing system</a>

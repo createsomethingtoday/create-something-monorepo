@@ -3,10 +3,15 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 const layoutSource = readFileSync('src/routes/+layout.svelte', 'utf8');
+const facilitiesSource = readFileSync('src/routes/facilities/+page.svelte', 'utf8');
+const footerSource = readFileSync('src/lib/site/AbundanceFooter.svelte', 'utf8');
 
 test('public navigation gives the applicant action priority over staff utility access', () => {
   assert.match(layoutSource, /class="webflow-primary-action"/);
-  assert.match(layoutSource, />Start application\s*<span aria-hidden="true">↗<\/span><\/a>/);
+  assert.match(
+    layoutSource,
+    /class="webflow-primary-action"[\s\S]*?href="\/apply"[\s\S]*?>\s*Start application\s*<span aria-hidden="true">↗<\/span>/
+  );
   assert.match(layoutSource, /class="webflow-staff-link"[\s\S]*?>\s*<span>Staff access<\/span>/);
   assert.doesNotMatch(layoutSource, /\{ href: '\/apply', label: 'Start' \}/);
 });
@@ -48,4 +53,11 @@ test('public navigation prioritizes the two audiences and keeps specialised rout
   assert.match(publicNavBlock, /\{ href: '\/agents', label: 'How it works' \}/);
   assert.doesNotMatch(publicNavBlock, /\{ href: '\/voice', label: 'Voice' \}/);
   assert.doesNotMatch(publicNavBlock, /\{ href: '\/client-service', label: 'NPG service' \}/);
+});
+
+test('facility coverage starts with its own prepared brief instead of a nurse application', () => {
+  assert.match(facilitiesSource, /class="public-button primary" href="\/facility-request"/);
+  assert.doesNotMatch(facilitiesSource, /class="public-button primary" href="\/apply"/);
+  assert.match(footerSource, /href="\/facility-request">Prepare coverage brief/);
+  assert.match(layoutSource, /data\.currentPath === '\/facility-request'/);
 });
