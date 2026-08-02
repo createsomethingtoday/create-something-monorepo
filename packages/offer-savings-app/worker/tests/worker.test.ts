@@ -27,6 +27,7 @@ test('the public Worker advertises OAuth and rejects anonymous MCP calls', async
     {} as ExecutionContext
   );
   assert.equal(healthResponse.status, 200);
+  assert.equal(healthResponse.headers.get('Cache-Control'), 'no-store');
   assert.deepEqual(await healthResponse.json(), {
     name: 'offer-savings-agent',
     version: '0.3.0',
