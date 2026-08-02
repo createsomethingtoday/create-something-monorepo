@@ -127,7 +127,7 @@ test('resolve_offers scores host-discovered evidence without invoking nested dis
   assert.equal(result.observedAt, fixture.request.asOf);
 });
 
-test('resolve_offers tolerates imprecise public dates and coded offers without a stated discount', async () => {
+test('resolve_offers preserves date-only offer windows and rejects a stale host-discovered code', async () => {
   const service = createOfferService({
     discovery: { discover: async () => [] },
     clock: () => new Date(fixture.request.asOf)
@@ -141,11 +141,11 @@ test('resolve_offers tolerates imprecise public dates and coded offers without a
       {
         ...hostObservation,
         id: 'host-imprecise-public-date',
-        source: { ...hostObservation.source, publishedAt: '2026-08-01' },
+        source: { ...hostObservation.source, publishedAt: '2026-05-01' },
         offer: {
           code: 'HOSTCODE',
           status: 'unknown',
-          endsAt: '2026-08-09'
+          endsAt: '2026-05-31'
         }
       }
     ]
@@ -153,6 +153,12 @@ test('resolve_offers tolerates imprecise public dates and coded offers without a
 
   assert.equal(result.resolution.decisions.length, 1);
   assert.equal(result.resolution.decisions[0]?.offerCode, 'HOSTCODE');
+  assert.equal(result.resolution.decisions[0]?.status, 'rejected');
+  assert.ok(
+    result.resolution.decisions[0]?.reliability.reasons.includes(
+      'The observed end date is before the request date.'
+    )
+  );
   assert.match(result.receiptHash, /^sha256:[a-f0-9]{64}$/);
 });
 

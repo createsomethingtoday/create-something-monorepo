@@ -7,6 +7,31 @@ function canonicalDateTime(value: unknown): string | undefined {
   return Number.isNaN(parsed.getTime()) ? undefined : parsed.toISOString();
 }
 
+function canonicalDateOnly(value: unknown): string | undefined {
+  return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : undefined;
+}
+
+function normalizeOptionalTemporal(
+  record: Record<string, unknown>,
+  timestampKey: string,
+  dateKey: string
+): void {
+  const value = record[timestampKey];
+  if (value === undefined) return;
+  const dateTime = canonicalDateTime(value);
+  if (dateTime) {
+    record[timestampKey] = dateTime;
+    return;
+  }
+  const dateOnly = canonicalDateOnly(value);
+  if (dateOnly) {
+    if (record[dateKey] === undefined) record[dateKey] = dateOnly;
+    delete record[timestampKey];
+    return;
+  }
+  delete record[timestampKey];
+}
+
 export function normalizeDiscoveredOfferObservations(
   normalizedRequest: OfferRequest,
   observations: unknown[]
@@ -19,18 +44,11 @@ export function normalizeDiscoveredOfferObservations(
     };
     if (observation.source) {
       observation.source.observedAt = normalizedRequest.asOf;
-      if (observation.source.publishedAt !== undefined) {
-        const publishedAt = canonicalDateTime(observation.source.publishedAt);
-        if (publishedAt) observation.source.publishedAt = publishedAt;
-        else delete observation.source.publishedAt;
-      }
+      normalizeOptionalTemporal(observation.source, 'publishedAt', 'publishedOn');
     }
-    for (const key of ['startsAt', 'endsAt'] as const) {
-      if (observation.offer?.[key] !== undefined) {
-        const dateTime = canonicalDateTime(observation.offer[key]);
-        if (dateTime) observation.offer[key] = dateTime;
-        else delete observation.offer[key];
-      }
+    if (observation.offer) {
+      normalizeOptionalTemporal(observation.offer, 'startsAt', 'startsOn');
+      normalizeOptionalTemporal(observation.offer, 'endsAt', 'endsOn');
     }
     if (
       observation.offer &&
