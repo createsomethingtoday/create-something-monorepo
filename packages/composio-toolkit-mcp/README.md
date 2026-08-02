@@ -99,6 +99,7 @@ Compatibility mode (`COMPOSIO_ENTITY_RESOLUTION_MODE=compat`) resolves in this o
 
 - `COMPOSIO_AUTH_CONFIG_MAP` (JSON string, toolkit -> auth config id)
 - `COMPOSIO_AIRTABLE_AUTH_CONFIG_ID` (explicit Airtable auth config fallback)
+- `COMPOSIO_GOOGLE_SEARCH_CONSOLE_AUTH_CONFIG_ID` (explicit Google Search Console auth config fallback)
 - `COMPOSIO_QUICKBOOKS_AUTH_CONFIG_ID` (explicit QuickBooks auth config fallback)
 - `COMPOSIO_DEFAULT_ENTITY_ID`
 - `COMPOSIO_ENTITY_RESOLUTION_MODE` (`header_required` default, or `compat`)

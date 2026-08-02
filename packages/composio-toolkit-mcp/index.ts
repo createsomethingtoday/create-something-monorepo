@@ -17,10 +17,11 @@ import {
   parseSearchComparisonArgs,
 } from './gsc-analysis.js';
 
-interface Env {
+export interface Env {
   COMPOSIO_API_KEY?: string;
   COMPOSIO_AUTH_CONFIG_MAP?: string;
   COMPOSIO_AIRTABLE_AUTH_CONFIG_ID?: string;
+  COMPOSIO_GOOGLE_SEARCH_CONSOLE_AUTH_CONFIG_ID?: string;
   COMPOSIO_QUICKBOOKS_AUTH_CONFIG_ID?: string;
   COMPOSIO_DEFAULT_ENTITY_ID?: string;
   COMPOSIO_ENTITY_RESOLUTION_MODE?: string;
@@ -1975,11 +1976,15 @@ function parseAuthConfigMap(raw: string | undefined): Record<string, string> {
   }
 }
 
-function buildAuthConfigMap(env: Env): Record<string, string> {
+export function buildAuthConfigMap(env: Env): Record<string, string> {
   const authConfigMap = parseAuthConfigMap(env.COMPOSIO_AUTH_CONFIG_MAP);
   const airtableAuthConfigId = env.COMPOSIO_AIRTABLE_AUTH_CONFIG_ID?.trim();
   if (airtableAuthConfigId) {
     authConfigMap.airtable = airtableAuthConfigId;
+  }
+  const googleSearchConsoleAuthConfigId = env.COMPOSIO_GOOGLE_SEARCH_CONSOLE_AUTH_CONFIG_ID?.trim();
+  if (googleSearchConsoleAuthConfigId) {
+    authConfigMap.google_search_console = googleSearchConsoleAuthConfigId;
   }
   const quickbooksAuthConfigId = env.COMPOSIO_QUICKBOOKS_AUTH_CONFIG_ID?.trim();
   if (quickbooksAuthConfigId) {
