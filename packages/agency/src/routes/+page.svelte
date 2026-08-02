@@ -255,10 +255,10 @@
             <picture>
               <source
                 media="(max-width: 640px)"
-                srcset="/images/performance-lab/paper-boundary-authority-mobile.webp"
+                srcset="/images/performance-lab/paper-boundary-authority-mobile.webp?v=cre-1592"
               />
               <img
-                src="/images/performance-lab/paper-boundary-authority.webp"
+                src="/images/performance-lab/paper-boundary-authority.webp?v=cre-1592"
                 alt="A porcelain paper decision path held at a black authority spine, where open, clamped, and stopped edges remain attached to a blank receipt."
                 loading="lazy"
                 width="1024"

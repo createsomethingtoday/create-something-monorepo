@@ -17,6 +17,14 @@ const mobileAsset = 'paper-boundary-authority-mobile.webp';
 test('the Boundary stage uses responsive Imagegen Paper art instead of the diagram SVG', () => {
   assert.match(homeSource, new RegExp(`/images/performance-lab/${desktopAsset}`));
   assert.match(homeSource, new RegExp(`/images/performance-lab/${mobileAsset}`));
+  assert.match(
+    homeSource,
+    new RegExp(`/images/performance-lab/${desktopAsset.replace('.', '\\.')}\\?v=cre-1592`)
+  );
+  assert.match(
+    homeSource,
+    new RegExp(`/images/performance-lab/${mobileAsset.replace('.', '\\.')}\\?v=cre-1592`)
+  );
   assert.match(homeSource, /<source\s+media="\(max-width: 640px\)"\s+srcset=/);
   assert.doesNotMatch(homeSource, /paper-boundary-study\.svg/);
   assert.ok(existsSync(resolve(assetRoot, desktopAsset)));
