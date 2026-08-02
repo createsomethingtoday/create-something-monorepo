@@ -1,6 +1,6 @@
 # Offer Savings App
 
-`@create-something/offer-savings-app` packages the LTK-first Offer Savings Agent as one Streamable HTTP process with a versioned REST API, MCP tools, and a ChatGPT-compatible MCP Apps widget. It is an adapter over `@create-something/offer-resolution`; it does not calculate confidence or own offer policy.
+`@create-something/offer-savings-app` packages the LTK-first Offer Savings Agent as one Streamable HTTP process with a versioned REST API, MCP tools, and a standalone MCP Apps widget resource. It is an adapter over `@create-something/offer-resolution`; it does not calculate confidence or own offer policy.
 
 ## Public surfaces
 
@@ -14,9 +14,9 @@
 
 The interactive ChatGPT/Codex path uses the host agent for bounded LTK-first public discovery and calls `resolve_offers` once with factual observations. The MCP—not the host—owns observation time, deterministic scores, caps, ranking, evidence separation, receipts, and watches. `find_offers` remains a server-side compatibility and scheduled-watch fallback.
 
-The widget uses the standard MCP Apps JSON-RPC bridge (`ui/initialize`, `ui/notifications/tool-result`, and `tools/call`) first. `window.openai` is an optional ChatGPT enhancement. The main result lane contains only currently corroborated LTK or supplemental offers. Historical mentions, uncorroborated creator codes, generic fulfillment pages, and other incomplete findings appear only as non-actionable research evidence, without projected savings or coupon actions. Each result includes a short search-run receipt. Its only write action is the retry-safe creation of a deadline-bounded watch; it cannot purchase, mutate a cart, access private LTK data, or send a notification.
+The standalone widget uses the standard MCP Apps JSON-RPC bridge (`ui/initialize`, `ui/notifications/tool-result`, and `tools/call`) first. `window.openai` is an optional ChatGPT enhancement. The main result lane contains only currently corroborated LTK or supplemental offers. Historical mentions, uncorroborated creator codes, generic fulfillment pages, and other incomplete findings appear only as non-actionable research evidence, without projected savings or coupon actions. Each result includes a short search-run receipt. Its only write action is the retry-safe creation of a deadline-bounded watch; it cannot purchase, mutate a cart, access private LTK data, or send a notification.
 
-The current tool descriptor points to `results-v6.html`. Read-only `results-v5.html`, `results-v4.html`, `results-v3.html`, `results-v2.html`, and `results-v1.html` resource aliases serve the same current widget so existing private ChatGPT installations can refresh safely after a template URI change. Completed receipted results are mirrored into widget-only response metadata and persisted in widget state so a host invocation envelope or remount cannot replace them with a pending state.
+The widget resource remains available for standalone development and future host compatibility, with read-only `results-v5.html`, `results-v4.html`, `results-v3.html`, `results-v2.html`, and `results-v1.html` aliases. Interactive tool descriptors intentionally do not bind an output template: ChatGPT currently completes the structured tool call but can leave the embedded app on its invocation envelope. Until the host reliably delivers the completed payload to the iframe, the production path renders the completed structured result and receipt directly in ChatGPT instead of showing a stale pending card.
 
 ChatGPT does not supply observation timestamps. The MCP input schemas omit `asOf`; the service records it at the start of each find, verify, or watch run. This prevents model-formatted timestamp retries from creating duplicate searches.
 

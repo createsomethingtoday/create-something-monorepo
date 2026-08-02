@@ -41,9 +41,7 @@ const widgetResourceMeta = {
   }
 } as const;
 
-const widgetToolMeta = {
-  ui: { resourceUri: OFFER_WIDGET_URI },
-  'openai/outputTemplate': OFFER_WIDGET_URI,
+const toolInvocationMeta = {
   'openai/toolInvocation/invoking': 'Checking public offers…',
   'openai/toolInvocation/invoked': 'Offers checked'
 } as const;
@@ -166,7 +164,7 @@ export function createOfferSavingsMcpServer(
   const server = new McpServer(
     {
       name: 'offer-savings-agent',
-      version: '0.2.7'
+      version: '0.2.8'
     },
     {
       capabilities: {
@@ -213,7 +211,7 @@ export function createOfferSavingsMcpServer(
         idempotentHint: true,
         openWorldHint: false
       },
-      _meta: toolMetaWithSecurity(widgetToolMeta, options.readSecuritySchemes)
+      _meta: toolMetaWithSecurity(toolInvocationMeta, options.readSecuritySchemes)
     },
     async (input) => {
       const result = await options.service.resolveOffers(input);
@@ -239,7 +237,7 @@ export function createOfferSavingsMcpServer(
         idempotentHint: true,
         openWorldHint: true
       },
-      _meta: toolMetaWithSecurity(widgetToolMeta, options.readSecuritySchemes)
+      _meta: toolMetaWithSecurity(toolInvocationMeta, options.readSecuritySchemes)
     },
     async (request) => {
       const result = await options.service.findOffers(request);
@@ -264,7 +262,7 @@ export function createOfferSavingsMcpServer(
         idempotentHint: true,
         openWorldHint: false
       },
-      _meta: toolMetaWithSecurity(widgetToolMeta, options.readSecuritySchemes)
+      _meta: toolMetaWithSecurity(toolInvocationMeta, options.readSecuritySchemes)
     },
     async (input) => {
       const result = await options.service.verifyOffer(input);
@@ -291,7 +289,7 @@ export function createOfferSavingsMcpServer(
       },
       _meta: toolMetaWithSecurity(
         {
-          ...widgetToolMeta,
+          ...toolInvocationMeta,
           'openai/toolInvocation/invoking': 'Starting the offer watch…',
           'openai/toolInvocation/invoked': 'Offer watch active'
         },
@@ -320,7 +318,7 @@ export function createOfferSavingsMcpServer(
         idempotentHint: true,
         openWorldHint: false
       },
-      _meta: toolMetaWithSecurity(widgetToolMeta, options.readSecuritySchemes)
+      _meta: toolMetaWithSecurity(toolInvocationMeta, options.readSecuritySchemes)
     },
     async ({ id }) => {
       const watch = await options.service.getWatch(id);
