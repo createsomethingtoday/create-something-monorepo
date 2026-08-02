@@ -180,6 +180,61 @@ async function markFired(env: Env, key: string, ttlSeconds: number): Promise<voi
   await env.ALERT_STATE?.put(`alert:${key}`, new Date().toISOString(), { expirationTtl: Math.max(60, ttlSeconds) });
 }
 
+// ── Read-only summary (for the Slack digest routine) ─────────────────────────
+// Aggregate numbers only — same PII posture as the dataset itself. Consumed by
+// the scheduled Claude routine that posts the daily digest to Slack, which
+// cannot hold Cloudflare credentials of its own.
+
+export interface TelemetrySummary {
+  generated_at: string;
+  window_24h: {
+    turns_settled: number;
+    turns_failed: number;
+    turns_denied: Record<string, number>;
+    sessions_minted: number;
+    sessions_rejected: number;
+    spend_usd: number;
+  };
+  window_7d: {
+    turns_settled: number;
+    turns_failed: number;
+    spend_usd: number;
+  };
+  daily_budget_usd: number;
+}
+
+export async function buildSummary(env: Env, now: Date, fetcher: typeof fetch): Promise<TelemetrySummary> {
+  const [last24h, last7d] = await Promise.all([
+    fetchWindowStats(env, 24, fetcher),
+    fetchWindowStats(env, 7 * 24, fetcher),
+  ]);
+  return {
+    generated_at: now.toISOString(),
+    window_24h: {
+      turns_settled: last24h.counts.turn_settled ?? 0,
+      turns_failed: last24h.counts.turn_failed ?? 0,
+      turns_denied: last24h.denialReasons,
+      sessions_minted: last24h.counts.session_minted ?? 0,
+      sessions_rejected: last24h.counts.session_rejected ?? 0,
+      spend_usd: Number(last24h.settledUsd.toFixed(4)),
+    },
+    window_7d: {
+      turns_settled: last7d.counts.turn_settled ?? 0,
+      turns_failed: last7d.counts.turn_failed ?? 0,
+      spend_usd: Number(last7d.settledUsd.toFixed(4)),
+    },
+    daily_budget_usd: Number(env.DAILY_BUDGET_MICRO_USD ?? '40000000') / 1e6,
+  };
+}
+
+// Constant-time comparison so the read key can't be probed byte-by-byte.
+export function keysEqual(a: string, b: string): boolean {
+  if (a.length !== b.length || a.length === 0) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i += 1) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
 // ── Scheduled entry point ─────────────────────────────────────────────────────
 
 export async function runScheduled(event: ScheduledController, env: Env, fetcher: typeof fetch = fetch): Promise<void> {
