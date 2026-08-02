@@ -19,7 +19,7 @@ ANTHROPIC_MODEL = "claude-opus-4-8"
 TURNSTILE_EXPECTED_HOSTNAME = "webflow.com"
 MAX_SESSION_TURNS = "20"
 MAX_CONCURRENT_TURNS = "8"
-# $40/day. Raised from $25 on 2026-08-03: weekday demand saturated the old cap
+# $40/day. Raised from $25 on 2026-08-02: weekday demand saturated the old cap
 # (spend pinned at ~$23 + $2 turn reservation), causing 63 daily_budget turn
 # denials the week of Jul 27 (51 on Jul 31 alone) at ~$0.25/turn.
 DAILY_BUDGET_MICRO_USD = "40000000"
