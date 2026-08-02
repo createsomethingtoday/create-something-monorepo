@@ -1,5 +1,6 @@
 import { findOffers as resolveOffers } from './resolve.js';
 import { canonicalStringify, hashReceipt } from './canonical.js';
+import { normalizeDiscoveredOfferObservations } from './normalize.js';
 import type {
   HostOfferObservation,
   OfferDecision,
@@ -358,11 +359,11 @@ export function createOfferService(options: CreateOfferServiceOptions): OfferSer
   const service: OfferService = {
     async resolveOffers({ request, observations }) {
       const observedRequest = materializeRequest(request);
-      const stampedObservations = observations.map((observation) => ({
-        ...observation,
-        source: { ...observation.source, observedAt: observedRequest.asOf }
-      }));
-      return presentResolution(resolveOffers(observedRequest, stampedObservations));
+      const normalizedObservations = normalizeDiscoveredOfferObservations(
+        observedRequest,
+        observations
+      );
+      return presentResolution(resolveOffers(observedRequest, normalizedObservations));
     },
     async findOffers(request) {
       const observedRequest = materializeRequest(request);

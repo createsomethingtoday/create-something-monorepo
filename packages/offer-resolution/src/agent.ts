@@ -5,9 +5,9 @@ import { findOffers } from './resolve.js';
 import {
   discoveredOfferEvidenceSchema,
   offerEvidenceInputSchema,
-  offerObservationSchema,
   offerRequestSchema
 } from './schemas.js';
+import { normalizeDiscoveredOfferObservations } from './normalize.js';
 import { canonicalStringify } from './canonical.js';
 import { createOfferService } from './service.js';
 import type { FindOffersServiceResult, OfferDiscoveryProvider } from './service.js';
@@ -177,39 +177,12 @@ export function finalizeStructuredEvidence(
   if (!Array.isArray(normalizedEvidence.observations)) {
     throw new Error('The agent evidence envelope is missing observations.');
   }
-  for (const observation of normalizedEvidence.observations ?? []) {
-    if (observation.source) {
-      observation.source.observedAt = normalizedRequest.asOf;
-      if (
-        observation.source.publishedAt !== undefined &&
-        !offerRequestSchema.shape.asOf.safeParse(observation.source.publishedAt).success
-      ) {
-        delete observation.source.publishedAt;
-      }
-    }
-    for (const key of ['startsAt', 'endsAt'] as const) {
-      if (
-        observation.offer?.[key] !== undefined &&
-        !offerRequestSchema.shape.asOf.safeParse(observation.offer[key]).success
-      ) {
-        delete observation.offer[key];
-      }
-    }
-    if (
-      observation.offer &&
-      observation.offer.discount === undefined &&
-      typeof observation.offer.code === 'string' &&
-      observation.offer.code.trim().length > 0
-    ) {
-      observation.offer.discount = { kind: 'unknown' };
-    }
-  }
   const capturedEvidence = offerEvidenceInputSchema.parse({
     request: offerRequestSchema.parse(normalizedEvidence.request),
-    observations: normalizedEvidence.observations.flatMap((observation) => {
-      const parsed = offerObservationSchema.safeParse(observation);
-      return parsed.success ? [parsed.data] : [];
-    })
+    observations: normalizeDiscoveredOfferObservations(
+      normalizedRequest,
+      normalizedEvidence.observations
+    )
   });
   if (canonicalStringify(capturedEvidence.request) !== canonicalStringify(normalizedRequest)) {
     throw new Error('The agent evidence request does not match the normalized shopping request.');

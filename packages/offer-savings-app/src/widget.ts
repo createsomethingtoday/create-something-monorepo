@@ -20,7 +20,27 @@ export function extractOfferSavingsWidgetResult(payload: unknown): Record<string
   return null;
 }
 
+export function shouldReplaceOfferSavingsWidgetResult(
+  currentPayload: unknown,
+  nextPayload: unknown
+): boolean {
+  const current = extractOfferSavingsWidgetResult(currentPayload);
+  const next = extractOfferSavingsWidgetResult(nextPayload);
+  if (!next) return false;
+  const completed = (value: Record<string, unknown> | null): boolean => {
+    const candidate =
+      value?.operation === 'find_offers'
+        ? value
+        : ((value?.watch as Record<string, unknown> | undefined)?.latestResult as
+            | Record<string, unknown>
+            | undefined);
+    return typeof candidate?.receiptHash === 'string' && candidate.receiptHash.length > 0;
+  };
+  return !completed(current) || completed(next);
+}
+
 const WIDGET_RESULT_EXTRACTOR = extractOfferSavingsWidgetResult.toString();
+const WIDGET_RESULT_REPLACER = shouldReplaceOfferSavingsWidgetResult.toString();
 
 export const OFFER_SAVINGS_WIDGET_HTML = String.raw`<!doctype html>
 <html lang="en">
@@ -104,6 +124,7 @@ export const OFFER_SAVINGS_WIDGET_HTML = String.raw`<!doctype html>
     <script type="module">
       const standalone = window.__OFFER_SAVINGS_STANDALONE__ ?? null;
       const extractOfferSavingsWidgetResult = ${WIDGET_RESULT_EXTRACTOR};
+      const shouldReplaceOfferSavingsWidgetResult = ${WIDGET_RESULT_REPLACER};
       let toolOutput = extractOfferSavingsWidgetResult(window.openai?.toolOutput)
         ?? extractOfferSavingsWidgetResult(window.openai?.toolResponseMetadata)
         ?? extractOfferSavingsWidgetResult(standalone?.initialResult);
@@ -130,11 +151,11 @@ export const OFFER_SAVINGS_WIDGET_HTML = String.raw`<!doctype html>
 
       function applyToolResult(result) {
         const nextResult = extractOfferSavingsWidgetResult(result);
-        if (nextResult) toolOutput = nextResult;
-        if (toolOutput?.operation === 'watch_offers') {
-          statusEl.textContent = toolOutput.created ? 'Watch active. We will keep the same watch if this action is retried.' : 'This watch was already active; no duplicate was created.';
-          document.body.dataset.watchId = toolOutput.watch?.id ?? '';
+        if (nextResult?.operation === 'watch_offers') {
+          statusEl.textContent = nextResult.created ? 'Watch active. We will keep the same watch if this action is retried.' : 'This watch was already active; no duplicate was created.';
+          document.body.dataset.watchId = nextResult.watch?.id ?? '';
         }
+        if (shouldReplaceOfferSavingsWidgetResult(toolOutput, nextResult)) toolOutput = nextResult;
         render();
       }
 
@@ -151,7 +172,7 @@ export const OFFER_SAVINGS_WIDGET_HTML = String.raw`<!doctype html>
         const evidence = Array.isArray(result?.evidence) ? result.evidence : [];
         offersEl.replaceChildren();
         evidenceEl.replaceChildren();
-        if (!result) {
+        if (!result || typeof result.receiptHash !== 'string' || result.receiptHash.length === 0) {
           emptyEl.hidden = true;
           evidenceSectionEl.hidden = true;
           summaryEl.textContent = 'Search in progress. Waiting for a completed offer result.';
@@ -295,7 +316,7 @@ export const OFFER_SAVINGS_WIDGET_HTML = String.raw`<!doctype html>
       const bridgeReady = window.parent === window
         ? Promise.resolve()
         : request('ui/initialize', {
-            appInfo: { name: 'offer-savings-widget', version: '0.2.5' },
+            appInfo: { name: 'offer-savings-widget', version: '0.2.6' },
             appCapabilities: {},
             protocolVersion: '2026-01-26'
           }).then(() => {

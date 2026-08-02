@@ -101,6 +101,35 @@ test('resolve_offers scores host-discovered evidence without invoking nested dis
   assert.equal(result.observedAt, fixture.request.asOf);
 });
 
+test('resolve_offers tolerates imprecise public dates and coded offers without a stated discount', async () => {
+  const service = createOfferService({
+    discovery: { discover: async () => [] },
+    clock: () => new Date(fixture.request.asOf)
+  });
+  const [hostObservation] = hostObservations;
+  assert.ok(hostObservation);
+
+  const result = await service.resolveOffers({
+    request: fixture.request,
+    observations: [
+      {
+        ...hostObservation,
+        id: 'host-imprecise-public-date',
+        source: { ...hostObservation.source, publishedAt: '2026-08-01' },
+        offer: {
+          code: 'HOSTCODE',
+          status: 'unknown',
+          endsAt: '2026-08-09'
+        }
+      }
+    ]
+  });
+
+  assert.equal(result.resolution.decisions.length, 1);
+  assert.equal(result.resolution.decisions[0]?.offerCode, 'HOSTCODE');
+  assert.match(result.receiptHash, /^sha256:[a-f0-9]{64}$/);
+});
+
 test('keeps generic fulfillment pages out of LTK coupon and fallback offer results', async () => {
   const official = fixture.observations.find(
     (observation) => observation.id === 'fixture-official-20'
