@@ -63,12 +63,26 @@ export async function preflight(env: Env): Promise<SyncResult> {
 
     for (const field of sourceMissing) result.errors.push({ scope: 'source_schema', message: `Missing source property: ${field}` });
     for (const field of targetMissing) result.errors.push({ scope: 'target_schema', message: `Missing target property: ${field}` });
+    const sourceStatusOptions = propertyOptionNames(config.sourceSchema[config.sourceStatusProperty]);
+    if (sourceStatusOptions.length > 0) {
+      for (const hdStatus of Object.keys(config.sourceStatusMap)) {
+        const mappedStatus = mapHdStatusToOsStatus(hdStatus, config.sourceStatusMap);
+        if (mappedStatus && !sourceStatusOptions.includes(mappedStatus)) {
+          result.errors.push({
+            scope: 'source_schema',
+            message: `Mapped source status option does not exist: ${hdStatus} -> ${mappedStatus}`,
+          });
+        }
+      }
+    }
 
     result.ok = result.errors.length === 0;
     result.source_data_source_id = config.sourceDataSourceId;
     result.target_data_source_id = config.targetDataSourceId;
     result.details = {
       source_status_property: config.sourceStatusProperty,
+      source_status_map: effectiveSourceStatusMap(config.sourceStatusMap),
+      source_status_options: sourceStatusOptions,
       target_ext_page_id_property: config.targetExtPageIdProperty,
       target_client_property_present: Boolean(config.targetSchema.Client),
       source_properties: Object.keys(config.sourceSchema).sort(),
@@ -152,7 +166,7 @@ export async function auditSync(env: Env): Promise<AuditResult> {
     for (const targetPage of targetPages) {
       const extPageId = readText(targetPage, config.targetExtPageIdProperty);
       if (!extPageId) continue;
-      const mappedStatus = mapHdStatusToOsStatus(readText(targetPage, 'Status'));
+      const mappedStatus = mapHdStatusToOsStatus(readText(targetPage, 'Status'), config.sourceStatusMap);
       if (!mappedStatus) continue;
       const sourcePage = sourceByExtPageId.get(extPageId);
       if (!sourcePage) continue;
@@ -452,7 +466,7 @@ export async function syncHalfDozenStatusToSource(
           continue;
         }
         const hdStatus = readText(targetPage, 'Status');
-        const mappedStatus = mapHdStatusToOsStatus(hdStatus);
+        const mappedStatus = mapHdStatusToOsStatus(hdStatus, config.sourceStatusMap);
         if (!mappedStatus) {
           result.skipped += 1;
           continue;
@@ -490,6 +504,7 @@ export async function syncHalfDozenStatusToSource(
       target_rows_checked: targetPages.length,
       source_rows_checked: sourcePages.length,
       source_status_property: config.sourceStatusProperty,
+      source_status_map: effectiveSourceStatusMap(config.sourceStatusMap),
     };
     return result;
   } catch (error) {
@@ -515,8 +530,16 @@ export async function fullReconcile(env: Env): Promise<SyncResult> {
   };
 }
 
-export function mapHdStatusToOsStatus(value: string): string | null {
-  return HD_TO_OS_STATUS[value] ?? null;
+export function mapHdStatusToOsStatus(value: string, overrides: Record<string, string> = {}): string | null {
+  const defaultStatus = HD_TO_OS_STATUS[value];
+  if (!defaultStatus) return null;
+  return overrides[value]?.trim() || defaultStatus;
+}
+
+function effectiveSourceStatusMap(overrides: Record<string, string>): Record<string, string> {
+  return Object.fromEntries(
+    Object.keys(HD_TO_OS_STATUS).map((hdStatus) => [hdStatus, mapHdStatusToOsStatus(hdStatus, overrides)]),
+  ) as Record<string, string>;
 }
 
 export function buildTicketTitle(ticket: string, clientDisplayName = 'BLONDISH'): string {
@@ -624,6 +647,7 @@ async function resolveSyncConfig(env: Env): Promise<SyncConfig> {
     sourceSchema,
     targetSchema,
     sourceStatusProperty,
+    sourceStatusMap: runtime.sourceStatusMap,
     targetExtPageIdProperty: targetExtPageId,
     clientDisplayName: runtime.clientDisplayName,
     sourceDataSourceTitle: runtime.sourceDataSourceTitle,
@@ -633,6 +657,15 @@ async function resolveSyncConfig(env: Env): Promise<SyncConfig> {
     clientLabel: runtime.clientLabel,
     sourceLabel: runtime.sourceLabel,
   };
+}
+
+function propertyOptionNames(property: DataSourceSchema[string] | undefined): string[] {
+  if (!property?.type) return [];
+  const optionConfig = property[property.type];
+  if (!isRecord(optionConfig) || !Array.isArray(optionConfig.options)) return [];
+  return optionConfig.options
+    .map((option: unknown) => isRecord(option) && typeof option.name === 'string' ? option.name : '')
+    .filter(Boolean);
 }
 
 async function resolveSourcePages(env: Env, dataSourceId: string, sourcePageIds?: string[]): Promise<NotionPage[]> {

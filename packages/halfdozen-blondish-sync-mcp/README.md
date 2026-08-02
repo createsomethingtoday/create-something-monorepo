@@ -80,6 +80,11 @@ Reverse sync updates only the client status property:
 - `Archive` -> `Archive`
 - `Roadblock` -> `Roadblock`
 
+Clients whose source database uses different option names can set
+`CLIENT_OS_STATUS_MAP` to a JSON object keyed by Half Dozen status. Lightswitch
+sets `{"Complete":"Completed"}`. Preflight validates the effective mapping
+overrides against the source status options before any write tool runs.
+
 ## Scale path
 
 The current MCP is an operator control plane. For hundreds of rows per client,

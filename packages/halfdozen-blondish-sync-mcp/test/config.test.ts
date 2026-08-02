@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { resolveRuntimeConfig, toolName } from '../src/config.js';
+import { parseStatusMap, resolveRuntimeConfig, toolName } from '../src/config.js';
 import type { Env } from '../src/types.js';
 
 test('resolveRuntimeConfig preserves BLONDISH defaults', () => {
@@ -58,4 +58,11 @@ test('resolveRuntimeConfig supports Cracked Live runtime config', () => {
   assert.equal(config.clientLabel, 'Cracked');
   assert.equal(config.sourceDataSourceId, 'a2cbfa48-c9e9-839c-8dac-073ab7fcf300');
   assert.equal(toolName(env, 'audit'), 'cracked_sync_audit');
+});
+
+test('parseStatusMap accepts explicit client status aliases and rejects invalid config', () => {
+  assert.deepEqual(parseStatusMap('{"Complete":"Completed"}'), { Complete: 'Completed' });
+  assert.throws(() => parseStatusMap('[]'), /must be a JSON object/);
+  assert.throws(() => parseStatusMap('{"Complete":""}'), /non-empty string keys and values/);
+  assert.throws(() => parseStatusMap('{"Backburner":"Later"}'), /cannot override unmapped Half Dozen status/);
 });
