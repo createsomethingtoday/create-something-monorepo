@@ -1,6 +1,6 @@
 {
   "name": "@createsomething/ground-mcp",
-  "version": "0.2.4",
+  "version": "0.3.0",
   "description": "Grounded claims for code. MCP server that prevents AI hallucination in code analysis.",
   "author": "CREATE SOMETHING <hello@createsomething.io>",
   "license": "MIT",
@@ -48,6 +48,7 @@
     "css-analysis"
   ],
   "bin": {
+    "ground": "bin/ground",
     "ground-mcp": "bin/ground-mcp"
   },
   "scripts": {

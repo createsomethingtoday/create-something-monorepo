@@ -20,6 +20,35 @@ Works with Claude Code, Cursor, Windsurf, VS Code Copilot, Claude Desktop, and a
 
 **The difference**: Ground requires computation before claims. No hallucinated analysis.
 
+## Recommended agent path
+
+Use CTX and Ground for different evidence:
+
+- **CTX** retrieves the history of earlier agent work.
+- **Ground** computes facts about the code that is on disk now.
+
+For a current-source review, start with the compact verified loop:
+
+1. `ground_analyze` — get machine-readable findings for a directory.
+2. `ground_diff` — restrict the same checks to changes since a Git baseline.
+3. `ground_verify_fix` — confirm the specific reported issue is gone.
+4. `ground_explain` — inspect why Ground included, excluded, or scored a result.
+
+The MCP server also retains targeted and graph tools for deeper investigations.
+The installed CLI exposes the same batch and Git-aware entry points:
+
+```bash
+ground analyze ./src --checks duplicates,dead_exports
+ground diff ./src --base origin/main --checks duplicates
+```
+
+Both commands print JSON evidence. `ground diff` only returns files inside the
+requested directory and resolves Git paths from the repository root, so it is
+safe to run from a package inside a monorepo.
+
+The release package includes the native Apple Silicon binaries directly; other
+supported platforms download the matching verified release asset during install.
+
 ## The Problem
 
 AI agents are confident. Too confident.

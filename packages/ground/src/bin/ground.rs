@@ -25,6 +25,7 @@ use clap::{Parser, Subcommand};
 use ground::VerifiedTriad;
 use ground::exceptions::{check_exception, load_config, smart_threshold};
 use ground::monorepo::{detect_monorepo, suggest_refactoring, generate_linear_command};
+use serde_json::json;
 
 #[derive(Parser)]
 #[command(name = "ground")]
@@ -63,6 +64,38 @@ enum Commands {
     /// Find problems in your code
     #[command(subcommand)]
     Find(FindCommands),
+
+    /// Run verified batch analysis through the canonical Ground engine
+    Analyze {
+        /// Directory to analyze
+        #[arg(default_value = ".")]
+        directory: PathBuf,
+        /// Checks to run (comma-separated: duplicates,dead_exports,orphans,environment)
+        #[arg(long, value_delimiter = ',')]
+        checks: Vec<String>,
+        /// Entry points to include in environment analysis
+        #[arg(long)]
+        entry_points: Vec<PathBuf>,
+        /// Scan across packages in a monorepo
+        #[arg(long)]
+        cross_package: bool,
+    },
+
+    /// Report only verified issues involving files changed since a git baseline
+    Diff {
+        /// Directory to analyze
+        #[arg(default_value = ".")]
+        directory: PathBuf,
+        /// Git ref to compare with
+        #[arg(long, default_value = "main")]
+        base: String,
+        /// Checks to run (comma-separated: duplicates,orphans)
+        #[arg(long, value_delimiter = ',')]
+        checks: Vec<String>,
+        /// Scan across packages in a monorepo
+        #[arg(long)]
+        cross_package: bool,
+    },
     
     /// Make a claim (only works if you've checked first)
     #[command(subcommand)]
@@ -117,7 +150,7 @@ enum FindCommands {
         #[arg(long, default_value = "0.75")]
         threshold: f64,
         /// File extensions to check (comma-separated)
-        #[arg(long, default_value = "ts,tsx,js,jsx,svelte")]
+        #[arg(long, default_value = "ts,tsx,js,jsx,svelte,rs")]
         extensions: String,
         /// Max files to compare
         #[arg(long, default_value = "500")]
@@ -452,6 +485,32 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
         }
         
         Commands::Find(find_cmd) => run_find(find_cmd, &cli.db),
+
+        Commands::Analyze { directory, checks, entry_points, cross_package } => {
+            run_mcp_analysis(
+                "ground_analyze",
+                &cli.db,
+                json!({
+                    "directory": directory,
+                    "checks": checks,
+                    "entry_points": entry_points,
+                    "cross_package": cross_package,
+                }),
+            )
+        }
+
+        Commands::Diff { directory, base, checks, cross_package } => {
+            run_mcp_analysis(
+                "ground_diff",
+                &cli.db,
+                json!({
+                    "directory": directory,
+                    "base": base,
+                    "checks": checks,
+                    "cross_package": cross_package,
+                }),
+            )
+        }
         
         Commands::Claim(claim_cmd) => {
             let vt = VerifiedTriad::new(&cli.db)?;
@@ -581,6 +640,22 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
             
             Ok(())
         }
+    }
+}
+
+fn run_mcp_analysis(
+    tool: &str,
+    db: &Path,
+    arguments: serde_json::Value,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let mut triad = VerifiedTriad::new(db)?;
+    let result = ground::mcp::handle_tool_call(&mut triad, tool, &arguments);
+
+    if result.success {
+        println!("{}", serde_json::to_string_pretty(&result.content)?);
+        Ok(())
+    } else {
+        Err(std::io::Error::other(result.error.unwrap_or_else(|| "Ground analysis failed".to_string())).into())
     }
 }
 
