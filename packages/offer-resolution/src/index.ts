@@ -19,6 +19,8 @@ export { findOffers } from './resolve.js';
 export { createOfferService } from './service.js';
 export { createOfferHttpHandler } from './http.js';
 export {
+  discoveredOfferEvidenceSchema,
+  discoveredOfferObservationSchema,
   findOffersInputSchema,
   hostOfferObservationSchema,
   offerEvidenceInputSchema,

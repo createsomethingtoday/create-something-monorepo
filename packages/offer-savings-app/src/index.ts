@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import {
   findOffersInputSchema,
+  offerRequestSchema,
   resolveOffersInputSchema,
   verifyOfferInputSchema,
   watchOffersInputSchema,
@@ -14,11 +15,12 @@ export { createLiveOfferService, readOfferSavingsRuntimeConfig } from './runtime
 export { OFFER_SAVINGS_WIDGET_HTML } from './widget.js';
 import { OFFER_SAVINGS_WIDGET_HTML } from './widget.js';
 
-export const OFFER_WIDGET_URI = 'ui://offer-savings/results-v3.html';
+export const OFFER_WIDGET_URI = 'ui://offer-savings/results-v4.html';
 export const OFFER_WIDGET_MIME_TYPE = 'text/html;profile=mcp-app';
 
 const widgetResources = [
   { name: 'offer-savings-results', uri: OFFER_WIDGET_URI },
+  { name: 'offer-savings-results-v3-compatibility', uri: 'ui://offer-savings/results-v3.html' },
   { name: 'offer-savings-results-v2-compatibility', uri: 'ui://offer-savings/results-v2.html' },
   { name: 'offer-savings-results-v1-compatibility', uri: 'ui://offer-savings/results-v1.html' }
 ] as const;
@@ -50,12 +52,61 @@ function toolMetaWithSecurity(
   return securitySchemes ? { ...meta, securitySchemes } : meta;
 }
 
-const serviceResultOutputSchema = z
+const userOfferOutputSchema = z
+  .object({
+    observationId: z.string().min(1),
+    merchant: z.string().min(1),
+    title: z.string().min(1),
+    code: z.string().min(1).optional(),
+    status: z.enum(['recommend', 'verify', 'lead', 'rejected']),
+    confidence: z.object({ label: z.string().min(1), score: z.number() }).strict(),
+    freshness: z.object({ score: z.number() }).strict(),
+    projectedSavings: z
+      .object({ amount: z.number(), currency: z.string().min(3).max(3) })
+      .strict()
+      .optional(),
+    source: z
+      .object({
+        url: z.string().url(),
+        kind: z.enum([
+          'official_retailer',
+          'retailer_checkout',
+          'ltk_public',
+          'creator_owned',
+          'affiliate_feed',
+          'user_authorized',
+          'search_index',
+          'deal_aggregator'
+        ]),
+        lane: z.enum(['ltk', 'supplemental'])
+      })
+      .strict(),
+    disclosure: z.string(),
+    receiptHash: z.string().min(1),
+    actions: z.object({ canCopyCode: z.boolean(), canWatch: z.boolean() }).strict()
+  })
+  .strict();
+
+const findOffersToolOutputSchema = z
   .object({
     schemaVersion: z.literal('offer_service.v0.1'),
-    operation: z.string().min(1)
+    operation: z.literal('find_offers'),
+    observedAt: z.string().datetime(),
+    receiptHash: z.string().min(1),
+    request: offerRequestSchema,
+    offers: z.array(userOfferOutputSchema),
+    ltkOffers: z.array(userOfferOutputSchema),
+    supplementalOffers: z.array(userOfferOutputSchema),
+    evidence: z.array(userOfferOutputSchema),
+    counts: z
+      .object({
+        ltk: z.number().int().nonnegative(),
+        supplemental: z.number().int().nonnegative(),
+        evidence: z.number().int().nonnegative()
+      })
+      .strict()
   })
-  .passthrough();
+  .strict();
 
 const getWatchInputSchema = z
   .object({
@@ -65,6 +116,21 @@ const getWatchInputSchema = z
 
 function asStructuredContent(value: unknown): Record<string, unknown> {
   return JSON.parse(JSON.stringify(value)) as Record<string, unknown>;
+}
+
+function asFindOffersStructuredContent(result: FindOffersServiceResult): Record<string, unknown> {
+  return asStructuredContent({
+    schemaVersion: result.schemaVersion,
+    operation: result.operation,
+    observedAt: result.observedAt,
+    receiptHash: result.receiptHash,
+    request: result.resolution.request,
+    offers: result.offers,
+    ltkOffers: result.ltkOffers,
+    supplementalOffers: result.supplementalOffers,
+    evidence: result.evidence,
+    counts: result.counts
+  });
 }
 
 function resultText(operation: string, result?: FindOffersServiceResult): string {
@@ -93,7 +159,7 @@ export function createOfferSavingsMcpServer(
   const server = new McpServer(
     {
       name: 'offer-savings-agent',
-      version: '0.2.4'
+      version: '0.2.5'
     },
     {
       capabilities: {
@@ -133,7 +199,7 @@ export function createOfferSavingsMcpServer(
       description:
         'After the ChatGPT or Codex agent completes bounded public discovery with LTK first, submit the normalized request and factual observations here for authoritative deterministic scoring, ranking, evidence separation, and a receipt. This tool does not search, purchase, mutate a cart, or create a watch.',
       inputSchema: resolveOffersInputSchema,
-      outputSchema: serviceResultOutputSchema,
+      outputSchema: findOffersToolOutputSchema,
       annotations: {
         readOnlyHint: true,
         destructiveHint: false,
@@ -146,7 +212,7 @@ export function createOfferSavingsMcpServer(
       const result = await options.service.resolveOffers(input);
       return {
         content: [{ type: 'text', text: resultText(result.operation, result) }],
-        structuredContent: asStructuredContent(result),
+        structuredContent: asFindOffersStructuredContent(result),
         _meta: { operation: result.operation, schemaVersion: result.schemaVersion }
       };
     }
@@ -159,7 +225,7 @@ export function createOfferSavingsMcpServer(
       description:
         'Legacy server-side discovery for scheduled watches or hosts without public-search capability. Interactive ChatGPT and Codex agents should search LTK first and call resolve_offers instead. This does not purchase or mutate a cart.',
       inputSchema: findOffersInputSchema,
-      outputSchema: serviceResultOutputSchema,
+      outputSchema: findOffersToolOutputSchema,
       annotations: {
         readOnlyHint: true,
         destructiveHint: false,
@@ -172,7 +238,7 @@ export function createOfferSavingsMcpServer(
       const result = await options.service.findOffers(request);
       return {
         content: [{ type: 'text', text: resultText(result.operation, result) }],
-        structuredContent: asStructuredContent(result),
+        structuredContent: asFindOffersStructuredContent(result),
         _meta: { operation: result.operation, schemaVersion: result.schemaVersion }
       };
     }
@@ -185,7 +251,6 @@ export function createOfferSavingsMcpServer(
       description:
         'Re-evaluate one supplied public offer observation against the deterministic policy. This is evidence verification only; when checkout would be required, the result remains needs_checkout.',
       inputSchema: verifyOfferInputSchema,
-      outputSchema: serviceResultOutputSchema,
       annotations: {
         readOnlyHint: true,
         destructiveHint: false,
@@ -211,7 +276,6 @@ export function createOfferSavingsMcpServer(
       description:
         'Persist one bounded offer request until a deadline. Reusing an idempotency key with the same request returns the existing watch; this does not notify, purchase, or mutate a cart.',
       inputSchema: watchOffersInputSchema,
-      outputSchema: serviceResultOutputSchema,
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,

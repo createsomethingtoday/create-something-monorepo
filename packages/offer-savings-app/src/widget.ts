@@ -211,12 +211,12 @@ export const OFFER_SAVINGS_WIDGET_HTML = String.raw`<!doctype html>
           });
           const watchButton = node('button', 'secondary', 'Watch for a better offer');
           watchButton.type = 'button';
-          watchButton.disabled = !offer.actions?.canWatch || !result?.resolution?.request;
+          watchButton.disabled = !offer.actions?.canWatch || !(result?.request ?? result?.resolution?.request);
           watchButton.addEventListener('click', async () => {
             watchButton.disabled = true;
             statusEl.textContent = 'Starting a bounded offer watch…';
             try {
-              const request = result.resolution.request;
+              const request = result.request ?? result.resolution.request;
               const input = standalone?.watchInput ?? {
                 request,
                 until: request.deadline + 'T23:59:59.000Z',
@@ -295,7 +295,7 @@ export const OFFER_SAVINGS_WIDGET_HTML = String.raw`<!doctype html>
       const bridgeReady = window.parent === window
         ? Promise.resolve()
         : request('ui/initialize', {
-            appInfo: { name: 'offer-savings-widget', version: '0.2.4' },
+            appInfo: { name: 'offer-savings-widget', version: '0.2.5' },
             appCapabilities: {},
             protocolVersion: '2026-01-26'
           }).then(() => {

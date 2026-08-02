@@ -9,6 +9,7 @@ import {
   createOfferFindAgent,
   createOfferEvidenceFinalizer,
   createLtkWebSearchTool,
+  discoveredOfferEvidenceSchema,
   finalizeCapturedResolution,
   finalizeStructuredEvidence,
   offerEvidenceInputSchema,
@@ -122,10 +123,67 @@ test('finalization rejects a model receipt that conflicts with captured resolver
 test('evidence finalizer uses schema-constrained output instead of a side-effect tool capture', () => {
   const finalizer = createOfferEvidenceFinalizer({ model: 'gpt-5.4-mini' });
 
-  assert.equal(finalizer.outputType, offerEvidenceInputSchema);
+  assert.equal(finalizer.outputType, discoveredOfferEvidenceSchema);
   assert.deepEqual(finalizer.tools, []);
   assert.equal(finalizer.modelSettings.toolChoice, 'none');
   assert.match(String(finalizer.instructions), /omit publishedAt unless/i);
+});
+
+test('evidence finalizer accepts a coded observation when the model omits discount details', () => {
+  const finalizer = createOfferEvidenceFinalizer({ model: 'gpt-5.4-mini' });
+  const codedObservationWithoutDiscount = {
+    id: 'sephora-code-with-unknown-discount',
+    merchant: 'Sephora',
+    title: 'Public Sephora code',
+    source: {
+      kind: 'official_retailer' as const,
+      url: 'https://www.sephora.com/beauty/beauty-offers',
+      publisher: 'Sephora',
+      observedAt: request.asOf,
+      access: 'public' as const,
+      direct: true
+    },
+    offer: {
+      code: 'SAMPLE',
+      status: 'unknown' as const
+    },
+    applicability: {
+      merchant: 'confirmed' as const,
+      budget: 'unknown' as const,
+      location: 'unknown' as const,
+      channel: 'unknown' as const,
+      membership: 'unknown' as const
+    },
+    fulfillment: { deadline: 'unknown' as const },
+    evidence: { terms: 'partial' as const, code: 'reported' as const, corroboratingUrls: [] }
+  };
+
+  const outputSchema = finalizer.outputType as typeof discoveredOfferEvidenceSchema;
+  assert.equal(
+    outputSchema.safeParse({ request, observations: [codedObservationWithoutDiscount] }).success,
+    true
+  );
+
+  const [normalized] = finalizeStructuredEvidence(request, {
+    request,
+    observations: [codedObservationWithoutDiscount]
+  });
+  assert.equal(normalized.offer.code, 'SAMPLE');
+  assert.deepEqual(normalized.offer.discount, { kind: 'unknown' });
+
+  assert.deepEqual(
+    finalizeStructuredEvidence(request, {
+      request,
+      observations: [
+        {
+          ...codedObservationWithoutDiscount,
+          id: 'no-concrete-offer-value',
+          offer: { status: 'unknown' as const }
+        }
+      ]
+    }),
+    []
+  );
 });
 
 test('structured evidence accepts the exact normalized request and rejects request drift', () => {
