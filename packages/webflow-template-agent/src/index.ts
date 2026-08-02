@@ -21,6 +21,7 @@ import {
 import type { AgentSseEvent, ChatContext, ChatRequestBody, Env } from './types.js';
 import type { AgentUsage } from './types.js';
 import { recordAbuseEvent, type AbuseEvent } from './telemetry.js';
+import { runScheduled } from './digest.js';
 
 const MAX_REQUEST_BODY_BYTES = 64 * 1024;
 const MAX_REQUEST_MESSAGES = 20;
@@ -237,6 +238,16 @@ export function createTemplateAgentWorker(
   },
 ): ExportedHandler<Env> {
   return {
+    // Telemetry digest + hourly alert scan over the Analytics Engine dataset
+    // (docs/TEMPLATE_AGENT_TELEMETRY_SPEC.md, Phase 1). No-op without
+    // CF_ANALYTICS_API_TOKEN; shadow-logs without SLACK_WEBHOOK_URL.
+    async scheduled(event: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
+      ctx.waitUntil(
+        runScheduled(event, env).catch((error) => {
+          console.log(`[telemetry] scheduled run failed: ${error instanceof Error ? error.message : String(error)}`);
+        }),
+      );
+    },
     async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 

@@ -20,6 +20,11 @@ export interface Env {
   CACHE_WRITE_USD_PER_MILLION_TOKENS?: string;
   CACHE_READ_USD_PER_MILLION_TOKENS?: string;
   AGENT_ANALYTICS?: AnalyticsEngineDataset;
+  // Telemetry digest + alerts (docs/TEMPLATE_AGENT_TELEMETRY_SPEC.md).
+  ALERT_STATE?: KVNamespace;
+  CF_ACCOUNT_ID?: string;
+  CF_ANALYTICS_API_TOKEN?: string;
+  SLACK_WEBHOOK_URL?: string;
 }
 
 // ── Chat protocol (client <-> agent worker) ──────────────────────────────────
