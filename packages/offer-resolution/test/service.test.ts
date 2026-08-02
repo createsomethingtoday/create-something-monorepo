@@ -20,6 +20,10 @@ interface Fixture {
 const fixture = JSON.parse(
   readFileSync(new URL('../fixtures/abercrombie-august-9.json', import.meta.url), 'utf8')
 ) as Fixture;
+const hostObservations = fixture.observations.map(({ source, ...observation }) => {
+  const { observedAt: _observedAt, ...hostSource } = source;
+  return { ...observation, source: hostSource };
+});
 
 test('find_offers returns authoritative receipts as user-ready offer cards', async () => {
   const service = createOfferService({
@@ -86,7 +90,7 @@ test('resolve_offers scores host-discovered evidence without invoking nested dis
 
   const result = await service.resolveOffers({
     request: fixture.request,
-    observations: fixture.observations
+    observations: hostObservations
   });
 
   assert.equal(discoveryCalls, 0);
@@ -94,6 +98,7 @@ test('resolve_offers scores host-discovered evidence without invoking nested dis
   assert.equal(result.counts.ltk, 1);
   assert.equal(result.counts.supplemental, 3);
   assert.equal(result.resolution.request.asOf, fixture.request.asOf);
+  assert.equal(result.observedAt, fixture.request.asOf);
 });
 
 test('keeps generic fulfillment pages out of LTK coupon and fallback offer results', async () => {

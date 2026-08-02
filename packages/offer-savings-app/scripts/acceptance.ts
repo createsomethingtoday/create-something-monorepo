@@ -26,6 +26,10 @@ const fixture = JSON.parse(
   )
 ) as Fixture;
 const { asOf: _fixtureAsOf, ...publicRequest } = fixture.request;
+const hostObservations = fixture.observations.map(({ source, ...observation }) => {
+  const { observedAt: _observedAt, ...hostSource } = source;
+  return { ...observation, source: hostSource };
+});
 const stateDirectory = mkdtempSync(join(tmpdir(), 'offer-savings-acceptance-'));
 const stateFile = join(stateDirectory, 'watches.json');
 const idempotencyKey = 'acceptance-watch-retry';
@@ -58,7 +62,7 @@ try {
   const resources = await client.listResources();
   const hostResolved = await client.callTool({
     name: 'resolve_offers',
-    arguments: { request: publicRequest, observations: fixture.observations }
+    arguments: { request: publicRequest, observations: hostObservations }
   });
   const found = await client.callTool({ name: 'find_offers', arguments: publicRequest });
   const creator = fixture.observations.find((item) => item.id === 'fixture-ltk-15');

@@ -1,6 +1,6 @@
 {
   "name": "offer-savings",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Find, verify, and watch public coupon offers with LTK-first discovery and deterministic reliability.",
   "author": {
     "name": "CREATE SOMETHING",
