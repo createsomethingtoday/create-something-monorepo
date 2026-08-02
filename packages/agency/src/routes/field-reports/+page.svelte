@@ -8,6 +8,7 @@
     type PerformanceEvidenceItem
   } from '@create-something/canon';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
+  import { paperAttachedReceiptMedia } from '$lib/data/performanceMedia';
 
   const reports: PerformanceEvidenceItem[] = [
     {
@@ -35,11 +36,8 @@
   title="Field Reports"
   lede="Each report separates what was measured, what was blocked, and what remains unknown—then names the authority the workflow did not earn."
   density="compact"
-  media={{
-    src: '/images/performance-lab/controlled-flow-natural.webp',
-    mobileSrc: '/images/performance-lab/controlled-flow-natural-mobile.webp',
-    alt: 'Black-and-white view of water moving through an engineered channel'
-  }}
+  media={paperAttachedReceiptMedia}
+  mode="paper"
   proof={[
     { label: 'Measured', value: 'Sourced' },
     { label: 'Blocked', value: 'Visible' },

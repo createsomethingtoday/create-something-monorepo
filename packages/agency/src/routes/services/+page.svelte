@@ -1,11 +1,10 @@
 <script lang="ts">
   import { Button, PerformanceCampaignOpening, SEO } from '@create-something/canon';
   import AgencyPerformanceReadback from '$lib/components/AgencyPerformanceReadback.svelte';
-  import ControlledWaterwayStory from '$lib/components/ControlledWaterwayStory.svelte';
   import ServicesMapPreview from '$lib/components/ServicesMapPreview.svelte';
   import ServicesProductPath from '$lib/components/ServicesProductPath.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
-  import { turbulenceExceptionMedia } from '$lib/data/performanceMedia';
+  import { paperClampedDecisionMedia } from '$lib/data/performanceMedia';
   import { getPublicProduct } from '$lib/data/productFamily';
 
   const mapProduct = getPublicProduct('map');
@@ -88,7 +87,8 @@
     eyebrow="How It Works"
     title="Nothing gets built until the map says what it should do."
     lede="Bring one handoff your team still checks manually. We name the decision owner and the stop condition first, then build only what that map requires — before anything touches customers, money, or production."
-    media={turbulenceExceptionMedia}
+    media={paperClampedDecisionMedia}
+    mode="paper"
     proof={[
       { label: 'Owner', value: 'Named' },
       { label: 'Protected action', value: 'Held' },
@@ -108,10 +108,6 @@
   <ServicesProductPath />
   <AgencyPerformanceReadback embedded={true} />
 
-  <section class="services-pipeline" aria-label="Controlled work pipeline">
-    <ControlledWaterwayStory />
-  </section>
-
   <ServicesMapPreview />
 </div>
 
@@ -120,14 +116,4 @@
     background: var(--color-performance-paper, #f3f3f0);
   }
 
-  .services-pipeline {
-    padding: clamp(2rem, 5vw, 4.5rem) clamp(1.25rem, 5vw, 6rem);
-    border-block: 1px solid var(--color-performance-line, #d7d7d2);
-    background: var(--color-performance-panel, #ffffff);
-  }
-
-  .services-pipeline :global(.waterway) {
-    width: min(var(--content-width-performance, 85rem), 100%);
-    margin-inline: auto;
-  }
 </style>
