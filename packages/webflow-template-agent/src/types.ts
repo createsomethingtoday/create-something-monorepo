@@ -25,6 +25,7 @@ export interface Env {
   CF_ACCOUNT_ID?: string;
   CF_ANALYTICS_API_TOKEN?: string;
   SLACK_WEBHOOK_URL?: string;
+  TELEMETRY_READ_KEY?: string;
 }
 
 // ── Chat protocol (client <-> agent worker) ──────────────────────────────────

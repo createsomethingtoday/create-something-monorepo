@@ -161,3 +161,34 @@ describe('runScheduled', () => {
     log.mockRestore();
   });
 });
+
+describe('keysEqual', () => {
+  it('accepts only exact matches and rejects empty keys', async () => {
+    const { keysEqual } = await import('../src/digest.js');
+    expect(keysEqual('abc123', 'abc123')).toBe(true);
+    expect(keysEqual('abc123', 'abc124')).toBe(false);
+    expect(keysEqual('abc', 'abc123')).toBe(false);
+    expect(keysEqual('', '')).toBe(false);
+  });
+});
+
+describe('buildSummary', () => {
+  it('returns aggregate windows and budget without secrets', async () => {
+    const { buildSummary } = await import('../src/digest.js');
+    const fetcher = vi.fn().mockImplementation(async () =>
+      aeResponse([
+        { type: 'turn_settled', reason: '', n: '50', micro_usd: '12216628' },
+        { type: 'turn_denied', reason: 'daily_budget', n: '3', micro_usd: '0' },
+        { type: 'session_minted', reason: '', n: '40', micro_usd: '0' },
+      ]),
+    );
+
+    const summary = await buildSummary(makeEnv(), new Date('2026-08-02T15:00:00Z'), fetcher as unknown as typeof fetch);
+
+    expect(summary.window_24h.turns_settled).toBe(50);
+    expect(summary.window_24h.turns_denied.daily_budget).toBe(3);
+    expect(summary.window_24h.spend_usd).toBeCloseTo(12.2166, 3);
+    expect(summary.daily_budget_usd).toBe(40);
+    expect(JSON.stringify(summary)).not.toContain('token-must-not-appear');
+  });
+});

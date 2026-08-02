@@ -421,3 +421,50 @@ describe('webflow-template-agent worker abuse boundaries', () => {
     expect(runTurn).not.toHaveBeenCalled();
   });
 });
+
+describe('telemetry summary endpoint', () => {
+  const aeBody = JSON.stringify({ data: [{ type: 'turn_settled', reason: '', n: '10', micro_usd: '2500000' }] });
+
+  it('serves aggregate JSON for the exact read key, even in production', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(aeBody, { status: 200 })));
+    const worker = createTemplateAgentWorker(securityDependencies());
+    const env = {
+      ...testEnv(),
+      ENVIRONMENT: 'production',
+      TELEMETRY_READ_KEY: 'read-key-1',
+      CF_ANALYTICS_API_TOKEN: 'ae-token',
+    };
+
+    const response = await worker.fetch!(
+      new Request('https://agent.test/telemetry/summary?key=read-key-1'),
+      env,
+      testContext(),
+    );
+
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as { window_24h: { turns_settled: number } };
+    expect(body.window_24h.turns_settled).toBe(10);
+    vi.unstubAllGlobals();
+  });
+
+  it('masks wrong or missing keys as 404, identical to unknown routes', async () => {
+    const worker = createTemplateAgentWorker(securityDependencies());
+    const env = { ...testEnv(), ENVIRONMENT: 'production', TELEMETRY_READ_KEY: 'read-key-1', CF_ANALYTICS_API_TOKEN: 'ae-token' };
+
+    for (const url of [
+      'https://agent.test/telemetry/summary?key=wrong',
+      'https://agent.test/telemetry/summary',
+    ]) {
+      const response = await worker.fetch!(new Request(url), env, testContext());
+      expect(response.status).toBe(404);
+      expect(await response.json()).toEqual({ error: 'Not found' });
+    }
+  });
+
+  it('is disabled entirely when the read key secret is unset', async () => {
+    const worker = createTemplateAgentWorker(securityDependencies());
+    const env = { ...testEnv(), ENVIRONMENT: 'production', CF_ANALYTICS_API_TOKEN: 'ae-token' };
+    const response = await worker.fetch!(new Request('https://agent.test/telemetry/summary?key='), env, testContext());
+    expect(response.status).toBe(404);
+  });
+});

@@ -67,3 +67,5 @@ id = "4303638006bf4b62a411d98296fd66eb"
 # - AGENT_PROXY_SECRET
 # - CF_ANALYTICS_API_TOKEN   (Account Analytics read — Analytics Engine SQL API)
 # - SLACK_WEBHOOK_URL        (optional; absent = shadow mode, alerts/digest log only)
+# - TELEMETRY_READ_KEY       (optional; capability key for GET /telemetry/summary,
+#                             consumed by the daily Slack digest routine)

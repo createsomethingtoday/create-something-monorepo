@@ -21,7 +21,7 @@ import {
 import type { AgentSseEvent, ChatContext, ChatRequestBody, Env } from './types.js';
 import type { AgentUsage } from './types.js';
 import { recordAbuseEvent, type AbuseEvent } from './telemetry.js';
-import { runScheduled } from './digest.js';
+import { buildSummary, keysEqual, runScheduled } from './digest.js';
 
 const MAX_REQUEST_BODY_BYTES = 64 * 1024;
 const MAX_REQUEST_MESSAGES = 20;
@@ -250,6 +250,19 @@ export function createTemplateAgentWorker(
     },
     async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
+
+    // Keyed, read-only aggregate telemetry for the Slack digest routine
+    // (docs/TEMPLATE_AGENT_TELEMETRY_SPEC.md). Sits above the proxy-secret
+    // mask because the routine is not the Webflow Cloud proxy; a bad or
+    // missing key gets the same 404 shape as every other masked request.
+    if (url.pathname === '/telemetry/summary' && request.method === 'GET') {
+      const key = url.searchParams.get('key') ?? '';
+      if (!env.TELEMETRY_READ_KEY || !env.CF_ANALYTICS_API_TOKEN || !keysEqual(key, env.TELEMETRY_READ_KEY)) {
+        return Response.json({ error: 'Not found' }, { status: 404 });
+      }
+      const summary = await buildSummary(env, new Date(), fetch);
+      return Response.json(summary, { headers: { 'Cache-Control': 'no-store' } });
+    }
 
     // The browser-facing Webflow Cloud proxy is the only public entrypoint.
     // Keep the workers.dev hostname routable for that cross-account proxy,
