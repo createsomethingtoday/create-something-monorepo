@@ -19,7 +19,10 @@ ANTHROPIC_MODEL = "claude-opus-4-8"
 TURNSTILE_EXPECTED_HOSTNAME = "webflow.com"
 MAX_SESSION_TURNS = "20"
 MAX_CONCURRENT_TURNS = "8"
-DAILY_BUDGET_MICRO_USD = "25000000"
+# $40/day. Raised from $25 on 2026-08-02: weekday demand saturated the old cap
+# (spend pinned at ~$23 + $2 turn reservation), causing 63 daily_budget turn
+# denials the week of Jul 27 (51 on Jul 31 alone) at ~$0.25/turn.
+DAILY_BUDGET_MICRO_USD = "40000000"
 TURN_RESERVATION_MICRO_USD = "2000000"
 INPUT_USD_PER_MILLION_TOKENS = "15"
 OUTPUT_USD_PER_MILLION_TOKENS = "75"
@@ -46,9 +49,21 @@ new_sqlite_classes = ["TemplateAgentAbuseGuard"]
 binding = "AGENT_ANALYTICS"
 dataset = "webflow_template_agent_abuse"
 
+# Telemetry digest + alerts (docs/TEMPLATE_AGENT_TELEMETRY_SPEC.md, Phase 1).
+# Crons are UTC: hourly alert scan at :05, daily digest 15:00 UTC = 8am PT.
+[triggers]
+crons = ["5 * * * *", "0 15 * * *"]
+
+# Alert cooldown/dedup state.
+[[kv_namespaces]]
+binding = "ALERT_STATE"
+id = "4303638006bf4b62a411d98296fd66eb"
+
 # Secrets (set via `wrangler secret put`):
 # - ANTHROPIC_API_KEY
 # - SESSION_SIGNING_SECRET
 # - CONTEXT_SIGNING_SECRET
 # - TURNSTILE_SECRET_KEY
 # - AGENT_PROXY_SECRET
+# - CF_ANALYTICS_API_TOKEN   (Account Analytics read — Analytics Engine SQL API)
+# - SLACK_WEBHOOK_URL        (optional; absent = shadow mode, alerts/digest log only)
