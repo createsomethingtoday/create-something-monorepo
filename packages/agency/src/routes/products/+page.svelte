@@ -16,7 +16,7 @@
   import AgencyPerformanceReadback from '$lib/components/AgencyPerformanceReadback.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
   import { PUBLIC_PRODUCT_SEQUENCE, getPublicProduct } from '$lib/data/productFamily';
-  import { clarityInspectionMedia } from '$lib/data/performanceMedia';
+  import { paperProductSystemMedia } from '$lib/data/performanceMedia';
 
   type ProductSurfaceKind = 'signal' | 'decision' | 'proof';
 
@@ -145,7 +145,8 @@
   title="Map the system. Control the work."
   lede="CREATE SOMETHING Map stands alone as the living definition. CREATE SOMETHING Control stands alone as the governed operating product and includes Map. Build connects the approved system."
   density="compact"
-  media={clarityInspectionMedia}
+  media={paperProductSystemMedia}
+  mode="paper"
   proof={[
     { label: 'Map', value: 'Define' },
     { label: 'Build', value: 'Connect' },

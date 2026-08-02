@@ -7,6 +7,7 @@ import {
   paperAttachedReceiptMedia,
   paperClampedDecisionMedia,
   paperFoldedHandoffMedia,
+  paperProductSystemMedia,
   performancePaperRouteAssignments
 } from '../src/lib/data/performanceMedia.ts';
 
@@ -17,12 +18,17 @@ const metadataPath = resolve(
   'content/assets/brand/agency-paper-under-pressure-imagegen.v20260802/metadata.md'
 );
 
-const studies = [paperFoldedHandoffMedia, paperClampedDecisionMedia, paperAttachedReceiptMedia];
+const studies = [
+  paperFoldedHandoffMedia,
+  paperClampedDecisionMedia,
+  paperAttachedReceiptMedia,
+  paperProductSystemMedia
+];
 
 test('publishes responsive Paper campaign descriptors with immutable assets', () => {
   assert.deepEqual(
     studies.map((study) => study.material),
-    ['paper', 'paper', 'paper']
+    ['paper', 'paper', 'paper', 'paper']
   );
 
   for (const study of studies) {
@@ -38,6 +44,7 @@ test('assigns one distinct Paper study to each campaign route', () => {
   assert.deepEqual(performancePaperRouteAssignments, {
     '/': 'paperFoldedHandoffMedia',
     '/services': 'paperClampedDecisionMedia',
+    '/products': 'paperProductSystemMedia',
     '/field-reports': 'paperAttachedReceiptMedia'
   });
 
@@ -55,6 +62,12 @@ test('records complete generation, inspection, rights, and hash evidence', () =>
   for (const required of [
     'billing_hard_limit_reached',
     'did not expose a model',
+    'CRE-1590',
+    'product-system-desktop.png',
+    'product-system-mobile.png',
+    '2cf05defe0abfdcef62822da8f60f13d87f4db817dc381320bc7eaa1caafde72',
+    '8577e3037944cf131c7976c67df4c2749640e34835a81225be63cffcd41a697d',
+    'weaker connector legibility',
     'SHA-256',
     'Rights and use',
     'Refresh condition',

@@ -157,18 +157,24 @@ test('public Map keeps the existing booking warmup rhythm', () => {
 	assert.ok(agencyEditableCanvas.includes('font-family: var(--font-performance-mono)'));
 });
 
-test('public Performance routes use the natural water image series', () => {
+test('public Performance routes preserve owned natural media assignments', () => {
 	for (const route of [homeRoute, servicesRoute, productsRoute, bookRoute, mapRoute, difyControlPlaneRoute]) {
 		assert.equal(route.includes('/images/performance-lab/controlled-flow.webp'), false);
 		assert.equal(route.includes('/images/performance-lab/pressure-boundary.webp'), false);
 		assert.equal(route.includes('/images/performance-lab/trace-control-plane.webp'), false);
 	}
 
-	assert.ok(homeRoute.includes('/images/performance-lab/pressure-boundary-natural.webp'));
-	assert.ok(servicesRoute.includes('/images/performance-lab/trace-wake-natural.webp'));
-	assert.ok(productsRoute.includes("import { clarityInspectionMedia }"));
-	assert.ok(productsRoute.includes('media={clarityInspectionMedia}'));
+	assert.ok(homeRoute.includes("import { paperFoldedHandoffMedia }"));
+	assert.ok(homeRoute.includes('media={paperFoldedHandoffMedia}'));
+	assert.ok(servicesRoute.includes("import { paperClampedDecisionMedia }"));
+	assert.ok(servicesRoute.includes('media={paperClampedDecisionMedia}'));
+	assert.ok(productsRoute.includes("import { paperProductSystemMedia }"));
+	assert.ok(productsRoute.includes('media={paperProductSystemMedia}'));
+	assert.ok(productsRoute.includes('mode="paper"'));
 	assert.equal(productsRoute.includes('/images/performance-lab/controlled-flow-natural.webp'), false);
+	assert.ok(mapRoute.includes("import { clarityInspectionMedia }"));
+	assert.ok(mapRoute.includes('media={clarityInspectionMedia}'));
+	assert.ok(difyControlPlaneRoute.includes('/images/performance-lab/trace-wake-natural.webp'));
 });
 
 test('home route uses the shared canvas kernel as a transparent proof object', () => {

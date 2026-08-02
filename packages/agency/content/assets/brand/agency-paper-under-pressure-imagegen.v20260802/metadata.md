@@ -3,13 +3,13 @@
 > Asset ID: `brand.agency-paper-under-pressure-imagegen.v20260802`
 > Owner: CREATE SOMETHING
 > Generated and inspected: 2026-08-02
-> Tracking: `CRE-1588`
+> Tracking: `CRE-1588`, `CRE-1590`
 > Status: approved for page-context verification
 
 ## Direction
 
-This family replaces procedural Three.js output as final still marketing art on
-three Agency campaign openings. Three.js remains available for interactions in
+This family replaces procedural Three.js and historical water output as final
+still marketing art on four Agency openings. Three.js remains available for interactions in
 which live state change carries meaning; authored HTML/SVG continues to own all
 copy, controls, proof, and accessibility.
 
@@ -17,6 +17,7 @@ copy, controls, proof, and accessibility.
 | --- | --- | --- | --- |
 | Folded handoff | Work crosses a bounded transfer and settles | `/` | Signal cobalt |
 | Clamped decision | Authority holds an unsafe continuation | `/services` | Review gold |
+| Product system | Map, Build, and Control remain distinct modules on one operating spine | `/products` | Signal blue / review gold / growth green |
 | Attached receipt | Proof remains physically attached after handoff | `/field-reports` | Growth green |
 
 ## Generation record
@@ -32,6 +33,10 @@ copy, controls, proof, and accessibility.
   are retained because their framing passed the real target-surface brief.
 - Exact authored prompts and edit invariants are preserved in
   `source/prompts.md`.
+- CRE-1590 repeated the configured `gpt-image-1.5`, `quality=high`,
+  `size=1536x1024` CLI attempt for the Products study. It returned
+  `billing_hard_limit_reached` before writing output, so the same documented
+  first-party session fallback was used.
 
 ## Accepted masters
 
@@ -43,6 +48,8 @@ copy, controls, proof, and accessibility.
 | `exports/clamped-decision-mobile.png` | 852 x 1846 | `cc97d399ed1224d5b6ba1cb86962c81dc4210d288b11b72a51531695a56b0b8e` |
 | `exports/attached-receipt-desktop.png` | 1536 x 1024 | `21ee20ac0d2f1612fca8130aa9dde9b5971e1cdb3b75a6455bda4ab5dc43a60a` |
 | `exports/attached-receipt-mobile.png` | 853 x 1844 | `c93c67ab6203726d9d8e656da2a12df2d3a932da744effaced307f2f4ebe723e` |
+| `exports/product-system-desktop.png` | 1536 x 1024 | `2cf05defe0abfdcef62822da8f60f13d87f4db817dc381320bc7eaa1caafde72` |
+| `exports/product-system-mobile.png` | 1024 x 1536 | `efc5dde0f652555c91aea4f98de4f632698111ca4c4ac0badfd4bef168c3fc58` |
 
 ## Public exports
 
@@ -56,6 +63,8 @@ All public WebP exports use `cwebp -q 88 -m 6` without resizing.
 | `static/images/performance-lab/paper-clamped-decision-mobile.webp` | 852 x 1846 | `d4e71298be6891435259034b05e85b89a2bbfc1ec12b6faacedf67258c762927` |
 | `static/images/performance-lab/paper-attached-receipt.webp` | 1536 x 1024 | `ec35f432a14b57f3ff5d0394b2e59e5dd742ce15e7c15572307fff6421386df5` |
 | `static/images/performance-lab/paper-attached-receipt-mobile.webp` | 853 x 1844 | `ff662f6ad78146cf311f1f3094fc34786341c07801879c29f99d1ed305a70284` |
+| `static/images/performance-lab/paper-product-system.webp` | 1536 x 1024 | `3d3dca09088a354969b1845ae12d6422503d68051e8bec9af7a419f06714ce44` |
+| `static/images/performance-lab/paper-product-system-mobile.webp` | 1024 x 1536 | `8577e3037944cf131c7976c67df4c2749640e34835a81225be63cffcd41a697d` |
 
 ## Inspection and rejection record
 
@@ -67,14 +76,18 @@ All public WebP exports use `cwebp -q 88 -m 6` without resizing.
   glass, third-party mark, or recognizable trade dress appears.
 - [x] Portrait edits preserve object identity and leave a quiet authored-copy
   field.
-- [x] No first-pass visual output was rejected. The only rejected attempt was the
-  three-job CLI request, which produced no image because of the billing limit.
+- [x] Products candidate A was rejected for weaker connector legibility and a
+  less reliable quiet copy lane. Candidate B preserves clearer separation among
+  the source sheet, connector fold, and operating stack and became the accepted
+  desktop master.
+- [x] The CRE-1588 first-pass visual outputs were accepted. The CLI requests for
+  CRE-1588 and CRE-1590 produced no image because of the billing limit.
 
 ## Rights and use
 
-Original generated work from CREATE SOMETHING-authored prompts. No reference
-image was copied into the desktop masters. The mobile edits use only the
-accepted CREATE SOMETHING-owned desktop masters. These are illustrative campaign
+Original generated work from CREATE SOMETHING-authored prompts. No external
+reference image was copied into the desktop masters. The mobile edits use only
+the accepted CREATE SOMETHING-owned desktop masters. These are illustrative
 material studies and must never be presented as proof of a real workflow run.
 
 ## Refresh condition

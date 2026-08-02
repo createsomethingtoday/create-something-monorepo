@@ -43,7 +43,6 @@ test('publishes a responsive, condition-specific descriptor for every bench-wate
 test('assigns each study to matching routes without exceeding two public surface families', () => {
   const expectedAssignments = {
     '/map': 'clarityInspectionMedia',
-    '/products': 'clarityInspectionMedia',
     '/control': 'turbulenceExceptionMedia',
     '/delivery': 'settlementResolvedMedia',
     '/proof/marketplace-workflow': 'traceDyeInjectionMedia',
