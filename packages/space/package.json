@@ -21,7 +21,8 @@
 		"build": "vite build",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
-		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
+		"test:search": "vitest run src/lib/search/sitemap.test.ts",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings && pnpm test:search",
 		"test:nba": "tsx --test src/lib/nba/scoreboard-state.test.ts src/lib/nba/api.test.ts workers/nba-proxy/src/scoreboard.test.ts workers/nba-proxy/src/archive.test.ts workers/nba-proxy/src/index.test.ts",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings --watch",
 		"deploy": "pnpm build && CLOUDFLARE_ACCOUNT_ID=9645bd52e640b8a4f40a3a55ff1dd75a node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=create-something-space --commit-dirty=true",
@@ -52,6 +53,7 @@
 		"vite": "^7.1.10",
 		"vite-plugin-top-level-await": "^1.6.0",
 		"vite-plugin-wasm": "^3.5.0",
+		"vitest": "^4.0.16",
 		"wrangler": "^4.103.0"
 	},
 	"dependencies": {

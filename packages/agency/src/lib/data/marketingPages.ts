@@ -44,7 +44,7 @@ export type MarketingPageEntry = {
   primaryAction: string;
   requiredTerms: string[];
   requiredLinks: string[];
-  schema: 'faq' | 'article' | 'page';
+  schema: 'article' | 'page';
   search: {
     changefreq: 'daily' | 'weekly' | 'monthly';
     priority: string;
@@ -85,7 +85,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     primaryAction: 'Map one workflow',
     requiredTerms: ['workflow', 'business operations', 'Signal', 'Decision', 'Proof'],
     requiredLinks: ['/services', '/partners', '/products', '/field-reports/template-review'],
-    schema: 'faq',
+    schema: 'page',
     search: {
       changefreq: 'weekly',
       priority: '1.0',
@@ -104,7 +104,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     primaryAction: 'Map the workflow',
     requiredTerms: ['workflow', 'Map', 'Build', 'Control', 'Proof'],
     requiredLinks: ['/map'],
-    schema: 'faq',
+    schema: 'page',
     search: {
       changefreq: 'weekly',
       priority: '0.95',
@@ -239,7 +239,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     primaryAction: 'Map the stack boundary',
     requiredTerms: ['workflow', 'approval', 'evidence', 'runbook', 'vendor'],
     requiredLinks: ['/products', '/cloudflare', '/dify'],
-    schema: 'faq',
+    schema: 'page',
     search: {
       changefreq: 'monthly',
       priority: '0.85',
@@ -259,7 +259,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     primaryAction: 'Map the workflow',
     requiredTerms: ['Substrate', 'OpenAI', 'Cloudflare', 'workflow', 'evidence'],
     requiredLinks: ['/products', '/cloudflare', '/stack'],
-    schema: 'faq',
+    schema: 'page',
     search: {
       changefreq: 'monthly',
       priority: '0.85',
@@ -278,7 +278,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     primaryAction: 'Start a client map',
     requiredTerms: ['workflow', 'client', 'Map', 'Build', 'Control'],
     requiredLinks: ['/map', '/partners'],
-    schema: 'faq',
+    schema: 'page',
     search: {
       changefreq: 'monthly',
       priority: '0.82',
@@ -373,7 +373,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     primaryAction: 'Map the runtime',
     requiredTerms: ['Cloudflare', 'Workers', 'D1', 'workflow', 'evidence'],
     requiredLinks: ['/partners', '/stack'],
-    schema: 'faq',
+    schema: 'page',
     search: {
       changefreq: 'monthly',
       priority: '0.8',
@@ -398,7 +398,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
       '/dify/template-marketplace-proof',
       '/stack'
     ],
-    schema: 'faq',
+    schema: 'page',
     search: {
       changefreq: 'weekly',
       priority: '0.9',
@@ -499,7 +499,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     primaryAction: 'Map one workflow',
     requiredTerms: ['workflow', 'Map', 'Build', 'Control', 'Proof'],
     requiredLinks: [],
-    schema: 'faq',
+    schema: 'page',
     search: {
       changefreq: 'monthly',
       priority: '0.75',
@@ -537,7 +537,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     primaryAction: 'Map one workflow',
     requiredTerms: ['Signal', 'inbox', 'API updates', 'Map', 'Proof'],
     requiredLinks: ['/map', '/products/decision', '/products/proof', '/products'],
-    schema: 'faq',
+    schema: 'page',
     search: {
       changefreq: 'monthly',
       priority: '0.68',
@@ -556,7 +556,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     primaryAction: 'Map one workflow',
     requiredTerms: ['Decision', 'queue', 'human-in-the-loop', 'Signal', 'Proof'],
     requiredLinks: ['/products/signal', '/map', '/products/proof', '/products'],
-    schema: 'faq',
+    schema: 'page',
     search: {
       changefreq: 'monthly',
       priority: '0.68',
@@ -575,7 +575,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     primaryAction: 'Map one workflow',
     requiredTerms: ['Proof', 'ledger', 'audit trail', 'Map', 'Decision'],
     requiredLinks: ['/products/signal', '/products/decision', '/map', '/products'],
-    schema: 'faq',
+    schema: 'page',
     search: {
       changefreq: 'monthly',
       priority: '0.68',
@@ -652,7 +652,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     primaryAction: 'Bring the workflow',
     requiredTerms: ['workflow', 'pilot', 'runbook', 'approval', 'evidence'],
     requiredLinks: [],
-    schema: 'faq',
+    schema: 'page',
     search: {
       changefreq: 'monthly',
       priority: '0.8',
@@ -671,7 +671,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     primaryAction: 'Bring the workflow',
     requiredTerms: ['Control', 'workflow', 'approval', 'evidence', 'reliability'],
     requiredLinks: [],
-    schema: 'faq',
+    schema: 'page',
     search: {
       changefreq: 'monthly',
       priority: '0.8',
@@ -725,11 +725,7 @@ export function scoreMarketingPage(
       id: 'schema',
       label: `Page uses ${entry.schema} schema`,
       points:
-        entry.schema === 'faq'
-          ? /faqItems/.test(source)
-            ? 12
-            : 0
-          : entry.schema === 'article'
+        entry.schema === 'article'
             ? /ogType="article"/.test(source) && /publishedTime=/.test(source)
               ? 12
               : 0
@@ -738,9 +734,7 @@ export function scoreMarketingPage(
               : 0,
       max: 12,
       passed:
-        entry.schema === 'faq'
-          ? /faqItems/.test(source)
-          : entry.schema === 'article'
+        entry.schema === 'article'
             ? /ogType="article"/.test(source) && /publishedTime=/.test(source)
             : /<SEO[\s\S]*?>/.test(source)
     },

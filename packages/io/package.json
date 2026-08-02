@@ -29,8 +29,9 @@
 		"check:experiments": "node scripts/check-experiment-catalog.mjs",
 		"test:analytics": "node --import tsx --test test/admin-analytics.test.ts",
 		"test:admin-experiments": "node --import tsx --test test/admin-experiments.test.ts",
-    "test:threshold-dwelling": "node --import tsx --test test/threshold-dwelling-performance.test.ts",
-		"check": "pnpm --filter @create-something/spritz package && pnpm check:content && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
+		"test:threshold-dwelling": "node --import tsx --test test/threshold-dwelling-performance.test.ts",
+		"test:search": "vitest run src/routes/sitemap.xml/sitemap.test.ts",
+		"check": "pnpm --filter @create-something/spritz package && pnpm check:content && pnpm test:search && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings --watch",
 		"prelint": "pnpm --filter @create-something/eslint-plugin-canon build",
 		"lint": "eslint .",
@@ -73,6 +74,7 @@
 		"tailwindcss": "^3.4.18",
 		"typescript": "^5.9.3",
 		"vite": "^7.1.10",
+		"vitest": "^4.0.16",
 		"wrangler": "^4.103.0"
 	}
 }

@@ -206,6 +206,10 @@
 			"types": "./dist/analytics/index.d.ts",
 			"default": "./dist/analytics/index.js"
 		},
+		"./search": {
+			"types": "./dist/search/index.d.ts",
+			"default": "./dist/search/index.js"
+		},
 		"./api": {
 			"types": "./dist/api/index.d.ts",
 			"default": "./dist/api/index.js"

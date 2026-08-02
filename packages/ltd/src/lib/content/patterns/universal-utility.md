@@ -1,7 +1,8 @@
 ---
 title: "Universal Utility"
-subtitle: ""The best for the most for the least." Charles and Ray Eames' democratic
-			design philosophy. Tools that serve everyone without compromise."
+subtitle: >-
+  "The best for the most for the least." Charles and Ray Eames' democratic
+  design philosophy. Tools that serve everyone without compromise.
 category: "Pattern"
 published: true
 publishedAt: "2025-01-08"
@@ -94,6 +95,5 @@ The best features shouldn't be paywalled. Core functionality should be
 Manufacturing constraints drove Eames innovation. Limitation enabled universality.
 
 Universal tools age well. Build on standards that everyone can access.
-
 
 

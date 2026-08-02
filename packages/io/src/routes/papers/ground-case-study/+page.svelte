@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { SEO } from '@create-something/canon';
+
 	const metrics = [
 		{ label: 'Duplicate functions found', value: '47', context: 'across 12 packages' },
 		{ label: 'False positives', value: '<5%', context: 'vs 30%+ with grep patterns' },
@@ -28,18 +30,29 @@
 	];
 </script>
 
-<svelte:head>
-	<title>Ground Case Study: Monorepo Analysis | CREATE SOMETHING</title>
-	<meta name="description" content="Case study: How Ground saved 8+ hours analyzing a 80+ package monorepo by preventing AI hallucination in code analysis." />
-	<meta name="keywords" content="Ground, case study, code analysis, AI hallucination, monorepo, duplicate detection, dead code" />
-</svelte:head>
+<SEO
+	title="Ground Case Study: Monorepo Analysis"
+	description="Case study: How Ground saved 8+ hours analyzing an 80+ package monorepo by preventing AI hallucination in code analysis."
+	keywords="Ground, case study, code analysis, AI hallucination, monorepo, duplicate detection, dead code"
+	canonical="https://createsomething.io/papers/ground-case-study"
+	ogType="article"
+	author="CREATE SOMETHING Research"
+	authorType="Organization"
+	authorUrl="https://createsomething.io/about"
+	publishedTime="2026-01-30T00:00:00Z"
+	modifiedTime="2026-01-30T00:00:00Z"
+	articleSection="Case Study"
+	articleTags={['Ground', 'Code Analysis', 'Hallucination Prevention', 'Monorepo']}
+	propertyName="io"
+/>
 
 <article class="paper">
 	<header class="paper-header">
 		<span class="category">Case Study</span>
 		<h1>Ground: Verification-First Code Analysis</h1>
 		<p class="subtitle">How computed claims replaced guesswork in an 80+ package monorepo</p>
-		<time datetime="2026-01">January 2026</time>
+		<p class="byline">By <a href="/about">CREATE SOMETHING Research</a></p>
+		<time datetime="2026-01-30">Published January 30, 2026</time>
 	</header>
 
 	<section class="abstract">

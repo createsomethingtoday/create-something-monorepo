@@ -85,6 +85,10 @@ test('retired Dify marketing cluster remains archived to the current stack route
   );
 });
 
+test('visible FAQs are content, not a search-schema quality gate', () => {
+  assert.ok(marketingPagePortfolio.every((entry) => entry.schema !== ('faq' as never)));
+});
+
 test('current marketing portfolio pages clear their route-decision strength threshold', () => {
   for (const entry of marketingPagePortfolio) {
     const source = readFileSync(pageFileForRoute(entry.path), 'utf8');

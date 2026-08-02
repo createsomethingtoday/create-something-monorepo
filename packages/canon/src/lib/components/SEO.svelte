@@ -21,6 +21,8 @@
   export let ogType: 'website' | 'article' | 'profile' = 'website';
   export let twitterCard: 'summary' | 'summary_large_image' = 'summary_large_image';
   export let author: string = 'Create Something';
+  export let authorType: 'Person' | 'Organization' = 'Organization';
+  export let authorUrl: string = '';
   export let publishedTime: string = '';
   export let modifiedTime: string = '';
   export let articleSection: string = '';
@@ -164,8 +166,9 @@
     ...(publishedTime && { datePublished: publishedTime }),
     ...((modifiedTime || publishedTime) && { dateModified: modifiedTime || publishedTime }),
     author: {
-      '@type': 'Organization',
-      name: author
+      '@type': authorType,
+      name: author,
+      url: authorUrl || (authorType === 'Organization' ? config.domain : undefined)
     },
     publisher: organizationSchema,
     mainEntityOfPage: {

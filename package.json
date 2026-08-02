@@ -186,6 +186,7 @@
     "prose:ste:check": "node scripts/prose-quality/index.mjs check --profile agency-ste --changed-from origin/main",
     "prose:ste:audit": "node scripts/prose-quality/index.mjs audit --profile agency-ste --scope agency-active",
     "prose:test": "node --test scripts/test/prose-quality.test.mjs",
+    "search:check": "pnpm --filter @create-something/canon package && pnpm --filter @create-something/canon exec vitest run src/lib/components/layout-seo.test.ts src/lib/domains/io/article-header-ssr.test.ts src/lib/search/sitemap.test.ts && pnpm --filter @create-something/io test:search && pnpm --filter @create-something/ltd test:search && pnpm --filter @create-something/space test:search && pnpm --filter @create-something/agency seo:check",
     "performance:pages:check": "tsx scripts/performance-page-audit.ts",
     "performance:pages:report": "tsx scripts/performance-page-audit.ts --json",
     "performance:pages:test": "node --import tsx --test scripts/test/performance-page-audit.test.ts",
