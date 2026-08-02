@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { onMount, type Snippet } from 'svelte';
+	import PerformancePaperStudioCanvas from './PerformancePaperStudioCanvas.svelte';
 	import type { PerformanceMediaVideo } from './media/types';
+	import type { PerformancePaperProperty } from './media/paper-studio';
 
 	export type PerformanceCampaignOpeningMode = 'ink' | 'paper';
 	export type PerformanceCampaignOpeningDensity = 'standard' | 'compact';
@@ -17,6 +19,7 @@
 		objectPosition?: string;
 		colorMode?: 'monochrome' | 'natural';
 		video?: PerformanceCampaignVideo;
+		studioShot?: PerformancePaperProperty;
 	}
 
 	export interface PerformanceCampaignProof {
@@ -35,6 +38,7 @@
 		priority?: boolean;
 		actions?: Snippet;
 		artifact?: Snippet;
+		artifactOwnsMedia?: boolean;
 	}
 
 	let {
@@ -47,10 +51,12 @@
 		density = 'standard',
 		priority = true,
 		actions,
-		artifact
+		artifact,
+		artifactOwnsMedia = false
 	}: Props = $props();
 
 	let motionAllowed = $state(false);
+	let studioReady = $state(false);
 
 	onMount(() => {
 		const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
@@ -72,6 +78,7 @@
 
 <section
 	class="performance-campaign-opening"
+	class:performance-campaign-opening--paper-studio={mode === 'paper' && Boolean(media.studioShot)}
 	data-mode={mode}
 	data-density={density}
 	data-has-artifact={artifact ? 'true' : 'false'}
@@ -79,16 +86,19 @@
 >
 	<figure
 		class="performance-campaign-opening__media"
+		class:performance-campaign-opening__media--studio-ready={studioReady}
+		class:performance-campaign-opening__media--paper-object-visible={studioReady ||
+			artifactOwnsMedia}
 		data-color-mode={media.colorMode ?? 'monochrome'}
 		data-material={media.material ?? 'unspecified'}
 	>
-		<picture>
+		<picture class:performance-campaign-opening__fallback-suppressed={artifactOwnsMedia}>
 			{#if media.mobileSrc}
 				<source media="(max-width: 47.99rem)" srcset={media.mobileSrc} />
 			{/if}
 			<img
 				src={media.src}
-				alt={media.alt}
+				alt={artifactOwnsMedia ? '' : media.alt}
 				width={media.width}
 				height={media.height}
 				loading={priority ? 'eager' : 'lazy'}
@@ -97,6 +107,12 @@
 				style:object-position={media.objectPosition ?? 'center'}
 			/>
 		</picture>
+		{#if media.studioShot && !artifact}
+			<PerformancePaperStudioCanvas
+				shot={media.studioShot}
+				onStateChange={(state) => (studioReady = state === 'ready')}
+			/>
+		{/if}
 		{#if media.video && motionAllowed}
 			<video
 				autoplay
@@ -192,6 +208,21 @@
 		object-fit: cover;
 	}
 
+	.performance-campaign-opening__media picture {
+		z-index: 0;
+		opacity: 1;
+		transition: opacity var(--duration-performance-standard, 400ms)
+			var(--ease-performance-standard, ease);
+	}
+
+	.performance-campaign-opening__media--studio-ready picture {
+		opacity: 0;
+	}
+
+	.performance-campaign-opening__media .performance-campaign-opening__fallback-suppressed {
+		opacity: 0;
+	}
+
 	.performance-campaign-opening__media[data-color-mode='monochrome'] img,
 	.performance-campaign-opening__media[data-color-mode='monochrome'] video {
 		filter: grayscale(1) contrast(1.08);
@@ -207,16 +238,21 @@
 		position: absolute;
 		inset: 0;
 		background:
-			linear-gradient(90deg,
+			linear-gradient(
+				90deg,
 				rgba(9, 9, 9, 0.99) 0%,
 				var(--performance-campaign-scrim-copy) 36%,
 				var(--performance-campaign-scrim-mid) 58%,
 				rgba(9, 9, 9, 0.04) 76%,
-				var(--performance-campaign-scrim-edge) 100%),
-			linear-gradient(0deg,
+				var(--performance-campaign-scrim-edge) 100%
+			),
+			linear-gradient(
+				0deg,
 				var(--performance-campaign-scrim-bottom) 0%,
 				rgba(9, 9, 9, 0.08) 48%,
-				rgba(9, 9, 9, 0) 100%);
+				rgba(9, 9, 9, 0) 100%
+			);
+		z-index: 1;
 	}
 
 	.performance-campaign-opening[data-mode='paper'] .performance-campaign-opening__media {
@@ -225,21 +261,41 @@
 
 	.performance-campaign-opening[data-mode='paper'] .performance-campaign-opening__media::after {
 		background:
-			linear-gradient(90deg,
+			linear-gradient(
+				90deg,
 				var(--color-performance-paper, #f3f3f0) 0%,
 				rgba(243, 243, 240, 0.98) 38%,
 				rgba(243, 243, 240, 0.72) 53%,
 				rgba(243, 243, 240, 0.14) 72%,
-				rgba(243, 243, 240, 0) 100%),
-			linear-gradient(0deg,
-				rgba(243, 243, 240, 0.82) 0%,
-				rgba(243, 243, 240, 0) 32%);
+				rgba(243, 243, 240, 0) 100%
+			),
+			linear-gradient(0deg, rgba(243, 243, 240, 0.82) 0%, rgba(243, 243, 240, 0) 32%);
+	}
+
+	.performance-campaign-opening[data-mode='paper']
+		.performance-campaign-opening__media--paper-object-visible::after {
+		background:
+			linear-gradient(
+				90deg,
+				var(--color-performance-paper, #f3f3f0) 0%,
+				rgba(243, 243, 240, 0.98) 34%,
+				rgba(243, 243, 240, 0.38) 46%,
+				rgba(243, 243, 240, 0.04) 58%,
+				rgba(243, 243, 240, 0) 68%
+			),
+			linear-gradient(0deg, rgba(243, 243, 240, 0.34) 0%, rgba(243, 243, 240, 0) 30%);
 	}
 
 	.performance-campaign-opening[data-mode='paper'] .performance-campaign-opening__grid {
 		background:
-			linear-gradient(90deg, var(--color-performance-grid, rgba(9, 9, 9, 0.045)) 1px, transparent 1px) 0 0 / 25% 100%,
-			linear-gradient(var(--color-performance-grid, rgba(9, 9, 9, 0.045)) 1px, transparent 1px) 0 0 / 100% 25%;
+			linear-gradient(
+					90deg,
+					var(--color-performance-grid, rgba(9, 9, 9, 0.045)) 1px,
+					transparent 1px
+				)
+				0 0 / 25% 100%,
+			linear-gradient(var(--color-performance-grid, rgba(9, 9, 9, 0.045)) 1px, transparent 1px) 0
+				0 / 100% 25%;
 	}
 
 	.performance-campaign-opening__grid {
@@ -260,7 +316,10 @@
 		gap: clamp(3rem, 8vw, 8rem);
 		width: min(
 			var(--content-width-performance, 85rem),
-			calc(100% - var(--space-performance-page-gutter, 1.25rem) - var(--space-performance-page-gutter, 1.25rem))
+			calc(
+				100% - var(--space-performance-page-gutter, 1.25rem) -
+					var(--space-performance-page-gutter, 1.25rem)
+			)
 		);
 		margin-inline: auto;
 		padding-block: clamp(8rem, 17vh, 12rem) 1.25rem;
@@ -292,7 +351,9 @@
 	}
 
 	@media (min-width: 48rem) {
-		.performance-campaign-opening[data-has-artifact='true'] .performance-campaign-opening__content header {
+		.performance-campaign-opening[data-has-artifact='true']
+			.performance-campaign-opening__content
+			header {
 			width: min(44%, 37rem);
 		}
 	}
@@ -314,11 +375,16 @@
 	.performance-campaign-opening h1 {
 		max-width: 13ch;
 		margin: 0;
-		font-family: var(--font-performance-display, var(--font-performance-display, var(--font-performance-sans)));
+		font-family: var(
+			--font-performance-display,
+			var(--font-performance-display, var(--font-performance-sans))
+		);
 		font-size: clamp(3.25rem, 8vw, 7.5rem);
 		font-weight: var(--font-performance-display-weight, var(--font-performance-medium, 500));
 		font-kerning: normal;
-		font-feature-settings: "kern" 1, "liga" 1;
+		font-feature-settings:
+			'kern' 1,
+			'liga' 1;
 		letter-spacing: var(--tracking-performance-display, -0.03em);
 		line-height: var(--leading-performance-display, 0.94);
 		text-wrap: balance;
@@ -343,18 +409,22 @@
 		margin-top: 0.5rem;
 	}
 
+	/* prettier-ignore */
 	.performance-campaign-opening:not([data-mode='paper']) .performance-campaign-opening__actions :global(.btn-primary) {
 		border-color: var(--color-performance-panel, #fff);
 		background: var(--color-performance-panel, #fff);
 		color: var(--color-performance-ink, #090909);
 	}
 
-	.performance-campaign-opening:not([data-mode='paper']) .performance-campaign-opening__actions :global(.btn-primary:hover) {
+	.performance-campaign-opening:not([data-mode='paper'])
+		.performance-campaign-opening__actions
+		:global(.btn-primary:hover) {
 		border-color: var(--color-performance-paper, #f3f3f0);
 		background: var(--color-performance-paper, #f3f3f0);
 		color: var(--color-performance-ink, #090909);
 	}
 
+	/* prettier-ignore */
 	.performance-campaign-opening:not([data-mode='paper']) .performance-campaign-opening__actions :global(.btn-secondary) {
 		border-color: rgba(255, 255, 255, 0.72);
 		background: rgba(9, 9, 9, 0.44);
@@ -362,18 +432,22 @@
 		backdrop-filter: blur(8px);
 	}
 
-	.performance-campaign-opening:not([data-mode='paper']) .performance-campaign-opening__actions :global(.btn-secondary:hover) {
+	.performance-campaign-opening:not([data-mode='paper'])
+		.performance-campaign-opening__actions
+		:global(.btn-secondary:hover) {
 		border-color: var(--color-performance-panel, #fff);
 		background: rgba(255, 255, 255, 0.12);
 		color: var(--color-performance-panel, #fff);
 	}
 
+	/* prettier-ignore */
 	.performance-campaign-opening[data-mode='paper'] .performance-campaign-opening__actions :global(.btn-primary) {
 		border-color: var(--color-performance-ink, #090909);
 		background: var(--color-performance-ink, #090909);
 		color: var(--color-performance-panel, #fff);
 	}
 
+	/* prettier-ignore */
 	.performance-campaign-opening[data-mode='paper'] .performance-campaign-opening__actions :global(.btn-secondary) {
 		border-color: var(--color-performance-line, #c6c8cc);
 		background: rgba(255, 255, 255, 0.62);
@@ -420,29 +494,48 @@
 
 		.performance-campaign-opening__media::after {
 			background:
-				linear-gradient(0deg,
+				linear-gradient(
+					0deg,
 					var(--performance-campaign-scrim-copy) 0%,
 					var(--performance-campaign-scrim-mid) 62%,
 					var(--performance-campaign-scrim-edge) 86%,
-					rgba(9, 9, 9, 0.14) 100%),
+					rgba(9, 9, 9, 0.14) 100%
+				),
 				linear-gradient(90deg, rgba(9, 9, 9, 0.72), rgba(9, 9, 9, 0.28));
 		}
 
 		.performance-campaign-opening[data-mode='paper'] .performance-campaign-opening__media::after {
 			background:
-				linear-gradient(180deg,
+				linear-gradient(
+					180deg,
 					var(--color-performance-paper, #f3f3f0) 0%,
 					rgba(243, 243, 240, 0.98) 48%,
 					rgba(243, 243, 240, 0.56) 68%,
-					rgba(243, 243, 240, 0.76) 100%),
-				linear-gradient(90deg,
-					rgba(243, 243, 240, 0.9),
-					rgba(243, 243, 240, 0.28));
+					rgba(243, 243, 240, 0.76) 100%
+				),
+				linear-gradient(90deg, rgba(243, 243, 240, 0.9), rgba(243, 243, 240, 0.28));
+		}
+
+		.performance-campaign-opening[data-mode='paper']
+			.performance-campaign-opening__media--paper-object-visible::after {
+			background:
+				linear-gradient(
+					180deg,
+					var(--color-performance-paper, #f3f3f0) 0%,
+					rgba(243, 243, 240, 0.98) 46%,
+					rgba(243, 243, 240, 0.72) 53%,
+					rgba(243, 243, 240, 0.14) 62%,
+					rgba(243, 243, 240, 0) 72%
+				),
+				linear-gradient(90deg, rgba(243, 243, 240, 0.36), rgba(243, 243, 240, 0));
 		}
 
 		.performance-campaign-opening__content {
 			width: min(
-				calc(100% - var(--space-performance-page-gutter, 0.75rem) - var(--space-performance-page-gutter, 0.75rem)),
+				calc(
+					100% - var(--space-performance-page-gutter, 0.75rem) -
+						var(--space-performance-page-gutter, 0.75rem)
+				),
 				var(--content-width-performance, 85rem)
 			);
 			padding-block: 7rem 0.75rem;
@@ -456,6 +549,10 @@
 			min-height: 64rem;
 		}
 
+		.performance-campaign-opening--paper-studio:not([data-has-artifact='true']) {
+			min-height: 60rem;
+		}
+
 		.performance-campaign-opening[data-density='compact'] .performance-campaign-opening__content {
 			padding-block: 5.5rem 0.75rem;
 		}
@@ -465,8 +562,20 @@
 			align-content: space-between;
 		}
 
+		.performance-campaign-opening--paper-studio .performance-campaign-opening__content header {
+			align-content: start;
+			align-self: start;
+			padding-top: 1.5rem;
+		}
+
 		.performance-campaign-opening__proof {
 			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.performance-campaign-opening__media picture {
+			transition: none;
 		}
 	}
 

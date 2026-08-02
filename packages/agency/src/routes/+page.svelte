@@ -229,6 +229,7 @@
     proof={heroProofItems}
     mode="paper"
     density="compact"
+    artifactOwnsMedia
   >
     {#snippet actions()}
       <Button href={agencyCoreMessaging.selfMapHref}>Map one workflow</Button>

@@ -1,15 +1,16 @@
 <script lang="ts">
+  import { PerformancePaperStudioCanvas, paperPressureHandoffMedia } from '@create-something/canon';
   import {
     initialPaperWorkflowStage,
     paperWorkflowStages,
     type PaperWorkflowStageId
   } from '$lib/data/paperWorkflow';
-  import PaperPressureCanvas from './PaperPressureCanvas.svelte';
 
   let activeStageId = $state<PaperWorkflowStageId>(initialPaperWorkflowStage);
   let activeStage = $derived(
     paperWorkflowStages.find((stage) => stage.id === activeStageId) ?? paperWorkflowStages[0]
   );
+  let studioReady = $state(false);
 
   function chooseStage(stageId: PaperWorkflowStageId) {
     activeStageId = stageId;
@@ -28,69 +29,23 @@
     <span class="paper-pressure__serial" aria-hidden="true">CS / WF—001</span>
 
     <div class="paper-pressure__artifact">
-      <svg
-        class="paper-pressure__sheet"
-        viewBox="0 0 760 520"
-        role="img"
-        aria-labelledby="paper-workflow-title paper-workflow-description"
-      >
-        <title id="paper-workflow-title">One sheet transformed into a controlled workflow</title>
-        <desc id="paper-workflow-description">
-          One compressed paper handoff opens into a routed sheet, then settles against a controlled
-          edge with proof attached. The selected Map, Build, or Control stage is emphasized.
-        </desc>
-
-        <defs>
-          <filter id="paper-shadow" x="-40%" y="-40%" width="180%" height="190%">
-            <feDropShadow dx="0" dy="22" stdDeviation="20" flood-opacity="0.2" />
-          </filter>
-          <linearGradient id="paper-face" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stop-color="var(--color-performance-panel, #fff)" />
-            <stop offset="0.55" stop-color="var(--color-performance-paper, #f3f3f0)" />
-            <stop offset="1" stop-color="var(--color-performance-line, #d7d7d2)" />
-          </linearGradient>
-        </defs>
-
-        <g data-paper-stage="map" class:stage-active={activeStageId === 'map'}>
-          <path
-            class="paper-pressure__crumple"
-            filter="url(#paper-shadow)"
-            d="m239 251 30-78 79-52 96 8 69 50 35 87-35 93-72 61-102-9-78-58Z"
-          />
-          <path class="paper-pressure__crease" d="m239 251 109-130 24 135-111 97m111-97 141-77-64 132-77-55m77 55-8 100m-69-155-33 155m33-155 141 103" />
-        </g>
-
-        <g data-paper-stage="build" class:stage-active={activeStageId === 'build'}>
-          <path
-            class="paper-pressure__opening-sheet"
-            filter="url(#paper-shadow)"
-            d="m109 157 191-45 151 65 195-43 18 257-194 38-153-70-190 44Z"
-          />
-          <path class="paper-pressure__crease" d="m300 112 17 247m134-182 19 252" />
-          <path class="paper-pressure__route" d="M159 270h122l82 64 91-74h135" />
-          <path class="paper-pressure__route" d="m572 244 20 16-20 16" />
-        </g>
-
-        <g data-paper-stage="control" class:stage-active={activeStageId === 'control'}>
-          <path
-            class="paper-pressure__settled-sheet"
-            filter="url(#paper-shadow)"
-            d="M112 111h497v313l-48 43H112Z"
-          />
-          <path class="paper-pressure__crease" d="m181 112 33 312m134-313-21 313m153-313 27 313" />
-          <path class="paper-pressure__perforation" d="M526 143v247" />
-          <g class="paper-pressure__stamp" transform="translate(387 302) rotate(-7)">
-            <rect width="153" height="78" rx="3" />
-            <text x="76.5" y="33" text-anchor="middle">PROOF</text>
-            <text x="76.5" y="54" text-anchor="middle">RECEIPT ATTACHED</text>
-          </g>
-          <path class="paper-pressure__clamp" d="M580 163h69v213h-69" />
-          <circle class="paper-pressure__clamp-pin" cx="615" cy="207" r="9" />
-          <circle class="paper-pressure__clamp-pin" cx="615" cy="333" r="9" />
-        </g>
-      </svg>
-
-      <PaperPressureCanvas stage={activeStageId} />
+      <picture class:paper-pressure__fallback--hidden={studioReady}>
+        {#if paperPressureHandoffMedia.mobileSrc}
+          <source media="(max-width: 47.99rem)" srcset={paperPressureHandoffMedia.mobileSrc} />
+        {/if}
+        <img
+          src={paperPressureHandoffMedia.src}
+          alt={paperPressureHandoffMedia.alt}
+          width={paperPressureHandoffMedia.width}
+          height={paperPressureHandoffMedia.height}
+        />
+      </picture>
+      <PerformancePaperStudioCanvas
+        shot="agency"
+        stage={activeStageId}
+        embedded
+        onStateChange={(state) => (studioReady = state === 'ready')}
+      />
     </div>
 
     <div class="paper-pressure__annotation" id="paper-stage-readout" aria-live="polite">
@@ -131,6 +86,7 @@
     display: grid;
     grid-template-rows: minmax(0, 1fr) auto;
     width: min(47vw, 44rem);
+    padding: 0;
     color: var(--paper-pressure-ink);
     pointer-events: none;
   }
@@ -161,88 +117,31 @@
 
   .paper-pressure__artifact {
     position: absolute;
-    inset: 3% 0 22%;
+    inset: 3% 0 25%;
     z-index: 1;
-    transform: translateY(-2rem);
     pointer-events: none;
   }
 
-  .paper-pressure__sheet {
+  .paper-pressure__artifact picture,
+  .paper-pressure__artifact img {
     position: absolute;
     inset: 0;
     display: block;
     width: 100%;
     height: 100%;
-    overflow: visible;
   }
 
-  [data-paper-stage] {
-    opacity: 0;
+  .paper-pressure__artifact picture {
     transition: opacity var(--duration-performance-standard, 400ms)
       var(--ease-performance-standard, ease);
   }
 
-  [data-paper-stage].stage-active {
-    opacity: 0.36;
+  .paper-pressure__artifact img {
+    object-fit: cover;
   }
 
-  .paper-pressure__crumple,
-  .paper-pressure__opening-sheet,
-  .paper-pressure__settled-sheet {
-    fill: url(#paper-face);
-    stroke: var(--color-performance-line-strong, #a9aaa5);
-    stroke-width: 1.5;
-  }
-
-  .paper-pressure__crease,
-  .paper-pressure__route,
-  .paper-pressure__perforation,
-  .paper-pressure__clamp {
-    fill: none;
-    stroke: currentColor;
-  }
-
-  .paper-pressure__crease {
-    stroke-width: 1;
-    opacity: 0.33;
-  }
-
-  .paper-pressure__route {
-    stroke: var(--paper-pressure-review);
-    stroke-width: 3;
-  }
-
-  .paper-pressure__perforation {
-    stroke: var(--paper-pressure-stop);
-    stroke-width: 2.5;
-    stroke-dasharray: 4 8;
-  }
-
-  .paper-pressure__stamp rect {
-    fill: none;
-    stroke: var(--paper-pressure-stop);
-    stroke-width: 3;
-  }
-
-  .paper-pressure__stamp text {
-    fill: var(--paper-pressure-stop);
-    font-family: var(--font-performance-mono);
-    font-size: 11px;
-  }
-
-  .paper-pressure__stamp text:first-of-type {
-    font-size: 20px;
-    font-weight: 700;
-  }
-
-  .paper-pressure__clamp {
-    stroke-width: 10;
-  }
-
-  .paper-pressure__clamp-pin {
-    fill: var(--color-performance-paper, #f3f3f0);
-    stroke: currentColor;
-    stroke-width: 3;
+  .paper-pressure__fallback--hidden {
+    opacity: 0;
   }
 
   .paper-pressure__annotation {
@@ -340,16 +239,16 @@
 
   @media (max-width: 47.99rem) {
     .paper-pressure {
-      top: 30rem;
+      top: 34rem;
       right: var(--space-performance-page-gutter, 0.75rem);
       bottom: 10rem;
       left: var(--space-performance-page-gutter, 0.75rem);
+      grid-template-rows: minmax(12rem, 1fr) auto;
       width: auto;
     }
 
     .paper-pressure__artifact {
       inset: 0 0 28%;
-      transform: translateY(-1rem);
     }
 
     .paper-pressure__annotation {

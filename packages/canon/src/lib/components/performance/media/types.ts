@@ -40,4 +40,5 @@ export interface PerformanceMediaStudy {
   objectPosition?: string;
   colorMode?: 'monochrome' | 'natural';
   video?: PerformanceMediaVideo;
+  studioShot?: 'agency' | 'io' | 'space' | 'ltd' | 'learn';
 }
