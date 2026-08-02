@@ -128,6 +128,42 @@ test('scores LTK freshness from publication time rather than observation time', 
   assert.equal(decision.reliability.components.freshness, 15);
 });
 
+test('scores date-only LTK publication evidence from its calendar date, not rediscovery time', () => {
+  const oldLtkPost: OfferObservation = {
+    ...officialOffer,
+    id: 'old-date-only-ltk-post',
+    source: {
+      kind: 'ltk_public',
+      url: 'https://www.shopltk.com/explore/example/posts/old-date-only',
+      publisher: 'Example Creator',
+      publishedOn: '2026-05-01',
+      observedAt: request.asOf,
+      access: 'public',
+      direct: true
+    },
+    evidence: { terms: 'partial', code: 'reported', corroboratingUrls: [] }
+  };
+
+  const [decision] = findOffers(request, [oldLtkPost]).decisions;
+  assert.equal(decision.reliability.components.freshness, 15);
+  assert.ok(!decision.reliability.caps.some((cap) => cap.code === 'PUBLICATION_DATE_UNKNOWN'));
+  assert.notEqual(decision.status, 'recommend');
+});
+
+test('rejects offers whose date-only end window precedes the request date', () => {
+  const expiredDateOnly: OfferObservation = {
+    ...officialOffer,
+    id: 'expired-date-only',
+    offer: { ...officialOffer.offer, endsAt: undefined, endsOn: '2026-07-28' }
+  };
+
+  const [decision] = findOffers(request, [expiredDateOnly]).decisions;
+  assert.equal(decision.status, 'rejected');
+  assert.ok(
+    decision.reliability.reasons.includes('The observed end date is before the request date.')
+  );
+});
+
 test('caps LTK evidence when the post publication time is unknown', () => {
   const undatedLtkPost: OfferObservation = {
     ...officialOffer,

@@ -48,7 +48,7 @@ node dist/cli.js live \
   --deadline 2026-08-09
 ```
 
-The live command accepts either `--merchant` or the supported `--category health_and_beauty`. Category search fans out deterministically to Ulta Beauty, Sephora, CVS Pharmacy, Walgreens, Target, and OSEA. It requires an approved `OPENAI_API_KEY`, uses hosted public web search, converts the completed search history into schema-constrained factual evidence, and returns the same domain-service result used by other adapters. Imprecise optional dates and malformed candidates fail closed rather than changing the whole receipt. It performs no purchases, cart mutation, messaging, subscriptions, unbounded monitoring, access-control bypass, or private LTK access.
+The live command accepts either `--merchant` or the supported `--category health_and_beauty`. Category search fans out deterministically to Ulta Beauty, Sephora, CVS Pharmacy, Walgreens, Target, and OSEA. It requires an approved `OPENAI_API_KEY`, uses hosted public web search, converts the completed search history into schema-constrained factual evidence, and returns the same domain-service result used by other adapters. Date-only publication and offer-window evidence is retained at date precision and is never upgraded to the crawl time; malformed candidates fail closed rather than changing the whole receipt. It performs no purchases, cart mutation, messaging, subscriptions, unbounded monitoring, access-control bypass, or private LTK access.
 
 ## Verification
 

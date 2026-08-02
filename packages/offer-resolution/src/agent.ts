@@ -95,7 +95,7 @@ You are the read-only Offer Evidence Finalizer. Convert the completed LTK-primar
 
 Copy the normalized shopping request supplied in the final user message exactly. Include only factual observations supported by direct URLs in the completed search history. Preserve public LTK observations as source kind ltk_public and keep supplemental sources distinct. An observation must contain a concrete coupon code, numeric discount, or explicit shipping offer; generic policy, pickup, delivery, store-location, or shipping-information pages are corroborating evidence only and must not become standalone offers.
 
-Use the normalized request asOf value for every observedAt. Omit publishedAt unless the source exposes a complete RFC 3339 timestamp ending in Z; omit imprecise startsAt and endsAt values for the same reason.
+Use the normalized request asOf value for every observedAt. Preserve date-only public dates in publishedOn, startsOn, and endsOn. Use publishedAt, startsAt, and endsAt only when the source exposes a complete RFC 3339 timestamp ending in Z. Never replace a publication or offer-window date with the observation time.
 
 Never calculate or invent a reliability score. Never purchase, mutate a cart, message a creator, subscribe, create monitoring, bypass access controls, or use private LTK endpoints.
 `.trim();

@@ -1,0 +1,88 @@
+{
+  "fixtureMetadata": {
+    "purpose": "Deterministic reliability-regression contract only. All codes are synthetic and must never be presented as current merchant offers.",
+    "acceptance": [
+      "A direct, current official observation with verified terms remains recommendable.",
+      "A stale LTK observation stays non-actionable even when it is rediscovered at request time.",
+      "Date-only source and offer-window evidence remains date-precise in the receipt."
+    ]
+  },
+  "request": {
+    "merchant": "Sephora",
+    "need": "beauty supplies",
+    "budget": 200,
+    "currency": "USD",
+    "postalCode": "76060",
+    "deadline": "2026-08-09",
+    "asOf": "2026-08-02T00:00:00.000Z",
+    "channels": ["online", "pickup", "in_store"]
+  },
+  "observations": [
+    {
+      "id": "fixture-current-official",
+      "merchant": "Sephora",
+      "title": "Fixture current official offer",
+      "source": {
+        "kind": "official_retailer",
+        "url": "https://www.sephora.com/beauty/beauty-offers",
+        "publisher": "Sephora",
+        "observedAt": "2026-08-02T00:00:00.000Z",
+        "access": "public",
+        "direct": true
+      },
+      "offer": {
+        "code": "FIXTURECURRENT20",
+        "discount": { "kind": "percent", "value": 20 },
+        "status": "active",
+        "endsOn": "2026-08-09"
+      },
+      "applicability": {
+        "merchant": "confirmed",
+        "budget": "confirmed",
+        "location": "confirmed",
+        "channel": "confirmed",
+        "membership": "confirmed"
+      },
+      "fulfillment": {
+        "deadline": "confirmed",
+        "evidenceUrl": "https://www.sephora.com/happening/stores"
+      },
+      "evidence": {
+        "terms": "explicit",
+        "code": "verified",
+        "corroboratingUrls": [
+          "https://www.sephora.com/beauty/beauty-offers",
+          "https://www.sephora.com/happening/stores"
+        ]
+      }
+    },
+    {
+      "id": "fixture-stale-ltk",
+      "merchant": "Sephora",
+      "title": "Fixture stale LTK creator code",
+      "source": {
+        "kind": "ltk_public",
+        "url": "https://www.shopltk.com/explore/example/posts/fixture-stale",
+        "publisher": "Example Creator",
+        "publishedOn": "2026-05-01",
+        "observedAt": "2026-08-02T00:00:00.000Z",
+        "access": "public",
+        "direct": true
+      },
+      "offer": {
+        "code": "FIXTURESTALE15",
+        "discount": { "kind": "percent", "value": 15 },
+        "status": "unknown"
+      },
+      "applicability": {
+        "merchant": "confirmed",
+        "budget": "unknown",
+        "location": "unknown",
+        "channel": "unknown",
+        "membership": "unknown"
+      },
+      "fulfillment": { "deadline": "unknown" },
+      "evidence": { "terms": "partial", "code": "reported", "corroboratingUrls": [] }
+    }
+  ]
+}

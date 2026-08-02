@@ -106,8 +106,12 @@ export function scoreFulfillment(request: OfferRequest, observation: OfferObserv
   return 35;
 }
 
-export function scoreFreshness(asOf: string, observedAt: string): number {
-  const ageMs = new Date(asOf).getTime() - new Date(observedAt).getTime();
+export function scoreFreshness(asOf: string, sourceTime?: string): number {
+  if (!sourceTime) return 0;
+  const sourceIsDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(sourceTime);
+  const ageMs = sourceIsDateOnly
+    ? Date.parse(`${asOf.slice(0, 10)}T00:00:00.000Z`) - Date.parse(`${sourceTime}T00:00:00.000Z`)
+    : new Date(asOf).getTime() - new Date(sourceTime).getTime();
   if (!Number.isFinite(ageMs) || ageMs < -5 * 60 * 1000) return 0;
   const days = Math.max(0, ageMs) / 86_400_000;
   if (days <= 1) return 100;
@@ -200,7 +204,8 @@ export function collectCaps(
   }
   if (
     (observation.source.kind === 'ltk_public' || observation.source.kind === 'creator_owned') &&
-    !observation.source.publishedAt
+    !observation.source.publishedAt &&
+    !observation.source.publishedOn
   ) {
     caps.push({
       code: 'PUBLICATION_DATE_UNKNOWN',

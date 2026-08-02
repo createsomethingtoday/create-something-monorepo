@@ -40,6 +40,7 @@ export interface OfferObservation {
     url: string;
     publisher: string;
     publishedAt?: string;
+    publishedOn?: string;
     observedAt: string;
     access: 'public' | 'authenticated' | 'app_only' | 'blocked';
     direct: boolean;
@@ -52,7 +53,9 @@ export interface OfferObservation {
     };
     status: 'active' | 'expired' | 'revoked' | 'unknown';
     startsAt?: string;
+    startsOn?: string;
     endsAt?: string;
+    endsOn?: string;
     minimumSubtotal?: number;
     checkoutOnly?: boolean;
   };

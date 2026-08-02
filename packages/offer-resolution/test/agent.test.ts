@@ -126,7 +126,7 @@ test('evidence finalizer uses schema-constrained output instead of a side-effect
   assert.equal(finalizer.outputType, discoveredOfferEvidenceSchema);
   assert.deepEqual(finalizer.tools, []);
   assert.equal(finalizer.modelSettings.toolChoice, 'none');
-  assert.match(String(finalizer.instructions), /omit publishedAt unless/i);
+  assert.match(String(finalizer.instructions), /preserve date-only/i);
 });
 
 test('evidence finalizer accepts a coded observation when the model omits discount details', () => {
@@ -200,7 +200,7 @@ test('structured evidence accepts the exact normalized request and rejects reque
   );
 });
 
-test('structured evidence fails closed on imprecise optional dates and owns observation time', () => {
+test('structured evidence preserves date-only publication and offer-window evidence while owning observation time', () => {
   const observation = {
     id: 'sephora-ltk-lead',
     merchant: 'Sephora',
@@ -209,7 +209,7 @@ test('structured evidence fails closed on imprecise optional dates and owns obse
       kind: 'ltk_public' as const,
       url: 'https://www.shopltk.com/explore/example',
       publisher: 'Example creator',
-      publishedAt: '2026-08-01',
+      publishedAt: '2026-05-01',
       observedAt: '2026-08-01',
       access: 'public' as const,
       direct: true
@@ -218,8 +218,8 @@ test('structured evidence fails closed on imprecise optional dates and owns obse
       code: 'EXAMPLE',
       discount: { kind: 'percent' as const, value: 10 },
       status: 'unknown' as const,
-      startsAt: '2026-08-01',
-      endsAt: '2026-08-09'
+      startsAt: '2026-05-01',
+      endsAt: '2026-05-31'
     },
     applicability: {
       merchant: 'confirmed' as const,
@@ -244,8 +244,11 @@ test('structured evidence fails closed on imprecise optional dates and owns obse
 
   assert.equal(actual.source.observedAt, request.asOf);
   assert.equal(actual.source.publishedAt, undefined);
+  assert.equal(actual.source.publishedOn, '2026-05-01');
   assert.equal(actual.offer.startsAt, undefined);
   assert.equal(actual.offer.endsAt, undefined);
+  assert.equal(actual.offer.startsOn, '2026-05-01');
+  assert.equal(actual.offer.endsOn, '2026-05-31');
 });
 
 test('structured evidence drops a malformed candidate without failing the entire search run', () => {

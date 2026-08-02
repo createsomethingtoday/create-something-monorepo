@@ -164,7 +164,7 @@ export function createOfferSavingsMcpServer(
   const server = new McpServer(
     {
       name: 'offer-savings-agent',
-      version: '0.2.8'
+      version: '0.2.9'
     },
     {
       capabilities: {

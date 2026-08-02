@@ -39,6 +39,18 @@ function requireDate(name: string, value: string, dateOnly = false): string {
   return value;
 }
 
+function requestDate(asOf: string): string {
+  return asOf.slice(0, 10);
+}
+
+function sourceFreshnessTime(observation: OfferObservation): string | undefined {
+  const publicationTime = observation.source.publishedAt ?? observation.source.publishedOn;
+  if (observation.source.kind === 'ltk_public' || observation.source.kind === 'creator_owned') {
+    return publicationTime;
+  }
+  return publicationTime ?? observation.source.observedAt;
+}
+
 function requireUrl(name: string, value: string): string {
   const parsed = new URL(value);
   if (!['http:', 'https:'].includes(parsed.protocol))
@@ -84,6 +96,9 @@ function normalizeObservation(input: OfferObservation): OfferObservation {
             requireDate('observation.source.publishedAt', input.source.publishedAt)
           ).toISOString()
         : undefined,
+      publishedOn: input.source.publishedOn
+        ? requireDate('observation.source.publishedOn', input.source.publishedOn, true)
+        : undefined,
       observedAt: new Date(
         requireDate('observation.source.observedAt', input.source.observedAt)
       ).toISOString()
@@ -94,8 +109,14 @@ function normalizeObservation(input: OfferObservation): OfferObservation {
       startsAt: input.offer.startsAt
         ? new Date(requireDate('observation.offer.startsAt', input.offer.startsAt)).toISOString()
         : undefined,
+      startsOn: input.offer.startsOn
+        ? requireDate('observation.offer.startsOn', input.offer.startsOn, true)
+        : undefined,
       endsAt: input.offer.endsAt
         ? new Date(requireDate('observation.offer.endsAt', input.offer.endsAt)).toISOString()
+        : undefined,
+      endsOn: input.offer.endsOn
+        ? requireDate('observation.offer.endsOn', input.offer.endsOn, true)
         : undefined
     },
     applicability: { ...input.applicability },
@@ -125,7 +146,9 @@ function observationFingerprint(observation: OfferObservation): string {
     observation.offer.discount.kind,
     observation.offer.discount.value ?? null,
     observation.offer.startsAt ?? null,
+    observation.offer.startsOn ?? null,
     observation.offer.endsAt ?? null,
+    observation.offer.endsOn ?? null,
     observation.offer.minimumSubtotal ?? null
   ]);
 }
@@ -139,7 +162,13 @@ function rejectionReasons(request: OfferRequest, observation: OfferObservation):
   if (observation.offer.endsAt && new Date(observation.offer.endsAt).getTime() < asOf) {
     reasons.push('The observed end time is before the request time.');
   }
+  if (observation.offer.endsOn && observation.offer.endsOn < requestDate(request.asOf)) {
+    reasons.push('The observed end date is before the request date.');
+  }
   if (observation.offer.startsAt && new Date(observation.offer.startsAt).getTime() > asOf) {
+    reasons.push('The offer has not started.');
+  }
+  if (observation.offer.startsOn && observation.offer.startsOn > requestDate(request.asOf)) {
     reasons.push('The offer has not started.');
   }
   if (
@@ -186,10 +215,7 @@ function decide(request: OfferRequest, observation: OfferObservation): OfferDeci
     applicability: scoreApplicability(observation),
     fulfillment: scoreFulfillment(request, observation),
     sourceAuthority: sourceAuthorityFor(request, observation),
-    freshness: scoreFreshness(
-      request.asOf,
-      observation.source.publishedAt ?? observation.source.observedAt
-    )
+    freshness: scoreFreshness(request.asOf, sourceFreshnessTime(observation))
   };
   const uncappedScore = Math.round(
     components.validity * 0.3 +

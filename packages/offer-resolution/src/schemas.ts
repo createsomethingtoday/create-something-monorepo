@@ -43,6 +43,7 @@ export const offerObservationSchema = z
         url: z.string().url(),
         publisher: z.string().min(1),
         publishedAt: z.string().datetime().optional(),
+        publishedOn: z.string().date().optional(),
         observedAt: z.string().datetime(),
         access: z.enum(['public', 'authenticated', 'app_only', 'blocked']),
         direct: z.boolean()
@@ -59,7 +60,9 @@ export const offerObservationSchema = z
           .strict(),
         status: z.enum(['active', 'expired', 'revoked', 'unknown']),
         startsAt: z.string().datetime().optional(),
+        startsOn: z.string().date().optional(),
         endsAt: z.string().datetime().optional(),
+        endsOn: z.string().date().optional(),
         minimumSubtotal: z.number().nonnegative().optional(),
         checkoutOnly: z.boolean().optional()
       })
