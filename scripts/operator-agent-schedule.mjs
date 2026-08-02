@@ -6,6 +6,8 @@ import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from '
 import path from 'node:path';
 import process from 'node:process';
 
+import { buildContextPacket } from './operator-agent-context.mjs';
+
 const DEFAULT_OUT_DIR = '.cache/operator-agent-schedule';
 const DEFAULT_SYSTEM_SCRIPT = path.resolve(import.meta.dirname, 'operator-agent-system.mjs');
 const DEFAULT_SCHEDULE_SCRIPT = path.resolve(import.meta.dirname, 'operator-agent-schedule.mjs');
@@ -286,7 +288,7 @@ export function validateLaunchdPlist(plistText, job) {
   };
 }
 
-export function buildRunPlan(options) {
+export function buildRunPlan(options, contextPacket = null) {
   const evalModelArgs = options.noModel ? ['--no-model'] : [];
   const patternModelArgs = options.noModel || options.patternNoModel ? ['--no-model'] : [];
   const plan = [
@@ -334,6 +336,7 @@ export function buildRunPlan(options) {
         String(options.evalLimit),
         '--timeout-ms',
         String(options.evalTimeoutMs),
+        ...(contextPacket?.modelContext ? ['--task', contextPacket.modelContext] : []),
         ...evalModelArgs,
         ...(options.noRevise ? ['--no-revise'] : []),
         '--json',
@@ -460,7 +463,7 @@ function modelHealthForSchedule(options, patternRun, modelProbeRun, batchRun, ba
   };
 }
 
-export function scheduleReport(options, runs) {
+export function scheduleReport(options, runs, contextPacket = null) {
   const patternRun = runs.find((run) => run.id === 'pattern-review');
   const modelProbeRun = runs.find((run) => run.id === 'model-probe');
   const batchRun = runs.find((run) => run.id === 'batch-eval');
@@ -477,6 +480,15 @@ export function scheduleReport(options, runs) {
     patternScope: options.patternScope,
     evalSurface: options.evalSurface,
     evalLimit: options.evalLimit,
+    ctxHistory: contextPacket
+      ? {
+          mode: contextPacket.mode,
+          available: contextPacket.available,
+          citations: contextPacket.citations,
+          highlightCount: contextPacket.highlights.length,
+          failure: contextPacket.failure ?? null,
+        }
+      : null,
     runs,
     scorecard: {
       patternReviewPassed: Boolean(patternRun?.report?.passed),
@@ -650,16 +662,29 @@ async function main() {
   else if (options.command === 'uninstall-launchd') report = uninstallLaunchd(options);
   else if (options.command === 'launchd-status') report = launchdStatus(options);
   else {
+    const contextPacket = options.noModel
+      ? {
+          mode: 'ctx-history-packet',
+          available: false,
+          citations: [],
+          highlights: [],
+          failure: 'CTX retrieval is reserved for model-backed runs.',
+          modelContext: '',
+        }
+      : buildContextPacket({
+          surface: options.evalSurface,
+          task: 'Find one bounded, evidence-led improvement candidate. CTX citations are advisory and must be verified against current sources.',
+        });
     const runs = [];
     let forceNoModel = false;
-    for (const step of buildRunPlan(options)) {
+    for (const step of buildRunPlan(options, contextPacket)) {
       const effectiveStep = forceNoModel && step.id === 'batch-eval' ? forceNoModelForBatchStep(step) : step;
       const runResult = runStep(effectiveStep);
       if (effectiveStep.forcedNoModel) runResult.forcedNoModel = true;
       runs.push(runResult);
       if (step.id === 'model-probe' && !runResult.ok) forceNoModel = true;
     }
-    report = scheduleReport(options, runs);
+    report = scheduleReport(options, runs, contextPacket);
     report.receiptPath = writeReceipt(options, report);
   }
   print(report, options.json);
