@@ -23,6 +23,9 @@ enabled = true
 # Optional explicit Airtable auth config id fallback. Merged into COMPOSIO_AUTH_CONFIG_MAP at runtime.
 # COMPOSIO_AIRTABLE_AUTH_CONFIG_ID = "ac_xxx"
 
+# Optional explicit Google Search Console auth config id fallback. Merged into COMPOSIO_AUTH_CONFIG_MAP at runtime.
+# COMPOSIO_GOOGLE_SEARCH_CONSOLE_AUTH_CONFIG_ID = "ac_xxx"
+
 # Optional explicit QuickBooks auth config id fallback. Merged into COMPOSIO_AUTH_CONFIG_MAP at runtime.
 # COMPOSIO_QUICKBOOKS_AUTH_CONFIG_ID = "ac_xxx"
 
