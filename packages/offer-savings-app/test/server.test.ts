@@ -21,7 +21,10 @@ import {
   createOfferSavingsMcpServer,
   readOfferSavingsRuntimeConfig
 } from '../src/index.js';
-import { extractOfferSavingsWidgetResult } from '../src/widget.js';
+import {
+  extractOfferSavingsWidgetResult,
+  shouldReplaceOfferSavingsWidgetResult
+} from '../src/widget.js';
 
 interface Fixture {
   request: OfferRequest;
@@ -64,6 +67,20 @@ test('widget waits for an authoritative result and unwraps supported host envelo
     extractOfferSavingsWidgetResult({ call_tool_result: { structuredContent: result } }),
     result
   );
+});
+
+test('widget never replaces a receipted result with a late pending envelope', () => {
+  const complete = {
+    operation: 'find_offers',
+    receiptHash: 'sha256:complete',
+    offers: [{ id: 'visible' }]
+  };
+  const pending = { operation: 'find_offers', offers: [], counts: { ltk: 0, supplemental: 0 } };
+  const newer = { ...complete, receiptHash: 'sha256:newer' };
+
+  assert.equal(shouldReplaceOfferSavingsWidgetResult(complete, pending), false);
+  assert.equal(shouldReplaceOfferSavingsWidgetResult(pending, complete), true);
+  assert.equal(shouldReplaceOfferSavingsWidgetResult(complete, newer), true);
 });
 
 async function connectClient(
@@ -119,8 +136,8 @@ test('MCP protocol exposes only the bounded offer workflow and widget resource',
   });
 
   const listed = await client.listTools();
-  assert.equal(client.getServerVersion()?.version, '0.2.5');
-  assert.equal(OFFER_WIDGET_URI, 'ui://offer-savings/results-v4.html');
+  assert.equal(client.getServerVersion()?.version, '0.2.6');
+  assert.equal(OFFER_WIDGET_URI, 'ui://offer-savings/results-v5.html');
   assert.deepEqual(
     listed.tools.map((tool) => tool.name),
     ['resolve_offers', 'find_offers', 'verify_offer', 'watch_offers', 'get_watch']
@@ -213,6 +230,7 @@ test('MCP protocol exposes only the bounded offer workflow and widget resource',
     resources.resources.map((resource) => resource.uri),
     [
       OFFER_WIDGET_URI,
+      'ui://offer-savings/results-v4.html',
       'ui://offer-savings/results-v3.html',
       'ui://offer-savings/results-v2.html',
       'ui://offer-savings/results-v1.html'
