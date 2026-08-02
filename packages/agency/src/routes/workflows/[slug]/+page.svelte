@@ -28,7 +28,7 @@
   propertyName="agency"
 />
 
-<article class="guide-shell">
+<article class="guide-shell" data-performance-mode="proof">
   <header class="guide-opening">
     <a class="guide-back" href="/workflows">Workflow guides</a>
     <p class="guide-eyebrow">{guide.eyebrow}</p>
@@ -140,76 +140,90 @@
 
 <style>
   .guide-shell {
-    --guide-line: color-mix(in srgb, var(--color-performance-ink, #090909) 18%, transparent);
-    width: min(100%, 1120px);
+    --guide-line: var(--color-performance-line);
+    width: min(
+      var(--content-width-performance),
+      calc(100vw - var(--space-performance-page-gutter) - var(--space-performance-page-gutter))
+    );
     margin: 0 auto;
-    padding: clamp(2rem, 6vw, 5.5rem) clamp(1rem, 4vw, 3rem) clamp(4rem, 9vw, 8rem);
+    padding: var(--space-performance-xl) 0 var(--space-performance-2xl);
+    color: var(--color-performance-ink);
   }
 
   .guide-opening {
     max-width: 920px;
-    padding-bottom: clamp(3rem, 8vw, 7rem);
+    padding-bottom: var(--space-performance-xl);
   }
 
   .guide-back,
   .guide-eyebrow,
   .section-label {
-    font-family: var(--font-performance-mono, ui-monospace, monospace);
-    font-size: 0.75rem;
-    line-height: 1.4;
-    letter-spacing: 0.08em;
+    font-family: var(--font-performance-mono);
+    font-size: var(--text-performance-caption);
+    line-height: var(--leading-performance-normal);
+    letter-spacing: var(--tracking-performance-widest);
     text-transform: uppercase;
   }
 
   .guide-back {
     display: inline-block;
-    margin-bottom: clamp(3rem, 9vw, 7.5rem);
-    text-underline-offset: 0.3em;
+    margin-bottom: var(--space-performance-2xl);
+    text-underline-offset: var(--space-performance-xs);
+    transition: color var(--duration-performance-micro) var(--ease-performance-standard);
   }
 
-  .guide-eyebrow,
+  .guide-back:hover {
+    color: var(--color-performance-signal);
+  }
+
+  .guide-eyebrow {
+    color: var(--color-performance-pressure);
+  }
+
   .section-label {
-    color: color-mix(in srgb, var(--color-performance-ink, #090909) 62%, transparent);
+    color: var(--color-performance-muted);
   }
 
   h1 {
     max-width: 19ch;
-    margin: 0.75rem 0 1.5rem;
-    font-family: var(--font-performance-serif, Georgia, serif);
-    font-size: clamp(2.85rem, 7vw, 6.6rem);
-    font-weight: 400;
-    line-height: 0.94;
-    letter-spacing: -0.045em;
+    margin: var(--space-performance-xs) 0 var(--space-performance-md);
+    font-family: var(--font-performance-serif);
+    font-size: var(--text-performance-display-xl);
+    font-weight: var(--font-performance-regular);
+    line-height: var(--leading-performance-display);
+    letter-spacing: var(--tracking-performance-display);
   }
 
   .guide-answer {
     max-width: 760px;
     margin: 0;
-    font-size: clamp(1.16rem, 2vw, 1.55rem);
-    line-height: 1.55;
+    font-size: var(--text-performance-body-lg);
+    line-height: var(--leading-performance-relaxed);
   }
 
   .guide-actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.75rem;
-    margin-top: 2rem;
+    gap: var(--space-performance-xs);
+    margin-top: var(--space-performance-md);
   }
 
   .guide-decision {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    margin: clamp(3rem, 7vw, 6rem) 0 0;
+    margin: var(--space-performance-xl) 0 0;
     border-top: 1px solid var(--guide-line);
     border-bottom: 1px solid var(--guide-line);
   }
 
   .guide-decision div {
-    padding: 1.5rem 1.5rem 1.75rem 0;
+    padding: var(--space-performance-md) var(--space-performance-md) var(--space-performance-md) 0;
+    border-top: 2px solid var(--color-performance-ready);
   }
 
   .guide-decision div + div {
-    padding-left: 1.5rem;
+    padding-left: var(--space-performance-md);
+    border-top-color: var(--color-performance-review);
     border-left: 1px solid var(--guide-line);
   }
 
@@ -217,24 +231,33 @@
   .step-list > li > span,
   .proof-list a > span,
   .guide-related a > span {
-    font-family: var(--font-performance-mono, ui-monospace, monospace);
-    font-size: 0.72rem;
-    letter-spacing: 0.07em;
+    font-family: var(--font-performance-mono);
+    font-size: var(--text-performance-operator-label);
+    line-height: var(--leading-performance-topology-label);
+    letter-spacing: var(--tracking-performance-operator-label);
     text-transform: uppercase;
   }
 
+  .guide-decision dt {
+    color: var(--color-performance-ready);
+  }
+
+  .guide-decision div + div dt {
+    color: var(--color-performance-review);
+  }
+
   dd {
-    margin: 0.65rem 0 0;
-    line-height: 1.6;
+    margin: var(--space-performance-xs) 0 0;
+    line-height: var(--leading-performance-relaxed);
   }
 
   .guide-section {
     display: grid;
     grid-template-columns: minmax(120px, 0.3fr) minmax(0, 1fr);
-    gap: clamp(1.5rem, 5vw, 5rem);
-    padding: clamp(3rem, 7vw, 6rem) 0;
+    gap: var(--space-performance-xl);
+    padding: var(--space-performance-xl) 0;
     border-top: 1px solid var(--guide-line);
-    scroll-margin-top: 6rem;
+    scroll-margin-top: var(--distance-performance-stage-sticky-offset);
   }
 
   .guide-section > div:last-child {
@@ -243,19 +266,19 @@
 
   h2 {
     max-width: 24ch;
-    margin: 0 0 2rem;
-    font-family: var(--font-performance-serif, Georgia, serif);
-    font-size: clamp(2rem, 4.5vw, 4rem);
-    font-weight: 400;
-    line-height: 1;
-    letter-spacing: -0.035em;
+    margin: 0 0 var(--space-performance-md);
+    font-family: var(--font-performance-serif);
+    font-size: var(--text-performance-display-sm);
+    font-weight: var(--font-performance-regular);
+    line-height: var(--leading-performance-display);
+    letter-spacing: var(--tracking-performance-tighter);
   }
 
   h3 {
     margin: 0;
-    font-size: clamp(1.05rem, 1.8vw, 1.3rem);
-    font-weight: 600;
-    line-height: 1.25;
+    font-size: var(--text-performance-h3);
+    font-weight: var(--font-performance-semibold);
+    line-height: var(--leading-performance-tight);
   }
 
   .guide-signals ul {
@@ -265,20 +288,20 @@
   }
 
   .guide-signals li {
-    padding: 1.1rem 0 1.1rem 1.5rem;
-    border-top: 1px solid var(--guide-line);
-    line-height: 1.55;
     position: relative;
+    padding: var(--space-performance-sm) 0 var(--space-performance-sm) var(--space-performance-md);
+    border-top: 1px solid var(--guide-line);
+    line-height: var(--leading-performance-relaxed);
   }
 
   .guide-signals li::before {
     content: '';
     position: absolute;
-    top: 1.7rem;
+    top: calc(var(--space-performance-sm) + var(--space-performance-xs));
     left: 0;
-    width: 0.42rem;
-    height: 0.42rem;
-    background: var(--color-performance-ink, #090909);
+    width: var(--space-performance-xs);
+    height: var(--space-performance-xs);
+    background: var(--color-performance-controlled);
     transform: rotate(45deg);
   }
 
@@ -291,17 +314,21 @@
   .step-list li {
     display: grid;
     grid-template-columns: 3rem minmax(0, 1fr);
-    gap: 1.25rem;
-    padding: 1.5rem 0;
+    gap: var(--space-performance-md);
+    padding: var(--space-performance-md) 0;
     border-top: 1px solid var(--guide-line);
+  }
+
+  .step-list > li > span {
+    color: var(--color-performance-signal);
   }
 
   .step-list p,
   .artifact-grid p,
   .proof-list p,
   .faq-list p {
-    margin: 0.65rem 0 0;
-    line-height: 1.65;
+    margin: var(--space-performance-xs) 0 0;
+    line-height: var(--leading-performance-relaxed);
   }
 
   .artifact-grid {
@@ -311,7 +338,7 @@
   }
 
   .artifact-grid article {
-    padding: clamp(1.2rem, 3vw, 2rem);
+    padding: var(--space-performance-md);
   }
 
   .artifact-grid article + article {
@@ -325,11 +352,20 @@
   .proof-list a {
     display: grid;
     grid-template-columns: minmax(150px, 0.42fr) minmax(0, 1fr);
-    gap: 1.5rem;
-    padding: 1.4rem 0;
+    gap: var(--space-performance-md);
+    padding: var(--space-performance-md) 0;
     border-bottom: 1px solid var(--guide-line);
     color: inherit;
     text-decoration: none;
+    transition: color var(--duration-performance-micro) var(--ease-performance-standard);
+  }
+
+  .proof-list a:hover {
+    color: var(--color-performance-signal);
+  }
+
+  .proof-list a > span {
+    color: var(--color-performance-signal);
   }
 
   .proof-list p {
@@ -345,26 +381,26 @@
   }
 
   summary {
-    padding: 1.4rem 2.5rem 1.4rem 0;
+    padding: var(--space-performance-md) var(--space-performance-xl) var(--space-performance-md) 0;
     cursor: pointer;
-    font-size: 1.05rem;
-    font-weight: 600;
+    font-size: var(--text-performance-body-md);
+    font-weight: var(--font-performance-semibold);
   }
 
   details p {
     max-width: 760px;
-    padding: 0 2.5rem 1.6rem 0;
+    padding: 0 var(--space-performance-xl) var(--space-performance-md) 0;
   }
 
   .guide-related {
-    padding-top: clamp(3rem, 7vw, 6rem);
+    padding-top: var(--space-performance-xl);
     border-top: 1px solid var(--guide-line);
   }
 
   .guide-related > div {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    margin-top: 1.25rem;
+    margin-top: var(--space-performance-sm);
     border: 1px solid var(--guide-line);
   }
 
@@ -373,11 +409,16 @@
     min-width: 0;
     min-height: 10rem;
     flex-direction: column;
-    gap: 1rem;
+    gap: var(--space-performance-sm);
     justify-content: space-between;
-    padding: 1.5rem;
+    padding: var(--space-performance-md);
     color: inherit;
     text-decoration: none;
+    transition: color var(--duration-performance-micro) var(--ease-performance-standard);
+  }
+
+  .guide-related a:hover {
+    color: var(--color-performance-growth);
   }
 
   .guide-related a + a {
@@ -385,13 +426,19 @@
   }
 
   .guide-related strong {
-    font-family: var(--font-performance-serif, Georgia, serif);
-    font-size: 1.4rem;
-    font-weight: 400;
-    line-height: 1.15;
+    font-family: var(--font-performance-serif);
+    font-size: var(--text-performance-h2);
+    font-weight: var(--font-performance-regular);
+    line-height: var(--leading-performance-tight);
   }
 
-  @media (max-width: 720px) {
+  @media (max-width: 48rem) {
+    .guide-shell {
+      width: calc(
+        100vw - var(--space-performance-page-gutter) - var(--space-performance-page-gutter)
+      );
+    }
+
     .guide-decision,
     .guide-section,
     .artifact-grid,
@@ -412,12 +459,12 @@
     }
 
     .guide-section {
-      gap: 1.25rem;
+      gap: var(--space-performance-md);
     }
 
     .proof-list a {
       grid-template-columns: 1fr;
-      gap: 0.55rem;
+      gap: var(--space-performance-xs);
     }
   }
 
@@ -430,7 +477,7 @@
     .guide-shell *::before,
     .guide-shell *::after {
       scroll-behavior: auto !important;
-      transition-duration: 0.01ms !important;
+      transition-duration: var(--duration-performance-instant) !important;
     }
   }
 </style>

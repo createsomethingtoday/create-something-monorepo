@@ -30,7 +30,7 @@
   propertyName="agency"
 />
 
-<div class="library-shell">
+<div class="library-shell" data-performance-mode="proof">
   <header class="library-opening">
     <p>Workflow library / 12 operating guides</p>
     <h1>Useful answers for work that must hold up under pressure.</h1>
@@ -108,18 +108,25 @@
 
 <style>
   .library-shell {
-    --library-line: color-mix(in srgb, var(--color-performance-ink, #090909) 18%, transparent);
-    width: min(100%, 1180px);
+    --library-line: var(--color-performance-line);
+    width: min(
+      var(--content-width-performance),
+      calc(100vw - var(--space-performance-page-gutter) - var(--space-performance-page-gutter))
+    );
     margin: 0 auto;
-    padding: clamp(2rem, 6vw, 5.5rem) clamp(1rem, 4vw, 3rem) clamp(4rem, 9vw, 8rem);
+    padding: var(--space-performance-xl) 0 var(--space-performance-2xl);
+    color: var(--color-performance-ink);
   }
 
   .library-opening {
-    min-height: min(760px, calc(100vh - 72px));
+    min-height: min(
+      var(--height-performance-stage),
+      calc(100vh - var(--height-performance-header))
+    );
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding-bottom: clamp(3rem, 7vw, 6rem);
+    padding-bottom: var(--space-performance-xl);
   }
 
   .library-opening > p,
@@ -127,72 +134,80 @@
   .library-method > div > span,
   .library-faq > span,
   .guide-index a div > span {
-    font-family: var(--font-performance-mono, ui-monospace, monospace);
-    font-size: 0.74rem;
-    letter-spacing: 0.08em;
+    font-family: var(--font-performance-mono);
+    font-size: var(--text-performance-caption);
+    line-height: var(--leading-performance-normal);
+    letter-spacing: var(--tracking-performance-widest);
     text-transform: uppercase;
+  }
+
+  .library-opening > p,
+  .guide-index header > span,
+  .library-method > div > span,
+  .library-faq > span {
+    color: var(--color-performance-pressure);
   }
 
   h1 {
     max-width: 15ch;
-    margin: clamp(4rem, 10vw, 9rem) 0;
-    font-family: var(--font-performance-serif, Georgia, serif);
-    font-size: clamp(3.2rem, 8vw, 7.8rem);
-    font-weight: 400;
-    line-height: 0.9;
-    letter-spacing: -0.05em;
+    margin: var(--space-performance-2xl) 0 var(--space-performance-xl);
+    font-family: var(--font-performance-serif);
+    font-size: var(--text-performance-display-xl);
+    font-weight: var(--font-performance-regular);
+    line-height: var(--leading-performance-display);
+    letter-spacing: var(--tracking-performance-display);
   }
 
   .library-intro {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
-    gap: 2rem;
+    gap: var(--space-performance-xl);
     align-items: end;
     border-top: 1px solid var(--library-line);
-    padding-top: 1.5rem;
+    padding-top: var(--space-performance-md);
   }
 
   .library-intro > p {
     max-width: 680px;
     margin: 0;
-    font-size: clamp(1.12rem, 2vw, 1.45rem);
-    line-height: 1.55;
+    font-size: var(--text-performance-body-lg);
+    line-height: var(--leading-performance-relaxed);
   }
 
   .library-intro > div {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.75rem;
+    gap: var(--space-performance-xs);
   }
 
   .guide-index,
   .library-method,
   .library-faq {
     border-top: 1px solid var(--library-line);
-    padding: clamp(3rem, 7vw, 6rem) 0;
-    scroll-margin-top: 6rem;
+    padding: var(--space-performance-xl) 0;
+    scroll-margin-top: var(--distance-performance-stage-sticky-offset);
   }
 
   .guide-index header,
   .library-method,
   .library-faq {
     display: grid;
-    grid-template-columns: minmax(180px, 0.36fr) minmax(0, 1fr);
-    gap: clamp(2rem, 6vw, 6rem);
+    grid-template-columns: minmax(var(--width-performance-stage-index), 0.36fr) minmax(0, 1fr);
+    gap: var(--space-performance-xl);
   }
 
   h2 {
     max-width: 24ch;
     margin: 0;
-    font-family: var(--font-performance-serif, Georgia, serif);
-    font-size: clamp(2.2rem, 5vw, 4.8rem);
-    font-weight: 400;
-    line-height: 0.98;
-    letter-spacing: -0.04em;
+    font-family: var(--font-performance-serif);
+    font-size: var(--text-performance-display-sm);
+    font-weight: var(--font-performance-regular);
+    line-height: var(--leading-performance-display);
+    letter-spacing: var(--tracking-performance-tighter);
   }
 
   .guide-index ol {
-    margin: clamp(2.5rem, 6vw, 5rem) 0 0;
+    margin: var(--space-performance-xl) 0 0;
     padding: 0;
     border-top: 1px solid var(--library-line);
     list-style: none;
@@ -205,32 +220,40 @@
   .guide-index a {
     display: grid;
     grid-template-columns: 3rem minmax(0, 1fr) 2rem;
-    gap: clamp(1rem, 3vw, 2rem);
+    gap: var(--space-performance-md);
     align-items: start;
-    padding: clamp(1.4rem, 3vw, 2.2rem) 0;
-    color: inherit;
+    padding: var(--space-performance-md) 0;
+    color: var(--color-performance-ink);
     text-decoration: none;
+    transition:
+      color var(--duration-performance-micro) var(--ease-performance-standard),
+      opacity var(--duration-performance-micro) var(--ease-performance-standard);
+  }
+
+  .guide-index a:hover {
+    color: var(--color-performance-signal);
   }
 
   .guide-number,
   .guide-arrow {
-    font-family: var(--font-performance-mono, ui-monospace, monospace);
-    font-size: 0.76rem;
+    font-family: var(--font-performance-mono);
+    font-size: var(--text-performance-caption);
+    line-height: var(--leading-performance-normal);
   }
 
   .guide-index h3 {
-    margin: 0.5rem 0 0;
-    font-family: var(--font-performance-serif, Georgia, serif);
-    font-size: clamp(1.45rem, 3vw, 2.6rem);
-    font-weight: 400;
-    line-height: 1.05;
-    letter-spacing: -0.025em;
+    margin: var(--space-performance-xs) 0 0;
+    font-family: var(--font-performance-serif);
+    font-size: var(--text-performance-h2);
+    font-weight: var(--font-performance-regular);
+    line-height: var(--leading-performance-tight);
+    letter-spacing: var(--tracking-performance-tight);
   }
 
   .guide-index a p {
     max-width: 700px;
-    margin: 0.75rem 0 0;
-    line-height: 1.55;
+    margin: var(--space-performance-xs) 0 0;
+    line-height: var(--leading-performance-relaxed);
   }
 
   .library-method > ol {
@@ -243,14 +266,14 @@
   .library-method li {
     display: grid;
     grid-template-columns: 7rem minmax(0, 1fr);
-    gap: 1rem;
-    padding: 1.25rem 0;
+    gap: var(--space-performance-sm);
+    padding: var(--space-performance-sm) 0;
     border-bottom: 1px solid var(--library-line);
-    line-height: 1.5;
+    line-height: var(--leading-performance-normal);
   }
 
   .library-faq > div > h2 {
-    margin-bottom: 2rem;
+    margin-bottom: var(--space-performance-md);
   }
 
   details {
@@ -262,19 +285,26 @@
   }
 
   summary {
-    padding: 1.35rem 2.5rem 1.35rem 0;
+    padding: var(--space-performance-md) var(--space-performance-xl) var(--space-performance-md) 0;
     cursor: pointer;
-    font-weight: 600;
+    font-size: var(--text-performance-body-md);
+    font-weight: var(--font-performance-semibold);
   }
 
   details p {
     max-width: 720px;
     margin: 0;
-    padding: 0 2.5rem 1.5rem 0;
-    line-height: 1.65;
+    padding: 0 var(--space-performance-xl) var(--space-performance-md) 0;
+    line-height: var(--leading-performance-relaxed);
   }
 
-  @media (max-width: 720px) {
+  @media (max-width: 48rem) {
+    .library-shell {
+      width: calc(
+        100vw - var(--space-performance-page-gutter) - var(--space-performance-page-gutter)
+      );
+    }
+
     .library-opening {
       min-height: auto;
     }
@@ -295,7 +325,7 @@
     }
 
     .library-method {
-      gap: 2rem;
+      gap: var(--space-performance-lg);
     }
   }
 
@@ -308,7 +338,7 @@
     .library-shell *::before,
     .library-shell *::after {
       scroll-behavior: auto !important;
-      transition-duration: 0.01ms !important;
+      transition-duration: var(--duration-performance-instant) !important;
     }
   }
 </style>
