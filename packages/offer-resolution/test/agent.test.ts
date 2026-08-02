@@ -237,6 +237,11 @@ test('structured evidence fails closed on imprecise optional dates and owns obse
     observations: [observation]
   });
 
+  assert.equal(
+    discoveredOfferEvidenceSchema.safeParse({ request, observations: [observation] }).success,
+    true
+  );
+
   assert.equal(actual.source.observedAt, request.asOf);
   assert.equal(actual.source.publishedAt, undefined);
   assert.equal(actual.offer.startsAt, undefined);

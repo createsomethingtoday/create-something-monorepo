@@ -1,6 +1,10 @@
 import { z } from 'zod';
 
 const evidenceStateSchema = z.enum(['confirmed', 'conflict', 'unknown']);
+const discoveredTemporalSchema = z.union([
+  z.string().datetime({ offset: true }),
+  z.string().date()
+]);
 
 export const offerRequestSchema = z
   .object({
@@ -93,9 +97,17 @@ export const offerEvidenceInputSchema = z
   .strict();
 
 export const discoveredOfferObservationSchema = offerObservationSchema.extend({
+  source: offerObservationSchema.shape.source
+    .extend({
+      publishedAt: discoveredTemporalSchema.optional(),
+      observedAt: discoveredTemporalSchema
+    })
+    .strict(),
   offer: offerObservationSchema.shape.offer
     .extend({
-      discount: offerObservationSchema.shape.offer.shape.discount.optional()
+      discount: offerObservationSchema.shape.offer.shape.discount.optional(),
+      startsAt: discoveredTemporalSchema.optional(),
+      endsAt: discoveredTemporalSchema.optional()
     })
     .strict()
 });
@@ -107,8 +119,8 @@ export const discoveredOfferEvidenceSchema = z
   })
   .strict();
 
-export const hostOfferObservationSchema = offerObservationSchema.extend({
-  source: offerObservationSchema.shape.source.omit({ observedAt: true }).strict()
+export const hostOfferObservationSchema = discoveredOfferObservationSchema.extend({
+  source: discoveredOfferObservationSchema.shape.source.omit({ observedAt: true }).strict()
 });
 
 export const resolveOffersInputSchema = z

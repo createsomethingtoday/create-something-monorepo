@@ -74,8 +74,11 @@ export interface OfferObservation {
   };
 }
 
-export type HostOfferObservation = Omit<OfferObservation, 'source'> & {
+export type HostOfferObservation = Omit<OfferObservation, 'source' | 'offer'> & {
   source: Omit<OfferObservation['source'], 'observedAt'>;
+  offer: Omit<OfferObservation['offer'], 'discount'> & {
+    discount?: OfferObservation['offer']['discount'];
+  };
 };
 
 export interface SourcePolicy {
