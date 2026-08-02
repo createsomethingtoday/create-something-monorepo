@@ -65,3 +65,60 @@ For each accepted desktop master:
 > soften the material into plastic or fabric.
 
 Input fidelity: high. Quality: high.
+
+## Product system desktop — CRE-1590
+
+> Use case: stylized-concept. Asset type: CREATE SOMETHING Agency Products page
+> hero, desktop master. Create one original engineered working-paper product
+> system on a matte black optical workbench: three distinct porcelain-white
+> paper modules registered to one precise black metal spine. The first module
+> is a flat source sheet with a small cobalt-blue registration tab; the second
+> is a folded connector bridge locked to the spine by one restrained
+> brass-gold keyed coupler; the third is a compact ordered evidence stack with
+> one small growth-green completion tab and a blank attached receipt edge. The
+> three modules form one clearly connected left-to-right operating system while
+> remaining visibly distinct, expressing define, connect, operate without
+> words. Optic-white seamless studio field and near-black workbench, no
+> environmental clutter. Premium editorial macro product photography,
+> physical paper prototype, photoreal materials, original non-branded
+> composition. Landscape 1536x1024; camera slightly above the workbench; the
+> complete system occupies the right 58 percent; generous quiet white negative
+> space across the left 42 percent for live HTML headline and actions; every
+> paper edge stays clear of the text lane. Large diffused softbox, controlled
+> soft contact shadows, calm precise laboratory daylight, natural color.
+> Toothy uncoated porcelain paper, matte black anodized metal, tiny brushed
+> brass coupler, restrained blue, gold, and green physical tabs. No text,
+> letters, numbers, logos, watermark, UI, screen, fake data, fake receipt
+> content, measurements, people, private information, third-party trade dress,
+> water, liquid, glass, droplets, books, binders, office folders, scattered
+> scraps, random crumpling, or extra objects. The receipt edge is blank and
+> subordinate. Avoid stationery catalog, scrapbook, plastic, wax, cloth,
+> glossy CGI, harsh bloom, oversharpening, excessive blur, sports product
+> silhouette, copied campaign layout.
+
+The first returned composition was rejected for weaker connector legibility
+and a less reliable quiet copy lane. The prompt was repeated without creative
+changes; the second result passed and is the accepted desktop master.
+
+## Product system mobile — CRE-1590
+
+> Use case: precise-object-edit. Asset type: CREATE SOMETHING Agency Products
+> page hero, mobile portrait composition. Change only composition and framing.
+> Preserve exactly the selected desktop image's three paper modules, their
+> order, proportions, porcelain paper texture, black registration spine and
+> perforated workbench, cobalt-blue source tab, brass-gold keyed coupler,
+> growth-green completion tab, blank receipt edge, natural color, and soft
+> laboratory lighting. Recompose the same physical system into a 1024x1536
+> portrait frame for a 390x844 mobile hero: leave the upper 43 percent as quiet
+> optic-white negative space for live HTML eyebrow, headline, lede, and actions;
+> place the complete three-module system in the lower 57 percent, reading from
+> upper-left toward lower-right as a compact connected sequence; keep all paper
+> edges and the black spine clear of the upper text lane; preserve controlled
+> soft contact shadows. Do not redesign, restyle, add, remove, duplicate,
+> relabel, or crop away any module. No text, letters, numbers, logos, watermark,
+> UI, screen, fake data, measurement marks, people, water, liquid, glass,
+> books, binders, folders, scrapbook elements, extra objects, or third-party
+> trade dress. Maintain input fidelity and premium editorial macro
+> product-photography realism.
+
+Input fidelity: high. Quality: high.

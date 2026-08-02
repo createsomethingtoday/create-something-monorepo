@@ -64,9 +64,22 @@ export const paperAttachedReceiptMedia = {
   colorMode: 'natural'
 } as const satisfies PerformanceMediaStudy;
 
+export const paperProductSystemMedia = {
+  src: '/images/performance-lab/paper-product-system.webp',
+  mobileSrc: '/images/performance-lab/paper-product-system-mobile.webp',
+  alt: 'Three porcelain paper modules registered to one black system spine with blue source, gold connection, and green operation markers',
+  condition: 'sequence',
+  material: 'paper',
+  width: 1536,
+  height: 1024,
+  objectPosition: 'center',
+  colorMode: 'natural'
+} as const satisfies PerformanceMediaStudy;
+
 export const performancePaperRouteAssignments = {
   '/': 'paperFoldedHandoffMedia',
   '/services': 'paperClampedDecisionMedia',
+  '/products': 'paperProductSystemMedia',
   '/field-reports': 'paperAttachedReceiptMedia'
 } as const;
 
@@ -76,7 +89,6 @@ export const performancePaperRouteAssignments = {
  */
 export const performanceWaterRouteAssignments = {
   '/map': 'clarityInspectionMedia',
-  '/products': 'clarityInspectionMedia',
   '/control': 'turbulenceExceptionMedia',
   '/delivery': 'settlementResolvedMedia',
   '/proof/marketplace-workflow': 'traceDyeInjectionMedia',
