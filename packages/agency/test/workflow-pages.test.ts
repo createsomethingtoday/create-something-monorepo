@@ -155,7 +155,7 @@ test('workflow surfaces use the Performance token contract instead of local styl
   }
 });
 
-test('workflow typography reserves the serif voice for the thesis and uses display roles for operation', () => {
+test('workflow typography follows the Performance property spine', () => {
   const hubPage = readFileSync(path.join(packageRoot, 'src/routes/workflows/+page.svelte'), 'utf8');
   const guidePage = readFileSync(
     path.join(packageRoot, 'src/routes/workflows/[slug]/+page.svelte'),
@@ -163,8 +163,9 @@ test('workflow typography reserves the serif voice for the thesis and uses displ
   );
 
   for (const route of [hubPage, guidePage]) {
-    assert.match(route, /h1\s*\{[\s\S]*?font-family:\s*var\(--font-performance-serif\)/);
+    assert.match(route, /h1\s*\{[\s\S]*?font-family:\s*var\(--font-performance-display\)/);
     assert.match(route, /h2\s*\{[\s\S]*?font-family:\s*var\(--font-performance-display\)/);
+    assert.doesNotMatch(route, /font-family:\s*var\(--font-performance-serif\)/);
   }
 
   assert.match(
@@ -179,5 +180,9 @@ test('workflow typography reserves the serif voice for the thesis and uses displ
   assert.match(
     guidePage,
     /\.guide-answer\s*\{[\s\S]*?font-family:\s*var\(--font-performance-prose\)/
+  );
+  assert.match(
+    hubPage,
+    /\.library-intro > p\s*\{[\s\S]*?font-family:\s*var\(--font-performance-prose\)/
   );
 });
