@@ -24,7 +24,8 @@
 		"prepare": "svelte-kit sync || echo ''",
 		"smoke": "pnpm check && pnpm smoke:canon-sidebar",
 		"test:canon-language": "node --import tsx --test test/canon-conviction-language.test.ts",
-		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings && pnpm test:canon-language",
+		"test:search": "vitest run src/lib/search/sitemap.test.ts",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings && pnpm test:canon-language && pnpm test:search",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings --watch",
 		"smoke:canon-sidebar": "tsx scripts/canon-sidebar-smoke.ts",
 		"deploy": "pnpm build && node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=createsomething-ltd",
@@ -51,6 +52,7 @@
 		"tailwindcss": "^3.4.18",
 		"typescript": "^5.9.3",
 		"vite": "^7.1.10",
+		"vitest": "^4.0.16",
 		"wrangler": "^4.103.0"
 	}
 }

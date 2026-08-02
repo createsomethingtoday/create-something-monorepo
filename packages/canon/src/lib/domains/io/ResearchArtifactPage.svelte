@@ -101,6 +101,9 @@ ${hasInteractive && paper.interactive_demo_url ? `
 	ogType="article"
 	publishedTime={paper.created_at}
 	modifiedTime={paper.updated_at}
+	author={paper.author_name || 'CREATE SOMETHING Research'}
+	authorType="Organization"
+	authorUrl={paper.author_url || 'https://createsomething.io/about'}
 	articleSection={paper.category}
 	articleTags={articleTags}
 	propertyName="io"

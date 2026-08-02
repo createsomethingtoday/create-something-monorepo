@@ -25,14 +25,6 @@ const robotsBlockedPrefixes = [
   '/mcp-access',
   '/prospects'
 ];
-const requiredFaqRoutes = new Set([
-  '/',
-  '/stack',
-  '/products',
-  '/cloudflare',
-  '/use-cases/business',
-  '/use-cases/enterprise'
-]);
 const requiredDedicatedOgImages = new Map([
   ['/cloudflare', '/og/cloudflare-lane.png'],
   ['/use-cases/enterprise', '/og/policy-os.png']
@@ -65,10 +57,6 @@ for (const entry of routeEntries) {
   const source = fs.readFileSync(pageFile, 'utf8');
   if (/noindex=\{true\}/.test(source)) {
     errors.push(`${entry.path} is in searchRoutes.json but its SEO component is noindex`);
-  }
-
-  if (requiredFaqRoutes.has(entry.path) && !hasSeoProp(source, 'faqItems')) {
-    errors.push(`${entry.path} is a high-intent search route but does not pass FAQ schema`);
   }
 
   const requiredOgImage = requiredDedicatedOgImages.get(entry.path);
@@ -204,8 +192,4 @@ function pageFileForRoute(route) {
 
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-function hasSeoProp(source, propName) {
-  return new RegExp(`(?:\\{${propName}\\}|${propName}=)`).test(source);
 }

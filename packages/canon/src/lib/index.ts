@@ -147,6 +147,9 @@ export * from './brand/index.js';
 // Newsletter (subscription and unsubscribe)
 export * from './newsletter/index.js';
 
+// Search discovery contracts (sitemaps and related machine-readable surfaces)
+export * from './search/index.js';
+
 // Icons (Canon icon system)
 export * from './icons/index.js';
 

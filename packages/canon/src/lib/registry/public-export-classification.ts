@@ -741,6 +741,13 @@ const PACKAGE_EXPORT_PATH_POLICIES: CanonPublicExportClassificationRule[] = [
     classification: 'supporting-api',
     registryPolicy: 'classified-out',
     rationale: 'Validation helpers support product code without becoming registry UI artifacts.'
+  },
+  {
+    exportPath: './search',
+    classification: 'supporting-api',
+    registryPolicy: 'classified-out',
+    rationale:
+      'Search discovery helpers serialize route-owned data without becoming registry UI artifacts.'
   }
 ];
 

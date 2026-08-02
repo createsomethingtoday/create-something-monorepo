@@ -94,6 +94,10 @@ export interface Paper {
   ascii_thumbnail?: string | null
   visual_summary?: ArtifactVisualSummary | null
   generated_brand_image?: GeneratedBrandImageSpec | null
+  author_name?: string | null
+  author_url?: string | null
+  reviewer_name?: string | null
+  verification_note?: string | null
   created_at: string
   updated_at: string
   published_at?: string | null

@@ -26,6 +26,12 @@
 	const difficultyClass = $derived(
 		difficultyLevels[paper.difficulty_level || ''] || 'difficulty-default'
 	);
+	const authorName = $derived(paper.author_name || 'CREATE SOMETHING Research');
+	const authorUrl = $derived(paper.author_url || 'https://createsomething.io/about');
+	const publishedDate = $derived(paper.published_at || paper.date || paper.created_at);
+	const hasMeaningfulUpdate = $derived(
+		Boolean(paper.updated_at && publishedDate && paper.updated_at.slice(0, 10) !== publishedDate.slice(0, 10))
+	);
 
 	const formatDate = (dateString: string | undefined = undefined) => {
 		if (!dateString) return '';
@@ -34,6 +40,7 @@
 			year: 'numeric',
 			month: 'long',
 			day: 'numeric',
+			timeZone: 'UTC',
 		});
 	};
 </script>
@@ -78,8 +85,13 @@
 
 	<!-- Metadata Row -->
 	<div class="metadata-row flex flex-wrap items-center gap-6 pt-6 animate-reveal" style="--delay: 5">
+		<div class="flex items-center gap-2">
+			<span>By</span>
+			<a class="metadata-link" href={authorUrl}>{authorName}</a>
+		</div>
+
 		<!-- Published Date -->
-		{#if paper.published_at || paper.date}
+		{#if publishedDate}
 			<div class="flex items-center gap-2">
 				<svg
 					class="w-4 h-4"
@@ -94,7 +106,13 @@
 						d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"
 					/>
 				</svg>
-				<span>{formatDate(paper.published_at || paper.date)}</span>
+				<span>Published {formatDate(publishedDate)}</span>
+			</div>
+		{/if}
+
+		{#if hasMeaningfulUpdate}
+			<div class="flex items-center gap-2">
+				<span>Updated {formatDate(paper.updated_at)}</span>
 			</div>
 		{/if}
 
@@ -207,6 +225,16 @@
 	.metadata-row {
 		font-size: var(--text-performance-body-sm);
 		color: var(--color-performance-fg-tertiary);
+	}
+
+	.metadata-link {
+		color: inherit;
+		text-decoration: underline;
+		text-underline-offset: 0.2em;
+	}
+
+	.metadata-link:hover {
+		color: var(--color-performance-fg-primary);
 	}
 
 	.difficulty-indicator {
