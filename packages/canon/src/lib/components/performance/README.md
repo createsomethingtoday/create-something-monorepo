@@ -6,7 +6,7 @@ The Performance design system is one Canon-owned namespace for presenting and op
 
 | Pattern                | Component                      | Owns                                                                                                                                            |
 | ---------------------- | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| Campaign opening       | `PerformanceCampaignOpening`   | Static-first first viewport, optional progressive video enhancement, responsive image source, claim hierarchy, actions, and campaign proof rail |
+| Campaign opening       | `PerformanceCampaignOpening`   | Static-first first viewport, optional progressive video or property artifact enhancement, responsive image source, claim hierarchy, actions, and campaign proof rail |
 | Thesis + conditions    | `PerformanceThesisConditions`  | One governing proposition paired with explicit signal, pressure, growth, risk, or neutral conditions                                            |
 | Sequential field tests | `PerformanceFieldSequence`     | Ordered studies, figure numbering, alternating media, optional sticky progression, and reduced-motion fallback                                  |
 | Contrast chapter       | `PerformanceContrastChapter`   | The black/white principle-to-intervention break and an inline or full-width slot for a real route-owned artifact                                |
@@ -39,6 +39,8 @@ Properties own words, route data, original media, domain-specific artifacts, app
 Campaign actions inherit a mode-aware surface from `PerformanceCampaignOpening`: ink openings provide a light primary action and a translucent, light-bordered secondary action; paper openings reverse that relationship. Properties may supply the action destination and label, but they must not reintroduce page-surface button colors over image-backed media.
 
 Campaign video is a progressive enhancement, never the only media surface. Supply the canonical responsive `src`, `mobileSrc`, and `alt` first, then optionally add `video.mp4`, `video.webm`, and a matching `video.poster`. Canon renders the still during SSR and first paint, adds silent autoplaying loop media only after hydration when motion is allowed, and keeps the video element absent when `prefers-reduced-motion: reduce` applies. Text, actions, proof, scrims, and grid overlays remain live DOM; never bake them into video. The static image is also the rollback when video delivery or motion quality fails.
+
+Use the optional campaign `artifact` snippet when the property owns an interactive object that must share the opening with the claim. The required static `media`, live text, actions, and proof remain authoritative. The property owns artifact semantics, controls, renderer lifecycle, fallback, and pointer behavior; Canon supplies a non-interactive placement layer and reserves enough mobile height to keep the artifact out of the claim and action path.
 
 Keep ordinary proof artifacts inline. Use `artifactPlacement="full-width"` on `PerformanceContrastChapter` when the artifact is itself an operating surface, such as a live canvas whose nodes, controls, and inspector need enough width to remain legible. The property still owns the renderer and projection; Canon only owns its placement in the chapter.
 

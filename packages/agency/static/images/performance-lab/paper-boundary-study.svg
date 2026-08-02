@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 960" role="img" aria-labelledby="title desc">
+  <title id="title">Paper pressure boundary study</title>
+  <desc id="desc">A paper sheet held against a controlled edge with a perforated stop line and an attached receipt.</desc>
+  <rect width="720" height="960" fill="#090909"/>
+  <g opacity=".2" stroke="#f3f3f0" fill="none">
+    <path d="M0 160h720M0 320h720M0 480h720M0 640h720M0 800h720"/>
+    <path d="M120 0v960M240 0v960M360 0v960M480 0v960M600 0v960"/>
+  </g>
+  <path d="M94 118h456l76 76v622H94z" fill="#f3f3f0" stroke="#fff" stroke-width="2"/>
+  <path d="M550 118v76h76" fill="#d7d7d2" stroke="#090909" stroke-width="2"/>
+  <path d="M476 166v566" fill="none" stroke="#b4312f" stroke-width="4" stroke-dasharray="8 14"/>
+  <path d="M132 226h186l76 92h82" fill="none" stroke="#090909" stroke-width="2" opacity=".7"/>
+  <g transform="translate(286 530) rotate(-7)" fill="none" stroke="#b4312f" stroke-width="5">
+    <rect width="242" height="112" rx="4"/>
+    <path d="M30 55h182"/>
+  </g>
+  <g fill="#090909" font-family="monospace">
+    <text x="132" y="352" font-size="20">RUN / WAIT / STOP</text>
+    <text x="132" y="390" font-size="14">NAMED AUTHORITY</text>
+    <text x="314" y="579" font-size="22" fill="#b4312f">RECEIPT</text>
+  </g>
+  <path d="M520 258h118v364H520" fill="none" stroke="#fff" stroke-width="18"/>
+  <circle cx="579" cy="320" r="14" fill="#090909" stroke="#fff" stroke-width="6"/>
+  <circle cx="579" cy="558" r="14" fill="#090909" stroke="#fff" stroke-width="6"/>
+</svg>

@@ -33,6 +33,10 @@ describe('PerformanceCampaignOpening', () => {
 		const actions = createRawSnippet(() => ({
 			render: () => '<a href="/book" data-testid="campaign-action">Book a working session</a>'
 		}));
+		const artifact = createRawSnippet(() => ({
+			render: () =>
+				'<div data-testid="campaign-artifact">Interactive workflow remains property-owned</div>'
+		}));
 
 		target = document.createElement('div');
 		document.body.appendChild(target);
@@ -55,7 +59,8 @@ describe('PerformanceCampaignOpening', () => {
 					{ label: 'Signals', value: 'Mapped' },
 					{ label: 'Decisions', value: 'Assigned' }
 				],
-				actions
+				actions,
+				artifact
 			}
 		}) as Record<string, unknown>;
 		flushSync();
@@ -63,6 +68,7 @@ describe('PerformanceCampaignOpening', () => {
 		const opening = target.querySelector('section.performance-campaign-opening');
 		expect(opening?.getAttribute('data-mode')).toBe('ink');
 		expect(opening?.getAttribute('data-density')).toBe('compact');
+		expect(opening?.getAttribute('data-has-artifact')).toBe('true');
 		expect(opening?.getAttribute('aria-label')).toBe('AI Performance Lab');
 		expect(opening?.querySelector('h1')?.textContent).toBe('Train the system before it runs.');
 		expect(opening?.querySelector('.performance-campaign-opening__lede')?.textContent).toContain(
@@ -86,6 +92,9 @@ describe('PerformanceCampaignOpening', () => {
 		expect(proofItems[0].textContent).toContain('Mapped');
 		expect(opening?.querySelector('[data-testid="campaign-action"]')?.getAttribute('href')).toBe(
 			'/book'
+		);
+		expect(opening?.querySelector('[data-testid="campaign-artifact"]')?.textContent).toContain(
+			'property-owned'
 		);
 	});
 

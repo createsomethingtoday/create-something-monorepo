@@ -33,6 +33,7 @@
 		density?: PerformanceCampaignOpeningDensity;
 		priority?: boolean;
 		actions?: Snippet;
+		artifact?: Snippet;
 	}
 
 	let {
@@ -44,7 +45,8 @@
 		mode = 'ink',
 		density = 'standard',
 		priority = true,
-		actions
+		actions,
+		artifact
 	}: Props = $props();
 
 	let motionAllowed = $state(false);
@@ -67,7 +69,13 @@
 	});
 </script>
 
-<section class="performance-campaign-opening" data-mode={mode} data-density={density} aria-label={eyebrow}>
+<section
+	class="performance-campaign-opening"
+	data-mode={mode}
+	data-density={density}
+	data-has-artifact={artifact ? 'true' : 'false'}
+	aria-label={eyebrow}
+>
 	<figure
 		class="performance-campaign-opening__media"
 		data-color-mode={media.colorMode ?? 'monochrome'}
@@ -132,6 +140,12 @@
 			</ul>
 		{/if}
 	</div>
+
+	{#if artifact}
+		<div class="performance-campaign-opening__artifact">
+			{@render artifact()}
+		</div>
+	{/if}
 </section>
 
 <style>
@@ -235,6 +249,13 @@
 		padding-block: clamp(8rem, 17vh, 12rem) 1.25rem;
 	}
 
+	.performance-campaign-opening__artifact {
+		position: absolute;
+		inset: 0;
+		z-index: 3;
+		pointer-events: none;
+	}
+
 	.performance-campaign-opening[data-density='compact'] .performance-campaign-opening__content {
 		gap: clamp(2rem, 5vw, 4rem);
 		padding-block: clamp(2.5rem, 6vh, 4rem) 1rem;
@@ -251,6 +272,12 @@
 		justify-items: start;
 		gap: 1rem;
 		max-width: 52rem;
+	}
+
+	@media (min-width: 48rem) {
+		.performance-campaign-opening[data-has-artifact='true'] .performance-campaign-opening__content header {
+			width: min(44%, 37rem);
+		}
 	}
 
 	.performance-campaign-opening__eyebrow,
@@ -396,8 +423,17 @@
 			min-height: 42rem;
 		}
 
+		.performance-campaign-opening[data-has-artifact='true'][data-density='compact'] {
+			min-height: 64rem;
+		}
+
 		.performance-campaign-opening[data-density='compact'] .performance-campaign-opening__content {
 			padding-block: 5.5rem 0.75rem;
+		}
+
+		.performance-campaign-opening[data-has-artifact='true'] .performance-campaign-opening__content {
+			grid-template-rows: auto auto;
+			align-content: space-between;
 		}
 
 		.performance-campaign-opening__proof {
