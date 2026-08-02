@@ -32,7 +32,8 @@ const widgetResourceMeta = {
     prefersBorder: true,
     csp: { connectDomains: [], resourceDomains: [] }
   },
-  'openai/widgetDescription': 'Ranked public offers with reliability and evidence disclosures.',
+  'openai/widgetDescription':
+    'Currently corroborated public offers, with unverified leads separated as non-actionable evidence.',
   'openai/widgetPrefersBorder': true,
   'openai/widgetCSP': {
     connect_domains: [],
@@ -145,7 +146,7 @@ function resultText(operation: string, result?: FindOffersServiceResult): string
     const supplemental = result?.counts.supplemental ?? 0;
     const evidence = result?.counts.evidence ?? 0;
     const run = result?.receiptHash.slice('sha256:'.length, 'sha256:'.length + 10) ?? 'unknown';
-    return `${ltk} LTK coupon candidate${ltk === 1 ? '' : 's'}; ${supplemental} supplemental fallback offer${supplemental === 1 ? '' : 's'}; ${evidence} evidence-only source${evidence === 1 ? '' : 's'}. Search run ${run}.`;
+    return `${ltk} verified LTK offer${ltk === 1 ? '' : 's'}; ${supplemental} verified supplemental offer${supplemental === 1 ? '' : 's'}; ${evidence} unverified finding${evidence === 1 ? '' : 's'}. Search run ${run}.`;
   }
   if (operation === 'verify_offer') return 'Re-evaluated the supplied public offer evidence.';
   if (operation === 'watch_offers') return 'The offer watch is active.';
@@ -203,7 +204,7 @@ export function createOfferSavingsMcpServer(
     {
       title: 'Score host-discovered public offers',
       description:
-        'After the ChatGPT or Codex agent completes bounded public discovery with LTK first, submit the normalized request and factual observations here for authoritative deterministic scoring, ranking, evidence separation, and a receipt. This tool does not search, purchase, mutate a cart, or create a watch.',
+        'After the ChatGPT or Codex agent completes bounded public discovery with LTK first, submit the normalized request and factual observations here for authoritative deterministic scoring, ranking, evidence separation, and a receipt. Only recommend-status decisions are returned as usable offers; verify and lead decisions remain non-actionable evidence. This tool does not search, purchase, mutate a cart, or create a watch.',
       inputSchema: resolveOffersInputSchema,
       outputSchema: findOffersToolOutputSchema,
       annotations: {
@@ -229,7 +230,7 @@ export function createOfferSavingsMcpServer(
     {
       title: 'Find public offers',
       description:
-        'Legacy server-side discovery for scheduled watches or hosts without public-search capability. Interactive ChatGPT and Codex agents should search LTK first and call resolve_offers instead. This does not purchase or mutate a cart.',
+        'Legacy server-side discovery for scheduled watches or hosts without public-search capability. Interactive ChatGPT and Codex agents should search LTK first and call resolve_offers instead. Only recommend-status decisions are returned as usable offers; verify and lead decisions remain non-actionable evidence. This does not purchase or mutate a cart.',
       inputSchema: findOffersInputSchema,
       outputSchema: findOffersToolOutputSchema,
       annotations: {

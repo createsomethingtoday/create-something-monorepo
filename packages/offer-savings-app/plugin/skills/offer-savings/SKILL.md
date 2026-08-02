@@ -13,9 +13,9 @@ Resolve a user-triggered shopping request through public discovery and determini
 2. Use the host agent's public-web capability for bounded discovery. Search public LTK posts, creator profiles, captions, product links, and visible exclusive-code indicators first. Preserve direct URLs and do not bypass app gates or login.
 3. Only after the LTK pass, search official retailer pages and inspectable checkout evidence for corroboration, then bounded creator-owned, authorized-feed, search-index, and deal-source gaps. Keep LTK and supplemental observations distinct.
 4. Call `resolve_offers` once with the normalized request and up to 50 factual observations from both passes. The MCP owns observation time, deterministic reliability scores, caps, ranking, evidence separation, and the receipt. Never calculate or edit a score in the host agent.
-5. Present `ltkOffers` as the primary answer, followed by `supplementalOffers` as clearly labeled fallback options. Do not blend the lanes.
-6. Treat `evidence` as supporting material, not coupons. Never present a shipping, pickup, delivery, store-location, or policy page as an offer, and never attach copy-code or watch actions to it. Rejected observations remain in the resolver receipt instead of the usable offer list.
-7. Include expected savings, constraints, direct evidence links, observation time, score components, caps or rejection reasons, and the search-run receipt hash. Say plainly when no current public LTK offer was found or no candidate is reliable enough to recommend.
+5. Present `ltkOffers` as the primary answer, followed by `supplementalOffers` as clearly labeled verified options. These arrays contain only resolver decisions with `recommend` status; do not promote a `verify` or `lead` decision into either lane.
+6. Treat `evidence` as research material, not working coupons. It includes uncorroborated creator codes, historical or incomplete leads, generic fulfillment pages, and other findings that are not currently recommendable. Do not present its codes as usable, calculate projected savings from them, or attach copy-code or watch actions. Rejected observations remain in the resolver receipt instead of the usable offer list.
+7. For recommended offers, include expected savings, constraints, direct evidence links, observation time, score components, and the search-run receipt hash. For evidence, report the caps or rejection reasons without claiming savings. Say plainly when no currently verified public offer was found.
 8. Call `verify_offer` when the user supplies an offer or asks for re-evaluation. Treat `needs_checkout` as unresolved; verification does not authorize checkout.
 9. Call `watch_offers` only after the user asks to keep checking and supplies an explicit deadline. Use a stable idempotency key so retries reuse the same watch. Use `get_watch` to read its current status. Scheduled watch refreshes may use the service-side discovery fallback because the host agent is not continuously online.
 
@@ -29,6 +29,7 @@ Read [references/source-policy.md](references/source-policy.md) when explaining 
 - Treat official retailer and inspectable checkout evidence as verification sources.
 - Treat public LTK, creator-owned pages, and authorized affiliate feeds as corroboration unless retailer evidence verifies the claim.
 - Treat search indexes and deal aggregators as leads.
+- Treat `verify` and `lead` decisions as non-actionable evidence. Only `recommend` decisions belong in a usable offer lane.
 - Never calculate, invent, or manually edit the reliability score. Report the resolver output and receipt.
 - Preserve uncertain, inaccessible, conflicting, stale, and expired observations instead of silently dropping them.
 

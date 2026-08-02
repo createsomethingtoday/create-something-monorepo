@@ -113,9 +113,9 @@ export const OFFER_SAVINGS_WIDGET_HTML = String.raw`<!doctype html>
         <header><div><p class="eyebrow">Public offer intelligence</p><h1 id="title">Offer Savings</h1></div><span class="search-order">LTK coupons first</span></header>
         <p id="summary">Waiting for a public offer result.</p>
         <div id="offers" aria-live="polite"></div>
-        <p id="empty" hidden>No LTK coupon or supplemental fallback offer was returned. A watch can still check again before the deadline.</p>
+        <p id="empty" hidden>No currently verified public offer was returned. Unverified mentions are research evidence only and should not be tried as working codes.</p>
         <section id="evidence-section" hidden aria-labelledby="evidence-title">
-          <h2 id="evidence-title" class="section-title">Evidence-only sources</h2>
+          <h2 id="evidence-title" class="section-title">Unverified leads and supporting evidence</h2>
           <div id="evidence"></div>
         </section>
         <p id="status" role="status" aria-live="polite"></p>
@@ -198,7 +198,7 @@ export const OFFER_SAVINGS_WIDGET_HTML = String.raw`<!doctype html>
         const run = String(result?.receiptHash ?? '').replace(/^sha256:/, '').slice(0, 10) || 'pending';
         emptyEl.hidden = offers.length > 0;
         evidenceSectionEl.hidden = evidence.length === 0;
-        summaryEl.textContent = String(ltkCount) + ' LTK coupon candidate' + (ltkCount === 1 ? '' : 's') + '; ' + String(supplementalCount) + ' supplemental fallback offer' + (supplementalCount === 1 ? '' : 's') + '; ' + String(evidence.length) + ' evidence-only source' + (evidence.length === 1 ? '' : 's') + '. Search run ' + run + '.';
+        summaryEl.textContent = String(ltkCount) + ' verified LTK offer' + (ltkCount === 1 ? '' : 's') + '; ' + String(supplementalCount) + ' verified supplemental offer' + (supplementalCount === 1 ? '' : 's') + '; ' + String(evidence.length) + ' unverified finding' + (evidence.length === 1 ? '' : 's') + '. Search run ' + run + '.';
 
         offers.forEach((offer, index) => {
           const card = node('article', 'offer');
@@ -206,7 +206,7 @@ export const OFFER_SAVINGS_WIDGET_HTML = String.raw`<!doctype html>
           card.dataset.confidence = offer.confidence?.label ?? 'Uncertain';
           const top = node('div', 'offer-top');
           const names = node('div');
-          names.append(node('p', 'lane', offer.source?.lane === 'ltk' ? 'LTK coupon' : 'Supplemental fallback'));
+          names.append(node('p', 'lane', offer.source?.lane === 'ltk' ? 'Verified LTK offer' : 'Verified supplemental offer'));
           names.append(node('h2', '', offer.merchant + ' — ' + offer.title));
           const confidence = node('span', 'confidence', offer.confidence?.label ?? 'Uncertain');
           confidence.dataset.level = offer.confidence?.label ?? 'Uncertain';
@@ -274,13 +274,13 @@ export const OFFER_SAVINGS_WIDGET_HTML = String.raw`<!doctype html>
           const card = node('article', 'evidence');
           const top = node('div', 'offer-top');
           const names = node('div');
-          names.append(node('p', 'lane', 'Not an offer'));
+          names.append(node('p', 'lane', item.status === 'verify' || item.status === 'lead' ? 'Unverified lead' : 'Supporting evidence'));
           names.append(node('h2', '', item.merchant + ' — ' + item.title));
           const confidence = node('span', 'confidence', 'Evidence only');
           confidence.dataset.level = 'Evidence only';
           top.append(names, confidence);
           card.append(top, node('p', 'disclosure', item.disclosure ?? 'This source did not contain a concrete coupon or discount.'));
-          const source = node('a', 'source', 'View supporting source');
+          const source = node('a', 'source', item.status === 'verify' || item.status === 'lead' ? 'Review unverified source' : 'View supporting source');
           source.href = item.source?.url ?? '#';
           source.target = '_blank';
           source.rel = 'noreferrer';

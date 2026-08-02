@@ -57,9 +57,14 @@ test('HTTP adapter exposes health and find_offers through real network requests'
   const result = (await findResponse.json()) as {
     operation: string;
     ltkOffers: Array<{ confidence: { label: string } }>;
+    supplementalOffers: Array<{ confidence: { label: string } }>;
+    evidence: Array<{ confidence: { label: string }; actions: { canCopyCode: boolean } }>;
   };
   assert.equal(result.operation, 'find_offers');
-  assert.equal(result.ltkOffers[0]?.confidence.label, 'Worth trying');
+  assert.equal(result.ltkOffers.length, 0);
+  assert.equal(result.supplementalOffers[0]?.confidence.label, 'Verified');
+  assert.equal(result.evidence[0]?.confidence.label, 'Evidence only');
+  assert.equal(result.evidence[0]?.actions.canCopyCode, false);
 });
 
 test('HTTP adapter exposes verify and persistent watch operations with actionable errors', async (t) => {

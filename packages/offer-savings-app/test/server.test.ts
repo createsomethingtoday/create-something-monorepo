@@ -252,7 +252,8 @@ test('MCP protocol exposes only the bounded offer workflow and widget resource',
   assert.match(widgetHtml, /Watch for a better offer/);
   assert.match(widgetHtml, /Freshness/);
   assert.match(widgetHtml, /LTK coupons first/i);
-  assert.match(widgetHtml, /Evidence-only sources/i);
+  assert.match(widgetHtml, /Unverified leads and supporting evidence/i);
+  assert.match(widgetHtml, /No currently verified public offer was returned/i);
   assert.match(widgetHtml, /Search run/i);
   assert.match(widgetHtml, /Search in progress\. Waiting for a completed offer result\./i);
   assert.match(widgetHtml, /offerSavingsLatestCompletedResult/);
@@ -290,21 +291,17 @@ test('MCP calls find, verify, and idempotent watch through the authoritative ser
   const found = await client.callTool({ name: 'find_offers', arguments: publicRequest });
   assert.equal(found.isError, undefined);
   assert.equal(found.structuredContent?.operation, 'find_offers');
-  assert.deepEqual(found.structuredContent?.counts, { ltk: 1, supplemental: 3, evidence: 0 });
+  assert.deepEqual(found.structuredContent?.counts, { ltk: 0, supplemental: 1, evidence: 3 });
   assert.match(
     found.content[0] && found.content[0].type === 'text' ? found.content[0].text : '',
-    /1 LTK coupon candidate.*3 supplemental fallback offers/i
+    /0 verified LTK offers.*1 verified supplemental offer.*3 unverified findings/i
   );
   assert.equal(
     (found.structuredContent?.request as { asOf: string }).asOf,
     '2026-07-30T15:00:00.000Z'
   );
   assert.match(String(found.structuredContent?.receiptHash), /^sha256:[a-f0-9]{64}$/);
-  assert.equal(
-    (found.structuredContent?.ltkOffers as Array<{ confidence: { label: string } }>)[0]?.confidence
-      .label,
-    'Worth trying'
-  );
+  assert.deepEqual(found.structuredContent?.ltkOffers, []);
   assert.equal(
     (found.structuredContent?.supplementalOffers as Array<{ confidence: { label: string } }>)[0]
       ?.confidence.label,
@@ -318,16 +315,16 @@ test('MCP calls find, verify, and idempotent watch through the authoritative ser
   assert.equal(hostResolved.isError, undefined);
   assert.equal(hostResolved.structuredContent?.operation, 'find_offers');
   assert.deepEqual(hostResolved.structuredContent?.counts, {
-    ltk: 1,
-    supplemental: 3,
-    evidence: 0
+    ltk: 0,
+    supplemental: 1,
+    evidence: 3
   });
   assert.equal(hostResolved._meta?.operation, 'find_offers');
   assert.match(String(hostResolved._meta?.receiptHash), /^sha256:[a-f0-9]{64}$/);
   assert.deepEqual(hostResolved._meta?.counts, {
-    ltk: 1,
-    supplemental: 3,
-    evidence: 0
+    ltk: 0,
+    supplemental: 1,
+    evidence: 3
   });
 
   const creator = fixture.observations.find((observation) => observation.id === 'fixture-ltk-15');
