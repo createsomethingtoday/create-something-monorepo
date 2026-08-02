@@ -136,7 +136,7 @@ test('MCP protocol exposes only the bounded offer workflow and widget resource',
   });
 
   const listed = await client.listTools();
-  assert.equal(client.getServerVersion()?.version, '0.2.7');
+  assert.equal(client.getServerVersion()?.version, '0.2.8');
   assert.equal(OFFER_WIDGET_URI, 'ui://offer-savings/results-v6.html');
   assert.deepEqual(
     listed.tools.map((tool) => tool.name),
@@ -212,14 +212,10 @@ test('MCP protocol exposes only the bounded offer workflow and widget resource',
     listed.tools.find((tool) => tool.name === 'watch_offers')?.annotations?.idempotentHint,
     true
   );
-  assert.equal(
-    (
-      listed.tools.find((tool) => tool.name === 'find_offers')?._meta?.ui as {
-        resourceUri?: string;
-      }
-    )?.resourceUri,
-    OFFER_WIDGET_URI
-  );
+  for (const tool of listed.tools) {
+    assert.equal(tool._meta?.['openai/outputTemplate'], undefined);
+    assert.equal((tool._meta?.ui as { resourceUri?: string } | undefined)?.resourceUri, undefined);
+  }
   assert.equal(
     listed.tools.some((tool) => /purchase|checkout|cart|private|scrap/i.test(tool.name)),
     false
