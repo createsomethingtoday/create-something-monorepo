@@ -90,12 +90,10 @@
     : isPublicIntakeRoute || !showInternalNavigation
       ? [
           { href: '/', label: 'Home' },
-          { href: '/nurses', label: 'Nurses' },
-          { href: '/voice', label: 'Voice' },
-          { href: '/client-service', label: 'NPG service' },
-          { href: '/jobs', label: 'Jobs' },
-          { href: '/facilities', label: 'Facilities' },
-          { href: '/agents', label: 'Agents' }
+          { href: '/nurses', label: 'For nurses' },
+          { href: '/jobs', label: 'Open roles' },
+          { href: '/facilities', label: 'For facilities' },
+          { href: '/agents', label: 'How it works' }
         ]
       : [
           { href: '/', label: 'Home' },
