@@ -1,0 +1,54 @@
+name = "webflow-template-agent"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
+workers_dev = true
+
+[observability]
+enabled = true
+
+[vars]
+ENVIRONMENT = "production"
+# Server-side calls are not subject to the webflow.com CSP, so the direct
+# worker origin is fine here. The *client* chat component must still reach
+# this agent through a *.webflow.com proxy path.
+SEARCH_API_BASE = "https://webflow-template-search.createsomething.workers.dev"
+ALLOWED_ORIGINS = "https://webflow.com,https://www.webflow.com,https://templates.webflow.com,https://template-marketplace.webflow.io,*.webflow.com"
+ANTHROPIC_MODEL = "claude-opus-4-8"
+TURNSTILE_EXPECTED_HOSTNAME = "webflow.com"
+MAX_SESSION_TURNS = "20"
+MAX_CONCURRENT_TURNS = "8"
+DAILY_BUDGET_MICRO_USD = "25000000"
+TURN_RESERVATION_MICRO_USD = "2000000"
+INPUT_USD_PER_MILLION_TOKENS = "15"
+OUTPUT_USD_PER_MILLION_TOKENS = "75"
+CACHE_WRITE_USD_PER_MILLION_TOKENS = "18.75"
+CACHE_READ_USD_PER_MILLION_TOKENS = "1.5"
+
+[[ratelimits]]
+name = "AGENT_RATE_LIMITER"
+namespace_id = "1200"
+
+[ratelimits.simple]
+limit = 6
+period = 60
+
+[[durable_objects.bindings]]
+name = "AGENT_GUARD"
+class_name = "TemplateAgentAbuseGuard"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["TemplateAgentAbuseGuard"]
+
+[[analytics_engine_datasets]]
+binding = "AGENT_ANALYTICS"
+dataset = "webflow_template_agent_abuse"
+
+# Secrets (set via `wrangler secret put`):
+# - ANTHROPIC_API_KEY
+# - SESSION_SIGNING_SECRET
+# - CONTEXT_SIGNING_SECRET
+# - TURNSTILE_SECRET_KEY
+# - AGENT_PROXY_SECRET
