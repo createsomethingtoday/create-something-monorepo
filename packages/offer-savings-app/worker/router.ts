@@ -181,7 +181,7 @@ export function createOfferSavingsWorkerHandler(options: {
       if (url.pathname === '/' || url.pathname === '/health') {
         return jsonResponse({
           name: 'offer-savings-agent',
-          version: '0.2.9',
+          version: '0.3.0',
           status: 'healthy',
           endpoint: '/mcp',
           authentication: 'OAuth 2.1 + PKCE through CREATE SOMETHING Identity'
