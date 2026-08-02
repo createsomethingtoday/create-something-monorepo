@@ -80,35 +80,22 @@ test('the homepage moves from claim to proof to method before asking visitors to
   }
 });
 
-test('the homepage opening uses a property-owned fluid-intelligence study', () => {
+test('the homepage opening uses the property-owned paper-under-pressure artifact', () => {
   assert.match(home, /const homepageHandoffBoundaryMedia: PerformanceCampaignMedia/);
   assert.match(
     home,
-    /src: '\/images\/performance-lab\/agency-fluid-intelligence-loop-v4-poster\.webp'/
+    /src: '\/images\/performance-lab\/paper-under-pressure-field\.svg'/
   );
-  assert.match(
-    home,
-    /mobileSrc:[\s\S]*?'\/images\/performance-lab\/agency-fluid-intelligence-loop-v4-poster-mobile\.webp'/
-  );
-  assert.match(home, /alt: 'A water-driven liquid-glass calibration instrument/);
-  assert.match(
-    home,
-    /mp4: '\/images\/performance-lab\/agency-fluid-intelligence-loop-v4\.mp4'/
-  );
-  assert.match(
-    home,
-    /webm: '\/images\/performance-lab\/agency-fluid-intelligence-loop-v4\.webm'/
-  );
-  assert.match(
-    home,
-    /poster: '\/images\/performance-lab\/agency-fluid-intelligence-loop-v4-poster\.webp'/
-  );
+  assert.match(home, /alt: 'A warm tactile paper field with one folded edge'/);
   assert.match(home, /media=\{homepageHandoffBoundaryMedia\}/);
+  assert.match(home, /mode="paper"/);
+  assert.match(home, /\{#snippet artifact\(\)\}[\s\S]*?<PaperUnderPressureStage \/>/);
+  assert.doesNotMatch(home, /agency-fluid-intelligence-loop-v4/);
   assert.doesNotMatch(home, /controlledFlowMedia/);
   assert.equal(
     existsSync(
       new URL(
-        '../static/images/performance-lab/agency-fluid-intelligence-loop-v4-poster.webp',
+        '../static/images/performance-lab/paper-under-pressure-field.svg',
         import.meta.url
       )
     ),
@@ -117,34 +104,7 @@ test('the homepage opening uses a property-owned fluid-intelligence study', () =
   assert.equal(
     existsSync(
       new URL(
-        '../static/images/performance-lab/agency-fluid-intelligence-loop-v4-poster-mobile.webp',
-        import.meta.url
-      )
-    ),
-    true
-  );
-  assert.equal(
-    existsSync(
-      new URL(
-        '../static/images/performance-lab/agency-fluid-intelligence-loop-v4.mp4',
-        import.meta.url
-      )
-    ),
-    true
-  );
-  assert.equal(
-    existsSync(
-      new URL(
-        '../static/images/performance-lab/agency-fluid-intelligence-loop-v4.webm',
-        import.meta.url
-      )
-    ),
-    true
-  );
-  assert.equal(
-    existsSync(
-      new URL(
-        '../static/images/performance-lab/agency-fluid-intelligence-loop-v4-poster.webp',
+        '../static/images/performance-lab/paper-boundary-study.svg',
         import.meta.url
       )
     ),
@@ -152,7 +112,7 @@ test('the homepage opening uses a property-owned fluid-intelligence study', () =
   );
 });
 
-test('the homepage boundary motion is a native fluid-intelligence loop with a still fallback', () => {
+test('the historical fluid study remains attributable while Canon retains optional motion support', () => {
   assert.match(
     campaign,
     /<video[\s\S]*?autoplay[\s\S]*?muted[\s\S]*?loop[\s\S]*?playsinline/
@@ -181,7 +141,7 @@ test('the homepage boundary motion is a native fluid-intelligence loop with a st
   );
 });
 
-test('the fluid tracer preserves diegetic color without changing the campaign default', () => {
+test('the campaign can preserve property-owned color without changing its default', () => {
   assert.match(home, /colorMode: 'natural'/);
   assert.match(campaign, /colorMode\?: 'monochrome' \| 'natural'/);
   assert.match(campaign, /data-color-mode=\{media\.colorMode \?\? 'monochrome'\}/);
@@ -191,7 +151,8 @@ test('the fluid tracer preserves diegetic color without changing the campaign de
 
 test('the homepage boundary artifact shows evidence without restating the scene introduction', () => {
   assert.match(home, /<figure class="boundary-study__media">/);
-  assert.match(home, /<figcaption>Boundary study · Run \/ Wait \/ Stop<\/figcaption>/);
+  assert.match(home, /<figcaption>Paper pressure study · Run \/ Wait \/ Stop<\/figcaption>/);
+  assert.match(home, /paper-boundary-study\.svg/);
   assert.doesNotMatch(home, /class="boundary-study__copy"/);
   assert.match(home, /class="boundary-study__outcomes"/);
   assert.match(home, /class="boundary-study__metrics"/);

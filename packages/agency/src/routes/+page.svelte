@@ -13,6 +13,7 @@
     type PerformanceNarrativeScene
   } from '@create-something/canon';
   import HeroTrustArtifact from '$lib/components/HeroTrustArtifact.svelte';
+  import PaperUnderPressureStage from '$lib/components/PaperUnderPressureStage.svelte';
   import AgencyPerformanceReadback from '$lib/components/AgencyPerformanceReadback.svelte';
   import AdoptionPathChooser from '$lib/components/AdoptionPathChooser.svelte';
   import IntegrationCompatibilityRail from '$lib/components/IntegrationCompatibilityRail.svelte';
@@ -21,18 +22,12 @@
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
   const homepageHandoffBoundaryMedia: PerformanceCampaignMedia = {
-    src: '/images/performance-lab/agency-fluid-intelligence-loop-v4-poster.webp',
-    mobileSrc: '/images/performance-lab/agency-fluid-intelligence-loop-v4-poster-mobile.webp',
-    alt: 'A water-driven liquid-glass calibration instrument circulating under pressure',
+    src: '/images/performance-lab/paper-under-pressure-field.svg',
+    alt: 'A warm tactile paper field with one folded edge',
     width: 1280,
     height: 720,
-    objectPosition: '65% center',
-    colorMode: 'natural',
-    video: {
-      mp4: '/images/performance-lab/agency-fluid-intelligence-loop-v4.mp4',
-      webm: '/images/performance-lab/agency-fluid-intelligence-loop-v4.webm',
-      poster: '/images/performance-lab/agency-fluid-intelligence-loop-v4-poster.webp'
-    }
+    objectPosition: 'center',
+    colorMode: 'natural'
   };
 
   const services = [
@@ -241,6 +236,7 @@
     lede="Choose a handoff your team still checks by hand. We map what can run, when a person steps in, what must stop, and what record proves the result."
     media={homepageHandoffBoundaryMedia}
     proof={heroProofItems}
+    mode="paper"
     density="compact"
   >
     {#snippet actions()}
@@ -248,6 +244,9 @@
       <Button href="/proof/marketplace-workflow" variant="secondary"
         >See the Marketplace workflow</Button
       >
+    {/snippet}
+    {#snippet artifact()}
+      <PaperUnderPressureStage />
     {/snippet}
   </PerformanceCampaignOpening>
 
@@ -267,17 +266,13 @@
         <article class="boundary-study" aria-label="Boundary study: run, wait, stop">
           <figure class="boundary-study__media">
             <picture>
-              <source
-                media="(max-width: 47.99rem)"
-                srcset="/images/performance-lab/pressure-boundary-natural-mobile.webp"
-              />
               <img
-                src="/images/performance-lab/pressure-boundary-natural.webp"
-                alt="Black-and-white field study of water meeting a designed boundary."
+                src="/images/performance-lab/paper-boundary-study.svg"
+                alt="Paper held against a controlled edge with a perforated stop line and attached receipt."
                 loading="lazy"
               />
             </picture>
-            <figcaption>Boundary study · Run / Wait / Stop</figcaption>
+            <figcaption>Paper pressure study · Run / Wait / Stop</figcaption>
           </figure>
           <div class="boundary-study__body">
             <div
