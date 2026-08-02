@@ -20,11 +20,41 @@ This package enables per-toolkit registry entries in the CREATE SOMETHING Hub:
 - `connection_status`
 - `get_connect_link`
 - `toolkit_info`
+- `google_search_console_compare_periods` (Google Search Console route only)
 - `gmail_mark_read_by_query` (Gmail toolkit route only)
 - `zoom_latest_transcript_status` (Zoom toolkit route only)
 - `zoom_list_available_transcripts` (Zoom toolkit route only)
 
-All Composio toolkit tools are exposed dynamically for that toolkit route.
+Most Composio toolkit tools are exposed dynamically for that toolkit route.
+Google Search Console is the governed exception: `policy.composio-gsc-readonly.v1`
+projects an exact six-tool read allowlist before route registration. Site
+add/delete, sitemap submit/delete, Indexing API, and unknown future actions are
+not registered and direct calls fail as `Unknown tool` before Composio tool
+execution.
+
+### Google Search Console intelligence
+
+The GSC route exposes these upstream reads:
+
+- list/get sites
+- Search Analytics query
+- URL inspection
+- list/get sitemaps
+
+`google_search_console_compare_periods` calls only the allowlisted Search
+Analytics source. It paginates two explicit windows and returns a deterministic
+receipt containing impression-weighted totals, deltas, positions 8–15
+opportunities, and simple question-prefix signals for answer-seeking queries.
+The thresholds are configurable and the ranking formula is returned with every
+receipt.
+
+The receipt is deliberately bounded:
+
+- dimensioned totals cover returned rows and may not equal property-wide totals
+- missing rows are not proof that a URL is unindexed
+- question-like queries are not proof of an AI answer or citation
+- ordinary Search Analytics does not replace Search Console's dedicated
+  Generative AI performance report
 
 ### Gmail helper workflow
 
@@ -77,7 +107,10 @@ Compatibility mode (`COMPOSIO_ENTITY_RESOLUTION_MODE=compat`) resolves in this o
 ## Local dev
 
 ```bash
+pnpm --filter @create-something/mcp-core build
 pnpm --filter @create-something/composio-bridge build
+pnpm --filter @create-something/composio-toolkit-mcp test
+pnpm --filter @create-something/composio-toolkit-mcp typecheck
 pnpm --filter @create-something/composio-toolkit-mcp dev
 ```
 
