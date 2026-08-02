@@ -2,13 +2,19 @@ import { Agent, run, tool, webSearchTool } from '@openai/agents';
 
 import { normalizeOfferRequest, planOfferDiscovery } from './discovery.js';
 import { findOffers } from './resolve.js';
-import { offerEvidenceInputSchema, offerObservationSchema, offerRequestSchema } from './schemas.js';
+import {
+  discoveredOfferEvidenceSchema,
+  offerEvidenceInputSchema,
+  offerObservationSchema,
+  offerRequestSchema
+} from './schemas.js';
 import { canonicalStringify } from './canonical.js';
 import { createOfferService } from './service.js';
 import type { FindOffersServiceResult, OfferDiscoveryProvider } from './service.js';
 import type { OfferObservation, OfferRequest, OfferResolutionResult } from './types.js';
 
 export { offerEvidenceInputSchema } from './schemas.js';
+export { discoveredOfferEvidenceSchema } from './schemas.js';
 
 export const OFFER_FIND_AGENT_INSTRUCTIONS = `
 You are the read-only Offer Find Agent. Resolve a shopping request against current public evidence.
@@ -103,7 +109,7 @@ export function createOfferEvidenceFinalizer(options: CreateOfferFindAgentOption
     modelSettings: { toolChoice: 'none', parallelToolCalls: false },
     tools: [],
     handoffs: [],
-    outputType: offerEvidenceInputSchema,
+    outputType: discoveredOfferEvidenceSchema,
     resetToolChoice: false
   });
 }
@@ -188,6 +194,14 @@ export function finalizeStructuredEvidence(
       ) {
         delete observation.offer[key];
       }
+    }
+    if (
+      observation.offer &&
+      observation.offer.discount === undefined &&
+      typeof observation.offer.code === 'string' &&
+      observation.offer.code.trim().length > 0
+    ) {
+      observation.offer.discount = { kind: 'unknown' };
     }
   }
   const capturedEvidence = offerEvidenceInputSchema.parse({

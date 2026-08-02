@@ -92,6 +92,21 @@ export const offerEvidenceInputSchema = z
   })
   .strict();
 
+export const discoveredOfferObservationSchema = offerObservationSchema.extend({
+  offer: offerObservationSchema.shape.offer
+    .extend({
+      discount: offerObservationSchema.shape.offer.shape.discount.optional()
+    })
+    .strict()
+});
+
+export const discoveredOfferEvidenceSchema = z
+  .object({
+    request: offerRequestSchema,
+    observations: z.array(discoveredOfferObservationSchema)
+  })
+  .strict();
+
 export const hostOfferObservationSchema = offerObservationSchema.extend({
   source: offerObservationSchema.shape.source.omit({ observedAt: true }).strict()
 });
