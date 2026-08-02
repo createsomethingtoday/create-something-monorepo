@@ -28,6 +28,48 @@ export const settlementResolvedMedia = {
   condition: 'resolved'
 } as const satisfies PerformanceMediaStudy;
 
+export const paperFoldedHandoffMedia = {
+  src: '/images/performance-lab/paper-folded-handoff.webp',
+  mobileSrc: '/images/performance-lab/paper-folded-handoff-mobile.webp',
+  alt: 'A porcelain paper route crossing two hard folds and a black transfer bridge before settling at a cobalt handoff tab',
+  condition: 'sequence',
+  material: 'paper',
+  width: 1536,
+  height: 1024,
+  objectPosition: 'center',
+  colorMode: 'natural'
+} as const satisfies PerformanceMediaStudy;
+
+export const paperClampedDecisionMedia = {
+  src: '/images/performance-lab/paper-clamped-decision.webp',
+  mobileSrc: '/images/performance-lab/paper-clamped-decision-mobile.webp',
+  alt: 'A porcelain paper edge held upright by a black decision rail with one gold authority tab at the stop boundary',
+  condition: 'pressure',
+  material: 'paper',
+  width: 1536,
+  height: 1024,
+  objectPosition: 'center',
+  colorMode: 'natural'
+} as const satisfies PerformanceMediaStudy;
+
+export const paperAttachedReceiptMedia = {
+  src: '/images/performance-lab/paper-attached-receipt.webp',
+  mobileSrc: '/images/performance-lab/paper-attached-receipt-mobile.webp',
+  alt: 'A blank perforated paper receipt physically stitched to its folded source sheet beside a small green proof tab',
+  condition: 'stamp',
+  material: 'paper',
+  width: 1536,
+  height: 1024,
+  objectPosition: 'center',
+  colorMode: 'natural'
+} as const satisfies PerformanceMediaStudy;
+
+export const performancePaperRouteAssignments = {
+  '/': 'paperFoldedHandoffMedia',
+  '/services': 'paperClampedDecisionMedia',
+  '/field-reports': 'paperAttachedReceiptMedia'
+} as const;
+
 /**
  * Route assignment is a policy artifact: each study names an actual operating
  * condition and may serve no more than two public surface families.
@@ -35,7 +77,6 @@ export const settlementResolvedMedia = {
 export const performanceWaterRouteAssignments = {
   '/map': 'clarityInspectionMedia',
   '/products': 'clarityInspectionMedia',
-  '/services': 'turbulenceExceptionMedia',
   '/control': 'turbulenceExceptionMedia',
   '/delivery': 'settlementResolvedMedia',
   '/proof/marketplace-workflow': 'traceDyeInjectionMedia',

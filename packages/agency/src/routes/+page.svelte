@@ -5,7 +5,6 @@
     PerformanceConversionHandoff,
     PerformanceNarrativeStage,
     PerformanceWorkflowMiniArtifact,
-    paperPressureHandoffMedia,
     SEO,
     type PerformanceCampaignProof,
     type PerformanceFieldStudyMetric,
@@ -13,13 +12,13 @@
     type PerformanceNarrativeScene
   } from '@create-something/canon';
   import HeroTrustArtifact from '$lib/components/HeroTrustArtifact.svelte';
-  import PaperUnderPressureStage from '$lib/components/PaperUnderPressureStage.svelte';
   import AgencyPerformanceReadback from '$lib/components/AgencyPerformanceReadback.svelte';
   import AdoptionPathChooser from '$lib/components/AdoptionPathChooser.svelte';
   import IntegrationCompatibilityRail from '$lib/components/IntegrationCompatibilityRail.svelte';
   import PublicSubstrateCanvas from '$lib/components/PublicSubstrateCanvas.svelte';
   import { templateReviewFieldReport } from '$lib/data/fieldReports';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
+  import { paperFoldedHandoffMedia } from '$lib/data/performanceMedia';
 
   const services = [
     {
@@ -225,20 +224,16 @@
     eyebrow={agencyCoreMessaging.categoryLabel}
     title="Make one workflow ready to delegate."
     lede="Choose a handoff your team still checks by hand. We map what can run, when a person steps in, what must stop, and what record proves the result."
-    media={paperPressureHandoffMedia}
+    media={paperFoldedHandoffMedia}
     proof={heroProofItems}
     mode="paper"
     density="compact"
-    artifactOwnsMedia
   >
     {#snippet actions()}
       <Button href={agencyCoreMessaging.selfMapHref}>Map one workflow</Button>
       <Button href="/proof/marketplace-workflow" variant="secondary"
         >See the Marketplace workflow</Button
       >
-    {/snippet}
-    {#snippet artifact()}
-      <PaperUnderPressureStage />
     {/snippet}
   </PerformanceCampaignOpening>
 

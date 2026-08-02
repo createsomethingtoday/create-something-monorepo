@@ -19,17 +19,18 @@ const opening = read(
 );
 const studies = read('../../canon/src/lib/components/performance/media/paper-studies.ts');
 
-test('the homepage opening makes one paper workflow legible before WebGL is available', () => {
-  assert.match(home, /import PaperUnderPressureStage/);
+test('the homepage opening uses immutable paper campaign art while preserving authored proof', () => {
+  assert.doesNotMatch(home, /import PaperUnderPressureStage/);
   assert.match(home, /mode="paper"/);
-  assert.match(home, /\{#snippet artifact\(\)\}[\s\S]*?<PaperUnderPressureStage \/>/);
+  assert.doesNotMatch(home, /\{#snippet artifact\(\)\}[\s\S]*?<PaperUnderPressureStage \/>/);
   assert.doesNotMatch(home, /agency-fluid-intelligence-loop-v4/);
 
   assert.match(component, /data-paper-under-pressure/);
   assert.match(component, /aria-label="Choose a paper workflow stage"/);
   assert.match(component, /aria-pressed=\{activeStageId === stage\.id\}/);
   assert.match(component, /aria-live="polite"/);
-  assert.match(home, /media=\{paperPressureHandoffMedia\}/);
+  assert.match(home, /media=\{paperFoldedHandoffMedia\}/);
+  assert.match(home, /Signal[\s\S]*?Decision[\s\S]*?Proof/);
   assert.match(studies, /alt: 'A tactile paper field/);
   assert.match(opening, /<picture class:performance-campaign-opening__fallback-suppressed/);
   assert.match(opening, /<img[\s\S]*?alt=\{artifactOwnsMedia \? '' : media\.alt\}/);

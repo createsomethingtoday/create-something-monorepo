@@ -44,7 +44,6 @@ test('assigns each study to matching routes without exceeding two public surface
   const expectedAssignments = {
     '/map': 'clarityInspectionMedia',
     '/products': 'clarityInspectionMedia',
-    '/services': 'turbulenceExceptionMedia',
     '/control': 'turbulenceExceptionMedia',
     '/delivery': 'settlementResolvedMedia',
     '/proof/marketplace-workflow': 'traceDyeInjectionMedia',

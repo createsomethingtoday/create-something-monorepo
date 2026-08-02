@@ -20,7 +20,7 @@ const openings = {
   },
   agency: {
     source: 'packages/agency/src/routes/+page.svelte',
-    study: 'paperPressureHandoffMedia'
+    study: 'paperFoldedHandoffMedia'
   },
   learn: {
     source: 'packages/lms/src/routes/+page.svelte',
