@@ -15,11 +15,12 @@ export { createLiveOfferService, readOfferSavingsRuntimeConfig } from './runtime
 export { OFFER_SAVINGS_WIDGET_HTML } from './widget.js';
 import { OFFER_SAVINGS_WIDGET_HTML } from './widget.js';
 
-export const OFFER_WIDGET_URI = 'ui://offer-savings/results-v5.html';
+export const OFFER_WIDGET_URI = 'ui://offer-savings/results-v6.html';
 export const OFFER_WIDGET_MIME_TYPE = 'text/html;profile=mcp-app';
 
 const widgetResources = [
   { name: 'offer-savings-results', uri: OFFER_WIDGET_URI },
+  { name: 'offer-savings-results-v5-compatibility', uri: 'ui://offer-savings/results-v5.html' },
   { name: 'offer-savings-results-v4-compatibility', uri: 'ui://offer-savings/results-v4.html' },
   { name: 'offer-savings-results-v3-compatibility', uri: 'ui://offer-savings/results-v3.html' },
   { name: 'offer-savings-results-v2-compatibility', uri: 'ui://offer-savings/results-v2.html' },
@@ -31,7 +32,8 @@ const widgetResourceMeta = {
     prefersBorder: true,
     csp: { connectDomains: [], resourceDomains: [] }
   },
-  'openai/widgetDescription': 'Ranked public offers with reliability and evidence disclosures.',
+  'openai/widgetDescription':
+    'Currently corroborated public offers, with unverified leads separated as non-actionable evidence.',
   'openai/widgetPrefersBorder': true,
   'openai/widgetCSP': {
     connect_domains: [],
@@ -134,13 +136,17 @@ function asFindOffersStructuredContent(result: FindOffersServiceResult): Record<
   });
 }
 
+function asFindOffersWidgetMeta(result: FindOffersServiceResult): Record<string, unknown> {
+  return asFindOffersStructuredContent(result);
+}
+
 function resultText(operation: string, result?: FindOffersServiceResult): string {
   if (operation === 'find_offers') {
     const ltk = result?.counts.ltk ?? 0;
     const supplemental = result?.counts.supplemental ?? 0;
     const evidence = result?.counts.evidence ?? 0;
     const run = result?.receiptHash.slice('sha256:'.length, 'sha256:'.length + 10) ?? 'unknown';
-    return `${ltk} LTK coupon candidate${ltk === 1 ? '' : 's'}; ${supplemental} supplemental fallback offer${supplemental === 1 ? '' : 's'}; ${evidence} evidence-only source${evidence === 1 ? '' : 's'}. Search run ${run}.`;
+    return `${ltk} verified LTK offer${ltk === 1 ? '' : 's'}; ${supplemental} verified supplemental offer${supplemental === 1 ? '' : 's'}; ${evidence} unverified finding${evidence === 1 ? '' : 's'}. Search run ${run}.`;
   }
   if (operation === 'verify_offer') return 'Re-evaluated the supplied public offer evidence.';
   if (operation === 'watch_offers') return 'The offer watch is active.';
@@ -160,7 +166,7 @@ export function createOfferSavingsMcpServer(
   const server = new McpServer(
     {
       name: 'offer-savings-agent',
-      version: '0.2.6'
+      version: '0.2.7'
     },
     {
       capabilities: {
@@ -198,7 +204,7 @@ export function createOfferSavingsMcpServer(
     {
       title: 'Score host-discovered public offers',
       description:
-        'After the ChatGPT or Codex agent completes bounded public discovery with LTK first, submit the normalized request and factual observations here for authoritative deterministic scoring, ranking, evidence separation, and a receipt. This tool does not search, purchase, mutate a cart, or create a watch.',
+        'After the ChatGPT or Codex agent completes bounded public discovery with LTK first, submit the normalized request and factual observations here for authoritative deterministic scoring, ranking, evidence separation, and a receipt. Only recommend-status decisions are returned as usable offers; verify and lead decisions remain non-actionable evidence. This tool does not search, purchase, mutate a cart, or create a watch.',
       inputSchema: resolveOffersInputSchema,
       outputSchema: findOffersToolOutputSchema,
       annotations: {
@@ -214,7 +220,7 @@ export function createOfferSavingsMcpServer(
       return {
         content: [{ type: 'text', text: resultText(result.operation, result) }],
         structuredContent: asFindOffersStructuredContent(result),
-        _meta: { operation: result.operation, schemaVersion: result.schemaVersion }
+        _meta: asFindOffersWidgetMeta(result)
       };
     }
   );
@@ -224,7 +230,7 @@ export function createOfferSavingsMcpServer(
     {
       title: 'Find public offers',
       description:
-        'Legacy server-side discovery for scheduled watches or hosts without public-search capability. Interactive ChatGPT and Codex agents should search LTK first and call resolve_offers instead. This does not purchase or mutate a cart.',
+        'Legacy server-side discovery for scheduled watches or hosts without public-search capability. Interactive ChatGPT and Codex agents should search LTK first and call resolve_offers instead. Only recommend-status decisions are returned as usable offers; verify and lead decisions remain non-actionable evidence. This does not purchase or mutate a cart.',
       inputSchema: findOffersInputSchema,
       outputSchema: findOffersToolOutputSchema,
       annotations: {
@@ -240,7 +246,7 @@ export function createOfferSavingsMcpServer(
       return {
         content: [{ type: 'text', text: resultText(result.operation, result) }],
         structuredContent: asFindOffersStructuredContent(result),
-        _meta: { operation: result.operation, schemaVersion: result.schemaVersion }
+        _meta: asFindOffersWidgetMeta(result)
       };
     }
   );

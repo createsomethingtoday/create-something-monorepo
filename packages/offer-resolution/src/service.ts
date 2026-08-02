@@ -175,6 +175,13 @@ function confidenceLabel(decision: OfferDecision, evidenceOnly = false): OfferCo
 }
 
 function disclosure(decision: OfferDecision): string {
+  if (decision.status !== 'recommend' && decision.status !== 'rejected') {
+    const reason =
+      decision.status === 'verify'
+        ? 'Unverified offer lead. Current merchant or checkout evidence is required before use.'
+        : 'Historical or incomplete lead. Do not rely on this as a working offer.';
+    return [reason, ...decision.reliability.reasons].join(' ');
+  }
   if (decision.reliability.reasons.length > 0) {
     return decision.reliability.reasons.join(' ');
   }
@@ -189,7 +196,7 @@ function presentOffer(
   request: OfferRequest,
   evidenceOnly = false
 ): UserOffer {
-  const usable = decision.status !== 'rejected' && !evidenceOnly;
+  const usable = decision.status === 'recommend' && !evidenceOnly;
   return {
     observationId: decision.observationId,
     merchant: decision.merchant,
@@ -204,7 +211,7 @@ function presentOffer(
       score: decision.reliability.components.freshness
     },
     projectedSavings:
-      decision.projectedSavingsAtBudget === undefined
+      !usable || decision.projectedSavingsAtBudget === undefined
         ? undefined
         : {
             amount: decision.projectedSavingsAtBudget,
@@ -235,9 +242,11 @@ function presentResolution(resolution: OfferResolutionResult): FindOffersService
   const visibleDecisions = resolution.decisions.filter(
     (decision) => decision.status !== 'rejected'
   );
-  const offerDecisions = visibleDecisions.filter((decision) => !isEvidenceOnly(decision));
-  const evidence = resolution.decisions
-    .filter((decision) => decision.status !== 'rejected' && isEvidenceOnly(decision))
+  const offerDecisions = visibleDecisions.filter(
+    (decision) => decision.status === 'recommend' && !isEvidenceOnly(decision)
+  );
+  const evidence = visibleDecisions
+    .filter((decision) => !offerDecisions.includes(decision))
     .map((decision) => presentOffer(decision, resolution.request, true));
   const ltkOffers = offerDecisions
     .filter((decision) => decision.discoveryLane === 'ltk')
@@ -378,7 +387,11 @@ export function createOfferService(options: CreateOfferServiceOptions): OfferSer
         schemaVersion: 'offer_service.v0.1',
         operation: 'verify_offer',
         verification: verificationStatus(decision),
-        offer: presentOffer(decision, resolution.request, isEvidenceOnly(decision)),
+        offer: presentOffer(
+          decision,
+          resolution.request,
+          isEvidenceOnly(decision) || decision.status !== 'recommend'
+        ),
         resolution
       };
     },

@@ -47,10 +47,14 @@ test('find_offers returns authoritative receipts as user-ready offer cards', asy
   assert.match(result.receiptHash, /^sha256:[a-f0-9]{64}$/);
   assert.equal(repeated.receiptHash, result.receiptHash);
   assert.deepEqual(result.resolution, authoritative);
-  assert.equal(result.offers[0]?.observationId, 'fixture-ltk-15');
-  assert.equal(result.ltkOffers[0]?.observationId, 'fixture-ltk-15');
+  assert.equal(result.offers[0]?.observationId, 'fixture-official-20');
+  assert.equal(result.ltkOffers.length, 0);
   assert.equal(result.supplementalOffers[0]?.observationId, 'fixture-official-20');
-  assert.equal(result.evidence.length, 0);
+  assert.equal(result.evidence.length, 3);
+  for (const unverifiedFinding of result.evidence) {
+    assert.equal(unverifiedFinding.projectedSavings, undefined);
+    assert.deepEqual(unverifiedFinding.actions, { canCopyCode: false, canWatch: false });
+  }
 
   const official = result.supplementalOffers[0];
   assert.equal(official?.confidence.label, 'Verified');
@@ -61,9 +65,11 @@ test('find_offers returns authoritative receipts as user-ready offer cards', asy
   assert.equal(official?.actions.canCopyCode, true);
   assert.equal(official?.actions.canWatch, true);
 
-  const creatorOffer = result.offers.find((offer) => offer.observationId === 'fixture-ltk-15');
-  assert.equal(creatorOffer?.confidence.label, 'Worth trying');
-  assert.match(creatorOffer?.disclosure ?? '', /retailer before relying/i);
+  const creatorLead = result.evidence.find((offer) => offer.observationId === 'fixture-ltk-15');
+  assert.equal(creatorLead?.confidence.label, 'Evidence only');
+  assert.equal(creatorLead?.projectedSavings, undefined);
+  assert.deepEqual(creatorLead?.actions, { canCopyCode: false, canWatch: false });
+  assert.match(creatorLead?.disclosure ?? '', /current merchant or checkout evidence is required/i);
 
   assert.equal(
     result.offers.some((offer) => offer.observationId === 'fixture-expired'),
@@ -74,6 +80,27 @@ test('find_offers returns authoritative receipts as user-ready offer cards', asy
       ?.status,
     'rejected'
   );
+});
+
+test('keeps unverified creator codes as non-actionable evidence', async () => {
+  const creatorObservation = fixture.observations.find(
+    (observation) => observation.id === 'fixture-ltk-15'
+  );
+  assert.ok(creatorObservation);
+  const service = createOfferService({
+    discovery: { discover: async () => [creatorObservation] },
+    clock: () => new Date(fixture.request.asOf)
+  });
+
+  const result = await service.findOffers(fixture.request);
+
+  assert.deepEqual(result.offers, []);
+  assert.deepEqual(result.ltkOffers, []);
+  assert.deepEqual(result.counts, { ltk: 0, supplemental: 0, evidence: 1 });
+  assert.equal(result.evidence[0]?.observationId, 'fixture-ltk-15');
+  assert.equal(result.evidence[0]?.confidence.label, 'Evidence only');
+  assert.equal(result.evidence[0]?.projectedSavings, undefined);
+  assert.deepEqual(result.evidence[0]?.actions, { canCopyCode: false, canWatch: false });
 });
 
 test('resolve_offers scores host-discovered evidence without invoking nested discovery', async () => {
@@ -95,8 +122,7 @@ test('resolve_offers scores host-discovered evidence without invoking nested dis
 
   assert.equal(discoveryCalls, 0);
   assert.equal(result.operation, 'find_offers');
-  assert.equal(result.counts.ltk, 1);
-  assert.equal(result.counts.supplemental, 3);
+  assert.deepEqual(result.counts, { ltk: 0, supplemental: 1, evidence: 3 });
   assert.equal(result.resolution.request.asOf, fixture.request.asOf);
   assert.equal(result.observedAt, fixture.request.asOf);
 });
@@ -161,11 +187,13 @@ test('keeps generic fulfillment pages out of LTK coupon and fallback offer resul
 
   assert.deepEqual(
     result.offers.map((offer) => offer.observationId),
-    ['fixture-ltk-15', 'fixture-official-20']
+    ['fixture-official-20']
   );
-  assert.equal(result.evidence[0]?.observationId, 'abercrombie-pickup-information');
-  assert.equal(result.evidence[0]?.confidence.label, 'Evidence only');
-  assert.deepEqual(result.evidence[0]?.actions, { canCopyCode: false, canWatch: false });
+  const fulfillmentEvidence = result.evidence.find(
+    (offer) => offer.observationId === 'abercrombie-pickup-information'
+  );
+  assert.equal(fulfillmentEvidence?.confidence.label, 'Evidence only');
+  assert.deepEqual(fulfillmentEvidence?.actions, { canCopyCode: false, canWatch: false });
 });
 
 test('verify_offer never promotes uncorroborated creator evidence to verified', async () => {
@@ -188,8 +216,10 @@ test('verify_offer never promotes uncorroborated creator evidence to verified', 
   assert.equal(result.schemaVersion, 'offer_service.v0.1');
   assert.equal(result.operation, 'verify_offer');
   assert.equal(result.verification, 'needs_checkout');
-  assert.equal(result.offer.confidence.label, 'Worth trying');
-  assert.match(result.offer.disclosure, /retailer before relying/i);
+  assert.equal(result.offer.confidence.label, 'Evidence only');
+  assert.equal(result.offer.projectedSavings, undefined);
+  assert.deepEqual(result.offer.actions, { canCopyCode: false, canWatch: false });
+  assert.match(result.offer.disclosure, /current merchant or checkout evidence is required/i);
 });
 
 test('watch_offers is idempotent and survives a service restart', async (t) => {
