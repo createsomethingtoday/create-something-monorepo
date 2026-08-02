@@ -293,7 +293,7 @@
           <span>Start an application</span>
           <span class="action-arrow" aria-hidden="true">↗</span>
         </a>
-        <a class="closing-link" href="/facilities">Request facility coverage</a>
+        <a class="closing-link" href="/facility-request">Prepare a coverage brief</a>
       </div>
     </div>
   </section>
