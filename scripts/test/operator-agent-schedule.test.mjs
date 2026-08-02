@@ -116,6 +116,32 @@ test('operator-agent schedule defaults pattern review to deterministic even when
   assert.equal(experimentPlan[2].args.includes('--no-model'), false);
 });
 
+test('operator-agent schedule carries a bounded CTX packet into batch eval and its receipt', () => {
+  const options = parseArgs(['once', '--eval-limit', '1']);
+  const contextPacket = {
+    mode: 'ctx-history-packet',
+    available: true,
+    citations: [{ provider: 'codex', ctxEventId: 'event-a', ctxSessionId: 'session-a' }],
+    highlights: ['Prior no-write schedule receipt passed.'],
+    modelContext: 'CTX history is advisory. Cited history: codex:event-a.',
+  };
+  const plan = buildRunPlan(options, contextPacket);
+  const batch = plan.find((step) => step.id === 'batch-eval');
+  const taskIndex = batch.args.indexOf('--task');
+
+  assert.ok(taskIndex >= 0);
+  assert.equal(batch.args[taskIndex + 1], contextPacket.modelContext);
+
+  const report = scheduleReport(options, [], contextPacket);
+  assert.deepEqual(report.ctxHistory, {
+    mode: 'ctx-history-packet',
+    available: true,
+    citations: contextPacket.citations,
+    highlightCount: 1,
+    failure: null,
+  });
+});
+
 test('operator-agent schedule once writes a single regular-run receipt', () => {
   const workspace = makeWorkspace();
   const outDir = path.join(workspace, '.schedule');

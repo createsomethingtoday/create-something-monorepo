@@ -173,7 +173,7 @@
     "operator-agent:access:token-check": "node scripts/operator-agent-cloudflare-access.mjs token-check",
     "operator-agent:access:start": "node scripts/operator-agent-cloudflare-access.mjs start",
     "operator-agent:access:status": "node scripts/operator-agent-cloudflare-access.mjs status",
-    "operator-agent:test": "node --test scripts/test/operator-agent-system.test.mjs scripts/test/operator-agent-cloudflare-access.test.mjs scripts/test/operator-agent-gateway.test.mjs scripts/test/operator-agent-gateway-smoke.test.mjs scripts/test/operator-agent-public-smoke.test.mjs scripts/test/operator-agent-runtime.test.mjs scripts/test/operator-agent-schedule.test.mjs scripts/test/operator-agent-repeat.test.mjs scripts/test/operator-agent-mcp.test.mjs scripts/test/operator-agent-doctor.test.mjs",
+    "operator-agent:test": "node --test scripts/test/operator-agent-system.test.mjs scripts/test/operator-agent-context.test.mjs scripts/test/operator-agent-cloudflare-access.test.mjs scripts/test/operator-agent-gateway.test.mjs scripts/test/operator-agent-gateway-smoke.test.mjs scripts/test/operator-agent-public-smoke.test.mjs scripts/test/operator-agent-runtime.test.mjs scripts/test/operator-agent-schedule.test.mjs scripts/test/operator-agent-repeat.test.mjs scripts/test/operator-agent-mcp.test.mjs scripts/test/operator-agent-doctor.test.mjs",
     "ornith:visible-chat": "node scripts/ornith-visible-chat.mjs",
     "zellij:agent": "node scripts/zellij-agent-lane.mjs",
     "zellij:claude": "node scripts/zellij-agent-lane.mjs --pane-name claude --command claude",
