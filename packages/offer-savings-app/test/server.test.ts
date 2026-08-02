@@ -119,8 +119,8 @@ test('MCP protocol exposes only the bounded offer workflow and widget resource',
   });
 
   const listed = await client.listTools();
-  assert.equal(client.getServerVersion()?.version, '0.2.4');
-  assert.equal(OFFER_WIDGET_URI, 'ui://offer-savings/results-v3.html');
+  assert.equal(client.getServerVersion()?.version, '0.2.5');
+  assert.equal(OFFER_WIDGET_URI, 'ui://offer-savings/results-v4.html');
   assert.deepEqual(
     listed.tools.map((tool) => tool.name),
     ['resolve_offers', 'find_offers', 'verify_offer', 'watch_offers', 'get_watch']
@@ -155,6 +155,25 @@ test('MCP protocol exposes only the bounded offer workflow and widget resource',
     listed.tools.find((tool) => tool.name === 'find_offers')?.annotations?.readOnlyHint,
     true
   );
+  const findOutputSchema = listed.tools.find((tool) => tool.name === 'find_offers')
+    ?.outputSchema as {
+    properties?: Record<string, unknown>;
+    required?: string[];
+  };
+  for (const field of [
+    'receiptHash',
+    'offers',
+    'ltkOffers',
+    'supplementalOffers',
+    'evidence',
+    'counts'
+  ]) {
+    assert.ok(
+      findOutputSchema.properties?.[field],
+      `find_offers outputSchema must describe ${field}`
+    );
+    assert.equal(findOutputSchema.required?.includes(field), true);
+  }
   const findInputSchema = listed.tools.find((tool) => tool.name === 'find_offers')?.inputSchema as {
     properties?: Record<string, unknown>;
     required?: string[];
@@ -192,7 +211,12 @@ test('MCP protocol exposes only the bounded offer workflow and widget resource',
   const resources = await client.listResources();
   assert.deepEqual(
     resources.resources.map((resource) => resource.uri),
-    [OFFER_WIDGET_URI, 'ui://offer-savings/results-v2.html', 'ui://offer-savings/results-v1.html']
+    [
+      OFFER_WIDGET_URI,
+      'ui://offer-savings/results-v3.html',
+      'ui://offer-savings/results-v2.html',
+      'ui://offer-savings/results-v1.html'
+    ]
   );
   assert.equal(
     resources.resources.every((resource) => resource.mimeType === 'text/html;profile=mcp-app'),
@@ -217,6 +241,7 @@ test('MCP protocol exposes only the bounded offer workflow and widget resource',
     csp: { connectDomains: [], resourceDomains: [] }
   });
   for (const legacyUri of [
+    'ui://offer-savings/results-v3.html',
     'ui://offer-savings/results-v2.html',
     'ui://offer-savings/results-v1.html'
   ]) {
@@ -248,9 +273,10 @@ test('MCP calls find, verify, and idempotent watch through the authoritative ser
     /1 LTK coupon candidate.*3 supplemental fallback offers/i
   );
   assert.equal(
-    (found.structuredContent?.resolution as { request: { asOf: string } }).request.asOf,
+    (found.structuredContent?.request as { asOf: string }).asOf,
     '2026-07-30T15:00:00.000Z'
   );
+  assert.match(String(found.structuredContent?.receiptHash), /^sha256:[a-f0-9]{64}$/);
   assert.equal(
     (found.structuredContent?.ltkOffers as Array<{ confidence: { label: string } }>)[0]?.confidence
       .label,

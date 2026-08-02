@@ -102,11 +102,13 @@ try {
 
   const toolNames = listed.tools.map((tool) => tool.name);
   const foundResult = found.structuredContent as {
-    resolution: { decisions: Array<{ receiptHash: string }> };
+    receiptHash: string;
+    request: { asOf: string };
     offers: Array<{ observationId: string; confidence: { label: string } }>;
   };
   const hostResolvedResult = hostResolved.structuredContent as {
-    resolution: { decisions: Array<{ receiptHash: string }> };
+    receiptHash: string;
+    request: { asOf: string };
     offers: Array<{ observationId: string; confidence: { label: string } }>;
   };
   const transcript = {
@@ -116,7 +118,10 @@ try {
       toolNames.join(',') === 'resolve_offers,find_offers,verify_offer,watch_offers,get_watch' &&
       resources.resources[0]?.mimeType === 'text/html;profile=mcp-app' &&
       hostResolvedResult.offers[0]?.observationId === foundResult.offers[0]?.observationId &&
-      hostResolvedResult.resolution.decisions.length === foundResult.resolution.decisions.length &&
+      hostResolvedResult.offers.length === foundResult.offers.length &&
+      /^sha256:[a-f0-9]{64}$/.test(hostResolvedResult.receiptHash) &&
+      /^sha256:[a-f0-9]{64}$/.test(foundResult.receiptHash) &&
+      hostResolvedResult.request.asOf === foundResult.request.asOf &&
       verified.structuredContent?.verification === 'needs_checkout' &&
       firstWatch.structuredContent?.created === true &&
       retryWatch.structuredContent?.created === false &&
@@ -133,13 +138,13 @@ try {
     hostResolve: {
       offerCount: hostResolvedResult.offers.length,
       bestObservationId: hostResolvedResult.offers[0]?.observationId,
-      receiptHashes: hostResolvedResult.resolution.decisions.map((decision) => decision.receiptHash)
+      receiptHash: hostResolvedResult.receiptHash
     },
     find: {
       offerCount: foundResult.offers.length,
       bestObservationId: foundResult.offers[0]?.observationId,
       bestConfidence: foundResult.offers[0]?.confidence.label,
-      receiptHashes: foundResult.resolution.decisions.map((decision) => decision.receiptHash)
+      receiptHash: foundResult.receiptHash
     },
     verify: { status: verified.structuredContent?.verification },
     watch: {
