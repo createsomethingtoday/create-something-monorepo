@@ -92,10 +92,14 @@ export const offerEvidenceInputSchema = z
   })
   .strict();
 
+export const hostOfferObservationSchema = offerObservationSchema.extend({
+  source: offerObservationSchema.shape.source.omit({ observedAt: true }).strict()
+});
+
 export const resolveOffersInputSchema = z
   .object({
     request: findOffersInputSchema,
-    observations: z.array(offerObservationSchema).max(50)
+    observations: z.array(hostOfferObservationSchema).max(50)
   })
   .strict();
 

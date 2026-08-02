@@ -36,6 +36,10 @@ const fixture = JSON.parse(
 ) as Fixture;
 
 const { asOf: _fixtureAsOf, ...publicRequest } = fixture.request;
+const hostObservations = fixture.observations.map(({ source, ...observation }) => {
+  const { observedAt: _observedAt, ...hostSource } = source;
+  return { ...observation, source: hostSource };
+});
 
 test('widget waits for an authoritative result and unwraps supported host envelopes', () => {
   const result = {
@@ -115,7 +119,7 @@ test('MCP protocol exposes only the bounded offer workflow and widget resource',
   });
 
   const listed = await client.listTools();
-  assert.equal(client.getServerVersion()?.version, '0.2.3');
+  assert.equal(client.getServerVersion()?.version, '0.2.4');
   assert.equal(OFFER_WIDGET_URI, 'ui://offer-savings/results-v3.html');
   assert.deepEqual(
     listed.tools.map((tool) => tool.name),
@@ -123,6 +127,28 @@ test('MCP protocol exposes only the bounded offer workflow and widget resource',
   );
   assert.equal(
     listed.tools.find((tool) => tool.name === 'resolve_offers')?.annotations?.openWorldHint,
+    false
+  );
+  const resolveInputSchema = listed.tools.find((tool) => tool.name === 'resolve_offers')
+    ?.inputSchema as {
+    properties?: {
+      observations?: {
+        items?: {
+          properties?: {
+            source?: { properties?: Record<string, unknown>; required?: string[] };
+          };
+        };
+      };
+    };
+  };
+  assert.equal(
+    resolveInputSchema.properties?.observations?.items?.properties?.source?.properties?.observedAt,
+    undefined
+  );
+  assert.equal(
+    resolveInputSchema.properties?.observations?.items?.properties?.source?.required?.includes(
+      'observedAt'
+    ),
     false
   );
   assert.equal(
@@ -238,7 +264,7 @@ test('MCP calls find, verify, and idempotent watch through the authoritative ser
 
   const hostResolved = await client.callTool({
     name: 'resolve_offers',
-    arguments: { request: publicRequest, observations: fixture.observations }
+    arguments: { request: publicRequest, observations: hostObservations }
   });
   assert.equal(hostResolved.isError, undefined);
   assert.equal(hostResolved.structuredContent?.operation, 'find_offers');

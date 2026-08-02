@@ -74,6 +74,10 @@ export interface OfferObservation {
   };
 }
 
+export type HostOfferObservation = Omit<OfferObservation, 'source'> & {
+  source: Omit<OfferObservation['source'], 'observedAt'>;
+};
+
 export interface SourcePolicy {
   authority: number;
   maximumScore: number;

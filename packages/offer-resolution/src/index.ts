@@ -20,6 +20,7 @@ export { createOfferService } from './service.js';
 export { createOfferHttpHandler } from './http.js';
 export {
   findOffersInputSchema,
+  hostOfferObservationSchema,
   offerEvidenceInputSchema,
   offerObservationSchema,
   offerRequestSchema,

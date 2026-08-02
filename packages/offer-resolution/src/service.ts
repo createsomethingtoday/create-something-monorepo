@@ -1,6 +1,7 @@
 import { findOffers as resolveOffers } from './resolve.js';
 import { canonicalStringify, hashReceipt } from './canonical.js';
 import type {
+  HostOfferObservation,
   OfferDecision,
   OfferObservation,
   OfferRequest,
@@ -69,7 +70,7 @@ export interface FindOffersServiceResult {
 
 export interface ResolveOffersInput {
   request: OfferRequestInput;
-  observations: OfferObservation[];
+  observations: HostOfferObservation[];
 }
 
 export type OfferVerificationStatus = 'verified' | 'needs_checkout' | 'unverified' | 'rejected';
@@ -356,7 +357,12 @@ export function createOfferService(options: CreateOfferServiceOptions): OfferSer
 
   const service: OfferService = {
     async resolveOffers({ request, observations }) {
-      return presentResolution(resolveOffers(materializeRequest(request), observations));
+      const observedRequest = materializeRequest(request);
+      const stampedObservations = observations.map((observation) => ({
+        ...observation,
+        source: { ...observation.source, observedAt: observedRequest.asOf }
+      }));
+      return presentResolution(resolveOffers(observedRequest, stampedObservations));
     },
     async findOffers(request) {
       const observedRequest = materializeRequest(request);
