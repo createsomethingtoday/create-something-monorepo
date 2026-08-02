@@ -1,6 +1,4 @@
 import { McpAgent } from 'agents/mcp';
-import { setDefaultOpenAIKey } from '@openai/agents';
-import { createAgentOfferDiscoveryProvider } from '@create-something/offer-resolution/agent';
 import {
   createOfferService,
   hashReceipt,
@@ -19,11 +17,6 @@ import {
 
 interface StoredWatchRow {
   payload: string;
-}
-
-function parsePositiveInteger(value: string | undefined, fallback: number): number {
-  const parsed = Number.parseInt(value ?? String(fallback), 10);
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
 }
 
 function parseWatch(row: StoredWatchRow | null): OfferWatch | undefined {
@@ -119,12 +112,7 @@ export class OfferSavingsMCP extends McpAgent<
   });
 
   private createWorkerOfferService(): OfferService {
-    const discovery = createAgentOfferDiscoveryProvider({
-      model: this.env.OFFER_AGENT_MODEL?.trim() || 'gpt-5.4-mini',
-      maxTurns: parsePositiveInteger(this.env.OFFER_AGENT_MAX_TURNS, 6)
-    });
     const service = createOfferService({
-      discovery,
       watches: createD1OfferWatchRepository(this.env.DB, () => this.props?.subject)
     });
     return {
@@ -136,9 +124,5 @@ export class OfferSavingsMCP extends McpAgent<
     };
   }
 
-  async init(): Promise<void> {
-    const key = this.env.OPENAI_API_KEY?.trim();
-    if (!key) throw new Error('OPENAI_API_KEY is required for Offer Savings discovery.');
-    setDefaultOpenAIKey(key);
-  }
+  async init(): Promise<void> {}
 }

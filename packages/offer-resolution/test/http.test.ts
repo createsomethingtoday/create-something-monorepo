@@ -22,10 +22,13 @@ const fixture = JSON.parse(
   readFileSync(new URL('../fixtures/abercrombie-august-9.json', import.meta.url), 'utf8')
 ) as Fixture;
 const { asOf: _fixtureAsOf, ...publicRequest } = fixture.request;
+const hostObservations = fixture.observations.map(({ source, ...observation }) => {
+  const { observedAt: _observedAt, ...hostSource } = source;
+  return { ...observation, source: hostSource };
+});
 
-test('HTTP adapter exposes health and find_offers through real network requests', async (t) => {
+test('HTTP adapter exposes host-search plans and evidence resolution through real network requests', async (t) => {
   const service = createOfferService({
-    discovery: { discover: async () => fixture.observations },
     clock: () => new Date(fixture.request.asOf)
   });
   const server = createServer(createOfferHttpHandler(service));
@@ -48,13 +51,21 @@ test('HTTP adapter exposes health and find_offers through real network requests'
     schemaVersion: 'offer_service.v0.1'
   });
 
-  const findResponse = await fetch(`${origin}/v1/offers/find`, {
+  const planResponse = await fetch(`${origin}/v1/offers/search-plan`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(publicRequest)
   });
-  assert.equal(findResponse.status, 200);
-  const result = (await findResponse.json()) as {
+  assert.equal(planResponse.status, 200);
+  assert.deepEqual((await planResponse.json() as { plan: { stages: Array<{ lane: string }> } }).plan.stages.map((stage) => stage.lane), ['ltk', 'supplemental']);
+
+  const resolveResponse = await fetch(`${origin}/v1/offers/resolve`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ request: publicRequest, observations: hostObservations })
+  });
+  assert.equal(resolveResponse.status, 200);
+  const result = (await resolveResponse.json()) as {
     operation: string;
     ltkOffers: Array<{ confidence: { label: string } }>;
     supplementalOffers: Array<{ confidence: { label: string } }>;
@@ -71,7 +82,6 @@ test('HTTP adapter exposes verify and persistent watch operations with actionabl
   const stateDirectory = mkdtempSync(join(tmpdir(), 'offer-http-'));
   t.after(() => rmSync(stateDirectory, { recursive: true, force: true }));
   const service = createOfferService({
-    discovery: { discover: async () => fixture.observations },
     watches: createFileOfferWatchRepository({
       filePath: join(stateDirectory, 'watches.json')
     }),
@@ -106,6 +116,7 @@ test('HTTP adapter exposes verify and persistent watch operations with actionabl
 
   const watchInput = {
     request: publicRequest,
+    observations: hostObservations,
     until: '2026-08-09T23:59:59.000Z',
     idempotencyKey: 'http-watch-abercrombie'
   };
@@ -136,7 +147,7 @@ test('HTTP adapter exposes verify and persistent watch operations with actionabl
   assert.equal(missingResponse.status, 404);
   assert.equal(((await missingResponse.json()) as { error: string }).error, 'watch_not_found');
 
-  const invalidResponse = await fetch(`${origin}/v1/offers/find`, {
+  const invalidResponse = await fetch(`${origin}/v1/offers/search-plan`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ ...publicRequest, budget: 0 })
@@ -147,7 +158,7 @@ test('HTTP adapter exposes verify and persistent watch operations with actionabl
     /budget must be greater than zero/i
   );
 
-  const unknownFieldResponse = await fetch(`${origin}/v1/offers/find`, {
+  const unknownFieldResponse = await fetch(`${origin}/v1/offers/search-plan`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ ...publicRequest, modelAuthoredScore: 100 })

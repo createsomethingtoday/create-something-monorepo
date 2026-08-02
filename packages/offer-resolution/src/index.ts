@@ -26,6 +26,7 @@ export {
   offerEvidenceInputSchema,
   offerObservationSchema,
   offerRequestSchema,
+  planOfferSearchInputSchema,
   resolveOffersInputSchema,
   verifyOfferInputSchema,
   watchOffersInputSchema
@@ -35,7 +36,7 @@ export type {
   CreateOfferServiceOptions,
   FindOffersServiceResult,
   OfferConfidenceLabel,
-  OfferDiscoveryProvider,
+  OfferSearchPlanServiceResult,
   OfferService,
   OfferVerificationStatus,
   OfferWatch,

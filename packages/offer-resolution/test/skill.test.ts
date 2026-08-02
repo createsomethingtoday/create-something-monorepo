@@ -34,10 +34,11 @@ test('skill metadata routes offer-finding requests and names the exclusions', as
   assert.match(skill, /historical lift/i);
 });
 
-test('skill uses the package CLI and deterministic result as the authority', async () => {
+test('skill uses the host-search plan and deterministic result as the authority', async () => {
   const skill = await read('SKILL.md');
   assert.match(skill, /@create-something\/offer-resolution/);
-  assert.match(skill, /resolve_offer_evidence/);
+  assert.match(skill, /plan_offer_search/);
+  assert.match(skill, /resolve_offers/);
   assert.match(skill, /Never.*score/i);
   assert.match(skill, /references\/source-registry\.md/);
   assert.match(skill, /watch_offers/);

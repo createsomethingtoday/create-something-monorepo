@@ -9,13 +9,14 @@ Resolve a user-triggered shopping request through public discovery and determini
 
 ## Workflow
 
-1. Normalize the request into merchant or supported category, need, budget, currency, five-digit US ZIP code, deadline with year, observation time, and acceptable channels. For a category request, use the resolver's bounded merchant fan-out; do not invent an unbounded retailer list. Ask only for an essential missing or ambiguous fact.
-2. Read [references/source-registry.md](references/source-registry.md) before discovery. Complete the public LTK stage first. Search public posts, creator profiles, captions, product links, and LTK-exclusive indicators, including app-gated `Copy Promo Code` signals.
-3. Only after the LTK stage, search supplemental sources. Corroborate LTK findings through creator-owned or official retailer evidence, then fill gaps through official retailer pages, authorized feeds, search indexes, and deal sites.
-4. Record each candidate as an observation. Preserve its direct URL, publisher, observation time, creator-post publication time when available, access state, offer terms, code evidence, eligibility facts, fulfillment evidence, and corroborating URLs. Never substitute observation time for post publication time. Include conflicting, expired, inaccessible, and uncertain candidates instead of silently dropping them.
-5. Run the candidate set through `@create-something/offer-resolution` or call `resolve_offer_evidence` when the Offer Find Agent is available. Never calculate, invent, or edit a reliability score yourself.
-6. Present the `ltk` lane before the `supplemental` lane. Within each lane, separate `recommend`, `verify`, `lead`, and `rejected`. Include projected savings, direct links, score components, caps, reasons, and receipt hashes. Say plainly when LTK returned no current public offer or no candidate is reliable enough to recommend.
-7. If the user asks to keep checking, call `watch_offers` with the normalized request, an explicit end time, and a stable idempotency key. Treat this as one bounded watch: retries must return the existing identity. It persists status and receipts but does not itself promise a schedule or send external notifications.
+1. Normalize the request into merchant or supported category, need, budget, currency, five-digit US ZIP code, deadline with year, and acceptable channels. For a category request, use the resolver's bounded merchant fan-out; do not invent an unbounded retailer list. Ask only for an essential missing or ambiguous fact.
+2. Call `plan_offer_search` before discovery. It provides the bounded LTK-first query plan but never performs a search or page retrieval.
+3. Read [references/source-registry.md](references/source-registry.md) before host discovery. Complete the public LTK stage first. Search public posts, creator profiles, captions, product links, and LTK-exclusive indicators, including app-gated `Copy Promo Code` signals.
+4. Only after the LTK stage, search supplemental sources. Corroborate LTK findings through creator-owned or official retailer evidence, then fill gaps through official retailer pages, authorized feeds, search indexes, and deal sites.
+5. Record each candidate as an observation. Preserve its direct URL, publisher, creator-post publication time when available, access state, offer terms, code evidence, eligibility facts, fulfillment evidence, and corroborating URLs. Never substitute rediscovery time for post publication time. Include conflicting, expired, inaccessible, and uncertain candidates instead of silently dropping them.
+6. Run the candidate set through `@create-something/offer-resolution` or call `resolve_offers`. Never calculate, invent, or edit a reliability score yourself.
+7. Present the `ltk` lane before the `supplemental` lane. Within each lane, separate `recommend`, `verify`, `lead`, and `rejected`. Include projected savings, direct links, score components, caps, reasons, and receipt hashes. Say plainly when LTK returned no current public offer or no candidate is reliable enough to recommend.
+8. If the user asks to keep checking, call `watch_offers` with the normalized request, current host observations, an explicit end time, and a stable idempotency key. Treat this as one bounded baseline: retries must return the existing identity. It persists status and receipts but does not itself search, promise a schedule, or send external notifications.
 
 For deterministic evidence files inside this repository, run:
 
@@ -24,10 +25,10 @@ pnpm --filter @create-something/offer-resolution build
 node packages/offer-resolution/dist/cli.js resolve --input <evidence.json>
 ```
 
-For a current public search with the Agents SDK and an approved existing API key, run:
+To print the bounded plan the host should follow, run:
 
 ```bash
-node packages/offer-resolution/dist/cli.js live \
+node packages/offer-resolution/dist/cli.js plan \
   --category health_and_beauty \
   --need "health and beauty products" \
   --budget 100 \
@@ -44,6 +45,7 @@ node packages/offer-resolution/dist/cli.js live \
 - Cap app-only, blocked, stale, terms-missing, code-unverified, eligibility-unknown, or deadline-unknown evidence as directed by the resolver.
 - Reject expired, revoked, not-yet-started, budget-conflicting, location-conflicting, channel-conflicting, membership-conflicting, or deadline-missing offers.
 - Preserve deterministic output: identical normalized evidence must yield identical decisions and receipt hashes.
+- The MCP does not search the web; the ChatGPT or Codex host owns retrieval and then submits factual observations.
 
 ## Safety and access
 

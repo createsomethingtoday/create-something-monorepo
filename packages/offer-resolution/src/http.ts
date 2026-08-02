@@ -1,9 +1,10 @@
 import type { IncomingMessage, RequestListener, ServerResponse } from 'node:http';
 
-import type { OfferRequestInput } from './types.js';
-import type { OfferService, VerifyOfferInput, WatchOffersInput } from './service.js';
+import type { VerifyOfferInput, WatchOffersInput } from './service.js';
+import type { OfferService } from './service.js';
 import {
-  findOffersInputSchema,
+  planOfferSearchInputSchema,
+  resolveOffersInputSchema,
   verifyOfferInputSchema,
   watchOffersInputSchema
 } from './schemas.js';
@@ -52,9 +53,14 @@ async function handleRequest(
     });
     return;
   }
-  if (request.method === 'POST' && url.pathname === '/v1/offers/find') {
-    const body = findOffersInputSchema.parse(await readJson(request)) as OfferRequestInput;
-    sendJson(response, 200, await service.findOffers(body));
+  if (request.method === 'POST' && url.pathname === '/v1/offers/search-plan') {
+    const body = planOfferSearchInputSchema.parse(await readJson(request));
+    sendJson(response, 200, await service.planOfferSearch(body));
+    return;
+  }
+  if (request.method === 'POST' && url.pathname === '/v1/offers/resolve') {
+    const body = resolveOffersInputSchema.parse(await readJson(request));
+    sendJson(response, 200, await service.resolveOffers(body));
     return;
   }
   if (request.method === 'POST' && url.pathname === '/v1/offers/verify') {

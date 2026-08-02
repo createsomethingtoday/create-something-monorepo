@@ -3,7 +3,6 @@ import { readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { createOfferFindAgent } from '../dist/agent.js';
 import {
   canonicalStringify,
   findOffers,
@@ -59,12 +58,6 @@ assert.equal(
 );
 assert.equal(Object.keys(SOURCE_POLICIES).length, 8);
 
-const agent = createOfferFindAgent();
-const agentTools = agent.tools.map((candidate) =>
-  candidate.type === 'function' ? candidate.name : (candidate.name ?? candidate.type)
-);
-assert.deepEqual(agentTools, ['web_search', 'resolve_offer_evidence']);
-assert.deepEqual(agent.toolUseBehavior, { stopAtToolNames: ['resolve_offer_evidence'] });
 const discoveryPlan = planOfferDiscovery(fixture.request);
 assert.deepEqual(
   discoveryPlan.stages.map((stage) => stage.lane),
@@ -72,7 +65,7 @@ assert.deepEqual(
 );
 
 const summary = {
-  schemaVersion: 'offer_resolution_acceptance.v0.2',
+  schemaVersion: 'offer_resolution_acceptance.v0.3',
   ok: true,
   scenario: fixture.fixtureMetadata.scenario,
   fixtureNotice: fixture.fixtureMetadata.purpose,
@@ -82,8 +75,8 @@ const summary = {
   lanes: first.lanes,
   inputUnchanged: true,
   sourceFamilyCount: Object.keys(SOURCE_POLICIES).length,
-  agentTools,
-  resolverTerminatesRun: true,
+  hostOwnsRetrieval: true,
+  serverSideSearchAgent: false,
   counts: first.summary,
   decisions: first.decisions.map((decision) => ({
     observationId: decision.observationId,
