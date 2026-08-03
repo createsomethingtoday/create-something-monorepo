@@ -47,6 +47,7 @@
 	});
 
 	let { children, data } = $props();
+	let mobileNavigationOpen = $state(false);
 
 	// Handle logout
 	async function handleLogout() {
@@ -125,7 +126,9 @@
 		currentProperty="io"
 		localItems={quickAccessItems}
 		showMobileButton={!$page.url.pathname.startsWith('/papers') &&
-			!$page.url.pathname.startsWith('/experiments')}
+			!$page.url.pathname.startsWith('/experiments') &&
+			!mobileNavigationOpen}
+		deferMobileButtonUntilCampaignExit={$page.url.pathname === '/'}
 	/>
 
 	<div class="layout-root property-performance">
@@ -142,6 +145,7 @@
 			loginHref="/login"
 			accountHref="/account"
 			visualStyle="performance"
+			onMobileMenuChange={(open) => (mobileNavigationOpen = open)}
 		/>
 
 		<!-- Add top padding to account for fixed navigation -->

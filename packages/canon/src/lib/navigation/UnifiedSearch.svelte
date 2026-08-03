@@ -124,6 +124,8 @@
 		enableAnalytics?: boolean;
 		/** Show floating search button for mobile */
 		showMobileButton?: boolean;
+		/** Keep the floating search control clear of an opted-in campaign opening. */
+		deferMobileButtonUntilCampaignExit?: boolean;
 	}
 
 	let {
@@ -135,14 +137,42 @@
 		onselect,
 		onclose,
 		enableAnalytics = true,
-		showMobileButton = true
+		showMobileButton = true,
+		deferMobileButtonUntilCampaignExit = false
 	}: Props = $props();
 
 	// Detect if device is touch-primary (mobile)
 	let isTouchDevice = $state(false);
+	let mobileButtonDeferred = $state<boolean | undefined>(undefined);
 	
 	onMount(() => {
 		isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+	});
+
+	// Campaign home pages opt in with a boundary on their hero. The button is
+	// withheld before this effect runs to avoid a first-paint overlap, then
+	// returns once the hero leaves view. An effect keeps that boundary current
+	// across client-side page navigation.
+	$effect(() => {
+		if (!deferMobileButtonUntilCampaignExit) {
+			mobileButtonDeferred = false;
+			return;
+		}
+
+		mobileButtonDeferred = true;
+
+		const boundary = document.querySelector<HTMLElement>('[data-mobile-search-boundary]');
+		if (!boundary || !('IntersectionObserver' in window)) {
+			mobileButtonDeferred = false;
+			return;
+		}
+
+		const observer = new IntersectionObserver(([entry]) => {
+			mobileButtonDeferred = entry?.isIntersecting ?? false;
+		});
+
+		observer.observe(boundary);
+		return () => observer.disconnect();
 	});
 
 	// =============================================================================
@@ -421,7 +451,7 @@
 <svelte:window onkeydown={handleKeydown} />
 
 <!-- Mobile Search Button -->
-{#if showMobileButton && !open}
+{#if showMobileButton && !open && (!deferMobileButtonUntilCampaignExit || mobileButtonDeferred === false)}
 	<button
 		class="mobile-search-button"
 		onclick={() => {

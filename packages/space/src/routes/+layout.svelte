@@ -7,6 +7,7 @@
 	import { afterNavigate, onNavigate } from '$app/navigation';
 
 	let { children } = $props();
+	let mobileNavigationOpen = $state(false);
 
 	// View Transitions API - Hermeneutic Navigation
 	// .space: Experimental (300ms)
@@ -80,7 +81,12 @@
 <Analytics property="space" />
 
 <!-- Unified Search - Cmd/Ctrl+K to open -->
-<UnifiedSearch currentProperty="space" localItems={quickAccessItems} />
+<UnifiedSearch
+	currentProperty="space"
+	localItems={quickAccessItems}
+	showMobileButton={!mobileNavigationOpen}
+	deferMobileButtonUntilCampaignExit={$page.url.pathname === '/'}
+/>
 
 <div class="layout property-performance">
 	<Navigation
@@ -93,6 +99,7 @@
 		ctaHref="https://createsomething.io"
 		showLogin={false}
 		visualStyle="performance"
+		onMobileMenuChange={(open) => (mobileNavigationOpen = open)}
 	/>
 
 	<main id="main-content" class="content">

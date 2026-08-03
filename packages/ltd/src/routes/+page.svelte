@@ -204,6 +204,7 @@
 />
 
 <PerformanceCampaignOpening
+  mobileSearchBoundary
   eyebrow="CREATE SOMETHING .ltd"
   title="The philosophy of automation infrastructure."
   lede="CREATE SOMETHING .ltd explains the creation moat: consuming AI tools is easy; building governed connectivity, policy, trust boundaries, and proof is the work."
