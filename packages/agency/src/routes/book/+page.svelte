@@ -93,7 +93,7 @@
 	<PerformanceConversionHandoff
 		eyebrow="Workflow mapping session"
 	title="Review the handoff, then choose a time."
-	description="Use the owned scheduler for one real workflow, its decision owner, and the record your team needs next. If you started a private draft, review the bounded handoff before choosing an opening."
+	description="Use this scheduler for one real workflow, its decision owner, and the record your team needs next. If you started a private draft, review its handoff before choosing an opening."
 		handoff={{
 			owner: 'Micah Johnson',
 			authority: 'Conflict-checked scheduling policy',
@@ -103,8 +103,8 @@
 		steps={[
 		{
 				label: 'Handoff',
-				title: 'Review the bounded context',
-				detail: 'Confirm the source, owner context, and draft notes that should travel into the scheduler.'
+				title: 'Review what will be shared',
+				detail: 'Confirm the source, decision owner, and draft notes that will reach the scheduler.'
 			},
 			{
 				label: 'Time',
@@ -154,7 +154,7 @@
 				{/if}
 
 				<p class="booking-handoff__privacy">
-					Only these bounded fields are shared with the owned scheduler below. Do not add credentials,
+					Only these fields are shared with the scheduler below. Do not add credentials,
 					client secrets, or private records.
 				</p>
 			</section>

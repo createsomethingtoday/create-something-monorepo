@@ -47,7 +47,7 @@
 	<PerformanceCampaignOpening
 		eyebrow="CREATE SOMETHING Map"
 		title="Make the workflow visible before you change it."
-		lede="Start a private browser-local draft to name the owner, data, approvals, systems, risks, and inspection points. Its bounded summary can travel into a mapping session or an authenticated Map workspace; it never touches a production system."
+		lede="Start a private browser-local draft to name the owner, data, approvals, systems, risks, and inspection points. A short summary can travel to a mapping session or an authenticated Map workspace. The draft never touches a production system."
 		media={paperFoldedHandoffMedia}
 		proof={[{ label: 'Input', value: 'Prospect map' }, { label: 'Boundary', value: 'No production tools' }, { label: 'Handoff', value: 'Build or Control' }]}
 	>
@@ -62,7 +62,7 @@
 	<PerformanceThesisConditions
 		eyebrow="Mapping protocol"
 		title="Set the boundary before work is delegated."
-		description="Map turns the starting sheet into a legible boundary, owner, stop condition, and proof requirement without touching production systems."
+		description="Map shows the boundary, owner, stop condition, and proof requirement before work reaches a production system."
 		conditions={mapProtocol}
 		ariaLabel="Public workflow mapping protocol"
 	/>
@@ -90,7 +90,7 @@
 	<PerformanceConversionHandoff
 		eyebrow="Continue the definition"
 		title="Carry the starter sheet forward."
-		description="The private draft is a starting sheet, not an account-scoped CREATE SOMETHING Map. Sign in for version history, review gates, sharing, export, and Build handoff—or bring the bounded summary into a mapping session first."
+		description="The private draft is a starting sheet, not an account-scoped CREATE SOMETHING Map. Sign in for version history, review gates, sharing, export, and Build handoff—or bring its summary into a mapping session first."
 		density="compact"
 		handoff={{
 			owner: 'Workflow owner',

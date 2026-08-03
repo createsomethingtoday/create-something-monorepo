@@ -111,7 +111,7 @@ test('the parent turns only the bounded scheduler context into a readable incomi
 
 	assert.deepEqual(schedulerHandoffSheet(context), {
 		state: 'ready',
-		summary: 'Review this bounded handoff before you choose a time.',
+    summary: 'Review this handoff before you choose a time.',
 		fields: [
 			{ label: 'Source', value: 'Atlas Canvas' },
 			{ label: 'Intent', value: 'Workflow Map' },
