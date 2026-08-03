@@ -1,54 +1,54 @@
-import canonSheet from './paper-canon-sheet.svg';
-import canonSheetMobile from './paper-canon-sheet-mobile.svg';
-import learningSequence from './paper-learning-sequence.svg';
-import learningSequenceMobile from './paper-learning-sequence-mobile.svg';
+import sourceStandard from './ltd-source-standard.webp';
+import sourceStandardMobile from './ltd-source-standard-mobile.webp';
+import learningSequence from './learn-learning-sequence.webp';
+import learningSequenceMobile from './learn-learning-sequence-mobile.webp';
 import pressureHandoff from './paper-pressure-handoff.svg';
 import pressureHandoffMobile from './paper-pressure-handoff-mobile.svg';
-import prototypeScore from './paper-prototype-score.svg';
-import prototypeScoreMobile from './paper-prototype-score-mobile.svg';
-import researchTrace from './paper-research-trace.svg';
-import researchTraceMobile from './paper-research-trace-mobile.svg';
+import pressurePrototype from './space-pressure-prototype.webp';
+import pressurePrototypeMobile from './space-pressure-prototype-mobile.webp';
+import researchTrace from './io-research-trace.webp';
+import researchTraceMobile from './io-research-trace-mobile.webp';
 
 import type { PerformanceMediaStudy } from './types';
 import type { PerformancePaperProperty } from './paper-studio';
 
 export const paperCanonSheetMedia = {
-  src: canonSheet,
-  mobileSrc: canonSheetMobile,
-  alt: 'A folded paper standard with a measured spine, margin rules, and a registered source mark.',
+  src: sourceStandard,
+  mobileSrc: sourceStandardMobile,
+  alt: 'A blank cotton paper standard secured to a precision rail with a cobalt source tab.',
   condition: 'source',
   material: 'paper',
-  width: 1600,
-  height: 1000,
+  width: 1536,
+  height: 1024,
   objectPosition: 'center',
   colorMode: 'natural',
-  studioShot: 'ltd'
+  paperObjectVisible: true
 } as const satisfies PerformanceMediaStudy;
 
 export const paperResearchTraceMedia = {
   src: researchTrace,
   mobileSrc: researchTraceMobile,
-  alt: 'Layered paper research records connected by a blue provenance trace and precise citation marks.',
+  alt: 'Layered archival paper research records registered to a graphite trace and cobalt source tab.',
   condition: 'trace',
   material: 'paper',
-  width: 1600,
-  height: 1000,
+  width: 1536,
+  height: 1024,
   objectPosition: 'center',
   colorMode: 'natural',
-  studioShot: 'io'
+  paperObjectVisible: true
 } as const satisfies PerformanceMediaStudy;
 
 export const paperPrototypeScoreMedia = {
-  src: prototypeScore,
-  mobileSrc: prototypeScoreMobile,
-  alt: 'A folded paper prototype held open by scored test lines, registration points, and a pressure mark.',
+  src: pressurePrototype,
+  mobileSrc: pressurePrototypeMobile,
+  alt: 'A stepped paper prototype held under a matte black compression rail with a cobalt calibration tab.',
   condition: 'score',
   material: 'paper',
-  width: 1600,
-  height: 1000,
+  width: 1536,
+  height: 1024,
   objectPosition: 'center',
   colorMode: 'natural',
-  studioShot: 'space'
+  paperObjectVisible: true
 } as const satisfies PerformanceMediaStudy;
 
 export const paperPressureHandoffMedia = {
@@ -67,14 +67,14 @@ export const paperPressureHandoffMedia = {
 export const paperLearningSequenceMedia = {
   src: learningSequence,
   mobileSrc: learningSequenceMobile,
-  alt: 'An accordion-fold paper workbook progressing through measured lessons toward an attached proof mark.',
+  alt: 'A continuous accordion-fold paper sequence held by guide rails with a cobalt learning tab.',
   condition: 'sequence',
   material: 'paper',
-  width: 1600,
-  height: 1000,
+  width: 1536,
+  height: 1024,
   objectPosition: 'center',
   colorMode: 'natural',
-  studioShot: 'learn'
+  paperObjectVisible: true
 } as const satisfies PerformanceMediaStudy;
 
 export const performancePaperStudies = {

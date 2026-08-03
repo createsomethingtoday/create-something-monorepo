@@ -20,6 +20,7 @@
 		colorMode?: 'monochrome' | 'natural';
 		video?: PerformanceCampaignVideo;
 		studioShot?: PerformancePaperProperty;
+		paperObjectVisible?: boolean;
 	}
 
 	export interface PerformanceCampaignProof {
@@ -88,7 +89,8 @@
 		class="performance-campaign-opening__media"
 		class:performance-campaign-opening__media--studio-ready={studioReady}
 		class:performance-campaign-opening__media--paper-object-visible={studioReady ||
-			artifactOwnsMedia}
+			artifactOwnsMedia ||
+			media.paperObjectVisible}
 		data-color-mode={media.colorMode ?? 'monochrome'}
 		data-material={media.material ?? 'unspecified'}
 	>
