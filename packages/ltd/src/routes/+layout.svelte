@@ -6,6 +6,7 @@
 	import '../app.css';
 
 	let { children, data } = $props();
+	let mobileNavigationOpen = $state(false);
 
 	// Handle logout
 	async function handleLogout() {
@@ -84,7 +85,12 @@
 <Analytics property="ltd" userId={data.user?.id} userOptedOut={data.user?.analytics_opt_out ?? false} />
 
 <!-- Unified Search - Cmd/Ctrl+K to open -->
-<UnifiedSearch currentProperty="ltd" localItems={quickAccessItems} />
+<UnifiedSearch
+	currentProperty="ltd"
+	localItems={quickAccessItems}
+	showMobileButton={!mobileNavigationOpen}
+	deferMobileButtonUntilCampaignExit={data?.pathname === '/'}
+/>
 
 <div class="min-h-screen flex flex-col ltd-clear-shell property-performance">
 	{#if !isCanonRoute}
@@ -99,6 +105,7 @@
 			loginHref="/login"
 			accountHref="/account"
 			visualStyle="performance"
+			onMobileMenuChange={(open) => (mobileNavigationOpen = open)}
 		/>
 	{/if}
 

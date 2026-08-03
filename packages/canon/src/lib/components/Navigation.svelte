@@ -461,6 +461,13 @@
   }
 
   .nav-clear {
+    /*
+     * Campaign openings use isolation for their media and copy layers. Give
+     * the navigation its own, higher stacking context so an open mobile
+     * drawer remains above those openings instead of being painted behind them.
+     */
+    position: relative;
+    z-index: var(--z-performance-fixed, 40);
     background-blend-mode: plus-darker, normal;
     background: linear-gradient(#9c9c964d 0% 100%), #ffffffd9;
     color: var(--color-performance-ink, #090909);

@@ -241,6 +241,7 @@
 />
 
 <PerformanceCampaignOpening
+  mobileSearchBoundary
   eyebrow="CREATE SOMETHING .space"
   title="A public workbench for testing runtime ideas."
   lede="CREATE SOMETHING .space is where tools, routes, and interaction patterns get tested against real execution surfaces before they become research, policy, or production workflows."

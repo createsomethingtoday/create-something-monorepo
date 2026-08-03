@@ -37,6 +37,8 @@
 		mode?: PerformanceCampaignOpeningMode;
 		density?: PerformanceCampaignOpeningDensity;
 		priority?: boolean;
+		/** Marks this opening as the point before which mobile search stays out of the way. */
+		mobileSearchBoundary?: boolean;
 		actions?: Snippet;
 		artifact?: Snippet;
 		artifactOwnsMedia?: boolean;
@@ -51,6 +53,7 @@
 		mode = 'ink',
 		density = 'standard',
 		priority = true,
+		mobileSearchBoundary = false,
 		actions,
 		artifact,
 		artifactOwnsMedia = false
@@ -83,6 +86,7 @@
 	data-mode={mode}
 	data-density={density}
 	data-has-artifact={artifact ? 'true' : 'false'}
+	data-mobile-search-boundary={mobileSearchBoundary ? 'true' : undefined}
 	aria-label={eyebrow}
 >
 	<figure

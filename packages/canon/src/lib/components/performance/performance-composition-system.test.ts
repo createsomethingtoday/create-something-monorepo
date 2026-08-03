@@ -48,6 +48,7 @@ describe('PerformanceCampaignOpening', () => {
 				lede: 'Map signals. Route decisions. Define actions. Leave proof.',
 				mode: 'ink',
 				density: 'compact',
+				mobileSearchBoundary: true,
 				media: {
 					src: '/images/pressure-wide.webp',
 					mobileSrc: '/images/pressure-tall.webp',
@@ -69,6 +70,7 @@ describe('PerformanceCampaignOpening', () => {
 		expect(opening?.getAttribute('data-mode')).toBe('ink');
 		expect(opening?.getAttribute('data-density')).toBe('compact');
 		expect(opening?.getAttribute('data-has-artifact')).toBe('true');
+		expect(opening?.getAttribute('data-mobile-search-boundary')).toBe('true');
 		expect(opening?.getAttribute('aria-label')).toBe('AI Performance Lab');
 		expect(opening?.querySelector('h1')?.textContent).toBe('Train the system before it runs.');
 		expect(opening?.querySelector('.performance-campaign-opening__lede')?.textContent).toContain(
