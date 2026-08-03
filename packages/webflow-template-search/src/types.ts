@@ -24,6 +24,8 @@ export interface Env {
   ENVIRONMENT?: string;
   SYNC_ADMIN_TOKEN?: string;
   WEBFLOW_WEBHOOK_SECRET?: string;
+  /** Amplitude project API key for the telemetry fallback forwarder (secret). */
+  AMPLITUDE_API_KEY?: string;
 }
 
 export interface AirtableAttachment {

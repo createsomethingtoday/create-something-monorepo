@@ -37,5 +37,11 @@ export default declareComponent(TemplateDetailConversionTracker, {
       name: 'Track Purchase Clicks',
       defaultValue: true,
     }),
+    forwardAttributionToCheckout: props.Boolean({
+      name: 'Forward Attribution To Checkout',
+      defaultValue: true,
+      tooltip:
+        'Append safe browse attribution (source component, filters, card position) as wf_attr_* params on the marketplace-checkout URL so orders can record their origin.',
+    }),
   },
 });

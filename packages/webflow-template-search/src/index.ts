@@ -13,6 +13,7 @@ import {
 import { corsPreflight, jsonResponse, textResponse, withCorsHeaders } from './http.js';
 import { parseSearchParams } from './query.js';
 import { searchTemplates } from './search.js';
+import { handleTelemetry } from './telemetry.js';
 import {
   SyncAlreadyRunningError,
   backfillCreatorMetadata,
@@ -456,6 +457,12 @@ export default {
 
       if (url.pathname === '/api/templates/search' && request.method === 'GET') {
         return await handleSearch(request, env, ctx);
+      }
+
+      if (url.pathname === '/api/templates/telemetry' && request.method === 'POST') {
+        // First-party fallback for the marketplace code components when
+        // webflow.com's page-level analytics SDKs are down (see telemetry.ts).
+        return await handleTelemetry(request, env, ctx);
       }
 
       if ((url.pathname === '/api/templates/client.js' || url.pathname === '/client.js') && request.method === 'GET') {
