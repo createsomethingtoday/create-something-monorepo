@@ -30,7 +30,7 @@ webflow-app-preflight/
 
 ## Measured baseline
 
-The skill was evaluated against a fixture app carrying **24 deliberately planted violations** across code, backend, config, and README.
+In our internal evaluation (July 2026), the skill was run against a fixture app carrying **24 deliberately planted violations** across code, backend, config, and README. The fixture app, prompts, and grading transcript are internal and are not included in this package, so treat the figures below as our internal evaluation rather than an independently reproducible benchmark.
 
 |                 | With skill | Unaided control |
 | --------------- | ---------- | --------------- |
@@ -54,7 +54,7 @@ Run the deterministic static harness after every guidance change. It requires no
 node evals/run-static-evals.mjs
 ```
 
-Checks that the eval files parse and are internally consistent, that every `contains` assertion is groundable somewhere in the skill corpus, that `not_contains` phrasing appears only inside Anti-advice, that rubric weights sum to 100 and each criterion's vocabulary exists in the corpus, that the checklists haven't regressed below their item thresholds, that the partner checklist still covers every gate section and pitfall, and that no internal tooling references or finding IDs have leaked into either shareable artifact. It answers "could a grounded model produce the expected output, and is this package self-consistent?" — not "did the model do it."
+Checks that the eval files parse and are internally consistent, that every `contains` assertion is groundable somewhere in the skill corpus, that `not_contains` phrasing appears only inside Anti-advice, that rubric weights sum to 100 and each criterion's vocabulary exists in the corpus, that the checklists haven't regressed below their item thresholds, that the partner checklist still covers every gate section and pitfall, that SKILL.md's backend exemplars stay grounded in the quality gate (and point to it as authoritative), that the load-bearing corrective phrases (revocation, retained cleanup scopes, site-and-page removal, CORS as defense-in-depth, site IDs in published page source) appear verbatim in SKILL.md, the gate, and the partner checklist, that the frontmatter contract holds (name, description length, sibling cross-reference), that each trigger-positive prompt routes to this skill's description rather than the sibling's, and that no internal tooling references or finding IDs have leaked into any shareable artifact (including the evals and this README). It answers "could a grounded model produce the expected output, and is this package self-consistent?" — not "did the model do it."
 
 **Coverage note.** The 24-violation fixture is bundle- and lifecycle-weighted. The **Backend and API surface** section — server-side identity resolution, object-level authorization, destination allowlisting, CORS as defense-in-depth, credential storage, upload validation, dependency-advisory hygiene, and production-only infrastructure — was added after that baseline was measured, and is exercised by quality cases 6–8 plus the `backend_authorization` rubric criterion. It has no unaided control figure yet. Those checks address the class of failure that review finds by _calling_ a service rather than by reading a bundle, so a static review of source alone cannot fully confirm them; the skill states them as requirements the developer must be able to demonstrate.
 

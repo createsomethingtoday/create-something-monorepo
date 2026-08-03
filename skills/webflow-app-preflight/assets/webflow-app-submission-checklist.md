@@ -2,7 +2,7 @@
 
 A self-contained pre-submission checklist for developers building a Webflow Marketplace App — Designer Extension, Data Client, or Hybrid.
 
-Every requirement here traces to Webflow's published Marketplace Guidelines and developer documentation. Following it isn't extra work; it's meeting the existing bar early, while changes are still cheap. A failed submission costs another review cycle, and reviews take roughly 10–15 business days.
+Items trace to Webflow's published Marketplace Guidelines and developer documentation unless tagged **`[control]`** — a security or engineering control that generalizes recurring review risk and prepares evidence, but is not verbatim published Webflow policy. Following either kind isn't extra work; it's meeting the existing bar early, while changes are still cheap. A failed submission costs another review cycle, and reviews take roughly 10–15 business days.
 
 Work top to bottom. Anything you can't check is worth fixing before you submit, not after.
 
@@ -44,25 +44,27 @@ If you can answer yes to all three _with evidence_, the App passes.
 - [ ] Archive contains exactly one canonical `webflow.json`, and the app title is your real product name — no scaffold defaults like "My React App".
 - [ ] The **bundled** `webflow.json` carries no CLI telemetry block (`telemetry.global.allowTelemetry`). The CLI can add one at bundle time even when your source manifest is clean, so check the file inside the artifact you upload.
 - [ ] The artifact you verify is the artifact you upload — run your production checks against the contents of `bundle.zip`, not a working-directory build a dev server can overwrite.
+- [ ] `bundle.zip` does not exceed the 5MB Designer Extension bundle limit — an oversized bundle fails at upload, before review starts.
+- [ ] The bundled `webflow.json` declares the required manifest fields — `name`, `apiVersion` (`"2"`), and `publicDir` matching your build output directory.
 
 ### Backend and API surface
 
 Reviewers verify these by calling your endpoints and asking for evidence, not by reading your bundle. Start from one premise: **a Designer Extension is client code running on someone else's machine, so every value it sends is attacker-controlled** — including identifiers that feel internal. A Webflow site ID is visible in published page source.
 
 - [ ] Every backend endpoint requires verified caller authentication.
-- [ ] No endpoint authorizes on a client-supplied identifier alone (site ID, account ID, project ID). Identity is resolved server-side from the Webflow ID token.
+- [ ] No endpoint authorizes on a client-supplied identifier alone (site ID, account ID, project ID — site IDs are visible in published page source). Identity is resolved server-side from the Webflow ID token.
 - [ ] Object-level authorization tested: a caller authorized for one site or tenant cannot read or write another's records, and gets a non-enumerating failure.
 - [ ] No reusable credential — third-party API key, access token, connection secret — is returned to the extension or visible in browser network traffic.
 - [ ] Outbound request destinations resolve from a server-side allowlist. HTTPS enforced. No user-supplied hosts.
-- [ ] CORS allowlists your production origins — not `*`, and never `*` together with `Allow-Credentials: true`.
-- [ ] Credentials encrypted at rest and scoped per tenant; decrypted values server-side only.
+- [ ] CORS allowlists your production origins — not `*`, and never `*` together with `Allow-Credentials: true`; CORS is defense-in-depth, not authorization.
+- [ ] `[control]` Credentials encrypted at rest and scoped per tenant; decrypted values server-side only.
 - [ ] No identity, session, or entitlement state derived from `localStorage` or `sessionStorage`.
 - [ ] Values interpolated into generated scripts, markup, or custom attributes are JSON-serialized and format-validated.
 - [ ] Uploads validated server-side for type, size, count, and file signature; archive contents inspected.
 - [ ] Actions are attributed to the authenticated user — no hardcoded owner or service identity standing in for real users.
-- [ ] Dependency audit clean of High and Critical advisories, or a documented function-level reachability analysis. Production manifest and lockfile available on request.
+- [ ] `[control]` Dependency audit clean of High and Critical advisories, or a documented function-level reachability analysis. Production manifest and lockfile available on request.
 - [ ] No staging, localhost, or tunnel hostnames anywhere in the artifact, and the installation URL you declare is a production host.
-- [ ] OAuth callback validates a single-use, server-stored `state` bound to the pending authorization; PKCE used where the OAuth model supports it.
+- [ ] `[control]` OAuth callback validates a single-use, server-stored `state` bound to the pending authorization — the CSRF control in Webflow's OAuth flow (PKCE is not part of Webflow's documented flow; use PKCE on third-party OAuth flows your app performs that support it).
 - [ ] Client bundle contains client code only — no server handlers, database schema, JWT logic, or backend dependencies (check the source map, which will reveal whatever the bundle contains).
 - [ ] Production logs contain no personal data or credentials; sensitive fields redacted at the logging boundary.
 
@@ -70,7 +72,7 @@ Reviewers verify these by calling your endpoints and asking for evidence, not by
 
 - [ ] Requested scopes are the minimum the App actually calls.
 - [ ] Install URL scopes are equal to or a subset of your configured scopes.
-- [ ] App stops calling the Data API immediately on revoke or uninstall.
+- [ ] App stops calling the Data API immediately on revoke or uninstall — a persistent 401 on a previously valid token is revocation, not an error to retry past.
 - [ ] Code on customer sites is delivered via the Custom Code API, not manual copy-paste.
 - [ ] Injected scripts are version-pinned — hosted scripts use an SRI `integrityHash`. No runtime loaders unless every remote resource is declared and pinned at submission.
 - [ ] Any change to injected code ships as a new script version plus an App update — never edited in place.
@@ -82,7 +84,7 @@ Reviewers verify these by calling your endpoints and asking for evidence, not by
 
 - [ ] Users are told clearly what data the App collects, where it's stored, and how it's used.
 - [ ] A reachable privacy policy covers that disclosure.
-- [ ] Terms of Service and Privacy Policy are distinct, publicly reachable URLs — not the same page.
+- [ ] `[control]` Terms of Service and Privacy Policy are distinct, publicly reachable URLs — not the same page.
 - [ ] Appropriate security measures protect stored user data from unauthorized access.
 - [ ] On uninstall, user data retained in _your own_ backend is deleted or anonymized — not just the scripts removed from the site.
 - [ ] Personal data handling complies with applicable privacy laws.
@@ -147,7 +149,7 @@ These are the recurring reasons a well-intentioned App gets bounced or pulled in
 
 Worth stating plainly, because each one inverts a real requirement:
 
-- ❌ "Add exponential backoff and retry on the 401." A persistent 401 on a previously valid token is **revocation**. Stop calling.
+- ❌ "Add exponential backoff and retry on the 401." A persistent 401 on a previously valid token is **revocation**. Stop calling. (429s and transient 5xx are the opposite case — back off and retry those.)
 - ❌ "Drop the extra scopes on uninstall." You must **retain** `custom_code:write` plus `sites:write`/`pages:write`, or cleanup is impossible.
 - ❌ "Webflow removes injected scripts automatically on uninstall." It does not. Removal is your responsibility, at site _and_ page level.
 
@@ -173,5 +175,5 @@ Every later change to the reviewed experience — bundle, Data Client behavior, 
 - Working with Custom Code — <https://developers.webflow.com/data/docs/working-with-custom-code>
 - Register a hosted script — <https://developers.webflow.com/data/reference/custom-code/custom-code/register-hosted>
 - Designer ID tokens — <https://developers.webflow.com/designer/reference/get-user-id-token>
-- Hybrid Apps — <https://developers.webflow.com/data/v1.0.0/docs/hybrid-apps>
+- Getting started with Webflow Apps (including Hybrid Apps) — <https://developers.webflow.com/apps/docs/getting-started-apps>
 - Developer platform — <https://developers.webflow.com/>
