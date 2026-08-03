@@ -220,11 +220,12 @@ test('Products explains the product family and keeps operating surfaces inside C
 test('booking carries the Field Report handoff into the owned mapping scheduler', () => {
   const book = readFileSync(new URL('../src/routes/book/+page.svelte', import.meta.url), 'utf8');
 
-  assert.match(book, /Map the workflow before the build decision/);
+  assert.match(book, /Review the handoff, then choose a time/);
   assert.match(book, /30- or 60-minute/);
   assert.match(book, /Choose 30 or 60 minutes/);
   assert.match(book, /first-party scheduler/);
   assert.match(book, /schedulerHandoffContext/);
+  assert.match(book, /What will travel into booking/);
 });
 
 test('the homepage concentrates measured Field Report proof in one primary readback', () => {

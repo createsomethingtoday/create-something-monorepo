@@ -78,7 +78,7 @@
       href="/book?source=field-reports&intent=workflow-mapping&lane=workflow_infrastructure"
       variant="secondary"
     >
-      Talk through one workflow
+      {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
   {/snippet}
 </PerformanceConversionHandoff>

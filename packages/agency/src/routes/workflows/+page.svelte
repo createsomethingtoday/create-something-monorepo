@@ -41,7 +41,7 @@
       </p>
       <div>
         <Button href="#guides">Browse the guides</Button>
-        <Button href="/map" variant="secondary">Map one workflow</Button>
+        <Button href="/map" variant="secondary">Start a private workflow draft</Button>
       </div>
     </div>
   </header>

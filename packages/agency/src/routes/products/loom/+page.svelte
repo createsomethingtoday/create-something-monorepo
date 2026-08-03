@@ -7,7 +7,7 @@
     SEO,
     type PerformanceNarrativeScene
   } from '@create-something/canon';
-  import { traceDyeInjectionMedia } from '$lib/data/performanceMedia';
+  import { paperAttachedReceiptMedia } from '$lib/data/performanceMedia';
 
   const cursorDeepLink =
     'cursor://anysphere.cursor-deeplink/mcp/install?name=loom&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyJAY3JlYXRlc29tZXRoaW5nL2xvb20tbWNwIl19';
@@ -125,7 +125,7 @@
   title="The continuity problem that led to Linear-first coordination."
   lede="Loom proved that agents need task ownership, checkpoints, routing, and recovery. Current CREATE SOMETHING repo work now uses Linear as the source of truth for tracked ownership, status, and evidence."
   density="compact"
-  media={traceDyeInjectionMedia}
+  media={paperAttachedReceiptMedia}
   proof={[
     { label: 'Loom', value: 'Archive' },
     { label: 'Linear', value: 'Current' },

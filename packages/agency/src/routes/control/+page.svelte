@@ -13,12 +13,12 @@
   } from '@create-something/canon';
   import SystemContextArtifact from '$lib/components/SystemContextArtifact.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
-  import { turbulenceExceptionMedia } from '$lib/data/performanceMedia';
+  import { paperClampedDecisionMedia } from '$lib/data/performanceMedia';
   import { getPublicProduct } from '$lib/data/productFamily';
 
   const mapProduct = getPublicProduct('map');
 
-  const channelConditions: PerformanceCondition[] = [
+  const controlConditions: PerformanceCondition[] = [
     {
       label: 'Pressure',
       title: 'Test before you delegate.',
@@ -32,7 +32,7 @@
       tone: 'signal'
     },
     {
-      label: 'Turbulence',
+      label: 'Exception',
       title: 'Ambiguity stops the run.',
       detail: 'When the work leaves known conditions, Control waits for a named owner.',
       tone: 'risk'
@@ -144,7 +144,7 @@
     eyebrow="CREATE SOMETHING Control"
     title="Managed AI Operations, after launch."
     lede="Control operates one standard-risk production environment from $900 per month after launch. No per-agent fees. You keep a legible workflow boundary, transparent AI usage, named approvals, and recovery context. Control includes Map."
-    media={turbulenceExceptionMedia}
+    media={paperClampedDecisionMedia}
     proof={[
       { label: 'Signal', value: 'Watch' },
       { label: 'Decision', value: 'Route' },
@@ -161,9 +161,9 @@
 
   <PerformanceThesisConditions
     eyebrow="Operating principle"
-    title="Governance is the channel, not the dam."
-    description="Control exists to keep delegated work moving. The boundary is what makes speed safe to grant, not a brake applied after the fact."
-    conditions={channelConditions}
+    title="Governance holds the decision boundary."
+    description="Control keeps delegated work moving because the operating boundary, authority, and exception path are written down before the run begins."
+    conditions={controlConditions}
     ariaLabel="Control operating principle"
   />
 

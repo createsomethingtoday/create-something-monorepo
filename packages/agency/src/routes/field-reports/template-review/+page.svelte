@@ -11,6 +11,7 @@
     type PerformanceEvidenceItem,
     type PerformanceNarrativeScene
   } from '@create-something/canon';
+  import { paperAttachedReceiptMedia } from '$lib/data/performanceMedia';
   import SystemContextArtifact from '$lib/components/SystemContextArtifact.svelte';
   import {
     getTemplateReviewPacketCompletion,
@@ -124,11 +125,7 @@
     eyebrow="Field report 01 / Review operations"
     title={templateReviewFieldReport.title}
     lede={templateReviewFieldReport.dek}
-    media={{
-      src: '/images/performance-lab/trace-wake-natural.webp',
-      mobileSrc: '/images/performance-lab/trace-wake-natural-mobile.webp',
-      alt: 'Aerial black-and-white view of a survey craft leaving a directional wake'
-    }}
+    media={paperAttachedReceiptMedia}
     proof={[
       { label: 'Packet completion', value: '49 / 50' },
       { label: 'Judgment', value: 'Blocked' },
