@@ -4,6 +4,7 @@ import { invalidateAssetsCache } from '$lib/server/assets-cache';
 import { getAirtableClient, type AssetUpdateData } from '$lib/server/airtable';
 import { shouldCreateAssetVersionForChanges } from '$lib/utils/asset-version-changes';
 import { sanitizeLongDescriptionHtml } from '@create-something/webflow-dashboard-core/long-description';
+import { isAllowedAssetImageUrl } from '@create-something/webflow-dashboard-core/uploads-url';
 
 function assertOptionalString(
   value: unknown,
@@ -96,6 +97,33 @@ function validateAssetUpdateBody(body: AssetUpdateData): void {
   );
 }
 
+/**
+ * Asset images are written into Airtable attachment fields, and Airtable
+ * fetches whatever URL it is handed. Without this check an authenticated
+ * creator could point a listing image at any host and publish content that
+ * never passed the type/size/dimension checks in /api/upload.
+ */
+function assertAssetImageUrls(
+  body: AssetUpdateData,
+  requestOrigin: string,
+  trustedOriginsCsv: string | undefined
+): void {
+  const reject = (label: string): never => {
+    throw error(400, `${label} must be an image uploaded through this dashboard`);
+  };
+
+  const assertUrl = (value: string | null | undefined, label: string): void => {
+    // Blank clears the image; only real URLs need vetting.
+    if (!value) return;
+    if (!isAllowedAssetImageUrl(value, requestOrigin, trustedOriginsCsv)) reject(label);
+  };
+
+  assertUrl(body.thumbnailUrl, 'Thumbnail');
+  assertUrl(body.secondaryThumbnailUrl, 'Secondary thumbnail');
+  body.secondaryThumbnails?.forEach((value) => assertUrl(value, 'Secondary thumbnail'));
+  body.carouselImages?.forEach((value) => assertUrl(value, 'Carousel image'));
+}
+
 function normalizeAssetUpdateBody(body: AssetUpdateData): AssetUpdateData {
   if (body.descriptionLongHtml === undefined) return body;
   return {
@@ -169,7 +197,7 @@ export const PATCH: RequestHandler = async ({ params, request, locals, platform 
 };
 
 // PUT - Update asset with images
-export const PUT: RequestHandler = async ({ params, request, locals, platform }) => {
+export const PUT: RequestHandler = async ({ params, request, locals, platform, url }) => {
   if (!locals.user?.email) {
     throw error(401, 'Unauthorized');
   }
@@ -194,6 +222,7 @@ export const PUT: RequestHandler = async ({ params, request, locals, platform })
 
   const body = normalizeAssetUpdateBody((await request.json()) as AssetUpdateData);
   validateAssetUpdateBody(body);
+  assertAssetImageUrls(body, url.origin, platform.env.CSRF_TRUSTED_ORIGINS);
   const { assetVersionChanges, ...updateBody } = body;
 
   // Check name uniqueness if name is being changed
