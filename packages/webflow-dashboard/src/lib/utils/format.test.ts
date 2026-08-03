@@ -45,6 +45,14 @@ describe('format utilities', () => {
 		expect(formatRelativeAge('2025-04-10T11:00:00.000Z', now)).toBe('1 years ago');
 	});
 
+	it('formats future dates without negative past-tense labels', () => {
+		// Later the same local day stays "Today" rather than rolling to "Tomorrow".
+		expect(formatRelativeAge('2026-06-27T18:00:00.000Z', now)).toBe('Today');
+		expect(formatRelativeAge('2026-06-28T11:00:00.000Z', now)).toBe('Tomorrow');
+		expect(formatRelativeAge('2026-07-03T11:00:00.000Z', now)).toBe('in 6 days');
+		expect(formatRelativeAge('2026-07-20T11:00:00.000Z', now)).toBe('Jul 20, 2026');
+	});
+
 	it('formats relative schedule labels for freshness messaging', () => {
 		expect(formatRelativeScheduleDate('2026-06-27T11:00:00.000Z', now)).toBe('Today');
 		expect(formatRelativeScheduleDate('2026-06-27T13:00:00.000Z', now)).toBe('in 1 hour');

@@ -196,7 +196,8 @@
 			});
 
 			if (response.ok) {
-				goto('/verify');
+				// /verify reads ?email= to show where the link was sent and to power resend.
+				goto(`/verify?email=${encodeURIComponent(primaryEmail.trim())}`);
 				return;
 			}
 

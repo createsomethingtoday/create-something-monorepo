@@ -122,6 +122,16 @@ export function formatRelativeAge(
   const resolvedDate = resolveDate(date);
   if (!resolvedDate) return '';
 
+  // Future dates would otherwise fall through to the past-tense math and render
+  // negative labels like "-6 days ago".
+  const calendarDayDiff = localDayDifference(resolvedDate, now);
+  if (calendarDayDiff > 0 || resolvedDate.getTime() > now.getTime()) {
+    if (calendarDayDiff <= 0) return 'Today';
+    if (calendarDayDiff === 1) return 'Tomorrow';
+    if (calendarDayDiff < 7) return `in ${calendarDayDiff} days`;
+    return formatLongDate(resolvedDate);
+  }
+
   const diffDays = Math.floor((now.getTime() - resolvedDate.getTime()) / MS_PER_DAY);
 
   if (diffDays === 0) return 'Today';
