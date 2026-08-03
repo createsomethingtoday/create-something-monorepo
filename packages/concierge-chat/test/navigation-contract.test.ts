@@ -41,6 +41,17 @@ test('public navigation links no longer inherit the internal app pill treatment'
   assert.match(layoutSource, /\.webflow-nav-links a \{[\s\S]*?border: 0;/);
 });
 
+test('public mobile navigation uses one clear current-page treatment', () => {
+  assert.match(
+    layoutSource,
+    /\.webflow-nav-links a\[aria-current='page'\] \{[\s\S]*?background: var\(--accent-secondary-soft\);[\s\S]*?font-weight: 620;/
+  );
+  assert.doesNotMatch(
+    layoutSource,
+    /\.webflow-nav-links > a\[aria-current='page'\] \{[\s\S]*?box-shadow: inset/
+  );
+});
+
 test('public navigation prioritizes the two audiences and keeps specialised routes contextual', () => {
   const publicNavBlock = layoutSource.match(
     /: isPublicIntakeRoute \|\| !showInternalNavigation\s+\? \[([\s\S]*?)\]\s+: \[/
