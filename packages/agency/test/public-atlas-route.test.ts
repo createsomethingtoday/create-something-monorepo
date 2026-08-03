@@ -134,7 +134,7 @@ test('Map route keeps one editable map with a compact worked-example rail', () =
 	assert.ok(mapRoute.includes('<SystemContextRail'));
 	assert.ok(mapRoute.includes('bookingHref="/book"'));
 	assert.ok(mapRoute.includes('eyebrow="Public mapping surface"'));
-	assert.ok(mapRoute.includes('The canvas turns curiosity into operating context.'));
+	assert.ok(mapRoute.includes('The canvas turns a starting sheet into operating context.'));
 });
 
 test('services route keeps one public Map canvas and one product-family grid', () => {
@@ -172,9 +172,11 @@ test('public Performance routes preserve owned natural media assignments', () =>
 	assert.ok(productsRoute.includes('media={paperProductSystemMedia}'));
 	assert.ok(productsRoute.includes('mode="paper"'));
 	assert.equal(productsRoute.includes('/images/performance-lab/controlled-flow-natural.webp'), false);
-	assert.ok(mapRoute.includes("import { clarityInspectionMedia }"));
-	assert.ok(mapRoute.includes('media={clarityInspectionMedia}'));
-	assert.ok(difyControlPlaneRoute.includes('/images/performance-lab/trace-wake-natural.webp'));
+	assert.ok(mapRoute.includes("import { paperFoldedHandoffMedia }"));
+	assert.ok(mapRoute.includes('media={paperFoldedHandoffMedia}'));
+	assert.ok(difyControlPlaneRoute.includes("import {\n    paperAttachedReceiptMedia,\n    paperClampedDecisionMedia\n  }"));
+	assert.ok(difyControlPlaneRoute.includes('media={paperClampedDecisionMedia}'));
+	assert.ok(difyControlPlaneRoute.includes('image: paperAttachedReceiptMedia.src'));
 });
 
 test('home route uses the shared canvas kernel as a transparent proof object', () => {

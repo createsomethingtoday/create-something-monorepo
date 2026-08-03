@@ -6,7 +6,8 @@ import {
 	normalizeSchedulerLifecycleMessage,
 	normalizeSchedulerResizeMessage,
 	normalizeSchedulerAccessUrl,
-	schedulerHandoffContext
+	schedulerHandoffContext,
+	schedulerHandoffSheet
 } from '../src/lib/scheduling/first-party.ts';
 
 const bookRoute = readFileSync(new URL('../src/routes/book/+page.svelte', import.meta.url), 'utf8');
@@ -100,6 +101,37 @@ test('direct booking does not invent zero-valued Atlas attribution', () => {
 	const iframe = new URL(buildFirstPartySchedulerUrl());
 	assert.equal(iframe.search, '');
 	assert.deepEqual(schedulerHandoffContext(), {});
+});
+
+test('the parent turns only the bounded scheduler context into a readable incoming handoff', () => {
+	const context = schedulerHandoffContext(
+		'?source=atlas-canvas&intent=workflow-map&lane=fit-review&readiness=ready&score=84&agent_messages=7',
+		'Map the approval handoff.'
+	);
+
+	assert.deepEqual(schedulerHandoffSheet(context), {
+		state: 'ready',
+		summary: 'Review this bounded handoff before you choose a time.',
+		fields: [
+			{ label: 'Source', value: 'Atlas Canvas' },
+			{ label: 'Intent', value: 'Workflow Map' },
+			{ label: 'Operating lane', value: 'Fit Review' },
+			{ label: 'Draft readiness', value: 'Ready' },
+			{ label: 'Readiness score', value: '84 / 100' },
+			{ label: 'Draft messages', value: '7 messages' }
+		],
+		warmupNotes: 'Map the approval handoff.'
+	});
+	assert.deepEqual(schedulerHandoffSheet({}), {
+		state: 'empty',
+		summary: 'No private draft is attached yet. You can still book a mapping session, or start a draft first.',
+		fields: []
+	});
+	assert.ok(bookRoute.includes('schedulerHandoffSheet'));
+	assert.ok(bookRoute.includes('Incoming handoff'));
+	assert.ok(bookRoute.includes('What will travel into booking'));
+	assert.ok(bookRoute.includes('booking_handoff_viewed'));
+	assert.ok(bookRoute.indexOf('booking-handoff') < bookRoute.indexOf('id="first-party-scheduler"'));
 });
 
 test('emailed management access crosses the owned page only through a stripped fragment', () => {

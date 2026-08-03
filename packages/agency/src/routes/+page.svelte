@@ -190,7 +190,7 @@
         'Your team can inspect the first test before deciding to build'
       ],
       receipts: ['workflow map', 'owner list', 'record plan'],
-      actions: [{ label: 'Map one workflow', href: agencyCoreMessaging.selfMapHref }]
+      actions: [{ label: agencyCoreMessaging.selfMapLabel, href: agencyCoreMessaging.selfMapHref }]
     },
     {
       id: 'operate',
@@ -230,7 +230,7 @@
     density="compact"
   >
     {#snippet actions()}
-      <Button href={agencyCoreMessaging.selfMapHref}>Map one workflow</Button>
+      <Button href={agencyCoreMessaging.selfMapHref}>{agencyCoreMessaging.selfMapLabel}</Button>
       <Button href="/proof/marketplace-workflow" variant="secondary"
         >See the Marketplace workflow</Button
       >

@@ -3,9 +3,9 @@
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
   export let eyebrow = 'Conversion Path';
-  export let title = 'Move from useful reading to a workflow control decision.';
+  export let title = 'Move from useful reading to a named workflow decision.';
   export let description =
-    'Cold readers should not be forced straight into a calendar. The ladder starts with a reusable checklist, moves to a workflow map, and keeps the booking path for teams with a named workflow.';
+    'Cold readers should not be forced straight into a calendar. Start with a reusable checklist, make a private draft, request a workflow map when review would help, then book when the owner and decision are named.';
 
   const stages = [
     {
@@ -19,9 +19,18 @@
     },
     {
       label: 'Warm',
-      title: 'Workflow map',
+      title: 'Private workflow draft',
       detail:
-        'A short form that captures the stack, bottleneck, risk boundary, and first workflow worth mapping.',
+        'A browser-local starting sheet for the owner, systems, approval points, risk boundary, and first workflow worth mapping.',
+      cta: agencyCoreMessaging.startWithWorkflowLabel,
+      href: agencyCoreMessaging.startWithWorkflowHref,
+      intent: 'private-workflow-draft'
+    },
+    {
+      label: 'Review',
+      title: 'Workflow-map request',
+      detail:
+        'A short request for help reviewing the stack, bottleneck, risk boundary, and first workflow worth mapping.',
       cta: agencyCoreMessaging.workflowTeardownLabel,
       href: agencyCoreMessaging.workflowTeardownHref,
       intent: 'workflow-teardown'
@@ -123,7 +132,7 @@
 
   .funnel-ladder__grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 1rem;
   }
 
@@ -176,7 +185,7 @@
     color: var(--color-performance-ink, #090909);
   }
 
-  @media (max-width: 900px) {
+  @media (max-width: 1080px) {
     .funnel-ladder__grid {
       grid-template-columns: 1fr;
     }

@@ -7,7 +7,7 @@
     SEO,
     type PerformanceEvidenceItem
   } from '@create-something/canon';
-  import { settlementResolvedMedia } from '$lib/data/performanceMedia';
+  import { paperAttachedReceiptMedia } from '$lib/data/performanceMedia';
 
   const deliveryRecords: PerformanceEvidenceItem[] = [
     {
@@ -38,7 +38,7 @@
   title="Published work lives here."
   lede="Each record says what changed, what remains private, what is blocked, and who decides next. Open the work directly; private evidence stays outside the public page."
   density="compact"
-  media={settlementResolvedMedia}
+  media={paperAttachedReceiptMedia}
   proof={[
     { label: 'Records', value: String(deliveryRecords.length).padStart(2, '0') },
     { label: 'Boundary', value: 'Client-safe only' },
@@ -71,6 +71,6 @@
   }}
 >
   {#snippet actions()}
-    <Button href="/contact?intent=workflow-map">Map one workflow</Button>
+    <Button href="/map">Start a private workflow draft</Button>
   {/snippet}
 </PerformanceConversionHandoff>

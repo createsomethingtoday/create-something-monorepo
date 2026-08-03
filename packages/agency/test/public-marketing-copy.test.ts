@@ -263,10 +263,10 @@ test('commercial decision routes use one primary and one conversational action',
     '../src/routes/proof/marketplace-workflow/+page.svelte'
   ].map((route) => readFileSync(new URL(route, import.meta.url), 'utf8')).join('\n');
 
-  assert.match(messaging, /startWithWorkflowLabel: 'Map one workflow'/);
-  assert.match(messaging, /selfMapLabel: 'Map one workflow'/);
-  assert.match(messaging, /bookMappingSessionLabel: 'Talk through one workflow'/);
-  assert.match(routes, />Map one workflow first</);
+  assert.match(messaging, /startWithWorkflowLabel: 'Start a private workflow draft'/);
+  assert.match(messaging, /selfMapLabel: 'Start a private workflow draft'/);
+  assert.match(messaging, /bookMappingSessionLabel: 'Book a mapping session'/);
+  assert.match(routes, />Start a private workflow draft</);
   assert.doesNotMatch(routes, /Start Workflow Map|Talk Through a Workflow|Map the workflow first|Map your workflow/);
 });
 

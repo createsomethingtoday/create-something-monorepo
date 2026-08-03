@@ -80,7 +80,7 @@ test('makes Experiments a two-section collection without a duplicate site shell'
 
 test('preserves every primary index destination and content boundary', () => {
   const inventory: Record<string, string[]> = {
-    delivery: ['/delivery/abundance', 'Client-safe only', 'Map one workflow'],
+    delivery: ['/delivery/abundance', 'Client-safe only', 'Start a private workflow draft'],
     experiments: ['data.papers', 'sortBy: SortOption', 'published_at'],
     'field-reports': ['/field-reports/template-review', 'Measured', 'Blocked', 'Unknown'],
     products: [

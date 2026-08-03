@@ -36,7 +36,7 @@
     <p class="guide-answer">{guide.directAnswer}</p>
     <div class="guide-actions">
       <Button href="#operating-path">Use the operating path</Button>
-      <Button href="/map" variant="secondary">Map one workflow</Button>
+      <Button href="/map" variant="secondary">Start a private workflow draft</Button>
     </div>
     <dl class="guide-decision">
       <div>

@@ -16,6 +16,13 @@ export type SchedulerHandoffContext = {
 	warmupNotes?: string;
 };
 
+export type SchedulerHandoffSheet = {
+	state: 'ready' | 'empty';
+	summary: string;
+	fields: Array<{ label: string; value: string }>;
+	warmupNotes?: string;
+};
+
 export type SchedulerDeclaredTrafficClass = 'internal' | 'test';
 
 export type SchedulerAccess = {
@@ -142,6 +149,48 @@ export function schedulerHandoffContext(search = '', warmupNotes?: string): Sche
 		.trim();
 	if (notes) context.warmupNotes = notes.slice(0, 2000);
 	return context;
+}
+
+function titleCase(value: string): string {
+	return value
+		.split(/[-_]+/)
+		.filter(Boolean)
+		.map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+		.join(' ');
+}
+
+/**
+ * Keeps the parent-page receipt aligned with the bounded context sent to the
+ * scheduler without exposing unknown query data or tracking draft notes.
+ */
+export function schedulerHandoffSheet(context: SchedulerHandoffContext): SchedulerHandoffSheet {
+	const fields: SchedulerHandoffSheet['fields'] = [];
+	const add = (label: string, value: string | number | undefined, format = titleCase) => {
+		if (value === undefined || value === '') return;
+		fields.push({ label, value: typeof value === 'number' ? String(value) : format(value) });
+	};
+
+	add('Source', context.source);
+	add('Intent', context.intent);
+	add('Operating lane', context.lane);
+	add('Draft readiness', context.readiness);
+	if (context.score !== undefined) fields.push({ label: 'Readiness score', value: `${context.score} / 100` });
+	if (context.agentMessages !== undefined) {
+		fields.push({
+			label: 'Draft messages',
+			value: `${context.agentMessages} ${context.agentMessages === 1 ? 'message' : 'messages'}`
+		});
+	}
+
+	const hasContext = fields.length > 0 || Boolean(context.warmupNotes);
+	return {
+		state: hasContext ? 'ready' : 'empty',
+		summary: hasContext
+			? 'Review this bounded handoff before you choose a time.'
+			: 'No private draft is attached yet. You can still book a mapping session, or start a draft first.',
+		fields,
+		...(context.warmupNotes ? { warmupNotes: context.warmupNotes } : {})
+	};
 }
 
 export function normalizeSchedulerLifecycleMessage(

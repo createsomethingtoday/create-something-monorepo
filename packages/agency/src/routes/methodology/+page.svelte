@@ -108,7 +108,7 @@
       detail:
         'The same canvas language shows what can run, what waits for judgment, what stops, and where proof lands before a workflow earns more authority.',
       tone: 'neutral',
-      actions: [{ label: 'Map one workflow', href: agencyCoreMessaging.selfMapHref }]
+      actions: [{ label: agencyCoreMessaging.selfMapLabel, href: agencyCoreMessaging.selfMapHref }]
     }
   ];
 </script>

@@ -12,7 +12,7 @@
     type PerformanceProofItem
   } from '@create-something/canon';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
-  import { traceDyeInjectionMedia } from '$lib/data/performanceMedia';
+  import { paperAttachedReceiptMedia } from '$lib/data/performanceMedia';
 
   const beforeAfter: PerformanceCardItem[] = [
     {
@@ -182,7 +182,7 @@
     eyebrow="Complete workflow · Active development"
     title="Turn a watched review queue into a testable workflow."
     lede="This worked example maps the Marketplace template lifecycle from submission through monitoring, then tests it with representative local fixtures. It runs in shadow mode only. Nothing is written, published, or approved in production."
-    media={traceDyeInjectionMedia}
+    media={paperAttachedReceiptMedia}
     proof={[
       { label: 'Status', value: 'Prototype' },
       { label: 'Mode', value: 'Shadow only' },

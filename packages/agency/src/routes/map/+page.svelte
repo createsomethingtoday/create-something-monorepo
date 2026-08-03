@@ -12,7 +12,7 @@
 	import PublicAtlasCanvas from '$lib/components/PublicAtlasCanvas.svelte';
 	import SystemContextRail from '$lib/components/SystemContextRail.svelte';
 	import { agencyCoreMessaging } from '$lib/data/marketingCopy';
-	import { clarityInspectionMedia } from '$lib/data/performanceMedia';
+	import { paperFoldedHandoffMedia } from '$lib/data/performanceMedia';
 
 	const mapProtocol: PerformanceCondition[] = [
 		{
@@ -47,12 +47,12 @@
 	<PerformanceCampaignOpening
 		eyebrow="CREATE SOMETHING Map"
 		title="Make the workflow visible before you change it."
-		lede="Use the constrained public canvas to name the owner, data, approvals, systems, risks, and inspection points. This browser-local draft stays on this device until you carry it into booking or an authenticated Map workspace."
-		media={clarityInspectionMedia}
+		lede="Start a private browser-local draft to name the owner, data, approvals, systems, risks, and inspection points. Its bounded summary can travel into a mapping session or an authenticated Map workspace; it never touches a production system."
+		media={paperFoldedHandoffMedia}
 		proof={[{ label: 'Input', value: 'Prospect map' }, { label: 'Boundary', value: 'No production tools' }, { label: 'Handoff', value: 'Build or Control' }]}
 	>
 		{#snippet actions()}
-			<Button href="#canvas">Open canvas</Button>
+			<Button href="#canvas">Open private draft</Button>
 			<Button href={agencyCoreMessaging.workflowMappingSessionHref} variant="secondary">
 				{agencyCoreMessaging.bookMappingSessionLabel}
 			</Button>
@@ -61,8 +61,8 @@
 
 	<PerformanceThesisConditions
 		eyebrow="Mapping protocol"
-		title="Map the channel before work enters it."
-		description="Map makes the boundary, ownership, stops, and proof requirements visible without touching production systems."
+		title="Set the boundary before work is delegated."
+		description="Map turns the starting sheet into a legible boundary, owner, stop condition, and proof requirement without touching production systems."
 		conditions={mapProtocol}
 		ariaLabel="Public workflow mapping protocol"
 	/>
@@ -71,8 +71,8 @@
 		id="canvas"
 		variant="white"
 		eyebrow="Public mapping surface"
-		title="The canvas turns curiosity into operating context."
-		description="Cold readers can test the method without exposing credentials. The public draft stays in this browser; its summary and readiness signal can move into booking, a durable Map workspace, Build, or Control."
+		title="The canvas turns a starting sheet into operating context."
+		description="Cold readers can test the method without exposing credentials. The private draft stays in this browser; its summary and readiness signal can move into booking, a durable Map workspace, Build, or Control."
 	>
 		{#snippet after()}
 			<SystemContextRail />
@@ -89,8 +89,8 @@
 
 	<PerformanceConversionHandoff
 		eyebrow="Continue the definition"
-		title="Keep the workflow definition alive."
-		description="The public canvas is a browser-local draft, not a durable workspace. Sign in to create an account-scoped Map with version history, review gates, sharing, export, and Build handoff—or bring this draft into a mapping session first."
+		title="Carry the starter sheet forward."
+		description="The private draft is a starting sheet, not an account-scoped CREATE SOMETHING Map. Sign in for version history, review gates, sharing, export, and Build handoff—or bring the bounded summary into a mapping session first."
 		density="compact"
 		handoff={{
 			owner: 'Workflow owner',
@@ -100,7 +100,7 @@
 		}}
 	>
 		{#snippet actions()}
-			<Button href="/map/workspace">Open Map workspace</Button>
+			<Button href="/map/workspace">Open CREATE SOMETHING Map</Button>
 			<Button href={agencyCoreMessaging.workflowMappingSessionHref} variant="secondary">
 				{agencyCoreMessaging.bookMappingSessionLabel}
 			</Button>

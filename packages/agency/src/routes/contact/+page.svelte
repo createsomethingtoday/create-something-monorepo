@@ -50,13 +50,13 @@
     },
     {
       value: 'workflow-mapping',
-      label: 'I am ready to map the workflow',
+      label: 'Book a mapping session',
       description:
         'Best when there is a real workflow, owner, approval authority, and decision timeline.',
       funnelStage: 'decision',
       serviceInterest: 'Workflow mapping session',
       submitLabel: 'Send mapping details',
-      successMessage: "Sent. I'll review the details before the mapping path."
+      successMessage: "Received. I'll review the details before confirming the right mapping path."
     }
   ];
 
@@ -353,14 +353,14 @@
     </div>
 
     <div class="contact-option contact-option--calendar">
-      <h2>Already high-intent?</h2>
+      <h2>Ready to book?</h2>
       <p>
         Use the calendar when you can bring one real workflow, the tools involved, who owns the
         decision, and what needs to be decided.
       </p>
       <div class="cal-button">
         <ScheduleButton variant="primary" size="lg" />
-        <a href="/book" class="calendar-link">Book a mapping session</a>
+        <a href="/book" class="calendar-link">Review scheduling details</a>
       </div>
     </div>
   </div>
@@ -369,7 +369,7 @@
 <PerformancePageSection
   variant="white"
   eyebrow="Funnel routing"
-  title="One intake path, three levels of commitment."
+  title="One intake path, four levels of commitment."
 >
   {#snippet after()}
     <FunnelLadder />
