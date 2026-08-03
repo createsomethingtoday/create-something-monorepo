@@ -582,15 +582,19 @@
 			</div>
 
 			{#if !showInternalOperatorUi}
-				<div class="application-completion" aria-label="Application completion">
+				<div
+					class="application-completion"
+					aria-label={`Application: ${nurseGuidance.title}. ${liveThreadView.thread.profile.completion}% complete.`}
+				>
 					<div class="application-completion-copy">
-						<span>Working profile</span>
-						<strong>{liveThreadView.thread.profile.completion}% complete</strong>
+						<span>Current step</span>
+						<strong>{nurseGuidance.title}</strong>
 					</div>
 					<div class="application-completion-track" aria-hidden="true">
 						<span style={`width: ${liveThreadView.thread.profile.completion}%`}></span>
 					</div>
-					<span class="application-completion-note">Built with you, one answer at a time.</span>
+					<span class="application-completion-note"
+						>{liveThreadView.thread.profile.completion}% profile complete</span>
 					{#if renderedInlineWidgets.length > 0}
 						<a class="application-next-link" href="#application-next-step">Next step ↓</a>
 					{/if}
@@ -1898,10 +1902,6 @@
 		.application-completion {
 			grid-template-columns: 1fr;
 			gap: 10px;
-		}
-
-		.application-completion-note {
-			display: none;
 		}
 
 		.application-next-link {
