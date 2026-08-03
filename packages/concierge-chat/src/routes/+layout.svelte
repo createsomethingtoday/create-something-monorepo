@@ -570,10 +570,15 @@
       background 160ms ease;
   }
 
-  .webflow-nav-links a:hover,
+  .webflow-nav-links a:hover {
+    background: var(--accent-secondary-soft);
+    color: var(--button-bg);
+  }
+
   .webflow-nav-links a[aria-current='page'] {
     background: var(--accent-secondary-soft);
     color: var(--button-bg);
+    font-weight: 620;
   }
 
   .webflow-nav-actions {
@@ -836,10 +841,6 @@
       border-radius: var(--radius-tight);
       font-size: 15px;
       text-align: left;
-    }
-
-    .webflow-nav-links > a[aria-current='page'] {
-      box-shadow: inset 3px 0 0 var(--accent-secondary);
     }
 
     .webflow-nav-toggle {
