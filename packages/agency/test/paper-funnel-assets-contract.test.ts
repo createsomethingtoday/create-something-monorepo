@@ -69,3 +69,15 @@ test('keeps draft, request, and booking commitments as distinct public actions',
   assert.match(funnel, /title: 'Mapping session'/);
   assert.match(booking, /Start a private workflow draft/);
 });
+
+test('uses direct reader-facing language through the draft and booking handoff', () => {
+  const funnel = readFileSync(resolve(agencyRoot, 'src/lib/components/FunnelLadder.svelte'), 'utf8');
+  const map = readFileSync(resolve(agencyRoot, 'src/routes/map/+page.svelte'), 'utf8');
+  const booking = readFileSync(resolve(agencyRoot, 'src/routes/book/+page.svelte'), 'utf8');
+  const visibleCopy = [funnel, map, booking].join('\n');
+
+  assert.match(funnel, /Start with a reusable checklist\. Make a private draft\./);
+  assert.match(map, /A short summary can travel to a mapping session/);
+  assert.match(booking, /Review what will be shared/);
+  assert.doesNotMatch(visibleCopy, /bounded (summary|handoff|context|fields)|owned scheduler/i);
+});

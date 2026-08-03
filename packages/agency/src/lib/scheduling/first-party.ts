@@ -186,7 +186,7 @@ export function schedulerHandoffSheet(context: SchedulerHandoffContext): Schedul
 	return {
 		state: hasContext ? 'ready' : 'empty',
 		summary: hasContext
-			? 'Review this bounded handoff before you choose a time.'
+			? 'Review this handoff before you choose a time.'
 			: 'No private draft is attached yet. You can still book a mapping session, or start a draft first.',
 		fields,
 		...(context.warmupNotes ? { warmupNotes: context.warmupNotes } : {})

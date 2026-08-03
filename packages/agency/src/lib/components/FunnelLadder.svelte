@@ -5,7 +5,7 @@
   export let eyebrow = 'Conversion Path';
   export let title = 'Move from useful reading to a named workflow decision.';
   export let description =
-    'Cold readers should not be forced straight into a calendar. Start with a reusable checklist, make a private draft, request a workflow map when review would help, then book when the owner and decision are named.';
+    'Start with a reusable checklist. Make a private draft. Request a workflow map when a review would help. Book when the owner and decision are named.';
 
   const stages = [
     {
