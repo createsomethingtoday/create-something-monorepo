@@ -86,6 +86,31 @@
   let isArchiving = $state(false);
   let showArchiveConfirm = $state(false);
 
+  // SvelteKit reuses this component across loads (invalidation, or navigating
+  // straight from one asset detail route to another). Without this resync the
+  // page keeps rendering the previous `data.asset`.
+  //
+  // Loop safety: the effect reads only `data.asset` — never `asset` — and
+  // `lastSyncedAsset` is a plain `let` (not `$state`) so writing it does not
+  // retrigger the effect.
+  let lastSyncedAsset = getInitialAsset();
+  $effect(() => {
+    const nextAsset = data.asset;
+    if (nextAsset === lastSyncedAsset) return;
+
+    const previousId = lastSyncedAsset.id;
+    lastSyncedAsset = nextAsset;
+    asset = nextAsset;
+
+    // A plain invalidation of the same asset keeps whichever tab the user is
+    // reading; a genuine A -> B navigation recomputes the default tab.
+    if (nextAsset.id !== previousId) {
+      activeTab = getDefaultTab(nextAsset.status) as TabValue;
+      imageError = false;
+      secondaryImageError = false;
+    }
+  });
+
   // Can show metrics for non-Upcoming and non-Rejected statuses
   const canShowMetrics = $derived(!['Upcoming', 'Rejected'].includes(asset.status));
 
@@ -141,7 +166,9 @@
     showEditModal = false;
   }
 
-  async function handleEditSave(updateData: AssetUpdateData): Promise<void> {
+  async function handleEditSave(
+    updateData: AssetUpdateData
+  ): Promise<{ versionWarning?: string }> {
     const response = await fetch(`/api/assets/${asset.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -149,18 +176,26 @@
     });
 
     if (!response.ok) {
-      const data = (await response.json()) as { message?: string };
-      throw new Error(data.message || 'Failed to update asset');
+      const errorData = (await response.json().catch(() => ({}))) as { message?: string };
+      throw new Error(errorData.message || 'Failed to update asset');
     }
 
-    const result = (await response.json()) as { asset: typeof asset };
+    const result = (await response.json().catch(() => ({}))) as {
+      asset?: Asset;
+      versionWarning?: string;
+    };
 
     // Update local state with new asset data
-    asset = result.asset;
+    if (result.asset) {
+      asset = result.asset;
+    }
 
     // Reset image error state in case thumbnail changed
     imageError = false;
     secondaryImageError = false;
+
+    // Surface version warnings the same way the dashboard flow does.
+    return { versionWarning: result.versionWarning };
   }
 
   async function handleArchive(): Promise<void> {
@@ -170,8 +205,8 @@
     });
 
     if (!response.ok) {
-      const data = (await response.json()) as { message?: string };
-      throw new Error(data.message || 'Failed to archive asset');
+      const errorData = (await response.json().catch(() => ({}))) as { message?: string };
+      throw new Error(errorData.message || 'Failed to archive asset');
     }
 
     // Navigate back to dashboard after successful archive
