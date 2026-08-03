@@ -1,5 +1,6 @@
 <script lang="ts">
 	import ImageUploader from './ImageUploader.svelte';
+	import { setThumbnailUrlAtIndex } from '$lib/utils/uploader-interactions';
 
 	interface Props {
 		value?: string[];
@@ -16,10 +17,9 @@
 			const newUrls = value.filter((_, i) => i !== index);
 			onchange?.(newUrls);
 		} else {
-			// Add/Update
-			const newUrls = [...value];
-			newUrls[index] = url;
-			onchange?.(newUrls);
+			// Add/Update — compacted so a write past the end never leaves holes
+			// that JSON.stringify would serialize as null.
+			onchange?.(setThumbnailUrlAtIndex(value, index, url));
 		}
 	}
 </script>
