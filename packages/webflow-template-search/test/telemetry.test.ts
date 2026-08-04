@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseTelemetryBody } from '../src/telemetry';
+import { buildAnalyticsEnginePoint, parseTelemetryBody } from '../src/telemetry';
 
 function event(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
@@ -46,6 +46,51 @@ describe('telemetry fallback payload parsing', () => {
       events: [event({ event_properties: { blob: 'x'.repeat(70_000) } })],
     });
     expect(parseTelemetryBody(oversized)).toHaveLength(0);
+  });
+
+  it('shapes an Analytics Engine point with stable column order', () => {
+    const [e] = parseTelemetryBody(
+      JSON.stringify({
+        events: [
+          event({
+            event_properties: {
+              component: 'TemplateDetailConversionTracker',
+              scope: 'detail_purchase_cta_clicked',
+              transport: 'beacon_fallback',
+              pathname: '/templates/html/vaboulus',
+              detail_template_slug: 'vaboulus',
+              attribution_source_component: 'TemplateGrid',
+              cta_location: 'offer_panel',
+              purchase_type: 'checkout',
+            },
+          }),
+        ],
+      }),
+    );
+    const point = buildAnalyticsEnginePoint(e);
+    expect(point.blobs).toEqual([
+      '[Template Marketplace] Code Component Event',
+      'TemplateDetailConversionTracker',
+      'detail_purchase_cta_clicked',
+      'beacon_fallback',
+      '/templates/html/vaboulus',
+      'vaboulus',
+      'TemplateGrid',
+      'offer_panel',
+      'checkout',
+    ]);
+    expect(point.doubles).toEqual([1]);
+    expect(point.indexes).toEqual(['TemplateDetailConversionTracker']);
+  });
+
+  it('tolerates missing properties and clips long blob values', () => {
+    const [e] = parseTelemetryBody(
+      JSON.stringify({ events: [event({ event_properties: { pathname: 'x'.repeat(500) } })] }),
+    );
+    const point = buildAnalyticsEnginePoint(e);
+    expect(point.indexes).toEqual(['unknown']);
+    expect(point.blobs[1]).toBe('');
+    expect(point.blobs[4].length).toBe(200);
   });
 
   it('caps events per request and clamps absurd timestamps', () => {

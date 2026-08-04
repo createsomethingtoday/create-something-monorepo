@@ -85,6 +85,57 @@ export function parseTelemetryBody(body: string, now = Date.now()): TelemetryEve
     .filter((event): event is TelemetryEvent => event !== null);
 }
 
+/** Property names copied into Analytics Engine blobs, in fixed column order. */
+const AE_BLOB_PROPERTIES = [
+  'component',
+  'scope',
+  'transport',
+  'pathname',
+  'detail_template_slug',
+  'attribution_source_component',
+  'cta_location',
+  'purchase_type',
+] as const;
+
+const MAX_AE_BLOB_LENGTH = 200;
+
+function aeBlobValue(properties: Record<string, unknown>, key: string): string {
+  const value = properties[key];
+  if (value === null || value === undefined) return '';
+  const text = typeof value === 'string' ? value : String(value);
+  return text.length > MAX_AE_BLOB_LENGTH ? text.slice(0, MAX_AE_BLOB_LENGTH) : text;
+}
+
+/**
+ * Shape one event for Analytics Engine. Exported for tests: column order is a
+ * contract, since AE queries address blobs positionally (blob1, blob2, ...).
+ */
+export function buildAnalyticsEnginePoint(event: TelemetryEvent): {
+  blobs: string[];
+  doubles: number[];
+  indexes: string[];
+} {
+  const properties = event.event_properties;
+  return {
+    blobs: [event.event_type, ...AE_BLOB_PROPERTIES.map((key) => aeBlobValue(properties, key))],
+    doubles: [1],
+    // Index by component so AE sampling and grouping stay per-component.
+    indexes: [aeBlobValue(properties, 'component') || 'unknown'],
+  };
+}
+
+function writeToAnalyticsEngine(env: Env, events: TelemetryEvent[]): void {
+  const dataset = env.TELEMETRY_AE;
+  if (!dataset) return;
+  for (const event of events) {
+    try {
+      dataset.writeDataPoint(buildAnalyticsEnginePoint(event));
+    } catch {
+      // Telemetry ingestion must never fail the request.
+    }
+  }
+}
+
 async function forwardToAmplitude(apiKey: string, events: TelemetryEvent[]): Promise<void> {
   try {
     await fetch(AMPLITUDE_HTTP_API, {
@@ -112,6 +163,10 @@ export async function handleTelemetry(
   const events = parseTelemetryBody(body);
   const apiKey = env.AMPLITUDE_API_KEY?.trim();
 
+  // Analytics Engine first: it needs no credential, so the funnel stays
+  // measurable even before/without Amplitude forwarding.
+  writeToAnalyticsEngine(env, events);
+
   if (events.length > 0 && apiKey) {
     ctx.waitUntil(forwardToAmplitude(apiKey, events));
   }
@@ -121,7 +176,11 @@ export async function handleTelemetry(
   return jsonResponse(
     request,
     env,
-    { accepted: events.length, forwarded: events.length > 0 && Boolean(apiKey) },
+    {
+      accepted: events.length,
+      recorded: events.length > 0 && Boolean(env.TELEMETRY_AE),
+      forwarded: events.length > 0 && Boolean(apiKey),
+    },
     202,
   );
 }
