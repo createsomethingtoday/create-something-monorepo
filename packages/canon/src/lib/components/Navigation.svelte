@@ -476,6 +476,12 @@
   }
 
   .nav-clear.nav-fixed {
+    /*
+     * `.nav-clear` establishes a stacking context for campaign openings.
+     * Reassert the requested fixed positioning here so that context does not
+     * put a fixed Performance header back into document flow.
+     */
+    position: fixed;
     top: 0;
     left: 0;
     right: 0;
