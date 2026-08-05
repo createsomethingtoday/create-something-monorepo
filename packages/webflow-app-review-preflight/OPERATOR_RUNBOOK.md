@@ -1,4 +1,4 @@
-# Validate a Production Runtime with App Review Preflight
+# Validate Submission Artifacts and a Production Runtime with App Review Preflight
 
 This guide shows you how to use App Review Preflight to test the production runtime for a Webflow App.
 
@@ -10,12 +10,15 @@ Preflight gives you evidence. It does not approve or reject an app.
 
 You will:
 
-1. Upload the exact app bundle you plan to submit.
-2. Connect that bundle to a dedicated published Webflow test site.
-3. Pin the production runtime by URL, SHA-256, and SRI.
-4. Ask Webflow's server to run the site in a fresh browser.
-5. Repeat the developer test on the same package.
-6. Ask a reviewer to replay that exact package.
+1. Upload the exact app bundle and private source-map container you plan to submit.
+2. Record the server-owned artifact receipt without exposing the private maps.
+3. Reconcile those exact containers through the canonical submission adapter twice.
+4. Prove that changing either container invalidates the supplied receipt.
+5. Connect the reviewed bundle to a dedicated published Webflow test site.
+6. Pin the production runtime by URL, SHA-256, and SRI.
+7. Ask Webflow's server to run the site in a fresh browser.
+8. Repeat the developer test on the same package.
+9. Ask a reviewer to replay that exact package.
 
 At the end, you will know whether the published site ran the reviewed runtime and blocked the proxy canary.
 
@@ -24,6 +27,9 @@ At the end, you will know whether the published site ran the reviewed runtime an
 Have these items ready:
 
 - the exact zip bundle you plan to submit
+- the exact private source-map ZIP you plan to submit, or one `.map` file
+- a canonical submission ID for each reconciliation run
+- access to the server-owned canonical submission adapter
 - a dedicated Webflow test site with the app installed
 - the published `webflow.io` URL for that site
 - the Webflow site or installation ID
@@ -41,6 +47,9 @@ Do not use a customer site. Do not use a runtime URL that can change while the r
 | -------------------- | ------------------------------------------------------------------------------------ |
 | Bundle               | The zip file you plan to submit for review                                           |
 | Bundle SHA-256       | A fingerprint for the zip; different files have a different fingerprint              |
+| Source-map artifact  | One private ZIP of maps, or one `.map` file, submitted as an unchanged container      |
+| Artifact receipt     | Server-owned identities for one reviewed bundle and source-map checkpoint             |
+| Reconciliation       | Exact-hash comparison between Preflight and the canonical form's stored artifacts     |
 | Runtime              | The JavaScript file that the published site loads and runs                           |
 | Runtime SHA-256      | A fingerprint for the runtime file that actually ran                                 |
 | SRI                  | The integrity value the browser uses to check a script before it runs                |
@@ -50,12 +59,13 @@ Do not use a customer site. Do not use a runtime URL that can change while the r
 | `webflow_observed`   | Evidence produced by Webflow's server-owned browser, not your computer               |
 | Proxy canary         | A harmless request used to prove that the app proxy does not expose an arbitrary URL |
 
-## Step 1: Upload the bundle
+## Step 1: Upload the exact submission artifacts
 
 1. Open **App Review Preflight** in Webflow Designer.
 2. Select the exact zip bundle you plan to submit.
-3. Wait for the bundle review to finish.
-4. Read every deterministic finding.
+3. Select the exact private source-map ZIP, or one `.map` file.
+4. Wait for the bundle review to finish.
+5. Read every deterministic finding.
 
 If the bundle review reports a problem, fix the bundle and upload a revision. Do not move to runtime testing until you understand the remaining findings.
 
@@ -64,10 +74,62 @@ When the bundle is ready, record:
 - review ID
 - review-version ID
 - bundle SHA-256
+- artifact-set version
+- artifact receipt ID
+- source-map artifact SHA-256
+- policy version and scan status
 
 These values identify the exact code under test.
 
-## Step 2: Prepare the Runtime Test Package
+The receipt must not show raw map content, `sourcesContent`, a public URL, or an R2 object key. Do not unzip and re-zip either artifact after recording the receipt: reconciliation hashes the original containers, not their extracted contents.
+
+For a directly authored, unminified bundle, Preflight may record that source maps are not required. A generated or minified executable must not receive a passing receipt without meaningfully associated maps.
+
+## Step 2: Reconcile the canonical submission twice
+
+The official Webflow App Submission Form remains canonical and continues receiving the bundle and source-map artifact. Its server-side automation computes SHA-256 over the exact stored files and calls the reconciliation endpoint. A browser must never receive the reconciliation token.
+
+Submit the same containers through the canonical form. The adapter must return all of the following:
+
+- `status: matched`
+- `receiptValid: true`
+- `enforcement: verified`
+- an empty `mismatches` list
+
+Repeat the complete Designer-to-canonical path once more without changing either artifact. Use a distinct canonical submission ID and record both results. The two runs must be consecutive; investigate any intervening mismatch or unknown receipt before continuing.
+
+The repository-owned adapter probe hashes the exact files and creates a receipt-safe JSON result. It is an operator aid for the form automation and does not replace the authenticated Designer or real canonical submission:
+
+```bash
+export SUBMISSION_RECONCILIATION_TOKEN="<server-owned secret>"
+
+pnpm --filter @create-something/webflow-app-review-preflight-worker \
+  verify:reconciliation -- \
+  --api-base https://webflow-app-review-preflight.createsomething.workers.dev \
+  --submission-id "<canonical submission ID>" \
+  --receipt-id "<artifact receipt ID>" \
+  --bundle "/absolute/path/to/exact-bundle.zip" \
+  --source-maps "/absolute/path/to/exact-source-maps.zip"
+
+unset SUBMISSION_RECONCILIATION_TOKEN
+```
+
+Save the JSON output in the approved private evidence location. It contains hashes and status, not the token or source contents.
+
+## Step 3: Prove mismatch invalidation
+
+Create a controlled negative copy by changing exactly one artifact while keeping the prior receipt ID. Submit that changed container through the canonical adapter under a new submission ID. Do not replace the prior matching evidence.
+
+The result must show:
+
+- `status: mismatch`
+- `receiptValid: false`
+- `enforcement: invalid`
+- `mismatches` naming `bundle` or `source_maps`
+
+Restore the original containers before runtime testing. A mismatch is successful negative evidence; it must never be converted to fail-open. Only an omitted receipt uses `receipt_not_provided` and `fail_open` during rollout.
+
+## Step 4: Prepare the Runtime Test Package
 
 Find the **Webflow runtime observation** card. Select **Prepare another test package** if an older package is already shown.
 
@@ -125,7 +187,7 @@ Create a new package when any of these values changes:
 
 Do not create a new package merely because you want to run the same test again.
 
-## Step 3: Run the developer test twice
+## Step 5: Run the developer test twice
 
 ### First run
 
@@ -149,7 +211,7 @@ The two job IDs must be different. The package ID, review-version ID, and bundle
 
 Two quick clicks do not create two runs. The server returns the one active job until that job is finished.
 
-## Step 4: Ask a reviewer to replay the package
+## Step 6: Ask a reviewer to replay the package
 
 A reviewer uses a separate identity and a server-owned workspace.
 
@@ -164,7 +226,7 @@ A reviewer uses a separate identity and a server-owned workspace.
 
 The reviewer replay must use the same package ID, review-version ID, and bundle SHA-256. It creates a third job and does not replace either developer run.
 
-## Step 5: Read the result
+## Step 7: Read the result
 
 ### Runtime security
 
@@ -200,10 +262,13 @@ Open **Evidence artifact details** to see the saved artifact types, sizes, and S
 
 Do not read **Evidence captured by Webflow** as an approval. It only tells you who controlled the browser and evidence path.
 
-## Step 6: Decide whether the validation is complete
+## Step 8: Decide whether the validation is complete
 
 The production-runtime validation is complete when you have:
 
+- two consecutive authenticated Designer-to-canonical artifact runs with exact matching hashes
+- one controlled mismatch run marked invalid
+- receipt evidence with artifact-set version, bundle and map hashes, policy version, and passing scan state
 - two completed developer jobs for one Runtime Test Package
 - one completed reviewer replay for that same package
 - three different observation job IDs
@@ -222,6 +287,19 @@ Choose one summary:
 | `infrastructure_incomplete` | One or more runs did not return trusted evidence |
 
 Only the external review process can approve or reject the app.
+
+Record one final evidence row for each run:
+
+| Run | Required identity | Required result |
+| --- | --- | --- |
+| Artifact match A | review version, receipt, artifact-set version, form submission, bundle hash, map hash | `matched` and `verified` |
+| Artifact match B | same fields with a distinct form submission | `matched` and `verified` |
+| Artifact mismatch | prior receipt plus the changed artifact hash | `mismatch` and `invalid` |
+| Runtime developer A | package, observation job, bundle hash, runtime hash/SRI | completed security and proxy result |
+| Runtime developer B | same package and bundle, distinct job | completed security and proxy result |
+| Runtime reviewer | same package and bundle, distinct reviewer job | completed security and proxy result |
+
+The artifact receipt proves the official form received the reviewed private containers. The runtime observation separately proves what the published site loaded and executed. Neither proof substitutes for the other.
 
 ## If the app does not move forward
 
