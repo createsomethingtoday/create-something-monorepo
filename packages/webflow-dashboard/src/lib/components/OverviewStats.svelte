@@ -3,6 +3,7 @@
   import KineticNumber from './KineticNumber.svelte';
   import DataFreshnessIndicator from './DataFreshnessIndicator.svelte';
   import type { Asset } from '$lib/server/airtable';
+  import { VIEWER_DATA_AVAILABLE } from '$lib/config/viewer-data';
   import { sortAssetTypes } from '$lib/utils/asset-actions';
 
   interface Props {
@@ -85,7 +86,7 @@
 
 <div class="overview-stats">
   <!-- Performance Summary -->
-  {#if totals.viewers > 0 || totals.purchases > 0 || totals.revenue > 0}
+  {#if (VIEWER_DATA_AVAILABLE && totals.viewers > 0) || totals.purchases > 0 || totals.revenue > 0}
     <section class="overview-panel overview-panel--performance">
       <Card>
         <CardHeader>
@@ -96,12 +97,14 @@
         </CardHeader>
         <CardContent>
           <div class="performance-grid">
-            <div class="performance-item">
-              <div class="performance-content">
-                <span class="performance-value"><KineticNumber value={totals.viewers} /></span>
-                <span class="performance-label">Total Viewers</span>
+            {#if VIEWER_DATA_AVAILABLE}
+              <div class="performance-item">
+                <div class="performance-content">
+                  <span class="performance-value"><KineticNumber value={totals.viewers} /></span>
+                  <span class="performance-label">Total Viewers</span>
+                </div>
               </div>
-            </div>
+            {/if}
 
             <div class="performance-item">
               <div class="performance-content">

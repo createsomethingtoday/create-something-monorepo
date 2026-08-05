@@ -10,6 +10,7 @@
 	 * gracefully falls back to no sparklines if history not yet collected.
 	 */
 	import { onMount } from 'svelte';
+	import { VIEWER_DATA_AVAILABLE } from '$lib/config/viewer-data';
 	import type { Asset } from '$lib/server/airtable';
 	import { Card, CardHeader, CardTitle, CardContent } from './ui';
 	import Sparkline from './Sparkline.svelte';
@@ -94,7 +95,7 @@
 
 	// Check if we have data to show
 	const hasData = $derived(
-		(asset.uniqueViewers && asset.uniqueViewers > 0) ||
+		(VIEWER_DATA_AVAILABLE && asset.uniqueViewers && asset.uniqueViewers > 0) ||
 		(asset.cumulativePurchases && asset.cumulativePurchases > 0) ||
 		(asset.cumulativeRevenue && asset.cumulativeRevenue > 0)
 	);
@@ -111,23 +112,25 @@
 				</div>
 			</CardHeader>
 			<CardContent>
-				<div class="metrics-grid">
-					<!-- Unique Viewers -->
-					<div class="metric-card">
-						<div class="metric-header">
-							<Users size={18} class="metric-icon viewers" />
-							<span class="metric-label">Unique Viewers</span>
-						</div>
-						<div class="metric-value">
-							<KineticNumber value={asset.uniqueViewers || 0} />
-						</div>
-						{#if historyLoaded && viewersTrend.length >= 2}
-							<div class="metric-trend">
-								<Sparkline data={viewersTrend} color="var(--color-info)" height={24} />
-								<span class="trend-days">{daysOfHistory}d trend</span>
+				<div class="metrics-grid" class:metrics-grid--two={!VIEWER_DATA_AVAILABLE}>
+					{#if VIEWER_DATA_AVAILABLE}
+						<!-- Unique Viewers -->
+						<div class="metric-card">
+							<div class="metric-header">
+								<Users size={18} class="metric-icon viewers" />
+								<span class="metric-label">Unique Viewers</span>
 							</div>
-						{/if}
-					</div>
+							<div class="metric-value">
+								<KineticNumber value={asset.uniqueViewers || 0} />
+							</div>
+							{#if historyLoaded && viewersTrend.length >= 2}
+								<div class="metric-trend">
+									<Sparkline data={viewersTrend} color="var(--color-info)" height={24} />
+									<span class="trend-days">{daysOfHistory}d trend</span>
+								</div>
+							{/if}
+						</div>
+					{/if}
 
 					<!-- Purchases -->
 					<div class="metric-card">
@@ -173,24 +176,26 @@
 			</CardHeader>
 			<CardContent>
 				<div class="insights-grid">
-					<div class="insight">
-						<div class="insight-icon">
-							<Percent size={16} />
+					{#if VIEWER_DATA_AVAILABLE}
+						<div class="insight">
+							<div class="insight-icon">
+								<Percent size={16} />
+							</div>
+							<div class="insight-content">
+								<span class="insight-label">Conversion Rate</span>
+								<span class="insight-value">{formatPercent(conversionRate())}</span>
+								<span class="insight-description">
+									{#if conversionRate() >= 5}
+										<span class="insight-good">Excellent performance</span>
+									{:else if conversionRate() >= 2}
+										<span class="insight-ok">Good conversion</span>
+									{:else}
+										<span class="insight-low">Room for improvement</span>
+									{/if}
+								</span>
+							</div>
 						</div>
-						<div class="insight-content">
-							<span class="insight-label">Conversion Rate</span>
-							<span class="insight-value">{formatPercent(conversionRate())}</span>
-							<span class="insight-description">
-								{#if conversionRate() >= 5}
-									<span class="insight-good">Excellent performance</span>
-								{:else if conversionRate() >= 2}
-									<span class="insight-ok">Good conversion</span>
-								{:else}
-									<span class="insight-low">Room for improvement</span>
-								{/if}
-							</span>
-						</div>
-					</div>
+					{/if}
 
 					<div class="insight">
 						<div class="insight-icon">
@@ -203,16 +208,18 @@
 						</div>
 					</div>
 
-					<div class="insight">
-						<div class="insight-icon">
-							<TrendingUp size={16} />
+					{#if VIEWER_DATA_AVAILABLE}
+						<div class="insight">
+							<div class="insight-icon">
+								<TrendingUp size={16} />
+							</div>
+							<div class="insight-content">
+								<span class="insight-label">Revenue per Viewer</span>
+								<span class="insight-value">{formatWholeCurrency(revenuePerViewer())}</span>
+								<span class="insight-description">Lifetime value indicator</span>
+							</div>
 						</div>
-						<div class="insight-content">
-							<span class="insight-label">Revenue per Viewer</span>
-							<span class="insight-value">{formatWholeCurrency(revenuePerViewer())}</span>
-							<span class="insight-description">Lifetime value indicator</span>
-						</div>
-					</div>
+					{/if}
 
 					{#if asset.qualityScore}
 						<div class="insight">
@@ -273,6 +280,11 @@
 		display: grid;
 		grid-template-columns: repeat(3, 1fr);
 		gap: var(--space-md);
+	}
+
+	/* While viewer data is unavailable only Purchases + Revenue render */
+	.metrics-grid--two {
+		grid-template-columns: repeat(2, 1fr);
 	}
 
 	.metric-card {

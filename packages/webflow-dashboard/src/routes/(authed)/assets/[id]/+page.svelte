@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { PageData } from './$types';
   import type { Asset, AssetUpdateData } from '$lib/server/airtable';
+  import { VIEWER_DATA_AVAILABLE } from '$lib/config/viewer-data';
   import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
   import { sanitizeFeedbackHtml, sanitizeLongDescription } from '$lib/utils/sanitize';
@@ -118,6 +119,7 @@
 
   // Tufte: Calculate derived metrics for relationships
   const conversionRate = $derived(() => {
+    if (!VIEWER_DATA_AVAILABLE) return null;
     if (!canShowMetrics || !asset.uniqueViewers || asset.uniqueViewers === 0) return null;
     return ((asset.cumulativePurchases || 0) / asset.uniqueViewers) * 100;
   });
@@ -340,7 +342,9 @@
                 <span><strong>{asset.qualityScore}</strong> quality score</span>
               {/if}
               {#if canShowMetrics && showPerformance}
-                <span><strong>{formatCompactNumber(asset.uniqueViewers)}</strong> viewers</span>
+                {#if VIEWER_DATA_AVAILABLE}
+                  <span><strong>{formatCompactNumber(asset.uniqueViewers)}</strong> viewers</span>
+                {/if}
                 <span
                   ><strong>{formatCompactNumber(asset.cumulativePurchases)}</strong> purchases</span
                 >
@@ -566,12 +570,14 @@
                     {/if}
 
                     {#if showPerformance && canShowMetrics}
-                      <div class="detail-item">
-                        <span class="detail-label detail-label--with-freshness"
-                          >Unique Viewers <DataFreshnessIndicator variant="tooltip" /></span
-                        >
-                        <span class="detail-value">{formatWholeNumber(asset.uniqueViewers)}</span>
-                      </div>
+                      {#if VIEWER_DATA_AVAILABLE}
+                        <div class="detail-item">
+                          <span class="detail-label detail-label--with-freshness"
+                            >Unique Viewers <DataFreshnessIndicator variant="tooltip" /></span
+                          >
+                          <span class="detail-value">{formatWholeNumber(asset.uniqueViewers)}</span>
+                        </div>
+                      {/if}
                       <div class="detail-item">
                         <span class="detail-label detail-label--with-freshness"
                           >Total Purchases <DataFreshnessIndicator variant="tooltip" /></span
@@ -687,13 +693,15 @@
                   </CardHeader>
                   <CardContent>
                     <div class="quick-stats">
-                      <div class="stat-item viewers">
-                        <div class="stat-header">
-                          <Users size={14} class="stat-icon" />
-                          <span class="stat-number">{formatWholeNumber(asset.uniqueViewers)}</span>
+                      {#if VIEWER_DATA_AVAILABLE}
+                        <div class="stat-item viewers">
+                          <div class="stat-header">
+                            <Users size={14} class="stat-icon" />
+                            <span class="stat-number">{formatWholeNumber(asset.uniqueViewers)}</span>
+                          </div>
+                          <span class="stat-label">Viewers</span>
                         </div>
-                        <span class="stat-label">Viewers</span>
-                      </div>
+                      {/if}
                       <div class="stat-item purchases">
                         <div class="stat-header">
                           <ShoppingCart size={14} class="stat-icon" />
