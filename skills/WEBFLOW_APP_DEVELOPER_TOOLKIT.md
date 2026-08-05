@@ -32,7 +32,7 @@ Give the skill only findings the recipient is authorized to receive. Do not atta
 
 ## Where App Review Preflight fits
 
-The App Review Preflight Designer Extension can supplement either skill with bundle analysis and authorized runtime observations when the required App, sandbox, and test package are available. Its output is evidence—not Marketplace approval—and does not replace human policy decisions, incident response, or authorization tests that require two controlled identities.
+The **App Review Preflight** system — a Designer Extension as the developer surface plus a reviewer web app backed by a Webflow-controlled runtime pipeline — can supplement either skill with bundle analysis and authorized runtime observations when the required App and sandbox are available. A partner-supplied runtime test package is **test input only, not evidence**: the security result comes solely from the Webflow-controlled run. Its output is evidence—not Marketplace approval—and does not replace human policy decisions, incident response, or authorization tests that require two controlled identities.
 
 ## Provenance and decision boundaries
 
@@ -54,4 +54,8 @@ Official starting points:
 
 Share the skill directories as versioned files so developers can use them in a skill-capable coding agent or read them directly. Include the commit or archive checksum used for the engagement. Public documentation and Marketplace expectations can change; refresh links and rerun the included evals before reuse.
 
-The Designer Extension can provide longer-lived automation once deployed and maintained. The skills are the faster artifact to distribute today, while their explicit provenance and versioning make future updates auditable.
+The App Review Preflight system can provide longer-lived automation once deployed and maintained. The skills are the faster artifact to distribute today, while their explicit provenance and versioning make future updates auditable.
+
+## Feedback
+
+If any guidance here is wrong, out of date, or unclear, reply through the channel that delivered this package — your App review thread or the message it was attached to. Include the `Packaged:` date and `Source commit` from `PROVENANCE.txt` so the right version gets fixed.

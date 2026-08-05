@@ -11,12 +11,39 @@ export function isSingleUploadInteractive(options: {
 	return !options.disabled && !options.isUploading;
 }
 
+/**
+ * An upload still occupies a slot only while it is queued or in flight.
+ *
+ * `complete` items do NOT count: the uploaded URL is appended to `value` in the
+ * same tick the status flips, so the item and its URL would be double-counted
+ * during the ~1s window before the completed entry is purged from the queue.
+ * `error` items never reserved a slot to begin with.
+ */
+export function isUploadInFlight(item: UploadQueueLike): boolean {
+	return item.status === 'pending' || item.status === 'uploading';
+}
+
 export function hasUploadWork(items: UploadQueueLike[]): boolean {
-	return items.some((item) => item.status === 'pending' || item.status === 'uploading');
+	return items.some(isUploadInFlight);
 }
 
 export function countReservedCarouselSlots(items: UploadQueueLike[]): number {
-	return items.filter((item) => item.status !== 'error').length;
+	return items.filter(isUploadInFlight).length;
+}
+
+/**
+ * Assign a thumbnail URL at `index` without leaving array holes.
+ *
+ * Writing past the end of a copied array produces a SPARSE array. `Array.some`
+ * skips holes, so the server's `assertOptionalStringArray` guard passes, but
+ * `JSON.stringify` serializes each hole as `null` and the request is rejected
+ * with a 400. Compacting matches the delete branch's `filter` semantics and
+ * never sends blank strings to the API.
+ */
+export function setThumbnailUrlAtIndex(urls: string[], index: number, url: string): string[] {
+	const nextUrls = [...urls];
+	nextUrls[index] = url;
+	return nextUrls.filter((entry) => typeof entry === 'string' && entry.length > 0);
 }
 
 export function getRemainingCarouselSlots(options: {

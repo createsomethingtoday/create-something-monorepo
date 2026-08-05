@@ -72,7 +72,9 @@
 		});
 
 		// Calculate trend (comparing first and last thirds)
-		const thirdLength = Math.floor(data.length / 3);
+		// Guard against length 2, where floor(2/3) === 0 would make firstThird empty
+		// (avg NaN) and slice(-0) return the whole array, yielding a NaN trend.
+		const thirdLength = Math.max(1, Math.floor(data.length / 3));
 		const firstThird = data.slice(0, thirdLength);
 		const lastThird = data.slice(-thirdLength);
 		const firstAvg = firstThird.reduce((a, b) => a + b, 0) / firstThird.length;

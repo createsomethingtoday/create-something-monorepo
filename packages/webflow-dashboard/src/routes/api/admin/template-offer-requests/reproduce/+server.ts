@@ -1,7 +1,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getAirtableClient } from '$lib/server/airtable';
-import { hasAdminAccess } from '$lib/server/security';
+import { hasAdminAccess, secretsMatch } from '$lib/server/security';
 import {
 	normalizeTemplateOfferRequestBody,
 	requireString,
@@ -32,7 +32,10 @@ function isAuthorizedDiagnosticRequest(
 	const configuredToken = env.TEMPLATE_OFFER_DIAGNOSTIC_TOKEN?.trim();
 	const providedToken = getBearerToken(request);
 
-	if (configuredToken && providedToken === configuredToken) {
+	// Constant-time compare: this endpoint can create real Template Offer records
+	// when dryRun is false, so the token check must not leak length or prefix
+	// information through response timing.
+	if (configuredToken && secretsMatch(providedToken, configuredToken)) {
 		return true;
 	}
 

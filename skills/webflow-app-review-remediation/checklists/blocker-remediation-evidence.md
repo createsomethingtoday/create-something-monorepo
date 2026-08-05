@@ -1,6 +1,6 @@
-# P1 remediation evidence checklist
+# Blocker remediation evidence checklist
 
-Use this checklist for each issued P1 finding. Mark an item `N/A` with a reason; do not silently skip it.
+Use this checklist for each issued blocker — P1 or `unassigned` (treat `unassigned` findings as P1 unless the reviewer states otherwise). Mark an item `N/A` with a reason; do not silently skip it.
 
 ## Handling
 
@@ -41,11 +41,11 @@ Use this checklist for each issued P1 finding. Mark an item `N/A` with a reason;
 - [ ] No unauthorized write, tenant enumeration, or response-body retrieval was used as proof.
 - [ ] GET and write-path authorization are tested separately when both exist.
 - [ ] Runtime URL, version, child resources, integrity behavior, and readiness signal are recorded when applicable.
-- [ ] App Review Preflight observations are labeled as evidence, not reviewer acceptance.
+- [ ] App Review Preflight observations are labeled as evidence from the Webflow-controlled run, not reviewer acceptance — and any partner-supplied runtime test package is recorded as test input only, never as evidence.
 
 ## Resubmission
 
-- [ ] Every P1 finding maps to changed files/configuration, tests, artifact proof, and runtime proof or a justified `N/A`.
+- [ ] Every P1 or unassigned finding maps to changed files/configuration, tests, artifact proof, and runtime proof or a justified `N/A`.
 - [ ] Remaining limitations and open decisions are explicit.
 - [ ] Source verified, artifact verified, installed, runtime observed, submitted, and reviewer accepted are reported separately.
 - [ ] The packet ends with `READY TO RESUBMIT` or `NOT READY TO RESUBMIT`.

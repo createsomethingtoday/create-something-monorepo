@@ -89,12 +89,12 @@ evals:
         value: 'owner'
   - id: 9
     input: 'Our callback function takes only the authorization code and exchanges it. We read siteId with jwtDecode before resolving the token. The client bundle includes our server handlers and DB schema, and the shipped source map exposes them. We log the full contact payload including email and phone on every sync.'
-    expected_output: 'Flags the missing single-use state validation (and PKCE where supported), identity derived from an unverified decoded token instead of a server-resolved one, backend code bundled into the client artifact as the defect the source map revealed, and personal data in production logs requiring redaction at the logging boundary.'
+    expected_output: 'Flags the missing single-use state validation as the CSRF control in Webflow''s OAuth flow, identity derived from an unverified decoded token instead of a server-resolved one, backend code bundled into the client artifact as the defect the source map revealed, and personal data in production logs requiring redaction at the logging boundary.'
     assertions:
       - type: 'contains'
         value: 'single-use'
       - type: 'contains'
-        value: 'PKCE'
+        value: 'state'
       - type: 'contains'
         value: 'redact'
       - type: 'not_contains'

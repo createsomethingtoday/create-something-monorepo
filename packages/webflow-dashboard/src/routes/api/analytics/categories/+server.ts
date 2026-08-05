@@ -1,4 +1,4 @@
-import { json, error } from '@sveltejs/kit';
+import { json, error, isHttpError } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getAirtableClient } from '$lib/server/airtable';
 import { marketplaceAnalyticsCacheHeaders } from '$lib/server/marketplace-cache';
@@ -118,6 +118,12 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 				{ headers: marketplaceAnalyticsCacheHeaders }
 			);
 	} catch (err) {
+		// requireTemplateAssetAccess throws 401/403/503 from inside this try. Those
+		// carry the real reason (not entitled vs. upstream outage) and must reach the
+		// client instead of being flattened into a generic 500.
+		if (isHttpError(err)) {
+			throw err;
+		}
 		console.error('Categories API Error:', err);
 		throw error(500, 'Failed to fetch category data');
 	}

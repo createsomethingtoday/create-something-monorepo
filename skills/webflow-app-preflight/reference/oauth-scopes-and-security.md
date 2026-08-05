@@ -16,8 +16,8 @@ Designer Extension–only Apps need no install URL — Webflow handles the insta
 
 Steps 1→4 cross a trust boundary, and your callback endpoint is publicly reachable. Two controls, both engineering practice rather than a Webflow-specific rule:
 
-- **Carry a `state` value and validate it.** Generate a single-use, unguessable value before step 1, store it server-side against the pending authorization, and reject any callback whose `state` is missing, unknown, expired, or already consumed. Without it, an attacker can deliver their own authorization code to your callback and get it exchanged under someone else's session — the code-injection form of CSRF.
-- **Use PKCE where your OAuth model supports it.** A `code_verifier`/`code_challenge` pair binds the exchange to the client that began the flow, so an intercepted code isn't independently redeemable.
+- **Carry a `state` value and validate it.** Generate a single-use, unguessable value before step 1, store it server-side against the pending authorization, and reject any callback whose `state` is missing, unknown, expired, or already consumed. Without it, an attacker can deliver their own authorization code to your callback and get it exchanged under someone else's session — the code-injection form of CSRF. Webflow's OAuth docs document `state` explicitly as the CSRF protection for this flow.
+- **PKCE is not part of Webflow's documented OAuth flow.** The parameters documented for Webflow's authorize and token-exchange endpoints do not include `code_challenge`/`code_verifier` (verified against the public OAuth reference, 2026-08-03) — so in the Webflow flow, the `state` check is your CSRF control. Do use PKCE (`code_verifier`/`code_challenge`) on any third-party OAuth flows your app performs that support it: it binds the exchange to the client that began the flow, so an intercepted code isn't independently redeemable.
 
 A reviewer reading your callback handler looks for the `state` check specifically. If your exchange function takes only an authorization code as input, that reads as the check being absent.
 
@@ -27,9 +27,12 @@ Scopes in the Install URL must be **equal to or a subset of** the scopes configu
 
 Request only what your App actually calls. Each Data API endpoint documents its required scope — take the union of the endpoints you use and stop there.
 
+Table regenerated from the public scopes reference (<https://developers.webflow.com/data/reference/scopes>) on 2026-08-03 — re-check that page before relying on it, since scopes can be added.
+
 | Resource           | Scopes                                  |
 | ------------------ | --------------------------------------- |
 | Assets             | `assets:read`, `assets:write`           |
+| Authorized User    | `authorized_user:read`                  |
 | CMS                | `cms:read`, `cms:write`                 |
 | Comments           | `comments:read`, `comments:write`       |
 | Components         | `components:read`, `components:write`   |
@@ -44,6 +47,8 @@ Request only what your App actually calls. Each Data API endpoint documents its 
 | Workspace          | `workspace:read`, `workspace:write`     |
 | Workspace Activity | `workspace_activity:read`               |
 | Webhooks           | Varies by trigger type                  |
+
+`authorized_user:read` is required for the **Get Authorized User** endpoint — the natural first call after a token exchange to resolve who authorized your App — so most Data Clients need it. (Authorization info requires no scope.)
 
 > "Only request scopes your app actually needs. Requesting unnecessary scopes can make users hesitant to approve your app."
 
@@ -70,7 +75,10 @@ The rules that get apps removed if broken:
 - **Changes take effect on publish.** Applying/updating/removing a script only goes live when the site is published, and publish pushes _all_ staged changes. Prompt the user to publish when ready; don't auto-publish on their behalf.
 - **Remove on uninstall.** Remove applied scripts at **both site and page level** when the App is uninstalled, where technically feasible. If automated removal isn't possible, give the user clear removal instructions.
 
-Inline scripts: max 10,000 characters, no `<script>` tags (Webflow adds them).
+Two different surfaces, two different limits (verified 2026-08-03):
+
+- **Data API inline scripts** (`POST /v2/sites/{site_id}/registered_scripts/inline`): `sourceCode` is limited to **2,000 characters**. It takes JavaScript source — the endpoint's examples pass raw JS, not `<script>` markup.
+- **Site/Page settings custom code** (the fields a user edits in project settings — a different surface from the Custom Code API): Webflow raised this to **50,000 characters** shared across Site settings, Page settings, Code Embed elements, and CMS rich text (Webflow product update).
 
 ## Designer Extension security patterns
 

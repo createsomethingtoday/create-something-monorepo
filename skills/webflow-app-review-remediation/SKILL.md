@@ -1,6 +1,6 @@
 ---
 name: webflow-app-review-remediation
-description: Resolve issued Webflow Marketplace App review blockers with a developer or partner. Use when review findings already exist and the developer needs a prioritized P1 remediation plan, implementation guidance, verification evidence, or a resubmission packet. Do not use for first-time preflight, generic security reviews, or internal reviewer/governance deliberation.
+description: Resolve issued Webflow Marketplace App review blockers with a developer or partner. Use when review findings, rejection feedback, or acceptance criteria already exist and the developer needs a prioritized remediation plan, implementation guidance, verification of a corrected bundle, runtime evidence, a reviewer response, or a resubmission packet. Do not use for first-time preflight — use webflow-app-preflight for that — or for generic security reviews or internal reviewer/governance deliberation.
 ---
 
 # Remediating Webflow App Review Blockers
@@ -54,17 +54,17 @@ Create one row per finding:
 | Provenance          | Label as `published requirement`, `issued finding`, `security control`, or `open decision`.         |
 | Evidence state      | `missing`, `source-verified`, `artifact-verified`, `runtime-observed`, or `reviewer-accepted`.      |
 
-Resolve P1 items first, but keep containment ahead of ordinary P1 implementation.
+Resolve P1 items first, but keep containment ahead of ordinary P1 implementation. Treat `unassigned` findings as P1 for planning and evidence purposes unless the reviewer states otherwise — most real rejection emails carry no P0/P1 nomenclature, and an unlabeled finding still blocks resubmission.
 
 ## Step 2 — Route the problem to the owning layer
 
 Debug in this order:
 
-1. **Database** — Is installation, tenant, site, user, credential, or lifecycle state correct and available?
-2. **Automation** — Do the extension, backend, OAuth flow, Custom Code lifecycle, build, and runtime behave correctly?
-3. **Judgment** — Is an exception, policy interpretation, risk acceptance, or partner expectation still undecided?
+1. **State and data** (Database) — Is installation, tenant, site, user, credential, or lifecycle state correct and available?
+2. **Behavior** (Automation) — Do the extension, backend, OAuth flow, Custom Code lifecycle, build, and runtime behave correctly?
+3. **Policy decision** (Judgment) — Is an exception, policy interpretation, risk acceptance, or partner expectation still undecided?
 
-Code cannot close an open Judgment decision. Record it as a blocker with an owner and continue only on independent findings.
+Code cannot close an open policy decision (Judgment). Record it as a blocker with an owner and continue only on independent findings.
 
 Common remediation lanes:
 
@@ -80,7 +80,7 @@ Common remediation lanes:
 
 ## Step 3 — Make an evidence-first plan
 
-Use `assets/remediation-plan.md`. For every P1 finding define before editing:
+Use `assets/remediation-plan.md`. For every P1 or unassigned finding define before editing:
 
 - the control that must become true;
 - the smallest code/configuration change that can make it true;
@@ -108,7 +108,7 @@ Do not deploy, rotate credentials, change App visibility, or submit a new versio
 
 ## Step 5 — Verify without flattening states
 
-Run `checklists/p1-remediation-evidence.md`. Report each state separately:
+Run `checklists/blocker-remediation-evidence.md`. Report each state separately:
 
 1. **Source verified** — code and configuration implement the intended control.
 2. **Artifact verified** — the exact production bundle/archive contains the expected output and excludes prohibited development material.
@@ -119,7 +119,7 @@ Run `checklists/p1-remediation-evidence.md`. Report each state separately:
 
 Never infer a later state from an earlier one.
 
-The App Review Preflight Designer Extension may provide artifact and runtime observations when the required bundle, authorized sandbox installation, and runtime package exist. Treat those observations as evidence, not approval. It does not replace authenticated cross-tenant tests, POST/write authorization tests, source-level destination-policy review, or human policy judgment.
+The **App Review Preflight** system — a reviewer web app backed by a Webflow-controlled runtime pipeline — may provide artifact and runtime observations when the required bundle and authorized sandbox installation exist. A partner-supplied runtime test package is test input only, not evidence: the security result comes solely from the Webflow-controlled run. Treat those observations as evidence produced by that run, never as approval. It does not replace authenticated cross-tenant tests, POST/write authorization tests, source-level destination-policy review, or human policy judgment.
 
 ## Step 6 — Prepare the resubmission packet
 
@@ -134,7 +134,7 @@ For every finding include:
 
 End with one of:
 
-- **READY TO RESUBMIT** — every issued P1 acceptance criterion has evidence and no containment or Judgment blocker remains.
+- **READY TO RESUBMIT** — every issued P1 or unassigned acceptance criterion has evidence and no containment or open policy (Judgment) blocker remains.
 - **NOT READY TO RESUBMIT** — list the exact missing evidence, owner, and next action.
 
 This verdict describes partner readiness only. It is not a Webflow approval decision.
@@ -162,7 +162,7 @@ Do not say that every security control is explicitly published Marketplace polic
 ## References
 
 - `assets/remediation-plan.md`
-- `checklists/p1-remediation-evidence.md`
+- `checklists/blocker-remediation-evidence.md`
 - Webflow Marketplace Guidelines: <https://developers.webflow.com/apps/docs/marketplace-guidelines>
 - Submit a Webflow App: <https://developers.webflow.com/submit>
 - Get user ID token: <https://developers.webflow.com/designer/reference/get-user-id-token>

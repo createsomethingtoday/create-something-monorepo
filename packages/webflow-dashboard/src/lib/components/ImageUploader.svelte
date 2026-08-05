@@ -123,6 +123,8 @@
 		isUploading = true;
 		uploadProgress = 0;
 
+		let progressInterval: ReturnType<typeof setInterval> | undefined;
+
 		try {
 			// Get dimensions for server-side validation
 			const dimensions = await getImageDimensions(file);
@@ -138,7 +140,7 @@
 			}
 
 			// Simulate progress for better UX (actual progress tracking would require XHR)
-			const progressInterval = setInterval(() => {
+			progressInterval = setInterval(() => {
 				if (uploadProgress < 90) {
 					uploadProgress += 10;
 				}
@@ -148,8 +150,6 @@
 				method: 'POST',
 				body: formData
 			});
-
-			clearInterval(progressInterval);
 
 			if (!response.ok) {
 				const errorData = (await response.json().catch(() => ({}))) as { message?: string };
@@ -178,6 +178,11 @@
 				error_message: message
 			});
 		} finally {
+			// Always stop the progress simulation, including when fetch rejects
+			// (offline/abort/network) and control jumps straight to catch.
+			if (progressInterval !== undefined) {
+				clearInterval(progressInterval);
+			}
 			isUploading = false;
 			uploadProgress = 0;
 		}

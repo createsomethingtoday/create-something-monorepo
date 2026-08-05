@@ -1224,7 +1224,10 @@ function extractAttachmentUrls(value: unknown): string[] {
 }
 
 function getScreenshotAltTexts(fields: Airtable.FieldSet): string[] {
-	return Array.from({ length: 5 }, (_, index) => firstString(fields[`Alt Text Screenshot ${index + 1}`]) || '');
+	// Reads come back keyed by field name; writes use the field ID.
+	const raw = firstString(fields['🖼️Carousel Images Alt Text']) || '';
+	const lines = raw ? raw.split('\n') : [];
+	return Array.from({ length: 5 }, (_, index) => (lines[index] || '').trim());
 }
 
 export function mapAssetRecord(record: Airtable.Record<Airtable.FieldSet>): Asset {
@@ -1281,17 +1284,17 @@ export function mapAssetRecord(record: Airtable.Record<Airtable.FieldSet>): Asse
 		previewUrl:
 			firstString(record.fields['🔗Preview Site URL']) ||
 			firstString(record.fields['fldROrXCnuZyKNCxW']),
-		marketplaceUrl: firstString(record.fields['🔗Marketplace URL']),
+		marketplaceUrl: firstString(record.fields['🔗Listing URL']),
 		submittedDate: firstString(record.fields['📅Submitted Date']),
 		publishedDate:
 			firstString(record.fields['🚀📅Published Date']) ||
-			firstString(record.fields['📅Published Date']),
+			firstString(record.fields['👀📅Published Date (Override)']),
 		decisionDate: firstString(record.fields['🚀📅Decision Date']),
 		uniqueViewers: Number(record.fields['📋 Unique Viewers']) || 0,
 		cumulativePurchases: Number(record.fields['📋 Cumulative Purchases']) || 0,
 		cumulativeRevenue: Number(record.fields['📋 Cumulative Revenue']) || 0,
 		latestReviewStatus: firstString(record.fields['📝Latest Review Status']),
-		latestReviewDate: firstString(record.fields['📝Latest Review Date']),
+		latestReviewDate: firstString(record.fields['🚀📅Latest Version Review Status LMT']),
 		latestReviewFeedback: firstString(record.fields['🖌️📝Latest Review Feedback']),
 		rejectionFeedback:
 			firstString(record.fields['🚩Rejection Feedback']) ||
@@ -1319,10 +1322,8 @@ export function mapAssetRecord(record: Airtable.Record<Airtable.FieldSet>): Asse
 		postOfferAction: firstString(record.fields['⚙️Post-Offer Action (🏗️ only)']),
 		appCapabilities: firstString(record.fields['ℹ️Capabilities (🖥️ only)']),
 		appInstallUrl: firstString(record.fields['🔗Install URL (🖥️ only)']),
-		appScopes: parseScopesField(
-			record.fields['ℹ️Scopes'] ?? record.fields['Scopes'] ?? record.fields['all-selected-scopes']
-		),
-		appAvatarAltText: firstString(record.fields['App Avatar Alt Text']),
+		appScopes: parseScopesField(record.fields['⚙️Scope(s)']),
+		appAvatarAltText: firstString(record.fields['🖼️Thumbnail Alt Text']),
 		paymentType: parseDelimitedStringArray(record.fields['ℹ️💲Payment Types']),
 		visibility: firstString(record.fields['ℹ️Visibility (🖥️ only)']),
 		appCategory: parseDelimitedStringArray(record.fields['ℹ️🪣Categories (Text)']),
@@ -1332,7 +1333,7 @@ export function mapAssetRecord(record: Airtable.Record<Airtable.FieldSet>): Asse
 		appFeaturesOverview: parseFeaturesField(
 			record.fields['❓ℹ️✨Features Text (MIGRATE TO LINKED FIELD)']
 		),
-		appDeveloperNotes: firstString(record.fields['Developer Notes']),
+		appDeveloperNotes: firstString(record.fields['ℹ️Notes']),
 		appAccessCredentials: firstString(record.fields['ℹ️Credentials']),
 		appVideoUrl: firstString(record.fields['🔗Promo Video URL (🖥️ only)']),
 		appDemoVideoUrl: firstString(record.fields['🔗Demo Video URL']),
@@ -1349,7 +1350,7 @@ function requiresCurrentSupportRecord(data: AssetUpdateData): boolean {
 	return isSupportUpdate && (data.appSupportEmail === undefined || data.appSupportUrl === undefined);
 }
 
-function buildAssetUpdateFields(
+export function buildAssetUpdateFields(
 	data: AssetUpdateData,
 	currentAsset?: Asset | null
 ): Record<string, AirtableWritableValue> {
@@ -1357,7 +1358,6 @@ function buildAssetUpdateFields(
 	const fields: Record<string, any> = {};
 
 	if (data.name !== undefined) fields['Name'] = data.name;
-	if (data.description !== undefined) fields['📝Description'] = data.description;
 	if (data.descriptionShort !== undefined) fields['ℹ️Description (Short)'] = data.descriptionShort;
 	if (data.descriptionLongHtml !== undefined) fields['ℹ️Description (Long).html'] = data.descriptionLongHtml;
 	if (data.websiteUrl !== undefined) fields['🔗Website URL'] = data.websiteUrl;
@@ -1366,22 +1366,37 @@ function buildAssetUpdateFields(
 		fields['ℹ️Capabilities (🖥️ only)'] = data.appCapabilities || null;
 	}
 	if (data.appInstallUrl !== undefined) fields['🔗Install URL (🖥️ only)'] = data.appInstallUrl;
-	if (data.appScopes !== undefined) fields['all-selected-scopes'] = JSON.stringify(data.appScopes || []);
-	if (data.appAvatarAltText !== undefined) fields['App Avatar Alt Text'] = data.appAvatarAltText;
+	// Airtable field IDs are stable; the display names carry emoji and have been
+	// renamed before, which is what silently broke every App-asset save.
+	if (data.appScopes !== undefined) {
+		// '⚙️Scope(s)' is rich text read back by splitting on newlines/commas.
+		fields['fldlFsAqNvG8uAftq'] = (data.appScopes || []).join('\n');
+	}
+	if (data.appAvatarAltText !== undefined) {
+		fields['fldKG132fWtKXhwsH'] = data.appAvatarAltText; // '🖼️Thumbnail Alt Text'
+	}
 	if (data.paymentType !== undefined) fields['ℹ️💲Payment Types'] = data.paymentType;
 	if (data.visibility !== undefined) fields['ℹ️Visibility (🖥️ only)'] = data.visibility || null;
-	if (data.appCategory !== undefined) fields['ℹ️🪣Categories (Text)'] = data.appCategory;
-	if (data.creatorName !== undefined) fields['🎨Creator Name'] = data.creatorName;
+	// appCategory and creatorName are deliberately not written. Both are derived
+	// on the Assets table — '🎨Creator Name' is a rollup off the linked Creator
+	// record and 'ℹ️🪣Categories (Text)' is a lookup off the '🪣Categories' link
+	// field — so Airtable rejects any write and takes the whole update with it.
+	// Editing them needs a link-field write, tracked as follow-up work.
 	if (data.creatorWebsite !== undefined) {
 		fields['👀🎨📧 Creator WF Account Email (Override)'] = data.creatorWebsite;
 	}
-	if (data.creatorContactEmail !== undefined) fields['🎨📧 Creator Email'] = data.creatorContactEmail;
+	if (data.creatorContactEmail !== undefined) {
+		// The read-only '🎨📧 Creator Email' rollup resolves from this override.
+		fields['fldjCdCvHOy7dVwss'] = data.creatorContactEmail;
+	}
 	if (data.appFeaturesOverview !== undefined) {
 		fields['❓ℹ️✨Features Text (MIGRATE TO LINKED FIELD)'] = buildFeaturesField(
 			data.appFeaturesOverview
 		);
 	}
-	if (data.appDeveloperNotes !== undefined) fields['Developer Notes'] = data.appDeveloperNotes;
+	if (data.appDeveloperNotes !== undefined) {
+		fields['fldBVKHOno8aJlnox'] = data.appDeveloperNotes; // 'ℹ️Notes'
+	}
 	if (data.appAccessCredentials !== undefined) fields['ℹ️Credentials'] = data.appAccessCredentials;
 	if (data.appVideoUrl !== undefined) fields['🔗Promo Video URL (🖥️ only)'] = data.appVideoUrl;
 	if (data.appDemoVideoUrl !== undefined) fields['🔗Demo Video URL'] = data.appDemoVideoUrl;
@@ -1396,10 +1411,12 @@ function buildAssetUpdateFields(
 	}
 	if (data.appTermsUrl !== undefined) fields['🔗Terms & Conditions URL'] = data.appTermsUrl;
 	if (data.appScreenshotAltTexts !== undefined) {
+		// A single '🖼️Carousel Images Alt Text' field holds all five, one per
+		// line, so position in the list is what ties an alt text to an image.
 		const altTexts = data.appScreenshotAltTexts.slice(0, 5);
-		for (let index = 0; index < 5; index += 1) {
-			fields[`Alt Text Screenshot ${index + 1}`] = altTexts[index] || '';
-		}
+		fields['fldJ2HQ8HgScYomuE'] = Array.from({ length: 5 }, (_, index) => altTexts[index] || '')
+			.join('\n')
+			.trimEnd();
 	}
 
 	return fields;
