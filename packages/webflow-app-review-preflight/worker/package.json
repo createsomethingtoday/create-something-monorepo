@@ -13,7 +13,7 @@
     "pretest": "pnpm --filter @create-something/webflow-app-review-preflight build",
     "probe:e2b": "node scripts/probe-e2b-runtime.mjs",
     "verify:reconciliation": "node scripts/reconcile-submission-artifacts.mjs",
-    "test": "vitest run && node --test scripts/reconcile-submission-artifacts.test.mjs",
+    "test": "vitest run && node --test scripts/reconcile-submission-artifacts.node.mjs",
     "types": "node ../../../scripts/run-wrangler.mjs types --config wrangler.jsonc"
   },
   "dependencies": {
