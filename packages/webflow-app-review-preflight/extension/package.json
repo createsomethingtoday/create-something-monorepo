@@ -8,6 +8,7 @@
     "build": "node scripts/build.mjs",
     "build:production": "PREFLIGHT_BUILD_MODE=production node scripts/build.mjs",
     "bundle": "pnpm build:production && node scripts/verify-production-bundle.mjs && webflow extension bundle",
+    "precheck": "pnpm --filter @create-something/webflow-app-review-preflight build",
     "check": "tsc --noEmit",
     "lint": "pnpm run check",
     "pretest": "pnpm --filter @create-something/webflow-app-review-preflight build",

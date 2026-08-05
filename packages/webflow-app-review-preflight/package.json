@@ -15,6 +15,7 @@
   "scripts": {
     "prebuild": "pnpm --filter @create-something/bundle-scanner-core build",
     "build": "tsup src/index.ts --format esm --dts --clean",
+    "precheck": "pnpm --filter @create-something/bundle-scanner-core build",
     "check": "tsc --noEmit",
     "lint": "pnpm run check",
     "pretest": "pnpm --filter @create-something/bundle-scanner-core build",

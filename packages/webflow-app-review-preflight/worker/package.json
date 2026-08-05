@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "build": "node ../../../scripts/run-wrangler.mjs deploy --dry-run --outdir dist --config wrangler.jsonc",
+    "precheck": "pnpm --filter @create-something/webflow-app-review-preflight build",
     "check": "tsc --noEmit",
     "dev": "node ../../../scripts/run-wrangler.mjs dev --config wrangler.jsonc",
     "lint": "pnpm run check",

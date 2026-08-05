@@ -17,6 +17,7 @@
   },
   "scripts": {
     "build": "tsup src/index.ts src/cli.ts --format esm --dts --clean",
+    "precheck": "pnpm --filter @create-something/webflow-app-review-preflight build",
     "check": "tsc --noEmit",
     "lint": "pnpm run check",
     "test": "vitest run"
