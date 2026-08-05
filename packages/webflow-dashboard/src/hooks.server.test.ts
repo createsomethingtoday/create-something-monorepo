@@ -74,7 +74,7 @@ describe('CSRF origin protection', () => {
   });
 
   it('exempts header-authenticated machine callers, which have no origin', async () => {
-    const { result, resolve } = callHandle('/api/admin/template-offer-requests/reproduce', {
+    const { result, resolve } = callHandle('/api/internal/machine-operation', {
       headers: { authorization: 'Bearer secret' }
     });
 

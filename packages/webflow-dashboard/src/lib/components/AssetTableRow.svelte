@@ -43,16 +43,6 @@
 	const cleanedStatus = $derived(normalizeAssetStatus(asset.status));
 	const showMetrics = $derived(!['Upcoming', 'Rejected'].includes(cleanedStatus));
 	const isSearchSuppressed = $derived(isTemplateSearchSuppressed(asset.searchVisibility));
-	const hasActiveOffer = $derived(
-		Boolean(
-			asset.activeOfferLabel ||
-				asset.activeOfferCtaUrl ||
-				asset.activeOfferStrategy ||
-				asset.activeOfferEndsAt ||
-				asset.activeOfferVisibility ||
-				asset.activeOfferPrice !== undefined
-		)
-	);
 
 	function handleView(event: MouseEvent) {
 		if (isViewDisabled) {
@@ -125,24 +115,9 @@
 			<span class="asset-name-row">
 				<span class="asset-name">{asset.name}</span>
 			</span>
-			{#if hasActiveOffer}
-				<span class="offer-badge-row">
-					<Badge variant="info">
-						{asset.activeOfferLabel || 'Limited offer'}
-						{#if asset.activeOfferPrice !== undefined}
-							· {formatCompactCurrency(asset.activeOfferPrice)}
-						{/if}
-					</Badge>
-				</span>
-			{/if}
 			{#if isSearchSuppressed}
-				<span class="offer-badge-row">
+				<span class="visibility-badge-row">
 					<Badge variant="warning">Detail only</Badge>
-				</span>
-			{/if}
-			{#if asset.recoveryOfferUsed}
-				<span class="offer-badge-row">
-					<Badge variant="secondary">Recovery used</Badge>
 				</span>
 			{/if}
 		</a>
@@ -280,7 +255,7 @@
 		min-width: 0;
 	}
 
-	.offer-badge-row {
+	.visibility-badge-row {
 		display: inline-flex;
 		margin-top: 0.22rem;
 		max-width: 100%;

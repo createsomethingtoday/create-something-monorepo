@@ -119,123 +119,16 @@ describe('computeTemplateHealth', () => {
 		});
 	});
 
-	it('recommends a limited recovery offer for templates that still need buyer response', () => {
-		const health = computeTemplateHealth(
-			templateAsset({
-				publishedDate: '2024-01-01',
-				uniqueViewers: 600,
-				cumulativePurchases: 0,
-				qualityScore: 'Good'
-			}),
-			NOW,
-			{ viewerDataAvailable: true }
-		);
-
-		expect(health.status).toBe('needs_attention');
-		expect(health.offer.hasOffer).toBe(false);
-		expect(health.automation).toMatchObject({
-			code: 'run_recovery_offer',
-			recommendedOfferStrategy: 'Prune recovery test',
-			recommendedPostOfferAction: 'Review search visibility after expiry'
-		});
-		expect(health.actions.map((action) => action.title)).toContain('Try a limited recovery offer');
-	});
-
-	it('moves underperforming templates detail-only after the one-time recovery was used', () => {
-		const health = computeTemplateHealth(
-			templateAsset({
-				publishedDate: '2024-01-01',
-				uniqueViewers: 600,
-				cumulativePurchases: 0,
-				qualityScore: 'Good',
-				recoveryOfferUsed: true,
-				qualifiedSales30d: 0
-			}),
-			NOW,
-			{ viewerDataAvailable: true }
-		);
-
-		expect(health.automation).toMatchObject({
-			code: 'move_detail_only',
-			searchVisibilityTarget: 'Detail only'
-		});
-		expect(health.actions.map((action) => action.title)).toContain(
-			'Move underperforming template detail-only'
-		);
-	});
-
-	it('surfaces live recovery offers as a lifecycle signal', () => {
-		const health = computeTemplateHealth(
-			templateAsset({
-				uniqueViewers: 600,
-				cumulativePurchases: 0,
-				activeOfferLabel: 'Creator sale',
-				activeOfferPrice: 29,
-				activeOfferEndsAt: '2026-06-20T12:00:00.000Z',
-				activeOfferStrategy: 'Prune recovery test',
-				activeOfferVisibility: 'Listing badge + detail',
-				offerPruneReviewAt: '2026-06-24T12:00:00.000Z',
-				postOfferAction: 'Re-review for pruning'
-			}),
-			NOW,
-			{ viewerDataAvailable: true }
-		);
-
-		expect(health.offer).toMatchObject({
-			hasOffer: true,
-			state: 'live',
-			label: 'Creator sale',
-			price: 29,
-			strategy: 'Prune recovery test',
-			postOfferAction: 'Re-review for pruning'
-		});
-		expect(health.actions.map((action) => action.title)).toContain('Measure the recovery window');
-	});
-
-	it('prioritizes expired recovery offers for lifecycle review', () => {
-		const health = computeTemplateHealth(
-			templateAsset({
-				uniqueViewers: 600,
-				cumulativePurchases: 1,
-				activeOfferLabel: 'Exit sale',
-				activeOfferPrice: 29,
-				activeOfferEndsAt: '2026-05-20T12:00:00.000Z',
-				activeOfferStrategy: 'Exit sale before delist',
-				activeOfferVisibility: 'Detail only',
-				offerPruneReviewAt: '2026-06-01T12:00:00.000Z',
-				postOfferAction: 'Delist / archive'
-			}),
-			NOW,
-			{ viewerDataAvailable: true }
-		);
-
-		expect(health.offer.state).toBe('expired');
-		expect(health.offer.tone).toBe('critical');
-		expect(health.automation.code).toBe('review_offer_outcome');
-		expect(health.actions).toContainEqual(
-			expect.objectContaining({
-				title: 'Complete the offer lifecycle review',
-				priority: 'high'
-			})
-		);
-	});
-
 	it('surfaces detail-only search visibility as a reversible discovery state', () => {
 		const health = computeTemplateHealth(
 			templateAsset({
-				searchVisibility: 'Detail only',
-				recoveryOfferUsed: true,
-				qualifiedSales30d: 3
+				searchVisibility: 'Detail only'
 			}),
 			NOW,
 			{ viewerDataAvailable: true }
 		);
 
 		expect(health.searchVisibilitySuppressed).toBe(true);
-		expect(health.automation).toMatchObject({
-			code: 'detail_only_recovery',
-			searchVisibilityTarget: '3/4 qualified sales'
-		});
 		expect(health.signals).toContainEqual(
 			expect.objectContaining({
 				label: 'Discovery',
@@ -245,53 +138,6 @@ describe('computeTemplateHealth', () => {
 		);
 		expect(health.actions.map((action) => action.title)).toContain(
 			'Maintain direct-access readiness'
-		);
-	});
-
-	it('marks detail-only templates eligible for re-entry after 4 qualified sales in 30 days', () => {
-		const health = computeTemplateHealth(
-			templateAsset({
-				searchVisibility: 'Detail only',
-				recoveryOfferUsed: true,
-				qualifiedSales30d: 4
-			}),
-			NOW,
-			{ viewerDataAvailable: true }
-		);
-
-		expect(health.automation).toMatchObject({
-			code: 'eligible_for_reentry',
-			searchVisibilityTarget: 'Searchable after review'
-		});
-		expect(health.signals).toContainEqual(
-			expect.objectContaining({
-				label: 'Re-entry signal',
-				value: '4/4 sales',
-				tone: 'positive'
-			})
-		);
-		expect(health.actions.map((action) => action.title)).toContain('Review for search re-entry');
-	});
-
-	it('keeps requested re-entry reviews pending and detail-only', () => {
-		const health = computeTemplateHealth(
-			templateAsset({
-				searchVisibility: 'Detail only - re-entry review requested',
-				recoveryOfferUsed: true,
-				qualifiedSales30d: 4
-			}),
-			NOW,
-			{ viewerDataAvailable: true }
-		);
-
-		expect(health.searchVisibilitySuppressed).toBe(true);
-		expect(health.automation).toMatchObject({
-			code: 'reentry_review_requested',
-			searchVisibilityTarget: 'Review requested'
-		});
-		expect(health.automation.signals).toContain('reentry_review_requested');
-		expect(health.actions.map((action) => action.title)).toContain(
-			'Await marketplace re-entry review'
 		);
 	});
 });
@@ -305,7 +151,6 @@ describe('computeTemplateHealth with viewer data unavailable', () => {
 		);
 
 		expect(health.conversionRate).toBeNull();
-		expect(health.automation.signals).toContain('viewers_unknown');
 		expect(health.signals.find((s) => s.label === 'Conversion')).toMatchObject({
 			value: 'Unavailable',
 			tone: 'neutral'

@@ -1,15 +1,5 @@
 import type { Asset } from '$lib/server/airtable';
 import { VIEWER_DATA_AVAILABLE } from '$lib/config/viewer-data';
-import {
-	RECOVERY_REENTRY_QUALIFIED_SALES_30D,
-	hasReachedRecoveryReentryThreshold,
-	isReentryReviewRequested,
-	isRecoveryOfferStrategy,
-	isTemplateSearchSuppressed,
-	recoverySalesRemaining
-} from './template-lifecycle-policy';
-
-export { isTemplateSearchSuppressed } from './template-lifecycle-policy';
 
 export type TemplateHealthStatus = 'strong' | 'watch' | 'needs_attention' | 'limited_data';
 export type TemplateHealthTone = 'positive' | 'neutral' | 'warning' | 'critical';
@@ -27,46 +17,6 @@ export interface TemplateHealthAction {
 	priority: 'high' | 'medium' | 'low';
 }
 
-export type TemplateLifecycleAutomationCode =
-	| 'collect_more_signal'
-	| 'keep_searchable'
-	| 'run_recovery_offer'
-	| 'review_offer_outcome'
-	| 'move_detail_only'
-	| 'eligible_for_reentry'
-	| 'reentry_review_requested'
-	| 'detail_only_recovery';
-
-export interface TemplateLifecycleAutomationSignal {
-	code: TemplateLifecycleAutomationCode;
-	label: string;
-	summary: string;
-	confidence: 'low' | 'medium' | 'high';
-	recommendedOfferStrategy?: string;
-	recommendedPostOfferAction?: string;
-	searchVisibilityTarget?: string;
-	signals: string[];
-}
-
-export type TemplateOfferState = 'none' | 'live' | 'expired' | 'internal';
-
-export interface TemplateOfferLifecycle {
-	hasOffer: boolean;
-	state: TemplateOfferState;
-	label: string;
-	tone: TemplateHealthTone;
-	summary: string;
-	price: number | null;
-	endsAt: Date | null;
-	pruneReviewAt: Date | null;
-	daysUntilEnd: number | null;
-	daysUntilReview: number | null;
-	ctaUrl?: string;
-	visibility?: string;
-	strategy?: string;
-	postOfferAction?: string;
-}
-
 export interface TemplateHealthModel {
 	status: TemplateHealthStatus;
 	label: string;
@@ -76,11 +26,6 @@ export interface TemplateHealthModel {
 	daysLive: number | null;
 	searchVisibility?: string;
 	searchVisibilitySuppressed: boolean;
-	qualifiedSales30d: number | null;
-	reentrySalesThreshold: number;
-	recoveryOfferUsed: boolean;
-	automation: TemplateLifecycleAutomationSignal;
-	offer: TemplateOfferLifecycle;
 	signals: TemplateHealthSignal[];
 	actions: TemplateHealthAction[];
 	hasQualityIssue: boolean;
@@ -104,12 +49,31 @@ function daysBetween(start: Date, end = new Date()): number {
 	return Math.max(0, Math.floor((end.getTime() - start.getTime()) / (24 * 60 * 60 * 1000)));
 }
 
-function daysUntil(target: Date, now = new Date()): number {
-	return Math.ceil((target.getTime() - now.getTime()) / (24 * 60 * 60 * 1000));
-}
-
 function normalizeText(value?: string | null): string {
 	return String(value ?? '').toLowerCase();
+}
+
+export function isTemplateSearchSuppressed(visibility?: string | null): boolean {
+	const normalized = normalizeText(visibility).trim();
+	if (!normalized) return false;
+
+	if (
+		/\b(searchable|search\s*enabled|listed|marketplace\s*search)\b/.test(normalized) &&
+		!normalized.includes('unlisted')
+	) {
+		return false;
+	}
+
+	return (
+		normalized.includes('detail only') ||
+		normalized.includes('detail-only') ||
+		normalized.includes('unlisted') ||
+		normalized.includes('hidden') ||
+		normalized.includes('suppress') ||
+		normalized.includes('not searchable') ||
+		normalized.includes('no search') ||
+		normalized.includes('remove from search')
+	);
 }
 
 function hasPositiveQualitySignal(qualityScore?: string): boolean {
@@ -158,268 +122,6 @@ function addActionOnce(actions: TemplateHealthAction[], action: TemplateHealthAc
 	actions.push(action);
 }
 
-function lifecycleAutomationSignal(input: {
-	status: TemplateHealthStatus;
-	isPublished: boolean;
-	viewersKnown: boolean;
-	hasEnoughViewers: boolean;
-	purchases: number;
-	qualifiedSales30d: number | null;
-	conversionRate: number | null;
-	daysLive: number | null;
-	qualityIssue: boolean;
-	hasReviewFeedback: boolean;
-	searchVisibility?: string | null;
-	searchVisibilitySuppressed: boolean;
-	recoveryOfferUsed: boolean;
-	offer: TemplateOfferLifecycle;
-}): TemplateLifecycleAutomationSignal {
-	const qualifiedSales30d = input.qualifiedSales30d ?? 0;
-	const remainingSales = recoverySalesRemaining(qualifiedSales30d);
-	const reentryReviewRequested = isReentryReviewRequested(input.searchVisibility);
-	const signals = [
-		!input.viewersKnown
-			? 'viewers_unknown'
-			: input.hasEnoughViewers
-				? 'enough_viewers'
-				: 'limited_viewers',
-		input.conversionRate === null ? 'conversion_unknown' : `conversion_${input.conversionRate.toFixed(1)}pct`,
-		`purchases_${input.purchases}`,
-		input.qualifiedSales30d === null ? 'qualified_sales_30d_unknown' : `qualified_sales_30d_${qualifiedSales30d}`,
-		input.daysLive === null ? 'not_live' : `days_live_${input.daysLive}`,
-		input.qualityIssue || input.hasReviewFeedback ? 'review_issue' : 'quality_clear',
-		input.searchVisibilitySuppressed
-			? reentryReviewRequested
-				? 'reentry_review_requested'
-				: 'detail_only'
-			: 'searchable',
-		input.recoveryOfferUsed ? 'recovery_used' : 'recovery_available',
-		input.offer.hasOffer ? `offer_${input.offer.state}` : 'no_offer'
-	];
-
-	if (input.searchVisibilitySuppressed) {
-		if (hasReachedRecoveryReentryThreshold(input.qualifiedSales30d) && !input.qualityIssue && !input.hasReviewFeedback) {
-			if (reentryReviewRequested) {
-				return {
-					code: 'reentry_review_requested',
-					label: 'Re-entry review pending',
-					summary:
-						'This detail-only template has reached the re-entry threshold and is queued for marketplace review. Keep it out of search until approval.',
-					confidence: 'high',
-					searchVisibilityTarget: 'Review requested',
-					signals
-				};
-			}
-
-			return {
-				code: 'eligible_for_reentry',
-				label: 'Eligible for search re-entry',
-				summary:
-					'This detail-only template has reached the 4 qualified sales in 30 days threshold. Review quality, then restore marketplace search if the listing is current.',
-				confidence: 'high',
-				searchVisibilityTarget: 'Searchable after review',
-				signals
-			};
-		}
-
-		return {
-			code: 'detail_only_recovery',
-			label: 'Detail-only recovery',
-			summary:
-				`Keep direct access intact. This template needs ${remainingSales} more qualified ${remainingSales === 1 ? 'sale' : 'sales'} in the rolling 30-day window before marketplace search re-entry.`,
-			confidence: 'high',
-			recommendedPostOfferAction: 'Review search visibility after expiry',
-			searchVisibilityTarget: `${qualifiedSales30d}/${RECOVERY_REENTRY_QUALIFIED_SALES_30D} qualified sales`,
-			signals
-		};
-	}
-
-	if (input.offer.state === 'expired') {
-		if (
-			isRecoveryOfferStrategy(input.offer.strategy) &&
-			hasReachedRecoveryReentryThreshold(input.qualifiedSales30d) &&
-			!input.qualityIssue &&
-			!input.hasReviewFeedback
-		) {
-			return {
-				code: 'keep_searchable',
-				label: 'Keep searchable',
-				summary:
-					'The one-time recovery window reached the 4 qualified sales in 30 days threshold. Keep the template searchable if the listing is current.',
-				confidence: 'high',
-				searchVisibilityTarget: 'Searchable',
-				signals
-			};
-		}
-
-		return {
-			code: 'review_offer_outcome',
-			label: 'Review offer outcome',
-			summary:
-				'The offer window ended. Compare conversion against the baseline before returning to search, moving detail-only, or archiving.',
-			confidence: isRecoveryOfferStrategy(input.offer.strategy) ? 'high' : 'medium',
-			recommendedPostOfferAction: input.offer.postOfferAction || 'Review search visibility after expiry',
-			searchVisibilityTarget: 'Decide from offer-period performance',
-			signals
-		};
-	}
-
-	// Without viewer data, low-view shortcuts are unreliable; require the
-	// stronger needs_attention evidence (long-lived with zero purchases, or a
-	// quality issue) before recommending lifecycle changes.
-	const viewerEvidence = input.viewersKnown ? input.hasEnoughViewers : true;
-	const underperforming = input.viewersKnown
-		? input.status === 'needs_attention' ||
-			input.purchases === 0 ||
-			(input.conversionRate !== null && input.conversionRate < WATCH_CONVERSION_RATE)
-		: input.status === 'needs_attention';
-
-	if (
-		input.isPublished &&
-		viewerEvidence &&
-		!input.offer.hasOffer &&
-		input.recoveryOfferUsed &&
-		underperforming
-	) {
-		return {
-			code: 'move_detail_only',
-			label: 'Move detail-only',
-			summary:
-				'The one-time recovery path has already been used and the template is still underperforming. Preserve direct access and remove it from marketplace search.',
-			confidence: 'high',
-			searchVisibilityTarget: 'Detail only',
-			signals
-		};
-	}
-
-	if (
-		input.isPublished &&
-		viewerEvidence &&
-		!input.offer.hasOffer &&
-		!input.recoveryOfferUsed &&
-		underperforming
-	) {
-		return {
-			code: 'run_recovery_offer',
-			label: 'Run recovery offer',
-			summary:
-				'Use a time-boxed creator offer to test price sensitivity before reducing search visibility.',
-			confidence: input.daysLive !== null && input.daysLive > WATCH_DAYS_WITHOUT_PURCHASE ? 'high' : 'medium',
-			recommendedOfferStrategy: 'Prune recovery test',
-			recommendedPostOfferAction: 'Review search visibility after expiry',
-			searchVisibilityTarget: 'Keep searchable during test',
-			signals
-		};
-	}
-
-	if (input.isPublished && (input.status === 'strong' || input.status === 'watch')) {
-		return {
-			code: 'keep_searchable',
-			label: 'Keep searchable',
-			summary: 'This template has enough quality or buyer signal to stay in marketplace search.',
-			confidence: input.status === 'strong' ? 'high' : 'medium',
-			searchVisibilityTarget: 'Searchable',
-			signals
-		};
-	}
-
-	return {
-		code: 'collect_more_signal',
-		label: 'Collect more signal',
-		summary: 'Keep the listing accurate until there is enough viewer, quality, or offer data to automate a lifecycle decision.',
-		confidence: 'low',
-		searchVisibilityTarget: input.isPublished ? 'Searchable' : 'Not applicable until published',
-		signals
-	};
-}
-
-function computeTemplateOfferLifecycle(asset: Asset, now = new Date()): TemplateOfferLifecycle {
-	const endsAt = parseDate(asset.activeOfferEndsAt);
-	const pruneReviewAt = parseDate(asset.offerPruneReviewAt);
-	const visibility = asset.activeOfferVisibility;
-	const strategy = asset.activeOfferStrategy;
-	const postOfferAction = asset.postOfferAction;
-	const label = asset.activeOfferLabel || strategy || 'Limited offer';
-	const hasOffer = Boolean(
-		asset.activeOfferLabel ||
-			asset.activeOfferPrice !== undefined ||
-			asset.activeOfferEndsAt ||
-			asset.activeOfferCtaUrl ||
-			visibility ||
-			strategy ||
-			pruneReviewAt ||
-			postOfferAction
-	);
-
-	if (!hasOffer) {
-		return {
-			hasOffer: false,
-			state: 'none',
-			label: 'No active offer',
-			tone: 'neutral',
-			summary:
-				'No limited offer is currently mirrored onto this asset. Use one selectively for recovery tests, not as a default discount.',
-			price: null,
-			endsAt: null,
-			pruneReviewAt: null,
-			daysUntilEnd: null,
-			daysUntilReview: null
-		};
-	}
-
-	const normalizedVisibility = normalizeText(visibility);
-	const state: TemplateOfferState =
-		normalizedVisibility.includes('internal') || normalizedVisibility.includes('hidden')
-			? 'internal'
-			: endsAt && endsAt.getTime() < now.getTime()
-				? 'expired'
-				: 'live';
-
-	const tone: TemplateHealthTone =
-		state === 'expired'
-			? isRecoveryOfferStrategy(strategy) || normalizeText(postOfferAction).includes('delist')
-				? 'critical'
-				: 'warning'
-			: state === 'live'
-				? 'positive'
-				: 'neutral';
-
-	let summary = 'A limited offer is available for this template.';
-
-	if (state === 'internal') {
-		summary = 'This offer is staged internally and is not intended for public marketplace surfaces yet.';
-	} else if (state === 'expired') {
-		summary =
-			"The offer window has ended. Review buyer response before changing this template's marketplace visibility.";
-	} else if (normalizeText(strategy).includes('creator-managed')) {
-		summary =
-			'Creator-managed pricing is being tested through an approved offer link. Watch conversion before making a lifecycle decision.';
-	} else if (normalizeText(strategy).includes('recovery')) {
-		summary =
-			'This is a recovery offer before a marketplace visibility review. Measure whether the discount changes buyer response.';
-	} else if (normalizeText(strategy).includes('exit sale')) {
-		summary =
-			'This is an exit-sale window before a marketplace lifecycle review. Keep buyer access and creator communication clear.';
-	}
-
-	return {
-		hasOffer,
-		state,
-		label,
-		tone,
-		summary,
-		price: typeof asset.activeOfferPrice === 'number' ? asset.activeOfferPrice : null,
-		endsAt,
-		pruneReviewAt,
-		daysUntilEnd: endsAt ? daysUntil(endsAt, now) : null,
-		daysUntilReview: pruneReviewAt ? daysUntil(pruneReviewAt, now) : null,
-		ctaUrl: asset.activeOfferCtaUrl,
-		visibility,
-		strategy,
-		postOfferAction
-	};
-}
-
 export function computeTemplateHealth(
 	asset: Asset,
 	now = new Date(),
@@ -440,14 +142,8 @@ export function computeTemplateHealth(
 	const positiveQuality = hasPositiveQualitySignal(asset.qualityScore);
 	const qualityIssue = hasNegativeQualitySignal(asset);
 	const hasReviewFeedback = Boolean(asset.latestReviewFeedback || asset.rejectionFeedback);
-	const offer = computeTemplateOfferLifecycle(asset, now);
 	const searchVisibility = asset.searchVisibility;
 	const searchVisibilitySuppressed = isTemplateSearchSuppressed(searchVisibility);
-	const qualifiedSales30d =
-		typeof asset.qualifiedSales30d === 'number' && Number.isFinite(asset.qualifiedSales30d)
-			? Math.max(0, Math.floor(asset.qualifiedSales30d))
-			: null;
-	const recoveryOfferUsed = Boolean(asset.recoveryOfferUsed);
 	const actions: TemplateHealthAction[] = [];
 
 	if (qualityIssue || hasReviewFeedback) {
@@ -528,72 +224,13 @@ export function computeTemplateHealth(
 		status = 'strong';
 	}
 
-	if (offer.hasOffer) {
-		if (offer.state === 'expired') {
-			addActionOnce(actions, {
-				title: 'Complete the offer lifecycle review',
-				description:
-					'Compare offer-period buyer response against the baseline before returning to standard checkout, lowering visibility, or archiving the listing.',
-				priority: isRecoveryOfferStrategy(offer.strategy) ? 'high' : 'medium'
-			});
-		} else if (isRecoveryOfferStrategy(offer.strategy)) {
-			addActionOnce(actions, {
-				title: 'Measure the recovery window',
-				description:
-					'Use the limited offer as the last buyer-response signal before a marketplace visibility review.',
-				priority: offer.daysUntilReview !== null && offer.daysUntilReview <= 7 ? 'high' : 'medium'
-			});
-		} else {
-			addActionOnce(actions, {
-				title: 'Measure offer impact',
-				description:
-					'Track whether the offer improves viewer-to-purchase conversion before making a permanent pricing or visibility change.',
-				priority: 'medium'
-			});
-		}
-	} else if (isPublished && status === 'needs_attention') {
+	if (searchVisibilitySuppressed) {
 		addActionOnce(actions, {
-			title: 'Try a limited recovery offer',
+			title: 'Maintain direct-access readiness',
 			description:
-				'After fixing quality or listing issues, use a time-boxed creator-managed offer to test whether price changes buyer response before any visibility review.',
+				'This template is out of marketplace search. Keep its detail page and buyer access accurate while it is detail-only.',
 			priority: 'medium'
 		});
-	}
-
-	if (recoveryOfferUsed && !offer.hasOffer && isPublished && status === 'needs_attention' && !searchVisibilitySuppressed) {
-		addActionOnce(actions, {
-			title: 'Move underperforming template detail-only',
-			description:
-				'The one-time recovery path is already used. Keep direct access, but remove this template from search unless it reaches the re-entry threshold.',
-			priority: 'high'
-		});
-	}
-
-	if (searchVisibilitySuppressed) {
-		if (hasReachedRecoveryReentryThreshold(qualifiedSales30d) && !qualityIssue && !hasReviewFeedback) {
-			if (isReentryReviewRequested(searchVisibility)) {
-				addActionOnce(actions, {
-					title: 'Await marketplace re-entry review',
-					description:
-						'This template has requested search re-entry. Keep it detail-only until marketplace review approves restoration.',
-					priority: 'high'
-				});
-			} else {
-				addActionOnce(actions, {
-					title: 'Review for search re-entry',
-					description:
-						'This detail-only template has reached 4 qualified sales in 30 days. Confirm quality before restoring search visibility.',
-					priority: 'high'
-				});
-			}
-		} else {
-			addActionOnce(actions, {
-				title: 'Maintain direct-access readiness',
-				description:
-					'This template is out of marketplace search. Keep its detail page and buyer access accurate while it is detail-only.',
-				priority: 'medium'
-			});
-		}
 	}
 
 	if (actions.length === 0) {
@@ -634,23 +271,6 @@ export function computeTemplateHealth(
 				'There is not enough buyer-performance data yet. Use the checklist below to keep the listing ready.'
 		}
 	};
-
-	const automation = lifecycleAutomationSignal({
-		status,
-		isPublished,
-		viewersKnown,
-		hasEnoughViewers,
-		purchases,
-		conversionRate,
-		daysLive,
-		qualityIssue,
-		hasReviewFeedback,
-		searchVisibility,
-		searchVisibilitySuppressed,
-		qualifiedSales30d,
-		recoveryOfferUsed,
-		offer
-	});
 
 	const signals: TemplateHealthSignal[] = [
 		{
@@ -704,12 +324,6 @@ export function computeTemplateHealth(
 			description: searchVisibilitySuppressed
 				? 'This template is preserved for direct access but removed from marketplace search.'
 				: 'This template is eligible for marketplace search discovery.'
-		},
-		{
-			label: 'Re-entry signal',
-			value: `${qualifiedSales30d ?? 0}/${RECOVERY_REENTRY_QUALIFIED_SALES_30D} sales`,
-			tone: hasReachedRecoveryReentryThreshold(qualifiedSales30d) ? 'positive' : searchVisibilitySuppressed ? 'warning' : 'neutral',
-			description: 'Detail-only templates need 4 qualified sales in 30 days before marketplace search re-entry.'
 		}
 	];
 
@@ -720,11 +334,6 @@ export function computeTemplateHealth(
 		daysLive,
 		searchVisibility,
 		searchVisibilitySuppressed,
-		qualifiedSales30d,
-		reentrySalesThreshold: RECOVERY_REENTRY_QUALIFIED_SALES_30D,
-		recoveryOfferUsed,
-		automation,
-		offer,
 		signals,
 		actions,
 		hasQualityIssue: qualityIssue,

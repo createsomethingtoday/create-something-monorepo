@@ -274,17 +274,6 @@
     return typeSortDirection === 'asc' ? 'A-Z' : 'Z-A';
   }
 
-  function hasActiveOffer(asset: Asset): boolean {
-    return Boolean(
-      asset.activeOfferLabel ||
-        asset.activeOfferCtaUrl ||
-        asset.activeOfferStrategy ||
-        asset.activeOfferEndsAt ||
-        asset.activeOfferVisibility ||
-        asset.activeOfferPrice !== undefined
-    );
-  }
-
   function getAssetDetailHref(id: string) {
     return `/assets/${id}`;
   }
@@ -603,16 +592,6 @@
                             >
                           </h4>
                           <p class="mobile-asset-type">{asset.type}</p>
-                          {#if hasActiveOffer(asset)}
-                            <div class="mobile-offer-badge">
-                              <Badge variant="info">
-                                {asset.activeOfferLabel || 'Limited offer'}
-                                {#if asset.activeOfferPrice !== undefined}
-                                  · {formatCompactCurrency(asset.activeOfferPrice)}
-                                {/if}
-                              </Badge>
-                            </div>
-                          {/if}
                         </div>
                         <StatusBadge status={asset.status} size="sm" />
                       </div>
@@ -1232,11 +1211,6 @@
     margin: 0;
     font-size: var(--text-caption);
     color: var(--color-fg-muted);
-  }
-
-  .mobile-offer-badge {
-    display: inline-flex;
-    max-width: 100%;
   }
 
   .mobile-stats {
