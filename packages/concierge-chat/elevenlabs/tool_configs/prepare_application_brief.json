@@ -1,0 +1,45 @@
+{
+  "name": "prepare_application_brief",
+  "description": "Stage a confirmed, non-sensitive nurse work-preference brief in the candidate's browser. This does not submit an application, create a candidate record, or contact a recruiter.",
+  "type": "client",
+  "expects_response": true,
+  "response_timeout_secs": 10,
+  "parameters": {
+    "type": "object",
+    "description": "The candidate-confirmed work-preference brief.",
+    "properties": {
+      "specialty": {
+        "type": "string",
+        "description": "Nursing specialty or desired role."
+      },
+      "workType": {
+        "type": "string",
+        "description": "Travel, per diem, local contract, or another work type."
+      },
+      "preferredShift": {
+        "type": "string",
+        "description": "Preferred shift or schedule."
+      },
+      "preferredLocation": {
+        "type": "string",
+        "description": "Preferred city, state, region, or travel radius."
+      },
+      "startWindow": {
+        "type": "string",
+        "description": "Approximate start window."
+      },
+      "payPreference": {
+        "type": "string",
+        "description": "Candidate-stated pay preference or constraint, never a promised rate."
+      },
+      "fitNotes": {
+        "type": "string",
+        "description": "Non-sensitive priorities, constraints, or deal breakers."
+      }
+    },
+    "required": ["specialty"]
+  },
+  "dynamic_variables": {
+    "dynamic_variable_placeholders": {}
+  }
+}

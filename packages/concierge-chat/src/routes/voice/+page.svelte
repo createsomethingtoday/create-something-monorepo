@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onDestroy, tick } from 'svelte';
   import { z } from 'zod';
-  import type { RealtimeSession } from '@openai/agents/realtime';
+  import type { VoiceConversation } from '@elevenlabs/client';
 
   import { createConciergeThreadClient } from '$lib/chat/client-actions';
   import {
@@ -10,22 +10,25 @@
     type VoiceApplicationBrief
   } from '$lib/voice/brief';
   import { toSafeVoiceError } from '$lib/voice/errors';
-  import {
-    voiceConciergeInstructions,
-    voiceConciergeSpeed,
-    voiceConciergeVoice
-  } from '$lib/voice/knowledge';
-  import { toVoiceTranscriptEntries, type VoiceTranscriptEntry } from '$lib/voice/transcript';
+  import type { VoiceTranscriptEntry } from '$lib/voice/transcript';
   import { absoluteUrl } from '$lib/site/seo';
 
   type CallStatus = 'idle' | 'connecting' | 'listening' | 'speaking' | 'ended' | 'error';
 
   interface ClientSecretPayload {
-    value?: string;
-    expiresAt?: number;
-    model?: string;
+    conversationToken?: string;
     message?: string;
   }
+
+  const applicationBriefSchema = z.object({
+    specialty: z.string().min(2).max(80),
+    workType: z.string().min(2).max(60).optional(),
+    preferredShift: z.string().min(2).max(80).optional(),
+    preferredLocation: z.string().min(2).max(100).optional(),
+    startWindow: z.string().min(2).max(80).optional(),
+    payPreference: z.string().min(2).max(100).optional(),
+    fitNotes: z.string().min(2).max(240).optional()
+  });
 
   const pageTitle = 'Voice Concierge | Abundance Staffing';
   const pageDescription =
@@ -42,7 +45,7 @@
   let continuing = false;
   let transcriptPanel: HTMLElement | null = null;
 
-  let activeSession: RealtimeSession | null = null;
+  let activeSession: VoiceConversation | null = null;
   let callTimer: ReturnType<typeof setInterval> | null = null;
   let disposed = false;
 
@@ -86,8 +89,19 @@
     callTimer = null;
   }
 
-  async function updateTranscript(history: readonly unknown[]) {
-    transcript = toVoiceTranscriptEntries(history);
+  async function appendTranscript(message: string, role: 'user' | 'agent', eventId?: number) {
+    const text = message.trim();
+    if (!text) return;
+
+    transcript = [
+      ...transcript,
+      {
+        id: eventId === undefined ? crypto.randomUUID() : `${role}-${eventId}`,
+        speaker: role === 'user' ? 'Candidate' : 'Concierge',
+        text,
+        status: 'completed'
+      }
+    ];
     await tick();
     transcriptPanel?.scrollTo({ top: transcriptPanel.scrollHeight, behavior: 'smooth' });
   }
@@ -113,125 +127,64 @@
         headers: { Accept: 'application/json' }
       });
       const token = (await tokenResponse.json()) as ClientSecretPayload;
-      if (!tokenResponse.ok || !token.value || !token.model) {
+      if (!tokenResponse.ok || !token.conversationToken) {
         throw new Error(token.message || 'The secure voice session could not be started.');
       }
 
-      const { RealtimeAgent, RealtimeSession, tool } = await import('@openai/agents/realtime');
-      const prepareApplicationBrief = tool({
-        name: 'prepare_application_brief',
-        description:
-          'Stage a confirmed, non-sensitive nurse work-preference brief in this browser. This does not submit an application, create a candidate record, or contact a recruiter.',
-        parameters: z.object({
-          specialty: z.string().min(2).max(80).describe('Nursing specialty or desired role'),
-          workType: z
-            .string()
-            .min(2)
-            .max(60)
-            .optional()
-            .describe('Travel, per diem, local contract, or another work type'),
-          preferredShift: z
-            .string()
-            .min(2)
-            .max(80)
-            .optional()
-            .describe('Preferred shift or schedule'),
-          preferredLocation: z
-            .string()
-            .min(2)
-            .max(100)
-            .optional()
-            .describe('Preferred city, state, region, or travel radius'),
-          startWindow: z.string().min(2).max(80).optional().describe('Approximate start window'),
-          payPreference: z
-            .string()
-            .min(2)
-            .max(100)
-            .optional()
-            .describe('Candidate-stated pay preference or constraint, not a promise'),
-          fitNotes: z
-            .string()
-            .min(2)
-            .max(240)
-            .optional()
-            .describe('Non-sensitive priorities, constraints, or deal breakers')
-        }),
-        execute: async (brief) => {
-          applicationBrief = brief;
-          return JSON.stringify({
-            status: 'staged_in_browser',
-            message:
-              'The candidate-controlled brief is ready on screen. Nothing has been submitted and no recruiter has been contacted.'
-          });
-        }
-      });
-
-      const agent = new RealtimeAgent({
-        name: 'Abundance Voice Concierge',
-        voice: voiceConciergeVoice,
-        instructions: voiceConciergeInstructions,
-        tools: [prepareApplicationBrief]
-      });
-
-      const session = new RealtimeSession(agent, {
-        model: token.model,
-        transport: 'webrtc',
-        tracingDisabled: true,
-        historyStoreAudio: false,
-        config: {
-          outputModalities: ['audio'],
-          reasoning: { effort: 'low' },
-          audio: {
-            input: {
-              transcription: { model: 'gpt-4o-mini-transcribe', language: 'en' },
-              noiseReduction: { type: 'near_field' },
-              turnDetection: {
-                type: 'semantic_vad',
-                eagerness: 'auto',
-                createResponse: true,
-                interruptResponse: true
-              }
-            },
-            output: { voice: voiceConciergeVoice, speed: voiceConciergeSpeed }
+      const { Conversation } = await import('@elevenlabs/client');
+      const session = await Conversation.startSession({
+        conversationToken: token.conversationToken,
+        connectionType: 'webrtc',
+        textOnly: false,
+        clientTools: {
+          prepare_application_brief: (parameters: unknown) => {
+            const brief = applicationBriefSchema.parse(parameters);
+            applicationBrief = brief;
+            return JSON.stringify({
+              status: 'staged_in_browser',
+              message:
+                'The candidate-controlled brief is ready on screen. Nothing has been submitted and no recruiter has been contacted.'
+            });
+          }
+        },
+        onConnect: () => {
+          if (!disposed) callStatus = 'listening';
+        },
+        onDisconnect: () => {
+          if (!disposed && callStatus !== 'error') callStatus = 'ended';
+          stopTimer();
+        },
+        onError: (message) => {
+          if (!disposed) {
+            errorMessage = toSafeVoiceError(message);
+            stopTimer();
+            callStatus = 'error';
+          }
+        },
+        onMessage: ({ message, role, event_id }) => {
+          if (!disposed) void appendTranscript(message, role, event_id);
+        },
+        onModeChange: ({ mode }) => {
+          if (!disposed) callStatus = mode === 'speaking' ? 'speaking' : 'listening';
+        },
+        onInterruption: () => {
+          if (!disposed) {
+            interruptions += 1;
+            callStatus = 'listening';
           }
         }
       });
 
-      session.on('history_updated', (history) => void updateTranscript(history));
-      session.on('audio_start', () => {
-        if (!disposed) callStatus = 'speaking';
-      });
-      session.on('audio_stopped', () => {
-        if (!disposed) callStatus = 'listening';
-      });
-      session.on('audio_interrupted', () => {
-        if (!disposed) {
-          interruptions += 1;
-          callStatus = 'listening';
-        }
-      });
-      session.on('error', ({ error }) => {
-        if (!disposed) {
-          errorMessage = toSafeVoiceError(error);
-          stopTimer();
-          session.close();
-          if (activeSession === session) activeSession = null;
-          callStatus = 'error';
-        }
-      });
-
-      activeSession = session;
-      await session.connect({ apiKey: token.value, model: token.model });
       if (disposed) {
-        session.close();
+        await session.endSession();
         return;
       }
 
+      activeSession = session;
       callStatus = 'listening';
       startTimer();
-      session.transport.requestResponse?.();
     } catch (error) {
-      activeSession?.close();
+      void activeSession?.endSession();
       activeSession = null;
       stopTimer();
       callStatus = 'error';
@@ -242,11 +195,11 @@
   function toggleMute() {
     if (!activeSession || !callActive) return;
     muted = !muted;
-    activeSession.mute(muted);
+    activeSession.setMicMuted(muted);
   }
 
   function endVoiceSession() {
-    activeSession?.close();
+    void activeSession?.endSession();
     activeSession = null;
     stopTimer();
     muted = false;
@@ -283,7 +236,7 @@
 
   onDestroy(() => {
     disposed = true;
-    activeSession?.close();
+    void activeSession?.endSession();
     activeSession = null;
     stopTimer();
   });
@@ -319,7 +272,7 @@
         </p>
 
         <div class="voice-principles" aria-label="Voice session safeguards">
-          <span>Session-only transcript</span>
+          <span>Transcript shown in session</span>
           <span>No identity or documents</span>
           <span>Recruiter decisions stay human</span>
         </div>

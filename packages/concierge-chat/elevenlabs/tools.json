@@ -1,0 +1,9 @@
+{
+    "tools": [
+        {
+            "type": "client",
+            "config": "tool_configs/prepare_application_brief.json",
+            "id": "tool_1601kza0e050fvs9gynvj5emn9vx"
+        }
+    ]
+}
