@@ -58,6 +58,9 @@ jobs:
           pnpm --filter @create-something/webflow-app-review-preflight-extension build:production
           node packages/webflow-app-review-preflight/extension/scripts/verify-production-bundle.mjs
 
+      - name: Install runtime browser
+        run: pnpm --filter @create-something/webflow-app-review-runtime-runner exec playwright install --with-deps chromium
+
       - name: Validate runtime runner
         run: |
           pnpm --filter @create-something/webflow-app-review-runtime-runner test
