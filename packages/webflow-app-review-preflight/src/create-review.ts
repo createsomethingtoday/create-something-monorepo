@@ -16,7 +16,9 @@ import type {
   ArtifactSurface,
   BundleReview,
   CreateBundleReviewInput,
+  CreateRuntimeReviewInput,
   ReviewGuidance,
+  RuntimeReviewManifest,
   SourceMapArtifactInput,
   SourceMapPolicyResult,
   SubmissionArtifactIdentity,
@@ -90,6 +92,85 @@ export class SourceMapValidationError extends Error {
     super(message);
     this.name = 'SourceMapValidationError';
   }
+}
+
+export class RuntimeReviewValidationError extends Error {}
+
+const MAX_RUNTIME_ARTIFACTS = 8;
+
+function isPrivateIpv4(hostname: string): boolean {
+  const parts = hostname.split('.').map(Number);
+  if (parts.length !== 4 || parts.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) {
+    return false;
+  }
+  const [a, b] = parts;
+  return (
+    a === 10 ||
+    a === 127 ||
+    a === 0 ||
+    (a === 169 && b === 254) ||
+    (a === 172 && b! >= 16 && b! <= 31) ||
+    (a === 192 && b === 168)
+  );
+}
+
+function isPublicRuntimeHost(hostname: string): boolean {
+  const normalized = hostname.toLowerCase().replace(/\.$/, '');
+  return Boolean(normalized) &&
+    normalized !== 'localhost' &&
+    !normalized.endsWith('.localhost') &&
+    !normalized.endsWith('.local') &&
+    !normalized.includes(':') &&
+    !isPrivateIpv4(normalized);
+}
+
+export function createRuntimeReviewManifest(
+  input: CreateRuntimeReviewInput
+): RuntimeReviewManifest {
+  const appName = typeof input.appName === 'string' ? input.appName.trim() : '';
+  if (!appName || appName.length > 120) {
+    throw new RuntimeReviewValidationError('Provide an app name under 121 characters.');
+  }
+  if (!Array.isArray(input.runtimeUrls) || input.runtimeUrls.length === 0 || input.runtimeUrls.length > MAX_RUNTIME_ARTIFACTS) {
+    throw new RuntimeReviewValidationError('Provide between 1 and 8 public runtime URLs.');
+  }
+
+  const unique = new Set<string>();
+  const runtimeUrls = input.runtimeUrls.map((value) => {
+    if (typeof value !== 'string' || !value.trim() || value.length > 2048) {
+      throw new RuntimeReviewValidationError('Each runtime URL is missing or too long.');
+    }
+    let url: URL;
+    try {
+      url = new URL(value.trim());
+    } catch {
+      throw new RuntimeReviewValidationError('Each runtime URL must be a valid public HTTPS URL.');
+    }
+    if (
+      url.protocol !== 'https:' ||
+      !url.hostname ||
+      url.username ||
+      url.password
+    ) {
+      throw new RuntimeReviewValidationError('Each runtime URL must be a public HTTPS URL without credentials.');
+    }
+    if (!isPublicRuntimeHost(url.hostname)) {
+      throw new RuntimeReviewValidationError('Each runtime URL must be publicly routable.');
+    }
+    url.hash = '';
+    const normalized = url.toString();
+    if (unique.has(normalized)) {
+      throw new RuntimeReviewValidationError('Runtime URLs must be unique.');
+    }
+    unique.add(normalized);
+    return normalized;
+  });
+
+  return {
+    schemaVersion: 'preflight_runtime_manifest.v1',
+    appName,
+    runtimeUrls
+  };
 }
 
 async function buildArtifactSet(
@@ -329,6 +410,67 @@ export async function createBundleReview(
     evidence: {
       scanReportVersion: report.scanReportVersion,
       scanRunId: report.runId
+    },
+    officialDecision: null
+  };
+}
+
+export async function createRuntimeReview(
+  input: CreateRuntimeReviewInput
+): Promise<BundleReview> {
+  const manifest = createRuntimeReviewManifest(input);
+  const manifestBytes = new TextEncoder().encode(JSON.stringify(manifest));
+  const createdAt = new Date().toISOString();
+
+  return {
+    schemaVersion: 'app_review_preflight.v1',
+    reviewType: 'runtime_manifest',
+    reviewId: crypto.randomUUID(),
+    createdAt,
+    artifact: {
+      fileName: 'runtime-manifest.json',
+      sha256: await sha256(manifestBytes.buffer as ArrayBuffer),
+      compressedBytes: manifestBytes.byteLength,
+      fileCount: manifest.runtimeUrls.length
+    },
+    artifactScope: {
+      primary: 'production_runtime',
+      appName: manifest.appName,
+      manifestPath: null
+    },
+    coverage: [
+      {
+        surface: 'designer_extension',
+        status: 'not_provided',
+        label: 'Designer Extension not provided',
+        detail: 'This review starts from hosted production JavaScript rather than an uploaded app bundle.'
+      },
+      {
+        surface: 'production_runtime',
+        status: 'needs_verification',
+        label: 'Production runtime ready for testing',
+        detail: 'Pin every hosted runtime file, then run the Webflow browser observation.'
+      }
+    ],
+    runtime: {
+      references: manifest.runtimeUrls,
+      status: 'discovered_unverified',
+      manualVerificationRequired: true
+    },
+    summary: {
+      readiness: 'ready',
+      securityBlockers: 0,
+      requiredUpdates: 0,
+      suggestedUpdates: 0
+    },
+    guidance: [],
+    policySnapshot: {
+      rulesetVersion: 'runtime-manifest.v1',
+      configVersion: PREFLIGHT_CONFIG.configVersion
+    },
+    evidence: {
+      scanReportVersion: 'runtime-manifest.v1',
+      scanRunId: crypto.randomUUID()
     },
     officialDecision: null
   };

@@ -28,6 +28,35 @@ describe('Preflight API', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  test('creates a hosted runtime review without sending a bundle or source map', async () => {
+    (globalThis as typeof globalThis & { webflow?: { getIdToken: () => Promise<string> } }).webflow = {
+      getIdToken: async () => 'designer-id-token'
+    };
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      expect(String(input)).toContain('/v1/runtime-reviews');
+      expect(init).toMatchObject({ method: 'POST' });
+      expect(JSON.parse(String(init?.body))).toEqual({
+        appName: 'Consent Pro Data Client',
+        runtimeUrls: [
+          'https://cdn.consentpro.com/runtime-v1.js',
+          'https://cdn.consentpro.com/child-v1.js'
+        ]
+      });
+      return new Response(JSON.stringify({ review: { id: 'runtime-review-1' } }), { status: 201 });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await createPreflightApi().createRuntimeReview({
+      appName: 'Consent Pro Data Client',
+      runtimeUrls: [
+        'https://cdn.consentpro.com/runtime-v1.js',
+        'https://cdn.consentpro.com/child-v1.js'
+      ]
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   test('explains when a runtime-run request reaches an older live Worker', async () => {
     (globalThis as typeof globalThis & { webflow?: { getIdToken: () => Promise<string> } }).webflow = {
       getIdToken: async () => 'designer-id-token'

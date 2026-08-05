@@ -1,11 +1,16 @@
 import type {
   BundleReview,
+  CreateRuntimeReviewInput,
   PreflightArtifactReceipt,
   RuntimeTestPackageInput,
   RuntimeTestPackageView
 } from '@create-something/webflow-app-review-preflight';
 
-export type { RuntimeTestPackageInput, RuntimeTestPackageView };
+export type {
+  CreateRuntimeReviewInput,
+  RuntimeTestPackageInput,
+  RuntimeTestPackageView
+};
 
 export interface ReviewVersion {
   id: string;
@@ -61,6 +66,7 @@ export interface PreflightApi {
   listReviews(): Promise<ReviewSummary[]>;
   getReview(id: string): Promise<StoredReview>;
   createReview(file: File, sourceMaps?: File, name?: string): Promise<StoredReview>;
+  createRuntimeReview(input: CreateRuntimeReviewInput): Promise<StoredReview>;
   addRevision(reviewId: string, file: File, sourceMaps?: File): Promise<RevisionResult>;
   listRuntimeTestPackages(reviewId: string): Promise<RuntimeTestPackageView[]>;
   createRuntimeTestPackage(

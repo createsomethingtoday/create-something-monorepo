@@ -36,6 +36,8 @@ export interface ReviewGuidance {
 
 export interface BundleReview {
   schemaVersion: 'app_review_preflight.v1';
+  /** Older stored bundle reviews predate this field. */
+  reviewType?: 'bundle' | 'runtime_manifest';
   reviewId: string;
   createdAt: string;
   artifact: {
@@ -79,6 +81,17 @@ export interface CreateBundleReviewInput {
   bundle: ArrayBuffer;
   fileName: string;
   sourceMapArtifact?: SourceMapArtifactInput;
+}
+
+export interface CreateRuntimeReviewInput {
+  appName: string;
+  runtimeUrls: string[];
+}
+
+export interface RuntimeReviewManifest {
+  schemaVersion: 'preflight_runtime_manifest.v1';
+  appName: string;
+  runtimeUrls: string[];
 }
 
 export interface SourceMapArtifactInput {

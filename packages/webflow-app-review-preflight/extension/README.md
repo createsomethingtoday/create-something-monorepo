@@ -1,6 +1,6 @@
 # App Review Preflight Designer Extension
 
-Native Webflow large right-panel UI for uploading an app bundle, understanding deterministic feedback, preparing a reproducible Runtime Test Package, reading Webflow-controlled runtime evidence, uploading a revision, and reopening automatically saved review history.
+Native Webflow large right-panel UI with two review starts: **App bundle + source maps** for submission-artifact receipts and deterministic bundle feedback, or **Hosted runtime / Data Client** for a private runtime manifest. Both paths prepare a reproducible Runtime Test Package and read Webflow-controlled runtime evidence; only the bundle path supports revisions and canonical-form artifact reconciliation.
 
 ```bash
 pnpm build

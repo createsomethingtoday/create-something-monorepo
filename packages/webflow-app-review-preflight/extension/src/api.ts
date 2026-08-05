@@ -1,5 +1,6 @@
 import type {
   PreflightApi,
+  CreateRuntimeReviewInput,
   RevisionResult,
   RuntimeTestPackageInput,
   RuntimeTestPackageView,
@@ -74,6 +75,14 @@ export function createPreflightApi(): PreflightApi {
       const body = await request<{ review: StoredReview }>('/v1/reviews', {
         method: 'POST',
         body: form
+      });
+      return body.review;
+    },
+    async createRuntimeReview(input: CreateRuntimeReviewInput): Promise<StoredReview> {
+      const body = await request<{ review: StoredReview }>('/v1/runtime-reviews', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(input)
       });
       return body.review;
     },

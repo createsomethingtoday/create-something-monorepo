@@ -17,6 +17,7 @@ const api: PreflightApi = {
   listReviews: async () => [],
   getReview: async () => Promise.reject(new Error('not used')),
   createReview: async () => Promise.reject(new Error('not used')),
+  createRuntimeReview: async () => Promise.reject(new Error('not used')),
   addRevision: async () => Promise.reject(new Error('not used')),
   listRuntimeTestPackages: async () => [],
   createRuntimeTestPackage: async () => Promise.reject(new Error('not used')),
@@ -132,18 +133,202 @@ describe('App Review Preflight extension', () => {
     expect(screen.queryByText('Reviewer identity')).not.toBeInTheDocument();
   });
 
-  test('uses the Designer wrapper title and starts with one clear upload action', async () => {
+  test('uses the Designer wrapper title and makes both review paths clear', async () => {
     render(<App api={api} />);
 
-    expect(await screen.findByText('Upload your app bundle')).toBeVisible();
+    expect(await screen.findByRole('heading', { name: 'What are you reviewing?' })).toBeVisible();
     expect(
       screen.queryByRole('heading', { name: 'App Review Preflight' })
     ).not.toBeInTheDocument();
     expect(
       screen.queryByText('Clear fixes before Marketplace review')
     ).not.toBeInTheDocument();
-    expect(screen.getByText('Choose bundle')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Review app bundle' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Test hosted runtime' })).toBeVisible();
     expect(screen.queryByText('Share')).not.toBeInTheDocument();
+  });
+
+  test('lets a developer start a hosted Data Client runtime review without choosing a bundle', async () => {
+    render(<App api={api} />);
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Test hosted runtime' }));
+
+    expect(screen.getByRole('heading', { name: 'Add hosted runtime' })).toBeVisible();
+    expect(screen.getByLabelText('App name')).toBeVisible();
+    expect(screen.getByLabelText('Hosted runtime URLs')).toBeVisible();
+    expect(screen.queryByText('Upload your app bundle')).not.toBeInTheDocument();
+  });
+
+  test('creates a hosted Data Client review from its public runtime URLs', async () => {
+    const created = consentProReview();
+    created.latestVersion.result.reviewType = 'runtime_manifest';
+    created.latestVersion.result.artifactScope = {
+      primary: 'production_runtime',
+      appName: 'Consent Pro Data Client',
+      manifestPath: null
+    };
+    created.latestVersion.result.runtime.references = [
+      'https://cdn.consentpro.com/runtime-v1.js',
+      'https://cdn.consentpro.com/child-v1.js'
+    ];
+    created.latestVersion.result.summary = {
+      readiness: 'ready',
+      securityBlockers: 0,
+      requiredUpdates: 0,
+      suggestedUpdates: 0
+    };
+    created.latestVersion.result.guidance = [];
+    const createRuntimeReview = vi.fn(async () => created);
+    const runtimeApi: PreflightApi = { ...api, createRuntimeReview };
+    render(<App api={runtimeApi} />);
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Test hosted runtime' }));
+    fireEvent.change(screen.getByLabelText('App name'), {
+      target: { value: 'Consent Pro Data Client' }
+    });
+    fireEvent.change(screen.getByLabelText('Hosted runtime URLs'), {
+      target: {
+        value: 'https://cdn.consentpro.com/runtime-v1.js\nhttps://cdn.consentpro.com/child-v1.js'
+      }
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Continue to runtime test' }));
+
+    await waitFor(() => expect(createRuntimeReview).toHaveBeenCalledWith({
+      appName: 'Consent Pro Data Client',
+      runtimeUrls: [
+        'https://cdn.consentpro.com/runtime-v1.js',
+        'https://cdn.consentpro.com/child-v1.js'
+      ]
+    }));
+    expect(await screen.findByRole('heading', { name: 'Consent Pro Data Client' })).toBeVisible();
+    expect(screen.getByText('Runtime manifest ready')).toBeVisible();
+    expect(screen.queryByLabelText('Finding summary')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Upload revision' })).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Webflow runtime observation' })).toBeVisible();
+  });
+
+  test('prepares a pin for every hosted Data Client runtime rather than only the first URL', async () => {
+    const review = consentProReview();
+    review.latestVersion.result.reviewType = 'runtime_manifest';
+    review.latestVersion.result.artifactScope = {
+      primary: 'production_runtime',
+      appName: 'Consent Pro Data Client',
+      manifestPath: null
+    };
+    review.latestVersion.result.runtime.references = [
+      'https://cdn.consentpro.com/runtime-v1.js',
+      'https://cdn.consentpro.com/child-v1.js'
+    ];
+    const prepared = {
+      schemaVersion: 'runtime_test_package.v1' as const,
+      id: 'runtime-package-data-client',
+      reviewId: review.id,
+      reviewVersionId: review.latestVersion.id,
+      bundleSha256: review.latestVersion.result.artifact.sha256,
+      status: 'ready' as const,
+      trust: 'partner_supplied' as const,
+      target: {
+        url: 'https://app-review-sandbox.webflow.io/',
+        host: 'app-review-sandbox.webflow.io'
+      },
+      sandboxInstallationId: 'local-webflow-site',
+      license: {
+        mode: 'installation_allowlist' as const,
+        expiresAt: '2026-08-06T18:00:00.000Z'
+      },
+      runtimeArtifacts: [
+        {
+          url: 'https://cdn.consentpro.com/runtime-v1.js',
+          sha256: 'a'.repeat(64),
+          integrity: 'sha256-runtime-v1'
+        },
+        {
+          url: 'https://cdn.consentpro.com/child-v1.js',
+          sha256: 'b'.repeat(64),
+          integrity: 'sha256-child-v1'
+        }
+      ],
+      negativeProxyProbe: {
+        method: 'GET' as const,
+        urlTemplate: 'https://cdn.consentpro.com/proxy?url={canaryUrl}'
+      },
+      lifecycle: { readySelector: '[data-runtime-ready]' },
+      evidence: null,
+      createdAt: review.createdAt,
+      observation: null
+    };
+    const createRuntimeTestPackage = vi.fn(async () => prepared);
+    const runtimeApi: PreflightApi = {
+      ...api,
+      listReviews: async () => [{
+        id: review.id,
+        name: review.name,
+        updatedAt: review.updatedAt,
+        latestSequence: 1,
+        readiness: 'changes_required',
+        appName: 'Consent Pro Data Client',
+        coverage: review.latestVersion.result.coverage
+      }],
+      getReview: async () => review,
+      createRuntimeTestPackage
+    };
+    render(<App api={runtimeApi} />);
+
+    fireEvent.click(await screen.findByRole('button', { name: /Consent Pro preflight/i }));
+
+    expect(await screen.findByLabelText('Runtime 1 URL')).toHaveValue(
+      'https://cdn.consentpro.com/runtime-v1.js'
+    );
+    expect(screen.getByLabelText('Runtime 2 URL')).toHaveValue(
+      'https://cdn.consentpro.com/child-v1.js'
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Add another runtime' }));
+    expect(screen.getByLabelText('Runtime 3 URL')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Remove runtime 3' }));
+    expect(screen.queryByLabelText('Runtime 3 URL')).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Published Webflow test URL'), {
+      target: { value: 'https://app-review-sandbox.webflow.io' }
+    });
+    fireEvent.change(screen.getByLabelText('Webflow installation or site ID'), {
+      target: { value: 'local-webflow-site' }
+    });
+    fireEvent.change(screen.getByLabelText('Runtime 1 SHA-256'), {
+      target: { value: 'a'.repeat(64) }
+    });
+    fireEvent.change(screen.getByLabelText('Runtime 1 SRI'), {
+      target: { value: 'sha256-runtime-v1' }
+    });
+    fireEvent.change(screen.getByLabelText('Runtime 2 SHA-256'), {
+      target: { value: 'b'.repeat(64) }
+    });
+    fireEvent.change(screen.getByLabelText('Runtime 2 SRI'), {
+      target: { value: 'sha256-child-v1' }
+    });
+    fireEvent.click(screen.getByText('Runtime-ready selector and proxy check'));
+    fireEvent.change(screen.getByLabelText('Proxy probe URL template'), {
+      target: { value: 'https://cdn.consentpro.com/proxy?url={canaryUrl}' }
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Prepare Webflow run' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm test package' }));
+
+    await waitFor(() => expect(createRuntimeTestPackage).toHaveBeenCalledWith(
+      review.id,
+      expect.objectContaining({
+        runtimeArtifacts: [
+          {
+            url: 'https://cdn.consentpro.com/runtime-v1.js',
+            sha256: 'a'.repeat(64),
+            integrity: 'sha256-runtime-v1'
+          },
+          {
+            url: 'https://cdn.consentpro.com/child-v1.js',
+            sha256: 'b'.repeat(64),
+            integrity: 'sha256-child-v1'
+          }
+        ]
+      })
+    ));
   });
 
   test('turns an uploaded bundle into plain-language, scope-aware feedback', async () => {
@@ -156,6 +341,7 @@ describe('App Review Preflight extension', () => {
     const { container } = render(<App api={uploadApi} />);
     const file = new File(['zip-bytes'], 'consent-pro.zip', { type: 'application/zip' });
 
+    fireEvent.click(await screen.findByRole('button', { name: 'Review app bundle' }));
     fireEvent.change(container.querySelector('input[type="file"]')!, {
       target: { files: [file] }
     });
@@ -185,6 +371,7 @@ describe('App Review Preflight extension', () => {
       type: 'application/zip'
     });
 
+    fireEvent.click(await screen.findByRole('button', { name: 'Review app bundle' }));
     fireEvent.change(await screen.findByLabelText('App bundle'), {
       target: { files: [bundle] }
     });
@@ -486,13 +673,13 @@ describe('App Review Preflight extension', () => {
     fireEvent.change(screen.getByLabelText('Webflow installation or site ID'), {
       target: { value: 'webflow-sandbox-site-123' }
     });
-    fireEvent.change(screen.getByLabelText('Immutable runtime URL'), {
+    fireEvent.change(screen.getByLabelText('Runtime 1 URL'), {
       target: { value: 'https://api.consentpro.com/v2/cdn/runtime-v1.js' }
     });
-    fireEvent.change(screen.getByLabelText('SHA-256'), {
+    fireEvent.change(screen.getByLabelText('Runtime 1 SHA-256'), {
       target: { value: 'a'.repeat(64) }
     });
-    fireEvent.change(screen.getByLabelText('Script integrity (SRI)'), {
+    fireEvent.change(screen.getByLabelText('Runtime 1 SRI'), {
       target: { value: 'sha256-runtime-v1' }
     });
     fireEvent.click(screen.getByText('Runtime-ready selector and proxy check'));
@@ -652,11 +839,11 @@ describe('App Review Preflight extension', () => {
     expect(screen.getByLabelText('Webflow installation or site ID')).toHaveValue(
       'consent-pro-test-site'
     );
-    expect(screen.getByLabelText('Immutable runtime URL')).toHaveValue(
+    expect(screen.getByLabelText('Runtime 1 URL')).toHaveValue(
       'https://api.consentpro.com/v2/cdn/runtime/immutable.js'
     );
-    expect(screen.getByLabelText('SHA-256')).toHaveValue('d'.repeat(64));
-    expect(screen.getByLabelText('Script integrity (SRI)')).toHaveValue('sha256-3d3d3d3d');
+    expect(screen.getByLabelText('Runtime 1 SHA-256')).toHaveValue('d'.repeat(64));
+    expect(screen.getByLabelText('Runtime 1 SRI')).toHaveValue('sha256-3d3d3d3d');
     expect(screen.getByLabelText('Ready selector')).toHaveValue('[data-consent-pro-ready]');
     expect(screen.getByLabelText('Proxy probe URL template')).toHaveValue(
       'https://api.consentpro.com/v2/proxy?url={canaryUrl}'

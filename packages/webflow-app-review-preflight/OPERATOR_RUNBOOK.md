@@ -2,6 +2,8 @@
 
 This guide shows you how to use App Review Preflight to test the production runtime for a Webflow App.
 
+The Designer starts with two distinct paths. Use **App bundle + source maps** when the exact private containers will also go through the official App Submission Form; that is the only path that creates the artifact receipt for canonical reconciliation. Use **Hosted runtime / Data Client** when the relevant production JavaScript is public and hosted separately. That path stores a private manifest of up to eight public HTTPS runtime URLs and proceeds to pinning and Webflow runtime observation; it does not replace form submission or create a source-map receipt.
+
 It is written for a junior Webflow app developer or reviewer. You should know how to publish a Webflow test site and open the Designer Extension. You do not need to know the internal Worker, database, or E2B code.
 
 Preflight gives you evidence. It does not approve or reject an app.

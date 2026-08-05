@@ -7,9 +7,11 @@ import { allowedOrigin, json, options } from './http';
 import {
   addRevision,
   createReview,
+  createRuntimeReview,
   getReview,
   listReviews,
-  ReviewInputError
+  ReviewInputError,
+  RuntimeReviewInputError
 } from './reviews';
 import { approveRuntimeJob, RuntimeApprovalError } from './runtime-jobs';
 import { recordRuntimeEvidence, RuntimeEvidenceError } from './runtime-evidence';
@@ -519,6 +521,9 @@ async function handle(request: Request, env: Env): Promise<Response> {
     if (url.pathname === '/v1/reviews' && request.method === 'POST') {
       return json({ review: await createReview(request, env, user) }, 201, origin);
     }
+    if (url.pathname === '/v1/runtime-reviews' && request.method === 'POST') {
+      return json({ review: await createRuntimeReview(request, env, user) }, 201, origin);
+    }
     if (url.pathname === '/v1/reviews' && request.method === 'GET') {
       return json(
         {
@@ -620,6 +625,9 @@ async function handle(request: Request, env: Env): Promise<Response> {
     }
     if (error instanceof ReviewInputError) {
       return json({ error: 'invalid_bundle', message: error.message }, 400, origin);
+    }
+    if (error instanceof RuntimeReviewInputError) {
+      return json({ error: 'invalid_runtime_review', message: error.message }, 400, origin);
     }
     if (error instanceof RuntimeApprovalError) {
       return json(

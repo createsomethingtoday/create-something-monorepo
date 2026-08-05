@@ -6,7 +6,7 @@ Operators should use the [App Review Preflight Operator Runbook](./OPERATOR_RUNB
 
 It is a preflight and evidence system. It does not approve or reject an app.
 
-The native Designer Extension is the developer surface for bundle feedback, private source-map intake, immutable artifact receipts and version history, Runtime Test Package preparation, and trusted-result readback. Reviewers use the web app to inspect submissions across developers and request independent replays. The actual production-runtime browser remains Webflow-controlled in E2B; neither interface can upload observed evidence, promote partner input to `Webflow observed`, or make an official decision.
+The native Designer Extension gives developers two explicit starting paths: **App bundle + source maps** for the submission-artifact receipt, or **Hosted runtime / Data Client** for an owner-scoped runtime manifest. Both paths lead to Runtime Test Package preparation and trusted-result readback. Reviewers use the web app to inspect submissions across developers and request independent replays. The actual production-runtime browser remains Webflow-controlled in E2B; neither interface can upload observed evidence, promote partner input to `Webflow observed`, or make an official decision.
 
 For the Consent Pro pilot, authorization happens outside the Designer Extension. Authorization, configuration, and publication are unscored prerequisites. Uninstall cleanup is also unscored while the Custom Code API cannot reliably complete that lifecycle. The only security result comes from Webflow-controlled execution of the pinned production runtime; no user-controlled browser can issue or manufacture it.
 
@@ -14,7 +14,7 @@ For the Consent Pro pilot, authorization happens outside the Designer Extension.
 
 The Hybrid App has two intentional user surfaces over one evidence system:
 
-- **Designer Extension — developer surface.** A developer uploads the exact submission bundle and the same private source-map artifact used by the official form, receives a hash-bound artifact receipt, prepares a dedicated site-bound Runtime Test Package, requests validation, and reads the resulting blockers. Developer access remains owner-scoped.
+- **Designer Extension — developer surface.** A developer either uploads the exact submission bundle and the same private source-map artifact used by the official form (receiving a hash-bound artifact receipt), or starts a hosted-runtime manifest with one to eight public JavaScript URLs. Either path prepares a dedicated site-bound Runtime Test Package, requests validation, and reads the resulting blockers. The runtime-manifest path intentionally does not claim an artifact receipt or replace the canonical form. Developer access remains owner-scoped.
 - **Reviewer web app — internal review surface.** An authenticated reviewer searches submissions across owners, opens any immutable revision, compares prior observations, and requests an independent replay of the exact package. Reviewer access is cross-owner, audited, and unavailable to developer identities.
 - **Worker, D1, R2, and E2B — authority surface.** The Worker owns immutable bindings and audit events; R2 stores private artifacts; D1 stores versions and predicates; a server-side coordinator issues one-time E2B jobs. Neither user interface receives the coordinator token or uploads `Webflow observed` evidence.
 
@@ -44,6 +44,13 @@ Findings must also preserve provenance. Each evidence location should identify d
 The reviewer surface must keep bundle/source visibility, source-map gaps, iframe-only blind spots, DOM access to credential fields, and uninstall responsibility explicit. For the Consent Pro pilot, the unresolved Custom Code API uninstall limitation remains documented but unscored; it does not weaken the runtime-integrity predicates.
 
 ## Review flow
+
+Choose the path that matches the artifact being reviewed:
+
+- **App bundle + source maps.** Use this for the exact private containers that will be attached to the official App Submission Form. It creates the receipt used for canonical form reconciliation.
+- **Hosted runtime / Data Client.** Use this when the app’s production JavaScript is loaded from public URLs rather than supplied as an app bundle. It stores a private manifest of one to eight public HTTPS URLs, then moves directly to runtime pinning and browser observation. It does not substitute for the bundle/source-map form submission or create a form-reconciliation receipt.
+
+For the bundle-and-source-map path:
 
 1. The extension gets a short-lived Webflow ID token and uploads the exact bundle plus one private source-map artifact: preferably a ZIP of `.map` files, or one `.map` file.
 2. The Worker validates map structure and association before persistence. Minified or generated bundles require matching maps; directly authored bundles may proceed without them. The Worker hashes and privately stores the original artifact containers, runs deterministic rules, persists the policy snapshot, and returns an artifact receipt plus Designer Extension and production-runtime coverage separately.

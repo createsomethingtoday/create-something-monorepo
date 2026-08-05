@@ -1,5 +1,8 @@
 export {
   createBundleReview,
+  createRuntimeReview,
+  createRuntimeReviewManifest,
+  RuntimeReviewValidationError,
   SourceMapValidationError
 } from './create-review';
 export { discoverRuntimeReferences } from './runtime-references';
@@ -22,11 +25,13 @@ export type {
   CompanionRunStatus,
   CoverageStatus,
   CreateBundleReviewInput,
+  CreateRuntimeReviewInput,
   ReviewCoverage,
   ReviewGuidance,
   RuntimeArtifactPin,
   RuntimeEvidenceTrust,
   RuntimeLifecycleContract,
+  RuntimeReviewManifest,
   RuntimeObservationJobContract,
   RuntimeObservationSummary,
   RuntimeTestPackage,

@@ -1,7 +1,11 @@
 import {
   createBundleReview,
+  createRuntimeReview as createRuntimeManifestReview,
+  createRuntimeReviewManifest,
+  RuntimeReviewValidationError,
   SourceMapValidationError,
-  type BundleReview
+  type BundleReview,
+  type CreateRuntimeReviewInput
 } from '@create-something/webflow-app-review-preflight';
 import type { AuthenticatedUser, Env, StoredReview } from './types';
 import {
@@ -12,8 +16,10 @@ import {
 
 const MAX_BUNDLE_BYTES = 10 * 1024 * 1024;
 const MAX_SOURCE_MAP_BYTES = 10 * 1024 * 1024;
+const MAX_RUNTIME_REVIEW_INPUT_BYTES = 32 * 1024;
 
 export class ReviewInputError extends Error {}
+export class RuntimeReviewInputError extends Error {}
 
 function safePathSegment(value: string): string {
   return value.replace(/[^a-zA-Z0-9_-]/g, '_');
@@ -39,6 +45,24 @@ function sourceMapArtifact(form: FormData): File | undefined {
     throw new ReviewInputError('The source-map artifact must be between 1 byte and 10 MB.');
   }
   return value;
+}
+
+async function runtimeReviewInput(request: Request): Promise<CreateRuntimeReviewInput> {
+  const text = await request.text();
+  if (text.length === 0 || text.length > MAX_RUNTIME_REVIEW_INPUT_BYTES) {
+    throw new RuntimeReviewInputError('Hosted runtime review input is missing or too large.');
+  }
+  try {
+    const parsed = JSON.parse(text) as unknown;
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error();
+    const input = parsed as Record<string, unknown>;
+    return {
+      appName: input.appName as string,
+      runtimeUrls: input.runtimeUrls as string[]
+    };
+  } catch {
+    throw new RuntimeReviewInputError('Hosted runtime review input must be valid JSON.');
+  }
 }
 
 async function analyzeBundle(
@@ -209,6 +233,91 @@ export async function createReview(
 
   await env.DB.batch(statements);
   return storedReview(name, versionId, result, artifactPersistence.receipt);
+}
+
+export async function createRuntimeReview(
+  request: Request,
+  env: Env,
+  user: AuthenticatedUser
+): Promise<StoredReview> {
+  const input = await runtimeReviewInput(request);
+  let manifest;
+  try {
+    manifest = createRuntimeReviewManifest(input);
+  } catch (error) {
+    if (error instanceof RuntimeReviewValidationError) {
+      throw new RuntimeReviewInputError(error.message);
+    }
+    throw error;
+  }
+  const result = await createRuntimeManifestReview(manifest);
+  const versionId = crypto.randomUUID();
+  const name = manifest.appName;
+  const owner = safePathSegment(user.id);
+  const artifactKey = `${owner}/runtime-manifests/sha256/${result.artifact.sha256}.json`;
+  const manifestBytes = new TextEncoder().encode(JSON.stringify(manifest));
+
+  if (!(await env.ARTIFACTS.head(artifactKey))) {
+    await env.ARTIFACTS.put(artifactKey, manifestBytes.buffer as ArrayBuffer, {
+      httpMetadata: { contentType: 'application/json' },
+      customMetadata: {
+        sha256: result.artifact.sha256,
+        kind: 'runtime_manifest'
+      }
+    });
+  }
+
+  await env.DB.batch([
+    env.DB.prepare(
+      `INSERT INTO reviews
+        (id, owner_user_id, site_id, name, created_at, updated_at, latest_version_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`
+    ).bind(
+      result.reviewId,
+      user.id,
+      user.siteId,
+      name,
+      result.createdAt,
+      result.createdAt,
+      versionId
+    ),
+    env.DB.prepare(
+      `INSERT INTO review_versions
+        (id, review_id, sequence, artifact_sha256, artifact_key, file_name,
+         compressed_bytes, policy_ruleset_version, policy_config_version,
+         review_json, created_at)
+       VALUES (?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ).bind(
+      versionId,
+      result.reviewId,
+      result.artifact.sha256,
+      artifactKey,
+      result.artifact.fileName,
+      result.artifact.compressedBytes,
+      result.policySnapshot.rulesetVersion,
+      result.policySnapshot.configVersion,
+      JSON.stringify(result),
+      result.createdAt
+    ),
+    env.DB.prepare(
+      `INSERT INTO review_events
+        (id, review_id, review_version_id, actor_user_id, event_type,
+         payload_json, created_at)
+       VALUES (?, ?, ?, ?, 'runtime_review_created', ?, ?)`
+    ).bind(
+      crypto.randomUUID(),
+      result.reviewId,
+      versionId,
+      user.id,
+      JSON.stringify({
+        artifactSha256: result.artifact.sha256,
+        runtimeArtifactCount: manifest.runtimeUrls.length
+      }),
+      result.createdAt
+    )
+  ]);
+
+  return storedReview(name, versionId, result, null);
 }
 
 interface LatestReviewRow {

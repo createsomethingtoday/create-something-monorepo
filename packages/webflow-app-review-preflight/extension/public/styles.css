@@ -41,7 +41,7 @@ body {
   line-height: 1.45;
   -webkit-font-smoothing: antialiased;
 }
-button, input { font: inherit; }
+button, input, textarea { font: inherit; }
 button { color: inherit; }
 h1, h2, h3, p { margin: 0; }
 h1 { font-size: 14px; line-height: 1.2; font-weight: 600; }
@@ -95,6 +95,23 @@ h3 { font-size: 12px; line-height: 1.3; font-weight: 600; }
 }
 .upload-card h2 { margin: var(--space-3) 0 var(--space-2); }
 .upload-card p { max-width: 360px; color: var(--color-text2); }
+.entry-choices { margin-top: var(--space-4); }
+.entry-choices-heading h2 { margin-top: var(--space-1); }
+.entry-choice-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); margin-top: var(--space-3); }
+.entry-card, .runtime-start-card { padding: var(--space-4); border: 1px solid var(--color-border1); border-radius: var(--radius-lg); background: var(--color-background2); }
+.entry-card { display: flex; min-height: 204px; flex-direction: column; align-items: flex-start; }
+.entry-card h3 { margin-top: var(--space-3); font-size: 14px; }
+.entry-card p, .runtime-start-heading p { margin-top: var(--space-2); color: var(--color-text2); font-size: 11px; }
+.entry-card .button { margin-top: auto; }
+.entry-icon { display: grid; width: 28px; height: 28px; place-items: center; border-radius: 50%; background: #243b5b; color: var(--color-info); }
+.runtime-start-card { margin-top: var(--space-3); }
+.runtime-start-heading { margin-top: var(--space-4); }
+.runtime-start-heading h2 { margin-top: var(--space-1); }
+.runtime-start-form { display: grid; gap: var(--space-3); margin-top: var(--space-4); }
+.runtime-start-form label { display: grid; gap: var(--space-1); color: var(--color-text2); font-size: 10px; font-weight: 600; }
+.runtime-start-form input, .runtime-start-form textarea { width: 100%; padding: var(--space-2); border: 1px solid var(--color-border2); border-radius: var(--radius-sm); background: var(--color-background1); color: var(--color-text1); }
+.runtime-start-form textarea { min-height: 92px; resize: vertical; }
+.runtime-start-form small { color: var(--color-text3); font-size: 10px; }
 .artifact-upload-fields { display: grid; gap: var(--space-2); width: 100%; max-width: 420px; margin-top: var(--space-4); }
 .artifact-upload-field { display: grid; gap: 3px; padding: var(--space-3); border: 1px solid var(--color-border2); border-radius: var(--radius-md); background: var(--color-background2); text-align: left; cursor: pointer; }
 .artifact-upload-field:hover { border-color: var(--color-info); }
@@ -243,6 +260,10 @@ h3 { font-size: 12px; line-height: 1.3; font-weight: 600; }
 .observation-form label, .advanced-settings label { display: grid; gap: var(--space-1); margin-top: var(--space-3); color: var(--color-text2); font-size: 10px; font-weight: 600; }
 .observation-form input, .advanced-settings input { width: 100%; min-height: 34px; padding: 0 var(--space-2); border: 1px solid var(--color-border2); border-radius: var(--radius-sm); background: var(--color-background1); color: var(--color-text1); }
 .observation-form input:focus { outline: 2px solid var(--color-info); outline-offset: 1px; }
+.runtime-set-intro { margin-top: var(--space-2); color: var(--color-text3); font-size: 10px; }
+.runtime-artifact-input { margin-top: var(--space-3); padding: var(--space-3); border: 1px solid var(--color-border1); border-radius: var(--radius-sm); background: var(--color-background1); }
+.runtime-artifact-heading { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); color: var(--color-text1); font-size: 11px; }
+.runtime-artifact-heading .button { min-height: 24px; margin-top: 0; padding: 0 var(--space-1); font-size: 10px; }
 .advanced-settings { padding: var(--space-3); border: 1px solid var(--color-border1); border-radius: var(--radius-md); }
 .advanced-settings summary { color: var(--color-text2); cursor: pointer; font-weight: 600; }
 .observation-status { margin-top: var(--space-4); }
@@ -298,6 +319,7 @@ h3 { font-size: 12px; line-height: 1.3; font-weight: 600; }
 
 @media (max-width: 390px) {
   .start-view, .review-view { padding: var(--space-3); }
+  .entry-choice-grid { grid-template-columns: 1fr; }
   .saved-state { position: static; margin-top: var(--space-2); }
   .summary-grid, .comparison { grid-template-columns: 1fr; }
   .observation-results { grid-template-columns: 1fr; }

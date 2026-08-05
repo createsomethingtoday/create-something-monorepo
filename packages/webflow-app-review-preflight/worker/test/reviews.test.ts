@@ -181,6 +181,99 @@ describe('review API', () => {
     });
   });
 
+  test('creates a private hosted-runtime review without requiring an app bundle', async () => {
+    const response = await exports.default.fetch(
+      new Request('https://preflight.test/v1/runtime-reviews', {
+        method: 'POST',
+        headers: {
+          authorization: 'Bearer test-token',
+          origin: 'http://localhost:1337',
+          'content-type': 'application/json'
+        },
+        body: JSON.stringify({
+          appName: 'Consent Pro Data Client',
+          runtimeUrls: [
+            'https://cdn.consentpro.com/runtime-v1.js',
+            'https://cdn.consentpro.com/child-v1.js'
+          ]
+        })
+      })
+    );
+
+    expect(response.status).toBe(201);
+    const body = await response.json<{
+      review: {
+        id: string;
+        latestVersion: {
+          result: {
+            reviewType?: string;
+            artifact: { sha256: string };
+            artifactScope: { primary: string };
+            runtime: { references: string[] };
+          };
+          receipt?: unknown;
+        };
+      };
+    }>();
+
+    expect(body.review.latestVersion.result).toMatchObject({
+      reviewType: 'runtime_manifest',
+      artifactScope: { primary: 'production_runtime' },
+      runtime: {
+        references: [
+          'https://cdn.consentpro.com/runtime-v1.js',
+          'https://cdn.consentpro.com/child-v1.js'
+        ]
+      }
+    });
+    expect(body.review.latestVersion.receipt).toBeNull();
+    expect(JSON.stringify(body)).not.toMatch(/runtime-manifests|object_key/i);
+
+    const object = await env.ARTIFACTS.head(
+      `local-webflow-user/runtime-manifests/sha256/${body.review.latestVersion.result.artifact.sha256}.json`
+    );
+    expect(object).not.toBeNull();
+
+    const packageResponse = await exports.default.fetch(
+      new Request(`https://preflight.test/v1/reviews/${body.review.id}/runtime-test-packages`, {
+        method: 'POST',
+        headers: {
+          authorization: 'Bearer test-token',
+          origin: 'http://localhost:1337',
+          'content-type': 'application/json'
+        },
+        body: JSON.stringify({
+          targetUrl: 'https://app-review-sandbox.webflow.io/',
+          sandboxInstallationId: 'local-webflow-site',
+          sandboxOwnershipConfirmed: true,
+          license: {
+            mode: 'installation_allowlist',
+            expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString()
+          },
+          runtimeArtifacts: body.review.latestVersion.result.runtime.references.map((url) => ({
+            url,
+            sha256: 'a'.repeat(64),
+            integrity: TEST_RUNTIME_INTEGRITY
+          })),
+          negativeProxyProbe: {
+            method: 'GET',
+            urlTemplate: 'https://cdn.consentpro.com/proxy?url={canaryUrl}'
+          },
+          lifecycle: { readySelector: '[data-runtime-ready]' }
+        })
+      })
+    );
+
+    expect(packageResponse.status).toBe(201);
+    const testPackage = await packageResponse.json<{
+      testPackage: { bundleSha256: string; runtimeArtifacts: Array<{ url: string }> };
+    }>();
+    expect(testPackage.testPackage.bundleSha256).toBe(body.review.latestVersion.result.artifact.sha256);
+    expect(testPackage.testPackage.runtimeArtifacts.map((artifact) => artifact.url)).toEqual(
+      body.review.latestVersion.result.runtime.references
+    );
+  });
+
   test('retires legacy runtime and companion mutations in production', async () => {
     const productionEnv = {
       DB: env.DB,

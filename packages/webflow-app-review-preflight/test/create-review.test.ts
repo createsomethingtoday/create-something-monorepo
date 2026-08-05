@@ -1,6 +1,11 @@
 import JSZip from 'jszip';
 import { describe, expect, test } from 'vitest';
-import { createBundleReview, SourceMapValidationError } from '../src/index';
+import {
+  createBundleReview,
+  createRuntimeReview,
+  RuntimeReviewValidationError,
+  SourceMapValidationError
+} from '../src/index';
 import { boundedEvidenceSnippet } from '../src/create-review';
 
 async function createDesignerExtensionFixture(): Promise<ArrayBuffer> {
@@ -145,5 +150,66 @@ describe('createBundleReview', () => {
       reason: 'No generated or minified executable files were detected.'
     });
     expect(review.artifactSet?.sourceMapArtifact).toBeNull();
+  });
+});
+
+describe('createRuntimeReview', () => {
+  test('creates a runtime-only review for multiple hosted Data Client files', async () => {
+    const review = await createRuntimeReview({
+      appName: 'Consent Pro Data Client',
+      runtimeUrls: [
+        'https://cdn.consentpro.com/runtime-v1.js',
+        'https://cdn.consentpro.com/child-v1.js'
+      ]
+    });
+
+    expect(review.reviewType).toBe('runtime_manifest');
+    expect(review.artifactScope).toEqual({
+      primary: 'production_runtime',
+      appName: 'Consent Pro Data Client',
+      manifestPath: null
+    });
+    expect(review.artifact.fileName).toBe('runtime-manifest.json');
+    expect(review.artifact.sha256).toMatch(/^[a-f0-9]{64}$/);
+    expect(review.runtime.references).toEqual([
+      'https://cdn.consentpro.com/runtime-v1.js',
+      'https://cdn.consentpro.com/child-v1.js'
+    ]);
+    expect(review.artifactSet).toBeUndefined();
+    expect(review.sourceMapPolicy).toBeUndefined();
+    expect(review.coverage).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ surface: 'production_runtime', status: 'needs_verification' })
+      ])
+    );
+  });
+
+  test('rejects a credentialed, private, or duplicate hosted runtime URL', async () => {
+    await expect(
+      createRuntimeReview({
+        appName: 'Consent Pro Data Client',
+        runtimeUrls: [
+          'https://secret@example.com/runtime.js',
+          'https://example.com/runtime.js'
+        ]
+      })
+    ).rejects.toBeInstanceOf(RuntimeReviewValidationError);
+
+    await expect(
+      createRuntimeReview({
+        appName: 'Consent Pro Data Client',
+        runtimeUrls: ['https://127.0.0.1/runtime.js']
+      })
+    ).rejects.toMatchObject({ message: 'Each runtime URL must be publicly routable.' });
+
+    await expect(
+      createRuntimeReview({
+        appName: 'Consent Pro Data Client',
+        runtimeUrls: [
+          'https://example.com/runtime.js',
+          'https://example.com/runtime.js'
+        ]
+      })
+    ).rejects.toMatchObject({ message: 'Runtime URLs must be unique.' });
   });
 });
