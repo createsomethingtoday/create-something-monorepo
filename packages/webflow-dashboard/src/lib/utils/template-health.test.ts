@@ -29,7 +29,8 @@ describe('computeTemplateHealth', () => {
 				uniqueViewers: 0,
 				cumulativePurchases: 0
 			}),
-			NOW
+			NOW,
+			{ viewerDataAvailable: true }
 		);
 
 		expect(health.status).toBe('limited_data');
@@ -43,7 +44,8 @@ describe('computeTemplateHealth', () => {
 				publishedDate: undefined,
 				decisionDate: '2026-05-01T00:00:00.000Z'
 			}),
-			NOW
+			NOW,
+			{ viewerDataAvailable: true }
 		);
 
 		expect(health.daysLive).toBe(33);
@@ -57,7 +59,8 @@ describe('computeTemplateHealth', () => {
 				uniqueViewers: 500,
 				cumulativePurchases: 25
 			}),
-			NOW
+			NOW,
+			{ viewerDataAvailable: true }
 		);
 
 		expect(health.status).toBe('strong');
@@ -72,7 +75,8 @@ describe('computeTemplateHealth', () => {
 				cumulativePurchases: 0,
 				qualityScore: 'Good'
 			}),
-			NOW
+			NOW,
+			{ viewerDataAvailable: true }
 		);
 
 		expect(health.status).toBe('needs_attention');
@@ -86,7 +90,8 @@ describe('computeTemplateHealth', () => {
 				cumulativePurchases: 0,
 				qualityScore: 'Good'
 			}),
-			NOW
+			NOW,
+			{ viewerDataAvailable: true }
 		);
 
 		expect(health.status).toBe('limited_data');
@@ -102,7 +107,8 @@ describe('computeTemplateHealth', () => {
 				uniqueViewers: 300,
 				cumulativePurchases: 6
 			}),
-			NOW
+			NOW,
+			{ viewerDataAvailable: true }
 		);
 
 		expect(health.status).toBe('needs_attention');
@@ -121,7 +127,8 @@ describe('computeTemplateHealth', () => {
 				cumulativePurchases: 0,
 				qualityScore: 'Good'
 			}),
-			NOW
+			NOW,
+			{ viewerDataAvailable: true }
 		);
 
 		expect(health.status).toBe('needs_attention');
@@ -144,7 +151,8 @@ describe('computeTemplateHealth', () => {
 				recoveryOfferUsed: true,
 				qualifiedSales30d: 0
 			}),
-			NOW
+			NOW,
+			{ viewerDataAvailable: true }
 		);
 
 		expect(health.automation).toMatchObject({
@@ -169,7 +177,8 @@ describe('computeTemplateHealth', () => {
 				offerPruneReviewAt: '2026-06-24T12:00:00.000Z',
 				postOfferAction: 'Re-review for pruning'
 			}),
-			NOW
+			NOW,
+			{ viewerDataAvailable: true }
 		);
 
 		expect(health.offer).toMatchObject({
@@ -196,7 +205,8 @@ describe('computeTemplateHealth', () => {
 				offerPruneReviewAt: '2026-06-01T12:00:00.000Z',
 				postOfferAction: 'Delist / archive'
 			}),
-			NOW
+			NOW,
+			{ viewerDataAvailable: true }
 		);
 
 		expect(health.offer.state).toBe('expired');
@@ -217,7 +227,8 @@ describe('computeTemplateHealth', () => {
 				recoveryOfferUsed: true,
 				qualifiedSales30d: 3
 			}),
-			NOW
+			NOW,
+			{ viewerDataAvailable: true }
 		);
 
 		expect(health.searchVisibilitySuppressed).toBe(true);
@@ -244,7 +255,8 @@ describe('computeTemplateHealth', () => {
 				recoveryOfferUsed: true,
 				qualifiedSales30d: 4
 			}),
-			NOW
+			NOW,
+			{ viewerDataAvailable: true }
 		);
 
 		expect(health.automation).toMatchObject({
@@ -268,7 +280,8 @@ describe('computeTemplateHealth', () => {
 				recoveryOfferUsed: true,
 				qualifiedSales30d: 4
 			}),
-			NOW
+			NOW,
+			{ viewerDataAvailable: true }
 		);
 
 		expect(health.searchVisibilitySuppressed).toBe(true);
@@ -280,6 +293,46 @@ describe('computeTemplateHealth', () => {
 		expect(health.actions.map((action) => action.title)).toContain(
 			'Await marketplace re-entry review'
 		);
+	});
+});
+
+describe('computeTemplateHealth with viewer data unavailable', () => {
+	it('reports conversion as unavailable and never judges on viewers', () => {
+		const health = computeTemplateHealth(
+			templateAsset({ uniqueViewers: 600, cumulativePurchases: 3 }),
+			NOW,
+			{ viewerDataAvailable: false }
+		);
+
+		expect(health.conversionRate).toBeNull();
+		expect(health.automation.signals).toContain('viewers_unknown');
+		expect(health.signals.find((s) => s.label === 'Conversion')).toMatchObject({
+			value: 'Unavailable',
+			tone: 'neutral'
+		});
+		expect(health.actions.map((a) => a.title)).not.toContain('Improve listing clarity');
+		expect(health.actions.map((a) => a.title)).not.toContain('Rework the first impression');
+	});
+
+	it('still surfaces purchase-based statuses without viewer data', () => {
+		const strong = computeTemplateHealth(
+			templateAsset({ uniqueViewers: 0, cumulativePurchases: 25 }),
+			NOW,
+			{ viewerDataAvailable: false }
+		);
+		expect(strong.status).toBe('strong');
+
+		const stale = computeTemplateHealth(
+			templateAsset({
+				uniqueViewers: 0,
+				cumulativePurchases: 0,
+				qualityScore: undefined,
+				publishedDate: '2024-01-01'
+			}),
+			NOW,
+			{ viewerDataAvailable: false }
+		);
+		expect(stale.status).toBe('needs_attention');
 	});
 });
 

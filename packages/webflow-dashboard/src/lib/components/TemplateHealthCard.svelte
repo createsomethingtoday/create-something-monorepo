@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Asset } from '$lib/server/airtable';
+	import { VIEWER_DATA_AVAILABLE } from '$lib/config/viewer-data';
 	import {
 		computeTemplateHealth,
 		type TemplateHealthTone
@@ -191,10 +192,12 @@
 			<p class="health-summary">{health.summary}</p>
 
 			<div class="health-metrics" aria-label="Template health summary">
-				<div class="metric">
-					<span class="metric-label">Viewers</span>
-					<span class="metric-value">{formatWholeNumber(asset.uniqueViewers, '0')}</span>
-				</div>
+				{#if VIEWER_DATA_AVAILABLE}
+					<div class="metric">
+						<span class="metric-label">Viewers</span>
+						<span class="metric-value">{formatWholeNumber(asset.uniqueViewers, '0')}</span>
+					</div>
+				{/if}
 				<div class="metric">
 					<span class="metric-label">Purchases</span>
 					<span class="metric-value">{formatWholeNumber(asset.cumulativePurchases, '0')}</span>

@@ -1,0 +1,40 @@
+name = "webflow-marketplace-sync"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
+workers_dev = true
+
+[observability]
+enabled = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "webflow-marketplace-sync"
+database_id = "42fc36cc-23c3-417a-b2b3-0752f03041b9"
+
+[vars]
+ENVIRONMENT = "production"
+# shadow: log intended Airtable writes without performing them. live: perform them.
+WRITE_MODE = "shadow"
+AIRTABLE_BASE_ID = "appMoIgXMTTTNIc3p"
+AIRTABLE_CMS_RECORDS_TABLE_ID = "tblyBiOO7BWcBYriE"
+WEBFLOW_SITE_ID = "5e593fb060cf87bbaf75dd20"
+WEBFLOW_TEMPLATES_COLLECTION_ID = "641b464e78789f611a5d4496"
+# Sweep looks back this many hours for missed webhooks.
+SWEEP_WINDOW_HOURS = "72"
+# Cap per sweep run — Whalesync pushes bump lastUpdated broadly, so the window can hold thousands.
+SWEEP_MAX_ITEMS = "500"
+
+[triggers]
+# */10: recent-item completeness sweep (webhook backstop)
+# 41 5 * * *: daily full drift scan (before the ~12:15 UTC publish job)
+crons = ["*/10 * * * *", "41 5 * * *"]
+
+# Secrets (wrangler secret put …):
+# - AIRTABLE_API_KEY          Airtable PAT with write access to the base
+# - WEBFLOW_API_TOKEN         TEMPLATE_MARKETPLACE site token (webhook item fetches)
+# - CMS_READ_ONLY             read-only Webflow token (bulk reconciler reads)
+# - WEBFLOW_WEBHOOK_SECRET    comma-separated per-subscription secrets
+# - ADMIN_TOKEN               bearer token for /api/* endpoints
+# - SLACK_WEBHOOK_URL         optional; drift summaries

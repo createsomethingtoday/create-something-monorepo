@@ -1,4 +1,5 @@
 import type { Asset } from '$lib/server/airtable';
+import { VIEWER_DATA_AVAILABLE } from '$lib/config/viewer-data';
 import {
 	RECOVERY_REENTRY_QUALIFIED_SALES_30D,
 	hasReachedRecoveryReentryThreshold,
@@ -160,6 +161,7 @@ function addActionOnce(actions: TemplateHealthAction[], action: TemplateHealthAc
 function lifecycleAutomationSignal(input: {
 	status: TemplateHealthStatus;
 	isPublished: boolean;
+	viewersKnown: boolean;
 	hasEnoughViewers: boolean;
 	purchases: number;
 	qualifiedSales30d: number | null;
@@ -176,7 +178,11 @@ function lifecycleAutomationSignal(input: {
 	const remainingSales = recoverySalesRemaining(qualifiedSales30d);
 	const reentryReviewRequested = isReentryReviewRequested(input.searchVisibility);
 	const signals = [
-		input.hasEnoughViewers ? 'enough_viewers' : 'limited_viewers',
+		!input.viewersKnown
+			? 'viewers_unknown'
+			: input.hasEnoughViewers
+				? 'enough_viewers'
+				: 'limited_viewers',
 		input.conversionRate === null ? 'conversion_unknown' : `conversion_${input.conversionRate.toFixed(1)}pct`,
 		`purchases_${input.purchases}`,
 		input.qualifiedSales30d === null ? 'qualified_sales_30d_unknown' : `qualified_sales_30d_${qualifiedSales30d}`,
@@ -258,14 +264,22 @@ function lifecycleAutomationSignal(input: {
 		};
 	}
 
+	// Without viewer data, low-view shortcuts are unreliable; require the
+	// stronger needs_attention evidence (long-lived with zero purchases, or a
+	// quality issue) before recommending lifecycle changes.
+	const viewerEvidence = input.viewersKnown ? input.hasEnoughViewers : true;
+	const underperforming = input.viewersKnown
+		? input.status === 'needs_attention' ||
+			input.purchases === 0 ||
+			(input.conversionRate !== null && input.conversionRate < WATCH_CONVERSION_RATE)
+		: input.status === 'needs_attention';
+
 	if (
 		input.isPublished &&
-		input.hasEnoughViewers &&
+		viewerEvidence &&
 		!input.offer.hasOffer &&
 		input.recoveryOfferUsed &&
-		(input.status === 'needs_attention' ||
-			input.purchases === 0 ||
-			(input.conversionRate !== null && input.conversionRate < WATCH_CONVERSION_RATE))
+		underperforming
 	) {
 		return {
 			code: 'move_detail_only',
@@ -280,12 +294,10 @@ function lifecycleAutomationSignal(input: {
 
 	if (
 		input.isPublished &&
-		input.hasEnoughViewers &&
+		viewerEvidence &&
 		!input.offer.hasOffer &&
 		!input.recoveryOfferUsed &&
-		(input.status === 'needs_attention' ||
-			input.purchases === 0 ||
-			(input.conversionRate !== null && input.conversionRate < WATCH_CONVERSION_RATE))
+		underperforming
 	) {
 		return {
 			code: 'run_recovery_offer',
@@ -408,16 +420,23 @@ function computeTemplateOfferLifecycle(asset: Asset, now = new Date()): Template
 	};
 }
 
-export function computeTemplateHealth(asset: Asset, now = new Date()): TemplateHealthModel {
-	const viewers = Math.max(0, asset.uniqueViewers ?? 0);
+export function computeTemplateHealth(
+	asset: Asset,
+	now = new Date(),
+	options?: { viewerDataAvailable?: boolean }
+): TemplateHealthModel {
+	// Viewer counts froze on 2026-07-21 (see $lib/config/viewer-data); while
+	// unavailable, health must not judge templates on viewers or conversion.
+	const viewersKnown = options?.viewerDataAvailable ?? VIEWER_DATA_AVAILABLE;
+	const viewers = viewersKnown ? Math.max(0, asset.uniqueViewers ?? 0) : 0;
 	const purchases = Math.max(0, asset.cumulativePurchases ?? 0);
-	const conversionRate = viewers > 0 ? (purchases / viewers) * 100 : null;
+	const conversionRate = viewersKnown && viewers > 0 ? (purchases / viewers) * 100 : null;
 	const publishedDate =
 		parseDate(asset.publishedDate) ||
 		(asset.status === 'Published' ? parseDate(asset.decisionDate) : null);
 	const daysLive = publishedDate ? daysBetween(publishedDate, now) : null;
 	const isPublished = isPublishedForHealth(asset);
-	const hasEnoughViewers = viewers >= MIN_VIEWERS_FOR_HEALTH;
+	const hasEnoughViewers = viewersKnown && viewers >= MIN_VIEWERS_FOR_HEALTH;
 	const positiveQuality = hasPositiveQualitySignal(asset.qualityScore);
 	const qualityIssue = hasNegativeQualitySignal(asset);
 	const hasReviewFeedback = Boolean(asset.latestReviewFeedback || asset.rejectionFeedback);
@@ -449,7 +468,7 @@ export function computeTemplateHealth(asset: Asset, now = new Date()): TemplateH
 		});
 	}
 
-	if (isPublished && viewers < MIN_VIEWERS_FOR_HEALTH) {
+	if (isPublished && viewersKnown && viewers < MIN_VIEWERS_FOR_HEALTH) {
 		addActionOnce(actions, {
 			title: 'Improve listing clarity',
 			description:
@@ -487,7 +506,7 @@ export function computeTemplateHealth(asset: Asset, now = new Date()): TemplateH
 
 	let status: TemplateHealthStatus = 'limited_data';
 
-	if (!isPublished || !hasEnoughViewers) {
+	if (!isPublished || (viewersKnown && !hasEnoughViewers)) {
 		status = 'limited_data';
 	} else if (
 		qualityIssue ||
@@ -619,6 +638,7 @@ export function computeTemplateHealth(asset: Asset, now = new Date()): TemplateH
 	const automation = lifecycleAutomationSignal({
 		status,
 		isPublished,
+		viewersKnown,
 		hasEnoughViewers,
 		purchases,
 		conversionRate,
@@ -645,7 +665,7 @@ export function computeTemplateHealth(asset: Asset, now = new Date()): TemplateH
 		},
 		{
 			label: 'Conversion',
-			value: formatPercent(conversionRate),
+			value: viewersKnown ? formatPercent(conversionRate) : 'Unavailable',
 			tone:
 				conversionRate === null || !hasEnoughViewers
 					? 'neutral'
@@ -654,8 +674,9 @@ export function computeTemplateHealth(asset: Asset, now = new Date()): TemplateH
 						: conversionRate >= WATCH_CONVERSION_RATE
 							? 'warning'
 							: 'critical',
-			description:
-				conversionRate === null || !hasEnoughViewers
+			description: !viewersKnown
+				? 'Marketplace view tracking is being rebuilt; conversion returns once new view data is collected.'
+				: conversionRate === null || !hasEnoughViewers
 					? 'Conversion becomes meaningful after at least 100 viewers.'
 					: 'Purchases divided by unique viewers, used as a buyer-fit signal.'
 		},

@@ -1,0 +1,34 @@
+# First-party template view beacon.
+#
+# Setup (one-time, requires infisical session for wrangler auth):
+#   1. pnpm --filter=@create-something/webflow-template-views exec wrangler d1 create webflow-template-views
+#   2. Paste the returned database_id below.
+#   3. pnpm --filter=@create-something/webflow-template-views exec wrangler d1 migrations apply webflow-template-views --remote
+#   4. pnpm --filter=@create-something/webflow-template-views exec wrangler secret put STATS_API_KEY
+#   5. pnpm --filter=@create-something/webflow-template-views deploy
+
+name = "webflow-template-views"
+main = "src/index.ts"
+compatibility_date = "2026-01-01"
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+
+[observability]
+enabled = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "webflow-template-views"
+database_id = "f5027b99-3216-4bce-bfb1-ae2376e98a7d"
+
+# Optional richer event stream (90-day retention) alongside the durable D1 rollup.
+[[analytics_engine_datasets]]
+binding = "VIEWS_AE"
+dataset = "webflow_template_views"
+
+[vars]
+ALLOWED_ORIGINS = "https://webflow.com,https://www.webflow.com,https://template-marketplace.webflow.io"
+
+# Secrets:
+# - STATS_API_KEY  (Bearer token protecting GET /stats; consumed by webflow-dashboard later)

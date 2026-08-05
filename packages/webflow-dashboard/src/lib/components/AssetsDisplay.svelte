@@ -17,6 +17,7 @@
   import DataFreshnessIndicator from './DataFreshnessIndicator.svelte';
   import Search from './Search.svelte';
   import type { Asset } from '$lib/server/airtable';
+  import { VIEWER_DATA_AVAILABLE } from '$lib/config/viewer-data';
   import type { AssetActionDescriptor } from '$lib/utils/asset-actions';
   import {
     getAssetActionConfig,
@@ -477,21 +478,23 @@
                         </TableHead>
                         <TableHead class="category-head">Category</TableHead>
                         {#if showPerformance}
-                          <TableHead
-                            align="right"
-                            class="metric-head"
-                            aria-sort={getAriaSort('uniqueViewers')}
-                          >
-                            <button
-                              type="button"
-                              class="sort-btn"
-                              class:active={sortConfig.key === 'uniqueViewers'}
-                              aria-label="Sort by viewers"
-                              onclick={() => requestSort('uniqueViewers')}
+                          {#if VIEWER_DATA_AVAILABLE}
+                            <TableHead
+                              align="right"
+                              class="metric-head"
+                              aria-sort={getAriaSort('uniqueViewers')}
                             >
-                              Viewers{getSortIndicator('uniqueViewers')}
-                            </button>
-                          </TableHead>
+                              <button
+                                type="button"
+                                class="sort-btn"
+                                class:active={sortConfig.key === 'uniqueViewers'}
+                                aria-label="Sort by viewers"
+                                onclick={() => requestSort('uniqueViewers')}
+                              >
+                                Viewers{getSortIndicator('uniqueViewers')}
+                              </button>
+                            </TableHead>
+                          {/if}
                           <TableHead
                             align="right"
                             class="metric-head"
@@ -559,9 +562,11 @@
                           </TableCell>
                           <TableCell></TableCell>
                           <TableCell></TableCell>
-                          <TableCell class="metric-cell totals-metric"
-                            ><strong>{totals.viewers.toLocaleString()}</strong></TableCell
-                          >
+                          {#if VIEWER_DATA_AVAILABLE}
+                            <TableCell class="metric-cell totals-metric"
+                              ><strong>{totals.viewers.toLocaleString()}</strong></TableCell
+                            >
+                          {/if}
                           <TableCell class="metric-cell totals-metric"
                             ><strong>{totals.purchases.toLocaleString()}</strong></TableCell
                           >
@@ -622,12 +627,14 @@
                           </span>
                         </div>
                         {#if showPerformance && !['Upcoming', 'Rejected'].includes(normalizeAssetStatus(asset.status))}
-                          <div>
-                            <span class="mobile-label">Viewers</span>
-                            <span class="mobile-value"
-                              >{asset.uniqueViewers?.toLocaleString() ?? '0'}</span
-                            >
-                          </div>
+                          {#if VIEWER_DATA_AVAILABLE}
+                            <div>
+                              <span class="mobile-label">Viewers</span>
+                              <span class="mobile-value"
+                                >{asset.uniqueViewers?.toLocaleString() ?? '0'}</span
+                              >
+                            </div>
+                          {/if}
                           <div>
                             <span class="mobile-label">Purchases</span>
                             <span class="mobile-value"

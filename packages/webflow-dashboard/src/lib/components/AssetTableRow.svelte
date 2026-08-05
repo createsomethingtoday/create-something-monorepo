@@ -2,6 +2,7 @@
 	import { Badge, TableCell, TableRow } from './ui';
 	import ActionsDropdown from './ActionsDropdown.svelte';
 	import type { Asset } from '$lib/server/airtable';
+	import { VIEWER_DATA_AVAILABLE } from '$lib/config/viewer-data';
 	import { getAssetActionConfig, normalizeAssetStatus } from '$lib/utils/asset-actions';
 	import { isTemplateSearchSuppressed } from '$lib/utils/template-health';
 	import {
@@ -68,6 +69,7 @@
 	// Tufte: Show relationships, not just numbers
 	// Conversion rate = purchases / viewers (key performance indicator)
 	const conversionRate = $derived(() => {
+		if (!VIEWER_DATA_AVAILABLE) return null;
 		if (!showMetrics || !asset.uniqueViewers || asset.uniqueViewers === 0) return null;
 		return ((asset.cumulativePurchases || 0) / asset.uniqueViewers) * 100;
 	});
@@ -164,9 +166,11 @@
 	{#if showPerformance}
 		{@const cr = conversionRate()}
 		{@const aov = avgOrderValue()}
-		<TableCell class="metric-cell">
-			<span class="metric metric-primary">{showMetrics ? formatCompactNumber(asset.uniqueViewers) : '—'}</span>
-		</TableCell>
+		{#if VIEWER_DATA_AVAILABLE}
+			<TableCell class="metric-cell">
+				<span class="metric metric-primary">{showMetrics ? formatCompactNumber(asset.uniqueViewers) : '—'}</span>
+			</TableCell>
+		{/if}
 		<TableCell class="metric-cell">
 			<div class="metric-stack">
 				<span class="metric metric-primary">{showMetrics ? formatCompactNumber(asset.cumulativePurchases) : '—'}</span>
