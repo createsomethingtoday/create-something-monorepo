@@ -148,11 +148,11 @@ test('public agency surfaces state the OpenAI conviction and owned-system bounda
   );
 
   assert.match(home, /<span>How we build<\/span>/);
-  assert.match(home, /Built with OpenAI Codex\. Designed to remain yours\./);
-  assert.match(home, /We use Codex to map, build, and maintain the workflow\./);
+  assert.match(home, /Built with OpenAI and Cloudflare\. Designed to remain yours\./);
+  assert.match(home, /We use OpenAI Codex to map, build, and maintain the workflow\./);
   assert.match(
     home,
-    /If the model\s+or agent environment changes, the system does not have to start over\./
+    /If the model\s+or agent environment\s+changes, the system does not have to start over\./
   );
   assert.match(home, />Why we build this way</);
   assert.doesNotMatch(home, /Current agent environment|Designed to outlast any model|MCP contracts, harnesses/);
@@ -161,6 +161,36 @@ test('public agency surfaces state the OpenAI conviction and owned-system bounda
   assert.match(stack, /data, MCP contracts, harnesses, skills, prompts, policy, evals, receipts/i);
   assert.match(partners, /OpenAI is the primary reasoning and agent environment/i);
   assert.match(partners, /open-weight and custom models/i);
+});
+
+test('the homepage leads with a Paper-led operating-system message before its provider stack', () => {
+  const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
+  const opening = home.slice(
+    home.indexOf('<PerformanceCampaignOpening'),
+    home.indexOf('</PerformanceCampaignOpening>')
+  );
+  const ownership = home.slice(
+    home.indexOf('<aside class="ownership-callout">'),
+    home.indexOf('</aside>', home.indexOf('<aside class="ownership-callout">'))
+  );
+
+  assert.match(home, /title="AI Operating Systems \| CREATE SOMETHING \.agency"/);
+  assert.match(opening, /eyebrow="Operating systems for AI work"/);
+  assert.match(opening, /title="Put the work on paper before you put AI to work\."/);
+  assert.match(
+    opening,
+    /We map one workflow, mark what can run, name where people decide, and attach proof to every important action\./
+  );
+  assert.match(opening, /Then we build the system with OpenAI and Cloudflare\./);
+  assert.match(opening, /media=\{paperOperatingRouteMedia\}/);
+  assert.match(opening, /mode="paper"/);
+  assert.match(ownership, /Built with OpenAI and Cloudflare\. Designed to remain yours\./);
+  assert.match(
+    ownership,
+    /CREATE SOMETHING owns the system\. OpenAI provides intelligence\. Cloudflare provides\s+infrastructure\./
+  );
+  assert.match(ownership, /Your\s+team keeps the map, rules, history, and recovery path\./);
+  assert.doesNotMatch(home, /Cloudflare OS/);
 });
 
 test('commercial decision routes lead with plain meaning before owned terminology', () => {
@@ -183,8 +213,8 @@ test('commercial decision routes lead with plain meaning before owned terminolog
   assert.doesNotMatch(layout, /label: 'How I Work'/);
   assert.doesNotMatch(layout, /label: 'Stack Boundary'/);
 
-  assert.match(home, /title="Make one workflow ready to delegate\."/);
-  assert.match(home, /Choose a handoff your team still checks by hand/);
+  assert.match(home, /title="Put the work on paper before you put AI to work\."/);
+  assert.match(home, /We map one workflow, mark what can run, name where people decide/);
   assert.match(home, />See the Marketplace workflow</);
   assert.match(home, /label: 'Control',[\s\S]*?value: 'Run \/ Wait \/ Stop'/);
   const heroProof = home.slice(home.indexOf('const heroProofItems'), home.indexOf('const serviceFlowSteps'));
@@ -329,7 +359,7 @@ test('agency README documents the public copy contract', () => {
   assert.match(source, /Run `pnpm copy:check`/);
   assert.match(source, /Run `pnpm copy:heal`/);
   assert.match(source, /### Platform Conviction Contract/);
-  assert.match(source, /Built with OpenAI Codex\. Designed to remain yours\./);
+  assert.match(source, /Built with OpenAI and Cloudflare\. Designed to remain yours\./);
   assert.match(source, /plain customer ownership\s+language/);
   assert.match(source, /### Current System Stack Contract/);
   assert.match(source, /Substrate is the owned database and operator layer/);

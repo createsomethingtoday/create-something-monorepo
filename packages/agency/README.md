@@ -1,6 +1,6 @@
 # CREATE SOMETHING Agency
 
-**createsomething.agency** — AI workflow systems for business operations
+**createsomething.agency** — operating systems for AI work
 
 We make one business workflow safe to delegate.
 
@@ -12,6 +12,7 @@ We make one business workflow safe to delegate.
 
 | Name | Job |
 |------|-----|
+| **Operating systems for AI work** | Homepage outcome: one mapped workflow with a named decision boundary and inspectable proof. |
 | **AI workflow systems** | Public category: business workflows with connected tools, scoped AI tasks, approvals, stop conditions, and audit trails. |
 | **Delegated Work Control** | Internal thesis layer: what can run, what waits, what stops, who owns the decision, and what evidence proves the work. |
 | **Workflow Trust Layer** | Internal service-language layer for governed execution around a workflow. |
@@ -54,7 +55,7 @@ reads like a strategy memo.
 
 Use this order:
 
-1. Name the category in plain language: `AI workflow systems`.
+1. Name the category in plain language: `AI workflow systems`. The homepage may add the outcome: `Operating systems for AI work`.
 2. Name the business situation: one messy handoff, repeated workflow, or live
    operating risk.
 3. State the operating loop: Signals, Decisions, and Proof.
@@ -150,7 +151,7 @@ Validation:
 Public platform language follows
 [Conviction Without Dependence](https://createsomething.ltd/canon/concepts/conviction-without-dependence):
 
-> Built with OpenAI Codex. Designed to remain yours.
+> Built with OpenAI and Cloudflare. Designed to remain yours.
 
 On public decision routes, express this conviction in plain customer ownership
 language before listing the technical artifacts that make portability real.
@@ -158,8 +159,8 @@ language before listing the technical artifacts that make portability real.
 Apply the contract in this order:
 
 1. Explain the workflow, decision boundary, and proof before naming a vendor.
-2. Name OpenAI Codex as the current primary agent environment when the stack is
-   relevant to the reader.
+2. Name OpenAI Codex as the current primary agent environment and Cloudflare as
+   current infrastructure when the stack is relevant to the reader.
 3. Put the owned system beside the claim: data, MCP contracts, harnesses,
    skills, prompts, policy, evals, receipts, routing, fallback, and recovery.
 4. Describe portability as a tested exit path to Claude, compatible harnesses,

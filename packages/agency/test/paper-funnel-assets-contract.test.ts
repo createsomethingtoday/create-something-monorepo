@@ -7,6 +7,7 @@ import {
   paperAttachedReceiptMedia,
   paperClampedDecisionMedia,
   paperFoldedHandoffMedia,
+  paperOperatingRouteMedia,
   paperProductSystemMedia,
   performancePaperRouteAssignments
 } from '../src/lib/data/performanceMedia.ts';
@@ -14,7 +15,7 @@ import {
 const agencyRoot = resolve(import.meta.dirname, '..');
 
 const expectedAssignments = {
-  '/': 'paperFoldedHandoffMedia',
+  '/': 'paperOperatingRouteMedia',
   '/services': 'paperClampedDecisionMedia',
   '/products': 'paperProductSystemMedia',
   '/field-reports': 'paperAttachedReceiptMedia',
@@ -32,6 +33,7 @@ test('keeps the public campaign policy on semantic Paper studies', () => {
   assert.deepEqual(performancePaperRouteAssignments, expectedAssignments);
 
   for (const study of [
+    paperOperatingRouteMedia,
     paperFoldedHandoffMedia,
     paperClampedDecisionMedia,
     paperAttachedReceiptMedia,
