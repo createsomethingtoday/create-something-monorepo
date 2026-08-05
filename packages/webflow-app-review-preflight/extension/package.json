@@ -1,0 +1,35 @@
+{
+  "name": "@create-something/webflow-app-review-preflight-extension",
+  "version": "0.1.0",
+  "description": "Native Webflow Designer Extension for App Review Preflight",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "build:production": "PREFLIGHT_BUILD_MODE=production node scripts/build.mjs",
+    "bundle": "pnpm build:production && node scripts/verify-production-bundle.mjs && webflow extension bundle",
+    "check": "tsc --noEmit",
+    "lint": "pnpm run check",
+    "pretest": "pnpm --filter @create-something/webflow-app-review-preflight build",
+    "serve": "pnpm build && webflow extension serve",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@create-something/webflow-app-review-preflight": "workspace:*",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@webflow/designer-extension-typings": "2.1.1",
+    "@webflow/webflow-cli": "^1.8.38",
+    "esbuild": "^0.24.2",
+    "jsdom": "^27.4.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.8"
+  }
+}

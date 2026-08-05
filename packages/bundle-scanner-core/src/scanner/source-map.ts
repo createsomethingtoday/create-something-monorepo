@@ -1,3 +1,4 @@
+import { decode } from '@jridgewell/sourcemap-codec';
 import type { FileEntry, SourceMapReference, SourceMapSummary, UnzippedFile } from '../types';
 import { getExtension } from '../utils/glob';
 
@@ -98,6 +99,7 @@ function parseSourceMap(
       version?: unknown;
       file?: unknown;
       sources?: unknown;
+      mappings?: unknown;
     };
     if (parsed.version !== 3) {
       return { path: normalizedPath, error: 'Source map version must be 3.' };
@@ -106,12 +108,42 @@ function parseSourceMap(
       return { path: normalizedPath, error: 'Source map is missing a sources array.' };
     }
 
+    const sources = parsed.sources
+      .filter((source): source is string => typeof source === 'string')
+      .map(normalizePath)
+      .filter(Boolean);
+    if (sources.length === 0) {
+      return { path: normalizedPath, error: 'Source map must identify at least one source file.' };
+    }
+    if (typeof parsed.mappings !== 'string') {
+      return { path: normalizedPath, error: 'Source map is missing a mappings string.' };
+    }
+
+    try {
+      const decoded = decode(parsed.mappings);
+      const hasMappedSegment = decoded.some((line) =>
+        line.some((segment) => {
+          const sourceIndex = segment[1];
+          return segment.length >= 4 &&
+            typeof sourceIndex === 'number' &&
+            sourceIndex >= 0 &&
+            sourceIndex < sources.length;
+        })
+      );
+      if (!hasMappedSegment) {
+        return {
+          path: normalizedPath,
+          error: 'Source map must contain at least one mapped segment.'
+        };
+      }
+    } catch {
+      return { path: normalizedPath, error: 'Source map mappings are not valid VLQ data.' };
+    }
+
     return {
       path: normalizedPath,
       file: typeof parsed.file === 'string' ? normalizePath(parsed.file) : undefined,
-      sources: parsed.sources
-        .filter((source): source is string => typeof source === 'string')
-        .map(normalizePath)
+      sources
     };
   } catch {
     return { path: normalizedPath, error: 'Source map is not valid JSON.' };

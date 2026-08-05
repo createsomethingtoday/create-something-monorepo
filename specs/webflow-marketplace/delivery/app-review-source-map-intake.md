@@ -13,6 +13,10 @@ Do not ask developers to ship source maps in the public production bundle. Do no
 submission notes as the source of truth. The form should collect a source-map artifact and pass
 that artifact to the scanner API as a first-class field.
 
+The official form remains the canonical submission path. App Review Preflight in the Designer is
+an earlier validation and receipt path over the same bundle and source-map containers; it does not
+replace the form or become the authority for the published runtime.
+
 ## Form Behavior
 
 Add a source-map section near the app bundle submission/review readiness step.
@@ -38,6 +42,43 @@ Rollout posture:
 - required later for minified/generated bundles
 - if supplied maps do not match the generated bundle files, mark automated review incomplete and
   request a corrected source-map artifact
+
+## Preflight Receipt Contract (`CRE-1619`)
+
+App Review Preflight accepts the same source-map container as the form: preferably one ZIP of
+`.map` files, with one `.map` allowed as a fallback. It hashes the original container, validates
+the extracted maps privately, and issues `preflight_artifact_receipt.v1` containing:
+
+- receipt, review-version, and artifact-set-version IDs
+- exact bundle, source-map container, and artifact-set SHA-256 digests
+- `source_maps.v1` policy version and passed scan status
+- reconciliation status: `not_checked`, `matched`, or `mismatch`
+
+The receipt exposes no R2 key, private URL, or source content. Correcting maps for identical bundle
+bytes increments the artifact-set version without creating a false bundle revision. Re-uploading
+the exact same artifact set is idempotent even if local filenames changed.
+
+Form automation should hash the exact stored form artifacts and call the server-to-server adapter:
+
+```json
+{
+  "submissionId": "asset-version-or-form-submission-id",
+  "receiptId": "optional-preflight-receipt-id",
+  "bundleSha256": "sha256-of-canonical-form-bundle",
+  "sourceMapArtifactSha256": "sha256-of-canonical-form-source-map-container-or-null"
+}
+```
+
+Rollout enforcement is asymmetric by design:
+
+- no receipt supplied: store `receipt_not_provided`, show the submission as unverified, and fail open
+- supplied receipt not found: invalid
+- supplied receipt with an exact two-hash match: verified
+- supplied receipt with either hash changed or omitted: invalid and report the mismatched component
+
+The adapter uses a dedicated server-only token, records every comparison, and does not write an
+official review decision. Adding the receipt field and adapter call to the external form/Airtable
+automation remains an approval-gated external-system change; do not guess field IDs.
 
 ## Scanner Handoff
 

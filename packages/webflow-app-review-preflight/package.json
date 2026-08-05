@@ -1,0 +1,32 @@
+{
+  "name": "@create-something/webflow-app-review-preflight",
+  "version": "0.1.0",
+  "description": "Versioned, scope-aware Webflow Marketplace app review preflight contract",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "prebuild": "pnpm --filter @create-something/bundle-scanner-core build",
+    "build": "tsup src/index.ts --format esm --dts --clean",
+    "check": "tsc --noEmit",
+    "lint": "pnpm run check",
+    "pretest": "pnpm --filter @create-something/bundle-scanner-core build",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@create-something/bundle-scanner-core": "workspace:*"
+  },
+  "devDependencies": {
+    "jszip": "^3.10.1",
+    "tsup": "^8.0.0",
+    "typescript": "^5.3.0",
+    "vitest": "^2.1.8"
+  }
+}
