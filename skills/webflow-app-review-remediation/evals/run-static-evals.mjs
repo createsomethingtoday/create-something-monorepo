@@ -7,7 +7,23 @@ import { fileURLToPath } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const skill = resolve(here, '..');
-const yaml = createRequire(import.meta.url)('yaml');
+
+// `yaml` is resolved from the nearest installation. The skill is designed to be
+// copied around, so fail with an actionable message rather than a stack trace.
+let yaml;
+try {
+  yaml = createRequire(import.meta.url)('yaml');
+} catch {
+  try {
+    yaml = createRequire(join(process.cwd(), 'package.json'))('yaml');
+  } catch {
+    console.error(
+      'This harness needs the `yaml` package.\n' +
+        'Run it from a project that has it installed, or: npm i yaml'
+    );
+    process.exit(2);
+  }
+}
 const read = (relativePath) => readFileSync(join(skill, relativePath), 'utf8');
 const parse = (relativePath) => yaml.parse(read(relativePath));
 
