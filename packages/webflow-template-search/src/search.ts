@@ -11,6 +11,7 @@ import type {
   SearchResponsePayload,
   TemplateSort,
 } from './types.js';
+import { slugifySegment } from './slug.js';
 import { parseJsonArray } from './utils.js';
 
 function placeholderList(count: number): string {
@@ -155,6 +156,42 @@ function creatorSlugVariants(slug: string): string[] {
   return Array.from(new Set(variants.filter(Boolean)));
 }
 
+function creatorSearchCandidates(query: string, mode: 'strict' | 'relaxed'): { fromClause: string; binds: unknown[] } {
+  const creatorSlugs = creatorSlugVariants(slugifySegment(query));
+  const ftsQuery = buildFtsQuery(query, mode);
+
+  return {
+    fromClause: `
+      FROM template_documents d
+      JOIN (
+        SELECT template_document_id, MIN(text_rank) AS text_rank, MAX(creator_match) AS creator_match
+        FROM (
+          SELECT
+            template_document_id,
+            bm25(template_documents_fts, 0, 10.0, 6.0, 1.5, 2.5, 2.0, 1.2, 0.8) AS text_rank,
+            0 AS creator_match
+          FROM template_documents_fts
+          WHERE template_documents_fts MATCH ?
+
+          UNION ALL
+
+          SELECT id AS template_document_id, NULL AS text_rank, 1 AS creator_match
+          FROM template_documents
+          WHERE creator_slug IN (${placeholderList(creatorSlugs.length)})
+
+          UNION ALL
+
+          SELECT id AS template_document_id, NULL AS text_rank, 1 AS creator_match
+          FROM template_documents
+          WHERE creator_name = ? COLLATE NOCASE
+        )
+        GROUP BY template_document_id
+      ) search_candidates ON search_candidates.template_document_id = d.id
+    `,
+    binds: [ftsQuery, ...creatorSlugs, query],
+  };
+}
+
 async function resolveAliases(env: Env, params: SearchParams): Promise<SearchParams> {
   return {
     ...params,
@@ -169,9 +206,9 @@ function buildSqlParts(params: SearchParams, options: FilterOptions = {}): SqlPa
   let queryMode = false;
 
   if (params.q) {
-    fromClause += ' JOIN template_documents_fts ON template_documents_fts.template_document_id = d.id';
-    clauses.push('template_documents_fts MATCH ?');
-    binds.push(buildFtsQuery(params.q, options.relaxedQuery ? 'relaxed' : 'strict'));
+    const candidates = creatorSearchCandidates(params.q, options.relaxedQuery ? 'relaxed' : 'strict');
+    fromClause = candidates.fromClause;
+    binds.push(...candidates.binds);
     queryMode = true;
   }
 
@@ -300,8 +337,9 @@ function buildSqlParts(params: SearchParams, options: FilterOptions = {}): SqlPa
 
 function queryOrderClause(params: SearchParams, queryMode: boolean): string {
   if (!queryMode) return sortClause(params.sort);
-  if (params.sort === 'popular') return `text_rank ASC, ${sortClause(params.sort)}`;
-  return sortClause(params.sort, { textRankTieBreaker: true });
+  const creatorMatchFirst = 'search_candidates.creator_match DESC, ';
+  if (params.sort === 'popular') return `${creatorMatchFirst}text_rank ASC, ${sortClause(params.sort)}`;
+  return `${creatorMatchFirst}${sortClause(params.sort, { textRankTieBreaker: true })}`;
 }
 
 async function getTotalCount(db: D1Database, sqlParts: SqlParts): Promise<number> {
@@ -552,10 +590,6 @@ function buildChildCategories(
   });
 }
 
-// The first bm25 weight covers the UNINDEXED template_document_id column; FTS5
-// assigns weights positionally across every declared column, indexed or not.
-const BM25_RANK_EXPRESSION = 'bm25(template_documents_fts, 0, 10.0, 6.0, 1.5, 2.5, 2.0, 1.2, 0.8)';
-
 export async function searchTemplates(env: Env, rawParams: SearchParams): Promise<SearchResponsePayload> {
   const params = await resolveAliases(env, rawParams);
   let sqlParts = buildSqlParts(params);
@@ -603,7 +637,7 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
       .prepare(`
         SELECT
           ${selectColumns},
-          ${sqlParts.queryMode ? BM25_RANK_EXPRESSION : 'NULL'} AS text_rank
+          ${sqlParts.queryMode ? 'CASE WHEN search_candidates.creator_match = 1 THEN NULL ELSE search_candidates.text_rank END' : 'NULL'} AS text_rank
         ${sqlParts.fromClause}
         ${sqlParts.whereClause}
         ORDER BY ${orderClause}
