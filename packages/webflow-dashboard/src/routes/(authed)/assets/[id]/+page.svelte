@@ -26,7 +26,6 @@
     TimelineCard,
     AnalyticsCard,
     TemplateHealthCard,
-    TemplateOfferRequestCard,
     DataFreshnessIndicator,
     Dialog,
     BackNavigation
@@ -35,7 +34,6 @@
   import { toast } from '$lib/stores/toast';
   import { trackEvent } from '$lib/utils/analytics';
   import { computeTemplateHealth, isTemplateSearchSuppressed } from '$lib/utils/template-health';
-  import { RECOVERY_REENTRY_QUALIFIED_SALES_30D } from '$lib/utils/template-lifecycle-policy';
   import {
     formatCompactCurrency,
     formatCompactNumber,
@@ -117,23 +115,6 @@
 
   // Template Health is a template-only creator guidance surface.
   const canShowHealth = $derived(asset.type === 'Template');
-  const templateHealth = $derived(computeTemplateHealth(asset));
-
-  const hasActiveOffer = $derived(
-    Boolean(
-      asset.activeOfferLabel ||
-        asset.activeOfferCtaUrl ||
-        asset.activeOfferStrategy ||
-        asset.activeOfferEndsAt ||
-        asset.activeOfferVisibility ||
-        asset.activeOfferPrice !== undefined
-    )
-  );
-  const canShowOfferRequest = $derived(
-    canShowHealth &&
-      asset.status === 'Published' &&
-      (hasActiveOffer || templateHealth.automation.code === 'run_recovery_offer')
-  );
   const isSearchSuppressed = $derived(isTemplateSearchSuppressed(asset.searchVisibility));
 
   // Can only edit Published templates
@@ -242,17 +223,6 @@
     }
   }
 
-  function handleLifecycleApplied(updatedAsset: Asset): void {
-    const previousVisibility = asset.searchVisibility;
-    asset = updatedAsset;
-    toast.success('Template lifecycle updated');
-    trackEvent('template_lifecycle_applied', {
-      asset_id: updatedAsset.id,
-      previous_search_visibility: previousVisibility,
-      search_visibility: updatedAsset.searchVisibility
-    });
-  }
-
   function setActiveTab(value: TabValue) {
     if (value === 'health' && !canShowHealth) return;
     if (value === 'analytics' && !canShowMetrics) return;
@@ -268,8 +238,6 @@
         asset_status: asset.status,
         health_status: health.status,
         has_quality_score: Boolean(asset.qualityScore),
-        has_active_offer: hasActiveOffer,
-        active_offer_strategy: asset.activeOfferStrategy,
         has_purchases: Boolean(asset.cumulativePurchases && asset.cumulativePurchases > 0),
         has_viewers: Boolean(asset.uniqueViewers && asset.uniqueViewers > 0)
       });
@@ -279,9 +247,7 @@
       asset_id: asset.id,
       tab: value,
       previous_tab: previousTab,
-      has_metrics: canShowMetrics,
-      has_active_offer: hasActiveOffer,
-      active_offer_strategy: asset.activeOfferStrategy
+      has_metrics: canShowMetrics
     });
   }
 
@@ -310,9 +276,7 @@
       asset_category: asset.category,
       asset_subcategory: asset.subcategory,
       initial_tab: activeTab,
-      has_metrics: canShowMetrics,
-      has_active_offer: hasActiveOffer,
-      active_offer_strategy: asset.activeOfferStrategy
+      has_metrics: canShowMetrics
     });
   });
 </script>
@@ -333,9 +297,6 @@
             <div class="title-row">
               <h1 class="asset-title">{asset.name}</h1>
               <StatusBadge status={asset.status} size="lg" />
-              {#if hasActiveOffer}
-                <Badge variant="info">{asset.activeOfferLabel || 'Limited offer'}</Badge>
-              {/if}
             </div>
             <p class="detail-subtitle">
               {asset.type}
@@ -358,20 +319,6 @@
                 <span><strong>Detail only</strong> search visibility</span>
               {:else if asset.searchVisibility}
                 <span><strong>{asset.searchVisibility}</strong> search visibility</span>
-              {/if}
-              {#if asset.qualifiedSales30d !== undefined || asset.recoveryOfferUsed}
-                <span
-                  ><strong>{asset.qualifiedSales30d ?? 0}/{RECOVERY_REENTRY_QUALIFIED_SALES_30D}</strong>
-                  re-entry sales</span
-                >
-              {/if}
-              {#if hasActiveOffer}
-                <span>
-                  <strong>{asset.activeOfferLabel || 'Limited offer'}</strong>
-                  {#if asset.activeOfferPrice !== undefined}
-                    at {formatCompactCurrency(asset.activeOfferPrice)}
-                  {/if}
-                </span>
               {/if}
               {#if asset.qualityScore}
                 <span><strong>{asset.qualityScore}</strong> quality score</span>
@@ -551,59 +498,6 @@
                         <span class="detail-value">{asset.searchVisibility}</span>
                       </div>
                     {/if}
-                    {#if asset.qualifiedSales30d !== undefined}
-                      <div class="detail-item">
-                        <span class="detail-label">Qualified Sales (30d)</span>
-                        <span class="detail-value"
-                          >{asset.qualifiedSales30d}/{RECOVERY_REENTRY_QUALIFIED_SALES_30D}</span
-                        >
-                      </div>
-                    {/if}
-                    {#if asset.recoveryOfferUsed !== undefined}
-                      <div class="detail-item">
-                        <span class="detail-label">Recovery Offer</span>
-                        <span class="detail-value">{asset.recoveryOfferUsed ? 'Used' : 'Available'}</span>
-                      </div>
-                    {/if}
-                    {#if hasActiveOffer}
-                      <div class="detail-item">
-                        <span class="detail-label">Active Offer</span>
-                        <span class="detail-value">{asset.activeOfferLabel || 'Limited offer'}</span>
-                      </div>
-                      {#if asset.activeOfferPrice !== undefined}
-                        <div class="detail-item">
-                          <span class="detail-label">Offer Price</span>
-                          <span class="detail-value"
-                            >{formatCompactCurrency(asset.activeOfferPrice)}</span
-                          >
-                        </div>
-                      {/if}
-                      {#if asset.activeOfferEndsAt}
-                        <div class="detail-item">
-                          <span class="detail-label">Offer Ends</span>
-                          <span class="detail-value">{formatLongDate(asset.activeOfferEndsAt)}</span>
-                        </div>
-                      {/if}
-                      {#if asset.activeOfferStrategy}
-                        <div class="detail-item">
-                          <span class="detail-label">Offer Strategy</span>
-                          <span class="detail-value">{asset.activeOfferStrategy}</span>
-                        </div>
-                      {/if}
-                      {#if asset.offerPruneReviewAt}
-                        <div class="detail-item">
-                          <span class="detail-label">Marketplace Review</span>
-                          <span class="detail-value">{formatLongDate(asset.offerPruneReviewAt)}</span>
-                        </div>
-                      {/if}
-                      {#if asset.postOfferAction}
-                        <div class="detail-item">
-                          <span class="detail-label">Post-Offer Action</span>
-                          <span class="detail-value">{asset.postOfferAction}</span>
-                        </div>
-                      {/if}
-                    {/if}
-
                     {#if showPerformance && canShowMetrics}
                       {#if VIEWER_DATA_AVAILABLE}
                         <div class="detail-item">
@@ -796,10 +690,7 @@
             class="tab-content"
           >
             <div class="health-tab-stack">
-              <TemplateHealthCard {asset} onLifecycleApplied={handleLifecycleApplied} />
-              {#if canShowOfferRequest}
-                <TemplateOfferRequestCard {asset} />
-              {/if}
+              <TemplateHealthCard {asset} />
             </div>
           </TabsContent>
         {/if}

@@ -10,7 +10,6 @@ declare global {
 				AIRTABLE_API_KEY: string;
 				AIRTABLE_BASE_ID: string;
 				CRON_SECRET?: string;
-				TEMPLATE_OFFER_DIAGNOSTIC_TOKEN?: string;
 				ADMIN_EMAILS?: string;
 				CSRF_TRUSTED_ORIGINS?: string;
 				SUBMISSION_STATUS_API_URL?: string;
