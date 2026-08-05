@@ -59,6 +59,8 @@ declare global {
 				ABUNDANCE_STAFF_ONBOARDING_TOKEN?: string;
 				ABUNDANCE_JOBS_MCP_URL?: string;
 				OPENAI_API_KEY?: string;
+				ELEVENLABS_API_KEY?: string;
+				ELEVENLABS_AGENT_ID?: string;
 			};
 			context?: unknown;
 			caches?: unknown;

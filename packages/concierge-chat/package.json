@@ -30,12 +30,16 @@
     "deploy:preview": "pnpm build && WRANGLER_LOG_PATH=../../.wrangler/logs/concierge-chat CLOUDFLARE_ACCOUNT_ID=9645bd52e640b8a4f40a3a55ff1dd75a pnpm exec wrangler pages deploy .svelte-kit/cloudflare --project-name=abundance-concierge-chat --branch=preview --commit-dirty=true",
     "mint:intake-grant": "node scripts/mint-intake-grant.mjs",
     "geo:secret:sync": "bash ../../scripts/concierge-pages-sync-geo-from-infisical.sh",
+    "elevenlabs:sync": "node scripts/sync-elevenlabs-agent-config.mjs",
+    "elevenlabs:status": "cd elevenlabs && elevenlabs agents status",
+    "elevenlabs:preview": "pnpm elevenlabs:sync && cd elevenlabs && elevenlabs agents push --dry-run",
     "cf:typegen": "WRANGLER_LOG_PATH=../../.wrangler/logs/concierge-chat CLOUDFLARE_ACCOUNT_ID=9645bd52e640b8a4f40a3a55ff1dd75a pnpm exec wrangler types",
     "db:migrate:local": "WRANGLER_LOG_PATH=../../.wrangler/logs/concierge-chat pnpm exec wrangler d1 migrations apply abundance-concierge-chat-db --local",
     "db:migrate": "WRANGLER_LOG_PATH=../../.wrangler/logs/concierge-chat CLOUDFLARE_ACCOUNT_ID=9645bd52e640b8a4f40a3a55ff1dd75a pnpm exec wrangler d1 migrations apply abundance-concierge-chat-db --remote"
   },
   "dependencies": {
     "@create-something/canon": "workspace:*",
+    "@elevenlabs/client": "^1.15.0",
     "@openai/agents": "^0.13.5",
     "svelte": "^5.41.0",
     "zod": "^4.3.6"
