@@ -146,11 +146,12 @@ Exit criteria
 - Phase 6 package matrix: bundle scanner 54/54 tests plus build; Preflight core 8/8 tests, typecheck, and build; Designer Extension 13/13 tests, typecheck, production build, production-config verification, and a 180,365-byte Webflow `bundle.zip`; runtime runner 12/12 tests, typecheck, and build.
 - Phase 6 Worker checks: TypeScript and Wrangler dry-run build pass. All eight migrations replay cleanly into a fresh SQLite database with no foreign-key violations. The current sandbox prevents the Cloudflare Vitest pool from binding `127.0.0.1`, so the full 35-test Worker suite must run in CI or an unrestricted local shell.
 - Phase 6 integration hygiene: `pnpm install --lockfile-only --frozen-lockfile` passes; lockfile additions are limited to the new workspace importers and their missing test dependencies; generated `public/bundle.js`, `bundle.zip`, and build output are ignored; `git diff --check` and bounded secret/storage-coordinate scans are clean.
-- Publication boundary: GitHub CLI is installed, but every configured GitHub account reports an invalid token. The GitHub publication skill requires successful `gh auth status` before staging, committing, pushing, or opening the draft PR.
+- Phase 6 CI integration: registered the Preflight core, extension, runner, and Worker in the `services` workspace lane so root `pnpm check` and `pnpm test` workflows execute them. JSON validation and both lane dry-runs resolve all four packages.
+- Publication: commit `6d5657b36` and the follow-up CI-lane commit are pushed on `codex/CRE-1619-preflight-artifact-receipts`; draft PR #1266 is open at `https://github.com/createsomethingtoday/create-something-monorepo/pull/1266`.
 - Worktree wrapper note: `pnpm agent:claim-worktree -- --issue CRE-1619` could not update protected root `.git/FETCH_HEAD`; the exact-base isolated clone is the non-destructive sandbox fallback.
 - Approval boundary: no production deploy, remote migration, Webflow install/publication, external form mutation, or external completion communication is authorized.
 - State-path fallback: repo `.codex` is read-only in this sandbox, so durable Ultragoal state is stored under `.agent-goals`.
 
 ## Next Action
 
-Re-authenticate GitHub with `gh auth login -h github.com`, then stage the exact CRE-1619 scope, commit, push, open a draft PR, and use CI to complete the unrestricted Worker test gate.
+Use PR #1266 CI to complete the unrestricted Worker test gate, repair any branch-owned failures, then request explicit approval for Phase 7 production/external mutations and live authenticated verification.
