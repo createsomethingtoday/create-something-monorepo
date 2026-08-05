@@ -18,7 +18,7 @@
   import PublicSubstrateCanvas from '$lib/components/PublicSubstrateCanvas.svelte';
   import { templateReviewFieldReport } from '$lib/data/fieldReports';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
-  import { paperFoldedHandoffMedia } from '$lib/data/performanceMedia';
+  import { paperOperatingRouteMedia } from '$lib/data/performanceMedia';
 
   const services = [
     {
@@ -59,7 +59,7 @@
     {
       question: 'What does CREATE SOMETHING build?',
       answer:
-        'CREATE SOMETHING builds AI workflow systems that make one business workflow safe to delegate. Signals show what changed. Decisions reach the right person or agent. Proof records what happened.'
+        'CREATE SOMETHING builds operating systems for AI work in business operations. Each system makes one business workflow safe to delegate. Signals show what changed. Decisions reach the right person or agent. Proof records what happened.'
     },
     {
       question: 'What makes a workflow reliable?',
@@ -210,9 +210,9 @@
 </script>
 
 <SEO
-  title="AI Workflow Systems | CREATE SOMETHING .agency"
-  description="CREATE SOMETHING builds AI workflow systems for business operations. One messy handoff becomes a workflow with named approvals, clear stop conditions, and an audit trail."
-  keywords="AI workflow systems, workflow automation consultant, governed AI workflows, workflow control layer, workflow mapping, workflow pilot, production automation, technical operators"
+  title="AI Operating Systems | CREATE SOMETHING .agency"
+  description="CREATE SOMETHING maps one business workflow, marks what can run, names where people decide, and attaches proof to every important action."
+  keywords="AI operating systems, AI workflow systems, workflow automation consultant, governed AI workflows, workflow control layer, workflow mapping, workflow pilot, production automation, technical operators"
   ogImage="/og-image.png"
   propertyName="agency"
   {services}
@@ -221,10 +221,10 @@
 
 <div class="home-pilot property-performance">
   <PerformanceCampaignOpening
-    eyebrow={agencyCoreMessaging.categoryLabel}
-    title="Make one workflow ready to delegate."
-    lede="Choose a handoff your team still checks by hand. We map what can run, when a person steps in, what must stop, and what record proves the result."
-    media={paperFoldedHandoffMedia}
+    eyebrow="Operating systems for AI work"
+    title="Put the work on paper before you put AI to work."
+    lede="We map one workflow, mark what can run, name where people decide, and attach proof to every important action. Then we build the system with OpenAI and Cloudflare."
+    media={paperOperatingRouteMedia}
     proof={heroProofItems}
     mode="paper"
     density="compact"
@@ -332,16 +332,18 @@
           <Button href={agencyCoreMessaging.selfMapHref}>{agencyCoreMessaging.selfMapLabel}</Button>
           <p>
             See the <a href="/services">service path</a>, the <a href="/partners">tools we use</a>,
-            or the <a href="/products">evidence</a>.
+            the <a href="/products">product surfaces</a>, or the
+            <a href="/field-reports/template-review">Marketplace field report</a>.
           </p>
         </div>
         <aside class="ownership-callout">
           <span>How we build</span>
-          <h3>Built with OpenAI Codex. Designed to remain yours.</h3>
+          <h3>Built with OpenAI and Cloudflare. Designed to remain yours.</h3>
           <p>
-            We use Codex to map, build, and maintain the workflow. Your team keeps the data,
-            connections, approval rules, tests, operating history, and recovery path. If the model
-            or agent environment changes, the system does not have to start over.
+            CREATE SOMETHING owns the system. OpenAI provides intelligence. Cloudflare provides
+            infrastructure. We use OpenAI Codex to map, build, and maintain the workflow. Your
+            team keeps the map, rules, history, and recovery path. If the model or agent environment
+            changes, the system does not have to start over.
           </p>
           <div>
             <a href="/stack">See what you keep</a>

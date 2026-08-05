@@ -1,5 +1,17 @@
 import type { PerformanceMediaStudy } from '@create-something/canon';
 
+export const paperOperatingRouteMedia = {
+  src: '/images/performance-lab/paper-operating-route.webp',
+  mobileSrc: '/images/performance-lab/paper-operating-route-mobile.webp',
+  alt: 'A blank porcelain source sheet crosses scored folds and a black control bridge before ending at one cobalt operating-route tab',
+  condition: 'sequence',
+  material: 'paper',
+  width: 1536,
+  height: 1024,
+  objectPosition: 'center',
+  colorMode: 'natural'
+} as const satisfies PerformanceMediaStudy;
+
 export const paperFoldedHandoffMedia = {
   src: '/images/performance-lab/paper-folded-handoff.webp',
   mobileSrc: '/images/performance-lab/paper-folded-handoff-mobile.webp',
@@ -49,7 +61,7 @@ export const paperProductSystemMedia = {
 } as const satisfies PerformanceMediaStudy;
 
 export const performancePaperRouteAssignments = {
-  '/': 'paperFoldedHandoffMedia',
+  '/': 'paperOperatingRouteMedia',
   '/services': 'paperClampedDecisionMedia',
   '/products': 'paperProductSystemMedia',
   '/field-reports': 'paperAttachedReceiptMedia',
