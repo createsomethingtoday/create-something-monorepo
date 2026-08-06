@@ -499,10 +499,12 @@ export interface WebflowWebhookPayload {
   triggerType: string;
   payload: {
     id: string;
-    isArchived: boolean;
-    isDraft: boolean;
-    /** Collection ID — used to route between Templates and Designers. */
-    cid: string;
+    isArchived?: boolean;
+    isDraft?: boolean;
+    /** Current Data API v2 collection identity. */
+    collectionId?: string;
+    /** Legacy collection identity retained for older subscriptions. */
+    cid?: string;
     fieldData: Record<string, unknown>;
   };
 }
@@ -526,15 +528,29 @@ export function mapWebhookDesignerItem(webhook: WebflowWebhookPayload): WebflowD
 }
 
 // Verifies a Webflow webhook signature (HMAC-SHA256, hex-encoded).
-// Webflow sends the signature in the x-webflow-signature header.
-export async function verifyWebflowSignature(secret: string, rawBody: string, signature: string): Promise<boolean> {
+// Current Webflow deliveries sign `${x-webflow-timestamp}:${body}`. Older
+// subscriptions signed the body alone; some of those deliveries also attach a
+// timestamp header, so retain that verified legacy form during the migration.
+export async function verifyWebflowSignature(
+  secret: string,
+  rawBody: string,
+  signature: string,
+  timestamp?: string | null,
+): Promise<boolean> {
   try {
+    const normalizedSignature = signature.replace(/\s+/g, '');
+    if (!/^[a-f\d]{64}$/i.test(normalizedSignature)) return false;
+
     const encoder = new TextEncoder();
     const key = await crypto.subtle.importKey('raw', encoder.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, [
       'verify',
     ]);
-    const sigBytes = new Uint8Array((signature.match(/../g) ?? []).map((h) => parseInt(h, 16)));
-    return crypto.subtle.verify('HMAC', key, sigBytes, encoder.encode(rawBody));
+    const sigBytes = new Uint8Array((normalizedSignature.match(/../g) ?? []).map((h) => parseInt(h, 16)));
+    const signedPayloads = timestamp?.trim() ? [`${timestamp.trim()}:${rawBody}`, rawBody] : [rawBody];
+    for (const signedPayload of signedPayloads) {
+      if (await crypto.subtle.verify('HMAC', key, sigBytes, encoder.encode(signedPayload))) return true;
+    }
+    return false;
   } catch {
     return false;
   }
