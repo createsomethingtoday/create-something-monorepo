@@ -41,6 +41,8 @@
 		mobileSearchBoundary?: boolean;
 		actions?: Snippet;
 		artifact?: Snippet;
+		/** A small, non-interactive annotation that should not change campaign layout. */
+		ornament?: Snippet;
 		artifactOwnsMedia?: boolean;
 	}
 
@@ -56,6 +58,7 @@
 		mobileSearchBoundary = false,
 		actions,
 		artifact,
+		ornament,
 		artifactOwnsMedia = false
 	}: Props = $props();
 
@@ -168,6 +171,12 @@
 	{#if artifact}
 		<div class="performance-campaign-opening__artifact">
 			{@render artifact()}
+		</div>
+	{/if}
+
+	{#if ornament}
+		<div class="performance-campaign-opening__ornament">
+			{@render ornament()}
 		</div>
 	{/if}
 </section>
@@ -331,7 +340,8 @@
 		padding-block: clamp(8rem, 17vh, 12rem) 1.25rem;
 	}
 
-	.performance-campaign-opening__artifact {
+	.performance-campaign-opening__artifact,
+	.performance-campaign-opening__ornament {
 		position: absolute;
 		inset: 0;
 		z-index: 3;

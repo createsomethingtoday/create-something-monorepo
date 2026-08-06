@@ -1,28 +1,55 @@
-<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
-  <rect width="1200" height="630" fill="#000000"/>
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="paper" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F6F6F1"/>
+      <stop offset="1" stop-color="#E7E7E0"/>
+    </linearGradient>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M48 0H0V48" fill="none" stroke="#11110F" stroke-opacity=".07"/>
+    </pattern>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="16" stdDeviation="15" flood-color="#090909" flood-opacity=".16"/>
+    </filter>
+  </defs>
 
-  <text x="600" y="150" font-family="JetBrains Mono, Courier, monospace" font-size="48" font-weight="700" fill="#ffffff" text-anchor="middle" letter-spacing="0.05em">
-    CREATE SOMETHING
-  </text>
+  <rect width="1200" height="630" fill="url(#paper)"/>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+  <rect x="0" y="610" width="1200" height="20" fill="#11110F"/>
 
-  <text x="600" y="200" font-family="JetBrains Mono, Courier, monospace" font-size="24" fill="#ffffff" fill-opacity="0.5" text-anchor="middle">
-    .agency
-  </text>
+  <g filter="url(#shadow)">
+    <path d="M676 142H1080V478H824L770 432V248L676 214V142Z" fill="#11110F"/>
+    <path d="M574 261L785 224L1043 255L1011 432L792 469L574 416L618 344L574 261Z" fill="#FAFAF6" stroke="#C7C7BE" stroke-width="2"/>
+    <path d="M574 261L618 344L574 416L466 389L500 325L466 277L574 261Z" fill="#ECECE5" stroke="#C7C7BE" stroke-width="2"/>
+    <path d="M574 261V416" stroke="#B6B6AD" stroke-width="2"/>
+    <path d="M785 224L792 469" stroke="#B6B6AD" stroke-width="2"/>
+    <path d="M824 238V452" stroke="#11110F" stroke-opacity=".6" stroke-width="3"/>
+    <rect x="1010" y="320" width="68" height="28" rx="5" fill="#2757BD"/>
+    <rect x="748" y="222" width="26" height="62" rx="4" fill="#AE740E"/>
+    <rect x="817" y="433" width="34" height="20" rx="3" fill="#73882A"/>
+  </g>
 
-  <!-- ASCII Art Box -->
-  <text font-family="JetBrains Mono, Courier, monospace" font-size="14" fill="#00ff00" xml:space="preserve">
-    <tspan x="200" y="280">┌───────────────────────────────────────────────────────┐</tspan>
-    <tspan x="200" y="305">│                                                       │</tspan>
-    <tspan x="200" y="330">│   █████╗  ██████╗ ███████╗███╗   ██╗████████╗██╗ ██████╗</tspan>
-    <tspan x="200" y="355">│  ██╔══██╗██╔════╝ ██╔════╝████╗  ██║╚══██╔══╝██║██╔════╝</tspan>
-    <tspan x="200" y="380">│  ███████║██║  ███╗█████╗  ██╔██╗ ██║   ██║   ██║██║     </tspan>
-    <tspan x="200" y="405">│  ██╔══██║██║   ██║██╔══╝  ██║╚██╗██║   ██║   ██║██║     </tspan>
-    <tspan x="200" y="430">│  ██║  ██║╚██████╔╝███████╗██║ ╚████║   ██║   ██║╚██████╗</tspan>
-    <tspan x="200" y="455">│  ╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚═╝  ╚═══╝   ╚═╝   ╚═╝ ╚═════╝</tspan>
-    <tspan x="200" y="480">│                                                       │</tspan>
-    <tspan x="200" y="505">│  → Agentic Systems Engineering                        │</tspan>
-    <tspan x="200" y="530">│  → AI Automation • Autonomous Systems                 │</tspan>
-    <tspan x="200" y="555">│                                                       │</tspan>
-    <tspan x="200" y="580">└───────────────────────────────────────────────────────┘</tspan>
-  </text>
+  <text x="80" y="77" fill="#11110F" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="700" letter-spacing="1.8">CREATE SOMETHING</text>
+  <text x="80" y="105" fill="#5E6268" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="600" letter-spacing="1.1">.agency / PAPER OPERATING SYSTEMS</text>
+  <text x="1074" y="77" fill="#5E6268" font-family="'Courier New', monospace" font-size="13" text-anchor="end" letter-spacing="1.1">CS / OS-01</text>
+
+  <text x="80" y="211" fill="#11110F" font-family="Arial, Helvetica, sans-serif" font-size="53" font-weight="700" letter-spacing="-2.5">OPERATING SYSTEMS</text>
+  <text x="80" y="267" fill="#11110F" font-family="Arial, Helvetica, sans-serif" font-size="53" font-weight="700" letter-spacing="-2.5">FOR AI WORK</text>
+  <text x="80" y="304" fill="#5E6268" font-family="Arial, Helvetica, sans-serif" font-size="21">Map the handoff. Keep the decision. Attach the proof.</text>
+
+  <g transform="translate(80 365)">
+    <rect width="386" height="60" fill="#FAFAF6" stroke="#11110F" stroke-width="1.5"/>
+    <rect x="0" width="8" height="60" fill="#2757BD"/>
+    <rect x="129" width="8" height="60" fill="#AE740E"/>
+    <rect x="258" width="8" height="60" fill="#73882A"/>
+    <text x="25" y="37" fill="#11110F" font-family="'Courier New', monospace" font-size="16" font-weight="700">MAP</text>
+    <text x="154" y="37" fill="#11110F" font-family="'Courier New', monospace" font-size="16" font-weight="700">BUILD</text>
+    <text x="283" y="37" fill="#11110F" font-family="'Courier New', monospace" font-size="16" font-weight="700">CONTROL</text>
+  </g>
+
+  <line x1="80" y1="479" x2="466" y2="479" stroke="#11110F" stroke-opacity=".22"/>
+  <text x="80" y="508" fill="#5E6268" font-family="'Courier New', monospace" font-size="13" font-weight="700" letter-spacing=".6">SOURCE SHEET</text>
+  <text x="229" y="508" fill="#5E6268" font-family="'Courier New', monospace" font-size="13" font-weight="700" letter-spacing=".6">DECISION BOUNDARY</text>
+  <text x="80" y="541" fill="#5E6268" font-family="'Courier New', monospace" font-size="13" font-weight="700" letter-spacing=".6">ATTACHED RECEIPT</text>
+
+  <text x="80" y="596" fill="#11110F" font-family="'Courier New', monospace" font-size="13" font-weight="700" letter-spacing=".7">SIGNAL → DECISION → PROOF</text>
 </svg>

@@ -426,16 +426,22 @@ test('layout keeps privacy prompt compact on Atlas proof-heavy routes', () => {
 	assert.equal(layoutRoute.includes('services|atlas|methodology|stack|products'), false);
 });
 
-test('compact mobile privacy prompt becomes a flush edge control below navigation', () => {
+test('Agency mobile privacy prompt uses an intentional safe corner away from campaign copy', () => {
 	assert.ok(agencyPrivacyAnalytics.includes('.privacy-choice--compact'));
+	assert.ok(layoutRoute.includes('mobilePlacement="safe-corner"'));
+	assert.ok(agencyPrivacyAnalytics.includes("mobilePlacement?: 'header-edge' | 'safe-corner'"));
+	assert.ok(
+		agencyPrivacyAnalytics.includes("class:privacy-choice--safe-corner={mobilePlacement === 'safe-corner'}")
+	);
 	assert.ok(agencyPrivacyAnalytics.includes('top: max(4.5rem, calc(4rem + env(safe-area-inset-top)))'));
-	assert.ok(agencyPrivacyAnalytics.includes('bottom: auto'));
-	assert.ok(agencyPrivacyAnalytics.includes('right: env(safe-area-inset-right)'));
+	assert.ok(agencyPrivacyAnalytics.includes('.privacy-choice.privacy-choice--safe-corner'));
+	assert.ok(agencyPrivacyAnalytics.includes('top: auto'));
+	assert.ok(agencyPrivacyAnalytics.includes('bottom: max(0.75rem, env(safe-area-inset-bottom))'));
 	assert.ok(agencyPrivacyAnalytics.includes('.privacy-choice:has(.privacy-panel)'));
 	assert.ok(agencyPrivacyAnalytics.includes("content: 'Privacy'"));
 	assert.match(
 		agencyPrivacyAnalytics,
-		/@media \(max-width: 640px\)[\s\S]*?\.privacy-pill \{[\s\S]*?min-height: 2\.75rem;[\s\S]*?border-right: 0;[\s\S]*?border-radius: var\(--radius-performance-sm, 4px\) 0 0 var\(--radius-performance-sm, 4px\);[\s\S]*?background: var\(--color-performance-panel,[\s\S]*?box-shadow: none/
+		/@media \(max-width: 640px\)[\s\S]*?\.privacy-choice--safe-corner \.privacy-pill \{[\s\S]*?border-right: 1px solid var\(--color-performance-line, #d7d7d2\);[\s\S]*?border-radius: var\(--radius-performance-sm, 4px\);[\s\S]*?box-shadow: 0 6px 18px/
 	);
 	assert.match(
 		agencyPrivacyAnalytics,
