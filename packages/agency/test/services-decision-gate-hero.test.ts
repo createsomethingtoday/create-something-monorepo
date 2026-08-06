@@ -18,6 +18,7 @@ test('Services keeps its semantic Paper fallback while Omma adds a bounded rende
   assert.ok(existsSync(rendererPath), 'Services must own the bounded renderer source');
 
   const canvas = readFileSync(canvasPath, 'utf8');
+  assert.match(route, /density="compact"/);
   const renderer = readFileSync(rendererPath, 'utf8');
 
   assert.match(route, /import ServicesDecisionGateCanvas/);

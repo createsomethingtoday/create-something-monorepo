@@ -92,6 +92,7 @@
     media={paperServicesDecisionGateMedia}
     mode="paper"
     artifactLayer="behind-content"
+    density="compact"
     artifactOwnsMedia={ommaReady}
     proof={[
       { label: 'Owner', value: 'Named' },
