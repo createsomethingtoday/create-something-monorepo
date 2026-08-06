@@ -16,7 +16,8 @@ export type CanonCodificationExemptionReason =
 	| 'webflow-review-tooling'
 	| 'admin-shell-tooling'
 	| 'mcp-tooling-demo'
-	| 'research-prototype';
+	| 'research-prototype'
+	| 'archived-source-provenance';
 
 export type CanonCodificationExemption = {
 	path: string;
@@ -137,6 +138,12 @@ export const CANON_CODIFICATION_EXEMPTIONS: CanonCodificationExemption[] = [
 		reason: 'research-prototype',
 		justification:
 			'Agent SDK experiment UI artifacts are research outputs attached to model/pipeline experiments, not reusable product components or rendered Canon-consuming property surfaces.'
+	},
+	{
+		path: 'packages/agency/content/assets/brand/sources/omma-paper-hero-v2',
+		reason: 'archived-source-provenance',
+		justification:
+			'The Omma export is preserved byte-for-byte as provenance and is not a rendered Agency UI surface; the reviewed runtime mirror remains subject to the Agency overlay.'
 	},
 	{
 		path: 'packages/sieve',
