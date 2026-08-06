@@ -18,6 +18,7 @@ export { default as PerformanceCampaignOpening } from './PerformanceCampaignOpen
 export { default as PerformancePaperStudioCanvas } from './PerformancePaperStudioCanvas.svelte';
 export type {
   PerformanceCampaignMedia,
+  PerformanceCampaignOpeningArtifactLayer,
   PerformanceCampaignOpeningMode,
   PerformanceCampaignProof,
   PerformanceCampaignVideo

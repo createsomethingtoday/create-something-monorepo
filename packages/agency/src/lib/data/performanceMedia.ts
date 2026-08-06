@@ -36,6 +36,18 @@ export const paperClampedDecisionMedia = {
   colorMode: 'natural'
 } as const satisfies PerformanceMediaStudy;
 
+export const paperServicesDecisionGateMedia = {
+  src: '/images/performance-lab/paper-services-decision-gate.webp',
+  mobileSrc: '/images/performance-lab/paper-services-decision-gate-mobile.webp',
+  alt: 'A porcelain source sheet resolving into a seven-layer paper decision stack, held at a carbon stop rail with one brass authority tab',
+  condition: 'pressure',
+  material: 'paper',
+  width: 1536,
+  height: 1024,
+  objectPosition: 'right center',
+  colorMode: 'natural'
+} as const satisfies PerformanceMediaStudy;
+
 export const paperAttachedReceiptMedia = {
   src: '/images/performance-lab/paper-attached-receipt.webp',
   mobileSrc: '/images/performance-lab/paper-attached-receipt-mobile.webp',
@@ -62,7 +74,7 @@ export const paperProductSystemMedia = {
 
 export const performancePaperRouteAssignments = {
   '/': 'paperOperatingRouteMedia',
-  '/services': 'paperClampedDecisionMedia',
+  '/services': 'paperServicesDecisionGateMedia',
   '/products': 'paperProductSystemMedia',
   '/field-reports': 'paperAttachedReceiptMedia',
   '/map': 'paperFoldedHandoffMedia',

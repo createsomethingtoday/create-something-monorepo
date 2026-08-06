@@ -1,15 +1,17 @@
 <script lang="ts">
   import { Button, PerformanceCampaignOpening, SEO } from '@create-something/canon';
   import AgencyPerformanceReadback from '$lib/components/AgencyPerformanceReadback.svelte';
+  import ServicesDecisionGateCanvas from '$lib/components/ServicesDecisionGateCanvas.svelte';
   import ServicesMapPreview from '$lib/components/ServicesMapPreview.svelte';
   import ServicesProductPath from '$lib/components/ServicesProductPath.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
-  import { paperClampedDecisionMedia } from '$lib/data/performanceMedia';
+  import { paperServicesDecisionGateMedia } from '$lib/data/performanceMedia';
   import { getPublicProduct } from '$lib/data/productFamily';
 
   const mapProduct = getPublicProduct('map');
   const buildProduct = getPublicProduct('build');
   const controlProduct = getPublicProduct('control');
+  let ommaReady = $state(false);
 
   const services = [
     {
@@ -87,8 +89,10 @@
     eyebrow="How It Works"
     title="Nothing gets built until the map says what it should do."
     lede="Bring one handoff your team still checks manually. We name the decision owner and the stop condition first, then build only what that map requires — before anything touches customers, money, or production."
-    media={paperClampedDecisionMedia}
+    media={paperServicesDecisionGateMedia}
     mode="paper"
+    artifactLayer="behind-content"
+    artifactOwnsMedia={ommaReady}
     proof={[
       { label: 'Owner', value: 'Named' },
       { label: 'Protected action', value: 'Held' },
@@ -102,6 +106,9 @@
       <Button href={agencyCoreMessaging.servicesMappingSessionHref} variant="secondary">
         {agencyCoreMessaging.bookMappingSessionLabel}
       </Button>
+    {/snippet}
+    {#snippet artifact()}
+      <ServicesDecisionGateCanvas onStateChange={(state) => (ommaReady = state === 'ready')} />
     {/snippet}
   </PerformanceCampaignOpening>
 

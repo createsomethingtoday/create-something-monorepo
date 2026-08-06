@@ -6,6 +6,7 @@ import test from 'node:test';
 import {
   paperAttachedReceiptMedia,
   paperClampedDecisionMedia,
+  paperServicesDecisionGateMedia,
   paperFoldedHandoffMedia,
   paperOperatingRouteMedia,
   paperProductSystemMedia,
@@ -22,11 +23,16 @@ const operatingRouteMetadataPath = resolve(
   agencyRoot,
   'content/assets/brand/agency-operating-route-imagegen.v20260805/metadata.md'
 );
+const servicesDecisionGateMetadataPath = resolve(
+  agencyRoot,
+  'content/assets/brand/agency-paper-decision-gate-3d.v20260805/metadata.md'
+);
 
 const studies = [
   paperOperatingRouteMedia,
   paperFoldedHandoffMedia,
   paperClampedDecisionMedia,
+  paperServicesDecisionGateMedia,
   paperAttachedReceiptMedia,
   paperProductSystemMedia
 ];
@@ -34,7 +40,7 @@ const studies = [
 test('publishes responsive Paper campaign descriptors with immutable assets', () => {
   assert.deepEqual(
     studies.map((study) => study.material),
-    ['paper', 'paper', 'paper', 'paper', 'paper']
+    ['paper', 'paper', 'paper', 'paper', 'paper', 'paper']
   );
 
   for (const study of studies) {
@@ -55,7 +61,7 @@ test('assigns one distinct Paper study to each campaign route', () => {
 
   assert.deepEqual(primaryCampaignAssignments, {
     '/': 'paperOperatingRouteMedia',
-    '/services': 'paperClampedDecisionMedia',
+    '/services': 'paperServicesDecisionGateMedia',
     '/products': 'paperProductSystemMedia',
     '/field-reports': 'paperAttachedReceiptMedia'
   });
@@ -111,5 +117,43 @@ test('records original ImageGen provenance for the Paper operating route', () =>
     assert.ok(metadata.includes(required), `metadata must record ${required}`);
   }
 
+  assert.doesNotMatch(metadata, /- \[ \]/);
+});
+
+test('records deterministic original-3D provenance for the Services decision gate', () => {
+  const metadata = readFileSync(servicesDecisionGateMetadataPath, 'utf8');
+
+  for (const required of [
+    'CRE-1625',
+    'deterministic CSS 3D',
+    'render_decision_gate.html',
+    'source/composition.md',
+    'decision-gate-desktop.jpg',
+    'decision-gate-mobile.jpg',
+    'paper-services-decision-gate.webp',
+    'paper-services-decision-gate-mobile.webp',
+    '799cfea1a9ed112cad67a3bbf381f06f7d6dc3ed8593fa0c3b9c4a3066cd5e2d',
+    'f18a4299c71a9edcd1e35a7df6d5cdf23898a904e4c22604cf14ee508f197a30',
+    'third-party GLB',
+    'interactive-3d-hero-scene-agen.zip',
+    'ccd2ddab4e5253a0c4bedbfbb953935e2c1b383e8ad2a77a56cbda417bef7beb',
+    'Omma Terms of Service',
+    'June 20, 2026',
+    'Rights and use',
+    'Refresh condition'
+  ]) {
+    assert.ok(metadata.includes(required), `metadata must record ${required}`);
+  }
+
+  assert.ok(
+    existsSync(
+      resolve(agencyRoot, 'content/assets/brand/agency-paper-decision-gate-3d.v20260805/source/render_decision_gate.html')
+    )
+  );
+  assert.ok(
+    existsSync(
+      resolve(agencyRoot, 'content/assets/brand/agency-paper-decision-gate-3d.v20260805/source/composition.md')
+    )
+  );
   assert.doesNotMatch(metadata, /- \[ \]/);
 });
