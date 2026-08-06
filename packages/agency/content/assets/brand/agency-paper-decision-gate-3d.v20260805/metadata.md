@@ -1,119 +1,135 @@
-# Agency Paper Decision Gate — original 3D render
+# Agency Paper Decision Gate — Omma v2 3D candidate
 
 > Asset ID: `brand.agency-paper-decision-gate-3d.v20260805`
 > Owner: CREATE SOMETHING
-> Rendered and inspected: 2026-08-05
+> Reviewed: 2026-08-06
 > Tracking: `CRE-1625`
-> Status: bounded Omma-derived interactive candidate under local `/services` page-context verification; deterministic CSS 3D pair retained as the required fallback
+> Status: locally accepted v2 candidate on draft PR #1271; not approved for production promotion
 
 ## Direction
 
-This replaces only the existing `/services` campaign hero's clamped-decision
-still. The artifact is a working-paper decision gate: a source sheet becomes a
-seven-layer decision stack, rises into one held paper face, and is physically
-stopped by a single carbon rail with one review-gold authority tab. All page
-copy, proof, and controls remain authored DOM content.
+This replaces only the `/services` campaign hero's clamped-decision still. The
+artifact makes one workflow boundary physical: a registered source stack becomes
+a scored working packet, then one held sheet meets a black decision rail at a
+single review-gold authority tab. Page copy, actions, proof, and state labels
+remain authored DOM content.
 
 | Study | Workflow meaning | Target surface | Accent |
 | --- | --- | --- | --- |
-| Paper Decision Gate | A named decision holds continuation at a visible stop boundary | `/services` | Review gold |
+| Paper Decision Gate v2 | Source → working material → held decision | `/services` | Review gold |
 
-## Generation and source record
+## Source and generation record
 
-- Final pixels are deterministic CSS 3D rendered from
-  `source/render_decision_gate.html`, with no generated-image model, external
-  image, external texture, or third-party GLB. They remain the static fallback,
-  not the default renderer when WebGL is available.
-- Interactive source began with the user-supplied
-  `interactive-3d-hero-scene-agen.zip` Omma export (SHA-256
-  `ccd2ddab4e5253a0c4bedbfbb953935e2c1b383e8ad2a77a56cbda417bef7beb`).
-  The supplied archive contains procedural source code and its README only;
-  it contains no image, GLB, texture, or license file. Its paper, stack, rail,
-  and authority-tab semantics were adapted into the owned Agency renderer at
-  `src/lib/visual/servicesDecisionGateRenderer.ts` and client-only capability
-  wrapper at `src/lib/components/ServicesDecisionGateCanvas.svelte`.
-- Native captures used the authenticated in-app browser at 1536 x 1024
-  (desktop) and 852 x 1410 (mobile). The mobile query changes only framing.
-- Public WebP exports use `cwebp -q 88 -m 6` without resizing.
-- The composition brief, renderer, model/prompt non-applicability, source
-  inputs, and hard exclusions are documented in `source/composition.md`.
-- Vizcom's authenticated `Agency Services — Decision Gate` file provided
-  composition review. Its imported user-provided GLBs had no discoverable
-  rights record, so none were used in final pixels.
-- A local Blender 5.2.0 primitive-only render crashed before output. No Blender
-  output is represented as an accepted master.
-- Omma's macro camera, blue/red lighting, post-process, device orientation,
-  and animation loop were rejected. The Agency renderer keeps a static
-  reduced-motion state, capped DPR, no device-orientation listener, no required
-  animation loop, and uses only the repository's local `three` dependency plus
-  procedural `CanvasTexture` maps.
+- The selected source is the user-supplied Omma export
+  `v2-interactive-3d-hero-scene-agen.zip`, SHA-256
+  `30fa5264526a6e8c1037d5c9268af4c664844279ea89956674494998a5ccad86`.
+- The complete export is preserved byte-for-byte under
+  `content/assets/brand/sources/omma-paper-hero-v2/`. A focused contract
+  hash-locks its Svelte wrapper and all eight visual modules.
+- The archive contains procedural Three.js source only. It contains no image,
+  texture file, GLB, font, or bundled license. Its `package.json` declares Vite
+  but omits its required `three` dependency, so the untouched export does not
+  install and build by itself. The reference harness used Three 0.162.0.
+- The production-constrained Omma brief is preserved at
+  `source/omma-fresh-composition-prompt.md`. It fixes desktop/mobile copy and
+  proof masks before camera selection and prohibits generated text, branded
+  trade dress, macro optics, chromatic aberration, vignette, colored bloom,
+  device orientation, auto-rotation, and animated meaning.
+- Vizcom's authenticated `Agency Services — Decision Gate` file remains a
+  composition reference only. Its imported user-provided GLBs have no
+  discoverable rights record and do not appear in these pixels.
 
-## Omma use and provenance
+## Review and bounded runtime corrections
 
-- The source archive was exported from the user's authenticated Omma project.
-  [Omma Terms of Service](https://omma.build/landing/terms), last updated
-  June 20, 2026 and reviewed on 2026-08-05, state that users retain ownership
-  rights to content they create using the service, including generated code.
-- The archive's absence of a bundled license is therefore recorded rather than
-  inferred. The implementation uses no external Omma-hosted runtime, trademark,
-  public project content, third-party GLB, or downloaded generated-media asset.
-- The Terms require review and validation of AI-generated content before public
-  use. This record is not a claim that the visual represents a real workflow.
+The untouched v2 export was rendered locally before integration. It exposed two
+deterministic correctness defects rather than a prompt-only quality failure:
 
-## Static fallback masters
+1. `rigs.js` built a camera basis with reversed right/up cross products. The
+   complete cluster landed under the protected copy lane instead of inside the
+   declared object field.
+2. `geometry.js` emitted the folded sheet's top and bottom face triangles with
+   winding opposite their supplied normals. The working packet and held sheet
+   rendered black under normal material culling.
 
-| File | Dimensions | SHA-256 |
-| --- | ---: | --- |
-| `exports/decision-gate-desktop.jpg` | 1536 x 1024 | `799cfea1a9ed112cad67a3bbf381f06f7d6dc3ed8593fa0c3b9c4a3066cd5e2d` |
-| `exports/decision-gate-mobile.jpg` | 852 x 1410 | `2805550830dc917e6fb82a3f41c5d05d216e4244b641a14ff25b7ce6f5216c52` |
+The runtime mirror under `src/lib/visual/omma-paper-hero-v2/` adds only:
+
+- non-executable TypeScript check headers;
+- corrected camera-basis cross-product order;
+- corrected folded-face triangle winding; and
+- a material-preserving BoxGeometry index/group collapse for repeated sheets,
+  reducing six draws per sheet to two without changing vertices, UVs, normals,
+  geometry, or the visible face/edge material boundary.
+
+Agency owns the lifecycle/capability adapter at
+`src/lib/visual/servicesDecisionGateRenderer.ts` and its host component. It
+does not replace the v2 geometry, textures, materials, lighting, states, or
+named camera rigs. Reduced-motion preference produces one settled static WebGL
+frame; `?decision-gate=fallback` remains the deterministic non-WebGL path.
+
+## Local verification
+
+- Corrected integrated desktop frame: live copy and proof remain unobstructed;
+  registered stack, folded packet, held sheet, black rail, and gold stop are all
+  readable in the right artifact field.
+- Corrected portrait scene and fallback: the upper copy lane and lower proof
+  lane remain quiet while preserving the same object identity.
+- Browser renderer metrics at 1280 × 720: profile
+  `omma-paper-hero-v2-desktop`, 80 draw calls, 10 geometries, 7 textures, DPR
+  1.5; all are inside the route budget.
+- Full Agency check and Cloudflare-adapter production build pass locally. The
+  only build notices are the existing Browserslist freshness and external
+  canvas-kernel React import notices.
+- Final production acceptance is still gated on operator visual approval and
+  fresh full-route 1440 × 1000 and 390 × 844 verification, including keyboard,
+  reduced motion, overflow, console, and request review.
 
 ## Public fallback exports
 
+The fallbacks were captured from the corrected deterministic v2 scene in the
+authenticated in-app Browser and converted with `cwebp -q 88 -m 6`.
+
 | File | Dimensions | SHA-256 |
 | --- | ---: | --- |
-| `static/images/performance-lab/paper-services-decision-gate.webp` | 1536 x 1024 | `50c756b4e82fcf881ffcf1e2c7327f172d6438c1a1dd222eba714120e3965294` |
-| `static/images/performance-lab/paper-services-decision-gate-mobile.webp` | 852 x 1410 | `f18a4299c71a9edcd1e35a7df6d5cdf23898a904e4c22604cf14ee508f197a30` |
+| `static/images/performance-lab/paper-services-decision-gate.webp` | 1280 × 720 | `b383c6b8478527e88c60f54dffa4b0aae212bdb8894926af165608f60f38a608` |
+| `static/images/performance-lab/paper-services-decision-gate-mobile.webp` | 390 × 844 | `d94a9188a43f5c4e2d92badd26ac23e4c871985cccdcf5484d225296050ddcca` |
+
+The older authored CSS study and its JPEG masters remain in this asset folder
+as rejection history. They are not the current public fallback.
 
 ## Inspection and rejection record
 
-- [x] Original masters inspected at native size and the public WebP files
-  inspected after conversion.
-- [x] Landscape preserves a quiet left copy lane; portrait preserves a quiet
-  upper copy lane before the lower 3D paper sequence.
-- [x] Paper thickness, layered edges, a held face, carbon stop rail, one brass
-  authority tab, and contact shadows remain readable without generated text.
 - [x] No text, logo, watermark, interface, people, hands, water, glass,
-  collage, stationery, random scraps, crumpled paper, or fake evidence appears.
-- [x] The prior `/services` hero was rejected as a final candidate because its
-  single low paper edge did not make the source-to-stop relationship legible.
-- [x] Vizcom 3D studies were retained as non-final composition references. The
-  imported assets lack rights documentation, and their wide study left the
-  paper state too pale or underscaled for the live route.
-- [x] The primitive-only Blender route was rejected because headless Blender
-  crashed before output; this has no effect on the accepted CSS 3D source.
-
-- [x] The initial local Omma-derived desktop composition was rejected because
-  its carbon rail crossed the live headline. The accepted local revision moves
-  and shortens the source, stack, stop rail, and tab into a right-side dark
-  instrument band, keeping the live left copy lane clear.
-- [x] Forced fallback verification confirms the static study remains a readable
-  Paper-native route fallback rather than a second WebGL canvas.
-- [x] The supplied `interactive-3d-ai-workflow-pro.zip` was reviewed only as a
-  separate `/products` System Spine candidate; it is not imported or used by
-  this `/services` artifact.
+  stationery, collage, random scraps, or crumpled paper appears in generated
+  pixels.
+- [x] Paper thickness, laminated edges, one controlled fold, a held sheet, one
+  black decision rail, one gold authority tab, and contact shadows remain
+  readable without generated labels.
+- [x] The initial simplified Agency renderer was rejected because it replaced
+  the exported material and geometry fidelity with low-detail slabs and a hard
+  split gradient.
+- [x] The controlled v1 exact-source benchmark proved technical fidelity but
+  failed semantic legibility: its macro camera read as a sheet and rail rather
+  than a source-to-stop workflow.
+- [x] The untouched v2 export failed its own declared masks and material read
+  because of the camera-basis and face-winding defects above.
+- [x] The minimally corrected v2 runtime and generated fallback pair pass local
+  desktop/portrait composition review. This is local acceptance, not production
+  proof.
+- [x] The separate `interactive-3d-ai-workflow-pro.zip` remains a `/products`
+  System Spine candidate and is not imported by `/services`.
 
 ## Rights and use
 
-CREATE SOMETHING-authored HTML, CSS, and browser-rendered pixels only. No
-external image input, third-party asset, or model is present in the static
-fallback masters. The interactive candidate is a user-owned Omma-derived,
-locally adapted procedural renderer; it imports the repository's existing
-`three` package but no Omma runtime or external media. The visual is
-illustrative and must not be presented as evidence of a real workflow run.
+The source archive was exported from the user's authenticated Omma project.
+Omma's Terms of Service, reviewed on 2026-08-05, state that users retain rights
+to content they create with the service, including generated code. The missing
+archive license is recorded rather than inferred. This implementation uses no
+Omma-hosted runtime, public community project, third-party GLB, or downloaded
+generated-media asset. The visual is illustrative and must not be represented
+as evidence of a real workflow execution.
 
 ## Refresh condition
 
-Replace this study only if the `/services` workflow meaning changes, a current
-desktop or mobile page-context verifier fails, or a later owned working-paper
-artifact clearly improves the source-to-stop legibility. Do not refresh for
-novelty alone.
+Replace this candidate if its final page-context verifier fails, the `/services`
+workflow meaning changes, or a later owned Paper artifact makes the same
+source-to-stop boundary materially clearer. Do not refresh it for novelty.

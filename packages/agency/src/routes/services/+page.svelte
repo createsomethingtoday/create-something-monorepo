@@ -90,7 +90,7 @@
     title="Nothing gets built until the map says what it should do."
     lede="Bring one handoff your team still checks manually. We name the decision owner and the stop condition first, then build only what that map requires — before anything touches customers, money, or production."
     media={paperServicesDecisionGateMedia}
-    mode="paper"
+    mode="ink"
     artifactLayer="behind-content"
     density="compact"
     artifactOwnsMedia={ommaReady}
@@ -122,6 +122,7 @@
 <style>
   .services-performance {
     background: var(--color-performance-paper, #f3f3f0);
+    --color-performance-ink: #0e1113;
   }
 
 </style>

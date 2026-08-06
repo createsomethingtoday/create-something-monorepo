@@ -39,11 +39,11 @@ export const paperClampedDecisionMedia = {
 export const paperServicesDecisionGateMedia = {
   src: '/images/performance-lab/paper-services-decision-gate.webp',
   mobileSrc: '/images/performance-lab/paper-services-decision-gate-mobile.webp',
-  alt: 'A porcelain source sheet resolving into a seven-layer paper decision stack, held at a carbon stop rail with one brass authority tab',
+  alt: 'A registered source stack resolving into a scored paper packet and held sheet at a black stop rail with one gold authority tab',
   condition: 'pressure',
   material: 'paper',
-  width: 1536,
-  height: 1024,
+  width: 1280,
+  height: 720,
   objectPosition: 'right center',
   colorMode: 'natural'
 } as const satisfies PerformanceMediaStudy;

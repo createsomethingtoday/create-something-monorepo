@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Interactive 3D hero scene agency services v2</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --field: #0e1113;
+        --ink: #f2f1ee;
+        --muted: #8b9298;
+        --line: rgba(255, 255, 255, 0.09);
+        --gold: #a8873f;
+        --nav-h: 72px;
+      }
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        padding: 0;
+        background: var(--field);
+        color: var(--ink);
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        overflow-x: hidden;
+      }
+      nav {
+        position: relative;
+        z-index: 5;
+        height: var(--nav-h);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 32px;
+        border-bottom: 1px solid var(--line);
+      }
+      .brand {
+        font-size: 13px;
+        letter-spacing: 0.14em;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+      .brand span { color: var(--muted); font-weight: 400; }
+      .navlinks {
+        display: flex;
+        gap: 26px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .navlinks a { color: inherit; text-decoration: none; }
+      .navlinks a[aria-current] { color: var(--ink); }
+
+      .hero {
+        position: relative;
+        height: calc(100vh - var(--nav-h));
+        min-height: 620px;
+        overflow: hidden;
+      }
+      #stage { position: absolute; inset: 0; }
+      #stage canvas { display: block; width: 100%; height: 100%; }
+
+      .copy {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 46%;
+        height: 82%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 0 48px 0 32px;
+        z-index: 3;
+        pointer-events: none;
+      }
+      .copy > * { pointer-events: auto; }
+      .eyebrow {
+        font-size: 11px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin: 0 0 20px;
+      }
+      .eyebrow b { color: var(--gold); font-weight: 500; }
+      h1 {
+        font-size: clamp(34px, 3.6vw, 54px);
+        line-height: 1.06;
+        letter-spacing: -0.022em;
+        font-weight: 600;
+        margin: 0 0 22px;
+        max-width: 15ch;
+      }
+      .lede {
+        font-size: 15.5px;
+        line-height: 1.62;
+        color: var(--muted);
+        margin: 0 0 34px;
+        max-width: 46ch;
+      }
+      .actions { display: flex; gap: 12px; flex-wrap: wrap; }
+      .btn {
+        font-family: inherit;
+        font-size: 13.5px;
+        font-weight: 500;
+        padding: 11px 20px;
+        border-radius: 7px;
+        border: 1px solid var(--line);
+        background: transparent;
+        color: var(--ink);
+        cursor: pointer;
+        transition: border-color 0.18s ease, background 0.18s ease;
+      }
+      .btn:hover { border-color: rgba(255,255,255,0.24); }
+      .btn.primary {
+        background: #f2f1ee;
+        color: #0e1113;
+        border-color: #f2f1ee;
+      }
+      .btn.primary:hover { background: #fff; }
+
+      .proof {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 18%;
+        display: flex;
+        align-items: center;
+        gap: 0;
+        padding: 0 32px;
+        border-top: 1px solid var(--line);
+        z-index: 3;
+        background: linear-gradient(to top, rgba(14,17,19,0.92), rgba(14,17,19,0));
+      }
+      .proof-item {
+        flex: 1;
+        padding-right: 24px;
+      }
+      .proof-item + .proof-item {
+        border-left: 1px solid var(--line);
+        padding-left: 24px;
+      }
+      .proof-k {
+        font-size: 10px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin: 0 0 6px;
+      }
+      .proof-v { font-size: 13.5px; margin: 0; color: var(--ink); }
+
+      /* Mask overlay for review only */
+      .masks {
+        position: absolute;
+        inset: 0;
+        z-index: 9;
+        pointer-events: none;
+        display: none;
+      }
+      .masks.on { display: block; }
+      .mask-zone {
+        position: absolute;
+        background: rgba(220, 60, 70, 0.16);
+        border: 1px dashed rgba(255, 90, 100, 0.85);
+      }
+      .mask-field {
+        position: absolute;
+        border: 1px dashed rgba(90, 220, 160, 0.9);
+        background: rgba(60, 220, 150, 0.06);
+      }
+      .mask-tag {
+        position: absolute;
+        font-size: 10px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: #fff;
+        background: rgba(0,0,0,0.6);
+        padding: 2px 6px;
+        border-radius: 3px;
+      }
+      .maskbtn {
+        position: fixed;
+        right: 16px;
+        bottom: 16px;
+        z-index: 20;
+        font-family: 'Inter', sans-serif;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 8px 12px;
+        border-radius: 6px;
+        border: 1px solid var(--line);
+        background: rgba(14,17,19,0.9);
+        color: var(--muted);
+        cursor: pointer;
+      }
+
+      @media (max-aspect-ratio: 21/20) {
+        .copy {
+          width: 100%;
+          height: 52%;
+          justify-content: flex-end;
+          padding: 0 22px 26px;
+        }
+        h1 { max-width: 18ch; font-size: clamp(30px, 8vw, 40px); }
+        .lede { font-size: 14.5px; margin-bottom: 22px; }
+        .proof { height: 14%; padding: 0 22px; }
+        .proof-item:nth-child(3) { display: none; }
+        .proof-v { font-size: 12px; }
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="brand">Create Something <span>.agency</span></div>
+      <div class="navlinks">
+        <a href="#work">Work</a>
+        <a href="#services" aria-current="page">Services</a>
+        <a href="#studio">Studio</a>
+        <a href="#contact">Contact</a>
+      </div>
+    </nav>
+
+    <section class="hero">
+      <div id="stage"></div>
+
+      <div class="copy">
+        <p class="eyebrow">Services — <b>Operating Boundary</b></p>
+        <h1>Source, working material, held decision.</h1>
+        <p class="lede">
+          Every engagement moves through three states. We keep the boundary
+          between them physical, registered, and reviewable — so the moment a
+          decision is held, everyone can see exactly where it stopped.
+        </p>
+        <div class="actions">
+          <button class="btn primary">Review the process</button>
+          <button class="btn">Download the operating brief</button>
+        </div>
+      </div>
+
+      <div class="proof">
+        <div class="proof-item">
+          <p class="proof-k">Source</p>
+          <p class="proof-v">Registered intake, versioned on receipt</p>
+        </div>
+        <div class="proof-item">
+          <p class="proof-k">Working material</p>
+          <p class="proof-v">Scored, folded, edge-legible revisions</p>
+        </div>
+        <div class="proof-item">
+          <p class="proof-k">Held decision</p>
+          <p class="proof-v">One stop, one authority mark</p>
+        </div>
+      </div>
+
+      <div class="masks" id="masks"></div>
+    </section>
+
+    <button class="maskbtn" id="maskbtn">Toggle masks</button>
+
+    <script type="module">
+      import { createPaperScene } from './src/lib/paper/scene.js';
+
+      const stage = document.getElementById('stage');
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      const instance = createPaperScene(stage, {
+        seed: 20514,
+        spread: 1.0,
+        parallax: true,
+        reducedMotion: reduced
+      });
+
+      if (!reduced) instance.resume();
+
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) instance.pause();
+        else if (!reduced) instance.resume();
+      });
+
+      // ---- Review mask overlay ----
+      const masksEl = document.getElementById('masks');
+      const btn = document.getElementById('maskbtn');
+
+      function drawMasks() {
+        const hero = document.querySelector('.hero');
+        const w = hero.clientWidth;
+        const h = hero.clientHeight;
+        const isMobile = w / h < 1.05;
+        masksEl.innerHTML = '';
+
+        const add = (cls, style, label) => {
+          const d = document.createElement('div');
+          d.className = cls;
+          Object.assign(d.style, style);
+          masksEl.appendChild(d);
+          if (label) {
+            const t = document.createElement('div');
+            t.className = 'mask-tag';
+            t.textContent = label;
+            t.style.left = style.left;
+            t.style.top = `calc(${style.top} + 6px)`;
+            t.style.marginLeft = '6px';
+            masksEl.appendChild(t);
+          }
+        };
+
+        if (!isMobile) {
+          add('mask-zone', { left: '0%', top: '0%', width: '46%', height: '100%' }, 'Quiet — left 46%');
+          add('mask-zone', { left: '0%', top: '82%', width: '100%', height: '18%' }, 'Quiet — bottom 18%');
+          add('mask-field', { left: '52%', top: '15%', width: '42%', height: '61%' }, 'Object field 52–94% / 15–76%');
+        } else {
+          add('mask-zone', { left: '0%', top: '0%', width: '100%', height: '52%' }, 'Quiet — top 52%');
+          add('mask-zone', { left: '0%', top: '86%', width: '100%', height: '14%' }, 'Quiet — bottom 14%');
+          add('mask-field', { left: '8%', top: '54.5%', width: '86%', height: '30%' }, 'Object band');
+        }
+      }
+
+      btn.addEventListener('click', () => {
+        masksEl.classList.toggle('on');
+        if (masksEl.classList.contains('on')) drawMasks();
+      });
+      window.addEventListener('resize', () => {
+        if (masksEl.classList.contains('on')) drawMasks();
+      });
+    </script>
+  </body>
+</html>
