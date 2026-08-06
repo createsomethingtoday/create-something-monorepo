@@ -15,6 +15,8 @@
     globalMetadata?: Record<string, unknown>;
     compactPrompt?: boolean;
     obscured?: boolean;
+    /** Keep the mobile control out of the campaign header when that space carries primary meaning. */
+    mobilePlacement?: 'header-edge' | 'safe-corner';
   }
 
   let {
@@ -23,7 +25,8 @@
     userOptedOut = false,
     globalMetadata = undefined,
     compactPrompt = false,
-    obscured = false
+    obscured = false,
+    mobilePlacement = 'header-edge'
   }: Props = $props();
 
   let mounted = $state(false);
@@ -67,6 +70,7 @@
     class="privacy-choice"
     class:privacy-choice--compact={compactPromptActive}
     class:privacy-choice--obscured={obscured}
+    class:privacy-choice--safe-corner={mobilePlacement === 'safe-corner'}
     aria-label="Privacy choices"
     aria-hidden={obscured}
     inert={obscured}
@@ -284,6 +288,17 @@
       max-width: none;
     }
 
+    .privacy-choice.privacy-choice--safe-corner {
+      top: auto;
+      right: max(0.75rem, env(safe-area-inset-right));
+      bottom: max(0.75rem, env(safe-area-inset-bottom));
+    }
+
+    .privacy-choice.privacy-choice--safe-corner:has(.privacy-panel) {
+      right: max(0.5rem, env(safe-area-inset-right));
+      bottom: max(0.5rem, env(safe-area-inset-bottom));
+    }
+
     .privacy-choice--compact {
       max-width: max-content;
     }
@@ -347,6 +362,12 @@
       color: var(--color-performance-muted, #5e6268);
       font-family: var(--font-performance-mono);
       font-size: 0.68rem;
+    }
+
+    .privacy-choice--safe-corner .privacy-pill {
+      border-right: 1px solid var(--color-performance-line, #d7d7d2);
+      border-radius: var(--radius-performance-sm, 4px);
+      box-shadow: 0 6px 18px rgba(10, 14, 25, 0.1);
     }
 
     .privacy-pill:hover {
