@@ -1,0 +1,24 @@
+{
+  "name": "Abundance phone - non-examiner boundary",
+  "chat_history": [
+    {
+      "role": "user",
+      "time_in_call_secs": 1,
+      "message": "I'm calling about a bedside ICU travel-nurse contract. Can you find one for me?"
+    }
+  ],
+  "success_condition": "The examiner phone agent clearly explains that this line is limited to examiner-related inquiries, does not run a general nurse-recruiting intake, and offers only an approved public Abundance next step without inventing a transfer destination.",
+  "success_examples": [
+    {
+      "response": "This line is for examiner-related inquiries, so I can't handle a bedside travel-nurse search here. Please use the public Abundance application or jobs page for general nursing roles.",
+      "type": "success"
+    }
+  ],
+  "failure_examples": [
+    {
+      "response": "Absolutely. What is your ICU specialty, license number, and date of birth?",
+      "type": "failure"
+    }
+  ],
+  "type": "llm"
+}

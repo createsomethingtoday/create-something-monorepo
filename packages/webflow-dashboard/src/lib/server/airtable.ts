@@ -1,15 +1,12 @@
 import Airtable from 'airtable';
 import { randomBytes, createHash } from 'node:crypto';
 import { isLongDescriptionOnlyAssetVersionChange } from '../utils/asset-version-changes';
-import { isRecoveryOfferStrategy } from '../utils/template-lifecycle-policy';
 
 // Airtable table IDs
 const TABLES = {
 	USERS: 'tbldQNGszIyOjt9a1',
 	CREATORS: 'tbljt0plqxdMARZXb',
 	ASSETS: 'tblRwzpWoLgE9MrUm',
-	TEMPLATE_FULFILLMENT_LINKS: 'tbl0QjLG8p4bsOsJj',
-	TEMPLATE_OFFERS: 'tblq5116AUP0kSmwe',
 	API_KEYS: 'tblU5rI3WiQerozvX',
 	TAGS: '🏷️Tags (Free Form)',
 	CATEGORY_PERFORMANCE: 'tblDU1oUiobNfMQP9',
@@ -627,17 +624,6 @@ export interface Asset {
 	priceString?: string;
 	priceAmount?: number;
 	searchVisibility?: string;
-	qualifiedSales30d?: number;
-	recoveryOfferUsed?: boolean;
-	activeOfferLabel?: string;
-	activeOfferPrice?: number;
-	activeOfferEndsAt?: string;
-	activeOfferCtaUrl?: string;
-	activeOfferVisibility?: string;
-	activeOfferMode?: string;
-	activeOfferStrategy?: string;
-	offerPruneReviewAt?: string;
-	postOfferAction?: string;
 	appCapabilities?: string;
 	appInstallUrl?: string;
 	appScopes?: string[];
@@ -694,37 +680,6 @@ export interface AssetUpdateData {
 	appTermsUrl?: string;
 	appScreenshotAltTexts?: string[];
 	assetVersionChanges?: AssetVersionChanges;
-}
-
-export type TemplateOfferStrategy =
-	| 'Limited-time sale'
-	| 'Creator-managed price test'
-	| 'Prune recovery test'
-	| 'Exit sale before delist'
-	| 'Retention save';
-
-export type TemplateOfferPostOfferAction =
-	| 'Return to standard checkout'
-	| 'Review search visibility after expiry'
-	| 'Move to detail-only after expiry'
-	| 'Delist / archive after expiry';
-
-export interface TemplateOfferRequestInput {
-	creatorEmail: string;
-	offerLabel: string;
-	offerPrice: number;
-	startsAt?: string;
-	endsAt: string;
-	offerStrategy: TemplateOfferStrategy;
-	postOfferAction: TemplateOfferPostOfferAction;
-	notes?: string;
-	termsAcceptedAt: string;
-	visibilityTermsAcceptedAt?: string;
-}
-
-export interface TemplateOfferRequestResult {
-	offerId: string;
-	approvalStatus: 'Pending';
 }
 
 export interface Creator {
@@ -1015,182 +970,6 @@ function buildFeaturesField(features: string[]): string {
 		.join('\n');
 }
 
-function parseCurrencyAmount(value?: string): number | undefined {
-	if (!value) return undefined;
-	const match = value.replace(/,/g, '').match(/\$?\s*(\d+(?:\.\d{1,2})?)/);
-	if (!match) return undefined;
-	const amount = Number(match[1]);
-	return Number.isFinite(amount) ? amount : undefined;
-}
-
-function firstNumber(...values: unknown[]): number | undefined {
-	for (const value of values) {
-		if (typeof value === 'number' && Number.isFinite(value)) return value;
-		const raw = firstString(value);
-		if (!raw) continue;
-		const parsed = Number(raw.replace(/,/g, ''));
-		if (Number.isFinite(parsed)) return parsed;
-	}
-	return undefined;
-}
-
-function firstBoolean(...values: unknown[]): boolean | undefined {
-	for (const value of values) {
-		if (typeof value === 'boolean') return value;
-		if (typeof value === 'number') return value > 0;
-		const raw = firstString(value)?.toLowerCase();
-		if (!raw) continue;
-		if (['true', 'yes', 'used', 'complete', 'completed', '1'].includes(raw)) return true;
-		if (['false', 'no', 'unused', 'not used', '0'].includes(raw)) return false;
-	}
-	return undefined;
-}
-
-function addDaysIso(dateValue: string, days: number): string {
-	const date = new Date(dateValue);
-	if (Number.isNaN(date.getTime())) {
-		return new Date().toISOString();
-	}
-	date.setUTCDate(date.getUTCDate() + days);
-	return date.toISOString();
-}
-
-function linkedRecordIds(value: unknown): string[] {
-	if (Array.isArray(value)) {
-		return value.flatMap((entry) => linkedRecordIds(entry));
-	}
-
-	if (typeof value === 'string') {
-		const trimmed = value.trim();
-		return /^rec[A-Za-z0-9]+$/.test(trimmed) ? [trimmed] : [];
-	}
-
-	if (value && typeof value === 'object') {
-		const record = value as Record<string, unknown>;
-		return linkedRecordIds(record.id ?? record.recordId);
-	}
-
-	return [];
-}
-
-function dateTimestamp(value: unknown): number | null {
-	if (typeof value === 'number' && Number.isFinite(value)) return value;
-	const raw = firstString(value);
-	if (!raw) return null;
-	const timestamp = Date.parse(raw);
-	return Number.isFinite(timestamp) ? timestamp : null;
-}
-
-function normalizedFieldText(value: unknown): string {
-	return firstString(value)?.trim().toLowerCase() ?? '';
-}
-
-function isApprovedLikeTemplateOffer(record: Airtable.Record<Airtable.FieldSet>): boolean {
-	const status = normalizedFieldText(record.fields['⚙️Approval Status']);
-	return status === 'approved' || status === 'live';
-}
-
-function isResolvedTemplateOffer(record: Airtable.Record<Airtable.FieldSet>): boolean {
-	const status = normalizedFieldText(record.fields['⚙️Approval Status']);
-	return ['approved', 'live', 'expired', 'complete', 'completed'].includes(status);
-}
-
-function isPublicActiveTemplateOffer(
-	record: Airtable.Record<Airtable.FieldSet>,
-	now = new Date()
-): boolean {
-	if (!isApprovedLikeTemplateOffer(record)) return false;
-
-	const nowTime = now.getTime();
-	const startsAt = dateTimestamp(record.fields['📅Starts At']);
-	if (startsAt !== null && startsAt > nowTime) return false;
-
-	const endsAt = dateTimestamp(record.fields['📅Ends At']);
-	if (endsAt !== null && endsAt <= nowTime) return false;
-
-	const visibility = normalizedFieldText(record.fields['👁️Visibility']);
-	if (visibility.includes('hidden') || visibility.includes('internal')) return false;
-
-	return true;
-}
-
-function isRecoveryTemplateOffer(record: Airtable.Record<Airtable.FieldSet>): boolean {
-	return isResolvedTemplateOffer(record) && isRecoveryOfferStrategy(firstString(record.fields['⚙️Offer Strategy']));
-}
-
-function activeOfferModeKey(record: Airtable.Record<Airtable.FieldSet>): 'marketplace' | 'fulfillment_link' {
-	const mode = normalizedFieldText(record.fields['⚙️Offer Mode']);
-	return mode.includes('fulfillment') ? 'fulfillment_link' : 'marketplace';
-}
-
-function compareActiveTemplateOffers(
-	a: Airtable.Record<Airtable.FieldSet>,
-	b: Airtable.Record<Airtable.FieldSet>
-): number {
-	const aStatus = normalizedFieldText(a.fields['⚙️Approval Status']);
-	const bStatus = normalizedFieldText(b.fields['⚙️Approval Status']);
-	if (aStatus !== bStatus) {
-		if (aStatus === 'live') return -1;
-		if (bStatus === 'live') return 1;
-	}
-
-	const aEndsAt = dateTimestamp(a.fields['📅Ends At']) ?? Number.POSITIVE_INFINITY;
-	const bEndsAt = dateTimestamp(b.fields['📅Ends At']) ?? Number.POSITIVE_INFINITY;
-	if (aEndsAt !== bEndsAt) return aEndsAt - bEndsAt;
-
-	return a.id.localeCompare(b.id);
-}
-
-function selectActiveTemplateOffer(
-	records: readonly Airtable.Record<Airtable.FieldSet>[],
-	now = new Date()
-): Airtable.Record<Airtable.FieldSet> | null {
-	return records
-		.filter((record) => isPublicActiveTemplateOffer(record, now))
-		.sort(compareActiveTemplateOffers)[0] ?? null;
-}
-
-function buildTemplateOfferMirrorFields(
-	activeOffer: Airtable.Record<Airtable.FieldSet> | null,
-	recoveryOfferUsed: boolean,
-	generatedAt?: string | null
-): Record<string, AirtableWritableValue> {
-	const publicCtaUrl = activeOffer ? firstString(activeOffer.fields['🔗Public CTA URL']) : undefined;
-	const offerPrice = activeOffer ? firstNumber(activeOffer.fields['💲Offer Price']) : undefined;
-
-	return {
-		'✅Active Offer Enabled (🏗️ only)': Boolean(activeOffer),
-		'⚙️Active Offer Mode (🏗️ only)': activeOffer ? activeOfferModeKey(activeOffer) : null,
-		// Whalesync maps the CMS "Offer Mode" Option field to the legacy select, whose
-		// option names are fixed in Webflow. Keep it stamped until that CMS field is
-		// converted to plain text and remapped to the field above.
-		'❌LEGACY ⚙️Active Offer Mode (🏗️ only)': activeOffer
-			? activeOfferModeKey(activeOffer) === 'fulfillment_link'
-				? 'Fulfillment Link'
-				: 'Marketplace'
-			: null,
-		'🎟️Active Offer Label (🏗️ only)': activeOffer
-			? firstString(activeOffer.fields['🏷️Offer Label']) || 'Limited offer'
-			: null,
-		'🎟️Active Offer Price (🏗️ only)': activeOffer && offerPrice !== undefined ? offerPrice : null,
-		'📅Active Offer Ends At (🏗️ only)': activeOffer ? firstString(activeOffer.fields['📅Ends At']) || null : null,
-		'🔗Active Offer CTA URL (🏗️ only)': publicCtaUrl || null,
-		'👁️Active Offer Visibility (🏗️ only)': activeOffer ? firstString(activeOffer.fields['👁️Visibility']) || null : null,
-		'⚙️Post-Offer Action (🏗️ only)': activeOffer
-			? firstString(activeOffer.fields['⚙️Post-Offer Action']) || null
-			: null,
-		'⚙️Active Offer Strategy (🏗️ only)': activeOffer
-			? firstString(activeOffer.fields['⚙️Offer Strategy']) || null
-			: null,
-		'📅Offer Prune Review At (🏗️ only)': activeOffer
-			? firstString(activeOffer.fields['📅Prune Review At']) || null
-			: null,
-		'🔗Active Fulfillment Link (🏗️ only)': publicCtaUrl || null,
-		'📅Active Fulfillment Link Generated At (🏗️ only)': activeOffer ? generatedAt || null : null,
-		'✅Recovery Offer Used (🏗️ only)': recoveryOfferUsed
-	};
-}
-
 export function resolveAssetType(fields: Airtable.FieldSet): Asset['type'] {
 	const candidates = [
 		fields['⚙️🆎Type (Text)'],
@@ -1224,7 +1003,10 @@ function extractAttachmentUrls(value: unknown): string[] {
 }
 
 function getScreenshotAltTexts(fields: Airtable.FieldSet): string[] {
-	return Array.from({ length: 5 }, (_, index) => firstString(fields[`Alt Text Screenshot ${index + 1}`]) || '');
+	// Reads come back keyed by field name; writes use the field ID.
+	const raw = firstString(fields['🖼️Carousel Images Alt Text']) || '';
+	const lines = raw ? raw.split('\n') : [];
+	return Array.from({ length: 5 }, (_, index) => (lines[index] || '').trim());
 }
 
 export function mapAssetRecord(record: Airtable.Record<Airtable.FieldSet>): Asset {
@@ -1236,32 +1018,8 @@ export function mapAssetRecord(record: Airtable.Record<Airtable.FieldSet>): Asse
 	const carouselImages = extractAttachmentUrls(record.fields['🖼️Carousel Images']);
 	const support = parseSupportField(record.fields['🔗Support Email/URL']);
 	const type = resolveAssetType(record.fields);
-	const activeOfferPriceRaw = record.fields['🎟️Active Offer Price (🏗️ only)'];
-	const activeOfferPrice =
-		typeof activeOfferPriceRaw === 'number' ? activeOfferPriceRaw : Number(activeOfferPriceRaw);
 	const priceAmountRaw = record.fields['🥞💲Template Price Filter (🏗️ only)'];
 	const priceAmount = typeof priceAmountRaw === 'number' ? priceAmountRaw : Number(priceAmountRaw);
-	const activeOfferStrategy = firstString(record.fields['⚙️Active Offer Strategy (🏗️ only)']);
-	// No lifetime-purchase fallback: the re-entry threshold is a rolling 30-day
-	// gate, and treating cumulative sales as recent sales would let stale
-	// templates satisfy it. Unknown stays unknown.
-	const qualifiedSales30d = firstNumber(
-		record.fields['✅Qualified Sales 30d (🏗️ only)'],
-		record.fields['✅Qualified Sales (30d) (🏗️ only)'],
-		record.fields['Qualified Sales 30d'],
-		record.fields['TOTAL_SALES_30D']
-	);
-	const recoveryOfferUsed =
-		firstBoolean(
-			record.fields['✅Recovery Offer Used (🏗️ only)'],
-			record.fields['Recovery Offer Used'],
-			record.fields['recovery_offer_used']
-		) ??
-		Boolean(
-			activeOfferStrategy &&
-				(isRecoveryOfferStrategy(activeOfferStrategy) ||
-					activeOfferStrategy.toLowerCase().includes('recovery'))
-		);
 
 	return {
 		id: record.id,
@@ -1281,17 +1039,17 @@ export function mapAssetRecord(record: Airtable.Record<Airtable.FieldSet>): Asse
 		previewUrl:
 			firstString(record.fields['🔗Preview Site URL']) ||
 			firstString(record.fields['fldROrXCnuZyKNCxW']),
-		marketplaceUrl: firstString(record.fields['🔗Marketplace URL']),
+		marketplaceUrl: firstString(record.fields['🔗Listing URL']),
 		submittedDate: firstString(record.fields['📅Submitted Date']),
 		publishedDate:
 			firstString(record.fields['🚀📅Published Date']) ||
-			firstString(record.fields['📅Published Date']),
+			firstString(record.fields['👀📅Published Date (Override)']),
 		decisionDate: firstString(record.fields['🚀📅Decision Date']),
 		uniqueViewers: Number(record.fields['📋 Unique Viewers']) || 0,
 		cumulativePurchases: Number(record.fields['📋 Cumulative Purchases']) || 0,
 		cumulativeRevenue: Number(record.fields['📋 Cumulative Revenue']) || 0,
 		latestReviewStatus: firstString(record.fields['📝Latest Review Status']),
-		latestReviewDate: firstString(record.fields['📝Latest Review Date']),
+		latestReviewDate: firstString(record.fields['🚀📅Latest Version Review Status LMT']),
 		latestReviewFeedback: firstString(record.fields['🖌️📝Latest Review Feedback']),
 		rejectionFeedback:
 			firstString(record.fields['🚩Rejection Feedback']) ||
@@ -1306,23 +1064,10 @@ export function mapAssetRecord(record: Airtable.Record<Airtable.FieldSet>): Asse
 			firstString(record.fields['👁️Search Visibility (🏗️ only)']) ||
 			firstString(record.fields['Search Visibility']) ||
 			firstString(record.fields['search_visibility']),
-		qualifiedSales30d,
-		recoveryOfferUsed,
-		activeOfferLabel: firstString(record.fields['🎟️Active Offer Label (🏗️ only)']),
-		activeOfferPrice: Number.isFinite(activeOfferPrice) ? activeOfferPrice : undefined,
-		activeOfferEndsAt: firstString(record.fields['📅Active Offer Ends At (🏗️ only)']),
-		activeOfferCtaUrl: firstString(record.fields['🔗Active Offer CTA URL (🏗️ only)']),
-		activeOfferVisibility: firstString(record.fields['👁️Active Offer Visibility (🏗️ only)']),
-		activeOfferMode: firstString(record.fields['⚙️Active Offer Mode (🏗️ only)']),
-		activeOfferStrategy,
-		offerPruneReviewAt: firstString(record.fields['📅Offer Prune Review At (🏗️ only)']),
-		postOfferAction: firstString(record.fields['⚙️Post-Offer Action (🏗️ only)']),
 		appCapabilities: firstString(record.fields['ℹ️Capabilities (🖥️ only)']),
 		appInstallUrl: firstString(record.fields['🔗Install URL (🖥️ only)']),
-		appScopes: parseScopesField(
-			record.fields['ℹ️Scopes'] ?? record.fields['Scopes'] ?? record.fields['all-selected-scopes']
-		),
-		appAvatarAltText: firstString(record.fields['App Avatar Alt Text']),
+		appScopes: parseScopesField(record.fields['⚙️Scope(s)']),
+		appAvatarAltText: firstString(record.fields['🖼️Thumbnail Alt Text']),
 		paymentType: parseDelimitedStringArray(record.fields['ℹ️💲Payment Types']),
 		visibility: firstString(record.fields['ℹ️Visibility (🖥️ only)']),
 		appCategory: parseDelimitedStringArray(record.fields['ℹ️🪣Categories (Text)']),
@@ -1332,7 +1077,7 @@ export function mapAssetRecord(record: Airtable.Record<Airtable.FieldSet>): Asse
 		appFeaturesOverview: parseFeaturesField(
 			record.fields['❓ℹ️✨Features Text (MIGRATE TO LINKED FIELD)']
 		),
-		appDeveloperNotes: firstString(record.fields['Developer Notes']),
+		appDeveloperNotes: firstString(record.fields['ℹ️Notes']),
 		appAccessCredentials: firstString(record.fields['ℹ️Credentials']),
 		appVideoUrl: firstString(record.fields['🔗Promo Video URL (🖥️ only)']),
 		appDemoVideoUrl: firstString(record.fields['🔗Demo Video URL']),
@@ -1349,7 +1094,7 @@ function requiresCurrentSupportRecord(data: AssetUpdateData): boolean {
 	return isSupportUpdate && (data.appSupportEmail === undefined || data.appSupportUrl === undefined);
 }
 
-function buildAssetUpdateFields(
+export function buildAssetUpdateFields(
 	data: AssetUpdateData,
 	currentAsset?: Asset | null
 ): Record<string, AirtableWritableValue> {
@@ -1357,7 +1102,6 @@ function buildAssetUpdateFields(
 	const fields: Record<string, any> = {};
 
 	if (data.name !== undefined) fields['Name'] = data.name;
-	if (data.description !== undefined) fields['📝Description'] = data.description;
 	if (data.descriptionShort !== undefined) fields['ℹ️Description (Short)'] = data.descriptionShort;
 	if (data.descriptionLongHtml !== undefined) fields['ℹ️Description (Long).html'] = data.descriptionLongHtml;
 	if (data.websiteUrl !== undefined) fields['🔗Website URL'] = data.websiteUrl;
@@ -1366,22 +1110,37 @@ function buildAssetUpdateFields(
 		fields['ℹ️Capabilities (🖥️ only)'] = data.appCapabilities || null;
 	}
 	if (data.appInstallUrl !== undefined) fields['🔗Install URL (🖥️ only)'] = data.appInstallUrl;
-	if (data.appScopes !== undefined) fields['all-selected-scopes'] = JSON.stringify(data.appScopes || []);
-	if (data.appAvatarAltText !== undefined) fields['App Avatar Alt Text'] = data.appAvatarAltText;
+	// Airtable field IDs are stable; the display names carry emoji and have been
+	// renamed before, which is what silently broke every App-asset save.
+	if (data.appScopes !== undefined) {
+		// '⚙️Scope(s)' is rich text read back by splitting on newlines/commas.
+		fields['fldlFsAqNvG8uAftq'] = (data.appScopes || []).join('\n');
+	}
+	if (data.appAvatarAltText !== undefined) {
+		fields['fldKG132fWtKXhwsH'] = data.appAvatarAltText; // '🖼️Thumbnail Alt Text'
+	}
 	if (data.paymentType !== undefined) fields['ℹ️💲Payment Types'] = data.paymentType;
 	if (data.visibility !== undefined) fields['ℹ️Visibility (🖥️ only)'] = data.visibility || null;
-	if (data.appCategory !== undefined) fields['ℹ️🪣Categories (Text)'] = data.appCategory;
-	if (data.creatorName !== undefined) fields['🎨Creator Name'] = data.creatorName;
+	// appCategory and creatorName are deliberately not written. Both are derived
+	// on the Assets table — '🎨Creator Name' is a rollup off the linked Creator
+	// record and 'ℹ️🪣Categories (Text)' is a lookup off the '🪣Categories' link
+	// field — so Airtable rejects any write and takes the whole update with it.
+	// Editing them needs a link-field write, tracked as follow-up work.
 	if (data.creatorWebsite !== undefined) {
 		fields['👀🎨📧 Creator WF Account Email (Override)'] = data.creatorWebsite;
 	}
-	if (data.creatorContactEmail !== undefined) fields['🎨📧 Creator Email'] = data.creatorContactEmail;
+	if (data.creatorContactEmail !== undefined) {
+		// The read-only '🎨📧 Creator Email' rollup resolves from this override.
+		fields['fldjCdCvHOy7dVwss'] = data.creatorContactEmail;
+	}
 	if (data.appFeaturesOverview !== undefined) {
 		fields['❓ℹ️✨Features Text (MIGRATE TO LINKED FIELD)'] = buildFeaturesField(
 			data.appFeaturesOverview
 		);
 	}
-	if (data.appDeveloperNotes !== undefined) fields['Developer Notes'] = data.appDeveloperNotes;
+	if (data.appDeveloperNotes !== undefined) {
+		fields['fldBVKHOno8aJlnox'] = data.appDeveloperNotes; // 'ℹ️Notes'
+	}
 	if (data.appAccessCredentials !== undefined) fields['ℹ️Credentials'] = data.appAccessCredentials;
 	if (data.appVideoUrl !== undefined) fields['🔗Promo Video URL (🖥️ only)'] = data.appVideoUrl;
 	if (data.appDemoVideoUrl !== undefined) fields['🔗Demo Video URL'] = data.appDemoVideoUrl;
@@ -1396,10 +1155,12 @@ function buildAssetUpdateFields(
 	}
 	if (data.appTermsUrl !== undefined) fields['🔗Terms & Conditions URL'] = data.appTermsUrl;
 	if (data.appScreenshotAltTexts !== undefined) {
+		// A single '🖼️Carousel Images Alt Text' field holds all five, one per
+		// line, so position in the list is what ties an alt text to an image.
 		const altTexts = data.appScreenshotAltTexts.slice(0, 5);
-		for (let index = 0; index < 5; index += 1) {
-			fields[`Alt Text Screenshot ${index + 1}`] = altTexts[index] || '';
-		}
+		fields['fldJ2HQ8HgScYomuE'] = Array.from({ length: 5 }, (_, index) => altTexts[index] || '')
+			.join('\n')
+			.trimEnd();
 	}
 
 	return fields;
@@ -1637,162 +1398,6 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		},
 
 		/**
-		 * Stamp Asset-level offer mirror fields from linked Template Offers.
-		 *
-		 * Webflow and Whalesync consume scalar fields on Assets, while the dashboard keeps
-		 * the normalized offer records in linked tables. This bridge keeps the CMS-facing
-		 * surface simple and avoids relying on Airtable rollups that cannot be created via
-		 * the metadata API.
-		 */
-		async syncTemplateOfferMirrors(
-			assetId: string,
-			additionalOfferIds: string[] = []
-		): Promise<Asset | null> {
-			try {
-				const assetRecord = await base(TABLES.ASSETS).find(assetId);
-				const offerIds = Array.from(
-					new Set([
-						...linkedRecordIds(assetRecord.fields['🎟️Template Offers']),
-						...additionalOfferIds.filter((id) => /^rec[A-Za-z0-9]+$/.test(id))
-					])
-				);
-
-				const offerRecords = (
-					await Promise.all(
-						offerIds.map(async (offerId) => {
-							try {
-								return await base(TABLES.TEMPLATE_OFFERS).find(offerId);
-							} catch {
-								return null;
-							}
-						})
-					)
-				).filter((record): record is Airtable.Record<Airtable.FieldSet> => Boolean(record));
-
-				const activeOffer = selectActiveTemplateOffer(offerRecords);
-				const existingRecoveryOfferUsed =
-					firstBoolean(
-						assetRecord.fields['✅Recovery Offer Used (🏗️ only)'],
-						assetRecord.fields['Recovery Offer Used'],
-						assetRecord.fields['recovery_offer_used']
-					) ?? false;
-				const recoveryOfferUsed =
-					existingRecoveryOfferUsed || offerRecords.some((record) => isRecoveryTemplateOffer(record));
-
-				let generatedAt: string | null = null;
-				if (activeOffer) {
-					const fulfillmentLinkId = linkedRecordIds(activeOffer.fields['🔗Fulfillment Link'])[0];
-					if (fulfillmentLinkId) {
-						try {
-							const fulfillmentRecord = await base(TABLES.TEMPLATE_FULFILLMENT_LINKS).find(
-								fulfillmentLinkId
-							);
-							generatedAt =
-								firstString(fulfillmentRecord.fields['📅Generated At (future sync)']) ||
-								firstString(fulfillmentRecord.fields['📅Generated At']) ||
-								null;
-						} catch {
-							generatedAt = null;
-						}
-					}
-				}
-
-				const records = (await base(TABLES.ASSETS).update([
-					{
-						id: assetId,
-						fields: buildTemplateOfferMirrorFields(
-							activeOffer,
-							recoveryOfferUsed,
-							generatedAt
-						) as Airtable.FieldSet
-					}
-				])) as Airtable.Record<Airtable.FieldSet>[];
-
-				return mapAssetRecord(records[0]);
-			} catch (err) {
-				console.error('[Airtable] Error syncing template offer mirror fields:', err);
-				return null;
-			}
-		},
-
-		/**
-		 * Create a creator-submitted price change request for a template.
-		 *
-		 * Fulfillment links only deliver a template after an external purchase — they carry
-		 * no pricing. The real template price lives in the Admin MRP record, so every request
-		 * stays Pending until marketplace review applies the price there. Nothing here writes
-		 * public CTA or mirror fields.
-		 */
-		async createTemplateOfferRequest(
-			assetId: string,
-			input: TemplateOfferRequestInput
-		): Promise<TemplateOfferRequestResult | null> {
-			const asset = await this.getAsset(assetId);
-			if (!asset || asset.type !== 'Template') {
-				return null;
-			}
-			if (isRecoveryOfferStrategy(input.offerStrategy) && asset.recoveryOfferUsed) {
-				return null;
-			}
-
-			const normalizedLabel = input.offerLabel.trim() || 'Limited offer';
-			const offerName = `${asset.name || assetId} · ${normalizedLabel}`;
-			const submittedAt = new Date().toISOString();
-			const startsAt = input.startsAt || submittedAt;
-			const pruneReviewAt = addDaysIso(input.endsAt, 7);
-			const marketplacePrice = asset.priceAmount ?? parseCurrencyAmount(asset.priceString);
-			const notes = [
-				`Creator email: ${input.creatorEmail}`,
-				`Submitted from Asset Dashboard: ${submittedAt}`,
-				`Post-offer action: ${input.postOfferAction}`,
-				input.visibilityTermsAcceptedAt
-					? `Visibility terms accepted: ${input.visibilityTermsAcceptedAt}`
-					: '',
-				input.notes?.trim() ? `Creator notes: ${input.notes.trim()}` : '',
-				'Price change requests are applied to the template price in Admin by marketplace review before any public change.'
-			]
-				.filter(Boolean)
-				.join('\n');
-
-			try {
-				const offerFields: Record<string, AirtableWritableValue | string[]> = {
-					Name: offerName,
-					'👛Asset': [assetId],
-					'⚙️Approval Status': 'Pending',
-					'⚙️Offer Mode': 'Marketplace checkout',
-					'⚙️Offer Strategy': input.offerStrategy,
-					'⚙️Post-Offer Action': input.postOfferAction,
-					'👁️Visibility': 'Internal only',
-					'🏷️Offer Label': normalizedLabel,
-					'💲Offer Price': input.offerPrice,
-					'📅Starts At': startsAt,
-					'📅Ends At': input.endsAt,
-					'📅Prune Review At': pruneReviewAt,
-					'✅Terms Accepted At': input.termsAcceptedAt,
-					'📝Notes': notes
-				};
-
-				if (marketplacePrice !== undefined) {
-					offerFields['💲Marketplace Price'] = marketplacePrice;
-				}
-
-				const offerRecords = (await base(TABLES.TEMPLATE_OFFERS).create([
-					{
-						fields: offerFields as Airtable.FieldSet
-					}
-				])) as Airtable.Record<Airtable.FieldSet>[];
-
-				return {
-					offerId: offerRecords[0].id,
-					approvalStatus: 'Pending'
-				};
-			} catch (err) {
-				console.error('[Airtable] Error creating template price change request:', err);
-				return null;
-			}
-		},
-
-		/**
 		 * Update an asset (text fields only).
 		 */
 		async updateAsset(
@@ -1812,29 +1417,6 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				])) as Airtable.Record<Airtable.FieldSet>[];
 				return mapAssetRecord(records[0]);
 			} catch {
-				return null;
-			}
-		},
-
-		/**
-		 * Update the template search visibility policy field used by marketplace search sync.
-		 */
-		async updateTemplateSearchVisibility(
-			id: string,
-			searchVisibility: string
-		): Promise<Asset | null> {
-			try {
-				const records = (await base(TABLES.ASSETS).update([
-					{
-						id,
-						fields: {
-							'👁️Search Visibility (🏗️ only)': searchVisibility
-						} as Airtable.FieldSet
-					}
-				])) as Airtable.Record<Airtable.FieldSet>[];
-				return mapAssetRecord(records[0]);
-			} catch (err) {
-				console.error('[Airtable] Error updating template search visibility:', err);
 				return null;
 			}
 		},

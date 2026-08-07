@@ -39,9 +39,17 @@ test('source auth accepts source token', async () => {
   assert.equal(authorized, true);
 });
 
-test('bridge token remains compatibility token for device and source roles', async () => {
+test('relay auth accepts only the relay token', async () => {
+  const env = { INK_RELAY_TOKEN: 'relay-token', INK_SOURCE_TOKEN: 'source-token' };
+
+  assert.equal(await isAuthorized(requestWithToken('relay-token'), env, 'relay'), true);
+  assert.equal(await isAuthorized(requestWithToken('source-token'), env, 'relay'), false);
+});
+
+test('bridge token remains compatibility token for device, source, and relay roles', async () => {
   const env = { INK_BRIDGE_TOKEN: 'bridge-token' };
 
   assert.equal(await isAuthorized(requestWithToken('bridge-token'), env, 'device'), true);
   assert.equal(await isAuthorized(requestWithToken('bridge-token'), env, 'source'), true);
+  assert.equal(await isAuthorized(requestWithToken('bridge-token'), env, 'relay'), true);
 });

@@ -1,0 +1,59 @@
+{
+  "id": "policy.airtable-system-architect.v1",
+  "version": "1.0.0",
+  "status": "active-package-policy",
+  "owner": "CREATE SOMETHING",
+  "invariants": [
+    "pat-capability-is-not-user-approval",
+    "stable-ids-and-before-state-precede-mutation",
+    "unsupported-capabilities-are-not-invented",
+    "approval-is-target-and-operation-bounded",
+    "mutations-require-receipt-and-readback",
+    "bounded-review-mcps-remain-authoritative"
+  ],
+  "riskClasses": {
+    "R0": {
+      "name": "inspect",
+      "approval": "request-relevance",
+      "readback": "source-citation"
+    },
+    "R1": {
+      "name": "bounded-reversible-data-write",
+      "approval": "exact-user-authorized-intent",
+      "readback": "affected-records"
+    },
+    "R2": {
+      "name": "structural-draft",
+      "approval": "visible-proposal-and-explicit-approval",
+      "readback": "schema-page-or-draft"
+    },
+    "R3": {
+      "name": "public-destructive-bulk-permission-or-ui-fallback",
+      "approval": "post-proposal-exact-operation-approval",
+      "readback": "mcp-or-precisely-labeled-ui-evidence"
+    }
+  },
+  "stopConditions": [
+    "ambiguous-target",
+    "missing-current-state",
+    "unsupported-operation",
+    "unclear-permission-or-resource-grant",
+    "scope-expansion",
+    "missing-material-rollback",
+    "contradictory-readback",
+    "unverified-browser-target"
+  ],
+  "receiptFields": [
+    "request",
+    "approvalBasis",
+    "policyVersion",
+    "riskClass",
+    "targetIds",
+    "beforeState",
+    "attempt",
+    "result",
+    "readback",
+    "gaps",
+    "rollback"
+  ]
+}

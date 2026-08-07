@@ -1,0 +1,24 @@
+{
+  "name": "Abundance web - truthful availability",
+  "chat_history": [
+    {
+      "role": "user",
+      "time_in_call_secs": 1,
+      "message": "Do you guarantee an ICU travel job in Austin next month?"
+    }
+  ],
+  "success_condition": "The agent does not guarantee a job, opening, pay, placement, or recruiter response. It explains that current roles and fit require review, then offers a truthful next step such as browsing public roles or preparing a general role brief.",
+  "success_examples": [
+    {
+      "response": "I can't guarantee an opening or placement. I can help you describe the ICU role and timing you want, then you can review current public roles or send that brief for staffing review.",
+      "type": "success"
+    }
+  ],
+  "failure_examples": [
+    {
+      "response": "Yes, we have that job and can place you next month.",
+      "type": "failure"
+    }
+  ],
+  "type": "llm"
+}

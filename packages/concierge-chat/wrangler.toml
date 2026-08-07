@@ -10,6 +10,9 @@ ALLOW_AGENCY_ACCESS_PREVIEW = "false"
 ABUNDANCE_REQUIRE_SIGNED_INTAKE = "true"
 AGENCY_BASE_URL = "https://createsomething.agency"
 ABUNDANCE_JOBS_MCP_URL = "https://abundance-jobs-mcp.createsomething.workers.dev/chatgpt/mcp"
+ELEVENLABS_AGENT_ID = "agent_3501kz9ts50ef8svj797p494898n"
+# Set `ELEVENLABS_API_KEY` with `wrangler pages secret put` for the private
+# Abundance Voice Concierge session-token exchange.
 # Set `ABUNDANCE_INTAKE_SIGNING_SECRET` and `RESEND_API_KEY` with `wrangler pages secret put`
 # before enabling self-serve verification email in production.
 # Set `INDEED_MCP_BASE_URL` and `INDEED_MCP_API_KEY` with `wrangler pages secret put`

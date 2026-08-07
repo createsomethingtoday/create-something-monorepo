@@ -66,9 +66,15 @@ export const handle: Handle = async ({ event, resolve }) => {
   const isMutatingMethod = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(event.request.method);
   const isApiRoute = event.url.pathname.startsWith('/api/');
   const isCronRoute = event.url.pathname.startsWith('/api/cron/');
-  const hasSessionCookie = Boolean(sessionToken);
+  // Machine callers authenticate with an explicit Authorization header. A
+  // browser never attaches one cross-site, so those requests carry no ambient
+  // authority to abuse and have no Origin to check.
+  const usesHeaderAuth = Boolean(event.request.headers.get('authorization'));
 
-  if (isMutatingMethod && isApiRoute && !isCronRoute && hasSessionCookie) {
+  // Deliberately not gated on holding a session: /api/auth/login accepts
+  // form-encoded bodies, which are not CORS-preflighted, so without this any
+  // site could drive verification emails to arbitrary addresses.
+  if (isMutatingMethod && isApiRoute && !isCronRoute && !usesHeaderAuth) {
     const isTrusted = isTrustedRequestOrigin(
       event.request,
       event.url.origin,

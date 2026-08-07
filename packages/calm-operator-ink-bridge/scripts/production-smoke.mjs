@@ -85,7 +85,9 @@ async function readJson(response, label) {
   }
 
   if (!response.ok) {
-    throw new Error(`${label} failed with HTTP ${response.status}: ${JSON.stringify(payload).slice(0, 300)}`);
+    throw new Error(
+      `${label} failed with HTTP ${response.status}: ${JSON.stringify(payload).slice(0, 300)}`
+    );
   }
 
   return assertObject(payload, label);
@@ -154,6 +156,19 @@ function checkBrief(payload) {
   };
 }
 
+function checkAgentConsole(payload) {
+  if (payload.ok !== true) throw new Error('GET /ink/agent-console did not return ok: true');
+  if (!Array.isArray(payload.agents) || !Array.isArray(payload.recent_decisions)) {
+    throw new Error('GET /ink/agent-console did not return agent and receipt arrays');
+  }
+  return {
+    name: 'GET /ink/agent-console',
+    ok: true,
+    count: Number(payload.count ?? payload.agents.length),
+    needs_input_count: Number(payload.needs_input_count ?? 0)
+  };
+}
+
 function checkHeartbeat(payload, deviceId) {
   const device = assertObject(payload.device, 'heartbeat.device');
   if (payload.ok !== true) throw new Error('POST /ink/device-heartbeat did not return ok: true');
@@ -205,20 +220,36 @@ export async function runProductionSmoke(argsInput, options = {}) {
   const brief = await getJson(fetchImpl, origin, briefPath, 'GET /ink/brief', token);
   checks.push(checkBrief(brief));
 
+  const agentConsole = await getJson(
+    fetchImpl,
+    origin,
+    '/ink/agent-console',
+    'GET /ink/agent-console',
+    token
+  );
+  checks.push(checkAgentConsole(agentConsole));
+
   if (!args.skipHeartbeat) {
-    const heartbeat = await postJson(fetchImpl, origin, '/ink/device-heartbeat', 'POST /ink/device-heartbeat', token, {
-      device_id: args.deviceId,
-      surface: args.surface,
-      firmware_version: 'production-smoke',
-      battery_percent: 0,
-      battery_mv: 0,
-      charging: false,
-      power_mode: 'smoke',
-      payload: {
-        kind: 'production_smoke',
-        checked_at: checkedAt
+    const heartbeat = await postJson(
+      fetchImpl,
+      origin,
+      '/ink/device-heartbeat',
+      'POST /ink/device-heartbeat',
+      token,
+      {
+        device_id: args.deviceId,
+        surface: args.surface,
+        firmware_version: 'production-smoke',
+        battery_percent: 0,
+        battery_mv: 0,
+        charging: false,
+        power_mode: 'smoke',
+        payload: {
+          kind: 'production_smoke',
+          checked_at: checkedAt
+        }
       }
-    });
+    );
     checks.push(checkHeartbeat(heartbeat, args.deviceId));
   }
 
@@ -238,10 +269,12 @@ export async function main(argv = process.argv, env = process.env) {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  main().then((code) => {
-    process.exitCode = code;
-  }).catch((error) => {
-    console.error(error instanceof Error ? error.message : String(error));
-    process.exitCode = 1;
-  });
+  main()
+    .then((code) => {
+      process.exitCode = code;
+    })
+    .catch((error) => {
+      console.error(error instanceof Error ? error.message : String(error));
+      process.exitCode = 1;
+    });
 }

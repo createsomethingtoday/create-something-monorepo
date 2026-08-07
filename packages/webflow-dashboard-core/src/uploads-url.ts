@@ -45,3 +45,47 @@ export function isAllowedUploadUrl(
   const allowedOrigins = new Set([requestOrigin, ...parseOrigins(extraTrustedOriginsCsv)]);
   return allowedOrigins.has(parsed.origin);
 }
+
+const AIRTABLE_ATTACHMENT_HOST = 'airtableusercontent.com';
+
+/**
+ * Airtable re-hosts attachment contents on its own CDN, so an image already
+ * stored on a record reads back as an airtableusercontent.com URL. The edit
+ * form re-submits every image field including the unchanged ones, and those
+ * signed URLs carry an expiry and rotate, so they cannot be matched against the
+ * stored value byte-for-byte. Recognising the host is what lets an untouched
+ * image survive a save without reopening the field to arbitrary origins.
+ */
+export function isAirtableAttachmentUrl(value: string): boolean {
+  let parsed: URL;
+  try {
+    parsed = new URL(value);
+  } catch {
+    return false;
+  }
+
+  if (parsed.protocol !== 'https:') return false;
+
+  return (
+    parsed.hostname === AIRTABLE_ATTACHMENT_HOST ||
+    parsed.hostname.endsWith(`.${AIRTABLE_ATTACHMENT_HOST}`)
+  );
+}
+
+/**
+ * Asset images land in Airtable attachment fields, which means Airtable fetches
+ * whatever URL we hand it. Only two sources are legitimate: an image this
+ * dashboard just uploaded, or an image Airtable is already hosting for this
+ * record. Anything else would publish unvalidated remote content on a public
+ * marketplace listing and bypass the size/dimension checks in /api/upload.
+ */
+export function isAllowedAssetImageUrl(
+  value: string,
+  requestOrigin: string,
+  extraTrustedOriginsCsv?: string
+): boolean {
+  return (
+    isAllowedUploadUrl(value, requestOrigin, extraTrustedOriginsCsv) ||
+    isAirtableAttachmentUrl(value)
+  );
+}

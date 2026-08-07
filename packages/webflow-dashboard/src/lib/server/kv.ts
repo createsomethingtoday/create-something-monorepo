@@ -44,6 +44,28 @@ export interface SessionHandoffData {
 }
 
 /**
+ * Validates that a KV value is actually a session.
+ *
+ * The session token comes straight from a cookie and is used verbatim as the KV
+ * key, and the SESSIONS namespace also holds rate-limit counters written by
+ * `checkRateLimit` as bare numbers under predictable keys
+ * (`ratelimit:auth:login:<ip>:<windowIndex>`). Without this guard,
+ * `kv.get(key, 'json')` parses "3" into a truthy `3`, hooks.server.ts sets
+ * `locals.user = { email: undefined }`, and that passes every `!locals.user`
+ * auth gate.
+ *
+ * Only `email` is checked. `createdAt` is deliberately not required:
+ * `shouldRefreshSession` already tolerates its absence, and demanding it would
+ * log out live sessions for no security gain.
+ */
+function isSessionData(value: unknown): value is SessionData {
+	if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
+
+	const email = (value as { email?: unknown }).email;
+	return typeof email === 'string' && email.length > 0;
+}
+
+/**
  * Get a session from KV.
  */
 export async function getSession(kv: KVNamespace, sessionToken: string): Promise<SessionData | null> {
@@ -51,7 +73,7 @@ export async function getSession(kv: KVNamespace, sessionToken: string): Promise
 
 	try {
 		const data = await kv.get(sessionToken, 'json');
-		return data as SessionData | null;
+		return isSessionData(data) ? data : null;
 	} catch {
 		return null;
 	}

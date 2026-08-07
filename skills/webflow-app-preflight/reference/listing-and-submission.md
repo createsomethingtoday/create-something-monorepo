@@ -60,4 +60,29 @@ Each failed round costs another 10–15 business days — which is why the pre-s
 
 Any material change to the reviewed experience — App functionality, user-facing behavior, requested permissions, submitted bundles, integrations, or scripts delivered via the Custom Code API — is an **App update** and goes through the same review. Submit the same form and select **"App Update"** as the submission type; only App Name and Client ID are required. For Designer Extensions, publish a new bundle version from your Workspace.
 
-Reference: <https://developers.webflow.com/apps/docs/marketplace-guidelines> · <https://developers.webflow.com/data/docs/submitting-your-app> · <https://developers.webflow.com/apps/docs/private-apps>
+## Marketplace listing form fields
+
+What the listing itself asks for, per the public App listing guide (<https://developers.webflow.com/apps/docs/marketplace/listing-your-app>, verified 2026-08-03):
+
+| Field                    | Spec                                                                                     |
+| ------------------------ | ---------------------------------------------------------------------------------------- |
+| **App name**             | Max 30 characters                                                                        |
+| **Publisher name**       | Max 20 characters — inherited from your publishing Workspace, edited in workspace settings |
+| **Short description**    | Max 100 characters, focused on the value proposition                                     |
+| **Long description**     | Max 10,000 characters; supports Markdown but not links                                   |
+| **Feature list**         | Max 5 features                                                                           |
+| **App logo**             | 900×900px, 1:1 ratio; logomarks (pictorial marks) only, not text logotypes               |
+| **Publisher logo**       | 20×20px — inherited from the Workspace; must read at small size                          |
+| **Screenshots**          | 1280×846px; minimum 4 recommended, showing key workflows                                 |
+| **Promo video**          | Optional, 1–2 minutes, hosted on YouTube (separate from the 2–5 minute review demo video) |
+| **Categories**           | Up to 5 from the published list (AI, Analytics, Asset Management, Automation, Compliance, Content Management, Customer Support, Data Sync, Design, Development and Coding, Ecommerce, Forms and Surveys, Icons, Localization, Marketing, Scheduling, SEO, User Management, Utilities) |
+| **Website URL**          | Must be valid                                                                            |
+| **Privacy policy URL**   | Must be valid                                                                            |
+| **Terms of service URL** | Must be valid                                                                            |
+| **Support email**        | Must be a valid email — the user-facing support contact                                  |
+
+**Pricing:** the listing has no dedicated pricing field. Document pricing tiers and in-app purchases in your **review notes and demo video** (per the submission guide), and disclose every fee, subscription, or in-app purchase — that disclosure is a published Marketplace Guidelines requirement.
+
+Note on asset specs: the listing guide gives the app logo at 900×900, while the Marketplace Guidelines page separately specifies the App avatar at 512×512 (both live as of 2026-08-03). Produce the logomark at the larger spec so it downsizes cleanly.
+
+Reference: <https://developers.webflow.com/apps/docs/marketplace-guidelines> · <https://developers.webflow.com/apps/docs/marketplace/submitting-your-app> · <https://developers.webflow.com/apps/docs/marketplace/listing-your-app> · <https://developers.webflow.com/apps/docs/private-apps>

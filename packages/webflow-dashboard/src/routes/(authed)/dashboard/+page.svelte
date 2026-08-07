@@ -156,7 +156,7 @@
     });
 
     if (!response.ok) {
-      const errorData = (await response.json()) as { message?: string };
+      const errorData = (await response.json().catch(() => ({}))) as { message?: string };
       throw new Error(errorData.message || 'Failed to update asset');
     }
 
@@ -184,7 +184,7 @@
         // Await invalidate to ensure data refresh completes
         await invalidate('app:assets');
       } else {
-        const errorData = (await response.json()) as { message?: string };
+        const errorData = (await response.json().catch(() => ({}))) as { message?: string };
         toast.error(errorData.message || 'Failed to archive asset');
       }
     } catch {

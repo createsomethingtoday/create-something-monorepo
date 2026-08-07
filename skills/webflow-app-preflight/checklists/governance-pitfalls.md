@@ -1,6 +1,6 @@
 # Governance pitfalls: the patterns that actually fail review
 
-These are the recurring, real-world patterns that most often trigger a rejection or escalate an App into deeper security review. They generalize the highest-signal issues seen across many App submissions. Each maps to a public Marketplace guideline — so following them is simply meeting the bar, done early. Check every one that could apply before you submit.
+These are the recurring, real-world patterns that most often trigger a rejection or escalate an App into deeper security review. They generalize the highest-signal issues seen across many App submissions. Most anchor to a public Marketplace guideline; where a fix goes beyond what the linked public page states, it is a security or engineering control that prepares review evidence, not verbatim published Webflow policy. Either way, following them is meeting the bar, done early. Check every one that could apply before you submit.
 
 ## 1. Dev builds trip the security scanner
 

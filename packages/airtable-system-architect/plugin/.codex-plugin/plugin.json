@@ -1,0 +1,39 @@
+{
+  "name": "airtable-system-architect",
+  "version": "0.1.0",
+  "description": "Inspect, design, implement, and verify governed Airtable base architecture through Airtable's official MCP.",
+  "author": {
+    "name": "CREATE SOMETHING",
+    "email": "hello@createsomething.agency",
+    "url": "https://createsomething.agency"
+  },
+  "homepage": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/airtable-system-architect",
+  "repository": "https://github.com/createsomethingtoday/create-something-monorepo",
+  "license": "MIT",
+  "keywords": [
+    "airtable",
+    "system-architecture",
+    "database",
+    "interfaces",
+    "automation",
+    "governance",
+    "mcp"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Airtable System Architect",
+    "shortDescription": "Govern Airtable schema, interfaces, and automations.",
+    "longDescription": "Use Airtable's official MCP to map, propose, implement, and verify base architecture with explicit approval gates, capability boundaries, and readback receipts.",
+    "developerName": "CREATE SOMETHING",
+    "category": "Developer Tools",
+    "capabilities": ["Interactive", "Read", "Write"],
+    "websiteURL": "https://createsomething.agency",
+    "defaultPrompt": [
+      "Map this Airtable base and identify structural risks.",
+      "Propose a normalized Airtable architecture for this workflow.",
+      "Implement the approved Airtable schema and interface plan with receipts."
+    ],
+    "brandColor": "#111111"
+  }
+}

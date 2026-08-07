@@ -33,6 +33,7 @@
   let copiedId = $state<string | null>(null);
   let error = $state<string | null>(null);
   let keyPendingRevoke = $state<ApiKey | null>(null);
+  let isRevoking = $state(false);
 
   // Form state
   let keyName = $state('');
@@ -103,8 +104,9 @@
   }
 
   async function confirmRevoke() {
-    if (!keyPendingRevoke) return;
+    if (!keyPendingRevoke || isRevoking) return;
     const keyId = keyPendingRevoke.keyId;
+    isRevoking = true;
     try {
       const response = await fetch('/api/keys/revoke', {
         method: 'POST',
@@ -117,6 +119,8 @@
       await loadKeys();
     } catch (err) {
       error = err instanceof Error ? err.message : 'Failed to revoke API key';
+    } finally {
+      isRevoking = false;
     }
   }
 
@@ -399,8 +403,12 @@
         be undone.
       </p>
       <div class="confirm-actions">
-        <Button variant="secondary" onclick={() => (keyPendingRevoke = null)}>Cancel</Button>
-        <Button variant="destructive" onclick={confirmRevoke}>Revoke key</Button>
+        <Button variant="secondary" onclick={() => (keyPendingRevoke = null)} disabled={isRevoking}>
+          Cancel
+        </Button>
+        <Button variant="destructive" onclick={confirmRevoke} disabled={isRevoking}>
+          {isRevoking ? 'Revoking...' : 'Revoke key'}
+        </Button>
       </div>
     </div>
   </Dialog>

@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { PageData } from './$types';
   import type { Asset, AssetUpdateData } from '$lib/server/airtable';
+  import { VIEWER_DATA_AVAILABLE } from '$lib/config/viewer-data';
   import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
   import { sanitizeFeedbackHtml, sanitizeLongDescription } from '$lib/utils/sanitize';
@@ -25,7 +26,6 @@
     TimelineCard,
     AnalyticsCard,
     TemplateHealthCard,
-    TemplateOfferRequestCard,
     DataFreshnessIndicator,
     Dialog,
     BackNavigation
@@ -34,7 +34,6 @@
   import { toast } from '$lib/stores/toast';
   import { trackEvent } from '$lib/utils/analytics';
   import { computeTemplateHealth, isTemplateSearchSuppressed } from '$lib/utils/template-health';
-  import { RECOVERY_REENTRY_QUALIFIED_SALES_30D } from '$lib/utils/template-lifecycle-policy';
   import {
     formatCompactCurrency,
     formatCompactNumber,
@@ -86,28 +85,36 @@
   let isArchiving = $state(false);
   let showArchiveConfirm = $state(false);
 
+  // SvelteKit reuses this component across loads (invalidation, or navigating
+  // straight from one asset detail route to another). Without this resync the
+  // page keeps rendering the previous `data.asset`.
+  //
+  // Loop safety: the effect reads only `data.asset` — never `asset` — and
+  // `lastSyncedAsset` is a plain `let` (not `$state`) so writing it does not
+  // retrigger the effect.
+  let lastSyncedAsset = getInitialAsset();
+  $effect(() => {
+    const nextAsset = data.asset;
+    if (nextAsset === lastSyncedAsset) return;
+
+    const previousId = lastSyncedAsset.id;
+    lastSyncedAsset = nextAsset;
+    asset = nextAsset;
+
+    // A plain invalidation of the same asset keeps whichever tab the user is
+    // reading; a genuine A -> B navigation recomputes the default tab.
+    if (nextAsset.id !== previousId) {
+      activeTab = getDefaultTab(nextAsset.status) as TabValue;
+      imageError = false;
+      secondaryImageError = false;
+    }
+  });
+
   // Can show metrics for non-Upcoming and non-Rejected statuses
   const canShowMetrics = $derived(!['Upcoming', 'Rejected'].includes(asset.status));
 
   // Template Health is a template-only creator guidance surface.
   const canShowHealth = $derived(asset.type === 'Template');
-  const templateHealth = $derived(computeTemplateHealth(asset));
-
-  const hasActiveOffer = $derived(
-    Boolean(
-      asset.activeOfferLabel ||
-        asset.activeOfferCtaUrl ||
-        asset.activeOfferStrategy ||
-        asset.activeOfferEndsAt ||
-        asset.activeOfferVisibility ||
-        asset.activeOfferPrice !== undefined
-    )
-  );
-  const canShowOfferRequest = $derived(
-    canShowHealth &&
-      asset.status === 'Published' &&
-      (hasActiveOffer || templateHealth.automation.code === 'run_recovery_offer')
-  );
   const isSearchSuppressed = $derived(isTemplateSearchSuppressed(asset.searchVisibility));
 
   // Can only edit Published templates
@@ -118,6 +125,7 @@
 
   // Tufte: Calculate derived metrics for relationships
   const conversionRate = $derived(() => {
+    if (!VIEWER_DATA_AVAILABLE) return null;
     if (!canShowMetrics || !asset.uniqueViewers || asset.uniqueViewers === 0) return null;
     return ((asset.cumulativePurchases || 0) / asset.uniqueViewers) * 100;
   });
@@ -141,7 +149,9 @@
     showEditModal = false;
   }
 
-  async function handleEditSave(updateData: AssetUpdateData): Promise<void> {
+  async function handleEditSave(
+    updateData: AssetUpdateData
+  ): Promise<{ versionWarning?: string }> {
     const response = await fetch(`/api/assets/${asset.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -149,18 +159,26 @@
     });
 
     if (!response.ok) {
-      const data = (await response.json()) as { message?: string };
-      throw new Error(data.message || 'Failed to update asset');
+      const errorData = (await response.json().catch(() => ({}))) as { message?: string };
+      throw new Error(errorData.message || 'Failed to update asset');
     }
 
-    const result = (await response.json()) as { asset: typeof asset };
+    const result = (await response.json().catch(() => ({}))) as {
+      asset?: Asset;
+      versionWarning?: string;
+    };
 
     // Update local state with new asset data
-    asset = result.asset;
+    if (result.asset) {
+      asset = result.asset;
+    }
 
     // Reset image error state in case thumbnail changed
     imageError = false;
     secondaryImageError = false;
+
+    // Surface version warnings the same way the dashboard flow does.
+    return { versionWarning: result.versionWarning };
   }
 
   async function handleArchive(): Promise<void> {
@@ -170,8 +188,8 @@
     });
 
     if (!response.ok) {
-      const data = (await response.json()) as { message?: string };
-      throw new Error(data.message || 'Failed to archive asset');
+      const errorData = (await response.json().catch(() => ({}))) as { message?: string };
+      throw new Error(errorData.message || 'Failed to archive asset');
     }
 
     // Navigate back to dashboard after successful archive
@@ -205,17 +223,6 @@
     }
   }
 
-  function handleLifecycleApplied(updatedAsset: Asset): void {
-    const previousVisibility = asset.searchVisibility;
-    asset = updatedAsset;
-    toast.success('Template lifecycle updated');
-    trackEvent('template_lifecycle_applied', {
-      asset_id: updatedAsset.id,
-      previous_search_visibility: previousVisibility,
-      search_visibility: updatedAsset.searchVisibility
-    });
-  }
-
   function setActiveTab(value: TabValue) {
     if (value === 'health' && !canShowHealth) return;
     if (value === 'analytics' && !canShowMetrics) return;
@@ -231,8 +238,6 @@
         asset_status: asset.status,
         health_status: health.status,
         has_quality_score: Boolean(asset.qualityScore),
-        has_active_offer: hasActiveOffer,
-        active_offer_strategy: asset.activeOfferStrategy,
         has_purchases: Boolean(asset.cumulativePurchases && asset.cumulativePurchases > 0),
         has_viewers: Boolean(asset.uniqueViewers && asset.uniqueViewers > 0)
       });
@@ -242,9 +247,7 @@
       asset_id: asset.id,
       tab: value,
       previous_tab: previousTab,
-      has_metrics: canShowMetrics,
-      has_active_offer: hasActiveOffer,
-      active_offer_strategy: asset.activeOfferStrategy
+      has_metrics: canShowMetrics
     });
   }
 
@@ -273,9 +276,7 @@
       asset_category: asset.category,
       asset_subcategory: asset.subcategory,
       initial_tab: activeTab,
-      has_metrics: canShowMetrics,
-      has_active_offer: hasActiveOffer,
-      active_offer_strategy: asset.activeOfferStrategy
+      has_metrics: canShowMetrics
     });
   });
 </script>
@@ -296,9 +297,6 @@
             <div class="title-row">
               <h1 class="asset-title">{asset.name}</h1>
               <StatusBadge status={asset.status} size="lg" />
-              {#if hasActiveOffer}
-                <Badge variant="info">{asset.activeOfferLabel || 'Limited offer'}</Badge>
-              {/if}
             </div>
             <p class="detail-subtitle">
               {asset.type}
@@ -322,25 +320,13 @@
               {:else if asset.searchVisibility}
                 <span><strong>{asset.searchVisibility}</strong> search visibility</span>
               {/if}
-              {#if asset.qualifiedSales30d !== undefined || asset.recoveryOfferUsed}
-                <span
-                  ><strong>{asset.qualifiedSales30d ?? 0}/{RECOVERY_REENTRY_QUALIFIED_SALES_30D}</strong>
-                  re-entry sales</span
-                >
-              {/if}
-              {#if hasActiveOffer}
-                <span>
-                  <strong>{asset.activeOfferLabel || 'Limited offer'}</strong>
-                  {#if asset.activeOfferPrice !== undefined}
-                    at {formatCompactCurrency(asset.activeOfferPrice)}
-                  {/if}
-                </span>
-              {/if}
               {#if asset.qualityScore}
                 <span><strong>{asset.qualityScore}</strong> quality score</span>
               {/if}
               {#if canShowMetrics && showPerformance}
-                <span><strong>{formatCompactNumber(asset.uniqueViewers)}</strong> viewers</span>
+                {#if VIEWER_DATA_AVAILABLE}
+                  <span><strong>{formatCompactNumber(asset.uniqueViewers)}</strong> viewers</span>
+                {/if}
                 <span
                   ><strong>{formatCompactNumber(asset.cumulativePurchases)}</strong> purchases</span
                 >
@@ -512,66 +498,15 @@
                         <span class="detail-value">{asset.searchVisibility}</span>
                       </div>
                     {/if}
-                    {#if asset.qualifiedSales30d !== undefined}
-                      <div class="detail-item">
-                        <span class="detail-label">Qualified Sales (30d)</span>
-                        <span class="detail-value"
-                          >{asset.qualifiedSales30d}/{RECOVERY_REENTRY_QUALIFIED_SALES_30D}</span
-                        >
-                      </div>
-                    {/if}
-                    {#if asset.recoveryOfferUsed !== undefined}
-                      <div class="detail-item">
-                        <span class="detail-label">Recovery Offer</span>
-                        <span class="detail-value">{asset.recoveryOfferUsed ? 'Used' : 'Available'}</span>
-                      </div>
-                    {/if}
-                    {#if hasActiveOffer}
-                      <div class="detail-item">
-                        <span class="detail-label">Active Offer</span>
-                        <span class="detail-value">{asset.activeOfferLabel || 'Limited offer'}</span>
-                      </div>
-                      {#if asset.activeOfferPrice !== undefined}
-                        <div class="detail-item">
-                          <span class="detail-label">Offer Price</span>
-                          <span class="detail-value"
-                            >{formatCompactCurrency(asset.activeOfferPrice)}</span
-                          >
-                        </div>
-                      {/if}
-                      {#if asset.activeOfferEndsAt}
-                        <div class="detail-item">
-                          <span class="detail-label">Offer Ends</span>
-                          <span class="detail-value">{formatLongDate(asset.activeOfferEndsAt)}</span>
-                        </div>
-                      {/if}
-                      {#if asset.activeOfferStrategy}
-                        <div class="detail-item">
-                          <span class="detail-label">Offer Strategy</span>
-                          <span class="detail-value">{asset.activeOfferStrategy}</span>
-                        </div>
-                      {/if}
-                      {#if asset.offerPruneReviewAt}
-                        <div class="detail-item">
-                          <span class="detail-label">Marketplace Review</span>
-                          <span class="detail-value">{formatLongDate(asset.offerPruneReviewAt)}</span>
-                        </div>
-                      {/if}
-                      {#if asset.postOfferAction}
-                        <div class="detail-item">
-                          <span class="detail-label">Post-Offer Action</span>
-                          <span class="detail-value">{asset.postOfferAction}</span>
-                        </div>
-                      {/if}
-                    {/if}
-
                     {#if showPerformance && canShowMetrics}
-                      <div class="detail-item">
-                        <span class="detail-label detail-label--with-freshness"
-                          >Unique Viewers <DataFreshnessIndicator variant="tooltip" /></span
-                        >
-                        <span class="detail-value">{formatWholeNumber(asset.uniqueViewers)}</span>
-                      </div>
+                      {#if VIEWER_DATA_AVAILABLE}
+                        <div class="detail-item">
+                          <span class="detail-label detail-label--with-freshness"
+                            >Unique Viewers <DataFreshnessIndicator variant="tooltip" /></span
+                          >
+                          <span class="detail-value">{formatWholeNumber(asset.uniqueViewers)}</span>
+                        </div>
+                      {/if}
                       <div class="detail-item">
                         <span class="detail-label detail-label--with-freshness"
                           >Total Purchases <DataFreshnessIndicator variant="tooltip" /></span
@@ -687,13 +622,15 @@
                   </CardHeader>
                   <CardContent>
                     <div class="quick-stats">
-                      <div class="stat-item viewers">
-                        <div class="stat-header">
-                          <Users size={14} class="stat-icon" />
-                          <span class="stat-number">{formatWholeNumber(asset.uniqueViewers)}</span>
+                      {#if VIEWER_DATA_AVAILABLE}
+                        <div class="stat-item viewers">
+                          <div class="stat-header">
+                            <Users size={14} class="stat-icon" />
+                            <span class="stat-number">{formatWholeNumber(asset.uniqueViewers)}</span>
+                          </div>
+                          <span class="stat-label">Viewers</span>
                         </div>
-                        <span class="stat-label">Viewers</span>
-                      </div>
+                      {/if}
                       <div class="stat-item purchases">
                         <div class="stat-header">
                           <ShoppingCart size={14} class="stat-icon" />
@@ -753,10 +690,7 @@
             class="tab-content"
           >
             <div class="health-tab-stack">
-              <TemplateHealthCard {asset} onLifecycleApplied={handleLifecycleApplied} />
-              {#if canShowOfferRequest}
-                <TemplateOfferRequestCard {asset} />
-              {/if}
+              <TemplateHealthCard {asset} />
             </div>
           </TabsContent>
         {/if}

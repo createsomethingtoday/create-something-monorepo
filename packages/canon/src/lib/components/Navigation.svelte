@@ -15,6 +15,8 @@
     logoSuffix?: string;
     /** Keep the company name visible beside the mark on narrow performance shells. */
     showMobileLogoText?: boolean;
+    /** Show the full performance wordmark at desktop and tablet widths. */
+    showDesktopLogoText?: boolean;
     logoHref?: string;
     links: NavLink[];
     currentPath?: string;
@@ -41,6 +43,7 @@
     logo,
     logoSuffix,
     showMobileLogoText = false,
+    showDesktopLogoText = false,
     logoHref = '/',
     links,
     currentPath = $bindable('/'),
@@ -96,6 +99,7 @@
   class:nav-clear={usesPerformanceStyle}
   class:nav-performance={usesPerformanceStyle}
   class:nav-show-mobile-logo-text={showMobileLogoText}
+  class:nav-show-desktop-logo-text={showDesktopLogoText}
   aria-label="Primary"
 >
   <div class="nav-inner shell-inner">
@@ -476,6 +480,12 @@
   }
 
   .nav-clear.nav-fixed {
+    /*
+     * `.nav-clear` establishes a stacking context for campaign openings.
+     * Reassert the requested fixed positioning here so that context does not
+     * put a fixed Performance header back into document flow.
+     */
+    position: fixed;
     top: 0;
     left: 0;
     right: 0;
@@ -526,6 +536,36 @@
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
     border: 0;
+  }
+
+  @media (min-width: 641px) {
+    .nav-clear.nav-show-desktop-logo-text .nav-logo {
+      min-width: 0;
+      gap: 0.25rem;
+    }
+
+    .nav-clear.nav-show-desktop-logo-text .nav-logo-text,
+    .nav-clear.nav-show-desktop-logo-text .nav-logo-suffix {
+      position: static;
+      width: auto;
+      height: auto;
+      margin: 0;
+      overflow: visible;
+      clip: auto;
+      white-space: nowrap;
+    }
+
+    .nav-clear.nav-show-desktop-logo-text .nav-logo-text {
+      font-size: 0.72rem;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    .nav-clear.nav-show-desktop-logo-text .nav-logo-suffix {
+      color: var(--color-performance-muted, #5e6268);
+      font-family: var(--font-performance-mono);
+      font-size: 0.68rem;
+    }
   }
 
   .nav-clear .nav-desktop {

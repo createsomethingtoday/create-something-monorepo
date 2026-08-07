@@ -382,6 +382,7 @@
   globalMetadata={globalAnalyticsMetadata}
   compactPrompt={useCompactPrivacyPrompt}
   obscured={mobileNavigationOpen}
+  mobilePlacement="safe-corner"
 />
 
 <!-- Unified Search - Cmd/Ctrl+K to open -->
@@ -401,6 +402,7 @@
     accountHref="/account"
     visualStyle="performance"
     showMobileLogoText={true}
+    showDesktopLogoText={true}
     onMobileMenuChange={(open) => (mobileNavigationOpen = open)}
   />
 

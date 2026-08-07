@@ -3,6 +3,7 @@ import {
 	airtableFormulaValue,
 	buildAssetListFormula,
 	buildAssetVersionCreateFields,
+	buildAssetUpdateFields,
 	buildAssetVersionSnapshot,
 	buildCreatorEmailMatchFormula,
 	buildCreatorRecordEmailMatchFormula,
@@ -68,7 +69,7 @@ describe('mapAssetRecord', () => {
 		expect(asset.decisionDate).toBe('2025-06-18T05:52:53.967Z');
 	});
 
-	it('does not treat lifetime purchases as qualified 30-day sales', () => {
+	it('maps lifetime purchases from marketplace analytics', () => {
 		const asset = mapAssetRecord({
 			id: 'recTemplate',
 			fields: {
@@ -80,22 +81,6 @@ describe('mapAssetRecord', () => {
 		} as unknown as Parameters<typeof mapAssetRecord>[0]);
 
 		expect(asset.cumulativePurchases).toBe(12);
-		expect(asset.qualifiedSales30d).toBeUndefined();
-	});
-
-	it('reads qualified 30-day sales from the dedicated rolling-window fields', () => {
-		const asset = mapAssetRecord({
-			id: 'recTemplate',
-			fields: {
-				Name: 'GenieNova',
-				'⚙️🆎Type (Text)': 'Template🏗️',
-				'🚀Marketplace Status': '3️⃣Published🚀',
-				'📋 Cumulative Purchases': 12,
-				'✅Qualified Sales 30d (🏗️ only)': 2
-			}
-		} as unknown as Parameters<typeof mapAssetRecord>[0]);
-
-		expect(asset.qualifiedSales30d).toBe(2);
 	});
 });
 
@@ -330,5 +315,59 @@ describe('buildAssetVersionCreateFields', () => {
 			createdBy: 'creator@example.com'
 		});
 		expect(fields.Snapshot).toBe(JSON.stringify(snapshot));
+	});
+});
+
+// These names and IDs were verified against the live "👛Marketplace Assets"
+// base. Every one of them was previously wrong, which made Airtable reject the
+// whole update and silently discard the rest of the payload, so pin them.
+describe('buildAssetUpdateFields', () => {
+	it('writes App fields to the field IDs that actually exist', () => {
+		const fields = buildAssetUpdateFields({
+			appScopes: ['cms:read', 'cms:write'],
+			appAvatarAltText: 'App icon',
+			appDeveloperNotes: 'Notes for the reviewer',
+			appScreenshotAltTexts: ['one', 'two']
+		});
+
+		// '⚙️Scope(s)' — read back by splitting on newlines, not JSON.
+		expect(fields['fldlFsAqNvG8uAftq']).toBe('cms:read\ncms:write');
+		expect(fields['fldKG132fWtKXhwsH']).toBe('App icon'); // '🖼️Thumbnail Alt Text'
+		expect(fields['fldBVKHOno8aJlnox']).toBe('Notes for the reviewer'); // 'ℹ️Notes'
+		// One field holds all five alt texts, one per line, position-significant.
+		expect(fields['fldJ2HQ8HgScYomuE']).toBe('one\ntwo');
+	});
+
+	it('routes creator contact email to the writable override field', () => {
+		const fields = buildAssetUpdateFields({ creatorContactEmail: 'creator@example.com' });
+
+		// '🎨📧 Creator Email' is a rollup that resolves from this override.
+		expect(fields['fldjCdCvHOy7dVwss']).toBe('creator@example.com');
+		expect(fields['🎨📧 Creator Email']).toBeUndefined();
+	});
+
+	it('never writes computed fields, which would fail the entire update', () => {
+		const fields = buildAssetUpdateFields({
+			description: 'legacy description',
+			creatorName: 'Someone',
+			appCategory: ['AI', 'SEO']
+		});
+
+		expect(fields['📝Description']).toBeUndefined();
+		expect(fields['🎨Creator Name']).toBeUndefined(); // rollup
+		expect(fields['ℹ️🪣Categories (Text)']).toBeUndefined(); // lookup
+		expect(Object.keys(fields)).toHaveLength(0);
+	});
+
+	it('still writes the plain text fields that were already correct', () => {
+		const fields = buildAssetUpdateFields({
+			name: 'Template',
+			descriptionShort: 'Short',
+			websiteUrl: 'https://example.com'
+		});
+
+		expect(fields['Name']).toBe('Template');
+		expect(fields['ℹ️Description (Short)']).toBe('Short');
+		expect(fields['🔗Website URL']).toBe('https://example.com');
 	});
 });

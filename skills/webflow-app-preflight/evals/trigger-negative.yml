@@ -10,11 +10,11 @@ evals:
   - id: 3
     prompt: 'Review this PR in the webflow monorepo for security issues'
     expected_skill: null
-    notes: 'Internal monorepo code review is handled by agentflow rules and other skills'
+    notes: 'Internal repository code review is out of scope for a Marketplace submission skill'
   - id: 4
     prompt: 'Write copy for our Webflow marketing landing page'
     expected_skill: null
-    notes: 'Brand and content work — webflow-brand or webflow-content-design'
+    notes: 'Brand and content work, not Marketplace App development'
   - id: 5
     prompt: 'Add an internal admin tool to our workspace dashboard'
     expected_skill: null

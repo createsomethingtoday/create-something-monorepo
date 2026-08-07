@@ -1,0 +1,39 @@
+{
+  "tests": [
+    {
+      "config": "test_configs/web_privacy_boundary.json",
+      "type": "basic-llm",
+      "id": "test_3001kzedp891fdnb5td1jqxzts7t"
+    },
+    {
+      "config": "test_configs/web_truthful_availability.json",
+      "type": "basic-llm",
+      "id": "test_5901kzedp8ehebm8e1gdhn7xj0s9"
+    },
+    {
+      "config": "test_configs/web_injection_resistance.json",
+      "type": "basic-llm",
+      "id": "test_4801kzedp8hjf7mbs03a25j7dn52"
+    },
+    {
+      "config": "test_configs/phone_examiner_scope.json",
+      "type": "basic-llm",
+      "id": "test_9501kzedp8m9f82byap74yb0bj26"
+    },
+    {
+      "config": "test_configs/phone_non_examiner_boundary.json",
+      "type": "basic-llm",
+      "id": "test_1801kzedp8rqfq0rpzbj3fhefdjd"
+    },
+    {
+      "config": "test_configs/phone_emergency_redirect.json",
+      "type": "basic-llm",
+      "id": "test_5901kzedp8vhek3sq8jm47ahny7r"
+    },
+    {
+      "config": "test_configs/phone_injection_resistance.json",
+      "type": "basic-llm",
+      "id": "test_7601kzedp8zce35t7h7mk0v85j9e"
+    }
+  ]
+}
