@@ -1,4 +1,19 @@
 import { DurableObject } from 'cloudflare:workers';
+import {
+  buildAgentConsole,
+  leaseAgentDecisions,
+  normalizeAgentProgress,
+  prepareAgentDecision,
+  transitionAgentDecision
+} from './agent-console.js';
+import type {
+  AgentDecisionInput,
+  AgentDecisionLeaseInput,
+  AgentDecisionReceiptInput,
+  AgentProgressInput,
+  StoredAgentDecision,
+  StoredAgentProgress
+} from './agent-console.js';
 import { buildOperatorBrief, toFirmwareBrief } from './brief.js';
 import { buildInkClock } from './clock.js';
 import { isAuthorized } from './auth.js';
@@ -41,6 +56,7 @@ interface Env {
   ALARM_TTL_MS?: string;
   INK_BRIDGE_TOKEN?: string;
   INK_DEVICE_TOKEN?: string;
+  INK_RELAY_TOKEN?: string;
   INK_SOURCE_TOKEN?: string;
   LINEAR_API_KEY?: string;
   LINEAR_TEAM_KEY?: string;
@@ -100,6 +116,10 @@ function text(data: string, init: ResponseInit = {}): Response {
   });
 }
 
+function agentResult(result: { ok: boolean; status?: number }): Response {
+  return json(result, { status: result.ok ? 200 : (result.status ?? 400) });
+}
+
 function workspaceId(env: Env): string {
   return env.WORKSPACE_ID?.trim() || 'create-something';
 }
@@ -118,7 +138,9 @@ function healthStaleAfterMs(env: Env): number {
   return DEFAULT_HEALTH_STALE_AFTER_MS;
 }
 
-function healthReviewRunOptions(input: number | HealthReviewRunOptions | undefined): Required<HealthReviewRunOptions> {
+function healthReviewRunOptions(
+  input: number | HealthReviewRunOptions | undefined
+): Required<HealthReviewRunOptions> {
   if (typeof input === 'number') {
     return {
       staleAfterMs: input,
@@ -157,7 +179,10 @@ function parseEpoch(value: number | string | undefined, fallback: number | null)
   return fallback;
 }
 
-function expiresAtFor(input: { expires_at?: number | string; ttl_ms?: unknown }, now: number): number | null {
+function expiresAtFor(
+  input: { expires_at?: number | string; ttl_ms?: unknown },
+  now: number
+): number | null {
   const explicit = parseEpoch(input.expires_at, null);
   if (explicit !== null) return explicit;
 
@@ -184,7 +209,8 @@ function recordValue(value: unknown): Record<string, unknown> | undefined {
 function numberValue(record: Record<string, unknown> | undefined, key: string): number | null {
   const value = record?.[key];
   if (typeof value === 'number' && Number.isFinite(value)) return value;
-  if (typeof value === 'string' && value.trim() && Number.isFinite(Number(value))) return Number(value);
+  if (typeof value === 'string' && value.trim() && Number.isFinite(Number(value)))
+    return Number(value);
   return null;
 }
 
@@ -211,7 +237,9 @@ function normalizedPrioritySourceLinks(
         ...(id ? { id } : {})
       };
     })
-    .filter((link): link is NonNullable<OperatorPriorityInput['source_links']>[number] => Boolean(link))
+    .filter((link): link is NonNullable<OperatorPriorityInput['source_links']>[number] =>
+      Boolean(link)
+    )
     .slice(0, 8);
 }
 
@@ -228,7 +256,7 @@ function operatorPriorityDetail(input: {
   signal: string;
 }): string {
   const sourceText = input.sourceLinks.length
-    ? `Sources: ${input.sourceLinks.map((link) => link.kind ? `${link.kind}:${link.label}` : link.label).join(', ')}`
+    ? `Sources: ${input.sourceLinks.map((link) => (link.kind ? `${link.kind}:${link.label}` : link.label)).join(', ')}`
     : '';
   const signalText = input.signal ? `Signal: ${input.signal}` : '';
   return [input.summary, `Risk: ${input.risk}`, signalText, sourceText].filter(Boolean).join('\n');
@@ -275,7 +303,9 @@ function healthReviewFirmwareCopy(
   const agentInventory = recordValue(registryItem.payload.agent_inventory);
   const liveHub = recordValue(registryItem.payload.live_hub);
   const mcpCount = numberValue(registryInventory, 'server_count');
-  const fleetCount = numberValue(fleetInventory, 'deployed_count') ?? numberValue(fleetInventory, 'deployment_count');
+  const fleetCount =
+    numberValue(fleetInventory, 'deployed_count') ??
+    numberValue(fleetInventory, 'deployment_count');
   const agentCount = numberValue(agentInventory, 'registered_health_surface_count');
   const connectedCount = numberValue(liveHub, 'connected_server_count');
   const enabledCount = numberValue(liveHub, 'enabled_server_count');
@@ -302,14 +332,20 @@ function healthReviewFirmwareCopy(
   };
 }
 
-function severityFor(input: { severity?: number; urgent?: boolean; state?: string; status?: string }): number {
+function severityFor(input: {
+  severity?: number;
+  urgent?: boolean;
+  state?: string;
+  status?: string;
+}): number {
   if (typeof input.severity === 'number' && Number.isFinite(input.severity)) {
     return Math.max(0, Math.min(100, Math.round(input.severity)));
   }
   if (input.urgent) return 90;
   if (input.state === 'blocked') return 85;
   if (input.state === 'mcp_attention' || input.state === 'agent_attention') return 80;
-  if (input.status && ['fail', 'failed', 'error', 'down'].includes(input.status.toLowerCase())) return 80;
+  if (input.status && ['fail', 'failed', 'error', 'down'].includes(input.status.toLowerCase()))
+    return 80;
   if (input.status && ['poor', 'degraded'].includes(input.status.toLowerCase())) return 70;
   return 50;
 }
@@ -362,6 +398,48 @@ function rowDevice(row: Record<string, SqlStorageValue> | null): StoredDeviceHea
     power_mode: String(row.power_mode ?? ''),
     ip_hint: String(row.ip_hint ?? ''),
     received_at: Number(row.received_at ?? 0),
+    payload: JSON.parse(String(row.payload_json ?? '{}')) as Record<string, unknown>
+  };
+}
+
+function rowAgentProgress(row: Record<string, SqlStorageValue>): StoredAgentProgress {
+  return {
+    agent_id: String(row.agent_id ?? ''),
+    provider: String(row.provider ?? ''),
+    label: String(row.label ?? ''),
+    status: String(row.status ?? 'working') as StoredAgentProgress['status'],
+    phase: String(row.phase ?? ''),
+    summary: String(row.summary ?? ''),
+    detail: String(row.detail ?? ''),
+    progress_version: Number(row.progress_version ?? 0),
+    needs_input: Boolean(row.needs_input),
+    decisions: JSON.parse(String(row.decisions_json ?? '[]')) as StoredAgentProgress['decisions'],
+    updated_at: Number(row.updated_at ?? 0),
+    expires_at: Number(row.expires_at ?? 0),
+    payload: JSON.parse(String(row.payload_json ?? '{}')) as Record<string, unknown>
+  };
+}
+
+function rowAgentDecision(row: Record<string, SqlStorageValue>): StoredAgentDecision {
+  return {
+    id: String(row.id ?? ''),
+    idempotency_key: String(row.idempotency_key ?? ''),
+    agent_id: String(row.agent_id ?? ''),
+    provider: String(row.provider ?? ''),
+    progress_version: Number(row.progress_version ?? 0),
+    decision_id: String(row.decision_id ?? ''),
+    kind: String(row.kind ?? 'status') as StoredAgentDecision['kind'],
+    label: String(row.label ?? ''),
+    message: String(row.message ?? ''),
+    device_id: String(row.device_id ?? ''),
+    state: String(row.state ?? 'queued') as StoredAgentDecision['state'],
+    created_at: Number(row.created_at ?? 0),
+    updated_at: Number(row.updated_at ?? 0),
+    lease_owner: String(row.lease_owner ?? ''),
+    lease_expires_at: row.lease_expires_at === null ? null : Number(row.lease_expires_at ?? 0),
+    attempts: Number(row.attempts ?? 0),
+    result_summary: String(row.result_summary ?? ''),
+    error: String(row.error ?? ''),
     payload: JSON.parse(String(row.payload_json ?? '{}')) as Record<string, unknown>
   };
 }
@@ -435,7 +513,9 @@ export class InkState extends DurableObject<Env> {
         .toArray()
         .map((row) => String(row.name ?? ''));
       for (const column of missingHealthReviewRunColumnMigrations(healthReviewRunColumns)) {
-        this.ctx.storage.sql.exec(`ALTER TABLE health_review_runs ADD COLUMN ${column.name} ${column.definition};`);
+        this.ctx.storage.sql.exec(
+          `ALTER TABLE health_review_runs ADD COLUMN ${column.name} ${column.definition};`
+        );
       }
       this.ctx.storage.sql.exec(`
         CREATE INDEX IF NOT EXISTS idx_health_review_runs_started
@@ -465,10 +545,62 @@ export class InkState extends DurableObject<Env> {
           payload_json TEXT NOT NULL
         );
       `);
+      this.ctx.storage.sql.exec(`
+        CREATE TABLE IF NOT EXISTS agent_progress (
+          agent_id TEXT PRIMARY KEY,
+          provider TEXT NOT NULL,
+          label TEXT NOT NULL,
+          status TEXT NOT NULL,
+          phase TEXT NOT NULL,
+          summary TEXT NOT NULL,
+          detail TEXT NOT NULL,
+          progress_version INTEGER NOT NULL,
+          needs_input INTEGER NOT NULL,
+          decisions_json TEXT NOT NULL,
+          updated_at INTEGER NOT NULL,
+          expires_at INTEGER NOT NULL,
+          payload_json TEXT NOT NULL
+        );
+      `);
+      this.ctx.storage.sql.exec(`
+        CREATE INDEX IF NOT EXISTS idx_agent_progress_active
+        ON agent_progress(expires_at, needs_input, updated_at);
+      `);
+      this.ctx.storage.sql.exec(`
+        CREATE TABLE IF NOT EXISTS agent_decisions (
+          id TEXT PRIMARY KEY,
+          idempotency_key TEXT NOT NULL UNIQUE,
+          agent_id TEXT NOT NULL,
+          provider TEXT NOT NULL,
+          progress_version INTEGER NOT NULL,
+          decision_id TEXT NOT NULL,
+          kind TEXT NOT NULL,
+          label TEXT NOT NULL,
+          message TEXT NOT NULL,
+          device_id TEXT NOT NULL,
+          state TEXT NOT NULL,
+          created_at INTEGER NOT NULL,
+          updated_at INTEGER NOT NULL,
+          lease_owner TEXT NOT NULL,
+          lease_expires_at INTEGER,
+          attempts INTEGER NOT NULL,
+          result_summary TEXT NOT NULL,
+          error TEXT NOT NULL,
+          payload_json TEXT NOT NULL
+        );
+      `);
+      this.ctx.storage.sql.exec(`
+        CREATE INDEX IF NOT EXISTS idx_agent_decisions_delivery
+        ON agent_decisions(state, provider, created_at);
+      `);
     });
   }
 
-  addAlert(input: InkAlertInput): { ok: true; alert: StoredAlert; brief: ReturnType<typeof buildOperatorBrief> } {
+  addAlert(input: InkAlertInput): {
+    ok: true;
+    alert: StoredAlert;
+    brief: ReturnType<typeof buildOperatorBrief>;
+  } {
     const now = Date.now();
     const id = input.id?.trim() || crypto.randomUUID();
     const alert: StoredAlert = {
@@ -524,7 +656,9 @@ export class InkState extends DurableObject<Env> {
     const risk = stringValue(input.risk) || 'No major risk recorded.';
     const nextAction = stringValue(input.next_action) || 'Review priority source';
     const summary = stringValue(input.summary);
-    const signal = stringValue(input.signal || input.payload?.signal || input.source_links?.[0]?.kind) || 'operator';
+    const signal =
+      stringValue(input.signal || input.payload?.signal || input.source_links?.[0]?.kind) ||
+      'operator';
     const sourceLinks = normalizedPrioritySourceLinks(input.source_links);
     const payload = input.payload ?? {};
     const result = this.addAlert({
@@ -624,7 +758,189 @@ export class InkState extends DurableObject<Env> {
     return { ok: true, event_id: eventId };
   }
 
-  heartbeat(input: DeviceHeartbeatInput, fallbackDeviceId: string): {
+  setAgentProgress(input: AgentProgressInput) {
+    const now = Date.now();
+    const normalized = normalizeAgentProgress(input, now);
+    if (!normalized.ok) return normalized;
+
+    const currentRow = this.ctx.storage.sql
+      .exec<
+        Record<string, SqlStorageValue>
+      >(`SELECT * FROM agent_progress WHERE agent_id = ? LIMIT 1`, normalized.progress.agent_id)
+      .toArray()[0];
+    const current = currentRow ? rowAgentProgress(currentRow) : null;
+    if (current && current.progress_version > normalized.progress.progress_version) {
+      return { ok: false as const, status: 409, error: 'Progress version moved backward.' };
+    }
+
+    const progress = normalized.progress;
+    this.ctx.storage.sql.exec(
+      `INSERT OR REPLACE INTO agent_progress
+        (agent_id, provider, label, status, phase, summary, detail, progress_version, needs_input,
+         decisions_json, updated_at, expires_at, payload_json)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      progress.agent_id,
+      progress.provider,
+      progress.label,
+      progress.status,
+      progress.phase,
+      progress.summary,
+      progress.detail,
+      progress.progress_version,
+      progress.needs_input ? 1 : 0,
+      JSON.stringify(progress.decisions),
+      progress.updated_at,
+      progress.expires_at,
+      JSON.stringify(progress.payload)
+    );
+
+    return { ok: true as const, progress, console: this.agentConsole(now) };
+  }
+
+  agentConsole(now = Date.now()) {
+    const progress = this.ctx.storage.sql
+      .exec<Record<string, SqlStorageValue>>(
+        `SELECT * FROM agent_progress
+         WHERE expires_at > ?
+         ORDER BY needs_input DESC, updated_at DESC
+         LIMIT 24`,
+        now
+      )
+      .toArray()
+      .map(rowAgentProgress);
+    const decisions = this.ctx.storage.sql
+      .exec<
+        Record<string, SqlStorageValue>
+      >(`SELECT * FROM agent_decisions ORDER BY updated_at DESC LIMIT 24`)
+      .toArray()
+      .map(rowAgentDecision);
+    return buildAgentConsole(progress, now, decisions);
+  }
+
+  enqueueAgentDecision(input: AgentDecisionInput) {
+    const now = Date.now();
+    const idempotencyKey = input.idempotency_key?.trim() ?? '';
+    const existingRow = idempotencyKey
+      ? this.ctx.storage.sql
+          .exec<
+            Record<string, SqlStorageValue>
+          >(`SELECT * FROM agent_decisions WHERE idempotency_key = ? LIMIT 1`, idempotencyKey)
+          .toArray()[0]
+      : undefined;
+    const progressRow = this.ctx.storage.sql
+      .exec<
+        Record<string, SqlStorageValue>
+      >(`SELECT * FROM agent_progress WHERE agent_id = ? LIMIT 1`, input.agent_id?.trim() ?? '')
+      .toArray()[0];
+    const prepared = prepareAgentDecision({
+      input,
+      progress: progressRow ? rowAgentProgress(progressRow) : null,
+      existing: existingRow ? rowAgentDecision(existingRow) : null,
+      now,
+      id: crypto.randomUUID()
+    });
+    if (!prepared.ok) return prepared;
+    if (!prepared.idempotent) {
+      const decision = prepared.decision;
+      this.ctx.storage.sql.exec(
+        `INSERT INTO agent_decisions
+          (id, idempotency_key, agent_id, provider, progress_version, decision_id, kind, label, message,
+           device_id, state, created_at, updated_at, lease_owner, lease_expires_at, attempts,
+           result_summary, error, payload_json)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        decision.id,
+        decision.idempotency_key,
+        decision.agent_id,
+        decision.provider,
+        decision.progress_version,
+        decision.decision_id,
+        decision.kind,
+        decision.label,
+        decision.message,
+        decision.device_id,
+        decision.state,
+        decision.created_at,
+        decision.updated_at,
+        decision.lease_owner,
+        decision.lease_expires_at,
+        decision.attempts,
+        decision.result_summary,
+        decision.error,
+        JSON.stringify(decision.payload)
+      );
+    }
+
+    return {
+      ok: true as const,
+      idempotent: prepared.idempotent,
+      decision: prepared.decision,
+      console: this.agentConsole(now)
+    };
+  }
+
+  leaseAgentDecisionQueue(input: AgentDecisionLeaseInput) {
+    const now = Date.now();
+    const candidates = this.ctx.storage.sql
+      .exec<Record<string, SqlStorageValue>>(
+        `SELECT * FROM agent_decisions
+         WHERE state = 'queued' OR (state IN ('leased', 'acknowledged') AND lease_expires_at <= ?)
+         ORDER BY created_at ASC
+         LIMIT 100`,
+        now
+      )
+      .toArray()
+      .map(rowAgentDecision);
+    const leased = leaseAgentDecisions({ decisions: candidates, input, now });
+    if (!leased.ok) return leased;
+
+    for (const decision of leased.decisions) {
+      this.ctx.storage.sql.exec(
+        `UPDATE agent_decisions
+         SET state = ?, updated_at = ?, lease_owner = ?, lease_expires_at = ?, attempts = ?
+         WHERE id = ?`,
+        decision.state,
+        decision.updated_at,
+        decision.lease_owner,
+        decision.lease_expires_at,
+        decision.attempts,
+        decision.id
+      );
+    }
+    return leased;
+  }
+
+  recordAgentDecisionReceipt(id: string, input: AgentDecisionReceiptInput) {
+    const row = this.ctx.storage.sql
+      .exec<
+        Record<string, SqlStorageValue>
+      >(`SELECT * FROM agent_decisions WHERE id = ? LIMIT 1`, id)
+      .toArray()[0];
+    const transitioned = transitionAgentDecision({
+      decision: row ? rowAgentDecision(row) : null,
+      input,
+      now: Date.now()
+    });
+    if (!transitioned.ok) return transitioned;
+
+    const decision = transitioned.decision;
+    this.ctx.storage.sql.exec(
+      `UPDATE agent_decisions
+       SET state = ?, updated_at = ?, result_summary = ?, error = ?, payload_json = ?
+       WHERE id = ?`,
+      decision.state,
+      decision.updated_at,
+      decision.result_summary,
+      decision.error,
+      JSON.stringify(decision.payload),
+      decision.id
+    );
+    return { ok: true as const, decision };
+  }
+
+  heartbeat(
+    input: DeviceHeartbeatInput,
+    fallbackDeviceId: string
+  ): {
     ok: true;
     device: StoredDeviceHeartbeat;
   } {
@@ -667,7 +983,11 @@ export class InkState extends DurableObject<Env> {
     return { ok: true, device };
   }
 
-  clear(scope = 'alerts'): { ok: true; cleared: number; brief: ReturnType<typeof buildOperatorBrief> } {
+  clear(scope = 'alerts'): {
+    ok: true;
+    cleared: number;
+    brief: ReturnType<typeof buildOperatorBrief>;
+  } {
     if (scope === 'health') {
       const result = this.ctx.storage.sql.exec<Record<string, SqlStorageValue>>(
         `DELETE FROM health_snapshots RETURNING 1 AS count`
@@ -723,7 +1043,9 @@ export class InkState extends DurableObject<Env> {
       return run;
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      console.error(JSON.stringify({ service: 'calm-operator-ink-bridge', level: 'error', message }));
+      console.error(
+        JSON.stringify({ service: 'calm-operator-ink-bridge', level: 'error', message })
+      );
       return null;
     }
   }
@@ -736,15 +1058,17 @@ export class InkState extends DurableObject<Env> {
     payload?: Record<string, unknown>;
   }): StoredHealthReviewRun | null {
     const finishedAt = Date.now();
-    return this.recordHealthReviewRun(buildHealthReviewRunRecord({
-      trigger: input.trigger,
-      status: 'failed',
-      startedAt: input.startedAt ?? finishedAt,
-      finishedAt,
-      collectedCount: input.collectedCount ?? 0,
-      error: input.error || 'Health review attempt failed.',
-      payload: input.payload
-    }));
+    return this.recordHealthReviewRun(
+      buildHealthReviewRunRecord({
+        trigger: input.trigger,
+        status: 'failed',
+        startedAt: input.startedAt ?? finishedAt,
+        finishedAt,
+        collectedCount: input.collectedCount ?? 0,
+        error: input.error || 'Health review attempt failed.',
+        payload: input.payload
+      })
+    );
   }
 
   healthReviewRuns(limit = 20): StoredHealthReviewRun[] {
@@ -759,7 +1083,9 @@ export class InkState extends DurableObject<Env> {
       .map(rowHealthReviewRun);
   }
 
-  runHealthReview(optionsInput: number | HealthReviewRunOptions = DEFAULT_HEALTH_STALE_AFTER_MS): HealthReviewRunResult {
+  runHealthReview(
+    optionsInput: number | HealthReviewRunOptions = DEFAULT_HEALTH_STALE_AFTER_MS
+  ): HealthReviewRunResult {
     const options = healthReviewRunOptions(optionsInput);
     const startedAt = options.startedAt;
 
@@ -802,38 +1128,41 @@ export class InkState extends DurableObject<Env> {
       }
 
       const finishedAt = Date.now();
-      const run = this.recordHealthReviewRun(buildHealthReviewRunRecord({
-        trigger: options.trigger,
-        status: 'completed',
-        startedAt,
-        finishedAt,
-        collectedCount: options.collectedCount,
-        report,
-        payload: options.payload
-      }));
+      const run = this.recordHealthReviewRun(
+        buildHealthReviewRunRecord({
+          trigger: options.trigger,
+          status: 'completed',
+          startedAt,
+          finishedAt,
+          collectedCount: options.collectedCount,
+          report,
+          payload: options.payload
+        })
+      );
 
       return { ...output, run };
     } catch (error) {
       const finishedAt = Date.now();
-      this.recordHealthReviewRun(buildHealthReviewRunRecord({
-        trigger: options.trigger,
-        status: 'failed',
-        startedAt,
-        finishedAt,
-        collectedCount: options.collectedCount,
-        error: error instanceof Error ? error.message : String(error),
-        payload: options.payload
-      }));
+      this.recordHealthReviewRun(
+        buildHealthReviewRunRecord({
+          trigger: options.trigger,
+          status: 'failed',
+          startedAt,
+          finishedAt,
+          collectedCount: options.collectedCount,
+          error: error instanceof Error ? error.message : String(error),
+          payload: options.payload
+        })
+      );
       throw error;
     }
   }
 
   device(deviceId: string): StoredDeviceHeartbeat | null {
     const row = this.ctx.storage.sql
-      .exec<Record<string, SqlStorageValue>>(
-        `SELECT * FROM device_heartbeats WHERE device_id = ? LIMIT 1`,
-        deviceId
-      )
+      .exec<
+        Record<string, SqlStorageValue>
+      >(`SELECT * FROM device_heartbeats WHERE device_id = ? LIMIT 1`, deviceId)
       .toArray()[0];
     return rowDevice(row ?? null);
   }
@@ -873,7 +1202,10 @@ function stateStub(env: Env): DurableObjectStub<InkState> {
   return env.INK_STATE.getByName(workspaceId(env));
 }
 
-async function collectAndRunHealthReview(env: Env, trigger: HealthReviewRunTrigger = 'manual'): Promise<{
+async function collectAndRunHealthReview(
+  env: Env,
+  trigger: HealthReviewRunTrigger = 'manual'
+): Promise<{
   ok: true;
   collected: Array<{ ok: boolean; component: string; status?: string }>;
   review: Awaited<ReturnType<InkState['runHealthReview']>>;
@@ -906,7 +1238,9 @@ async function collectAndRunHealthReview(env: Env, trigger: HealthReviewRunTrigg
       });
     } catch (recordError) {
       const message = recordError instanceof Error ? recordError.message : String(recordError);
-      console.error(JSON.stringify({ service: 'calm-operator-ink-bridge', level: 'error', message }));
+      console.error(
+        JSON.stringify({ service: 'calm-operator-ink-bridge', level: 'error', message })
+      );
     }
     throw error;
   }
@@ -924,7 +1258,10 @@ async function collectAndRunHealthReview(env: Env, trigger: HealthReviewRunTrigg
   };
 }
 
-async function runScheduledDailyAlarms(env: Env, nowMs = Date.now()): Promise<{
+async function runScheduledDailyAlarms(
+  env: Env,
+  nowMs = Date.now()
+): Promise<{
   ok: true;
   checked_at: string;
   fired: Array<{ id: string; local_date: string; local_time: string; display_time: string }>;
@@ -975,6 +1312,11 @@ async function route(request: Request, env: Env): Promise<Response> {
         'GET /ink/brief',
         'GET /ink/surface-brief',
         'GET /ink/clock',
+        'GET /ink/agent-console',
+        'POST /ink/agent-progress',
+        'POST /ink/agent-decision',
+        'POST /ink/agent-decisions/lease',
+        'POST /ink/agent-decisions/:id/receipt',
         'POST /ink/alert',
         'POST /ink/operator-priority',
         'POST /ink/operator-event',
@@ -997,13 +1339,45 @@ async function route(request: Request, env: Env): Promise<Response> {
     return json(
       {
         ok: false,
-        error: authRole === 'device' ? 'Unauthorized device request.' : 'Unauthorized source request.'
+        error:
+          authRole === 'device'
+            ? 'Unauthorized device request.'
+            : authRole === 'relay'
+              ? 'Unauthorized relay request.'
+              : 'Unauthorized source request.'
       },
       { status: 401 }
     );
   }
 
   const stub = stateStub(env);
+
+  if (method === 'GET' && path === '/ink/agent-console') {
+    return json(await stub.agentConsole());
+  }
+
+  if (method === 'POST' && path === '/ink/agent-progress') {
+    const body = await parseJsonBody<AgentProgressInput>(request);
+    return agentResult(await stub.setAgentProgress(body));
+  }
+
+  if (method === 'POST' && path === '/ink/agent-decision') {
+    const body = await parseJsonBody<AgentDecisionInput>(request);
+    return agentResult(await stub.enqueueAgentDecision(body));
+  }
+
+  if (method === 'POST' && path === '/ink/agent-decisions/lease') {
+    const body = await parseJsonBody<AgentDecisionLeaseInput>(request);
+    return agentResult(await stub.leaseAgentDecisionQueue(body));
+  }
+
+  const agentReceiptMatch = path.match(/^\/ink\/agent-decisions\/([^/]+)\/receipt$/);
+  if (method === 'POST' && agentReceiptMatch) {
+    const body = await parseJsonBody<AgentDecisionReceiptInput>(request);
+    return agentResult(
+      await stub.recordAgentDecisionReceipt(decodeURIComponent(agentReceiptMatch[1] ?? ''), body)
+    );
+  }
 
   if (method === 'GET' && (path === '/ink/brief' || path === '/ink/surface-brief')) {
     const surface = url.searchParams.get('surface') || defaultSurface(env);
@@ -1090,7 +1464,9 @@ async function route(request: Request, env: Env): Promise<Response> {
   if (method === 'GET' && path === '/ink/health-review/runs') {
     return json({
       ok: true,
-      runs: await stub.healthReviewRuns(normalizeHealthReviewRunLimit(url.searchParams.get('limit')))
+      runs: await stub.healthReviewRuns(
+        normalizeHealthReviewRunLimit(url.searchParams.get('limit'))
+      )
     });
   }
 
@@ -1146,7 +1522,9 @@ async function route(request: Request, env: Env): Promise<Response> {
   }
 
   if (method === 'POST' && path === '/ink/alarms/run') {
-    const body: { now?: number | string } = await parseJsonBody<{ now?: number | string }>(request).catch(() => ({}));
+    const body: { now?: number | string } = await parseJsonBody<{ now?: number | string }>(
+      request
+    ).catch(() => ({}));
     const nowMs = parseEpoch(body.now, Date.now()) ?? Date.now();
     return json(await runScheduledDailyAlarms(env, nowMs));
   }
@@ -1162,7 +1540,9 @@ async function route(request: Request, env: Env): Promise<Response> {
   }
 
   if (method === 'POST' && path === '/ink/clear') {
-    const body = await parseJsonBody<{ scope?: string }>(request).catch(() => ({ scope: 'alerts' }));
+    const body = await parseJsonBody<{ scope?: string }>(request).catch(() => ({
+      scope: 'alerts'
+    }));
     return json(await stub.clear(body.scope ?? 'alerts'));
   }
 
@@ -1175,7 +1555,9 @@ export default {
       return await route(request, env);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      console.error(JSON.stringify({ service: 'calm-operator-ink-bridge', level: 'error', message }));
+      console.error(
+        JSON.stringify({ service: 'calm-operator-ink-bridge', level: 'error', message })
+      );
       return json({ ok: false, error: message }, { status: 500 });
     }
   },
@@ -1191,7 +1573,9 @@ export default {
           }
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
-          console.error(JSON.stringify({ service: 'calm-operator-ink-bridge', level: 'error', message }));
+          console.error(
+            JSON.stringify({ service: 'calm-operator-ink-bridge', level: 'error', message })
+          );
         }
       })()
     );

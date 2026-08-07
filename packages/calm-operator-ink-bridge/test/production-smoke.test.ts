@@ -81,6 +81,16 @@ test('checks production health, clock, brief, and heartbeat contracts', async ()
         }
       });
     }
+    if (href === 'https://ink.example.test/ink/agent-console') {
+      return jsonResponse({
+        ok: true,
+        generated_at: '2026-04-30T17:00:00.000Z',
+        count: 0,
+        needs_input_count: 0,
+        agents: [],
+        recent_decisions: []
+      });
+    }
     if (href === 'https://ink.example.test/ink/device-heartbeat') {
       assert.equal(new Headers(init?.headers).get('x-ink-token'), 'device-token');
       assert.equal(init?.method, 'POST');
@@ -112,13 +122,17 @@ test('checks production health, clock, brief, and heartbeat contracts', async ()
 
   assert.equal(result.ok, true);
   assert.equal(result.origin, 'https://ink.example.test');
-  assert.deepEqual(result.checks.map((check) => check.name), [
-    'GET /healthz',
-    'GET /ink/clock',
-    'GET /ink/brief',
-    'POST /ink/device-heartbeat'
-  ]);
-  assert.equal(calls.length, 4);
+  assert.deepEqual(
+    result.checks.map((check) => check.name),
+    [
+      'GET /healthz',
+      'GET /ink/clock',
+      'GET /ink/brief',
+      'GET /ink/agent-console',
+      'POST /ink/device-heartbeat'
+    ]
+  );
+  assert.equal(calls.length, 5);
   assert.equal(new Headers(calls[1]?.init?.headers).get('x-ink-token'), 'device-token');
   assert.equal(new Headers(calls[2]?.init?.headers).get('x-ink-token'), 'device-token');
 });
@@ -130,11 +144,17 @@ test('supports public-only health smoke without a token', async () => {
     return jsonResponse({ ok: true, service: 'calm-operator-ink-bridge' });
   };
 
-  const result = await runProductionSmoke({ origin: 'https://ink.example.test', publicOnly: true }, { fetch });
+  const result = await runProductionSmoke(
+    { origin: 'https://ink.example.test', publicOnly: true },
+    { fetch }
+  );
 
   assert.equal(result.ok, true);
   assert.deepEqual(calls, ['https://ink.example.test/healthz']);
-  assert.deepEqual(result.checks.map((check) => check.name), ['GET /healthz']);
+  assert.deepEqual(
+    result.checks.map((check) => check.name),
+    ['GET /healthz']
+  );
 });
 
 test('requires a token for authenticated smoke checks', async () => {

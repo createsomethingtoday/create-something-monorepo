@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Airtable System Architect'
+  short_description: 'Govern Airtable schema, interfaces, and automations'
+  default_prompt: 'Use $airtable-system-architect to map this Airtable system and propose the smallest governed architecture change.'

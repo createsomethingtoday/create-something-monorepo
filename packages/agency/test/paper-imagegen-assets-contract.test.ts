@@ -7,6 +7,7 @@ import {
   paperAttachedReceiptMedia,
   paperClampedDecisionMedia,
   paperFoldedHandoffMedia,
+  paperOperatingRouteMedia,
   paperProductSystemMedia,
   performancePaperRouteAssignments
 } from '../src/lib/data/performanceMedia.ts';
@@ -17,8 +18,13 @@ const metadataPath = resolve(
   agencyRoot,
   'content/assets/brand/agency-paper-under-pressure-imagegen.v20260802/metadata.md'
 );
+const operatingRouteMetadataPath = resolve(
+  agencyRoot,
+  'content/assets/brand/agency-operating-route-imagegen.v20260805/metadata.md'
+);
 
 const studies = [
+  paperOperatingRouteMedia,
   paperFoldedHandoffMedia,
   paperClampedDecisionMedia,
   paperAttachedReceiptMedia,
@@ -28,7 +34,7 @@ const studies = [
 test('publishes responsive Paper campaign descriptors with immutable assets', () => {
   assert.deepEqual(
     studies.map((study) => study.material),
-    ['paper', 'paper', 'paper', 'paper']
+    ['paper', 'paper', 'paper', 'paper', 'paper']
   );
 
   for (const study of studies) {
@@ -41,8 +47,14 @@ test('publishes responsive Paper campaign descriptors with immutable assets', ()
 });
 
 test('assigns one distinct Paper study to each campaign route', () => {
-  assert.deepEqual(performancePaperRouteAssignments, {
-    '/': 'paperFoldedHandoffMedia',
+  const primaryCampaignAssignments = Object.fromEntries(
+    Object.entries(performancePaperRouteAssignments).filter(([route]) =>
+      ['/', '/services', '/products', '/field-reports'].includes(route)
+    )
+  );
+
+  assert.deepEqual(primaryCampaignAssignments, {
+    '/': 'paperOperatingRouteMedia',
     '/services': 'paperClampedDecisionMedia',
     '/products': 'paperProductSystemMedia',
     '/field-reports': 'paperAttachedReceiptMedia'
@@ -68,6 +80,29 @@ test('records complete generation, inspection, rights, and hash evidence', () =>
     '2cf05defe0abfdcef62822da8f60f13d87f4db817dc381320bc7eaa1caafde72',
     '8577e3037944cf131c7976c67df4c2749640e34835a81225be63cffcd41a697d',
     'weaker connector legibility',
+    'SHA-256',
+    'Rights and use',
+    'Refresh condition',
+    'source/prompts.md'
+  ]) {
+    assert.ok(metadata.includes(required), `metadata must record ${required}`);
+  }
+
+  assert.doesNotMatch(metadata, /- \[ \]/);
+});
+
+test('records original ImageGen provenance for the Paper operating route', () => {
+  const metadata = readFileSync(operatingRouteMetadataPath, 'utf8');
+
+  for (const required of [
+    'OpenAI ImageGen',
+    'operating-route-desktop.png',
+    'operating-route-mobile.png',
+    'paper-operating-route.webp',
+    'paper-operating-route-mobile.webp',
+    '53b899b7a37457eead4fc5cb9cd1f9422f8e5bee73928559d046cd87bb669d1c',
+    'd9cc104172aa70d2554594258b5a5c809d512a25ea6fb0920a16e9869fb6e807',
+    'No third-party image input',
     'SHA-256',
     'Rights and use',
     'Refresh condition',

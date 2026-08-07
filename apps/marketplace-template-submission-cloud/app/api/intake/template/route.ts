@@ -18,12 +18,10 @@ import {
   buildPublishedUrlValidationMessage,
   getPublishedUrlValidationIssues,
   normalizePublishedUrl,
-  runPublishedUrlValidation,
-  type PublishedUrlValidationSummary
+  runPublishedUrlValidation
 } from '../../../../lib/intake/published-url';
-import { getCachedPublishedValidation } from '../../../../lib/server/published-validation-cache';
 import { runValidatorAppSubmissionPreflight } from '../../../../lib/intake/validator-app';
-import { runFreshFontCustomCodePreflight } from '../../../../lib/intake/font-custom-code';
+import { runFreshCustomCodePreflight } from '../../../../lib/intake/font-custom-code';
 import { validateTemplateNameSyntax } from '../../../../lib/intake/template-name';
 import { waitForTemplateSubmissionReceipt } from '../../../../lib/intake/submission-receipt';
 import {
@@ -264,32 +262,29 @@ export async function POST(request: Request) {
     const normalizedPublishedUrl = normalizePublishedUrl(body.publishedUrl || '');
     const airtable = await getServerAirtable();
 
-    // Reuse the validation the creator just completed via "Validate template"
-    // when available; otherwise start a fresh crawl alongside the other
-    // read-only checks. All results are checked in priority order below.
-    const cachedValidation = await getCachedPublishedValidation(normalizedPublishedUrl);
-    const publishedValidationPromise = cachedValidation
-      ? null
-      : runPublishedUrlValidation(normalizedPublishedUrl).then(
-          (value) => ({ ok: true as const, value }),
-          (error) => ({ ok: false as const, error })
-        );
-
-    // Always inspect the current published head at the final write boundary.
-    // The full crawl may be cached briefly, but project-level custom code can
-    // change after that crawl and must not inherit the earlier pass.
-    const freshFontCustomCodePromise = runFreshFontCustomCodePreflight(normalizedPublishedUrl).then(
+    // Always rerun the published-site crawl at the final write boundary.
+    // Schema markup can be added at page level after an earlier clean validation,
+    // so a cached result cannot authorize a new Marketplace submission.
+    const publishedValidationPromise = runPublishedUrlValidation(normalizedPublishedUrl).then(
       (value) => ({ ok: true as const, value }),
       (error) => ({ ok: false as const, error })
     );
 
-    const [eligibility, templateNameAvailabilityResult, freshFontCustomCodeResult] = await Promise.all([
+    // Always inspect the current published head at the final write boundary.
+    // This homepage fetch is the fast early policy check; the full crawl above
+    // remains authoritative for page-level custom code.
+    const freshCustomCodePromise = runFreshCustomCodePreflight(normalizedPublishedUrl).then(
+      (value) => ({ ok: true as const, value }),
+      (error) => ({ ok: false as const, error })
+    );
+
+    const [eligibility, templateNameAvailabilityResult, freshCustomCodeResult] = await Promise.all([
       evaluateCreatorEligibility(creatorEmail),
       checkTemplateNameAvailability(templateName, { airtable }).then(
         (value) => ({ ok: true as const, value }),
         (error) => ({ ok: false as const, error })
       ),
-      freshFontCustomCodePromise
+      freshCustomCodePromise
     ]);
 
     if (!templateNameAvailabilityResult.ok) {
@@ -315,20 +310,20 @@ export async function POST(request: Request) {
       return jsonNoStore({ error: 'Template name is already in use.' }, { status: 409 });
     }
 
-    if (!freshFontCustomCodeResult.ok) {
+    if (!freshCustomCodeResult.ok) {
       return jsonNoStore(
         {
-          error: 'Could not verify the current published custom-code font policy. Try again after confirming the site is public.'
+          error: 'Could not verify the current published custom-code policy. Try again after confirming the site is public.'
         },
         { status: 503 }
       );
     }
 
-    if (!freshFontCustomCodeResult.value.passed) {
+    if (!freshCustomCodeResult.value.passed) {
       return jsonNoStore(
         {
-          error: freshFontCustomCodeResult.value.findings[0].message,
-          validationIssues: freshFontCustomCodeResult.value.findings.map(
+          error: freshCustomCodeResult.value.findings[0].message,
+          validationIssues: freshCustomCodeResult.value.findings.map(
             (finding) => `${finding.message} Found: ${finding.source}`
           )
         },
@@ -336,69 +331,50 @@ export async function POST(request: Request) {
       );
     }
 
-    let publishedUrlResult: {
-      normalizedUrl: string;
-      gsapDetected: boolean;
-      siteResults: PublishedUrlValidationSummary['siteResults'];
-    };
-    let validatorConfirmation: { passed: boolean; score?: number };
-
-    if (cachedValidation) {
-      publishedUrlResult = {
-        normalizedUrl: cachedValidation.normalizedUrl,
-        gsapDetected: cachedValidation.summary.gsapDetected,
-        siteResults: cachedValidation.summary.siteResults
-      };
-      validatorConfirmation = {
-        passed: cachedValidation.validatorPreflight?.passed ?? true,
-        score: cachedValidation.validatorPreflight?.result?.score
-      };
-    } else {
-      const settled = await publishedValidationPromise!;
-      if (!settled.ok) {
-        throw settled.error instanceof Error
-          ? settled.error
-          : new Error('Published URL validation failed.');
-      }
-
-      const publishedValidation = settled.value;
-      if (!publishedValidation.summary.passed) {
-        const validationIssues = getPublishedUrlValidationIssues(publishedValidation.summary);
-        return jsonNoStore(
-          {
-            error: buildPublishedUrlValidationMessage(publishedValidation.summary),
-            validationIssues
-          },
-          { status: 400 }
-        );
-      }
-
-      const validatorPreflight = await runValidatorAppSubmissionPreflight(
-        publishedValidation.normalizedUrl
-      );
-      if (validatorPreflight.required && !validatorPreflight.passed) {
-        return jsonNoStore(
-          {
-            error: validatorPreflight.message,
-            validationIssues: validatorPreflight.issues,
-            validatorPreflight
-          },
-          {
-            status: validatorPreflight.status === 'validator_app_unavailable' ? 503 : 400
-          }
-        );
-      }
-
-      publishedUrlResult = {
-        normalizedUrl: publishedValidation.normalizedUrl,
-        gsapDetected: publishedValidation.summary.gsapDetected,
-        siteResults: publishedValidation.summary.siteResults
-      };
-      validatorConfirmation = {
-        passed: validatorPreflight.passed,
-        score: validatorPreflight.result?.score
-      };
+    const settled = await publishedValidationPromise;
+    if (!settled.ok) {
+      throw settled.error instanceof Error
+        ? settled.error
+        : new Error('Published URL validation failed.');
     }
+
+    const publishedValidation = settled.value;
+    if (!publishedValidation.summary.passed) {
+      const validationIssues = getPublishedUrlValidationIssues(publishedValidation.summary);
+      return jsonNoStore(
+        {
+          error: buildPublishedUrlValidationMessage(publishedValidation.summary),
+          validationIssues
+        },
+        { status: 400 }
+      );
+    }
+
+    const validatorPreflight = await runValidatorAppSubmissionPreflight(
+      publishedValidation.normalizedUrl
+    );
+    if (validatorPreflight.required && !validatorPreflight.passed) {
+      return jsonNoStore(
+        {
+          error: validatorPreflight.message,
+          validationIssues: validatorPreflight.issues,
+          validatorPreflight
+        },
+        {
+          status: validatorPreflight.status === 'validator_app_unavailable' ? 503 : 400
+        }
+      );
+    }
+
+    const publishedUrlResult = {
+      normalizedUrl: publishedValidation.normalizedUrl,
+      gsapDetected: publishedValidation.summary.gsapDetected,
+      siteResults: publishedValidation.summary.siteResults
+    };
+    const validatorConfirmation = {
+      passed: validatorPreflight.passed,
+      score: validatorPreflight.result?.score
+    };
 
     const previewUrl = normalizePreviewUrl(body.previewUrl || '');
     const combinedFeatures = new Set(featureFlags);

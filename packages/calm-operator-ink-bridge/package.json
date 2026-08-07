@@ -7,6 +7,9 @@
     "check": "tsc --noEmit",
     "deploy": "node ../../scripts/run-wrangler.mjs deploy",
     "dev": "node ../../scripts/run-wrangler.mjs dev",
+    "agent:progress": "tsx scripts/post-agent-progress.mjs",
+    "agent:relay": "tsx scripts/run-agent-relay.mjs",
+    "agent:relay:once": "tsx scripts/run-agent-relay.mjs --once",
     "post:health": "tsx scripts/post-health-snapshot.mjs",
     "post:langfuse-quality": "tsx scripts/post-langfuse-quality-priority.mjs",
     "post:mcp": "tsx scripts/post-mcp-attention.mjs",
@@ -18,6 +21,7 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260621.1",
+    "@openai/codex": "0.147.0",
     "tsx": "^4.21.0",
     "typescript": "^5.7.2",
     "wrangler": "^4.103.0"

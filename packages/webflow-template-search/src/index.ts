@@ -305,12 +305,13 @@ async function handleWebflowWebhook(request: Request, env: Env): Promise<Respons
 
   if (env.WEBFLOW_WEBHOOK_SECRET) {
     const signature = request.headers.get('x-webflow-signature') ?? '';
+    const timestamp = request.headers.get('x-webflow-timestamp');
     // WEBFLOW_WEBHOOK_SECRET may be comma-separated when multiple webhook subscriptions
     // are registered (Webflow generates a unique secret per subscription/trigger type).
     const secrets = env.WEBFLOW_WEBHOOK_SECRET.split(',').map((s) => s.trim()).filter(Boolean);
     let valid = false;
     for (const secret of secrets) {
-      if (await verifyWebflowSignature(secret, rawBody, signature)) {
+      if (await verifyWebflowSignature(secret, rawBody, signature, timestamp)) {
         valid = true;
         break;
       }
@@ -332,15 +333,16 @@ async function handleWebflowWebhook(request: Request, env: Env): Promise<Respons
   }
 
   const syncedAt = new Date().toISOString();
+  const collectionId = payload.collectionId ?? payload.cid;
 
-  if (payload.cid === TEMPLATES_COLLECTION_ID) {
+  if (collectionId === TEMPLATES_COLLECTION_ID) {
     const record = mapWebhookTemplateItem(webhook);
     if (!record) return jsonResponse(request, env, { status: 'ignored', reason: 'no template identity or item not live' });
     await updateTemplateImagesFromWebflow(env.DB, [record], syncedAt);
     return jsonResponse(request, env, { status: 'updated', collection: 'templates', id: record.id ?? record.templateSlug ?? record.name });
   }
 
-  if (payload.cid === DESIGNERS_COLLECTION_ID) {
+  if (collectionId === DESIGNERS_COLLECTION_ID) {
     const record = mapWebhookDesignerItem(webhook);
     if (!record) return jsonResponse(request, env, { status: 'ignored', reason: 'no designer identity or item not live' });
     const updated = await updateCreatorAvatarsFromWebflow(env.DB, [record], syncedAt);

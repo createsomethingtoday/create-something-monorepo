@@ -1,4 +1,18 @@
-const TRUSTED_DOMAIN_SUFFIXES = ['webflow.com', 'webflow.io', 'createsomething.io'] as const;
+/**
+ * Suffix trust is limited to domains Webflow itself controls. This covers the
+ * production embed on templates.webflow.com and the Designer preview on
+ * *.design.webflow.com.
+ *
+ * webflow.io is deliberately NOT a suffix here: every Webflow customer
+ * publishes under *.webflow.io, so trusting the suffix would make any Webflow
+ * user a trusted origin for cookie-authenticated mutations. The staging host
+ * that embeds this dashboard is listed exactly instead.
+ *
+ * Additional embed origins belong in the CSRF_TRUSTED_ORIGINS env var, which
+ * is read at request time and needs no code change.
+ */
+const TRUSTED_DOMAIN_SUFFIXES = ['webflow.com', 'createsomething.io'] as const;
+const TRUSTED_EXACT_HOSTS = ['template-marketplace.webflow.io'] as const;
 
 function parseCsv(raw: string | undefined): string[] {
   if (!raw) return [];
@@ -51,7 +65,7 @@ function getProvidedSecret(request: Request): string | null {
  * Constant-time string comparison so secret checks do not leak length or
  * prefix information through response timing.
  */
-function secretsMatch(provided: string | null, expected: string): boolean {
+export function secretsMatch(provided: string | null, expected: string): boolean {
   if (!provided) return false;
 
   const providedBytes = new TextEncoder().encode(provided);
@@ -137,6 +151,10 @@ export function isTrustedRequestOrigin(
 
     if (parsed.protocol !== 'https:') {
       return false;
+    }
+
+    if (TRUSTED_EXACT_HOSTS.some((host) => host === parsed.hostname)) {
+      return true;
     }
 
     return TRUSTED_DOMAIN_SUFFIXES.some((domain) => isDomainOrSubdomain(parsed.hostname, domain));

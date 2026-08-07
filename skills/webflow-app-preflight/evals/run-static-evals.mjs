@@ -44,6 +44,33 @@ try {
 const load = (p) => readFileSync(join(SKILL, p), 'utf8');
 const yml = (p) => YAML.parse(load(p));
 
+// Sibling skill (for the routing check). The pair ships together; if only one
+// directory was copied, the routing check is skipped with a note.
+const SIBLING = resolve(SKILL, '..', 'webflow-app-review-remediation');
+const SKILL_NAME = 'webflow-app-preflight';
+
+const frontmatterOf = (raw) => {
+  const m = raw.match(/^---\n([\s\S]*?)\n---/);
+  return m ? YAML.parse(m[1]) : null;
+};
+
+// Crude but deterministic routing score: stemmed keyword overlap between a
+// prompt and the tokens that are DISTINCTIVE to one skill's description
+// (tokens shared by both descriptions carry no routing signal and are dropped).
+const STOPWORDS = new Set([
+  'the', 'a', 'an', 'and', 'or', 'for', 'with', 'to', 'of', 'is', 'are', 'it',
+  'its', 'my', 'our', 'me', 'i', 'do', 'how', 'what', 'can', 'you', 'us', 'in',
+  'on', 'as', 'be', 'we', 'this', 'these', 'into', 'from', 'that', 'was', 'will'
+]);
+const stemsOf = (s) =>
+  new Set(
+    s
+      .toLowerCase()
+      .split(/[^a-z0-9]+/)
+      .filter((w) => w.length >= 3 && !STOPWORDS.has(w))
+      .map((w) => w.slice(0, 5))
+  );
+
 const corpusFiles = [
   'SKILL.md',
   ...readdirSync(join(SKILL, 'checklists')).map((f) => `checklists/${f}`),
@@ -195,6 +222,55 @@ for (const m of load('SKILL.md').matchAll(/`(reference\/[\w.-]+|checklists\/[\w.
   check('structure', `referenced path exists: ${target}`, existsSync(join(SKILL, target)));
 }
 
+// ---- 7b. frontmatter contract ------------------------------------------
+const skillRaw = load('SKILL.md');
+const fm = frontmatterOf(skillRaw);
+check('frontmatter', 'SKILL.md has parseable YAML frontmatter', fm !== null);
+check('frontmatter', `name matches directory (${SKILL_NAME})`, fm?.name === SKILL_NAME);
+check(
+  'frontmatter',
+  'description is non-empty and < 1024 chars',
+  typeof fm?.description === 'string' &&
+    fm.description.length > 0 &&
+    fm.description.length < 1024,
+  `length=${fm?.description?.length ?? 0}`
+);
+check(
+  'frontmatter',
+  'description names the sibling skill',
+  Boolean(fm?.description?.includes('webflow-app-review-remediation'))
+);
+
+// ---- 7c. SKILL.md backend exemplars have not drifted from the gate -------
+// Phase 3's backend subsection is deliberately a premise plus a few exemplar
+// controls; the gate owns the authoritative list. Both must stay groundable
+// in each other, or the pair silently diverges.
+const skillBackend = (skillRaw.split('### Backend and API surface')[1] ?? '')
+  .split('\n### ')[0]
+  .toLowerCase();
+check('drift', 'SKILL.md has a Backend and API surface subsection', skillBackend.length > 0);
+check(
+  'drift',
+  'SKILL.md names the gate as authoritative for the backend surface',
+  skillBackend.includes('pre-submission-quality-gate.md')
+);
+for (const kw of [
+  'attacker-controlled',
+  'id token',
+  'object-level',
+  'defense-in-depth',
+  'allowlist',
+  'single-use',
+  'state'
+]) {
+  check('drift', `backend keyword "${kw}" present in SKILL.md exemplars`, skillBackend.includes(kw));
+  check(
+    'drift',
+    `backend keyword "${kw}" present in gate backend section`,
+    backendSection.toLowerCase().includes(kw)
+  );
+}
+
 // ---- 8. partner checklist has not drifted from the gate ----------------
 // The partner checklist is a derived, self-contained asset for developers who
 // aren't running an agent. It must stay in step with the gate and the pitfalls.
@@ -230,6 +306,60 @@ check(
   `partner ${(partner.match(/^- ❌/gm) ?? []).length} vs skill ${antiCount}`
 );
 
+// ---- 8b. load-bearing sentence lock --------------------------------------
+// The corrective phrasing behind the Anti-advice items and the retained-
+// cleanup-scopes rule must appear verbatim (modulo markdown emphasis) in all
+// three surfaces. Item-count checks alone would let a reworded item say the
+// opposite and still pass.
+// Strip markdown emphasis (asterisks, backticks, space-adjacent underscores)
+// without touching snake_case identifiers like custom_code:write.
+const lockNormalize = (s) =>
+  s.toLowerCase().replace(/[*`]/g, '').replace(/ _|_ /g, ' ').replace(/\s+/g, ' ');
+const lockDocs = {
+  'SKILL.md': lockNormalize(skillRaw),
+  'quality gate': lockNormalize(gate),
+  'partner checklist': lockNormalize(partner)
+};
+const lockPhrases = [
+  'a persistent 401 on a previously valid token is revocation', // 401 ≠ retry
+  'retain', // cleanup scopes are retained, not dropped
+  'custom_code:write',
+  'sites:write',
+  'site and page level', // removal is the App's job, at both levels
+  'defense-in-depth', // CORS is not authorization
+  'published page source' // site IDs are not secrets
+];
+for (const [doc, text] of Object.entries(lockDocs)) {
+  for (const phrase of lockPhrases) {
+    check('lock', `"${phrase}" appears in ${doc}`, text.includes(phrase));
+  }
+}
+
+// ---- 8c. trigger routing against both descriptions -----------------------
+// ID-uniqueness and non-empty prompts validate YAML against itself; the
+// frontmatter description is what actually routes. Each positive prompt must
+// score higher against this skill's description than the sibling's.
+if (existsSync(join(SIBLING, 'SKILL.md'))) {
+  const sibFm = frontmatterOf(readFileSync(join(SIBLING, 'SKILL.md'), 'utf8'));
+  const ownSet = stemsOf(fm?.description ?? '');
+  const sibSet = stemsOf(sibFm?.description ?? '');
+  const ownDistinct = [...ownSet].filter((t) => !sibSet.has(t));
+  const sibDistinct = [...sibSet].filter((t) => !ownSet.has(t));
+  for (const ev of parsed['evals/trigger-positive.yml'].evals) {
+    const p = stemsOf(ev.prompt);
+    const own = ownDistinct.filter((t) => p.has(t)).length;
+    const sib = sibDistinct.filter((t) => p.has(t)).length;
+    check(
+      'routing',
+      `positive ${ev.id} routes to ${SKILL_NAME}`,
+      own > sib,
+      `own=${own} sibling=${sib} :: ${ev.prompt}`
+    );
+  }
+} else {
+  check('routing', 'sibling skill available for routing check', true, 'sibling directory not found — skipped');
+}
+
 // ---- 9. shareability: no internal identifiers --------------------------
 // Default terms are internal *tooling* and finding-ID shapes, not names of any
 // third party — pass PREFLIGHT_FORBIDDEN_TERMS to add your own.
@@ -241,8 +371,11 @@ const forbidden = [
     .map((t) => t.trim().toLowerCase())
     .filter(Boolean)
 ];
-// The partner checklist ships to third parties, so it is scanned too.
-const shareable = `${corpus}\n${partner.toLowerCase()}`;
+// The partner checklist, README, and eval files ship to third parties, so
+// they are scanned too — internal names must not leak through any of them.
+const evalRaw = files.map(load).join('\n');
+const readmeRaw = load('README.md');
+const shareable = `${corpus}\n${partner.toLowerCase()}\n${evalRaw.toLowerCase()}\n${readmeRaw.toLowerCase()}`;
 const termHits = forbidden.filter((t) => shareable.includes(t));
 check('shareable', 'no internal tooling references', termHits.length === 0, termHits.join(', '));
 // Internal finding IDs look like "AB-01" / "AB-1234".

@@ -216,6 +216,9 @@
       nameError = null;
       nameWarning = null;
       isCheckingName = false;
+      nameCheckPending = false;
+      // Retire any in-flight check from the previously opened asset.
+      nameCheckSequence += 1;
     }
   });
 
@@ -226,6 +229,11 @@
   let nameWarning = $state<string | null>(null);
   let isCheckingName = $state(false);
   let nameCheckTimeout: ReturnType<typeof setTimeout> | null = null;
+  // Identifies the newest check so a slow earlier response cannot overwrite it.
+  let nameCheckSequence = 0;
+  // True between a keystroke and the matching check resolving, so the
+  // "available" hint cannot appear for a name nothing has verified yet.
+  let nameCheckPending = $state(false);
   let showArchiveConfirm = $state(false);
 
   const originalName = $derived(asset.name);
@@ -297,15 +305,22 @@
   }
 
   async function checkNameUniqueness(name: string) {
+    // Claiming the sequence here also retires any in-flight request, so the
+    // synchronous branches below cannot be overwritten by a late response.
+    const requestId = ++nameCheckSequence;
+    const isCurrent = () => requestId === nameCheckSequence;
+
     if (!canEditName || name === originalName) {
       nameError = null;
       nameWarning = null;
+      nameCheckPending = false;
       return;
     }
 
     if (!name.trim()) {
       nameError = 'Name is required';
       nameWarning = null;
+      nameCheckPending = false;
       return;
     }
 
@@ -323,14 +338,19 @@
       }
 
       const data = (await response.json()) as { available: boolean };
+      if (!isCurrent()) return;
       nameError = data.available ? null : 'An asset with this name already exists';
       nameWarning = null;
     } catch {
+      if (!isCurrent()) return;
       nameError = null;
       nameWarning =
         'Could not verify name availability. You can still save; the server will validate it.';
     } finally {
-      isCheckingName = false;
+      if (isCurrent()) {
+        isCheckingName = false;
+        nameCheckPending = false;
+      }
     }
   }
 
@@ -344,6 +364,7 @@
       clearTimeout(nameCheckTimeout);
     }
 
+    nameCheckPending = target.value.trim() !== originalName;
     nameCheckTimeout = setTimeout(() => {
       checkNameUniqueness(target.value);
     }, 500);
@@ -451,11 +472,6 @@
       carouselImages.some((_, index) => !formData.appScreenshotAltTexts[index]?.trim())
     ) {
       error = 'Provide alt text for each app screenshot';
-      return;
-    }
-
-    if (isAppAsset && formData.appCategory.length > 2) {
-      error = 'Select at most two app categories';
       return;
     }
 
@@ -637,7 +653,12 @@
         );
       }
 
-      if (thumbnailUrl !== asset.thumbnailUrl) {
+      // asset.thumbnailUrl is undefined when there is no thumbnail while the
+      // local state normalizes to null, so compare against the same shape or
+      // every save of a thumbnail-less asset reports a phantom image change.
+      const thumbnailChanged = thumbnailUrl !== (asset.thumbnailUrl || null);
+
+      if (thumbnailChanged) {
         changedFields.push(isAppAsset ? 'app icon' : 'thumbnail');
         const oldUrls = asset.thumbnailUrl ? [{ url: asset.thumbnailUrl }] : [];
         const newUrls = thumbnailUrl ? [{ url: thumbnailUrl }] : [];
@@ -676,7 +697,7 @@
         asset_category: asset.category,
         asset_subcategory: asset.subcategory,
         fields_changed: changedFields,
-        has_thumbnail_change: thumbnailUrl !== asset.thumbnailUrl,
+        has_thumbnail_change: thumbnailChanged,
         has_secondary_change: !arraysEqual(asset.secondaryThumbnails || [], secondaryThumbnails),
         has_carousel_change: !arraysEqual(asset.carouselImages || [], carouselImages)
       });
@@ -703,8 +724,8 @@
         payload.appAvatarAltText = formData.appAvatarAltText;
         payload.paymentType = [...formData.paymentType];
         payload.visibility = formData.visibility;
-        payload.appCategory = [...formData.appCategory];
-        payload.creatorName = formData.creatorName;
+        // App category and creator name are read-only in Airtable, so they are
+        // shown for reference but never submitted.
         payload.creatorWebsite = formData.creatorWebsite;
         payload.creatorContactEmail = formData.creatorContactEmail;
         payload.appFeaturesOverview = [...formData.appFeaturesOverview];
@@ -846,7 +867,7 @@
             <span class="field-hint error">{nameError}</span>
           {:else if nameWarning}
             <span class="field-hint warning">{nameWarning}</span>
-          {:else if formData.name !== originalName && formData.name.trim()}
+          {:else if !nameCheckPending && formData.name !== originalName && formData.name.trim()}
             <span class="field-hint success">Name is available</span>
           {/if}
         {:else}
@@ -1052,6 +1073,8 @@
             class="form-control native-select native-select--multi"
             multiple
             size="8"
+            disabled
+            aria-describedby="appCategory-hint"
             onchange={handleCategoryChange}
           >
             {#each APP_CATEGORY_OPTIONS as option}
@@ -1060,7 +1083,10 @@
               </option>
             {/each}
           </select>
-          <span class="field-hint">{formData.appCategory.length} of 2 categories selected</span>
+          <span class="field-hint" id="appCategory-hint">
+            {formData.appCategory.length} of 2 categories selected. Categories are managed by the
+            Marketplace team — contact support to change them.
+          </span>
         </div>
 
         <div class="form-field">
@@ -1083,7 +1109,16 @@
         <div class="form-row">
           <div class="form-field">
             <Label for="creatorName">Creator Name</Label>
-            <Input id="creatorName" type="text" bind:value={formData.creatorName} />
+            <Input
+              id="creatorName"
+              type="text"
+              disabled
+              aria-describedby="creatorName-hint"
+              bind:value={formData.creatorName}
+            />
+            <span class="field-hint" id="creatorName-hint">
+              Taken from your creator profile. Edit it in Profile settings.
+            </span>
           </div>
           <div class="form-field">
             <Label for="creatorWebsite">Creator Webflow Account Email Override</Label>

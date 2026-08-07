@@ -1,0 +1,42 @@
+<evaluation>
+  <qa_pair>
+    <question>Before filtering a single-select field by value, which Airtable MCP tool must be used to obtain choice IDs?</question>
+    <answer>get_table_schema</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Which tool discovers interfaces and pages for a base?</question>
+    <answer>list_pages_for_base</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>What policy risk class applies to publishing an interface?</question>
+    <answer>R3</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Does possession of an Airtable PAT constitute approval to mutate a base?</question>
+    <answer>No</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Which documented MCP action creates an interface group?</question>
+    <answer>create_interface</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Can the documented MCP enable a draft automation?</question>
+    <answer>No</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>What must happen immediately after a supported Airtable mutation?</question>
+    <answer>Read back the changed surface and produce a receipt</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Which lane remains authoritative for routine Webflow Marketplace review decisions?</question>
+    <answer>The bounded Template Review MCP or App Review MCP</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>May an agent call an undocumented Airtable endpoint when a tool is missing?</question>
+    <answer>No</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>What is required before any browser UI mutation?</question>
+    <answer>An authenticated Airtable session, verified target, visible proposal, and explicit approval for the exact operation</answer>
+  </qa_pair>
+</evaluation>

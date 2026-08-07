@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { runFreshFontCustomCodePreflight } from './font-custom-code';
+import { runFreshCustomCodePreflight } from './font-custom-code';
 
 test('checks the current published HTML and blocks manual font stylesheet links', async () => {
-  const result = await runFreshFontCustomCodePreflight(
+  const result = await runFreshCustomCodePreflight(
     'https://manual-font-links.webflow.io/',
     {
       fetchImpl: async () =>
@@ -20,6 +20,28 @@ test('checks the current published HTML and blocks manual font stylesheet links'
   assert.equal(result.findings[0].policy, 'custom-code-font-loading');
 });
 
+test('checks the current published HTML and blocks JSON-LD schema markup', async () => {
+  const result = await runFreshCustomCodePreflight(
+    'https://schema-template.webflow.io/',
+    {
+      fetchImpl: async () =>
+        new Response(
+          `<html><head><script type="application/ld+json">{
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": "Webflow Template",
+            "description": "Included Figma File"
+          }</script></head></html>`,
+          { status: 200 }
+        )
+    }
+  );
+
+  assert.equal(result.passed, false);
+  assert.equal(result.findings.length, 1);
+  assert.equal(result.findings[0].policy, 'custom-code-schema-markup-not-allowed');
+});
+
 test('does not reuse an earlier clean result when the published head changes', async () => {
   let fetchCount = 0;
   const fetchImpl = async () => {
@@ -32,10 +54,10 @@ test('does not reuse an earlier clean result when the published head changes', a
     );
   };
 
-  const first = await runFreshFontCustomCodePreflight('https://fresh-check.webflow.io/', {
+  const first = await runFreshCustomCodePreflight('https://fresh-check.webflow.io/', {
     fetchImpl
   });
-  const second = await runFreshFontCustomCodePreflight('https://fresh-check.webflow.io/', {
+  const second = await runFreshCustomCodePreflight('https://fresh-check.webflow.io/', {
     fetchImpl
   });
 

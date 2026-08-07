@@ -29,7 +29,7 @@ test('the homepage opening uses immutable paper campaign art while preserving au
   assert.match(component, /aria-label="Choose a paper workflow stage"/);
   assert.match(component, /aria-pressed=\{activeStageId === stage\.id\}/);
   assert.match(component, /aria-live="polite"/);
-  assert.match(home, /media=\{paperFoldedHandoffMedia\}/);
+  assert.match(home, /media=\{paperOperatingRouteMedia\}/);
   assert.match(home, /Signal[\s\S]*?Decision[\s\S]*?Proof/);
   assert.match(studies, /alt: 'A tactile paper field/);
   assert.match(opening, /<picture class:performance-campaign-opening__fallback-suppressed/);

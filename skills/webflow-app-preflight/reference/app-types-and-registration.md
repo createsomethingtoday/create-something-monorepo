@@ -43,12 +43,16 @@ Start from the official CLI so structure, dependencies, and config are correct:
 
 ```bash
 npm install -g @webflow/webflow-cli       # install the CLI
-webflow extension list                    # available templates: default, react, typescript-alt
-webflow extension init my-app react       # scaffold a Designer Extension from a template
+webflow extension init my-app react       # scaffold a Designer Extension — run init and pick a template
+                                          # (templates cover frameworks like React and TypeScript)
 webflow extension serve                   # local dev server, default port 1337, live inside the Designer
 webflow extension serve 3000              # use a different port
 webflow extension bundle                  # produce bundle.zip for upload
 ```
+
+(Command set verified against `@webflow/webflow-cli` 2.3.0 and the Designer Extension build guide, 2026-08-03.)
+
+The scaffold writes a `webflow.json` manifest at the project root. Three fields are required — `name` (how the extension appears in Webflow), `apiVersion` (use `"2"`), and `publicDir` (the build output directory, default `dist`). The resulting `bundle.zip` **must not exceed 5MB** or the upload fails before review starts.
 
 For Designer Extensions, you upload the bundled **client-side source code** through the App version manager — reviewers read that source, so keep it readable (see `checklists/governance-pitfalls.md`).
 

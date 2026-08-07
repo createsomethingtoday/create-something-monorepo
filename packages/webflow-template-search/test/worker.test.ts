@@ -2385,6 +2385,68 @@ describe('webflow-template-search worker', () => {
     }
   });
 
+  it('returns every template for an exact creator-name search', async () => {
+    const brixSibling = {
+      ...PUBLISHED_ASSETS[2],
+      id: 'recBrixSibling',
+      fields: {
+        ...PUBLISHED_ASSETS[2].fields,
+        Name: 'Brix Sibling',
+        'ℹ️Description (Long).html': '<p>Landing page for software teams with clean charts.</p>',
+        '🥞CMS Slug (formula)': 'brix-sibling-website-template',
+        '🎨Creator': ['creator-brix'],
+        '🎨Creator Name': 'BRIX Templates',
+        '🔗Listing URL': 'https://webflow.com/templates/html/brix-sibling-website-template',
+        '🔗Preview Site URL': 'https://brix-sibling.example.com',
+        '🔗Website URL': 'https://webflow.com/templates/html/brix-sibling-website-template',
+      },
+    };
+    const brixTextMatch = {
+      ...PUBLISHED_ASSETS[0],
+      fields: {
+        ...PUBLISHED_ASSETS[0].fields,
+        'ℹ️Description (Long).html': '<p>BRIX Templates automation for AI teams and agent builders.</p>',
+      },
+    };
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [brixTextMatch, brixSibling],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      creators: LOOKUPS.creators,
+    });
+    const { env, close } = createTestEnv();
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      const response = await callWorker(
+        new Request('https://templates.test/api/templates/search?query=bRiX%20tEmPlAtEs&page_size=10'),
+        env,
+      );
+      const payload = (await response.json()) as {
+        items: Array<{ name: string; creator_name: string | null }>;
+        pagination: { total_items: number };
+      };
+
+      expect(payload.pagination.total_items).toBe(2);
+      expect(payload.items).toEqual([
+        expect.objectContaining({ name: 'Agentflow', creator_name: 'BRIX Templates' }),
+        expect.objectContaining({ name: 'Brix Sibling', creator_name: 'BRIX Templates' }),
+      ]);
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
   it('refuses to sweep the live index when the rebuild snapshot is implausibly small', async () => {
     const fetchMock = installAirtableFetchMock({
       publishedAssets: [PUBLISHED_ASSETS[0]],

@@ -18,7 +18,7 @@
   import PublicSubstrateCanvas from '$lib/components/PublicSubstrateCanvas.svelte';
   import { templateReviewFieldReport } from '$lib/data/fieldReports';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
-  import { paperFoldedHandoffMedia } from '$lib/data/performanceMedia';
+  import { paperOperatingRouteMedia } from '$lib/data/performanceMedia';
 
   const services = [
     {
@@ -59,7 +59,7 @@
     {
       question: 'What does CREATE SOMETHING build?',
       answer:
-        'CREATE SOMETHING builds AI workflow systems that make one business workflow safe to delegate. Signals show what changed. Decisions reach the right person or agent. Proof records what happened.'
+        'CREATE SOMETHING builds operating systems for AI work in business operations. Each system makes one business workflow safe to delegate. Signals show what changed. Decisions reach the right person or agent. Proof records what happened.'
     },
     {
       question: 'What makes a workflow reliable?',
@@ -210,9 +210,9 @@
 </script>
 
 <SEO
-  title="AI Workflow Systems | CREATE SOMETHING .agency"
-  description="CREATE SOMETHING builds AI workflow systems for business operations. One messy handoff becomes a workflow with named approvals, clear stop conditions, and an audit trail."
-  keywords="AI workflow systems, workflow automation consultant, governed AI workflows, workflow control layer, workflow mapping, workflow pilot, production automation, technical operators"
+  title="AI Operating Systems | CREATE SOMETHING .agency"
+  description="CREATE SOMETHING maps one business workflow, marks what can run, names where people decide, and attaches proof to every important action."
+  keywords="AI operating systems, AI workflow systems, workflow automation consultant, governed AI workflows, workflow control layer, workflow mapping, workflow pilot, production automation, technical operators"
   ogImage="/og-image.png"
   propertyName="agency"
   {services}
@@ -221,10 +221,10 @@
 
 <div class="home-pilot property-performance">
   <PerformanceCampaignOpening
-    eyebrow={agencyCoreMessaging.categoryLabel}
-    title="Make one workflow ready to delegate."
-    lede="Choose a handoff your team still checks by hand. We map what can run, when a person steps in, what must stop, and what record proves the result."
-    media={paperFoldedHandoffMedia}
+    eyebrow="Operating systems for AI work"
+    title="Put the work on paper before you put AI to work."
+    lede="We map one workflow, mark what can run, name where people decide, and attach proof to every important action. Then we build the system with OpenAI and Cloudflare."
+    media={paperOperatingRouteMedia}
     proof={heroProofItems}
     mode="paper"
     density="compact"
@@ -234,6 +234,20 @@
       <Button href="/proof/marketplace-workflow" variant="secondary"
         >See the Marketplace workflow</Button
       >
+    {/snippet}
+    {#snippet ornament()}
+      <aside class="home-source-imprint" aria-label="Operating route paper imprint">
+        <header>
+          <span>CS / OS-01</span>
+          <strong>Operating route</strong>
+        </header>
+        <ol>
+          <li><i class="home-source-imprint__source"></i><span>Source sheet</span></li>
+          <li><i class="home-source-imprint__decision"></i><span>Decision boundary</span></li>
+          <li><i class="home-source-imprint__proof"></i><span>Proof attached</span></li>
+        </ol>
+        <small>Map one handoff. Keep the decision. Leave the receipt.</small>
+      </aside>
     {/snippet}
   </PerformanceCampaignOpening>
 
@@ -332,16 +346,18 @@
           <Button href={agencyCoreMessaging.selfMapHref}>{agencyCoreMessaging.selfMapLabel}</Button>
           <p>
             See the <a href="/services">service path</a>, the <a href="/partners">tools we use</a>,
-            or the <a href="/products">evidence</a>.
+            the <a href="/products">product surfaces</a>, or the
+            <a href="/field-reports/template-review">Marketplace field report</a>.
           </p>
         </div>
         <aside class="ownership-callout">
           <span>How we build</span>
-          <h3>Built with OpenAI Codex. Designed to remain yours.</h3>
+          <h3>Built with OpenAI and Cloudflare. Designed to remain yours.</h3>
           <p>
-            We use Codex to map, build, and maintain the workflow. Your team keeps the data,
-            connections, approval rules, tests, operating history, and recovery path. If the model
-            or agent environment changes, the system does not have to start over.
+            CREATE SOMETHING owns the system. OpenAI provides intelligence. Cloudflare provides
+            infrastructure. We use OpenAI Codex to map, build, and maintain the workflow. Your
+            team keeps the map, rules, history, and recovery path. If the model or agent environment
+            changes, the system does not have to start over.
           </p>
           <div>
             <a href="/stack">See what you keep</a>
@@ -679,6 +695,91 @@
     text-underline-offset: 0.18em;
   }
 
+  .home-source-imprint {
+    position: absolute;
+    top: clamp(14rem, 30vh, 20rem);
+    right: clamp(2rem, 12vw, 12rem);
+    display: grid;
+    gap: 0.68rem;
+    width: clamp(13.5rem, 21vw, 18rem);
+    padding: 0.72rem 0.78rem 0.8rem;
+    border: 1px solid rgba(9, 9, 9, 0.8);
+    background: rgba(255, 255, 255, 0.82);
+    box-shadow: 0 14px 30px rgba(9, 9, 9, 0.14);
+    color: var(--color-performance-ink, #090909);
+    font-family: var(--font-performance-mono);
+  }
+
+  .home-source-imprint header,
+  .home-source-imprint ol {
+    display: grid;
+    gap: 0.42rem;
+    margin: 0;
+  }
+
+  .home-source-imprint header {
+    padding-bottom: 0.62rem;
+    border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
+  }
+
+  .home-source-imprint header span,
+  .home-source-imprint small {
+    color: var(--color-performance-muted, #5e6268);
+    font-size: 0.62rem;
+    font-weight: var(--font-performance-semibold);
+    line-height: 1.3;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+
+  .home-source-imprint header strong {
+    font-size: 0.76rem;
+    font-weight: var(--font-performance-semibold);
+    letter-spacing: 0;
+    line-height: 1.2;
+    text-transform: uppercase;
+  }
+
+  .home-source-imprint li {
+    display: grid;
+    grid-template-columns: 0.62rem minmax(0, 1fr);
+    gap: 0.48rem;
+    align-items: center;
+    list-style: none;
+    color: var(--color-performance-ink, #090909);
+    font-size: 0.64rem;
+    font-weight: var(--font-performance-medium);
+    line-height: 1.2;
+    text-transform: uppercase;
+  }
+
+  .home-source-imprint i {
+    display: block;
+    width: 0.5rem;
+    height: 0.5rem;
+    border: 1px solid rgba(9, 9, 9, 0.68);
+  }
+
+  .home-source-imprint__source {
+    background: #2558c4;
+  }
+
+  .home-source-imprint__decision {
+    background: #b07408;
+  }
+
+  .home-source-imprint__proof {
+    background: #708426;
+  }
+
+  .home-source-imprint small {
+    display: block;
+    padding-top: 0.62rem;
+    border-top: 1px solid var(--color-performance-line, #d7d7d2);
+    line-height: 1.45;
+    text-transform: none;
+  }
+
   @media (max-width: 980px) {
     .boundary-study {
       grid-template-columns: minmax(12rem, 0.58fr) minmax(0, 1.42fr);
@@ -690,6 +791,10 @@
   }
 
   @media (max-width: 640px) {
+    .home-source-imprint {
+      display: none;
+    }
+
     .boundary-study__outcomes {
       grid-template-columns: 1fr;
     }

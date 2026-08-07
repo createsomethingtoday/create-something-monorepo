@@ -9,6 +9,7 @@ describe('clear navigation mobile drawer layering', () => {
 		expect(source).toContain('.nav-clear {');
 		expect(source).toContain('position: relative;');
 		expect(source).toContain('z-index: var(--z-performance-fixed, 40);');
+		expect(source).toMatch(/\.nav-clear\.nav-fixed\s*\{[\s\S]*?position:\s*fixed;/);
 		expect(source).toContain('.nav-clear .nav-mobile-menu {');
 		expect(source).toContain('position: fixed;');
 	});

@@ -55,6 +55,7 @@ Automation sources used for this historical matrix:
 | Section | Checklist Item | Coverage | MCP Signal |
 |---|---|---|---|
 | Custom Code | No custom code except approved cases | Partial | Script/style tag and external library detection; not full project settings coverage |
+| Custom Code | No JSON-LD/schema markup in new submissions | Auto | Published-site crawl and final fresh submission validation block `script[type="application/ld+json"]` under `custom-code-schema-markup-not-allowed` |
 | Custom Code | Font smoothing only allowed project code | Partial | CSS snippet detection possible |
 | Custom Code | No-index on Licenses/Changelog only | Partial | Per-page robots tag checks |
 | Custom Code | SVG usage requires Instructions page | Partial | SVG presence + instructions page presence |

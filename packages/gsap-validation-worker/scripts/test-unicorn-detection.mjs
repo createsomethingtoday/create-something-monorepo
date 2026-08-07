@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-import { findProhibitedFontCustomCode } from '../src/font-custom-code-policy.js';
+import { findProhibitedMarketplaceCustomCode } from '../src/font-custom-code-policy.js';
 
 const source = fs.readFileSync(new URL('../src/worker.js', import.meta.url), 'utf8');
 const start = source.indexOf('var IX2_REJECTION_MESSAGE');
@@ -15,7 +15,7 @@ const sandbox = {
   console,
   Set,
   URL,
-  findProhibitedFontCustomCode,
+  findProhibitedMarketplaceCustomCode,
   __name: (target) => target
 };
 
@@ -107,6 +107,28 @@ assert.equal(
   lottieResult.details.flaggedCode.some((issue) => issue.policy === 'ix2-rejected'),
   false,
   'expected Webflow Lottie element markers to be allowed'
+);
+
+const schemaMarkupResult = sandbox.validateGsapUsage(
+  `<!doctype html><html><head>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "Webflow Template",
+        "description": "Included Figma File"
+      }
+    </script>
+  </head><body></body></html>`,
+  'https://schema-template.webflow.io/'
+);
+
+assert.equal(schemaMarkupResult.passed, false);
+assert.ok(
+  schemaMarkupResult.details.flaggedCode.some(
+    (issue) => issue.policy === 'custom-code-schema-markup-not-allowed'
+  ),
+  'expected JSON-LD schema markup to block new Marketplace submissions'
 );
 
 const lottieRuntimeDetection = sandbox.detectIx2Interactions(`

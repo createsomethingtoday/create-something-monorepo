@@ -3,10 +3,33 @@ import {
 	checkRateLimit,
 	consumeSessionHandoff,
 	createSessionHandoff,
+	getSession,
 	refreshSession,
+	setSession,
 	shouldRefreshSession,
 	type SessionData
 } from './kv';
+
+/** Minimal KV double: stores raw strings, parses on `'json'` reads like real KV. */
+function createKv(initial: Record<string, string> = {}) {
+	const store = new Map<string, string>(Object.entries(initial));
+
+	const kv = {
+		get: vi.fn(async (key: string, type?: 'json' | 'text') => {
+			const value = store.get(key) ?? null;
+			if (value === null) return null;
+			return type === 'json' ? JSON.parse(value) : value;
+		}),
+		put: vi.fn(async (key: string, value: string) => {
+			store.set(key, value);
+		}),
+		delete: vi.fn(async (key: string) => {
+			store.delete(key);
+		})
+	} as unknown as KVNamespace;
+
+	return { kv, store };
+}
 
 describe('checkRateLimit', () => {
 	it('fails closed by default when KV operations throw', async () => {
@@ -56,6 +79,63 @@ describe('checkRateLimit', () => {
 		expect(second.allowed).toBe(false);
 		expect(second.remaining).toBe(0);
 		expect(second.retryAfter).toBeGreaterThan(0);
+	});
+});
+
+describe('getSession', () => {
+	it('returns a well-formed session', async () => {
+		const { kv } = createKv();
+		await setSession(kv, 'session_123', 'creator@example.com');
+
+		const session = await getSession(kv, 'session_123');
+
+		expect(session).toMatchObject({ email: 'creator@example.com' });
+		expect(typeof session?.createdAt).toBe('number');
+	});
+
+	it('returns null when the key is missing', async () => {
+		const { kv } = createKv();
+
+		expect(await getSession(kv, 'session_missing')).toBeNull();
+	});
+
+	it('returns null for an empty session token without touching KV', async () => {
+		const { kv } = createKv();
+
+		expect(await getSession(kv, '')).toBeNull();
+		expect(kv.get).not.toHaveBeenCalled();
+	});
+
+	// The SESSIONS namespace also holds rate-limit counters and other non-session
+	// values. Anything that is not a session must not authenticate a request.
+	it.each([
+		['a bare number (rate-limit counter)', '3'],
+		['a bare string', '"creator@example.com"'],
+		['an array', '[{"email":"creator@example.com"}]'],
+		['an object with no email', '{"createdAt":123}'],
+		['an object with a non-string email', '{"email":42,"createdAt":123}'],
+		['an object with an empty email', '{"email":"","createdAt":123}']
+	])('returns null for %s', async (_label, stored) => {
+		const { kv } = createKv({ 'session_forged': stored });
+
+		expect(await getSession(kv, 'session_forged')).toBeNull();
+	});
+
+	it('rejects a real rate-limit counter key used as a session token', async () => {
+		const { kv, store } = createKv();
+
+		// checkRateLimit writes the counter itself — no hand-written key shape.
+		const rateLimitKey = 'auth:login:203.0.113.7';
+		await checkRateLimit(kv, rateLimitKey, 5, 60);
+
+		const counterKey = Array.from(store.keys()).find((key) =>
+			key.startsWith(`ratelimit:${rateLimitKey}:`)
+		);
+		expect(counterKey).toBeDefined();
+		expect(store.get(counterKey as string)).toBe('1');
+
+		// An attacker who guesses this key must not get an authenticated session.
+		expect(await getSession(kv, counterKey as string)).toBeNull();
 	});
 });
 

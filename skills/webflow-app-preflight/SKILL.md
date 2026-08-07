@@ -1,6 +1,6 @@
 ---
 name: webflow-app-preflight
-description: Build or update a Webflow Marketplace App before review findings are issued. Use when scaffolding, developing, or preparing a Webflow App (Designer Extension, Data Client, or Hybrid) for Marketplace submission. Steers toward quality and away from the patterns that most often trigger rejection or a security-review flag. When exact review findings already exist, use webflow-app-review-remediation instead.
+description: Build or update a Webflow Marketplace App before review findings are issued. Use when scaffolding, developing, or getting a Webflow App (Designer Extension, Data Client, or Hybrid) ready for Marketplace submission — including OAuth scopes, custom code and scripts shipped to customer sites, private App and beta launch questions, and the pre-submission quality gate. Steers toward quality and away from the patterns that most often trigger rejection or a security-review flag. When exact review findings already exist, use webflow-app-review-remediation instead.
 ---
 
 # Preparing a Webflow Marketplace App for Review
@@ -43,13 +43,14 @@ Start from the official CLI. It wires up the correct project structure, dependen
 # Install the CLI
 npm install -g @webflow/webflow-cli
 
-# Scaffold a Designer Extension (templates: default, react, typescript-alt)
+# Scaffold a Designer Extension — run init and pick a template
+# (templates cover frameworks like React and TypeScript)
 webflow extension init my-app react
 
 # Run locally inside the Designer (default port 1337; pass a port to override)
 webflow extension serve
 
-# Produce bundle.zip for upload when you're ready
+# Produce bundle.zip for upload when you're ready (bundle must not exceed 5MB)
 webflow extension bundle
 ```
 
@@ -69,25 +70,14 @@ This is where reviews are won or lost. Follow these while writing code, not afte
 
 ### Backend and API surface (inspectable by calling it, not by reading it)
 
-Your bundle can be read. Your backend can't — reviewers verify it by calling it and by asking you to evidence it, so treat each item below as something you must be able to demonstrate on a review site.
+Your bundle can be read. Your backend can't — reviewers verify it by calling it and by asking you to evidence it. Start from one premise: **a Designer Extension is client code running on someone else's machine, so every value it sends is attacker-controlled** — including identifiers that feel internal. A Webflow site ID is visible in published page source.
 
-Start from one premise: **a Designer Extension is client code running on someone else's machine, so every value it sends is attacker-controlled** — including identifiers that feel internal. A Webflow site ID is visible in published page source.
+Four exemplar controls set the tone. The authoritative item-by-item set is the **Backend & API surface** section of `checklists/pre-submission-quality-gate.md` — run it end to end; each item is something you must be able to demonstrate on a review site.
 
-- **Authenticate every endpoint, and never authorize on an identifier the client supplied.** A site ID identifies a site; it does not authenticate or authorize a caller. Resolve identity server-side from the Webflow ID token and bind the resolved installation, user, and site to the record being touched.
-- **Enforce object-level authorization.** An identity authorized for one site or tenant must not read or write another's records. A valid caller requesting someone else's resource should get a non-success, non-enumerating response with no data.
-- **Never return a reusable credential to the extension.** Third-party API keys, access tokens, and connection secrets stay server-side. Return connection status or a masked identifier instead. A credential reachable by browser JavaScript is not a secret — and anything that can change a config value can redirect it.
-- **Resolve outbound destinations from a server-side allowlist, HTTPS only.** Don't construct request URLs from user-supplied hosts. Free-form destination input plus a credential header is how keys reach hosts you don't control.
-- **CORS is defense-in-depth, not authorization.** `Access-Control-Allow-Origin: *` on an endpoint that returns anything sensitive means any site can read the response from a user's browser; with `Allow-Credentials: true` it's worse. Allowlist your production origins — and remember a non-browser client ignores CORS entirely, so it can never be the control that keeps callers out.
-- **Encrypt credentials at rest, scoped per tenant.** Decrypted values live server-side, for the duration of the call.
-- **Don't derive identity or entitlement from browser storage.** `localStorage` is user-editable, so a token or user record kept there can be modified locally. Anything gating a privileged operation is verified server-side on every request.
-- **Serialize, never interpolate.** Values flowing into generated JavaScript, markup, or custom attributes must be JSON-serialized and format-validated. String interpolation into generated code is stored injection.
-- **Validate uploads server-side.** Enforce type, size, and count limits; verify file signatures and archive contents rather than trusting client-side checks or file extensions.
-- **Attribute actions to the authenticated user.** No hardcoded owner or single service identity standing in for real users — it breaks auditability and usually means tenant isolation was never tested.
-- **Ship production infrastructure.** No staging, localhost, or tunnel hostnames anywhere in the artifact, and the installation URL you declare must be a production host. Add a build rule that fails when they appear.
-- **Audit your dependencies.** Resolve High and Critical advisories, or supply a function-level reachability analysis with a time-bound remediation plan. Be able to produce the production manifest and lockfile on request.
-- **Bind the OAuth callback to the request that started it.** Carry a single-use `state` value, store it server-side against the pending authorization, and reject callbacks whose `state` is missing, unknown, expired, or already used. Add PKCE where your OAuth model supports it. An exchange function that accepts only an authorization code reads to a reviewer as having no CSRF protection.
-- **Ship client code only in the client bundle.** No server handlers, database schema, JWT logic, or backend dependencies in the artifact the browser downloads. If a source map reveals your backend internals, the defect is that the backend was bundled — the map only made it visible. Fix the bundle, don't hide the map; review needs the map.
-- **Keep personal data out of logs.** Production logs should not carry contact payloads, emails, names, phone numbers, credentials, API URLs, or tenant identifiers you don't need. Redact at the logging boundary so a new call site can't reintroduce it.
+- **Authenticate every endpoint, and never authorize on an identifier the client supplied.** Resolve identity server-side from the Webflow ID token and bind the resolved installation, user, and site to the record being touched.
+- **Enforce object-level authorization.** An identity authorized for one site or tenant must not read or write another's records; a valid caller requesting someone else's resource gets a non-enumerating failure with no data.
+- **Keep credentials server-side, and treat CORS as defense-in-depth, not authorization.** Never return a reusable credential to the extension; resolve outbound destinations from a server-side allowlist, HTTPS only. A non-browser client ignores CORS entirely, so it can never be the control that keeps callers out.
+- **Bind the OAuth callback to the request that started it** with a single-use, server-stored `state`, rejecting callbacks whose `state` is missing, unknown, expired, or already used. In Webflow's OAuth flow the `state` check is your CSRF control — PKCE is not part of Webflow's documented flow; use PKCE on any third-party OAuth flows your app performs that support it.
 
 ### Consent and lifecycle (easy to forget, always noticed)
 
@@ -128,7 +118,7 @@ See `reference/listing-and-submission.md` for the full submission checklist.
 
 ## Phase 5 — Pre-submission quality gate
 
-Run `checklists/pre-submission-quality-gate.md` end to end. Every item must pass. Then review `checklists/governance-pitfalls.md` — these are the specific, real-world patterns that most often cause a rejection or a security-review escalation. If any apply, fix before submitting.
+Run `checklists/pre-submission-quality-gate.md` end to end. Every item must pass. The gate tags items `[control]` where a check is a security or engineering control rather than verbatim published Webflow policy — keep that distinction when reporting findings. Then review `checklists/governance-pitfalls.md` — these are the specific, real-world patterns that most often cause a rejection or a security-review escalation. If any apply, fix before submitting.
 
 Only submit when:
 
@@ -144,7 +134,7 @@ Submit through the form at <https://developers.webflow.com/submit>. Reviews take
 
 Measured failure modes from an unaided review of the same fixture app. Each sounds reasonable and is confidently wrong:
 
-- ❌ "Add exponential backoff and retry on the 401." → A persistent 401 on a previously valid token is **revocation**. Stop calling; don't retry past it.
+- ❌ "Add exponential backoff and retry on the 401." → A persistent 401 on a previously valid token is **revocation**. Stop calling; don't retry past it. (429s and transient 5xx are the opposite case — back off and retry those. It's specifically the persistent 401 on a previously valid token that means stop.)
 - ❌ "Drop the extra scopes on uninstall" / "remove that field." → You must **retain** `custom_code:write` + `sites:write`/`pages:write`, or cleanup is impossible.
 - ❌ "Webflow removes injected scripts automatically on uninstall." → It does not. Removal is the App's responsibility, at site _and_ page level.
 - ❌ "The endpoint is safe because CORS restricts which origins can call it." → CORS is a browser policy, not authorization. A non-browser client ignores it. Authenticate and authorize server-side.

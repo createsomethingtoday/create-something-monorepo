@@ -1,0 +1,56 @@
+<!--
+  Template view beacon — paste into Site Settings → Custom Code → Footer Code
+  of the "Template Marketplace" Webflow site (site-wide), then publish.
+
+  Replaces the Segment `Template Marketplace Viewed` event decommissioned on
+  2026-07-21. Fires on every /templates page: detail pages report their slug,
+  browse/search pages report the synthetic slug "marketplace-browse".
+
+  Transport note: webflow.com's enforced Content-Security-Policy allowlists
+  connect-src, which blocks sendBeacon/fetch to the worker. The policy sets no
+  script-src, so views are delivered as a <script src> GET instead.
+
+  Deployed endpoint: https://webflow-template-views.createsomething.workers.dev
+-->
+<script>
+  (function () {
+    var ENDPOINT = 'https://webflow-template-views.createsomething.workers.dev/t.js';
+    try {
+      var path = location.pathname;
+      if (path.indexOf('/templates') !== 0) return;
+
+      var match = path.match(/^\/templates\/html\/([a-z0-9-]+)\/?$/);
+      var slug = match ? match[1] : 'marketplace-browse';
+
+      // First view of this template in this browser session → counts toward
+      // the "sessions" (unique-ish viewers) rollup.
+      var first = 0;
+      try {
+        var key = 'wf_tv_' + slug;
+        if (!sessionStorage.getItem(key)) {
+          first = 1;
+          sessionStorage.setItem(key, '1');
+        }
+      } catch (e) {
+        /* sessionStorage unavailable — still count the view */
+      }
+
+      var qs =
+        '?s=' + encodeURIComponent(slug) +
+        '&p=' + encodeURIComponent((path + location.search).slice(0, 400)) +
+        '&r=' + encodeURIComponent(document.referrer.slice(0, 300)) +
+        '&u=' + first +
+        '&_=' + Date.now();
+
+      var el = document.createElement('script');
+      el.async = true;
+      el.src = ENDPOINT + qs;
+      el.onload = el.onerror = function () {
+        if (el.parentNode) el.parentNode.removeChild(el);
+      };
+      (document.head || document.documentElement).appendChild(el);
+    } catch (e) {
+      /* never break the page for analytics */
+    }
+  })();
+</script>
