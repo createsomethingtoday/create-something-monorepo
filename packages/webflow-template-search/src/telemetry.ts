@@ -95,6 +95,10 @@ const AE_BLOB_PROPERTIES = [
   'attribution_source_component',
   'cta_location',
   'purchase_type',
+  // blob10: chat-launcher holdout arm ('visible' | 'hidden'), stamped by the
+  // components so per-arm funnels are aggregate counts. Append-only column —
+  // never reorder the entries above.
+  'holdout_arm',
 ] as const;
 
 const MAX_AE_BLOB_LENGTH = 200;

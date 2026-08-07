@@ -88,5 +88,11 @@ export default declareComponent(TemplateChat, {
       tooltip:
         'Emit marketplace analytics (wf_analytics / Segment / Amplitude) and write conversion attribution for template clicks.',
     }),
+    holdoutPercent: props.Number({
+      name: 'Holdout Percent',
+      defaultValue: 0,
+      tooltip:
+        'Conversion experiment: share of devices (0–100) that get the launcher hidden. 0 = experiment off, everyone sees the launcher. Assignments are sticky per device and both arms emit holdout_assigned analytics. Floating variant only.',
+    }),
   },
 });

@@ -3,6 +3,7 @@ import { UiIcon } from '../primitives/UiIcon';
 import { trackMarketplaceEvent } from '../marketplace/analytics';
 import { useMarketplaceComponentErrorTracking } from '../marketplace/MarketplaceComponentErrorBoundary';
 import { getSafeAnalyticsOverrides, writeTemplateAttribution } from '../marketplace/templateAttribution';
+import { getStoredChatHoldoutArm, resolveChatHoldoutArm, type ChatHoldoutArm } from './templateChatHoldout';
 import {
   fetchAuthorizedAgentRequest,
   MAX_REQUEST_MESSAGE_CHARS,
@@ -159,6 +160,12 @@ export interface TemplateChatProps {
   locale?: string;
   /** ISO 4217 code for template prices. */
   currency?: string;
+  /**
+   * Share of devices (0–100) assigned to a hidden-launcher holdout arm for
+   * the conversion experiment. 0 disables the experiment (everyone sees the
+   * launcher). Floating variant only — inline placements are exempt.
+   */
+  holdoutPercent?: number;
 }
 
 // ── Layout and interaction constants ────────────────────────────────────────
@@ -203,7 +210,7 @@ function renderMessageText(content: string): React.ReactNode {
   return parts.map((part, index) => (index % 2 === 1 ? <strong key={index}>{part}</strong> : part));
 }
 
-export const TemplateChat: React.FC<TemplateChatProps> = ({
+const TemplateChatSurface: React.FC<TemplateChatProps> = ({
   apiBase = 'https://templates.webflow.com/templates-api',
   turnstileSiteKey = '0x4AAAAAADzmfUVSu5s1hvW5',
   title = 'Template finder',
@@ -398,6 +405,11 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
   const messageCountRef = useRef(messages.length);
   messageCountRef.current = messages.length;
 
+  // Read once: the holdout wrapper persists the arm before this surface
+  // renders, so every chat event carries the arm it was measured under.
+  const holdoutArmRef = useRef<ChatHoldoutArm | null>(null);
+  if (holdoutArmRef.current === null) holdoutArmRef.current = getStoredChatHoldoutArm();
+
   const track = useCallback<ChatTrack>(
     (scope, data = {}) => {
       trackMarketplaceEvent(
@@ -409,6 +421,7 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
           chat_variant: variant,
           chat_surface: immersiveRef.current ? 'immersive' : 'compact',
           chat_message_count: messageCountRef.current,
+          ...(holdoutArmRef.current ? { holdout_arm: holdoutArmRef.current } : {}),
           ...data,
         },
         enableAnalytics,
@@ -1428,6 +1441,43 @@ export const TemplateChat: React.FC<TemplateChatProps> = ({
       </div>
     </>
   );
+};
+
+/**
+ * Public entry: resolves the launcher holdout before any chat state exists.
+ * The hidden arm renders nothing at all — no persistence reads, no overlay
+ * pollers, no session plumbing — so the control group experiences a page
+ * without the feature, not a muted version of it. Both arms emit
+ * `holdout_assigned`; funnels compare aggregate counts per arm.
+ */
+export const TemplateChat: React.FC<TemplateChatProps> = (props) => {
+  const { holdoutPercent = 0, variant = 'floating', enableAnalytics = true } = props;
+  // Inline placements are deliberate page sections; hiding them would leave a
+  // visibly broken layout. The experiment targets the floating launcher.
+  const holdoutActive = variant !== 'inline' && holdoutPercent > 0;
+  const [arm] = useState<ChatHoldoutArm>(() =>
+    holdoutActive ? resolveChatHoldoutArm(holdoutPercent) : 'visible',
+  );
+
+  const assignmentSentRef = useRef(false);
+  useEffect(() => {
+    if (!holdoutActive || assignmentSentRef.current) return;
+    assignmentSentRef.current = true;
+    trackMarketplaceEvent(
+      'Code Component Event',
+      {
+        ...getSafeAnalyticsOverrides(),
+        component: 'TemplateChat',
+        scope: 'holdout_assigned',
+        holdout_arm: arm,
+        holdout_percent: holdoutPercent,
+      },
+      enableAnalytics,
+    );
+  }, [arm, enableAnalytics, holdoutActive, holdoutPercent]);
+
+  if (arm === 'hidden') return null;
+  return <TemplateChatSurface {...props} />;
 };
 
 export default TemplateChat;
