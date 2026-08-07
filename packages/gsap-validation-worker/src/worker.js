@@ -7,7 +7,7 @@ var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require
   throw Error('Dynamic require of "' + x + '" is not supported');
 });
 
-import { findProhibitedFontCustomCode } from "./font-custom-code-policy.js";
+import { findProhibitedMarketplaceCustomCode } from "./font-custom-code-policy.js";
 
 // cloudflare-worker/lib/shared-validator.js
 var IX2_REJECTION_MESSAGE = "Legacy Webflow IX2 interactions detected. As of May 1, 2026, Marketplace templates submitted with IX2 interactions are rejected. Rebuild interactions with Webflow Interactions powered by GSAP (IX3), publish again, and rerun validation.";
@@ -584,12 +584,12 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
     securityRisks: []
     // Scripts that pose security risks
   };
-  const fontCustomCodeFindings = findProhibitedFontCustomCode(html);
-  fontCustomCodeFindings.forEach((finding, index) => {
+  const prohibitedCustomCodeFindings = findProhibitedMarketplaceCustomCode(html);
+  prohibitedCustomCodeFindings.forEach((finding, index) => {
     results.flaggedCode.push({
-      scriptIndex: `font-${index}`,
+      scriptIndex: `policy-${index}`,
       message: finding.message,
-      reason: 'Template fonts must be configured through Webflow Fonts instead of custom code.',
+      reason: 'The published site contains custom code that is not allowed in new Marketplace template submissions.',
       policy: finding.policy,
       flaggedCode: [`${finding.kind}: ${finding.source}`]
     });
@@ -649,10 +649,8 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
     }
     const isSchemaJsonLd = /"@context"\s*:\s*"https?:\/\/(www\.)?schema\.org"/.test(script) && /"@type"\s*:/.test(script);
     if (isSchemaJsonLd) {
-      results.allowedCustomCode.push({
-        scriptIndex: index,
-        message: "Schema.org JSON-LD structured data (allowed)"
-      });
+      // The shared raw-HTML policy already recorded the blocking finding.
+      // Stop here so valid JSON-LD does not also receive a generic JS error.
       return;
     }
     if (isValidatorReviewBridgeScript(script)) {

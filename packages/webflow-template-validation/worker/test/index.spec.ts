@@ -117,7 +117,7 @@ async function sha256ForTest(value: string) {
 		.join('');
 }
 
-describe('Custom code font policy', () => {
+describe('Custom code policy', () => {
 	it('returns a blocking validation issue for fonts loaded through published head code', async () => {
 		vi.mocked(fetchHTML).mockResolvedValue({
 			html: `<!doctype html><html><head>
@@ -152,6 +152,53 @@ describe('Custom code font policy', () => {
 		expect(payload.analysis.customCode.issues).toEqual([
 			expect.objectContaining({
 				id: 'custom-code-font-loading',
+				category: 'Custom Code & Site Settings',
+				severity: 'error'
+			})
+		]);
+	});
+
+	it('blocks published JSON-LD schema markup for new Marketplace submissions', async () => {
+		vi.mocked(fetchHTML).mockResolvedValue({
+			html: `<!doctype html><html><head>
+				<script type="application/ld+json">
+					{
+						"@context": "https://schema.org",
+						"@type": "WebSite",
+						"name": "Webflow Template",
+						"description": "Included Figma File"
+					}
+				</script>
+			</head><body></body></html>`,
+			status: 200,
+			headers: { 'content-type': 'text/html' },
+			size: 0,
+			loadTime: 0
+		});
+
+		const response = await worker.fetch(
+			new Request('https://validation-worker.createsomething.workers.dev/validate', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					siteUrl: 'https://schema-template.webflow.io',
+					designerData: { components: [], styles: [], pages: [], assets: [] },
+					options: {
+						skipAssets: true,
+						skipContent: true,
+						skipAccessibility: true
+					}
+				})
+			}),
+			{},
+			createExecutionContext()
+		);
+
+		expect(response.status).toBe(200);
+		const payload = await response.json() as any;
+		expect(payload.analysis.customCode.issues).toEqual([
+			expect.objectContaining({
+				id: 'custom-code-schema-markup-not-allowed',
 				category: 'Custom Code & Site Settings',
 				severity: 'error'
 			})

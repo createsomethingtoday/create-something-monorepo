@@ -1,19 +1,21 @@
 import {
-	findProhibitedFontCustomCode,
-	type FontCustomCodeFinding
+	findProhibitedMarketplaceCustomCode,
+	type MarketplaceCustomCodeFinding
 } from '@create-something/gsap-validation-worker/font-custom-code-policy';
 import type { CustomCodeAnalysisResult, ValidationIssue } from '../types';
 import { fetchHTML } from '../utils/fetch-utils';
 
-function toValidationIssue(finding: FontCustomCodeFinding, index: number): ValidationIssue {
+function toValidationIssue(finding: MarketplaceCustomCodeFinding, index: number): ValidationIssue {
 	return {
-		id: index === 0 ? 'custom-code-font-loading' : `custom-code-font-loading-${index + 1}`,
+		id: index === 0 ? finding.policy : `${finding.policy}-${index + 1}`,
 		category: 'Custom Code & Site Settings',
 		severity: 'error',
 		message: finding.message,
 		description: `${finding.kind}: ${finding.source}`,
 		howToFix:
-			'Remove the custom font code, add the eligible Google or OFL font through Site settings > Fonts, publish again, and rerun validation.',
+			finding.policy === 'custom-code-font-loading'
+				? 'Remove the custom font code, add the eligible Google or OFL font through Site settings > Fonts, publish again, and rerun validation.'
+				: 'Remove the schema markup, publish again, and rerun validation.',
 		details: {
 			policy: finding.policy,
 			kind: finding.kind,
@@ -25,11 +27,16 @@ function toValidationIssue(finding: FontCustomCodeFinding, index: number): Valid
 export async function validateCustomCode(siteUrl: string): Promise<CustomCodeAnalysisResult> {
 	try {
 		const { html } = await fetchHTML(siteUrl);
-		const findings = findProhibitedFontCustomCode(html);
+		const findings = findProhibitedMarketplaceCustomCode(html);
 		return {
 			issues: findings.map(toValidationIssue),
 			stats: {
-				fontCustomCodeFindings: findings.length,
+				fontCustomCodeFindings: findings.filter(
+					(finding) => finding.policy === 'custom-code-font-loading'
+				).length,
+				schemaMarkupFindings: findings.filter(
+					(finding) => finding.policy === 'custom-code-schema-markup-not-allowed'
+				).length,
 				analysisComplete: true
 			}
 		};
@@ -47,6 +54,7 @@ export async function validateCustomCode(siteUrl: string): Promise<CustomCodeAna
 			],
 			stats: {
 				fontCustomCodeFindings: 0,
+				schemaMarkupFindings: 0,
 				analysisComplete: false
 			}
 		};

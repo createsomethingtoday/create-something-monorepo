@@ -1,7 +1,10 @@
 export const FONT_CUSTOM_CODE_POLICY = 'custom-code-font-loading';
+export const SCHEMA_MARKUP_POLICY = 'custom-code-schema-markup-not-allowed';
 
 export const FONT_CUSTOM_CODE_MESSAGE =
   'Font files must be added through Webflow Site settings > Fonts. Remove manually inserted font <link>, @import, or @font-face code, publish the site again, and rerun validation.';
+export const SCHEMA_MARKUP_MESSAGE =
+  'Schema markup (JSON-LD) is not allowed in new Marketplace template submissions. Remove the schema markup, publish the site again, and rerun validation.';
 
 const FONT_STYLESHEET_HOSTS = new Set([
   'api.fontshare.com',
@@ -39,7 +42,7 @@ export function isKnownFontStylesheetUrl(value) {
   }
 }
 
-function finding(kind, source) {
+function fontFinding(kind, source) {
   return {
     kind,
     source,
@@ -56,7 +59,7 @@ export function findProhibitedFontCustomCode(html) {
   for (const tag of linkTags) {
     const href = readHtmlAttribute(tag, 'href');
     if (isStylesheetLink(tag) && isKnownFontStylesheetUrl(href)) {
-      findings.push(finding('font-stylesheet-link', href));
+      findings.push(fontFinding('font-stylesheet-link', href));
     }
   }
 
@@ -69,14 +72,38 @@ export function findProhibitedFontCustomCode(html) {
     while ((importMatch = importPattern.exec(css)) !== null) {
       const source = (importMatch[2] || importMatch[3] || '').trim();
       if (isKnownFontStylesheetUrl(source)) {
-        findings.push(finding('font-import', source));
+        findings.push(fontFinding('font-import', source));
       }
     }
 
     if (/@font-face\s*\{/i.test(css)) {
-      findings.push(finding('inline-font-face', '@font-face'));
+      findings.push(fontFinding('inline-font-face', '@font-face'));
     }
   }
 
   return findings;
+}
+
+export function findProhibitedSchemaMarkup(html) {
+  if (typeof html !== 'string' || html === '') return [];
+
+  const findings = [];
+  const scriptTags = html.match(/<script\b[^>]*>/gi) || [];
+  for (const tag of scriptTags) {
+    const type = readHtmlAttribute(tag, 'type')?.toLowerCase();
+    if (type === 'application/ld+json') {
+      findings.push({
+        kind: 'schema-markup',
+        source: 'script[type="application/ld+json"]',
+        policy: SCHEMA_MARKUP_POLICY,
+        message: SCHEMA_MARKUP_MESSAGE
+      });
+    }
+  }
+
+  return findings;
+}
+
+export function findProhibitedMarketplaceCustomCode(html) {
+  return [...findProhibitedFontCustomCode(html), ...findProhibitedSchemaMarkup(html)];
 }
