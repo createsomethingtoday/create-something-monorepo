@@ -2,6 +2,13 @@ import { DurableObject } from 'cloudflare:workers';
 import { buildOperatorBrief, toFirmwareBrief } from './brief.js';
 import { buildInkClock } from './clock.js';
 import { isAuthorized } from './auth.js';
+import { CodexCommandCoordinator } from './codex-command-coordinator.js';
+import { SqlCodexCommandStorage } from './codex-command-sql.js';
+import {
+  CodexCommandError,
+  type CompleteCodexCommandInput,
+  type CreateCodexCommandInput
+} from './codex-commands.js';
 import { DEFAULT_HEALTH_STALE_AFTER_MS, buildHealthReviewReport } from './health-review.js';
 import { claimLinearIssue, fetchLinearOpenIssues } from './linear-open.js';
 import {
@@ -41,6 +48,7 @@ interface Env {
   ALARM_TTL_MS?: string;
   INK_BRIDGE_TOKEN?: string;
   INK_DEVICE_TOKEN?: string;
+  INK_RUNNER_TOKEN?: string;
   INK_SOURCE_TOKEN?: string;
   LINEAR_API_KEY?: string;
   LINEAR_TEAM_KEY?: string;
@@ -79,6 +87,10 @@ interface HealthReviewRunResult {
   brief: ReturnType<typeof buildOperatorBrief>;
 }
 
+type CodexRpcResult<T> =
+  | { ok: true; value: T }
+  | { ok: false; error: string; code: string; status: number };
+
 function json(data: unknown, init: ResponseInit = {}): Response {
   return new Response(JSON.stringify(data, null, 2), {
     ...init,
@@ -98,6 +110,28 @@ function text(data: string, init: ResponseInit = {}): Response {
       ...Object.fromEntries(new Headers(init.headers ?? undefined))
     }
   });
+}
+
+function codexResponse<T>(result: CodexRpcResult<T>, successStatus = 200): Response {
+  if (!result.ok) {
+    return json({ ok: false, error: result.error, code: result.code }, { status: result.status });
+  }
+  const value = result.value;
+  return json(
+    typeof value === 'object' && value !== null ? { ok: true, ...value } : { ok: true, value },
+    { status: successStatus }
+  );
+}
+
+async function codexRpc<T>(operation: () => Promise<T>): Promise<CodexRpcResult<T>> {
+  try {
+    return { ok: true, value: await operation() };
+  } catch (error) {
+    if (error instanceof CodexCommandError) {
+      return { ok: false, error: error.message, code: error.code, status: error.status };
+    }
+    throw error;
+  }
 }
 
 function workspaceId(env: Env): string {
@@ -464,6 +498,31 @@ export class InkState extends DurableObject<Env> {
           created_at INTEGER NOT NULL,
           payload_json TEXT NOT NULL
         );
+      `);
+      this.ctx.storage.sql.exec(`
+        CREATE TABLE IF NOT EXISTS codex_snapshots (
+          device_id TEXT PRIMARY KEY,
+          runner_id TEXT NOT NULL,
+          expires_at INTEGER NOT NULL,
+          payload_json TEXT NOT NULL
+        );
+      `);
+      this.ctx.storage.sql.exec(`
+        CREATE TABLE IF NOT EXISTS codex_commands (
+          request_id TEXT PRIMARY KEY,
+          runner_id TEXT NOT NULL,
+          device_id TEXT NOT NULL,
+          device_nonce TEXT NOT NULL,
+          status TEXT NOT NULL,
+          created_at INTEGER NOT NULL,
+          expires_at INTEGER NOT NULL,
+          payload_json TEXT NOT NULL,
+          UNIQUE(device_id, device_nonce)
+        );
+      `);
+      this.ctx.storage.sql.exec(`
+        CREATE INDEX IF NOT EXISTS idx_codex_commands_runner_queue
+        ON codex_commands(runner_id, status, created_at);
       `);
     });
   }
@@ -838,6 +897,56 @@ export class InkState extends DurableObject<Env> {
     return rowDevice(row ?? null);
   }
 
+  async publishCodexSnapshot(input: unknown): Promise<CodexRpcResult<Awaited<ReturnType<CodexCommandCoordinator['publishSnapshot']>>>> {
+    return codexRpc(() =>
+      new CodexCommandCoordinator(new SqlCodexCommandStorage(this.ctx.storage.sql)).publishSnapshot(input)
+    );
+  }
+
+  async codexDeviceView(deviceId: string): Promise<CodexRpcResult<Awaited<ReturnType<CodexCommandCoordinator['deviceView']>>>> {
+    return codexRpc(() =>
+      new CodexCommandCoordinator(new SqlCodexCommandStorage(this.ctx.storage.sql)).deviceView(deviceId)
+    );
+  }
+
+  async createCodexCommand(input: CreateCodexCommandInput): Promise<CodexRpcResult<Awaited<ReturnType<CodexCommandCoordinator['createCommand']>>>> {
+    return codexRpc(() =>
+      new CodexCommandCoordinator(new SqlCodexCommandStorage(this.ctx.storage.sql)).createCommand(input)
+    );
+  }
+
+  async nextCodexCommand(runnerId: string): Promise<CodexRpcResult<Awaited<ReturnType<CodexCommandCoordinator['nextCommand']>>>> {
+    return codexRpc(() =>
+      new CodexCommandCoordinator(new SqlCodexCommandStorage(this.ctx.storage.sql)).nextCommand(runnerId)
+    );
+  }
+
+  async claimCodexCommand(requestId: string, runnerId: string): Promise<CodexRpcResult<Awaited<ReturnType<CodexCommandCoordinator['claimCommand']>>>> {
+    return codexRpc(() =>
+      new CodexCommandCoordinator(new SqlCodexCommandStorage(this.ctx.storage.sql)).claimCommand(requestId, runnerId)
+    );
+  }
+
+  async completeCodexCommand(
+    requestId: string,
+    runnerId: string,
+    input: CompleteCodexCommandInput
+  ): Promise<CodexRpcResult<Awaited<ReturnType<CodexCommandCoordinator['completeCommand']>>>> {
+    return codexRpc(() =>
+      new CodexCommandCoordinator(new SqlCodexCommandStorage(this.ctx.storage.sql)).completeCommand(
+        requestId,
+        runnerId,
+        input
+      )
+    );
+  }
+
+  async codexDeviceCommand(requestId: string, deviceId: string): Promise<CodexRpcResult<Awaited<ReturnType<CodexCommandCoordinator['deviceCommand']>>>> {
+    return codexRpc(() =>
+      new CodexCommandCoordinator(new SqlCodexCommandStorage(this.ctx.storage.sql)).deviceCommand(requestId, deviceId)
+    );
+  }
+
   brief(surface: string, deviceId = 'core-ink'): ReturnType<typeof buildOperatorBrief> {
     const alerts = this.ctx.storage.sql
       .exec<Record<string, SqlStorageValue>>(
@@ -987,6 +1096,13 @@ async function route(request: Request, env: Env): Promise<Response> {
         'POST /ink/health-review/run',
         'POST /ink/alarms/run',
         'POST /ink/device-heartbeat',
+        'GET /ink/codex',
+        'POST /ink/codex/commands',
+        'GET /ink/codex/commands/:request_id',
+        'POST /ink/codex/snapshot',
+        'GET /ink/codex/commands/next',
+        'POST /ink/codex/commands/:request_id/claim',
+        'POST /ink/codex/commands/:request_id/receipt',
         'POST /ink/clear'
       ]
     });
@@ -997,13 +1113,49 @@ async function route(request: Request, env: Env): Promise<Response> {
     return json(
       {
         ok: false,
-        error: authRole === 'device' ? 'Unauthorized device request.' : 'Unauthorized source request.'
+        error: `Unauthorized ${authRole} request.`
       },
       { status: 401 }
     );
   }
 
   const stub = stateStub(env);
+
+  if (method === 'GET' && path === '/ink/codex') {
+    const deviceId = url.searchParams.get('device_id') || defaultDeviceId(env);
+    return codexResponse(await stub.codexDeviceView(deviceId));
+  }
+
+  if (method === 'POST' && path === '/ink/codex/snapshot') {
+    return codexResponse(await stub.publishCodexSnapshot(await parseJsonBody<unknown>(request)), 201);
+  }
+
+  if (method === 'POST' && path === '/ink/codex/commands') {
+    const body = await parseJsonBody<CreateCodexCommandInput>(request);
+    return codexResponse(await stub.createCodexCommand(body), 201);
+  }
+
+  if (method === 'GET' && path === '/ink/codex/commands/next') {
+    return codexResponse(await stub.nextCodexCommand(url.searchParams.get('runner_id') || ''));
+  }
+
+  const codexCommandMatch = path.match(/^\/ink\/codex\/commands\/([A-Za-z0-9][A-Za-z0-9:._-]*)$/);
+  if (method === 'GET' && codexCommandMatch) {
+    const deviceId = url.searchParams.get('device_id') || defaultDeviceId(env);
+    return codexResponse(await stub.codexDeviceCommand(codexCommandMatch[1]!, deviceId));
+  }
+
+  const codexRunnerMatch = path.match(
+    /^\/ink\/codex\/commands\/([A-Za-z0-9][A-Za-z0-9:._-]*)\/(claim|receipt)$/
+  );
+  if (method === 'POST' && codexRunnerMatch) {
+    const body = await parseJsonBody<CompleteCodexCommandInput & { runner_id?: string }>(request);
+    const requestId = codexRunnerMatch[1]!;
+    const runnerId = body.runner_id || '';
+    return codexRunnerMatch[2] === 'claim'
+      ? codexResponse(await stub.claimCodexCommand(requestId, runnerId))
+      : codexResponse(await stub.completeCodexCommand(requestId, runnerId, body));
+  }
 
   if (method === 'GET' && (path === '/ink/brief' || path === '/ink/surface-brief')) {
     const surface = url.searchParams.get('surface') || defaultSurface(env);

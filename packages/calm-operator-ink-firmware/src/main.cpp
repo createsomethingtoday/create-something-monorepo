@@ -5,6 +5,7 @@
 #include <Preferences.h>
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
+#include <esp_system.h>
 #include <time.h>
 
 #if __has_include("operator_config.local.h")
@@ -17,8 +18,10 @@
 
 namespace {
 
-constexpr const char* FIRMWARE_VERSION = "0.1.5";
+constexpr const char* FIRMWARE_VERSION = "0.2.0";
 constexpr uint32_t AUTO_SYNC_INTERVAL_MS = 5UL * 60UL * 1000UL;
+constexpr uint32_t CODEX_ARM_WINDOW_MS = 15UL * 1000UL;
+constexpr uint32_t CODEX_RECEIPT_POLL_MS = 2UL * 1000UL;
 constexpr uint32_t WIFI_TIMEOUT_MS = 15000;
 constexpr uint32_t TLS_TIME_TIMEOUT_MS = 10000;
 constexpr time_t MIN_TLS_TIME = 1704067200; // 2024-01-01T00:00:00Z
@@ -43,6 +46,16 @@ struct Brief {
   bool urgent = false;
 };
 
+struct CodexView {
+  String status = "offline";
+  String taskId;
+  String task;
+  String actionId;
+  String requestId;
+  String receiptStatus;
+  String receiptDetail;
+};
+
 struct MenuAction {
   const char* bucket;
   const char* label;
@@ -52,6 +65,7 @@ const MenuAction MENU[] = {
   {"Operator", "Sync"},
   {"Operator", "MCP Review"},
   {"Operator", "Check In"},
+  {"Operator", "Codex"},
   {"Rhythm", "Clock"},
   {"Rhythm", "Rhythm"},
   {"Calm", "Calm Reset"},
@@ -70,10 +84,12 @@ enum class Screen {
   Rhythm,
   CalmReset,
   StoneGarden,
+  Codex,
   Status
 };
 
 Brief activeBrief;
+CodexView codexView;
 Screen screen = Screen::Brief;
 int menuIndex = 0;
 bool alertsEnabled = true;
@@ -88,6 +104,11 @@ String clockLine1 = "";
 String clockLine2 = "";
 bool briefIsCached = false;
 bool tlsClockReady = false;
+bool codexArmed = false;
+uint32_t codexArmedAt = 0;
+uint32_t lastCodexPollAt = 0;
+uint32_t codexCommandCounter = 0;
+String codexBootNonce;
 int stoneCursor = 0;
 int stoneCount = 0;
 const int STONE_SLOTS = 9;
@@ -210,6 +231,13 @@ void beepUrgent() {
   M5.Speaker.tone(5200, 90);
   delay(120);
   M5.Speaker.tone(3800, 90);
+}
+
+void beepAccepted() {
+  if (!alertsEnabled || quietMode) return;
+  M5.Speaker.tone(3600, 35);
+  delay(70);
+  M5.Speaker.tone(4700, 60);
 }
 
 void flushFrame(const String& key, bool force = false) {
@@ -471,6 +499,7 @@ String menuHint(const String& label) {
   if (label == "Sync") return "Fetch latest brief";
   if (label == "MCP Review") return "Run health review";
   if (label == "Check In") return "Save operator state";
+  if (label == "Codex") return "Arm safe follow-up";
   if (label == "Clock") return "Show Central Time";
   if (label == "Rhythm") return "Daily anchors";
   if (label == "Calm Reset") return "Breathing reset";
@@ -606,6 +635,170 @@ int requestBridge(const String& method, const String& path, const String& body, 
     lastHttpError = "";
   }
   return status;
+}
+
+String codexHeadline() {
+  if (codexArmed) return "CODEX ARMED";
+  if (codexView.status == "ready") return "CODEX READY";
+  if (codexView.status == "queued") return "CODEX QUEUED";
+  if (codexView.status == "claimed") return "CODEX RUNNING";
+  if (codexView.status == "accepted") return "CODEX ACCEPTED";
+  if (codexView.status == "rejected") return "CODEX REJECTED";
+  if (codexView.status == "expired") return "CODEX EXPIRED";
+  return "CODEX OFFLINE";
+}
+
+String codexInstruction() {
+  if (codexArmed) return "B confirm  A cancel";
+  if (codexView.status == "ready") return "B arm  C refresh";
+  if (codexView.status == "queued") return "Waiting for Mac";
+  if (codexView.status == "claimed") return "Follow-up running";
+  if (codexView.status == "accepted") return "Follow-up sent";
+  if (codexView.status == "rejected") return codexView.receiptDetail.length() ? codexView.receiptDetail : "Action rejected";
+  if (codexView.status == "expired") return "Refresh and re-arm";
+  return "Start Mac runner";
+}
+
+void renderCodex() {
+  screen = Screen::Codex;
+  startFrame(codexHeadline(), codexArmed || codexView.status == "claimed");
+  canvas.setTextSize(1);
+  drawWrapped(
+    codexView.task.length() ? codexView.task : "No disposable task selected",
+    14,
+    50,
+    172,
+    15,
+    3);
+  drawWrapped(codexInstruction(), 14, 112, 172, 15, 3);
+  const String requestLabel = codexView.requestId.length()
+    ? "Req " + codexView.requestId.substring(0, min(8, (int)codexView.requestId.length()))
+    : "No request";
+  canvas.drawString(fitText(requestLabel, 164), 18, 158);
+  drawFooter(codexArmed ? "B confirm A cancel" : "A menu C refresh");
+  flushFrame(screenKey(
+    "codex",
+    codexView.status,
+    codexArmed ? "armed" : "calm",
+    codexView.taskId,
+    codexView.actionId,
+    codexView.requestId));
+}
+
+bool applyCodexPayload(const String& payload) {
+  JsonDocument doc;
+  const DeserializationError error = deserializeJson(doc, payload);
+  if (error) {
+    codexArmed = false;
+    codexView.status = "offline";
+    codexView.receiptDetail = "Bad bridge JSON";
+    return false;
+  }
+
+  const String previousStatus = codexView.status;
+  codexView.status = String((const char*)(doc["status"] | "offline"));
+  const String taskId = String((const char*)(doc["task_id"] | ""));
+  const String task = String((const char*)(doc["task"] | ""));
+  const String actionId = String((const char*)(doc["action_id"] | ""));
+  const String requestId = String((const char*)(doc["request_id"] | ""));
+  if (taskId.length()) codexView.taskId = taskId;
+  if (task.length()) codexView.task = task;
+  if (actionId.length()) codexView.actionId = actionId;
+  if (requestId.length()) codexView.requestId = requestId;
+
+  JsonVariantConst receipt = doc["receipt"];
+  codexView.receiptStatus = receipt.isNull()
+    ? ""
+    : String((const char*)(receipt["status"] | ""));
+  codexView.receiptDetail = receipt.isNull()
+    ? ""
+    : String((const char*)(receipt["detail"] | ""));
+
+  Serial.printf(
+    "[ink][codex] state=%s request=%s receipt=%s\n",
+    codexView.status.c_str(),
+    codexView.requestId.c_str(),
+    codexView.receiptStatus.c_str());
+
+  if (codexView.status == "accepted" && previousStatus != "accepted") {
+    beepAccepted();
+  } else if (
+    (codexView.status == "rejected" || codexView.status == "expired") &&
+    previousStatus != codexView.status) {
+    beepUrgent();
+  }
+  return true;
+}
+
+bool fetchCodexView(bool announce = false) {
+  if (announce) beepSoft();
+  String payload;
+  const String path = String("/ink/codex?device_id=") + CALM_OPERATOR_DEVICE_ID;
+  const int status = requestBridge("GET", path, "", payload);
+  lastCodexPollAt = millis();
+  if (status < 200 || status >= 300 || !applyCodexPayload(payload)) {
+    codexArmed = false;
+    codexView.status = "offline";
+    if (codexView.receiptDetail.length() == 0) {
+      codexView.receiptDetail = lastHttpError.length() ? lastHttpError : "Bridge unavailable";
+    }
+    Serial.printf("[ink][codex] state=offline request=%s receipt=\n", codexView.requestId.c_str());
+    renderCodex();
+    return false;
+  }
+  renderCodex();
+  return true;
+}
+
+void armCodex() {
+  if (codexView.status != "ready" || codexView.taskId.length() == 0 || codexView.actionId.length() == 0) {
+    fetchCodexView(true);
+    return;
+  }
+  codexArmed = true;
+  codexArmedAt = millis();
+  Serial.printf(
+    "[ink][codex] armed task=%s action=%s\n",
+    codexView.taskId.c_str(),
+    codexView.actionId.c_str());
+  beepSoft();
+  renderCodex();
+}
+
+void confirmCodex() {
+  if (!codexArmed || millis() - codexArmedAt > CODEX_ARM_WINDOW_MS) {
+    codexArmed = false;
+    Serial.println("[ink][codex] arm_expired");
+    renderCodex();
+    return;
+  }
+
+  codexCommandCounter++;
+  const String deviceNonce = codexBootNonce + ":press-" + String(codexCommandCounter);
+  Serial.printf(
+    "[ink][codex] confirmed task=%s action=%s nonce=%s\n",
+    codexView.taskId.c_str(),
+    codexView.actionId.c_str(),
+    deviceNonce.c_str());
+  const String body =
+    String("{\"device_id\":\"") + jsonEscape(CALM_OPERATOR_DEVICE_ID) +
+    "\",\"device_nonce\":\"" + jsonEscape(deviceNonce) +
+    "\",\"task_id\":\"" + jsonEscape(codexView.taskId) +
+    "\",\"action_id\":\"" + jsonEscape(codexView.actionId) +
+    "\",\"confirmed\":true}";
+  codexArmed = false;
+  String payload;
+  const int status = requestBridge("POST", "/ink/codex/commands", body, payload);
+  lastCodexPollAt = millis();
+  if (status < 200 || status >= 300 || !applyCodexPayload(payload)) {
+    codexView.status = "rejected";
+    codexView.receiptDetail = lastHttpError.length() ? lastHttpError : "Command rejected";
+    Serial.printf("[ink][codex] state=rejected request=%s receipt=\n", codexView.requestId.c_str());
+    beepUrgent();
+  } else {
+    beepSoft();
+  }
+  renderCodex();
 }
 
 void postHeartbeat() {
@@ -856,6 +1049,8 @@ void selectMenuAction() {
     requestMcpReview();
   } else if (label == "Check In") {
     operatorCheckIn();
+  } else if (label == "Codex") {
+    fetchCodexView(true);
   } else if (label == "Clock") {
     fetchClock();
   } else if (label == "Rhythm") {
@@ -903,6 +1098,18 @@ void handleSelect() {
     return;
   }
 
+  if (screen == Screen::Codex) {
+    if (codexView.status == "ready") {
+      if (codexArmed) confirmCodex();
+      else armCodex();
+    } else if (codexView.status == "queued" || codexView.status == "claimed" || codexView.status == "offline") {
+      fetchCodexView(true);
+    } else {
+      renderMenu();
+    }
+    return;
+  }
+
   selectMenuAction();
 }
 
@@ -913,6 +1120,9 @@ void handlePrevious() {
   } else if (screen == Screen::StoneGarden) {
     stoneCursor = (stoneCursor + STONE_SLOTS - 1) % STONE_SLOTS;
     renderStoneGarden();
+  } else if (screen == Screen::Codex) {
+    codexArmed = false;
+    renderMenu();
   }
 }
 
@@ -923,6 +1133,9 @@ void handleNext() {
   } else if (screen == Screen::StoneGarden) {
     stoneCursor = (stoneCursor + 1) % STONE_SLOTS;
     renderStoneGarden();
+  } else if (screen == Screen::Codex) {
+    codexArmed = false;
+    fetchCodexView(true);
   }
 }
 
@@ -944,6 +1157,9 @@ void setup() {
   Serial.printf("[ink] boot firmware=%s\n", FIRMWARE_VERSION);
   auto cfg = M5.config();
   M5.begin(cfg);
+  char bootNonce[9];
+  snprintf(bootNonce, sizeof(bootNonce), "%08lx", (unsigned long)esp_random());
+  codexBootNonce = String(bootNonce);
   M5.Display.setRotation(0);
   loadSettings();
   canvas.setColorDepth(1);
@@ -977,15 +1193,34 @@ void loop() {
   if (M5.BtnC.wasPressed()) {
     handleNext();
   }
-  if (M5.BtnB.wasPressed() || M5.BtnEXT.wasPressed()) {
+  const bool selectB = M5.BtnB.wasPressed();
+  const bool selectExt = M5.BtnEXT.wasPressed();
+  if (selectB || selectExt) {
+    if (screen == Screen::Codex) {
+      Serial.printf("[ink][codex] physical_select source=%s\n", selectB ? "B" : "EXT");
+    }
     handleSelect();
   }
   if (M5.BtnPWR.wasPressed()) {
-    fetchBrief(true);
+    if (screen == Screen::Codex) fetchCodexView(true);
+    else fetchBrief(true);
   }
 
   if (hasRuntimeConfig() && screen == Screen::Brief && millis() - lastSyncAttemptAt > AUTO_SYNC_INTERVAL_MS) {
     fetchBrief(false);
+  }
+
+  if (screen == Screen::Codex && codexArmed && millis() - codexArmedAt > CODEX_ARM_WINDOW_MS) {
+    codexArmed = false;
+    Serial.println("[ink][codex] arm_expired");
+    renderCodex();
+  }
+
+  if (
+    screen == Screen::Codex &&
+    (codexView.status == "queued" || codexView.status == "claimed") &&
+    millis() - lastCodexPollAt > CODEX_RECEIPT_POLL_MS) {
+    fetchCodexView(false);
   }
 
   delay(30);

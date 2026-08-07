@@ -32,6 +32,8 @@ Token-gated:
 - `GET /ink/surface-brief`
 - `GET /ink/clock`
 - `GET /ink/device`
+- `GET /ink/codex`
+- `GET /ink/codex/commands/:request_id`
 - `POST /ink/alert`
 - `POST /ink/operator-priority`
 - `POST /ink/source-event`
@@ -45,6 +47,11 @@ Token-gated:
 - `POST /ink/health-review/run`
 - `POST /ink/alarms/run`
 - `POST /ink/device-heartbeat`
+- `POST /ink/codex/commands`
+- `POST /ink/codex/snapshot`
+- `GET /ink/codex/commands/next`
+- `POST /ink/codex/commands/:request_id/claim`
+- `POST /ink/codex/commands/:request_id/receipt`
 - `POST /ink/clear`
 
 Tokens may be sent as `Authorization: Bearer ...`, `x-ink-token`, or `x-api-key`.
@@ -56,6 +63,7 @@ Set with Wrangler:
 ```bash
 pnpm --dir packages/calm-operator-ink-bridge exec wrangler secret put INK_DEVICE_TOKEN
 pnpm --dir packages/calm-operator-ink-bridge exec wrangler secret put INK_SOURCE_TOKEN
+pnpm --dir packages/calm-operator-ink-bridge exec wrangler secret put INK_RUNNER_TOKEN
 ```
 
 Optional compatibility token:
@@ -65,6 +73,9 @@ pnpm --dir packages/calm-operator-ink-bridge exec wrangler secret put INK_BRIDGE
 ```
 
 Use `INK_DEVICE_TOKEN` in Core Ink firmware. Use `INK_SOURCE_TOKEN` for agent/MCP producers.
+Use `INK_RUNNER_TOKEN` only in the outbound Mac Codex runner. Unlike the legacy
+compatibility token, it cannot authenticate device or source routes, and device,
+source, and compatibility tokens cannot authenticate runner routes.
 
 The Core Ink firmware lives in `packages/calm-operator-ink-firmware`. It uses
 the device token for `/ink/brief`, `/ink/clock`, `/ink/health-review/request`,
@@ -259,6 +270,31 @@ curl -sS https://ink.createsomething.agency/ink/health-review/request \
 Clearing stored alerts or health state remains a source-token operation; the
 shipped device token is only for read, heartbeat, review request, and local
 operator-event paths.
+
+## Codex pager command boundary
+
+The Codex pager path keeps `@create-something/codex-presence` private on the Mac.
+Ink stores only a sanitized task/action snapshot and an expiring fixed follow-up
+command; the Mac polls Ink outbound. Ink cannot connect to loopback Presence.
+
+Roles and routes:
+
+- Runner: `POST /ink/codex/snapshot` publishes one current, safe `follow_up`
+  action for one device and selected disposable task.
+- Device: `GET /ink/codex` reads the current task/action and latest receipt.
+- Device: `POST /ink/codex/commands` confirms that exact task/action with a
+  device nonce. The bridge assigns the request ID; replaying the nonce returns
+  the same command.
+- Runner: `GET /ink/codex/commands/next?runner_id=...` polls the oldest unexpired
+  queued command, then `POST .../:request_id/claim` claims it exactly once.
+- Runner: `POST .../:request_id/receipt` records the exact Presence receipt.
+- Device: `GET .../:request_id?device_id=...` reads its sanitized terminal state.
+
+The only MVP prompt is `Continue with the recommended next step.`. The device
+cannot submit arbitrary text. Commands expire after two minutes; snapshots
+expire after five. A claimed command never automatically returns to the queue,
+because a runner crash after local execution is ambiguous and replay would be
+unsafe. A fresh physical confirmation is required after recovery.
 
 ## Daily alarms
 

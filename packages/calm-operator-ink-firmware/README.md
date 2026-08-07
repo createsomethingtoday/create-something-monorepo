@@ -8,6 +8,8 @@ The firmware is intentionally simple:
 - Wi-Fi only. BLE/iPhone notification capture is not part of this build.
 - Polls `https://ink.createsomething.agency` for the current operator brief.
 - Requests a live MCP/agent health review from Ink.
+- Can confirm one narrowly defined follow-up on an explicitly selected,
+  disposable Codex task through the outbound Mac runner.
 - Provides local rhythm, clock, settings, and calm tools.
 - Uses slow, explicit e-ink refreshes instead of animated UI.
 - Keeps the current screen visible during network work and redraws only when the
@@ -33,6 +35,11 @@ Recommended values:
 
 If Wi-Fi values are not present, the firmware tries saved ESP32 Wi-Fi
 credentials from a previous firmware before showing a setup screen.
+
+An iPhone app is not required. The Core Ink can use a normal Wi-Fi network or
+an iPhone Personal Hotspot, while the Mac runner independently makes outbound
+HTTPS requests to the Ink bridge. The phone does not need to stay within
+Bluetooth range and never receives a Codex credential.
 
 HTTPS requests validate the Ink bridge certificate against the Google Trust
 Services `GTS Root R4` trust anchor in `include/trust_roots.h`. The firmware
@@ -75,6 +82,29 @@ pnpm --dir packages/calm-operator-ink-firmware monitor
 - From the source/detail screen, select opens the menu.
 - `PWR`: manual sync.
 
+### Codex pager
+
+Select `Operator > Codex` to see whether the configured disposable Codex task
+has a fresh, safe `follow_up` action. The pager never accepts or transmits
+arbitrary prompt text.
+
+- First `B`/main press: arm the current task and action for 15 seconds.
+- Second `B`/main press: confirm the same identifiers and queue the fixed
+  reviewed follow-up.
+- `A`: cancel an armed command or return to the menu.
+- `C`: refresh readiness or receipt state.
+- `PWR`: refresh readiness or receipt state.
+
+The screen distinguishes `ARMED`, `QUEUED`, `RUNNING`, `ACCEPTED`, `REJECTED`,
+`EXPIRED`, and offline/unavailable outcomes. Accepted feedback respects Alerts
+and Quiet Mode. A timed-out arm is discarded locally; a claimed request is
+never silently replayed after an ambiguous runner restart.
+
+The production bridge must have a distinct `INK_RUNNER_TOKEN`, and the Mac must
+run `@create-something/calm-operator-codex-runner` against loopback Codex
+Presence. Device, source, bridge, and runner tokens are separate roles. See the
+bridge and runner READMEs for deployment and local runner setup.
+
 The home brief is intentionally one-glance:
 
 - stable state label such as `OPERATOR PRIORITY`, `QUALITY DRIFT`, or
@@ -96,7 +126,7 @@ the left and battery/sound state on the right.
 
 Menu buckets:
 
-- `Operator`: Sync, MCP Review, Check In
+- `Operator`: Sync, MCP Review, Check In, Codex
 - `Rhythm`: Clock, Rhythm
 - `Calm`: Calm Reset, Stone Garden
 - `Settings`: Alerts, Quiet Mode, Status
