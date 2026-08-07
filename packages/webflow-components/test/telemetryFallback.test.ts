@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { trackMarketplaceEvent } from '../src/components/marketplace/analytics';
 import {
+  assessPageAnalyticsSdk,
+  flushIndeterminateForTests,
   hasPageAnalyticsSdk,
   resetTelemetryFallbackForTests,
   sendTelemetryFallbackEvent,
@@ -69,7 +71,8 @@ function installFixture(options: { sdkPresent?: boolean; beaconAccepts?: boolean
     },
   });
   if (sdkPresent) {
-    (browserWindow as Record<string, unknown>).analytics = { track: () => undefined };
+    // A verifiably healthy Segment SDK: `initialized` only exists post-load.
+    (browserWindow as Record<string, unknown>).analytics = { track: () => undefined, initialized: true };
   }
 
   globalRef.window = browserWindow;
@@ -114,7 +117,7 @@ function installFixture(options: { sdkPresent?: boolean; beaconAccepts?: boolean
   };
 }
 
-test('hasPageAnalyticsSdk reflects SDK availability', () => {
+test('hasPageAnalyticsSdk reflects verified SDK health, not shim presence', () => {
   const withSdk = installFixture({ sdkPresent: true });
   try {
     assert.equal(hasPageAnalyticsSdk(), true);
@@ -127,6 +130,86 @@ test('hasPageAnalyticsSdk reflects SDK availability', () => {
     assert.equal(hasPageAnalyticsSdk(), false);
   } finally {
     withoutSdk.restore();
+  }
+
+  // A bare Segment snippet stub (track only, no initialized/user) is
+  // indeterminate — it may queue-and-deliver later or be a zombie.
+  const stub = installFixture({ sdkPresent: false });
+  try {
+    (globalThis as GlobalWithBrowser).window!.analytics = { track: () => undefined } as never;
+    assert.equal(hasPageAnalyticsSdk(), false);
+    assert.equal(assessPageAnalyticsSdk(), 'indeterminate');
+  } finally {
+    stub.restore();
+  }
+
+  // The 2026 zombie wf_analytics shim: track() exists, isInitialized() never
+  // flips true, zero network egress. Must NOT count as a working SDK.
+  const zombie = installFixture({ sdkPresent: false });
+  try {
+    (globalThis as GlobalWithBrowser).window!.wf_analytics = {
+      track: () => undefined,
+      isInitialized: () => undefined,
+    } as never;
+    assert.equal(assessPageAnalyticsSdk(), 'indeterminate');
+  } finally {
+    zombie.restore();
+  }
+
+  // An initialized wf_analytics bundle is healthy.
+  const healthyWf = installFixture({ sdkPresent: false });
+  try {
+    (globalThis as GlobalWithBrowser).window!.wf_analytics = {
+      track: () => undefined,
+      isInitialized: () => true,
+    } as never;
+    assert.equal(assessPageAnalyticsSdk(), 'healthy');
+  } finally {
+    healthyWf.restore();
+  }
+
+  // A wf_analytics without introspection is assumed healthy (old bundle).
+  const legacyWf = installFixture({ sdkPresent: false });
+  try {
+    (globalThis as GlobalWithBrowser).window!.wf_analytics = { track: () => undefined } as never;
+    assert.equal(assessPageAnalyticsSdk(), 'healthy');
+  } finally {
+    legacyWf.restore();
+  }
+});
+
+test('indeterminate shim buffers, then flushes to the beacon when still uninitialized', () => {
+  const fixture = installFixture({ sdkPresent: false });
+  try {
+    (globalThis as GlobalWithBrowser).window!.wf_analytics = {
+      track: () => undefined,
+      isInitialized: () => undefined,
+    } as never;
+    trackMarketplaceEvent('Code Component Event', { component: 'TemplateGrid', scope: 'test' });
+    assert.equal(fixture.beaconCalls.length, 0, 'buffered during the grace window');
+    flushIndeterminateForTests();
+    assert.equal(fixture.beaconCalls.length, 1, 'flushed once the shim proved to be a zombie');
+    // After the zombie verdict, subsequent events send without re-buffering.
+    trackMarketplaceEvent('Code Component Event', { component: 'TemplateGrid', scope: 'test2' });
+    assert.equal(fixture.beaconCalls.length, 2);
+  } finally {
+    fixture.restore();
+  }
+});
+
+test('grace-window buffer is dropped when the SDK finishes initializing', () => {
+  const fixture = installFixture({ sdkPresent: false });
+  try {
+    const win = (globalThis as GlobalWithBrowser).window! as Window & Record<string, unknown>;
+    let initialized: boolean | undefined;
+    win.wf_analytics = { track: () => undefined, isInitialized: () => initialized } as never;
+    trackMarketplaceEvent('Code Component Event', { component: 'TemplateGrid', scope: 'test' });
+    assert.equal(fixture.beaconCalls.length, 0, 'buffered during the grace window');
+    initialized = true; // the real bundle arrives before the deadline
+    flushIndeterminateForTests();
+    assert.equal(fixture.beaconCalls.length, 0, 'SDK owns the buffered events');
+  } finally {
+    fixture.restore();
   }
 });
 

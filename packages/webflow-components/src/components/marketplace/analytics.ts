@@ -1,4 +1,4 @@
-import { hasPageAnalyticsSdk, sendTelemetryFallbackEvent } from './telemetryFallback';
+import { maybeSendTelemetryFallback } from './telemetryFallback';
 
 export type MarketplaceAnalyticsData = Record<string, string | number | boolean | null | undefined>;
 export type MarketplaceExperimentVariant = 'control' | 'treatment';
@@ -17,10 +17,16 @@ export interface MarketplaceExperimentState {
 interface WfAnalytics {
   init?: (config: Record<string, unknown>) => void;
   track?: (eventName: string, eventData?: Record<string, unknown>) => void;
+  /** Present on the 2026 shim; never flips true when the real bundle fails to load. */
+  isInitialized?: () => boolean | undefined;
 }
 
 interface SegmentAnalytics {
   track?: (eventName: string, eventData?: Record<string, unknown>) => void;
+  /** Set by the real analytics.js after load; absent on the snippet stub. */
+  initialized?: boolean;
+  /** Non-queueable member that only the real library exposes. */
+  user?: () => unknown;
 }
 
 interface AmplitudeAnalytics {
@@ -181,12 +187,12 @@ export function trackMarketplaceEvent(
   }
 
   try {
-    // Page-SDK outage resilience (2026-07-21): when no SDK is present the
-    // fan-out above silently no-oped. Beacon the event to the owned Worker so
-    // the funnel stays measurable. Gated on SDK absence to avoid double-counting.
-    if (!hasPageAnalyticsSdk()) {
-      sendTelemetryFallbackEvent(analyticsEventName, data);
-    }
+    // Page-SDK outage resilience (2026-07-21, hardened 2026-08-07): when no
+    // working SDK is present the fan-out above silently no-ops — including
+    // into zombie shims whose track() delivers nothing. The fallback sends,
+    // drops, or grace-buffers based on verified SDK health so the funnel
+    // stays measurable without double-counting.
+    maybeSendTelemetryFallback(analyticsEventName, data);
   } catch {
     // Analytics must not block navigation or component interaction.
   }
