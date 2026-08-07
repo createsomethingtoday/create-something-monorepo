@@ -7,6 +7,8 @@ The firmware is intentionally simple:
 
 - Wi-Fi only. BLE/iPhone notification capture is not part of this build.
 - Polls `https://ink.createsomething.agency` for the current operator brief.
+- Shows up to four active Codex/Claude agent cards and their safe steering
+  actions.
 - Requests a live MCP/agent health review from Ink.
 - Provides local rhythm, clock, settings, and calm tools.
 - Uses slow, explicit e-ink refreshes instead of animated UI.
@@ -73,7 +75,19 @@ pnpm --dir packages/calm-operator-ink-firmware monitor
 - `B` or `EXT/main`: select
 - From the brief screen, select opens the source/detail screen.
 - From the source/detail screen, select opens the menu.
-- `PWR`: manual sync.
+- In `Agents`, `A/C` move between agents or actions and `B` opens/selects.
+- Consequential agent actions require a second `B` press on a confirmation
+  screen. `A/C` cancels that confirmation.
+- `PWR`: refresh the current agent console, or sync the brief elsewhere.
+
+The agent surface polls every 30 seconds while it is open. It shows milestone
+snapshots rather than token-level streaming so duplicate e-ink frames are
+skipped. After a decision, the receipt screen distinguishes queueing from relay
+acknowledgement, completion, or failure.
+
+Actions that require free-form text are not submitted blank. The firmware
+shows `TEXT REQUIRED`; those actions need the future push-to-talk microphone or
+a phone handoff. Button-only decisions work with the Core Ink as shipped.
 
 The home brief is intentionally one-glance:
 
@@ -90,13 +104,13 @@ counts, and the strongest source label or link label that fits on the e-ink
 surface. Langfuse appears here as quality/eval evidence, not as the policy or
 work source of truth.
 
-The menu shows the current bucket and position, for example `Operator 1/10`.
+The menu shows the current bucket and position, for example `Operator 1/11`.
 Each selected item includes a one-line purpose. The footer keeps action hints on
 the left and battery/sound state on the right.
 
 Menu buckets:
 
-- `Operator`: Sync, MCP Review, Check In
+- `Operator`: Agents, Sync, MCP Review, Check In
 - `Rhythm`: Clock, Rhythm
 - `Calm`: Calm Reset, Stone Garden
 - `Settings`: Alerts, Quiet Mode, Status

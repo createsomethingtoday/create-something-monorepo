@@ -1,8 +1,9 @@
-export type AuthRole = 'device' | 'source';
+export type AuthRole = 'device' | 'source' | 'relay';
 
 export interface AuthEnv {
   INK_BRIDGE_TOKEN?: string;
   INK_DEVICE_TOKEN?: string;
+  INK_RELAY_TOKEN?: string;
   INK_SOURCE_TOKEN?: string;
 }
 
@@ -12,7 +13,9 @@ function parseToken(request: Request): string | null {
     return bearer.slice(7).trim();
   }
 
-  return request.headers.get('x-ink-token')?.trim() ?? request.headers.get('x-api-key')?.trim() ?? null;
+  return (
+    request.headers.get('x-ink-token')?.trim() ?? request.headers.get('x-api-key')?.trim() ?? null
+  );
 }
 
 async function sha256Bytes(value: string): Promise<Uint8Array> {
@@ -40,15 +43,24 @@ async function tokenMatches(input: string, expected: string): Promise<boolean> {
 function roleTokens(env: AuthEnv, role: AuthRole): string[] {
   const bridgeToken = env.INK_BRIDGE_TOKEN?.trim();
   const deviceToken = env.INK_DEVICE_TOKEN?.trim();
+  const relayToken = env.INK_RELAY_TOKEN?.trim();
   const sourceToken = env.INK_SOURCE_TOKEN?.trim();
 
   const candidates =
-    role === 'device' ? [deviceToken, bridgeToken] : [sourceToken, bridgeToken];
+    role === 'device'
+      ? [deviceToken, bridgeToken]
+      : role === 'relay'
+        ? [relayToken, bridgeToken]
+        : [sourceToken, bridgeToken];
 
   return candidates.filter((value): value is string => Boolean(value));
 }
 
-export async function isAuthorized(request: Request, env: AuthEnv, role: AuthRole): Promise<boolean> {
+export async function isAuthorized(
+  request: Request,
+  env: AuthEnv,
+  role: AuthRole
+): Promise<boolean> {
   const token = parseToken(request);
   if (!token) return false;
 
