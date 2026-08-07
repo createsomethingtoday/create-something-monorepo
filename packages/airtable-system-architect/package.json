@@ -1,0 +1,25 @@
+{
+  "name": "@create-something/airtable-system-architect",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Governed Codex plugin for Airtable base, schema, interface, and automation architecture.",
+  "type": "module",
+  "createSomething": {
+    "agentLegibilityContract": true,
+    "tier": "judgment",
+    "surface": "control-plane",
+    "entrypoints": [
+      "plugin/.codex-plugin/plugin.json",
+      "plugin/skills/airtable-system-architect/SKILL.md"
+    ],
+    "boot": "pnpm test",
+    "smoke": "pnpm verify"
+  },
+  "scripts": {
+    "check": "node --check test/plugin-packaging.test.mjs",
+    "test": "node --test test/*.test.mjs",
+    "verify": "pnpm check && pnpm test"
+  },
+  "author": "CREATE SOMETHING <hello@createsomething.agency>",
+  "license": "MIT"
+}
