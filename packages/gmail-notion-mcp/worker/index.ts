@@ -5,7 +5,7 @@
  *   /mcp  — Streamable HTTP transport
  *   /     — Health/info JSON
  *
- * Identity: send X-MCP-Account-Id or Authorization: Bearer <accountId> for multi-user metering.
+ * Identity: transport uses a shared bearer credential; the Composio entity is server configured.
  * Pricing: 100 free runs/period, then 1¢/run (1 run = 1 tool call).
  */
 
@@ -15,7 +15,7 @@ import { ComposioToolFactory } from '@create-something/composio-bridge';
 import { enableTelemetry } from '@create-something/mcp-core';
 import { registerAuthTools } from '../src/tools/auth.js';
 import { incrementRun, getUsage } from '../src/metering.js';
-import { normalizeAccountId } from '../src/identity.js';
+import { authorizeMcpTransport, resolveServerAccountId } from './transport-auth.js';
 
 // =============================================================================
 // Types
@@ -31,6 +31,8 @@ interface Env {
   LANGFUSE_PROJECT_NAME?: string;
   /** D1 for run metering (100 free, then 1¢/run). Create with wrangler d1 create gmail-notion-mcp-runs */
   RUNS_DB?: D1Database;
+  MCP_API_KEY?: string;
+  MCP_ACCOUNT_ID?: string;
 }
 
 const DEFAULT_LANGFUSE_PROJECT_NAME = 'CREATE SOMETHING';
@@ -55,23 +57,11 @@ export class GmailNotionMCP extends McpAgent<Env> {
     }],
   });
 
-  /** Set in fetch() from X-MCP-Account-Id or Authorization Bearer; used for Composio entityId and metering. */
-  private currentAccountId = 'default';
-
-  override async fetch(request: Request): Promise<Response> {
-    this.currentAccountId = normalizeAccountId(this.getAccountIdFromRequest(request));
-    return super.fetch(request);
-  }
-
-  private getAccountIdFromRequest(request: Request): string | null {
-    const accountHeader = request.headers.get('x-mcp-account-id');
-    if (accountHeader?.trim()) return accountHeader.trim();
-    const auth = request.headers.get('authorization');
-    if (auth?.startsWith('Bearer ')) return auth.slice(7).trim() || null;
-    return null;
-  }
+  /** Server-owned Composio entity and metering key. Request headers cannot select it. */
+  private currentAccountId = 'operator';
 
   async init() {
+    this.currentAccountId = resolveServerAccountId(this.env);
     if (this.env.LANGFUSE_PUBLIC_KEY && this.env.LANGFUSE_SECRET_KEY) {
       enableTelemetry(
         this.server,
@@ -380,6 +370,8 @@ export default {
     const url = new URL(request.url);
 
     if (url.pathname === '/mcp' || url.pathname.startsWith('/mcp/')) {
+      const authError = authorizeMcpTransport(request, env);
+      if (authError) return authError;
       return GmailNotionMCP.serve('/mcp').fetch(request, env, ctx);
     }
 
@@ -400,7 +392,7 @@ export default {
                 tools: ['notion_connection_status', 'notion_get_connect_link', 'notion_*'],
               },
             },
-            identity: 'Send X-MCP-Account-Id or Authorization: Bearer <accountId> for multi-user metering.',
+            identity: 'Bearer-authenticated operator service; account identity is configured server-side.',
             endpoints: { mcp: '/mcp' },
           },
           null,

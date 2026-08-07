@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "dev": "node ../../../scripts/run-wrangler.mjs dev",
-    "deploy": "node ../../../scripts/run-wrangler.mjs deploy"
+    "deploy": "node ../../../scripts/run-wrangler.mjs deploy",
+    "test": "node --import tsx --test tests/*.test.ts"
   },
   "dependencies": {
     "@create-something/composio-bridge": "workspace:*",

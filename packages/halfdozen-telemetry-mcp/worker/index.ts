@@ -24,6 +24,7 @@ import { McpAgent } from 'agents/mcp';
 import { enableTelemetry } from '@create-something/mcp-core';
 import { z } from 'zod';
 import { WORKWAY_FLEET_SERVERS } from '../../../config/mcp-hub/telemetry-fleet.ts';
+import { authorizeMcpTransport } from './transport-auth.js';
 
 // =============================================================================
 // Types
@@ -35,6 +36,7 @@ interface Env {
   LANGFUSE_PUBLIC_KEY?: string;
   LANGFUSE_SECRET_KEY?: string;
   LANGFUSE_PROJECT_NAME?: string;
+  MCP_BEARER_TOKEN?: string;
 }
 
 interface D1Database {
@@ -819,10 +821,14 @@ export default {
     const url = new URL(request.url);
 
     if (url.pathname === '/mcp' || url.pathname.startsWith('/mcp/')) {
+      const authError = authorizeMcpTransport(request, env);
+      if (authError) return authError;
       return TelemetryMCP.serve('/mcp').fetch(request, env, ctx);
     }
 
     if (url.pathname === '/sse' || url.pathname.startsWith('/sse/')) {
+      const authError = authorizeMcpTransport(request, env);
+      if (authError) return authError;
       return TelemetryMCP.serve('/sse').fetch(request, env, ctx);
     }
 

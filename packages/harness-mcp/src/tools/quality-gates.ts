@@ -1,8 +1,13 @@
 import { execCommand, findMonorepoRoot } from '../utils.js';
 import type { QualityGateResult } from '../types.js';
 
-function buildLintCommand(packageName?: string, autoFix?: boolean): string {
-  const args = ['pnpm', '-w', 'lint'];
+interface CommandSpec {
+  command: string;
+  args: string[];
+}
+
+function buildLintCommand(packageName?: string, autoFix?: boolean): CommandSpec {
+  const args = ['-w', 'lint'];
 
   if (packageName || autoFix) {
     args.push('--');
@@ -16,7 +21,7 @@ function buildLintCommand(packageName?: string, autoFix?: boolean): string {
     args.push('--fix');
   }
 
-  return args.join(' ');
+  return { command: 'pnpm', args };
 }
 
 export function runQualityGate(
@@ -30,19 +35,19 @@ export function runQualityGate(
   const root = findMonorepoRoot();
   const cwd = options?.cwd || root;
 
-  const commands: Record<typeof gate, string> = {
+  const commands: Record<typeof gate, CommandSpec> = {
     tests: options?.package
-      ? `pnpm --filter=${options.package} test`
-      : 'pnpm test',
+      ? { command: 'pnpm', args: [`--filter=${options.package}`, 'test'] }
+      : { command: 'pnpm', args: ['test'] },
     typecheck: options?.package
-      ? `pnpm --filter=${options.package} exec tsc --noEmit`
-      : 'tsc --noEmit',
+      ? { command: 'pnpm', args: [`--filter=${options.package}`, 'exec', 'tsc', '--noEmit'] }
+      : { command: 'tsc', args: ['--noEmit'] },
     lint: buildLintCommand(options?.package, options?.autoFix)
   };
 
-  const command = commands[gate];
+  const { command, args } = commands[gate];
 
-  const result = execCommand(command, cwd);
+  const result = execCommand(command, args, cwd);
 
   return {
     gate,

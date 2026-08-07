@@ -25,7 +25,7 @@
     "dev": "tsc --watch",
     "lint": "pnpm run typecheck",
     "typecheck": "tsc --noEmit",
-    "test": "echo \"Tests coming soon\""
+    "test": "node --import tsx --test test/*.test.ts"
   },
   "dependencies": {
     "@create-something/observability": "workspace:*",

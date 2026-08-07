@@ -1,0 +1,8 @@
+# Default review owner for all repository changes.
+* @micahwithwf
+
+# Security-sensitive policy and automation surfaces.
+/.github/ @micahwithwf
+/SECURITY.md @micahwithwf
+/config/mcp-hub/ @micahwithwf
+/packages/identity-worker/ @micahwithwf

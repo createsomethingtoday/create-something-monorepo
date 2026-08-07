@@ -20,6 +20,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpAgent } from 'agents/mcp';
 import { z } from 'zod';
 import { registerFeedbackTool, D1FeedbackStore, enableTelemetry } from '@create-something/mcp-core';
+import { authorizeMcpTransport } from './transport-auth.js';
 
 // =============================================================================
 // Types
@@ -36,6 +37,7 @@ interface Env {
   ALERT_EMAIL?: string;
   FEEDBACK_DB: any;  // D1Database — shared feedback across Half Dozen MCPs
   MCP_OBJECT: DurableObjectNamespace;
+  MCP_BEARER_TOKEN?: string;
 }
 
 // =============================================================================
@@ -711,10 +713,16 @@ export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
     const url = new URL(request.url);
 
-    if (url.pathname === '/mcp' || url.pathname.startsWith('/mcp/'))
+    if (url.pathname === '/mcp' || url.pathname.startsWith('/mcp/')) {
+      const authError = authorizeMcpTransport(request, env);
+      if (authError) return authError;
       return YouTubeSyncMCP.serve('/mcp').fetch(request, env, ctx);
-    if (url.pathname === '/sse' || url.pathname.startsWith('/sse/'))
+    }
+    if (url.pathname === '/sse' || url.pathname.startsWith('/sse/')) {
+      const authError = authorizeMcpTransport(request, env);
+      if (authError) return authError;
       return YouTubeSyncMCP.serve('/sse').fetch(request, env, ctx);
+    }
 
     if (url.pathname === '/' || url.pathname === '/health') {
       return new Response(JSON.stringify({

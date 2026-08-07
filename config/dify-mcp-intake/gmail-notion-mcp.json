@@ -18,14 +18,19 @@
     "transport": "http",
     "url": "https://gmail-notion-mcp.createsomething.workers.dev/mcp",
     "auth": {
-      "type": "none"
+      "type": "bearer",
+      "infisical": {
+        "environment": "prod",
+        "path": "/gmail-notion-mcp",
+        "secret_key": "MCP_API_KEY"
+      }
     }
   },
   "dify_studio_steps": [
     "Open Dify Studio -> Tools -> MCP.",
     "Create an HTTP MCP server card with server ID gmail-notion-mcp.",
     "Set the MCP URL to https://gmail-notion-mcp.createsomething.workers.dev/mcp.",
-    "Use no authentication for the server card.",
+    "Configure bearer auth from Infisical prod:/gmail-notion-mcp:MCP_API_KEY.",
     "Refresh/discover tools in Dify Studio.",
     "Transcribe every discovered tool into config/dify/inventory.json with risk classification.",
     "Run pnpm dify:inventory:generate and pnpm dify:coverage:generate."
@@ -37,7 +42,12 @@
       "transport": "http",
       "url": "https://gmail-notion-mcp.createsomething.workers.dev/mcp",
       "auth": {
-        "type": "none"
+        "type": "bearer",
+        "infisical": {
+          "environment": "prod",
+          "path": "/gmail-notion-mcp",
+          "secret_key": "MCP_API_KEY"
+        }
       },
       "tools": []
     }

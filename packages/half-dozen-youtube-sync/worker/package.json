@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "node ../../../scripts/run-wrangler.mjs dev",
     "deploy": "node ../../../scripts/run-wrangler.mjs deploy",
+    "test": "node --import tsx --test tests/*.test.ts",
     "secrets": "echo 'Run: wrangler secret put <NAME>' && echo 'Required: NOTION_API_KEY, NOTION_DATABASE_ID'"
   },
   "dependencies": {

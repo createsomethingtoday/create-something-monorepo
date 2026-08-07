@@ -48,6 +48,7 @@ crons = ["*/5 * * * *"]
 
 [vars]
 # Base instance = Danny
+LIFECYCLE = "dormant"
 AUTHORIZED_EMAIL = "dm@halfdozen.co"
 TELEMETRY_SERVER_NAME = "halfdozen-gmail-sync-danny"
 
@@ -61,6 +62,7 @@ name = "halfdozen-gmail-fillip"
 routes = [{ pattern = "fillip-gmail.mcp.workway.co", custom_domain = true }]
 
 [env.fillip.vars]
+LIFECYCLE = "dormant"
 AUTHORIZED_EMAIL = "fillip@halfdozen.co"
 TELEMETRY_SERVER_NAME = "halfdozen-gmail-sync-fillip"
 
@@ -91,6 +93,7 @@ name = "halfdozen-gmail-leah"
 routes = [{ pattern = "leah-gmail.mcp.workway.co", custom_domain = true }]
 
 [env.leah.vars]
+LIFECYCLE = "dormant"
 AUTHORIZED_EMAIL = "leah@halfdozen.co"
 TELEMETRY_SERVER_NAME = "halfdozen-gmail-sync-leah"
 

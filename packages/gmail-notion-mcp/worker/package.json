@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "node ../../../scripts/run-wrangler.mjs dev",
     "deploy": "node ../../../scripts/run-wrangler.mjs deploy",
+    "test": "node --import tsx --test tests/*.test.ts",
     "db:migrate": "node ../../../scripts/run-wrangler.mjs d1 migrations apply gmail-notion-mcp-runs --remote",
     "db:migrate:local": "node ../../../scripts/run-wrangler.mjs d1 migrations apply gmail-notion-mcp-runs --local"
   },

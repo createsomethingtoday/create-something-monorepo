@@ -14,7 +14,7 @@
  * - Resume from failures
  */
 
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -110,13 +110,12 @@ async function sleep(ms: number): Promise<void> {
 
 function executeIssue(issueId: string, config: BatchConfig): boolean {
   const root = findMonorepoRoot();
-  const forceArg = config.forceAgent ? `--force-agent ${config.forceAgent}` : '';
-  const dryRunArg = config.dryRun ? '--dry-run' : '';
-
-  const command = `node packages/harness-mcp/dist/bin/bd-smart-route.js ${issueId} ${forceArg} ${dryRunArg}`;
+  const args = ['packages/harness-mcp/dist/bin/bd-smart-route.js', issueId];
+  if (config.forceAgent) args.push('--force-agent', config.forceAgent);
+  if (config.dryRun) args.push('--dry-run');
 
   try {
-    execSync(command, {
+    execFileSync('node', args, {
       stdio: 'inherit',
       cwd: root,
     });

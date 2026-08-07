@@ -9,11 +9,11 @@ export function getGitStatus(): {
   const root = findMonorepoRoot();
 
   // Get branch
-  const branchResult = execCommand('git branch --show-current', root);
+  const branchResult = execCommand('git', ['branch', '--show-current'], root);
   const branch = branchResult.success ? branchResult.output : 'unknown';
 
   // Get status
-  const statusResult = execCommand('git status --porcelain', root);
+  const statusResult = execCommand('git', ['status', '--porcelain'], root);
   const lines = statusResult.output.split('\n').filter(Boolean);
 
   const modified: string[] = [];
@@ -40,7 +40,7 @@ export function commitWithIssue(issueId: string, message: string): void {
   const root = findMonorepoRoot();
 
   // Stage all changes
-  const addResult = execCommand('git add .', root);
+  const addResult = execCommand('git', ['add', '.'], root);
   if (!addResult.success) {
     throw new Error(`Failed to stage changes: ${addResult.output}`);
   }
@@ -48,13 +48,7 @@ export function commitWithIssue(issueId: string, message: string): void {
   // Create commit message with issue reference
   const fullMessage = `${message}\n\nRefs: ${issueId}\n\nCo-Authored-By: Harness Agent <noreply@createsomething.io>`;
 
-  // Commit using heredoc for proper formatting
-  const commitCommand = `git commit -m "$(cat <<'EOF'
-${fullMessage}
-EOF
-)"`;
-
-  const commitResult = execCommand(commitCommand, root);
+  const commitResult = execCommand('git', ['commit', '-m', fullMessage], root);
   if (!commitResult.success) {
     throw new Error(`Failed to commit: ${commitResult.output}`);
   }
@@ -62,13 +56,13 @@ EOF
 
 export function getDiff(staged: boolean = false): string {
   const root = findMonorepoRoot();
-  const command = staged ? 'git diff --staged' : 'git diff';
-  const result = execCommand(command, root);
+  const args = staged ? ['diff', '--staged'] : ['diff'];
+  const result = execCommand('git', args, root);
   return result.output;
 }
 
 export function getCurrentCommit(): string {
   const root = findMonorepoRoot();
-  const result = execCommand('git rev-parse HEAD', root);
+  const result = execCommand('git', ['rev-parse', 'HEAD'], root);
   return result.success ? result.output : '';
 }

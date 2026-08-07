@@ -4,7 +4,7 @@ import type { BeadsIssue } from '../types.js';
 export function getIssue(issueId: string): BeadsIssue {
   const root = findMonorepoRoot();
   // Use bd list --json with --limit 0 to get all issues
-  const result = execCommand(`bd list --json --limit 0`, root);
+  const result = execCommand('bd', ['list', '--json', '--limit', '0'], root);
 
   if (!result.success) {
     throw new Error(`Failed to list issues: ${result.output}`);
@@ -34,21 +34,21 @@ export function listIssues(filter?: {
 }): BeadsIssue[] {
   const root = findMonorepoRoot();
 
-  let command = 'bd list --json';
+  const args = ['list', '--json'];
 
   if (filter?.status) {
-    command += ` --status ${filter.status}`;
+    args.push('--status', filter.status);
   }
 
   if (filter?.labels?.length) {
-    command += ` --label ${filter.labels.join(',')}`;
+    args.push('--label', filter.labels.join(','));
   }
 
   if (filter?.priority) {
-    command += ` --priority ${filter.priority}`;
+    args.push('--priority', filter.priority);
   }
 
-  const result = execCommand(command, root);
+  const result = execCommand('bd', args, root);
 
   if (!result.success) {
     throw new Error(`Failed to list issues: ${result.output}`);
@@ -72,7 +72,7 @@ export function updateIssue(
   const root = findMonorepoRoot();
 
   if (updates.status) {
-    const result = execCommand(`bd update ${issueId} --status ${updates.status}`, root);
+    const result = execCommand('bd', ['update', issueId, '--status', updates.status], root);
     if (!result.success) {
       throw new Error(`Failed to update issue status: ${result.output}`);
     }
@@ -80,24 +80,24 @@ export function updateIssue(
 
   if (updates.labels?.add) {
     for (const label of updates.labels.add) {
-      execCommand(`bd label add ${issueId} ${label}`, root);
+      execCommand('bd', ['label', 'add', issueId, label], root);
     }
   }
 
   if (updates.labels?.remove) {
     for (const label of updates.labels.remove) {
-      execCommand(`bd label remove ${issueId} ${label}`, root);
+      execCommand('bd', ['label', 'remove', issueId, label], root);
     }
   }
 
   if (updates.notes) {
-    execCommand(`bd update ${issueId} --notes "${updates.notes}"`, root);
+    execCommand('bd', ['update', issueId, '--notes', updates.notes], root);
   }
 }
 
 export function closeIssue(issueId: string): void {
   const root = findMonorepoRoot();
-  const result = execCommand(`bd close ${issueId}`, root);
+  const result = execCommand('bd', ['close', issueId], root);
 
   if (!result.success) {
     throw new Error(`Failed to close issue: ${result.output}`);
@@ -106,7 +106,7 @@ export function closeIssue(issueId: string): void {
 
 export function getPriority(): BeadsIssue[] {
   const root = findMonorepoRoot();
-  const result = execCommand('bv --robot-priority', root);
+  const result = execCommand('bv', ['--robot-priority'], root);
 
   if (!result.success) {
     throw new Error(`Failed to get priority: ${result.output}`);
