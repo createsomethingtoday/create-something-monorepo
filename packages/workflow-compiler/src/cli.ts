@@ -7,7 +7,6 @@ import { writeCompiledWorkflowArtifacts } from './artifacts.js';
 import { compileWorkflowDefinition, WorkflowCompilationError } from './compile.js';
 import { replayWorkflow } from './replay.js';
 import { serveOperatorConsole } from './server.js';
-import type { WorkflowDefinition, WorkflowReplayManifest } from './types.js';
 
 interface CompileOptions {
   workflowPath: string;
@@ -55,12 +54,12 @@ async function main(): Promise<void> {
   }
 
   const options = compileOptions(args);
-  const definition = JSON.parse(await readFile(options.workflowPath, 'utf8')) as WorkflowDefinition;
+  const definition = JSON.parse(await readFile(options.workflowPath, 'utf8'));
   const bundle = compileWorkflowDefinition(definition);
   const replay = options.casesPath
     ? replayWorkflow(
         bundle,
-        JSON.parse(await readFile(options.casesPath, 'utf8')) as WorkflowReplayManifest,
+        JSON.parse(await readFile(options.casesPath, 'utf8')),
       )
     : undefined;
   const manifest = await writeCompiledWorkflowArtifacts(bundle, options.outDir, replay);

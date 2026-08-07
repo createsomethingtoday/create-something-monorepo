@@ -110,8 +110,16 @@ function transitionTarget(
     (edge) => edge.kind === 'transitions' && edge.from === `state:${initialState}` && edge.to === actionNode,
   );
   if (!entersAction) return undefined;
+  const enteredTransition = bundle.workflowMap.edges.find(
+    (edge) => edge.kind === 'transitions' && edge.from === `state:${initialState}` && edge.to === actionNode,
+  );
+  if (!enteredTransition?.id.endsWith(':action')) return undefined;
   const exitsAction = bundle.workflowMap.edges.find(
-    (edge) => edge.kind === 'transitions' && edge.from === actionNode && edge.to.startsWith('state:'),
+    (edge) =>
+      edge.kind === 'transitions' &&
+      edge.id === `${enteredTransition.id.slice(0, -':action'.length)}:state` &&
+      edge.from === actionNode &&
+      edge.to.startsWith('state:'),
   );
   return exitsAction?.to.slice('state:'.length);
 }

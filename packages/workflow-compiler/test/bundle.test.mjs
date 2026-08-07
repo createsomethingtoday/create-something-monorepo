@@ -105,3 +105,50 @@ test('fails closed when a transition references an unknown action', async () => 
     },
   );
 });
+
+test('rejects invalid public workflow definitions with structured diagnostics', async () => {
+  const unsupportedSchema = JSON.parse(await readFile(fixtureUrl, 'utf8'));
+  unsupportedSchema.schemaVersion = 'workflow_definition.v9';
+  unsupportedSchema.states.push({ ...unsupportedSchema.states[0] });
+  unsupportedSchema.transitions.push({
+    id: 'duplicate-submitted-validation-route',
+    from: 'submitted',
+    to: 'published',
+    actionId: 'validate_submission',
+  });
+  unsupportedSchema.actions[0].recovery = {
+    mode: 'unsupported',
+    owner: 7,
+    path: null,
+  };
+
+  assert.throws(
+    () => compileWorkflowDefinition(unsupportedSchema),
+    (error) => {
+      assert.equal(error.name, 'WorkflowCompilationError');
+      assert.deepEqual(
+        error.diagnostics.map((diagnostic) => diagnostic.code),
+        [
+          'UNSUPPORTED_WORKFLOW_SCHEMA_VERSION',
+          'INVALID_WORKFLOW_DEFINITION',
+          'INVALID_WORKFLOW_DEFINITION',
+          'INVALID_WORKFLOW_DEFINITION',
+          'DUPLICATE_STATE_ID',
+          'AMBIGUOUS_TRANSITION_ROUTE',
+        ],
+      );
+      assert.deepEqual(
+        error.diagnostics.map((diagnostic) => diagnostic.path),
+        [
+          'schemaVersion',
+          'actions[0].recovery.mode',
+          'actions[0].recovery.owner',
+          'actions[0].recovery.path',
+          'states[6].id',
+          'transitions[5]',
+        ],
+      );
+      return true;
+    },
+  );
+});

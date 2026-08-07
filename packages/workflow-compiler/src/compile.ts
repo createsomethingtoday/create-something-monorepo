@@ -31,6 +31,266 @@ export class WorkflowCompilationError extends Error {
   }
 }
 
+type UnknownRecord = Record<string, unknown>;
+
+function isRecord(value: unknown): value is UnknownRecord {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function invalidDefinition(
+  diagnostics: WorkflowCompilationDiagnostic[],
+  path: string,
+  message: string,
+): void {
+  diagnostics.push({ code: 'INVALID_WORKFLOW_DEFINITION', path, message });
+}
+
+function requireRecord(
+  value: unknown,
+  path: string,
+  diagnostics: WorkflowCompilationDiagnostic[],
+): UnknownRecord | undefined {
+  if (isRecord(value)) return value;
+  invalidDefinition(diagnostics, path, `${path} must be an object.`);
+  return undefined;
+}
+
+function requireString(
+  record: UnknownRecord,
+  key: string,
+  path: string,
+  diagnostics: WorkflowCompilationDiagnostic[],
+): void {
+  if (typeof record[key] !== 'string') {
+    invalidDefinition(diagnostics, `${path}.${key}`, `${path}.${key} must be a string.`);
+  }
+}
+
+function requireBoolean(
+  record: UnknownRecord,
+  key: string,
+  path: string,
+  diagnostics: WorkflowCompilationDiagnostic[],
+): void {
+  if (typeof record[key] !== 'boolean') {
+    invalidDefinition(diagnostics, `${path}.${key}`, `${path}.${key} must be a boolean.`);
+  }
+}
+
+function requireStringArray(
+  record: UnknownRecord,
+  key: string,
+  path: string,
+  diagnostics: WorkflowCompilationDiagnostic[],
+): void {
+  if (!Array.isArray(record[key]) || !record[key].every((value) => typeof value === 'string')) {
+    invalidDefinition(diagnostics, `${path}.${key}`, `${path}.${key} must be an array of strings.`);
+  }
+}
+
+function requireEnum(
+  record: UnknownRecord,
+  key: string,
+  path: string,
+  values: readonly string[],
+  diagnostics: WorkflowCompilationDiagnostic[],
+): void {
+  if (typeof record[key] !== 'string' || !values.includes(record[key])) {
+    invalidDefinition(
+      diagnostics,
+      `${path}.${key}`,
+      `${path}.${key} must be one of: ${values.join(', ')}.`,
+    );
+  }
+}
+
+function requireCollection(
+  definition: UnknownRecord,
+  key: string,
+  diagnostics: WorkflowCompilationDiagnostic[],
+): UnknownRecord[] {
+  const value = definition[key];
+  if (!Array.isArray(value)) {
+    invalidDefinition(diagnostics, key, `${key} must be an array.`);
+    return [];
+  }
+  return value.flatMap((entry, index) => {
+    const record = requireRecord(entry, `${key}[${index}]`, diagnostics);
+    return record ? [record] : [];
+  });
+}
+
+function validateUniqueIds(
+  entries: UnknownRecord[],
+  collection: string,
+  singular: string,
+  diagnostics: WorkflowCompilationDiagnostic[],
+): void {
+  const seen = new Set<string>();
+  entries.forEach((entry, index) => {
+    if (typeof entry.id !== 'string') return;
+    if (seen.has(entry.id)) {
+      diagnostics.push({
+        code: `DUPLICATE_${singular}_ID`,
+        path: `${collection}[${index}].id`,
+        message: `${singular} id ${entry.id} must be unique.`,
+      });
+      return;
+    }
+    seen.add(entry.id);
+  });
+}
+
+function validateWorkflowDefinition(input: unknown): WorkflowDefinition {
+  const diagnostics: WorkflowCompilationDiagnostic[] = [];
+  const definition = requireRecord(input, 'workflow', diagnostics);
+  if (!definition) throw new WorkflowCompilationError(diagnostics);
+
+  if (definition.schemaVersion !== 'workflow_definition.v0.1') {
+    diagnostics.push({
+      code: 'UNSUPPORTED_WORKFLOW_SCHEMA_VERSION',
+      path: 'schemaVersion',
+      message: 'schemaVersion must be workflow_definition.v0.1.',
+    });
+  }
+  for (const key of ['workflowId', 'version', 'title', 'businessObjective']) {
+    requireString(definition, key, 'workflow', diagnostics);
+  }
+  const owners = requireRecord(definition.owners, 'owners', diagnostics);
+  if (owners) {
+    for (const key of ['workflow', 'policy', 'technical']) {
+      requireString(owners, key, 'owners', diagnostics);
+    }
+  }
+
+  const systems = requireCollection(definition, 'systems', diagnostics);
+  systems.forEach((system, index) => {
+    const path = `systems[${index}]`;
+    for (const key of ['id', 'title', 'owningSurface']) requireString(system, key, path, diagnostics);
+    requireEnum(system, 'tier', path, ['database', 'automation', 'judgment'], diagnostics);
+    requireBoolean(system, 'sourceOfTruth', path, diagnostics);
+  });
+
+  const objects = requireCollection(definition, 'objects', diagnostics);
+  objects.forEach((object, index) => {
+    const path = `objects[${index}]`;
+    for (const key of ['id', 'title', 'sourceSystemId']) requireString(object, key, path, diagnostics);
+    requireStringArray(object, 'requiredFields', path, diagnostics);
+  });
+
+  const events = requireCollection(definition, 'events', diagnostics);
+  events.forEach((event, index) => {
+    const path = `events[${index}]`;
+    for (const key of ['id', 'title', 'objectId']) requireString(event, key, path, diagnostics);
+    requireStringArray(event, 'requiredEvidence', path, diagnostics);
+  });
+
+  const actors = requireCollection(definition, 'actors', diagnostics);
+  actors.forEach((actor, index) => {
+    const path = `actors[${index}]`;
+    for (const key of ['id', 'title']) requireString(actor, key, path, diagnostics);
+  });
+
+  const states = requireCollection(definition, 'states', diagnostics);
+  states.forEach((state, index) => {
+    const path = `states[${index}]`;
+    for (const key of ['id', 'title']) requireString(state, key, path, diagnostics);
+    if ('terminal' in state && state.terminal !== undefined) requireBoolean(state, 'terminal', path, diagnostics);
+  });
+
+  const actions = requireCollection(definition, 'actions', diagnostics);
+  actions.forEach((action, index) => {
+    const path = `actions[${index}]`;
+    for (const key of ['id', 'title', 'authority']) requireString(action, key, path, diagnostics);
+    requireEnum(action, 'kind', path, ['read', 'write', 'decision', 'publish'], diagnostics);
+    requireEnum(
+      action,
+      'autonomy',
+      path,
+      ['auto_allow', 'approval_required', 'manual_only', 'blocked'],
+      diagnostics,
+    );
+    requireStringArray(action, 'systemsTouched', path, diagnostics);
+    requireStringArray(action, 'requiredEvidence', path, diagnostics);
+    const approval = requireRecord(action.approval, `${path}.approval`, diagnostics);
+    if (approval) {
+      requireBoolean(approval, 'required', `${path}.approval`, diagnostics);
+      if ('owner' in approval && approval.owner !== undefined) {
+        requireString(approval, 'owner', `${path}.approval`, diagnostics);
+      }
+    }
+    const receipt = requireRecord(action.receipt, `${path}.receipt`, diagnostics);
+    if (receipt) requireStringArray(receipt, 'requiredFields', `${path}.receipt`, diagnostics);
+    const recovery = requireRecord(action.recovery, `${path}.recovery`, diagnostics);
+    if (recovery) {
+      requireEnum(recovery, 'mode', `${path}.recovery`, ['rollback', 'escalate', 'manual_fallback'], diagnostics);
+      requireString(recovery, 'owner', `${path}.recovery`, diagnostics);
+      requireString(recovery, 'path', `${path}.recovery`, diagnostics);
+    }
+    if ('tool' in action && action.tool !== undefined) {
+      const tool = requireRecord(action.tool, `${path}.tool`, diagnostics);
+      if (tool) {
+        requireString(tool, 'name', `${path}.tool`, diagnostics);
+        requireString(tool, 'targetSystemId', `${path}.tool`, diagnostics);
+      }
+    }
+    if ('agentId' in action && action.agentId !== undefined) {
+      requireString(action, 'agentId', path, diagnostics);
+    }
+  });
+
+  const transitions = requireCollection(definition, 'transitions', diagnostics);
+  transitions.forEach((transition, index) => {
+    const path = `transitions[${index}]`;
+    for (const key of ['id', 'from', 'to', 'actionId']) requireString(transition, key, path, diagnostics);
+  });
+
+  const agents = requireCollection(definition, 'agents', diagnostics);
+  agents.forEach((agent, index) => {
+    const path = `agents[${index}]`;
+    for (const key of ['id', 'title', 'purpose', 'escalationOwner']) {
+      requireString(agent, key, path, diagnostics);
+    }
+    requireStringArray(agent, 'allowedActionIds', path, diagnostics);
+  });
+
+  const evaluations = requireCollection(definition, 'evaluations', diagnostics);
+  evaluations.forEach((evaluation, index) => {
+    const path = `evaluations[${index}]`;
+    for (const key of ['id', 'title', 'actionId']) requireString(evaluation, key, path, diagnostics);
+    requireEnum(evaluation, 'expectedOutcome', path, ['pass', 'approval_required', 'blocked'], diagnostics);
+    requireStringArray(evaluation, 'requiredEvidence', path, diagnostics);
+  });
+
+  validateUniqueIds(systems, 'systems', 'SYSTEM', diagnostics);
+  validateUniqueIds(objects, 'objects', 'OBJECT', diagnostics);
+  validateUniqueIds(events, 'events', 'EVENT', diagnostics);
+  validateUniqueIds(actors, 'actors', 'ACTOR', diagnostics);
+  validateUniqueIds(states, 'states', 'STATE', diagnostics);
+  validateUniqueIds(actions, 'actions', 'ACTION', diagnostics);
+  validateUniqueIds(transitions, 'transitions', 'TRANSITION', diagnostics);
+  validateUniqueIds(agents, 'agents', 'AGENT', diagnostics);
+  validateUniqueIds(evaluations, 'evaluations', 'EVALUATION', diagnostics);
+
+  const routes = new Set<string>();
+  transitions.forEach((transition, index) => {
+    if (typeof transition.from !== 'string' || typeof transition.actionId !== 'string') return;
+    const route = JSON.stringify([transition.from, transition.actionId]);
+    if (routes.has(route)) {
+      diagnostics.push({
+        code: 'AMBIGUOUS_TRANSITION_ROUTE',
+        path: `transitions[${index}]`,
+        message: `Transition route (${transition.from}, ${transition.actionId}) must identify one target state.`,
+      });
+      return;
+    }
+    routes.add(route);
+  });
+
+  if (diagnostics.length > 0) throw new WorkflowCompilationError(diagnostics);
+  return input as WorkflowDefinition;
+}
+
 function byId<T extends { id: string }>(left: T, right: T): number {
   return left.id.localeCompare(right.id);
 }
@@ -231,7 +491,8 @@ function validateReferences(definition: WorkflowDefinition): WorkflowCompilation
   return diagnostics;
 }
 
-export function compileWorkflowDefinition(definition: WorkflowDefinition): CompiledWorkflowBundle {
+export function compileWorkflowDefinition(input: unknown): CompiledWorkflowBundle {
+  const definition = validateWorkflowDefinition(input);
   const diagnostics = [...validateGovernance(definition), ...validateReferences(definition)];
   if (diagnostics.length > 0) throw new WorkflowCompilationError(diagnostics);
 

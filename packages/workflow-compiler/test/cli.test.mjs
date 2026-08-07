@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, readFile, readdir, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -57,5 +57,27 @@ test('the public CLI writes a deterministic linked artifact inventory', async ()
   } finally {
     await rm(first, { recursive: true, force: true });
     await rm(second, { recursive: true, force: true });
+  }
+});
+
+test('the public CLI emits structured diagnostics for an invalid workflow definition', async () => {
+  const scratch = await mkdtemp(join(tmpdir(), 'workflow-compiler-invalid-'));
+
+  try {
+    const workflowPath = join(scratch, 'workflow.json');
+    await writeFile(workflowPath, JSON.stringify({ schemaVersion: 'workflow_definition.v9' }));
+    const result = spawnSync(
+      process.execPath,
+      ['dist/cli.js', 'compile', '--workflow', workflowPath, '--out', join(scratch, 'out')],
+      { cwd: packageRoot, encoding: 'utf8' },
+    );
+
+    assert.equal(result.status, 1);
+    const output = JSON.parse(result.stderr);
+    assert.equal(output.ok, false);
+    assert.equal(output.error, 'WorkflowCompilationError');
+    assert.ok(output.diagnostics.some((diagnostic) => diagnostic.code === 'UNSUPPORTED_WORKFLOW_SCHEMA_VERSION'));
+  } finally {
+    await rm(scratch, { recursive: true, force: true });
   }
 });
