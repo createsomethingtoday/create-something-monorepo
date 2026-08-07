@@ -392,6 +392,7 @@ export interface CustomCodeAnalysisResult {
 	issues: ValidationIssue[];
 	stats: {
 		fontCustomCodeFindings: number;
+		schemaMarkupFindings: number;
 		analysisComplete: boolean;
 	};
 }

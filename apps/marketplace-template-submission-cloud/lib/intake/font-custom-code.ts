@@ -1,6 +1,6 @@
 import {
-  findProhibitedFontCustomCode,
-  type FontCustomCodeFinding
+  findProhibitedMarketplaceCustomCode,
+  type MarketplaceCustomCodeFinding
 } from '@create-something/gsap-validation-worker/font-custom-code-policy';
 
 const DEFAULT_TIMEOUT_MS = 12_000;
@@ -10,15 +10,15 @@ type PreflightOptions = {
   timeoutMs?: number;
 };
 
-export type FreshFontCustomCodePreflight = {
+export type FreshCustomCodePreflight = {
   passed: boolean;
-  findings: FontCustomCodeFinding[];
+  findings: MarketplaceCustomCodeFinding[];
 };
 
-export async function runFreshFontCustomCodePreflight(
+export async function runFreshCustomCodePreflight(
   normalizedPublishedUrl: string,
   options: PreflightOptions = {}
-): Promise<FreshFontCustomCodePreflight> {
+): Promise<FreshCustomCodePreflight> {
   const controller = new AbortController();
   const timeoutId = setTimeout(
     () => controller.abort(),
@@ -34,7 +34,7 @@ export async function runFreshFontCustomCodePreflight(
       throw new Error(`Published site returned HTTP ${response.status}.`);
     }
 
-    const findings = findProhibitedFontCustomCode(await response.text());
+    const findings = findProhibitedMarketplaceCustomCode(await response.text());
     return { passed: findings.length === 0, findings };
   } finally {
     clearTimeout(timeoutId);
