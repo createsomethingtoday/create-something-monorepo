@@ -2,11 +2,14 @@ import {
   CAPABILITIES_OPTIONS,
   DEFAULT_AIRTABLE_BASE_ID,
   DEFAULT_GOVERNANCE_FINDINGS_TABLE_ID,
+  EXCEPTION_STATUS_OPTIONS,
+  EXCEPTION_TYPE_OPTIONS,
   FIELD_IDS,
   GOVERNANCE_FINDING_FIELD_NAMES,
   type GovernanceFindingCategory,
   type GovernanceFindingPriority,
   type GovernanceFindingStatus,
+  HOLD_REASON_OPTIONS,
   MARKETPLACE_STATUS_OPTIONS,
   REJECTION_REASON_OPTIONS,
   REVIEW_STATUS_OPTIONS,
@@ -96,6 +99,35 @@ const VERSION_FIELD_IDS = [
   FIELD_IDS.versions.daysInCurrentStage,
   FIELD_IDS.versions.assetLink,
   FIELD_IDS.versions.assetRecordIdRollup,
+  FIELD_IDS.versions.exceptionStatus,
+  FIELD_IDS.versions.exceptionType,
+  FIELD_IDS.versions.exceptionRationale,
+  FIELD_IDS.versions.exceptionDecisionNotes,
+  FIELD_IDS.versions.exceptionRequestedBy,
+  FIELD_IDS.versions.exceptionDecisionBy,
+  FIELD_IDS.versions.exceptionRequestedDatetime,
+  FIELD_IDS.versions.exceptionDecisionDatetime,
+  FIELD_IDS.versions.exceptionItemsLink,
+  FIELD_IDS.versions.undecidedExceptionItems,
+  FIELD_IDS.versions.deniedExceptionItems,
+  FIELD_IDS.versions.holdReason,
+  FIELD_IDS.versions.holdNotes,
+  FIELD_IDS.versions.partnershipApp,
+] as const;
+
+const EXCEPTION_ITEM_FIELD_IDS = [
+  FIELD_IDS.exceptions.item,
+  FIELD_IDS.exceptions.assetVersionLink,
+  FIELD_IDS.exceptions.status,
+  FIELD_IDS.exceptions.type,
+  FIELD_IDS.exceptions.rationale,
+  FIELD_IDS.exceptions.decisionNotes,
+  FIELD_IDS.exceptions.requestedBy,
+  FIELD_IDS.exceptions.decisionBy,
+  FIELD_IDS.exceptions.requestedDatetime,
+  FIELD_IDS.exceptions.decisionDatetime,
+  FIELD_IDS.exceptions.undecided,
+  FIELD_IDS.exceptions.denied,
 ] as const;
 
 export class AirtableClientError extends Error {
@@ -179,6 +211,37 @@ export interface AppReviewVersion {
   rejectionReason?: string;
   reviewFeedback?: string;
   daysInCurrentStage?: number;
+  exceptionStatus?: string;
+  exceptionType?: string;
+  exceptionRationale?: string;
+  exceptionDecisionNotes?: string;
+  exceptionRequestedBy?: CollaboratorRef | null;
+  exceptionDecisionBy?: CollaboratorRef | null;
+  exceptionRequestedDatetime?: string;
+  exceptionDecisionDatetime?: string;
+  exceptionItemIds?: string[];
+  undecidedExceptionItems?: number;
+  deniedExceptionItems?: number;
+  holdReason?: string;
+  holdNotes?: string;
+  isPartnershipApp?: boolean;
+  createdTime?: string;
+}
+
+export interface AppReviewExceptionItem {
+  exceptionItemId: string;
+  item?: string;
+  assetVersionId?: string;
+  exceptionStatus?: string;
+  exceptionType?: string;
+  rationale?: string;
+  decisionNotes?: string;
+  requestedBy?: CollaboratorRef | null;
+  decisionBy?: CollaboratorRef | null;
+  requestedDatetime?: string;
+  decisionDatetime?: string;
+  isUndecided?: boolean;
+  isDenied?: boolean;
   createdTime?: string;
 }
 
@@ -281,6 +344,27 @@ export interface VersionReviewUpdateInput {
   rejection_reason?: string;
   review_feedback?: string;
   submission_datetime_override?: string | null;
+  exception_status?: string;
+  exception_type?: string;
+  exception_rationale?: string;
+  exception_decision_notes?: string;
+  hold_reason?: string | null;
+  hold_notes?: string;
+}
+
+export interface ExceptionItemCreateInput {
+  asset_version_id: string;
+  item: string;
+  exception_type?: string;
+  rationale?: string;
+}
+
+export interface ExceptionItemUpdateInput {
+  item?: string;
+  exception_status?: string;
+  exception_type?: string;
+  rationale?: string;
+  decision_notes?: string;
 }
 
 export interface AssetMetadataUpdateInput {
@@ -475,6 +559,42 @@ function mapVersionRecord(record: AirtableRecord): AppReviewVersion {
     rejectionReason: firstString(fields[FIELD_IDS.versions.rejectionReason]),
     reviewFeedback: firstString(fields[FIELD_IDS.versions.reviewFeedback]),
     daysInCurrentStage: toNumberValue(fields[FIELD_IDS.versions.daysInCurrentStage]),
+    exceptionStatus: firstString(fields[FIELD_IDS.versions.exceptionStatus]),
+    exceptionType: firstString(fields[FIELD_IDS.versions.exceptionType]),
+    exceptionRationale: firstString(fields[FIELD_IDS.versions.exceptionRationale]),
+    exceptionDecisionNotes: firstString(fields[FIELD_IDS.versions.exceptionDecisionNotes]),
+    exceptionRequestedBy: toCollaborator(fields[FIELD_IDS.versions.exceptionRequestedBy]),
+    exceptionDecisionBy: toCollaborator(fields[FIELD_IDS.versions.exceptionDecisionBy]),
+    exceptionRequestedDatetime: firstString(fields[FIELD_IDS.versions.exceptionRequestedDatetime]),
+    exceptionDecisionDatetime: firstString(fields[FIELD_IDS.versions.exceptionDecisionDatetime]),
+    exceptionItemIds: toStringArray(fields[FIELD_IDS.versions.exceptionItemsLink]),
+    undecidedExceptionItems: toNumberValue(fields[FIELD_IDS.versions.undecidedExceptionItems]),
+    deniedExceptionItems: toNumberValue(fields[FIELD_IDS.versions.deniedExceptionItems]),
+    holdReason: firstString(fields[FIELD_IDS.versions.holdReason]),
+    holdNotes: firstString(fields[FIELD_IDS.versions.holdNotes]),
+    isPartnershipApp: toBooleanValue(fields[FIELD_IDS.versions.partnershipApp]),
+    createdTime: record.createdTime,
+  };
+}
+
+function mapExceptionItemRecord(record: AirtableRecord): AppReviewExceptionItem {
+  const fields = record.fields;
+  const undecided = toNumberValue(fields[FIELD_IDS.exceptions.undecided]);
+  const denied = toNumberValue(fields[FIELD_IDS.exceptions.denied]);
+  return {
+    exceptionItemId: record.id,
+    item: firstString(fields[FIELD_IDS.exceptions.item]),
+    assetVersionId: toStringArray(fields[FIELD_IDS.exceptions.assetVersionLink])[0],
+    exceptionStatus: firstString(fields[FIELD_IDS.exceptions.status]),
+    exceptionType: firstString(fields[FIELD_IDS.exceptions.type]),
+    rationale: firstString(fields[FIELD_IDS.exceptions.rationale]),
+    decisionNotes: firstString(fields[FIELD_IDS.exceptions.decisionNotes]),
+    requestedBy: toCollaborator(fields[FIELD_IDS.exceptions.requestedBy]),
+    decisionBy: toCollaborator(fields[FIELD_IDS.exceptions.decisionBy]),
+    requestedDatetime: firstString(fields[FIELD_IDS.exceptions.requestedDatetime]),
+    decisionDatetime: firstString(fields[FIELD_IDS.exceptions.decisionDatetime]),
+    isUndecided: undecided === undefined ? undefined : undecided > 0,
+    isDenied: denied === undefined ? undefined : denied > 0,
     createdTime: record.createdTime,
   };
 }
@@ -814,6 +934,28 @@ export class AirtableClient {
       if (error instanceof AirtableClientError && error.status === 404) return null;
       throw error;
     }
+  }
+
+  private async createRecord(
+    tableId: ScopedTableId,
+    fields: Record<string, unknown>,
+  ): Promise<AirtableRecord> {
+    assertScopedTable(tableId);
+    const query = new URLSearchParams();
+    query.set('returnFieldsByFieldId', 'true');
+    query.set('typecast', 'true');
+
+    const payload = JSON.stringify({ records: [{ fields }] });
+    const data = await this.requestJson<AirtableListResponse>(
+      `/${encodeURIComponent(tableId)}`,
+      { method: 'POST', body: payload },
+      query,
+    );
+
+    if (!data.records[0]) {
+      throw new AirtableClientError('AIRTABLE_EMPTY_CREATE', 'Airtable create returned no record.');
+    }
+    return data.records[0];
   }
 
   private async updateRecord(
@@ -1215,12 +1357,125 @@ export class AirtableClient {
         : null;
     }
 
+    if (input.exception_status !== undefined) {
+      if (!(EXCEPTION_STATUS_OPTIONS as readonly string[]).includes(input.exception_status)) {
+        throw new AirtableClientError('INVALID_EXCEPTION_STATUS', 'Unsupported exception status.', 400, {
+          value: input.exception_status,
+          allowed: EXCEPTION_STATUS_OPTIONS,
+        });
+      }
+      fields[FIELD_IDS.versions.exceptionStatus] = input.exception_status;
+    }
+
+    if (input.exception_type !== undefined) {
+      if (!(EXCEPTION_TYPE_OPTIONS as readonly string[]).includes(input.exception_type)) {
+        throw new AirtableClientError('INVALID_EXCEPTION_TYPE', 'Unsupported exception type.', 400, {
+          value: input.exception_type,
+          allowed: EXCEPTION_TYPE_OPTIONS,
+        });
+      }
+      fields[FIELD_IDS.versions.exceptionType] = input.exception_type;
+    }
+
+    if (input.exception_rationale !== undefined) {
+      fields[FIELD_IDS.versions.exceptionRationale] = input.exception_rationale;
+    }
+
+    if (input.exception_decision_notes !== undefined) {
+      fields[FIELD_IDS.versions.exceptionDecisionNotes] = input.exception_decision_notes;
+    }
+
+    if (input.hold_reason !== undefined) {
+      if (input.hold_reason !== null && !(HOLD_REASON_OPTIONS as readonly string[]).includes(input.hold_reason)) {
+        throw new AirtableClientError('INVALID_HOLD_REASON', 'Unsupported hold reason.', 400, {
+          value: input.hold_reason,
+          allowed: HOLD_REASON_OPTIONS,
+        });
+      }
+      fields[FIELD_IDS.versions.holdReason] = input.hold_reason;
+    }
+
+    if (input.hold_notes !== undefined) {
+      fields[FIELD_IDS.versions.holdNotes] = input.hold_notes;
+    }
+
     if (Object.keys(fields).length === 0) {
       throw new AirtableClientError('NO_MUTATION_FIELDS', 'No version review fields were provided.', 400);
     }
 
     const updated = await this.updateRecord(TABLE_IDS.assetVersions, versionId, fields);
     return mapVersionRecord(updated);
+  }
+
+  async listExceptionItems(versionId: string): Promise<AppReviewExceptionItem[]> {
+    const version = await this.getVersionById(versionId);
+    if (!version) {
+      throw new AirtableClientError('VERSION_NOT_FOUND', `Asset Version ${versionId} was not found.`, 404);
+    }
+    const itemIds = version.exceptionItemIds ?? [];
+    if (itemIds.length === 0) return [];
+
+    const records = await this.listRecords({
+      tableId: TABLE_IDS.exceptions,
+      fieldIds: [...EXCEPTION_ITEM_FIELD_IDS],
+      filterByFormula: `OR(${itemIds.map((id) => `RECORD_ID() = '${escapeFormulaValue(id)}'`).join(',')})`,
+    });
+    return records.map((record) => mapExceptionItemRecord(record));
+  }
+
+  async createExceptionItem(input: ExceptionItemCreateInput): Promise<AppReviewExceptionItem> {
+    if (input.exception_type !== undefined && !(EXCEPTION_TYPE_OPTIONS as readonly string[]).includes(input.exception_type)) {
+      throw new AirtableClientError('INVALID_EXCEPTION_TYPE', 'Unsupported exception type.', 400, {
+        value: input.exception_type,
+        allowed: EXCEPTION_TYPE_OPTIONS,
+      });
+    }
+
+    const fields: Record<string, unknown> = {
+      [FIELD_IDS.exceptions.item]: input.item,
+      [FIELD_IDS.exceptions.assetVersionLink]: [input.asset_version_id],
+    };
+    if (input.exception_type !== undefined) fields[FIELD_IDS.exceptions.type] = input.exception_type;
+    if (input.rationale !== undefined) fields[FIELD_IDS.exceptions.rationale] = input.rationale;
+
+    const created = await this.createRecord(TABLE_IDS.exceptions, fields);
+    return mapExceptionItemRecord(created);
+  }
+
+  async updateExceptionItem(exceptionItemId: string, input: ExceptionItemUpdateInput): Promise<AppReviewExceptionItem> {
+    const fields: Record<string, unknown> = {};
+
+    if (input.item !== undefined) fields[FIELD_IDS.exceptions.item] = input.item;
+
+    if (input.exception_status !== undefined) {
+      if (!(EXCEPTION_STATUS_OPTIONS as readonly string[]).includes(input.exception_status)) {
+        throw new AirtableClientError('INVALID_EXCEPTION_STATUS', 'Unsupported exception status.', 400, {
+          value: input.exception_status,
+          allowed: EXCEPTION_STATUS_OPTIONS,
+        });
+      }
+      fields[FIELD_IDS.exceptions.status] = input.exception_status;
+    }
+
+    if (input.exception_type !== undefined) {
+      if (!(EXCEPTION_TYPE_OPTIONS as readonly string[]).includes(input.exception_type)) {
+        throw new AirtableClientError('INVALID_EXCEPTION_TYPE', 'Unsupported exception type.', 400, {
+          value: input.exception_type,
+          allowed: EXCEPTION_TYPE_OPTIONS,
+        });
+      }
+      fields[FIELD_IDS.exceptions.type] = input.exception_type;
+    }
+
+    if (input.rationale !== undefined) fields[FIELD_IDS.exceptions.rationale] = input.rationale;
+    if (input.decision_notes !== undefined) fields[FIELD_IDS.exceptions.decisionNotes] = input.decision_notes;
+
+    if (Object.keys(fields).length === 0) {
+      throw new AirtableClientError('NO_MUTATION_FIELDS', 'No exception item fields were provided.', 400);
+    }
+
+    const updated = await this.updateRecord(TABLE_IDS.exceptions, exceptionItemId, fields);
+    return mapExceptionItemRecord(updated);
   }
 
   async updateAssetMetadata(assetId: string, input: AssetMetadataUpdateInput): Promise<AppReviewAsset> {
