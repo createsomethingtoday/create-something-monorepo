@@ -3,11 +3,57 @@ import test from 'node:test';
 
 import {
   ELEVENLABS_CONVERSATION_TOKEN_URL,
-  createElevenLabsVoiceSessionResponse
+  createElevenLabsVoiceSessionResponse,
+  createVoiceSessionRatePolicies,
+  createVoiceSessionRequestDeniedResponse,
+  isAllowedVoiceSessionRequest
 } from '../src/lib/server/elevenlabs-voice-session';
+import { enforcePublicWritePolicies } from '../src/lib/server/public-write-limits';
 
 const apiKey = 'xi-test-server-key-that-must-never-reach-the-browser';
 const agentId = 'agent_3501kz9ts50ef8svj797p494898n';
+
+test('voice session requests allow same-origin browsers and reject cross-site callers', async () => {
+  const url = new URL('https://abundance-concierge-chat.pages.dev/api/voice/session');
+  const sameOrigin = new Request(url, {
+    method: 'POST',
+    headers: {
+      origin: 'https://abundance-concierge-chat.pages.dev',
+      'sec-fetch-site': 'same-origin'
+    }
+  });
+  const crossSite = new Request(url, {
+    method: 'POST',
+    headers: {
+      origin: 'https://quota-burner.example',
+      'sec-fetch-site': 'cross-site'
+    }
+  });
+
+  assert.equal(isAllowedVoiceSessionRequest(sameOrigin, url), true);
+  assert.equal(isAllowedVoiceSessionRequest(crossSite, url), false);
+
+  const denied = createVoiceSessionRequestDeniedResponse();
+  assert.equal(denied.status, 403);
+  assert.equal(denied.headers.get('cache-control'), 'no-store, private');
+  assert.doesNotMatch(await denied.text(), /agent_|api.?key/i);
+});
+
+test('voice session issuance blocks a ninth request inside the ten-minute burst window', async () => {
+  const subject = `ip:test-${Date.now()}-${Math.random()}`;
+  const attempts = [];
+
+  for (let index = 0; index < 9; index += 1) {
+    attempts.push(
+      await enforcePublicWritePolicies({ policies: createVoiceSessionRatePolicies(subject) })
+    );
+  }
+
+  assert.ok(attempts.slice(0, 8).every((result) => result.ok));
+  assert.equal(attempts[8].ok, false);
+  assert.equal(attempts[8].blockedPolicy?.scope, 'voice_session.ip.10m');
+  assert.ok((attempts[8].blockedPolicy?.retryAfterSeconds ?? 0) > 0);
+});
 
 test('the Abundance voice session exchanges its server key for a short-lived conversation token', async () => {
   let capturedRequest: Request | undefined;

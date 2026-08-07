@@ -1,6 +1,23 @@
 export const ELEVENLABS_CONVERSATION_TOKEN_URL =
   'https://api.elevenlabs.io/v1/convai/conversation/token';
 
+export function createVoiceSessionRatePolicies(subject: string) {
+  return [
+    {
+      scope: 'voice_session.ip.10m',
+      subject,
+      windowMs: 10 * 60 * 1000,
+      maxHits: 8
+    },
+    {
+      scope: 'voice_session.ip.1d',
+      subject,
+      windowMs: 24 * 60 * 60 * 1000,
+      maxHits: 30
+    }
+  ];
+}
+
 interface CreateElevenLabsVoiceSessionOptions {
   apiKey?: string;
   agentId?: string;
@@ -9,6 +26,30 @@ interface CreateElevenLabsVoiceSessionOptions {
 
 interface ElevenLabsConversationTokenResponse {
   token?: unknown;
+}
+
+export function isAllowedVoiceSessionRequest(request: Request, requestUrl: URL): boolean {
+  const fetchSite = request.headers.get('sec-fetch-site')?.toLowerCase();
+  if (fetchSite === 'cross-site') return false;
+
+  const origin = request.headers.get('origin');
+  if (!origin) return true;
+
+  try {
+    return new URL(origin).origin === requestUrl.origin;
+  } catch {
+    return false;
+  }
+}
+
+export function createVoiceSessionRequestDeniedResponse(): Response {
+  return json(
+    {
+      error: 'request_not_allowed',
+      message: 'Voice Concierge could not start from this page.'
+    },
+    403
+  );
 }
 
 const noStoreHeaders = {

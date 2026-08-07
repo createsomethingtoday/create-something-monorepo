@@ -12,3 +12,12 @@ test('voice page uses the signed ElevenLabs WebRTC session end to end', async ()
   assert.doesNotMatch(source, /@openai\/agents\/realtime/);
   assert.doesNotMatch(source, /new RealtimeSession/);
 });
+
+test('voice page accurately describes the configured retention boundary', async () => {
+  const source = await readFile('src/routes/voice/+page.svelte', 'utf8');
+
+  assert.match(source, /Audio is processed live and not\s+retained/i);
+  assert.match(source, /transcript may be kept for up to 30 days/i);
+  assert.match(source, /Audio not retained/i);
+  assert.doesNotMatch(source, />Not saved</);
+});

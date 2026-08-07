@@ -345,7 +345,9 @@
         </div>
 
         <p class="microphone-note">
-          Your browser asks for microphone access when you start. Audio is not stored by this site.
+          Your browser asks for microphone access when you start. Audio is processed live and not
+          retained. A transcript may be kept for up to 30 days for safety and service review. Don’t
+          share personal or sensitive information.
         </p>
       </section>
     </div>
@@ -359,7 +361,7 @@
             <span>01 · Live conversation</span>
             <h2>Talk naturally.<br />Correct anything.</h2>
           </div>
-          <span class="not-saved">Not saved</span>
+          <span class="not-saved">Audio not retained</span>
         </div>
 
         <div class="prompt-row" aria-label="Conversation starters">

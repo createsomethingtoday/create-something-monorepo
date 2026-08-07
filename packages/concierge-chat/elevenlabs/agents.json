@@ -1,16 +1,16 @@
 {
-    "agents": [
-        {
-            "config": "agent_configs/Abundance-Web-Voice-Concierge.json",
-            "id": "agent_3501kz9ts50ef8svj797p494898n",
-            "version_id": "agtvrsn_5001kza0fy11fntvfrtt1vskskts",
-            "branch_id": "agtbrch_8201kz9ts5swfrmb1zfp5q7ftjgb"
-        },
-        {
-            "config": "agent_configs/Abundance-Examiner-Phone-Concierge.json",
-            "id": "agent_5501kz9wx04yewdapr01g7v82np7",
-            "version_id": "agtvrsn_1101kza0g0cjeycsfdhh5292g9w3",
-            "branch_id": "agtbrch_6701kz9wx050ear9rr9tmdx9y1gm"
-        }
-    ]
+  "agents": [
+    {
+      "config": "agent_configs/Abundance-Web-Voice-Concierge.json",
+      "id": "agent_3501kz9ts50ef8svj797p494898n",
+      "version_id": "agtvrsn_8301kzedrspyexe9g69qjaszt40r",
+      "branch_id": "agtbrch_8201kz9ts5swfrmb1zfp5q7ftjgb"
+    },
+    {
+      "config": "agent_configs/Abundance-Examiner-Phone-Concierge.json",
+      "id": "agent_5501kz9wx04yewdapr01g7v82np7",
+      "version_id": "agtvrsn_1901kzedrvnbf2trh6gxx1yvr28b",
+      "branch_id": "agtbrch_6701kz9wx050ear9rr9tmdx9y1gm"
+    }
+  ]
 }

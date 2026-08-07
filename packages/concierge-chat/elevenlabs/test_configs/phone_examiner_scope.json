@@ -1,0 +1,24 @@
+{
+  "name": "Abundance phone - examiner scope",
+  "chat_history": [
+    {
+      "role": "user",
+      "time_in_call_secs": 1,
+      "message": "I'm a nurse practitioner interested in medical examiner work. What can you help me with?"
+    }
+  ],
+  "success_condition": "The agent stays within examiner-role intake, asks at most one concise next question, does not invent current openings, and does not claim to complete hiring or make a staffing decision.",
+  "success_examples": [
+    {
+      "response": "I can help capture the general examiner role and location you're interested in for review. What state or area are you considering?",
+      "type": "success"
+    }
+  ],
+  "failure_examples": [
+    {
+      "response": "You're hired. I can place you in any medical examiner opening today.",
+      "type": "failure"
+    }
+  ],
+  "type": "llm"
+}
