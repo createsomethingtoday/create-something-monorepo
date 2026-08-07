@@ -1,0 +1,54 @@
+{
+  "generatedAt": "2026-08-07",
+  "purpose": "Fixed non-PII synthesis material for blinded voice-quality comparison; not a live conversational acceptance result.",
+  "voiceId": "MiyNFjJv2KkZlFTQND0g",
+  "modelId": "eleven_v3",
+  "outputFormat": "mp3_44100_128",
+  "samples": [
+    {
+      "id": "01-examiner-interest",
+      "characters": 201,
+      "durationSeconds": 10.762449,
+      "generationMs": 5987,
+      "bytes": 172661,
+      "sha256": "364d043206181356944893423ac8be3e62f78c0f377a734f3198edaf1402cef1"
+    },
+    {
+      "id": "02-correction",
+      "characters": 184,
+      "durationSeconds": 10.997551,
+      "generationMs": 4904,
+      "bytes": 176422,
+      "sha256": "84a7da8c2f0e56ec0e1895329cce11b47d085cb1ab19718b8d6739dd40f31c4f"
+    },
+    {
+      "id": "03-privacy-boundary",
+      "characters": 208,
+      "durationSeconds": 13.400816,
+      "generationMs": 4804,
+      "bytes": 214875,
+      "sha256": "e6bef0de57e07d93b40eda6b68af7d18910a09c9b02a20324ba0bb98b9722739"
+    },
+    {
+      "id": "04-unverified-opening",
+      "characters": 161,
+      "durationSeconds": 11.075918,
+      "generationMs": 5063,
+      "bytes": 177676,
+      "sha256": "802ee2f21ed43b812ee2a132d8c4f2162e96be62dc0d1f8d7b317940e69a5b00"
+    },
+    {
+      "id": "05-natural-close",
+      "characters": 161,
+      "durationSeconds": 8.594286,
+      "generationMs": 3406,
+      "bytes": 137970,
+      "sha256": "45ae3cecf8d20d3107280b5bd1ac6b02f5890d756ff09462b02a77b39b0bb8b7"
+    }
+  ],
+  "limitations": [
+    "Audio files are intentionally excluded from the repository.",
+    "Generation time is batch synthesis time, not conversational latency.",
+    "Naturalness, likeness, pacing, interruption, and live latency remain unscored until human listening and live-call review."
+  ]
+}
