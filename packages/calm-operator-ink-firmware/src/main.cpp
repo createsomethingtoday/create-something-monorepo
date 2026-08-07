@@ -17,8 +17,9 @@
 
 namespace {
 
-constexpr const char* FIRMWARE_VERSION = "0.1.5";
+constexpr const char* FIRMWARE_VERSION = "0.2.0";
 constexpr uint32_t AUTO_SYNC_INTERVAL_MS = 5UL * 60UL * 1000UL;
+constexpr uint32_t AGENT_SYNC_INTERVAL_MS = 30UL * 1000UL;
 constexpr uint32_t WIFI_TIMEOUT_MS = 15000;
 constexpr uint32_t TLS_TIME_TIMEOUT_MS = 10000;
 constexpr time_t MIN_TLS_TIME = 1704067200; // 2024-01-01T00:00:00Z
@@ -48,7 +49,34 @@ struct MenuAction {
   const char* label;
 };
 
+struct AgentDecision {
+  String id;
+  String kind;
+  String label;
+  String description;
+  bool requiresConfirmation = true;
+  bool requiresText = false;
+};
+
+constexpr int MAX_AGENTS = 4;
+constexpr int MAX_AGENT_DECISIONS = 5;
+
+struct AgentCard {
+  String id;
+  String provider;
+  String label;
+  String status;
+  String phase;
+  String summary;
+  String detail;
+  uint32_t progressVersion = 0;
+  bool needsInput = false;
+  AgentDecision decisions[MAX_AGENT_DECISIONS];
+  int decisionCount = 0;
+};
+
 const MenuAction MENU[] = {
+  {"Operator", "Agents"},
   {"Operator", "Sync"},
   {"Operator", "MCP Review"},
   {"Operator", "Check In"},
@@ -65,6 +93,11 @@ constexpr int MENU_COUNT = sizeof(MENU) / sizeof(MENU[0]);
 enum class Screen {
   Brief,
   BriefDetail,
+  AgentList,
+  AgentDetail,
+  AgentDecision,
+  AgentConfirm,
+  AgentReceipt,
   Menu,
   Clock,
   Rhythm,
@@ -76,6 +109,15 @@ enum class Screen {
 Brief activeBrief;
 Screen screen = Screen::Brief;
 int menuIndex = 0;
+AgentCard agents[MAX_AGENTS];
+int agentCount = 0;
+int agentIndex = 0;
+int agentDecisionIndex = 0;
+uint32_t lastAgentSyncAt = 0;
+uint32_t lastAgentSyncAttemptAt = 0;
+String lastDecisionState;
+String lastDecisionLabel;
+String lastDecisionSummary;
 bool alertsEnabled = true;
 bool quietMode = false;
 bool lastUrgentRendered = false;
@@ -468,6 +510,7 @@ String menuDisplayLabel(const MenuAction& action) {
 }
 
 String menuHint(const String& label) {
+  if (label == "Agents") return "View and steer agents";
   if (label == "Sync") return "Fetch latest brief";
   if (label == "MCP Review") return "Run health review";
   if (label == "Check In") return "Save operator state";
@@ -503,6 +546,120 @@ void renderMenu() {
   canvas.drawString(fitText(menuDisplayLabel(MENU[next]), 160), 18, 148);
   drawFooter("A/C move B select");
   flushFrame(screenKey("menu", action.bucket, selectedLabel, menuDisplayLabel(MENU[previous]), menuDisplayLabel(MENU[next])));
+}
+
+String agentProviderLabel(const AgentCard& agent) {
+  String provider = agent.provider;
+  provider.toUpperCase();
+  return provider.length() > 0 ? provider : "AGENT";
+}
+
+String agentReceiptLine() {
+  if (lastDecisionState.length() == 0) return "";
+  String state = lastDecisionState;
+  state.toUpperCase();
+  return fitText(state + " " + lastDecisionLabel, 176);
+}
+
+void renderAgentList() {
+  screen = Screen::AgentList;
+  if (agentCount <= 0) {
+    startFrame("AGENTS 0", true);
+    canvas.setTextSize(2);
+    drawWrapped("No active agents", 16, 54, 168, 22, 2);
+    canvas.setTextSize(1);
+    drawWrapped("Start a relay producer or refresh.", 16, 116, 168, 15, 2);
+    drawFooter("PWR refresh B menu");
+    flushFrame(screenKey("agents-empty", lastDecisionState, lastDecisionLabel));
+    return;
+  }
+
+  agentIndex = constrain(agentIndex, 0, agentCount - 1);
+  const AgentCard& agent = agents[agentIndex];
+  startFrame(agentProviderLabel(agent) + " " + String(agentIndex + 1) + "/" + String(agentCount), true);
+  canvas.setTextSize(2);
+  drawWrapped(agent.label, 12, 38, 176, 20, 2);
+  canvas.setTextSize(1);
+  drawWrapped(agent.phase.length() ? agent.phase : agent.status, 12, 86, 176, 14, 2);
+  drawWrapped(agent.summary, 12, 116, 176, 14, 2);
+  const String receipt = agentReceiptLine();
+  if (receipt.length() > 0) canvas.drawString(receipt, 12, 164);
+  drawFooter(agent.needsInput ? "INPUT B detail" : "A/C agents B detail");
+  flushFrame(screenKey(
+    "agent-list",
+    agent.id,
+    String(agent.progressVersion),
+    agent.status,
+    agent.summary,
+    receipt));
+}
+
+void renderAgentDetail() {
+  if (agentCount <= 0) {
+    renderAgentList();
+    return;
+  }
+  screen = Screen::AgentDetail;
+  const AgentCard& agent = agents[agentIndex];
+  startFrame(agent.needsInput ? "AGENT NEEDS INPUT" : "AGENT DETAIL", false);
+  canvas.setTextSize(1);
+  drawWrapped(agentProviderLabel(agent) + " / " + agent.status, 12, 38, 176, 14, 1);
+  drawWrapped(agent.phase, 12, 58, 176, 14, 2);
+  canvas.drawLine(12, 90, 188, 90, TFT_BLACK);
+  drawWrapped(agent.detail.length() ? agent.detail : agent.summary, 12, 102, 176, 14, 3);
+  const String actionLine = agent.decisionCount > 0
+    ? String(agent.decisionCount) + " safe action" + (agent.decisionCount == 1 ? "" : "s")
+    : "No remote-safe actions";
+  canvas.drawString(actionLine, 12, 158);
+  drawFooter(agent.decisionCount > 0 ? "B actions PWR refresh" : "B menu PWR refresh");
+  flushFrame(screenKey("agent-detail", agent.id, String(agent.progressVersion), agent.detail, actionLine));
+}
+
+void renderAgentDecision() {
+  if (agentCount <= 0 || agents[agentIndex].decisionCount <= 0) {
+    renderAgentDetail();
+    return;
+  }
+  screen = Screen::AgentDecision;
+  const AgentCard& agent = agents[agentIndex];
+  agentDecisionIndex = constrain(agentDecisionIndex, 0, agent.decisionCount - 1);
+  const AgentDecision& decision = agent.decisions[agentDecisionIndex];
+  startFrame("ACTION " + String(agentDecisionIndex + 1) + "/" + String(agent.decisionCount), true);
+  canvas.setTextSize(2);
+  drawWrapped(decision.label, 12, 40, 176, 20, 2);
+  canvas.setTextSize(1);
+  drawWrapped(decision.description, 12, 92, 176, 14, 3);
+  if (decision.requiresText) drawWrapped("Needs voice or phone text", 12, 148, 176, 14, 2);
+  drawFooter("A/C actions B select");
+  flushFrame(screenKey("agent-action", agent.id, decision.id, decision.label, decision.description));
+}
+
+void renderAgentConfirm() {
+  const AgentCard& agent = agents[agentIndex];
+  const AgentDecision& decision = agent.decisions[agentDecisionIndex];
+  screen = Screen::AgentConfirm;
+  startFrame("CONFIRM STEERING", true);
+  canvas.setTextSize(2);
+  drawWrapped(decision.label, 12, 42, 176, 20, 2);
+  canvas.setTextSize(1);
+  drawWrapped(decision.description, 12, 94, 176, 14, 3);
+  canvas.drawRect(10, 148, 180, 28, TFT_BLACK);
+  canvas.drawString("B CONFIRM   A/C CANCEL", 20, 158);
+  drawFooter(agentProviderLabel(agent) + " v" + String(agent.progressVersion));
+  flushFrame(screenKey("agent-confirm", agent.id, String(agent.progressVersion), decision.id));
+}
+
+void renderAgentReceipt(const String& state, const String& label, const String& summary) {
+  screen = Screen::AgentReceipt;
+  String title = state;
+  title.toUpperCase();
+  startFrame(title.length() ? title : "DECISION RECEIPT", true);
+  canvas.setTextSize(2);
+  drawWrapped(label, 12, 44, 176, 20, 2);
+  canvas.setTextSize(1);
+  drawWrapped(summary, 12, 104, 176, 14, 4);
+  drawFooter("B agents PWR refresh");
+  flushFrame(screenKey("agent-receipt", state, label, summary));
 }
 
 bool connectWifi() {
@@ -606,6 +763,125 @@ int requestBridge(const String& method, const String& path, const String& body, 
     lastHttpError = "";
   }
   return status;
+}
+
+bool applyAgentConsolePayload(const String& payload) {
+  JsonDocument doc;
+  const DeserializationError error = deserializeJson(doc, payload);
+  if (error) {
+    lastHttpError = String("Agent JSON: ") + error.c_str();
+    return false;
+  }
+
+  agentCount = 0;
+  JsonArrayConst agentArray = doc["agents"].as<JsonArrayConst>();
+  for (JsonVariantConst item : agentArray) {
+    if (agentCount >= MAX_AGENTS) break;
+    AgentCard& agent = agents[agentCount];
+    agent.id = String((const char*)(item["agent_id"] | ""));
+    agent.provider = String((const char*)(item["provider"] | "agent"));
+    agent.label = String((const char*)(item["label"] | "Agent"));
+    agent.status = String((const char*)(item["status"] | "working"));
+    agent.phase = String((const char*)(item["phase"] | ""));
+    agent.summary = String((const char*)(item["summary"] | ""));
+    agent.detail = String((const char*)(item["detail"] | ""));
+    agent.progressVersion = item["progress_version"] | 0;
+    agent.needsInput = item["needs_input"] | false;
+    agent.decisionCount = 0;
+
+    JsonArrayConst decisions = item["decisions"].as<JsonArrayConst>();
+    for (JsonVariantConst decisionItem : decisions) {
+      if (agent.decisionCount >= MAX_AGENT_DECISIONS) break;
+      AgentDecision& decision = agent.decisions[agent.decisionCount];
+      decision.id = String((const char*)(decisionItem["id"] | ""));
+      decision.kind = String((const char*)(decisionItem["kind"] | "status"));
+      decision.label = String((const char*)(decisionItem["label"] | "Action"));
+      decision.description = String((const char*)(decisionItem["description"] | ""));
+      decision.requiresConfirmation = decisionItem["requires_confirmation"] | true;
+      decision.requiresText = decisionItem["requires_text"] | false;
+      if (decision.id.length() > 0) agent.decisionCount++;
+    }
+    if (agent.id.length() > 0) agentCount++;
+  }
+
+  JsonArrayConst receipts = doc["recent_decisions"].as<JsonArrayConst>();
+  if (!receipts.isNull() && receipts.size() > 0) {
+    JsonVariantConst receipt = receipts[0];
+    lastDecisionState = String((const char*)(receipt["state"] | ""));
+    lastDecisionLabel = String((const char*)(receipt["label"] | ""));
+    lastDecisionSummary = String((const char*)(receipt["result_summary"] | receipt["error"] | ""));
+  }
+
+  if (agentCount == 0) agentIndex = 0;
+  else agentIndex = constrain(agentIndex, 0, agentCount - 1);
+  agentDecisionIndex = 0;
+  return true;
+}
+
+bool fetchAgentConsole(bool announce = true) {
+  lastAgentSyncAttemptAt = millis();
+  if (announce) beepSoft();
+  String payload;
+  const int status = requestBridge("GET", "/ink/agent-console", "", payload);
+  if (status < 200 || status >= 300) {
+    renderAgentReceipt(
+      "SYNC FAILED",
+      "Agent console",
+      lastHttpError.length() ? lastHttpError : "Bridge unavailable");
+    return false;
+  }
+  if (!applyAgentConsolePayload(payload)) {
+    renderAgentReceipt("SYNC FAILED", "Agent console", lastHttpError);
+    return false;
+  }
+  lastAgentSyncAt = millis();
+  renderAgentList();
+  return true;
+}
+
+void submitAgentDecision() {
+  if (agentCount <= 0 || agents[agentIndex].decisionCount <= 0) {
+    renderAgentList();
+    return;
+  }
+  const AgentCard& agent = agents[agentIndex];
+  const AgentDecision& decision = agent.decisions[agentDecisionIndex];
+  if (decision.requiresText) {
+    renderAgentReceipt("TEXT REQUIRED", decision.label, "Use phone handoff or add a push-to-talk microphone.");
+    return;
+  }
+
+  renderAgentReceipt("SENDING", decision.label, "Queueing bounded agent steering.");
+  String payload;
+  const String idempotency = String(CALM_OPERATOR_DEVICE_ID) + ":" + agent.id + ":" +
+    String(agent.progressVersion) + ":" + decision.id;
+  const String body =
+    String("{\"agent_id\":\"") + jsonEscape(agent.id) +
+    "\",\"progress_version\":" + String(agent.progressVersion) +
+    ",\"decision_id\":\"" + jsonEscape(decision.id) +
+    "\",\"confirmed\":true,\"idempotency_key\":\"" + jsonEscape(idempotency) +
+    "\",\"device_id\":\"" + jsonEscape(CALM_OPERATOR_DEVICE_ID) + "\"}";
+  const int status = requestBridge("POST", "/ink/agent-decision", body, payload);
+  if (status < 200 || status >= 300) {
+    String detail = lastHttpError;
+    JsonDocument errorDoc;
+    if (!deserializeJson(errorDoc, payload)) {
+      detail = String((const char*)(errorDoc["error"] | detail.c_str()));
+    }
+    renderAgentReceipt(status == 409 ? "STALE" : "QUEUE FAILED", decision.label, detail);
+    return;
+  }
+
+  JsonDocument responseDoc;
+  if (deserializeJson(responseDoc, payload)) {
+    renderAgentReceipt("QUEUED", decision.label, "Relay will deliver this at the agent checkpoint.");
+    return;
+  }
+  JsonVariantConst receipt = responseDoc["decision"];
+  lastDecisionState = String((const char*)(receipt["state"] | "queued"));
+  lastDecisionLabel = String((const char*)(receipt["label"] | decision.label.c_str()));
+  lastDecisionSummary = "Relay will deliver this at the agent checkpoint.";
+  renderAgentReceipt(lastDecisionState, lastDecisionLabel, lastDecisionSummary);
 }
 
 void postHeartbeat() {
@@ -850,7 +1126,9 @@ void selectMenuAction() {
   const String label = MENU[menuIndex].label;
   Serial.print("[ink] selected action=");
   Serial.println(label);
-  if (label == "Sync") {
+  if (label == "Agents") {
+    fetchAgentConsole(true);
+  } else if (label == "Sync") {
     fetchBrief(true);
   } else if (label == "MCP Review") {
     requestMcpReview();
@@ -891,6 +1169,44 @@ void handleSelect() {
     return;
   }
 
+  if (screen == Screen::AgentList) {
+    if (agentCount > 0) renderAgentDetail();
+    else renderMenu();
+    return;
+  }
+
+  if (screen == Screen::AgentDetail) {
+    if (agents[agentIndex].decisionCount > 0) {
+      agentDecisionIndex = 0;
+      renderAgentDecision();
+    } else {
+      renderMenu();
+    }
+    return;
+  }
+
+  if (screen == Screen::AgentDecision) {
+    const AgentDecision& decision = agents[agentIndex].decisions[agentDecisionIndex];
+    if (decision.requiresText) {
+      renderAgentReceipt("TEXT REQUIRED", decision.label, "Use phone handoff or add a push-to-talk microphone.");
+    } else if (decision.requiresConfirmation) {
+      renderAgentConfirm();
+    } else {
+      submitAgentDecision();
+    }
+    return;
+  }
+
+  if (screen == Screen::AgentConfirm) {
+    submitAgentDecision();
+    return;
+  }
+
+  if (screen == Screen::AgentReceipt) {
+    renderAgentList();
+    return;
+  }
+
   if (screen == Screen::StoneGarden) {
     if (stoneCount >= STONE_SLOTS) {
       stoneCount = 0;
@@ -913,6 +1229,20 @@ void handlePrevious() {
   } else if (screen == Screen::StoneGarden) {
     stoneCursor = (stoneCursor + STONE_SLOTS - 1) % STONE_SLOTS;
     renderStoneGarden();
+  } else if (screen == Screen::AgentList || screen == Screen::AgentDetail) {
+    if (agentCount > 0) {
+      agentIndex = (agentIndex + agentCount - 1) % agentCount;
+      agentDecisionIndex = 0;
+      screen == Screen::AgentDetail ? renderAgentDetail() : renderAgentList();
+    }
+  } else if (screen == Screen::AgentDecision) {
+    const int count = agents[agentIndex].decisionCount;
+    if (count > 0) {
+      agentDecisionIndex = (agentDecisionIndex + count - 1) % count;
+      renderAgentDecision();
+    }
+  } else if (screen == Screen::AgentConfirm) {
+    renderAgentDecision();
   }
 }
 
@@ -923,7 +1253,30 @@ void handleNext() {
   } else if (screen == Screen::StoneGarden) {
     stoneCursor = (stoneCursor + 1) % STONE_SLOTS;
     renderStoneGarden();
+  } else if (screen == Screen::AgentList || screen == Screen::AgentDetail) {
+    if (agentCount > 0) {
+      agentIndex = (agentIndex + 1) % agentCount;
+      agentDecisionIndex = 0;
+      screen == Screen::AgentDetail ? renderAgentDetail() : renderAgentList();
+    }
+  } else if (screen == Screen::AgentDecision) {
+    const int count = agents[agentIndex].decisionCount;
+    if (count > 0) {
+      agentDecisionIndex = (agentDecisionIndex + 1) % count;
+      renderAgentDecision();
+    }
+  } else if (screen == Screen::AgentConfirm) {
+    renderAgentDecision();
   }
+}
+
+void handlePower() {
+  if (screen == Screen::AgentList || screen == Screen::AgentDetail || screen == Screen::AgentDecision ||
+      screen == Screen::AgentConfirm || screen == Screen::AgentReceipt) {
+    fetchAgentConsole(true);
+    return;
+  }
+  fetchBrief(true);
 }
 
 void renderBoot() {
@@ -981,11 +1334,16 @@ void loop() {
     handleSelect();
   }
   if (M5.BtnPWR.wasPressed()) {
-    fetchBrief(true);
+    handlePower();
   }
 
   if (hasRuntimeConfig() && screen == Screen::Brief && millis() - lastSyncAttemptAt > AUTO_SYNC_INTERVAL_MS) {
     fetchBrief(false);
+  }
+
+  if (hasRuntimeConfig() && screen == Screen::AgentList &&
+      millis() - lastAgentSyncAttemptAt > AGENT_SYNC_INTERVAL_MS) {
+    fetchAgentConsole(false);
   }
 
   delay(30);

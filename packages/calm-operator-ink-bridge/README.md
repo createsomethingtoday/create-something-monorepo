@@ -16,6 +16,9 @@ The device should call this Worker directly over HTTPS. A Cloudflare Tunnel is o
 - Run a scheduled health review four times daily.
 - Fire daily local alarms for the operator at configured Central Time moments.
 - Accept Core Ink device heartbeat.
+- Store versioned Codex and Claude progress snapshots.
+- Queue only agent-advertised, remote-safe operator decisions and retain their
+  delivery receipts.
 - Return a compact `/ink/brief` response compatible with the firmware bridge contract.
 - Keep production content live-only. No mock carousel or fake workflow counts.
 
@@ -32,6 +35,11 @@ Token-gated:
 - `GET /ink/surface-brief`
 - `GET /ink/clock`
 - `GET /ink/device`
+- `GET /ink/agent-console`
+- `POST /ink/agent-progress`
+- `POST /ink/agent-decision`
+- `POST /ink/agent-decisions/lease`
+- `POST /ink/agent-decisions/:id/receipt`
 - `POST /ink/alert`
 - `POST /ink/operator-priority`
 - `POST /ink/source-event`
@@ -55,6 +63,7 @@ Set with Wrangler:
 
 ```bash
 pnpm --dir packages/calm-operator-ink-bridge exec wrangler secret put INK_DEVICE_TOKEN
+pnpm --dir packages/calm-operator-ink-bridge exec wrangler secret put INK_RELAY_TOKEN
 pnpm --dir packages/calm-operator-ink-bridge exec wrangler secret put INK_SOURCE_TOKEN
 ```
 
@@ -64,7 +73,9 @@ Optional compatibility token:
 pnpm --dir packages/calm-operator-ink-bridge exec wrangler secret put INK_BRIDGE_TOKEN
 ```
 
-Use `INK_DEVICE_TOKEN` in Core Ink firmware. Use `INK_SOURCE_TOKEN` for agent/MCP producers.
+Use `INK_DEVICE_TOKEN` in Core Ink firmware, `INK_RELAY_TOKEN` in the local
+agent relay, and `INK_SOURCE_TOKEN` for MCP/alert producers. `INK_BRIDGE_TOKEN`
+remains a compatibility token for all three roles.
 
 The Core Ink firmware lives in `packages/calm-operator-ink-firmware`. It uses
 the device token for `/ink/brief`, `/ink/clock`, `/ink/health-review/request`,
@@ -89,7 +100,7 @@ infisical run --env=prod --path=/ --include-imports=true -- pnpm ink:bridge:smok
 ```
 
 The smoke checks public `/healthz`, authenticated `/ink/clock`, authenticated
-`/ink/brief`, and a harmless `/ink/device-heartbeat` write using
+`/ink/brief`, the read-only `/ink/agent-console`, and a harmless `/ink/device-heartbeat` write using
 `INK_DEVICE_TOKEN` or `CALM_OPERATOR_BRIDGE_TOKEN`.
 
 Use `--public-only` when only route reachability should be checked, or
@@ -141,6 +152,70 @@ Central Time clock contract:
   }
 }
 ```
+
+## Agent progress and steering
+
+The agent console is provider-neutral. A relay publishes a versioned snapshot;
+the device can enqueue only one of the `remote_safe` decisions advertised in
+that exact version. Unsafe decisions remain visible to the desktop agent but
+are omitted from the Core Ink response.
+
+Publish a snapshot from a JSON file or stdin:
+
+```bash
+INK_RELAY_TOKEN=... pnpm --dir packages/calm-operator-ink-bridge agent:progress ./agent-progress.json
+```
+
+```json
+{
+  "agent_id": "claude:session-123",
+  "provider": "claude",
+  "label": "Auth investigation",
+  "status": "waiting",
+  "phase": "Tests reproduced",
+  "summary": "Two agents finished; one needs direction.",
+  "detail": "Choose the next bounded path.",
+  "progress_version": 17,
+  "needs_input": true,
+  "decisions": [
+    {
+      "id": "focus-test",
+      "kind": "redirect",
+      "label": "Focus on test",
+      "description": "Fix the failing test before implementation changes.",
+      "requires_confirmation": true,
+      "requires_text": false,
+      "remote_safe": true
+    }
+  ]
+}
+```
+
+Run the local delivery relay continuously, or run one deterministic cycle:
+
+```bash
+INK_RELAY_TOKEN=... pnpm --dir packages/calm-operator-ink-bridge agent:relay
+INK_RELAY_TOKEN=... pnpm --dir packages/calm-operator-ink-bridge agent:relay:once
+```
+
+Optional relay configuration:
+
+- `INK_BRIDGE_ORIGIN` defaults to `https://ink.createsomething.agency`.
+- `INK_RELAY_ID` defaults to the local hostname.
+- `INK_RELAY_PROVIDERS` defaults to `claude,codex`.
+- `INK_CLAUDE_EXECUTABLE` and `INK_CODEX_EXECUTABLE` override CLI paths.
+- `INK_AGENT_WORKDIR` sets the trusted workspace for resumed sessions.
+
+Claude delivery uses `claude --resume ... --print`. Codex delivery uses the
+[documented non-interactive resume contract](https://developers.openai.com/codex/cli/reference),
+`codex exec --json resume ...`. Neither
+adapter bypasses the provider's existing sandbox, permissions, or approval
+policy. A `stop` or `pause` decision asks the agent to act at its next safe
+checkpoint; the relay does not kill an executing tool process.
+
+Decision state is durable: `queued`, `leased`, `acknowledged`, then `completed`
+or `failed`. The console returns recent receipts so the device can distinguish
+button input from actual provider delivery.
 
 ## Producer helpers
 
