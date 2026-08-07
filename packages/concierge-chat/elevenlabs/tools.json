@@ -1,9 +1,14 @@
 {
-    "tools": [
-        {
-            "type": "client",
-            "config": "tool_configs/prepare_application_brief.json",
-            "id": "tool_1601kza0e050fvs9gynvj5emn9vx"
-        }
-    ]
+  "tools": [
+    {
+      "type": "client",
+      "config": "tool_configs/prepare_application_brief.json",
+      "id": "tool_1601kza0e050fvs9gynvj5emn9vx"
+    },
+    {
+      "type": "webhook",
+      "config": "tool_configs/lookup_npg_location.json",
+      "id": "tool_0701kzf7nzfbe9s8zd9jks6kf51p"
+    }
+  ]
 }
