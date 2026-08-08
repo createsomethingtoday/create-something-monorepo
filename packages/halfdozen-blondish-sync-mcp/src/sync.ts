@@ -38,6 +38,15 @@ type SourceToHdOptions = {
   createMissing?: boolean;
 };
 
+type AttachmentFallback = {
+  name: string;
+  reason: 'notion_file_size_limit';
+  source_page_id: string;
+};
+
+const ATTACHMENT_FALLBACK_PREFIX = 'Attachment sync exception [source ';
+const ATTACHMENT_FALLBACK_REASON = ' exceeds the Half Dozen Notion file-size limit and was not copied. ';
+
 export async function preflight(env: Env): Promise<SyncResult> {
   const result = emptyResult('preflight');
   try {
@@ -150,7 +159,12 @@ export async function auditSync(env: Env): Promise<AuditResult> {
       }
       result.details.matched_rows += 1;
       const targetPage = targetMatches[0];
-      const patch = await buildExistingTargetPatch(env, config, sourcePage, targetPage, ownerUserId, { materializeFileUploads: false });
+      const targetBlocks = await listAllBlockChildren(env, 'halfdozen', targetPage.id);
+      const attachmentFallbacks = attachmentFallbacksFromTargetBlocks(targetBlocks, sourcePage);
+      const patch = await buildExistingTargetPatch(env, config, sourcePage, targetPage, ownerUserId, {
+        materializeFileUploads: false,
+        skipAttachmentNames: new Set(attachmentFallbacks.map((fallback) => fallback.name)),
+      });
       if (Object.keys(patch).length > 0) {
         result.details.contract_field_drifts.push({
           target_page_id: targetPage.id,
@@ -158,7 +172,7 @@ export async function auditSync(env: Env): Promise<AuditResult> {
           fields: Object.keys(patch),
         });
       }
-      if (await targetPageBodyDiffers(env, sourcePage, targetPage.id)) {
+      if (await targetPageBodyDiffers(env, sourcePage, targetPage.id, attachmentFallbacks, targetBlocks)) {
         result.details.body_drifts.push({ target_page_id: targetPage.id, ext_page_id: extPageId });
       }
     }
@@ -328,6 +342,7 @@ export async function syncSourceTicketsToHalfDozen(
   let titleRepairs = 0;
   let propertyRepairs = 0;
   let bodyRepairs = 0;
+  const attachmentFallbacks: AttachmentFallback[] = [];
   try {
     const config = await resolveSyncConfig(env);
     result.source_data_source_id = config.sourceDataSourceId;
@@ -346,6 +361,7 @@ export async function syncSourceTicketsToHalfDozen(
     const ownerUserId = await findUserIdByEmail(env, 'halfdozen', config.ownerEmail);
     for (const sourcePage of sourcePages) {
       try {
+        const sourceAttachmentFallbacks: AttachmentFallback[] = [];
         if (!isPageInDataSource(sourcePage, config.sourceDataSourceId)) {
           result.skipped += 1;
           continue;
@@ -359,8 +375,13 @@ export async function syncSourceTicketsToHalfDozen(
 
         const existingTargetPage = targetByExtPageId.get(extPageId);
         if (existingTargetPage) {
+          const existingTargetBlocks = await listAllBlockChildren(env, 'halfdozen', existingTargetPage.id);
+          const knownAttachmentFallbacks = attachmentFallbacksFromTargetBlocks(existingTargetBlocks, sourcePage);
           const externalPatch = filterTargetPatch(
-            await buildExistingTargetPatch(env, config, sourcePage, existingTargetPage, ownerUserId),
+            await buildExistingTargetPatch(env, config, sourcePage, existingTargetPage, ownerUserId, {
+              attachmentFallbacks: sourceAttachmentFallbacks,
+              skipAttachmentNames: new Set(knownAttachmentFallbacks.map((fallback) => fallback.name)),
+            }),
             config,
             options.repairFields,
           );
@@ -371,8 +392,12 @@ export async function syncSourceTicketsToHalfDozen(
             propertyRepairs += Object.keys(externalPatch).filter((propertyName) => propertyName !== 'Ticket').length;
             if (externalPatch['External URL'] || externalPatch['External Files & Media']) externalReferenceUpdates += 1;
           }
+          const bodyAttachmentFallbacks = uniqueAttachmentFallbacks([
+            ...knownAttachmentFallbacks,
+            ...sourceAttachmentFallbacks,
+          ]);
           const bodyUpdated = shouldRepairField(options.repairFields, 'page body')
-            ? await syncTargetPageBody(env, sourcePage, existingTargetPage.id)
+            ? await syncTargetPageBody(env, sourcePage, existingTargetPage.id, bodyAttachmentFallbacks, existingTargetBlocks)
             : false;
           if (bodyUpdated) bodyRepairs += 1;
           if (Object.keys(externalPatch).length > 0 || bodyUpdated) {
@@ -380,6 +405,7 @@ export async function syncSourceTicketsToHalfDozen(
           } else {
             result.skipped += 1;
           }
+          attachmentFallbacks.push(...bodyAttachmentFallbacks);
           continue;
         }
 
@@ -389,11 +415,14 @@ export async function syncSourceTicketsToHalfDozen(
         }
 
         const latestSourcePage = await retrievePage(env, 'client', sourcePage.id);
-        const properties = await buildTargetCreateProperties(env, config, latestSourcePage, ownerUserId);
-        const children = await buildTicketBody(env, latestSourcePage);
+        const properties = await buildTargetCreateProperties(env, config, latestSourcePage, ownerUserId, sourceAttachmentFallbacks);
+        const children = await buildTicketBody(env, latestSourcePage, sourceAttachmentFallbacks);
         const created = await createPage(env, config.targetDataSourceId, properties, children);
 
-        const confirmationPatch = await buildExistingTargetPatch(env, config, latestSourcePage, created, ownerUserId);
+        const confirmationPatch = await buildExistingTargetPatch(env, config, latestSourcePage, created, ownerUserId, {
+          attachmentFallbacks: sourceAttachmentFallbacks,
+          skipAttachmentNames: new Set(sourceAttachmentFallbacks.map((fallback) => fallback.name)),
+        });
         if (Object.keys(confirmationPatch).length > 0) {
           await updatePage(env, 'halfdozen', created.id, confirmationPatch);
           if (confirmationPatch.Ticket) titleRepairs += 1;
@@ -403,6 +432,8 @@ export async function syncSourceTicketsToHalfDozen(
 
         result.created += 1;
         targetByExtPageId.set(extPageId, created);
+        attachmentFallbacks.push(...uniqueAttachmentFallbacks(sourceAttachmentFallbacks));
+        continue;
       } catch (error) {
         result.errors.push({
           scope: 'source_to_hd_page',
@@ -410,6 +441,7 @@ export async function syncSourceTicketsToHalfDozen(
           page_id: sourcePage.id,
           ext_page_id: readText(sourcePage, 'Page ID') || undefined,
         });
+        continue;
       }
     }
 
@@ -421,6 +453,7 @@ export async function syncSourceTicketsToHalfDozen(
       title_repairs: titleRepairs,
       property_repairs: propertyRepairs,
       body_repairs: bodyRepairs,
+      attachment_fallbacks: uniqueAttachmentFallbacks(attachmentFallbacks),
     };
     return result;
   } catch (error) {
@@ -737,6 +770,7 @@ async function buildTargetCreateProperties(
   config: SyncConfig,
   sourcePage: NotionPage,
   ownerUserId: string | null,
+  attachmentFallbacks: AttachmentFallback[] = [],
 ): Promise<Record<string, unknown>> {
   if (config.targetSchema.Owner?.type === 'people' && !ownerUserId) {
     throw new Error(`Could not find target Owner user ${config.ownerEmail}.`);
@@ -755,7 +789,7 @@ async function buildTargetCreateProperties(
   writeRequired(properties, config.targetSchema, config.targetExtPageIdProperty, readText(sourcePage, 'Page ID'));
   if (externalUrl) writeRequired(properties, config.targetSchema, 'External URL', externalUrl);
   if (sourceFiles.length > 0) {
-    writeRequired(properties, config.targetSchema, 'External Files & Media', await buildWritableFiles(env, sourceFiles));
+    writeRequired(properties, config.targetSchema, 'External Files & Media', await buildWritableFiles(env, sourceFiles, sourcePage.id, attachmentFallbacks));
   }
   return properties;
 }
@@ -766,7 +800,7 @@ async function buildExistingTargetPatch(
   sourcePage: NotionPage,
   targetPage: NotionPage,
   ownerUserId: string | null,
-  options: { materializeFileUploads?: boolean } = {},
+  options: { materializeFileUploads?: boolean; attachmentFallbacks?: AttachmentFallback[]; skipAttachmentNames?: Set<string> } = {},
 ): Promise<Record<string, unknown>> {
   if (config.targetSchema.Owner?.type === 'people' && !ownerUserId) {
     throw new Error(`Could not find target Owner user ${config.ownerEmail}.`);
@@ -774,7 +808,7 @@ async function buildExistingTargetPatch(
 
   const properties: Record<string, unknown> = {};
   const externalUrl = readExternalUrl(sourcePage);
-  const sourceFiles = readFiles(sourcePage, 'Files & Media');
+  const sourceFiles = readFiles(sourcePage, 'Files & Media').filter((file) => !options.skipAttachmentNames?.has(file.name));
   const ticket = readText(sourcePage, 'Ticket');
   const desiredTitle = buildTicketTitle(ticket, config.clientDisplayName);
   const currentTitle = readText(targetPage, 'Ticket');
@@ -790,7 +824,12 @@ async function buildExistingTargetPatch(
     if (options.materializeFileUploads === false) {
       properties['External Files & Media'] = { drift: true };
     } else {
-      writeRequired(properties, config.targetSchema, 'External Files & Media', await buildWritableFiles(env, sourceFiles));
+      writeRequired(properties, config.targetSchema, 'External Files & Media', await buildWritableFiles(
+        env,
+        sourceFiles,
+        sourcePage.id,
+        options.attachmentFallbacks,
+      ));
     }
   }
 
@@ -814,25 +853,41 @@ function shouldRepairField(repairFields: SourceToHdRepairField[] | undefined, fi
   return !repairFields || repairFields.length === 0 || repairFields.includes(field);
 }
 
-async function targetPageBodyDiffers(env: Env, sourcePage: NotionPage, targetPageId: string): Promise<boolean> {
-  const desiredChildren = await buildTicketBody(env, sourcePage);
+async function targetPageBodyDiffers(
+  env: Env,
+  sourcePage: NotionPage,
+  targetPageId: string,
+  attachmentFallbacks: AttachmentFallback[] = [],
+  existingBlocks?: NotionBlock[],
+): Promise<boolean> {
+  const desiredChildren = await buildTicketBody(env, sourcePage, attachmentFallbacks);
   const desiredTexts = desiredChildren.map(blockPlainText).filter(Boolean);
-  const existingBlocks = await listAllBlockChildren(env, 'halfdozen', targetPageId);
-  const existingTexts = existingBlocks.map(blockPlainText).filter(Boolean);
+  const targetBlocks = existingBlocks ?? await listAllBlockChildren(env, 'halfdozen', targetPageId);
+  const existingTexts = targetBlocks.map(blockPlainText).filter(Boolean);
   return !stringArraysEqual(existingTexts, desiredTexts);
 }
 
-async function syncTargetPageBody(env: Env, sourcePage: NotionPage, targetPageId: string): Promise<boolean> {
-  if (!await targetPageBodyDiffers(env, sourcePage, targetPageId)) return false;
-  const existingBlocks = await listAllBlockChildren(env, 'halfdozen', targetPageId);
-  for (const block of existingBlocks) {
+async function syncTargetPageBody(
+  env: Env,
+  sourcePage: NotionPage,
+  targetPageId: string,
+  attachmentFallbacks: AttachmentFallback[] = [],
+  existingBlocks?: NotionBlock[],
+): Promise<boolean> {
+  const targetBlocks = existingBlocks ?? await listAllBlockChildren(env, 'halfdozen', targetPageId);
+  if (!await targetPageBodyDiffers(env, sourcePage, targetPageId, attachmentFallbacks, targetBlocks)) return false;
+  for (const block of targetBlocks) {
     await deleteBlock(env, 'halfdozen', block.id);
   }
-  await appendBlockChildren(env, 'halfdozen', targetPageId, await buildTicketBody(env, sourcePage));
+  await appendBlockChildren(env, 'halfdozen', targetPageId, await buildTicketBody(env, sourcePage, attachmentFallbacks));
   return true;
 }
 
-async function buildTicketBody(env: Env, sourcePage: NotionPage): Promise<Array<Record<string, unknown>>> {
+async function buildTicketBody(
+  env: Env,
+  sourcePage: NotionPage,
+  attachmentFallbacks: AttachmentFallback[] = [],
+): Promise<Array<Record<string, unknown>>> {
   const createdBy = readText(sourcePage, 'Created By') || 'Unknown';
   const details = await buildTicketDetailsText(env, sourcePage);
   const children: Array<Record<string, unknown>> = [
@@ -854,7 +909,53 @@ async function buildTicketBody(env: Env, sourcePage: NotionPage): Promise<Array<
       paragraph: { rich_text: [{ type: 'text', text: { content: chunk } }] },
     });
   }
+  for (const fallback of attachmentFallbacks) {
+    children.push({
+      object: 'block',
+      type: 'paragraph',
+      paragraph: {
+        rich_text: [
+          {
+            type: 'text',
+            text: {
+              content: `${ATTACHMENT_FALLBACK_PREFIX}${fallback.source_page_id}]: ${fallback.name}${ATTACHMENT_FALLBACK_REASON}`,
+            },
+          },
+          ...(sourcePage.url ? [{
+            type: 'text',
+            text: { content: 'Open the source ticket.', link: { url: sourcePage.url } },
+          }] : []),
+        ],
+      },
+    });
+  }
   return children;
+}
+
+function attachmentFallbacksFromTargetBlocks(blocks: NotionBlock[], sourcePage: NotionPage): AttachmentFallback[] {
+  const fallbackPrefix = `${ATTACHMENT_FALLBACK_PREFIX}${sourcePage.id}]: `;
+  const sourceAttachmentNames = new Set(readFiles(sourcePage, 'Files & Media').map((file) => file.name));
+  const fallbacks: AttachmentFallback[] = [];
+  for (const block of blocks) {
+    const text = blockPlainText(block);
+    if (!text.startsWith(fallbackPrefix)) continue;
+    const reasonIndex = text.indexOf(ATTACHMENT_FALLBACK_REASON, fallbackPrefix.length);
+    if (reasonIndex < 0) continue;
+    const name = text.slice(fallbackPrefix.length, reasonIndex).trim();
+    if (!name || !sourceAttachmentNames.has(name)) continue;
+    fallbacks.push({ name, reason: 'notion_file_size_limit', source_page_id: sourcePage.id });
+  }
+  return uniqueAttachmentFallbacks(fallbacks);
+}
+
+function uniqueAttachmentFallbacks(fallbacks: AttachmentFallback[]): AttachmentFallback[] {
+  const seen = new Set<string>();
+  return fallbacks.filter((fallback) => {
+    const key = `${fallback.source_page_id}\t${fallback.name}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 async function readSourcePageBodyText(env: Env, sourcePageId: string): Promise<string> {
@@ -862,7 +963,12 @@ async function readSourcePageBodyText(env: Env, sourcePageId: string): Promise<s
   return blocks.map(blockPlainText).filter(Boolean).join('\n\n').trim();
 }
 
-async function buildWritableFiles(env: Env, sourceFiles: SyncFile[]): Promise<Array<Record<string, unknown>>> {
+async function buildWritableFiles(
+  env: Env,
+  sourceFiles: SyncFile[],
+  sourcePageId: string,
+  attachmentFallbacks: AttachmentFallback[] = [],
+): Promise<Array<Record<string, unknown>>> {
   const files: Array<Record<string, unknown>> = [];
   for (const file of sourceFiles) {
     if (file.sourceType === 'external' && file.url) {
@@ -871,17 +977,30 @@ async function buildWritableFiles(env: Env, sourceFiles: SyncFile[]): Promise<Ar
     }
 
     if (file.url) {
-      const fileUploadId = await uploadFileToNotion(env, FILE_UPLOAD_TARGET_WORKSPACE as Workspace, {
-        name: file.name,
-        url: file.url,
-      });
-      files.push({ name: file.name, type: 'file_upload', file_upload: { id: fileUploadId } });
+      try {
+        const fileUploadId = await uploadFileToNotion(env, FILE_UPLOAD_TARGET_WORKSPACE as Workspace, {
+          name: file.name,
+          url: file.url,
+        });
+        files.push({ name: file.name, type: 'file_upload', file_upload: { id: fileUploadId } });
+      } catch (error) {
+        if (!isNotionFileSizeLimitError(error)) throw error;
+        attachmentFallbacks.push({
+          name: file.name,
+          reason: 'notion_file_size_limit',
+          source_page_id: sourcePageId,
+        });
+      }
       continue;
     }
 
     throw new Error(`Source attachment "${file.name}" does not have a retrievable URL.`);
   }
   return files;
+}
+
+function isNotionFileSizeLimitError(error: unknown): boolean {
+  return /file(?:_upload)?(?:\s+is)?\s+too\s+large|file_upload_invalid_size|file-size\s+limit|file\s+size\s+(?:is\s+)?(?:not\s+within|exceeds|over)|per-file\s+size/i.test(errorMessage(error));
 }
 
 function writeRequired(

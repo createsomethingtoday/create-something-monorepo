@@ -7,6 +7,7 @@ import {
   readText,
   resolveTargetPages,
   syncHalfDozenStatusToSource,
+  syncSourceTicketsToHalfDozen,
   targetExtPageIdProperty,
 } from '../src/sync.js';
 import type { Env, NotionPage } from '../src/types.js';
@@ -209,4 +210,144 @@ test('resolveTargetPages accepts the source_page_id UUID surfaced by an audit', 
 
   assert.deepEqual(pages.map((page) => page.id), [targetPage.id]);
   assert.deepEqual(requests, [`https://api.notion.com/v1/data_sources/${targetDataSourceId}/query`]);
+});
+
+test('scoped source-to-HD repair keeps going when a source attachment exceeds the Notion limit', async (t) => {
+  const sourceDataSourceId = 'a2cbfa48-c9e9-839c-8dac-073ab7fcf300';
+  const sourcePageId = '34101384-1111-2222-3333-444444444444';
+  const targetPageId = '7154a6f1-0b31-4772-9893-1e567feb6fc5';
+  const sourcePage: NotionPage = {
+    id: sourcePageId,
+    url: 'https://www.notion.so/cracked-live-ticket-cl-62',
+    parent: { data_source_id: sourceDataSourceId },
+    properties: {
+      Ticket: { type: 'title', title: [{ plain_text: 'AI Agent System that Fills in the Page of the Show Sheets' }] },
+      Details: { type: 'rich_text', rich_text: [{ plain_text: 'Build the requested agent system.' }] },
+      'Created By': { type: 'people', people: [{ name: 'Cracked', person: { email: 'ops@cracked.live' } }] },
+      'Page ID': { type: 'unique_id', unique_id: { prefix: 'CL', number: 62 } },
+      URL: { type: 'url', url: 'https://cracked.live/tickets/CL-62' },
+      'Files & Media': {
+        type: 'files',
+        files: [{ name: 'show-sheet-recording.mov', file: { url: 'https://files.example/show-sheet-recording.mov' } }],
+      },
+    },
+  };
+  const targetPage: NotionPage = {
+    id: targetPageId,
+    parent: { data_source_id: targetDataSourceId },
+    properties: {
+      Ticket: { type: 'title', title: [{ plain_text: 'AI Agent System that Fills in the Page of the Show Sheets' }] },
+      Status: { type: 'status', status: { name: 'Not Started' } },
+      Source: { type: 'select', select: { name: 'Portal / Tag' } },
+      Owner: { type: 'people', people: [{ name: 'FG', person: { email: 'fillip@halfdozen.co' } }] },
+      'External Page ID': { type: 'rich_text', rich_text: [{ plain_text: 'CL-62' }] },
+      'External URL': { type: 'url', url: null },
+      'External Files & Media': { type: 'files', files: [] },
+    },
+  };
+  const pagePatches: Array<Record<string, unknown>> = [];
+  const bodyWrites: Array<Array<Record<string, unknown>>> = [];
+  let targetBlocks: Array<Record<string, unknown>> = [];
+  let uploadAttempts = 0;
+
+  t.mock.method(globalThis, 'fetch', async (input: string | URL | Request, init?: RequestInit) => {
+    const url = String(input);
+    if (url.endsWith(`/data_sources/${sourceDataSourceId}`)) {
+      return jsonResponse({
+        properties: {
+          Ticket: { type: 'title' },
+          Details: { type: 'rich_text' },
+          'Created By': { type: 'people' },
+          'Page ID': { type: 'unique_id' },
+          URL: { type: 'url' },
+          'Files & Media': { type: 'files' },
+        },
+      });
+    }
+    if (url.endsWith(`/data_sources/${targetDataSourceId}`)) {
+      return jsonResponse({
+        properties: {
+          Ticket: { type: 'title' },
+          Status: { type: 'status' },
+          Source: { type: 'select' },
+          Owner: { type: 'people' },
+          'External Page ID': { type: 'rich_text' },
+          'External URL': { type: 'url' },
+          'External Files & Media': { type: 'files' },
+        },
+      });
+    }
+    if (url.endsWith(`/pages/${sourcePageId}`)) return jsonResponse(sourcePage);
+    if (url.endsWith(`/data_sources/${targetDataSourceId}/query`)) return jsonResponse({ results: [targetPage], has_more: false });
+    if (url.includes('/users?')) return jsonResponse({ results: [{ id: 'owner-id', person: { email: 'fillip@halfdozen.co' } }], has_more: false });
+    if (url.endsWith('/file_uploads')) return jsonResponse({ id: 'upload-1', upload_url: 'https://uploads.example/upload-1' });
+    if (url === 'https://files.example/show-sheet-recording.mov') {
+      return new Response('large recording', { headers: { 'content-type': 'video/quicktime' } });
+    }
+    if (url === 'https://uploads.example/upload-1') {
+      uploadAttempts += 1;
+      return jsonResponse({ message: 'File too large' }, 400);
+    }
+    if (url.endsWith(`/pages/${targetPageId}`) && init?.method === 'PATCH') {
+      const properties = (JSON.parse(String(init.body)) as { properties: Record<string, unknown> }).properties;
+      pagePatches.push(properties);
+      if (properties['External URL']) targetPage.properties!['External URL'] = { type: 'url', url: 'https://cracked.live/tickets/CL-62' };
+      if (properties['External Files & Media']) targetPage.properties!['External Files & Media'] = { type: 'files', files: [] };
+      return jsonResponse(targetPage);
+    }
+    if (url.includes(`/blocks/${targetPageId}/children`) && init?.method === 'PATCH') {
+      targetBlocks = (JSON.parse(String(init.body)) as { children: Array<Record<string, unknown>> }).children;
+      bodyWrites.push(targetBlocks);
+      return jsonResponse({});
+    }
+    if (url.includes(`/blocks/${targetPageId}/children`)) return jsonResponse({ results: targetBlocks, has_more: false });
+    return jsonResponse({ message: `Unexpected request: ${url}` }, 500);
+  });
+
+  const result = await syncSourceTicketsToHalfDozen({
+    CLIENT_NOTION_API_KEY: 'client-token',
+    HALFDOZEN_NOTION_API_KEY: 'hd-token',
+    CLIENT_SUPPORT_TICKETS_DATA_SOURCE_ID: sourceDataSourceId,
+    HALFDOZEN_TICKETS_DATA_SOURCE_ID: targetDataSourceId,
+    SYNC_OWNER_EMAIL: 'fillip@halfdozen.co',
+    SYNC_OWNER_LABEL: 'FG (fillip@halfdozen.co)',
+    SYNC_SOURCE_LABEL: 'Portal / Tag',
+    SYNC_CLIENT_DISPLAY_NAME: 'Cracked Live',
+  } as Env, { sourcePageIds: [sourcePageId] });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.updated, 1);
+  assert.deepEqual(result.errors, []);
+  assert.deepEqual(pagePatches, [{
+    'External URL': { url: 'https://cracked.live/tickets/CL-62' },
+    'External Files & Media': { files: [] },
+  }]);
+  assert.match(JSON.stringify(bodyWrites), /show-sheet-recording\.mov/);
+  assert.match(JSON.stringify(bodyWrites), /exceeds the Half Dozen Notion file-size limit/i);
+  assert.doesNotMatch(JSON.stringify(bodyWrites), /files\.example/);
+  assert.deepEqual(result.details?.attachment_fallbacks, [{
+    name: 'show-sheet-recording.mov',
+    reason: 'notion_file_size_limit',
+    source_page_id: sourcePageId,
+  }]);
+
+  const repeatedResult = await syncSourceTicketsToHalfDozen({
+    CLIENT_NOTION_API_KEY: 'client-token',
+    HALFDOZEN_NOTION_API_KEY: 'hd-token',
+    CLIENT_SUPPORT_TICKETS_DATA_SOURCE_ID: sourceDataSourceId,
+    HALFDOZEN_TICKETS_DATA_SOURCE_ID: targetDataSourceId,
+    SYNC_OWNER_EMAIL: 'fillip@halfdozen.co',
+    SYNC_OWNER_LABEL: 'FG (fillip@halfdozen.co)',
+    SYNC_SOURCE_LABEL: 'Portal / Tag',
+    SYNC_CLIENT_DISPLAY_NAME: 'Cracked Live',
+  } as Env, { sourcePageIds: [sourcePageId] });
+
+  assert.equal(repeatedResult.ok, true);
+  assert.equal(repeatedResult.updated, 0);
+  assert.equal(uploadAttempts, 1);
+  assert.deepEqual(repeatedResult.details?.attachment_fallbacks, [{
+    name: 'show-sheet-recording.mov',
+    reason: 'notion_file_size_limit',
+    source_page_id: sourcePageId,
+  }]);
 });
