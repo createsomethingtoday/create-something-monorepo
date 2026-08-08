@@ -6,6 +6,7 @@ import test from 'node:test';
 import {
   paperAttachedReceiptMedia,
   paperClampedDecisionMedia,
+  paperServicesDecisionGateMedia,
   paperFoldedHandoffMedia,
   paperOperatingRouteMedia,
   paperProductSystemMedia,
@@ -16,7 +17,7 @@ const agencyRoot = resolve(import.meta.dirname, '..');
 
 const expectedAssignments = {
   '/': 'paperOperatingRouteMedia',
-  '/services': 'paperClampedDecisionMedia',
+  '/services': 'paperServicesDecisionGateMedia',
   '/products': 'paperProductSystemMedia',
   '/field-reports': 'paperAttachedReceiptMedia',
   '/map': 'paperFoldedHandoffMedia',
@@ -36,6 +37,7 @@ test('keeps the public campaign policy on semantic Paper studies', () => {
     paperOperatingRouteMedia,
     paperFoldedHandoffMedia,
     paperClampedDecisionMedia,
+    paperServicesDecisionGateMedia,
     paperAttachedReceiptMedia,
     paperProductSystemMedia
   ]) {

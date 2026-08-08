@@ -6,6 +6,7 @@
 
 	export type PerformanceCampaignOpeningMode = 'ink' | 'paper';
 	export type PerformanceCampaignOpeningDensity = 'standard' | 'compact';
+	export type PerformanceCampaignOpeningArtifactLayer = 'above-content' | 'behind-content';
 
 	export type PerformanceCampaignVideo = PerformanceMediaVideo;
 
@@ -41,6 +42,7 @@
 		mobileSearchBoundary?: boolean;
 		actions?: Snippet;
 		artifact?: Snippet;
+		artifactLayer?: PerformanceCampaignOpeningArtifactLayer;
 		/** A small, non-interactive annotation that should not change campaign layout. */
 		ornament?: Snippet;
 		artifactOwnsMedia?: boolean;
@@ -57,6 +59,7 @@
 		priority = true,
 		mobileSearchBoundary = false,
 		actions,
+		artifactLayer = 'above-content',
 		artifact,
 		ornament,
 		artifactOwnsMedia = false
@@ -89,6 +92,7 @@
 	data-mode={mode}
 	data-density={density}
 	data-has-artifact={artifact ? 'true' : 'false'}
+	data-artifact-layer={artifact ? artifactLayer : undefined}
 	data-mobile-search-boundary={mobileSearchBoundary ? 'true' : undefined}
 	aria-label={eyebrow}
 >
@@ -169,7 +173,10 @@
 	</div>
 
 	{#if artifact}
-		<div class="performance-campaign-opening__artifact">
+		<div
+			class="performance-campaign-opening__artifact"
+			class:performance-campaign-opening__artifact--behind-content={artifactLayer === 'behind-content'}
+		>
 			{@render artifact()}
 		</div>
 	{/if}
@@ -340,12 +347,21 @@
 		padding-block: clamp(8rem, 17vh, 12rem) 1.25rem;
 	}
 
+	.performance-campaign-opening[data-artifact-layer='behind-content']
+		.performance-campaign-opening__content {
+		z-index: 3;
+	}
+
 	.performance-campaign-opening__artifact,
 	.performance-campaign-opening__ornament {
 		position: absolute;
 		inset: 0;
 		z-index: 3;
 		pointer-events: none;
+	}
+
+	.performance-campaign-opening__artifact--behind-content {
+		z-index: 2;
 	}
 
 	.performance-campaign-opening[data-density='compact'] .performance-campaign-opening__content {

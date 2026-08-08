@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 import {
+	CANON_CODIFICATION_EXEMPTIONS,
 	assertCanonCodificationAudit,
 	buildCanonCodificationAuditReport,
 	renderCanonCodificationAuditReport,
@@ -15,6 +16,20 @@ import {
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../../../..');
 
 describe('Canon codification audit', () => {
+	it('treats preserved third-party UI source archives as provenance rather than rendered product UI', () => {
+		const exemption = CANON_CODIFICATION_EXEMPTIONS.find(
+			(entry) =>
+				entry.path === 'packages/agency/content/assets/brand/sources/omma-paper-hero-v2'
+		);
+
+		expect(exemption).toEqual({
+			path: 'packages/agency/content/assets/brand/sources/omma-paper-hero-v2',
+			reason: 'archived-source-provenance',
+			justification:
+				'The Omma export is preserved byte-for-byte as provenance and is not a rendered Agency UI surface; the reviewed runtime mirror remains subject to the Agency overlay.'
+		});
+	});
+
 	it('classifies every current repo UI source file without undecided Canon ownership', async () => {
 		const report = await buildCanonCodificationAuditReport(repoRoot);
 

@@ -100,6 +100,34 @@ describe('PerformanceCampaignOpening', () => {
 		);
 	});
 
+	it('can place a property-owned visual artifact behind live campaign copy', () => {
+		const artifact = createRawSnippet(() => ({
+			render: () => '<div data-testid="behind-copy-artifact">Renderer-owned pixels</div>'
+		}));
+
+		target = document.createElement('div');
+		document.body.appendChild(target);
+		instance = mount(PerformanceCampaignOpening, {
+			target,
+			props: {
+				eyebrow: 'How it works',
+				title: 'A decision stays visible.',
+				mode: 'paper',
+				artifactLayer: 'behind-content',
+				media: { src: '/images/paper.webp', alt: 'A paper decision gate' },
+				artifact
+			}
+		}) as Record<string, unknown>;
+		flushSync();
+
+		const opening = target.querySelector('section.performance-campaign-opening');
+		expect(opening?.getAttribute('data-artifact-layer')).toBe('behind-content');
+		expect(
+			opening?.querySelector('.performance-campaign-opening__artifact--behind-content')
+		).not.toBeNull();
+		expect(opening?.querySelector('h1')?.textContent).toBe('A decision stays visible.');
+	});
+
 	it('progressively enhances static campaign media with silent looping video', () => {
 		vi.stubGlobal('matchMedia', () => ({
 			matches: false,

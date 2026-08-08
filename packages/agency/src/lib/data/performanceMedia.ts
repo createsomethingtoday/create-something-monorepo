@@ -36,6 +36,18 @@ export const paperClampedDecisionMedia = {
   colorMode: 'natural'
 } as const satisfies PerformanceMediaStudy;
 
+export const paperServicesDecisionGateMedia = {
+  src: '/images/performance-lab/paper-services-decision-gate.webp',
+  mobileSrc: '/images/performance-lab/paper-services-decision-gate-mobile.webp',
+  alt: 'A registered source stack resolving into a scored paper packet and held sheet at a black stop rail with one gold authority tab',
+  condition: 'pressure',
+  material: 'paper',
+  width: 1280,
+  height: 720,
+  objectPosition: 'right center',
+  colorMode: 'natural'
+} as const satisfies PerformanceMediaStudy;
+
 export const paperAttachedReceiptMedia = {
   src: '/images/performance-lab/paper-attached-receipt.webp',
   mobileSrc: '/images/performance-lab/paper-attached-receipt-mobile.webp',
@@ -62,7 +74,7 @@ export const paperProductSystemMedia = {
 
 export const performancePaperRouteAssignments = {
   '/': 'paperOperatingRouteMedia',
-  '/services': 'paperClampedDecisionMedia',
+  '/services': 'paperServicesDecisionGateMedia',
   '/products': 'paperProductSystemMedia',
   '/field-reports': 'paperAttachedReceiptMedia',
   '/map': 'paperFoldedHandoffMedia',

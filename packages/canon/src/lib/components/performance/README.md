@@ -50,6 +50,8 @@ historical routes.
 
 Use the optional campaign `artifact` snippet when the property owns an interactive object that must share the opening with the claim. The required static `media`, live text, actions, and proof remain authoritative. The property owns artifact semantics, controls, renderer lifecycle, fallback, and pointer behavior; Canon supplies a non-interactive placement layer and reserves enough mobile height to keep the artifact out of the claim and action path.
 
+Use `artifactLayer="behind-content"` only when a property-owned visual renderer must sit above campaign media but below the live heading, actions, and proof. The static media remains the SSR, reduced-motion, and renderer-failure fallback; this setting changes placement, not that authority boundary.
+
 Keep ordinary proof artifacts inline. Use `artifactPlacement="full-width"` on `PerformanceContrastChapter` when the artifact is itself an operating surface, such as a live canvas whose nodes, controls, and inspector need enough width to remain legible. The property still owns the renderer and projection; Canon only owns its placement in the chapter.
 
 The same placement rule applies to conversion. Keep a compact receipt or object in the default `sidecar` position. Set `artifactPlacement="full-width"` on `PerformanceConversionHandoff` when a delegation object, workflow map, or approval surface needs horizontal room. Canon then pairs the narrative with a compact authority ledger and promotes the route-owned artifact to a shared proof row below them.
