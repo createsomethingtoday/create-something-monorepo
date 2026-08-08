@@ -1,3 +1,5 @@
+import { hasPageAnalyticsSdk, sendTelemetryFallbackEvent } from './telemetryFallback';
+
 export type MarketplaceAnalyticsData = Record<string, string | number | boolean | null | undefined>;
 export type MarketplaceExperimentVariant = 'control' | 'treatment';
 export type MarketplaceExperimentRole = 'none' | MarketplaceExperimentVariant;
@@ -173,6 +175,17 @@ export function trackMarketplaceEvent(
       window.amplitude.logEvent(analyticsEventName, data);
     } else {
       window.amplitude?.getInstance?.()?.logEvent?.(analyticsEventName, data);
+    }
+  } catch {
+    // Analytics must not block navigation or component interaction.
+  }
+
+  try {
+    // Page-SDK outage resilience (2026-07-21): when no SDK is present the
+    // fan-out above silently no-oped. Beacon the event to the owned Worker so
+    // the funnel stays measurable. Gated on SDK absence to avoid double-counting.
+    if (!hasPageAnalyticsSdk()) {
+      sendTelemetryFallbackEvent(analyticsEventName, data);
     }
   } catch {
     // Analytics must not block navigation or component interaction.

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import type { MarketplaceAnalyticsData } from './analytics';
 import { trackMarketplaceEvent, trackMarketplaceEventExact } from './analytics';
+import { forwardAttributionToCheckoutAnchor } from './checkoutAttribution';
 import {
   attributionAnalytics,
   getSafeAnalyticsOverrides,
@@ -21,6 +22,8 @@ export interface TemplateDetailConversionTrackerProps {
   trackPreviewClicks?: boolean;
   /** Track purchase/use-template CTA clicks. */
   trackPurchaseClicks?: boolean;
+  /** Append browse attribution (source component, filters, position) to the checkout URL on purchase clicks. */
+  forwardAttributionToCheckout?: boolean;
 }
 
 const PURCHASE_SELECTOR = [
@@ -104,6 +107,7 @@ export const TemplateDetailConversionTracker: React.FC<TemplateDetailConversionT
   trackView = true,
   trackPreviewClicks = true,
   trackPurchaseClicks = true,
+  forwardAttributionToCheckout = true,
 }) => {
   const viewTrackedRef = useRef(false);
 
@@ -160,12 +164,28 @@ export const TemplateDetailConversionTracker: React.FC<TemplateDetailConversionT
 
       const purchaseEl = trackPurchaseClicks ? target.closest(PURCHASE_SELECTOR) : null;
       if (purchaseEl) {
+        // Capture phase runs before the browser follows the link, so the
+        // navigation that is about to happen carries the browse attribution.
+        let attributionForwarded = false;
+        if (forwardAttributionToCheckout) {
+          try {
+            attributionForwarded = forwardAttributionToCheckoutAnchor(
+              purchaseEl,
+              readTemplateAttribution(),
+              resolvedTemplateSlug,
+            );
+          } catch {
+            // Forwarding must never block the purchase click.
+          }
+        }
+
         trackTemplateDetailPurchaseCtaClick(
           {
             ...baseData(),
             scope: 'detail_purchase_cta_clicked',
             cta_location: ctaLocation(purchaseEl),
             purchase_type: purchaseType(purchaseEl, price),
+            attribution_forwarded: attributionForwarded,
           },
           enableAnalytics,
         );
@@ -174,7 +194,15 @@ export const TemplateDetailConversionTracker: React.FC<TemplateDetailConversionT
 
     document.addEventListener('click', onClick, true);
     return () => document.removeEventListener('click', onClick, true);
-  }, [enableAnalytics, price, templateSlug, trackPreviewClicks, trackPurchaseClicks, trackView]);
+  }, [
+    enableAnalytics,
+    forwardAttributionToCheckout,
+    price,
+    templateSlug,
+    trackPreviewClicks,
+    trackPurchaseClicks,
+    trackView,
+  ]);
 
   return <span data-template-detail-conversion-tracker="" style={{ display: 'none' }} />;
 };
