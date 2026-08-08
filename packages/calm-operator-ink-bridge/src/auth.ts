@@ -1,6 +1,10 @@
 export type AuthRole = 'device' | 'source' | 'relay';
 
 export interface AuthEnv {
+  OPERATOR_BRIDGE_TOKEN?: string;
+  OPERATOR_DEVICE_TOKEN?: string;
+  OPERATOR_RELAY_TOKEN?: string;
+  OPERATOR_SOURCE_TOKEN?: string;
   INK_BRIDGE_TOKEN?: string;
   INK_DEVICE_TOKEN?: string;
   INK_RELAY_TOKEN?: string;
@@ -41,17 +45,27 @@ async function tokenMatches(input: string, expected: string): Promise<boolean> {
 }
 
 function roleTokens(env: AuthEnv, role: AuthRole): string[] {
-  const bridgeToken = env.INK_BRIDGE_TOKEN?.trim();
-  const deviceToken = env.INK_DEVICE_TOKEN?.trim();
-  const relayToken = env.INK_RELAY_TOKEN?.trim();
-  const sourceToken = env.INK_SOURCE_TOKEN?.trim();
-
   const candidates =
     role === 'device'
-      ? [deviceToken, bridgeToken]
+      ? [
+          env.OPERATOR_DEVICE_TOKEN?.trim(),
+          env.INK_DEVICE_TOKEN?.trim(),
+          env.OPERATOR_BRIDGE_TOKEN?.trim(),
+          env.INK_BRIDGE_TOKEN?.trim()
+        ]
       : role === 'relay'
-        ? [relayToken, bridgeToken]
-        : [sourceToken, bridgeToken];
+        ? [
+            env.OPERATOR_RELAY_TOKEN?.trim(),
+            env.INK_RELAY_TOKEN?.trim(),
+            env.OPERATOR_BRIDGE_TOKEN?.trim(),
+            env.INK_BRIDGE_TOKEN?.trim()
+          ]
+        : [
+            env.OPERATOR_SOURCE_TOKEN?.trim(),
+            env.INK_SOURCE_TOKEN?.trim(),
+            env.OPERATOR_BRIDGE_TOKEN?.trim(),
+            env.INK_BRIDGE_TOKEN?.trim()
+          ];
 
   return candidates.filter((value): value is string => Boolean(value));
 }

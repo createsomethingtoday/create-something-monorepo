@@ -81,7 +81,7 @@
 | `packages/bundle-scanner` | `@create-something/bundle-scanner` | labs | `monorepo` |  |
 | `packages/bundle-scanner-core` | `@create-something/bundle-scanner-core` | labs | `monorepo` |  |
 | `packages/calm-operator-ink-bridge` | `@create-something/calm-operator-ink-bridge` |  | `monorepo` |  |
-| `packages/calm-operator-ink-firmware` | `@create-something/calm-operator-ink-firmware` |  | `monorepo` |  |
+| `packages/calm-operator-stopwatch-firmware` | `@create-something/calm-operator-stopwatch-firmware` |  | `monorepo` |  |
 | `packages/canon` | `@create-something/canon` | product | `monorepo` | Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction. |
 | `packages/canon-tokens` | `@createsomething/canon-tokens` | product | `monorepo` |  |
 | `packages/canvas-kernel` | `@create-something/canvas-kernel` |  | `monorepo` |  |

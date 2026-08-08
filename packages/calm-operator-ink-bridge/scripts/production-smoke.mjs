@@ -7,7 +7,7 @@ import { bridgeUrl } from '../src/producers.ts';
 
 const DEFAULT_ORIGIN = 'https://ink.createsomething.agency';
 const DEFAULT_DEVICE_ID = 'production-smoke';
-const DEFAULT_SURFACE = 'core-ink';
+const DEFAULT_SURFACE = 'stopwatch';
 
 function usage() {
   return [
@@ -17,11 +17,11 @@ function usage() {
     '',
     'Options:',
     '  --origin <url>        Defaults to https://ink.createsomething.agency',
-    '  --token <token>       Defaults to INK_DEVICE_TOKEN or CALM_OPERATOR_BRIDGE_TOKEN',
+    '  --token <token>       Defaults to OPERATOR_DEVICE_TOKEN, then the legacy device token',
     '  --device-id <id>      Defaults to production-smoke',
-    '  --surface <surface>   Defaults to core-ink',
+    '  --surface <surface>   Defaults to stopwatch',
     '  --public-only         Only check GET /healthz; does not require a token',
-    '  --skip-heartbeat      Skip the harmless POST /ink/device-heartbeat write',
+    '  --skip-heartbeat      Skip the harmless POST /operator/device-heartbeat write',
     '  --help                Show this help'
   ].join('\n');
 }
@@ -29,7 +29,7 @@ function usage() {
 export function parseArgs(argv, env = process.env) {
   const args = {
     origin: DEFAULT_ORIGIN,
-    token: env.INK_DEVICE_TOKEN ?? env.CALM_OPERATOR_BRIDGE_TOKEN,
+    token: env.OPERATOR_DEVICE_TOKEN ?? env.INK_DEVICE_TOKEN ?? env.CALM_OPERATOR_BRIDGE_TOKEN,
     deviceId: DEFAULT_DEVICE_ID,
     surface: DEFAULT_SURFACE,
     publicOnly: false,
@@ -131,12 +131,12 @@ function checkHealth(payload) {
 }
 
 function checkClock(payload) {
-  const clock = assertObject(payload.clock ?? payload, 'GET /ink/clock clock');
+  const clock = assertObject(payload.clock ?? payload, 'GET /operator/clock clock');
   assertString(clock.generated_at, 'clock.generated_at');
   assertString(clock.local_date, 'clock.local_date');
   assertString(clock.display_time, 'clock.display_time');
   return {
-    name: 'GET /ink/clock',
+    name: 'GET /operator/clock',
     ok: true,
     generated_at: clock.generated_at,
     local_date: clock.local_date,
@@ -147,7 +147,7 @@ function checkClock(payload) {
 function checkBrief(payload) {
   const clock = assertObject(payload.clock, 'brief.clock');
   return {
-    name: 'GET /ink/brief',
+    name: 'GET /operator/brief',
     ok: true,
     state: assertString(payload.state, 'brief.state'),
     headline: assertString(payload.headline, 'brief.headline'),
@@ -157,12 +157,12 @@ function checkBrief(payload) {
 }
 
 function checkAgentConsole(payload) {
-  if (payload.ok !== true) throw new Error('GET /ink/agent-console did not return ok: true');
+  if (payload.ok !== true) throw new Error('GET /operator/agent-console did not return ok: true');
   if (!Array.isArray(payload.agents) || !Array.isArray(payload.recent_decisions)) {
-    throw new Error('GET /ink/agent-console did not return agent and receipt arrays');
+    throw new Error('GET /operator/agent-console did not return agent and receipt arrays');
   }
   return {
-    name: 'GET /ink/agent-console',
+    name: 'GET /operator/agent-console',
     ok: true,
     count: Number(payload.count ?? payload.agents.length),
     needs_input_count: Number(payload.needs_input_count ?? 0)
@@ -171,12 +171,15 @@ function checkAgentConsole(payload) {
 
 function checkHeartbeat(payload, deviceId) {
   const device = assertObject(payload.device, 'heartbeat.device');
-  if (payload.ok !== true) throw new Error('POST /ink/device-heartbeat did not return ok: true');
+  if (payload.ok !== true)
+    throw new Error('POST /operator/device-heartbeat did not return ok: true');
   if (device.device_id !== deviceId) {
-    throw new Error(`POST /ink/device-heartbeat returned device_id ${String(device.device_id)}`);
+    throw new Error(
+      `POST /operator/device-heartbeat returned device_id ${String(device.device_id)}`
+    );
   }
   return {
-    name: 'POST /ink/device-heartbeat',
+    name: 'POST /operator/device-heartbeat',
     ok: true,
     device_id: device.device_id,
     received_at: device.received_at
@@ -208,23 +211,25 @@ export async function runProductionSmoke(argsInput, options = {}) {
 
   const token = args.token?.trim();
   if (!token) {
-    throw new Error('INK_DEVICE_TOKEN or CALM_OPERATOR_BRIDGE_TOKEN is required');
+    throw new Error(
+      'OPERATOR_DEVICE_TOKEN, INK_DEVICE_TOKEN, or CALM_OPERATOR_BRIDGE_TOKEN is required'
+    );
   }
 
-  const clock = await getJson(fetchImpl, origin, '/ink/clock', 'GET /ink/clock', token);
+  const clock = await getJson(fetchImpl, origin, '/operator/clock', 'GET /operator/clock', token);
   checks.push(checkClock(clock));
 
   const briefPath =
-    `/ink/brief?surface=${encodeURIComponent(args.surface)}` +
+    `/operator/brief?surface=${encodeURIComponent(args.surface)}` +
     `&device_id=${encodeURIComponent(args.deviceId)}`;
-  const brief = await getJson(fetchImpl, origin, briefPath, 'GET /ink/brief', token);
+  const brief = await getJson(fetchImpl, origin, briefPath, 'GET /operator/brief', token);
   checks.push(checkBrief(brief));
 
   const agentConsole = await getJson(
     fetchImpl,
     origin,
-    '/ink/agent-console',
-    'GET /ink/agent-console',
+    '/operator/agent-console',
+    'GET /operator/agent-console',
     token
   );
   checks.push(checkAgentConsole(agentConsole));
@@ -233,8 +238,8 @@ export async function runProductionSmoke(argsInput, options = {}) {
     const heartbeat = await postJson(
       fetchImpl,
       origin,
-      '/ink/device-heartbeat',
-      'POST /ink/device-heartbeat',
+      '/operator/device-heartbeat',
+      'POST /operator/device-heartbeat',
       token,
       {
         device_id: args.deviceId,

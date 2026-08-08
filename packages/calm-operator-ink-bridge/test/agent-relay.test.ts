@@ -7,7 +7,7 @@ import type { StoredAgentDecision } from '../src/agent-console.js';
 function decision(overrides: Partial<StoredAgentDecision> = {}): StoredAgentDecision {
   return {
     id: 'decision-1',
-    idempotency_key: 'core-ink:1',
+    idempotency_key: 'stopwatch:1',
     agent_id: 'claude:session-123',
     provider: 'claude',
     progress_version: 17,
@@ -15,7 +15,7 @@ function decision(overrides: Partial<StoredAgentDecision> = {}): StoredAgentDeci
     kind: 'redirect',
     label: 'Focus on test',
     message: 'Fix the failing test first.',
-    device_id: 'core-ink',
+    device_id: 'Stopwatch',
     state: 'leased',
     created_at: 1,
     updated_at: 1,
@@ -32,7 +32,7 @@ function decision(overrides: Partial<StoredAgentDecision> = {}): StoredAgentDeci
 test('builds a bounded steering prompt from the structured decision', () => {
   assert.equal(
     steeringPrompt(decision()),
-    'Operator steering from Core Ink: redirect — Focus on test\n\nFix the failing test first.\n\nAcknowledge this direction briefly, then continue within the existing permissions and approval policy.'
+    'Operator steering from Stopwatch: redirect — Focus on test\n\nFix the failing test first.\n\nAcknowledge this direction briefly, then continue within the existing permissions and approval policy.'
   );
 });
 

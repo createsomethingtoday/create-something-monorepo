@@ -1,14 +1,18 @@
 import { spawn } from 'node:child_process';
-import { hostname } from 'node:os';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { hostname, tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 import { adapterCommand } from '../src/agent-relay.js';
+import { boundedTranscript, voiceTranscriberCommand } from '../src/voice-relay.js';
 
-const origin = (process.env.INK_BRIDGE_ORIGIN || 'https://ink.createsomething.agency').replace(
-  /\/+$/,
-  ''
-);
-const token = process.env.INK_RELAY_TOKEN?.trim() || '';
-const relayId = (process.env.INK_RELAY_ID || hostname())
+const origin = (
+  process.env.OPERATOR_BRIDGE_ORIGIN ||
+  process.env.INK_BRIDGE_ORIGIN ||
+  'https://ink.createsomething.agency'
+).replace(/\/+$/, '');
+const token = process.env.OPERATOR_RELAY_TOKEN?.trim() || process.env.INK_RELAY_TOKEN?.trim() || '';
+const relayId = (process.env.OPERATOR_RELAY_ID || process.env.INK_RELAY_ID || hostname())
   .replace(/[^A-Za-z0-9_-]/g, '-')
   .slice(0, 96);
 const providers = (process.env.INK_RELAY_PROVIDERS || 'claude,codex')
@@ -22,7 +26,7 @@ const commandTimeoutMs = Math.max(
 );
 const once = process.argv.includes('--once');
 
-if (!token) throw new Error('INK_RELAY_TOKEN is required.');
+if (!token) throw new Error('OPERATOR_RELAY_TOKEN or INK_RELAY_TOKEN is required.');
 
 async function bridge(path, body) {
   const response = await fetch(`${origin}${path}`, {
@@ -32,16 +36,52 @@ async function bridge(path, body) {
   });
   const payload = await response.json();
   if (!response.ok)
-    throw new Error(payload.error || `Ink bridge returned HTTP ${response.status}.`);
+    throw new Error(payload.error || `Operator bridge returned HTTP ${response.status}.`);
   return payload;
 }
 
 async function receipt(decision, state, summary = '', error = '') {
-  await bridge(`/ink/agent-decisions/${encodeURIComponent(decision.id)}/receipt`, {
+  await bridge(`/operator/agent-decisions/${encodeURIComponent(decision.id)}/receipt`, {
     relay_id: relayId,
     state,
     summary,
     error
+  });
+}
+
+function spawnCapture(command, timeoutMs) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command.executable, command.args, {
+      cwd: process.env.INK_AGENT_WORKDIR || process.cwd(),
+      env: process.env,
+      shell: false,
+      stdio: ['ignore', 'pipe', 'pipe']
+    });
+    let stdout = '';
+    let stderr = '';
+    const capture = (current, chunk) => (current + chunk.toString('utf8')).slice(-16_000);
+    child.stdout.on('data', (chunk) => {
+      stdout = capture(stdout, chunk);
+    });
+    child.stderr.on('data', (chunk) => {
+      stderr = capture(stderr, chunk);
+    });
+    const timeout = setTimeout(() => {
+      child.kill('SIGTERM');
+      reject(new Error(`Executable exceeded ${timeoutMs}ms.`));
+    }, timeoutMs);
+    child.once('error', (error) => {
+      clearTimeout(timeout);
+      reject(error);
+    });
+    child.once('close', (code) => {
+      clearTimeout(timeout);
+      if (code !== 0) {
+        reject(new Error((stderr || stdout || `Executable exited ${code}.`).trim().slice(0, 500)));
+        return;
+      }
+      resolve(stdout);
+    });
   });
 }
 
@@ -90,8 +130,50 @@ function execute(decision) {
   });
 }
 
+async function transcribe(command) {
+  const directory = await mkdtemp(join(tmpdir(), 'calm-operator-voice-'));
+  const audioPath = join(directory, `${command.id}.pcm`);
+  try {
+    await writeFile(audioPath, Buffer.from(command.audio_base64, 'base64'), { mode: 0o600 });
+    const transcriber = voiceTranscriberCommand(audioPath, {
+      executable: process.env.OPERATOR_TRANSCRIBE_EXECUTABLE,
+      argsJson: process.env.OPERATOR_TRANSCRIBE_ARGS_JSON
+    });
+    return boundedTranscript(await spawnCapture(transcriber, commandTimeoutMs));
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+}
+
+async function voiceCycle() {
+  if (!process.env.OPERATOR_TRANSCRIBE_EXECUTABLE?.trim()) return 0;
+  const leased = await bridge('/operator/voice-commands/lease', {
+    relay_id: relayId,
+    limit: 1,
+    lease_ms: Math.min(5 * 60_000, commandTimeoutMs + 10_000)
+  });
+  for (const command of leased.commands) {
+    try {
+      const transcript = await transcribe(command);
+      await bridge(`/operator/voice-command/${encodeURIComponent(command.id)}/transcript`, {
+        relay_id: relayId,
+        transcript
+      });
+      process.stdout.write(`${command.id} transcribed\n`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      await bridge(`/operator/voice-command/${encodeURIComponent(command.id)}/transcript`, {
+        relay_id: relayId,
+        error: message.slice(0, 500)
+      }).catch(() => undefined);
+      process.stderr.write(`${command.id} transcription failed: ${message}\n`);
+    }
+  }
+  return leased.commands.length;
+}
+
 async function cycle() {
-  const leased = await bridge('/ink/agent-decisions/lease', {
+  const leased = await bridge('/operator/agent-decisions/lease', {
     relay_id: relayId,
     providers,
     limit: 4,
@@ -122,6 +204,7 @@ process.once('SIGTERM', () => {
 });
 
 do {
+  await voiceCycle();
   await cycle();
   if (!once && !stopping) await new Promise((resolve) => setTimeout(resolve, pollMs));
 } while (!once && !stopping);

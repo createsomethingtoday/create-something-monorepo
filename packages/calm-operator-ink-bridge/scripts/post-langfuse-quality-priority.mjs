@@ -2,11 +2,7 @@
 
 import { readFileSync } from 'node:fs';
 
-import {
-  bridgeUrl,
-  postOperatorPriority,
-  synthesizeOperatorPriority
-} from '../src/producers.ts';
+import { bridgeUrl, postOperatorPriority, synthesizeOperatorPriority } from '../src/producers.ts';
 
 const DEFAULT_ORIGIN = 'https://ink.createsomething.agency';
 
@@ -18,7 +14,7 @@ function usage() {
     'Options:',
     '  --input <path>       Local JSON summary or eval command output text',
     '  --origin <url>       Defaults to https://ink.createsomething.agency',
-    '  --url <url>          Full POST /ink/operator-priority URL',
+    '  --url <url>          Full POST /operator/operator-priority URL',
     '  --token <token>      Defaults to INK_SOURCE_TOKEN or CALM_OPERATOR_BRIDGE_TOKEN',
     '  --ttl-ms <number>    Optional priority expiry in milliseconds',
     '  --dry-run            Print normalized Langfuse signal and priority without posting'
@@ -72,7 +68,8 @@ function numberField(record, ...keys) {
   for (const key of keys) {
     const value = record[key];
     if (typeof value === 'number' && Number.isFinite(value)) return value;
-    if (typeof value === 'string' && value.trim() && Number.isFinite(Number(value))) return Number(value);
+    if (typeof value === 'string' && value.trim() && Number.isFinite(Number(value)))
+      return Number(value);
   }
   return 0;
 }
@@ -100,7 +97,8 @@ function recommendedAction(signal) {
 function normalizeJsonSummary(raw) {
   const root = asRecord(raw);
   const record = asRecord(root.langfuse ?? root.quality ?? root.eval ?? root);
-  const status = stringField(record, 'status', 'state', 'result') || (record.ok === false ? 'failed' : 'ok');
+  const status =
+    stringField(record, 'status', 'state', 'result') || (record.ok === false ? 'failed' : 'ok');
   const signal = {
     status,
     eval_name: stringField(record, 'eval_name', 'evalName', 'eval', 'suite', 'name'),
@@ -116,21 +114,30 @@ function normalizeJsonSummary(raw) {
   };
 
   signal.severity = severityFor(signal);
-  signal.recommended_action = stringField(record, 'recommended_action', 'recommendedAction', 'action') || recommendedAction(signal);
+  signal.recommended_action =
+    stringField(record, 'recommended_action', 'recommendedAction', 'action') ||
+    recommendedAction(signal);
   return signal;
 }
 
 function normalizeTextSummary(text) {
-  const firstLine = text.split(/\r?\n/).map((line) => line.trim()).find(Boolean) ?? 'Langfuse eval output';
+  const firstLine =
+    text
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .find(Boolean) ?? 'Langfuse eval output';
   const lower = text.toLowerCase();
   const failures = Number(lower.match(/(\d+)\s+(?:failed|failures?)/)?.[1] ?? 0);
   const regressions = Number(lower.match(/(\d+)\s+regressions?/)?.[1] ?? 0);
-  const status =
-    lower.includes('critical') ? 'critical' :
-      lower.includes('regression') ? 'regression' :
-        lower.includes('fail') || lower.includes('error') ? 'failed' :
-          lower.includes('warn') ? 'warning' :
-            'ok';
+  const status = lower.includes('critical')
+    ? 'critical'
+    : lower.includes('regression')
+      ? 'regression'
+      : lower.includes('fail') || lower.includes('error')
+        ? 'failed'
+        : lower.includes('warn')
+          ? 'warning'
+          : 'ok';
   const signal = {
     status,
     eval_name: 'Langfuse eval',
@@ -173,9 +180,10 @@ async function main(argv = process.argv, env = process.env) {
     return 0;
   }
 
-  if (!args.token?.trim()) throw new Error('INK_SOURCE_TOKEN or CALM_OPERATOR_BRIDGE_TOKEN is required');
+  if (!args.token?.trim())
+    throw new Error('INK_SOURCE_TOKEN or CALM_OPERATOR_BRIDGE_TOKEN is required');
   const response = await postOperatorPriority({
-    url: args.url ?? bridgeUrl(args.origin, '/ink/operator-priority'),
+    url: args.url ?? bridgeUrl(args.origin, '/operator/operator-priority'),
     token: args.token,
     priority
   });
@@ -184,9 +192,11 @@ async function main(argv = process.argv, env = process.env) {
   return 0;
 }
 
-main().then((code) => {
-  process.exitCode = code;
-}).catch((error) => {
-  console.error(error instanceof Error ? error.message : String(error));
-  process.exitCode = 1;
-});
+main()
+  .then((code) => {
+    process.exitCode = code;
+  })
+  .catch((error) => {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exitCode = 1;
+  });

@@ -711,20 +711,20 @@
       "runtime": "cloudflare, node"
     },
     {
-      "id": "substrate:create-something:package:create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
-      "atlasNodeId": "atlas_create-something_package_create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
-      "title": "@create-something/calm-operator-ink-firmware",
-      "path": "packages/calm-operator-ink-firmware",
+      "id": "substrate:create-something:package:create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
+      "atlasNodeId": "atlas_create-something_package_create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
+      "title": "@create-something/calm-operator-stopwatch-firmware",
+      "path": "packages/calm-operator-stopwatch-firmware",
       "tier": "Mixed",
       "surface": "package",
       "owner": "CREATE SOMETHING",
       "status": "mapped",
-      "summary": "Workspace package at packages/calm-operator-ink-firmware.",
+      "summary": "Workspace package at packages/calm-operator-stopwatch-firmware.",
       "tags": [
         "package",
         "package"
       ],
-      "packageName": "@create-something/calm-operator-ink-firmware",
+      "packageName": "@create-something/calm-operator-stopwatch-firmware",
       "runtime": "node"
     },
     {
@@ -8436,11 +8436,11 @@
       "evidence": "packages/calm-operator-ink-bridge is present in the repo scan."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
       "source": "substrate:create-something:root",
-      "target": "substrate:create-something:package:create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
+      "target": "substrate:create-something:package:create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
       "relation": "contains",
-      "evidence": "packages/calm-operator-ink-firmware is present in the repo scan."
+      "evidence": "packages/calm-operator-stopwatch-firmware is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-createsomething-canon-tokens-packages-canon-tokens",

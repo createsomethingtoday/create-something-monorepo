@@ -65,7 +65,7 @@ test('returns clear live-only state when no attention is needed', () => {
   assert.deepEqual(firmwareBrief.clock, brief.clock);
 });
 
-test('prioritizes MCP attention alerts for the Core Ink brief', () => {
+test('prioritizes MCP attention alerts for the operator brief', () => {
   const brief = buildOperatorBrief({
     alerts: [
       alert({ state: 'operator_attention', subject: 'Routine note', severity: 40 }),

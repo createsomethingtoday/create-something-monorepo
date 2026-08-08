@@ -793,13 +793,13 @@ export const databaseLayerWorkerState =
         "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
       },
       {
-        "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-package-create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
+        "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-package-create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
         "kind": "topology_record",
-        "title": "@create-something/calm-operator-ink-firmware",
-        "recordId": "substrate:create-something:package:create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
+        "title": "@create-something/calm-operator-stopwatch-firmware",
+        "recordId": "substrate:create-something:package:create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
         "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
-        "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-package-create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
-        "mcpUri": "substrate://topology/internal/records/substrate-create-something-package-create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
+        "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-package-create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
+        "mcpUri": "substrate://topology/internal/records/substrate-create-something-package-create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
         "agentCommand": "databaseLayer.topology.records.get",
         "access": [
           "read"
@@ -8609,7 +8609,7 @@ export const databaseLayerWorkerState =
           "substrate:create-something:package:create-something-ascii-renderer-packages-ascii-renderer",
           "substrate:create-something:package:create-something-bundle-scanner-packages-bundle-scanner",
           "substrate:create-something:package:create-something-bundle-scanner-core-packages-bundle-scanner-core",
-          "substrate:create-something:package:create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
+          "substrate:create-something:package:create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
           "substrate:create-something:package:create-something-cloudflare-sdk-packages-cloudflare-sdk",
           "substrate:create-something:package:create-something-codex-presence-packages-codex-presence",
           "substrate:create-something:package:createsomething-motion-ontology-space-packages-huggingface-spaces-motion-ontology",
@@ -8632,7 +8632,7 @@ export const databaseLayerWorkerState =
           "packages/ascii-renderer",
           "packages/bundle-scanner",
           "packages/bundle-scanner-core",
-          "packages/calm-operator-ink-firmware",
+          "packages/calm-operator-stopwatch-firmware",
           "packages/cloudflare-sdk",
           "packages/codex-presence",
           "packages/huggingface-spaces/motion-ontology",
@@ -11208,20 +11208,20 @@ export const databaseLayerWorkerState =
         "runtime": "cloudflare, node"
       },
       {
-        "id": "substrate:create-something:package:create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
-        "atlasNodeId": "atlas_create-something_package_create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
-        "title": "@create-something/calm-operator-ink-firmware",
-        "path": "packages/calm-operator-ink-firmware",
+        "id": "substrate:create-something:package:create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
+        "atlasNodeId": "atlas_create-something_package_create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
+        "title": "@create-something/calm-operator-stopwatch-firmware",
+        "path": "packages/calm-operator-stopwatch-firmware",
         "tier": "Mixed",
         "surface": "package",
         "owner": "CREATE SOMETHING",
         "status": "mapped",
-        "summary": "Workspace package at packages/calm-operator-ink-firmware.",
+        "summary": "Workspace package at packages/calm-operator-stopwatch-firmware.",
         "tags": [
           "package",
           "package"
         ],
-        "packageName": "@create-something/calm-operator-ink-firmware",
+        "packageName": "@create-something/calm-operator-stopwatch-firmware",
         "runtime": "node"
       },
       {
@@ -18933,11 +18933,11 @@ export const databaseLayerWorkerState =
         "evidence": "packages/calm-operator-ink-bridge is present in the repo scan."
       },
       {
-        "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
+        "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
         "source": "substrate:create-something:root",
-        "target": "substrate:create-something:package:create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
+        "target": "substrate:create-something:package:create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
         "relation": "contains",
-        "evidence": "packages/calm-operator-ink-firmware is present in the repo scan."
+        "evidence": "packages/calm-operator-stopwatch-firmware is present in the repo scan."
       },
       {
         "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-createsomething-canon-tokens-packages-canon-tokens",
@@ -27476,18 +27476,18 @@ export const databaseLayerWorkerState =
           "updatedAt": "2026-07-23T05:11:08.429Z"
         },
         {
-          "id": "atlas_create-something_package_create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
+          "id": "atlas_create-something_package_create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
           "kind": "system",
-          "label": "@create-something/calm-operator-ink-firmware",
-          "atlasId": "substrate:create-something:package:create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
+          "label": "@create-something/calm-operator-stopwatch-firmware",
+          "atlasId": "substrate:create-something:package:create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
           "x": 84,
           "y": 1204,
           "width": 232,
           "height": 142,
           "owner": "CREATE SOMETHING",
           "status": "unknown",
-          "notes": "packages/calm-operator-ink-firmware | package | Mixed",
-          "evidence": "Workspace package at packages/calm-operator-ink-firmware.",
+          "notes": "packages/calm-operator-stopwatch-firmware | package | Mixed",
+          "evidence": "Workspace package at packages/calm-operator-stopwatch-firmware.",
           "products": [
             {
               "productId": "signal",
@@ -27499,10 +27499,10 @@ export const databaseLayerWorkerState =
           ],
           "governanceRecords": [
             {
-              "id": "receipt:substrate:create-something:package:create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
+              "id": "receipt:substrate:create-something:package:create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
               "productId": "proof",
-              "title": "@create-something/calm-operator-ink-firmware is part of the mapped root topology.",
-              "summary": "packages/calm-operator-ink-firmware was discovered during topology generation at 2026-07-23T05:11:08.429Z.",
+              "title": "@create-something/calm-operator-stopwatch-firmware is part of the mapped root topology.",
+              "summary": "packages/calm-operator-stopwatch-firmware was discovered during topology generation at 2026-07-23T05:11:08.429Z.",
               "status": "ready",
               "source": "Substrate topology projection",
               "attachedAt": "2026-07-23T05:11:08.429Z",
@@ -27511,11 +27511,11 @@ export const databaseLayerWorkerState =
           ],
           "bindings": [
             {
-              "id": "binding:substrate:create-something:package:create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
+              "id": "binding:substrate:create-something:package:create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
               "kind": "script",
-              "label": "@create-something/calm-operator-ink-firmware",
+              "label": "@create-something/calm-operator-stopwatch-firmware",
               "source": "package",
-              "selector": "substrate:create-something:package:create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
+              "selector": "substrate:create-something:package:create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
               "required": true
             }
           ],
@@ -51452,11 +51452,11 @@ export const databaseLayerWorkerState =
           "updatedAt": "2026-07-23T05:11:08.429Z"
         },
         {
-          "id": "atlas_create-something_edge_substrate-create-something-root-contains-substrate-create-something-package-create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
+          "id": "atlas_create-something_edge_substrate-create-something-root-contains-substrate-create-something-package-create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
           "source": "atlas_create-something_root",
-          "target": "atlas_create-something_package_create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
+          "target": "atlas_create-something_package_create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
           "label": "contains",
-          "evidence": "packages/calm-operator-ink-firmware is present in the repo scan.",
+          "evidence": "packages/calm-operator-stopwatch-firmware is present in the repo scan.",
           "createdBy": "system",
           "updatedAt": "2026-07-23T05:11:08.429Z"
         },

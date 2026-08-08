@@ -18,7 +18,7 @@ function usage() {
     '',
     'Options:',
     '  --origin <url>        Defaults to https://ink.createsomething.agency',
-    '  --url <url>           Full POST /ink/operator-priority URL',
+    '  --url <url>           Full POST /operator/operator-priority URL',
     '  --token <token>       Defaults to INK_SOURCE_TOKEN or CALM_OPERATOR_BRIDGE_TOKEN',
     '  --focus <text>        What the operator should focus on now',
     '  --risk <text>         The main risk or reason this matters',
@@ -65,7 +65,12 @@ function parseArgs(argv, env = process.env) {
       args.summary = argv[++index];
     } else if (item === '--source-link') {
       args.sourceLinks.push(parseSourceLink(argv[++index]));
-    } else if (item === '--linear' || item === '--notion' || item === '--codex' || item === '--health') {
+    } else if (
+      item === '--linear' ||
+      item === '--notion' ||
+      item === '--codex' ||
+      item === '--health'
+    ) {
       args.sourceLinks.push(parseSourceLink(argv[++index], item.slice(2)));
     } else if (item === '--sources') {
       args.sources = JSON.parse(readFileSync(argv[++index], 'utf8'));
@@ -103,7 +108,8 @@ async function main(argv = process.argv, env = process.env) {
     console.log(usage());
     return 0;
   }
-  if (!args.token?.trim()) throw new Error('INK_SOURCE_TOKEN or CALM_OPERATOR_BRIDGE_TOKEN is required');
+  if (!args.token?.trim())
+    throw new Error('INK_SOURCE_TOKEN or CALM_OPERATOR_BRIDGE_TOKEN is required');
 
   const hasExplicitBrief = args.focus && args.risk && args.nextAction;
   const hasSources = Object.keys(args.sources).length > 0;
@@ -128,13 +134,10 @@ async function main(argv = process.argv, env = process.env) {
     const synthesized = synthesizeOperatorPriority(args.sources);
     priority = {
       ...synthesized,
-      source_links: [
-        ...((synthesized.source_links ?? [])),
-        ...args.sourceLinks
-      ]
+      source_links: [...(synthesized.source_links ?? []), ...args.sourceLinks]
     };
   }
-  const url = args.url ?? bridgeUrl(args.origin, '/ink/operator-priority');
+  const url = args.url ?? bridgeUrl(args.origin, '/operator/operator-priority');
   const response = await postOperatorPriority({
     url,
     token: args.token,
@@ -145,9 +148,11 @@ async function main(argv = process.argv, env = process.env) {
   return 0;
 }
 
-main().then((code) => {
-  process.exitCode = code;
-}).catch((error) => {
-  console.error(error instanceof Error ? error.message : String(error));
-  process.exitCode = 1;
-});
+main()
+  .then((code) => {
+    process.exitCode = code;
+  })
+  .catch((error) => {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exitCode = 1;
+  });

@@ -1244,9 +1244,9 @@
                   "status": "mapped"
                 },
                 {
-                  "id": "substrate:create-something:package:create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
-                  "label": "@create-something/calm-operator-ink-firmware",
-                  "path": "packages/calm-operator-ink-firmware",
+                  "id": "substrate:create-something:package:create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
+                  "label": "@create-something/calm-operator-stopwatch-firmware",
+                  "path": "packages/calm-operator-stopwatch-firmware",
                   "tier": "Mixed",
                   "surface": "package",
                   "status": "mapped"
@@ -13152,25 +13152,25 @@
       "targetPath": "packages/calm-operator-ink-bridge"
     },
     {
-      "id": "substrate:create-something:package:create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
-      "atlasNodeId": "atlas_create-something_package_create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
+      "id": "substrate:create-something:package:create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
+      "atlasNodeId": "atlas_create-something_package_create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
       "substrate": {
-        "recordId": "substrate:create-something:package:create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
-        "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-package-create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
-        "mcpUri": "substrate://topology/internal/records/substrate-create-something-package-create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
+        "recordId": "substrate:create-something:package:create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
+        "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-package-create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
+        "mcpUri": "substrate://topology/internal/records/substrate-create-something-package-create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
         "agentCommand": "databaseLayer.topology.records.get",
-        "receiptId": "receipt:substrate:create-something:package:create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
+        "receiptId": "receipt:substrate:create-something:package:create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
         "actionId": null,
         "operatingSliceId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-package-surface-mixed-package",
         "operatingSliceApiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-package-surface-mixed-package",
         "readinessApiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-package-surface-mixed-package/readiness",
         "readinessStatus": "approval_required",
         "atlasCanvasId": "create-something-internal-operating-topology",
-        "atlasNodeId": "atlas_create-something_package_create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware"
+        "atlasNodeId": "atlas_create-something_package_create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware"
       },
       "clientOverlay": null,
-      "label": "@create-something/calm-operator-ink-firmware",
-      "path": "packages/calm-operator-ink-firmware",
+      "label": "@create-something/calm-operator-stopwatch-firmware",
+      "path": "packages/calm-operator-stopwatch-firmware",
       "tier": "Mixed",
       "surface": "package",
       "status": "mapped",
@@ -13182,7 +13182,7 @@
       "z": -48,
       "size": 7.82842712474619,
       "color": "#84cc16",
-      "targetPath": "packages/calm-operator-ink-firmware"
+      "targetPath": "packages/calm-operator-stopwatch-firmware"
     },
     {
       "id": "substrate:create-something:package:createsomething-canon-tokens-packages-canon-tokens",
@@ -27679,11 +27679,11 @@
       "alpha": 0.16
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
       "source": 0,
       "target": 37,
       "relation": "contains",
-      "evidence": "packages/calm-operator-ink-firmware is present in the repo scan.",
+      "evidence": "packages/calm-operator-stopwatch-firmware is present in the repo scan.",
       "color": "#64748b",
       "alpha": 0.16
     },

@@ -8,18 +8,21 @@ import {
 } from '../scripts/run-health-checked-command.mjs';
 
 test('parses wrapper args and command after separator', () => {
-  const args = parseArgs([
-    'node',
-    'run-health-checked-command.mjs',
-    '--name',
-    'MCP review agent',
-    '--registry-id',
-    'agent.mcp-review',
-    '--',
-    'npm',
-    'run',
-    'mcp:review'
-  ], {});
+  const args = parseArgs(
+    [
+      'node',
+      'run-health-checked-command.mjs',
+      '--name',
+      'MCP review agent',
+      '--registry-id',
+      'agent.mcp-review',
+      '--',
+      'npm',
+      'run',
+      'mcp:review'
+    ],
+    {}
+  );
 
   assert.equal(args.name, 'MCP review agent');
   assert.equal(args.registryId, 'agent.mcp-review');
@@ -73,16 +76,19 @@ test('builds failed command health with operator action', () => {
 });
 
 test('dry-run executes the command and skips posting', async () => {
-  const result = await runHealthCheckedCommand({
-    name: 'Dry Run Agent',
-    source: 'test-wrapper',
-    type: 'agent',
-    origin: 'https://ink.example.test',
-    successStatus: 'healthy',
-    failureStatus: 'failed',
-    dryRun: true,
-    command: [process.execPath, '-e', 'process.exit(0)']
-  }, { stdio: 'pipe' });
+  const result = await runHealthCheckedCommand(
+    {
+      name: 'Dry Run Agent',
+      source: 'test-wrapper',
+      type: 'agent',
+      origin: 'https://ink.example.test',
+      successStatus: 'healthy',
+      failureStatus: 'failed',
+      dryRun: true,
+      command: [process.execPath, '-e', 'process.exit(0)']
+    },
+    { stdio: 'pipe' }
+  );
 
   assert.equal(result.ok, true);
   assert.equal(result.dry_run, true);
@@ -92,26 +98,29 @@ test('dry-run executes the command and skips posting', async () => {
 
 test('posts failed health snapshots and preserves command exit code', async () => {
   let posted;
-  const result = await runHealthCheckedCommand({
-    name: 'Failing Agent',
-    source: 'test-wrapper',
-    type: 'agent',
-    origin: 'https://ink.example.test',
-    token: 'test-token',
-    successStatus: 'healthy',
-    failureStatus: 'failed',
-    command: [process.execPath, '-e', 'process.exit(5)']
-  }, {
-    stdio: 'pipe',
-    postHealthSnapshot: async (options) => {
-      posted = options;
-      return { ok: true };
+  const result = await runHealthCheckedCommand(
+    {
+      name: 'Failing Agent',
+      source: 'test-wrapper',
+      type: 'agent',
+      origin: 'https://ink.example.test',
+      token: 'test-token',
+      successStatus: 'healthy',
+      failureStatus: 'failed',
+      command: [process.execPath, '-e', 'process.exit(5)']
+    },
+    {
+      stdio: 'pipe',
+      postHealthSnapshot: async (options) => {
+        posted = options;
+        return { ok: true };
+      }
     }
-  });
+  );
 
   assert.equal(result.command_exit_code, 5);
   assert.equal(result.snapshot.status, 'failed');
-  assert.equal(posted.url, 'https://ink.example.test/ink/health-snapshot');
+  assert.equal(posted.url, 'https://ink.example.test/operator/health-snapshot');
   assert.equal(posted.token, 'test-token');
   assert.equal(posted.snapshot.payload.exit_code, 5);
 });
