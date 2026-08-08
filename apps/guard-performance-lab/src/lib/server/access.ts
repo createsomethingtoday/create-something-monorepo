@@ -3,7 +3,8 @@ import type { GuardAccessScope } from './scope.js';
 export const PROJECT_SESSION_COOKIE = 'guard_lab_project_session';
 export const PROJECT_SESSION_TTL_SECONDS = 14 * 24 * 60 * 60;
 const PASSWORD_HASH_ALGORITHM = 'pbkdf2-sha256';
-const PASSWORD_HASH_ITERATIONS = 210_000;
+// Cloudflare Workers Web Crypto rejects PBKDF2 requests above 100,000 iterations.
+const PASSWORD_HASH_ITERATIONS = 100_000;
 const PASSWORD_HASH_BYTES = 32;
 const PASSWORD_SALT_BYTES = 16;
 
@@ -65,9 +66,9 @@ function parsePasswordHash(value: string): {
     algorithm !== PASSWORD_HASH_ALGORITHM
     || extra.length > 0
     || !Number.isInteger(iterations)
-    || iterations < PASSWORD_HASH_ITERATIONS
+    || iterations !== PASSWORD_HASH_ITERATIONS
   ) {
-    throw new Error(`GUARD_LAB_PROJECT_PASSWORD_HASH must use ${PASSWORD_HASH_ALGORITHM} with at least ${PASSWORD_HASH_ITERATIONS} iterations.`);
+    throw new Error(`GUARD_LAB_PROJECT_PASSWORD_HASH must use ${PASSWORD_HASH_ALGORITHM} with exactly ${PASSWORD_HASH_ITERATIONS} iterations.`);
   }
   let salt: Uint8Array<ArrayBuffer>;
   let digest: Uint8Array<ArrayBuffer>;
@@ -115,6 +116,9 @@ export async function hashProjectPassword(
   const iterations = options.iterations ?? PASSWORD_HASH_ITERATIONS;
   if (!Number.isInteger(iterations) || iterations < PASSWORD_HASH_ITERATIONS) {
     throw new Error(`Project password hashing requires at least ${PASSWORD_HASH_ITERATIONS} iterations.`);
+  }
+  if (iterations > PASSWORD_HASH_ITERATIONS) {
+    throw new Error(`Project password hashing supports at most ${PASSWORD_HASH_ITERATIONS} iterations on Cloudflare Workers.`);
   }
   const salt = options.salt ?? crypto.getRandomValues(new Uint8Array(PASSWORD_SALT_BYTES));
   if (salt.byteLength < PASSWORD_SALT_BYTES) throw new Error('Project password hashing requires at least 16 salt bytes.');

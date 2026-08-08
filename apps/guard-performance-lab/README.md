@@ -306,7 +306,7 @@ pnpm --filter @create-something/guard-performance-lab mcp
 Guard Lab uses one email-free project credential for the player and family. Every password holder receives the same player-scoped workspace; the browser credential never grants operator access.
 
 - `GUARD_LAB_SHARED_PLAYER_ID` selects the one player profile exposed to the shared session.
-- `GUARD_LAB_PROJECT_PASSWORD_HASH` is a secret PBKDF2-SHA256 verifier. The plaintext family password is never stored in Cloudflare or the repository.
+- `GUARD_LAB_PROJECT_PASSWORD_HASH` is a secret PBKDF2-SHA256 verifier using Cloudflare Workers' supported 100,000-iteration ceiling. Use a generated high-entropy family password; the plaintext is never stored in Cloudflare or the repository.
 - `GUARD_LAB_SESSION_SECRET` is a separate random deployment secret with at least 32 characters.
 - `GUARD_LAB_PROJECT_SIGN_IN_URL` optionally overrides the same-origin `/sign-in` route.
 
