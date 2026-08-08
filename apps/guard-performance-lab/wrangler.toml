@@ -6,7 +6,7 @@ pages_build_output_dir = ".svelte-kit/cloudflare"
 [vars]
 ENVIRONMENT = "production"
 GUARD_LAB_PROJECT_SIGN_IN_URL = "/sign-in"
-GUARD_LAB_SHARED_PLAYER_ID = "developing-guard"
+GUARD_LAB_SHARED_PLAYER_ID = "56bd44c0-767f-409a-ad0b-2d51778afb2d"
 
 [[d1_databases]]
 binding = "GUARD_LAB_DB"
