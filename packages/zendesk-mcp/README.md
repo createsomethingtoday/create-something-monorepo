@@ -156,14 +156,14 @@ pnpm exec wrangler deploy --cwd packages/zendesk-mcp/worker
 
 ## Agent Legibility Contract
 
-| Field               | Value                                                                                                                                                             |
-| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Entry point         | `README.md`, `src/server.ts`, `worker/index.ts`                                                                                                                   |
-| Boot command        | `pnpm --filter @create-something/zendesk-mcp build && pnpm --filter @create-something/zendesk-mcp start`                                                          |
-| Smoke command       | `pnpm --filter @create-something/zendesk-mcp verify`                                                                                                              |
+| Field | Value |
+|-------|-------|
+| Entry point | `README.md`, `src/server.ts`, `worker/index.ts` |
+| Boot command | `pnpm --filter @create-something/zendesk-mcp build && pnpm --filter @create-something/zendesk-mcp start` |
+| Smoke command | `pnpm --filter @create-something/zendesk-mcp verify` |
 | Validation surfaces | typecheck, build, plugin packaging and policy tests, Worker `/health`, fresh-task authenticated read-only MCP call, and separately approved representative writes |
-| UI validation path  | Webflow Zendesk ticket, for example `https://webflow2579.zendesk.com/agent/tickets/1147219`                                                                       |
-| Escalation rule     | Stop if Zendesk auth, agent permissions, ticket visibility, or transport auth cannot be verified without exposing credentials.                                    |
+| UI validation path | Webflow Zendesk ticket, for example `https://webflow2579.zendesk.com/agent/tickets/1147219` |
+| Escalation rule | Stop if Zendesk auth, agent permissions, ticket visibility, or transport auth cannot be verified without exposing credentials. |
 
 ## Rollback
 
