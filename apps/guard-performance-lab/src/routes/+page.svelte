@@ -288,7 +288,7 @@
       {:else}
         <span class="assigned-player"><small>Assigned player</small><strong>{player?.name}</strong></span>
       {/if}
-      <a class="sign-out" href="/api/auth/logout">Sign out</a>
+      <a class="sign-out" href="/api/auth/logout">Lock project</a>
     </div>
   </header>
 
@@ -549,6 +549,6 @@
       <button class="button danger" disabled={commandBusy} onclick={resetData}>{resetArmed ? 'Confirm reset' : 'Reset workspace'}</button>{/if}
     {/if}
 
-    <footer class="footer">FIELD TEST / V0.5 &nbsp; STATUS / {hydrated ? 'IDENTITY SCOPED' : 'LOADING'} &nbsp; REV / {labState.revision} &nbsp; FIRST-PARTY AUTH</footer>
+    <footer class="footer">FIELD TEST / V0.5 &nbsp; STATUS / {hydrated ? 'PLAYER SCOPED' : 'LOADING'} &nbsp; REV / {labState.revision} &nbsp; SHARED PROJECT ACCESS</footer>
   </main>
 </div>
