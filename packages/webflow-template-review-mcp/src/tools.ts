@@ -1,6 +1,7 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 
+import { prepareAdminTemplateFill, prepareAdminTemplateFillBatch } from './admin-template-fill.js';
 import type { AirtableClient, TemplateReviewQueueItem } from './airtable.js';
 import { AirtableClientError } from './airtable.js';
 import { CHECKLIST_KIND_VALUES, parseChecklist } from './checklist.js';
@@ -473,6 +474,105 @@ export function registerTools(
       try {
         return asSuccess({
           context: await getClient().getReviewContext(version_id, currentReviewerAsCollaborator(getReviewer)),
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_prepare_admin_template_fill',
+    'Read-only: generate Webflow Admin template form data plus a fill-only console script/bookmarklet for https://webflow.com/admin/templates. Does not submit the form, create an MRP, or write Airtable.',
+    {
+      version_id: z.string().min(1),
+      include_script: z.boolean().optional(),
+      include_bookmarklet: z.boolean().optional(),
+    },
+    async ({ version_id, include_script, include_bookmarklet }) => {
+      try {
+        const context = await getClient().getReviewContext(version_id, currentReviewerAsCollaborator(getReviewer));
+        return asSuccess(
+          prepareAdminTemplateFill(context, {
+            includeScript: include_script ?? true,
+            includeBookmarklet: include_bookmarklet ?? true,
+          }),
+        );
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_prepare_admin_template_fill_batch',
+    'Read-only: generate compact Webflow Admin template form data for multiple template versions. Omits console scripts by default so bulk MRP handoffs stay readable.',
+    {
+      version_ids: z.array(z.string().min(1)).min(1).max(25),
+      include_scripts: z.boolean().optional(),
+      include_bookmarklets: z.boolean().optional(),
+    },
+    async ({ version_ids, include_scripts, include_bookmarklets }) => {
+      try {
+        const uniqueVersionIds = Array.from(new Set(version_ids));
+        const contexts = await Promise.all(uniqueVersionIds.map((versionId) => getClient().getReviewContext(versionId, currentReviewerAsCollaborator(getReviewer))));
+        return asSuccess(
+          prepareAdminTemplateFillBatch(contexts, {
+            includeScript: include_scripts ?? false,
+            includeBookmarklet: include_bookmarklets ?? false,
+          }),
+        );
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_get_template_thumbnail',
+    'Read-only: return fresh download links for the asset\'s 🖼️Thumbnail Image, secondary thumbnails, and carousel images. Use after creating the template in Webflow Admin to upload the thumbnail there. Airtable attachment URLs are time-limited — re-run this tool if a link has expired.',
+    {
+      asset_id: z.string().min(1).optional(),
+      version_id: z.string().min(1).optional(),
+    },
+    async ({ asset_id, version_id }) => {
+      try {
+        if (!asset_id && !version_id) {
+          throw new AirtableClientError('MISSING_IDENTIFIER', 'Provide asset_id or version_id.', 400);
+        }
+        const client = getClient();
+        let resolvedAssetId = asset_id;
+        if (!resolvedAssetId && version_id) {
+          const version = await client.getVersionById(version_id);
+          if (!version) {
+            throw new AirtableClientError('VERSION_NOT_FOUND', 'Template version not found.', 404, { version_id });
+          }
+          if (!version.assetId) {
+            throw new AirtableClientError('VERSION_ASSET_ID_MISSING', 'Template version is missing its asset linkage.', 500, { version_id });
+          }
+          resolvedAssetId = version.assetId;
+        }
+        const thumbnails = await client.getAssetThumbnails(resolvedAssetId!);
+        if (!thumbnails) {
+          throw new AirtableClientError('ASSET_NOT_FOUND_OR_OUT_OF_SCOPE', 'Template asset not found in template-review scope.', 404, {
+            asset_id: resolvedAssetId,
+          });
+        }
+        return asSuccess({
+          schema_version: 'webflow_admin_template_thumbnails.v0.1',
+          source: {
+            asset_id: thumbnails.assetId,
+            ...(version_id ? { version_id } : {}),
+            template_name: thumbnails.templateName,
+          },
+          thumbnail: thumbnails.thumbnail,
+          secondary_thumbnails: thumbnails.secondaryThumbnails,
+          carousel_images: thumbnails.carouselImages,
+          url_expiry_note: 'Airtable attachment URLs are time-limited (roughly 2 hours). Re-run this tool for fresh links instead of reusing saved URLs.',
+          next_steps: [
+            'Download the primary thumbnail and upload it on the template\'s Admin edit page after the initial create at https://webflow.com/admin/templates.',
+            'Copy the new Template ID into 👀ℹ️MRP ID (Override) (template_review_update_asset_publishing) before approving the version.',
+          ],
         });
       } catch (error) {
         return asError(error);

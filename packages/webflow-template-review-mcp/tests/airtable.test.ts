@@ -212,12 +212,20 @@ test('getAssetById maps current asset fields and compatibility aliases', async (
         fields: {
           [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
           [CONFIRMED_ASSET_FIELDS.name]: 'Conicorn',
+          [CONFIRMED_ASSET_FIELDS.uid]: 'conicorn',
           [CONFIRMED_ASSET_FIELDS.descriptionShort]: 'Short description',
           [CONFIRMED_ASSET_FIELDS.descriptionLongHtml]: '<p>Long description</p>',
+          [CONFIRMED_ASSET_FIELDS.adminDetailPagePath]: '/templates/html/conicorn-website-template',
+          [CONFIRMED_ASSET_FIELDS.adminRecommendedType]: 'CMS',
+          [CONFIRMED_ASSET_FIELDS.categoryNames]: ['Design Portfolio', 'Creative Agency'],
+          [CONFIRMED_ASSET_FIELDS.categoryCmsSlugs]: ['design-portfolio-websites', 'creative-agency-websites'],
+          [CONFIRMED_ASSET_FIELDS.categoryGroupDisplayName]: ['Portfolio & Agency'],
+          [CONFIRMED_ASSET_FIELDS.categoryGroupCmsSlug]: ['portfolio-and-agency-websites'],
           [CONFIRMED_ASSET_FIELDS.latestReviewStatus]: '✅Approved',
           [CONFIRMED_ASSET_FIELDS.latestReviewDate]: '2026-03-16T18:00:00.000Z',
           [CONFIRMED_ASSET_FIELDS.rejectionFeedback]: 'Plain rejection feedback',
           [CONFIRMED_ASSET_FIELDS.publishedDate]: '2026-03-17',
+          [CONFIRMED_ASSET_FIELDS.templatePriceFilter]: 99,
         },
       });
     },
@@ -226,11 +234,73 @@ test('getAssetById maps current asset fields and compatibility aliases', async (
   const asset = await client.getAssetById('rec_asset_current');
 
   assert.ok(asset);
+  assert.equal(asset.uid, 'conicorn');
   assert.equal(asset.description, '<p>Long description</p>');
   assert.equal(asset.descriptionLongHtml, '<p>Long description</p>');
+  assert.equal(asset.adminDetailPagePath, '/templates/html/conicorn-website-template');
+  assert.equal(asset.adminRecommendedType, 'CMS');
+  assert.deepEqual(asset.categoryNames, ['Design Portfolio', 'Creative Agency']);
+  assert.deepEqual(asset.categoryCmsSlugs, ['design-portfolio-websites', 'creative-agency-websites']);
+  assert.deepEqual(asset.categoryGroupDisplayNames, ['Portfolio & Agency']);
+  assert.deepEqual(asset.categoryGroupCmsSlugs, ['portfolio-and-agency-websites']);
   assert.equal(asset.latestReviewDate, '2026-03-16T18:00:00.000Z');
   assert.equal(asset.rejectionFeedbackHtml, 'Plain rejection feedback');
   assert.equal(asset.publishedDate, '2026-03-17');
+  assert.equal(asset.templatePriceFilter, 99);
+});
+
+test('getAssetThumbnails returns attachment details for admin thumbnail handoff', async () => {
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input) => {
+      const url = new URL(String(input));
+
+      if (!url.pathname.includes(`/${TABLE_IDS.assets}/rec_asset_thumbs`)) {
+        throw new Error(`Unexpected fetch: ${url.toString()}`);
+      }
+
+      return jsonResponse({
+        id: 'rec_asset_thumbs',
+        createdTime: '2026-03-17T00:00:00.000Z',
+        fields: {
+          [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
+          [CONFIRMED_ASSET_FIELDS.name]: 'Conicorn',
+          [CONFIRMED_ASSET_FIELDS.thumbnailImage]: [
+            {
+              id: 'att_primary',
+              url: 'https://airtable.example/primary.png',
+              filename: 'conicorn-thumbnail.png',
+              type: 'image/png',
+              size: 245000,
+              width: 1440,
+              height: 1080,
+            },
+          ],
+          [CONFIRMED_ASSET_FIELDS.thumbnailImageSecondary]: [
+            { id: 'att_secondary', url: 'https://airtable.example/secondary.png', filename: 'conicorn-secondary.png' },
+          ],
+        },
+      });
+    },
+  });
+
+  const thumbnails = await client.getAssetThumbnails('rec_asset_thumbs');
+
+  assert.ok(thumbnails);
+  assert.equal(thumbnails.assetId, 'rec_asset_thumbs');
+  assert.equal(thumbnails.templateName, 'Conicorn');
+  assert.deepEqual(thumbnails.thumbnail, {
+    url: 'https://airtable.example/primary.png',
+    filename: 'conicorn-thumbnail.png',
+    type: 'image/png',
+    sizeBytes: 245000,
+    width: 1440,
+    height: 1080,
+  });
+  assert.deepEqual(thumbnails.secondaryThumbnails, [
+    { url: 'https://airtable.example/secondary.png', filename: 'conicorn-secondary.png' },
+  ]);
+  assert.deepEqual(thumbnails.carouselImages, []);
 });
 
 test('getVersionById maps the current version-side MRP and agent feedback fields', async () => {

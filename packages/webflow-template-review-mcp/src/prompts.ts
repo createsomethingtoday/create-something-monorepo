@@ -152,11 +152,19 @@ Automated validation and sandbox evidence do not approve, reject, request change
 
 | Tool | What it does |
 |------|-------------|
+| \`template_review_prepare_admin_template_fill\` | Read-only: Admin create-template form data + fill-only console script (never submits) |
+| \`template_review_get_template_thumbnail\` | Read-only: fresh thumbnail download links for the manual Admin upload after the initial create |
 | \`template_review_list_releases\` | Available releases to attach |
 | \`template_review_update_asset_metadata\` | Update name, description, thumbnails |
 | \`template_review_update_asset_publishing\` | Update MRP ID override |
 | \`template_review_set_checklist_items\` | Check off 🚀Publishing Checklist items as you complete them |
 | \`template_review_complete_publishing\` | Attach the release (does not mark the checklist unless \`mark_all_publishing_items\` is set) |
+
+Manual Admin sequence for a new template: \`prepare_admin_template_fill\` → paste
+the fill-only script on https://webflow.com/admin/templates → click Create
+Template yourself → \`get_template_thumbnail\` and upload the image on the new
+template's Admin edit page → copy the new Template ID into the MRP ID override
+via \`update_asset_publishing\`.
 
 Work the publishing checklist per item with \`set_checklist_items\`. Only pass
 \`mark_all_publishing_items: true\` to \`complete_publishing\` when every publishing
