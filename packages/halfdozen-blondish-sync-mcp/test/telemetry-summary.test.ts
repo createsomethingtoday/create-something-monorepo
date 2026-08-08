@@ -26,6 +26,11 @@ test('summarizeTelemetryPayload emits counts and drift categories without row pa
       ],
       body_drifts: [{ target_page_id: 'target-page-c', ext_page_id: 'ST-ISH-26' }],
       reverse_status_drifts: [],
+      attachment_fallbacks: [{
+        name: 'large-client-recording.mov',
+        reason: 'notion_file_size_limit',
+        source_page_id: 'source-page-a',
+      }],
     },
   };
 
@@ -38,11 +43,12 @@ test('summarizeTelemetryPayload emits counts and drift categories without row pa
   assert.equal(summary.missing_hd_rows_count, 1);
   assert.equal(summary.contract_field_drifts_count, 2);
   assert.equal(summary.body_drifts_count, 1);
+  assert.equal(summary.attachment_fallbacks_count, 1);
   assert.deepEqual(summary.contract_field_drift_fields, {
     'External Files & Media': 1,
     'External URL': 2,
   });
-  assert.doesNotMatch(serialized, /source-page-a|target-page-a|ST-ISH-24|Merchandise Funnel/);
+  assert.doesNotMatch(serialized, /source-page-a|target-page-a|ST-ISH-24|Merchandise Funnel|large-client-recording/);
 });
 
 test('summarizeTelemetryPayload keeps scoped repair plans compact', () => {

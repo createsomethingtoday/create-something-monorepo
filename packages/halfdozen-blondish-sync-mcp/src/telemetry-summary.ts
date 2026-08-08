@@ -57,6 +57,7 @@ export function summarizeSyncResult(result: SyncResult): JsonRecord {
   copyArrayCount(summary, details, 'contract_field_drifts', 'contract_field_drifts_count');
   copyArrayCount(summary, details, 'body_drifts', 'body_drifts_count');
   copyArrayCount(summary, details, 'reverse_status_drifts', 'reverse_status_drifts_count');
+  copyArrayCount(summary, details, 'attachment_fallbacks', 'attachment_fallbacks_count');
   copyArrayCount(summary, details, 'other_contract_drifts', 'other_contract_drifts_count');
   copyArrayCount(summary, details, 'selected_source_page_ids', 'selected_source_page_ids_count');
   copyArrayCount(summary, details, 'selected_ext_page_ids', 'selected_ext_page_ids_count');
