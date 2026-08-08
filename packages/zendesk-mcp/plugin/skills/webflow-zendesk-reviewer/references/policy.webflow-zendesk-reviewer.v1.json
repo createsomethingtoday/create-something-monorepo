@@ -1,0 +1,59 @@
+{
+  "id": "policy.webflow-zendesk-reviewer.v1",
+  "version": "1.0.0",
+  "status": "active-package-policy",
+  "owner": "CREATE SOMETHING",
+  "invariants": [
+    "mcp-capability-is-not-user-approval",
+    "current-ticket-and-comments-precede-mutation",
+    "zendesk-does-not-replace-app-review-state",
+    "approval-is-ticket-and-operation-bounded",
+    "mutations-require-readback-and-receipt",
+    "missing-evidence-does-not-create-commitments",
+    "connectivity-verification-is-read-only"
+  ],
+  "riskClasses": {
+    "R0": {
+      "name": "inspect-and-draft",
+      "approval": "request-relevance",
+      "readback": "current-source-citation"
+    },
+    "R1": {
+      "name": "private-internal-note",
+      "approval": "exact-user-authorized-note",
+      "readback": "comment-id-and-private-visibility"
+    },
+    "R2": {
+      "name": "requester-visible-or-workflow-state-mutation",
+      "approval": "exact-user-authorized-operation",
+      "readback": "ticket-comments-status-and-tags"
+    }
+  },
+  "stopConditions": [
+    "ambiguous-ticket-or-requester",
+    "missing-current-ticket-or-comments",
+    "review-or-draft-only-request",
+    "missing-required-app-review-state",
+    "unclear-permission-visibility-or-transport-auth",
+    "unsupported-external-commitment",
+    "scope-expansion",
+    "missing-or-contradictory-readback"
+  ],
+  "receiptFields": [
+    "request",
+    "approvalBasis",
+    "policyVersion",
+    "riskClass",
+    "ticketId",
+    "beforeState",
+    "commentsConsulted",
+    "appReviewEvidence",
+    "attempt",
+    "result",
+    "readback",
+    "visibility",
+    "statusAndTagChanges",
+    "gaps",
+    "rollback"
+  ]
+}
