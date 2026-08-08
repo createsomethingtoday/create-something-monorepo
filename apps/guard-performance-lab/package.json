@@ -31,6 +31,8 @@
     "film:test:analyzer": "uv run --script scripts/test_analyze_film.py",
     "film:bakeoff:tracking": "uv run --script scripts/bakeoff-film-tracking.py",
     "film:test:bakeoff": "uv run --script scripts/test_bakeoff_film_tracking.py && uv run --script scripts/test_benchmark_roboflow_court.py",
+    "film:bakeoff:gemma": "uv run --script scripts/gemma-film-bakeoff.py",
+    "film:test:gemma": "uv run --script scripts/test_gemma_film_bakeoff.py",
     "film:bakeoff:court:roboflow": "uv run --script scripts/benchmark-roboflow-court.py",
     "film:track:mask:sam2": "python scripts/track-player-mask-sam2.py",
     "film:review:mask-stint": "tsx scripts/review-film-mask-stint.ts",
