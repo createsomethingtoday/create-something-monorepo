@@ -8,8 +8,8 @@ A standalone, private-first coaching system for developing guards. Version 0.5 a
 - Production uses the private `GUARD_LAB_DB` Cloudflare D1 binding. The runtime fails closed when `ENVIRONMENT=production` and that durable binding is absent; the JSON file store remains development-only.
 - D1 stores immutable film frames in ordered chunks so large captured traces do not exceed SQLite row-value limits. Corrections remain a small append-only overlay and do not rewrite or increment the analysis revision.
 - Every mutation goes through one typed command service. An atomic cross-process lock prevents browser and Codex writes from overwriting one another; the visible workspace revision increments after each accepted command.
-- Protected workspace data is never restored from browser storage; the server-scoped response is authoritative for every identity.
-- The app has no analytics or domain-external data writes. Network access is limited to first-party identity verification/login and operator-requested source links.
+- Protected workspace data is never restored from browser storage; the player-scoped server response is authoritative for every shared session.
+- The app has no analytics or domain-external data writes. Network access is limited to the app and operator-requested source links.
 - The starter profile is generic and contains no child-identifying information.
 - Resetting local data restores the generic profile and removes saved receipts, evidence, and engagement events.
 - Source-video bytes and detector weights are never written to the application datastore or committed. Only hashes, model provenance, derived coordinates, unresolved intervals, correction receipts, and explicitly anonymized review derivatives persist.
@@ -32,7 +32,7 @@ pnpm --filter @create-something/guard-performance-lab build
 pnpm --filter @create-something/guard-performance-lab preview
 ```
 
-The production preview runs at `http://127.0.0.1:4173` and is the owning surface for the browser-auth-fixture + Playwright workflow recorded under `Primary verifier` in `.codex/guard-performance-lab-viewing-room/goal.md`. Rendering invariants that can be asserted without a browser belong in `src/lib/FilmTrafficCourt.test.ts` instead, so they stay in the suite.
+The production preview runs at `http://127.0.0.1:4173` and is the owning surface for the shared-password browser fixture + Playwright workflow. Rendering invariants that can be asserted without a browser belong in `src/lib/FilmTrafficCourt.test.ts` instead, so they stay in the suite.
 
 ## One-run film trace
 
@@ -301,16 +301,24 @@ GUARD_LAB_MCP_SCOPE=player:developing-guard \
 pnpm --filter @create-something/guard-performance-lab mcp
 ```
 
-## First-party identity and production
+## Shared project password and production
 
-Guard Lab accepts only exact server-side subject bindings:
+Guard Lab uses one email-free project credential for the player and family. Every password holder receives the same player-scoped workspace; the browser credential never grants operator access.
 
-- `GUARD_LAB_OPERATOR_SUBJECTS`: comma-separated operator subjects.
-- `GUARD_LAB_PLAYER_BINDINGS`: JSON object mapping identity subject to assigned player ID.
-- `CS_IDENTITY_AUDIENCE=guard-performance-lab` with the standard CREATE SOMETHING issuer/JWKS variables.
-- `ALLOW_CS_AUTH_PREVIEW=true` requires an explicit non-production `GUARD_LAB_DEV_SCOPE=operator` or `player:<id>` and is rejected in production.
+- `GUARD_LAB_SHARED_PLAYER_ID` selects the one player profile exposed to the shared session.
+- `GUARD_LAB_PROJECT_PASSWORD_HASH` is a secret PBKDF2-SHA256 verifier using Cloudflare Workers' supported 100,000-iteration ceiling. Use a generated high-entropy family password; the plaintext is never stored in Cloudflare or the repository.
+- `GUARD_LAB_SESSION_SECRET` is a separate random deployment secret with at least 32 characters.
+- `GUARD_LAB_PROJECT_SIGN_IN_URL` optionally overrides the same-origin `/sign-in` route.
 
-Every layout and `/api/*` data route resolves Canon access. Player HTTP and MCP calls are scoped from the binding; a caller-supplied different player ID is denied, and a player-scoped engagement write is attributed to `player` on both the HTTP and MCP surfaces even when the caller supplies another source. Stdio MCP requires `GUARD_LAB_MCP_LAUNCHER=trusted` and an explicit `GUARD_LAB_MCP_SCOPE`. There is no remote MCP transport; adding one is a separately approval-gated network-boundary change.
+Generate the verifier without placing the password in shell history:
+
+```bash
+pnpm --filter @create-something/guard-performance-lab auth:hash-project-password
+```
+
+Store both secret values with Cloudflare Pages secret management. A signed session is HTTP-only, Secure in production, SameSite=Lax, limited to the root path, and expires after 14 days. The current password verifier is part of the signing key derivation, so rotating the password verifier invalidates all existing sessions.
+
+Every layout and `/api/*` data route resolves the signed project session. A caller-supplied different player ID is denied, and a player-scoped engagement write is attributed to `player` on both the HTTP and MCP surfaces even when the caller supplies another source. Stdio MCP remains a separate trusted-operator boundary: it requires `GUARD_LAB_MCP_LAUNCHER=trusted` and an explicit `GUARD_LAB_MCP_SCOPE`. There is no remote MCP transport; adding one is a separately approval-gated network-boundary change.
 
 Production hosting is Cloudflare Pages plus D1. Apply migrations before deploying. Keep a D1 export and the previous Pages deployment ID before promotion; rollback the Pages deployment first, then restore the corresponding D1 export only if the schema/data change requires it. Private player records are retained until an operator explicitly deletes or resets them; exports and rollback artifacts must remain private and follow the same deletion decision.
 
@@ -318,7 +326,7 @@ The MCP surface provides program/workspace resources plus guidance, evidence rev
 
 ## Fonts and network boundary
 
-Satoshi and IBM Plex Mono are self-hosted under `static/fonts/`. The app consumes Canon’s Performance color tokens without importing Canon’s remote Fontshare stylesheet or its all-language font bundle. Runtime network activity is limited to the app, CREATE SOMETHING Identity endpoints, and evidence links a person explicitly opens.
+Satoshi and IBM Plex Mono are self-hosted under `static/fonts/`. The app consumes Canon’s Performance color tokens without importing Canon’s remote Fontshare stylesheet or its all-language font bundle. Runtime network activity is limited to the app and evidence links a person explicitly opens.
 
 Verify both MCP profiles:
 
@@ -334,4 +342,4 @@ pnpm --filter @create-something/guard-performance-lab mcp:parity
 
 ## Deployment boundary
 
-The package now has an approved Cloudflare Pages and D1 production path. Production remains fail-closed until exact legitimate subject bindings are supplied. New credentials, real-user assignments, retention-policy changes, licensed feeds, and future production promotions remain separately approval-gated; no source change by itself grants those permissions.
+The package has an approved Cloudflare Pages and D1 production path. Production remains fail-closed until the shared player ID, password verifier, and session secret are configured. Password creation or rotation, player reassignment, retention-policy changes, licensed feeds, and future production promotions remain explicit operational actions; no source change by itself grants those permissions.

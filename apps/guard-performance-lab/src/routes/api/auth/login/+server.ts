@@ -1,3 +1,7 @@
-import { createLoginHandler } from '@create-something/canon/auth/handlers';
+import type { RequestHandler } from './$types';
+import { authenticateProjectPassword, runtimeEnv } from '$lib/server/access.js';
 
-export const POST = createLoginHandler();
+export const POST: RequestHandler = ({ request, platform }) => authenticateProjectPassword({
+  request,
+  env: runtimeEnv(platform)
+});
