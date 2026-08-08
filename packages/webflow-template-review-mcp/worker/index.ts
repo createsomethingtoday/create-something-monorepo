@@ -49,6 +49,7 @@ interface Env {
   TEMPLATE_REVIEW_ENVIRONMENT?: string;
   TEMPLATE_REVIEW_FORCE_READ_ONLY?: string;
   WORKER_PUBLIC_ORIGIN?: string;
+  MARKETPLACE_ADMIN_API_KEY?: string;
 }
 
 type RequestProps = {
@@ -120,6 +121,9 @@ export class WebflowTemplateReviewMCP extends McpAgent<Env, unknown, RequestProp
         adminExecute: {
           publicOrigin: this.env.WORKER_PUBLIC_ORIGIN,
           thumbnailProxySecret: this.env.AIRTABLE_API_KEY,
+        },
+        marketplaceAdmin: {
+          apiKey: this.env.MARKETPLACE_ADMIN_API_KEY,
         },
       },
       {

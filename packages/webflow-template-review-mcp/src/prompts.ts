@@ -157,6 +157,8 @@ Automated validation and sandbox evidence do not approve, reject, request change
 | \`template_review_prepare_admin_template_create_execute\` | Execute-mode: console script that creates the template + syncs fields + uploads the tall thumbnail after the reviewer confirms in-browser |
 | \`template_review_prepare_admin_template_update_execute\` | Execute-mode: console script that PUTs metadata changes to an existing template (diff table + confirm; preserves untouched checkbox booleans) |
 | \`template_review_prepare_admin_template_thumbnail_execute\` | Execute-mode: console script that uploads the Airtable thumbnail as the template's tall thumbnail (confirm-gated) |
+| \`template_review_prepare_admin_template_verify\` | Read-only: console script that GETs the Admin template record and prints a field-by-field match table against Airtable (writes nothing) |
+| \`template_review_set_mrp_visibility\` | Server-side Webflow write: flip MRP visibility PUBLIC/PRIVATE via the key-authenticated Airtable write-back route — only on an explicit reviewer request |
 | \`template_review_list_releases\` | Available releases to attach |
 | \`template_review_update_asset_metadata\` | Update name, description, thumbnails |
 | \`template_review_update_asset_publishing\` | Update MRP ID override |
@@ -178,7 +180,11 @@ click all belong to the reviewer's browser. For metadata fixes on an existing
 template use \`prepare_admin_template_update_execute\` (shows a diff first and
 preserves untouched checkbox booleans); for thumbnail replacement use
 \`prepare_admin_template_thumbnail_execute\`. Always finish by recording the
-Template ID in the MRP ID override via \`update_asset_publishing\`.
+Template ID in the MRP ID override via \`update_asset_publishing\`, then run
+\`prepare_admin_template_verify\` to confirm the Admin record matches Airtable
+field-for-field before approving. \`set_mrp_visibility\` changes what buyers can
+see on the marketplace — never call it without the reviewer naming the MRP and
+the target visibility in the same request.
 
 Work the publishing checklist per item with \`set_checklist_items\`. Only pass
 \`mark_all_publishing_items: true\` to \`complete_publishing\` when every publishing

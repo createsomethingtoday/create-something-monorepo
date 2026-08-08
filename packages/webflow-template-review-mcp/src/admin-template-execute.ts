@@ -230,6 +230,57 @@ ${SCRIPT_PRELUDE}
 })();`;
 }
 
+/** Expected Admin field values derived from Airtable, for the verify script. */
+export interface AdminTemplateExpectedFields {
+  name?: string;
+  shortName?: string;
+  description?: string;
+  extDetailPageUrl?: string;
+  extCategory?: string;
+  extMainTag?: string;
+  type?: string;
+  /** Price in cents. */
+  cost?: number;
+}
+
+/**
+ * Read-only console script: GET the Admin template record and compare it
+ * field-by-field against the Airtable-derived expected values. Prints a
+ * match table and a verdict. Performs no writes and shows no confirm dialog.
+ */
+export function buildAdminTemplateVerifyScript(templateId: string, expected: AdminTemplateExpectedFields): string {
+  const data = JSON.stringify({ templateId, expected }, null, 2);
+  return `(async () => {
+  const { templateId, expected } = ${data};
+  const response = await fetch('/admin/api/templates/' + templateId, { headers: { Accept: 'application/json' } });
+  if (!response.ok) {
+    console.error('Failed to load template ' + templateId + ' (status ' + response.status + '). Are you signed in to Admin, and is the ID correct?');
+    return;
+  }
+  const payload = await response.json();
+  const current = payload.template || payload;
+  if (!current || typeof current !== 'object') {
+    console.error('Template payload missing in Admin response.', payload);
+    return;
+  }
+  const normalize = (value) => (value === undefined || value === null ? '' : String(value).trim());
+  const rows = Object.entries(expected).map(([field, expectedValue]) => {
+    const actualValue = current[field];
+    const match = normalize(actualValue) === normalize(expectedValue);
+    return { field, expected: expectedValue, actual: actualValue, match: match ? 'OK' : 'MISMATCH' };
+  });
+  console.table(rows);
+  const mismatches = rows.filter((row) => row.match !== 'OK');
+  if (mismatches.length) {
+    console.warn('Template Review Admin verify: ' + mismatches.length + ' of ' + rows.length + ' fields differ from Airtable. Use template_review_prepare_admin_template_update_execute to fix them.');
+  } else {
+    console.log('Template Review Admin verify: all ' + rows.length + ' checked fields match Airtable for "' + (current.name || templateId) + '".');
+  }
+  console.log('Reference state:', { _id: current._id, archived: current.archived, standard: current.standard, starter: current.starter, tutorial: current.tutorial, featured: current.featured, usedCount: current.usedCount });
+  console.warn('Read-only script: it fetched Admin state and compared it. Nothing was written.');
+})();`;
+}
+
 export interface AdminTemplateCreateExecuteInput {
   formData: AdminTemplateFillFormData;
   thumbnail?: AdminThumbnailSource;

@@ -2,11 +2,14 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 
 import { prepareAdminTemplateFill, prepareAdminTemplateFillBatch } from './admin-template-fill.js';
+import { MRP_VISIBILITY_VALUES, setMrpVisibility, type MarketplaceAdminConfig } from './admin-mrp.js';
 import {
   buildAdminExecuteBundle,
   buildAdminTemplateCreateExecuteScript,
   buildAdminTemplateUpdateExecuteScript,
+  buildAdminTemplateVerifyScript,
   buildAdminThumbnailUploadExecuteScript,
+  type AdminTemplateExpectedFields,
   type AdminThumbnailSource,
 } from './admin-template-execute.js';
 import {
@@ -193,6 +196,7 @@ export interface AdminExecuteConfig {
 export interface ToolRuntimeConfig extends ValidationToolConfig {
   sandboxExecution?: PublishedSiteSandboxExecutionConfig;
   adminExecute?: AdminExecuteConfig;
+  marketplaceAdmin?: MarketplaceAdminConfig;
 }
 
 /**
@@ -220,6 +224,8 @@ export const WRITE_TOOL_NAMES: ReadonlySet<string> = new Set([
   'template_review_prepare_admin_template_create_execute',
   'template_review_prepare_admin_template_update_execute',
   'template_review_prepare_admin_template_thumbnail_execute',
+  // Server-side Webflow write: flips MarketplaceResourceProfile visibility.
+  'template_review_set_mrp_visibility',
 ]);
 
 export function registerTools(
@@ -804,6 +810,82 @@ export function registerTools(
           }),
           source: { asset_id: thumbnails.assetId, template_name: thumbnails.templateName, image: kind, image_index: index },
           image_details: source,
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_prepare_admin_template_verify',
+    'Read-only: generate a console script that GETs the Admin template record and compares it field-by-field against the Airtable-derived values (name, slug, description, detail path, category, tag, type, cost). Prints a match table; writes nothing. Resolves the Template ID from the asset\'s MRP ID override when template_id is omitted.',
+    {
+      version_id: z.string().min(1),
+      template_id: MONGO_TEMPLATE_ID.optional(),
+      include_bookmarklet: z.boolean().optional(),
+    },
+    async ({ version_id, template_id, include_bookmarklet }) => {
+      try {
+        const context = await getClient().getReviewContext(version_id, currentReviewerAsCollaborator(getReviewer));
+        const resolvedTemplateId = template_id ?? context.asset?.mrpIdOverride ?? context.asset?.mrpId;
+        if (!resolvedTemplateId || !/^[0-9a-f]{24}$/i.test(resolvedTemplateId)) {
+          throw new AirtableClientError(
+            'TEMPLATE_ID_UNRESOLVED',
+            'No template_id was provided and the asset has no 24-hex MRP ID (override) to verify against. Create the template in Admin first, or pass template_id.',
+            422,
+            { version_id, mrp_id_override: context.asset?.mrpIdOverride ?? null, mrp_id: context.asset?.mrpId ?? null },
+          );
+        }
+        const fillBundle = prepareAdminTemplateFill(context, { includeScript: false, includeBookmarklet: false });
+        const adminForm = fillBundle.form_data.admin_form;
+        const expected: AdminTemplateExpectedFields = {
+          ...(adminForm.name !== undefined ? { name: adminForm.name } : {}),
+          ...(adminForm.shortName !== undefined ? { shortName: adminForm.shortName } : {}),
+          ...(adminForm.description !== undefined ? { description: adminForm.description } : {}),
+          ...(adminForm.extDetailPageUrl !== undefined ? { extDetailPageUrl: adminForm.extDetailPageUrl } : {}),
+          ...(adminForm.extCategory !== undefined ? { extCategory: adminForm.extCategory } : {}),
+          ...(adminForm.extMainTag !== undefined ? { extMainTag: adminForm.extMainTag } : {}),
+          ...(adminForm.type !== undefined ? { type: adminForm.type } : {}),
+          ...(adminForm.cost !== undefined ? { cost: Number(adminForm.cost) } : {}),
+        };
+        const consoleScript = buildAdminTemplateVerifyScript(resolvedTemplateId, expected);
+        return asSuccess({
+          schema_version: 'webflow_admin_template_verify.v0.1',
+          source: fillBundle.source,
+          template_id: resolvedTemplateId,
+          template_id_source: template_id ? 'input' : context.asset?.mrpIdOverride ? 'mrp_id_override' : 'mrp_id',
+          expected,
+          ...(fillBundle.missing_fields.length ? { expected_gaps: fillBundle.missing_fields } : {}),
+          admin_url: `https://webflow.com/admin/templates/${resolvedTemplateId}`,
+          safety_boundary: [
+            'Read-only on both sides: this tool writes nothing, and the generated script only GETs Admin state and prints a comparison.',
+            'Derived category/tag/type values are heuristic — a MISMATCH row can mean the reviewer intentionally chose a different value in Admin.',
+          ],
+          console_script: consoleScript,
+          ...(include_bookmarklet === true ? { bookmarklet: `javascript:${encodeURIComponent(consoleScript.replace(/\s+/g, ' ').trim())}` } : {}),
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_set_mrp_visibility',
+    'Server-side Webflow write: set a MarketplaceResourceProfile\'s visibility to PUBLIC or PRIVATE via the key-authenticated PUT /admin/api/mrp/airtable route. For templates the mrp_id equals the Template ID from /admin/templates. Requires the marketplace admin key in this runtime and an explicit reviewer request; sends only the visibility field (partial update).',
+    {
+      mrp_id: MONGO_TEMPLATE_ID.describe('MarketplaceResourceProfile _id (equals the Template ID for templates).'),
+      visibility: z.enum(MRP_VISIBILITY_VALUES),
+    },
+    async ({ mrp_id, visibility }) => {
+      try {
+        const reviewer = requireResolvedReviewer(getReviewer);
+        const result = await setMrpVisibility(runtimeConfig.marketplaceAdmin ?? {}, mrp_id, visibility);
+        return asSuccess({
+          reviewer: reviewerPayload(reviewer),
+          ...result,
+          note: 'Partial update: only visibility was sent. Verify the listing state in Admin or on the marketplace before announcing the change.',
         });
       } catch (error) {
         return asError(error);
