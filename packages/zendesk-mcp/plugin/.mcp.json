@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "webflow-zendesk": {
+      "type": "http",
+      "url": "https://zendesk-mcp.createsomething.workers.dev/mcp",
+      "bearer_token_env_var": "ZENDESK_MCP_API_KEY"
+    }
+  }
+}

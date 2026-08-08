@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Webflow Zendesk Reviewer'
+  short_description: 'Review Marketplace Zendesk tickets with governed writes'
+  default_prompt: 'Use $webflow-zendesk-reviewer to read the current Zendesk evidence, reconcile any review-state claims with the bounded App Review MCP, and return the safest next action.'
