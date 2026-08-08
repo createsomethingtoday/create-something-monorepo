@@ -11,6 +11,9 @@ CS_IDENTITY_AUDIENCE = "guard-performance-lab"
 CS_AUTH_SIGN_IN_URL = "/sign-in"
 ALLOW_CS_AUTH_PREVIEW = "false"
 GUARD_LAB_OPERATOR_SUBJECTS = "b8adb839-ddbb-4747-968e-7668687cf140"
+# Secret: GUARD_LAB_IDENTITY_ADMIN_TOKEN (Identity API key with only player_access_manage)
+# Runtime var: IDENTITY_API_URL=https://id.createsomething.space
+# Runtime var: GUARD_LAB_PLAYER_BINDINGS={"<player-access-subject>":"<guard-player-id>"}
 
 [[d1_databases]]
 binding = "GUARD_LAB_DB"

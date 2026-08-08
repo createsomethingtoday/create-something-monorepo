@@ -25,6 +25,7 @@ test('identity worker publishes the AI-readable auth platform contract', async (
   assert.equal(body.jwks_uri, 'https://id.createsomething.space/.well-known/jwks.json');
   assert.equal(body.openapi_uri, 'https://id.createsomething.space/v1/auth/openapi.json');
   assert.equal(body.endpoints.login, 'https://id.createsomething.space/v1/auth/login');
+  assert.equal(body.endpoints.player_login, 'https://id.createsomething.space/v1/auth/player-login');
   assert.equal(body.endpoints.me, 'https://id.createsomething.space/v1/users/me');
   assert.deepEqual(body.jwt.algorithms, ['ES256']);
   assert.ok(body.policy_dimensions.includes('email_domain'));
@@ -48,6 +49,7 @@ test('identity worker publishes an auth-focused OpenAPI contract', async () => {
   assert.equal(body.info.title, 'CREATE SOMETHING Auth API');
   assert.equal(body.servers[0].url, 'https://id.createsomething.space');
   assert.equal(body.paths['/v1/auth/login'].post.operationId, 'login');
+  assert.equal(body.paths['/v1/auth/player-login'].post.operationId, 'playerLogin');
   assert.equal(body.paths['/v1/auth/signup'].post.operationId, 'signup');
   assert.equal(body.paths['/v1/auth/refresh'].post.operationId, 'refreshSession');
   assert.equal(body.paths['/v1/auth/logout'].post.operationId, 'logout');

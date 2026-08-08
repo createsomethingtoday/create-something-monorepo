@@ -52,6 +52,32 @@ export interface RefreshToken {
 	created_at: string;
 }
 
+export interface PlayerAccessCredential {
+	subject_id: string;
+	player_code: string;
+	password_hash: string;
+	manager_subject: string;
+	display_name: string | null;
+	status: 'active' | 'revoked';
+	created_by_actor: string;
+	last_used_at: string | null;
+	rotated_at: string | null;
+	revoked_at: string | null;
+	created_at: string;
+	updated_at: string;
+}
+
+export interface PlayerAccessSession {
+	id: string;
+	subject_id: string;
+	token_hash: string;
+	family_id: string;
+	expires_at: string;
+	revoked_at: string | null;
+	created_at: string;
+	updated_at: string;
+}
+
 export interface SigningKey {
 	id: string;
 	private_key: string;

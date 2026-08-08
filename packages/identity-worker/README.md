@@ -22,8 +22,12 @@ Single identity across all properties: .space, .io, .agency, .ltd, and .learn.
 | GET | `/v1/auth/openapi.json` | Auth-focused OpenAPI 3.1 contract |
 | POST | `/v1/auth/signup` | Create account |
 | POST | `/v1/auth/login` | Authenticate |
+| POST | `/v1/auth/player-login` | Exchange a player code and passphrase for a Guard-scoped session |
 | POST | `/v1/auth/refresh` | Refresh tokens |
 | POST | `/v1/auth/logout` | Invalidate session |
+| POST | `/v1/auth/player-access/admin-get` | Inspect Player Access (API key + `player_access_manage`) |
+| POST | `/v1/auth/player-access/admin-upsert` | Create or reset Player Access (API key + `player_access_manage`) |
+| POST | `/v1/auth/player-access/admin-revoke` | Revoke Player Access sessions (API key + `player_access_manage`) |
 | GET | `/v1/users/me` | Get current user |
 | GET | `/.well-known/jwks.json` | Public keys |
 | POST | `/v1/mcp/sessions` | Create MCP session token + policy claims |

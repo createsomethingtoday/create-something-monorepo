@@ -16,12 +16,20 @@ import {
 	findRefreshTokenByHash,
 	revokeRefreshToken,
 	revokeTokenFamily,
+	createPlayerAccessSessionFamily,
+	createPlayerAccessSession,
+	findPlayerAccessBySubject,
+	findPlayerAccessSessionByHash,
+	revokePlayerAccessSession,
+	revokePlayerAccessSessionFamily,
 } from '../db/queries';
 
 // Token configuration
 const ACCESS_TOKEN_TTL = 15 * 60; // 15 minutes
 const REFRESH_TOKEN_TTL = 7 * 24 * 60 * 60; // 7 days
 const ISSUER = 'https://id.createsomething.space';
+export const PLAYER_ACCESS_TOKEN_TTL_SECONDS = 15 * 60;
+export const PLAYER_ACCESS_SESSION_TTL_SECONDS = 12 * 60 * 60;
 export const IDENTITY_TOKEN_AUDIENCES = [
 	'workway',
 	'templates',
@@ -83,6 +91,83 @@ export async function createSignedToken(
 ): Promise<string> {
 	const signingKey = await getOrCreateSigningKey(db);
 	return signJWT(payload, signingKey);
+}
+
+async function issuePlayerAccessTokens(
+	db: D1Database,
+	subjectId: string,
+	familyId: string,
+	credentialPasswordHash?: string
+): Promise<{ accessToken: string; refreshToken: string; expiresIn: number; refreshExpiresIn: number } | null> {
+	if (credentialPasswordHash !== undefined) {
+		const familyCreated = await createPlayerAccessSessionFamily(
+			db,
+			familyId,
+			subjectId,
+			credentialPasswordHash
+		);
+		if (!familyCreated) return null;
+	}
+	const now = Math.floor(Date.now() / 1000);
+	const accessToken = await createSignedToken(db, {
+		sub: subjectId,
+		tier: 'free',
+		source: 'guard-player',
+		kind: 'player_access',
+		iss: ISSUER,
+		aud: ['guard-performance-lab'],
+		iat: now,
+		exp: now + PLAYER_ACCESS_TOKEN_TTL_SECONDS,
+	});
+	const refreshToken = generateSecureToken(48);
+	const sessionCreated = await createPlayerAccessSession(db, {
+		id: generateUUID(),
+		subject_id: subjectId,
+		token_hash: await hashToken(refreshToken),
+		family_id: familyId,
+		expires_at: new Date(Date.now() + PLAYER_ACCESS_SESSION_TTL_SECONDS * 1000).toISOString(),
+	});
+	if (!sessionCreated) return null;
+	return {
+		accessToken,
+		refreshToken,
+		expiresIn: PLAYER_ACCESS_TOKEN_TTL_SECONDS,
+		refreshExpiresIn: PLAYER_ACCESS_SESSION_TTL_SECONDS,
+	};
+}
+
+export async function generatePlayerAccessTokens(
+	db: D1Database,
+	subjectId: string,
+	credentialPasswordHash: string
+) {
+	return issuePlayerAccessTokens(db, subjectId, generateUUID(), credentialPasswordHash);
+}
+
+export async function refreshPlayerAccessTokens(db: D1Database, refreshToken: string) {
+	const stored = await findPlayerAccessSessionByHash(db, await hashToken(refreshToken));
+	if (!stored) return null;
+	if (stored.revoked_at) {
+		await revokePlayerAccessSessionFamily(db, stored.family_id);
+		return null;
+	}
+	if (new Date(stored.expires_at).getTime() <= Date.now()) {
+		await revokePlayerAccessSession(db, stored.id);
+		return null;
+	}
+	const credential = await findPlayerAccessBySubject(db, stored.subject_id);
+	if (!credential || credential.status !== 'active') return null;
+	const claimed = await revokePlayerAccessSession(db, stored.id);
+	if (!claimed) {
+		await revokePlayerAccessSessionFamily(db, stored.family_id);
+		return null;
+	}
+	const tokens = await issuePlayerAccessTokens(db, stored.subject_id, stored.family_id);
+	if (!tokens) return null;
+	return {
+		...tokens,
+		subjectId: stored.subject_id,
+	};
 }
 
 /**

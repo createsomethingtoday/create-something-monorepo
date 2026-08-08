@@ -1,0 +1,35 @@
+{
+  "policy_id": "policy.guard-player-access.v1",
+  "version": 1,
+  "status": "draft",
+  "identity_owner": "identity-worker",
+  "application": "guard-performance-lab",
+  "credential": {
+    "identifier": "random_non_identifying_player_code",
+    "passphrase_min_length": 15,
+    "passphrase_max_length": 128,
+    "plaintext_persistence": false,
+    "email_required": false
+  },
+  "session": {
+    "audiences": ["guard-performance-lab"],
+    "email_claim": false,
+    "access_token_ttl_seconds": 900,
+    "refresh_session_ttl_seconds": 43200,
+    "revoke_all_sessions_on_reset": true
+  },
+  "management": {
+    "application_operator_required": true,
+    "service_permission": "player_access_manage",
+    "service_key_browser_exposure": false,
+    "old_passphrase_recoverable": false
+  },
+  "production_gates": [
+    "under_13_privacy_review_approved",
+    "guardian_notice_consent_and_control_decided",
+    "least_privilege_service_key_provisioned",
+    "exact_subject_binding_read_back",
+    "migration_backup_and_rollback_recorded",
+    "browser_and_scope_proof_passed"
+  ]
+}

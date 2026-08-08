@@ -92,6 +92,8 @@ Use `@create-something/canon/auth/components` for the sign-in UI, `@create-somet
 | `CS_AUTH_ALLOW_ANY_AUTHENTICATED` | exceptional | explicit private-app policy |
 | `ALLOW_CS_AUTH_PREVIEW` | local only | non-production preview bypass |
 
+Email-free youth access remains an Identity-owned authenticator, never an application-local password table. Guard Performance Lab uses `/v1/auth/player-login` for player code plus passphrase exchange. Its operator adapter may call the `admin-get`, `admin-upsert`, and `admin-revoke` Player Access endpoints with a service API key restricted to `player_access_manage`; the browser never receives that key. Player tokens contain no email claim, are audience-limited to `guard-performance-lab`, and still require the app's exact subject-to-player binding.
+
 The application adapter may use different variable names, but it must map to the same verification and policy contract explicitly.
 
 ## Verification

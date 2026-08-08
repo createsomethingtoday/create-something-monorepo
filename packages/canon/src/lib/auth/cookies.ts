@@ -49,6 +49,8 @@ export interface SessionCookies {
 export interface SetCookieParams {
 	accessToken?: string;
 	refreshToken?: string;
+	/** Identity-owned refresh lifetime; defaults to the ordinary seven-day session. */
+	refreshMaxAge?: number;
 	/** Override domain for cross-subdomain cookies */
 	domain?: string;
 }
@@ -130,7 +132,7 @@ export function setSessionCookies(
 	params: SetCookieParams,
 	isProduction = true
 ): void {
-	const { accessToken, refreshToken, domain } = params;
+	const { accessToken, refreshToken, refreshMaxAge, domain } = params;
 
 	if (accessToken) {
 		cookies.set(
@@ -141,10 +143,11 @@ export function setSessionCookies(
 	}
 
 	if (refreshToken) {
+		const options = getRefreshTokenCookieOptions(isProduction, domain);
 		cookies.set(
 			COOKIE_CONFIG.NAMES.REFRESH_TOKEN,
 			refreshToken,
-			getRefreshTokenCookieOptions(isProduction, domain)
+			refreshMaxAge === undefined ? options : { ...options, maxAge: refreshMaxAge }
 		);
 	}
 }

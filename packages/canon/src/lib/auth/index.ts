@@ -135,6 +135,7 @@ export {
 	handleIdentityError,
 	createAuthHandler,
 	createLoginHandler,
+	createPlayerLoginHandler,
 	createSignupHandler,
 	// Cross-domain handlers
 	TARGET_DOMAINS,

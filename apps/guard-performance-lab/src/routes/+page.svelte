@@ -5,6 +5,7 @@
   import type { GuideOutput } from '$lib/guide.js';
   import type { WorkspaceCommand } from '$lib/workspace-api.js';
   import FilmTrafficCourt from '$lib/FilmTrafficCourt.svelte';
+  import PlayerAccessPanel from '$lib/PlayerAccessPanel.svelte';
   import GuardInsightCourt from '$lib/GuardInsightCourt.svelte';
   import SharedLanguageLibrary from '$lib/SharedLanguageLibrary.svelte';
   import { applyFilmCorrections, resolveFilmTrafficAt, summarizeFilmTargetCoverage, type FilmMovementMode } from '$lib/film.js';
@@ -538,6 +539,11 @@
           <div class="actions"><button class="button primary" disabled={commandBusy} type="submit">Save my profile</button>{#if profileSaved}<span class="success" role="status">PROFILE SAVED / PRIVATE WORKSPACE</span>{/if}</div>
         </form>
       </section>
+      {#if operator && player}
+        {#key player.id}
+          <PlayerAccessPanel playerId={player.id} displayName={player.profile.preferredName || player.name} />
+        {/key}
+      {/if}
       <div class="section-head"><h2>Codex access boundary</h2><p>Both people work with the program. Neither needs a coach persona.</p></div>
       <div class="role-grid">
         <article><span class="mono">Program agent</span><strong>Guides the sequence</strong><p>Requests context, applies safety policy, separates evidence, and proposes the next interaction.</p></article>

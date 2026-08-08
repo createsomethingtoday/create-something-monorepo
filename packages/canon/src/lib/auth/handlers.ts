@@ -118,7 +118,8 @@ interface AuthResponse {
 	access_token: string;
 	refresh_token: string;
 	expires_in: number;
-	user: User;
+	refresh_expires_in?: number;
+	user: User | { id: string; access_type: 'player'; display_name?: string | null };
 	error?: string;
 	message?: string;
 }
@@ -187,7 +188,7 @@ export function createAuthHandler(config: AuthHandlerConfig) {
 			cookies.set('cs_refresh_token', data.refresh_token, {
 				...cookieOptions,
 				...(config.cookieDomain && { domain: config.cookieDomain }),
-				maxAge: 7 * 24 * 60 * 60, // 7 days
+				maxAge: data.refresh_expires_in ?? 7 * 24 * 60 * 60,
 			});
 
 			return json({ success: true, user: data.user });
@@ -208,6 +209,21 @@ export function createLoginHandler(options?: {
 	return createAuthHandler({
 		endpoint: '/v1/auth/login',
 		action: 'Login',
+		cookieDomain: options?.cookieDomain,
+		identityBaseUrl: options?.identityBaseUrl,
+		isProduction: options?.isProduction,
+	});
+}
+
+/** Pre-configured email-free Player Access handler. */
+export function createPlayerLoginHandler(options?: {
+	cookieDomain?: string;
+	identityBaseUrl?: string;
+	isProduction?: boolean;
+}) {
+	return createAuthHandler({
+		endpoint: '/v1/auth/player-login',
+		action: 'Player login',
 		cookieDomain: options?.cookieDomain,
 		identityBaseUrl: options?.identityBaseUrl,
 		isProduction: options?.isProduction,
