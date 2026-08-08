@@ -2,7 +2,20 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 
 import { prepareAdminTemplateFill, prepareAdminTemplateFillBatch } from './admin-template-fill.js';
-import type { AirtableClient, TemplateReviewQueueItem } from './airtable.js';
+import {
+  buildAdminExecuteBundle,
+  buildAdminTemplateCreateExecuteScript,
+  buildAdminTemplateUpdateExecuteScript,
+  buildAdminThumbnailUploadExecuteScript,
+  type AdminThumbnailSource,
+} from './admin-template-execute.js';
+import {
+  buildThumbnailProxyUrl,
+  pickThumbnailAttachment,
+  THUMBNAIL_PROXY_KINDS,
+  type ThumbnailProxyKind,
+} from './thumbnail-proxy.js';
+import type { AirtableClient, TemplateReviewAssetThumbnails, TemplateReviewQueueItem } from './airtable.js';
 import { AirtableClientError } from './airtable.js';
 import { CHECKLIST_KIND_VALUES, parseChecklist } from './checklist.js';
 import { COMPREHENSIVE_REVIEW_LANE_IDS, EVIDENCE_LABELS, formatComprehensiveAgentReviewFeedback } from './comprehensive-review-feedback.js';
@@ -170,8 +183,16 @@ export interface ToolAccess {
   allowedToolNames?: ReadonlySet<string>;
 }
 
+export interface AdminExecuteConfig {
+  /** Public origin of this worker, used to mint signed thumbnail-proxy URLs. */
+  publicOrigin?: string;
+  /** HMAC secret for thumbnail-proxy URL signing (worker-side only). */
+  thumbnailProxySecret?: string;
+}
+
 export interface ToolRuntimeConfig extends ValidationToolConfig {
   sandboxExecution?: PublishedSiteSandboxExecutionConfig;
+  adminExecute?: AdminExecuteConfig;
 }
 
 /**
@@ -193,6 +214,12 @@ export const WRITE_TOOL_NAMES: ReadonlySet<string> = new Set([
   'template_review_update_version_review',
   'template_review_approve_version',
   'template_review_reject_version',
+  // Execute-script generators write nothing server-side, but the scripts they
+  // hand out submit to Webflow Admin when the reviewer runs them. Read-only
+  // sessions must not receive them.
+  'template_review_prepare_admin_template_create_execute',
+  'template_review_prepare_admin_template_update_execute',
+  'template_review_prepare_admin_template_thumbnail_execute',
 ]);
 
 export function registerTools(
@@ -573,6 +600,210 @@ export function registerTools(
             'Download the primary thumbnail and upload it on the template\'s Admin edit page after the initial create at https://webflow.com/admin/templates.',
             'Copy the new Template ID into 👀ℹ️MRP ID (Override) (template_review_update_asset_publishing) before approving the version.',
           ],
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  const resolveAssetIdForThumbnails = async (assetId?: string, versionId?: string): Promise<string> => {
+    if (assetId) return assetId;
+    if (!versionId) {
+      throw new AirtableClientError('MISSING_IDENTIFIER', 'Provide asset_id or version_id.', 400);
+    }
+    const version = await getClient().getVersionById(versionId);
+    if (!version) {
+      throw new AirtableClientError('VERSION_NOT_FOUND', 'Template version not found.', 404, { version_id: versionId });
+    }
+    if (!version.assetId) {
+      throw new AirtableClientError('VERSION_ASSET_ID_MISSING', 'Template version is missing its asset linkage.', 500, {
+        version_id: versionId,
+      });
+    }
+    return version.assetId;
+  };
+
+  const thumbnailSourceFor = async (
+    thumbnails: TemplateReviewAssetThumbnails,
+    kind: ThumbnailProxyKind,
+    index: number,
+  ): Promise<AdminThumbnailSource | null> => {
+    const attachment = pickThumbnailAttachment(thumbnails, kind, index);
+    if (!attachment?.url) return null;
+    const adminExecute = runtimeConfig.adminExecute;
+    const proxyUrl =
+      adminExecute?.publicOrigin && adminExecute.thumbnailProxySecret
+        ? await buildThumbnailProxyUrl({
+            origin: adminExecute.publicOrigin,
+            secret: adminExecute.thumbnailProxySecret,
+            assetId: thumbnails.assetId,
+            kind,
+            index,
+          })
+        : undefined;
+    return {
+      label: kind === 'thumbnail' ? 'primary thumbnail' : `${kind} image #${index + 1}`,
+      filename: attachment.filename ?? `${thumbnails.templateName || thumbnails.assetId}-tall-thumbnail.png`,
+      direct_url: attachment.url,
+      ...(proxyUrl ? { proxy_url: proxyUrl } : {}),
+      ...(attachment.width ? { width: attachment.width } : {}),
+      ...(attachment.height ? { height: attachment.height } : {}),
+      ...(attachment.sizeBytes ? { size_bytes: attachment.sizeBytes } : {}),
+    };
+  };
+
+  const MONGO_TEMPLATE_ID = z
+    .string()
+    .regex(/^[0-9a-f]{24}$/i, 'Expected a 24-character hex Webflow Template ID (from /admin/templates/<id>).');
+
+  server.tool(
+    'template_review_prepare_admin_template_create_execute',
+    'Execute-mode: generate a console script that CREATES the marketplace template on https://webflow.com/admin/templates when the reviewer runs it and confirms — POST create, follow-up field sync, and tall-thumbnail upload in one paste. The MCP performs no Webflow writes itself; auth, CSRF, and the final confirmation stay with the signed-in reviewer.',
+    {
+      version_id: z.string().min(1),
+      include_thumbnail_upload: z.boolean().optional(),
+      include_bookmarklet: z.boolean().optional(),
+    },
+    async ({ version_id, include_thumbnail_upload, include_bookmarklet }) => {
+      try {
+        const context = await getClient().getReviewContext(version_id, currentReviewerAsCollaborator(getReviewer));
+        const fillBundle = prepareAdminTemplateFill(context, { includeScript: false, includeBookmarklet: false });
+        if (fillBundle.missing_fields.length > 0) {
+          throw new AirtableClientError(
+            'ADMIN_FORM_INCOMPLETE',
+            'Cannot generate a create-execute script while required Admin form fields are missing.',
+            422,
+            { missing_fields: fillBundle.missing_fields },
+          );
+        }
+
+        const warnings: string[] = [...(fillBundle.form_data.admin_form_warnings ?? [])];
+        if (!fillBundle.readiness.can_publish) {
+          warnings.push(
+            'This version is not currently publish-ready according to MCP capability flags. Confirm approval state before running the script.',
+          );
+        }
+
+        let thumbnail: AdminThumbnailSource | undefined;
+        if (include_thumbnail_upload !== false && context.assetId) {
+          const thumbnails = await getClient().getAssetThumbnails(context.assetId);
+          const source = thumbnails ? await thumbnailSourceFor(thumbnails, 'thumbnail', 0) : null;
+          if (source) thumbnail = source;
+          else warnings.push('No primary thumbnail attachment found; the script will skip the thumbnail upload step.');
+        }
+
+        return asSuccess({
+          ...buildAdminExecuteBundle({
+            action: 'create',
+            consoleScript: buildAdminTemplateCreateExecuteScript({ formData: fillBundle.form_data, thumbnail }),
+            extraBoundary: [
+              'The script chains POST create → PUT field sync → tall-thumbnail upload, each visible in the console.',
+              'After it finishes, record the new Template ID in 👀ℹ️MRP ID (Override) via template_review_update_asset_publishing.',
+            ],
+            warnings,
+            includeBookmarklet: include_bookmarklet === true,
+          }),
+          source: fillBundle.source,
+          form_data: fillBundle.form_data,
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_prepare_admin_template_update_execute',
+    'Execute-mode: generate a console script that UPDATES an existing marketplace template via PUT /admin/api/templates/:id when the reviewer runs it and confirms. The script fetches current state first, shows a diff table, and preserves untouched checkbox booleans (starter/archived/tutorial/standard) — the Admin API silently flips omitted booleans to false. The MCP performs no Webflow writes itself.',
+    {
+      template_id: MONGO_TEMPLATE_ID,
+      changes: z
+        .object({
+          name: z.string().min(1).optional(),
+          description: z.string().min(1).optional(),
+          extDetailPageUrl: z.string().min(1).optional(),
+          extCategory: z.string().min(1).optional(),
+          extMainTag: z.string().min(1).optional(),
+          type: z.string().min(1).optional(),
+          cost: z.number().int().min(0).optional().describe('Price in cents (Admin stores cost in cents).'),
+          featured: z.number().int().optional(),
+          usedCount: z.number().int().min(0).optional(),
+          category: z.string().optional(),
+          features: z.array(z.string()).optional(),
+          starter: z.boolean().optional(),
+          archived: z.boolean().optional(),
+          tutorial: z.boolean().optional(),
+          standard: z.boolean().optional(),
+        })
+        .refine((value) => Object.keys(value).length > 0, { message: 'Provide at least one change.' }),
+      include_bookmarklet: z.boolean().optional(),
+    },
+    async ({ template_id, changes, include_bookmarklet }) => {
+      try {
+        return asSuccess(
+          buildAdminExecuteBundle({
+            action: 'update',
+            consoleScript: buildAdminTemplateUpdateExecuteScript(template_id, changes),
+            extraBoundary: [
+              'The script GETs current template state, prints a diff table, and only PUTs after the reviewer confirms.',
+              'Checkbox booleans not listed in the diff are preserved exactly as they are today.',
+            ],
+            includeBookmarklet: include_bookmarklet === true,
+          }),
+        );
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_prepare_admin_template_thumbnail_execute',
+    'Execute-mode: generate a console script that uploads the asset\'s Airtable thumbnail as the template\'s tall thumbnail via POST /admin/api/templates/:id/tall-thumbnail when the reviewer runs it and confirms. Bundles a direct Airtable link plus a signed worker proxy link (fresh bytes, CORS-safe) as fallback. The MCP performs no Webflow writes itself.',
+    {
+      template_id: MONGO_TEMPLATE_ID,
+      asset_id: z.string().min(1).optional(),
+      version_id: z.string().min(1).optional(),
+      image: z.enum(THUMBNAIL_PROXY_KINDS).optional().describe('Which Airtable image to upload (default: thumbnail).'),
+      image_index: z.number().int().min(0).optional().describe('Index within secondary/carousel images (default: 0).'),
+      include_bookmarklet: z.boolean().optional(),
+    },
+    async ({ template_id, asset_id, version_id, image, image_index, include_bookmarklet }) => {
+      try {
+        const resolvedAssetId = await resolveAssetIdForThumbnails(asset_id, version_id);
+        const thumbnails = await getClient().getAssetThumbnails(resolvedAssetId);
+        if (!thumbnails) {
+          throw new AirtableClientError('ASSET_NOT_FOUND_OR_OUT_OF_SCOPE', 'Template asset not found in template-review scope.', 404, {
+            asset_id: resolvedAssetId,
+          });
+        }
+        const kind: ThumbnailProxyKind = image ?? 'thumbnail';
+        const index = image_index ?? 0;
+        const source = await thumbnailSourceFor(thumbnails, kind, index);
+        if (!source) {
+          throw new AirtableClientError('IMAGE_NOT_FOUND', `No ${kind} image at index ${index} for this asset.`, 404, {
+            asset_id: resolvedAssetId,
+            image: kind,
+            image_index: index,
+          });
+        }
+        const warnings: string[] = [];
+        if (!source.proxy_url) {
+          warnings.push(
+            'No signed proxy URL available in this runtime; the script only has the direct Airtable link, which expires in roughly 2 hours and may be CORS-blocked. Prefer running this tool against the deployed worker.',
+          );
+        }
+        return asSuccess({
+          ...buildAdminExecuteBundle({
+            action: 'upload_thumbnail',
+            consoleScript: buildAdminThumbnailUploadExecuteScript(template_id, source),
+            extraBoundary: ['The script fetches image bytes, shows size, and only uploads after the reviewer confirms.'],
+            warnings,
+            includeBookmarklet: include_bookmarklet === true,
+          }),
+          source: { asset_id: thumbnails.assetId, template_name: thumbnails.templateName, image: kind, image_index: index },
+          image_details: source,
         });
       } catch (error) {
         return asError(error);

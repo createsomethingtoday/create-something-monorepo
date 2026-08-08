@@ -25,6 +25,7 @@ import {
   getReviewerProfileForEmail,
 } from '../src/reviewer-directory.js';
 import { registerTools } from '../src/tools.js';
+import { handleThumbnailProxyRequest, THUMBNAIL_PROXY_PATH } from '../src/thumbnail-proxy.js';
 
 interface Env {
   MCP_OBJECT: DurableObjectNamespace;
@@ -47,6 +48,7 @@ interface Env {
   E2B_BROWSER_TEMPLATE?: string;
   TEMPLATE_REVIEW_ENVIRONMENT?: string;
   TEMPLATE_REVIEW_FORCE_READ_ONLY?: string;
+  WORKER_PUBLIC_ORIGIN?: string;
 }
 
 type RequestProps = {
@@ -114,6 +116,10 @@ export class WebflowTemplateReviewMCP extends McpAgent<Env, unknown, RequestProp
         sandboxExecution: {
           apiKey: this.env.E2B_API_KEY,
           template: this.env.E2B_BROWSER_TEMPLATE,
+        },
+        adminExecute: {
+          publicOrigin: this.env.WORKER_PUBLIC_ORIGIN,
+          thumbnailProxySecret: this.env.AIRTABLE_API_KEY,
         },
       },
       {
@@ -322,6 +328,25 @@ export default {
       const result = await authenticateWithIdentity(request, env, url.origin);
       if (result instanceof Response) return result;
       return serve.fetch(request, env, { ...ctx, props: result.props });
+    }
+
+    // Signed image proxy for Admin execute scripts: re-resolves Airtable
+    // attachment bytes fresh (Airtable URLs expire ~2h) with permissive CORS
+    // so scripts running on https://webflow.com can fetch them. HMAC-gated —
+    // only URLs minted by the prepare tools verify. See src/thumbnail-proxy.ts.
+    if (url.pathname === THUMBNAIL_PROXY_PATH) {
+      if (request.method !== 'GET') {
+        return new Response('Method not allowed', { status: 405, headers: CORS_HEADERS });
+      }
+      const airtableApiKey = env.AIRTABLE_API_KEY;
+      const client = airtableApiKey
+        ? new AirtableClient({ apiKey: airtableApiKey, baseId: env.AIRTABLE_BASE_ID ?? DEFAULT_AIRTABLE_BASE_ID })
+        : null;
+      return handleThumbnailProxyRequest(url, {
+        secret: airtableApiKey,
+        getThumbnails: (assetId) =>
+          client ? client.getAssetThumbnails(assetId) : Promise.resolve(null),
+      });
     }
 
     if (url.pathname === '/' || url.pathname === '/health') {

@@ -154,6 +154,9 @@ Automated validation and sandbox evidence do not approve, reject, request change
 |------|-------------|
 | \`template_review_prepare_admin_template_fill\` | Read-only: Admin create-template form data + fill-only console script (never submits) |
 | \`template_review_get_template_thumbnail\` | Read-only: fresh thumbnail download links for the manual Admin upload after the initial create |
+| \`template_review_prepare_admin_template_create_execute\` | Execute-mode: console script that creates the template + syncs fields + uploads the tall thumbnail after the reviewer confirms in-browser |
+| \`template_review_prepare_admin_template_update_execute\` | Execute-mode: console script that PUTs metadata changes to an existing template (diff table + confirm; preserves untouched checkbox booleans) |
+| \`template_review_prepare_admin_template_thumbnail_execute\` | Execute-mode: console script that uploads the Airtable thumbnail as the template's tall thumbnail (confirm-gated) |
 | \`template_review_list_releases\` | Available releases to attach |
 | \`template_review_update_asset_metadata\` | Update name, description, thumbnails |
 | \`template_review_update_asset_publishing\` | Update MRP ID override |
@@ -165,6 +168,17 @@ the fill-only script on https://webflow.com/admin/templates → click Create
 Template yourself → \`get_template_thumbnail\` and upload the image on the new
 template's Admin edit page → copy the new Template ID into the MRP ID override
 via \`update_asset_publishing\`.
+
+Script-assisted alternative: \`prepare_admin_template_create_execute\` returns a
+console script that performs the whole create sequence (POST create → PUT field
+sync → tall-thumbnail upload) once the reviewer pastes it on
+https://webflow.com/admin/templates and accepts the confirm() dialogs. The MCP
+never submits anything itself — Okta session, CSRF token, and the confirmation
+click all belong to the reviewer's browser. For metadata fixes on an existing
+template use \`prepare_admin_template_update_execute\` (shows a diff first and
+preserves untouched checkbox booleans); for thumbnail replacement use
+\`prepare_admin_template_thumbnail_execute\`. Always finish by recording the
+Template ID in the MRP ID override via \`update_asset_publishing\`.
 
 Work the publishing checklist per item with \`set_checklist_items\`. Only pass
 \`mark_all_publishing_items: true\` to \`complete_publishing\` when every publishing
