@@ -62,6 +62,7 @@ describe('telemetry fallback payload parsing', () => {
               attribution_source_component: 'TemplateGrid',
               cta_location: 'offer_panel',
               purchase_type: 'checkout',
+              holdout_arm: 'visible',
             },
           }),
         ],
@@ -78,6 +79,7 @@ describe('telemetry fallback payload parsing', () => {
       'TemplateGrid',
       'offer_panel',
       'checkout',
+      'visible',
     ]);
     expect(point.doubles).toEqual([1]);
     expect(point.indexes).toEqual(['TemplateDetailConversionTracker']);

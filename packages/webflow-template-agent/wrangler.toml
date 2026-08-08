@@ -23,7 +23,7 @@ MAX_CONCURRENT_TURNS = "8"
 # (spend pinned at ~$23 + $2 turn reservation), causing 63 daily_budget turn
 # denials the week of Jul 27 (51 on Jul 31 alone) at ~$0.25/turn.
 DAILY_BUDGET_MICRO_USD = "40000000"
-TURN_RESERVATION_MICRO_USD = "2000000"
+TURN_RESERVATION_MICRO_USD = "1000000"
 INPUT_USD_PER_MILLION_TOKENS = "15"
 OUTPUT_USD_PER_MILLION_TOKENS = "75"
 CACHE_WRITE_USD_PER_MILLION_TOKENS = "18.75"

@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import type { MarketplaceAnalyticsData } from './analytics';
 import { trackMarketplaceEvent, trackMarketplaceEventExact } from './analytics';
 import { forwardAttributionToCheckoutAnchor } from './checkoutAttribution';
+import { getStoredChatHoldoutArm } from '../chat/templateChatHoldout';
 import {
   attributionAnalytics,
   getSafeAnalyticsOverrides,
@@ -118,9 +119,13 @@ export const TemplateDetailConversionTracker: React.FC<TemplateDetailConversionT
 
     const baseData = () => {
       const attribution = readTemplateAttribution();
+      // Stamp (never assign) the chat-launcher holdout arm, so per-arm
+      // purchase funnels need only aggregate counts — see templateChatHoldout.
+      const holdoutArm = getStoredChatHoldoutArm();
       return {
         ...getSafeAnalyticsOverrides(),
         ...attributionAnalytics(attribution, resolvedTemplateSlug),
+        ...(holdoutArm ? { holdout_arm: holdoutArm } : {}),
         component: 'TemplateDetailConversionTracker',
         detail_template_slug: resolvedTemplateSlug,
         detail_price_bucket: priceBucket(price),

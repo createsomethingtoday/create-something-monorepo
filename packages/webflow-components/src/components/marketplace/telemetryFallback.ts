@@ -40,22 +40,62 @@ let sentThisPage = 0;
 /** Test hook: reset per-page state between test cases. */
 export function resetTelemetryFallbackForTests(): void {
   sentThisPage = 0;
+  pendingIndeterminate = [];
+  if (graceTimer !== null) {
+    clearTimeout(graceTimer);
+    graceTimer = null;
+  }
+  flushHooked = false;
+  zombieVerdict = false;
 }
 
-/** True when any page-level analytics SDK is available to receive events. */
-export function hasPageAnalyticsSdk(): boolean {
-  if (typeof window === 'undefined') return true; // SSR: nothing to fall back for.
+export type PageAnalyticsSdkHealth = 'healthy' | 'indeterminate' | 'absent';
+
+/**
+ * Three-state SDK assessment. A `track` function alone is NOT evidence of a
+ * working pipeline: since ~2026-08-04 webflow.com ships a wf_analytics shim
+ * whose track() swallows events with zero network egress and whose
+ * isInitialized() never flips true (the marketing scripts that load the real
+ * bundle are empty husks). Segment's snippet similarly stubs track() before
+ * analytics.js loads. Such shims are 'indeterminate' — maybe still loading,
+ * maybe zombies — and their events are buffered for a grace period instead of
+ * being dropped or double-sent.
+ */
+export function assessPageAnalyticsSdk(): PageAnalyticsSdkHealth {
+  if (typeof window === 'undefined') return 'healthy'; // SSR: nothing to fall back for.
+  let sawShim = false;
   try {
-    if (typeof window.wf_analytics?.track === 'function') return true;
-    if (typeof window.analytics?.track === 'function') return true;
+    const wf = window.wf_analytics;
+    if (typeof wf?.track === 'function') {
+      if (typeof wf.isInitialized === 'function') {
+        if (wf.isInitialized()) return 'healthy';
+        sawShim = true; // Present but uninitialized: loading or zombie.
+      } else {
+        // No introspection surface — assume the old working bundle rather
+        // than risk double-counting alongside it.
+        return 'healthy';
+      }
+    }
+    const segment = window.analytics;
+    if (typeof segment?.track === 'function') {
+      // The snippet stub queues method calls; the real analytics.js sets
+      // `initialized` and exposes non-queueable members like user().
+      if (segment.initialized || typeof segment.user === 'function') return 'healthy';
+      sawShim = true;
+    }
     const amplitude = window.amplitude;
-    if (typeof amplitude?.track === 'function') return true;
-    if (typeof amplitude?.logEvent === 'function') return true;
-    if (typeof amplitude?.getInstance === 'function') return true;
+    if (typeof amplitude?.track === 'function') return 'healthy';
+    if (typeof amplitude?.logEvent === 'function') return 'healthy';
+    if (typeof amplitude?.getInstance === 'function') return 'healthy';
   } catch {
     // Property access on a broken SDK shim must not break tracking.
   }
-  return false;
+  return sawShim ? 'indeterminate' : 'absent';
+}
+
+/** True when a page-level analytics SDK is verifiably able to deliver events. */
+export function hasPageAnalyticsSdk(): boolean {
+  return assessPageAnalyticsSdk() === 'healthy';
 }
 
 function randomId(): string {
@@ -141,4 +181,80 @@ export function sendTelemetryFallbackEvent(
   } catch {
     // Serialization failures must never block the interaction being tracked.
   }
+}
+
+// ── Indeterminate-SDK buffering ───────────────────────────────────────────────
+// Events emitted while the SDK is a not-yet-initialized shim are held for a
+// grace window. If the real bundle finishes loading, it owns the events (the
+// fan-out already invoked its queueing track()); the buffer is dropped. If the
+// shim is still uninitialized at the deadline — today's zombie failure mode —
+// the buffer flushes to the beacon. A queueing stub's in-memory backlog dies
+// with the page, so the pagehide flush cannot double-count either.
+
+/** How long a present-but-uninitialized SDK gets to prove it can deliver. */
+export const INDETERMINATE_SDK_GRACE_MS = 6_000;
+
+let pendingIndeterminate: Array<{ eventType: string; properties: Record<string, unknown> }> = [];
+let graceTimer: ReturnType<typeof setTimeout> | null = null;
+let flushHooked = false;
+let zombieVerdict = false;
+
+function flushIndeterminate(): void {
+  if (graceTimer !== null) {
+    clearTimeout(graceTimer);
+    graceTimer = null;
+  }
+  const pending = pendingIndeterminate;
+  pendingIndeterminate = [];
+  if (pending.length === 0) return;
+  if (assessPageAnalyticsSdk() === 'healthy') return; // SDK loaded; it owns these events.
+  zombieVerdict = true;
+  for (const item of pending) sendTelemetryFallbackEvent(item.eventType, item.properties);
+}
+
+function bufferIndeterminateEvent(eventType: string, properties: Record<string, unknown>): void {
+  if (pendingIndeterminate.length >= MAX_FALLBACK_EVENTS_PER_PAGE) return;
+  pendingIndeterminate.push({ eventType, properties });
+  if (graceTimer === null) {
+    try {
+      graceTimer = setTimeout(flushIndeterminate, INDETERMINATE_SDK_GRACE_MS);
+    } catch {
+      graceTimer = null;
+    }
+  }
+  if (!flushHooked) {
+    flushHooked = true;
+    try {
+      window.addEventListener('pagehide', flushIndeterminate);
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') flushIndeterminate();
+      });
+    } catch {
+      // Listener installation is best-effort; the grace timer still flushes.
+    }
+  }
+}
+
+/**
+ * Single fallback entry point for the marketplace tracker: sends immediately
+ * when no SDK exists, drops when a working SDK is present, and buffers for
+ * the grace window when only an uninitialized shim is present.
+ */
+export function maybeSendTelemetryFallback(
+  eventType: string,
+  eventProperties: Record<string, unknown>,
+): void {
+  if (typeof window === 'undefined') return;
+  const health = assessPageAnalyticsSdk();
+  if (health === 'healthy') return;
+  if (health === 'absent' || zombieVerdict) {
+    sendTelemetryFallbackEvent(eventType, eventProperties);
+    return;
+  }
+  bufferIndeterminateEvent(eventType, eventProperties);
+}
+
+/** Test hook: force the grace-window flush without waiting on the timer. */
+export function flushIndeterminateForTests(): void {
+  flushIndeterminate();
 }
