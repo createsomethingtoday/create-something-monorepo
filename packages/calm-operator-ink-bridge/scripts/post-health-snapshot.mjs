@@ -14,7 +14,7 @@ function usage() {
     '',
     'Options:',
     '  --origin <url>       Defaults to https://ink.createsomething.agency',
-    '  --url <url>          Full POST /ink/health-snapshot URL',
+    '  --url <url>          Full POST /operator/health-snapshot URL',
     '  --token <token>      Defaults to INK_SOURCE_TOKEN or CALM_OPERATOR_BRIDGE_TOKEN',
     '  --snapshot <path>    Health snapshot JSON',
     '  --component <name>   Component name for one-off health snapshot',
@@ -75,10 +75,11 @@ const snapshot = args.snapshot
       severity: args.severity
     };
 
-if (!snapshot.component && !snapshot.source) throw new Error('--snapshot or --component is required');
+if (!snapshot.component && !snapshot.source)
+  throw new Error('--snapshot or --component is required');
 if (!snapshot.status) throw new Error('--snapshot or --status is required');
 
-const url = args.url ?? bridgeUrl(args.origin, '/ink/health-snapshot');
+const url = args.url ?? bridgeUrl(args.origin, '/operator/health-snapshot');
 const response = await postHealthSnapshot({
   url,
   token: args.token,

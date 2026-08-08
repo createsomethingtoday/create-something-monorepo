@@ -345,7 +345,7 @@ export function prepareAgentDecision(input: {
       kind: option.kind,
       label: option.label,
       message,
-      device_id: boundedText(request.device_id, 96) || 'core-ink',
+      device_id: boundedText(request.device_id, 96) || 'stopwatch',
       state: 'queued',
       created_at: now,
       updated_at: now,

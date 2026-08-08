@@ -12,7 +12,7 @@ const POOR_HEALTH_STATUSES = new Set(['fail', 'failed', 'error', 'down', 'poor',
 
 export function normalizeSurface(surface: string | null | undefined): InkSurface {
   const value = surface?.trim().toLowerCase();
-  if (!value) return 'core-ink';
+  if (!value) return 'stopwatch';
   if (value === 'm5paper' || value === 'm5-paper') return 'm5paper';
   if (value === 'papers3' || value === 'paper-s3' || value === 'm5papers3') return 'papers3';
   return value;
@@ -48,7 +48,9 @@ function alertScore(alert: StoredAlert): number {
                   : 0;
 
   const urgentWorkflowWeight =
-    alert.urgent && alert.state !== 'operator_priority' && alert.state !== 'health_attention' ? 75 : 0;
+    alert.urgent && alert.state !== 'operator_priority' && alert.state !== 'health_attention'
+      ? 75
+      : 0;
   return alert.severity + stateWeight + (alert.urgent ? 50 : 0) + urgentWorkflowWeight;
 }
 
@@ -61,13 +63,11 @@ function selectAlert(alerts: StoredAlert[]): StoredAlert | undefined {
 }
 
 function selectHealth(snapshots: StoredHealthSnapshot[]): StoredHealthSnapshot | undefined {
-  return snapshots
-    .filter(isPoorHealth)
-    .sort((left, right) => {
-      const severity = right.severity - left.severity;
-      if (severity !== 0) return severity;
-      return right.updated_at - left.updated_at;
-    })[0];
+  return snapshots.filter(isPoorHealth).sort((left, right) => {
+    const severity = right.severity - left.severity;
+    if (severity !== 0) return severity;
+    return right.updated_at - left.updated_at;
+  })[0];
 }
 
 function headlineForAlert(alert: StoredAlert): string {
@@ -111,7 +111,8 @@ function normalizedSourceLinks(value: unknown): OperatorPrioritySourceLink[] {
     .map((link) => {
       if (typeof link !== 'object' || link === null) return null;
       const record = link as Record<string, unknown>;
-      const label = typeof record.label === 'string' ? record.label.replace(/\s+/g, ' ').trim() : '';
+      const label =
+        typeof record.label === 'string' ? record.label.replace(/\s+/g, ' ').trim() : '';
       if (!label) return null;
       const url = typeof record.url === 'string' ? record.url.trim() : '';
       const kind = typeof record.kind === 'string' ? record.kind.trim() : '';
@@ -129,17 +130,25 @@ function normalizedSourceLinks(value: unknown): OperatorPrioritySourceLink[] {
 
 function signalForBrief(brief: OperatorBrief, sourceLinks: OperatorPrioritySourceLink[]): string {
   const payloadSignal =
-    brief.selected_alert?.state === 'operator_priority' && typeof brief.selected_alert.payload.signal === 'string'
+    brief.selected_alert?.state === 'operator_priority' &&
+    typeof brief.selected_alert.payload.signal === 'string'
       ? brief.selected_alert.payload.signal.trim()
       : '';
   if (payloadSignal) return payloadSignal;
   if (sourceLinks[0]?.kind) return sourceLinks[0].kind;
   if (brief.selected_health) return 'health';
-  if (brief.selected_alert?.state === 'mcp_attention' || brief.selected_alert?.state === 'agent_attention') return 'health';
+  if (
+    brief.selected_alert?.state === 'mcp_attention' ||
+    brief.selected_alert?.state === 'agent_attention'
+  )
+    return 'health';
   return brief.state === 'clear' ? 'clear' : 'operator';
 }
 
-function detailLabelForBrief(brief: OperatorBrief, sourceLinks: OperatorPrioritySourceLink[]): string {
+function detailLabelForBrief(
+  brief: OperatorBrief,
+  sourceLinks: OperatorPrioritySourceLink[]
+): string {
   if (sourceLinks[0]?.label) return compact(sourceLinks[0].label, 42);
   if (brief.selected_alert?.external_id) return compact(brief.selected_alert.external_id, 42);
   if (brief.selected_alert?.source) return compact(brief.selected_alert.source, 42);
@@ -201,7 +210,10 @@ export function buildOperatorBrief(input: {
       headline: 'HEALTH ATTENTION',
       line1: compact(selectedHealth.component || selectedHealth.source || 'System health', 28),
       line2: compact(selectedHealth.summary || selectedHealth.status, 46),
-      detail: compact(selectedHealth.detail || selectedHealth.summary || selectedHealth.status, 120),
+      detail: compact(
+        selectedHealth.detail || selectedHealth.summary || selectedHealth.status,
+        120
+      ),
       action: 'Review health source',
       urgent: selectedHealth.severity >= 80,
       generated_at: generatedAt,
@@ -236,9 +248,10 @@ export function buildOperatorBrief(input: {
 }
 
 export function toFirmwareBrief(brief: OperatorBrief): Record<string, unknown> {
-  const sourceLinks = brief.selected_alert?.state === 'operator_priority'
-    ? normalizedSourceLinks(brief.selected_alert.payload.source_links)
-    : [];
+  const sourceLinks =
+    brief.selected_alert?.state === 'operator_priority'
+      ? normalizedSourceLinks(brief.selected_alert.payload.source_links)
+      : [];
   const signal = signalForBrief(brief, sourceLinks);
   const detailLabel = detailLabelForBrief(brief, sourceLinks);
 

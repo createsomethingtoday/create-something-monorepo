@@ -22,7 +22,7 @@ test('parses production smoke options from env and args', () => {
       '--origin',
       'https://ink.example.test/',
       '--device-id',
-      'core-ink-test',
+      'stopwatch-test',
       '--surface',
       'desk',
       '--skip-heartbeat'
@@ -32,7 +32,7 @@ test('parses production smoke options from env and args', () => {
 
   assert.equal(args.origin, 'https://ink.example.test/');
   assert.equal(args.token, 'device-token');
-  assert.equal(args.deviceId, 'core-ink-test');
+  assert.equal(args.deviceId, 'stopwatch-test');
   assert.equal(args.surface, 'desk');
   assert.equal(args.skipHeartbeat, true);
 });
@@ -52,7 +52,7 @@ test('checks production health, clock, brief, and heartbeat contracts', async ()
     if (href === 'https://ink.example.test/healthz') {
       return jsonResponse({ ok: true, service: 'calm-operator-ink-bridge' });
     }
-    if (href === 'https://ink.example.test/ink/clock') {
+    if (href === 'https://ink.example.test/operator/clock') {
       return jsonResponse({
         ok: true,
         clock: {
@@ -66,7 +66,9 @@ test('checks production health, clock, brief, and heartbeat contracts', async ()
         }
       });
     }
-    if (href === 'https://ink.example.test/ink/brief?surface=core-ink&device_id=core-ink-smoke') {
+    if (
+      href === 'https://ink.example.test/operator/brief?surface=stopwatch&device_id=stopwatch-smoke'
+    ) {
       return jsonResponse({
         state: 'clear',
         headline: 'CALM OPERATOR',
@@ -81,7 +83,7 @@ test('checks production health, clock, brief, and heartbeat contracts', async ()
         }
       });
     }
-    if (href === 'https://ink.example.test/ink/agent-console') {
+    if (href === 'https://ink.example.test/operator/agent-console') {
       return jsonResponse({
         ok: true,
         generated_at: '2026-04-30T17:00:00.000Z',
@@ -91,17 +93,17 @@ test('checks production health, clock, brief, and heartbeat contracts', async ()
         recent_decisions: []
       });
     }
-    if (href === 'https://ink.example.test/ink/device-heartbeat') {
+    if (href === 'https://ink.example.test/operator/device-heartbeat') {
       assert.equal(new Headers(init?.headers).get('x-ink-token'), 'device-token');
       assert.equal(init?.method, 'POST');
       assert.equal(typeof init?.body, 'string');
       const body = JSON.parse(String(init?.body));
-      assert.equal(body.device_id, 'core-ink-smoke');
+      assert.equal(body.device_id, 'stopwatch-smoke');
       assert.equal(body.payload.kind, 'production_smoke');
       return jsonResponse({
         ok: true,
         device: {
-          device_id: 'core-ink-smoke',
+          device_id: 'stopwatch-smoke',
           received_at: 1777568400000
         }
       });
@@ -114,8 +116,8 @@ test('checks production health, clock, brief, and heartbeat contracts', async ()
     {
       origin: 'https://ink.example.test/',
       token: 'device-token',
-      deviceId: 'core-ink-smoke',
-      surface: 'core-ink'
+      deviceId: 'stopwatch-smoke',
+      surface: 'stopwatch'
     },
     { fetch, now: Date.parse('2026-04-30T17:00:00.000Z') }
   );
@@ -126,10 +128,10 @@ test('checks production health, clock, brief, and heartbeat contracts', async ()
     result.checks.map((check) => check.name),
     [
       'GET /healthz',
-      'GET /ink/clock',
-      'GET /ink/brief',
-      'GET /ink/agent-console',
-      'POST /ink/device-heartbeat'
+      'GET /operator/clock',
+      'GET /operator/brief',
+      'GET /operator/agent-console',
+      'POST /operator/device-heartbeat'
     ]
   );
   assert.equal(calls.length, 5);
@@ -162,6 +164,6 @@ test('requires a token for authenticated smoke checks', async () => {
 
   await assert.rejects(
     runProductionSmoke({ origin: 'https://ink.example.test' }, { fetch }),
-    /INK_DEVICE_TOKEN/
+    /OPERATOR_DEVICE_TOKEN/
   );
 });

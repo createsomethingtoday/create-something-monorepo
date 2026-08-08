@@ -88,6 +88,8 @@
     "open-weight:eval:local": "node scripts/open-weight-agent-local-eval.mjs --mode transformers",
     "ink:bridge:smoke": "pnpm --dir packages/calm-operator-ink-bridge smoke:production",
     "ink:priority": "pnpm --dir packages/calm-operator-ink-bridge post:priority",
+    "operator:bridge:smoke": "pnpm --dir packages/calm-operator-ink-bridge smoke:production",
+    "operator:priority": "pnpm --dir packages/calm-operator-ink-bridge post:priority",
     "codex:g2:access:check": "node scripts/codex-g2-cloudflare-access.mjs check",
     "codex:g2:access:config": "node scripts/codex-g2-cloudflare-access.mjs config",
     "codex:g2:access:start": "node scripts/codex-g2-cloudflare-access.mjs start",
@@ -402,7 +404,8 @@
     "langfuse:smoke": "tsx scripts/langfuse-openai-smoke.ts",
     "langfuse:mcp:telemetry-smoke": "tsx scripts/langfuse-mcp-telemetry-smoke.ts",
     "langfuse:playbook-smoke": "tsx scripts/langfuse-playbook-mcp-smoke.ts",
-    "ink:langfuse-quality": "pnpm --dir packages/calm-operator-ink-bridge post:langfuse-quality"
+    "ink:langfuse-quality": "pnpm --dir packages/calm-operator-ink-bridge post:langfuse-quality",
+    "operator:langfuse-quality": "pnpm --dir packages/calm-operator-ink-bridge post:langfuse-quality"
   },
   "devDependencies": {
     "@create-something/observability": "workspace:*",

@@ -27,8 +27,8 @@ new_sqlite_classes = ["InkState"]
 
 [vars]
 WORKSPACE_ID = "create-something"
-DEFAULT_DEVICE_ID = "core-ink"
-DEFAULT_SURFACE = "core-ink"
+DEFAULT_DEVICE_ID = "stopwatch"
+DEFAULT_SURFACE = "stopwatch"
 HEALTH_STALE_AFTER_MS = "43200000"
 HEALTH_REVIEW_UTC_HOURS = "4,13,18,23"
 DAILY_ALARMS_CT = "06:00,09:00"
@@ -97,7 +97,7 @@ HEALTH_CHECKS_JSON = """
 """
 
 # Secrets required before production deploy:
-# - INK_DEVICE_TOKEN: Core Ink read/heartbeat/review token
+# - INK_DEVICE_TOKEN: legacy-named device read/heartbeat/review token
 # - INK_RELAY_TOKEN: local Codex/Claude progress and command relay token
 # - INK_SOURCE_TOKEN: agent/MCP/source write token
 # Optional compatibility token:

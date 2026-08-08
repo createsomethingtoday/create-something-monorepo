@@ -1,4 +1,4 @@
-export type InkSurface = 'core-ink' | 'm5paper' | 'papers3' | string;
+export type InkSurface = 'stopwatch' | 'core-ink' | 'm5paper' | 'papers3' | string;
 
 export type OperatorState =
   | 'clear'
@@ -55,7 +55,9 @@ export interface OperatorPriorityInput {
   payload?: Record<string, unknown>;
 }
 
-export interface StoredAlert extends Required<Omit<InkAlertInput, 'expires_at' | 'payload' | 'ttl_ms'>> {
+export interface StoredAlert extends Required<
+  Omit<InkAlertInput, 'expires_at' | 'payload' | 'ttl_ms'>
+> {
   status: 'active' | 'cleared';
   created_at: number;
   updated_at: number;
@@ -107,8 +109,9 @@ export interface RemoteHealthCheckResult {
   snapshot: HealthSnapshotInput;
 }
 
-export interface StoredHealthSnapshot
-  extends Required<Omit<HealthSnapshotInput, 'observed_at' | 'payload'>> {
+export interface StoredHealthSnapshot extends Required<
+  Omit<HealthSnapshotInput, 'observed_at' | 'payload'>
+> {
   observed_at: number;
   updated_at: number;
   payload: Record<string, unknown>;

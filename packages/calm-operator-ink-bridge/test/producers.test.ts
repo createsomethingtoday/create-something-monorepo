@@ -10,7 +10,10 @@ import {
 } from '../src/producers.js';
 
 test('builds production bridge URLs predictably', () => {
-  assert.equal(bridgeUrl('https://ink.createsomething.agency/', '/ink/alert'), 'https://ink.createsomething.agency/ink/alert');
+  assert.equal(
+    bridgeUrl('https://ink.createsomething.agency/', '/operator/alert'),
+    'https://ink.createsomething.agency/operator/alert'
+  );
 });
 
 test('builds MCP attention alert payloads for producer integrations', () => {

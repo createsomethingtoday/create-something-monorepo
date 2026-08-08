@@ -23,7 +23,7 @@ function sessionReference(decision: StoredAgentDecision): string {
 }
 
 export function steeringPrompt(decision: StoredAgentDecision): string {
-  const heading = `Operator steering from Core Ink: ${decision.kind} — ${decision.label}`;
+  const heading = `Operator steering from ${decision.device_id || 'Calm Operator'}: ${decision.kind} — ${decision.label}`;
   const detail = decision.message ? `\n\n${decision.message}` : '';
   const close =
     decision.kind === 'stop'

@@ -13,7 +13,7 @@ function usage() {
     '',
     'Options:',
     '  --origin <url>       Defaults to https://ink.createsomething.agency',
-    '  --url <url>          Full POST /ink/alert URL',
+    '  --url <url>          Full POST /operator/alert URL',
     '  --token <token>      Defaults to INK_SOURCE_TOKEN or CALM_OPERATOR_BRIDGE_TOKEN',
     '  --mcp <name>         MCP display name',
     '  --registry-id <id>   Optional MCP registry id',
@@ -69,7 +69,7 @@ if (args.help) {
 if (!args.mcp) throw new Error('--mcp is required');
 if (!args.reason) throw new Error('--reason is required');
 
-const url = args.url ?? bridgeUrl(args.origin, '/ink/alert');
+const url = args.url ?? bridgeUrl(args.origin, '/operator/alert');
 const response = await postInkAlert({
   url,
   token: args.token,

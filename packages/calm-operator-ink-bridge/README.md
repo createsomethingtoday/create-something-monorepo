@@ -1,6 +1,9 @@
-# Calm Operator Ink Bridge
+# Calm Operator Bridge
 
-Production Cloudflare Worker bridge for Calm Operator Ink.
+Production Cloudflare Worker bridge for the Stopwatch Calm Operator device.
+The deployed Worker and `INK_*` secret names remain unchanged to avoid a
+credential and Durable Object migration. `/operator/*` is the canonical API;
+the former `/ink/*` paths remain temporary compatibility aliases.
 
 The device should call this Worker directly over HTTPS. A Cloudflare Tunnel is only needed when a local-only producer cannot post outbound to the Worker. For production, agents, MCP review jobs, Slack/Gmail bridges, and health checks should send outbound events to this Worker.
 
@@ -15,11 +18,12 @@ The device should call this Worker directly over HTTPS. A Cloudflare Tunnel is o
 - Collect configured remote health checks on the same schedule.
 - Run a scheduled health review four times daily.
 - Fire daily local alarms for the operator at configured Central Time moments.
-- Accept Core Ink device heartbeat.
+- Accept Stopwatch device heartbeat.
 - Store versioned Codex and Claude progress snapshots.
 - Queue only agent-advertised, remote-safe operator decisions and retain their
   delivery receipts.
-- Return a compact `/ink/brief` response compatible with the firmware bridge contract.
+- Accept bounded voice recordings for local transcription and on-device review.
+- Return a compact `/operator/brief` response compatible with the device contract.
 - Keep production content live-only. No mock carousel or fake workflow counts.
 
 ## Endpoints
@@ -31,29 +35,26 @@ Public:
 
 Token-gated:
 
-- `GET /ink/brief`
-- `GET /ink/surface-brief`
-- `GET /ink/clock`
-- `GET /ink/device`
-- `GET /ink/agent-console`
-- `POST /ink/agent-progress`
-- `POST /ink/agent-decision`
-- `POST /ink/agent-decisions/lease`
-- `POST /ink/agent-decisions/:id/receipt`
-- `POST /ink/alert`
-- `POST /ink/operator-priority`
-- `POST /ink/source-event`
-- `POST /ink/operator-event`
-- `POST /ink/health-snapshot`
-- `GET /ink/health-checks`
-- `POST /ink/health-checks/run`
-- `GET /ink/health-review`
-- `GET /ink/health-review/runs`
-- `POST /ink/health-review/request`
-- `POST /ink/health-review/run`
-- `POST /ink/alarms/run`
-- `POST /ink/device-heartbeat`
-- `POST /ink/clear`
+- `GET /operator/brief`
+- `GET /operator/clock`
+- `GET /operator/agent-console`
+- `POST /operator/agent-progress`
+- `POST /operator/agent-decision`
+- `POST /operator/agent-decisions/lease`
+- `POST /operator/agent-decisions/:id/receipt`
+- `POST /operator/voice-command`
+- `GET /operator/voice-command/:id`
+- `POST /operator/voice-command/:id/confirm`
+- `POST /operator/voice-commands/lease`
+- `POST /operator/voice-command/:id/transcript`
+- `POST /operator/alert`
+- `POST /operator/operator-priority`
+- `POST /operator/operator-event`
+- `POST /operator/health-snapshot`
+- `GET /operator/health-review`
+- `POST /operator/health-review/request`
+- `POST /operator/device-heartbeat`
+- `POST /operator/clear`
 
 Tokens may be sent as `Authorization: Bearer ...`, `x-ink-token`, or `x-api-key`.
 
@@ -73,13 +74,13 @@ Optional compatibility token:
 pnpm --dir packages/calm-operator-ink-bridge exec wrangler secret put INK_BRIDGE_TOKEN
 ```
 
-Use `INK_DEVICE_TOKEN` in Core Ink firmware, `INK_RELAY_TOKEN` in the local
+Use `INK_DEVICE_TOKEN` in Stopwatch firmware, `INK_RELAY_TOKEN` in the local
 agent relay, and `INK_SOURCE_TOKEN` for MCP/alert producers. `INK_BRIDGE_TOKEN`
 remains a compatibility token for all three roles.
 
-The Core Ink firmware lives in `packages/calm-operator-ink-firmware`. It uses
-the device token for `/ink/brief`, `/ink/clock`, `/ink/health-review/request`,
-`/ink/operator-event`, and `/ink/device-heartbeat`.
+The Stopwatch firmware lives in `packages/calm-operator-stopwatch-firmware`.
+Generic `OPERATOR_*` token names are also accepted by the code for future
+secret migration, but existing production secrets require no rotation.
 
 ## Deploy
 
@@ -96,11 +97,11 @@ If the custom domain is not ready, remove the route from `wrangler.toml` and dep
 Run a production smoke after deploys or route/token changes:
 
 ```bash
-infisical run --env=prod --path=/ --include-imports=true -- pnpm ink:bridge:smoke
+infisical run --env=prod --path=/ --include-imports=true -- pnpm operator:bridge:smoke
 ```
 
-The smoke checks public `/healthz`, authenticated `/ink/clock`, authenticated
-`/ink/brief`, the read-only `/ink/agent-console`, and a harmless `/ink/device-heartbeat` write using
+The smoke checks public `/healthz`, authenticated `/operator/clock`, authenticated
+`/operator/brief`, the read-only `/operator/agent-console`, and a harmless `/operator/device-heartbeat` write using
 `INK_DEVICE_TOKEN` or `CALM_OPERATOR_BRIDGE_TOKEN`.
 
 Use `--public-only` when only route reachability should be checked, or
@@ -122,7 +123,7 @@ INK_SOURCE_TOKEN=... pnpm post:mcp -- \
 ## Example brief
 
 ```bash
-curl -sS https://ink.createsomething.agency/ink/brief \
+curl -sS https://ink.createsomething.agency/operator/brief \
   -H "x-ink-token: $INK_DEVICE_TOKEN"
 ```
 
@@ -158,7 +159,7 @@ Central Time clock contract:
 The agent console is provider-neutral. A relay publishes a versioned snapshot;
 the device can enqueue only one of the `remote_safe` decisions advertised in
 that exact version. Unsafe decisions remain visible to the desktop agent but
-are omitted from the Core Ink response.
+are omitted from the Stopwatch response.
 
 Publish a snapshot from a JSON file or stdin:
 
@@ -217,6 +218,25 @@ Decision state is durable: `queued`, `leased`, `acknowledged`, then `completed`
 or `failed`. The console returns recent receipts so the device can distinguish
 button input from actual provider delivery.
 
+### Voice steering
+
+Voice is an input adapter to the same decision queue, not a second authority
+path. Stopwatch uploads at most 192 kB of mono `pcm_s16le` audio at 16 kHz. A
+relay must lease the item, attach a transcript, and release the raw audio before
+the device can review it. Confirmation then calls the normal decision validator.
+
+Voice leasing is disabled until a local transcriber is configured:
+
+```bash
+export OPERATOR_TRANSCRIBE_EXECUTABLE=/absolute/path/to/transcribe
+export OPERATOR_TRANSCRIBE_ARGS_JSON='["--language","en","{audio}"]'
+INK_RELAY_TOKEN=... pnpm --dir packages/calm-operator-ink-bridge agent:relay
+```
+
+The executable is launched with `shell: false`, receives a mode-`0600`
+temporary PCM file, and must print only the transcript to stdout. A failed or
+empty transcription cannot be confirmed.
+
 ## Producer helpers
 
 MCP review agents and health monitors can post directly to production:
@@ -227,7 +247,7 @@ pnpm post:priority -- \
   --risk "Marketplace copy incomplete" \
   --next-action "Review Airtable fields" \
   --linear "CRE-611=https://linear.app/createsomething/issue/CRE-611" \
-  --health "Ink health=https://ink.createsomething.agency/ink/health-review"
+  --health "Operator health=https://ink.createsomething.agency/operator/health-review"
 pnpm post:langfuse-quality -- --input ./langfuse-quality-summary.json
 pnpm post:mcp -- --mcp "HubSpot MCP" --reason "Review failed"
 pnpm post:health -- --component "Claude Code Slack watcher" --status degraded --summary "No heartbeat in 20 minutes"
@@ -235,7 +255,7 @@ pnpm post:health -- --component "Claude Code Slack watcher" --status degraded --
 
 These commands read `INK_SOURCE_TOKEN` or `CALM_OPERATOR_BRIDGE_TOKEN` from the environment.
 
-`POST /ink/operator-priority` is the preferred producer route when a workflow has
+`POST /operator/operator-priority` is the preferred producer route when a workflow has
 already synthesized the operator view across Linear, Notion, Codex, and health
 state. It writes one replaceable `operator-priority:current` alert with:
 
@@ -246,7 +266,7 @@ state. It writes one replaceable `operator-priority:current` alert with:
   `health`, `codex`, or `langfuse`
 - `source_links`: compact evidence links for the full bridge or operator surface
 
-The Core Ink display renders the compact brief as `OPERATOR PRIORITY`, with focus,
+The Stopwatch display renders the compact brief as `OPERATOR PRIORITY`, with focus,
 `HEALTH ATTENTION`, or `QUALITY DRIFT`, with focus, risk, and next action.
 Source links stay in the JSON payload for richer surfaces and the firmware detail
 screen.
@@ -303,7 +323,7 @@ the report is clear, the Worker clears the synthetic health-review alert.
 You can run the review manually:
 
 ```bash
-curl -sS https://ink.createsomething.agency/ink/health-review/run \
+curl -sS https://ink.createsomething.agency/operator/health-review/run \
   -X POST \
   -H "authorization: Bearer $INK_SOURCE_TOKEN"
 ```
@@ -314,7 +334,7 @@ Health-review attempts are stored in the bridge Durable Object. Inspect recent
 manual, scheduled, device-requested, and health-check-triggered runs with:
 
 ```bash
-curl -sS "https://ink.createsomething.agency/ink/health-review/runs?limit=20" \
+curl -sS "https://ink.createsomething.agency/operator/health-review/runs?limit=20" \
   -H "authorization: Bearer $INK_SOURCE_TOKEN"
 ```
 
@@ -326,7 +346,7 @@ returns the compact firmware brief shape, so the device can show one calm summar
 instead of a full report:
 
 ```bash
-curl -sS https://ink.createsomething.agency/ink/health-review/request \
+curl -sS https://ink.createsomething.agency/operator/health-review/request \
   -X POST \
   -H "x-ink-token: $INK_DEVICE_TOKEN"
 ```
@@ -345,7 +365,7 @@ idempotent, and expires after `ALARM_TTL_MS`, defaulting to 45 minutes.
 Run the alarm scheduler manually:
 
 ```bash
-curl -sS https://ink.createsomething.agency/ink/alarms/run \
+curl -sS https://ink.createsomething.agency/operator/alarms/run \
   -X POST \
   -H "authorization: Bearer $INK_SOURCE_TOKEN" \
   -d '{"now":"2026-04-29T11:00:00Z"}'
@@ -395,14 +415,14 @@ full downstream Hub health endpoint on every Ink review.
 List configured checks:
 
 ```bash
-curl -sS https://ink.createsomething.agency/ink/health-checks \
+curl -sS https://ink.createsomething.agency/operator/health-checks \
   -H "authorization: Bearer $INK_SOURCE_TOKEN"
 ```
 
 Run checks and review immediately:
 
 ```bash
-curl -sS https://ink.createsomething.agency/ink/health-checks/run \
+curl -sS https://ink.createsomething.agency/operator/health-checks/run \
   -X POST \
   -H "authorization: Bearer $INK_SOURCE_TOKEN"
 ```
