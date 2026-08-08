@@ -18,7 +18,6 @@ let env: RuntimeEnv;
 
 beforeAll(async () => {
   passwordHash = await hashProjectPassword(password, {
-    iterations: 210_000,
     salt: new Uint8Array(16).fill(7)
   });
   env = {
@@ -30,6 +29,18 @@ beforeAll(async () => {
 });
 
 describe('Guard Lab shared project password', () => {
+  it('keeps PBKDF2 within the Cloudflare Workers runtime ceiling', async () => {
+    const verifier = await hashProjectPassword(password, {
+      salt: new Uint8Array(16).fill(9)
+    });
+
+    expect(verifier.split('$')[1]).toBe('100000');
+    await expect(hashProjectPassword(password, {
+      iterations: 100_001,
+      salt: new Uint8Array(16).fill(9)
+    })).rejects.toThrow(/at most 100000 iterations/i);
+  });
+
   it('creates only a player-scoped session and rejects tampering or expiration', async () => {
     const token = await createProjectSession({ passwordHash, playerId, sessionSecret, now });
 
