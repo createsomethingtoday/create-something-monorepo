@@ -27,7 +27,8 @@
     {
       label: 'Route',
       title: 'Live',
-      detail: 'The surface performs real work against the runtime instead of simulating an outcome.',
+      detail:
+        'The surface performs real work against the runtime instead of simulating an outcome.',
       tone: 'signal'
     },
     {
@@ -39,7 +40,8 @@
     {
       label: 'Promotion',
       title: 'Receipted',
-      detail: 'Patterns move to research or delivery only with a repeatable result and named handoff.',
+      detail:
+        'Patterns move to research or delivery only with a repeatable result and named handoff.',
       tone: 'growth'
     }
   ];
@@ -243,6 +245,8 @@
 <PerformanceCampaignOpening
   mobileSearchBoundary
   eyebrow="CREATE SOMETHING .space"
+  propertyRole="Public systems workbench"
+  expression="editorial"
   title="A public workbench for testing runtime ideas."
   lede="CREATE SOMETHING .space is where tools, routes, and interaction patterns get tested against real execution surfaces before they become research, policy, or production workflows."
   media={paperPrototypeScoreMedia}
@@ -259,7 +263,12 @@
   eyebrow="Workbench protocol"
   title="Execute, inspect, then promote what survives."
   description="Live routes. Workers-first execution. Inspectable outputs."
-  intervention={{ label: 'Runtime handoff', title: 'Visible behavior before promotion', detail: 'The workbench exposes state, timing, outputs, and failure before a pattern moves elsewhere.' }}
+  intervention={{
+    label: 'Runtime handoff',
+    title: 'Visible behavior before promotion',
+    detail:
+      'The workbench exposes state, timing, outputs, and failure before a pattern moves elsewhere.'
+  }}
 >
   {#snippet artifact()}
     <PerformanceCardGrid
@@ -316,7 +325,11 @@
   description="The best workbench patterns do not stay trapped on the playground. They transfer into the research, delivery, and editorial properties that complete the system."
 >
   {#snippet after()}
-    <PerformanceCardGrid items={ecosystemCards} columns={3} ariaLabel="Workbench handoff destinations" />
+    <PerformanceCardGrid
+      items={ecosystemCards}
+      columns={3}
+      ariaLabel="Workbench handoff destinations"
+    />
   {/snippet}
 </PerformancePageSection>
 
@@ -330,7 +343,12 @@
   eyebrow="Pick a surface"
   title="Start with the runtime you want to inspect."
   description="Open the playground if you want to execute code, motion if you want to inspect interaction systems, or data if you want to work against a live refresh loop."
-  handoff={{ owner: 'Workbench operator', authority: 'Runtime evidence', proof: 'Output + state + handoff', state: 'ready' }}
+  handoff={{
+    owner: 'Workbench operator',
+    authority: 'Runtime evidence',
+    proof: 'Output + state + handoff',
+    state: 'ready'
+  }}
 >
   {#snippet actions()}
     <Button href="/motion">Inspect Motion</Button>

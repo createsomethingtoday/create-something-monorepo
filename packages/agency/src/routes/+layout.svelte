@@ -400,7 +400,7 @@
     user={data.user}
     onLogout={handleLogout}
     accountHref="/account"
-    visualStyle="performance"
+    visualStyle="editorial"
     showMobileLogoText={true}
     showDesktopLogoText={true}
     onMobileMenuChange={(open) => (mobileNavigationOpen = open)}
@@ -420,13 +420,14 @@
     aboutText="Calm, transparent, reliable workflow systems for operator-owned outcomes: clear operating boundaries, evidence-backed delivery, and escalation only when judgment is required."
     quickLinkGroups={footerQuickLinkGroups}
     footerCta={{
+      title: 'Ready to make one workflow AI-native?',
       label: agencyCoreMessaging.startWithWorkflowLabel,
       href: primaryCtaHref,
       description: 'Start a lightweight workflow map before booking.'
     }}
     showSocial={true}
     isAuthenticated={!!data.user}
-    visualStyle="performance"
+    visualStyle="editorial"
   />
 
   {#if !routeOwnsPerformanceEnding && $page.url.pathname !== '/basketball-systems-lab' && !isDifyArticleRoute}

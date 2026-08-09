@@ -8,7 +8,7 @@
     href: string;
   }
 
-  type NavigationVisualStyle = 'classic' | 'performance' | 'clear';
+  type NavigationVisualStyle = 'classic' | 'performance' | 'clear' | 'editorial';
 
   interface Props {
     logo: string;
@@ -61,7 +61,10 @@
 
   let mobileMenuOpen = $state(false);
   let mobileMenuButton = $state<HTMLButtonElement>();
-  const usesPerformanceStyle = $derived(visualStyle === 'performance' || visualStyle === 'clear');
+  const usesPerformanceStyle = $derived(
+    visualStyle === 'performance' || visualStyle === 'clear' || visualStyle === 'editorial'
+  );
+  const usesEditorialStyle = $derived(visualStyle === 'editorial');
 
   function isActive(link: NavLink): boolean {
     if (link.href === '/') {
@@ -98,6 +101,7 @@
   class:nav-fixed={fixed}
   class:nav-clear={usesPerformanceStyle}
   class:nav-performance={usesPerformanceStyle}
+  class:nav-editorial={usesEditorialStyle}
   class:nav-show-mobile-logo-text={showMobileLogoText}
   class:nav-show-desktop-logo-text={showDesktopLogoText}
   aria-label="Primary"
@@ -106,7 +110,7 @@
     <div class="flex items-center justify-between">
       <!-- Logo / Home -->
       <a href={logoHref} class="nav-logo">
-        {#if usesPerformanceStyle}
+        {#if usesPerformanceStyle || usesEditorialStyle}
           <span class="nav-logo-mark" aria-hidden="true">
             <CubeMark size={28} variant="mono" />
           </span>
@@ -119,7 +123,7 @@
 
       <!-- Desktop Navigation Links -->
       <div class="nav-desktop hidden xl:flex items-center gap-2 ml-8">
-        {#if usesPerformanceStyle}
+        {#if usesPerformanceStyle || usesEditorialStyle}
           <div class="nav-link-list">
             {#each links as link}
               <a href={link.href} class="nav-link" class:active={isActive(link)}>
@@ -192,7 +196,7 @@
 
     <!-- Mobile Menu -->
     {#if mobileMenuOpen}
-      {#if usesPerformanceStyle}
+      {#if usesPerformanceStyle || usesEditorialStyle}
         <span class="nav-mobile-backdrop" aria-hidden="true"></span>
       {/if}
       <div class="nav-mobile-menu animate-slide-down xl:hidden pt-4 pb-2 flex flex-col gap-4 mt-4">
@@ -214,7 +218,9 @@
         {#if user}
           <div class="nav-mobile-user">
             <span class="nav-mobile-user-email">{user.email}</span>
-            <a href={accountHref} onclick={() => closeMobileMenu()} class="nav-link py-2"> Account </a>
+            <a href={accountHref} onclick={() => closeMobileMenu()} class="nav-link py-2">
+              Account
+            </a>
             <button
               type="button"
               class="nav-mobile-logout"
@@ -351,7 +357,11 @@
   }
 
   .nav-desktop {
-    background: color-mix(in srgb, var(--color-performance-shell-surface-secondary) 86%, transparent);
+    background: color-mix(
+      in srgb,
+      var(--color-performance-shell-surface-secondary) 86%,
+      transparent
+    );
     border: 1px solid var(--color-performance-shell-border-subtle);
     border-radius: var(--radius-performance-scale-full);
     padding: 0.25rem;
@@ -730,5 +740,76 @@
       letter-spacing: 0.03em;
       text-transform: uppercase;
     }
+  }
+
+  /* Owned editorial shell: one institutional navigation across licensed properties. */
+  .nav-editorial,
+  .nav-editorial.nav-fixed {
+    color: var(--color-performance-editorial-dark, #181312);
+    border-bottom: 1px solid
+      color-mix(in srgb, var(--color-performance-editorial-dark) 18%, transparent);
+    background: color-mix(
+      in srgb,
+      var(--color-performance-editorial-light, #f3ebe4) 94%,
+      transparent
+    );
+    box-shadow: none;
+  }
+
+  .nav-editorial .nav-inner {
+    width: min(var(--content-width-performance-editorial, 90rem), calc(100% - 2rem));
+    padding-block: 0.65rem;
+  }
+
+  .nav-editorial .nav-logo-mark {
+    --color-performance-fg-primary: var(--color-performance-editorial-dark, #181312);
+    color: var(--color-performance-editorial-dark, #181312);
+  }
+
+  .nav-editorial .nav-link-list {
+    border-color: color-mix(in srgb, var(--color-performance-editorial-dark) 16%, transparent);
+    border-radius: var(--radius-performance-editorial, 0.375rem);
+    background: color-mix(
+      in srgb,
+      var(--color-performance-editorial-light-secondary, #d8cdbc) 45%,
+      transparent
+    );
+  }
+
+  .nav-editorial .nav-link,
+  .nav-editorial .nav-mobile-menu .nav-link {
+    color: color-mix(in srgb, var(--color-performance-editorial-dark) 72%, transparent);
+    border-radius: calc(var(--radius-performance-editorial, 0.375rem) - 0.125rem);
+  }
+
+  .nav-editorial .nav-link:hover,
+  .nav-editorial .nav-link.active {
+    color: var(--color-performance-editorial-dark, #181312);
+    background: var(--color-performance-editorial-light, #f3ebe4);
+  }
+
+  .nav-editorial .nav-cta {
+    border-color: var(--color-performance-editorial-brand, #fcaa2d);
+    border-radius: var(--radius-performance-editorial, 0.375rem);
+    background: var(--color-performance-editorial-brand, #fcaa2d);
+    color: var(--color-performance-editorial-dark, #181312);
+    box-shadow: none;
+  }
+
+  .nav-editorial .nav-cta:hover {
+    background: color-mix(in srgb, var(--color-performance-editorial-brand) 88%, white);
+    box-shadow: none;
+  }
+
+  .nav-editorial .nav-menu-button {
+    border-color: color-mix(in srgb, var(--color-performance-editorial-dark) 22%, transparent);
+    border-radius: var(--radius-performance-editorial, 0.375rem);
+    background: transparent;
+    color: var(--color-performance-editorial-dark, #181312);
+  }
+
+  .nav-editorial .nav-mobile-menu,
+  .nav-editorial .nav-mobile-backdrop {
+    background: var(--color-performance-editorial-light, #f3ebe4);
   }
 </style>
