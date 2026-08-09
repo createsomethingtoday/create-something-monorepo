@@ -42,7 +42,7 @@
       slug: 'defensive-impact',
       title: 'Defensive Impact',
       description:
-        'How well is each defender limiting their matchup? See actual vs expected shooting percentages.',
+        'Did either team hold opponents below expected points? Compare outcomes with a shot-zone estimate.',
       icon: Shield
     },
     {
@@ -107,12 +107,9 @@
   $effect(() => {
     const intervalMs = pollIntervalMs;
     if (intervalMs) {
-      const interval = setInterval(
-        () => {
-          invalidateAll();
-        },
-        intervalMs
-      );
+      const interval = setInterval(() => {
+        invalidateAll();
+      }, intervalMs);
 
       return () => {
         clearInterval(interval);
@@ -142,11 +139,11 @@
 <!-- Header -->
 <section class="page-header">
   <div class="container">
-    <p class="category">Experiment</p>
-    <h1 class="title">NBA Live Analytics</h1>
+    <p class="category">NBA analysis</p>
+    <h1 class="title">Choose a game. See what the numbers support.</h1>
     <p class="subtitle">
-      Watch how players work together, defend their matchups, and create scoring
-      opportunities—updated every 30 seconds during live games.
+      Pick a date, choose a game, then open an analysis. Detailed views appear only when the
+      available play data can support them.
     </p>
   </div>
 </section>
@@ -184,7 +181,10 @@
       </div>
       <span class="timestamp">
         {#if data.timestamp}
-          Data from {new Date(data.timestamp).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+          Data from {new Date(data.timestamp).toLocaleTimeString([], {
+            hour: 'numeric',
+            minute: '2-digit'
+          })}
         {:else}
           Retrying automatically
         {/if}
@@ -208,7 +208,9 @@
           <span class="summary-stat">{scheduledCount} upcoming</span>
         {/if}
         {#if finalCount > 0}
-          <span class="summary-stat summary-stat--muted">{finalCount} final</span>
+          <span class="summary-stat summary-stat--muted">
+            {finalCount} completed {finalCount === 1 ? 'game' : 'games'}
+          </span>
         {/if}
       </div>
     </div>
@@ -233,9 +235,11 @@
         <p class="error-message">We couldn't load {isToday ? "today's" : 'these'} games.</p>
         <p class="error-hint">
           {#if isToday}
-            The primary and fallback scoreboards are unavailable. This page will retry automatically.
+            The primary and fallback scoreboards are unavailable. This page will retry
+            automatically.
           {:else}
-            The primary and fallback scoreboards are unavailable for this date. Reload or try another date.
+            The primary and fallback scoreboards are unavailable for this date. Reload or try
+            another date.
           {/if}
         </p>
         {#if data.correlationId}
@@ -254,7 +258,8 @@
         </p>
         <p class="empty-hint">
           {#if data.scoreboardState === 'stale'}
-            Live sources are unavailable. Showing the last successful result while this page retries.
+            Live sources are unavailable. Showing the last successful result while this page
+            retries.
           {:else if data.dateRelation === 'today'}
             There are no games live or scheduled for the current slate.
           {:else if data.dateRelation === 'future'}
@@ -281,7 +286,9 @@
       {:else if data.scoreboardState === 'complete'}
         <div class="slate-note"><p>All games on this slate are final.</p></div>
       {:else if data.scoreboardState === 'stale'}
-        <div class="slate-note"><p>Showing the last known scoreboard while live sources recover.</p></div>
+        <div class="slate-note">
+          <p>Showing the last known scoreboard while live sources recover.</p>
+        </div>
       {/if}
       <GameSelector
         games={data.games}
@@ -376,15 +383,18 @@
 <section class="about-section">
   <div class="container">
     <div class="about-card">
-      <h3 class="about-title">How this works</h3>
+      <h3 class="about-title">Start here</h3>
+      <ol class="about-steps">
+        <li>Choose the date you want to inspect.</li>
+        <li>Select a game from the scoreboard.</li>
+        <li>Open the question that matches your decision.</li>
+      </ol>
       <p class="about-text">
-        This dashboard combines live scoreboard data with detailed NBA feeds when they are
-        available. Advanced analysis appears only when the play-by-play data supports it. It's also
-        an experiment in AI-assisted development—we built it using structured specifications to see
-        how well agents can handle complex, data-driven features.
+        Scoreboard data can confirm the score and game state. Advanced views need detailed play
+        data, so some games remain scoreboard-only.
       </p>
       <a href="https://createsomething.io/papers/spec-driven-development" class="about-link">
-        Read about the development process <ArrowRight size={14} />
+        How this experiment was built <ArrowRight size={14} />
       </a>
     </div>
   </div>
@@ -778,6 +788,14 @@
     color: var(--color-performance-fg-secondary);
     line-height: 1.6;
     margin-bottom: var(--space-performance-sm);
+  }
+
+  .about-steps {
+    margin: 0 0 var(--space-performance-sm);
+    padding-left: var(--space-performance-md);
+    color: var(--color-performance-fg-secondary);
+    font-size: var(--text-performance-body-sm);
+    line-height: 1.7;
   }
 
   .about-link {

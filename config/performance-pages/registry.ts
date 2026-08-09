@@ -689,7 +689,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
       'data/nba/pace',
       'data/nba/shot-network'
     ],
-    'pending',
+    'migrated',
     contract(
       'tool',
       'Inspect the selected basketball state and decide what the data supports.',
