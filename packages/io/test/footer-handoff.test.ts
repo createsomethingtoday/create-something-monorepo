@@ -9,6 +9,7 @@ describe('IO footer handoff', () => {
 			'/experiments/delegation-practice'
 		]) {
 			expect(getIoFooterHandoff(pathname)).toEqual({
+				kind: 'research',
 				showNewsletter: true,
 				showCommercialCta: false
 			});
@@ -18,6 +19,7 @@ describe('IO footer handoff', () => {
 	it('uses the commercial handoff on non-research-detail pages without stacking the digest', () => {
 		for (const pathname of ['/', '/about', '/methodology', '/papers', '/experiments']) {
 			expect(getIoFooterHandoff(pathname)).toEqual({
+				kind: 'commercial',
 				showNewsletter: false,
 				showCommercialCta: true
 			});

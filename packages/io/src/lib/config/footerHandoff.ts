@@ -1,4 +1,5 @@
 export interface IoFooterHandoff {
+	kind: 'commercial' | 'research';
 	showNewsletter: boolean;
 	showCommercialCta: boolean;
 }
@@ -9,6 +10,7 @@ export function getIoFooterHandoff(pathname: string): IoFooterHandoff {
 	const continuesResearch = RESEARCH_DETAIL_ROUTE.test(pathname);
 
 	return {
+		kind: continuesResearch ? 'research' : 'commercial',
 		showNewsletter: continuesResearch,
 		showCommercialCta: !continuesResearch
 	};

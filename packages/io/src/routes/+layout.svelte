@@ -210,32 +210,34 @@
       {@render children()}
     </main>
 
-    <Footer
-      mode="io"
-      showNewsletter={footerHandoff.showNewsletter}
-      turnstileSiteKey={data.turnstileSiteKey}
-      newsletterTitle="Get the monthly research digest"
-      newsletterDescription="Papers, experiments, and patterns—delivered."
-      aboutText="Systematic evaluation of AI-native development through tracked experiments. Real data from building with Claude Code and Cloudflare."
-      quickLinks={[
-        { label: 'Experiments', href: '/experiments' },
-        { label: 'Methodology', href: '/methodology' },
-        { label: 'Categories', href: '/categories' },
-        { label: 'About', href: '/about' },
-        { label: 'Contact', href: '/contact' }
-      ]}
-      footerCta={footerHandoff.showCommercialCta
-        ? {
-            title: 'Ready to turn evidence into an operating decision?',
-            label: 'Bring the workflow to .agency',
-            href: 'https://createsomething.agency/practice?source=io&intent=research-to-practice',
-            description: 'Carry the paper, method, and open question into a bounded workflow map.'
-          }
-        : undefined}
-      showSocial={true}
-      isAuthenticated={!!data.user}
-      visualStyle="editorial"
-    />
+    <div data-footer-handoff={footerHandoff.kind}>
+      <Footer
+        mode="io"
+        showNewsletter={footerHandoff.showNewsletter}
+        turnstileSiteKey={data.turnstileSiteKey}
+        newsletterTitle="Get the monthly research digest"
+        newsletterDescription="Papers, experiments, and patterns—delivered."
+        aboutText="Systematic evaluation of AI-native development through tracked experiments. Real data from building with Claude Code and Cloudflare."
+        quickLinks={[
+          { label: 'Experiments', href: '/experiments' },
+          { label: 'Methodology', href: '/methodology' },
+          { label: 'Categories', href: '/categories' },
+          { label: 'About', href: '/about' },
+          { label: 'Contact', href: '/contact' }
+        ]}
+        footerCta={footerHandoff.showCommercialCta
+          ? {
+              title: 'Ready to turn evidence into an operating decision?',
+              label: 'Bring the workflow to .agency',
+              href: 'https://createsomething.agency/practice?source=io&intent=research-to-practice',
+              description: 'Carry the paper, method, and open question into a bounded workflow map.'
+            }
+          : undefined}
+        showSocial={true}
+        isAuthenticated={!!data.user}
+        visualStyle="editorial"
+      />
+    </div>
 
     <!-- Mode of Being Indicator - Hermeneutic Circle Position -->
     <ModeIndicator current="io" />
