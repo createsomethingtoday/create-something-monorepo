@@ -128,7 +128,7 @@ export const workflowPages: WorkflowPage[] = [
     ],
     relatedSlugs: ['mcp-security-oauth', 'mcp-vs-api', 'ai-workflow-observability'],
     publishedTime: '2026-08-02',
-    modifiedTime: '2026-08-02'
+    modifiedTime: '2026-08-09'
   },
   {
     slug: 'ai-workflow-automation',
@@ -219,7 +219,7 @@ export const workflowPages: WorkflowPage[] = [
     ],
     relatedSlugs: ['workflow-mapping', 'human-in-the-loop-ai', 'ai-workflow-governance'],
     publishedTime: '2026-08-02',
-    modifiedTime: '2026-08-02'
+    modifiedTime: '2026-08-09'
   },
   {
     slug: 'ai-workflow-governance',
@@ -309,7 +309,7 @@ export const workflowPages: WorkflowPage[] = [
     ],
     relatedSlugs: ['human-in-the-loop-ai', 'ai-agent-evaluation', 'ai-workflow-observability'],
     publishedTime: '2026-08-02',
-    modifiedTime: '2026-08-02'
+    modifiedTime: '2026-08-09'
   },
   {
     slug: 'human-in-the-loop-ai',
@@ -399,7 +399,7 @@ export const workflowPages: WorkflowPage[] = [
     ],
     relatedSlugs: ['ai-workflow-governance', 'ai-agent-evaluation', 'webflow-template-review'],
     publishedTime: '2026-08-02',
-    modifiedTime: '2026-08-02'
+    modifiedTime: '2026-08-09'
   },
   {
     slug: 'ai-agent-evaluation',
@@ -489,7 +489,7 @@ export const workflowPages: WorkflowPage[] = [
     ],
     relatedSlugs: ['ai-workflow-governance', 'human-in-the-loop-ai', 'ai-workflow-observability'],
     publishedTime: '2026-08-02',
-    modifiedTime: '2026-08-02'
+    modifiedTime: '2026-08-09'
   },
   {
     slug: 'mcp-security-oauth',
@@ -579,7 +579,7 @@ export const workflowPages: WorkflowPage[] = [
     ],
     relatedSlugs: ['mcp-server-development', 'ai-workflow-governance', 'mcp-vs-api'],
     publishedTime: '2026-08-02',
-    modifiedTime: '2026-08-02'
+    modifiedTime: '2026-08-09'
   },
   {
     slug: 'mcp-vs-api',
@@ -670,7 +670,7 @@ export const workflowPages: WorkflowPage[] = [
     ],
     relatedSlugs: ['mcp-server-development', 'mcp-security-oauth', 'ai-workflow-automation'],
     publishedTime: '2026-08-02',
-    modifiedTime: '2026-08-02'
+    modifiedTime: '2026-08-09'
   },
   {
     slug: 'webflow-marketplace-operations',
@@ -765,7 +765,7 @@ export const workflowPages: WorkflowPage[] = [
     ],
     relatedSlugs: ['webflow-app-review', 'webflow-template-review', 'ai-workflow-observability'],
     publishedTime: '2026-08-02',
-    modifiedTime: '2026-08-02'
+    modifiedTime: '2026-08-09'
   },
   {
     slug: 'webflow-app-review',
@@ -857,7 +857,7 @@ export const workflowPages: WorkflowPage[] = [
     ],
     relatedSlugs: ['webflow-marketplace-operations', 'mcp-security-oauth', 'ai-agent-evaluation'],
     publishedTime: '2026-08-02',
-    modifiedTime: '2026-08-02'
+    modifiedTime: '2026-08-09'
   },
   {
     slug: 'webflow-template-review',
@@ -952,7 +952,7 @@ export const workflowPages: WorkflowPage[] = [
     ],
     relatedSlugs: ['human-in-the-loop-ai', 'webflow-marketplace-operations', 'ai-agent-evaluation'],
     publishedTime: '2026-08-02',
-    modifiedTime: '2026-08-02'
+    modifiedTime: '2026-08-09'
   },
   {
     slug: 'workflow-mapping',
@@ -1042,7 +1042,7 @@ export const workflowPages: WorkflowPage[] = [
     ],
     relatedSlugs: ['ai-workflow-automation', 'ai-workflow-governance', 'ai-workflow-observability'],
     publishedTime: '2026-08-02',
-    modifiedTime: '2026-08-02'
+    modifiedTime: '2026-08-09'
   },
   {
     slug: 'ai-workflow-observability',
@@ -1132,7 +1132,7 @@ export const workflowPages: WorkflowPage[] = [
     ],
     relatedSlugs: ['ai-workflow-governance', 'ai-agent-evaluation', 'workflow-mapping'],
     publishedTime: '2026-08-02',
-    modifiedTime: '2026-08-02'
+    modifiedTime: '2026-08-09'
   }
 ];
 
