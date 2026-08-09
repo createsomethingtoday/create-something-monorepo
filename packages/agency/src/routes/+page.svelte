@@ -8,7 +8,6 @@
     SEO,
     type PerformanceCampaignProof,
     type PerformanceFieldStudyMetric,
-    type PerformanceFieldStudyProof,
     type PerformanceNarrativeScene
   } from '@create-something/canon';
   import HeroTrustArtifact from '$lib/components/HeroTrustArtifact.svelte';
@@ -100,108 +99,106 @@
   const serviceFlowSteps = [
     {
       id: 'signal',
-      eyebrow: '01 Notice',
-      title: 'Spot the change',
+      eyebrow: '01 Offense',
+      title: 'Advance approved work',
       detail:
-        'Choose the support, revenue, production, API, or access changes your team still has to notice by hand.',
-      proof: 'source · workflow · owner · system · risk'
+        'Known signals move through the route your team approved, so routine work does not wait for manual follow-up.',
+      proof: 'approved signal · allowed action · named route'
     },
     {
       id: 'decision',
-      eyebrow: '02 Decide',
-      title: 'Send it to the right owner',
+      eyebrow: '02 Defense',
+      title: 'Protect the decision',
       detail:
-        'Give the owner the context, allowed actions, approval options, and stop reason in one place.',
-      proof: 'decision queue · allowed actions · runbook · release record'
+        'Ambiguity, AI limits, and untrusted automation reach a named owner or stop with a reason.',
+      proof: 'owner · gate · stop reason · recovery path'
     },
     {
       id: 'proof',
-      eyebrow: '03 Record',
-      title: 'Keep the result',
+      eyebrow: '03 Proof',
+      title: 'Review the receipt',
       detail:
-        'Record what started the work, which rule applied, who decided, what happened next, and how to recover.',
+        'Every important run keeps its source, rule, decision, result, and recovery record together.',
       proof: 'source · rule · decision · result · recovery'
     }
   ] as const;
 
   const flowStudyMetrics: PerformanceFieldStudyMetric[] = [
     {
-      label: 'Starting scope',
-      value: '1 workflow',
-      detail: 'Start with one workflow before allowing more actions.'
+      label: 'Shared Playbook',
+      value: '1 owned system',
+      detail: 'Map one workflow first, then keep its rules and runbook together.'
     },
     {
-      label: 'Decision points',
-      value: 'Run / Wait / Stop',
-      detail: 'Every branch names who decides.'
+      label: 'Offense',
+      value: 'Approved work advances',
+      detail: 'Known signals use a route your team accepted.'
     },
     {
-      label: 'Required record',
-      value: 'Receipt required',
-      detail: 'Every action leaves a record your team can review.'
+      label: 'Defense',
+      value: 'Owner / gate / stop',
+      detail: 'Your team decides what can run, what needs approval, and what must stop.'
     }
   ];
 
-  const flowStudyProof: PerformanceFieldStudyProof = {
-    id: 'PL-METHOD-20260710',
-    owner: 'CREATE SOMETHING',
-    state: 'RECORD ATTACHED',
-    verified: '2026-07-10',
-    version: 'v1',
-    classification: 'Public method'
+  const flowStudyReceipt = {
+    id: 'PB-02 / HANDOFF',
+    owner: 'Client team',
+    state: 'CLIENT-OWNED',
+    evidence: 'Owner + gate + receipt'
   };
 
   const operatorOutcomes = [
     {
       state: 'Before',
-      title: 'The operator watches the handoff.',
-      detail: 'Routine work waits across tools, and exceptions arrive without enough context.'
+      title: 'Every AI handoff becomes a new exception.',
+      detail: 'Routine work waits across tools, and a person has to rebuild missing context.'
     },
     {
       state: 'After',
-      title: 'The operator returns when a decision matters.',
+      title: 'Your team runs a client-owned Playbook.',
       detail:
-        'Safe work moves, exceptions reach a named owner, and unsafe actions stop with a reason.'
+        'Approved work advances. Exceptions reach a named owner. Every action leaves a record your team can review.'
     }
   ] as const;
 
   const agencyScenes: PerformanceNarrativeScene[] = [
     {
-      id: 'boundary',
-      label: 'Boundary',
-      summary: 'Limits set',
-      title: 'Stop watching every handoff. Step in when a decision matters.',
+      id: 'map',
+      label: 'Map',
+      summary: 'The play is named',
+      title: 'Map the play before AI runs it.',
       detail:
-        'Your team decides what can run, what needs approval, and what must stop before the workflow starts.',
+        'Map shows where work starts, what the agent may do, and where a person must approve. It also names the owner, source, decision gate, and proof required before AI gets access.',
       tone: 'review',
       actions: [{ label: agencyCoreMessaging.selfMapLabel, href: agencyCoreMessaging.selfMapHref }]
     },
     {
-      id: 'map',
-      label: 'Map',
-      summary: 'Workflow mapped',
-      title: 'Map the handoff before AI runs it.',
+      id: 'build',
+      label: 'Build',
+      summary: 'The route is installed',
+      title: 'Build the operating path your team approves.',
       detail:
-        'CREATE SOMETHING Map shows where work starts, what the agent may do, and where a person must approve. It also shows when the workflow stops and what record proves the result.',
+        'We connect the tools, agent, and rules that serve the play. Unapproved access stays out of the route.',
       tone: 'allow',
       evidence: [
-        'One view shows systems, owners, and handoffs',
-        'Agent actions and human approvals have clear limits',
-        'Your team can inspect the first test before deciding to build'
+        'One view shows systems, owners, and allowed actions',
+        'Agent tasks and human approvals have clear limits',
+        'Your team inspects the first test before a live run'
       ],
-      receipts: ['workflow map', 'owner list', 'record plan'],
+      receipts: ['workflow map', 'approved route', 'runbook'],
       actions: [{ label: agencyCoreMessaging.selfMapLabel, href: agencyCoreMessaging.selfMapHref }]
     },
     {
-      id: 'operate',
-      label: 'Operate',
-      summary: 'Run → record',
-      title: 'Notice the change. Route the decision. Record the result.',
-      detail: 'Start with one workflow. Add rules only when real work shows where they are needed.',
+      id: 'control',
+      label: 'Control',
+      summary: 'Offense + defense',
+      title: 'Advance approved work. Protect every decision.',
+      detail: 'Offense moves known work. Defense routes ambiguity to a person, stops unsafe action, and keeps proof attached.',
       tone: 'neutral',
       evidence: [
-        'Each request stays connected to its decision and record',
-        'The system cannot make the final decision; the field report names what passed and remains blocked',
+        'Each request stays connected to its decision and receipt',
+        'The system cannot make the final decision; the field report names what passed and stayed blocked',
         'Your team keeps the data, rules, tests, history, and recovery path'
       ],
       receipts: ['workflow map', templateReviewFieldReport.id, 'recovery path']
@@ -244,32 +241,19 @@
 
   <PerformanceNarrativeStage
     id="agency-operating-story"
-    eyebrow="One workflow, step by step"
-    title="Keep the judgment. Delegate the rest."
-    description="Your team sets the limits before work moves. We map the handoff, test one workflow, and keep a record of every run."
+    eyebrow="One shared Playbook"
+    title="Map the play. Build the system. Keep control."
+    description="We work beside an operator to map one workflow and install its AI infrastructure. Your team decides what can run, what needs approval, and what must stop. Your team keeps a Playbook it can inspect, run, stop, recover, and review with proof."
     scenes={agencyScenes}
-    ariaLabel="Agency operating story"
+    ariaLabel="Shared Playbook delivery story"
     density="compact"
   >
     {#snippet artifact(scene: PerformanceNarrativeScene)}
-      {#if scene.id === 'boundary'}
-        <article class="boundary-study" aria-label="Boundary study: run, wait, stop">
-          <figure class="boundary-study__media">
-            <picture>
-              <source
-                media="(max-width: 640px)"
-                srcset="/images/performance-lab/paper-boundary-authority-mobile.webp?v=cre-1592"
-              />
-              <img
-                src="/images/performance-lab/paper-boundary-authority.webp?v=cre-1592"
-                alt="A porcelain paper decision path held at a black authority spine, where open, clamped, and stopped edges remain attached to a blank receipt."
-                loading="lazy"
-                width="1024"
-                height="1536"
-              />
-            </picture>
-            <figcaption>Paper pressure study · Run / Wait / Stop</figcaption>
-          </figure>
+      {#if scene.id === 'map'}
+        <article class="boundary-study" aria-label="Shared Playbook: Map, Build, Control">
+          <div class="boundary-study__field">
+            <PlaybookField variant="services" embedded />
+          </div>
           <div class="boundary-study__body">
             <div
               class="boundary-study__outcomes"
@@ -294,25 +278,25 @@
             <dl class="boundary-study__receipt" aria-label="Boundary study receipt">
               <div>
                 <dt>Receipt</dt>
-                <dd>{flowStudyProof.id}</dd>
+                <dd>{flowStudyReceipt.id}</dd>
               </div>
               <div>
                 <dt>Owner</dt>
-                <dd>{flowStudyProof.owner}</dd>
+                <dd>{flowStudyReceipt.owner}</dd>
               </div>
               <div>
                 <dt>State</dt>
-                <dd>{flowStudyProof.state}</dd>
+                <dd>{flowStudyReceipt.state}</dd>
               </div>
               <div>
-                <dt>Verified</dt>
-                <dd>{flowStudyProof.verified}</dd>
+                <dt>Evidence</dt>
+                <dd>{flowStudyReceipt.evidence}</dd>
               </div>
             </dl>
           </div>
         </article>
-      {:else if scene.id === 'map'}
-        <div class="agency-stage-map" aria-label="Map workflow definition">
+      {:else if scene.id === 'build'}
+        <div class="agency-stage-map" aria-label="Build the workflow system">
           <PublicSubstrateCanvas />
         </div>
       {:else}
@@ -401,40 +385,14 @@
     background: var(--color-performance-paper, #f3f3f0);
   }
 
-  .boundary-study__media {
-    position: relative;
+  .boundary-study__field {
+    display: grid;
+    align-content: center;
     margin: 0;
-    min-height: 31rem;
+    min-width: 0;
+    padding: 1rem;
     border-right: 1px solid var(--color-performance-line, #d7d7d2);
     background: var(--color-performance-ink, #090909);
-    overflow: hidden;
-  }
-
-  .boundary-study__media picture {
-    display: block;
-    width: 100%;
-    height: 100%;
-  }
-
-  .boundary-study__media img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center;
-  }
-
-  .boundary-study__media figcaption {
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    padding: 0.65rem 0.8rem;
-    border-top: 1px solid var(--color-performance-line-strong, #a9aaa5);
-    background: color-mix(in srgb, var(--color-performance-ink, #090909) 88%, transparent);
-    color: var(--color-performance-panel, #ffffff);
-    font-family: var(--font-performance-mono);
-    font-size: 0.68rem;
-    text-transform: uppercase;
   }
 
   .boundary-study__body {
@@ -686,11 +644,11 @@
 
   @media (max-width: 980px) {
     .boundary-study {
-      grid-template-columns: minmax(12rem, 0.58fr) minmax(0, 1.42fr);
+      grid-template-columns: minmax(16rem, 0.8fr) minmax(0, 1.2fr);
     }
 
-    .boundary-study__media {
-      min-height: 34rem;
+    .boundary-study__field {
+      padding: 0.8rem;
     }
   }
 
@@ -712,18 +670,13 @@
       grid-template-columns: 1fr;
     }
 
-    .boundary-study__media {
+    .boundary-study__field {
       display: block;
       grid-row: auto;
-      height: 9.5rem;
-      min-height: 9.5rem;
+      min-height: 0;
+      padding: 0.65rem;
       border-right: 0;
       border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
-      overflow: hidden;
-    }
-
-    .boundary-study__media img {
-      object-position: center 54%;
     }
 
     .boundary-study__metrics {
