@@ -15,12 +15,13 @@
   }
 
   interface FooterCta {
+    title?: string;
     label: string;
     href: string;
     description?: string;
   }
 
-  type FooterVisualStyle = 'classic' | 'performance' | 'clear';
+  type FooterVisualStyle = 'classic' | 'performance' | 'clear' | 'editorial';
 
   interface Props {
     mode?: 'ltd' | 'io' | 'space' | 'agency' | 'learn';
@@ -200,7 +201,10 @@
   }
 
   const currentYear = new Date().getFullYear();
-  const usesPerformanceStyle = $derived(visualStyle === 'performance' || visualStyle === 'clear');
+  const usesPerformanceStyle = $derived(
+    visualStyle === 'performance' || visualStyle === 'clear' || visualStyle === 'editorial'
+  );
+  const usesEditorialStyle = $derived(visualStyle === 'editorial');
   const defaultCopyright = `© ${currentYear} Create Something. The canon for "less, but better."`;
   const footerLinkGroups = $derived(
     quickLinkGroups.length > 0
@@ -255,6 +259,7 @@
   class="footer"
   class:footer-clear={usesPerformanceStyle}
   class:footer-performance={usesPerformanceStyle}
+  class:footer-editorial={usesEditorialStyle}
 >
   <!-- Newsletter Section (Optional) -->
   {#if showNewsletter}
@@ -338,13 +343,30 @@
     </section>
   {/if}
 
+  {#if usesEditorialStyle && footerCta}
+    <section class="footer-editorial-callout" aria-labelledby="footer-editorial-callout-title">
+      <div class="footer-editorial-callout__inner">
+        <div>
+          <p class="footer-editorial-callout__eyebrow">Next possession</p>
+          <h2 id="footer-editorial-callout-title">{footerCta.title ?? footerCta.label}</h2>
+        </div>
+        <div class="footer-editorial-callout__decision">
+          {#if footerCta.description}
+            <p>{footerCta.description}</p>
+          {/if}
+          <a href={footerCta.href}>{footerCta.label}</a>
+        </div>
+      </div>
+    </section>
+  {/if}
+
   <!-- Footer Links -->
   <div class="footer-links py-12 px-6" class:with-newsletter={showNewsletter}>
     <div class="footer-inner shell-inner">
       <div class="footer-links-grid">
         <!-- About / Brand Column -->
         <div class="footer-brand-column">
-          {#if usesPerformanceStyle}
+          {#if usesPerformanceStyle || usesEditorialStyle}
             <a href="/" class="footer-mark" aria-label="CREATE SOMETHING home">
               <CubeMark size={44} variant="mono" />
             </a>
@@ -363,7 +385,7 @@
             </p>
           {/if}
 
-          {#if footerCta}
+          {#if footerCta && !usesEditorialStyle}
             <a href={footerCta.href} class="footer-cta">
               <span class="footer-cta-label">{footerCta.label}</span>
               {#if footerCta.description}
@@ -1084,6 +1106,179 @@
 
     .footer-clear .footer-mark {
       margin-bottom: 0.35rem;
+    }
+  }
+
+  /* Owned editorial ending: warm dark field, large brand gesture, quiet directory. */
+  .footer-editorial {
+    border-top: 0;
+    background: var(--color-performance-editorial-dark, #181312);
+    color: var(--color-performance-editorial-light, #f3ebe4);
+  }
+
+  .footer-editorial-callout {
+    padding: clamp(5rem, 11vw, 9rem) 1rem;
+    background: var(--color-performance-editorial-light-secondary, #d8cdbc);
+    color: var(--color-performance-editorial-dark, #181312);
+  }
+
+  .footer-editorial-callout__inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(18rem, 0.65fr);
+    gap: clamp(2rem, 7vw, 7rem);
+    width: min(var(--content-width-performance-editorial, 90rem), 100%);
+    margin-inline: auto;
+    align-items: end;
+  }
+
+  .footer-editorial-callout__eyebrow {
+    margin: 0 0 1rem;
+    font-family: var(--font-performance-mono);
+    font-size: 0.72rem;
+    font-weight: var(--font-performance-semibold);
+    text-transform: uppercase;
+  }
+
+  .footer-editorial-callout h2 {
+    max-width: 12ch;
+    margin: 0;
+    font-family: var(--font-performance-editorial);
+    font-size: clamp(3.4rem, 7vw, 7rem);
+    font-weight: 400;
+    letter-spacing: -0.045em;
+    line-height: 0.92;
+  }
+
+  .footer-editorial-callout__decision {
+    display: grid;
+    gap: 1.25rem;
+  }
+
+  .footer-editorial-callout__decision p {
+    max-width: 34rem;
+    margin: 0;
+    font-size: clamp(1rem, 1.4vw, 1.2rem);
+    line-height: 1.5;
+  }
+
+  .footer-editorial-callout__decision a {
+    display: inline-flex;
+    width: fit-content;
+    min-height: 2.75rem;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--color-performance-editorial-dark, #181312);
+    border-radius: var(--radius-performance-editorial, 0.375rem);
+    background: var(--color-performance-editorial-dark, #181312);
+    color: var(--color-performance-editorial-light, #f3ebe4);
+    font-family: var(--font-performance-mono);
+    font-size: 0.75rem;
+    font-weight: var(--font-performance-semibold);
+    letter-spacing: 0.06em;
+    text-decoration: none;
+    text-transform: uppercase;
+  }
+
+  .footer-editorial-callout__decision a:focus-visible {
+    outline: 3px solid var(--color-performance-signal-soft, #a7b8ff);
+    outline-offset: 3px;
+  }
+
+  .footer-editorial .footer-links {
+    padding-top: clamp(4rem, 9vw, 8rem);
+    background: var(--color-performance-editorial-dark, #181312);
+  }
+
+  .footer-editorial .footer-inner {
+    width: min(var(--content-width-performance-editorial, 90rem), calc(100% - 2rem));
+  }
+
+  .footer-editorial .footer-links-grid {
+    padding: clamp(1.5rem, 4vw, 3.5rem);
+    border-color: color-mix(in srgb, var(--color-performance-editorial-light) 22%, transparent);
+    border-radius: var(--radius-performance-editorial, 0.375rem);
+    background: var(--color-performance-editorial-dark-secondary, #2e2927);
+    box-shadow: none;
+  }
+
+  .footer-editorial .footer-mark {
+    --color-performance-fg-primary: var(--color-performance-editorial-brand, #fcaa2d);
+    color: var(--color-performance-editorial-brand, #fcaa2d);
+  }
+
+  .footer-editorial .brand-title {
+    color: var(--color-performance-editorial-light, #f3ebe4);
+  }
+
+  .footer-editorial .brand-description {
+    max-width: 34rem;
+    color: color-mix(in srgb, var(--color-performance-editorial-light) 72%, transparent);
+    font-size: clamp(1rem, 1.5vw, 1.2rem);
+  }
+
+  .footer-editorial .footer-cta {
+    width: min(100%, 24rem);
+    border-color: var(--color-performance-editorial-brand, #fcaa2d);
+    border-radius: var(--radius-performance-editorial, 0.375rem);
+    background: var(--color-performance-editorial-brand, #fcaa2d);
+    color: var(--color-performance-editorial-dark, #181312);
+  }
+
+  .footer-editorial .footer-cta:hover {
+    border-color: color-mix(in srgb, var(--color-performance-editorial-brand) 88%, white);
+    background: color-mix(in srgb, var(--color-performance-editorial-brand) 88%, white);
+  }
+
+  .footer-editorial .footer-cta-description {
+    color: color-mix(in srgb, var(--color-performance-editorial-dark) 72%, transparent);
+  }
+
+  .footer-editorial .section-title,
+  .footer-editorial .footer-link,
+  .footer-editorial .footer-link:hover,
+  .footer-editorial .footer-link.active {
+    color: var(--color-performance-editorial-light, #f3ebe4);
+  }
+
+  .footer-editorial .link-label,
+  .footer-editorial .link-description,
+  .footer-editorial .copyright-text,
+  .footer-editorial .legal-link,
+  .footer-editorial .legal-separator {
+    color: color-mix(in srgb, var(--color-performance-editorial-light) 58%, transparent);
+  }
+
+  .footer-editorial .social-link {
+    border-color: color-mix(in srgb, var(--color-performance-editorial-light) 24%, transparent);
+    background: transparent;
+    color: var(--color-performance-editorial-light, #f3ebe4);
+  }
+
+  .footer-editorial .footer-copyright,
+  .footer-editorial .footer-quote {
+    background: var(--color-performance-editorial-dark, #181312);
+  }
+
+  @media (max-width: 640px) {
+    .footer-editorial-callout {
+      padding: 4rem 0.75rem;
+    }
+
+    .footer-editorial-callout__inner {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+
+    .footer-editorial-callout h2 {
+      font-size: clamp(3rem, 15vw, 4.8rem);
+    }
+
+    .footer-editorial .footer-inner {
+      width: min(100% - 1rem, var(--content-width-performance-editorial, 90rem));
+    }
+
+    .footer-editorial .footer-brand-column {
+      border-color: color-mix(in srgb, var(--color-performance-editorial-light) 18%, transparent);
     }
   }
 </style>

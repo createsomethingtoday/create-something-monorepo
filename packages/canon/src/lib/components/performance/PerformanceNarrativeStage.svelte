@@ -3,6 +3,7 @@
   import { onMount, type Snippet } from 'svelte';
 
   export type PerformanceNarrativeTone = 'allow' | 'review' | 'block' | 'neutral';
+  export type PerformanceNarrativeExpression = 'field' | 'editorial';
 
   export interface PerformanceNarrativeAction {
     label: string;
@@ -29,6 +30,7 @@
     scenes: PerformanceNarrativeScene[];
     ariaLabel?: string;
     density?: 'standard' | 'compact';
+    expression?: PerformanceNarrativeExpression;
     preview?: Snippet;
     artifact?: Snippet<[PerformanceNarrativeScene, number]>;
   }
@@ -41,6 +43,7 @@
     scenes,
     ariaLabel = 'Narrative scenes',
     density = 'compact',
+    expression = 'field',
     preview,
     artifact
   }: Props = $props();
@@ -124,6 +127,7 @@
   {id}
   class="performance-narrative-stage"
   data-density={density}
+  data-expression={expression}
   data-enhanced={enhanced}
   aria-label={ariaLabel}
 >
@@ -571,6 +575,89 @@
   .performance-narrative-stage__controls button:disabled {
     cursor: not-allowed;
     opacity: 0.42;
+  }
+
+  .performance-narrative-stage[data-expression='editorial'] {
+    padding-block: clamp(4rem, 7vw, 7rem);
+    border-block: 0;
+    background: var(--color-performance-paper, #f3f3f0);
+  }
+
+  .performance-narrative-stage[data-expression='editorial'] .performance-narrative-stage__inner {
+    width: min(
+      var(--content-width-performance-editorial, 90rem),
+      calc(100% - clamp(1rem, 3vw, 4rem))
+    );
+    gap: clamp(2rem, 5vw, 4.5rem);
+  }
+
+  .performance-narrative-stage[data-expression='editorial'] .performance-narrative-stage__header {
+    grid-template-columns: minmax(20rem, 1.05fr) minmax(18rem, 0.65fr);
+    padding-inline: clamp(0.75rem, 2vw, 2rem);
+  }
+
+  .performance-narrative-stage[data-expression='editorial'] h2,
+  .performance-narrative-stage[data-expression='editorial'] h3 {
+    font-family: var(--font-performance-editorial);
+    font-weight: 400;
+    letter-spacing: -0.035em;
+  }
+
+  .performance-narrative-stage[data-expression='editorial'] h2 {
+    max-width: 14ch;
+    font-size: clamp(3.25rem, 6vw, 6rem);
+    line-height: 0.94;
+  }
+
+  .performance-narrative-stage[data-expression='editorial']
+    .performance-narrative-stage__composition {
+    grid-template-columns: minmax(15rem, 0.3fr) minmax(0, 1fr);
+    overflow: hidden;
+    border-color: var(--color-performance-line, #d7d7d2);
+    border-radius: var(--radius-performance-editorial, 0.375rem);
+    background: var(--color-performance-panel, #fff);
+  }
+
+  .performance-narrative-stage[data-expression='editorial'] .performance-narrative-stage__index {
+    background: color-mix(in srgb, var(--color-performance-paper, #f3f3f0) 82%, white);
+  }
+
+  .performance-narrative-stage[data-expression='editorial']
+    .performance-narrative-stage__index
+    button[aria-selected='true'] {
+    background: var(--color-performance-panel, #fff);
+  }
+
+  .performance-narrative-stage[data-expression='editorial'] .performance-narrative-stage__panel {
+    gap: clamp(1.25rem, 3vw, 2.5rem);
+    padding: clamp(1.25rem, 4vw, 4rem);
+  }
+
+  .performance-narrative-stage[data-expression='editorial']
+    .performance-narrative-stage__scene-head
+    h3 {
+    max-width: 20ch;
+    font-size: clamp(2.5rem, 4.4vw, 4.75rem);
+    line-height: 0.95;
+  }
+
+  .performance-narrative-stage[data-expression='editorial']
+    .performance-narrative-stage__receipts
+    strong {
+    display: inline-flex;
+    min-height: 2rem;
+    align-items: center;
+    border-radius: var(--radius-performance-editorial, 0.375rem);
+    background: var(--color-performance-paper, #f3f3f0);
+    box-shadow: inset 3px 0 0 var(--color-performance-controlled, #0057b8);
+  }
+
+  @media (max-width: 63.99rem) {
+    .performance-narrative-stage[data-expression='editorial'] .performance-narrative-stage__header,
+    .performance-narrative-stage[data-expression='editorial']
+      .performance-narrative-stage__composition {
+      grid-template-columns: 1fr;
+    }
   }
 
   @media (min-width: 64rem) {

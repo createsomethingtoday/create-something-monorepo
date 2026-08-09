@@ -152,14 +152,36 @@ test('the campaign can preserve property-owned color without changing its defaul
   assert.match(campaign, /\[data-color-mode='natural'\][\s\S]*?filter: contrast\(1\.08\)/);
 });
 
-test('the homepage boundary artifact shows evidence without restating the scene introduction', () => {
-  assert.match(home, /<figure class="boundary-study__media">/);
-  assert.match(home, /<figcaption>Paper pressure study · Run \/ Wait \/ Stop<\/figcaption>/);
-  assert.match(home, /paper-boundary-authority\.webp/);
+test('the homepage operating story uses the shared Playbook to show Map, Build, and Control', () => {
+  assert.match(home, /eyebrow="One shared Playbook"/);
+  assert.match(home, /title="Map the play\. Build the system\. Keep control\."/);
+  assert.match(home, /label: 'Map'/);
+  assert.match(home, /label: 'Build'/);
+  assert.match(home, /label: 'Control'/);
+  assert.match(home, /<PlaybookField variant="services" embedded \/>/);
+  assert.doesNotMatch(home, /paper-boundary-authority\.webp/);
   assert.doesNotMatch(home, /class="boundary-study__copy"/);
   assert.match(home, /class="boundary-study__outcomes"/);
   assert.match(home, /class="boundary-study__metrics"/);
   assert.match(home, /class="boundary-study__receipt"/);
+  assert.match(home, /Approved work advances/);
+  assert.match(home, /Owner \/ gate \/ stop/);
+  assert.match(home, /client-owned Playbook/);
+});
+
+test('the Shared Playbook study stacks its court and proof legibly on mobile', () => {
+  assert.match(
+    home,
+    /@media \(max-width: 640px\)[\s\S]*?\.boundary-study\s*\{\s*grid-template-columns:\s*1fr/
+  );
+  assert.match(
+    home,
+    /@media \(max-width: 640px\)[\s\S]*?\.boundary-study__field\s*\{[\s\S]*?display:\s*block[\s\S]*?border-bottom:/
+  );
+  assert.match(
+    home,
+    /@media \(max-width: 640px\)[\s\S]*?\.boundary-study__metrics\s*\{\s*grid-template-columns:\s*1fr/
+  );
 });
 
 test('the shared readback derives a measured example and its limits from field-report truth', () => {

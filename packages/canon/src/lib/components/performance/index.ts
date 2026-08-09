@@ -18,6 +18,7 @@ export { default as PerformanceCampaignOpening } from './PerformanceCampaignOpen
 export { default as PerformancePaperStudioCanvas } from './PerformancePaperStudioCanvas.svelte';
 export type {
   PerformanceCampaignMedia,
+  PerformanceCampaignOpeningExpression,
   PerformanceCampaignOpeningMode,
   PerformanceCampaignProof,
   PerformanceCampaignVideo
@@ -74,6 +75,7 @@ export type {
 } from './PerformanceConversionHandoff.svelte';
 export { default as PerformanceNarrativeStage } from './PerformanceNarrativeStage.svelte';
 export type {
+  PerformanceNarrativeExpression,
   PerformanceNarrativeAction,
   PerformanceNarrativeScene,
   PerformanceNarrativeTone
