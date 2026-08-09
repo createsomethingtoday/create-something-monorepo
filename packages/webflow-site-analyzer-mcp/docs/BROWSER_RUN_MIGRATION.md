@@ -12,6 +12,8 @@ an execution adapter.
 | Public stateless analysis | Kitesurf, Chromium, Steel, Browserless | Use the lightweight engine first; preserve operational rollback during burn-in. |
 | Public screenshot | Kitesurf, Chromium, Steel, Browserless | Kitesurf screenshots are evidence-bearing but are not claimed to be pixel-identical. |
 | Pixel-sensitive screenshot | Chromium, Steel, Browserless | The caller declares `pixelSensitive: true`; Kitesurf is skipped before execution. |
+| WebGL or video | Chromium, Steel, Browserless | The caller declares `browserRequirement: 'webgl'` or `'video'`; Kitesurf is skipped before execution. |
+| Real-TLS or bot-challenge compatibility | Chromium, Steel, Browserless | The caller declares `browserRequirement: 'real-tls'` or `'bot-challenge'`; Kitesurf is skipped before execution. |
 | Persistent session | Chromium, Steel, Browserless | Kitesurf is stateless. |
 | Webflow Designer metadata | Chromium, Steel, Browserless | Designer extraction is authenticated/sessionful and uses keyboard/panel state. |
 
@@ -19,9 +21,11 @@ Webflow preview URLs and requests carrying browser cookies are classified as
 authenticated before execution and skip Kitesurf even when the operation is a
 general analysis call.
 
-Kitesurf is not selected for video, WebGL, real TLS bot challenges, persistent
-authentication, or pixel-sensitive acceptance. Operator Chrome remains the
-final verifier for consequential authenticated or visual acceptance work.
+Kitesurf is not selected for declared video, WebGL, real TLS, bot-challenge,
+persistent-authentication, or pixel-sensitive acceptance requirements. A
+Kitesurf failure on otherwise compatible work still escalates to Chromium and
+records the failed attempt separately. Operator Chrome remains the final
+verifier for consequential authenticated or visual acceptance work.
 
 ## Runtime configuration
 
@@ -37,7 +41,8 @@ isolate. Browser credentials are not copied into `process.env`. Direct CDP is
 used because arbitrary analyzer scripts and documented Kitesurf selection are
 not available through the binding-backed Quick Action interface. The Worker
 transport performs an authenticated WebSocket upgrade and redacts connection
-errors.
+errors. The MCP Worker also fails closed if its server authentication secret is
+missing, while keeping `/health` public.
 
 ## Receipts
 
@@ -56,9 +61,13 @@ This keeps billing uncertainty explicit.
 
 ## Fixed comparison verifier
 
-The corpus is frozen at `scripts/browser-run-corpus.json`. It covers a standards
-baseline, CREATE SOMETHING, a published Webflow site, a screenshot, a WebGL
-case that must fail Kitesurf and escalate, and a sessionful Chromium case.
+The corpus is frozen at `scripts/browser-run-corpus.json`. Version
+`2026-08-08.v2` covers a standards baseline, CREATE SOMETHING, a published
+Webflow site, a screenshot, declared WebGL work that must select Chromium before
+execution, a separate deliberate Kitesurf runtime-failure probe, and a
+sessionful Chromium case. Version v2 corrected the policy/probe distinction
+before any live baseline receipt existed; subsequent corpus changes require
+operator approval.
 
 ```bash
 pnpm run verify:browser-run:corpus
@@ -66,12 +75,14 @@ pnpm run verify:browser-run:corpus
 CLOUDFLARE_ACCOUNT_ID=... \
 CLOUDFLARE_BROWSER_RUN_API_TOKEN=... \
 STEEL_API_KEY=... \
+BROWSER_RUN_ENABLED=true \
 pnpm run verify:browser-run -- --output /tmp/browser-run-comparison.json
 ```
 
 The live verifier requires both Browser Run and an incumbent credential. It
-fails if engine selection differs from policy, the WebGL case omits its failed
-Kitesurf attempt, semantic analysis differs, or either screenshot is empty.
+fails if engine selection differs from policy, a declared Chromium requirement
+touches Kitesurf, the dedicated runtime-fallback probe omits its failed Kitesurf
+attempt, semantic analysis differs, or either screenshot is empty.
 Production acceptance requires two consecutive clean corpus runs after the
 merged deployment.
 
@@ -86,6 +97,10 @@ Before any production route change, secret creation/rotation, paid entitlement,
 or deployment, record explicit operator approval in CRE-1645. After rollback,
 verify `/health`, missing/invalid MCP authentication, and one incumbent corpus
 case. Restore `BROWSER_RUN_ENABLED=true` only through the same promotion gate.
+The package `deploy` script runs `scripts/remote-deploy-preflight.mjs` first and
+requires an explicit route switch, the selected primary credential, an
+incumbent rollback credential during burn-in, MCP authentication, and the
+Cloudflare deploy credential.
 
 ## Incumbent consumer audit
 

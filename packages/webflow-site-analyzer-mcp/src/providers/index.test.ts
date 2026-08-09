@@ -166,6 +166,29 @@ test('routes pixel-sensitive screenshots directly to Chromium', async () => {
   assert.deepEqual(chromium.calls, ['screenshot']);
 });
 
+test('routes declared Kitesurf-incompatible analysis directly to Chromium', async () => {
+  for (const browserRequirement of ['webgl', 'video', 'real-tls', 'bot-challenge'] as const) {
+    const kitesurf = createProvider('cloudflare-kitesurf', { engine: 'kitesurf' });
+    const chromium = createProvider('cloudflare-chromium', { engine: 'chromium' });
+    const manager = new ProviderManager({
+      primary: 'cloudflare-kitesurf',
+      providers: [kitesurf.provider, chromium.provider],
+      routes: { analyze: ['cloudflare-kitesurf', 'cloudflare-chromium'] },
+    });
+
+    const result = await manager.analyzeWithReceipt<{ engine: string }>(
+      'https://example.com',
+      'document.title',
+      { browserRequirement },
+    );
+
+    assert.equal(result.receipt.capability, browserRequirement);
+    assert.equal(result.receipt.selectedProvider, 'cloudflare-chromium');
+    assert.deepEqual(kitesurf.calls, []);
+    assert.deepEqual(chromium.calls, ['analyze']);
+  }
+});
+
 test('records the failed Kitesurf attempt and selected Chromium fallback', async () => {
   const kitesurf = createProvider(
     'cloudflare-kitesurf',
@@ -286,6 +309,7 @@ test('keeps fallback selection local to one request while another request is run
 
 test('builds the declared Cloudflare-first routes while retaining configured incumbents', () => {
   const manager = createProviderManager({
+    cloudflareBrowserRunEnabled: true,
     cloudflareAccountId: 'account-123',
     cloudflareBrowserRunApiToken: 'secret-token',
     steelApiKey: 'steel-token',
@@ -299,6 +323,20 @@ test('builds the declared Cloudflare-first routes while retaining configured inc
   assert.deepEqual(
     manager.getHealthMetrics().map(({ provider }) => provider),
     ['cloudflare-kitesurf', 'cloudflare-chromium', 'steel', 'browserless'],
+  );
+});
+
+test('requires the explicit route switch before Browser Run credentials become active', () => {
+  const manager = createProviderManager({
+    cloudflareAccountId: 'account-123',
+    cloudflareBrowserRunApiToken: 'secret-token',
+    steelApiKey: 'steel-token',
+  });
+
+  assert.equal(manager.getProviderName(), 'steel');
+  assert.deepEqual(
+    manager.getHealthMetrics().map(({ provider }) => provider),
+    ['steel'],
   );
 });
 

@@ -245,6 +245,7 @@ Hosted client config:
 
 Notes:
 - `WEBFLOW_SITE_ANALYZER_MCP_API_KEY` is preferred for remote auth. `MCP_API_KEY` is still accepted as a fallback.
+- Cloudflare Worker MCP requests fail closed when neither server auth secret is configured; `/health` remains public for readiness checks.
 - `WEBFLOW_ANALYZER_REGISTRY_PATH` lets a hosted Node process keep script-version state outside the repo checkout.
 - The Hub registry points at the remote HTTP analyzer endpoint. The Phase B reviewer bundle also includes the remote `webflow-local` compatibility entry for plagiarism and framework analysis.
 

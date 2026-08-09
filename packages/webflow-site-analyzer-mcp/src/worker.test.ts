@@ -13,6 +13,7 @@ const env = {
 
 test('health reports Browser Run routing readiness without exposing secrets', () => {
   const body = createBrowserRoutingHealth({
+    cloudflareBrowserRunEnabled: true,
     cloudflareAccountId: env.CLOUDFLARE_ACCOUNT_ID,
     cloudflareBrowserRunApiToken: env.CLOUDFLARE_BROWSER_RUN_API_TOKEN,
     steelApiKey: env.STEEL_API_KEY,
@@ -40,4 +41,13 @@ test('MCP remains fail-closed when Browser Run is configured', () => {
 
   assert.equal(isWorkerRequestAuthorized(missing, env), false);
   assert.equal(isWorkerRequestAuthorized(invalid, env), false);
+});
+
+test('MCP Worker fails closed when the server auth secret is absent', () => {
+  const request = new Request('https://analyzer.example/mcp', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer attacker-controlled' },
+  });
+
+  assert.equal(isWorkerRequestAuthorized(request, {}), false);
 });

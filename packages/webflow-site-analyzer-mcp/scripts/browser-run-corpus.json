@@ -1,6 +1,6 @@
 {
-  "version": "2026-08-08.v1",
-  "frozenAt": "2026-08-08T00:00:00.000Z",
+  "version": "2026-08-08.v2",
+  "frozenAt": "2026-08-08T22:30:00.000-05:00",
   "cases": [
     {
       "id": "standards-baseline",
@@ -27,9 +27,19 @@
       "expectedEngine": "cloudflare-kitesurf"
     },
     {
-      "id": "webgl-forced-escalation",
+      "id": "webgl-declared-chromium",
       "url": "https://threejs.org/examples/webgl_animation_keyframes.html",
-      "operation": "webgl-analyze",
+      "operation": "analyze",
+      "script": "webgl",
+      "browserRequirement": "webgl",
+      "expectedEngine": "cloudflare-chromium"
+    },
+    {
+      "id": "kitesurf-runtime-fallback-probe",
+      "url": "https://threejs.org/examples/webgl_animation_keyframes.html",
+      "operation": "analyze",
+      "script": "webgl",
+      "expectKitesurfFailure": true,
       "expectedEngine": "cloudflare-chromium"
     },
     {

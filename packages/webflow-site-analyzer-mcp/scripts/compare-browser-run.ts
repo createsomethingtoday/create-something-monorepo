@@ -8,17 +8,22 @@ import {
   type BrowserOperationResult,
   type ProviderManager,
 } from '../src/providers/index.js';
+import type { BrowserRequirement } from '../src/types.js';
 import {
   createBrowserExecutionReceipt,
   type BrowserExecutionReceipt,
 } from '../src/providers/browser-execution-receipt.js';
 
-type CorpusOperation = 'analyze' | 'screenshot' | 'webgl-analyze' | 'openSession';
+type CorpusOperation = 'analyze' | 'screenshot' | 'openSession';
+type CorpusScript = 'standard' | 'webgl';
 
 interface CorpusCase {
   id: string;
   url: string;
   operation: CorpusOperation;
+  script?: CorpusScript;
+  browserRequirement?: BrowserRequirement;
+  expectKitesurfFailure?: boolean;
   expectedEngine: 'cloudflare-kitesurf' | 'cloudflare-chromium';
 }
 
@@ -95,9 +100,12 @@ async function execute(
   } else {
     operation = await manager.analyzeWithReceipt(
       corpusCase.url,
-      corpusCase.operation === 'webgl-analyze'
+      corpusCase.script === 'webgl'
         ? WEBGL_ANALYSIS_SCRIPT
         : STANDARD_ANALYSIS_SCRIPT,
+      corpusCase.browserRequirement
+        ? { browserRequirement: corpusCase.browserRequirement }
+        : undefined,
     );
   }
 
@@ -124,6 +132,19 @@ async function main(): Promise<void> {
     if (!corpus.version || corpus.cases.length < 5) {
       throw new Error('Browser Run corpus must have a version and at least five cases');
     }
+    const caseIds = new Set<string>();
+    for (const corpusCase of corpus.cases) {
+      if (caseIds.has(corpusCase.id)) {
+        throw new Error(`Browser Run corpus contains duplicate case ID: ${corpusCase.id}`);
+      }
+      caseIds.add(corpusCase.id);
+      if (corpusCase.browserRequirement && corpusCase.expectedEngine !== 'cloudflare-chromium') {
+        throw new Error(`${corpusCase.id}: declared browser requirements must select Chromium`);
+      }
+      if (corpusCase.browserRequirement && corpusCase.expectKitesurfFailure) {
+        throw new Error(`${corpusCase.id}: direct Chromium classification and fallback proof must be separate cases`);
+      }
+    }
     console.log(`valid browser corpus ${corpus.version}: ${corpus.cases.length} cases`);
     return;
   }
@@ -136,6 +157,9 @@ async function main(): Promise<void> {
     process.env.CLOUDFLARE_BROWSER_RUN_API_TOKEN,
     'CLOUDFLARE_BROWSER_RUN_API_TOKEN',
   );
+  if (process.env.BROWSER_RUN_ENABLED !== 'true') {
+    throw new Error('BROWSER_RUN_ENABLED=true is required to authorize the Browser Run shadow route');
+  }
   const baselineConfigured = Boolean(
     process.env.STEEL_API_KEY
     || process.env.BROWSERLESS_TOKEN
@@ -146,6 +170,7 @@ async function main(): Promise<void> {
   }
 
   const routed = createProviderManager({
+    cloudflareBrowserRunEnabled: true,
     cloudflareAccountId,
     cloudflareBrowserRunApiToken,
   });
@@ -159,22 +184,33 @@ async function main(): Promise<void> {
     const routedRun = await execute(routed, corpusCase);
     const baselineRun = await execute(baseline, corpusCase);
     const selectedAsExpected = routedRun.receipt.selectedProvider === corpusCase.expectedEngine;
+    const classifiedAsExpected = !corpusCase.browserRequirement
+      || (
+        routedRun.receipt.capability === corpusCase.browserRequirement
+        && !routedRun.receipt.attempts.some((attempt) =>
+          attempt.provider === 'cloudflare-kitesurf'
+        )
+      );
     const semanticEquivalent = corpusCase.operation === 'screenshot'
       ? (routedRun.result as { byteLength: number }).byteLength > 0
         && (baselineRun.result as { byteLength: number }).byteLength > 0
       : corpusCase.operation === 'openSession'
         ? true
         : stableJson(routedRun.result) === stableJson(baselineRun.result);
-    const fallbackProven = corpusCase.operation !== 'webgl-analyze'
+    const fallbackProven = !corpusCase.expectKitesurfFailure
       || routedRun.receipt.attempts.some((attempt) =>
         attempt.provider === 'cloudflare-kitesurf' && attempt.outcome === 'failure'
       );
-    const casePassed = selectedAsExpected && semanticEquivalent && fallbackProven;
+    const casePassed = selectedAsExpected
+      && classifiedAsExpected
+      && semanticEquivalent
+      && fallbackProven;
     passed &&= casePassed;
     cases.push({
       ...corpusCase,
       passed: casePassed,
       selectedAsExpected,
+      classifiedAsExpected,
       semanticEquivalent,
       fallbackProven,
       routed: routedRun,

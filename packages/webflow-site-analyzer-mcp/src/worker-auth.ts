@@ -19,7 +19,7 @@ function parseBearerToken(request: Request): string | null {
 
 export function isWorkerRequestAuthorized(request: Request, env: WorkerAuthEnv): boolean {
   const configuredToken = getWorkerApiKey(env);
-  if (!configuredToken) return true;
+  if (!configuredToken) return false;
 
   const suppliedToken = parseBearerToken(request)
     ?? request.headers.get('x-api-key')?.trim()

@@ -8,7 +8,13 @@
  * - browserless: Browserless.io - retained as an operational fallback
  */
 
-import type { AnalyzeOptions, BrowserProvider, BrowserSessionInit, ProviderHealthMetrics } from '../types.js';
+import type {
+  AnalyzeOptions,
+  BrowserProvider,
+  BrowserRequirement,
+  BrowserSessionInit,
+  ProviderHealthMetrics,
+} from '../types.js';
 import { createBrowserlessProvider } from './browserless.js';
 import {
   createCloudflareBrowserRunProvider,
@@ -27,7 +33,8 @@ export type BrowserCapability =
   | 'visual-public'
   | 'pixel-sensitive'
   | 'designer-authenticated'
-  | 'sessionful';
+  | 'sessionful'
+  | BrowserRequirement;
 
 const DEFAULT_OPERATION_CAPABILITIES: Record<BrowserOperation, BrowserCapability> = {
   analyze: 'stateless-public',
@@ -35,6 +42,16 @@ const DEFAULT_OPERATION_CAPABILITIES: Record<BrowserOperation, BrowserCapability
   extractDesignerMetadata: 'designer-authenticated',
   openSession: 'sessionful',
 };
+
+const KITESURF_INCOMPATIBLE_CAPABILITIES = new Set<BrowserCapability>([
+  'pixel-sensitive',
+  'designer-authenticated',
+  'sessionful',
+  'webgl',
+  'video',
+  'real-tls',
+  'bot-challenge',
+]);
 
 export interface BrowserRouteAttempt {
   provider: string;
@@ -380,11 +397,7 @@ export class ProviderManager {
     route: string[],
     capability: BrowserCapability,
   ): string[] {
-    if (
-      capability === 'sessionful'
-      || capability === 'designer-authenticated'
-      || capability === 'pixel-sensitive'
-    ) {
+    if (KITESURF_INCOMPATIBLE_CAPABILITIES.has(capability)) {
       return route.filter((provider) => provider !== 'cloudflare-kitesurf');
     }
     return [...route];
@@ -401,6 +414,7 @@ export class ProviderManager {
     if (options?.cookies?.length || url?.includes('preview.webflow.com/preview/')) {
       return 'designer-authenticated';
     }
+    if (options?.browserRequirement) return options.browserRequirement;
     return this.capabilities[operationName];
   }
 
@@ -471,7 +485,7 @@ export { createSteelBrowserProvider } from './steel.js';
 
 function runtimeConfigFromEnv(): BrowserProviderRuntimeConfig {
   return {
-    cloudflareBrowserRunEnabled: process.env.BROWSER_RUN_ENABLED !== 'false',
+    cloudflareBrowserRunEnabled: process.env.BROWSER_RUN_ENABLED === 'true',
     cloudflareAccountId: process.env.CLOUDFLARE_ACCOUNT_ID || process.env.CF_ACCOUNT_ID,
     cloudflareBrowserRunApiToken:
       process.env.CLOUDFLARE_BROWSER_RUN_API_TOKEN
@@ -493,7 +507,7 @@ export function createProviderManager(
   runtimeConfig: BrowserProviderRuntimeConfig = runtimeConfigFromEnv(),
 ): ProviderManager {
   const cloudflareConfigured = Boolean(
-    runtimeConfig.cloudflareBrowserRunEnabled !== false
+    runtimeConfig.cloudflareBrowserRunEnabled === true
     && runtimeConfig.cloudflareAccountId
     && runtimeConfig.cloudflareBrowserRunApiToken,
   );

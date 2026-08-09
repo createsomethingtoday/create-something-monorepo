@@ -16,12 +16,23 @@ function formatNames(names) {
 
 const checks = [
   {
+    name: 'browser route switch',
+    ok: process.env.BROWSER_RUN_ENABLED === 'true' || process.env.BROWSER_RUN_ENABLED === 'false',
+    required: 'BROWSER_RUN_ENABLED=true or BROWSER_RUN_ENABLED=false',
+  },
+  {
     name: 'browser provider',
     ok:
-      (process.env.BROWSER_RUN_ENABLED !== 'false'
+      (process.env.BROWSER_RUN_ENABLED === 'true'
         && envPresent('CLOUDFLARE_BROWSER_RUN_API_TOKEN'))
-      || groupPresent(['STEEL_API_KEY', 'BROWSERLESS_TOKEN', 'BROWSERLESS_API_KEY']),
-    required: 'CLOUDFLARE_BROWSER_RUN_API_TOKEN or an incumbent rollback provider token',
+      || (process.env.BROWSER_RUN_ENABLED === 'false'
+        && groupPresent(['STEEL_API_KEY', 'BROWSERLESS_TOKEN', 'BROWSERLESS_API_KEY'])),
+    required: 'CLOUDFLARE_BROWSER_RUN_API_TOKEN when enabled, or an incumbent token when disabled',
+  },
+  {
+    name: 'incumbent rollback provider',
+    ok: groupPresent(['STEEL_API_KEY', 'BROWSERLESS_TOKEN', 'BROWSERLESS_API_KEY']),
+    required: 'STEEL_API_KEY, BROWSERLESS_TOKEN, or BROWSERLESS_API_KEY during Browser Run burn-in',
   },
   {
     name: 'MCP auth token',

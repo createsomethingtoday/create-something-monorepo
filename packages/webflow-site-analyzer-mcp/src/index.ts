@@ -187,7 +187,7 @@ function isBrowserAutomationSupported(): boolean {
     );
   }
   return Boolean(
-    config.cloudflareBrowserRunEnabled !== false
+    config.cloudflareBrowserRunEnabled === true
     && config.cloudflareAccountId
     && config.cloudflareBrowserRunApiToken
     || config.steelApiKey

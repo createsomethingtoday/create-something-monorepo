@@ -19,7 +19,7 @@
     "verify:browser-run": "tsx scripts/compare-browser-run.ts",
     "verify:browser-run:corpus": "tsx scripts/compare-browser-run.ts --validate",
     "test:classifier": "pnpm build && infisical run -- node scripts/test-url-classifier-live.mjs",
-    "deploy": "wrangler deploy",
+    "deploy": "node scripts/remote-deploy-preflight.mjs && wrangler deploy",
     "deploy:secrets": "echo 'Set secrets with: wrangler secret put CLOUDFLARE_BROWSER_RUN_API_TOKEN && wrangler secret put WEBFLOW_SITE_ANALYZER_MCP_API_KEY && wrangler secret put WEBFLOW_OPENAI_API_KEY; keep STEEL_API_KEY during rollback burn-in'",
     "dev:worker": "wrangler dev",
     "lint": "pnpm run typecheck",

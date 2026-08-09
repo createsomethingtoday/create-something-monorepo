@@ -15,7 +15,7 @@ export function createBrowserRoutingHealth(
   activeProvider: string | null,
 ): BrowserRoutingHealth {
   const browserRunConfigured = Boolean(
-    config?.cloudflareBrowserRunEnabled !== false
+    config?.cloudflareBrowserRunEnabled === true
     && config?.cloudflareAccountId
     && config.cloudflareBrowserRunApiToken,
   );

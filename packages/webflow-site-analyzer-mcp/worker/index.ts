@@ -69,7 +69,7 @@ function configureRuntime(env: Env): void {
     runtime: 'worker',
     apiKey: getWorkerApiKey(env) ?? undefined,
     browserProvider: {
-      cloudflareBrowserRunEnabled: env.BROWSER_RUN_ENABLED !== 'false',
+      cloudflareBrowserRunEnabled: env.BROWSER_RUN_ENABLED === 'true',
       cloudflareAccountId: env.CLOUDFLARE_ACCOUNT_ID,
       cloudflareBrowserRunApiToken: env.CLOUDFLARE_BROWSER_RUN_API_TOKEN,
       steelApiKey: env.STEEL_API_KEY,

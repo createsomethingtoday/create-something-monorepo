@@ -209,6 +209,8 @@ export interface BrowserProviderConfig {
   retries?: number;
 }
 
+export type BrowserRequirement = 'webgl' | 'video' | 'real-tls' | 'bot-challenge';
+
 export interface AnalyzeOptions {
   waitForSelector?: string;
   waitForNavigation?: boolean;
@@ -223,6 +225,8 @@ export interface AnalyzeOptions {
   quality?: number;
   // Force Chromium when screenshots are used as pixel-sensitive acceptance evidence.
   pixelSensitive?: boolean;
+  // Declare a documented Kitesurf incompatibility so routing selects Chromium before execution.
+  browserRequirement?: BrowserRequirement;
 }
 
 export interface BrowserSessionInit {
