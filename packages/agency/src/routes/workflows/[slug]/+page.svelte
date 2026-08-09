@@ -30,14 +30,22 @@
 
 <article class="guide-shell" data-performance-mode="proof">
   <header class="guide-opening">
-    <a class="guide-back" href="/workflows">Workflow guides</a>
+    <a class="guide-back" href="/workflows">Operator playbook</a>
     <p class="guide-eyebrow">{guide.eyebrow}</p>
     <h1>{guide.title}</h1>
     <p class="guide-answer">{guide.directAnswer}</p>
     <div class="guide-actions">
-      <Button href="#operating-path">Use the operating path</Button>
+      <Button href="#operating-path">Run the play</Button>
       <Button href="/map" variant="secondary">Start a private workflow draft</Button>
     </div>
+    <aside class="guide-route" aria-label="Operator playbook route">
+      <span>Playbook route</span>
+      <ol>
+        <li><i class="guide-route__mark guide-route__mark--ring" aria-hidden="true">O</i><strong>Read signal</strong></li>
+        <li><i class="guide-route__mark guide-route__mark--cross" aria-hidden="true">×</i><strong>Run play</strong></li>
+        <li><i class="guide-route__mark guide-route__mark--ring" aria-hidden="true">O</i><strong>Review receipt</strong></li>
+      </ol>
+    </aside>
     <dl class="guide-decision">
       <div>
         <dt>Good fit</dt>
@@ -51,9 +59,9 @@
   </header>
 
   <section class="guide-section guide-signals" aria-labelledby="signals-heading">
-    <div class="section-label">01 / Recognize the work</div>
+    <div class="section-label">01 / Read the signal</div>
     <div>
-      <h2 id="signals-heading">Signals this guide applies</h2>
+      <h2 id="signals-heading">Signals this play applies</h2>
       <ul>
         {#each guide.signals as signal}
           <li>{signal}</li>
@@ -63,9 +71,9 @@
   </section>
 
   <section id="operating-path" class="guide-section" aria-labelledby="path-heading">
-    <div class="section-label">02 / Operating path</div>
+    <div class="section-label">02 / Run the play</div>
     <div>
-      <h2 id="path-heading">A bounded way to proceed</h2>
+      <h2 id="path-heading">A bounded way to move</h2>
       <ol class="step-list">
         {#each guide.steps as step, index}
           <li>
@@ -81,9 +89,9 @@
   </section>
 
   <section class="guide-section" aria-labelledby="artifacts-heading">
-    <div class="section-label">03 / What remains</div>
+    <div class="section-label">03 / Keep the system</div>
     <div>
-      <h2 id="artifacts-heading">Artifacts an operator can inspect</h2>
+      <h2 id="artifacts-heading">Playbook artifacts an operator can inspect</h2>
       <div class="artifact-grid">
         {#each guide.artifacts as artifact}
           <article>
@@ -96,9 +104,9 @@
   </section>
 
   <section class="guide-section" aria-labelledby="proof-heading">
-    <div class="section-label">04 / Owned evidence</div>
+    <div class="section-label">04 / Review the receipt</div>
     <div>
-      <h2 id="proof-heading">Follow the claim to a working surface</h2>
+      <h2 id="proof-heading">Follow the claim to live proof</h2>
       <div class="proof-list">
         {#each guide.proofLinks as proof}
           <a href={proof.href}>
@@ -111,7 +119,7 @@
   </section>
 
   <section class="guide-section" aria-labelledby="faq-heading">
-    <div class="section-label">05 / Direct answers</div>
+    <div class="section-label">05 / Operator questions</div>
     <div>
       <h2 id="faq-heading">Questions operators ask</h2>
       <div class="faq-list">
@@ -126,7 +134,7 @@
   </section>
 
   <footer class="guide-related">
-    <p class="section-label">Related workflow guides</p>
+    <p class="section-label">Next plays</p>
     <div>
       {#each data.related as related}
         <a href={`/workflows/${related.slug}`}>
@@ -207,6 +215,67 @@
     flex-wrap: wrap;
     gap: var(--space-performance-xs);
     margin-top: var(--space-performance-md);
+  }
+
+  .guide-route {
+    display: grid;
+    grid-template-columns: minmax(8rem, 0.3fr) minmax(0, 1fr);
+    gap: var(--space-performance-md);
+    align-items: center;
+    margin-top: var(--space-performance-lg);
+    padding: var(--space-performance-sm) 0;
+    border-top: 1px solid var(--guide-line);
+    border-bottom: 1px solid var(--guide-line);
+  }
+
+  .guide-route > span,
+  .guide-route strong {
+    font-family: var(--font-performance-mono);
+    font-size: var(--text-performance-caption);
+    line-height: var(--leading-performance-normal);
+    letter-spacing: var(--tracking-performance-widest);
+    text-transform: uppercase;
+  }
+
+  .guide-route > span {
+    color: var(--color-performance-muted);
+  }
+
+  .guide-route ol {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-performance-xs);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .guide-route li {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: var(--space-performance-xs);
+  }
+
+  .guide-route__mark {
+    display: grid;
+    width: 1.25rem;
+    height: 1.25rem;
+    flex: 0 0 auto;
+    place-items: center;
+    font-family: var(--font-performance-display);
+    font-size: var(--text-performance-body-md);
+    font-style: normal;
+    font-weight: var(--font-performance-display-weight);
+    line-height: 1;
+  }
+
+  .guide-route__mark--ring {
+    color: var(--color-performance-controlled);
+  }
+
+  .guide-route__mark--cross {
+    color: var(--color-performance-signal);
   }
 
   .guide-decision {
@@ -450,6 +519,11 @@
     .artifact-grid,
     .guide-related > div {
       grid-template-columns: 1fr;
+    }
+
+    .guide-route {
+      grid-template-columns: 1fr;
+      gap: var(--space-performance-xs);
     }
 
     .guide-decision div + div,

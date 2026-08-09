@@ -103,7 +103,7 @@ test('workflow FAQ questions are not mass-duplicated', () => {
   assert.equal(new Set(normalized(questions)).size, questions.length);
 });
 
-test('workflow route implementation is prerendered, indexable, and Paper-native', () => {
+test('workflow route implementation is prerendered, indexable, and playbook-native', () => {
   const routeServer = readFileSync(
     path.join(packageRoot, 'src/routes/workflows/[slug]/+page.server.ts'),
     'utf8'
@@ -123,9 +123,15 @@ test('workflow route implementation is prerendered, indexable, and Paper-native'
   assert.match(routePage, /breadcrumbs/);
   assert.match(routePage, /href="\/workflows"/);
   assert.match(hubPage, /<SEO/);
+  assert.match(hubPage, /Operator playbook/);
+  assert.match(hubPage, /Map the play\. Build the system\. Keep control\./);
+  assert.match(hubPage, /Signal → Decision → Proof/);
+  assert.match(routePage, /Playbook route/);
+  assert.match(routePage, /Run the play/);
   assert.match(layoutServer, /if \(building\)/);
   assert.match(layoutServer, /user: undefined/);
   assert.doesNotMatch(`${routeServer}\n${routePage}\n${hubPage}`, waterEraTerms);
+  assert.doesNotMatch(`${routePage}\n${hubPage}`, /\b(game day|winning|coach)\b/i);
 });
 
 test('workflow surfaces use the Performance token contract instead of local styling literals', () => {

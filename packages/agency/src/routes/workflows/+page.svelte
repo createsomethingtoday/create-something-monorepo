@@ -22,8 +22,8 @@
 </script>
 
 <SEO
-  title="AI Workflow Guides | CREATE SOMETHING .agency"
-  description="Twelve practical guides for mapping, building, securing, evaluating, and operating AI workflows and MCP systems with explicit ownership and proof."
+  title="AI Workflow Playbook | CREATE SOMETHING .agency"
+  description="Twelve practical playbook guides for operators mapping, building, and controlling AI workflows and MCP systems with explicit ownership and proof."
   keywords="AI workflow guides, MCP server development, AI workflow governance, human in the loop AI, Webflow Marketplace operations"
   canonical="https://createsomething.agency/workflows"
   {faqItems}
@@ -32,12 +32,40 @@
 
 <div class="library-shell" data-performance-mode="proof">
   <header class="library-opening">
-    <p>Workflow library / 12 operating guides</p>
-    <h1>Useful answers for work that must hold up under pressure.</h1>
+    <p>Operator playbook / 12 field guides</p>
+    <div class="library-opening__main">
+      <div>
+        <h1>Map the play. Build the system. Keep control.</h1>
+        <p class="library-opening__answer">
+          A practical playbook for the business handoffs that need to move faster without
+          losing the owner, the approval boundary, or the proof.
+        </p>
+      </div>
+      <aside class="playbook-field" aria-labelledby="playbook-field-title">
+        <div class="playbook-field__heading">
+          <span>One shared playbook</span>
+          <strong id="playbook-field-title">Signal → Decision → Proof</strong>
+        </div>
+        <ol aria-label="Map, Build, and Control operating route">
+          <li>
+            <span class="playbook-mark playbook-mark--ring" aria-hidden="true">O</span>
+            <div><strong>Map</strong><span>Name the handoff and the owner.</span></div>
+          </li>
+          <li>
+            <span class="playbook-mark playbook-mark--cross" aria-hidden="true">×</span>
+            <div><strong>Build</strong><span>Connect the system and its boundaries.</span></div>
+          </li>
+          <li>
+            <span class="playbook-mark playbook-mark--ring" aria-hidden="true">O</span>
+            <div><strong>Control</strong><span>Review the receipt and recover.</span></div>
+          </li>
+        </ol>
+      </aside>
+    </div>
     <div class="library-intro">
       <p>
-        Start with one business handoff. These guides show how to map the work, connect the systems,
-        place judgment, protect authority, and preserve proof.
+        Start with one live handoff. Each guide gives you a route to run, the operating artifacts to
+        keep, and the proof to inspect when conditions change.
       </p>
       <div>
         <Button href="#guides">Browse the guides</Button>
@@ -48,8 +76,8 @@
 
   <section id="guides" class="guide-index" aria-labelledby="guide-index-heading">
     <header>
-      <span>Choose by the decision you need to make</span>
-      <h2 id="guide-index-heading">Twelve bounded paths, not twelve keyword swaps.</h2>
+      <span>Choose the next play</span>
+      <h2 id="guide-index-heading">Twelve operating routes for work that has to hold up.</h2>
     </header>
 
     <ol>
@@ -71,21 +99,21 @@
 
   <section class="library-method" aria-labelledby="method-heading">
     <div>
-      <span>How to use the library</span>
-      <h2 id="method-heading">Read for a decision. Leave with an artifact.</h2>
+      <span>How to use the playbook</span>
+      <h2 id="method-heading">Read for a decision. Leave with a system your team can run.</h2>
     </div>
     <ol>
       <li>
-        <strong>Recognize</strong><span>Match the guide to an observed operating signal.</span>
+        <strong>Read the signal</strong><span>Match the guide to an observed operating signal.</span>
       </li>
       <li>
-        <strong>Bound</strong><span>Use the fit and pause conditions before choosing tools.</span>
+        <strong>Set the boundary</strong><span>Use the fit and pause conditions before choosing tools.</span>
       </li>
       <li>
-        <strong>Build</strong><span>Follow the operating path and keep the named artifacts.</span>
+        <strong>Run the play</strong><span>Follow the operating path and keep the named artifacts.</span>
       </li>
       <li>
-        <strong>Verify</strong><span
+        <strong>Review the receipt</strong><span
           >Follow each claim to Agency-owned proof and related guidance.</span
         >
       </li>
@@ -129,6 +157,14 @@
     padding-bottom: var(--space-performance-xl);
   }
 
+  .library-opening__main {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.44fr);
+    gap: var(--space-performance-xl);
+    align-items: end;
+    margin: var(--space-performance-2xl) 0 var(--space-performance-xl);
+  }
+
   .library-opening > p,
   .guide-index header > span,
   .library-method > div > span,
@@ -150,12 +186,100 @@
 
   h1 {
     max-width: 15ch;
-    margin: var(--space-performance-2xl) 0 var(--space-performance-xl);
+    margin: 0;
     font-family: var(--font-performance-display);
     font-size: var(--text-performance-display-xl);
     font-weight: var(--font-performance-display-weight);
     line-height: var(--leading-performance-display);
     letter-spacing: var(--tracking-performance-display);
+  }
+
+  .library-opening__answer {
+    max-width: 42rem;
+    margin: var(--space-performance-md) 0 0;
+    font-family: var(--font-performance-prose);
+    font-size: var(--text-performance-body-lg);
+    line-height: var(--leading-performance-relaxed);
+  }
+
+  .playbook-field {
+    border: 1px solid var(--library-line);
+    background: var(--color-performance-surface);
+  }
+
+  .playbook-field__heading {
+    display: grid;
+    gap: var(--space-performance-xs);
+    padding: var(--space-performance-md);
+    border-bottom: 1px solid var(--library-line);
+  }
+
+  .playbook-field__heading > span,
+  .playbook-field li > div > strong {
+    font-family: var(--font-performance-mono);
+    font-size: var(--text-performance-caption);
+    line-height: var(--leading-performance-normal);
+    letter-spacing: var(--tracking-performance-widest);
+    text-transform: uppercase;
+  }
+
+  .playbook-field__heading > span {
+    color: var(--color-performance-muted);
+  }
+
+  .playbook-field__heading > strong {
+    font-family: var(--font-performance-display);
+    font-size: var(--text-performance-h3);
+    font-weight: var(--font-performance-display-weight);
+    line-height: var(--leading-performance-tight);
+  }
+
+  .playbook-field ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .playbook-field li {
+    display: grid;
+    grid-template-columns: 2rem minmax(0, 1fr);
+    gap: var(--space-performance-sm);
+    align-items: center;
+    padding: var(--space-performance-sm) var(--space-performance-md);
+  }
+
+  .playbook-field li + li {
+    border-top: 1px solid var(--library-line);
+  }
+
+  .playbook-field li > div {
+    display: grid;
+    gap: calc(var(--space-performance-xs) / 2);
+  }
+
+  .playbook-field li > div > span {
+    font-family: var(--font-performance-prose);
+    font-size: var(--text-performance-body-sm);
+    line-height: var(--leading-performance-normal);
+  }
+
+  .playbook-mark {
+    display: grid;
+    width: 1.65rem;
+    height: 1.65rem;
+    place-items: center;
+    font-family: var(--font-performance-display);
+    font-size: var(--text-performance-h3);
+    font-weight: var(--font-performance-display-weight);
+    line-height: 1;
+  }
+
+  .playbook-mark--ring {
+    color: var(--color-performance-controlled);
+  }
+
+  .playbook-mark--cross {
+    color: var(--color-performance-signal);
   }
 
   .library-intro {
@@ -322,6 +446,7 @@
     }
 
     .library-intro,
+    .library-opening__main,
     .guide-index header,
     .library-method,
     .library-faq {
