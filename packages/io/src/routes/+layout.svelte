@@ -4,6 +4,7 @@
   import { afterNavigate, onNavigate, goto, invalidateAll } from '$app/navigation';
   import { Navigation, Footer, Analytics, ModeIndicator, LayoutSEO } from '@create-something/canon';
   import { UnifiedSearch } from '@create-something/canon/navigation';
+  import { getIoFooterHandoff } from '$lib/config/footerHandoff';
   import { page } from '$app/stores';
 
   // View Transitions API - Hermeneutic Navigation
@@ -48,6 +49,7 @@
 
   let { children, data } = $props();
   let mobileNavigationOpen = $state(false);
+  const footerHandoff = $derived(getIoFooterHandoff($page.url.pathname));
 
   // Handle logout
   async function handleLogout() {
@@ -210,7 +212,7 @@
 
     <Footer
       mode="io"
-      showNewsletter={true}
+      showNewsletter={footerHandoff.showNewsletter}
       turnstileSiteKey={data.turnstileSiteKey}
       newsletterTitle="Get the monthly research digest"
       newsletterDescription="Papers, experiments, and patterns—delivered."
@@ -222,12 +224,14 @@
         { label: 'About', href: '/about' },
         { label: 'Contact', href: '/contact' }
       ]}
-      footerCta={{
-        title: 'Ready to turn evidence into an operating decision?',
-        label: 'Bring the workflow to .agency',
-        href: 'https://createsomething.agency/practice?source=io&intent=research-to-practice',
-        description: 'Carry the paper, method, and open question into a bounded workflow map.'
-      }}
+      footerCta={footerHandoff.showCommercialCta
+        ? {
+            title: 'Ready to turn evidence into an operating decision?',
+            label: 'Bring the workflow to .agency',
+            href: 'https://createsomething.agency/practice?source=io&intent=research-to-practice',
+            description: 'Carry the paper, method, and open question into a bounded workflow map.'
+          }
+        : undefined}
       showSocial={true}
       isAuthenticated={!!data.user}
       visualStyle="editorial"
