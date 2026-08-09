@@ -146,6 +146,7 @@
     lede="Control operates one standard-risk environment from $900 per month after launch. Offense advances approved work. Defense holds exceptions, protects authority, and preserves recovery proof."
     density="compact"
     artifactOwnsMedia
+    artifactMobilePlacement="flow"
     proof={[
       { label: 'Signal', value: 'Watch' },
       { label: 'Decision', value: 'Route' },

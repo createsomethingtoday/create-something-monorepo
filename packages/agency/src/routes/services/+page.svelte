@@ -89,6 +89,7 @@
     lede="Bring one handoff your team still checks manually. We map its owners and limits, make approved Runbooks executable, and hand back the client-owned system."
     density="compact"
     artifactOwnsMedia
+    artifactMobilePlacement="flow"
     proof={[
       { label: 'Owner', value: 'Named' },
       { label: 'Protected action', value: 'Held' },
