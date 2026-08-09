@@ -69,7 +69,7 @@
     font-size: clamp(2.25rem, 4.8vw, 4.75rem);
     font-weight: 400;
     letter-spacing: -0.045em;
-    line-height: 0.95;
+    line-height: var(--leading-performance-editorial, 1.1);
   }
 
   dl {

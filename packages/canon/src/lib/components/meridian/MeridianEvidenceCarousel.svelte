@@ -91,7 +91,7 @@
     font-size: clamp(2.7rem, 5.5vw, 5.8rem);
     font-weight: 400;
     letter-spacing: -0.055em;
-    line-height: 0.91;
+    line-height: var(--leading-performance-editorial, 1.1);
   }
   .meridian-evidence__description {
     max-width: 42rem;

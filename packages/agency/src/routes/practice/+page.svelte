@@ -203,6 +203,7 @@
   </PerformanceNarrativeStage>
 
   <PerformanceConversionHandoff
+    expression="editorial"
     eyebrow="School + skeptical review"
     title="Finish with a Practice Receipt, not a certificate."
     description="Practice produces an inspectable workflow map, a tested authority envelope, and a review verdict you can act on. Skeptical review may support, revise, hold, or falsify the thesis. When you can name the workflow and accountable owner, the mapping-session path is ready."

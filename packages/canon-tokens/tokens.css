@@ -40,7 +40,12 @@
   --color-performance-fg-primary: #ffffff;
   --color-performance-fg-secondary: rgba(255, 255, 255, 0.8);
   --color-performance-fg-tertiary: rgba(255, 255, 255, 0.6);
-  --color-performance-fg-muted: rgba(255, 255, 255, 0.46); /* WCAG AA compliant: 4.56:1 on pure black */
+  --color-performance-fg-muted: rgba(
+    255,
+    255,
+    255,
+    0.46
+  ); /* WCAG AA compliant: 4.56:1 on pure black */
   --color-performance-fg-subtle: rgba(255, 255, 255, 0.2);
 
   /* Borders - Subtle separation */
@@ -75,21 +80,21 @@
   /* Semantic colors - Functional, not decorative
    * All colors are WCAG AA compliant (4.5:1+ on pure black).
    */
-  --color-performance-success: #44aa44;               /* 7.08:1 */
+  --color-performance-success: #44aa44; /* 7.08:1 */
   --color-performance-success-muted: rgba(68, 170, 68, 0.2);
   --color-performance-success-border: rgba(68, 170, 68, 0.3);
   --color-performance-success-bg: var(--color-performance-growth-soft);
   --color-performance-success-text: var(--color-performance-growth);
-  --color-performance-error: #d44d4d;                 /* 4.97:1 */
+  --color-performance-error: #d44d4d; /* 4.97:1 */
   --color-performance-error-muted: rgba(212, 77, 77, 0.2);
   --color-performance-error-border: rgba(212, 77, 77, 0.3);
-  --color-performance-warning: #aa8844;               /* 6.31:1 */
+  --color-performance-warning: #aa8844; /* 6.31:1 */
   --color-performance-warning-muted: rgba(170, 136, 68, 0.2);
   --color-performance-warning-border: rgba(170, 136, 68, 0.3);
   --color-performance-warning-background: var(--color-performance-gold-soft);
   --color-performance-warning-subtle: var(--color-performance-gold-soft);
   --color-performance-warning-text: var(--color-performance-gold);
-  --color-performance-info: #5082b9;                  /* 5.23:1 */
+  --color-performance-info: #5082b9; /* 5.23:1 */
   --color-performance-info-muted: rgba(80, 130, 185, 0.2);
   --color-performance-info-border: rgba(80, 130, 185, 0.3);
   --color-performance-info-subtle: var(--color-performance-signal-soft);
@@ -101,6 +106,12 @@
    * third-party brand identifiers.
    */
   --color-performance-paper: #f3f3f0;
+  /* Licensed editorial public system. Brand accent is not an approval state. */
+  --color-performance-editorial-dark: #181312;
+  --color-performance-editorial-dark-secondary: #2e2927;
+  --color-performance-editorial-light: #f3ebe4;
+  --color-performance-editorial-light-secondary: #d8cdbc;
+  --color-performance-editorial-brand: #fcaa2d;
   --color-performance-paper-fiber: rgb(9 9 9 / 0.035);
   --color-performance-paper-edge: #b6b6ae;
   --color-performance-paper-fold: #deded7;
@@ -174,6 +185,7 @@
   --shadow-performance-node: none;
   --radius-performance-sm: 0;
   --radius-performance-md: 4px;
+  --radius-performance-editorial: 0.375rem;
   --content-width-performance: 85rem;
   --space-performance-page-gutter: clamp(0.75rem, 2.5vw, 1.25rem);
   --height-performance-stage: 34rem;
@@ -192,7 +204,12 @@
   /* Interactive states */
   --color-performance-hover: rgba(255, 255, 255, 0.05);
   --color-performance-active: rgba(255, 255, 255, 0.1);
-  --color-performance-focus: rgba(255, 255, 255, 0.5); /* WCAG AA compliant: 5.28:1 for focus indicators */
+  --color-performance-focus: rgba(
+    255,
+    255,
+    255,
+    0.5
+  ); /* WCAG AA compliant: 5.28:1 for focus indicators */
   --color-performance-focus-ring: var(--color-performance-focus);
 
   /* Overlay - for modals, dialogs, backdrops */
@@ -290,7 +307,7 @@
    * | strong | 0.22    | rgba(255, 255, 255, 0.22) | High contrast edge    |
    */
   --glass-performance-border-subtle: rgba(255, 255, 255, 0.06);
-  --glass-performance-border-light: rgba(255, 255, 255, 0.10);
+  --glass-performance-border-light: rgba(255, 255, 255, 0.1);
   --glass-performance-border-medium: rgba(255, 255, 255, 0.15);
   --glass-performance-border-strong: rgba(255, 255, 255, 0.22);
 
@@ -415,9 +432,9 @@
   --color-performance-data-6-muted: rgba(250, 204, 21, 0.2);
 
   /* Rank colors - for leaderboards, medals, badges */
-  --color-performance-rank-gold: #ca8a04;              /* Gold/1st place */
+  --color-performance-rank-gold: #ca8a04; /* Gold/1st place */
   --color-performance-rank-gold-muted: rgba(202, 138, 4, 0.2);
-  --color-performance-rank-bronze: #c2410c;            /* Bronze/3rd place */
+  --color-performance-rank-bronze: #c2410c; /* Bronze/3rd place */
   --color-performance-rank-bronze-muted: rgba(194, 65, 12, 0.2);
 
   /* ==========================================================================
@@ -433,19 +450,26 @@
      ========================================================================== */
 
   /* Font families */
-  --font-performance-sans: Arial, "Helvetica Neue", Helvetica, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-performance-sans:
+    'Geist Variable', Arial, 'Helvetica Neue', Helvetica, system-ui, -apple-system,
+    BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-performance-heading: var(--font-performance-sans);
   --font-performance-display: var(--font-performance-sans);
-  --font-performance-mono: "IBM Plex Mono", "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas, monospace;
+  --font-performance-mono:
+    'IBM Plex Mono', 'SFMono-Regular', 'SF Mono', Menlo, Monaco, Consolas, monospace;
   --font-performance-display-weight: 500;
   --tracking-performance-display: -0.03em;
   --leading-performance-display: 0.94;
-  --font-performance-serif: Georgia, "Times New Roman", serif;
+  --leading-performance-editorial: 1.1;
+  --font-performance-serif: Georgia, 'Times New Roman', serif;
+  --font-performance-editorial: 'CS Editorial', Georgia, 'Times New Roman', serif;
   --font-performance-interface: var(--font-performance-sans);
   --font-performance-prose: var(--font-performance-sans);
   --font-performance-record: var(--font-performance-mono);
   --font-performance-topology-label: var(--font-performance-mono);
   --font-performance-code: var(--font-performance-mono);
+  /* Editorial is a single regular face; hierarchy comes from scale and space, never faux bold. */
+  --font-performance-editorial-weight: 400;
 
   /* Font weights */
   --font-performance-light: 300;
@@ -489,22 +513,22 @@
    * | caption    | 1.2⁻¹ | 0.833   | 1 / 1.2        |
    * | overline   | φ⁻¹   | 0.618   | 1 / φ          |
    */
-  --text-performance-display-xl: clamp(4.236rem, 6vw + 2rem, 6.854rem);  /* φ⁴ max */
-  --text-performance-display: clamp(2.618rem, 4vw + 1.5rem, 4.236rem);   /* φ³ max */
+  --text-performance-display-xl: clamp(4.236rem, 6vw + 2rem, 6.854rem); /* φ⁴ max */
+  --text-performance-display: clamp(2.618rem, 4vw + 1.5rem, 4.236rem); /* φ³ max */
   --text-performance-display-sm: clamp(1.618rem, 3vw + 1rem, 2.618rem);
-  --text-performance-h1: clamp(1.618rem, 3vw + 1rem, 2.618rem);          /* φ² max */
-  --text-performance-h2: clamp(1.2rem, 2vw + 0.5rem, 1.618rem);          /* φ¹ max */
-  --text-performance-h3: clamp(1.02rem, 1vw + 0.5rem, 1.2rem);           /* 1.2¹ max */
-  --text-performance-h4: clamp(0.931rem, 0.5vw + 0.5rem, 1.095rem);      /* √1.2 max */
-  --text-performance-h5: 1rem;                                            /* base */
-  --text-performance-h6: 0.913rem;                                        /* 1/√1.2 */
-  --text-performance-body-lg: 1.095rem;                                   /* √1.2 */
+  --text-performance-h1: clamp(1.618rem, 3vw + 1rem, 2.618rem); /* φ² max */
+  --text-performance-h2: clamp(1.2rem, 2vw + 0.5rem, 1.618rem); /* φ¹ max */
+  --text-performance-h3: clamp(1.02rem, 1vw + 0.5rem, 1.2rem); /* 1.2¹ max */
+  --text-performance-h4: clamp(0.931rem, 0.5vw + 0.5rem, 1.095rem); /* √1.2 max */
+  --text-performance-h5: 1rem; /* base */
+  --text-performance-h6: 0.913rem; /* 1/√1.2 */
+  --text-performance-body-lg: 1.095rem; /* √1.2 */
   --text-performance-body-md: 1rem;
-  --text-performance-body: 1rem;                                          /* base */
-  --text-performance-body-sm: 0.913rem;                                   /* 1/√1.2 */
-  --text-performance-caption: 0.833rem;                                   /* 1/1.2 */
+  --text-performance-body: 1rem; /* base */
+  --text-performance-body-sm: 0.913rem; /* 1/√1.2 */
+  --text-performance-caption: 0.833rem; /* 1/1.2 */
   --text-performance-caption-xs: 0.625rem;
-  --text-performance-overline: 0.618rem;                                  /* 1/φ */
+  --text-performance-overline: 0.618rem; /* 1/φ */
   --text-performance-record: var(--text-performance-body-sm);
   --text-performance-record-meta: var(--text-performance-caption);
   --text-performance-operator-label: 0.72rem;
@@ -530,7 +554,7 @@
   --text-performance-watermark-lg: clamp(10rem, 30vw, 30rem);
   --text-performance-watermark-md: clamp(6rem, 20vw, 20rem);
   --text-performance-watermark-sm: clamp(4rem, 15vw, 15rem);
-  --text-performance-watermark-mobile: clamp(4rem, 20vw, 15rem);  /* Responsive mobile variant */
+  --text-performance-watermark-mobile: clamp(4rem, 20vw, 15rem); /* Responsive mobile variant */
 
   /* ==========================================================================
      Spacing - Golden Ratio (φ = 1.618)
@@ -547,13 +571,13 @@
      | 3xl  | φ⁵    | 11.090  | φ⁵         |
      ========================================================================== */
 
-  --space-performance-xs: 0.618rem;   /* φ⁻¹ */
-  --space-performance-sm: 1rem;       /* φ⁰ (base) */
-  --space-performance-md: 1.618rem;   /* φ¹ */
-  --space-performance-lg: 2.618rem;   /* φ² */
-  --space-performance-xl: 4.236rem;   /* φ³ */
-  --space-performance-2xl: 6.854rem;  /* φ⁴ */
-  --space-performance-3xl: 11.09rem;  /* φ⁵ */
+  --space-performance-xs: 0.618rem; /* φ⁻¹ */
+  --space-performance-sm: 1rem; /* φ⁰ (base) */
+  --space-performance-md: 1.618rem; /* φ¹ */
+  --space-performance-lg: 2.618rem; /* φ² */
+  --space-performance-xl: 4.236rem; /* φ³ */
+  --space-performance-2xl: 6.854rem; /* φ⁴ */
+  --space-performance-3xl: 11.09rem; /* φ⁵ */
 
   /* ==========================================================================
      Border Radius - 4px Base Unit
@@ -573,11 +597,11 @@
      | full | ∞          | —           | 9999px | Pills, avatars      |
      ========================================================================== */
 
-  --radius-performance-scale-sm: 6px;    /* 4 × 1.5 */
-  --radius-performance-scale-md: 8px;    /* 4 × 2 */
-  --radius-performance-scale-lg: 12px;   /* 4 × 3 */
-  --radius-performance-scale-xl: 16px;   /* 4 × 4 */
-  --radius-performance-scale-2xl: 24px;  /* 4 × 6 */
+  --radius-performance-scale-sm: 6px; /* 4 × 1.5 */
+  --radius-performance-scale-md: 8px; /* 4 × 2 */
+  --radius-performance-scale-lg: 12px; /* 4 × 3 */
+  --radius-performance-scale-xl: 16px; /* 4 × 4 */
+  --radius-performance-scale-2xl: 24px; /* 4 × 6 */
   --radius-performance-scale-full: 9999px;
 
   /* ==========================================================================
@@ -605,9 +629,12 @@
 
   --shadow-performance-scale-none: none;
   --shadow-performance-scale-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
-  --shadow-performance-scale-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.5);
-  --shadow-performance-scale-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.5);
-  --shadow-performance-scale-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+  --shadow-performance-scale-md:
+    0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.5);
+  --shadow-performance-scale-lg:
+    0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.5);
+  --shadow-performance-scale-xl:
+    0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
   --shadow-performance-scale-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.75);
 
   /* Glow shadows - DERIVED: blur doubles per step (10, 20, 40)
@@ -646,9 +673,9 @@
    *
    * See easing.ts for mathematical derivation of control points.
    */
-  --ease-performance-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
-  --ease-performance-decelerate: cubic-bezier(0.0, 0.0, 0.2, 1);
-  --ease-performance-accelerate: cubic-bezier(0.4, 0.0, 1, 1);
+  --ease-performance-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-performance-decelerate: cubic-bezier(0, 0, 0.2, 1);
+  --ease-performance-accelerate: cubic-bezier(0.4, 0, 1, 1);
 
   /* Duration - perceptual thresholds
    *
@@ -670,7 +697,7 @@
    */
   --duration-performance-instant: 100ms;
   --duration-performance-micro: 200ms;
-  --duration-performance-fast: 200ms;     /* Alias for --duration-performance-micro (common naming expectation) */
+  --duration-performance-fast: 200ms; /* Alias for --duration-performance-micro (common naming expectation) */
   --duration-performance-standard: 300ms;
   --duration-performance-complex: 500ms;
   --duration-performance-slow: 700ms;
@@ -807,11 +834,11 @@
      - 26 × φ = 42rem ≈ 66-75 chars (optimal reading)
      - 20rem = 320px, classic mobile viewport
      ========================================================================== */
-  --width-performance-tight: 16.07rem;   /* 26 / φ - narrow sidebars */
-  --width-performance-narrow: 32.36rem;  /* 20 × φ - narrow content */
-  --width-performance-prose: 42rem;      /* 26 × φ - optimal reading (66-75 chars) */
+  --width-performance-tight: 16.07rem; /* 26 / φ - narrow sidebars */
+  --width-performance-narrow: 32.36rem; /* 20 × φ - narrow content */
+  --width-performance-prose: 42rem; /* 26 × φ - optimal reading (66-75 chars) */
   --width-performance-content: 52.36rem; /* 20 × φ² - content sections */
-  --width-performance-wide: 68rem;       /* 26 × φ² - full-width content */
+  --width-performance-wide: 68rem; /* 26 × φ² - full-width content */
 
   /* ==========================================================================
      View Transitions
@@ -1069,7 +1096,7 @@
    Apply via: <html data-theme="light"> or .theme-light
    ========================================================================== */
 
-[data-theme="light"],
+[data-theme='light'],
 .theme-light {
   --color-performance-bg-pure: #ffffff;
   --color-performance-bg-elevated: #fafafa;
@@ -1162,21 +1189,21 @@
      * Mobile display: 1.75rem (28px) min ensures comfortable reading
      * On 375px screen: 5vw = 18.75px, +0.5rem = 26.75px → clamps to 28px min
      */
-    --text-performance-display-xl: clamp(2.25rem, 7vw + 0.75rem, 3.5rem);   /* 36px - 56px */
-    --text-performance-display: clamp(1.75rem, 5vw + 0.5rem, 2.25rem);      /* 28px - 36px */
-    
+    --text-performance-display-xl: clamp(2.25rem, 7vw + 0.75rem, 3.5rem); /* 36px - 56px */
+    --text-performance-display: clamp(1.75rem, 5vw + 0.5rem, 2.25rem); /* 28px - 36px */
+
     /* Heading text - slightly reduced for mobile hierarchy
      * H1 needs room to breathe on mobile without overwhelming
      */
-    --text-performance-h1: clamp(1.375rem, 3.5vw + 0.5rem, 1.75rem);        /* 22px - 28px */
-    --text-performance-h2: clamp(1.125rem, 2.5vw + 0.5rem, 1.375rem);       /* 18px - 22px */
-    
+    --text-performance-h1: clamp(1.375rem, 3.5vw + 0.5rem, 1.75rem); /* 22px - 28px */
+    --text-performance-h2: clamp(1.125rem, 2.5vw + 0.5rem, 1.375rem); /* 18px - 22px */
+
     /* Small text - increased minimums for mobile readability
      * WCAG recommends 14px+ for body text
      * Original caption: 0.833rem (13.3px) - too small on mobile
      * Original overline: 0.618rem (9.9px) - much too small
      */
-    --text-performance-caption: 0.875rem;                                   /* 14px - readable */
-    --text-performance-overline: 0.75rem;                                   /* 12px - minimum readable */
+    --text-performance-caption: 0.875rem; /* 14px - readable */
+    --text-performance-overline: 0.75rem; /* 12px - minimum readable */
   }
 }

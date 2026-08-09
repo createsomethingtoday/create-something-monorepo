@@ -460,6 +460,7 @@
   --font-performance-display-weight: 500;
   --tracking-performance-display: -0.03em;
   --leading-performance-display: 0.94;
+  --leading-performance-editorial: 1.1;
   --font-performance-serif: Georgia, 'Times New Roman', serif;
   --font-performance-editorial: 'CS Editorial', Georgia, 'Times New Roman', serif;
   --font-performance-interface: var(--font-performance-sans);

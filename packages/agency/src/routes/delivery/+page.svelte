@@ -61,6 +61,7 @@
 />
 
 <PerformanceConversionHandoff
+  expression="editorial"
   eyebrow="No record yet"
   title="A delivery record is published only when it is safe to read."
   description="A new delivery record should appear only after its boundary, owner decisions, and validation evidence are safe and clear."

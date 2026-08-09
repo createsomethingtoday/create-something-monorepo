@@ -454,6 +454,7 @@
   />
 
   <PerformanceConversionHandoff
+    expression="editorial"
     eyebrow="Fixed-scope first step"
     title={agencyCoreMessaging.workflowCtaHeading}
     description="Start with a workflow map and proof plan. If the map does not show a useful controlled pilot, the work stops there; if it does, the first build has a clear delegation boundary."

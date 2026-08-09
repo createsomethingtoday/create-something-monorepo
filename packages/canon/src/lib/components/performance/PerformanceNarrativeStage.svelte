@@ -606,7 +606,7 @@
   .performance-narrative-stage[data-expression='editorial'] h2 {
     max-width: 14ch;
     font-size: clamp(3.25rem, 6vw, 6rem);
-    line-height: 1.02;
+    line-height: var(--leading-performance-editorial, 1.1);
   }
 
   .performance-narrative-stage[data-expression='editorial']
@@ -638,7 +638,7 @@
     h3 {
     max-width: 20ch;
     font-size: clamp(2.5rem, 4.4vw, 4.75rem);
-    line-height: 1.02;
+    line-height: var(--leading-performance-editorial, 1.1);
   }
 
   .performance-narrative-stage[data-expression='editorial']

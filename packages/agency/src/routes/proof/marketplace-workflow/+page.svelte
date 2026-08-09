@@ -245,6 +245,7 @@
   </PerformanceNarrativeStage>
 
   <PerformanceConversionHandoff
+    expression="editorial"
     eyebrow="Apply the method"
     title="Bring the handoff your team still watches by hand."
     description="Map can define the systems, the owners, and the failure points first. Build follows only when the controlled lane is clear enough to test."
