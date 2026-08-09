@@ -47,6 +47,12 @@
 
   const originSignals = [
     {
+      label: 'Team',
+      title: 'A shared picture under pressure',
+      detail:
+        'Division III basketball taught me that roles, practice, review, and the next decision matter when the pace rises.'
+    },
+    {
       label: 'Power',
       title: 'Control before speed',
       detail: 'A Porsche 930 Turbo is useful only when the driver can trust the system around it.'
@@ -94,6 +100,7 @@
         'Machines, emergency medicine, veterinary care, and platform systems all taught the same lesson: capability becomes useful when ownership, protocols, and recovery stay visible.',
       tone: 'neutral',
       evidence: [
+        'Division III basketball',
         'Porsche 930 Turbo',
         'Emergency medicine',
         'Continuity of care',
@@ -193,7 +200,7 @@
   titleLevel="h1"
   eyebrow="About"
   title="I build calm, transparent workflow systems for operator-owned outcomes."
-  description="The operator should not carry the chaos of automation. My work turns toolchains into clear workflow states: what agents and tools can do, what needs judgment, and what must stop with a reason."
+  description="The operator should not carry the chaos of automation. I give people and approved AI the same Playbook: what can run, what needs judgment, and what must stop."
 >
   {#snippet aside()}
     <PerformanceCardGrid
@@ -216,6 +223,10 @@
     {#if scene.id === 'origin'}
       <div class="about-stage-split">
         <div class="about-prose">
+          <p>
+            I played Division III basketball. It taught me the value of a shared picture: clear
+            roles, practiced Runbooks, pressure-tested decisions, and honest review after the run.
+          </p>
           <p>
             I grew up between two reference points: a Porsche 930 Turbo and emergency medicine. One
             taught me that power needs control. The other taught me that when pressure rises, clear

@@ -9,10 +9,10 @@
 		SEO,
 		type PerformanceCondition
 	} from '@create-something/canon';
+	import PlaybookField from '$lib/components/PlaybookField.svelte';
 	import PublicAtlasCanvas from '$lib/components/PublicAtlasCanvas.svelte';
 	import SystemContextRail from '$lib/components/SystemContextRail.svelte';
 	import { agencyCoreMessaging } from '$lib/data/marketingCopy';
-	import { paperFoldedHandoffMedia } from '$lib/data/performanceMedia';
 
 	const mapProtocol: PerformanceCondition[] = [
 		{
@@ -46,9 +46,10 @@
 <main class="map-page">
 	<PerformanceCampaignOpening
 		eyebrow="CREATE SOMETHING Map"
-		title="Make the workflow visible before you change it."
-		lede="Start a private browser-local draft to name the owner, data, approvals, systems, risks, and inspection points. A short summary can travel to a mapping session or an authenticated Map workspace. The draft never touches a production system."
-		media={paperFoldedHandoffMedia}
+		title="See the whole operation before AI runs the play."
+		lede="Map defines the client-owned Playbook: owner, data, systems, authority, Runbooks, risks, and proof. Start a private draft without touching production. A short summary can travel to a mapping session."
+		density="compact"
+		artifactOwnsMedia
 		proof={[{ label: 'Input', value: 'Prospect map' }, { label: 'Boundary', value: 'No production tools' }, { label: 'Handoff', value: 'Build or Control' }]}
 	>
 		{#snippet actions()}
@@ -56,6 +57,9 @@
 			<Button href={agencyCoreMessaging.workflowMappingSessionHref} variant="secondary">
 				{agencyCoreMessaging.bookMappingSessionLabel}
 			</Button>
+		{/snippet}
+		{#snippet artifact()}
+			<PlaybookField variant="map" />
 		{/snippet}
 	</PerformanceCampaignOpening>
 

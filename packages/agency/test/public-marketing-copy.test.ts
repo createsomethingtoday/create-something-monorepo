@@ -163,7 +163,7 @@ test('public agency surfaces state the OpenAI conviction and owned-system bounda
   assert.match(partners, /open-weight and custom models/i);
 });
 
-test('the homepage leads with a Paper-led operating-system message before its provider stack', () => {
+test('the homepage leads with a Playbook-led operating-system message before its provider stack', () => {
   const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
   const opening = home.slice(
     home.indexOf('<PerformanceCampaignOpening'),
@@ -175,15 +175,16 @@ test('the homepage leads with a Paper-led operating-system message before its pr
   );
 
   assert.match(home, /title="AI Operating Systems \| CREATE SOMETHING \.agency"/);
-  assert.match(opening, /eyebrow="Operating systems for AI work"/);
-  assert.match(opening, /title="Put the work on paper before you put AI to work\."/);
+  assert.match(opening, /eyebrow="Forward-deployed AI operations"/);
+  assert.match(opening, /title="Your people and AI need the same playbook\."/);
   assert.match(
     opening,
-    /We map one workflow, mark what can run, name where people decide, and attach proof to every important action\./
+    /We work beside operators to map one workflow, install its AI infrastructure, and hand back a client-owned Playbook\./
   );
-  assert.match(opening, /Then we build the system with OpenAI and Cloudflare\./);
-  assert.match(opening, /media=\{paperOperatingRouteMedia\}/);
-  assert.match(opening, /mode="paper"/);
+  assert.match(opening, /Offense advances approved work\. Defense protects decisions, proof, and recovery\./);
+  assert.match(opening, /The opposition is ambiguity, AI out of reach, and untrusted automation\./);
+  assert.match(opening, /<PlaybookField variant="home"/);
+  assert.doesNotMatch(opening, /mode="paper"|paperOperatingRouteMedia/);
   assert.match(ownership, /Built with OpenAI and Cloudflare\. Designed to remain yours\./);
   assert.match(
     ownership,
@@ -213,8 +214,8 @@ test('commercial decision routes lead with plain meaning before owned terminolog
   assert.doesNotMatch(layout, /label: 'How I Work'/);
   assert.doesNotMatch(layout, /label: 'Stack Boundary'/);
 
-  assert.match(home, /title="Put the work on paper before you put AI to work\."/);
-  assert.match(home, /We map one workflow, mark what can run, name where people decide/);
+  assert.match(home, /title="Your people and AI need the same playbook\."/);
+  assert.match(home, /We work beside operators to map one workflow/);
   assert.match(home, />See the Marketplace workflow</);
   assert.match(home, /label: 'Control',[\s\S]*?value: 'Run \/ Wait \/ Stop'/);
   const heroProof = home.slice(home.indexOf('const heroProofItems'), home.indexOf('const serviceFlowSteps'));
@@ -230,10 +231,10 @@ test('commercial decision routes lead with plain meaning before owned terminolog
   assert.match(servicesMapPreview, /See the operating path before deciding to build/);
   assert.doesNotMatch(services, /PerformanceFieldSequence|PerformanceThesisConditions/);
 
-  assert.match(productsPage, /title="Map the system\. Control the work\."/);
-  assert.match(productsPage, /CREATE SOMETHING Map stands alone/);
-  assert.match(productsPage, /CREATE SOMETHING Control stands alone/);
-  assert.match(productsPage, /Control includes Map/);
+  assert.match(productsPage, /title="One playbook\. Three operating paths\."/);
+  assert.match(productsPage, /Map defines the client-owned Playbook/);
+  assert.match(productsPage, /Build makes its approved Runbooks executable/);
+  assert.match(productsPage, /Control operates and improves the system/);
   assert.doesNotMatch(productsPage, /Product hierarchy|Product protocol|Operating sequence/);
 
   assert.match(stack, /You keep the accounts, data, approval rights, and operating history/);

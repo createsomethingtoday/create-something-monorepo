@@ -33,7 +33,7 @@ const handoffBoundaryMetadata = read(
 test('every indexed public marketing route receives a route-owned or shared Performance ending', () => {
   const indexedRoutes = marketingPagePortfolio.filter((entry) => entry.decision === 'index');
 
-  assert.equal(indexedRoutes.length, 26);
+  assert.equal(indexedRoutes.length, 39);
   assert.ok(indexedRoutes.some((entry) => entry.path === '/'));
   assert.match(layout, /marketingPagePortfolio/);
   assert.match(layout, /entry\.decision !== 'archive'/);
@@ -80,16 +80,11 @@ test('the homepage moves from claim to proof to method before asking visitors to
   }
 });
 
-test('the homepage opening uses the property-owned paper-under-pressure artifact', () => {
-  assert.match(home, /const homepageHandoffBoundaryMedia: PerformanceCampaignMedia/);
-  assert.match(
-    home,
-    /src: '\/images\/performance-lab\/paper-under-pressure-field\.svg'/
-  );
-  assert.match(home, /alt: 'A warm tactile paper field with one folded edge'/);
-  assert.match(home, /media=\{homepageHandoffBoundaryMedia\}/);
-  assert.match(home, /mode="paper"/);
-  assert.match(home, /\{#snippet artifact\(\)\}[\s\S]*?<PaperUnderPressureStage \/>/);
+test('the homepage opening uses the property-owned Playbook artifact', () => {
+  assert.match(home, /import PlaybookField/);
+  assert.match(home, /artifactOwnsMedia/);
+  assert.match(home, /\{#snippet artifact\(\)\}[\s\S]*?<PlaybookField variant="home" \/>/);
+  assert.doesNotMatch(home, /mode="paper"|paperOperatingRouteMedia/);
   assert.doesNotMatch(home, /agency-fluid-intelligence-loop-v4/);
   assert.doesNotMatch(home, /controlledFlowMedia/);
   assert.equal(
@@ -151,7 +146,6 @@ test('the historical fluid study remains attributable while Canon retains option
 });
 
 test('the campaign can preserve property-owned color without changing its default', () => {
-  assert.match(home, /colorMode: 'natural'/);
   assert.match(campaign, /colorMode\?: 'monochrome' \| 'natural'/);
   assert.match(campaign, /data-color-mode=\{media\.colorMode \?\? 'monochrome'\}/);
   assert.match(campaign, /\[data-color-mode='monochrome'\][\s\S]*?grayscale\(1\)/);
@@ -161,7 +155,7 @@ test('the campaign can preserve property-owned color without changing its defaul
 test('the homepage boundary artifact shows evidence without restating the scene introduction', () => {
   assert.match(home, /<figure class="boundary-study__media">/);
   assert.match(home, /<figcaption>Paper pressure study · Run \/ Wait \/ Stop<\/figcaption>/);
-  assert.match(home, /paper-boundary-study\.svg/);
+  assert.match(home, /paper-boundary-authority\.webp/);
   assert.doesNotMatch(home, /class="boundary-study__copy"/);
   assert.match(home, /class="boundary-study__outcomes"/);
   assert.match(home, /class="boundary-study__metrics"/);

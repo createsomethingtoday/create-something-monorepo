@@ -32,7 +32,8 @@
 		eyebrow: string;
 		title: string;
 		lede?: string;
-		media: PerformanceCampaignMedia;
+		/** Optional when a semantic artifact supplies the complete visual field. */
+		media?: PerformanceCampaignMedia;
 		proof?: PerformanceCampaignProof[];
 		mode?: PerformanceCampaignOpeningMode;
 		density?: PerformanceCampaignOpeningDensity;
@@ -85,62 +86,65 @@
 
 <section
 	class="performance-campaign-opening"
-	class:performance-campaign-opening--paper-studio={mode === 'paper' && Boolean(media.studioShot)}
+	class:performance-campaign-opening--paper-studio={mode === 'paper' && Boolean(media?.studioShot)}
 	data-mode={mode}
 	data-density={density}
 	data-has-artifact={artifact ? 'true' : 'false'}
+	data-artifact-owns-media={artifactOwnsMedia ? 'true' : undefined}
 	data-mobile-search-boundary={mobileSearchBoundary ? 'true' : undefined}
 	aria-label={eyebrow}
 >
-	<figure
-		class="performance-campaign-opening__media"
-		class:performance-campaign-opening__media--studio-ready={studioReady}
-		class:performance-campaign-opening__media--paper-object-visible={studioReady ||
-			artifactOwnsMedia ||
-			media.paperObjectVisible}
-		data-color-mode={media.colorMode ?? 'monochrome'}
-		data-material={media.material ?? 'unspecified'}
-	>
-		<picture class:performance-campaign-opening__fallback-suppressed={artifactOwnsMedia}>
-			{#if media.mobileSrc}
-				<source media="(max-width: 47.99rem)" srcset={media.mobileSrc} />
-			{/if}
-			<img
-				src={media.src}
-				alt={artifactOwnsMedia ? '' : media.alt}
-				width={media.width}
-				height={media.height}
-				loading={priority ? 'eager' : 'lazy'}
-				fetchpriority={priority ? 'high' : 'auto'}
-				decoding="async"
-				style:object-position={media.objectPosition ?? 'center'}
-			/>
-		</picture>
-		{#if media.studioShot && !artifact}
-			<PerformancePaperStudioCanvas
-				shot={media.studioShot}
-				onStateChange={(state) => (studioReady = state === 'ready')}
-			/>
-		{/if}
-		{#if media.video && motionAllowed}
-			<video
-				autoplay
-				muted
-				loop
-				playsinline
-				preload="metadata"
-				poster={media.video.poster ?? media.src}
-				aria-hidden="true"
-				style:object-position={media.objectPosition ?? 'center'}
-			>
-				{#if media.video.webm}
-					<source src={media.video.webm} type="video/webm" />
+	{#if media}
+		<figure
+			class="performance-campaign-opening__media"
+			class:performance-campaign-opening__media--studio-ready={studioReady}
+			class:performance-campaign-opening__media--paper-object-visible={studioReady ||
+				artifactOwnsMedia ||
+				media.paperObjectVisible}
+			data-color-mode={media.colorMode ?? 'monochrome'}
+			data-material={media.material ?? 'unspecified'}
+		>
+			<picture class:performance-campaign-opening__fallback-suppressed={artifactOwnsMedia}>
+				{#if media.mobileSrc}
+					<source media="(max-width: 47.99rem)" srcset={media.mobileSrc} />
 				{/if}
-				<source src={media.video.mp4} type="video/mp4" />
-			</video>
-		{/if}
-		<div class="performance-campaign-opening__grid" aria-hidden="true"></div>
-	</figure>
+				<img
+					src={media.src}
+					alt={artifactOwnsMedia ? '' : media.alt}
+					width={media.width}
+					height={media.height}
+					loading={priority ? 'eager' : 'lazy'}
+					fetchpriority={priority ? 'high' : 'auto'}
+					decoding="async"
+					style:object-position={media.objectPosition ?? 'center'}
+				/>
+			</picture>
+			{#if media.studioShot && !artifact}
+				<PerformancePaperStudioCanvas
+					shot={media.studioShot}
+					onStateChange={(state) => (studioReady = state === 'ready')}
+				/>
+			{/if}
+			{#if media.video && motionAllowed}
+				<video
+					autoplay
+					muted
+					loop
+					playsinline
+					preload="metadata"
+					poster={media.video.poster ?? media.src}
+					aria-hidden="true"
+					style:object-position={media.objectPosition ?? 'center'}
+				>
+					{#if media.video.webm}
+						<source src={media.video.webm} type="video/webm" />
+					{/if}
+					<source src={media.video.mp4} type="video/mp4" />
+				</video>
+			{/if}
+			<div class="performance-campaign-opening__grid" aria-hidden="true"></div>
+		</figure>
+	{/if}
 
 	<div class="performance-campaign-opening__content">
 		<header>

@@ -48,7 +48,7 @@ Use on homepage, services, editorial, case-study, and social surfaces.
 
 Must include:
 
-1. One original human-motion, system-motion, or material-study image.
+1. One original Playbook field or content-specific performance study.
 2. One technical annotation or integrated measurement layer.
 3. Decisive scale contrast and a non-uniform composition.
 4. A named translation into workflow pressure, testing, or proof.
@@ -57,57 +57,57 @@ Must include:
 Campaign mode does not remove proof. It integrates proof into the field image,
 sequence, caption, trace, or receipt.
 
-### Material identity: working paper
+### Operating identity: Playbook field
 
-CREATE SOMETHING uses paper under designed conditions as its primary material subject. Paper is
-where a signal becomes a record, a rule becomes portable, a handoff becomes explicit, and proof can
-be attached. It makes the operating model physical without anthropomorphizing the agent or hiding
-the workflow behind atmosphere.
+CREATE SOMETHING uses court-like Playbook notation as its primary Agency campaign field. The field
+gives operators and approved AI the same picture: actors, routes, authority, constraints, evidence,
+and the next decision. Offense shows how approved work creates advantage. Defense shows how the
+operation protects authority, quality, evidence, and recovery.
 
-Paper is not a stationery theme. Use it as an operational vocabulary:
+The marks have one stable operating vocabulary:
 
-| Paper state | Workflow meaning | Required visual evidence |
+| Mark | Workflow meaning | Required visual evidence |
 | --- | --- | --- |
-| Source sheet | provenance and declared authority | margin, source mark, or registered origin |
-| Fold | routing or transformation | an explicit before/after plane or directional spine |
-| Score / perforation | run, wait, stop boundary | a cut line, stop edge, or controlled tear path |
-| Stack | accumulated evidence | distinct ordered layers whose sequence remains legible |
-| Stamp / attachment | receipt and verification | a mark connected to the record it verifies |
+| O = owner | a person or approved agent with a named role | ring plus visible role label |
+| X = opposition | ambiguity, AI out of reach, or untrusted automation | cross plus visible condition label |
+| Route = delegated work | expected movement of context or action | directional path plus action label |
+| Gate = human decision | authority automation cannot pass alone | stop geometry plus decision label |
+| Receipt = proof | evidence attached to the run state | record geometry plus proof label |
+| Zone = boundary | permission, system, environment, or risk region | bounded field plus context label |
 
-The visual must show why the paper changed. A generic blank sheet, a random crumpled ball, scattered
-scraps, or a texture pasted behind type does not pass. Creases, layers, edges, registration marks,
-and semantic color must explain source, transformation, boundary, evidence, or proof.
+The visual must describe an actual Play. X marks name ambiguity, AI out of reach, or untrusted
+automation—not a person, customer, or competitor. Generic X/O decoration, hardwood texture, team branding,
+jerseys, whistles, scoreboards, motivational slogans, or basketball clip art do not pass. A reader
+must understand the operating meaning without sports knowledge.
 
-#### Scale rule: workbench, not scrapbook
+#### Scale rule: shared picture, not tactics theater
 
-Show one engineered paper object at a useful inspection scale. The paper may be flat, folded,
-scored, stacked, or under pressure, but it must retain a readable edge and a clear relation to its
-measurement rail. Reserve a separate live-DOM lane for the proposition and action; no fold, rule,
-annotation line, or 3D object may pass through essential copy.
+Show one bounded Play at a useful inspection scale. Actors, routes, gates, constraints, and proof
+must retain readable labels and a clear relationship. Reserve a separate live-DOM lane for the
+proposition and action; no route, mark, annotation, or field line may pass through essential copy.
 
 | Prefer | Reject |
 | --- | --- |
-| One source sheet, workbook, folded prototype, evidence stack, or stamped handoff | Collage of unrelated scraps or repeated paper balls |
-| Visible margin, fold, score, registration point, attachment, or receipt | Texture with no operational meaning |
-| Quiet paper field plus one semantic signal color | Brown craft-paper nostalgia or decorative rainbow stationery |
-| Property-specific state mapped to its role | One identical hero cloned across every property |
+| One route-specific Play with named actors, authority, and proof | Generic formation or repeated X/O wallpaper |
+| Visible route, gate, constraint, boundary, and receipt | Court lines with no operational meaning |
+| Quiet near-black field plus semantic state color | Hardwood nostalgia or decorative team colors |
+| Route-specific state mapped to its decision | One identical field cloned across every route |
 
-#### Signature device: registered change
+#### Signature device: called route
 
-The primary device is a change that leaves registration evidence: a fold aligned to a datum, a
-scored stop line, a trace joining sources, a progress mark across an accordion sequence, or a stamp
-attached to the final sheet. Semantic color is diegetic: signal blue registers source and control,
-pressure orange marks a test boundary, growth green marks completed progression, and risk red marks
-a stop. Color never substitutes for the state word or artifact.
+The primary device is a route that meets authority and leaves evidence: a signal reaches an owner,
+an approved agent advances work, a constraint redirects the route, a human gate holds a protected
+action, and a receipt records the result. Semantic color is diegetic: signal blue identifies owned
+control, review gold marks a decision, growth green marks approved progression, and risk red marks a
+stop. Color never substitutes for the state word or artifact.
 
-Agency owns the interactive reference implementation, Paper Under Pressure. It progressively
-enhances a complete static paper field with a Three.js object and keeps renderer lifecycle,
-interaction, fallback, and context recovery local to the property. LTD, IO, Space, and Learn use
-responsive vector studies so the material contract remains complete without WebGL.
+Agency owns the reference Playbook field implementation. It uses semantic SVG and live text to keep
+the complete static field available in SSR, no-JavaScript, and reduced-motion states. Each route
+selects a distinct Play while the component owns the stable legend and responsive geometry.
 
-The prior controlled-water family remains a valid historical and secondary campaign library for
-routes whose content genuinely concerns flow, pressure, trace, or settlement. It is no longer the
-primary homepage identity and must not be reused as a generic brand background.
+Paper remains available for editorial and historical material, including source records, research,
+receipts, and prior campaign studies. The prior controlled-water and Paper families are not the
+primary Agency commercial hero identity and must not return as generic brand backgrounds.
 
 ### Product mode
 
