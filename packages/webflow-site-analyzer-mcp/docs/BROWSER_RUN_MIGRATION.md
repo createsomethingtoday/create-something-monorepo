@@ -83,6 +83,11 @@ The live verifier requires both Browser Run and an incumbent credential. It
 fails if engine selection differs from policy, a declared Chromium requirement
 touches Kitesurf, the dedicated runtime-fallback probe omits its failed Kitesurf
 attempt, semantic analysis differs, or either screenshot is empty.
+Schema version 2 also treats external failure as evidence: every corpus case is
+attempted on both the routed and incumbent sides, provider failures retain their
+sanitized routing receipt and failure stage, and the JSON report is written
+before the command exits nonzero. This prevents the first failed URL from
+silently omitting the rest of the corpus or a healthy incumbent baseline.
 Production acceptance requires two consecutive clean corpus runs after the
 merged deployment.
 

@@ -2,10 +2,12 @@
 
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 import {
   createProviderManager,
   type BrowserOperationResult,
+  type BrowserRoutingReceipt,
   type ProviderManager,
 } from '../src/providers/index.js';
 import type { BrowserRequirement } from '../src/types.js';
@@ -17,7 +19,7 @@ import {
 type CorpusOperation = 'analyze' | 'screenshot' | 'openSession';
 type CorpusScript = 'standard' | 'webgl';
 
-interface CorpusCase {
+export interface CorpusCase {
   id: string;
   url: string;
   operation: CorpusOperation;
@@ -31,6 +33,48 @@ interface Corpus {
   version: string;
   frozenAt: string;
   cases: CorpusCase[];
+}
+
+interface ComparisonExecution {
+  result: unknown;
+  receipt: BrowserExecutionReceipt;
+}
+
+interface ComparisonFailure {
+  stage: 'routed' | 'baseline';
+  error: string;
+  durationMs: number;
+}
+
+interface FailedExecutionReceipt extends BrowserRoutingReceipt {
+  url: string;
+  durationMs: number;
+  resultHash: null;
+  usage: {
+    browserMsUsed: null;
+    source: 'unavailable';
+  };
+}
+
+interface FailedComparisonExecution {
+  result: null;
+  receipt: FailedExecutionReceipt | null;
+}
+
+interface ComparisonCaseResult extends CorpusCase {
+  passed: boolean;
+  selectedAsExpected: boolean;
+  classifiedAsExpected: boolean;
+  semanticEquivalent: boolean;
+  fallbackProven: boolean;
+  failures: ComparisonFailure[];
+  routed: ComparisonExecution | FailedComparisonExecution;
+  baseline: ComparisonExecution | FailedComparisonExecution;
+}
+
+export interface CorpusComparisonResult {
+  passed: boolean;
+  cases: ComparisonCaseResult[];
 }
 
 const STANDARD_ANALYSIS_SCRIPT = `(() => ({
@@ -57,6 +101,36 @@ function parseArg(name: string): string | undefined {
 function requireValue(value: string | undefined, label: string): string {
   if (!value?.trim()) throw new Error(`${label} is required`);
   return value.trim();
+}
+
+function sanitizeComparisonError(error: unknown, redactions: string[]): string {
+  let message = error instanceof Error ? error.message : String(error);
+  for (const secret of redactions) {
+    if (secret) message = message.split(secret).join('[REDACTED]');
+  }
+  return message
+    .replace(/Bearer\s+[^\s"']+/gi, 'Bearer [REDACTED]')
+    .replace(/([?&](?:api[_-]?key|token)=)[^&\s"']+/gi, '$1[REDACTED]')
+    .replace(/("Authorization"\s*:\s*")[^"]+/gi, '$1[REDACTED]');
+}
+
+function createFailedExecution(
+  routing: BrowserRoutingReceipt | null,
+  corpusCase: CorpusCase,
+  durationMs: number,
+): FailedComparisonExecution {
+  return {
+    result: null,
+    receipt: routing
+      ? {
+        ...routing,
+        url: corpusCase.url,
+        durationMs,
+        resultHash: null,
+        usage: { browserMsUsed: null, source: 'unavailable' },
+      }
+      : null,
+  };
 }
 
 function stableJson(value: unknown): string {
@@ -122,6 +196,104 @@ async function execute(
   };
 }
 
+export async function compareCorpusCases(input: {
+  cases: CorpusCase[];
+  executeRouted: (corpusCase: CorpusCase) => Promise<ComparisonExecution>;
+  executeBaseline: (corpusCase: CorpusCase) => Promise<ComparisonExecution>;
+  getRoutedFailureReceipt?: () => BrowserRoutingReceipt | undefined;
+  getBaselineFailureReceipt?: () => BrowserRoutingReceipt | undefined;
+  redactions?: string[];
+}): Promise<CorpusComparisonResult> {
+  const cases: ComparisonCaseResult[] = [];
+  let passed = true;
+  for (const corpusCase of input.cases) {
+    let routedRun: ComparisonExecution | undefined;
+    let baselineRun: ComparisonExecution | undefined;
+    const failures: ComparisonFailure[] = [];
+    const routedStartedAt = Date.now();
+
+    try {
+      routedRun = await input.executeRouted(corpusCase);
+    } catch (error) {
+      failures.push({
+        stage: 'routed',
+        error: sanitizeComparisonError(error, input.redactions ?? []),
+        durationMs: Date.now() - routedStartedAt,
+      });
+    }
+
+    const baselineStartedAt = Date.now();
+    try {
+      baselineRun = await input.executeBaseline(corpusCase);
+    } catch (error) {
+      failures.push({
+        stage: 'baseline',
+        error: sanitizeComparisonError(error, input.redactions ?? []),
+        durationMs: Date.now() - baselineStartedAt,
+      });
+    }
+
+    const routedReceipt = routedRun?.receipt ?? input.getRoutedFailureReceipt?.() ?? null;
+    const baselineReceipt = baselineRun?.receipt ?? input.getBaselineFailureReceipt?.() ?? null;
+    const selectedAsExpected = routedReceipt?.selectedProvider === corpusCase.expectedEngine;
+    const classifiedAsExpected = Boolean(
+      routedReceipt
+      && (
+        !corpusCase.browserRequirement
+        || (
+          routedReceipt.capability === corpusCase.browserRequirement
+          && !routedReceipt.attempts.some((attempt) =>
+            attempt.provider === 'cloudflare-kitesurf'
+          )
+        )
+      ),
+    );
+    const semanticEquivalent = Boolean(
+      routedRun
+      && baselineRun
+      && (
+        corpusCase.operation === 'screenshot'
+          ? (routedRun.result as { byteLength: number }).byteLength > 0
+            && (baselineRun.result as { byteLength: number }).byteLength > 0
+          : corpusCase.operation === 'openSession'
+            ? true
+            : stableJson(routedRun.result) === stableJson(baselineRun.result)
+      ),
+    );
+    const fallbackProven = !corpusCase.expectKitesurfFailure
+      || Boolean(routedReceipt?.attempts.some((attempt) =>
+        attempt.provider === 'cloudflare-kitesurf' && attempt.outcome === 'failure'
+      ));
+    const casePassed = failures.length === 0
+      && selectedAsExpected
+      && classifiedAsExpected
+      && semanticEquivalent
+      && fallbackProven;
+    passed &&= casePassed;
+    cases.push({
+      ...corpusCase,
+      passed: casePassed,
+      selectedAsExpected,
+      classifiedAsExpected,
+      semanticEquivalent,
+      fallbackProven,
+      failures,
+      routed: routedRun ?? createFailedExecution(
+        routedReceipt,
+        corpusCase,
+        failures.find((failure) => failure.stage === 'routed')?.durationMs ?? 0,
+      ),
+      baseline: baselineRun ?? createFailedExecution(
+        baselineReceipt,
+        corpusCase,
+        failures.find((failure) => failure.stage === 'baseline')?.durationMs ?? 0,
+      ),
+    });
+  }
+
+  return { passed, cases };
+}
+
 async function main(): Promise<void> {
   const corpusPath = path.resolve(
     parseArg('--corpus') ?? 'scripts/browser-run-corpus.json',
@@ -169,63 +341,50 @@ async function main(): Promise<void> {
     throw new Error('An incumbent Steel or Browserless credential is required for parity comparison');
   }
 
+  let latestRoutedReceipt: BrowserRoutingReceipt | undefined;
+  let latestBaselineReceipt: BrowserRoutingReceipt | undefined;
   const routed = createProviderManager({
     cloudflareBrowserRunEnabled: true,
     cloudflareAccountId,
     cloudflareBrowserRunApiToken,
+    onRouteReceipt: (receipt) => {
+      latestRoutedReceipt = receipt;
+    },
   });
   const baseline = createProviderManager({
     steelApiKey: process.env.STEEL_API_KEY,
     browserlessToken: process.env.BROWSERLESS_TOKEN ?? process.env.BROWSERLESS_API_KEY,
+    onRouteReceipt: (receipt) => {
+      latestBaselineReceipt = receipt;
+    },
   });
-  const cases = [];
-  let passed = true;
-  for (const corpusCase of corpus.cases) {
-    const routedRun = await execute(routed, corpusCase);
-    const baselineRun = await execute(baseline, corpusCase);
-    const selectedAsExpected = routedRun.receipt.selectedProvider === corpusCase.expectedEngine;
-    const classifiedAsExpected = !corpusCase.browserRequirement
-      || (
-        routedRun.receipt.capability === corpusCase.browserRequirement
-        && !routedRun.receipt.attempts.some((attempt) =>
-          attempt.provider === 'cloudflare-kitesurf'
-        )
-      );
-    const semanticEquivalent = corpusCase.operation === 'screenshot'
-      ? (routedRun.result as { byteLength: number }).byteLength > 0
-        && (baselineRun.result as { byteLength: number }).byteLength > 0
-      : corpusCase.operation === 'openSession'
-        ? true
-        : stableJson(routedRun.result) === stableJson(baselineRun.result);
-    const fallbackProven = !corpusCase.expectKitesurfFailure
-      || routedRun.receipt.attempts.some((attempt) =>
-        attempt.provider === 'cloudflare-kitesurf' && attempt.outcome === 'failure'
-      );
-    const casePassed = selectedAsExpected
-      && classifiedAsExpected
-      && semanticEquivalent
-      && fallbackProven;
-    passed &&= casePassed;
-    cases.push({
-      ...corpusCase,
-      passed: casePassed,
-      selectedAsExpected,
-      classifiedAsExpected,
-      semanticEquivalent,
-      fallbackProven,
-      routed: routedRun,
-      baseline: baselineRun,
-    });
-  }
+  const comparison = await compareCorpusCases({
+    cases: corpus.cases,
+    executeRouted: async (corpusCase) => {
+      latestRoutedReceipt = undefined;
+      return await execute(routed, corpusCase);
+    },
+    executeBaseline: async (corpusCase) => {
+      latestBaselineReceipt = undefined;
+      return await execute(baseline, corpusCase);
+    },
+    getRoutedFailureReceipt: () => latestRoutedReceipt,
+    getBaselineFailureReceipt: () => latestBaselineReceipt,
+    redactions: [
+      cloudflareBrowserRunApiToken,
+      process.env.STEEL_API_KEY ?? '',
+      process.env.BROWSERLESS_TOKEN ?? '',
+      process.env.BROWSERLESS_API_KEY ?? '',
+    ],
+  });
 
   const generatedAt = new Date().toISOString();
   const report = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     generatedAt,
     corpusVersion: corpus.version,
     corpusHash: `sha256:${await sha256(corpusText)}`,
-    passed,
-    cases,
+    ...comparison,
   };
   const outputPath = path.resolve(
     parseArg('--output')
@@ -233,11 +392,17 @@ async function main(): Promise<void> {
   );
   await mkdir(path.dirname(outputPath), { recursive: true });
   await writeFile(outputPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
-  console.log(`browser comparison ${passed ? 'passed' : 'failed'}: ${outputPath}`);
-  if (!passed) process.exitCode = 1;
+  console.log(`browser comparison ${comparison.passed ? 'passed' : 'failed'}: ${outputPath}`);
+  if (!comparison.passed) process.exitCode = 1;
 }
 
-main().catch((error: unknown) => {
-  console.error(error instanceof Error ? error.message : String(error));
-  process.exitCode = 1;
-});
+const isMainModule = process.argv[1]
+  ? import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href
+  : false;
+
+if (isMainModule) {
+  main().catch((error: unknown) => {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exitCode = 1;
+  });
+}
