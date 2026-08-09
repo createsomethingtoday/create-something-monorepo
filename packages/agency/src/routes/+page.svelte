@@ -16,9 +16,9 @@
   import AdoptionPathChooser from '$lib/components/AdoptionPathChooser.svelte';
   import IntegrationCompatibilityRail from '$lib/components/IntegrationCompatibilityRail.svelte';
   import PublicSubstrateCanvas from '$lib/components/PublicSubstrateCanvas.svelte';
+  import PlaybookField from '$lib/components/PlaybookField.svelte';
   import { templateReviewFieldReport } from '$lib/data/fieldReports';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
-  import { paperOperatingRouteMedia } from '$lib/data/performanceMedia';
 
   const services = [
     {
@@ -221,13 +221,12 @@
 
 <div class="home-pilot property-performance">
   <PerformanceCampaignOpening
-    eyebrow="Operating systems for AI work"
-    title="Put the work on paper before you put AI to work."
-    lede="We map one workflow, mark what can run, name where people decide, and attach proof to every important action. Then we build the system with OpenAI and Cloudflare."
-    media={paperOperatingRouteMedia}
+    eyebrow="Forward-deployed AI operations"
+    title="Your people and AI need the same playbook."
+    lede="We work beside operators to map one workflow, install its AI infrastructure, and hand back a client-owned Playbook. Offense advances approved work. Defense protects decisions, proof, and recovery. The opposition is ambiguity, AI out of reach, and untrusted automation."
     proof={heroProofItems}
-    mode="paper"
     density="compact"
+    artifactOwnsMedia
   >
     {#snippet actions()}
       <Button href={agencyCoreMessaging.selfMapHref}>{agencyCoreMessaging.selfMapLabel}</Button>
@@ -235,19 +234,8 @@
         >See the Marketplace workflow</Button
       >
     {/snippet}
-    {#snippet ornament()}
-      <aside class="home-source-imprint" aria-label="Operating route paper imprint">
-        <header>
-          <span>CS / OS-01</span>
-          <strong>Operating route</strong>
-        </header>
-        <ol>
-          <li><i class="home-source-imprint__source"></i><span>Source sheet</span></li>
-          <li><i class="home-source-imprint__decision"></i><span>Decision boundary</span></li>
-          <li><i class="home-source-imprint__proof"></i><span>Proof attached</span></li>
-        </ol>
-        <small>Map one handoff. Keep the decision. Leave the receipt.</small>
-      </aside>
+    {#snippet artifact()}
+      <PlaybookField variant="home" />
     {/snippet}
   </PerformanceCampaignOpening>
 
@@ -695,91 +683,6 @@
     text-underline-offset: 0.18em;
   }
 
-  .home-source-imprint {
-    position: absolute;
-    top: clamp(14rem, 30vh, 20rem);
-    right: clamp(2rem, 12vw, 12rem);
-    display: grid;
-    gap: 0.68rem;
-    width: clamp(13.5rem, 21vw, 18rem);
-    padding: 0.72rem 0.78rem 0.8rem;
-    border: 1px solid rgba(9, 9, 9, 0.8);
-    background: rgba(255, 255, 255, 0.82);
-    box-shadow: 0 14px 30px rgba(9, 9, 9, 0.14);
-    color: var(--color-performance-ink, #090909);
-    font-family: var(--font-performance-mono);
-  }
-
-  .home-source-imprint header,
-  .home-source-imprint ol {
-    display: grid;
-    gap: 0.42rem;
-    margin: 0;
-  }
-
-  .home-source-imprint header {
-    padding-bottom: 0.62rem;
-    border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
-  }
-
-  .home-source-imprint header span,
-  .home-source-imprint small {
-    color: var(--color-performance-muted, #5e6268);
-    font-size: 0.62rem;
-    font-weight: var(--font-performance-semibold);
-    line-height: 1.3;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
-  }
-
-  .home-source-imprint header strong {
-    font-size: 0.76rem;
-    font-weight: var(--font-performance-semibold);
-    letter-spacing: 0;
-    line-height: 1.2;
-    text-transform: uppercase;
-  }
-
-  .home-source-imprint li {
-    display: grid;
-    grid-template-columns: 0.62rem minmax(0, 1fr);
-    gap: 0.48rem;
-    align-items: center;
-    list-style: none;
-    color: var(--color-performance-ink, #090909);
-    font-size: 0.64rem;
-    font-weight: var(--font-performance-medium);
-    line-height: 1.2;
-    text-transform: uppercase;
-  }
-
-  .home-source-imprint i {
-    display: block;
-    width: 0.5rem;
-    height: 0.5rem;
-    border: 1px solid rgba(9, 9, 9, 0.68);
-  }
-
-  .home-source-imprint__source {
-    background: #2558c4;
-  }
-
-  .home-source-imprint__decision {
-    background: #b07408;
-  }
-
-  .home-source-imprint__proof {
-    background: #708426;
-  }
-
-  .home-source-imprint small {
-    display: block;
-    padding-top: 0.62rem;
-    border-top: 1px solid var(--color-performance-line, #d7d7d2);
-    line-height: 1.45;
-    text-transform: none;
-  }
-
   @media (max-width: 980px) {
     .boundary-study {
       grid-template-columns: minmax(12rem, 0.58fr) minmax(0, 1.42fr);
@@ -791,10 +694,6 @@
   }
 
   @media (max-width: 640px) {
-    .home-source-imprint {
-      display: none;
-    }
-
     .boundary-study__outcomes {
       grid-template-columns: 1fr;
     }

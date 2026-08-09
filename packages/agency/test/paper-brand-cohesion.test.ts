@@ -17,29 +17,31 @@ test('Agency opts into a visible desktop wordmark without changing Canon default
   assert.match(layout, /showDesktopLogoText=\{true\}/);
 });
 
-test('the Agency hero makes the Paper operating grammar visible without a provider logo lockup', () => {
+test('the Agency hero makes the Playbook operating grammar visible without a provider logo lockup', () => {
   const home = read('src/routes/+page.svelte');
   const campaignOpening = read('../canon/src/lib/components/performance/PerformanceCampaignOpening.svelte');
+  const field = read('src/lib/components/PlaybookField.svelte');
 
-  assert.match(home, /title="Put the work on paper before you put AI to work\."/);
-  assert.match(home, /#snippet ornament\(\)/);
-  assert.match(home, /CS \/ OS-01/);
-  assert.match(home, /Source sheet/);
-  assert.match(home, /Decision boundary/);
-  assert.match(home, /Proof attached/);
-  assert.match(home, /Then we build the system with OpenAI and Cloudflare\./);
+  assert.match(home, /title="Your people and AI need the same playbook\."/);
+  assert.match(home, /#snippet artifact\(\)/);
+  assert.match(home, /<PlaybookField variant="home"/);
+  assert.match(home, /client-owned Playbook/);
+  assert.match(home, /Offense advances approved work/);
+  assert.match(home, /Defense protects decisions, proof, and recovery/);
   assert.doesNotMatch(home, /OpenAI[^\n]{0,80}<img|Cloudflare[^\n]{0,80}<img/);
-  assert.match(campaignOpening, /ornament\?: Snippet/);
-  assert.match(campaignOpening, /performance-campaign-opening__ornament/);
+  assert.match(campaignOpening, /media\?: PerformanceCampaignMedia/);
+  assert.match(field, /O = owner/);
+  assert.match(field, /X = opposition/);
 });
 
-test('Field Reports carries a visible attached-proof marker in its opening instead of relying on a white-on-white crop', () => {
+test('Field Reports carries an attached-proof Playbook field instead of relying on a crop', () => {
   const reports = read('src/routes/field-reports/+page.svelte');
+  const field = read('src/lib/components/PlaybookField.svelte');
 
-  assert.match(reports, /field-report-proof-marker/);
-  assert.match(reports, /Receipt attached/);
-  assert.match(reports, /border-left: 0\.45rem solid #708426/);
-  assert.match(reports, /@media \(max-width: 640px\)[\s\S]*?top: 47%/);
+  assert.match(reports, /<PlaybookField variant="proof"/);
+  assert.match(reports, /Review the film\. Improve the playbook\./);
+  assert.match(field, /Receipt attached/);
+  assert.match(field, /@media \(max-width: 47\.99rem\)/);
 });
 
 test('the shared social preview is a current, served Paper operating-system artifact', () => {

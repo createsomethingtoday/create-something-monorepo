@@ -8,6 +8,7 @@
     SEO,
     type PerformanceNarrativeScene
   } from '@create-something/canon';
+  import PlaybookField from '$lib/components/PlaybookField.svelte';
   import {
     listGovernanceProducts,
     type GovernanceProduct
@@ -16,7 +17,6 @@
   import AgencyPerformanceReadback from '$lib/components/AgencyPerformanceReadback.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
   import { PUBLIC_PRODUCT_SEQUENCE, getPublicProduct } from '$lib/data/productFamily';
-  import { paperProductSystemMedia } from '$lib/data/performanceMedia';
 
   type ProductSurfaceKind = 'signal' | 'decision' | 'proof';
 
@@ -142,11 +142,10 @@
 
 <PerformanceCampaignOpening
   eyebrow="Product system"
-  title="Map the system. Control the work."
-  lede="CREATE SOMETHING Map stands alone as the living definition. CREATE SOMETHING Control stands alone as the governed operating product and includes Map. Build connects the approved system."
+  title="One playbook. Three operating paths."
+  lede="Map defines the client-owned Playbook. Build makes its approved Runbooks executable. Control operates and improves the system with visible authority and proof."
   density="compact"
-  media={paperProductSystemMedia}
-  mode="paper"
+  artifactOwnsMedia
   proof={[
     { label: 'Map', value: 'Define' },
     { label: 'Build', value: 'Connect' },
@@ -155,6 +154,9 @@
 >
   {#snippet actions()}
     <Button href="#choose-product">Choose the right path</Button>
+  {/snippet}
+  {#snippet artifact()}
+    <PlaybookField variant="products" />
   {/snippet}
 </PerformanceCampaignOpening>
 

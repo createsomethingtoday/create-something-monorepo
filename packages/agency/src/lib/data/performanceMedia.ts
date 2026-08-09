@@ -61,12 +61,6 @@ export const paperProductSystemMedia = {
 } as const satisfies PerformanceMediaStudy;
 
 export const performancePaperRouteAssignments = {
-  '/': 'paperOperatingRouteMedia',
-  '/services': 'paperClampedDecisionMedia',
-  '/products': 'paperProductSystemMedia',
-  '/field-reports': 'paperAttachedReceiptMedia',
-  '/map': 'paperFoldedHandoffMedia',
-  '/control': 'paperClampedDecisionMedia',
   '/delivery': 'paperAttachedReceiptMedia',
   '/proof/marketplace-workflow': 'paperAttachedReceiptMedia',
   '/field-reports/template-review': 'paperAttachedReceiptMedia',

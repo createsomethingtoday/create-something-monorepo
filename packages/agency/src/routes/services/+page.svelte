@@ -1,10 +1,10 @@
 <script lang="ts">
   import { Button, PerformanceCampaignOpening, SEO } from '@create-something/canon';
+  import PlaybookField from '$lib/components/PlaybookField.svelte';
   import AgencyPerformanceReadback from '$lib/components/AgencyPerformanceReadback.svelte';
   import ServicesMapPreview from '$lib/components/ServicesMapPreview.svelte';
   import ServicesProductPath from '$lib/components/ServicesProductPath.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
-  import { paperClampedDecisionMedia } from '$lib/data/performanceMedia';
   import { getPublicProduct } from '$lib/data/productFamily';
 
   const mapProduct = getPublicProduct('map');
@@ -85,10 +85,10 @@
 <div class="services-performance property-performance">
   <PerformanceCampaignOpening
     eyebrow="How It Works"
-    title="Nothing gets built until the map says what it should do."
-    lede="Bring one handoff your team still checks manually. We name the decision owner and the stop condition first, then build only what that map requires — before anything touches customers, money, or production."
-    media={paperClampedDecisionMedia}
-    mode="paper"
+    title="Map the operation. Install the playbook."
+    lede="Bring one handoff your team still checks manually. We map its owners and limits, make approved Runbooks executable, and hand back the client-owned system."
+    density="compact"
+    artifactOwnsMedia
     proof={[
       { label: 'Owner', value: 'Named' },
       { label: 'Protected action', value: 'Held' },
@@ -102,6 +102,9 @@
       <Button href={agencyCoreMessaging.servicesMappingSessionHref} variant="secondary">
         {agencyCoreMessaging.bookMappingSessionLabel}
       </Button>
+    {/snippet}
+    {#snippet artifact()}
+      <PlaybookField variant="services" />
     {/snippet}
   </PerformanceCampaignOpening>
 
