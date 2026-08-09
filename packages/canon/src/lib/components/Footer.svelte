@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { CubeMark } from '../brand/marks/index.js';
   import { getAnalytics } from '../analytics/client.js';
+  import MeridianOfferPanel from './meridian/MeridianOfferPanel.svelte';
 
   interface QuickLink {
     label: string;
@@ -344,20 +345,15 @@
   {/if}
 
   {#if usesEditorialStyle && footerCta}
-    <section class="footer-editorial-callout" aria-labelledby="footer-editorial-callout-title">
-      <div class="footer-editorial-callout__inner">
-        <div>
-          <p class="footer-editorial-callout__eyebrow">Next possession</p>
-          <h2 id="footer-editorial-callout-title">{footerCta.title ?? footerCta.label}</h2>
-        </div>
-        <div class="footer-editorial-callout__decision">
-          {#if footerCta.description}
-            <p>{footerCta.description}</p>
-          {/if}
-          <a href={footerCta.href}>{footerCta.label}</a>
-        </div>
-      </div>
-    </section>
+    <MeridianOfferPanel
+      eyebrow="Next possession"
+      title={footerCta.title ?? footerCta.label}
+      description={footerCta.description}
+      actionLabel={footerCta.label}
+      actionHref={footerCta.href}
+      {mode}
+      headingId="footer-editorial-callout-title"
+    />
   {/if}
 
   {#if usesEditorialStyle}
@@ -1159,74 +1155,6 @@
     color: var(--color-performance-editorial-dark, #181312);
   }
 
-  .footer-editorial-callout {
-    padding: clamp(5rem, 11vw, 9rem) 1rem;
-    background: var(--color-performance-editorial-light-secondary, #d8cdbc);
-    color: var(--color-performance-editorial-dark, #181312);
-  }
-
-  .footer-editorial-callout__inner {
-    display: grid;
-    grid-template-columns: minmax(0, 1.35fr) minmax(18rem, 0.65fr);
-    gap: clamp(2rem, 7vw, 7rem);
-    width: min(var(--content-width-performance-editorial, 90rem), 100%);
-    margin-inline: auto;
-    align-items: end;
-  }
-
-  .footer-editorial-callout__eyebrow {
-    margin: 0 0 1rem;
-    font-family: var(--font-performance-mono);
-    font-size: 0.72rem;
-    font-weight: var(--font-performance-semibold);
-    text-transform: uppercase;
-  }
-
-  .footer-editorial-callout h2 {
-    max-width: 12ch;
-    margin: 0;
-    font-family: var(--font-performance-editorial);
-    font-size: clamp(3.4rem, 7vw, 7rem);
-    font-weight: 400;
-    letter-spacing: -0.045em;
-    line-height: 0.92;
-  }
-
-  .footer-editorial-callout__decision {
-    display: grid;
-    gap: 1.25rem;
-  }
-
-  .footer-editorial-callout__decision p {
-    max-width: 34rem;
-    margin: 0;
-    font-size: clamp(1rem, 1.4vw, 1.2rem);
-    line-height: 1.5;
-  }
-
-  .footer-editorial-callout__decision a {
-    display: inline-flex;
-    width: fit-content;
-    min-height: 2.75rem;
-    align-items: center;
-    padding: 0.75rem 1rem;
-    border: 1px solid var(--color-performance-editorial-dark, #181312);
-    border-radius: var(--radius-performance-editorial, 0.375rem);
-    background: var(--color-performance-editorial-dark, #181312);
-    color: var(--color-performance-editorial-light, #f3ebe4);
-    font-family: var(--font-performance-mono);
-    font-size: 0.75rem;
-    font-weight: var(--font-performance-semibold);
-    letter-spacing: 0.06em;
-    text-decoration: none;
-    text-transform: uppercase;
-  }
-
-  .footer-editorial-callout__decision a:focus-visible {
-    outline: 3px solid var(--color-performance-signal-soft, #a7b8ff);
-    outline-offset: 3px;
-  }
-
   .footer-editorial-identity {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
@@ -1340,19 +1268,6 @@
   }
 
   @media (max-width: 640px) {
-    .footer-editorial-callout {
-      padding: 4rem 0.75rem;
-    }
-
-    .footer-editorial-callout__inner {
-      grid-template-columns: 1fr;
-      gap: 2rem;
-    }
-
-    .footer-editorial-callout h2 {
-      font-size: clamp(3rem, 15vw, 4.8rem);
-    }
-
     .footer-editorial-identity {
       grid-template-columns: 1fr;
       gap: 1.5rem;

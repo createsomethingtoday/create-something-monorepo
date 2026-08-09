@@ -328,7 +328,8 @@ describe('Performance composition typography', () => {
       'meridian/MeridianCardGrid.svelte',
       'meridian/MeridianEvidenceCarousel.svelte',
       'meridian/MeridianFeatureSplit.svelte',
-      'meridian/MeridianMetrics.svelte'
+      'meridian/MeridianMetrics.svelte',
+      'meridian/MeridianOfferPanel.svelte'
     ];
 
     for (const component of components) {
