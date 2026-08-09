@@ -1,6 +1,6 @@
 name = "webflow-site-analyzer-mcp"
 main = "index.ts"
-compatibility_date = "2025-01-01"
+compatibility_date = "2026-08-08"
 compatibility_flags = ["nodejs_compat"]
 account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
 
@@ -16,5 +16,7 @@ new_sqlite_classes = ["TemplateReviewJobDurableObject"]
 enabled = true
 
 [vars]
+CLOUDFLARE_ACCOUNT_ID = "9645bd52e640b8a4f40a3a55ff1dd75a"
+BROWSER_RUN_ENABLED = "true"
 WEBFLOW_TEMPLATE_REVIEW_MAX_CONCURRENT_JOBS = "2"
 WEBFLOW_TEMPLATE_REVIEW_MAX_QUEUE_SIZE = "100"

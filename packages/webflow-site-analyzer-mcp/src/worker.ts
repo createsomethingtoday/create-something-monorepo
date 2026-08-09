@@ -7,17 +7,24 @@
 
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import {
+  configureAnalyzerRuntime,
   configureTemplateReviewJobDurableObject,
   createAnalyzerServer,
   getAnalyzerHealth,
 } from './index.js';
 import type { TemplateReviewJobDurableObjectNamespace } from './template-review-jobs.js';
+import { isWorkerRequestAuthorized } from './worker-auth.js';
 
 export { TemplateReviewJobDurableObject } from './template-review-job-durable-object.js';
 
 interface Env {
   TEMPLATE_REVIEW_JOBS?: TemplateReviewJobDurableObjectNamespace;
   STEEL_API_KEY?: string;
+  BROWSERLESS_API_KEY?: string;
+  BROWSERLESS_TOKEN?: string;
+  CLOUDFLARE_ACCOUNT_ID?: string;
+  CLOUDFLARE_BROWSER_RUN_API_TOKEN?: string;
+  BROWSER_RUN_ENABLED?: string;
   WEBFLOW_SITE_ANALYZER_MCP_API_KEY?: string;
   WEBFLOW_GROQ_API_KEY?: string;
   WEBFLOW_OPENAI_API_KEY?: string;
@@ -42,29 +49,21 @@ function jsonResponse(body: unknown, status = 200): Response {
   });
 }
 
-function isAuthorized(request: Request, env: Env): boolean {
-  const configuredToken = env.WEBFLOW_SITE_ANALYZER_MCP_API_KEY?.trim();
-  if (!configuredToken) return true;
-
-  const url = new URL(request.url);
-  const queryToken = url.searchParams.get('token')?.trim() ?? null;
-  const authorization = request.headers.get('Authorization');
-  const bearerMatch = authorization?.match(/^Bearer\s+(.+)$/i);
-  const headerToken = bearerMatch?.[1]?.trim()
-    ?? request.headers.get('X-API-Key')?.trim()
-    ?? null;
-
-  return headerToken === configuredToken || queryToken === configuredToken;
-}
-
 /**
- * Inject Worker secrets into process.env so existing code that reads
- * process.env.STEEL_API_KEY etc. continues to work unchanged.
+ * Preserve only unrelated legacy classifier/telemetry environment access.
+ * Browser and request-auth bindings flow through configureAnalyzerRuntime.
  */
-function injectEnvSecrets(env: Env): void {
-  const keys: Array<Exclude<keyof Env, 'TEMPLATE_REVIEW_JOBS'>> = [
-    'STEEL_API_KEY',
-    'WEBFLOW_SITE_ANALYZER_MCP_API_KEY',
+function injectLegacyNonBrowserSecrets(env: Env): void {
+  const keys: Array<
+    | 'WEBFLOW_GROQ_API_KEY'
+    | 'WEBFLOW_OPENAI_API_KEY'
+    | 'LANGFUSE_PUBLIC_KEY'
+    | 'LANGFUSE_SECRET_KEY'
+    | 'LANGFUSE_HOST'
+    | 'LANGFUSE_BASE_URL'
+    | 'LANGFUSE_PROJECT_NAME'
+    | 'ENVIRONMENT'
+  > = [
     'WEBFLOW_GROQ_API_KEY',
     'WEBFLOW_OPENAI_API_KEY',
     'LANGFUSE_PUBLIC_KEY',
@@ -81,9 +80,24 @@ function injectEnvSecrets(env: Env): void {
   }
 }
 
+function configureRuntime(env: Env): void {
+  configureAnalyzerRuntime({
+    runtime: 'worker',
+    apiKey: env.WEBFLOW_SITE_ANALYZER_MCP_API_KEY,
+    browserProvider: {
+      cloudflareBrowserRunEnabled: env.BROWSER_RUN_ENABLED === 'true',
+      cloudflareAccountId: env.CLOUDFLARE_ACCOUNT_ID,
+      cloudflareBrowserRunApiToken: env.CLOUDFLARE_BROWSER_RUN_API_TOKEN,
+      steelApiKey: env.STEEL_API_KEY,
+      browserlessToken: env.BROWSERLESS_TOKEN ?? env.BROWSERLESS_API_KEY,
+    },
+  });
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
-    injectEnvSecrets(env);
+    configureRuntime(env);
+    injectLegacyNonBrowserSecrets(env);
     configureTemplateReviewJobDurableObject(env.TEMPLATE_REVIEW_JOBS);
 
     const url = new URL(request.url);
@@ -105,7 +119,7 @@ export default {
 
     // MCP endpoint — use Web Standard transport directly
     if (url.pathname === '/mcp') {
-      if (!isAuthorized(request, env)) {
+      if (!isWorkerRequestAuthorized(request, env)) {
         return jsonResponse(
           { error: 'Unauthorized. Provide Authorization: Bearer <token>.' },
           401

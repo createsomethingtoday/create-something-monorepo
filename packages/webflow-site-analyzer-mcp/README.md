@@ -9,7 +9,7 @@ This MCP server operates at the following tiers of the [Three-Tier Framework](..
 | Tier | Role in This Server |
 |------|---------------------|
 | **Database** | Web pages (URLs) as the source of truth — site structure, SEO metadata, touchpoints, images, performance data, and Webflow Designer metadata (pages, CSS classes, components, CMS collections, assets) |
-| **Automation** | Versioned extraction scripts executed via browser automation (`analyze_touchpoints`, `extract_seo`, `get_page_structure`, `analyze_images`, `get_performance`, `capture_screenshot`, `extract_designer_metadata`); Steel.dev and Browserless browser providers; Temporal workflows for durable execution |
+| **Automation** | Versioned extraction scripts executed through the owned browser contract (`analyze_touchpoints`, `extract_seo`, `get_page_structure`, `analyze_images`, `get_performance`, `capture_screenshot`, `extract_designer_metadata`); Cloudflare Kitesurf and Browser Run Chromium, with Steel/Browserless retained temporarily for rollback; Temporal workflows for durable execution |
 | **Judgment** | Self-improving intelligence layer — feedback collection (`record_feedback`), pattern analysis (`run_analysis_cycle`), script version comparison (`compare_versions`), autonomous improvement proposals, and A/B testing of extraction scripts (`promote_version`, `create_script_version`) |
 
 **Primary tier**: Automation — the server's core value is its suite of versioned browser-based extraction tools, though its Judgment tier (self-improvement loop) is a distinguishing architectural feature.
@@ -73,15 +73,22 @@ pnpm add @create-something/webflow-site-analyzer-mcp
 
 The analyzer supports multiple browser automation providers:
 
-| Provider | Best For | Session Duration | Cost |
-|----------|----------|------------------|------|
-| **Steel** (preferred) | Default production path, long-running review sessions | 24 hours | Lower browser-hour cost |
-| **Browserless** (fallback) | Operational fallback when Steel is unavailable | Variable | Higher browser-hour cost |
+| Provider | Best For | Lifecycle | Cost |
+|----------|----------|-----------|------|
+| **Cloudflare Kitesurf** (primary) | Compatible public, stateless analysis and screenshots | One operation | Free during beta; 3–7× lower CPU/memory than Chromium in Cloudflare's published corpus |
+| **Cloudflare Browser Run Chromium** | Sessionful, authenticated, WebGL, bot/TLS-sensitive, and Designer work | Explicitly closed session | Browser Run session pricing |
+| **Steel** (temporary rollback) | Incumbent parity and rollback during burn-in | Long-running session | Incumbent pricing |
+| **Browserless** (temporary rollback) | Secondary incumbent fallback | Variable | Incumbent pricing |
 
 ### Environment Variables
 
 ```bash
-# Recommended: Steel.dev (production)
+# Primary managed-browser platform
+CLOUDFLARE_ACCOUNT_ID=your-cloudflare-account-id
+CLOUDFLARE_BROWSER_RUN_API_TOKEN=your-browser-rendering-edit-token
+BROWSER_RUN_ENABLED=true
+
+# Temporary rollback provider during burn-in
 STEEL_API_KEY=your-steel-api-key
 
 # Optional: Streamable HTTP auth + runtime settings (remote mode)
@@ -113,31 +120,48 @@ LANGFUSE_SECRET_KEY=your-langfuse-api-key
 
 ### Provider Selection
 
-The system automatically selects the provider based on available credentials:
-1. If `STEEL_API_KEY` is set → Steel is preferred as the primary provider
-2. If `BROWSERLESS_TOKEN` or `BROWSERLESS_API_KEY` is set → Browserless is available as fallback
-3. If Steel errors at runtime, the provider manager can fail over to Browserless automatically
-4. If Steel is not configured, Browserless becomes the active provider
+The system classifies the operation before execution:
+
+1. Compatible public analysis/screenshots route to Kitesurf, then Browser Run Chromium on failure.
+2. Sessionful and Designer operations route directly to Browser Run Chromium.
+3. Steel and Browserless remain later ordered fallbacks only while the burn-in gate is open.
+4. Set `BROWSER_RUN_ENABLED=false` and redeploy to select the configured incumbent without deleting or rotating credentials. This is an emergency rollback, not a silent runtime fallback.
+
+Every MCP browser result includes `_browser` evidence with the capability,
+selected engine, ordered attempts, duration, fallback reason, result SHA-256,
+and usage availability. CDP does not return the Quick Action
+`X-Browser-Ms-Used` header, so CDP receipts state usage as unavailable instead
+of inventing a cost measurement.
+
+See [Browser Run migration and rollback](./docs/BROWSER_RUN_MIGRATION.md).
 
 ### Integration test (opt-in)
 
-An integration test runs real Steel + Webflow preview extraction and asserts on tool output shape. It is **opt-in**: without credentials it skips and exits 0 (CI-friendly).
+An integration test runs the configured managed browser against a Webflow preview and asserts on tool output shape. It is **opt-in**: without credentials it skips and exits 0 (CI-friendly).
 
 ```bash
 # Skip (no credentials)
 pnpm test:integration
-# → "Integration test skipped: STEEL_API_KEY not set"
+# → "Integration test skipped: no Browser Run or incumbent browser credentials configured."
 
-# Run against Steel + Webflow preview
-STEEL_API_KEY=your-key pnpm test:integration
+# Run against Browser Run + Webflow preview
+CLOUDFLARE_ACCOUNT_ID=your-account-id \
+CLOUDFLARE_BROWSER_RUN_API_TOKEN=your-token \
+pnpm test:integration
 # Optional: override preview URL (default: public Woven Wear template)
-STEEL_API_KEY=your-key WEBFLOW_PREVIEW_URL=https://preview.webflow.com/preview/... pnpm test:integration
+CLOUDFLARE_ACCOUNT_ID=your-account-id \
+CLOUDFLARE_BROWSER_RUN_API_TOKEN=your-token \
+WEBFLOW_PREVIEW_URL=https://preview.webflow.com/preview/... \
+pnpm test:integration
 
 # Also test the Designer metadata agent (Flow B: panel navigation P, G, A, H, J). Slower (~1–3 min).
-RUN_DESIGNER_METADATA_TEST=1 STEEL_API_KEY=your-key pnpm test:integration
+RUN_DESIGNER_METADATA_TEST=1 \
+CLOUDFLARE_ACCOUNT_ID=your-account-id \
+CLOUDFLARE_BROWSER_RUN_API_TOKEN=your-token \
+pnpm test:integration
 ```
 
-In CI, set `STEEL_API_KEY` (and optionally `WEBFLOW_PREVIEW_URL`) as secrets to run the test. Set `RUN_DESIGNER_METADATA_TEST=1` to also exercise the Designer metadata extraction agent.
+In CI, set the Browser Run account/token (and optionally `WEBFLOW_PREVIEW_URL`) to run the test. Set `RUN_DESIGNER_METADATA_TEST=1` to also exercise Chromium Designer metadata extraction. Incumbent credentials still work for rollback-only comparison.
 
 ### MCP Configuration
 
@@ -182,7 +206,8 @@ The package now also supports a hosted Streamable HTTP endpoint for Hub/downstre
 ```bash
 pnpm build
 WEBFLOW_SITE_ANALYZER_MCP_API_KEY=your-token \
-STEEL_API_KEY=your-steel-key \
+CLOUDFLARE_ACCOUNT_ID=your-account-id \
+CLOUDFLARE_BROWSER_RUN_API_TOKEN=your-token \
 PORT=8788 \
 pnpm start:http
 ```
@@ -220,6 +245,7 @@ Hosted client config:
 
 Notes:
 - `WEBFLOW_SITE_ANALYZER_MCP_API_KEY` is preferred for remote auth. `MCP_API_KEY` is still accepted as a fallback.
+- Cloudflare Worker MCP requests fail closed when neither server auth secret is configured; `/health` remains public for readiness checks.
 - `WEBFLOW_ANALYZER_REGISTRY_PATH` lets a hosted Node process keep script-version state outside the repo checkout.
 - The Hub registry points at the remote HTTP analyzer endpoint. The Phase B reviewer bundle also includes the remote `webflow-local` compatibility entry for plagiarism and framework analysis.
 
@@ -952,16 +978,14 @@ Uses AI Interaction Atlas vocabulary:
   'touchpoint.mcp_server': 'webflow-site-analyzer-mcp',
   'ai_task.type': 'extract',
   'ai_task.skill': 'analyze_touchpoints',
-  'browser.provider': 'browserless',
+  'browser.provider': 'cloudflare-kitesurf',
   'webflow.url': 'https://...'
 }
 ```
 
 ## Cost Tracking
 
-Browser time is tracked per provider session and surfaced on template-review reports via `providerMetrics.browserMinutes`.
-
-The current runtime is optimized to keep Steel as the primary, lower-cost path and only invoke Browserless when Steel is unavailable or errors.
+Browser time is tracked per provider session and surfaced on template-review reports via `providerMetrics.browserMinutes`. Each tool result's `_browser` receipt is the stronger per-run source of truth. Direct CDP does not expose Quick Action usage headers, so usage remains explicitly unavailable until Cloudflare exposes it on that boundary.
 
 ## Development
 
@@ -1106,8 +1130,10 @@ src/
 ├── types.ts             # Type definitions
 ├── observability.ts     # Tracing and metrics
 ├── providers/
-│   ├── index.ts         # Provider manager
-│   └── browserless.ts   # Browserless implementation (includes Designer extraction)
+│   ├── index.ts                    # Owned capability router and receipts
+│   ├── cloudflare-browser-run.ts   # Kitesurf and Chromium CDP adapter
+│   ├── steel.ts                    # Temporary rollback provider
+│   └── browserless.ts              # Temporary rollback provider
 ├── scripts/
 │   ├── index.ts         # Script exports
 │   ├── touchpoints.ts   # Touchpoint extraction
@@ -1122,23 +1148,16 @@ src/
     └── intelligence.ts  # Analysis and proposal generation
 ```
 
-## Browser Provider
+## Browser platform
 
-Currently uses **Browserless.io** as the primary browser automation provider:
+Cloudflare Browser Run is the owned managed-browser platform. Kitesurf handles
+compatible stateless work; Chromium handles persistent, authenticated, WebGL,
+bot/TLS-sensitive, and Designer work. Steel and Browserless remain only as
+explicit rollback providers until CRE-1645's production burn-in gate passes.
 
-- WebSocket-based Puppeteer connection
-- No timeout limits (unlike Cloudflare's 60s)
-- Persistent sessions support
-- Self-hosted option available
-
-### Why Not Cloudflare Browser Rendering?
-
-Cloudflare Browser Rendering has a 60-second timeout limit which can be problematic for:
-- Complex SPAs with heavy JavaScript
-- Pages with many lazy-loaded elements
-- Full-page screenshot capture
-
-Browserless provides more flexibility for production use cases.
+The analyzer keeps its provider interface, capability policy, receipts, and
+rollback switch independent of Cloudflare so the execution adapter remains
+replaceable.
 
 ## License
 

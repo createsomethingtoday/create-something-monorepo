@@ -18,7 +18,16 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 
-import { createProviderManager, type ProviderManager } from './providers/index.js';
+import {
+  createProviderManager,
+  type BrowserProviderRuntimeConfig,
+  type ProviderManager,
+} from './providers/index.js';
+import { configurePuppeteerRuntime } from './providers/puppeteer-runtime.js';
+import {
+  createBrowserExecutionReceipt,
+  type BrowserExecutionReceipt,
+} from './providers/browser-execution-receipt.js';
 import {
   initRegistry,
   createIntelligenceAnalyzer,
@@ -52,6 +61,7 @@ import {
 } from './template-review-jobs.js';
 import { classifyUrls, type ClassifyOptions } from './url-classifier.js';
 import { is404PageTitle } from './review-utils.js';
+import { createBrowserRoutingHealth } from './browser-routing-health.js';
 import type {
   TouchpointAnalysis,
   SEOAnalysis,
@@ -96,6 +106,46 @@ let providerManager: ProviderManager | null = null;
 let registry: RegistryManager | null = null;
 let templateReviewJobs: TemplateReviewJobManager | null = null;
 let templateReviewJobDurableObjectNamespace: TemplateReviewJobDurableObjectNamespace | null = null;
+let analyzerRuntimeConfig: AnalyzerRuntimeConfig | null = null;
+
+export interface AnalyzerRuntimeConfig {
+  runtime: 'node' | 'worker';
+  apiKey?: string;
+  registryPath?: string;
+  browserProvider?: BrowserProviderRuntimeConfig;
+  templateReviewMaxConcurrentJobs?: number;
+  templateReviewMaxQueueSize?: number;
+}
+
+function sameAnalyzerRuntimeConfig(
+  current: AnalyzerRuntimeConfig,
+  next: AnalyzerRuntimeConfig,
+): boolean {
+  return current.runtime === next.runtime
+    && current.apiKey === next.apiKey
+    && current.registryPath === next.registryPath
+    && current.templateReviewMaxConcurrentJobs === next.templateReviewMaxConcurrentJobs
+    && current.templateReviewMaxQueueSize === next.templateReviewMaxQueueSize
+    && current.browserProvider?.cloudflareBrowserRunEnabled
+      === next.browserProvider?.cloudflareBrowserRunEnabled
+    && current.browserProvider?.cloudflareAccountId === next.browserProvider?.cloudflareAccountId
+    && current.browserProvider?.cloudflareBrowserRunApiToken
+      === next.browserProvider?.cloudflareBrowserRunApiToken
+    && current.browserProvider?.steelApiKey === next.browserProvider?.steelApiKey
+    && current.browserProvider?.browserlessToken === next.browserProvider?.browserlessToken;
+}
+
+export function configureAnalyzerRuntime(config: AnalyzerRuntimeConfig): void {
+  if (analyzerRuntimeConfig) {
+    if (!sameAnalyzerRuntimeConfig(analyzerRuntimeConfig, config)) {
+      throw new Error('Analyzer runtime is already configured with different bindings');
+    }
+    return;
+  }
+
+  analyzerRuntimeConfig = config;
+  configurePuppeteerRuntime(config.runtime);
+}
 
 function parsePositiveInt(value: string | undefined, fallback: number): number {
   const parsed = value ? Number.parseInt(value, 10) : Number.NaN;
@@ -104,35 +154,57 @@ function parsePositiveInt(value: string | undefined, fallback: number): number {
 
 function getApiKey(): string | null {
   const value =
-    process.env.WEBFLOW_SITE_ANALYZER_MCP_API_KEY?.trim() ??
-    process.env.MCP_API_KEY?.trim() ??
-    '';
+    analyzerRuntimeConfig?.apiKey?.trim()
+    ?? process.env.WEBFLOW_SITE_ANALYZER_MCP_API_KEY?.trim()
+    ?? process.env.MCP_API_KEY?.trim()
+    ?? '';
   return value ? value : null;
 }
 
 function getRegistryPath(): string | undefined {
-  const value = process.env.WEBFLOW_ANALYZER_REGISTRY_PATH?.trim();
+  const value = analyzerRuntimeConfig?.registryPath?.trim()
+    ?? process.env.WEBFLOW_ANALYZER_REGISTRY_PATH?.trim();
   return value ? value : undefined;
 }
 
-function isWorkerRuntime(): boolean {
-  return process.env.WEBFLOW_SITE_ANALYZER_RUNTIME === 'worker';
+function getBrowserProviderRuntimeConfig(): BrowserProviderRuntimeConfig | undefined {
+  return analyzerRuntimeConfig?.browserProvider;
 }
 
 function isBrowserAutomationSupported(): boolean {
-  return !isWorkerRuntime();
+  const config = getBrowserProviderRuntimeConfig();
+  if (!config) {
+    return Boolean(
+      (process.env.CLOUDFLARE_ACCOUNT_ID || process.env.CF_ACCOUNT_ID)
+      && (
+        process.env.CLOUDFLARE_BROWSER_RUN_API_TOKEN
+        || process.env.CLOUDFLARE_API_TOKEN
+        || process.env.CF_API_TOKEN
+      )
+      || process.env.STEEL_API_KEY
+      || process.env.BROWSERLESS_TOKEN
+      || process.env.BROWSERLESS_API_KEY,
+    );
+  }
+  return Boolean(
+    config.cloudflareBrowserRunEnabled === true
+    && config.cloudflareAccountId
+    && config.cloudflareBrowserRunApiToken
+    || config.steelApiKey
+    || config.browserlessToken,
+  );
 }
 
 function assertBrowserAutomationSupported(toolName: string): void {
   if (isBrowserAutomationSupported()) return;
   throw new Error(
-    `${toolName} is not supported on the Cloudflare Worker deployment. Use the local analyzer or a non-Worker host for browser-backed review execution.`,
+    `${toolName} requires a configured browser provider. Configure Cloudflare Browser Run or an incumbent rollback provider.`,
   );
 }
 
 function getProvider(): ProviderManager {
   if (!providerManager) {
-    providerManager = createProviderManager();
+    providerManager = createProviderManager(getBrowserProviderRuntimeConfig());
   }
   return providerManager;
 }
@@ -150,8 +222,10 @@ function getTemplateReviewJobManager(): TemplateReviewJobManager {
       ? new DurableObjectTemplateReviewJobStore(templateReviewJobDurableObjectNamespace)
       : undefined;
     templateReviewJobs = new TemplateReviewJobManager(executeTemplateReview, {
-      concurrency: parsePositiveInt(process.env.WEBFLOW_TEMPLATE_REVIEW_MAX_CONCURRENT_JOBS, 2),
-      maxQueueSize: parsePositiveInt(process.env.WEBFLOW_TEMPLATE_REVIEW_MAX_QUEUE_SIZE, 100),
+      concurrency: analyzerRuntimeConfig?.templateReviewMaxConcurrentJobs
+        ?? parsePositiveInt(process.env.WEBFLOW_TEMPLATE_REVIEW_MAX_CONCURRENT_JOBS, 2),
+      maxQueueSize: analyzerRuntimeConfig?.templateReviewMaxQueueSize
+        ?? parsePositiveInt(process.env.WEBFLOW_TEMPLATE_REVIEW_MAX_QUEUE_SIZE, 100),
     }, store);
   }
   return templateReviewJobs;
@@ -174,7 +248,13 @@ interface VersionedExecutionResult<T> {
   data: T;
   versionId: string;
   durationMs: number;
+  browser: BrowserExecutionReceipt;
 }
+
+type VersionedBrowserResult<T> = T & {
+  _version: string;
+  _browser: BrowserExecutionReceipt;
+};
 
 async function executeVersionedScript<T>(
   scriptName: string,
@@ -183,15 +263,20 @@ async function executeVersionedScript<T>(
 ): Promise<VersionedExecutionResult<T>> {
   const reg = await getScriptRegistry();
   const manager = getProvider();
-  const provider = manager.getProvider();
   const startTime = Date.now();
 
   // Get versioned script (may use testing version for A/B)
   const { code, versionId } = reg.getScriptForExecution(scriptName);
 
   try {
-    const data = await provider.analyze<T>(url, code, options);
+    const operation = await manager.analyzeWithReceipt<T>(url, code, options);
+    const data = operation.data;
     const durationMs = Date.now() - startTime;
+    const browser = await createBrowserExecutionReceipt(operation.receipt, {
+      url,
+      durationMs,
+      result: data,
+    });
 
     // Record metrics for this version
     await reg.recordExecution(versionId, true, durationMs, 
@@ -200,7 +285,7 @@ async function executeVersionedScript<T>(
         : undefined
     );
 
-    return { data, versionId, durationMs };
+    return { data, versionId, durationMs, browser };
 
   } catch (error) {
     const durationMs = Date.now() - startTime;
@@ -213,7 +298,7 @@ async function executeVersionedScript<T>(
 // Tool Handlers - Analysis (Automation Layer)
 // =============================================================================
 
-async function analyzeTouchpoints(input: AnalyzeTouchpointsInput): Promise<TouchpointAnalysis & { _version: string }> {
+async function analyzeTouchpoints(input: AnalyzeTouchpointsInput): Promise<VersionedBrowserResult<TouchpointAnalysis>> {
   const manager = getProvider();
   const provider = manager.getProvider();
 
@@ -226,7 +311,7 @@ async function analyzeTouchpoints(input: AnalyzeTouchpointsInput): Promise<Touch
   const browserSpan = createBrowserSpan(trace, input.url);
 
   try {
-    const { data, versionId, durationMs } = await executeVersionedScript<TouchpointAnalysis>(
+    const { data, versionId, durationMs, browser } = await executeVersionedScript<TouchpointAnalysis>(
       'touchpoints',
       input.url,
       {
@@ -241,7 +326,7 @@ async function analyzeTouchpoints(input: AnalyzeTouchpointsInput): Promise<Touch
     recordAnalysisMetrics(trace, {
       tool: 'analyze_touchpoints',
       url: input.url,
-      provider: provider.name,
+      provider: browser.selectedProvider ?? provider.name,
       durationMs,
       success: true,
       itemsExtracted: data.totalCount,
@@ -249,7 +334,7 @@ async function analyzeTouchpoints(input: AnalyzeTouchpointsInput): Promise<Touch
     });
 
     manager.recordAnalysis(true, durationMs);
-    return { ...data, _version: versionId };
+    return { ...data, _version: versionId, _browser: browser };
 
   } catch (error) {
     browserSpan.end({ success: false, error: String(error) });
@@ -259,7 +344,7 @@ async function analyzeTouchpoints(input: AnalyzeTouchpointsInput): Promise<Touch
   }
 }
 
-async function extractSEO(input: ExtractSEOInput): Promise<SEOAnalysis & { _version: string }> {
+async function extractSEO(input: ExtractSEOInput): Promise<VersionedBrowserResult<SEOAnalysis>> {
   const manager = getProvider();
   const provider = manager.getProvider();
 
@@ -273,7 +358,7 @@ async function extractSEO(input: ExtractSEOInput): Promise<SEOAnalysis & { _vers
   const browserSpan = createBrowserSpan(trace, input.url);
 
   try {
-    const { data, versionId, durationMs } = await executeVersionedScript<SEOAnalysis>(
+    const { data, versionId, durationMs, browser } = await executeVersionedScript<SEOAnalysis>(
       'seo',
       input.url,
       { timeout: input.timeout }
@@ -285,7 +370,7 @@ async function extractSEO(input: ExtractSEOInput): Promise<SEOAnalysis & { _vers
     recordAnalysisMetrics(trace, {
       tool: 'extract_seo',
       url: input.url,
-      provider: provider.name,
+      provider: browser.selectedProvider ?? provider.name,
       durationMs,
       success: true,
       itemsExtracted: data.issues.length,
@@ -293,7 +378,7 @@ async function extractSEO(input: ExtractSEOInput): Promise<SEOAnalysis & { _vers
     });
 
     manager.recordAnalysis(true, durationMs);
-    return { ...data, _version: versionId };
+    return { ...data, _version: versionId, _browser: browser };
 
   } catch (error) {
     browserSpan.end({ success: false, error: String(error) });
@@ -303,7 +388,7 @@ async function extractSEO(input: ExtractSEOInput): Promise<SEOAnalysis & { _vers
   }
 }
 
-async function getPageStructure(input: GetPageStructureInput): Promise<PageStructure & { _version: string }> {
+async function getPageStructure(input: GetPageStructureInput): Promise<VersionedBrowserResult<PageStructure>> {
   const manager = getProvider();
   const provider = manager.getProvider();
 
@@ -316,7 +401,7 @@ async function getPageStructure(input: GetPageStructureInput): Promise<PageStruc
   const browserSpan = createBrowserSpan(trace, input.url);
 
   try {
-    const { data, versionId, durationMs } = await executeVersionedScript<PageStructure>(
+    const { data, versionId, durationMs, browser } = await executeVersionedScript<PageStructure>(
       'structure',
       input.url,
       { timeout: input.timeout }
@@ -327,7 +412,7 @@ async function getPageStructure(input: GetPageStructureInput): Promise<PageStruc
     recordAnalysisMetrics(trace, {
       tool: 'get_page_structure',
       url: input.url,
-      provider: provider.name,
+      provider: browser.selectedProvider ?? provider.name,
       durationMs,
       success: true,
       itemsExtracted: data.sections.length,
@@ -335,7 +420,7 @@ async function getPageStructure(input: GetPageStructureInput): Promise<PageStruc
     });
 
     manager.recordAnalysis(true, durationMs);
-    return { ...data, _version: versionId };
+    return { ...data, _version: versionId, _browser: browser };
 
   } catch (error) {
     browserSpan.end({ success: false, error: String(error) });
@@ -345,7 +430,7 @@ async function getPageStructure(input: GetPageStructureInput): Promise<PageStruc
   }
 }
 
-async function analyzeImages(input: AnalyzeImagesInput): Promise<ImageAnalysis & { _version: string }> {
+async function analyzeImages(input: AnalyzeImagesInput): Promise<VersionedBrowserResult<ImageAnalysis>> {
   const manager = getProvider();
   const provider = manager.getProvider();
 
@@ -358,7 +443,7 @@ async function analyzeImages(input: AnalyzeImagesInput): Promise<ImageAnalysis &
   const browserSpan = createBrowserSpan(trace, input.url);
 
   try {
-    const { data, versionId, durationMs } = await executeVersionedScript<ImageAnalysis>(
+    const { data, versionId, durationMs, browser } = await executeVersionedScript<ImageAnalysis>(
       'images',
       input.url,
       { timeout: input.timeout }
@@ -370,7 +455,7 @@ async function analyzeImages(input: AnalyzeImagesInput): Promise<ImageAnalysis &
     recordAnalysisMetrics(trace, {
       tool: 'analyze_images',
       url: input.url,
-      provider: provider.name,
+      provider: browser.selectedProvider ?? provider.name,
       durationMs,
       success: true,
       itemsExtracted: data.totalImages,
@@ -378,7 +463,7 @@ async function analyzeImages(input: AnalyzeImagesInput): Promise<ImageAnalysis &
     });
 
     manager.recordAnalysis(true, durationMs);
-    return { ...data, _version: versionId };
+    return { ...data, _version: versionId, _browser: browser };
 
   } catch (error) {
     browserSpan.end({ success: false, error: String(error) });
@@ -388,7 +473,7 @@ async function analyzeImages(input: AnalyzeImagesInput): Promise<ImageAnalysis &
   }
 }
 
-async function getPerformance(input: GetPerformanceInput): Promise<PerformanceMetrics & { _version: string }> {
+async function getPerformance(input: GetPerformanceInput): Promise<VersionedBrowserResult<PerformanceMetrics>> {
   const manager = getProvider();
   const provider = manager.getProvider();
 
@@ -402,7 +487,7 @@ async function getPerformance(input: GetPerformanceInput): Promise<PerformanceMe
   const browserSpan = createBrowserSpan(trace, input.url);
 
   try {
-    const { data, versionId, durationMs } = await executeVersionedScript<PerformanceMetrics>(
+    const { data, versionId, durationMs, browser } = await executeVersionedScript<PerformanceMetrics>(
       'performance',
       input.url,
       { timeout: input.timeout, waitForNavigation: true }
@@ -413,14 +498,14 @@ async function getPerformance(input: GetPerformanceInput): Promise<PerformanceMe
     recordAnalysisMetrics(trace, {
       tool: 'get_performance',
       url: input.url,
-      provider: provider.name,
+      provider: browser.selectedProvider ?? provider.name,
       durationMs,
       success: true,
       browserMinutes: durationMs / 60000
     });
 
     manager.recordAnalysis(true, durationMs);
-    return { ...data, _version: versionId };
+    return { ...data, _version: versionId, _browser: browser };
 
   } catch (error) {
     browserSpan.end({ success: false, error: String(error) });
@@ -430,7 +515,11 @@ async function getPerformance(input: GetPerformanceInput): Promise<PerformanceMe
   }
 }
 
-async function captureScreenshot(input: CaptureScreenshotInput): Promise<{ screenshot: string; format: string }> {
+async function captureScreenshot(input: CaptureScreenshotInput): Promise<{
+  screenshot: string;
+  format: string;
+  _browser: BrowserExecutionReceipt;
+}> {
   const manager = getProvider();
   const provider = manager.getProvider();
   const startTime = Date.now();
@@ -445,20 +534,27 @@ async function captureScreenshot(input: CaptureScreenshotInput): Promise<{ scree
   const browserSpan = createBrowserSpan(trace, input.url);
 
   try {
-    const buffer = await provider.screenshot(input.url, {
+    const operation = await manager.screenshotWithReceipt(input.url, {
       viewport: input.viewport,
       fullPage: input.fullPage,
       format: input.format,
-      quality: input.quality
+      quality: input.quality,
+      pixelSensitive: input.pixelSensitive,
     });
+    const buffer = operation.data;
 
     const durationMs = Date.now() - startTime;
+    const browser = await createBrowserExecutionReceipt(operation.receipt, {
+      url: input.url,
+      durationMs,
+      result: buffer,
+    });
     browserSpan.end({ success: true, sizeBytes: buffer.length });
 
     recordAnalysisMetrics(trace, {
       tool: 'capture_screenshot',
       url: input.url,
-      provider: provider.name,
+      provider: browser.selectedProvider ?? provider.name,
       durationMs,
       success: true,
       browserMinutes: durationMs / 60000
@@ -468,7 +564,8 @@ async function captureScreenshot(input: CaptureScreenshotInput): Promise<{ scree
 
     return {
       screenshot: buffer.toString('base64'),
-      format: input.format || 'png'
+      format: input.format || 'png',
+      _browser: browser,
     };
 
   } catch (error) {
@@ -480,7 +577,9 @@ async function captureScreenshot(input: CaptureScreenshotInput): Promise<{ scree
   }
 }
 
-async function extractDesignerMetadata(input: ExtractDesignerMetadataInput): Promise<DesignerMetadata> {
+async function extractDesignerMetadata(input: ExtractDesignerMetadataInput): Promise<
+  DesignerMetadata & { _browser: BrowserExecutionReceipt }
+> {
   const manager = getProvider();
   const provider = manager.getProvider();
   const startTime = Date.now();
@@ -495,9 +594,19 @@ async function extractDesignerMetadata(input: ExtractDesignerMetadataInput): Pro
   const browserSpan = createBrowserSpan(trace, input.url);
 
   try {
-    // Use the specialized extractDesignerMetadata method
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const rawData = await (provider as any).extractDesignerMetadata(input.url, input.timeout);
+    const operation = await manager.extractDesignerMetadataWithReceipt(input.url, input.timeout);
+    const rawData = operation.data as unknown as Pick<
+      DesignerMetadata,
+      | 'siteName'
+      | 'sitePlan'
+      | 'pages'
+      | 'styleClasses'
+      | 'components'
+      | 'interactions'
+      | 'cmsCollections'
+      | 'assets'
+      | 'breakpoints'
+    >;
 
     const durationMs = Date.now() - startTime;
 
@@ -531,6 +640,11 @@ async function extractDesignerMetadata(input: ExtractDesignerMetadataInput): Pro
       
       breakpoints: rawData.breakpoints
     };
+    const browser = await createBrowserExecutionReceipt(operation.receipt, {
+      url: input.url,
+      durationMs,
+      result: metadata,
+    });
 
     browserSpan.end({ 
       success: true, 
@@ -542,7 +656,7 @@ async function extractDesignerMetadata(input: ExtractDesignerMetadataInput): Pro
     recordAnalysisMetrics(trace, {
       tool: 'extract_designer_metadata',
       url: input.url,
-      provider: provider.name,
+      provider: browser.selectedProvider ?? provider.name,
       durationMs,
       success: true,
       itemsExtracted: metadata.totalPages + metadata.totalClasses + metadata.totalComponents,
@@ -550,7 +664,7 @@ async function extractDesignerMetadata(input: ExtractDesignerMetadataInput): Pro
     });
 
     manager.recordAnalysis(true, durationMs);
-    return metadata;
+    return { ...metadata, _browser: browser };
 
   } catch (error) {
     const durationMs = Date.now() - startTime;
@@ -3352,7 +3466,11 @@ export function createAnalyzerServer(): Server {
               properties: { width: { type: 'number' }, height: { type: 'number' } }
             },
             format: { type: 'string', enum: ['png', 'jpeg', 'webp'] },
-            quality: { type: 'number', description: 'Quality 0-100 for jpeg/webp' }
+            quality: { type: 'number', description: 'Quality 0-100 for jpeg/webp' },
+            pixelSensitive: {
+              type: 'boolean',
+              description: 'Route directly to Chromium for pixel-sensitive acceptance evidence',
+            }
           },
           required: ['url']
         }
@@ -3779,6 +3897,7 @@ export async function shutdownAnalyzerServer(): Promise<void> {
 
 export function getAnalyzerHealth(): Record<string, unknown> {
   const providerName = providerManager?.getProviderName() ?? null;
+  const browserConfig = getBrowserProviderRuntimeConfig();
   return {
     name: 'webflow-site-analyzer-mcp',
     version: '1.0.0',
@@ -3791,10 +3910,13 @@ export function getAnalyzerHealth(): Record<string, unknown> {
     },
     templateReview: {
       browserAutomationSupported: isBrowserAutomationSupported(),
-      maxConcurrentJobs: parsePositiveInt(process.env.WEBFLOW_TEMPLATE_REVIEW_MAX_CONCURRENT_JOBS, 2),
-      maxQueueSize: parsePositiveInt(process.env.WEBFLOW_TEMPLATE_REVIEW_MAX_QUEUE_SIZE, 100),
+      maxConcurrentJobs: analyzerRuntimeConfig?.templateReviewMaxConcurrentJobs
+        ?? parsePositiveInt(process.env.WEBFLOW_TEMPLATE_REVIEW_MAX_CONCURRENT_JOBS, 2),
+      maxQueueSize: analyzerRuntimeConfig?.templateReviewMaxQueueSize
+        ?? parsePositiveInt(process.env.WEBFLOW_TEMPLATE_REVIEW_MAX_QUEUE_SIZE, 100),
       durableStorageConfigured: Boolean(templateReviewJobDurableObjectNamespace)
-    }
+    },
+    browserRouting: createBrowserRoutingHealth(browserConfig, providerName),
   };
 }
 
