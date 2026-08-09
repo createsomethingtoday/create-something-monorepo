@@ -157,6 +157,7 @@
     description="The Practice is one learning spine: locate the failure, make authority visible, rehearse the operator journey, and attach every claim to a current evidence state."
     scenes={practiceScenes}
     ariaLabel="Delegation Practice argument"
+    expression="editorial"
   >
     {#snippet artifact(scene: PerformanceNarrativeScene)}
       {#if scene.id === 'diagnose'}
