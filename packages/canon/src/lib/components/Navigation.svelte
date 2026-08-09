@@ -6,6 +6,11 @@
   interface NavLink {
     label: string;
     href: string;
+    children?: Array<{
+      label: string;
+      href: string;
+      description?: string;
+    }>;
   }
 
   type NavigationVisualStyle = 'classic' | 'performance' | 'clear' | 'editorial';
@@ -61,6 +66,7 @@
 
   let mobileMenuOpen = $state(false);
   let mobileMenuButton = $state<HTMLButtonElement>();
+  let openDesktopMenu = $state<string | null>(null);
   const usesPerformanceStyle = $derived(
     visualStyle === 'performance' || visualStyle === 'clear' || visualStyle === 'editorial'
   );
@@ -70,7 +76,10 @@
     if (link.href === '/') {
       return currentPath === '/';
     }
-    return currentPath.startsWith(link.href);
+    return (
+      currentPath.startsWith(link.href) ||
+      link.children?.some((child) => currentPath.startsWith(child.href)) === true
+    );
   }
 
   function setMobileMenuOpen(open: boolean) {
@@ -88,7 +97,12 @@
   }
 
   function handleWindowKeydown(event: KeyboardEvent) {
-    if (event.key !== 'Escape' || !mobileMenuOpen) return;
+    if (event.key !== 'Escape') return;
+    if (openDesktopMenu) {
+      openDesktopMenu = null;
+      return;
+    }
+    if (!mobileMenuOpen) return;
     event.preventDefault();
     closeMobileMenu(true);
   }
@@ -126,9 +140,42 @@
         {#if usesPerformanceStyle || usesEditorialStyle}
           <div class="nav-link-list">
             {#each links as link}
-              <a href={link.href} class="nav-link" class:active={isActive(link)}>
-                {link.label}
-              </a>
+              {#if link.children?.length}
+                <div class="nav-dropdown">
+                  <button
+                    type="button"
+                    class="nav-link nav-dropdown__trigger"
+                    class:active={isActive(link)}
+                    aria-expanded={openDesktopMenu === link.href}
+                    aria-controls={`nav-submenu-${link.href.replaceAll('/', '') || 'root'}`}
+                    onclick={() =>
+                      (openDesktopMenu = openDesktopMenu === link.href ? null : link.href)}
+                  >
+                    {link.label}<span aria-hidden="true">⌄</span>
+                  </button>
+                  {#if openDesktopMenu === link.href}
+                    <div
+                      id={`nav-submenu-${link.href.replaceAll('/', '') || 'root'}`}
+                      class="nav-dropdown__menu"
+                    >
+                      {#each link.children as child}
+                        <a
+                          href={child.href}
+                          class="nav-dropdown__item"
+                          onclick={() => (openDesktopMenu = null)}
+                        >
+                          <span>{child.label}</span>
+                          {#if child.description}<small>{child.description}</small>{/if}
+                        </a>
+                      {/each}
+                    </div>
+                  {/if}
+                </div>
+              {:else}
+                <a href={link.href} class="nav-link" class:active={isActive(link)}>
+                  {link.label}
+                </a>
+              {/if}
             {/each}
           </div>
           <div class="nav-actions">
@@ -209,6 +256,15 @@
           >
             {link.label}
           </a>
+          {#if link.children?.length}
+            <div class="nav-mobile-submenu">
+              {#each link.children as child}
+                <a href={child.href} onclick={() => closeMobileMenu()} class="nav-link py-2">
+                  {child.label}
+                </a>
+              {/each}
+            </div>
+          {/if}
         {/each}
         {#if ctaLabel && ctaHref}
           <a href={ctaHref} onclick={() => closeMobileMenu()} class="nav-cta text-center">
@@ -317,6 +373,68 @@
     background: var(--color-performance-shell-surface-tertiary);
   }
 
+  .nav-dropdown {
+    position: relative;
+  }
+
+  .nav-dropdown__trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .nav-dropdown__trigger > span {
+    font-size: 0.9em;
+    line-height: 0.8;
+  }
+
+  .nav-dropdown__menu {
+    position: absolute;
+    z-index: 5;
+    top: calc(100% + 0.55rem);
+    left: 0;
+    display: grid;
+    width: min(20rem, 38vw);
+    padding: 0.45rem;
+    border: 1px solid var(--color-performance-shell-border-default);
+    border-radius: var(--radius-performance-scale-md);
+    background: var(--color-performance-shell-surface-secondary);
+    box-shadow: var(--color-performance-shell-shadow);
+  }
+
+  .nav-dropdown__item {
+    display: grid;
+    gap: 0.18rem;
+    padding: 0.72rem 0.78rem;
+    border-radius: calc(var(--radius-performance-scale-md) - 0.2rem);
+    color: var(--color-performance-fg-primary);
+    text-decoration: none;
+  }
+
+  .nav-dropdown__item:hover {
+    background: var(--color-performance-shell-surface-hover);
+  }
+
+  .nav-dropdown__item span {
+    font-size: 0.88rem;
+    font-weight: var(--font-performance-semibold);
+  }
+
+  .nav-dropdown__item small {
+    color: var(--color-performance-fg-muted);
+    font-size: 0.74rem;
+    line-height: 1.35;
+  }
+
+  .nav-dropdown__item:focus-visible,
+  .nav-dropdown__trigger:focus-visible {
+    outline: 2px solid var(--color-performance-focus);
+    outline-offset: 2px;
+  }
+
   .nav-link:focus-visible {
     outline: 2px solid var(--color-performance-focus);
     outline-offset: 2px;
@@ -402,6 +520,14 @@
     padding-left: var(--space-performance-sm);
     padding-right: var(--space-performance-sm);
     box-shadow: var(--color-performance-shell-shadow);
+  }
+
+  .nav-mobile-submenu {
+    display: grid;
+    gap: 0.1rem;
+    margin: -0.5rem 0 0.15rem 0.75rem;
+    padding-left: 0.75rem;
+    border-left: 1px solid var(--color-performance-shell-border-subtle);
   }
 
   /* Slide down animation for mobile menu */
@@ -786,6 +912,31 @@
   .nav-editorial .nav-link.active {
     color: var(--color-performance-editorial-dark, #181312);
     background: var(--color-performance-editorial-light, #f3ebe4);
+  }
+
+  .nav-editorial .nav-dropdown__menu {
+    border-color: color-mix(in srgb, var(--color-performance-editorial-dark) 22%, transparent);
+    border-radius: var(--radius-performance-editorial, 0.375rem);
+    background: var(--color-performance-editorial-light, #f3ebe4);
+    box-shadow: 0 1.1rem 2.5rem
+      color-mix(in srgb, var(--color-performance-editorial-dark) 18%, transparent);
+  }
+
+  .nav-editorial .nav-dropdown__item {
+    border-radius: calc(var(--radius-performance-editorial, 0.375rem) - 0.1rem);
+    color: var(--color-performance-editorial-dark, #181312);
+  }
+
+  .nav-editorial .nav-dropdown__item:hover {
+    background: var(--color-performance-editorial-light-secondary, #d8cdbc);
+  }
+
+  .nav-editorial .nav-dropdown__item small {
+    color: color-mix(in srgb, var(--color-performance-editorial-dark) 66%, transparent);
+  }
+
+  .nav-editorial .nav-mobile-submenu {
+    border-left-color: color-mix(in srgb, var(--color-performance-editorial-dark) 22%, transparent);
   }
 
   .nav-editorial .nav-cta {

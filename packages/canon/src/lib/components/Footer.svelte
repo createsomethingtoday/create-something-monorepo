@@ -360,6 +360,16 @@
     </section>
   {/if}
 
+  {#if usesEditorialStyle}
+    <div class="footer-editorial-identity" aria-hidden="true">
+      <div>
+        <span>CREATE</span>
+        <span>SOMETHING</span>
+      </div>
+      <p>Operating systems for work that has to hold up.</p>
+    </div>
+  {/if}
+
   <!-- Footer Links -->
   <div class="footer-links py-12 px-6" class:with-newsletter={showNewsletter}>
     <div class="footer-inner shell-inner">
@@ -1116,6 +1126,39 @@
     color: var(--color-performance-editorial-light, #f3ebe4);
   }
 
+  .footer-editorial #newsletter {
+    border-bottom: 1px solid
+      color-mix(in srgb, var(--color-performance-editorial-dark) 18%, transparent);
+    background: var(--color-performance-editorial-light-secondary, #d8cdbc);
+    color: var(--color-performance-editorial-dark, #181312);
+  }
+
+  .footer-editorial .newsletter-title {
+    font-family: var(--font-performance-editorial);
+    font-size: clamp(2.6rem, 5vw, 5rem);
+    font-weight: 400;
+    letter-spacing: -0.05em;
+    line-height: 0.94;
+  }
+
+  .footer-editorial .newsletter-description {
+    color: color-mix(in srgb, var(--color-performance-editorial-dark) 76%, transparent);
+  }
+
+  .footer-editorial .newsletter-input {
+    border: 1px solid color-mix(in srgb, var(--color-performance-editorial-dark) 32%, transparent);
+    border-radius: 0;
+    background: var(--color-performance-editorial-light, #f3ebe4);
+    color: var(--color-performance-editorial-dark, #181312);
+  }
+
+  .footer-editorial .newsletter-button {
+    border: 1px solid var(--color-performance-editorial-brand, #fcaa2d);
+    border-radius: 0;
+    background: var(--color-performance-editorial-brand, #fcaa2d);
+    color: var(--color-performance-editorial-dark, #181312);
+  }
+
   .footer-editorial-callout {
     padding: clamp(5rem, 11vw, 9rem) 1rem;
     background: var(--color-performance-editorial-light-secondary, #d8cdbc);
@@ -1184,8 +1227,45 @@
     outline-offset: 3px;
   }
 
+  .footer-editorial-identity {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 2rem;
+    align-items: end;
+    width: min(var(--content-width-performance-editorial, 90rem), calc(100% - 2rem));
+    margin-inline: auto;
+    padding: clamp(4rem, 9vw, 8rem) 0 0;
+    color: var(--color-performance-editorial-light, #f3ebe4);
+  }
+
+  .footer-editorial-identity div {
+    display: grid;
+    font-family: var(--font-performance-editorial);
+    font-size: clamp(4.1rem, 12.1vw, 12.75rem);
+    font-weight: 400;
+    letter-spacing: -0.075em;
+    line-height: 0.7;
+  }
+
+  .footer-editorial-identity div span:last-child {
+    margin-left: clamp(1rem, 8vw, 9rem);
+    color: var(--color-performance-editorial-brand, #fcaa2d);
+  }
+
+  .footer-editorial-identity p {
+    max-width: 15rem;
+    margin: 0 0 0.25rem;
+    color: color-mix(in srgb, var(--color-performance-editorial-light) 62%, transparent);
+    font-family: var(--font-performance-mono);
+    font-size: 0.68rem;
+    font-weight: var(--font-performance-semibold);
+    letter-spacing: 0.065em;
+    line-height: 1.45;
+    text-transform: uppercase;
+  }
+
   .footer-editorial .footer-links {
-    padding-top: clamp(4rem, 9vw, 8rem);
+    padding-top: clamp(2.5rem, 5vw, 4rem);
     background: var(--color-performance-editorial-dark, #181312);
   }
 
@@ -1271,6 +1351,18 @@
 
     .footer-editorial-callout h2 {
       font-size: clamp(3rem, 15vw, 4.8rem);
+    }
+
+    .footer-editorial-identity {
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+      width: min(100% - 1.5rem, var(--content-width-performance-editorial, 90rem));
+      padding-top: 4rem;
+    }
+
+    .footer-editorial-identity div {
+      font-size: clamp(3.55rem, 18vw, 6.5rem);
+      line-height: 0.75;
     }
 
     .footer-editorial .footer-inner {

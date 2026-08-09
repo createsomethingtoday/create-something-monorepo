@@ -56,7 +56,32 @@
   // test/public-marketing-copy.test.ts.
   const navLinks = [
     { label: 'How It Works', href: '/services' },
-    { label: 'Practice', href: '/practice' },
+    {
+      label: 'Practice',
+      href: '/practice',
+      children: [
+        {
+          label: 'Practice overview',
+          href: '/practice',
+          description: 'See the embedded operating-partner model and delivery lanes.'
+        },
+        {
+          label: 'Map a workflow',
+          href: agencyCoreMessaging.selfMapHref,
+          description: 'Name the handoff, owner, and first controlled pilot.'
+        },
+        {
+          label: 'How it works',
+          href: '/services',
+          description: 'Map, build, and control one AI-native operating path.'
+        },
+        {
+          label: 'Marketplace field report',
+          href: '/field-reports/template-review',
+          description: 'Inspect a live workflow, evidence, and decision boundary.'
+        }
+      ]
+    },
     { label: 'What You Keep', href: '/stack' },
     { label: 'Products', href: '/products' },
     { label: 'Field Reports', href: '/field-reports' }
