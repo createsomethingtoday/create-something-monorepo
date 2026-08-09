@@ -62,6 +62,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Test paper-cycle context
+        run: pnpm paper-cycle:test
+
       - name: Collect paper-cycle context
         id: context
         run: |

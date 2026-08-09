@@ -198,6 +198,7 @@
     "thesis:evidence:validate": "node scripts/thesis-evidence.mjs validate",
     "policy:artifacts:check": "node scripts/policy-artifact-check.mjs",
     "paper-cycle:context": "node scripts/io-paper-cycle-context.mjs",
+    "paper-cycle:test": "node --test scripts/test/io-paper-cycle-context.test.mjs",
     "paper-cycle:labels:sync": "node scripts/io-paper-cycle-labels.mjs",
     "paper-cycle:verify": "node scripts/io-paper-cycle-verify.mjs",
     "harness": "pnpm --filter @create-something/harness harness",
