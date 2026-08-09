@@ -316,8 +316,8 @@
     title="A shared play is a control surface."
     metrics={[
       { value: '1', label: 'workflow first', detail: 'Start with the handoff that matters.' },
-      { value: '3', label: 'run states', detail: 'Run, wait, or stop stays explicit.' },
-      { value: '1', label: 'owned Playbook', detail: 'Your team receives the working system.' }
+      { value: '3', label: 'run states', detail: 'Every run, wait, or stop stays explicit.' },
+      { value: '1', label: 'owned Playbook', detail: 'Your team keeps the working system.' }
     ]}
   />
 

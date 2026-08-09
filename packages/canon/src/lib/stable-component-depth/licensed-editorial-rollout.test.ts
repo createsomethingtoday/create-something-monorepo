@@ -132,6 +132,24 @@ describe('Licensed editorial public-system rollout', () => {
     );
   });
 
+  it('keeps the Agency ownership proposition in the editorial public-heading expression', () => {
+    const stack = readFileSync(
+      join(REPO_ROOT, 'packages/agency/src/routes/stack/+page.svelte'),
+      'utf8'
+    );
+    const metrics = readFileSync(
+      join(REPO_ROOT, 'packages/canon/src/lib/components/meridian/MeridianMetrics.svelte'),
+      'utf8'
+    );
+    const home = routeSource('agency');
+
+    expect(stack).toContain('expression="editorial"');
+    expect(metrics).toContain('grid-template-rows: auto auto minmax(2.9em, auto)');
+    expect(metrics).toContain('grid-template-rows: auto auto auto');
+    expect(home).toContain('Every run, wait, or stop stays explicit.');
+    expect(home).toContain('Your team keeps the working system.');
+  });
+
   it('keeps .io distinct as the research and field-evidence property', () => {
     const source = routeSource('io');
 
