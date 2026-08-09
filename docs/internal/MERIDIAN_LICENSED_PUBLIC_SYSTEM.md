@@ -2,7 +2,7 @@
 
 Status: implementation manifest  
 Owner: CREATE SOMETHING  
-Tracking: CRE-1646
+Tracking: CRE-1646 (initial shell), CRE-1647 (complete component adoption)
 
 ## Licensed end-product map
 
@@ -27,7 +27,7 @@ Reference stylesheet SHA-256:
 
 `7043bacf6fcb6db959e32f6863ec07b0e9355b5e54791e09555179bde1222cd2`
 
-The export's license page identifies Gambarino as free for personal and commercial use through Fontshare. The local source font was renamed for owned serving at `/fonts/create-something-editorial.woff2` on each licensed end product.
+The export's license page identifies Gambarino as free for personal and commercial use through Fontshare. The local source font was renamed for owned serving at `/fonts/create-something-editorial.woff2` on each licensed end product. The same licensed source loads Geist as its interface family; Canon self-hosts the Geist variable family through `@fontsource-variable/geist` (SIL OFL-1.1) rather than making a Google Fonts request.
 
 Source and deployed font SHA-256:
 
@@ -41,6 +41,9 @@ Source and deployed font SHA-256:
 - No template CDN assets are hotlinked.
 - Playbook fields, operating receipts, Performance Lab semantics, property routes, and property-specific actions remain first-party.
 - The source contributes bounded design decisions: editorial serif contrast, warm neutral casing, paired text/artifact composition, compact radii, aligned metadata, and deliberate section pacing.
+- Typography roles are explicit: Gambarino-derived `CS Editorial` is display-only at its actual 400 weight; variable Geist is the interface and reading face; IBM Plex Mono remains limited to receipts, labels, and operational state. Performance surfaces disable font synthesis so the single editorial face is never faux-bolded or faux-italicized.
+- The complete native component inventory and public-property map live in
+  [`MERIDIAN_COMPONENT_ADOPTION_MAP.md`](./MERIDIAN_COMPONENT_ADOPTION_MAP.md).
 
 Webflow Studio conversion is deferred until Studio is generally available and the operator authorizes a separate migration. This implementation does not create or modify a Webflow project.
 

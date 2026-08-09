@@ -2,12 +2,15 @@
   import type { PageData } from './$types';
   import {
     Button,
+    MeridianCardGrid,
+    MeridianFeatureSplit,
     PerformanceCampaignOpening,
     PerformanceNarrativeStage,
     paperResearchTraceMedia,
     PapersGrid,
     PropertyFunnel,
     SEO,
+    type MeridianCard,
     type PerformanceDecisionItem,
     type PerformanceNarrativeScene
   } from '@create-something/canon';
@@ -44,6 +47,27 @@
     { value: `${featuredExperiments.length}`, label: 'featured artifacts to inspect first' },
     { value: '3', label: 'database / automation / judgment layers' }
   ]);
+
+  const meridianResearchCards = $derived(
+    featuredExperiments.slice(0, 3).map(
+      (paper): MeridianCard => ({
+        eyebrow: paper.category || 'Research artifact',
+        title: paper.title,
+        description:
+          paper.excerpt_short ||
+          paper.excerpt ||
+          paper.description ||
+          'Open the research artifact and its supporting notes.',
+        href: `/papers/${paper.slug}`,
+        ctaLabel: 'Read artifact',
+        meta: paper.published_at
+          ? new Date(paper.published_at).getFullYear().toString()
+          : undefined,
+        kind: 'article',
+        tone: 'court'
+      })
+    )
+  );
 
   const decisionStates: PerformanceDecisionItem[] = [
     {
@@ -134,6 +158,18 @@
   {/snippet}
 </PerformanceCampaignOpening>
 
+<MeridianFeatureSplit
+  eyebrow="Research field"
+  title="A claim earns its route through evidence."
+  description="The research layer collects the operator question, the working method, and the artifact trail before a pattern is allowed into delivery or policy."
+  primaryLabel="Read the methodology"
+  primaryHref="/methodology"
+  secondaryLabel="Browse experiments"
+  secondaryHref="/experiments"
+  tags={['Artifact first', 'Method named', 'Handoff visible']}
+  visualLabel="Research route"
+/>
+
 <PerformanceNarrativeStage
   id="research-operating-story"
   expression="editorial"
@@ -153,6 +189,16 @@
     {/if}
   {/snippet}
 </PerformanceNarrativeStage>
+
+{#if meridianResearchCards.length > 0}
+  <MeridianCardGrid
+    eyebrow="Research index"
+    title="Recent artifacts, given a clear reading path."
+    description="The editorial card treatment gives each paper its category, context, and destination without turning the archive into a generic blog."
+    cards={meridianResearchCards}
+    ariaLabel="Featured research artifacts"
+  />
+{/if}
 
 <PropertyFunnel
   current="io"

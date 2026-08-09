@@ -1,4 +1,5 @@
 @import '@ibm/plex-mono/css/ibm-plex-mono-all.css';
+@import '@fontsource-variable/geist/wght.css';
 
 @font-face {
   font-family: 'CS Editorial';
@@ -198,11 +199,12 @@
     var(--color-performance-paper);
   color: var(--color-performance-ink);
   font-family: var(--font-performance-display, var(--font-performance-sans));
+  font-synthesis: none;
 }
 
 .property-performance :where(h1, h2) {
   font-family: var(--font-performance-editorial);
-  font-weight: 400;
+  font-weight: var(--font-performance-editorial-weight, 400);
 }
 
 [data-performance-mode] {
