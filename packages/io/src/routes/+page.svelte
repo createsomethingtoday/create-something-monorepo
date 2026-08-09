@@ -119,6 +119,8 @@
 <PerformanceCampaignOpening
   mobileSearchBoundary
   eyebrow="CREATE SOMETHING .io"
+  propertyRole="Research + field evidence"
+  expression="editorial"
   title="Research for automation you can defend."
   lede="CREATE SOMETHING .io turns experiments, papers, and field notes into a usable research layer for operators. The goal is evidence you can carry into the next build, review, or production decision."
   media={paperResearchTraceMedia}
@@ -134,6 +136,7 @@
 
 <PerformanceNarrativeStage
   id="research-operating-story"
+  expression="editorial"
   eyebrow="Research decision path"
   title="Start from evidence. Decide whether to read, test, or scope."
   description="The research decision and its artifacts now share one surface: trace the claim, inspect the relevant work, and name the receiving lane before handoff."

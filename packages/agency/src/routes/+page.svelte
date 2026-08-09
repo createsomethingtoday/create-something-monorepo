@@ -194,7 +194,8 @@
       label: 'Control',
       summary: 'Offense + defense',
       title: 'Advance approved work. Protect every decision.',
-      detail: 'Offense moves known work. Defense routes ambiguity to a person, stops unsafe action, and keeps proof attached.',
+      detail:
+        'Offense moves known work. Defense routes ambiguity to a person, stops unsafe action, and keeps proof attached.',
       tone: 'neutral',
       evidence: [
         'Each request stays connected to its decision and receipt',
@@ -218,9 +219,11 @@
 
 <div class="home-pilot property-performance">
   <PerformanceCampaignOpening
-    eyebrow="Forward-deployed AI operations"
+    eyebrow="CREATE SOMETHING .agency"
+    propertyRole="Embedded AI operating partner"
+    expression="editorial"
     title="Your people and AI need the same playbook."
-    lede="We work beside operators to map one workflow, install its AI infrastructure, and hand back a client-owned Playbook. Offense advances approved work. Defense protects decisions, proof, and recovery. The opposition is ambiguity, AI out of reach, and untrusted automation."
+    lede="We embed with operators to map one workflow, install its AI infrastructure, and hand back a client-owned Playbook. Offense advances approved work. Defense protects decisions, proof, and recovery. The opposition is ambiguity, AI out of reach, and untrusted automation."
     proof={heroProofItems}
     density="compact"
     artifactOwnsMedia
@@ -241,6 +244,7 @@
 
   <PerformanceNarrativeStage
     id="agency-operating-story"
+    expression="editorial"
     eyebrow="One shared Playbook"
     title="Map the play. Build the system. Keep control."
     description="We work beside an operator to map one workflow and install its AI infrastructure. Your team decides what can run, what needs approval, and what must stop. Your team keeps a Playbook it can inspect, run, stop, recover, and review with proof."
@@ -328,8 +332,8 @@
           <h3>Built with OpenAI and Cloudflare. Designed to remain yours.</h3>
           <p>
             CREATE SOMETHING owns the system. OpenAI provides intelligence. Cloudflare provides
-            infrastructure. We use OpenAI Codex to map, build, and maintain the workflow. Your
-            team keeps the map, rules, history, and recovery path. If the model or agent environment
+            infrastructure. We use OpenAI Codex to map, build, and maintain the workflow. Your team
+            keeps the map, rules, history, and recovery path. If the model or agent environment
             changes, the system does not have to start over.
           </p>
           <div>

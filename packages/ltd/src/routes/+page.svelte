@@ -206,6 +206,8 @@
 <PerformanceCampaignOpening
   mobileSearchBoundary
   eyebrow="CREATE SOMETHING .ltd"
+  propertyRole="Canon + operating standards"
+  expression="editorial"
   title="The philosophy of automation infrastructure."
   lede="CREATE SOMETHING .ltd explains the creation moat: consuming AI tools is easy; building governed connectivity, policy, trust boundaries, and proof is the work."
   media={paperCanonSheetMedia}
@@ -224,6 +226,7 @@
 
 <PerformanceNarrativeStage
   id="canon-operating-story"
+  expression="editorial"
   eyebrow="Delegation canon"
   title="Build, govern, prove."
   description="MCP consumption is commoditized. MCP creation is not. Each operating decision now carries its governing canon and evidence in the same focused surface."

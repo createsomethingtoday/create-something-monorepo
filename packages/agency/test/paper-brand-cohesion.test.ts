@@ -13,13 +13,18 @@ test('Agency opts into a visible desktop wordmark without changing Canon default
   assert.match(navigation, /showDesktopLogoText\?: boolean/);
   assert.match(navigation, /showDesktopLogoText = false/);
   assert.match(navigation, /class:nav-show-desktop-logo-text=\{showDesktopLogoText\}/);
-  assert.match(navigation, /@media \(min-width: 641px\)[\s\S]*?\.nav-show-desktop-logo-text \.nav-logo-text/);
+  assert.match(
+    navigation,
+    /@media \(min-width: 641px\)[\s\S]*?\.nav-show-desktop-logo-text \.nav-logo-text/
+  );
   assert.match(layout, /showDesktopLogoText=\{true\}/);
 });
 
 test('the Agency hero makes the Playbook operating grammar visible without a provider logo lockup', () => {
   const home = read('src/routes/+page.svelte');
-  const campaignOpening = read('../canon/src/lib/components/performance/PerformanceCampaignOpening.svelte');
+  const campaignOpening = read(
+    '../canon/src/lib/components/performance/PerformanceCampaignOpening.svelte'
+  );
   const field = read('src/lib/components/PlaybookField.svelte');
 
   assert.match(home, /title="Your people and AI need the same playbook\."/);
@@ -40,7 +45,7 @@ test('Field Reports carries an attached-proof Playbook field instead of relying 
 
   assert.match(reports, /<PlaybookField variant="proof"/);
   assert.match(reports, /Review the film\. Improve the playbook\./);
-  assert.match(field, /Receipt attached/);
+  assert.match(field, /attached receipt/i);
   assert.match(field, /@media \(max-width: 47\.99rem\)/);
 });
 
@@ -51,7 +56,10 @@ test('the shared social preview is a current, served Paper operating-system arti
 
   assert.ok(existsSync(svgPath));
   assert.ok(existsSync(pngPath));
-  assert.ok(statSync(pngPath).size > 50_000, 'served raster social card should not be a placeholder');
+  assert.ok(
+    statSync(pngPath).size > 50_000,
+    'served raster social card should not be a placeholder'
+  );
   for (const label of [
     'OPERATING SYSTEMS',
     'FOR AI WORK',
