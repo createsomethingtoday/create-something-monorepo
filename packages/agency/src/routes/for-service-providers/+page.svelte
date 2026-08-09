@@ -96,6 +96,7 @@
     variant="hero"
     layout="stack"
     titleLevel="h1"
+    expression="editorial"
     eyebrow="For service providers"
     title="Use CREATE SOMETHING with your clients."
     description="Bring one client workflow. Map the ownership and tool boundary, build only the approved path, and leave the client with proof they can inspect."

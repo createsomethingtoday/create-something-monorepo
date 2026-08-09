@@ -142,6 +142,7 @@
 
 <PerformanceCampaignOpening
   eyebrow="Product system"
+  expression="editorial"
   title="One playbook. Three operating paths."
   lede="Map defines the client-owned Playbook. Build makes its approved Runbooks executable. Control operates and improves the system with visible authority and proof."
   density="compact"

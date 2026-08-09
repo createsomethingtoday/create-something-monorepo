@@ -111,6 +111,7 @@
   variant="hero"
   layout="split"
   titleLevel="h1"
+  expression="editorial"
   eyebrow={product.name}
   {title}
   {description}

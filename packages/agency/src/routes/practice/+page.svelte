@@ -142,6 +142,7 @@
     description="Map the work. Bound the authority. Test the system. Prove what happened. Earn the right to do more."
     handoff={openingHandoff}
     headingLevel="h1"
+    expression="editorial"
   >
     {#snippet actions()}
       <Button href="#practice-workbench">Map one workflow</Button>

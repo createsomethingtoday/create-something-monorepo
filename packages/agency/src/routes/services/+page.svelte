@@ -85,6 +85,7 @@
 <div class="services-performance property-performance">
   <PerformanceCampaignOpening
     eyebrow="How It Works"
+    expression="editorial"
     title="Map the operation. Install the playbook."
     lede="Bring one handoff your team still checks manually. We map its owners and limits, make approved Runbooks executable, and hand back the client-owned system."
     density="compact"

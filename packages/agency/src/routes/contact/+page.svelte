@@ -242,6 +242,7 @@
   variant="hero"
   layout="split"
   titleLevel="h1"
+  expression="editorial"
   eyebrow={selectedContent.eyebrow}
   title={selectedContent.title}
   description={selectedContent.description}

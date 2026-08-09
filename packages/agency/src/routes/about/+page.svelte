@@ -198,6 +198,7 @@
   variant="hero"
   layout="split"
   titleLevel="h1"
+  expression="editorial"
   eyebrow="About"
   title="I build calm, transparent workflow systems for operator-owned outcomes."
   description="The operator should not carry the chaos of automation. I give people and approved AI the same Playbook: what can run, what needs judgment, and what must stop."

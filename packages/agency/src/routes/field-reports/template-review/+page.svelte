@@ -123,6 +123,7 @@
 <main class="field-report">
   <PerformanceCampaignOpening
     eyebrow="Field report 01 / Review operations"
+    expression="editorial"
     title={templateReviewFieldReport.title}
     lede={templateReviewFieldReport.dek}
     media={paperAttachedReceiptMedia}

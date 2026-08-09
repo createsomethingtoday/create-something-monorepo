@@ -217,6 +217,7 @@
   variant="hero"
   layout="split"
   titleLevel="h1"
+  expression="editorial"
   eyebrow="Cloudflare Workflow Runtime"
   title="Cloudflare runtime with controlled workflows."
   description="Cloudflare is the deployable runtime for controlled workflow surfaces. It carries the routes, the state, and the queues, and every handoff stays rollback-ready."

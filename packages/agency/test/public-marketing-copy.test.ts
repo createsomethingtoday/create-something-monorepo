@@ -264,6 +264,70 @@ test('commercial decision routes lead with plain meaning before owned terminolog
   assert.match(proof, /prototype measurements, not customer ROI claims/);
 });
 
+test('public Agency commercial propositions declare the shared editorial expression', () => {
+  const campaignRoutes = [
+    'services',
+    'map',
+    'control',
+    'products',
+    'products/ground',
+    'products/loom',
+    'field-reports',
+    'field-reports/template-review',
+    'proof/marketplace-workflow',
+    'delivery',
+    'experiments'
+  ];
+  const sectionHeroRoutes = [
+    'about',
+    'cloudflare',
+    'contact',
+    'for-service-providers',
+    'partners',
+    'security',
+    'use-cases/business',
+    'use-cases/enterprise'
+  ];
+
+  for (const route of campaignRoutes) {
+    const source = readFileSync(new URL(`../src/routes/${route}/+page.svelte`, import.meta.url), 'utf8');
+    const opening = source.slice(
+      source.indexOf('<PerformanceCampaignOpening'),
+      source.indexOf('</PerformanceCampaignOpening>')
+    );
+    assert.match(opening, /expression="editorial"/, `${route} must opt into editorial campaign type`);
+  }
+
+  for (const route of sectionHeroRoutes) {
+    const source = readFileSync(new URL(`../src/routes/${route}/+page.svelte`, import.meta.url), 'utf8');
+    const hero = source.slice(
+      source.indexOf('<PerformancePageSection'),
+      source.indexOf('</PerformancePageSection>')
+    );
+    assert.match(hero, /expression="editorial"/, `${route} must opt into editorial proposition type`);
+  }
+
+  const governanceProduct = readFileSync(
+    new URL('../src/lib/components/GovernanceProductPage.svelte', import.meta.url),
+    'utf8'
+  );
+  const practice = readFileSync(new URL('../src/routes/practice/+page.svelte', import.meta.url), 'utf8');
+  const methodology = readFileSync(
+    new URL('../src/routes/methodology/+page.svelte', import.meta.url),
+    'utf8'
+  );
+  const workflows = readFileSync(new URL('../src/routes/workflows/+page.svelte', import.meta.url), 'utf8');
+
+  assert.match(governanceProduct, /<PerformancePageSection[\s\S]*?expression="editorial"/);
+  assert.match(practice, /<PerformanceConversionHandoff[\s\S]*?headingLevel="h1"[\s\S]*?expression="editorial"/);
+  assert.match(methodology, /\.hero-title\s*\{[\s\S]*?font-family:\s*var\(--font-performance-editorial\)/);
+  assert.doesNotMatch(
+    workflows,
+    /font-performance-editorial/,
+    'operational workflow guides remain in the field expression'
+  );
+});
+
 test('the homepage operating story preserves the boundary in reader-facing language', () => {
   const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
   const description = home.match(/id="agency-operating-story"[\s\S]*?description="([^"]+)"/)?.[1];

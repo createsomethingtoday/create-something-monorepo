@@ -35,6 +35,7 @@
 
 <PerformanceCampaignOpening
   eyebrow="Delivery records"
+  expression="editorial"
   title="Published work lives here."
   lede="Each record says what changed, what remains private, what is blocked, and who decides next. Open the work directly; private evidence stays outside the public page."
   density="compact"

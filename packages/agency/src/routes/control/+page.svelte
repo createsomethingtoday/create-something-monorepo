@@ -142,6 +142,7 @@
 <main class="control-page">
   <PerformanceCampaignOpening
     eyebrow="CREATE SOMETHING Control"
+    expression="editorial"
     title="Run offense and defense from one playbook."
     lede="Control operates one standard-risk environment from $900 per month after launch. Offense advances approved work. Defense holds exceptions, protects authority, and preserves recovery proof."
     density="compact"

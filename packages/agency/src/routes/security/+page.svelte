@@ -99,6 +99,7 @@
   variant="hero"
   layout="split"
   titleLevel="h1"
+  expression="editorial"
   eyebrow="Security"
   title="A token can exist and access can still stop."
   description="Credentials are not permission by themselves. Who you are, what you may touch, and who approves it are all resolved before delegated work runs."
