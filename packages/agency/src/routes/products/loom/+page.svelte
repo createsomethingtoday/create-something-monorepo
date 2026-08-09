@@ -122,6 +122,7 @@
 
 <PerformanceCampaignOpening
   eyebrow="Historical proof"
+  expression="editorial"
   title="The continuity problem that led to Linear-first coordination."
   lede="Loom proved that agents need task ownership, checkpoints, routing, and recovery. Current CREATE SOMETHING repo work now uses Linear as the source of truth for tracked ownership, status, and evidence."
   density="compact"

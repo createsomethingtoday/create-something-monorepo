@@ -33,6 +33,7 @@
 
 <PerformanceCampaignOpening
   eyebrow="Performance Lab / Public evidence"
+  expression="editorial"
   title="Review the film. Improve the playbook."
   lede="Each Field Report replays a run against its evidence. It separates what was measured, blocked, and unknown so operators can improve the next Play."
   density="compact"

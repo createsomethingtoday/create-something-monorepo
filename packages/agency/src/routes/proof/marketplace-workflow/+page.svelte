@@ -180,6 +180,7 @@
 <div class="marketplace-workflow property-performance">
   <PerformanceCampaignOpening
     eyebrow="Complete workflow · Active development"
+    expression="editorial"
     title="Turn a watched review queue into a testable workflow."
     lede="This worked example maps the Marketplace template lifecycle from submission through monitoring, then tests it with representative local fixtures. It runs in shadow mode only. Nothing is written, published, or approved in production."
     media={paperAttachedReceiptMedia}

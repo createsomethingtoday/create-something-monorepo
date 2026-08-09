@@ -46,6 +46,7 @@
 <main class="map-page">
 	<PerformanceCampaignOpening
 		eyebrow="CREATE SOMETHING Map"
+		expression="editorial"
 		title="See the whole operation before AI runs the play."
 		lede="Map defines the client-owned Playbook: owner, data, systems, authority, Runbooks, risks, and proof. Start a private draft without touching production. A short summary can travel to a mapping session."
 		density="compact"

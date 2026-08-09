@@ -134,6 +134,7 @@
 
 <PerformanceCampaignOpening
   eyebrow="Free and open source"
+  expression="editorial"
   title="Code analysis that checks before it claims."
   lede="Agents can report confident similarities without comparing the files. Ground makes verification a prerequisite, so every duplicate, dead-code, or orphan claim starts with evidence."
   density="compact"

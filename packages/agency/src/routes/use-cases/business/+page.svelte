@@ -233,6 +233,7 @@
   variant="hero"
   layout="split"
   titleLevel="h1"
+  expression="editorial"
   eyebrow="For teams of 5-50"
   title="Your tools do not talk to each other. Your team fills the gap."
   description="Start with the workflow that wastes the most time. CREATE SOMETHING maps the manual bridge, builds the first controlled pilot, and leaves your operator with a control path they can understand."
