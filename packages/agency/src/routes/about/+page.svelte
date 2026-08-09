@@ -1,6 +1,7 @@
 <script lang="ts">
   import {
     Button,
+    MeridianMetrics,
     PerformanceCardGrid,
     PerformanceConversionHandoff,
     PerformanceNarrativeStage,
@@ -10,35 +11,48 @@
     type PerformanceCtaItem,
     type PerformanceNarrativeScene
   } from '@create-something/canon';
+  import PlaybookField from '$lib/components/PlaybookField.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
-  const operatorStates = [
-    { label: 'Clear', value: 'No decisions pending', detail: 'The operator can step away.' },
-    { label: 'Review', value: 'Approval needed', detail: 'Judgment is required before action.' },
-    { label: 'Stop', value: 'Blocked with reason', detail: 'The system explains why it paused.' }
+  const courtReads = [
+    {
+      label: 'Read the floor',
+      value: 'Map',
+      detail: 'See the workflow, owners, handoffs, and opposition before AI acts.'
+    },
+    {
+      label: 'Call the play',
+      value: 'Build',
+      detail: 'Install the approved route with named decisions and executable Runbooks.'
+    },
+    {
+      label: 'Review the film',
+      value: 'Control',
+      detail: 'Run offense and defense with visible stops, recovery, and proof.'
+    }
   ];
 
   const methodSteps = [
     {
-      label: '01',
+      label: 'Read the floor',
       title: 'Map the operating path',
       detail:
         'Find the workflow your team still completes or covers by hand and name the handoffs, owners, and failure modes.'
     },
     {
-      label: '02',
+      label: 'Name the decision',
       title: 'Classify the judgment states',
       detail:
         'Separate safe work from approval-needed work and actions that should be blocked with an inspectable reason.'
     },
     {
-      label: '03',
+      label: 'Install the play',
       title: 'Ship the control layer',
       detail:
         'Use MCP, skills, runbooks, release checks, and trust receipts to make the workflow portable and controlled.'
     },
     {
-      label: '04',
+      label: 'Review the film',
       title: 'Brief the operator',
       detail:
         'Surface only the state that needs attention so the human returns for judgment, not constant monitoring.'
@@ -93,11 +107,11 @@
   const aboutScenes: PerformanceNarrativeScene[] = [
     {
       id: 'origin',
-      label: 'Origin',
-      summary: 'Power needs control',
-      title: 'Pressure made the operating principle concrete.',
+      label: 'Court vision',
+      summary: 'Read the whole floor',
+      title: 'Division III basketball made the shared picture visible.',
       detail:
-        'Machines, emergency medicine, veterinary care, and platform systems all taught the same lesson: capability becomes useful when ownership, protocols, and recovery stay visible.',
+        'A good possession depends on spacing, roles, timing, and a shared read. An AI workflow needs the same operating clarity before the pace rises.',
       tone: 'neutral',
       evidence: [
         'Division III basketball',
@@ -109,29 +123,29 @@
     },
     {
       id: 'method',
-      label: 'Method',
-      summary: 'Protect the operator',
-      title: 'Map, classify, control, then brief.',
+      label: 'Practice',
+      summary: 'Rehearse the decision',
+      title: 'Map the play before AI runs it.',
       detail:
-        'The Calm Operator Method keeps the workflow understandable before agent capacity expands.',
+        'The method makes the route, judgment states, control layer, and operator brief explicit before agent capacity expands.',
       tone: 'allow',
       receipts: ['workflow map', 'judgment states', 'control layer', 'operator brief']
     },
     {
       id: 'contract',
-      label: 'Contract',
-      summary: 'Keep the work narrow',
-      title: 'One operating path should become trustworthy before the system grows.',
+      label: 'Game control',
+      summary: 'Offense + defense',
+      title: 'Advance approved work. Protect operator authority.',
       detail:
-        'The engagement removes unnecessary complexity, names the decision owner, and leaves the client with controls, evidence, and working software.',
+        'One operating path becomes trustworthy before the system grows. The client keeps the Playbook, controls, evidence, and working software.',
       tone: 'review',
       receipts: ['cleanup loop', 'Subtractive Triad', 'client-owned path']
     },
     {
       id: 'system',
-      label: 'System',
-      summary: 'Each property has one job',
-      title: 'The rest of CREATE SOMETHING sharpens the operating work.',
+      label: 'Program',
+      summary: 'Each property has a role',
+      title: 'Every CREATE SOMETHING property improves the next play.',
       detail:
         'Philosophy, research, experiments, and agency delivery remain distinct while passing useful evidence between one another.',
       tone: 'neutral',
@@ -143,21 +157,14 @@
     }
   ];
 
-  const operatorStateCards: PerformanceCardItem[] = operatorStates.map((state) => ({
-    eyebrow: state.label,
-    icon: state.label === 'Clear' ? 'check' : state.label === 'Review' ? 'search' : 'warning',
-    title: state.value,
-    detail: state.detail
-  }));
-
   const methodCards: PerformanceCardItem[] = methodSteps.map((step) => ({
     eyebrow: step.label,
     icon:
-      step.label === '01'
+      step.label === 'Read the floor'
         ? 'folder'
-        : step.label === '02'
+        : step.label === 'Name the decision'
           ? 'search'
-          : step.label === '03'
+          : step.label === 'Install the play'
             ? 'settings'
             : 'user',
     title: step.title,
@@ -199,24 +206,27 @@
   layout="split"
   titleLevel="h1"
   expression="editorial"
-  eyebrow="About"
-  title="I build calm, transparent workflow systems for operator-owned outcomes."
-  description="The operator should not carry the chaos of automation. I give people and approved AI the same Playbook: what can run, what needs judgment, and what must stop."
+  eyebrow="About CREATE SOMETHING"
+  title="The operator should see the whole court."
+  description="Division III basketball taught me to read spacing, pressure, roles, and the next decision as one shared picture. CREATE SOMETHING brings that discipline to AI operations: map the play, name who decides, and keep proof attached."
 >
   {#snippet aside()}
-    <PerformanceCardGrid
-      items={operatorStateCards}
-      columns={1}
-      ariaLabel="Operator decision states"
-    />
+    <PlaybookField variant="about" embedded />
   {/snippet}
 </PerformancePageSection>
+
+<MeridianMetrics
+  eyebrow="Court vision"
+  title="One shared picture changes the pace."
+  metrics={courtReads}
+  ariaLabel="Basketball court reads translated into the CREATE SOMETHING operating method"
+/>
 
 <PerformanceNarrativeStage
   id="about-operating-story"
   eyebrow="One operating story"
-  title="The biography only matters where it explains the work."
-  description="The biography matters only where it explains the work: why control comes before scale, how the method protects the operator, what the engagement promises, and how the wider system contributes."
+  title="The biography matters because it became the method."
+  description="Court vision, pressure, practice, and review became a way to build AI systems that operators can understand, trust, and own."
   scenes={aboutScenes}
   ariaLabel="About operating story"
 >
@@ -225,8 +235,14 @@
       <div class="about-stage-split">
         <div class="about-prose">
           <p>
-            I played Division III basketball. It taught me the value of a shared picture: clear
-            roles, practiced Runbooks, pressure-tested decisions, and honest review after the run.
+            I played Division III basketball. It taught me to read the whole floor before forcing
+            the next move. A shared picture gives every person a role, a route, and the context to
+            adjust when the defense changes.
+          </p>
+          <p>
+            That is the model behind CREATE SOMETHING. The Playbook gives operators and approved AI
+            the same view of the workflow. Offense advances approved work. Defense protects
+            decisions, evidence, and recovery.
           </p>
           <p>
             I grew up between two reference points: a Porsche 930 Turbo and emergency medicine. One

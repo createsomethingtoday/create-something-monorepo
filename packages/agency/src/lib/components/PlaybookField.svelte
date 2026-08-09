@@ -1,5 +1,12 @@
 <script lang="ts">
-  export type PlaybookFieldVariant = 'home' | 'services' | 'products' | 'map' | 'control' | 'proof';
+  export type PlaybookFieldVariant =
+    | 'home'
+    | 'about'
+    | 'services'
+    | 'products'
+    | 'map'
+    | 'control'
+    | 'proof';
 
   type Point = { x: number; y: number; label: string };
   type Route = { d: string; label: string; tone?: 'signal' | 'growth' | 'review' };
@@ -12,6 +19,7 @@
     owners: Point[];
     constraints: Point[];
     routes: Route[];
+    ball?: Point;
     gate: { x: number; y: number; label: string };
     receipt: {
       x: number;
@@ -55,6 +63,34 @@
         label: 'Proof receipt',
         state: 'Attached',
         record: 'PB-01 / R1',
+        evidence: 'Decision + result'
+      }
+    },
+    about: {
+      code: 'PB / ORIGIN',
+      phase: 'Court vision',
+      call: 'Read → Decide → Review',
+      summary: 'Vision → Decision → Proof',
+      description:
+        'About Playbook: the operator reads the whole workflow, shares the play with an approved agent, routes judgment to a named owner, moves around ambiguity, and reviews attached proof.',
+      owners: [
+        { x: 148, y: 212, label: 'Operator' },
+        { x: 316, y: 142, label: 'Agent' },
+        { x: 470, y: 238, label: 'Decision owner' }
+      ],
+      constraints: [{ x: 472, y: 112, label: 'Ambiguity' }],
+      routes: [
+        { d: 'M 170 204 C 218 178, 256 148, 292 144', label: 'Share the play', tone: 'signal' },
+        { d: 'M 338 150 C 382 166, 410 214, 446 232', label: 'Route judgment', tone: 'review' }
+      ],
+      ball: { x: 244, y: 164, label: 'Shared play' },
+      gate: { x: 402, y: 218, label: 'Named decision' },
+      receipt: {
+        x: 476,
+        y: 286,
+        label: 'Film review',
+        state: 'Attached',
+        record: 'PB-00 / D3',
         evidence: 'Decision + result'
       }
     },
@@ -247,6 +283,14 @@
         {/each}
       </g>
 
+      {#if play.ball}
+        <g class="playbook-field__ball" transform={`translate(${play.ball.x} ${play.ball.y})`}>
+          <circle r="9" />
+          <path d="M -8 -2 C -2 0, 2 0, 8 -2 M -2 -8 C 0 -2, 0 2, -2 8" />
+          <title>{play.ball.label}</title>
+        </g>
+      {/if}
+
       <g class="playbook-field__gate" transform={`translate(${play.gate.x} ${play.gate.y})`}>
         <path class="playbook-field__gate-post" d="M -18 -24 V 24 H -10 M 18 -24 V 24 H 10" />
         <line class="playbook-field__gate-crossbar" x1="-28" y1="0" x2="28" y2="0" />
@@ -264,7 +308,10 @@
       {/each}
 
       {#each play.constraints as constraint}
-        <g class="playbook-field__constraint" transform={`translate(${constraint.x} ${constraint.y})`}>
+        <g
+          class="playbook-field__constraint"
+          transform={`translate(${constraint.x} ${constraint.y})`}
+        >
           <rect class="playbook-field__constraint-frame" x="-18" y="-18" width="36" height="36" />
           <line x1="-12" y1="-12" x2="12" y2="12" />
           <line x1="12" y1="-12" x2="-12" y2="12" />
@@ -398,6 +445,20 @@
 
   .playbook-field__arrow {
     fill: var(--color-performance-signal-soft, #a7b8ff);
+  }
+
+  .playbook-field__ball circle {
+    fill: var(--color-performance-pressure, #e54800);
+    stroke: var(--color-performance-panel, #fff);
+    stroke-width: 1.5;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .playbook-field__ball path {
+    fill: none;
+    stroke: var(--color-performance-editorial-dark, #181312);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
   }
 
   .playbook-field__owner circle {
