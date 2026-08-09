@@ -55,13 +55,39 @@ test('Playbook field publishes one stable, accessible operating legend', () => {
   assert.match(playbookField, /Route = delegated work/);
   assert.match(playbookField, /Gate = human decision/);
   assert.match(playbookField, /Receipt = proof/);
+  assert.match(playbookField, /playbook-field__constraint-frame/);
+  assert.match(playbookField, /playbook-field__gate-post/);
+  assert.match(playbookField, /playbook-field__gate-decision/);
+  assert.match(playbookField, />Gate<\/text>/);
   assert.match(playbookField, /@media \(prefers-reduced-motion: reduce\)/);
+});
+
+test('Playbook proof is a readable receipt ticket, not a generic document glyph', () => {
+  assert.match(playbookField, /state: string;/);
+  assert.match(playbookField, /record: string;/);
+  assert.match(playbookField, /evidence: string;/);
+  assert.match(playbookField, /data-proof-ticket/);
+  assert.match(playbookField, /RECEIPT/);
+  assert.match(playbookField, /Evidence:/);
+
+  for (const state of ['Attached', 'Recorded', 'Owned', 'Approved', 'Recoverable', 'Verified']) {
+    assert.match(playbookField, new RegExp(`state: '${state}'`));
+  }
 });
 
 test('campaign opening can be owned by a semantic artifact without fallback media', () => {
   assert.match(campaignOpening, /media\?: PerformanceCampaignMedia/);
   assert.match(campaignOpening, /\{#if media\}[\s\S]*performance-campaign-opening__media/);
   assert.match(campaignOpening, /data-artifact-owns-media=\{artifactOwnsMedia/);
+  assert.match(campaignOpening, /artifactMobilePlacement\?: 'overlay' \| 'flow'/);
+  assert.match(
+    campaignOpening,
+    /data-artifact-mobile-placement=\{artifact \? artifactMobilePlacement : undefined\}/
+  );
+  assert.match(
+    campaignOpening,
+    /data-artifact-mobile-placement='flow'[\s\S]*?display: contents/
+  );
   assert.match(
     campaignOpening,
     /performance-campaign-opening__actions :global\(\.btn:focus-visible\)[\s\S]*?outline: 3px solid/
@@ -77,9 +103,13 @@ test('the commercial hero cohort uses route-specific Playbook fields and no Pape
     assert.match(source, new RegExp(`title="${contract.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"`));
     assert.match(source, new RegExp(`<PlaybookField variant="${contract.variant}"`));
     assert.match(source, /artifactOwnsMedia/);
+    assert.match(source, /artifactMobilePlacement="flow"/);
     assert.doesNotMatch(source, /from '\$lib\/data\/performanceMedia'/);
     assert.doesNotMatch(source, /mode="paper"/);
   }
+
+  assert.doesNotMatch(playbookField, /bottom: 7rem/);
+  assert.match(playbookField, /position: relative/);
 });
 
 test('About names the earned basketball origin without positioning athletic services', () => {

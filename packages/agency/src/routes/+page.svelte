@@ -227,6 +227,7 @@
     proof={heroProofItems}
     density="compact"
     artifactOwnsMedia
+    artifactMobilePlacement="flow"
   >
     {#snippet actions()}
       <Button href={agencyCoreMessaging.selfMapHref}>{agencyCoreMessaging.selfMapLabel}</Button>

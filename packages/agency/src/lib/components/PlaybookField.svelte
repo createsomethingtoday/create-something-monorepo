@@ -13,7 +13,14 @@
     constraints: Point[];
     routes: Route[];
     gate: { x: number; y: number; label: string };
-    receipt: { x: number; y: number; label: string };
+    receipt: {
+      x: number;
+      y: number;
+      label: string;
+      state: string;
+      record: string;
+      evidence: string;
+    };
   };
 
   interface Props {
@@ -40,7 +47,14 @@
         { d: 'M 332 208 C 394 208, 400 292, 472 292', label: 'Escalate', tone: 'review' }
       ],
       gate: { x: 384, y: 274, label: 'Human decision' },
-      receipt: { x: 500, y: 292, label: 'Proof' }
+      receipt: {
+        x: 500,
+        y: 292,
+        label: 'Proof receipt',
+        state: 'Attached',
+        record: 'PB-01 / R1',
+        evidence: 'Decision + result'
+      }
     },
     services: {
       code: 'PB / 02',
@@ -60,7 +74,14 @@
         { d: 'M 332 202 C 382 202, 414 202, 462 202', label: 'Handoff', tone: 'growth' }
       ],
       gate: { x: 222, y: 184, label: 'Approval' },
-      receipt: { x: 488, y: 284, label: 'Run record' }
+      receipt: {
+        x: 488,
+        y: 284,
+        label: 'Run record',
+        state: 'Recorded',
+        record: 'PB-02 / RUN',
+        evidence: 'Installed route'
+      }
     },
     products: {
       code: 'PB / 03',
@@ -82,7 +103,14 @@
         { d: 'M 172 212 C 228 240, 270 288, 328 300', label: 'Operate', tone: 'review' }
       ],
       gate: { x: 244, y: 186, label: 'Choose' },
-      receipt: { x: 472, y: 304, label: 'Owned system' }
+      receipt: {
+        x: 472,
+        y: 304,
+        label: 'Owned system',
+        state: 'Owned',
+        record: 'PB-03 / SYS',
+        evidence: 'Client-owned'
+      }
     },
     map: {
       code: 'PB / 04',
@@ -102,7 +130,14 @@
         { d: 'M 326 126 C 360 152, 348 242, 442 274', label: 'Allowed path', tone: 'growth' }
       ],
       gate: { x: 350, y: 194, label: 'Decision boundary' },
-      receipt: { x: 486, y: 278, label: 'Map approved' }
+      receipt: {
+        x: 486,
+        y: 278,
+        label: 'Map approval',
+        state: 'Approved',
+        record: 'PB-04 / MAP',
+        evidence: 'Scope + gate'
+      }
     },
     control: {
       code: 'PB / 05',
@@ -125,7 +160,14 @@
         { d: 'M 324 138 C 362 168, 372 248, 446 278', label: 'Defense', tone: 'review' }
       ],
       gate: { x: 386, y: 250, label: 'Review' },
-      receipt: { x: 492, y: 282, label: 'Recovery proof' }
+      receipt: {
+        x: 492,
+        y: 282,
+        label: 'Recovery proof',
+        state: 'Recoverable',
+        record: 'PB-05 / CTRL',
+        evidence: 'Stop + recovery'
+      }
     },
     proof: {
       code: 'PB / 06',
@@ -145,7 +187,14 @@
         { d: 'M 342 204 C 390 204, 424 204, 460 204', label: 'Adjust', tone: 'growth' }
       ],
       gate: { x: 246, y: 186, label: 'Evidence check' },
-      receipt: { x: 484, y: 286, label: 'Receipt attached' }
+      receipt: {
+        x: 484,
+        y: 286,
+        label: 'Field receipt',
+        state: 'Verified',
+        record: 'PB-06 / FILM',
+        evidence: 'Measured run'
+      }
     }
   };
 
@@ -196,8 +245,10 @@
       </g>
 
       <g class="playbook-field__gate" transform={`translate(${play.gate.x} ${play.gate.y})`}>
-        <rect x="-7" y="-24" width="14" height="48" />
-        <line x1="-19" y1="0" x2="19" y2="0" />
+        <path class="playbook-field__gate-post" d="M -18 -24 V 24 H -10 M 18 -24 V 24 H 10" />
+        <line class="playbook-field__gate-crossbar" x1="-28" y1="0" x2="28" y2="0" />
+        <rect class="playbook-field__gate-decision" x="-7" y="-7" width="14" height="14" />
+        <text class="playbook-field__gate-label" y="42" text-anchor="middle">Gate</text>
         <title>{play.gate.label}</title>
       </g>
 
@@ -211,16 +262,31 @@
 
       {#each play.constraints as constraint}
         <g class="playbook-field__constraint" transform={`translate(${constraint.x} ${constraint.y})`}>
-          <line x1="-14" y1="-14" x2="14" y2="14" />
-          <line x1="14" y1="-14" x2="-14" y2="14" />
-          <text y="38" text-anchor="middle">{constraint.label}</text>
+          <rect class="playbook-field__constraint-frame" x="-18" y="-18" width="36" height="36" />
+          <line x1="-12" y1="-12" x2="12" y2="12" />
+          <line x1="12" y1="-12" x2="-12" y2="12" />
+          <text y="43" text-anchor="middle">{constraint.label}</text>
         </g>
       {/each}
 
-      <g class="playbook-field__receipt" transform={`translate(${play.receipt.x} ${play.receipt.y})`}>
-        <rect width="90" height="54" />
-        <path d="M 12 17 H 72 M 12 28 H 58 M 12 39 H 66" />
-        <text x="45" y="72" text-anchor="middle">{play.receipt.label}</text>
+      <g
+        class="playbook-field__receipt"
+        data-proof-ticket
+        transform={`translate(${play.receipt.x} ${play.receipt.y})`}
+      >
+        <path class="playbook-field__receipt-attachment" d="M -24 12 H 0" />
+        <rect width="112" height="68" />
+        <path d="M 0 17 H 112" />
+        <rect class="playbook-field__receipt-state-rail" x="7" y="6" width="5" height="5" />
+        <text class="playbook-field__receipt-kind" x="16" y="11">RECEIPT</text>
+        <text class="playbook-field__receipt-state" x="104" y="11" text-anchor="end">
+          {play.receipt.state}
+        </text>
+        <text class="playbook-field__receipt-record" x="8" y="31">{play.receipt.record}</text>
+        <text class="playbook-field__receipt-label" x="8" y="45">{play.receipt.label}</text>
+        <text class="playbook-field__receipt-evidence" x="8" y="58">
+          Evidence: {play.receipt.evidence}
+        </text>
       </g>
     </svg>
 
@@ -332,26 +398,59 @@
     stroke: none;
   }
 
-  .playbook-field__constraint line {
+  .playbook-field__constraint-frame {
+    fill: rgba(239, 140, 140, 0.08);
     stroke: var(--color-performance-risk, #ef8c8c);
-    stroke-width: 4;
+    stroke-width: 1.5;
     vector-effect: non-scaling-stroke;
   }
 
-  .playbook-field__gate rect,
-  .playbook-field__gate line {
+  .playbook-field__constraint line {
+    stroke: var(--color-performance-risk, #ef8c8c);
+    stroke-width: 3.5;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .playbook-field__gate-post,
+  .playbook-field__gate-crossbar {
+    fill: none;
+    stroke: var(--color-performance-review, #f0bd69);
+    stroke-width: 2;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .playbook-field__gate-decision {
     fill: rgba(240, 189, 105, 0.18);
     stroke: var(--color-performance-review, #f0bd69);
     stroke-width: 2;
     vector-effect: non-scaling-stroke;
   }
 
-  .playbook-field__receipt rect,
-  .playbook-field__receipt path {
+  .playbook-field__gate .playbook-field__gate-label {
+    fill: var(--color-performance-review, #f0bd69);
+    font-size: 9px;
+    letter-spacing: 0.08em;
+  }
+
+  .playbook-field__receipt > rect,
+  .playbook-field__receipt > path:not(.playbook-field__receipt-attachment) {
     fill: rgba(117, 215, 160, 0.08);
     stroke: var(--color-performance-growth, #75d7a0);
     stroke-width: 1.5;
     vector-effect: non-scaling-stroke;
+  }
+
+  .playbook-field__receipt-attachment {
+    fill: none;
+    stroke: var(--color-performance-growth, #75d7a0);
+    stroke-dasharray: 3 3;
+    stroke-width: 1.5;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .playbook-field__receipt .playbook-field__receipt-state-rail {
+    fill: var(--color-performance-growth, #75d7a0);
+    stroke: none;
   }
 
   .playbook-field text {
@@ -361,6 +460,29 @@
     font-weight: var(--font-performance-semibold, 600);
     letter-spacing: 0.04em;
     text-transform: uppercase;
+  }
+
+  .playbook-field__receipt .playbook-field__receipt-kind,
+  .playbook-field__receipt .playbook-field__receipt-state,
+  .playbook-field__receipt .playbook-field__receipt-evidence {
+    fill: var(--color-performance-growth, #75d7a0);
+    font-size: 8px;
+    font-weight: var(--font-performance-semibold, 600);
+    letter-spacing: 0.08em;
+  }
+
+  .playbook-field__receipt .playbook-field__receipt-record {
+    fill: var(--color-performance-panel, #fff);
+    font-size: 10px;
+    font-weight: var(--font-performance-semibold, 600);
+    letter-spacing: 0.06em;
+  }
+
+  .playbook-field__receipt .playbook-field__receipt-label {
+    fill: rgba(255, 255, 255, 0.86);
+    font-size: 9px;
+    font-weight: var(--font-performance-semibold, 600);
+    letter-spacing: 0.03em;
   }
 
   .playbook-field__footer {
@@ -399,11 +521,10 @@
 
   @media (max-width: 47.99rem) {
     .playbook-field {
-      top: auto;
-      right: 0.75rem;
-      bottom: 7rem;
-      left: 0.75rem;
+      position: relative;
+      inset: auto;
       width: auto;
+      margin: 0;
       transform: none;
     }
 

@@ -50,6 +50,7 @@
 		lede="Map defines the client-owned Playbook: owner, data, systems, authority, Runbooks, risks, and proof. Start a private draft without touching production. A short summary can travel to a mapping session."
 		density="compact"
 		artifactOwnsMedia
+		artifactMobilePlacement="flow"
 		proof={[{ label: 'Input', value: 'Prospect map' }, { label: 'Boundary', value: 'No production tools' }, { label: 'Handoff', value: 'Build or Control' }]}
 	>
 		{#snippet actions()}

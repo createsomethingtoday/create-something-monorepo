@@ -37,6 +37,7 @@
   lede="Each Field Report replays a run against its evidence. It separates what was measured, blocked, and unknown so operators can improve the next Play."
   density="compact"
   artifactOwnsMedia
+  artifactMobilePlacement="flow"
   proof={[
     { label: 'Measured', value: 'Sourced' },
     { label: 'Blocked', value: 'Visible' },

@@ -146,6 +146,7 @@
   lede="Map defines the client-owned Playbook. Build makes its approved Runbooks executable. Control operates and improves the system with visible authority and proof."
   density="compact"
   artifactOwnsMedia
+  artifactMobilePlacement="flow"
   proof={[
     { label: 'Map', value: 'Define' },
     { label: 'Build', value: 'Connect' },

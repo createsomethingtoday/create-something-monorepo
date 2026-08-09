@@ -45,6 +45,8 @@
 		/** A small, non-interactive annotation that should not change campaign layout. */
 		ornament?: Snippet;
 		artifactOwnsMedia?: boolean;
+		/** Places a semantic artifact between the hero action and proof rail on small screens. */
+		artifactMobilePlacement?: 'overlay' | 'flow';
 	}
 
 	let {
@@ -60,7 +62,8 @@
 		actions,
 		artifact,
 		ornament,
-		artifactOwnsMedia = false
+		artifactOwnsMedia = false,
+		artifactMobilePlacement = 'overlay'
 	}: Props = $props();
 
 	let motionAllowed = $state(false);
@@ -91,6 +94,7 @@
 	data-density={density}
 	data-has-artifact={artifact ? 'true' : 'false'}
 	data-artifact-owns-media={artifactOwnsMedia ? 'true' : undefined}
+	data-artifact-mobile-placement={artifact ? artifactMobilePlacement : undefined}
 	data-mobile-search-boundary={mobileSearchBoundary ? 'true' : undefined}
 	aria-label={eyebrow}
 >
@@ -590,6 +594,70 @@
 
 		.performance-campaign-opening__proof {
 			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+
+		.performance-campaign-opening[data-artifact-mobile-placement='flow'] {
+			grid-template-rows: auto auto auto;
+			min-height: 0;
+		}
+
+		.performance-campaign-opening[data-artifact-mobile-placement='flow'][data-density='compact'] {
+			min-height: 0;
+		}
+
+		.performance-campaign-opening[data-artifact-mobile-placement='flow']
+			.performance-campaign-opening__content {
+			display: contents;
+		}
+
+		.performance-campaign-opening[data-artifact-mobile-placement='flow']
+			.performance-campaign-opening__content
+			header {
+			position: relative;
+			z-index: 2;
+			grid-row: 1;
+			width: min(
+				calc(
+					100% - var(--space-performance-page-gutter, 0.75rem) -
+						var(--space-performance-page-gutter, 0.75rem)
+				),
+				var(--content-width-performance, 85rem)
+			);
+			margin-inline: auto;
+			padding-block: 5.5rem 2rem;
+		}
+
+		.performance-campaign-opening[data-artifact-mobile-placement='flow']
+			.performance-campaign-opening__artifact {
+			position: relative;
+			inset: auto;
+			z-index: 3;
+			grid-row: 2;
+			width: min(
+				calc(
+					100% - var(--space-performance-page-gutter, 0.75rem) -
+						var(--space-performance-page-gutter, 0.75rem)
+				),
+				var(--content-width-performance, 85rem)
+			);
+			margin-inline: auto;
+			padding-bottom: 0.75rem;
+		}
+
+		.performance-campaign-opening[data-artifact-mobile-placement='flow']
+			.performance-campaign-opening__proof {
+			position: relative;
+			z-index: 2;
+			grid-row: 3;
+			width: min(
+				calc(
+					100% - var(--space-performance-page-gutter, 0.75rem) -
+						var(--space-performance-page-gutter, 0.75rem)
+				),
+				var(--content-width-performance, 85rem)
+			);
+			margin-inline: auto;
+			margin-bottom: 0.75rem;
 		}
 	}
 
