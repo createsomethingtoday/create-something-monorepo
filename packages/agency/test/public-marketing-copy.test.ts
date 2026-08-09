@@ -408,6 +408,22 @@ test('commercial conversion handoffs use editorial propositions while task surfa
   }
 });
 
+test('the Practice argument is editorial while its operating artifacts stay field-led', () => {
+  const practice = readFileSync(new URL('../src/routes/practice/+page.svelte', import.meta.url), 'utf8');
+  const argumentOpening = practice.match(/<PerformanceNarrativeStage\b[\s\S]*?>/)?.[0] ?? '';
+  const diagnosticArtifact = practice.slice(
+    practice.indexOf('<PerformanceThesisConditions'),
+    practice.indexOf('/>', practice.indexOf('<PerformanceThesisConditions')) + 2
+  );
+
+  assert.match(argumentOpening, /expression="editorial"/);
+  assert.doesNotMatch(
+    diagnosticArtifact,
+    /expression="editorial"/,
+    'the diagnostic artifact keeps the field typography hierarchy'
+  );
+});
+
 test('the homepage operating story preserves the boundary in reader-facing language', () => {
   const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
   const description = home.match(/id="agency-operating-story"[\s\S]*?description="([^"]+)"/)?.[1];
