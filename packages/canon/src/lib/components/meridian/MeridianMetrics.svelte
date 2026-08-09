@@ -82,6 +82,7 @@
 
   dl > div {
     display: grid;
+    grid-template-rows: auto auto minmax(2.9em, auto);
     align-content: end;
     gap: 0.85rem;
     min-height: 15rem;
@@ -122,6 +123,7 @@
         color-mix(in srgb, var(--color-performance-editorial-dark, #181312) 18%, transparent);
     }
     dl > div {
+      grid-template-rows: auto auto auto;
       min-height: auto;
       padding: 1.25rem 1rem;
     }

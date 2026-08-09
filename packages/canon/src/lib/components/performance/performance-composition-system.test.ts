@@ -338,6 +338,19 @@ describe('Performance composition typography', () => {
     expect(source).toContain('font-kerning: normal');
     expect(source).toMatch(/font-feature-settings:[\s\S]*?['"]kern['"] 1,[\s\S]*?['"]liga['"] 1/);
   });
+
+  it('offers the owned editorial face only through an explicit public-proposition expression', () => {
+    const source = readFileSync(
+      join(process.cwd(), 'src/lib/components/clear/ClearPageSection.svelte'),
+      'utf8'
+    );
+
+    expect(source).toContain("type ClearSectionExpression = 'field' | 'editorial'");
+    expect(source).toContain("expression = 'field'");
+    expect(source).toContain('data-expression={expression}');
+    expect(source).toContain(".clear-page-section[data-expression='editorial'] .clear-page-section__title");
+    expect(source).toContain('font-family: var(--font-performance-editorial)');
+  });
 });
 
 describe('PerformanceThesisConditions', () => {
@@ -796,6 +809,9 @@ describe('PerformanceNarrativeStage', () => {
     expect(source).toContain(".performance-narrative-stage[data-expression='editorial'] {");
     expect(source).toContain('font-family: var(--font-performance-editorial)');
     expect(source).toContain('border-radius: var(--radius-performance-editorial, 0.375rem)');
+    expect(source).toContain(".performance-narrative-stage[data-expression='editorial'] h2 {");
+    expect(source).toContain(".performance-narrative-stage[data-expression='editorial']\n    .performance-narrative-stage__scene-head\n    h3 {");
+    expect(source).toContain('line-height: 1.02;');
   });
 
   it('keeps every scene summary visible while one complete proof scene holds focus', () => {
