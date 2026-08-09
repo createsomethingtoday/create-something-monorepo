@@ -5,9 +5,17 @@ type PuppeteerLike = {
 };
 
 let cachedRuntime: Promise<PuppeteerLike> | null = null;
+let configuredRuntime: 'node' | 'worker' | null = null;
 
 function shouldUseBrowserRuntime(): boolean {
-  return process.env.WEBFLOW_SITE_ANALYZER_RUNTIME === 'worker';
+  return configuredRuntime === 'worker'
+    || (configuredRuntime === null && process.env.WEBFLOW_SITE_ANALYZER_RUNTIME === 'worker');
+}
+
+export function configurePuppeteerRuntime(runtime: 'node' | 'worker'): void {
+  if (configuredRuntime === runtime) return;
+  configuredRuntime = runtime;
+  cachedRuntime = null;
 }
 
 async function loadRuntime(): Promise<PuppeteerLike> {
@@ -29,11 +37,26 @@ async function loadRuntime(): Promise<PuppeteerLike> {
 }
 
 class NativeWebSocketTransport implements ConnectionTransport {
-  static create(url: string): Promise<NativeWebSocketTransport> {
+  static async create(url: string, headers?: Record<string, string>): Promise<NativeWebSocketTransport> {
+    if (headers && Object.keys(headers).length > 0) {
+      const fetchUrl = url.replace(/^wss:/, 'https:').replace(/^ws:/, 'http:');
+      const response = await fetch(fetchUrl, {
+        headers: {
+          ...headers,
+          Upgrade: 'websocket',
+        },
+      }) as Response & { webSocket?: WebSocket & { accept(): void } };
+      if (!response.webSocket) {
+        throw new Error(`Failed to open authenticated WebSocket transport (${response.status})`);
+      }
+      response.webSocket.accept();
+      return new NativeWebSocketTransport(response.webSocket);
+    }
+
     return new Promise((resolve, reject) => {
       const ws = new WebSocket(url);
       ws.addEventListener('open', () => resolve(new NativeWebSocketTransport(ws)));
-      ws.addEventListener('error', () => reject(new Error(`Failed to open WebSocket transport for ${url}`)));
+      ws.addEventListener('error', () => reject(new Error('Failed to open WebSocket transport')));
     });
   }
 
@@ -75,8 +98,8 @@ export async function connectPuppeteer(options: ConnectOptions) {
   const runtime = await cachedRuntime;
 
   if (shouldUseBrowserRuntime() && options.browserWSEndpoint && !options.transport) {
-    const { browserWSEndpoint, headers: _headers, ...rest } = options;
-    const transport = await NativeWebSocketTransport.create(browserWSEndpoint);
+    const { browserWSEndpoint, headers, ...rest } = options;
+    const transport = await NativeWebSocketTransport.create(browserWSEndpoint, headers);
     return runtime.connect({
       ...rest,
       transport,

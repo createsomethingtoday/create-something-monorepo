@@ -1,11 +1,13 @@
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 
 import {
+  configureAnalyzerRuntime,
   configureTemplateReviewJobDurableObject,
   createAnalyzerServer,
   getAnalyzerHealth,
 } from '../src/index.js';
 import type { TemplateReviewJobDurableObjectNamespace } from '../src/template-review-jobs.js';
+import { getWorkerApiKey, isWorkerRequestAuthorized } from '../src/worker-auth.js';
 
 export { TemplateReviewJobDurableObject } from '../src/template-review-job-durable-object.js';
 
@@ -16,6 +18,9 @@ interface Env {
   STEEL_API_KEY?: string;
   BROWSERLESS_API_KEY?: string;
   BROWSERLESS_TOKEN?: string;
+  CLOUDFLARE_ACCOUNT_ID?: string;
+  CLOUDFLARE_BROWSER_RUN_API_TOKEN?: string;
+  BROWSER_RUN_ENABLED?: string;
   WEBFLOW_TEMPLATE_REVIEW_MAX_CONCURRENT_JOBS?: string;
   WEBFLOW_TEMPLATE_REVIEW_MAX_QUEUE_SIZE?: string;
   LANGFUSE_PUBLIC_KEY?: string;
@@ -41,31 +46,6 @@ function json(body: unknown, init: ResponseInit = {}): Response {
   });
 }
 
-function getApiKey(env: Env): string | null {
-  const value = env.WEBFLOW_SITE_ANALYZER_MCP_API_KEY?.trim() ?? env.MCP_API_KEY?.trim() ?? '';
-  return value || null;
-}
-
-function parseBearerToken(request: Request): string | null {
-  const authorization = request.headers.get('authorization');
-  if (!authorization) return null;
-  const match = authorization.match(/^Bearer\s+(.+)$/i);
-  return match?.[1]?.trim() ?? null;
-}
-
-function isAuthorized(request: Request, env: Env): boolean {
-  const configuredToken = getApiKey(env);
-  if (!configuredToken) return true;
-
-  const headerToken =
-    parseBearerToken(request) ??
-    request.headers.get('x-api-key')?.trim() ??
-    new URL(request.url).searchParams.get('token')?.trim() ??
-    null;
-
-  return headerToken === configuredToken;
-}
-
 function withCors(response: Response): Response {
   const headers = new Headers(response.headers);
   for (const [key, value] of Object.entries(CORS_HEADERS)) {
@@ -79,34 +59,35 @@ function withCors(response: Response): Response {
   });
 }
 
-function syncEnvToProcess(env: Env): void {
-  const entries: Array<[keyof Env, string | undefined]> = [
-    ['WEBFLOW_SITE_ANALYZER_MCP_API_KEY', env.WEBFLOW_SITE_ANALYZER_MCP_API_KEY],
-    ['MCP_API_KEY', env.MCP_API_KEY],
-    ['STEEL_API_KEY', env.STEEL_API_KEY],
-    ['BROWSERLESS_API_KEY', env.BROWSERLESS_API_KEY],
-    ['BROWSERLESS_TOKEN', env.BROWSERLESS_TOKEN],
-    ['WEBFLOW_TEMPLATE_REVIEW_MAX_CONCURRENT_JOBS', env.WEBFLOW_TEMPLATE_REVIEW_MAX_CONCURRENT_JOBS],
-    ['WEBFLOW_TEMPLATE_REVIEW_MAX_QUEUE_SIZE', env.WEBFLOW_TEMPLATE_REVIEW_MAX_QUEUE_SIZE],
-    ['LANGFUSE_PROJECT_NAME', env.LANGFUSE_PROJECT_NAME],
-    ['LANGFUSE_PUBLIC_KEY', env.LANGFUSE_PUBLIC_KEY],
-    ['LANGFUSE_SECRET_KEY', env.LANGFUSE_SECRET_KEY],
-    ['LANGFUSE_BASE_URL', env.LANGFUSE_BASE_URL],
-  ];
+function parseOptionalPositiveInt(value: string | undefined): number | undefined {
+  const parsed = value ? Number.parseInt(value, 10) : Number.NaN;
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
+}
 
-  for (const [key, value] of entries) {
-    if (typeof value === 'string' && value.length > 0) {
-      process.env[key] = value;
-    }
-  }
-
-  process.env.WEBFLOW_SITE_ANALYZER_RUNTIME = 'worker';
+function configureRuntime(env: Env): void {
+  configureAnalyzerRuntime({
+    runtime: 'worker',
+    apiKey: getWorkerApiKey(env) ?? undefined,
+    browserProvider: {
+      cloudflareBrowserRunEnabled: env.BROWSER_RUN_ENABLED !== 'false',
+      cloudflareAccountId: env.CLOUDFLARE_ACCOUNT_ID,
+      cloudflareBrowserRunApiToken: env.CLOUDFLARE_BROWSER_RUN_API_TOKEN,
+      steelApiKey: env.STEEL_API_KEY,
+      browserlessToken: env.BROWSERLESS_TOKEN ?? env.BROWSERLESS_API_KEY,
+    },
+    templateReviewMaxConcurrentJobs: parseOptionalPositiveInt(
+      env.WEBFLOW_TEMPLATE_REVIEW_MAX_CONCURRENT_JOBS,
+    ),
+    templateReviewMaxQueueSize: parseOptionalPositiveInt(
+      env.WEBFLOW_TEMPLATE_REVIEW_MAX_QUEUE_SIZE,
+    ),
+  });
 }
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
-    syncEnvToProcess(env);
+    configureRuntime(env);
     configureTemplateReviewJobDurableObject(env.TEMPLATE_REVIEW_JOBS);
 
     if (request.method === 'OPTIONS') {
@@ -122,7 +103,7 @@ export default {
     }
 
     if (url.pathname === '/mcp' || url.pathname.startsWith('/mcp/')) {
-      if (!isAuthorized(request, env)) {
+      if (!isWorkerRequestAuthorized(request, env)) {
         return json(
           { error: 'Unauthorized. Provide Authorization: Bearer <WEBFLOW_SITE_ANALYZER_MCP_API_KEY>.' },
           { status: 401 },

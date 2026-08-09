@@ -1,0 +1,42 @@
+{
+  "version": "2026-08-08.v1",
+  "frozenAt": "2026-08-08T00:00:00.000Z",
+  "cases": [
+    {
+      "id": "standards-baseline",
+      "url": "https://example.com/",
+      "operation": "analyze",
+      "expectedEngine": "cloudflare-kitesurf"
+    },
+    {
+      "id": "create-something-public",
+      "url": "https://createsomething.agency/",
+      "operation": "analyze",
+      "expectedEngine": "cloudflare-kitesurf"
+    },
+    {
+      "id": "webflow-published",
+      "url": "https://meetup-w-wcopilot.webflow.io/",
+      "operation": "analyze",
+      "expectedEngine": "cloudflare-kitesurf"
+    },
+    {
+      "id": "webflow-screenshot",
+      "url": "https://meetup-w-wcopilot.webflow.io/",
+      "operation": "screenshot",
+      "expectedEngine": "cloudflare-kitesurf"
+    },
+    {
+      "id": "webgl-forced-escalation",
+      "url": "https://threejs.org/examples/webgl_animation_keyframes.html",
+      "operation": "webgl-analyze",
+      "expectedEngine": "cloudflare-chromium"
+    },
+    {
+      "id": "sessionful-chromium",
+      "url": "https://example.com/",
+      "operation": "openSession",
+      "expectedEngine": "cloudflare-chromium"
+    }
+  ]
+}

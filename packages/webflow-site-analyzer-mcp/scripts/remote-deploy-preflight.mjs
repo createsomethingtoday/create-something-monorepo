@@ -17,8 +17,11 @@ function formatNames(names) {
 const checks = [
   {
     name: 'browser provider',
-    ok: groupPresent(['STEEL_API_KEY', 'BROWSERLESS_TOKEN', 'BROWSERLESS_API_KEY']),
-    required: 'STEEL_API_KEY or BROWSERLESS_TOKEN or BROWSERLESS_API_KEY',
+    ok:
+      (process.env.BROWSER_RUN_ENABLED !== 'false'
+        && envPresent('CLOUDFLARE_BROWSER_RUN_API_TOKEN'))
+      || groupPresent(['STEEL_API_KEY', 'BROWSERLESS_TOKEN', 'BROWSERLESS_API_KEY']),
+    required: 'CLOUDFLARE_BROWSER_RUN_API_TOKEN or an incumbent rollback provider token',
   },
   {
     name: 'MCP auth token',

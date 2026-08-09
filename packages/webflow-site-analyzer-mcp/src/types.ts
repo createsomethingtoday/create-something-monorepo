@@ -221,6 +221,8 @@ export interface AnalyzeOptions {
   fullPage?: boolean;
   format?: 'png' | 'jpeg' | 'webp';
   quality?: number;
+  // Force Chromium when screenshots are used as pixel-sensitive acceptance evidence.
+  pixelSensitive?: boolean;
 }
 
 export interface BrowserSessionInit {
@@ -348,6 +350,7 @@ export interface CaptureScreenshotInput {
   viewport?: { width: number; height: number };
   format?: 'png' | 'jpeg' | 'webp';
   quality?: number;
+  pixelSensitive?: boolean;
 }
 
 export interface GetPerformanceInput {

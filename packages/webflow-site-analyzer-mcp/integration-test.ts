@@ -1,19 +1,19 @@
 /**
- * Integration test: Steel.dev + Webflow preview URL
+ * Integration test: managed browser provider + Webflow preview URL
  *
  * Runs real browser extraction against a Webflow preview URL and asserts
  * on tool output shape. Opt-in: skips when credentials are missing.
  *
  * Usage:
- *   STEEL_API_KEY=xxx WEBFLOW_PREVIEW_URL=https://preview.webflow.com/... pnpm test:integration
- *   # Or use default preview URL (public template):
- *   STEEL_API_KEY=xxx pnpm test:integration
+ *   CLOUDFLARE_ACCOUNT_ID=xxx CLOUDFLARE_BROWSER_RUN_API_TOKEN=xxx \
+ *     WEBFLOW_PREVIEW_URL=https://preview.webflow.com/... pnpm test:integration
  *
  * Test the Designer metadata agent (Flow B: panel navigation P, G, A, H, J):
- *   RUN_DESIGNER_METADATA_TEST=1 STEEL_API_KEY=xxx pnpm test:integration
+ *   RUN_DESIGNER_METADATA_TEST=1 CLOUDFLARE_ACCOUNT_ID=xxx \
+ *     CLOUDFLARE_BROWSER_RUN_API_TOKEN=xxx pnpm test:integration
  *   (Slower: ~1–3 min. Same URL as above or set WEBFLOW_PREVIEW_URL.)
  *
- * In CI: set STEEL_API_KEY and optionally WEBFLOW_PREVIEW_URL as secrets.
+ * In CI: set Browser Run credentials and optionally WEBFLOW_PREVIEW_URL.
  * Without them, the script exits 0 and prints "Skipped (no credentials)".
  */
 
@@ -67,24 +67,37 @@ function assertDesignerMetadataShape(data: unknown): asserts data is DesignerMet
 }
 
 async function main(): Promise<void> {
-  const apiKey = process.env.STEEL_API_KEY;
+  const cloudflareConfigured = Boolean(
+    (process.env.CLOUDFLARE_ACCOUNT_ID || process.env.CF_ACCOUNT_ID)
+    && process.env.CLOUDFLARE_BROWSER_RUN_API_TOKEN,
+  );
+  const incumbentConfigured = Boolean(
+    process.env.STEEL_API_KEY
+    || process.env.BROWSERLESS_TOKEN
+    || process.env.BROWSERLESS_API_KEY,
+  );
   const url = process.env.WEBFLOW_PREVIEW_URL ?? DEFAULT_PREVIEW_URL;
 
-  if (!apiKey?.trim()) {
-    skip('Integration test skipped: STEEL_API_KEY not set (set it to run against Steel + Webflow preview).');
+  if (!cloudflareConfigured && !incumbentConfigured) {
+    skip('Integration test skipped: no Browser Run or incumbent browser credentials configured.');
   }
 
   if (!url.includes('preview.webflow.com/preview/')) {
     fail('WEBFLOW_PREVIEW_URL must be a Webflow preview URL (preview.webflow.com/preview/...)');
   }
 
-  console.log('Running integration test (Steel + Webflow preview)...');
+  console.log('Running integration test (managed browser + Webflow preview)...');
   console.log('URL:', url);
 
   const manager = createProviderManager();
   const provider = manager.getProvider();
-  if (provider.name !== 'steel') {
-    fail(`Expected Steel provider; got ${provider.name}. Set STEEL_API_KEY.`);
+  const expectedProvider = cloudflareConfigured
+    ? 'cloudflare-kitesurf'
+    : process.env.STEEL_API_KEY
+      ? 'steel'
+      : 'browserless';
+  if (provider.name !== expectedProvider) {
+    fail(`Expected ${expectedProvider} provider; got ${provider.name}.`);
   }
 
   const registry = await initRegistry();
@@ -92,7 +105,7 @@ async function main(): Promise<void> {
 
   try {
     // 1. Touchpoints
-    console.log('  Running analyze_touchpoints (Steel session + iframe load, may take 30–90s)...');
+    console.log('  Running analyze_touchpoints (managed session + iframe load, may take 30–90s)...');
     const { code: touchpointsCode, versionId: touchpointsVersion } = registry.getScriptForExecution('touchpoints', true);
     const touchpointsRaw = await provider.analyze<unknown>(url, touchpointsCode, { timeout });
     assertTouchpointShape(touchpointsRaw);
@@ -112,7 +125,7 @@ async function main(): Promise<void> {
         extractDesignerMetadata?: (url: string, timeout?: number) => Promise<unknown>;
       };
       if (typeof providerWithDesigner.extractDesignerMetadata !== 'function') {
-        fail('Provider does not support extractDesignerMetadata (Steel/Browserless only).');
+        fail('Provider does not support extractDesignerMetadata.');
       }
       console.log('  Running extract_designer_metadata (panel navigation P, G, A, H, J; may take 1–3 min)...');
       const metaRaw = await providerWithDesigner.extractDesignerMetadata!(url, timeout);
