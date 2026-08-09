@@ -30,7 +30,8 @@ testimonials.
 | FAQ accordion                                 | `MeridianAccordion` using native `details` semantics                            | `.agency` Playbook questions                                                   |
 | Newsletter/form treatment                     | Editorial footer newsletter styling and existing verified signup flow           | `.io` research digest; `.ltd` canon letter                                     |
 | Desktop service dropdown and mobile hierarchy | `Navigation` child links and full mobile disclosure                             | `.agency` Practice menu; shared navigation language across all four properties |
-| Closing CTA and layered footer directory      | Editorial footer callout, identity masthead, directory, and social/legal region | All four properties                                                            |
+| Split playbook / resource callout              | `MeridianOfferPanel` with a property-specific signal → decision → proof artifact | Shared editorial footer across all four properties                              |
+| Closing CTA and layered footer directory       | `MeridianOfferPanel`, identity masthead, directory, and social/legal region       | All four properties                                                             |
 
 ## Typography system
 

@@ -97,7 +97,8 @@ describe('Licensed editorial public-system rollout', () => {
       'MeridianFeatureSplit',
       'MeridianCardGrid',
       'MeridianEvidenceCarousel',
-      'MeridianAccordion'
+      'MeridianAccordion',
+      'MeridianOfferPanel'
     ]) {
       expect(components).toContain(component);
       expect(adoptionMap).toContain(component);
@@ -105,6 +106,8 @@ describe('Licensed editorial public-system rollout', () => {
 
     expect(navigation).toContain('nav-dropdown__menu');
     expect(navigation).toContain('nav-mobile-submenu');
+    expect(footer).toContain("import MeridianOfferPanel from './meridian/MeridianOfferPanel.svelte'");
+    expect(footer).toContain('<MeridianOfferPanel');
     expect(footer).toContain('footer-editorial-identity');
     expect(footer).toContain('.footer-editorial #newsletter');
 
@@ -123,13 +126,32 @@ describe('Licensed editorial public-system rollout', () => {
     const source = routeSource('agency');
 
     expect(source).toContain('expression="editorial"');
-    expect(source.match(/expression="editorial"/g)).toHaveLength(2);
+    expect(source.match(/expression="editorial"/g)?.length).toBeGreaterThanOrEqual(2);
     expect(source).toContain('propertyRole="Embedded AI operating partner"');
     expect(source).toContain('We embed with operators');
     expect(source).toContain('client-owned Playbook');
     expect(source).toContain(
       'The opposition is ambiguity, AI out of reach, and untrusted automation.'
     );
+  });
+
+  it('uses one artifact-led offer action with property-specific records', () => {
+    const offer = readFileSync(
+      join(
+        REPO_ROOT,
+        'packages/canon/src/lib/components/meridian/MeridianOfferPanel.svelte'
+      ),
+      'utf8'
+    );
+
+    expect(offer.match(/<a\s/g)).toHaveLength(1);
+    expect(offer).toContain('SIGNAL → DECISION → PROOF');
+    expect(offer).toContain("agency: { code: 'PB / 01'");
+    expect(offer).toContain("io: { code: 'FR / 01'");
+    expect(offer).toContain("ltd: { code: 'PL / 01'");
+    expect(offer).toContain("space: { code: 'RT / 01'");
+    expect(offer).not.toContain('Free Download');
+    expect(offer).not.toContain('<img');
   });
 
   it('keeps the Agency ownership proposition in the editorial public-heading expression', () => {
