@@ -46,7 +46,7 @@ test('public HTML cache policy skips personalized or high-variance requests', ()
   assert.equal(cacheDecision({ headers: new Headers({ authorization: 'Bearer token' }) }), false);
 });
 
-test('public HTML cache policy skips protected and API routes', () => {
+test('public HTML cache policy skips protected, API, and release-sensitive workflow routes', () => {
   assert.equal(cacheDecision({ pathname: '/api/contact' }), false);
   assert.equal(cacheDecision({ pathname: '/admin' }), false);
   assert.equal(cacheDecision({ pathname: '/admin/security' }), false);
@@ -54,6 +54,8 @@ test('public HTML cache policy skips protected and API routes', () => {
   assert.equal(cacheDecision({ pathname: '/login' }), false);
   assert.equal(cacheDecision({ pathname: '/mcp-access/tools' }), false);
   assert.equal(cacheDecision({ pathname: '/prospects' }), false);
+  assert.equal(cacheDecision({ pathname: '/workflows' }), false);
+  assert.equal(cacheDecision({ pathname: '/workflows/workflow-mapping' }), false);
 });
 
 test('public HTML cache only stores successful public HTML responses', () => {
