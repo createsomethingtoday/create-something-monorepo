@@ -226,6 +226,7 @@
   </PerformanceNarrativeStage>
 
   <PerformanceConversionHandoff
+    expression="editorial"
     eyebrow="Apply the method"
     title="Ready to make the workflow quieter?"
     description="Every project starts with this operating model. We remove what does not belong, then ship the smallest controlled path that lets the operator stop watching everything."

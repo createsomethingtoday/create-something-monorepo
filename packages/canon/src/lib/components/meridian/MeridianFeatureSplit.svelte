@@ -180,7 +180,7 @@
     font-size: clamp(2.7rem, 5.6vw, 5.9rem);
     font-weight: 400;
     letter-spacing: -0.055em;
-    line-height: 0.91;
+    line-height: var(--leading-performance-editorial, 1.1);
   }
   .meridian-split__description {
     max-width: 43rem;

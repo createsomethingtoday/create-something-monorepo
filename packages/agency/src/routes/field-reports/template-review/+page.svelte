@@ -308,6 +308,7 @@
   </section>
 
   <PerformanceConversionHandoff
+    expression="editorial"
     eyebrow="Business implication"
     title="Use automation to prepare evidence—not to assume judgment."
     description="Start with one repeated workflow, a named decision owner, and a measurable baseline. Expand authority only after the system proves both quality and business value."

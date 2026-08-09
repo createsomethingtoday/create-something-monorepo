@@ -746,7 +746,7 @@
     font-size: clamp(4rem, 7vw, 7.4rem);
     font-weight: var(--font-performance-editorial-weight, 400);
     letter-spacing: -0.045em;
-    line-height: 0.91;
+    line-height: var(--leading-performance-editorial, 1.1);
   }
 
   .performance-campaign-opening[data-expression='editorial']

@@ -335,6 +335,7 @@
 </PerformanceNarrativeStage>
 
 <PerformanceConversionHandoff
+  expression="editorial"
   eyebrow="Start with the workflow"
   title="Bring the workflow, owner, and first risk boundary."
   description="I will map the control states before expanding automation authority."

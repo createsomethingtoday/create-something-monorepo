@@ -315,6 +315,30 @@ describe('Performance composition typography', () => {
     }
   });
 
+  it('uses the Meridian 1.1 leading contract for editorial proposition headings', () => {
+    const tokens = readFileSync(join(process.cwd(), 'src/lib/styles/tokens.css'), 'utf8');
+    expect(tokens).toContain('--leading-performance-editorial: 1.1');
+
+    const components = [
+      'performance/PerformanceCampaignOpening.svelte',
+      'performance/PerformanceConversionHandoff.svelte',
+      'performance/PerformanceNarrativeStage.svelte',
+      'clear/ClearPageSection.svelte',
+      'meridian/MeridianAccordion.svelte',
+      'meridian/MeridianCardGrid.svelte',
+      'meridian/MeridianEvidenceCarousel.svelte',
+      'meridian/MeridianFeatureSplit.svelte',
+      'meridian/MeridianMetrics.svelte'
+    ];
+
+    for (const component of components) {
+      const source = readFileSync(join(process.cwd(), 'src/lib/components', component), 'utf8');
+      expect(source, component).toContain(
+        'line-height: var(--leading-performance-editorial, 1.1)'
+      );
+    }
+  });
+
   it('loads the approved local mono source without a remote display-font request', () => {
     const source = readFileSync(join(process.cwd(), 'src/lib/styles/performance.css'), 'utf8');
 
@@ -811,7 +835,7 @@ describe('PerformanceNarrativeStage', () => {
     expect(source).toContain('border-radius: var(--radius-performance-editorial, 0.375rem)');
     expect(source).toContain(".performance-narrative-stage[data-expression='editorial'] h2 {");
     expect(source).toContain(".performance-narrative-stage[data-expression='editorial']\n    .performance-narrative-stage__scene-head\n    h3 {");
-    expect(source).toContain('line-height: 1.02;');
+    expect(source).toContain('line-height: var(--leading-performance-editorial, 1.1);');
   });
 
   it('keeps every scene summary visible while one complete proof scene holds focus', () => {

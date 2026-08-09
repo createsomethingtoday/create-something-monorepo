@@ -66,6 +66,7 @@
 />
 
 <PerformanceConversionHandoff
+  expression="editorial"
   eyebrow="Bring the next field test"
   title="Measure one workflow before expanding authority."
   description="Name the repeated handoff, decision owner, objective work, and current baseline. The first map will show whether a controlled pilot is worth running."

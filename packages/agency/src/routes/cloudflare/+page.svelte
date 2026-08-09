@@ -267,6 +267,7 @@
 </PerformanceNarrativeStage>
 
 <PerformanceConversionHandoff
+  expression="editorial"
   eyebrow="Map the runtime"
   title="Bring the workflow that needs a controlled route."
   description="I’ll map the route, the permissions, and the evidence your team needs before a Cloudflare build becomes production work."

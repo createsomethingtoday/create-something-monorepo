@@ -317,6 +317,7 @@
 </PerformanceNarrativeStage>
 
 <PerformanceConversionHandoff
+  expression="editorial"
   eyebrow="Start with one workflow"
   title={agencyCoreMessaging.workflowCtaHeading}
   description={agencyCoreMessaging.workflowCtaDetail}

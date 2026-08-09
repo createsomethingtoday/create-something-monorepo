@@ -291,6 +291,7 @@
 </PerformanceNarrativeStage>
 
 <PerformanceConversionHandoff
+  expression="editorial"
   eyebrow="Start with one workflow"
   title="Bring the workflow that wastes the most time."
   description="I will help map the first controlled pilot before expanding authority, scope, or spend."

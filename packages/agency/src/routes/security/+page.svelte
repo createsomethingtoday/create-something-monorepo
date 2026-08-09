@@ -133,6 +133,7 @@
 </PerformancePageSection>
 
 <PerformanceConversionHandoff
+  expression="editorial"
   eyebrow="Access boundary"
   title="Name the boundary before you hand out credentials."
   description="An agent should arrive at a workflow that already knows its permissions, its stop points, and who decides. Access is granted against that map, not ahead of it."

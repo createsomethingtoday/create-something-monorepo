@@ -325,6 +325,7 @@
 </PerformanceNarrativeStage>
 
 <PerformanceConversionHandoff
+  expression="editorial"
   eyebrow="Start with the workflow"
   title="Bring the workflow, the accounts, and the decision owner."
   description="CREATE SOMETHING maps the stack boundary and defines the first controlled path. Before implementation starts, you can see what tools may do and what stays visible."
