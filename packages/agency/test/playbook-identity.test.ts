@@ -62,6 +62,13 @@ test('Playbook field publishes one stable, accessible operating legend', () => {
   assert.match(playbookField, /@media \(prefers-reduced-motion: reduce\)/);
 });
 
+test('Playbook field can become a self-contained study without changing its operating legend', () => {
+  assert.match(playbookField, /embedded\?: boolean/);
+  assert.match(playbookField, /embedded = false/);
+  assert.match(playbookField, /class:playbook-field--embedded=\{embedded\}/);
+  assert.match(playbookField, /\.playbook-field--embedded/);
+});
+
 test('Playbook proof is a readable receipt ticket, not a generic document glyph', () => {
   assert.match(playbookField, /state: string;/);
   assert.match(playbookField, /record: string;/);

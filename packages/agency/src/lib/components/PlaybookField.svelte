@@ -25,9 +25,11 @@
 
   interface Props {
     variant: PlaybookFieldVariant;
+    /** Lets a route place the field as a self-contained operating study. */
+    embedded?: boolean;
   }
 
-  let { variant }: Props = $props();
+  let { variant, embedded = false }: Props = $props();
 
   const plays: Record<PlaybookFieldVariant, Play> = {
     home: {
@@ -204,6 +206,7 @@
 
 <figure
   class="playbook-field"
+  class:playbook-field--embedded={embedded}
   data-playbook-field={variant}
   role="img"
   aria-label={play.description}
@@ -311,6 +314,17 @@
     margin: 0;
     color: var(--color-performance-panel, #fff);
     transform: translateY(-50%);
+  }
+
+  .playbook-field--embedded {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    transform: none;
+  }
+
+  .playbook-field--embedded .playbook-field__frame {
+    box-shadow: none;
   }
 
   .playbook-field__frame {
