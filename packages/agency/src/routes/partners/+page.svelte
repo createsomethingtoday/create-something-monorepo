@@ -160,6 +160,7 @@
 </PerformancePageSection>
 
 <PerformanceConversionHandoff
+  expression="editorial"
   eyebrow="Map the workflow"
   title="Bring the workflow before choosing the stack."
   description="Map the handoff and name its owner, then agree what the system may do on its own and where it has to stop. Deliver workflows for clients? Use the service-provider path to keep the client boundary attached."

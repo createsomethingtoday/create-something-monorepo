@@ -212,12 +212,12 @@
 		font-family: var(--font-performance-editorial);
 		font-weight: var(--font-performance-editorial-weight, 400);
 		letter-spacing: -0.04em;
-		line-height: 1.02;
+		line-height: var(--leading-performance-editorial, 1.1);
 	}
 
 	.clear-page-section[data-expression='editorial'].clear-page-section--hero
 		.clear-page-section__title {
-		line-height: 1;
+		line-height: var(--leading-performance-editorial, 1.1);
 	}
 
 	.clear-page-section__description {

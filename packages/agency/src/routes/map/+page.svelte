@@ -94,6 +94,7 @@
 	</PerformancePageSection>
 
 	<PerformanceConversionHandoff
+		expression="editorial"
 		eyebrow="Continue the definition"
 		title="Carry the starter sheet forward."
 		description="The private draft is a starting sheet, not an account-scoped CREATE SOMETHING Map. Sign in for version history, review gates, sharing, export, and Build handoff—or bring its summary into a mapping session first."

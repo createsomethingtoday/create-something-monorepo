@@ -217,6 +217,7 @@
   </PerformanceNarrativeStage>
 
   <PerformanceConversionHandoff
+    expression="editorial"
     eyebrow="Choose the next boundary"
     title="Define the workflow or bring the one already running."
     description="Use Map when the system still needs a shared definition. Use Build for new workflows and integrations. Bring a launched workflow to Control when it needs accountable operation, approvals, evidence, and recovery."

@@ -80,7 +80,7 @@
     font-size: clamp(2.7rem, 5.4vw, 5.6rem);
     font-weight: 400;
     letter-spacing: -0.055em;
-    line-height: 0.92;
+    line-height: var(--leading-performance-editorial, 1.1);
   }
   .meridian-card-grid__description {
     max-width: 36rem;

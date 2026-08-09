@@ -231,6 +231,7 @@
 </section>
 
 <PerformanceConversionHandoff
+  expression="editorial"
   eyebrow="Apply the system"
   title="Start with the workflow your team still protects by hand."
   description="Use Map to define it, Build to connect it, or Control to operate it with approvals and proof. Control includes Map."

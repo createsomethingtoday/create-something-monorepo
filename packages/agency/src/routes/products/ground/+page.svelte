@@ -242,6 +242,7 @@ ground claim duplicate utils.ts helpers.ts "same validation logic"
 </PerformanceNarrativeStage>
 
 <PerformanceConversionHandoff
+  expression="editorial"
   eyebrow="Ground handoff"
   title="Put evidence before the next code claim."
   description="Install Ground in one agent client, run a real verification, and preserve the checked inputs with the finding."

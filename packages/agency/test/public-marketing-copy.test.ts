@@ -15,6 +15,12 @@ function packageRelative(file: string): string {
   return file.replace(`${packageRoot}/`, '');
 }
 
+function conversionHandoffOpenings(source: string): string[] {
+  return [...source.matchAll(/<PerformanceConversionHandoff\b[\s\S]*?>/g)].map(
+    ([opening]) => opening
+  );
+}
+
 test('public agency copy guard discovers every visitor-facing route', () => {
   const files = discoverPublicCopyFiles().map(packageRelative);
 
@@ -326,6 +332,80 @@ test('public Agency commercial propositions declare the shared editorial express
     /font-performance-editorial/,
     'operational workflow guides remain in the field expression'
   );
+});
+
+test('commercial conversion handoffs use editorial propositions while task surfaces stay field-led', () => {
+  const commercialRoutes = [
+    '',
+    'about',
+    'cloudflare',
+    'control',
+    'delivery',
+    'field-reports',
+    'field-reports/template-review',
+    'for-service-providers',
+    'map',
+    'methodology',
+    'partners',
+    'practice',
+    'products',
+    'products/ground',
+    'products/loom',
+    'proof/marketplace-workflow',
+    'security',
+    'stack',
+    'use-cases/business',
+    'use-cases/enterprise'
+  ];
+
+  for (const route of commercialRoutes) {
+    const routePath = route ? `${route}/+page.svelte` : '+page.svelte';
+    const source = readFileSync(new URL(`../src/routes/${routePath}`, import.meta.url), 'utf8');
+    const openings = conversionHandoffOpenings(source);
+
+    assert.ok(openings.length > 0, `${route || 'home'} must render a conversion handoff`);
+    for (const opening of openings) {
+      assert.match(
+        opening,
+        /expression="editorial"/,
+        `${route || 'home'} conversion propositions must use the editorial expression`
+      );
+    }
+  }
+
+  const governanceProduct = readFileSync(
+    new URL('../src/lib/components/GovernanceProductPage.svelte', import.meta.url),
+    'utf8'
+  );
+  for (const opening of conversionHandoffOpenings(governanceProduct)) {
+    assert.match(opening, /expression="editorial"/);
+  }
+
+  const taskRoutes = [
+    'book',
+    'dify',
+    'dify/agent-eval-gates',
+    'dify/mcp-control-plane',
+    'dify/ship-dify-app-with-mcp-tools',
+    'dify/template-marketplace-proof'
+  ];
+
+  for (const route of taskRoutes) {
+    const source = readFileSync(
+      new URL(`../src/routes/${route}/+page.svelte`, import.meta.url),
+      'utf8'
+    );
+    const openings = conversionHandoffOpenings(source);
+
+    assert.ok(openings.length > 0, `${route} must render a conversion handoff`);
+    for (const opening of openings) {
+      assert.doesNotMatch(
+        opening,
+        /expression="editorial"/,
+        `${route} remains an operational field surface`
+      );
+    }
+  }
 });
 
 test('the homepage operating story preserves the boundary in reader-facing language', () => {
