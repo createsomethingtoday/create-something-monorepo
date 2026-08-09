@@ -1,6 +1,8 @@
 <script lang="ts">
   import {
     Button,
+    MeridianCardGrid,
+    MeridianFeatureSplit,
     PerformanceCampaignOpening,
     PerformanceCardGrid,
     PerformanceNarrativeStage,
@@ -11,7 +13,8 @@
     type PerformanceCardItem,
     type PerformanceCampaignProof,
     type PerformanceDecisionItem,
-    type PerformanceNarrativeScene
+    type PerformanceNarrativeScene,
+    type MeridianCard
   } from '@create-something/canon';
 
   const heroProofItems: PerformanceCampaignProof[] = [
@@ -193,6 +196,39 @@
     id: ['connect', 'govern', 'prove'][index],
     ...item
   }));
+
+  const meridianMasterCards: MeridianCard[] = [
+    {
+      eyebrow: 'Industrial design',
+      title: 'Dieter Rams',
+      description:
+        'A master reference for reducing the operating surface to what actually serves the person doing the work.',
+      href: '/masters/dieter-rams',
+      ctaLabel: 'Read the reference',
+      kind: 'profile',
+      tone: 'ink'
+    },
+    {
+      eyebrow: 'Architecture',
+      title: 'Ludwig Mies van der Rohe',
+      description:
+        'A master reference for structure, legibility, and the discipline of leaving only what needs to remain.',
+      href: '/masters/mies-van-der-rohe',
+      ctaLabel: 'Read the reference',
+      kind: 'profile',
+      tone: 'ink'
+    },
+    {
+      eyebrow: 'Operating standard',
+      title: 'Policy before prompt',
+      description:
+        'The reusable artifact is the governing rule a team can inspect—not a hidden instruction that only works once.',
+      href: '/patterns/crystallization',
+      ctaLabel: 'Open the pattern',
+      kind: 'article',
+      tone: 'court'
+    }
+  ];
 </script>
 
 <SEO
@@ -224,6 +260,18 @@
   {/snippet}
 </PerformanceCampaignOpening>
 
+<MeridianFeatureSplit
+  eyebrow="Canon as a working field"
+  title="A standard should make delegation easier to review."
+  description="The philosophy becomes useful only when it changes an actual action boundary: what can connect, what needs approval, and what proof another operator can inspect."
+  primaryLabel="Read the canon"
+  primaryHref="/canon"
+  secondaryLabel="Browse standards"
+  secondaryHref="/standards"
+  tags={['Connect', 'Govern', 'Prove']}
+  visualLabel="Canon field"
+/>
+
 <PerformanceNarrativeStage
   id="canon-operating-story"
   expression="editorial"
@@ -241,6 +289,14 @@
     />
   {/snippet}
 </PerformanceNarrativeStage>
+
+<MeridianCardGrid
+  eyebrow="Sources and patterns"
+  title="The people and standards behind the operating language."
+  description="The licensed profile and article card treatments now point to the real references that shape CREATE SOMETHING’s canon."
+  cards={meridianMasterCards}
+  ariaLabel="Canon sources and operating patterns"
+/>
 
 <section class="ltd-continuation" aria-label="Canon continuation">
   <PropertyFunnel

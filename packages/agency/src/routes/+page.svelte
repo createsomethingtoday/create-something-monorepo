@@ -1,11 +1,17 @@
 <script lang="ts">
   import {
     Button,
+    MeridianAccordion,
+    MeridianCardGrid,
+    MeridianEvidenceCarousel,
+    MeridianMetrics,
     PerformanceCampaignOpening,
     PerformanceConversionHandoff,
     PerformanceNarrativeStage,
     PerformanceWorkflowMiniArtifact,
     SEO,
+    type MeridianCard,
+    type MeridianEvidence,
     type PerformanceCampaignProof,
     type PerformanceFieldStudyMetric,
     type PerformanceNarrativeScene
@@ -74,6 +80,69 @@
       question: 'What do clients leave with?',
       answer:
         'Clients leave with a visible workflow map, connected-system plan, approval path, run/wait/stop states, and an audit trail the team can inspect.'
+    }
+  ];
+
+  const deliveryCards: MeridianCard[] = [
+    {
+      eyebrow: 'First possession',
+      title: 'Map one workflow',
+      description:
+        'Start with the handoff that makes the cost of waiting, guessing, or rechecking most visible.',
+      href: agencyCoreMessaging.selfMapHref,
+      ctaLabel: 'Start the map',
+      meta: 'Fixed first scope',
+      kind: 'offer',
+      tone: 'paper'
+    },
+    {
+      eyebrow: 'Installed route',
+      title: 'Build the controlled path',
+      description:
+        'Connect the systems, AI tasks, approval points, and safe stops that let known work move.',
+      href: '/services',
+      ctaLabel: 'See the practice',
+      meta: 'Scoped implementation',
+      kind: 'service',
+      tone: 'ink'
+    },
+    {
+      eyebrow: 'Owned handoff',
+      title: 'Keep the Playbook',
+      description:
+        'Your team keeps the rules, records, recovery path, and review rhythm when the first pilot is done.',
+      href: '/stack',
+      ctaLabel: 'See what you keep',
+      meta: 'Client-owned system',
+      kind: 'case',
+      tone: 'brand'
+    }
+  ];
+
+  const operatorEvidence: MeridianEvidence[] = [
+    {
+      eyebrow: 'Field report',
+      title: 'A workflow map makes the decision boundary visible before automation begins.',
+      detail:
+        'The field report keeps the working constraint, the approval path, and the evidence trail together so the next operator can understand what advanced and what stayed blocked.',
+      source: 'Read the Marketplace workflow',
+      href: '/proof/marketplace-workflow'
+    },
+    {
+      eyebrow: 'Control record',
+      title: 'One named owner is more useful than another implicit handoff.',
+      detail:
+        'A shared Playbook makes the route, decision gate, and recovery note explicit instead of asking an operator to reconstruct context from scattered tools.',
+      source: 'See the delivery path',
+      href: '/services'
+    },
+    {
+      eyebrow: 'System boundary',
+      title: 'The result is an operating artifact, not a dependency on our team.',
+      detail:
+        'The map, rules, runbook, history, and recovery plan remain with the client so an AI or infrastructure change does not erase the operating knowledge.',
+      source: 'Inspect the ownership model',
+      href: '/stack'
     }
   ];
 
@@ -242,6 +311,16 @@
 
   <AgencyPerformanceReadback />
 
+  <MeridianMetrics
+    eyebrow="Scoreboard"
+    title="A shared play is a control surface."
+    metrics={[
+      { value: '1', label: 'workflow first', detail: 'Start with the handoff that matters.' },
+      { value: '3', label: 'run states', detail: 'Run, wait, or stop stays explicit.' },
+      { value: '1', label: 'owned Playbook', detail: 'Your team receives the working system.' }
+    ]}
+  />
+
   <PerformanceNarrativeStage
     id="agency-operating-story"
     expression="editorial"
@@ -347,9 +426,32 @@
     {/snippet}
   </PerformanceNarrativeStage>
 
+  <MeridianCardGrid
+    eyebrow="The delivery roster"
+    title="Each engagement earns a clear next move."
+    description="The card system makes scope, action, and ownership legible without inventing a rate card or a promise the work has not earned."
+    cards={deliveryCards}
+    ariaLabel="CREATE SOMETHING delivery paths"
+  />
+
+  <MeridianEvidenceCarousel
+    eyebrow="Operator proof"
+    title="Evidence replaces borrowed testimonials."
+    description="The licensed testimonial treatment now carries inspectable operating evidence rather than made-up praise."
+    items={operatorEvidence}
+  />
+
   <AdoptionPathChooser />
 
   <IntegrationCompatibilityRail surface="homepage" />
+
+  <MeridianAccordion
+    eyebrow="Playbook questions"
+    title="What the first workflow changes."
+    description="A direct answer before a mapping session is more useful than a vague assurance."
+    items={faqItems}
+    openFirst={true}
+  />
 
   <PerformanceConversionHandoff
     eyebrow="Fixed-scope first step"

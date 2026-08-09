@@ -744,7 +744,7 @@
     max-width: 11ch;
     font-family: var(--font-performance-editorial);
     font-size: clamp(4rem, 7vw, 7.4rem);
-    font-weight: 400;
+    font-weight: var(--font-performance-editorial-weight, 400);
     letter-spacing: -0.045em;
     line-height: 0.91;
   }

@@ -1,6 +1,7 @@
 <script lang="ts">
   import {
     Button,
+    MeridianCardGrid,
     PerformanceCampaignOpening,
     PerformanceCardGrid,
     PerformanceContrastChapter,
@@ -11,6 +12,7 @@
     paperPrototypeScoreMedia,
     PropertyFunnel,
     SEO,
+    type MeridianCard,
     type PerformanceCardItem,
     type PerformanceCondition,
     type PerformanceDecisionItem
@@ -232,6 +234,17 @@
       ]
     }
   ];
+
+  const meridianToolCards: MeridianCard[] = tools.slice(0, 3).map((tool, index) => ({
+    eyebrow: tool.eyebrow,
+    title: tool.title,
+    description: tool.detail,
+    href: tool.href,
+    ctaLabel: 'Open the route',
+    meta: ['Run', 'Inspect', 'Practice'][index],
+    kind: index === 0 ? 'case' : 'service',
+    tone: index === 0 ? 'brand' : 'ink'
+  }));
 </script>
 
 <SEO
@@ -258,6 +271,14 @@
     <Button href="/praxis" variant="secondary">Start Praxis</Button>
   {/snippet}
 </PerformanceCampaignOpening>
+
+<MeridianCardGrid
+  eyebrow="Workbench roster"
+  title="Routes that do real work."
+  description="The service and case-study card system now introduces live tools with their runtime purpose and direct entry point."
+  cards={meridianToolCards}
+  ariaLabel="Featured workbench routes"
+/>
 
 <PerformanceContrastChapter
   eyebrow="Workbench protocol"

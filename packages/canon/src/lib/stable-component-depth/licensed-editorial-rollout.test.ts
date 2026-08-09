@@ -28,6 +28,11 @@ describe('Licensed editorial public-system rollout', () => {
       join(REPO_ROOT, 'packages/canon/src/lib/components/Footer.svelte'),
       'utf8'
     );
+    const performance = readFileSync(
+      join(REPO_ROOT, 'packages/canon/src/lib/styles/performance.css'),
+      'utf8'
+    );
+    const packageManifest = readFileSync(join(REPO_ROOT, 'packages/canon/package.json'), 'utf8');
 
     for (const property of ['agency', 'io', 'ltd', 'space'] as const) {
       const layout = layoutSource(property);
@@ -43,6 +48,10 @@ describe('Licensed editorial public-system rollout', () => {
     expect(navigation).toContain('nav-editorial');
     expect(footer).toContain("'editorial'");
     expect(footer).toContain('footer-editorial');
+    expect(tokens).toContain("'Geist Variable'");
+    expect(performance).toContain('@fontsource-variable/geist/wght.css');
+    expect(performance).toContain('font-synthesis: none');
+    expect(packageManifest).toContain('@fontsource-variable/geist');
   });
 
   it('maps one licensed end product and one identical self-hosted font asset to each property', () => {
@@ -63,6 +72,51 @@ describe('Licensed editorial public-system rollout', () => {
     expect(manifest).toContain('No Webflow runtime');
     expect(manifest).toContain('Webflow Studio conversion is deferred');
     expect(manifest).toContain(expectedHash);
+  });
+
+  it('adopts every licensed navigation, section, card, proof, form, and footer pattern as owned components', () => {
+    const adoptionMap = readFileSync(
+      join(REPO_ROOT, 'docs/internal/MERIDIAN_COMPONENT_ADOPTION_MAP.md'),
+      'utf8'
+    );
+    const components = readFileSync(
+      join(REPO_ROOT, 'packages/canon/src/lib/components/meridian/index.ts'),
+      'utf8'
+    );
+    const navigation = readFileSync(
+      join(REPO_ROOT, 'packages/canon/src/lib/components/Navigation.svelte'),
+      'utf8'
+    );
+    const footer = readFileSync(
+      join(REPO_ROOT, 'packages/canon/src/lib/components/Footer.svelte'),
+      'utf8'
+    );
+
+    for (const component of [
+      'MeridianMetrics',
+      'MeridianFeatureSplit',
+      'MeridianCardGrid',
+      'MeridianEvidenceCarousel',
+      'MeridianAccordion'
+    ]) {
+      expect(components).toContain(component);
+      expect(adoptionMap).toContain(component);
+    }
+
+    expect(navigation).toContain('nav-dropdown__menu');
+    expect(navigation).toContain('nav-mobile-submenu');
+    expect(footer).toContain('footer-editorial-identity');
+    expect(footer).toContain('.footer-editorial #newsletter');
+
+    expect(routeSource('agency')).toContain('<MeridianMetrics');
+    expect(routeSource('agency')).toContain('<MeridianEvidenceCarousel');
+    expect(routeSource('agency')).toContain('<MeridianAccordion');
+    expect(routeSource('io')).toContain('<MeridianFeatureSplit');
+    expect(routeSource('io')).toContain('<MeridianCardGrid');
+    expect(routeSource('ltd')).toContain('<MeridianFeatureSplit');
+    expect(routeSource('ltd')).toContain("kind: 'profile'");
+    expect(routeSource('space')).toContain('<MeridianCardGrid');
+    expect(layoutSource('agency')).toContain('children: [');
   });
 
   it('frames .agency as the embedded operating partner and names the client-owned Playbook', () => {
