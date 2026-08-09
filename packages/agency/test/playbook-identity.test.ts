@@ -119,11 +119,19 @@ test('the commercial hero cohort uses route-specific Playbook fields and no Pape
   assert.match(playbookField, /position: relative/);
 });
 
-test('About names the earned basketball origin without positioning athletic services', () => {
+test('About turns the earned basketball origin into an operator-facing court vision story', () => {
   const about = read('../src/routes/about/+page.svelte');
+  const playbookField = read('../src/lib/components/PlaybookField.svelte');
 
   assert.match(about, /Division III basketball/);
   assert.match(about, /shared picture/);
+  assert.match(about, /The operator should see the whole court\./);
+  assert.match(about, /<PlaybookField variant="about"/);
+  assert.match(about, /Read the floor/);
+  assert.match(about, /Call the play/);
+  assert.match(about, /Review the film/);
+  assert.match(playbookField, /about:\s*\{/);
+  assert.match(playbookField, /Shared play/);
   assert.doesNotMatch(about, /basketball coaching|athletic performance services/i);
 });
 
