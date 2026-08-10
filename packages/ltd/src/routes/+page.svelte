@@ -3,10 +3,10 @@
     Button,
     MeridianCardGrid,
     MeridianFeatureSplit,
-    HeroArtifact,
     PerformanceCampaignOpening,
     PerformanceCardGrid,
     PerformanceNarrativeStage,
+    paperCanonSheetMedia,
     SEO,
     NewsletterSignup,
     PropertyFunnel,
@@ -246,20 +246,17 @@
   expression="editorial"
   title="The philosophy of automation infrastructure."
   lede="CREATE SOMETHING .ltd explains the creation moat: consuming AI tools is easy; building governed connectivity, policy, trust boundaries, and proof is the work."
+  media={paperCanonSheetMedia}
   proof={heroProofItems}
+  mode="paper"
   density="compact"
-  artifactOwnsMedia
-  artifactMobilePlacement="flow"
 >
   {#snippet actions()}
     <Button
       href="https://createsomething.agency/practice?source=ltd&intent=canon-to-practice&stage=qualify&lane=policy_os"
-    >See The Practice</Button
+      >See The Practice</Button
     >
     <Button href="/canon" variant="secondary">Read The Canon</Button>
-  {/snippet}
-  {#snippet artifact()}
-    <HeroArtifact scene="ltd-canon-standard" embedded />
   {/snippet}
 </PerformanceCampaignOpening>
 
