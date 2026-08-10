@@ -162,6 +162,13 @@ test('the homepage operating story uses the shared Playbook to show Map, Build, 
   assert.match(home, /client-owned Playbook/);
 });
 
+test('editorial narrative panels keep their scene rows intrinsically sized on desktop', () => {
+  assert.match(
+    narrative,
+    /data-expression='editorial'\]\s*\.performance-narrative-stage__panel\s*\{[\s\S]*?align-content:\s*start;[\s\S]*?min-height:\s*0;/
+  );
+});
+
 test('the Shared Playbook study stacks its court and proof legibly on mobile', () => {
   assert.match(
     home,
