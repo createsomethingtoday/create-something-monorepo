@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { HeroArtifact, type HeroArtifactSceneId } from '@create-something/canon';
-
   export type PlaybookFieldVariant =
     | 'home'
     | 'about'
@@ -240,16 +238,6 @@
 
   const play = $derived(plays[variant]);
   const arrowId = $derived(`playbook-arrow-${variant}`);
-  const artifactByVariant: Record<PlaybookFieldVariant, HeroArtifactSceneId> = {
-    home: 'agency-folded-playbook',
-    about: 'basketball-procedural-court',
-    services: 'agency-gated-route',
-    products: 'agency-three-path',
-    map: 'agency-gated-route',
-    control: 'agency-evidence-stack',
-    proof: 'agency-evidence-stack'
-  };
-  const artifactScene = $derived(artifactByVariant[variant]);
 </script>
 
 <figure
@@ -260,9 +248,6 @@
   aria-label={play.description}
 >
   <div class="playbook-field__frame">
-    <div class="playbook-field__artifact">
-      <HeroArtifact scene={artifactScene} />
-    </div>
     <header class="playbook-field__header">
       <span>{play.code}</span>
       <strong>{play.phase}</strong>
@@ -390,7 +375,6 @@
   }
 
   .playbook-field__frame {
-    position: relative;
     overflow: hidden;
     border: 1px solid rgba(255, 255, 255, 0.42);
     background: rgba(9, 9, 9, 0.64);
@@ -400,8 +384,6 @@
 
   .playbook-field__header,
   .playbook-field__footer {
-    position: relative;
-    z-index: 1;
     display: flex;
     align-items: center;
     gap: 0.75rem;
@@ -433,13 +415,6 @@
     background:
       linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px) 0 0 / 100% 25%,
       linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px) 0 0 / 25% 100%;
-    opacity: 0;
-  }
-
-  .playbook-field__artifact {
-    position: absolute;
-    inset: 0;
-    z-index: 0;
   }
 
   .playbook-field__court > * {
