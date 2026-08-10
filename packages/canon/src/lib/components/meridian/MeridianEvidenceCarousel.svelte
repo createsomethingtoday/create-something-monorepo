@@ -36,7 +36,8 @@
     if (cardWidth > 0) {
       current = Math.min(items.length, Math.max(1, Math.round(rail.scrollLeft / cardWidth) + 1));
     }
-    atStart = rail.scrollLeft <= 1;
+    const leadingSnapInset = Number.parseFloat(getComputedStyle(rail).paddingInlineStart) || 0;
+    atStart = rail.scrollLeft <= leadingSnapInset + 1;
     atEnd = rail.scrollLeft + rail.clientWidth >= rail.scrollWidth - 1;
   }
 
