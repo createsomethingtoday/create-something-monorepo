@@ -53,6 +53,7 @@
 		type SystemUploadDefinition,
 		type SystemUploadIssue
 	} from './simulation.js';
+	import HeroArtifact from '../../components/performance/HeroArtifact.svelte';
 
 	const policies = listManagementPolicies();
 	const environments = listEnvironments();
@@ -2322,6 +2323,7 @@
 				<strong>Policy Window</strong>
 			</div>
 			<div class="performance-system-court">
+				<HeroArtifact scene="basketball-procedural-court" embedded live />
 				<div class="performance-system-court-lines" aria-hidden="true">
 					<div class="performance-system-court-half"></div>
 					<div class="performance-system-court-key"></div>

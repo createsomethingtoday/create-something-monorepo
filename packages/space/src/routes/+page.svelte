@@ -2,6 +2,7 @@
   import {
     Button,
     MeridianCardGrid,
+    HeroArtifact,
     PerformanceCampaignOpening,
     PerformanceCardGrid,
     PerformanceContrastChapter,
@@ -9,7 +10,6 @@
     PerformanceDecisionPanel,
     PerformancePageSection,
     PerformanceThesisConditions,
-    paperPrototypeScoreMedia,
     PropertyFunnel,
     SEO,
     type MeridianCard,
@@ -262,13 +262,16 @@
   expression="editorial"
   title="A public workbench for testing runtime ideas."
   lede="CREATE SOMETHING .space is where tools, routes, and interaction patterns get tested against real execution surfaces before they become research, policy, or production workflows."
-  media={paperPrototypeScoreMedia}
   proof={proofMetrics.map((item) => ({ label: item.label, value: item.value }))}
-  mode="paper"
+  artifactOwnsMedia
+  artifactMobilePlacement="flow"
 >
   {#snippet actions()}
     <Button href="/playground">Open The Playground</Button>
     <Button href="/praxis" variant="secondary">Start Praxis</Button>
+  {/snippet}
+  {#snippet artifact()}
+    <HeroArtifact scene="space-runtime-rig" embedded live />
   {/snippet}
 </PerformanceCampaignOpening>
 

@@ -1,7 +1,7 @@
 {
   "name": "@create-something/render-pipeline",
   "version": "0.1.0",
-  "description": "SVG rendering pipeline (Replicate integration DISABLED - cost control)",
+  "description": "Deterministic local SVG and GLB rendering pipeline with provenance and receipts",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -15,7 +15,9 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "docs": "tsx src/bin/generate-docs.ts",
-    "generate-sections": "tsx scripts/generate-sections.ts"
+    "generate-sections": "tsx scripts/generate-sections.ts",
+    "render-lab": "node web-render/server.mjs",
+    "test:web-render": "tsx --test test/web-render-contract.test.ts"
   },
   "dependencies": {
     "@create-something/canon": "workspace:^",
@@ -41,6 +43,8 @@
   "keywords": [
     "svg",
     "render",
+    "gltf",
+    "webgl",
     "architecture",
     "visualization"
   ],
