@@ -346,6 +346,8 @@
     "webflow:governance:verify": "pnpm webflow:governance:check && pnpm webflow:components:verify",
     "agent:claim-worktree": "node scripts/agent-claim-worktree.mjs",
     "agent:claim-worktree:test": "node --test scripts/test/agent-claim-worktree.test.mjs",
+    "archive:package": "node scripts/package-source-archive.mjs",
+    "archive:package:test": "node --test scripts/test/package-source-archive.test.mjs",
     "linear": "node scripts/linear/remote.mjs",
     "linear:ready": "node scripts/linear/remote.mjs ready",
     "linear:list": "node scripts/linear/remote.mjs list",
