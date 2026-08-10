@@ -92,6 +92,10 @@
     return { label: product.shortName, href: product.route };
   });
   const primaryCtaHref = agencyCoreMessaging.startWithWorkflowHref;
+  const agencyFooterMacroMedia = {
+    src: '/images/performance-lab/playbook-footer-decision-gate-macro.webp',
+    alt: 'Macro-real Playbook decision gate: an ivory AI-agent marker held inside a black steel ring as amber and proof-green routes cross a physical court surface.'
+  };
   const globalAnalyticsMetadata = $derived(getAgencyGlobalAnalyticsMetadata($page.url.pathname));
   const isDifyArticleRoute = $derived(isAgencyDifyArticlePath($page.url.pathname));
   const routeOwnsPerformanceEnding = $derived(
@@ -448,7 +452,8 @@
       title: 'Ready to make one workflow AI-native?',
       label: agencyCoreMessaging.startWithWorkflowLabel,
       href: primaryCtaHref,
-      description: 'Start a lightweight workflow map before booking.'
+      description: 'Start a lightweight workflow map before booking.',
+      media: agencyFooterMacroMedia
     }}
     showSocial={true}
     isAuthenticated={!!data.user}
