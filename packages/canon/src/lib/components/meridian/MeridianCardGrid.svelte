@@ -22,26 +22,42 @@
     </header>
     <div class="meridian-card-grid__grid">
       {#each cards as card}
-        <article
-          class:meridian-card--linked={Boolean(card.href)}
-          class="meridian-card meridian-card--{card.kind ?? 'service'} meridian-card--{card.tone ??
-            'paper'}"
-        >
-          <div class="meridian-card__visual" aria-hidden="true"><span></span><i>↗</i></div>
-          <div class="meridian-card__content">
-            <div class="meridian-card__meta">
-              {#if card.eyebrow}<span>{card.eyebrow}</span>{/if}
-              {#if card.meta}<small>{card.meta}</small>{/if}
+        {#if card.href}
+          <a
+            class="meridian-card meridian-card--linked meridian-card--{card.kind ??
+              'service'} meridian-card--{card.tone ?? 'paper'}"
+            href={card.href}
+            aria-label={`${card.ctaLabel ?? 'Open'}: ${card.title}`}
+          >
+            <div class="meridian-card__visual" aria-hidden="true"><span></span><i>↗</i></div>
+            <div class="meridian-card__content">
+              <div class="meridian-card__meta">
+                {#if card.eyebrow}<span>{card.eyebrow}</span>{/if}
+                {#if card.meta}<small>{card.meta}</small>{/if}
+              </div>
+              <h3>{card.title}</h3>
+              {#if card.description}<p>{card.description}</p>{/if}
+              <span class="meridian-card__action"
+                >{card.ctaLabel ?? 'Open'} <span aria-hidden="true">↗</span></span
+              >
             </div>
-            <h3>{card.title}</h3>
-            {#if card.description}<p>{card.description}</p>{/if}
-            {#if card.href}
-              <a href={card.href} aria-label={`${card.ctaLabel ?? 'Open'}: ${card.title}`}>
-                {card.ctaLabel ?? 'Open'} <span aria-hidden="true">↗</span>
-              </a>
-            {/if}
-          </div>
-        </article>
+          </a>
+        {:else}
+          <article
+            class="meridian-card meridian-card--{card.kind ??
+              'service'} meridian-card--{card.tone ?? 'paper'}"
+          >
+            <div class="meridian-card__visual" aria-hidden="true"><span></span><i>↗</i></div>
+            <div class="meridian-card__content">
+              <div class="meridian-card__meta">
+                {#if card.eyebrow}<span>{card.eyebrow}</span>{/if}
+                {#if card.meta}<small>{card.meta}</small>{/if}
+              </div>
+              <h3>{card.title}</h3>
+              {#if card.description}<p>{card.description}</p>{/if}
+            </div>
+          </article>
+        {/if}
       {/each}
     </div>
   </div>
@@ -105,6 +121,11 @@
     border-bottom: 1px solid
       color-mix(in srgb, var(--color-performance-editorial-dark, #181312) 20%, transparent);
     background: var(--color-performance-editorial-light, #f3ebe4);
+    color: inherit;
+    text-decoration: none;
+  }
+  .meridian-card--linked {
+    cursor: pointer;
   }
   .meridian-card__visual {
     position: relative;
@@ -150,6 +171,7 @@
     font-family: var(--font-performance-editorial);
     font-size: 2.2rem;
     font-style: normal;
+    transition: transform 180ms ease;
   }
   .meridian-card--case .meridian-card__visual {
     min-height: clamp(14rem, 24vw, 20rem);
@@ -254,7 +276,7 @@
     font-size: 0.98rem;
     line-height: 1.5;
   }
-  .meridian-card__content > a {
+  .meridian-card__action {
     display: inline-flex;
     width: fit-content;
     align-items: center;
@@ -268,13 +290,21 @@
     text-decoration: none;
     text-transform: uppercase;
   }
-  .meridian-card__content > a:hover {
+  .meridian-card--linked:is(:hover, :focus-visible) .meridian-card__action {
     text-decoration: underline;
     text-underline-offset: 0.25rem;
   }
-  .meridian-card__content > a:focus-visible {
+  .meridian-card--linked:is(:hover, :focus-visible) .meridian-card__visual i {
+    transform: translate(0.2rem, -0.2rem);
+  }
+  .meridian-card--linked:focus-visible {
     outline: 3px solid var(--color-performance-focus, #345eea);
-    outline-offset: 3px;
+    outline-offset: -3px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .meridian-card__visual i {
+      transition: none;
+    }
   }
   @media (max-width: 900px) {
     .meridian-card-grid__grid {
