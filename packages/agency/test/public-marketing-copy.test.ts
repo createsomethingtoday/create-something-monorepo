@@ -327,10 +327,10 @@ test('public Agency commercial propositions declare the shared editorial express
   assert.match(governanceProduct, /<PerformancePageSection[\s\S]*?expression="editorial"/);
   assert.match(practice, /<PerformanceConversionHandoff[\s\S]*?headingLevel="h1"[\s\S]*?expression="editorial"/);
   assert.match(methodology, /\.hero-title\s*\{[\s\S]*?font-family:\s*var\(--font-performance-editorial\)/);
-  assert.doesNotMatch(
+  assert.match(
     workflows,
-    /font-performance-editorial/,
-    'operational workflow guides remain in the field expression'
+    /h1\s*\{[\s\S]*?font-family:\s*var\(--font-performance-editorial\)/,
+    'the workflow library proposition must use the shared Agency editorial face'
   );
 });
 

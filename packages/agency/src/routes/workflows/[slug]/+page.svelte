@@ -195,11 +195,11 @@
   h1 {
     max-width: 19ch;
     margin: var(--space-performance-xs) 0 var(--space-performance-md);
-    font-family: var(--font-performance-display);
+    font-family: var(--font-performance-editorial);
     font-size: var(--text-performance-display-xl);
-    font-weight: var(--font-performance-display-weight);
-    line-height: var(--leading-performance-display);
-    letter-spacing: var(--tracking-performance-display);
+    font-weight: var(--font-performance-editorial-weight, 400);
+    line-height: var(--leading-performance-editorial, 1.1);
+    letter-spacing: -0.045em;
   }
 
   .guide-answer {
