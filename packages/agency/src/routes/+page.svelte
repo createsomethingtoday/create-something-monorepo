@@ -24,6 +24,7 @@
   import PlaybookField from '$lib/components/PlaybookField.svelte';
   import { templateReviewFieldReport } from '$lib/data/fieldReports';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
+  import { playbookHomeHeroMedia } from '$lib/data/playbookHeroMedia';
 
   const services = [
     {
@@ -293,19 +294,16 @@
     expression="editorial"
     title="Your people and AI need the same playbook."
     lede="We embed with operators to map one workflow, install its AI infrastructure, and hand back a client-owned Playbook. Offense advances approved work. Defense protects decisions, proof, and recovery. The opposition is ambiguity, AI out of reach, and untrusted automation."
+    media={playbookHomeHeroMedia}
     proof={heroProofItems}
     density="compact"
-    artifactOwnsMedia
-    artifactMobilePlacement="flow"
+    mediaMobilePlacement="background"
   >
     {#snippet actions()}
       <Button href={agencyCoreMessaging.selfMapHref}>{agencyCoreMessaging.selfMapLabel}</Button>
       <Button href="/proof/marketplace-workflow" variant="secondary"
         >See the Marketplace workflow</Button
       >
-    {/snippet}
-    {#snippet artifact()}
-      <PlaybookField variant="home" />
     {/snippet}
   </PerformanceCampaignOpening>
 

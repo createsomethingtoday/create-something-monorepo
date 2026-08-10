@@ -30,7 +30,8 @@ test('the homepage retires Paper while the historical study remains inspectable'
   assert.match(component, /aria-pressed=\{activeStageId === stage\.id\}/);
   assert.match(component, /aria-live="polite"/);
   assert.doesNotMatch(home, /paperOperatingRouteMedia/);
-  assert.match(home, /<PlaybookField variant="home"/);
+  assert.match(home, /media=\{playbookHomeHeroMedia\}/);
+  assert.match(home, /<PlaybookField variant="services" embedded/);
   assert.match(home, /Signal[\s\S]*?Decision[\s\S]*?Proof/);
   assert.match(studies, /alt: 'A tactile paper field/);
   assert.match(opening, /<picture class:performance-campaign-opening__fallback-suppressed/);

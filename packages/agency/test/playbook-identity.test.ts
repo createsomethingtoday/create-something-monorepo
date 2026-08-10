@@ -9,22 +9,25 @@ const campaignOpening = read(
   '../../canon/src/lib/components/performance/PerformanceCampaignOpening.svelte'
 );
 
-const routeContracts = [
-  {
-    path: '../src/routes/+page.svelte',
-    variant: 'home',
-    title: 'Your people and AI need the same playbook.'
-  },
+const macroRouteContracts = [
   {
     path: '../src/routes/services/+page.svelte',
-    variant: 'services',
+    mediaKey: 'services',
     title: 'Map the operation. Install the playbook.'
   },
   {
     path: '../src/routes/products/+page.svelte',
-    variant: 'products',
+    mediaKey: 'products',
     title: 'One playbook. Three operating paths.'
   },
+  {
+    path: '../src/routes/field-reports/+page.svelte',
+    mediaKey: 'fieldReports',
+    title: 'Review the film. Improve the playbook.'
+  }
+] as const;
+
+const fieldRouteContracts = [
   {
     path: '../src/routes/map/+page.svelte',
     variant: 'map',
@@ -34,11 +37,6 @@ const routeContracts = [
     path: '../src/routes/control/+page.svelte',
     variant: 'control',
     title: 'Run offense and defense from one playbook.'
-  },
-  {
-    path: '../src/routes/field-reports/+page.svelte',
-    variant: 'proof',
-    title: 'Review the film. Improve the playbook.'
   }
 ] as const;
 
@@ -91,23 +89,42 @@ test('campaign opening can be owned by a semantic artifact without fallback medi
     campaignOpening,
     /data-artifact-mobile-placement=\{artifact \? artifactMobilePlacement : undefined\}/
   );
-  assert.match(
-    campaignOpening,
-    /data-artifact-mobile-placement='flow'[\s\S]*?display: contents/
-  );
+  assert.match(campaignOpening, /data-artifact-mobile-placement='flow'[\s\S]*?display: contents/);
   assert.match(
     campaignOpening,
     /performance-campaign-opening__actions :global\(\.btn:focus-visible\)[\s\S]*?outline: 3px solid/
   );
-  assert.match(campaignOpening, /performance-campaign-opening__artifact[\s\S]*?pointer-events: none/);
+  assert.match(
+    campaignOpening,
+    /performance-campaign-opening__artifact[\s\S]*?pointer-events: none/
+  );
 });
 
-test('the commercial hero cohort uses route-specific Playbook fields and no Paper fallback', () => {
-  for (const contract of routeContracts) {
+test('the commercial hero cohort uses responsive Playbook macro studies and no Paper fallback', () => {
+  for (const contract of macroRouteContracts) {
+    const source = read(contract.path);
+
+    assert.match(source, /import \{ playbookHeroMedia \} from '\$lib\/data\/playbookHeroMedia'/);
+    assert.match(
+      source,
+      new RegExp(`title="${contract.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"`)
+    );
+    assert.match(source, new RegExp(`media=\\{playbookHeroMedia\\.${contract.mediaKey}\\}`));
+    assert.match(source, /mediaMobilePlacement="background"/);
+    assert.doesNotMatch(source, /from '\$lib\/data\/performanceMedia'/);
+    assert.doesNotMatch(source, /mode="paper"/);
+  }
+});
+
+test('the decision routes retain readable Playbook fields where the field itself is the proof', () => {
+  for (const contract of fieldRouteContracts) {
     const source = read(contract.path);
 
     assert.match(source, /import PlaybookField from '\$lib\/components\/PlaybookField\.svelte'/);
-    assert.match(source, new RegExp(`title="${contract.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"`));
+    assert.match(
+      source,
+      new RegExp(`title="${contract.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"`)
+    );
     assert.match(source, new RegExp(`<PlaybookField variant="${contract.variant}"`));
     assert.match(source, /artifactOwnsMedia/);
     assert.match(source, /artifactMobilePlacement="flow"/);
@@ -117,6 +134,15 @@ test('the commercial hero cohort uses route-specific Playbook fields and no Pape
 
   assert.doesNotMatch(playbookField, /bottom: 7rem/);
   assert.match(playbookField, /position: relative/);
+});
+
+test('the Home hero uses the campaign court study while preserving the Playbook field in the narrative', () => {
+  const home = read('../src/routes/+page.svelte');
+
+  assert.match(home, /media=\{playbookHomeHeroMedia\}/);
+  assert.match(home, /mediaMobilePlacement="background"/);
+  assert.match(home, /<PlaybookField variant="services" embedded/);
+  assert.doesNotMatch(home, /artifactOwnsMedia/);
 });
 
 test('About turns the earned basketball origin into an operator-facing court vision story', () => {

@@ -200,7 +200,8 @@ test('the homepage leads with a Playbook-led operating-system message before its
     /Offense advances approved work\. Defense protects decisions, proof, and recovery\./
   );
   assert.match(opening, /The opposition is ambiguity, AI out of reach, and untrusted automation\./);
-  assert.match(opening, /<PlaybookField variant="home"/);
+  assert.match(opening, /media=\{playbookHomeHeroMedia\}/);
+  assert.match(opening, /mediaMobilePlacement="background"/);
   assert.doesNotMatch(opening, /mode="paper"|paperOperatingRouteMedia/);
   assert.match(ownership, /Built with OpenAI and Cloudflare\. Designed to remain yours\./);
   assert.match(
