@@ -39,6 +39,23 @@ test('the Agency hero makes the Playbook operating grammar visible without a pro
   assert.match(field, /X = opposition/);
 });
 
+test('shared campaign titles keep every period optically separated from display letters', () => {
+  const campaignOpening = read(
+    '../canon/src/lib/components/performance/PerformanceCampaignOpening.svelte'
+  );
+
+  assert.match(campaignOpening, /let titleParts = \$derived\(title\.split\('\.'\)\);/);
+  assert.match(campaignOpening, /\{#each titleParts as part, index\}/);
+  assert.match(
+    campaignOpening,
+    /titleParts\.length - 1\}<span[\s\S]*?class="performance-campaign-opening__period">\.<\/span\s*>/
+  );
+  assert.match(
+    campaignOpening,
+    /\.performance-campaign-opening__period\s*\{[\s\S]*?margin-inline-start:\s*0\.055em;/
+  );
+});
+
 test('the Agency footer handoff uses its own macro-real decision-gate image without replacing live CTA copy', () => {
   const layout = read('src/routes/+layout.svelte');
   const footer = read('../canon/src/lib/components/Footer.svelte');
