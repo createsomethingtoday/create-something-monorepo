@@ -81,11 +81,16 @@ test('the homepage moves from claim to proof to method before asking visitors to
 });
 
 test('the homepage opening uses the property-owned Playbook court media candidate', () => {
-  assert.match(home, /import PlaybookField/);
-  assert.match(home, /import \{ playbookHomeHeroMedia \} from '\$lib\/data\/playbookHeroMedia'/);
+  assert.match(
+    home,
+    /import \{ playbookHeroMedia, playbookHomeHeroMedia \} from '\$lib\/data\/playbookHeroMedia'/
+  );
   assert.match(home, /media=\{playbookHomeHeroMedia\}/);
   assert.match(home, /mediaMobilePlacement="background"/);
-  assert.match(home, /<PlaybookField variant="services" embedded \/>/);
+  assert.match(home, /data-campaign-media="home-map-narrative"/);
+  assert.match(home, /srcset=\{playbookHeroMedia\.map\.mobileSrc\}/);
+  assert.match(home, /src=\{playbookHeroMedia\.map\.src\}/);
+  assert.doesNotMatch(home, /PlaybookField/);
   assert.doesNotMatch(home, /mode="paper"|paperOperatingRouteMedia/);
   assert.doesNotMatch(home, /agency-fluid-intelligence-loop-v4/);
   assert.doesNotMatch(home, /controlledFlowMedia/);
@@ -151,7 +156,8 @@ test('the homepage operating story uses the shared Playbook to show Map, Build, 
   assert.match(home, /label: 'Map'/);
   assert.match(home, /label: 'Build'/);
   assert.match(home, /label: 'Control'/);
-  assert.match(home, /<PlaybookField variant="services" embedded \/>/);
+  assert.match(home, /class="boundary-study__field boundary-study__field--media"/);
+  assert.match(home, /src=\{playbookHeroMedia\.map\.src\}/);
   assert.doesNotMatch(home, /paper-boundary-authority\.webp/);
   assert.doesNotMatch(home, /class="boundary-study__copy"/);
   assert.match(home, /class="boundary-study__outcomes"/);
@@ -170,6 +176,10 @@ test('editorial narrative panels keep their scene rows intrinsically sized on de
 });
 
 test('the Shared Playbook study stacks its court and proof legibly on mobile', () => {
+  assert.match(
+    home,
+    /@media \(max-width: 980px\)[\s\S]*?\.boundary-study__field--media\s*\{\s*padding:\s*0/
+  );
   assert.match(
     home,
     /@media \(max-width: 640px\)[\s\S]*?\.boundary-study\s*\{\s*grid-template-columns:\s*1fr/

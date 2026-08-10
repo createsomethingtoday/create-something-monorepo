@@ -182,10 +182,18 @@ test('public Performance routes preserve owned natural media assignments', () =>
 test('home route uses the shared canvas kernel as a transparent proof object', () => {
 	assert.ok(homeRoute.includes('<PublicSubstrateCanvas'));
 	assert.ok(homeRoute.includes("from '$lib/components/PublicSubstrateCanvas.svelte'"));
-	assert.ok(homeRoute.includes('Map the work before AI runs it.'));
+	assert.ok(homeRoute.includes('Map the play before AI runs it.'));
 	assert.ok(homeRoute.includes('artifactPlacement="sidecar"'));
 	assert.equal(homeRoute.includes('<PublicAtlasStoryCanvas'), false);
 	assert.equal(homeRoute.includes('<PublicAtlasCanvas'), false);
+});
+
+test('home Map narrative uses the responsive court image pair instead of the procedural field render', () => {
+	assert.ok(homeRoute.includes("import { playbookHeroMedia, playbookHomeHeroMedia }"));
+	assert.ok(homeRoute.includes('srcset={playbookHeroMedia.map.mobileSrc}'));
+	assert.ok(homeRoute.includes('src={playbookHeroMedia.map.src}'));
+	assert.ok(homeRoute.includes('alt={playbookHeroMedia.map.alt}'));
+	assert.equal(homeRoute.includes('<PlaybookField variant="services" embedded />'), false);
 });
 
 test('home route keeps the delegation object beside a concise conversion handoff', () => {
