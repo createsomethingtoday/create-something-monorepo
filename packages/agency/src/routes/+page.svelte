@@ -497,7 +497,7 @@
 
   .boundary-study {
     display: grid;
-    grid-template-columns: minmax(15rem, 0.68fr) minmax(0, 1.32fr);
+    grid-template-columns: minmax(18rem, 0.86fr) minmax(0, 1.14fr);
     border: 1px solid var(--color-performance-line, #d7d7d2);
     background: var(--color-performance-paper, #f3f3f0);
   }
@@ -529,7 +529,7 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: center;
+    object-position: 82% center;
   }
 
   .boundary-study__body {
@@ -791,6 +791,10 @@
     .boundary-study__field--media {
       padding: 0;
     }
+
+    .boundary-study__media img {
+      object-position: 60% center;
+    }
   }
 
   @media (max-width: 640px) {
@@ -827,6 +831,10 @@
 
     .boundary-study__media {
       aspect-ratio: 3 / 2;
+    }
+
+    .boundary-study__media img {
+      object-position: center;
     }
 
     .boundary-study__metrics {
