@@ -44,6 +44,34 @@ describe('MeridianCardGrid', () => {
 });
 
 describe('MeridianEvidenceCarousel', () => {
+  it('sets its boundary controls from the rendered rail on mount', async () => {
+    target = document.createElement('div');
+    document.body.appendChild(target);
+    instance = mount(MeridianEvidenceCarousel, {
+      target,
+      props: {
+        title: 'Evidence',
+        items: [
+          { eyebrow: 'Map', title: 'First', detail: 'First detail', source: 'Source one' },
+          { eyebrow: 'Build', title: 'Second', detail: 'Second detail', source: 'Source two' }
+        ]
+      }
+    }) as Record<string, unknown>;
+    flushSync();
+
+    const rail = target.querySelector<HTMLDivElement>('.meridian-evidence__rail');
+    Object.defineProperties(rail!, {
+      clientWidth: { configurable: true, value: 300 },
+      scrollWidth: { configurable: true, value: 300 },
+      scrollLeft: { configurable: true, value: 0, writable: true }
+    });
+    await Promise.resolve();
+    flushSync();
+
+    expect(target.querySelector<HTMLButtonElement>('[aria-label="Previous evidence"]')?.disabled).toBe(true);
+    expect(target.querySelector<HTMLButtonElement>('[aria-label="Next evidence"]')?.disabled).toBe(true);
+  });
+
   it('communicates when the evidence rail cannot move farther', () => {
     target = document.createElement('div');
     document.body.appendChild(target);

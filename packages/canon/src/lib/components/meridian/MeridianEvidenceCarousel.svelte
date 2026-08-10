@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
+
   import type { MeridianEvidence } from './types';
 
   interface Props {
@@ -37,6 +39,16 @@
     atStart = rail.scrollLeft <= 1;
     atEnd = rail.scrollLeft + rail.clientWidth >= rail.scrollWidth - 1;
   }
+
+  onMount(() => {
+    let active = true;
+    queueMicrotask(() => {
+      if (active) handleScroll();
+    });
+    return () => {
+      active = false;
+    };
+  });
 </script>
 
 <section class="meridian-evidence" aria-label={ariaLabel}>
