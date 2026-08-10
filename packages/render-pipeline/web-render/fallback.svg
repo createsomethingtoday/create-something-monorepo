@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" role="img" aria-labelledby="title description">
+  <title id="title">Static controlled field fallback</title>
+  <desc id="description">A cobalt control structure and porcelain receipt over an onyx field.</desc>
+  <defs>
+    <linearGradient id="field" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#030404"/>
+      <stop offset="1" stop-color="#111414"/>
+    </linearGradient>
+    <radialGradient id="light" cx="72%" cy="38%" r="55%">
+      <stop offset="0" stop-color="#294f86" stop-opacity=".52"/>
+      <stop offset="1" stop-color="#030404" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1600" height="1000" fill="url(#field)"/>
+  <rect width="1600" height="1000" fill="url(#light)"/>
+  <path d="M760 760 1530 640 1250 370 650 520Z" fill="#0b0d0d" stroke="#d8d3c6" stroke-opacity=".35" stroke-width="4"/>
+  <path d="M1060 610c80-55 178-75 292-55" fill="none" stroke="#d8d3c6" stroke-opacity=".55" stroke-width="8"/>
+  <path d="M1214 497V208h250v206" fill="none" stroke="#0754cf" stroke-width="32" stroke-linejoin="round"/>
+  <rect x="1265" y="258" width="140" height="104" rx="8" fill="#0b0d0d" stroke="#d8d3c6" stroke-width="9"/>
+  <ellipse cx="1336" cy="388" rx="83" ry="22" fill="none" stroke="#0754cf" stroke-width="18"/>
+  <path d="M1272 392c15 92 40 142 64 156 28-23 50-77 65-156" fill="none" stroke="#d8d3c6" stroke-opacity=".72" stroke-width="7"/>
+  <g transform="translate(1030 686) rotate(-8)">
+    <rect width="196" height="126" rx="8" fill="#d8d3c6"/>
+    <rect x="16" y="16" width="18" height="94" rx="4" fill="#176f43"/>
+    <path d="M54 35h112M54 62h88M54 89h102" stroke="#111414" stroke-opacity=".48" stroke-width="7"/>
+  </g>
+</svg>
