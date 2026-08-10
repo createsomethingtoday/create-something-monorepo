@@ -54,6 +54,10 @@ test('the Agency footer handoff uses its own macro-real decision-gate image with
   assert.match(footer, /media=\{footerCta\.media\}/);
   assert.match(offerPanel, /media\?: MeridianOfferMedia/);
   assert.match(offerPanel, /\{#if media\}[\s\S]*?<img[\s\S]*?alt=\{media\.alt\}/);
+  assert.match(
+    offerPanel,
+    /@media \(max-width: 760px\)[\s\S]*?\.meridian-offer-panel__visual\.has-media\s*\{[\s\S]*?aspect-ratio:\s*2 \/ 3;/
+  );
   assert.ok(existsSync(image));
   assert.ok(statSync(image).size > 100_000, 'footer media must be a substantive raster asset');
   assert.match(metadata, /campaign material only/i);

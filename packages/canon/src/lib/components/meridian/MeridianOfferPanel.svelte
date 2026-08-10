@@ -385,6 +385,11 @@
       padding: 1.25rem;
     }
 
+    .meridian-offer-panel__visual.has-media {
+      min-height: 0;
+      aspect-ratio: 2 / 3;
+    }
+
     .meridian-offer-panel__artifact {
       width: min(100%, 18rem);
       aspect-ratio: 0.9;
