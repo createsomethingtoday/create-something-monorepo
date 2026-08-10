@@ -1,6 +1,7 @@
 <script lang="ts">
   import {
     Button,
+    PerformanceCampaignOpening,
     PerformanceConversionHandoff,
     PerformanceEvidenceIndex,
     PerformanceNarrativeStage,
@@ -12,13 +13,7 @@
   } from '@create-something/canon';
   import DelegationPracticeWorkbench from '$lib/components/DelegationPracticeWorkbench.svelte';
   import PublicAtlasStoryCanvas from '$lib/components/PublicAtlasStoryCanvas.svelte';
-
-  const openingHandoff = {
-    owner: 'Accountable operator',
-    authority: 'Observe one workflow',
-    proof: 'No evidence attached yet',
-    state: 'draft' as const
-  };
+  import { playbookHeroMedia } from '$lib/data/playbookHeroMedia';
 
   const systemConditions: PerformanceCondition[] = [
     {
@@ -136,19 +131,25 @@
 />
 
 <main class="delegation-practice-page">
-  <PerformanceConversionHandoff
+  <PerformanceCampaignOpening
     eyebrow="The Delegation Practice"
     title="Make delegated work trustworthy."
-    description="Map the work. Bound the authority. Test the system. Prove what happened. Earn the right to do more."
-    handoff={openingHandoff}
-    headingLevel="h1"
+    lede="Map the work. Bound the authority. Test the system. Prove what happened. Earn the right to do more."
+    media={playbookHeroMedia.practice}
+    mediaMobilePlacement="background"
+    density="compact"
     expression="editorial"
+    proof={[
+      { label: 'Owner', value: 'Accountable operator' },
+      { label: 'Authority', value: 'Observe one workflow' },
+      { label: 'Evidence', value: 'Draft' }
+    ]}
   >
     {#snippet actions()}
       <Button href="#practice-workbench">Map one workflow</Button>
       <Button href="#evidence" variant="secondary">Examine the evidence</Button>
     {/snippet}
-  </PerformanceConversionHandoff>
+  </PerformanceCampaignOpening>
 
   <PerformanceNarrativeStage
     id="delegation-practice-argument"

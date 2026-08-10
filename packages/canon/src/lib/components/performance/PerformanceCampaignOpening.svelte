@@ -51,6 +51,8 @@
     artifactOwnsMedia?: boolean;
     /** Places a semantic artifact between the hero action and proof rail on small screens. */
     artifactMobilePlacement?: 'overlay' | 'flow';
+    /** Keeps authored portrait media behind the editorial proposition instead of flowing below it. */
+    mediaMobilePlacement?: 'flow' | 'background';
   }
 
   let {
@@ -69,7 +71,8 @@
     artifact,
     ornament,
     artifactOwnsMedia = false,
-    artifactMobilePlacement = 'overlay'
+    artifactMobilePlacement = 'overlay',
+    mediaMobilePlacement = 'flow'
   }: Props = $props();
 
   let motionAllowed = $state(false);
@@ -102,6 +105,7 @@
   data-has-artifact={artifact ? 'true' : 'false'}
   data-artifact-owns-media={artifactOwnsMedia ? 'true' : undefined}
   data-artifact-mobile-placement={artifact ? artifactMobilePlacement : undefined}
+  data-media-mobile-placement={media ? mediaMobilePlacement : undefined}
   data-mobile-search-boundary={mobileSearchBoundary ? 'true' : undefined}
   aria-label={eyebrow}
 >
@@ -687,7 +691,7 @@
 
   .performance-campaign-opening[data-expression='editorial'] {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(44rem, 82svh);
+    grid-template-rows: minmax(max(44rem, 82svh), max-content);
     box-sizing: border-box;
     width: 100%;
     min-height: 44rem;
@@ -894,6 +898,20 @@
       grid-template-columns: repeat(2, minmax(0, 1fr));
       width: 100%;
       margin: 0;
+    }
+
+    .performance-campaign-opening[data-expression='editorial'][data-media-mobile-placement='background'] {
+      grid-template-rows: auto;
+    }
+
+    .performance-campaign-opening[data-expression='editorial'][data-media-mobile-placement='background']
+      .performance-campaign-opening__media {
+      position: absolute;
+      inset: 0;
+      grid-column: 1;
+      grid-row: 1;
+      width: 100%;
+      min-height: 100%;
     }
   }
 
