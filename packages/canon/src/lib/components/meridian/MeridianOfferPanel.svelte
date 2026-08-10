@@ -1,6 +1,11 @@
 <script lang="ts">
   type PropertyMode = 'ltd' | 'io' | 'space' | 'agency' | 'learn';
 
+  interface MeridianOfferMedia {
+    src: string;
+    alt: string;
+  }
+
   interface Props {
     eyebrow: string;
     title: string;
@@ -9,6 +14,8 @@
     actionHref: string;
     mode?: PropertyMode;
     headingId?: string;
+    /** Optional property-owned campaign image for the footer handoff visual. */
+    media?: MeridianOfferMedia;
   }
 
   const artifacts: Record<PropertyMode, { code: string; name: string; record: string }> = {
@@ -26,7 +33,8 @@
     actionLabel,
     actionHref,
     mode = 'agency',
-    headingId = 'meridian-offer-panel-title'
+    headingId = 'meridian-offer-panel-title',
+    media
   }: Props = $props();
 
   let artifact = $derived(artifacts[mode]);
@@ -34,35 +42,45 @@
 
 <section class="meridian-offer-panel" aria-labelledby={headingId} data-mode={mode}>
   <div class="meridian-offer-panel__inner">
-    <div
-      class="meridian-offer-panel__visual"
-      role="img"
-      aria-label={`${artifact.name}: signal moves through a named decision gate and finishes with attached proof.`}
-    >
-      <div class="meridian-offer-panel__artifact" aria-hidden="true">
-        <div class="meridian-offer-panel__artifact-header">
-          <span>{artifact.code}</span>
-          <span>{artifact.name}</span>
+    <div class:has-media={media} class="meridian-offer-panel__visual">
+      {#if media}
+        <img
+          class="meridian-offer-panel__media"
+          src={media.src}
+          alt={media.alt}
+          loading="lazy"
+          decoding="async"
+        />
+      {:else}
+        <div
+          class="meridian-offer-panel__artifact"
+          role="img"
+          aria-label={`${artifact.name}: signal moves through a named decision gate and finishes with attached proof.`}
+        >
+          <div class="meridian-offer-panel__artifact-header">
+            <span>{artifact.code}</span>
+            <span>{artifact.name}</span>
+          </div>
+          <svg viewBox="0 0 480 360" aria-hidden="true">
+            <path class="court" d="M18 66H462V342H18zM240 66v276M18 204h128v98H18M462 204H334v98h128M240 161a43 43 0 1 0 0 86 43 43 0 0 0 0-86ZM146 116a116 116 0 0 1 0 176M334 116a116 116 0 0 0 0 176" />
+            <path class="route route--one" d="M101 124C151 122 165 171 210 191" />
+            <path class="route route--two" d="M257 207c50 3 68 69 120 69" />
+            <circle class="owner" cx="92" cy="124" r="18" />
+            <circle class="decision" cx="235" cy="202" r="23" />
+            <rect class="gate" x="294" y="224" width="28" height="44" />
+            <path class="arrow" d="m205 179 15 14-20 2ZM372 263l22 13-22 13Z" />
+            <rect class="receipt" x="351" y="291" width="91" height="37" />
+            <path class="receipt-lines" d="M362 303h58M362 314h42" />
+            <text x="65" y="160">SIGNAL</text>
+            <text x="208" y="242">DECISION</text>
+            <text x="370" y="348">PROOF</text>
+          </svg>
+          <div class="meridian-offer-panel__artifact-record">
+            <span>SIGNAL → DECISION → PROOF</span>
+            <span>{artifact.record}</span>
+          </div>
         </div>
-        <svg viewBox="0 0 480 360" aria-hidden="true">
-          <path class="court" d="M18 66H462V342H18zM240 66v276M18 204h128v98H18M462 204H334v98h128M240 161a43 43 0 1 0 0 86 43 43 0 0 0 0-86ZM146 116a116 116 0 0 1 0 176M334 116a116 116 0 0 0 0 176" />
-          <path class="route route--one" d="M101 124C151 122 165 171 210 191" />
-          <path class="route route--two" d="M257 207c50 3 68 69 120 69" />
-          <circle class="owner" cx="92" cy="124" r="18" />
-          <circle class="decision" cx="235" cy="202" r="23" />
-          <rect class="gate" x="294" y="224" width="28" height="44" />
-          <path class="arrow" d="m205 179 15 14-20 2ZM372 263l22 13-22 13Z" />
-          <rect class="receipt" x="351" y="291" width="91" height="37" />
-          <path class="receipt-lines" d="M362 303h58M362 314h42" />
-          <text x="65" y="160">SIGNAL</text>
-          <text x="208" y="242">DECISION</text>
-          <text x="370" y="348">PROOF</text>
-        </svg>
-        <div class="meridian-offer-panel__artifact-record">
-          <span>SIGNAL → DECISION → PROOF</span>
-          <span>{artifact.record}</span>
-        </div>
-      </div>
+      {/if}
     </div>
 
     <div class="meridian-offer-panel__content">
@@ -108,6 +126,23 @@
     background:
       radial-gradient(circle at 19% 12%, rgb(243 235 228 / 34%), transparent 28%),
       linear-gradient(145deg, #a96718 0%, var(--color-performance-editorial-brand, #fcaa2d) 48%, #8a4f13 100%);
+  }
+
+  .meridian-offer-panel__visual.has-media {
+    padding: 0;
+    background: var(--color-performance-editorial-dark, #181312);
+  }
+
+  .meridian-offer-panel__visual.has-media::before,
+  .meridian-offer-panel__visual.has-media::after {
+    display: none;
+  }
+
+  .meridian-offer-panel__media {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 52%;
   }
 
   .meridian-offer-panel__visual::before,
@@ -348,6 +383,11 @@
     .meridian-offer-panel__visual {
       min-height: 21rem;
       padding: 1.25rem;
+    }
+
+    .meridian-offer-panel__visual.has-media {
+      min-height: 0;
+      aspect-ratio: 2 / 3;
     }
 
     .meridian-offer-panel__artifact {

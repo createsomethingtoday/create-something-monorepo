@@ -20,6 +20,10 @@
     label: string;
     href: string;
     description?: string;
+    media?: {
+      src: string;
+      alt: string;
+    };
   }
 
   type FooterVisualStyle = 'classic' | 'performance' | 'clear' | 'editorial';
@@ -351,6 +355,7 @@
       description={footerCta.description}
       actionLabel={footerCta.label}
       actionHref={footerCta.href}
+      media={footerCta.media}
       {mode}
       headingId="footer-editorial-callout-title"
     />

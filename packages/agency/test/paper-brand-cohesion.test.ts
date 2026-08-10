@@ -39,6 +39,31 @@ test('the Agency hero makes the Playbook operating grammar visible without a pro
   assert.match(field, /X = opposition/);
 });
 
+test('the Agency footer handoff uses its own macro-real decision-gate image without replacing live CTA copy', () => {
+  const layout = read('src/routes/+layout.svelte');
+  const footer = read('../canon/src/lib/components/Footer.svelte');
+  const offerPanel = read('../canon/src/lib/components/meridian/MeridianOfferPanel.svelte');
+  const image = resolve(agencyRoot, 'static/images/performance-lab/playbook-footer-decision-gate-macro.webp');
+  const metadata = read(
+    'content/assets/brand/agency-footer-playbook-decision-gate-macro.v20260810/metadata.md'
+  );
+
+  assert.match(layout, /media: agencyFooterMacroMedia/);
+  assert.match(layout, /playbook-footer-decision-gate-macro\.webp/);
+  assert.match(footer, /media\?: \{[\s\S]*?src: string;[\s\S]*?alt: string;/);
+  assert.match(footer, /media=\{footerCta\.media\}/);
+  assert.match(offerPanel, /media\?: MeridianOfferMedia/);
+  assert.match(offerPanel, /\{#if media\}[\s\S]*?<img[\s\S]*?alt=\{media\.alt\}/);
+  assert.match(
+    offerPanel,
+    /@media \(max-width: 760px\)[\s\S]*?\.meridian-offer-panel__visual\.has-media\s*\{[\s\S]*?aspect-ratio:\s*2 \/ 3;/
+  );
+  assert.ok(existsSync(image));
+  assert.ok(statSync(image).size > 100_000, 'footer media must be a substantive raster asset');
+  assert.match(metadata, /campaign material only/i);
+  assert.match(metadata, /text, logos, people/i);
+});
+
 test('Field Reports carries an attached-proof Playbook macro study with its authored mobile companion', () => {
   const reports = read('src/routes/field-reports/+page.svelte');
 
