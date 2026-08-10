@@ -13,6 +13,7 @@
 	import PublicAtlasCanvas from '$lib/components/PublicAtlasCanvas.svelte';
 	import SystemContextRail from '$lib/components/SystemContextRail.svelte';
 	import { agencyCoreMessaging } from '$lib/data/marketingCopy';
+	import { playbookHeroMedia } from '$lib/data/playbookHeroMedia';
 
 	const mapProtocol: PerformanceCondition[] = [
 		{
@@ -50,8 +51,8 @@
 		title="See the whole operation before AI runs the play."
 		lede="Map defines the client-owned Playbook: owner, data, systems, authority, Runbooks, risks, and proof. Start a private draft without touching production. A short summary can travel to a mapping session."
 		density="compact"
-		artifactOwnsMedia
-		artifactMobilePlacement="flow"
+		media={playbookHeroMedia.map}
+		mediaMobilePlacement="background"
 		proof={[{ label: 'Input', value: 'Prospect map' }, { label: 'Boundary', value: 'No production tools' }, { label: 'Handoff', value: 'Build or Control' }]}
 	>
 		{#snippet actions()}
@@ -59,9 +60,6 @@
 			<Button href={agencyCoreMessaging.workflowMappingSessionHref} variant="secondary">
 				{agencyCoreMessaging.bookMappingSessionLabel}
 			</Button>
-		{/snippet}
-		{#snippet artifact()}
-			<PlaybookField variant="map" />
 		{/snippet}
 	</PerformanceCampaignOpening>
 
@@ -81,6 +79,7 @@
 		description="Cold readers can test the method without exposing credentials. The private draft stays in this browser; its summary and readiness signal can move into booking, a durable Map workspace, Build, or Control."
 	>
 		{#snippet after()}
+			<PlaybookField variant="map" embedded />
 			<SystemContextRail />
 			<PublicAtlasCanvas bookingHref="/book"
 				initialIntegration={$page.url.searchParams.get('source') === 'integration-catalog'

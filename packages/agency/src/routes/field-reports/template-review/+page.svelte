@@ -11,7 +11,7 @@
     type PerformanceEvidenceItem,
     type PerformanceNarrativeScene
   } from '@create-something/canon';
-  import { paperAttachedReceiptMedia } from '$lib/data/performanceMedia';
+  import { playbookHeroMedia } from '$lib/data/playbookHeroMedia';
   import SystemContextArtifact from '$lib/components/SystemContextArtifact.svelte';
   import {
     getTemplateReviewPacketCompletion,
@@ -126,7 +126,8 @@
     expression="editorial"
     title={templateReviewFieldReport.title}
     lede={templateReviewFieldReport.dek}
-    media={paperAttachedReceiptMedia}
+    media={playbookHeroMedia.templateReview}
+    mediaMobilePlacement="background"
     proof={[
       { label: 'Packet completion', value: '49 / 50' },
       { label: 'Judgment', value: 'Blocked' },
