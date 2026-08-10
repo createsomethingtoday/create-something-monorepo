@@ -12,21 +12,30 @@
   let { eyebrow, title, description, items, ariaLabel = title }: Props = $props();
   let rail = $state<HTMLDivElement>();
   let current = $state(1);
+  let atStart = $state(true);
+  let atEnd = $state(false);
 
   function scroll(direction: -1 | 1) {
     if (!rail) return;
+    if ((direction === -1 && atStart) || (direction === 1 && atEnd)) return;
     const card = rail.querySelector<HTMLElement>('[data-evidence-card]');
+    const scrollDistance = card?.offsetWidth || rail.clientWidth;
+    if (!scrollDistance) return;
     rail.scrollBy({
-      left: direction * (card?.offsetWidth ?? rail.clientWidth),
-      behavior: 'smooth'
+      left: direction * scrollDistance,
+      behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
     });
   }
 
   function handleScroll() {
     if (!rail) return;
     const card = rail.querySelector<HTMLElement>('[data-evidence-card]');
-    const cardWidth = card?.offsetWidth ?? rail.clientWidth;
-    current = Math.min(items.length, Math.max(1, Math.round(rail.scrollLeft / cardWidth) + 1));
+    const cardWidth = card?.offsetWidth || rail.clientWidth;
+    if (cardWidth > 0) {
+      current = Math.min(items.length, Math.max(1, Math.round(rail.scrollLeft / cardWidth) + 1));
+    }
+    atStart = rail.scrollLeft <= 1;
+    atEnd = rail.scrollLeft + rail.clientWidth >= rail.scrollWidth - 1;
   }
 </script>
 
@@ -39,8 +48,18 @@
     </header>
     <div class="meridian-evidence__controls" aria-label="Evidence carousel controls">
       <span aria-live="polite">{current} / {items.length}</span>
-      <button type="button" onclick={() => scroll(-1)} aria-label="Previous evidence">←</button>
-      <button type="button" onclick={() => scroll(1)} aria-label="Next evidence">→</button>
+      <button
+        type="button"
+        onclick={() => scroll(-1)}
+        aria-label="Previous evidence"
+        disabled={atStart}>←</button
+      >
+      <button
+        type="button"
+        onclick={() => scroll(1)}
+        aria-label="Next evidence"
+        disabled={atEnd || items.length <= 1}>→</button
+      >
     </div>
   </div>
   <div class="meridian-evidence__rail" bind:this={rail} onscroll={handleScroll}>
@@ -121,7 +140,11 @@
     font-size: 1.25rem;
     cursor: pointer;
   }
-  button:hover {
+  button:disabled {
+    cursor: not-allowed;
+    opacity: 0.42;
+  }
+  button:enabled:hover {
     background: var(--color-performance-editorial-brand, #fcaa2d);
     border-color: var(--color-performance-editorial-brand, #fcaa2d);
     color: var(--color-performance-editorial-dark, #181312);
