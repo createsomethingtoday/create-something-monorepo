@@ -70,6 +70,7 @@ describe('PerformanceCampaignOpening', () => {
         mode: 'ink',
         density: 'compact',
         mobileSearchBoundary: true,
+        mediaMobilePlacement: 'background',
         media: {
           src: '/images/pressure-wide.webp',
           mobileSrc: '/images/pressure-tall.webp',
@@ -92,6 +93,7 @@ describe('PerformanceCampaignOpening', () => {
     expect(opening?.getAttribute('data-density')).toBe('compact');
     expect(opening?.getAttribute('data-has-artifact')).toBe('true');
     expect(opening?.getAttribute('data-mobile-search-boundary')).toBe('true');
+    expect(opening?.getAttribute('data-media-mobile-placement')).toBe('background');
     expect(opening?.getAttribute('aria-label')).toBe('AI Performance Lab');
     expect(opening?.querySelector('h1')?.textContent).toBe('Train the system before it runs.');
     expect(opening?.querySelector('.performance-campaign-opening__lede')?.textContent).toContain(
@@ -246,7 +248,7 @@ describe('PerformanceCampaignOpening', () => {
     const compactSource = source.replace(/\s+/g, ' ');
 
     expect(source).toContain(".performance-campaign-opening[data-expression='editorial'] {");
-    expect(source).toContain('grid-template-rows: minmax(44rem, 82svh)');
+    expect(source).toContain('grid-template-rows: minmax(max(44rem, 82svh), max-content)');
     expect(source).toContain('background: var(--color-performance-editorial-dark, #181312)');
     expect(compactSource).toContain(
       ".performance-campaign-opening[data-expression='editorial'] .performance-campaign-opening__content"
@@ -334,9 +336,7 @@ describe('Performance composition typography', () => {
 
     for (const component of components) {
       const source = readFileSync(join(process.cwd(), 'src/lib/components', component), 'utf8');
-      expect(source, component).toContain(
-        'line-height: var(--leading-performance-editorial, 1.1)'
-      );
+      expect(source, component).toContain('line-height: var(--leading-performance-editorial, 1.1)');
     }
   });
 
@@ -373,7 +373,9 @@ describe('Performance composition typography', () => {
     expect(source).toContain("type ClearSectionExpression = 'field' | 'editorial'");
     expect(source).toContain("expression = 'field'");
     expect(source).toContain('data-expression={expression}');
-    expect(source).toContain(".clear-page-section[data-expression='editorial'] .clear-page-section__title");
+    expect(source).toContain(
+      ".clear-page-section[data-expression='editorial'] .clear-page-section__title"
+    );
     expect(source).toContain('font-family: var(--font-performance-editorial)');
   });
 });
@@ -835,7 +837,9 @@ describe('PerformanceNarrativeStage', () => {
     expect(source).toContain('font-family: var(--font-performance-editorial)');
     expect(source).toContain('border-radius: var(--radius-performance-editorial, 0.375rem)');
     expect(source).toContain(".performance-narrative-stage[data-expression='editorial'] h2 {");
-    expect(source).toContain(".performance-narrative-stage[data-expression='editorial']\n    .performance-narrative-stage__scene-head\n    h3 {");
+    expect(source).toContain(
+      ".performance-narrative-stage[data-expression='editorial']\n    .performance-narrative-stage__scene-head\n    h3 {"
+    );
     expect(source).toContain('line-height: var(--leading-performance-editorial, 1.1);');
   });
 

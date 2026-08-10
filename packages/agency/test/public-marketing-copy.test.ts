@@ -273,6 +273,8 @@ test('commercial decision routes lead with plain meaning before owned terminolog
 test('public Agency commercial propositions declare the shared editorial expression', () => {
   const campaignRoutes = [
     'services',
+    'practice',
+    'stack',
     'map',
     'control',
     'products',
@@ -296,37 +298,55 @@ test('public Agency commercial propositions declare the shared editorial express
   ];
 
   for (const route of campaignRoutes) {
-    const source = readFileSync(new URL(`../src/routes/${route}/+page.svelte`, import.meta.url), 'utf8');
+    const source = readFileSync(
+      new URL(`../src/routes/${route}/+page.svelte`, import.meta.url),
+      'utf8'
+    );
     const opening = source.slice(
       source.indexOf('<PerformanceCampaignOpening'),
       source.indexOf('</PerformanceCampaignOpening>')
     );
-    assert.match(opening, /expression="editorial"/, `${route} must opt into editorial campaign type`);
+    assert.match(
+      opening,
+      /expression="editorial"/,
+      `${route} must opt into editorial campaign type`
+    );
   }
 
   for (const route of sectionHeroRoutes) {
-    const source = readFileSync(new URL(`../src/routes/${route}/+page.svelte`, import.meta.url), 'utf8');
+    const source = readFileSync(
+      new URL(`../src/routes/${route}/+page.svelte`, import.meta.url),
+      'utf8'
+    );
     const hero = source.slice(
       source.indexOf('<PerformancePageSection'),
       source.indexOf('</PerformancePageSection>')
     );
-    assert.match(hero, /expression="editorial"/, `${route} must opt into editorial proposition type`);
+    assert.match(
+      hero,
+      /expression="editorial"/,
+      `${route} must opt into editorial proposition type`
+    );
   }
 
   const governanceProduct = readFileSync(
     new URL('../src/lib/components/GovernanceProductPage.svelte', import.meta.url),
     'utf8'
   );
-  const practice = readFileSync(new URL('../src/routes/practice/+page.svelte', import.meta.url), 'utf8');
   const methodology = readFileSync(
     new URL('../src/routes/methodology/+page.svelte', import.meta.url),
     'utf8'
   );
-  const workflows = readFileSync(new URL('../src/routes/workflows/+page.svelte', import.meta.url), 'utf8');
+  const workflows = readFileSync(
+    new URL('../src/routes/workflows/+page.svelte', import.meta.url),
+    'utf8'
+  );
 
   assert.match(governanceProduct, /<PerformancePageSection[\s\S]*?expression="editorial"/);
-  assert.match(practice, /<PerformanceConversionHandoff[\s\S]*?headingLevel="h1"[\s\S]*?expression="editorial"/);
-  assert.match(methodology, /\.hero-title\s*\{[\s\S]*?font-family:\s*var\(--font-performance-editorial\)/);
+  assert.match(
+    methodology,
+    /\.hero-title\s*\{[\s\S]*?font-family:\s*var\(--font-performance-editorial\)/
+  );
   assert.match(
     workflows,
     /h1\s*\{[\s\S]*?font-family:\s*var\(--font-performance-editorial\)/,
@@ -409,7 +429,10 @@ test('commercial conversion handoffs use editorial propositions while task surfa
 });
 
 test('the Practice argument is editorial while its operating artifacts stay field-led', () => {
-  const practice = readFileSync(new URL('../src/routes/practice/+page.svelte', import.meta.url), 'utf8');
+  const practice = readFileSync(
+    new URL('../src/routes/practice/+page.svelte', import.meta.url),
+    'utf8'
+  );
   const argumentOpening = practice.match(/<PerformanceNarrativeStage\b[\s\S]*?>/)?.[0] ?? '';
   const diagnosticArtifact = practice.slice(
     practice.indexOf('<PerformanceThesisConditions'),

@@ -8,7 +8,6 @@
     SEO,
     type PerformanceNarrativeScene
   } from '@create-something/canon';
-  import PlaybookField from '$lib/components/PlaybookField.svelte';
   import {
     listGovernanceProducts,
     type GovernanceProduct
@@ -17,6 +16,7 @@
   import AgencyPerformanceReadback from '$lib/components/AgencyPerformanceReadback.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
   import { PUBLIC_PRODUCT_SEQUENCE, getPublicProduct } from '$lib/data/productFamily';
+  import { playbookHeroMedia } from '$lib/data/playbookHeroMedia';
 
   type ProductSurfaceKind = 'signal' | 'decision' | 'proof';
 
@@ -145,9 +145,9 @@
   expression="editorial"
   title="One playbook. Three operating paths."
   lede="Map defines the client-owned Playbook. Build makes its approved Runbooks executable. Control operates and improves the system with visible authority and proof."
+  media={playbookHeroMedia.products}
+  mediaMobilePlacement="background"
   density="compact"
-  artifactOwnsMedia
-  artifactMobilePlacement="flow"
   proof={[
     { label: 'Map', value: 'Define' },
     { label: 'Build', value: 'Connect' },
@@ -156,9 +156,6 @@
 >
   {#snippet actions()}
     <Button href="#choose-product">Choose the right path</Button>
-  {/snippet}
-  {#snippet artifact()}
-    <PlaybookField variant="products" />
   {/snippet}
 </PerformanceCampaignOpening>
 

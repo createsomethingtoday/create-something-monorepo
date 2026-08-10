@@ -1,11 +1,11 @@
 <script lang="ts">
   import { Button, PerformanceCampaignOpening, SEO } from '@create-something/canon';
-  import PlaybookField from '$lib/components/PlaybookField.svelte';
   import AgencyPerformanceReadback from '$lib/components/AgencyPerformanceReadback.svelte';
   import ServicesMapPreview from '$lib/components/ServicesMapPreview.svelte';
   import ServicesProductPath from '$lib/components/ServicesProductPath.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
   import { getPublicProduct } from '$lib/data/productFamily';
+  import { playbookHeroMedia } from '$lib/data/playbookHeroMedia';
 
   const mapProduct = getPublicProduct('map');
   const buildProduct = getPublicProduct('build');
@@ -88,9 +88,9 @@
     expression="editorial"
     title="Map the operation. Install the playbook."
     lede="Bring one handoff your team still checks manually. We map its owners and limits, make approved Runbooks executable, and hand back the client-owned system."
+    media={playbookHeroMedia.services}
+    mediaMobilePlacement="background"
     density="compact"
-    artifactOwnsMedia
-    artifactMobilePlacement="flow"
     proof={[
       { label: 'Owner', value: 'Named' },
       { label: 'Protected action', value: 'Held' },
@@ -105,9 +105,6 @@
         {agencyCoreMessaging.bookMappingSessionLabel}
       </Button>
     {/snippet}
-    {#snippet artifact()}
-      <PlaybookField variant="services" />
-    {/snippet}
   </PerformanceCampaignOpening>
 
   <ServicesProductPath />
@@ -120,5 +117,4 @@
   .services-performance {
     background: var(--color-performance-paper, #f3f3f0);
   }
-
 </style>

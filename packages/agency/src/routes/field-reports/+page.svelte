@@ -7,8 +7,8 @@
     SEO,
     type PerformanceEvidenceItem
   } from '@create-something/canon';
-  import PlaybookField from '$lib/components/PlaybookField.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
+  import { playbookHeroMedia } from '$lib/data/playbookHeroMedia';
 
   const reports: PerformanceEvidenceItem[] = [
     {
@@ -36,9 +36,9 @@
   expression="editorial"
   title="Review the film. Improve the playbook."
   lede="Each Field Report replays a run against its evidence. It separates what was measured, blocked, and unknown so operators can improve the next Play."
+  media={playbookHeroMedia.fieldReports}
+  mediaMobilePlacement="background"
   density="compact"
-  artifactOwnsMedia
-  artifactMobilePlacement="flow"
   proof={[
     { label: 'Measured', value: 'Sourced' },
     { label: 'Blocked', value: 'Visible' },
@@ -50,9 +50,6 @@
     <Button href={agencyCoreMessaging.selfMapHref} variant="secondary">
       {agencyCoreMessaging.selfMapLabel}
     </Button>
-  {/snippet}
-  {#snippet artifact()}
-    <PlaybookField variant="proof" />
   {/snippet}
 </PerformanceCampaignOpening>
 
