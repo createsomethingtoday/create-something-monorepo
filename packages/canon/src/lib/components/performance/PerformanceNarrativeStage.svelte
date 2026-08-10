@@ -629,7 +629,9 @@
   }
 
   .performance-narrative-stage[data-expression='editorial'] .performance-narrative-stage__panel {
+    align-content: start;
     gap: clamp(1.25rem, 3vw, 2.5rem);
+    min-height: 0;
     padding: clamp(1.25rem, 4vw, 4rem);
   }
 
