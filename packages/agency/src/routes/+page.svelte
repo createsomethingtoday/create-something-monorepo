@@ -21,10 +21,9 @@
   import AdoptionPathChooser from '$lib/components/AdoptionPathChooser.svelte';
   import IntegrationCompatibilityRail from '$lib/components/IntegrationCompatibilityRail.svelte';
   import PublicSubstrateCanvas from '$lib/components/PublicSubstrateCanvas.svelte';
-  import PlaybookField from '$lib/components/PlaybookField.svelte';
   import { templateReviewFieldReport } from '$lib/data/fieldReports';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
-  import { playbookHomeHeroMedia } from '$lib/data/playbookHeroMedia';
+  import { playbookHeroMedia, playbookHomeHeroMedia } from '$lib/data/playbookHeroMedia';
 
   const services = [
     {
@@ -332,8 +331,21 @@
     {#snippet artifact(scene: PerformanceNarrativeScene)}
       {#if scene.id === 'map'}
         <article class="boundary-study" aria-label="Shared Playbook: Map, Build, Control">
-          <div class="boundary-study__field">
-            <PlaybookField variant="services" embedded />
+          <div class="boundary-study__field boundary-study__field--media">
+            <picture class="boundary-study__media">
+              {#if playbookHeroMedia.map.mobileSrc}
+                <source media="(max-width: 47.99rem)" srcset={playbookHeroMedia.map.mobileSrc} />
+              {/if}
+              <img
+                src={playbookHeroMedia.map.src}
+                alt={playbookHeroMedia.map.alt}
+                width={playbookHeroMedia.map.width}
+                height={playbookHeroMedia.map.height}
+                loading="lazy"
+                decoding="async"
+                data-campaign-media="home-map-narrative"
+              />
+            </picture>
           </div>
           <div class="boundary-study__body">
             <div
@@ -498,6 +510,26 @@
     padding: 1rem;
     border-right: 1px solid var(--color-performance-line, #d7d7d2);
     background: var(--color-performance-ink, #090909);
+  }
+
+  .boundary-study__field--media {
+    display: flex;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .boundary-study__media {
+    display: block;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .boundary-study__media img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
   }
 
   .boundary-study__body {
@@ -755,6 +787,10 @@
     .boundary-study__field {
       padding: 0.8rem;
     }
+
+    .boundary-study__field--media {
+      padding: 0;
+    }
   }
 
   @media (max-width: 640px) {
@@ -782,6 +818,15 @@
       padding: 0.65rem;
       border-right: 0;
       border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
+    }
+
+    .boundary-study__field--media {
+      display: block;
+      padding: 0;
+    }
+
+    .boundary-study__media {
+      aspect-ratio: 3 / 2;
     }
 
     .boundary-study__metrics {
