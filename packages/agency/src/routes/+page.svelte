@@ -436,32 +436,72 @@
     {/snippet}
   </PerformanceNarrativeStage>
 
-  <MeridianCardGrid
-    eyebrow="The delivery roster"
-    title="Each engagement earns a clear next move."
-    description="The card system makes scope, action, and ownership legible without inventing a rate card or a promise the work has not earned."
-    cards={deliveryCards}
-    ariaLabel="CREATE SOMETHING delivery paths"
-  />
+  <details class="home-mobile-supporting-record">
+    <summary>
+      <span>Supporting record</span>
+      <strong>Inspect the supporting record</strong>
+      <small>Delivery paths, proof, ownership, and tools</small>
+    </summary>
+    <div class="home-mobile-supporting-record__body">
+      <p>
+        The first choice does not need every detail. Use the record when you want to inspect the
+        delivery path, proof, or system boundary before you start a map.
+      </p>
+      <div class="home-mobile-supporting-record__links">
+        <a href="/proof/marketplace-workflow">
+          <span>Proof</span><strong>Marketplace field report</strong><small
+            >See the measured result</small
+          >
+        </a>
+        <a href="/services">
+          <span>Method</span><strong>Delivery path</strong><small
+            >See how Map, Build, and Control work</small
+          >
+        </a>
+        <a href="/stack">
+          <span>Boundary</span><strong>Ownership boundary</strong><small
+            >See what your team keeps</small
+          >
+        </a>
+        <a href="/partners">
+          <span>Tools</span><strong>Tool directory</strong><small
+            >Inspect the available connector paths</small
+          >
+        </a>
+      </div>
+    </div>
+  </details>
 
-  <MeridianEvidenceCarousel
-    eyebrow="Operator proof"
-    title="Evidence replaces borrowed testimonials."
-    description="The licensed testimonial treatment now carries inspectable operating evidence rather than made-up praise."
-    items={operatorEvidence}
-  />
+  <div class="home-supporting-record__deferred home-supporting-record__deferred--early">
+    <MeridianCardGrid
+      eyebrow="The delivery roster"
+      title="Each engagement earns a clear next move."
+      description="The card system makes scope, action, and ownership legible without inventing a rate card or a promise the work has not earned."
+      cards={deliveryCards}
+      ariaLabel="CREATE SOMETHING delivery paths"
+    />
+
+    <MeridianEvidenceCarousel
+      eyebrow="Operator proof"
+      title="Evidence replaces borrowed testimonials."
+      description="The licensed testimonial treatment now carries inspectable operating evidence rather than made-up praise."
+      items={operatorEvidence}
+    />
+  </div>
 
   <AdoptionPathChooser />
 
-  <IntegrationCompatibilityRail surface="homepage" />
+  <div class="home-supporting-record__deferred home-supporting-record__deferred--late">
+    <IntegrationCompatibilityRail surface="homepage" />
 
-  <MeridianAccordion
-    eyebrow="Playbook questions"
-    title="What the first workflow changes."
-    description="A direct answer before a mapping session is more useful than a vague assurance."
-    items={faqItems}
-    openFirst={true}
-  />
+    <MeridianAccordion
+      eyebrow="Playbook questions"
+      title="What the first workflow changes."
+      description="A direct answer before a mapping session is more useful than a vague assurance."
+      items={faqItems}
+      openFirst={true}
+    />
+  </div>
 
   <PerformanceConversionHandoff
     expression="editorial"
@@ -493,6 +533,10 @@
   .home-pilot {
     background: var(--color-performance-panel, #ffffff);
     color: var(--color-performance-ink, #090909);
+  }
+
+  .home-mobile-supporting-record {
+    display: none;
   }
 
   .boundary-study {
@@ -779,6 +823,12 @@
     text-underline-offset: 0.18em;
   }
 
+  @media (min-width: 640.01px) {
+    .home-supporting-record__deferred {
+      display: contents;
+    }
+  }
+
   @media (max-width: 980px) {
     .boundary-study {
       grid-template-columns: minmax(16rem, 0.8fr) minmax(0, 1.2fr);
@@ -798,6 +848,115 @@
   }
 
   @media (max-width: 640px) {
+    .home-supporting-record__deferred {
+      display: none;
+    }
+
+    .home-mobile-supporting-record {
+      display: grid;
+      margin: 1.25rem var(--space-performance-page-gutter, 1rem);
+      border: 1px solid var(--color-performance-line, #d7d7d2);
+      background: var(--color-performance-paper, #f3f3f0);
+    }
+
+    .home-mobile-supporting-record summary {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 0.3rem 1rem;
+      align-items: center;
+      min-height: var(--height-performance-control-min, 2.75rem);
+      padding: 0.9rem;
+      color: var(--color-performance-ink, #090909);
+      cursor: pointer;
+      list-style: none;
+    }
+
+    .home-mobile-supporting-record summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .home-mobile-supporting-record summary::after {
+      grid-column: 2;
+      grid-row: 1 / span 3;
+      color: var(--color-performance-muted, #5e6268);
+      content: '+';
+      font-family: var(--font-performance-mono);
+      font-size: 1.2rem;
+    }
+
+    .home-mobile-supporting-record[open] summary::after {
+      content: '−';
+    }
+
+    .home-mobile-supporting-record summary > span,
+    .home-mobile-supporting-record__links span {
+      color: var(--color-performance-muted, #5e6268);
+      font-family: var(--font-performance-mono);
+      font-size: 0.68rem;
+      font-weight: var(--font-performance-semibold);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .home-mobile-supporting-record summary strong {
+      grid-column: 1;
+      font-size: 1.05rem;
+      font-weight: var(--font-performance-medium);
+      line-height: 1.15;
+    }
+
+    .home-mobile-supporting-record summary small {
+      grid-column: 1;
+      color: var(--color-performance-muted, #5e6268);
+      font-size: 0.8rem;
+      line-height: 1.35;
+    }
+
+    .home-mobile-supporting-record__body {
+      display: grid;
+      gap: 0.9rem;
+      padding: 0 0.9rem 0.9rem;
+      border-top: 1px solid var(--color-performance-line, #d7d7d2);
+    }
+
+    .home-mobile-supporting-record__body > p {
+      margin: 0;
+      color: var(--color-performance-muted, #5e6268);
+      font-size: 0.88rem;
+      line-height: 1.45;
+    }
+
+    .home-mobile-supporting-record__links {
+      display: grid;
+      border: 1px solid var(--color-performance-line, #d7d7d2);
+    }
+
+    .home-mobile-supporting-record__links a {
+      display: grid;
+      gap: 0.2rem;
+      min-height: var(--height-performance-control-min, 2.75rem);
+      padding: 0.75rem;
+      color: var(--color-performance-ink, #090909);
+      text-decoration: none;
+    }
+
+    .home-mobile-supporting-record__links a + a {
+      border-top: 1px solid var(--color-performance-line, #d7d7d2);
+    }
+
+    .home-mobile-supporting-record__links strong {
+      font-size: 0.98rem;
+      font-weight: var(--font-performance-medium);
+      line-height: 1.2;
+    }
+
+    .home-mobile-supporting-record__links small {
+      color: var(--color-performance-muted, #5e6268);
+      font-size: 0.78rem;
+      line-height: 1.35;
+    }
+
     .boundary-study__outcomes {
       grid-template-columns: 1fr;
     }
