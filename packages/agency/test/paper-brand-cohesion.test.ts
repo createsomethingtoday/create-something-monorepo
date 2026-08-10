@@ -39,11 +39,31 @@ test('the Agency hero makes the Playbook operating grammar visible without a pro
   assert.match(field, /X = opposition/);
 });
 
+test('shared campaign titles keep every period optically separated from display letters', () => {
+  const campaignOpening = read(
+    '../canon/src/lib/components/performance/PerformanceCampaignOpening.svelte'
+  );
+
+  assert.match(campaignOpening, /let titleParts = \$derived\(title\.split\('\.'\)\);/);
+  assert.match(campaignOpening, /\{#each titleParts as part, index\}/);
+  assert.match(
+    campaignOpening,
+    /titleParts\.length - 1\}<span[\s\S]*?class="performance-campaign-opening__period">\.<\/span\s*>/
+  );
+  assert.match(
+    campaignOpening,
+    /\.performance-campaign-opening__period\s*\{[\s\S]*?margin-inline-start:\s*0\.055em;/
+  );
+});
+
 test('the Agency footer handoff uses its own macro-real decision-gate image without replacing live CTA copy', () => {
   const layout = read('src/routes/+layout.svelte');
   const footer = read('../canon/src/lib/components/Footer.svelte');
   const offerPanel = read('../canon/src/lib/components/meridian/MeridianOfferPanel.svelte');
-  const image = resolve(agencyRoot, 'static/images/performance-lab/playbook-footer-decision-gate-macro.webp');
+  const image = resolve(
+    agencyRoot,
+    'static/images/performance-lab/playbook-footer-decision-gate-macro.webp'
+  );
   const metadata = read(
     'content/assets/brand/agency-footer-playbook-decision-gate-macro.v20260810/metadata.md'
   );
@@ -71,6 +91,42 @@ test('Field Reports carries an attached-proof Playbook macro study with its auth
   assert.match(reports, /mediaMobilePlacement="background"/);
   assert.match(reports, /Review the film\. Improve the playbook\./);
   assert.doesNotMatch(reports, /<PlaybookField variant="proof"/);
+});
+
+test('Map and Template Review each carry a route-specific Playbook court hero with a mobile companion', () => {
+  const map = read('src/routes/map/+page.svelte');
+  const templateReview = read('src/routes/field-reports/template-review/+page.svelte');
+  const heroMedia = read('src/lib/data/playbookHeroMedia.ts');
+  const mapDesktop = resolve(
+    agencyRoot,
+    'static/images/performance-lab/playbook-map-operating-junction.webp'
+  );
+  const mapMobile = resolve(
+    agencyRoot,
+    'static/images/performance-lab/playbook-map-operating-junction-mobile.webp'
+  );
+  const reviewDesktop = resolve(
+    agencyRoot,
+    'static/images/performance-lab/playbook-template-review-human-gate.webp'
+  );
+  const reviewMobile = resolve(
+    agencyRoot,
+    'static/images/performance-lab/playbook-template-review-human-gate-mobile.webp'
+  );
+
+  assert.match(map, /media=\{playbookHeroMedia\.map\}/);
+  assert.match(map, /mediaMobilePlacement="background"/);
+  assert.doesNotMatch(map, /artifactOwnsMedia|artifactMobilePlacement/);
+  assert.match(map, /<PlaybookField variant="map" embedded \/>/);
+  assert.match(templateReview, /media=\{playbookHeroMedia\.templateReview\}/);
+  assert.match(templateReview, /mediaMobilePlacement="background"/);
+  assert.doesNotMatch(templateReview, /paperAttachedReceiptMedia/);
+  assert.match(heroMedia, /map: \{[\s\S]*?playbook-map-operating-junction\.webp/);
+  assert.match(heroMedia, /templateReview: \{[\s\S]*?playbook-template-review-human-gate\.webp/);
+  for (const image of [mapDesktop, mapMobile, reviewDesktop, reviewMobile]) {
+    assert.ok(existsSync(image), `${image} must be served by the Agency package`);
+    assert.ok(statSync(image).size > 20_000, `${image} must be a substantive raster asset`);
+  }
 });
 
 test('the shared social preview is a current, served Paper operating-system artifact', () => {

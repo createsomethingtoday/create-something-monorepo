@@ -1,6 +1,13 @@
 import type { PerformanceCampaignMedia } from '@create-something/canon';
 
-export type PlaybookHeroRoute = 'services' | 'practice' | 'stack' | 'products' | 'fieldReports';
+export type PlaybookHeroRoute =
+  | 'services'
+  | 'practice'
+  | 'stack'
+  | 'products'
+  | 'fieldReports'
+  | 'map'
+  | 'templateReview';
 
 const imageRoot = '/images/performance-lab';
 
@@ -54,6 +61,22 @@ export const playbookHeroMedia: Record<PlaybookHeroRoute, PerformanceCampaignMed
     src: `${imageRoot}/playbook-field-reports-evidence-receipt.webp`,
     mobileSrc: `${imageRoot}/playbook-field-reports-evidence-receipt-mobile.webp`,
     alt: 'Macro 3D Playbook court with an AI agent route attached to an evidence receipt.',
+    width: 1536,
+    height: 1024,
+    colorMode: 'natural'
+  },
+  map: {
+    src: `${imageRoot}/playbook-map-operating-junction.webp`,
+    mobileSrc: `${imageRoot}/playbook-map-operating-junction-mobile.webp`,
+    alt: 'Macro-real Playbook court with an ivory AI agent marker at a mapped operating junction, an amber route, and a proof-green terminal.',
+    width: 1536,
+    height: 1024,
+    colorMode: 'natural'
+  },
+  templateReview: {
+    src: `${imageRoot}/playbook-template-review-human-gate.webp`,
+    mobileSrc: `${imageRoot}/playbook-template-review-human-gate-mobile.webp`,
+    alt: 'Macro-real Playbook court with an ivory AI agent marker stopped before a human approval gate and a proof-green terminal beyond it.',
     width: 1536,
     height: 1024,
     colorMode: 'natural'

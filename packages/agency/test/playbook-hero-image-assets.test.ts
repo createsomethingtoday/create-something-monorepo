@@ -31,6 +31,14 @@ const expectedHashes: Record<PlaybookHeroRoute, { desktop: string; mobile: strin
   fieldReports: {
     desktop: '2847f7f312b746e4bf35f73f885367a41f18a820b980f7f177f762cd623c813a',
     mobile: '99857a564fa772592de5252e20747ad6ee1b7bb55c7ac6217ae5c0ac7b452105'
+  },
+  map: {
+    desktop: '0b803ad1a5b30a2392bc3ceae3cddc2011065b9e11d32ad4a3d727f44e1810bb',
+    mobile: '46caca75a1b4fd16053436990f466d2e8e88efd9cc5419baeb561e185deb2b56'
+  },
+  templateReview: {
+    desktop: 'd6c9aaaab394231f5f263d71f4f4163003d1b3b46eeb23dc89b90cfd85323e27',
+    mobile: 'ffd9e469ddb49138f9d40d09dbb9f827eb66d3ab5eb530270ea725dab9483d97'
   }
 };
 

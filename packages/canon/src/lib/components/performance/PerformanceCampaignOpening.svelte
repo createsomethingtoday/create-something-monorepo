@@ -77,6 +77,7 @@
 
   let motionAllowed = $state(false);
   let studioReady = $state(false);
+  let titleParts = $derived(title.split('.'));
 
   onMount(() => {
     const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
@@ -169,7 +170,11 @@
           <span class="performance-campaign-opening__property-role">{propertyRole}</span>
         {/if}
       </div>
-      <h1>{title}</h1>
+      <h1>
+        {#each titleParts as part, index}{part}{#if index < titleParts.length - 1}<span
+              class="performance-campaign-opening__period">.</span
+            >{/if}{/each}
+      </h1>
       {#if lede}
         <p class="performance-campaign-opening__lede">{lede}</p>
       {/if}
@@ -440,6 +445,12 @@
     letter-spacing: var(--tracking-performance-display, -0.03em);
     line-height: var(--leading-performance-display, 0.94);
     text-wrap: balance;
+  }
+
+  .performance-campaign-opening__period {
+    display: inline-block;
+    margin-inline-start: 0.055em;
+    letter-spacing: normal;
   }
 
   .performance-campaign-opening__lede {
