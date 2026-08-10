@@ -161,7 +161,7 @@ test('workflow surfaces use the Performance token contract instead of local styl
   }
 });
 
-test('workflow typography follows the Performance property spine', () => {
+test('workflow titles use the Agency editorial face while operating content stays in the field spine', () => {
   const hubPage = readFileSync(path.join(packageRoot, 'src/routes/workflows/+page.svelte'), 'utf8');
   const guidePage = readFileSync(
     path.join(packageRoot, 'src/routes/workflows/[slug]/+page.svelte'),
@@ -169,7 +169,9 @@ test('workflow typography follows the Performance property spine', () => {
   );
 
   for (const route of [hubPage, guidePage]) {
-    assert.match(route, /h1\s*\{[\s\S]*?font-family:\s*var\(--font-performance-display\)/);
+    assert.match(route, /h1\s*\{[\s\S]*?font-family:\s*var\(--font-performance-editorial\)/);
+    assert.match(route, /h1\s*\{[\s\S]*?font-weight:\s*var\(--font-performance-editorial-weight, 400\)/);
+    assert.match(route, /h1\s*\{[\s\S]*?line-height:\s*var\(--leading-performance-editorial, 1\.1\)/);
     assert.match(route, /h2\s*\{[\s\S]*?font-family:\s*var\(--font-performance-display\)/);
     assert.doesNotMatch(route, /font-family:\s*var\(--font-performance-serif\)/);
   }
