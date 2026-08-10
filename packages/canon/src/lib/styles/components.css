@@ -1044,17 +1044,11 @@
       linear-gradient(0deg, rgba(10, 14, 25, 0.035) 1px, transparent 1px) 0 0 / 100% 28px;
   }
 
-  .performance-system-court > .hero-artifact {
-    z-index: 0;
-  }
-
   .performance-system-court-lines {
     position: absolute;
     inset: 22px;
     border: 2px solid rgba(10, 14, 25, 0.12);
     border-radius: var(--radius-performance-sm);
-    z-index: 1;
-    opacity: 0;
   }
 
   .performance-system-court-half,
@@ -1113,7 +1107,6 @@
     color: white;
     border-radius: var(--radius-performance-sm);
     backdrop-filter: blur(10px);
-    z-index: 2;
   }
 
   .performance-system-court-readout span,

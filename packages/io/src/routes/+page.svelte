@@ -4,9 +4,9 @@
     Button,
     MeridianCardGrid,
     MeridianFeatureSplit,
-    HeroArtifact,
     PerformanceCampaignOpening,
     PerformanceNarrativeStage,
+    paperResearchTraceMedia,
     PapersGrid,
     PropertyFunnel,
     SEO,
@@ -147,17 +147,14 @@
   expression="editorial"
   title="Research for automation you can defend."
   lede="CREATE SOMETHING .io turns experiments, papers, and field notes into a usable research layer for operators. The goal is evidence you can carry into the next build, review, or production decision."
+  media={paperResearchTraceMedia}
   proof={proofMetrics.map((item) => ({ label: item.label, value: item.value }))}
+  mode="paper"
   density="compact"
-  artifactOwnsMedia
-  artifactMobilePlacement="flow"
 >
   {#snippet actions()}
     <Button href="/papers">Read The Papers</Button>
     <Button href="/experiments" variant="secondary">Browse Experiments</Button>
-  {/snippet}
-  {#snippet artifact()}
-    <HeroArtifact scene="io-research-specimen" embedded />
   {/snippet}
 </PerformanceCampaignOpening>
 

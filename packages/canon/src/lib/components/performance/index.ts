@@ -16,17 +16,6 @@ export type {
 } from './PerformanceFieldSequence.svelte';
 export { default as PerformanceCampaignOpening } from './PerformanceCampaignOpening.svelte';
 export { default as PerformancePaperStudioCanvas } from './PerformancePaperStudioCanvas.svelte';
-export { default as HeroArtifact } from './HeroArtifact.svelte';
-export {
-  getHeroArtifactScene,
-  heroArtifactSceneIds,
-  heroArtifactSceneRegistry,
-  validateHeroArtifactSceneRegistry,
-  type HeroArtifactRole,
-  type HeroArtifactScene,
-  type HeroArtifactSceneId,
-  type HeroArtifactSubject
-} from './physical-artifact.js';
 export type {
   PerformanceCampaignMedia,
   PerformanceCampaignOpeningExpression,
