@@ -194,6 +194,21 @@ test('the Shared Playbook study stacks its court and proof legibly on mobile', (
   );
 });
 
+test('the homepage Map study gives the operating junction room on desktop without disturbing its mobile crop', () => {
+  assert.match(
+    home,
+    /\.boundary-study\s*\{\s*display:\s*grid;\s*grid-template-columns:\s*minmax\(18rem,\s*0\.86fr\)\s*minmax\(0,\s*1\.14fr\);/
+  );
+  assert.match(
+    home,
+    /\.boundary-study__media img\s*\{[\s\S]*?object-position:\s*82%\s+center;/
+  );
+  assert.match(
+    home,
+    /@media \(max-width: 640px\)[\s\S]*?\.boundary-study__media img\s*\{\s*object-position:\s*center;/
+  );
+});
+
 test('the shared readback derives a measured example and its limits from field-report truth', () => {
   assert.equal(templateReviewFieldReport.evidence.usableCases, 49);
   assert.equal(templateReviewFieldReport.evidence.selectedCases, 50);
