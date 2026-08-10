@@ -80,28 +80,24 @@ test('the homepage moves from claim to proof to method before asking visitors to
   }
 });
 
-test('the homepage opening uses the property-owned Playbook artifact', () => {
+test('the homepage opening uses the property-owned Playbook court media candidate', () => {
   assert.match(home, /import PlaybookField/);
-  assert.match(home, /artifactOwnsMedia/);
-  assert.match(home, /\{#snippet artifact\(\)\}[\s\S]*?<PlaybookField variant="home" \/>/);
+  assert.match(home, /import \{ playbookHomeHeroMedia \} from '\$lib\/data\/playbookHeroMedia'/);
+  assert.match(home, /media=\{playbookHomeHeroMedia\}/);
+  assert.match(home, /mediaMobilePlacement="background"/);
+  assert.match(home, /<PlaybookField variant="services" embedded \/>/);
   assert.doesNotMatch(home, /mode="paper"|paperOperatingRouteMedia/);
   assert.doesNotMatch(home, /agency-fluid-intelligence-loop-v4/);
   assert.doesNotMatch(home, /controlledFlowMedia/);
   assert.equal(
     existsSync(
-      new URL(
-        '../static/images/performance-lab/paper-under-pressure-field.svg',
-        import.meta.url
-      )
+      new URL('../static/images/performance-lab/paper-under-pressure-field.svg', import.meta.url)
     ),
     true
   );
   assert.equal(
     existsSync(
-      new URL(
-        '../static/images/performance-lab/paper-boundary-authority.webp',
-        import.meta.url
-      )
+      new URL('../static/images/performance-lab/paper-boundary-authority.webp', import.meta.url)
     ),
     true
   );
@@ -117,10 +113,7 @@ test('the homepage opening uses the property-owned Playbook artifact', () => {
 });
 
 test('the historical fluid study remains attributable while Canon retains optional motion support', () => {
-  assert.match(
-    campaign,
-    /<video[\s\S]*?autoplay[\s\S]*?muted[\s\S]*?loop[\s\S]*?playsinline/
-  );
+  assert.match(campaign, /<video[\s\S]*?autoplay[\s\S]*?muted[\s\S]*?loop[\s\S]*?playsinline/);
   assert.match(campaign, /\{#if media\.video && motionAllowed\}/);
   assert.match(campaign, /poster=\{media\.video\.poster \?\? media\.src\}/);
   assert.match(handoffBoundaryMetadata, /CRE-1562/);
@@ -229,10 +222,7 @@ test('the shared fallback keeps its action beside the claim and its proof in the
     handoff,
     /performance-handoff__intro[\s\S]*?performance-handoff__actions[\s\S]*?<AgencyPerformanceReadback compact=\{true\}/
   );
-  assert.match(
-    readback,
-    /selected cases produced usable evidence packets for human decision/i
-  );
+  assert.match(readback, /selected cases produced usable evidence packets for human decision/i);
 });
 
 test('homepage Performance surfaces share one responsive page gutter token', () => {

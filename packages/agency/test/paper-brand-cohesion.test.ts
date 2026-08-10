@@ -28,8 +28,8 @@ test('the Agency hero makes the Playbook operating grammar visible without a pro
   const field = read('src/lib/components/PlaybookField.svelte');
 
   assert.match(home, /title="Your people and AI need the same playbook\."/);
-  assert.match(home, /#snippet artifact\(\)/);
-  assert.match(home, /<PlaybookField variant="home"/);
+  assert.match(home, /media=\{playbookHomeHeroMedia\}/);
+  assert.match(home, /mediaMobilePlacement="background"/);
   assert.match(home, /client-owned Playbook/);
   assert.match(home, /Offense advances approved work/);
   assert.match(home, /Defense protects decisions, proof, and recovery/);
@@ -39,14 +39,13 @@ test('the Agency hero makes the Playbook operating grammar visible without a pro
   assert.match(field, /X = opposition/);
 });
 
-test('Field Reports carries an attached-proof Playbook field instead of relying on a crop', () => {
+test('Field Reports carries an attached-proof Playbook macro study with its authored mobile companion', () => {
   const reports = read('src/routes/field-reports/+page.svelte');
-  const field = read('src/lib/components/PlaybookField.svelte');
 
-  assert.match(reports, /<PlaybookField variant="proof"/);
+  assert.match(reports, /media=\{playbookHeroMedia\.fieldReports\}/);
+  assert.match(reports, /mediaMobilePlacement="background"/);
   assert.match(reports, /Review the film\. Improve the playbook\./);
-  assert.match(field, /attached receipt/i);
-  assert.match(field, /@media \(max-width: 47\.99rem\)/);
+  assert.doesNotMatch(reports, /<PlaybookField variant="proof"/);
 });
 
 test('the shared social preview is a current, served Paper operating-system artifact', () => {

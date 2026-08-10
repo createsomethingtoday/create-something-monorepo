@@ -3,7 +3,11 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
-import { playbookHeroMedia, type PlaybookHeroRoute } from '../src/lib/data/playbookHeroMedia';
+import {
+  playbookHeroMedia,
+  playbookHomeHeroMedia,
+  type PlaybookHeroRoute
+} from '../src/lib/data/playbookHeroMedia';
 
 const agencyRoot = fileURLToPath(new URL('..', import.meta.url));
 
@@ -57,4 +61,23 @@ test('Playbook macro heroes keep distinct desktop and mobile source assets', () 
     assert.equal(sha256(desktop), expectedHashes[route].desktop);
     assert.equal(sha256(mobile), expectedHashes[route].mobile);
   }
+});
+
+test('the Home court candidate keeps its authored desktop and mobile studies distinct', () => {
+  assert.equal(playbookHomeHeroMedia.src, '/images/performance-lab/playbook-home-agent-macro.webp');
+  assert.equal(
+    playbookHomeHeroMedia.mobileSrc,
+    '/images/performance-lab/playbook-home-agent-macro-mobile.webp'
+  );
+  assert.match(playbookHomeHeroMedia.alt, /AI-agent/i);
+  assert.equal(playbookHomeHeroMedia.width, 1536);
+  assert.equal(playbookHomeHeroMedia.height, 1024);
+
+  const desktop = publicAsset(playbookHomeHeroMedia.src);
+  const mobile = publicAsset(playbookHomeHeroMedia.mobileSrc!);
+
+  assert.ok(desktop.byteLength > 50_000, 'Home desktop export looks truncated');
+  assert.ok(mobile.byteLength > 50_000, 'Home mobile export looks truncated');
+  assert.equal(sha256(desktop), 'ea7a153bf4dcb9a37fb689d80953e0afbc768bc412de09033d008668f9d08d08');
+  assert.equal(sha256(mobile), '814fca6eed996d6133dc1521f75cd9c1f5b216413932eb55c2891cdbf8cc3f97');
 });

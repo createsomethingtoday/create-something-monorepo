@@ -4,6 +4,19 @@ export type PlaybookHeroRoute = 'services' | 'practice' | 'stack' | 'products' |
 
 const imageRoot = '/images/performance-lab';
 
+/**
+ * A bounded Home candidate: campaign material, not workflow proof. The
+ * semantic Playbook field remains in the Home narrative stage below the fold.
+ */
+export const playbookHomeHeroMedia: PerformanceCampaignMedia = {
+  src: `${imageRoot}/playbook-home-agent-macro.webp`,
+  mobileSrc: `${imageRoot}/playbook-home-agent-macro-mobile.webp`,
+  alt: 'Macro-real Playbook court with an ivory AI-agent marker held inside a smoked-metal ring and approached by an amber workflow route.',
+  width: 1536,
+  height: 1024,
+  colorMode: 'natural'
+};
+
 export const playbookHeroMedia: Record<PlaybookHeroRoute, PerformanceCampaignMedia> = {
   services: {
     src: `${imageRoot}/playbook-how-it-works-approval-gate.webp`,
