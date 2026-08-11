@@ -71,6 +71,23 @@ test('the App Review Arc makes intake and preflight a reusable first scene', () 
       ?.presentation.branches?.map((branch) => branch.label),
     ['Request changes', 'Reject', 'Escalate an exception']
   );
+  assert.deepEqual(
+    APP_REVIEW_GOVERNANCE_COMPOSITION.scenes.find((scene) => scene.id === 'orient')
+      ?.presentation.relationships,
+    [
+      {
+        fromNodeId: 'zendesk-context',
+        label: 'Keeps context attached',
+        toNodeId: 'd1-governance-record'
+      },
+      {
+        fromNodeId: 'd1-governance-record',
+        label: 'Projects a readable view',
+        toNodeId: 'airtable-projection'
+      }
+    ],
+    'the map slide should encode the focused relationship instead of relying on decorative geometry'
+  );
   for (const scene of APP_REVIEW_GOVERNANCE_COMPOSITION.scenes) {
     assert.ok(scene.presentation.reader.stakeholders.length > 0);
     assert.ok(scene.presentation.reader.stakeholders.every((stakeholder) => stakeholder.meaning.length > 0));
@@ -113,6 +130,17 @@ test('composition validation refuses nested map modules and unapproved action pa
   const result = validateAtlasComposition(nested);
   assert.equal(result.ok, false);
   assert.match(result.issues.join('\n'), /nested map modules/i);
+});
+
+test('map relationships must connect focused nodes in the shared map module', () => {
+  const invalid = structuredClone(APP_REVIEW_GOVERNANCE_COMPOSITION);
+  const orient = invalid.scenes.find((scene) => scene.id === 'orient');
+  assert.ok(orient);
+  orient.presentation.relationships[0].fromNodeId = 'slack-signal';
+
+  const result = validateAtlasComposition(invalid);
+  assert.equal(result.ok, false);
+  assert.match(result.issues.join('\n'), /relationship.*focused node/i);
 });
 
 test('map module resolution preserves an explicit pinned map version', () => {

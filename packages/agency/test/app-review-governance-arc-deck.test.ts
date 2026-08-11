@@ -37,6 +37,10 @@ test('the App Review Arc is a full deck with typed scene compositions and owned 
   assert.match(route, /The durable review record \(D1\)/);
   assert.match(route, /The team's readable workspace \(Airtable\)/);
   assert.match(route, /The partner conversation \(Zendesk\)/);
+  assert.match(route, /scene\.presentation\.relationships/);
+  assert.match(route, /class="arc-map__connector"/);
+  assert.match(route, /relationship\.label/);
+  assert.doesNotMatch(route, /arc-map__trace/);
   assert.match(route, /<summary>See the technical handoff<\/summary>/);
   assert.match(route, /Try it: draft the creator update/);
   assert.ok(
@@ -45,6 +49,14 @@ test('the App Review Arc is a full deck with typed scene compositions and owned 
   );
   assert.match(metadata, /f761a8d1dc61f57344405a97cb574396a49a2dc353bc9ee72ae23a58e90e5650/);
   await access(assetPath);
+});
+
+test('the focused map relationship stacks into a readable mobile sequence', async () => {
+  const route = await readFile(routePath, 'utf8');
+
+  assert.match(route, /\.arc-map__flow\s*\{[^}]*grid-template-columns:/);
+  assert.match(route, /@media \(max-width: 760px\)[\s\S]*?\.arc-map__flow\s*\{[^}]*grid-template-columns:\s*1fr;/);
+  assert.match(route, /\.arc-map__connector-line::after/);
 });
 
 test('the presentation rail preserves readable scene labels on a narrow deck', async () => {
