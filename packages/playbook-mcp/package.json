@@ -35,6 +35,7 @@
     "playbook-mcp": "dist/index.js"
   },
   "scripts": {
+    "prebuild": "pnpm --filter @create-something/atlas-composition build",
     "build": "tsc",
     "dev": "tsc --watch",
     "lint": "pnpm run typecheck",
