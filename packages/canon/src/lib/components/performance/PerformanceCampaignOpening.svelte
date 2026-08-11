@@ -77,7 +77,12 @@
 
   let motionAllowed = $state(false);
   let studioReady = $state(false);
-  let titleParts = $derived(title.split('.'));
+  let titleParts = $derived(
+    title.split('.').map((part) => {
+      const match = part.match(/^(.*?)(\S+)$/s);
+      return match ? { prefix: match[1], word: match[2] } : { prefix: part, word: '' };
+    })
+  );
 
   onMount(() => {
     const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
@@ -171,7 +176,12 @@
         {/if}
       </div>
       <h1>
-        {#each titleParts as part, index}{part}{#if index < titleParts.length - 1}<span
+        {#each titleParts as part, index}{part.prefix}{#if part.word}<span
+              class="performance-campaign-opening__punctuated-word"
+              >{part.word}{#if index < titleParts.length - 1}<span
+                  class="performance-campaign-opening__period">.</span
+                >{/if}</span
+            >{:else if index < titleParts.length - 1}<span
               class="performance-campaign-opening__period">.</span
             >{/if}{/each}
       </h1>
@@ -451,6 +461,10 @@
     display: inline;
     margin-inline-start: 0.055em;
     letter-spacing: normal;
+  }
+
+  .performance-campaign-opening__punctuated-word {
+    white-space: nowrap;
   }
 
   .performance-campaign-opening__lede {

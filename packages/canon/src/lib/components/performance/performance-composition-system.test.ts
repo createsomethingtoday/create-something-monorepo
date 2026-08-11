@@ -29,6 +29,27 @@ afterEach(() => {
 });
 
 describe('PerformanceCampaignOpening', () => {
+  it('keeps sentence-ending periods attached to their preceding words', () => {
+    target = document.createElement('div');
+    document.body.appendChild(target);
+    instance = mount(PerformanceCampaignOpening, {
+      target,
+      props: {
+        eyebrow: 'Product system',
+        title: 'One playbook. Three operating paths.'
+      }
+    }) as Record<string, unknown>;
+    flushSync();
+
+    const opening = target.querySelector('section.performance-campaign-opening');
+    const punctuatedWords = [
+      ...(opening?.querySelectorAll('.performance-campaign-opening__punctuated-word') ?? [])
+    ];
+
+    expect(opening?.querySelector('h1')?.textContent).toBe('One playbook. Three operating paths.');
+    expect(punctuatedWords.map((word) => word.textContent)).toEqual(['playbook.', 'paths.']);
+  });
+
   it('names the editorial property role in the public opening', () => {
     target = document.createElement('div');
     document.body.appendChild(target);

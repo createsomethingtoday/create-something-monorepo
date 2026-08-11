@@ -38,6 +38,8 @@ Properties own words, route data, original media, domain-specific artifacts, app
 
 Campaign actions inherit a mode-aware surface from `PerformanceCampaignOpening`: ink openings provide a light primary action and a translucent, light-bordered secondary action; paper openings reverse that relationship. Properties may supply the action destination and label, but they must not reintroduce page-surface button colors over image-backed media.
 
+Campaign headings keep sentence-ending punctuation with its preceding word at every responsive width. Canon owns that wrapping behavior so properties do not need copy-local non-breaking characters or route CSS to protect an editorial line.
+
 Campaign motion is a progressive enhancement, never the only media surface. Supply the canonical responsive `src`, `mobileSrc`, and `alt` first, then optionally add `video.mp4`, `video.webm`, and a matching `video.poster`. Canon renders the still during SSR and first paint, adds silent autoplaying loop media only after hydration when motion is allowed, and keeps the video element absent when `prefers-reduced-motion: reduce` applies. Text, actions, proof, scrims, and grid overlays remain live DOM; never bake them into video. The static image is also the rollback when video delivery or motion quality fails.
 
 The primary campaign material is Paper. Canon exports five responsive studies:
