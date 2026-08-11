@@ -236,9 +236,45 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     'migrated',
     contract(
       'landing',
-      'Choose the canon lens that should govern the work.',
-      'The indexed canon stage pairs each principle with its source and consequence.',
-      'Continue through the property sequence'
+      'Choose one recurring workflow and its first operating playbook.',
+      'The library makes the owner, boundary, approved work, and receipt visible before the work runs.',
+      'Open a playbook or assess workflow readiness'
+    )
+  ),
+  group(
+    'ltd-playbook-library',
+    'ltd',
+    ['playbooks'],
+    'migrated',
+    contract(
+      'index',
+      'Choose the playbook that matches the work moment.',
+      'Each card exposes the operating outcome, approved work, and receipt to keep.',
+      'Open one playbook in context'
+    )
+  ),
+  group(
+    'ltd-playbook-details',
+    'ltd',
+    ['playbooks/[slug]'],
+    'migrated',
+    contract(
+      'editorial',
+      'Understand the operating decision and run it without losing the boundary.',
+      'The owner, approved work, wait point, receipt, runbook, and opposition are inspectable.',
+      'Assess readiness or return to the library'
+    )
+  ),
+  group(
+    'ltd-readiness',
+    'ltd',
+    ['readiness'],
+    'migrated',
+    contract(
+      'tool',
+      'Assess whether one workflow is ready to run with trust.',
+      'The check identifies ambiguity, missing access, unnamed ownership, mistrust, and absent proof.',
+      'Open the recommended playbook'
     )
   ),
   group(
