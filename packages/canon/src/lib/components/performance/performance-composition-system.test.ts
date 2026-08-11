@@ -810,6 +810,10 @@ describe('PerformanceNarrativeStage', () => {
       summary: 'Boundary visible',
       title: 'See the whole workflow.',
       detail: 'Name the systems, owner, risk, and proof before implementation.',
+      stakeholders: [
+        { role: 'Creator', meaning: 'You can see what the reviewer needs.' },
+        { role: 'Reviewer', meaning: 'You receive one inspectable package.' }
+      ],
       evidence: ['Systems are named'],
       receipts: ['workflow map']
     },
@@ -892,6 +896,9 @@ describe('PerformanceNarrativeStage', () => {
     expect(stage?.querySelector('[role="tabpanel"]:not([hidden])')?.textContent).toContain(
       'See the whole workflow.'
     );
+    expect(stage?.querySelector('[aria-label="What this means for you"]')?.textContent).toContain(
+      'You can see what the reviewer needs.'
+    );
 
     (tabs[2] as HTMLButtonElement).click();
     flushSync();
@@ -953,5 +960,49 @@ describe('PerformanceNarrativeStage', () => {
     expect(selected?.textContent).toContain('Prove');
     expect(document.activeElement).toBe(selected);
     expect(window.location.hash).toBe('#workflow-story-prove');
+  });
+
+  it('presents one viewport-sized slide without stealing keys from focused controls', () => {
+    target = document.createElement('div');
+    document.body.appendChild(target);
+    instance = mount(PerformanceNarrativeStage, {
+      target,
+      props: {
+        id: 'workflow-story',
+        title: 'Map. Decide. Prove.',
+        enablePresentation: true,
+        scenes
+      }
+    }) as Record<string, unknown>;
+    flushSync();
+
+    const stage = target.querySelector<HTMLElement>('section.performance-narrative-stage');
+    target.querySelector<HTMLButtonElement>('.performance-narrative-stage__present')?.click();
+    flushSync();
+
+    expect(stage?.getAttribute('data-presenting')).toBe('true');
+    expect(stage?.getAttribute('role')).toBe('dialog');
+    expect(stage?.getAttribute('aria-modal')).toBe('true');
+    expect(document.body.style.overflow).toBe('hidden');
+    expect(target.querySelectorAll('[role="tabpanel"]:not([hidden])')).toHaveLength(1);
+    expect(target.querySelector('.performance-narrative-stage__controls')?.textContent).toContain(
+      'Next slide'
+    );
+
+    const exit = target.querySelector<HTMLButtonElement>('.performance-narrative-stage__present');
+    exit?.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
+    flushSync();
+    expect(stage?.querySelector('[role="tab"][aria-selected="true"]')?.textContent).toContain('Map');
+
+    document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    flushSync();
+    expect(stage?.querySelector('[role="tab"][aria-selected="true"]')?.textContent).toContain(
+      'Decide'
+    );
+
+    document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    flushSync();
+    expect(stage?.getAttribute('data-presenting')).toBe('false');
+    expect(document.body.style.overflow).toBe('');
   });
 });

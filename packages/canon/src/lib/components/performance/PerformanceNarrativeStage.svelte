@@ -16,6 +16,10 @@
     summary: string;
     title: string;
     detail: string;
+    stakeholders?: Array<{
+      role: string;
+      meaning: string;
+    }>;
     tone?: PerformanceNarrativeTone;
     evidence?: string[];
     receipts?: string[];
@@ -54,6 +58,12 @@
   let enhanced = $state(false);
   let presenting = $state(false);
   let tabElements = $state<HTMLButtonElement[]>([]);
+  let stageElement = $state<HTMLElement>();
+  let presentButton = $state<HTMLButtonElement>();
+  let previousBodyOverflow = '';
+
+  const interactiveSelector =
+    'a[href], button, input, textarea, select, summary, [contenteditable="true"]';
 
   function controlState(tone: PerformanceNarrativeTone | undefined) {
     if (tone === 'allow') return 'ready';
@@ -115,10 +125,25 @@
 
   function handlePresentationKeydown(event: KeyboardEvent) {
     if (!presenting || event.defaultPrevented) return;
-    if (
-      event.target instanceof HTMLElement &&
-      event.target.closest('input, textarea, select, [contenteditable="true"]')
-    ) {
+
+    if (event.key === 'Tab' && stageElement) {
+      const focusable = [...stageElement.querySelectorAll<HTMLElement>(interactiveSelector)].filter(
+        (element) => !element.hasAttribute('disabled') && element.getAttribute('aria-hidden') !== 'true'
+      );
+      const first = focusable[0];
+      const last = focusable.at(-1);
+      if (!first || !last) return;
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+      return;
+    }
+
+    if (event.target instanceof HTMLElement && event.target.closest(interactiveSelector)) {
       return;
     }
 
@@ -132,7 +157,7 @@
     } else if (event.key === 'End') {
       nextIndex = scenes.length - 1;
     } else if (event.key === 'Escape') {
-      presenting = false;
+      setPresenting(false);
       return;
     } else {
       return;
@@ -140,6 +165,20 @@
 
     event.preventDefault();
     selectScene(nextIndex, true);
+  }
+
+  function setPresenting(next: boolean) {
+    if (presenting === next) return;
+    presenting = next;
+
+    if (typeof document === 'undefined') return;
+    if (next) {
+      previousBodyOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = previousBodyOverflow;
+      requestAnimationFrame(() => presentButton?.focus());
+    }
   }
 
   onMount(() => {
@@ -153,11 +192,13 @@
       window.removeEventListener('hashchange', syncFromFragment);
       window.removeEventListener('popstate', syncFromFragment);
       window.removeEventListener('keydown', handlePresentationKeydown);
+      if (presenting) document.body.style.overflow = previousBodyOverflow;
     };
   });
 </script>
 
 <section
+  bind:this={stageElement}
   {id}
   class="performance-narrative-stage"
   data-density={density}
@@ -165,7 +206,9 @@
   data-enhanced={enhanced}
   data-presentation-enabled={enablePresentation}
   data-presenting={presenting}
-  aria-label={ariaLabel}
+  role={presenting ? 'dialog' : undefined}
+  aria-modal={presenting ? 'true' : undefined}
+  aria-label={presenting ? `${ariaLabel} presentation` : ariaLabel}
 >
   <div class="performance-narrative-stage__inner">
     <header class="performance-narrative-stage__header">
@@ -176,10 +219,11 @@
       {#if description}<p>{description}</p>{/if}
       {#if enablePresentation}
         <button
+          bind:this={presentButton}
           type="button"
           class="performance-narrative-stage__present"
           aria-pressed={presenting}
-          onclick={() => (presenting = !presenting)}
+          onclick={() => setPresenting(!presenting)}
         >
           {presenting ? 'Exit presentation' : 'Present deck'}
         </button>
@@ -246,6 +290,16 @@
               </div>
               <h3>{scene.title}</h3>
               <p>{scene.detail}</p>
+              {#if scene.stakeholders?.length}
+                <div
+                  class="performance-narrative-stage__stakeholders"
+                  aria-label="What this means for you"
+                >
+                  {#each scene.stakeholders as stakeholder}
+                    <p><strong>{stakeholder.role}</strong><span>{stakeholder.meaning}</span></p>
+                  {/each}
+                </div>
+              {/if}
             </div>
 
             {#if artifact}
@@ -291,15 +345,15 @@
                   disabled={index === 0}
                   onclick={() => selectScene(index - 1, true, true)}
                 >
-                  Previous
+                  {presenting ? 'Previous slide' : 'Previous'}
                 </button>
-                <span aria-live="polite">{scene.label} · {index + 1} of {scenes.length}</span>
+                <span aria-live="polite">Slide {index + 1} of {scenes.length} · {scene.label}</span>
                 <button
                   type="button"
                   disabled={index === scenes.length - 1}
                   onclick={() => selectScene(index + 1, true, true)}
                 >
-                  Next
+                  {presenting ? 'Next slide' : 'Next'}
                 </button>
               </div>
             {/if}
@@ -366,27 +420,6 @@
   .performance-narrative-stage__present:focus-visible {
     outline: 3px solid var(--color-performance-signal, #0057b8);
     outline-offset: 2px;
-  }
-
-  .performance-narrative-stage[data-presenting='true'] {
-    position: fixed;
-    z-index: 90;
-    inset: 0;
-    overflow: auto;
-    padding-block: clamp(1rem, 2vw, 2rem);
-    scroll-margin-top: 0;
-  }
-
-  .performance-narrative-stage[data-presenting='true'] .performance-narrative-stage__inner {
-    min-height: calc(100dvh - clamp(2rem, 4vw, 4rem));
-  }
-
-  .performance-narrative-stage[data-presenting='true'] .performance-narrative-stage__preview {
-    display: none;
-  }
-
-  .performance-narrative-stage[data-presenting='true'] .performance-narrative-stage__composition {
-    min-height: calc(100dvh - 10rem);
   }
 
   .performance-narrative-stage__header > div,
@@ -548,14 +581,14 @@
     display: none;
   }
 
-  .performance-narrative-stage__scene-head > div {
+  .performance-narrative-stage__scene-head > div:first-child {
     display: flex;
     gap: 0.75rem;
     align-items: center;
     justify-content: space-between;
   }
 
-  .performance-narrative-stage__scene-head > div > strong {
+  .performance-narrative-stage__scene-head > div:first-child > strong {
     padding: 0.3rem 0.55rem;
     border: 1px solid var(--color-performance-line, #d7d7d2);
     color: var(--color-performance-muted, #5e6268);
@@ -574,6 +607,38 @@
 
   .performance-narrative-stage__scene-head > p {
     max-width: 48rem;
+  }
+
+  .performance-narrative-stage__stakeholders {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+    gap: 1px;
+    overflow: hidden;
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+    background: var(--color-performance-line, #d7d7d2);
+  }
+
+  .performance-narrative-stage__stakeholders p {
+    display: grid;
+    gap: 0.3rem;
+    padding: 0.65rem 0.75rem;
+    background: var(--color-performance-panel, #fff);
+  }
+
+  .performance-narrative-stage__stakeholders p strong {
+    color: var(--color-performance-ink, #090909);
+    font-family: var(--font-performance-mono);
+    font-size: 0.66rem;
+    text-transform: uppercase;
+  }
+
+  .performance-narrative-stage__stakeholders p span {
+    color: var(--color-performance-muted, #5e6268);
+    font-family: inherit;
+    font-size: 0.76rem;
+    font-weight: 400;
+    line-height: 1.35;
+    text-transform: none;
   }
 
   .performance-narrative-stage__artifact {
@@ -889,6 +954,277 @@
 
     .performance-narrative-stage__index button:nth-last-child(-n + 2) {
       border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
+    }
+  }
+
+  .performance-narrative-stage[data-presenting='true'] {
+    position: fixed;
+    z-index: 90;
+    inset: 0;
+    width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
+    padding: 0;
+    border: 0;
+    scroll-margin-top: 0;
+    background: var(--color-performance-paper, #f3f3f0);
+  }
+
+  .performance-narrative-stage[data-presenting='true'] .performance-narrative-stage__inner {
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+  }
+
+  .performance-narrative-stage[data-presenting='true'] .performance-narrative-stage__header {
+    z-index: 2;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 1rem;
+    align-items: center;
+    min-height: 3.5rem;
+    padding: 0.5rem clamp(0.75rem, 2vw, 1.5rem);
+    border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
+    background: var(--color-performance-panel, #fff);
+  }
+
+  .performance-narrative-stage[data-presenting='true']
+    .performance-narrative-stage__header
+    > div {
+    display: flex;
+    min-width: 0;
+    gap: 0.75rem;
+    align-items: baseline;
+  }
+
+  .performance-narrative-stage[data-presenting='true'] .performance-narrative-stage__header h2 {
+    max-width: none;
+    overflow: hidden;
+    font-family: var(--font-performance-display);
+    font-size: 1rem;
+    font-weight: var(--font-performance-semibold);
+    line-height: 1.1;
+    text-overflow: ellipsis;
+    text-wrap: nowrap;
+    white-space: nowrap;
+  }
+
+  .performance-narrative-stage[data-presenting='true'] .performance-narrative-stage__header > p,
+  .performance-narrative-stage[data-presenting='true'] .performance-narrative-stage__preview {
+    display: none;
+  }
+
+  .performance-narrative-stage[data-presenting='true'] .performance-narrative-stage__present {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+    min-height: 2.4rem;
+  }
+
+  .performance-narrative-stage[data-presenting='true']
+    .performance-narrative-stage__composition {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .performance-narrative-stage[data-presenting='true'] .performance-narrative-stage__index {
+    position: static;
+    display: grid;
+    grid-template-columns: repeat(var(--scene-count, 1), minmax(7rem, 1fr));
+    grid-auto-flow: row;
+    overflow-x: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
+    background: var(--color-performance-court, #e6e6e0);
+    scrollbar-width: thin;
+  }
+
+  .performance-narrative-stage[data-presenting='true']
+    .performance-narrative-stage__index
+    button {
+    grid-template-columns: 1.2rem minmax(0, 1fr);
+    min-height: 3rem;
+    padding: 0.55rem 0.65rem;
+    border-right: 1px solid var(--color-performance-line, #d7d7d2);
+    border-bottom: 0;
+    scroll-snap-align: none;
+  }
+
+  .performance-narrative-stage[data-presenting='true']
+    .performance-narrative-stage__index-copy
+    small,
+  .performance-narrative-stage[data-presenting='true']
+    .performance-narrative-stage__index-copy
+    em {
+    display: none;
+  }
+
+  .performance-narrative-stage[data-presenting='true'] .performance-narrative-stage__panels {
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .performance-narrative-stage[data-presenting='true'] .performance-narrative-stage__panel,
+  .performance-narrative-stage[data-presenting='true'][data-expression='editorial']
+    .performance-narrative-stage__panel {
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    align-content: stretch;
+    gap: clamp(0.65rem, 1.5vw, 1rem);
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
+    padding: clamp(0.75rem, 2vw, 1.5rem);
+  }
+
+  .performance-narrative-stage[data-presenting='true']
+    .performance-narrative-stage__scene-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(16rem, 0.55fr);
+    gap: 0.45rem clamp(1rem, 3vw, 3rem);
+    align-items: end;
+  }
+
+  .performance-narrative-stage[data-presenting='true']
+    .performance-narrative-stage__scene-head
+    > div:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .performance-narrative-stage[data-presenting='true']
+    .performance-narrative-stage__stakeholders {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  }
+
+  .performance-narrative-stage[data-presenting='true']
+    .performance-narrative-stage__scene-head
+    h3,
+  .performance-narrative-stage[data-presenting='true'][data-expression='editorial']
+    .performance-narrative-stage__scene-head
+    h3 {
+    max-width: 18ch;
+    font-size: clamp(2rem, 4.6vw, 4.75rem);
+    line-height: var(--leading-performance-editorial, 1.02);
+  }
+
+  .performance-narrative-stage[data-presenting='true']
+    .performance-narrative-stage__scene-head
+    > p {
+    max-width: 38rem;
+    padding-bottom: 0.15rem;
+    font-size: clamp(0.86rem, 1.35vw, 1rem);
+  }
+
+  .performance-narrative-stage[data-presenting='true'] .performance-narrative-stage__artifact {
+    min-height: 0;
+    overflow: auto;
+    padding-block: 0.5rem;
+    overscroll-behavior: contain;
+  }
+
+  .performance-narrative-stage[data-presenting='true'] .performance-narrative-stage__proof,
+  .performance-narrative-stage[data-presenting='true'] .performance-narrative-stage__actions {
+    display: none;
+  }
+
+  .performance-narrative-stage[data-presenting='true'] .performance-narrative-stage__controls {
+    z-index: 2;
+    margin: 0;
+    padding-top: 0.55rem;
+    background: var(--color-performance-panel, #fff);
+  }
+
+  @media (max-width: 47.99rem) {
+    .performance-narrative-stage[data-presenting='true'] .performance-narrative-stage__header {
+      min-height: 3.25rem;
+      padding: 0.4rem 0.55rem;
+    }
+
+    .performance-narrative-stage[data-presenting='true']
+      .performance-narrative-stage__header
+      span {
+      display: none;
+    }
+
+    .performance-narrative-stage[data-presenting='true']
+      .performance-narrative-stage__header
+      h2 {
+      font-size: 0.85rem;
+    }
+
+    .performance-narrative-stage[data-presenting='true']
+      .performance-narrative-stage__composition {
+      grid-template-rows: auto minmax(0, 1fr);
+    }
+
+    .performance-narrative-stage[data-presenting='true']
+      .performance-narrative-stage__index {
+      grid-template-columns: none;
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(7.75rem, 36vw);
+      scroll-snap-type: inline mandatory;
+    }
+
+    .performance-narrative-stage[data-presenting='true']
+      .performance-narrative-stage__index
+      button {
+      scroll-snap-align: start;
+    }
+
+    .performance-narrative-stage[data-presenting='true']
+      .performance-narrative-stage__panel,
+    .performance-narrative-stage[data-presenting='true'][data-expression='editorial']
+      .performance-narrative-stage__panel {
+      gap: 0.65rem;
+      padding: 0.7rem;
+    }
+
+    .performance-narrative-stage[data-presenting='true']
+      .performance-narrative-stage__scene-head {
+      grid-template-columns: 1fr;
+      gap: 0.35rem;
+    }
+
+    .performance-narrative-stage[data-presenting='true']
+      .performance-narrative-stage__scene-head
+      h3,
+    .performance-narrative-stage[data-presenting='true'][data-expression='editorial']
+      .performance-narrative-stage__scene-head
+      h3 {
+      font-size: clamp(1.65rem, 9vw, 2.7rem);
+    }
+
+    .performance-narrative-stage[data-presenting='true']
+      .performance-narrative-stage__scene-head
+      > p {
+      font-size: 0.84rem;
+      line-height: 1.4;
+    }
+
+    .performance-narrative-stage[data-presenting='true']
+      .performance-narrative-stage__stakeholders {
+      display: flex;
+      overflow-x: auto;
+      scroll-snap-type: x proximity;
+    }
+
+    .performance-narrative-stage[data-presenting='true']
+      .performance-narrative-stage__stakeholders
+      p {
+      min-width: min(15rem, 72vw);
+      scroll-snap-align: start;
+    }
+
+    .performance-narrative-stage[data-presenting='true']
+      .performance-narrative-stage__controls {
+      grid-template-columns: 1fr 1fr;
     }
   }
 

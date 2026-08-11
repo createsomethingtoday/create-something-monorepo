@@ -21,7 +21,18 @@ export type AtlasMotionCue =
 export type AtlasRouteKind = 'arc' | 'playbook' | 'runbook';
 export type AtlasSceneKind = 'signal' | 'automation' | 'map' | 'judgment' | 'runbook' | 'receipt';
 export type AtlasActionStatus = 'proposed' | 'approved' | 'rejected' | 'completed';
-export type AtlasPresentationLayout = 'statement' | 'split' | 'image' | 'code' | 'map' | 'demo' | 'proof';
+export type AtlasPresentationLayout =
+  | 'statement'
+  | 'split'
+  | 'image'
+  | 'code'
+  | 'map'
+  | 'decision'
+  | 'branches'
+  | 'demo'
+  | 'proof';
+
+export type AtlasStakeholderRole = 'Creator' | 'Reviewer' | 'Partnerships & Support' | 'Leadership';
 
 export type AtlasMapVersion = {
   id?: string;
@@ -60,6 +71,20 @@ export type AtlasArtifact = {
 export type AtlasScenePresentation = {
   layout: AtlasPresentationLayout;
   eyebrow: string;
+  reader: {
+    heading: string;
+    explanation: string;
+    takeaway: string;
+    stakeholders: Array<{
+      role: AtlasStakeholderRole;
+      meaning: string;
+    }>;
+  };
+  branches?: Array<{
+    explanation: string;
+    label: string;
+    next: string;
+  }>;
   callout?: {
     detail: string;
     label: string;
@@ -384,6 +409,16 @@ export const APP_REVIEW_GOVERNANCE_COMPOSITION: AtlasComposition = {
       presentation: {
         layout: 'split',
         eyebrow: '01 / Intake & Preflight',
+        reader: {
+          heading: 'A developer submits an app.',
+          explanation:
+            'The system checks the form, runs App Review Preflight, and gathers the evidence a reviewer needs. The app is ready to inspect, not approved.',
+          takeaway: 'Evidence comes before review',
+          stakeholders: [
+            { role: 'Creator', meaning: 'You can see what is missing before a reviewer decides.' },
+            { role: 'Reviewer', meaning: 'You receive one inspectable package instead of scattered evidence.' }
+          ]
+        },
         callout: {
           label: 'Quality gate',
           value: 'Evidence first',
@@ -404,11 +439,11 @@ export const APP_REVIEW_GOVERNANCE_COMPOSITION: AtlasComposition = {
     {
       id: 'signal',
       kind: 'signal',
-      label: 'Signal',
-      title: 'A signal arrives. It is not a decision yet.',
-      summary: 'Slack holds the starting signal.',
+      label: 'Notify',
+      title: 'The submission reaches the review team.',
+      summary: 'The form starts the request; Slack alerts the team.',
       detail:
-        'The agent can read a relevant channel through a user-scoped Slack MCP, preserving source context before anything becomes governed work.',
+        'The submitted form remains the intake. A Slack message alerts the team and stays attached as source context before anything becomes governed work.',
       artifactIds: ['slack-signal-contract', 'motion-authoring-contract'],
       evidence: ['Slack is an intake signal, not the durable governance record.'],
       mapModuleIds: [APP_REVIEW_MAP_MODULE_ID],
@@ -416,10 +451,20 @@ export const APP_REVIEW_GOVERNANCE_COMPOSITION: AtlasComposition = {
       presentation: {
         layout: 'statement',
         eyebrow: '02 / Signal',
+        reader: {
+          heading: 'The submission reaches the review team.',
+          explanation:
+            'The form creates the review request. Slack tells the team it is ready. The alert stays attached as context, but it does not become the official record.',
+          takeaway: 'One request, one clear alert',
+          stakeholders: [
+            { role: 'Creator', meaning: 'Your submitted form stays attached to the review.' },
+            { role: 'Reviewer', meaning: 'The alert tells you where the review package is waiting.' }
+          ]
+        },
         callout: {
           label: 'Source boundary',
-          value: 'Slack starts the story',
-          detail: 'The original conversation remains visible context. It is not silently promoted into durable governance state.'
+          value: 'The form starts the request',
+          detail: 'Slack alerts the team. It does not replace the submitted form or become the official review record.'
         }
       },
       motion: {
@@ -443,6 +488,16 @@ export const APP_REVIEW_GOVERNANCE_COMPOSITION: AtlasComposition = {
       presentation: {
         layout: 'code',
         eyebrow: '03 / Normalize',
+        reader: {
+          heading: 'An agent prepares the review item.',
+          explanation:
+            'Claude gathers the submitted evidence and prepares a proposed review item through the governed write path. The agent can organize the work. It cannot approve it.',
+          takeaway: 'The agent prepares; a person approves',
+          stakeholders: [
+            { role: 'Reviewer', meaning: 'You get a prepared item and still own the judgment.' },
+            { role: 'Leadership', meaning: 'Automation removes setup work without removing accountability.' }
+          ]
+        },
         code: {
           language: 'typescript',
           filename: 'app-governance-normalize.ts',
@@ -481,10 +536,20 @@ export const APP_REVIEW_GOVERNANCE_COMPOSITION: AtlasComposition = {
       presentation: {
         layout: 'map',
         eyebrow: '04 / Orient',
+        reader: {
+          heading: 'Each system keeps one clear job.',
+          explanation:
+            'The durable record stores the decision. The team workspace makes it readable. The partner conversation keeps questions and exceptions attached. The map shows how they connect.',
+          takeaway: 'One record with clear supporting context',
+          stakeholders: [
+            { role: 'Partnerships & Support', meaning: 'Your conversation stays visible without becoming the decision.' },
+            { role: 'Leadership', meaning: 'You can trace one accountable record across the process.' }
+          ]
+        },
         callout: {
           label: 'Source of truth',
-          value: 'D1 is durable',
-          detail: 'Airtable stays readable and Zendesk stays conversational, but neither replaces the governed record.'
+          value: 'One durable review record',
+          detail: 'The team workspace stays readable and the partner conversation stays conversational, but neither replaces the official record.'
         }
       },
       motion: {
@@ -506,21 +571,89 @@ export const APP_REVIEW_GOVERNANCE_COMPOSITION: AtlasComposition = {
       mapModuleIds: [APP_REVIEW_MAP_MODULE_ID],
       focusNodeIds: ['d1-governance-record', 'operator-decision'],
       presentation: {
-        layout: 'image',
+        layout: 'decision',
         eyebrow: '05 / Decide',
+        reader: {
+          heading: 'A person decides what happens next.',
+          explanation:
+            'The agent may draft a creator update. Proposed means waiting. Approved means the update may run. Request changes, rejection, and exceptions all stay visible.',
+          takeaway: 'Proposed means waiting',
+          stakeholders: [
+            { role: 'Creator', meaning: 'You receive a clear outcome and the reason behind it.' },
+            { role: 'Reviewer', meaning: 'You approve, reject, or request changes before any action runs.' }
+          ]
+        },
         callout: {
           label: 'Human judgment',
           value: 'Proposed is not approved',
           detail: 'The agent can draft the smallest reversible next step. An operator still owns approval, rejection, and accountability.'
         },
-        media: {
-          artifactId: 'app-review-evidence-gate-media',
-          caption: 'The visual is an explanatory study, not a claimed approval event.',
-          placement: 'full-bleed'
-        }
       },
       motion: {
         cue: 'decision-gate',
+        reducedMotion: 'static-emphasis',
+        source: 'agent-authored-structured-data'
+      }
+    },
+    {
+      id: 'recover',
+      kind: 'judgment',
+      label: 'Recover',
+      title: 'A request for changes keeps the process moving.',
+      summary: 'A no becomes a documented next step, not a dead end.',
+      detail:
+        'A failed preflight or review can return clear changes to the creator, close the candidate with a reason, or escalate an exception for added sign-off. A revised app re-enters through Intake with its earlier context preserved.',
+      artifactIds: ['app-review-preflight-contract', 'zendesk-context-contract', 'action-gate-contract'],
+      evidence: [
+        'Request changes returns a clear summary and lets a revised app re-enter through Intake.',
+        'Exceptions require added human sign-off before any bounded action can run.'
+      ],
+      mapModuleIds: [APP_REVIEW_MAP_MODULE_ID],
+      focusNodeIds: [
+        'app-submission-form',
+        'app-review-preflight',
+        'zendesk-context',
+        'operator-decision'
+      ],
+      presentation: {
+        layout: 'branches',
+        eyebrow: '06 / Recover',
+        reader: {
+          heading: 'A no creates a clear way forward.',
+          explanation:
+            'If preflight or review finds a problem, the creator receives the reason and the next step. A revised app returns to Intake. A risky exception waits for added human sign-off.',
+          takeaway: 'Every stop has a next step',
+          stakeholders: [
+            { role: 'Creator', meaning: 'You know what to change and where a revision re-enters.' },
+            { role: 'Partnerships & Support', meaning: 'You can carry context into an exception without bypassing review.' },
+            { role: 'Leadership', meaning: 'Failure and escalation paths are visible, not hidden in chat.' }
+          ]
+        },
+        branches: [
+          {
+            label: 'Request changes',
+            explanation: 'Send the creator a concrete list of changes. Preserve the evidence already gathered.',
+            next: 'Revise and return to Intake'
+          },
+          {
+            label: 'Reject',
+            explanation: 'Record the reason and close this candidate. Keep the decision available for later review.',
+            next: 'Close with a visible reason'
+          },
+          {
+            label: 'Escalate an exception',
+            explanation: 'Attach partner context and require added sign-off before any action can run.',
+            next: 'Wait for dual approval'
+          }
+        ],
+        callout: {
+          label: 'Recovery path',
+          value: 'Revise, close, or escalate',
+          detail: 'A no is useful only when the next step and owner are clear.'
+        }
+      },
+      motion: {
+        cue: 'recovery-loop',
         reducedMotion: 'static-emphasis',
         source: 'agent-authored-structured-data'
       }
@@ -532,18 +665,28 @@ export const APP_REVIEW_GOVERNANCE_COMPOSITION: AtlasComposition = {
       title: 'The approved action follows the bounded runbook.',
       summary: 'The action can run only after its gate clears.',
       detail:
-        'This fixture simulates a local-only reconciliation check. It has no production target, no external write, and no right to execute a rejected proposal.',
+        'This fixture simulates a local requested-changes handoff. It has no production target, sends no message, and has no right to execute a rejected proposal.',
       artifactIds: ['action-gate-contract', 'motion-authoring-contract'],
       evidence: ['The prototype action is local-only and returns no production claim.'],
       mapModuleIds: [APP_REVIEW_MAP_MODULE_ID],
       focusNodeIds: ['operator-decision', 'app-governance-mcp', 'workflow-receipt'],
       presentation: {
         layout: 'demo',
-        eyebrow: '06 / Run',
+        eyebrow: '07 / Run',
+        reader: {
+          heading: 'Only the approved action can run.',
+          explanation:
+            'After approval, the governed write path records the bounded step and keeps the result tied to the review. This demo stays in the browser and sends no message.',
+          takeaway: 'Approval unlocks one bounded step',
+          stakeholders: [
+            { role: 'Creator', meaning: 'Only the update a reviewer approved can be prepared for you.' },
+            { role: 'Reviewer', meaning: 'Your approval unlocks one named action, not open-ended access.' }
+          ]
+        },
         callout: {
           label: 'Execution boundary',
-          value: 'Local fixture only',
-          detail: 'The runtime can demonstrate an approved reconciliation check, but it has no production target and no external write authority.'
+          value: 'One approved creator update',
+          detail: 'The demo records a simulated requested-changes handoff. It has no production target and sends no external message.'
         }
       },
       motion: {
@@ -566,7 +709,17 @@ export const APP_REVIEW_GOVERNANCE_COMPOSITION: AtlasComposition = {
       focusNodeIds: ['workflow-receipt', 'd1-governance-record'],
       presentation: {
         layout: 'proof',
-        eyebrow: '07 / Proof',
+        eyebrow: '08 / Proof',
+        reader: {
+          heading: 'The system records what happened.',
+          explanation:
+            'The receipt names the issuer, the action, the result, and the runtime boundary. A reviewer can inspect the record instead of trusting a chat summary.',
+          takeaway: 'A receipt closes the review',
+          stakeholders: [
+            { role: 'Reviewer', meaning: 'You can inspect the action and result after the handoff.' },
+            { role: 'Leadership', meaning: 'You get an auditable record instead of a status claim.' }
+          ]
+        },
         callout: {
           label: 'Close the Arc',
           value: 'Show the receipt',
@@ -585,22 +738,24 @@ export const APP_REVIEW_GOVERNANCE_COMPOSITION: AtlasComposition = {
       id: 'app-review-governance-arc',
       kind: 'arc',
       title: 'App Review Governance Arc',
-      description: 'The durable A-to-Z human story from a submission and preflight handoff to a receipt.',
-      sceneIds: ['intake-preflight', 'signal', 'normalize', 'orient', 'decide', 'run', 'proof']
+      description: 'Follow an app from submission to a final receipt.',
+      sceneIds: ['intake-preflight', 'signal', 'normalize', 'orient', 'decide', 'recover', 'run', 'proof']
     },
     {
       id: 'app-review-governance-playbook',
       kind: 'playbook',
       title: 'App Review Governance Playbook',
-      description: 'The reusable method for preserving source boundaries and decision gates.',
-      sceneIds: ['intake-preflight', 'signal', 'normalize', 'orient', 'decide', 'proof']
+      description:
+        'Reuse the review method: collect evidence, keep each source clear, require a person to decide, and record proof.',
+      sceneIds: ['intake-preflight', 'signal', 'normalize', 'orient', 'decide', 'recover', 'proof']
     },
     {
       id: 'app-review-governance-runbook',
       kind: 'runbook',
       title: 'App Review Governance Runbook',
-      description: 'The method bound to the App Review operating context and local action simulation.',
-      sceneIds: ['intake-preflight', 'orient', 'decide', 'run', 'proof']
+      description:
+        'Run one review: gather context, wait for approval, take one bounded action, and record the result.',
+      sceneIds: ['intake-preflight', 'orient', 'decide', 'recover', 'run', 'proof']
     }
   ]
 };
@@ -650,9 +805,34 @@ export function validateAtlasComposition(composition: AtlasComposition): AtlasCo
     if (scene.motion.reducedMotion !== 'static-emphasis') {
       issues.push(`Scene ${scene.id} must define a static reduced-motion equivalent.`);
     }
-    const layouts: AtlasPresentationLayout[] = ['statement', 'split', 'image', 'code', 'map', 'demo', 'proof'];
+    const layouts: AtlasPresentationLayout[] = [
+      'statement',
+      'split',
+      'image',
+      'code',
+      'map',
+      'decision',
+      'branches',
+      'demo',
+      'proof'
+    ];
     if (!layouts.includes(scene.presentation.layout)) {
       issues.push(`Scene ${scene.id} has an unsupported presentation layout.`);
+    }
+    if (
+      !scene.presentation.reader.heading.trim() ||
+      !scene.presentation.reader.explanation.trim() ||
+      !scene.presentation.reader.takeaway.trim()
+    ) {
+      issues.push(`Scene ${scene.id} must define complete reader-facing presentation copy.`);
+    }
+    if (
+      !scene.presentation.reader.stakeholders.length ||
+      scene.presentation.reader.stakeholders.some(
+        (stakeholder) => !stakeholder.role.trim() || !stakeholder.meaning.trim()
+      )
+    ) {
+      issues.push(`Scene ${scene.id} must explain what it means for at least one stakeholder.`);
     }
     if ((scene.presentation.layout === 'split' || scene.presentation.layout === 'image') && !scene.presentation.media) {
       issues.push(`Scene ${scene.id} requires a media composition.`);
@@ -668,6 +848,9 @@ export function validateAtlasComposition(composition: AtlasComposition): AtlasCo
     }
     if (scene.presentation.code && !scene.presentation.code.content.trim()) {
       issues.push(`Scene ${scene.id} has an empty code composition.`);
+    }
+    if (scene.presentation.layout === 'branches' && (scene.presentation.branches?.length ?? 0) < 2) {
+      issues.push(`Scene ${scene.id} requires at least two visible branches.`);
     }
     for (const id of scene.mapModuleIds) {
       if (!moduleIds.includes(id)) issues.push(`Scene ${scene.id} references unknown map module ${id}.`);
@@ -758,11 +941,11 @@ export function proposeArcAction(
   if (!input.proposedBy.trim()) throw new Error('An agent identity is required to propose an action.');
 
   return {
-    actionId: 'reconcile-app-review-governance-checklist',
+    actionId: 'send-creator-requested-changes-summary',
     arcId: composition.id,
-    title: 'Reconcile the staged App Review governance checklist',
+    title: 'Send the creator the requested-changes summary',
     description:
-      'Compare the local staged checklist fixture with the App Review Governance contract and return a difference report. No external system is read or written.',
+      'Prepare a local preview of the requested-changes summary and record the intended handoff. No message is sent and no external system is read or written.',
     gate: 'approval',
     proposedBy: input.proposedBy.trim(),
     status: 'proposed',
@@ -806,7 +989,7 @@ export function executeArcAction(
       issuer: input.executor.trim(),
       mode: 'local-fixture',
       status: 'recorded',
-      evidence: 'Local fixture reconciliation completed; no external system was read or written.'
+      evidence: 'Local fixture recorded a simulated requested-changes handoff; no message was sent and no external system was read or written.'
     }
   };
 }
