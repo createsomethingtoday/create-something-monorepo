@@ -292,26 +292,21 @@
 			</p>
 		</div>
 
-		<div class="about-visual" aria-label="Care at home">
-			<img
-				class="about-photo"
-				src="/caregiver-selfie.avif"
-				alt="A home health professional smiling with an older adult"
-				width="656"
-				height="440"
-			/>
-			<img
-				class="about-cutout"
-				src="/caregiver-meal.avif"
-				alt="A caregiver bringing a meal to an older adult at home"
-				width="690"
-				height="682"
-			/>
-			<aside class="promise-card" aria-label="Our promise">
-				<p>“Our commitment is to our community.”</p>
-				<span>Every visit. Every plan. Every family.</span>
-			</aside>
-		</div>
+		<figure class="about-visual">
+			<div class="about-photo-frame">
+				<img
+					class="about-photo"
+					src="/caregiver-selfie.avif"
+					alt="A home health professional smiling with an older adult"
+					width="656"
+					height="440"
+				/>
+			</div>
+			<figcaption class="promise-strip">
+				<span>Our promise</span>
+				<p>Every visit. Every plan. Every family.</p>
+			</figcaption>
+		</figure>
 	</section>
 
 	<section id="contact" class="contact-section section-shell">

@@ -604,10 +604,11 @@ p {
 }
 
 .about-grid {
+	padding-block: clamp(88px, 8vw, 108px);
 	display: grid;
 	grid-template-columns: minmax(0, 1fr) minmax(370px, 0.76fr);
 	align-items: center;
-	gap: clamp(60px, 9vw, 130px);
+	gap: clamp(56px, 7vw, 108px);
 }
 
 .about-lede {
@@ -616,69 +617,54 @@ p {
 }
 
 .about-visual {
-	position: relative;
-	min-height: 540px;
+	margin: 0;
+	border: 1px solid var(--line);
 	border-radius: var(--radius-media);
-	background: var(--sage);
+	display: grid;
+	grid-template-rows: minmax(0, 1fr) auto;
 	overflow: hidden;
+	background: var(--sage);
+	box-shadow: var(--shadow-media);
 }
 
-.about-visual::before {
-	position: absolute;
-	top: -55px;
-	left: -45px;
-	width: 220px;
-	height: 220px;
-	border: 30px solid rgb(255 255 255 / 34%);
-	border-radius: 50%;
-	content: '';
+.about-photo-frame {
+	aspect-ratio: 1.25;
+	min-height: 0;
+	overflow: hidden;
+	background: var(--sage);
 }
 
 .about-photo {
-	position: absolute;
-	top: 34px;
-	right: 34px;
-	width: 72%;
-	border-radius: 120px 120px 20px 20px;
+	width: 100%;
+	height: 100%;
 	object-fit: cover;
-	box-shadow: var(--shadow-card);
+	object-position: center;
 }
 
-.about-cutout {
-	position: absolute;
-	bottom: -36px;
-	left: -25px;
-	width: 58%;
-	filter: drop-shadow(0 16px 28px rgb(0 40 85 / 16%));
+.promise-strip {
+	padding: 20px 22px;
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr);
+	align-items: center;
+	gap: 20px;
+	background: var(--forest-deep);
+	color: #fff;
 }
 
-.promise-card {
-	position: absolute;
-	right: 24px;
-	bottom: 24px;
-	z-index: 2;
-	max-width: 245px;
-	border: 1px solid rgb(0 40 85 / 9%);
-	border-radius: var(--radius-card);
-	padding: 20px;
-	background: rgb(255 254 250 / 94%);
-	box-shadow: var(--shadow-card);
-	-webkit-backdrop-filter: blur(12px);
-	backdrop-filter: blur(12px);
-}
-
-.promise-card p {
-	margin-bottom: 12px;
-	font-size: 1.45rem;
-	font-weight: 700;
-	line-height: 1.12;
-	letter-spacing: -0.03em;
-}
-
-.promise-card span {
-	color: var(--muted);
-	font-size: 0.8rem;
+.promise-strip p {
+	margin: 0;
+	font-size: clamp(1rem, 1.4vw, 1.2rem);
 	font-weight: 650;
+	line-height: 1.25;
+}
+
+.promise-strip span {
+	color: var(--warm);
+	font-family: 'J&J Work Sans', 'Work Sans', sans-serif;
+	font-size: 0.68rem;
+	font-weight: 650;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
 }
 
 .referral-actions {
@@ -1462,30 +1448,10 @@ p {
 		grid-template-columns: 1fr;
 	}
 
-	.about-visual {
-		min-height: 450px;
-	}
-
-	.about-photo {
-		top: 22px;
-		right: 22px;
-		width: 80%;
-	}
-
-	.about-cutout {
-		left: -30px;
-		width: 64%;
-	}
-
-	.promise-card {
-		right: 14px;
-		bottom: 14px;
-		max-width: 210px;
-		padding: 16px;
-	}
-
-	.promise-card p {
-		font-size: 1.2rem;
+	.promise-strip {
+		grid-template-columns: 1fr;
+		gap: 7px;
+		padding: 18px;
 	}
 
 	.referral-actions a {
