@@ -5,7 +5,6 @@ pages_build_output_dir = ".svelte-kit/cloudflare"
 
 [vars]
 PUBLIC_BASE_URL = "https://jandjhomehealth.pages.dev"
-ADMIN_EMAILS = "support@createsomething.io,ejohnson@jandjhomehealth.com,micah@createsomething.io"
 
 [[d1_databases]]
 binding = "DB"
@@ -18,7 +17,6 @@ compatibility_date = "2026-06-04"
 
 [env.production.vars]
 PUBLIC_BASE_URL = "https://jandjhomehealth.pages.dev"
-ADMIN_EMAILS = "support@createsomething.io,ejohnson@jandjhomehealth.com,micah@createsomething.io"
 
 [[env.production.d1_databases]]
 binding = "DB"
