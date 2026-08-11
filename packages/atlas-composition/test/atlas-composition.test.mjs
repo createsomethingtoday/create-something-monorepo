@@ -8,6 +8,7 @@ import {
   executeArcAction,
   proposeArcAction,
   resolveMapModule,
+  toAtlasStoryAdapter,
   validateAtlasComposition
 } from '../dist/index.js';
 
@@ -34,6 +35,24 @@ test('the App Review Arc makes intake and preflight a reusable first scene', () 
     'motion-authoring-contract'
   ]);
   assert.match(intake.detail, /not an approval/i);
+
+  assert.deepEqual(
+    APP_REVIEW_GOVERNANCE_COMPOSITION.scenes.map((scene) => scene.presentation.layout),
+    ['split', 'statement', 'code', 'map', 'image', 'demo', 'proof'],
+    'an Arc is a sequence of deliberately different slide compositions, not one repeated panel'
+  );
+  assert.equal(intake.presentation.media?.artifactId, 'app-review-evidence-gate-media');
+  assert.equal(
+    APP_REVIEW_GOVERNANCE_COMPOSITION.artifacts.find(
+      (artifact) => artifact.id === 'app-review-evidence-gate-media'
+    )?.provenance.costUsd,
+    null,
+    'an unmetered generated asset must not be presented as a zero-cost generation'
+  );
+
+  const story = toAtlasStoryAdapter(APP_REVIEW_GOVERNANCE_COMPOSITION, 'app-review-governance-arc');
+  assert.equal(story.scenes[0].presentation.layout, 'split');
+  assert.equal(story.scenes[2].presentation.code?.language, 'typescript');
 
   const moduleId = APP_REVIEW_GOVERNANCE_COMPOSITION.mapModules[0].id;
   for (const route of APP_REVIEW_GOVERNANCE_COMPOSITION.routes) {

@@ -21,6 +21,7 @@ export type AtlasMotionCue =
 export type AtlasRouteKind = 'arc' | 'playbook' | 'runbook';
 export type AtlasSceneKind = 'signal' | 'automation' | 'map' | 'judgment' | 'runbook' | 'receipt';
 export type AtlasActionStatus = 'proposed' | 'approved' | 'rejected' | 'completed';
+export type AtlasPresentationLayout = 'statement' | 'split' | 'image' | 'code' | 'map' | 'demo' | 'proof';
 
 export type AtlasMapVersion = {
   id?: string;
@@ -48,11 +49,31 @@ export type AtlasArtifact = {
   summary: string;
   provenance: {
     alt: string;
-    costUsd: number;
+    costUsd: number | null;
     model: string;
     promptReference: string;
     rights: string;
     source: string;
+  };
+};
+
+export type AtlasScenePresentation = {
+  layout: AtlasPresentationLayout;
+  eyebrow: string;
+  callout?: {
+    detail: string;
+    label: string;
+    value: string;
+  };
+  code?: {
+    content: string;
+    filename: string;
+    language: 'json' | 'typescript';
+  };
+  media?: {
+    artifactId: string;
+    caption: string;
+    placement: 'beside-copy' | 'full-bleed';
   };
 };
 
@@ -67,6 +88,7 @@ export type AtlasCompositionScene = {
   evidence: string[];
   mapModuleIds: string[];
   focusNodeIds: string[];
+  presentation: AtlasScenePresentation;
   motion: {
     cue: AtlasMotionCue;
     reducedMotion: 'static-emphasis';
@@ -140,6 +162,22 @@ export type AtlasCompositionValidation = {
 const APP_REVIEW_MAP_MODULE_ID = 'app-review-governance-map';
 
 const APP_REVIEW_GOVERNANCE_ARTIFACTS: AtlasArtifact[] = [
+  {
+    id: 'app-review-evidence-gate-media',
+    kind: 'media',
+    title: 'Evidence gate study',
+    summary:
+      'A generated operating still used as an explanatory composition: the source sheet reaches an inspectable human decision gate without claiming a real review outcome.',
+    provenance: {
+      alt: 'An ivory source sheet crosses a measured grid toward a physical decision gate, marked by blue, gold, and green state dots.',
+      costUsd: null,
+      model: 'gpt-image-2 via built-in ImageGen',
+      promptReference:
+        'packages/agency/content/assets/brand/agency-app-review-governance-evidence-gate.v20260811/source/prompt.md',
+      rights: 'Original CREATE SOMETHING model output; no reference images or third-party marks. Review before reuse.',
+      source: '/images/arcs/app-review-governance-evidence-gate.v1.png'
+    }
+  },
   {
     id: 'app-submission-form-contract',
     kind: 'evidence',
@@ -343,6 +381,20 @@ export const APP_REVIEW_GOVERNANCE_COMPOSITION: AtlasComposition = {
         'webflow-app-preflight-skills',
         'app-governance-mcp'
       ],
+      presentation: {
+        layout: 'split',
+        eyebrow: '01 / Intake & Preflight',
+        callout: {
+          label: 'Quality gate',
+          value: 'Evidence first',
+          detail: 'The submission, controlled Preflight, and versioned skills make a candidate inspectable before a reviewer ever decides.'
+        },
+        media: {
+          artifactId: 'app-review-evidence-gate-media',
+          caption: 'The source reaches an evidence gate; it does not become an approval.',
+          placement: 'beside-copy'
+        }
+      },
       motion: {
         cue: 'handoff-trace',
         reducedMotion: 'static-emphasis',
@@ -361,6 +413,15 @@ export const APP_REVIEW_GOVERNANCE_COMPOSITION: AtlasComposition = {
       evidence: ['Slack is an intake signal, not the durable governance record.'],
       mapModuleIds: [APP_REVIEW_MAP_MODULE_ID],
       focusNodeIds: ['slack-signal', 'claude-agent'],
+      presentation: {
+        layout: 'statement',
+        eyebrow: '02 / Signal',
+        callout: {
+          label: 'Source boundary',
+          value: 'Slack starts the story',
+          detail: 'The original conversation remains visible context. It is not silently promoted into durable governance state.'
+        }
+      },
       motion: {
         cue: 'signal-reveal',
         reducedMotion: 'static-emphasis',
@@ -379,6 +440,26 @@ export const APP_REVIEW_GOVERNANCE_COMPOSITION: AtlasComposition = {
       evidence: ['The governed MCP boundary makes retries and ownership inspectable.'],
       mapModuleIds: [APP_REVIEW_MAP_MODULE_ID],
       focusNodeIds: ['claude-agent', 'app-governance-mcp', 'd1-governance-record'],
+      presentation: {
+        layout: 'code',
+        eyebrow: '03 / Normalize',
+        code: {
+          language: 'typescript',
+          filename: 'app-governance-normalize.ts',
+          content: `const governedItem = await appGovernance.create({
+  source: slackSignal.id,
+  preflight: preflight.receiptId,
+  status: 'proposed'
+});
+
+// No direct Airtable write. No approval implied.`
+        },
+        callout: {
+          label: 'MCP boundary',
+          value: 'Write with policy',
+          detail: 'The agent can construct the governed item through a bounded interface. It cannot manufacture approval.'
+        }
+      },
       motion: {
         cue: 'handoff-trace',
         reducedMotion: 'static-emphasis',
@@ -397,6 +478,15 @@ export const APP_REVIEW_GOVERNANCE_COMPOSITION: AtlasComposition = {
       evidence: ['Airtable is a workspace/projection; Zendesk remains linked partner context.'],
       mapModuleIds: [APP_REVIEW_MAP_MODULE_ID],
       focusNodeIds: ['d1-governance-record', 'airtable-projection', 'zendesk-context'],
+      presentation: {
+        layout: 'map',
+        eyebrow: '04 / Orient',
+        callout: {
+          label: 'Source of truth',
+          value: 'D1 is durable',
+          detail: 'Airtable stays readable and Zendesk stays conversational, but neither replaces the governed record.'
+        }
+      },
       motion: {
         cue: 'module-focus',
         reducedMotion: 'static-emphasis',
@@ -415,6 +505,20 @@ export const APP_REVIEW_GOVERNANCE_COMPOSITION: AtlasComposition = {
       evidence: ['Workflow actions have explicit proposed, approved, rejected, and completed states.'],
       mapModuleIds: [APP_REVIEW_MAP_MODULE_ID],
       focusNodeIds: ['d1-governance-record', 'operator-decision'],
+      presentation: {
+        layout: 'image',
+        eyebrow: '05 / Decide',
+        callout: {
+          label: 'Human judgment',
+          value: 'Proposed is not approved',
+          detail: 'The agent can draft the smallest reversible next step. An operator still owns approval, rejection, and accountability.'
+        },
+        media: {
+          artifactId: 'app-review-evidence-gate-media',
+          caption: 'The visual is an explanatory study, not a claimed approval event.',
+          placement: 'full-bleed'
+        }
+      },
       motion: {
         cue: 'decision-gate',
         reducedMotion: 'static-emphasis',
@@ -433,6 +537,15 @@ export const APP_REVIEW_GOVERNANCE_COMPOSITION: AtlasComposition = {
       evidence: ['The prototype action is local-only and returns no production claim.'],
       mapModuleIds: [APP_REVIEW_MAP_MODULE_ID],
       focusNodeIds: ['operator-decision', 'app-governance-mcp', 'workflow-receipt'],
+      presentation: {
+        layout: 'demo',
+        eyebrow: '06 / Run',
+        callout: {
+          label: 'Execution boundary',
+          value: 'Local fixture only',
+          detail: 'The runtime can demonstrate an approved reconciliation check, but it has no production target and no external write authority.'
+        }
+      },
       motion: {
         cue: 'recovery-loop',
         reducedMotion: 'static-emphasis',
@@ -451,6 +564,15 @@ export const APP_REVIEW_GOVERNANCE_COMPOSITION: AtlasComposition = {
       evidence: ['Receipts record proof, decision, handoff, sync, or error evidence.'],
       mapModuleIds: [APP_REVIEW_MAP_MODULE_ID],
       focusNodeIds: ['workflow-receipt', 'd1-governance-record'],
+      presentation: {
+        layout: 'proof',
+        eyebrow: '07 / Proof',
+        callout: {
+          label: 'Close the Arc',
+          value: 'Show the receipt',
+          detail: 'A visible issuer, evidence string, runtime mode, and boundary close the story with an inspectable artifact.'
+        }
+      },
       motion: {
         cue: 'proof-stamp',
         reducedMotion: 'static-emphasis',
@@ -528,6 +650,25 @@ export function validateAtlasComposition(composition: AtlasComposition): AtlasCo
     if (scene.motion.reducedMotion !== 'static-emphasis') {
       issues.push(`Scene ${scene.id} must define a static reduced-motion equivalent.`);
     }
+    const layouts: AtlasPresentationLayout[] = ['statement', 'split', 'image', 'code', 'map', 'demo', 'proof'];
+    if (!layouts.includes(scene.presentation.layout)) {
+      issues.push(`Scene ${scene.id} has an unsupported presentation layout.`);
+    }
+    if ((scene.presentation.layout === 'split' || scene.presentation.layout === 'image') && !scene.presentation.media) {
+      issues.push(`Scene ${scene.id} requires a media composition.`);
+    }
+    if (scene.presentation.media) {
+      const media = composition.artifacts.find((artifact) => artifact.id === scene.presentation.media?.artifactId);
+      if (!media || media.kind !== 'media') {
+        issues.push(`Scene ${scene.id} references an invalid media composition artifact.`);
+      }
+    }
+    if (scene.presentation.layout === 'code' && !scene.presentation.code) {
+      issues.push(`Scene ${scene.id} requires a code composition.`);
+    }
+    if (scene.presentation.code && !scene.presentation.code.content.trim()) {
+      issues.push(`Scene ${scene.id} has an empty code composition.`);
+    }
     for (const id of scene.mapModuleIds) {
       if (!moduleIds.includes(id)) issues.push(`Scene ${scene.id} references unknown map module ${id}.`);
     }
@@ -577,6 +718,7 @@ export function toAtlasStoryAdapter(
   scenes: Array<{
     id: string;
     motionCue: 'highlight-nodes' | 'trace-handoff' | 'reveal-proof';
+    presentation: AtlasScenePresentation;
     title: string;
   }>;
 } {
@@ -597,7 +739,12 @@ export function toAtlasStoryAdapter(
     scenes: route.sceneIds.map((sceneId) => {
       const scene = findById(composition.scenes, sceneId, 'Composition scene');
       if (scene.motion.cue === 'none') throw new Error(`Scene ${scene.id} has no adapter motion cue.`);
-      return { id: scene.id, motionCue: motionCueBySceneCue[scene.motion.cue], title: scene.title };
+      return {
+        id: scene.id,
+        motionCue: motionCueBySceneCue[scene.motion.cue],
+        presentation: scene.presentation,
+        title: scene.title
+      };
     })
   };
 }

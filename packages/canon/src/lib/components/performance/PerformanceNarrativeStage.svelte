@@ -31,6 +31,7 @@
     ariaLabel?: string;
     density?: 'standard' | 'compact';
     expression?: PerformanceNarrativeExpression;
+    enablePresentation?: boolean;
     preview?: Snippet;
     artifact?: Snippet<[PerformanceNarrativeScene, number]>;
   }
@@ -44,12 +45,14 @@
     ariaLabel = 'Narrative scenes',
     density = 'compact',
     expression = 'field',
+    enablePresentation = false,
     preview,
     artifact
   }: Props = $props();
 
   let activeIndex = $state(0);
   let enhanced = $state(false);
+  let presenting = $state(false);
   let tabElements = $state<HTMLButtonElement[]>([]);
 
   function controlState(tone: PerformanceNarrativeTone | undefined) {
@@ -110,15 +113,46 @@
     selectScene(nextIndex, true, true);
   }
 
+  function handlePresentationKeydown(event: KeyboardEvent) {
+    if (!presenting || event.defaultPrevented) return;
+    if (
+      event.target instanceof HTMLElement &&
+      event.target.closest('input, textarea, select, [contenteditable="true"]')
+    ) {
+      return;
+    }
+
+    let nextIndex = activeIndex;
+    if (event.key === 'ArrowRight' || event.key === 'ArrowDown' || event.key === 'PageDown' || event.key === ' ') {
+      nextIndex = Math.min(activeIndex + 1, scenes.length - 1);
+    } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp' || event.key === 'PageUp') {
+      nextIndex = Math.max(activeIndex - 1, 0);
+    } else if (event.key === 'Home') {
+      nextIndex = 0;
+    } else if (event.key === 'End') {
+      nextIndex = scenes.length - 1;
+    } else if (event.key === 'Escape') {
+      presenting = false;
+      return;
+    } else {
+      return;
+    }
+
+    event.preventDefault();
+    selectScene(nextIndex, true);
+  }
+
   onMount(() => {
     enhanced = true;
     syncFromFragment();
     window.addEventListener('hashchange', syncFromFragment);
     window.addEventListener('popstate', syncFromFragment);
+    window.addEventListener('keydown', handlePresentationKeydown);
 
     return () => {
       window.removeEventListener('hashchange', syncFromFragment);
       window.removeEventListener('popstate', syncFromFragment);
+      window.removeEventListener('keydown', handlePresentationKeydown);
     };
   });
 </script>
@@ -129,6 +163,8 @@
   data-density={density}
   data-expression={expression}
   data-enhanced={enhanced}
+  data-presentation-enabled={enablePresentation}
+  data-presenting={presenting}
   aria-label={ariaLabel}
 >
   <div class="performance-narrative-stage__inner">
@@ -138,6 +174,16 @@
         <h2>{title}</h2>
       </div>
       {#if description}<p>{description}</p>{/if}
+      {#if enablePresentation}
+        <button
+          type="button"
+          class="performance-narrative-stage__present"
+          aria-pressed={presenting}
+          onclick={() => (presenting = !presenting)}
+        >
+          {presenting ? 'Exit presentation' : 'Present deck'}
+        </button>
+      {/if}
     </header>
 
     {#if preview}
@@ -301,6 +347,46 @@
     grid-template-columns: minmax(18rem, 0.9fr) minmax(18rem, 0.7fr);
     gap: clamp(1.5rem, 4vw, 4rem);
     align-items: end;
+  }
+
+  .performance-narrative-stage__present {
+    justify-self: end;
+    min-height: var(--height-performance-control-min, 2.75rem);
+    padding: 0.65rem 0.85rem;
+    border: 1px solid var(--color-performance-line-strong, #9c9c96);
+    background: var(--color-performance-ink, #090909);
+    color: var(--color-performance-panel, #fff);
+    font-family: var(--font-performance-mono);
+    font-size: 0.72rem;
+    font-weight: var(--font-performance-semibold);
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .performance-narrative-stage__present:focus-visible {
+    outline: 3px solid var(--color-performance-signal, #0057b8);
+    outline-offset: 2px;
+  }
+
+  .performance-narrative-stage[data-presenting='true'] {
+    position: fixed;
+    z-index: 90;
+    inset: 0;
+    overflow: auto;
+    padding-block: clamp(1rem, 2vw, 2rem);
+    scroll-margin-top: 0;
+  }
+
+  .performance-narrative-stage[data-presenting='true'] .performance-narrative-stage__inner {
+    min-height: calc(100dvh - clamp(2rem, 4vw, 4rem));
+  }
+
+  .performance-narrative-stage[data-presenting='true'] .performance-narrative-stage__preview {
+    display: none;
+  }
+
+  .performance-narrative-stage[data-presenting='true'] .performance-narrative-stage__composition {
+    min-height: calc(100dvh - 10rem);
   }
 
   .performance-narrative-stage__header > div,
@@ -683,6 +769,10 @@
       align-items: start;
     }
 
+    .performance-narrative-stage__present {
+      justify-self: start;
+    }
+
     .performance-narrative-stage__header > p {
       max-width: 42rem;
     }
@@ -697,17 +787,22 @@
     }
 
     .performance-narrative-stage__index {
-      grid-template-columns: repeat(var(--scene-count, 3), minmax(0, 1fr));
+      grid-template-columns: none;
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(9.5rem, 40vw);
+      overflow-x: auto;
+      overscroll-behavior-inline: contain;
+      scroll-snap-type: inline mandatory;
       border-right: 0;
       border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
     }
 
     .performance-narrative-stage__index button {
-      grid-template-columns: 1fr;
+      grid-template-columns: 1.35rem minmax(0, 1fr);
       border-right: 1px solid var(--color-performance-line, #d7d7d2);
+      scroll-snap-align: start;
     }
 
-    .performance-narrative-stage__index-number,
     .performance-narrative-stage__index-copy em {
       display: none;
     }
@@ -734,18 +829,19 @@
     }
 
     .performance-narrative-stage__index {
-      grid-template-columns: repeat(var(--scene-count, 3), minmax(0, 1fr));
+      grid-template-columns: none;
+      grid-auto-columns: minmax(8.3rem, 58vw);
     }
 
     .performance-narrative-stage__index button {
-      grid-template-columns: 1fr;
+      grid-template-columns: 1.2rem minmax(0, 1fr);
       min-height: var(--height-performance-control-min, 2.75rem);
       padding: 0.65rem;
       border-right: 1px solid var(--color-performance-line, #d7d7d2);
     }
 
     .performance-narrative-stage__index-number {
-      display: none;
+      display: block;
     }
 
     .performance-narrative-stage__panel {
@@ -783,15 +879,16 @@
 
   @media (max-width: 22.5rem) {
     .performance-narrative-stage__index {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: none;
+      grid-auto-columns: minmax(7.75rem, 74vw);
     }
 
     .performance-narrative-stage__index button:nth-child(2n) {
-      border-right: 0;
+      border-right: 1px solid var(--color-performance-line, #d7d7d2);
     }
 
     .performance-narrative-stage__index button:nth-last-child(-n + 2) {
-      border-bottom: 0;
+      border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
     }
   }
 
