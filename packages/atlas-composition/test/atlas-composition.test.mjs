@@ -17,7 +17,7 @@ test('the App Review Arc makes intake and preflight a reusable first scene', () 
 
   assert.deepEqual(result, { ok: true, issues: [] });
   assert.equal(APP_REVIEW_GOVERNANCE_COMPOSITION.schema, ATLAS_COMPOSITION_SCHEMA);
-  assert.equal(APP_REVIEW_GOVERNANCE_COMPOSITION.scenes.length, 7);
+  assert.equal(APP_REVIEW_GOVERNANCE_COMPOSITION.scenes.length, 8);
   assert.equal(APP_REVIEW_GOVERNANCE_COMPOSITION.mapModules.length, 1);
 
   const intake = APP_REVIEW_GOVERNANCE_COMPOSITION.scenes.find((scene) => scene.id === 'intake-preflight');
@@ -38,7 +38,7 @@ test('the App Review Arc makes intake and preflight a reusable first scene', () 
 
   assert.deepEqual(
     APP_REVIEW_GOVERNANCE_COMPOSITION.scenes.map((scene) => scene.presentation.layout),
-    ['split', 'statement', 'code', 'map', 'image', 'demo', 'proof'],
+    ['split', 'statement', 'code', 'map', 'decision', 'branches', 'demo', 'proof'],
     'an Arc is a sequence of deliberately different slide compositions, not one repeated panel'
   );
   assert.equal(intake.presentation.media?.artifactId, 'app-review-evidence-gate-media');
@@ -53,6 +53,44 @@ test('the App Review Arc makes intake and preflight a reusable first scene', () 
   const story = toAtlasStoryAdapter(APP_REVIEW_GOVERNANCE_COMPOSITION, 'app-review-governance-arc');
   assert.equal(story.scenes[0].presentation.layout, 'split');
   assert.equal(story.scenes[2].presentation.code?.language, 'typescript');
+  assert.deepEqual(
+    APP_REVIEW_GOVERNANCE_COMPOSITION.scenes.map((scene) => scene.presentation.reader.heading),
+    [
+      'A developer submits an app.',
+      'The submission reaches the review team.',
+      'An agent prepares the review item.',
+      'Each system keeps one clear job.',
+      'A person decides what happens next.',
+      'A no creates a clear way forward.',
+      'Only the approved action can run.',
+      'The system records what happened.'
+    ]
+  );
+  assert.deepEqual(
+    APP_REVIEW_GOVERNANCE_COMPOSITION.scenes.find((scene) => scene.id === 'recover')
+      ?.presentation.branches?.map((branch) => branch.label),
+    ['Request changes', 'Reject', 'Escalate an exception']
+  );
+  for (const scene of APP_REVIEW_GOVERNANCE_COMPOSITION.scenes) {
+    assert.ok(scene.presentation.reader.stakeholders.length > 0);
+    assert.ok(scene.presentation.reader.stakeholders.every((stakeholder) => stakeholder.meaning.length > 0));
+  }
+  assert.match(
+    APP_REVIEW_GOVERNANCE_COMPOSITION.scenes[0].presentation.reader.explanation,
+    /checks the form.*gathers the evidence/i
+  );
+  assert.match(
+    APP_REVIEW_GOVERNANCE_COMPOSITION.scenes[4].presentation.reader.explanation,
+    /proposed means waiting/i
+  );
+  assert.deepEqual(
+    APP_REVIEW_GOVERNANCE_COMPOSITION.routes.map((route) => route.description),
+    [
+      'Follow an app from submission to a final receipt.',
+      'Reuse the review method: collect evidence, keep each source clear, require a person to decide, and record proof.',
+      'Run one review: gather context, wait for approval, take one bounded action, and record the result.'
+    ]
+  );
 
   const moduleId = APP_REVIEW_GOVERNANCE_COMPOSITION.mapModules[0].id;
   for (const route of APP_REVIEW_GOVERNANCE_COMPOSITION.routes) {
@@ -100,6 +138,7 @@ test('a bounded agent proposal requires an operator decision before local execut
 
   assert.equal(proposal.status, 'proposed');
   assert.equal(proposal.gate, 'approval');
+  assert.equal(proposal.title, 'Send the creator the requested-changes summary');
   assert.throws(() => executeArcAction(proposal, { executor: 'local-prototype-runtime' }), /approved/i);
 
   const approved = decideArcAction(proposal, {
