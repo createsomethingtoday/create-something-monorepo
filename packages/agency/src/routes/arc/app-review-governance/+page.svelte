@@ -39,6 +39,9 @@
   });
 
   const nodeLabels: Record<string, string> = {
+    'app-submission-form': 'App submission form',
+    'app-review-preflight': 'App Review Preflight',
+    'webflow-app-preflight-skills': 'Preflight skills',
     'slack-signal': 'Slack signal',
     'claude-agent': 'Claude / agent',
     'app-governance-mcp': 'Governance MCP',
@@ -100,7 +103,7 @@
       <p class="arc-kicker">Arc / local prototype / map → decision → proof</p>
       <h1>App Review Governance</h1>
       <p>
-        A durable story of how an App Review signal becomes an operator-approved action and a receipt—without collapsing Slack, Airtable, Zendesk, D1, agents, or MCPs into one ambiguous system.
+        A durable story of how an App Submission Form, App Review Preflight, and versioned Preflight skills become a governed, operator-approved action and receipt—without collapsing Slack, Airtable, Zendesk, D1, agents, or MCPs into one ambiguous system.
       </p>
     </div>
     <dl class="arc-hero__facts" aria-label="Arc prototype boundaries">
@@ -130,8 +133,8 @@
   <PerformanceNarrativeStage
     id="app-review-governance-arc"
     eyebrow="A reusable operating artifact"
-    title="Signal → Decision → Proof"
-    description="Every page carries a data-authored motion cue. Motion is a controllable state change, never the only way to understand the story. Use the scene rail, arrows, or a direct URL fragment to navigate."
+    title="Intake → Decision → Proof"
+    description="Every page carries a data-authored motion cue. The intake scene keeps the form, controlled Preflight evidence, and skills gate distinct from an operator decision. Motion is a controllable state change, never the only way to understand the story. Use the scene rail, arrows, or a direct URL fragment to navigate."
     {scenes}
     ariaLabel="App Review Governance Arc scenes"
   >
