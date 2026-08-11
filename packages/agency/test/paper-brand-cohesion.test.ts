@@ -39,16 +39,16 @@ test('the Agency hero makes the Playbook operating grammar visible without a pro
   assert.match(field, /X = opposition/);
 });
 
-test('shared campaign titles keep every period optically separated from display letters', () => {
+test('shared campaign titles keep every period optically separated and attached to its word', () => {
   const campaignOpening = read(
     '../canon/src/lib/components/performance/PerformanceCampaignOpening.svelte'
   );
 
-  assert.match(campaignOpening, /let titleParts = \$derived\(title\.split\('\.'\)\);/);
+  assert.match(campaignOpening, /title\.split\('\.'\)\.map\(\(part\) =>/);
   assert.match(campaignOpening, /\{#each titleParts as part, index\}/);
   assert.match(
     campaignOpening,
-    /titleParts\.length - 1\}<span[\s\S]*?class="performance-campaign-opening__period">\.<\/span\s*>/
+    /class="performance-campaign-opening__punctuated-word"[\s\S]*?class="performance-campaign-opening__period">\.<\/span\s*>/
   );
   assert.match(
     campaignOpening,
@@ -57,6 +57,10 @@ test('shared campaign titles keep every period optically separated from display 
   assert.doesNotMatch(
     campaignOpening,
     /\.performance-campaign-opening__period\s*\{[\s\S]*?display:\s*inline-block;/
+  );
+  assert.match(
+    campaignOpening,
+    /\.performance-campaign-opening__punctuated-word\s*\{[\s\S]*?white-space:\s*nowrap;/
   );
 });
 
