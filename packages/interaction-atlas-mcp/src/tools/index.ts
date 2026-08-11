@@ -10,6 +10,12 @@
 import { jsonContent, errorContent } from '@create-something/mcp-core';
 import type { ScopedMcpServer } from '@create-something/mcp-core';
 import type { D1Database } from '@create-something/mcp-core';
+import {
+  APP_REVIEW_GOVERNANCE_COMPOSITION,
+  proposeArcAction,
+  resolveMapModule,
+  toAtlasStoryAdapter
+} from '@create-something/atlas-composition';
 
 import {
   getAtlasStats,
@@ -40,6 +46,9 @@ import {
 
 import {
   AtlasGetSchema,
+  AtlasCompositionActionProposeSchema,
+  AtlasCompositionGetSchema,
+  AtlasCompositionMapModuleResolveSchema,
   AtlasSearchSchema,
   AtlasStudioEdgeAddSchema,
   AtlasStudioEdgeUpdateSchema,
@@ -866,6 +875,58 @@ export function registerTools(server: ScopedMcpServer): void {
         return errorContent(`Pattern not found: ${input.id}`);
       }
       return jsonContent({ accountId: ctx.accountId, pattern });
+    },
+    { readOnly: true },
+  );
+
+  server.tool(
+    'atlas_composition_get',
+    'Read the local App Review Governance Arc composition and optionally adapt one route as a transient Atlas Story. The composition is fixture-only and owns no customer state.',
+    AtlasCompositionGetSchema.shape,
+    async (params, ctx) => {
+      const input = AtlasCompositionGetSchema.parse(params);
+      const routeId = input.route_id ?? 'app-review-governance-arc';
+      return jsonContent({
+        accountId: ctx.accountId,
+        composition: APP_REVIEW_GOVERNANCE_COMPOSITION,
+        story: toAtlasStoryAdapter(APP_REVIEW_GOVERNANCE_COMPOSITION, routeId)
+      });
+    },
+    { readOnly: true },
+  );
+
+  server.tool(
+    'atlas_composition_resolve_map_module',
+    'Resolve the explicit pinned App Review governance map module without changing the map or its source system.',
+    AtlasCompositionMapModuleResolveSchema.shape,
+    async (params, ctx) => {
+      const input = AtlasCompositionMapModuleResolveSchema.parse(params);
+      const resolution = resolveMapModule(
+        APP_REVIEW_GOVERNANCE_COMPOSITION,
+        input.module_id,
+        (mapId) => ({
+          mapId,
+          latestVersion: '2026-08-10',
+          versions: ['2026-08-10']
+        })
+      );
+      return jsonContent({ accountId: ctx.accountId, resolution });
+    },
+    { readOnly: true },
+  );
+
+  server.tool(
+    'atlas_composition_propose_local_action',
+    'Draft the one bounded App Review Arc action for an operator. This creates no record and cannot approve, execute, or mutate an external system.',
+    AtlasCompositionActionProposeSchema.shape,
+    async (params, ctx) => {
+      AtlasCompositionActionProposeSchema.parse(params);
+      const proposedBy = ctx.userId ?? ctx.accountId;
+      return jsonContent({
+        accountId: ctx.accountId,
+        proposal: proposeArcAction(APP_REVIEW_GOVERNANCE_COMPOSITION, { proposedBy }),
+        nextRequiredActor: 'operator'
+      });
     },
     { readOnly: true },
   );

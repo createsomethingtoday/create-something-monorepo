@@ -7,6 +7,48 @@ import path from 'node:path';
 import { registerTools } from '../dist/tools/index.js';
 import { createSession } from '../dist/studio/store.js';
 
+test('Atlas composition tools expose one fixture-backed Arc, map module, and approval-gated proposal', async () => {
+  const tools = new Map();
+  const server = {
+    tool(name, description, schema, handler, options) {
+      tools.set(name, { description, handler, options, schema });
+    }
+  };
+
+  registerTools(server);
+
+  const getComposition = tools.get('atlas_composition_get');
+  const resolveModule = tools.get('atlas_composition_resolve_map_module');
+  const proposeAction = tools.get('atlas_composition_propose_local_action');
+  assert.ok(getComposition);
+  assert.ok(resolveModule);
+  assert.ok(proposeAction);
+  assert.equal(getComposition.options?.readOnly, true);
+  assert.equal(resolveModule.options?.readOnly, true);
+  assert.equal(proposeAction.options?.readOnly, true);
+
+  const ctx = { accountId: 'acct_test', metadata: {}, policy: {}, userId: 'agent_test' };
+  const compositionResult = await getComposition.handler({}, ctx);
+  const compositionPayload = JSON.parse(compositionResult.content[0].text);
+  assert.equal(compositionPayload.composition.id, 'app-review-governance');
+  assert.equal(compositionPayload.story.ephemeral, true);
+  assert.equal(compositionPayload.story.scenes.length, 6);
+
+  const resolutionResult = await resolveModule.handler(
+    { module_id: 'app-review-governance-map' },
+    ctx
+  );
+  const resolutionPayload = JSON.parse(resolutionResult.content[0].text);
+  assert.equal(resolutionPayload.resolution.resolvedVersion, '2026-08-10');
+  assert.equal(resolutionPayload.resolution.versionMode, 'pinned');
+
+  const proposalResult = await proposeAction.handler({}, ctx);
+  const proposalPayload = JSON.parse(proposalResult.content[0].text);
+  assert.equal(proposalPayload.proposal.status, 'proposed');
+  assert.equal(proposalPayload.proposal.proposedBy, 'agent_test');
+  assert.equal(proposalPayload.nextRequiredActor, 'operator');
+});
+
 test('Atlas Studio database health is exposed as a read-only MCP tool', async () => {
   const previousHome = process.env.CREATE_SOMETHING_ATLAS_HOME;
   const home = await mkdtemp(path.join(tmpdir(), 'atlas-tools-health-test-'));
