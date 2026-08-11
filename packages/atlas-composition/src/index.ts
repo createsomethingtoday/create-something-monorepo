@@ -100,6 +100,11 @@ export type AtlasScenePresentation = {
     caption: string;
     placement: 'beside-copy' | 'full-bleed';
   };
+  relationships?: Array<{
+    fromNodeId: string;
+    label: string;
+    toNodeId: string;
+  }>;
 };
 
 export type AtlasCompositionScene = {
@@ -539,7 +544,7 @@ export const APP_REVIEW_GOVERNANCE_COMPOSITION: AtlasComposition = {
         reader: {
           heading: 'Each system keeps one clear job.',
           explanation:
-            'The durable record stores the decision. The team workspace makes it readable. The partner conversation keeps questions and exceptions attached. The map shows how they connect.',
+            'The partner conversation stays attached as supporting context. The durable record stores the decision. The team workspace presents a readable view without becoming a second source of truth.',
           takeaway: 'One record with clear supporting context',
           stakeholders: [
             { role: 'Partnerships & Support', meaning: 'Your conversation stays visible without becoming the decision.' },
@@ -550,7 +555,19 @@ export const APP_REVIEW_GOVERNANCE_COMPOSITION: AtlasComposition = {
           label: 'Source of truth',
           value: 'One durable review record',
           detail: 'The team workspace stays readable and the partner conversation stays conversational, but neither replaces the official record.'
-        }
+        },
+        relationships: [
+          {
+            fromNodeId: 'zendesk-context',
+            label: 'Keeps context attached',
+            toNodeId: 'd1-governance-record'
+          },
+          {
+            fromNodeId: 'd1-governance-record',
+            label: 'Projects a readable view',
+            toNodeId: 'airtable-projection'
+          }
+        ]
       },
       motion: {
         cue: 'module-focus',
@@ -851,6 +868,26 @@ export function validateAtlasComposition(composition: AtlasComposition): AtlasCo
     }
     if (scene.presentation.layout === 'branches' && (scene.presentation.branches?.length ?? 0) < 2) {
       issues.push(`Scene ${scene.id} requires at least two visible branches.`);
+    }
+    if (scene.presentation.layout === 'map' && !scene.presentation.relationships?.length) {
+      issues.push(`Scene ${scene.id} requires at least one visible map relationship.`);
+    }
+    const selectedNodeIds = new Set(
+      scene.mapModuleIds.flatMap(
+        (moduleId) => composition.mapModules.find((module) => module.id === moduleId)?.selection.nodeIds ?? []
+      )
+    );
+    for (const relationship of scene.presentation.relationships ?? []) {
+      if (!relationship.label.trim()) {
+        issues.push(`Scene ${scene.id} has an unlabeled map relationship.`);
+      }
+      for (const nodeId of [relationship.fromNodeId, relationship.toNodeId]) {
+        if (!scene.focusNodeIds.includes(nodeId)) {
+          issues.push(`Scene ${scene.id} relationship must connect a focused node: ${nodeId}.`);
+        } else if (!selectedNodeIds.has(nodeId)) {
+          issues.push(`Scene ${scene.id} relationship references a node outside its shared map module: ${nodeId}.`);
+        }
+      }
     }
     for (const id of scene.mapModuleIds) {
       if (!moduleIds.includes(id)) issues.push(`Scene ${scene.id} references unknown map module ${id}.`);

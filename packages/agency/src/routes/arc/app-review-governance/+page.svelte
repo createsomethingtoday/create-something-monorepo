@@ -53,6 +53,12 @@
     'workflow-receipt': 'The proof receipt'
   };
 
+  const nodeRoles: Record<string, string> = {
+    'd1-governance-record': 'Source of truth',
+    'airtable-projection': 'Readable projection',
+    'zendesk-context': 'Supporting context'
+  };
+
   const mapModule = composition.mapModules[0];
   const motionArtifact = composition.artifacts.find((artifact) => artifact.id === 'motion-authoring-contract');
 
@@ -190,17 +196,25 @@
               <span>{mapModule.title}</span>
               <small>{mapModule.map.version.mode} version {mapModule.map.version.id}</small>
             </div>
-            <div class="arc-map" data-motion-cue={scene.motion.cue}>
-              <div class="arc-map__trace" aria-hidden="true"></div>
-              {#each mapModule.selection.nodeIds as nodeId, index}
+            <div class="arc-map__flow" data-motion-cue={scene.motion.cue}>
+              {#each scene.presentation.relationships ?? [] as relationship, index}
+                {#if index === 0}
+                  <div class="arc-map__node" style:--flow-index={0} data-node={relationship.fromNodeId}>
+                    <span>{nodeRoles[relationship.fromNodeId]}</span>
+                    <strong>{nodeLabels[relationship.fromNodeId]}</strong>
+                  </div>
+                {/if}
                 <div
-                  class:arc-map__node--focused={scene.focusNodeIds.includes(nodeId)}
-                  class="arc-map__node"
-                  style:--node-index={index}
-                  data-node={nodeId}
+                  class="arc-map__connector"
+                  style:--flow-index={index * 2 + 1}
+                  aria-label={`${nodeLabels[relationship.fromNodeId]}: ${relationship.label} to ${nodeLabels[relationship.toNodeId]}`}
                 >
-                  <span>{String(index + 1).padStart(2, '0')}</span>
-                  <strong>{nodeLabels[nodeId]}</strong>
+                  <span>{relationship.label}</span>
+                  <i class="arc-map__connector-line" aria-hidden="true"></i>
+                </div>
+                <div class="arc-map__node" style:--flow-index={index * 2 + 2} data-node={relationship.toNodeId}>
+                  <span>{nodeRoles[relationship.toNodeId]}</span>
+                  <strong>{nodeLabels[relationship.toNodeId]}</strong>
                 </div>
               {/each}
             </div>
@@ -382,12 +396,14 @@
   .arc-module { overflow: hidden; border: 1px solid var(--color-performance-ink, #090909); background: #111; color: #f2f1eb; }
   .arc-module__topline { display: flex; justify-content: space-between; gap: 1rem; padding: .8rem 1rem; border-bottom: 1px solid rgb(255 255 255 / .24); color: #cbc9c0; font: .7rem/1.2 var(--font-performance-mono, ui-monospace, monospace); text-transform: uppercase; }
   .arc-module__topline span { color: #fffdf5; font-weight: 700; }
-  .arc-map { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .75rem; min-height: 205px; padding: 1rem; isolation: isolate; }
-  .arc-map__trace { position: absolute; z-index: -1; top: 50%; left: 5%; width: 90%; border-top: 1px dashed rgb(225 220 201 / .6); transform: rotate(-5deg); }
-  .arc-map__node { display: grid; align-content: end; min-height: 82px; padding: .7rem; border: 1px solid rgb(255 255 255 / .22); background: rgb(255 255 255 / .05); opacity: .42; transition: opacity .18s ease, transform .18s ease, border-color .18s ease; }
-  .arc-map__node span { color: #a7a49a; font: .68rem/1 var(--font-performance-mono, ui-monospace, monospace); }
-  .arc-map__node strong { margin-top: .5rem; font-size: .83rem; line-height: 1.05; }
-  .arc-map__node--focused { border-color: #ebd26c; background: rgb(235 210 108 / .14); opacity: 1; }
+  .arc-map__flow { display: grid; grid-template-columns: minmax(11rem, 1fr) minmax(7rem, .5fr) minmax(11rem, 1fr) minmax(7rem, .5fr) minmax(11rem, 1fr); align-items: center; min-height: 205px; padding: clamp(1rem, 2.4vw, 2rem); }
+  .arc-map__node { display: grid; align-content: end; min-height: 112px; padding: 1rem; border: 1px solid #ebd26c; background: rgb(235 210 108 / .14); }
+  .arc-map__node span { color: #d7ca8a; font: 700 .66rem/1.2 var(--font-performance-mono, ui-monospace, monospace); letter-spacing: .04em; text-transform: uppercase; }
+  .arc-map__node strong { max-width: 18ch; margin-top: .7rem; font-size: clamp(.86rem, 1.35vw, 1.05rem); line-height: 1.15; }
+  .arc-map__connector { position: relative; display: flex; align-items: center; min-width: 0; color: #d5d2c8; text-align: center; }
+  .arc-map__connector span { position: absolute; bottom: calc(50% + .65rem); left: 50%; z-index: 1; width: max-content; max-width: calc(100% - 1rem); padding: .15rem .4rem; background: #111; font: 650 .67rem/1.35 var(--font-performance-mono, ui-monospace, monospace); text-transform: uppercase; transform: translateX(-50%); }
+  .arc-map__connector-line { position: relative; display: block; width: calc(100% - .35rem); height: 1px; background: #ebd26c; transform-origin: left center; }
+  .arc-map__connector-line::after { position: absolute; top: 50%; right: -.35rem; width: .55rem; height: .55rem; border-top: 1px solid #ebd26c; border-right: 1px solid #ebd26c; content: ''; transform: translateY(-50%) rotate(45deg); }
   .arc-module__legend { margin: 0; padding: .8rem 1rem; border-top: 1px solid rgb(255 255 255 / .24); color: #bdbbb2; font-size: .78rem; line-height: 1.45; }
   .arc-slide--decision { position: relative; min-height: 28rem; overflow: hidden; background: #111; }
   .arc-slide--decision { background: radial-gradient(circle at 82% 18%, rgb(0 87 184 / .42), transparent 34%), #111; }
@@ -435,16 +451,32 @@
   @media (prefers-reduced-motion: no-preference) {
     .arc-scene[data-motion-cue='signal-reveal'] .arc-slide--statement { animation: arc-arrive 500ms cubic-bezier(.2, .8, .2, 1) both; }
     .arc-scene[data-motion-cue='handoff-trace'] .arc-slide__media, .arc-scene[data-motion-cue='handoff-trace'] .arc-code__bar { animation: arc-arrive 600ms cubic-bezier(.2, .8, .2, 1) both; }
-    .arc-scene[data-motion-cue='module-focus'] .arc-map__node--focused { animation: arc-focus 760ms cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--node-index) * 50ms); }
+    .arc-scene[data-motion-cue='module-focus'] .arc-map__node,
+    .arc-scene[data-motion-cue='module-focus'] .arc-map__connector { animation: arc-arrive 520ms cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--flow-index) * 120ms); }
+    .arc-scene[data-motion-cue='module-focus'] .arc-map__connector-line { animation: arc-connect 520ms cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--flow-index) * 120ms + 120ms); }
     .arc-scene[data-motion-cue='decision-gate'] .arc-image__decision { animation: arc-arrive 600ms cubic-bezier(.2, .8, .2, 1) both; }
     .arc-scene[data-motion-cue='recovery-loop'] .arc-demo__status { animation: arc-arrive 600ms cubic-bezier(.2, .8, .2, 1) both; }
     .arc-scene[data-motion-cue='proof-stamp'] .arc-receipt { animation: arc-proof 640ms cubic-bezier(.2, .8, .2, 1) both; }
   }
   @keyframes arc-arrive { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-  @keyframes arc-focus { 0% { transform: scale(.94); } 60% { transform: scale(1.04); } 100% { transform: scale(1); } }
+  @keyframes arc-connect { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  @keyframes arc-connect-vertical { from { transform: scaleY(0); } to { transform: scaleY(1); } }
   @keyframes arc-proof { from { filter: brightness(1.7); transform: scale(.985); } to { filter: brightness(1); transform: scale(1); } }
-  @media (prefers-reduced-motion: reduce) { .arc-scene *, .arc-scene *::before, .arc-scene *::after { animation: none !important; transition: none !important; } .arc-map__node--focused { outline: 2px solid #ebd26c; outline-offset: -3px; } }
-  @media (max-width: 760px) { .arc-hero, .arc-contract, .arc-slide--split, .arc-slide--branches, .arc-slide--demo, .arc-slide--proof { grid-template-columns: 1fr; } .arc-contract ol, .arc-map { grid-template-columns: repeat(2, minmax(0, 1fr)); } .arc-slide--branches ol { grid-template-columns: 1fr; } .arc-slide--decision, .arc-image__decision { min-height: 24rem; } .arc-image__decision { max-width: 100%; background: linear-gradient(0deg, rgb(9 9 9 / .94), rgb(9 9 9 / .35)); } }
+  @media (prefers-reduced-motion: reduce) { .arc-scene *, .arc-scene *::before, .arc-scene *::after { animation: none !important; transition: none !important; } .arc-map__node { outline: 2px solid #ebd26c; outline-offset: -3px; } }
+  @media (max-width: 760px) {
+    .arc-hero, .arc-contract, .arc-slide--split, .arc-slide--branches, .arc-slide--demo, .arc-slide--proof { grid-template-columns: 1fr; }
+    .arc-contract ol { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .arc-map__flow { grid-template-columns: 1fr; min-height: auto; }
+    .arc-map__node { min-height: 88px; }
+    .arc-map__connector { justify-content: center; min-height: 4.5rem; padding: 0; }
+    .arc-map__connector span { top: 50%; bottom: auto; left: calc(50% + .8rem); max-width: calc(50% - 1.2rem); transform: translateY(-50%); }
+    .arc-map__connector-line { width: 1px; height: 100%; transform-origin: center top; }
+    .arc-map__connector-line::after { top: auto; right: 50%; bottom: -.25rem; transform: translateX(50%) rotate(135deg); }
+    .arc-scene[data-motion-cue='module-focus'] .arc-map__connector-line { animation-name: arc-connect-vertical; }
+    .arc-slide--branches ol { grid-template-columns: 1fr; }
+    .arc-slide--decision, .arc-image__decision { min-height: 24rem; }
+    .arc-image__decision { max-width: 100%; background: linear-gradient(0deg, rgb(9 9 9 / .94), rgb(9 9 9 / .35)); }
+  }
   :global(.performance-narrative-stage[data-presenting='true']) .arc-scene { min-height: 100%; grid-template-rows: minmax(0, 1fr); }
   :global(.performance-narrative-stage[data-presenting='true']) .arc-sources { display: none; }
   :global(.performance-narrative-stage[data-presenting='true']) .arc-slide,
