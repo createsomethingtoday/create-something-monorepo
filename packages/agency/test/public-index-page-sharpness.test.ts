@@ -82,7 +82,13 @@ test('preserves every primary index destination and content boundary', () => {
   const inventory: Record<string, string[]> = {
     delivery: ['/delivery/abundance', 'Client-safe only', 'Start a private workflow draft'],
     experiments: ['data.papers', 'sortBy: SortOption', 'published_at'],
-    'field-reports': ['/field-reports/template-review', 'Measured', 'Blocked', 'Unknown'],
+    'field-reports': [
+      '/field-reports/template-review',
+      '/field-reports/upstream-contributions',
+      'Measured',
+      'Blocked',
+      'Unknown'
+    ],
     products: [
       'agencyCoreMessaging.selfMapHref',
       'agencyCoreMessaging.workflowMappingSessionHref',

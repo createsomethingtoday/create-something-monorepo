@@ -283,6 +283,7 @@ test('public Agency commercial propositions declare the shared editorial express
     'products/loom',
     'field-reports',
     'field-reports/template-review',
+    'field-reports/upstream-contributions',
     'proof/marketplace-workflow',
     'delivery',
     'experiments'
@@ -364,6 +365,7 @@ test('commercial conversion handoffs use editorial propositions while task surfa
     'delivery',
     'field-reports',
     'field-reports/template-review',
+    'field-reports/upstream-contributions',
     'for-service-providers',
     'map',
     'methodology',

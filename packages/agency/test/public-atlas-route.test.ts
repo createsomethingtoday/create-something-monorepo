@@ -119,6 +119,7 @@ test('agency surface policy names Atlas proof and compact privacy paths', () => 
 	assert.equal(usesCompactAgencyPrivacyPrompt('/book'), true);
 	assert.equal(usesCompactAgencyPrivacyPrompt('/field-reports'), true);
 	assert.equal(usesCompactAgencyPrivacyPrompt('/field-reports/template-review/'), true);
+	assert.equal(usesCompactAgencyPrivacyPrompt('/field-reports/upstream-contributions/'), true);
 	assert.equal(usesCompactAgencyPrivacyPrompt('/contact'), false);
 });
 

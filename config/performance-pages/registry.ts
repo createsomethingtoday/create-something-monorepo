@@ -50,6 +50,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     [
       'bearer-token-policy',
       'field-reports/template-review',
+      'field-reports/upstream-contributions',
       'methodology',
       'practice',
       'proof/marketplace-workflow'
