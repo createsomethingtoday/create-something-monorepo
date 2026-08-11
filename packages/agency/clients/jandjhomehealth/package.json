@@ -17,6 +17,8 @@
     "types": "node ../../../../scripts/run-wrangler.mjs types"
   },
   "dependencies": {
+	"@create-something/arc": "workspace:*",
+	"@create-something/atlas-composition": "workspace:*",
     "@openai/agents": "^0.13.5",
     "lucide-svelte": "^0.562.0",
     "zod": "^4.3.6"

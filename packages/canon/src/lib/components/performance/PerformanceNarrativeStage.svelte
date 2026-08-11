@@ -202,6 +202,12 @@
   function handlePresentationKeydown(event: KeyboardEvent) {
     if (!presenting || event.defaultPrevented) return;
 
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      setPresenting(false);
+      return;
+    }
+
     if (event.key === 'Tab' && stageElement) {
       const focusable = [...stageElement.querySelectorAll<HTMLElement>(interactiveSelector)].filter(
         (element) => !element.hasAttribute('disabled') && element.getAttribute('aria-hidden') !== 'true'
@@ -220,7 +226,20 @@
     }
 
     if (event.target instanceof HTMLElement && event.target.closest(interactiveSelector)) {
-      return;
+      const presentationChrome = event.target.closest(
+        '.performance-narrative-stage__present, .performance-narrative-stage__controls, .performance-narrative-stage__index'
+      );
+      const directionalKey = [
+        'ArrowRight',
+        'ArrowDown',
+        'PageDown',
+        'ArrowLeft',
+        'ArrowUp',
+        'PageUp',
+        'Home',
+        'End'
+      ].includes(event.key);
+      if (!presentationChrome || !directionalKey) return;
     }
 
     let nextIndex = activeIndex;
@@ -232,9 +251,6 @@
       nextIndex = 0;
     } else if (event.key === 'End') {
       nextIndex = scenes.length - 1;
-    } else if (event.key === 'Escape') {
-      setPresenting(false);
-      return;
     } else {
       return;
     }
