@@ -195,6 +195,7 @@ export const GOVERNANCE_FINDING_CATEGORY_OPTIONS = [
   'Documentation Overhaul & Tracking Hub',
   'Tooling: App Review MCP & Security Scanning',
   'Ecosystem & Competitive Watch',
+  'Bundle Review Precision — Library False-Positives & Dependency Declarations',
   'Parking Lot',
 ] as const;
 
@@ -520,10 +521,10 @@ export const APP_REVIEW_FIELD_MAP = {
       exception_type: FIELD_IDS.exceptions.type,
       rationale: FIELD_IDS.exceptions.rationale,
       decision_notes: FIELD_IDS.exceptions.decisionNotes,
-      requested_by: FIELD_IDS.exceptions.requestedBy,
-      decision_by: FIELD_IDS.exceptions.decisionBy,
     },
     readOnly: {
+      requested_by: FIELD_IDS.exceptions.requestedBy,
+      decision_by: FIELD_IDS.exceptions.decisionBy,
       requested_datetime: FIELD_IDS.exceptions.requestedDatetime,
       decision_datetime: FIELD_IDS.exceptions.decisionDatetime,
       undecided: FIELD_IDS.exceptions.undecided,

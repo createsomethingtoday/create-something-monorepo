@@ -83,6 +83,10 @@ describe('schema helpers', () => {
     expect(APP_REVIEW_FIELD_MAP.versions.writable.exception_status).toBe(FIELD_IDS.versions.exceptionStatus);
     expect(APP_REVIEW_FIELD_MAP.versions.readOnly.exception_slack_ts).toBe(FIELD_IDS.versions.exceptionSlackTs);
     expect(APP_REVIEW_FIELD_MAP.exceptions.writable.exception_status).toBe(FIELD_IDS.exceptions.status);
+    expect(APP_REVIEW_FIELD_MAP.exceptions.writable).not.toHaveProperty('requested_by');
+    expect(APP_REVIEW_FIELD_MAP.exceptions.writable).not.toHaveProperty('decision_by');
+    expect(APP_REVIEW_FIELD_MAP.exceptions.readOnly.requested_by).toBe(FIELD_IDS.exceptions.requestedBy);
+    expect(APP_REVIEW_FIELD_MAP.exceptions.readOnly.decision_by).toBe(FIELD_IDS.exceptions.decisionBy);
     expect(APP_REVIEW_FIELD_MAP.exceptions.readOnly.requested_datetime).toBe(FIELD_IDS.exceptions.requestedDatetime);
     expect(APP_REVIEW_FIELD_MAP.statusOptions.exceptionStatus).toContain('✅Approved');
     expect(APP_REVIEW_FIELD_MAP.statusOptions.holdReason).toContain('Pending Exception Decision');
@@ -97,6 +101,9 @@ describe('schema helpers', () => {
     expect(isGovernanceFindingStatus('Needs Decision')).toBe(true);
     expect(isGovernanceFindingPriority('P1')).toBe(true);
     expect(GOVERNANCE_FINDING_CATEGORY_OPTIONS).toContain('Documentation Overhaul & Tracking Hub');
+    expect(GOVERNANCE_FINDING_CATEGORY_OPTIONS).toContain(
+      'Bundle Review Precision — Library False-Positives & Dependency Declarations',
+    );
     expect(GOVERNANCE_FINDING_STATUS_OPTIONS).toContain('Parking Lot');
     expect(GOVERNANCE_FINDING_PRIORITY_OPTIONS).toEqual(['P0', 'P1', 'P2', 'P3']);
   });

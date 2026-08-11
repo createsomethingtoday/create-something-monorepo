@@ -1019,9 +1019,6 @@ export class AirtableClient {
 
   private async getGovernanceFindingRecord(recordId: string): Promise<AirtableRecord | null> {
     const params = new URLSearchParams();
-    for (const fieldName of Object.values(GOVERNANCE_FINDING_FIELD_NAMES)) {
-      params.append('fields[]', fieldName);
-    }
 
     try {
       return await this.requestJson<AirtableSingleResponse>(

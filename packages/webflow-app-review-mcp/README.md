@@ -81,6 +81,9 @@ Optional:
 - `app_review_approve_version`
 - `app_review_reject_version`
 - `app_review_update_version_review`
+- `app_review_list_exception_items`
+- `app_review_create_exception_item`
+- `app_review_update_exception_item`
 - `app_review_update_asset_metadata`
 - `app_review_set_marketplace_status`
 
@@ -146,7 +149,7 @@ Recommended fields:
 | `Title` | Single line text | Required by `app_review_create_governance_finding` |
 | `Status` | Single select | `New`, `Triage`, `In Progress`, `Needs Decision`, `Waiting on Owner`, `Done`, `Parking Lot` |
 | `Priority` | Single select | `P0`, `P1`, `P2`, `P3` |
-| `Category` | Single select | Runtime integrity, private/beta governance, inspectability, Forms API/credentials, docs/tracking hub, tooling/security scanning, ecosystem watch, parking lot |
+| `Category` | Single select | Runtime integrity, private/beta governance, inspectability, Forms API/credentials, docs/tracking hub, tooling/security scanning, ecosystem watch, bundle-review precision, parking lot |
 | `Summary` | Long text | Required |
 | `Evidence` | Long text | Concrete thread/ticket/docs evidence |
 | `Recommendation` | Long text | Proposed policy, docs, platform, or tooling action |
@@ -161,6 +164,11 @@ Recommended fields:
 | `Linked URLs` | Long text | One URL per line |
 | `Reporter` | Single line text | Defaults to `Dify Governance Database` when omitted |
 | `Created By Agent` | Single line text | Defaults to `webflow-app-review-mcp` |
+
+Governance Findings are the cross-app policy and tooling backlog. Per-app or
+per-version waivers belong in the Marketplace Assets base's first-class
+`⚖️Exceptions` table and must use the `app_review_*_exception_item` tools; do
+not add an `Exceptions` category here as a substitute.
 
 ## Canonical Mappings
 

@@ -370,6 +370,41 @@ describe('AirtableClient governance findings', () => {
       decisionNeeded: true,
     });
   });
+
+  it('gets one governance finding without unsupported list-only field parameters', async () => {
+    const fetchFn = vi.fn(async (input: RequestInfo | URL) => {
+      const url = new URL(String(input));
+      if (url.searchParams.has('fields[]')) {
+        return jsonResponse({
+          error: {
+            type: 'INVALID_REQUEST_UNKNOWN',
+            message: 'Invalid request: parameter validation failed.',
+          },
+        }, 422);
+      }
+
+      return jsonResponse({
+        id: 'recW17aeKiE0Stdhg',
+        fields: {
+          [fields.title]: 'Bundle Review Precision',
+          [fields.category]: 'Bundle Review Precision — Library False-Positives & Dependency Declarations',
+          [fields.summary]: 'Separate developer-fixable findings from library false positives.',
+        },
+      });
+    });
+
+    const client = new AirtableClient({
+      apiKey: 'token',
+      fetchFn,
+      governanceBaseId: 'appGovernance',
+      governanceFindingsTableId: 'tblGovernance',
+    });
+
+    await expect(client.getGovernanceFinding('recW17aeKiE0Stdhg')).resolves.toMatchObject({
+      findingId: 'recW17aeKiE0Stdhg',
+      category: 'Bundle Review Precision — Library False-Positives & Dependency Declarations',
+    });
+  });
 });
 
 describe('AirtableClient app review context and queue helpers', () => {
