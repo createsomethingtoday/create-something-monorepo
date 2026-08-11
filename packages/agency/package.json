@@ -57,6 +57,7 @@
   },
   "dependencies": {
     "@composio/core": "^0.6.4",
+    "@create-something/atlas-composition": "workspace:*",
     "@create-something/canon": "workspace:*",
     "@create-something/canvas-kernel": "workspace:*",
     "@create-something/database-layer": "workspace:*",
