@@ -4,9 +4,13 @@
     | 'about'
     | 'services'
     | 'products'
+    | 'workflows'
     | 'map'
     | 'control'
-    | 'proof';
+    | 'proof'
+    | 'marketplace-review'
+    | 'workflow-recovery'
+    | 'workflow-control';
 
   type Point = { x: number; y: number; label: string };
   type Route = { d: string; label: string; tone?: 'signal' | 'growth' | 'review' };
@@ -150,6 +154,33 @@
         evidence: 'Client-owned'
       }
     },
+    workflows: {
+      code: 'PB / LIB-12',
+      phase: 'Field guides',
+      call: 'Read → Bound → Run → Review',
+      summary: 'Signal → Decision → Proof',
+      description:
+        'Workflow Library Playbook: a live operating signal routes through the relevant field guide, around an untrusted shortcut, to a named decision owner and an applied proof receipt.',
+      owners: [
+        { x: 142, y: 202, label: 'Live signal' },
+        { x: 304, y: 132, label: 'Field guide' },
+        { x: 474, y: 280, label: 'Operator' }
+      ],
+      constraints: [{ x: 474, y: 122, label: 'Untrusted shortcut' }],
+      routes: [
+        { d: 'M 164 196 C 212 166, 250 140, 280 134', label: 'Read', tone: 'signal' },
+        { d: 'M 328 144 C 368 180, 390 246, 450 276', label: 'Apply', tone: 'growth' }
+      ],
+      gate: { x: 390, y: 246, label: 'Fit / pause' },
+      receipt: {
+        x: 494,
+        y: 282,
+        label: 'Applied play',
+        state: 'Inspect',
+        record: 'LIB-12 / GUIDE',
+        evidence: 'Owner + boundary + proof'
+      }
+    },
     map: {
       code: 'PB / 04',
       phase: 'Map',
@@ -232,6 +263,90 @@
         state: 'Verified',
         record: 'PB-06 / FILM',
         evidence: 'Measured run'
+      }
+    },
+    'marketplace-review': {
+      code: 'PB / MR-01',
+      phase: 'Review queue',
+      call: 'Prepare → Review → Decide',
+      summary: 'Evidence moves / judgment stays',
+      description:
+        'Marketplace Review Playbook: an agent prepares the evidence packet, ambiguity routes around automation, and a named reviewer keeps final approval authority with an attached decision receipt.',
+      owners: [
+        { x: 142, y: 202, label: 'Submission' },
+        { x: 304, y: 132, label: 'Evidence agent' },
+        { x: 474, y: 278, label: 'Reviewer' }
+      ],
+      constraints: [{ x: 474, y: 122, label: 'Exceptional case' }],
+      routes: [
+        { d: 'M 164 196 C 212 166, 250 140, 280 134', label: 'Prepare', tone: 'signal' },
+        { d: 'M 328 142 C 364 176, 384 244, 450 274', label: 'Escalate', tone: 'review' }
+      ],
+      gate: { x: 392, y: 246, label: 'Human approval' },
+      receipt: {
+        x: 494,
+        y: 282,
+        label: 'Review decision',
+        state: 'Human-owned',
+        record: 'MR-01 / REVIEW',
+        evidence: 'Packet + decision'
+      }
+    },
+    'workflow-recovery': {
+      code: 'PB / REC-01',
+      phase: 'Recovery',
+      call: 'Trace → Stop → Recover',
+      summary: 'Failure / authority / evidence',
+      description:
+        'Workflow Recovery Playbook: the operator traces the last known-good run, stops unsafe retries at the authority gate, and chooses repair, replacement, or retirement with recovery proof.',
+      owners: [
+        { x: 144, y: 202, label: 'Last good run' },
+        { x: 306, y: 132, label: 'Failure trace' },
+        { x: 476, y: 280, label: 'Recovery owner' }
+      ],
+      constraints: [
+        { x: 306, y: 278, label: 'Missing evidence' },
+        { x: 478, y: 122, label: 'Unsafe retry' }
+      ],
+      routes: [
+        { d: 'M 166 196 C 216 166, 252 140, 282 134', label: 'Trace', tone: 'signal' },
+        { d: 'M 328 144 C 370 182, 392 246, 452 276', label: 'Recover', tone: 'review' }
+      ],
+      gate: { x: 390, y: 246, label: 'Stop / resume' },
+      receipt: {
+        x: 496,
+        y: 282,
+        label: 'Recovery plan',
+        state: 'Review',
+        record: 'REC-01 / PLAN',
+        evidence: 'Repair / replace / stop'
+      }
+    },
+    'workflow-control': {
+      code: 'PB / CTRL-01',
+      phase: 'Human control',
+      call: 'Run → Wait → Stop',
+      summary: 'Allowed path / named decision',
+      description:
+        'Workflow Control Playbook: approved work runs, ambiguous decisions wait with a complete packet, unauthorized action stops, and the client keeps the operating receipt.',
+      owners: [
+        { x: 142, y: 204, label: 'Signal' },
+        { x: 304, y: 132, label: 'AI agent' },
+        { x: 474, y: 280, label: 'Decision owner' }
+      ],
+      constraints: [{ x: 474, y: 122, label: 'Untrusted action' }],
+      routes: [
+        { d: 'M 164 198 C 212 168, 250 140, 280 134', label: 'Run', tone: 'growth' },
+        { d: 'M 328 144 C 366 178, 390 246, 450 276', label: 'Wait', tone: 'review' }
+      ],
+      gate: { x: 390, y: 246, label: 'Decision boundary' },
+      receipt: {
+        x: 494,
+        y: 282,
+        label: 'Control receipt',
+        state: 'Client-owned',
+        record: 'CTRL-01 / RUN',
+        evidence: 'Decision + result'
       }
     }
   };

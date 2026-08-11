@@ -123,6 +123,11 @@ test('workflow route implementation is prerendered, indexable, and playbook-nati
   assert.match(routePage, /breadcrumbs/);
   assert.match(routePage, /href="\/workflows"/);
   assert.match(hubPage, /<SEO/);
+  assert.match(hubPage, /<PerformanceCampaignOpening/);
+  assert.match(hubPage, /expression="editorial"/);
+  assert.match(hubPage, /<PlaybookField variant="workflows"/);
+  assert.match(hubPage, /<PerformanceNarrativeStage/);
+  assert.match(hubPage, /<PerformanceConversionHandoff/);
   assert.match(hubPage, /Operator playbook/);
   assert.match(hubPage, /Map the play\. Build the system\. Keep control\./);
   assert.match(hubPage, /Signal → Decision → Proof/);
@@ -168,10 +173,15 @@ test('workflow titles use the Agency editorial face while operating content stay
     'utf8'
   );
 
-  for (const route of [hubPage, guidePage]) {
+  assert.match(hubPage, /<PerformanceCampaignOpening[\s\S]*?expression="editorial"/);
+
+  for (const route of [guidePage]) {
     assert.match(route, /h1\s*\{[\s\S]*?font-family:\s*var\(--font-performance-editorial\)/);
     assert.match(route, /h1\s*\{[\s\S]*?font-weight:\s*var\(--font-performance-editorial-weight, 400\)/);
     assert.match(route, /h1\s*\{[\s\S]*?line-height:\s*var\(--leading-performance-editorial, 1\.1\)/);
+  }
+
+  for (const route of [hubPage, guidePage]) {
     assert.match(route, /h2\s*\{[\s\S]*?font-family:\s*var\(--font-performance-display\)/);
     assert.doesNotMatch(route, /font-family:\s*var\(--font-performance-serif\)/);
   }
@@ -189,8 +199,5 @@ test('workflow titles use the Agency editorial face while operating content stay
     guidePage,
     /\.guide-answer\s*\{[\s\S]*?font-family:\s*var\(--font-performance-prose\)/
   );
-  assert.match(
-    hubPage,
-    /\.library-intro > p\s*\{[\s\S]*?font-family:\s*var\(--font-performance-prose\)/
-  );
+  assert.match(hubPage, /lede="A practical playbook/);
 });

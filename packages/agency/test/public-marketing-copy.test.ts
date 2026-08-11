@@ -350,7 +350,7 @@ test('public Agency commercial propositions declare the shared editorial express
   );
   assert.match(
     workflows,
-    /h1\s*\{[\s\S]*?font-family:\s*var\(--font-performance-editorial\)/,
+    /<PerformanceCampaignOpening[\s\S]*?expression="editorial"/,
     'the workflow library proposition must use the shared Agency editorial face'
   );
 });
@@ -376,7 +376,8 @@ test('commercial conversion handoffs use editorial propositions while task surfa
     'security',
     'stack',
     'use-cases/business',
-    'use-cases/enterprise'
+    'use-cases/enterprise',
+    'workflows'
   ];
 
   for (const route of commercialRoutes) {

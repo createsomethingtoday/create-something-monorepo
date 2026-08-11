@@ -8,10 +8,13 @@ import { performancePageRegistry } from '../../../config/performance-pages/regis
 const workspaceRoot = resolve(import.meta.dirname, '../../..');
 const commercialRoutes = [
   'about',
+  'ai-workflow-control',
+  'ai-workflow-recovery',
   'cloudflare',
   'contact',
   'control',
   'for-service-providers',
+  'marketplace-review-automation',
   'partners',
   'security',
   'services',

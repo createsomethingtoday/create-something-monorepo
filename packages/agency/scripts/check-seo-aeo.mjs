@@ -55,7 +55,7 @@ for (const entry of routeEntries) {
   }
 
   const source = fs.readFileSync(pageFile, 'utf8');
-  if (/noindex=\{true\}/.test(source)) {
+  if (sourceDeclaresNoindex(source)) {
     errors.push(`${entry.path} is in searchRoutes.json but its SEO component is noindex`);
   }
 
@@ -100,7 +100,7 @@ for (const entry of routeEntries) {
 for (const file of pageFiles) {
   const route = routeFromPageFile(file);
   const source = fs.readFileSync(file, 'utf8');
-  const noindex = /noindex=\{true\}/.test(source);
+  const noindex = sourceDeclaresNoindex(source);
   const robotsBlocked = robotsBlockedPrefixes.some(
     (prefix) => route === prefix || route.startsWith(`${prefix}/`)
   );
@@ -191,6 +191,10 @@ function pageFileForRoute(route) {
   }
   const routeDir = route === '/' ? routesRoot : path.join(routesRoot, route.slice(1));
   return path.join(routeDir, '+page.svelte');
+}
+
+function sourceDeclaresNoindex(source) {
+  return /noindex=\{true\}/.test(source) || /search-policy:\s*noindex/.test(source);
 }
 
 function escapeRegExp(value) {
