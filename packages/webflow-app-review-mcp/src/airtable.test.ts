@@ -406,4 +406,55 @@ describe('AirtableClient app review context and queue helpers', () => {
     expect(result.items).toHaveLength(1);
     expect(result.items[0]?.isAssigned).toBe(true);
   });
+
+  it('honors the queue limit when assignment is any', async () => {
+    const fetchFn = vi.fn(async (input: RequestInfo | URL) => {
+      const url = new URL(String(input));
+
+      if (url.pathname.endsWith(`/${TABLE_IDS.assets}`) && !url.searchParams.get('offset')) {
+        return jsonResponse({
+          records: [assetRecord('recAsset1')],
+          offset: 'next-page',
+        });
+      }
+
+      if (url.pathname.endsWith(`/${TABLE_IDS.assets}`) && url.searchParams.get('offset') === 'next-page') {
+        return jsonResponse({
+          records: [assetRecord('recAsset2')],
+        });
+      }
+
+      if (url.pathname.endsWith(`/${TABLE_IDS.assetVersions}`)) {
+        return jsonResponse({
+          records: [
+            {
+              ...versionRecord('rec-version-1', null),
+              fields: {
+                ...versionRecord('rec-version-1', null).fields,
+                [FIELD_IDS.versions.assetLink]: ['recAsset1'],
+                [FIELD_IDS.versions.assetRecordIdRollup]: ['recAsset1'],
+              },
+            },
+          ],
+        });
+      }
+
+      return new Response('not found', { status: 404 });
+    });
+
+    const client = new AirtableClient({
+      apiKey: 'token',
+      fetchFn,
+    });
+
+    const result = await client.listAssetQueueDetailed({
+      limit: 1,
+      assigned: 'any',
+    });
+
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0]?.assetId).toBe('recAsset1');
+    expect(fetchFn).toHaveBeenCalledTimes(2);
+    expect(new URL(String(fetchFn.mock.calls[0]?.[0])).searchParams.get('offset')).toBeNull();
+  });
 });
