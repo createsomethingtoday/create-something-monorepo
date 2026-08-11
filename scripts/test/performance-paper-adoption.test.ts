@@ -5,11 +5,7 @@ import { test } from 'node:test';
 
 const repoRoot = resolve(import.meta.dirname, '../..');
 
-const openings = {
-  ltd: {
-    source: 'packages/ltd/src/routes/+page.svelte',
-    study: 'paperCanonSheetMedia'
-  },
+const paperOpenings = {
   io: {
     source: 'packages/io/src/routes/+page.svelte',
     study: 'paperResearchTraceMedia'
@@ -25,7 +21,7 @@ const openings = {
 } as const;
 
 test('Paper remains assigned to the public properties that still own it', () => {
-  for (const [property, opening] of Object.entries(openings)) {
+  for (const [property, opening] of Object.entries(paperOpenings)) {
     const source = readFileSync(resolve(repoRoot, opening.source), 'utf8');
 
     assert.match(source, new RegExp(`media\\s*=\\s*{${opening.study}}`), `${property} Paper media`);
@@ -38,19 +34,19 @@ test('Paper remains assigned to the public properties that still own it', () => 
   }
 });
 
-test('Agency graduates from Paper to an owned Playbook field', () => {
-  const source = readFileSync(resolve(repoRoot, 'packages/agency/src/routes/+page.svelte'), 'utf8');
-  const field = readFileSync(
-    resolve(repoRoot, 'packages/agency/src/lib/components/PlaybookField.svelte'),
-    'utf8'
-  );
+test('LTD uses its owned Playbook field instead of the retired Paper opening', () => {
+  const source = readFileSync(resolve(repoRoot, 'packages/ltd/src/routes/+page.svelte'), 'utf8');
 
-  assert.match(source, /<PlaybookField variant="home"/);
-  assert.match(source, /artifactOwnsMedia/);
+  assert.match(source, /media=\{ltdOperatingFieldMedia\}/);
+  assert.match(source, /mode="ink"/);
+  assert.doesNotMatch(source, /mode="paper"|paperCanonSheetMedia/);
+});
+
+test('Agency uses its owned Playbook campaign media instead of Paper', () => {
+  const source = readFileSync(resolve(repoRoot, 'packages/agency/src/routes/+page.svelte'), 'utf8');
+
+  assert.match(source, /media=\{playbookHomeHeroMedia\}/);
+  assert.match(source, /mediaMobilePlacement="background"/);
+  assert.doesNotMatch(source, /PlaybookField/);
   assert.doesNotMatch(source, /mode="paper"|paper[A-Z][A-Za-z]+Media/);
-  assert.match(field, /O = owner/);
-  assert.match(field, /X = opposition/);
-  assert.match(field, /Ambiguity/);
-  assert.match(field, /Untrusted automation/);
-  assert.match(field, /AI out of reach/);
 });

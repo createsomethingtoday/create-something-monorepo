@@ -109,6 +109,7 @@
   }
 </script>
 
+<!-- search-policy: noindex; this Arc exposes a local-action fixture, not an indexable marketing route. -->
 <svelte:head>
   <title>App Review Governance Arc · CREATE SOMETHING</title>
   <meta
