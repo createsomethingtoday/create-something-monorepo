@@ -4,7 +4,6 @@
 	import {
 		Clipboard,
 		ExternalLink,
-		KeyRound,
 		LogOut,
 		Mail,
 		Phone,
@@ -113,10 +112,6 @@
 			<a href="/admin/qr" title="Open QR code">
 				<QrCode size={18} aria-hidden="true" />
 				<span>QR</span>
-			</a>
-			<a href="/admin/settings" title="Manage password">
-				<KeyRound size={18} aria-hidden="true" />
-				<span>Password</span>
 			</a>
 			<button type="button" onclick={logout} title="Logout">
 				<LogOut size={18} aria-hidden="true" />

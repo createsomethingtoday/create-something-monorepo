@@ -2,7 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { createAdminSession, verifyAdminLogin } from '$lib/server/auth';
 import { getDb } from '$lib/server/db';
-import { getRuntimeEnv, normalizeEmail } from '$lib/server/env';
+import { getRuntimeEnv } from '$lib/server/env';
 
 export const POST: RequestHandler = async ({ request, cookies, platform }) => {
 	let body: unknown;
@@ -13,17 +13,16 @@ export const POST: RequestHandler = async ({ request, cookies, platform }) => {
 	}
 
 	const payload = body && typeof body === 'object' ? (body as Record<string, unknown>) : {};
-	const email = typeof payload.email === 'string' ? normalizeEmail(payload.email) : '';
 	const password = typeof payload.password === 'string' ? payload.password : '';
 
-	if (!email || !password) {
-		return json({ success: false, error: 'Email and password are required.' }, { status: 400 });
+	if (!password) {
+		return json({ success: false, error: 'Password is required.' }, { status: 400 });
 	}
 
 	try {
 		const db = getDb(platform);
 		const env = getRuntimeEnv(platform);
-		const admin = await verifyAdminLogin(db, env, email, password);
+		const admin = await verifyAdminLogin(db, env, password);
 
 		if (!admin) {
 			return json({ success: false, error: 'Invalid credentials.' }, { status: 401 });
