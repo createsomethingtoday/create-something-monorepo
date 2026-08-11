@@ -19,6 +19,16 @@
       "types": "./dist/catalog.d.ts",
       "import": "./dist/catalog.js",
       "default": "./dist/catalog.js"
+    },
+    "./arcs": {
+      "types": "./dist/arcs.d.ts",
+      "import": "./dist/arcs.js",
+      "default": "./dist/arcs.js"
+    },
+    "./operator-playbooks": {
+      "types": "./dist/operator-playbooks.d.ts",
+      "import": "./dist/operator-playbooks.js",
+      "default": "./dist/operator-playbooks.js"
     }
   },
   "bin": {
@@ -29,9 +39,11 @@
     "dev": "tsc --watch",
     "lint": "pnpm run typecheck",
     "start": "node dist/index.js",
+    "test": "pnpm build && node --test test/*.test.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@create-something/atlas-composition": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.25.3",
     "zod": "^3.23.0"
   },

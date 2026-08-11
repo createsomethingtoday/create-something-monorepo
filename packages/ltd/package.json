@@ -35,6 +35,7 @@
 	},
 	"dependencies": {
 		"@create-something/canon": "workspace:*",
+		"@create-something/playbook-mcp": "workspace:*",
 		"@create-something/tufte": "workspace:*"
 	},
 	"devDependencies": {

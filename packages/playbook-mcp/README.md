@@ -4,6 +4,26 @@ Host workflow playbooks for MCP onboarding. Teaches users how to work effectivel
 
 Lightweight by design — ships alongside client MCPs for onboarding. No philosophy, no papers, no design system. Just workflow guidance.
 
+## Arc catalog
+
+The package also exposes a read-only Arc catalog at `@create-something/playbook-mcp/arcs`.
+It projects every canonical public registry entry into the shared Atlas composition
+contract without creating another workflow ledger:
+
+- 6 host Playbooks
+- 30 outcome Playbooks
+- 3 operator Playbooks
+- 14 structured workflow Runbooks
+
+Those 53 generated Arcs sit beside the hand-authored App Review Governance prototype,
+for 54 public presentation routes in total. Each generated composition preserves one
+reusable map and three views: Arc, Playbook, and Runbook. Private client procedures and
+markdown-only templates are deliberately excluded.
+
+The three public operator Playbooks are exported from
+`@create-something/playbook-mcp/operator-playbooks`, making this package their canonical
+registry while allowing the `.ltd` operator library to consume the same definitions.
+
 ## Framework Tier
 
 | Tier           | MCP Primitive | Role in This Server                                                                          |

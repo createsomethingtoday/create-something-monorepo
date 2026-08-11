@@ -40,6 +40,11 @@ The public Playbook hierarchy is:
 4. **Receipt:** the evidence of what ran, waited, stopped, recovered, or remains
    unknown.
 
+The noindex Arc catalog at `/arcs` presents every canonical public Playbook and Runbook
+as a presentation-native route. Generated routes live at `/arc/{slug}` and expose the
+same read-only catalog through `/api/arcs` and `/api/arcs/{slug}`. The existing
+`/arc/app-review-governance` prototype remains the proven hand-authored composition.
+
 Offense creates operating advantage by advancing approved work. Defense protects
 authority, quality, evidence, and recovery. Map defines the Playbook, Build
 makes approved Runbooks executable, and Control runs and revises them.
