@@ -45,4 +45,26 @@ describe('PerformanceNarrativeStage SSR', () => {
       body.indexOf('Leave an inspectable wake.')
     );
   });
+
+  it('offers an explicit, keyboard-addressable presentation mode when enabled', () => {
+    const { body } = render(PerformanceNarrativeStage, {
+      props: {
+        id: 'deck-story',
+        title: 'A deck with an operator in the loop.',
+        enablePresentation: true,
+        scenes: [
+          {
+            id: 'first',
+            label: 'First',
+            summary: 'A focused composition',
+            title: 'The first scene.',
+            detail: 'A deck must be presentable without turning navigation into autoplay.'
+          }
+        ]
+      }
+    });
+
+    expect(body).toContain('data-presentation-enabled="true"');
+    expect(body).toContain('Present deck');
+  });
 });
