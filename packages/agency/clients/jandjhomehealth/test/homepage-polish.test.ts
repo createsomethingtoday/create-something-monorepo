@@ -23,3 +23,13 @@ test('the public trust path uses supported process language instead of unverifie
 	assert.match(homepage, /Please do not include medical details here/);
 	assert.match(homepage, /If you are experiencing a medical emergency, call 911/);
 });
+
+test('the commitment section presents one care image with a non-overlapping caption', () => {
+	const aboutSection = homepage.match(/<section id="about"(?<markup>[\s\S]*?)<\/section>/);
+	const aboutMarkup = aboutSection?.groups?.markup ?? '';
+
+	assert.match(aboutMarkup, /<figure class="about-visual"/);
+	assert.equal((aboutMarkup.match(/<img\b/g) ?? []).length, 1);
+	assert.match(aboutMarkup, /<figcaption class="promise-strip"/);
+	assert.doesNotMatch(aboutMarkup, /about-cutout|promise-card/);
+});
