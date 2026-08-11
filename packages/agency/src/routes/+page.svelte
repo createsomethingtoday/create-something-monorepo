@@ -143,6 +143,14 @@
         'The map, rules, runbook, history, and recovery plan remain with the client so an AI or infrastructure change does not erase the operating knowledge.',
       source: 'Inspect the ownership model',
       href: '/stack'
+    },
+    {
+      eyebrow: 'Upstream contribution',
+      title: 'We improve the infrastructure we rely on.',
+      detail:
+        'A reliability fix merged into CTX. Credited security work merged into OpenAI Codex Security and shipped in version 0.1.9.',
+      source: 'Inspect the contribution receipts',
+      href: '/field-reports/upstream-contributions'
     }
   ];
 

@@ -9,6 +9,7 @@ const workspaceRoot = resolve(import.meta.dirname, '../../..');
 const editorialRoutes = [
   'bearer-token-policy',
   'field-reports/template-review',
+  'field-reports/upstream-contributions',
   'methodology',
   'practice',
   'proof/marketplace-workflow'
@@ -49,6 +50,7 @@ test('keeps Agency editorial, delivery, and archived redirect archetypes precise
 test('consolidates only section-heavy editorial arguments into a focused evidence stage', () => {
   for (const route of [
     'field-reports/template-review',
+    'field-reports/upstream-contributions',
     'methodology',
     'practice',
     'proof/marketplace-workflow'
@@ -76,6 +78,13 @@ test('preserves editorial destinations and complete proof inventory', () => {
       'Reviewer time savings are not measured.',
       'templateReviewFieldReport.sources',
       '/book'
+    ],
+    'field-reports/upstream-contributions': [
+      'The work began with a narrow, reproducible boundary.',
+      'Acceptance improved the implementation without erasing its origin.',
+      'Contributor does not mean partner.',
+      'upstreamContributionFieldReport.sources',
+      '/field-reports'
     ],
     methodology: [
       'The Core Principle',

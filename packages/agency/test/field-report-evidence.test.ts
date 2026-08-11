@@ -4,8 +4,46 @@ import test from 'node:test';
 
 import {
   getTemplateReviewPacketCompletion,
-  templateReviewFieldReport
+  templateReviewFieldReport,
+  upstreamContributionFieldReport
 } from '../src/lib/data/fieldReports.ts';
+
+test('upstream contribution report keeps acceptance evidence and relationship limits together', () => {
+  assert.equal(upstreamContributionFieldReport.id, '#FR-2026-02');
+  assert.equal(upstreamContributionFieldReport.relationship, 'Independent open-source contributor');
+  assert.deepEqual(
+    upstreamContributionFieldReport.contributions.map(({ project, state }) => ({ project, state })),
+    [
+      { project: 'CTX', state: 'merged' },
+      { project: 'OpenAI Codex Security', state: 'released' }
+    ]
+  );
+  assert.equal(upstreamContributionFieldReport.sources.length, 6);
+  assert.ok(
+    upstreamContributionFieldReport.sources.every(({ href }) =>
+      href.startsWith('https://github.com/')
+    )
+  );
+  assert.equal(upstreamContributionFieldReport.sources.at(-1)?.id, '#OAI-0.1.9');
+  assert.match(upstreamContributionFieldReport.limits.join(' '), /do not establish a partnership/i);
+});
+
+test('upstream contribution page exposes primary receipts without implying endorsement', () => {
+  const routeUrl = new URL(
+    '../src/routes/field-reports/upstream-contributions/+page.svelte',
+    import.meta.url
+  );
+  assert.equal(existsSync(routeUrl), true);
+
+  const route = readFileSync(routeUrl, 'utf8');
+  assert.match(route, /title=\{upstreamContributionFieldReport\.title\}/);
+  assert.match(route, /CTX failed to compile on macOS ARM64/i);
+  assert.match(route, /OpenAI maintainers narrowed the security change/i);
+  assert.match(route, /Contributor does not mean partner\./i);
+  assert.match(route, /upstreamContributionFieldReport\.sources/);
+  assert.match(route, /Independent contributor/);
+  assert.doesNotMatch(route, /OpenAI partner|trusted by OpenAI|endorsed by OpenAI/i);
+});
 
 test('template review Field Report separates packet completion, synthetic boundary checks, and business impact', () => {
   assert.equal(templateReviewFieldReport.id, '#FR-2026-01');
@@ -195,6 +233,8 @@ test('Field Reports are a browsable proof chapter in the agency journey', () => 
   assert.match(index, /Automation prepared the evidence\. Human judgment still decided\./);
   assert.match(index, /49 of 50 selected cases/);
   assert.match(index, /href: '\/field-reports\/template-review'/);
+  assert.match(index, /href: '\/field-reports\/upstream-contributions'/);
+  assert.match(index, /upstreamContributionFieldReport\.title/);
   assert.match(layout, /label: 'Field Reports', href: '\/field-reports'/);
   assert.match(footer, /href="\/field-reports">Field Reports/);
 });

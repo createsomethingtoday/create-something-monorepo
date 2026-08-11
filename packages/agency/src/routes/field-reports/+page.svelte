@@ -8,6 +8,7 @@
     type PerformanceEvidenceItem
   } from '@create-something/canon';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
+  import { upstreamContributionFieldReport } from '$lib/data/fieldReports';
   import { playbookHeroMedia } from '$lib/data/playbookHeroMedia';
 
   const reports: PerformanceEvidenceItem[] = [
@@ -20,6 +21,15 @@
       state: 'verified',
       date: 'May–June 2026',
       href: '/field-reports/template-review'
+    },
+    {
+      id: upstreamContributionFieldReport.id,
+      kind: 'Infrastructure reliability',
+      title: upstreamContributionFieldReport.title,
+      detail: upstreamContributionFieldReport.dek,
+      state: 'verified',
+      date: upstreamContributionFieldReport.verifiedPeriod,
+      href: '/field-reports/upstream-contributions'
     }
   ];
 </script>
@@ -46,7 +56,7 @@
   ]}
 >
   {#snippet actions()}
-    <Button href="#reports">Read the first report</Button>
+    <Button href="#reports">Read the reports</Button>
     <Button href={agencyCoreMessaging.selfMapHref} variant="secondary">
       {agencyCoreMessaging.selfMapLabel}
     </Button>

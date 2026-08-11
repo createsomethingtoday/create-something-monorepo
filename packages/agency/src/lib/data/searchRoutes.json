@@ -123,13 +123,19 @@
     "path": "/field-reports",
     "changefreq": "monthly",
     "priority": "0.82",
-    "lastmod": "2026-07-10"
+    "lastmod": "2026-08-11"
   },
   {
     "path": "/field-reports/template-review",
     "changefreq": "monthly",
     "priority": "0.86",
     "lastmod": "2026-07-12"
+  },
+  {
+    "path": "/field-reports/upstream-contributions",
+    "changefreq": "monthly",
+    "priority": "0.84",
+    "lastmod": "2026-08-11"
   },
   {
     "path": "/use-cases/business",
