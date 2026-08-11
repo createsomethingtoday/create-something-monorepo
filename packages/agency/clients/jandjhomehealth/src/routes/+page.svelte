@@ -2,12 +2,10 @@
 	import { page } from '$app/state';
 	import {
 		ArrowRight,
-		BadgeCheck,
 		Check,
 		CircleCheck,
 		Clock3,
 		HeartHandshake,
-		House,
 		Loader2,
 		Mail,
 		Menu,
@@ -192,24 +190,20 @@
 				width="980"
 				height="998"
 			/>
-			<div class="experience-card">
-				<strong>20+</strong>
-				<span>years of trusted care</span>
-			</div>
 			<div class="care-card">
 				<HeartHandshake size={22} aria-hidden="true" />
-				<span>Personalized for every family</span>
+				<span>Start with a conversation</span>
 			</div>
 		</div>
 	</section>
 
-	<section class="proof-bar" aria-label="J and J care commitments">
-		<div class="section-shell proof-grid">
-			<div><BadgeCheck aria-hidden="true" /><span>Experienced care professionals</span></div>
-			<div><House aria-hidden="true" /><span>Care delivered in your home</span></div>
-			<div><HeartHandshake aria-hidden="true" /><span>Respect for every family</span></div>
-		</div>
-	</section>
+	<div class="proof-bar" aria-label="How to begin care">
+		<ol class="section-shell proof-grid">
+			<li><span class="proof-step">01</span><strong>Contact the care team</strong></li>
+			<li><span class="proof-step">02</span><strong>Confirm needs and availability</strong></li>
+			<li><span class="proof-step">03</span><strong>Plan the next step together</strong></li>
+		</ol>
+	</div>
 
 	<section id="services" class="content-section section-shell">
 		<div class="section-intro">
@@ -235,24 +229,52 @@
 	<section id="why-us" class="why-section">
 		<div class="section-shell why-grid">
 			<div class="why-heading">
-				<p class="eyebrow eyebrow-light">Why families choose J&amp;J</p>
-				<h2>A plan for the person—not just the task.</h2>
+				<p class="eyebrow eyebrow-light">From first call to next step</p>
+				<h2>A clear conversation before care begins.</h2>
+				<p>
+					Families and referring professionals can start in the same place: tell us how to
+					reach you, then speak directly with the care team about fit and availability.
+				</p>
 			</div>
 
-			<ol class="care-steps">
-				<li>
-					<span>01</span>
-					<div><h3>We listen first</h3><p>Tell us what support would make home feel safer and more manageable.</p></div>
-				</li>
-				<li>
-					<span>02</span>
-					<div><h3>We shape the care</h3><p>Your care plan reflects clinical needs, personal routines, and family goals.</p></div>
-				</li>
-				<li>
-					<span>03</span>
-					<div><h3>We stay connected</h3><p>Our team communicates clearly and adjusts as needs and progress change.</p></div>
-				</li>
-			</ol>
+			<div class="care-journey">
+				<ol class="care-steps">
+					<li>
+						<span>01</span>
+						<div>
+							<h3>Share what support is needed</h3>
+							<p>Request a callback with basic contact details, or call the care team directly.</p>
+						</div>
+					</li>
+					<li>
+						<span>02</span>
+						<div>
+							<h3>Confirm needs and availability</h3>
+							<p>The care team will discuss the situation and confirm what support may be available.</p>
+						</div>
+					</li>
+					<li>
+						<span>03</span>
+						<div>
+							<h3>Plan the next step together</h3>
+							<p>The care team will explain the appropriate next action based on the conversation.</p>
+						</div>
+					</li>
+				</ol>
+
+				<div id="referrals" class="referral-actions" aria-label="Referral contact options">
+					<a href="tel:+18179993839">
+						<Phone size={21} aria-hidden="true" />
+						<span><small>Call our team</small>(817) 999-3839</span>
+						<ArrowRight size={19} aria-hidden="true" />
+					</a>
+					<a href="mailto:jandjhomehealth@gmail.com">
+						<Mail size={21} aria-hidden="true" />
+						<span><small>Email us</small>jandjhomehealth@gmail.com</span>
+						<ArrowRight size={19} aria-hidden="true" />
+					</a>
+				</div>
+			</div>
 		</div>
 	</section>
 
@@ -261,8 +283,8 @@
 			<p class="eyebrow">Our commitment</p>
 			<h2>Community care, practiced with dignity.</h2>
 			<p class="about-lede">
-				For more than two decades, J and J Home Health has helped people recover, stay
-				independent, and feel supported in the place they know best.
+				J and J Home Health supports people working toward recovery, independence, and a
+				more manageable life in the place they know best.
 			</p>
 			<p>
 				We believe trust is built in the details: arriving prepared, explaining what comes
@@ -289,32 +311,6 @@
 				<p>“Our commitment is to our community.”</p>
 				<span>Every visit. Every plan. Every family.</span>
 			</aside>
-		</div>
-	</section>
-
-	<section id="referrals" class="referral-section">
-		<div class="section-shell referral-grid">
-			<div>
-				<p class="eyebrow eyebrow-light">For providers and families</p>
-				<h2>Let’s make the next step simple.</h2>
-				<p>
-					Whether you are a clinician, case manager, social worker, or family member, our team
-					will help you understand availability and the referral process.
-				</p>
-			</div>
-
-			<div class="referral-actions">
-				<a href="tel:+18179993839">
-					<Phone size={21} aria-hidden="true" />
-					<span><small>Call our team</small>(817) 999-3839</span>
-					<ArrowRight size={19} aria-hidden="true" />
-				</a>
-				<a href="mailto:jandjhomehealth@gmail.com">
-					<Mail size={21} aria-hidden="true" />
-					<span><small>Email us</small>jandjhomehealth@gmail.com</span>
-					<ArrowRight size={19} aria-hidden="true" />
-				</a>
-			</div>
 		</div>
 	</section>
 
