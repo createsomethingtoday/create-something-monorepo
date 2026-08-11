@@ -3,6 +3,7 @@ export const DEFAULT_AIRTABLE_BASE_ID = 'appMoIgXMTTTNIc3p';
 export const TABLE_IDS = {
   assets: 'tblRwzpWoLgE9MrUm',
   assetVersions: 'tblHxZ2hgSFLZxsZu',
+  exceptions: 'tblnbaaIbIulWl0b7',
   governanceFindings: 'App Review Governance Findings',
 } as const;
 
@@ -56,6 +57,35 @@ export const FIELD_IDS = {
     submissionDatetime: 'fldWTKKh989L4lTTB',
     submissionDatetimeOverride: 'fldtAJZzh7oVHFmkF',
     daysInCurrentStage: 'fldbVdznI0sOQrEnX',
+    exceptionStatus: 'fldQo0XS9zJp5PifI',
+    exceptionType: 'fldYBytJAxkoax1db',
+    exceptionRationale: 'fldHm7bwSMkrcHYip',
+    exceptionDecisionNotes: 'fldYVNmh3VKM7mGbV',
+    exceptionRequestedBy: 'fldQlqegqmNwj3gWr',
+    exceptionDecisionBy: 'fldQwXHkFcpNgmDSM',
+    exceptionRequestedDatetime: 'fldonrW3JIOJQOHf4',
+    exceptionDecisionDatetime: 'fldGAzs9xwwSSvjce',
+    exceptionSlackTs: 'flddpAmN1slPDuKhZ',
+    exceptionItemsLink: 'fld8hWsxsAssmFi6u',
+    undecidedExceptionItems: 'fldiVQqWSw5shDkZS',
+    deniedExceptionItems: 'fldzwlnjdAapVFkzp',
+    holdReason: 'fldwoVrvt27LaEWIA',
+    holdNotes: 'fldmcikFo6r5GyLuf',
+    partnershipApp: 'fldczL9zgq44MjxQE',
+  },
+  exceptions: {
+    item: 'fldmJcVJCytD1VY1r',
+    assetVersionLink: 'fldqVk39RERL1tVPP',
+    status: 'fld0D5PoJAWhYeHiI',
+    type: 'fldUqjcnkOUO7RRKS',
+    rationale: 'fldHNABt611HJ6JxI',
+    decisionNotes: 'fldZvSg7gpbBw89Hz',
+    requestedBy: 'fldg17LtSEg66IkxJ',
+    decisionBy: 'fldcPJTTphd9MGnjT',
+    requestedDatetime: 'fldSP7etbvaMdEAYm',
+    decisionDatetime: 'fldhqW4RSpazA6421',
+    undecided: 'fldDwkkTHErvn4atw',
+    denied: 'fldJXVOBAeKLACZtc',
   },
 } as const;
 
@@ -107,6 +137,33 @@ export const REVIEW_STATUS_OPTIONS = [
   '☠️Archived (Auto)',
 ] as const;
 
+export const EXCEPTION_STATUS_OPTIONS = [
+  '🆕Requested',
+  '👀Under Review',
+  '✅Approved',
+  '❌Denied',
+  '🔙Withdrawn',
+] as const;
+
+export const EXCEPTION_TYPE_OPTIONS = [
+  'Guideline',
+  'Category Constraint',
+  'Custom Code / Scopes',
+  'Security',
+  'Pricing / Billing',
+  'Other',
+] as const;
+
+export const HOLD_REASON_OPTIONS = [
+  'Awaiting Creator Response',
+  'Awaiting Internal Decision',
+  'Security Review',
+  'Legal / Compliance',
+  'Platform Dependency',
+  'Pending Exception Decision',
+  'Other',
+] as const;
+
 export const REVIEW_TYPE_OPTIONS = [
   'New Asset',
   'Asset Update',
@@ -138,6 +195,7 @@ export const GOVERNANCE_FINDING_CATEGORY_OPTIONS = [
   'Documentation Overhaul & Tracking Hub',
   'Tooling: App Review MCP & Security Scanning',
   'Ecosystem & Competitive Watch',
+  'Bundle Review Precision — Library False-Positives & Dependency Declarations',
   'Parking Lot',
 ] as const;
 
@@ -201,6 +259,9 @@ export type Capability = (typeof CAPABILITIES_OPTIONS)[number];
 export type ReviewStatus = (typeof REVIEW_STATUS_OPTIONS)[number];
 export type ReviewType = (typeof REVIEW_TYPE_OPTIONS)[number];
 export type RejectionReason = (typeof REJECTION_REASON_OPTIONS)[number];
+export type ExceptionStatus = (typeof EXCEPTION_STATUS_OPTIONS)[number];
+export type ExceptionType = (typeof EXCEPTION_TYPE_OPTIONS)[number];
+export type HoldReason = (typeof HOLD_REASON_OPTIONS)[number];
 export type GovernanceFindingCategory = (typeof GOVERNANCE_FINDING_CATEGORY_OPTIONS)[number];
 export type GovernanceFindingStatus = (typeof GOVERNANCE_FINDING_STATUS_OPTIONS)[number];
 export type GovernanceFindingPriority = (typeof GOVERNANCE_FINDING_PRIORITY_OPTIONS)[number];
@@ -325,6 +386,18 @@ export function isRejectionReason(value: string): value is RejectionReason {
   return (REJECTION_REASON_OPTIONS as readonly string[]).includes(value);
 }
 
+export function isExceptionStatus(value: string): value is ExceptionStatus {
+  return (EXCEPTION_STATUS_OPTIONS as readonly string[]).includes(value);
+}
+
+export function isExceptionType(value: string): value is ExceptionType {
+  return (EXCEPTION_TYPE_OPTIONS as readonly string[]).includes(value);
+}
+
+export function isHoldReason(value: string): value is HoldReason {
+  return (HOLD_REASON_OPTIONS as readonly string[]).includes(value);
+}
+
 export function isGovernanceFindingCategory(value: string): value is GovernanceFindingCategory {
   return (GOVERNANCE_FINDING_CATEGORY_OPTIONS as readonly string[]).includes(value);
 }
@@ -418,11 +491,44 @@ export const APP_REVIEW_FIELD_MAP = {
       rejection_reason: FIELD_IDS.versions.rejectionReason,
       review_feedback: FIELD_IDS.versions.reviewFeedback,
       submission_datetime_override: FIELD_IDS.versions.submissionDatetimeOverride,
+      exception_status: FIELD_IDS.versions.exceptionStatus,
+      exception_type: FIELD_IDS.versions.exceptionType,
+      exception_rationale: FIELD_IDS.versions.exceptionRationale,
+      exception_decision_notes: FIELD_IDS.versions.exceptionDecisionNotes,
+      hold_reason: FIELD_IDS.versions.holdReason,
+      hold_notes: FIELD_IDS.versions.holdNotes,
     },
     readOnly: {
       submission_datetime: FIELD_IDS.versions.submissionDatetime,
       days_in_current_stage: FIELD_IDS.versions.daysInCurrentStage,
       version_number: FIELD_IDS.versions.versionNumber,
+      exception_requested_by: FIELD_IDS.versions.exceptionRequestedBy,
+      exception_decision_by: FIELD_IDS.versions.exceptionDecisionBy,
+      exception_requested_datetime: FIELD_IDS.versions.exceptionRequestedDatetime,
+      exception_decision_datetime: FIELD_IDS.versions.exceptionDecisionDatetime,
+      exception_slack_ts: FIELD_IDS.versions.exceptionSlackTs,
+      exception_item_ids: FIELD_IDS.versions.exceptionItemsLink,
+      undecided_exception_items: FIELD_IDS.versions.undecidedExceptionItems,
+      denied_exception_items: FIELD_IDS.versions.deniedExceptionItems,
+      is_partnership_app: FIELD_IDS.versions.partnershipApp,
+    },
+  },
+  exceptions: {
+    writable: {
+      item: FIELD_IDS.exceptions.item,
+      asset_version_id: FIELD_IDS.exceptions.assetVersionLink,
+      exception_status: FIELD_IDS.exceptions.status,
+      exception_type: FIELD_IDS.exceptions.type,
+      rationale: FIELD_IDS.exceptions.rationale,
+      decision_notes: FIELD_IDS.exceptions.decisionNotes,
+    },
+    readOnly: {
+      requested_by: FIELD_IDS.exceptions.requestedBy,
+      decision_by: FIELD_IDS.exceptions.decisionBy,
+      requested_datetime: FIELD_IDS.exceptions.requestedDatetime,
+      decision_datetime: FIELD_IDS.exceptions.decisionDatetime,
+      undecided: FIELD_IDS.exceptions.undecided,
+      denied: FIELD_IDS.exceptions.denied,
     },
   },
   governanceFindings: {
@@ -437,6 +543,9 @@ export const APP_REVIEW_FIELD_MAP = {
     reviewStatus: REVIEW_STATUS_OPTIONS,
     reviewType: REVIEW_TYPE_OPTIONS,
     rejectionReason: REJECTION_REASON_OPTIONS,
+    exceptionStatus: EXCEPTION_STATUS_OPTIONS,
+    exceptionType: EXCEPTION_TYPE_OPTIONS,
+    holdReason: HOLD_REASON_OPTIONS,
     governanceFindingCategory: GOVERNANCE_FINDING_CATEGORY_OPTIONS,
     governanceFindingStatus: GOVERNANCE_FINDING_STATUS_OPTIONS,
     governanceFindingPriority: GOVERNANCE_FINDING_PRIORITY_OPTIONS,

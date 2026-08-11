@@ -1,5 +1,6 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { describe, expect, it, vi } from 'vitest';
+import { z } from 'zod';
 
 import type { AirtableClient } from './airtable.js';
 import { registerTools } from './tools.js';
@@ -11,9 +12,9 @@ function createServerHarness() {
   const handlers = new Map<string, ToolHandler>();
 
   const server = {
-    tool(name: string, _description: string, _schema: unknown, handler: ToolHandler) {
+    tool(name: string, _description: string, schema: z.ZodRawShape, handler: ToolHandler) {
       names.push(name);
-      handlers.set(name, handler);
+      handlers.set(name, async (args) => handler(z.object(schema).parse(args)));
     },
   } as unknown as McpServer;
 
@@ -147,14 +148,14 @@ describe('registerTools', () => {
 
     const result = await handlers.get('governance_database_create_finding')?.({
       title: 'Docs governance gap',
-      category: 'Docs & Tracking Hub Governance',
+      category: 'Documentation Overhaul & Tracking Hub',
       summary: 'Distribution terminology needs canonical tracking.',
       decision_needed: true,
     });
 
     expect(client.createGovernanceFinding).toHaveBeenCalledWith({
       title: 'Docs governance gap',
-      category: 'Docs & Tracking Hub Governance',
+      category: 'Documentation Overhaul & Tracking Hub',
       summary: 'Distribution terminology needs canonical tracking.',
       decision_needed: true,
       reporter: 'Dify Governance Database',
@@ -166,6 +167,22 @@ describe('registerTools', () => {
         title: 'Docs governance gap',
       },
     });
+  });
+
+  it('applies the registered category schema before governance handlers run', async () => {
+    const { server, handlers } = createServerHarness();
+    const client = {
+      createGovernanceFinding: vi.fn(),
+    } as unknown as AirtableClient;
+
+    registerTools(server, () => client);
+
+    await expect(handlers.get('governance_database_create_finding')?.({
+      title: 'Docs governance gap',
+      category: 'Docs & Tracking Hub Governance',
+      summary: 'Distribution terminology needs canonical tracking.',
+    })).rejects.toThrow();
+    expect(client.createGovernanceFinding).not.toHaveBeenCalled();
   });
 
   it('request_changes mutates explicit version fields without assignment ownership', async () => {
@@ -205,14 +222,12 @@ describe('registerTools', () => {
 
     registerTools(server, () => client);
 
-    const result = await handlers.get('app_review_request_changes')?.({
+    await expect(handlers.get('app_review_request_changes')?.({
       version_id: 'recVersion',
       review_feedback: 'feedback',
       review_status: '✅Approved',
-    });
+    })).rejects.toThrow();
 
-    const payload = parsePayload(result!);
-    expect(payload.ok).toBe(false);
     expect(client.getVersionById).not.toHaveBeenCalled();
     expect(client.updateVersionReview).not.toHaveBeenCalled();
   });
