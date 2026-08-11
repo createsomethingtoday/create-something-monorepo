@@ -52,7 +52,11 @@ test('shared campaign titles keep every period optically separated from display 
   );
   assert.match(
     campaignOpening,
-    /\.performance-campaign-opening__period\s*\{[\s\S]*?margin-inline-start:\s*0\.055em;/
+    /\.performance-campaign-opening__period\s*\{[\s\S]*?display:\s*inline;[\s\S]*?margin-inline-start:\s*0\.055em;/
+  );
+  assert.doesNotMatch(
+    campaignOpening,
+    /\.performance-campaign-opening__period\s*\{[\s\S]*?display:\s*inline-block;/
   );
 });
 

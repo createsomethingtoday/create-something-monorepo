@@ -448,7 +448,7 @@
   }
 
   .performance-campaign-opening__period {
-    display: inline-block;
+    display: inline;
     margin-inline-start: 0.055em;
     letter-spacing: normal;
   }
