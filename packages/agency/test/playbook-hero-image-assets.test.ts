@@ -32,6 +32,10 @@ const expectedHashes: Record<PlaybookHeroRoute, { desktop: string; mobile: strin
     desktop: '2847f7f312b746e4bf35f73f885367a41f18a820b980f7f177f762cd623c813a',
     mobile: '99857a564fa772592de5252e20747ad6ee1b7bb55c7ac6217ae5c0ac7b452105'
   },
+  workflows: {
+    desktop: '54784b3785abf52cb085d58a11bc51c61d78b0c70941835a13e4889ba1c1339b',
+    mobile: '3f7036312354d78ddaf8b0c839a7b0f29688d13b08075e4faf18b1fc3a0fc0b1'
+  },
   map: {
     desktop: '0b803ad1a5b30a2392bc3ceae3cddc2011065b9e11d32ad4a3d727f44e1810bb',
     mobile: '46caca75a1b4fd16053436990f466d2e8e88efd9cc5419baeb561e185deb2b56'
