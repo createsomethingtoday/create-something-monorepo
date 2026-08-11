@@ -4,6 +4,8 @@ import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
+import { performancePageRegistry } from '../../../config/performance-pages/registry.ts';
+
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const routePath = path.join(packageRoot, 'src/routes/arc/app-review-governance/+page.svelte');
 const assetPath = path.join(
@@ -72,6 +74,21 @@ test('the App Review Arc is a full deck with typed scene compositions and owned 
   );
   assert.match(metadata, /f761a8d1dc61f57344405a97cb574396a49a2dc353bc9ee72ae23a58e90e5650/);
   await access(assetPath);
+});
+
+test('the App Review Arc remains a noindex local fixture with a governed tool contract', async () => {
+  const route = await readFile(routePath, 'utf8');
+  const publicTools = performancePageRegistry.find((group) => group.id === 'agency-public-tools');
+
+  assert.match(route, /search-policy:\s*noindex/);
+  assert.match(route, /<meta[\s\S]*?name="robots"[\s\S]*?content="noindex, nofollow"\s*\/?>/);
+  assert.equal(publicTools?.status, 'pending');
+  assert.equal(publicTools?.contract?.archetype, 'tool');
+  assert.ok(
+    publicTools?.sources.includes(
+      'packages/agency/src/routes/arc/app-review-governance/+page.svelte'
+    )
+  );
 });
 
 test('the focused map relationship stacks into a readable mobile sequence', async () => {

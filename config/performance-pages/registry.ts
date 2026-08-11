@@ -123,6 +123,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     'agency-public-tools',
     'agency',
     [
+      'arc/app-review-governance',
       'basketball-systems-lab',
       'book',
       'dashboard',
