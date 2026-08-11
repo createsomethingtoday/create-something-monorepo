@@ -10,6 +10,7 @@ test('the public hero lets its responsive aspect ratio control image height', ()
 
 	assert.ok(heroImageRule?.groups?.declarations, 'expected a .hero-visual img rule');
 	assert.match(heroImageRule.groups.declarations, /height:\s*auto\s*;/);
+	assert.match(heroImageRule.groups.declarations, /object-position:\s*right center\s*;/);
 });
 
 test('the public trust path uses supported process language instead of unverified claims', () => {

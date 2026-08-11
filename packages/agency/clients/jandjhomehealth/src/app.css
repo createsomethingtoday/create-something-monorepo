@@ -393,6 +393,7 @@ p {
 	aspect-ratio: 0.82;
 	border-radius: 44% 44% var(--radius-media) var(--radius-media);
 	object-fit: cover;
+	object-position: right center;
 	box-shadow: var(--shadow);
 }
 
