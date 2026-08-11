@@ -7,7 +7,7 @@
     SEO,
     type PerformanceNarrativeScene
   } from '@create-something/canon';
-  import PlaybookField from '$lib/components/PlaybookField.svelte';
+  import { playbookHeroMedia } from '$lib/data/playbookHeroMedia';
   import { workflowPages } from '$lib/data/workflowPages';
 
   const faqItems = [
@@ -94,15 +94,12 @@
       { label: 'Receipt', value: 'Signal → Decision → Proof' }
     ]}
     density="compact"
-    artifactOwnsMedia
-    artifactMobilePlacement="flow"
+    media={playbookHeroMedia.workflows}
+    mediaMobilePlacement="background"
   >
     {#snippet actions()}
       <Button href="#guides" size="lg">Browse the guides</Button>
       <Button href="/map" variant="secondary">Start a private workflow draft</Button>
-    {/snippet}
-    {#snippet artifact()}
-      <PlaybookField variant="workflows" embedded />
     {/snippet}
   </PerformanceCampaignOpening>
 
@@ -349,7 +346,6 @@
     .guide-index a {
       grid-template-columns: 2rem minmax(0, 1fr) 1.25rem;
     }
-
   }
 
   @media (prefers-reduced-motion: reduce) {

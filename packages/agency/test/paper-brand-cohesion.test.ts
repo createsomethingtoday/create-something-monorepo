@@ -137,6 +137,28 @@ test('Map and Template Review each carry a route-specific Playbook court hero wi
   }
 });
 
+test('Workflow library opens with a route-specific macro Playbook hero and authored mobile companion', () => {
+  const workflows = read('src/routes/workflows/+page.svelte');
+  const heroMedia = read('src/lib/data/playbookHeroMedia.ts');
+  const desktop = resolve(
+    agencyRoot,
+    'static/images/performance-lab/playbook-workflows-guide-junction.webp'
+  );
+  const mobile = resolve(
+    agencyRoot,
+    'static/images/performance-lab/playbook-workflows-guide-junction-mobile.webp'
+  );
+
+  assert.match(workflows, /media=\{playbookHeroMedia\.workflows\}/);
+  assert.match(workflows, /mediaMobilePlacement="background"/);
+  assert.doesNotMatch(workflows, /artifactOwnsMedia|artifactMobilePlacement/);
+  assert.match(heroMedia, /workflows: \{[\s\S]*?playbook-workflows-guide-junction\.webp/);
+  for (const image of [desktop, mobile]) {
+    assert.ok(existsSync(image), `${image} must be served by the Agency package`);
+    assert.ok(statSync(image).size > 20_000, `${image} must be a substantive raster asset`);
+  }
+});
+
 test('the shared social preview is a current, served Paper operating-system artifact', () => {
   const svgPath = resolve(agencyRoot, 'static/og-image.svg');
   const pngPath = resolve(agencyRoot, 'static/og-image.png');

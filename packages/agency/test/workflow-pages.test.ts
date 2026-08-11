@@ -125,7 +125,10 @@ test('workflow route implementation is prerendered, indexable, and playbook-nati
   assert.match(hubPage, /<SEO/);
   assert.match(hubPage, /<PerformanceCampaignOpening/);
   assert.match(hubPage, /expression="editorial"/);
-  assert.match(hubPage, /<PlaybookField variant="workflows"/);
+  assert.match(hubPage, /media=\{playbookHeroMedia\.workflows\}/);
+  assert.match(hubPage, /mediaMobilePlacement="background"/);
+  assert.doesNotMatch(hubPage, /artifactOwnsMedia|artifactMobilePlacement/);
+  assert.doesNotMatch(hubPage, /<PlaybookField variant="workflows"/);
   assert.match(hubPage, /<PerformanceNarrativeStage/);
   assert.match(hubPage, /<PerformanceConversionHandoff/);
   assert.match(hubPage, /Operator playbook/);
@@ -177,8 +180,14 @@ test('workflow titles use the Agency editorial face while operating content stay
 
   for (const route of [guidePage]) {
     assert.match(route, /h1\s*\{[\s\S]*?font-family:\s*var\(--font-performance-editorial\)/);
-    assert.match(route, /h1\s*\{[\s\S]*?font-weight:\s*var\(--font-performance-editorial-weight, 400\)/);
-    assert.match(route, /h1\s*\{[\s\S]*?line-height:\s*var\(--leading-performance-editorial, 1\.1\)/);
+    assert.match(
+      route,
+      /h1\s*\{[\s\S]*?font-weight:\s*var\(--font-performance-editorial-weight, 400\)/
+    );
+    assert.match(
+      route,
+      /h1\s*\{[\s\S]*?line-height:\s*var\(--leading-performance-editorial, 1\.1\)/
+    );
   }
 
   for (const route of [hubPage, guidePage]) {

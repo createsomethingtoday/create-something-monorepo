@@ -6,6 +6,7 @@ export type PlaybookHeroRoute =
   | 'stack'
   | 'products'
   | 'fieldReports'
+  | 'workflows'
   | 'map'
   | 'templateReview';
 
@@ -61,6 +62,14 @@ export const playbookHeroMedia: Record<PlaybookHeroRoute, PerformanceCampaignMed
     src: `${imageRoot}/playbook-field-reports-evidence-receipt.webp`,
     mobileSrc: `${imageRoot}/playbook-field-reports-evidence-receipt-mobile.webp`,
     alt: 'Macro 3D Playbook court with an AI agent route attached to an evidence receipt.',
+    width: 1536,
+    height: 1024,
+    colorMode: 'natural'
+  },
+  workflows: {
+    src: `${imageRoot}/playbook-workflows-guide-junction.webp`,
+    mobileSrc: `${imageRoot}/playbook-workflows-guide-junction-mobile.webp`,
+    alt: 'Macro-real Playbook court with an ivory AI agent marker at a three-way guide junction beside a tabbed field manual, approval block, and proof tile.',
     width: 1536,
     height: 1024,
     colorMode: 'natural'
