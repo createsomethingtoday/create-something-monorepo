@@ -32,14 +32,16 @@ test('Atlas composition tools expose one fixture-backed Arc, map module, and app
   const compositionPayload = JSON.parse(compositionResult.content[0].text);
   assert.equal(compositionPayload.composition.id, 'app-review-governance');
   assert.equal(compositionPayload.story.ephemeral, true);
-  assert.equal(compositionPayload.story.scenes.length, 6);
+  assert.equal(compositionPayload.story.scenes.length, 7);
+  assert.equal(compositionPayload.story.scenes[0].id, 'intake-preflight');
+  assert.equal(compositionPayload.story.scenes[0].motionCue, 'trace-handoff');
 
   const resolutionResult = await resolveModule.handler(
     { module_id: 'app-review-governance-map' },
     ctx
   );
   const resolutionPayload = JSON.parse(resolutionResult.content[0].text);
-  assert.equal(resolutionPayload.resolution.resolvedVersion, '2026-08-10');
+  assert.equal(resolutionPayload.resolution.resolvedVersion, '2026-08-11');
   assert.equal(resolutionPayload.resolution.versionMode, 'pinned');
 
   const proposalResult = await proposeAction.handler({}, ctx);

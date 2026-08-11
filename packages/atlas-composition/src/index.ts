@@ -141,6 +141,51 @@ const APP_REVIEW_MAP_MODULE_ID = 'app-review-governance-map';
 
 const APP_REVIEW_GOVERNANCE_ARTIFACTS: AtlasArtifact[] = [
   {
+    id: 'app-submission-form-contract',
+    kind: 'evidence',
+    title: 'App Submission Form',
+    summary:
+      'The creator-facing submission form starts a review request with explicit evidence; it hands off a candidate, never a decision.',
+    provenance: {
+      alt: 'A creator submits a Marketplace App candidate with the review materials that make the request inspectable.',
+      costUsd: 0,
+      model: 'not-applicable—submission contract',
+      promptReference: 'app-review-governance-arc.intake.v1',
+      rights: 'First-party skill documentation with official submission guidance.',
+      source: 'skills/webflow-app-preflight/reference/listing-and-submission.md'
+    }
+  },
+  {
+    id: 'app-review-preflight-contract',
+    kind: 'evidence',
+    title: 'App Review Preflight',
+    summary:
+      'The controlled Preflight system returns bundle and runtime observations as evidence; it does not approve, reject, or replace human policy judgment.',
+    provenance: {
+      alt: 'A controlled Preflight run returns immutable evidence while the Marketplace decision remains human-owned.',
+      costUsd: 0,
+      model: 'not-applicable—controlled runtime evidence contract',
+      promptReference: 'app-review-governance-arc.preflight.v1',
+      rights: 'First-party operational documentation.',
+      source: 'skills/WEBFLOW_APP_DEVELOPER_TOOLKIT.md'
+    }
+  },
+  {
+    id: 'webflow-app-preflight-skill-contract',
+    kind: 'guide',
+    title: 'Webflow App Preflight skills',
+    summary:
+      'Versioned pre-submission skills make the functional, secure, inspectable, and honest quality gate explicit before a reviewer receives the candidate.',
+    provenance: {
+      alt: 'A versioned skill turns the pre-submission quality gate into an inspectable operating artifact.',
+      costUsd: 0,
+      model: 'not-applicable—versioned skill contract',
+      promptReference: 'app-review-governance-arc.preflight.v1',
+      rights: 'First-party skill documentation.',
+      source: 'skills/webflow-app-preflight/SKILL.md'
+    }
+  },
+  {
     id: 'app-governance-architecture',
     kind: 'evidence',
     title: 'Governance source boundary',
@@ -240,10 +285,13 @@ export const APP_REVIEW_GOVERNANCE_COMPOSITION: AtlasComposition = {
       description: 'One explicit, pinned map module reused by the Arc, Playbook, and Runbook.',
       map: {
         mapId: 'app-review-governance-canonical-map',
-        version: { id: '2026-08-10', mode: 'pinned' }
+        version: { id: '2026-08-11', mode: 'pinned' }
       },
       selection: {
         nodeIds: [
+          'app-submission-form',
+          'app-review-preflight',
+          'webflow-app-preflight-skills',
           'slack-signal',
           'claude-agent',
           'app-governance-mcp',
@@ -254,6 +302,9 @@ export const APP_REVIEW_GOVERNANCE_COMPOSITION: AtlasComposition = {
           'workflow-receipt'
         ],
         edgeIds: [
+          'submission-form-to-preflight',
+          'preflight-to-skills',
+          'preflight-skills-to-mcp',
           'signal-to-agent',
           'agent-to-mcp',
           'mcp-to-d1',
@@ -267,6 +318,37 @@ export const APP_REVIEW_GOVERNANCE_COMPOSITION: AtlasComposition = {
   ],
   artifacts: APP_REVIEW_GOVERNANCE_ARTIFACTS,
   scenes: [
+    {
+      id: 'intake-preflight',
+      kind: 'automation',
+      label: 'Intake & Preflight',
+      title: 'A submission becomes inspectable before review begins.',
+      summary: 'Form → Preflight app → skills gate → governed review record.',
+      detail:
+        'The App Submission Form starts the candidate handoff. App Review Preflight returns controlled evidence, and the versioned Preflight skills make the quality gate legible. Each result is evidence, not an approval; the governed record and operator decision remain explicit.',
+      artifactIds: [
+        'app-submission-form-contract',
+        'app-review-preflight-contract',
+        'webflow-app-preflight-skill-contract',
+        'motion-authoring-contract'
+      ],
+      evidence: [
+        'Submission and preflight make the candidate inspectable; they never grant Marketplace approval.',
+        'The Preflight result is controlled evidence, not a review decision.'
+      ],
+      mapModuleIds: [APP_REVIEW_MAP_MODULE_ID],
+      focusNodeIds: [
+        'app-submission-form',
+        'app-review-preflight',
+        'webflow-app-preflight-skills',
+        'app-governance-mcp'
+      ],
+      motion: {
+        cue: 'handoff-trace',
+        reducedMotion: 'static-emphasis',
+        source: 'agent-authored-structured-data'
+      }
+    },
     {
       id: 'signal',
       kind: 'signal',
@@ -381,22 +463,22 @@ export const APP_REVIEW_GOVERNANCE_COMPOSITION: AtlasComposition = {
       id: 'app-review-governance-arc',
       kind: 'arc',
       title: 'App Review Governance Arc',
-      description: 'The durable A-to-Z human story from a source signal to a receipt.',
-      sceneIds: ['signal', 'normalize', 'orient', 'decide', 'run', 'proof']
+      description: 'The durable A-to-Z human story from a submission and preflight handoff to a receipt.',
+      sceneIds: ['intake-preflight', 'signal', 'normalize', 'orient', 'decide', 'run', 'proof']
     },
     {
       id: 'app-review-governance-playbook',
       kind: 'playbook',
       title: 'App Review Governance Playbook',
       description: 'The reusable method for preserving source boundaries and decision gates.',
-      sceneIds: ['signal', 'normalize', 'orient', 'decide', 'proof']
+      sceneIds: ['intake-preflight', 'signal', 'normalize', 'orient', 'decide', 'proof']
     },
     {
       id: 'app-review-governance-runbook',
       kind: 'runbook',
       title: 'App Review Governance Runbook',
       description: 'The method bound to the App Review operating context and local action simulation.',
-      sceneIds: ['orient', 'decide', 'run', 'proof']
+      sceneIds: ['intake-preflight', 'orient', 'decide', 'run', 'proof']
     }
   ]
 };

@@ -11,17 +11,34 @@ import {
   validateAtlasComposition
 } from '../dist/index.js';
 
-test('the App Review Arc is a valid six-scene composition with one reusable map module', () => {
+test('the App Review Arc makes intake and preflight a reusable first scene', () => {
   const result = validateAtlasComposition(APP_REVIEW_GOVERNANCE_COMPOSITION);
 
   assert.deepEqual(result, { ok: true, issues: [] });
   assert.equal(APP_REVIEW_GOVERNANCE_COMPOSITION.schema, ATLAS_COMPOSITION_SCHEMA);
-  assert.equal(APP_REVIEW_GOVERNANCE_COMPOSITION.scenes.length, 6);
+  assert.equal(APP_REVIEW_GOVERNANCE_COMPOSITION.scenes.length, 7);
   assert.equal(APP_REVIEW_GOVERNANCE_COMPOSITION.mapModules.length, 1);
+
+  const intake = APP_REVIEW_GOVERNANCE_COMPOSITION.scenes.find((scene) => scene.id === 'intake-preflight');
+  assert.ok(intake, 'the Arc should expose a first-class intake and preflight scene');
+  assert.deepEqual(intake.focusNodeIds, [
+    'app-submission-form',
+    'app-review-preflight',
+    'webflow-app-preflight-skills',
+    'app-governance-mcp'
+  ]);
+  assert.deepEqual(intake.artifactIds, [
+    'app-submission-form-contract',
+    'app-review-preflight-contract',
+    'webflow-app-preflight-skill-contract',
+    'motion-authoring-contract'
+  ]);
+  assert.match(intake.detail, /not an approval/i);
 
   const moduleId = APP_REVIEW_GOVERNANCE_COMPOSITION.mapModules[0].id;
   for (const route of APP_REVIEW_GOVERNANCE_COMPOSITION.routes) {
     assert.ok(route.sceneIds.length > 0);
+    assert.equal(route.sceneIds[0], 'intake-preflight');
     for (const sceneId of route.sceneIds) {
       const scene = APP_REVIEW_GOVERNANCE_COMPOSITION.scenes.find((item) => item.id === sceneId);
       assert.ok(scene, `route ${route.id} should reference an existing scene`);
@@ -47,13 +64,13 @@ test('map module resolution preserves an explicit pinned map version', () => {
     'app-review-governance-map',
     (mapId) => ({
       mapId,
-      latestVersion: '2026-08-10',
-      versions: ['2026-08-10', '2026-08-09']
+      latestVersion: '2026-08-11',
+      versions: ['2026-08-11', '2026-08-10']
     })
   );
 
   assert.equal(resolved.map.mapId, 'app-review-governance-canonical-map');
-  assert.equal(resolved.resolvedVersion, '2026-08-10');
+  assert.equal(resolved.resolvedVersion, '2026-08-11');
   assert.equal(resolved.versionMode, 'pinned');
 });
 

@@ -906,8 +906,8 @@ export function registerTools(server: ScopedMcpServer): void {
         input.module_id,
         (mapId) => ({
           mapId,
-          latestVersion: '2026-08-10',
-          versions: ['2026-08-10']
+          latestVersion: '2026-08-11',
+          versions: ['2026-08-11']
         })
       );
       return jsonContent({ accountId: ctx.accountId, resolution });
