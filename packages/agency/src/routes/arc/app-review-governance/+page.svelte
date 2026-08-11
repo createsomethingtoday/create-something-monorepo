@@ -220,6 +220,25 @@
             </div>
             <p class="arc-module__legend">{scene.presentation.callout?.detail}</p>
           </section>
+        {:else if scene.presentation.layout === 'capabilities'}
+          <section class="arc-capabilities" aria-label={`${scene.label} capabilities and boundaries`}>
+            {#each scene.presentation.capabilities ?? [] as capability, index}
+              <article
+                data-capability-node={capability.nodeId}
+                style:--capability-index={index}
+              >
+                <header>
+                  <span>{String(index + 1).padStart(2, '0')}</span>
+                  <h4>{capability.title}</h4>
+                </header>
+                <dl>
+                  <div><dt>What it can do</dt><dd>{capability.can}</dd></div>
+                  <div><dt>What it produces</dt><dd>{capability.produces}</dd></div>
+                  <div><dt>What it cannot decide</dt><dd>{capability.boundary}</dd></div>
+                </dl>
+              </article>
+            {/each}
+          </section>
         {:else if scene.presentation.layout === 'decision'}
           <section class="arc-slide arc-slide--decision">
             <div class="arc-image__decision">
@@ -393,7 +412,7 @@
   .arc-code__details summary { padding: .85rem 1rem; color: #eeece2; font: 650 .72rem/1.2 var(--font-performance-mono, ui-monospace, monospace); text-transform: uppercase; cursor: pointer; }
   .arc-code__bar { display: flex; justify-content: space-between; gap: 1rem; padding: .75rem 1rem; border-bottom: 1px solid rgb(255 255 255 / .22); color: #d8d5c5; font: .7rem/1.2 var(--font-performance-mono, ui-monospace, monospace); }
   .arc-slide--code pre { margin: 0; padding: clamp(1rem, 3vw, 2rem); overflow: auto; color: #f4df84; font: .82rem/1.6 var(--font-performance-mono, ui-monospace, monospace); }
-  .arc-module { overflow: hidden; border: 1px solid var(--color-performance-ink, #090909); background: #111; color: #f2f1eb; }
+  .arc-module { overflow: hidden; padding: 0; border: 1px solid var(--color-performance-ink, #090909); background: #111; color: #f2f1eb; }
   .arc-module__topline { display: flex; justify-content: space-between; gap: 1rem; padding: .8rem 1rem; border-bottom: 1px solid rgb(255 255 255 / .24); color: #cbc9c0; font: .7rem/1.2 var(--font-performance-mono, ui-monospace, monospace); text-transform: uppercase; }
   .arc-module__topline span { color: #fffdf5; font-weight: 700; }
   .arc-map__flow { display: grid; grid-template-columns: minmax(11rem, 1fr) minmax(7rem, .5fr) minmax(11rem, 1fr) minmax(7rem, .5fr) minmax(11rem, 1fr); align-items: center; min-height: 205px; padding: clamp(1rem, 2.4vw, 2rem); }
@@ -438,6 +457,15 @@
   .arc-receipt > strong { font-size: 1rem; }
   .arc-receipt p { margin: 0; color: #d4d2ca; font-size: .82rem; line-height: 1.45; }
   .arc-receipt small { color: #b8b6ad; font-size: .72rem; }
+  .arc-capabilities { display: flex; gap: 1px; overflow: hidden; padding: 0; border: 1px solid var(--color-performance-ink, #090909); background: var(--color-performance-line, #d7d7d2); }
+  .arc-capabilities article { display: grid; flex: 1 1 0; align-content: start; min-width: 0; background: var(--color-performance-panel, #fff); }
+  .arc-capabilities header { display: flex; gap: .65rem; align-items: baseline; padding: .8rem .9rem; border-bottom: 1px solid var(--color-performance-line, #d7d7d2); }
+  .arc-capabilities header span, .arc-capabilities dt { color: var(--color-performance-muted, #5f605a); font: 650 .63rem/1.25 var(--font-performance-mono, ui-monospace, monospace); letter-spacing: .05em; text-transform: uppercase; }
+  .arc-capabilities h4 { margin: 0; font-size: .9rem; line-height: 1.2; }
+  .arc-capabilities dl { display: grid; margin: 0; }
+  .arc-capabilities dl div { padding: .72rem .9rem; border-bottom: 1px solid var(--color-performance-line, #d7d7d2); }
+  .arc-capabilities dl div:last-child { border-bottom: 0; background: color-mix(in srgb, var(--color-performance-review, #b69300) 8%, white); }
+  .arc-capabilities dd { margin: .35rem 0 0; color: var(--color-performance-muted, #5f605a); font-size: clamp(.72rem, .88vw, .82rem); line-height: 1.42; }
   .arc-sources { border-top: 1px solid var(--color-performance-line, #d7d7d2); }
   .arc-sources summary { padding: .75rem 0; cursor: pointer; }
   .arc-sources > div { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: 1px; background: var(--color-performance-line, #d7d7d2); }
@@ -457,6 +485,7 @@
     .arc-scene[data-motion-cue='decision-gate'] .arc-image__decision { animation: arc-arrive 600ms cubic-bezier(.2, .8, .2, 1) both; }
     .arc-scene[data-motion-cue='recovery-loop'] .arc-demo__status { animation: arc-arrive 600ms cubic-bezier(.2, .8, .2, 1) both; }
     .arc-scene[data-motion-cue='proof-stamp'] .arc-receipt { animation: arc-proof 640ms cubic-bezier(.2, .8, .2, 1) both; }
+    .arc-scene[data-motion-cue='handoff-trace'] .arc-capabilities article { animation: arc-arrive 520ms cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--capability-index) * 110ms); }
   }
   @keyframes arc-arrive { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes arc-connect { from { transform: scaleX(0); } to { transform: scaleX(1); } }
@@ -476,11 +505,19 @@
     .arc-slide--branches ol { grid-template-columns: 1fr; }
     .arc-slide--decision, .arc-image__decision { min-height: 24rem; }
     .arc-image__decision { max-width: 100%; background: linear-gradient(0deg, rgb(9 9 9 / .94), rgb(9 9 9 / .35)); }
+    .arc-capabilities { overflow-x: auto; overscroll-behavior-inline: contain; scroll-snap-type: inline mandatory; }
+    .arc-capabilities article { flex: 0 0 min(16rem, 82vw); scroll-snap-align: start; }
   }
   :global(.performance-narrative-stage[data-presenting='true']) .arc-scene { min-height: 100%; grid-template-rows: minmax(0, 1fr); }
   :global(.performance-narrative-stage[data-presenting='true']) .arc-sources { display: none; }
   :global(.performance-narrative-stage[data-presenting='true']) .arc-slide,
   :global(.performance-narrative-stage[data-presenting='true']) .arc-module { min-height: 100%; }
+  :global(.performance-narrative-stage[data-presenting='true']) .arc-capabilities { min-height: 0; height: max-content; align-self: center; align-content: start; }
+  :global(.performance-narrative-stage[data-presenting='true']) .arc-capabilities header { padding: .6rem .75rem; }
+  :global(.performance-narrative-stage[data-presenting='true']) .arc-capabilities dl div { padding: .52rem .75rem; }
+  :global(.performance-narrative-stage[data-presenting='true']) .arc-capabilities dd { margin-top: .25rem; font-size: clamp(.68rem, .78vw, .76rem); line-height: 1.32; }
+  :global(.performance-narrative-stage[data-presenting='true'] .performance-narrative-stage__panel:has(.arc-scene[data-layout='capabilities']) .performance-narrative-stage__stakeholders) { display: none; }
+  :global(.performance-narrative-stage[data-presenting='true'] .performance-narrative-stage__panel:has(.arc-scene[data-layout='capabilities']) .performance-narrative-stage__scene-head h3) { max-width: 24ch; font-size: clamp(2rem, 3.1vw, 2.8rem); }
   :global(.performance-narrative-stage[data-presenting='true']) .arc-slide--split,
   :global(.performance-narrative-stage[data-presenting='true']) .arc-slide--decision,
   :global(.performance-narrative-stage[data-presenting='true']) .arc-slide--branches,

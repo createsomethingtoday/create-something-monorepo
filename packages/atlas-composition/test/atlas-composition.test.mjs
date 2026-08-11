@@ -17,7 +17,7 @@ test('the App Review Arc makes intake and preflight a reusable first scene', () 
 
   assert.deepEqual(result, { ok: true, issues: [] });
   assert.equal(APP_REVIEW_GOVERNANCE_COMPOSITION.schema, ATLAS_COMPOSITION_SCHEMA);
-  assert.equal(APP_REVIEW_GOVERNANCE_COMPOSITION.scenes.length, 8);
+  assert.equal(APP_REVIEW_GOVERNANCE_COMPOSITION.scenes.length, 10);
   assert.equal(APP_REVIEW_GOVERNANCE_COMPOSITION.mapModules.length, 1);
 
   const intake = APP_REVIEW_GOVERNANCE_COMPOSITION.scenes.find((scene) => scene.id === 'intake-preflight');
@@ -35,10 +35,41 @@ test('the App Review Arc makes intake and preflight a reusable first scene', () 
     'motion-authoring-contract'
   ]);
   assert.match(intake.detail, /not an approval/i);
+  const preflightCapabilities = APP_REVIEW_GOVERNANCE_COMPOSITION.scenes.find(
+    (scene) => scene.id === 'preflight-capabilities'
+  );
+  assert.ok(preflightCapabilities);
+  assert.deepEqual(
+    preflightCapabilities.presentation.capabilities.map((capability) => capability.nodeId),
+    ['app-submission-form', 'app-review-preflight', 'webflow-app-preflight-skills'],
+    'the intake scene should explain each tool instead of collapsing them into one preflight claim'
+  );
+  assert.deepEqual(
+    preflightCapabilities.presentation.capabilities.map((capability) => capability.title),
+    ['Submission form', 'App Review Preflight', 'Preflight skills']
+  );
+
+  const reviewCapabilities = APP_REVIEW_GOVERNANCE_COMPOSITION.scenes.find(
+    (scene) => scene.id === 'review-capabilities'
+  );
+  assert.ok(reviewCapabilities);
+  assert.deepEqual(
+    reviewCapabilities.presentation.capabilities.map((capability) => capability.nodeId),
+    ['claude-agent', 'app-governance-mcp', 'operator-decision'],
+    'the review scene should make the agent, MCP, and human boundaries explicit'
+  );
+  for (const capability of [
+    ...preflightCapabilities.presentation.capabilities,
+    ...reviewCapabilities.presentation.capabilities
+  ]) {
+    assert.ok(capability.can.trim(), `${capability.title} should say what it can do`);
+    assert.ok(capability.produces.trim(), `${capability.title} should name its output`);
+    assert.ok(capability.boundary.trim(), `${capability.title} should name its decision boundary`);
+  }
 
   assert.deepEqual(
     APP_REVIEW_GOVERNANCE_COMPOSITION.scenes.map((scene) => scene.presentation.layout),
-    ['split', 'statement', 'code', 'map', 'decision', 'branches', 'demo', 'proof'],
+    ['split', 'capabilities', 'statement', 'code', 'capabilities', 'map', 'decision', 'branches', 'demo', 'proof'],
     'an Arc is a sequence of deliberately different slide compositions, not one repeated panel'
   );
   assert.equal(intake.presentation.media?.artifactId, 'app-review-evidence-gate-media');
@@ -52,13 +83,15 @@ test('the App Review Arc makes intake and preflight a reusable first scene', () 
 
   const story = toAtlasStoryAdapter(APP_REVIEW_GOVERNANCE_COMPOSITION, 'app-review-governance-arc');
   assert.equal(story.scenes[0].presentation.layout, 'split');
-  assert.equal(story.scenes[2].presentation.code?.language, 'typescript');
+  assert.equal(story.scenes[3].presentation.code?.language, 'typescript');
   assert.deepEqual(
     APP_REVIEW_GOVERNANCE_COMPOSITION.scenes.map((scene) => scene.presentation.reader.heading),
     [
       'A developer submits an app.',
+      'Three tools make the submission inspectable.',
       'The submission reaches the review team.',
       'An agent prepares the review item.',
+      'Automation stops where judgment begins.',
       'Each system keeps one clear job.',
       'A person decides what happens next.',
       'A no creates a clear way forward.',
@@ -97,7 +130,8 @@ test('the App Review Arc makes intake and preflight a reusable first scene', () 
     /checks the form.*gathers the evidence/i
   );
   assert.match(
-    APP_REVIEW_GOVERNANCE_COMPOSITION.scenes[4].presentation.reader.explanation,
+    APP_REVIEW_GOVERNANCE_COMPOSITION.scenes.find((scene) => scene.id === 'decide')
+      .presentation.reader.explanation,
     /proposed means waiting/i
   );
   assert.deepEqual(
@@ -141,6 +175,19 @@ test('map relationships must connect focused nodes in the shared map module', ()
   const result = validateAtlasComposition(invalid);
   assert.equal(result.ok, false);
   assert.match(result.issues.join('\n'), /relationship.*focused node/i);
+});
+
+test('capability explanations must belong to focused nodes and state all three reader contracts', () => {
+  const invalid = structuredClone(APP_REVIEW_GOVERNANCE_COMPOSITION);
+  const capabilities = invalid.scenes.find((scene) => scene.id === 'preflight-capabilities');
+  assert.ok(capabilities);
+  capabilities.presentation.capabilities[0].boundary = '';
+  capabilities.presentation.capabilities[1].nodeId = 'operator-decision';
+
+  const result = validateAtlasComposition(invalid);
+  assert.equal(result.ok, false);
+  assert.match(result.issues.join('\n'), /capability.*complete/i);
+  assert.match(result.issues.join('\n'), /capability.*focused node/i);
 });
 
 test('map module resolution preserves an explicit pinned map version', () => {

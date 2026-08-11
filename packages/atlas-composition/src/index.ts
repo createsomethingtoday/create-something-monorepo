@@ -24,6 +24,7 @@ export type AtlasActionStatus = 'proposed' | 'approved' | 'rejected' | 'complete
 export type AtlasPresentationLayout =
   | 'statement'
   | 'split'
+  | 'capabilities'
   | 'image'
   | 'code'
   | 'map'
@@ -33,6 +34,14 @@ export type AtlasPresentationLayout =
   | 'proof';
 
 export type AtlasStakeholderRole = 'Creator' | 'Reviewer' | 'Partnerships & Support' | 'Leadership';
+
+export type AtlasCapabilityExplanation = {
+  nodeId: string;
+  title: string;
+  can: string;
+  produces: string;
+  boundary: string;
+};
 
 export type AtlasMapVersion = {
   id?: string;
@@ -105,6 +114,7 @@ export type AtlasScenePresentation = {
     label: string;
     toNodeId: string;
   }>;
+  capabilities?: AtlasCapabilityExplanation[];
 };
 
 export type AtlasCompositionScene = {
@@ -442,6 +452,78 @@ export const APP_REVIEW_GOVERNANCE_COMPOSITION: AtlasComposition = {
       }
     },
     {
+      id: 'preflight-capabilities',
+      kind: 'automation',
+      label: 'Preflight roles',
+      title: 'The form, Preflight app, and skills check different layers.',
+      summary: 'Handoff completeness → controlled evidence → developer readiness.',
+      detail:
+        'The submission form validates the handoff. App Review Preflight inspects artifacts and controlled runtime observations. The versioned skills help a developer prepare the app and cite gaps. None can approve the app.',
+      artifactIds: [
+        'app-submission-form-contract',
+        'app-review-preflight-contract',
+        'webflow-app-preflight-skill-contract',
+        'motion-authoring-contract'
+      ],
+      evidence: [
+        'Static artifact checks and controlled runtime observations are separate evidence lanes.',
+        'The form, Preflight app, and skills cannot grant Marketplace approval.'
+      ],
+      mapModuleIds: [APP_REVIEW_MAP_MODULE_ID],
+      focusNodeIds: ['app-submission-form', 'app-review-preflight', 'webflow-app-preflight-skills'],
+      presentation: {
+        layout: 'capabilities',
+        eyebrow: '02 / Preflight roles',
+        reader: {
+          heading: 'Three tools make the submission inspectable.',
+          explanation:
+            'The form checks the handoff. Preflight checks the evidence. The skills help the developer prepare. Each returns a different kind of proof, and none makes the review decision.',
+          takeaway: 'Different checks, one visible boundary',
+          stakeholders: [
+            { role: 'Creator', meaning: 'You can tell which tool found a problem and what to fix next.' },
+            { role: 'Reviewer', meaning: 'You can distinguish submitted facts, automated evidence, and developer readiness guidance.' }
+          ]
+        },
+        capabilities: [
+          {
+            nodeId: 'app-submission-form',
+            title: 'Submission form',
+            can:
+              'Checks the fields required for the selected submission type, basic link and file formatting, and whether the review materials are present.',
+            produces:
+              'One canonical review request with the creator answers, review links and access details, and the submitted bundle or private review artifacts.',
+            boundary:
+              'A complete form proves the handoff is ready. It does not decide whether the app meets Marketplace quality or policy.'
+          },
+          {
+            nodeId: 'app-review-preflight',
+            title: 'App Review Preflight',
+            can:
+              'Inspects bundle identity and source-map reviewability. In its controlled runtime lane, it observes published hash or SRI, readiness, loaded scripts, and proxy behavior.',
+            produces:
+              'A bounded evidence result naming the artifact or runtime observed, the checks run, and the findings returned to the developer or reviewer.',
+            boundary:
+              'Static checks cannot prove live behavior. Runtime evidence can observe behavior, but it cannot approve or reject the app.'
+          },
+          {
+            nodeId: 'webflow-app-preflight-skills',
+            title: 'Preflight skills',
+            can:
+              'Walk the app and its evidence through functional, security, inspectability, OAuth and backend, custom-code lifecycle, listing, and demo checks.',
+            produces:
+              'Cited checklist findings, concrete remediation steps, and a submit or do-not-submit readiness recommendation.',
+            boundary:
+              'The versioned skills prepare evidence and can drift as public guidance changes. They do not promise reviewer acceptance.'
+          }
+        ]
+      },
+      motion: {
+        cue: 'module-focus',
+        reducedMotion: 'static-emphasis',
+        source: 'agent-authored-structured-data'
+      }
+    },
+    {
       id: 'signal',
       kind: 'signal',
       label: 'Notify',
@@ -455,7 +537,7 @@ export const APP_REVIEW_GOVERNANCE_COMPOSITION: AtlasComposition = {
       focusNodeIds: ['slack-signal', 'claude-agent'],
       presentation: {
         layout: 'statement',
-        eyebrow: '02 / Signal',
+        eyebrow: '03 / Signal',
         reader: {
           heading: 'The submission reaches the review team.',
           explanation:
@@ -492,7 +574,7 @@ export const APP_REVIEW_GOVERNANCE_COMPOSITION: AtlasComposition = {
       focusNodeIds: ['claude-agent', 'app-governance-mcp', 'd1-governance-record'],
       presentation: {
         layout: 'code',
-        eyebrow: '03 / Normalize',
+        eyebrow: '04 / Normalize',
         reader: {
           heading: 'An agent prepares the review item.',
           explanation:
@@ -527,6 +609,73 @@ export const APP_REVIEW_GOVERNANCE_COMPOSITION: AtlasComposition = {
       }
     },
     {
+      id: 'review-capabilities',
+      kind: 'judgment',
+      label: 'Review roles',
+      title: 'The agent, MCP, and human hold different authority.',
+      summary: 'Agent prepares → MCP constrains → reviewer decides.',
+      detail:
+        'The agent organizes evidence and proposes. The Governance MCP exposes and records bounded operations. The human reviewer validates the evidence and owns the decision.',
+      artifactIds: ['app-governance-architecture', 'action-gate-contract', 'motion-authoring-contract'],
+      evidence: [
+        'The agent recommendation and the reviewer decision remain distinct states.',
+        'The governed path records authority; it does not invent it.'
+      ],
+      mapModuleIds: [APP_REVIEW_MAP_MODULE_ID],
+      focusNodeIds: ['claude-agent', 'app-governance-mcp', 'operator-decision'],
+      presentation: {
+        layout: 'capabilities',
+        eyebrow: '05 / Review roles',
+        reader: {
+          heading: 'Automation stops where judgment begins.',
+          explanation:
+            'Automation can organize evidence and make the next action legible. The governed interface limits what can happen. A named person still owns approval, rejection, changes, or escalation.',
+          takeaway: 'Preparation, permission, and judgment stay separate',
+          stakeholders: [
+            { role: 'Reviewer', meaning: 'You receive prepared evidence and retain final authority.' },
+            { role: 'Leadership', meaning: 'You can see where automation stops and accountable judgment begins.' }
+          ]
+        },
+        capabilities: [
+          {
+            nodeId: 'claude-agent',
+            title: 'Review agent',
+            can:
+              'Reads the submitted evidence and attached source context, organizes the findings, and drafts a proposed review item or creator update.',
+            produces:
+              'A structured proposal with its sources, findings, current status, and the smallest intended next action.',
+            boundary:
+              'The agent can prepare and recommend. It cannot silently approve the app or execute a state change.'
+          },
+          {
+            nodeId: 'app-governance-mcp',
+            title: 'Governance MCP',
+            can:
+              'Exposes named review operations, validates their inputs, and sends permitted reads or writes through the governed system boundary.',
+            produces:
+              'A traceable record change or explicit failure tied to the operation, actor, source evidence, and policy boundary.',
+            boundary:
+              'The MCP constrains and records the path. It does not supply reviewer judgment or invent human authorization.'
+          },
+          {
+            nodeId: 'operator-decision',
+            title: 'Human reviewer',
+            can:
+              'Validates the evidence, tests gaps automation cannot settle, and requests changes, rejects, approves, or escalates an exception.',
+            produces:
+              'An attributable decision with a reason, owner, and clear next step for the creator and review team.',
+            boundary:
+              'The decision stays human-owned. A green form, scan, skill, agent recommendation, or MCP call cannot imply approval.'
+          }
+        ]
+      },
+      motion: {
+        cue: 'module-focus',
+        reducedMotion: 'static-emphasis',
+        source: 'agent-authored-structured-data'
+      }
+    },
+    {
       id: 'orient',
       kind: 'map',
       label: 'Orient',
@@ -540,7 +689,7 @@ export const APP_REVIEW_GOVERNANCE_COMPOSITION: AtlasComposition = {
       focusNodeIds: ['d1-governance-record', 'airtable-projection', 'zendesk-context'],
       presentation: {
         layout: 'map',
-        eyebrow: '04 / Orient',
+        eyebrow: '06 / Orient',
         reader: {
           heading: 'Each system keeps one clear job.',
           explanation:
@@ -589,7 +738,7 @@ export const APP_REVIEW_GOVERNANCE_COMPOSITION: AtlasComposition = {
       focusNodeIds: ['d1-governance-record', 'operator-decision'],
       presentation: {
         layout: 'decision',
-        eyebrow: '05 / Decide',
+        eyebrow: '07 / Decide',
         reader: {
           heading: 'A person decides what happens next.',
           explanation:
@@ -634,7 +783,7 @@ export const APP_REVIEW_GOVERNANCE_COMPOSITION: AtlasComposition = {
       ],
       presentation: {
         layout: 'branches',
-        eyebrow: '06 / Recover',
+        eyebrow: '08 / Recover',
         reader: {
           heading: 'A no creates a clear way forward.',
           explanation:
@@ -689,7 +838,7 @@ export const APP_REVIEW_GOVERNANCE_COMPOSITION: AtlasComposition = {
       focusNodeIds: ['operator-decision', 'app-governance-mcp', 'workflow-receipt'],
       presentation: {
         layout: 'demo',
-        eyebrow: '07 / Run',
+        eyebrow: '09 / Run',
         reader: {
           heading: 'Only the approved action can run.',
           explanation:
@@ -726,7 +875,7 @@ export const APP_REVIEW_GOVERNANCE_COMPOSITION: AtlasComposition = {
       focusNodeIds: ['workflow-receipt', 'd1-governance-record'],
       presentation: {
         layout: 'proof',
-        eyebrow: '08 / Proof',
+        eyebrow: '10 / Proof',
         reader: {
           heading: 'The system records what happened.',
           explanation:
@@ -756,7 +905,18 @@ export const APP_REVIEW_GOVERNANCE_COMPOSITION: AtlasComposition = {
       kind: 'arc',
       title: 'App Review Governance Arc',
       description: 'Follow an app from submission to a final receipt.',
-      sceneIds: ['intake-preflight', 'signal', 'normalize', 'orient', 'decide', 'recover', 'run', 'proof']
+      sceneIds: [
+        'intake-preflight',
+        'preflight-capabilities',
+        'signal',
+        'normalize',
+        'review-capabilities',
+        'orient',
+        'decide',
+        'recover',
+        'run',
+        'proof'
+      ]
     },
     {
       id: 'app-review-governance-playbook',
@@ -764,7 +924,17 @@ export const APP_REVIEW_GOVERNANCE_COMPOSITION: AtlasComposition = {
       title: 'App Review Governance Playbook',
       description:
         'Reuse the review method: collect evidence, keep each source clear, require a person to decide, and record proof.',
-      sceneIds: ['intake-preflight', 'signal', 'normalize', 'orient', 'decide', 'recover', 'proof']
+      sceneIds: [
+        'intake-preflight',
+        'preflight-capabilities',
+        'signal',
+        'normalize',
+        'review-capabilities',
+        'orient',
+        'decide',
+        'recover',
+        'proof'
+      ]
     },
     {
       id: 'app-review-governance-runbook',
@@ -772,7 +942,16 @@ export const APP_REVIEW_GOVERNANCE_COMPOSITION: AtlasComposition = {
       title: 'App Review Governance Runbook',
       description:
         'Run one review: gather context, wait for approval, take one bounded action, and record the result.',
-      sceneIds: ['intake-preflight', 'orient', 'decide', 'recover', 'run', 'proof']
+      sceneIds: [
+        'intake-preflight',
+        'preflight-capabilities',
+        'review-capabilities',
+        'orient',
+        'decide',
+        'recover',
+        'run',
+        'proof'
+      ]
     }
   ]
 };
@@ -825,6 +1004,7 @@ export function validateAtlasComposition(composition: AtlasComposition): AtlasCo
     const layouts: AtlasPresentationLayout[] = [
       'statement',
       'split',
+      'capabilities',
       'image',
       'code',
       'map',
@@ -863,6 +1043,12 @@ export function validateAtlasComposition(composition: AtlasComposition): AtlasCo
     if (scene.presentation.layout === 'code' && !scene.presentation.code) {
       issues.push(`Scene ${scene.id} requires a code composition.`);
     }
+    if (
+      scene.presentation.layout === 'capabilities' &&
+      (scene.presentation.capabilities?.length ?? 0) < 2
+    ) {
+      issues.push(`Scene ${scene.id} requires at least two capability explanations.`);
+    }
     if (scene.presentation.code && !scene.presentation.code.content.trim()) {
       issues.push(`Scene ${scene.id} has an empty code composition.`);
     }
@@ -887,6 +1073,23 @@ export function validateAtlasComposition(composition: AtlasComposition): AtlasCo
         } else if (!selectedNodeIds.has(nodeId)) {
           issues.push(`Scene ${scene.id} relationship references a node outside its shared map module: ${nodeId}.`);
         }
+      }
+    }
+    for (const capability of scene.presentation.capabilities ?? []) {
+      if (
+        !capability.title.trim() ||
+        !capability.can.trim() ||
+        !capability.produces.trim() ||
+        !capability.boundary.trim()
+      ) {
+        issues.push(`Scene ${scene.id} capability explanations must define a complete reader contract.`);
+      }
+      if (!scene.focusNodeIds.includes(capability.nodeId)) {
+        issues.push(`Scene ${scene.id} capability must describe a focused node: ${capability.nodeId}.`);
+      } else if (!selectedNodeIds.has(capability.nodeId)) {
+        issues.push(
+          `Scene ${scene.id} capability references a node outside its shared map module: ${capability.nodeId}.`
+        );
       }
     }
     for (const id of scene.mapModuleIds) {
