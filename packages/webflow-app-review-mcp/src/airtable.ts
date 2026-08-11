@@ -1023,7 +1023,9 @@ export class AirtableClient {
   }> {
     const limit = query.limit ?? 100;
     const sort = query.sort ?? 'submissionDatetime_desc';
-    const needsPostFilterCompleteness = Boolean(query.status || query.assigned !== undefined);
+    const needsPostFilterCompleteness = Boolean(
+      query.status || query.assigned === 'assigned' || query.assigned === 'unassigned',
+    );
     const queue = await this.listAssetQueue(needsPostFilterCompleteness ? undefined : limit);
     const latestVersions = await this.listLatestVersionsForAssets(queue.map((item) => item.assetId));
     const items = queue.map((item) => toQueueItem(item, latestVersions.get(item.assetId) ?? null));
