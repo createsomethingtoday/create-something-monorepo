@@ -17,7 +17,7 @@ OAUTH_ALLOWED_EMAILS = "pablo.miranda@webflow.com,shea.sisco@webflow.com,micah@w
 CF_ACCESS_TEAM_DOMAIN = "https://webflow.cloudflareaccess.com"
 # Set this to the dedicated App Review Access application audience only after
 # the Webflow Cloud hostname and Access application have been provisioned.
-CF_ACCESS_AUD = ""
+CF_ACCESS_AUD = "3b4a38c7c99ec7127bcbb99d9c8aae7b0011a51370bff31b7085385e1a2807ba"
 
 [[d1_databases]]
 binding = "TELEMETRY_DB"
