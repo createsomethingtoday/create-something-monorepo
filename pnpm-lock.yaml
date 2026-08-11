@@ -454,6 +454,9 @@ importers:
       '@create-something/mcp-authz':
         specifier: workspace:*
         version: link:../mcp-authz
+      '@create-something/playbook-mcp':
+        specifier: workspace:*
+        version: link:../playbook-mcp
       '@create-something/tufte':
         specifier: workspace:^
         version: link:../tufte
@@ -2702,6 +2705,9 @@ importers:
       '@create-something/canon':
         specifier: workspace:*
         version: link:../canon
+      '@create-something/playbook-mcp':
+        specifier: workspace:*
+        version: link:../playbook-mcp
       '@create-something/tufte':
         specifier: workspace:*
         version: link:../tufte
@@ -3327,6 +3333,9 @@ importers:
 
   packages/playbook-mcp:
     dependencies:
+      '@create-something/atlas-composition':
+        specifier: workspace:*
+        version: link:../atlas-composition
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
         version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)

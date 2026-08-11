@@ -199,6 +199,23 @@ export type AtlasCompositionValidation = {
   issues: string[];
 };
 
+export type AtlasRegistryArcStep = {
+  id: string;
+  title: string;
+  detail: string;
+};
+
+export type AtlasRegistryArcDefinition = {
+  id: string;
+  title: string;
+  description: string;
+  owner: string;
+  boundary: string;
+  proof: string;
+  source: string;
+  steps: AtlasRegistryArcStep[];
+};
+
 const APP_REVIEW_MAP_MODULE_ID = 'app-review-governance-map';
 
 const APP_REVIEW_GOVERNANCE_ARTIFACTS: AtlasArtifact[] = [
@@ -1108,6 +1125,320 @@ export function validateAtlasComposition(composition: AtlasComposition): AtlasCo
   }
 
   return { ok: issues.length === 0, issues };
+}
+
+function registryArcNodeId(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'step';
+}
+
+/**
+ * Project a registered Playbook or Runbook into the shared presentation
+ * contract. The source registry remains authoritative; this adapter creates no
+ * second workflow record, permission model, or execution state.
+ */
+export function createRegistryArcComposition(
+  definition: AtlasRegistryArcDefinition
+): AtlasComposition {
+  if (definition.steps.length < 2) {
+    throw new Error(`Registry Arc ${definition.id} requires at least two steps.`);
+  }
+
+  const compositionId = registryArcNodeId(definition.id);
+  const mapModuleId = `${compositionId}-map`;
+  const stepNodeIds = definition.steps.map(
+    (step, index) => `${compositionId}-step-${index + 1}-${registryArcNodeId(step.id)}`
+  );
+  const gateNodeId = `${compositionId}-operator-gate`;
+  const receiptNodeId = `${compositionId}-proof-receipt`;
+  const nodeIds = [...stepNodeIds, gateNodeId, receiptNodeId];
+  const relationshipPairs = nodeIds.slice(0, -1).map((fromNodeId, index) => ({
+    fromNodeId,
+    label:
+      index === stepNodeIds.length - 1
+        ? 'waits for'
+        : index === stepNodeIds.length
+          ? 'records'
+          : 'hands off',
+    toNodeId: nodeIds[index + 1]
+  }));
+  const artifactId = `${compositionId}-source`;
+  const receiptArtifactId = `${compositionId}-receipt-contract`;
+
+  const scenes: AtlasCompositionScene[] = [
+    {
+      id: `${compositionId}-orient`,
+      kind: 'signal',
+      label: 'Orient',
+      title: definition.title,
+      summary: definition.description,
+      detail: `${definition.description} The registered source remains authoritative while this Arc explains the operating route.`,
+      artifactIds: [artifactId],
+      evidence: [`Registered source: ${definition.source}`],
+      mapModuleIds: [mapModuleId],
+      focusNodeIds: [stepNodeIds[0]],
+      presentation: {
+        layout: 'statement',
+        eyebrow: '01 / Orient',
+        reader: {
+          heading: definition.title,
+          explanation: definition.description,
+          takeaway: 'Start from the registered operating method',
+          stakeholders: [
+            {
+              role: 'Leadership',
+              meaning: 'You can see the intended outcome and accountable route before work begins.'
+            }
+          ]
+        },
+        callout: {
+          label: 'Owner',
+          value: definition.owner,
+          detail: 'The source registry names the method; the Arc makes its route legible.'
+        }
+      },
+      motion: {
+        cue: 'signal-reveal',
+        reducedMotion: 'static-emphasis',
+        source: 'agent-authored-structured-data'
+      }
+    },
+    {
+      id: `${compositionId}-map`,
+      kind: 'map',
+      label: 'Shared map',
+      title: 'One route carries the work from signal to proof.',
+      summary: `${definition.steps.length} registered steps, one operator gate, and one proof receipt.`,
+      detail:
+        'The Arc, Playbook, and Runbook reuse this flat map module rather than creating separate workflow graphs.',
+      artifactIds: [artifactId],
+      evidence: [
+        `${definition.steps.length} steps are projected directly from ${definition.source}.`
+      ],
+      mapModuleIds: [mapModuleId],
+      focusNodeIds: nodeIds,
+      presentation: {
+        layout: 'map',
+        eyebrow: '02 / Map',
+        reader: {
+          heading: 'See the whole operating route.',
+          explanation:
+            'Each handoff stays ordered, the human boundary stays visible, and proof remains the terminal state.',
+          takeaway: `${definition.steps.length} steps · one gate · one receipt`,
+          stakeholders: [
+            {
+              role: 'Creator',
+              meaning: 'You can inspect the expected sequence before running it.'
+            },
+            { role: 'Reviewer', meaning: 'You can see where judgment remains human-owned.' }
+          ]
+        },
+        relationships: relationshipPairs,
+        callout: {
+          label: 'Shared module',
+          value: `${definition.steps.length} registered steps`,
+          detail: definition.boundary
+        }
+      },
+      motion: {
+        cue: 'handoff-trace',
+        reducedMotion: 'static-emphasis',
+        source: 'agent-authored-structured-data'
+      }
+    },
+    {
+      id: `${compositionId}-runbook`,
+      kind: 'runbook',
+      label: 'Runbook',
+      title: 'Execute the registered route in order.',
+      summary: 'The Runbook is the executable route through the Playbook, not a second copy of it.',
+      detail: definition.steps
+        .map((step, index) => `${index + 1}. ${step.title}: ${step.detail}`)
+        .join('\n'),
+      artifactIds: [artifactId],
+      evidence: definition.steps.map((step) => step.title),
+      mapModuleIds: [mapModuleId],
+      focusNodeIds: stepNodeIds,
+      presentation: {
+        layout: 'branches',
+        eyebrow: '03 / Runbook',
+        reader: {
+          heading: 'Follow the route without losing the boundary.',
+          explanation:
+            'The ordered steps carry the operating detail. Each remains traceable to the typed source registry.',
+          takeaway: `${definition.steps.length} executable steps`,
+          stakeholders: [
+            { role: 'Creator', meaning: 'You get the exact sequence and handoff context.' },
+            {
+              role: 'Reviewer',
+              meaning: 'You can stop or redirect the route at the named boundary.'
+            }
+          ]
+        },
+        branches: definition.steps.map((step, index) => ({
+          explanation: step.detail,
+          label: `${String(index + 1).padStart(2, '0')} · ${step.title}`,
+          next: definition.steps[index + 1]?.title ?? 'Operator gate'
+        })),
+        callout: {
+          label: 'Route',
+          value: 'Run in order',
+          detail: 'Nothing here grants new execution authority.'
+        }
+      },
+      motion: {
+        cue: 'module-focus',
+        reducedMotion: 'static-emphasis',
+        source: 'agent-authored-structured-data'
+      }
+    },
+    {
+      id: `${compositionId}-gate`,
+      kind: 'judgment',
+      label: 'Decision gate',
+      title: 'Authority stays with the named operator.',
+      summary: definition.boundary,
+      detail: `Owner: ${definition.owner}. ${definition.boundary}`,
+      artifactIds: [artifactId],
+      evidence: [definition.boundary],
+      mapModuleIds: [mapModuleId],
+      focusNodeIds: [gateNodeId],
+      presentation: {
+        layout: 'decision',
+        eyebrow: '04 / Judgment',
+        reader: {
+          heading: 'Pause at the decision boundary.',
+          explanation: definition.boundary,
+          takeaway: `Owner: ${definition.owner}`,
+          stakeholders: [
+            {
+              role: 'Reviewer',
+              meaning: 'You retain the authority to approve, redirect, or stop the route.'
+            }
+          ]
+        },
+        callout: { label: 'Human boundary', value: definition.owner, detail: definition.boundary }
+      },
+      motion: {
+        cue: 'decision-gate',
+        reducedMotion: 'static-emphasis',
+        source: 'agent-authored-structured-data'
+      }
+    },
+    {
+      id: `${compositionId}-proof`,
+      kind: 'receipt',
+      label: 'Proof',
+      title: 'Close with inspectable proof.',
+      summary: definition.proof,
+      detail:
+        'The Arc describes the expected proof contract. It does not fabricate a completed run or receipt.',
+      artifactIds: [receiptArtifactId],
+      evidence: [definition.proof],
+      mapModuleIds: [mapModuleId],
+      focusNodeIds: [receiptNodeId],
+      presentation: {
+        layout: 'proof',
+        eyebrow: '05 / Proof',
+        reader: {
+          heading: 'Return evidence, not a status claim.',
+          explanation: definition.proof,
+          takeaway: 'The expected receipt is named before execution',
+          stakeholders: [
+            {
+              role: 'Leadership',
+              meaning: 'You know what evidence should exist when the route completes.'
+            }
+          ]
+        },
+        callout: { label: 'Expected proof', value: 'Receipt required', detail: definition.proof }
+      },
+      motion: {
+        cue: 'proof-stamp',
+        reducedMotion: 'static-emphasis',
+        source: 'agent-authored-structured-data'
+      }
+    }
+  ];
+
+  return {
+    schema: ATLAS_COMPOSITION_SCHEMA,
+    id: compositionId,
+    title: definition.title,
+    description: definition.description,
+    mode: 'local-fixture',
+    mapModules: [
+      {
+        id: mapModuleId,
+        title: `${definition.title} map`,
+        description:
+          'A read-only projection of the registered route reused by the Arc, Playbook, and Runbook.',
+        map: { mapId: `registry:${definition.id}`, version: { id: 'registry-v1', mode: 'pinned' } },
+        selection: {
+          nodeIds,
+          edgeIds: relationshipPairs.map(
+            (relationship, index) => `${compositionId}-edge-${index + 1}`
+          )
+        }
+      }
+    ],
+    artifacts: [
+      {
+        id: artifactId,
+        kind: 'guide',
+        title: `${definition.title} source`,
+        summary: 'The typed registry entry that owns this Arc content.',
+        provenance: {
+          alt: `Registered source for ${definition.title}.`,
+          costUsd: 0,
+          model: 'not-applicable—typed registry adapter',
+          promptReference: 'registry-arc-adapter.v1',
+          rights: 'First-party CREATE SOMETHING registry content.',
+          source: definition.source
+        }
+      },
+      {
+        id: receiptArtifactId,
+        kind: 'receipt',
+        title: 'Expected proof contract',
+        summary: definition.proof,
+        provenance: {
+          alt: `Expected proof contract for ${definition.title}.`,
+          costUsd: 0,
+          model: 'not-applicable—read-only proof specification',
+          promptReference: 'registry-arc-adapter.v1',
+          rights: 'First-party CREATE SOMETHING composition contract.',
+          source: definition.source
+        }
+      }
+    ],
+    routes: [
+      {
+        id: `${compositionId}-arc`,
+        kind: 'arc',
+        title: `${definition.title} Arc`,
+        description: `Understand ${definition.title} from orientation through proof.`,
+        sceneIds: scenes.map((scene) => scene.id)
+      },
+      {
+        id: `${compositionId}-playbook`,
+        kind: 'playbook',
+        title: `${definition.title} Playbook`,
+        description: 'Reuse the method, boundary, and proof contract.',
+        sceneIds: [scenes[0].id, scenes[1].id, scenes[3].id, scenes[4].id]
+      },
+      {
+        id: `${compositionId}-runbook-route`,
+        kind: 'runbook',
+        title: `${definition.title} Runbook`,
+        description: 'Execute the ordered steps while preserving the named decision gate.',
+        sceneIds: [scenes[0].id, scenes[2].id, scenes[3].id, scenes[4].id]
+      }
+    ],
+    scenes
+  };
 }
 
 export function resolveMapModule(

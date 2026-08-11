@@ -17,7 +17,9 @@
 		"smoke": "pnpm check && pnpm smoke:canon-sidebar"
 	},
 	"scripts": {
-		"prebuild": "pnpm --filter @create-something/canon package && pnpm --filter @create-something/tufte package",
+		"prepare:local-deps": "pnpm --filter @create-something/playbook-mcp build",
+		"prebuild": "pnpm prepare:local-deps && pnpm --filter @create-something/canon package && pnpm --filter @create-something/tufte package",
+		"precheck": "pnpm prepare:local-deps",
 		"dev": "vite dev",
 		"build": "vite build",
 		"preview": "vite preview",
@@ -35,6 +37,7 @@
 	},
 	"dependencies": {
 		"@create-something/canon": "workspace:*",
+		"@create-something/playbook-mcp": "workspace:*",
 		"@create-something/tufte": "workspace:*"
 	},
 	"devDependencies": {

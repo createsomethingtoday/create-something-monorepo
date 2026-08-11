@@ -16,6 +16,7 @@ import {
   resolveMapModule,
   toAtlasStoryAdapter
 } from '@create-something/atlas-composition';
+import { getArcBySlug, listArcSummaries } from '@create-something/playbook-mcp/arcs';
 
 import {
   getAtlasStats,
@@ -48,6 +49,7 @@ import {
   AtlasGetSchema,
   AtlasCompositionActionProposeSchema,
   AtlasCompositionGetSchema,
+  AtlasCompositionListSchema,
   AtlasCompositionMapModuleResolveSchema,
   AtlasSearchSchema,
   AtlasStudioEdgeAddSchema,
@@ -880,16 +882,36 @@ export function registerTools(server: ScopedMcpServer): void {
   );
 
   server.tool(
+    'atlas_composition_list',
+    'List all read-only Arc presentation routes generated from registered public Playbooks and Runbooks, plus the shipped App Review prototype.',
+    AtlasCompositionListSchema.shape,
+    async (params, ctx) => {
+      const input = AtlasCompositionListSchema.parse(params);
+      const arcs = listArcSummaries().filter(
+        (arc) => !input.source_kind || arc.source.kind === input.source_kind
+      );
+      return jsonContent({ accountId: ctx.accountId, arcs, total: arcs.length });
+    },
+    { readOnly: true },
+  );
+
+  server.tool(
     'atlas_composition_get',
-    'Read the local App Review Governance Arc composition and optionally adapt one route as a transient Atlas Story. The composition is fixture-only and owns no customer state.',
+    'Read one registered Arc composition and optionally adapt one route as a transient Atlas Story. Arc compositions are read-only views and own no customer state.',
     AtlasCompositionGetSchema.shape,
     async (params, ctx) => {
       const input = AtlasCompositionGetSchema.parse(params);
-      const routeId = input.route_id ?? 'app-review-governance-arc';
+      const arc = getArcBySlug(input.composition_id ?? 'app-review-governance');
+      if (!arc) return errorContent(`Arc composition not found: ${input.composition_id}`);
+      const route = input.route_id
+        ? arc.composition.routes.find((candidate) => candidate.id === input.route_id)
+        : arc.composition.routes.find((candidate) => candidate.kind === 'arc');
+      if (!route) return errorContent(`Arc route not found: ${input.route_id ?? 'arc'}`);
       return jsonContent({
         accountId: ctx.accountId,
-        composition: APP_REVIEW_GOVERNANCE_COMPOSITION,
-        story: toAtlasStoryAdapter(APP_REVIEW_GOVERNANCE_COMPOSITION, routeId)
+        composition: arc.composition,
+        source: arc.source,
+        story: toAtlasStoryAdapter(arc.composition, route.id)
       });
     },
     { readOnly: true },
@@ -897,17 +919,22 @@ export function registerTools(server: ScopedMcpServer): void {
 
   server.tool(
     'atlas_composition_resolve_map_module',
-    'Resolve the explicit pinned App Review governance map module without changing the map or its source system.',
+    'Resolve an explicit pinned Arc map module without changing the map or its source registry.',
     AtlasCompositionMapModuleResolveSchema.shape,
     async (params, ctx) => {
       const input = AtlasCompositionMapModuleResolveSchema.parse(params);
+      const arc = getArcBySlug(input.composition_id ?? 'app-review-governance');
+      if (!arc) return errorContent(`Arc composition not found: ${input.composition_id}`);
+      const module = arc.composition.mapModules.find((candidate) => candidate.id === input.module_id);
+      if (!module) return errorContent(`Arc map module not found: ${input.module_id}`);
+      const version = module.map.version.id ?? 'live';
       const resolution = resolveMapModule(
-        APP_REVIEW_GOVERNANCE_COMPOSITION,
+        arc.composition,
         input.module_id,
         (mapId) => ({
           mapId,
-          latestVersion: '2026-08-11',
-          versions: ['2026-08-11']
+          latestVersion: version,
+          versions: [version]
         })
       );
       return jsonContent({ accountId: ctx.accountId, resolution });

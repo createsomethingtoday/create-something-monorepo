@@ -9,6 +9,20 @@ AI Interaction Atlas mapping server for MCPs and agents with:
 
 ## Core Flows
 
+### Arc presentation catalog
+
+The Atlas composition tools expose the public, registry-backed Arc catalog while keeping
+write authority outside the presentation layer:
+
+- `atlas_composition_list` lists all 54 Arc summaries.
+- `atlas_composition_get` resolves a generated Arc or the App Review Governance prototype.
+- `atlas_composition_resolve_map_module` returns the pinned reusable map for any Arc.
+- `atlas_composition_propose_local_action` remains limited to the hand-authored App Review
+  prototype; generated catalog Arcs are read-only.
+
+The catalog uses the same source registries as Playbook MCP. It does not create a second
+graph, permission model, story ledger, or execution ledger.
+
 ### 0) Atlas Studio browser portal
 
 For Codex-led client mapping, use MCP as the agent-native control plane and the browser portal as the presentation layer.

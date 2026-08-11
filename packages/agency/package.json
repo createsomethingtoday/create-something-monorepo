@@ -63,6 +63,7 @@
     "@create-something/database-layer": "workspace:*",
     "@create-something/delivery-schema": "workspace:*",
     "@create-something/mcp-authz": "workspace:*",
+    "@create-something/playbook-mcp": "workspace:*",
     "@create-something/tufte": "workspace:^",
     "lucide-svelte": "^0.562.0",
     "react": "^19.2.4",
