@@ -59,7 +59,7 @@ Every creation exists simultaneously at three levels:
 | Boot command | `pnpm dev` |
 | Smoke command | `pnpm check` |
 | Validation surfaces | Svelte check output, route preview, Cloudflare Pages build output |
-| UI validation path | `/`, `/playbooks`, `/playbooks/exception-handoff`, `/readiness` |
+| UI validation path | `/`, `/playbooks`, `/readiness` |
 | Escalation rule | stop if a change alters canon, voice, or standards semantics without an explicit judgment artifact or operator decision |
 
 ---
