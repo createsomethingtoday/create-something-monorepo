@@ -1,6 +1,6 @@
 {
 	"name": "@create-something/ltd",
-	"description": "The Philosophy of Automation Infrastructure — where we articulate why creation > consumption",
+	"description": "The operating library for AI work — practical playbooks, runbooks, readiness checks, and the Canon behind them",
 	"private": true,
 	"version": "1.0.0",
 	"type": "module",
@@ -24,8 +24,9 @@
 		"prepare": "svelte-kit sync || echo ''",
 		"smoke": "pnpm check && pnpm smoke:canon-sidebar",
 		"test:canon-language": "node --import tsx --test test/canon-conviction-language.test.ts",
+		"test:operator-library": "node --import tsx --test test/operator-library.test.ts",
 		"test:search": "vitest run src/lib/search/sitemap.test.ts",
-		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings && pnpm test:canon-language && pnpm test:search",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings && pnpm test:canon-language && pnpm test:operator-library && pnpm test:search",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings --watch",
 		"smoke:canon-sidebar": "tsx scripts/canon-sidebar-smoke.ts",
 		"deploy": "pnpm build && node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=createsomething-ltd",
