@@ -1,0 +1,175 @@
+{
+  "id": "agency-high-intent-search-v20260810",
+  "sourceIssue": "CRE-1674",
+  "state": "planning",
+  "dailyBudgetUsd": 50,
+  "activation": {
+    "status": "approval-required",
+    "preSpendGate": "google-keyword-planner",
+    "accountMutationAuthorized": false,
+    "spendAuthorized": false
+  },
+  "network": {
+    "channel": "google-search",
+    "locations": ["United States"],
+    "presenceOnly": true,
+    "searchPartners": false,
+    "displayExpansion": false,
+    "performanceMax": false,
+    "dynamicSearchAds": false,
+    "automaticUrlExpansion": false
+  },
+  "measurement": {
+    "system": "consented-first-party-analytics",
+    "primaryWebsiteSignal": "booking_completed",
+    "secondaryWebsiteSignal": "workflow_draft_started",
+    "offlineDecision": "accepted_opportunity_manual_review",
+    "googleTag": false,
+    "enhancedConversions": false,
+    "clickIdentifiersCaptured": false
+  },
+  "plannerGate": {
+    "network": "Google Search only",
+    "location": "United States",
+    "locationMode": "Presence: people in or regularly in targeted locations",
+    "requiredExports": [
+      "average monthly searches",
+      "three-month change",
+      "year-over-year change",
+      "competition",
+      "top-of-page bid low range",
+      "top-of-page bid high range",
+      "forecast",
+      "geography"
+    ]
+  },
+  "adGroups": [
+    {
+      "id": "marketplace-review",
+      "priority": 1,
+      "dailyBudgetUsd": 22,
+      "landingPath": "/marketplace-review-automation",
+      "finalUrl": "https://createsomething.agency/marketplace-review-automation?utm_source=google&utm_medium=cpc&utm_campaign=agency-high-intent-search-v20260810&utm_content=marketplace-review",
+      "keywords": [
+        { "text": "marketplace review automation", "matchType": "exact" },
+        { "text": "marketplace review automation", "matchType": "phrase" },
+        { "text": "marketplace approval workflow", "matchType": "exact" },
+        { "text": "submission review automation", "matchType": "phrase" },
+        { "text": "seller approval workflow", "matchType": "phrase" },
+        { "text": "evidence review workflow", "matchType": "exact" }
+      ],
+      "ad": {
+        "headlines": [
+          "Marketplace Review, Mapped",
+          "Prepare Evidence First",
+          "Keep Final Approval Human"
+        ],
+        "descriptions": [
+          "Prepare a complete review packet while your reviewer keeps final approval authority.",
+          "Map one marketplace queue, its evidence, decision owner, and safe write boundary."
+        ]
+      }
+    },
+    {
+      "id": "workflow-recovery",
+      "priority": 2,
+      "dailyBudgetUsd": 15,
+      "landingPath": "/ai-workflow-recovery",
+      "finalUrl": "https://createsomething.agency/ai-workflow-recovery?utm_source=google&utm_medium=cpc&utm_campaign=agency-high-intent-search-v20260810&utm_content=workflow-recovery",
+      "keywords": [
+        { "text": "AI agent recovery", "matchType": "exact" },
+        { "text": "AI agent recovery", "matchType": "phrase" },
+        { "text": "fix broken AI agent", "matchType": "exact" },
+        { "text": "AI workflow troubleshooting", "matchType": "phrase" },
+        { "text": "AI workflow failure", "matchType": "phrase" },
+        { "text": "AI agent audit", "matchType": "exact" }
+      ],
+      "ad": {
+        "headlines": [
+          "Recover a Broken AI Workflow",
+          "Trace the Failure First",
+          "Repair, Replace, or Stop"
+        ],
+        "descriptions": [
+          "Trace failure, permissions, decisions, and missing proof before another live run.",
+          "Get a private recovery map and a repair, replacement, or stop recommendation."
+        ]
+      }
+    },
+    {
+      "id": "workflow-control",
+      "priority": 3,
+      "dailyBudgetUsd": 10,
+      "landingPath": "/ai-workflow-control",
+      "finalUrl": "https://createsomething.agency/ai-workflow-control?utm_source=google&utm_medium=cpc&utm_campaign=agency-high-intent-search-v20260810&utm_content=workflow-control",
+      "keywords": [
+        { "text": "AI workflow human approval", "matchType": "exact" },
+        { "text": "AI agent approval workflow", "matchType": "phrase" },
+        { "text": "AI decision boundary", "matchType": "exact" },
+        { "text": "AI workflow stop conditions", "matchType": "phrase" },
+        { "text": "human in the loop workflow control", "matchType": "exact" }
+      ],
+      "ad": {
+        "headlines": [
+          "Human Approval for AI Work",
+          "Define Run, Wait, and Stop",
+          "Keep the Playbook"
+        ],
+        "descriptions": [
+          "Define which work runs, which decisions wait, and what must stop before it acts.",
+          "Map one approval boundary into a client-owned Playbook with an attached receipt."
+        ]
+      }
+    },
+    {
+      "id": "brand",
+      "priority": 4,
+      "dailyBudgetUsd": 3,
+      "landingPath": "/",
+      "finalUrl": "https://createsomething.agency/?utm_source=google&utm_medium=cpc&utm_campaign=agency-high-intent-search-v20260810&utm_content=brand",
+      "keywords": [
+        { "text": "CREATE SOMETHING agency", "matchType": "exact" },
+        { "text": "CREATE SOMETHING AI agency", "matchType": "phrase" }
+      ],
+      "ad": {
+        "headlines": [
+          "CREATE SOMETHING",
+          "AI Operations, Client-Owned",
+          "Map One Workflow"
+        ],
+        "descriptions": [
+          "Map one workflow, install its AI infrastructure, and keep the operating Playbook.",
+          "Operators and AI agents use the same rules, approval path, stops, and receipts."
+        ]
+      }
+    }
+  ],
+  "holdbacks": [
+    {
+      "cluster": "generic-ai-governance",
+      "status": "paused",
+      "releaseGate": "specific route-level proof and Keyword Planner evidence"
+    },
+    {
+      "cluster": "revops",
+      "status": "paused",
+      "releaseGate": "specific route-level proof and Keyword Planner evidence"
+    },
+    {
+      "cluster": "customer-service",
+      "status": "paused",
+      "releaseGate": "specific route-level proof and Keyword Planner evidence"
+    }
+  ],
+  "negativeKeywords": [
+    "jobs",
+    "salary",
+    "course",
+    "certification",
+    "free download",
+    "definition",
+    "examples",
+    "open source",
+    "customer support phone number"
+  ]
+}

@@ -19,14 +19,20 @@ export const AGENCY_ATLAS_PROOF_PATHS = [
 
 export const AGENCY_COMPACT_PRIVACY_PATHS = [
   '/',
+  '/ai-workflow-control',
+  '/ai-workflow-recovery',
   '/book',
   '/field-reports',
   '/field-reports/template-review',
+  '/marketplace-review-automation',
+  '/workflows',
   ...AGENCY_ATLAS_PROOF_PATHS
 ] as const;
 
 export const AGENCY_ROUTE_OWNED_PERFORMANCE_ENDING_PATHS = [
   '/',
+  '/ai-workflow-control',
+  '/ai-workflow-recovery',
   '/services',
   '/book',
   '/contact',
@@ -49,6 +55,8 @@ export const AGENCY_ROUTE_OWNED_PERFORMANCE_ENDING_PATHS = [
   '/cloudflare',
   '/field-reports',
   '/field-reports/template-review',
+  '/marketplace-review-automation',
+  '/workflows',
   '/use-cases/business',
   '/use-cases/enterprise',
   '/about'

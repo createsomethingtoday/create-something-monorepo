@@ -1,5 +1,13 @@
 <script lang="ts">
-  import { Button, SEO } from '@create-something/canon';
+  import {
+    Button,
+    PerformanceCampaignOpening,
+    PerformanceConversionHandoff,
+    PerformanceNarrativeStage,
+    SEO,
+    type PerformanceNarrativeScene
+  } from '@create-something/canon';
+  import PlaybookField from '$lib/components/PlaybookField.svelte';
   import { workflowPages } from '$lib/data/workflowPages';
 
   const faqItems = [
@@ -19,6 +27,49 @@
         'MCP guides explain the connectivity and authority layer. Webflow operations guides show those principles inside real review, app, template, and Marketplace boundaries where evidence and human judgment must remain distinct.'
     }
   ];
+
+  const playbookScenes: PerformanceNarrativeScene[] = [
+    {
+      id: 'signal',
+      label: 'Read',
+      summary: 'Start from observed work',
+      title: 'Read the signal before choosing the system.',
+      detail:
+        'Match the guide to a live handoff, delay, exception, or review queue. The starting point is an operating signal—not a model or automation product.',
+      tone: 'review',
+      evidence: ['live handoff', 'named owner', 'observed delay or rework']
+    },
+    {
+      id: 'boundary',
+      label: 'Bound',
+      summary: 'Protect the decision',
+      title: 'Set the fit, pause, and approval conditions.',
+      detail:
+        'Each guide marks where AI can assist, where a person decides, which permissions matter, and what should stop before a tool path is selected.',
+      tone: 'block',
+      receipts: ['fit condition', 'pause condition', 'approval authority']
+    },
+    {
+      id: 'run',
+      label: 'Run',
+      summary: 'Follow the owned route',
+      title: 'Run the play and keep its operating artifacts.',
+      detail:
+        'Use the guide to name the source, action, decision state, output, and recovery route. The artifacts remain useful after a vendor or model changes.',
+      tone: 'allow',
+      evidence: ['workflow map', 'runbook', 'decision rules', 'recovery path']
+    },
+    {
+      id: 'proof',
+      label: 'Review',
+      summary: 'Inspect the receipt',
+      title: 'Follow every claim back to proof.',
+      detail:
+        'The guide ends with a receipt: the source, rule, decision, result, and evidence that lets the next operator understand what happened.',
+      tone: 'neutral',
+      receipts: ['source', 'rule', 'decision', 'result', 'recovery']
+    }
+  ];
 </script>
 
 <SEO
@@ -30,111 +81,124 @@
   propertyName="agency"
 />
 
-<div class="library-shell" data-performance-mode="proof">
-  <header class="library-opening">
-    <p>Operator playbook / 12 field guides</p>
-    <div class="library-opening__main">
+<div class="workflow-library property-performance" data-performance-mode="proof">
+  <PerformanceCampaignOpening
+    eyebrow="Operator playbook / 12 field guides"
+    propertyRole="Workflow library"
+    expression="editorial"
+    title="Map the play. Build the system. Keep control."
+    lede="A practical playbook for the business handoffs that need to move faster without losing the owner, the approval boundary, or the proof."
+    proof={[
+      { label: 'Library', value: '12 field guides' },
+      { label: 'Operating route', value: 'Map / Build / Control' },
+      { label: 'Receipt', value: 'Signal → Decision → Proof' }
+    ]}
+    density="compact"
+    artifactOwnsMedia
+    artifactMobilePlacement="flow"
+  >
+    {#snippet actions()}
+      <Button href="#guides" size="lg">Browse the guides</Button>
+      <Button href="/map" variant="secondary">Start a private workflow draft</Button>
+    {/snippet}
+    {#snippet artifact()}
+      <PlaybookField variant="workflows" embedded />
+    {/snippet}
+  </PerformanceCampaignOpening>
+
+  <div class="library-shell">
+    <section id="guides" class="guide-index" aria-labelledby="guide-index-heading">
+      <header>
+        <span>Choose the next play</span>
+        <h2 id="guide-index-heading">Twelve operating routes for work that has to hold up.</h2>
+      </header>
+
+      <ol>
+        {#each workflowPages as guide, index}
+          <li>
+            <a href={`/workflows/${guide.slug}`}>
+              <span class="guide-number">{String(index + 1).padStart(2, '0')}</span>
+              <div>
+                <span>{guide.eyebrow}</span>
+                <h3>{guide.title}</h3>
+                <p>{guide.description}</p>
+              </div>
+              <span class="guide-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+        {/each}
+      </ol>
+    </section>
+  </div>
+
+  <PerformanceNarrativeStage
+    id="playbook-route"
+    eyebrow="How to use the playbook"
+    title="Read for a decision. Leave with a system your team can run."
+    description="Each guide moves through the same four-part operating route, so the reader knows what to observe, protect, keep, and prove."
+    scenes={playbookScenes}
+    ariaLabel="Workflow Playbook operating route"
+    expression="editorial"
+  />
+
+  <div class="library-shell library-shell--faq">
+    <section class="library-faq" aria-labelledby="library-faq-heading">
+      <span>Direct answers</span>
       <div>
-        <h1>Map the play. Build the system. Keep control.</h1>
-        <p class="library-opening__answer">
-          A practical playbook for the business handoffs that need to move faster without
-          losing the owner, the approval boundary, or the proof.
-        </p>
+        <h2 id="library-faq-heading">Before you choose a guide</h2>
+        {#each faqItems as faq}
+          <details>
+            <summary>{faq.question}</summary>
+            <p>{faq.answer}</p>
+          </details>
+        {/each}
       </div>
-      <aside class="playbook-field" aria-labelledby="playbook-field-title">
-        <div class="playbook-field__heading">
-          <span>One shared playbook</span>
-          <strong id="playbook-field-title">Signal → Decision → Proof</strong>
-        </div>
-        <ol aria-label="Map, Build, and Control operating route">
-          <li>
-            <span class="playbook-mark playbook-mark--ring" aria-hidden="true">O</span>
-            <div><strong>Map</strong><span>Name the handoff and the owner.</span></div>
-          </li>
-          <li>
-            <span class="playbook-mark playbook-mark--cross" aria-hidden="true">×</span>
-            <div><strong>Build</strong><span>Connect the system and its boundaries.</span></div>
-          </li>
-          <li>
-            <span class="playbook-mark playbook-mark--ring" aria-hidden="true">O</span>
-            <div><strong>Control</strong><span>Review the receipt and recover.</span></div>
-          </li>
-        </ol>
-      </aside>
-    </div>
-    <div class="library-intro">
-      <p>
-        Start with one live handoff. Each guide gives you a route to run, the operating artifacts to
-        keep, and the proof to inspect when conditions change.
-      </p>
-      <div>
-        <Button href="#guides">Browse the guides</Button>
-        <Button href="/map" variant="secondary">Start a private workflow draft</Button>
-      </div>
-    </div>
-  </header>
+    </section>
+  </div>
 
-  <section id="guides" class="guide-index" aria-labelledby="guide-index-heading">
-    <header>
-      <span>Choose the next play</span>
-      <h2 id="guide-index-heading">Twelve operating routes for work that has to hold up.</h2>
-    </header>
-
-    <ol>
-      {#each workflowPages as guide, index}
-        <li>
-          <a href={`/workflows/${guide.slug}`}>
-            <span class="guide-number">{String(index + 1).padStart(2, '0')}</span>
-            <div>
-              <span>{guide.eyebrow}</span>
-              <h3>{guide.title}</h3>
-              <p>{guide.description}</p>
-            </div>
-            <span class="guide-arrow" aria-hidden="true">↗</span>
-          </a>
-        </li>
-      {/each}
-    </ol>
-  </section>
-
-  <section class="library-method" aria-labelledby="method-heading">
-    <div>
-      <span>How to use the playbook</span>
-      <h2 id="method-heading">Read for a decision. Leave with a system your team can run.</h2>
-    </div>
-    <ol>
-      <li>
-        <strong>Read the signal</strong><span>Match the guide to an observed operating signal.</span>
-      </li>
-      <li>
-        <strong>Set the boundary</strong><span>Use the fit and pause conditions before choosing tools.</span>
-      </li>
-      <li>
-        <strong>Run the play</strong><span>Follow the operating path and keep the named artifacts.</span>
-      </li>
-      <li>
-        <strong>Review the receipt</strong><span
-          >Follow each claim to Agency-owned proof and related guidance.</span
-        >
-      </li>
-    </ol>
-  </section>
-
-  <section class="library-faq" aria-labelledby="library-faq-heading">
-    <span>Direct answers</span>
-    <div>
-      <h2 id="library-faq-heading">Before you choose a guide</h2>
-      {#each faqItems as faq}
-        <details>
-          <summary>{faq.question}</summary>
-          <p>{faq.answer}</p>
-        </details>
-      {/each}
-    </div>
-  </section>
+  <PerformanceConversionHandoff
+    eyebrow="Private workflow draft"
+    title="Choose the live handoff behind the guide."
+    description="The library helps you recognize the pattern. The private draft turns one real workflow into an owner, boundary, operating route, and first proof requirement."
+    handoff={{
+      owner: 'Your workflow operator',
+      authority: 'Draft the workflow; no production mutation',
+      proof: 'Private map with owner, decision, stop, and receipt',
+      state: 'draft'
+    }}
+    steps={[
+      {
+        label: 'Guide',
+        title: 'Choose the closest operating pattern.',
+        detail: 'Use the fit and pause conditions to name the right starting point.'
+      },
+      {
+        label: 'Map',
+        title: 'Bring one live handoff.',
+        detail: 'Name the source, owner, action, approval boundary, and failure state.'
+      },
+      {
+        label: 'Proof',
+        title: 'Set the first verification gate.',
+        detail: 'Decide what must be visible before any build or production change.'
+      }
+    ]}
+    expression="editorial"
+    density="concise"
+  >
+    {#snippet actions()}
+      <Button href="/map" size="lg">Start a private workflow draft</Button>
+      <Button href="#guides" variant="secondary">Return to the guides</Button>
+    {/snippet}
+  </PerformanceConversionHandoff>
 </div>
 
 <style>
+  .workflow-library {
+    background: var(--color-performance-panel);
+    color: var(--color-performance-ink);
+  }
+
   .library-shell {
     --library-line: var(--color-performance-line);
     width: min(
@@ -142,32 +206,11 @@
       calc(100vw - var(--space-performance-page-gutter) - var(--space-performance-page-gutter))
     );
     margin: 0 auto;
-    padding: var(--space-performance-xl) 0 var(--space-performance-2xl);
+    padding: var(--space-performance-2xl) 0;
     color: var(--color-performance-ink);
   }
 
-  .library-opening {
-    min-height: min(
-      var(--height-performance-stage),
-      calc(100vh - var(--height-performance-header))
-    );
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding-bottom: var(--space-performance-xl);
-  }
-
-  .library-opening__main {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.44fr);
-    gap: var(--space-performance-xl);
-    align-items: end;
-    margin: var(--space-performance-2xl) 0 var(--space-performance-xl);
-  }
-
-  .library-opening > p,
   .guide-index header > span,
-  .library-method > div > span,
   .library-faq > span,
   .guide-index a div > span {
     font-family: var(--font-performance-mono);
@@ -177,136 +220,12 @@
     text-transform: uppercase;
   }
 
-  .library-opening > p,
   .guide-index header > span,
-  .library-method > div > span,
   .library-faq > span {
     color: var(--color-performance-pressure);
   }
 
-  h1 {
-    max-width: 15ch;
-    margin: 0;
-    font-family: var(--font-performance-editorial);
-    font-size: var(--text-performance-display-xl);
-    font-weight: var(--font-performance-editorial-weight, 400);
-    line-height: var(--leading-performance-editorial, 1.1);
-    letter-spacing: -0.045em;
-  }
-
-  .library-opening__answer {
-    max-width: 42rem;
-    margin: var(--space-performance-md) 0 0;
-    font-family: var(--font-performance-prose);
-    font-size: var(--text-performance-body-lg);
-    line-height: var(--leading-performance-relaxed);
-  }
-
-  .playbook-field {
-    border: 1px solid var(--library-line);
-    background: var(--color-performance-surface);
-  }
-
-  .playbook-field__heading {
-    display: grid;
-    gap: var(--space-performance-xs);
-    padding: var(--space-performance-md);
-    border-bottom: 1px solid var(--library-line);
-  }
-
-  .playbook-field__heading > span,
-  .playbook-field li > div > strong {
-    font-family: var(--font-performance-mono);
-    font-size: var(--text-performance-caption);
-    line-height: var(--leading-performance-normal);
-    letter-spacing: var(--tracking-performance-widest);
-    text-transform: uppercase;
-  }
-
-  .playbook-field__heading > span {
-    color: var(--color-performance-muted);
-  }
-
-  .playbook-field__heading > strong {
-    font-family: var(--font-performance-display);
-    font-size: var(--text-performance-h3);
-    font-weight: var(--font-performance-display-weight);
-    line-height: var(--leading-performance-tight);
-  }
-
-  .playbook-field ol {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  .playbook-field li {
-    display: grid;
-    grid-template-columns: 2rem minmax(0, 1fr);
-    gap: var(--space-performance-sm);
-    align-items: center;
-    padding: var(--space-performance-sm) var(--space-performance-md);
-  }
-
-  .playbook-field li + li {
-    border-top: 1px solid var(--library-line);
-  }
-
-  .playbook-field li > div {
-    display: grid;
-    gap: calc(var(--space-performance-xs) / 2);
-  }
-
-  .playbook-field li > div > span {
-    font-family: var(--font-performance-prose);
-    font-size: var(--text-performance-body-sm);
-    line-height: var(--leading-performance-normal);
-  }
-
-  .playbook-mark {
-    display: grid;
-    width: 1.65rem;
-    height: 1.65rem;
-    place-items: center;
-    font-family: var(--font-performance-display);
-    font-size: var(--text-performance-h3);
-    font-weight: var(--font-performance-display-weight);
-    line-height: 1;
-  }
-
-  .playbook-mark--ring {
-    color: var(--color-performance-controlled);
-  }
-
-  .playbook-mark--cross {
-    color: var(--color-performance-signal);
-  }
-
-  .library-intro {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: var(--space-performance-xl);
-    align-items: end;
-    border-top: 1px solid var(--library-line);
-    padding-top: var(--space-performance-md);
-  }
-
-  .library-intro > p {
-    max-width: 680px;
-    margin: 0;
-    font-family: var(--font-performance-prose);
-    font-size: var(--text-performance-body-lg);
-    line-height: var(--leading-performance-relaxed);
-  }
-
-  .library-intro > div {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-performance-xs);
-  }
-
   .guide-index,
-  .library-method,
   .library-faq {
     border-top: 1px solid var(--library-line);
     padding: var(--space-performance-xl) 0;
@@ -314,7 +233,6 @@
   }
 
   .guide-index header,
-  .library-method,
   .library-faq {
     display: grid;
     grid-template-columns: minmax(var(--width-performance-stage-index), 0.36fr) minmax(0, 1fr);
@@ -382,28 +300,10 @@
     line-height: var(--leading-performance-relaxed);
   }
 
-  .library-method > ol {
-    margin: 0;
-    padding: 0;
-    border-top: 1px solid var(--library-line);
-    list-style: none;
-  }
-
-  .library-method li {
-    display: grid;
-    grid-template-columns: 7rem minmax(0, 1fr);
-    gap: var(--space-performance-sm);
-    padding: var(--space-performance-sm) 0;
-    border-bottom: 1px solid var(--library-line);
-    line-height: var(--leading-performance-normal);
-  }
-
-  .library-method strong,
   summary {
     font-family: var(--font-performance-display);
   }
 
-  .library-method li > span,
   details p {
     font-family: var(--font-performance-prose);
   }
@@ -441,29 +341,15 @@
       );
     }
 
-    .library-opening {
-      min-height: auto;
-    }
-
-    .library-intro,
-    .library-opening__main,
     .guide-index header,
-    .library-method,
     .library-faq {
       grid-template-columns: 1fr;
-    }
-
-    .library-intro {
-      align-items: start;
     }
 
     .guide-index a {
       grid-template-columns: 2rem minmax(0, 1fr) 1.25rem;
     }
 
-    .library-method {
-      gap: var(--space-performance-lg);
-    }
   }
 
   @media (prefers-reduced-motion: reduce) {

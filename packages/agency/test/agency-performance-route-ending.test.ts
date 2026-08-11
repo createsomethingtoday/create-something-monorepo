@@ -18,7 +18,7 @@ const routeSource = (pathname: string) =>
   read(`../src/routes${pathname === '/' ? '' : pathname}/+page.svelte`);
 
 test('route-owned Performance endings replace the generic handoff on primary decision routes', () => {
-  for (const pathname of ['/', '/services', '/products', '/stack', '/field-reports']) {
+  for (const pathname of ['/', '/services', '/products', '/stack', '/field-reports', '/workflows']) {
     assert.equal(usesRouteOwnedAgencyPerformanceEnding(pathname), true, pathname);
   }
 
@@ -41,6 +41,8 @@ test('every active marketing route receives exactly one route-owned or shared co
     const declaresConversionHandoff = /<PerformanceConversionHandoff\b/.test(source);
     const delegatesToGovernanceProduct = /<GovernanceProductPage\b/.test(source);
     const ownsEnding = usesRouteOwnedAgencyPerformanceEnding(entry.path);
+    const usesSharedFallback =
+      sharedFallbackRoutes.includes(entry.path) || entry.sourceRoute === '/workflows/[slug]';
 
     if (declaresConversionHandoff || delegatesToGovernanceProduct) {
       assert.equal(ownsEnding, true, `${entry.path} already renders a conversion handoff`);
@@ -48,7 +50,7 @@ test('every active marketing route receives exactly one route-owned or shared co
 
     assert.equal(
       ownsEnding,
-      !sharedFallbackRoutes.includes(entry.path),
+      !usesSharedFallback,
       `${entry.path} should receive exactly one ending`
     );
   }

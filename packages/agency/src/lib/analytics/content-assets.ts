@@ -6,7 +6,8 @@ export type AgencyContentIntent =
   | 'checklist'
   | 'definition'
   | 'workflow-proof'
-  | 'service';
+  | 'service'
+  | 'paid-search';
 
 export type AgencyContentFunnelStage = 'awareness' | 'consideration' | 'decision';
 
@@ -23,6 +24,39 @@ export interface AgencyContentAssetAnalytics {
 }
 
 const AGENCY_CONTENT_ASSETS_BY_PATH: Record<string, AgencyContentAssetAnalytics> = {
+  '/marketplace-review-automation': {
+    contentAssetId: 'conversion.marketplace-review-automation.v20260810',
+    contentType: 'conversion-page',
+    contentCluster: 'marketplace-workflow-review',
+    contentIntent: 'paid-search',
+    contentAudience: 'marketplace operator evaluating evidence preparation and approval controls',
+    contentFunnelStage: 'decision',
+    contentPrimaryKeyword: 'marketplace review automation',
+    contentPrimaryCta: 'workflow-draft-started',
+    contentLinearIssue: 'CRE-1674'
+  },
+  '/ai-workflow-recovery': {
+    contentAssetId: 'conversion.ai-workflow-recovery.v20260810',
+    contentType: 'conversion-page',
+    contentCluster: 'ai-workflow-recovery',
+    contentIntent: 'paid-search',
+    contentAudience: 'operator with a brittle or failed AI workflow',
+    contentFunnelStage: 'decision',
+    contentPrimaryKeyword: 'AI agent recovery',
+    contentPrimaryCta: 'workflow-draft-started',
+    contentLinearIssue: 'CRE-1674'
+  },
+  '/ai-workflow-control': {
+    contentAssetId: 'conversion.ai-workflow-control.v20260810',
+    contentType: 'conversion-page',
+    contentCluster: 'human-approval-and-control',
+    contentIntent: 'paid-search',
+    contentAudience: 'operator defining human approval and stop conditions for AI work',
+    contentFunnelStage: 'decision',
+    contentPrimaryKeyword: 'AI workflow human approval',
+    contentPrimaryCta: 'workflow-draft-started',
+    contentLinearIssue: 'CRE-1674'
+  },
   '/services': {
     contentAssetId: 'service.workflow-infrastructure.v20260518',
     contentType: 'service-page',

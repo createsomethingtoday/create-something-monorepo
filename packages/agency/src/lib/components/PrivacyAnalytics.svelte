@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { afterNavigate } from '$app/navigation';
   import { Analytics } from '@create-something/canon';
   import type { Property } from '@create-something/canon/analytics';
   import {
@@ -7,6 +8,11 @@
     updateAnalyticsConsent,
     type ConsentState
   } from '@create-something/canon/gdpr';
+  import {
+    captureHighIntentSearchAttribution,
+    clearHighIntentSearchAttribution,
+    type HighIntentSearchAttribution
+  } from '$lib/analytics/high-intent-search';
 
   interface Props {
     property?: Property;
@@ -34,15 +40,31 @@
   let showPanel = $state(false);
   let compactPromptActive = $state(false);
   let consentState = $state<ConsentState | null>(null);
+  let paidSearchAttribution = $state<HighIntentSearchAttribution | undefined>(undefined);
 
   const hasStoredChoice = $derived(consentState !== null);
   const statusLabel = $derived(
     userOptedOut || consentState?.analytics === false ? 'Analytics off' : 'Analytics on'
   );
+  const effectiveGlobalMetadata = $derived(
+    globalMetadata || paidSearchAttribution
+      ? { ...(globalMetadata ?? {}), ...(paidSearchAttribution ?? {}) }
+      : undefined
+  );
+
+  function syncPaidSearchAttribution(url: URL) {
+    if (!analyticsAllowed) return;
+    paidSearchAttribution = captureHighIntentSearchAttribution(url, window.sessionStorage);
+  }
+
+  afterNavigate((navigation) => {
+    if (navigation.to?.url) syncPaidSearchAttribution(navigation.to.url);
+  });
 
   onMount(() => {
     consentState = getConsentState();
     analyticsAllowed = Boolean(consentState?.analytics) && !userOptedOut;
+    if (analyticsAllowed) syncPaidSearchAttribution(new URL(window.location.href));
     compactPromptActive = compactPrompt && !consentState && !userOptedOut;
     showPanel = !consentState && !userOptedOut && !compactPromptActive;
     mounted = true;
@@ -51,6 +73,12 @@
   function setAnalyticsConsent(analytics: boolean) {
     consentState = updateAnalyticsConsent(analytics);
     analyticsAllowed = analytics && !userOptedOut;
+    if (analyticsAllowed) {
+      syncPaidSearchAttribution(new URL(window.location.href));
+    } else {
+      clearHighIntentSearchAttribution(window.sessionStorage);
+      paidSearchAttribution = undefined;
+    }
     showPanel = false;
     compactPromptActive = false;
   }
@@ -62,7 +90,7 @@
 </script>
 
 {#if mounted && analyticsAllowed}
-  <Analytics {property} {userId} {userOptedOut} {globalMetadata} />
+  <Analytics {property} {userId} {userOptedOut} globalMetadata={effectiveGlobalMetadata} />
 {/if}
 
 {#if mounted}
