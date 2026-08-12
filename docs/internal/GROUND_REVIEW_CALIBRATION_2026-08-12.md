@@ -17,6 +17,8 @@ precision:
 - 0 Ground findings
 - 0 execution failures
 - 7 of 20 receipts had no analyzable files
+- 11 of 20 receipts were partial rather than falsely clean
+- 2 of 20 receipts completed every requested check
 
 Zero findings is not evidence of zero false positives. The sample contained no
 positive findings to adjudicate, so finding precision remains unknown.
@@ -38,25 +40,25 @@ The machine-readable summary is
 | PR    | Status              | Changed | Duplicate coverage | Orphan coverage | Excluded | Findings |
 | ----- | ------------------- | ------: | -----------------: | --------------: | -------: | -------: |
 | #1321 | no analyzable files |       2 |                  0 |               0 |        2 |        0 |
-| #1324 | clear               |      25 |                  4 |               2 |       21 |        0 |
+| #1324 | partial             |      25 |                  4 |               2 |       21 |        0 |
 | #1325 | no analyzable files |       2 |                  0 |               0 |        2 |        0 |
-| #1327 | clear               |      11 |                  1 |               0 |       10 |        0 |
-| #1332 | clear               |      22 |                  4 |               3 |       18 |        0 |
+| #1327 | partial             |      11 |                  1 |               0 |       10 |        0 |
+| #1332 | partial             |      22 |                  4 |               3 |       18 |        0 |
 | #1333 | no analyzable files |       4 |                  0 |               0 |        4 |        0 |
 | #1334 | no analyzable files |       4 |                  0 |               0 |        4 |        0 |
-| #1337 | clear               |      10 |                  3 |               0 |        7 |        0 |
-| #1338 | clear               |      19 |                  2 |               0 |       17 |        0 |
-| #1344 | clear               |      23 |                  5 |               3 |       18 |        0 |
+| #1337 | partial             |      10 |                  3 |               0 |        7 |        0 |
+| #1338 | partial             |      19 |                  2 |               0 |       17 |        0 |
+| #1344 | partial             |      23 |                  5 |               3 |       18 |        0 |
 | #1345 | no analyzable files |       9 |                  0 |               0 |        9 |        0 |
 | #1346 | clear               |      17 |                  1 |               1 |       16 |        0 |
-| #1347 | clear               |       5 |                  1 |               0 |        4 |        0 |
+| #1347 | partial             |       5 |                  1 |               0 |        4 |        0 |
 | #1348 | clear               |       8 |                  2 |               2 |        6 |        0 |
 | #1349 | no analyzable files |       8 |                  0 |               0 |        8 |        0 |
-| #1351 | clear               |      11 |                  2 |               1 |        9 |        0 |
-| #1352 | clear               |      17 |                  3 |               0 |       14 |        0 |
+| #1351 | partial             |      11 |                  2 |               1 |        9 |        0 |
+| #1352 | partial             |      17 |                  3 |               0 |       14 |        0 |
 | #1353 | no analyzable files |       3 |                  0 |               0 |        3 |        0 |
-| #1354 | clear               |      10 |                  1 |               0 |        9 |        0 |
-| #1355 | clear               |       4 |                  2 |               0 |        2 |        0 |
+| #1354 | partial             |      10 |                  1 |               0 |        9 |        0 |
+| #1355 | partial             |       4 |                  2 |               0 |        2 |        0 |
 
 ### Exclusion distribution
 
@@ -94,11 +96,18 @@ reason; Ground classifies them by their actual language or path policy.
 
 The duplicate analyzer now scans the complete eligible source set, emits the
 exact changed files completed by each requested check, and records partial or
-failed files separately. Directory symlinks are skipped during deterministic
-traversal, preventing aliases and cycles from inflating or hanging a scan. The
+failed files separately. Unique directory symlink targets are traversed once
+through a canonical visited set, preserving symlink-only source while preventing
+aliases and cycles from inflating or hanging a scan. The
 review wrapper requires this evidence for packages over the former 500-file
 boundary or containing directory aliases; an older binary cannot claim those
 files were checked merely by listing them as analyzable.
+
+Completion status is preserved end to end. A changed file appearing in an
+analyzed-file list is no longer enough to claim a clean review when the broader
+duplicate corpus was partial, and an orphan exclusion is not summarized as a
+completed clean check. The stricter replay produced 11 partial receipts, 2
+fully clear receipts, and 7 receipts with no analyzable files.
 
 ## Next evidence gate
 

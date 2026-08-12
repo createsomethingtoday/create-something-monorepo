@@ -453,11 +453,20 @@ export function buildReceipt({
       run(groundBinary, ['diff', path, '--base', baseSha, '--checks', CHECKS.join(',')], root)
     );
     const duplicateCompletion = result.check_coverage?.duplicates;
+    const duplicateStatus = ['completed', 'partial', 'failed'].includes(duplicateCompletion?.status)
+      ? duplicateCompletion.status
+      : requiresCompletionEvidence
+        ? 'partial'
+        : 'completed';
+    const orphanCompletion = result.check_coverage?.orphans;
+    const orphanStatus = ['completed', 'partial', 'failed'].includes(orphanCompletion?.status)
+      ? orphanCompletion.status
+      : 'completed';
     const duplicateReportedFiles = Array.isArray(duplicateCompletion?.analyzed_changed_files)
       ? duplicateCompletion.analyzed_changed_files
       : requiresCompletionEvidence
         ? []
-        : result.changed_file_list ?? [];
+        : (result.changed_file_list ?? []);
     const reportedAnalyzedChangedFiles = [
       ...new Set(
         duplicateReportedFiles
@@ -482,20 +491,20 @@ export function buildReceipt({
           path: receiptPath(root, exclusion.path)
         }))
       : requiresCompletionEvidence
-      ? files
-          .filter(
-            (file) =>
-              file.startsWith(`${path}/`) &&
-              supportedSource(file) &&
-              !generatedSource(file) &&
-              !deleted.has(file) &&
-              !indexWorktreeMismatch.has(file) &&
-              !modeOnly.has(file) &&
-              !unmerged.has(file) &&
-              !unreadable.has(file)
-          )
-          .map((file) => ({ path: file, reason: 'ground_completion_evidence_missing' }))
-      : [];
+        ? files
+            .filter(
+              (file) =>
+                file.startsWith(`${path}/`) &&
+                supportedSource(file) &&
+                !generatedSource(file) &&
+                !deleted.has(file) &&
+                !indexWorktreeMismatch.has(file) &&
+                !modeOnly.has(file) &&
+                !unmerged.has(file) &&
+                !unreadable.has(file)
+            )
+            .map((file) => ({ path: file, reason: 'ground_completion_evidence_missing' }))
+        : [];
     const analyzedPathSet = new Set(analyzedChangedFiles);
     const orphanAnalyzedFiles = analyzedChangedFiles.filter(
       (file) => added.has(file) && !groundPolicyIgnored(root, path, file, ignorePatterns)
@@ -518,11 +527,13 @@ export function buildReceipt({
         analyzed_changed_files: analyzedChangedFiles,
         checks: {
           duplicates: {
+            status: duplicateStatus,
             analyzable_changed_files: analyzedChangedFiles.length,
             analyzed_changed_files: analyzedChangedFiles,
             excluded_changed_files: []
           },
           orphans: {
+            status: orphanStatus,
             analyzable_changed_files: orphanAnalyzedFiles.length,
             analyzed_changed_files: orphanAnalyzedFiles,
             excluded_changed_files: orphanExcludedFiles
@@ -652,11 +663,21 @@ export function buildReceipt({
   const analyzable = analyzedSet.size;
   const checkCoverage = {
     duplicates: {
+      status: targets.some((target) => target.coverage.checks.duplicates.status === 'failed')
+        ? 'failed'
+        : targets.every((target) => target.coverage.checks.duplicates.status === 'completed')
+          ? 'completed'
+          : 'partial',
       analyzable_changed_files: analyzable,
       analyzed_changed_files: [...analyzedSet],
       excluded_changed_files: excluded.filter((exclusion) => supportedSource(exclusion.path))
     },
     orphans: {
+      status: targets.some((target) => target.coverage.checks.orphans.status === 'failed')
+        ? 'failed'
+        : targets.every((target) => target.coverage.checks.orphans.status === 'completed')
+          ? 'completed'
+          : 'partial',
       analyzable_changed_files: targets.reduce(
         (count, target) => count + target.coverage.checks.orphans.analyzable_changed_files,
         0
@@ -674,6 +695,9 @@ export function buildReceipt({
       ]
     }
   };
+  const checksComplete = Object.values(checkCoverage).every(
+    (coverage) => coverage.status === 'completed'
+  );
 
   return {
     schema_version: 'ground-review-receipt.v1',
@@ -691,7 +715,14 @@ export function buildReceipt({
       excluded_changed_files: excluded
     },
     findings,
-    status: findings.length > 0 ? 'findings' : analyzable > 0 ? 'clear' : 'no_analyzable_files'
+    status:
+      findings.length > 0
+        ? 'findings'
+        : analyzable === 0
+          ? 'no_analyzable_files'
+          : checksComplete
+            ? 'clear'
+            : 'partial'
   };
 }
 
@@ -714,7 +745,9 @@ export function formatMarkdown(receipt) {
   if (receipt.coverage.checks) {
     lines.push(
       `- Duplicate-check coverage: ${receipt.coverage.checks.duplicates.analyzable_changed_files} file(s)`,
-      `- Orphan-check coverage: ${receipt.coverage.checks.orphans.analyzable_changed_files} new file(s)`
+      `- Duplicate-check status: ${receipt.coverage.checks.duplicates.status}`,
+      `- Orphan-check coverage: ${receipt.coverage.checks.orphans.analyzable_changed_files} new file(s)`,
+      `- Orphan-check status: ${receipt.coverage.checks.orphans.status}`
     );
   }
   if (receipt.targets.length > 0) {

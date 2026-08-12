@@ -1904,14 +1904,7 @@ fn collect_ts_files_inner(
             Err(_) => continue,
         };
 
-        // Directory aliases can make traversal order-dependent and may form cycles.
-        // The real directory is discovered through its lexical entry, so aliases do
-        // not add source coverage and are intentionally skipped.
-        if file_type.is_symlink() && path.is_dir() {
-            continue;
-        }
-
-        if file_type.is_dir() {
+        if file_type.is_dir() || (file_type.is_symlink() && path.is_dir()) {
             collect_ts_files_inner(&path, files, visited_directories);
         } else if file_type.is_file() || (file_type.is_symlink() && path.is_file()) {
             let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
@@ -3014,12 +3007,7 @@ fn handle_diff(args: &Value) -> ToolResult {
                 }));
             }
         }
-        let status = if orphan_exclusions.iter().any(|exclusion| {
-            matches!(
-                exclusion.get("reason").and_then(|reason| reason.as_str()),
-                Some("file_unavailable" | "orphan_analysis_failed")
-            )
-        }) { "partial" } else { "completed" };
+        let status = if orphan_exclusions.is_empty() { "completed" } else { "partial" };
         check_coverage.insert("orphans".to_string(), json!({
             "status": status,
             "analyzed_changed_files": analyzed_changed_files,
@@ -4128,6 +4116,74 @@ mod tests {
             result.content["check_coverage"]["duplicates"]["status"],
             "partial"
         );
+        assert!(result.content["message"]
+            .as_str()
+            .unwrap()
+            .contains("completed portion"));
+        assert!(!result.content["message"]
+            .as_str()
+            .unwrap()
+            .contains("are clean"));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn duplicate_scan_traverses_unique_symlinked_source_directory() {
+        use std::fs;
+        use std::os::unix::fs::symlink;
+
+        let directory = tempdir().unwrap();
+        let shared = tempdir().unwrap();
+        fs::write(shared.path().join("value.ts"), "export const value = 1;\n").unwrap();
+        symlink(shared.path(), directory.path().join("src")).unwrap();
+
+        let result = handle_find_duplicate_functions(&json!({
+            "directory": directory.path()
+        }));
+
+        assert!(result.success, "{:?}", result.content);
+        assert_eq!(result.content["files_discovered"], 1);
+        assert_eq!(result.content["files_checked"], 1);
+        assert_eq!(result.content["scan_complete"], true);
+        assert!(result.content["file_list"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|path| path.as_str().unwrap().ends_with("src/value.ts")));
+    }
+
+    #[test]
+    fn diff_orphan_coverage_is_partial_for_existing_changed_files() {
+        use std::fs;
+        use std::process::Command;
+
+        let repo = tempdir().unwrap();
+        let run_git = |args: &[&str]| {
+            let status = Command::new("git")
+                .args(args)
+                .current_dir(repo.path())
+                .status()
+                .unwrap();
+            assert!(status.success(), "git {:?} failed", args);
+        };
+
+        run_git(&["init", "--quiet"]);
+        run_git(&["config", "user.email", "ground@example.test"]);
+        run_git(&["config", "user.name", "Ground test"]);
+        let changed = repo.path().join("changed.ts");
+        fs::write(&changed, "export const value = 1;\n").unwrap();
+        run_git(&["add", "."]);
+        run_git(&["commit", "--quiet", "-m", "baseline"]);
+
+        fs::write(&changed, "export const value = 2;\n").unwrap();
+        let result = handle_diff(&json!({
+            "directory": repo.path(),
+            "base": "HEAD",
+            "checks": ["orphans"]
+        }));
+
+        assert!(result.success, "{:?}", result.content);
+        assert_eq!(result.content["check_coverage"]["orphans"]["status"], "partial");
         assert!(result.content["message"]
             .as_str()
             .unwrap()
