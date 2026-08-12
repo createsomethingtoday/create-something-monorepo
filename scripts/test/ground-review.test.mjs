@@ -660,3 +660,38 @@ test('CLI excludes a dangling package source symlink as unreadable', (t) => {
   ]);
   assert.equal(receipt.status, 'no_analyzable_files');
 });
+
+test('CLI excludes a package source path replaced by a directory', (t) => {
+  const repo = mkdtempSync(join(tmpdir(), 'ground-review-directory-'));
+  t.after(() => rmSync(repo, { recursive: true, force: true }));
+
+  mustRun('git', ['init', '-b', 'main'], repo);
+  mustRun('git', ['config', 'core.hooksPath', '/dev/null'], repo);
+  writeFixtureFile(repo, 'packages/example/package.json', '{"name":"@example/pkg"}\n');
+  const source = writeFixtureFile(
+    repo,
+    'packages/example/src/value.ts',
+    'export const value = 1;\n'
+  );
+  mustRun('git', ['add', '.'], repo);
+  mustRun('git', ['commit', '-m', 'baseline'], repo);
+  rmSync(source);
+  mkdirSync(source);
+  writeFixtureFile(repo, 'packages/example/src/value.ts/nested.txt', 'replacement\n');
+
+  const result = run(process.execPath, [scriptPath, '--base', 'HEAD', '--format', 'json'], repo, {
+    GROUND_BINARY: join(repo, 'missing-ground')
+  });
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const receipt = JSON.parse(result.stdout);
+  assert.deepEqual(receipt.changed_files, [
+    'packages/example/src/value.ts',
+    'packages/example/src/value.ts/nested.txt'
+  ]);
+  assert.deepEqual(receipt.targets, []);
+  assert.deepEqual(receipt.coverage.excluded_changed_files, [
+    { path: 'packages/example/src/value.ts', reason: 'unreadable_file' },
+    { path: 'packages/example/src/value.ts/nested.txt', reason: 'unsupported_extension' }
+  ]);
+});
