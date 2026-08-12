@@ -55,19 +55,19 @@ function normalizePath(path) {
 }
 
 function changedFiles(root, base) {
-  const tracked = run('git', ['diff', '--name-only', base, '--'], root)
-    .split(/\r?\n/)
+  const tracked = run('git', ['diff', '--name-only', '-z', base, '--'], root)
+    .split('\0')
     .filter(Boolean);
-  const untracked = run('git', ['ls-files', '--others', '--exclude-standard'], root)
-    .split(/\r?\n/)
+  const untracked = run('git', ['ls-files', '-z', '--others', '--exclude-standard'], root)
+    .split('\0')
     .filter(Boolean);
   return [...new Set([...tracked, ...untracked].map(normalizePath))].sort();
 }
 
 function deletedFiles(root, base) {
   return new Set(
-    run('git', ['diff', '--name-only', '--diff-filter=D', base, '--'], root)
-      .split(/\r?\n/)
+    run('git', ['diff', '--name-only', '-z', '--diff-filter=D', base, '--'], root)
+      .split('\0')
       .filter(Boolean)
       .map(normalizePath)
       .filter((path) => !existsSync(resolve(root, path)))
@@ -76,8 +76,8 @@ function deletedFiles(root, base) {
 
 function unmergedFiles(root) {
   return new Set(
-    run('git', ['diff', '--name-only', '--diff-filter=U', '--'], root)
-      .split(/\r?\n/)
+    run('git', ['diff', '--name-only', '-z', '--diff-filter=U', '--'], root)
+      .split('\0')
       .filter(Boolean)
       .map(normalizePath)
   );
