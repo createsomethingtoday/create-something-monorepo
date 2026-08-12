@@ -50,7 +50,8 @@ exclusions, and observed findings. Duplicate findings are marked as observations
 because Ground does not yet baseline duplicate pairs against the base revision.
 The receipt also separates per-check coverage: duplicate analysis applies to all
 analyzable changed files, while orphan analysis applies only to files absent from
-the base revision. During calibration, a finding or unavailable
+the base revision and not excluded by the extended `.ground.yml` path policy.
+During calibration, a finding or unavailable
 Ground binary is visible in the step evidence but does not make the solo-loop
 fail.
 
