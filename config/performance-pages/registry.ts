@@ -660,7 +660,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     'learn-account',
     'lms',
     ['account', 'auth/magic', 'login', 'signup'],
-    'pending',
+    'migrated',
     contract(
       'tool',
       'Complete the identity or account task and return to learning.',
