@@ -59,9 +59,10 @@ pnpm ground:review:json -- --base origin/main
 ```
 
 The pilot covers changed TypeScript, JavaScript, and `.mjs` files beneath a
-package with `package.json`. Svelte, Rust, generated artifacts, root scripts,
-and other unsupported paths remain named exclusions rather than being reported
-as checked-clean.
+package with `package.json`. Svelte, Rust, root scripts, other unsupported
+paths, and source files following the repository's
+`*.generated.{ts,tsx,js,jsx,mjs}` convention remain named exclusions rather
+than being reported as checked-clean.
 
 Keep the receipt advisory until at least 20 representative PRs have recorded
 finding precision, false positives, and coverage exclusions. Promotion to a
