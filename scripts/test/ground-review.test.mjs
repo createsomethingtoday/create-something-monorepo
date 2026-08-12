@@ -182,7 +182,7 @@ test('CLI collapses nested package changes into one non-overlapping target', (t)
     binaryDir,
     'fake-ground',
     `#!/bin/sh
-printf '%s\\n' '{"discovered_changed_files":2,"analyzable_changed_files":2,"changed_files":2,"changed_file_list":[],"excluded_changed_files":[],"checks_run":["duplicates","orphans"],"new_issues":[],"total_new_issues":0}'
+printf '%s\\n' '{"discovered_changed_files":2,"analyzable_changed_files":2,"changed_files":2,"changed_file_list":["packages/parent/src/index.ts","packages/parent/worker/src/index.ts"],"excluded_changed_files":[],"checks_run":["duplicates","orphans"],"new_issues":[],"total_new_issues":0}'
 `
   );
   chmodSync(fakeGround, 0o755);
@@ -480,7 +480,7 @@ printf '%s\\n' '{"discovered_changed_files":1,"analyzable_changed_files":1,"chan
   assert.deepEqual(receipt.coverage.excluded_changed_files, []);
 });
 
-test('CLI preserves Unicode Git paths without quoted-path corruption', (t) => {
+test('CLI preserves Unicode Git paths when Ground cannot round-trip them', (t) => {
   const repo = mkdtempSync(join(tmpdir(), 'ground-review-unicode-'));
   const binaryDir = mkdtempSync(join(tmpdir(), 'ground-review-unicode-binary-'));
   t.after(() => {
@@ -500,7 +500,7 @@ test('CLI preserves Unicode Git paths without quoted-path corruption', (t) => {
     binaryDir,
     'fake-ground',
     `#!/bin/sh
-printf '%s\\n' '{"discovered_changed_files":1,"analyzable_changed_files":1,"changed_file_list":["packages/example/src/café.ts"],"excluded_changed_files":[],"new_issues":[]}'
+printf '%s\\n' '{"discovered_changed_files":1,"analyzable_changed_files":0,"changed_file_list":[],"excluded_changed_files":[],"new_issues":[]}'
 `
   );
   chmodSync(fakeGround, 0o755);
@@ -512,7 +512,13 @@ printf '%s\\n' '{"discovered_changed_files":1,"analyzable_changed_files":1,"chan
   assert.equal(result.status, 0, result.stderr || result.stdout);
   const receipt = JSON.parse(result.stdout);
   assert.deepEqual(receipt.changed_files, ['packages/example/src/café.ts']);
-  assert.deepEqual(receipt.targets[0].coverage.analyzed_changed_files, [
-    'packages/example/src/café.ts'
+  assert.deepEqual(receipt.targets[0].coverage.analyzed_changed_files, []);
+  assert.equal(receipt.coverage.analyzable_changed_files, 0);
+  assert.deepEqual(receipt.coverage.excluded_changed_files, [
+    { path: 'packages/example/src/café.ts', reason: 'ground_path_mismatch' }
   ]);
+  assert.deepEqual(receipt.targets[0].coverage.excluded_changed_files, [
+    { path: 'packages/example/src/café.ts', reason: 'ground_path_mismatch' }
+  ]);
+  assert.equal(receipt.status, 'no_analyzable_files');
 });
