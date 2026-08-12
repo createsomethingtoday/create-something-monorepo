@@ -250,6 +250,15 @@ function normalizeFinding(root, finding) {
   return normalized;
 }
 
+function findingPaths(finding) {
+  return [
+    ...(typeof finding?.path === 'string' ? [finding.path] : []),
+    ...(Array.isArray(finding?.files)
+      ? finding.files.filter((path) => typeof path === 'string')
+      : [])
+  ];
+}
+
 export function resolveGroundBinary(
   root,
   platform = process.platform,
@@ -343,6 +352,7 @@ export function buildReceipt({
           )
           .map((file) => ({ path: file, reason: 'ground_scan_cap' }))
       : [];
+    const analyzedPathSet = new Set(analyzedChangedFiles);
     return {
       path,
       package_name: packageName(root, path),
@@ -358,7 +368,9 @@ export function buildReceipt({
           ...scanLimitExclusions
         ]
       },
-      findings: (result.new_issues ?? []).map((finding) => normalizeFinding(root, finding))
+      findings: (result.new_issues ?? [])
+        .map((finding) => normalizeFinding(root, finding))
+        .filter((finding) => findingPaths(finding).some((file) => analyzedPathSet.has(file)))
     };
   });
 
